@@ -3,7 +3,6 @@ import seedrandom from 'seedrandom';
 import { getCardIds } from '@/utils/GetAllCardIds';
 import { getMaps } from '@/utils/getMaps';
 
-import { ActionCardType } from '@/types/ActionCard';
 import { CardType } from '@/types/Card';
 import { DEFAULT_CONFIG, GameConfig, IPlayerData } from '@/types/IQuiz';
 export const NUMBER_HAND = 8;
@@ -164,18 +163,13 @@ export class GameSetupGenerator {
     return this.generateAndDistribute(ids, NUMBER_FINAL_SCORING);
   }
 
-  public generateActionCards(): ActionCardType[][] {
-    const cards = [
-      ActionCardType.CARDS,
-      ActionCardType.SPONSORS,
-      ActionCardType.ASSOCIATION,
-      ActionCardType.BUILD,
-    ];
+  public generateActionCards(): any[][] {
+    const cards = [1, 1, 1, 1, 1];
 
     return new Array(this.gameConfig.players)
       .fill(0)
       .map((_, index) => [
-        ActionCardType.ANIMAL,
+        1,
         ...this.sampleSizeWithSeed(cards, 4, this.seed + index.toString()),
       ]);
   }

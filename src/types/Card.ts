@@ -1,20 +1,20 @@
-import { AnimalCard } from '@/types/AnimalCard';
+import BaseCard from '@/types/BaseCard';
 import { EndGameCard } from '@/types/EndGameCard';
 import { ProjectCard } from '@/types/ProjectCard';
 import { SponsorCard } from '@/types/SponsorCard';
 
-export type Card = AnimalCard | SponsorCard | ProjectCard | EndGameCard;
+export type Card = BaseCard | SponsorCard | ProjectCard | EndGameCard;
 
 export enum CardType {
-  ANIMAL_CARD = 'AnimalCard',
+  ANIMAL_CARD = 'BaseCard',
   SPONSOR_CARD = 'SponsorCard',
   CONSERVATION_CARD = 'ConservationCard',
   ACTION_CARD = 'ActionCard',
   END_GAME_CARD = 'EndGameCard',
 }
 
-export function isAnimalCard(card: Card): card is AnimalCard {
-  return (card as AnimalCard).size !== undefined;
+export function isBaseCard(card: Card): card is BaseCard {
+  return true;
 }
 
 export function isSponsorCard(card: Card): card is SponsorCard {

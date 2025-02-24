@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { FiRotateCcw } from 'react-icons/fi';
 
 import { SortButton } from '@/components/buttons/SortButton';
-import { AnimalCardList } from '@/components/cards/animal_cards/AnimalCardList';
+import { BaseCardList } from '@/components/cards/base_cards/BaseCardList';
 import { SponsorCardList } from '@/components/cards/sponsor_cards/SponsorCardList';
 import { CardSourceFilter } from '@/components/filters/CardSourceFilter';
 import { CardTypeFilter } from '@/components/filters/CardTypeFilter';
@@ -50,7 +50,7 @@ export default function HomePage(
   const [size, setSize] = useState<number[]>([0]);
   const [strength, setStrength] = useState<number[]>([0]);
 
-  const [animalCardsCount, setAnimalCardsCount] = useState<number>(0);
+  const [animalCardsCount, setBaseCardsCount] = useState<number>(0);
   const [sponsorCardsCount, setSponsorCardsCount] = useState<number>(0);
 
   const animalMaxNum = useMemo(() => {
@@ -79,7 +79,7 @@ export default function HomePage(
       selectedCardTypes.length !== 0 &&
       !selectedCardTypes.includes(CardType.ANIMAL_CARD)
     ) {
-      setAnimalCardsCount(0);
+      setBaseCardsCount(0);
     }
     if (
       selectedCardTypes.length !== 0 &&
@@ -101,7 +101,7 @@ export default function HomePage(
     setTextFilter('');
     setSelectedCardTypes([]);
     setSelectedCardSources([]);
-    // setAnimalCardsCount(0);
+    // setBaseCardsCount(0);
     // setSponsorCardsCount(0);
     setSortOrder(SortOrder.ID_ASC);
     setSize([0]);
@@ -138,7 +138,7 @@ export default function HomePage(
             <TextFilter onTextChange={setTextFilter} reset={reset} />
             <div
               onClick={resetAll}
-              className='group flex w-auto items-center justify-between space-x-2 rounded-2xl rounded-md bg-zinc-600 px-4 py-2 text-lg font-medium text-zinc-100 shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur-md hover:bg-zinc-500 hover:text-lime-400 focus:outline-none focus-visible:ring-2 dark:from-zinc-900/30 dark:to-zinc-800/80 dark:text-zinc-200 dark:ring-white/10 dark:hover:ring-white/20 dark:focus-visible:ring-yellow-500/80'
+              className='group flex w-auto items-center justify-between space-x-2 rounded-2xl rounded-md bg-zinc-600 px-4 py-2 text-lg font-medium text-zinc-100 shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur-md hover:bg-zinc-500 hover:text-primary-400 focus:outline-none focus-visible:ring-2 dark:from-zinc-900/30 dark:to-zinc-800/80 dark:text-zinc-200 dark:ring-white/10 dark:hover:ring-white/20 dark:focus-visible:ring-yellow-500/80'
             >
               <FiRotateCcw className='' />
             </div>
@@ -165,13 +165,13 @@ export default function HomePage(
         <div className='relative'>
           {(selectedCardTypes.length === 0 ||
             selectedCardTypes.includes(CardType.ANIMAL_CARD)) && (
-            <AnimalCardList
+            <BaseCardList
               selectedTags={selectedTags}
               selectedRequirements={selectedRequirements}
               selectedCardSources={selectedCardSources}
               textFilter={textFilter}
               sortOrder={sortOrder}
-              onCardCountChange={setAnimalCardsCount}
+              onCardCountChange={setBaseCardsCount}
               size={size}
               maxNum={animalMaxNum}
             />
@@ -189,18 +189,18 @@ export default function HomePage(
               maxNum={sponsorMaxNum}
             />
           )}
-          {shouldDisplayViewMore && (
+          {/* {shouldDisplayViewMore && (
             <>
               <div className='h-10 w-full'></div>
               <div className='absolute bottom-0 h-40 w-full bg-gradient-to-b from-transparent via-[#ecf5e8] to-[#ecf5e8] lg:h-60 xl:h-80'></div>
               <Button
-                className='absolute bottom-5 h-12 w-full bg-lime-600 hover:bg-lime-700'
+                className='absolute bottom-5 h-12 w-full bg-primary-600 hover:bg-primary-700'
                 onClick={handleViewMore}
               >
                 {t('View More')}
               </Button>
             </>
-          )}
+          )} */}
         </div>
       </main>
     </Layout>

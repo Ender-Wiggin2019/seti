@@ -1,12 +1,10 @@
 import React from 'react';
 
 import AbilityIcon from '@/components/icons/abilities/AbilityIcon';
-import Boost from '@/components/icons/abilities/Boost';
 import ExtraShift from '@/components/icons/abilities/ExtraShift';
 import Mark from '@/components/icons/abilities/Mark';
 import Posturing from '@/components/icons/abilities/Posturing';
 import Trade from '@/components/icons/abilities/Trade';
-import ActionCardIcon from '@/components/icons/actions/ActionCardIcon';
 import Clever from '@/components/icons/actions/Clever';
 import Determination from '@/components/icons/actions/Determination';
 import Strength from '@/components/icons/actions/Strength';
@@ -36,7 +34,6 @@ import ReputationIcon from '@/components/icons/tokens/ReputationIcon';
 import TagIcon from '@/components/icons/tokens/TagIcon';
 import XToken from '@/components/icons/tokens/XToken';
 
-import { ActionCardType } from '@/types/ActionCard';
 import { Icon } from '@/types/Icon';
 import { IconName } from '@/types/IconName';
 import { getTag, Tag } from '@/types/Tags';
@@ -61,16 +58,6 @@ export const IconFactory: React.FC<Icon> = ({
   else if (iconName === IconName.CLEVER) return <Clever />;
   else if (iconName === IconName.MARK) return <Mark />;
   else if (iconName === IconName.POSTURING) return <Posturing />;
-  else if (iconName === IconName.BOOST_BUILDING)
-    return <Boost actionType={ActionCardType.BUILD} />;
-  else if (iconName === IconName.BOOST_ANIMAL)
-    return <Boost actionType={ActionCardType.ANIMAL} />;
-  else if (iconName === IconName.BOOST_CARD)
-    return <Boost actionType={ActionCardType.CARDS} />;
-  else if (iconName === IconName.BOOST_ASSOCIATION)
-    return <Boost actionType={ActionCardType.ASSOCIATION} />;
-  else if (iconName === IconName.BOOST_SPONSORS)
-    return <Boost actionType={ActionCardType.SPONSORS} />;
   else if (iconName === IconName.EXTRA_SHIFT) return <ExtraShift />;
   else if (iconName === IconName.HELPFUL) return <></>;
   else if (iconName === IconName.TAKE_CARD_IN_RANGE) {
@@ -116,18 +103,6 @@ export const IconFactory: React.FC<Icon> = ({
     //   return <TagIcon type={OtherTag.Science} />;
   } else if (iconName === IconName.DETERMINATION) {
     return <Determination />;
-  } else if (iconName === IconName.ANIMAL_ACTION_CARD) {
-    return <ActionCardIcon actionType={ActionCardType.ANIMAL} />;
-  } else if (iconName === IconName.ASSOCIATION_ACTION_CARD) {
-    return <ActionCardIcon actionType={ActionCardType.ASSOCIATION} />;
-  } else if (iconName === IconName.BUILD_ACTION_CARD) {
-    return <ActionCardIcon actionType={ActionCardType.BUILD} />;
-  } else if (iconName === IconName.CARDS_ACTION_CARD) {
-    return <ActionCardIcon actionType={ActionCardType.CARDS} />;
-  } else if (iconName === IconName.SPONSORS_ACTION_CARD) {
-    return <ActionCardIcon actionType={ActionCardType.SPONSORS} />;
-  } else if (iconName === IconName.ACTION_CARD) {
-    return <ActionCardIcon />;
   } else if (iconName === IconName.MARKETING) {
     return <Marketing />;
   } else if (iconName === IconName.SPONSOR_CARD) {

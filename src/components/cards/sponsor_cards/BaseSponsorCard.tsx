@@ -8,11 +8,11 @@ import SponsorCardWrapper from '@/components/wrapper/SponsorWrapper';
 
 import { SponsorCard as SponsorCardType } from '@/types/SponsorCard';
 
-interface AnimalCardProps {
+interface BaseCardProps {
   sponsor: SponsorCardType;
 }
 
-export const BaseSponsorCard: React.FC<AnimalCardProps> = ({ sponsor }) => {
+export const BaseSponsorCard: React.FC<BaseCardProps> = ({ sponsor }) => {
   const { t } = useTranslation('common');
 
   return (

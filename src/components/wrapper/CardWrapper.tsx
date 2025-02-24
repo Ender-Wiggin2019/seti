@@ -1,8 +1,15 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2024-07-07 17:11:51
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-25 01:39:10
+ * @Description:
+ */
 import React, { useEffect, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
-import { BaseAnimalCard } from '@/components/cards/animal_cards/BaseAnimalCard';
+import { BaseCard } from '@/components/cards/base_cards/BaseCard';
 import { BaseEndGameCard } from '@/components/cards/endgame_cards/BaseEndGameCard';
 import { TokenProjectCard } from '@/components/cards/project_cards/ProjectCard';
 import { BaseSponsorCard } from '@/components/cards/sponsor_cards/BaseSponsorCard';
@@ -10,7 +17,7 @@ import { BaseSponsorCard } from '@/components/cards/sponsor_cards/BaseSponsorCar
 import { getCardById } from '@/utils/GetCardById';
 
 import {
-  isAnimalCard,
+  isBaseCard,
   isEndGameCard,
   isProjectCard,
   isSponsorCard,
@@ -55,8 +62,8 @@ const CardWrapper: React.FC<CardWrapperProps> = ({
     return null;
   }
 
-  const Card = isAnimalCard(cardData) ? (
-    <BaseAnimalCard animal={cardData} />
+  const Card = isBaseCard(cardData) ? (
+    <BaseCard card={cardData} />
   ) : isSponsorCard(cardData) ? (
     <BaseSponsorCard sponsor={cardData} />
   ) : isProjectCard(cardData) ? (
@@ -67,7 +74,7 @@ const CardWrapper: React.FC<CardWrapperProps> = ({
   return (
     <div
       className={cn('player-board-hand w-min cursor-pointer', {
-        'rounded-sm ring-4 ring-lime-500 ring-offset-2': selected,
+        'rounded-sm ring-4 ring-primary-500 ring-offset-2': selected,
         preview: preview,
 
         'cursor-auto': !canSelect,

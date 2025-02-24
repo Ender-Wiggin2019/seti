@@ -42,7 +42,7 @@ const TextButton = React.forwardRef<HTMLButtonElement, TextButtonProps>(
           className,
           selected &&
             selectClassName === undefined &&
-            'ring-2 ring-lime-700/90',
+            'ring-2 ring-primary-700/90',
           selected && selectClassName !== undefined && selectClassName
         )}
         {...rest}

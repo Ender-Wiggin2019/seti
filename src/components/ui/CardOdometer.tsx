@@ -1,9 +1,16 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2023-07-08 11:36:49
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-24 23:09:38
+ * @Description:
+ */
 import dynamic from 'next/dynamic';
 import React from 'react';
 
-const Odometer = dynamic(import('react-odometerjs'), {
+const Odometer = dynamic(() => import('react-odometerjs'), {
   ssr: false,
-  loading: () => <span>0</span>,
+  loading: () => <div>0</div>,
 });
 
 type CardOdometerProps = {

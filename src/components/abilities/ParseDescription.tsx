@@ -1,7 +1,6 @@
 import { useTranslation } from 'next-i18next';
 import React from 'react';
 
-import ActionCardIcon from '@/components/icons/actions/ActionCardIcon';
 import Determination from '@/components/icons/actions/Determination';
 import Strength from '@/components/icons/actions/Strength';
 import Marketing from '@/components/icons/bonuses/Marketing';
@@ -20,7 +19,6 @@ import ReputationIcon from '@/components/icons/tokens/ReputationIcon';
 import TagIcon from '@/components/icons/tokens/TagIcon';
 import XToken from '@/components/icons/tokens/XToken';
 
-import { ActionCardType } from '@/types/ActionCard';
 import { Effect } from '@/types/Effect';
 import { Ability } from '@/types/KeyWords';
 import { AnimalTag, OtherTag } from '@/types/Tags';
@@ -110,24 +108,6 @@ const ParseDescription: React.FC<ParseDescriptionProps> = ({ desc }) => {
         return <TagIcon key={index} type={OtherTag.Science} />;
       } else if (keyword === 'Determination') {
         return <Determination key={index} />;
-      } else if (keyword === 'AnimalActionCard') {
-        return (
-          <ActionCardIcon key={index} actionType={ActionCardType.ANIMAL} />
-        );
-      } else if (keyword === 'AssociationActionCard') {
-        return (
-          <ActionCardIcon key={index} actionType={ActionCardType.ASSOCIATION} />
-        );
-      } else if (keyword === 'BuildActionCard') {
-        return <ActionCardIcon key={index} actionType={ActionCardType.BUILD} />;
-      } else if (keyword === 'CardsActionCard') {
-        return <ActionCardIcon key={index} actionType={ActionCardType.CARDS} />;
-      } else if (keyword === 'SponsorsActionCard') {
-        return (
-          <ActionCardIcon key={index} actionType={ActionCardType.SPONSORS} />
-        );
-      } else if (keyword === 'ActionCard') {
-        return <ActionCardIcon key={index} />;
       } else if (keyword === 'Marketing') {
         return <Marketing key={index} />;
       }

@@ -1,4 +1,10 @@
-import { AnimalsData } from '@/data/Animals';
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2024-06-27 23:56:37
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-25 01:12:41
+ * @Description:
+ */
 import { EndGameData } from '@/data/EndGames';
 import { ProjectsData } from '@/data/Projects';
 import { SponsorsData } from '@/data/Sponsors';
@@ -9,7 +15,6 @@ import { ProjectCard, ProjectCategory } from '@/types/ProjectCard';
 
 export function getAllCardIds() {
   return [
-    ...AnimalsData.map((d) => d.id),
     ...SponsorsData.map((d) => d.id),
     ...ProjectsData.map((d) => d.id),
     ...EndGameData.map((d) => d.id),
@@ -17,7 +22,6 @@ export function getAllCardIds() {
 }
 
 export const cardTypeDataMapping = new Map<CardType, Card[]>([
-  [CardType.ANIMAL_CARD, AnimalsData],
   [CardType.SPONSOR_CARD, SponsorsData],
   [CardType.CONSERVATION_CARD, ProjectsData],
   [CardType.END_GAME_CARD, EndGameData],
@@ -32,7 +36,7 @@ export function getCardIds(
     let data = cardTypeDataMapping.get(cardType);
     if (!data) throw Error('Cannot find cardType');
     if (cardSources) {
-      data = data.filter((d) => cardSources.includes(d.source));
+      data = data.filter((d) => cardSources.includes(d.source as any));
     }
     if (setUpType === 'hand' && cardType === CardType.CONSERVATION_CARD) {
       data = data.filter(

@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { getCardById } from '@/utils/GetCardById';
 
 import {
-  isAnimalCard,
+  isBaseCard,
   isEndGameCard,
   isProjectCard,
   isSponsorCard,
@@ -24,7 +24,7 @@ const TitleWrapper: React.FC<TitleWrapperProps> = ({ id }) => {
     return null;
   }
 
-  const className = isAnimalCard(cardData)
+  const className = isBaseCard(cardData)
     ? 'animal-title'
     : isSponsorCard(cardData)
     ? 'sponsor-title'

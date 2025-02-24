@@ -1,3 +1,10 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2024-06-27 23:56:37
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-25 01:33:07
+ * @Description:
+ */
 // @ts-check
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const path = require('path');
@@ -11,7 +18,7 @@ module.exports = {
   i18n: {
     defaultLocale: 'en',
     locales: ['en', 'zh-CN', 'de'],
-    localeDetection: true,
+    // localeDetection: false,
   },
   /** To avoid issues when deploying to some paas (vercel...) */
   localePath:

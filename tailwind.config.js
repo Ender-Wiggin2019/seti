@@ -1,3 +1,10 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2023-07-09 05:42:25
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-20 01:14:47
+ * @Description:
+ */
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ['class'],
@@ -20,11 +27,20 @@ module.exports = {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
+        background: '#02adc4',
         foreground: 'hsl(var(--foreground))',
         primary: {
-          DEFAULT: 'hsl(var(--primary))',
+          DEFAULT: '#02adc4',
           foreground: 'hsl(var(--primary-foreground))',
+          100: '#b2dfcf',
+          200: '#b2dfcf',
+          300: '#b2dfcf',
+          400: '#b2dfcf',
+          500: '#02adc4',
+          600: '#02adc4',
+          700: '#008ab7',
+          800: '#008ab7',
+          900: '#008ab7',
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',

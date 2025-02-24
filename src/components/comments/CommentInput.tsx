@@ -167,7 +167,7 @@ const CommentForm = ({
 
       <button
         disabled={submitting}
-        className='group flex w-24 items-center justify-center space-x-2 rounded-full bg-lime-500 px-4 py-2 text-xs font-medium text-zinc-900 shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur-md hover:text-lime-700 focus:outline-none focus-visible:ring-2 dark:from-zinc-900/30 dark:to-zinc-800/80 dark:text-zinc-200 dark:ring-white/10 dark:hover:ring-white/20 dark:focus-visible:ring-yellow-500/80'
+        className='group flex w-24 items-center justify-center space-x-2 rounded-full bg-primary-500 px-4 py-2 text-xs font-medium text-zinc-900 shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur-md hover:text-primary-700 focus:outline-none focus-visible:ring-2 dark:from-zinc-900/30 dark:to-zinc-800/80 dark:text-zinc-200 dark:ring-white/10 dark:hover:ring-white/20 dark:focus-visible:ring-yellow-500/80'
         type='submit'
       >
         {submitting

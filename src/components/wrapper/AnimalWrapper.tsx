@@ -1,22 +1,22 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2023-08-15 06:15:19
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-25 01:02:04
+ * @Description:
+ */
 import React from 'react';
 
 import { cardNames } from '@/data/CardNames'; // Assuming the json file is named animalData.json
 
-interface AnimalCardWrapperProps {
+interface BaseCardWrapperProps {
   id: string;
   children: React.ReactNode;
 }
 
-const AnimalCardWrapper: React.FC<AnimalCardWrapperProps> = ({
-  id,
-  children,
-}) => {
-  const animalName = cardNames[id];
-
+const BaseCardWrapper: React.FC<BaseCardWrapperProps> = ({ id, children }) => {
   return (
     <div
-      id={`card-${animalName}`}
-      data-id={animalName}
       className='ark-card zoo-card animal-card tooltipable'
       draggable={false}
     >
@@ -25,4 +25,4 @@ const AnimalCardWrapper: React.FC<AnimalCardWrapperProps> = ({
   );
 };
 
-export default AnimalCardWrapper;
+export default BaseCardWrapper;

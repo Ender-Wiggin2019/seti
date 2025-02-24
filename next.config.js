@@ -1,7 +1,14 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2023-08-14 10:52:47
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-24 23:37:57
+ * @Description:
+ */
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { i18n } = require('./next-i18next.config');
-
 /** @type {import('next').NextConfig} */
+
 const nextConfig = {
   i18n,
 

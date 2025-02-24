@@ -6,7 +6,7 @@ export default function Page() {
       appearance={{
         elements: {
           formButtonPrimary:
-            'bg-lime-500 hover:bg-slate-400 text-sm normal-case',
+            'bg-primary-500 hover:bg-slate-400 text-sm normal-case',
         },
       }}
     />

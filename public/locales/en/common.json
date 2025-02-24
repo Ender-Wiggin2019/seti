@@ -10,7 +10,7 @@
     "random": "Random Quiz",
     "prev": "Previous Quizzes",
     "total": "Total",
-    "banner_desc": "Join the <1>Discord Group</1> to discuss quizzes and any topics about Ark Nova!"
+    "banner_desc": "Join the <1>Discord Group</1> to discuss quizzes and any topics about Seti!"
   },
   "abilities": {
     "clever_description": "After finishing you may place any Action card on {Slot-1} .",
@@ -542,7 +542,7 @@
   },
   "about": {
     "title": "About This Site",
-    "intro": "This is an open-source unofficial website of the board game Ark Nova. It is not affiliated with Capstone Games in any way.\nThis project gets inspiration from ssimeonoff's website and for players to easily search for cards and their effects. The initial data for this site is sourced from <1>Cillie's List of animal cards</1>, while the icons and styles were borrowed from <3>BGA</3>. If there are any copyright concerns, I will address them.",
+    "intro": "This is an open-source unofficial website of the board game Seti. It is not affiliated with Capstone Games in any way.\nThis project gets inspiration from ssimeonoff's website and for players to easily search for cards and their effects. The initial data for this site is sourced from <1>Cillie's List of animal cards</1>, while the icons and styles were borrowed from <3>BGA</3>. If there are any copyright concerns, I will address them.",
     "features": {
       "title": "Features",
       "intro": "Currently, this site has the following features:",

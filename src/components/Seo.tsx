@@ -2,14 +2,14 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 
 const defaultMeta = {
-  title: 'Ark Nova Fan Hub - Explore Maps, Cards, and More!',
-  siteName: 'Ark Nova Fan Hub',
+  title: 'Seti Fan Hub - Explore Maps, Cards, and More!',
+  siteName: 'Seti Fan Hub',
   description:
-    'Dive into the world of Ark Nova with our extensive card and map database and engaging quizzes. Rate cards, leave comments, and unleash your creativity with our DIY card maker!',
-  url: 'https://ark-nova.ender-wiggin.com',
+    'Dive into the world of Seti with our extensive card and map database and engaging quizzes. Rate cards, leave comments, and unleash your creativity with our DIY card maker!',
+  url: 'https://seti.ender-wiggin.com',
   type: 'website',
   robots: 'follow, index',
-  image: 'https://ark-nova.ender-wiggin.com/images/large-og.png',
+  image: 'https://seti.ender-wiggin.com/images/large-og.png',
 };
 
 type SeoProps = {

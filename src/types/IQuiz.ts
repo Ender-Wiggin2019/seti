@@ -1,4 +1,10 @@
-import { ActionCardType } from '@/types/ActionCard';
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2024-07-04 03:11:05
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-24 22:56:02
+ * @Description:
+ */
 import { CardSource } from '@/types/CardSource';
 
 export type GameMode = 'default' | 'arena';
@@ -45,7 +51,7 @@ export const BGA_CONFIG: GameConfig = {
 export interface IPlayerData {
   cards: string[];
   maps: string[];
-  actionCards: ActionCardType[];
+  actionCards: any;
   finalScoring: string[];
   isMainPlayer: boolean;
 }

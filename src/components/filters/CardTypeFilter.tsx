@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-07-08 11:36:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2024-10-07 00:52:10
+ * @LastEditTime: 2025-02-24 23:01:34
  * @Description:
  */
 // CategoryFilter.tsx
@@ -11,7 +11,6 @@ import { useTranslation } from 'next-i18next';
 import React, { useEffect, useState } from 'react';
 
 import TextButton from '@/components/buttons/TextButton';
-import HumanSponsor from '@/components/icons/HumanSponsor';
 
 import { CardType } from '@/types/Card';
 
@@ -70,19 +69,13 @@ export const CardTypeFilter: React.FC<CardTypeFilterProps> = ({
           >
             {t('Sponsor Card')}
           </TextButton>
-          <div
-            className='absolute -top-2 right-0 cursor-pointer hover:opacity-80'
-            onClick={() => router.push('/people-sponsors')}
-          >
-            <HumanSponsor />
-          </div>
         </div>
       )}
       {cardTypes.includes(CardType.CONSERVATION_CARD) && (
         <TextButton
           selected={selectedCategories.includes(CardType.CONSERVATION_CARD)}
-          className='hover:text-lime-500'
-          selectClassName='text-lime-500 ring-lime-500/90 ring-2'
+          className='hover:text-primary-500'
+          selectClassName='text-primary-500 ring-primary-500/90 ring-2'
           onClick={() => handleCategoryChange(CardType.CONSERVATION_CARD)}
         >
           {t('Conservation Projects')}
