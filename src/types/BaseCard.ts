@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-10-25 22:45:44
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-25 01:10:50
+ * @LastEditTime: 2025-02-26 02:20:00
  * @Description:
  */
 
@@ -16,7 +16,7 @@ export default interface BaseCard {
   // upper
   freeAction?: IFreeAction[];
   sector?: ESector;
-  price?: number;
+  price: number;
   income?: EResource;
   mission?: string;
   description?: string;
@@ -46,7 +46,31 @@ export enum EResource {
   PUBLICITY,
   SCORE,
   CARD,
+  MOVE,
 }
+
+export const BASE_FREE_ACTIONS = [
+  EResource.DATA,
+  EResource.PUBLICITY,
+  EResource.MOVE,
+];
+
+export const ESectorMap: Record<ESector, string> = {
+  [ESector.RED]: 'red',
+  [ESector.YELLOW]: 'yellow',
+  [ESector.BLUE]: 'blue',
+  [ESector.BLACK]: 'black',
+};
+
+export const EResourceMap: Record<EResource, string> = {
+  [EResource.CREDIT]: 'credit',
+  [EResource.ENERGY]: 'energy',
+  [EResource.DATA]: 'data',
+  [EResource.PUBLICITY]: 'publicity',
+  [EResource.SCORE]: 'score',
+  [EResource.CARD]: 'card',
+  [EResource.MOVE]: 'move',
+};
 
 export enum ECardType {
   NORMAL,

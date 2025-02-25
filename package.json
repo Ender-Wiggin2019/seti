@@ -21,6 +21,7 @@
     "deploy": "vercel deploy --prod"
   },
   "dependencies": {
+    "@babel/types": "^7.26.9",
     "@clerk/nextjs": "^5.2.1",
     "@headlessui/react": "^1.7.15",
     "@hookform/resolvers": "^3.2.0",
@@ -37,7 +38,8 @@
     "@radix-ui/react-switch": "^1.0.3",
     "@radix-ui/react-tabs": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.1.2",
-    "@tanstack/react-query": "^4.32.6",
+    "@tanstack/react-query": "^4.36.1",
+    "@types/aria-query": "^5.0.4",
     "@vercel/analytics": "^1.0.1",
     "class-variance-authority": "^0.6.1",
     "clsx": "^1.2.1",

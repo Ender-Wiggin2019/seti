@@ -1,40 +1,27 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2023-08-03 06:34:29
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-26 02:15:56
+ * @Description:
+ */
 import React from 'react';
 
-import { AnimalTag, ContinentTag, OtherTag, Tag } from '@/types/Tags';
+import { EResource, EResourceMap, ESector, ESectorMap } from '@/types/BaseCard';
 
 interface TagProps {
-  type: Tag;
+  tagType: 'resource' | 'sector';
+  type: EResource | ESector;
 }
 
-// key is the same as the css class name
-const getKeyByValue = (enumObject: any, value: string): string => {
-  for (const enumMember in enumObject) {
-    if (enumObject[enumMember] === value) {
-      return enumMember;
-    }
+const TagComponent: React.FC<TagProps> = ({ tagType, type }) => {
+  if (tagType === 'resource') {
+    return <div className='w-20'>{EResourceMap[type]}</div>;
+  } else if (tagType === 'sector') {
+    return <div className='w-20'>{ESectorMap[type as ESector]}</div>;
   }
-  return '';
-};
 
-const formatDataType = (tag: Tag): string => {
-  // The keys are combined enum objects
-  const keys = { ...AnimalTag, ...ContinentTag, ...OtherTag };
-  // eslint-disable-next-line no-console
-  return getKeyByValue(keys, tag);
-};
-
-const TagComponent: React.FC<TagProps> = ({ type }) => {
-  const dataType = formatDataType(type);
-  // special render rules
-  if (dataType === 'Reputation_3') {
-    return (
-      <div className='badge-icon' data-type='Reputation'>
-        3
-      </div>
-    );
-  } else {
-    return <div className='badge-icon' data-type={dataType}></div>;
-  }
+  return null;
 };
 
 export default TagComponent;

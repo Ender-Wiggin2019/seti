@@ -5,14 +5,7 @@ import { BiChevronDown } from 'react-icons/bi';
 
 import { cn } from '@/lib/utils';
 
-import TagButton from '@/components/buttons/TagButton';
-
-import {
-  AnimalTag,
-  ContinentTag,
-  otherTagRequirements,
-  Tag,
-} from '@/types/Tags';
+import { Tag } from '@/types/Tags';
 
 type RequirementFilterProps = {
   onFilterChange: (tags: Tag[]) => void;
@@ -107,7 +100,7 @@ export const RequirementFilter: React.FC<RequirementFilterProps> = ({
         }}
         style={{ pointerEvents: isOpen ? 'auto' : 'none' }}
       >
-        {Object.values(AnimalTag).map((tag, index) => (
+        {/* {Object.values(AnimalTag).map((tag, index) => (
           <motion.li variants={itemVariants} key={index}>
             <TagButton
               tag={tag}
@@ -115,10 +108,10 @@ export const RequirementFilter: React.FC<RequirementFilterProps> = ({
               selected={selectedTags.includes(tag)}
             />
           </motion.li>
-        ))}
+        ))} */}
 
         {/*<LogicButton logic={} selected={} />*/}
-        {Object.values(ContinentTag).map((tag, index) => (
+        {/* {Object.values(ContinentTag).map((tag, index) => (
           <motion.li variants={itemVariants} key={index}>
             <TagButton
               tag={tag}
@@ -135,7 +128,7 @@ export const RequirementFilter: React.FC<RequirementFilterProps> = ({
               selected={selectedTags.includes(tag)}
             />
           </motion.li>
-        ))}
+        ))} */}
       </motion.ul>
     </motion.nav>
   );

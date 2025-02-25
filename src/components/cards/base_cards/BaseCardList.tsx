@@ -1,8 +1,15 @@
 /*
  * @Author: Ender-Wiggin
+ * @Date: 2025-02-26 00:02:25
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-26 02:19:17
+ * @Description:
+ */
+/*
+ * @Author: Ender-Wiggin
  * @Date: 2024-06-27 23:56:37
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-25 01:30:05
+ * @LastEditTime: 2025-02-26 01:20:42
  * @Description:
  */
 // import { useUser } from '@clerk/nextjs';
@@ -17,41 +24,62 @@ import { getBaseCardModel } from '@/utils/getBaseCardModel';
 
 import { useBaseCardData } from './useBaseCardData';
 
+import BaseCardType, { EResource, ESector } from '@/types/BaseCard';
 import { CardSource } from '@/types/CardSource';
 import { IBaseCard } from '@/types/IBaseCard';
 import { IRating } from '@/types/IRating';
 import { SortOrder } from '@/types/Order';
-import { OtherTag, Tag } from '@/types/Tags';
-import generateCards from '@/utils/generateCards';
-import BaseCardType from '@/types/BaseCard';
 
 interface BaseCardListProps {
-  selectedTags?: Tag[];
-  selectedRequirements?: Tag[];
+  selectedSectors?: ESector[];
+  selectedFreeActions?: EResource[];
   selectedCardSources?: CardSource[];
   textFilter?: string;
   sortOrder?: SortOrder;
-  size?: number[];
+  credit?: number[];
   onCardCountChange: (count: number) => void;
   maxNum?: number;
   // ... any other filters
 }
 
-const cards: BaseCardType[] = [...generateCards(7, 10, '/images/cards/cards-1.webp'), ...generateCards(7, 10, '/images/cards/cards-2.webp')];
+// const cards: BaseCardType[] = [...generateCards(7, 10, '/images/cards/cards-1.webp'), ...generateCards(7, 10, '/images/cards/cards-2.webp')];
 
-const filterAnimals = (
-  animals: BaseCardType[],
-  selectedTags: Tag[] = [],
-  selectedRequirements: Tag[] = [],
+const filterCards = (
+  cards: BaseCardType[],
+  selectedSectors: ESector[] = [],
+  selectedFreeActions: EResource[] = [],
   selectedCardSources: CardSource[] = [],
   textFilter = '',
-  size: number[] = [0],
+  credit: number[] = [0],
   maxNum?: number
 ) => {
   const lowercaseFilter = textFilter.toLowerCase();
 
-  const res = animals;
+  let res = cards;
+  if (selectedFreeActions && selectedFreeActions.length > 0) {
+    // FIXME: 注意这里先[0]
+    res = res.filter(
+      (card) =>
+        card.freeAction &&
+        selectedFreeActions.includes(card.freeAction[0]?.type)
+    );
+  }
 
+  if (selectedSectors && selectedSectors.length > 0) {
+    // FIXME: 注意这里先[0]
+    res = res.filter(
+      (card) => card.sector && selectedSectors.includes(card.sector)
+    );
+  }
+
+  res = res.filter(
+    (card) =>
+      credit.length === 0 ||
+      credit.includes(0) ||
+      credit.includes(1) ||
+      credit.includes(2) ||
+      credit.includes(card.price)
+  );
   return {
     originalCount: res.length,
     limitedCount: res.length,
@@ -60,13 +88,13 @@ const filterAnimals = (
 };
 
 export const BaseCardList: React.FC<BaseCardListProps> = ({
-  selectedTags,
-  selectedRequirements,
+  selectedSectors,
+  selectedFreeActions,
   selectedCardSources = [],
   textFilter,
   onCardCountChange,
   sortOrder = SortOrder.ID_ASC,
-  size = [0],
+  credit = [0],
   maxNum,
 }) => {
   // const { user } = useUser();
@@ -88,23 +116,23 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
   //   enabled: shouldFetchRatings,
   // });
 
-  // const animalsData = useBaseCardData();
-  const animalsData = cards;
-  const { originalCount, cards: filteredAnimals } = filterAnimals(
-    animalsData,
-    selectedTags,
-    selectedRequirements,
+  const cardsData = useBaseCardData();
+  // const cardsData = cards;
+  const { originalCount, cards: filteredCards } = filterCards(
+    cardsData,
+    selectedSectors,
+    selectedFreeActions,
     selectedCardSources,
     textFilter,
-    size,
+    credit,
     maxNum
   );
 
   const combineDataWithRatings = (
-    animals: BaseCardType[],
+    cards: BaseCardType[],
     ratings: IRating[]
   ): IBaseCard[] => {
-    return animals.map((animal) => {
+    return cards.map((animal) => {
       const rating = ratings.find((r) => r.cardid === animal.id);
       return {
         id: animal.id,
@@ -117,21 +145,21 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
   };
 
   const initialBaseCards: IBaseCard[] = useMemo(() => {
-    return filteredAnimals.map((animal) => ({
+    return filteredCards.map((animal) => ({
       id: animal.id,
       animalCard: animal,
       model: getBaseCardModel(animal),
       rating: null,
       ratingCount: null,
     }));
-  }, [filteredAnimals]);
+  }, [filteredCards]);
 
   const ratedBaseCards: IBaseCard[] = useMemo(() => {
     if (!cardRatings) {
       return initialBaseCards;
     }
-    return combineDataWithRatings(filteredAnimals, cardRatings);
-  }, [filteredAnimals, cardRatings, initialBaseCards]);
+    return combineDataWithRatings(filteredCards, cardRatings);
+  }, [filteredCards, cardRatings, initialBaseCards]);
 
   useEffect(() => {
     onCardCountChange(originalCount);

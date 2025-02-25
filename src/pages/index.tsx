@@ -6,24 +6,21 @@ import { FiRotateCcw } from 'react-icons/fi';
 
 import { SortButton } from '@/components/buttons/SortButton';
 import { BaseCardList } from '@/components/cards/base_cards/BaseCardList';
-import { SponsorCardList } from '@/components/cards/sponsor_cards/SponsorCardList';
 import { CardSourceFilter } from '@/components/filters/CardSourceFilter';
 import { CardTypeFilter } from '@/components/filters/CardTypeFilter';
-import { RequirementFilter } from '@/components/filters/RequirementFilter';
-import { SizeFilter } from '@/components/filters/SizeFilter';
-import { StrengthFilter } from '@/components/filters/StrengthFilter';
-import { TagFilter } from '@/components/filters/TagFilter';
+import { CreditFilter } from '@/components/filters/CreditFilter';
+import { FreeActionFilter } from '@/components/filters/FreeActionFilter';
+import { SectorFilter } from '@/components/filters/SectorFilter';
 import { TextFilter } from '@/components/filters/TextFilter'; // make sure to import your TextFilter
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
-import { Button } from '@/components/ui/button';
 import { CardOdometer } from '@/components/ui/CardOdometer';
 import { Separator } from '@/components/ui/separator';
 
+import { EResource, ESector } from '@/types/BaseCard';
 import { CardType } from '@/types/Card';
 import { CardSource } from '@/types/CardSource';
 import { SortOrder } from '@/types/Order';
-import { Tag } from '@/types/Tags';
 
 type Props = {
   // Add custom props here
@@ -39,16 +36,18 @@ export default function HomePage(
 
   // limit the number of cards to be displayed for optimization
   const [totalMaxNum, setTotalMaxNum] = useState<number>(INIT_MAX_NUM);
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
-  const [selectedRequirements, setSelectedRequirements] = useState<Tag[]>([]);
+  const [selectedFreeActions, setSelectedFreeActions] = useState<EResource[]>(
+    []
+  );
+  const [selectedSectors, setSelectedSectors] = useState<ESector[]>([]);
   const [textFilter, setTextFilter] = useState<string>(''); // add this line
   const [selectedCardTypes, setSelectedCardTypes] = useState<CardType[]>([]);
   const [selectedCardSources, setSelectedCardSources] = useState<CardSource[]>(
     []
   );
   const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.ID_ASC);
-  const [size, setSize] = useState<number[]>([0]);
-  const [strength, setStrength] = useState<number[]>([0]);
+  const [credit, setCredit] = useState<number[]>([0]);
+  // const [strength, setStrength] = useState<number[]>([0]);
 
   const [animalCardsCount, setBaseCardsCount] = useState<number>(0);
   const [sponsorCardsCount, setSponsorCardsCount] = useState<number>(0);
@@ -96,16 +95,16 @@ export default function HomePage(
   }, [reset]);
 
   const resetAll = () => {
-    setSelectedTags([]);
-    setSelectedRequirements([]);
+    setSelectedFreeActions([]);
+    setSelectedSectors([]);
     setTextFilter('');
     setSelectedCardTypes([]);
     setSelectedCardSources([]);
     // setBaseCardsCount(0);
     // setSponsorCardsCount(0);
     setSortOrder(SortOrder.ID_ASC);
-    setSize([0]);
-    setStrength([0]);
+    setCredit([0]);
+    // setStrength([0]);
     setTotalMaxNum(INIT_MAX_NUM); // reset the total number of cards to be displayed
     setReset(true);
   };
@@ -129,11 +128,14 @@ export default function HomePage(
               reset={reset}
             />
           </div>
-          <TagFilter onFilterChange={setSelectedTags} reset={reset} />
-          <RequirementFilter
-            onFilterChange={setSelectedRequirements}
+          <FreeActionFilter
+            onFilterChange={setSelectedFreeActions}
             reset={reset}
           />
+          {/* <SectorFilter
+            onFilterChange={setSelectedSectors}
+            reset={reset}
+          /> */}
           <div className='flex flex-row space-x-4'>
             <TextFilter onTextChange={setTextFilter} reset={reset} />
             <div
@@ -145,8 +147,8 @@ export default function HomePage(
           </div>
           <div className='flex flex-row space-x-4'>
             <SortButton sortOrder={sortOrder} setSortOrder={setSortOrder} />
-            <SizeFilter onFilterChange={setSize} reset={reset} />
-            <StrengthFilter onFilterChange={setStrength} reset={reset} />
+            <CreditFilter onFilterChange={setCredit} reset={reset} />
+            {/* <StrengthFilter onFilterChange={setStrength} reset={reset} /> */}
           </div>
           <div className='flex flex-row space-x-4'>
             <CardOdometer
@@ -166,21 +168,21 @@ export default function HomePage(
           {(selectedCardTypes.length === 0 ||
             selectedCardTypes.includes(CardType.ANIMAL_CARD)) && (
             <BaseCardList
-              selectedTags={selectedTags}
-              selectedRequirements={selectedRequirements}
+              selectedFreeActions={selectedFreeActions}
+              selectedSectors={selectedSectors}
               selectedCardSources={selectedCardSources}
               textFilter={textFilter}
               sortOrder={sortOrder}
               onCardCountChange={setBaseCardsCount}
-              size={size}
+              credit={credit}
               maxNum={animalMaxNum}
             />
           )}
-          {(selectedCardTypes.length === 0 ||
+          {/* {(selectedCardTypes.length === 0 ||
             selectedCardTypes.includes(CardType.SPONSOR_CARD)) && (
             <SponsorCardList
-              selectedTags={selectedTags}
-              selectedRequirements={selectedRequirements}
+              selectedFreeActions={selectedFreeActions}
+              selectedSectors={selectedSectors}
               selectedCardSources={selectedCardSources}
               textFilter={textFilter}
               sortOrder={sortOrder}
@@ -188,7 +190,7 @@ export default function HomePage(
               strength={strength}
               maxNum={sponsorMaxNum}
             />
-          )}
+          )} */}
           {/* {shouldDisplayViewMore && (
             <>
               <div className='h-10 w-full'></div>

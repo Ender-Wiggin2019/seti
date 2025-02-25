@@ -1,3 +1,10 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2023-08-15 14:20:13
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-26 02:16:52
+ * @Description:
+ */
 // TagButton.tsx
 import * as React from 'react';
 
@@ -5,17 +12,21 @@ import { cn } from '@/lib/utils';
 
 import TagComponent from '@/components/icons/Tag';
 
-import { Tag } from '@/types/Tags';
+import { EResource, ESector } from '@/types/BaseCard';
 
 type TagButtonProps = {
   isLoading?: boolean;
-  tag: Tag;
+  tag: EResource | ESector;
+  tagType: 'resource' | 'sector';
   selected: boolean;
-  onTagClick?: (tag: Tag) => void;
+  onTagClick?: (tag: EResource | ESector) => void;
 } & React.ComponentPropsWithRef<'button'>;
 
 const TagButton = React.forwardRef<HTMLButtonElement, TagButtonProps>(
-  ({ className, isLoading, tag, selected, onTagClick, ...rest }, ref) => {
+  (
+    { className, isLoading, tag, tagType, selected, onTagClick, ...rest },
+    ref
+  ) => {
     return (
       <button
         ref={ref}
@@ -29,7 +40,7 @@ const TagButton = React.forwardRef<HTMLButtonElement, TagButtonProps>(
         )}
         {...rest}
       >
-        <TagComponent type={tag} />
+        <TagComponent tagType={tagType} type={tag} />
       </button>
     );
   }

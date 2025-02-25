@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 
-import { AnimalDataContext } from './BaseCardDataContext';
+import { BaseCardDataContext } from './BaseCardDataContext';
 
 export function useBaseCardData() {
-  return useContext(AnimalDataContext);
+  return useContext(BaseCardDataContext);
 }
