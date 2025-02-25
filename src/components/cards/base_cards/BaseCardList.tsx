@@ -36,11 +36,9 @@ interface BaseCardListProps {
   maxNum?: number;
   // ... any other filters
 }
-const cards: BaseCardType[] = [
-  ...generateCards(7, 10, '/images/cards/cards-1.webp'),
-];
 
-// const cards: BaseCardType[] = [...generateCards(7, 10, '/images/cards/cards-1.webp'), ...generateCards(7, 10, '/images/cards/cards-2.webp')];
+const cards: BaseCardType[] = [...generateCards(7, 10, '/images/cards/cards-1.webp'), ...generateCards(7, 10, '/images/cards/cards-2.webp')];
+
 const filterAnimals = (
   animals: BaseCardType[],
   selectedTags: Tag[] = [],
