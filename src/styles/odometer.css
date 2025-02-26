@@ -2,11 +2,11 @@
 
 @font-face {
   font-display: swap;
-  font-family: MyriadPro-Regular;
+  /* font-family: MyriadPro-Regular; */
   font-style: normal;
   font-weight: 400;
-  src: url(/img/fonts/MyriadPro-Regular.woff) format('woff'),
-    url(/img/fonts/MyriadPro-Regular.ttf) format('truetype');
+  /* src: url(/img/fonts/MyriadPro-Regular.woff) format('woff'),
+    url(/img/fonts/MyriadPro-Regular.ttf) format('truetype'); */
 }
 .odometer.odometer-auto-theme,
 .odometer.odometer-theme-train-station {

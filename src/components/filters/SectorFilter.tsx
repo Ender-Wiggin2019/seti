@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-08-15 14:20:13
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-26 02:17:25
+ * @LastEditTime: 2025-02-26 12:00:00
  * @Description:
  */
 // SectorFilter.tsx
@@ -21,7 +21,6 @@ export const SectorFilter: React.FC<SectorFilterProps> = ({
   reset,
 }) => {
   const [selectedSectors, setSelectedSectors] = useState<ESector[]>([]);
-
   const toggleSector = (sector: ESector) => {
     setSelectedSectors((prev) =>
       prev.includes(sector)
@@ -46,7 +45,7 @@ export const SectorFilter: React.FC<SectorFilterProps> = ({
     <>
       <div className='xl:grid-cols-auto grid grid-cols-4 gap-2 md:grid-cols-6 lg:grid-cols-8'>
         {Object.keys(ESectorMap).map((key) => {
-          const sector = key as unknown as ESector;
+          const sector = Number(key) as ESector;
           return (
             <TagButton
               key={sector}

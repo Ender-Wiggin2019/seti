@@ -10,13 +10,14 @@ interface BaseCardProps {
 }
 
 export const BaseCard: React.FC<BaseCardProps> = ({ card }) => {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation('seti');
 
   const { src, row, col } = card.position || { src: '', row: 0, col: 0 };
   const cols = 10;
 
   return (
     <BaseCardWrapper id={card.id}>
+      <div className='card-title'>{t(card.name)}</div>
       <div
         className='card-cell'
         style={{

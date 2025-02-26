@@ -5,23 +5,16 @@ import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import React from 'react';
 
 import { BaseCard } from '@/components/cards/base_cards/BaseCard';
-import { AnimalModelCard } from '@/components/cards/base_cards/models/AnimalModelCard';
-import { BaseEndGameCard } from '@/components/cards/endgame_cards/BaseEndGameCard';
-import { EndGameHoverCard } from '@/components/cards/endgame_cards/EndGameHoverCard';
-import { BaseSponsorCard } from '@/components/cards/sponsor_cards/BaseSponsorCard';
+import { HoverCard } from '@/components/cards/base_cards/HoverCard';
 import { Comments } from '@/components/comments/Comments';
 // make sure to import your TextFilter
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
 
 import { getAllCardIds } from '@/utils/GetAllCardIds';
-import { getBaseCardModel } from '@/utils/getBaseCardModel';
-import { getCardById, getCardTypeById } from '@/utils/GetCardById';
+import { getCardById } from '@/utils/GetCardById';
 
 import BaseCardType from '@/types/BaseCard';
-import { CardType } from '@/types/Card';
-import { EndGameCard as EndGameCardType } from '@/types/EndGameCard';
-import { SponsorCard as SponsorCardType } from '@/types/SponsorCard';
 type Props = {
   // Add custom props here
 };
@@ -41,39 +34,12 @@ export default function Page(
       <Seo templateTitle={`Seti Card #${card.id} ${card.name}`} />
       <div className='mb-24 flex flex-col'>
         <div className='flex flex-col items-center py-24 md:py-36 lg:pb-48 lg:pt-36'>
-          {getCardTypeById(router.query.id) === CardType.ANIMAL_CARD ? (
-            <div className='flex flex-row md:scale-125 lg:scale-150'>
-              <div className='mr-3 flex-initial md:mr-10 lg:mr-20'>
-                <BaseCard card={card as BaseCardType} />
-              </div>
-              <AnimalModelCard
-                id={card.id}
-                model={getBaseCardModel(card as BaseCardType)}
-                showLink={false}
-              />
+          <div className='flex flex-row md:scale-125 lg:scale-150'>
+            <div className='mr-3 flex-initial md:mr-10 lg:mr-20'>
+              <BaseCard card={card as BaseCardType} />
             </div>
-          ) : null}
-
-          {getCardTypeById(router.query.id) === CardType.SPONSOR_CARD ? (
-            <div className='flex flex-row md:scale-125 lg:scale-150'>
-              <div className='mr-3 flex-initial md:mr-10 lg:mr-20'>
-                <BaseSponsorCard sponsor={card as SponsorCardType} />
-              </div>
-            </div>
-          ) : null}
-
-          {getCardTypeById(router.query.id) === CardType.END_GAME_CARD ? (
-            <div className='flex flex-row md:scale-125 lg:scale-150'>
-              <div className='mr-3 flex-initial md:mr-10 lg:mr-20'>
-                <BaseEndGameCard card={card as EndGameCardType} />
-              </div>
-              <EndGameHoverCard
-                id={card.id}
-                showLink={false}
-                card={card as EndGameCardType}
-              />
-            </div>
-          ) : null}
+            <HoverCard id={card.id} showLink={false} />
+          </div>
         </div>
 
         <Comments cardId={router.query.id} />
@@ -84,7 +50,7 @@ export default function Page(
 
 export const getStaticProps: GetStaticProps<Props> = async ({ locale }) => ({
   props: {
-    ...(await serverSideTranslations(locale ?? 'zh-CN', ['common'])),
+    ...(await serverSideTranslations(locale ?? 'zh-CN', ['common', 'seti'])),
   },
 });
 

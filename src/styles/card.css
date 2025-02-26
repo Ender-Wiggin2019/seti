@@ -15,3 +15,17 @@
   background-size: inherit;
   background-repeat: no-repeat;
 }
+
+.card-title {
+  position: absolute;
+  top: 96px;
+  left: 46px;
+  width: 80px;
+  height: 10px;
+  background-color: #3f3d40;
+  font-size: 6px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

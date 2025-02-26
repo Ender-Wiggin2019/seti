@@ -1,3 +1,10 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2025-02-25 09:56:21
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-26 14:36:20
+ * @Description:
+ */
 import { Separator } from '@/components/ui/separator';
 
 interface HoverCardProps {
@@ -11,7 +18,7 @@ import { useTranslation } from 'next-i18next';
 import React from 'react';
 import { Rating } from 'react-simple-star-rating';
 
-export const SponsorHoverCard: React.FC<HoverCardProps> = ({
+export const HoverCard: React.FC<HoverCardProps> = ({
   id,
   showLink,
   rating,

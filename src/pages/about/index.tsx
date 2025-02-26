@@ -25,6 +25,9 @@ export default function HomePage(
           <h1 className='scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl'>
             {t('about.title')}
           </h1>
+          <p className='leading-7 [&:not(:first-child)]:mt-6'>
+            测试版本，仍在开发中。Ender 制作。
+          </p>
           {/* <p className='leading-7 [&:not(:first-child)]:mt-6'>
             <Trans i18nKey='about.intro'>
               This is an open-source unofficial website of the board game Ark
@@ -135,6 +138,6 @@ export default function HomePage(
 
 export const getStaticProps: GetStaticProps<Props> = async ({ locale }) => ({
   props: {
-    ...(await serverSideTranslations(locale ?? 'zh-CN', ['common'])),
+    ...(await serverSideTranslations(locale ?? 'zh-CN', ['common', 'seti'])),
   },
 });

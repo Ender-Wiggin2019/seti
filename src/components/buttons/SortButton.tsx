@@ -1,11 +1,16 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2025-02-25 09:56:21
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-26 13:39:34
+ * @Description:
+ */
 import { useTranslation } from 'next-i18next';
 import React from 'react';
 import {
   TbSortAscending2,
   TbSortAscendingNumbers,
-  TbSortDescending2,
   TbSortDescendingNumbers,
-  TbStarHalfFilled,
 } from 'react-icons/tb';
 
 import TextButton from '@/components/buttons/TextButton';
@@ -29,14 +34,14 @@ export const SortButton: React.FC<SortButtonProps> = ({
         return t('sort.ID_ASC');
       case SortOrder.ID_DESC:
         return t('sort.ID_DESC');
-      case SortOrder.DIFF_ASC:
-        return t('sort.DIFF_ASC');
-      case SortOrder.DIFF_DESC:
-        return t('sort.DIFF_DESC');
+      // case SortOrder.DIFF_ASC:
+      //   return t('sort.DIFF_ASC');
+      // case SortOrder.DIFF_DESC:
+      //   return t('sort.DIFF_DESC');
       // case SortOrder.RATING_ASC:
       //   return t('Rating');
-      case SortOrder.RATING_DESC:
-        return t('sort.RATING_DESC');
+      // case SortOrder.RATING_DESC:
+      //   return t('sort.RATING_DESC');
       default:
         return '';
     }
@@ -46,14 +51,14 @@ export const SortButton: React.FC<SortButtonProps> = ({
     switch (sortOrder) {
       case SortOrder.ID_ASC:
         return <TbSortAscendingNumbers />;
-      case SortOrder.DIFF_ASC:
-        return <TbSortAscending2 />;
+      // case SortOrder.DIFF_ASC:
+      //   return <TbSortAscending2 />;
       case SortOrder.ID_DESC:
         return <TbSortDescendingNumbers />;
-      case SortOrder.DIFF_DESC:
-        return <TbSortDescending2 />;
-      case SortOrder.RATING_DESC:
-        return <TbStarHalfFilled />;
+      // case SortOrder.DIFF_DESC:
+      //   return <TbSortDescending2 />;
+      // case SortOrder.RATING_DESC:
+      //   return <TbStarHalfFilled />;
       default:
         return null;
     }

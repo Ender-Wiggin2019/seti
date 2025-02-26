@@ -10,7 +10,7 @@ import { BaseCardModel } from '@/types/BaseCardModel';
 
 export interface IBaseCard {
   id: string;
-  animalCard: BaseCard;
+  card: BaseCard;
   model: BaseCardModel;
   rating?: number | null;
   ratingCount?: number | null;

@@ -2,11 +2,12 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-26 02:28:22
+ * @LastEditTime: 2025-02-26 15:35:41
  * @Description:
  */
-import BaseCard, { EResource, ESector } from '@/types/BaseCard';
 // import {Size} from "@/types/Size";
+
+import BaseCard, { EResource, ESector } from '@/types/BaseCard';
 
 export const baseCards: BaseCard[] = [
   {
@@ -34,7 +35,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.DATA, value: 1 }],
     sector: ESector.RED,
     price: 1,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '64',
@@ -70,7 +71,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.BLACK,
     price: 2,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '97',
@@ -79,7 +80,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.DATA, value: 1 }],
     sector: ESector.BLUE,
     price: 3,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '55',
@@ -97,7 +98,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.MOVE, value: 1 }],
     sector: ESector.RED,
     price: 0,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '123',
@@ -133,7 +134,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.BLUE,
     price: 2,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '43',
@@ -142,7 +143,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.MOVE, value: 1 }],
     sector: ESector.BLUE,
     price: 1,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '56',
@@ -196,7 +197,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.RED,
     price: 3,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '88',
@@ -205,7 +206,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.MOVE, value: 1 }],
     sector: ESector.BLUE,
     price: 2,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '73',
@@ -223,7 +224,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.YELLOW,
     price: 1,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '116',
@@ -250,7 +251,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.DATA, value: 1 }],
     sector: ESector.RED,
     price: 1,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '53',
@@ -259,7 +260,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.MOVE, value: 1 }],
     sector: ESector.BLUE,
     price: 2,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '16',
@@ -286,7 +287,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.BLUE,
     price: 3,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '99',
@@ -358,7 +359,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.MOVE, value: 1 }],
     sector: ESector.RED,
     price: 2,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '71',
@@ -385,7 +386,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.RED,
     price: 3,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '121',
@@ -394,7 +395,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.MOVE, value: 1 }],
     sector: ESector.YELLOW,
     price: 7,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '4',
@@ -412,7 +413,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.RED,
     price: 1,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '66',
@@ -430,7 +431,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.YELLOW,
     price: 3,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '11',
@@ -439,7 +440,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.YELLOW,
     price: 1,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '19',
@@ -529,7 +530,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.YELLOW,
     price: 2,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '82',
@@ -538,7 +539,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.DATA, value: 1 }],
     sector: ESector.YELLOW,
     price: 1,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '6',
@@ -547,7 +548,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.DATA, value: 1 }],
     sector: ESector.RED,
     price: 3,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '35',
@@ -565,7 +566,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.BLUE,
     price: 1,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '40',
@@ -592,7 +593,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.MOVE, value: 1 }],
     sector: ESector.BLACK,
     price: 3,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '25',
@@ -619,7 +620,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.MOVE, value: 1 }],
     sector: ESector.RED,
     price: 3,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '130',
@@ -628,7 +629,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.YELLOW,
     price: 1,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
   },
   {
     id: '109',
@@ -666,7 +667,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.DATA, value: 1 }],
     sector: ESector.YELLOW,
     price: 1,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -696,7 +697,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.RED,
     price: 1,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -746,7 +747,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.DATA, value: 1 }],
     sector: ESector.YELLOW,
     price: 2,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -776,7 +777,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.MOVE, value: 1 }],
     sector: ESector.BLUE,
     price: 2,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -826,7 +827,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.MOVE, value: 1 }],
     sector: ESector.YELLOW,
     price: 1,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -856,7 +857,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.MOVE, value: 1 }],
     sector: ESector.YELLOW,
     price: 0,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -866,7 +867,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.DATA, value: 1 }],
     sector: ESector.BLUE,
     price: 3,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -876,7 +877,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.RED,
     price: 1,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -886,7 +887,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.YELLOW,
     price: 3,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -976,7 +977,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.RED,
     price: 3,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -986,7 +987,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.BLUE,
     price: 2,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -996,7 +997,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.BLUE,
     price: 1,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -1026,7 +1027,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.DATA, value: 1 }],
     sector: ESector.BLUE,
     price: 3,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -1036,7 +1037,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.BLACK,
     price: 1,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -1046,7 +1047,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.DATA, value: 1 }],
     sector: ESector.RED,
     price: 2,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -1066,7 +1067,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.MOVE, value: 1 }],
     sector: ESector.BLUE,
     price: 3,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -1076,7 +1077,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.MOVE, value: 1 }],
     sector: ESector.RED,
     price: 2,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -1146,7 +1147,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.MOVE, value: 1 }],
     sector: ESector.YELLOW,
     price: 2,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -1166,7 +1167,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.YELLOW,
     price: 2,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -1236,7 +1237,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.MOVE, value: 1 }],
     sector: ESector.RED,
     price: 2,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -1266,7 +1267,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.YELLOW,
     price: 2,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -1286,7 +1287,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.DATA, value: 1 }],
     sector: ESector.YELLOW,
     price: 3,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -1296,7 +1297,7 @@ export const baseCards: BaseCard[] = [
     freeAction: [{ type: EResource.MOVE, value: 1 }],
     sector: ESector.BLUE,
     price: 2,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
   },
   {
@@ -1311,4 +1312,16 @@ export const baseCards: BaseCard[] = [
   },
 ];
 
+// export const baseCards: BaseCard[] = [
+//     {
+//       id: '39',
+//       name: '61 Virginis Observation',
+//       position: { src: '/images/cards/cards-1.webp', row: 0, col: 0 },
+//       freeAction: [{ type: EResource.MOVE, value: 1 }],
+//       sector: ESector.BLUE,
+//       price: 2,
+//       income: EResource.CARD,
+//     },
+//   ];
+// console.log((baseCards.map(c => c.name)).join(','));
 export default baseCards;

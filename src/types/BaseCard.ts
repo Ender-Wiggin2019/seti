@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-10-25 22:45:44
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-26 02:20:00
+ * @LastEditTime: 2025-02-26 12:26:03
  * @Description:
  */
 
@@ -33,14 +33,14 @@ export interface IFreeAction {
 }
 
 export enum ESector {
-  RED,
+  RED = 1,
   YELLOW,
   BLUE,
   BLACK,
 }
 
 export enum EResource {
-  CREDIT,
+  CREDIT = 1,
   ENERGY,
   DATA,
   PUBLICITY,
@@ -53,6 +53,12 @@ export const BASE_FREE_ACTIONS = [
   EResource.DATA,
   EResource.PUBLICITY,
   EResource.MOVE,
+];
+
+export const BASE_INCOMES = [
+  EResource.CREDIT,
+  EResource.ENERGY,
+  EResource.CARD,
 ];
 
 export const ESectorMap: Record<ESector, string> = {
@@ -73,7 +79,7 @@ export const EResourceMap: Record<EResource, string> = {
 };
 
 export enum ECardType {
-  NORMAL,
+  NORMAL = 1,
   ALIEN,
   PROMO,
   FAN_MADE,

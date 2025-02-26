@@ -2,58 +2,58 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-08-15 14:20:13
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-26 02:16:57
+ * @LastEditTime: 2025-02-26 12:24:27
  * @Description:
  */
-// FreeActionFilter.tsx
+// ResourceFilter.tsx
 import React, { useState } from 'react';
 
 import TagButton from '@/components/buttons/TagButton';
 
-import { BASE_FREE_ACTIONS, EResource } from '@/types/BaseCard';
+import { EResource } from '@/types/BaseCard';
 
-type FreeActionFilterProps = {
-  onFilterChange: (freeActions: EResource[]) => void;
+type ResourceFilterProps = {
+  onFilterChange: (Resources: EResource[]) => void;
+  src: EResource[];
   reset: boolean;
 };
-export const FreeActionFilter: React.FC<FreeActionFilterProps> = ({
+export const ResourceFilter: React.FC<ResourceFilterProps> = ({
   onFilterChange,
+  src,
   reset,
 }) => {
-  const [selectedFreeActions, setSelectedFreeActions] = useState<EResource[]>(
-    []
-  );
+  const [selectedResources, setSelectedResources] = useState<EResource[]>([]);
 
-  const toggleFreeAction = (freeAction: EResource) => {
-    setSelectedFreeActions((prev) =>
-      prev.includes(freeAction)
-        ? prev.filter((t) => t !== freeAction)
-        : [...prev, freeAction]
+  const toggleResource = (Resource: EResource) => {
+    setSelectedResources((prev) =>
+      prev.includes(Resource)
+        ? prev.filter((t) => t !== Resource)
+        : [...prev, Resource]
     );
   };
 
   React.useEffect(() => {
     if (reset) {
-      setSelectedFreeActions([]);
+      setSelectedResources([]);
     }
   }, [reset]);
 
   // logic: and, or
 
   React.useEffect(() => {
-    onFilterChange(selectedFreeActions);
-  }, [onFilterChange, selectedFreeActions]);
+    onFilterChange(selectedResources);
+  }, [onFilterChange, selectedResources]);
 
   return (
     <>
       <div className='xl:grid-cols-auto grid grid-cols-4 gap-2 md:grid-cols-6 lg:grid-cols-8'>
-        {BASE_FREE_ACTIONS.map((resource) => (
+        {src.map((resource) => (
           <TagButton
             key={resource}
             tagType='resource'
             tag={resource}
-            onClick={() => toggleFreeAction(resource)}
-            selected={selectedFreeActions.includes(resource)}
+            onClick={() => toggleResource(resource)}
+            selected={selectedResources.includes(resource)}
           />
         ))}
       </div>

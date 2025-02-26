@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-26 00:02:25
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-26 02:19:17
+ * @LastEditTime: 2025-02-26 14:40:52
  * @Description:
  */
 /*
@@ -34,6 +34,7 @@ interface BaseCardListProps {
   selectedSectors?: ESector[];
   selectedFreeActions?: EResource[];
   selectedCardSources?: CardSource[];
+  selectedIncomes?: EResource[];
   textFilter?: string;
   sortOrder?: SortOrder;
   credit?: number[];
@@ -48,6 +49,7 @@ const filterCards = (
   cards: BaseCardType[],
   selectedSectors: ESector[] = [],
   selectedFreeActions: EResource[] = [],
+  selectedIncomes: EResource[] = [],
   selectedCardSources: CardSource[] = [],
   textFilter = '',
   credit: number[] = [0],
@@ -72,13 +74,16 @@ const filterCards = (
     );
   }
 
+  if (selectedIncomes && selectedIncomes.length > 0) {
+    // FIXME: 注意这里先[0]
+    res = res.filter(
+      (card) => card.income && selectedIncomes.includes(card.income)
+    );
+  }
+
   res = res.filter(
     (card) =>
-      credit.length === 0 ||
-      credit.includes(0) ||
-      credit.includes(1) ||
-      credit.includes(2) ||
-      credit.includes(card.price)
+      credit.length === 0 || credit.includes(5) || credit.includes(card.price)
   );
   return {
     originalCount: res.length,
@@ -91,6 +96,7 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
   selectedSectors,
   selectedFreeActions,
   selectedCardSources = [],
+  selectedIncomes = [],
   textFilter,
   onCardCountChange,
   sortOrder = SortOrder.ID_ASC,
@@ -122,6 +128,7 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
     cardsData,
     selectedSectors,
     selectedFreeActions,
+    selectedIncomes,
     selectedCardSources,
     textFilter,
     credit,
@@ -132,12 +139,12 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
     cards: BaseCardType[],
     ratings: IRating[]
   ): IBaseCard[] => {
-    return cards.map((animal) => {
-      const rating = ratings.find((r) => r.cardid === animal.id);
+    return cards.map((baseCard) => {
+      const rating = ratings.find((r) => r.cardid === baseCard.id);
       return {
-        id: animal.id,
-        animalCard: animal,
-        model: getBaseCardModel(animal),
+        id: baseCard.id,
+        card: baseCard,
+        model: getBaseCardModel(baseCard),
         rating: rating ? rating._avg.rating : null,
         ratingCount: rating ? rating._count : null,
       };
@@ -145,10 +152,10 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
   };
 
   const initialBaseCards: IBaseCard[] = useMemo(() => {
-    return filteredCards.map((animal) => ({
-      id: animal.id,
-      animalCard: animal,
-      model: getBaseCardModel(animal),
+    return filteredCards.map((baseCard) => ({
+      id: baseCard.id,
+      card: baseCard,
+      model: getBaseCardModel(baseCard),
       rating: null,
       ratingCount: null,
     }));
@@ -167,32 +174,32 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
 
   switch (sortOrder) {
     case SortOrder.ID_ASC:
-      ratedBaseCards.sort((a, b) => a.id.localeCompare(b.id));
+      ratedBaseCards.sort((a, b) => Number(a.id) - Number(b.id));
       break;
     case SortOrder.ID_DESC:
-      ratedBaseCards.sort((a, b) => b.id.localeCompare(a.id));
+      ratedBaseCards.sort((a, b) => Number(b.id) - Number(a.id));
       break;
-    case SortOrder.DIFF_ASC:
-      ratedBaseCards.sort(
-        (a, b) =>
-          a.model.diffWithSpecialEnclosure - b.model.diffWithSpecialEnclosure
-      );
-      break;
-    case SortOrder.DIFF_DESC:
-      ratedBaseCards.sort(
-        (a, b) =>
-          b.model.diffWithSpecialEnclosure - a.model.diffWithSpecialEnclosure
-      );
-      break;
-    case SortOrder.RATING_DESC:
-      ratedBaseCards.sort((a, b) => {
-        if ((b.rating ?? -1) !== (a.rating ?? -1)) {
-          return (b.rating ?? -1) - (a.rating ?? -1);
-        } else {
-          return (b.ratingCount ?? -1) - (a.ratingCount ?? -1);
-        }
-      });
-      break;
+    // case SortOrder.DIFF_ASC:
+    //   ratedBaseCards.sort(
+    //     (a, b) =>
+    //       a.model.diffWithSpecialEnclosure - b.model.diffWithSpecialEnclosure
+    //   );
+    //   break;
+    // case SortOrder.DIFF_DESC:
+    //   ratedBaseCards.sort(
+    //     (a, b) =>
+    //       b.model.diffWithSpecialEnclosure - a.model.diffWithSpecialEnclosure
+    //   );
+    //   break;
+    // case SortOrder.RATING_DESC:
+    // ratedBaseCards.sort((a, b) => {
+    //   if ((b.rating ?? -1) !== (a.rating ?? -1)) {
+    //     return (b.rating ?? -1) - (a.rating ?? -1);
+    //   } else {
+    //     return (b.ratingCount ?? -1) - (a.ratingCount ?? -1);
+    //   }
+    // });
+    // break;
   }
 
   return (

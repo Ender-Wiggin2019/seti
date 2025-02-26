@@ -1,11 +1,19 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2025-02-25 09:56:21
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-26 14:47:37
+ * @Description:
+ */
 import React from 'react';
 
-import { AnimalModelCard } from '@/components/cards/base_cards/models/AnimalModelCard';
+import { HoverCard } from '@/components/cards/base_cards/HoverCard';
 import {
-  PopHover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/PopHover';
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 import { BaseCard } from './BaseCard';
 
@@ -20,24 +28,25 @@ export const RatedBaseCard: React.FC<RatedBaseCardProps> = ({
   cardData,
   showLink,
 }) => {
-  const { animalCard, model, rating, ratingCount } = cardData;
+  const { card, model, rating, ratingCount } = cardData;
 
   return (
     <>
-      <PopHover>
-        <PopoverTrigger>
-          <BaseCard card={animalCard} />
-        </PopoverTrigger>
-        <PopoverContent className='z-20 -mt-56 w-48 bg-zinc-50/95 p-2 md:-mt-64 md:w-52'>
-          <AnimalModelCard
-            id={animalCard.id}
-            model={model}
-            showLink={showLink}
-            rating={rating}
-            ratingCount={ratingCount}
-          />
-        </PopoverContent>
-      </PopHover>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <BaseCard card={card} />
+          </TooltipTrigger>
+          <TooltipContent className='bg-zinc-50/95 p-2'>
+            <HoverCard
+              id={card.id}
+              showLink={showLink}
+              rating={rating}
+              ratingCount={ratingCount}
+            />
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </>
   );
 };

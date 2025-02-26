@@ -6,18 +6,20 @@ import { FiRotateCcw } from 'react-icons/fi';
 
 import { SortButton } from '@/components/buttons/SortButton';
 import { BaseCardList } from '@/components/cards/base_cards/BaseCardList';
-import { CardSourceFilter } from '@/components/filters/CardSourceFilter';
-import { CardTypeFilter } from '@/components/filters/CardTypeFilter';
 import { CreditFilter } from '@/components/filters/CreditFilter';
-import { FreeActionFilter } from '@/components/filters/FreeActionFilter';
+import { ResourceFilter } from '@/components/filters/FreeActionFilter';
 import { SectorFilter } from '@/components/filters/SectorFilter';
 import { TextFilter } from '@/components/filters/TextFilter'; // make sure to import your TextFilter
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
 import { CardOdometer } from '@/components/ui/CardOdometer';
-import { Separator } from '@/components/ui/separator';
 
-import { EResource, ESector } from '@/types/BaseCard';
+import {
+  BASE_FREE_ACTIONS,
+  BASE_INCOMES,
+  EResource,
+  ESector,
+} from '@/types/BaseCard';
 import { CardType } from '@/types/Card';
 import { CardSource } from '@/types/CardSource';
 import { SortOrder } from '@/types/Order';
@@ -40,13 +42,14 @@ export default function HomePage(
     []
   );
   const [selectedSectors, setSelectedSectors] = useState<ESector[]>([]);
+  const [selectedIncomes, setSelectedIncomes] = useState<EResource[]>([]);
   const [textFilter, setTextFilter] = useState<string>(''); // add this line
   const [selectedCardTypes, setSelectedCardTypes] = useState<CardType[]>([]);
   const [selectedCardSources, setSelectedCardSources] = useState<CardSource[]>(
     []
   );
   const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.ID_ASC);
-  const [credit, setCredit] = useState<number[]>([0]);
+  const [credit, setCredit] = useState<number[]>([5]);
   // const [strength, setStrength] = useState<number[]>([0]);
 
   const [animalCardsCount, setBaseCardsCount] = useState<number>(0);
@@ -56,7 +59,6 @@ export default function HomePage(
     if (reset) return INIT_MAX_NUM;
     return animalCardsCount > 0 ? Math.min(totalMaxNum, animalCardsCount) : 0;
   }, [animalCardsCount, totalMaxNum]);
-
   const sponsorMaxNum = useMemo(() => {
     if (reset) return 0;
     const remainingMaxNum = totalMaxNum - animalMaxNum;
@@ -103,7 +105,7 @@ export default function HomePage(
     // setBaseCardsCount(0);
     // setSponsorCardsCount(0);
     setSortOrder(SortOrder.ID_ASC);
-    setCredit([0]);
+    setCredit([5]);
     // setStrength([0]);
     setTotalMaxNum(INIT_MAX_NUM); // reset the total number of cards to be displayed
     setReset(true);
@@ -117,7 +119,7 @@ export default function HomePage(
       <main>
         <div className='flex flex-col space-y-4 px-2 py-2 md:px-4'>
           <div className='flex flex-col md:flex-row'>
-            <CardTypeFilter
+            {/* <CardTypeFilter
               cardTypes={[CardType.ANIMAL_CARD, CardType.SPONSOR_CARD]}
               onFilterChange={setSelectedCardTypes}
               reset={reset}
@@ -126,21 +128,33 @@ export default function HomePage(
             <CardSourceFilter
               onFilterChange={setSelectedCardSources}
               reset={reset}
-            />
+            /> */}
           </div>
-          <FreeActionFilter
+          <div className='text-xl text-primary-200 font-bold'>
+            {t('free_action')}
+          </div>
+          <ResourceFilter
             onFilterChange={setSelectedFreeActions}
+            src={BASE_FREE_ACTIONS}
             reset={reset}
           />
-          {/* <SectorFilter
-            onFilterChange={setSelectedSectors}
+          <div className='text-xl text-primary-200 font-bold'>
+            {t('income')}
+          </div>
+          <ResourceFilter
+            onFilterChange={setSelectedIncomes}
+            src={BASE_INCOMES}
             reset={reset}
-          /> */}
+          />
+          <div className='text-xl text-primary-200 font-bold'>
+            {t('sector')}
+          </div>
+          <SectorFilter onFilterChange={setSelectedSectors} reset={reset} />
           <div className='flex flex-row space-x-4'>
             <TextFilter onTextChange={setTextFilter} reset={reset} />
             <div
               onClick={resetAll}
-              className='group flex w-auto items-center justify-between space-x-2 rounded-2xl rounded-md bg-zinc-600 px-4 py-2 text-lg font-medium text-zinc-100 shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur-md hover:bg-zinc-500 hover:text-primary-400 focus:outline-none focus-visible:ring-2 dark:from-zinc-900/30 dark:to-zinc-800/80 dark:text-zinc-200 dark:ring-white/10 dark:hover:ring-white/20 dark:focus-visible:ring-yellow-500/80'
+              className='group flex w-auto items-center justify-between space-x-2 rounded-md bg-zinc-600 px-4 py-2 text-lg font-medium text-zinc-100 shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur-md hover:bg-zinc-500 hover:text-primary-400 focus:outline-none focus-visible:ring-2 dark:from-zinc-900/30 dark:to-zinc-800/80 dark:text-zinc-200 dark:ring-white/10 dark:hover:ring-white/20 dark:focus-visible:ring-yellow-500/80'
             >
               <FiRotateCcw className='' />
             </div>
@@ -153,12 +167,12 @@ export default function HomePage(
           <div className='flex flex-row space-x-4'>
             <CardOdometer
               value={animalCardsCount}
-              name={t('Animal')}
+              name={t('base_cards')}
               className='text-amber-500 hover:text-amber-600'
             />
             <CardOdometer
               value={sponsorCardsCount}
-              name={t('Sponsor')}
+              name={t('aliens')}
               className='text-sky-600 hover:text-sky-700'
             />
           </div>
@@ -170,6 +184,7 @@ export default function HomePage(
             <BaseCardList
               selectedFreeActions={selectedFreeActions}
               selectedSectors={selectedSectors}
+              selectedIncomes={selectedIncomes}
               selectedCardSources={selectedCardSources}
               textFilter={textFilter}
               sortOrder={sortOrder}
@@ -211,6 +226,6 @@ export default function HomePage(
 
 export const getStaticProps: GetStaticProps<Props> = async ({ locale }) => ({
   props: {
-    ...(await serverSideTranslations(locale ?? 'zh-CN', ['common'])),
+    ...(await serverSideTranslations(locale ?? 'zh-CN', ['common', 'seti'])),
   },
 });

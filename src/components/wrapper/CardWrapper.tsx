@@ -10,9 +10,6 @@ import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 import { BaseCard } from '@/components/cards/base_cards/BaseCard';
-import { BaseEndGameCard } from '@/components/cards/endgame_cards/BaseEndGameCard';
-import { TokenProjectCard } from '@/components/cards/project_cards/ProjectCard';
-import { BaseSponsorCard } from '@/components/cards/sponsor_cards/BaseSponsorCard';
 
 import { getCardById } from '@/utils/GetCardById';
 
@@ -62,15 +59,7 @@ const CardWrapper: React.FC<CardWrapperProps> = ({
     return null;
   }
 
-  const Card = isBaseCard(cardData) ? (
-    <BaseCard card={cardData} />
-  ) : isSponsorCard(cardData) ? (
-    <BaseSponsorCard sponsor={cardData} />
-  ) : isProjectCard(cardData) ? (
-    <TokenProjectCard project={cardData} pos={index as any} />
-  ) : isEndGameCard(cardData) ? (
-    <BaseEndGameCard card={cardData} />
-  ) : null;
+  const Card = isBaseCard(cardData) ? <BaseCard card={cardData} /> : null;
   return (
     <div
       className={cn('player-board-hand w-min cursor-pointer', {
