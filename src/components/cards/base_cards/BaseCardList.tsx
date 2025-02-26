@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-26 00:02:25
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-26 14:40:52
+ * @LastEditTime: 2025-02-27 02:32:32
  * @Description:
  */
 /*
@@ -24,7 +24,7 @@ import { getBaseCardModel } from '@/utils/getBaseCardModel';
 
 import { useBaseCardData } from './useBaseCardData';
 
-import BaseCardType, { EResource, ESector } from '@/types/BaseCard';
+import BaseCardType, { EAlienType, EResource, ESector } from '@/types/BaseCard';
 import { CardSource } from '@/types/CardSource';
 import { IBaseCard } from '@/types/IBaseCard';
 import { IRating } from '@/types/IRating';
@@ -35,10 +35,11 @@ interface BaseCardListProps {
   selectedFreeActions?: EResource[];
   selectedCardSources?: CardSource[];
   selectedIncomes?: EResource[];
+  selectedAliens?: EAlienType[],
   textFilter?: string;
   sortOrder?: SortOrder;
   credit?: number[];
-  onCardCountChange: (count: number) => void;
+  onCardCountChange: ({base, alien}: {base: number, alien: number}) => void;
   maxNum?: number;
   // ... any other filters
 }
@@ -50,6 +51,7 @@ const filterCards = (
   selectedSectors: ESector[] = [],
   selectedFreeActions: EResource[] = [],
   selectedIncomes: EResource[] = [],
+  selectedAliens: EAlienType[] = [],
   selectedCardSources: CardSource[] = [],
   textFilter = '',
   credit: number[] = [0],
@@ -81,12 +83,22 @@ const filterCards = (
     );
   }
 
+  if (selectedAliens.length === 0) {
+    res = res.filter(card => !card.alien);
+  }
+
+  if (selectedAliens.length > 0 && selectedAliens.length < 5) {
+    res = res.filter(card => card.alien && 
+      selectedAliens.includes(card.alien)
+    );
+  }
   res = res.filter(
     (card) =>
       credit.length === 0 || credit.includes(5) || credit.includes(card.price)
   );
   return {
-    originalCount: res.length,
+    originalCount: res.filter(c => !c.alien).length,
+    alienCount: res.filter(c => c.alien).length,
     limitedCount: res.length,
     cards: res,
   };
@@ -97,6 +109,7 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
   selectedFreeActions,
   selectedCardSources = [],
   selectedIncomes = [],
+  selectedAliens = [],
   textFilter,
   onCardCountChange,
   sortOrder = SortOrder.ID_ASC,
@@ -124,11 +137,12 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
 
   const cardsData = useBaseCardData();
   // const cardsData = cards;
-  const { originalCount, cards: filteredCards } = filterCards(
+  const { originalCount, alienCount, cards: filteredCards } = filterCards(
     cardsData,
     selectedSectors,
     selectedFreeActions,
     selectedIncomes,
+    selectedAliens,
     selectedCardSources,
     textFilter,
     credit,
@@ -169,15 +183,35 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
   }, [filteredCards, cardRatings, initialBaseCards]);
 
   useEffect(() => {
-    onCardCountChange(originalCount);
+    onCardCountChange({base: originalCount, alien: alienCount});
   }, [originalCount, onCardCountChange]);
 
   switch (sortOrder) {
     case SortOrder.ID_ASC:
-      ratedBaseCards.sort((a, b) => Number(a.id) - Number(b.id));
+      ratedBaseCards.sort((a, b) => {
+        const aIsNumeric = /^\d+$/.test(a.id);
+        const bIsNumeric = /^\d+$/.test(b.id);
+
+        // 如果一个是数字，一个不是数字，数字的排在前面
+        if (aIsNumeric && !bIsNumeric) return -1;
+        if (!aIsNumeric && bIsNumeric) return 1;
+
+        // 如果都是数字或者都是非数字，比较数字部分
+        return Number(a.id) - Number(b.id);
+      });
       break;
     case SortOrder.ID_DESC:
-      ratedBaseCards.sort((a, b) => Number(b.id) - Number(a.id));
+      ratedBaseCards.sort((a, b) => {
+        const aIsNumeric = /^\d+$/.test(a.id);
+        const bIsNumeric = /^\d+$/.test(b.id);
+
+        // 如果一个是数字，一个不是数字，数字的排在前面
+        if (aIsNumeric && !bIsNumeric) return -1;
+        if (!aIsNumeric && bIsNumeric) return 1;
+
+        // 如果都是数字或者都是非数字，比较数字部分
+        return Number(b.id) - Number(a.id);
+      });
       break;
     // case SortOrder.DIFF_ASC:
     //   ratedBaseCards.sort(
@@ -207,7 +241,7 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
       {ratedBaseCards.map((ratedBaseCard: IBaseCard) => (
         <div
           key={ratedBaseCard.id}
-          className='-mb-12 scale-75 sm:mb-1 sm:scale-90 md:mb-4 md:scale-100'
+          className='scale-100 sm:mb-1 sm:scale-100 md:mb-4 md:scale-100'
         >
           <RatedBaseCard
             key={ratedBaseCard.id}

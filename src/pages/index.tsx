@@ -4,6 +4,8 @@ import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import React, { useEffect, useMemo, useState } from 'react';
 import { FiRotateCcw } from 'react-icons/fi';
 
+import { useSettings } from '@/hooks/useSettings';
+
 import { SortButton } from '@/components/buttons/SortButton';
 import { BaseCardList } from '@/components/cards/base_cards/BaseCardList';
 import { CreditFilter } from '@/components/filters/CreditFilter';
@@ -13,16 +15,20 @@ import { TextFilter } from '@/components/filters/TextFilter'; // make sure to im
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
 import { CardOdometer } from '@/components/ui/CardOdometer';
+import { SettingsDialogButton } from '@/components/ui/enable-alien-dialog';
 
 import {
+  ALL_ALIENS,
   BASE_FREE_ACTIONS,
   BASE_INCOMES,
+  EAlienType,
   EResource,
   ESector,
 } from '@/types/BaseCard';
 import { CardType } from '@/types/Card';
 import { CardSource } from '@/types/CardSource';
 import { SortOrder } from '@/types/Order';
+import { AlienFilter } from '@/components/filters/AlienFilter';
 
 type Props = {
   // Add custom props here
@@ -34,6 +40,9 @@ export default function HomePage(
   _props: InferGetStaticPropsType<typeof getStaticProps>
 ) {
   const { t } = useTranslation('common');
+  const { settings, setSettings } = useSettings();
+  console.log('🎸 [test] - settings:', settings);
+
   const [reset, setReset] = useState<boolean>(false);
 
   // limit the number of cards to be displayed for optimization
@@ -43,6 +52,10 @@ export default function HomePage(
   );
   const [selectedSectors, setSelectedSectors] = useState<ESector[]>([]);
   const [selectedIncomes, setSelectedIncomes] = useState<EResource[]>([]);
+  const [selectedAliens, setSelectedAliens] = useState<EAlienType[]>(
+    settings.enableAlien ? ALL_ALIENS : []
+  );
+
   const [textFilter, setTextFilter] = useState<string>(''); // add this line
   const [selectedCardTypes, setSelectedCardTypes] = useState<CardType[]>([]);
   const [selectedCardSources, setSelectedCardSources] = useState<CardSource[]>(
@@ -52,13 +65,15 @@ export default function HomePage(
   const [credit, setCredit] = useState<number[]>([5]);
   // const [strength, setStrength] = useState<number[]>([0]);
 
-  const [animalCardsCount, setBaseCardsCount] = useState<number>(0);
+  const [cardsCount, setCardsCount] = useState<{ base: number; alien: number }>(
+    { base: 0, alien: 0 }
+  );
   const [sponsorCardsCount, setSponsorCardsCount] = useState<number>(0);
-
+  const { base: baseCardsCount, alien: alienCardCount } = cardsCount;
   const animalMaxNum = useMemo(() => {
     if (reset) return INIT_MAX_NUM;
-    return animalCardsCount > 0 ? Math.min(totalMaxNum, animalCardsCount) : 0;
-  }, [animalCardsCount, totalMaxNum]);
+    return baseCardsCount > 0 ? Math.min(totalMaxNum, baseCardsCount) : 0;
+  }, [baseCardsCount, totalMaxNum]);
   const sponsorMaxNum = useMemo(() => {
     if (reset) return 0;
     const remainingMaxNum = totalMaxNum - animalMaxNum;
@@ -68,8 +83,8 @@ export default function HomePage(
   }, [animalMaxNum, sponsorCardsCount, totalMaxNum]);
 
   const shouldDisplayViewMore = useMemo(() => {
-    return totalMaxNum < animalCardsCount + sponsorCardsCount;
-  }, [animalCardsCount, sponsorCardsCount, totalMaxNum]);
+    return totalMaxNum < baseCardsCount + sponsorCardsCount;
+  }, [baseCardsCount, sponsorCardsCount, totalMaxNum]);
 
   const handleViewMore = () => {
     setTotalMaxNum(totalMaxNum + INIT_MAX_NUM);
@@ -80,7 +95,7 @@ export default function HomePage(
       selectedCardTypes.length !== 0 &&
       !selectedCardTypes.includes(CardType.ANIMAL_CARD)
     ) {
-      setBaseCardsCount(0);
+      setCardsCount({ base: 0, alien: 0 });
     }
     if (
       selectedCardTypes.length !== 0 &&
@@ -102,6 +117,7 @@ export default function HomePage(
     setTextFilter('');
     setSelectedCardTypes([]);
     setSelectedCardSources([]);
+     setSelectedAliens(settings.enableAlien ? ALL_ALIENS : []);
     // setBaseCardsCount(0);
     // setSponsorCardsCount(0);
     setSortOrder(SortOrder.ID_ASC);
@@ -119,6 +135,13 @@ export default function HomePage(
       <main>
         <div className='flex flex-col space-y-4 px-2 py-2 md:px-4'>
           <div className='flex flex-col md:flex-row'>
+            {settings.enableAlien && (
+              <AlienFilter
+                alienTypes={ALL_ALIENS}
+                onFilterChange={setSelectedAliens}
+                reset={reset}
+              />
+            )}
             {/* <CardTypeFilter
               cardTypes={[CardType.ANIMAL_CARD, CardType.SPONSOR_CARD]}
               onFilterChange={setSelectedCardTypes}
@@ -166,15 +189,24 @@ export default function HomePage(
           </div>
           <div className='flex flex-row space-x-4'>
             <CardOdometer
-              value={animalCardsCount}
+              value={baseCardsCount}
               name={t('base_cards')}
               className='text-amber-500 hover:text-amber-600'
             />
-            <CardOdometer
-              value={sponsorCardsCount}
-              name={t('aliens')}
-              className='text-sky-600 hover:text-sky-700'
-            />
+            {!settings.enableAlien ? (
+              <SettingsDialogButton
+                onSubmit={() => {
+                  setSettings({ enableAlien: true });
+                  setSelectedAliens(ALL_ALIENS);
+                }}
+              />
+            ) : (
+              <CardOdometer
+                value={alienCardCount}
+                name={t('aliens')}
+                className='text-sky-600 hover:text-sky-700'
+              />
+            )}
           </div>
         </div>
         <div className='mb-2 md:mb-8'></div>
@@ -186,9 +218,10 @@ export default function HomePage(
               selectedSectors={selectedSectors}
               selectedIncomes={selectedIncomes}
               selectedCardSources={selectedCardSources}
+              selectedAliens={selectedAliens}
               textFilter={textFilter}
               sortOrder={sortOrder}
-              onCardCountChange={setBaseCardsCount}
+              onCardCountChange={setCardsCount}
               credit={credit}
               maxNum={animalMaxNum}
             />

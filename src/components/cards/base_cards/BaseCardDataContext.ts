@@ -7,6 +7,7 @@
  */
 import { createContext } from 'react';
 
+import { alienCards } from '@/data/alienCards';
 import { baseCards } from '@/data/baseCards';
 
-export const BaseCardDataContext = createContext(baseCards);
+export const BaseCardDataContext = createContext([...baseCards, ...alienCards]);

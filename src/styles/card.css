@@ -18,14 +18,25 @@
 
 .card-title {
   position: absolute;
-  top: 96px;
+  top: 95px;
   left: 46px;
-  width: 80px;
-  height: 10px;
+  width: 103px;
+  height: 9px;
   background-color: #3f3d40;
-  font-size: 6px;
+  font-size: 7px;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
+
+}
+
+.anomalies {
+  top: 87px;
+  background-color: #1a6983;
+}
+
+.centaurians {
+  top: 87px;
+  background-color: #5fb35e;
 }

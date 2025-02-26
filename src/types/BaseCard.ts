@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-10-25 22:45:44
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-26 12:26:03
+ * @LastEditTime: 2025-02-27 02:01:24
  * @Description:
  */
 
@@ -25,6 +25,7 @@ export default interface BaseCard {
   // meta data
   source?: CardSource;
   cardType?: ECardType;
+  alien?: EAlienType;
 }
 
 export interface IFreeAction {
@@ -84,3 +85,26 @@ export enum ECardType {
   PROMO,
   FAN_MADE,
 }
+
+export enum EAlienType {
+  ANOMALIES = 1,
+  CENTAURIANS,
+  EXERTIANS,
+  MASCAMITES,
+  OUMUAMUA
+}
+
+export const EAlienMap: Record<EAlienType, string> = {
+  [EAlienType.ANOMALIES]: 'anomalies',
+  [EAlienType.CENTAURIANS]: 'centaurians',
+  [EAlienType.EXERTIANS]: 'exertians',
+  [EAlienType.MASCAMITES]: 'mascamites',
+  [EAlienType.OUMUAMUA]: 'oumuamua',
+}
+
+export const ALL_ALIENS = [
+  EAlienType.ANOMALIES,
+  EAlienType.CENTAURIANS,
+  EAlienType.EXERTIANS,
+  EAlienType.MASCAMITES,
+  EAlienType.OUMUAMUA,]

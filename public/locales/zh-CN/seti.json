@@ -1,4 +1,10 @@
 {
+  "anomalies": "异象者",
+  "centaurians": "半人马族",
+  "exertians": "动能族",
+  "mascamites": "虫族",
+  "oumuamua": "奥陌陌",
+
   "61 Virginis Observation": "61 Virginis观测",
   "Advanced Navigation System": "高级导航系统",
   "Algonquin Radio Observatory": "阿尔冈昆射电天文台",
@@ -106,7 +112,7 @@
   "Rosetta Probe": "罗塞塔探测器",
   "Sample Return": "样本返回",
   "Saturn Exploration Program": "土星探测计划",
-  "Saturn Flyby": "土星飞越",
+  "Saturn Flyby": "飞越土星",
   "Scientific Cooperation": "科学合作",
   "SETI Data Archive": "SETI数据档案",
   "SETI Institute": "SETI研究所",
@@ -135,5 +141,25 @@
   "Voyager 2 Mission": "旅行者2号任务",
   "Westerbork Synthesis Radio Telescope": "韦斯特博克综合射电望远镜",
   "Wow! Signal": "哇！信号",
-  "Yevpatoria Telescope Construction": "叶夫帕托里亚望远镜建造"
+  "Yevpatoria Telescope Construction": "叶夫帕托里亚望远镜建造",
+
+  "Amazing Uncertainty": "不可思议",
+  "Are we Being Observed?": "我们被监视了？",
+  "Close-up View": "近距离观察",
+  "Concerned People": "凝神倾听",
+  "Listening Carefully": "仔细倾听",
+  "Message Capsule": "信息胶囊",
+  "New Physics": "新物理学",
+  "Part of Everyday Life": "日常一景",
+  "Signs of Life": "生命迹象",
+  "A Message from Afar": "远方来信",
+  "Alien Schematics": "外星图纸",
+  "Exocomputers": "外星计算机",
+  "Hivemind Concept": "集群思维",
+  "Infocluster": "信息簇",
+  "Music of the Spheres": "天体乐章",
+  "Synthesis Instructions": "合成指南",
+  "Telescope Blueprints": "望远镜蓝图",
+  "Torrent-chain Signal": "信号洪流",
+  "Vessel Designs": "飞船设计"
 }

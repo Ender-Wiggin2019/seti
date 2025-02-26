@@ -77,5 +77,11 @@
     "import_json": "Import JSON",
     "add_exist_ability": "Existing Ability",
     "bug": "This function has a unsolved bug. Please do not delete original abilities before your customized abilities."
-  }
+  },
+  "dialog": {
+    "warning": "警告",
+    "warning-desc": "这部分可能会剧透并影响你的游戏体验。你确定要继续吗？",
+    "confirm": "确认"
+  },
+  "Aliens?": "外...外星人?"
 }
