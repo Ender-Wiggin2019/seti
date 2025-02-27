@@ -8,6 +8,8 @@ import { useSettings } from '@/hooks/useSettings';
 
 import { SortButton } from '@/components/buttons/SortButton';
 import { BaseCardList } from '@/components/cards/base_cards/BaseCardList';
+import { ClientOnly } from '@/components/ClientOnly';
+import { AlienFilter } from '@/components/filters/AlienFilter';
 import { CreditFilter } from '@/components/filters/CreditFilter';
 import { ResourceFilter } from '@/components/filters/FreeActionFilter';
 import { SectorFilter } from '@/components/filters/SectorFilter';
@@ -28,7 +30,6 @@ import {
 import { CardType } from '@/types/Card';
 import { CardSource } from '@/types/CardSource';
 import { SortOrder } from '@/types/Order';
-import { AlienFilter } from '@/components/filters/AlienFilter';
 
 type Props = {
   // Add custom props here
@@ -117,7 +118,7 @@ export default function HomePage(
     setTextFilter('');
     setSelectedCardTypes([]);
     setSelectedCardSources([]);
-     setSelectedAliens(settings.enableAlien ? ALL_ALIENS : []);
+    setSelectedAliens(settings.enableAlien ? ALL_ALIENS : []);
     // setBaseCardsCount(0);
     // setSponsorCardsCount(0);
     setSortOrder(SortOrder.ID_ASC);
@@ -226,19 +227,6 @@ export default function HomePage(
               maxNum={animalMaxNum}
             />
           )}
-          {/* {(selectedCardTypes.length === 0 ||
-            selectedCardTypes.includes(CardType.SPONSOR_CARD)) && (
-            <SponsorCardList
-              selectedFreeActions={selectedFreeActions}
-              selectedSectors={selectedSectors}
-              selectedCardSources={selectedCardSources}
-              textFilter={textFilter}
-              sortOrder={sortOrder}
-              onCardCountChange={setSponsorCardsCount}
-              strength={strength}
-              maxNum={sponsorMaxNum}
-            />
-          )} */}
           {/* {shouldDisplayViewMore && (
             <>
               <div className='h-10 w-full'></div>

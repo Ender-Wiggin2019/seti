@@ -1,3 +1,10 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2025-02-29 11:58:37
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-29 11:58:48
+ * @Description:
+ */
 export const fetchCardRatings = async () => {
   const response = await fetch('/api/cards/ratings');
   if (!response.ok) {

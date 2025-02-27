@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-27 02:12:12
+ * @LastEditTime: 2025-02-29 02:12:12
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -249,4 +249,4 @@ export const alienCards: BaseCard[] = [
   },
 ];
 
-console.log(alienCards.map(a => a.name).join(', '));
+console.log(alienCards.map((a) => a.name).join(', '));

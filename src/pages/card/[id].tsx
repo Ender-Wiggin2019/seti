@@ -11,8 +11,7 @@ import { Comments } from '@/components/comments/Comments';
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
 
-import { getAllCardIds } from '@/utils/GetAllCardIds';
-import { getCardById } from '@/utils/GetCardById';
+import { getAllCardIds, getCardById } from '@/utils/card';
 
 import BaseCardType from '@/types/BaseCard';
 type Props = {
@@ -28,7 +27,8 @@ export default function Page(
   const { t } = useTranslation('common');
   if (typeof router.query.id !== 'string') return null;
   const card = getCardById(router.query.id);
-  if (typeof card !== 'object') return null;
+
+  if (!card) return null;
   return (
     <Layout>
       <Seo templateTitle={`Seti Card #${card.id} ${card.name}`} />
@@ -54,15 +54,6 @@ export const getStaticProps: GetStaticProps<Props> = async ({ locale }) => ({
   },
 });
 
-// export async function getStaticPaths() {
-//   const paths = getAllCardIds();
-//   return {
-//     paths,
-//     fallback: false,
-//   };
-// }
-
-// should add locales to getStaticPaths
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 export async function getStaticPaths({ locales }) {

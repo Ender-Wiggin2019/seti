@@ -2,18 +2,17 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-26 14:47:37
+ * @LastEditTime: 2025-02-29 11:33:29
  * @Description:
  */
 import React from 'react';
 
 import { HoverCard } from '@/components/cards/base_cards/HoverCard';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 import { BaseCard } from './BaseCard';
 
@@ -32,21 +31,19 @@ export const RatedBaseCard: React.FC<RatedBaseCardProps> = ({
 
   return (
     <>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <BaseCard card={card} />
-          </TooltipTrigger>
-          <TooltipContent className='bg-zinc-50/95 p-2'>
-            <HoverCard
-              id={card.id}
-              showLink={showLink}
-              rating={rating}
-              ratingCount={ratingCount}
-            />
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Popover>
+        <PopoverTrigger asChild>
+          <BaseCard card={card} />
+        </PopoverTrigger>
+        <PopoverContent className='bg-zinc-50/95 p-2'>
+          <HoverCard
+            id={card.id}
+            showLink={showLink}
+            rating={rating}
+            ratingCount={ratingCount}
+          />
+        </PopoverContent>
+      </Popover>
     </>
   );
 };

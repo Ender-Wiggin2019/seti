@@ -1,10 +1,3 @@
-/*
- * @Author: Ender-Wiggin
- * @Date: 2023-07-05 03:08:32
- * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-27 00:49:28
- * @Description:
- */
 import type { Config } from 'tailwindcss';
 import defaultTheme from 'tailwindcss/defaultTheme';
 
@@ -30,6 +23,31 @@ export default {
           700: '#008ab7',
           800: '#008ab7',
           900: '#008ab7',
+        },
+        anomalies: {
+          DEFAULT: '#28b6af',
+          foreground: '#9cd2d9',
+          background: '#004c65',
+        },
+        centaurians: {
+          DEFAULT: '#00a16c',
+          foreground: '#9cd2b2',
+          background: '#024d3f',
+        },
+        exertians: {
+          DEFAULT: '#000',
+          foreground: '#F5C4C0',
+          background: '#BE0505',
+        },
+        mascamites: {
+          DEFAULT: '#604008',
+          foreground: '#ECE6C4',
+          background: '#A38815',
+        },
+        oumuamua: {
+          DEFAULT: '#D6CAE2',
+          foreground: '#75509C',
+          background: '#333469',
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
@@ -67,5 +85,5 @@ export default {
       },
     },
   },
-  plugins: [require('@tailwindcss/forms')],
+  plugins: [require('@tailwindcss/forms'), require('tailwindcss-animate')],
 } satisfies Config;

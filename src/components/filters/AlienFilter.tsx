@@ -2,15 +2,17 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-07-08 11:36:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-27 02:27:19
+ * @LastEditTime: 2025-02-29 12:26:45
  * @Description:
  */
-// CategoryFilter.tsx
 import { useRouter } from 'next/router';
 import { useTranslation } from 'next-i18next';
 import React, { useEffect, useState } from 'react';
 
 import TextButton from '@/components/buttons/TextButton';
+import { Badge } from '@/components/ui/badge';
+
+import { ALIEN_BUTTON_GROUP } from '@/constant/alien';
 
 import { EAlienMap, EAlienType } from '@/types/BaseCard';
 
@@ -27,7 +29,9 @@ export const AlienFilter: React.FC<AlienFilterProps> = ({
 }) => {
   const router = useRouter();
   const { t } = useTranslation('seti');
-  const [selectedCategories, setSelectedCategories] = useState<EAlienType[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<EAlienType[]>(
+    []
+  );
 
   const handleCategoryChange = (cardType: EAlienType) => {
     setSelectedCategories((prev: EAlienType[]) =>
@@ -49,28 +53,29 @@ export const AlienFilter: React.FC<AlienFilterProps> = ({
 
   return (
     <div className='flex justify-between gap-4'>
-      {alienTypes.includes(EAlienType.ANOMALIES) && (
-        <TextButton
-          selected={selectedCategories.includes(EAlienType.ANOMALIES)}
-          className='text-[#9cd2d9] hover:text-white/50 focus:text-white/50 bg-[#004c65]'
-          selectClassName='ring-[#28b6af] text-[#9cd2d9] ring-2'
-          onClick={() => handleCategoryChange(EAlienType.ANOMALIES)}
-        >
-          {t(EAlienMap[EAlienType.ANOMALIES])}
-        </TextButton>
-      )}
-      {alienTypes.includes(EAlienType.CENTAURIANS) && (
-        <div className='relative'>
-          <TextButton
-            selected={selectedCategories.includes(EAlienType.CENTAURIANS)}
-          className='text-[#9cd2b2] hover:text-white/50 focus:text-white/50 bg-[#024d3f]'
-          selectClassName='ring-[#00a16c] text-[#9cd2b2] ring-2'
-            onClick={() => handleCategoryChange(EAlienType.CENTAURIANS)}
-          >
-          {t(EAlienMap[EAlienType.CENTAURIANS])}
-          </TextButton>
-        </div>
-      )}
+      {ALIEN_BUTTON_GROUP.map((alien) => {
+        if (!alienTypes.includes(alien.type)) {
+          return null;
+        }
+        return (
+          <div key={alien.type} className='relative'>
+            {alien.wip && (
+              <Badge className='z-10 bg-amber-300 absolute -top-2 -right-2 text-black'>
+                TODO
+              </Badge>
+            )}
+            <TextButton
+              key={alien.type}
+              selected={selectedCategories.includes(alien.type)}
+              className={`${alien.text} hover:text-white/50 focus:text-white/50 ${alien.bg} rounded-sm`}
+              selectClassName={`${alien.ring} ${alien.text} ring-2`}
+              onClick={() => handleCategoryChange(alien.type)}
+            >
+              {t(EAlienMap[alien.type])}
+            </TextButton>
+          </div>
+        );
+      })}
     </div>
   );
 };

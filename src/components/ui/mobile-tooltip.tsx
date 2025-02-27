@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-26 14:19:38
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-26 14:22:21
+ * @LastEditTime: 2025-02-29 11:16:04
  * @Description:
  */
 'use client';
@@ -50,6 +50,7 @@ export const TooltipProvider = ({
 
 export const Tooltip = (props: TooltipProps & PopoverProps) => {
   const isTouch = useTouch();
+  console.log('🎸 [test] - Tooltip - isTouch:', isTouch);
 
   return isTouch ? <Popover {...props} /> : <OriginalTooltip {...props} />;
 };

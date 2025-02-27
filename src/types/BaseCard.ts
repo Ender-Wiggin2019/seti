@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-10-25 22:45:44
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-27 02:01:24
+ * @LastEditTime: 2025-02-29 10:58:41
  * @Description:
  */
 
@@ -91,7 +91,7 @@ export enum EAlienType {
   CENTAURIANS,
   EXERTIANS,
   MASCAMITES,
-  OUMUAMUA
+  OUMUAMUA,
 }
 
 export const EAlienMap: Record<EAlienType, string> = {
@@ -100,11 +100,12 @@ export const EAlienMap: Record<EAlienType, string> = {
   [EAlienType.EXERTIANS]: 'exertians',
   [EAlienType.MASCAMITES]: 'mascamites',
   [EAlienType.OUMUAMUA]: 'oumuamua',
-}
+};
 
 export const ALL_ALIENS = [
   EAlienType.ANOMALIES,
   EAlienType.CENTAURIANS,
   EAlienType.EXERTIANS,
   EAlienType.MASCAMITES,
-  EAlienType.OUMUAMUA,]
+  EAlienType.OUMUAMUA,
+];

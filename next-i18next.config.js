@@ -1,8 +1,8 @@
 /*
  * @Author: Ender-Wiggin
- * @Date: 2024-06-27 23:56:37
+ * @Date: 2025-02-26 11:48:15
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-26 00:04:46
+ * @LastEditTime: 2025-02-29 12:31:54
  * @Description:
  */
 // @ts-check
@@ -17,7 +17,7 @@ module.exports = {
   debug: false,
   i18n: {
     defaultLocale: 'en',
-    locales: ['en', 'zh-CN', 'de'],
+    locales: ['en', 'zh-CN'],
     localeDetection: false,
   },
   /** To avoid issues when deploying to some paas (vercel...) */
