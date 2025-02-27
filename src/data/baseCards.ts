@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-26 15:35:41
+ * @LastEditTime: 2025-02-27 14:08:38
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -29,7 +29,7 @@ export const baseCards: BaseCard[] = [
     income: EResource.CARD,
   },
   {
-    id: '156',
+    id: '136',
     name: 'Algonquin Radio Observatory',
     position: { src: '/images/cards/cards-1.webp', row: 0, col: 2 },
     freeAction: [{ type: EResource.DATA, value: 1 }],

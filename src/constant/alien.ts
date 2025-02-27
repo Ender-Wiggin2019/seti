@@ -18,14 +18,12 @@ export const ALIEN_BUTTON_GROUP = [
     text: 'text-mascamites-foreground',
     ring: 'ring-mascamites',
     bg: 'bg-mascamites-background',
-    wip: true,
   },
   {
     type: EAlienType.OUMUAMUA,
     text: 'text-oumuamua-foreground',
     ring: 'ring-oumuamua',
     bg: 'bg-oumuamua-background',
-    wip: true,
   },
   {
     type: EAlienType.EXERTIANS,

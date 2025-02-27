@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-26 23:56:31
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-29 02:04:39
+ * @LastEditTime: 2025-02-27 14:28:10
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
@@ -34,6 +34,8 @@ export const BaseCard: React.FC<BaseCardProps> = ({ card }) => {
           backgroundPosition: `-${150 * col}px -${209 * row}px`,
           width: '150px', // Adjust size as needed
           height: '209px', // Adjust size as needed
+          borderRadius: '12px',
+          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
         }}
       ></div>
     </BaseCardWrapper>

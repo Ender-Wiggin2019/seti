@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-07-08 11:36:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-29 12:26:45
+ * @LastEditTime: 2025-02-27 14:03:31
  * @Description:
  */
 import { useRouter } from 'next/router';
@@ -52,7 +52,7 @@ export const AlienFilter: React.FC<AlienFilterProps> = ({
   }, [reset]);
 
   return (
-    <div className='flex justify-between gap-4'>
+    <div className='flex flex-wrap justify-between gap-4'>
       {ALIEN_BUTTON_GROUP.map((alien) => {
         if (!alienTypes.includes(alien.type)) {
           return null;

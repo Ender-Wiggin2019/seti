@@ -28,7 +28,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-
 }
 
 .anomalies {
@@ -39,4 +38,14 @@
 .centaurians {
   top: 87px;
   background-color: #5fb35e;
+}
+
+.mascamites {
+  top: 87px;
+  background-color: #5d412d;
+}
+
+.oumuamua {
+  top: 87px;
+  background-color: #6940a2;
 }

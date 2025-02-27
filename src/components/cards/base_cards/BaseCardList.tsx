@@ -1,17 +1,3 @@
-/*
- * @Author: Ender-Wiggin
- * @Date: 2025-02-26 00:02:25
- * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-27 12:32:41
- * @Description:
- */
-/*
- * @Author: Ender-Wiggin
- * @Date: 2024-06-27 23:56:37
- * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-26 01:20:42
- * @Description:
- */
 // import { useUser } from '@clerk/nextjs';
 import { useQuery } from '@tanstack/react-query';
 import React, { useEffect, useMemo } from 'react';

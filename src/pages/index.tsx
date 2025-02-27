@@ -42,7 +42,6 @@ export default function HomePage(
 ) {
   const { t } = useTranslation('common');
   const { settings, setSettings } = useSettings();
-  console.log('🎸 [test] - settings:', settings);
 
   const [reset, setReset] = useState<boolean>(false);
 
