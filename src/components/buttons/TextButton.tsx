@@ -1,3 +1,10 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2025-02-27 23:31:28
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-28 01:52:11
+ * @Description:
+ */
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
@@ -28,14 +35,14 @@ const TextButton = React.forwardRef<HTMLButtonElement, TextButtonProps>(
         type='button'
         disabled={buttonDisabled}
         className={cn(
-          'group mt-1 flex w-24 items-center justify-center space-x-2 rounded-full px-4 py-2 text-sm font-medium text-zinc-800 shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur-md focus:outline-none focus-visible:ring-2 dark:from-zinc-900/30 dark:to-zinc-800/80 dark:text-zinc-200 dark:ring-white/10 dark:hover:ring-white/20 dark:focus-visible:ring-yellow-500/80',
+          'group mt-1 flex w-24 items-center justify-center space-x-2 rounded-full px-4 py-2 text-sm font-medium shadow-lg shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none focus-visible:ring-2 bg-gradient-to-b from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 focus-visible:ring-yellow-500/80',
           //#region  //*=========== Variant ===========
           variant === 'primary' && [
             'text-primary-500 hover:text-primary-600 active:text-primary-700',
             'disabled:text-primary-200',
           ],
           variant === 'basic' && [
-            'text-black hover:text-gray-600 active:text-gray-800',
+            'text-white hover:text-gray-300 active:text-zinc-100',
             'disabled:text-gray-300',
           ],
 

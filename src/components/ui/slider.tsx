@@ -1,3 +1,10 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2023-08-15 14:20:13
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-28 02:20:38
+ * @Description:
+ */
 'use client';
 
 import * as SliderPrimitive from '@radix-ui/react-slider';
@@ -12,8 +19,8 @@ const Slider = React.forwardRef<
   }
 >(({ className, color = 'amber', ...props }, ref) => {
   const colorClasses = {
-    bg: 'bg-amber-800',
-    border: 'border-amber-800',
+    bg: 'bg-zinc-200',
+    border: 'bg-primary',
   };
 
   switch (color) {
@@ -44,7 +51,7 @@ const Slider = React.forwardRef<
         />
       </SliderPrimitive.Track>
       <SliderPrimitive.Thumb
-        className={`block h-5 w-5 rounded-full border-2 ${colorClasses.border} bg-white ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 `}
+        className={`block h-5 w-5 rounded-full border-2 ${colorClasses.border} bg-primary ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 `}
       />
     </SliderPrimitive.Root>
   );

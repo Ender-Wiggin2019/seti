@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-10-25 22:45:44
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-29 10:58:41
+ * @LastEditTime: 2025-02-28 01:43:45
  * @Description:
  */
 
@@ -34,20 +34,20 @@ export interface IFreeAction {
 }
 
 export enum ESector {
-  RED = 1,
-  YELLOW,
-  BLUE,
-  BLACK,
+  RED = 'red-signal',
+  YELLOW = 'yellow-signal',
+  BLUE = 'blue-signal',
+  BLACK = 'black-signal',
 }
 
 export enum EResource {
-  CREDIT = 1,
-  ENERGY,
-  DATA,
-  PUBLICITY,
-  SCORE,
-  CARD,
-  MOVE,
+  CREDIT = 'credit',
+  ENERGY = 'energy',
+  DATA = 'data',
+  PUBLICITY = 'publicity',
+  SCORE = 'score',
+  CARD = 'draw-card',
+  MOVE = 'move',
 }
 
 export const BASE_FREE_ACTIONS = [

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-27 16:39:21
+ * @LastEditTime: 2025-02-27 23:41:58
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -58,7 +58,7 @@ export const alienCards: BaseCard[] = [
   },
   {
     id: 'ET.16',
-    name: '',
+    name: 'Flooding the Media Space',
     position: { src: '/images/aliens/anomalies.webp', row: 0, col: 4 },
     freeAction: [
       { type: EResource.DATA, value: 1 },

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-08-14 10:52:47
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-26 13:52:46
+ * @LastEditTime: 2025-02-28 02:21:49
  * @Description:
  */
 import React, { useEffect, useState } from 'react';
@@ -11,6 +11,8 @@ import { FiHexagon } from 'react-icons/fi';
 import { cn } from '@/lib/utils';
 
 import { Slider } from '@/components/ui/slider';
+import { EResource } from '@/types/BaseCard';
+import Tag from '@/components/icons/Tag';
 type CreditFilterProps = React.ComponentProps<typeof Slider> & {
   onFilterChange: (credit: number[]) => void;
   reset: boolean;
@@ -39,10 +41,14 @@ export function CreditFilter({
   }, [reset]);
 
   return (
-    <div className='group mt-1 flex w-48 flex-row items-center justify-center space-x-2 rounded-full bg-gradient-to-b from-zinc-50/20 to-white/80 px-4 py-2 text-sm font-medium text-amber-800 shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur-md focus:outline-none focus-visible:ring-2 dark:from-zinc-900/30 dark:to-zinc-800/80 dark:text-zinc-200 dark:ring-white/10 dark:hover:ring-white/20 dark:focus-visible:ring-yellow-500/80'>
-      <div className='flex w-10 flex-row gap-2'>
-        <FiHexagon className='h-auto w-auto' />
-        <div>{credit[0] === 5 ? 'All' : credit[0]}</div>
+    <div className='group mt-1 flex w-64 flex-row items-center justify-center space-x-2 rounded-full bg-gradient-to-b  px-2 py-1 text-sm font-medium shadow-lg shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none focus-visible:ring-2 from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 focus-visible:ring-yellow-500/80'>
+      <div className='flex flex-row gap-1 items-center'>
+        <div className='scale-75'>
+          <Tag type={EResource.CREDIT} />
+        </div>
+        <div className='text-xl w-8 font-bold text-[#b09530]'>
+          {credit[0] === 5 ? 'All' : credit[0]}
+        </div>
       </div>
       <Slider
         value={credit}

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-26 13:39:34
+ * @LastEditTime: 2025-02-28 01:52:58
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
@@ -78,7 +78,7 @@ export const SortButton: React.FC<SortButtonProps> = ({
   return (
     <TextButton
       selected={false}
-      className='hover:text-zinc-500'
+      className='w-32'
       selectClassName='text-zinc-900 ring-zinc-900/90 ring-2'
       onClick={handleSortOrderChange}
     >

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-07-08 11:36:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-27 14:03:31
+ * @LastEditTime: 2025-02-28 01:56:39
  * @Description:
  */
 import { useRouter } from 'next/router';
@@ -67,8 +67,8 @@ export const AlienFilter: React.FC<AlienFilterProps> = ({
             <TextButton
               key={alien.type}
               selected={selectedCategories.includes(alien.type)}
-              className={`${alien.text} hover:text-white/50 focus:text-white/50 ${alien.bg} rounded-sm`}
-              selectClassName={`${alien.ring} ${alien.text} ring-2`}
+              className={`${alien.text} hover:text-white/50 focus:text-white/50 bg-none ${alien.bg} rounded-sm`}
+              selectClassName={`${alien.ring} ${alien.text} hover:${alien.ring} active:${alien.ring} ring-2`}
               onClick={() => handleCategoryChange(alien.type)}
             >
               {t(EAlienMap[alien.type])}

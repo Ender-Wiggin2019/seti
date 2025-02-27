@@ -153,7 +153,7 @@ export default function HomePage(
               reset={reset}
             /> */}
           </div>
-          <div className='text-xl text-primary-200 font-bold'>
+          <div className='text-lg text-primary-200 font-bold'>
             {t('free_action')}
           </div>
           <ResourceFilter
@@ -161,7 +161,7 @@ export default function HomePage(
             src={BASE_FREE_ACTIONS}
             reset={reset}
           />
-          <div className='text-xl text-primary-200 font-bold'>
+          <div className='text-lg text-primary-200 font-bold'>
             {t('income')}
           </div>
           <ResourceFilter
@@ -169,7 +169,7 @@ export default function HomePage(
             src={BASE_INCOMES}
             reset={reset}
           />
-          <div className='text-xl text-primary-200 font-bold'>
+          <div className='text-lg text-primary-200 font-bold'>
             {t('sector')}
           </div>
           <SectorFilter onFilterChange={setSelectedSectors} reset={reset} />
@@ -177,7 +177,7 @@ export default function HomePage(
             <TextFilter onTextChange={setTextFilter} reset={reset} />
             <div
               onClick={resetAll}
-              className='group flex w-auto items-center justify-between space-x-2 rounded-md bg-zinc-600 px-4 py-2 text-lg font-medium text-zinc-100 shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur-md hover:bg-zinc-500 hover:text-primary-400 focus:outline-none focus-visible:ring-2 dark:from-zinc-900/30 dark:to-zinc-800/80 dark:text-zinc-200 dark:ring-white/10 dark:hover:ring-white/20 dark:focus-visible:ring-yellow-500/80'
+              className='group flex w-auto items-center justify-between space-x-2 rounded-md bg-primary px-4 py-2 text-lg font-medium text-zinc-100 shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur-md hover:bg-zinc-500 hover:text-primary-400 focus:outline-none focus-visible:ring-2 dark:from-zinc-900/30 dark:to-zinc-800/80 dark:text-zinc-200 dark:ring-white/10 dark:hover:ring-white/20 dark:focus-visible:ring-yellow-500/80'
             >
               <FiRotateCcw className='' />
             </div>

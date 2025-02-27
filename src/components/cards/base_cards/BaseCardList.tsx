@@ -191,7 +191,7 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
 
   useEffect(() => {
     onCardCountChange({ base: originalCount, alien: alienCount });
-  }, [originalCount, onCardCountChange]);
+  }, [originalCount, alienCount, onCardCountChange]);
 
   switch (sortOrder) {
     case SortOrder.ID_ASC:

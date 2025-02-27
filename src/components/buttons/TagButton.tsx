@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-08-15 14:20:13
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-26 02:16:52
+ * @LastEditTime: 2025-02-28 01:55:36
  * @Description:
  */
 // TagButton.tsx
@@ -33,10 +33,9 @@ const TagButton = React.forwardRef<HTMLButtonElement, TagButtonProps>(
         type='button'
         onClick={() => onTagClick && onTagClick(tag)}
         className={cn(
-          'filter-button h-min w-min rounded-full bg-gradient-to-b from-zinc-50/50 to-white/90 p-2 text-sm shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur transition',
-          selected &&
-            'bg-gradient-radial scale-90 from-primary-700/90 to-primary-600/70',
-          !selected && 'scale-90 hover:scale-110'
+          'filter-button h-min w-min rounded-full bg-gradient-to-b from-zinc-50/50 to-white/90 p-1 text-sm shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur transition',
+          selected && 'bg-gradient-radial from-yellow-200 to-yellow-100',
+          !selected && ''
         )}
         {...rest}
       >

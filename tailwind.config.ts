@@ -35,18 +35,18 @@ export default {
           background: '#024d3f',
         },
         exertians: {
-          DEFAULT: '#000',
+          DEFAULT: '#F5C4C0',
           foreground: '#F5C4C0',
           background: '#BE0505',
         },
         mascamites: {
-          DEFAULT: '#604008',
+          DEFAULT: '#ECE6C4',
           foreground: '#ECE6C4',
           background: '#A38815',
         },
         oumuamua: {
-          DEFAULT: '#D6CAE2',
-          foreground: '#75509C',
+          DEFAULT: '#75509C',
+          foreground: '#D6CAE2',
           background: '#333469',
         },
         secondary: {

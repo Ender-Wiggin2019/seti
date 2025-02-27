@@ -1,3 +1,10 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2023-07-08 11:36:49
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-28 02:02:49
+ * @Description:
+ */
 import { motion, useMotionTemplate, useMotionValue } from 'framer-motion';
 import { useTranslation } from 'next-i18next';
 import React, { useState } from 'react';
@@ -41,7 +48,7 @@ export const TextFilter: React.FC<TextFilterProps> = ({
   return (
     <div
       className={cn(
-        'group relative flex w-full rounded-xl bg-gradient-to-b from-zinc-50/50 to-white/70 p-2 pb-6 shadow-xl shadow-zinc-500/10 ring-2 ring-zinc-200/30 transition-opacity [--spotlight-color:rgb(236_252_203_/_0.25)] dark:from-zinc-900/70 dark:to-zinc-800/60 dark:shadow-zinc-700/10 dark:ring-zinc-700/30 dark:[--spotlight-color:rgb(217_249_157_/_0.04)] md:p-4 lg:w-1/2'
+        'group relative flex w-full rounded-xl bg-gradient-to-b p-2 pb-6 shadow-xl ring-2  transition-opacity from-zinc-900/70 to-zinc-800/60 shadow-zinc-700/10 ring-zinc-700/80 [--spotlight-color:rgb(217_249_157_/_0.04)] md:p-4 lg:w-1/2'
       )}
       onMouseMove={handleMouseMove}
     >
@@ -57,7 +64,7 @@ export const TextFilter: React.FC<TextFilterProps> = ({
       >
         <svg
           aria-hidden='true'
-          className='absolute inset-x-0 inset-y-[-30%] h-[160%] w-full skew-y-[-18deg] fill-black/5 stroke-zinc-900/10 dark:fill-[hsla(0,0%,100%,.03)] dark:stroke-white/10'
+          className='absolute inset-x-0 inset-y-[-30%] h-[160%] w-full skew-y-[-18deg fill-[hsla(0,0%,100%,.03)] stroke-white/10'
         >
           <defs>
             <pattern
@@ -86,7 +93,7 @@ export const TextFilter: React.FC<TextFilterProps> = ({
 
       <div className='z-10 ml-2 flex-1 shrink-0 md:ml-4'>
         <input
-          className='block w-full shrink-0 resize-none border-0 bg-transparent p-0 text-sm leading-6 text-zinc-800 placeholder-zinc-400 outline-none transition-[height] will-change-[height] focus:outline-none focus:ring-0 dark:text-zinc-200 dark:placeholder-zinc-500'
+          className='block w-full shrink-0 resize-none border-0 bg-transparent p-0 text-sm leading-6 text-zinc-800 placeholder-zinc-400 outline-none transition-[height] will-change-[height] focus:outline-none focus:ring-0 text-zinc-200 placeholder-zinc-500'
           value={text}
           placeholder={t('Filter text') + '...'}
           onChange={(event) => handleChange(event.target.value)}

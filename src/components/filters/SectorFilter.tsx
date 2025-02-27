@@ -45,7 +45,7 @@ export const SectorFilter: React.FC<SectorFilterProps> = ({
     <>
       <div className='xl:grid-cols-auto grid grid-cols-4 gap-2 md:grid-cols-6 lg:grid-cols-8'>
         {Object.keys(ESectorMap).map((key) => {
-          const sector = Number(key) as ESector;
+          const sector = key as ESector;
           return (
             <TagButton
               key={sector}
