@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 09:48:41
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-28 14:36:38
+ * @LastEditTime: 2025-02-28 16:49:05
  * @Description:
  */
 import { ArrowDownWideNarrow, ArrowUpNarrowWide } from 'lucide-react';
@@ -24,17 +24,16 @@ export const SortButton: React.FC<SortButtonProps> = ({
 }) => {
   const { t } = useTranslation('common');
 
-  const sortMap: Record<SortOrder, { text: string; icon: React.JSX.Element }> =
-    {
-      [SortOrder.ID_ASC]: {
-        text: t('sort.ID_ASC'),
-        icon: <ArrowUpNarrowWide />,
-      },
-      [SortOrder.ID_DESC]: {
-        text: t('sort.ID_DESC'),
-        icon: <ArrowDownWideNarrow />,
-      },
-    };
+  const sortMap: Record<SortOrder, { text: string; icon: JSX.Element }> = {
+    [SortOrder.ID_ASC]: {
+      text: t('sort.ID_ASC'),
+      icon: <ArrowUpNarrowWide />,
+    },
+    [SortOrder.ID_DESC]: {
+      text: t('sort.ID_DESC'),
+      icon: <ArrowDownWideNarrow />,
+    },
+  };
 
   const handleSortOrderChange = () => {
     setSortOrder((oldSortOrder) => {
