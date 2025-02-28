@@ -2,13 +2,13 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-01 03:00:23
+ * @LastEditTime: 2025-03-01 03:11:43
  * @Description:
  */
 // import {Size} from "@/types/Size";
 
-import baseCards from '@/data/baseCards';
-import { flavorTexts } from '@/data/flavorTexts';
+// import baseCards from '@/data/baseCards';
+// import { flavorTexts } from '@/data/flavorTexts';
 import BaseCard, { EAlienType } from '@/types/BaseCard';
 import { EResource, ESector } from '@/types/element';
 export const alienCards: BaseCard[] = [
