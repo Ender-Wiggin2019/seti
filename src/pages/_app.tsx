@@ -1,3 +1,10 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2025-02-25 09:56:21
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-28 09:49:59
+ * @Description:
+ */
 import { ClerkProvider } from '@clerk/nextjs';
 import { AppProps } from 'next/app';
 import Script from 'next/script';
@@ -14,7 +21,7 @@ function MyApp({ Component, pageProps }: AppProps) {
       <Script
         async
         src='https://umami.ender-wiggin.com/script.js'
-        data-website-id='f2a10fa7-5a6f-4329-9bdf-c239f51b6c52'
+        data-website-id='7c7098e8-25da-46a0-8bfc-c831955f6a9e'
 
         // data-website-id='f2a10fa7-5a6f-4329-9bdf-c239f51b6c52'
       ></Script>

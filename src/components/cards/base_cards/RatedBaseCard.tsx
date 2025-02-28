@@ -2,10 +2,10 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-29 11:33:29
+ * @LastEditTime: 2025-02-28 12:00:04
  * @Description:
  */
-import React from 'react';
+import React, { useState } from 'react';
 
 import { HoverCard } from '@/components/cards/base_cards/HoverCard';
 import {
@@ -27,23 +27,26 @@ export const RatedBaseCard: React.FC<RatedBaseCardProps> = ({
   cardData,
   showLink,
 }) => {
+  // NOTE: rating and ratingCount are not used yet
   const { card, model, rating, ratingCount } = cardData;
-
+  const [open, setOpen] = useState(false);
   return (
-    <>
-      <Popover>
+    <div className='w-fit'>
+      <Popover open={open}>
         <PopoverTrigger asChild>
-          <BaseCard card={card} />
+          <div className='w-fit' onClick={() => setOpen((prev) => !prev)}>
+            <BaseCard card={card} />
+          </div>
         </PopoverTrigger>
-        <PopoverContent className='bg-zinc-50/95 p-2'>
+        <PopoverContent className='w-32 -mt-40 bg-zinc-50/95 p-2'>
           <HoverCard
-            id={card.id}
+            card={cardData.card}
             showLink={showLink}
-            rating={rating}
-            ratingCount={ratingCount}
+            rating={null}
+            ratingCount={null}
           />
         </PopoverContent>
       </Popover>
-    </>
+    </div>
   );
 };

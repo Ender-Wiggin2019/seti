@@ -1,3 +1,10 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2025-02-25 09:56:21
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-28 13:08:14
+ * @Description:
+ */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'next-i18next';
@@ -38,7 +45,7 @@ export default function Page(
             <div className='mr-3 flex-initial md:mr-10 lg:mr-20'>
               <BaseCard card={card as BaseCardType} />
             </div>
-            <HoverCard id={card.id} showLink={false} />
+            <HoverCard card={card} showLink={false} />
           </div>
         </div>
 

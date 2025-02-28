@@ -1,5 +1,4 @@
 import type { Config } from 'tailwindcss';
-import defaultTheme from 'tailwindcss/defaultTheme';
 
 export default {
   content: ['./src/**/*.{js,jsx,ts,tsx}'],
@@ -73,6 +72,9 @@ export default {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+      },
+      text: {
+        xxs: 'font-size: 0.6rem;line-height: 0.8rem;',
       },
       borderRadius: {
         lg: 'var(--radius)',

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-07-08 11:36:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-28 02:02:49
+ * @LastEditTime: 2025-02-28 13:05:37
  * @Description:
  */
 import { motion, useMotionTemplate, useMotionValue } from 'framer-motion';
@@ -48,7 +48,7 @@ export const TextFilter: React.FC<TextFilterProps> = ({
   return (
     <div
       className={cn(
-        'group relative flex w-full rounded-xl bg-gradient-to-b p-2 pb-6 shadow-xl ring-2  transition-opacity from-zinc-900/70 to-zinc-800/60 shadow-zinc-700/10 ring-zinc-700/80 [--spotlight-color:rgb(217_249_157_/_0.04)] md:p-4 lg:w-1/2'
+        'group relative flex w-full rounded-xl bg-gradient-to-b p-4 shadow-xl ring-2  transition-opacity from-zinc-900/70 to-zinc-800/60 shadow-zinc-700/10 ring-zinc-700/80 [--spotlight-color:rgb(217_249_157_/_0.04)] md:p-4 lg:w-1/2'
       )}
       onMouseMove={handleMouseMove}
     >
@@ -93,7 +93,7 @@ export const TextFilter: React.FC<TextFilterProps> = ({
 
       <div className='z-10 ml-2 flex-1 shrink-0 md:ml-4'>
         <input
-          className='block w-full shrink-0 resize-none border-0 bg-transparent p-0 text-sm leading-6 text-zinc-800 placeholder-zinc-400 outline-none transition-[height] will-change-[height] focus:outline-none focus:ring-0 text-zinc-200 placeholder-zinc-500'
+          className='block w-full shrink-0 resize-none border-0 bg-transparent p-0 text-sm leading-6 placeholder-zinc-400 outline-none transition-[height] will-change-[height] focus:outline-none focus:ring-0 text-zinc-200'
           value={text}
           placeholder={t('Filter text') + '...'}
           onChange={(event) => handleChange(event.target.value)}
