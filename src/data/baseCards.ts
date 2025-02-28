@@ -2,14 +2,14 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-27 14:08:38
+ * @LastEditTime: 2025-03-01 02:38:38
  * @Description:
  */
 // import {Size} from "@/types/Size";
 
 import BaseCard from '@/types/BaseCard';
 import { EResource, ESector } from '@/types/element';
-export const baseCards: BaseCard[] = [
+const _baseCards: BaseCard[] = [
   {
     id: '39',
     name: '61 Virginis Observation',
@@ -1311,6 +1311,14 @@ export const baseCards: BaseCard[] = [
     description: '',
   },
 ];
+
+// add flavorText
+export const baseCards: BaseCard[] = _baseCards.map(card => {
+  return {
+    ...card,
+    flavorText: `${card.id}_flavor_text`,
+  };
+})
 
 // export const baseCards: BaseCard[] = [
 //     {

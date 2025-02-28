@@ -31,6 +31,11 @@ export default interface BaseCard {
   description?: string;
   flavorText?: string;
 
+  // special
+  special?: {
+    danger?: number,
+  }
+
   // meta data
   source?: CardSource;
   cardType?: ECardType;

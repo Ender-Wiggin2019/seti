@@ -2,12 +2,13 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-26 23:56:31
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-27 14:28:10
+ * @LastEditTime: 2025-03-01 02:41:13
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
 import React from 'react';
 
+import { FlavorText } from '@/components/cards/base_cards/FlavorText';
 import BaseCardWrapper from '@/components/wrapper/AnimalWrapper';
 
 import BaseCardType, { EAlienMap } from '@/types/BaseCard';
@@ -38,6 +39,9 @@ export const BaseCard: React.FC<BaseCardProps> = ({ card }) => {
           boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
         }}
       ></div>
+      {/* {card.flavorText && (
+        <FlavorText id={card.id} flavorText={card.flavorText} />
+      )} */}
     </BaseCardWrapper>
   );
 };

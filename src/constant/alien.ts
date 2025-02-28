@@ -30,6 +30,5 @@ export const ALIEN_BUTTON_GROUP = [
     text: 'text-exertians-foreground',
     ring: 'ring-exertians',
     bg: 'bg-exertians-background',
-    wip: true,
   },
 ];

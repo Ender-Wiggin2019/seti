@@ -26,7 +26,10 @@ export default function HomePage(
             {t('about.title')}
           </h1>
           <p className='leading-7 [&:not(:first-child)]:mt-6'>
-            测试版本，仍在开发中。Ender 制作。
+            Beta version, still in development. Made by Ender.
+          </p>
+          <p className='leading-7 [&:not(:first-child)]:mt-6'>
+            测试版本，仍在开发中。Ender 制作。感谢根派大佬帮忙提供修正天文术语的官方翻译。
           </p>
           {/* <p className='leading-7 [&:not(:first-child)]:mt-6'>
             <Trans i18nKey='about.intro'>
@@ -138,6 +141,10 @@ export default function HomePage(
 
 export const getStaticProps: GetStaticProps<Props> = async ({ locale }) => ({
   props: {
-    ...(await serverSideTranslations(locale ?? 'zh-CN', ['common', 'seti'])),
+    ...(await serverSideTranslations(locale ?? 'zh-CN', [
+      'common',
+      'seti',
+      'flavorText',
+    ])),
   },
 });

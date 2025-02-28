@@ -26,7 +26,7 @@ export const HoverCard: React.FC<HoverCardProps> = ({
   ratingCount,
 }) => {
   // const router = useRouter();
-  const { t } = useTranslation(['common', 'seti']);
+  const { t } = useTranslation(['common', 'seti', 'flavorText']);
   return (
     <div className='flex flex-col text-xxs'>
       {<span className='text-xxs'>{card.name}</span>}

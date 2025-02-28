@@ -2,11 +2,13 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-28 14:48:53
+ * @LastEditTime: 2025-03-01 03:00:23
  * @Description:
  */
 // import {Size} from "@/types/Size";
 
+import baseCards from '@/data/baseCards';
+import { flavorTexts } from '@/data/flavorTexts';
 import BaseCard, { EAlienType } from '@/types/BaseCard';
 import { EResource, ESector } from '@/types/element';
 export const alienCards: BaseCard[] = [
@@ -491,6 +493,167 @@ export const alienCards: BaseCard[] = [
     income: EResource.CARD,
     alien: EAlienType.OUMUAMUA,
   },
+
+  {
+    id: 'ET.52',
+    name: 'Automated Lab',
+    position: { src: '/images/aliens/exertians.webp', row: 0, col: 0 },
+    price: 0,
+    alien: EAlienType.EXERTIANS,
+    special: {
+      danger: 0,
+    }
+  },
+  {
+    id: 'ET.50',
+    name: 'Casette Deployment',
+    position: { src: '/images/aliens/exertians.webp', row: 0, col: 1 },
+    price: 0,
+    alien: EAlienType.EXERTIANS,
+    special: {
+      danger: 2,
+    }
+  },
+  {
+    id: 'ET.45',
+    name: 'Core-breach Exoplanet',
+    position: { src: '/images/aliens/exertians.webp', row: 0, col: 2 },
+    price: 0,
+    alien: EAlienType.EXERTIANS,
+    special: {
+      danger: 4,
+    }
+  },
+  {
+    id: 'ET.42',
+    name: 'Deflector',
+    position: { src: '/images/aliens/exertians.webp', row: 0, col: 3 },
+    price: 0,
+    alien: EAlienType.EXERTIANS,
+    special: {
+      danger: 7,
+    }
+  },
+  {
+    id: 'ET.43',
+    name: 'Expender Core',
+    position: { src: '/images/aliens/exertians.webp', row: 0, col: 4 },
+    price: 0,
+    alien: EAlienType.EXERTIANS,
+    special: {
+      danger: 3,
+    }
+  },
+  {
+    id: 'ET.51',
+    name: 'Extractor',
+    position: { src: '/images/aliens/exertians.webp', row: 1, col: 0 },
+    price: 0,
+    alien: EAlienType.EXERTIANS,
+    special: {
+      danger: 8,
+    }
+  },
+  {
+    id: 'ET.47',
+    name: 'Fission-sun Exoplanet',
+    position: { src: '/images/aliens/exertians.webp', row: 1, col: 1 },
+    price: 0,
+    alien: EAlienType.EXERTIANS,
+    special: {
+      danger: 5,
+    }
+  },
+  {
+    id: 'ET.49',
+    name: 'Generative Infrastructure',
+    position: { src: '/images/aliens/exertians.webp', row: 1, col: 2 },
+    price: 0,
+    alien: EAlienType.EXERTIANS,
+    special: {
+      danger: 7,
+    }
+  },
+  {
+    id: 'ET.54',
+    name: 'Nanowielder Node',
+    position: { src: '/images/aliens/exertians.webp', row: 1, col: 3 },
+    price: 0,
+    alien: EAlienType.EXERTIANS,
+    special: {
+      danger: 1,
+    }
+  },
+  {
+    id: 'ET.53',
+    name: 'Neuralab',
+    position: { src: '/images/aliens/exertians.webp', row: 1, col: 4 },
+    price: 0,
+    alien: EAlienType.EXERTIANS,
+    special: {
+      danger: 9,
+    }
+  },
+  {
+    id: 'ET.48',
+    name: 'Oscillating Probes',
+    position: { src: '/images/aliens/exertians.webp', row: 2, col: 0 },
+    price: 0,
+    alien: EAlienType.EXERTIANS,
+    special: {
+      danger: 3,
+    }
+  },
+  {
+    id: 'ET.44',
+    name: 'pierced Exoplanet',
+    position: { src: '/images/aliens/exertians.webp', row: 2, col: 1 },
+    price: 0,
+    alien: EAlienType.EXERTIANS,
+    special: {
+      danger: 4,
+    }
+  },
+  {
+    id: 'ET.41',
+    name: 'Razor-edge Shuttle',
+    position: { src: '/images/aliens/exertians.webp', row: 2, col: 2 },
+    price: 0,
+    alien: EAlienType.EXERTIANS,
+    special: {
+      danger: 6,
+    }
+  },
+  {
+    id: 'ET.55',
+    name: 'Stratoelevator',
+    position: { src: '/images/aliens/exertians.webp', row: 2, col: 3 },
+    price: 0,
+    alien: EAlienType.EXERTIANS,
+    special: {
+      danger: 4,
+    }
+  },
+  {
+    id: 'ET.46',
+    name: 'Vortex Exoplanet',
+    position: { src: '/images/aliens/exertians.webp', row: 2, col: 4 },
+    price: 0,
+    alien: EAlienType.EXERTIANS,
+    special: {
+      danger: 4,
+    }
+  },
 ];
 
+
+// const res = [];
+
+// for (let i = 70; i < flavorTexts.length + 70; i ++ ) {
+//   const f = flavorTexts[i - 70];
+//   const id = baseCards[i].id;
+//   res.push(`\"${id + '_flavor_text'}\": \"${f.flavorText}\"`);
+// }
+
+// console.log(res)
 // console.log(a.map((a) => a.name).join(', '));

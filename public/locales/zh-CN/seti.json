@@ -182,5 +182,21 @@
   "Probe Customisation": "探测器定制",
   "Race Against Time": "争分夺秒",
   "Terrain Mapping": "地形测绘",
-  "Visitor in the Sky": "天外来客"
+  "Visitor in the Sky": "天外来客",
+
+  "Automated Lab": "自动实验室",
+  "Casette Deployment": "盒式部署",
+  "Core-breach Exoplanet": "核心破裂的外星",
+  "Deflector": "偏转器",
+  "Expender Core": "扩展核心",
+  "Extractor": "提取器",
+  "Fission-sun Exoplanet": "裂变太阳系外行星",
+  "Generative Infrastructure": "生成式基建",
+  "Nanowielder Node": "纳米控制节点",
+  "Neuralab": "神经实验室",
+  "Oscillating Probes": "振荡探测器",
+  "Pierced Exoplanet": "穿透的系外行星",
+  "Razor-edge Shuttle": "锐边穿梭机",
+  "Stratoelevator": "平流层升降机",
+  "Vortex Exoplanet": "漩涡系外行星"
 }

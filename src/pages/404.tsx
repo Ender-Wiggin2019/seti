@@ -38,6 +38,10 @@ type Props = {
 
 export const getStaticProps: GetStaticProps<Props> = async ({ locale }) => ({
   props: {
-    ...(await serverSideTranslations(locale ?? 'en', ['common', 'seti'])),
+    ...(await serverSideTranslations(locale ?? 'en', [
+      'common',
+      'seti',
+      'flavorText',
+    ])),
   },
 });

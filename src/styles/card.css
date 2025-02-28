@@ -16,6 +16,57 @@
   background-repeat: no-repeat;
 }
 
+/* Method1: clip */
+/* .card-flavor-text {
+  position: absolute;
+  display: flex;
+  align-items: flex-end;
+  bottom: 6px;
+  left: 9px;
+  background-color: white;
+  color: black;
+  font-size: 5px;
+  font-style: italic;
+  width: 124px;
+  height: 24px;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 24px) 100%, 0 100%);
+  box-sizing: border-box;
+  text-overflow: ellipsis;
+} */
+
+/* Method2: append */
+.card-flavor-text {
+  position: absolute;
+  display: flex;
+  align-items: flex-end;
+  bottom: 6px;
+  left: 8px;
+  background-color: white;
+  color: black;
+  font-size: 4px;
+  line-height: 6px;
+  font-style: italic;
+  width: 104px;
+  height: 20px;
+  padding-bottom: 2px;
+  box-sizing: border-box;
+}
+
+.card-flavor-text::after {
+  content: '';
+  position: absolute;
+  top: 0; /* 将 bottom 改为 top */
+  right: -20px;
+  width: 0;
+  height: 0;
+  border-left: 20px solid white; /* 将 border-left 改为 border-right */
+  border-bottom: 20px solid transparent; /* 将 border-top 改为 border-bottom */
+}
+
+.normal-flavor-text {
+  color: black;
+}
+
 .card-title {
   position: absolute;
   top: 95px;
@@ -48,6 +99,11 @@
 .oumuamua {
   top: 87px;
   background-color: #6940a2;
+}
+
+.exertians {
+  top: 87px;
+  background-color: #ca273a;
 }
 /* icons */
 .seti-icon {

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-07-08 11:36:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-28 11:27:34
+ * @LastEditTime: 2025-03-01 02:01:48
  * @Description:
  */
 import { useRouter } from 'next/router';
@@ -59,11 +59,6 @@ export const AlienFilter: React.FC<AlienFilterProps> = ({
         }
         return (
           <div key={alien.type} className='relative'>
-            {alien.wip && (
-              <Badge className='z-10 bg-amber-300 absolute -top-2 -right-2 text-black'>
-                TODO
-              </Badge>
-            )}
             <TextButton
               key={alien.type}
               selected={selectedCategories.includes(alien.type)}
