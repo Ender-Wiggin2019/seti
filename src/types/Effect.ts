@@ -1,3 +1,10 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2025-02-25 09:56:21
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-28 14:46:47
+ * @Description:
+ */
 export enum EffectType {
   // Base Game
   PASSIVE = 'passive',

@@ -1,17 +1,13 @@
 /*
  * @Author: Ender-Wiggin
- * @Date: 2025-02-25 09:56:21
+ * @Date: 2025-02-28 09:48:41
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-28 01:52:58
+ * @LastEditTime: 2025-02-28 14:36:38
  * @Description:
  */
+import { ArrowDownWideNarrow, ArrowUpNarrowWide } from 'lucide-react';
 import { useTranslation } from 'next-i18next';
 import React from 'react';
-import {
-  TbSortAscending2,
-  TbSortAscendingNumbers,
-  TbSortDescendingNumbers,
-} from 'react-icons/tb';
 
 import TextButton from '@/components/buttons/TextButton';
 
@@ -28,41 +24,17 @@ export const SortButton: React.FC<SortButtonProps> = ({
 }) => {
   const { t } = useTranslation('common');
 
-  const getSortOrderText = (sortOrder: SortOrder) => {
-    switch (sortOrder) {
-      case SortOrder.ID_ASC:
-        return t('sort.ID_ASC');
-      case SortOrder.ID_DESC:
-        return t('sort.ID_DESC');
-      // case SortOrder.DIFF_ASC:
-      //   return t('sort.DIFF_ASC');
-      // case SortOrder.DIFF_DESC:
-      //   return t('sort.DIFF_DESC');
-      // case SortOrder.RATING_ASC:
-      //   return t('Rating');
-      // case SortOrder.RATING_DESC:
-      //   return t('sort.RATING_DESC');
-      default:
-        return '';
-    }
-  };
-
-  const getSortIcon = (sortOrder: SortOrder) => {
-    switch (sortOrder) {
-      case SortOrder.ID_ASC:
-        return <TbSortAscendingNumbers />;
-      // case SortOrder.DIFF_ASC:
-      //   return <TbSortAscending2 />;
-      case SortOrder.ID_DESC:
-        return <TbSortDescendingNumbers />;
-      // case SortOrder.DIFF_DESC:
-      //   return <TbSortDescending2 />;
-      // case SortOrder.RATING_DESC:
-      //   return <TbStarHalfFilled />;
-      default:
-        return null;
-    }
-  };
+  const sortMap: Record<SortOrder, { text: string; icon: React.JSX.Element }> =
+    {
+      [SortOrder.ID_ASC]: {
+        text: t('sort.ID_ASC'),
+        icon: <ArrowUpNarrowWide />,
+      },
+      [SortOrder.ID_DESC]: {
+        text: t('sort.ID_DESC'),
+        icon: <ArrowDownWideNarrow />,
+      },
+    };
 
   const handleSortOrderChange = () => {
     setSortOrder((oldSortOrder) => {
@@ -82,8 +54,8 @@ export const SortButton: React.FC<SortButtonProps> = ({
       selectClassName='text-zinc-900 ring-zinc-900/90 ring-2'
       onClick={handleSortOrderChange}
     >
-      {getSortIcon(sortOrder)}
-      {getSortOrderText(sortOrder)}
+      {sortMap[sortOrder].icon}
+      {sortMap[sortOrder].text}
     </TextButton>
   );
 };

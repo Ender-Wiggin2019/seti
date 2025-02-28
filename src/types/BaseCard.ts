@@ -1,12 +1,20 @@
 /*
  * @Author: Ender-Wiggin
+ * @Date: 2025-02-28 09:48:41
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-28 14:47:07
+ * @Description:
+ */
+/*
+ * @Author: Ender-Wiggin
  * @Date: 2023-10-25 22:45:44
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-28 01:43:45
+ * @LastEditTime: 2025-02-28 14:24:53
  * @Description:
  */
 
 import { CardSource } from '@/types/CardSource';
+import { ESector, EResource, IIconItem } from '@/types/element';
 
 export default interface BaseCard {
   id: string;
@@ -19,6 +27,7 @@ export default interface BaseCard {
   price: number;
   income?: EResource;
   mission?: string;
+  effect?: IIconItem[];
   description?: string;
   flavorText?: string;
 
@@ -33,23 +42,6 @@ export interface IFreeAction {
   value: number;
 }
 
-export enum ESector {
-  RED = 'red-signal',
-  YELLOW = 'yellow-signal',
-  BLUE = 'blue-signal',
-  BLACK = 'black-signal',
-}
-
-export enum EResource {
-  CREDIT = 'credit',
-  ENERGY = 'energy',
-  DATA = 'data',
-  PUBLICITY = 'publicity',
-  SCORE = 'score',
-  CARD = 'draw-card',
-  MOVE = 'move',
-}
-
 export const BASE_FREE_ACTIONS = [
   EResource.DATA,
   EResource.PUBLICITY,
@@ -61,23 +53,6 @@ export const BASE_INCOMES = [
   EResource.ENERGY,
   EResource.CARD,
 ];
-
-export const ESectorMap: Record<ESector, string> = {
-  [ESector.RED]: 'red',
-  [ESector.YELLOW]: 'yellow',
-  [ESector.BLUE]: 'blue',
-  [ESector.BLACK]: 'black',
-};
-
-export const EResourceMap: Record<EResource, string> = {
-  [EResource.CREDIT]: 'credit',
-  [EResource.ENERGY]: 'energy',
-  [EResource.DATA]: 'data',
-  [EResource.PUBLICITY]: 'publicity',
-  [EResource.SCORE]: 'score',
-  [EResource.CARD]: 'card',
-  [EResource.MOVE]: 'move',
-};
 
 export enum ECardType {
   NORMAL = 1,

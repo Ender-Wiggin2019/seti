@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-08-15 14:20:13
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-26 12:00:00
+ * @LastEditTime: 2025-02-28 15:51:30
  * @Description:
  */
 // SectorFilter.tsx
@@ -10,7 +10,7 @@ import React, { useState } from 'react';
 
 import TagButton from '@/components/buttons/TagButton';
 
-import { ESector, ESectorMap } from '@/types/BaseCard';
+import { ESector, ESectorMap } from '@/types/element';
 
 type SectorFilterProps = {
   onFilterChange: (sectors: ESector[]) => void;

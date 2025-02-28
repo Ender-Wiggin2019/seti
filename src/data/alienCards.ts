@@ -2,13 +2,13 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-27 23:41:58
+ * @LastEditTime: 2025-02-28 14:48:53
  * @Description:
  */
 // import {Size} from "@/types/Size";
 
-import BaseCard, { EAlienType, EResource, ESector } from '@/types/BaseCard';
-
+import BaseCard, { EAlienType } from '@/types/BaseCard';
+import { EResource, ESector } from '@/types/element';
 export const alienCards: BaseCard[] = [
   {
     id: 'ET.20',

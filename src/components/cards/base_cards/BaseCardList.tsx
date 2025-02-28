@@ -10,7 +10,8 @@ import { getBaseCardModel } from '@/utils/getBaseCardModel';
 
 import { useBaseCardData } from './useBaseCardData';
 
-import BaseCardType, { EAlienType, EResource, ESector } from '@/types/BaseCard';
+import BaseCardType, { EAlienType } from '@/types/BaseCard';
+import { EResource, ESector } from '@/types/element';
 import { CardSource } from '@/types/CardSource';
 import { IBaseCard } from '@/types/IBaseCard';
 import { IRating } from '@/types/IRating';

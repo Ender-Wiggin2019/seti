@@ -31,7 +31,7 @@ function NavItem({
         {children}
         {isActive && (
           <motion.span
-            className='absolute inset-x-1 -bottom-px h-px bg-gradient-to-r from-primary-700/0 via-primary-700/70 to-primary-700/0 dark:from-primary-400/0 dark:via-primary-400/40 dark:to-primary-400/0'
+            className='absolute inset-x-1 -bottom-px h-px bg-gradient-to-r from-primary-400/0 via-primary-400/40 to-primary-400/0'
             layoutId='active-nav-item'
           />
         )}
@@ -65,10 +65,10 @@ function Desktop({
       onMouseMove={handleMouseMove}
       className={cn(
         'group relative',
-        'rounded-full bg-gradient-to-b from-zinc-50/70 to-white/90',
-        'shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur-md',
-        'dark:from-zinc-900/70 dark:to-zinc-800/90 dark:ring-zinc-100/10',
-        '[--spotlight-color:rgb(236_252_203_/_0.6)] dark:[--spotlight-color:rgb(217_249_157_/_0.07)]',
+        'rounded-full bg-gradient-to-b',
+        'shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-100/10 backdrop-blur-md',
+        'from-zinc-900/70 to-zinc-800/90',
+        '[--spotlight-color:rgb(217_249_157_/_0.07)]',
         className
       )}
       {...props}
@@ -80,7 +80,7 @@ function Desktop({
         aria-hidden='true'
       />
 
-      <ul className='flex bg-transparent px-3 text-sm font-medium text-zinc-800 dark:text-zinc-200 '>
+      <ul className='flex bg-transparent px-3 text-sm font-medium text-zinc-200 '>
         {navigationItems.map(({ href, text }) => (
           <NavItem key={href} href={href}>
             {t(text)}
@@ -111,7 +111,7 @@ function Mobile(props: PopoverProps<'div'>) {
   const { t } = useTranslation('common');
   return (
     <Popover {...props}>
-      <Popover.Button className='group flex w-28 items-center justify-between rounded-full bg-gradient-to-b from-zinc-50/20 to-white/80 px-4 py-2 text-sm font-medium text-zinc-800 shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur-md focus:outline-none focus-visible:ring-2 dark:from-zinc-900/30 dark:to-zinc-800/80 dark:text-zinc-200 dark:ring-white/10 dark:hover:ring-white/20 dark:focus-visible:ring-yellow-500/80'>
+      <Popover.Button className='group flex w-28 items-center justify-between rounded-full bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-lg shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none focus-visible:ring-2 from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 focus-visible:ring-primary-500/80'>
         {t('nav.go')}
         {/* Chevron */}
         <svg
@@ -151,14 +151,14 @@ function Mobile(props: PopoverProps<'div'>) {
         >
           <Popover.Panel
             focus
-            className='fixed inset-x-4 top-8 z-50 origin-top rounded-3xl bg-gradient-to-b from-zinc-100/75 to-white p-8 ring-1 ring-zinc-900/5 dark:from-zinc-900/50 dark:to-zinc-900 dark:ring-zinc-800'
+            className='fixed inset-x-4 top-8 z-50 origin-top rounded-3xl bg-gradient-to-b p-8 ring-1 from-zinc-900/50 to-zinc-900 ring-zinc-100/10'
           >
             <div className='flex flex-row-reverse items-center justify-between'>
               <Popover.Button aria-label='关闭菜单' className='-m-1 p-1'>
                 <svg
                   viewBox='0 0 24 24'
                   aria-hidden='true'
-                  className='h-6 w-6 text-zinc-500 dark:text-zinc-400'
+                  className='h-6 w-6 text-zinc-400'
                 >
                   <path
                     d='m17.25 6.75-10.5 10.5M6.75 6.75l10.5 10.5'
@@ -170,12 +170,12 @@ function Mobile(props: PopoverProps<'div'>) {
                   />
                 </svg>
               </Popover.Button>
-              <h2 className='text-sm font-medium text-zinc-600 dark:text-zinc-400'>
+              <h2 className='text-sm font-medium text-zinc-400'>
                 {t('nav.go')}
               </h2>
             </div>
             <nav className='mt-6'>
-              <ul className='-my-2 divide-y divide-zinc-500/20 text-base text-zinc-800 dark:divide-zinc-100/5 dark:text-zinc-300'>
+              <ul className='-my-2 divide-y text-base divide-zinc-100/5 text-zinc-300'>
                 {navigationItems.map(({ href, text }) => (
                   <MobileNavItem key={href} href={href}>
                     {t(text)}

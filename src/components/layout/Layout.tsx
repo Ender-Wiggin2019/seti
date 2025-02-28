@@ -3,7 +3,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-09-13 06:17:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-29 00:27:45
+ * @LastEditTime: 2025-02-28 16:00:44
  * @Description:
  */
 // import { Analytics } from '@vercel/analytics/react';
@@ -38,7 +38,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       <Header />
       <QueryProvider>
-        <div className='relative text-zinc-800 dark:text-zinc-800'>
+        <div className='relative text-zinc-200'>
           <main className='flex flex-col items-center'>
             <div className='relative w-full sm:px-8 sm:md:max-w-3xl md:max-w-4xl lg:max-w-4xl xl:max-w-6xl'>
               <div className='absolute z-10 flex justify-center -top-8 left-2 md:left-8'>

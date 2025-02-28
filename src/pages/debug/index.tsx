@@ -3,14 +3,14 @@ import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import React from 'react';
 
-// make sure to import your TextFilter
-import Layout from '@/components/layout/Layout';
-import Seo from '@/components/Seo';
-import { Container } from '@/components/ui/Container';
-import baseCards from '@/data/baseCards';
 import { alienCards } from '@/data/alienCards';
-import { RatedBaseCard } from '@/components/cards/base_cards/RatedBaseCard';
+
 import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
+import { RatedBaseCard } from '@/components/cards/base_cards/RatedBaseCard';
+import { IconFactory } from '@/components/icons/IconFactory';
+
+import { EResource, IIconItem } from '@/types/element';
+// make sure to import your TextFilter
 type Props = {
   // Add custom props here
 };
@@ -20,8 +20,8 @@ export default function HomePage(
 ) {
   const { t } = useTranslation('common');
   const _card = alienCards[0];
-  const card = _card;
-  // const card = {..._card, position: {src: '', row: 0, col: 0}};
+  // const card = _card;
+  const card = { ..._card, position: { src: '', row: 0, col: 0 } };
   const ratedCard = {
     id: card.id,
     card: card,
@@ -29,10 +29,23 @@ export default function HomePage(
     rating: 3,
     ratingCount: 10,
   };
+
+  const iconItem: IIconItem = {
+    // type: EResource.MOVE,
+    // type: EResource.DATA,
+    type: EResource.PUBLICITY,
+
+    value: 1,
+    options: {
+      showValue: true,
+      diamondShape: true,
+    },
+  };
   return (
     <div className='p-4'>
       <PreviewBaseCard card={card} showLink={true} />
       <RatedBaseCard cardData={ratedCard} showLink={true} />
+      <IconFactory iconItem={iconItem} />
     </div>
   );
 }

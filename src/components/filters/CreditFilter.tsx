@@ -11,7 +11,7 @@ import { FiHexagon } from 'react-icons/fi';
 import { cn } from '@/lib/utils';
 
 import { Slider } from '@/components/ui/slider';
-import { EResource } from '@/types/BaseCard';
+import { EResource, ESector } from '@/types/element';
 import Tag from '@/components/icons/Tag';
 type CreditFilterProps = React.ComponentProps<typeof Slider> & {
   onFilterChange: (credit: number[]) => void;

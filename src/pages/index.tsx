@@ -24,12 +24,11 @@ import {
   BASE_FREE_ACTIONS,
   BASE_INCOMES,
   EAlienType,
-  EResource,
-  ESector,
 } from '@/types/BaseCard';
 import { CardType } from '@/types/Card';
 import { CardSource } from '@/types/CardSource';
 import { SortOrder } from '@/types/Order';
+import { EResource, ESector } from '@/types/element';
 
 type Props = {
   // Add custom props here

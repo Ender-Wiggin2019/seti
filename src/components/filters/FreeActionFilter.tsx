@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-08-15 14:20:13
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-26 12:24:27
+ * @LastEditTime: 2025-02-28 15:51:13
  * @Description:
  */
 // ResourceFilter.tsx
@@ -10,7 +10,7 @@ import React, { useState } from 'react';
 
 import TagButton from '@/components/buttons/TagButton';
 
-import { EResource } from '@/types/BaseCard';
+import { EResource } from '@/types/element';
 
 type ResourceFilterProps = {
   onFilterChange: (Resources: EResource[]) => void;

@@ -7,8 +7,8 @@
  */
 // import {Size} from "@/types/Size";
 
-import BaseCard, { EResource, ESector } from '@/types/BaseCard';
-
+import BaseCard from '@/types/BaseCard';
+import { EResource, ESector } from '@/types/element';
 export const baseCards: BaseCard[] = [
   {
     id: '39',

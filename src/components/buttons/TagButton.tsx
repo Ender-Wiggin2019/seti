@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-08-15 14:20:13
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-28 01:55:36
+ * @LastEditTime: 2025-02-28 14:28:26
  * @Description:
  */
 // TagButton.tsx
@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 
 import TagComponent from '@/components/icons/Tag';
 
-import { EResource, ESector } from '@/types/BaseCard';
+import { EResource, ESector } from '@/types/element';
 
 type TagButtonProps = {
   isLoading?: boolean;
@@ -39,7 +39,7 @@ const TagButton = React.forwardRef<HTMLButtonElement, TagButtonProps>(
         )}
         {...rest}
       >
-        <TagComponent tagType={tagType} type={tag} />
+        <TagComponent type={tag} />
       </button>
     );
   }
