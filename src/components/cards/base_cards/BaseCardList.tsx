@@ -17,6 +17,7 @@ import { IBaseCard } from '@/types/IBaseCard';
 import { IRating } from '@/types/IRating';
 import { SortOrder } from '@/types/Order';
 import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
+import { PreviewBaseCardV2 } from '@/components/cards/base_cards/PreviewBaseCardV2';
 
 interface BaseCardListProps {
   selectedSectors?: ESector[];
@@ -257,7 +258,7 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
             cardData={ratedBaseCard}
             showLink={true}
           /> */}
-          <PreviewBaseCard
+          <PreviewBaseCardV2
             key={ratedBaseCard.id}
             card={ratedBaseCard.card}
             showLink={true}

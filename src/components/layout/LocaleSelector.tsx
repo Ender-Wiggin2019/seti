@@ -1,3 +1,10 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2025-02-25 09:56:21
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-02-28 17:04:55
+ * @Description:
+ */
 import { useRouter } from 'next/router';
 import { useTranslation } from 'next-i18next';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -49,7 +56,7 @@ const LocaleSelector: React.FC<{
   return (
     <LocaleSelect.Root value={value.value} onValueChange={languageChanged}>
       <LocaleSelect.Trigger
-        className='md:w-30 flex w-fit justify-start space-x-1 border-none font-bold text-zinc-800 transition-colors hover:text-primary-600 dark:text-zinc-200 dark:hover:text-primary-400'
+        className='md:w-30 flex w-fit justify-start space-x-1 border-none font-bold text-zinc-200 transition-colors hover:text-primary-600 dark:text-zinc-200 dark:hover:text-primary-400'
         aria-label={t('Placeholder')}
       >
         <LocaleSelect.Value placeholder={t('Placeholder')} />

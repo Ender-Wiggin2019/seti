@@ -10,6 +10,7 @@ import { RatedBaseCard } from '@/components/cards/base_cards/RatedBaseCard';
 import { IconFactory } from '@/components/icons/IconFactory';
 
 import { EResource, IIconItem } from '@/types/element';
+import { PreviewBaseCardV2 } from '@/components/cards/base_cards/PreviewBaseCardV2';
 // make sure to import your TextFilter
 type Props = {
   // Add custom props here
@@ -44,8 +45,10 @@ export default function HomePage(
   return (
     <div className='p-4'>
       <PreviewBaseCard card={card} showLink={true} />
-      <RatedBaseCard cardData={ratedCard} showLink={true} />
-      <IconFactory iconItem={iconItem} />
+      <PreviewBaseCardV2 card={card} showLink={true} />
+
+      {/* <RatedBaseCard cardData={ratedCard} showLink={true} />
+      <IconFactory iconItem={iconItem} /> */}
     </div>
   );
 }

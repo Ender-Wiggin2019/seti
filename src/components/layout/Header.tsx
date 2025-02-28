@@ -226,7 +226,7 @@ function UserInfo() {
                     type='button'
                     className='group h-10 rounded-full bg-gradient-to-b px-3 text-sm shadow-lg shadow-zinc-800/5 ring-1 backdrop-blur transition from-zinc-900/50 to-zinc-800/90 ring-white/10 hover:ring-white/20'
                   >
-                    <UserArrowLeftIcon className='h-5 w-5' />
+                    <UserArrowLeftIcon className='h-5 w-5 text-zinc-200' />
                   </button>
                 </Tooltip.Trigger>
               </SignInButton>
