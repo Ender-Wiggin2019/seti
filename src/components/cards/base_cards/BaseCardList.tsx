@@ -258,7 +258,7 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
             cardData={ratedBaseCard}
             showLink={true}
           /> */}
-          <PreviewBaseCardV2
+          <PreviewBaseCard
             key={ratedBaseCard.id}
             card={ratedBaseCard.card}
             showLink={true}
