@@ -43,3 +43,6 @@ sitemap.xml
 sitemap-*.xml
 /public/locales/en/common.missing.json
 /public/img/icons.psd
+
+# sqrpi locale
+scripts
