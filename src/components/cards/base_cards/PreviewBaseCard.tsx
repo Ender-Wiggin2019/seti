@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 12:05:53
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-01 22:48:42
+ * @LastEditTime: 2025-03-01 23:26:33
  * @Description:
  */
 import {
@@ -39,7 +39,7 @@ export const PreviewBaseCard: React.FC<PreviewBaseCardProps> = ({
       </DialogTrigger>
       <DialogContent className='sm:max-w-[425px] bg-gradient-to-b from-zinc-100 to-white backdrop-blur-lg'>
         <DialogHeader className="space-y-1 lg:space-y-1.5">
-          <DialogTitle>{t(card.name)}</DialogTitle>
+          <DialogTitle>{t(card.name)} ({card.id})</DialogTitle>
           <DialogDescription>
             {/* Make changes to your profile here. Click save when you're done. */}
           </DialogDescription>
