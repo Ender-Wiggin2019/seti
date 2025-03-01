@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-01 03:11:43
+ * @LastEditTime: 2025-03-01 12:31:29
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -34,6 +34,9 @@ export const alienCards: BaseCard[] = [
     price: 1,
     income: EResource.CARD,
     alien: EAlienType.ANOMALIES,
+    special: {
+      descHelper: "Gain the reward from the anomaly which is going to be triggered next.",
+    }
   },
   {
     id: 'ET.12',
@@ -119,6 +122,9 @@ export const alienCards: BaseCard[] = [
     price: 1,
     income: EResource.ENERGY,
     alien: EAlienType.ANOMALIES,
+    special: {
+      descHelper: "Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income.",
+    }
   },
   {
     id: 'ET.11',

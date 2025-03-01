@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 09:48:41
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-28 14:47:07
+ * @LastEditTime: 2025-03-01 12:14:08
  * @Description:
  */
 /*
@@ -34,6 +34,7 @@ export default interface BaseCard {
   // special
   special?: {
     danger?: number,
+    descHelper?: string, // temporary translation for some texts
   }
 
   // meta data

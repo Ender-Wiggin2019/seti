@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-01 02:38:38
+ * @LastEditTime: 2025-03-01 12:36:10
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -270,6 +270,9 @@ const _baseCards: BaseCard[] = [
     sector: ESector.BLUE,
     price: 1,
     income: EResource.CREDIT,
+    special: {
+      descHelper: "You may land on a space that is already occupied and still get the covered reward.",
+    }
   },
   {
     id: '68',
@@ -315,6 +318,9 @@ const _baseCards: BaseCard[] = [
     sector: ESector.BLACK,
     price: 2,
     income: EResource.CREDIT,
+    special: {
+      descHelper: "LAND on a planet or a moon, even without the required tech.",
+    }
   },
   {
     id: '100',
@@ -441,6 +447,9 @@ const _baseCards: BaseCard[] = [
     sector: ESector.YELLOW,
     price: 1,
     income: EResource.ENERGY,
+    special: {
+      descHelper: "Reveal the card you drew, and gain its free-action corner effect.",
+    }
   },
   {
     id: '19',
@@ -450,6 +459,9 @@ const _baseCards: BaseCard[] = [
     sector: ESector.YELLOW,
     price: 1,
     income: EResource.CREDIT,
+    special: {
+      descHelper: "Each time you visit a planet this turn, you may gain 1 MOVE instead of 1 PUBLICITY.",
+    }
   },
   {
     id: '30',
@@ -531,6 +543,9 @@ const _baseCards: BaseCard[] = [
     sector: ESector.YELLOW,
     price: 2,
     income: EResource.ENERGY,
+    special: {
+      descHelper: "MARK in a sector with one of your probes and in both neighboring sectors.",
+    }
   },
   {
     id: '82',
@@ -1279,6 +1294,9 @@ const _baseCards: BaseCard[] = [
     price: 0,
     income: EResource.CARD,
     description: '',
+    special: {
+      descHelper: 'Ignore the limit of probes in space for those launches.',
+    },
   },
   {
     id: '103',

@@ -198,5 +198,14 @@
   "Pierced Exoplanet": "穿透的系外行星",
   "Razor-edge Shuttle": "锐边穿梭机",
   "Stratoelevator": "平流层升降机",
-  "Vortex Exoplanet": "漩涡系外行星"
+  "Vortex Exoplanet": "漩涡系外行星",
+
+  "Ignore the limit of probes in space for those launches.": "对于这次发射, 忽略探测器的数量上限。",
+  "Reveal the card you drew, and gain its free-action corner effect.": "展示你抽到的卡牌，并获得其免费行动的效果。",
+  "Each time you visit a planet this turn, you may gain 1 MOVE instead of 1 PUBLICITY.": "本回合每次经过行星时，你可以改为获得1次移动而不是1次宣传。",
+  "LAND on a planet or a moon, even without the required tech.": "着陆在行星或卫星上, 即使没有所需科技。",
+  "MARK in a sector with one of your probes and in both neighboring sectors.": "在一个有你探测器的扇区以及两个相邻扇区进行标记",
+  "You may land on a space that is already occupied and still get the covered reward.": "你可以降落在已被占据的空间，并仍然获得被覆盖的奖励。",
+  "Gain the reward from the anomaly which is going to be triggered next.": "获得即将触发的异常奖励。",
+  "Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income.": "弃掉其中一张以获得其免费行动的效果，然后再弃掉另一张以获得对应收入的资源。"
 }

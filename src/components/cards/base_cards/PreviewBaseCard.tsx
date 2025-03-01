@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 12:05:53
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-01 02:29:16
+ * @LastEditTime: 2025-03-01 12:42:17
  * @Description:
  */
 import {
@@ -49,10 +49,15 @@ export const PreviewBaseCard: React.FC<PreviewBaseCardProps> = ({
             <BaseCard card={card} />
           </div>
         </div>
+          {card.special?.descHelper  && <div className="border-b-2">
+            {t(card.special?.descHelper)}
+          </div>
+          }
         {card.flavorText && <div className="">
           <FlavorText id={card.id} flavorText={card.flavorText} display='normal'/>
         </div>
         }
+
         {/* <DialogFooter>
           <Button type='submit'>Save changes</Button>
         </DialogFooter> */}
