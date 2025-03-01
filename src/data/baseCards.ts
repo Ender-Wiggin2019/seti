@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-01 12:36:10
+ * @LastEditTime: 2025-03-01 12:53:45
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -348,6 +348,9 @@ const _baseCards: BaseCard[] = [
     sector: ESector.YELLOW,
     price: 3,
     income: EResource.CREDIT,
+    special: {
+      descHelper: 'Ignore the limit of probes in space for those launches.',
+    },
   },
   {
     id: '65',
@@ -1294,9 +1297,6 @@ const _baseCards: BaseCard[] = [
     price: 0,
     income: EResource.CARD,
     description: '',
-    special: {
-      descHelper: 'Ignore the limit of probes in space for those launches.',
-    },
   },
   {
     id: '103',
