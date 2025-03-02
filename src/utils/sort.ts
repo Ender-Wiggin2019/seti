@@ -4,10 +4,10 @@ import BaseCard from "@/types/BaseCard";
  * @Author: Ender-Wiggin
  * @Date: 2025-03-01 23:59:26
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-01 23:59:29
+ * @LastEditTime: 2025-03-03 00:15:05
  * @Description:
  */
-function extractNumberFromString(str: string): number {
+function extractNumberFromString(str: string) {
   const match = str.match(/\d+/);
   return match ? parseInt(match[0], 10) : 0;
 }

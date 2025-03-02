@@ -189,10 +189,31 @@
   -webkit-text-stroke: 3px black;
 }
 
+.icon-value-credit {
+  -webkit-text-stroke: 3px #b09530;
+}
+
+.icon-value-energy {
+  -webkit-text-stroke: 3px #3aaa23;
+}
+.icon-value-credit {
+  -webkit-text-stroke: 3px #b09530;
+}
+.icon-value-credit {
+  -webkit-text-stroke: 3px #b09530;
+}
+.icon-value-credit {
+  -webkit-text-stroke: 3px #b09530;
+}
+
 .icon-value-move {
   -webkit-text-stroke: 3px black;
 }
 
 .icon-value-data {
   -webkit-text-stroke: 3px #567fd1;
+}
+
+.icon-value-publicity {
+  -webkit-text-stroke: 3px #f14927;
 }

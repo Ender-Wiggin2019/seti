@@ -1,3 +1,10 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2025-03-01 00:33:02
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-03-03 01:01:43
+ * @Description:
+ */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
@@ -9,7 +16,7 @@ import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
 import { RatedBaseCard } from '@/components/cards/base_cards/RatedBaseCard';
 import { IconFactory } from '@/components/icons/IconFactory';
 
-import { EResource, IIconItem } from '@/types/element';
+import { EResource, EResourceMap, IIconItem } from '@/types/element';
 import { PreviewBaseCardV2 } from '@/components/cards/base_cards/PreviewBaseCardV2';
 // make sure to import your TextFilter
 type Props = {
@@ -47,8 +54,10 @@ export default function HomePage(
       <PreviewBaseCard card={card} showLink={true} />
       <PreviewBaseCardV2 card={card} showLink={true} />
 
-      {/* <RatedBaseCard cardData={ratedCard} showLink={true} />
-      <IconFactory iconItem={iconItem} /> */}
+      {Object.entries(EResourceMap).map(([resource, value]) => (
+        <IconFactory iconItem={{ ...iconItem, type: resource as EResource }} />
+      ))}
+      <IconFactory iconItem={iconItem} />
     </div>
   );
 }
