@@ -8,7 +8,6 @@
 import { useTranslation } from 'next-i18next';
 import React from 'react';
 
-import { FlavorText } from '@/components/cards/base_cards/FlavorText';
 import BaseCardWrapper from '@/components/wrapper/AnimalWrapper';
 
 import BaseCardType, { EAlienMap } from '@/types/BaseCard';

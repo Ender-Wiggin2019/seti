@@ -10,7 +10,6 @@ import { useTranslation } from 'next-i18next';
 import React, { useEffect, useState } from 'react';
 
 import TextButton from '@/components/buttons/TextButton';
-import { Badge } from '@/components/ui/badge';
 
 import { ALIEN_BUTTON_GROUP } from '@/constant/alien';
 

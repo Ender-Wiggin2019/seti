@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-03 16:39:04
+ * @LastEditTime: 2025-03-04 00:02:30
  * @Description:
  */
 import React from 'react';
@@ -29,7 +29,7 @@ export const IconFactory: React.FC<IconProps> = ({ iconItem }) => {
   };
 
   return (
-    <div className='icon-container '>
+    <div className='icon-container'>
       {getValueComponent()}
       <div className='icon-border'>
         <TagComponent

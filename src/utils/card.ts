@@ -9,9 +9,10 @@
 import { alienCards } from '@/data/alienCards';
 import baseCards from '@/data/baseCards';
 
+import { sortCards } from '@/utils/sort';
+
 import BaseCard from '@/types/BaseCard';
 import { Card } from '@/types/Card';
-import { sortCards } from '@/utils/sort';
 
 export function isBaseCard(card: Card): card is BaseCard {
   return !card.alien;
@@ -30,6 +31,8 @@ export const getCardById = (id: string) => {
 };
 
 export const getCardsById = (ids: string[], sort?: boolean) => {
-  const res = [...baseCards, ...alienCards].filter((card) => ids.includes(card.id));
+  const res = [...baseCards, ...alienCards].filter((card) =>
+    ids.includes(card.id)
+  );
   return sort ? sortCards(res) : res;
 };

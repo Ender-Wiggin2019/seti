@@ -8,7 +8,7 @@ import { useSettings } from '@/hooks/useSettings';
 
 import { SortButton } from '@/components/buttons/SortButton';
 import { BaseCardList } from '@/components/cards/base_cards/BaseCardList';
-import { ClientOnly } from '@/components/ClientOnly';
+import { AdvancedFilter } from '@/components/filters/AdvancedFilter';
 import { AlienFilter } from '@/components/filters/AlienFilter';
 import { CreditFilter } from '@/components/filters/CreditFilter';
 import { ResourceFilter } from '@/components/filters/FreeActionFilter';
@@ -27,9 +27,8 @@ import {
 } from '@/types/BaseCard';
 import { CardType } from '@/types/Card';
 import { CardSource } from '@/types/CardSource';
+import { EResource, ESector, TIcon } from '@/types/element';
 import { SortOrder } from '@/types/Order';
-import { EResource, ESector } from '@/types/element';
-
 type Props = {
   // Add custom props here
 };
@@ -42,6 +41,7 @@ export default function HomePage(
   const { t } = useTranslation('common');
   const { settings, setSettings } = useSettings();
 
+  // change search mode
   const [reset, setReset] = useState<boolean>(false);
 
   // limit the number of cards to be displayed for optimization
@@ -60,6 +60,7 @@ export default function HomePage(
   const [selectedCardSources, setSelectedCardSources] = useState<CardSource[]>(
     []
   );
+  const [advancedIcons, setAdvancedIcons] = useState<TIcon[]>([]);
   const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.ID_ASC);
   const [credit, setCredit] = useState<number[]>([5]);
   // const [strength, setStrength] = useState<number[]>([0]);
@@ -116,6 +117,7 @@ export default function HomePage(
     setTextFilter('');
     setSelectedCardTypes([]);
     setSelectedCardSources([]);
+    setAdvancedIcons([]);
     setSelectedAliens(settings.enableAlien ? ALL_ALIENS : []);
     // setBaseCardsCount(0);
     // setSponsorCardsCount(0);
@@ -152,6 +154,10 @@ export default function HomePage(
               reset={reset}
             /> */}
           </div>
+          {/* <Switch
+            checked={isAdvancedSearch}
+            onCheckedChange={setIsAdvancedSearch}
+          /> */}
           <div className='text-lg text-primary-200 font-bold'>
             {t('free_action')}
           </div>
@@ -172,6 +178,7 @@ export default function HomePage(
             {t('sector')}
           </div>
           <SectorFilter onFilterChange={setSelectedSectors} reset={reset} />
+          <AdvancedFilter onFilterChange={setAdvancedIcons} reset={reset} />
           <div className='flex flex-row space-x-4'>
             <TextFilter onTextChange={setTextFilter} reset={reset} />
             <div
@@ -186,6 +193,10 @@ export default function HomePage(
             <CreditFilter onFilterChange={setCredit} reset={reset} />
             {/* <StrengthFilter onFilterChange={setStrength} reset={reset} /> */}
           </div>
+          {/* <Button size='lg' className='text-white'
+            onClick={() => setIsAdvancedSearch(prev => !prev)}>
+              {t('advanced_search')}
+            </Button> */}
           <div className='flex flex-row space-x-4'>
             <CardOdometer
               value={baseCardsCount}
@@ -218,6 +229,7 @@ export default function HomePage(
               selectedIncomes={selectedIncomes}
               selectedCardSources={selectedCardSources}
               selectedAliens={selectedAliens}
+              advancedIcons={advancedIcons}
               textFilter={textFilter}
               sortOrder={sortOrder}
               onCardCountChange={setCardsCount}

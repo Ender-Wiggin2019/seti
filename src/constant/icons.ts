@@ -2,13 +2,13 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 16:47:27
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-03 16:59:07
+ * @LastEditTime: 2025-03-04 00:01:14
  * @Description:
  */
 import { IBaseEffect } from '@/types/effect';
 import { ESpecialAction, IIconItem } from '@/types/element';
 
-const getIcon = (effect: IBaseEffect): IIconItem => {
+export const getIcon = (effect: IBaseEffect): IIconItem => {
   const { type, value, desc } = effect;
 
   // default style
@@ -31,7 +31,7 @@ const getIcon = (effect: IBaseEffect): IIconItem => {
       showValue = true;
       break;
   }
-  return {
+  const res = {
     type,
     value: value || 1,
     options: {
@@ -43,4 +43,6 @@ const getIcon = (effect: IBaseEffect): IIconItem => {
       borderColor,
     },
   };
+  console.log('🎸 [test] - getIcon - res:', res);
+  return res;
 };

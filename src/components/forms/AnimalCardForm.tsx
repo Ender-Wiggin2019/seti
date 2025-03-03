@@ -1,4 +1,3 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 // import { Terminal } from 'lucide-react';
 // import { useTranslation } from 'next-i18next';
 // import React, { useEffect, useState } from 'react';

@@ -35,8 +35,9 @@ export const alienCards: BaseCard[] = [
     income: EResource.CARD,
     alien: EAlienType.ANOMALIES,
     special: {
-      descHelper: "Gain the reward from the anomaly which is going to be triggered next.",
-    }
+      descHelper:
+        'Gain the reward from the anomaly which is going to be triggered next.',
+    },
   },
   {
     id: 'ET.12',
@@ -123,8 +124,9 @@ export const alienCards: BaseCard[] = [
     income: EResource.ENERGY,
     alien: EAlienType.ANOMALIES,
     special: {
-      descHelper: "Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income.",
-    }
+      descHelper:
+        'Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income.',
+    },
   },
   {
     id: 'ET.11',
@@ -508,7 +510,7 @@ export const alienCards: BaseCard[] = [
     alien: EAlienType.EXERTIANS,
     special: {
       danger: 0,
-    }
+    },
   },
   {
     id: 'ET.50',
@@ -518,7 +520,7 @@ export const alienCards: BaseCard[] = [
     alien: EAlienType.EXERTIANS,
     special: {
       danger: 2,
-    }
+    },
   },
   {
     id: 'ET.45',
@@ -528,7 +530,7 @@ export const alienCards: BaseCard[] = [
     alien: EAlienType.EXERTIANS,
     special: {
       danger: 4,
-    }
+    },
   },
   {
     id: 'ET.42',
@@ -538,7 +540,7 @@ export const alienCards: BaseCard[] = [
     alien: EAlienType.EXERTIANS,
     special: {
       danger: 7,
-    }
+    },
   },
   {
     id: 'ET.43',
@@ -548,7 +550,7 @@ export const alienCards: BaseCard[] = [
     alien: EAlienType.EXERTIANS,
     special: {
       danger: 3,
-    }
+    },
   },
   {
     id: 'ET.51',
@@ -558,7 +560,7 @@ export const alienCards: BaseCard[] = [
     alien: EAlienType.EXERTIANS,
     special: {
       danger: 8,
-    }
+    },
   },
   {
     id: 'ET.47',
@@ -568,7 +570,7 @@ export const alienCards: BaseCard[] = [
     alien: EAlienType.EXERTIANS,
     special: {
       danger: 5,
-    }
+    },
   },
   {
     id: 'ET.49',
@@ -578,7 +580,7 @@ export const alienCards: BaseCard[] = [
     alien: EAlienType.EXERTIANS,
     special: {
       danger: 7,
-    }
+    },
   },
   {
     id: 'ET.54',
@@ -588,7 +590,7 @@ export const alienCards: BaseCard[] = [
     alien: EAlienType.EXERTIANS,
     special: {
       danger: 1,
-    }
+    },
   },
   {
     id: 'ET.53',
@@ -598,7 +600,7 @@ export const alienCards: BaseCard[] = [
     alien: EAlienType.EXERTIANS,
     special: {
       danger: 9,
-    }
+    },
   },
   {
     id: 'ET.48',
@@ -608,7 +610,7 @@ export const alienCards: BaseCard[] = [
     alien: EAlienType.EXERTIANS,
     special: {
       danger: 3,
-    }
+    },
   },
   {
     id: 'ET.44',
@@ -618,7 +620,7 @@ export const alienCards: BaseCard[] = [
     alien: EAlienType.EXERTIANS,
     special: {
       danger: 4,
-    }
+    },
   },
   {
     id: 'ET.41',
@@ -628,7 +630,7 @@ export const alienCards: BaseCard[] = [
     alien: EAlienType.EXERTIANS,
     special: {
       danger: 6,
-    }
+    },
   },
   {
     id: 'ET.55',
@@ -638,7 +640,7 @@ export const alienCards: BaseCard[] = [
     alien: EAlienType.EXERTIANS,
     special: {
       danger: 4,
-    }
+    },
   },
   {
     id: 'ET.46',
@@ -648,10 +650,9 @@ export const alienCards: BaseCard[] = [
     alien: EAlienType.EXERTIANS,
     special: {
       danger: 4,
-    }
+    },
   },
 ];
-
 
 // const res = [];
 

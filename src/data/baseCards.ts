@@ -2,10 +2,12 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-01 12:53:45
+ * @LastEditTime: 2025-03-04 01:45:52
  * @Description:
  */
 // import {Size} from "@/types/Size";
+
+import { e } from '@/constant/effect';
 
 import BaseCard from '@/types/BaseCard';
 import { EResource, ESector } from '@/types/element';
@@ -90,6 +92,7 @@ const _baseCards: BaseCard[] = [
     sector: ESector.YELLOW,
     price: 3,
     income: EResource.CARD,
+    effects: [e.SCAN()],
   },
   {
     id: '129',
@@ -261,6 +264,7 @@ const _baseCards: BaseCard[] = [
     sector: ESector.BLUE,
     price: 2,
     income: EResource.ENERGY,
+    effects: [e.SCAN()],
   },
   {
     id: '16',
@@ -271,8 +275,10 @@ const _baseCards: BaseCard[] = [
     price: 1,
     income: EResource.CREDIT,
     special: {
-      descHelper: "You may land on a space that is already occupied and still get the covered reward.",
-    }
+      descHelper:
+        'You may land on a space that is already occupied and still get the covered reward.',
+    },
+    effects: [e.LAND()],
   },
   {
     id: '68',
@@ -319,8 +325,9 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.CREDIT,
     special: {
-      descHelper: "LAND on a planet or a moon, even without the required tech.",
-    }
+      descHelper: 'LAND on a planet or a moon, even without the required tech.',
+    },
+    effects: [e.LAND()],
   },
   {
     id: '100',
@@ -351,6 +358,7 @@ const _baseCards: BaseCard[] = [
     special: {
       descHelper: 'Ignore the limit of probes in space for those launches.',
     },
+    effects: [e.LAUNCH()],
   },
   {
     id: '65',
@@ -451,8 +459,9 @@ const _baseCards: BaseCard[] = [
     price: 1,
     income: EResource.ENERGY,
     special: {
-      descHelper: "Reveal the card you drew, and gain its free-action corner effect.",
-    }
+      descHelper:
+        'Reveal the card you drew, and gain its free-action corner effect.',
+    },
   },
   {
     id: '19',
@@ -463,8 +472,9 @@ const _baseCards: BaseCard[] = [
     price: 1,
     income: EResource.CREDIT,
     special: {
-      descHelper: "Each time you visit a planet this turn, you may gain 1 MOVE instead of 1 PUBLICITY.",
-    }
+      descHelper:
+        'Each time you visit a planet this turn, you may gain 1 MOVE instead of 1 PUBLICITY.',
+    },
   },
   {
     id: '30',
@@ -483,6 +493,7 @@ const _baseCards: BaseCard[] = [
     sector: ESector.BLACK,
     price: 2,
     income: EResource.CREDIT,
+    effects: [e.SCAN()],
   },
   {
     id: '18',
@@ -547,8 +558,9 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.ENERGY,
     special: {
-      descHelper: "MARK in a sector with one of your probes and in both neighboring sectors.",
-    }
+      descHelper:
+        'MARK in a sector with one of your probes and in both neighboring sectors.',
+    },
   },
   {
     id: '82',
@@ -567,6 +579,7 @@ const _baseCards: BaseCard[] = [
     sector: ESector.RED,
     price: 3,
     income: EResource.ENERGY,
+    effects: [e.LAUNCH()],
   },
   {
     id: '35',
@@ -639,6 +652,7 @@ const _baseCards: BaseCard[] = [
     sector: ESector.RED,
     price: 3,
     income: EResource.ENERGY,
+    effects: [e.SCAN()],
   },
   {
     id: '130',
@@ -648,6 +662,7 @@ const _baseCards: BaseCard[] = [
     sector: ESector.YELLOW,
     price: 1,
     income: EResource.ENERGY,
+    effects: [e.LAUNCH()],
   },
   {
     id: '109',
@@ -797,6 +812,7 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.ENERGY,
     description: '',
+    effects: [e.SCAN()],
   },
   {
     id: '10',
@@ -827,6 +843,7 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.CARD,
     description: '',
+    effects: [e.LAUNCH()],
   },
   {
     id: '120',
@@ -857,6 +874,7 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.CARD,
     description: '',
+    effects: [e.SCAN()],
   },
   {
     id: '13',
@@ -867,6 +885,7 @@ const _baseCards: BaseCard[] = [
     price: 1,
     income: EResource.CARD,
     description: '',
+    effects: [e.LAND()],
   },
   {
     id: '1',
@@ -937,6 +956,7 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.CARD,
     description: '',
+    effects: [e.LAUNCH()],
   },
   {
     id: '110',
@@ -1117,6 +1137,7 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.CARD,
     description: '',
+    effects: [e.LAUNCH()],
   },
   {
     id: '132',
@@ -1127,6 +1148,7 @@ const _baseCards: BaseCard[] = [
     price: 3,
     income: EResource.CARD,
     description: '',
+    effects: [e.LAUNCH()],
   },
   {
     id: '50',
@@ -1147,6 +1169,7 @@ const _baseCards: BaseCard[] = [
     price: 4,
     income: EResource.CREDIT,
     description: '',
+    effects: [e.LAUNCH()],
   },
   {
     id: '106',
@@ -1217,6 +1240,7 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.CARD,
     description: '',
+    effects: [e.LAUNCH()],
   },
   {
     id: '58',
@@ -1227,6 +1251,7 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.CREDIT,
     description: '',
+    effects: [e.LAUNCH()],
   },
   {
     id: '44',
@@ -1247,6 +1272,7 @@ const _baseCards: BaseCard[] = [
     price: 3,
     income: EResource.CREDIT,
     description: '',
+    effects: [e.LAUNCH()],
   },
   {
     id: '33',
@@ -1277,6 +1303,7 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.CREDIT,
     description: '',
+    effects: [e.SCAN()],
   },
   {
     id: '47',
@@ -1331,12 +1358,12 @@ const _baseCards: BaseCard[] = [
 ];
 
 // add flavorText
-export const baseCards: BaseCard[] = _baseCards.map(card => {
+export const baseCards: BaseCard[] = _baseCards.map((card) => {
   return {
     ...card,
     flavorText: `${card.id}_flavor_text`,
   };
-})
+});
 
 // export const baseCards: BaseCard[] = [
 //     {

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 09:48:41
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-01 12:14:08
+ * @LastEditTime: 2025-03-04 01:18:34
  * @Description:
  */
 /*
@@ -14,7 +14,8 @@
  */
 
 import { CardSource } from '@/types/CardSource';
-import { ESector, EResource, IIconItem } from '@/types/element';
+import { Effect } from '@/types/effect';
+import { EResource, ESector } from '@/types/element';
 
 export default interface BaseCard {
   id: string;
@@ -27,15 +28,15 @@ export default interface BaseCard {
   price: number;
   income?: EResource;
   mission?: string;
-  effect?: IIconItem[];
+  effects?: Effect[];
   description?: string;
   flavorText?: string;
 
   // special
   special?: {
-    danger?: number,
-    descHelper?: string, // temporary translation for some texts
-  }
+    danger?: number;
+    descHelper?: string; // temporary translation for some texts
+  };
 
   // meta data
   source?: CardSource;

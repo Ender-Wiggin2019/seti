@@ -1,7 +1,7 @@
 import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
 import CardList from '@/components/cards/shared/CardList';
+
 import BaseCard from '@/types/BaseCard';
-import { IBaseCard } from '@/types/IBaseCard';
 
 /*
  * @Author: Ender-Wiggin

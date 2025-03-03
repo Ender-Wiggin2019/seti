@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 14:45:30
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-03 16:46:21
+ * @LastEditTime: 2025-03-04 00:12:56
  * @Description:
  */
 export enum ESector {
@@ -31,12 +31,19 @@ export enum EResource {
   MOVE = 'move',
 }
 
+export enum ETrace {
+  ANY = 'any-trace',
+  RED = 'red-trace',
+  YELLOW = 'yellow-trace',
+  BLUE = 'blue-trace',
+}
+
 export enum ESpecialAction {
-  LAUNCH = 'launch',
-  ORBIT = 'orbit',
-  LAND = 'land',
-  SCAN = 'scan',
-  COMPUTER = 'computer',
+  LAUNCH = 'launch-action',
+  ORBIT = 'orbit-action',
+  LAND = 'land-action',
+  SCAN = 'scan-action',
+  COMPUTER = 'computer-action',
 }
 
 export enum ETech {
@@ -44,13 +51,6 @@ export enum ETech {
   PROBE = 'tech-probe',
   SCAN = 'tech-scan',
   COMPUTER = 'tech-computer',
-}
-
-export enum ELight {
-  ANY = 'light-any',
-  RED = 'light-red',
-  YELLOW = 'light-yellow',
-  BLUE = 'light-blue',
 }
 
 export const ESectorMap: Record<ESector, string> = {
@@ -70,13 +70,23 @@ export const EResourceMap: Record<EResource, string> = {
   [EResource.MOVE]: 'move',
 };
 
+// Misc Icons
+export enum EMiscIcon {
+  ROTATE = 'rotate',
+  INCOME = 'income',
+  ORBIT_COUNT = 'orbit-count', // 用于任务计数的图标
+  LAND_COUNT = 'land-count',
+  ORBIT_OR_LAND_COUNT = 'orbit-or-land-count',
+}
+
 export type TIcon =
   | ESector
   | EScanAction
   | EResource
   | ETech
-  | ELight
-  | ESpecialAction;
+  | ETrace
+  | ESpecialAction
+  | EMiscIcon;
 
 export interface IIconItem {
   type: TIcon;

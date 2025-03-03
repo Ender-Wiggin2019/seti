@@ -1,5 +1,39 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2025-03-03 22:59:49
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-03-04 01:29:18
+ * @Description:
+ */
 import { EEffectType, IBaseEffect } from '@/types/effect';
-import { ESpecialAction } from '@/types/element';
+import { EMiscIcon, ESpecialAction } from '@/types/element';
+
+const ORBIT_COUNT = (): IBaseEffect => {
+  return {
+    effectType: EEffectType.BASE,
+    type: EMiscIcon.ORBIT_COUNT,
+    value: 1,
+    desc: 'desc.orbit_count',
+  };
+};
+
+const LAND_COUNT = (): IBaseEffect => {
+  return {
+    effectType: EEffectType.BASE,
+    type: EMiscIcon.LAND_COUNT,
+    value: 1,
+    desc: 'desc.land_count',
+  };
+};
+
+const ORBIT_OR_LAND_COUNT = (): IBaseEffect => {
+  return {
+    effectType: EEffectType.BASE,
+    type: EMiscIcon.ORBIT_OR_LAND_COUNT,
+    value: 1,
+    desc: 'desc.orbit_or_land_count',
+  };
+};
 
 const ORBIT = (): IBaseEffect => {
   return {
@@ -22,13 +56,13 @@ const LAND = (): IBaseEffect => {
 const LAUNCH = (): IBaseEffect => {
   return {
     effectType: EEffectType.BASE,
-    type: ESpecialAction.ORBIT,
+    type: ESpecialAction.LAUNCH,
     value: 1,
     desc: 'desc.launch',
   };
 };
 
-const SCAN = () => {
+const SCAN = (): IBaseEffect => {
   return {
     effectType: EEffectType.BASE,
     type: ESpecialAction.SCAN,
@@ -44,4 +78,16 @@ const COMPUTER = () => {
     value: 1,
     desc: 'desc.computer',
   };
+};
+
+export const e = {
+  ORBIT,
+  LAND,
+  LAUNCH,
+  SCAN,
+  COMPUTER,
+
+  ORBIT_COUNT,
+  LAND_COUNT,
+  ORBIT_OR_LAND_COUNT,
 };

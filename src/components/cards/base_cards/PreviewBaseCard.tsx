@@ -22,6 +22,7 @@ interface PreviewBaseCardProps {
   showLink?: boolean;
 }
 import { useTranslation } from 'next-i18next';
+
 import { FlavorText } from '@/components/cards/base_cards/FlavorText';
 
 export const PreviewBaseCard: React.FC<PreviewBaseCardProps> = ({
@@ -38,8 +39,10 @@ export const PreviewBaseCard: React.FC<PreviewBaseCardProps> = ({
         </div>
       </DialogTrigger>
       <DialogContent className='sm:max-w-[425px] bg-gradient-to-b from-zinc-100 to-white backdrop-blur-lg'>
-        <DialogHeader className="space-y-1 lg:space-y-1.5">
-          <DialogTitle>{t(card.name)} ({card.id})</DialogTitle>
+        <DialogHeader className='space-y-1 lg:space-y-1.5'>
+          <DialogTitle>
+            {t(card.name)} ({card.id})
+          </DialogTitle>
           <DialogDescription>
             {/* Make changes to your profile here. Click save when you're done. */}
           </DialogDescription>
@@ -49,14 +52,18 @@ export const PreviewBaseCard: React.FC<PreviewBaseCardProps> = ({
             <BaseCard card={card} />
           </div>
         </div>
-          {card.special?.descHelper  && <div className="border-b-2">
-            {t(card.special?.descHelper)}
+        {card.special?.descHelper && (
+          <div className='border-b-2'>{t(card.special?.descHelper)}</div>
+        )}
+        {card.flavorText && (
+          <div className=''>
+            <FlavorText
+              id={card.id}
+              flavorText={card.flavorText}
+              display='normal'
+            />
           </div>
-          }
-        {card.flavorText && <div className="">
-          <FlavorText id={card.id} flavorText={card.flavorText} display='normal'/>
-        </div>
-        }
+        )}
 
         {/* <DialogFooter>
           <Button type='submit'>Save changes</Button>

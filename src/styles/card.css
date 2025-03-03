@@ -107,7 +107,7 @@
 }
 /* icons */
 .seti-icon {
-  background-image: url(/images/icons.jpg);
+  background-image: url(/images/seti-icons.png);
   background-size: 500% 700%;
   width: 50px;
   height: 50px;
@@ -115,7 +115,7 @@
 }
 
 .seti-icon-diamond {
-  background-image: url(/images/icons.jpg);
+  background-image: url(/images/seti-icons.png);
   background-size: 500% 700%;
   width: 50px;
   height: 50px;
@@ -143,16 +143,16 @@
 .icon-move {
   background-position: -50px -50px; /* 第二行第二列 */
 }
-.icon-8 {
+.icon-orbit-count {
   background-position: -100px -50px; /* 第二行第三列 */
 }
-.icon-9 {
+.icon-land-count {
   background-position: -150px -50px; /* 第二行第四列 */
 }
-.icon-10 {
+.icon-orbit-or-land-count {
   background-position: -200px -50px; /* 第二行第五列 */
 }
-.icon-signal {
+.icon-any-signal {
   background-position: 0 -100px; /* 第三行第一列 */
 }
 .icon-yellow-signal {
@@ -166,6 +166,73 @@
 }
 .icon-black-signal {
   background-position: -200px -100px; /* 第三行第五列 */
+}
+
+.icon-yellow-trace {
+  background-position: 0 -150px; /* 第四行第一列 */
+}
+.icon-red-trace {
+  background-position: -50px -150px; /* 第四行第二列 */
+}
+.icon-blue-trace {
+  background-position: -100px -150px; /* 第四行第三列 */
+}
+.icon-any-trace {
+  background-position: -150px -150px; /* 第四行第四列 */
+}
+.icon-score {
+  background-position: -200px -150px; /* 第四行第五列 */
+}
+.icon-computer-action {
+  background-position: 0 -200px; /* 第五行第一列 */
+}
+.icon-land-action {
+  background-position: -50px -200px; /* 第五行第二列 */
+}
+.icon-launch-action {
+  background-position: -100px -200px; /* 第五行第三列 */
+}
+.icon-scan-action {
+  background-position: -150px -200px; /* 第五行第四列 */
+}
+.icon-orbit-action {
+  background-position: -200px -200px; /* 第五行第五列 */
+}
+.icon-scan-tech {
+  background-position: 0 -250px; /* 第六行第一列 */
+}
+.icon-probe-tech {
+  background-position: -50px -250px; /* 第六行第二列 */
+}
+.icon-computer-tech {
+  background-position: -100px -250px; /* 第六行第三列 */
+}
+.icon-any-tech {
+  background-position: -150px -250px; /* 第六行第四列 */
+}
+.icon-rotate {
+  background-position: -200px -250px; /* 第六行第五列 */
+}
+
+.icon-any-card {
+  background-position: 0 -300px; /* 第七行第一列 */
+}
+
+/** 区别在于一个是收入，一个是正常图标。未来应该要把收入的那个改一下 */
+.icon-draw-card-2 {
+  background-position: -50 -300px;
+}
+
+.icon-discard-card-scan {
+  background-position: -100px -300px;
+}
+
+.icon-display-card-scan {
+  background-position: -150px -300px;
+}
+
+.icon-income {
+  background-position: -200px -300px;
 }
 
 .icon-container {
@@ -216,4 +283,32 @@
 
 .icon-value-publicity {
   -webkit-text-stroke: 3px #f14927;
+}
+
+.hexagon {
+  position: relative;
+  width: 124px;
+  height: 100px;
+  background: #d8d8d8;
+}
+
+.hexagon:after,
+.hexagon:before {
+  position: absolute;
+  content: '';
+  z-index: 1;
+  top: 0;
+  width: 0px;
+  background: #fff;
+  border-top: 50px transparent solid;
+  border-bottom: 50px transparent solid;
+}
+
+.hexagon:before {
+  left: 0;
+  border-right: 30px #d8d8d8 solid;
+}
+.hexagon:after {
+  right: 0;
+  border-left: 30px #d8d8d8 solid;
 }

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-01 00:33:02
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-03 16:15:09
+ * @LastEditTime: 2025-03-03 23:50:22
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
@@ -15,6 +15,9 @@ import { alienCards } from '@/data/alienCards';
 import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
 import { PreviewBaseCardV2 } from '@/components/cards/base_cards/PreviewBaseCardV2';
 import { IconFactory } from '@/components/icons/IconFactory';
+
+import { e } from '@/constant/effect';
+import { getIcon } from '@/constant/icons';
 
 import { EResource, EResourceMap, IIconItem } from '@/types/element';
 // make sure to import your TextFilter
@@ -52,6 +55,7 @@ export default function HomePage(
     <div className='p-4'>
       <PreviewBaseCard card={card} showLink={true} />
       <PreviewBaseCardV2 card={card} showLink={true} />
+      <IconFactory iconItem={getIcon(e.ORBIT())} />
 
       {Object.entries(EResourceMap).map(([resource, value]) => (
         <IconFactory
