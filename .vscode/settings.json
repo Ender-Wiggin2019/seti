@@ -8,5 +8,6 @@
   "headwind.runOnSave": false,
   "typescript.preferences.importModuleSpecifier": "non-relative",
   "i18n-ally.localesPaths": ["public/locales"],
-  "i18n-ally.keystyle": "nested"
+  "i18n-ally.keystyle": "nested",
+  "jira-plugin.workingProject": ""
 }
