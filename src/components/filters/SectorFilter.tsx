@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-08-15 14:20:13
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-28 15:51:30
+ * @LastEditTime: 2025-03-04 01:55:35
  * @Description:
  */
 // SectorFilter.tsx
@@ -49,7 +49,6 @@ export const SectorFilter: React.FC<SectorFilterProps> = ({
           return (
             <TagButton
               key={sector}
-              tagType='sector'
               tag={sector}
               onClick={() => toggleSector(sector)}
               selected={selectedSectors.includes(sector)}
