@@ -1,3 +1,10 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2025-02-25 09:56:21
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-03-03 16:39:04
+ * @Description:
+ */
 import React from 'react';
 
 import TagComponent from '@/components/icons/Tag';
@@ -10,7 +17,7 @@ interface IconProps {
 export const IconFactory: React.FC<IconProps> = ({ iconItem }) => {
   const { type, value, options } = iconItem;
 
-  if (type === 'none') {
+  if (!type) {
     return <div>{options?.text || ''}</div>;
   }
 
@@ -24,7 +31,7 @@ export const IconFactory: React.FC<IconProps> = ({ iconItem }) => {
   return (
     <div className='icon-container '>
       {getValueComponent()}
-      <div className={`icon-border`}>
+      <div className='icon-border'>
         <TagComponent
           type={type}
           shape={options?.diamondShape ? 'diamond' : undefined}

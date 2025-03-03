@@ -1,3 +1,10 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2025-02-28 14:45:30
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-03-03 16:46:21
+ * @Description:
+ */
 export enum ESector {
   RED = 'red-signal',
   YELLOW = 'yellow-signal',
@@ -5,6 +12,15 @@ export enum ESector {
   BLACK = 'black-signal',
 }
 
+export enum EScanAction {
+  ANY = 'any-signal',
+  RED = 'red-signal',
+  YELLOW = 'yellow-signal',
+  BLUE = 'blue-signal',
+  BLACK = 'black-signal',
+  DISPLAY_CARD = 'display-card-signal',
+  DISCARD_CARD = 'discard-card-signal',
+}
 export enum EResource {
   CREDIT = 'credit',
   ENERGY = 'energy',
@@ -16,9 +32,11 @@ export enum EResource {
 }
 
 export enum ESpecialAction {
+  LAUNCH = 'launch',
   ORBIT = 'orbit',
   LAND = 'land',
   SCAN = 'scan',
+  COMPUTER = 'computer',
 }
 
 export enum ETech {
@@ -54,11 +72,11 @@ export const EResourceMap: Record<EResource, string> = {
 
 export type TIcon =
   | ESector
+  | EScanAction
   | EResource
   | ETech
   | ELight
-  | ESpecialAction
-  | 'none';
+  | ESpecialAction;
 
 export interface IIconItem {
   type: TIcon;

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-01 00:33:02
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-03 01:01:43
+ * @LastEditTime: 2025-03-03 16:15:09
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
@@ -13,11 +13,10 @@ import React from 'react';
 import { alienCards } from '@/data/alienCards';
 
 import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
-import { RatedBaseCard } from '@/components/cards/base_cards/RatedBaseCard';
+import { PreviewBaseCardV2 } from '@/components/cards/base_cards/PreviewBaseCardV2';
 import { IconFactory } from '@/components/icons/IconFactory';
 
 import { EResource, EResourceMap, IIconItem } from '@/types/element';
-import { PreviewBaseCardV2 } from '@/components/cards/base_cards/PreviewBaseCardV2';
 // make sure to import your TextFilter
 type Props = {
   // Add custom props here
@@ -55,7 +54,10 @@ export default function HomePage(
       <PreviewBaseCardV2 card={card} showLink={true} />
 
       {Object.entries(EResourceMap).map(([resource, value]) => (
-        <IconFactory iconItem={{ ...iconItem, type: resource as EResource }} />
+        <IconFactory
+          key={resource}
+          iconItem={{ ...iconItem, type: resource as EResource }}
+        />
       ))}
       <IconFactory iconItem={iconItem} />
     </div>

@@ -1,3 +1,10 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2025-02-25 09:56:21
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-03-03 16:58:26
+ * @Description:
+ */
 module.exports = {
   env: {
     browser: true,
@@ -15,6 +22,7 @@ module.exports = {
   rules: {
     'no-unused-vars': 'off',
     'no-console': 'warn',
+    'prefer-const': 'warn',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     'react/no-unescaped-entities': 'off',
 

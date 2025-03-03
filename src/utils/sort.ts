@@ -1,10 +1,10 @@
-import BaseCard from "@/types/BaseCard";
+import BaseCard from '@/types/BaseCard';
 
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-03-01 23:59:26
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-03 00:15:05
+ * @LastEditTime: 2025-03-03 14:06:53
  * @Description:
  */
 function extractNumberFromString(str: string) {
@@ -12,7 +12,7 @@ function extractNumberFromString(str: string) {
   return match ? parseInt(match[0], 10) : 0;
 }
 
-export function sortCards(cards: BaseCard[], ascending: boolean = true): BaseCard[] {
+export function sortCards(cards: BaseCard[], ascending = true): BaseCard[] {
   return cards.sort((a, b) => {
     const aIsNumeric = /^\d+$/.test(a.id);
     const bIsNumeric = /^\d+$/.test(b.id);
