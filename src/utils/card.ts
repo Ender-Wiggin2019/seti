@@ -13,9 +13,8 @@ import { sortCards } from '@/utils/sort';
 
 import BaseCard from '@/types/BaseCard';
 import { Card } from '@/types/Card';
-import { EScanAction, ETech, ETrace, TIcon } from '@/types/element';
 import { EEffectType, Effect } from '@/types/effect';
-import { effect } from 'zod';
+import { EScanAction, ETech, ETrace, TIcon } from '@/types/element';
 
 export function isBaseCard(card: Card): card is BaseCard {
   return !card.alien;

@@ -12,15 +12,9 @@ import React from 'react';
 
 import { alienCards } from '@/data/alienCards';
 
-import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
-import { PreviewBaseCardV2 } from '@/components/cards/base_cards/PreviewBaseCardV2';
-import { IconFactory } from '@/components/icons/IconFactory';
-
-import { e } from '@/constant/effect';
-import { getIcon } from '@/constant/icons';
-
-import { EResource, EResourceMap, IIconItem } from '@/types/element';
 import { AdvancedFilter } from '@/components/filters/AdvancedFilter';
+
+import { EResource, IIconItem } from '@/types/element';
 // make sure to import your TextFilter
 type Props = {
   // Add custom props here

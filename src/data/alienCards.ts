@@ -2,16 +2,19 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-01 12:31:29
+ * @LastEditTime: 2025-03-05 01:38:16
  * @Description:
  */
 // import {Size} from "@/types/Size";
 
 // import baseCards from '@/data/baseCards';
 // import { flavorTexts } from '@/data/flavorTexts';
+
+import { DESC, DESC_WITH_TYPE, e, m } from '@/constant/effect';
+
 import BaseCard, { EAlienType } from '@/types/BaseCard';
-import { EResource, ESector } from '@/types/element';
-export const alienCards: BaseCard[] = [
+import { EResource, EScanAction, ESector } from '@/types/element';
+export const _alienCards: BaseCard[] = [
   {
     id: 'ET.20',
     name: 'Amazing Uncertainty',
@@ -21,6 +24,12 @@ export const alienCards: BaseCard[] = [
     price: 1,
     income: EResource.ENERGY,
     alien: EAlienType.ANOMALIES,
+    effects: [
+      e.SIGNAL_ANY(),
+      DESC(
+        'Then gain {score-1} for each signal you have in sectors with anomalies.'
+      ),
+    ],
   },
   {
     id: 'ET.17',
@@ -34,6 +43,20 @@ export const alienCards: BaseCard[] = [
     price: 1,
     income: EResource.CARD,
     alien: EAlienType.ANOMALIES,
+    effects: [
+      DESC(
+        'Gain the reward from the anomaly which is going to be triggered next.'
+      ),
+      m.QUICK_MISSION(
+        [
+          e.TRACE_RED(),
+          e.TRACE_YELLOW(),
+          e.TRACE_BLUE(),
+          DESC('for this species'),
+        ],
+        [e.SCORE(3), e.PUBLICITY(2)]
+      ),
+    ],
     special: {
       descHelper:
         'Gain the reward from the anomaly which is going to be triggered next.',
@@ -48,6 +71,10 @@ export const alienCards: BaseCard[] = [
     price: 1,
     income: EResource.CREDIT,
     alien: EAlienType.ANOMALIES,
+    effects: [
+      e.MOVE(5),
+      DESC("Don't gain any {publicity} for moving probes this turn."),
+    ],
   },
   {
     id: 'ET.13',
@@ -61,6 +88,23 @@ export const alienCards: BaseCard[] = [
     price: 1,
     income: EResource.CREDIT,
     alien: EAlienType.ANOMALIES,
+    effects: [
+      e.PUBLICITY(1),
+      m.FULL_MISSION([
+        {
+          req: [e.TECH_ANY()],
+          reward: [e.ENERGY()],
+        },
+        {
+          req: [e.TECH_ANY()],
+          reward: [e.CARD_ANY()],
+        },
+        {
+          req: [e.TECH_ANY()],
+          reward: [e.SCORE(3)],
+        },
+      ]),
+    ],
   },
   {
     id: 'ET.16',
@@ -74,6 +118,12 @@ export const alienCards: BaseCard[] = [
     price: 1,
     income: EResource.CREDIT,
     alien: EAlienType.ANOMALIES,
+    effects: [
+      DESC_WITH_TYPE(
+        EResource.CARD_ANY,
+        'Draw all three cards from the card row.'
+      ),
+    ],
   },
   {
     id: 'ET.14',
@@ -87,6 +137,13 @@ export const alienCards: BaseCard[] = [
     price: 2,
     income: EResource.CARD,
     alien: EAlienType.ANOMALIES,
+    effects: [
+      e.SCAN(),
+      DESC_WITH_TYPE(
+        EScanAction.ANY,
+        'In addition mark a {signal} in a sector with the anomaly which is going to be triggered next.'
+      ),
+    ],
   },
   {
     id: 'ET.18',
@@ -100,6 +157,7 @@ export const alienCards: BaseCard[] = [
     price: 2,
     income: EResource.CREDIT,
     alien: EAlienType.ANOMALIES,
+    effects: [e.ROTATE(), e.TECH_ANY()],
   },
   {
     id: 'ET.19',
@@ -110,6 +168,7 @@ export const alienCards: BaseCard[] = [
     price: 1,
     income: EResource.ENERGY,
     alien: EAlienType.ANOMALIES,
+    effects: [e.TRACE_ANY()],
   },
   {
     id: 'ET.15',
@@ -127,6 +186,12 @@ export const alienCards: BaseCard[] = [
       descHelper:
         'Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income.',
     },
+    effects: [
+      e.CARD(3),
+      DESC(
+        'Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income.'
+      ),
+    ],
   },
   {
     id: 'ET.11',
@@ -137,6 +202,10 @@ export const alienCards: BaseCard[] = [
     price: 1,
     income: EResource.CARD,
     alien: EAlienType.ANOMALIES,
+    effects: [
+      e.LAUNCH(),
+      DESC('If it was in a sector with an anomaly, gain {move-1} .'),
+    ],
   },
 
   {
@@ -654,11 +723,20 @@ export const alienCards: BaseCard[] = [
   },
 ];
 
+// add flavorText
+export const alienCards: BaseCard[] = _alienCards.map((card) => {
+  return {
+    ...card,
+    flavorText: `${card.id}_flavor_text`,
+  };
+});
+
 // const res = [];
 
-// for (let i = 70; i < flavorTexts.length + 70; i ++ ) {
-//   const f = flavorTexts[i - 70];
-//   const id = baseCards[i].id;
+// const _aalienCards = alienCards.filter(a => a.alien === EAlienType.EXERTIANS);
+// for (let i = 0; i < flavorTexts.length; i ++ ) {
+//   const f = flavorTexts[i];
+//   const id = _aalienCards[i].id;
 //   res.push(`\"${id + '_flavor_text'}\": \"${f.flavorText}\"`);
 // }
 

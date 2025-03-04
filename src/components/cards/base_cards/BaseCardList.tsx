@@ -6,18 +6,17 @@ import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
 import CardList from '@/components/cards/shared/CardList';
 
 import { fetchCardRatings } from '@/services/card';
+import { filterCardsByIcons } from '@/utils/card';
 import { getBaseCardModel } from '@/utils/getBaseCardModel';
 
 import { useBaseCardData } from './useBaseCardData';
 
 import BaseCardType, { EAlienType } from '@/types/BaseCard';
 import { CardSource } from '@/types/CardSource';
-import { EEffectType } from '@/types/effect';
 import { EResource, ESector, TIcon } from '@/types/element';
 import { IBaseCard } from '@/types/IBaseCard';
 import { IRating } from '@/types/IRating';
 import { SortOrder } from '@/types/Order';
-import { filterCardsByIcons } from '@/utils/card';
 
 interface BaseCardListProps {
   selectedSectors?: ESector[];

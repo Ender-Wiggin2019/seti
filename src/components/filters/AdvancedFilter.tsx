@@ -9,6 +9,7 @@ import TagButton from '@/components/buttons/TagButton';
 
 import {
   EResource,
+  EScanAction,
   ESpecialAction,
   ETech,
   ETrace,
@@ -118,11 +119,13 @@ export const AdvancedFilter: React.FC<AdvancedFilterProps> = ({
           ETech.PROBE,
           ETech.COMPUTER,
           EResource.MOVE,
+          EScanAction.ANY,
         ].map((icon) => (
           <motion.li variants={itemVariants} key={icon}>
             <TagButton
               key={icon}
               tag={icon}
+              brightMode={true}
               onClick={() => toggleTag(icon)}
               selected={selectedTags.includes(icon)}
             />

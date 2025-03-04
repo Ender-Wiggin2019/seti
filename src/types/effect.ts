@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-04 15:12:18
+ * @LastEditTime: 2025-03-05 01:17:33
  * @Description:
  */
 
@@ -39,7 +39,7 @@ export interface IMissionReq {
 }
 
 export interface IMissionItem {
-  req: IBaseEffect | ICustomizedEffect;
+  req: (IBaseEffect | ICustomizedEffect)[];
   reward: (IBaseEffect | ICustomizedEffect)[];
 }
 

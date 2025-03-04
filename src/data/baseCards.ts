@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-04 15:25:47
+ * @LastEditTime: 2025-03-05 01:18:17
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -1517,6 +1517,70 @@ const _baseCards: BaseCard[] = [
       e.ROTATE(),
       e.TECH_SCAN(),
       DESC('Then you can discard a card for a signal from your hand .'),
+    ],
+  },
+  {
+    id: '117',
+    name: 'Lunar Gateway',
+    position: { src: '/images/cards/cards-2.webp', row: 6, col: 7 },
+    freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
+    sector: ESector.RED,
+    price: 3,
+    income: EResource.CARD,
+    description: '',
+    effects: [
+      e.LAUNCH(),
+      m.FULL_MISSION([
+        {
+          req: [e.ORBIT_OR_LAND_COUNT()],
+          reward: [e.LAUNCH()],
+        },
+        {
+          req: [e.ORBIT_OR_LAND_COUNT()],
+          reward: [e.ENERGY()],
+        },
+      ]),
+    ],
+  },
+  {
+    id: 'SE EN 01',
+    name: 'Not a planet since 2006',
+    position: { src: '/images/cards/cards-2.webp', row: 6, col: 8 },
+    freeAction: [{ type: EResource.MOVE, value: 1 }],
+    sector: ESector.RED,
+    price: 0,
+    income: EResource.CARD,
+    description: '',
+    effects: [
+      DESC(
+        'Keep this card in front of you. If you have a probe in the outermost ring, you may use an {orbit} or {land} action to place that probe on pluto.'
+      ),
+    ],
+  },
+  {
+    id: 'SE EN 02',
+    name: 'Gateway to Mars',
+    position: { src: '/images/cards/cards-2.webp', row: 6, col: 9 },
+    freeAction: [{ type: EResource.DATA, value: 1 }],
+    sector: ESector.BLUE,
+    price: 1,
+    income: EResource.CREDIT,
+    description: '',
+    effects: [
+      m.FULL_MISSION([
+        {
+          req: [
+            DESC(
+              'When you {orbit} / {land} at Mars (or its moons) or when you play a Card mentioning "Mars" in its flavor text:'
+            ),
+          ],
+          reward: [e.PUBLICITY(2)],
+        },
+        {
+          req: [e.ORBIT_OR_LAND_COUNT()],
+          reward: [e.SCORE(5)],
+        },
+      ]),
     ],
   },
 ];

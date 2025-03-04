@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 22:59:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-04 15:12:04
+ * @LastEditTime: 2025-03-05 01:17:05
  * @Description:
  */
 import {
@@ -12,14 +12,12 @@ import {
   IEndGameEffect,
   IMissionEffect,
   IMissionItem,
-  IMissionReq,
   IOrEffect,
 } from '@/types/effect';
 import {
   EMiscIcon,
   EResource,
   EScanAction,
-  ESector,
   ESpecialAction,
   ETech,
   ETrace,
@@ -121,13 +119,13 @@ export const e = {
 
 // usually will only has one mission
 const QUICK_MISSION = (
-  req: IBaseEffect | ICustomizedEffect,
+  req: IBaseEffect | ICustomizedEffect | (IBaseEffect | ICustomizedEffect)[],
   reward: IBaseEffect | IBaseEffect[]
 ): IMissionEffect => ({
   effectType: EEffectType.MISSION_QUICK,
   missions: [
     {
-      req,
+      req: Array.isArray(req) ? req : [req],
       reward: Array.isArray(reward) ? reward : [reward],
     },
   ],
