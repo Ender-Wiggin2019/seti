@@ -17,6 +17,7 @@ import { EResource, ESector, TIcon } from '@/types/element';
 import { IBaseCard } from '@/types/IBaseCard';
 import { IRating } from '@/types/IRating';
 import { SortOrder } from '@/types/Order';
+import { filterCardsByIcons } from '@/utils/card';
 
 interface BaseCardListProps {
   selectedSectors?: ESector[];
@@ -100,15 +101,7 @@ const filterCards = (
   // Filter by advanced icons
   // TODO: just a demo yet
   if (advancedIcons.length > 0) {
-    console.log('🎸 [test] - advancedIcons:', advancedIcons);
-    res = res.filter((card) =>
-      card.effects?.some(
-        (e) =>
-          e.effectType !== EEffectType.MISSION &&
-          e.type &&
-          advancedIcons.includes(e.type)
-      )
-    );
+    res = filterCardsByIcons(res, advancedIcons);
   }
 
   // Filter by credit

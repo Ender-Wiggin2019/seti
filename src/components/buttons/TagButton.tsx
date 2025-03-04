@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-08-15 14:20:13
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-04 01:39:49
+ * @LastEditTime: 2025-03-04 11:47:22
  * @Description:
  */
 // TagButton.tsx
@@ -11,6 +11,8 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 import TagComponent from '@/components/icons/Tag';
+
+import { getIconShape } from '@/utils/icon';
 
 import { TIcon } from '@/types/element';
 
@@ -23,7 +25,8 @@ type TagButtonProps = {
 
 const TagButton = React.forwardRef<HTMLButtonElement, TagButtonProps>(
   ({ className, isLoading, tag, selected, onTagClick, ...rest }, ref) => {
-    const isHex = tag.includes('action');
+    const shape = getIconShape(tag);
+    const isOriginal = shape === 'normal';
 
     return (
       <button
@@ -31,16 +34,17 @@ const TagButton = React.forwardRef<HTMLButtonElement, TagButtonProps>(
         type='button'
         onClick={() => onTagClick && onTagClick(tag)}
         className={cn(
-          !isHex &&
+          !isOriginal &&
             'filter-button h-min w-min rounded-full duration-200 bg-gradient-to-b from-zinc-50/50 to-white/90 p-1 text-sm shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur transition',
-          isHex && 'ring-0 border-none brightness-50 duration-200 scale-125',
+          isOriginal &&
+            'ring-0 border-none brightness-50 duration-200 scale-125',
           selected && 'bg-gradient-radial from-yellow-200 to-yellow-100',
-          isHex && selected && 'brightness-100',
+          isOriginal && selected && 'brightness-100',
           !selected && ''
         )}
         {...rest}
       >
-        <TagComponent type={tag} shape={isHex ? 'normal' : 'round'} />
+        <TagComponent type={tag} shape={shape} />
       </button>
     );
   }

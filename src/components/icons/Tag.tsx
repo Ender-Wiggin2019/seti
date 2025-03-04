@@ -2,15 +2,16 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-08-03 06:34:29
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-04 00:02:57
+ * @LastEditTime: 2025-03-04 11:38:16
  * @Description:
  */
 import React from 'react';
 
 import { TIcon } from '@/types/element';
+import { TShape } from '@/types/Icon';
 interface TagProps {
   type: TIcon;
-  shape?: 'diamond' | 'round' | 'normal';
+  shape?: TShape;
 }
 
 const TagComponent: React.FC<TagProps> = ({ type, shape = 'round' }) => {

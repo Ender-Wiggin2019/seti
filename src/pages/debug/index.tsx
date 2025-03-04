@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-01 00:33:02
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-03 23:50:22
+ * @LastEditTime: 2025-03-04 11:46:47
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
@@ -20,6 +20,7 @@ import { e } from '@/constant/effect';
 import { getIcon } from '@/constant/icons';
 
 import { EResource, EResourceMap, IIconItem } from '@/types/element';
+import { AdvancedFilter } from '@/components/filters/AdvancedFilter';
 // make sure to import your TextFilter
 type Props = {
   // Add custom props here
@@ -53,17 +54,17 @@ export default function HomePage(
   };
   return (
     <div className='p-4'>
-      <PreviewBaseCard card={card} showLink={true} />
+      {/* <PreviewBaseCard card={card} showLink={true} />
       <PreviewBaseCardV2 card={card} showLink={true} />
-      <IconFactory iconItem={getIcon(e.ORBIT())} />
-
-      {Object.entries(EResourceMap).map(([resource, value]) => (
+      <IconFactory iconItem={getIcon(e.ORBIT())} /> */}
+      <AdvancedFilter onFilterChange={(tag) => () => tag} reset={false} />
+      {/* {Object.entries(EResourceMap).map(([resource, value]) => (
         <IconFactory
           key={resource}
           iconItem={{ ...iconItem, type: resource as EResource }}
         />
-      ))}
-      <IconFactory iconItem={iconItem} />
+      ))} */}
+      {/* <IconFactory iconItem={iconItem} /> */}
     </div>
   );
 }

@@ -27,7 +27,8 @@ export enum EResource {
   DATA = 'data',
   PUBLICITY = 'publicity',
   SCORE = 'score',
-  CARD = 'draw-card',
+  CARD = 'draw-card', // has question mark
+  CARD_ANY = 'card-any',
   MOVE = 'move',
 }
 
@@ -47,10 +48,10 @@ export enum ESpecialAction {
 }
 
 export enum ETech {
-  ANY = 'tech-any',
-  PROBE = 'tech-probe',
-  SCAN = 'tech-scan',
-  COMPUTER = 'tech-computer',
+  ANY = 'any-tech',
+  PROBE = 'probe-tech',
+  SCAN = 'scan-tech',
+  COMPUTER = 'computer-tech',
 }
 
 export const ESectorMap: Record<ESector, string> = {
@@ -66,8 +67,9 @@ export const EResourceMap: Record<EResource, string> = {
   [EResource.DATA]: 'data',
   [EResource.PUBLICITY]: 'publicity',
   [EResource.SCORE]: 'score',
-  [EResource.CARD]: 'card',
+  [EResource.CARD]: 'draw-card',
   [EResource.MOVE]: 'move',
+  [EResource.CARD_ANY]: 'card-any',
 };
 
 // Misc Icons

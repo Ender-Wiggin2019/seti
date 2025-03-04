@@ -7,7 +7,13 @@ import { cn } from '@/lib/utils';
 
 import TagButton from '@/components/buttons/TagButton';
 
-import { ESpecialAction, TIcon } from '@/types/element';
+import {
+  EResource,
+  ESpecialAction,
+  ETech,
+  ETrace,
+  TIcon,
+} from '@/types/element';
 
 type AdvancedFilterProps = {
   onFilterChange: (tags: TIcon[]) => void;
@@ -102,18 +108,26 @@ export const AdvancedFilter: React.FC<AdvancedFilterProps> = ({
         }}
         style={{ pointerEvents: isOpen ? 'auto' : 'none' }}
       >
-        {[ESpecialAction.LAND, ESpecialAction.LAUNCH, ESpecialAction.SCAN].map(
-          (icon) => (
-            <motion.li variants={itemVariants} key={icon}>
-              <TagButton
-                key={icon}
-                tag={icon}
-                onClick={() => toggleTag(icon)}
-                selected={selectedTags.includes(icon)}
-              />
-            </motion.li>
-          )
-        )}
+        {[
+          ESpecialAction.LAUNCH,
+          ESpecialAction.LAND,
+          ESpecialAction.SCAN,
+          ETrace.ANY,
+          ETech.ANY,
+          ETech.SCAN,
+          ETech.PROBE,
+          ETech.COMPUTER,
+          EResource.MOVE,
+        ].map((icon) => (
+          <motion.li variants={itemVariants} key={icon}>
+            <TagButton
+              key={icon}
+              tag={icon}
+              onClick={() => toggleTag(icon)}
+              selected={selectedTags.includes(icon)}
+            />
+          </motion.li>
+        ))}
       </motion.ul>
     </motion.nav>
   );

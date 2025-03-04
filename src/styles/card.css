@@ -74,7 +74,7 @@
   width: 103px;
   height: 9px;
   background-color: #3f3d40;
-  font-size: 7px;
+  font-size: 6px;
   color: white;
   display: flex;
   align-items: center;
@@ -131,7 +131,7 @@
 .icon-draw-card {
   background-position: -100px 0; /* 第一行第三列 */
 }
-.icon-card {
+.icon-card-any {
   background-position: -150px 0; /* 第一行第四列 */
 }
 .icon-publicity {

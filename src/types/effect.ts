@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-03 16:57:05
+ * @LastEditTime: 2025-03-04 15:12:18
  * @Description:
  */
 
@@ -11,11 +11,19 @@ import { IIconItem, TIcon } from '@/types/element';
 // effect 是逻辑层，icon是渲染层。原则上 effect 包含所有非渲染相关信息，等价于 model
 export enum EEffectType {
   BASE = 1,
-  MISSION,
+  MISSION_QUICK,
+  MISSION_FULL, // a totally mission card
+  END_GAME,
   CUSTOMIZED,
+  OR, // semantic label for an alternative effect
 }
 
-export type Effect = IBaseEffect | IMissionEffect | ICustomizedEffect;
+export type Effect =
+  | IBaseEffect
+  | IMissionEffect
+  | IEndGameEffect
+  | ICustomizedEffect
+  | IOrEffect;
 
 export interface IBaseEffect {
   effectType: EEffectType.BASE;
@@ -27,6 +35,12 @@ export interface IBaseEffect {
 export interface IMissionReq {
   type: TIcon;
   reqCount: number;
+  desc?: string;
+}
+
+export interface IMissionItem {
+  req: IBaseEffect | ICustomizedEffect;
+  reward: (IBaseEffect | ICustomizedEffect)[];
 }
 
 export interface ICustomizedEffect {
@@ -34,10 +48,22 @@ export interface ICustomizedEffect {
   type?: TIcon;
   desc: string;
 }
+
 export interface IMissionEffect {
-  effectType: EEffectType.MISSION;
-  req: IMissionReq;
-  reward: IBaseEffect[];
+  effectType: EEffectType.MISSION_QUICK | EEffectType.MISSION_FULL;
+  missions: IMissionItem[];
+}
+
+export interface IEndGameEffect {
+  effectType: EEffectType.END_GAME;
+  score: number;
+  per: IBaseEffect;
+  desc?: string;
+}
+
+export interface IOrEffect {
+  effectType: EEffectType.OR;
+  effects: Effect[];
 }
 
 // 核心函数，用于将IEffect转换为IIconItem

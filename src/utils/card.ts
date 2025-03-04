@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-29 11:57:13
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-02 00:00:19
+ * @LastEditTime: 2025-03-04 15:51:01
  * @Description:
  */
 
@@ -13,6 +13,9 @@ import { sortCards } from '@/utils/sort';
 
 import BaseCard from '@/types/BaseCard';
 import { Card } from '@/types/Card';
+import { EScanAction, ETech, ETrace, TIcon } from '@/types/element';
+import { EEffectType, Effect } from '@/types/effect';
+import { effect } from 'zod';
 
 export function isBaseCard(card: Card): card is BaseCard {
   return !card.alien;
@@ -35,4 +38,84 @@ export const getCardsById = (ids: string[], sort?: boolean) => {
     ids.includes(card.id)
   );
   return sort ? sortCards(res) : res;
+};
+
+// NOTE: a special function to filter cards by front end icons
+// It will have some hard code logic for display
+export const filterCardsByIcons = (cards: BaseCard[], icons: TIcon[]) => {
+  const res: BaseCard[] = [];
+  for (const card of cards) {
+    if (!card.effects) continue;
+
+    if (isEffectsIncludeIcons(card.effects, icons)) {
+      res.push(card);
+    }
+  }
+
+  return res;
+};
+
+/**
+ * check if the effects include the icons
+ * @param effects
+ * @param icons
+ * @returns
+ */
+export const isEffectsIncludeIcons = (
+  effects: Effect[],
+  icons: TIcon[]
+): boolean => {
+  for (const effect of effects) {
+    if (effect.effectType === EEffectType.OR) {
+      return isEffectsIncludeIcons(effect.effects, icons);
+    }
+    if (
+      effect.effectType === EEffectType.BASE ||
+      effect.effectType === EEffectType.CUSTOMIZED
+    ) {
+      if (!effect.type) continue;
+
+      const isAnyTrace = [
+        ETrace.ANY,
+        ETrace.BLUE,
+        ETrace.RED,
+        ETrace.YELLOW,
+      ].includes(effect.type as ETrace);
+
+      const isAnyTech = [
+        ETech.ANY,
+        ETech.COMPUTER,
+        ETech.PROBE,
+        ETech.SCAN,
+      ].includes(effect.type as ETech);
+
+      const isAnyScan = [
+        EScanAction.ANY,
+        EScanAction.BLACK,
+        EScanAction.BLUE,
+        EScanAction.DISCARD_CARD,
+        EScanAction.DISPLAY_CARD,
+        EScanAction.RED,
+        EScanAction.YELLOW,
+      ].includes(effect.type as EScanAction);
+
+      if (isAnyTrace && icons.includes(ETrace.ANY)) {
+        return true;
+      }
+
+      if (isAnyScan && icons.includes(EScanAction.ANY)) {
+        return true;
+      }
+
+      if (isAnyTech && icons.includes(ETech.ANY)) {
+        return true;
+      }
+
+      if (icons.includes(effect.type as TIcon)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 };
