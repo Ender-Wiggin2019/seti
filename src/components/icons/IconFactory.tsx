@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-05 16:55:49
+ * @LastEditTime: 2025-03-06 00:30:49
  * @Description:
  */
 import React from 'react';
@@ -28,12 +28,16 @@ export const IconFactory: React.FC<IconProps> = ({ iconItem }) => {
     return <div className={`icon-value icon-value-${type}`}>{value}</div>;
   };
 
+  const showMultipleItem = !options?.showValue && value > 1;
+
   return (
     <div className={`icon-container icon-${options?.size || 'md'}`}>
       {getValueComponent()}
-      <div className='icon-border'>
-        <TagComponent type={type} shape={options?.shape} />
-      </div>
+      {Array.from({ length: showMultipleItem ? value : 1 }).map((_, index) => (
+        <div key={index} className='icon-border'>
+          <TagComponent type={type} shape={options?.shape} />
+        </div>
+      ))}
     </div>
   );
 };

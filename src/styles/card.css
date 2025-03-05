@@ -66,6 +66,30 @@
 .normal-flavor-text {
   color: black;
 }
+.card-effects-container {
+  position: absolute;
+  bottom: 24px;
+  left: 2px;
+  background-color: white;
+  color: black;
+  font-size: 9px;
+  line-height: 10px;
+  width: 146px;
+  height: 77px;
+  padding-bottom: 2px;
+  box-sizing: border-box;
+  opacity: 0.8;
+}
+
+.card-effects {
+  display: flex;
+  flex: 1 1 0%;
+  width: 100%;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+}
 
 .card-title {
   position: absolute;
@@ -241,6 +265,7 @@
   align-items: center;
   width: fit-content;
   height: fit-content;
+  flex-shrink: 0;
 }
 
 .icon-lg {
@@ -252,11 +277,15 @@
 }
 
 .icon-sm {
-  scale: 0.8;
+  scale: 0.6;
+  width: auto;
+  height: 50px;
 }
 
 .icon-xs {
   scale: 0.5;
+  width: auto;
+  height: 50px;
 }
 
 .icon-value {

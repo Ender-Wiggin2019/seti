@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-05 01:18:17
+ * @LastEditTime: 2025-03-06 00:32:25
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -396,7 +396,11 @@ const _baseCards: BaseCard[] = [
     special: {
       descHelper: 'Ignore the limit of probes in space for those launches.',
     },
-    effects: [e.LAUNCH()],
+    effects: [
+      e.LAUNCH(2),
+      e.PUBLICITY(1),
+      DESC('Ignore the limit of probes in space for those launches.'),
+    ],
   },
   {
     id: '65',

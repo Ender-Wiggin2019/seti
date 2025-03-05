@@ -1,3 +1,10 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2025-03-05 23:45:21
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-03-06 00:45:58
+ * @Description:
+ */
 import React from 'react';
 
 import { EffectFactory } from '@/components/Effect';
@@ -16,7 +23,11 @@ export const DescRender: React.FC<IconProps> = ({ desc }) => {
         const res = renderNode2Effect(renderNode);
         if (typeof res === 'string') {
           // TODO: use rich text
-          return <span key={index}>{res}</span>;
+          return (
+            <span className='text-center' key={index}>
+              {res}
+            </span>
+          );
         }
 
         return (

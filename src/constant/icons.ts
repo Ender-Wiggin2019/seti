@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 16:47:27
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-04 00:01:14
+ * @LastEditTime: 2025-03-06 00:23:09
  * @Description:
  */
 import { IBaseEffect } from '@/types/effect';
@@ -25,9 +25,10 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
   switch (type) {
     case ESpecialAction.ORBIT:
     case ESpecialAction.LAND:
+    case ESpecialAction.LAUNCH:
     case ESpecialAction.SCAN:
     case ESpecialAction.COMPUTER:
-      size = 'lg';
+      size = 'sm';
       break;
     case EResource.MOVE:
       shape = 'round';
@@ -38,6 +39,7 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
     case EResource.PUBLICITY:
     case EResource.DATA:
       shape = 'diamond';
+      size = 'xs';
       showValue = true;
       break;
     default:
