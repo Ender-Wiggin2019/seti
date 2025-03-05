@@ -1,8 +1,10 @@
+import { TShape } from '@/types/Icon';
+
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 14:45:30
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-04 00:12:56
+ * @LastEditTime: 2025-03-05 16:54:11
  * @Description:
  */
 export enum ESector {
@@ -44,7 +46,7 @@ export enum ESpecialAction {
   ORBIT = 'orbit-action',
   LAND = 'land-action',
   SCAN = 'scan-action',
-  COMPUTER = 'computer-action',
+  COMPUTER = 'compu pter-action',
 }
 
 export enum ETech {
@@ -90,13 +92,17 @@ export type TIcon =
   | ESpecialAction
   | EMiscIcon;
 
+export type TSize = 'xs' | 'sm' | 'md' | 'lg';
+
 export interface IIconItem {
   type: TIcon;
   value: number;
   options?: {
+    size?: TSize;
     showValue?: boolean;
+    showValueInCenter?: boolean;
     text?: string; // use text when icon is none
-    diamondShape?: boolean;
+    shape?: TShape;
     textColor?: string;
     border?: boolean;
     borderColor?: string;

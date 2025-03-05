@@ -239,12 +239,31 @@
   display: flex;
   justify-content: flex-start;
   align-items: center;
+  width: fit-content;
+  height: fit-content;
+}
+
+.icon-lg {
+  scale: 1.5;
+}
+
+.icon-md {
+  scale: 1;
+}
+
+.icon-sm {
+  scale: 0.8;
+}
+
+.icon-xs {
+  scale: 0.5;
 }
 
 .icon-value {
   z-index: 5;
   color: white;
   width: 30px;
+  height: 40px;
   font-size: 60px;
   font-weight: 800;
   margin-right: -16px;

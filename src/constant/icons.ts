@@ -6,43 +6,57 @@
  * @Description:
  */
 import { IBaseEffect } from '@/types/effect';
-import { ESpecialAction, IIconItem } from '@/types/element';
+import { EResource, ESpecialAction, IIconItem, TSize } from '@/types/element';
+import { TShape } from '@/types/Icon';
 
-export const getIcon = (effect: IBaseEffect): IIconItem => {
-  const { type, value, desc } = effect;
+export const getIconItem = (effect: IBaseEffect): IIconItem => {
+  const { type, value, desc, size: oriSize } = effect;
 
   // default style
   let showValue = false;
-  const diamondShape = false;
+  const showValueInCenter = false;
+  const text = '';
+  let shape: TShape = 'normal';
+  let size: TSize = 'md';
   const textColor = '';
   const border = false;
   const borderColor = '';
 
   switch (type) {
     case ESpecialAction.ORBIT:
-      break;
     case ESpecialAction.LAND:
-      break;
     case ESpecialAction.SCAN:
-      break;
     case ESpecialAction.COMPUTER:
+      size = 'lg';
+      break;
+    case EResource.MOVE:
+      shape = 'round';
+      showValue = true;
+      break;
+    case EResource.CREDIT:
+    case EResource.ENERGY:
+    case EResource.PUBLICITY:
+    case EResource.DATA:
+      shape = 'diamond';
+      showValue = true;
       break;
     default:
-      showValue = true;
+      // showValue = true;
       break;
   }
   const res = {
     type,
     value: value || 1,
     options: {
+      size: oriSize || size,
       showValue,
       text: desc,
-      diamondShape,
+      shape,
       textColor,
       border,
       borderColor,
     },
   };
-  console.log('🎸 [test] - getIcon - res:', res);
-  return res;
+  console.log('🎸 [test] - getIconItem - res:', res);
+  return res satisfies IIconItem;
 };

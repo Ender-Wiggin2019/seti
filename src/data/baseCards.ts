@@ -1532,12 +1532,12 @@ const _baseCards: BaseCard[] = [
       e.LAUNCH(),
       m.FULL_MISSION([
         {
-          req: [e.ORBIT_OR_LAND_COUNT()],
-          reward: [e.LAUNCH()],
+          req: e.ORBIT_OR_LAND_COUNT(),
+          reward: e.LAUNCH(),
         },
         {
-          req: [e.ORBIT_OR_LAND_COUNT()],
-          reward: [e.ENERGY()],
+          req: e.ORBIT_OR_LAND_COUNT(),
+          reward: e.ENERGY(),
         },
       ]),
     ],
@@ -1569,16 +1569,14 @@ const _baseCards: BaseCard[] = [
     effects: [
       m.FULL_MISSION([
         {
-          req: [
-            DESC(
-              'When you {orbit} / {land} at Mars (or its moons) or when you play a Card mentioning "Mars" in its flavor text:'
-            ),
-          ],
-          reward: [e.PUBLICITY(2)],
+          req: DESC(
+            'When you {orbit} / {land} at Mars (or its moons) or when you play a Card mentioning "Mars" in its flavor text:'
+          ),
+          reward: e.PUBLICITY(2),
         },
         {
-          req: [e.ORBIT_OR_LAND_COUNT()],
-          reward: [e.SCORE(5)],
+          req: e.ORBIT_OR_LAND_COUNT(),
+          reward: e.SCORE(5),
         },
       ]),
     ],

@@ -2,11 +2,11 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-05 01:17:33
+ * @LastEditTime: 2025-03-05 16:54:18
  * @Description:
  */
 
-import { IIconItem, TIcon } from '@/types/element';
+import { IIconItem, TIcon, TSize } from '@/types/element';
 
 // effect 是逻辑层，icon是渲染层。原则上 effect 包含所有非渲染相关信息，等价于 model
 export enum EEffectType {
@@ -30,6 +30,7 @@ export interface IBaseEffect {
   type: TIcon;
   value?: number;
   desc?: string;
+  size?: TSize; // 一般不会赋值，除非是 desc
 }
 
 export interface IMissionReq {
@@ -39,8 +40,8 @@ export interface IMissionReq {
 }
 
 export interface IMissionItem {
-  req: (IBaseEffect | ICustomizedEffect)[];
-  reward: (IBaseEffect | ICustomizedEffect)[];
+  req: IBaseEffect | ICustomizedEffect | (IBaseEffect | ICustomizedEffect)[];
+  reward: IBaseEffect | ICustomizedEffect | (IBaseEffect | ICustomizedEffect)[];
 }
 
 export interface ICustomizedEffect {

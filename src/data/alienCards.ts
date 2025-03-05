@@ -92,16 +92,16 @@ export const _alienCards: BaseCard[] = [
       e.PUBLICITY(1),
       m.FULL_MISSION([
         {
-          req: [e.TECH_ANY()],
-          reward: [e.ENERGY()],
+          req: e.TECH_ANY(),
+          reward: e.ENERGY(),
         },
         {
-          req: [e.TECH_ANY()],
-          reward: [e.CARD_ANY()],
+          req: e.TECH_ANY(),
+          reward: e.CARD_ANY(),
         },
         {
-          req: [e.TECH_ANY()],
-          reward: [e.SCORE(3)],
+          req: e.TECH_ANY(),
+          reward: e.SCORE(3),
         },
       ]),
     ],

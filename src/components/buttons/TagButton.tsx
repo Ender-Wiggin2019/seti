@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 
 import TagComponent from '@/components/icons/Tag';
 
-import { getIconShape } from '@/utils/icon';
+import { getButtonIconShape } from '@/utils/icon';
 
 import { TIcon } from '@/types/element';
 
@@ -29,7 +29,7 @@ const TagButton = React.forwardRef<HTMLButtonElement, TagButtonProps>(
     { className, isLoading, tag, brightMode, selected, onTagClick, ...rest },
     ref
   ) => {
-    const shape = getIconShape(tag);
+    const shape = getButtonIconShape(tag);
     const isOriginal = shape === 'normal' || brightMode;
 
     return (
