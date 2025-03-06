@@ -5,10 +5,19 @@ import { BiChevronDown } from 'react-icons/bi';
 
 import { cn } from '@/lib/utils';
 
-import { Tag } from '@/types/Tags';
+import TagButton from '@/components/buttons/TagButton';
 
-type RequirementFilterProps = {
-  onFilterChange: (tags: Tag[]) => void;
+import {
+  EResource,
+  EScanAction,
+  ESpecialAction,
+  ETech,
+  ETrace,
+  TIcon,
+} from '@/types/element';
+
+type AdvancedFilterProps = {
+  onFilterChange: (tags: TIcon[]) => void;
   reset: boolean;
 };
 
@@ -21,16 +30,16 @@ const itemVariants: Variants = {
   closed: { opacity: 0, x: -100, transition: { duration: 0.2 } },
 };
 
-export const RequirementFilter: React.FC<RequirementFilterProps> = ({
+export const AdvancedFilter: React.FC<AdvancedFilterProps> = ({
   onFilterChange,
   reset,
 }) => {
   const { t } = useTranslation('common');
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const [selectedTags, setSelectedTags] = useState<TIcon[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   // console.log(selectedTags);
 
-  const toggleTag = (tag: Tag) => {
+  const toggleTag = (tag: TIcon) => {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
@@ -40,7 +49,7 @@ export const RequirementFilter: React.FC<RequirementFilterProps> = ({
 
   useEffect(() => {
     onFilterChange(selectedTags);
-  }, [selectedTags]);
+  }, [onFilterChange, selectedTags]);
 
   useEffect(() => {
     if (reset) {
@@ -57,12 +66,12 @@ export const RequirementFilter: React.FC<RequirementFilterProps> = ({
     >
       <motion.button
         className={cn(
-          'group mt-1 flex w-40 items-center justify-between space-x-2 rounded-full bg-gradient-to-b from-zinc-50/20 to-white/80 px-4 py-2 text-sm font-medium text-zinc-800 shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur-md focus:outline-none focus-visible:ring-2 dark:from-zinc-900/30 dark:to-zinc-800/80 dark:text-zinc-200 dark:ring-white/10 dark:hover:ring-white/20 dark:focus-visible:ring-yellow-500/80'
+          'group mt-1 flex w-40 items-center justify-between space-x-2 rounded-full bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-lg shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20'
         )}
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsOpen(!isOpen)}
       >
-        {t('Requirements')}
+        {t('Advanced')}
         <motion.div
           variants={{
             open: { rotate: 180 },
@@ -75,7 +84,7 @@ export const RequirementFilter: React.FC<RequirementFilterProps> = ({
         </motion.div>
       </motion.button>
       <motion.ul
-        className='flex flex-wrap'
+        className='flex flex-wrap gap-4 px-4 pt-4'
         variants={{
           open: {
             clipPath: 'inset(0% 0% 0% 0% round 10px)',
@@ -100,35 +109,28 @@ export const RequirementFilter: React.FC<RequirementFilterProps> = ({
         }}
         style={{ pointerEvents: isOpen ? 'auto' : 'none' }}
       >
-        {/* {Object.values(AnimalTag).map((tag, index) => (
-          <motion.li variants={itemVariants} key={index}>
+        {[
+          ESpecialAction.LAUNCH,
+          ESpecialAction.LAND,
+          ESpecialAction.SCAN,
+          ETrace.ANY,
+          ETech.ANY,
+          ETech.SCAN,
+          ETech.PROBE,
+          ETech.COMPUTER,
+          EResource.MOVE,
+          EScanAction.ANY,
+        ].map((icon) => (
+          <motion.li variants={itemVariants} key={icon}>
             <TagButton
-              tag={tag}
-              onClick={() => toggleTag(tag)}
-              selected={selectedTags.includes(tag)}
-            />
-          </motion.li>
-        ))} */}
-
-        {/*<LogicButton logic={} selected={} />*/}
-        {/* {Object.values(ContinentTag).map((tag, index) => (
-          <motion.li variants={itemVariants} key={index}>
-            <TagButton
-              tag={tag}
-              onClick={() => toggleTag(tag)}
-              selected={selectedTags.includes(tag)}
+              key={icon}
+              tag={icon}
+              brightMode={true}
+              onClick={() => toggleTag(icon)}
+              selected={selectedTags.includes(icon)}
             />
           </motion.li>
         ))}
-        {otherTagRequirements.map((tag, index) => (
-          <motion.li variants={itemVariants} key={index}>
-            <TagButton
-              tag={tag}
-              onClick={() => toggleTag(tag)}
-              selected={selectedTags.includes(tag)}
-            />
-          </motion.li>
-        ))} */}
       </motion.ul>
     </motion.nav>
   );

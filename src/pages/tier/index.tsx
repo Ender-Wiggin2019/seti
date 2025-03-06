@@ -3,13 +3,14 @@ import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import React from 'react';
 
+import { PureCardList } from '@/components/cards/base_cards/PureCardList';
 // make sure to import your TextFilter
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
 import { Container } from '@/components/ui/Container';
+
 import { Tier } from '@/constant/tier';
 import { getCardsById } from '@/utils/card';
-import { PureCardList } from '@/components/cards/base_cards/PureCardList';
 type Props = {
   // Add custom props here
 };
@@ -30,9 +31,12 @@ export default function HomePage(
           </h1>
           {}
           <p className='leading-7 [&:not(:first-child)]:mt-6'>
-            注:<br />
-            1. 纯主观, 游戏经验有待积累, 卡表会相应更新<br />
-            2. 大多数纯任务牌, 能完成都有 t2 强度<br />
+            注:
+            <br />
+            1. 纯主观, 游戏经验有待积累, 卡表会相应更新
+            <br />
+            2. 大多数纯任务牌, 能完成都有 t2 强度
+            <br />
           </p>
           {/* <p className='leading-7 [&:not(:first-child)]:mt-6'>
             2. 大多数纯任务牌, 能完成都有t2+强度

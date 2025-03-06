@@ -1,8 +1,10 @@
+import { TShape } from '@/types/Icon';
+
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 14:45:30
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-03 16:46:21
+ * @LastEditTime: 2025-03-06 12:25:49
  * @Description:
  */
 export enum ESector {
@@ -27,30 +29,31 @@ export enum EResource {
   DATA = 'data',
   PUBLICITY = 'publicity',
   SCORE = 'score',
-  CARD = 'draw-card',
+  CARD = 'draw-card', // has question mark
+  CARD_ANY = 'card-any',
   MOVE = 'move',
 }
 
+export enum ETrace {
+  ANY = 'any-trace',
+  RED = 'red-trace',
+  YELLOW = 'yellow-trace',
+  BLUE = 'blue-trace',
+}
+
 export enum ESpecialAction {
-  LAUNCH = 'launch',
-  ORBIT = 'orbit',
-  LAND = 'land',
-  SCAN = 'scan',
-  COMPUTER = 'computer',
+  LAUNCH = 'launch-action',
+  ORBIT = 'orbit-action',
+  LAND = 'land-action',
+  SCAN = 'scan-action',
+  COMPUTER = 'compu pter-action',
 }
 
 export enum ETech {
-  ANY = 'tech-any',
-  PROBE = 'tech-probe',
-  SCAN = 'tech-scan',
-  COMPUTER = 'tech-computer',
-}
-
-export enum ELight {
-  ANY = 'light-any',
-  RED = 'light-red',
-  YELLOW = 'light-yellow',
-  BLUE = 'light-blue',
+  ANY = 'any-tech',
+  PROBE = 'probe-tech',
+  SCAN = 'scan-tech',
+  COMPUTER = 'computer-tech',
 }
 
 export const ESectorMap: Record<ESector, string> = {
@@ -66,25 +69,41 @@ export const EResourceMap: Record<EResource, string> = {
   [EResource.DATA]: 'data',
   [EResource.PUBLICITY]: 'publicity',
   [EResource.SCORE]: 'score',
-  [EResource.CARD]: 'card',
+  [EResource.CARD]: 'draw-card',
   [EResource.MOVE]: 'move',
+  [EResource.CARD_ANY]: 'card-any',
 };
+
+// Misc Icons
+export enum EMiscIcon {
+  ROTATE = 'rotate',
+  INCOME = 'income',
+  ORBIT_COUNT = 'orbit-count', // 用于任务计数的图标
+  LAND_COUNT = 'land-count',
+  ORBIT_OR_LAND_COUNT = 'orbit-or-land-count',
+}
 
 export type TIcon =
   | ESector
   | EScanAction
   | EResource
   | ETech
-  | ELight
-  | ESpecialAction;
+  | ETrace
+  | ESpecialAction
+  | EMiscIcon;
+
+// desc: the minimum icon size in description
+export type TSize = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'desc';
 
 export interface IIconItem {
   type: TIcon;
   value: number;
   options?: {
+    size?: TSize;
     showValue?: boolean;
+    showValueInCenter?: boolean;
     text?: string; // use text when icon is none
-    diamondShape?: boolean;
+    shape?: TShape;
     textColor?: string;
     border?: boolean;
     borderColor?: string;

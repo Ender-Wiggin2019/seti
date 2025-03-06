@@ -66,6 +66,40 @@
 .normal-flavor-text {
   color: black;
 }
+.card-effects-container {
+  position: absolute;
+  bottom: 24px;
+  left: 2px;
+  background-color: white;
+  color: black;
+  font-size: 9px;
+  line-height: 10px;
+  width: 146px;
+  height: 77px;
+  padding-bottom: 2px;
+  opacity: 0.8;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 4px;
+}
+
+.card-quick-mission-container {
+  width: 138px;
+  /* height: 60px; */
+}
+
+.card-effects {
+  display: flex;
+  /* flex: 1 1 0%; */
+  /* width: 100%; */
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 1px solid green;
+}
 
 .card-title {
   position: absolute;
@@ -74,7 +108,7 @@
   width: 103px;
   height: 9px;
   background-color: #3f3d40;
-  font-size: 7px;
+  font-size: 6px;
   color: white;
   display: flex;
   align-items: center;
@@ -107,21 +141,28 @@
 }
 /* icons */
 .seti-icon {
-  background-image: url(/images/icons.jpg);
+  background-image: url(/images/seti-icons.png);
   background-size: 500% 700%;
   width: 50px;
   height: 50px;
-  border-radius: 50%;
+  /* border-radius: 50%; */
+  /* border: 1px solid black; */
 }
 
 .seti-icon-diamond {
-  background-image: url(/images/icons.jpg);
+  background-image: url(/images/seti-icons.png);
   background-size: 500% 700%;
   width: 50px;
   height: 50px;
   clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  /* border: 1px solid black; */
 }
 
+.icon-test {
+  border: 2px solid blue;
+  background-color: black;
+  opacity: 50%;
+}
 .icon-credit {
   background-position: 0 0; /* 第一行第一列 */
 }
@@ -131,7 +172,7 @@
 .icon-draw-card {
   background-position: -100px 0; /* 第一行第三列 */
 }
-.icon-card {
+.icon-card-any {
   background-position: -150px 0; /* 第一行第四列 */
 }
 .icon-publicity {
@@ -143,16 +184,16 @@
 .icon-move {
   background-position: -50px -50px; /* 第二行第二列 */
 }
-.icon-8 {
+.icon-orbit-count {
   background-position: -100px -50px; /* 第二行第三列 */
 }
-.icon-9 {
+.icon-land-count {
   background-position: -150px -50px; /* 第二行第四列 */
 }
-.icon-10 {
+.icon-orbit-or-land-count {
   background-position: -200px -50px; /* 第二行第五列 */
 }
-.icon-signal {
+.icon-any-signal {
   background-position: 0 -100px; /* 第三行第一列 */
 }
 .icon-yellow-signal {
@@ -168,26 +209,216 @@
   background-position: -200px -100px; /* 第三行第五列 */
 }
 
+.icon-yellow-trace {
+  background-position: 0 -150px; /* 第四行第一列 */
+}
+.icon-red-trace {
+  background-position: -50px -150px; /* 第四行第二列 */
+}
+.icon-blue-trace {
+  background-position: -100px -150px; /* 第四行第三列 */
+}
+.icon-any-trace {
+  background-position: -150px -150px; /* 第四行第四列 */
+}
+.icon-score {
+  background-position: -200px -150px; /* 第四行第五列 */
+}
+.icon-computer-action {
+  background-position: 0 -200px; /* 第五行第一列 */
+}
+.icon-land-action {
+  background-position: -50px -200px; /* 第五行第二列 */
+}
+.icon-launch-action {
+  background-position: -100px -200px; /* 第五行第三列 */
+}
+.icon-scan-action {
+  background-position: -150px -200px; /* 第五行第四列 */
+}
+.icon-orbit-action {
+  background-position: -200px -200px; /* 第五行第五列 */
+}
+.icon-scan-tech {
+  background-position: 0 -250px; /* 第六行第一列 */
+}
+.icon-probe-tech {
+  background-position: -50px -250px; /* 第六行第二列 */
+}
+.icon-computer-tech {
+  background-position: -100px -250px; /* 第六行第三列 */
+}
+.icon-any-tech {
+  background-position: -150px -250px; /* 第六行第四列 */
+}
+.icon-rotate {
+  background-position: -200px -250px; /* 第六行第五列 */
+}
+
+.icon-any-card {
+  background-position: 0 -300px; /* 第七行第一列 */
+}
+
+/** 区别在于一个是收入，一个是正常图标。未来应该要把收入的那个改一下 */
+.icon-draw-card-2 {
+  background-position: -50 -300px;
+}
+
+.icon-discard-card-scan {
+  background-position: -100px -300px;
+}
+
+.icon-display-card-scan {
+  background-position: -150px -300px;
+}
+
+.icon-income {
+  background-position: -200px -300px;
+}
+
 .icon-container {
   display: flex;
+  flex: 0 0 auto;
   justify-content: flex-start;
   align-items: center;
+  /* width: 50px; */
+  gap: 4px;
+  border: 1px solid red;
+}
+
+/* .icon-md {
+  scale: 1;
+}
+
+.icon-sm {
+  scale: 0.6;
+} */
+
+.icon-container-md-1 {
+  width: 50px;
+  height: 50px;
+}
+
+.icon-container-md-2 {
+  width: 100px;
+  height: 50px;
+}
+
+.icon-container-md-3 {
+  width: 150px;
+  height: 50px;
+}
+
+.icon-container-sm-1 {
+  transform-origin: 0% 50%;
+  scale: 0.6;
+  width: 30px;
+  height: 30px;
+}
+
+.icon-container-sm-2 {
+  transform-origin: 0% 50%;
+  scale: 0.6;
+  width: 60px;
+  height: 30px;
+}
+
+.icon-container-sm-3 {
+  transform-origin: 0% 50%;
+  scale: 0.6;
+  width: 90px;
+  height: 30px;
+}
+
+.icon-container-xs-1 {
+  transform-origin: 0% 50%;
+  scale: 0.5;
+  width: 25px;
+  height: 25px;
+}
+
+.icon-container-xs-2 {
+  transform-origin: 0% 50%;
+  scale: 0.5;
+  width: 50px;
+  height: 25px;
+}
+
+.icon-container-xs-3 {
+  transform-origin: 0% 50%;
+  scale: 0.5;
+  width: 75px;
+  height: 25px;
+}
+
+.icon-container-xxs-1 {
+  transform-origin: 0% 50%;
+  scale: 0.3;
+  width: 15px;
+  height: 15px;
+}
+
+.icon-container-xxs-2 {
+  transform-origin: 0% 50%;
+  scale: 0.3;
+  width: 30px;
+  height: 15px;
+}
+
+.icon-container-xxs-3 {
+  transform-origin: 0% 50%;
+  scale: 0.3;
+  width: 45px;
+  height: 15px;
+}
+
+.icon-container-desc-1 {
+  transform-origin: 0% 50%;
+  scale: 0.2;
+  width: 10px;
+  height: 10px;
+}
+
+.icon-container-desc-2 {
+  scale: 0.2;
+  width: 20px;
+  height: 10px;
+}
+
+.icon-container-desc-3 {
+  scale: 0.2;
+  width: 30px;
+  height: 10px;
 }
 
 .icon-value {
+  position: absolute;
   z-index: 5;
   color: white;
-  width: 30px;
-  font-size: 60px;
+  /* width: 20px;
+  height: 40px; */
+  font-size: 40px;
   font-weight: 800;
-  margin-right: -16px;
+  left: -8px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   align-items: center;
   color: white;
   -webkit-text-fill-color: white;
-  -webkit-text-stroke: 3px black;
+  -webkit-text-stroke: 4px black;
 }
+
+/* .icon-text-sm {
+  scale: 0.6;
+}
+
+.icon-text-xs {
+  scale: 0.5;
+}
+
+.icon-text-xxs {
+  scale: 0.5;
+} */
 
 .icon-value-credit {
   -webkit-text-stroke: 3px #b09530;
@@ -216,4 +447,32 @@
 
 .icon-value-publicity {
   -webkit-text-stroke: 3px #f14927;
+}
+
+.hexagon {
+  position: relative;
+  width: 124px;
+  height: 100px;
+  background: #d8d8d8;
+}
+
+.hexagon:after,
+.hexagon:before {
+  position: absolute;
+  content: '';
+  z-index: 1;
+  top: 0;
+  width: 0px;
+  background: #fff;
+  border-top: 50px transparent solid;
+  border-bottom: 50px transparent solid;
+}
+
+.hexagon:before {
+  left: 0;
+  border-right: 30px #d8d8d8 solid;
+}
+.hexagon:after {
+  right: 0;
+  border-left: 30px #d8d8d8 solid;
 }

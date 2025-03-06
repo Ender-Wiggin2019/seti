@@ -6,6 +6,7 @@
  * @Description:
  */
 import { Separator } from '@/components/ui/separator';
+
 import BaseCardType from '@/types/BaseCard';
 interface HoverCardProps {
   card: BaseCardType;
@@ -17,7 +18,6 @@ import Link from 'next/link';
 import { useTranslation } from 'next-i18next';
 import React from 'react';
 import { Rating } from 'react-simple-star-rating';
-import { IBaseCard } from '@/types/IBaseCard';
 
 export const HoverCard: React.FC<HoverCardProps> = ({
   card,
@@ -29,7 +29,7 @@ export const HoverCard: React.FC<HoverCardProps> = ({
   const { t } = useTranslation(['common', 'seti', 'flavorText']);
   return (
     <div className='flex flex-col text-xxs'>
-      {<span className='text-xxs'>{card.name}</span>}
+      <span className='text-xxs'>{card.name}</span>
       {rating && (
         <div className='flex flex-row gap-1'>
           <Rating

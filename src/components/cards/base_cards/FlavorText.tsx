@@ -20,7 +20,8 @@ export const FlavorText: React.FC<BaseCardProps> = ({
     return (
       <div className={cls}>
         <Trans i18nKey={flavorText} ns='flavorText'>
-          Anyone can help search for alien life. All you need to do is connect to
+          Anyone can help search for alien life. All you need to do is connect
+          to
           <Link
             className='text-sky-800 underline underline-offset-2'
             href='https://setiathome.berkeley.edu'

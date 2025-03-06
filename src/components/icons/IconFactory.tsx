@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-03 16:39:04
+ * @LastEditTime: 2025-03-06 18:57:36
  * @Description:
  */
 import React from 'react';
@@ -25,18 +25,32 @@ export const IconFactory: React.FC<IconProps> = ({ iconItem }) => {
     if (!options?.showValue) {
       return null;
     }
-    return <div className={`icon-value icon-value-${type}`}>{value}</div>;
+    return (
+      <div
+        // className={`absolute icon-value icon-text-${
+        //   options?.size || 'md'
+        // }-1 icon-value-${type}`}
+        className={`absolute icon-value icon-value-${type}`}
+      >
+        {value}
+      </div>
+    );
   };
 
+  const showMultipleItem = !options?.showValue && value > 1;
+
   return (
-    <div className='icon-container '>
+    <div
+      className={`icon-container icon-container-${options?.size || 'md'}-${
+        showMultipleItem ? value : 1
+      }`}
+    >
       {getValueComponent()}
-      <div className='icon-border'>
-        <TagComponent
-          type={type}
-          shape={options?.diamondShape ? 'diamond' : undefined}
-        />
-      </div>
+      {Array.from({ length: showMultipleItem ? value : 1 }).map((_, index) => (
+        <div key={index} className='icon-border'>
+          <TagComponent type={type} shape={options?.shape} />
+        </div>
+      ))}
     </div>
   );
 };

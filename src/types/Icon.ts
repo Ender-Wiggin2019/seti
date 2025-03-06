@@ -1,8 +1,7 @@
-import { IconName } from '@/types/IconName';
+export type TShape = 'diamond' | 'round' | 'normal';
 
-export type Icon = {
-  iconName: IconName | string; // user customized icon can be string
-  params?: { value: string; type?: string };
-  notBadge?: boolean;
-  slotCubeHolder?: boolean;
-};
+export interface IRenderNode {
+  type: 'text' | 'component';
+  name: string; // if text, the desc; if component, the component name
+  value?: number;
+}

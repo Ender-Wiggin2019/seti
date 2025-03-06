@@ -2,22 +2,21 @@
 import { useQuery } from '@tanstack/react-query';
 import React, { useEffect, useMemo } from 'react';
 
-import { RatedBaseCard } from '@/components/cards/base_cards/RatedBaseCard';
+import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
 import CardList from '@/components/cards/shared/CardList';
 
 import { fetchCardRatings } from '@/services/card';
+import { filterCardsByIcons } from '@/utils/card';
 import { getBaseCardModel } from '@/utils/getBaseCardModel';
 
 import { useBaseCardData } from './useBaseCardData';
 
 import BaseCardType, { EAlienType } from '@/types/BaseCard';
-import { EResource, ESector } from '@/types/element';
 import { CardSource } from '@/types/CardSource';
+import { EResource, ESector, TIcon } from '@/types/element';
 import { IBaseCard } from '@/types/IBaseCard';
 import { IRating } from '@/types/IRating';
 import { SortOrder } from '@/types/Order';
-import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
-import { PreviewBaseCardV2 } from '@/components/cards/base_cards/PreviewBaseCardV2';
 
 interface BaseCardListProps {
   selectedSectors?: ESector[];
@@ -25,6 +24,7 @@ interface BaseCardListProps {
   selectedCardSources?: CardSource[];
   selectedIncomes?: EResource[];
   selectedAliens?: EAlienType[];
+  advancedIcons?: TIcon[];
   textFilter?: string;
   sortOrder?: SortOrder;
   credit?: number[];
@@ -41,6 +41,7 @@ const filterCards = (
   selectedFreeActions: EResource[] = [],
   selectedIncomes: EResource[] = [],
   selectedAliens: EAlienType[] = [],
+  advancedIcons: TIcon[] = [],
   selectedCardSources: CardSource[] = [],
   textFilter = '',
   credit: number[] = [0],
@@ -96,6 +97,12 @@ const filterCards = (
     );
   }
 
+  // Filter by advanced icons
+  // TODO: just a demo yet
+  if (advancedIcons.length > 0) {
+    res = filterCardsByIcons(res, advancedIcons);
+  }
+
   // Filter by credit
   res = res.filter(
     (card) =>
@@ -116,6 +123,7 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
   selectedCardSources = [],
   selectedIncomes = [],
   selectedAliens = [],
+  advancedIcons = [],
   textFilter,
   onCardCountChange,
   sortOrder = SortOrder.ID_ASC,
@@ -153,6 +161,7 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
     selectedFreeActions,
     selectedIncomes,
     selectedAliens,
+    advancedIcons,
     selectedCardSources,
     textFilter,
     credit,

@@ -50,7 +50,6 @@ export const ResourceFilter: React.FC<ResourceFilterProps> = ({
         {src.map((resource) => (
           <TagButton
             key={resource}
-            tagType='resource'
             tag={resource}
             onClick={() => toggleResource(resource)}
             selected={selectedResources.includes(resource)}
