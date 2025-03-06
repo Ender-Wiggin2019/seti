@@ -36,6 +36,7 @@ export default interface BaseCard {
   special?: {
     danger?: number;
     descHelper?: string; // temporary translation for some texts
+    enableEffectRender?: boolean; // temp
   };
 
   // meta data

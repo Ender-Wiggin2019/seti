@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-06 19:03:01
+ * @LastEditTime: 2025-03-07 02:16:03
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -303,10 +303,16 @@ const _baseCards: BaseCard[] = [
     price: 1,
     income: EResource.CREDIT,
     special: {
+      enableEffectRender: true,
       descHelper:
         'You may land on a space that is already occupied and still get the covered reward.',
     },
-    effects: [e.LAND()],
+    effects: [
+      e.LAND(),
+      DESC(
+        'You may land on a space that is already occupied and still get the covered reward.'
+      ),
+    ],
   },
   {
     id: '68',
@@ -363,7 +369,10 @@ const _baseCards: BaseCard[] = [
     special: {
       descHelper: 'LAND on a planet or a moon, even without the required tech.',
     },
-    effects: [e.LAND()],
+    effects: [
+      e.LAND(),
+      DESC('on a planet or a moon, even without the required tech.'),
+    ],
   },
   {
     id: '100',
@@ -394,6 +403,7 @@ const _baseCards: BaseCard[] = [
     price: 3,
     income: EResource.CREDIT,
     special: {
+      enableEffectRender: true,
       descHelper: 'Ignore the limit of probes in space for those launches.',
     },
     effects: [
@@ -543,14 +553,11 @@ const _baseCards: BaseCard[] = [
     sector: ESector.YELLOW,
     price: 2,
     income: EResource.CARD,
+    special: {
+      enableEffectRender: true,
+    },
     // special effect
-    effects: [
-      {
-        effectType: EEffectType.CUSTOMIZED,
-        type: EScanAction.ANY,
-        desc: `desc.card-30`,
-      },
-    ],
+    effects: [DESC_WITH_TYPE(EScanAction.ANY, 'desc.card-30')],
   },
   {
     id: '105',
@@ -570,6 +577,10 @@ const _baseCards: BaseCard[] = [
     sector: ESector.BLACK,
     price: 1,
     income: EResource.CARD,
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [DESC_WITH_TYPE(ETrace.YELLOW, 'desc.card-18')],
   },
   {
     id: '134',
@@ -831,7 +842,7 @@ const _baseCards: BaseCard[] = [
     price: 1,
     income: EResource.ENERGY,
     description: '',
-    effects: [e.MOVE()],
+    effects: [e.MOVE(2)],
   },
   {
     id: '7',
@@ -1424,7 +1435,14 @@ const _baseCards: BaseCard[] = [
     price: 3,
     income: EResource.CREDIT,
     description: '',
-    effects: [e.LAUNCH()],
+    effects: [
+      e.LAUNCH(),
+      e.PUBLICITY(),
+      m.QUICK_MISSION(e.ORBIT_OR_LAND_COUNT(1, 'mars'), [
+        e.SCORE(7),
+        e.PUBLICITY(),
+      ]),
+    ],
   },
   {
     id: '33',

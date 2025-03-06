@@ -2,16 +2,17 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-26 23:56:31
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-06 00:48:44
+ * @LastEditTime: 2025-03-07 02:21:05
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
 import React from 'react';
 
+import { EffectContainer } from '@/components/effect/EffectContainer';
 import BaseCardWrapper from '@/components/wrapper/AnimalWrapper';
 
 import BaseCardType, { EAlienMap } from '@/types/BaseCard';
-import { EffectFactory } from '@/components/effect/Effect';
+import { FlavorText } from '@/components/cards/base_cards/FlavorText';
 
 interface BaseCardProps {
   card: BaseCardType;
@@ -39,6 +40,9 @@ export const BaseCard: React.FC<BaseCardProps> = ({ card }) => {
           boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
         }}
       ></div>
+      {card?.special?.enableEffectRender && card.effects && (
+        <EffectContainer effects={card.effects} />
+      )}
       {/* {card.effects && (
         <div className='card-effects-container'>
           <div className='card-effects'>
@@ -48,9 +52,9 @@ export const BaseCard: React.FC<BaseCardProps> = ({ card }) => {
           </div>
         </div>
       )} */}
-      {/* {card.flavorText && (
+      {card?.special?.enableEffectRender && card.flavorText && (
         <FlavorText id={card.id} flavorText={card.flavorText} />
-      )} */}
+      )}
     </BaseCardWrapper>
   );
 };

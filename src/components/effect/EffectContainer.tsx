@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-06 15:22:44
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-06 19:02:08
+ * @LastEditTime: 2025-03-07 02:06:22
  * @Description:
  */
 import React from 'react';
@@ -32,8 +32,8 @@ export const EffectContainer: React.FC<Props> = ({ effects }) => {
     (effect) => !fullWidthEffectTypes.includes(effect.effectType)
   );
   return (
-    <div className='card-effects-container border border-red-300'>
-      <div className='card-effects border'>
+    <div className='card-effects-container'>
+      <div className='card-effects'>
         {normalEffects.map((effect, index) => (
           <EffectFactory key={index} effect={effect} />
         ))}

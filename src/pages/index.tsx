@@ -214,7 +214,7 @@ export default function HomePage(
               <CardOdometer
                 value={alienCardCount}
                 name={t('aliens')}
-                className='text-sky-600 hover:text-sky-700'
+                className='text-primary hover:text-sky-700'
               />
             )}
           </div>

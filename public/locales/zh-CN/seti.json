@@ -210,5 +210,12 @@
   "MARK in a sector with one of your probes and in both neighboring sectors.": "在一个有你探测器的扇区以及两个相邻扇区进行标记",
   "You may land on a space that is already occupied and still get the covered reward.": "你可以降落在已被占据的空间，并仍然获得被覆盖的奖励。",
   "Gain the reward from the anomaly which is going to be triggered next.": "获得即将触发的异常奖励。",
-  "Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income.": "弃掉其中一张以获得其免费行动的效果，然后再弃掉另一张以获得对应收入的资源。"
+  "Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income.": "弃掉其中一张以获得其免费行动的效果，然后再弃掉另一张以获得对应收入的资源。",
+
+  "desc": {
+    "card-18": "如果你在小行星带上有一个探测器, 标记一个 {yellow-trace}。",
+    "card-30": "选择至多 3 个探测器 (你或其他玩家的). 对于每个探测器, 在对应扇区内标记一个 {any-signal}。",
+    "card-32": "In the sector with Mercury.",
+    "card-63-req": "on each species"
+  }
 }

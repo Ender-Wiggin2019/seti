@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 16:47:27
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-06 15:52:57
+ * @LastEditTime: 2025-03-07 02:28:41
  * @Description:
  */
 import { IBaseEffect } from '@/types/effect';
@@ -56,6 +56,10 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
       size = 'sm';
       break;
     case EResource.MOVE:
+      size = 'sm';
+      shape = 'normal';
+      showValue = true;
+      break;
     case EResource.SCORE:
       size = 'sm';
       shape = 'round';
@@ -88,6 +92,5 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
       borderColor,
     },
   };
-  console.log('🎸 [test] - getIconItem - res:', res);
   return res satisfies IIconItem;
 };

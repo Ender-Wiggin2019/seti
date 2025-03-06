@@ -1,3 +1,10 @@
+.source-code-pro {
+  font-family: 'Source Code Pro', monospace;
+  font-optical-sizing: auto;
+  font-weight: 800;
+  font-style: normal;
+}
+
 .card-grid {
   display: grid;
   grid-template-columns: repeat(10, 1fr);
@@ -14,6 +21,11 @@
   background-image: inherit;
   background-size: inherit;
   background-repeat: no-repeat;
+}
+
+.text-desc {
+  font-size: 0.5rem /* 12px */;
+  line-height: 0.7rem /* 16px */;
 }
 
 /* Method1: clip */
@@ -46,7 +58,7 @@
   font-size: 4px;
   line-height: 6px;
   font-style: italic;
-  width: 104px;
+  width: 108px;
   height: 20px;
   padding-bottom: 2px;
   box-sizing: border-box;
@@ -77,17 +89,20 @@
   width: 146px;
   height: 77px;
   padding-bottom: 2px;
-  opacity: 0.8;
+  /* opacity: 0.8; */
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
   gap: 4px;
+  padding: 4px;
 }
 
 .card-quick-mission-container {
+  background-image: url('/images/cards/mission-container.png');
   width: 138px;
-  /* height: 60px; */
+  height: calc(138px * 293 / 1093);
+  background-size: cover;
 }
 
 .card-effects {
@@ -97,8 +112,8 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  border: 1px solid green;
+  gap: 8px;
+  /* border: 1px solid green; */
 }
 
 .card-title {
@@ -183,6 +198,12 @@
 }
 .icon-move {
   background-position: -50px -50px; /* 第二行第二列 */
+}
+.icon-move-special {
+  background-image: url(/images/move-icon.png);
+  width: 50px;
+  height: 50px;
+  background-size: cover;
 }
 .icon-orbit-count {
   background-position: -100px -50px; /* 第二行第三列 */
@@ -283,7 +304,7 @@
   align-items: center;
   /* width: 50px; */
   gap: 4px;
-  border: 1px solid red;
+  /* border: 1px solid red; */
 }
 
 /* .icon-md {
@@ -294,112 +315,17 @@
   scale: 0.6;
 } */
 
-.icon-container-md-1 {
-  width: 50px;
-  height: 50px;
-}
-
-.icon-container-md-2 {
-  width: 100px;
-  height: 50px;
-}
-
-.icon-container-md-3 {
-  width: 150px;
-  height: 50px;
-}
-
-.icon-container-sm-1 {
-  transform-origin: 0% 50%;
-  scale: 0.6;
-  width: 30px;
-  height: 30px;
-}
-
-.icon-container-sm-2 {
-  transform-origin: 0% 50%;
-  scale: 0.6;
-  width: 60px;
-  height: 30px;
-}
-
-.icon-container-sm-3 {
-  transform-origin: 0% 50%;
-  scale: 0.6;
-  width: 90px;
-  height: 30px;
-}
-
-.icon-container-xs-1 {
-  transform-origin: 0% 50%;
-  scale: 0.5;
-  width: 25px;
-  height: 25px;
-}
-
-.icon-container-xs-2 {
-  transform-origin: 0% 50%;
-  scale: 0.5;
-  width: 50px;
-  height: 25px;
-}
-
-.icon-container-xs-3 {
-  transform-origin: 0% 50%;
-  scale: 0.5;
-  width: 75px;
-  height: 25px;
-}
-
-.icon-container-xxs-1 {
-  transform-origin: 0% 50%;
-  scale: 0.3;
-  width: 15px;
-  height: 15px;
-}
-
-.icon-container-xxs-2 {
-  transform-origin: 0% 50%;
-  scale: 0.3;
-  width: 30px;
-  height: 15px;
-}
-
-.icon-container-xxs-3 {
-  transform-origin: 0% 50%;
-  scale: 0.3;
-  width: 45px;
-  height: 15px;
-}
-
-.icon-container-desc-1 {
-  transform-origin: 0% 50%;
-  scale: 0.2;
-  width: 10px;
-  height: 10px;
-}
-
-.icon-container-desc-2 {
-  scale: 0.2;
-  width: 20px;
-  height: 10px;
-}
-
-.icon-container-desc-3 {
-  scale: 0.2;
-  width: 30px;
-  height: 10px;
-}
-
 .icon-value {
   position: absolute;
   z-index: 5;
   color: white;
-  /* width: 20px;
-  height: 40px; */
+  font-family: 'Source Code Pro';
+  /* width: 20px; */
+  height: 50px;
   font-size: 40px;
   font-weight: 800;
-  left: -8px;
+
+  left: -4px;
   display: flex;
   justify-content: flex-start;
   align-items: center;
@@ -438,7 +364,11 @@
 }
 
 .icon-value-move {
-  -webkit-text-stroke: 3px black;
+  -webkit-text-stroke: 3px #464c5a;
+  font-size: 50px;
+  line-height: 50px;
+  left: -8px;
+  bottom: -8px;
 }
 
 .icon-value-data {

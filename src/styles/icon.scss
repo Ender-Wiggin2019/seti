@@ -2,8 +2,8 @@ $scales: (
   md: 1,
   sm: 0.6,
   xs: 0.5,
-  xxs: 0.3,
-  desc: 0.2,
+  xxs: 0.4,
+  desc: 0.3,
 );
 
 @mixin icon-styles($prefix, $height, $count, $width-multiplier) {

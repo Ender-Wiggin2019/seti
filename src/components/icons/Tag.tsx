@@ -2,12 +2,12 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-08-03 06:34:29
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-04 11:38:16
+ * @LastEditTime: 2025-03-07 01:50:13
  * @Description:
  */
 import React from 'react';
 
-import { TIcon } from '@/types/element';
+import { EResource, TIcon } from '@/types/element';
 import { TShape } from '@/types/Icon';
 interface TagProps {
   type: TIcon;
@@ -31,7 +31,10 @@ const TagComponent: React.FC<TagProps> = ({ type, shape = 'round' }) => {
       break;
   }
 
-  const cls = `${iconCls} icon-${type}`;
+  // NOTE: special display logic for move
+  const typeCls =
+    type === EResource.MOVE && shape === 'normal' ? 'move-special' : type;
+  const cls = `${iconCls} icon-${typeCls}`;
   return <div className={cls}></div>;
 };
 

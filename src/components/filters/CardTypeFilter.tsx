@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-07-08 11:36:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-24 23:01:34
+ * @LastEditTime: 2025-03-07 02:25:44
  * @Description:
  */
 // CategoryFilter.tsx
@@ -64,7 +64,7 @@ export const CardTypeFilter: React.FC<CardTypeFilterProps> = ({
           <TextButton
             selected={selectedCategories.includes(CardType.SPONSOR_CARD)}
             className='hover:text-sky-600'
-            selectClassName='text-sky-600 ring-sky-600/90 ring-2'
+            selectClassName='text-primary ring-primary ring-2'
             onClick={() => handleCategoryChange(CardType.SPONSOR_CARD)}
           >
             {t('Sponsor Card')}

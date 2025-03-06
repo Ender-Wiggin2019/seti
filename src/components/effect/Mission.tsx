@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-06 14:44:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-06 15:39:15
+ * @LastEditTime: 2025-03-07 00:16:20
  * @Description:
  */
 import React from 'react';
@@ -29,7 +29,7 @@ export const Mission: React.FC<missionProps> = ({ missions }) => {
       : [quickMission.reward];
     return (
       <div className='card-quick-mission-container flex flex-1 flex-row flex-wrap justify-center items-center'>
-        <div className='border flex justify-center items-center flex-1  border-black'>
+        <div className='border flex justify-center items-center flex-1'>
           {reqEffects.map((reqEffect, index) => {
             return (
               <EffectFactory
@@ -39,7 +39,7 @@ export const Mission: React.FC<missionProps> = ({ missions }) => {
             );
           })}
         </div>
-        <div className='border flex justify-center items-center flex-1 border-black gap-1'>
+        <div className='border flex justify-center items-center flex-1 gap-1'>
           {rewardEffects.map((rewardEffect, index) => {
             return (
               <EffectFactory

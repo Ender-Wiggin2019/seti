@@ -2,13 +2,14 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-28 09:49:59
+ * @LastEditTime: 2025-03-07 00:55:54
  * @Description:
  */
 import { ClerkProvider } from '@clerk/nextjs';
 import { AppProps } from 'next/app';
 import Script from 'next/script';
 import { appWithTranslation } from 'next-i18next';
+import { Source_Code_Pro } from 'next/font/google';
 
 import '@/styles/globals.css';
 import '@/styles/card.css';

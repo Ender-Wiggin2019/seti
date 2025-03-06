@@ -13,6 +13,8 @@
   "yellow": "黄",
   "blue": "蓝",
   "black": "黑",
+  "base_cards": "基础卡牌",
+  "aliens": "外星人卡牌",
   "sort": {
     "ID_ASC": "编号升序",
     "ID_DESC": "编号降序",
@@ -85,5 +87,6 @@
   },
   "Aliens?": "外...外星人?",
   "Tier List": "梯度排名",
-  "Advanced": "高级筛选"
+  "Advanced": "高级筛选",
+  "Filter text": "输入文本"
 }

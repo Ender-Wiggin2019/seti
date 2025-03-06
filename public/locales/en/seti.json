@@ -144,7 +144,8 @@
   "Yevpatoria Telescope Construction": "Yevpatoria Telescope Construction",
 
   "desc": {
-    "card-30": "",
+    "card-18": "If you have a probe on asteroids, mark a {yellow-trace}.",
+    "card-30": "Choose up to 3 probes (yours or other players'). For each probe, mark a {any-signal} in its sector.",
     "card-32": "In the sector with Mercury.",
     "card-63-req": "on each species"
   }
