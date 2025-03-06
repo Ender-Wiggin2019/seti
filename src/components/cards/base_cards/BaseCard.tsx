@@ -11,7 +11,7 @@ import React from 'react';
 import BaseCardWrapper from '@/components/wrapper/AnimalWrapper';
 
 import BaseCardType, { EAlienMap } from '@/types/BaseCard';
-import { EffectFactory } from '@/components/Effect';
+import { EffectFactory } from '@/components/effect/Effect';
 
 interface BaseCardProps {
   card: BaseCardType;

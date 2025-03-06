@@ -12,6 +12,7 @@ import { appWithTranslation } from 'next-i18next';
 
 import '@/styles/globals.css';
 import '@/styles/card.css';
+import '@/styles/icon.scss';
 import '@/styles/odometer.css';
 import '@/styles/clerk.css';
 

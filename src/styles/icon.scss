@@ -1,0 +1,23 @@
+$scales: (
+  md: 1,
+  sm: 0.6,
+  xs: 0.5,
+  xxs: 0.3,
+  desc: 0.2,
+);
+
+@mixin icon-styles($prefix, $height, $count, $width-multiplier) {
+  @each $size, $scale in $scales {
+    @for $i from 1 through $count {
+      .#{$prefix}-#{$size}-#{$i} {
+        transform-origin: 0% 50%;
+        scale: $scale;
+        width: $scale * $i * $width-multiplier;
+        height: $scale * $height;
+      }
+    }
+  }
+}
+
+@include icon-styles('icon-container', 50px, 4, 50px);
+@include icon-styles('icon-text', 50px, 1, 20px);

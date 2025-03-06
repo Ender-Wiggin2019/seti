@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-06 00:32:25
+ * @LastEditTime: 2025-03-06 19:03:01
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -1595,6 +1595,26 @@ export const baseCards: BaseCard[] = _baseCards.map((card) => {
   };
 });
 
+export const testCards: BaseCard[] = [
+  {
+    id: 'test',
+    name: 'ALICE',
+    position: { src: '/images/cards/cards-1.webp', row: 0, col: 3 },
+    freeAction: [{ type: EResource.MOVE, value: 1 }],
+    sector: ESector.BLUE,
+    price: 3,
+    income: EResource.CREDIT,
+    effects: [
+      // e.DATA(1),
+      e.PUBLICITY(1),
+      e.TECH_COMPUTER(2),
+      m.QUICK_MISSION(
+        [e.TRACE_BLUE(1, d.onEach), DESC('test {score-1} test')],
+        [e.DATA(2), e.SCORE(2)]
+      ),
+    ],
+  },
+];
 // export const baseCards: BaseCard[] = [
 //     {
 //       id: '39',

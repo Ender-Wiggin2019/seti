@@ -77,18 +77,28 @@
   width: 146px;
   height: 77px;
   padding-bottom: 2px;
-  box-sizing: border-box;
   opacity: 0.8;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 4px;
+}
+
+.card-quick-mission-container {
+  width: 138px;
+  /* height: 60px; */
 }
 
 .card-effects {
   display: flex;
-  flex: 1 1 0%;
-  width: 100%;
+  /* flex: 1 1 0%; */
+  /* width: 100%; */
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   gap: 2px;
+  border: 1px solid green;
 }
 
 .card-title {
@@ -131,21 +141,28 @@
 }
 /* icons */
 .seti-icon {
-  background-image: url(/images/seti-icons.png);
+  background-image: url(/images/seti-icons1.png);
   background-size: 500% 700%;
   width: 50px;
   height: 50px;
-  border-radius: 50%;
+  /* border-radius: 50%; */
+  border: 1px solid black;
 }
 
 .seti-icon-diamond {
-  background-image: url(/images/seti-icons.png);
+  background-image: url(/images/seti-icons1.png);
   background-size: 500% 700%;
   width: 50px;
   height: 50px;
   clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  border: 1px solid black;
 }
 
+.icon-test {
+  border: 2px solid blue;
+  background-color: black;
+  opacity: 50%;
+}
 .icon-credit {
   background-position: 0 0; /* 第一行第一列 */
 }
@@ -261,48 +278,147 @@
 
 .icon-container {
   display: flex;
+  flex: 0 0 auto;
   justify-content: flex-start;
   align-items: center;
-  width: fit-content;
-  height: fit-content;
-  flex-shrink: 0;
+  /* width: 50px; */
+  gap: 4px;
+  border: 1px solid red;
 }
 
-.icon-lg {
-  scale: 1.5;
-}
-
-.icon-md {
+/* .icon-md {
   scale: 1;
 }
 
 .icon-sm {
   scale: 0.6;
-  width: auto;
+} */
+
+.icon-container-md-1 {
+  width: 50px;
   height: 50px;
 }
 
-.icon-xs {
-  scale: 0.5;
-  width: auto;
+.icon-container-md-2 {
+  width: 100px;
   height: 50px;
+}
+
+.icon-container-md-3 {
+  width: 150px;
+  height: 50px;
+}
+
+.icon-container-sm-1 {
+  transform-origin: 0% 50%;
+  scale: 0.6;
+  width: 30px;
+  height: 30px;
+}
+
+.icon-container-sm-2 {
+  transform-origin: 0% 50%;
+  scale: 0.6;
+  width: 60px;
+  height: 30px;
+}
+
+.icon-container-sm-3 {
+  transform-origin: 0% 50%;
+  scale: 0.6;
+  width: 90px;
+  height: 30px;
+}
+
+.icon-container-xs-1 {
+  transform-origin: 0% 50%;
+  scale: 0.5;
+  width: 25px;
+  height: 25px;
+}
+
+.icon-container-xs-2 {
+  transform-origin: 0% 50%;
+  scale: 0.5;
+  width: 50px;
+  height: 25px;
+}
+
+.icon-container-xs-3 {
+  transform-origin: 0% 50%;
+  scale: 0.5;
+  width: 75px;
+  height: 25px;
+}
+
+.icon-container-xxs-1 {
+  transform-origin: 0% 50%;
+  scale: 0.3;
+  width: 15px;
+  height: 15px;
+}
+
+.icon-container-xxs-2 {
+  transform-origin: 0% 50%;
+  scale: 0.3;
+  width: 30px;
+  height: 15px;
+}
+
+.icon-container-xxs-3 {
+  transform-origin: 0% 50%;
+  scale: 0.3;
+  width: 45px;
+  height: 15px;
+}
+
+.icon-container-desc-1 {
+  transform-origin: 0% 50%;
+  scale: 0.2;
+  width: 10px;
+  height: 10px;
+}
+
+.icon-container-desc-2 {
+  scale: 0.2;
+  width: 20px;
+  height: 10px;
+}
+
+.icon-container-desc-3 {
+  scale: 0.2;
+  width: 30px;
+  height: 10px;
 }
 
 .icon-value {
+  position: absolute;
   z-index: 5;
   color: white;
-  width: 30px;
-  height: 40px;
-  font-size: 60px;
+  /* width: 20px;
+  height: 40px; */
+  font-size: 40px;
   font-weight: 800;
-  margin-right: -16px;
+  left: -8px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   align-items: center;
   color: white;
   -webkit-text-fill-color: white;
-  -webkit-text-stroke: 3px black;
+  -webkit-text-stroke: 4px black;
 }
+
+/* .icon-text-sm {
+  scale: 0.6;
+}
+
+.icon-text-xs {
+  scale: 0.5;
+}
+
+.icon-text-xxs {
+  scale: 0.5;
+} */
 
 .icon-value-credit {
   -webkit-text-stroke: 3px #b09530;

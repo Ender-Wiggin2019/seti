@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-05 16:54:18
+ * @LastEditTime: 2025-03-06 15:18:44
  * @Description:
  */
 
@@ -48,6 +48,7 @@ export interface ICustomizedEffect {
   effectType: EEffectType.CUSTOMIZED;
   type?: TIcon;
   desc: string;
+  size?: TSize; // 一般不会赋值，除非是 desc
 }
 
 export interface IMissionEffect {
