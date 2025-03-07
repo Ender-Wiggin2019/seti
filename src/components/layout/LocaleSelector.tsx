@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-28 17:04:55
+ * @LastEditTime: 2025-03-07 18:19:00
  * @Description:
  */
 import { useRouter } from 'next/router';
@@ -50,7 +50,7 @@ const LocaleSelector: React.FC<{
 
       await switchToLocale(locale);
     },
-    [switchToLocale, onChange]
+    [languageNames, onChange, switchToLocale]
   );
 
   return (

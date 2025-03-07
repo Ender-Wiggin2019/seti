@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-07 02:16:03
+ * @LastEditTime: 2025-03-07 18:18:02
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -12,7 +12,13 @@ import { DESC, DESC_WITH_TYPE, e, m, OR } from '@/constant/effect';
 
 import BaseCard from '@/types/BaseCard';
 import { EEffectType } from '@/types/effect';
-import { EResource, EScanAction, ESector, ETrace } from '@/types/element';
+import {
+  EMiscIcon,
+  EResource,
+  EScanAction,
+  ESector,
+  ETrace,
+} from '@/types/element';
 const _baseCards: BaseCard[] = [
   {
     id: '39',
@@ -53,7 +59,7 @@ const _baseCards: BaseCard[] = [
     effects: [
       e.ROTATE(),
       e.TECH_COMPUTER(),
-      m.QUICK_MISSION(e.TRACE_BLUE(1, d.onEach), e.DATA(2)),
+      m.QUICK_MISSION([e.TRACE_BLUE(1), d.onEach], e.DATA(2)),
     ],
   },
   {
@@ -96,7 +102,7 @@ const _baseCards: BaseCard[] = [
     effects: [
       e.ROTATE(),
       e.TECH_PROBE(),
-      m.QUICK_MISSION(e.TRACE_RED(1, d.onEach), [e.SCORE(2), e.CARD()]),
+      m.QUICK_MISSION([e.TRACE_RED(1), d.onEach], [e.SCORE(2), e.CARD()]),
     ],
   },
   {
@@ -150,6 +156,15 @@ const _baseCards: BaseCard[] = [
     sector: ESector.BLUE,
     price: 1,
     income: EResource.CREDIT,
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [
+      DESC_WITH_TYPE(EMiscIcon.ORBIT_COUNT, 'desc.card-15'),
+      e.SCORE(3),
+      e.DATA(),
+      e.CARD_ANY(),
+    ],
   },
   {
     id: '38',
@@ -227,6 +242,17 @@ const _baseCards: BaseCard[] = [
     sector: ESector.RED,
     price: 3,
     income: EResource.ENERGY,
+    // special: {
+    //   enableEffectRender: true,
+    // },
+    effects: [
+      e.LAUNCH(),
+      e.CARD_ANY(),
+      m.QUICK_MISSION(e.ORBIT_OR_LAND_COUNT(1, 'at Saturn (incl. moons)'), [
+        e.SCORE(6),
+        e.PUBLICITY(),
+      ]),
+    ],
   },
   {
     id: '88',
@@ -506,7 +532,7 @@ const _baseCards: BaseCard[] = [
     effects: [
       e.ROTATE(),
       e.TECH_SCAN(),
-      m.QUICK_MISSION(e.TRACE_RED(1, d.onEach), [e.SCORE(2), e.ENERGY()]),
+      m.QUICK_MISSION([e.TRACE_RED(1), d.onEach], [e.SCORE(2), e.ENERGY()]),
     ],
   },
   {
@@ -527,9 +553,14 @@ const _baseCards: BaseCard[] = [
     price: 1,
     income: EResource.ENERGY,
     special: {
+      enableEffectRender: true,
       descHelper:
         'Reveal the card you drew, and gain its free-action corner effect.',
     },
+    effects: [
+      e.CARD_ANY(),
+      DESC('Reveal the card you drew, and gain its free-action corner effect.'),
+    ],
   },
   {
     id: '19',
@@ -540,10 +571,11 @@ const _baseCards: BaseCard[] = [
     price: 1,
     income: EResource.CREDIT,
     special: {
+      enableEffectRender: true,
       descHelper:
         'Each time you visit a planet this turn, you may gain 1 MOVE instead of 1 PUBLICITY.',
     },
-    effects: [e.MOVE()],
+    effects: [e.MOVE(), DESC('desc.card-19')],
   },
   {
     id: '30',
@@ -661,7 +693,17 @@ const _baseCards: BaseCard[] = [
     sector: ESector.RED,
     price: 3,
     income: EResource.ENERGY,
-    effects: [e.LAUNCH()],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [
+      e.LAUNCH(),
+      e.DATA(),
+      m.QUICK_MISSION(e.ORBIT_OR_LAND_COUNT(1, 'at Jupiter (incl. moons)'), [
+        e.SCORE(7),
+        e.PUBLICITY(),
+      ]),
+    ],
   },
   {
     id: '35',
@@ -853,6 +895,17 @@ const _baseCards: BaseCard[] = [
     price: 3,
     income: EResource.CARD,
     description: '',
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [
+      e.LAUNCH(),
+      e.MOVE(),
+      m.QUICK_MISSION(e.ORBIT_OR_LAND_COUNT(1, 'at Mercury'), [
+        e.SCORE(7),
+        e.PUBLICITY(),
+      ]),
+    ],
   },
   {
     id: '77',
@@ -934,7 +987,15 @@ const _baseCards: BaseCard[] = [
     price: 3,
     income: EResource.CREDIT,
     description: '',
-    effects: [e.TECH_PROBE()],
+    special: {
+      enableEffectRender: true,
+      descHelper: 'Ignore the limit of probes in space for those launches.',
+    },
+    effects: [
+      e.ROTATE(),
+      e.TECH_PROBE(),
+      m.QUICK_MISSION(DESC('desc.card-10'), [e.SCORE(), e.CARD_ANY()]),
+    ],
   },
   {
     id: '62',
@@ -981,6 +1042,10 @@ const _baseCards: BaseCard[] = [
     price: 1,
     income: EResource.ENERGY,
     description: '',
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [DESC_WITH_TYPE(EResource.DATA, 'desc.card-17')],
   },
   {
     id: '52',
@@ -1002,7 +1067,10 @@ const _baseCards: BaseCard[] = [
     price: 1,
     income: EResource.CARD,
     description: '',
-    effects: [e.LAND()],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [e.LAND(), DESC('desc.card-13')],
   },
   {
     id: '1',
@@ -1435,10 +1503,13 @@ const _baseCards: BaseCard[] = [
     price: 3,
     income: EResource.CREDIT,
     description: '',
+    special: {
+      enableEffectRender: true,
+    },
     effects: [
       e.LAUNCH(),
       e.PUBLICITY(),
-      m.QUICK_MISSION(e.ORBIT_OR_LAND_COUNT(1, 'mars'), [
+      m.QUICK_MISSION(e.ORBIT_OR_LAND_COUNT(1, 'at Venus'), [
         e.SCORE(7),
         e.PUBLICITY(),
       ]),
@@ -1627,7 +1698,7 @@ export const testCards: BaseCard[] = [
       e.PUBLICITY(1),
       e.TECH_COMPUTER(2),
       m.QUICK_MISSION(
-        [e.TRACE_BLUE(1, d.onEach), DESC('test {score-1} test')],
+        [e.ORBIT_OR_LAND_COUNT(1), DESC('at jupiter (incl. moons)')],
         [e.DATA(2), e.SCORE(2)]
       ),
     ],

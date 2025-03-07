@@ -7,14 +7,9 @@
  */
 import React from 'react';
 
-import { DescRender } from '@/components/effect/DescRender';
-import { IconFactory } from '@/components/icons/IconFactory';
-
-import { getIconItem } from '@/constant/icons';
+import { EffectFactory } from '@/components/effect/Effect';
 
 import { EEffectType, Effect } from '@/types/effect';
-import { Mission } from '@/components/effect/Mission';
-import { EffectFactory } from '@/components/effect/Effect';
 
 interface Props {
   effects: Effect[];

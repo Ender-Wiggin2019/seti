@@ -8,11 +8,11 @@
 import { useTranslation } from 'next-i18next';
 import React from 'react';
 
+import { FlavorText } from '@/components/cards/base_cards/FlavorText';
 import { EffectContainer } from '@/components/effect/EffectContainer';
 import BaseCardWrapper from '@/components/wrapper/AnimalWrapper';
 
 import BaseCardType, { EAlienMap } from '@/types/BaseCard';
-import { FlavorText } from '@/components/cards/base_cards/FlavorText';
 
 interface BaseCardProps {
   card: BaseCardType;

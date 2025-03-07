@@ -144,7 +144,12 @@
   "Yevpatoria Telescope Construction": "Yevpatoria Telescope Construction",
 
   "desc": {
+    "card-10": "{orbit-or-land-count} at Neptune <br> and {orbit-or-land-count} at Uranus <br> (incl. their moons)",
+    "card-13": "If you land on Mars, Mercury, or any moon with this action, <br>gain {score-4}.",
+    "card-15": "Remove one of your {orbit-count} from any planet to gain:",
+    "card-17": "Choose 1 of your probes.<br>Gain {data-2} if it is on asteroids.<br>Gain {data-1} for each adjacent asteroid",
     "card-18": "If you have a probe on asteroids, mark a {yellow-trace}.",
+    "card-19": "Each time you visit a planet this turn,<br>you may gain {move-1} instead of {publicity-1}.",
     "card-30": "Choose up to 3 probes (yours or other players'). For each probe, mark a {any-signal} in its sector.",
     "card-32": "In the sector with Mercury.",
     "card-63-req": "on each species"

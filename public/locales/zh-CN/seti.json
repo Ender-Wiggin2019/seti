@@ -4,6 +4,7 @@
   "exertians": "动能族",
   "mascamites": "虫族",
   "oumuamua": "奥陌陌",
+
   "61 Virginis Observation": "观测天门增四",
   "Advanced Navigation System": "高级导航系统",
   "Algonquin Radio Observatory": "阿尔冈金射电天文台",
@@ -213,9 +214,14 @@
   "Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income.": "弃掉其中一张以获得其免费行动的效果，然后再弃掉另一张以获得对应收入的资源。",
 
   "desc": {
-    "card-18": "如果你在小行星带上有一个探测器, 标记一个 {yellow-trace}。",
+    "card-10": "{orbit-or-land-count} 在海王星<br>和 {orbit-or-land-count} 在天王星<br>（包括它们的卫星）",
+    "card-13": "如果你在火星、水星或任何卫星上着陆，<br>获得 {score-4}。",
+    "card-15": "从任何行星移除一个<b>你的 {orbit-count} 以获得：",
+    "card-17": "选择你的一个探测器。<br>如果它在小行星上，获得 {data-2}。<br>每个相邻的小行星获得 {data-1}",
+    "card-18": "如果你在小行星带上r有一个探测器, <br>标记一个 {yellow-trace}。",
+    "card-19": "在本回合每访问一个行星时，<br>你可以选择获得 {move-1} 而不是 {publicity-1}。",
     "card-30": "选择至多 3 个探测器 (你或其他玩家的). 对于每个探测器, 在对应扇区内标记一个 {any-signal}。",
-    "card-32": "In the sector with Mercury.",
-    "card-63-req": "on each species"
+    "card-32": "在有水星的区域。",
+    "card-63-req": "在每个物种上"
   }
 }

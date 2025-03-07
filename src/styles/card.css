@@ -23,9 +23,34 @@
   background-repeat: no-repeat;
 }
 
-.text-desc {
+.text-desc-md {
   font-size: 0.5rem /* 12px */;
-  line-height: 0.7rem /* 16px */;
+  line-height: 0.8rem /* 16px */;
+}
+
+.text-desc-sm {
+  font-size: 0.45rem /* 12px */;
+  line-height: 0.5rem /* 16px */;
+}
+
+.text-desc-xs {
+  font-size: 0.44rem /* 12px */;
+  line-height: 0.45rem /* 16px */;
+}
+
+.text-desc-xxs {
+  font-size: 0.42rem /* 12px */;
+  line-height: 0.42rem /* 16px */;
+}
+
+.text-desc-desc {
+  font-size: 0.4rem;
+  line-height: 0.4rem;
+}
+
+.text-desc-desc-mini {
+  font-size: 0.4rem;
+  line-height: 0.4rem;
 }
 
 /* Method1: clip */
@@ -99,10 +124,33 @@
 }
 
 .card-quick-mission-container {
+  position: relative;
   background-image: url('/images/cards/mission-container.png');
   width: 138px;
   height: calc(138px * 293 / 1093);
   background-size: cover;
+}
+
+.card-quick-mission-container .req-container {
+  position: absolute;
+  display: flex;
+  gap: 1px;
+  top: 0px;
+  left: 0px;
+  width: 73px;
+  height: 37px;
+  padding: 1px 2px 1px 2px;
+}
+
+.card-quick-mission-container .reward-container {
+  position: absolute;
+  display: flex;
+  gap: 8px;
+  top: 0px;
+  right: 0px;
+  width: 65px;
+  height: 37px;
+  padding: 1px 2px 1px 2px;
 }
 
 .card-effects {
@@ -164,19 +212,16 @@
   /* border: 1px solid black; */
 }
 
-.seti-icon-diamond {
-  background-image: url(/images/seti-icons.png);
-  background-size: 500% 700%;
-  width: 50px;
-  height: 50px;
+.diamond {
   clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
   /* border: 1px solid black; */
 }
 
 .icon-test {
+  background-image: url(/images/1.png);
   border: 2px solid blue;
-  background-color: black;
-  opacity: 50%;
+  background-color: gray;
+  opacity: 20%;
 }
 .icon-credit {
   background-position: 0 0; /* 第一行第一列 */
@@ -187,7 +232,7 @@
 .icon-draw-card {
   background-position: -100px 0; /* 第一行第三列 */
 }
-.icon-card-any {
+.icon-any-card {
   background-position: -150px 0; /* 第一行第四列 */
 }
 .icon-publicity {
@@ -276,12 +321,12 @@
   background-position: -200px -250px; /* 第六行第五列 */
 }
 
-.icon-any-card {
+.icon-any-card-special {
   background-position: 0 -300px; /* 第七行第一列 */
 }
 
 /** 区别在于一个是收入，一个是正常图标。未来应该要把收入的那个改一下 */
-.icon-draw-card-2 {
+.icon-draw-card-special {
   background-position: -50 -300px;
 }
 
@@ -323,28 +368,16 @@
   /* width: 20px; */
   height: 50px;
   font-size: 40px;
-  font-weight: 800;
+  /* font-weight: 800; */
 
   left: -4px;
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: center;
   color: white;
   -webkit-text-fill-color: white;
   -webkit-text-stroke: 4px black;
 }
-
-/* .icon-text-sm {
-  scale: 0.6;
-}
-
-.icon-text-xs {
-  scale: 0.5;
-}
-
-.icon-text-xxs {
-  scale: 0.5;
-} */
 
 .icon-value-credit {
   -webkit-text-stroke: 3px #b09530;
@@ -353,8 +386,10 @@
 .icon-value-energy {
   -webkit-text-stroke: 3px #3aaa23;
 }
-.icon-value-credit {
-  -webkit-text-stroke: 3px #b09530;
+.icon-value-score {
+  -webkit-text-stroke: 3px #156853;
+  width: 20px;
+  left: 15px;
 }
 .icon-value-credit {
   -webkit-text-stroke: 3px #b09530;
@@ -405,4 +440,12 @@
 .hexagon:after {
   right: 0;
   border-left: 30px #d8d8d8 solid;
+}
+
+.desc-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
 }

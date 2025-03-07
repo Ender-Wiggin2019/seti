@@ -145,16 +145,12 @@ export function Header() {
                 <NavigationBar.Mobile className='pointer-events-auto relative z-50 md:hidden' />
                 <NavigationBar.Desktop className='pointer-events-auto relative z-50 hidden md:block' />
               </div>
-              <motion.div
-                className='flex justify-end gap-3 md:flex-1'
-                initial={{ opacity: 0, y: -20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-              >
+              <div className='flex justify-end gap-3 md:flex-1'>
                 {/* <UserInfo /> */}
                 <div className='pointer-events-auto'>
                   <LocaleSelector />
                 </div>
-              </motion.div>
+              </div>
             </div>
           </Container>
         </div>

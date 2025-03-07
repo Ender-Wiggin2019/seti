@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 22:59:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-05 16:55:33
+ * @LastEditTime: 2025-03-07 18:18:39
  * @Description:
  */
 import {
@@ -26,11 +26,12 @@ import {
 
 const _base =
   (type: TIcon) =>
-  (value = 1, desc = `desc.${type}`): IBaseEffect => ({
+  (value = 1, desc = ''): IBaseEffect => ({
     effectType: EEffectType.BASE,
     type,
     value,
     desc,
+    helperText: `desc.${type}`,
   });
 
 const ORBIT_COUNT = _base(EMiscIcon.ORBIT_COUNT);
@@ -165,6 +166,7 @@ export const DESC_WITH_TYPE = (
   effectType: EEffectType.CUSTOMIZED,
   type,
   desc,
+  helperText: `desc.${type}`,
 });
 
 export const OR = (...effects: IBaseEffect[]): IOrEffect => ({

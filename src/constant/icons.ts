@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 16:47:27
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-07 02:28:41
+ * @LastEditTime: 2025-03-07 18:18:20
  * @Description:
  */
 import { IBaseEffect } from '@/types/effect';
@@ -19,7 +19,7 @@ import {
 import { TShape } from '@/types/Icon';
 
 export const getIconItem = (effect: IBaseEffect): IIconItem => {
-  const { type, value, desc, size: oriSize } = effect;
+  const { type: _type, value, desc, size: oriSize } = effect;
 
   // default style
   let showValue = false;
@@ -27,6 +27,7 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
   const text = '';
   let shape: TShape = 'normal';
   let size: TSize = 'md';
+  let type = _type;
   const textColor = '';
   const border = false;
   const borderColor = '';
@@ -59,18 +60,29 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
       size = 'sm';
       shape = 'normal';
       showValue = true;
+      type = 'move-special'; // special render
       break;
     case EResource.SCORE:
       size = 'sm';
       shape = 'round';
       showValue = true;
       break;
+    case EResource.CARD:
+      size = 'sm';
+      shape = 'normal';
+      showValue = true;
+      type = 'draw-card-special'; // special render
+      break;
+    case EResource.CARD_ANY:
+      size = 'sm';
+      shape = 'normal';
+      showValue = true;
+      type = 'any-card-special'; // special render
+      break;
     case EResource.CREDIT:
     case EResource.ENERGY:
     case EResource.DATA:
     case EResource.PUBLICITY:
-    case EResource.CARD:
-    case EResource.CARD_ANY:
       shape = 'diamond';
       size = 'sm';
       showValue = true;

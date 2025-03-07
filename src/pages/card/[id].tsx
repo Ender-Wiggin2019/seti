@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-01 01:39:37
+ * @LastEditTime: 2025-03-07 14:58:49
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
@@ -14,7 +14,6 @@ import React from 'react';
 import { BaseCard } from '@/components/cards/base_cards/BaseCard';
 import { HoverCard } from '@/components/cards/base_cards/HoverCard';
 import { Comments } from '@/components/comments/Comments';
-// make sure to import your TextFilter
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
 

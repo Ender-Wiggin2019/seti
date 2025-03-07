@@ -9,7 +9,6 @@ import { ClerkProvider } from '@clerk/nextjs';
 import { AppProps } from 'next/app';
 import Script from 'next/script';
 import { appWithTranslation } from 'next-i18next';
-import { Source_Code_Pro } from 'next/font/google';
 
 import '@/styles/globals.css';
 import '@/styles/card.css';

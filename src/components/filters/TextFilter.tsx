@@ -2,12 +2,13 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-07-08 11:36:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-28 13:05:37
+ * @LastEditTime: 2025-03-07 18:20:07
  * @Description:
  */
 import { motion, useMotionTemplate, useMotionValue } from 'framer-motion';
+import { debounce } from 'lodash';
 import { useTranslation } from 'next-i18next';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 type TextFilterProps = {
@@ -34,9 +35,14 @@ export const TextFilter: React.FC<TextFilterProps> = ({
   );
   const background = useMotionTemplate`radial-gradient(320px circle at ${mouseX}px ${mouseY}px, var(--spotlight-color) 0%, transparent 85%)`;
 
-  const handleChange = (text: string) => {
-    setText(text);
-    onTextChange(text);
+  const debouncedTextChange = useCallback(
+    debounce((newText: string) => onTextChange(newText), 300),
+    [onTextChange]
+  );
+
+  const handleChange = (newText: string) => {
+    setText(newText);
+    debouncedTextChange(newText);
   };
 
   React.useEffect(() => {

@@ -9,7 +9,6 @@ import React from 'react';
 
 import { EffectFactory } from '@/components/effect/Effect';
 
-import { extractDesc, renderNode2Effect } from '@/utils/desc';
 import { IMissionItem } from '@/types/effect';
 
 interface missionProps {
@@ -29,7 +28,7 @@ export const Mission: React.FC<missionProps> = ({ missions }) => {
       : [quickMission.reward];
     return (
       <div className='card-quick-mission-container flex flex-1 flex-row flex-wrap justify-center items-center'>
-        <div className='border flex justify-center items-center flex-1'>
+        <div className='req-container flex justify-center items-center'>
           {reqEffects.map((reqEffect, index) => {
             return (
               <EffectFactory
@@ -39,7 +38,7 @@ export const Mission: React.FC<missionProps> = ({ missions }) => {
             );
           })}
         </div>
-        <div className='border flex justify-center items-center flex-1 gap-1'>
+        <div className='reward-container flex justify-center items-center flex-1 gap-1'>
           {rewardEffects.map((rewardEffect, index) => {
             return (
               <EffectFactory
@@ -54,25 +53,4 @@ export const Mission: React.FC<missionProps> = ({ missions }) => {
   }
 
   return null;
-  // return (
-  //   <div className='flex flex-row flex-wrap justify-center items-center'>
-  //     {descArray.map((renderNode, index) => {
-  //       const res = renderNode2Effect(renderNode);
-  //       if (typeof res === 'string') {
-  //         // TODO: use rich text
-  //         return (
-  //           <span className='text-center' key={index}>
-  //             {res}
-  //           </span>
-  //         );
-  //       }
-
-  //       return (
-  //         // <div key={index} className=''>
-  //         <EffectFactory key={index} effect={res} />
-  //         // </div>
-  //       );
-  //     })}
-  //   </div>
-  // );
 };

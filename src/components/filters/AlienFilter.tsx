@@ -1,11 +1,3 @@
-/*
- * @Author: Ender-Wiggin
- * @Date: 2023-07-08 11:36:49
- * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-01 02:01:48
- * @Description:
- */
-import { useRouter } from 'next/router';
 import { useTranslation } from 'next-i18next';
 import React, { useEffect, useState } from 'react';
 
@@ -26,7 +18,6 @@ export const AlienFilter: React.FC<AlienFilterProps> = ({
   onFilterChange,
   reset,
 }) => {
-  const router = useRouter();
   const { t } = useTranslation('seti');
   const [selectedCategories, setSelectedCategories] = useState<EAlienType[]>(
     []

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-06 15:18:44
+ * @LastEditTime: 2025-03-07 15:37:13
  * @Description:
  */
 
@@ -30,6 +30,7 @@ export interface IBaseEffect {
   type: TIcon;
   value?: number;
   desc?: string;
+  helperText?: string; // info about the icon
   size?: TSize; // 一般不会赋值，除非是 desc
 }
 
@@ -48,6 +49,7 @@ export interface ICustomizedEffect {
   effectType: EEffectType.CUSTOMIZED;
   type?: TIcon;
   desc: string;
+  helperText?: string; // info about the icon
   size?: TSize; // 一般不会赋值，除非是 desc
 }
 

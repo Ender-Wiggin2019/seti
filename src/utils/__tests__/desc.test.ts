@@ -22,12 +22,12 @@ describe('extractDesc should work correctly', () => {
 
   it('should extract multiple components', () => {
     const result = extractDesc(
-      '{card-any}aa bbb {publicity-2-bb}{tech-any-1}c ccc dd.'
+      '{any-card}aa bbb {publicity-2-bb}{tech-any-1}c ccc dd.'
     );
     expect(result).toEqual([
       {
         type: 'component',
-        name: 'card-any',
+        name: 'any-card',
       },
       {
         type: 'text',

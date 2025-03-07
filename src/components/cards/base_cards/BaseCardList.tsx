@@ -1,12 +1,14 @@
 // import { useUser } from '@clerk/nextjs';
 import { useQuery } from '@tanstack/react-query';
-import React, { useEffect, useMemo } from 'react';
+import { useTranslation } from 'next-i18next';
+import React, { useCallback, useEffect, useMemo } from 'react';
 
 import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
 import CardList from '@/components/cards/shared/CardList';
 
 import { fetchCardRatings } from '@/services/card';
 import { filterCardsByIcons } from '@/utils/card';
+import { filterText } from '@/utils/filter';
 import { getBaseCardModel } from '@/utils/getBaseCardModel';
 
 import { useBaseCardData } from './useBaseCardData';
@@ -30,92 +32,11 @@ interface BaseCardListProps {
   credit?: number[];
   onCardCountChange: ({ base, alien }: { base: number; alien: number }) => void;
   maxNum?: number;
+  enableEffectRender?: true;
   // ... any other filters
 }
 
 // const cards: BaseCardType[] = [...generateCards(7, 10, '/images/cards/cards-1.webp'), ...generateCards(7, 10, '/images/cards/cards-2.webp')];
-
-const filterCards = (
-  cards: BaseCardType[],
-  selectedSectors: ESector[] = [],
-  selectedFreeActions: EResource[] = [],
-  selectedIncomes: EResource[] = [],
-  selectedAliens: EAlienType[] = [],
-  advancedIcons: TIcon[] = [],
-  selectedCardSources: CardSource[] = [],
-  textFilter = '',
-  credit: number[] = [0],
-  maxNum?: number
-) => {
-  let res = cards;
-
-  // Filter by text
-  const lowercaseFilter = textFilter.toLowerCase();
-  if (lowercaseFilter) {
-    res = res.filter(
-      (card) =>
-        card.id.toLowerCase().includes(lowercaseFilter) ||
-        card.name.toLowerCase().includes(lowercaseFilter) ||
-        card.description?.toLowerCase().includes(lowercaseFilter)
-    );
-  }
-
-  // Filter by card sources
-  if (selectedFreeActions && selectedFreeActions.length > 0) {
-    res = res.filter(
-      (card) =>
-        card.freeAction &&
-        card.freeAction.some((action) =>
-          selectedFreeActions.includes(action.type)
-        )
-    );
-  }
-
-  // Filter by sectors
-  if (selectedSectors && selectedSectors.length > 0) {
-    res = res.filter(
-      (card) => card.sector && selectedSectors.includes(card.sector)
-    );
-  }
-
-  // Filter by card sources
-  if (selectedIncomes && selectedIncomes.length > 0) {
-    res = res.filter(
-      (card) => card.income && selectedIncomes.includes(card.income)
-    );
-  }
-
-  // Filter by card sources
-  if (selectedAliens.length === 0) {
-    res = res.filter((card) => !card.alien);
-  }
-
-  // Filter by card sources
-  if (selectedAliens.length > 0 && selectedAliens.length < 5) {
-    res = res.filter(
-      (card) => card.alien && selectedAliens.includes(card.alien)
-    );
-  }
-
-  // Filter by advanced icons
-  // TODO: just a demo yet
-  if (advancedIcons.length > 0) {
-    res = filterCardsByIcons(res, advancedIcons);
-  }
-
-  // Filter by credit
-  res = res.filter(
-    (card) =>
-      credit.length === 0 || credit.includes(5) || credit.includes(card.price)
-  );
-
-  return {
-    originalCount: res.filter((c) => !c.alien).length,
-    alienCount: res.filter((c) => c.alien).length,
-    limitedCount: res.length,
-    cards: res,
-  };
-};
 
 export const BaseCardList: React.FC<BaseCardListProps> = ({
   selectedSectors,
@@ -129,6 +50,7 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
   sortOrder = SortOrder.ID_ASC,
   credit = [0],
   maxNum,
+  enableEffectRender = false,
 }) => {
   // const { user } = useUser();
   // const userId = user?.id ?? '';
@@ -150,7 +72,91 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
   // });
 
   const cardsData = useBaseCardData();
+  const { t } = useTranslation('seti');
+
   // const cardsData = cards;
+  const filterCards = useCallback(
+    (
+      cards: BaseCardType[],
+      selectedSectors: ESector[] = [],
+      selectedFreeActions: EResource[] = [],
+      selectedIncomes: EResource[] = [],
+      selectedAliens: EAlienType[] = [],
+      advancedIcons: TIcon[] = [],
+      selectedCardSources: CardSource[] = [],
+      textFilter = '',
+      credit: number[] = [0],
+      maxNum?: number
+    ) => {
+      let res = cards;
+
+      // Filter by text
+      const lowercaseFilter = textFilter.toLowerCase();
+      if (lowercaseFilter) {
+        res = filterText(lowercaseFilter, res, t);
+      }
+
+      // Filter by card sources
+      if (selectedFreeActions && selectedFreeActions.length > 0) {
+        res = res.filter(
+          (card) =>
+            card.freeAction &&
+            card.freeAction.some((action) =>
+              selectedFreeActions.includes(action.type)
+            )
+        );
+      }
+
+      // Filter by sectors
+      if (selectedSectors && selectedSectors.length > 0) {
+        res = res.filter(
+          (card) => card.sector && selectedSectors.includes(card.sector)
+        );
+      }
+
+      // Filter by card sources
+      if (selectedIncomes && selectedIncomes.length > 0) {
+        res = res.filter(
+          (card) => card.income && selectedIncomes.includes(card.income)
+        );
+      }
+
+      // Filter by card sources
+      if (selectedAliens.length === 0) {
+        res = res.filter((card) => !card.alien);
+      }
+
+      // Filter by card sources
+      if (selectedAliens.length > 0 && selectedAliens.length < 5) {
+        res = res.filter(
+          (card) => card.alien && selectedAliens.includes(card.alien)
+        );
+      }
+
+      // Filter by advanced icons
+      // TODO: just a demo yet
+      if (advancedIcons.length > 0) {
+        res = filterCardsByIcons(res, advancedIcons);
+      }
+
+      // Filter by credit
+      res = res.filter(
+        (card) =>
+          credit.length === 0 ||
+          credit.includes(5) ||
+          credit.includes(card.price)
+      );
+
+      return {
+        originalCount: res.filter((c) => !c.alien).length,
+        alienCount: res.filter((c) => c.alien).length,
+        limitedCount: res.length,
+        cards: res,
+      };
+    },
+    [t]
+  );
+
   const {
     originalCount,
     alienCount,
@@ -187,12 +193,20 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
   const initialBaseCards: IBaseCard[] = useMemo(() => {
     return filteredCards.map((baseCard) => ({
       id: baseCard.id,
-      card: baseCard,
+      // TODO: test only
+      card: {
+        ...baseCard,
+        special: {
+          ...baseCard.special,
+          enableEffectRender:
+            baseCard.special?.enableEffectRender || enableEffectRender,
+        },
+      },
       model: getBaseCardModel(baseCard),
       rating: null,
       ratingCount: null,
     }));
-  }, [filteredCards]);
+  }, [enableEffectRender, filteredCards]);
 
   const ratedBaseCards: IBaseCard[] = useMemo(() => {
     if (!cardRatings) {

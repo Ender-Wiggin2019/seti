@@ -30,7 +30,7 @@ export enum EResource {
   PUBLICITY = 'publicity',
   SCORE = 'score',
   CARD = 'draw-card', // has question mark
-  CARD_ANY = 'card-any',
+  CARD_ANY = 'any-card',
   MOVE = 'move',
 }
 
@@ -71,7 +71,7 @@ export const EResourceMap: Record<EResource, string> = {
   [EResource.SCORE]: 'score',
   [EResource.CARD]: 'draw-card',
   [EResource.MOVE]: 'move',
-  [EResource.CARD_ANY]: 'card-any',
+  [EResource.CARD_ANY]: 'any-card',
 };
 
 // Misc Icons
@@ -83,6 +83,17 @@ export enum EMiscIcon {
   ORBIT_OR_LAND_COUNT = 'orbit-or-land-count',
 }
 
+export enum EPlanet {
+  EARTH = 'earth',
+  MARS = 'mars',
+  JUPITER = 'jupiter',
+  SATURN = 'saturn',
+  MERCURY = 'mercury',
+  VENUS = 'venus',
+  URANUS = 'uranus',
+  NEPTUNE = 'neptune',
+}
+
 export type TIcon =
   | ESector
   | EScanAction
@@ -90,10 +101,14 @@ export type TIcon =
   | ETech
   | ETrace
   | ESpecialAction
-  | EMiscIcon;
+  | EPlanet
+  | EMiscIcon
+  | 'move-special'
+  | 'draw-card-special'
+  | 'any-card-special'; // only use in description
 
-// desc: the minimum icon size in description
-export type TSize = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'desc';
+// desc-mini: the minimum icon size in description
+export type TSize = 'desc-mini' | 'desc' | 'xxs' | 'xs' | 'sm' | 'md' | 'lg';
 
 export interface IIconItem {
   type: TIcon;

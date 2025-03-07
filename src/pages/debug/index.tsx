@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-01 00:33:02
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-06 19:03:40
+ * @LastEditTime: 2025-03-07 18:17:40
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
@@ -10,9 +10,8 @@ import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import React from 'react';
 
-import baseCards, { testCards } from '@/data/baseCards';
+import baseCards from '@/data/baseCards';
 
-import { EffectFactory } from '@/components/effect/Effect';
 import { EffectContainer } from '@/components/effect/EffectContainer';
 
 // make sure to import your TextFilter
@@ -24,7 +23,9 @@ export default function HomePage(
   _props: InferGetStaticPropsType<typeof getStaticProps>
 ) {
   const { t } = useTranslation('common');
-  const _card = testCards.filter((c) => c.id === 'test')[0];
+  const _card = baseCards.filter((c) => c.id === '10')[0];
+
+  // const _card = testCards.filter((c) => c.id === 'test')[0];
   // const card = _card;
   const card = { ..._card, position: { src: '', row: 0, col: 0 } };
 
@@ -49,6 +50,7 @@ export default function HomePage(
 
   return (
     <div className='relative h-60 p-4'>
+      {/* <PreviewBaseCard card={_card} showLink={true} /> */}
       {/* <PreviewBaseCard card={card} showLink={true} />
       <PreviewBaseCardV2 card={card} showLink={true} /> */}
       {/* <IconFactory iconItem={getIconItem(e.ORBIT())} />

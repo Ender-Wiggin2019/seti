@@ -1,6 +1,7 @@
 import { e } from '@/constant/effect';
 
 import { IBaseEffect } from '@/types/effect';
+import { TSize } from '@/types/element';
 import { IRenderNode } from '@/types/Icon';
 
 // such as `some text {credit-1} some text`
@@ -11,10 +12,15 @@ export const extractDesc = (desc: string): IRenderNode[] => {
 
   while ((match = regex.exec(desc)) !== null) {
     if (match[2]) {
-      // This is plain text outside of {}
-      result.push({
-        type: 'text',
-        name: match[2],
+      // special case: <br>
+      const parts = match[2].split(/<br\s*\/?>/i);
+      parts.forEach((part) => {
+        if (part.trim()) {
+          result.push({
+            type: 'text',
+            name: part,
+          });
+        }
       });
     } else if (match[1]) {
       // This is a {xxx} or {xxx-xxx} pattern
@@ -58,11 +64,80 @@ export const renderNode2Effect = (node: IRenderNode): IBaseEffect | string => {
   if (fn) {
     return {
       ...fn(node.value),
-      size: 'xs', // in desc, we only show small icons
+      // size: size || 'xs', // in desc, we only show small icons
     };
   }
 
   // NOTE: some special cases
 
   return node.name;
+};
+
+export const computeLength = (nodes: IRenderNode[]) => {
+  return nodes.reduce((acc, node) => {
+    if (node.type === 'text') {
+      return acc + node.name.length;
+    }
+
+    if (node.type === 'component') {
+      return acc + 8; // one component is around 4 chars
+    }
+    return acc + 1;
+  }, 0);
+};
+
+// the icon in desc should be smaller
+export const getDescIconSize = (
+  nodes: IRenderNode[],
+  defaultSize?: TSize
+): TSize => {
+  const descLength = computeLength(nodes);
+
+  if (descLength > 25) {
+    if (defaultSize === 'desc' || defaultSize === 'xxs') {
+      return 'desc-mini';
+    } else {
+      return 'desc';
+    }
+  }
+
+  if (!defaultSize) {
+    return 'desc';
+  }
+
+  // in description, size will be decreased by 1 step
+  if (defaultSize === 'sm') {
+    return 'xs';
+  }
+
+  if (defaultSize === 'xs') {
+    return 'xxs';
+  }
+
+  if (defaultSize === 'xxs') {
+    return 'desc';
+  }
+
+  if (defaultSize === 'desc') {
+    return 'desc-mini';
+  }
+
+  return defaultSize;
+};
+
+export const getDescTextSize = (iconSize: TSize): TSize => {
+  switch (iconSize) {
+    case 'desc-mini':
+      return 'desc';
+    case 'desc':
+      return 'xxs';
+    case 'xxs':
+      return 'xs';
+    case 'xs':
+      return 'sm';
+    case 'sm':
+      return 'md';
+    default:
+      return 'desc-mini';
+  }
 };
