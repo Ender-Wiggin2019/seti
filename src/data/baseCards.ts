@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-07 18:18:02
+ * @LastEditTime: 2025-03-08 01:31:32
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -348,7 +348,15 @@ const _baseCards: BaseCard[] = [
     sector: ESector.RED,
     price: 3,
     income: EResource.CREDIT,
-    effects: [e.ROTATE(), e.TECH_COMPUTER(), m.END_GAME(2, e.TRACE_BLUE())],
+    effects: [
+      e.ROTATE(),
+      e.TECH_COMPUTER(),
+      m.END_GAME(
+        '{score-2} for each {blue-trace} you have.',
+        2,
+        e.TRACE_BLUE()
+      ),
+    ],
   },
   {
     id: '57',
@@ -381,7 +389,11 @@ const _baseCards: BaseCard[] = [
     effects: [
       e.ROTATE(),
       OR(e.TECH_PROBE(), e.TECH_SCAN()),
-      m.END_GAME(2, e.TECH_COMPUTER()),
+      m.END_GAME(
+        '{score-2} for each {tech-computer} you have',
+        2,
+        e.TECH_COMPUTER()
+      ),
     ], // todo: check this logic
   },
   {
@@ -393,11 +405,13 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.CREDIT,
     special: {
+      enableEffectRender: true,
       descHelper: 'LAND on a planet or a moon, even without the required tech.',
     },
     effects: [
       e.LAND(),
-      DESC('on a planet or a moon, even without the required tech.'),
+      DESC('desc.card-12', 'half'),
+      m.END_GAME('desc.card-12-endgame'),
     ],
   },
   {
@@ -518,7 +532,7 @@ const _baseCards: BaseCard[] = [
     income: EResource.ENERGY,
     effects: [
       e.SIGNAL_DISCARD_CARD(),
-      m.END_GAME(1, e.SIGNAL_ANY(), 'for each sector where you have a signal.'),
+      m.END_GAME('{score-1} for each sector where you have a signal.'),
     ],
   },
   {
@@ -1009,7 +1023,7 @@ const _baseCards: BaseCard[] = [
     effects: [
       e.ROTATE(),
       e.TECH_SCAN(),
-      m.END_GAME(2, e.TRACE_RED(), 'desc.card-62-endgame'),
+      m.END_GAME('desc.card-62-endgame', 2, e.TRACE_RED()),
     ],
   },
   {
@@ -1331,7 +1345,7 @@ const _baseCards: BaseCard[] = [
     effects: [
       e.ROTATE(),
       e.TECH_PROBE(),
-      m.END_GAME(2, e.TRACE_YELLOW(), 'desc.card-63-endgame'),
+      m.END_GAME('desc.card-63-endgame', 2, e.TRACE_YELLOW()),
     ],
   },
   {

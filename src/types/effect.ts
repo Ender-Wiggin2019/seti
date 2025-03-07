@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-07 15:37:13
+ * @LastEditTime: 2025-03-08 01:09:16
  * @Description:
  */
 
@@ -51,6 +51,7 @@ export interface ICustomizedEffect {
   desc: string;
   helperText?: string; // info about the icon
   size?: TSize; // 一般不会赋值，除非是 desc
+  width?: 'half' | 'full';
 }
 
 export interface IMissionEffect {
@@ -60,9 +61,9 @@ export interface IMissionEffect {
 
 export interface IEndGameEffect {
   effectType: EEffectType.END_GAME;
-  score: number;
-  per: IBaseEffect;
-  desc?: string;
+  desc: string;
+  score?: number;
+  per?: IBaseEffect;
 }
 
 export interface IOrEffect {

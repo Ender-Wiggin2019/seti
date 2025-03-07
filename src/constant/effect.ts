@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 22:59:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-07 18:18:39
+ * @LastEditTime: 2025-03-08 01:24:25
  * @Description:
  */
 import {
@@ -22,6 +22,7 @@ import {
   ETech,
   ETrace,
   TIcon,
+  TSize,
 } from '@/types/element';
 
 const _base =
@@ -138,9 +139,9 @@ const FULL_MISSION = (missions: IMissionItem[]): IMissionEffect => ({
 });
 
 const END_GAME = (
-  score: number,
-  per: IBaseEffect,
-  desc = 'for each'
+  desc: string,
+  score?: number,
+  per?: IBaseEffect
 ): IEndGameEffect => ({
   effectType: EEffectType.END_GAME,
   score,
@@ -154,18 +155,26 @@ export const m = {
   END_GAME,
 };
 
-export const DESC = (desc: string): ICustomizedEffect => ({
+export const DESC = (
+  desc: string,
+  width: 'full' | 'half' = 'full'
+): ICustomizedEffect => ({
   effectType: EEffectType.CUSTOMIZED,
   desc,
+  width,
 });
 
 export const DESC_WITH_TYPE = (
   type: TIcon,
-  desc: string
+  desc: string,
+  size?: TSize,
+  width: 'full' | 'half' = 'full'
 ): ICustomizedEffect => ({
   effectType: EEffectType.CUSTOMIZED,
   type,
   desc,
+  size,
+  width,
   helperText: `desc.${type}`,
 });
 

@@ -40,12 +40,12 @@
 
 .text-desc-xxs {
   font-size: 0.42rem /* 12px */;
-  line-height: 0.42rem /* 16px */;
+  line-height: 0.5rem /* 16px */;
 }
 
 .text-desc-desc {
   font-size: 0.4rem;
-  line-height: 0.4rem;
+  line-height: 0.45rem;
 }
 
 .text-desc-desc-mini {
@@ -54,7 +54,7 @@
 }
 
 /* Method1: clip */
-/* .card-flavor-text {
+/* .card-flavor-text-container {
   position: absolute;
   display: flex;
   align-items: flex-end;
@@ -72,24 +72,21 @@
 } */
 
 /* Method2: append */
-.card-flavor-text {
+.card-flavor-text-container {
   position: absolute;
+  bottom: 6px;
+  left: 7px;
   display: flex;
   align-items: flex-end;
-  bottom: 6px;
-  left: 8px;
   background-color: white;
   color: black;
-  font-size: 4px;
-  line-height: 6px;
-  font-style: italic;
-  width: 108px;
+  width: 104px;
   height: 20px;
   padding-bottom: 2px;
   box-sizing: border-box;
 }
 
-.card-flavor-text::after {
+.card-flavor-text-container::after {
   content: '';
   position: absolute;
   top: 0; /* 将 bottom 改为 top */
@@ -98,6 +95,17 @@
   height: 0;
   border-left: 20px solid white; /* 将 border-left 改为 border-right */
   border-bottom: 20px solid transparent; /* 将 border-top 改为 border-bottom */
+}
+
+.card-flavor-text {
+  z-index: 5;
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+  width: 114px;
+  font-size: 4px;
+  line-height: 5px;
+  font-style: italic;
 }
 
 .normal-flavor-text {
@@ -111,13 +119,13 @@
   color: black;
   font-size: 9px;
   line-height: 10px;
-  width: 146px;
+  width: 147px;
   height: 77px;
   padding-bottom: 2px;
   /* opacity: 0.8; */
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: center;
   gap: 4px;
   padding: 4px;
@@ -129,6 +137,18 @@
   width: 138px;
   height: calc(138px * 293 / 1093);
   background-size: cover;
+}
+
+.end-game-container {
+  position: relative;
+  background-image: url('/images/cards/end-game-container.png');
+  width: 125px;
+  height: calc(125px * 274 / 1167);
+  margin-left: 22px;
+  background-size: cover;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .card-quick-mission-container .req-container {
@@ -160,7 +180,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   /* border: 1px solid green; */
 }
 
@@ -375,11 +395,11 @@
   justify-content: center;
   align-items: center;
   color: white;
-  -webkit-text-fill-color: white;
-  -webkit-text-stroke: 4px black;
+  /* -webkit-text-fill-color: white;
+  -webkit-text-stroke: 4px black; */
 }
 
-.icon-value-credit {
+/* .icon-value-credit {
   -webkit-text-stroke: 3px #b09530;
 }
 
@@ -394,8 +414,8 @@
 .icon-value-credit {
   -webkit-text-stroke: 3px #b09530;
 }
-.icon-value-credit {
-  -webkit-text-stroke: 3px #b09530;
+.icon-value-card, .icon-value-any-card, .icon-value-card-special, .icon-value-any-card-special {
+  -webkit-text-stroke: 3px #3b3947;
 }
 
 .icon-value-move {
@@ -412,7 +432,7 @@
 
 .icon-value-publicity {
   -webkit-text-stroke: 3px #f14927;
-}
+} */
 
 .hexagon {
   position: relative;

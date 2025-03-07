@@ -14,7 +14,8 @@ export const FlavorText: React.FC<BaseCardProps> = ({
   display,
 }) => {
   const { t } = useTranslation(['flavorText']);
-  const cls = display === 'normal' ? 'normal-flavor-text' : 'card-flavor-text';
+  const cls =
+    display === 'normal' ? 'normal-flavor-text' : 'card-flavor-text-container';
   // Easter egg: SETI@Home
   if (id === '108') {
     return (
@@ -34,5 +35,9 @@ export const FlavorText: React.FC<BaseCardProps> = ({
     );
   }
 
-  return <div className={cls}>{t(flavorText)}</div>;
+  return (
+    <div className={cls}>
+      <div className='card-flavor-text'>{t(flavorText)}</div>
+    </div>
+  );
 };

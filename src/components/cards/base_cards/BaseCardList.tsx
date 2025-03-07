@@ -274,18 +274,20 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
       {ratedBaseCards.map((ratedBaseCard: IBaseCard) => (
         <div
           key={ratedBaseCard.id}
-          className='scale-100 sm:mb-1 sm:scale-100 md:mb-4 md:scale-100'
+          className='scale-100 sm:mb-1 sm:scale-100 md:mb-4 md:h-64'
         >
           {/* <RatedBaseCard
             key={ratedBaseCard.id}
             cardData={ratedBaseCard}
             showLink={true}
           /> */}
-          <PreviewBaseCard
-            key={ratedBaseCard.id}
-            card={ratedBaseCard.card}
-            showLink={true}
-          />
+          <div className='scale-100 md:scale-125 md:translate-y-8'>
+            <PreviewBaseCard
+              key={ratedBaseCard.id}
+              card={ratedBaseCard.card}
+              showLink={true}
+            />
+          </div>
         </div>
       ))}
     </CardList>

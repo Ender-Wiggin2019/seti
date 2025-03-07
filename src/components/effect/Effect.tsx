@@ -26,11 +26,25 @@ export const EffectFactory: React.FC<IconProps> = ({ effect }) => {
   }
 
   if (effect.effectType === EEffectType.CUSTOMIZED) {
-    return <DescRender desc={t(effect.desc)} size={effect.size} />;
+    return (
+      <DescRender
+        desc={t(effect.desc)}
+        size={effect.size}
+        width={effect.width}
+      />
+    );
   }
 
   if (effect.effectType === EEffectType.MISSION_QUICK) {
     return <Mission missions={effect.missions} />;
+  }
+
+  if (effect.effectType === EEffectType.END_GAME) {
+    return (
+      <div className='end-game-container'>
+        <DescRender desc={t(effect.desc)} size='xxs' />
+      </div>
+    );
   }
 
   return null;
