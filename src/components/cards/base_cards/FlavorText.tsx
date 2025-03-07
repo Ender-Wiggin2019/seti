@@ -14,30 +14,33 @@ export const FlavorText: React.FC<BaseCardProps> = ({
   display,
 }) => {
   const { t } = useTranslation(['flavorText']);
-  const cls =
-    display === 'normal' ? 'normal-flavor-text' : 'card-flavor-text-container';
+  const cls = display === 'normal' ? '' : 'card-flavor-text-container';
+  const textCls =
+    display === 'normal' ? 'normal-flavor-text' : 'card-flavor-text';
   // Easter egg: SETI@Home
   if (id === '108') {
     return (
       <div className={cls}>
-        <Trans i18nKey={flavorText} ns='flavorText'>
-          Anyone can help search for alien life. All you need to do is connect
-          to
-          <Link
-            className='text-sky-800 underline underline-offset-2'
-            href='https://setiathome.berkeley.edu'
-          >
-            https://setiathome.berkeley.edu
-          </Link>
-          .
-        </Trans>
+        <div className={textCls}>
+          <Trans i18nKey={flavorText} ns='flavorText'>
+            Anyone can help search for alien life. All you need to do is connect
+            to
+            <Link
+              className='text-sky-800 underline underline-offset-2'
+              href='https://setiathome.berkeley.edu'
+            >
+              https://setiathome.berkeley.edu
+            </Link>
+            .
+          </Trans>
+        </div>
       </div>
     );
   }
 
   return (
     <div className={cls}>
-      <div className='card-flavor-text'>{t(flavorText)}</div>
+      <div className={textCls}>{t(flavorText)}</div>
     </div>
   );
 };
