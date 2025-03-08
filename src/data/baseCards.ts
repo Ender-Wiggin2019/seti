@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-08 12:50:51
+ * @LastEditTime: 2025-03-09 02:12:33
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -242,9 +242,9 @@ const _baseCards: BaseCard[] = [
     sector: ESector.RED,
     price: 3,
     income: EResource.ENERGY,
-    // special: {
-    //   enableEffectRender: true,
-    // },
+    special: {
+      enableEffectRender: true,
+    },
     effects: [
       e.LAUNCH(),
       e.CARD_ANY(),
@@ -410,7 +410,7 @@ const _baseCards: BaseCard[] = [
     },
     effects: [
       e.LAND(),
-      DESC('desc.card-12', 'half'),
+      DESC('desc.card-12'),
       m.END_GAME('desc.card-12-endgame'),
     ],
   },
@@ -521,6 +521,18 @@ const _baseCards: BaseCard[] = [
     sector: ESector.RED,
     price: 0,
     income: EResource.CARD,
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [
+      m.FULL_MISSION(
+        [
+          { req: DESC('Venus'), reward: e.PUBLICITY(1) },
+          { req: DESC('Jupiter'), reward: e.DATA(4) },
+        ],
+        'When you visit:'
+      ),
+    ],
   },
   {
     id: '86',
@@ -833,6 +845,18 @@ const _baseCards: BaseCard[] = [
     price: 0,
     income: EResource.CREDIT,
     description: '',
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [
+      m.FULL_MISSION(
+        [
+          { req: DESC('Mercury'), reward: e.CARD() },
+          { req: DESC('Saturn'), reward: e.PUBLICITY() },
+        ],
+        'When you visit:'
+      ),
+    ],
   },
   {
     id: '34',
@@ -871,6 +895,10 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.CREDIT,
     description: '',
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [e.PUBLICITY(), e.DATA(2), m.END_GAME('desc.card-14-endgame')],
   },
   {
     id: '32',
@@ -1600,6 +1628,18 @@ const _baseCards: BaseCard[] = [
     price: 0,
     income: EResource.CARD,
     description: '',
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [
+      m.FULL_MISSION(
+        [
+          { req: DESC('Uranus'), reward: e.ENERGY(1) },
+          { req: DESC('Neptune'), reward: e.CREDIT(1) },
+        ],
+        'When you visit:'
+      ),
+    ],
   },
   {
     id: '103',

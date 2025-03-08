@@ -2,9 +2,10 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-06 14:44:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-08 12:55:38
+ * @LastEditTime: 2025-03-09 01:31:03
  * @Description:
  */
+import { useTranslation } from 'next-i18next';
 import React from 'react';
 
 import { DescRender } from '@/components/effect/DescRender';
@@ -18,6 +19,7 @@ interface missionProps {
 
 export const Mission: React.FC<missionProps> = ({ effect }) => {
   const { missions, desc } = effect;
+  const { t } = useTranslation('seti');
   // const descArray = extractDesc(desc);
   if (missions.length === 1) {
     const quickMission = missions[0];
@@ -55,7 +57,7 @@ export const Mission: React.FC<missionProps> = ({ effect }) => {
   } else {
     return (
       <div className='card-mission-container'>
-        {desc && <DescRender desc={desc} />}
+        {desc && <DescRender desc={t(desc)} />}
         {missions.map((mission, index) => {
           const reqEffects = Array.isArray(mission.req)
             ? mission.req
@@ -90,12 +92,10 @@ export const Mission: React.FC<missionProps> = ({ effect }) => {
             </div>
           );
         })}
-        {/* 
+        {/*
         <div className='card-mission-req'>111</div>
         <div className='card-mission-reward'>111</div> */}
       </div>
     );
   }
-
-  return null;
 };

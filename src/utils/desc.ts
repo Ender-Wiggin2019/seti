@@ -5,21 +5,25 @@ import { TSize } from '@/types/element';
 import { IRenderNode } from '@/types/Icon';
 
 // such as `some text {credit-1} some text`
-export const extractDesc = (desc: string): IRenderNode[] => {
-  const result: IRenderNode[] = [];
+export const extractDesc = (desc: string): IRenderNode[][] => {
+  const result: IRenderNode[][] = [[]];
   const regex = /{([^{}]+?)}|([^{}]+)/g;
   let match;
 
   while ((match = regex.exec(desc)) !== null) {
     if (match[2]) {
-      // special case: <br>
+      // Special case: <br>
       const parts = match[2].split(/<br\s*\/?>/i);
-      parts.forEach((part) => {
+      parts.forEach((part, index) => {
         if (part.trim()) {
-          result.push({
+          result[result.length - 1].push({
             type: 'text',
             name: part,
           });
+        }
+        if (index < parts.length - 1) {
+          // Create a new sub-array after each <br>
+          result.push([]);
         }
       });
     } else if (match[1]) {
@@ -31,14 +35,14 @@ export const extractDesc = (desc: string): IRenderNode[] => {
       if (isNumeric && parts.length > 1) {
         // If the last part is numeric and there are multiple parts
         const name = parts.slice(0, -1).join('-');
-        result.push({
+        result[result.length - 1].push({
           type: 'component',
           name: name,
           value: Number(lastPart),
         });
       } else {
         // Otherwise, treat the whole as a name
-        result.push({
+        result[result.length - 1].push({
           type: 'component',
           name: match[1],
         });
@@ -88,10 +92,12 @@ export const computeLength = (nodes: IRenderNode[]) => {
 
 // the icon in desc should be smaller
 export const getDescIconSize = (
-  nodes: IRenderNode[],
+  nodes: IRenderNode[][],
   defaultSize?: TSize
 ): TSize => {
-  const descLength = computeLength(nodes);
+  const descLength = nodes.reduce((acc, node) => {
+    return acc + computeLength(node);
+  }, 0);
 
   if (descLength > 25) {
     if (defaultSize === 'desc' || defaultSize === 'xxs') {

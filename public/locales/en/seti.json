@@ -145,8 +145,9 @@
 
   "desc": {
     "card-10": "{orbit-or-land-count} at Neptune <br> and {orbit-or-land-count} at Uranus <br> (incl. their moons)",
-    "card-12": "on a planet or a moon, even without the required tech.",
+    "card-12": "on a planet or a moon, <br>even without the required tech.",
     "card-12-endgame": "{score-3} for each {orbit-or-land-count} at Jupiter (incl. moons).",
+    "card-14-endgame": "{score-4} for each {orbit-or-land-count} at Mars (incl. moons).",
     "card-13": "If you land on Mars, Mercury, or any moon with this action, <br>gain {score-4}.",
     "card-15": "Remove one of your {orbit-count} from any planet to gain:",
     "card-17": "Choose 1 of your probes.<br>Gain {data-2} if it is on asteroids.<br>Gain {data-1} for each adjacent asteroid",

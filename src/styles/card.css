@@ -182,11 +182,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 0px 8px 0px 8px;
+  margin-left: 10px;
 }
 
 .card-mission-item-container {
   display: flex;
-  margin-top: -20px;
+  /* margin-top: -20px; */
   flex-direction: column;
   justify-content: center;
   align-items: center;
@@ -201,7 +203,7 @@
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  padding-top: 4px;
+  padding-top: 2px;
 }
 
 .card-mission-reward {
@@ -214,6 +216,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  padding-top: 2px;
 }
 
 .req-1 {
@@ -393,7 +396,7 @@
 
 /** 区别在于一个是收入，一个是正常图标。未来应该要把收入的那个改一下 */
 .icon-draw-card-special {
-  background-position: -50 -300px;
+  background-position: -50px -300px;
 }
 
 .icon-discard-card-scan {

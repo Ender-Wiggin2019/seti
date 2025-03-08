@@ -213,20 +213,36 @@
   "Gain the reward from the anomaly which is going to be triggered next.": "获得即将触发的异常奖励。",
   "Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income.": "弃掉其中一张以获得其免费行动的效果，然后再弃掉另一张以获得对应收入的资源。",
 
-  "When you visit:": "当你访问",
+  "When you visit:": "当你访问:",
+  "Mercury": "水星(Mercury)",
+  "Venus": "金星(Venus)",
+  "Mars": "火星(Mars)",
   "Jupiter": "木星(Jupiter)",
   "Saturn": "土星(Saturn)",
+  "Uranus": "天王星(Uranus)",
+  "Neptune": "海王星(Neptune)",
+  "Pluto": "冥王星(Pluto)",
+  "any planet": "任何行星",
+  "any moon": "任何卫星",
+  "at Neptune": "在海王星(Neptune)",
+  "at Uranus": "在天王星(Uranus)",
   "at Venus": "在金星(Venus)",
+  "at Mars": "在火星(Mars)",
+
   "at Jupiter (incl": {
     " moons)": "在木星(Jupiter)，包括卫星"
+  },
+  "at Saturn (incl": {
+    " moons)": "在土星(Saturn)，包括卫星"
   },
   "at Mercury": "在水星(Mercury)",
   "desc": {
     "card-10": "{orbit-or-land-count} 在海王星<br>和 {orbit-or-land-count} 在天王星<br>（包括它们的卫星）",
-    "card-12": "在行星或卫星上，即使没有所需科技。",
+    "card-12": "在行星或卫星上，<br>即便没有所需科技。",
     "card-12-endgame": "每个在木星(Jupiter)上的{orbit-or-land-count}，<br>获得 {score-3}, 包括卫星。",
+    "card-14-endgame": "每个在火星(Mars)上的{orbit-or-land-count}，<br>获得 {score-3}, 包括卫星。",
     "card-13": "如果你在火星、水星或任何卫星上着陆，<br>获得 {score-4}。",
-    "card-15": "从任何行星移除一个<br>你的 {orbit-count} 以获得：",
+    "card-15": "从任何行星移除一个你的 {orbit-count} 以获得：<br>",
     "card-17": "选择你的一个探测器。<br>如果它在小行星上，获得 {data-2}。<br>每个相邻的小行星获得 {data-1}",
     "card-18": "如果你在小行星带上有一个探测器, <br>标记一个 {yellow-trace}。",
     "card-19": "在本回合每访问一个行星时，<br>你可以选择获得 {move-1} 而不是 {publicity-1}。",
