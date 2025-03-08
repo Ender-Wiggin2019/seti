@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-08 01:31:32
+ * @LastEditTime: 2025-03-08 12:50:51
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -1095,6 +1095,18 @@ const _baseCards: BaseCard[] = [
     price: 0,
     income: EResource.ENERGY,
     description: '',
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [
+      m.FULL_MISSION(
+        [
+          { req: DESC('Jupiter'), reward: e.DATA(1) },
+          { req: DESC('Saturn'), reward: e.SCORE(4) },
+        ],
+        'When you visit:'
+      ),
+    ],
   },
   {
     id: '119',

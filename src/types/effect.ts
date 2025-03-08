@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-08 01:09:16
+ * @LastEditTime: 2025-03-08 12:49:15
  * @Description:
  */
 
@@ -57,6 +57,7 @@ export interface ICustomizedEffect {
 export interface IMissionEffect {
   effectType: EEffectType.MISSION_QUICK | EEffectType.MISSION_FULL;
   missions: IMissionItem[];
+  desc?: string;
 }
 
 export interface IEndGameEffect {

@@ -133,9 +133,10 @@ const QUICK_MISSION = (
   ],
 });
 
-const FULL_MISSION = (missions: IMissionItem[]): IMissionEffect => ({
+const FULL_MISSION = (missions: IMissionItem[], desc = ''): IMissionEffect => ({
   effectType: EEffectType.MISSION_FULL,
   missions,
+  desc,
 });
 
 const END_GAME = (

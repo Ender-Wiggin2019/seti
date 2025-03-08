@@ -2,20 +2,22 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-06 14:44:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-07 00:16:20
+ * @LastEditTime: 2025-03-08 12:55:38
  * @Description:
  */
 import React from 'react';
 
+import { DescRender } from '@/components/effect/DescRender';
 import { EffectFactory } from '@/components/effect/Effect';
 
-import { IMissionItem } from '@/types/effect';
+import { IMissionEffect } from '@/types/effect';
 
 interface missionProps {
-  missions: IMissionItem[];
+  effect: IMissionEffect;
 }
 
-export const Mission: React.FC<missionProps> = ({ missions }) => {
+export const Mission: React.FC<missionProps> = ({ effect }) => {
+  const { missions, desc } = effect;
   // const descArray = extractDesc(desc);
   if (missions.length === 1) {
     const quickMission = missions[0];
@@ -48,6 +50,49 @@ export const Mission: React.FC<missionProps> = ({ missions }) => {
             );
           })}
         </div>
+      </div>
+    );
+  } else {
+    return (
+      <div className='card-mission-container'>
+        {desc && <DescRender desc={desc} />}
+        {missions.map((mission, index) => {
+          const reqEffects = Array.isArray(mission.req)
+            ? mission.req
+            : [mission.req];
+
+          const rewardEffects = Array.isArray(mission.reward)
+            ? mission.reward
+            : [mission.reward];
+
+          return (
+            <div key={index} className='card-mission-item-container'>
+              <div className='card-mission-req'>
+                {reqEffects.map((reqEffect, index) => {
+                  return (
+                    <EffectFactory
+                      key={index}
+                      effect={{ ...reqEffect, size: 'xxs' }}
+                    />
+                  );
+                })}
+              </div>
+              <div className='card-mission-reward'>
+                {rewardEffects.map((reqEffect, index) => {
+                  return (
+                    <EffectFactory
+                      key={index}
+                      effect={{ ...reqEffect, size: 'xxs' }}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+        {/* 
+        <div className='card-mission-req'>111</div>
+        <div className='card-mission-reward'>111</div> */}
       </div>
     );
   }

@@ -131,14 +131,6 @@
   padding: 4px;
 }
 
-.card-quick-mission-container {
-  position: relative;
-  background-image: url('/images/cards/mission-container.png');
-  width: 138px;
-  height: calc(138px * 293 / 1093);
-  background-size: cover;
-}
-
 .end-game-container {
   position: relative;
   background-image: url('/images/cards/end-game-container.png');
@@ -149,6 +141,14 @@
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.card-quick-mission-container {
+  position: relative;
+  background-image: url('/images/cards/mission-container.png');
+  width: 138px;
+  height: calc(138px * 293 / 1093);
+  background-size: cover;
 }
 
 .card-quick-mission-container .req-container {
@@ -171,6 +171,52 @@
   width: 65px;
   height: 37px;
   padding: 1px 2px 1px 2px;
+}
+
+.card-mission-container {
+  position: relative;
+  background-image: url('/images/cards/mission-background.png');
+  width: 138px;
+  height: calc(138px * 302 / 1143);
+  background-size: cover;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-mission-item-container {
+  display: flex;
+  margin-top: -20px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.card-mission-req {
+  position: relative;
+  background-image: url('/images/cards/mission-req.png');
+  width: calc(310px * 138 / 1143);
+  height: calc(204px * 138 / 1143);
+  background-size: cover;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding-top: 4px;
+}
+
+.card-mission-reward {
+  position: relative;
+  background-image: url('/images/cards/mission-reward.png');
+  width: calc(274px * 138 / 1143);
+  height: calc(270px * 138 / 1143);
+  background-size: cover;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.req-1 {
 }
 
 .card-effects {

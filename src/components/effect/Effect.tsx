@@ -35,8 +35,11 @@ export const EffectFactory: React.FC<IconProps> = ({ effect }) => {
     );
   }
 
-  if (effect.effectType === EEffectType.MISSION_QUICK) {
-    return <Mission missions={effect.missions} />;
+  if (
+    effect.effectType === EEffectType.MISSION_QUICK ||
+    effect.effectType === EEffectType.MISSION_FULL
+  ) {
+    return <Mission effect={effect} />;
   }
 
   if (effect.effectType === EEffectType.END_GAME) {
