@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-10 00:54:40
+ * @LastEditTime: 2025-03-10 01:15:53
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -1499,7 +1499,7 @@ const _baseCards: BaseCard[] = [
           { req: e.CREDIT(2), reward: e.CARD_ANY() },
           { req: e.CREDIT(3), reward: e.PUBLICITY(2) },
         ],
-        'When you pay the indicated cost to play a card as your main action:'
+        'desc.card-106'
       ),
     ],
   },
