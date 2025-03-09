@@ -2,12 +2,13 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-26 23:56:31
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-07 02:21:05
+ * @LastEditTime: 2025-03-09 12:36:57
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
 import React from 'react';
 
+import { CardIncome } from '@/components/card/CardIncome';
 import { FlavorText } from '@/components/cards/base_cards/FlavorText';
 import { EffectContainer } from '@/components/effect/EffectContainer';
 import BaseCardWrapper from '@/components/wrapper/AnimalWrapper';
@@ -39,7 +40,9 @@ export const BaseCard: React.FC<BaseCardProps> = ({ card }) => {
           borderRadius: '12px',
           boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
         }}
-      ></div>
+      >
+        {/* {card.income && <CardIncome income={card.income}/>} */}
+      </div>
       {card?.special?.enableEffectRender && card.effects && (
         <EffectContainer effects={card.effects} />
       )}

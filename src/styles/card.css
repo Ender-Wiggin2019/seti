@@ -21,6 +21,7 @@
   background-image: inherit;
   background-size: inherit;
   background-repeat: no-repeat;
+  overflow: hidden;
 }
 
 .text-desc-md {
@@ -128,7 +129,7 @@
   justify-content: center;
   align-items: center;
   gap: 4px;
-  padding: 4px;
+  padding: 2px;
 }
 
 .end-game-container {
@@ -143,6 +144,12 @@
   align-items: center;
 }
 
+.card-mission-container {
+  position: relative;
+  width: 138px;
+  height: 50px;
+  /* margin-top: 10px; */
+}
 .card-quick-mission-container {
   position: relative;
   background-image: url('/images/cards/mission-container.png');
@@ -173,7 +180,7 @@
   padding: 1px 2px 1px 2px;
 }
 
-.card-mission-container {
+.card-full-mission-container {
   position: relative;
   background-image: url('/images/cards/mission-background.png');
   width: 138px;
@@ -183,7 +190,28 @@
   justify-content: space-between;
   align-items: center;
   padding: 0px 8px 0px 8px;
-  margin-left: 10px;
+  margin-left: 5px;
+}
+
+.card-full-mission-container-vertical {
+  position: relative;
+  background-image: url('/images/cards/mission-container-large.png');
+  width: 138px;
+  height: calc(138px * 460 / 1142);
+  background-size: cover;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0px 8px 0px 8px;
+  margin-left: 5px;
+}
+
+.card-full-missions {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .card-mission-item-container {
@@ -247,6 +275,20 @@
   justify-content: center;
 }
 
+.card-income-container {
+  position: absolute;
+  width: 150px;
+  height: auto;
+  bottom: 0px;
+  overflow: hidden;
+  border-radius: 12px;
+}
+.card-income-svg {
+  width: 100%;
+  height: auto;
+}
+
+/** Aliens */
 .anomalies {
   top: 87px;
   background-color: #1a6983;
@@ -359,6 +401,7 @@
 .icon-score {
   background-position: -200px -150px; /* 第四行第五列 */
 }
+
 .icon-computer-action {
   background-position: 0 -200px; /* 第五行第一列 */
 }
@@ -409,6 +452,28 @@
 
 .icon-income {
   background-position: -200px -300px;
+}
+
+/** second  icon file */
+.icon-fulfill-sector-any {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: 0 -150px; /* 第四行第一列 */
+}
+.icon-fulfill-sector-blue {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: -50px -150px; /* 第四行第二列 */
+}
+.icon-fulfill-sector-yellow {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: -100px -150px; /* 第四行第三列 */
+}
+.icon-fulfill-sector-red {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: -150px -150px; /* 第四行第四列 */
+}
+.icon-fulfill-sector-black {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: -200px -150px; /* 第四行第五列 */
 }
 
 .icon-container {

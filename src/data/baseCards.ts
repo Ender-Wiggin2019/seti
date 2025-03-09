@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-09 02:12:33
+ * @LastEditTime: 2025-03-10 00:54:40
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -1187,6 +1187,26 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.CREDIT,
     description: '',
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [
+      e.PUBLICITY(1, '', 'desc'),
+      m.FULL_MISSION([
+        {
+          req: e.TECH_PROBE(),
+          reward: e.PUBLICITY(2),
+        },
+        {
+          req: e.TECH_SCAN(),
+          reward: e.PUBLICITY(2),
+        },
+        {
+          req: e.TECH_COMPUTER(),
+          reward: e.PUBLICITY(2),
+        },
+      ]),
+    ],
   },
   {
     id: '74',
@@ -1247,7 +1267,14 @@ const _baseCards: BaseCard[] = [
     price: 1,
     income: EResource.CREDIT,
     description: '',
-    effects: [e.SIGNAL_RED(2)],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [
+      e.SIGNAL_RED(2),
+      DESC('at Proxima Centauri.'),
+      m.QUICK_MISSION([e.FULFILL_SECTOR_RED(2)], [e.SCORE(4), e.PUBLICITY()]),
+    ],
   },
   {
     id: '61',
@@ -1462,6 +1489,19 @@ const _baseCards: BaseCard[] = [
     price: 1,
     income: EResource.CREDIT,
     description: '',
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [
+      m.FULL_MISSION(
+        [
+          { req: e.CREDIT(1), reward: e.SCORE(2) },
+          { req: e.CREDIT(2), reward: e.CARD_ANY() },
+          { req: e.CREDIT(3), reward: e.PUBLICITY(2) },
+        ],
+        'When you pay the indicated cost to play a card as your main action:'
+      ),
+    ],
   },
   {
     id: '96',
@@ -1710,11 +1750,10 @@ const _baseCards: BaseCard[] = [
     price: 0,
     income: EResource.CARD,
     description: '',
-    effects: [
-      DESC(
-        'Keep this card in front of you. If you have a probe in the outermost ring, you may use an {orbit} or {land} action to place that probe on pluto.'
-      ),
-    ],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [DESC('desc.card-se-en-01')],
   },
   {
     id: 'SE EN 02',

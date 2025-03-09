@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-05 23:45:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-09 02:02:39
+ * @LastEditTime: 2025-03-10 01:12:05
  * @Description:
  */
 import React from 'react';
@@ -29,7 +29,6 @@ interface IconProps {
 
 export const DescRender: React.FC<IconProps> = ({ desc, size, width }) => {
   const descArray = extractDesc(desc);
-  console.log('🎸 [test] - descArray:', desc, descArray);
   // desc 会降一个尺寸
   const descIconSize = getDescIconSize(descArray, size);
   const descTextSize = getDescTextSize(descIconSize);

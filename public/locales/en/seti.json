@@ -155,6 +155,7 @@
     "card-19": "Each time you visit a planet this turn,<br>you may gain {move-1} instead of {publicity-1}.",
     "card-30": "Choose up to 3 probes (yours or other players'). For each probe, mark a {any-signal} in its sector.",
     "card-32": "In the sector with Mercury.",
-    "card-63-req": "on each species"
+    "card-63-req": "on each species",
+    "card-se-en-01": "Keep this card in front of you.<br>If vou have a probe in the outermost ring, <br>you may use an {orbit-action} or {land-action} action to place that probe on Pluto."
   }
 }

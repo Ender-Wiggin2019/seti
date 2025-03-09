@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 22:59:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-08 01:24:25
+ * @LastEditTime: 2025-03-10 00:34:56
  * @Description:
  */
 import {
@@ -27,11 +27,12 @@ import {
 
 const _base =
   (type: TIcon) =>
-  (value = 1, desc = ''): IBaseEffect => ({
+  (value = 1, desc = '', size?: TSize): IBaseEffect => ({
     effectType: EEffectType.BASE,
     type,
     value,
     desc,
+    size,
     helperText: `desc.${type}`,
   });
 
@@ -76,6 +77,10 @@ const SIGNAL_DISPLAY_CARD = _base(EScanAction.DISPLAY_CARD); // NOTE: namespace
 // misc
 const ROTATE = _base(EMiscIcon.ROTATE);
 const INCOME = _base(EMiscIcon.INCOME);
+const FULFILL_SECTOR_ANY = _base(EMiscIcon.FULFILL_SECTOR_ANY);
+const FULFILL_SECTOR_RED = _base(EMiscIcon.FULFILL_SECTOR_RED);
+const FULFILL_SECTOR_YELLOW = _base(EMiscIcon.FULFILL_SECTOR_YELLOW);
+const FULFILL_SECTOR_BLUE = _base(EMiscIcon.FULFILL_SECTOR_BLUE);
 
 export const e = {
   ORBIT,
@@ -117,6 +122,10 @@ export const e = {
 
   ROTATE,
   INCOME,
+  FULFILL_SECTOR_ANY,
+  FULFILL_SECTOR_RED,
+  FULFILL_SECTOR_YELLOW,
+  FULFILL_SECTOR_BLUE,
 };
 
 // usually will only has one mission

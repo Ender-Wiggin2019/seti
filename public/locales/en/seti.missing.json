@@ -1,23 +1,21 @@
 {
+  "Perfect Timing": "Perfect Timing",
+  "Visitor in the Sky": "Visitor in the Sky",
+  "Automated Lab": "Automated Lab",
+  "Core-breach Exoplanet": "Core-breach Exoplanet",
+  "Deflector": "Deflector",
+  "Oscillating Probes": "Oscillating Probes",
+  "Fission-sun Exoplanet": "Fission-sun Exoplanet",
+  "Stratoelevator": "Stratoelevator",
+  "pierced Exoplanet": "pierced Exoplanet",
+  "Vortex Exoplanet": "Vortex Exoplanet",
   "Ignore the limit of probes in space for those launches": {
     "": "Ignore the limit of probes in space for those launches."
-  },
-  "Reveal the card you drew, and gain its free-action corner effect": {
-    "": "Reveal the card you drew, and gain its free-action corner effect."
   },
   "LAND on a planet or a moon, even without the required tech": {
     "": "LAND on a planet or a moon, even without the required tech."
   },
-  "You may land on a space that is already occupied and still get the covered reward": {
-    "": "You may land on a space that is already occupied and still get the covered reward."
-  },
   "Each time you visit a planet this turn, you may gain 1 MOVE instead of 1 PUBLICITY": {
     "": "Each time you visit a planet this turn, you may gain 1 MOVE instead of 1 PUBLICITY."
-  },
-  "MARK in a sector with one of your probes and in both neighboring sectors": {
-    "": "MARK in a sector with one of your probes and in both neighboring sectors."
-  },
-  "Lunar Gateway": "Lunar Gateway",
-  "Not a planet since 2006": "Not a planet since 2006",
-  "Gateway to Mars": "Gateway to Mars"
+  }
 }

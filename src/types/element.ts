@@ -4,7 +4,7 @@ import { TShape } from '@/types/Icon';
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 14:45:30
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-06 12:25:49
+ * @LastEditTime: 2025-03-10 00:19:37
  * @Description:
  */
 export enum ESector {
@@ -23,6 +23,7 @@ export enum EScanAction {
   DISPLAY_CARD = 'display-card-signal',
   DISCARD_CARD = 'discard-card-signal',
 }
+
 export enum EResource {
   CREDIT = 'credit',
   ENERGY = 'energy',
@@ -81,6 +82,10 @@ export enum EMiscIcon {
   ORBIT_COUNT = 'orbit-count', // 用于任务计数的图标
   LAND_COUNT = 'land-count',
   ORBIT_OR_LAND_COUNT = 'orbit-or-land-count',
+  FULFILL_SECTOR_ANY = 'fulfill-sector-any',
+  FULFILL_SECTOR_RED = 'fulfill-sector-red',
+  FULFILL_SECTOR_YELLOW = 'fulfill-sector-yellow',
+  FULFILL_SECTOR_BLUE = 'fulfill-sector-blue',
 }
 
 export enum EPlanet {
