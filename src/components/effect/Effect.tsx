@@ -45,7 +45,7 @@ export const EffectFactory: React.FC<IconProps> = ({ effect }) => {
   if (effect.effectType === EEffectType.END_GAME) {
     return (
       <div className='end-game-container'>
-        <DescRender desc={t(effect.desc)} size='xxs' />
+        <DescRender desc={t(effect.desc)} size={effect.size || 'xxs'} />
       </div>
     );
   }

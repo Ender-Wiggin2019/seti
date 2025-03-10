@@ -229,6 +229,9 @@
   "at Venus": "在金星(Venus)",
   "at Mars": "在火星(Mars)",
 
+  "at Mars (incl": {
+    " moons)": "在火星(Mars)，包括卫星"
+  },
   "at Jupiter (incl": {
     " moons)": "在木星(Jupiter)，包括卫星"
   },
@@ -236,6 +239,50 @@
     " moons)": "在土星(Saturn)，包括卫星"
   },
   "at Mercury": "在水星(Mercury)",
+  "at Proxima Centauri": "在比邻星(Proxima Centauri)。",
+  "in the sector with Mercury": {
+    "": "在水星(Mercury)所在的区域。"
+  },
+  "in the sector with Venus": {
+    "": "在金星(Venus)所在的区域。"
+  },
+  "in the sector with Mars": {
+    "": "在火星(Mars)所在的区域。"
+  },
+  "in the sector with Jupiter": {
+    "": "在木星(Jupiter)所在的区域。"
+  },
+  "in the sector with Saturn": {
+    "": "在土星(Saturn)所在的区域。"
+  },
+  "at 61 Virginis": {
+    "": "在天门增四(61 Virginis)。"
+  },
+  "at Sirius A": {
+    "": "在天狼星A(Sirius A)。"
+  },
+  "at Beta Pictoris": {
+    "": "在毕宿五(Beta Pictoris)。"
+  },
+  "at Kepler 22": {
+    "": "在开普勒22(Kepler 22)。"
+  },
+  "at Procyon": {
+    "": "在南河三(Procyon)。"
+  },
+  "at Barnard's Star": {
+    "": "在巴纳德星(Barnard's Star)。"
+  },
+  "at Vega": {
+    "": "在织女星(Vega)。"
+  },
+  "{score-3} for each {fulfill-sector-black}": "每有一个 {fulfill-sector-black}} 获得 {score-3}",
+  "{score-3} for each {fulfill-sector-red}}": "每有一个  {fulfill-sector-red}} 获得 {score-3}",
+  "{score-3} for each {fulfill-sector-yellow}}": "每有一个 {fulfill-sector-yellow}} 获得 {score-3}",
+  "{score-3} for each {fulfill-sector-blue}}": "每有一个 {fulfill-sector-blue}} 获得 {score-3}",
+  "{publicity-8}": "{publicity-8}",
+  "Have at least": "拥有至少",
+  "Do not count moons": "不包含卫星。",
   "desc": {
     "card-10": "{orbit-or-land-count} 在海王星<br>和 {orbit-or-land-count} 在天王星<br>（包括它们的卫星）",
     "card-12": "在行星或卫星上，<br>即便没有所需科技。",
@@ -246,8 +293,25 @@
     "card-17": "选择你的一个探测器。<br>如果它在小行星上，获得 {data-2}。<br>每个相邻的小行星获得 {data-1}",
     "card-18": "如果你在小行星带上有一个探测器, <br>标记一个 {yellow-trace}。",
     "card-19": "在本回合每访问一个行星时，<br>你可以选择获得 {move-1} 而不是 {publicity-1}。",
+    "card-20": "如果本回合访问水星(Mercury)，获得 {score-4}。",
+    "card-21": "如果本回合访问金星(Venus)，获得 {score-3}。",
+    "card-22": "如果本回合访问火星(Mars)，获得 {score-4}。",
+    "card-23": "如果本回合访问木星(Jupiter)，获得 {score-4}。",
+    "card-24": "如果本回合访问土星(Saturn)，获得 {score-6}。",
+    "card-25": "本回合每访问一个独特的行星（包括地球），获得 {score-1}。",
+    "card-26": "本回合无视来自小行星的移动限制。",
+    "card-27": "{any-signal} 在有你探测器的扇区。",
+    "card-28": "{any-signal} {any-signal} 在有你探测器的扇区。",
+    "card-29": "{any-signal} 在有你探测器的扇区和两个相邻扇区。",
     "card-30": "选择至多 3 个探测器 (你或其他玩家的). 对于每个探测器, 在对应扇区内标记一个 {any-signal}。",
-    "card-32": "在有水星的区域。",
+    "card-32": "在有水星(Mercury)的区域。",
+    "card-45": "如果本回合完成至少一个扇区，获得 {energy-1}。",
+    "card-46": "如果本回合完成至少一个扇区，获得 {draw-card-1}。",
+    "card-47": "如果本回合完成至少一个扇区，获得 {data-1}。",
+    "card-50": "每个你标记信号的不同扇区<br>获得 {score-2}。",
+    "card-52": "每个用此行动标记的{red-signal}获得 {score-2}。",
+    "card-53": "每个用此行动标记的{yellow-signal}获得 {score-2}。",
+    "card-54": "每个用此行动标记的{blue-signal}获得 {score-2}。",
     "card-63-req": "在每个物种上",
     "card-106": "当你在主要行动中打出卡牌<br>支付如下费用时:",
     "card-se-en-01": "将这张卡放置在你面前}。<br>如果你在最外层的环有一个探测器，<br>你可以执行 {orbit-action} 或 {land-action} 行动<br>在冥王星(Pluto)放置探测器}。"

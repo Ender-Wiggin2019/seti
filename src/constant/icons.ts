@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 16:47:27
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-07 18:18:20
+ * @LastEditTime: 2025-03-11 01:47:24
  * @Description:
  */
 import { IBaseEffect } from '@/types/effect';
@@ -47,14 +47,17 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
     case ETrace.BLUE:
     case ETrace.RED:
     case ETrace.YELLOW:
+    case EScanAction.DISCARD_CARD:
+    case EScanAction.DISPLAY_CARD:
+      size = 'sm';
+      break;
     case EScanAction.ANY:
     case EScanAction.BLACK:
     case EScanAction.BLUE:
     case EScanAction.RED:
     case EScanAction.YELLOW:
-    case EScanAction.DISCARD_CARD:
-    case EScanAction.DISPLAY_CARD:
-      size = 'sm';
+      shape = 'round';
+      size = 'xs';
       break;
     case EResource.MOVE:
       size = 'sm';
@@ -89,6 +92,7 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
       break;
     default:
       // showValue = true;
+      shape = 'round';
       break;
   }
   const res = {

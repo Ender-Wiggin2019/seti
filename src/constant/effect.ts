@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 22:59:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-10 00:34:56
+ * @LastEditTime: 2025-03-10 23:07:33
  * @Description:
  */
 import {
@@ -81,7 +81,7 @@ const FULFILL_SECTOR_ANY = _base(EMiscIcon.FULFILL_SECTOR_ANY);
 const FULFILL_SECTOR_RED = _base(EMiscIcon.FULFILL_SECTOR_RED);
 const FULFILL_SECTOR_YELLOW = _base(EMiscIcon.FULFILL_SECTOR_YELLOW);
 const FULFILL_SECTOR_BLUE = _base(EMiscIcon.FULFILL_SECTOR_BLUE);
-
+const FULFILL_SECTOR_BLACK = _base(EMiscIcon.FULFILL_SECTOR_BLACK);
 export const e = {
   ORBIT,
   LAND,
@@ -126,6 +126,7 @@ export const e = {
   FULFILL_SECTOR_RED,
   FULFILL_SECTOR_YELLOW,
   FULFILL_SECTOR_BLUE,
+  FULFILL_SECTOR_BLACK,
 };
 
 // usually will only has one mission
@@ -151,12 +152,14 @@ const FULL_MISSION = (missions: IMissionItem[], desc = ''): IMissionEffect => ({
 const END_GAME = (
   desc: string,
   score?: number,
-  per?: IBaseEffect
+  per?: IBaseEffect,
+  size?: TSize
 ): IEndGameEffect => ({
   effectType: EEffectType.END_GAME,
   score,
   per,
   desc,
+  size,
 });
 
 export const m = {
