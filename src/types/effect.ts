@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-10 10:39:38
+ * @LastEditTime: 2025-03-10 23:11:36
  * @Description:
  */
 
@@ -65,6 +65,7 @@ export interface IEndGameEffect {
   desc: string;
   score?: number;
   per?: IBaseEffect;
+  size?: TSize;
 }
 
 export interface IOrEffect {

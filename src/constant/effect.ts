@@ -80,7 +80,7 @@ const FULFILL_SECTOR_ANY = _base(EMiscIcon.FULFILL_SECTOR_ANY);
 const FULFILL_SECTOR_RED = _base(EMiscIcon.FULFILL_SECTOR_RED);
 const FULFILL_SECTOR_YELLOW = _base(EMiscIcon.FULFILL_SECTOR_YELLOW);
 const FULFILL_SECTOR_BLUE = _base(EMiscIcon.FULFILL_SECTOR_BLUE);
-
+const FULFILL_SECTOR_BLACK = _base(EMiscIcon.FULFILL_SECTOR_BLACK);
 export const e = {
   ORBIT,
   LAND,
@@ -125,6 +125,7 @@ export const e = {
   FULFILL_SECTOR_RED,
   FULFILL_SECTOR_YELLOW,
   FULFILL_SECTOR_BLUE,
+  FULFILL_SECTOR_BLACK,
 };
 export interface IFlattenMissionItem {
   req: IBaseEffect | ICustomizedEffect | (IBaseEffect | ICustomizedEffect)[];
@@ -166,12 +167,14 @@ const FULL_MISSION = (
 const END_GAME = (
   desc: string,
   score?: number,
-  per?: IBaseEffect
+  per?: IBaseEffect,
+  size?: TSize
 ): IEndGameEffect => ({
   effectType: EEffectType.END_GAME,
   score,
   per,
   desc,
+  size,
 });
 
 export const m = {

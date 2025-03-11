@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-10 01:15:53
+ * @LastEditTime: 2025-03-11 01:33:38
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -28,7 +28,17 @@ const _baseCards: BaseCard[] = [
     sector: ESector.BLUE,
     price: 2,
     income: EResource.CARD,
-    effects: [e.SIGNAL_YELLOW(2)],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [
+      e.SIGNAL_YELLOW(2),
+      DESC('at 61 Virginis.'),
+      m.QUICK_MISSION(
+        [e.FULFILL_SECTOR_YELLOW(2)],
+        [e.SCORE(4), e.PUBLICITY()]
+      ),
+    ],
   },
   {
     id: '128',
@@ -70,7 +80,10 @@ const _baseCards: BaseCard[] = [
     sector: ESector.RED,
     price: 2,
     income: EResource.CARD,
-    effects: [e.SIGNAL_DISPLAY_CARD(2)],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [e.SIGNAL_DISPLAY_CARD(2), DESC('desc.card-45')],
   },
   {
     id: '46',
@@ -80,7 +93,10 @@ const _baseCards: BaseCard[] = [
     sector: ESector.YELLOW,
     price: 2,
     income: EResource.CREDIT,
-    effects: [e.SIGNAL_DISPLAY_CARD(2)],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [e.SIGNAL_DISPLAY_CARD(2), DESC('desc.card-46')],
   },
   {
     id: '122',
@@ -113,7 +129,10 @@ const _baseCards: BaseCard[] = [
     sector: ESector.YELLOW,
     price: 3,
     income: EResource.CARD,
-    effects: [e.SCAN()],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [e.SCAN(), DESC('desc.card-54')],
   },
   {
     id: '129',
@@ -174,7 +193,19 @@ const _baseCards: BaseCard[] = [
     sector: ESector.BLUE,
     price: 2,
     income: EResource.ENERGY,
-    effects: [e.SIGNAL_RED(2)],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [
+      e.SIGNAL_RED(2),
+      DESC("at Barnard's Star."),
+      m.END_GAME(
+        '{score-3} for each {fulfill-sector-red}}',
+        3,
+        e.FULFILL_SECTOR_BLACK(),
+        'sm'
+      ),
+    ],
   },
   {
     id: '43',
@@ -184,7 +215,14 @@ const _baseCards: BaseCard[] = [
     sector: ESector.BLUE,
     price: 1,
     income: EResource.ENERGY,
-    effects: [e.SIGNAL_BLACK(1)],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [
+      e.SIGNAL_BLACK(),
+      DESC('at Beta Pictoris.'),
+      m.QUICK_MISSION([e.FULFILL_SECTOR_BLACK()], [e.SCORE(2), e.PUBLICITY()]),
+    ],
   },
   {
     id: '56',
@@ -194,6 +232,9 @@ const _baseCards: BaseCard[] = [
     sector: ESector.YELLOW,
     price: 1,
     income: EResource.CREDIT,
+    special: {
+      enableEffectRender: true,
+    },
     effects: [e.MOVE(), e.SIGNAL_BLUE()],
   },
   {
@@ -204,6 +245,9 @@ const _baseCards: BaseCard[] = [
     sector: ESector.BLUE,
     price: 1,
     income: EResource.CREDIT,
+    special: {
+      enableEffectRender: true,
+    },
     effects: [e.MOVE(), e.SIGNAL_RED()],
   },
   {
@@ -214,6 +258,9 @@ const _baseCards: BaseCard[] = [
     sector: ESector.RED,
     price: 1,
     income: EResource.CREDIT,
+    special: {
+      enableEffectRender: true,
+    },
     effects: [e.MOVE(), e.SIGNAL_YELLOW()],
   },
   {
@@ -318,7 +365,10 @@ const _baseCards: BaseCard[] = [
     sector: ESector.BLUE,
     price: 2,
     income: EResource.ENERGY,
-    effects: [e.SCAN()],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [e.SCAN(), DESC('desc.card-53')],
   },
   {
     id: '16',
@@ -366,6 +416,9 @@ const _baseCards: BaseCard[] = [
     sector: ESector.BLUE,
     price: 3,
     income: EResource.ENERGY,
+    special: {
+      enableEffectRender: true,
+    },
     effects: [e.CARD_ANY(), e.ROTATE(), e.TECH_SCAN()],
   },
   {
@@ -598,10 +651,8 @@ const _baseCards: BaseCard[] = [
     income: EResource.CREDIT,
     special: {
       enableEffectRender: true,
-      descHelper:
-        'Each time you visit a planet this turn, you may gain 1 MOVE instead of 1 PUBLICITY.',
     },
-    effects: [e.MOVE(), DESC('desc.card-19')],
+    effects: [e.MOVE(2), DESC('desc.card-19')],
   },
   {
     id: '30',
@@ -657,7 +708,10 @@ const _baseCards: BaseCard[] = [
     sector: ESector.RED,
     price: 1,
     income: EResource.CARD,
-    effects: [e.MOVE()],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [e.MOVE(), DESC('desc.card-27')],
   },
   {
     id: '81',
@@ -697,10 +751,9 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.ENERGY,
     special: {
-      descHelper:
-        'MARK in a sector with one of your probes and in both neighboring sectors.',
+      enableEffectRender: true,
     },
-    effects: [e.MOVE()],
+    effects: [e.MOVE(1), DESC('desc.card-29')],
   },
   {
     id: '82',
@@ -739,12 +792,15 @@ const _baseCards: BaseCard[] = [
     sector: ESector.BLUE,
     price: 2,
     income: EResource.CREDIT,
+    special: {
+      enableEffectRender: true,
+    },
     effects: [
-      {
-        effectType: EEffectType.CUSTOMIZED,
-        type: EScanAction.ANY,
-        desc: `desc.card-35`,
-      },
+      e.SIGNAL_ANY(2, 'in the sector with Jupiter.'),
+      m.QUICK_MISSION(
+        e.ORBIT_OR_LAND_COUNT(1, 'at Jupiter (incl. moons)'),
+        e.SCORE(4)
+      ),
     ],
   },
   {
@@ -755,7 +811,10 @@ const _baseCards: BaseCard[] = [
     sector: ESector.BLUE,
     price: 1,
     income: EResource.ENERGY,
-    effects: [e.MOVE()],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [e.MOVE(2), DESC('desc.card-23')],
   },
   {
     id: '40',
@@ -765,7 +824,19 @@ const _baseCards: BaseCard[] = [
     sector: ESector.RED,
     price: 2,
     income: EResource.CREDIT,
-    effects: [e.SIGNAL_YELLOW(2)],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [
+      e.SIGNAL_YELLOW(2),
+      DESC('at Kepler 22.'),
+      m.END_GAME(
+        '{score-3} for each {fulfill-sector-yellow}}',
+        3,
+        e.FULFILL_SECTOR_BLACK(),
+        'sm'
+      ),
+    ],
   },
   {
     id: '28',
@@ -775,7 +846,10 @@ const _baseCards: BaseCard[] = [
     sector: ESector.BLUE,
     price: 2,
     income: EResource.CREDIT,
-    effects: [e.MOVE()],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [e.MOVE(1), DESC('desc.card-28')],
   },
   {
     id: '69',
@@ -795,7 +869,10 @@ const _baseCards: BaseCard[] = [
     sector: ESector.RED,
     price: 2,
     income: EResource.CREDIT,
-    effects: [e.MOVE()],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [e.MOVE(4), DESC('desc.card-25')],
   },
   {
     id: '102',
@@ -814,7 +891,20 @@ const _baseCards: BaseCard[] = [
     sector: ESector.RED,
     price: 3,
     income: EResource.ENERGY,
-    effects: [e.DATA(), e.SCAN()],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [
+      e.DATA(),
+      e.SCAN(),
+      m.QUICK_MISSION(
+        [
+          DESC('Have at least'),
+          DESC_WITH_TYPE(EResource.PUBLICITY, '{publicity-8}'),
+        ],
+        [e.SCORE(3), e.CARD_ANY()]
+      ),
+    ],
   },
   {
     id: '130',
@@ -867,12 +957,15 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.CARD,
     description: '',
+    special: {
+      enableEffectRender: true,
+    },
     effects: [
-      {
-        effectType: EEffectType.CUSTOMIZED,
-        type: EScanAction.ANY,
-        desc: `desc.card-34`,
-      },
+      e.SIGNAL_ANY(2, 'in the sector with Mars.'),
+      m.QUICK_MISSION(
+        e.ORBIT_OR_LAND_COUNT(1, 'at Mars (incl. moons)'),
+        e.SCORE(4)
+      ),
     ],
   },
   {
@@ -884,7 +977,10 @@ const _baseCards: BaseCard[] = [
     price: 1,
     income: EResource.ENERGY,
     description: '',
-    effects: [e.MOVE()],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [e.MOVE(2), DESC('desc.card-22')],
   },
   {
     id: '14',
@@ -909,12 +1005,12 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.CREDIT,
     description: '',
+    special: {
+      enableEffectRender: true,
+    },
     effects: [
-      {
-        effectType: EEffectType.CUSTOMIZED,
-        type: EScanAction.ANY,
-        desc: `desc.card-32`,
-      },
+      e.SIGNAL_ANY(2, 'in the sector with Mercury.'),
+      m.QUICK_MISSION(e.ORBIT_OR_LAND_COUNT(1, 'at Mercury'), e.SCORE(4)),
     ],
   },
   {
@@ -926,7 +1022,10 @@ const _baseCards: BaseCard[] = [
     price: 1,
     income: EResource.ENERGY,
     description: '',
-    effects: [e.MOVE(2)],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [e.MOVE(2), DESC('desc.card-20')],
   },
   {
     id: '7',
@@ -1098,7 +1197,10 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.CARD,
     description: '',
-    effects: [e.SCAN()],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [e.SCAN(), DESC('desc.card-52')],
   },
   {
     id: '13',
@@ -1238,7 +1340,19 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.CARD,
     description: '',
-    effects: [e.SIGNAL_BLUE(2)],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [
+      e.SIGNAL_BLUE(2),
+      DESC('at Procyon.'),
+      m.END_GAME(
+        '{score-3} for each {fulfill-sector-blue}}',
+        3,
+        e.FULFILL_SECTOR_BLACK(),
+        'sm'
+      ),
+    ],
   },
   {
     id: '87',
@@ -1333,12 +1447,15 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.CARD,
     description: '',
+    special: {
+      enableEffectRender: true,
+    },
     effects: [
-      {
-        effectType: EEffectType.CUSTOMIZED,
-        type: EScanAction.ANY,
-        desc: `desc.card-36`,
-      },
+      e.SIGNAL_ANY(2, 'in the sector with Saturn.'),
+      m.QUICK_MISSION(
+        e.ORBIT_OR_LAND_COUNT(1, 'at Saturn (incl. moons)'),
+        e.SCORE(4)
+      ),
     ],
   },
   {
@@ -1350,7 +1467,10 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.CARD,
     description: '',
-    effects: [e.MOVE()],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [e.MOVE(3), DESC('desc.card-24')],
   },
   {
     id: '72',
@@ -1423,8 +1543,14 @@ const _baseCards: BaseCard[] = [
     sector: ESector.RED,
     price: 2,
     income: EResource.ENERGY,
-    description: '',
-    effects: [e.SIGNAL_BLUE(2)],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [
+      e.SIGNAL_BLUE(2),
+      DESC('at Sirius A.'),
+      m.QUICK_MISSION([e.FULFILL_SECTOR_BLUE(2)], [e.SCORE(4), e.PUBLICITY()]),
+    ],
   },
   {
     id: '113',
@@ -1445,7 +1571,17 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.CARD,
     description: '',
-    effects: [e.LAUNCH(), e.MOVE()],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [
+      e.LAUNCH(),
+      e.MOVE(),
+      m.QUICK_MISSION(
+        [e.LAND_COUNT(3, 'Do not count moons', 'desc-mini')],
+        e.CREDIT()
+      ),
+    ],
   },
   {
     id: '132',
@@ -1467,6 +1603,9 @@ const _baseCards: BaseCard[] = [
     price: 3,
     income: EResource.CREDIT,
     description: '',
+    special: {
+      enableEffectRender: true,
+    },
     effects: [e.SIGNAL_DISPLAY_CARD(3, 'desc.card-50')], // TODO: 还有额外内容
   },
   {
@@ -1542,7 +1681,10 @@ const _baseCards: BaseCard[] = [
     price: 1,
     income: EResource.CARD,
     description: '',
-    effects: [e.MOVE()],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [e.MOVE(2), DESC('desc.card-26')],
   },
   {
     id: '125',
@@ -1586,7 +1728,19 @@ const _baseCards: BaseCard[] = [
     price: 1,
     income: EResource.CREDIT,
     description: '',
-    effects: [e.SIGNAL_BLACK(1)],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [
+      e.SIGNAL_BLACK(),
+      DESC('at Vega.'),
+      m.END_GAME(
+        '{score-3} for each {fulfill-sector-black}',
+        3,
+        e.FULFILL_SECTOR_BLACK(),
+        'sm'
+      ),
+    ],
   },
   {
     id: '5',
@@ -1618,12 +1772,12 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.ENERGY,
     description: '',
+    special: {
+      enableEffectRender: true,
+    },
     effects: [
-      {
-        effectType: EEffectType.CUSTOMIZED,
-        type: EScanAction.ANY,
-        desc: `desc.card-33`,
-      },
+      e.SIGNAL_ANY(2, 'in the sector with Venus.'),
+      m.QUICK_MISSION(e.ORBIT_OR_LAND_COUNT(1, 'at Venus'), e.SCORE(4)),
     ],
   },
   {
@@ -1635,7 +1789,10 @@ const _baseCards: BaseCard[] = [
     price: 1,
     income: EResource.CREDIT,
     description: '',
-    effects: [e.MOVE()],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [e.MOVE(2), DESC('desc.card-21')],
   },
   {
     id: '54',
@@ -1646,7 +1803,10 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.CREDIT,
     description: '',
-    effects: [e.SCAN()],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [e.SCAN(), DESC('desc.card-54')],
   },
   {
     id: '47',
@@ -1657,7 +1817,10 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.ENERGY,
     description: '',
-    effects: [e.SIGNAL_DISPLAY_CARD(2)],
+    special: {
+      enableEffectRender: true,
+    },
+    effects: [e.SIGNAL_DISPLAY_CARD(2), DESC('desc.card-47')],
   },
   {
     id: '3',

@@ -4,7 +4,7 @@ import { TShape } from '@/types/Icon';
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 14:45:30
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-10 00:19:37
+ * @LastEditTime: 2025-03-11 00:28:20
  * @Description:
  */
 export enum ESector {
@@ -47,7 +47,8 @@ export enum ESpecialAction {
   ORBIT = 'orbit-action',
   LAND = 'land-action',
   SCAN = 'scan-action',
-  COMPUTER = 'compu pter-action',
+  COMPUTER = 'computer-action',
+  ORBIT_OR_LAND = 'orbit-or-land-action',
 }
 
 export enum ETech {
@@ -86,6 +87,16 @@ export enum EMiscIcon {
   FULFILL_SECTOR_RED = 'fulfill-sector-red',
   FULFILL_SECTOR_YELLOW = 'fulfill-sector-yellow',
   FULFILL_SECTOR_BLUE = 'fulfill-sector-blue',
+  FULFILL_SECTOR_BLACK = 'fulfill-sector-black',
+  FULFILL_ICON = 'fulfill-icon',
+  ADVANCED_15 = 'advanced-15',
+  FULFILL_ADVANCED = 'fulfill-advanced',
+  DANGER = 'danger',
+  DRAW_ALIEN_CARD = 'draw-alien-card',
+  EXOFOSSIL = 'exofossil',
+  USE_EXOFOSSIL = 'use-exofossil',
+  SAMPLE = 'sample',
+  FULFILL_SAMPLE = 'fulfill-sample',
 }
 
 export enum EPlanet {

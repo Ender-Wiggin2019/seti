@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-06 14:44:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-10 01:10:51
+ * @LastEditTime: 2025-03-10 22:58:33
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
@@ -12,6 +12,7 @@ import { DescRender } from '@/components/effect/DescRender';
 import { EffectFactory } from '@/components/effect/Effect';
 
 import { IMissionEffect } from '@/types/effect';
+import { calculateSize } from '@/utils/desc';
 
 interface missionProps {
   effect: IMissionEffect;
@@ -37,7 +38,7 @@ export const Mission: React.FC<missionProps> = ({ effect }) => {
             return (
               <EffectFactory
                 key={index}
-                effect={{ ...reqEffect, size: 'xxs' }}
+                effect={{ ...reqEffect, size: reqEffect.size || 'xxs' }}
               />
             );
           })}
@@ -47,7 +48,7 @@ export const Mission: React.FC<missionProps> = ({ effect }) => {
             return (
               <EffectFactory
                 key={index}
-                effect={{ ...rewardEffect, size: 'xxs' }}
+                effect={{ ...rewardEffect, size: rewardEffect.size || 'xxs' }}
               />
             );
           })}
@@ -55,7 +56,7 @@ export const Mission: React.FC<missionProps> = ({ effect }) => {
       </div>
     );
   } else {
-    const isDescLengthTooLong = desc && t(desc).length > 10;
+    const isDescLengthTooLong = desc && calculateSize(t(desc)) > 20;
     const outerContainerCls = isDescLengthTooLong
       ? 'card-mission-container -mt-4'
       : 'card-mission-container mt-[10px]';

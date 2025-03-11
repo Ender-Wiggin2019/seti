@@ -80,11 +80,11 @@ export const renderNode2Effect = (node: IRenderNode): IBaseEffect | string => {
 export const computeLength = (nodes: IRenderNode[]) => {
   return nodes.reduce((acc, node) => {
     if (node.type === 'text') {
-      return acc + node.name.length;
+      return acc + calculateSize(node.name);
     }
 
     if (node.type === 'component') {
-      return acc + 8; // one component is around 4 chars
+      return acc + 5; // one component is around 4 chars
     }
     return acc + 1;
   }, 0);
@@ -147,3 +147,16 @@ export const getDescTextSize = (iconSize: TSize): TSize => {
       return 'desc-mini';
   }
 };
+
+export function calculateSize(str: string) {
+  let size = 0;
+  for (let i = 0; i < str.length; i++) {
+    const charCode = str.charCodeAt(i);
+    if (charCode > 255) {
+      size += 2;
+    } else {
+      size += 1;
+    }
+  }
+  return size;
+}
