@@ -1,21 +1,76 @@
 {
-  "Perfect Timing": "Perfect Timing",
-  "Visitor in the Sky": "Visitor in the Sky",
-  "Automated Lab": "Automated Lab",
-  "Core-breach Exoplanet": "Core-breach Exoplanet",
-  "Deflector": "Deflector",
+  "Amazing Uncertainty": "Amazing Uncertainty",
+  "Signs of Life": "Signs of Life",
+  "Hivemind Concept": "Hivemind Concept",
+  "Infocluster": "Infocluster",
+  "First Contact": "First Contact",
+  "Casette Deployment": "Casette Deployment",
+  "Extractor": "Extractor",
   "Oscillating Probes": "Oscillating Probes",
-  "Fission-sun Exoplanet": "Fission-sun Exoplanet",
-  "Stratoelevator": "Stratoelevator",
-  "pierced Exoplanet": "pierced Exoplanet",
-  "Vortex Exoplanet": "Vortex Exoplanet",
+  "in the sector with Saturn": {
+    "": "in the sector with Saturn."
+  },
+  "Close-up View": "Close-up View",
+  "Message Capsule": "Message Capsule",
+  "Torrent-chain Signal": "Torrent-chain Signal",
+  "Orbital Monitoring": "Orbital Monitoring",
+  "Probe Customisation": "Probe Customisation",
+  "Terrain Mapping": "Terrain Mapping",
+  "Expender Core": "Expender Core",
+  "Nanowielder Node": "Nanowielder Node",
+  "Razor-edge Shuttle": "Razor-edge Shuttle",
   "Ignore the limit of probes in space for those launches": {
     "": "Ignore the limit of probes in space for those launches."
   },
   "LAND on a planet or a moon, even without the required tech": {
     "": "LAND on a planet or a moon, even without the required tech."
   },
-  "Each time you visit a planet this turn, you may gain 1 MOVE instead of 1 PUBLICITY": {
-    "": "Each time you visit a planet this turn, you may gain 1 MOVE instead of 1 PUBLICITY."
+  "You may land on a space that is already occupied and still get the covered reward": {
+    "": "You may land on a space that is already occupied and still get the covered reward."
+  },
+  "Are we Being Observed?": "Are we Being Observed?",
+  "A Message from Afar": "A Message from Afar",
+  "Synthesis Instructions": "Synthesis Instructions",
+  "Hive Sample": "Hive Sample",
+  "Rover Exploration": "Rover Exploration",
+  "pierced Exoplanet": "pierced Exoplanet",
+  "Reveal the card you drew, and gain its free-action corner effect": {
+    "": "Reveal the card you drew, and gain its free-action corner effect."
+  },
+  "in the sector with Mercury": {
+    "": "in the sector with Mercury."
+  },
+  "in the sector with Venus": {
+    "": "in the sector with Venus."
+  },
+  "in the sector with Mars": {
+    "": "in the sector with Mars."
+  },
+  "in the sector with Jupiter": {
+    "": "in the sector with Jupiter."
+  },
+  "at Proxima Centauri": {
+    "": "at Proxima Centauri."
+  },
+  "at Barnard's Star": {
+    "": "at Barnard's Star."
+  },
+  "at 61 Virginis": {
+    "": "at 61 Virginis."
+  },
+  "at Kepler 22": {
+    "": "at Kepler 22."
+  },
+  "at Sirius A": {
+    "": "at Sirius A."
+  },
+  "at Procyon": {
+    "": "at Procyon."
+  },
+  "at Beta Pictoris": {
+    "": "at Beta Pictoris."
+  },
+  "at Vega": {
+    "": "at Vega."
   }
 }
