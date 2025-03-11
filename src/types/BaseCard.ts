@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 09:48:41
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-04 01:18:34
+ * @LastEditTime: 2025-03-10 10:34:00
  * @Description:
  */
 /*
@@ -27,7 +27,6 @@ export default interface BaseCard {
   sector?: ESector;
   price: number;
   income?: EResource;
-  mission?: string;
   effects?: Effect[];
   description?: string;
   flavorText?: string;

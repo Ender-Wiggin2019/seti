@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 22:59:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-10 00:34:56
+ * @LastEditTime: 2025-03-11 20:59:27
  * @Description:
  */
 import {
@@ -11,7 +11,6 @@ import {
   ICustomizedEffect,
   IEndGameEffect,
   IMissionEffect,
-  IMissionItem,
   IOrEffect,
 } from '@/types/effect';
 import {
@@ -127,11 +126,15 @@ export const e = {
   FULFILL_SECTOR_YELLOW,
   FULFILL_SECTOR_BLUE,
 };
+export interface IFlattenMissionItem {
+  req: IBaseEffect | ICustomizedEffect | (IBaseEffect | ICustomizedEffect)[];
+  reward: IBaseEffect | IBaseEffect[];
+}
 
 // usually will only has one mission
 const QUICK_MISSION = (
-  req: IBaseEffect | ICustomizedEffect | (IBaseEffect | ICustomizedEffect)[],
-  reward: IBaseEffect | IBaseEffect[]
+  req: IFlattenMissionItem['req'],
+  reward: IFlattenMissionItem['reward']
 ): IMissionEffect => ({
   effectType: EEffectType.MISSION_QUICK,
   missions: [
@@ -142,9 +145,21 @@ const QUICK_MISSION = (
   ],
 });
 
-const FULL_MISSION = (missions: IMissionItem[], desc = ''): IMissionEffect => ({
+const flatMission2MissionItem = (missions: IFlattenMissionItem[]) => {
+  return missions.map((mission) => {
+    return {
+      req: Array.isArray(mission.req) ? mission.req : [mission.req],
+      reward: Array.isArray(mission.reward) ? mission.reward : [mission.reward],
+    };
+  });
+};
+
+const FULL_MISSION = (
+  missions: IFlattenMissionItem[],
+  desc = ''
+): IMissionEffect => ({
   effectType: EEffectType.MISSION_FULL,
-  missions,
+  missions: flatMission2MissionItem(missions),
   desc,
 });
 
