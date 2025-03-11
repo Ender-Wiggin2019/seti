@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 22:59:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-11 20:59:27
+ * @LastEditTime: 2025-03-12 01:53:41
  * @Description:
  */
 import {
@@ -81,6 +81,15 @@ const FULFILL_SECTOR_RED = _base(EMiscIcon.FULFILL_SECTOR_RED);
 const FULFILL_SECTOR_YELLOW = _base(EMiscIcon.FULFILL_SECTOR_YELLOW);
 const FULFILL_SECTOR_BLUE = _base(EMiscIcon.FULFILL_SECTOR_BLUE);
 const FULFILL_SECTOR_BLACK = _base(EMiscIcon.FULFILL_SECTOR_BLACK);
+const FULFILL_ICON = _base(EMiscIcon.FULFILL_ICON);
+const ADVANCED_15 = _base(EMiscIcon.ADVANCED_15);
+const FULFILL_ADVANCED = _base(EMiscIcon.FULFILL_ADVANCED);
+const DANGER = _base(EMiscIcon.DANGER);
+const DRAW_ALIEN_CARD = _base(EMiscIcon.DRAW_ALIEN_CARD);
+const EXOFOSSIL = _base(EMiscIcon.EXOFOSSIL);
+const USE_EXOFOSSIL = _base(EMiscIcon.USE_EXOFOSSIL);
+const SAMPLE = _base(EMiscIcon.SAMPLE);
+const FULFILL_SAMPLE = _base(EMiscIcon.FULFILL_SAMPLE);
 export const e = {
   ORBIT,
   LAND,
@@ -126,10 +135,19 @@ export const e = {
   FULFILL_SECTOR_YELLOW,
   FULFILL_SECTOR_BLUE,
   FULFILL_SECTOR_BLACK,
+  FULFILL_ICON,
+  ADVANCED_15,
+  FULFILL_ADVANCED,
+  DANGER,
+  DRAW_ALIEN_CARD,
+  EXOFOSSIL,
+  USE_EXOFOSSIL,
+  SAMPLE,
+  FULFILL_SAMPLE,
 };
 export interface IFlattenMissionItem {
   req: IBaseEffect | ICustomizedEffect | (IBaseEffect | ICustomizedEffect)[];
-  reward: IBaseEffect | IBaseEffect[];
+  reward: IBaseEffect | ICustomizedEffect | (IBaseEffect | ICustomizedEffect)[];
 }
 
 // usually will only has one mission

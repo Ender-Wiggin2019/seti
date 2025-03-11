@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-06 14:44:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-10 22:58:33
+ * @LastEditTime: 2025-03-12 01:07:35
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
@@ -84,7 +84,7 @@ export const Mission: React.FC<missionProps> = ({ effect }) => {
                       return (
                         <EffectFactory
                           key={index}
-                          effect={{ ...reqEffect, size: 'xxs' }}
+                          effect={{ ...reqEffect, size: 'desc' }}
                         />
                       );
                     })}

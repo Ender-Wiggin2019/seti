@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-01 00:33:02
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-10 23:32:40
+ * @LastEditTime: 2025-03-12 00:59:32
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
@@ -23,7 +23,7 @@ export default function HomePage(
   _props: InferGetStaticPropsType<typeof getStaticProps>
 ) {
   const { t } = useTranslation('common');
-  const _card = baseCards.filter((c) => c.id === '36')[0];
+  const _card = baseCards.filter((c) => c.id === '76')[0];
 
   // const _card = testCards.filter((c) => c.id === 'test')[0];
   // const card = _card;

@@ -524,32 +524,40 @@
 }
 
 .icon-orbit-or-land-action {
+  background-image: url(/images/seti-icons-2.png);
   background-position: -100px -250px; /* 第六行第三列 */
 }
 .icon-fulfill-advanced {
+  background-image: url(/images/seti-icons-2.png);
   background-position: -150px -250px; /* 第六行第四列 */
 }
 .icon-danger {
+  background-image: url(/images/seti-icons-2.png);
   background-position: -200px -250px; /* 第六行第五列 */
 }
 
 .icon-draw-alien-card {
+  background-image: url(/images/seti-icons-2.png);
   background-position: 0 -300px; /* 第七行第一列 */
 }
 
 .icon-exofossil {
+  background-image: url(/images/seti-icons-2.png);
   background-position: -50px -300px;
 }
 
 .icon-use-exofossil {
+  background-image: url(/images/seti-icons-2.png);
   background-position: -100px -300px;
 }
 
 .icon-sample {
+  background-image: url(/images/seti-icons-2.png);
   background-position: -150px -300px;
 }
 
 .icon-fulfill-sample {
+  background-image: url(/images/seti-icons-2.png);
   background-position: -200px -300px;
 }
 

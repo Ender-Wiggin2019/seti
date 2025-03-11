@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-05 01:38:16
+ * @LastEditTime: 2025-03-12 01:57:10
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -336,6 +336,17 @@ export const _alienCards: BaseCard[] = [
     price: 1,
     income: EResource.ENERGY,
     alien: EAlienType.MASCAMITES,
+    special: {
+      enableEffectRender: false,
+    },
+    effects: [
+      e.LAND(),
+      DESC('desc.et-pickup'),
+      m.QUICK_MISSION(
+        DESC('Deliver {sample} to Earth'),
+        DESC('Resolve {fulfill-sample} twice.')
+      ),
+    ],
   },
   {
     id: 'ET.10',

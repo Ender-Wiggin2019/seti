@@ -216,7 +216,20 @@
     "card-53": "{score-2} for each {yellow-signal} you mark with this action.",
     "card-54": "{score-2} for each {blue-signal} you mark with this action.",
     "card-63-req": "on each species",
+    "card-67": "Then you can discard a card for a signal from your hand.",
+    "card-71": "Then gain {score-2} for each tech of that type you have.",
+    "card-72": "If you take the tech that someone else has researched, <br>gain {publicity-2}.",
+    "card-73": "Discard all 3 cards from the card row for their free-action corner effect.",
+    "card-81": "that someone else has <br> already researched.",
+    "card-81-2": "Do not advance the solar system. <br>Do not gain the {score-3} / {publicity-1} / {energy-1} / {any-card-1} <br> bonus printed on the tile.",
+    "card-83": "",
+    "card-84": "",
+    "card-86-endgame": "",
+    "card-87": "",
+    "card-88": "",
+
     "card-106": "When you pay the indicated cost to play a card as your main action:",
-    "card-se-en-01": "Keep this card in front of you.<br>If vou have a probe in the outermost ring, <br>you may use an {orbit-action} or {land-action} action to place that probe on Pluto."
+    "card-se-en-01": "Keep this card in front of you.<br>If vou have a probe in the outermost ring, <br>you may use an {orbit-action} or {land-action} action to place that probe on Pluto.",
+    "et-pickup": "Then look at all {sample}<br> on the planet <br>and pick one up."
   }
 }
