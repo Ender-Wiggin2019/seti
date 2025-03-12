@@ -2,17 +2,22 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-01 00:33:02
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-12 00:59:32
+ * @LastEditTime: 2025-03-12 11:12:57
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import React from 'react';
+import React, { useState } from 'react';
 
 import baseCards from '@/data/baseCards';
 
 import { EffectContainer } from '@/components/effect/EffectContainer';
+import { EffectSelector } from '@/components/form/EffectSelector';
+
+import { EEffectType, Effect, IBaseEffect } from '@/types/effect';
+import { updateEffectArray } from '@/utils/effect';
+import { EffectsGenerator } from '@/components/form/EffectsGenerator';
 
 // make sure to import your TextFilter
 type Props = {
@@ -47,9 +52,25 @@ export default function HomePage(
   //     '{move-2} {score-2} test {orbit-action-1} test'
   //   ),
   // ];
+  const [currentEffects, setCurrentEffects] = useState<Effect[]>([]);
+  console.log('🎸 [test] - currentEffects:', currentEffects);
+  const handleEffectChange = (effect: IBaseEffect) => {
+    console.log('🎸 [test] - handleEffectChange - effect:', effect);
 
+    setCurrentEffects((prevEffects) => updateEffectArray(prevEffects, effect));
+  };
   return (
-    <div className='relative h-60 p-4'>
+    <div className='relative p-4 flex flex-col w-60'>
+      <div className='relative z-50 h-64'>
+        <EffectContainer effects={currentEffects} />
+      </div>
+      {/* <EffectSelector
+        currentEffects={currentEffects}
+        onChange={handleEffectChange}
+      /> */}
+
+      <EffectsGenerator selectedEffects={[]} />
+      <div></div>
       {/* <PreviewBaseCard card={_card} showLink={true} /> */}
       {/* <PreviewBaseCard card={card} showLink={true} />
       <PreviewBaseCardV2 card={card} showLink={true} /> */}
@@ -60,7 +81,7 @@ export default function HomePage(
         <EffectFactory key={index} effect={effect} />
       ))}
        */}
-      {card.effects && <EffectContainer effects={card.effects} />}
+      {/* {card.effects && <EffectContainer effects={card.effects} />} */}
       <div className='scale-75'>
         {/* <DescRender desc='test {score-2} {orbit-action-1} test'/> */}
       </div>

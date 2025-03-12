@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-10 23:11:36
+ * @LastEditTime: 2025-03-12 12:09:06
  * @Description:
  */
 
@@ -52,6 +52,7 @@ export interface ICustomizedEffect {
   helperText?: string; // info about the icon
   size?: TSize; // 一般不会赋值，除非是 desc
   width?: 'half' | 'full';
+  id: string; // use for unique desc identifier
 }
 
 export interface IMissionEffect {

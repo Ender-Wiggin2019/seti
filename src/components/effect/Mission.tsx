@@ -11,7 +11,7 @@ import React from 'react';
 import { DescRender } from '@/components/effect/DescRender';
 import { EffectFactory } from '@/components/effect/Effect';
 
-import { IMissionEffect } from '@/types/effect';
+import { EEffectType, IMissionEffect } from '@/types/effect';
 import { calculateSize } from '@/utils/desc';
 
 interface missionProps {
@@ -22,7 +22,10 @@ export const Mission: React.FC<missionProps> = ({ effect }) => {
   const { missions, desc } = effect;
   const { t } = useTranslation('seti');
   // const descArray = extractDesc(desc);
-  if (missions.length === 1) {
+  if (
+    missions.length === 1 &&
+    effect.effectType === EEffectType.MISSION_QUICK
+  ) {
     const quickMission = missions[0];
     const reqEffects = Array.isArray(quickMission.req)
       ? quickMission.req
