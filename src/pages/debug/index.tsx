@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-01 00:33:02
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-12 11:12:57
+ * @LastEditTime: 2025-03-13 00:13:39
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
@@ -18,6 +18,7 @@ import { EffectSelector } from '@/components/form/EffectSelector';
 import { EEffectType, Effect, IBaseEffect } from '@/types/effect';
 import { updateEffectArray } from '@/utils/effect';
 import { EffectsGenerator } from '@/components/form/EffectsGenerator';
+import Layout from '@/components/layout/Layout';
 
 // make sure to import your TextFilter
 type Props = {
@@ -60,40 +61,42 @@ export default function HomePage(
     setCurrentEffects((prevEffects) => updateEffectArray(prevEffects, effect));
   };
   return (
-    <div className='relative p-4 flex flex-col w-60'>
-      <div className='relative z-50 h-64'>
-        <EffectContainer effects={currentEffects} />
-      </div>
-      {/* <EffectSelector
+    <Layout>
+      <div className='relative p-4 flex flex-col w-full'>
+        <div className='relative z-50 h-64'>
+          <EffectContainer effects={currentEffects} />
+        </div>
+        {/* <EffectSelector
         currentEffects={currentEffects}
         onChange={handleEffectChange}
       /> */}
 
-      <EffectsGenerator selectedEffects={[]} />
-      <div></div>
-      {/* <PreviewBaseCard card={_card} showLink={true} /> */}
-      {/* <PreviewBaseCard card={card} showLink={true} />
+        <EffectsGenerator selectedEffects={[]} />
+        <div></div>
+        {/* <PreviewBaseCard card={_card} showLink={true} /> */}
+        {/* <PreviewBaseCard card={card} showLink={true} />
       <PreviewBaseCardV2 card={card} showLink={true} /> */}
-      {/* <IconFactory iconItem={getIconItem(e.ORBIT())} />
+        {/* <IconFactory iconItem={getIconItem(e.ORBIT())} />
       <IconFactory iconItem={getIconItem(e.MOVE(2))} />
       <IconFactory iconItem={getIconItem(e.PUBLICITY(2))} /> */}
-      {/* {effects.map((effect, index) => (
+        {/* {effects.map((effect, index) => (
         <EffectFactory key={index} effect={effect} />
       ))}
        */}
-      {/* {card.effects && <EffectContainer effects={card.effects} />} */}
-      <div className='scale-75'>
-        {/* <DescRender desc='test {score-2} {orbit-action-1} test'/> */}
-      </div>
-      {/* <AdvancedFilter onFilterChange={(tag) => () => tag} reset={false} /> */}
-      {/* {Object.entries(EResourceMap).map(([resource, value]) => (
+        {/* {card.effects && <EffectContainer effects={card.effects} />} */}
+        <div className='scale-75'>
+          {/* <DescRender desc='test {score-2} {orbit-action-1} test'/> */}
+        </div>
+        {/* <AdvancedFilter onFilterChange={(tag) => () => tag} reset={false} /> */}
+        {/* {Object.entries(EResourceMap).map(([resource, value]) => (
         <IconFactory
           key={resource}
           iconItem={{ ...iconItem, type: resource as EResource }}
         />
       ))} */}
-      {/* <IconFactory iconItem={iconItem} /> */}
-    </div>
+        {/* <IconFactory iconItem={iconItem} /> */}
+      </div>
+    </Layout>
   );
 }
 

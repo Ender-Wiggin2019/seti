@@ -31,8 +31,8 @@ const TagComponent: React.FC<TagProps> = ({ type, shape = 'round' }) => {
       break;
   }
 
-  // const cls = `${iconCls} icon-${type}`;
-  const cls = `${iconCls} icon-test`;
+  const cls = `${iconCls} icon-${type}`;
+  // const cls = `${iconCls} icon-test`;
   return <div className={cls}></div>;
 };
 

@@ -73,7 +73,7 @@ export const EffectsGenerator = ({
     return res;
   }, [currentEffects, quickMissionEffect, fullMissionEffect]);
   return (
-    <div className='relative p-4 flex flex-col w-60'>
+    <div className='relative p-4 flex flex-col'>
       {(!type ||
         ![
           EEffectType.MISSION_FULL,
