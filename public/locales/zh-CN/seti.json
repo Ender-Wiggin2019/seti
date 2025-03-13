@@ -239,7 +239,9 @@
     " moons)": "在土星(Saturn)，包括卫星"
   },
   "at Mercury": "在水星(Mercury)",
-  "at Proxima Centauri": "在比邻星(Proxima Centauri)。",
+  "at Proxima Centauri": {
+    "": "在比邻星(Proxima Centauri)。"
+  },
   "in the sector with Mercury": {
     "": "在水星(Mercury)所在的区域。"
   },
@@ -312,7 +314,36 @@
     "card-52": "每个用此行动标记的{red-signal}获得 {score-2}。",
     "card-53": "每个用此行动标记的{yellow-signal}获得 {score-2}。",
     "card-54": "每个用此行动标记的{blue-signal}获得 {score-2}。",
+    "card-55": "此外，在任何区域标记一个{any-signal}信号。",
+    "card-61-req": "至少拥有",
+    "card-62-endgame": "每个{red-trace}踪迹得{score-2}分",
+    "card-63-endgame": "每个{yellow-trace}踪迹得{score-2}分",
     "card-63-req": "在每个物种上",
+    "card-67": "然后你可以弃掉一张手牌以获得一个信号。",
+    "card-68-endgame": "你的每个{blue-trace} 获得 {score-2}",
+    "card-71": "然后每拥有一个该类型的科技，获得{score-2}分。",
+    "card-72": "如果你获得了其他人研究的科技，<br>获得{publicity-2}。",
+    "card-73": "弃掉卡牌行中的所有3张卡牌以获得它们的自由行动角效果。",
+    "card-74": "每展示一张手牌中具有{move}自由行动角效果的卡牌，{move-1}。",
+    "card-75": "然后每拥有一个该颜色的{any-trace}，获得{score-1}分。",
+    "card-81": "其他人已经研究过的。",
+    "card-81-2": "不要推进太阳系。<br>不要获得印在板块上的{score-3}/{publicity-1}/{energy-1}/{any-card-1}奖励。",
+    "card-83": "在地球所在的区域。",
+    "card-84": "从任意行星或月球上移除一个你的{land-count}以标记一个{yellow-trace}踪迹。",
+    "card-86-endgame": "每个你有信号的扇区获得{score-1}分。",
+    "card-87": "探测器距离地球至少5格",
+    "card-88": "在你的探测器所在的区域。",
+    "card-88-req": "在你的探测器所在的区域。",
+    "card-89-req": "手中没有卡牌",
+    "card-90": "每展示一张具有{energy-income}收入的手牌，获得{energy-1}。<br>然后用这张卡增加你的{income}。",
+    "card-91": "每有一张 {energy-income} 收入(不包含初始收入卡)，<br>获得{energy-1}。<br>然后用这张卡增加你的{income}。",
+    "card-92": "每有一张 {card-income} 收入(不包含初始收入卡)，<br>获得{publicity-1}。<br>然后用这张卡增加你的{income}。",
+    "card-93": "每有一张 {credit-income} 收入(不包含初始收入卡)，<br>获得{score-3}。<br>然后用这张卡增加你的{income}。",
+    "card-95-req": "在与地球相邻的小行星上有一个探测器",
+    "card-98": "为你已标记{red-trace}的物种标记一个{red-trace}。",
+    "card-99": "为你已标记{yellow-trace}的物种标记一个{yellow-trace}。",
+    "card-100": "为你已标记{blue-trace}的物种标记一个{blue-trace}。",
+
     "card-106": "当你在主要行动中打出卡牌<br>支付如下费用时:",
     "card-se-en-01": "将这张卡放置在你面前}。<br>如果你在最外层的环有一个探测器，<br>你可以执行 {orbit-action} 或 {land-action} 行动<br>在冥王星(Pluto)放置探测器}。"
   }

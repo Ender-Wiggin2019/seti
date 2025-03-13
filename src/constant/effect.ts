@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 22:59:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-12 01:53:41
+ * @LastEditTime: 2025-03-14 01:06:55
  * @Description:
  */
 import {
@@ -90,6 +90,9 @@ const EXOFOSSIL = _base(EMiscIcon.EXOFOSSIL);
 const USE_EXOFOSSIL = _base(EMiscIcon.USE_EXOFOSSIL);
 const SAMPLE = _base(EMiscIcon.SAMPLE);
 const FULFILL_SAMPLE = _base(EMiscIcon.FULFILL_SAMPLE);
+const CREDIT_INCOME = _base(EMiscIcon.CREDIT_INCOME);
+const ENERGY_INCOME = _base(EMiscIcon.ENERGY_INCOME);
+const CARD_INCOME = _base(EMiscIcon.CARD_INCOME);
 export const e = {
   ORBIT,
   LAND,
@@ -144,6 +147,9 @@ export const e = {
   USE_EXOFOSSIL,
   SAMPLE,
   FULFILL_SAMPLE,
+  CREDIT_INCOME,
+  ENERGY_INCOME,
+  CARD_INCOME,
 };
 export interface IFlattenMissionItem {
   req: IBaseEffect | ICustomizedEffect | (IBaseEffect | ICustomizedEffect)[];

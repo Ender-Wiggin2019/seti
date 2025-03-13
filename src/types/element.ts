@@ -4,7 +4,7 @@ import { TShape } from '@/types/Icon';
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 14:45:30
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-11 00:28:20
+ * @LastEditTime: 2025-03-14 01:05:17
  * @Description:
  */
 export enum ESector {
@@ -97,6 +97,9 @@ export enum EMiscIcon {
   USE_EXOFOSSIL = 'use-exofossil',
   SAMPLE = 'sample',
   FULFILL_SAMPLE = 'fulfill-sample',
+  CREDIT_INCOME = 'credit-income',
+  ENERGY_INCOME = 'energy-income',
+  CARD_INCOME = 'card-income',
 }
 
 export enum EPlanet {
