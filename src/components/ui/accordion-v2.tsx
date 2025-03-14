@@ -1,20 +1,16 @@
-import { motion, Variants } from 'framer-motion';
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2025-03-13 09:52:34
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-03-13 16:21:58
+ * @Description:
+ */
+import { motion } from 'framer-motion';
 import { useTranslation } from 'next-i18next';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { BiChevronDown } from 'react-icons/bi';
 
 import { cn } from '@/lib/utils';
-
-import TagButton from '@/components/buttons/TagButton';
-
-import {
-  EResource,
-  EScanAction,
-  ESpecialAction,
-  ETech,
-  ETrace,
-  TIcon,
-} from '@/types/element';
 
 type AccordionV2Props = {
   title: string;
@@ -54,7 +50,7 @@ export const AccordionV2: React.FC<AccordionV2Props> = ({
         </motion.div>
       </motion.button>
       <motion.ul
-        className='flex flex-wrap gap-4 px-4 pt-4'
+        className='flex flex-wrap gap-4 px-4 pt-4 border-l-2 border-zinc-300 rounded-none'
         variants={{
           open: {
             clipPath: 'inset(0% 0% 0% 0% round 10px)',
@@ -62,9 +58,9 @@ export const AccordionV2: React.FC<AccordionV2Props> = ({
             transition: {
               type: 'spring',
               bounce: 0,
-              duration: 0.2,
+              duration: 0.5,
               delayChildren: 0.1,
-              staggerChildren: 0.05,
+              // staggerChildren: 0.05,
             },
           },
           closed: {
@@ -73,7 +69,7 @@ export const AccordionV2: React.FC<AccordionV2Props> = ({
             transition: {
               type: 'spring',
               bounce: 0,
-              duration: 0.2,
+              duration: 0.5,
             },
           },
         }}

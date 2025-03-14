@@ -47,7 +47,7 @@ export const QuickMissionSelector = ({ missionEffect, onChange }: Props) => {
     }
   };
   return (
-    <div>
+    <div className='rounded-md border border-black flex flex-col gap-4'>
       <EffectsGenerator
         selectedEffects={req}
         onChange={(e) => handleChange(e, 'req')}

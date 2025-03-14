@@ -3,13 +3,14 @@ import React, { useMemo, useState } from 'react';
 import { EffectContainer } from '@/components/effect/EffectContainer';
 import { DescInput } from '@/components/form/DescInput';
 import { EffectSelector } from '@/components/form/EffectSelector';
+import { FullMissionSelector } from '@/components/form/FullMissionSelector';
+import { QuickMissionSelector } from '@/components/form/QuickMissionSelector';
+import { AccordionV2 } from '@/components/ui/accordion-v2';
 
 import { m } from '@/constant/effect';
 import { updateEffectArray } from '@/utils/effect';
 
 import { EEffectType, Effect, IMissionEffect } from '@/types/effect';
-import { QuickMissionSelector } from '@/components/form/QuickMissionSelector';
-import { FullMissionSelector } from '@/components/form/FullMissionSelector';
 
 type Props = {
   selectedEffects: Effect[];
@@ -57,6 +58,14 @@ export const EffectsGenerator = ({
   const hasQuickMission = (quickMissionEffect?.missions?.length || 0) > 0;
   const hasFullMission = (fullMissionEffect?.missions.length || 0) > 0;
 
+  const showExtra =
+    !type ||
+    ![
+      EEffectType.MISSION_FULL,
+      EEffectType.MISSION_QUICK,
+      EEffectType.END_GAME,
+    ].includes(type);
+
   const effects = useMemo(() => {
     const res = [...currentEffects];
     if (quickMissionEffect) {
@@ -72,59 +81,67 @@ export const EffectsGenerator = ({
 
     return res;
   }, [currentEffects, quickMissionEffect, fullMissionEffect]);
-  return (
-    <div className='relative p-4 flex flex-col'>
-      {(!type ||
-        ![
-          EEffectType.MISSION_FULL,
-          EEffectType.MISSION_QUICK,
-          EEffectType.END_GAME,
-        ].includes(type)) && (
-        <div className='relative z-50 h-64'>
-          <EffectContainer effects={effects} />
-        </div>
-      )}
-      <DescInput
-        currentEffects={currentEffects}
-        onChange={handleEffectChange}
-      />
-      <EffectSelector
-        currentEffects={currentEffects}
-        onChange={handleEffectChange}
-      />
-      {!hasQuickMission ? (
-        <div className='' onClick={handleAddQuickMission}>
-          Add Quick Mission
-        </div>
-      ) : (
-        <div onClick={() => setQuickMissionEffect(null)}>Delete</div>
-      )}
-      {hasQuickMission && (
-        <div>
+
+  const quickMissionComp = () => {
+    return (
+      <AccordionV2 title='Quick Mission'>
+        {!hasQuickMission ? (
+          <div className='' onClick={handleAddQuickMission}>
+            Add Quick Mission
+          </div>
+        ) : (
+          <div onClick={() => setQuickMissionEffect(null)}>Delete</div>
+        )}
+
+        {hasQuickMission && (
           <QuickMissionSelector
             missionEffect={quickMissionEffect}
             onChange={handleUpdateQuickMission}
           />
-          {/* <EffectsGenerator selectedEffects={}/> */}
-        </div>
-      )}
+        )}
+        {/* <EffectsGenerator selectedEffects={}/> */}
+      </AccordionV2>
+    );
+  };
 
-      {!hasFullMission ? (
-        <div className='' onClick={handleAddFullMission}>
-          Add Full Mission
-        </div>
-      ) : (
-        <div onClick={() => setFullMissionEffect(null)}>Delete</div>
-      )}
-      {hasFullMission && (
-        <div>
+  const fullMissionComp = () => {
+    return (
+      <AccordionV2 title='Mission'>
+        {!hasFullMission ? (
+          <div className='' onClick={handleAddFullMission}>
+            Add Full Mission
+          </div>
+        ) : (
+          <div onClick={() => setFullMissionEffect(null)}>Delete</div>
+        )}
+        {hasFullMission && (
           <FullMissionSelector
             missionEffect={fullMissionEffect}
             onChange={handleUpdateFullMission}
           />
-          {/* <EffectsGenerator selectedEffects={}/> */}
+        )}
+      </AccordionV2>
+    );
+  };
+  return (
+    <div className='relative p-4 flex flex-col'>
+      {showExtra && (
+        <div className='relative z-50 h-64'>
+          <EffectContainer effects={effects} />
         </div>
       )}
+      <AccordionV2 title='Description'>
+        <DescInput
+          currentEffects={currentEffects}
+          onChange={handleEffectChange}
+        />
+      </AccordionV2>
+      <EffectSelector
+        currentEffects={currentEffects}
+        onChange={handleEffectChange}
+      />
+      {showExtra && quickMissionComp()}
+      {showExtra && fullMissionComp()}
     </div>
   );
 };
