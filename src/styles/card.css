@@ -455,15 +455,15 @@
 }
 
 /** second  icon file */
-.icon-credit-truck {
+.icon-credit-income {
   background-image: url(/images/seti-icons-2.png);
   background-position: 0 0; /* 第一行第一列 */
 }
-.icon-energy-truck {
+.icon-energy-income {
   background-image: url(/images/seti-icons-2.png);
   background-position: -50px 0; /* 第一行第二列 */
 }
-.icon-draw-card-truck {
+.icon-card-income {
   background-image: url(/images/seti-icons-2.png);
   background-position: -100px 0; /* 第一行第三列 */
 }

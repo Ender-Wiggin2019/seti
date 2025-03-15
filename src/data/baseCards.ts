@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-12 01:41:40
+ * @LastEditTime: 2025-03-14 01:28:05
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -118,7 +118,7 @@ const _baseCards: BaseCard[] = [
     effects: [
       e.ROTATE(),
       e.TECH_PROBE(),
-      m.QUICK_MISSION([e.TRACE_RED(1), d.onEach], [e.SCORE(2), e.CARD()]),
+      m.QUICK_MISSION([e.TRACE_YELLOW(1), d.onEach], [e.SCORE(2), e.CARD()]),
     ],
   },
   {
@@ -132,7 +132,7 @@ const _baseCards: BaseCard[] = [
     special: {
       enableEffectRender: true,
     },
-    effects: [e.SCAN(), DESC('desc.card-54')],
+    effects: [e.SCAN(), DESC('desc.card-55')],
   },
   {
     id: '129',
@@ -328,6 +328,10 @@ const _baseCards: BaseCard[] = [
     sector: ESector.BLUE,
     price: 2,
     income: EResource.ENERGY,
+    effects: [
+      e.SIGNAL_ANY(2, 'desc.card-88'),
+      m.QUICK_MISSION(DESC('desc.card-88-req'), e.PUBLICITY(2)),
+    ],
   },
   {
     id: '73',
@@ -421,11 +425,7 @@ const _baseCards: BaseCard[] = [
     effects: [
       e.ROTATE(),
       e.TECH_COMPUTER(),
-      m.END_GAME(
-        '{score-2} for each {blue-trace} you have.',
-        2,
-        e.TRACE_BLUE()
-      ),
+      m.END_GAME('desc.card-68-endgame', 2, e.TRACE_BLUE()),
     ],
   },
   {
@@ -562,6 +562,7 @@ const _baseCards: BaseCard[] = [
     sector: ESector.BLUE,
     price: 1,
     income: EResource.CARD,
+    effects: [DESC('desc.card-90')],
   },
   {
     id: '91',
@@ -571,6 +572,7 @@ const _baseCards: BaseCard[] = [
     sector: ESector.RED,
     price: 3,
     income: EResource.ENERGY,
+    effects: [DESC('desc.card-91')],
   },
   {
     id: '121',
@@ -611,10 +613,7 @@ const _baseCards: BaseCard[] = [
     sector: ESector.RED,
     price: 1,
     income: EResource.ENERGY,
-    effects: [
-      e.SIGNAL_DISCARD_CARD(),
-      m.END_GAME('{score-1} for each sector where you have a signal.'),
-    ],
+    effects: [e.SIGNAL_DISPLAY_CARD(), m.END_GAME('desc.card-86-endgame')],
   },
   {
     id: '66',
@@ -638,6 +637,7 @@ const _baseCards: BaseCard[] = [
     sector: ESector.YELLOW,
     price: 3,
     income: EResource.ENERGY,
+    effects: [DESC('desc.card-93')],
   },
   {
     id: '11',
@@ -802,6 +802,18 @@ const _baseCards: BaseCard[] = [
     sector: ESector.YELLOW,
     price: 1,
     income: EResource.ENERGY,
+    effects: [
+      m.FULL_MISSION([
+        {
+          req: e.ORBIT(),
+          reward: e.PUBLICITY(2),
+        },
+        {
+          req: e.LAND(),
+          reward: e.PUBLICITY(2),
+        },
+      ]),
+    ],
   },
   {
     id: '6',
@@ -921,6 +933,18 @@ const _baseCards: BaseCard[] = [
     sector: ESector.BLUE,
     price: 2,
     income: EResource.CREDIT,
+    effects: [
+      e.PUBLICITY(3),
+      m.QUICK_MISSION(
+        [
+          e.TRACE_RED(1, '', 'desc-mini'),
+          e.TRACE_YELLOW(1, '', 'desc-mini'),
+          e.TRACE_BLUE(1, '', 'desc-mini'),
+          DESC('for a single species'),
+        ],
+        e.TRACE_ANY(1, 'for that species')
+      ),
+    ],
   },
   {
     id: '51',
@@ -1126,6 +1150,7 @@ const _baseCards: BaseCard[] = [
     price: 3,
     income: EResource.CARD,
     description: '',
+    effects: [e.PUBLICITY(2), DESC('desc.card-92')],
   },
   {
     id: '76',
@@ -1165,6 +1190,10 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.ENERGY,
     description: '',
+    effects: [
+      e.PUBLICITY(2),
+      m.QUICK_MISSION(DESC('desc.card-95-req'), [e.SCORE(5), e.CARD_ANY()]),
+    ],
   },
   {
     id: '127',
@@ -1185,6 +1214,10 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.CREDIT,
     description: '',
+    effects: [
+      e.CARD(3),
+      m.QUICK_MISSION(DESC('desc.card-89-req'), e.CARD_ANY()),
+    ],
   },
   {
     id: '135',
@@ -1444,10 +1477,7 @@ const _baseCards: BaseCard[] = [
     effects: [
       e.ROTATE(),
       e.TECH_PROBE(),
-      m.QUICK_MISSION(DESC('have a probe at least 5 spaces from Earth'), [
-        e.SCORE(3),
-        e.ENERGY(1),
-      ]),
+      m.QUICK_MISSION(DESC('desc.card-87'), [e.SCORE(3), e.ENERGY(1)]),
     ],
   },
   {
@@ -1480,7 +1510,7 @@ const _baseCards: BaseCard[] = [
     effects: [
       e.ROTATE(),
       e.TECH_COMPUTER(),
-      m.QUICK_MISSION(e.SCORE(50, 'desc.card-61-req'), e.INCOME()),
+      m.QUICK_MISSION([DESC('desc.card-61-req'), e.SCORE(50)], e.INCOME()),
     ],
   },
   {
@@ -1514,7 +1544,7 @@ const _baseCards: BaseCard[] = [
     price: 1,
     income: EResource.ENERGY,
     description: '',
-    effects: [DESC_WITH_TYPE(ETrace.YELLOW, 'todo')],
+    effects: [DESC_WITH_TYPE(ETrace.YELLOW, 'desc.card-84')],
   },
   {
     id: '36',
@@ -1559,13 +1589,7 @@ const _baseCards: BaseCard[] = [
     price: 3,
     income: EResource.ENERGY,
     description: '',
-    effects: [
-      e.ROTATE(),
-      e.TECH_ANY(),
-      DESC(
-        'If you take the tech that someone else has researched, gain {publicity-2}'
-      ),
-    ],
+    effects: [e.ROTATE(), e.TECH_ANY(), DESC('desc.card-72')],
   },
   {
     id: '137',
@@ -1749,6 +1773,12 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.ENERGY,
     description: '',
+    effects: [
+      e.PUBLICITY(),
+      e.DATA(),
+      e.CARD(),
+      m.QUICK_MISSION(e.TRACE_YELLOW(3), e.TRACE_YELLOW()),
+    ],
   },
   {
     id: '131',
@@ -1769,6 +1799,22 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.ENERGY,
     description: '',
+    effects: [
+      m.FULL_MISSION([
+        {
+          req: e.SCAN(),
+          reward: e.SIGNAL_YELLOW(),
+        },
+        {
+          req: e.SCAN(),
+          reward: e.SIGNAL_RED(),
+        },
+        {
+          req: e.SCAN(),
+          reward: e.SIGNAL_BLUE(),
+        },
+      ]),
+    ],
   },
   {
     id: '26',
@@ -1922,7 +1968,7 @@ const _baseCards: BaseCard[] = [
     special: {
       enableEffectRender: true,
     },
-    effects: [e.SCAN(), DESC('desc.card-55')],
+    effects: [e.SCAN(), DESC('desc.card-54')],
   },
   {
     id: '47',
@@ -1969,7 +2015,14 @@ const _baseCards: BaseCard[] = [
     price: 3,
     income: EResource.ENERGY,
     description: '',
-    effects: [e.ROTATE(), e.TECH_SCAN()], // todo: mission
+    effects: [
+      e.ROTATE(),
+      e.TECH_SCAN(),
+      m.QUICK_MISSION(
+        [e.FULFILL_SECTOR_ANY(2, 'in the same sector')],
+        e.SCORE(9)
+      ),
+    ], // todo: mission
   },
   {
     id: '83',
@@ -1980,6 +2033,7 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.ENERGY,
     description: '',
+    effects: [e.PUBLICITY(), e.SIGNAL_ANY(2, 'desc.card-83')],
   },
   {
     id: '67',
@@ -1990,7 +2044,7 @@ const _baseCards: BaseCard[] = [
     price: 3,
     income: EResource.CARD,
     description: '',
-    effects: [e.PUBLICITY(), e.ROTATE(), e.TECH_SCAN(), DESC('desc-card-67')],
+    effects: [e.PUBLICITY(), e.ROTATE(), e.TECH_SCAN(), DESC('desc.card-67')],
   },
   {
     id: '117',
@@ -2060,6 +2114,10 @@ export const baseCards: BaseCard[] = _baseCards.map((card) => {
   return {
     ...card,
     flavorText: `${card.id}_flavor_text`,
+    special: {
+      ...card.special,
+      enableEffectRender: Number(card.id) <= 103 ? true : false,
+    },
   };
 });
 
