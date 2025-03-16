@@ -496,6 +496,27 @@
   background-position: -200px -50px; /* 第二行第五列 */
 }
 
+.icon-any-signal-corner {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: 0 -100px; /* 第三行第一列 */
+}
+.icon-yellow-signal-corner {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: -50px -100px; /* 第三行第二列 */
+}
+.icon-red-signal-corner {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: -100px -100px; /* 第三行第三列 */
+}
+.icon-blue-signal-corner {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: -150px -100px; /* 第三行第四列 */
+}
+.icon-black-signal-corner {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: -200px -100px; /* 第三行第五列 */
+}
+
 .icon-fulfill-sector-any {
   background-image: url(/images/seti-icons-2.png);
   background-position: 0 -150px; /* 第四行第一列 */
@@ -667,4 +688,93 @@
   justify-content: center;
   align-items: center;
   gap: 2px;
+}
+
+.card-background {
+  position: relative;
+  background-image: url('/images/cards/background-image.png'); /* 替换为你的背景图片路径 */
+  background-size: cover;
+  width: 150px;
+  height: 209px;
+  z-index: 1; /* 背景图片的z-index较低 */
+}
+
+.card-render {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-image: url('/images/cards/card-template.png');
+  background-size: cover;
+  width: 150px;
+  height: 209px;
+  border-radius: 12px;
+  opacity: 1; /* 设置透明度 */
+  /* z-index: -1; */
+}
+
+.card-free-action {
+  z-index: 5;
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  height: 20px;
+}
+
+.card-sector-corner-background {
+  z-index: 5;
+  position: absolute;
+  right: 0px;
+  width: 0;
+  height: 0;
+  border-left: 15px solid transparent;
+  border-bottom: 30px solid transparent;
+  border-right: 30px solid blue;
+  opacity: 100%;
+}
+
+.card-sector-corner-signal {
+  z-index: 6;
+  position: absolute;
+  top: -6px;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  scale: 0.5;
+}
+
+.card-wrapper {
+  position: relative;
+  overflow: hidden;
+  width: 150px;
+  height: 209px;
+  border-radius: 12px;
+}
+
+.card-render-title {
+  position: absolute;
+  top: 95px;
+  left: 40px;
+  width: 110px;
+  height: 12px;
+  font-size: 6px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-render-credit {
+  position: absolute;
+  top: 88px;
+  left: 0px;
+  width: 12px;
+  height: 16px;
+  font-size: 18px;
+  line-height: 18px;
+  color: white;
+  font-family: 'Source Code Pro';
+  /* background-color: #1a6983; */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

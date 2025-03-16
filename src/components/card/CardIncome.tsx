@@ -1,11 +1,11 @@
-import { EColorMap } from '@/constant/color';
+import { EResourceColorMap } from '@/constant/color';
 import { EResource } from '@/types/element';
 
 type Props = {
   income: EResource;
 };
 export const CardIncome = ({ income }: Props) => {
-  const color = EColorMap[income];
+  const color = EResourceColorMap[income];
   return (
     <div className='card-income-container'>
       <div className='card-income-svg'>

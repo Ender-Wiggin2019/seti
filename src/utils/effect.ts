@@ -2,15 +2,19 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-12 11:12:08
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-12 12:03:37
+ * @LastEditTime: 2025-03-17 01:24:52
  * @Description:
  */
+import { e } from '@/constant/effect';
+
+import { IFreeAction } from '@/types/BaseCard';
 import {
   EEffectType,
   Effect,
   IBaseEffect,
   ICustomizedEffect,
 } from '@/types/effect';
+import { TIcon } from '@/types/element';
 
 export const updateEffectArray = (
   prevEffects: Effect[],
@@ -51,4 +55,25 @@ export const updateEffectArray = (
   }
 
   return [...prevEffects, newEffect];
+};
+
+export const getEffectByIconType = (icon: TIcon) => {
+  const fn = Object.values(e).find((effectFn) => {
+    const effect = effectFn();
+    if (effect.type === icon) {
+      return true;
+    }
+  });
+
+  return fn?.();
+};
+export const freeAction2Effect = (freeAction: IFreeAction): IBaseEffect => {
+  const { type, value } = freeAction;
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const effect = getEffectByIconType(type)!;
+  return {
+    ...effect,
+    value,
+    size: 'xs',
+  };
 };

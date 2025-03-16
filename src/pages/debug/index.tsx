@@ -2,22 +2,20 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-01 00:33:02
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-13 00:13:39
+ * @LastEditTime: 2025-03-16 11:54:16
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import baseCards from '@/data/baseCards';
 
-import { EffectContainer } from '@/components/effect/EffectContainer';
+import { CardRender } from '@/components/form/CardRender';
 import { EffectsGenerator } from '@/components/form/EffectsGenerator';
 
-import { updateEffectArray } from '@/utils/effect';
-
-import { Effect, IBaseEffect } from '@/types/effect';
+import { Effect } from '@/types/effect';
 
 // make sure to import your TextFilter
 type Props = {
@@ -54,22 +52,28 @@ export default function HomePage(
   // ];
   const [currentEffects, setCurrentEffects] = useState<Effect[]>([]);
   console.log('🎸 [test] - currentEffects:', currentEffects);
-  const handleEffectChange = (effect: IBaseEffect) => {
-    console.log('🎸 [test] - handleEffectChange - effect:', effect);
-
-    setCurrentEffects((prevEffects) => updateEffectArray(prevEffects, effect));
+  const handleEffectsChange = (effects: Effect[]) => {
+    setCurrentEffects(effects);
   };
+
+  const renderCard = useMemo(() => {
+    return {
+      ...baseCards[0],
+      effects: currentEffects,
+    };
+  }, [currentEffects]);
   return (
     <div className='relative p-4 flex flex-col w-full'>
-      <div className='relative z-50 h-64'>
-        <EffectContainer effects={currentEffects} />
+      <div className=''>
+        {/* <EffectContainer effects={currentEffects} /> */}
+        <CardRender card={renderCard} />
       </div>
       {/* <EffectSelector
         currentEffects={currentEffects}
         onChange={handleEffectChange}
       /> */}
 
-      <EffectsGenerator selectedEffects={[]} />
+      <EffectsGenerator selectedEffects={[]} onChange={handleEffectsChange} />
       <div></div>
       {/* <PreviewBaseCard card={_card} showLink={true} /> */}
       {/* <PreviewBaseCard card={card} showLink={true} />

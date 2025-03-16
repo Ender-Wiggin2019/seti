@@ -78,7 +78,7 @@ export const EffectsGenerator = ({
       );
       res.push(fullMissionEffect);
     }
-
+    onChange?.(res);
     return res;
   }, [currentEffects, quickMissionEffect, fullMissionEffect]);
 
@@ -126,7 +126,7 @@ export const EffectsGenerator = ({
   return (
     <div className='relative p-4 flex flex-col'>
       {showExtra && (
-        <div className='relative z-50 h-64'>
+        <div className='relative z-50 h-24'>
           <EffectContainer effects={effects} />
         </div>
       )}
