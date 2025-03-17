@@ -156,6 +156,7 @@
   width: 138px;
   height: calc(138px * 293 / 1093);
   background-size: cover;
+  margin-right: -11px;
 }
 
 .card-quick-mission-container .req-container {
@@ -281,11 +282,16 @@
   height: auto;
   bottom: 0px;
   overflow: hidden;
-  border-radius: 12px;
+  /* border-radius: 12px; */
 }
 .card-income-svg {
   width: 100%;
   height: auto;
+}
+
+.card-income-icon {
+  position: absolute;
+  right: 4px;
 }
 
 /** Aliens */

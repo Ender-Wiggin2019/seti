@@ -2,12 +2,13 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-26 23:56:31
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-17 01:55:28
+ * @LastEditTime: 2025-03-18 00:05:38
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
 import React, { useMemo } from 'react';
 
+import { CardIncome } from '@/components/card/CardIncome';
 import { FlavorText } from '@/components/cards/base_cards/FlavorText';
 import { EffectFactory } from '@/components/effect/Effect';
 import { EffectContainer } from '@/components/effect/EffectContainer';
@@ -18,7 +19,6 @@ import { freeAction2Effect } from '@/utils/effect';
 
 import CardRenderType, { EAlienMap } from '@/types/BaseCard';
 import { ESector } from '@/types/element';
-import { CardIncome } from '@/components/card/CardIncome';
 
 interface CardRenderProps {
   card: CardRenderType;
@@ -77,10 +77,14 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
       <div className='card-render-credit'>{card.price}</div>
 
       {card?.special?.enableEffectRender && card.effects && (
-        <EffectContainer effects={card.effects} /> // 确保EffectContainer的z-index较高
+        <EffectContainer effects={card.effects} className='bg-transparent' /> // 确保EffectContainer的z-index较高
       )}
       {card?.special?.enableEffectRender && card.flavorText && (
-        <FlavorText id={card.id} flavorText={card.flavorText} />
+        <FlavorText
+          id={card.id}
+          flavorText={card.flavorText}
+          className='bg-transparent'
+        />
       )}
     </CardRenderWrapper>
   );

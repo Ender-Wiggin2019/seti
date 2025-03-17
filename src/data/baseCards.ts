@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-14 01:28:05
+ * @LastEditTime: 2025-03-18 00:16:21
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -483,7 +483,7 @@ const _baseCards: BaseCard[] = [
     },
     effects: [
       e.LAND(),
-      DESC('desc.card-12'),
+      DESC('desc.card-12', 'half'),
       m.END_GAME('desc.card-12-endgame'),
     ],
   },

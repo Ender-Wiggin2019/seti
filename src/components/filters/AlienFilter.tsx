@@ -52,7 +52,7 @@ export const AlienFilter: React.FC<AlienFilterProps> = ({
             <TextButton
               key={alien.type}
               selected={selectedCategories.includes(alien.type)}
-              className={`${alien.text} hover:text-white/50 focus:text-white/50 bg-none ${alien.bg} rounded-sm`}
+              className={`${alien.text} hover:text-white/50 focus:text-white/50 bg-transparent ${alien.bg} rounded-sm`}
               selectClassName={`${alien.ring} ${alien.text} hover:${alien.ring} active:${alien.ring} ring-2`}
               onClick={() => handleCategoryChange(alien.type)}
             >
