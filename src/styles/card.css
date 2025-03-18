@@ -784,3 +784,9 @@
   align-items: center;
   justify-content: center;
 }
+
+.card-larger {
+  scale: 2;
+  translate: 52% 55%;
+  width: fit-content;
+}

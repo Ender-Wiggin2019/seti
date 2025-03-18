@@ -14,9 +14,9 @@ interface BaseCardWrapperProps {
 
 const BaseCardWrapper: React.FC<BaseCardWrapperProps> = ({ id, children }) => {
   return (
-    <div className='' draggable={false}>
-      <div className='card-wrapper'>{children}</div>
-    </div>
+    // <div className='' draggable={false}>
+    <div className='card-wrapper'>{children}</div>
+    // </div>
   );
 };
 

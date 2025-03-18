@@ -1,8 +1,17 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2025-03-14 23:39:03
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-03-19 01:19:43
+ * @Description:
+ */
+import { cn } from '@/lib/utils';
+
 import { EffectFactory } from '@/components/effect/Effect';
 import { AccordionV2 } from '@/components/ui/accordion-v2';
-import { Textarea } from '@/components/ui/textarea';
+
 import { e } from '@/constant/effect';
-import { cn } from '@/lib/utils';
+
 import { EEffectType, Effect, IBaseEffect } from '@/types/effect';
 import { TSize } from '@/types/element';
 
@@ -12,7 +21,7 @@ type Props = {
 };
 export const EffectSelector = ({ currentEffects, onChange }: Props) => {
   return (
-    <AccordionV2 title='Effects'>
+    <AccordionV2 title='Icons'>
       <div className='grid grid-cols-4 gap-2 lg:grid-cols-5'>
         {Object.entries(e).map(([key, fn]) => {
           const effect = fn();

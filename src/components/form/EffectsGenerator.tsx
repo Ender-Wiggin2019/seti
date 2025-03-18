@@ -11,6 +11,7 @@ import { m } from '@/constant/effect';
 import { updateEffectArray } from '@/utils/effect';
 
 import { EEffectType, Effect, IMissionEffect } from '@/types/effect';
+import { Button } from '@/components/ui/button';
 
 type Props = {
   selectedEffects: Effect[];
@@ -86,11 +87,16 @@ export const EffectsGenerator = ({
     return (
       <AccordionV2 title='Quick Mission'>
         {!hasQuickMission ? (
-          <div className='' onClick={handleAddQuickMission}>
+          <Button variant='highlight' onClick={handleAddQuickMission}>
             Add Quick Mission
-          </div>
+          </Button>
         ) : (
-          <div onClick={() => setQuickMissionEffect(null)}>Delete</div>
+          <Button
+            variant='destructive'
+            onClick={() => setQuickMissionEffect(null)}
+          >
+            Delete
+          </Button>
         )}
 
         {hasQuickMission && (
@@ -108,11 +114,16 @@ export const EffectsGenerator = ({
     return (
       <AccordionV2 title='Mission'>
         {!hasFullMission ? (
-          <div className='' onClick={handleAddFullMission}>
-            Add Full Mission
-          </div>
+          <Button variant='highlight' onClick={handleAddFullMission}>
+            Add Missions
+          </Button>
         ) : (
-          <div onClick={() => setFullMissionEffect(null)}>Delete</div>
+          <Button
+            variant='destructive'
+            onClick={() => setFullMissionEffect(null)}
+          >
+            Delete
+          </Button>
         )}
         {hasFullMission && (
           <FullMissionSelector
@@ -124,12 +135,12 @@ export const EffectsGenerator = ({
     );
   };
   return (
-    <div className='relative p-4 flex flex-col'>
-      {showExtra && (
+    <div className='relative p-2 flex flex-col'>
+      {/* {showExtra && (
         <div className='relative z-50 h-24'>
           <EffectContainer effects={effects} />
         </div>
-      )}
+      )} */}
       <AccordionV2 title='Description'>
         <DescInput
           currentEffects={currentEffects}

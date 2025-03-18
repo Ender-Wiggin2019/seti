@@ -62,7 +62,7 @@ export const AdvancedFilter: React.FC<AdvancedFilterProps> = ({
       initial={false}
       animate={isOpen ? 'open' : 'closed'}
       className='menu'
-      style={{ overflow: 'hidden' }} // 这里添加 overflow: hidden
+      // style={{ overflow: 'hidden' }} // 这里添加 overflow: hidden
     >
       <motion.button
         className={cn(
