@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-26 23:56:31
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-19 00:54:04
+ * @LastEditTime: 2025-03-20 01:10:24
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
@@ -36,6 +36,32 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
     return card.freeAction.map((a) => freeAction2Effect(a));
   }, [card.freeAction]);
 
+  const style = useMemo(() => {
+    if (card.image) {
+      return {
+        backgroundImage: `url(${card.image})`,
+        width: '150px',
+        height: 'auto',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        borderRadius: '12px',
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+        zIndex: -1,
+      };
+    } else {
+      return {
+        backgroundImage: `url(${src})`,
+        backgroundSize: `${cols * 100}% auto`,
+        backgroundPosition: `-${150 * col}px ${209 * row * -1 + 1}px`,
+        width: '150px',
+        height: '209px',
+        borderRadius: '12px',
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+        zIndex: -1, // 确保背景图片的z-index较低
+        scale: '1.01',
+      };
+    }
+  }, [card.image, col, cols, row, src]);
   return (
     <CardRenderWrapper id={card.id}>
       <div className='card-free-action'>
@@ -55,23 +81,13 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
       <div className='card-sector-corner-signal'>
         <div className={`seti-icon icon-${card.sector}-corner`}></div>
       </div>
-      <div
-        className=''
-        style={{
-          backgroundImage: `url(${src})`,
-          backgroundSize: `${cols * 100}% auto`,
-          backgroundPosition: `-${150 * col}px ${209 * row * -1 + 1}px`,
-          width: '150px',
-          height: '209px',
-          borderRadius: '12px',
-          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-          zIndex: -1, // 确保背景图片的z-index较低
-          scale: '1.01',
-        }}
-      >
-        <div className='card-cell card-render'>
-          {card.income && <CardIncome income={card.income} />}
-        </div>
+      {card.image ? (
+        <img src={card.image || src} alt={card.name} style={style} />
+      ) : (
+        <div style={style}></div>
+      )}
+      <div className='card-cell card-render'>
+        {card.income && <CardIncome income={card.income} />}
       </div>
       <div className={`card-render-title ${alienCls}`}>{t(card.name)}</div>
       <div className='card-render-credit'>{card.price}</div>

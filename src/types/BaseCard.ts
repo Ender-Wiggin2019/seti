@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 09:48:41
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-10 10:34:00
+ * @LastEditTime: 2025-03-20 00:17:23
  * @Description:
  */
 /*
@@ -20,7 +20,11 @@ import { EResource, ESector } from '@/types/element';
 export default interface BaseCard {
   id: string;
   name: string;
+  // use for official cards
   position?: { src: string; row: number; col: number };
+
+  // use for diy cards
+  image?: string;
 
   // upper
   freeAction?: IFreeAction[];

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-12 12:22:14
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-13 16:48:01
+ * @LastEditTime: 2025-03-20 01:30:41
  * @Description:
  */
 
@@ -32,19 +32,19 @@ export const FullMissionSelector = ({ missionEffect, onChange }: Props) => {
     missionEffect = m.FULL_MISSION([{ req: [], reward: [] }], '');
   }
 
-  // const [currReq, setCurrReq] = useState(missionEffect.missions[idx].req);
+  // const [currReq, setCurrReq] = useState(missionEffect?.missions[idx].req);
   // const [currReward, setCurrReward] = useState(
-  //   missionEffect.missions[idx].reward
+  //   missionEffect?.missions[idx].reward
   // );
   const [desc, setDesc] = useState(missionEffect.desc);
 
   const handleIndexChange = (i: number) => {
     setIdx(i);
-    // setCurrReq(missionEffect.missions[i].req);
-    // setCurrReward(missionEffect.missions[i].reward);
+    // setCurrReq(missionEffect?.missions[i].req);
+    // setCurrReward(missionEffect?.missions[i].reward);
     console.log(
-      '🎸 [test] - handleIndexChange - missionEffect.missions[i].req:',
-      missionEffect.missions[i].req
+      '🎸 [test] - handleIndexChange - missionEffect?.missions[i].req:',
+      missionEffect?.missions?.[i]?.req
     );
   };
 
@@ -53,10 +53,12 @@ export const FullMissionSelector = ({ missionEffect, onChange }: Props) => {
       req: [],
       reward: [],
     };
-    setIdx(missionEffect.missions.length);
+    setIdx(missionEffect?.missions?.length || 0);
     // setCurrReq(newItem.req);
     // setCurrReward(newItem.reward);
-    onChange?.(m.FULL_MISSION([...missionEffect.missions, newItem], desc));
+    onChange?.(
+      m.FULL_MISSION([...(missionEffect?.missions || []), newItem], desc)
+    );
   };
 
   const handleChange = (effects: Effect[], type: 'req' | 'reward') => {
@@ -65,7 +67,7 @@ export const FullMissionSelector = ({ missionEffect, onChange }: Props) => {
       // setCurrReq(effects as IBaseEffect[]);
       onChange?.(
         m.FULL_MISSION(
-          missionEffect.missions.map((m, i) =>
+          missionEffect?.missions.map((m, i) =>
             i === idx ? { ...m, req: effects as IBaseEffect[] } : m
           ),
           desc
@@ -75,7 +77,7 @@ export const FullMissionSelector = ({ missionEffect, onChange }: Props) => {
       // setCurrReward(effects as IBaseEffect[]);
       onChange?.(
         m.FULL_MISSION(
-          missionEffect.missions.map((m, i) =>
+          missionEffect?.missions.map((m, i) =>
             i === idx ? { ...m, reward: effects as IBaseEffect[] } : m
           ),
           desc
@@ -86,17 +88,17 @@ export const FullMissionSelector = ({ missionEffect, onChange }: Props) => {
 
   const handleDescChange = (desc: string) => {
     setDesc(desc);
-    onChange?.(m.FULL_MISSION(missionEffect.missions, desc));
+    onChange?.(m.FULL_MISSION(missionEffect?.missions, desc));
   };
 
   // useEffect(() => {
-  //   setCurrReq(missionEffect.missions[idx].req);
-  //   setCurrReward(missionEffect.missions[idx].reward);
-  // }, [missionEffect.missions, idx]);
+  //   setCurrReq(missionEffect?.missions[idx].req);
+  //   setCurrReward(missionEffect?.missions[idx].reward);
+  // }, [missionEffect?.missions, idx]);
 
   return (
     <div>
-      {missionEffect.missions.map((m, i) => (
+      {missionEffect?.missions.map((m, i) => (
         <div key={i} onClick={() => handleIndexChange(i)}>
           {i + 1}
         </div>
@@ -105,12 +107,12 @@ export const FullMissionSelector = ({ missionEffect, onChange }: Props) => {
         Add
       </div>
       <EffectsGenerator
-        selectedEffects={missionEffect.missions[idx].req}
+        selectedEffects={missionEffect?.missions[idx].req}
         onChange={(e) => handleChange(e, 'req')}
         type={EEffectType.MISSION_FULL}
       />
       <EffectsGenerator
-        selectedEffects={missionEffect.missions[idx].reward}
+        selectedEffects={missionEffect?.missions[idx].reward}
         onChange={(e) => handleChange(e, 'reward')}
         type={EEffectType.MISSION_FULL}
       />

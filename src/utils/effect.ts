@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-12 11:12:08
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-17 01:24:52
+ * @LastEditTime: 2025-03-20 01:19:12
  * @Description:
  */
 import { e } from '@/constant/effect';
@@ -14,7 +14,7 @@ import {
   IBaseEffect,
   ICustomizedEffect,
 } from '@/types/effect';
-import { TIcon } from '@/types/element';
+import { EResource, TIcon } from '@/types/element';
 
 export const updateEffectArray = (
   prevEffects: Effect[],
@@ -76,4 +76,11 @@ export const freeAction2Effect = (freeAction: IFreeAction): IBaseEffect => {
     value,
     size: 'xs',
   };
+};
+
+export const effects2FreeAction = (effects: Effect[]): IFreeAction[] => {
+  return effects.map((e) => ({
+    type: (e as IBaseEffect)?.type as EResource, // FIXME: update free action type
+    value: (e as IBaseEffect)?.value || 1,
+  }));
 };

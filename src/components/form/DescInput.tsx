@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-12 11:42:57
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-13 01:50:11
+ * @LastEditTime: 2025-03-20 01:27:50
  * @Description:
  */
 import { useState } from 'react';
@@ -22,7 +22,7 @@ type Props = {
 export const DescInput = ({ currentEffects, onChange }: Props) => {
   const descEffects = currentEffects.filter(
     (e) => e.effectType === EEffectType.CUSTOMIZED
-  );
+  ) as ICustomizedEffect[];
   const [newDesc, setNewDesc] = useState<string>();
   const [editingId, setEditingId] = useState<string | null>(null);
 
