@@ -1,17 +1,17 @@
-import React, { useMemo, useState } from 'react';
+import { isEqual } from 'lodash';
+import React, { useEffect, useState } from 'react';
 
-import { EffectContainer } from '@/components/effect/EffectContainer';
 import { DescInput } from '@/components/form/DescInput';
 import { EffectSelector } from '@/components/form/EffectSelector';
 import { FullMissionSelector } from '@/components/form/FullMissionSelector';
 import { QuickMissionSelector } from '@/components/form/QuickMissionSelector';
 import { AccordionV2 } from '@/components/ui/accordion-v2';
+import { Button } from '@/components/ui/button';
 
 import { m } from '@/constant/effect';
 import { updateEffectArray } from '@/utils/effect';
 
 import { EEffectType, Effect, IMissionEffect } from '@/types/effect';
-import { Button } from '@/components/ui/button';
 
 type Props = {
   selectedEffects: Effect[];
@@ -19,23 +19,31 @@ type Props = {
   type?: EEffectType;
 };
 export const EffectsGenerator = ({
-  selectedEffects,
+  selectedEffects: currentEffects,
   onChange,
   type,
 }: Props) => {
-  const [currentEffects, setCurrentEffects] =
-    useState<Effect[]>(selectedEffects);
+  console.log('🎸 [test] - currentEffects222:', currentEffects);
+  const [currEffects, setCurrEffects] = useState<Effect[]>(currentEffects);
   const [quickMissionEffect, setQuickMissionEffect] =
     useState<IMissionEffect | null>(null);
   const [fullMissionEffect, setFullMissionEffect] =
     useState<IMissionEffect | null>(null);
+  if (type === EEffectType.MISSION_FULL)
+    console.log('🎸 [test] - selectedEffects:', currentEffects);
   // console.log('🎸 [test] - currentEffects:', currentEffects);
   const handleEffectChange = (effect: Effect, action?: 'del') => {
-    // console.log('🎸 [test] - handleEffectChange - effect:', effect);
-    setCurrentEffects((prevEffects) =>
+    console.log('🎸 [test] - handleEffectChange - effect:', effect);
+    setCurrEffects((prevEffects) =>
       updateEffectArray(prevEffects, effect, action)
     );
-    onChange?.(updateEffectArray(currentEffects, effect, action));
+    // const newEffects = updateEffectArray(currentEffects, effect, action);
+    // console.log('🎸 [test] - handleEffectChange - newEffects:', newEffects, currentEffects, isEqual(newEffects, currentEffects));
+
+    // only callback when it's actually change
+    // if (!isEqual(newEffects, currentEffects)) {
+    //   onChange?.(updateEffectArray(currentEffects, effect, action));
+    // }
   };
 
   const handleAddQuickMission = () => {
@@ -67,21 +75,39 @@ export const EffectsGenerator = ({
       EEffectType.END_GAME,
     ].includes(type);
 
-  const effects = useMemo(() => {
-    const res = [...currentEffects];
-    if (quickMissionEffect) {
+  useEffect(() => {
+    let res = [...currEffects];
+    const quick = res.findIndex(
+      (e) => e.effectType === EEffectType.MISSION_QUICK
+    );
+    console.log('🎸 [test] - useEffect - quick:', quick);
+    const full = res.findIndex(
+      (e) => e.effectType === EEffectType.MISSION_FULL
+    );
+
+    if (quick >= 0 && quickMissionEffect) {
+      res = [...res.slice(0, quick), ...res.slice(quick + 1)];
+      console.log('🎸 [test] - useEffect - res:', res);
+    } else if (quickMissionEffect) {
       res.push(quickMissionEffect);
     }
-    if (fullMissionEffect) {
-      console.log(
-        '🎸 [test] - effects - fullMissionEffect:',
-        fullMissionEffect
-      );
+
+    if (full >= 0 && fullMissionEffect) {
+      res = [...res.slice(0, full), ...res.slice(full + 1)];
+    } else if (fullMissionEffect) {
       res.push(fullMissionEffect);
     }
-    onChange?.(res);
-    return res;
-  }, [currentEffects, quickMissionEffect, fullMissionEffect]);
+
+    if (!isEqual(currentEffects, res)) {
+      onChange?.(res);
+    }
+  }, [
+    currentEffects,
+    quickMissionEffect,
+    fullMissionEffect,
+    onChange,
+    currEffects,
+  ]);
 
   const quickMissionComp = () => {
     return (
@@ -113,6 +139,12 @@ export const EffectsGenerator = ({
   const fullMissionComp = () => {
     return (
       <AccordionV2 title='Mission'>
+        {hasFullMission && (
+          <FullMissionSelector
+            missionEffect={fullMissionEffect}
+            onChange={handleUpdateFullMission}
+          />
+        )}
         {!hasFullMission ? (
           <Button variant='highlight' onClick={handleAddFullMission}>
             Add Missions
@@ -124,12 +156,6 @@ export const EffectsGenerator = ({
           >
             Delete
           </Button>
-        )}
-        {hasFullMission && (
-          <FullMissionSelector
-            missionEffect={fullMissionEffect}
-            onChange={handleUpdateFullMission}
-          />
         )}
       </AccordionV2>
     );

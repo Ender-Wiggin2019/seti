@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-26 23:56:31
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-20 01:10:24
+ * @LastEditTime: 2025-03-21 01:49:47
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
@@ -36,6 +36,10 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
     return card.freeAction.map((a) => freeAction2Effect(a));
   }, [card.freeAction]);
 
+  const effects = useMemo(() => {
+    return card.effects || [];
+  }, [card]);
+  console.log('🎸 [test] - effects - effects:', effects);
   const style = useMemo(() => {
     if (card.image) {
       return {
@@ -93,7 +97,7 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
       <div className='card-render-credit'>{card.price}</div>
 
       {card?.special?.enableEffectRender && card.effects && (
-        <EffectContainer effects={card.effects} className='bg-transparent' /> // 确保EffectContainer的z-index较高
+        <EffectContainer effects={effects} className='bg-transparent' /> // 确保EffectContainer的z-index较高
       )}
       {card?.special?.enableEffectRender && card.flavorText && (
         <FlavorText

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-12 12:22:14
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-20 01:30:41
+ * @LastEditTime: 2025-03-21 01:08:40
  * @Description:
  */
 
@@ -20,6 +20,7 @@ import {
   IBaseEffect,
   IMissionEffect,
 } from '@/types/effect';
+import { cn } from '@/lib/utils';
 
 type Props = {
   missionEffect: IMissionEffect | null;
@@ -96,23 +97,36 @@ export const FullMissionSelector = ({ missionEffect, onChange }: Props) => {
   //   setCurrReward(missionEffect?.missions[idx].reward);
   // }, [missionEffect?.missions, idx]);
 
+  const req = missionEffect?.missions?.[idx].req;
+  console.log('🎸 [test] - FullMissionSelector - req:', req);
+  const reward = missionEffect?.missions?.[idx].reward;
+
   return (
     <div>
-      {missionEffect?.missions.map((m, i) => (
-        <div key={i} onClick={() => handleIndexChange(i)}>
-          {i + 1}
-        </div>
-      ))}
+      <div className='flex gap-1'>
+        {missionEffect?.missions.map((m, i) => (
+          <div
+            key={i}
+            onClick={() => handleIndexChange(i)}
+            className={cn(
+              'rounded-full border border-zinc-300 bg-zinc-800/90 w-8 h-8 flex justify-center items-center',
+              { 'bg-primary': i === idx }
+            )}
+          >
+            {i + 1}
+          </div>
+        ))}
+      </div>
       <div className='' onClick={handleAddNew}>
         Add
       </div>
       <EffectsGenerator
-        selectedEffects={missionEffect?.missions[idx].req}
+        selectedEffects={req}
         onChange={(e) => handleChange(e, 'req')}
         type={EEffectType.MISSION_FULL}
       />
       <EffectsGenerator
-        selectedEffects={missionEffect?.missions[idx].reward}
+        selectedEffects={reward}
         onChange={(e) => handleChange(e, 'reward')}
         type={EEffectType.MISSION_FULL}
       />

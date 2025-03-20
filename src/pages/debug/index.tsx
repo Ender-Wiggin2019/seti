@@ -3,7 +3,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-01 00:33:02
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-20 01:21:37
+ * @LastEditTime: 2025-03-21 01:52:34
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
@@ -33,6 +33,7 @@ import {
 import BaseCard from '@/types/BaseCard';
 import { Effect } from '@/types/effect';
 import { EResource, ESector, TSize } from '@/types/element';
+import { Button } from '@/components/ui/button';
 
 // make sure to import your TextFilter
 type Props = {
@@ -78,6 +79,16 @@ export default function HomePage(
   const [currentFlavorText, setCurrentFlavorText] = useState<string>();
   const [currentFreeActions, setCurrentFreeActions] = useState<Effect[]>([]);
 
+  const handleReset = () => {
+    setCurrentEffects([]);
+    setCurrentIncome(EResource.CREDIT);
+    setCurrentSector(ESector.RED);
+    setCurrentCredit('');
+    setCurrentTitle('');
+    setCurrentFlavorText('');
+    setCurrentFreeActions([]);
+    setCurrentImage('');
+  };
   console.log('🎸 [test] - currentEffects:', currentEffects);
   const handleEffectsChange = (effects: Effect[]) => {
     setCurrentEffects(effects);
@@ -150,14 +161,19 @@ export default function HomePage(
             </div>
             {/* <EffectContainer effects={currentEffects} /> */}
           </div>
+          <Button variant='destructive' className='w-20' onClick={handleReset}>
+            Reset
+          </Button>
+          {/* <Button variant="highlight" className="w-20" onClick={handleExport}>Export</Button> */}
+
           {/* <EffectSelector
         currentEffects={currentEffects}
         onChange={handleEffectChange}
       /> */}
           <AccordionV2 title='Effect'>
             <EffectsGenerator
-              selectedEffects={[]}
-              onChange={handleEffectsChange}
+              selectedEffects={currentEffects}
+              onChange={(e) => handleEffectsChange(e)}
             />
           </AccordionV2>
           <div></div>
