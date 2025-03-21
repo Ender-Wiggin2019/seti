@@ -2,18 +2,15 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-12 12:22:14
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-12 14:30:03
+ * @LastEditTime: 2025-03-22 01:03:12
  * @Description:
  */
 
 import React, { useState } from 'react';
 
-import { EffectContainer } from '@/components/effect/EffectContainer';
-import { DescInput } from '@/components/form/DescInput';
-import { EffectSelector } from '@/components/form/EffectSelector';
+import { EffectsGenerator } from '@/components/form/EffectsGenerator';
 
 import { m } from '@/constant/effect';
-import { updateEffectArray } from '@/utils/effect';
 
 import {
   EEffectType,
@@ -21,7 +18,6 @@ import {
   IBaseEffect,
   IMissionEffect,
 } from '@/types/effect';
-import { EffectsGenerator } from '@/components/form/EffectsGenerator';
 
 type Props = {
   missionEffect: IMissionEffect | null;

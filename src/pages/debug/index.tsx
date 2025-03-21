@@ -3,7 +3,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-01 00:33:02
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-21 01:52:34
+ * @LastEditTime: 2025-03-22 01:13:04
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
@@ -89,7 +89,6 @@ export default function HomePage(
     setCurrentFreeActions([]);
     setCurrentImage('');
   };
-  console.log('🎸 [test] - currentEffects:', currentEffects);
   const handleEffectsChange = (effects: Effect[]) => {
     setCurrentEffects(effects);
   };

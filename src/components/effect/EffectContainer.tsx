@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-06 15:22:44
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-21 01:50:30
+ * @LastEditTime: 2025-03-22 01:12:58
  * @Description:
  */
 import React from 'react';
@@ -18,7 +18,6 @@ interface Props {
   className?: string;
 }
 export const EffectContainer: React.FC<Props> = ({ effects, className }) => {
-  console.log('🎸 [test] - effectswww:', effects);
   const fullWidthEffectTypes = [
     EEffectType.END_GAME,
     EEffectType.MISSION_FULL,

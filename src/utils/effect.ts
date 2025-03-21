@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-12 11:12:08
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-20 01:19:12
+ * @LastEditTime: 2025-03-22 00:54:58
  * @Description:
  */
 import { e } from '@/constant/effect';
@@ -13,6 +13,7 @@ import {
   Effect,
   IBaseEffect,
   ICustomizedEffect,
+  IMissionEffect,
 } from '@/types/effect';
 import { EResource, TIcon } from '@/types/element';
 
@@ -55,6 +56,20 @@ export const updateEffectArray = (
   }
 
   return [...prevEffects, newEffect];
+};
+
+export const updateMissionEffectArray = (
+  prevEffects: Effect[],
+  newEffect: IMissionEffect,
+  effectType: EEffectType
+): Effect[] => {
+  // base, add value
+  const idx = prevEffects.findIndex((e) => e.effectType === effectType);
+  if (idx < 0) {
+    return [...prevEffects, newEffect];
+  }
+
+  return prevEffects.map((e, i) => (i === idx ? newEffect : e));
 };
 
 export const getEffectByIconType = (icon: TIcon) => {

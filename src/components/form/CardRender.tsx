@@ -39,7 +39,6 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
   const effects = useMemo(() => {
     return card.effects || [];
   }, [card]);
-  console.log('🎸 [test] - effects - effects:', effects);
   const style = useMemo(() => {
     if (card.image) {
       return {
