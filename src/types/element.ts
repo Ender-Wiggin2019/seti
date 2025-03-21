@@ -4,7 +4,7 @@ import { TShape } from '@/types/Icon';
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 14:45:30
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-14 01:05:17
+ * @LastEditTime: 2025-03-17 00:56:23
  * @Description:
  */
 export enum ESector {
@@ -127,7 +127,16 @@ export type TIcon =
   | 'any-card-special'; // only use in description
 
 // desc-mini: the minimum icon size in description
-export type TSize = 'desc-mini' | 'desc' | 'xxs' | 'xs' | 'sm' | 'md' | 'lg';
+export type TSize =
+  | 'desc-mini'
+  | 'desc'
+  | 'xxs'
+  | 'xs'
+  | 'sm'
+  | 'md'
+  | 'lg'
+  | 'xl'
+  | '2xl';
 
 export interface IIconItem {
   type: TIcon;

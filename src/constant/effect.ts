@@ -2,9 +2,11 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 22:59:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-14 01:06:55
+ * @LastEditTime: 2025-03-12 01:53:41
  * @Description:
  */
+import { v4 as uuidv4 } from 'uuid';
+
 import {
   EEffectType,
   IBaseEffect,
@@ -23,7 +25,6 @@ import {
   TIcon,
   TSize,
 } from '@/types/element';
-
 const _base =
   (type: TIcon) =>
   (value = 1, desc = '', size?: TSize): IBaseEffect => ({
@@ -214,6 +215,7 @@ export const DESC = (
   effectType: EEffectType.CUSTOMIZED,
   desc,
   width,
+  id: uuidv4(),
 });
 
 export const DESC_WITH_TYPE = (
@@ -228,6 +230,7 @@ export const DESC_WITH_TYPE = (
   size,
   width,
   helperText: `desc.${type}`,
+  id: uuidv4(),
 });
 
 export const OR = (...effects: IBaseEffect[]): IOrEffect => ({

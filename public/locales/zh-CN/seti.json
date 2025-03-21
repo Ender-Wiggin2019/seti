@@ -285,6 +285,7 @@
   "{publicity-8}": "{publicity-8}",
   "Have at least": "拥有至少",
   "Do not count moons": "不包含卫星。",
+  "on each species": "每种外星物种",
   "desc": {
     "card-10": "{orbit-or-land-count} 在海王星<br>和 {orbit-or-land-count} 在天王星<br>（包括它们的卫星）",
     "card-12": "在行星或卫星上，<br>即便没有所需科技。",

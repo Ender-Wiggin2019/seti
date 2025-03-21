@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-11 23:41:00
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-12 00:02:26
+ * @LastEditTime: 2025-03-17 01:22:05
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
@@ -23,6 +23,7 @@ import { sortCards } from '@/utils/sort';
 import BaseCardType from '@/types/BaseCard';
 import { BaseCard } from '@/components/cards/base_cards/BaseCard';
 import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
+import { CardRender } from '@/components/form/CardRender';
 type Props = {
   // Add custom props here
 };
@@ -53,7 +54,7 @@ export default function HomePage(
                   <PreviewBaseCard card={oriCard} />
                 </div>
                 <div className='relative'>
-                  <PreviewBaseCard card={renderCard} />
+                  <CardRender card={renderCard} />
                 </div>
               </div>
             );

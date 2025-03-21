@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-05 23:45:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-10 01:12:05
+ * @LastEditTime: 2025-03-18 00:18:47
  * @Description:
  */
 import React from 'react';
@@ -49,8 +49,8 @@ export const DescRender: React.FC<IconProps> = ({ desc, size, width }) => {
                 return (
                   <span
                     className={cn(
-                      `inline-block text-desc-${descTextSize} text-center`
-                      // { 'max-w-24': width === 'half' },
+                      `inline-block text-desc-${descTextSize} text-center`,
+                      { 'max-w-20': width === 'half' }
                       // { 'max-w-32': width !== 'half' }
                     )}
                     key={String(lineIndex) + index}
@@ -61,12 +61,12 @@ export const DescRender: React.FC<IconProps> = ({ desc, size, width }) => {
               }
 
               return (
-                // <div key={index} className=''>
-                <EffectFactory
-                  key={index}
-                  effect={{ ...res, size: descIconSize }}
-                />
-                // </div>
+                <div key={index} className='px-[2px]'>
+                  <EffectFactory
+                    key={index}
+                    effect={{ ...res, size: descIconSize }}
+                  />
+                </div>
               );
             })}
             {/* {lineIndex !== descArray.length - 1 && <div className="w-1/2"></div>} */}

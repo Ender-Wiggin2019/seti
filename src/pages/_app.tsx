@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-07 00:55:54
+ * @LastEditTime: 2025-03-18 00:15:09
  * @Description:
  */
 import { ClerkProvider } from '@clerk/nextjs';
@@ -10,11 +10,11 @@ import { AppProps } from 'next/app';
 import Script from 'next/script';
 import { appWithTranslation } from 'next-i18next';
 
-import '@/styles/globals.css';
 import '@/styles/card.css';
 import '@/styles/icon.scss';
 import '@/styles/odometer.css';
 import '@/styles/clerk.css';
+import '@/styles/globals.css';
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
