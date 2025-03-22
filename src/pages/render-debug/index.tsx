@@ -24,6 +24,7 @@ import BaseCardType from '@/types/BaseCard';
 import { BaseCard } from '@/components/cards/base_cards/BaseCard';
 import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
 import { CardRender } from '@/components/form/CardRender';
+import { alienCards } from '@/data/alienCards';
 type Props = {
   // Add custom props here
 };
@@ -32,7 +33,7 @@ export default function HomePage(
   _props: InferGetStaticPropsType<typeof getStaticProps>
 ) {
   const { t } = useTranslation('common');
-  const cards = sortCards(baseCards);
+  const cards = sortCards([...baseCards, ...alienCards]);
   return (
     <Layout>
       <Seo templateTitle='About' />

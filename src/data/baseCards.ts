@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-18 00:16:21
+ * @LastEditTime: 2025-03-23 00:30:19
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -1533,7 +1533,10 @@ const _baseCards: BaseCard[] = [
     price: 2,
     income: EResource.ENERGY,
     description: '',
-    effects: [e.LAUNCH()],
+    effects: [
+      e.LAUNCH(),
+      m.QUICK_MISSION(DESC('desc.card-104-req'), [e.SCORE(3), e.DATA(1)]),
+    ],
   },
   {
     id: '84',

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-13 09:52:34
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-19 01:29:37
+ * @LastEditTime: 2025-03-23 02:18:54
  * @Description:
  */
 import { motion } from 'framer-motion';
@@ -14,11 +14,13 @@ import { cn } from '@/lib/utils';
 
 type AccordionV2Props = {
   title: string;
+  className?: string;
   children: React.ReactNode;
 };
 
 export const AccordionV2: React.FC<AccordionV2Props> = ({
   title,
+  className,
   children,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -32,7 +34,8 @@ export const AccordionV2: React.FC<AccordionV2Props> = ({
     >
       <motion.button
         className={cn(
-          'group mt-1 flex w-40 items-center justify-between space-x-2 rounded-full bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-lg shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20'
+          'group mt-1 flex w-40 items-center justify-between space-x-2 rounded-full bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-lg shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20',
+          className
         )}
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsOpen(!isOpen)}

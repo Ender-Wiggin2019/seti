@@ -86,7 +86,26 @@
     "confirm": "确认"
   },
   "Aliens?": "外...外星人?",
+  "Placeholder": "Placeholder",
+  "Free Action": "免费行动",
+  "Sector": "右上角扇区",
+  "Image": "图片",
+  "Use URL": "使用链接",
+  "Credit": "费用",
+  "Title": "卡牌名称",
+  "Flavor Text": "背景文字",
+  "Card ID": "卡牌编号",
+  "Effect": "效果",
+  "Description": "文本描述",
+  "Go to Full Page": "查看完整列表",
+  "Icons": "Icons",
+  "Conditional Mission": "条件式任务",
+  "Triggerable Missions": "触发式任务",
+  "Income": "收入",
   "Tier List": "梯度排名",
   "Advanced": "高级筛选",
-  "Filter text": "输入文本"
+  "Filter text": "输入文本",
+  "Reset": "重置",
+  "Download": "保存",
+  "Export": "导出"
 }

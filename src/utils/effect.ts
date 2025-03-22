@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-12 11:12:08
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-22 00:54:58
+ * @LastEditTime: 2025-03-23 01:13:47
  * @Description:
  */
 import { e } from '@/constant/effect';
@@ -47,6 +47,7 @@ export const updateEffectArray = (
     const existingEffectIndex = prevEffects.findIndex(
       (e) => e.effectType === EEffectType.CUSTOMIZED && e.id === newEffect.id
     );
+    console.log('🎸 [test] - existingEffectIndex:', existingEffectIndex);
 
     if (existingEffectIndex !== -1) {
       return prevEffects.map((e, index) =>

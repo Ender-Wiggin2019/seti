@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-14 23:39:03
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-19 01:19:43
+ * @LastEditTime: 2025-03-23 01:52:53
  * @Description:
  */
 import { cn } from '@/lib/utils';
@@ -13,18 +13,29 @@ import { AccordionV2 } from '@/components/ui/accordion-v2';
 import { e } from '@/constant/effect';
 
 import { EEffectType, Effect, IBaseEffect } from '@/types/effect';
-import { TSize } from '@/types/element';
+import { TIcon, TSize } from '@/types/element';
+import { Button } from '@/components/ui/button';
 
 type Props = {
   currentEffects: Effect[];
   onChange?: (effect: IBaseEffect) => void;
+  title?: string;
+  icons?: TIcon[];
 };
-export const EffectSelector = ({ currentEffects, onChange }: Props) => {
+export const EffectSelector = ({
+  currentEffects,
+  title,
+  icons,
+  onChange,
+}: Props) => {
   return (
-    <AccordionV2 title='Icons'>
+    <AccordionV2 title={title || 'Icons'}>
       <div className='grid grid-cols-4 gap-2 lg:grid-cols-5'>
         {Object.entries(e).map(([key, fn]) => {
           const effect = fn();
+          if (icons && !icons.includes(effect.type)) {
+            return null;
+          }
           const displayedEffect = { ...effect, size: 'xl' as TSize };
           const hasEffect = currentEffects.some(
             (e) => e.effectType === EEffectType.BASE && e.type === effect.type

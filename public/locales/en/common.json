@@ -92,5 +92,24 @@
     "warning-desc": "This section may contain spoilers and affect your gaming experience. Are you sure you want to continue?",
     "confirm": "Confirm"
   },
-  "Aliens?": "Aliens?"
+  "Aliens?": "Aliens?",
+  "Placeholder": "Placeholder",
+  "Free Action": "Free Action",
+  "Sector": "Sector",
+  "Image": "Image",
+  "Use URL": "Use URL",
+  "Credit": "Credit",
+  "Title": "Title",
+  "Flavor Text": "Flavor Text",
+  "Card ID": "Card ID",
+  "Effect": "Effect",
+  "Description": "Description",
+  "Go to Full Page": "Go to Full Page",
+  "Icons": "Icons",
+  "Conditional Mission": "Conditional Mission",
+  "Triggerable Missions": "Triggerable Missions",
+  "Income": "Income",
+  "Tier List": "Tier List",
+  "Advanced": "Advanced",
+  "Filter text": "Filter text"
 }

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-22 15:12:55
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-22 16:12:51
+ * @LastEditTime: 2025-03-23 01:25:51
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
@@ -34,18 +34,22 @@ const effects = Object.values(e).map((effectFn) => {
   };
 });
 
-export function EffectTable() {
+type Props = {
+  onCopy?: () => void;
+};
+export function EffectTable({ onCopy }: Props) {
   const { t } = useTranslation('common');
 
   const handleClick = (text: string) => {
     navigator?.clipboard?.writeText(`{${text}}`);
+    onCopy?.();
   };
   return (
     <Table>
       <TableCaption>{t('helper.desc')}</TableCaption>
       <TableHeader>
         <TableRow>
-          <TableHead className='w-[200px]'>{t('helper.name')}</TableHead>
+          <TableHead className='w-[160px]'>{t('helper.name')}</TableHead>
           <TableHead>{t('helper.example')}</TableHead>
           <TableHead>{t('helper.display')}</TableHead>
         </TableRow>

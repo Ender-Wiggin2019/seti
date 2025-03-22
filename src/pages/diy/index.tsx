@@ -3,7 +3,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-01 00:33:02
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-22 14:00:25
+ * @LastEditTime: 2025-03-23 02:15:26
  * @Description:
  */
 import { toPng } from 'html-to-image';
@@ -35,6 +35,7 @@ import {
 import BaseCard from '@/types/BaseCard';
 import { Effect } from '@/types/effect';
 import { EResource, ESector, TSize } from '@/types/element';
+import Seo from '@/components/Seo';
 
 // make sure to import your TextFilter
 type Props = {
@@ -47,30 +48,6 @@ export default function HomePage(
   const { t } = useTranslation('common');
   const downloadRef = React.useRef<HTMLDivElement>(null);
 
-  const _card = baseCards.filter((c) => c.id === '76')[0];
-
-  // const _card = testCards.filter((c) => c.id === 'test')[0];
-  // const card = _card;
-  const card = { ..._card, position: { src: '', row: 1, col: 1 } };
-
-  // const iconItem: IIconItem = {
-  //   // type: EResource.MOVE,
-  //   // type: EResource.DATA,
-  //   type: EResource.PUBLICITY,
-
-  //   value: 1,
-  //   options: {
-  //     showValue: true,
-  //     diamondShape: true,
-  //   },
-  // };
-  // const effects = [
-  //   e.MOVE(1),
-  //   DESC_WITH_TYPE(
-  //     ETrace.BLUE,
-  //     '{move-2} {score-2} test {orbit-action-1} test'
-  //   ),
-  // ];
   const [currentEffects, setCurrentEffects] = useState<Effect[]>([]);
   const [currentIncome, setCurrentIncome] = useState<EResource>(
     EResource.CREDIT
@@ -241,6 +218,7 @@ export default function HomePage(
 
   return (
     <Layout>
+      <Seo templateTitle='Card Editor' />
       <div className='flex flex-col lg:flex-row gap-4 px-2'>
         <div className='relative flex flex-col w-full lg:w-3/5'>
           <div className='w-80 h-[440px]'>
@@ -249,7 +227,6 @@ export default function HomePage(
                 <CardRender card={renderCard} />
               </div>
             </div>
-            {/* <EffectContainer effects={currentEffects} /> */}
           </div>
           <div className='flex justify-start items-center gap-2 mb-2'>
             <Button
@@ -257,62 +234,38 @@ export default function HomePage(
               className='w-20 mr-8'
               onClick={handleReset}
             >
-              Reset
+              {t('Reset')}
             </Button>
             <Button
               variant='highlight'
               className='w-20'
               onClick={handleDownloadImage}
             >
-              Download
+              {t('Download')}
             </Button>
             <Button variant='highlight' className='w-20' onClick={exportToJson}>
-              Export
+              {t('Export')}
             </Button>
           </div>
-          {/* <Button variant="highlight" className="w-20" onClick={handleExport}>Export</Button> */}
-
-          {/* <EffectSelector
-        currentEffects={currentEffects}
-        onChange={handleEffectChange}
-      /> */}
           <AccordionV2 title='Effect'>
             <EffectsGenerator
               selectedEffects={currentEffects}
               onChange={(e) => handleEffectsChange(e)}
             />
           </AccordionV2>
-          <div></div>
-          {/* <PreviewBaseCard card={_card} showLink={true} /> */}
-          {/* <PreviewBaseCard card={card} showLink={true} />
-      <PreviewBaseCardV2 card={card} showLink={true} /> */}
-          {/* <IconFactory iconItem={getIconItem(e.ORBIT())} />
-      <IconFactory iconItem={getIconItem(e.MOVE(2))} />
-      <IconFactory iconItem={getIconItem(e.PUBLICITY(2))} /> */}
-          {/* {effects.map((effect, index) => (
-        <EffectFactory key={index} effect={effect} />
-      ))}
-       */}
-          {/* {card.effects && <EffectContainer effects={card.effects} />} */}
-          <div className='scale-75'>
-            {/* <DescRender desc='test {score-2} {orbit-action-1} test'/> */}
-          </div>
-          {/* <AdvancedFilter onFilterChange={(tag) => () => tag} reset={false} /> */}
-          {/* {Object.entries(EResourceMap).map(([resource, value]) => (
-        <IconFactory
-          key={resource}
-          iconItem={{ ...iconItem, type: resource as EResource }}
-        />
-      ))} */}
-          {/* <IconFactory iconItem={iconItem} /> */}
         </div>
         <div className='flex flex-col gap-2'>
-          <AccordionV2 title='Free Action'>
-            <EffectSelector
-              currentEffects={currentFreeActions}
-              onChange={handleFreeActionChange}
-            />
-          </AccordionV2>
+          <EffectSelector
+            title={t('Free Action')}
+            currentEffects={currentFreeActions}
+            icons={[
+              EResource.PUBLICITY,
+              EResource.DATA,
+              EResource.MOVE,
+              EResource.SCORE,
+            ]}
+            onChange={handleFreeActionChange}
+          />
 
           <AccordionV2 title='Income'>
             {/* <div className='text-white text-lg'>Income</div> */}
@@ -339,7 +292,7 @@ export default function HomePage(
             </div>
           </AccordionV2>
 
-          <AccordionV2 title='Sector'>
+          <AccordionV2 title={t('Sector')}>
             {/* <div className='text-white text-lg'>Sector</div> */}
             <div className='w-full grid grid-cols-5 gap-4 lg:grid-cols-5 flex-shrink-0'>
               {Object.values(ESector).map((e) => {
@@ -365,7 +318,7 @@ export default function HomePage(
           </AccordionV2>
 
           <div className='grid w-full max-w-sm items-center gap-1.5'>
-            <Label htmlFor='picture'>Picture</Label>
+            <Label htmlFor='picture'>{t('Image')}</Label>
             <div className='flex gap-2'>
               {!useUrl ? (
                 <Input
@@ -389,42 +342,42 @@ export default function HomePage(
             </div>
           </div>
           <div className='grid w-full max-w-sm items-center gap-1.5'>
-            <Label htmlFor='credit'>credit</Label>
+            <Label htmlFor='credit'>{t('Credit')}</Label>
             <Input
               type='credit'
               id='credit'
-              placeholder='credit'
+              placeholder={t('Your card price')}
               value={currentCredit}
               onChange={(e) => handleCreditChange(e.target.value)}
             />
           </div>
           <div className='grid w-full max-w-sm items-center gap-1.5'>
-            <Label htmlFor='title'>Title</Label>
+            <Label htmlFor='title'>{t('Title')}</Label>
             <Input
               type='title'
               id='title'
-              placeholder='title'
+              placeholder={t('Your card title')}
               value={currentTitle}
               onChange={(e) => handleTitleChange(e.target.value)}
             />
           </div>
           <div className='grid w-full max-w-sm items-center gap-1.5'>
-            <Label htmlFor='title'>Flavor Text</Label>
+            <Label htmlFor='title'>{t('Flavor Text')}</Label>
             <Input
               type='title'
               id='title'
               value={currentFlavorText}
-              placeholder='title'
+              placeholder={t('Tell more about your card')}
               onChange={(e) => handleFlavorTextChange(e.target.value)}
             />
           </div>
           <div className='grid w-full max-w-sm items-center gap-1.5'>
-            <Label htmlFor='title'>Card ID</Label>
+            <Label htmlFor='title'>{t('Card ID')}</Label>
             <Input
               type='title'
               id='title'
               value={currentId}
-              placeholder='title'
+              placeholder={t('Enter card title')}
               onChange={(e) => setCurrentId(e.target.value)}
             />
           </div>

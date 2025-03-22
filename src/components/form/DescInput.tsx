@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-12 11:42:57
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-22 15:52:46
+ * @LastEditTime: 2025-03-23 02:11:11
  * @Description:
  */
 import { useState } from 'react';
@@ -15,6 +15,7 @@ import { DESC } from '@/constant/effect';
 
 import { EEffectType, Effect, ICustomizedEffect } from '@/types/effect';
 import { HelpButton } from '@/components/ui/helper-dialog';
+import { cn } from '@/lib/utils';
 
 type Props = {
   currentEffects: Effect[];
@@ -33,6 +34,8 @@ export const DescInput = ({ currentEffects, onChange }: Props) => {
     }
     if (!editingId) {
       const newDescEffect = DESC(newDesc);
+      setEditingId(newDescEffect.id);
+
       onChange?.(newDescEffect);
     } else {
       const updatedDescEffect = descEffects.find((e) => e.id === editingId);
@@ -60,7 +63,12 @@ export const DescInput = ({ currentEffects, onChange }: Props) => {
     <div className='flex flex-col gap-2'>
       {descEffects.map((de) => (
         <div key={de.id} className='flex gap-2'>
-          <div className='flex-1 text-white rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50 bg-zinc-950 ring-offset-zinc-950 placeholder:text-zinc-400 focus-visible:ring-primary'>
+          <div
+            className={cn(
+              'flex-1 text-white/50 rounded-md ring-1 ring-white/10 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50 bg-zinc-950 ring-offset-zinc-950 placeholder:text-zinc-400 focus-visible:ring-primary',
+              { 'text-white': de.id === editingId }
+            )}
+          >
             {de.desc}
           </div>
           <Button
@@ -91,11 +99,14 @@ export const DescInput = ({ currentEffects, onChange }: Props) => {
       </div>
       <HelpButton />
       {newDesc && (
-        <div className='flex justify-start w-full h-12 rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50 bg-zinc-950 ring-offset-zinc-950 placeholder:text-zinc-400 focus-visible:ring-primary'>
-          <div className='text-zinc-400'>
-            <DescRender desc={newDesc} />
+        <>
+          <div>Preview</div>
+          <div className='flex justify-start w-full h-12 rounded-md px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50 bg-zinc-950 ring-offset-zinc-950 placeholder:text-zinc-400 focus-visible:ring-primary'>
+            <div className='text-zinc-400'>
+              <DescRender desc={newDesc} />
+            </div>
           </div>
-        </div>
+        </>
       )}
       <div className='flex justify-start items-center gap-4'>
         <Button variant='dark' className='w-40' onClick={handleAdd}>

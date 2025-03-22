@@ -103,10 +103,10 @@ export const EffectsGenerator = ({
 
   const quickMissionComp = () => {
     return (
-      <AccordionV2 title='Quick Mission'>
+      <AccordionV2 title='Conditional Mission' className='w-52'>
         {!hasQuickMission ? (
           <Button variant='highlight' onClick={handleAddQuickMission}>
-            Add Quick Mission
+            Add Conditional Mission
           </Button>
         ) : (
           <Button
@@ -130,7 +130,7 @@ export const EffectsGenerator = ({
 
   const fullMissionComp = () => {
     return (
-      <AccordionV2 title='Mission'>
+      <AccordionV2 title='Triggerable Missions' className='w-52'>
         {hasFullMission && (
           <FullMissionSelector
             missionEffect={fullMissionEffect}
