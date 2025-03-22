@@ -3,9 +3,10 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-01 00:33:02
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-22 01:13:04
+ * @LastEditTime: 2025-03-22 13:57:47
  * @Description:
  */
+import { toPng } from 'html-to-image';
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
@@ -21,6 +22,7 @@ import { EffectSelector } from '@/components/form/EffectSelector';
 import { EffectsGenerator } from '@/components/form/EffectsGenerator';
 import Layout from '@/components/layout/Layout';
 import { AccordionV2 } from '@/components/ui/accordion-v2';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -33,7 +35,6 @@ import {
 import BaseCard from '@/types/BaseCard';
 import { Effect } from '@/types/effect';
 import { EResource, ESector, TSize } from '@/types/element';
-import { Button } from '@/components/ui/button';
 
 // make sure to import your TextFilter
 type Props = {
@@ -44,6 +45,8 @@ export default function HomePage(
   _props: InferGetStaticPropsType<typeof getStaticProps>
 ) {
   const { t } = useTranslation('common');
+  const downloadRef = React.useRef<HTMLDivElement>(null);
+
   const _card = baseCards.filter((c) => c.id === '76')[0];
 
   // const _card = testCards.filter((c) => c.id === 'test')[0];
@@ -76,8 +79,11 @@ export default function HomePage(
   const [currentImage, setCurrentImage] = useState<string>();
   const [currentCredit, setCurrentCredit] = useState<string>();
   const [currentTitle, setCurrentTitle] = useState<string>();
+  const [currentId, setCurrentId] = useState<string>('Fan.1');
+
   const [currentFlavorText, setCurrentFlavorText] = useState<string>();
   const [currentFreeActions, setCurrentFreeActions] = useState<Effect[]>([]);
+  const [useUrl, setUseUrl] = useState(false);
 
   const handleReset = () => {
     setCurrentEffects([]);
@@ -88,6 +94,7 @@ export default function HomePage(
     setCurrentFlavorText('');
     setCurrentFreeActions([]);
     setCurrentImage('');
+    setCurrentId('Fan.1');
   };
   const handleEffectsChange = (effects: Effect[]) => {
     setCurrentEffects(effects);
@@ -111,6 +118,10 @@ export default function HomePage(
     if (e.target.files) setCurrentImage(URL.createObjectURL(e.target.files[0]));
   };
 
+  const handleSetImage = (data: string) => {
+    setCurrentImage(data);
+  };
+
   const handleCreditChange = (data: string) => {
     setCurrentCredit(data);
   };
@@ -123,9 +134,65 @@ export default function HomePage(
     setCurrentFlavorText(data);
   };
 
+  const handleUrlChange = () => {
+    setUseUrl((prev) => !prev);
+  };
+
+  const handleDownloadImage = async () => {
+    if (downloadRef.current === null) {
+      return;
+    }
+
+    toPng(downloadRef.current, { quality: 0.8, pixelRatio: 10 })
+      .then((dataUrl) => {
+        const link = document.createElement('a');
+        link.download = currentTitle + '.png';
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  const handleJsonImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileReader = new FileReader();
+    if (!e.target.files) {
+      return;
+    }
+    fileReader.readAsText(e.target.files[0], 'UTF-8');
+    fileReader.onload = (event) => {
+      if (!event.target) {
+        return;
+      }
+      try {
+        const parsedData = JSON.parse(event.target.result as string);
+        if (!parsedData?.special?.fanMade) {
+          throw new Error('Not Validate!');
+        }
+
+        setCurrentEffects(parsedData.effects);
+        setCurrentIncome(parsedData.income);
+        setCurrentSector(parsedData.sector);
+        setCurrentCredit(parsedData.price);
+        setCurrentTitle(parsedData.name);
+        setCurrentFlavorText(parsedData.flavorText);
+        setCurrentFreeActions(parsedData.freeAction);
+        setCurrentImage(parsedData.image);
+        setCurrentId(parsedData.id);
+        // setIsResetting(true);
+      } catch (error) {
+        alert("Failed to parse the JSON. Please ensure it's a valid JSON.");
+      }
+    };
+  };
+
   const renderCard = useMemo(() => {
     const res: BaseCard = {
       ...baseCards[0],
+      id: currentId || '',
       effects: currentEffects,
       income: currentIncome,
       sector: currentSector,
@@ -137,10 +204,15 @@ export default function HomePage(
       name: currentTitle || '',
       flavorText: currentFlavorText,
       freeAction: effects2FreeAction(currentFreeActions),
+      special: {
+        fanMade: true,
+        enableEffectRender: true,
+      },
     };
 
     return res;
   }, [
+    currentId,
     currentEffects,
     currentIncome,
     currentSector,
@@ -150,19 +222,54 @@ export default function HomePage(
     currentFlavorText,
     currentFreeActions,
   ]);
+
+  const exportToJson = () => {
+    const tmp = renderCard;
+    // tmp.image = ''; // FIXME: data storage?
+    const dataStr =
+      'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(tmp));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute('href', dataStr);
+    downloadAnchorNode.setAttribute(
+      'download',
+      `${renderCard.id || 'fan-made-card'}.json`
+    );
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
+
   return (
     <Layout>
       <div className='flex flex-col lg:flex-row gap-4 px-2'>
         <div className='relative flex flex-col w-full lg:w-3/5'>
           <div className='w-80 h-[440px]'>
             <div className='card-larger'>
-              <CardRender card={renderCard} />
+              <div ref={downloadRef} className=''>
+                <CardRender card={renderCard} />
+              </div>
             </div>
             {/* <EffectContainer effects={currentEffects} /> */}
           </div>
-          <Button variant='destructive' className='w-20' onClick={handleReset}>
-            Reset
-          </Button>
+          <div className='flex justify-start items-center gap-2 mb-2'>
+            <Button
+              variant='destructive'
+              className='w-20 mr-8'
+              onClick={handleReset}
+            >
+              Reset
+            </Button>
+            <Button
+              variant='highlight'
+              className='w-20'
+              onClick={handleDownloadImage}
+            >
+              Download
+            </Button>
+            <Button variant='highlight' className='w-20' onClick={exportToJson}>
+              Export
+            </Button>
+          </div>
           {/* <Button variant="highlight" className="w-20" onClick={handleExport}>Export</Button> */}
 
           {/* <EffectSelector
@@ -259,11 +366,27 @@ export default function HomePage(
 
           <div className='grid w-full max-w-sm items-center gap-1.5'>
             <Label htmlFor='picture'>Picture</Label>
-            <Input
-              id='picture'
-              type='file'
-              onChange={(e) => handleImageUpload(e)}
-            />
+            <div className='flex gap-2'>
+              {!useUrl ? (
+                <Input
+                  id='picture'
+                  type='file'
+                  onChange={(e) => handleImageUpload(e)}
+                />
+              ) : (
+                <Input
+                  type='url'
+                  id='url'
+                  placeholder='url'
+                  value={currentImage}
+                  onChange={(e) => handleSetImage(e.target.value)}
+                />
+              )}
+
+              <Button className='w-40' onClick={handleUrlChange}>
+                {useUrl ? t('Use Upload') : t('Use URL')}
+              </Button>
+            </div>
           </div>
           <div className='grid w-full max-w-sm items-center gap-1.5'>
             <Label htmlFor='credit'>credit</Label>
@@ -271,6 +394,7 @@ export default function HomePage(
               type='credit'
               id='credit'
               placeholder='credit'
+              value={currentCredit}
               onChange={(e) => handleCreditChange(e.target.value)}
             />
           </div>
@@ -280,6 +404,7 @@ export default function HomePage(
               type='title'
               id='title'
               placeholder='title'
+              value={currentTitle}
               onChange={(e) => handleTitleChange(e.target.value)}
             />
           </div>
@@ -288,8 +413,30 @@ export default function HomePage(
             <Input
               type='title'
               id='title'
+              value={currentFlavorText}
               placeholder='title'
               onChange={(e) => handleFlavorTextChange(e.target.value)}
+            />
+          </div>
+          <div className='grid w-full max-w-sm items-center gap-1.5'>
+            <Label htmlFor='title'>Card ID</Label>
+            <Input
+              type='title'
+              id='title'
+              value={currentId}
+              placeholder='title'
+              onChange={(e) => setCurrentId(e.target.value)}
+            />
+          </div>
+
+          <div className='grid w-full max-w-sm items-center gap-1.5'>
+            <Label htmlFor='animal-json-import'>{t('diy.import_json')}</Label>
+            <Input
+              id='animal-json-import'
+              type='file'
+              value=''
+              className=''
+              onChange={handleJsonImport}
             />
           </div>
         </div>

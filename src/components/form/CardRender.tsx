@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-26 23:56:31
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-21 01:49:47
+ * @LastEditTime: 2025-03-22 14:01:00
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
@@ -47,7 +47,7 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
         height: 'auto',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        borderRadius: '12px',
+        // borderRadius: '12px',
         boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
         zIndex: -1,
       };
@@ -94,6 +94,7 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
       </div>
       <div className={`card-render-title ${alienCls}`}>{t(card.name)}</div>
       <div className='card-render-credit'>{card.price}</div>
+      <div className='card-no'>{card.id}</div>
 
       {card?.special?.enableEffectRender && card.effects && (
         <EffectContainer effects={effects} className='bg-transparent' /> // 确保EffectContainer的z-index较高
@@ -104,6 +105,9 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
           flavorText={card.flavorText}
           className='bg-transparent'
         />
+      )}
+      {card?.special?.fanMade && (
+        <div className='card-watermark'>{t('watermark')}</div>
       )}
     </CardRenderWrapper>
   );

@@ -72,6 +72,23 @@
   text-overflow: ellipsis;
 } */
 
+.card-watermark {
+  position: absolute;
+  top: 20px;
+  left: -50px;
+  rotate: -90deg;
+  display: flex;
+  align-items: flex-end;
+  color: black;
+  width: 104px;
+  height: 20px;
+  font-size: 6px;
+  /* line-height: 5px; */
+  opacity: 20%;
+  padding-bottom: 2px;
+  box-sizing: border-box;
+}
+
 /* Method2: append */
 .card-flavor-text-container {
   position: absolute;
@@ -724,6 +741,25 @@
   top: 2px;
   left: 6px;
   height: 20px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.card-no {
+  color: black;
+  z-index: 5;
+  position: absolute;
+  bottom: 9px;
+  font-weight: 800;
+  left: -2px;
+  height: 20px;
+  width: 24px;
+  font-size: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  rotate: -90deg;
 }
 
 .card-sector-corner-background {
