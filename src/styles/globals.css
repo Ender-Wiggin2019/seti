@@ -123,3 +123,7 @@ html.dark {
 .preview {
   @apply z-10 duration-500 lg:hover:z-[99999] lg:hover:scale-[200%];
 }
+
+.bg-gradient-dark {
+  @apply bg-gradient-to-b shadow-lg shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20;
+}

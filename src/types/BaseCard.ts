@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 09:48:41
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-20 00:17:23
+ * @LastEditTime: 2025-03-22 13:12:02
  * @Description:
  */
 /*
@@ -40,6 +40,7 @@ export default interface BaseCard {
     danger?: number;
     descHelper?: string; // temporary translation for some texts
     enableEffectRender?: boolean; // temp
+    fanMade?: boolean;
   };
 
   // meta data

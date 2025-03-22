@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-12 12:22:14
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-22 01:03:12
+ * @LastEditTime: 2025-03-22 12:41:36
  * @Description:
  */
 
@@ -18,15 +18,15 @@ import {
   IBaseEffect,
   IMissionEffect,
 } from '@/types/effect';
+import { useTranslation } from 'next-i18next';
 
 type Props = {
   missionEffect: IMissionEffect | null;
   onChange?: (effect: IMissionEffect) => void;
 };
 export const QuickMissionSelector = ({ missionEffect, onChange }: Props) => {
-  // let missionEffect = selectedEffects.find(
-  //   (e) => e.effectType === EEffectType.MISSION_QUICK
-  // ) as IMissionEffect;
+  const { t } = useTranslation('common');
+
   if (!missionEffect) {
     missionEffect = m.QUICK_MISSION([], []);
   }
@@ -43,12 +43,14 @@ export const QuickMissionSelector = ({ missionEffect, onChange }: Props) => {
     }
   };
   return (
-    <div className='rounded-md border border-black flex flex-col gap-4'>
+    <div className='items-start justify-start space-x-2 rounded-md bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-lg shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 flex flex-col 2'>
+      <div className='text-lg text-white font-semibold'>{t('Condition')}</div>
       <EffectsGenerator
         selectedEffects={req}
         onChange={(e) => handleChange(e, 'req')}
         type={EEffectType.MISSION_QUICK}
       />
+      <div className='text-lg text-white font-semibold'>{t('Reward')}</div>
       <EffectsGenerator
         selectedEffects={reward}
         onChange={(e) => handleChange(e, 'reward')}

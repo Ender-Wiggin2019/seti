@@ -250,5 +250,6 @@
     "card-106": "When you pay the indicated cost to play a card as your main action:",
     "card-se-en-01": "Keep this card in front of you.<br>If vou have a probe in the outermost ring, <br>you may use an {orbit-action} or {land-action} action to place that probe on Pluto.",
     "et-pickup": "Then look at all {sample}<br> on the planet <br>and pick one up."
-  }
+  },
+  "watermark": "Fan Made"
 }
