@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-12 11:42:57
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-20 01:27:50
+ * @LastEditTime: 2025-03-22 15:52:46
  * @Description:
  */
 import { useState } from 'react';
@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { DESC } from '@/constant/effect';
 
 import { EEffectType, Effect, ICustomizedEffect } from '@/types/effect';
+import { HelpButton } from '@/components/ui/helper-dialog';
 
 type Props = {
   currentEffects: Effect[];
@@ -88,6 +89,7 @@ export const DescInput = ({ currentEffects, onChange }: Props) => {
           onChange={(e) => setNewDesc(e.target.value)}
         />
       </div>
+      <HelpButton />
       {newDesc && (
         <div className='flex justify-start w-full h-12 rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50 bg-zinc-950 ring-offset-zinc-950 placeholder:text-zinc-400 focus-visible:ring-primary'>
           <div className='text-zinc-400'>

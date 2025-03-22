@@ -45,6 +45,7 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
         backgroundImage: `url(${card.image})`,
         width: '150px',
         height: 'auto',
+        minHeight: '96px',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         // borderRadius: '12px',

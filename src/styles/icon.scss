@@ -84,3 +84,16 @@ $scales: (
 .icon-value-publicity {
   @include text-stroke('shadow', #f14927);
 }
+
+.icon-value-draw-alien-card {
+  @include text-stroke('shadow', #1b4448);
+}
+
+.icon-value-danger {
+  @include text-stroke('shadow', #061114);
+}
+
+.icon-value-exofossil,
+.icon-value-use-exofossil {
+  @include text-stroke('shadow', #694d96);
+}

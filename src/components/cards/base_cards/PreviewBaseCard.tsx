@@ -24,6 +24,7 @@ interface PreviewBaseCardProps {
 import { useTranslation } from 'next-i18next';
 
 import { FlavorText } from '@/components/cards/base_cards/FlavorText';
+import { CardRender } from '@/components/form/CardRender';
 
 export const PreviewBaseCard: React.FC<PreviewBaseCardProps> = ({
   card,
@@ -31,11 +32,16 @@ export const PreviewBaseCard: React.FC<PreviewBaseCardProps> = ({
 }) => {
   const { t } = useTranslation('seti');
 
+  const enableEffectRender = card?.special?.enableEffectRender;
   return (
     <Dialog>
       <DialogTrigger asChild>
         <div className='w-fit'>
-          <BaseCard card={card} />
+          {enableEffectRender ? (
+            <CardRender card={card} />
+          ) : (
+            <BaseCard card={card} />
+          )}
         </div>
       </DialogTrigger>
       <DialogContent className='sm:max-w-[425px] bg-gradient-to-b from-zinc-100 to-white backdrop-blur-lg'>

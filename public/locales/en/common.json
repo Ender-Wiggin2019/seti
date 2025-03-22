@@ -68,6 +68,13 @@
       "a_3": "Feel free to comment in the <1>BGG thread</1> or submit an issue at <3>GitHub</3>."
     }
   },
+  "helper": {
+    "howto": "How to use icons in description?",
+    "desc": "Full list of icons you can use in description.",
+    "name": "Syntax",
+    "example": "Example",
+    "display": "Display"
+  },
   "diy": {
     "card_maker": "Card Maker",
     "create_your_own_animal_card": "Create your own animal card.",

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 16:47:27
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-17 01:20:29
+ * @LastEditTime: 2025-03-22 15:33:16
  * @Description:
  */
 import { IBaseEffect } from '@/types/effect';
@@ -85,12 +85,22 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
       showValue = true;
       type = 'any-card-special'; // special render
       break;
+    case EMiscIcon.DRAW_ALIEN_CARD:
+      size = 'sm';
+      shape = 'normal';
+      showValue = true;
+      break;
     case EResource.CREDIT:
     case EResource.ENERGY:
     case EResource.DATA:
     case EResource.PUBLICITY:
+    case EMiscIcon.EXOFOSSIL:
+    case EMiscIcon.USE_EXOFOSSIL:
       shape = 'diamond';
       size = 'sm';
+      showValue = true;
+      break;
+    case EMiscIcon.DANGER:
       showValue = true;
       break;
     default:
