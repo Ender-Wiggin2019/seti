@@ -1,24 +1,10 @@
 {
-  "Amazing Uncertainty": "Amazing Uncertainty",
-  "Signs of Life": "Signs of Life",
-  "Hivemind Concept": "Hivemind Concept",
-  "Infocluster": "Infocluster",
-  "First Contact": "First Contact",
-  "Casette Deployment": "Casette Deployment",
   "Extractor": "Extractor",
   "Oscillating Probes": "Oscillating Probes",
-  "in the sector with Saturn": {
-    "": "in the sector with Saturn."
-  },
-  "Close-up View": "Close-up View",
-  "Message Capsule": "Message Capsule",
-  "Torrent-chain Signal": "Torrent-chain Signal",
-  "Orbital Monitoring": "Orbital Monitoring",
-  "Probe Customisation": "Probe Customisation",
-  "Terrain Mapping": "Terrain Mapping",
-  "Expender Core": "Expender Core",
-  "Nanowielder Node": "Nanowielder Node",
+  "pierced Exoplanet": "pierced Exoplanet",
   "Razor-edge Shuttle": "Razor-edge Shuttle",
+  "Vortex Exoplanet": "Vortex Exoplanet",
+  "Stratoelevator": "Stratoelevator",
   "Ignore the limit of probes in space for those launches": {
     "": "Ignore the limit of probes in space for those launches."
   },
@@ -28,12 +14,9 @@
   "You may land on a space that is already occupied and still get the covered reward": {
     "": "You may land on a space that is already occupied and still get the covered reward."
   },
-  "Are we Being Observed?": "Are we Being Observed?",
-  "A Message from Afar": "A Message from Afar",
-  "Synthesis Instructions": "Synthesis Instructions",
-  "Hive Sample": "Hive Sample",
-  "Rover Exploration": "Rover Exploration",
-  "pierced Exoplanet": "pierced Exoplanet",
+  "for a single species": "for a single species",
+  "for that species": "for that species",
+  "in the same sector": "in the same sector",
   "Reveal the card you drew, and gain its free-action corner effect": {
     "": "Reveal the card you drew, and gain its free-action corner effect."
   },
@@ -48,6 +31,9 @@
   },
   "in the sector with Jupiter": {
     "": "in the sector with Jupiter."
+  },
+  "in the sector with Saturn": {
+    "": "in the sector with Saturn."
   },
   "at Proxima Centauri": {
     "": "at Proxima Centauri."
@@ -72,5 +58,88 @@
   },
   "at Vega": {
     "": "at Vega."
-  }
+  },
+  "at Uranus": "at Uranus",
+  "desc": {
+    "card-104-req": "desc.card-104-req"
+  },
+  "todo": "todo",
+  "{score-2} for each {tech-computer} you have": "{score-2} for each {tech-computer} you have",
+  "First Contact": "First Contact",
+  "When you {orbit} / {land} at Mars (or its moons) or when you play a Card mentioning \"Mars\" in its flavor text:": "When you {orbit} / {land} at Mars (or its moons) or when you play a Card mentioning \"Mars\" in its flavor text:",
+  "Mass Sample Collection": "Mass Sample Collection",
+  "Martian Quarantine Lab": "Martian Quarantine Lab",
+  "Ecosystem Study": "Ecosystem Study",
+  "The Queen": "The Queen",
+  "Breeding Sample": "Breeding Sample",
+  "Deliver {sample} to Earth": "Deliver {sample} to Earth",
+  "Resolve {fulfill-sample} twice": {
+    "": "Resolve {fulfill-sample} twice."
+  },
+  "Hive Sample": "Hive Sample",
+  "Orbital Monitoring": "Orbital Monitoring",
+  "Computer Simulations": "Computer Simulations",
+  "Signs of Life": "Signs of Life",
+  "If it was in a sector with an anomaly, gain {move-1} ": {
+    "": "If it was in a sector with an anomaly, gain {move-1} ."
+  },
+  "Close-up View": "Close-up View",
+  "Don't gain any {publicity} for moving probes this turn": {
+    "": "Don't gain any {publicity} for moving probes this turn."
+  },
+  "Concerned People": "Concerned People",
+  "Listening Carefully": "Listening Carefully",
+  "In addition mark a {signal} in a sector with the anomaly which is going to be triggered next": {
+    "": "In addition mark a {signal} in a sector with the anomaly which is going to be triggered next."
+  },
+  "Part of Everyday Life": "Part of Everyday Life",
+  "Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income": {
+    "": "Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income."
+  },
+  "Flooding the Media Space": "Flooding the Media Space",
+  "Draw all three cards from the card row": {
+    "": "Draw all three cards from the card row."
+  },
+  "Are we Being Observed?": "Are we Being Observed?",
+  "Gain the reward from the anomaly which is going to be triggered next": {
+    "": "Gain the reward from the anomaly which is going to be triggered next."
+  },
+  "for this species": "for this species",
+  "New Physics": "New Physics",
+  "Amazing Uncertainty": "Amazing Uncertainty",
+  "Then gain {score-1} for each signal you have in sectors with anomalies": {
+    "": "Then gain {score-1} for each signal you have in sectors with anomalies."
+  },
+  "Visitor in the Sky": "Visitor in the Sky",
+  "Altered Trajectory": "Altered Trajectory",
+  "Terrain Mapping": "Terrain Mapping",
+  "Probe Customisation": "Probe Customisation",
+  "Race Against Time": "Race Against Time",
+  "Exofossil Samples": "Exofossil Samples",
+  "Comparative Analysis": "Comparative Analysis",
+  "Excavation Rover": "Excavation Rover",
+  "Vessel Designs": "Vessel Designs",
+  "Exocomputers": "Exocomputers",
+  "Infocluster": "Infocluster",
+  "Synthesis Instructions": "Synthesis Instructions",
+  "Alien Schematics": "Alien Schematics",
+  "Music of the Spheres": "Music of the Spheres",
+  "Telescope Blueprints": "Telescope Blueprints",
+  "Torrent-chain Signal": "Torrent-chain Signal",
+  "Deflector": "Deflector",
+  "Core-breach Exoplanet": "Core-breach Exoplanet",
+  "Fission-sun Exoplanet": "Fission-sun Exoplanet",
+  "Generative Infrastructure": "Generative Infrastructure",
+  "Casette Deployment": "Casette Deployment",
+  "Automated Lab": "Automated Lab",
+  "Neuralab": "Neuralab",
+  "Nanowielder Node": "Nanowielder Node",
+  "at Neptune": "at Neptune",
+  "Rover Exploration": "Rover Exploration",
+  "Message Capsule": "Message Capsule",
+  "Exofossil Discovery": "Exofossil Discovery",
+  "Perfect Timing": "Perfect Timing",
+  "A Message from Afar": "A Message from Afar",
+  "Hivemind Concept": "Hivemind Concept",
+  "Expender Core": "Expender Core"
 }

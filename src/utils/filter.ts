@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-07 23:02:36
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-24 00:21:16
+ * @LastEditTime: 2025-03-24 00:25:02
  * @Description:
  */
 import BaseCard from '@/types/BaseCard';
@@ -70,7 +70,7 @@ const serializeEffect = (effect: Effect, t: (text: string) => string) => {
         reward: serializeEffects(mission.reward, t),
       };
     });
-    effectObj.desc = effect.desc || '';
+    effectObj.desc = t(effect.desc || '');
   } else if (effect.effectType === EEffectType.OR) {
     effectObj.effects = serializeEffects(effect.effects, t);
   }
@@ -106,7 +106,7 @@ const effect2String = (effect: Effect, t: (text: string) => string): string => {
       effectArray.push(effects2String(mission.req, t));
       effectArray.push(effects2String(mission.reward, t));
     });
-    effectArray.push(effect.desc || '');
+    effectArray.push(t(effect.desc || ''));
   } else if (effect.effectType === EEffectType.OR) {
     effectArray.push(effects2String(effect.effects, t));
   }
