@@ -238,9 +238,9 @@
     "card-88-req": "in a sector with one of your probes.",
     "card-89-req": "Have no cards in your hand",
     "card-90": "Gain {energy-1} for each card with {energy-income} <br> income you show from your hand.",
-    "card-91": "Gain {energy-1} for each card with {energy-income} <br>trucked income.<br> Then increase your {income} with this card.",
-    "card-92": "Gain {publicity-1} for each card with {card-income} <br>trucked income.<br> Then increase your {income} with this card.",
-    "card-93": "Gain {score-3} for each card with {credit-income} <br>trucked income.<br> Then increase your {income} with this card.",
+    "card-91": "Gain {energy-1} for each card with {energy-income} <br>tucked income.<br> Then increase your {income} with this card.",
+    "card-92": "Gain {publicity-1} for each card with {card-income} <br>tucked income.<br> Then increase your {income} with this card.",
+    "card-93": "Gain {score-3} for each card with {credit-income} <br>tucked income.<br> Then increase your {income} with this card.",
 
     "card-95-req": "Have a probe on asteroids adjacent to Earth",
     "card-98": "Mark a {red-trace} for a species<br> for which you have already marked a {red-trace}.",
