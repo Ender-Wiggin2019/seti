@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 12:05:53
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-01 23:26:33
+ * @LastEditTime: 2025-03-23 12:17:22
  * @Description:
  */
 import {
@@ -55,7 +55,11 @@ export const PreviewBaseCard: React.FC<PreviewBaseCardProps> = ({
         </DialogHeader>
         <div className='p-4 w-full flex justify-center items-center h-[450px]'>
           <div className='scale-[2] w-fit'>
-            <BaseCard card={card} />
+            {enableEffectRender ? (
+              <CardRender card={card} />
+            ) : (
+              <BaseCard card={card} />
+            )}
           </div>
         </div>
         {card.special?.descHelper && (

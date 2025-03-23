@@ -31,7 +31,7 @@ export default function HomePage(
           <p className='leading-7 [&:not(:first-child)]:mt-6'>
             测试版本，仍在开发中。Ender
             制作。特别感谢根派大佬帮忙提供修正天文术语的官方翻译,
-            以及自爆型大老师对卡牌翻译的帮忙。
+            以及自爆型大老师和天使对卡牌翻译的帮忙。
           </p>
           {/* <p className='leading-7 [&:not(:first-child)]:mt-6'>
             <Trans i18nKey='about.intro'>
