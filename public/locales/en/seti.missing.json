@@ -1,27 +1,25 @@
 {
+  "Synthesis Instructions": "Synthesis Instructions",
+  "Torrent-chain Signal": "Torrent-chain Signal",
+  "Telescope Blueprints": "Telescope Blueprints",
+  "Rover Exploration": "Rover Exploration",
+  "Martian Quarantine Lab": "Martian Quarantine Lab",
+  "Exofossil Discovery": "Exofossil Discovery",
+  "Mass Sample Collection": "Mass Sample Collection",
+  "Probe Customisation": "Probe Customisation",
   "Extractor": "Extractor",
-  "Oscillating Probes": "Oscillating Probes",
-  "pierced Exoplanet": "pierced Exoplanet",
+  "Breeding Sample": "Breeding Sample",
+  "The Queen": "The Queen",
+  "Expender Core": "Expender Core",
   "Razor-edge Shuttle": "Razor-edge Shuttle",
-  "Vortex Exoplanet": "Vortex Exoplanet",
-  "Stratoelevator": "Stratoelevator",
   "Ignore the limit of probes in space for those launches": {
     "": "Ignore the limit of probes in space for those launches."
   },
-  "LAND on a planet or a moon, even without the required tech": {
-    "": "LAND on a planet or a moon, even without the required tech."
-  },
-  "You may land on a space that is already occupied and still get the covered reward": {
-    "": "You may land on a space that is already occupied and still get the covered reward."
-  },
-  "for a single species": "for a single species",
-  "for that species": "for that species",
-  "in the same sector": "in the same sector",
   "Reveal the card you drew, and gain its free-action corner effect": {
     "": "Reveal the card you drew, and gain its free-action corner effect."
   },
-  "in the sector with Mercury": {
-    "": "in the sector with Mercury."
+  "You may land on a space that is already occupied and still get the covered reward": {
+    "": "You may land on a space that is already occupied and still get the covered reward."
   },
   "in the sector with Venus": {
     "": "in the sector with Venus."
@@ -38,20 +36,11 @@
   "at Proxima Centauri": {
     "": "at Proxima Centauri."
   },
-  "at Barnard's Star": {
-    "": "at Barnard's Star."
-  },
   "at 61 Virginis": {
     "": "at 61 Virginis."
   },
-  "at Kepler 22": {
-    "": "at Kepler 22."
-  },
   "at Sirius A": {
     "": "at Sirius A."
-  },
-  "at Procyon": {
-    "": "at Procyon."
   },
   "at Beta Pictoris": {
     "": "at Beta Pictoris."
@@ -60,6 +49,8 @@
     "": "at Vega."
   },
   "at Uranus": "at Uranus",
+  "for a single species": "for a single species",
+  "for that species": "for that species",
   "desc": {
     "card-104-req": "desc.card-104-req"
   },
@@ -67,11 +58,7 @@
   "{score-2} for each {tech-computer} you have": "{score-2} for each {tech-computer} you have",
   "First Contact": "First Contact",
   "When you {orbit} / {land} at Mars (or its moons) or when you play a Card mentioning \"Mars\" in its flavor text:": "When you {orbit} / {land} at Mars (or its moons) or when you play a Card mentioning \"Mars\" in its flavor text:",
-  "Mass Sample Collection": "Mass Sample Collection",
-  "Martian Quarantine Lab": "Martian Quarantine Lab",
   "Ecosystem Study": "Ecosystem Study",
-  "The Queen": "The Queen",
-  "Breeding Sample": "Breeding Sample",
   "Deliver {sample} to Earth": "Deliver {sample} to Earth",
   "Resolve {fulfill-sample} twice": {
     "": "Resolve {fulfill-sample} twice."
@@ -105,7 +92,7 @@
     "": "Gain the reward from the anomaly which is going to be triggered next."
   },
   "for this species": "for this species",
-  "New Physics": "New Physics",
+  "Message Capsule": "Message Capsule",
   "Amazing Uncertainty": "Amazing Uncertainty",
   "Then gain {score-1} for each signal you have in sectors with anomalies": {
     "": "Then gain {score-1} for each signal you have in sectors with anomalies."
@@ -113,33 +100,46 @@
   "Visitor in the Sky": "Visitor in the Sky",
   "Altered Trajectory": "Altered Trajectory",
   "Terrain Mapping": "Terrain Mapping",
-  "Probe Customisation": "Probe Customisation",
   "Race Against Time": "Race Against Time",
+  "Perfect Timing": "Perfect Timing",
   "Exofossil Samples": "Exofossil Samples",
   "Comparative Analysis": "Comparative Analysis",
   "Excavation Rover": "Excavation Rover",
   "Vessel Designs": "Vessel Designs",
   "Exocomputers": "Exocomputers",
   "Infocluster": "Infocluster",
-  "Synthesis Instructions": "Synthesis Instructions",
   "Alien Schematics": "Alien Schematics",
-  "Music of the Spheres": "Music of the Spheres",
-  "Telescope Blueprints": "Telescope Blueprints",
-  "Torrent-chain Signal": "Torrent-chain Signal",
+  "Hivemind Concept": "Hivemind Concept",
   "Deflector": "Deflector",
+  "pierced Exoplanet": "pierced Exoplanet",
   "Core-breach Exoplanet": "Core-breach Exoplanet",
+  "Vortex Exoplanet": "Vortex Exoplanet",
   "Fission-sun Exoplanet": "Fission-sun Exoplanet",
+  "Oscillating Probes": "Oscillating Probes",
   "Generative Infrastructure": "Generative Infrastructure",
   "Casette Deployment": "Casette Deployment",
   "Automated Lab": "Automated Lab",
   "Neuralab": "Neuralab",
   "Nanowielder Node": "Nanowielder Node",
+  "Stratoelevator": "Stratoelevator",
+  "LAND on a planet or a moon, even without the required tech": {
+    "": "LAND on a planet or a moon, even without the required tech."
+  },
+  "in the sector with Mercury": {
+    "": "in the sector with Mercury."
+  },
+  "at Barnard's Star": {
+    "": "at Barnard's Star."
+  },
+  "at Kepler 22": {
+    "": "at Kepler 22."
+  },
+  "at Procyon": {
+    "": "at Procyon."
+  },
   "at Neptune": "at Neptune",
-  "Rover Exploration": "Rover Exploration",
-  "Message Capsule": "Message Capsule",
-  "Exofossil Discovery": "Exofossil Discovery",
-  "Perfect Timing": "Perfect Timing",
+  "in the same sector": "in the same sector",
   "A Message from Afar": "A Message from Afar",
-  "Hivemind Concept": "Hivemind Concept",
-  "Expender Core": "Expender Core"
+  "Music of the Spheres": "Music of the Spheres",
+  "New Physics": "New Physics"
 }

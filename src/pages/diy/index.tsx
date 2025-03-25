@@ -32,7 +32,7 @@ import {
   updateEffectArray,
 } from '@/utils/effect';
 
-import BaseCard from '@/types/BaseCard';
+import { IBaseCard } from '@/types/BaseCard';
 import { Effect } from '@/types/effect';
 import { EResource, ESector, TSize } from '@/types/element';
 import Seo from '@/components/Seo';
@@ -167,7 +167,7 @@ export default function HomePage(
   };
 
   const renderCard = useMemo(() => {
-    const res: BaseCard = {
+    const res: IBaseCard = {
       ...baseCards[0],
       id: currentId || '',
       effects: currentEffects,

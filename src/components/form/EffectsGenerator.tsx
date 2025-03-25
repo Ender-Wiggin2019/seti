@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import { DescInput } from '@/components/form/DescInput';
 import { EffectSelector } from '@/components/form/EffectSelector';

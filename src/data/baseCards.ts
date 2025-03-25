@@ -10,8 +10,7 @@
 import { d } from '@/constant/desc';
 import { DESC, DESC_WITH_TYPE, e, m, OR } from '@/constant/effect';
 
-import BaseCard from '@/types/BaseCard';
-import { EEffectType } from '@/types/effect';
+import { IBaseCard } from '@/types/BaseCard';
 import {
   EMiscIcon,
   EResource,
@@ -19,7 +18,8 @@ import {
   ESector,
   ETrace,
 } from '@/types/element';
-const _baseCards: BaseCard[] = [
+
+const _baseCards: IBaseCard[] = [
   {
     id: '39',
     name: '61 Virginis Observation',
@@ -2113,7 +2113,7 @@ const _baseCards: BaseCard[] = [
 ];
 
 // add flavorText
-export const baseCards: BaseCard[] = _baseCards.map((card) => {
+export const baseCards: IBaseCard[] = _baseCards.map((card) => {
   return {
     ...card,
     flavorText: `${card.id}_flavor_text`,
@@ -2124,26 +2124,26 @@ export const baseCards: BaseCard[] = _baseCards.map((card) => {
   };
 });
 
-export const testCards: BaseCard[] = [
-  {
-    id: 'test',
-    name: 'ALICE',
-    position: { src: '/images/cards/cards-1.webp', row: 0, col: 3 },
-    freeAction: [{ type: EResource.MOVE, value: 1 }],
-    sector: ESector.BLUE,
-    price: 3,
-    income: EResource.CREDIT,
-    effects: [
-      // e.DATA(1),
-      e.PUBLICITY(1),
-      e.TECH_COMPUTER(2),
-      m.QUICK_MISSION(
-        [e.ORBIT_OR_LAND_COUNT(1), DESC('at jupiter (incl. moons)')],
-        [e.DATA(2), e.SCORE(2)]
-      ),
-    ],
-  },
-];
+// export const testCards: IBaseCard[] = [
+//   {
+//     id: 'test',
+//     name: 'ALICE',
+//     position: { src: '/images/cards/cards-1.webp', row: 0, col: 3 },
+//     freeAction: [{ type: EResource.MOVE, value: 1 }],
+//     sector: ESector.BLUE,
+//     price: 3,
+//     income: EResource.CREDIT,
+//     effects: [
+//       // e.DATA(1),
+//       e.PUBLICITY(1),
+//       e.TECH_COMPUTER(2),
+//       m.QUICK_MISSION(
+//         [e.ORBIT_OR_LAND_COUNT(1), DESC('at jupiter (incl. moons)')],
+//         [e.DATA(2), e.SCORE(2)]
+//       ),
+//     ],
+//   },
+// ];
 // export const baseCards: BaseCard[] = [
 //     {
 //       id: '39',

@@ -6,6 +6,7 @@
  * @Description:
  */
 
+import { useTranslation } from 'next-i18next';
 import React, { useState } from 'react';
 
 import { EffectsGenerator } from '@/components/form/EffectsGenerator';
@@ -18,7 +19,6 @@ import {
   IBaseEffect,
   IMissionEffect,
 } from '@/types/effect';
-import { useTranslation } from 'next-i18next';
 
 type Props = {
   missionEffect: IMissionEffect | null;

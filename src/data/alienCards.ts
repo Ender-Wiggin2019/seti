@@ -12,9 +12,10 @@
 
 import { DESC, DESC_WITH_TYPE, e, m } from '@/constant/effect';
 
-import BaseCard, { EAlienType } from '@/types/BaseCard';
+import { EAlienType, IBaseCard } from '@/types/BaseCard';
 import { EResource, EScanAction, ESector } from '@/types/element';
-export const _alienCards: BaseCard[] = [
+
+export const _alienCards: IBaseCard[] = [
   {
     id: 'ET.20',
     name: 'Amazing Uncertainty',
@@ -735,7 +736,7 @@ export const _alienCards: BaseCard[] = [
 ];
 
 // add flavorText
-export const alienCards: BaseCard[] = _alienCards.map((card) => {
+export const alienCards: IBaseCard[] = _alienCards.map((card) => {
   return {
     ...card,
     flavorText: `${card.id}_flavor_text`,

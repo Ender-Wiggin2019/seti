@@ -16,9 +16,9 @@ import {
 
 import { BaseCard } from './BaseCard';
 
-import BaseCardType from '@/types/BaseCard';
+import { IBaseCard } from '@/types/BaseCard';
 interface PreviewBaseCardProps {
-  card: BaseCardType;
+  card: IBaseCard;
   showLink?: boolean;
 }
 import { useTranslation } from 'next-i18next';

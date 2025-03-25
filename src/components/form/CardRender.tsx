@@ -17,11 +17,11 @@ import CardRenderWrapper from '@/components/wrapper/AnimalWrapper';
 import { ESectorColorMap } from '@/constant/color';
 import { freeAction2Effect } from '@/utils/effect';
 
-import CardRenderType, { EAlienMap } from '@/types/BaseCard';
+import { EAlienMap, IBaseCard } from '@/types/BaseCard';
 import { ESector } from '@/types/element';
 
 interface CardRenderProps {
-  card: CardRenderType;
+  card: IBaseCard;
 }
 
 export const CardRender: React.FC<CardRenderProps> = ({ card }) => {

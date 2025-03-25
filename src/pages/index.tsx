@@ -130,8 +130,8 @@ export default function HomePage(
 
   return (
     <Layout>
-      {/* <Seo templateTitle='Home' /> */}
-      <Seo />
+      <Seo templateTitle='Home' />
+      {/* <Seo /> */}
 
       <main>
         <div className='flex flex-col space-y-4 px-2 py-2 md:px-4'>
@@ -154,10 +154,6 @@ export default function HomePage(
               reset={reset}
             /> */}
           </div>
-          {/* <Switch
-            checked={isAdvancedSearch}
-            onCheckedChange={setIsAdvancedSearch}
-          /> */}
           <div className='text-lg text-primary-200 font-bold'>
             {t('free_action')}
           </div>

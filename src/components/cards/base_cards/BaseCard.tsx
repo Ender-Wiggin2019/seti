@@ -2,21 +2,20 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-26 23:56:31
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-09 12:36:57
+ * @LastEditTime: 2025-03-25 18:52:25
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
 import React from 'react';
 
-import { CardIncome } from '@/components/card/CardIncome';
 import { FlavorText } from '@/components/cards/base_cards/FlavorText';
 import { EffectContainer } from '@/components/effect/EffectContainer';
 import BaseCardWrapper from '@/components/wrapper/AnimalWrapper';
 
-import BaseCardType, { EAlienMap } from '@/types/BaseCard';
+import { EAlienMap, IBaseCard } from '@/types/BaseCard';
 
 interface BaseCardProps {
-  card: BaseCardType;
+  card: IBaseCard;
 }
 
 export const BaseCard: React.FC<BaseCardProps> = ({ card }) => {

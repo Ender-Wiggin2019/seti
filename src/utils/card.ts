@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-29 11:57:13
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-04 15:51:01
+ * @LastEditTime: 2025-03-25 18:56:43
  * @Description:
  */
 
@@ -11,18 +11,9 @@ import baseCards from '@/data/baseCards';
 
 import { sortCards } from '@/utils/sort';
 
-import BaseCard from '@/types/BaseCard';
-import { Card } from '@/types/Card';
 import { EEffectType, Effect } from '@/types/effect';
 import { EScanAction, ETech, ETrace, TIcon } from '@/types/element';
-
-export function isBaseCard(card: Card): card is BaseCard {
-  return !card.alien;
-}
-
-export function isAlienCard(card: Card): boolean {
-  return !!card.alien;
-}
+import { IBaseCard } from '@/types/BaseCard';
 
 export const getAllCardIds = () => {
   return [...baseCards, ...alienCards].map((card) => card.id);
@@ -41,8 +32,8 @@ export const getCardsById = (ids: string[], sort?: boolean) => {
 
 // NOTE: a special function to filter cards by front end icons
 // It will have some hard code logic for display
-export const filterCardsByIcons = (cards: BaseCard[], icons: TIcon[]) => {
-  const res: BaseCard[] = [];
+export const filterCardsByIcons = (cards: IBaseCard[], icons: TIcon[]) => {
+  const res: IBaseCard[] = [];
   for (const card of cards) {
     if (!card.effects) continue;
 

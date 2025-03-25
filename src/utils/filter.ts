@@ -2,15 +2,15 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-07 23:02:36
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-24 00:25:02
+ * @LastEditTime: 2025-03-25 18:57:29
  * @Description:
  */
-import BaseCard from '@/types/BaseCard';
+import { IBaseCard } from '@/types/BaseCard';
 import { EEffectType, Effect } from '@/types/effect';
 
 export const filterText = (
   _text: string,
-  cards: BaseCard[],
+  cards: IBaseCard[],
   t: (text: string) => string
 ) => {
   const text = _text.toLowerCase().trim();

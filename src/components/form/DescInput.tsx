@@ -7,15 +7,16 @@
  */
 import { useState } from 'react';
 
+import { cn } from '@/lib/utils';
+
 import { DescRender } from '@/components/effect/DescRender';
 import { Button } from '@/components/ui/button';
+import { HelpButton } from '@/components/ui/helper-dialog';
 import { Textarea } from '@/components/ui/textarea';
 
 import { DESC } from '@/constant/effect';
 
 import { EEffectType, Effect, ICustomizedEffect } from '@/types/effect';
-import { HelpButton } from '@/components/ui/helper-dialog';
-import { cn } from '@/lib/utils';
 
 type Props = {
   currentEffects: Effect[];

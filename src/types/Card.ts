@@ -2,12 +2,9 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-02-29 11:57:43
+ * @LastEditTime: 2025-03-25 18:47:49
  * @Description:
  */
-import BaseCard from '@/types/BaseCard';
-
-export type Card = BaseCard;
 
 export enum CardType {
   ANIMAL_CARD = 'BaseCard',

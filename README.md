@@ -11,10 +11,10 @@ Expect frequent improvements.
 
 Next up:
 
-- [ ] All aliens
+- [x] All aliens
 - [ ] Card description translation
-- [ ] Card flavor text translation
-- [ ] DIY
+- [x] Card flavor text translation
+- [x] DIY
 - [ ] Alien boards
 
 ## Running Locally
@@ -36,17 +36,6 @@ If you don't hav `pnpm` installed, you can install it with the following command
 ```bash
 npm install -g pnpm
 ```
-
-**3. Set Environment Variables**
-
-```bash
-mv .env.example .env.local
-```
-
-For now, I use the following technologies:
-
-- [Clerk](https://www.clerk.dev/) for authentication. You can sign up for a free account [here](https://www.clerk.dev/). Once you have an account, you can create a new project and get your API keys. Then, you can add them to your `.env.local` file.
-- [Neon](https://neon.tech/) for database. It's not integrated yet, but will be implemented in the future.
 
 **3. Run App**
 

@@ -17,15 +17,12 @@
     "format:check": "prettier -c .",
     "postbuild": "next-sitemap --config next-sitemap.config.js",
     "prepare": "husky install",
-    "postinstall": "prisma generate",
     "deploy": "vercel deploy --prod"
   },
   "dependencies": {
     "@babel/types": "^7.26.9",
-    "@clerk/nextjs": "^5.2.1",
     "@headlessui/react": "^1.7.15",
     "@hookform/resolvers": "^3.2.0",
-    "@prisma/client": "5.1.1",
     "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-dialog": "^1.0.4",
     "@radix-ui/react-hover-card": "^1.0.6",
@@ -44,7 +41,6 @@
     "class-variance-authority": "^0.6.1",
     "clsx": "^1.2.1",
     "cmdk": "^0.2.0",
-    "date-fns": "^3.6.0",
     "dayjs": "^1.11.9",
     "embla-carousel-react": "^8.1.5",
     "framer-motion": "^10.12.18",
@@ -54,14 +50,11 @@
     "i18next-browser-languagedetector": "^7.1.0",
     "i18next-http-backend": "^2.2.1",
     "i18next-parser": "^8.0.0",
-    "less": "^4.2.2",
-    "less-loader": "^12.2.0",
     "lodash": "^4.17.21",
     "lucide-react": "^0.259.0",
     "next": "^13.3.4",
     "next-i18next": "^14.0.0",
     "next-themes": "^0.2.1",
-    "next-with-less": "^3.0.1",
     "radix-ui": "^1.0.1",
     "react": "18.2.0",
     "react-card-flip": "^1.2.0",
@@ -77,9 +70,7 @@
     "seedrandom": "^3.0.5",
     "tailwind-merge": "^1.13.2",
     "tailwindcss-animate": "^1.0.6",
-    "uuid": "^10.0.0",
-    "valtio": "^1.11.1",
-    "zod": "^3.22.0"
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^16.3.0",
@@ -113,7 +104,6 @@
     "postcss": "^8.4.23",
     "prettier": "^2.8.8",
     "prettier-plugin-tailwindcss": "^0.1.13",
-    "prisma": "5.1.1",
     "sass": "^1.85.1",
     "tailwindcss": "^3.3.2",
     "typescript": "^4.9.5"

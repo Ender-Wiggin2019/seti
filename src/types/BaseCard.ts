@@ -17,7 +17,7 @@ import { CardSource } from '@/types/CardSource';
 import { Effect } from '@/types/effect';
 import { EResource, ESector } from '@/types/element';
 
-export default interface BaseCard {
+export interface IBaseCard {
   id: string;
   name: string;
   // use for official cards

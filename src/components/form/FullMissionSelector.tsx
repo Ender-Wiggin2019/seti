@@ -7,12 +7,14 @@
  */
 
 import { isEqual } from 'lodash';
+import { useTranslation } from 'next-i18next';
 import React, { useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
 import { EffectsGenerator } from '@/components/form/EffectsGenerator';
 import { AccordionV2 } from '@/components/ui/accordion-v2';
+import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
 import { m } from '@/constant/effect';
@@ -23,8 +25,6 @@ import {
   IBaseEffect,
   IMissionEffect,
 } from '@/types/effect';
-import { useTranslation } from 'next-i18next';
-import { Button } from '@/components/ui/button';
 
 type Props = {
   missionEffect: IMissionEffect | null;

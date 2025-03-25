@@ -1,10 +1,17 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2025-03-04 11:28:00
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-03-25 18:48:22
+ * @Description:
+ */
 import { Popover, Transition } from '@headlessui/react';
 
 import { BaseCard } from './BaseCard';
 
-import BaseCardType from '@/types/BaseCard';
+import { IBaseCard } from '@/types/BaseCard';
 interface PreviewBaseCardProps {
-  card: BaseCardType;
+  card: IBaseCard;
   showLink?: boolean;
 }
 import { useTranslation } from 'next-i18next';
