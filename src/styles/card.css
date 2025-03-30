@@ -311,6 +311,25 @@
   right: 4px;
 }
 
+.card-price-container {
+  position: absolute;
+  height: auto;
+  top: 83px;
+  overflow: hidden;
+  left: -1px;
+}
+
+.card-price-svg {
+  width: 100%;
+  height: auto;
+}
+
+.card-price-icon {
+  position: absolute;
+  left: 11px;
+  top: 3px;
+}
+
 /** Aliens */
 .anomalies {
   top: 87px;
@@ -792,10 +811,19 @@
   border-radius: 12px;
 }
 
+.card-title-container {
+  position: absolute;
+  height: auto;
+  top: 95px;
+  overflow: hidden;
+  left: 34px;
+}
+
 .card-render-title {
   position: absolute;
-  top: 95px;
-  left: 40px;
+  z-index: 10;
+  /* top: 95px; */
+  left: 6px;
   width: 110px;
   height: 12px;
   font-size: 6px;
@@ -805,10 +833,14 @@
   justify-content: center;
 }
 
+.card-title-svg {
+}
+
 .card-render-credit {
   position: absolute;
-  top: 88px;
-  left: 0px;
+  z-index: 10;
+  top: 5px;
+  left: 1px;
   width: 12px;
   height: 16px;
   font-size: 18px;

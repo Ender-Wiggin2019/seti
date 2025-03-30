@@ -2,13 +2,14 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-26 23:56:31
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-22 14:01:00
+ * @LastEditTime: 2025-03-31 01:50:02
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
 import React, { useMemo } from 'react';
 
 import { CardIncome } from '@/components/card/CardIncome';
+import { CardPrice } from '@/components/card/CardPrice';
 import { FlavorText } from '@/components/cards/base_cards/FlavorText';
 import { EffectFactory } from '@/components/effect/Effect';
 import { EffectContainer } from '@/components/effect/EffectContainer';
@@ -18,7 +19,8 @@ import { ESectorColorMap } from '@/constant/color';
 import { freeAction2Effect } from '@/utils/effect';
 
 import { EAlienMap, IBaseCard } from '@/types/BaseCard';
-import { ESector } from '@/types/element';
+import { EResource, ESector } from '@/types/element';
+import { CardTitle } from '@/components/card/CardTitle';
 
 interface CardRenderProps {
   card: IBaseCard;
@@ -93,8 +95,10 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
       <div className='card-cell card-render'>
         {card.income && <CardIncome income={card.income} />}
       </div>
-      <div className={`card-render-title ${alienCls}`}>{t(card.name)}</div>
-      <div className='card-render-credit'>{card.price}</div>
+      <CardTitle color='#3E403B' title={t(card.name)} />
+      {/* <div className={`card-render-title ${alienCls}`}>{t(card.name)}</div> */}
+      {/* <div className='card-render-credit'>{card.price}</div> */}
+      <CardPrice type={EResource.CREDIT} price={card.price} />
       <div className='card-no'>{card.id}</div>
 
       {card?.special?.enableEffectRender && card.effects && (
