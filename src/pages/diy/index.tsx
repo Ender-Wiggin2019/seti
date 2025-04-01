@@ -3,14 +3,14 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-01 00:33:02
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-02 00:34:50
+ * @LastEditTime: 2025-04-02 01:24:10
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import React, { useMemo, useState } from 'react';
-
+import { HexColorPicker } from 'react-colorful';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -65,6 +65,9 @@ export default function HomePage(
   const [currentFreeActions, setCurrentFreeActions] = useState<Effect[]>([]);
   const [useUrl, setUseUrl] = useState(false);
 
+  const [color, setColor] = useState('#3E403B');
+  const [priceType, setPriceType] = useState(EResource.CREDIT);
+
   const handleReset = () => {
     setCurrentEffects([]);
     setCurrentIncome(EResource.CREDIT);
@@ -74,6 +77,8 @@ export default function HomePage(
     setCurrentFlavorText('');
     setCurrentFreeActions([]);
     setCurrentImage('');
+    setColor('#3E403B');
+    setPriceType(EResource.CREDIT);
     setCurrentId('Fan.1');
   };
   const handleEffectsChange = (effects: Effect[]) => {
@@ -112,6 +117,10 @@ export default function HomePage(
 
   const handleFlavorTextChange = (data: string) => {
     setCurrentFlavorText(data);
+  };
+
+  const handlePriceTypeChange = (data: EResource) => {
+    setPriceType(data);
   };
 
   const handleUrlChange = () => {
@@ -160,6 +169,8 @@ export default function HomePage(
         setCurrentFreeActions(parsedData.freeAction);
         setCurrentImage(parsedData.image);
         setCurrentId(parsedData.id);
+        setColor(parsedData.color);
+        setPriceType(parsedData.priceType);
         // setIsResetting(true);
       } catch (error) {
         alert("Failed to parse the JSON. Please ensure it's a valid JSON.");
@@ -177,12 +188,14 @@ export default function HomePage(
       // position: { src: currentImage || '', row: 0, col: 0 },
       image: currentImage,
       price: Number(currentCredit) || 0,
+      priceType: priceType,
       name: currentTitle || '',
       flavorText: currentFlavorText,
       freeAction: effects2FreeAction(currentFreeActions),
       special: {
         fanMade: true,
         enableEffectRender: true,
+        titleColor: color,
       },
     };
 
@@ -194,9 +207,11 @@ export default function HomePage(
     currentSector,
     currentImage,
     currentCredit,
+    priceType,
     currentTitle,
     currentFlavorText,
     currentFreeActions,
+    color,
   ]);
 
   return (
@@ -250,7 +265,7 @@ export default function HomePage(
             onChange={handleFreeActionChange}
           />
 
-          <AccordionV2 title='Income'>
+          <AccordionV2 title={t('Income')}>
             {/* <div className='text-white text-lg'>Income</div> */}
             <div className='w-full grid grid-cols-5 gap-4 lg:grid-cols-5 flex-shrink-0 h-40'>
               {Object.values(EResource).map((e) => {
@@ -365,6 +380,34 @@ export default function HomePage(
               onChange={(e) => setCurrentId(e.target.value)}
             />
           </div>
+
+          <AccordionV2 title={t('Advanced')}>
+            <HexColorPicker color={color} onChange={setColor} />;
+            <AccordionV2 title={t('Price Type')}>
+              {/* <div className='text-white text-lg'>Income</div> */}
+              <div className='w-full grid grid-cols-5 gap-4 lg:grid-cols-5 flex-shrink-0 h-40'>
+                {Object.values(EResource).map((e) => {
+                  return (
+                    <div
+                      key={e}
+                      onClick={() => handlePriceTypeChange(e)}
+                      className={cn(
+                        'flex w-40 h-40 items-center rounded-md bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 p-2 shadow-md h-18 w-18 justify-center'
+                        // { 'ring-white/10 from-zinc-900/30 to-primary/80': hasEffect }
+                      )}
+                    >
+                      <EffectFactory
+                        effect={{
+                          ...getEffectByIconType(e)!,
+                          size: 'xl' as TSize,
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </AccordionV2>
+          </AccordionV2>
 
           <div className='grid w-full max-w-sm items-center gap-1.5'>
             <Label htmlFor='animal-json-import'>{t('diy.import_json')}</Label>

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-26 23:56:31
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-31 01:50:02
+ * @LastEditTime: 2025-04-02 01:01:09
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
@@ -21,6 +21,7 @@ import { freeAction2Effect } from '@/utils/effect';
 import { EAlienMap, IBaseCard } from '@/types/BaseCard';
 import { EResource, ESector } from '@/types/element';
 import { CardTitle } from '@/components/card/CardTitle';
+import { CardMiddleBar } from '@/components/card/CardMiddleBar';
 
 interface CardRenderProps {
   card: IBaseCard;
@@ -68,14 +69,17 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
       };
     }
   }, [card.image, col, cols, row, src]);
-  return (
-    <CardRenderWrapper id={card.id}>
-      <div className='card-free-action'>
-        {freeActionEffects.map((e) => (
-          <EffectFactory key={e.type} effect={e} />
-        ))}
-        {/* <EffectContainer effects={freeActionEffects} /> */}
-      </div>
+
+  const renderFreeAction = () => (
+    <div className='card-free-action'>
+      {freeActionEffects.map((e) => (
+        <EffectFactory key={e.type} effect={e} />
+      ))}
+    </div>
+  );
+
+  const renderSector = () => (
+    <>
       <div
         className='card-sector-corner-background'
         style={{
@@ -87,22 +91,30 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
       <div className='card-sector-corner-signal'>
         <div className={`seti-icon icon-${card.sector}-corner`}></div>
       </div>
-      {card.image ? (
-        <img src={card.image || src} alt={card.name} style={style} />
-      ) : (
-        <div style={style}></div>
-      )}
+    </>
+  );
+
+  const renderImage = () =>
+    card.image ? (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={card.image || src} alt={card.name} style={style} />
+    ) : (
+      <div style={style}></div>
+    );
+
+  return (
+    <CardRenderWrapper id={card.id}>
+      {renderFreeAction()}
+      {renderSector()}
+      {renderImage()}
       <div className='card-cell card-render'>
         {card.income && <CardIncome income={card.income} />}
       </div>
-      <CardTitle color='#3E403B' title={t(card.name)} />
-      {/* <div className={`card-render-title ${alienCls}`}>{t(card.name)}</div> */}
-      {/* <div className='card-render-credit'>{card.price}</div> */}
-      <CardPrice type={EResource.CREDIT} price={card.price} />
+      <CardMiddleBar card={card} />
       <div className='card-no'>{card.id}</div>
 
       {card?.special?.enableEffectRender && card.effects && (
-        <EffectContainer effects={effects} className='bg-transparent' /> // 确保EffectContainer的z-index较高
+        <EffectContainer effects={effects} className='' /> // 确保EffectContainer的z-index较高
       )}
       {card?.special?.enableEffectRender && card.flavorText && (
         <FlavorText

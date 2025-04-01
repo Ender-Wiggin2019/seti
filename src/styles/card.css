@@ -129,16 +129,16 @@
 .normal-flavor-text {
   color: black;
 }
+
 .card-effects-container {
   position: absolute;
   bottom: 24px;
-  left: 2px;
   background-color: white;
   color: black;
   font-size: 9px;
   line-height: 10px;
-  width: 147px;
-  height: 77px;
+  width: 150px;
+  height: 89px;
   padding-bottom: 2px;
   /* opacity: 0.8; */
   display: flex;
@@ -147,6 +147,7 @@
   align-items: center;
   gap: 4px;
   padding: 4px;
+  padding-top: 18px;
 }
 
 .end-game-container {
@@ -314,9 +315,9 @@
 .card-price-container {
   position: absolute;
   height: auto;
-  top: 83px;
+  top: -12px;
   overflow: hidden;
-  left: -1px;
+  left: -2px;
 }
 
 .card-price-svg {
@@ -814,9 +815,8 @@
 .card-title-container {
   position: absolute;
   height: auto;
-  top: 95px;
   overflow: hidden;
-  left: 34px;
+  left: 32px;
 }
 
 .card-render-title {
@@ -840,7 +840,7 @@
   position: absolute;
   z-index: 10;
   top: 5px;
-  left: 1px;
+  left: 2px;
   width: 12px;
   height: 16px;
   font-size: 18px;
@@ -857,4 +857,11 @@
   scale: 2;
   translate: 52% 55%;
   width: fit-content;
+}
+
+.card-middle {
+  position: absolute;
+  height: auto;
+  top: 95px;
+  z-index: 10;
 }

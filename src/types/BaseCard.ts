@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 09:48:41
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-22 13:12:02
+ * @LastEditTime: 2025-04-02 01:12:23
  * @Description:
  */
 /*
@@ -30,6 +30,7 @@ export interface IBaseCard {
   freeAction?: IFreeAction[];
   sector?: ESector;
   price: number;
+  priceType?: EResource; // new attribute for price type
   income?: EResource;
   effects?: Effect[];
   description?: string;
@@ -41,6 +42,8 @@ export interface IBaseCard {
     descHelper?: string; // temporary translation for some texts
     enableEffectRender?: boolean; // temp
     fanMade?: boolean;
+    titleColor?: string;
+    titleHeight?: string;
   };
 
   // meta data
