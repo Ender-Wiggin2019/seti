@@ -3,16 +3,16 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-01 00:33:02
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-23 02:15:26
+ * @LastEditTime: 2025-04-02 00:34:50
  * @Description:
  */
-import { toPng } from 'html-to-image';
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import React, { useMemo, useState } from 'react';
 
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 import baseCards from '@/data/baseCards';
 
@@ -21,6 +21,7 @@ import { CardRender } from '@/components/form/CardRender';
 import { EffectSelector } from '@/components/form/EffectSelector';
 import { EffectsGenerator } from '@/components/form/EffectsGenerator';
 import Layout from '@/components/layout/Layout';
+import Seo from '@/components/Seo';
 import { AccordionV2 } from '@/components/ui/accordion-v2';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,11 +32,11 @@ import {
   getEffectByIconType,
   updateEffectArray,
 } from '@/utils/effect';
+import { downloadImage, exportToJson } from '@/utils/file';
 
 import { IBaseCard } from '@/types/BaseCard';
 import { Effect } from '@/types/effect';
 import { EResource, ESector, TSize } from '@/types/element';
-import Seo from '@/components/Seo';
 
 // make sure to import your TextFilter
 type Props = {
@@ -46,6 +47,8 @@ export default function HomePage(
   _props: InferGetStaticPropsType<typeof getStaticProps>
 ) {
   const { t } = useTranslation('common');
+  const { toast } = useToast();
+
   const downloadRef = React.useRef<HTMLDivElement>(null);
 
   const [currentEffects, setCurrentEffects] = useState<Effect[]>([]);
@@ -116,22 +119,20 @@ export default function HomePage(
   };
 
   const handleDownloadImage = async () => {
-    if (downloadRef.current === null) {
-      return;
-    }
+    downloadImage(
+      downloadRef.current,
+      currentTitle,
+      (msg: string) => {
+        toast({ title: msg, variant: 'success' });
+      },
+      (msg: string) => {
+        toast({ title: msg, variant: 'destructive' });
+      }
+    );
+  };
 
-    toPng(downloadRef.current, { quality: 0.8, pixelRatio: 10 })
-      .then((dataUrl) => {
-        const link = document.createElement('a');
-        link.download = currentTitle + '.png';
-        link.href = dataUrl;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+  const handleExport = () => {
+    exportToJson(renderCard);
   };
 
   const handleJsonImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -174,9 +175,7 @@ export default function HomePage(
       income: currentIncome,
       sector: currentSector,
       // position: { src: currentImage || '', row: 0, col: 0 },
-      image:
-        currentImage ||
-        'https://cf.geekdo-images.com/MUmw2-kFJ0OYBZMiUniI_g__imagepage/img/FtaM7L1afBKFc-T7JShGDkdNUGk=/fit-in/900x600/filters:no_upscale():strip_icc()/pic8259598.jpg',
+      image: currentImage,
       price: Number(currentCredit) || 0,
       name: currentTitle || '',
       flavorText: currentFlavorText,
@@ -199,22 +198,6 @@ export default function HomePage(
     currentFlavorText,
     currentFreeActions,
   ]);
-
-  const exportToJson = () => {
-    const tmp = renderCard;
-    // tmp.image = ''; // FIXME: data storage?
-    const dataStr =
-      'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(tmp));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute('href', dataStr);
-    downloadAnchorNode.setAttribute(
-      'download',
-      `${renderCard.id || 'fan-made-card'}.json`
-    );
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-  };
 
   return (
     <Layout>
@@ -243,7 +226,7 @@ export default function HomePage(
             >
               {t('Download')}
             </Button>
-            <Button variant='highlight' className='w-20' onClick={exportToJson}>
+            <Button variant='highlight' className='w-20' onClick={handleExport}>
               {t('Export')}
             </Button>
           </div>
@@ -324,6 +307,7 @@ export default function HomePage(
                 <Input
                   id='picture'
                   type='file'
+                  accept='.jpg,.jpeg,.webp,.png'
                   onChange={(e) => handleImageUpload(e)}
                 />
               ) : (
@@ -336,9 +320,9 @@ export default function HomePage(
                 />
               )}
 
-              <Button className='w-40' onClick={handleUrlChange}>
+              {/* <Button className='w-40' onClick={handleUrlChange}>
                 {useUrl ? t('Use Upload') : t('Use URL')}
-              </Button>
+              </Button> */}
             </div>
           </div>
           <div className='grid w-full max-w-sm items-center gap-1.5'>
@@ -385,8 +369,9 @@ export default function HomePage(
           <div className='grid w-full max-w-sm items-center gap-1.5'>
             <Label htmlFor='animal-json-import'>{t('diy.import_json')}</Label>
             <Input
-              id='animal-json-import'
+              id='json-import'
               type='file'
+              accept='.json'
               value=''
               className=''
               onChange={handleJsonImport}

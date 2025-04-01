@@ -3,7 +3,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-09-13 06:17:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-07 01:01:41
+ * @LastEditTime: 2025-04-02 00:22:45
  * @Description:
  */
 // import { Analytics } from '@vercel/analytics/react';
@@ -12,6 +12,7 @@ import React, { Suspense } from 'react';
 
 import { Header } from '@/components/layout/Header';
 import { QueryProvider } from '@/components/layout/QueryProvider';
+import { Toaster } from '@/components/ui/toaster';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -54,6 +55,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               {children}
             </div>
           </main>
+          <Toaster />
           <Suspense>{/*<Footer />*/}</Suspense>
         </div>
       </QueryProvider>

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-29 11:57:13
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-25 18:56:43
+ * @LastEditTime: 2025-04-01 23:48:32
  * @Description:
  */
 
@@ -11,9 +11,9 @@ import baseCards from '@/data/baseCards';
 
 import { sortCards } from '@/utils/sort';
 
+import { IBaseCard } from '@/types/BaseCard';
 import { EEffectType, Effect } from '@/types/effect';
 import { EScanAction, ETech, ETrace, TIcon } from '@/types/element';
-import { IBaseCard } from '@/types/BaseCard';
 
 export const getAllCardIds = () => {
   return [...baseCards, ...alienCards].map((card) => card.id);
