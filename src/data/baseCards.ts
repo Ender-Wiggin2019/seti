@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-23 00:30:19
+ * @LastEditTime: 2025-04-04 18:43:53
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -19,7 +19,7 @@ import {
   ETrace,
 } from '@/types/element';
 
-const _baseCards: IBaseCard[] = [
+const _baseCards: any[] = [
   {
     id: '39',
     name: '61 Virginis Observation',
@@ -48,6 +48,7 @@ const _baseCards: IBaseCard[] = [
     sector: ESector.BLUE,
     price: 1,
     income: EResource.CARD,
+    effects: [],
   },
   {
     id: '136',
@@ -57,6 +58,7 @@ const _baseCards: IBaseCard[] = [
     sector: ESector.RED,
     price: 1,
     income: EResource.ENERGY,
+    effects: [],
   },
   {
     id: '64',
@@ -106,6 +108,7 @@ const _baseCards: IBaseCard[] = [
     sector: ESector.BLACK,
     price: 2,
     income: EResource.ENERGY,
+    effects: [],
   },
   {
     id: '97',
@@ -142,6 +145,7 @@ const _baseCards: IBaseCard[] = [
     sector: ESector.RED,
     price: 0,
     income: EResource.ENERGY,
+    effects: [],
   },
   {
     id: '123',
@@ -271,6 +275,7 @@ const _baseCards: IBaseCard[] = [
     sector: ESector.RED,
     price: 1,
     income: EResource.CARD,
+    effects: [],
   },
   {
     id: '80',
@@ -361,6 +366,7 @@ const _baseCards: IBaseCard[] = [
     sector: ESector.BLACK,
     price: 1,
     income: EResource.CARD,
+    effects: [],
   },
   {
     id: '138',
@@ -370,6 +376,7 @@ const _baseCards: IBaseCard[] = [
     sector: ESector.BLUE,
     price: 1,
     income: EResource.CARD,
+    effects: [],
   },
   {
     id: '98',
@@ -543,6 +550,7 @@ const _baseCards: IBaseCard[] = [
     sector: ESector.RED,
     price: 2,
     income: EResource.ENERGY,
+    effects: [],
   },
   {
     id: '71',
@@ -715,6 +723,7 @@ const _baseCards: IBaseCard[] = [
     sector: ESector.RED,
     price: 1,
     income: EResource.CARD,
+    effects: [],
   },
   {
     id: '27',
@@ -1204,6 +1213,7 @@ const _baseCards: IBaseCard[] = [
     price: 1,
     income: EResource.CREDIT,
     description: '',
+    effects: [],
   },
   {
     id: '89',
@@ -1284,6 +1294,7 @@ const _baseCards: IBaseCard[] = [
     price: 1,
     income: EResource.CREDIT,
     description: '',
+    effects: [],
   },
   {
     id: '17',
@@ -1369,6 +1380,7 @@ const _baseCards: IBaseCard[] = [
     price: 1,
     income: EResource.ENERGY,
     description: '',
+    effects: [],
   },
   {
     id: '112',
@@ -1390,6 +1402,7 @@ const _baseCards: IBaseCard[] = [
     price: 1,
     income: EResource.CREDIT,
     description: '',
+    effects: [],
   },
   {
     id: '94',
