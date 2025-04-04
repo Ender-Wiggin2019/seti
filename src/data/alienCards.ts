@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-12 01:57:10
+ * @LastEditTime: 2025-04-04 18:39:21
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -15,7 +15,7 @@ import { DESC, DESC_WITH_TYPE, e, m } from '@/constant/effect';
 import { EAlienType, IBaseCard } from '@/types/BaseCard';
 import { EResource, EScanAction, ESector } from '@/types/element';
 
-export const _alienCards: IBaseCard[] = [
+export const _alienCards: any[] = [
   {
     id: 'ET.20',
     name: 'Amazing Uncertainty',
