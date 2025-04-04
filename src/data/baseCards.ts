@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-04 18:43:53
+ * @LastEditTime: 2025-04-04 22:45:53
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -607,7 +607,7 @@ const _baseCards: any[] = [
       m.FULL_MISSION(
         [
           { req: DESC('Venus'), reward: e.PUBLICITY(1) },
-          { req: DESC('Jupiter'), reward: e.DATA(4) },
+          { req: DESC('Jupiter'), reward: e.DATA(1) },
         ],
         'When you visit:'
       ),
@@ -1247,7 +1247,7 @@ const _baseCards: any[] = [
     freeAction: [{ type: EResource.DATA, value: 1 }],
     sector: ESector.BLACK,
     price: 3,
-    income: EResource.CREDIT,
+    income: EResource.ENERGY,
     description: '',
     special: {
       enableEffectRender: true,
