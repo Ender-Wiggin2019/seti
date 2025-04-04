@@ -2,14 +2,14 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-26 23:56:31
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-02 01:01:09
+ * @LastEditTime: 2025-04-04 18:31:14
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
 import React, { useMemo } from 'react';
 
 import { CardIncome } from '@/components/card/CardIncome';
-import { CardPrice } from '@/components/card/CardPrice';
+import { CardMiddleBar } from '@/components/card/CardMiddleBar';
 import { FlavorText } from '@/components/cards/base_cards/FlavorText';
 import { EffectFactory } from '@/components/effect/Effect';
 import { EffectContainer } from '@/components/effect/EffectContainer';
@@ -19,9 +19,7 @@ import { ESectorColorMap } from '@/constant/color';
 import { freeAction2Effect } from '@/utils/effect';
 
 import { EAlienMap, IBaseCard } from '@/types/BaseCard';
-import { EResource, ESector } from '@/types/element';
-import { CardTitle } from '@/components/card/CardTitle';
-import { CardMiddleBar } from '@/components/card/CardMiddleBar';
+import { ESector } from '@/types/element';
 
 interface CardRenderProps {
   card: IBaseCard;
@@ -33,7 +31,7 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
   const { src, row, col } = card.position || { src: '', row: 0, col: 0 };
   const cols = card.alien ? 5 : 10;
   const alienCls = card.alien ? EAlienMap[card.alien] : '';
-
+  const titleHeight = card?.special?.titleHeight || 95;
   const freeActionEffects = useMemo(() => {
     if (!card.freeAction) return [];
     return card.freeAction.map((a) => freeAction2Effect(a));
@@ -110,12 +108,18 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
       <div className='card-cell card-render'>
         {card.income && <CardIncome income={card.income} />}
       </div>
-      <CardMiddleBar card={card} />
-      <div className='card-no'>{card.id}</div>
+      <div
+        className='card-render-container'
+        style={{ top: titleHeight + 'px' }}
+      >
+        <CardMiddleBar card={card} />
 
-      {card?.special?.enableEffectRender && card.effects && (
-        <EffectContainer effects={effects} className='' /> // 确保EffectContainer的z-index较高
-      )}
+        {card?.special?.enableEffectRender && card.effects && (
+          <EffectContainer effects={effects} className='' /> // 确保EffectContainer的z-index较高
+        )}
+      </div>
+      <div className='card-no-bg'></div>
+      <div className='card-no'>{card.id}</div>
       {card?.special?.enableEffectRender && card.flavorText && (
         <FlavorText
           id={card.id}
@@ -123,9 +127,9 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
           className='bg-transparent'
         />
       )}
-      {card?.special?.fanMade && (
+      {/* {card?.special?.fanMade && (
         <div className='card-watermark'>{t('watermark')}</div>
-      )}
+      )} */}
     </CardRenderWrapper>
   );
 };

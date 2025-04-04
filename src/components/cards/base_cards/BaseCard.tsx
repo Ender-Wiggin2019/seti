@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-26 23:56:31
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-25 18:52:25
+ * @LastEditTime: 2025-04-04 17:26:55
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
@@ -42,9 +42,9 @@ export const BaseCard: React.FC<BaseCardProps> = ({ card }) => {
       >
         {/* {card.income && <CardIncome income={card.income}/>} */}
       </div>
-      {card?.special?.enableEffectRender && card.effects && (
+      {/* {card?.special?.enableEffectRender && card.effects && (
         <EffectContainer effects={card.effects} />
-      )}
+      )} */}
       {/* {card.effects && (
         <div className='card-effects-container'>
           <div className='card-effects'>
@@ -54,9 +54,9 @@ export const BaseCard: React.FC<BaseCardProps> = ({ card }) => {
           </div>
         </div>
       )} */}
-      {card?.special?.enableEffectRender && card.flavorText && (
+      {/* {card?.special?.enableEffectRender && card.flavorText && (
         <FlavorText id={card.id} flavorText={card.flavorText} />
-      )}
+      )} */}
     </BaseCardWrapper>
   );
 };

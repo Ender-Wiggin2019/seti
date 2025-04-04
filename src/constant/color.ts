@@ -1,10 +1,11 @@
+import { EAlienType } from '@/types/BaseCard';
 import { EResource, ESector } from '@/types/element';
 
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-03-09 12:05:06
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-18 00:03:34
+ * @LastEditTime: 2025-04-04 17:14:39
  * @Description:
  */
 export const EResourceColorMap: Record<EResource, string> = {
@@ -23,4 +24,12 @@ export const ESectorColorMap: Record<ESector, string> = {
   [ESector.BLUE]: '#3478d8',
   [ESector.RED]: '#e93e27',
   [ESector.YELLOW]: '#f5c242',
+};
+
+export const EAlienColor: Record<EAlienType, string> = {
+  [EAlienType.ANOMALIES]: '#1a6983',
+  [EAlienType.CENTAURIANS]: '#5fb35e',
+  [EAlienType.MASCAMITES]: '#5d412d',
+  [EAlienType.OUMUAMUA]: '#6940a2',
+  [EAlienType.EXERTIANS]: '#ca273a',
 };

@@ -1,16 +1,11 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-/*
- * @Author: Ender-Wiggin
- * @Date: 2025-03-01 00:33:02
- * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-02 01:24:10
- * @Description:
- */
-import type { GetStaticProps, InferGetStaticPropsType } from 'next';
+import { ArrowBigDownDash, ArrowBigUpDash } from 'lucide-react';
+import { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import React, { useMemo, useState } from 'react';
 import { HexColorPicker } from 'react-colorful';
+
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -29,6 +24,8 @@ import { Label } from '@/components/ui/label';
 
 import {
   effects2FreeAction,
+  freeAction2Effect,
+  freeActions2Effects,
   getEffectByIconType,
   updateEffectArray,
 } from '@/utils/effect';
@@ -38,9 +35,27 @@ import { IBaseCard } from '@/types/BaseCard';
 import { Effect } from '@/types/effect';
 import { EResource, ESector, TSize } from '@/types/element';
 
-// make sure to import your TextFilter
 type Props = {
   // Add custom props here
+};
+
+const defaultCard: IBaseCard = {
+  effects: [],
+  income: EResource.CREDIT,
+  sector: ESector.RED,
+  image: '',
+  price: 0,
+  priceType: EResource.CREDIT,
+  name: '',
+  flavorText: '',
+  freeAction: [],
+  id: 'Fan.1',
+  special: {
+    fanMade: true,
+    enableEffectRender: true,
+    titleColor: '#3E403B',
+    titleHeight: 95,
+  },
 };
 
 export default function HomePage(
@@ -48,79 +63,79 @@ export default function HomePage(
 ) {
   const { t } = useTranslation('common');
   const { toast } = useToast();
-
   const downloadRef = React.useRef<HTMLDivElement>(null);
 
-  const [currentEffects, setCurrentEffects] = useState<Effect[]>([]);
-  const [currentIncome, setCurrentIncome] = useState<EResource>(
-    EResource.CREDIT
-  );
-  const [currentSector, setCurrentSector] = useState<ESector>(ESector.RED);
-  const [currentImage, setCurrentImage] = useState<string>();
-  const [currentCredit, setCurrentCredit] = useState<string>();
-  const [currentTitle, setCurrentTitle] = useState<string>();
-  const [currentId, setCurrentId] = useState<string>('Fan.1');
-
-  const [currentFlavorText, setCurrentFlavorText] = useState<string>();
-  const [currentFreeActions, setCurrentFreeActions] = useState<Effect[]>([]);
+  const [card, setCard] = useState<IBaseCard>({
+    ...baseCards[0],
+    ...defaultCard,
+  });
   const [useUrl, setUseUrl] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const updateCard = (updates: Partial<IBaseCard>) => {
+    setCard((prevCard) => ({ ...prevCard, ...updates }));
+  };
 
-  const [color, setColor] = useState('#3E403B');
-  const [priceType, setPriceType] = useState(EResource.CREDIT);
+  const updateSpecial = (updates: Partial<IBaseCard['special']>) => {
+    setCard((prevCard) => ({
+      ...prevCard,
+      special: { ...prevCard.special, ...updates },
+    }));
+  };
 
   const handleReset = () => {
-    setCurrentEffects([]);
-    setCurrentIncome(EResource.CREDIT);
-    setCurrentSector(ESector.RED);
-    setCurrentCredit('');
-    setCurrentTitle('');
-    setCurrentFlavorText('');
-    setCurrentFreeActions([]);
-    setCurrentImage('');
-    setColor('#3E403B');
-    setPriceType(EResource.CREDIT);
-    setCurrentId('Fan.1');
-  };
-  const handleEffectsChange = (effects: Effect[]) => {
-    setCurrentEffects(effects);
+    setCard({ ...baseCards[0], ...defaultCard });
   };
 
-  const handleIncomeChange = (data: EResource) => {
-    setCurrentIncome(data);
+  const handleEffectsChange = (effects: Effect[]) => {
+    updateCard({ effects });
+  };
+
+  const handleIncomeChange = (income: EResource) => {
+    updateCard({ income });
   };
 
   const handleFreeActionChange = (effect: Effect) => {
-    setCurrentFreeActions((prevEffects) =>
-      updateEffectArray(prevEffects, effect)
-    );
+    updateCard({
+      freeAction: effects2FreeAction(
+        updateEffectArray(freeActions2Effects(card.freeAction || []), effect)
+      ),
+    });
   };
 
-  const handleSectorChange = (data: ESector) => {
-    setCurrentSector(data);
+  const handleSectorChange = (sector: ESector) => {
+    updateCard({ sector });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleImageUpload = (e: any) => {
-    if (e.target.files) setCurrentImage(URL.createObjectURL(e.target.files[0]));
+    if (e.target.files)
+      updateCard({ image: URL.createObjectURL(e.target.files[0]) });
   };
 
-  const handleSetImage = (data: string) => {
-    setCurrentImage(data);
+  const handleSetImage = (image: string) => {
+    updateCard({ image });
   };
 
-  const handleCreditChange = (data: string) => {
-    setCurrentCredit(data);
+  const handleCreditChange = (price: string) => {
+    updateCard({ price: Number(price) || 0 });
   };
 
-  const handleTitleChange = (data: string) => {
-    setCurrentTitle(data);
+  const handleTitleChange = (name: string) => {
+    updateCard({ name });
   };
 
-  const handleFlavorTextChange = (data: string) => {
-    setCurrentFlavorText(data);
+  const handleTitleHeightChange = (height: number) => {
+    updateSpecial({
+      titleHeight: Math.max((card?.special?.titleHeight || 95) + height, 45),
+    });
   };
 
-  const handlePriceTypeChange = (data: EResource) => {
-    setPriceType(data);
+  const handleFlavorTextChange = (flavorText: string) => {
+    updateCard({ flavorText });
+  };
+
+  const handlePriceTypeChange = (priceType: EResource) => {
+    updateCard({ priceType });
   };
 
   const handleUrlChange = () => {
@@ -128,10 +143,13 @@ export default function HomePage(
   };
 
   const handleDownloadImage = async () => {
+    setLoading(true);
+    toast({ title: 'Please wait...' });
     downloadImage(
       downloadRef.current,
-      currentTitle,
+      card.name,
       (msg: string) => {
+        setLoading(false);
         toast({ title: msg, variant: 'success' });
       },
       (msg: string) => {
@@ -141,7 +159,7 @@ export default function HomePage(
   };
 
   const handleExport = () => {
-    exportToJson(renderCard);
+    exportToJson(card);
   };
 
   const handleJsonImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,73 +175,47 @@ export default function HomePage(
       try {
         const parsedData = JSON.parse(event.target.result as string);
         if (!parsedData?.special?.fanMade) {
-          throw new Error('Not Validate!');
+          throw new Error(t('Not Validate!'));
         }
-
-        setCurrentEffects(parsedData.effects);
-        setCurrentIncome(parsedData.income);
-        setCurrentSector(parsedData.sector);
-        setCurrentCredit(parsedData.price);
-        setCurrentTitle(parsedData.name);
-        setCurrentFlavorText(parsedData.flavorText);
-        setCurrentFreeActions(parsedData.freeAction);
-        setCurrentImage(parsedData.image);
-        setCurrentId(parsedData.id);
-        setColor(parsedData.color);
-        setPriceType(parsedData.priceType);
-        // setIsResetting(true);
+        setCard(parsedData);
       } catch (error) {
-        alert("Failed to parse the JSON. Please ensure it's a valid JSON.");
+        alert(t("Failed to parse the JSON. Please ensure it's a valid JSON."));
       }
     };
   };
 
   const renderCard = useMemo(() => {
-    const res: IBaseCard = {
-      ...baseCards[0],
-      id: currentId || '',
-      effects: currentEffects,
-      income: currentIncome,
-      sector: currentSector,
-      // position: { src: currentImage || '', row: 0, col: 0 },
-      image: currentImage,
-      price: Number(currentCredit) || 0,
-      priceType: priceType,
-      name: currentTitle || '',
-      flavorText: currentFlavorText,
-      freeAction: effects2FreeAction(currentFreeActions),
-      special: {
-        fanMade: true,
-        enableEffectRender: true,
-        titleColor: color,
-      },
+    return {
+      ...card,
     };
-
-    return res;
-  }, [
-    currentId,
-    currentEffects,
-    currentIncome,
-    currentSector,
-    currentImage,
-    currentCredit,
-    priceType,
-    currentTitle,
-    currentFlavorText,
-    currentFreeActions,
-    color,
-  ]);
+  }, [card]);
 
   return (
     <Layout>
       <Seo templateTitle='Card Editor' />
       <div className='flex flex-col lg:flex-row gap-4 px-2'>
         <div className='relative flex flex-col w-full lg:w-3/5'>
-          <div className='w-80 h-[440px]'>
+          <div className='relative w-80 h-[440px]'>
             <div className='card-larger'>
-              <div ref={downloadRef} className=''>
+              <div ref={downloadRef}>
                 <CardRender card={renderCard} />
               </div>
+            </div>
+            <div className='absolute -right-8 flex flex-col gap-4'>
+              <Button
+                variant='dark'
+                className='w-10 h-10 text-md p-0 hover:text-primary'
+                onClick={() => handleTitleHeightChange(-10)}
+              >
+                <ArrowBigUpDash />
+              </Button>
+              <Button
+                variant='dark'
+                className='w-10 h-10 text-md p-0 hover:text-primary'
+                onClick={() => handleTitleHeightChange(10)}
+              >
+                <ArrowBigDownDash />
+              </Button>
             </div>
           </div>
           <div className='flex justify-start items-center gap-2 mb-2'>
@@ -245,17 +237,19 @@ export default function HomePage(
               {t('Export')}
             </Button>
           </div>
-          <AccordionV2 title='Effect'>
+          <AccordionV2 title={t('Effect')}>
             <EffectsGenerator
-              selectedEffects={currentEffects}
-              onChange={(e) => handleEffectsChange(e)}
+              selectedEffects={card.effects}
+              onChange={handleEffectsChange}
             />
           </AccordionV2>
         </div>
         <div className='flex flex-col gap-2'>
           <EffectSelector
             title={t('Free Action')}
-            currentEffects={currentFreeActions}
+            currentEffects={
+              card.freeAction?.map((a) => freeAction2Effect(a)) || []
+            }
             icons={[
               EResource.PUBLICITY,
               EResource.DATA,
@@ -266,52 +260,44 @@ export default function HomePage(
           />
 
           <AccordionV2 title={t('Income')}>
-            {/* <div className='text-white text-lg'>Income</div> */}
             <div className='w-full grid grid-cols-5 gap-4 lg:grid-cols-5 flex-shrink-0 h-40'>
-              {Object.values(EResource).map((e) => {
-                return (
-                  <div
-                    key={e}
-                    onClick={() => handleIncomeChange(e)}
-                    className={cn(
-                      'flex w-40 h-40 items-center rounded-md bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 p-2 shadow-md h-18 w-18 justify-center'
-                      // { 'ring-white/10 from-zinc-900/30 to-primary/80': hasEffect }
-                    )}
-                  >
-                    <EffectFactory
-                      effect={{
-                        ...getEffectByIconType(e)!,
-                        size: 'xl' as TSize,
-                      }}
-                    />
-                  </div>
-                );
-              })}
+              {Object.values(EResource).map((e) => (
+                <div
+                  key={e}
+                  onClick={() => handleIncomeChange(e)}
+                  className={cn(
+                    'flex w-40 h-40 items-center rounded-md bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 p-2 shadow-md h-18 w-18 justify-center'
+                  )}
+                >
+                  <EffectFactory
+                    effect={{
+                      ...getEffectByIconType(e)!,
+                      size: 'xl' as TSize,
+                    }}
+                  />
+                </div>
+              ))}
             </div>
           </AccordionV2>
 
           <AccordionV2 title={t('Sector')}>
-            {/* <div className='text-white text-lg'>Sector</div> */}
             <div className='w-full grid grid-cols-5 gap-4 lg:grid-cols-5 flex-shrink-0'>
-              {Object.values(ESector).map((e) => {
-                return (
-                  <div
-                    key={e}
-                    onClick={() => handleSectorChange(e as ESector)}
-                    className={cn(
-                      'flex w-40 h-fit items-center rounded-md bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 p-2 shadow-md h-18 w-18 justify-center'
-                      // { 'ring-white/10 from-zinc-900/30 to-primary/80': hasEffect }
-                    )}
-                  >
-                    <EffectFactory
-                      effect={{
-                        ...getEffectByIconType(e)!,
-                        size: 'xl' as TSize,
-                      }}
-                    />
-                  </div>
-                );
-              })}
+              {Object.values(ESector).map((e) => (
+                <div
+                  key={e}
+                  onClick={() => handleSectorChange(e as ESector)}
+                  className={cn(
+                    'flex w-40 h-fit items-center rounded-md bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 p-2 shadow-md h-18 w-18 justify-center'
+                  )}
+                >
+                  <EffectFactory
+                    effect={{
+                      ...getEffectByIconType(e)!,
+                      size: 'xl' as TSize,
+                    }}
+                  />
+                </div>
+              ))}
             </div>
           </AccordionV2>
 
@@ -323,21 +309,17 @@ export default function HomePage(
                   id='picture'
                   type='file'
                   accept='.jpg,.jpeg,.webp,.png'
-                  onChange={(e) => handleImageUpload(e)}
+                  onChange={handleImageUpload}
                 />
               ) : (
                 <Input
                   type='url'
                   id='url'
-                  placeholder='url'
-                  value={currentImage}
+                  placeholder={t('url')}
+                  value={card.image}
                   onChange={(e) => handleSetImage(e.target.value)}
                 />
               )}
-
-              {/* <Button className='w-40' onClick={handleUrlChange}>
-                {useUrl ? t('Use Upload') : t('Use URL')}
-              </Button> */}
             </div>
           </div>
           <div className='grid w-full max-w-sm items-center gap-1.5'>
@@ -346,7 +328,7 @@ export default function HomePage(
               type='credit'
               id='credit'
               placeholder={t('Your card price')}
-              value={currentCredit}
+              value={card.price.toString()}
               onChange={(e) => handleCreditChange(e.target.value)}
             />
           </div>
@@ -356,16 +338,16 @@ export default function HomePage(
               type='title'
               id='title'
               placeholder={t('Your card title')}
-              value={currentTitle}
+              value={card.name}
               onChange={(e) => handleTitleChange(e.target.value)}
             />
           </div>
           <div className='grid w-full max-w-sm items-center gap-1.5'>
-            <Label htmlFor='title'>{t('Flavor Text')}</Label>
+            <Label htmlFor='flavorText'>{t('Flavor Text')}</Label>
             <Input
-              type='title'
-              id='title'
-              value={currentFlavorText}
+              type='text'
+              id='flavorText'
+              value={card.flavorText}
               placeholder={t('Tell more about your card')}
               onChange={(e) => handleFlavorTextChange(e.target.value)}
             />
@@ -373,38 +355,41 @@ export default function HomePage(
           <div className='grid w-full max-w-sm items-center gap-1.5'>
             <Label htmlFor='title'>{t('Card ID')}</Label>
             <Input
-              type='title'
-              id='title'
-              value={currentId}
+              type='text'
+              id='cardId'
+              value={card.id}
               placeholder={t('Enter card title')}
-              onChange={(e) => setCurrentId(e.target.value)}
+              onChange={(e) => updateCard({ id: e.target.value })}
             />
           </div>
 
           <AccordionV2 title={t('Advanced')}>
-            <HexColorPicker color={color} onChange={setColor} />;
+            <div className='grid w-full max-w-sm items-center gap-1.5'>
+              <Label>{t('Title Color')}</Label>
+              <HexColorPicker
+                color={card.special?.titleColor}
+                onChange={(color) => updateSpecial({ titleColor: color })}
+              />
+            </div>
+
             <AccordionV2 title={t('Price Type')}>
-              {/* <div className='text-white text-lg'>Income</div> */}
               <div className='w-full grid grid-cols-5 gap-4 lg:grid-cols-5 flex-shrink-0 h-40'>
-                {Object.values(EResource).map((e) => {
-                  return (
-                    <div
-                      key={e}
-                      onClick={() => handlePriceTypeChange(e)}
-                      className={cn(
-                        'flex w-40 h-40 items-center rounded-md bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 p-2 shadow-md h-18 w-18 justify-center'
-                        // { 'ring-white/10 from-zinc-900/30 to-primary/80': hasEffect }
-                      )}
-                    >
-                      <EffectFactory
-                        effect={{
-                          ...getEffectByIconType(e)!,
-                          size: 'xl' as TSize,
-                        }}
-                      />
-                    </div>
-                  );
-                })}
+                {Object.values(EResource).map((e) => (
+                  <div
+                    key={e}
+                    onClick={() => handlePriceTypeChange(e)}
+                    className={cn(
+                      'flex w-40 h-40 items-center rounded-md bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 p-2 shadow-md h-18 w-18 justify-center'
+                    )}
+                  >
+                    <EffectFactory
+                      effect={{
+                        ...getEffectByIconType(e)!,
+                        size: 'xl' as TSize,
+                      }}
+                    />
+                  </div>
+                ))}
               </div>
             </AccordionV2>
           </AccordionV2>
@@ -415,8 +400,6 @@ export default function HomePage(
               id='json-import'
               type='file'
               accept='.json'
-              value=''
-              className=''
               onChange={handleJsonImport}
             />
           </div>

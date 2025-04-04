@@ -102,6 +102,7 @@
   height: 20px;
   padding-bottom: 2px;
   box-sizing: border-box;
+  z-index: 12;
 }
 
 .card-flavor-text-container::after {
@@ -132,18 +133,18 @@
 
 .card-effects-container {
   position: absolute;
-  bottom: 24px;
+  top: 2px;
   background-color: white;
   color: black;
   font-size: 9px;
   line-height: 10px;
   width: 150px;
-  height: 89px;
+  height: 180px;
   padding-bottom: 2px;
   /* opacity: 0.8; */
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: start;
   align-items: center;
   gap: 4px;
   padding: 4px;
@@ -300,6 +301,7 @@
   height: auto;
   bottom: 0px;
   overflow: hidden;
+  z-index: 15;
   /* border-radius: 12px; */
 }
 .card-income-svg {
@@ -782,6 +784,18 @@
   rotate: -90deg;
 }
 
+.card-no-bg {
+  color: black;
+  background-color: #ececeb;
+  z-index: 5;
+  position: absolute;
+  bottom: 9px;
+  left: -2px;
+  height: 20px;
+  width: 8px;
+  border-radius: 1px;
+}
+
 .card-sector-corner-background {
   z-index: 5;
   position: absolute;
@@ -861,7 +875,13 @@
 
 .card-middle {
   position: absolute;
+  /* height: auto;
+  top: 95px; */
+  z-index: 10;
+}
+
+.card-render-container {
+  position: absolute;
   height: auto;
   top: 95px;
-  z-index: 10;
 }

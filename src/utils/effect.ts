@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-12 11:12:08
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-23 01:13:47
+ * @LastEditTime: 2025-04-04 17:47:32
  * @Description:
  */
 import { e } from '@/constant/effect';
@@ -47,7 +47,6 @@ export const updateEffectArray = (
     const existingEffectIndex = prevEffects.findIndex(
       (e) => e.effectType === EEffectType.CUSTOMIZED && e.id === newEffect.id
     );
-    console.log('🎸 [test] - existingEffectIndex:', existingEffectIndex);
 
     if (existingEffectIndex !== -1) {
       return prevEffects.map((e, index) =>
@@ -92,6 +91,12 @@ export const freeAction2Effect = (freeAction: IFreeAction): IBaseEffect => {
     value,
     size: 'xs',
   };
+};
+
+export const freeActions2Effects = (
+  freeAction: IFreeAction[]
+): IBaseEffect[] => {
+  return freeAction.map((a) => freeAction2Effect(a));
 };
 
 export const effects2FreeAction = (effects: Effect[]): IFreeAction[] => {
