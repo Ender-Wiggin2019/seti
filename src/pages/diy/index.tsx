@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { ArrowBigDownDash, ArrowBigUpDash } from 'lucide-react';
+import { ArrowBigDownDash, ArrowBigUpDash, Undo2 } from 'lucide-react';
 import { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
@@ -8,8 +8,6 @@ import { HexColorPicker } from 'react-colorful';
 
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-
-import baseCards from '@/data/baseCards';
 
 import { EffectFactory } from '@/components/effect/Effect';
 import { CardRender } from '@/components/form/CardRender';
@@ -34,48 +32,50 @@ import { downloadImage, exportToJson } from '@/utils/file';
 import { IBaseCard } from '@/types/BaseCard';
 import { Effect } from '@/types/effect';
 import { EResource, ESector, TSize } from '@/types/element';
+import { DEFAULT_BASE_CARD } from '@/data/defaultCards';
 
 type Props = {
   // Add custom props here
 };
 
-const defaultCard: IBaseCard = {
-  effects: [],
-  income: EResource.CREDIT,
-  sector: ESector.RED,
-  image: '',
-  price: 0,
-  priceType: EResource.CREDIT,
-  name: '',
-  flavorText: '',
-  freeAction: [],
-  id: 'Fan.1',
-  special: {
-    fanMade: true,
-    enableEffectRender: true,
-    titleColor: '#3E403B',
-    titleHeight: 95,
-  },
-};
+const MAX_HISTORY = 10;
 
-export default function HomePage(
+export default function DiyPage(
   _props: InferGetStaticPropsType<typeof getStaticProps>
 ) {
   const { t } = useTranslation('common');
   const { toast } = useToast();
   const downloadRef = React.useRef<HTMLDivElement>(null);
 
-  const [card, setCard] = useState<IBaseCard>({
-    ...baseCards[0],
-    ...defaultCard,
-  });
+  const [card, setCard] = useState<IBaseCard>(DEFAULT_BASE_CARD);
+  const [history, setHistory] = useState<IBaseCard[]>([]);
   const [useUrl, setUseUrl] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const pushToHistory = (newCard: IBaseCard) => {
+    setHistory((prevHistory) => {
+      const newHistory = [newCard, ...prevHistory];
+      return newHistory.length > MAX_HISTORY
+        ? newHistory.slice(0, MAX_HISTORY)
+        : newHistory;
+    });
+  };
+
   const updateCard = (updates: Partial<IBaseCard>) => {
+    pushToHistory(card);
     setCard((prevCard) => ({ ...prevCard, ...updates }));
   };
 
+  const undo = () => {
+    if (history.length > 0) {
+      const [lastState, ...restHistory] = history;
+      setCard(lastState);
+      setHistory(restHistory);
+    }
+  };
+
   const updateSpecial = (updates: Partial<IBaseCard['special']>) => {
+    pushToHistory(card);
     setCard((prevCard) => ({
       ...prevCard,
       special: { ...prevCard.special, ...updates },
@@ -83,7 +83,9 @@ export default function HomePage(
   };
 
   const handleReset = () => {
-    setCard({ ...baseCards[0], ...defaultCard });
+    pushToHistory(card);
+    const resetCard = DEFAULT_BASE_CARD;
+    setCard(resetCard);
   };
 
   const handleEffectsChange = (effects: Effect[]) => {
@@ -220,20 +222,30 @@ export default function HomePage(
           </div>
           <div className='flex justify-start items-center gap-2 mb-2'>
             <Button
+              variant='default'
+              className='w-20'
+              disabled={history.length === 0}
+              onClick={undo}
+            >
+              <Undo2 />
+              {t('Undo')}
+            </Button>
+            <Button
               variant='destructive'
               className='w-20 mr-8'
+              disabled={history.length === 0}
               onClick={handleReset}
             >
               {t('Reset')}
             </Button>
             <Button
-              variant='highlight'
+              variant='default'
               className='w-20'
               onClick={handleDownloadImage}
             >
               {t('Download')}
             </Button>
-            <Button variant='highlight' className='w-20' onClick={handleExport}>
+            <Button variant='default' className='w-20' onClick={handleExport}>
               {t('Export')}
             </Button>
           </div>

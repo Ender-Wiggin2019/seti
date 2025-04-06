@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-09 12:03:24
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-04 17:18:21
+ * @LastEditTime: 2025-04-06 17:07:26
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
@@ -25,7 +25,11 @@ export const CardMiddleBar = ({ card }: Props) => {
   const color = getCardMiddleColor(card);
   return (
     <div className='card-middle'>
-      <CardTitle color={color} title={t(card.name)} />
+      <CardTitle
+        color={color}
+        title={t(card.name)}
+        size={card.special?.titleSize}
+      />
       <CardPrice type={priceType} price={card.price} />
     </div>
   );

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-04 18:39:21
+ * @LastEditTime: 2025-04-06 13:50:52
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -384,6 +384,15 @@ export const _alienCards: any[] = [
     price: 1,
     income: EResource.CARD,
     alien: EAlienType.MASCAMITES,
+    effects: [
+      e.MOVE(1, '', 'xs'),
+      e.LAND(1, '', 'xs'),
+      DESC('desc.et-pickup'),
+      m.QUICK_MISSION(
+        [DESC('Deliver {sample} to Earth')],
+        [e.FULFILL_SAMPLE(), e.DATA(2)]
+      ),
+    ],
   },
   {
     id: 'ET.8',
@@ -740,6 +749,10 @@ export const alienCards: IBaseCard[] = _alienCards.map((card) => {
   return {
     ...card,
     flavorText: `${card.id}_flavor_text`,
+    special: {
+      ...card.special,
+      titleHeight: 86,
+    },
   };
 });
 

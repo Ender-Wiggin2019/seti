@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-26 23:56:31
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-04 18:31:14
+ * @LastEditTime: 2025-04-06 16:50:28
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
@@ -32,6 +32,7 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
   const cols = card.alien ? 5 : 10;
   const alienCls = card.alien ? EAlienMap[card.alien] : '';
   const titleHeight = card?.special?.titleHeight || 95;
+  const effectContainerHeight = 95 - titleHeight + 94;
   const freeActionEffects = useMemo(() => {
     if (!card.freeAction) return [];
     return card.freeAction.map((a) => freeAction2Effect(a));
@@ -115,7 +116,11 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
         <CardMiddleBar card={card} />
 
         {card?.special?.enableEffectRender && card.effects && (
-          <EffectContainer effects={effects} className='' /> // 确保EffectContainer的z-index较高
+          <EffectContainer
+            effects={effects}
+            className=''
+            height={effectContainerHeight}
+          />
         )}
       </div>
       <div className='card-no-bg'></div>

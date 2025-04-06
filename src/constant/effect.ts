@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 22:59:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-12 01:53:41
+ * @LastEditTime: 2025-04-06 17:13:51
  * @Description:
  */
 import { v4 as uuidv4 } from 'uuid';
@@ -45,6 +45,7 @@ const LAND = _base(ESpecialAction.LAND);
 const LAUNCH = _base(ESpecialAction.LAUNCH);
 const SCAN = _base(ESpecialAction.SCAN);
 const COMPUTER = _base(ESpecialAction.COMPUTER);
+const ORBIT_OR_LAND = _base(ESpecialAction.ORBIT_OR_LAND);
 
 const TRACE_ANY = _base(ETrace.ANY);
 const TRACE_RED = _base(ETrace.RED);
@@ -100,6 +101,7 @@ export const e = {
   LAUNCH,
   SCAN,
   COMPUTER,
+  ORBIT_OR_LAND,
 
   ORBIT_COUNT,
   LAND_COUNT,

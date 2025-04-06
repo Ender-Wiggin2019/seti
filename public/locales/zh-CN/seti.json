@@ -278,6 +278,9 @@
   "at Vega": {
     "": "在织女星(Vega)。"
   },
+  "in any sector": {
+    "": "在任意扇区。"
+  },
   "{score-3} for each {fulfill-sector-black}": "每有一个 {fulfill-sector-black}} 获得 {score-3}",
   "{score-3} for each {fulfill-sector-red}}": "每有一个  {fulfill-sector-red}} 获得 {score-3}",
   "{score-3} for each {fulfill-sector-yellow}}": "每有一个 {fulfill-sector-yellow}} 获得 {score-3}",
@@ -345,7 +348,17 @@
     "card-99": "为你已标记{yellow-trace}的物种标记一个{yellow-trace}。",
     "card-100": "为你已标记{blue-trace}的物种标记一个{blue-trace}。",
 
+    "card-104-req": "在彗星上有一个探测器",
     "card-106": "当你支付如下费用<br>在主要行动中打出卡牌时:",
+    "card-108": "如果你至少拥有 {publicity-8}，标记一个 {red-trace}。",
+    "card-112-req": "{orbit-count} 和 {land-count} 在同一个星球上。",
+    "card-113-endgame": "按照金色终局计分板块中你没有标记的那个的最右侧位置计分。",
+    "card-114": "然后你可以从手牌中弃掉最多3张牌以获得信号。",
+    "card-116": "当你在对应颜色的扇区中标记一个信号时:",
+    "card-118": "在一个有你探测器的区域中。<br>不要从中获得任何 {data-0} 。",
+    "card-119": "然后每有一个 {publicity-1} ，获得 {score-1} 。",
+    "card-120": "{any-signal} 在一个有你探测器的区域中。<br>如果你在该区域恰好有1个信号，将这张卡牌返回手牌。",
+    "card-122": "执行3次:<br><br>弃掉牌堆顶的牌以获得其信号。",
     "card-se-en-01": "将这张卡放置在你面前}。<br>如果你在最外层的环有一个探测器，<br>你可以执行 {orbit-action} 或 {land-action} 行动<br>在冥王星放置探测器}。"
   },
   "watermark": "粉丝卡牌"

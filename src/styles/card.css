@@ -98,21 +98,11 @@
   align-items: flex-end;
   /* background-color: white; */
   color: black;
-  width: 104px;
+  width: 106px;
   height: 20px;
   padding-bottom: 2px;
   box-sizing: border-box;
   z-index: 12;
-}
-
-.card-flavor-text-container::after {
-  content: '';
-  position: absolute;
-  top: 0; /* 将 bottom 改为 top */
-  right: -20px;
-  width: 0;
-  height: 0;
-  border-bottom: 20px solid transparent; /* 将 border-top 改为 border-bottom */
 }
 
 .card-flavor-text {
@@ -120,9 +110,9 @@
   position: absolute;
   bottom: 0px;
   left: 0px;
-  width: 118px;
+  width: 120px;
   font-size: 4px;
-  line-height: 5px;
+  line-height: 4.5px;
   font-style: italic;
 }
 
@@ -143,7 +133,7 @@
   /* opacity: 0.8; */
   display: flex;
   flex-direction: column;
-  justify-content: start;
+  justify-content: center;
   align-items: center;
   gap: 4px;
   padding: 4px;
@@ -155,7 +145,7 @@
   background-image: url('/images/cards/end-game-container.png');
   width: 125px;
   height: calc(125px * 274 / 1167);
-  margin-left: 22px;
+  margin-left: 25px;
   background-size: cover;
   display: flex;
   justify-content: center;
@@ -206,10 +196,10 @@
   height: calc(138px * 302 / 1143);
   background-size: cover;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   padding: 0px 8px 0px 8px;
-  margin-left: 5px;
+  margin-left: 6px;
 }
 
 .card-full-mission-container-vertical {
@@ -220,17 +210,20 @@
   background-size: cover;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   padding: 0px 8px 0px 8px;
-  margin-left: 5px;
+  margin-left: 6px;
+  margin-top: -4px;
 }
 
 .card-full-missions {
   position: relative;
   display: flex;
+  gap: 8px;
   justify-content: space-between;
   align-items: center;
+  /* margin-left: 6px; */
 }
 
 .card-mission-item-container {
@@ -263,7 +256,8 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding-top: 2px;
+  padding-top: 3px;
+  margin-top: -4px;
 }
 
 .req-1 {
@@ -844,6 +838,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.smaller-text {
+  font-size: 5px;
 }
 
 .card-title-svg {

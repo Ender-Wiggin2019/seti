@@ -187,6 +187,9 @@
   "Have at least": "Have at least",
   "Do not count moons": "Do not count moons.",
   "on each species": "on each species",
+  "in any sector": {
+    "": "in any sector."
+  },
   "desc": {
     "card-10": "{orbit-or-land-count} at Neptune <br> and {orbit-or-land-count} at Uranus <br> (incl. their moons)",
     "card-12": "on a planet or a moon, <br>even without the required tech.",
@@ -247,9 +250,19 @@
     "card-99": "Mark a {yellow-trace} for a species<br> for which you have already marked a {yellow-trace}.",
     "card-100": "Mark a {blue-trace} for a species<br> for which you have already marked a {blue-trace}.",
 
+    "card-104-req": "Have a probe on a comet",
     "card-106": "When you pay the indicated cost to play a card as your main action:",
+    "card-108": "If you have at least {publicity-8}, mark a {red-trace} .",
+    "card-112-req": "{orbit-count} and {land-count} at a single planet.",
+    "card-113-endgame": "Resolve the rightmost space on a gold scoring tile you did not mark.",
+    "card-114": "Then you can discard up to 3 cards for signals from your hand.",
+    "card-116": "When vou mark a signal in a sector of the indicated color:",
+    "card-118": "in a sector with one of your probes. Don't gain any {data-0} from them.",
+    "card-119": "Then gain {score-1} for each {publicity-1} you have.",
+    "card-120": "{any-signal} in a sector with one of your probes. If you have exactly 1 signal in that sector, return this card to your hand.",
+    "card-122": "Do this 3 times: <br><br> Discard the top card of the deck for its signal.",
     "card-se-en-01": "Keep this card in front of you.<br>If vou have a probe in the outermost ring, <br>you may use an {orbit-action} or {land-action} action to place that probe on Pluto.",
-    "et-pickup": "Then look at all {sample}<br> on the planet <br>and pick one up."
+    "et-pickup": "Then look at all {sample}<br> on the planet and <br>pick one up."
   },
   "watermark": "Fan Made"
 }

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 16:47:27
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-22 15:33:16
+ * @LastEditTime: 2025-04-06 17:13:10
  * @Description:
  */
 import { IBaseEffect } from '@/types/effect';
@@ -38,6 +38,7 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
     case ESpecialAction.LAUNCH:
     case ESpecialAction.SCAN:
     case ESpecialAction.COMPUTER:
+    case ESpecialAction.ORBIT_OR_LAND:
     case EMiscIcon.ROTATE:
     case ETech.ANY:
     case ETech.PROBE:
@@ -59,6 +60,8 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
     case EMiscIcon.ORBIT_COUNT:
     case EMiscIcon.LAND_COUNT:
     case EMiscIcon.ORBIT_OR_LAND_COUNT:
+    case EMiscIcon.SAMPLE:
+    case EMiscIcon.FULFILL_SAMPLE:
       shape = 'round';
       size = 'xs';
       break;

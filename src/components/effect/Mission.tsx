@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-06 14:44:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-12 01:07:35
+ * @LastEditTime: 2025-04-06 16:34:41
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
@@ -106,9 +106,6 @@ export const Mission: React.FC<missionProps> = ({ effect }) => {
               );
             })}
           </div>
-          {/*
-        <div className='card-mission-req'>111</div>
-        <div className='card-mission-reward'>111</div> */}
         </div>
       </div>
     );
