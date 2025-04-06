@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 22:59:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-06 17:13:51
+ * @LastEditTime: 2025-04-06 23:02:07
  * @Description:
  */
 import { v4 as uuidv4 } from 'uuid';
@@ -176,7 +176,11 @@ const QUICK_MISSION = (
 const flatMission2MissionItem = (missions: IFlattenMissionItem[]) => {
   return missions.map((mission) => {
     return {
-      req: Array.isArray(mission.req) ? mission.req : [mission.req],
+      req: mission.req
+        ? Array.isArray(mission.req)
+          ? mission.req
+          : [mission.req]
+        : [],
       reward: Array.isArray(mission.reward) ? mission.reward : [mission.reward],
     };
   });

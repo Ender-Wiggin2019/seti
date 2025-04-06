@@ -13,6 +13,7 @@ import { EAlienType, IBaseCard } from '@/types/BaseCard';
 import { CardSource } from '@/types/CardSource';
 import { EResource, ESector, TIcon } from '@/types/element';
 import { SortOrder } from '@/types/Order';
+import { sortCards } from '@/utils/sort';
 
 interface BaseCardListProps {
   selectedSectors?: ESector[];
@@ -130,7 +131,7 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
     [t]
   );
 
-  const {
+  let {
     originalCount,
     alienCount,
     cards: filteredCards,
@@ -153,30 +154,10 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
 
   switch (sortOrder) {
     case SortOrder.ID_ASC:
-      filteredCards.sort((a, b) => {
-        const aIsNumeric = /^\d+$/.test(a.id);
-        const bIsNumeric = /^\d+$/.test(b.id);
-
-        // 如果一个是数字，一个不是数字，数字的排在前面
-        if (aIsNumeric && !bIsNumeric) return -1;
-        if (!aIsNumeric && bIsNumeric) return 1;
-
-        // 如果都是数字或者都是非数字，比较数字部分
-        return Number(a.id) - Number(b.id);
-      });
+      filteredCards = sortCards(filteredCards);
       break;
     case SortOrder.ID_DESC:
-      filteredCards.sort((a, b) => {
-        const aIsNumeric = /^\d+$/.test(a.id);
-        const bIsNumeric = /^\d+$/.test(b.id);
-
-        // 如果一个是数字，一个不是数字，数字的排在前面
-        if (aIsNumeric && !bIsNumeric) return -1;
-        if (!aIsNumeric && bIsNumeric) return 1;
-
-        // 如果都是数字或者都是非数字，比较数字部分
-        return Number(b.id) - Number(a.id);
-      });
+      filteredCards = sortCards(filteredCards, false);
       break;
   }
 

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 16:47:27
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-06 17:13:10
+ * @LastEditTime: 2025-04-07 00:34:22
  * @Description:
  */
 import { IBaseEffect } from '@/types/effect';
@@ -113,7 +113,7 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
   }
   const res = {
     type,
-    value: value || 1,
+    value: value !== undefined ? value : 1,
     options: {
       size: oriSize || size,
       showValue,

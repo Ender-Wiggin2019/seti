@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-11 23:41:00
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-06 16:25:05
+ * @LastEditTime: 2025-04-07 01:02:47
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
@@ -28,7 +28,9 @@ export default function HomePage(
   _props: InferGetStaticPropsType<typeof getStaticProps>
 ) {
   const { t } = useTranslation('common');
-  const cards = sortCards([...baseCards, ...alienCards]).slice(100);
+  // const cards = sortCards([...baseCards, ...alienCards]).slice(105);
+  const cards = sortCards([...baseCards, ...alienCards]);
+
   // const cards = sortCards([...alienCards]);
 
   return (

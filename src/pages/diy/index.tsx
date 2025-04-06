@@ -176,9 +176,9 @@ export default function DiyPage(
       }
       try {
         const parsedData = JSON.parse(event.target.result as string);
-        if (!parsedData?.special?.fanMade) {
-          throw new Error(t('Not Validate!'));
-        }
+        // if (!parsedData?.special?.fanMade) {
+        //   throw new Error(t('Not Validate!'));
+        // }
         setCard(parsedData);
       } catch (error) {
         alert(t("Failed to parse the JSON. Please ensure it's a valid JSON."));

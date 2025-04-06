@@ -35,19 +35,27 @@ export default function HomePage(
             <br />
             1. 纯主观, 游戏经验有待积累, 卡表会相应更新
             <br />
-            2. 大多数纯任务牌, 能完成都有 t2 强度
+            2. 所有扫描牌都有 T2+ 强度, 所有发射牌都有 T3+ 强度
+            <br />
+            3. 点灯(踪迹)牌强度在 T1 - T2 浮动, 属于是看局势的牌,不算普适的强牌
+            <br />
+            4. 所有科技牌都有 T3 左右强度, 科技牌属于是不得不有但不需要很多的牌,
+            因为基本都是 3 费起步, 经济一般不支持打太多张
+            <br />
+            4. 任务牌整体强度都还可以, 因为存在任务计分, 存在隐性的加分
             <br />
           </p>
           {/* <p className='leading-7 [&:not(:first-child)]:mt-6'>
             2. 大多数纯任务牌, 能完成都有t2+强度
           </p> */}
-          <h2 className='text-2xl font-bold mt-4'>T1</h2>
+          <h2 className='text-2xl font-bold mt-4'>T0</h2>
           <PureCardList cardList={getCardsById(Tier.T1, true)} />
-          <h2 className='text-2xl font-bold mt-4'>T2</h2>
+          <h2 className='text-2xl font-bold mt-4'>T1</h2>
           <PureCardList cardList={getCardsById(Tier.T2, true)} />
-          {/* <h2 className='text-2xl font-bold mt-4'>T3</h2>
+          <h2 className='text-2xl font-bold mt-4'>T2</h2>
           <PureCardList cardList={getCardsById(Tier.T3, true)} />
-          <PureCardList cardList={getCardsById(Tier.T4, true)} /> */}
+          <h2 className='text-2xl font-bold mt-4'>T3</h2>
+          <PureCardList cardList={getCardsById(Tier.T4, true)} />
 
           {/* <p className='leading-7 [&:not(:first-child)]:mt-6'>
             <Trans i18nKey='about.intro'>

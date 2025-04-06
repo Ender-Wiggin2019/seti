@@ -190,6 +190,9 @@
   "in any sector": {
     "": "in any sector."
   },
+  "OR": "OR",
+  "{score-2} for each {computer-tech}": "{score-2} for each {computer-tech}",
+  "Have 5": "Have 5",
   "desc": {
     "card-10": "{orbit-or-land-count} at Neptune <br> and {orbit-or-land-count} at Uranus <br> (incl. their moons)",
     "card-12": "on a planet or a moon, <br>even without the required tech.",
@@ -229,7 +232,7 @@
     "card-71": "Then gain {score-2} for each tech of that type you have.",
     "card-72": "If you take the tech that someone else has researched, <br>gain {publicity-2}.",
     "card-73": "Discard all 3 cards from the card row for their free-action corner effect.",
-    "card-74": "{move-1} for each card with a {move} free-action corner effect you show from your hand.",
+    "card-74": "{move-1} for each card with a {move-0} free-action corner effect you show from your hand.",
     "card-75": "Then for each {any-trace} you have in that color, gain {score-1}.",
     "card-81": "that someone else has <br> already researched.",
     "card-81-2": "Do not advance the solar system. <br>Do not gain the {score-3} / {publicity-1} / {energy-1} / {any-card-1} <br> bonus printed on the tile.",
@@ -261,7 +264,21 @@
     "card-119": "Then gain {score-1} for each {publicity-1} you have.",
     "card-120": "{any-signal} in a sector with one of your probes. If you have exactly 1 signal in that sector, return this card to your hand.",
     "card-122": "Do this 3 times: <br><br> Discard the top card of the deck for its signal.",
+    "card-123": "If you visit asteroids this turn, gain {data-1} .",
+    "card-124": "If you visit a comet this turn, gain {score-4} .",
+    "card-125": "If you move within the same ring at least once this turn, gain {score-3} {publicity-1} .",
+    "card-127-endgame": "If you have a probe on asteroids, <br>gain {score-13} .",
+    "card-128-req": "When you visit a planet (except Earth):",
+    "card-129-req": "When you visit asteroids on your turn:",
+    "card-133": "Then {move-1} for each other planet or a comet in the same sector as Earth.",
+    "card-134": "in a sector with one or your probes",
+    "card-134-req": "Have a signal in 4 different sectors",
+    "card-136": "Don't gain any {data-0} from them.",
+    "card-138": "When you discard a card from your hand for this free action:",
+
     "card-se-en-01": "Keep this card in front of you.<br>If vou have a probe in the outermost ring, <br>you may use an {orbit-action} or {land-action} action to place that probe on Pluto.",
+    "card-se-en-02": "When you {orbit-or-land-action} at Mars (or its moons) <br>or when you play a card mentioning \"Mars\" in its flavor text:",
+
     "et-pickup": "Then look at all {sample}<br> on the planet and <br>pick one up."
   },
   "watermark": "Fan Made"

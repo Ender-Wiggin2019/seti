@@ -289,6 +289,9 @@
   "Have at least": "拥有至少",
   "Do not count moons": "不包含卫星。",
   "on each species": "每种外星物种",
+  "OR": "或",
+  "{score-2} for each {computer-tech}": "每个 {computer-tech} 获得 {score-2}",
+  "Have 5": "有 5 个",
   "desc": {
     "card-10": "{orbit-or-land-count} 在海王星<br>和 {orbit-or-land-count} 在天王星<br>（包括它们的卫星）",
     "card-12": "在行星或卫星上，<br>即便没有所需科技。",
@@ -328,12 +331,12 @@
     "card-71": "然后每拥有一个该类型的科技，获得{score-2}分。",
     "card-72": "如果你获得了其他人已研究的科技，<br>获得{publicity-2}。",
     "card-73": "弃掉卡牌行中的所有3张卡牌以获得它们的自由行动角效果。",
-    "card-74": "每展示一张手牌中具有{move}自由行动角效果的卡牌，{move-1}。",
+    "card-74": "每展示一张手牌中具有{move-0}自由行动角效果的卡牌，{move-1}。",
     "card-75": "然后每拥有一个该颜色的{any-trace}，获得{score-1}分。",
     "card-81": "其他人已研究过的。",
     "card-81-2": "不要推进太阳系。<br>不要获得印在板块上的{score-3}/{publicity-1}/{energy-1}/{any-card-1}奖励。",
     "card-83": "在地球所在的扇区。",
-    "card-84": "从任意行星或月球上移除一个你的{land-count}以标记一个{yellow-trace}。",
+    "card-84": "从任意行星或卫星上移除一个你的{land-count}以标记一个{yellow-trace}。",
     "card-86-endgame": "每个你有信号的扇区获得{score-1}分。",
     "card-87": "有一个距离地球至少5格的探测器",
     "card-88": "在你的探测器所在的扇区。",
@@ -359,7 +362,20 @@
     "card-119": "然后每有一个 {publicity-1} ，获得 {score-1} 。",
     "card-120": "{any-signal} 在一个有你探测器的区域中。<br>如果你在该区域恰好有1个信号，将这张卡牌返回手牌。",
     "card-122": "执行3次:<br><br>弃掉牌堆顶的牌以获得其信号。",
-    "card-se-en-01": "将这张卡放置在你面前}。<br>如果你在最外层的环有一个探测器，<br>你可以执行 {orbit-action} 或 {land-action} 行动<br>在冥王星放置探测器}。"
+    "card-123": "如果你在本回合访问了小行星，获得 {data-1} 。",
+    "card-124": "如果你在本回合访问了彗星，获得 {score-4} 。",
+    "card-125": "如果你在本回合在同一环内至少移动一步，获得 {score-3} {publicity-1} 。",
+    "card-127-endgame": "如果你在小行星上有探测器，<br>获得 {score-13} 。",
+    "card-128-req": "当你访问一个行星（除了地球）时：",
+    "card-129-req": "当你在你的回合访问小行星时：",
+    "card-133": "地球所在扇区的每有一个其他行星或彗星，<br>你可以 {move-1} 。",
+    "card-134": "在一个有你探测器的扇区。",
+    "card-134-req": "在4个不同的扇区有一个信号",
+    "card-136": "不获得任何 {data-0} 。",
+    "card-138": "当你从手中弃掉一张卡牌获取对应免费行动时：",
+
+    "card-se-en-01": "将这张卡放置在你面前。<br>如果你在最外层的环有一个探测器，<br>你可以执行 {orbit-action} 或 {land-action} 行动<br>在冥王星放置探测器。",
+    "card-se-en-02": "当你在火星及其卫星执行 {orbit-or-land-action} <br>或者打出一张背景文字有\"火星\" (Mars) 字样的卡牌时:"
   },
   "watermark": "粉丝卡牌"
 }

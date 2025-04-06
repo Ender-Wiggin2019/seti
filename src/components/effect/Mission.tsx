@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-06 14:44:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-06 16:34:41
+ * @LastEditTime: 2025-04-06 23:09:55
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
@@ -13,6 +13,7 @@ import { EffectFactory } from '@/components/effect/Effect';
 
 import { EEffectType, IMissionEffect } from '@/types/effect';
 import { calculateSize } from '@/utils/desc';
+import { cn } from '@/lib/utils';
 
 interface missionProps {
   effect: IMissionEffect;
@@ -72,9 +73,11 @@ export const Mission: React.FC<missionProps> = ({ effect }) => {
           {desc && <DescRender desc={t(desc)} />}
           <div className='card-full-missions'>
             {missions.map((mission, index) => {
-              const reqEffects = Array.isArray(mission.req)
-                ? mission.req
-                : [mission.req];
+              const reqEffects = mission.req
+                ? Array.isArray(mission.req)
+                  ? mission.req
+                  : [mission.req]
+                : [];
 
               const rewardEffects = Array.isArray(mission.reward)
                 ? mission.reward
@@ -82,17 +85,23 @@ export const Mission: React.FC<missionProps> = ({ effect }) => {
 
               return (
                 <div key={index} className='card-mission-item-container'>
-                  <div className='card-mission-req'>
-                    {reqEffects.map((reqEffect, index) => {
-                      return (
-                        <EffectFactory
-                          key={index}
-                          effect={{ ...reqEffect, size: 'desc' }}
-                        />
-                      );
+                  {reqEffects.length > 0 && (
+                    <div className='card-mission-req'>
+                      {reqEffects.map((reqEffect, index) => {
+                        return (
+                          <EffectFactory
+                            key={index}
+                            effect={{ ...reqEffect, size: 'desc' }}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
+                  <div
+                    className={cn('card-mission-reward', {
+                      'mt-1': reqEffects.length === 0,
                     })}
-                  </div>
-                  <div className='card-mission-reward'>
+                  >
                     {rewardEffects.map((reqEffect, index) => {
                       return (
                         <EffectFactory

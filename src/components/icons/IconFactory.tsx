@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-10 22:56:39
+ * @LastEditTime: 2025-04-07 00:33:18
  * @Description:
  */
 import React from 'react';
@@ -22,7 +22,7 @@ export const IconFactory: React.FC<IconProps> = ({ iconItem }) => {
   }
 
   const getValueComponent = () => {
-    if (!options?.showValue) {
+    if (!options?.showValue || !value) {
       return null;
     }
     return (
