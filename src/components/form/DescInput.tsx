@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-12 11:42:57
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-23 02:11:11
+ * @LastEditTime: 2025-04-08 00:45:01
  * @Description:
  */
 import { useState } from 'react';
@@ -21,8 +21,13 @@ import { EEffectType, Effect, ICustomizedEffect } from '@/types/effect';
 type Props = {
   currentEffects: Effect[];
   onChange?: (effect: ICustomizedEffect, action?: 'del') => void;
+  enableCreateNew?: boolean;
 };
-export const DescInput = ({ currentEffects, onChange }: Props) => {
+export const DescInput = ({
+  currentEffects,
+  onChange,
+  enableCreateNew = true,
+}: Props) => {
   const descEffects = currentEffects.filter(
     (e) => e.effectType === EEffectType.CUSTOMIZED
   ) as ICustomizedEffect[];
@@ -33,7 +38,15 @@ export const DescInput = ({ currentEffects, onChange }: Props) => {
     if (!newDesc) {
       return;
     }
-    if (!editingId) {
+    if (!enableCreateNew) {
+      const newDescEffect = {
+        ...(currentEffects[0] as ICustomizedEffect),
+        desc: newDesc,
+      };
+      setEditingId(newDescEffect.id);
+
+      onChange?.(newDescEffect);
+    } else if (!editingId) {
       const newDescEffect = DESC(newDesc);
       setEditingId(newDescEffect.id);
 
@@ -62,34 +75,35 @@ export const DescInput = ({ currentEffects, onChange }: Props) => {
   };
   return (
     <div className='flex flex-col gap-2'>
-      {descEffects.map((de) => (
-        <div key={de.id} className='flex gap-2'>
-          <div
-            className={cn(
-              'flex-1 text-white/50 rounded-md ring-1 ring-white/10 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50 bg-zinc-950 ring-offset-zinc-950 placeholder:text-zinc-400 focus-visible:ring-primary',
-              { 'text-white': de.id === editingId }
-            )}
-          >
-            {de.desc}
+      {enableCreateNew &&
+        descEffects.map((de) => (
+          <div key={de.id} className='flex gap-2'>
+            <div
+              className={cn(
+                'flex-1 text-white/50 rounded-md ring-1 ring-white/10 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50 bg-zinc-950 ring-offset-zinc-950 placeholder:text-zinc-400 focus-visible:ring-primary',
+                { 'text-white': de.id === editingId }
+              )}
+            >
+              {de.desc}
+            </div>
+            <Button
+              variant='outline'
+              size='sm'
+              className='w-16'
+              onClick={() => handleEdit(de)}
+            >
+              Edit
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              className='w-16'
+              onClick={() => handleDelete(de)}
+            >
+              Delete
+            </Button>
           </div>
-          <Button
-            variant='outline'
-            size='sm'
-            className='w-16'
-            onClick={() => handleEdit(de)}
-          >
-            Edit
-          </Button>
-          <Button
-            variant='outline'
-            size='sm'
-            className='w-16'
-            onClick={() => handleDelete(de)}
-          >
-            Delete
-          </Button>
-        </div>
-      ))}
+        ))}
       <div>Workspace</div>
       <div className='relative'>
         <Textarea
@@ -109,10 +123,12 @@ export const DescInput = ({ currentEffects, onChange }: Props) => {
           </div>
         </>
       )}
-      <div className='flex justify-start items-center gap-4'>
-        <Button variant='dark' className='w-40' onClick={handleAdd}>
-          Create New
-        </Button>
+      <div className='flex justify-end items-center gap-4'>
+        {enableCreateNew && (
+          <Button variant='dark' className='w-40' onClick={handleAdd}>
+            Create New
+          </Button>
+        )}
         <Button variant='highlight' className='w-40' onClick={handleSave}>
           Save
         </Button>

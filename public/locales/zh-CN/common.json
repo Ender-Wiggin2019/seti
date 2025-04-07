@@ -38,7 +38,7 @@
     "login_to_pick": "login for better statistics"
   },
   "about": {
-    "title": "About This Site",
+    "title": "关于本网站",
     "intro": "This is an open-source unofficial website of the board game Seti. It is not affiliated with Capstone Games in any way.\nThis project gets inspiration from ssimeonoff's website and for players to easily search for cards and their effects. The initial data for this site is sourced from <1>Cillie's List of animal cards</1>, while the icons and styles were borrowed from <3>BGA</3>. If there are any copyright concerns, I will address them.",
     "features": {
       "title": "Features",
@@ -68,6 +68,13 @@
       "a_3": "Feel free to comment in the <1>BGG thread</1> or submit an issue at <3>GitHub</3>."
     }
   },
+  "helper": {
+    "howto": "如何在文本中使用图标？",
+    "desc": "可渲染图标列表",
+    "name": "语法",
+    "example": "样例",
+    "display": "展示"
+  },
   "diy": {
     "card_maker": "Card Maker",
     "create_your_own_animal_card": "Create your own animal card.",
@@ -75,15 +82,17 @@
     "animal_name": "Animal Name",
     "add_new_enclosure": "Add New Enclosure",
     "add_new_ability": "Customized Ability",
-    "export_json": "Export as JSON",
-    "import_json": "Import JSON",
+    "export_json": "导出 SETI 文件",
+    "import_json": "导入 .SETI 文件",
     "add_exist_ability": "Existing Ability",
     "bug": "This function has a unsolved bug. Please do not delete original abilities before your customized abilities."
   },
   "dialog": {
     "warning": "警告",
     "warning-desc": "这部分可能会剧透并影响你的游戏体验。你确定要继续吗？",
-    "confirm": "确认"
+    "confirm": "确认",
+    "export": "说明",
+    "export-desc": "点击“确认”按钮后，将下载一个 .seti 文件。这个文件记录了这张卡牌的编辑状态，导出后可以通过“导入”按钮恢复当前编辑状态。如果你希望未来依然可以编辑这张卡牌，建议导出该文件。"
   },
   "Aliens?": "外...外星人?",
   "Placeholder": "Placeholder",
@@ -98,9 +107,10 @@
   "Effect": "效果",
   "Description": "文本描述",
   "Go to Full Page": "查看完整列表",
-  "Icons": "Icons",
+  "Icons": "图标",
   "Conditional Mission": "条件式任务",
   "Triggerable Missions": "触发式任务",
+  "Endgame": "终局计分",
   "Income": "收入",
   "Tier List": "梯度排名",
   "Advanced": "高级选项",
@@ -111,5 +121,6 @@
   "Your card price": "你的卡牌费用",
   "Your card title": "你的卡牌名称",
   "Tell more about your card": "你的卡牌背景",
-  "Enter card title": "输入卡牌名称"
+  "Enter card title": "输入卡牌名称",
+  "Undo": "撤销"
 }

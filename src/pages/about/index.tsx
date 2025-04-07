@@ -29,9 +29,11 @@ export default function HomePage(
             Beta version, still in development. Made by Ender.
           </p>
           <p className='leading-7 [&:not(:first-child)]:mt-6'>
-            测试版本，仍在开发中。Ender
-            制作。特别感谢根派大佬帮忙提供修正天文术语的官方翻译,
-            以及自爆型大老师和天使对卡牌翻译的帮忙。
+            测试版本，仍在开发中。Ender制作。
+          </p>
+          <p className='leading-7 [&:not(:first-child)]:mt-6'>
+            特别感谢以下玩家为本网站提供的翻译支持与建议: 根派, 自爆型大老师,
+            天使。
           </p>
           {/* <p className='leading-7 [&:not(:first-child)]:mt-6'>
             <Trans i18nKey='about.intro'>

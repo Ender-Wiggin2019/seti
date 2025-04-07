@@ -9,9 +9,15 @@ import { AccordionV2 } from '@/components/ui/accordion-v2';
 import { Button } from '@/components/ui/button';
 
 import { m } from '@/constant/effect';
-import { updateEffectArray, updateMissionEffectArray } from '@/utils/effect';
+import { updateEffectArray, updateSpecialEffectArray } from '@/utils/effect';
 
-import { EEffectType, Effect, IMissionEffect } from '@/types/effect';
+import {
+  EEffectType,
+  Effect,
+  IEndGameEffect,
+  IMissionEffect,
+} from '@/types/effect';
+import { EndgameSelector } from '@/components/form/EndgameSelector';
 
 type Props = {
   selectedEffects: Effect[];
@@ -27,6 +33,9 @@ export const EffectsGenerator = ({
     useState<IMissionEffect | null>(null);
   const [fullMissionEffect, setFullMissionEffect] =
     useState<IMissionEffect | null>(null);
+  const [endgameEffectDesc, setEndgameEffectDesc] = useState<string | null>(
+    null
+  );
 
   const handleEffectChange = (effect: Effect, action?: 'del') => {
     const newEffects = updateEffectArray(currentEffects, effect, action);
@@ -38,11 +47,10 @@ export const EffectsGenerator = ({
   };
 
   const handleAddQuickMission = () => {
-    // init
     const initEffect = m.QUICK_MISSION([], []);
     setQuickMissionEffect(initEffect);
     onChange?.(
-      updateMissionEffectArray(
+      updateSpecialEffectArray(
         currentEffects,
         initEffect,
         EEffectType.MISSION_QUICK
@@ -50,19 +58,27 @@ export const EffectsGenerator = ({
     );
   };
 
+  const handleAddEndGame = () => {
+    const initEffect = m.END_GAME('');
+    setEndgameEffectDesc('');
+    onChange?.(
+      updateSpecialEffectArray(currentEffects, initEffect, EEffectType.END_GAME)
+    );
+  };
+
   const handleAddFullMission = () => {
-    // init
     const initEffect = m.FULL_MISSION([{ req: [], reward: [] }], '');
 
     setFullMissionEffect(initEffect);
     onChange?.(
-      updateMissionEffectArray(
+      updateSpecialEffectArray(
         currentEffects,
         initEffect,
         EEffectType.MISSION_FULL
       )
     );
   };
+
   const handleUpdateQuickMission = (effect: IMissionEffect | null) => {
     setQuickMissionEffect(effect);
     if (!effect) {
@@ -71,10 +87,26 @@ export const EffectsGenerator = ({
       );
     }
     onChange?.(
-      updateMissionEffectArray(
+      updateSpecialEffectArray(
         currentEffects,
         effect,
         EEffectType.MISSION_QUICK
+      )
+    );
+  };
+
+  const handleUpdateEndgame = (desc: string | null) => {
+    setEndgameEffectDesc(desc);
+    if (!desc) {
+      return onChange?.(
+        currentEffects.filter((e) => e.effectType !== EEffectType.END_GAME)
+      );
+    }
+    onChange?.(
+      updateSpecialEffectArray(
+        currentEffects,
+        m.END_GAME(desc),
+        EEffectType.END_GAME
       )
     );
   };
@@ -87,11 +119,12 @@ export const EffectsGenerator = ({
       );
     }
     onChange?.(
-      updateMissionEffectArray(currentEffects, effect, EEffectType.MISSION_FULL)
+      updateSpecialEffectArray(currentEffects, effect, EEffectType.MISSION_FULL)
     );
   };
   const hasQuickMission = (quickMissionEffect?.missions?.length || 0) > 0;
   const hasFullMission = (fullMissionEffect?.missions.length || 0) > 0;
+  const hasEndgame = endgameEffectDesc !== null;
 
   const showExtra =
     !type ||
@@ -123,7 +156,6 @@ export const EffectsGenerator = ({
             onChange={handleUpdateQuickMission}
           />
         )}
-        {/* <EffectsGenerator selectedEffects={}/> */}
       </AccordionV2>
     );
   };
@@ -152,13 +184,35 @@ export const EffectsGenerator = ({
       </AccordionV2>
     );
   };
+
+  const endGameComp = () => {
+    return (
+      <AccordionV2 title='Endgame' className='w-52'>
+        {!hasEndgame ? (
+          <Button variant='highlight' onClick={handleAddEndGame}>
+            Add Endgame
+          </Button>
+        ) : (
+          <Button
+            variant='destructive'
+            onClick={() => handleUpdateEndgame(null)}
+          >
+            Delete
+          </Button>
+        )}
+
+        {hasEndgame && (
+          <EndgameSelector
+            desc={endgameEffectDesc}
+            onChange={handleUpdateEndgame}
+          />
+        )}
+      </AccordionV2>
+    );
+  };
+
   return (
     <div className='relative p-2 flex flex-col'>
-      {/* {showExtra && (
-        <div className='relative z-50 h-24'>
-          <EffectContainer effects={effects} />
-        </div>
-      )} */}
       <AccordionV2 title='Description'>
         <DescInput
           currentEffects={currentEffects}
@@ -171,6 +225,7 @@ export const EffectsGenerator = ({
       />
       {showExtra && quickMissionComp()}
       {showExtra && fullMissionComp()}
+      {showExtra && endGameComp()}
     </div>
   );
 };

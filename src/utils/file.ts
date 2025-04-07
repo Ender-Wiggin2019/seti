@@ -41,7 +41,7 @@ export const exportToJson = async (
     downloadAnchorNode.setAttribute('href', dataStr);
     downloadAnchorNode.setAttribute(
       'download',
-      `${card.id || 'fan-made-card'}.json`
+      `${card.id || 'fan-made-card'}.seti`
     );
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();

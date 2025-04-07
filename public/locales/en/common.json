@@ -82,15 +82,17 @@
     "animal_name": "Animal Name",
     "add_new_enclosure": "Add New Enclosure",
     "add_new_ability": "Customized Ability",
-    "export_json": "Export as JSON",
-    "import_json": "Import JSON (which you exported before)",
+    "export_json": "Export SETI File",
+    "import_json": "Import .SETI File",
     "add_exist_ability": "Existing Ability",
     "bug": "This function has a unsolved bug. Please do not delete original abilities before your customized abilities."
   },
   "dialog": {
     "warning": "Warning",
     "warning-desc": "This section may contain spoilers and affect your gaming experience. Are you sure you want to continue?",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "export": "Notice",
+    "export-desc": "After clicking the \"Confirm\" button, a .seti file will be downloaded. This file represents the intermediate state of the card creation process and can be restored using the \"Import\" button. It's recommended to export this file if you plan to edit the card later."
   },
   "Aliens?": "Aliens?",
   "Placeholder": "Placeholder",
@@ -108,6 +110,7 @@
   "Icons": "Icons",
   "Conditional Mission": "Conditional Mission",
   "Triggerable Missions": "Triggerable Missions",
+  "Endgame": "Endgame",
   "Income": "Income",
   "Tier List": "Tier List",
   "Advanced": "Advanced",
@@ -118,5 +121,6 @@
   "Your card price": "Your card price",
   "Your card title": "Your card title",
   "Tell more about your card": "Tell more about your card",
-  "Enter card title": "Enter card title"
+  "Enter card title": "Enter card title",
+  "Undo": "Undo"
 }

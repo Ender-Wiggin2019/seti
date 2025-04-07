@@ -33,6 +33,7 @@ import { IBaseCard } from '@/types/BaseCard';
 import { Effect } from '@/types/effect';
 import { EResource, ESector, TSize } from '@/types/element';
 import { DEFAULT_BASE_CARD } from '@/data/defaultCards';
+import { ExportDialogButton } from '@/components/ui/export-dialog';
 
 type Props = {
   // Add custom props here
@@ -176,9 +177,9 @@ export default function DiyPage(
       }
       try {
         const parsedData = JSON.parse(event.target.result as string);
-        // if (!parsedData?.special?.fanMade) {
-        //   throw new Error(t('Not Validate!'));
-        // }
+        if (!parsedData?.special?.fanMade) {
+          throw new Error(t('This JSON is not created from this tool.'));
+        }
         setCard(parsedData);
       } catch (error) {
         alert(t("Failed to parse the JSON. Please ensure it's a valid JSON."));
@@ -223,7 +224,7 @@ export default function DiyPage(
           <div className='flex justify-start items-center gap-2 mb-2'>
             <Button
               variant='default'
-              className='w-20'
+              className='w-24'
               disabled={history.length === 0}
               onClick={undo}
             >
@@ -245,9 +246,7 @@ export default function DiyPage(
             >
               {t('Download')}
             </Button>
-            <Button variant='default' className='w-20' onClick={handleExport}>
-              {t('Export')}
-            </Button>
+            <ExportDialogButton onSubmit={handleExport} />
           </div>
           <AccordionV2 title={t('Effect')}>
             <EffectsGenerator
@@ -262,12 +261,7 @@ export default function DiyPage(
             currentEffects={
               card.freeAction?.map((a) => freeAction2Effect(a)) || []
             }
-            icons={[
-              EResource.PUBLICITY,
-              EResource.DATA,
-              EResource.MOVE,
-              EResource.SCORE,
-            ]}
+            icons={Object.values(EResource)}
             onChange={handleFreeActionChange}
           />
 
@@ -411,7 +405,7 @@ export default function DiyPage(
             <Input
               id='json-import'
               type='file'
-              accept='.json'
+              accept='.seti'
               onChange={handleJsonImport}
             />
           </div>

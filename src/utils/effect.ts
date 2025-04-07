@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-12 11:12:08
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-04 17:47:32
+ * @LastEditTime: 2025-04-08 00:13:55
  * @Description:
  */
 import { e } from '@/constant/effect';
@@ -13,6 +13,7 @@ import {
   Effect,
   IBaseEffect,
   ICustomizedEffect,
+  IEndGameEffect,
   IMissionEffect,
 } from '@/types/effect';
 import { EResource, TIcon } from '@/types/element';
@@ -58,9 +59,9 @@ export const updateEffectArray = (
   return [...prevEffects, newEffect];
 };
 
-export const updateMissionEffectArray = (
+export const updateSpecialEffectArray = (
   prevEffects: Effect[],
-  newEffect: IMissionEffect,
+  newEffect: IMissionEffect | IEndGameEffect,
   effectType: EEffectType
 ): Effect[] => {
   // base, add value
