@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-07 01:36:59
+ * @LastEditTime: 2025-04-12 01:02:21
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -1069,7 +1069,7 @@ const _baseCards: IBaseCard[] = [
       m.FULL_MISSION(
         [
           { req: DESC('Mercury'), reward: e.CARD() },
-          { req: DESC('Saturn'), reward: e.PUBLICITY() },
+          { req: DESC('Venus'), reward: e.PUBLICITY() },
         ],
         'When you visit:'
       ),

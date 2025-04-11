@@ -2,18 +2,20 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-06 14:44:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-06 23:09:55
+ * @LastEditTime: 2025-04-12 01:03:08
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
 import React from 'react';
 
+import { cn } from '@/lib/utils';
+
 import { DescRender } from '@/components/effect/DescRender';
 import { EffectFactory } from '@/components/effect/Effect';
 
-import { EEffectType, IMissionEffect } from '@/types/effect';
 import { calculateSize } from '@/utils/desc';
-import { cn } from '@/lib/utils';
+
+import { EEffectType, IMissionEffect } from '@/types/effect';
 
 interface missionProps {
   effect: IMissionEffect;
@@ -47,7 +49,12 @@ export const Mission: React.FC<missionProps> = ({ effect }) => {
             );
           })}
         </div>
-        <div className='reward-container flex justify-center items-center flex-1 gap-1'>
+        <div
+          className={cn(
+            'reward-container flex justify-center items-center flex-1 gap-2',
+            { 'gap-[2px]': rewardEffects.length >= 3 }
+          )}
+        >
           {rewardEffects.map((rewardEffect, index) => {
             return (
               <EffectFactory

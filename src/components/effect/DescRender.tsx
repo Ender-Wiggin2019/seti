@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-05 23:45:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-07 00:36:33
+ * @LastEditTime: 2025-04-11 01:42:32
  * @Description:
  */
 import React from 'react';
@@ -35,12 +35,19 @@ export const DescRender: React.FC<IconProps> = ({ desc, size, width }) => {
   // const descIconSize: TSize = size || 'xs';
 
   return (
-    <div className='desc-container flex flex-col'>
+    <div
+      className={cn('desc-container flex flex-col', {
+        'max-w-24': width === 'half',
+      })}
+    >
       {descArray.map((renderNodeLine: IRenderNode[], lineIndex) => {
         return (
           <div
             key={lineIndex}
-            className='flex flex-row flex-wrap justify-center items-center'
+            className={cn(
+              'w-full flex flex-row flex-wrap justify-center items-center',
+              { 'justify-start': width === 'half' }
+            )}
           >
             {renderNodeLine.map((renderNode, index) => {
               const res = renderNode2Effect(renderNode);
@@ -50,7 +57,7 @@ export const DescRender: React.FC<IconProps> = ({ desc, size, width }) => {
                   <span
                     className={cn(
                       `inline-block text-desc-${descTextSize} text-center`,
-                      { 'max-w-20': width === 'half' }
+                      { 'text-start': width === 'half' }
                       // { 'max-w-32': width !== 'half' }
                     )}
                     key={String(lineIndex) + index}
