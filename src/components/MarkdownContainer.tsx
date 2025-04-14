@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-04-14 23:49:39
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-15 02:01:18
+ * @LastEditTime: 2025-04-15 02:15:52
  * @Description:
  */
 import Giscus from '@giscus/react';
@@ -23,7 +23,7 @@ export const MarkdownContainer = ({ title, content }: Props) => {
     <Layout>
       <Seo templateTitle={title} />
 
-      <Container className='px-2 pt-2'>
+      <Container className='px-2 pt-2 md:pt-4'>
         <Markdown
           components={{
             h1: ({ children }) => (
