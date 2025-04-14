@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 12:05:53
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-23 12:17:22
+ * @LastEditTime: 2025-04-14 18:59:34
  * @Description:
  */
 import {
@@ -20,6 +20,7 @@ import { IBaseCard } from '@/types/BaseCard';
 interface PreviewBaseCardProps {
   card: IBaseCard;
   showLink?: boolean;
+  onlyId?: boolean;
 }
 import { useTranslation } from 'next-i18next';
 
@@ -29,6 +30,7 @@ import { CardRender } from '@/components/form/CardRender';
 export const PreviewBaseCard: React.FC<PreviewBaseCardProps> = ({
   card,
   showLink,
+  onlyId,
 }) => {
   const { t } = useTranslation('seti');
 
@@ -36,13 +38,19 @@ export const PreviewBaseCard: React.FC<PreviewBaseCardProps> = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <div className='w-fit'>
-          {enableEffectRender ? (
-            <CardRender card={card} />
-          ) : (
-            <BaseCard card={card} />
-          )}
-        </div>
+        {onlyId ? (
+          <span className='underline font-bold'>
+            #{card.id} {t(card.name)}
+          </span>
+        ) : (
+          <div className='w-fit'>
+            {enableEffectRender ? (
+              <CardRender card={card} />
+            ) : (
+              <BaseCard card={card} />
+            )}
+          </div>
+        )}
       </DialogTrigger>
       <DialogContent className='sm:max-w-[425px] bg-gradient-to-b from-zinc-100 to-white backdrop-blur-lg'>
         <DialogHeader className='space-y-1 lg:space-y-1.5'>

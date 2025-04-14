@@ -20,7 +20,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <div className='pointer-events-none fixed inset-0 select-none bg-black'>
         <div className='h-full w-full'>
           <img
-            src='/images/background.jpg'
+            // src='/images/background.jpg'
             className='h-auto w-full object-contain object-top'
             alt='background'
             // fill
