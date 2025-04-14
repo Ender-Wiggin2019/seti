@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-11 23:41:00
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-07 01:02:47
+ * @LastEditTime: 2025-04-12 16:53:19
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
@@ -29,15 +29,15 @@ export default function HomePage(
 ) {
   const { t } = useTranslation('common');
   // const cards = sortCards([...baseCards, ...alienCards]).slice(105);
-  const cards = sortCards([...baseCards, ...alienCards]);
+  // const cards = sortCards([...baseCards, ...alienCards]);
 
-  // const cards = sortCards([...alienCards]);
+  const cards = sortCards([...alienCards]);
 
   return (
     <Layout>
       <Seo templateTitle='About' />
       <Container>
-        <div className='mt-4 flex flex-col'>
+        <div className='mt-4 flex flex-col gap-2'>
           {cards.map((card) => {
             const oriCard: IBaseCard = {
               ...card,

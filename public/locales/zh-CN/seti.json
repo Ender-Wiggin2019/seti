@@ -375,7 +375,11 @@
     "card-138": "当你从手中弃掉一张卡牌获取对应免费行动时：",
 
     "card-se-en-01": "将这张卡放置在你面前。<br>如果你在最外层的环有一个探测器，<br>你可以执行 {orbit-action} 或 {land-action} 行动<br>在冥王星放置探测器。",
-    "card-se-en-02": "当你在火星及其卫星执行 {orbit-or-land-action} <br>或者打出一张背景文字有\"火星\" (Mars) 字样的卡牌时:"
+    "card-se-en-02": "当你在火星及其卫星执行 {orbit-or-land-action} <br>或者打出一张背景文字有\"火星\" (Mars) 字样的卡牌时:",
+
+    "et-pickup": "查看当前行星的所有 {sample}<br>并选择一个拾起。",
+    "et-pickup-back-reward": "选择木星 (Jupiter) 或土星 (Saturn), <br>查看该行星的所有 {sample}<br>并选择一个获得奖励, 然后放回。",
+    "et-pickup-moon": "在行星或卫星上, 无视科技限制。查看当前行星的<br>所有 {sample}并选择一个拾起。"
   },
   "watermark": "粉丝卡牌"
 }

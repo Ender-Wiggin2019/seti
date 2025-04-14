@@ -9,6 +9,8 @@ import { HexColorPicker } from 'react-colorful';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
+import { DEFAULT_BASE_CARD } from '@/data/defaultCards';
+
 import { EffectFactory } from '@/components/effect/Effect';
 import { CardRender } from '@/components/form/CardRender';
 import { EffectSelector } from '@/components/form/EffectSelector';
@@ -17,6 +19,7 @@ import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
 import { AccordionV2 } from '@/components/ui/accordion-v2';
 import { Button } from '@/components/ui/button';
+import { ExportDialogButton } from '@/components/ui/export-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -32,8 +35,6 @@ import { downloadImage, exportToJson } from '@/utils/file';
 import { IBaseCard } from '@/types/BaseCard';
 import { Effect } from '@/types/effect';
 import { EResource, ESector, TSize } from '@/types/element';
-import { DEFAULT_BASE_CARD } from '@/data/defaultCards';
-import { ExportDialogButton } from '@/components/ui/export-dialog';
 
 type Props = {
   // Add custom props here
@@ -409,6 +410,12 @@ export default function DiyPage(
               onChange={handleJsonImport}
             />
           </div>
+          {/* <Button className="max-w-sm mt-4">
+<Paintbrush className="mr-1"/>
+            <Link href='/gallery'>
+            {t('Take a look at existing fan-made cards')}
+            </Link>
+            </Button> */}
         </div>
       </div>
     </Layout>

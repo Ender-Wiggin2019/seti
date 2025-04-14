@@ -3,7 +3,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-09-13 06:17:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-02 00:22:45
+ * @LastEditTime: 2025-04-14 23:49:46
  * @Description:
  */
 // import { Analytics } from '@vercel/analytics/react';
@@ -20,7 +20,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <div className='pointer-events-none fixed inset-0 select-none bg-black'>
         <div className='h-full w-full'>
           <img
-            // src='/images/background.jpg'
+            src='/images/background.jpg'
             className='h-auto w-full object-contain object-top'
             alt='background'
             // fill

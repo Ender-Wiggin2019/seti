@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-06 13:50:52
+ * @LastEditTime: 2025-04-12 16:54:55
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -343,10 +343,7 @@ export const _alienCards: any[] = [
     effects: [
       e.LAND(),
       DESC('desc.et-pickup'),
-      m.QUICK_MISSION(
-        DESC('Deliver {sample} to Earth'),
-        DESC('Resolve {fulfill-sample} twice.')
-      ),
+      m.QUICK_MISSION(DESC('Deliver {sample} to Earth'), DESC('desc.et-7')),
     ],
   },
   {
@@ -374,6 +371,10 @@ export const _alienCards: any[] = [
     price: 1,
     income: EResource.CARD,
     alien: EAlienType.MASCAMITES,
+    effects: [
+      DESC('desc.et-pickup-back', 'half'),
+      m.END_GAME('desc.et-5-endgame'),
+    ],
   },
   {
     id: 'ET.1',
@@ -387,7 +388,7 @@ export const _alienCards: any[] = [
     effects: [
       e.MOVE(1, '', 'xs'),
       e.LAND(1, '', 'xs'),
-      DESC('desc.et-pickup'),
+      DESC('desc.et-pickup', 'half'),
       m.QUICK_MISSION(
         [DESC('Deliver {sample} to Earth')],
         [e.FULFILL_SAMPLE(), e.DATA(2)]
@@ -406,6 +407,15 @@ export const _alienCards: any[] = [
     price: 3,
     income: EResource.ENERGY,
     alien: EAlienType.MASCAMITES,
+    effects: [
+      e.PUBLICITY(),
+      e.ROTATE(),
+      e.TECH_PROBE(),
+      m.QUICK_MISSION(
+        [DESC('desc.et-8-req')],
+        [DESC('desc.et-pickup-back-reward')]
+      ),
+    ],
   },
   {
     id: 'ET.4',
@@ -419,6 +429,14 @@ export const _alienCards: any[] = [
     price: 1,
     income: EResource.CREDIT,
     alien: EAlienType.MASCAMITES,
+    effects: [
+      e.LAND(),
+      DESC('desc.et-pickup', 'half'),
+      m.QUICK_MISSION(
+        [DESC('Deliver {sample} to Mars')],
+        [e.FULFILL_SAMPLE(), e.SCORE(2), e.CARD_ANY()]
+      ),
+    ],
   },
   {
     id: 'ET.3',
@@ -432,6 +450,14 @@ export const _alienCards: any[] = [
     price: 1,
     income: EResource.ENERGY,
     alien: EAlienType.MASCAMITES,
+    effects: [
+      e.ORBIT_OR_LAND(),
+      DESC('desc.et-pickup', 'half'),
+      m.QUICK_MISSION(
+        [DESC('Deliver {sample} to Earth')],
+        [e.FULFILL_SAMPLE(), e.SCORE(3), e.CREDIT()]
+      ),
+    ],
   },
   {
     id: 'ET.9',
@@ -455,19 +481,35 @@ export const _alienCards: any[] = [
     price: 2,
     income: EResource.ENERGY,
     alien: EAlienType.MASCAMITES,
+    effects: [
+      e.LAND(),
+      DESC('desc.et-pickup-moon', 'half'),
+      m.QUICK_MISSION(
+        [DESC('Deliver {sample} to Earth')],
+        [e.FULFILL_SAMPLE(), e.SCORE(3), e.DATA(3)]
+      ),
+    ],
   },
   {
     id: 'ET.6',
     name: 'The Queen',
     position: { src: '/images/aliens/mascamites.webp', row: 1, col: 4 },
     freeAction: [
-      { type: EResource.MOVE, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.MOVE, value: 1 },
     ],
     sector: ESector.RED,
     price: 2,
     income: EResource.CREDIT,
     alien: EAlienType.MASCAMITES,
+    effects: [
+      e.LAND(),
+      DESC('desc.et-pickup-moon', 'half'),
+      m.QUICK_MISSION(
+        [DESC('Deliver {sample} to Earth')],
+        [e.FULFILL_SAMPLE(), e.SCORE(6), e.PUBLICITY(2)]
+      ),
+    ],
   },
 
   {

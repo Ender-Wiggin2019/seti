@@ -193,6 +193,7 @@
   "OR": "OR",
   "{score-2} for each {computer-tech}": "{score-2} for each {computer-tech}",
   "Have 5": "Have 5",
+  "Deliver {sample} to Earth": "运送 {sample} 到地球",
   "desc": {
     "card-10": "{orbit-or-land-count} at Neptune <br> and {orbit-or-land-count} at Uranus <br> (incl. their moons)",
     "card-12": "on a planet or a moon, <br>even without the required tech.",
@@ -279,7 +280,9 @@
     "card-se-en-01": "Keep this card in front of you.<br>If vou have a probe in the outermost ring, <br>you may use an {orbit-action} or {land-action} action to place that probe on Pluto.",
     "card-se-en-02": "When you {orbit-or-land-action} at Mars (or its moons) <br>or when you play a card mentioning \"Mars\" in its flavor text:",
 
-    "et-pickup": "Then look at all {sample}<br> on the planet and <br>pick one up."
+    "et-pickup": "Then look at all {sample}<br> on the planet and <br>pick one up.",
+    "et-pickup-back-reward": "Choose Jupiter or Saturn. <br>Look at all its {sample}, pick one, gain its reward, and put it back.",
+    "et-pickup-moon": "on a planet or a moon, even without the required tech. <br>Then look at all {sample} <br>on the planet and pick one up."
   },
   "watermark": "Fan Made"
 }
