@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-04-14 17:16:03
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-14 19:03:26
+ * @LastEditTime: 2025-04-15 00:23:14
  * @Description:
  */
 import fs from 'fs';
@@ -14,6 +14,7 @@ import React from 'react';
 // make sure to import your TextFilter
 import { MarkdownContainer } from '@/components/MarkdownContainer';
 type Props = {
+  title: string;
   content: string;
 };
 
@@ -22,11 +23,13 @@ export default function HomePage(
 ) {
   const content = _props.content;
 
-  return <MarkdownContainer content={content} />;
+  return <MarkdownContainer title={_props.title} content={content} />;
 }
 
 export const getStaticProps: GetStaticProps<Props> = async ({ locale }) => {
-  const filePath = path.join(process.cwd(), 'src/posts', 'model.md');
+  const post = locale?.includes('zh') ? 'model-zh.md' : 'model.md';
+  const title = locale?.includes('zh') ? '基础模型介绍' : 'Basic Model';
+  const filePath = path.join(process.cwd(), 'src/posts', post);
   const fileContents = fs.readFileSync(filePath, 'utf8');
 
   return {
@@ -36,6 +39,7 @@ export const getStaticProps: GetStaticProps<Props> = async ({ locale }) => {
         'seti',
         'flavorText',
       ])),
+      title,
       content: fileContents,
     },
   };

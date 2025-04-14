@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 12:05:53
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-14 18:59:34
+ * @LastEditTime: 2025-04-15 00:58:47
  * @Description:
  */
 import {
@@ -39,11 +39,11 @@ export const PreviewBaseCard: React.FC<PreviewBaseCardProps> = ({
     <Dialog>
       <DialogTrigger asChild>
         {onlyId ? (
-          <span className='underline font-bold'>
+          <span className='underline underline-offset-4 font-bold'>
             #{card.id} {t(card.name)}
           </span>
         ) : (
-          <div className='w-fit'>
+          <div className='w-fit cursor-pointer'>
             {enableEffectRender ? (
               <CardRender card={card} />
             ) : (

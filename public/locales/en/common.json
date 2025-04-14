@@ -28,6 +28,7 @@
     "cards": "Cards",
     "about": "About",
     "diy": "Card Maker",
+    "posts": "Posts",
     "maps": "Maps",
     "endgames": "Final Scoring",
     "random_quiz": "Random Quiz",
@@ -93,6 +94,9 @@
     "confirm": "Confirm",
     "export": "Notice",
     "export-desc": "After clicking the \"Confirm\" button, a .seti file will be downloaded. This file represents the intermediate state of the card creation process and can be restored using the \"Import\" button. It's recommended to export this file if you plan to edit the card later."
+  },
+  "article": {
+    "enlarge": "Click card to view the larger image"
   },
   "Aliens?": "Aliens?",
   "Placeholder": "Placeholder",

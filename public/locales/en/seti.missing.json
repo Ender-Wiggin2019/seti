@@ -1,25 +1,125 @@
 {
-  "Synthesis Instructions": "Synthesis Instructions",
   "Torrent-chain Signal": "Torrent-chain Signal",
-  "Telescope Blueprints": "Telescope Blueprints",
-  "Rover Exploration": "Rover Exploration",
-  "Martian Quarantine Lab": "Martian Quarantine Lab",
-  "Exofossil Discovery": "Exofossil Discovery",
-  "Mass Sample Collection": "Mass Sample Collection",
+  "Orbital Monitoring": "Orbital Monitoring",
   "Probe Customisation": "Probe Customisation",
+  "Core-breach Exoplanet": "Core-breach Exoplanet",
+  "Fission-sun Exoplanet": "Fission-sun Exoplanet",
+  "Ecosystem Study": "Ecosystem Study",
+  "Hive Sample": "Hive Sample",
+  "Rover Exploration": "Rover Exploration",
+  "Exofossil Discovery": "Exofossil Discovery",
   "Extractor": "Extractor",
-  "Breeding Sample": "Breeding Sample",
-  "The Queen": "The Queen",
-  "Expender Core": "Expender Core",
+  "Exofossil Samples": "Exofossil Samples",
+  "Race Against Time": "Race Against Time",
+  "Casette Deployment": "Casette Deployment",
+  "Neuralab": "Neuralab",
   "Razor-edge Shuttle": "Razor-edge Shuttle",
+  "Vortex Exoplanet": "Vortex Exoplanet",
+  "for a single species": "for a single species",
+  "for that species": "for that species",
+  "in the same sector": "in the same sector",
+  "{score-2} for each {tech-computer} you have": "{score-2} for each {tech-computer} you have",
+  "Deliver {sample} to Earth": "Deliver {sample} to Earth",
+  "When you {orbit} / {land} at Mars (or its moons) or when you play a Card mentioning \"Mars\" in its flavor text:": "When you {orbit} / {land} at Mars (or its moons) or when you play a Card mentioning \"Mars\" in its flavor text:",
+  "Resolve {fulfill-sample} twice": {
+    "": "Resolve {fulfill-sample} twice."
+  },
+  "If it was in a sector with an anomaly, gain {move-1} ": {
+    "": "If it was in a sector with an anomaly, gain {move-1} ."
+  },
+  "Don't gain any {publicity} for moving probes this turn": {
+    "": "Don't gain any {publicity} for moving probes this turn."
+  },
+  "In addition mark a {signal} in a sector with the anomaly which is going to be triggered next": {
+    "": "In addition mark a {signal} in a sector with the anomaly which is going to be triggered next."
+  },
+  "Draw all three cards from the card row": {
+    "": "Draw all three cards from the card row."
+  },
+  "for this species": "for this species",
+  "Then gain {score-1} for each signal you have in sectors with anomalies": {
+    "": "Then gain {score-1} for each signal you have in sectors with anomalies."
+  },
+  "pierced Exoplanet": "pierced Exoplanet",
+  "First Contact": "First Contact",
+  "Mass Sample Collection": "Mass Sample Collection",
+  "Martian Quarantine Lab": "Martian Quarantine Lab",
+  "The Queen": "The Queen",
+  "Breeding Sample": "Breeding Sample",
+  "Computer Simulations": "Computer Simulations",
+  "Signs of Life": "Signs of Life",
+  "Close-up View": "Close-up View",
+  "Concerned People": "Concerned People",
+  "Listening Carefully": "Listening Carefully",
+  "Part of Everyday Life": "Part of Everyday Life",
+  "Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income": {
+    "": "Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income."
+  },
+  "Flooding the Media Space": "Flooding the Media Space",
+  "Are we Being Observed?": "Are we Being Observed?",
+  "Gain the reward from the anomaly which is going to be triggered next": {
+    "": "Gain the reward from the anomaly which is going to be triggered next."
+  },
+  "Message Capsule": "Message Capsule",
+  "Amazing Uncertainty": "Amazing Uncertainty",
+  "Visitor in the Sky": "Visitor in the Sky",
+  "Terrain Mapping": "Terrain Mapping",
+  "Perfect Timing": "Perfect Timing",
+  "Comparative Analysis": "Comparative Analysis",
+  "Excavation Rover": "Excavation Rover",
+  "Vessel Designs": "Vessel Designs",
+  "Exocomputers": "Exocomputers",
+  "Infocluster": "Infocluster",
+  "A Message from Afar": "A Message from Afar",
+  "Synthesis Instructions": "Synthesis Instructions",
+  "Alien Schematics": "Alien Schematics",
+  "Music of the Spheres": "Music of the Spheres",
+  "Hivemind Concept": "Hivemind Concept",
+  "Deflector": "Deflector",
+  "Expender Core": "Expender Core",
+  "Oscillating Probes": "Oscillating Probes",
+  "Generative Infrastructure": "Generative Infrastructure",
+  "Nanowielder Node": "Nanowielder Node",
+  "Stratoelevator": "Stratoelevator",
+  "desc": {
+    "card-se-en-02": "desc.card-se-en-02",
+    "card-123": "desc.card-123",
+    "card-124": "desc.card-124",
+    "card-125": "desc.card-125",
+    "card-127-endgame": "desc.card-127-endgame",
+    "card-128-req": "desc.card-128-req",
+    "card-129-req": "desc.card-129-req",
+    "card-133": "desc.card-133",
+    "card-134": "desc.card-134",
+    "card-134-req": "desc.card-134-req",
+    "card-136": "desc.card-136",
+    "card-138": "desc.card-138",
+    "et-pickup-back": "desc.et-pickup-back",
+    "et-5-endgame": "desc.et-5-endgame",
+    "et-7": "desc.et-7",
+    "et-8-req": "desc.et-8-req"
+  },
+  "OR": "OR",
+  "{score-2} for each {computer-tech}": "{score-2} for each {computer-tech}",
+  "Have 5": "Have 5",
+  "New Physics": "New Physics",
+  "Altered Trajectory": "Altered Trajectory",
+  "Telescope Blueprints": "Telescope Blueprints",
+  "Automated Lab": "Automated Lab",
   "Ignore the limit of probes in space for those launches": {
     "": "Ignore the limit of probes in space for those launches."
+  },
+  "LAND on a planet or a moon, even without the required tech": {
+    "": "LAND on a planet or a moon, even without the required tech."
+  },
+  "You may land on a space that is already occupied and still get the covered reward": {
+    "": "You may land on a space that is already occupied and still get the covered reward."
   },
   "Reveal the card you drew, and gain its free-action corner effect": {
     "": "Reveal the card you drew, and gain its free-action corner effect."
   },
-  "You may land on a space that is already occupied and still get the covered reward": {
-    "": "You may land on a space that is already occupied and still get the covered reward."
+  "in the sector with Mercury": {
+    "": "in the sector with Mercury."
   },
   "in the sector with Venus": {
     "": "in the sector with Venus."
@@ -36,11 +136,20 @@
   "at Proxima Centauri": {
     "": "at Proxima Centauri."
   },
+  "at Barnard's Star": {
+    "": "at Barnard's Star."
+  },
   "at 61 Virginis": {
     "": "at 61 Virginis."
   },
+  "at Kepler 22": {
+    "": "at Kepler 22."
+  },
   "at Sirius A": {
     "": "at Sirius A."
+  },
+  "at Procyon": {
+    "": "at Procyon."
   },
   "at Beta Pictoris": {
     "": "at Beta Pictoris."
@@ -49,97 +158,6 @@
     "": "at Vega."
   },
   "at Uranus": "at Uranus",
-  "for a single species": "for a single species",
-  "for that species": "for that species",
-  "desc": {
-    "card-104-req": "desc.card-104-req"
-  },
-  "todo": "todo",
-  "{score-2} for each {tech-computer} you have": "{score-2} for each {tech-computer} you have",
-  "First Contact": "First Contact",
-  "When you {orbit} / {land} at Mars (or its moons) or when you play a Card mentioning \"Mars\" in its flavor text:": "When you {orbit} / {land} at Mars (or its moons) or when you play a Card mentioning \"Mars\" in its flavor text:",
-  "Ecosystem Study": "Ecosystem Study",
-  "Deliver {sample} to Earth": "Deliver {sample} to Earth",
-  "Resolve {fulfill-sample} twice": {
-    "": "Resolve {fulfill-sample} twice."
-  },
-  "Hive Sample": "Hive Sample",
-  "Orbital Monitoring": "Orbital Monitoring",
-  "Computer Simulations": "Computer Simulations",
-  "Signs of Life": "Signs of Life",
-  "If it was in a sector with an anomaly, gain {move-1} ": {
-    "": "If it was in a sector with an anomaly, gain {move-1} ."
-  },
-  "Close-up View": "Close-up View",
-  "Don't gain any {publicity} for moving probes this turn": {
-    "": "Don't gain any {publicity} for moving probes this turn."
-  },
-  "Concerned People": "Concerned People",
-  "Listening Carefully": "Listening Carefully",
-  "In addition mark a {signal} in a sector with the anomaly which is going to be triggered next": {
-    "": "In addition mark a {signal} in a sector with the anomaly which is going to be triggered next."
-  },
-  "Part of Everyday Life": "Part of Everyday Life",
-  "Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income": {
-    "": "Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income."
-  },
-  "Flooding the Media Space": "Flooding the Media Space",
-  "Draw all three cards from the card row": {
-    "": "Draw all three cards from the card row."
-  },
-  "Are we Being Observed?": "Are we Being Observed?",
-  "Gain the reward from the anomaly which is going to be triggered next": {
-    "": "Gain the reward from the anomaly which is going to be triggered next."
-  },
-  "for this species": "for this species",
-  "Message Capsule": "Message Capsule",
-  "Amazing Uncertainty": "Amazing Uncertainty",
-  "Then gain {score-1} for each signal you have in sectors with anomalies": {
-    "": "Then gain {score-1} for each signal you have in sectors with anomalies."
-  },
-  "Visitor in the Sky": "Visitor in the Sky",
-  "Altered Trajectory": "Altered Trajectory",
-  "Terrain Mapping": "Terrain Mapping",
-  "Race Against Time": "Race Against Time",
-  "Perfect Timing": "Perfect Timing",
-  "Exofossil Samples": "Exofossil Samples",
-  "Comparative Analysis": "Comparative Analysis",
-  "Excavation Rover": "Excavation Rover",
-  "Vessel Designs": "Vessel Designs",
-  "Exocomputers": "Exocomputers",
-  "Infocluster": "Infocluster",
-  "Alien Schematics": "Alien Schematics",
-  "Hivemind Concept": "Hivemind Concept",
-  "Deflector": "Deflector",
-  "pierced Exoplanet": "pierced Exoplanet",
-  "Core-breach Exoplanet": "Core-breach Exoplanet",
-  "Vortex Exoplanet": "Vortex Exoplanet",
-  "Fission-sun Exoplanet": "Fission-sun Exoplanet",
-  "Oscillating Probes": "Oscillating Probes",
-  "Generative Infrastructure": "Generative Infrastructure",
-  "Casette Deployment": "Casette Deployment",
-  "Automated Lab": "Automated Lab",
-  "Neuralab": "Neuralab",
-  "Nanowielder Node": "Nanowielder Node",
-  "Stratoelevator": "Stratoelevator",
-  "LAND on a planet or a moon, even without the required tech": {
-    "": "LAND on a planet or a moon, even without the required tech."
-  },
-  "in the sector with Mercury": {
-    "": "in the sector with Mercury."
-  },
-  "at Barnard's Star": {
-    "": "at Barnard's Star."
-  },
-  "at Kepler 22": {
-    "": "at Kepler 22."
-  },
-  "at Procyon": {
-    "": "at Procyon."
-  },
   "at Neptune": "at Neptune",
-  "in the same sector": "in the same sector",
-  "A Message from Afar": "A Message from Afar",
-  "Music of the Spheres": "Music of the Spheres",
-  "New Physics": "New Physics"
+  "Deliver {sample} to Mars": "Deliver {sample} to Mars"
 }
