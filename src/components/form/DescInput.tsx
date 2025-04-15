@@ -118,7 +118,7 @@ export const DescInput = ({
           <div>Preview</div>
           <div className='flex justify-start w-full h-12 rounded-md px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50 bg-zinc-950 ring-offset-zinc-950 placeholder:text-zinc-400 focus-visible:ring-primary'>
             <div className='text-zinc-400'>
-              <DescRender desc={newDesc} />
+              <DescRender desc={newDesc.replace('\n', '<br>')} />
             </div>
           </div>
         </>
