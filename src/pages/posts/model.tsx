@@ -28,7 +28,9 @@ export default function HomePage(
 
 export const getStaticProps: GetStaticProps<Props> = async ({ locale }) => {
   const post = locale?.includes('zh') ? 'model-zh.md' : 'model.md';
-  const title = locale?.includes('zh') ? '基础模型介绍' : 'Basic Model';
+  const title = locale?.includes('zh')
+    ? '基础模型介绍'
+    : 'SETI Strategy: Basic Model';
   const filePath = path.join(process.cwd(), 'src/posts', post);
   const fileContents = fs.readFileSync(filePath, 'utf8');
 

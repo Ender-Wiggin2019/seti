@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-04-14 23:49:39
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-15 02:15:52
+ * @LastEditTime: 2025-04-15 02:01:18
  * @Description:
  */
 import Giscus from '@giscus/react';
@@ -74,7 +74,7 @@ export const MarkdownContainer = ({ title, content }: Props) => {
               try {
                 const ids = String(children)
                   .replace(/\n$/, '')
-                  .replace(' ', '')
+                  // .replace(' ', '')
                   .split(',');
 
                 if (inline) return <MarkCard ids={ids} onlyId />;
