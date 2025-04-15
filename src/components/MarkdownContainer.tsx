@@ -9,6 +9,7 @@ import Giscus from '@giscus/react';
 import Markdown from 'react-markdown';
 
 import { MarkCard } from '@/components/cards/base_cards/MarkCard';
+import { DescRender } from '@/components/effect/DescRender';
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
 import { Container } from '@/components/ui/Container';
@@ -23,7 +24,7 @@ export const MarkdownContainer = ({ title, content }: Props) => {
     <Layout>
       <Seo templateTitle={title} />
 
-      <Container className='px-2 pt-2'>
+      <Container className='px-2 pt-2 md:pt-4'>
         <Markdown
           components={{
             h1: ({ children }) => (
@@ -67,23 +68,37 @@ export const MarkdownContainer = ({ title, content }: Props) => {
               </strong>
             ),
             code: ({ inline, className, children, ...props }) => {
-              // if (className?.includes('seti')) {
-              //   return <code {...props}>{children}</code>;
-              // }
+              if (inline) {
+                // if (String(children).startsWith('{')) {
+                // return <DescRender desc={String(children)} size='sm' />;
+                // }
+                const ids = String(children).split(',');
+                return <MarkCard ids={ids} onlyId />;
+              }
 
+              if (className?.includes('desc')) {
+                return (
+                  <div className='bg-black/50 rounded-md p-2'>
+                    <DescRender desc={String(children)} size='sm' />
+                  </div>
+                );
+              }
               try {
                 const ids = String(children)
                   .replace(/\n$/, '')
                   // .replace(' ', '')
                   .split(',');
 
-                if (inline) return <MarkCard ids={ids} onlyId />;
+                if (className?.includes('seti')) {
+                  return (
+                    <div className='px-1 py-2'>
+                      <MarkCard ids={ids} />
+                    </div>
+                  );
+                }
 
-                return (
-                  <div className='px-1 py-2'>
-                    <MarkCard ids={ids} />
-                  </div>
-                );
+                //   return <code {...props}>{children}</code>;
+                // }
               } catch {
                 return <code className='text-red-500'>{children}</code>;
               }

@@ -6,17 +6,19 @@ by Ender
 
 Hello everyone, my game ID is Ender_Wiggin. If you're a player of Through the Ages, Terraforming Mars, or Ark Nova, you might have heard of me. I'm a fan of these games and have played a fair number of sessions. SETI is an outstanding card game, and this article will explore its basic numerical model from the perspective of a card eurogame enthusiast and a SETI beginner (I've only played about 20 games).
 
-These ideas are not yet fully developed and may be adjusted in the future. Everyone is welcome to discuss and help improve them together.
-
-Let's embark on this journey!
+Let's begin our expedition!
 
 ## TL;DR
 
-**1 Credit = 1 Energy = 1 Any Card = 1 Signal = 2 Data = 2 Publicity = 2 Moves = 5 VP.**
+```desc
+{credit-1} = {energy-1} = {data-2} = {publicity-2} = {move-2} = {score-5}
+```
 
-1 Draw Card = 0.75 Credit, Alien Cards has 0.5 more Credit, 1 Tech = 3 Credits, 1 Trace = 2 Credits.
+**1 Credit = 1 Energy = 1 Any Card (card row or random) = 1 Signal = 2 Data = 2 Publicity = 2 Move = 6 VP.**
 
-Playing a basic card costs 0.5 Credit, and playing an Alien Card costs 1 Credit.
+**1 Random card = 0.75 Credit, Alien Cards have 0.5 more Credit, 1 Tech = 3 Credits, 1 Trace = 2 Credits.**
+
+**Playing a basic card costs 0.5 Credit, and playing an Alien Card costs 1 Credit. Missions usually have 0.5 more value than other cards (if you finish it).**
 
 The following sections will provide detailed explanations.
 

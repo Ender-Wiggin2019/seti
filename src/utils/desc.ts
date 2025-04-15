@@ -93,8 +93,12 @@ export const computeLength = (nodes: IRenderNode[]) => {
 // the icon in desc should be smaller
 export const getDescIconSize = (
   nodes: IRenderNode[][],
-  defaultSize?: TSize
+  defaultSize?: TSize,
+  smartSize?: boolean
 ): TSize => {
+  if (!smartSize) {
+    return defaultSize || 'md';
+  }
   const descLength = nodes.reduce((acc, node) => {
     return acc + computeLength(node);
   }, 0);
@@ -142,7 +146,9 @@ export const getDescTextSize = (iconSize: TSize): TSize => {
     case 'xs':
       return 'sm';
     case 'sm':
-      return 'md';
+      return 'lg';
+    case 'md':
+      return 'lg';
     default:
       return 'desc-mini';
   }

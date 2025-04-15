@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-05 23:45:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-11 01:42:32
+ * @LastEditTime: 2025-04-15 19:14:08
  * @Description:
  */
 import React from 'react';
@@ -24,15 +24,20 @@ import { IRenderNode } from '@/types/Icon';
 interface IconProps {
   desc: string;
   size?: TSize;
+  smartSize?: boolean;
   width?: 'full' | 'half';
 }
 
-export const DescRender: React.FC<IconProps> = ({ desc, size, width }) => {
+export const DescRender: React.FC<IconProps> = ({
+  desc,
+  size,
+  smartSize,
+  width,
+}) => {
   const descArray = extractDesc(desc);
-  // desc 会降一个尺寸
-  const descIconSize = getDescIconSize(descArray, size);
+
+  const descIconSize = getDescIconSize(descArray, size, smartSize);
   const descTextSize = getDescTextSize(descIconSize);
-  // const descIconSize: TSize = size || 'xs';
 
   return (
     <div
