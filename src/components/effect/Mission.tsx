@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-06 14:44:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-12 01:03:08
+ * @LastEditTime: 2025-04-16 00:25:42
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
@@ -77,7 +77,7 @@ export const Mission: React.FC<missionProps> = ({ effect }) => {
     return (
       <div className={outerContainerCls}>
         <div className={innerContainerCls}>
-          {desc && <DescRender desc={t(desc)} />}
+          {desc && <DescRender desc={t(desc)} smartSize />}
           <div className='card-full-missions'>
             {missions.map((mission, index) => {
               const reqEffects = mission.req
