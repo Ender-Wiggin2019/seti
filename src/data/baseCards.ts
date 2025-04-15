@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-12 01:02:21
+ * @LastEditTime: 2025-04-15 16:01:07
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -1311,7 +1311,7 @@ const _baseCards: IBaseCard[] = [
     effects: [
       e.ROTATE(),
       e.TECH_PROBE(),
-      m.QUICK_MISSION(DESC('desc.card-10'), [e.SCORE(), e.CARD_ANY()]),
+      m.QUICK_MISSION(DESC('desc.card-10'), [e.SCORE(5), e.CARD_ANY()]),
     ],
   },
   {

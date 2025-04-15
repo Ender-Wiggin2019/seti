@@ -6,11 +6,13 @@ by Ender
 
 Hello everyone, my game ID is Ender_Wiggin. If you're a player of Through the Ages, Terraforming Mars, or Ark Nova, you might have heard of me. I'm a fan of these games and have played a fair number of sessions. SETI is an outstanding card game, and this article will explore its basic numerical model from the perspective of a card eurogame enthusiast and a SETI beginner (I've only played about 20 games).
 
+These ideas are not yet fully developed and may be adjusted in the future. Everyone is welcome to discuss and help improve them together.
+
 Let's embark on this journey!
 
 ## TL;DR
 
-**1 Credit = 1 Energy = 1 Any Card = 1 Signal = 2 Data = 2 Publicity = 2 Move = 6 VP.**
+**1 Credit = 1 Energy = 1 Any Card = 1 Signal = 2 Data = 2 Publicity = 2 Moves = 5 VP.**
 
 1 Draw Card = 0.75 Credit, Alien Cards has 0.5 more Credit, 1 Tech = 3 Credits, 1 Trace = 2 Credits.
 
@@ -67,9 +69,9 @@ The Free Action Corner on cards indicates that these resources (Publicity, Data,
 
 > **Model: 1 Draw Card = 0.75 Credit, 1 Any Card = 1 Credit, playing a card incurs a 0.5 Credit opportunity cost**
 
-There is no doubt that drawing only random cards and drawing from anywhere have model differences. The 0.75 for Draw Cards is an experiential number because the card's lower limit is discarded for a 0.5 benefit. If a card is worth playing, it generally yields at least 1 benefit, so drawing a card is more beneficial than 0.5.
+There is no doubt that drawing only random cards and drawing from anywhere have model differences. The 0.75 for Draw Cards is an experiential and average number because the card's lower limit is discarded for a 0.5 benefit. If a card is worth playing, it generally yields at least 1 benefit, so drawing a card is more beneficial than 0.5.
 
-Also, We must introduce the concept of **Standard Action** and Action's **actual** models. This concept is evident in Terraforming Mars (TFM), where everyone knows standard actions are inefficient. However, in SETI, the ratio of these cards are rare, so standard actions are seen as a baseline model, with some cards appearing "overpowered."
+Also, We must introduce the concept of **Standard Action** and Action's **actual** models. This concept is evident in Terraforming Mars (TFM), where everyone knows standard actions are inefficient. However, in SETI, the ratio of these cards is quite low, so standard actions are seen as a baseline model, with some cards appearing "overpowered."
 
 ```seti
 130,135
@@ -88,16 +90,16 @@ SETI is essentially a competitive game where the **actual value** of actions cha
 
 Based on this analysis, we can identify some interesting details:
 
-1. `9` is not overpowered in terms of calculation. It follows the standard model (3.5 = 1.5 + 1.5 + 0.5), which is why the designer added Publicity. However, it is overpowered because it gains card advantage, and Launch might be necessary. Without cards, launching requires standard action, making it relatively overpowered.
+1. `9` is not overpowered in terms of calculation. It follows the standard model (3.5 = 1.5 + 1.5 + 0.5), which is why the designer added an additional Publicity. However, it is somehow overpowered because it means this one card has the same benefits as playing two `130`. Besides, Launch might be necessary. Without cards, launching requires 2 Credit standard action, making it relatively overpowered.
 2. `31` is strictly overpowered if the mission can be completed, offering 1 Value Launch and 1 Move. Most mission cards are overpowered if the mission is completed, so **completing missions as much as possible** is a significant factor in efficiently utilizing resources in this game.
-3. Similarly, the left third card is 0.5 Value more powerful than the heavy falcon. Although the mission is delayed, we can consider it this way. The rightmost Scan is also 0.5 Value more powerful. Thus, most good mission cards are at least 0.5 Value overpowered.
+3. Similarly, the left third card is 0.5 Value more powerful than the heavy falcon. Although the mission is delayed, we can consider it this way. The rightmost Scan (`105`) is much more than 0.5 Value if it can be fulfilled. Thus, most good mission cards are at least 0.5 Value overpowered.
 4. Therefore, inserting cards into income is usually not a profitable option, as its expected return is less than 1. However, it cannot be viewed this way solely because, apart from Credits with a stable 1 benefit, Energy and cards depreciate due to ratio issues. For example, if a lack of Credits forces you to discard cards, one card yields 0.5 benefit; a lack of Move forces you to use Energy for Moves, devaluing Energy.
 
 ### 5. Move
 
 > **Model: 1 Move = 0.5 Credit**
 
-Two derivations: one directly from the Free Action Corner showing 0.5 Value, and the example below, where the rightmost minus the second rightmost shows 1 Signal = 1 Credit, thus 1 Move = 0.5 Credit. The leftmost and second leftmost can also be used for verification, with extra scoring and special effects roughly worth 0.5 Credit.
+Two derivations: one directly from the Free Action Corner showing 0.5 Value, and the example below, where the rightmost minus the second rightmost shows 1 Signal = 1 Credit, thus 1 Move = 0.5 Credit. `25` and `26` can also be used for verification, with extra scoring and special effects roughly worth 0.5 Credit.
 
 ```seti
 25,26,27,28
@@ -106,10 +108,10 @@ Two derivations: one directly from the Free Action Corner showing 0.5 Value, and
 The Move model explains the following:
 
 1. Why using Energy for Moves is not recommended, as each step theoretically loses 0.5 Value.
-2. The Free Action Corner discard for Move is relatively strong. When you must Move, the Free Action Corner can achieve the effect of 1 Energy. This is the third layer of resource conversion: Credit -> Energy -> Move. Each resource has its role; Energy can Move, but with a hand full of Move Free Action Corners, you can't convert to Energy. On the other hand, discarding is a quick action with strategic significance.
-3. Move cards aren't very strong because they yield similar benefits to the Free Action Corner discard but require a Move, which might cause issues. However, it's best to have some Move cards for emergencies, as they are better than standard actions.
-4. Moves should be used wisely. An interesting phenomenon is that if a player has a 4-step Move card, they might not hesitate to play it to reach any desired location. However, if another player is poor, they might wait to use 2 steps after the solar system rotates, achieving the same effect. Even if the Move card is overpowered, the Move itself is inefficient.
-5. Additionally, if a Move passes through a comet or planet, it inherently returns 0.5 benefit. This makes 1 Energy Move a standard model. However, if you can reach a planet at the right time with minimal steps and cost while gaining Publicity, that's a huge win. This is why the second orange Tech (ignoring asteroids for Move and gaining Publicity) is very powerful.
+2. The Free Action Corner discard for Move is relatively strong. When you must Move, the Free Action Corner can achieve the effect of 1 Energy. This is the third layer of resource conversion: Credit -> Energy -> Move. Each resource has its role; Energy can Move, but with a hand full of Move Free Action Corners, you can't convert them back to Energy. On the other hand, discarding is a quick action with strategic significance for chasing good planets in timing.
+3. Move cards aren't very strong because they yield similar benefits to the Free Action Corner discard but require an extra action, which might cause issues. However, it's usually good to have some Move cards for backup, as they are always better than using Energy.
+4. Moves should be used wisely. An interesting phenomenon is that if a player has a 4-step Move card, this player might not hesitate to play it to reach any desired planet. However, if another player is poor, that player might wait to use 2 steps after the solar system rotates, achieving the same effect. Even if the Move card is overpowered, the Move itself is inefficient.
+5. Additionally, if a Move passes through a comet or planet, it inherently returns 0.5 benefit. This makes 1 Energy Move a standard model. However, if you can reach a planet at the right time with minimal steps and cost while gaining Publicity, that produces huge benefits. This is why the second orange Tech (ignoring asteroids for Move and gaining Publicity) is very powerful.
 
 ### 6. Signal & Scan Action
 
@@ -149,21 +151,28 @@ On the other hand, Tech's benefits can be broken down. Acquiring a Tech means it
 
 ### 8. VP
 
-> **Model: 1 Credit = 6 VP**
+> **Model: 0.5 Credit = 3 VP; 1 Credit = 5 VP**
 
-A more accurate value might be 0.5 Credit = 3 VP, 1 Credit = 5 VP, but let's consider 1 Credit = 6 VP as a high standard. The following two cards from the Mascamites species are good references.
+Many Missions have 2 or 3 VP as rewards. But only few cards has 5+ VP. I prefer to use 5 VP as the basic calculation, while 1 Credit = 6 VP can be a higher standard. The following two cards from the Mascamites species are good references.
 
 ```seti
 ET.2,ET.6
 ```
 
-Most mission cards follow this logic, with missions themselves being 0.5 Value overpowered, matching the 3 VP of the second card. Comparing the first and second cards, 3 VP is exchanged for 1 Data:
+Most mission cards follow this logic, with missions themselves being 0.5 Value overpowered, matching the 3 VP of the second card. Comparing the first and second cards, 3 VP is exchanged for 1 Data.
 
 ```seti
 79,132,112,111
 ```
 
-Here's an interesting calculation: assume starting resources, inserting an income card, which is 5 Credits 3 Energy 4 Cards 4 Publicity with a total of 6 Value income. Over 5 rounds, total economy is 5 + 3 + 4 \* 0.5 + 4 \* 0.5 + 4.5 \* 6 = 39 Value. With 1 Credit = 6 VP conversion, a base score is 234. Including end-game, the total score is a strong contender for first place. This is similar to TFM's **basic** logic: if all your actions aren't inefficient, you're likely to win.
+To be honest, the model of VP is a bit tricky and not that clear, maybe 0.5 Credit = 2 VP and 1 Credit = 4 VP is also a reasonable equation. Though I think 4 VP it too low to win the game.
+
+Some more cards for references:
+
+- 3 VP: `51`, `ET.29`
+- 5 VP: `79`, `95`, `SE EN 02`
+
+Here's an interesting calculation: assume starting resources, inserting an income card, which is 5 Credits 3 Energy 4 Cards 4 Publicity with a total of 6 Value income. Over 5 rounds, total economy is 5 + 3 + 4 \* 0.5 + 4 \* 0.5 + 4 \* 7 (4 + 2 + 0.5 + 0.5) = 40 Value. With 1 Credit = 5 VP conversion, a base score is 200. If 1 Credit = 6 VP, it can be 240. Including end-game, the total score is a strong contender for first place (In those games I played, the winner usually have 250 - 290 VP, while some special game can have 300+ but it's not that common). This is similar to the TFM Base game logic (with no expansions): if all your actions are base model, you're likely to win.
 
 ### 9. Alien Card & Trace
 
