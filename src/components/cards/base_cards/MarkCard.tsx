@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 12:05:53
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-15 01:19:13
+ * @LastEditTime: 2025-04-16 00:27:59
  * @Description:
  */
 
@@ -40,7 +40,7 @@ export const MarkCard: React.FC<PreviewBaseCardProps> = ({ ids, onlyId }) => {
     );
   }
   return (
-    <div className=''>
+    <div className='font-sans'>
       <div
         className={cn(
           'flex justify-center rounded-md gap-8 md:gap-8 scale-[0.7] md:scale-100',

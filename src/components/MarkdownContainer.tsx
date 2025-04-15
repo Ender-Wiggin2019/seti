@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-04-14 23:49:39
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-15 16:16:02
+ * @LastEditTime: 2025-04-16 01:54:40
  * @Description:
  */
 import Giscus from '@giscus/react';
@@ -78,7 +78,7 @@ export const MarkdownContainer = ({ title, content }: Props) => {
 
               if (className?.includes('desc')) {
                 return (
-                  <div className='bg-black/50 rounded-md p-2'>
+                  <div className='bg-black/30 rounded-md p-2 mt-4'>
                     <DescRender desc={String(children)} size='sm' />
                   </div>
                 );
@@ -97,7 +97,7 @@ export const MarkdownContainer = ({ title, content }: Props) => {
                   );
                 }
 
-                //   return <code {...props}>{children}</code>;
+                return <code {...props}>{children}</code>;
                 // }
               } catch {
                 return <code className='text-red-500'>{children}</code>;

@@ -14,11 +14,17 @@ Let's begin our expedition!
 {credit-1} = {energy-1} = {data-2} = {publicity-2} = {move-2} = {score-5}
 ```
 
-**1 Credit = 1 Energy = 1 Any Card (card row or random) = 1 Signal = 2 Data = 2 Publicity = 2 Move = 6 VP.**
+```desc
+{draw-card-1} = 0.75 {credit-0}<br>
+{any-card-1} = 1 {credit-0}<br>
+{draw-alien-card-1} = 1.5 {credit-0}
+```
 
-**1 Random card = 0.75 Credit, Alien Cards have 0.5 more Credit, 1 Tech = 3 Credits, 1 Trace = 2 Credits.**
-
-**Playing a basic card costs 0.5 Credit, and playing an Alien Card costs 1 Credit. Missions usually have 0.5 more value than other cards (if you finish it).**
+```desc
+{any-tech} = {credit-3}<br>
+{any-trace} = {credit-2}<br>
+{any-signal} = {credit-1}
+```
 
 The following sections will provide detailed explanations.
 
@@ -26,7 +32,9 @@ The following sections will provide detailed explanations.
 
 ### 1. Credit
 
-> 1 Credit = 1 Value (as the basic unit)
+```desc
+{credit-1} = 1 Value (as the basic unit)
+```
 
 Credits are the core resource and the unit of measurement for model calculations.Credits are unique because they have very few ways to be replenished, aside from income, the first Computer Tech, some Aliens' mechanics, and a few cards that gain Credits (likely only 5 cards).
 
@@ -40,7 +48,9 @@ Based on this analysis, here are some simple conclusions:
 
 ### 2. Energy
 
-> **Model: 1 Energy = 1 Credit**
+```desc
+{energy-1} = {credit-1}
+```
 
 One of the most basic models, almost everyone agrees that Energy and Credits are equivalent. However, Energy can also be gained through Tech board rewards and some more cards.
 
@@ -55,7 +65,9 @@ Key takeaways:
 
 ### 3. Publicity & Data
 
-> **Model: 1 Publicity = 1 Data = 0.5 Credit**
+```desc
+{data-1} = {publicity-1} = 0.5 {credit-0}
+```
 
 The Free Action Corner on cards indicates that these resources (Publicity, Data, Move) are theoretically equivalent, although the Data model is a bit odd:
 
@@ -69,22 +81,45 @@ The Free Action Corner on cards indicates that these resources (Publicity, Data,
 
 ### 4. Card
 
-> **Model: 1 Draw Card = 0.75 Credit, 1 Any Card = 1 Credit, playing a card incurs a 0.5 Credit opportunity cost**
+```desc
+{draw-card-1} = 0.75 {credit-0}<br>
+{any-card-1} = 1 {credit-0}<br>
+```
 
-There is no doubt that drawing only random cards and drawing from anywhere have model differences. The 0.75 for Draw Cards is an experiential and average number because the card's lower limit is discarded for a 0.5 benefit. If a card is worth playing, it generally yields at least 1 benefit, so drawing a card is more beneficial than 0.5.
+> Playing a card incurs a 0.5 Credit opportunity cost.
 
-Also, We must introduce the concept of **Standard Action** and Action's **actual** models. This concept is evident in Terraforming Mars (TFM), where everyone knows standard actions are inefficient. However, in SETI, the ratio of these cards is quite low, so standard actions are seen as a baseline model, with some cards appearing "overpowered."
+There is no doubt that drawing random cards is the subset of drawing random cards or from card row. The 0.75 for Draw Cards is an experiential and average number because if the card is great, you can have 1+ value for playing this card. While if the card is too weak, you can still discard it for the free action which is about 0.5 value.
+
+There is a very important concept here: play cost. This is a somewhat complex but common concept in card games. The draw cost and play cost are different; the former is 0.75 (or you can consider it as 1), while the latter is a constant 0.5.
+
+For example, The below card seems to have no cost and can be played without any consideration. However, when you play this card, you lose one move as opportunity cost. If the mission isn't completed at all, you lose 0.5 in benefits. If you complete only one task, the benefit is roughly equivalent to discarding it, so in some cases, it might be better to just discard it.
+
+```seti
+2
+```
+
+Another important concept to introduce is the **standard action** model and the actual action model. Standard actions are those you can perform without needing a card, such as launching a probe, Scan, or Move.
 
 ```seti
 130,135
 ```
 
-For example, these cards seem overpowered but are genuinely **balanced cards**:
+Take the above cards as examples. They might seem overpowered, but actually they are considered **balanced cards** by the designer:
 
-- The actual model for the Launch Action is 1.5 Credits, equal to the card cost + 0.5 Credit opportunity cost (anytime you can discard it for free action which is 0.5 Credit).
-- The actual model for the Scan Action is 2 Credits, with Publicity's 0.5 Credit + Scan's 2 Credits equaling 2.5.
+- The actual model for a Launch Action is 1.5 Credits, which equals the card cost plus a 0.5 Credit opportunity cost.
+- The actual model for a Scan Action is 2 Credits, where 0.5 Credits for Publicity plus 2 Credits for scanning equals 2.5.
 
-SETI is essentially a competitive game where the **actual value** of actions changes with the game situation, but the actual model remains constant. Understanding the actual model is a small factor in efficiently utilizing resources (though not significant, as players often have to perform standard actions).
+In some games, like Terraforming Mars (TFM), we clearly know that standard actions are less efficient, so we often choose to use more cost-effective card actions. But this concept is not so obvious in SETI because there are fewer related cards so that players may have to perform standard actions:
+
+```seti
+{launch-action} : 15/140
+{scan-action} : 7/140
+{land-action} : 3/140
+```
+
+However, I still believe this concept is important. On one hand, because the proportion of these cards is relatively high in Alien Cards, the Mascamites have 6 Land Action cards, and 'Oumuamua has a total of 5 Launch, Scan, and Land Actions combined. Anomalies have 2 related cards. After the Aliens appear, there's a good chance to use overpowered cards instead of standard actions. On the other hand, knowing the actual model allows us to plan for the future. For example, if you have 2 Credits left and nothing to do, you might think about launching a probe. But maybe saving those 2 Credits will let you draw an overpowered Launch card next turn.
+
+Thus, understanding the model's main significance lies in providing deeper strategic thinking and understanding the game's underlying numerical logic. However, it doesn't mean players should rigidly follow the model. SETI is a very dynamic game; while the model is foundational, **timing** is also crucial. For instance, if you perform a standard Launch Action, move one step, and then gain 2 Publicity with the help of the solar system's rotation, you've made a profitable move.
 
 ```seti
 9,31,117,105
@@ -99,7 +134,9 @@ Based on this analysis, we can identify some interesting details:
 
 ### 5. Move
 
-> **Model: 1 Move = 0.5 Credit**
+```desc
+{move-1} = 0.5 {credit-0}<br>
+```
 
 Two derivations: one directly from the Free Action Corner showing 0.5 Value, and the example below, where the rightmost minus the second rightmost shows 1 Signal = 1 Credit, thus 1 Move = 0.5 Credit. `25` and `26` can also be used for verification, with extra scoring and special effects roughly worth 0.5 Credit.
 
@@ -117,7 +154,10 @@ The Move model explains the following:
 
 ### 6. Signal & Scan Action
 
-> **Model: 1 Signal = 1 Credit; 1 Scan Action = 2 Credits**
+```desc
+{any-signal} = {credit-1}<br>
+{scan-action} = {credit-2}
+```
 
 ```seti
 27,28,47,48
@@ -139,7 +179,9 @@ For Scan Actions:
 
 ### 7. Tech
 
-> **Model: 1 Tech = 3 Credits**
+```desc
+{any-tech} = {credit-3}<br>
+```
 
 This value is evident from 6 Publicity for 1 Tech and the cost of Tech cards.
 
@@ -153,7 +195,13 @@ On the other hand, Tech's benefits can be broken down. Acquiring a Tech means it
 
 ### 8. VP
 
-> **Model: 0.5 Credit = 3 VP; 1 Credit = 5 VP**
+```desc
+0.5 {credit-0} = {score-3}<br>
+```
+
+```desc
+1 {credit-0} = {score-5}
+```
 
 Many Missions have 2 or 3 VP as rewards. But only few cards has 5+ VP. I prefer to use 5 VP as the basic calculation, while 1 Credit = 6 VP can be a higher standard. The following two cards from the Mascamites species are good references.
 
@@ -178,7 +226,12 @@ Here's an interesting calculation: assume starting resources, inserting an incom
 
 ### 9. Alien Card & Trace
 
-> **Model: 1 Alien Card = 1.5 Credits, playing an Alien Card incurs a 1 Credit cost; 1 Any Trace = 2 Credits**
+```desc
+{draw-alien-card-1} = 1.5 {credit-0}<br>
+{any-trace} = {credit-2}<br>
+```
+
+> **Playing an Alien Card incurs one Value opportunity cost**
 
 Anomalies are the standard Alien species, as their cards aren't overpowered, unlike the Mascamites. The following example shows the Trace model: 1 Any Trace = 2 Credits. A specified color Trace yields slightly less.
 

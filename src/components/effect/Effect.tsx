@@ -1,3 +1,10 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2025-03-07 23:02:36
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-04-16 00:25:29
+ * @Description:
+ */
 import { useTranslation } from 'next-i18next';
 import React from 'react';
 
@@ -19,7 +26,7 @@ export const EffectFactory: React.FC<IconProps> = ({ effect }) => {
       <>
         <IconFactory iconItem={getIconItem(effect)} />
         {effect.desc && effect.desc.length > 0 && (
-          <DescRender desc={t(effect.desc)} size={effect.size} />
+          <DescRender desc={t(effect.desc)} size={effect.size} smartSize />
         )}
       </>
     );
@@ -31,6 +38,7 @@ export const EffectFactory: React.FC<IconProps> = ({ effect }) => {
         desc={t(effect.desc)}
         size={effect.size}
         width={effect.width}
+        smartSize
       />
     );
   }
@@ -45,7 +53,11 @@ export const EffectFactory: React.FC<IconProps> = ({ effect }) => {
   if (effect.effectType === EEffectType.END_GAME) {
     return (
       <div className='end-game-container'>
-        <DescRender desc={t(effect.desc)} size={effect.size || 'xs'} />
+        <DescRender
+          desc={t(effect.desc)}
+          size={effect.size || 'xs'}
+          smartSize
+        />
       </div>
     );
   }

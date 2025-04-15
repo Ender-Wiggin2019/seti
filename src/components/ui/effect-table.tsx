@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-22 15:12:55
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-23 01:25:51
+ * @LastEditTime: 2025-04-16 00:25:22
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
@@ -69,7 +69,7 @@ export function EffectTable({ onCopy }: Props) {
             <TableCell className='font-medium'>{effect.example}</TableCell>
             <TableCell>
               <div className='scale-[2]'>
-                <DescRender desc={effect.example} />
+                <DescRender desc={effect.example} smartSize />
               </div>
             </TableCell>
           </TableRow>
