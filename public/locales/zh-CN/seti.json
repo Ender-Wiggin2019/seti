@@ -292,6 +292,9 @@
   "OR": "或",
   "{score-2} for each {computer-tech}": "每个 {computer-tech} 获得 {score-2}",
   "Have 5": "有 5 个",
+  "Deliver {sample} to Earth": "运送 {sample} 到地球",
+  "for this species": "这个<br>物种",
+
   "desc": {
     "card-10": "{orbit-or-land-count} 在海王星<br>和 {orbit-or-land-count} 在天王星<br>（包括它们的卫星）",
     "card-12": "在行星或卫星上，<br>即便没有所需科技。",
@@ -379,7 +382,15 @@
 
     "et-pickup": "查看当前行星的所有 {sample}<br>并选择一个拾起。",
     "et-pickup-back-reward": "选择木星 (Jupiter) 或土星 (Saturn), <br>查看该行星的所有 {sample}<br>并选择一个获得奖励, 然后放回。",
-    "et-pickup-moon": "在行星或卫星上, 无视科技限制。查看当前行星的<br>所有 {sample}并选择一个拾起。"
+    "et-pickup-moon": "在行星或卫星上, 无视科技限制。查看当前行星的<br>所有 {sample}并选择一个拾起。",
+
+    "et-11": "如果它在一个有异常的扇区，获得 {move-1}。",
+    "et-12": "本回合移动探测器不获得任何 {publicity-0}。",
+    "et-14": "并且在即将触发异常的扇区标记一个{any-signal}。",
+    "et-15": "弃掉其中一张以获得其免费行动角效果，然后弃掉另一张以获得对应其收入的资源。",
+    "et-16": "从牌列中抽取所有的三张牌。",
+    "et-17": "获得即将触发的异常奖励。",
+    "et-20": "每个有异常的扇区中的信号<br>为你提供{score-1}。"
   },
   "watermark": "粉丝卡牌"
 }

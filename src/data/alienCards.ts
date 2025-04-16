@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-12 16:54:55
+ * @LastEditTime: 2025-04-17 01:00:29
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -25,34 +25,27 @@ export const _alienCards: any[] = [
     price: 1,
     income: EResource.ENERGY,
     alien: EAlienType.ANOMALIES,
-    effects: [
-      e.SIGNAL_ANY(),
-      DESC(
-        'Then gain {score-1} for each signal you have in sectors with anomalies.'
-      ),
-    ],
+    effects: [e.SIGNAL_ANY(), DESC('in any sector.'), DESC('desc.et-20')],
   },
   {
     id: 'ET.17',
     name: 'Are we Being Observed?',
     position: { src: '/images/aliens/anomalies.webp', row: 0, col: 1 },
     freeAction: [
-      { type: EResource.MOVE, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.MOVE, value: 1 },
     ],
     sector: ESector.YELLOW,
     price: 1,
     income: EResource.CARD,
     alien: EAlienType.ANOMALIES,
     effects: [
-      DESC(
-        'Gain the reward from the anomaly which is going to be triggered next.'
-      ),
+      DESC('desc.et-17'),
       m.QUICK_MISSION(
         [
-          e.TRACE_RED(),
-          e.TRACE_YELLOW(),
-          e.TRACE_BLUE(),
+          e.TRACE_RED(1, '', 'desc'),
+          e.TRACE_YELLOW(1, '', 'desc'),
+          e.TRACE_BLUE(1, '', 'desc'),
           DESC('for this species'),
         ],
         [e.SCORE(3), e.PUBLICITY(2)]
@@ -72,18 +65,15 @@ export const _alienCards: any[] = [
     price: 1,
     income: EResource.CREDIT,
     alien: EAlienType.ANOMALIES,
-    effects: [
-      e.MOVE(5),
-      DESC("Don't gain any {publicity} for moving probes this turn."),
-    ],
+    effects: [e.MOVE(5), DESC('desc.et-12')],
   },
   {
     id: 'ET.13',
     name: 'Concerned People',
     position: { src: '/images/aliens/anomalies.webp', row: 0, col: 3 },
     freeAction: [
-      { type: EResource.DATA, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.DATA, value: 1 },
     ],
     sector: ESector.YELLOW,
     price: 1,
@@ -112,47 +102,36 @@ export const _alienCards: any[] = [
     name: 'Flooding the Media Space',
     position: { src: '/images/aliens/anomalies.webp', row: 0, col: 4 },
     freeAction: [
-      { type: EResource.DATA, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.DATA, value: 1 },
     ],
     sector: ESector.RED,
     price: 1,
     income: EResource.CREDIT,
     alien: EAlienType.ANOMALIES,
-    effects: [
-      DESC_WITH_TYPE(
-        EResource.CARD_ANY,
-        'Draw all three cards from the card row.'
-      ),
-    ],
+    effects: [DESC_WITH_TYPE(EResource.CARD_ANY, 'desc.et-16')],
   },
   {
     id: 'ET.14',
     name: 'Listening Carefully',
     position: { src: '/images/aliens/anomalies.webp', row: 1, col: 0 },
     freeAction: [
-      { type: EResource.MOVE, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.MOVE, value: 1 },
     ],
     sector: ESector.RED,
     price: 2,
     income: EResource.CARD,
     alien: EAlienType.ANOMALIES,
-    effects: [
-      e.SCAN(),
-      DESC_WITH_TYPE(
-        EScanAction.ANY,
-        'In addition mark a {signal} in a sector with the anomaly which is going to be triggered next.'
-      ),
-    ],
+    effects: [e.SCAN(), DESC_WITH_TYPE(EScanAction.ANY, 'desc.et-14')],
   },
   {
     id: 'ET.18',
     name: 'Message Capsule',
     position: { src: '/images/aliens/anomalies.webp', row: 1, col: 1 },
     freeAction: [
-      { type: EResource.MOVE, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.MOVE, value: 1 },
     ],
     sector: ESector.BLUE,
     price: 2,
@@ -176,8 +155,8 @@ export const _alienCards: any[] = [
     name: 'Part of Everyday Life',
     position: { src: '/images/aliens/anomalies.webp', row: 1, col: 3 },
     freeAction: [
-      { type: EResource.MOVE, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.MOVE, value: 1 },
     ],
     sector: ESector.BLUE,
     price: 1,
@@ -187,12 +166,7 @@ export const _alienCards: any[] = [
       descHelper:
         'Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income.',
     },
-    effects: [
-      e.CARD(3),
-      DESC(
-        'Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income.'
-      ),
-    ],
+    effects: [e.CARD(3), DESC('desc.et-15')],
   },
   {
     id: 'ET.11',
@@ -203,10 +177,7 @@ export const _alienCards: any[] = [
     price: 1,
     income: EResource.CARD,
     alien: EAlienType.ANOMALIES,
-    effects: [
-      e.LAUNCH(),
-      DESC('If it was in a sector with an anomaly, gain {move-1} .'),
-    ],
+    effects: [e.LAUNCH(), DESC('desc.et-11')],
   },
 
   {
@@ -214,8 +185,8 @@ export const _alienCards: any[] = [
     name: 'A Message from Afar',
     position: { src: '/images/aliens/centaurians.webp', row: 0, col: 0 },
     freeAction: [
-      { type: EResource.MOVE, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.MOVE, value: 1 },
     ],
     sector: ESector.RED,
     price: 1,
@@ -227,8 +198,8 @@ export const _alienCards: any[] = [
     name: 'Alien Schematics',
     position: { src: '/images/aliens/centaurians.webp', row: 0, col: 1 },
     freeAction: [
-      { type: EResource.DATA, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.DATA, value: 1 },
     ],
     sector: ESector.BLUE,
     price: 1,
@@ -240,8 +211,8 @@ export const _alienCards: any[] = [
     name: 'Exocomputers',
     position: { src: '/images/aliens/centaurians.webp', row: 0, col: 2 },
     freeAction: [
-      { type: EResource.MOVE, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.MOVE, value: 1 },
     ],
     sector: ESector.RED,
     price: 1,
@@ -273,8 +244,8 @@ export const _alienCards: any[] = [
     name: 'Music of the Spheres',
     position: { src: '/images/aliens/centaurians.webp', row: 1, col: 0 },
     freeAction: [
-      { type: EResource.DATA, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.DATA, value: 1 },
     ],
     sector: ESector.BLACK,
     price: 2,
@@ -296,8 +267,8 @@ export const _alienCards: any[] = [
     name: 'Telescope Blueprints',
     position: { src: '/images/aliens/centaurians.webp', row: 1, col: 2 },
     freeAction: [
-      { type: EResource.MOVE, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.MOVE, value: 1 },
     ],
     sector: ESector.RED,
     price: 2,
@@ -319,8 +290,8 @@ export const _alienCards: any[] = [
     name: 'Vessel Designs',
     position: { src: '/images/aliens/centaurians.webp', row: 1, col: 4 },
     freeAction: [
-      { type: EResource.DATA, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.DATA, value: 1 },
     ],
     sector: ESector.BLUE,
     price: 1,
@@ -351,8 +322,8 @@ export const _alienCards: any[] = [
     name: 'Computer Simulations',
     position: { src: '/images/aliens/mascamites.webp', row: 0, col: 1 },
     freeAction: [
-      { type: EResource.DATA, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.DATA, value: 1 },
     ],
     sector: ESector.YELLOW,
     price: 3,
@@ -364,8 +335,8 @@ export const _alienCards: any[] = [
     name: 'Ecosystem Study',
     position: { src: '/images/aliens/mascamites.webp', row: 0, col: 2 },
     freeAction: [
-      { type: EResource.MOVE, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.MOVE, value: 1 },
     ],
     sector: ESector.BLUE,
     price: 1,
@@ -400,8 +371,8 @@ export const _alienCards: any[] = [
     name: 'Hive Sample',
     position: { src: '/images/aliens/mascamites.webp', row: 0, col: 4 },
     freeAction: [
-      { type: EResource.MOVE, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.MOVE, value: 1 },
     ],
     sector: ESector.BLUE,
     price: 3,
@@ -422,8 +393,8 @@ export const _alienCards: any[] = [
     name: 'Martian Quarantine Lab',
     position: { src: '/images/aliens/mascamites.webp', row: 1, col: 0 },
     freeAction: [
-      { type: EResource.DATA, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.DATA, value: 1 },
     ],
     sector: ESector.RED,
     price: 1,
@@ -443,8 +414,8 @@ export const _alienCards: any[] = [
     name: 'Mass Sample Collection',
     position: { src: '/images/aliens/mascamites.webp', row: 1, col: 1 },
     freeAction: [
-      { type: EResource.DATA, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.DATA, value: 1 },
     ],
     sector: ESector.YELLOW,
     price: 1,
@@ -464,8 +435,8 @@ export const _alienCards: any[] = [
     name: 'Orbital Monitoring',
     position: { src: '/images/aliens/mascamites.webp', row: 1, col: 2 },
     freeAction: [
-      { type: EResource.MOVE, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.MOVE, value: 1 },
     ],
     sector: ESector.YELLOW,
     price: 3,
@@ -517,8 +488,8 @@ export const _alienCards: any[] = [
     name: 'Altered Trajectory',
     position: { src: '/images/aliens/oumuamua.webp', row: 0, col: 0 },
     freeAction: [
-      { type: EResource.MOVE, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.MOVE, value: 1 },
     ],
     sector: ESector.RED,
     price: 2,
@@ -530,8 +501,8 @@ export const _alienCards: any[] = [
     name: 'Comparative Analysis',
     position: { src: '/images/aliens/oumuamua.webp', row: 0, col: 1 },
     freeAction: [
-      { type: EResource.MOVE, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.MOVE, value: 1 },
     ],
     sector: ESector.RED,
     price: 1,
@@ -553,8 +524,8 @@ export const _alienCards: any[] = [
     name: 'Excavation Rover',
     position: { src: '/images/aliens/oumuamua.webp', row: 0, col: 3 },
     freeAction: [
-      { type: EResource.DATA, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.DATA, value: 1 },
     ],
     sector: ESector.BLACK,
     price: 1,
@@ -566,8 +537,8 @@ export const _alienCards: any[] = [
     name: 'Exofossil Samples',
     position: { src: '/images/aliens/oumuamua.webp', row: 0, col: 4 },
     freeAction: [
-      { type: EResource.MOVE, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.MOVE, value: 1 },
     ],
     sector: ESector.BLUE,
     price: 2,
@@ -579,8 +550,8 @@ export const _alienCards: any[] = [
     name: 'Perfect Timing',
     position: { src: '/images/aliens/oumuamua.webp', row: 1, col: 0 },
     freeAction: [
-      { type: EResource.DATA, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.DATA, value: 1 },
     ],
     sector: ESector.YELLOW,
     price: 2,
@@ -592,8 +563,8 @@ export const _alienCards: any[] = [
     name: 'Probe Customisation',
     position: { src: '/images/aliens/oumuamua.webp', row: 1, col: 1 },
     freeAction: [
-      { type: EResource.DATA, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.DATA, value: 1 },
     ],
     sector: ESector.BLUE,
     price: 1,
@@ -615,8 +586,8 @@ export const _alienCards: any[] = [
     name: 'Terrain Mapping',
     position: { src: '/images/aliens/oumuamua.webp', row: 1, col: 3 },
     freeAction: [
-      { type: EResource.MOVE, value: 1 },
       { type: EResource.SCORE, value: 1 },
+      { type: EResource.MOVE, value: 1 },
     ],
     sector: ESector.YELLOW,
     price: 3,
@@ -788,12 +759,14 @@ export const _alienCards: any[] = [
 
 // add flavorText
 export const alienCards: IBaseCard[] = _alienCards.map((card) => {
+  const id = Number(card.id.split('.')?.[1]);
   return {
     ...card,
     flavorText: `${card.id}_flavor_text`,
     special: {
       ...card.special,
       titleHeight: 86,
+      enableEffectRender: id >= 11 && id <= 20,
     },
   };
 });

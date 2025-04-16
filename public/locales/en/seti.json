@@ -193,7 +193,8 @@
   "OR": "OR",
   "{score-2} for each {computer-tech}": "{score-2} for each {computer-tech}",
   "Have 5": "Have 5",
-  "Deliver {sample} to Earth": "运送 {sample} 到地球",
+  "Deliver {sample} to Earth": "Deliver {sample} to Earth",
+  "for this species": "for this species",
   "desc": {
     "card-10": "{orbit-or-land-count} at Neptune <br> and {orbit-or-land-count} at Uranus <br> (incl. their moons)",
     "card-12": "on a planet or a moon, <br>even without the required tech.",
@@ -282,7 +283,15 @@
 
     "et-pickup": "Then look at all {sample}<br> on the planet and <br>pick one up.",
     "et-pickup-back-reward": "Choose Jupiter or Saturn. <br>Look at all its {sample}, pick one, gain its reward, and put it back.",
-    "et-pickup-moon": "on a planet or a moon, even without the required tech. <br>Then look at all {sample} <br>on the planet and pick one up."
+    "et-pickup-moon": "on a planet or a moon, even without the required tech. <br>Then look at all {sample} <br>on the planet and pick one up.",
+
+    "et-11": "If it was in a sector with an anomaly, <br>gain {move-1} .",
+    "et-12": "Don't gain any {publicity-0} for moving probes this turn.",
+    "et-14": "In addition mark a {any-signal} in a sector <br>with the anomaly which is going to be triggered next.",
+    "et-15": "Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income.",
+    "et-16": "Draw all three cards from the card row.",
+    "et-17": "Gain the reward from the anomaly which is going to be triggered next.",
+    "et-20": "Then gain {score-1} for each signal <br>you have in sectors with anomalies."
   },
   "watermark": "Fan Made"
 }

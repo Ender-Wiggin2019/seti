@@ -111,11 +111,13 @@ Take the above cards as examples. They might seem overpowered, but actually they
 
 In some games, like Terraforming Mars (TFM), we clearly know that standard actions are less efficient, so we often choose to use more cost-effective card actions. But this concept is not so obvious in SETI because there are fewer related cards so that players may have to perform standard actions:
 
-```seti
-{launch-action} : 15/140
-{scan-action} : 7/140
-{land-action} : 3/140
+```desc
+{launch-action} : 15/140<br>
+{scan-action} :  7/140<br>
+{land-action} :  3/140<br>
 ```
+
+> PS: You can view the [**full card list**](https://seti.ender-wiggin.com) for more information.
 
 However, I still believe this concept is important. On one hand, because the proportion of these cards is relatively high in Alien Cards, the Mascamites have 6 Land Action cards, and 'Oumuamua has a total of 5 Launch, Scan, and Land Actions combined. Anomalies have 2 related cards. After the Aliens appear, there's a good chance to use overpowered cards instead of standard actions. On the other hand, knowing the actual model allows us to plan for the future. For example, if you have 2 Credits left and nothing to do, you might think about launching a probe. But maybe saving those 2 Credits will let you draw an overpowered Launch card next turn.
 
