@@ -4,16 +4,16 @@ import React, { useCallback, useEffect } from 'react';
 import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
 import CardList from '@/components/cards/shared/CardList';
 
-import { filterCardsByIcons } from '@/utils/card';
+import { filterCardsByCardTypes, filterCardsByIcons } from '@/utils/card';
 import { filterText } from '@/utils/filter';
+import { sortCards } from '@/utils/sort';
 
 import { useBaseCardData } from './useBaseCardData';
 
 import { EAlienType, IBaseCard } from '@/types/BaseCard';
 import { CardSource } from '@/types/CardSource';
-import { EResource, ESector, TIcon } from '@/types/element';
+import { ECardType, EResource, ESector, TIcon } from '@/types/element';
 import { SortOrder } from '@/types/Order';
-import { sortCards } from '@/utils/sort';
 
 interface BaseCardListProps {
   selectedSectors?: ESector[];
@@ -22,6 +22,7 @@ interface BaseCardListProps {
   selectedIncomes?: EResource[];
   selectedAliens?: EAlienType[];
   advancedIcons?: TIcon[];
+  selectedCardTypes?: ECardType[];
   textFilter?: string;
   sortOrder?: SortOrder;
   credit?: number[];
@@ -39,6 +40,7 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
   selectedIncomes = [],
   selectedAliens = [],
   advancedIcons = [],
+  selectedCardTypes = [],
   textFilter,
   onCardCountChange,
   sortOrder = SortOrder.ID_ASC,
@@ -57,6 +59,7 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
       selectedIncomes: EResource[] = [],
       selectedAliens: EAlienType[] = [],
       advancedIcons: TIcon[] = [],
+      selectedCardTypes: ECardType[] = [],
       selectedCardSources: CardSource[] = [],
       textFilter = '',
       credit: number[] = [0],
@@ -68,6 +71,10 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
       const lowercaseFilter = textFilter.toLowerCase();
       if (lowercaseFilter) {
         res = filterText(lowercaseFilter, res, t);
+      }
+
+      if (selectedCardTypes.length > 0) {
+        res = filterCardsByCardTypes(res, selectedCardTypes);
       }
 
       // Filter by card sources
@@ -107,8 +114,6 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
         );
       }
 
-      // Filter by advanced icons
-      // TODO: just a demo yet
       if (advancedIcons.length > 0) {
         res = filterCardsByIcons(res, advancedIcons);
       }
@@ -142,6 +147,7 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
     selectedIncomes,
     selectedAliens,
     advancedIcons,
+    selectedCardTypes,
     selectedCardSources,
     textFilter,
     credit,

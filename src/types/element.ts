@@ -1,10 +1,11 @@
+import { EEffectType } from '@/types/effect';
 import { TShape } from '@/types/Icon';
 
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 14:45:30
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-17 00:56:23
+ * @LastEditTime: 2025-04-20 00:27:31
  * @Description:
  */
 export enum ESector {
@@ -113,6 +114,11 @@ export enum EPlanet {
   NEPTUNE = 'neptune',
 }
 
+export enum ECardType {
+  BASE = 'base-card',
+  MISSION = 'mission-card',
+  END_SCORING = 'end-scoring-card',
+}
 export type TIcon =
   | ESector
   | EScanAction
@@ -122,6 +128,7 @@ export type TIcon =
   | ESpecialAction
   | EPlanet
   | EMiscIcon
+  | ECardType
   | 'move-special'
   | 'draw-card-special'
   | 'any-card-special'; // only use in description
@@ -152,3 +159,9 @@ export interface IIconItem {
     borderColor?: string;
   };
 }
+
+export const CardTypeEffectMap: Record<ECardType, EEffectType[]> = {
+  [ECardType.BASE]: [EEffectType.BASE],
+  [ECardType.MISSION]: [EEffectType.MISSION_FULL, EEffectType.MISSION_QUICK],
+  [ECardType.END_SCORING]: [EEffectType.END_GAME],
+};

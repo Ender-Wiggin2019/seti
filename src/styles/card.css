@@ -570,6 +570,28 @@
   background-image: url(/images/seti-icons-2.png);
   background-position: -150px -150px; /* 第四行第四列 */
 }
+
+.icon-5-1 {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: 0 -200px; /* 第五行第一列 */
+}
+.icon-5-2 {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: -50px -200px; /* 第五行第二列 */
+}
+.icon-mission-card {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: -100px -200px; /* 第五行第三列 */
+}
+.icon-end-scoring-card {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: -150px -200px; /* 第五行第四列 */
+}
+.icon-5-5 {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: -200px -200px; /* 第五行第五列 */
+}
+
 .icon-fulfill-sector-black {
   background-image: url(/images/seti-icons-2.png);
   background-position: -200px -150px; /* 第四行第五列 */

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-29 11:57:13
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-01 23:48:32
+ * @LastEditTime: 2025-04-20 00:30:51
  * @Description:
  */
 
@@ -13,7 +13,14 @@ import { sortCards } from '@/utils/sort';
 
 import { IBaseCard } from '@/types/BaseCard';
 import { EEffectType, Effect } from '@/types/effect';
-import { EScanAction, ETech, ETrace, TIcon } from '@/types/element';
+import {
+  CardTypeEffectMap,
+  ECardType,
+  EScanAction,
+  ETech,
+  ETrace,
+  TIcon,
+} from '@/types/element';
 
 export const getAllCardIds = () => {
   return [...baseCards, ...alienCards].map((card) => card.id);
@@ -41,6 +48,23 @@ export const filterCardsByIcons = (cards: IBaseCard[], icons: TIcon[]) => {
       res.push(card);
     }
   }
+
+  return res;
+};
+
+export const filterCardsByEffectTypes = (
+  cards: IBaseCard[],
+  effectTypes: EEffectType[]
+) => {
+  const res: IBaseCard[] = [];
+  for (const card of cards) {
+    if (!card.effects) continue;
+
+    if (effectTypes.some((type) => isEffectsHasType(card.effects, type))) {
+      res.push(card);
+    }
+  }
+  console.log('🎸 [test] - filterCardsByEffectTypes - res:', res);
 
   return res;
 };
@@ -108,4 +132,29 @@ export const isEffectsIncludeIcons = (
   }
 
   return false;
+};
+
+export const isEffectsHasType = (
+  effects: Effect[],
+  type: EEffectType
+): boolean => {
+  for (const effect of effects) {
+    if (effect.effectType === EEffectType.OR) {
+      return isEffectsHasType(effect.effects, type);
+    }
+    if (effect.effectType === type) return true;
+  }
+
+  return false;
+};
+
+export const filterCardsByCardTypes = (
+  cards: IBaseCard[],
+  cardTypes: ECardType[]
+) => {
+  const effectTypes = cardTypes.reduce((prev: EEffectType[], curr) => {
+    return [...prev, ...CardTypeEffectMap[curr]];
+  }, []);
+
+  return filterCardsByEffectTypes(cards, effectTypes);
 };

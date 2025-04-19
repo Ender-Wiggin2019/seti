@@ -12,10 +12,12 @@ import { AdvancedFilter } from '@/components/filters/AdvancedFilter';
 import { AlienFilter } from '@/components/filters/AlienFilter';
 import { CreditFilter } from '@/components/filters/CreditFilter';
 import { ResourceFilter } from '@/components/filters/FreeActionFilter';
+import { IconFilter } from '@/components/filters/IconFilter';
 import { SectorFilter } from '@/components/filters/SectorFilter';
 import { TextFilter } from '@/components/filters/TextFilter'; // make sure to import your TextFilter
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
+import { AccordionV2 } from '@/components/ui/accordion-v2';
 import { CardOdometer } from '@/components/ui/CardOdometer';
 import { SettingsDialogButton } from '@/components/ui/enable-alien-dialog';
 
@@ -25,9 +27,8 @@ import {
   BASE_INCOMES,
   EAlienType,
 } from '@/types/BaseCard';
-import { CardType } from '@/types/Card';
 import { CardSource } from '@/types/CardSource';
-import { EResource, ESector, TIcon } from '@/types/element';
+import { ECardType, EResource, ESector, TIcon } from '@/types/element';
 import { SortOrder } from '@/types/Order';
 type Props = {
   // Add custom props here
@@ -56,7 +57,7 @@ export default function HomePage(
   );
 
   const [textFilter, setTextFilter] = useState<string>(''); // add this line
-  const [selectedCardTypes, setSelectedCardTypes] = useState<CardType[]>([]);
+  const [selectedCardTypes, setSelectedCardTypes] = useState<ECardType[]>([]);
   const [selectedCardSources, setSelectedCardSources] = useState<CardSource[]>(
     []
   );
@@ -89,21 +90,6 @@ export default function HomePage(
   const handleViewMore = () => {
     setTotalMaxNum(totalMaxNum + INIT_MAX_NUM);
   };
-
-  useEffect(() => {
-    if (
-      selectedCardTypes.length !== 0 &&
-      !selectedCardTypes.includes(CardType.ANIMAL_CARD)
-    ) {
-      setCardsCount({ base: 0, alien: 0 });
-    }
-    if (
-      selectedCardTypes.length !== 0 &&
-      !selectedCardTypes.includes(CardType.SPONSOR_CARD)
-    ) {
-      setSponsorCardsCount(0);
-    }
-  }, [selectedCardTypes]);
 
   useEffect(() => {
     if (reset) {
@@ -174,6 +160,14 @@ export default function HomePage(
             {t('sector')}
           </div>
           <SectorFilter onFilterChange={setSelectedSectors} reset={reset} />
+          <div className='text-lg text-primary-200 font-bold'>
+            {t('Card Type')}
+          </div>
+          <IconFilter<ECardType>
+            options={[ECardType.MISSION, ECardType.END_SCORING]}
+            onFilterChange={setSelectedCardTypes}
+            reset={reset}
+          />
           <AdvancedFilter onFilterChange={setAdvancedIcons} reset={reset} />
           <div className='flex flex-row space-x-4'>
             <TextFilter onTextChange={setTextFilter} reset={reset} />
@@ -217,22 +211,20 @@ export default function HomePage(
         </div>
         <div className='mb-2 md:mb-8'></div>
         <div className='relative'>
-          {(selectedCardTypes.length === 0 ||
-            selectedCardTypes.includes(CardType.ANIMAL_CARD)) && (
-            <BaseCardList
-              selectedFreeActions={selectedFreeActions}
-              selectedSectors={selectedSectors}
-              selectedIncomes={selectedIncomes}
-              selectedCardSources={selectedCardSources}
-              selectedAliens={selectedAliens}
-              advancedIcons={advancedIcons}
-              textFilter={textFilter}
-              sortOrder={sortOrder}
-              onCardCountChange={setCardsCount}
-              credit={credit}
-              maxNum={animalMaxNum}
-            />
-          )}
+          <BaseCardList
+            selectedFreeActions={selectedFreeActions}
+            selectedSectors={selectedSectors}
+            selectedIncomes={selectedIncomes}
+            selectedCardSources={selectedCardSources}
+            selectedAliens={selectedAliens}
+            advancedIcons={advancedIcons}
+            selectedCardTypes={selectedCardTypes}
+            textFilter={textFilter}
+            sortOrder={sortOrder}
+            onCardCountChange={setCardsCount}
+            credit={credit}
+            maxNum={animalMaxNum}
+          />
           {/* {shouldDisplayViewMore && (
             <>
               <div className='h-10 w-full'></div>

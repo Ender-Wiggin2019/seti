@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 09:48:41
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-04 17:43:20
+ * @LastEditTime: 2025-04-19 23:09:40
  * @Description:
  */
 /*
@@ -49,7 +49,7 @@ export interface IBaseCard {
 
   // meta data
   source?: CardSource;
-  cardType?: ECardType;
+  cardType?: ECardCategory;
   alien?: EAlienType;
 }
 
@@ -70,7 +70,7 @@ export const BASE_INCOMES = [
   EResource.CARD,
 ];
 
-export enum ECardType {
+export enum ECardCategory {
   NORMAL = 1,
   ALIEN,
   PROMO,

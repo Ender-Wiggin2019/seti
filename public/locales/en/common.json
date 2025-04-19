@@ -1,6 +1,7 @@
 {
   "sector": "Sector",
   "income": "Income",
+  "Card Type": "Card Type",
   "free_action": "Free action",
   "credit": "Credit",
   "energy": "Energy",
