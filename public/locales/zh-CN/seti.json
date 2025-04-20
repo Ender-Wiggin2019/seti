@@ -390,7 +390,20 @@
     "et-15": "弃掉其中一张以获得其免费行动角效果，然后弃掉另一张以获得对应其收入的资源。",
     "et-16": "从牌列中抽取所有的三张牌。",
     "et-17": "获得即将触发的异常奖励。",
-    "et-20": "每个有异常的扇区中的信号<br>为你提供{score-1}。"
+    "et-20": "每个有异常的扇区中的信号<br>为你提供{score-1}。",
+    "et-21": "你在奥陌陌 (Oumuamua) 上<br>标记的每个信号获得 {score-2}。",
+    "et-21-req": "标记过需要消耗<br>{exofossil}的{any-trace}  。",
+    "et-22": "如果你在奥陌陌 (Oumuamua) 上标记至少1个信号，<br>获得 {exofossil}。",
+    "et-22-req": "在奥陌陌 (Oumuamua) {land-count}",
+    "et-23": "在有奥陌陌 (Oumuamua) 的扇区。",
+    "et-23-req": "拥有至少 {exofossil-3}",
+    "et-24": "然后你可以 {use-exofossil} 来标记任意扇区的 {any-signal}。",
+    "et-24-endgame": "该物种标记的每个 {any-trace} 获得 {score-1}。",
+    "et-25": "你可以使用 {use-exofossil} 任意次来获得每个 {move-2}。",
+    "et-27": "如果你在本回合访问奥陌陌<br> (Oumuamua)，获得 {exofossil}。",
+    "et-27-req": "在奥陌陌 (Oumuamua) 上至少有1个信号。",
+    "et-28": "然后你可以 {use-exofossil} 来获得 {data-1}。",
+    "et-30": "如果你在此行动中降落在奥陌陌<br> (Oumuamua)，获得 {score-3}。"
   },
   "watermark": "粉丝卡牌"
 }

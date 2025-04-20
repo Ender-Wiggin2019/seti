@@ -2,13 +2,13 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-15 16:01:07
+ * @LastEditTime: 2025-04-20 12:33:34
  * @Description:
  */
 // import {Size} from "@/types/Size";
 
 import { d } from '@/constant/desc';
-import { DESC, DESC_WITH_TYPE, e, m, OR } from '@/constant/effect';
+import { DESC, DESC_WITH_TYPE, e, m } from '@/constant/effect';
 
 import { IBaseCard } from '@/types/BaseCard';
 import {

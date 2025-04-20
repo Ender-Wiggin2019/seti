@@ -195,6 +195,7 @@
   "Have 5": "Have 5",
   "Deliver {sample} to Earth": "Deliver {sample} to Earth",
   "for this species": "for this species",
+  "Then": "Then",
   "desc": {
     "card-10": "{orbit-or-land-count} at Neptune <br> and {orbit-or-land-count} at Uranus <br> (incl. their moons)",
     "card-12": "on a planet or a moon, <br>even without the required tech.",
@@ -291,7 +292,20 @@
     "et-15": "Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income.",
     "et-16": "Draw all three cards from the card row.",
     "et-17": "Gain the reward from the anomaly which is going to be triggered next.",
-    "et-20": "Then gain {score-1} for each signal <br>you have in sectors with anomalies."
+    "et-20": "Then gain {score-1} for each signal <br>you have in sectors with anomalies.",
+    "et-21": "{score-2} for each signal you <br>mark on Oumuamua.",
+    "et-21-req": "Have a {any-trace} marked for this species that requires<br> a {exofossil} payment.",
+    "et-22": "If you mark at least 1 signal on Oumuamua, gain {exofossil}.",
+    "et-22-req": "{land-count} on Oumuamua",
+    "et-23": "in the sector with Oumuamua.",
+    "et-23-req": "Have at least {exofossil-3}",
+    "et-24": "Then you may {use-exofossil} to mark a {any-signal} in any sector.",
+    "et-24-endgame": "{score-1} for each {any-trace} you have marked for this species.",
+    "et-25": "You may {use-exofossil} any number of times to gain {move-2} for each.",
+    "et-27": "If you visit Oumuamua <br>this turn, gain {exofossil}.",
+    "et-27-req": "Have at least 1 signal on Oumuamua.",
+    "et-28": "Then you may {use-exofossil} to gain {data-1}.",
+    "et-30": "If you land on Oumuamua with this action, <br>gain {score-3}."
   },
   "watermark": "Fan Made"
 }

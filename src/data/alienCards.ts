@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-17 01:00:29
+ * @LastEditTime: 2025-04-20 12:55:22
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -172,7 +172,7 @@ export const _alienCards: any[] = [
     id: 'ET.11',
     name: 'Signs of Life',
     position: { src: '/images/aliens/anomalies.webp', row: 1, col: 4 },
-    freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
+    freeAction: [{ type: EResource.PUBLICITY, value: 2 }],
     sector: ESector.BLUE,
     price: 1,
     income: EResource.CARD,
@@ -495,6 +495,11 @@ export const _alienCards: any[] = [
     price: 2,
     income: EResource.ENERGY,
     alien: EAlienType.OUMUAMUA,
+    effects: [
+      e.SCAN(),
+      DESC('desc.et-22', 'half'),
+      m.QUICK_MISSION(DESC('desc.et-22-req'), e.SCORE(4)),
+    ],
   },
   {
     id: 'ET.29',
@@ -508,6 +513,14 @@ export const _alienCards: any[] = [
     price: 1,
     income: EResource.ENERGY,
     alien: EAlienType.OUMUAMUA,
+    effects: [
+      e.EXOFOSSIL(1, '', 'xs'),
+      m.FULL_MISSION([
+        { req: e.TRACE_ANY(), reward: e.DATA(1) },
+        { req: e.TRACE_ANY(), reward: e.PUBLICITY(1) },
+        { req: e.TRACE_ANY(), reward: e.SCORE(3) },
+      ]),
+    ],
   },
   {
     id: 'ET.23',
@@ -518,6 +531,14 @@ export const _alienCards: any[] = [
     price: 1,
     income: EResource.ENERGY,
     alien: EAlienType.OUMUAMUA,
+    effects: [
+      e.SIGNAL_ANY(),
+      DESC('desc.et-23'),
+      m.QUICK_MISSION(DESC('desc.et-23-req'), [
+        e.USE_EXOFOSSIL(2),
+        e.SCORE(11),
+      ]),
+    ],
   },
   {
     id: 'ET.30',
@@ -531,6 +552,19 @@ export const _alienCards: any[] = [
     price: 1,
     income: EResource.CARD,
     alien: EAlienType.OUMUAMUA,
+    effects: [
+      e.LAND(),
+      DESC('desc.et-30', 'half'),
+      m.QUICK_MISSION(
+        [
+          e.TRACE_RED(1, '', 'desc'),
+          e.TRACE_YELLOW(1, '', 'desc'),
+          e.TRACE_BLUE(1, '', 'desc'),
+          DESC('for this species'),
+        ],
+        [e.EXOFOSSIL()]
+      ),
+    ],
   },
   {
     id: 'ET.28',
@@ -544,6 +578,7 @@ export const _alienCards: any[] = [
     price: 2,
     income: EResource.CARD,
     alien: EAlienType.OUMUAMUA,
+    effects: [e.ROTATE(), e.TECH_COMPUTER(), DESC('desc.et-28')],
   },
   {
     id: 'ET.27',
@@ -557,6 +592,11 @@ export const _alienCards: any[] = [
     price: 2,
     income: EResource.CREDIT,
     alien: EAlienType.OUMUAMUA,
+    effects: [
+      e.MOVE(4),
+      DESC('desc.et-27', 'half'),
+      m.QUICK_MISSION(DESC('desc.et-27-req'), [e.EXOFOSSIL(1)]),
+    ],
   },
   {
     id: 'ET.25',
@@ -570,6 +610,7 @@ export const _alienCards: any[] = [
     price: 1,
     income: EResource.CREDIT,
     alien: EAlienType.OUMUAMUA,
+    effects: [DESC('desc.et-25'), DESC('Then'), e.LAND()],
   },
   {
     id: 'ET.26',
@@ -580,6 +621,7 @@ export const _alienCards: any[] = [
     price: 1,
     income: EResource.ENERGY,
     alien: EAlienType.OUMUAMUA,
+    effects: [e.LAUNCH(), e.EXOFOSSIL()],
   },
   {
     id: 'ET.24',
@@ -593,6 +635,14 @@ export const _alienCards: any[] = [
     price: 3,
     income: EResource.CREDIT,
     alien: EAlienType.OUMUAMUA,
+    effects: [
+      e.SIGNAL_YELLOW(),
+      e.SIGNAL_RED(),
+      e.SIGNAL_BLUE(),
+
+      DESC('desc.et-24'),
+      m.END_GAME('desc.et-24-endgame'),
+    ],
   },
   {
     id: 'ET.21',
@@ -603,6 +653,11 @@ export const _alienCards: any[] = [
     price: 2,
     income: EResource.CARD,
     alien: EAlienType.OUMUAMUA,
+    effects: [
+      e.SCAN(),
+      DESC('desc.et-21', 'half'),
+      m.QUICK_MISSION(DESC('desc.et-21-req'), e.DATA()),
+    ],
   },
 
   {
@@ -766,7 +821,7 @@ export const alienCards: IBaseCard[] = _alienCards.map((card) => {
     special: {
       ...card.special,
       titleHeight: 86,
-      enableEffectRender: id >= 11 && id <= 20,
+      enableEffectRender: id >= 11 && id <= 30,
     },
   };
 });

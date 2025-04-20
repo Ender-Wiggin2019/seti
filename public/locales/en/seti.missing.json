@@ -23,7 +23,18 @@
     "et-7": "desc.et-7",
     "et-8-req": "desc.et-8-req",
     "et-11": "desc.et-11",
-    "et-12": "desc.et-12"
+    "et-12": "desc.et-12",
+    "et-21": "desc.et-21",
+    "et-21-desc": "desc.et-21-req",
+    "et-22": "desc.et-22",
+    "et-22-desc": "desc.et-22-req",
+    "et-23": "desc.et-23",
+    "et-23-desc": "desc.et-23-req",
+    "et-24": "desc.et-24",
+    "et-24-endgame": "desc.et-24-endgame",
+    "et-25": "desc.et-25",
+    "et-27": "desc.et-27",
+    "et-27-desc": "desc.et-27-req"
   },
   "If it was in a sector with an anomaly, gain {move-1} ": {
     "": "If it was in a sector with an anomaly, gain {move-1} ."
@@ -139,5 +150,7 @@
     "": "at Vega."
   },
   "at Uranus": "at Uranus",
-  "at Neptune": "at Neptune"
+  "at Neptune": "at Neptune",
+  "A Message from Afar": "A Message from Afar",
+  "Then": "Then"
 }
