@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-25 18:35:42
+ * @LastEditTime: 2025-04-21 00:27:12
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
@@ -18,6 +18,7 @@ import Seo from '@/components/Seo';
 import { getAllCardIds, getCardById } from '@/utils/card';
 
 import { IBaseCard } from '@/types/BaseCard';
+import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
 type Props = {
   // Add custom props here
 };
@@ -37,11 +38,9 @@ export default function Page(
     <Layout>
       <Seo templateTitle={`Seti Card #${card.id} ${card.name}`} />
       <div className='mb-24 flex flex-col'>
-        <div className='flex flex-col items-center py-24 md:py-36 lg:pb-48 lg:pt-36'>
-          <div className='flex flex-row md:scale-125 lg:scale-150'>
-            <div className='mr-3 flex-initial md:mr-10 lg:mr-20'>
-              <BaseCard card={card as IBaseCard} />
-            </div>
+        <div className='flex flex-col items-center pt-48 lg:pt-48'>
+          <div className='flex flex-row scale-[2]'>
+            <PreviewBaseCard card={card as IBaseCard} />
           </div>
         </div>
       </div>
