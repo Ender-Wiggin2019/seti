@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-06 14:44:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-16 00:25:42
+ * @LastEditTime: 2025-04-20 23:52:02
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
@@ -22,7 +22,7 @@ interface missionProps {
 }
 
 export const Mission: React.FC<missionProps> = ({ effect }) => {
-  const { missions, desc } = effect;
+  const { missions, desc, rewardSize } = effect;
   const { t } = useTranslation('seti');
   // const descArray = extractDesc(desc);
   if (
@@ -38,8 +38,19 @@ export const Mission: React.FC<missionProps> = ({ effect }) => {
       ? quickMission.reward
       : [quickMission.reward];
     return (
-      <div className='card-quick-mission-container flex flex-1 flex-row flex-wrap justify-center items-center'>
-        <div className='req-container flex justify-center items-center'>
+      <div
+        className={cn(
+          'card-quick-mission-container flex flex-1 flex-row flex-wrap justify-center items-center',
+          {
+            'card-quick-mission-container-large-reward': rewardSize === 'large',
+          }
+        )}
+      >
+        <div
+          className={cn('req-container flex justify-center items-center', {
+            'req-container-large': rewardSize === 'large',
+          })}
+        >
           {reqEffects.map((reqEffect, index) => {
             return (
               <EffectFactory
@@ -52,7 +63,8 @@ export const Mission: React.FC<missionProps> = ({ effect }) => {
         <div
           className={cn(
             'reward-container flex justify-center items-center flex-1 gap-2',
-            { 'gap-[2px]': rewardEffects.length >= 3 }
+            { 'gap-[2px]': rewardEffects.length >= 3 },
+            { 'reward-container-large': rewardSize === 'large' }
           )}
         >
           {rewardEffects.map((rewardEffect, index) => {

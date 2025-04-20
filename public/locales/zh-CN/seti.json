@@ -210,7 +210,7 @@
   "LAND on a planet or a moon, even without the required tech.": "着陆在行星或卫星上, 即使没有所需科技。",
   "MARK in a sector with one of your probes and in both neighboring sectors.": "在一个有你探测器的扇区以及两个相邻扇区进行标记",
   "You may land on a space that is already occupied and still get the covered reward.": "你可以降落在已被占据的空间，并仍然获得被覆盖的奖励。",
-  "Gain the reward from the anomaly which is going to be triggered next.": "获得即将触发的异常奖励。",
+  "Gain the reward from the anomaly which is going to be triggered next.": "获得即将触发的异常体奖励。",
   "Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income.": "弃掉其中一张以获得其免费行动的效果，然后再弃掉另一张以获得对应收入的资源。",
 
   "When you visit:": "当你访问:",
@@ -237,6 +237,12 @@
   },
   "at Saturn (incl": {
     " moons)": "在土星(Saturn)，包括卫星"
+  },
+  "at Uranus (incl": {
+    " moons)": "在天王星(Uranus)，包括卫星"
+  },
+  "at Neptune (incl": {
+    " moons)": "在海王星(Neptune)，包括卫星"
   },
   "at Mercury": "在水星(Mercury)",
   "at Proxima Centauri": {
@@ -293,7 +299,9 @@
   "{score-2} for each {computer-tech}": "每个 {computer-tech} 获得 {score-2}",
   "Have 5": "有 5 个",
   "Deliver {sample} to Earth": "运送 {sample} 到地球",
+  "Deliver {sample} to Mars": "运送 {sample} 到火星 (Mars)",
   "for this species": "这个<br>物种",
+  "Then": "然后",
 
   "desc": {
     "card-10": "{orbit-or-land-count} 在海王星<br>和 {orbit-or-land-count} 在天王星<br>（包括它们的卫星）",
@@ -381,16 +389,23 @@
     "card-se-en-02": "当你在火星及其卫星执行 {orbit-or-land-action} <br>或者打出一张背景文字有\"火星\" (Mars) 字样的卡牌时:",
 
     "et-pickup": "查看当前行星的所有 {sample}<br>并选择一个拾起。",
-    "et-pickup-back-reward": "选择木星 (Jupiter) 或土星 (Saturn), <br>查看该行星的所有 {sample}<br>并选择一个获得奖励, 然后放回。",
+    "et-pickup-back": "查看你探测器所在星球的所有 {sample}。<br>选择一个获得奖励, 然后放回。",
+    "et-pickup-back-reward": "选择木星 (Jupiter) 或土星 (Saturn), 查看该行星的所有 {sample}并选择一个获得奖励,<br>然后放回。",
     "et-pickup-moon": "在行星或卫星上, 无视科技限制。查看当前行星的<br>所有 {sample}并选择一个拾起。",
 
-    "et-11": "如果它在一个有异常的扇区，获得 {move-1}。",
+    "et-5-endgame": "该物种中你标记的<br>每个 {any-trace} 获得 {score-1}。",
+    "et-7": "触发 {fulfill-sample} 两次。",
+    "et-8-req": "{yellow-trace-2} 本物种。",
+    "et-9-req": "{red-trace-2} 本物种。",
+    "et-10-req": "{blue-trace-2} 本物种。",
+
+    "et-11": "如果它在一个有异常体的扇区，获得 {move-1}。",
     "et-12": "本回合移动探测器不获得任何 {publicity-0}。",
-    "et-14": "并且在即将触发异常的扇区标记一个{any-signal}。",
+    "et-14": "并且在即将触发异常体的扇区标记一个{any-signal}。",
     "et-15": "弃掉其中一张以获得其免费行动角效果，然后弃掉另一张以获得对应其收入的资源。",
     "et-16": "从牌列中抽取所有的三张牌。",
-    "et-17": "获得即将触发的异常奖励。",
-    "et-20": "每个有异常的扇区中的信号<br>为你提供{score-1}。",
+    "et-17": "获得即将触发的异常体奖励。",
+    "et-20": "每个有异常体的扇区中的信号<br>为你提供{score-1}。",
     "et-21": "你在奥陌陌 (Oumuamua) 上<br>标记的每个信号获得 {score-2}。",
     "et-21-req": "标记过需要消耗<br>{exofossil}的{any-trace}  。",
     "et-22": "如果你在奥陌陌 (Oumuamua) 上标记至少1个信号，<br>获得 {exofossil}。",
@@ -398,7 +413,7 @@
     "et-23": "在有奥陌陌 (Oumuamua) 的扇区。",
     "et-23-req": "拥有至少 {exofossil-3}",
     "et-24": "然后你可以 {use-exofossil} 来标记任意扇区的 {any-signal}。",
-    "et-24-endgame": "该物种标记的每个 {any-trace} 获得 {score-1}。",
+    "et-24-endgame": "该物种中你标记的<br>每个 {any-trace} 获得 {score-1}。",
     "et-25": "你可以使用 {use-exofossil} 任意次来获得每个 {move-2}。",
     "et-27": "如果你在本回合访问奥陌陌<br> (Oumuamua)，获得 {exofossil}。",
     "et-27-req": "在奥陌陌 (Oumuamua) 上至少有1个信号。",

@@ -167,6 +167,9 @@
   margin-right: -11px;
 }
 
+.card-quick-mission-container-large-reward {
+  background-image: url('/images/cards/mission-container-large-reward.png');
+}
 .card-quick-mission-container .req-container {
   position: absolute;
   display: flex;
@@ -178,12 +181,33 @@
   padding: 1px 2px 1px 2px;
 }
 
+.card-quick-mission-container .req-container-large {
+  position: absolute;
+  display: flex;
+  gap: 1px;
+  top: 0px;
+  left: 0px;
+  width: 38px;
+  height: 37px;
+  padding: 1px 2px 1px 2px;
+}
+
 .card-quick-mission-container .reward-container {
   position: absolute;
   display: flex;
   top: 0px;
   right: 0px;
   width: 65px;
+  height: 37px;
+  padding: 1px 2px 1px 2px;
+}
+
+.card-quick-mission-container .reward-container-large {
+  position: absolute;
+  display: flex;
+  top: 0px;
+  right: 0px;
+  width: 100px;
   height: 37px;
   padding: 1px 2px 1px 2px;
 }

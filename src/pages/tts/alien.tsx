@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-11 23:41:00
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-20 12:52:28
+ * @LastEditTime: 2025-04-21 00:13:23
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
@@ -28,7 +28,7 @@ export default function HomePage(
 
   const cards = alienCards.filter((card) => {
     const id = Number(card.id.split('.')?.[1]);
-    return id >= 11 && id <= 30;
+    return id >= 0 && id <= 10;
   }); // tts should use original sort logic
 
   return (

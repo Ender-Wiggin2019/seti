@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-20 12:55:22
+ * @LastEditTime: 2025-04-21 00:14:00
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -329,6 +329,16 @@ export const _alienCards: any[] = [
     price: 3,
     income: EResource.CARD,
     alien: EAlienType.MASCAMITES,
+    effects: [
+      e.PUBLICITY(),
+      e.ROTATE(),
+      e.TECH_COMPUTER(),
+      m.QUICK_MISSION(
+        [DESC('desc.et-10-req')],
+        [DESC('desc.et-pickup-back-reward')],
+        'large'
+      ),
+    ],
   },
   {
     id: 'ET.5',
@@ -342,10 +352,7 @@ export const _alienCards: any[] = [
     price: 1,
     income: EResource.CARD,
     alien: EAlienType.MASCAMITES,
-    effects: [
-      DESC('desc.et-pickup-back', 'half'),
-      m.END_GAME('desc.et-5-endgame'),
-    ],
+    effects: [DESC('desc.et-pickup-back'), m.END_GAME('desc.et-5-endgame')],
   },
   {
     id: 'ET.1',
@@ -384,7 +391,8 @@ export const _alienCards: any[] = [
       e.TECH_PROBE(),
       m.QUICK_MISSION(
         [DESC('desc.et-8-req')],
-        [DESC('desc.et-pickup-back-reward')]
+        [DESC('desc.et-pickup-back-reward')],
+        'large'
       ),
     ],
   },
@@ -442,6 +450,16 @@ export const _alienCards: any[] = [
     price: 3,
     income: EResource.CREDIT,
     alien: EAlienType.MASCAMITES,
+    effects: [
+      e.PUBLICITY(),
+      e.ROTATE(),
+      e.TECH_SCAN(),
+      m.QUICK_MISSION(
+        [DESC('desc.et-9-req')],
+        [DESC('desc.et-pickup-back-reward')],
+        'large'
+      ),
+    ],
   },
   {
     id: 'ET.2',
@@ -821,7 +839,7 @@ export const alienCards: IBaseCard[] = _alienCards.map((card) => {
     special: {
       ...card.special,
       titleHeight: 86,
-      enableEffectRender: id >= 11 && id <= 30,
+      enableEffectRender: id >= 0 && id <= 30,
     },
   };
 });

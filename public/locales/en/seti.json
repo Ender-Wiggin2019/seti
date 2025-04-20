@@ -194,6 +194,7 @@
   "{score-2} for each {computer-tech}": "{score-2} for each {computer-tech}",
   "Have 5": "Have 5",
   "Deliver {sample} to Earth": "Deliver {sample} to Earth",
+  "Deliver {sample} to Mars": "Deliver {sample} to Mars",
   "for this species": "for this species",
   "Then": "Then",
   "desc": {
@@ -284,7 +285,14 @@
 
     "et-pickup": "Then look at all {sample}<br> on the planet and <br>pick one up.",
     "et-pickup-back-reward": "Choose Jupiter or Saturn. <br>Look at all its {sample}, pick one, gain its reward, and put it back.",
+    "et-pickup-back": "Look at all {sample} on a planet with your probe. Choose one, gain its reward, and put it back.",
     "et-pickup-moon": "on a planet or a moon, even without the required tech. <br>Then look at all {sample} <br>on the planet and pick one up.",
+
+    "et-5-endgame": "{score-1} for each {any-trace} you have marked for this species.",
+    "et-7": "Resolve {fulfill-sample} twice.",
+    "et-8-req": "{yellow-trace-2} for this species.",
+    "et-9-req": "{red-trace-2} for this species.",
+    "et-10-req": "{blue-trace-2} for this species.",
 
     "et-11": "If it was in a sector with an anomaly, <br>gain {move-1} .",
     "et-12": "Don't gain any {publicity-0} for moving probes this turn.",

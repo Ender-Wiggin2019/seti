@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-20 12:33:34
+ * @LastEditTime: 2025-04-20 21:16:44
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -1951,7 +1951,7 @@ const _baseCards: IBaseCard[] = [
     },
     effects: [
       e.LAUNCH(),
-      m.QUICK_MISSION(e.ORBIT_OR_LAND_COUNT(1, 'at Neptune'), [
+      m.QUICK_MISSION(e.ORBIT_OR_LAND_COUNT(1, 'at Neptune (incl. moons)'), [
         e.SCORE(4),
         e.DATA(),
       ]),
@@ -1971,7 +1971,7 @@ const _baseCards: IBaseCard[] = [
     },
     effects: [
       e.LAUNCH(),
-      m.QUICK_MISSION(e.ORBIT_OR_LAND_COUNT(1, 'at Uranus'), [
+      m.QUICK_MISSION(e.ORBIT_OR_LAND_COUNT(1, 'at Uranus (incl. moons)'), [
         e.SCORE(3),
         e.CARD(),
       ]),

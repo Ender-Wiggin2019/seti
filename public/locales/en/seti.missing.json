@@ -152,5 +152,11 @@
   "at Uranus": "at Uranus",
   "at Neptune": "at Neptune",
   "A Message from Afar": "A Message from Afar",
-  "Then": "Then"
+  "Then": "Then",
+  "at Uranus (incl": {
+    " moons)": "at Uranus (incl. moons)"
+  },
+  "at Neptune (incl": {
+    " moons)": "at Neptune (incl. moons)"
+  }
 }

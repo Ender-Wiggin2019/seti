@@ -162,7 +162,8 @@ export interface IFlattenMissionItem {
 // usually will only has one mission
 const QUICK_MISSION = (
   req: IFlattenMissionItem['req'],
-  reward: IFlattenMissionItem['reward']
+  reward: IFlattenMissionItem['reward'],
+  rewardSize?: 'normal' | 'large'
 ): IMissionEffect => ({
   effectType: EEffectType.MISSION_QUICK,
   missions: [
@@ -171,6 +172,7 @@ const QUICK_MISSION = (
       reward: Array.isArray(reward) ? reward : [reward],
     },
   ],
+  rewardSize,
 });
 
 const flatMission2MissionItem = (missions: IFlattenMissionItem[]) => {
