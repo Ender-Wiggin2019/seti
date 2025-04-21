@@ -695,7 +695,7 @@ const _baseCards: IBaseCard[] = [
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.YELLOW,
     price: 3,
-    income: EResource.ENERGY,
+    income: EResource.CREDIT,
     effects: [DESC('desc.card-93')],
   },
   {
