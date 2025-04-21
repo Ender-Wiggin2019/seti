@@ -926,3 +926,27 @@
   height: auto;
   top: 95px;
 }
+
+.container-oumuamua {
+  background-image: url('/images/aliens/card_back/oumuamua.webp');
+  width: 105%;
+  height: auto;
+  background-size: 105%;
+  background-position: center -75px;
+  filter: brightness(75%);
+  transition: filter 0.3s;
+}
+
+.container-oumuamua:hover {
+  filter: brightness(100%);
+}
+
+.alien-text {
+  filter: brightness(100%);
+  font-size: 2.5rem;
+  line-height: 2.5rem;
+  font-weight: 600;
+  text-shadow: #6940a2 1px 0 10px;
+}
+.text-oumuamua {
+}
