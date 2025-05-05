@@ -245,7 +245,7 @@
     "card-86-endgame": "{score-1} for each sector <br>where you have a signal.",
     "card-87": "have a probe at least 5 spaces from Earth",
     "card-88": "in a sector with one of your probes.",
-    "card-88-req": "in a sector with one of your probes.",
+    "card-88-req": "Have a signal in 4 different sectors",
     "card-89-req": "Have no cards in your hand",
     "card-90": "Gain {energy-1} for each card with {energy-income} <br> income you show from your hand.",
     "card-91": "Gain {energy-1} for each card with {energy-income} <br>tucked income.<br> Then increase your {income} with this card.",
