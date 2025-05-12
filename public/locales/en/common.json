@@ -16,6 +16,10 @@
   "black": "Black",
   "base_cards": "Base Cards",
   "aliens": "Aliens",
+  "posts": {
+    "model": "Model",
+    "tech": "Tech"
+  },
   "sort": {
     "ID_ASC": "ID",
     "ID_DESC": "ID",

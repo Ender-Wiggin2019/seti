@@ -2,10 +2,10 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-04-14 23:49:39
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-16 01:54:40
+ * @LastEditTime: 2025-05-12 21:03:01
  * @Description:
  */
-import Giscus from '@giscus/react';
+import Giscus, { GiscusProps } from '@giscus/react';
 import Markdown from 'react-markdown';
 
 import { MarkCard } from '@/components/cards/base_cards/MarkCard';
@@ -13,16 +13,19 @@ import { DescRender } from '@/components/effect/DescRender';
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
 import { Container } from '@/components/ui/Container';
+import { useTranslation } from 'next-i18next';
 
 type Props = {
   title: string;
   content: string;
+  giscusProps?: Partial<GiscusProps>;
 };
 
-export const MarkdownContainer = ({ title, content }: Props) => {
+export const MarkdownContainer = ({ title, content, giscusProps }: Props) => {
+  const { t } = useTranslation('common');
   return (
     <Layout>
-      <Seo templateTitle={title} />
+      <Seo templateTitle={t(title)} />
 
       <Container className='px-2 pt-2 md:pt-4'>
         <Markdown
@@ -108,13 +111,14 @@ export const MarkdownContainer = ({ title, content }: Props) => {
           {content}
         </Markdown>
         <Giscus
-          id='comments'
+          // id='comments'
+          // categoryId='DIC_kwDON-z0tc4CpF4W'
+          // term='Welcome to share your idea about SETI'
+          {...giscusProps}
           repo='Ender-Wiggin2019/seti'
           repoId='R_kgDON-z0tQ'
           category='Ideas'
-          categoryId='DIC_kwDON-z0tc4CpF4W'
-          mapping='specific'
-          term='Welcome to share your idea about SETI'
+          mapping={giscusProps?.mapping || 'pathname'}
           reactionsEnabled='1'
           emitMetadata='0'
           inputPosition='top'
