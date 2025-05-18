@@ -4,7 +4,7 @@ import { GiscusProps } from '@giscus/react';
  * @Author: Ender-Wiggin
  * @Date: 2025-05-03 12:49:07
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-05-12 20:43:31
+ * @LastEditTime: 2025-05-18 21:11:09
  * @Description:
  */
 export interface IPostItem {
@@ -14,7 +14,12 @@ export interface IPostItem {
   author?: string;
   description?: string;
   giscusProps?: Partial<GiscusProps>;
+  cnOnly?: boolean;
+  tag?: IPostTag;
+  date?: string;
 }
+
+export type IPostTag = 'hot' | 'new' | 'update';
 
 export enum EPostCategory {
   STRATEGY = 'Strategy',

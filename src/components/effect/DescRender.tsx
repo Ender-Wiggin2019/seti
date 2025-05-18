@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-05 23:45:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-15 19:14:08
+ * @LastEditTime: 2025-05-18 20:33:46
  * @Description:
  */
 import React from 'react';
@@ -76,7 +76,7 @@ export const DescRender: React.FC<IconProps> = ({
                 <div key={index} className='px-[2px]'>
                   <EffectFactory
                     key={index}
-                    effect={{ ...res, size: descIconSize }}
+                    effect={{ ...res, size: renderNode?.size || descIconSize }}
                   />
                 </div>
               );

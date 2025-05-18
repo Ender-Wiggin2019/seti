@@ -24,9 +24,14 @@
     "RATING_DESC": "评分"
   },
   "posts": {
-    "model": "Model",
-    "tech": "Tech"
+    "model": "SETI 基础: 卡牌模型",
+    "tech": "SETI 进阶: 科技路线",
+    "diy": "DIY工具使用指南",
+    "expand": "展开",
+    "hot": "热门"
   },
+  "Strategy": "策略",
+  "Tutorial": "教程",
   "nav": {
     "go": "前往",
     "home": "首页",
@@ -112,7 +117,7 @@
   "Card ID": "卡牌编号",
   "Effect": "效果",
   "Description": "文本描述",
-  "Go to Full Page": "查看完整列表",
+  "Go to Full Page": "查看完整列表并了解更多使用技巧",
   "Icons": "图标",
   "Conditional Mission": "条件式任务",
   "Triggerable Missions": "触发式任务",

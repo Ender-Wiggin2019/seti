@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-12 11:42:57
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-16 00:25:16
+ * @LastEditTime: 2025-05-18 20:46:20
  * @Description:
  */
 import { useState } from 'react';
@@ -107,9 +107,9 @@ export const DescInput = ({
       <div>Workspace</div>
       <div className='relative'>
         <Textarea
-          value={newDesc}
+          value={newDesc?.replace(/<br>/g, '\n')}
           className='w-full lg:w-64'
-          onChange={(e) => setNewDesc(e.target.value)}
+          onChange={(e) => setNewDesc(e.target.value?.replace(/\n/g, '<br>'))}
         />
       </div>
       <HelpButton />
@@ -118,7 +118,7 @@ export const DescInput = ({
           <div>Preview</div>
           <div className='flex justify-start w-full h-12 rounded-md px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50 bg-zinc-950 ring-offset-zinc-950 placeholder:text-zinc-400 focus-visible:ring-primary'>
             <div className='text-zinc-400'>
-              <DescRender desc={newDesc.replace('\n', '<br>')} smartSize />
+              <DescRender desc={newDesc} smartSize />
             </div>
           </div>
         </>

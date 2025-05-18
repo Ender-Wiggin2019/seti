@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-12 12:22:14
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-08 00:39:05
+ * @LastEditTime: 2025-05-18 21:17:06
  * @Description:
  */
 
@@ -32,7 +32,6 @@ export const EndgameSelector = ({ desc, onChange }: Props) => {
   // const [req, setReq] = useState(endgameEffect?.desc);
 
   const handleChange = (effect: ICustomizedEffect) => {
-    console.log('🎸 [test] - handleChange - effect:', effect);
     // setReq(effect?.desc);
     onChange?.(effect?.desc);
   };

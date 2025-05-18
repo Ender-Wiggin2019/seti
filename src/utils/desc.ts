@@ -28,24 +28,44 @@ export const extractDesc = (desc: string): IRenderNode[][] => {
       });
     } else if (match[1]) {
       // This is a {xxx} or {xxx-xxx} pattern
-      const parts = match[1].split('-');
-      const lastPart = parts[parts.length - 1];
-      const isNumeric = !isNaN(Number(lastPart));
+      const innerMatch = match[1].match(/([^[\]]+)(?:\[(.*?)\])?/);
+      if (innerMatch) {
+        const namePart = innerMatch[1];
+        const _size = innerMatch[2];
+        const size = [
+          'md',
+          'sm',
+          'xs',
+          'xxs',
+          'xxxs',
+          'desc',
+          'desc-mini',
+        ].includes(_size)
+          ? _size
+          : undefined;
+        const parts = namePart.split('-');
+        const lastPart = parts[parts.length - 1];
+        const isNumeric = !isNaN(Number(lastPart));
 
-      if (isNumeric && parts.length > 1) {
-        // If the last part is numeric and there are multiple parts
-        const name = parts.slice(0, -1).join('-');
-        result[result.length - 1].push({
-          type: 'component',
-          name: name,
-          value: Number(lastPart),
-        });
-      } else {
-        // Otherwise, treat the whole as a name
-        result[result.length - 1].push({
-          type: 'component',
-          name: match[1],
-        });
+        if (isNumeric && parts.length > 1) {
+          // If the last part is numeric and there are multiple parts
+          const name = parts.slice(0, -1).join('-');
+          const component: IRenderNode = {
+            type: 'component',
+            name: name,
+            value: Number(lastPart),
+            size: size as TSize,
+          };
+          result[result.length - 1].push(component);
+        } else {
+          // Otherwise, treat the whole as a name
+          const component: IRenderNode = {
+            type: 'component',
+            name: namePart,
+            size: size as TSize,
+          };
+          result[result.length - 1].push(component);
+        }
       }
     }
   }
@@ -96,6 +116,9 @@ export const getDescIconSize = (
   defaultSize?: TSize,
   smartSize?: boolean
 ): TSize => {
+  // if (nodes?.[0]?.[0]?.size) {
+  //   return nodes?.[0]?.[0]?.size;
+  // }
   if (!smartSize) {
     return defaultSize || 'md';
   }

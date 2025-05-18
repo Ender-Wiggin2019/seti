@@ -3,7 +3,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-03 11:32:58
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-23 01:25:38
+ * @LastEditTime: 2025-05-18 20:59:52
  * @Description:
  */
 import Link from 'next/link';
@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { EffectTable } from '@/components/ui/effect-table';
 
 import { ISettings } from '@/types/settings';
+import { ExternalLink } from 'lucide-react';
 
 type Props = {
   onSubmit?: (settings: ISettings) => void;
@@ -33,8 +34,9 @@ export function HelpButton({ onSubmit }: Props) {
         </div>
       </DialogTrigger>
       <DialogContent className='sm:max-w-md bg-zinc-900 h-[500px] text-white overflow-y-scroll'>
-        <Link href='/helper' target='_blank'>
+        <Link href='/posts/diy' className='flex gap-2' target='_blank'>
           {t('Go to Full Page')}
+          <ExternalLink />
         </Link>
         <EffectTable onCopy={() => setOpen(false)} />
       </DialogContent>

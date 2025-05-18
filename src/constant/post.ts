@@ -4,7 +4,7 @@ import { EPostCategory, IPostItem } from '@/types/post';
  * @Author: Ender-Wiggin
  * @Date: 2025-05-03 12:55:07
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-05-12 20:46:06
+ * @LastEditTime: 2025-05-18 21:03:41
  * @Description:
  */
 export const Posts: IPostItem[] = [
@@ -14,12 +14,14 @@ export const Posts: IPostItem[] = [
     category: EPostCategory.STRATEGY,
     author: 'Ender',
     description: '',
+    tag: 'hot',
     giscusProps: {
       id: 'comments',
       categoryId: 'DIC_kwDON-z0tc4CpF4W',
       term: 'Welcome to share your idea about SETI',
       mapping: 'specific',
     },
+    date: '2025-04-15',
   },
   {
     title: 'posts.tech',
@@ -27,17 +29,21 @@ export const Posts: IPostItem[] = [
     category: EPostCategory.STRATEGY,
     author: 'Ender',
     description: '',
+    tag: 'hot',
+    cnOnly: true,
+    date: '2025-05-16',
     // giscusProps: {
     //   id:'comments',
     //   categoryId: 'DIC_kwDON-z0tc4CpF4W',
     //   term:'Welcome to share your idea about SETI',
     // },
   },
-  // {
-  //   title: 'posts.diy_tutorial',
-  //   path: 'diy_tutorial',
-  //   category: EPostCategory.TUTORIAL,
-  //   author: 'Ender',
-  //   description: '',
-  // },
+  {
+    title: 'posts.diy',
+    path: 'diy',
+    category: EPostCategory.TUTORIAL,
+    author: 'Ender',
+    description: '',
+    date: '2025-05-18',
+  },
 ];

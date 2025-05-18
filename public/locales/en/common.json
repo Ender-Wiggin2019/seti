@@ -17,8 +17,11 @@
   "base_cards": "Base Cards",
   "aliens": "Aliens",
   "posts": {
-    "model": "Model",
-    "tech": "Tech"
+    "model": "Seti Basic: Card Model",
+    "tech": "Seti Advanced: Tech",
+    "diy": "DIY Tool Usage Guide",
+    "expand": "Expand",
+    "hot": "Hot"
   },
   "sort": {
     "ID_ASC": "ID",
@@ -115,7 +118,7 @@
   "Card ID": "Card ID",
   "Effect": "Effect",
   "Description": "Description",
-  "Go to Full Page": "Go to Full Page",
+  "Go to Full Page": "Go to full page and learn more tips",
   "Icons": "Icons",
   "Conditional Mission": "Conditional Mission",
   "Triggerable Missions": "Triggerable Missions",

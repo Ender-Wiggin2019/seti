@@ -2,18 +2,20 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-04-14 23:49:39
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-05-12 21:03:01
+ * @LastEditTime: 2025-05-18 20:37:57
  * @Description:
  */
 import Giscus, { GiscusProps } from '@giscus/react';
+import { useTranslation } from 'next-i18next';
 import Markdown from 'react-markdown';
 
 import { MarkCard } from '@/components/cards/base_cards/MarkCard';
 import { DescRender } from '@/components/effect/DescRender';
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
+import { AccordionV2 } from '@/components/ui/accordion-v2';
 import { Container } from '@/components/ui/Container';
-import { useTranslation } from 'next-i18next';
+import { EffectTable } from '@/components/ui/effect-table';
 
 type Props = {
   title: string;
@@ -84,6 +86,22 @@ export const MarkdownContainer = ({ title, content, giscusProps }: Props) => {
                   <div className='bg-black/30 rounded-md p-2 mt-4'>
                     <DescRender desc={String(children)} size='sm' />
                   </div>
+                );
+              }
+
+              if (className?.includes('txt')) {
+                return (
+                  <div className='bg-black/30 rounded-md p-2 mt-4 flex justify-center'>
+                    {children}
+                  </div>
+                );
+              }
+
+              if (className?.includes('table')) {
+                return (
+                  <AccordionV2 title={t('posts.expand')}>
+                    <EffectTable />
+                  </AccordionV2>
                 );
               }
               try {
