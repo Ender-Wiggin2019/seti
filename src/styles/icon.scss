@@ -23,8 +23,26 @@ $scales: (
   }
 }
 
+// 生成 icon-value-size 的样式，绝对定位，lg 时 top: 10px
+@mixin icon-value-size-styles($height: 50px, $bottom: 7px, $top-lg: 10px) {
+  @each $size, $scale in $scales {
+    .icon-value-size-#{$size} {
+      position: absolute;
+      // width: $scale * $height;
+      height: $scale * $height;
+      // scale: $scale;
+      bottom: $bottom * $scale;
+      // @if $size == lg {
+      //   top: $top-lg;
+      //   bottom: auto;
+      // }
+    }
+  }
+}
+
 @include icon-styles('icon-container', 50px, 4, 50px);
 @include icon-styles('icon-text', 50px, 1, 20px);
+@include icon-value-size-styles();
 
 @mixin text-stroke($type, $color) {
   @if $type == 'shadow' {
@@ -58,13 +76,14 @@ $scales: (
   margin-top: -2px;
   left: 0px;
   width: 50px;
-  font-size: 30px;
+  font-size: 35px;
 }
 
 .icon-value-card,
 .icon-value-any-card,
 .icon-value-draw-card-special,
 .icon-value-any-card-special {
+  left: -3px;
   @include text-stroke('shadow', #3b3947);
 }
 
@@ -74,6 +93,7 @@ $scales: (
   // font-size: 50px;
   // line-height: 50px;
   left: -6px;
+  font-size: 45px;
   // bottom: -8px;
 }
 

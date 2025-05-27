@@ -1,8 +1,16 @@
-.source-code-pro {
-  font-family: 'Source Code Pro', monospace;
-  font-optical-sizing: auto;
-  font-weight: 800;
-  font-style: normal;
+@font-face {
+  font-family: 'Kobenhavn W03 Bold';
+  src: url('https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.eot');
+  src: url('https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.eot?#iefix')
+      format('embedded-opentype'),
+    url('https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.woff2')
+      format('woff2'),
+    url('https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.woff')
+      format('woff'),
+    url('https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.ttf')
+      format('truetype'),
+    url('https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.svg#Kobenhavn W03 Bold')
+      format('svg');
 }
 
 .card-grid {
@@ -687,13 +695,13 @@
   position: absolute;
   z-index: 5;
   color: white;
-  font-family: 'Source Code Pro';
+  font-family: 'Kobenhavn W03 Bold', monospace;
   /* width: 20px; */
   height: 50px;
   font-size: 40px;
   /* font-weight: 800; */
 
-  left: -4px;
+  left: -5px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -701,41 +709,6 @@
   /* -webkit-text-fill-color: white;
   -webkit-text-stroke: 4px black; */
 }
-
-/* .icon-value-credit {
-  -webkit-text-stroke: 3px #b09530;
-}
-
-.icon-value-energy {
-  -webkit-text-stroke: 3px #3aaa23;
-}
-.icon-value-score {
-  -webkit-text-stroke: 3px #156853;
-  width: 20px;
-  left: 15px;
-}
-.icon-value-credit {
-  -webkit-text-stroke: 3px #b09530;
-}
-.icon-value-card, .icon-value-any-card, .icon-value-card-special, .icon-value-any-card-special {
-  -webkit-text-stroke: 3px #3b3947;
-}
-
-.icon-value-move {
-  -webkit-text-stroke: 3px #464c5a;
-  font-size: 50px;
-  line-height: 50px;
-  left: -8px;
-  bottom: -8px;
-}
-
-.icon-value-data {
-  -webkit-text-stroke: 3px #567fd1;
-}
-
-.icon-value-publicity {
-  -webkit-text-stroke: 3px #f14927;
-} */
 
 .hexagon {
   position: relative;
@@ -896,13 +869,13 @@
   position: absolute;
   z-index: 10;
   top: 5px;
-  left: 2px;
+  left: 4px;
   width: 12px;
-  height: 16px;
-  font-size: 18px;
+  height: 15px;
+  font-size: 19px;
   line-height: 18px;
   color: white;
-  font-family: 'Source Code Pro';
+  font-family: 'Kobenhavn W03 Bold', monospace;
   display: flex;
   align-items: center;
   justify-content: center;

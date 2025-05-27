@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-07 00:33:18
+ * @LastEditTime: 2025-05-27 21:26:09
  * @Description:
  */
 import React from 'react';
@@ -16,7 +16,7 @@ interface IconProps {
 }
 export const IconFactory: React.FC<IconProps> = ({ iconItem }) => {
   const { type, value, options } = iconItem;
-
+  const size = options?.size || 'md';
   if (!type) {
     return <div>{options?.text || ''}</div>;
   }
@@ -30,7 +30,7 @@ export const IconFactory: React.FC<IconProps> = ({ iconItem }) => {
         // className={`absolute icon-value icon-text-${
         //   options?.size || 'md'
         // }-1 icon-value-${type}`}
-        className={`absolute icon-value icon-value-${type}`}
+        className={`absolute icon-value icon-value-size-${size} icon-value-${type}`}
       >
         {value}
       </div>
@@ -41,7 +41,7 @@ export const IconFactory: React.FC<IconProps> = ({ iconItem }) => {
 
   return (
     <div
-      className={`icon-container icon-container-${options?.size || 'md'}-${
+      className={`icon-container icon-container-${size}-${
         showMultipleItem ? value : 1
       }`}
     >
