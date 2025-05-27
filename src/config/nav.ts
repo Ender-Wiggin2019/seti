@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-05-18 21:14:11
+ * @LastEditTime: 2025-05-27 23:50:54
  * @Description:
  */
 export const navigationItems = [
@@ -15,5 +15,5 @@ export const navigationItems = [
   // { href: '/quizzes', text: 'nav.daily_quiz' },
   // { href: '/cards', text: 'Cards' },
   // { href: '/actions', text: 'Actions' },
-  { href: '/about', text: 'nav.about' },
+  { href: '/post/about', text: 'nav.about' },
 ];

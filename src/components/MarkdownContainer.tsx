@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-04-14 23:49:39
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-05-18 20:37:57
+ * @LastEditTime: 2025-05-27 23:58:21
  * @Description:
  */
 import Giscus, { GiscusProps } from '@giscus/react';
@@ -72,6 +72,16 @@ export const MarkdownContainer = ({ title, content, giscusProps }: Props) => {
                 {children}
               </strong>
             ),
+            a: ({ children, href }) => (
+              <a
+                href={href}
+                className='font-medium underline underline-offset-4 hover:text-primary-600'
+                target='_blank'
+                rel='noopener noreferrer'
+              >
+                {children}
+              </a>
+            ),
             code: ({ inline, className, children, ...props }) => {
               if (inline) {
                 // if (String(children).startsWith('{')) {
@@ -112,7 +122,7 @@ export const MarkdownContainer = ({ title, content, giscusProps }: Props) => {
 
                 if (className?.includes('seti')) {
                   return (
-                    <div className='px-1 py-2'>
+                    <div className='px-1 py-2 hover:text-primary-500'>
                       <MarkCard ids={ids} />
                     </div>
                   );

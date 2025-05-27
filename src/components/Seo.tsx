@@ -2,10 +2,10 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 
 const defaultMeta = {
-  title: 'Seti Fan Hub - Explore Maps, Cards, and More!',
+  title: 'Seti Fan Hub - Explore SETI via web!',
   siteName: 'Seti Fan Hub',
   description:
-    'Dive into the world of Seti with our extensive card and map database and engaging quizzes. Rate cards, leave comments, and unleash your creativity with our DIY card maker!',
+    'Dive into the world of Seti with our extensive card database and strategy discussion. Rate cards, leave comments, and unleash your creativity with our DIY card maker!',
   url: 'https://seti.ender-wiggin.com',
   type: 'website',
   robots: 'follow, index',

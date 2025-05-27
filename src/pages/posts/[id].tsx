@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-04-14 17:16:03
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-05-12 20:50:35
+ * @LastEditTime: 2025-05-27 23:55:53
  * @Description:
  */
 import fs from 'fs';
@@ -43,10 +43,6 @@ export const getStaticProps: GetStaticProps<Props> = async (props) => {
   if (!postItem) {
     throw new Error('Please config this post in constant/Posts.');
   }
-  console.log(
-    '🎸 [test] - constgetStaticProps:GetStaticProps<Props>= - props:',
-    props
-  );
 
   const mdPath = locale?.includes('zh')
     ? `${postItem.path}-zh.md`

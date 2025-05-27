@@ -4,6 +4,8 @@ This is an open-source online website of the board game SETI. It is not affiliat
 
 See a [demo](https://seti.ender-wiggin.com/).
 
+![og](/public/images/large-og.png)
+
 ## Updates
 
 This project will be updated over time.
@@ -12,9 +14,10 @@ Expect frequent improvements.
 Next up:
 
 - [x] All aliens
-- [ ] Card description translation
+- [x] Card description translation
 - [x] Card flavor text translation
 - [x] DIY
+- [ ] Posts
 - [ ] Alien boards
 
 ## Running Locally

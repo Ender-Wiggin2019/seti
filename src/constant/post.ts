@@ -4,7 +4,7 @@ import { EPostCategory, IPostItem } from '@/types/post';
  * @Author: Ender-Wiggin
  * @Date: 2025-05-03 12:55:07
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-05-18 21:03:41
+ * @LastEditTime: 2025-05-27 23:51:21
  * @Description:
  */
 export const Posts: IPostItem[] = [
@@ -45,5 +45,13 @@ export const Posts: IPostItem[] = [
     author: 'Ender',
     description: '',
     date: '2025-05-18',
+  },
+  {
+    title: 'posts.about',
+    path: 'about',
+    category: EPostCategory.GENERAL,
+    author: 'Ender',
+    description: '',
+    date: '2025-05-27',
   },
 ];
