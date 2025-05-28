@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-04-14 17:16:03
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-05-27 23:55:53
+ * @LastEditTime: 2025-05-28 16:20:13
  * @Description:
  */
 import fs from 'fs';
@@ -44,11 +44,14 @@ export const getStaticProps: GetStaticProps<Props> = async (props) => {
     throw new Error('Please config this post in constant/Posts.');
   }
 
-  const mdPath = locale?.includes('zh')
-    ? `${postItem.path}-zh.md`
-    : `${postItem.path}.md`;
+  const folderPath = locale?.includes('zh') ? 'zh-CN' : 'en';
   const title = postItem.title;
-  const filePath = path.join(process.cwd(), 'src/posts', mdPath);
+  const filePath = path.join(
+    process.cwd(),
+    'src/posts',
+    folderPath,
+    `${postItem?.path}.md`
+  );
   const fileContents = fs.readFileSync(filePath, 'utf8');
 
   return {

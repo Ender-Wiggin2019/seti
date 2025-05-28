@@ -4,7 +4,7 @@ import { EPostCategory, IPostItem } from '@/types/post';
  * @Author: Ender-Wiggin
  * @Date: 2025-05-03 12:55:07
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-05-27 23:51:21
+ * @LastEditTime: 2025-05-28 17:10:00
  * @Description:
  */
 export const Posts: IPostItem[] = [
@@ -30,7 +30,6 @@ export const Posts: IPostItem[] = [
     author: 'Ender',
     description: '',
     tag: 'hot',
-    cnOnly: true,
     date: '2025-05-16',
     // giscusProps: {
     //   id:'comments',
