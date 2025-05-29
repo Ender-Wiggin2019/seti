@@ -47,7 +47,7 @@ Orange Tech acts as a lubricant. The game is playable without it, but having it 
 
 ### 3.1 Orange Tech 1 (Launch Capacity + 1)
 
-Rating: A-
+**Rating: A-**
 
 ```desc
 {launch-action} + 1
@@ -59,10 +59,10 @@ This tech with energy bonus is a popular starting tech and is often picked. If y
 
 ### 3.2 Orange Tech 2 (Ignore Asteroids)
 
-Rating: S
+**Rating: S**
 
 ```desc
-{move} Ignore Asteroid Limitation.<br>
+{move} Ignore Asteroid Limitation.<br><br>
 When you visit Asteroid, gain {publicity-1} .
 ```
 
@@ -74,7 +74,7 @@ Overall, this tech is very strong, universally useful late-game, but not necessa
 
 ### 3.3 Orange Tech 3 (Landing Costs 1 Less Energy)
 
-Rating: A+
+**Rating: A+**
 
 ```desc
 {land-action} : - {energy-1}
@@ -92,7 +92,7 @@ Nonetheless, this tech is still valuable, breaking even after 2 landings and pro
 
 ### 3.4 Orange Tech 4 (Moon Landing)
 
-Rating: B
+**Rating: B**
 
 ```desc
 {land-action} on Moons
@@ -141,19 +141,19 @@ Strategically, scanning should be decisive. Scan when the timing is right, even 
 
 ### 4.1 Purple Tech 1
 
-Rating: A
+**Rating: A**
 
 ```desc
-{any-signal} in Earth and adjacent sectors
+{any-signal} on Earth or adjacent sectors
 ```
 
 Some players love starting with Purple 1, as its 2 data allows for stable 4 data income tuck in round 1. Its effect isn't useless, providing flexibility when scanning sectors. Actually it's quite good in 2P since players will completing for the same sector.
 
 Overall, it's a transitional tech, not highly profitable, occupying an early tech slot.
 
-### 4.2 Purple Tech 2 (Promote Mercury Scan)
+### 4.2 Purple Tech 2 (Mercury Scan)
 
-Rating: S
+**Rating: S**
 
 ```desc
 {publicity-1} -> {any-signal} (Mercury)
@@ -168,7 +168,7 @@ Usually, everyone takes it, but timing matters. Acquiring it too early without o
 Rating: B
 
 ```desc
-{any-card} -> {any-signal}
+{discard-card-signal}
 ```
 
 Playing scanning strategy reveals a major limiting factor: cards, specifically for income tuck.
@@ -181,7 +181,7 @@ Overall, this tech is more for early first-in-sector competition, later becoming
 
 ### 4.4 Purple Tech 4 (Launch Move)
 
-Rating: S
+**Rating: S**
 
 ```desc
 {move-1} / {energy-1} -> {launch-action}
@@ -203,7 +203,7 @@ A small caveat: Using Purple 4 to move probes is slow, risking being preempted. 
 
 ## V. Blue Tech
 
-Rating: A to S
+**Rating: A to S**
 
 - Early game (R1)
 
