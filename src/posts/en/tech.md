@@ -119,7 +119,7 @@ Moon value is decent, and mid-to-late game supplementing with a Moon tech is rea
 
 Now, is a Moon start advisable? This boils down to whether it's worth taking Moon tech for a Phobos start, as other planets don't offer such dramatic early returns and have less endgame variance.
 
-My view is it's not worth it, except for Europa with a fast ship or 1-cost landing. Reasons:
+My view is it's not worth it, except for `#12`. Reasons:
 
 1. Phobos's inherent value is lower than theoretical value. Limited card count and uncertain card quality make energy tuck mediocre, and lack of cards forces card tuck. A Phobos start means round 2 must be a card round, or else multiple disadvantages (discussed later) can't be mitigated. Without sufficient credit income, the rhythm can be bleak. For dual income, double orbit or orbit + 4 data might be better.
 2. High landing prerequisites. Moon tech implies no energy-saving landing tech, adding +1 to landing costs. Moreover, orbiting conditions for landing aren't guaranteed, as players usually won't help others save 1 energy. This leads to delays, and Phobos players lack the cards to wait, typically requiring 3 energy for landing.
@@ -128,10 +128,10 @@ My view is it's not worth it, except for Europa with a fast ship or 1-cost landi
    2. No subsequent tech: Moon tech is mostly unused in round 2. Ideally, landing a 2-trace spot is nice, but perfect map scenarios are rare, often still needing 3 energy to land.
    3. No traces, no trace competition potential. Round 2 aliens introduce new mechanics while you're still playing human cards. If aiming to land another Moon for traces, resources might be insufficient for landing, and even if successful, cards can't be played due to resource constraints, still lacking data.
    4. Falling behind in scores, missing endgame tiles. Other players will outpace Phobos starters in scoring, as early scoring relies on landing and traces, while Phobos offers only income. The 7 bonus points are insufficient. If others focus on orbit development, Phobos might compete, but that's a player environment issue, not universal.
-4. One card can lead to last place: Europa with a fast ship. Although just one card, calculate the probability of drawing a specific card from 132 (full expansion 140 - your 5 cards - 3 in play, assuming you have it) in 15 draws, it's 11.36%. If others start with card income, the probability increases. An 89% chance of a normal outcome but an 11% chance of last place makes risk-averse players hesitant. Another 4-cost card poses potential risk if acquired before you.
+4. One card can lead to last place: `12`. Although just one card, calculate the probability of drawing a specific card from 132 (full expansion 140 - your 5 cards - 3 in card row) in 15 draws, it's 11.36%. If others start with card income, the probability increases. An 89% chance of a normal outcome but an 11% chance of last place makes risk-averse players hesitant. Another 4-cost card poses potential risk if acquired before you.
 5. Main planets might not be worse than Moons. Main planets provide data, and even if a Moon is accessible, you might prioritize the first main planet, making Moon tech a loss.
 
-In summary, Moons aren't suitable for starting. Mid-to-late game supplementing with one is fine, as main planets might be full. However, don't prioritize 25/26 points.
+In summary, Moons aren't suitable for starting. Mid-to-late game supplementing with one is fine, as main planets might be full. **However, don't prioritize 25/26 points.**
 
 ## IV. Purple Tech
 
