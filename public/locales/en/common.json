@@ -19,6 +19,7 @@
   "posts": {
     "model": "Seti Basic: Card Model",
     "tech": "Seti Advanced: Tech",
+    "trace": "Seti Advanced: Trace",
     "diy": "DIY Tool Usage Guide",
     "about": "About This Site",
     "expand": "Expand",

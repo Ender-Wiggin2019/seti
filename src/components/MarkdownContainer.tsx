@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-04-14 23:49:39
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-05-27 23:58:21
+ * @LastEditTime: 2025-06-04 16:44:47
  * @Description:
  */
 import Giscus, { GiscusProps } from '@giscus/react';
@@ -16,6 +16,7 @@ import Seo from '@/components/Seo';
 import { AccordionV2 } from '@/components/ui/accordion-v2';
 import { Container } from '@/components/ui/Container';
 import { EffectTable } from '@/components/ui/effect-table';
+import { Separator } from '@/components/ui/separator';
 
 type Props = {
   title: string;
@@ -63,7 +64,7 @@ export const MarkdownContainer = ({ title, content, giscusProps }: Props) => {
             ),
             li: ({ children }) => <li className=''>{children}</li>,
             blockquote: ({ children }) => (
-              <blockquote className='mt-6 border-l-2 pl-6 italic'>
+              <blockquote className='mt-6 border-l-2 pl-6 italic bg-black/30 rounded-r-md'>
                 {children}
               </blockquote>
             ),
@@ -82,6 +83,7 @@ export const MarkdownContainer = ({ title, content, giscusProps }: Props) => {
                 {children}
               </a>
             ),
+            hr: () => <Separator className='opacity-50 px-8' />,
             code: ({ inline, className, children, ...props }) => {
               if (inline) {
                 // if (String(children).startsWith('{')) {

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 12:05:53
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-16 00:27:59
+ * @LastEditTime: 2025-06-04 16:37:44
  * @Description:
  */
 
@@ -48,7 +48,10 @@ export const MarkCard: React.FC<PreviewBaseCardProps> = ({ ids, onlyId }) => {
         )}
       >
         {cards.map((card) => (
-          <div key={card.id} className=''>
+          <div
+            key={card.id}
+            className='z-1 hover:scale-[2] hover:z-50 duration-300'
+          >
             <PreviewBaseCard card={card} />
           </div>
         ))}

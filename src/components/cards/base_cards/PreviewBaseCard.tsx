@@ -39,7 +39,7 @@ export const PreviewBaseCard: React.FC<PreviewBaseCardProps> = ({
     <Dialog>
       <DialogTrigger asChild>
         {onlyId ? (
-          <span className='underline underline-offset-4 font-bold'>
+          <span className='underline underline-offset-4 font-bold cursor-pointer hover:text-primary-500'>
             #{card.id} {t(card.name)}
           </span>
         ) : (

@@ -4,7 +4,7 @@ import { EPostCategory, IPostItem } from '@/types/post';
  * @Author: Ender-Wiggin
  * @Date: 2025-05-03 12:55:07
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-05-28 17:10:00
+ * @LastEditTime: 2025-06-04 16:45:40
  * @Description:
  */
 export const Posts: IPostItem[] = [
@@ -36,6 +36,15 @@ export const Posts: IPostItem[] = [
     //   categoryId: 'DIC_kwDON-z0tc4CpF4W',
     //   term:'Welcome to share your idea about SETI',
     // },
+  },
+  {
+    title: 'posts.trace',
+    path: 'trace',
+    category: EPostCategory.STRATEGY,
+    author: 'Ender',
+    description: '',
+    date: '2025-06-03',
+    cnOnly: true,
   },
   {
     title: 'posts.diy',
