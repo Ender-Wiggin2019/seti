@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-05 23:45:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-05-18 20:33:46
+ * @LastEditTime: 2025-06-05 11:01:57
  * @Description:
  */
 import React from 'react';
@@ -56,6 +56,13 @@ export const DescRender: React.FC<IconProps> = ({
           >
             {renderNodeLine.map((renderNode, index) => {
               const res = renderNode2Effect(renderNode);
+
+              if (res === '&nbsp') {
+                return (
+                  <div key={String(lineIndex) + index} className='w-1'></div>
+                );
+              }
+
               if (typeof res === 'string') {
                 // TODO: use rich text
                 return (
