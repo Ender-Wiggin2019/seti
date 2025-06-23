@@ -28,12 +28,17 @@
     "tech": "SETI 进阶: 科技路线",
     "diy": "DIY工具使用指南",
     "trace": "SETI 进阶: 点灯学",
+    "fan_made_corps": "玩家自制公司",
     "about": "关于本网站",
     "expand": "展开",
     "hot": "热门"
   },
+  "corps": {
+    "desc": "目前仅包含部分公司，后续会持续更新。"
+  },
   "Strategy": "策略",
   "Tutorial": "教程",
+  "General": "常规",
   "nav": {
     "go": "前往",
     "home": "首页",

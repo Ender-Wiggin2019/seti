@@ -25,6 +25,9 @@
     "expand": "Expand",
     "hot": "Hot"
   },
+  "corps": {
+    "desc": "Please note that those corporations are ALL fan made. DO NOT SHARE THEM TO PUBLIC."
+  },
   "sort": {
     "ID_ASC": "ID",
     "ID_DESC": "ID",
