@@ -73,6 +73,8 @@ export const downloadImage = async (
     document.body.removeChild(link);
     onSuccess?.('Download image successfully!');
   } catch (err) {
-    onError?.('Download image failed! Please try to upload another image.');
+    onError?.(
+      'Download image failed! If you are using Firefox, please try another browser.'
+    );
   }
 };

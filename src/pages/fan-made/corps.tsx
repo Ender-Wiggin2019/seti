@@ -1,11 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-/*
- * @Author: Ender-Wiggin
- * @Date: 2025-06-24 01:31:11
- * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-06-24 02:23:19
- * @Description:
- */
+
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
@@ -13,6 +7,7 @@ import React from 'react';
 
 import { fanMadeCorps } from '@/data/fanMadeCorps';
 
+import ModelCard from '@/components/corp/ModelCard';
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
 import { Container } from '@/components/ui/Container';
@@ -43,17 +38,20 @@ export default function HomePage(
                     <h2 className='text-black text-2xl font-bold text-center mb-2'>
                       {card.name}
                     </h2>
-                    <p className='absolute bottom-12 z-2 text-7xl font-bold text-black opacity-20 shadow-md'>
-                      FAN MADE
-                    </p>
                     <p className='text-gray-700 text-lg mb-2'>
                       {t('设计者')}: {card.author}
                     </p>
-                    <img
-                      src={`/images/corps/${card.name}.jpg`}
-                      alt={card.name}
-                      className='w-96 hover:scale-125 lg:hover:scale-[2] duration-300 hover:z-20 rounded-md'
-                    />
+                    <div className='relative'>
+                      <p className='absolute bottom-2 z-2 text-7xl font-bold text-black opacity-20 shadow-md'>
+                        FAN MADE
+                      </p>
+                      <img
+                        src={`/images/corps/${card.name}.jpg`}
+                        alt={card.name}
+                        className='w-96 lg:hover:scale-[2] duration-300 hover:z-20 rounded-md'
+                      />
+                    </div>
+                    <ModelCard corp={card} round={4} />
                   </div>
                 </div>
               </div>

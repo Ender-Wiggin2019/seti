@@ -2,12 +2,12 @@
 
 ## I. Introduction
 
-I've recently played more SETI, experiencing some games with scores over 300. This has given me new insights into the game mechanics. This article provides an analysis of the tech aspects that SETI players are concerned with, including the overall tech strategy and individual tech evaluations. My thoughts are still evolving, so this article is more of a starting point for discussion. Your thoughts are welcome.
+I've recently played more SETI, experiencing some games with scores over 300 in 4p (and some 400+ in solo against easiest AI). This has given me new insights into the game mechanics. This article provides an analysis of the tech aspects that SETI players are concerned with, including the overall tech strategy and analysis for each tech tile. My thoughts are still evolving, so this article is more of a starting point for discussion. Your thoughts are welcome.
 
 Key points to clarify:
 
 1. The tech routes in SETI is not complex and can even be somewhat formulaic.
-2. The "non-formulaic" aspect of tech choice mainly lies in the tech's backside bonus, which significantly influence decision-making.
+2. The "non-formulaic" aspect of tech choice mainly depends on the tech's backside bonus, which significantly influence decision-making.
 
 ## II. Tech Route
 
@@ -30,14 +30,9 @@ Other effective components are:
 - 2nd Orange Tech (Ignore Asteroids, Visit Asteroid +1 Publicity)
 - Blue Tech (credit, Energy, Publicity)
 
-Once this engine is built, each Scan action yields considerable returns, allowing for efficient resource cycling in the late game. If multiple players go for scan, it can result in a pseudo-perpetual scoring loop.
+Once this engine is built, each Scan action yields considerable returns, allowing for efficient resource cycling in the late game. If multiple players go for scan, it can result in a pseudo-perpetual scoring loop (of course the resource will be out of used XD).
 
-However, this leads to a concern for players who prefer diverse strategies, as they may find the game formulaic.
-
-While I don't disagree the concern above, but here are some alternative perspectives:
-
-1. Having a strongest late-game engine doesn't mean everyone can achieve it, and the routes to this engine vary. The game's appeal lies in how quickly and efficiently players can build this setup. Card asymmetry, endgame tiles, game meta, and tech instant bonus all influence decisions. Although this engine is strong late-game, it's unremarkable early on, scan without good techs and economy may lead to failure.
-2. SETI encourages a balanced development rather than an all-in strategy. All players chasing for the same goal may lead to lose-lose situation.
+Some players may doubt at this conclusion, since scaling is one of the most concerned issue in this game, such as the scan issue in 2p.
 
 Let's analyze each tech.
 
@@ -59,7 +54,7 @@ This tech with energy bonus is a popular starting tech and is often picked. If y
 
 ### 3.2 Orange Tech 2 (Ignore Asteroids)
 
-**Rating: S**
+**Rating: A+**
 
 ```desc
 {move} Ignore Asteroid Limitation.<br><br>
@@ -74,7 +69,7 @@ Overall, this tech is very strong, universally useful late-game, but not necessa
 
 ### 3.3 Orange Tech 3 (Landing Costs 1 Less Energy)
 
-**Rating: A+**
+**Rating: A**
 
 ```desc
 {land-action} : - {energy-1}
