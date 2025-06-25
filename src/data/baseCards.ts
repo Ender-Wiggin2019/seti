@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-20 21:16:44
+ * @LastEditTime: 2025-06-25 16:29:46
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -1316,7 +1316,7 @@ const _baseCards: IBaseCard[] = [
   },
   {
     id: '62',
-    name: 'Onsala Telescope Constructior',
+    name: 'Onsala Telescope Construction',
     position: { src: '/images/cards/cards-2.webp', row: 1, col: 5 },
     freeAction: [{ type: EResource.DATA, value: 1 }],
     sector: ESector.RED,
@@ -1435,7 +1435,7 @@ const _baseCards: IBaseCard[] = [
     price: 1,
     income: EResource.ENERGY,
     description: '',
-    effects: [e.CARD(), DESC('desc.card-114')],
+    effects: [e.CARD_ANY(), DESC('desc.card-114')],
   },
   {
     id: '112',
@@ -1703,7 +1703,7 @@ const _baseCards: IBaseCard[] = [
         },
         {
           req: e.SCAN(),
-          reward: e.CARD(),
+          reward: e.CARD_ANY(),
         },
         {
           req: e.SCAN(),
