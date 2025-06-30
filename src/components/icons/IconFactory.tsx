@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-05-27 21:26:09
+ * @LastEditTime: 2025-07-01 00:45:05
  * @Description:
  */
 import React from 'react';
@@ -22,7 +22,7 @@ export const IconFactory: React.FC<IconProps> = ({ iconItem }) => {
   }
 
   const getValueComponent = () => {
-    if (!options?.showValue || !value) {
+    if (!options?.showValue) {
       return null;
     }
     return (
@@ -32,12 +32,12 @@ export const IconFactory: React.FC<IconProps> = ({ iconItem }) => {
         // }-1 icon-value-${type}`}
         className={`absolute icon-value icon-value-size-${size} icon-value-${type}`}
       >
-        {value}
+        {value || 0}
       </div>
     );
   };
 
-  const showMultipleItem = !options?.showValue && value > 1;
+  const showMultipleItem = !options?.showValue;
 
   return (
     <div
