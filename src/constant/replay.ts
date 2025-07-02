@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-05-22 00:26:20
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-07-02 19:08:08
+ * @LastEditTime: 2025-07-03 02:16:39
  * @Description:
  */
 
@@ -77,17 +77,35 @@ export const REPLAY_LIST: Partial<IReplayItem>[] = [
     round: 1,
     turn: 0,
     desc: '开局插收入',
-    actions: [EAction.PLAY_CARD],
+    // actions: [EAction.PLAY_CARD],
     // card: '100',
     resources: {
       credit: 4,
       energy: 3,
-      card: ['100', '69', '7', '53', '33'],
+      card: ['65', '53', '32', '30', '83'],
       publicity: 4,
       data: 0,
       score: 2,
     },
     gain: { income: { type: 'credit', cardId: '100' } },
+    spend: {},
+  },
+  {
+    round: 1,
+    turn: 0,
+    desc: 'FAST',
+    actions: [EAction.PLAY_CARD],
+    card: '65',
+    gain: { card: ['5'], score: 2 },
+    spend: {},
+  },
+  {
+    round: 1,
+    turn: 0,
+    desc: 'FAST',
+    actions: [EAction.PLAY_CARD],
+    card: '65',
+    gain: { card: ['5'], score: 2 },
     spend: {},
   },
 ];

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-07-02 17:54:00
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-07-02 19:59:38
+ * @LastEditTime: 2025-07-03 02:03:17
  * @Description:
  */
 
@@ -225,4 +225,16 @@ export const getFinalReplayList = (
     result.push(getComputedReplayItem(item));
   }
   return result;
+};
+
+export const getResourceCount = (resource: keyof IResourceItem) => {
+  if (!resource) return 0;
+  let value;
+  if (Array.isArray(resource)) {
+    value = resource.length;
+  } else {
+    value = Number(resource);
+  }
+
+  return isNaN(value) ? 0 : value;
 };

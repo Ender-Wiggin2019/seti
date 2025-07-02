@@ -6,12 +6,13 @@ import Layout from '@/components/layout/Layout';
 import { DownloadableReplayItem } from '@/components/replay-card';
 
 import { REPLAY_LIST } from '@/constant/replay';
+import { getFinalReplayList } from '@/utils/action';
 
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-05-22 00:25:32
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-05-22 01:11:54
+ * @LastEditTime: 2025-07-02 21:25:59
  * @Description:
  */
 export default function HomePage(
@@ -20,7 +21,7 @@ export default function HomePage(
   return (
     <Layout>
       <div className='flex flex-col gap-4 p-4'>
-        {REPLAY_LIST.map((item) => (
+        {getFinalReplayList(REPLAY_LIST).map((item) => (
           <DownloadableReplayItem
             key={String(item.round) + item.turn}
             {...item}

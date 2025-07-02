@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { e } from '@/constant/effect';
 import { IReplayItem } from '@/constant/replay';
 import { getCardById } from '@/utils/card';
+import { getResourceCount } from '@/utils/action';
 
 /*
  * @Author: Ender-Wiggin
@@ -25,8 +26,27 @@ export const ReplayItem = ({
   gain,
   income,
   card,
-  cards,
 }: IReplayItem) => {
+  const cards = resources?.card;
+
+  const renderResource = (resource: any, type: 'gain' | 'spend') => {
+    if (!resource) return null;
+    const value = getResourceCount(resource);
+    if (!value) return null;
+    const cls =
+      value <= 0 ? '' : type === 'gain' ? 'text-green-500' : 'text-red-500';
+    const prefix = type === 'gain' && value > 0 ? '+' : '-';
+    return (
+      <div className={cls}>
+        {prefix}
+        {value}
+      </div>
+    );
+  };
+
+  const allCards = resources?.card || [];
+  const spendCardIds = spend?.card;
+  console.log('spendCardIds', gain);
   return (
     <div
       className={cn(
@@ -34,15 +54,22 @@ export const ReplayItem = ({
         { 'w-full': cards?.length > 0 }
       )}
     >
-      {card && getCardById(card) && (
+      {/* {card && getCardById(card) && (
         <div className='absolute bottom-0 left-0 scale-90'>
           <PreviewBaseCard card={getCardById(card)!} />
         </div>
-      )}
-      {cards && (
-        <div className='absolute bottom-0 -left-20 scale-75 flex gap-2'>
-          {cards.map((card) => (
-            <div key={getCardById(card).id} className=''>
+      )} */}
+      {allCards && (
+        <div className='absolute bottom-0 -left-40 scale-50 flex gap-2'>
+          {allCards.map((card) => (
+            <div
+              key={getCardById(card)?.id}
+              className={
+                spendCardIds?.includes(card)
+                  ? 'scale-125 ring-4 rounded-md ring-lime-500 ring-offset-4 mr-10'
+                  : 'opacity-90'
+              }
+            >
               <PreviewBaseCard card={getCardById(card)} />
             </div>
           ))}
@@ -55,9 +82,7 @@ export const ReplayItem = ({
             key={type}
             className='flex font-bold text-4xl justify-end items-center gap-2'
           >
-            {gain?.[type] && (
-              <div className='text-green-500'>+{gain?.[type]}</div>
-            )}
+            {gain?.[type] && renderResource(gain?.[type], 'spend')}
             <EffectFactory
               effect={e[type.toUpperCase() as keyof typeof e](
                 resources?.[type],
@@ -73,43 +98,40 @@ export const ReplayItem = ({
       <div className='text-2xl'>{desc}</div>
       <Separator className='my-2' />
 
-      {['credit', 'energy', 'card', 'publicity', 'data', 'exofossil'].map(
-        (type) => {
-          if (resources?.[type] === undefined) return null;
-          return (
-            <div
-              key={type}
-              className='flex font-bold text-4xl justify-end items-center gap-2'
-            >
-              {resources?.[type] !== undefined && resources?.[type]}
-              {spend?.[type] && (
-                <div className='text-red-500'>-{spend?.[type]}</div>
-              )}
-              {gain?.[type] && (
-                <div className='text-green-500'>+{gain?.[type]}</div>
-              )}
-              {gain?.income === type && (
+      {['credit', 'energy', 'card', 'publicity', 'data'].map((type) => {
+        if (resources?.[type] === undefined) return null;
+        return (
+          <div
+            key={type}
+            className='flex font-bold text-4xl justify-end items-center gap-2'
+          >
+            {/* {gain?.income === type && (
                 <>
                   <div className='text-green-500'>+ 1</div>
                   <EffectFactory effect={e.INCOME(1, '', 'xs')} />
                 </>
-              )}
-              <div className='ml-6'>
-                <EffectFactory
-                  effect={e[type.toUpperCase() as keyof typeof e](
-                    (resources?.[type] || 0) +
-                      (gain?.[type] || 0) +
-                      (gain?.income === type ? 1 : 0) -
-                      (spend?.[type] || 0),
-                    '',
-                    'md'
-                  )}
-                />
-              </div>
+              )} */}
+            <div className='ml-6'>
+              <EffectFactory
+                effect={e[type.toUpperCase() as keyof typeof e](
+                  getResourceCount(resources?.[type]),
+                  '',
+                  'md'
+                )}
+              />
             </div>
-          );
-        }
-      )}
+            {spend?.[type] && renderResource(spend?.[type], 'spend')}
+            {gain?.[type] && renderResource(gain?.[type], 'gain')}
+
+            {gain?.income === type && (
+              <>
+                <div className='text-green-500'>+ 1</div>
+                <EffectFactory effect={e.INCOME(1, '', 'xs')} />
+              </>
+            )}
+          </div>
+        );
+      })}
       {/* <div>{turn}</div> */}
       {/* <div>{item.resources}</div> */}
     </div>
