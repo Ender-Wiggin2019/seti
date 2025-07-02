@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-13 09:52:34
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-23 02:18:54
+ * @LastEditTime: 2025-07-02 21:22:19
  * @Description:
  */
 import { motion } from 'framer-motion';
@@ -62,7 +62,8 @@ export const AccordionV2: React.FC<AccordionV2Props> = ({
           variants={{
             open: {
               clipPath: 'inset(0% 0% 0% 0% round 10px)',
-              maxHeight: 1200, // expand size
+              maxHeight: 1600, // expand size
+              overflowY: 'auto',
               transition: {
                 type: 'spring',
                 bounce: 0,

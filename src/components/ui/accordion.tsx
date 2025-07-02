@@ -1,3 +1,10 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2023-08-15 06:15:19
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-07-02 21:20:06
+ * @Description:
+ */
 'use client';
 
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
