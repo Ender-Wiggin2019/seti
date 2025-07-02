@@ -7,6 +7,7 @@ import React from 'react';
 
 import { fanMadeCorps } from '@/data/fanMadeCorps';
 
+import CorpCard from '@/components/corp/CorpCard';
 import ModelCard from '@/components/corp/ModelCard';
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
@@ -41,16 +42,7 @@ export default function HomePage(
                     <p className='text-gray-700 text-lg mb-2'>
                       {t('设计者')}: {card.author}
                     </p>
-                    <div className='relative'>
-                      <p className='absolute bottom-2 z-2 text-7xl font-bold text-black opacity-20 shadow-md'>
-                        FAN MADE
-                      </p>
-                      <img
-                        src={`/images/corps/${card.name}.jpg`}
-                        alt={card.name}
-                        className='w-96 lg:hover:scale-[2] duration-300 hover:z-20 rounded-md'
-                      />
-                    </div>
+                    <CorpCard corp={card} />
                     <ModelCard corp={card} round={4} />
                   </div>
                 </div>

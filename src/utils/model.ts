@@ -1,3 +1,10 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2025-06-24 11:04:22
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-06-26 14:24:04
+ * @Description:
+ */
 import { ICorp, IModel } from '@/types/corp';
 import { EEffectType, Effect, IBaseEffect } from '@/types/effect';
 import {

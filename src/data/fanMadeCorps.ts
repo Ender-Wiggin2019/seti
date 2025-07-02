@@ -7,6 +7,10 @@ export const fanMadeCorps: ICorp[] = [
     name: 'Vitor',
     author: 'Ender',
     faq: [],
+    color: {
+      title: '#ccc',
+      background: '#000',
+    },
     startResources: [
       e.CREDIT(4),
       e.ENERGY(2),

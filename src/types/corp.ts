@@ -15,6 +15,12 @@ export interface ICorp {
   effectUnitValue: number;
   modifyValue?: number;
   modifyReason?: string;
+  color?: ICorpColor;
+}
+
+export interface ICorpColor {
+  background: string;
+  title: string;
 }
 
 export interface IModel {

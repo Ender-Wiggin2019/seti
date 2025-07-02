@@ -899,3 +899,22 @@
   height: auto;
   top: 95px;
 }
+
+.corp-income-container {
+  position: absolute;
+  width: 150px;
+  height: auto;
+  bottom: 0px;
+  overflow: hidden;
+  z-index: 15;
+  /* border-radius: 12px; */
+}
+.corp-income-svg {
+  width: 100%;
+  height: auto;
+}
+
+.corp-income-icon {
+  position: absolute;
+  right: 4px;
+}
