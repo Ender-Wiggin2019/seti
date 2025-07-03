@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-05-22 00:26:20
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-07-03 17:11:56
+ * @LastEditTime: 2025-07-03 22:09:09
  * @Description:
  */
 
@@ -285,3 +285,22 @@ export const REPLAY_LIST: Partial<IReplayItem>[] = [
     gain: { credit: 5, energy: 4, card: ['115'] },
   },
 ];
+
+// export const REPLAY_LIST: Partial<IReplayItem>[] = [
+//   {
+//     round: 1,
+//     turn: 0,
+//     desc: 'Tuck Income',
+//     actions: [EAction.INCOME],
+//     resources: {
+//       credit: 4,
+//       energy: 3,
+//       card: ['65', '53', '32', '30', '83'],
+//       publicity: 4,
+//       data: 0,
+//       score: 2,
+//     },
+//     gain: { income: { type: 'credit', cardId: '32' } },
+//     spend: {},
+//   },
+// ];
