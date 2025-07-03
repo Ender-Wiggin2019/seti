@@ -46,7 +46,6 @@ export const ReplayItem = ({
 
   const allCards = resources?.card || [];
   const spendCardIds = spend?.card;
-  console.log('spendCardIds', gain);
   return (
     <div
       className={cn(

@@ -12,12 +12,18 @@ import { getFinalReplayList } from '@/utils/action';
  * @Author: Ender-Wiggin
  * @Date: 2025-05-22 00:25:32
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-07-02 21:25:59
+ * @LastEditTime: 2025-07-03 15:04:30
  * @Description:
  */
 export default function HomePage(
   _props: InferGetStaticPropsType<typeof getStaticProps>
 ) {
+  console.log(
+    '🎸 [test] - getFinalReplayList(REPLAY_LIST):',
+    getFinalReplayList(REPLAY_LIST),
+    JSON.stringify(getFinalReplayList(REPLAY_LIST))
+  );
+
   return (
     <Layout>
       <div className='flex flex-col gap-4 p-4'>

@@ -1,28 +1,34 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-07-02 17:54:00
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-07-03 02:03:17
+ * @LastEditTime: 2025-07-03 16:17:56
  * @Description:
  */
 
 import {
   EAction,
-  EActionMap,
+  EActionGainMap,
+  EActionSpendMap,
   IReplayItem,
   IResourceItem,
 } from '@/constant/replay';
 import { getCardById } from '@/utils/card';
 
-export const getSpendResourceFromActions = (
+import { IFreeAction } from '@/types/BaseCard';
+
+export const getResourceFromActions = (
   actions: EAction[],
-  replay: IReplayItem
+  replay: IReplayItem,
+  type: 'spend' | 'gain'
 ): Partial<IResourceItem> => {
+  const map = type === 'spend' ? EActionSpendMap : EActionGainMap;
   return actions.reduce((acc: Partial<IResourceItem>, action) => {
-    if (action === EAction.PLAY_CARD) {
+    if (action === EAction.PLAY_CARD && type === 'spend') {
       const currCard = getCardById(replay.card || '');
       const price = currCard?.price || 0;
-      const { credit, ...rest } = EActionMap[action];
+      const { credit, ...rest } = map[action];
       // 先处理非card字段
       const nonCardResult = Object.keys(rest).reduce((sum, k) => {
         const key = k as keyof IResourceItem;
@@ -46,15 +52,14 @@ export const getSpendResourceFromActions = (
       } satisfies Partial<IResourceItem>;
     }
 
-    return Object.keys(EActionMap[action] || {}).reduce(
+    return Object.keys(map[action] || {}).reduce(
       (sum, k) => {
         const key = k as keyof IResourceItem;
         if (key === 'card') {
           // 不处理 card
         } else {
           sum[key] =
-            ((acc[key] as number) || 0) +
-            ((EActionMap[action][key] as number) || 0);
+            ((acc[key] as number) || 0) + ((map[action][key] as number) || 0);
         }
         return sum;
       },
@@ -63,10 +68,26 @@ export const getSpendResourceFromActions = (
   }, {});
 };
 
+function freeActionsToResourceItem(
+  freeActions: IFreeAction[]
+): Partial<IResourceItem> {
+  return freeActions.reduce((acc, action) => {
+    const key = action.type as keyof IResourceItem;
+    acc[key] = ((acc[key] as number) || 0) + action.value;
+    return acc;
+  }, {} as Partial<IResourceItem>);
+}
+
 export const getComputedReplayItem = (replay: IReplayItem) => {
-  const spendFromActions: Partial<IResourceItem> = getSpendResourceFromActions(
+  const spendFromActions: Partial<IResourceItem> = getResourceFromActions(
     replay.actions || [],
-    replay
+    replay,
+    'spend'
+  );
+  const gainFromActions: Partial<IResourceItem> = getResourceFromActions(
+    replay.actions || [],
+    replay,
+    'gain'
   );
   const originalSpend: Partial<IResourceItem> = replay.spend || {};
   // 先构造完整的结构
@@ -106,6 +127,14 @@ export const getComputedReplayItem = (replay: IReplayItem) => {
       }
     }
   }
+
+  // freeAction: spend 处理
+  if (replay.freeActionCards && replay.freeActionCards.length > 0) {
+    mergedSpend.card = Array.from(
+      new Set([...mergedSpend.card, ...replay.freeActionCards])
+    );
+  }
+
   // card 字段保持 string[]
   let finalCard = mergedSpend.card;
   const incomeCardId = replay.gain?.income?.cardId;
@@ -114,12 +143,115 @@ export const getComputedReplayItem = (replay: IReplayItem) => {
       new Set([...(mergedSpend.card || []), incomeCardId])
     );
   }
+
+  // 处理 gain 字段
+  let computedGain: Partial<IResourceItem> | undefined = undefined;
+  if (replay.gain) {
+    // 1. income 累加处理
+    const { income, ...restGain } = replay.gain;
+    computedGain = { ...restGain };
+    if (income) {
+      const { type } = income;
+      computedGain[type] = ((computedGain[type] as number) || 0) + 1;
+    }
+    // 2. mark 处理
+    if (replay.mark) {
+      const markSum = Object.values(replay.mark).reduce(
+        (sum, v) => sum + (typeof v === 'number' ? v : 0),
+        0
+      );
+      if (computedGain) {
+        computedGain.data = (computedGain.data || 0) + markSum;
+      } else {
+        computedGain = { data: markSum };
+      }
+    }
+    // 3. 只保留资源字段（去掉income和mark）
+    if (computedGain) {
+      const { income, mark, ...resourceGain } = computedGain as any;
+      computedGain = resourceGain;
+    }
+  }
+
+  // freeAction: gain 处理
+  const freeActionGain: Partial<IResourceItem> = {};
+  if (replay.freeActionCards && replay.freeActionCards.length > 0) {
+    for (const cardId of replay.freeActionCards) {
+      const card = getCardById(cardId);
+      if (card && Array.isArray(card.freeAction)) {
+        const gain = freeActionsToResourceItem(card.freeAction);
+        console.log('🎸 [test] - getComputedReplayItem - gain:', gain);
+        for (const key in gain) {
+          const k = key as keyof IResourceItem;
+          if (k === 'card') continue; // freeAction 不会有 card
+          freeActionGain[k] =
+            ((freeActionGain[k] as number) || 0) + ((gain[k] as number) || 0);
+        }
+      }
+    }
+  }
+
+  // 合并 gainFromActions、computedGain、freeActionGain
+  let finalGain: Partial<IResourceItem> | undefined = undefined;
+  if (
+    computedGain ||
+    Object.keys(gainFromActions).length > 0 ||
+    Object.keys(freeActionGain).length > 0
+  ) {
+    finalGain = { ...gainFromActions };
+    if (computedGain) {
+      for (const key in computedGain) {
+        if (key === 'card') {
+          // 合并所有来源的 card 字段并去重
+          finalGain.card = Array.from(
+            new Set([
+              ...((finalGain.card as string[] | undefined) || []),
+              ...((computedGain.card as string[] | undefined) || []),
+              ...((freeActionGain.card as string[] | undefined) || []),
+              ...((replay.gain?.card as string[] | undefined) || []),
+            ])
+          );
+        } else {
+          const keyTyped = key as keyof IResourceItem;
+          // 只对 number 字段做累加
+          if (typeof computedGain[keyTyped] === 'number') {
+            const finalGainTyped = finalGain as any;
+            const computedGainTyped = computedGain as any;
+            finalGainTyped[keyTyped] =
+              ((finalGainTyped[keyTyped] as number) || 0) +
+              ((computedGainTyped[keyTyped] as number) || 0);
+          }
+        }
+      }
+    }
+    // 合并 freeActionGain 的数值字段
+    for (const key in freeActionGain) {
+      if (key === 'card') {
+        finalGain.card = Array.from(
+          new Set([
+            ...((finalGain.card as string[] | undefined) || []),
+            ...((freeActionGain.card as string[] | undefined) || []),
+          ])
+        );
+        continue;
+      }
+      const keyTyped = key as keyof IResourceItem;
+      if (typeof freeActionGain[keyTyped] === 'number') {
+        const finalGainTyped = finalGain as any;
+        finalGainTyped[keyTyped] =
+          ((finalGainTyped[keyTyped] as number) || 0) +
+          ((freeActionGain[keyTyped] as number) || 0);
+      }
+    }
+  }
+
   return {
     ...replay,
     spend: {
       ...mergedSpend,
       card: finalCard,
     },
+    gain: finalGain,
   };
 };
 
@@ -143,6 +275,14 @@ function mergeResource(
     score: (base.score || 0) + (add.score || 0) - (sub.score || 0),
     exofossil:
       (base.exofossil || 0) + (add.exofossil || 0) - (sub.exofossil || 0),
+    launch: (base.launch || 0) + (add.launch || 0) - (sub.launch || 0),
+    redTrace: (base.redTrace || 0) + (add.redTrace || 0) - (sub.redTrace || 0),
+    yellowTrace:
+      (base.yellowTrace || 0) + (add.yellowTrace || 0) - (sub.yellowTrace || 0),
+    blueTrace:
+      (base.blueTrace || 0) + (add.blueTrace || 0) - (sub.blueTrace || 0),
+    tech: (base.tech || 0) + (add.tech || 0) - (sub.tech || 0),
+    move: (base.move || 0) + (add.move || 0) - (sub.move || 0),
   };
 }
 
@@ -219,7 +359,8 @@ export const getFinalReplayList = (
       resources,
       spend: replayList[i].spend,
       gain: replayList[i].gain,
-      income: replayList[i].income,
+      mark: replayList[i].mark,
+      freeActionCards: replayList[i].freeActionCards,
     };
 
     result.push(getComputedReplayItem(item));
