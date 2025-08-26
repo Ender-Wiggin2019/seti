@@ -1,0 +1,143 @@
+{
+  "sector": "Setor",
+  "income": "Renda",
+  "Card Type": "Tipo de Carta",
+  "free_action": "Ação livre",
+  "credit": "Crédito",
+  "energy": "Energia",
+  "data": "Dados",
+  "publicity": "Publicidade",
+  "score": "Pontuação",
+  "card": "Carta",
+  "move": "Movimento",
+  "red": "Vermelho",
+  "yellow": "Amarelo",
+  "blue": "Azul",
+  "black": "Preto",
+  "base_cards": "Cartas Base",
+  "aliens": "Alienígenas",
+  "posts": {
+    "model": "Seti Base: Modelo de Carta",
+    "tech": "Seti Avançado: Tecnologia",
+    "trace": "Seti Avançado: Vestígio",
+    "diy": "Guia de Uso da Ferramenta DIY",
+    "about": "Sobre este Site",
+    "expand": "Expandir",
+    "hot": "Popular"
+  },
+  "corps": {
+    "desc": "Atenção: essas corporações foram criadas por fãs. NÃO AS COMPARTILHE PUBLICAMENTE."
+  },
+  "sort": {
+    "ID_ASC": "ID",
+    "ID_DESC": "ID",
+    "DIFF_ASC": "Valor",
+    "DIFF_DESC": "Valor",
+    "RATING_DESC": "Avaliação"
+  },
+  "nav": {
+    "go": "Ir para",
+    "home": "Início",
+    "cards": "Cartas",
+    "about": "Sobre",
+    "diy": "Criador de Cartas",
+    "posts": "Postagens",
+    "maps": "Mapas",
+    "endgames": "Pontuação Final",
+    "random_quiz": "Quiz Aleatório",
+    "daily_quiz": "Quiz Diário"
+  },
+  "comment": {
+    "login_to_comment": "faça login para comentar",
+    "login_to_pick": "faça login para estatísticas mais precisas"
+  },
+  "about": {
+    "title": "Sobre este Site",
+    "intro": "Este é um site não oficial e de código aberto do jogo de tabuleiro Seti. Ele não é afiliado à Capstone Games de nenhuma forma.\nEste projeto se inspira no site de ssimeonoff e foi criado para que os jogadores possam pesquisar facilmente por cartas e seus efeitos. Os dados iniciais deste site são provenientes da <1>Lista de cartas de animais do Cillie</1>, enquanto os ícones e estilos foram emprestados do <3>BGA</3>. Se houver quaisquer preocupações relacionadas a direitos autorais, eu as tratarei.",
+    "features": {
+      "title": "Funcionalidades",
+      "intro": "Atualmente, este site possui as seguintes funcionalidades:",
+      "li_1": "Todas as cartas de animais e patrocinadores do jogo base e da expansão Mundo Marinho",
+      "li_2": "Suporte multilíngue",
+      "li_3": "Filtros por tags, requisitos, palavras-chave e similares",
+      "li_4": "Cálculo de valor do animal",
+      "li_5": "Avaliação e comentários para cada carta",
+      "plan_title": "Planos Futuros",
+      "plan_intro": "No futuro, pretendo adicionar as seguintes funcionalidades:",
+      "plan_li_1": "Criador de Cartas de Animais",
+      "plan_li_2": "Mapas",
+      "plan_li_3": "Todas as outras cartas"
+    },
+    "thanks": {
+      "title": "Agradecimentos",
+      "translation": "Agradecimentos aos seguintes jogadores por ajudarem na tradução: 小z, 晓慜, Yannick, Propaganda Panda."
+    },
+    "faq": {
+      "title": "Perguntas Frequentes",
+      "q_1": "Como posso ajudar na tradução?",
+      "a_1": "Legal! Você pode seguir as instruções <1>aqui</1>.",
+      "q_2": "Este site foi criado para fins comerciais?",
+      "a_2": "Não, este é um site de código aberto dedicado a este jogo fantástico. As imagens e textos originais pertencem à Capstone Games. Se houver quaisquer preocupações relacionadas a direitos autorais, eu as tratarei.",
+      "q_3": "E se eu tiver outra pergunta, sugestão ou relato de bug relacionado a este site?",
+      "a_3": "Sinta-se à vontade para comentar no <1>tópico do BGG</1> ou enviar uma issue no <3>GitHub</3>."
+    }
+  },
+  "helper": {
+    "howto": "Como usar ícones na descrição?",
+    "desc": "Lista completa de ícones que você pode usar na descrição.",
+    "name": "Sintaxe",
+    "example": "Exemplo",
+    "display": "Exibição"
+  },
+  "diy": {
+    "card_maker": "Criador de Cartas",
+    "create_your_own_animal_card": "Crie sua própria carta de animal.",
+    "Download": "Baixar Imagem",
+    "animal_name": "Nome do Animal",
+    "add_new_enclosure": "Adicionar Novo Recinto",
+    "add_new_ability": "Habilidade Personalizada",
+    "export_json": "Exportar Arquivo SETI",
+    "import_json": "Importar Arquivo .SETI",
+    "add_exist_ability": "Habilidade Existente",
+    "bug": "Esta função possui um bug não resolvido. Por favor, não exclua habilidades originais antes de adicionar as suas personalizadas."
+  },
+  "dialog": {
+    "warning": "Aviso",
+    "warning-desc": "Esta seção pode conter spoilers e afetar sua experiência de jogo. Tem certeza de que deseja continuar?",
+    "confirm": "Confirmar",
+    "export": "Aviso",
+    "export-desc": "Após clicar no botão \\\\\\\\\\\"Confirmar\\\\\\\\\\\", um arquivo .seti será baixado. Esse arquivo representa o estado intermediário do processo de criação da carta e pode ser restaurado usando o botão \\\\\\\\\\\"Importar\\\\\\\\\\\". Recomenda-se exportar esse arquivo se você planeja editar a carta depois."
+  },
+  "article": {
+    "enlarge": "Clique na carta para ver a imagem ampliada"
+  },
+  "Aliens?": "Alienígenas?",
+  "Placeholder": "Marcador de posição",
+  "Free Action": "Ação Livre",
+  "Sector": "Setor",
+  "Image": "Imagem",
+  "Use URL": "Usar URL",
+  "Credit": "Crédito",
+  "Title": "Título",
+  "Flavor Text": "Texto de Ambientação",
+  "Card ID": "ID da Carta",
+  "Effect": "Efeito",
+  "Description": "Descrição",
+  "Go to Full Page": "Ir para a página completa e aprender mais dicas",
+  "Icons": "Ícones",
+  "Conditional Mission": "Missão Condicional",
+  "Triggerable Missions": "Missões Ativáveis",
+  "Endgame": "Fim de Jogo",
+  "Income": "Renda",
+  "Tier List": "Lista de Níveis",
+  "Advanced": "Avançado",
+  "Filter text": "Texto do filtro",
+  "Reset": "Redefinir",
+  "Download": "Baixar",
+  "Export": "Exportar",
+  "Your card price": "Preço da sua carta",
+  "Your card title": "Título da sua carta",
+  "Tell more about your card": "Conte mais sobre a sua carta",
+  "Enter card title": "Digite o título da carta",
+  "Undo": "Desfazer"
+}
