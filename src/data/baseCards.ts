@@ -1730,7 +1730,7 @@ const _baseCards: IBaseCard[] = [
     freeAction: [{ type: EResource.MOVE, value: 1 }],
     sector: ESector.BLUE,
     price: 3,
-    income: EResource.ENERGY,
+    income: EResource.CREDIT,
     description: '',
     effects: [
       e.ROTATE(),

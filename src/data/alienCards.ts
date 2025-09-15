@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-21 00:14:00
+ * @LastEditTime: 2025-09-15 15:15:28
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -131,7 +131,7 @@ export const _alienCards: any[] = [
     position: { src: '/images/aliens/anomalies.webp', row: 1, col: 1 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
-      { type: EResource.MOVE, value: 1 },
+      { type: EResource.DATA, value: 1 },
     ],
     sector: ESector.BLUE,
     price: 2,
@@ -545,7 +545,7 @@ export const _alienCards: any[] = [
     name: 'Exofossil Discovery',
     position: { src: '/images/aliens/oumuamua.webp', row: 0, col: 2 },
     freeAction: [{ type: EResource.PUBLICITY, value: 2 }],
-    sector: ESector.BLUE,
+    sector: ESector.YELLOW,
     price: 1,
     income: EResource.ENERGY,
     alien: EAlienType.OUMUAMUA,
