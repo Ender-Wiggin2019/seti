@@ -95,6 +95,7 @@ const FULFILL_SAMPLE = _base(EMiscIcon.FULFILL_SAMPLE);
 const CREDIT_INCOME = _base(EMiscIcon.CREDIT_INCOME);
 const ENERGY_INCOME = _base(EMiscIcon.ENERGY_INCOME);
 const CARD_INCOME = _base(EMiscIcon.CARD_INCOME);
+const SIGNAL_TOKEN = _base(EMiscIcon.SIGNAL_TOKEN);
 export const e = {
   ORBIT,
   LAND,
@@ -153,6 +154,7 @@ export const e = {
   CREDIT_INCOME,
   ENERGY_INCOME,
   CARD_INCOME,
+  SIGNAL_TOKEN,
 };
 export interface IFlattenMissionItem {
   req: IBaseEffect | ICustomizedEffect | (IBaseEffect | ICustomizedEffect)[];
