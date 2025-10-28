@@ -1,0 +1,13 @@
+---
+alwaysApply: true
+---
+
+# Transtion Guide
+
+这是一个科幻项目，有着严谨的天文学背景。
+
+对于翻译卡牌，步骤如下：
+
+1. 检查 public/locales/en/seti.json, 以 en 为模板，并与其它语言比对 (暂时只需要翻译 zh-CN)。可以参考 public/locales/en/seti.missing.json 看看哪些是没有翻译的。
+2. 获取差异后翻译对应语言，要求用词准确严谨，如果是天文学专有名词按照官方翻译。如果是科幻背景的标题，尽量让卡牌名称琅琅上口。
+3. 检查 public/locales/en/flavorText.json，同样翻译。这是背景文字，按照原文语气翻译

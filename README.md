@@ -17,8 +17,9 @@ Next up:
 - [x] Card description translation
 - [x] Card flavor text translation
 - [x] DIY
-- [ ] Posts
+- [x] Posts
 - [ ] Alien boards
+- [ ] Expansion (WIP)
 
 ## Running Locally
 

@@ -315,5 +315,11 @@
     "et-28": "Then you may {use-exofossil} to gain {data-1}.",
     "et-30": "If you land on Oumuamua with this action, <br>gain {score-3}."
   },
-  "watermark": "Fan Made"
+  "watermark": "Fan Made",
+  "Reusable Lander": "Reusable Lander",
+  "sa": {
+    "desc": {
+      "card_1": "If you land on a planet (not a moon) <br>which had a {land-count} already, <br>return this card to your hand."
+    }
+  }
 }

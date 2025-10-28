@@ -1,8 +1,8 @@
 /*
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
- * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-06-25 16:29:46
+ * @LastEditors: Ender Wiggin
+ * @LastEditTime: 2025-10-29 01:59:17
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -11,6 +11,7 @@ import { d } from '@/constant/desc';
 import { DESC, DESC_WITH_TYPE, e, m } from '@/constant/effect';
 
 import { IBaseCard } from '@/types/BaseCard';
+import { CardSource } from '@/types/CardSource';
 import {
   EMiscIcon,
   EResource,
@@ -2217,6 +2218,7 @@ export const baseCards: IBaseCard[] = _baseCards.map((card) => {
       ...card.special,
       enableEffectRender: true,
     },
+    source: CardSource.BASE,
   };
 });
 
