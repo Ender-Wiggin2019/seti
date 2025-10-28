@@ -1,8 +1,8 @@
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 16:47:27
- * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-07 00:34:22
+ * @LastEditors: error: git config user.name & please set dead value or install git
+ * @LastEditTime: 2025-10-28 01:47:00
  * @Description:
  */
 import { IBaseEffect } from '@/types/effect';
@@ -50,6 +50,7 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
     case ETrace.YELLOW:
     case EScanAction.DISCARD_CARD:
     case EScanAction.DISPLAY_CARD:
+    case EMiscIcon.SIGNAL_TOKEN:
       size = 'sm';
       break;
     case EScanAction.ANY:

@@ -1,0 +1,32 @@
+---
+alwaysApply: false
+---
+# 增加图标的流程
+
+1. 用户会输入图标所在的文件和位置以及名称
+2. 在 `card.css` 中增加对于的样式，参考下面的。可以看到，每多一行或多一列，会减少50px
+
+```css
+.icon-income {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: -150px 0; /* 第一行第四列 */
+}
+
+.icon-display-card-signal {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: 0 -50px; /* 第二行第一列 */
+}
+.icon-discard-card-signal {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: -50px -50px; /* 第二行第二列 */
+}
+```
+
+3. 在 element.ts 中增加对于的枚举，如无特殊要求一般加在 EMiscIcon，命名规范是大写
+
+4. 在 effect.ts 中更新对应逻辑，如：
+
+```
+const ROTATE = _base(EMiscIcon.ROTATE);
+const INCOME = _base(EMiscIcon.INCOME);
+```

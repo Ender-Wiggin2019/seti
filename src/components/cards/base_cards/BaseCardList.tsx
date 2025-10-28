@@ -78,6 +78,13 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
       }
 
       // Filter by card sources
+      if (selectedCardSources.length > 0) {
+        res = res.filter(
+          (card) => card.source && selectedCardSources.includes(card.source)
+        );
+      }
+
+      // Filter by free actions
       if (selectedFreeActions && selectedFreeActions.length > 0) {
         res = res.filter(
           (card) =>

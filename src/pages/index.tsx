@@ -10,6 +10,7 @@ import { SortButton } from '@/components/buttons/SortButton';
 import { BaseCardList } from '@/components/cards/base_cards/BaseCardList';
 import { AdvancedFilter } from '@/components/filters/AdvancedFilter';
 import { AlienFilter } from '@/components/filters/AlienFilter';
+import { CardSourceFilter } from '@/components/filters/CardSourceFilter';
 import { CreditFilter } from '@/components/filters/CreditFilter';
 import { ResourceFilter } from '@/components/filters/FreeActionFilter';
 import { IconFilter } from '@/components/filters/IconFilter';
@@ -17,7 +18,6 @@ import { SectorFilter } from '@/components/filters/SectorFilter';
 import { TextFilter } from '@/components/filters/TextFilter'; // make sure to import your TextFilter
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
-import { AccordionV2 } from '@/components/ui/accordion-v2';
 import { CardOdometer } from '@/components/ui/CardOdometer';
 import { SettingsDialogButton } from '@/components/ui/enable-alien-dialog';
 
@@ -129,17 +129,14 @@ export default function HomePage(
                 reset={reset}
               />
             )}
-            {/* <CardTypeFilter
-              cardTypes={[CardType.ANIMAL_CARD, CardType.SPONSOR_CARD]}
-              onFilterChange={setSelectedCardTypes}
-              reset={reset}
-            />
-            <Separator orientation='vertical' className='mr-5 bg-zinc-900' />
-            <CardSourceFilter
-              onFilterChange={setSelectedCardSources}
-              reset={reset}
-            /> */}
           </div>
+          <div className='text-lg text-primary-200 font-bold'>
+            {t('Card Source')}
+          </div>
+          <CardSourceFilter
+            onFilterChange={setSelectedCardSources}
+            reset={reset}
+          />
           <div className='text-lg text-primary-200 font-bold'>
             {t('free_action')}
           </div>

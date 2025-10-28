@@ -420,5 +420,11 @@
     "et-28": "然后你可以 {use-exofossil} 来获得 {data-1}。",
     "et-30": "如果你在此行动中降落在奥陌陌<br> (Oumuamua)，获得 {score-3}。"
   },
-  "watermark": "粉丝卡牌"
+  "watermark": "粉丝卡牌",
+  "Reusable Lander": "可重复使用着陆器",
+  "sa": {
+    "desc": {
+      "card_1": "如果你降落在已有 {land-count} 的行星上（不包括卫星），<br>将此卡牌返回手牌。"
+    }
+  }
 }

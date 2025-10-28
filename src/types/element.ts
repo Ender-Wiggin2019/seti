@@ -4,8 +4,8 @@ import { TShape } from '@/types/Icon';
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 14:45:30
- * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-20 00:27:31
+ * @LastEditors: error: git config user.name & please set dead value or install git
+ * @LastEditTime: 2025-10-28 01:43:15
  * @Description:
  */
 export enum ESector {
@@ -101,6 +101,7 @@ export enum EMiscIcon {
   CREDIT_INCOME = 'credit-income',
   ENERGY_INCOME = 'energy-income',
   CARD_INCOME = 'card-income',
+  SIGNAL_TOKEN = 'signal-token',
 }
 
 export enum EPlanet {

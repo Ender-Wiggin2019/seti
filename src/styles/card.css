@@ -565,6 +565,11 @@
   background-position: -200px -50px; /* 第二行第五列 */
 }
 
+.icon-signal-token {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: -150px -50px; /* 第二行第四列 */
+}
+
 .icon-any-signal-corner {
   background-image: url(/images/seti-icons-2.png);
   background-position: 0 -100px; /* 第三行第一列 */

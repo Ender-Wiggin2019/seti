@@ -1,6 +1,11 @@
-// CategoryFilter.tsx
-import { useTranslation } from 'next-i18next';
-import React, { useEffect, useState } from 'react';
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2023-08-15 14:20:13
+ * @LastEditors: Ender Wiggin
+ * @LastEditTime: 2025-10-29 01:54:35
+ * @Description: CardSourceFilter component for filtering cards by source
+ */
+import React, { useState } from 'react';
 
 import TextButton from '@/components/buttons/TextButton';
 
@@ -15,56 +20,51 @@ export const CardSourceFilter: React.FC<CardSourceFilterProps> = ({
   onFilterChange,
   reset,
 }) => {
-  const { t } = useTranslation('common');
-  const [selectedCardSource, setSelectedCardSource] = useState<CardSource[]>(
+  const [selectedCardSources, setSelectedCardSources] = useState<CardSource[]>(
     []
   );
 
-  const handleCategoryChange = (CardSource: CardSource) => {
-    setSelectedCardSource((prev: CardSource[]) =>
-      prev.includes(CardSource)
-        ? prev.filter((t) => t !== CardSource)
-        : [...prev, CardSource]
+  const toggleCardSource = (cardSource: CardSource) => {
+    setSelectedCardSources((prev) =>
+      prev.includes(cardSource)
+        ? prev.filter((t) => t !== cardSource)
+        : [...prev, cardSource]
     );
   };
 
-  useEffect(() => {
-    onFilterChange(selectedCardSource);
-  }, [selectedCardSource]);
-
-  useEffect(() => {
+  React.useEffect(() => {
     if (reset) {
-      setSelectedCardSource([]);
+      setSelectedCardSources([]);
     }
   }, [reset]);
 
+  React.useEffect(() => {
+    onFilterChange(selectedCardSources);
+  }, [onFilterChange, selectedCardSources]);
+
   return (
-    <div className='flex justify-between gap-4'>
-      <TextButton
-        selected={selectedCardSource.includes(CardSource.BASE)}
-        className='hover:text-zinc-500'
-        selectClassName='text-zinc-900 ring-zinc-900/90 ring-2'
-        onClick={() => handleCategoryChange(CardSource.BASE)}
-      >
-        {t('Base')}
-      </TextButton>
-      <TextButton
-        selected={selectedCardSource.includes(CardSource.MARINE_WORLD)}
-        className='hover:text-blue-500'
-        selectClassName='text-blue-500 ring-blue-500/90 ring-2'
-        onClick={() => handleCategoryChange(CardSource.MARINE_WORLD)}
-      >
-        {t('Marine World')}
-      </TextButton>
-      <TextButton
-        selected={selectedCardSource.includes(CardSource.PROMO)}
-        className='hover:text-pink-500'
-        selectClassName='text-pink-500 ring-pink-500/90 ring-2'
-        onClick={() => handleCategoryChange(CardSource.PROMO)}
-      >
-        {t('Promo')}
-      </TextButton>
-      {/*<TextButton onClick={() => handleCategoryChange(null)}>All Cards</TextButton>*/}
-    </div>
+    <>
+      <div className='flex flex-wrap gap-3'>
+        {Object.values(CardSource).map((cardSource) => (
+          <div key={cardSource} className='relative'>
+            <TextButton
+              selected={selectedCardSources.includes(cardSource)}
+              variant={
+                selectedCardSources.includes(cardSource) ? 'primary' : 'basic'
+              }
+              onClick={() => toggleCardSource(cardSource)}
+              className='w-32 py-1.5'
+            >
+              {cardSource}
+            </TextButton>
+            {cardSource === CardSource.SPACE_AGENCY && (
+              <div className='absolute -top-1 -right-1 bg-orange-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold shadow-sm'>
+                BETA
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </>
   );
 };
