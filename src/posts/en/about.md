@@ -8,9 +8,17 @@ Additionally, because this game is perfect for DIY cards, I put a lot of effort 
 
 Moreover, I will also share some of my insights on playing the game on this website. If you have any thoughts about SETI, please feel free to contact me. Your articles can also be featured on this website.
 
-Lastly, a special thanks to the following players for their enthusiastic help in translating the website, providing high-quality and accurate translations for the game:
+Lastly, a special thanks to the following players for their enthusiastic help in translating the website, providing high-quality and accurate translations for the game (in no particular order):
 
-**根派、自爆型大老师、天使。**
+- 根派: Helped with translation and proofreading
+- 自爆型大老师: Helped with alien card translations
+- 天使: Helped with translation and proofreading
+- 白泽: Helped provide scanned versions of expansion cards
+- 结缘: Helped organize and number expansion cards
+- Biubangboom: Helped compile statistics and input expansion cards into spreadsheets
+- Bruno: Helped provide Brazilian Portuguese language support
+
+Thank you all for your help!
 
 ## About Me
 

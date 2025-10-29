@@ -1,0 +1,21 @@
+---
+alwaysApply: false
+---
+# 增加卡牌
+
+参考 csv 文件，按照如下步骤处理:
+
+1. id为主键，name对应名称
+2. 免费行动角参考 `freeAction: [{ type: EResource.PUBLICITY, value: 1 }],`，宣传对应 PUBLICITY，数据对应 DATA，移动对应 MOVE
+3. 扇区颜色对应 `sector: ESector.RED`，一共四种颜色
+4. 收入对应 EResource，钱->CREDIT, 电 -> ENERGY, 牌 -> CARD
+5. 费用对应 price 字段
+6. 背景文字需要修改 `public/locales/en/flavorText.json`，按照编号填充，参考：
+
+```
+  "sa": {
+    "flavor_text": {
+      "card_1": "TEXT_IN_CSV"
+    }
+  }
+  ```

@@ -2,7 +2,8 @@
   "Reusable Lander": "Reusable Lander",
   "sa": {
     "desc": {
-      "card_1": "sa.desc.card_1"
+      "card_1": "sa.desc.card_1",
+      "card_2": "sa.desc.card_2"
     }
   },
   "Ignore the limit of probes in space for those launches": {
@@ -61,5 +62,49 @@
   },
   "at Neptune (incl": {
     " moons)": "at Neptune (incl. moons)"
-  }
+  },
+  "for a single species": "for a single species",
+  "for that species": "for that species",
+  "in the same sector": "in the same sector",
+  "Tracking and Data Relay Satellite": "Tracking and Data Relay Satellite",
+  "NASA Deep Space Network": "NASA Deep Space Network",
+  "Breakthrough Message": "Breakthrough Message",
+  "Servicing Mission": "Servicing Mission",
+  "Live Landing Broadcast": "Live Landing Broadcast",
+  "Twin Probes": "Twin Probes",
+  "Quantum Data Storage": "Quantum Data Storage",
+  "Lunar Crater Radio Telescope": "Lunar Crater Radio Telescope",
+  "First Human in Space": "First Human in Space",
+  "New Assignment": "New Assignment",
+  "Two-planet Flyby Maneuver": "Two-planet Flyby Maneuver",
+  "James Clerk Maxwell Telescope": "James Clerk Maxwell Telescope",
+  "Reusable Rocket": "Reusable Rocket",
+  "Iterative Engineering": "Iterative Engineering",
+  "Astronaut Training Experience": "Astronaut Training Experience",
+  "Paid Media Coverage": "Paid Media Coverage",
+  "Contracted Research": "Contracted Research",
+  "TESS Satellite": "TESS Satellite",
+  "Well Executed Project": "Well Executed Project",
+  "Orbital Refueling": "Orbital Refueling",
+  "Psyche Probe": "Psyche Probe",
+  "Neutral Buoyancy Training": "Neutral Buoyancy Training",
+  "Space Elevator": "Space Elevator",
+  "LIGO": "LIGO",
+  "New AI Models": "New AI Models",
+  "Better Solar Panels": "Better Solar Panels",
+  "Restructuring": "Restructuring",
+  "Abandoned Mission": "Abandoned Mission",
+  "Akatsuku Orbiter": "Akatsuku Orbiter",
+  "Ingenuity Helicopter": "Ingenuity Helicopter",
+  "MUREP Idea Competition": "MUREP Idea Competition",
+  "Delayed Launch": "Delayed Launch",
+  "Private Sector Investment": "Private Sector Investment",
+  "NASA Exoplanet Archive": "NASA Exoplanet Archive",
+  "Big Ear Radio Telescope": "Big Ear Radio Telescope",
+  "Pandora Satellite": "Pandora Satellite",
+  "Space Rendezvous": "Space Rendezvous",
+  "Grand Tour Program": "Grand Tour Program",
+  "Hall-effect Thruster": "Hall-effect Thruster",
+  "Exoplanet Survey": "Exoplanet Survey",
+  "LOFAR Array": "LOFAR Array"
 }

@@ -69,27 +69,11 @@ export default function HomePage(
   const [cardsCount, setCardsCount] = useState<{ base: number; alien: number }>(
     { base: 0, alien: 0 }
   );
-  const [sponsorCardsCount, setSponsorCardsCount] = useState<number>(0);
   const { base: baseCardsCount, alien: alienCardCount } = cardsCount;
   const animalMaxNum = useMemo(() => {
     if (reset) return INIT_MAX_NUM;
     return baseCardsCount > 0 ? Math.min(totalMaxNum, baseCardsCount) : 0;
-  }, [baseCardsCount, totalMaxNum]);
-  const sponsorMaxNum = useMemo(() => {
-    if (reset) return 0;
-    const remainingMaxNum = totalMaxNum - animalMaxNum;
-    return remainingMaxNum > 0
-      ? Math.min(remainingMaxNum, sponsorCardsCount)
-      : 0;
-  }, [animalMaxNum, sponsorCardsCount, totalMaxNum]);
-
-  const shouldDisplayViewMore = useMemo(() => {
-    return totalMaxNum < baseCardsCount + sponsorCardsCount;
-  }, [baseCardsCount, sponsorCardsCount, totalMaxNum]);
-
-  const handleViewMore = () => {
-    setTotalMaxNum(totalMaxNum + INIT_MAX_NUM);
-  };
+  }, [baseCardsCount, reset, totalMaxNum]);
 
   useEffect(() => {
     if (reset) {

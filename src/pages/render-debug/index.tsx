@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-11 23:41:00
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-12 16:53:19
+ * @LastEditTime: 2025-10-29 17:37:57
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
@@ -10,16 +10,18 @@ import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import React from 'react';
 
+import { alienCards } from '@/data/alienCards';
+import spaceAgencyCards from '@/data/spaceAgencyCards';
+
+import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
+import { CardRender } from '@/components/form/CardRender';
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
 import { Container } from '@/components/ui/Container';
 
 import { sortCards } from '@/utils/sort';
+
 import { IBaseCard } from '@/types/BaseCard';
-import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
-import { CardRender } from '@/components/form/CardRender';
-import { alienCards } from '@/data/alienCards';
-import baseCards from '@/data/baseCards';
 type Props = {
   // Add custom props here
 };
@@ -29,9 +31,9 @@ export default function HomePage(
 ) {
   const { t } = useTranslation('common');
   // const cards = sortCards([...baseCards, ...alienCards]).slice(105);
-  // const cards = sortCards([...baseCards, ...alienCards]);
+  const cards = sortCards([...spaceAgencyCards]);
 
-  const cards = sortCards([...alienCards]);
+  // const cards = sortCards([...alienCards]);
 
   return (
     <Layout>
