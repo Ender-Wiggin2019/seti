@@ -1,8 +1,8 @@
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-02-25 09:56:21
- * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-05-27 21:26:09
+ * @LastEditors: Ender Wiggin
+ * @LastEditTime: 2025-10-29 22:12:55
  * @Description:
  */
 import React from 'react';
@@ -25,12 +25,15 @@ export const IconFactory: React.FC<IconProps> = ({ iconItem }) => {
     if (!options?.showValue || !value) {
       return null;
     }
+    const isLargeValue = Number.isInteger(value) && Number(value) >= 10;
     return (
       <div
         // className={`absolute icon-value icon-text-${
         //   options?.size || 'md'
         // }-1 icon-value-${type}`}
-        className={`absolute icon-value icon-value-size-${size} icon-value-${type}`}
+        className={`absolute icon-value icon-value-size-${size} icon-value-${type}${
+          isLargeValue ? ' icon-value-large' : ''
+        }`}
       >
         {value}
       </div>

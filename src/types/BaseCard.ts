@@ -44,7 +44,7 @@ export interface IBaseCard {
     fanMade?: boolean;
     titleColor?: string;
     titleHeight?: number;
-    titleSize?: string;
+    watermark?: boolean;
   };
 
   // meta data

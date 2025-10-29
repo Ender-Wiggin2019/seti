@@ -315,7 +315,7 @@
     "et-28": "Then you may {use-exofossil} to gain {data-1}.",
     "et-30": "If you land on Oumuamua with this action, <br>gain {score-3}."
   },
-  "watermark": "Fan Made",
+  "watermark": "Not For Commercial Use",
   "Reusable Lander": "Reusable Lander",
   "for a single species": "for a single species",
   "for that species": "for that species",
@@ -363,7 +363,41 @@
   "LOFAR Array": "LOFAR Array",
   "sa": {
     "desc": {
-      "card_1": "If you land on a planet (not a moon) <br>which had a {land-count} already, <br>return this card to your hand."
+      "card_1": "If you land on a planet (not a moon) <br>which had a {land-count} already, <br>return this card to your hand.",
+      "card_2": "Choose {publicity-0} , {data-0} , or {move-0} <br>Gain it once for each card you show <br>from your hand that has the icon <br>in its free-action corner effect.",
+      "card_5": "Then, if you have a probe on a space adjacent to Earth, return this card to your hand.",
+      "card_6": "Then mark a {any-signal} in the sector where you landed.",
+      "card_7": "Have 2 probes in space<br>at two different planets<br>(except Earth)",
+      "card_8_endgame": "{score-3} for each remaining {data-0} in your data pool.",
+      "card_10_endgame": "{score-1} for each remaining {publicity-0}.",
+      "card_11": "Have a probe on asteroids",
+      "card_12": "If you visit at least 2 different<br>planets this turn, gain {score-3}.",
+      "card_13": "Then gain {signal-token}.",
+      "card_14": "If another player has a probe on Earth, return this card to your hand.",
+      "card_15": "Gain the {score-3} / {publicity-1} / {energy-1} / {any-card-1} bonus printed on the tech tile again.",
+      "card_16": "Have no publicity",
+      "card_17": "You can spend any amount of {credit-0} to gain {score-2} {publicity-1} for each credit spent.",
+      "card_18": "Set your {publicity-0} to 0.",
+      "card_18_2": "that someone else has already researched.",
+      "card_19": "in a sector where you have<br>3 or more signals.<br> Don't gain any {data-0} from them.",
+      "card_20": "Discard a non-alien card from your hand.<br>Gain its free-action corner effect 3 times.",
+      "card_21": "Visit a planet <br>where you have an {orbit-count}:",
+      "card_22": "Remove one of your {orbit-count} from any<br>planet to place a probe on the space<br>with that planet on the solar system<br>board (ignoring your probe limit).",
+      "card_27": "If you have 0 energy, gain {energy-1} for <br>each of your probes in space.",
+      "card_28": "Discard any number of cards from<br>your hand. Then gain resources<br>according to their income corner.",
+      "card_28_2": "Have 0 credits, 0 energy and no cards in hand",
+      "card_29": "Return a mission you have not completed yet to your hand to gain {data-2}.",
+      "card_30": "Then gain {data-1} for each {computer-tech} you have.",
+      "card_31": "{score-6} for each planet where you have<br> {land-count} (moons do not count).",
+      "card_32": "Discard all cards from your hand (if any). <br>Then gain",
+      "card_33": "When you pass:",
+      "card_34": "Then gain {draw-card-1} for each tech of<br> the type you have the most of.",
+      "card_35": "Have a total of at least {data-12} in<br>your computer and data pool",
+      "card_37": "in each sector where you already have a signal.<br>Don't gain any {data-0} from them.",
+      "card_38": "Then gain {score-3} if you have a probe<br>on a space with another probe.",
+      "card_39_endgame": "{score-2} for each planet (not a moon)<br>where you have {orbit-count} or {land-count}.",
+      "card_41": "Have a signal in a yellow, red, blue, and black sector",
+      "card_42": "Have a signal or {fulfill-sector-any} in each sector"
     }
   }
 }

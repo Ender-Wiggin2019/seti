@@ -15,6 +15,7 @@ import baseCards from '@/data/baseCards';
 import { CardRender } from '@/components/form/CardRender';
 
 import { IBaseCard } from '@/types/BaseCard';
+import spaceAgencyCards from '@/data/spaceAgencyCards';
 type Props = {
   // Add custom props here
 };
@@ -26,7 +27,8 @@ export default function HomePage(
   // const cards = sortCards([...baseCards, ...alienCards]).slice(105);
   // const cards = sortCards([...baseCards, ...alienCards]);
 
-  const cards = baseCards; // tts should use original sort logic
+  // const cards = baseCards; // tts should use original sort logic
+  const cards = spaceAgencyCards;
 
   return (
     <div className=''>

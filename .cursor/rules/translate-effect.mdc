@@ -1,0 +1,22 @@
+---
+alwaysApply: true
+---
+
+翻译遵守如下规则：
+
+1. `{}` 里面的内容保留，特殊字符例如 `<br>` 保留
+2. 一些特定术语参考如下翻译：
+
+- probe: 探测器
+- scan: 扫描
+- tech: 科技
+- card: 卡牌
+- sector: 扇区
+- publicity: 宣传
+- move: 移动
+- alien: 外星人
+- signal: 信号
+- mark:标记
+- land: 登陆
+- asteroid:
+- 对于行星，翻译为 中文(英文)，如 土星 (Saturn)

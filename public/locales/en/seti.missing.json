@@ -3,7 +3,16 @@
   "sa": {
     "desc": {
       "card_1": "sa.desc.card_1",
-      "card_2": "sa.desc.card_2"
+      "card_2": "sa.desc.card_2",
+      "card_7": "sa.desc.card_7",
+      "card_13": "sa.desc.card_13",
+      "card_15": "sa.desc.card_15",
+      "card_27": "sa.desc.card_27",
+      "card_28": "sa.desc.card_28",
+      "card_29": "sa.desc.card_29",
+      "card_31": "sa.desc.card_31",
+      "card_32": "sa.desc.card_32",
+      "card_41": "sa.desc.card_41"
     }
   },
   "Ignore the limit of probes in space for those launches": {
@@ -106,5 +115,9 @@
   "Grand Tour Program": "Grand Tour Program",
   "Hall-effect Thruster": "Hall-effect Thruster",
   "Exoplanet Survey": "Exoplanet Survey",
-  "LOFAR Array": "LOFAR Array"
+  "LOFAR Array": "LOFAR Array",
+  "desc": {
+    "card_8_endgame": "desc.card_8_endgame",
+    "card_10_endgame": "desc.card_10_endgame"
+  }
 }

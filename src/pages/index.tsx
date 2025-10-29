@@ -114,9 +114,9 @@ export default function HomePage(
               />
             )}
           </div>
-          <div className='text-lg text-primary-200 font-bold'>
+          {/* <div className='text-lg text-primary-200 font-bold'>
             {t('Card Source')}
-          </div>
+          </div> */}
           <CardSourceFilter
             onFilterChange={setSelectedCardSources}
             reset={reset}

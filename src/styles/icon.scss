@@ -44,6 +44,11 @@ $scales: (
 @include icon-styles('icon-text', 50px, 1, 20px);
 @include icon-value-size-styles();
 
+// 当数值大于10时，向左移动更多，避免挡住原内容
+.icon-value-large {
+  left: -27px !important;
+}
+
 @mixin text-stroke($type, $color) {
   @if $type == 'shadow' {
     text-shadow: $color 3px 0px 0px, $color 2.83487px 0.981584px 0px,

@@ -1,8 +1,8 @@
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-02-26 23:56:31
- * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-07 00:34:57
+ * @LastEditors: Ender Wiggin
+ * @LastEditTime: 2025-10-30 01:36:45
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
@@ -132,9 +132,9 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
           className='bg-transparent'
         />
       )}
-      {/* {card?.special?.fanMade && (
-        <div className='card-watermark'>{t('watermark')}</div>
-      )} */}
+      {card?.special?.watermark && (
+        <div className='card-copyright'>{t('watermark')}</div>
+      )}
     </CardRenderWrapper>
   );
 };

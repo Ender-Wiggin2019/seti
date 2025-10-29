@@ -2,12 +2,12 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-10-29 02:27:55
+ * @LastEditTime: 2025-10-30 01:34:09
  * @Description:
  */
 // import {Size} from "@/types/Size";
 
-import { DESC, e } from '@/constant/effect';
+import { DESC, e, m } from '@/constant/effect';
 
 import { IBaseCard } from '@/types/BaseCard';
 import { CardSource } from '@/types/CardSource';
@@ -65,7 +65,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.BLUE,
     price: 1,
     income: EResource.CREDIT,
-    effects: [],
+    effects: [e.DATA(), e.MOVE(), DESC('sa.desc.card_5')],
   },
   {
     id: '6',
@@ -75,7 +75,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.BLUE,
     price: 2,
     income: EResource.CARD,
-    effects: [],
+    effects: [e.MOVE(), e.LAND(), DESC('sa.desc.card_6')],
   },
   {
     id: '7',
@@ -85,7 +85,11 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.RED,
     price: 3,
     income: EResource.ENERGY,
-    effects: [],
+    effects: [
+      e.ROTATE(),
+      e.TECH_PROBE(),
+      m.QUICK_MISSION(DESC('sa.desc.card_7'), [e.CREDIT(2)]),
+    ],
   },
   {
     id: '8',
@@ -95,7 +99,11 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.YELLOW,
     price: 3,
     income: EResource.ENERGY,
-    effects: [],
+    effects: [
+      e.ROTATE(),
+      e.TECH_COMPUTER(),
+      m.END_GAME('sa.desc.card_8_endgame'),
+    ],
   },
   {
     id: '9',
@@ -105,7 +113,11 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.BLUE,
     price: 3,
     income: EResource.CARD,
-    effects: [],
+    effects: [
+      e.ROTATE(),
+      e.TECH_SCAN(),
+      m.QUICK_MISSION(e.FULFILL_SECTOR_ANY(3), [e.PUBLICITY(3)]),
+    ],
   },
   {
     id: '10',
@@ -115,17 +127,21 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.RED,
     price: 4,
     income: EResource.ENERGY,
-    effects: [],
+    effects: [e.PUBLICITY(10), m.END_GAME('sa.desc.card_10_endgame')],
   },
   {
     id: '11',
-    name: 'New Assignment',
-    image: '/images/cards/space-agency/11.jpg',
-    freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
-    sector: ESector.YELLOW,
-    price: 2,
-    income: EResource.ENERGY,
-    effects: [],
+    name: 'Psyche Probe',
+    image: '/images/cards/space-agency/22.jpg',
+    freeAction: [{ type: EResource.DATA, value: 1 }],
+    sector: ESector.RED,
+    price: 3,
+    income: EResource.CARD,
+    effects: [
+      e.LAUNCH(),
+      e.PUBLICITY(1),
+      m.QUICK_MISSION(DESC('sa.desc.card_11'), [e.SCORE(3), e.ENERGY(2)]),
+    ],
   },
   {
     id: '12',
@@ -135,7 +151,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.YELLOW,
     price: 1,
     income: EResource.CREDIT,
-    effects: [],
+    effects: [e.MOVE(2), DESC('sa.desc.card_12')],
   },
   {
     id: '13',
@@ -145,7 +161,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.YELLOW,
     price: 2,
     income: EResource.CARD,
-    effects: [],
+    effects: [e.SCAN(), DESC('sa.desc.card_13')],
   },
   {
     id: '14',
@@ -155,7 +171,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.BLUE,
     price: 2,
     income: EResource.ENERGY,
-    effects: [],
+    effects: [e.LAUNCH(), e.PUBLICITY(), DESC('sa.desc.card_14')],
   },
   {
     id: '15',
@@ -165,7 +181,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.BLUE,
     price: 3,
     income: EResource.CREDIT,
-    effects: [],
+    effects: [e.ROTATE(), e.TECH_ANY(), DESC('sa.desc.card_15')],
   },
   {
     id: '16',
@@ -175,7 +191,10 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.BLUE,
     price: 2,
     income: EResource.CREDIT,
-    effects: [],
+    effects: [
+      e.PUBLICITY(4),
+      m.QUICK_MISSION(DESC('sa.desc.card_16'), [e.SCORE(2), e.PUBLICITY()]),
+    ],
   },
   {
     id: '17',
@@ -185,7 +204,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.YELLOW,
     price: 0,
     income: EResource.CREDIT,
-    effects: [],
+    effects: [DESC('sa.desc.card_17')],
   },
   {
     id: '18',
@@ -195,7 +214,12 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.RED,
     price: 2,
     income: EResource.CREDIT,
-    effects: [],
+    effects: [
+      DESC('sa.desc.card_18'),
+      e.ROTATE(),
+      e.TECH_ANY(),
+      DESC('sa.desc.card_18_2'),
+    ],
   },
   {
     id: '19',
@@ -205,7 +229,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.YELLOW,
     price: 0,
     income: EResource.CREDIT,
-    effects: [],
+    effects: [e.SIGNAL_ANY(2), DESC('sa.desc.card_19')],
   },
   {
     id: '20',
@@ -215,7 +239,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.RED,
     price: 1,
     income: EResource.CARD,
-    effects: [],
+    effects: [e.PUBLICITY(), DESC('sa.desc.card_20')],
   },
   {
     id: '21',
@@ -225,17 +249,29 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.BLUE,
     price: 0,
     income: EResource.CARD,
-    effects: [],
+    effects: [
+      m.FULL_MISSION(
+        [
+          {
+            reward: e.ENERGY(),
+          } as any,
+          {
+            reward: e.ENERGY(),
+          } as any,
+        ],
+        'sa.desc.card_21'
+      ),
+    ],
   },
   {
     id: '22',
-    name: 'Psyche Probe',
-    image: '/images/cards/space-agency/22.jpg',
-    freeAction: [{ type: EResource.DATA, value: 1 }],
-    sector: ESector.RED,
-    price: 3,
-    income: EResource.CARD,
-    effects: [],
+    name: 'New Assignment',
+    image: '/images/cards/space-agency/11.jpg',
+    freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
+    sector: ESector.YELLOW,
+    price: 2,
+    income: EResource.ENERGY,
+    effects: [DESC('sa.desc.card_11')],
   },
   {
     id: '23',
@@ -245,7 +281,19 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.YELLOW,
     price: 1,
     income: EResource.ENERGY,
-    effects: [],
+    effects: [
+      e.PUBLICITY(1, '', 'xs'),
+      m.FULL_MISSION([
+        {
+          req: e.LAUNCH(),
+          reward: e.CARD(),
+        },
+        {
+          req: e.ORBIT_OR_LAND_COUNT(),
+          reward: e.SCORE(3),
+        },
+      ]),
+    ],
   },
   {
     id: '24',
@@ -255,7 +303,18 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.YELLOW,
     price: 2,
     income: EResource.CARD,
-    effects: [],
+    effects: [
+      m.FULL_MISSION([
+        {
+          req: e.TECH_PROBE(),
+          reward: e.LAUNCH(),
+        },
+        {
+          req: e.TECH_PROBE(),
+          reward: e.LAUNCH(),
+        },
+      ]),
+    ],
   },
   {
     id: '25',
@@ -265,7 +324,18 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.RED,
     price: 1,
     income: EResource.ENERGY,
-    effects: [],
+    effects: [
+      m.FULL_MISSION([
+        {
+          req: e.TECH_SCAN(),
+          reward: e.SIGNAL_TOKEN(),
+        },
+        {
+          req: e.TECH_SCAN(),
+          reward: e.SIGNAL_TOKEN(),
+        },
+      ]),
+    ],
   },
   {
     id: '26',
@@ -275,7 +345,18 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.BLUE,
     price: 0,
     income: EResource.CREDIT,
-    effects: [],
+    effects: [
+      m.FULL_MISSION([
+        {
+          req: e.TECH_COMPUTER(),
+          reward: e.DATA(),
+        },
+        {
+          req: e.TECH_COMPUTER(),
+          reward: e.DATA(),
+        },
+      ]),
+    ],
   },
   {
     id: '27',
@@ -285,7 +366,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.RED,
     price: 0,
     income: EResource.CARD,
-    effects: [],
+    effects: [DESC('sa.desc.card_27')],
   },
   {
     id: '28',
@@ -295,7 +376,13 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.RED,
     price: 1,
     income: EResource.CREDIT,
-    effects: [],
+    effects: [
+      DESC('sa.desc.card_28'),
+      m.QUICK_MISSION(DESC('sa.desc.card_28_2'), [
+        e.PUBLICITY(2),
+        e.CARD_ANY(),
+      ]),
+    ],
   },
   {
     id: '29',
@@ -305,7 +392,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.BLUE,
     price: 1,
     income: EResource.ENERGY,
-    effects: [],
+    effects: [DESC('sa.desc.card_29')],
   },
   {
     id: '30',
@@ -315,7 +402,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.BLUE,
     price: 2,
     income: EResource.ENERGY,
-    effects: [],
+    effects: [e.ORBIT(), DESC('sa.desc.card_30')],
   },
   {
     id: '31',
@@ -325,7 +412,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.YELLOW,
     price: 1,
     income: EResource.CREDIT,
-    effects: [],
+    effects: [e.LAND(), m.END_GAME('sa.desc.card_31', 6, undefined, 'xxs')],
   },
   {
     id: '32',
@@ -335,7 +422,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.RED,
     price: 1,
     income: EResource.CREDIT,
-    effects: [],
+    effects: [DESC('sa.desc.card_32'), e.PUBLICITY(), e.CARD(2)],
   },
   {
     id: '33',
@@ -345,7 +432,17 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.BLUE,
     price: 1,
     income: EResource.ENERGY,
-    effects: [],
+    effects: [
+      e.PUBLICITY(1, '', 'xs'),
+      m.FULL_MISSION(
+        [
+          {
+            reward: e.LAUNCH(),
+          } as any,
+        ],
+        'sa.desc.card_33'
+      ),
+    ],
   },
   {
     id: '34',
@@ -355,7 +452,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.RED,
     price: 2,
     income: EResource.ENERGY,
-    effects: [],
+    effects: [e.INCOME(1, '', 'sm'), DESC('sa.desc.card_34')],
   },
   {
     id: '35',
@@ -365,7 +462,10 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.YELLOW,
     price: 1,
     income: EResource.CARD,
-    effects: [],
+    effects: [
+      e.SIGNAL_TOKEN(),
+      m.QUICK_MISSION(DESC('sa.desc.card_35'), [e.ENERGY()]),
+    ],
   },
   {
     id: '36',
@@ -375,7 +475,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.BLACK,
     price: 2,
     income: EResource.CARD,
-    effects: [],
+    effects: [e.SIGNAL_YELLOW(), e.SIGNAL_RED(), e.SIGNAL_BLUE()],
   },
   {
     id: '37',
@@ -385,7 +485,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.YELLOW,
     price: 0,
     income: EResource.CARD,
-    effects: [],
+    effects: [DESC('sa.desc.card_37')],
   },
   {
     id: '38',
@@ -395,7 +495,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.YELLOW,
     price: 1,
     income: EResource.ENERGY,
-    effects: [],
+    effects: [e.PUBLICITY(), e.MOVE(), DESC('sa.desc.card_38')],
   },
   {
     id: '39',
@@ -405,7 +505,10 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.RED,
     price: 2,
     income: EResource.CREDIT,
-    effects: [],
+    effects: [
+      e.MOVE(2),
+      m.END_GAME('sa.desc.card_39_endgame', 2, undefined, 'xxs'),
+    ],
   },
   {
     id: '40',
@@ -415,7 +518,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.BLUE,
     price: 2,
     income: EResource.CREDIT,
-    effects: [],
+    effects: [e.MOVE(5)],
   },
   {
     id: '41',
@@ -425,7 +528,12 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.BLUE,
     price: 2,
     income: EResource.ENERGY,
-    effects: [],
+    effects: [
+      e.SIGNAL_TOKEN(),
+      e.PUBLICITY(),
+      e.CARD_ANY(),
+      m.QUICK_MISSION(DESC('sa.desc.card_41'), [e.SCORE(4)]),
+    ],
   },
   {
     id: '42',
@@ -435,7 +543,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.YELLOW,
     price: 2,
     income: EResource.CARD,
-    effects: [],
+    effects: [e.SCAN(), m.QUICK_MISSION(DESC('sa.desc.card_42'), [e.SCORE(8)])],
   },
 ];
 
@@ -448,6 +556,7 @@ export const spaceAgencyCards: IBaseCard[] = _spaceAgencyCards.map((card) => {
     special: {
       ...card.special,
       enableEffectRender: true,
+      watermark: true,
     },
     source: CardSource.SPACE_AGENCY,
   };

@@ -97,6 +97,21 @@
   box-sizing: border-box;
 }
 
+.card-copyright {
+  position: absolute;
+  top: 45px;
+  left: 0px;
+  color: white;
+  width: 150px;
+  height: 16px;
+  font-size: 16px;
+  line-height: 16px;
+  font-weight: 600;
+  opacity: 70%;
+  text-align: center;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
 /* Method2: append */
 .card-flavor-text-container {
   position: absolute;
