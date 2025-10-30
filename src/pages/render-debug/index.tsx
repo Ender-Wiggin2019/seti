@@ -10,11 +10,10 @@ import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import React from 'react';
 
-import { alienCards } from '@/data/alienCards';
 import spaceAgencyCards from '@/data/spaceAgencyCards';
 
 import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
-import { CardRender } from '@/components/form/CardRender';
+import { DownloadableCardRender } from '@/components/form/DownloadableCardRender';
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
 import { Container } from '@/components/ui/Container';
@@ -29,7 +28,7 @@ type Props = {
 export default function HomePage(
   _props: InferGetStaticPropsType<typeof getStaticProps>
 ) {
-  const { t } = useTranslation('common');
+  const { t: _t } = useTranslation('common');
   // const cards = sortCards([...baseCards, ...alienCards]).slice(105);
   const cards = sortCards([...spaceAgencyCards]);
 
@@ -56,7 +55,7 @@ export default function HomePage(
                   <PreviewBaseCard card={oriCard} />
                 </div>
                 <div className='relative'>
-                  <CardRender card={renderCard} />
+                  <DownloadableCardRender card={renderCard} />
                 </div>
               </div>
             );

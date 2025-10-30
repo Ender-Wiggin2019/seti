@@ -209,7 +209,7 @@
   "Each time you visit a planet this turn, you may gain 1 MOVE instead of 1 PUBLICITY.": "本回合每次经过行星时，你可以改为获得1次移动而不是1次宣传。",
   "LAND on a planet or a moon, even without the required tech.": "着陆在行星或卫星上, 即使没有所需科技。",
   "MARK in a sector with one of your probes and in both neighboring sectors.": "在一个有你探测器的扇区以及两个相邻扇区进行标记",
-  "You may land on a space that is already occupied and still get the covered reward.": "你可以降落在已被占据的空间，并仍然获得被覆盖的奖励。",
+  "You may land on a space that is already occupied and still get the covered reward.": "你可以降落在已被占据的位置，并仍然获得被覆盖的奖励。",
   "Gain the reward from the anomaly which is going to be triggered next.": "获得即将触发的异常体奖励。",
   "Discard one of them for its free-action corner effect and then discard another one to gain a resource corresponding to its income.": "弃掉其中一张以获得其免费行动的效果，然后再弃掉另一张以获得对应收入的资源。",
 
@@ -465,13 +465,13 @@
     "et-28": "然后你可以 {use-exofossil} 来获得 {data-1}。",
     "et-30": "如果你在此行动中降落在奥陌陌<br> (Oumuamua)，获得 {score-3}。"
   },
-  "watermark": "仅供学习，禁止商用",
+  "watermark": "测试版本，仅供学习",
   "Reusable Lander": "可重复使用着陆器",
   "sa": {
     "desc": {
       "card_1": "如果你登陆在已有 {land-count} 的行星上（不包括卫星），<br>将此卡牌返回手牌。",
       "card_2": "选择 {publicity-0}、{data-0} 或 {move-0}<br>每展示一张手牌中在免费行动角效果中有该图标<br>的卡牌，获得一次该资源。",
-      "card_5": "然后，如果你在相邻地球的空间上有一个探测器，<br>将此卡牌返回手牌。",
+      "card_5": "然后，如果你在相邻地球的位置上有一个探测器，<br>将此卡牌返回手牌。",
       "card_6": "然后在你着陆的扇区标记一个 {any-signal}。",
       "card_7": "在太空中两个不同行星上<br>有2个探测器<br>（不包括地球）",
       "card_8_endgame": "数据池中每个剩余的 {data-0} 获得 {score-3}。",
@@ -482,28 +482,28 @@
       "card_14": "如果其他玩家在地球上有一个探测器，<br>将此卡牌返回手牌。",
       "card_15": "再次获得印在科技板块上的<br>{score-3} / {publicity-1} / {energy-1} / {any-card-1} 奖励。",
       "card_16": "没有宣传",
-      "card_17": "你可以花费任意数量的 {credit-0}，<br>每花费1个，获得 {score-2} 和 {publicity-1}。",
+      "card_17": "你可以花费任意数量的 {credit-0}，<br>每花费1个，获得 {score-2} 和 {publicity-2}。",
       "card_18": "将你的 {publicity-0} 设为 0。",
       "card_18_2": "其他人已研究过的。",
       "card_19": "在你拥有<br>3个或更多信号的扇区。<br>不要从中获得任何 {data-0}。",
       "card_20": "从手牌中弃掉一张非外星人卡牌。<br>获得其免费行动角效果3次。",
       "card_21": "访问一个<br>你有 {orbit-count} 的行星：",
-      "card_22": "从任意行星移除一个你的 {orbit-count}，<br>在太阳系板上该行星所在的空间<br>放置一个探测器（忽略你的探测器数量上限）。",
+      "card_22": "从任意行星移除一个你的 {orbit-count}，<br>在太阳系板上该行星所在的位置<br>放置一个探测器（忽略你的探测器数量上限）。",
       "card_27": "如果你有 0 能量，<br>每个你在太空中的探测器获得 {energy-1}。",
       "card_28": "从手牌中弃掉任意数量的卡牌。<br>然后根据它们的收入角获得资源。",
       "card_28_2": "0钱、0电且没有卡牌",
       "card_29": "将一个你未完成的任务返回手牌，<br>获得 {data-2}。",
       "card_30": "然后每个你拥有的 {computer-tech} 获得 {data-1}。",
-      "card_31": "每个你有 {land-count} 的行星<br>获得 {score-6}（不计算卫星）。",
-      "card_32": "弃掉手牌中的所有卡牌（如果有）。<br>然后获得",
+      "card_31": "每个你有 {land-count-2} 的行星<br>获得 {score-6}（不计算卫星）。",
+      "card_32": "弃掉手牌中的所有卡牌（如果有）。然后获得",
       "card_33": "当你跳过回合时：",
       "card_34": "然后每拥有一个你数量最多的科技类型的科技，<br>获得 {draw-card-1}。",
-      "card_35": "在你的计算机和数据池中<br>总共至少拥有 {data-12}",
+      "card_35": "在你的计算机和数据池中<br>总共至少<br>拥有 {data-12}",
       "card_37": "在每个你已有信号的扇区。<br>不要从中获得任何 {data-0}。",
-      "card_38": "然后如果你有一个探测器<br>在与另一个探测器同一空间上，获得 {score-3}。",
+      "card_38": "然后如果你有一个探测器<br>在与另一个探测器同一位置上，获得 {score-3}。",
       "card_39_endgame": "每个你拥有 {orbit-count} 或 {land-count} 的行星<br>（不包括卫星）获得 {score-2}。",
       "card_41": "在黄色、红色、蓝色和黑色扇区各有一个信号",
-      "card_42": "在每个扇区都有一个信号或 {fulfill-sector-any}"
+      "card_42": "在每个扇区都有一个<br>信号或 {fulfill-sector-any}"
     }
   }
 }

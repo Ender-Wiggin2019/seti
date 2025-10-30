@@ -167,7 +167,7 @@
   position: relative;
   background-image: url('/images/cards/end-game-container.png');
   width: 125px;
-  height: calc(125px * 274 / 1167);
+  height: 30px;
   margin-left: 25px;
   background-size: cover;
   display: flex;
@@ -185,7 +185,7 @@
   position: relative;
   background-image: url('/images/cards/mission-container.png');
   width: 138px;
-  height: calc(138px * 293 / 1093);
+  height: 37px;
   background-size: cover;
   margin-right: -11px;
 }

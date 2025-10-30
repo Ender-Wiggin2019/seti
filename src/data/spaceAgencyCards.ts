@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-10-30 02:09:13
+ * @LastEditTime: 2025-10-30 21:19:38
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -485,7 +485,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.YELLOW,
     price: 0,
     income: EResource.CARD,
-    effects: [DESC('sa.desc.card_37')],
+    effects: [e.SIGNAL_ANY(), DESC('sa.desc.card_37')],
   },
   {
     id: '38',
