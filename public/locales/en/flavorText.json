@@ -244,16 +244,16 @@
       "card_41": "Since exoplanets are so far away, getting images of them is extremely difficult. Most exoplanets have only been detected through indirect methods.",
       "card_42": "Science has no borders - a saying nicely demonstrated by the Low-Frequency Array, with thousands of antennas spread over eight European countries.",
       "card_ET": {
-        "11": "sa.flavor_text.card_ET.11",
-        "12": "sa.flavor_text.card_ET.12",
-        "13": "sa.flavor_text.card_ET.13",
-        "14": "sa.flavor_text.card_ET.14",
-        "15": "sa.flavor_text.card_ET.15",
-        "16": "sa.flavor_text.card_ET.16",
-        "17": "sa.flavor_text.card_ET.17",
-        "18": "sa.flavor_text.card_ET.18",
-        "19": "sa.flavor_text.card_ET.19",
-        "20": "sa.flavor_text.card_ET.20"
+        "11": "Analysis of the asteroid fragment revealed isotopes and organic compounds associated with the presence of life. To confirm it, further studies will be required.",
+        "12": "Electron microscopy has given us our first high-resolution images of this new form of life. It appears to have some similiarities with certain terrestrial amoebas.",
+        "13": "",
+        "14": "",
+        "15": "An alien lifeform like this one could present a significant risk to Earth's ecosystem. Extensive studies were conducted in orbit before bringing the sample planetside.",
+        "16": "Performing hundreds of tests using environmental suits would be extremely tiring for researchers. Fortunately, a lot of those tests could be performed by robots instead.",
+        "17": "",
+        "18": "Studies of the new lifeform have been published in many scientific journals. After all, research is most useful if you can share the information with the rest of the world.",
+        "19": "The lifeform proved remarkably resistant to harsh conditions, adapting to increasing radiation, pressure and temperature much faster than anything we've seen before.",
+        "20": "Consolidating data from multiple sources, we have managed to plot the trajectory and pinpoint the likely origin of the asteroid where the lifeform was found."
       }
     }
   }

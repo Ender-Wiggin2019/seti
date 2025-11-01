@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 12:05:53
  * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-11-01 17:06:41
+ * @LastEditTime: 2025-11-01 23:21:30
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
@@ -74,8 +74,11 @@ export const PreviewBaseCard: React.FC<PreviewBaseCardProps> = ({
           </div>
         </div>
         {card.special?.faq && <FAQ items={card.special.faq} />}
-        {card.flavorText && (
+        {!card.special?.faq && card.flavorText && (
           <div className=''>
+            <h3 className='text-left text-lg font-semibold mb-3'>
+              {t('Flavor Text')}
+            </h3>
             <FlavorText
               id={card.id}
               flavorText={card.flavorText}
