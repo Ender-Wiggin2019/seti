@@ -2,12 +2,13 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-10-30 21:19:38
+ * @LastEditTime: 2025-11-01 17:12:27
  * @Description:
  */
 // import {Size} from "@/types/Size";
 
 import { DESC, e, m } from '@/constant/effect';
+import { FAQ } from '@/data/faq';
 
 import { IBaseCard } from '@/types/BaseCard';
 import { CardSource } from '@/types/CardSource';
@@ -549,14 +550,16 @@ const _spaceAgencyCards: IBaseCard[] = [
 
 // add flavorText
 export const spaceAgencyCards: IBaseCard[] = _spaceAgencyCards.map((card) => {
+  const id = `SA.${card.id}`;
   return {
     ...card,
-    id: `SA.${card.id}`,
+    id,
     flavorText: `sa.flavor_text.card_${card.id}`,
     special: {
       ...card.special,
       enableEffectRender: true,
       watermark: true,
+      faq: FAQ[id],
     },
     source: CardSource.SPACE_AGENCY,
   };

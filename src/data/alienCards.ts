@@ -1,8 +1,8 @@
 /*
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
- * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-09-15 15:15:28
+ * @LastEditors: Ender Wiggin
+ * @LastEditTime: 2025-11-01 17:05:40
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -11,6 +11,7 @@
 // import { flavorTexts } from '@/data/flavorTexts';
 
 import { DESC, DESC_WITH_TYPE, e, m } from '@/constant/effect';
+import { FAQ } from '@/data/faq';
 
 import { EAlienType, IBaseCard } from '@/types/BaseCard';
 import { EResource, EScanAction, ESector } from '@/types/element';
@@ -840,6 +841,7 @@ export const alienCards: IBaseCard[] = _alienCards.map((card) => {
       ...card.special,
       titleHeight: 86,
       enableEffectRender: id >= 0 && id <= 30,
+      faq: FAQ[card.id],
     },
   };
 });

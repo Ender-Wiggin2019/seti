@@ -2,13 +2,14 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-10-29 01:59:17
+ * @LastEditTime: 2025-11-01 17:05:06
  * @Description:
  */
 // import {Size} from "@/types/Size";
 
 import { d } from '@/constant/desc';
 import { DESC, DESC_WITH_TYPE, e, m } from '@/constant/effect';
+import { FAQ } from '@/data/faq';
 
 import { IBaseCard } from '@/types/BaseCard';
 import { CardSource } from '@/types/CardSource';
@@ -2217,6 +2218,7 @@ export const baseCards: IBaseCard[] = _baseCards.map((card) => {
     special: {
       ...card.special,
       enableEffectRender: true,
+      faq: FAQ[card.id],
     },
     source: CardSource.BASE,
   };

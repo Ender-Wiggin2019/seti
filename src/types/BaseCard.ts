@@ -40,6 +40,7 @@ export interface IBaseCard {
   special?: {
     danger?: number;
     descHelper?: string; // temporary translation for some texts
+    faq?: string[];
     enableEffectRender?: boolean; // temp
     fanMade?: boolean;
     titleColor?: string;

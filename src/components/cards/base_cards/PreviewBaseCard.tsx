@@ -1,10 +1,16 @@
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 12:05:53
- * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-15 00:58:47
+ * @LastEditors: Ender Wiggin
+ * @LastEditTime: 2025-11-01 17:06:41
  * @Description:
  */
+import { useTranslation } from 'next-i18next';
+import React from 'react';
+
+import { FAQ } from '@/components/cards/base_cards/FAQ';
+import { FlavorText } from '@/components/cards/base_cards/FlavorText';
+import { CardRender } from '@/components/form/CardRender';
 import {
   Dialog,
   DialogContent,
@@ -17,15 +23,12 @@ import {
 import { BaseCard } from './BaseCard';
 
 import { IBaseCard } from '@/types/BaseCard';
+
 interface PreviewBaseCardProps {
   card: IBaseCard;
   showLink?: boolean;
   onlyId?: boolean;
 }
-import { useTranslation } from 'next-i18next';
-
-import { FlavorText } from '@/components/cards/base_cards/FlavorText';
-import { CardRender } from '@/components/form/CardRender';
 
 export const PreviewBaseCard: React.FC<PreviewBaseCardProps> = ({
   card,
@@ -70,9 +73,7 @@ export const PreviewBaseCard: React.FC<PreviewBaseCardProps> = ({
             )}
           </div>
         </div>
-        {card.special?.descHelper && (
-          <div className='border-b-2'>{t(card.special?.descHelper)}</div>
-        )}
+        {card.special?.faq && <FAQ items={card.special.faq} />}
         {card.flavorText && (
           <div className=''>
             <FlavorText
