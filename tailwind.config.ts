@@ -48,6 +48,10 @@ export default {
           foreground: '#D6CAE2',
           background: '#333469',
         },
+        amoeba: {
+          DEFAULT: '#9CA6BD',
+          foreground: '#000',
+        },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
           foreground: 'hsl(var(--secondary-foreground))',

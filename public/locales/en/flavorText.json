@@ -242,7 +242,19 @@
       "card_39": "Capitalizing on a specific alignment of Jupiter, Saturn, Uranus and Neptune that only occurs once per 175 years, this project could have used one probe to visit them all.",
       "card_40": "First used in the 1970s, Hall-effect thrusters are a highly efficient form of electric propulsion, accelerating ionized gas using an electromagnetic field to create thrust.",
       "card_41": "Since exoplanets are so far away, getting images of them is extremely difficult. Most exoplanets have only been detected through indirect methods.",
-      "card_42": "Science has no borders - a saying nicely demonstrated by the Low-Frequency Array, with thousands of antennas spread over eight European countries."
+      "card_42": "Science has no borders - a saying nicely demonstrated by the Low-Frequency Array, with thousands of antennas spread over eight European countries.",
+      "card_ET": {
+        "11": "sa.flavor_text.card_ET.11",
+        "12": "sa.flavor_text.card_ET.12",
+        "13": "sa.flavor_text.card_ET.13",
+        "14": "sa.flavor_text.card_ET.14",
+        "15": "sa.flavor_text.card_ET.15",
+        "16": "sa.flavor_text.card_ET.16",
+        "17": "sa.flavor_text.card_ET.17",
+        "18": "sa.flavor_text.card_ET.18",
+        "19": "sa.flavor_text.card_ET.19",
+        "20": "sa.flavor_text.card_ET.20"
+      }
     }
   }
 }

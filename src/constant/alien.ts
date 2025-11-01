@@ -31,4 +31,12 @@ export const ALIEN_BUTTON_GROUP = [
     ring: 'ring-exertians',
     bg: 'bg-exertians-background',
   },
+  {
+    type: EAlienType.AMOEBA,
+    text: 'text-amoeba-foreground',
+    ring: 'ring-amoeba',
+    bg: 'bg-amoeba-background',
+    hover: 'hover:text-black/70 focus:text-black/70',
+    beta: true,
+  },
 ];

@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 09:48:41
  * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-10-29 01:35:46
+ * @LastEditTime: 2025-11-01 15:37:31
  * @Description:
  */
 /*
@@ -84,6 +84,7 @@ export enum EAlienType {
   EXERTIANS,
   MASCAMITES,
   OUMUAMUA,
+  AMOEBA,
 }
 
 export const EAlienMap: Record<EAlienType, string> = {
@@ -92,12 +93,9 @@ export const EAlienMap: Record<EAlienType, string> = {
   [EAlienType.EXERTIANS]: 'exertians',
   [EAlienType.MASCAMITES]: 'mascamites',
   [EAlienType.OUMUAMUA]: 'oumuamua',
+  [EAlienType.AMOEBA]: 'amoeba',
 };
 
-export const ALL_ALIENS = [
-  EAlienType.ANOMALIES,
-  EAlienType.CENTAURIANS,
-  EAlienType.EXERTIANS,
-  EAlienType.MASCAMITES,
-  EAlienType.OUMUAMUA,
-];
+export const ALL_ALIENS: EAlienType[] = Object.values(EAlienType).filter(
+  (v): v is EAlienType => typeof v === 'number'
+);

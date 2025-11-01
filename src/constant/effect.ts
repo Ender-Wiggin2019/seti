@@ -1,8 +1,8 @@
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 22:59:49
- * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-06 23:02:07
+ * @LastEditors: Ender Wiggin
+ * @LastEditTime: 2025-11-01 16:08:05
  * @Description:
  */
 import { v4 as uuidv4 } from 'uuid';
@@ -16,6 +16,7 @@ import {
   IOrEffect,
 } from '@/types/effect';
 import {
+  EAlienIcon,
   EMiscIcon,
   EResource,
   EScanAction,
@@ -84,18 +85,22 @@ const FULFILL_SECTOR_YELLOW = _base(EMiscIcon.FULFILL_SECTOR_YELLOW);
 const FULFILL_SECTOR_BLUE = _base(EMiscIcon.FULFILL_SECTOR_BLUE);
 const FULFILL_SECTOR_BLACK = _base(EMiscIcon.FULFILL_SECTOR_BLACK);
 const FULFILL_ICON = _base(EMiscIcon.FULFILL_ICON);
-const ADVANCED_15 = _base(EMiscIcon.ADVANCED_15);
-const FULFILL_ADVANCED = _base(EMiscIcon.FULFILL_ADVANCED);
-const DANGER = _base(EMiscIcon.DANGER);
 const DRAW_ALIEN_CARD = _base(EMiscIcon.DRAW_ALIEN_CARD);
-const EXOFOSSIL = _base(EMiscIcon.EXOFOSSIL);
-const USE_EXOFOSSIL = _base(EMiscIcon.USE_EXOFOSSIL);
-const SAMPLE = _base(EMiscIcon.SAMPLE);
-const FULFILL_SAMPLE = _base(EMiscIcon.FULFILL_SAMPLE);
 const CREDIT_INCOME = _base(EMiscIcon.CREDIT_INCOME);
 const ENERGY_INCOME = _base(EMiscIcon.ENERGY_INCOME);
 const CARD_INCOME = _base(EMiscIcon.CARD_INCOME);
 const SIGNAL_TOKEN = _base(EMiscIcon.SIGNAL_TOKEN);
+
+const ADVANCED_15 = _base(EAlienIcon.ADVANCED_15);
+const FULFILL_ADVANCED = _base(EAlienIcon.FULFILL_ADVANCED);
+const DANGER = _base(EAlienIcon.DANGER);
+const EXOFOSSIL = _base(EAlienIcon.EXOFOSSIL);
+const USE_EXOFOSSIL = _base(EAlienIcon.USE_EXOFOSSIL);
+const SAMPLE = _base(EAlienIcon.SAMPLE);
+const FULFILL_SAMPLE = _base(EAlienIcon.FULFILL_SAMPLE);
+const ORGANELLE_RED = _base(EAlienIcon.ORGANELLE_RED);
+const ORGANELLE_BLUE = _base(EAlienIcon.ORGANELLE_BLUE);
+const ORGANELLE_YELLOW = _base(EAlienIcon.ORGANELLE_YELLOW);
 export const e = {
   ORBIT,
   LAND,
@@ -143,18 +148,23 @@ export const e = {
   FULFILL_SECTOR_BLUE,
   FULFILL_SECTOR_BLACK,
   FULFILL_ICON,
-  ADVANCED_15,
-  FULFILL_ADVANCED,
+  CREDIT_INCOME,
+  ENERGY_INCOME,
+  CARD_INCOME,
+  SIGNAL_TOKEN,
+
+  // ADVANCED_15,
+  // FULFILL_ADVANCED,
   DANGER,
   DRAW_ALIEN_CARD,
   EXOFOSSIL,
   USE_EXOFOSSIL,
   SAMPLE,
   FULFILL_SAMPLE,
-  CREDIT_INCOME,
-  ENERGY_INCOME,
-  CARD_INCOME,
-  SIGNAL_TOKEN,
+
+  ORGANELLE_RED,
+  ORGANELLE_BLUE,
+  ORGANELLE_YELLOW,
 };
 export interface IFlattenMissionItem {
   req: IBaseEffect | ICustomizedEffect | (IBaseEffect | ICustomizedEffect)[];

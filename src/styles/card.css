@@ -693,6 +693,44 @@
   background-position: -200px -300px;
 }
 
+.icon-sector-any {
+  background-image: url(/images/seti-icons-3.png);
+  background-position: 0 -150px; /* 第四行第一列 */
+}
+.icon-sector-blue {
+  background-image: url(/images/seti-icons-3.png);
+  background-position: -50px -150px; /* 第四行第二列 */
+}
+.icon-sector-yellow {
+  background-image: url(/images/seti-icons-3.png);
+  background-position: -100px -150px; /* 第四行第三列 */
+}
+.icon-sector-red {
+  background-image: url(/images/seti-icons-3.png);
+  background-position: -150px -150px; /* 第四行第四列 */
+}
+
+.icon-organelle-red {
+  background-image: url(/images/seti-icons-3.png);
+  background-position: 0 -200px; /* 第五行第一列 */
+}
+.icon-organelle-blue {
+  background-image: url(/images/seti-icons-3.png);
+  background-position: -50px -200px; /* 第五行第二列 */
+}
+.icon-organelle-yellow {
+  background-image: url(/images/seti-icons-3.png);
+  background-position: -100px -200px; /* 第五行第三列 */
+}
+.icon-5-4 {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: -150px -200px; /* 第五行第四列 */
+}
+.icon-5-5 {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: -200px -200px; /* 第五行第五列 */
+}
+
 .icon-container {
   display: flex;
   flex: 0 0 auto;

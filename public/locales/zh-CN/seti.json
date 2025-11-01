@@ -203,6 +203,22 @@
   "Lunar Gateway": "月球门户空间站",
   "Not a planet since 2006": "自 2006 年起不再是行星",
   "Gateway to Mars": "火星轨道门户",
+  "Space Rendezvous": "太空交会",
+  "Grand Tour Program": "大巡游计划",
+  "Hall-effect Thruster": "霍尔效应推进器",
+  "Exoplanet Survey": "系外行星调查",
+  "LOFAR Array": "低频阵列",
+
+  "Biosignature Screening": "生物特征筛选",
+  "Physical Characterization": "物理表征",
+  "Genome Characterization": "基因组表征",
+  "Breakthrough Theory": "突破性理论",
+  "Low-gravity Research": "低重力研究",
+  "Automated Analysis": "自动分析",
+  "Safety Protocols": "安全协议",
+  "Scientific Papers": "科学论文",
+  "Extreme Conditions Testing": "极端条件测试",
+  "Place of Origin": "起源地",
 
   "Ignore the limit of probes in space for those launches.": "对于这次发射, 忽略探测器的数量上限。",
   "Reveal the card you drew, and gain its free-action corner effect.": "展示你抽到的卡牌，并获得其免费行动的效果。",
@@ -300,7 +316,7 @@
   "Have 5": "有 5 个",
   "Deliver {sample} to Earth": "运送 {sample} 到地球",
   "Deliver {sample} to Mars": "运送 {sample} 到火星 (Mars)",
-  "for this species": "这个<br>物种",
+  "for this species": "本物种",
   "Then": "然后",
 
   "for a single species": "单个物种",
@@ -503,7 +519,13 @@
       "card_38": "然后如果你有一个探测器<br>在与另一个探测器同一位置上，获得 {score-3}。",
       "card_39_endgame": "每个你拥有 {orbit-count} 或 {land-count} 的行星<br>（不包括卫星）获得 {score-2}。",
       "card_41": "在黄色、红色、蓝色和黑色扇区各有一个信号",
-      "card_42": "在每个扇区都有一个<br>信号或 {fulfill-sector-any}"
+      "card_42": "在每个扇区都有一个<br>信号或 {fulfill-sector-any}",
+      "card_et_11": "你在本物种标记的<br>每个 {red-trace} 获得 {score-2}。",
+      "card_et_12": "你在本物种标记的<br>每个 {yellow-trace} 获得 {score-2}。",
+      "card_et_13": "你在本物种标记的<br>每个 {blue-trace} 获得 {score-2}。",
+      "card_et_14_req": "你在本物种的非发现区标记过 {red-trace} {yellow-trace} {blue-trace}。",
+      "card_et_14_reward": "本物种板上每个空位<br>获得 {score-1}",
+      "card_et_18": "从本物种板上移除你的一个标记，<br>根据该空间的颜色获得 {organelle-red-3} 或 {organelle-yellow-3} 或 {organelle-blue-3}。"
     }
   }
 }

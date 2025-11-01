@@ -90,18 +90,24 @@ export enum EMiscIcon {
   FULFILL_SECTOR_BLUE = 'fulfill-sector-blue',
   FULFILL_SECTOR_BLACK = 'fulfill-sector-black',
   FULFILL_ICON = 'fulfill-icon',
-  ADVANCED_15 = 'advanced-15',
-  FULFILL_ADVANCED = 'fulfill-advanced',
-  DANGER = 'danger',
-  DRAW_ALIEN_CARD = 'draw-alien-card',
-  EXOFOSSIL = 'exofossil',
-  USE_EXOFOSSIL = 'use-exofossil',
-  SAMPLE = 'sample',
-  FULFILL_SAMPLE = 'fulfill-sample',
   CREDIT_INCOME = 'credit-income',
   ENERGY_INCOME = 'energy-income',
   CARD_INCOME = 'card-income',
   SIGNAL_TOKEN = 'signal-token',
+  DRAW_ALIEN_CARD = 'draw-alien-card',
+}
+
+export enum EAlienIcon {
+  ADVANCED_15 = 'advanced-15',
+  FULFILL_ADVANCED = 'fulfill-advanced',
+  DANGER = 'danger',
+  EXOFOSSIL = 'exofossil',
+  USE_EXOFOSSIL = 'use-exofossil',
+  SAMPLE = 'sample',
+  FULFILL_SAMPLE = 'fulfill-sample',
+  ORGANELLE_RED = 'organelle-red',
+  ORGANELLE_BLUE = 'organelle-blue',
+  ORGANELLE_YELLOW = 'organelle-yellow',
 }
 
 export enum EPlanet {
@@ -130,6 +136,7 @@ export type TIcon =
   | EPlanet
   | EMiscIcon
   | ECardType
+  | EAlienIcon
   | 'move-special'
   | 'draw-card-special'
   | 'any-card-special'; // only use in description

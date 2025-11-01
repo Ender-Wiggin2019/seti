@@ -1,12 +1,13 @@
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 16:47:27
- * @LastEditors: error: git config user.name & please set dead value or install git
- * @LastEditTime: 2025-10-28 01:47:00
+ * @LastEditors: Ender Wiggin
+ * @LastEditTime: 2025-11-01 13:32:48
  * @Description:
  */
 import { IBaseEffect } from '@/types/effect';
 import {
+  EAlienIcon,
   EMiscIcon,
   EResource,
   EScanAction,
@@ -51,6 +52,9 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
     case EScanAction.DISCARD_CARD:
     case EScanAction.DISPLAY_CARD:
     case EMiscIcon.SIGNAL_TOKEN:
+    case EAlienIcon.ORGANELLE_RED:
+    case EAlienIcon.ORGANELLE_BLUE:
+    case EAlienIcon.ORGANELLE_YELLOW:
       size = 'sm';
       break;
     case EScanAction.ANY:
@@ -61,8 +65,8 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
     case EMiscIcon.ORBIT_COUNT:
     case EMiscIcon.LAND_COUNT:
     case EMiscIcon.ORBIT_OR_LAND_COUNT:
-    case EMiscIcon.SAMPLE:
-    case EMiscIcon.FULFILL_SAMPLE:
+    case EAlienIcon.SAMPLE:
+    case EAlienIcon.FULFILL_SAMPLE:
       shape = 'round';
       size = 'xs';
       break;
@@ -98,13 +102,13 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
     case EResource.ENERGY:
     case EResource.DATA:
     case EResource.PUBLICITY:
-    case EMiscIcon.EXOFOSSIL:
-    case EMiscIcon.USE_EXOFOSSIL:
+    case EAlienIcon.EXOFOSSIL:
+    case EAlienIcon.USE_EXOFOSSIL:
       shape = 'diamond';
       size = 'sm';
       showValue = true;
       break;
-    case EMiscIcon.DANGER:
+    case EAlienIcon.DANGER:
       showValue = true;
       break;
     default:

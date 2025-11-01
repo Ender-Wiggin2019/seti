@@ -1,6 +1,8 @@
 import { useTranslation } from 'next-i18next';
 import React, { useEffect, useState } from 'react';
 
+import { cn } from '@/lib/utils';
+
 import TextButton from '@/components/buttons/TextButton';
 
 import { ALIEN_BUTTON_GROUP } from '@/constant/alien';
@@ -52,12 +54,19 @@ export const AlienFilter: React.FC<AlienFilterProps> = ({
             <TextButton
               key={alien.type}
               selected={selectedCategories.includes(alien.type)}
-              className={`${alien.text} hover:text-white/50 focus:text-white/50 bg-transparent ${alien.bg} rounded-sm`}
+              className={cn(
+                `${alien.text} hover:text-white/50 focus:text-white/50 bg-transparent ${alien.bg} ${alien.hover} rounded-sm`
+              )}
               selectClassName={`${alien.ring} ${alien.text} hover:${alien.ring} active:${alien.ring} ring-2`}
               onClick={() => handleCategoryChange(alien.type)}
             >
               {t(EAlienMap[alien.type])}
             </TextButton>
+            {alien.beta && (
+              <div className='absolute -top-1 -right-1 bg-orange-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold shadow-sm'>
+                BETA
+              </div>
+            )}
           </div>
         );
       })}

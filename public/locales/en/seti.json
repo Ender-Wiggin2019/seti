@@ -361,6 +361,19 @@
   "Hall-effect Thruster": "Hall-effect Thruster",
   "Exoplanet Survey": "Exoplanet Survey",
   "LOFAR Array": "LOFAR Array",
+
+  "First Contact": "First Contact",
+  "Biosignature Screening": "Biosignature Screening",
+  "Physical Characterization": "Physical Characterization",
+  "Genome Characterization": "Genome Characterization",
+  "Breakthrough Theory": "Breakthrough Theory",
+  "Low-gravity Research": "Low-gravity Research",
+  "Automated Analysis": "Automated Analysis",
+  "Safety Protocols": "Safety Protocols",
+  "Scientific Papers": "Scientific Papers",
+  "Extreme Conditions Testing": "Extreme Conditions Testing",
+  "Place of Origin": "Place of Origin",
+
   "sa": {
     "desc": {
       "card_1": "If you land on a planet (not a moon) <br>which had a {land-count} already, <br>return this card to your hand.",
@@ -397,7 +410,13 @@
       "card_38": "Then gain {score-3} if you have a probe<br>on a space with another probe.",
       "card_39_endgame": "{score-2} for each planet (not a moon)<br>where you have {orbit-count} or {land-count}.",
       "card_41": "Have a signal in a yellow, red, blue, and black sector",
-      "card_42": "Have a signal or {fulfill-sector-any} in each sector"
+      "card_42": "Have a signal or {fulfill-sector-any} in each sector",
+      "card_et_11": "{score-2} for each {red-trace} you have <br>marked for this species.",
+      "card_et_12": "{score-2} for each {yellow-trace} you have <br>marked for this species.",
+      "card_et_13": "{score-2} for each {blue-trace} you have <br>marked for this species.",
+      "card_et_14_req": "{red-trace} {yellow-trace} {blue-trace} for this species except discovery spaces.",
+      "card_et_14_reward": "{score-1} for each empty space on this species board",
+      "card_et_18": "Remove one of your markers from a space on this species to gain {organelle-red-3} or {organelle-yellow-3} or {organelle-blue-3} based on the color of the space."
     }
   }
 }

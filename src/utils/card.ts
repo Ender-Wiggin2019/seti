@@ -2,13 +2,11 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-29 11:57:13
  * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-10-29 01:40:06
+ * @LastEditTime: 2025-11-01 15:29:21
  * @Description:
  */
 
-import { alienCards } from '@/data/alienCards';
-import baseCards from '@/data/baseCards';
-import { spaceAgencyCards } from '@/data/spaceAgencyCards';
+import { ALL_CARDS } from '@/data';
 
 import { sortCards } from '@/utils/sort';
 
@@ -24,21 +22,15 @@ import {
 } from '@/types/element';
 
 export const getAllCardIds = () => {
-  return [...baseCards, ...spaceAgencyCards, ...alienCards].map(
-    (card) => card.id
-  );
+  return ALL_CARDS.map((card) => card.id);
 };
 
 export const getCardById = (id: string) => {
-  return [...baseCards, ...spaceAgencyCards, ...alienCards].find(
-    (card) => card.id === id
-  );
+  return ALL_CARDS.find((card) => card.id === id);
 };
 
 export const getCardsById = (ids: string[], sort?: boolean) => {
-  const res = [...baseCards, ...spaceAgencyCards, ...alienCards].filter(
-    (card) => ids.includes(card.id)
-  );
+  const res = ALL_CARDS.filter((card) => ids.includes(card.id));
   return sort ? sortCards(res) : res;
 };
 

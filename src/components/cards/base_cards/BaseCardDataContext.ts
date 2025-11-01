@@ -2,17 +2,11 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-07-03 05:04:25
  * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-10-29 01:59:12
+ * @LastEditTime: 2025-11-01 15:28:57
  * @Description:
  */
 import { createContext } from 'react';
 
-import { alienCards } from '@/data/alienCards';
-import { baseCards } from '@/data/baseCards';
-import { spaceAgencyCards } from '@/data/spaceAgencyCards';
+import { ALL_CARDS } from '@/data';
 
-export const BaseCardDataContext = createContext([
-  ...baseCards,
-  ...spaceAgencyCards,
-  ...alienCards,
-]);
+export const BaseCardDataContext = createContext(ALL_CARDS);
