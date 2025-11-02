@@ -129,5 +129,5 @@ html.dark {
 }
 
 .bg-amoeba-background {
-  @apply bg-gradient-to-r from-[#e289b0] via-[#ffdf92] to-[#2ab4e8];
+  @apply bg-gradient-to-r from-[#04CDFF] via-[#FE3496] to-[#F8C422] from-0% via-50% to-100%;
 }

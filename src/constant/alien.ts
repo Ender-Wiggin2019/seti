@@ -36,7 +36,7 @@ export const ALIEN_BUTTON_GROUP = [
     text: 'text-amoeba-foreground',
     ring: 'ring-amoeba',
     bg: 'bg-amoeba-background',
-    hover: 'hover:text-black/70 focus:text-black/70',
+    // hover: 'hover:text-black/70 focus:text-black/70',
     beta: true,
   },
 ];

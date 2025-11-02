@@ -522,7 +522,7 @@
       "card_et_13": "你在本物种标记的<br>每个 {blue-trace} 获得 {score-2}。",
       "card_et_14_req": "你在本物种的非发现区标记过 {red-trace} {yellow-trace} {blue-trace}。",
       "card_et_14_reward": "本物种板上每个空位<br>获得 {score-1}",
-      "card_et_18": "从本物种板上移除你的一个标记，<br>根据该空间的颜色获得 {organelle-red-3} 或 {organelle-yellow-3} 或 {organelle-blue-3}。"
+      "card_et_18": "从本物种板上移除你的一个标记，<br>根据该空间的颜色一次性触发对应颜色的所有奖励 {organelle-red-3} 或 {organelle-yellow-3} 或 {organelle-blue-3} 。"
     }
   },
   "faq": {
