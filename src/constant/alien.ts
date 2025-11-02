@@ -1,6 +1,13 @@
 import { EAlienType } from '@/types/BaseCard';
 
-export const ALIEN_BUTTON_GROUP = [
+export const ALIEN_BUTTON_GROUP: {
+  type: EAlienType;
+  text: string;
+  ring: string;
+  bg: string;
+  hover?: string;
+  beta?: boolean;
+}[] = [
   {
     type: EAlienType.ANOMALIES,
     text: 'text-anomalies-foreground',
