@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-11-01 17:05:56
+ * @LastEditTime: 2025-11-02 18:40:18
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -212,7 +212,7 @@ const _spaceAgencyAliens: IBaseCard[] = [
       { type: EResource.MOVE, value: 1 },
     ],
     sector: ESector.YELLOW,
-    price: 0,
+    price: 1,
     income: EResource.ENERGY,
     special: {
       enableEffectRender: true,
