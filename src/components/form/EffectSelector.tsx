@@ -1,8 +1,8 @@
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-03-14 23:39:03
- * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-23 01:52:53
+ * @LastEditors: Ender Wiggin
+ * @LastEditTime: 2025-11-04 01:58:13
  * @Description:
  */
 import { cn } from '@/lib/utils';
@@ -10,11 +10,10 @@ import { cn } from '@/lib/utils';
 import { EffectFactory } from '@/components/effect/Effect';
 import { AccordionV2 } from '@/components/ui/accordion-v2';
 
-import { e } from '@/constant/effect';
+import { BASE_EFFECTS } from '@/constant/effect';
 
 import { EEffectType, Effect, IBaseEffect } from '@/types/effect';
 import { TIcon, TSize } from '@/types/element';
-import { Button } from '@/components/ui/button';
 
 type Props = {
   currentEffects: Effect[];
@@ -31,7 +30,7 @@ export const EffectSelector = ({
   return (
     <AccordionV2 title={title || 'Icons'}>
       <div className='grid grid-cols-4 gap-2 lg:grid-cols-5'>
-        {Object.entries(e).map(([key, fn]) => {
+        {Object.entries(BASE_EFFECTS).map(([key, fn]) => {
           const effect = fn();
           if (icons && !icons.includes(effect.type)) {
             return null;

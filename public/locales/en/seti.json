@@ -5,6 +5,7 @@
   "mascamites": "Mascamites",
   "oumuamua": "'Oumuamua",
   "Amoeba": "Amoeba",
+  "glyphids": "Glyphids",
 
   "61 Virginis Observation": "61 Virginis Observation",
   "Advanced Navigation System": "Advanced Navigation System",
@@ -376,6 +377,7 @@
   "Place of Origin": "Place of Origin",
 
   "sa": {
+    "glyphids-title": "@.~$\\/\\'$/.!%;|?",
     "desc": {
       "card_1": "If you land on a planet (not a moon) <br>which had a {land-count} already, <br>return this card to your hand.",
       "card_2": "Choose {publicity-0} , {data-0} , or {move-0} <br>Gain it once for each card you show <br>from your hand that has the icon <br>in its free-action corner effect.",
@@ -412,6 +414,7 @@
       "card_39_endgame": "{score-2} for each planet (not a moon)<br>where you have {orbit-count} or {land-count}.",
       "card_41": "Have a signal in a yellow, red, blue, and black sector",
       "card_42": "Have a signal or {fulfill-sector-any} in each sector",
+      "card_et_1": "{score-3} for each {glyph-count} of which type you have the most.",
       "card_et_11": "{score-2} for each {red-trace} you have <br>marked for this species.",
       "card_et_12": "{score-2} for each {yellow-trace} you have <br>marked for this species.",
       "card_et_13": "{score-2} for each {blue-trace} you have <br>marked for this species.",

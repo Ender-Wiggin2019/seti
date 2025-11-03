@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 22:59:49
  * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-11-01 16:08:05
+ * @LastEditTime: 2025-11-04 02:11:07
  * @Description:
  */
 import { v4 as uuidv4 } from 'uuid';
@@ -101,7 +101,19 @@ const FULFILL_SAMPLE = _base(EAlienIcon.FULFILL_SAMPLE);
 const ORGANELLE_RED = _base(EAlienIcon.ORGANELLE_RED);
 const ORGANELLE_BLUE = _base(EAlienIcon.ORGANELLE_BLUE);
 const ORGANELLE_YELLOW = _base(EAlienIcon.ORGANELLE_YELLOW);
-export const e = {
+
+// glyphids
+const GLYPH_GRAY = _base(EAlienIcon.GLYPH_GRAY);
+const GLYPH_ORANGE = _base(EAlienIcon.GLYPH_ORANGE);
+const GLYPH_YELLOW = _base(EAlienIcon.GLYPH_YELLOW);
+const GLYPH_RED = _base(EAlienIcon.GLYPH_RED);
+const GLYPH_GREEN = _base(EAlienIcon.GLYPH_GREEN);
+const GLYPH_BLUE = _base(EAlienIcon.GLYPH_BLUE);
+const GLYPH_PURPLE = _base(EAlienIcon.GLYPH_PURPLE);
+const GLYPH_COUNT = _base(EAlienIcon.GLYPH_COUNT);
+
+//
+export const BASE_EFFECTS = {
   ORBIT,
   LAND,
   LAUNCH,
@@ -152,9 +164,11 @@ export const e = {
   ENERGY_INCOME,
   CARD_INCOME,
   SIGNAL_TOKEN,
+};
 
-  // ADVANCED_15,
-  // FULFILL_ADVANCED,
+export const ALIEN_EFFECTS = {
+  ADVANCED_15,
+  FULFILL_ADVANCED,
   DANGER,
   DRAW_ALIEN_CARD,
   EXOFOSSIL,
@@ -162,9 +176,24 @@ export const e = {
   SAMPLE,
   FULFILL_SAMPLE,
 
+  // amoeba
   ORGANELLE_RED,
   ORGANELLE_BLUE,
   ORGANELLE_YELLOW,
+
+  // glyphids
+  GLYPH_GRAY,
+  GLYPH_ORANGE,
+  GLYPH_YELLOW,
+  GLYPH_RED,
+  GLYPH_GREEN,
+  GLYPH_BLUE,
+  GLYPH_PURPLE,
+  GLYPH_COUNT,
+};
+export const e = {
+  ...BASE_EFFECTS,
+  ...ALIEN_EFFECTS,
 };
 export interface IFlattenMissionItem {
   req: IBaseEffect | ICustomizedEffect | (IBaseEffect | ICustomizedEffect)[];

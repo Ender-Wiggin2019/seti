@@ -2,19 +2,41 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-11-02 18:40:18
+ * @LastEditTime: 2025-11-04 02:20:09
  * @Description:
  */
 // import {Size} from "@/types/Size";
 
-import { DESC, e, m } from '@/constant/effect';
 import { FAQ } from '@/data/faq';
+
+import { DESC, e, m } from '@/constant/effect';
 
 import { EAlienType, IBaseCard } from '@/types/BaseCard';
 import { CardSource } from '@/types/CardSource';
-import { EResource, ESector } from '@/types/element';
+import { EAlienIcon, EResource, ESector } from '@/types/element';
 
 const _spaceAgencyAliens: IBaseCard[] = [
+  {
+    id: 'ET.1',
+    name: 'sa.glyphids-title',
+    image: '/images/aliens/glyphids/ET.1.jpg',
+    freeAction: [{ type: EAlienIcon.GLYPH_ORANGE, value: 1 } as any],
+    sector: ESector.BLACK,
+    price: 1,
+    income: EResource.CARD,
+    special: {
+      enableEffectRender: true,
+    },
+    alien: EAlienType.GLYPHIDS,
+    effects: [
+      e.GLYPH_YELLOW(),
+      e.GLYPH_GREEN(),
+      DESC('OR'),
+      e.GLYPH_BLUE(),
+      e.GLYPH_PURPLE(),
+      m.END_GAME('sa.desc.card_et_1'),
+    ],
+  },
   {
     id: 'ET.11',
     name: 'Biosignature Screening',

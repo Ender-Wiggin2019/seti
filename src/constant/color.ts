@@ -5,7 +5,7 @@ import { EResource, ESector } from '@/types/element';
  * @Author: Ender-Wiggin
  * @Date: 2025-03-09 12:05:06
  * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-11-01 15:34:15
+ * @LastEditTime: 2025-11-04 01:57:48
  * @Description:
  */
 export const EResourceColorMap: Record<EResource, string> = {
@@ -33,4 +33,5 @@ export const EAlienColor: Record<EAlienType, string> = {
   [EAlienType.OUMUAMUA]: '#6940a2',
   [EAlienType.EXERTIANS]: '#ca273a',
   [EAlienType.AMOEBA]: '#9DA7BE',
+  [EAlienType.GLYPHIDS]: '#B8D429',
 };

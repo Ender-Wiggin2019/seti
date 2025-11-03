@@ -693,6 +693,82 @@
   background-position: -200px -300px;
 }
 
+/* third icon file */
+.icon-credit-income {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: 0 0; /* 第一行第一列 */
+}
+.icon-energy-income {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: -50px 0; /* 第一行第二列 */
+}
+.icon-card-income {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: -100px 0; /* 第一行第三列 */
+}
+.icon-income {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: -150px 0; /* 第一行第四列 */
+}
+
+.icon-display-card-signal {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: 0 -50px; /* 第二行第一列 */
+}
+.icon-discard-card-signal {
+  background-image: url(/images/seti-icons-2.png);
+  background-position: -50px -50px; /* 第二行第二列 */
+}
+.icon-fulfill-icon {
+  background-image: url(/images/move-icon.png);
+  width: 50px;
+  height: 50px;
+  background-size: cover;
+}
+.icon-orbit-count {
+  background-position: -100px -50px; /* 第二行第三列 */
+}
+.icon-land-count {
+  background-position: -150px -50px; /* 第二行第四列 */
+}
+
+.icon-glyph-gray {
+  background-image: url(/images/seti-icons-3.png);
+  background-position: 0 0; /* 第一行第一列 */
+}
+.icon-glyph-orange {
+  background-image: url(/images/seti-icons-3.png);
+  background-position: -50px 0; /* 第一行第二列 */
+}
+.icon-glyph-yellow {
+  background-image: url(/images/seti-icons-3.png);
+  background-position: -100px 0; /* 第一行第三列 */
+}
+.icon-glyph-red {
+  background-image: url(/images/seti-icons-3.png);
+  background-position: -150px 0; /* 第一行第四列 */
+}
+.icon-glyph-green {
+  background-image: url(/images/seti-icons-3.png);
+  background-position: -200px 0; /* 第一行第五列 */
+}
+.icon-glyph-blue {
+  background-image: url(/images/seti-icons-3.png);
+  background-position: 0px -50px; /* 第二行第一列 */
+}
+.icon-glyph-purple {
+  background-image: url(/images/seti-icons-3.png);
+  background-position: -50px -50px; /* 第二行第二列 */
+}
+.icon-glyph-count {
+  background-image: url(/images/seti-icons-3.png);
+  background-position: -100px -50px; /* 第二行第三列 */
+}
+.icon-glyph-mark {
+  background-image: url(/images/seti-icons-3.png);
+  background-position: -150px -50px; /* 第二行第四列 */
+}
+
 .icon-sector-any {
   background-image: url(/images/seti-icons-3.png);
   background-position: 0 -150px; /* 第四行第一列 */

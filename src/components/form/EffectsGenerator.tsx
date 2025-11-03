@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 
 import { DescInput } from '@/components/form/DescInput';
 import { EffectSelector } from '@/components/form/EffectSelector';
+import { EndgameSelector } from '@/components/form/EndgameSelector';
 import { FullMissionSelector } from '@/components/form/FullMissionSelector';
 import { QuickMissionSelector } from '@/components/form/QuickMissionSelector';
 import { AccordionV2 } from '@/components/ui/accordion-v2';
@@ -11,13 +12,7 @@ import { Button } from '@/components/ui/button';
 import { m } from '@/constant/effect';
 import { updateEffectArray, updateSpecialEffectArray } from '@/utils/effect';
 
-import {
-  EEffectType,
-  Effect,
-  IEndGameEffect,
-  IMissionEffect,
-} from '@/types/effect';
-import { EndgameSelector } from '@/components/form/EndgameSelector';
+import { EEffectType, Effect, IMissionEffect } from '@/types/effect';
 
 type Props = {
   selectedEffects: Effect[];

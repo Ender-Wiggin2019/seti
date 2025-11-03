@@ -46,4 +46,11 @@ export const ALIEN_BUTTON_GROUP: {
     // hover: 'hover:text-black/70 focus:text-black/70',
     beta: true,
   },
+  {
+    type: EAlienType.GLYPHIDS,
+    text: 'text-glyphids-foreground',
+    ring: 'ring-glyphids',
+    bg: 'bg-glyphids-background',
+    beta: true,
+  },
 ];

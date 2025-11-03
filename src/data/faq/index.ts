@@ -2,7 +2,7 @@
  * @Author: Ender Wiggin
  * @Date: 2025-11-01 16:55:46
  * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-11-01 17:08:14
+ * @LastEditTime: 2025-11-03 23:56:07
  * @Description:
  */
 export const FAQ: Record<string, string[]> = {
@@ -20,7 +20,7 @@ export const FAQ: Record<string, string[]> = {
   'SA.19': ['faq.sa.19_1', 'faq.sa.19_2', 'faq.sa.19_3'],
   'SA.20': ['faq.sa.20_1'],
   'SA.21': ['faq.sa.21_1'],
-  'SA.22': ['faq.sa.22_1', 'faq.sa.22_2', 'faq.sa.22_3'],
+  'SA.22': ['faq.sa.22_2', 'faq.sa.22_3'],
   'SA.26': ['faq.sa.26_1'],
   'SA.27': ['faq.sa.27_1', 'faq.sa.27_2'],
   'SA.28': ['faq.sa.28_1'],

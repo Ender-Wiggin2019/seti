@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 16:47:27
  * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-11-01 13:32:48
+ * @LastEditTime: 2025-11-04 02:22:40
  * @Description:
  */
 import { IBaseEffect } from '@/types/effect';
@@ -68,6 +68,17 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
     case EAlienIcon.SAMPLE:
     case EAlienIcon.FULFILL_SAMPLE:
       shape = 'round';
+      size = 'xs';
+      break;
+    case EAlienIcon.GLYPH_GRAY:
+    case EAlienIcon.GLYPH_ORANGE:
+    case EAlienIcon.GLYPH_YELLOW:
+    case EAlienIcon.GLYPH_RED:
+    case EAlienIcon.GLYPH_GREEN:
+    case EAlienIcon.GLYPH_BLUE:
+    case EAlienIcon.GLYPH_PURPLE:
+    case EAlienIcon.GLYPH_COUNT:
+    case EAlienIcon.GLYPH_MARK:
       size = 'xs';
       break;
     case EResource.MOVE:

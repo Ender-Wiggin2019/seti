@@ -4,8 +4,8 @@ import { TShape } from '@/types/Icon';
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 14:45:30
- * @LastEditors: error: git config user.name & please set dead value or install git
- * @LastEditTime: 2025-10-28 01:43:15
+ * @LastEditors: Ender Wiggin
+ * @LastEditTime: 2025-11-04 02:10:11
  * @Description:
  */
 export enum ESector {
@@ -108,6 +108,17 @@ export enum EAlienIcon {
   ORGANELLE_RED = 'organelle-red',
   ORGANELLE_BLUE = 'organelle-blue',
   ORGANELLE_YELLOW = 'organelle-yellow',
+
+  // glyphids
+  GLYPH_GRAY = 'glyph-gray',
+  GLYPH_ORANGE = 'glyph-orange',
+  GLYPH_YELLOW = 'glyph-yellow',
+  GLYPH_RED = 'glyph-red',
+  GLYPH_GREEN = 'glyph-green',
+  GLYPH_BLUE = 'glyph-blue',
+  GLYPH_PURPLE = 'glyph-purple',
+  GLYPH_COUNT = 'glyph-count',
+  GLYPH_MARK = 'glyph-mark',
 }
 
 export enum EPlanet {

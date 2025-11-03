@@ -52,6 +52,11 @@ export default {
           DEFAULT: '#FFABEC',
           foreground: '#FFABEC',
         },
+        glyphids: {
+          DEFAULT: '#D2F504',
+          foreground: '#D2F504',
+          background: '#4C7B40',
+        },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
           foreground: 'hsl(var(--secondary-foreground))',
