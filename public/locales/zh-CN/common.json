@@ -49,7 +49,8 @@
     "maps": "地图",
     "endgames": "终局计分",
     "random_quiz": "随机测验",
-    "daily_quiz": "每日测验"
+    "daily_quiz": "每日测验",
+    "prelude": "起始卡"
   },
   "comment": {
     "login_to_comment": "login to comment",

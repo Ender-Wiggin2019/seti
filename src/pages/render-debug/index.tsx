@@ -1,8 +1,8 @@
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-03-11 23:41:00
- * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-10-29 17:37:57
+ * @LastEditors: Ender Wiggin
+ * @LastEditTime: 2025-11-04 22:28:26
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
@@ -10,7 +10,7 @@ import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import React from 'react';
 
-import spaceAgencyCards from '@/data/spaceAgencyCards';
+import spaceAgencyAliens from '@/data/spaceAgencyAliens';
 
 import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
 import { DownloadableCardRender } from '@/components/form/DownloadableCardRender';
@@ -30,7 +30,7 @@ export default function HomePage(
 ) {
   const { t: _t } = useTranslation('common');
   // const cards = sortCards([...baseCards, ...alienCards]).slice(105);
-  const cards = sortCards([...spaceAgencyCards]);
+  const cards = sortCards([...spaceAgencyAliens]);
 
   // const cards = sortCards([...alienCards]);
 

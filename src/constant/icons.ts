@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 16:47:27
  * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-11-04 02:22:40
+ * @LastEditTime: 2025-11-04 22:20:56
  * @Description:
  */
 import { IBaseEffect } from '@/types/effect';
@@ -79,7 +79,7 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
     case EAlienIcon.GLYPH_PURPLE:
     case EAlienIcon.GLYPH_COUNT:
     case EAlienIcon.GLYPH_MARK:
-      size = 'xs';
+      size = 'sm';
       break;
     case EResource.MOVE:
       size = 'sm';

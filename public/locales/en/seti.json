@@ -199,6 +199,20 @@
   "Deliver {sample} to Mars": "Deliver {sample} to Mars",
   "for this species": "for this species",
   "Then": "Then",
+  "in the discovery space of the right species": "in the discovery space of the right species",
+  "in Barnard's Star": "in Barnard's Star",
+  "in Proxima Centauri": "in Proxima Centauri",
+  "in Sirius A": "in Sirius A",
+  "in Procyon": "in Procyon",
+  "in Kepler 22": "in Kepler 22",
+  "in 61 Virginis": "in 61 Virginis",
+  "in Beta Pictoris": "in Beta Pictoris",
+  "in Vega": "in Vega",
+  "at Saturn": "at Saturn",
+  "at Jupiter": "at Jupiter",
+  "at Uranus": "at Uranus",
+  "at Neptune": "at Neptune",
+  "at Mars": "at Mars",
   "desc": {
     "card-10": "{orbit-or-land-count} at Neptune <br> and {orbit-or-land-count} at Uranus <br> (incl. their moons)",
     "card-12": "on a planet or a moon, <br>even without the required tech.",
@@ -480,5 +494,11 @@
       "14_3": "In a rare case, due to the card #ET.19 Extreme Conditions Testing, a discovery space below the Amoeba board can be also empty. It doesn't count towards the reward either because it is not part of the Amoeba board.",
       "19_1": "You can remove your marker either from a space on the Amoeba board, or from a discovery space below it, or even from an overflow space belonging to this species. Based on the color of that space, gain the bonuses from all organelle tokens in the matching section, and move the tokens as usual."
     }
+  },
+  "prelude": {
+    "mark": "Mark(without gaining any bonuses for doing so):",
+    "place": "Place(without gaining any bonuses for doing so):",
+    "card_income": "Increase your {income} with this card (and gain the {draw-card} immediately).",
+    "data_income": "Increase your {income} with this card (and gain the {data} immediately)."
   }
 }

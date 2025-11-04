@@ -5,7 +5,7 @@
   "mascamites": "虫族",
   "oumuamua": "奥陌陌",
   "amoeba": "变形虫",
-  "glyphids": "符文族",
+  "glyphids": "字形族",
   "Flavor Text": "背景文字",
 
   "61 Virginis Observation": "观测天门增四",
@@ -316,6 +316,17 @@
   "Deliver {sample} to Mars": "运送 {sample} 到火星 (Mars)",
   "for this species": "本物种",
   "Then": "然后",
+  "in the discovery space of the right species": "在右侧物种的发现区",
+  "in Barnard's Star": "在巴纳德星\n(Barnard's Star)",
+  "in Proxima Centauri": "在比邻星\n(Proxima Centauri)",
+  "in Sirius A": "在天狼星A\n(Sirius A)",
+  "in Procyon": "在南河三\n(Procyon)",
+  "in Kepler 22": "在开普勒22(Kepler 22)",
+  "in 61 Virginis": "在天门增四\n(61 Virginis)",
+  "in Beta Pictoris": "在老人增四\n(Beta Pictoris)",
+  "in Vega": "在织女星\n(Vega)",
+  "at Saturn": "在土星(Saturn)",
+  "at Jupiter": "在木星(Jupiter)",
 
   "for a single species": "单个物种",
   "for that species": "该物种",
@@ -519,8 +530,8 @@
       "card_39_endgame": "每个你拥有 {orbit-count} 或 {land-count} 的行星<br>（不包括卫星）获得 {score-2}。",
       "card_41": "在黄色、红色、蓝色和黑色扇区各有一个信号",
       "card_42": "在每个扇区都有一个<br>信号或 {fulfill-sector-any}",
-      "card_et_1": "每个你拥有的数量最多的符文类型<br>获得 {score-3}。",
-      "card_et_9": "你最大的符文组合中每个符文<br>为你提供 {score-1}。",
+      "card_et_1": "每个你拥有的数量最多的字形类型<br>获得 {score-3}。",
+      "card_et_9": "你最大的字形组合中每个字形<br>为你提供 {score-1}。",
       "card_et_10": "{red-trace} {yellow-trace} {blue-trace} <br> 本物种标记",
       "card_et_11": "你在本物种标记的<br>每个 {red-trace} 获得 {score-2}。",
       "card_et_12": "你在本物种标记的<br>每个 {yellow-trace} 获得 {score-2}。",
@@ -585,5 +596,11 @@
       "14_3": "在罕见情况下，由于卡牌#ET.19极端条件测试，变形虫板下方的发现位置也可能为空。它也不计入奖励，因为它不是变形虫板的一部分。",
       "19_1": "你可以从变形虫板上的位置、其下方的发现位置，或者甚至从属于该物种的溢出位置移除你的标记。根据该位置的颜色，获得匹配部分中所有细胞器标记的奖励，并像往常一样移动标记。"
     }
+  },
+  "prelude": {
+    "mark": "标记（不获得任何奖励）：",
+    "place": "放置（不获得任何奖励）：",
+    "card_income": "用这张卡增加你的{income} (并立即获得{draw-card})。",
+    "data_income": "用这张卡增加你的{income}(并立即获得{data})。"
   }
 }

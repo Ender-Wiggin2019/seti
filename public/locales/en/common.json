@@ -45,7 +45,8 @@
     "maps": "Maps",
     "endgames": "Final Scoring",
     "random_quiz": "Random Quiz",
-    "daily_quiz": "Daily Quiz"
+    "daily_quiz": "Daily Quiz",
+    "prelude": "Prelude"
   },
   "comment": {
     "login_to_comment": "login to comment",
