@@ -375,7 +375,7 @@
   "Scientific Papers": "Scientific Papers",
   "Extreme Conditions Testing": "Extreme Conditions Testing",
   "Place of Origin": "Place of Origin",
-
+  "———————— OR ————————": "———————— OR ————————",
   "sa": {
     "glyphids-title": "@.~$\\/\\'$/.!%;|?",
     "desc": {
@@ -415,6 +415,8 @@
       "card_41": "Have a signal in a yellow, red, blue, and black sector",
       "card_42": "Have a signal or {fulfill-sector-any} in each sector",
       "card_et_1": "{score-3} for each {glyph-count} of which type you have the most.",
+      "card_et_9": "{score-1} for each {glyph-count} in your largest set.",
+      "card_et_10": "{red-trace} {yellow-trace} {blue-trace} <br> for this species",
       "card_et_11": "{score-2} for each {red-trace} you have <br>marked for this species.",
       "card_et_12": "{score-2} for each {yellow-trace} you have <br>marked for this species.",
       "card_et_13": "{score-2} for each {blue-trace} you have <br>marked for this species.",

@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /*
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-11-04 02:20:09
+ * @LastEditTime: 2025-11-04 22:30:30
  * @Description:
  */
 // import {Size} from "@/types/Size";
@@ -29,12 +30,193 @@ const _spaceAgencyAliens: IBaseCard[] = [
     },
     alien: EAlienType.GLYPHIDS,
     effects: [
-      e.GLYPH_YELLOW(),
-      e.GLYPH_GREEN(),
+      e.GLYPH_YELLOW(1, '', 'xs'),
+      e.GLYPH_GREEN(1, '', 'xs'),
       DESC('OR'),
-      e.GLYPH_BLUE(),
-      e.GLYPH_PURPLE(),
+      e.GLYPH_BLUE(1, '', 'xs'),
+      e.GLYPH_PURPLE(1, '', 'xs'),
       m.END_GAME('sa.desc.card_et_1'),
+    ],
+  },
+  {
+    id: 'ET.2',
+    name: 'sa.glyphids-title',
+    image: '/images/aliens/glyphids/ET.2.jpg',
+    freeAction: [{ type: EAlienIcon.GLYPH_ORANGE, value: 1 } as any],
+    sector: ESector.BLUE,
+    price: 1,
+    income: EResource.ENERGY,
+    special: {
+      enableEffectRender: true,
+    },
+    alien: EAlienType.GLYPHIDS,
+    effects: [
+      DESC('{glyph-purple[sm]} {glyph-purple[sm]} {glyph-red[sm]}'),
+      DESC('———————— OR ————————'),
+      DESC('{glyph-blue[sm]} {glyph-blue[sm]} {glyph-green[sm]}'),
+    ],
+  },
+  {
+    id: 'ET.3',
+    name: 'sa.glyphids-title',
+    image: '/images/aliens/glyphids/ET.3.jpg',
+    freeAction: [{ type: EAlienIcon.GLYPH_GREEN, value: 1 } as any],
+    sector: ESector.YELLOW,
+    price: 0,
+    income: EResource.CREDIT,
+    special: {
+      enableEffectRender: true,
+    },
+    alien: EAlienType.GLYPHIDS,
+    effects: [
+      m.FULL_MISSION([
+        { req: e.ORBIT_OR_LAND_COUNT(), reward: e.GLYPH_YELLOW() },
+        { req: e.ORBIT_OR_LAND_COUNT(), reward: e.GLYPH_GRAY() },
+        { req: e.ORBIT_OR_LAND_COUNT(), reward: e.GLYPH_BLUE() },
+      ]),
+    ],
+  },
+  {
+    id: 'ET.4',
+    name: 'sa.glyphids-title',
+    image: '/images/aliens/glyphids/ET.4.jpg',
+    freeAction: [{ type: EAlienIcon.GLYPH_GRAY, value: 1 } as any],
+    sector: ESector.RED,
+    price: 0,
+    income: EResource.CARD,
+    special: {
+      enableEffectRender: true,
+    },
+    alien: EAlienType.GLYPHIDS,
+    effects: [
+      m.FULL_MISSION([
+        { req: e.TECH_PROBE(), reward: e.GLYPH_YELLOW() },
+        { req: e.TECH_SCAN(), reward: e.GLYPH_ORANGE() },
+        { req: e.TECH_COMPUTER(), reward: e.GLYPH_RED() },
+      ]),
+    ],
+  },
+  {
+    id: 'ET.5',
+    name: 'sa.glyphids-title',
+    image: '/images/aliens/glyphids/ET.5.jpg',
+    freeAction: [{ type: EAlienIcon.GLYPH_GRAY, value: 1 } as any],
+    sector: ESector.YELLOW,
+    price: 1,
+    income: EResource.ENERGY,
+    special: {
+      enableEffectRender: true,
+    },
+    alien: EAlienType.GLYPHIDS,
+    effects: [
+      e.SIGNAL_TOKEN(),
+      m.FULL_MISSION([
+        { req: e.SCAN(), reward: e.GLYPH_YELLOW() },
+        { req: e.SCAN(), reward: e.GLYPH_PURPLE() },
+      ]),
+    ],
+  },
+  {
+    id: 'ET.6',
+    name: 'sa.glyphids-title',
+    image: '/images/aliens/glyphids/ET.6.jpg',
+    freeAction: [{ type: EAlienIcon.GLYPH_PURPLE, value: 1 } as any],
+    sector: ESector.RED,
+    price: 1,
+    income: EResource.CREDIT,
+    special: {
+      enableEffectRender: true,
+    },
+    alien: EAlienType.GLYPHIDS,
+    effects: [
+      e.PUBLICITY(1, '', 'xxs'),
+      e.DATA(1, '', 'xxs'),
+
+      m.FULL_MISSION([
+        { req: e.LAUNCH(), reward: e.GLYPH_ORANGE() },
+        { req: e.LAUNCH(), reward: e.GLYPH_GREEN() },
+      ]),
+    ],
+  },
+  {
+    id: 'ET.7',
+    name: 'sa.glyphids-title',
+    image: '/images/aliens/glyphids/ET.7.jpg',
+    freeAction: [{ type: EAlienIcon.GLYPH_BLUE, value: 1 } as any],
+    sector: ESector.RED,
+    price: 1,
+    income: EResource.CARD,
+    special: {
+      enableEffectRender: true,
+    },
+    alien: EAlienType.GLYPHIDS,
+    effects: [
+      e.CARD_ANY(),
+      m.FULL_MISSION([
+        { req: e.TRACE_ANY(), reward: e.GLYPH_RED() },
+        { req: e.TRACE_ANY(), reward: e.GLYPH_GRAY() },
+        { req: e.TRACE_ANY(), reward: e.GLYPH_PURPLE() },
+      ]),
+    ],
+  },
+  {
+    id: 'ET.8',
+    name: 'sa.glyphids-title',
+    image: '/images/aliens/glyphids/ET.8.jpg',
+    freeAction: [{ type: EAlienIcon.GLYPH_YELLOW, value: 1 } as any],
+    sector: ESector.BLUE,
+    price: 1,
+    income: EResource.ENERGY,
+    special: {
+      enableEffectRender: true,
+    },
+    alien: EAlienType.GLYPHIDS,
+    effects: [
+      DESC('{glyph-green[sm]} {glyph-green[sm]} {glyph-red[sm]}'),
+      DESC('———————— OR ————————'),
+      DESC('{glyph-gray[sm]} {glyph-gray[sm]} {glyph-orange[sm]}'),
+    ],
+  },
+  {
+    id: 'ET.9',
+    name: 'sa.glyphids-title',
+    image: '/images/aliens/glyphids/ET.9.jpg',
+    freeAction: [{ type: EAlienIcon.GLYPH_GREEN, value: 1 } as any],
+    sector: ESector.YELLOW,
+    price: 1,
+    income: EResource.CREDIT,
+    special: {
+      enableEffectRender: true,
+    },
+    alien: EAlienType.GLYPHIDS,
+    effects: [
+      e.GLYPH_YELLOW(1, '', 'xs'),
+      e.GLYPH_PURPLE(1, '', 'xs'),
+      DESC('OR'),
+      e.GLYPH_BLUE(1, '', 'xs'),
+      e.GLYPH_PURPLE(1, '', 'xs'),
+      m.END_GAME('sa.desc.card_et_9'),
+    ],
+  },
+  {
+    id: 'ET.10',
+    name: 'sa.glyphids-title',
+    image: '/images/aliens/glyphids/ET.10.jpg',
+    freeAction: [{ type: EAlienIcon.GLYPH_RED, value: 1 } as any],
+    sector: ESector.BLUE,
+    price: 2,
+    income: EResource.CARD,
+    special: {
+      enableEffectRender: true,
+    },
+    alien: EAlienType.GLYPHIDS,
+    effects: [
+      e.LAUNCH(),
+      e.GLYPH_GREEN(),
+      m.QUICK_MISSION(DESC('sa.desc.card_et_10'), [
+        e.GLYPH_RED(),
+        e.GLYPH_BLUE(),
+      ]),
     ],
   },
   {

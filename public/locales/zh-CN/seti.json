@@ -361,6 +361,7 @@
   "Hall-effect Thruster": "霍尔效应推进器",
   "Exoplanet Survey": "系外行星巡天",
   "LOFAR Array": "LOFAR低频阵",
+  "———————— OR ————————": "———————— 或 ————————",
 
   "desc": {
     "card-10": "{orbit-or-land-count} 在海王星<br>和 {orbit-or-land-count} 在天王星<br>（包括它们的卫星）",
@@ -518,6 +519,9 @@
       "card_39_endgame": "每个你拥有 {orbit-count} 或 {land-count} 的行星<br>（不包括卫星）获得 {score-2}。",
       "card_41": "在黄色、红色、蓝色和黑色扇区各有一个信号",
       "card_42": "在每个扇区都有一个<br>信号或 {fulfill-sector-any}",
+      "card_et_1": "每个你拥有的数量最多的符文类型<br>获得 {score-3}。",
+      "card_et_9": "你最大的符文组合中每个符文<br>为你提供 {score-1}。",
+      "card_et_10": "{red-trace} {yellow-trace} {blue-trace} <br> 本物种标记",
       "card_et_11": "你在本物种标记的<br>每个 {red-trace} 获得 {score-2}。",
       "card_et_12": "你在本物种标记的<br>每个 {yellow-trace} 获得 {score-2}。",
       "card_et_13": "你在本物种标记的<br>每个 {blue-trace} 获得 {score-2}。",
