@@ -8,7 +8,6 @@
 // import {Size} from "@/types/Size";
 
 import { DESC, e, m } from '@/constant/effect';
-import { FAQ } from '@/data/faq';
 
 import { IBaseCard } from '@/types/BaseCard';
 import { CardSource } from '@/types/CardSource';
@@ -403,7 +402,7 @@ const _spaceAgencyCards: IBaseCard[] = [
     sector: ESector.BLUE,
     price: 2,
     income: EResource.ENERGY,
-    effects: [e.ORBIT(), DESC('sa.desc.card_30')],
+    effects: [e.ORBIT(), e.PUBLICITY(), DESC('sa.desc.card_30')],
   },
   {
     id: '31',
