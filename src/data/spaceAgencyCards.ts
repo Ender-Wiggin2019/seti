@@ -5,7 +5,8 @@
  * @LastEditTime: 2025-11-01 17:12:27
  * @Description:
  */
-// import {Size} from "@/types/Size";
+
+import { FAQ } from '@/data/faq';
 
 import { DESC, e, m } from '@/constant/effect';
 
