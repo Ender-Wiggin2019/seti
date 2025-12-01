@@ -1,8 +1,8 @@
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-02-26 23:56:31
- * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-10-30 01:36:45
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-12-01 16:29:41
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
@@ -16,10 +16,9 @@ import { EffectContainer } from '@/components/effect/EffectContainer';
 import CardRenderWrapper from '@/components/wrapper/AnimalWrapper';
 
 import { ESectorColorMap } from '@/constant/color';
-import { freeAction2Effect } from '@/utils/effect';
-
-import { EAlienMap, IBaseCard } from '@/types/BaseCard';
+import { IBaseCard } from '@/types/BaseCard';
 import { ESector } from '@/types/element';
+import { freeAction2Effect } from '@/utils/effect';
 
 interface CardRenderProps {
   card: IBaseCard;
@@ -30,7 +29,6 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
 
   const { src, row, col } = card.position || { src: '', row: 0, col: 0 };
   const cols = card.alien ? 5 : 10;
-  const alienCls = card.alien ? EAlienMap[card.alien] : '';
   const titleHeight = card?.special?.titleHeight || 95;
   const effectContainerHeight = 95 - titleHeight + 94;
   const freeActionEffects = useMemo(() => {
@@ -50,7 +48,6 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
         minHeight: '96px',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        // borderRadius: '12px',
         boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
         zIndex: -1,
       };

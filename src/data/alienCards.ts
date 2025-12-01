@@ -1,14 +1,11 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: <Alien Cards have some special rules> */
 /*
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
- * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-11-01 17:05:40
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-12-01 16:33:12
  * @Description:
  */
-// import {Size} from "@/types/Size";
-
-// import baseCards from '@/data/baseCards';
-// import { flavorTexts } from '@/data/flavorTexts';
 
 import { DESC, DESC_WITH_TYPE, e, m } from '@/constant/effect';
 import { FAQ } from '@/data/faq';
@@ -49,7 +46,7 @@ export const _alienCards: any[] = [
           e.TRACE_BLUE(1, '', 'desc'),
           DESC('for this species'),
         ],
-        [e.SCORE(3), e.PUBLICITY(2)]
+        [e.SCORE(3), e.PUBLICITY(2)],
       ),
     ],
     special: {
@@ -337,7 +334,7 @@ export const _alienCards: any[] = [
       m.QUICK_MISSION(
         [DESC('desc.et-10-req')],
         [DESC('desc.et-pickup-back-reward')],
-        'large'
+        'large',
       ),
     ],
   },
@@ -370,7 +367,7 @@ export const _alienCards: any[] = [
       DESC('desc.et-pickup', 'half'),
       m.QUICK_MISSION(
         [DESC('Deliver {sample} to Earth')],
-        [e.FULFILL_SAMPLE(), e.DATA(2)]
+        [e.FULFILL_SAMPLE(), e.DATA(2)],
       ),
     ],
   },
@@ -393,7 +390,7 @@ export const _alienCards: any[] = [
       m.QUICK_MISSION(
         [DESC('desc.et-8-req')],
         [DESC('desc.et-pickup-back-reward')],
-        'large'
+        'large',
       ),
     ],
   },
@@ -414,7 +411,7 @@ export const _alienCards: any[] = [
       DESC('desc.et-pickup', 'half'),
       m.QUICK_MISSION(
         [DESC('Deliver {sample} to Mars')],
-        [e.FULFILL_SAMPLE(), e.SCORE(2), e.CARD_ANY()]
+        [e.FULFILL_SAMPLE(), e.SCORE(2), e.CARD_ANY()],
       ),
     ],
   },
@@ -435,7 +432,7 @@ export const _alienCards: any[] = [
       DESC('desc.et-pickup', 'half'),
       m.QUICK_MISSION(
         [DESC('Deliver {sample} to Earth')],
-        [e.FULFILL_SAMPLE(), e.SCORE(3), e.CREDIT()]
+        [e.FULFILL_SAMPLE(), e.SCORE(3), e.CREDIT()],
       ),
     ],
   },
@@ -458,7 +455,7 @@ export const _alienCards: any[] = [
       m.QUICK_MISSION(
         [DESC('desc.et-9-req')],
         [DESC('desc.et-pickup-back-reward')],
-        'large'
+        'large',
       ),
     ],
   },
@@ -476,7 +473,7 @@ export const _alienCards: any[] = [
       DESC('desc.et-pickup-moon', 'half'),
       m.QUICK_MISSION(
         [DESC('Deliver {sample} to Earth')],
-        [e.FULFILL_SAMPLE(), e.SCORE(3), e.DATA(3)]
+        [e.FULFILL_SAMPLE(), e.SCORE(3), e.DATA(3)],
       ),
     ],
   },
@@ -497,7 +494,7 @@ export const _alienCards: any[] = [
       DESC('desc.et-pickup-moon', 'half'),
       m.QUICK_MISSION(
         [DESC('Deliver {sample} to Earth')],
-        [e.FULFILL_SAMPLE(), e.SCORE(6), e.PUBLICITY(2)]
+        [e.FULFILL_SAMPLE(), e.SCORE(6), e.PUBLICITY(2)],
       ),
     ],
   },
@@ -581,7 +578,7 @@ export const _alienCards: any[] = [
           e.TRACE_BLUE(1, '', 'desc'),
           DESC('for this species'),
         ],
-        [e.EXOFOSSIL()]
+        [e.EXOFOSSIL()],
       ),
     ],
   },

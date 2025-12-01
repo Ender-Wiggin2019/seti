@@ -1,5 +1,5 @@
 import { useTranslation } from 'next-i18next';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 /**
  * Hook para resolver problemas de hidratação com i18n

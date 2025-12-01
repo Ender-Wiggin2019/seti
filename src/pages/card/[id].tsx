@@ -7,29 +7,25 @@
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useRouter } from 'next/router';
-import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import React from 'react';
 
-import { BaseCard } from '@/components/cards/base_cards/BaseCard';
+import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
 
+import { IBaseCard } from '@/types/BaseCard';
 import { getAllCardIds, getCardById } from '@/utils/card';
 
-import { IBaseCard } from '@/types/BaseCard';
-import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
 type Props = {
   // Add custom props here
 };
 
 export default function Page(
-  _props: InferGetStaticPropsType<typeof getStaticProps>
+  _props: InferGetStaticPropsType<typeof getStaticProps>,
 ) {
   const router = useRouter();
 
   /* {router.query.id} 根据这个获得BaseCard*/
-  const { t } = useTranslation('common');
   if (typeof router.query.id !== 'string') return null;
   const card = getCardById(router.query.id);
 
@@ -58,7 +54,6 @@ export const getStaticProps: GetStaticProps<Props> = async ({ locale }) => ({
   },
 });
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 export async function getStaticPaths({ locales }) {
   const ids = getAllCardIds();
@@ -67,7 +62,7 @@ export async function getStaticPaths({ locales }) {
       locales.map((locale: string) => ({
         params: { id: id.toString() },
         locale, //locale should not be inside `params`
-      }))
+      })),
     )
     .flat(); // to avoid nested array
   return {

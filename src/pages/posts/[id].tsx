@@ -2,15 +2,13 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-04-14 17:16:03
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-05-28 16:20:13
+ * @LastEditTime: 2025-12-01 16:48:48
  * @Description:
  */
 import fs from 'fs';
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import path from 'path';
-import React from 'react';
-
 // make sure to import your TextFilter
 import { MarkdownContainer } from '@/components/MarkdownContainer';
 
@@ -22,7 +20,7 @@ type Props = {
 };
 
 export default function HomePage(
-  _props: InferGetStaticPropsType<typeof getStaticProps>
+  _props: InferGetStaticPropsType<typeof getStaticProps>,
 ) {
   const content = _props.content;
   const postItem = Posts.find((p) => p.title === _props.title);
@@ -50,7 +48,7 @@ export const getStaticProps: GetStaticProps<Props> = async (props) => {
     process.cwd(),
     'src/posts',
     folderPath,
-    `${postItem?.path}.md`
+    `${postItem?.path}.md`,
   );
   const fileContents = fs.readFileSync(filePath, 'utf8');
 
@@ -74,7 +72,7 @@ export async function getStaticPaths({ locales }) {
     locales.map((locale: string) => ({
       params: { id: post.path },
       locale, //locale should not be inside `params`
-    }))
+    })),
   ).flat(); // to avoid nested array
   return {
     paths,

@@ -3,17 +3,14 @@ import React, { useCallback, useEffect } from 'react';
 
 import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
 import CardList from '@/components/cards/shared/CardList';
-
-import { filterCardsByCardTypes, filterCardsByIcons } from '@/utils/card';
-import { filterText } from '@/utils/filter';
-import { sortCards } from '@/utils/sort';
-
-import { useBaseCardData } from './useBaseCardData';
-
 import { EAlienType, IBaseCard } from '@/types/BaseCard';
 import { CardSource } from '@/types/CardSource';
 import { ECardType, EResource, ESector, TIcon } from '@/types/element';
 import { SortOrder } from '@/types/Order';
+import { filterCardsByCardTypes, filterCardsByIcons } from '@/utils/card';
+import { filterText } from '@/utils/filter';
+import { sortCards } from '@/utils/sort';
+import { useBaseCardData } from './useBaseCardData';
 
 interface BaseCardListProps {
   selectedSectors?: ESector[];
@@ -63,7 +60,7 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
       selectedCardSources: CardSource[] = [],
       textFilter = '',
       credit: number[] = [0],
-      maxNum?: number
+      maxNum?: number,
     ) => {
       let res = cards;
 
@@ -80,7 +77,7 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
       // Filter by card sources
       if (selectedCardSources.length > 0) {
         res = res.filter(
-          (card) => card.source && selectedCardSources.includes(card.source)
+          (card) => card.source && selectedCardSources.includes(card.source),
         );
       }
 
@@ -90,22 +87,22 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
           (card) =>
             card.freeAction &&
             card.freeAction.some((action) =>
-              selectedFreeActions.includes(action.type)
-            )
+              selectedFreeActions.includes(action.type),
+            ),
         );
       }
 
       // Filter by sectors
       if (selectedSectors && selectedSectors.length > 0) {
         res = res.filter(
-          (card) => card.sector && selectedSectors.includes(card.sector)
+          (card) => card.sector && selectedSectors.includes(card.sector),
         );
       }
 
       // Filter by card sources
       if (selectedIncomes && selectedIncomes.length > 0) {
         res = res.filter(
-          (card) => card.income && selectedIncomes.includes(card.income)
+          (card) => card.income && selectedIncomes.includes(card.income),
         );
       }
 
@@ -117,7 +114,7 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
       // Filter by card sources
       if (selectedAliens.length > 0 && selectedAliens.length < 5) {
         res = res.filter(
-          (card) => card.alien && selectedAliens.includes(card.alien)
+          (card) => card.alien && selectedAliens.includes(card.alien),
         );
       }
 
@@ -130,7 +127,7 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
         (card) =>
           credit.length === 0 ||
           credit.includes(5) ||
-          credit.includes(card.price)
+          credit.includes(card.price),
       );
 
       return {
@@ -140,7 +137,7 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
         cards: res,
       };
     },
-    [t]
+    [t],
   );
 
   let {
@@ -158,7 +155,7 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
     selectedCardSources,
     textFilter,
     credit,
-    maxNum
+    maxNum,
   );
 
   useEffect(() => {

@@ -23,14 +23,14 @@ export const CardSourceFilter: React.FC<CardSourceFilterProps> = ({
 }) => {
   const { t } = useTranslation('common');
   const [selectedCardSources, setSelectedCardSources] = useState<CardSource[]>(
-    []
+    [],
   );
 
   const toggleCardSource = (cardSource: CardSource) => {
     setSelectedCardSources((prev) =>
       prev.includes(cardSource)
         ? prev.filter((t) => t !== cardSource)
-        : [...prev, cardSource]
+        : [...prev, cardSource],
     );
   };
 

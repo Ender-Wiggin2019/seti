@@ -26,6 +26,7 @@ import {
   TIcon,
   TSize,
 } from '@/types/element';
+
 const _base =
   (type: TIcon) =>
   (value = 1, desc = '', size?: TSize): IBaseEffect => ({
@@ -204,7 +205,7 @@ export interface IFlattenMissionItem {
 const QUICK_MISSION = (
   req: IFlattenMissionItem['req'],
   reward: IFlattenMissionItem['reward'],
-  rewardSize?: 'normal' | 'large'
+  rewardSize?: 'normal' | 'large',
 ): IMissionEffect => ({
   effectType: EEffectType.MISSION_QUICK,
   missions: [
@@ -231,7 +232,7 @@ const flatMission2MissionItem = (missions: IFlattenMissionItem[]) => {
 
 const FULL_MISSION = (
   missions: IFlattenMissionItem[],
-  desc = ''
+  desc = '',
 ): IMissionEffect => ({
   effectType: EEffectType.MISSION_FULL,
   missions: flatMission2MissionItem(missions),
@@ -242,7 +243,7 @@ const END_GAME = (
   desc: string,
   score?: number,
   per?: IBaseEffect,
-  size?: TSize
+  size?: TSize,
 ): IEndGameEffect => ({
   effectType: EEffectType.END_GAME,
   score,
@@ -259,7 +260,7 @@ export const m = {
 
 export const DESC = (
   desc: string,
-  width: 'full' | 'half' = 'full'
+  width: 'full' | 'half' = 'full',
 ): ICustomizedEffect => ({
   effectType: EEffectType.CUSTOMIZED,
   desc,
@@ -271,7 +272,7 @@ export const DESC_WITH_TYPE = (
   type: TIcon,
   desc: string,
   size?: TSize,
-  width: 'full' | 'half' = 'full'
+  width: 'full' | 'half' = 'full',
 ): ICustomizedEffect => ({
   effectType: EEffectType.CUSTOMIZED,
   type,

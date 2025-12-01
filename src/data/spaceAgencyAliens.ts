@@ -1,16 +1,14 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/** biome-ignore-all lint/suspicious/noExplicitAny: <> */
 /*
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
- * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-11-04 22:30:30
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-12-01 16:33:54
  * @Description:
  */
-// import {Size} from "@/types/Size";
-
-import { FAQ } from '@/data/faq';
 
 import { DESC, e, m } from '@/constant/effect';
+import { FAQ } from '@/data/faq';
 
 import { EAlienType, IBaseCard } from '@/types/BaseCard';
 import { CardSource } from '@/types/CardSource';
@@ -444,5 +442,4 @@ export const spaceAgencyAliens: IBaseCard[] = _spaceAgencyAliens.map((card) => {
   };
 });
 
-console.log('🎸 [test] - spaceAgencyAliens:', spaceAgencyAliens);
 export default spaceAgencyAliens;

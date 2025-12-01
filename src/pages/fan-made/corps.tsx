@@ -1,23 +1,27 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2025-09-15 15:14:50
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-12-01 16:42:45
+ * @Description:
+ */
 /* eslint-disable @next/next/no-img-element */
 
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import React from 'react';
-
-import { fanMadeCorps } from '@/data/fanMadeCorps';
-
 import ModelCard from '@/components/corp/ModelCard';
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
 import { Container } from '@/components/ui/Container';
+import { fanMadeCorps } from '@/data/fanMadeCorps';
 
 type Props = {
   // Add custom props here
 };
 
 export default function HomePage(
-  _props: InferGetStaticPropsType<typeof getStaticProps>
+  _props: InferGetStaticPropsType<typeof getStaticProps>,
 ) {
   const { t } = useTranslation('common');
 

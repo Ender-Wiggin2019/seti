@@ -7,21 +7,10 @@
  */
 
 import { useTranslation } from 'next-i18next';
-import React, { useMemo, useState } from 'react';
-
-import { EffectsGenerator } from '@/components/form/EffectsGenerator';
-
-import { DESC, m } from '@/constant/effect';
-
-import {
-  EEffectType,
-  Effect,
-  IBaseEffect,
-  ICustomizedEffect,
-  IEndGameEffect,
-  IMissionEffect,
-} from '@/types/effect';
+import { useMemo } from 'react';
 import { DescInput } from '@/components/form/DescInput';
+import { DESC } from '@/constant/effect';
+import { ICustomizedEffect } from '@/types/effect';
 
 type Props = {
   desc: string | null;
@@ -29,10 +18,8 @@ type Props = {
 };
 export const EndgameSelector = ({ desc, onChange }: Props) => {
   const { t } = useTranslation('common');
-  // const [req, setReq] = useState(endgameEffect?.desc);
 
   const handleChange = (effect: ICustomizedEffect) => {
-    // setReq(effect?.desc);
     onChange?.(effect?.desc);
   };
 

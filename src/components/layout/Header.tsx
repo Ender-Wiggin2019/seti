@@ -3,12 +3,10 @@
 import { motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import React from 'react';
-
-import { clamp } from '@/lib/math';
-import { cn } from '@/lib/utils';
-
 import LocaleSelector from '@/components/layout/LocaleSelector';
 import { Container } from '@/components/ui/Container';
+import { clamp } from '@/lib/math';
+import { cn } from '@/lib/utils';
 
 import { NavigationBar } from './NavigationBar';
 
@@ -40,7 +38,7 @@ export function Header() {
       const scrollY = clamp(
         window.scrollY,
         0,
-        document.body.scrollHeight - window.innerHeight
+        document.body.scrollHeight - window.innerHeight,
       );
 
       if (isInitial.current) {
@@ -95,7 +93,7 @@ export function Header() {
           'mb-var(--header-mb mb-[0px])flex pointer-events-none relative z-50 flex-col',
           isHomePage
             ? 'h-[var(--header-heighth-180px)]'
-            : 'h-[var(--header-heighth-64px)]'
+            : 'h-[var(--header-heighth-64px)]',
         )}
         layout
         layoutRoot

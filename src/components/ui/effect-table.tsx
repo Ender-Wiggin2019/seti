@@ -5,8 +5,9 @@
  * @LastEditTime: 2025-04-16 00:25:22
  * @Description:
  */
-import { useTranslation } from 'next-i18next';
 
+import { CopyIcon } from 'lucide-react';
+import { useTranslation } from 'next-i18next';
 import { DescRender } from '@/components/effect/DescRender';
 import {
   Table,
@@ -17,10 +18,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-
 import { e } from '@/constant/effect';
 import { getIconItem } from '@/constant/icons';
-import { CopyIcon } from 'lucide-react';
 
 const effects = Object.values(e).map((effectFn) => {
   const effect = effectFn();

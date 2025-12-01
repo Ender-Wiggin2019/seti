@@ -2,25 +2,24 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-11 23:41:00
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-21 00:13:23
+ * @LastEditTime: 2025-12-01 16:49:31
  * @Description:
  */
+/** biome-ignore-all lint/correctness/noUnusedVariables: <> */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import React from 'react';
-
+import { CardRender } from '@/components/form/CardRender';
 import { alienCards } from '@/data/alienCards';
 
-import { CardRender } from '@/components/form/CardRender';
-
 import { IBaseCard } from '@/types/BaseCard';
+
 type Props = {
   // Add custom props here
 };
 
 export default function HomePage(
-  _props: InferGetStaticPropsType<typeof getStaticProps>
+  _props: InferGetStaticPropsType<typeof getStaticProps>,
 ) {
   const { t } = useTranslation('common');
   // const cards = sortCards([...baseCards, ...alienCards]).slice(105);

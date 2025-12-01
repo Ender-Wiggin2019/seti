@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-28 12:05:53
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-06-04 16:37:44
+ * @LastEditTime: 2025-12-01 16:27:18
  * @Description:
  */
 
@@ -11,18 +11,13 @@ interface PreviewBaseCardProps {
   onlyId?: boolean;
 }
 
-import { cn } from '@/lib/utils';
-
+import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
 import { alienCards } from '@/data/alienCards';
 import baseCards from '@/data/baseCards';
-
-import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
-
+import { cn } from '@/lib/utils';
 import { IBaseCard } from '@/types/BaseCard';
-import { useTranslation } from 'next-i18next';
 
 export const MarkCard: React.FC<PreviewBaseCardProps> = ({ ids, onlyId }) => {
-  const { t } = useTranslation('common');
   const _cards = [...baseCards, ...alienCards];
   const cards: IBaseCard[] = [];
   ids.forEach((id) => {
@@ -44,7 +39,7 @@ export const MarkCard: React.FC<PreviewBaseCardProps> = ({ ids, onlyId }) => {
       <div
         className={cn(
           'flex justify-center rounded-md gap-8 md:gap-8 scale-[0.7] md:scale-100',
-          { 'scale-[0.55] gap-4': cards.length >= 4 }
+          { 'scale-[0.55] gap-4': cards.length >= 4 },
         )}
       >
         {cards.map((card) => (

@@ -31,7 +31,7 @@ describe('extractDesc should work correctly', () => {
 
   it('should extract multiple components', () => {
     const result = extractDesc(
-      '{any-card}aa bbb {publicity-2-bb}{tech-any-1}c ccc<br> dd.'
+      '{any-card}aa bbb {publicity-2-bb}{tech-any-1}c ccc<br> dd.',
     );
     expect(result).toEqual([
       [

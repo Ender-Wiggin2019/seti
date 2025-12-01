@@ -19,10 +19,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-
-import { BaseCard } from './BaseCard';
-
 import { IBaseCard } from '@/types/BaseCard';
+import { BaseCard } from './BaseCard';
 
 interface PreviewBaseCardProps {
   card: IBaseCard;

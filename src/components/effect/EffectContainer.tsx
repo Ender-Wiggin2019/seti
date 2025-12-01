@@ -6,10 +6,8 @@
  * @Description:
  */
 import React from 'react';
-
-import { cn } from '@/lib/utils';
-
 import { EffectFactory } from '@/components/effect/Effect';
+import { cn } from '@/lib/utils';
 
 import { EEffectType, Effect } from '@/types/effect';
 
@@ -29,10 +27,10 @@ export const EffectContainer: React.FC<Props> = ({
     EEffectType.MISSION_QUICK,
   ];
   const fullWidthEffects = effects.filter((effect) =>
-    fullWidthEffectTypes.includes(effect.effectType)
+    fullWidthEffectTypes.includes(effect.effectType),
   );
   const normalEffects = effects.filter(
-    (effect) => !fullWidthEffectTypes.includes(effect.effectType)
+    (effect) => !fullWidthEffectTypes.includes(effect.effectType),
   );
   return (
     <div

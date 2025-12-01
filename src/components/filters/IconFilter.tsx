@@ -28,7 +28,7 @@ export const IconFilter = <T extends TIcon>({
     setSelectedOptions((prev) =>
       prev.includes(option)
         ? prev.filter((t) => t !== option)
-        : [...prev, option]
+        : [...prev, option],
     );
   };
 

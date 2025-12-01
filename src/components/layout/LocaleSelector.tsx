@@ -36,7 +36,7 @@ const LocaleSelector: React.FC<{
 
       return router.push(path, path, { locale });
     },
-    [router]
+    [router],
   );
 
   const languageChanged = useCallback(
@@ -50,7 +50,7 @@ const LocaleSelector: React.FC<{
 
       await switchToLocale(locale);
     },
-    [languageNames, onChange, switchToLocale]
+    [languageNames, onChange, switchToLocale],
   );
 
   return (

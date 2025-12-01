@@ -25,7 +25,7 @@ export const SectorFilter: React.FC<SectorFilterProps> = ({
     setSelectedSectors((prev) =>
       prev.includes(sector)
         ? prev.filter((t) => t !== sector)
-        : [...prev, sector]
+        : [...prev, sector],
     );
   };
 

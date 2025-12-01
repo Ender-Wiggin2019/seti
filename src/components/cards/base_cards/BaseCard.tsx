@@ -2,14 +2,12 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-02-26 23:56:31
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-04 17:26:55
+ * @LastEditTime: 2025-12-01 16:26:41
  * @Description:
  */
 import { useTranslation } from 'next-i18next';
 import React from 'react';
 
-import { FlavorText } from '@/components/cards/base_cards/FlavorText';
-import { EffectContainer } from '@/components/effect/EffectContainer';
 import BaseCardWrapper from '@/components/wrapper/AnimalWrapper';
 
 import { EAlienMap, IBaseCard } from '@/types/BaseCard';

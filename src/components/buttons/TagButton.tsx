@@ -7,14 +7,10 @@
  */
 // TagButton.tsx
 import * as React from 'react';
-
-import { cn } from '@/lib/utils';
-
 import TagComponent from '@/components/icons/Tag';
-
-import { getButtonIconShape } from '@/utils/icon';
-
+import { cn } from '@/lib/utils';
 import { TIcon } from '@/types/element';
+import { getButtonIconShape } from '@/utils/icon';
 
 type TagButtonProps = {
   isLoading?: boolean;
@@ -27,7 +23,7 @@ type TagButtonProps = {
 const TagButton = React.forwardRef<HTMLButtonElement, TagButtonProps>(
   (
     { className, isLoading, tag, brightMode, selected, onTagClick, ...rest },
-    ref
+    ref,
   ) => {
     const shape = getButtonIconShape(tag);
     const isOriginal = shape === 'normal' || brightMode;
@@ -44,14 +40,14 @@ const TagButton = React.forwardRef<HTMLButtonElement, TagButtonProps>(
             'ring-0 border-none brightness-[0.3] duration-200 scale-125',
           selected && 'bg-gradient-radial from-yellow-200 to-yellow-100',
           isOriginal && selected && 'brightness-100',
-          !selected && ''
+          !selected && '',
         )}
         {...rest}
       >
         <TagComponent type={tag} shape={shape} />
       </button>
     );
-  }
+  },
 );
 
 export default TagButton;

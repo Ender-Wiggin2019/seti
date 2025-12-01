@@ -55,7 +55,7 @@ export const Tooltip = (props: TooltipProps & PopoverProps) => {
 };
 
 export const TooltipTrigger = (
-  props: TooltipTriggerProps & PopoverTriggerProps
+  props: TooltipTriggerProps & PopoverTriggerProps,
 ) => {
   const isTouch = useTouch();
 
@@ -67,7 +67,7 @@ export const TooltipTrigger = (
 };
 
 export const TooltipContent = (
-  props: TooltipContentProps & PopoverContentProps
+  props: TooltipContentProps & PopoverContentProps,
 ) => {
   const isTouch = useTouch();
 

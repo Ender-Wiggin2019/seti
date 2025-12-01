@@ -7,15 +7,11 @@
  */
 import { useTranslation } from 'next-i18next';
 import React from 'react';
-
-import { cn } from '@/lib/utils';
-
 import { DescRender } from '@/components/effect/DescRender';
 import { EffectFactory } from '@/components/effect/Effect';
-
-import { calculateSize } from '@/utils/desc';
-
+import { cn } from '@/lib/utils';
 import { EEffectType, IMissionEffect } from '@/types/effect';
+import { calculateSize } from '@/utils/desc';
 
 interface missionProps {
   effect: IMissionEffect;
@@ -43,7 +39,7 @@ export const Mission: React.FC<missionProps> = ({ effect }) => {
           'card-quick-mission-container flex flex-1 flex-row flex-wrap justify-center items-center',
           {
             'card-quick-mission-container-large-reward': rewardSize === 'large',
-          }
+          },
         )}
       >
         <div
@@ -64,7 +60,7 @@ export const Mission: React.FC<missionProps> = ({ effect }) => {
           className={cn(
             'reward-container flex justify-center items-center flex-1 gap-2',
             { 'gap-[2px]': rewardEffects.length >= 3 },
-            { 'reward-container-large': rewardSize === 'large' }
+            { 'reward-container-large': rewardSize === 'large' },
           )}
         >
           {rewardEffects.map((rewardEffect, index) => {

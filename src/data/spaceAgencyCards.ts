@@ -1,14 +1,14 @@
 /*
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
- * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-11-01 17:12:27
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-12-01 16:43:47
  * @Description:
  */
-
-import { FAQ } from '@/data/faq';
+/** biome-ignore-all lint/suspicious/noExplicitAny: <> */
 
 import { DESC, e, m } from '@/constant/effect';
+import { FAQ } from '@/data/faq';
 
 import { IBaseCard } from '@/types/BaseCard';
 import { CardSource } from '@/types/CardSource';
@@ -260,7 +260,7 @@ const _spaceAgencyCards: IBaseCard[] = [
             reward: e.ENERGY(),
           } as any,
         ],
-        'sa.desc.card_21'
+        'sa.desc.card_21',
       ),
     ],
   },
@@ -441,7 +441,7 @@ const _spaceAgencyCards: IBaseCard[] = [
             reward: e.LAUNCH(),
           } as any,
         ],
-        'sa.desc.card_33'
+        'sa.desc.card_33',
       ),
     ],
   },

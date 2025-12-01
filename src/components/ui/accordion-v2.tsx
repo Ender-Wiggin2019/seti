@@ -35,7 +35,7 @@ export const AccordionV2: React.FC<AccordionV2Props> = ({
       <motion.button
         className={cn(
           'group mt-1 flex w-40 items-center justify-between space-x-2 rounded-full bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-lg shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20',
-          className
+          className,
         )}
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsOpen(!isOpen)}

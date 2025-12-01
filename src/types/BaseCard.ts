@@ -93,5 +93,5 @@ export const EAlienMap: Record<EAlienType, string> = {
 };
 
 export const ALL_ALIENS: EAlienType[] = Object.values(EAlienType).filter(
-  (v): v is EAlienType => typeof v === 'number'
+  (v): v is EAlienType => typeof v === 'number',
 );

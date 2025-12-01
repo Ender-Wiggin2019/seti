@@ -5,12 +5,12 @@
  * @LastEditTime: 2025-05-18 21:13:48
  * @Description:
  */
+
+import { Flame } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslation } from 'next-i18next';
-
-import { IPostItem, IPostTag } from '@/types/post';
 import { Badge } from '@/components/ui/badge';
-import { Flame } from 'lucide-react';
+import { IPostItem, IPostTag } from '@/types/post';
 
 export const PostItem = ({
   title,

@@ -1,10 +1,11 @@
 /*
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
- * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-11-01 17:05:06
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-12-01 16:41:35
  * @Description:
  */
+/** biome-ignore-all lint/suspicious/noExplicitAny: <> */
 // import {Size} from "@/types/Size";
 
 import { d } from '@/constant/desc';
@@ -38,7 +39,7 @@ const _baseCards: IBaseCard[] = [
       DESC('at 61 Virginis.'),
       m.QUICK_MISSION(
         [e.FULFILL_SECTOR_YELLOW(2)],
-        [e.SCORE(4), e.PUBLICITY()]
+        [e.SCORE(4), e.PUBLICITY()],
       ),
     ],
   },
@@ -57,7 +58,7 @@ const _baseCards: IBaseCard[] = [
           { reward: e.DATA(1) } as any,
           { reward: e.MOVE(1) } as any,
         ],
-        'desc.card-128-req'
+        'desc.card-128-req',
       ),
     ],
   },
@@ -169,7 +170,7 @@ const _baseCards: IBaseCard[] = [
           { reward: e.DATA(1) } as any,
           { reward: e.DATA(1) } as any,
         ],
-        'desc.card-129-req'
+        'desc.card-129-req',
       ),
     ],
   },
@@ -233,7 +234,7 @@ const _baseCards: IBaseCard[] = [
         '{score-3} for each {fulfill-sector-red}}',
         3,
         e.FULFILL_SECTOR_BLACK(),
-        'sm'
+        'sm',
       ),
     ],
   },
@@ -402,7 +403,7 @@ const _baseCards: IBaseCard[] = [
           { req: e.SIGNAL_RED(1), reward: e.MOVE(1) },
           { req: e.SIGNAL_BLUE(1), reward: e.MOVE(1) },
         ],
-        'desc.card-116'
+        'desc.card-116',
       ),
     ],
   },
@@ -421,7 +422,7 @@ const _baseCards: IBaseCard[] = [
           { req: e.DATA(), reward: e.DATA() },
           { req: e.MOVE(), reward: e.MOVE() },
         ],
-        'desc.card-138'
+        'desc.card-138',
       ),
     ],
   },
@@ -464,7 +465,7 @@ const _baseCards: IBaseCard[] = [
     effects: [
       e.LAND(),
       DESC(
-        'You may land on a space that is already occupied and still get the covered reward.'
+        'You may land on a space that is already occupied and still get the covered reward.',
       ),
     ],
   },
@@ -662,7 +663,7 @@ const _baseCards: IBaseCard[] = [
           { req: DESC('Venus'), reward: e.PUBLICITY(1) },
           { req: DESC('Jupiter'), reward: e.DATA(1) },
         ],
-        'When you visit:'
+        'When you visit:',
       ),
     ],
   },
@@ -916,7 +917,7 @@ const _baseCards: IBaseCard[] = [
       e.SIGNAL_ANY(2, 'in the sector with Jupiter.'),
       m.QUICK_MISSION(
         e.ORBIT_OR_LAND_COUNT(1, 'at Jupiter (incl. moons)'),
-        e.SCORE(4)
+        e.SCORE(4),
       ),
     ],
   },
@@ -951,7 +952,7 @@ const _baseCards: IBaseCard[] = [
         '{score-3} for each {fulfill-sector-yellow}}',
         3,
         e.FULFILL_SECTOR_BLACK(),
-        'sm'
+        'sm',
       ),
     ],
   },
@@ -1008,7 +1009,7 @@ const _baseCards: IBaseCard[] = [
           e.TRACE_BLUE(1, '', 'desc-mini'),
           DESC('for a single species'),
         ],
-        e.TRACE_ANY(1, 'for that species')
+        e.TRACE_ANY(1, 'for that species'),
       ),
     ],
   },
@@ -1031,7 +1032,7 @@ const _baseCards: IBaseCard[] = [
           DESC('Have at least'),
           DESC_WITH_TYPE(EResource.PUBLICITY, '{publicity-8}'),
         ],
-        [e.SCORE(3), e.CARD_ANY()]
+        [e.SCORE(3), e.CARD_ANY()],
       ),
     ],
   },
@@ -1073,7 +1074,7 @@ const _baseCards: IBaseCard[] = [
           { req: DESC('Mercury'), reward: e.CARD() },
           { req: DESC('Venus'), reward: e.PUBLICITY() },
         ],
-        'When you visit:'
+        'When you visit:',
       ),
     ],
   },
@@ -1093,7 +1094,7 @@ const _baseCards: IBaseCard[] = [
       e.SIGNAL_ANY(2, 'in the sector with Mars.'),
       m.QUICK_MISSION(
         e.ORBIT_OR_LAND_COUNT(1, 'at Mars (incl. moons)'),
-        e.SCORE(4)
+        e.SCORE(4),
       ),
     ],
   },
@@ -1413,7 +1414,7 @@ const _baseCards: IBaseCard[] = [
           { req: DESC('Jupiter'), reward: e.DATA(1) },
           { req: DESC('Saturn'), reward: e.SCORE(4) },
         ],
-        'When you visit:'
+        'When you visit:',
       ),
     ],
   },
@@ -1536,7 +1537,7 @@ const _baseCards: IBaseCard[] = [
         '{score-3} for each {fulfill-sector-blue}}',
         3,
         e.FULFILL_SECTOR_BLACK(),
-        'sm'
+        'sm',
       ),
     ],
   },
@@ -1644,7 +1645,7 @@ const _baseCards: IBaseCard[] = [
       e.SIGNAL_ANY(2, 'in the sector with Saturn.'),
       m.QUICK_MISSION(
         e.ORBIT_OR_LAND_COUNT(1, 'at Saturn (incl. moons)'),
-        e.SCORE(4)
+        e.SCORE(4),
       ),
     ],
   },
@@ -1785,7 +1786,7 @@ const _baseCards: IBaseCard[] = [
       e.MOVE(),
       m.QUICK_MISSION(
         [e.LAND_COUNT(3, 'Do not count moons', 'desc-mini')],
-        e.CREDIT()
+        e.CREDIT(),
       ),
     ],
   },
@@ -1803,7 +1804,7 @@ const _baseCards: IBaseCard[] = [
       e.PUBLICITY(2),
       m.QUICK_MISSION(
         [DESC('Have 5'), e.ORBIT_OR_LAND_COUNT(1)],
-        [e.SCORE(3), e.CREDIT()]
+        [e.SCORE(3), e.CREDIT()],
       ),
     ],
   },
@@ -1851,7 +1852,7 @@ const _baseCards: IBaseCard[] = [
           { req: e.CREDIT(2), reward: e.CARD_ANY() },
           { req: e.CREDIT(3), reward: e.PUBLICITY(2) },
         ],
-        'desc.card-106'
+        'desc.card-106',
       ),
     ],
   },
@@ -1998,7 +1999,7 @@ const _baseCards: IBaseCard[] = [
         '{score-3} for each {fulfill-sector-black}',
         3,
         e.FULFILL_SECTOR_BLACK(),
-        'sm'
+        'sm',
       ),
     ],
   },
@@ -2100,7 +2101,7 @@ const _baseCards: IBaseCard[] = [
           { req: DESC('Uranus'), reward: e.ENERGY(1) },
           { req: DESC('Neptune'), reward: e.CREDIT(1) },
         ],
-        'When you visit:'
+        'When you visit:',
       ),
     ],
   },
@@ -2118,7 +2119,7 @@ const _baseCards: IBaseCard[] = [
       e.TECH_SCAN(),
       m.QUICK_MISSION(
         [e.FULFILL_SECTOR_ANY(2, 'in the same sector')],
-        e.SCORE(9)
+        e.SCORE(9),
       ),
     ],
     special: {
@@ -2204,7 +2205,7 @@ const _baseCards: IBaseCard[] = [
             reward: e.SCORE(5),
           } as any,
         ],
-        'desc.card-se-en-02'
+        'desc.card-se-en-02',
       ),
     ],
   },

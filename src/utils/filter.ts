@@ -11,7 +11,7 @@ import { EEffectType, Effect } from '@/types/effect';
 export const filterText = (
   _text: string,
   cards: IBaseCard[],
-  t: (text: string) => string
+  t: (text: string) => string,
 ) => {
   const text = _text.toLowerCase().trim();
   if (!text) return cards;
@@ -23,13 +23,13 @@ export const filterText = (
       t(card.flavorText || '')
         ?.toLowerCase()
         .includes(text) ||
-      effectsHasText(card.effects, text, t)
+      effectsHasText(card.effects, text, t),
   );
 };
 const effectsHasText = (
   effects: Effect[] | undefined,
   text: string,
-  t: (text: string) => string
+  t: (text: string) => string,
 ) => {
   if (!effects) return false;
   // const effectsStr = JSON.stringify(serializeEffects(effects, t)).toLowerCase();
@@ -42,7 +42,7 @@ const effectsHasText = (
 
 const serializeEffects = (
   effects: Effect | Effect[],
-  t: (text: string) => string
+  t: (text: string) => string,
 ) => {
   if (Array.isArray(effects)) {
     return effects.map((effect) => serializeEffect(effect, t));
@@ -52,6 +52,7 @@ const serializeEffects = (
 };
 
 const serializeEffect = (effect: Effect, t: (text: string) => string) => {
+  // biome-ignore lint/suspicious/noExplicitAny: <>
   const effectObj: any = {};
   if (
     effect.effectType === EEffectType.BASE ||
@@ -79,7 +80,7 @@ const serializeEffect = (effect: Effect, t: (text: string) => string) => {
 
 const effects2String = (
   effects: Effect | Effect[],
-  t: (text: string) => string
+  t: (text: string) => string,
 ): string => {
   if (Array.isArray(effects)) {
     const arr = effects.map((effect) => effect2String(effect, t));

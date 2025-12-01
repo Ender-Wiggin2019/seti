@@ -6,20 +6,16 @@
  * @Description:
  */
 import React from 'react';
-
-import { cn } from '@/lib/utils';
-
 import { EffectFactory } from '@/components/effect/Effect';
-
+import { cn } from '@/lib/utils';
+import { TSize } from '@/types/element';
+import { IRenderNode } from '@/types/Icon';
 import {
   extractDesc,
   getDescIconSize,
   getDescTextSize,
   renderNode2Effect,
 } from '@/utils/desc';
-
-import { TSize } from '@/types/element';
-import { IRenderNode } from '@/types/Icon';
 
 interface IconProps {
   desc: string;
@@ -51,7 +47,7 @@ export const DescRender: React.FC<IconProps> = ({
             key={lineIndex}
             className={cn(
               'w-full flex flex-row flex-wrap justify-center items-center',
-              { 'justify-start': width === 'half' }
+              { 'justify-start': width === 'half' },
             )}
           >
             {renderNodeLine.map((renderNode, index) => {
@@ -69,7 +65,7 @@ export const DescRender: React.FC<IconProps> = ({
                   <span
                     className={cn(
                       `inline-block text-desc-${descTextSize} text-center`,
-                      { 'text-start': width === 'half' }
+                      { 'text-start': width === 'half' },
                       // { 'max-w-32': width !== 'half' }
                     )}
                     key={String(lineIndex) + index}

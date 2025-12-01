@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-12 11:12:08
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-08 00:13:55
+ * @LastEditTime: 2025-12-01 16:40:23
  * @Description:
  */
 import { e } from '@/constant/effect';
@@ -21,19 +21,19 @@ import { EResource, TIcon } from '@/types/element';
 export const updateEffectArray = (
   prevEffects: Effect[],
   newEffect: Effect,
-  action?: 'del'
+  action?: 'del',
 ): Effect[] => {
   // base, add value
   if (newEffect.effectType === EEffectType.BASE) {
     const existingEffectIndex = prevEffects.findIndex(
-      (e) => e.effectType === EEffectType.BASE && e.type === newEffect.type
+      (e) => e.effectType === EEffectType.BASE && e.type === newEffect.type,
     );
 
     if (existingEffectIndex !== -1) {
       return prevEffects.map((e, index) =>
         index === existingEffectIndex
           ? { ...e, value: ((e as IBaseEffect).value || 1) + 1 }
-          : e
+          : e,
       );
     }
   }
@@ -42,16 +42,16 @@ export const updateEffectArray = (
   if (newEffect.effectType === EEffectType.CUSTOMIZED) {
     if (action === 'del') {
       return prevEffects.filter(
-        (e) => (e as ICustomizedEffect)?.id !== newEffect.id
+        (e) => (e as ICustomizedEffect)?.id !== newEffect.id,
       );
     }
     const existingEffectIndex = prevEffects.findIndex(
-      (e) => e.effectType === EEffectType.CUSTOMIZED && e.id === newEffect.id
+      (e) => e.effectType === EEffectType.CUSTOMIZED && e.id === newEffect.id,
     );
 
     if (existingEffectIndex !== -1) {
       return prevEffects.map((e, index) =>
-        index === existingEffectIndex ? { ...e, desc: newEffect.desc } : e
+        index === existingEffectIndex ? { ...e, desc: newEffect.desc } : e,
       );
     }
   }
@@ -62,7 +62,7 @@ export const updateEffectArray = (
 export const updateSpecialEffectArray = (
   prevEffects: Effect[],
   newEffect: IMissionEffect | IEndGameEffect,
-  effectType: EEffectType
+  effectType: EEffectType,
 ): Effect[] => {
   // base, add value
   const idx = prevEffects.findIndex((e) => e.effectType === effectType);
@@ -85,7 +85,7 @@ export const getEffectByIconType = (icon: TIcon) => {
 };
 export const freeAction2Effect = (freeAction: IFreeAction): IBaseEffect => {
   const { type, value } = freeAction;
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  // biome-ignore lint/style/noNonNullAssertion: <>
   const effect = getEffectByIconType(type)!;
   return {
     ...effect,
@@ -95,7 +95,7 @@ export const freeAction2Effect = (freeAction: IFreeAction): IBaseEffect => {
 };
 
 export const freeActions2Effects = (
-  freeAction: IFreeAction[]
+  freeAction: IFreeAction[],
 ): IBaseEffect[] => {
   return freeAction.map((a) => freeAction2Effect(a));
 };

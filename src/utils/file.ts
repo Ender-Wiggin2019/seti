@@ -11,7 +11,7 @@ import { toPng } from 'html-to-image';
 import { IBaseCard } from '@/types/BaseCard';
 
 const blobUrlToBase64 = async (
-  blobUrl: string
+  blobUrl: string,
 ): Promise<string | ArrayBuffer | null> => {
   const response = await fetch(blobUrl);
   const blob = await response.blob();
@@ -26,7 +26,7 @@ const blobUrlToBase64 = async (
 export const exportToJson = async (
   card: IBaseCard,
   onSuccess?: () => void,
-  onError?: () => void
+  onError?: () => void,
 ) => {
   try {
     const tmp = { ...card };
@@ -41,7 +41,7 @@ export const exportToJson = async (
     downloadAnchorNode.setAttribute('href', dataStr);
     downloadAnchorNode.setAttribute(
       'download',
-      `${card.id || 'fan-made-card'}.seti`
+      `${card.id || 'fan-made-card'}.seti`,
     );
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
@@ -56,7 +56,7 @@ export const downloadImage = async (
   element: HTMLElement | null,
   title?: string,
   onSuccess?: (msg: string) => void,
-  onError?: (msg: string) => void
+  onError?: (msg: string) => void,
 ) => {
   if (element === null) {
     onError?.('The image is empty!');
@@ -72,9 +72,9 @@ export const downloadImage = async (
     link.click();
     document.body.removeChild(link);
     onSuccess?.('Download image successfully!');
-  } catch (err) {
+  } catch {
     onError?.(
-      'Download image failed! If you are using Firefox, please try another browser.'
+      'Download image failed! If you are using Firefox, please try another browser.',
     );
   }
 };

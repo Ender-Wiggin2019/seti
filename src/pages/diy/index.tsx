@@ -1,16 +1,10 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/** biome-ignore-all lint/style/noNonNullAssertion: <> */
 import { ArrowBigDownDash, ArrowBigUpDash, Undo2 } from 'lucide-react';
 import { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import React, { useMemo, useState } from 'react';
 import { HexColorPicker } from 'react-colorful';
-
-import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
-
-import { DEFAULT_BASE_CARD } from '@/data/defaultCards';
-
 import { EffectFactory } from '@/components/effect/Effect';
 import { CardRender } from '@/components/form/CardRender';
 import { EffectSelector } from '@/components/form/EffectSelector';
@@ -22,7 +16,12 @@ import { Button } from '@/components/ui/button';
 import { ExportDialogButton } from '@/components/ui/export-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-
+import { DEFAULT_BASE_CARD } from '@/data/defaultCards';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+import { IBaseCard } from '@/types/BaseCard';
+import { Effect } from '@/types/effect';
+import { EResource, ESector, TSize } from '@/types/element';
 import {
   effects2FreeAction,
   freeAction2Effect,
@@ -32,10 +31,6 @@ import {
 } from '@/utils/effect';
 import { downloadImage, exportToJson } from '@/utils/file';
 
-import { IBaseCard } from '@/types/BaseCard';
-import { Effect } from '@/types/effect';
-import { EResource, ESector, TSize } from '@/types/element';
-
 type Props = {
   // Add custom props here
 };
@@ -43,7 +38,7 @@ type Props = {
 const MAX_HISTORY = 10;
 
 export default function DiyPage(
-  _props: InferGetStaticPropsType<typeof getStaticProps>
+  _props: InferGetStaticPropsType<typeof getStaticProps>,
 ) {
   const { t } = useTranslation('common');
   const { toast } = useToast();
@@ -51,8 +46,8 @@ export default function DiyPage(
 
   const [card, setCard] = useState<IBaseCard>(DEFAULT_BASE_CARD);
   const [history, setHistory] = useState<IBaseCard[]>([]);
-  const [useUrl, setUseUrl] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [useUrl, _setUseUrl] = useState(false);
+  const [_loading, setLoading] = useState(false);
 
   const pushToHistory = (newCard: IBaseCard) => {
     setHistory((prevHistory) => {
@@ -101,7 +96,7 @@ export default function DiyPage(
   const handleFreeActionChange = (effect: Effect) => {
     updateCard({
       freeAction: effects2FreeAction(
-        updateEffectArray(freeActions2Effects(card.freeAction || []), effect)
+        updateEffectArray(freeActions2Effects(card.freeAction || []), effect),
       ),
     });
   };
@@ -110,7 +105,7 @@ export default function DiyPage(
     updateCard({ sector });
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: <>
   const handleImageUpload = (e: any) => {
     if (e.target.files)
       updateCard({ image: URL.createObjectURL(e.target.files[0]) });
@@ -142,10 +137,6 @@ export default function DiyPage(
     updateCard({ priceType });
   };
 
-  const handleUrlChange = () => {
-    setUseUrl((prev) => !prev);
-  };
-
   const handleDownloadImage = async () => {
     setLoading(true);
     toast({ title: 'Please wait...' });
@@ -158,7 +149,7 @@ export default function DiyPage(
       },
       (msg: string) => {
         toast({ title: msg, variant: 'destructive' });
-      }
+      },
     );
   };
 
@@ -182,7 +173,7 @@ export default function DiyPage(
           throw new Error(t('This JSON is not created from this tool.'));
         }
         setCard(parsedData);
-      } catch (error) {
+      } catch {
         alert(t("Failed to parse the JSON. Please ensure it's a valid JSON."));
       }
     };
@@ -273,7 +264,7 @@ export default function DiyPage(
                   key={e}
                   onClick={() => handleIncomeChange(e)}
                   className={cn(
-                    'flex w-40 h-40 items-center rounded-md bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 p-2 shadow-md h-18 w-18 justify-center'
+                    'flex w-40 h-40 items-center rounded-md bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 p-2 shadow-md h-18 w-18 justify-center',
                   )}
                 >
                   <EffectFactory
@@ -294,7 +285,7 @@ export default function DiyPage(
                   key={e}
                   onClick={() => handleSectorChange(e as ESector)}
                   className={cn(
-                    'flex w-40 h-fit items-center rounded-md bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 p-2 shadow-md h-18 w-18 justify-center'
+                    'flex w-40 h-fit items-center rounded-md bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 p-2 shadow-md h-18 w-18 justify-center',
                   )}
                 >
                   <EffectFactory
@@ -386,7 +377,7 @@ export default function DiyPage(
                     key={e}
                     onClick={() => handlePriceTypeChange(e)}
                     className={cn(
-                      'flex w-40 h-40 items-center rounded-md bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 p-2 shadow-md h-18 w-18 justify-center'
+                      'flex w-40 h-40 items-center rounded-md bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 p-2 shadow-md h-18 w-18 justify-center',
                     )}
                   >
                     <EffectFactory

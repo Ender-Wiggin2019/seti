@@ -1,9 +1,12 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/** biome-ignore-all lint/suspicious/noExplicitAny: <> */
+/** biome-ignore-all lint/style/noNonNullAssertion: <> */
+/** biome-ignore-all lint/correctness/noUnusedVariables: <> */
+/** biome-ignore-all lint/suspicious/noConsole: <> */
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-03-01 00:33:02
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-22 13:57:47
+ * @LastEditTime: 2025-12-01 16:48:31
  * @Description:
  */
 import { toPng } from 'html-to-image';
@@ -11,11 +14,6 @@ import type { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import React, { useMemo, useState } from 'react';
-
-import { cn } from '@/lib/utils';
-
-import baseCards from '@/data/baseCards';
-
 import { EffectFactory } from '@/components/effect/Effect';
 import { CardRender } from '@/components/form/CardRender';
 import { EffectSelector } from '@/components/form/EffectSelector';
@@ -25,16 +23,16 @@ import { AccordionV2 } from '@/components/ui/accordion-v2';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-
+import baseCards from '@/data/baseCards';
+import { cn } from '@/lib/utils';
+import { IBaseCard } from '@/types/BaseCard';
+import { Effect } from '@/types/effect';
+import { EResource, ESector, TSize } from '@/types/element';
 import {
   effects2FreeAction,
   getEffectByIconType,
   updateEffectArray,
 } from '@/utils/effect';
-
-import { IBaseCard } from '@/types/BaseCard';
-import { Effect } from '@/types/effect';
-import { EResource, ESector, TSize } from '@/types/element';
 
 // make sure to import your TextFilter
 type Props = {
@@ -42,7 +40,7 @@ type Props = {
 };
 
 export default function HomePage(
-  _props: InferGetStaticPropsType<typeof getStaticProps>
+  _props: InferGetStaticPropsType<typeof getStaticProps>,
 ) {
   const { t } = useTranslation('common');
   const downloadRef = React.useRef<HTMLDivElement>(null);
@@ -73,7 +71,7 @@ export default function HomePage(
   // ];
   const [currentEffects, setCurrentEffects] = useState<Effect[]>([]);
   const [currentIncome, setCurrentIncome] = useState<EResource>(
-    EResource.CREDIT
+    EResource.CREDIT,
   );
   const [currentSector, setCurrentSector] = useState<ESector>(ESector.RED);
   const [currentImage, setCurrentImage] = useState<string>();
@@ -106,7 +104,7 @@ export default function HomePage(
 
   const handleFreeActionChange = (effect: Effect) => {
     setCurrentFreeActions((prevEffects) =>
-      updateEffectArray(prevEffects, effect)
+      updateEffectArray(prevEffects, effect),
     );
   };
 
@@ -183,7 +181,7 @@ export default function HomePage(
         setCurrentImage(parsedData.image);
         setCurrentId(parsedData.id);
         // setIsResetting(true);
-      } catch (error) {
+      } catch (_error) {
         alert("Failed to parse the JSON. Please ensure it's a valid JSON.");
       }
     };
@@ -232,7 +230,7 @@ export default function HomePage(
     downloadAnchorNode.setAttribute('href', dataStr);
     downloadAnchorNode.setAttribute(
       'download',
-      `${renderCard.id || 'fan-made-card'}.json`
+      `${renderCard.id || 'fan-made-card'}.json`,
     );
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
@@ -323,7 +321,7 @@ export default function HomePage(
                     key={e}
                     onClick={() => handleIncomeChange(e)}
                     className={cn(
-                      'flex w-40 h-40 items-center rounded-md bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 p-2 shadow-md h-18 w-18 justify-center'
+                      'flex w-40 h-40 items-center rounded-md bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 p-2 shadow-md h-18 w-18 justify-center',
                       // { 'ring-white/10 from-zinc-900/30 to-primary/80': hasEffect }
                     )}
                   >
@@ -348,7 +346,7 @@ export default function HomePage(
                     key={e}
                     onClick={() => handleSectorChange(e as ESector)}
                     className={cn(
-                      'flex w-40 h-fit items-center rounded-md bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 p-2 shadow-md h-18 w-18 justify-center'
+                      'flex w-40 h-fit items-center rounded-md bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 p-2 shadow-md h-18 w-18 justify-center',
                       // { 'ring-white/10 from-zinc-900/30 to-primary/80': hasEffect }
                     )}
                   >

@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { DescInput } from '@/components/form/DescInput';
 import { EffectSelector } from '@/components/form/EffectSelector';
@@ -10,9 +10,8 @@ import { AccordionV2 } from '@/components/ui/accordion-v2';
 import { Button } from '@/components/ui/button';
 
 import { m } from '@/constant/effect';
-import { updateEffectArray, updateSpecialEffectArray } from '@/utils/effect';
-
 import { EEffectType, Effect, IMissionEffect } from '@/types/effect';
+import { updateEffectArray, updateSpecialEffectArray } from '@/utils/effect';
 
 type Props = {
   selectedEffects: Effect[];
@@ -29,7 +28,7 @@ export const EffectsGenerator = ({
   const [fullMissionEffect, setFullMissionEffect] =
     useState<IMissionEffect | null>(null);
   const [endgameEffectDesc, setEndgameEffectDesc] = useState<string | null>(
-    null
+    null,
   );
 
   const handleEffectChange = (effect: Effect, action?: 'del') => {
@@ -48,8 +47,8 @@ export const EffectsGenerator = ({
       updateSpecialEffectArray(
         currentEffects,
         initEffect,
-        EEffectType.MISSION_QUICK
-      )
+        EEffectType.MISSION_QUICK,
+      ),
     );
   };
 
@@ -57,7 +56,11 @@ export const EffectsGenerator = ({
     const initEffect = m.END_GAME('');
     setEndgameEffectDesc('');
     onChange?.(
-      updateSpecialEffectArray(currentEffects, initEffect, EEffectType.END_GAME)
+      updateSpecialEffectArray(
+        currentEffects,
+        initEffect,
+        EEffectType.END_GAME,
+      ),
     );
   };
 
@@ -69,8 +72,8 @@ export const EffectsGenerator = ({
       updateSpecialEffectArray(
         currentEffects,
         initEffect,
-        EEffectType.MISSION_FULL
-      )
+        EEffectType.MISSION_FULL,
+      ),
     );
   };
 
@@ -78,15 +81,17 @@ export const EffectsGenerator = ({
     setQuickMissionEffect(effect);
     if (!effect) {
       return onChange?.(
-        currentEffects.filter((e) => e.effectType !== EEffectType.MISSION_QUICK)
+        currentEffects.filter(
+          (e) => e.effectType !== EEffectType.MISSION_QUICK,
+        ),
       );
     }
     onChange?.(
       updateSpecialEffectArray(
         currentEffects,
         effect,
-        EEffectType.MISSION_QUICK
-      )
+        EEffectType.MISSION_QUICK,
+      ),
     );
   };
 
@@ -94,15 +99,15 @@ export const EffectsGenerator = ({
     setEndgameEffectDesc(desc);
     if (!desc) {
       return onChange?.(
-        currentEffects.filter((e) => e.effectType !== EEffectType.END_GAME)
+        currentEffects.filter((e) => e.effectType !== EEffectType.END_GAME),
       );
     }
     onChange?.(
       updateSpecialEffectArray(
         currentEffects,
         m.END_GAME(desc),
-        EEffectType.END_GAME
-      )
+        EEffectType.END_GAME,
+      ),
     );
   };
 
@@ -110,11 +115,15 @@ export const EffectsGenerator = ({
     setFullMissionEffect(effect);
     if (!effect) {
       return onChange?.(
-        currentEffects.filter((e) => e.effectType !== EEffectType.MISSION_FULL)
+        currentEffects.filter((e) => e.effectType !== EEffectType.MISSION_FULL),
       );
     }
     onChange?.(
-      updateSpecialEffectArray(currentEffects, effect, EEffectType.MISSION_FULL)
+      updateSpecialEffectArray(
+        currentEffects,
+        effect,
+        EEffectType.MISSION_FULL,
+      ),
     );
   };
   const hasQuickMission = (quickMissionEffect?.missions?.length || 0) > 0;

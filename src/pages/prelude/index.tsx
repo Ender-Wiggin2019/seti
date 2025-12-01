@@ -1,22 +1,19 @@
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-11-05 00:08:55
- * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-11-05 02:18:06
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-12-01 16:48:53
  * @Description: Prelude Cards Page
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import React from 'react';
-
-import { preludeCards } from '@/data/preludeCards';
-
 import { PreludeCard } from '@/components/cards/prelude';
 import CardList from '@/components/cards/shared/CardList';
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
 import { Container } from '@/components/ui/Container';
+import { preludeCards } from '@/data/preludeCards';
 
 import { IPreludeCard } from '@/types/prelude';
 
@@ -25,7 +22,7 @@ type Props = {
 };
 
 export default function PreludePage(
-  _props: InferGetStaticPropsType<typeof getStaticProps>
+  _props: InferGetStaticPropsType<typeof getStaticProps>,
 ) {
   const { t } = useTranslation('common');
 

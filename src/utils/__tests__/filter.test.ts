@@ -29,7 +29,7 @@ describe('filterText', () => {
     const result = filterText(
       'translated_Great Observatories Pr',
       cards,
-      mockT
+      mockT,
     );
     expect(result[0].id).toEqual('30');
   });

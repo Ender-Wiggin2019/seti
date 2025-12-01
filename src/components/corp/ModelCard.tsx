@@ -2,10 +2,8 @@ import React from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
-import { getModel } from '@/utils/model';
-
 import { ICorp, IModel } from '@/types/corp';
+import { getModel } from '@/utils/model';
 
 interface IModelCardProps {
   corp: ICorp;

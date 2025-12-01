@@ -61,7 +61,8 @@ export const getModel = (corp: ICorp, round: number): IModel => {
   } = corp;
   const initIncome = startResources?.find(
     (effect) =>
-      effect.effectType === EEffectType.BASE && effect.type === EMiscIcon.INCOME
+      effect.effectType === EEffectType.BASE &&
+      effect.type === EMiscIcon.INCOME,
   ) as IBaseEffect;
   const initIncomeValue = initIncome?.value || 0;
   const initResources =

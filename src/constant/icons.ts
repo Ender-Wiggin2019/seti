@@ -1,8 +1,8 @@
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-03-03 16:47:27
- * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-11-04 22:20:56
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-12-01 16:32:44
  * @Description:
  */
 import { IBaseEffect } from '@/types/effect';
@@ -24,8 +24,6 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
 
   // default style
   let showValue = false;
-  const showValueInCenter = false;
-  const text = '';
   let shape: TShape = 'normal';
   let size: TSize = 'md';
   let type = _type;

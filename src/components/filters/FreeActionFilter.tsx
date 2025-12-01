@@ -28,7 +28,7 @@ export const ResourceFilter: React.FC<ResourceFilterProps> = ({
     setSelectedResources((prev) =>
       prev.includes(Resource)
         ? prev.filter((t) => t !== Resource)
-        : [...prev, Resource]
+        : [...prev, Resource],
     );
   };
 

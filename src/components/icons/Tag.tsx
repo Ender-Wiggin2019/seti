@@ -2,13 +2,14 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-08-03 06:34:29
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-11 01:00:25
+ * @LastEditTime: 2025-12-01 16:30:47
  * @Description:
  */
 import React from 'react';
 
-import { EScanAction, TIcon } from '@/types/element';
+import { TIcon } from '@/types/element';
 import { TShape } from '@/types/Icon';
+
 interface TagProps {
   type: TIcon;
   shape?: TShape;
@@ -32,7 +33,6 @@ const TagComponent: React.FC<TagProps> = ({ type, shape = 'round' }) => {
   }
 
   const cls = `${iconCls} icon-${type}`;
-  // const cls = `${iconCls} icon-test`;
   return <div className={cls}></div>;
 };
 

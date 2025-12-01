@@ -1,11 +1,8 @@
 import { useTranslation } from 'next-i18next';
 import React, { useEffect, useState } from 'react';
-
-import { cn } from '@/lib/utils';
-
 import TextButton from '@/components/buttons/TextButton';
-
 import { ALIEN_BUTTON_GROUP } from '@/constant/alien';
+import { cn } from '@/lib/utils';
 
 import { EAlienMap, EAlienType } from '@/types/BaseCard';
 
@@ -22,14 +19,14 @@ export const AlienFilter: React.FC<AlienFilterProps> = ({
 }) => {
   const { t } = useTranslation('seti');
   const [selectedCategories, setSelectedCategories] = useState<EAlienType[]>(
-    []
+    [],
   );
 
   const handleCategoryChange = (cardType: EAlienType) => {
     setSelectedCategories((prev: EAlienType[]) =>
       prev.includes(cardType)
         ? prev.filter((t) => t !== cardType)
-        : [...prev, cardType]
+        : [...prev, cardType],
     );
   };
 
@@ -55,7 +52,7 @@ export const AlienFilter: React.FC<AlienFilterProps> = ({
               key={alien.type}
               selected={selectedCategories.includes(alien.type)}
               className={cn(
-                `${alien.text} hover:text-white/50 focus:text-white/50 bg-transparent ${alien.bg} ${alien.hover} rounded-sm`
+                `${alien.text} hover:text-white/50 focus:text-white/50 bg-transparent ${alien.bg} ${alien.hover} rounded-sm`,
               )}
               selectClassName={`${alien.ring} ${alien.text} hover:${alien.ring} active:${alien.ring} ring-2`}
               onClick={() => handleCategoryChange(alien.type)}

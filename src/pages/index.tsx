@@ -1,11 +1,8 @@
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FiRotateCcw } from 'react-icons/fi';
-
-import { useSettings } from '@/hooks/useSettings';
-
 import { SortButton } from '@/components/buttons/SortButton';
 import { BaseCardList } from '@/components/cards/base_cards/BaseCardList';
 import { AdvancedFilter } from '@/components/filters/AdvancedFilter';
@@ -20,6 +17,7 @@ import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
 import { CardOdometer } from '@/components/ui/CardOdometer';
 import { SettingsDialogButton } from '@/components/ui/enable-alien-dialog';
+import { useSettings } from '@/hooks/useSettings';
 
 import {
   ALL_ALIENS,
@@ -30,6 +28,7 @@ import {
 import { CardSource } from '@/types/CardSource';
 import { ECardType, EResource, ESector, TIcon } from '@/types/element';
 import { SortOrder } from '@/types/Order';
+
 type Props = {
   // Add custom props here
 };
@@ -37,7 +36,7 @@ type Props = {
 const INIT_MAX_NUM = 20;
 
 export default function HomePage(
-  _props: InferGetStaticPropsType<typeof getStaticProps>
+  _props: InferGetStaticPropsType<typeof getStaticProps>,
 ) {
   const { t } = useTranslation('common');
   const { settings, setSettings } = useSettings();
@@ -48,18 +47,18 @@ export default function HomePage(
   // limit the number of cards to be displayed for optimization
   const [totalMaxNum, setTotalMaxNum] = useState<number>(INIT_MAX_NUM);
   const [selectedFreeActions, setSelectedFreeActions] = useState<EResource[]>(
-    []
+    [],
   );
   const [selectedSectors, setSelectedSectors] = useState<ESector[]>([]);
   const [selectedIncomes, setSelectedIncomes] = useState<EResource[]>([]);
   const [selectedAliens, setSelectedAliens] = useState<EAlienType[]>(
-    settings.enableAlien ? ALL_ALIENS : []
+    settings.enableAlien ? ALL_ALIENS : [],
   );
 
   const [textFilter, setTextFilter] = useState<string>(''); // add this line
   const [selectedCardTypes, setSelectedCardTypes] = useState<ECardType[]>([]);
   const [selectedCardSources, setSelectedCardSources] = useState<CardSource[]>(
-    []
+    [],
   );
   const [advancedIcons, setAdvancedIcons] = useState<TIcon[]>([]);
   const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.ID_ASC);
@@ -67,7 +66,7 @@ export default function HomePage(
   // const [strength, setStrength] = useState<number[]>([0]);
 
   const [cardsCount, setCardsCount] = useState<{ base: number; alien: number }>(
-    { base: 0, alien: 0 }
+    { base: 0, alien: 0 },
   );
   const { base: baseCardsCount, alien: alienCardCount } = cardsCount;
   const animalMaxNum = useMemo(() => {

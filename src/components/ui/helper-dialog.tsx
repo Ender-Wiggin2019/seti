@@ -1,4 +1,5 @@
 'use client';
+import { ExternalLink } from 'lucide-react';
 /*
  * @Author: Ender-Wiggin
  * @Date: 2025-02-03 11:32:58
@@ -10,12 +11,9 @@ import Link from 'next/link';
 import { useTranslation } from 'next-i18next';
 import { useState } from 'react';
 import { RiQuestionFill } from 'react-icons/ri';
-
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { EffectTable } from '@/components/ui/effect-table';
-
 import { ISettings } from '@/types/settings';
-import { ExternalLink } from 'lucide-react';
 
 type Props = {
   onSubmit?: (settings: ISettings) => void;

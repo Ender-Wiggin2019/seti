@@ -9,11 +9,9 @@ import { useTranslation } from 'next-i18next';
 
 import { CardPrice } from '@/components/card/CardPrice';
 import { CardTitle } from '@/components/card/CardTitle';
-
-import { getCardMiddleColor } from '@/utils/color';
-
 import { IBaseCard } from '@/types/BaseCard';
 import { EResource } from '@/types/element';
+import { getCardMiddleColor } from '@/utils/color';
 
 type Props = {
   card: IBaseCard;

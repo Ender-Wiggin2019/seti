@@ -1,5 +1,3 @@
-import { getModel, getValueFromEffect, getValuesFromEffects } from '../model';
-
 import { ICorp } from '@/types/corp';
 import { EEffectType, Effect } from '@/types/effect';
 import {
@@ -9,6 +7,7 @@ import {
   ESpecialAction,
   ETech,
 } from '@/types/element';
+import { getModel, getValueFromEffect, getValuesFromEffects } from '../model';
 
 describe('Model Utility Functions', () => {
   describe('getValueFromEffect', () => {
@@ -146,6 +145,7 @@ describe('Model Utility Functions', () => {
     it('should return 0 for unknown effect types', () => {
       const unknownEffect: Effect = {
         effectType: EEffectType.BASE,
+        // biome-ignore lint/suspicious/noExplicitAny: <>
         type: 'unknown-type' as any,
         value: 5,
       };

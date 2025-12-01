@@ -6,15 +6,12 @@
  * @Description:
  */
 import { useState } from 'react';
-
-import { cn } from '@/lib/utils';
-
 import { DescRender } from '@/components/effect/DescRender';
 import { Button } from '@/components/ui/button';
 import { HelpButton } from '@/components/ui/helper-dialog';
 import { Textarea } from '@/components/ui/textarea';
-
 import { DESC } from '@/constant/effect';
+import { cn } from '@/lib/utils';
 
 import { EEffectType, Effect, ICustomizedEffect } from '@/types/effect';
 
@@ -29,7 +26,7 @@ export const DescInput = ({
   enableCreateNew = true,
 }: Props) => {
   const descEffects = currentEffects.filter(
-    (e) => e.effectType === EEffectType.CUSTOMIZED
+    (e) => e.effectType === EEffectType.CUSTOMIZED,
   ) as ICustomizedEffect[];
   const [newDesc, setNewDesc] = useState<string>();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -81,7 +78,7 @@ export const DescInput = ({
             <div
               className={cn(
                 'flex-1 text-white/50 rounded-md ring-1 ring-white/10 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50 bg-zinc-950 ring-offset-zinc-950 placeholder:text-zinc-400 focus-visible:ring-primary',
-                { 'text-white': de.id === editingId }
+                { 'text-white': de.id === editingId },
               )}
             >
               {de.desc}

@@ -27,7 +27,7 @@ const TextButton = React.forwardRef<HTMLButtonElement, TextButtonProps>(
       disabled: buttonDisabled,
       ...rest
     },
-    ref
+    ref,
   ) => {
     return (
       <button
@@ -52,14 +52,14 @@ const TextButton = React.forwardRef<HTMLButtonElement, TextButtonProps>(
           selected &&
             selectClassName === undefined &&
             'ring-2 ring-primary-700/90',
-          selected && selectClassName !== undefined && selectClassName
+          selected && selectClassName !== undefined && selectClassName,
         )}
         {...rest}
       >
         {children}
       </button>
     );
-  }
+  },
 );
 
 export default TextButton;

@@ -2,22 +2,19 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-12 12:22:14
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-22 12:50:10
+ * @LastEditTime: 2025-12-01 16:29:13
  * @Description:
  */
 
 import { isEqual } from 'lodash';
 import { useTranslation } from 'next-i18next';
-import React, { useState } from 'react';
-
-import { cn } from '@/lib/utils';
-
+import { useState } from 'react';
 import { EffectsGenerator } from '@/components/form/EffectsGenerator';
 import { AccordionV2 } from '@/components/ui/accordion-v2';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-
 import { m } from '@/constant/effect';
+import { cn } from '@/lib/utils';
 
 import {
   EEffectType,
@@ -53,7 +50,7 @@ export const FullMissionSelector = ({
       reward: [],
     };
     onChange?.(
-      m.FULL_MISSION([...(missionEffect?.missions || []), newItem], desc)
+      m.FULL_MISSION([...(missionEffect?.missions || []), newItem], desc),
     );
   };
 
@@ -62,9 +59,9 @@ export const FullMissionSelector = ({
       // setCurrReq(effects as IBaseEffect[]);
       const newMission = m.FULL_MISSION(
         missionEffect.missions.map((mission, i) =>
-          i === idx ? { ...mission, req: effects as IBaseEffect[] } : mission
+          i === idx ? { ...mission, req: effects as IBaseEffect[] } : mission,
         ),
-        desc
+        desc,
       );
       if (!isEqual(missionEffect, newMission)) {
         onChange?.(newMission);
@@ -73,9 +70,11 @@ export const FullMissionSelector = ({
       // setCurrReward(effects as IBaseEffect[]);
       const newMission = m.FULL_MISSION(
         missionEffect.missions.map((mission, i) =>
-          i === idx ? { ...mission, reward: effects as IBaseEffect[] } : mission
+          i === idx
+            ? { ...mission, reward: effects as IBaseEffect[] }
+            : mission,
         ),
-        desc
+        desc,
       );
       if (!isEqual(missionEffect, newMission)) {
         onChange?.(newMission);
@@ -100,7 +99,7 @@ export const FullMissionSelector = ({
             onClick={() => handleIndexChange(i)}
             className={cn(
               'rounded-full border border-zinc-300 bg-zinc-800/90 w-8 h-8 flex justify-center items-center',
-              { 'bg-primary': i === idx }
+              { 'bg-primary': i === idx },
             )}
           >
             {i + 1}

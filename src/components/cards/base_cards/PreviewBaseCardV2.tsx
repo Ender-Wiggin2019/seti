@@ -6,14 +6,14 @@
  * @Description:
  */
 import { Popover, Transition } from '@headlessui/react';
-
+import { IBaseCard } from '@/types/BaseCard';
 import { BaseCard } from './BaseCard';
 
-import { IBaseCard } from '@/types/BaseCard';
 interface PreviewBaseCardProps {
   card: IBaseCard;
   showLink?: boolean;
 }
+
 import { useTranslation } from 'next-i18next';
 import React from 'react';
 

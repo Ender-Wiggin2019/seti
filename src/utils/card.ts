@@ -7,9 +7,6 @@
  */
 
 import { ALL_CARDS } from '@/data';
-
-import { sortCards } from '@/utils/sort';
-
 import { IBaseCard } from '@/types/BaseCard';
 import { EEffectType, Effect } from '@/types/effect';
 import {
@@ -20,6 +17,7 @@ import {
   ETrace,
   TIcon,
 } from '@/types/element';
+import { sortCards } from '@/utils/sort';
 
 export const getAllCardIds = () => {
   return ALL_CARDS.map((card) => card.id);
@@ -51,7 +49,7 @@ export const filterCardsByIcons = (cards: IBaseCard[], icons: TIcon[]) => {
 
 export const filterCardsByEffectTypes = (
   cards: IBaseCard[],
-  effectTypes: EEffectType[]
+  effectTypes: EEffectType[],
 ) => {
   const res: IBaseCard[] = [];
   for (const card of cards) {
@@ -73,7 +71,7 @@ export const filterCardsByEffectTypes = (
  */
 export const isEffectsIncludeIcons = (
   effects: Effect[],
-  icons: TIcon[]
+  icons: TIcon[],
 ): boolean => {
   for (const effect of effects) {
     if (effect.effectType === EEffectType.OR) {
@@ -132,7 +130,7 @@ export const isEffectsIncludeIcons = (
 
 export const isEffectsHasType = (
   effects: Effect[],
-  type: EEffectType
+  type: EEffectType,
 ): boolean => {
   for (const effect of effects) {
     if (effect.effectType === EEffectType.OR) {
@@ -146,7 +144,7 @@ export const isEffectsHasType = (
 
 export const filterCardsByCardTypes = (
   cards: IBaseCard[],
-  cardTypes: ECardType[]
+  cardTypes: ECardType[],
 ) => {
   const effectTypes = cardTypes.reduce((prev: EEffectType[], curr) => {
     return [...prev, ...CardTypeEffectMap[curr]];

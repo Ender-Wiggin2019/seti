@@ -9,9 +9,6 @@
 import { Rocket } from 'lucide-react';
 import { useTranslation } from 'next-i18next';
 import { useState } from 'react';
-
-import { useSettings } from '@/hooks/useSettings';
-
 import {
   Dialog,
   DialogContent,
@@ -21,10 +18,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-
-import { Button } from './button';
-
+import { useSettings } from '@/hooks/useSettings';
 import { ISettings } from '@/types/settings';
+import { Button } from './button';
 
 type Props = {
   onSubmit: (settings: ISettings) => void;
@@ -34,7 +30,8 @@ export function SettingsDialogButton({ onSubmit }: Props) {
   const { t } = useTranslation('common');
   const [open, setOpen] = useState(false);
 
-  const { updateSettings, handleSubmit: _handleSubmit } = useSettings(onSubmit);
+  const { updateSettings: _updateSettings, handleSubmit: _handleSubmit } =
+    useSettings(onSubmit);
 
   const handleSubmit = () => {
     // updateSettings({enableAlien: true});

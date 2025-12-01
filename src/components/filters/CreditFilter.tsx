@@ -6,13 +6,12 @@
  * @Description:
  */
 import React, { useEffect, useState } from 'react';
-
-import { cn } from '@/lib/utils';
-
 import Tag from '@/components/icons/Tag';
 import { Slider } from '@/components/ui/slider';
+import { cn } from '@/lib/utils';
 
 import { EResource } from '@/types/element';
+
 type CreditFilterProps = React.ComponentProps<typeof Slider> & {
   onFilterChange: (credit: number[]) => void;
   reset: boolean;

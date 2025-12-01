@@ -5,10 +5,10 @@
  * @LastEditTime: 2025-10-30 21:32:33
  * @Description: Downloadable version of CardRender using withDownloadable HOC.
  */
-import { CardRender } from './CardRender';
-import withDownloadable from './withDownloadable';
 
 import { IBaseCard } from '@/types/BaseCard';
+import { CardRender } from './CardRender';
+import withDownloadable from './withDownloadable';
 
 type CardRenderProps = {
   card: IBaseCard;
@@ -16,7 +16,7 @@ type CardRenderProps = {
 
 export const DownloadableCardRender = withDownloadable<CardRenderProps>(
   CardRender,
-  (props) => props.card.id + '.png'
+  (props) => props.card.id + '.png',
 );
 
 export default DownloadableCardRender;

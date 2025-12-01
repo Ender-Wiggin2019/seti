@@ -114,7 +114,7 @@ export const computeLength = (nodes: IRenderNode[]) => {
 export const getDescIconSize = (
   nodes: IRenderNode[][],
   defaultSize?: TSize,
-  smartSize?: boolean
+  smartSize?: boolean,
 ): TSize => {
   // if (nodes?.[0]?.[0]?.size) {
   //   return nodes?.[0]?.[0]?.size;

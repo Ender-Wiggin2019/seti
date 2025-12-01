@@ -2,12 +2,12 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-12 12:22:14
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-22 12:41:36
+ * @LastEditTime: 2025-12-01 16:29:49
  * @Description:
  */
 
 import { useTranslation } from 'next-i18next';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { EffectsGenerator } from '@/components/form/EffectsGenerator';
 

@@ -3,13 +3,11 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-01 00:33:02
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-03-22 14:00:25
+ * @LastEditTime: 2025-12-01 16:47:59
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
-import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import React from 'react';
 
 import Layout from '@/components/layout/Layout';
 import { EffectTable } from '@/components/ui/effect-table';
@@ -20,9 +18,8 @@ type Props = {
 };
 
 export default function HomePage(
-  _props: InferGetStaticPropsType<typeof getStaticProps>
+  _props: InferGetStaticPropsType<typeof getStaticProps>,
 ) {
-  const { t } = useTranslation('common');
   return (
     <Layout>
       <EffectTable />

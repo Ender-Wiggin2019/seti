@@ -1,16 +1,17 @@
 @font-face {
-  font-family: 'Kobenhavn W03 Bold';
-  src: url('https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.eot');
-  src: url('https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.eot?#iefix')
-      format('embedded-opentype'),
-    url('https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.woff2')
-      format('woff2'),
-    url('https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.woff')
-      format('woff'),
-    url('https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.ttf')
-      format('truetype'),
-    url('https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.svg#Kobenhavn W03 Bold')
-      format('svg');
+  font-family: "Kobenhavn W03 Bold";
+  src: url("https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.eot");
+  src:
+    url("https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.eot?#iefix")
+    format("embedded-opentype"),
+    url("https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.woff2")
+    format("woff2"),
+    url("https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.woff")
+    format("woff"),
+    url("https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.ttf")
+    format("truetype"),
+    url("https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.svg#Kobenhavn W03 Bold")
+    format("svg");
 }
 
 .card-grid {
@@ -20,7 +21,7 @@
   width: 100%;
   height: 0;
   padding-bottom: 70%; /* 10:7 aspect ratio */
-  background-image: url('/images/cards/cards-1.webp');
+  background-image: url("/images/cards/cards-1.webp");
   background-size: 1000% 700%; /* 10x7 grid */
 }
 .card-cell {
@@ -165,7 +166,7 @@
 
 .end-game-container {
   position: relative;
-  background-image: url('/images/cards/end-game-container.png');
+  background-image: url("/images/cards/end-game-container.png");
   width: 125px;
   height: 30px;
   margin-left: 25px;
@@ -183,7 +184,7 @@
 }
 .card-quick-mission-container {
   position: relative;
-  background-image: url('/images/cards/mission-container.png');
+  background-image: url("/images/cards/mission-container.png");
   width: 138px;
   height: 37px;
   background-size: cover;
@@ -191,7 +192,7 @@
 }
 
 .card-quick-mission-container-large-reward {
-  background-image: url('/images/cards/mission-container-large-reward.png');
+  background-image: url("/images/cards/mission-container-large-reward.png");
 }
 .card-quick-mission-container .req-container {
   position: absolute;
@@ -237,7 +238,7 @@
 
 .card-full-mission-container {
   position: relative;
-  background-image: url('/images/cards/mission-background.png');
+  background-image: url("/images/cards/mission-background.png");
   width: 138px;
   height: calc(138px * 302 / 1143);
   background-size: cover;
@@ -250,7 +251,7 @@
 
 .card-full-mission-container-vertical {
   position: relative;
-  background-image: url('/images/cards/mission-container-large.png');
+  background-image: url("/images/cards/mission-container-large.png");
   width: 138px;
   height: calc(138px * 460 / 1142);
   background-size: cover;
@@ -281,7 +282,7 @@
 }
 .card-mission-req {
   position: relative;
-  background-image: url('/images/cards/mission-req.png');
+  background-image: url("/images/cards/mission-req.png");
   width: calc(310px * 138 / 1143);
   height: calc(204px * 138 / 1143);
   background-size: cover;
@@ -294,7 +295,7 @@
 
 .card-mission-reward {
   position: relative;
-  background-image: url('/images/cards/mission-reward.png');
+  background-image: url("/images/cards/mission-reward.png");
   width: calc(274px * 138 / 1143);
   height: calc(270px * 138 / 1143);
   background-size: cover;
@@ -829,7 +830,7 @@
   position: absolute;
   z-index: 5;
   color: white;
-  font-family: 'Kobenhavn W03 Bold', monospace;
+  font-family: "Kobenhavn W03 Bold", monospace;
   /* width: 20px; */
   height: 50px;
   font-size: 40px;
@@ -854,7 +855,7 @@
 .hexagon:after,
 .hexagon:before {
   position: absolute;
-  content: '';
+  content: "";
   z-index: 1;
   top: 0;
   width: 0px;
@@ -882,7 +883,7 @@
 
 .card-background {
   position: relative;
-  background-image: url('/images/cards/background-image.png'); /* 替换为你的背景图片路径 */
+  background-image: url("/images/cards/background-image.png"); /* 替换为你的背景图片路径 */
   background-size: cover;
   width: 150px;
   height: 209px;
@@ -893,7 +894,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  background-image: url('/images/cards/card-template.png');
+  background-image: url("/images/cards/card-template.png");
   background-size: cover;
   width: 150px;
   height: 209px;
@@ -1009,7 +1010,7 @@
   font-size: 19px;
   line-height: 18px;
   color: white;
-  font-family: 'Kobenhavn W03 Bold', monospace;
+  font-family: "Kobenhavn W03 Bold", monospace;
   display: flex;
   align-items: center;
   justify-content: center;

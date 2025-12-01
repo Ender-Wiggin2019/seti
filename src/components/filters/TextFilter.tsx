@@ -11,6 +11,7 @@ import { useTranslation } from 'next-i18next';
 import React, { useCallback, useState } from 'react';
 
 import { cn } from '@/lib/utils';
+
 type TextFilterProps = {
   onTextChange: (newText: string) => void;
   reset: boolean;
@@ -31,13 +32,13 @@ export const TextFilter: React.FC<TextFilterProps> = ({
       mouseX.set(clientX - bounds.left);
       mouseY.set(clientY - bounds.top);
     },
-    [mouseX, mouseY]
+    [mouseX, mouseY],
   );
   const background = useMotionTemplate`radial-gradient(320px circle at ${mouseX}px ${mouseY}px, var(--spotlight-color) 0%, transparent 85%)`;
 
   const debouncedTextChange = useCallback(
     debounce((newText: string) => onTextChange(newText), 300),
-    [onTextChange]
+    [onTextChange],
   );
 
   const handleChange = (newText: string) => {
@@ -54,7 +55,7 @@ export const TextFilter: React.FC<TextFilterProps> = ({
   return (
     <div
       className={cn(
-        'group relative flex w-full rounded-xl bg-gradient-to-b p-4 shadow-xl ring-2  transition-opacity from-zinc-900/70 to-zinc-800/60 shadow-zinc-700/10 ring-zinc-700/80 [--spotlight-color:rgb(217_249_157_/_0.04)] md:p-4 lg:w-1/2'
+        'group relative flex w-full rounded-xl bg-gradient-to-b p-4 shadow-xl ring-2  transition-opacity from-zinc-900/70 to-zinc-800/60 shadow-zinc-700/10 ring-zinc-700/80 [--spotlight-color:rgb(217_249_157_/_0.04)] md:p-4 lg:w-1/2',
       )}
       onMouseMove={handleMouseMove}
     >
@@ -65,7 +66,7 @@ export const TextFilter: React.FC<TextFilterProps> = ({
       />
       <div
         className={cn(
-          'pointer-events-none absolute inset-0 z-0 select-none overflow-hidden rounded-xl mix-blend-overlay'
+          'pointer-events-none absolute inset-0 z-0 select-none overflow-hidden rounded-xl mix-blend-overlay',
         )}
       >
         <svg

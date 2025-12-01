@@ -20,7 +20,7 @@ const Trigger = React.forwardRef<
     ref={ref}
     className={cn(
       'group flex w-36 items-center justify-between space-x-2 rounded-full bg-gradient-to-b px-4 py-2 text-sm font-medium shadow-lg shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none focus-visible:ring-2 from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20 focus-visible:ring-yellow-500/80',
-      className
+      className,
     )}
     {...props}
   >
@@ -39,7 +39,7 @@ const Content = React.forwardRef<
       ref={ref}
       className={cn(
         'relative z-50 min-w-[8rem] overflow-hidden rounded-xl border shadow-xl animate-in fade-in-80 border-stone-800 bg-stone-900 text-stone-300',
-        className
+        className,
       )}
       {...props}
     >
@@ -59,7 +59,7 @@ const Label = React.forwardRef<
     ref={ref}
     className={cn(
       'py-1.5 pl-8 pr-2 text-sm font-semibold text-stone-200',
-      className
+      className,
     )}
     {...props}
   />
@@ -75,7 +75,7 @@ const Item = React.forwardRef<
     className={cn(
       'relative z-50 flex cursor-default text-zinc-200 select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-sm font-medium outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-stone-800',
       'tracking-tight',
-      className
+      className,
     )}
     {...props}
   >
