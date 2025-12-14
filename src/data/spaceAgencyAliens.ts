@@ -2,8 +2,8 @@
 /*
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
- * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-12-01 16:33:54
+ * @LastEditors: Ender Wiggin
+ * @LastEditTime: 2025-12-15 01:24:16
  * @Description:
  */
 
@@ -192,7 +192,7 @@ const _spaceAgencyAliens: IBaseCard[] = [
       e.GLYPH_PURPLE(1, '', 'xs'),
       DESC('OR'),
       e.GLYPH_BLUE(1, '', 'xs'),
-      e.GLYPH_PURPLE(1, '', 'xs'),
+      e.GLYPH_ORANGE(1, '', 'xs'),
       m.END_GAME('sa.desc.card_et_9'),
     ],
   },

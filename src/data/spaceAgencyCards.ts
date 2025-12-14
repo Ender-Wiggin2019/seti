@@ -1,8 +1,8 @@
 /*
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
- * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-12-01 16:43:47
+ * @LastEditors: Ender Wiggin
+ * @LastEditTime: 2025-12-15 01:46:06
  * @Description:
  */
 /** biome-ignore-all lint/suspicious/noExplicitAny: <> */
@@ -133,7 +133,7 @@ const _spaceAgencyCards: IBaseCard[] = [
   {
     id: '11',
     name: 'Psyche Probe',
-    image: '/images/cards/space-agency/22.jpg',
+    image: '/images/cards/space-agency/11.jpg',
     freeAction: [{ type: EResource.DATA, value: 1 }],
     sector: ESector.RED,
     price: 3,
@@ -224,13 +224,13 @@ const _spaceAgencyCards: IBaseCard[] = [
   },
   {
     id: '19',
-    name: 'TESS Satellite',
+    name: 'New Assignment',
     image: '/images/cards/space-agency/19.jpg',
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.YELLOW,
-    price: 0,
-    income: EResource.CREDIT,
-    effects: [e.SIGNAL_ANY(2), DESC('sa.desc.card_19')],
+    price: 2,
+    income: EResource.ENERGY,
+    effects: [DESC('sa.desc.card_19')],
   },
   {
     id: '20',
@@ -266,13 +266,13 @@ const _spaceAgencyCards: IBaseCard[] = [
   },
   {
     id: '22',
-    name: 'New Assignment',
-    image: '/images/cards/space-agency/11.jpg',
+    name: 'TESS Satellite',
+    image: '/images/cards/space-agency/22.jpg',
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.YELLOW,
-    price: 2,
-    income: EResource.ENERGY,
-    effects: [DESC('sa.desc.card_22')],
+    price: 0,
+    income: EResource.CREDIT,
+    effects: [e.SIGNAL_ANY(2), DESC('sa.desc.card_22')],
   },
   {
     id: '23',
