@@ -1,3 +1,10 @@
+/*
+ * @Author: Ender Wiggin
+ * @Date: 2025-12-15 01:23:47
+ * @LastEditors: Ender Wiggin
+ * @LastEditTime: 2025-12-15 02:18:46
+ * @Description:
+ */
 import { useTranslation } from 'next-i18next';
 import React, { useEffect, useState } from 'react';
 import TextButton from '@/components/buttons/TextButton';
@@ -52,7 +59,7 @@ export const AlienFilter: React.FC<AlienFilterProps> = ({
               key={alien.type}
               selected={selectedCategories.includes(alien.type)}
               className={cn(
-                `${alien.text} hover:text-white/50 focus:text-white/50 bg-transparent ${alien.bg} ${alien.hover} rounded-sm`,
+                `${alien.text} hover:text-white/50 focus:text-white/50 bg-transparent ${alien.bg} rounded-sm`,
               )}
               selectClassName={`${alien.ring} ${alien.text} hover:${alien.ring} active:${alien.ring} ring-2`}
               onClick={() => handleCategoryChange(alien.type)}
