@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-05-14 16:48:53
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-05-18 21:13:48
+ * @LastEditTime: 2025-12-17 16:45:38
  * @Description:
  */
 
@@ -44,8 +44,12 @@ export const PostItem = ({
       </div>
       <div className='flex justify-between items-end'>
         <div className='text-2xl font-bold text-white'>{t(title)}</div>
-        {/* {author && <div className='text-sm text-gray-400'>by {t(author)}</div>} */}
-        {date && <div className='text-sm text-gray-400'>{t(date)}</div>}
+        <div className='flex justify-end space-x-4 text-sm'>
+          {author && (
+            <div className='text-sm text-gray-100'>By {t(author)}</div>
+          )}
+          {date && <div className='text-sm text-gray-400'>{t(date)}</div>}
+        </div>
       </div>
       {description && (
         <div className='text-base text-gray-400'>{t(description)}</div>

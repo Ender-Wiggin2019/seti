@@ -1,8 +1,8 @@
 /*
  * @Author: Ender Wiggin
  * @Date: 2025-11-01 17:10:00
- * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-11-04 00:00:48
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2025-12-16 14:17:53
  * @Description: FAQ component for rendering FAQ list items
  */
 import { useTranslation } from 'next-i18next';
@@ -17,8 +17,8 @@ interface FAQProps {
 
 export const FAQ: React.FC<FAQProps> = ({ items, className }) => {
   const { t } = useTranslation('seti');
-
-  if (!items || items.length === 0) {
+  const finalItems = items?.map((i) => i.split('\n'))?.flat() || [];
+  if (!finalItems || finalItems.length === 0) {
     return null;
   }
 
@@ -26,7 +26,7 @@ export const FAQ: React.FC<FAQProps> = ({ items, className }) => {
     <div className={cn('pb-4', className)}>
       <h3 className='text-left text-lg font-semibold mb-3'>FAQ</h3>
       <div className='max-h-24 overflow-y-auto pr-2'>
-        {items.map((item, index) => (
+        {finalItems.map((item, index) => (
           <div key={index} className='mb-2 last:mb-0'>
             {t(item)}
           </div>
