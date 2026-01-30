@@ -13,8 +13,8 @@ type Props = {
 
 export const DisplayContainer: React.FC<Props> = ({ header, children }) => {
   return (
-    <div className='flex justify-between items-center text-primary-500 gap-2'>
-      <h2 className='text-lg text-primary-200 font-bold'>{header}</h2>
+    <div className='flex justify-between items-center text-space-300 gap-2'>
+      <h2 className='text-lg text-space-200 font-bold'>{header}</h2>
       <>{children}</>
     </div>
   );

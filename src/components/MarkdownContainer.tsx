@@ -30,60 +30,74 @@ export const MarkdownContainer = ({ title, content, giscusProps }: Props) => {
     <Layout>
       <Seo templateTitle={t(title)} />
 
-      <Container className='px-2 pt-2 md:pt-4'>
+      <Container className='px-3 pt-3 md:px-4 md:pt-6'>
         <Markdown
           components={{
             h1: ({ children }) => (
-              <h1 className='scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl'>
+              <h1 className='scroll-m-20 text-4xl font-bold tracking-tight text-space-50 lg:text-5xl'>
                 {children}
               </h1>
             ),
             h2: ({ children }) => (
-              <h2 className='mt-10 scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0'>
+              <h2 className='mt-12 scroll-m-20 border-b border-primary/20 pb-3 text-3xl font-semibold tracking-tight text-space-100 first:mt-0'>
                 {children}
               </h2>
             ),
             h3: ({ children }) => (
-              <h3 className='mt-8 scroll-m-20 text-2xl font-semibold tracking-tight'>
+              <h3 className='mt-10 scroll-m-20 text-2xl font-semibold tracking-tight text-space-100'>
                 {children}
               </h3>
             ),
             h4: ({ children }) => (
-              <h4 className='mt-6 scroll-m-20 text-xl font-semibold tracking-tight'>
+              <h4 className='mt-8 scroll-m-20 text-xl font-semibold tracking-tight text-space-200'>
                 {children}
               </h4>
             ),
             p: ({ children }) => (
-              <p className='leading-7 [&:not(:first-child)]:mt-6'>{children}</p>
+              <p className='leading-7 text-space-300 [&:not(:first-child)]:mt-6'>
+                {children}
+              </p>
             ),
             ul: ({ children }) => (
-              <ul className='my-6 ml-6 list-disc [&>li]:mt-2'>{children}</ul>
+              <ul className='my-6 ml-6 list-disc text-space-300 marker:text-primary/60 [&>li]:mt-2'>
+                {children}
+              </ul>
             ),
             ol: ({ children }) => (
-              <ol className='my-6 ml-6 list-disc [&>li]:mt-2'>{children}</ol>
+              <ol className='my-6 ml-6 list-decimal text-space-300 marker:text-primary/60 [&>li]:mt-2'>
+                {children}
+              </ol>
             ),
-            li: ({ children }) => <li className=''>{children}</li>,
+            li: ({ children }) => (
+              <li className='text-space-300'>{children}</li>
+            ),
             blockquote: ({ children }) => (
-              <blockquote className='mt-6 border-l-2 pl-6 italic bg-black/30 rounded-r-md'>
+              <blockquote className='mt-6 border-l-2 border-primary/50 bg-gradient-to-r from-space-900/60 to-transparent pl-6 pr-4 py-4 italic text-space-300 rounded-r-lg'>
                 {children}
               </blockquote>
             ),
             strong: ({ children }) => (
-              <strong className='font-semibold text-primary-500'>
+              <strong className='font-semibold text-space-50'>
                 {children}
               </strong>
             ),
             a: ({ children, href }) => (
               <a
                 href={href}
-                className='font-medium underline underline-offset-4 hover:text-primary-600'
+                className='font-medium text-primary/90 underline decoration-primary/30 underline-offset-4 transition-all duration-200 hover:text-primary hover:decoration-primary/60'
                 target='_blank'
                 rel='noopener noreferrer'
               >
                 {children}
               </a>
             ),
-            hr: () => <Separator className='opacity-50 px-8' />,
+            hr: () => (
+              <div className='my-10 flex items-center justify-center gap-3'>
+                <div className='h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent' />
+                <div className='h-1.5 w-1.5 rounded-full bg-primary/40' />
+                <div className='h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent' />
+              </div>
+            ),
             code: ({ inline, className, children, ...props }) => {
               if (inline) {
                 // if (String(children).startsWith('{')) {
@@ -95,7 +109,7 @@ export const MarkdownContainer = ({ title, content, giscusProps }: Props) => {
 
               if (className?.includes('desc')) {
                 return (
-                  <div className='bg-black/30 rounded-md p-2 mt-4'>
+                  <div className='bg-space-900/60 backdrop-blur-sm rounded-lg p-3 mt-4 ring-1 ring-space-700/30'>
                     <DescRender desc={String(children)} size='sm' />
                   </div>
                 );
@@ -103,7 +117,7 @@ export const MarkdownContainer = ({ title, content, giscusProps }: Props) => {
 
               if (className?.includes('txt')) {
                 return (
-                  <div className='bg-black/30 rounded-md p-2 mt-4 flex justify-center'>
+                  <div className='bg-space-900/60 backdrop-blur-sm rounded-lg p-3 mt-4 flex justify-center ring-1 ring-space-700/30'>
                     {children}
                   </div>
                 );
@@ -124,16 +138,27 @@ export const MarkdownContainer = ({ title, content, giscusProps }: Props) => {
 
                 if (className?.includes('seti')) {
                   return (
-                    <div className='px-1 py-2 hover:text-primary-500'>
+                    <div className='px-1 py-2 transition-colors duration-200 hover:text-primary'>
                       <MarkCard ids={ids} />
                     </div>
                   );
                 }
 
-                return <code {...props}>{children}</code>;
+                return (
+                  <code
+                    className='px-1.5 py-0.5 rounded text-sm bg-space-800/80 text-primary/90 ring-1 ring-space-700/30'
+                    {...props}
+                  >
+                    {children}
+                  </code>
+                );
                 // }
               } catch {
-                return <code className='text-red-500'>{children}</code>;
+                return (
+                  <code className='px-1.5 py-0.5 rounded text-sm bg-red-950/50 text-red-400'>
+                    {children}
+                  </code>
+                );
               }
             },
           }}

@@ -8,13 +8,15 @@ body {
   background-color: var(--bg-color);
   scroll-behavior: smooth;
   scroll-padding-top: 3rem;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 html.light {
-  --bg-color: theme("colors.zinc.50");
+  --bg-color: #fafafa;
 }
 html.dark {
-  --bg-color: theme("colors.zinc.900");
+  --bg-color: #0a0a0b;
 }
 
 [data-radix-popper-content-wrapper] {
@@ -26,8 +28,8 @@ html.dark {
 }
 
 ::selection {
-  background-color: theme("colors.lime.300");
-  color: theme("colors.lime.950");
+  background-color: hsl(var(--primary-400));
+  color: #09090b;
 }
 
 @keyframes typing-pulse {
@@ -37,6 +39,49 @@ html.dark {
   }
   50% {
     opacity: 0;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 5px hsl(var(--primary-500)),
+      0 0 10px hsl(var(--primary-500) / 0.5);
+  }
+  50% {
+    box-shadow:
+      0 0 10px hsl(var(--primary-500)),
+      0 0 20px hsl(var(--primary-500) / 0.5);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
   }
 }
 
@@ -72,37 +117,116 @@ html.dark {
     --ring: 240 5% 64.9%;
 
     --radius: 0.5rem;
+
+    /* Primary color scale - Light mode (Stellar Silver) */
+    --primary-50: 240 10% 98%;
+    --primary-100: 240 10% 96%;
+    --primary-200: 240 8% 91%;
+    --primary-300: 240 6% 86%;
+    --primary-400: 240 5% 72%;
+    --primary-500: 240 4% 60%;
+    --primary-600: 240 4% 47%;
+    --primary-700: 240 5% 36%;
+    --primary-800: 240 5% 26%;
+    --primary-900: 240 6% 17%;
+    --primary-950: 240 10% 8%;
   }
 
-  .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
+  /* ===== STELLAR SILVER DARK THEME (星际银色主题) ===== */
+  /* Deep space black base with silver metallic accents */
+  .dark,
+  .dark.theme-silver {
+    --background: 240 6% 4%;
+    --foreground: 210 20% 98%;
 
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 220 10% 8%;
+    --muted-foreground: 220 9% 56%;
 
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 220 13% 5%;
+    --popover-foreground: 210 20% 98%;
 
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
+    --card: 220 12% 6%;
+    --card-foreground: 210 20% 98%;
 
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
+    --border: 220 10% 14%;
+    --input: 220 10% 14%;
 
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
+    /* Silver metallic primary - sophisticated and modern */
+    --primary: 220 9% 64%;
+    --primary-foreground: 220 13% 5%;
 
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 220 10% 10%;
+    --secondary-foreground: 210 20% 98%;
 
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    /* Silver accent for interactive elements */
+    --accent: 220 9% 64%;
+    --accent-foreground: 220 13% 5%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 85.7% 97.3%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 85% 97%;
 
-    --ring: 240 3.7% 15.9%;
+    --ring: 220 9% 64%;
+
+    /* Silver metallic color scale */
+    --primary-50: 210 20% 98%;
+    --primary-100: 220 14% 96%;
+    --primary-200: 220 13% 91%;
+    --primary-300: 216 12% 84%;
+    --primary-400: 218 11% 65%;
+    --primary-500: 220 9% 46%;
+    --primary-600: 215 14% 34%;
+    --primary-700: 217 19% 27%;
+    --primary-800: 215 28% 17%;
+    --primary-900: 221 39% 11%;
+    --primary-950: 224 71% 4%;
+  }
+
+  /* ===== ICE ACCENT THEME (冰晶青色点缀) ===== */
+  /* Deep space black base with ice cyan highlights */
+  .dark.theme-ice {
+    --background: 240 6% 4%;
+    --foreground: 210 20% 98%;
+
+    --muted: 220 10% 8%;
+    --muted-foreground: 220 9% 56%;
+
+    --popover: 220 13% 5%;
+    --popover-foreground: 210 20% 98%;
+
+    --card: 220 12% 6%;
+    --card-foreground: 210 20% 98%;
+
+    --border: 220 10% 14%;
+    --input: 220 10% 14%;
+
+    /* Ice cyan primary - cool and futuristic */
+    --primary: 187 92% 69%;
+    --primary-foreground: 220 13% 5%;
+
+    --secondary: 220 10% 10%;
+    --secondary-foreground: 210 20% 98%;
+
+    /* Ice cyan accent */
+    --accent: 187 92% 69%;
+    --accent-foreground: 220 13% 5%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 85% 97%;
+
+    --ring: 187 92% 69%;
+
+    /* Ice cyan color scale */
+    --primary-50: 183 100% 96%;
+    --primary-100: 185 96% 90%;
+    --primary-200: 186 94% 82%;
+    --primary-300: 187 92% 69%;
+    --primary-400: 188 86% 53%;
+    --primary-500: 189 94% 43%;
+    --primary-600: 192 91% 36%;
+    --primary-700: 193 82% 31%;
+    --primary-800: 194 70% 27%;
+    --primary-900: 196 64% 24%;
+    --primary-950: 197 80% 14%;
   }
 }
 
@@ -124,10 +248,372 @@ html.dark {
   @apply z-10 duration-500 lg:hover:z-[99999] lg:hover:scale-[200%];
 }
 
+/* ===== GRADIENT & GLASS EFFECTS ===== */
 .bg-gradient-dark {
-  @apply bg-gradient-to-b shadow-lg shadow-zinc-800/5 ring-1 backdrop-blur-md focus:outline-none from-zinc-900/30 to-zinc-800/80 text-zinc-200 ring-white/10 hover:ring-white/20;
+  @apply bg-gradient-to-b shadow-lg shadow-space-950/20 ring-1 backdrop-blur-md focus:outline-none from-space-900/50 to-space-950/90 text-space-100 ring-space-700/30 hover:ring-space-600/50;
 }
 
-.bg-amoeba-background {
-  @apply bg-gradient-to-r from-[#04CDFF] via-[#FE3496] to-[#F8C422] from-0% via-50% to-100%;
+.bg-glass {
+  @apply bg-space-900/60 backdrop-blur-xl ring-1 ring-space-700/20;
+}
+
+.bg-glass-elevated {
+  @apply bg-space-850/80 backdrop-blur-xl ring-1 ring-space-700/30 shadow-xl shadow-space-950/50;
+}
+
+/* ===== GLOW EFFECTS ===== */
+.bg-glow-primary {
+  box-shadow: 0 0 20px hsl(var(--primary-500) / 0.3);
+}
+.bg-glow-primary:hover {
+  box-shadow: 0 0 30px hsl(var(--primary-500) / 0.5);
+}
+
+.bg-glow-accent {
+  box-shadow: 0 0 20px hsl(var(--accent) / 0.3);
+}
+.bg-glow-accent:hover {
+  box-shadow: 0 0 30px hsl(var(--accent) / 0.5);
+}
+
+.text-glow {
+  text-shadow: 0 0 10px hsl(var(--primary-500) / 0.5);
+}
+
+.text-glow-accent {
+  text-shadow: 0 0 10px hsl(var(--accent) / 0.5);
+}
+
+/* ===== BORDER GLOW ===== */
+.border-glow {
+  position: relative;
+}
+.border-glow::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary-500) / 0.5),
+    transparent 50%,
+    hsl(var(--primary-500) / 0.2)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ===== SHIMMER EFFECT ===== */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(var(--primary-500) / 0.1) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* ===== ANIMATIONS ===== */
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* ===== TYPOGRAPHY ENHANCEMENTS ===== */
+.prose-space {
+  @apply text-space-200;
+}
+
+.prose-space h1,
+.prose-space h2,
+.prose-space h3,
+.prose-space h4 {
+  @apply text-space-50 font-semibold;
+}
+
+.prose-space a {
+  color: hsl(var(--primary-400));
+  text-decoration: none;
+  transition:
+    color 0.2s ease,
+    text-shadow 0.2s ease;
+}
+
+.prose-space a:hover {
+  color: hsl(var(--primary-300));
+  text-shadow: 0 0 8px hsl(var(--primary-500) / 0.4);
+}
+
+.prose-space strong {
+  color: hsl(var(--primary-300));
+  font-weight: 600;
+}
+
+.prose-space blockquote {
+  @apply border-l-2 pl-4 italic;
+  border-color: hsl(var(--primary-500) / 0.5);
+  background: linear-gradient(90deg, hsl(var(--primary-950) / 0.3), transparent);
+}
+
+.prose-space code {
+  @apply px-1.5 py-0.5 rounded text-sm;
+  background: hsl(var(--primary-950) / 0.5);
+  color: hsl(var(--primary-300));
+}
+
+.prose-space hr {
+  @apply my-8;
+  border-color: hsl(var(--primary-500) / 0.2);
+}
+
+/* ===== THEME TOGGLE INDICATOR ===== */
+[data-theme="silver"] .theme-indicator::after {
+  content: "◆";
+}
+
+[data-theme="ice"] .theme-indicator::after {
+  content: "◇";
+}
+
+/* ===== THEME-AWARE BACKGROUND GRADIENTS ===== */
+/* Subtle gradient that adds depth without overwhelming */
+.theme-gradient {
+  background: radial-gradient(
+    ellipse 80% 50% at 50% 0%,
+    hsl(var(--primary-500) / 0.06) 0%,
+    transparent 70%
+  );
+}
+
+/* Silver theme - subtle metallic glow */
+.dark.theme-silver .theme-gradient,
+.dark:not(.theme-ice) .theme-gradient {
+  background: radial-gradient(
+    ellipse 80% 50% at 50% 0%,
+    rgba(156, 163, 175, 0.08) 0%,
+    rgba(156, 163, 175, 0.02) 50%,
+    transparent 100%
+  );
+}
+
+/* Ice theme - cool cyan glow */
+.dark.theme-ice .theme-gradient {
+  background: radial-gradient(
+    ellipse 80% 50% at 50% 0%,
+    rgba(103, 232, 249, 0.08) 0%,
+    rgba(103, 232, 249, 0.02) 50%,
+    transparent 100%
+  );
+}
+
+/* ===== STARFIELD BACKGROUND ===== */
+/* Three layers of stars with different sizes and densities */
+
+.stars-layer-1 {
+  background-image:
+    radial-gradient(
+      1px 1px at 20% 30%,
+      rgba(255, 255, 255, 0.8) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      1px 1px at 40% 70%,
+      rgba(255, 255, 255, 0.6) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      1px 1px at 50% 50%,
+      rgba(255, 255, 255, 0.7) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      1px 1px at 60% 20%,
+      rgba(255, 255, 255, 0.5) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      1px 1px at 80% 90%,
+      rgba(255, 255, 255, 0.6) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      1px 1px at 10% 60%,
+      rgba(255, 255, 255, 0.5) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      1px 1px at 90% 40%,
+      rgba(255, 255, 255, 0.7) 0%,
+      transparent 100%
+    );
+  background-size: 250px 250px;
+  animation: twinkle 4s ease-in-out infinite;
+}
+
+.stars-layer-2 {
+  background-image:
+    radial-gradient(
+      1.5px 1.5px at 25% 25%,
+      rgba(255, 255, 255, 0.4) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      1.5px 1.5px at 75% 75%,
+      rgba(255, 255, 255, 0.5) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      1.5px 1.5px at 45% 85%,
+      rgba(255, 255, 255, 0.4) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      1.5px 1.5px at 85% 15%,
+      rgba(255, 255, 255, 0.3) 0%,
+      transparent 100%
+    );
+  background-size: 350px 350px;
+  animation: twinkle 6s ease-in-out infinite reverse;
+}
+
+.stars-layer-3 {
+  background-image:
+    radial-gradient(
+      2px 2px at 15% 80%,
+      rgba(255, 255, 255, 0.3) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      2px 2px at 65% 35%,
+      rgba(255, 255, 255, 0.25) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      2px 2px at 35% 15%,
+      rgba(255, 255, 255, 0.35) 0%,
+      transparent 100%
+    );
+  background-size: 500px 500px;
+  animation: twinkle 8s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* ===== NEBULA BACKGROUND EFFECTS ===== */
+/* Theme-aware nebula/cosmic cloud effects */
+
+.nebula-bg {
+  opacity: 0.12;
+}
+
+/* Silver theme nebula - subtle metallic cosmic clouds */
+.dark.theme-silver .nebula-bg,
+.dark:not(.theme-ice) .nebula-bg {
+  background:
+    radial-gradient(
+      ellipse 60% 40% at 10% 20%,
+      rgba(156, 163, 175, 0.2) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 50% 50% at 90% 80%,
+      rgba(107, 114, 128, 0.15) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 40% 30% at 70% 30%,
+      rgba(75, 85, 99, 0.1) 0%,
+      transparent 50%
+    );
+}
+
+/* Ice theme nebula - cool cyan cosmic clouds */
+.dark.theme-ice .nebula-bg {
+  background:
+    radial-gradient(
+      ellipse 60% 40% at 10% 20%,
+      rgba(103, 232, 249, 0.2) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 50% 50% at 90% 80%,
+      rgba(34, 211, 238, 0.15) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 40% 30% at 70% 30%,
+      rgba(6, 182, 212, 0.1) 0%,
+      transparent 50%
+    );
+}
+
+/* ===== METALLIC EFFECTS ===== */
+.metallic-surface {
+  background: linear-gradient(
+    135deg,
+    rgba(156, 163, 175, 0.1) 0%,
+    rgba(75, 85, 99, 0.05) 50%,
+    rgba(156, 163, 175, 0.1) 100%
+  );
+  border: 1px solid rgba(156, 163, 175, 0.2);
+}
+
+.metallic-border {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--background), var(--background)) padding-box,
+    linear-gradient(
+      135deg,
+      rgba(156, 163, 175, 0.4),
+      rgba(75, 85, 99, 0.1),
+      rgba(156, 163, 175, 0.4)
+    )
+    border-box;
+}
+
+.metallic-text {
+  background: linear-gradient(135deg, #f3f4f6 0%, #9ca3af 50%, #f3f4f6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ===== SPACE DEPTH LAYERS ===== */
+.space-depth {
+  background:
+    radial-gradient(
+      ellipse at 20% 30%,
+      rgba(31, 41, 55, 0.3) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 80% 70%,
+      rgba(17, 24, 39, 0.3) 0%,
+      transparent 50%
+    ), linear-gradient(180deg, #0a0a0b 0%, #141416 50%, #0a0a0b 100%);
 }

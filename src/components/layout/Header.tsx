@@ -3,7 +3,9 @@
 import { motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import React from 'react';
+
 import LocaleSelector from '@/components/layout/LocaleSelector';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { Container } from '@/components/ui/Container';
 import { clamp } from '@/lib/math';
 import { cn } from '@/lib/utils';
@@ -128,8 +130,11 @@ export function Header() {
                 <NavigationBar.Mobile className='pointer-events-auto relative z-50 md:hidden' />
                 <NavigationBar.Desktop className='pointer-events-auto relative z-50 hidden md:block' />
               </div>
-              <div className='flex justify-end gap-3 md:flex-1'>
+              <div className='flex justify-end gap-2 md:flex-1'>
                 {/* <UserInfo /> */}
+                <div className='pointer-events-auto'>
+                  <ThemeToggle />
+                </div>
                 <div className='pointer-events-auto'>
                   <LocaleSelector />
                 </div>

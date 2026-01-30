@@ -120,7 +120,7 @@ export default function HomePage(
             onFilterChange={setSelectedCardSources}
             reset={reset}
           />
-          <div className='text-lg text-primary-200 font-bold'>
+          <div className='text-lg text-space-200 font-bold'>
             {t('free_action')}
           </div>
           <ResourceFilter
@@ -128,19 +128,15 @@ export default function HomePage(
             src={BASE_FREE_ACTIONS}
             reset={reset}
           />
-          <div className='text-lg text-primary-200 font-bold'>
-            {t('income')}
-          </div>
+          <div className='text-lg text-space-200 font-bold'>{t('income')}</div>
           <ResourceFilter
             onFilterChange={setSelectedIncomes}
             src={BASE_INCOMES}
             reset={reset}
           />
-          <div className='text-lg text-primary-200 font-bold'>
-            {t('sector')}
-          </div>
+          <div className='text-lg text-space-200 font-bold'>{t('sector')}</div>
           <SectorFilter onFilterChange={setSelectedSectors} reset={reset} />
-          <div className='text-lg text-primary-200 font-bold'>
+          <div className='text-lg text-space-200 font-bold'>
             {t('Card Type')}
           </div>
           <IconFilter<ECardType>
@@ -153,7 +149,7 @@ export default function HomePage(
             <TextFilter onTextChange={setTextFilter} reset={reset} />
             <div
               onClick={resetAll}
-              className='group flex w-auto items-center justify-between space-x-2 rounded-md bg-primary px-4 py-2 text-lg font-medium text-zinc-100 shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur-md hover:bg-zinc-500 hover:text-primary-400 focus:outline-none focus-visible:ring-2 dark:from-zinc-900/30 dark:to-zinc-800/80 dark:text-zinc-200 dark:ring-white/10 dark:hover:ring-white/20 dark:focus-visible:ring-yellow-500/80'
+              className='group flex w-auto items-center justify-between space-x-2 rounded-md bg-space-700 px-4 py-2 text-lg font-medium text-space-100 shadow-lg shadow-space-950/20 ring-1 ring-space-600 backdrop-blur-md hover:bg-space-600 hover:text-primary-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 transition-colors duration-200'
             >
               <FiRotateCcw className='' />
             </div>
@@ -171,7 +167,7 @@ export default function HomePage(
             <CardOdometer
               value={baseCardsCount}
               name={t('base_cards')}
-              className='text-amber-500 hover:text-amber-600'
+              className='text-accent-500 hover:text-accent-400'
             />
             {!settings.enableAlien ? (
               <SettingsDialogButton
@@ -184,7 +180,7 @@ export default function HomePage(
               <CardOdometer
                 value={alienCardCount}
                 name={t('aliens')}
-                className='text-primary hover:text-sky-700'
+                className='text-primary-500 hover:text-primary-400'
               />
             )}
           </div>
