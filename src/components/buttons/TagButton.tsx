@@ -38,8 +38,9 @@ const TagButton = React.forwardRef<HTMLButtonElement, TagButtonProps>(
             'filter-button h-min w-min rounded-full duration-200 bg-gradient-to-b from-zinc-50/50 to-white/90 p-1 text-sm shadow-lg shadow-zinc-800/5 ring-1 ring-zinc-900/5 backdrop-blur transition',
           isOriginal &&
             'ring-0 border-none brightness-[0.3] duration-200 scale-125',
-          selected && 'bg-gradient-radial from-yellow-200 to-yellow-100',
-          isOriginal && selected && 'brightness-100',
+          selected &&
+            'bg-gradient-radial from-primary-400 to-primary-500 shadow-[0_0_12px_hsl(var(--primary-500)/0.5)]',
+          isOriginal && selected && 'brightness-110 scale-130',
           !selected && '',
         )}
         {...rest}
