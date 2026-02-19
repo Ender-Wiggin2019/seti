@@ -71,6 +71,7 @@
     "react-odometerjs": "^3.1.0",
     "react-simple-star-rating": "^5.1.7",
     "react-textarea-autosize": "^8.5.2",
+    "recharts": "^3.7.0",
     "seedrandom": "^3.0.5",
     "tailwind-merge": "^1.13.2",
     "tailwindcss-animate": "^1.0.6",

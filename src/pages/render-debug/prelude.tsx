@@ -2,22 +2,30 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-11 23:41:00
  * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-12-18 22:10:17
+ * @LastEditTime: 2025-11-04 22:28:26
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
-import { DownloadableCardRender } from '@/components/form/DownloadableCardRender';
+import React from 'react';
+import { PreludeCard } from '@/components/cards/prelude';
+import withDownloadable from '@/components/form/withDownloadable';
 import Layout from '@/components/layout/Layout';
 import Seo from '@/components/Seo';
 import { Container } from '@/components/ui/Container';
-import spaceAgencyAliens from '@/data/spaceAgencyAliens';
-import spaceAgencyCards from '@/data/spaceAgencyCards';
-import { IBaseCard } from '@/types/BaseCard';
-import { sortCards } from '@/utils/sort';
+import { preludeCards } from '@/data/preludeCards';
 
+import { IPreludeCard } from '@/types/prelude';
+
+type PreludeCardProps = {
+  card: IPreludeCard;
+};
+
+const DownloadablePreludeCard = withDownloadable<PreludeCardProps>(
+  PreludeCard,
+  (props) => props.card.id + '.png',
+);
 type Props = {
   // Add custom props here
 };
@@ -26,33 +34,21 @@ export default function HomePage(
   _props: InferGetStaticPropsType<typeof getStaticProps>,
 ) {
   const { t: _t } = useTranslation('common');
-  // const cards = sortCards([...baseCards, ...alienCards]).slice(105);
-  const cards = sortCards([...spaceAgencyCards]);
-
-  // const cards = sortCards([...alienCards]);
 
   return (
     <Layout>
-      <Seo templateTitle='About' />
+      <Seo templateTitle='Prelude Debug' />
       <Container>
         <div className='mt-4 flex flex-col gap-2'>
-          {cards.map((card) => {
-            const oriCard: IBaseCard = {
-              ...card,
-              special: { enableEffectRender: false },
-            };
-            const renderCard: IBaseCard = {
-              ...card,
-              special: { ...card.special, enableEffectRender: true },
-            };
+          {preludeCards.map((card: IPreludeCard) => {
             return (
-              <div className='flex justify-start gap-4' key={oriCard.id}>
-                <div className='text-xl text-white'>{oriCard.id}</div>
+              <div className='flex justify-start gap-4' key={card.id}>
+                <div className='text-xl text-white'>{card.id}</div>
                 <div className='relative'>
-                  <PreviewBaseCard card={oriCard} />
+                  <PreludeCard card={card} />
                 </div>
                 <div className='relative'>
-                  <DownloadableCardRender card={renderCard} />
+                  <DownloadablePreludeCard card={card} />
                 </div>
               </div>
             );

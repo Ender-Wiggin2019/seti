@@ -17,6 +17,7 @@ export interface IPostItem {
   cnOnly?: boolean;
   tag?: IPostTag;
   date?: string;
+  externalPath?: string;
 }
 
 export type IPostTag = 'hot' | 'new' | 'update';

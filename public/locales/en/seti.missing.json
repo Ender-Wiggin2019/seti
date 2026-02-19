@@ -1,124 +1,23 @@
 {
-  "Reusable Lander": "Reusable Lander",
-  "sa": {
-    "desc": {
-      "card_1": "sa.desc.card_1",
-      "card_2": "sa.desc.card_2",
-      "card_7": "sa.desc.card_7",
-      "card_13": "sa.desc.card_13",
-      "card_15": "sa.desc.card_15",
-      "card_27": "sa.desc.card_27",
-      "card_28": "sa.desc.card_28",
-      "card_29": "sa.desc.card_29",
-      "card_31": "sa.desc.card_31",
-      "card_32": "sa.desc.card_32",
-      "card_41": "sa.desc.card_41"
-    }
-  },
+  "Telescope Blueprints": "Telescope Blueprints",
+  "Vessel Designs": "Vessel Designs",
+  "Exofossil Samples": "Exofossil Samples",
+  "Nanowielder Node": "Nanowielder Node",
+  "pierced Exoplanet": "pierced Exoplanet",
+  "Mass Sample Collection": "Mass Sample Collection",
+  "Rover Exploration": "Rover Exploration",
+  "Exofossil Discovery": "Exofossil Discovery",
+  "Probe Customisation": "Probe Customisation",
+  "Oscillating Probes": "Oscillating Probes",
+  "Vortex Exoplanet": "Vortex Exoplanet",
   "Ignore the limit of probes in space for those launches": {
     "": "Ignore the limit of probes in space for those launches."
   },
-  "Reveal the card you drew, and gain its free-action corner effect": {
-    "": "Reveal the card you drew, and gain its free-action corner effect."
-  },
-  "LAND on a planet or a moon, even without the required tech": {
-    "": "LAND on a planet or a moon, even without the required tech."
-  },
+  "The Queen": "The Queen",
+  "Comparative Analysis": "Comparative Analysis",
+  "Message Capsule": "Message Capsule",
+  "New Physics": "New Physics",
   "You may land on a space that is already occupied and still get the covered reward": {
     "": "You may land on a space that is already occupied and still get the covered reward."
-  },
-  "in the sector with Mercury": {
-    "": "in the sector with Mercury."
-  },
-  "in the sector with Venus": {
-    "": "in the sector with Venus."
-  },
-  "in the sector with Mars": {
-    "": "in the sector with Mars."
-  },
-  "in the sector with Jupiter": {
-    "": "in the sector with Jupiter."
-  },
-  "in the sector with Saturn": {
-    "": "in the sector with Saturn."
-  },
-  "at Proxima Centauri": {
-    "": "at Proxima Centauri."
-  },
-  "at Barnard's Star": {
-    "": "at Barnard's Star."
-  },
-  "at 61 Virginis": {
-    "": "at 61 Virginis."
-  },
-  "at Kepler 22": {
-    "": "at Kepler 22."
-  },
-  "at Sirius A": {
-    "": "at Sirius A."
-  },
-  "at Procyon": {
-    "": "at Procyon."
-  },
-  "at Beta Pictoris": {
-    "": "at Beta Pictoris."
-  },
-  "at Vega": {
-    "": "at Vega."
-  },
-  "at Uranus (incl": {
-    " moons)": "at Uranus (incl. moons)"
-  },
-  "at Neptune (incl": {
-    " moons)": "at Neptune (incl. moons)"
-  },
-  "for a single species": "for a single species",
-  "for that species": "for that species",
-  "in the same sector": "in the same sector",
-  "Tracking and Data Relay Satellite": "Tracking and Data Relay Satellite",
-  "NASA Deep Space Network": "NASA Deep Space Network",
-  "Breakthrough Message": "Breakthrough Message",
-  "Servicing Mission": "Servicing Mission",
-  "Live Landing Broadcast": "Live Landing Broadcast",
-  "Twin Probes": "Twin Probes",
-  "Quantum Data Storage": "Quantum Data Storage",
-  "Lunar Crater Radio Telescope": "Lunar Crater Radio Telescope",
-  "First Human in Space": "First Human in Space",
-  "New Assignment": "New Assignment",
-  "Two-planet Flyby Maneuver": "Two-planet Flyby Maneuver",
-  "James Clerk Maxwell Telescope": "James Clerk Maxwell Telescope",
-  "Reusable Rocket": "Reusable Rocket",
-  "Iterative Engineering": "Iterative Engineering",
-  "Astronaut Training Experience": "Astronaut Training Experience",
-  "Paid Media Coverage": "Paid Media Coverage",
-  "Contracted Research": "Contracted Research",
-  "TESS Satellite": "TESS Satellite",
-  "Well Executed Project": "Well Executed Project",
-  "Orbital Refueling": "Orbital Refueling",
-  "Psyche Probe": "Psyche Probe",
-  "Neutral Buoyancy Training": "Neutral Buoyancy Training",
-  "Space Elevator": "Space Elevator",
-  "LIGO": "LIGO",
-  "New AI Models": "New AI Models",
-  "Better Solar Panels": "Better Solar Panels",
-  "Restructuring": "Restructuring",
-  "Abandoned Mission": "Abandoned Mission",
-  "Akatsuku Orbiter": "Akatsuku Orbiter",
-  "Ingenuity Helicopter": "Ingenuity Helicopter",
-  "MUREP Idea Competition": "MUREP Idea Competition",
-  "Delayed Launch": "Delayed Launch",
-  "Private Sector Investment": "Private Sector Investment",
-  "NASA Exoplanet Archive": "NASA Exoplanet Archive",
-  "Big Ear Radio Telescope": "Big Ear Radio Telescope",
-  "Pandora Satellite": "Pandora Satellite",
-  "Space Rendezvous": "Space Rendezvous",
-  "Grand Tour Program": "Grand Tour Program",
-  "Hall-effect Thruster": "Hall-effect Thruster",
-  "Exoplanet Survey": "Exoplanet Survey",
-  "LOFAR Array": "LOFAR Array",
-  "desc": {
-    "card_8_endgame": "desc.card_8_endgame",
-    "card_10_endgame": "desc.card_10_endgame"
-  },
-  "Flavor Text": "Flavor Text"
+  }
 }

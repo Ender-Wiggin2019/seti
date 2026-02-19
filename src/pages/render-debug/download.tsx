@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2025-03-11 23:41:00
  * @LastEditors: Ender Wiggin
- * @LastEditTime: 2025-12-18 22:10:17
+ * @LastEditTime: 2025-12-18 22:01:41
  * @Description:
  */
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
@@ -27,7 +27,7 @@ export default function HomePage(
 ) {
   const { t: _t } = useTranslation('common');
   // const cards = sortCards([...baseCards, ...alienCards]).slice(105);
-  const cards = sortCards([...spaceAgencyCards]);
+  const cards = sortCards([...spaceAgencyCards, ...spaceAgencyAliens]);
 
   // const cards = sortCards([...alienCards]);
 

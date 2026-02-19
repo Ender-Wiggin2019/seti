@@ -1,0 +1,56 @@
+<!--
+ * @Author: Ender Wiggin
+ * @Date: 2026-02-12 22:27:15
+ * @LastEditors: Ender Wiggin
+ * @LastEditTime: 2026-02-12 22:42:19
+ * @Description:
+-->
+---
+alwaysApply: true
+---
+
+## 生成 Slide 用于演示
+
+你需要基于一篇 SETI 公司的攻略进行整理，并在项目中生成一个类似 Google Slide 的交互页面，画幅是 16 * 9，允许切换上下页。因此一共分为两步：
+1、数据处理，阅读文章，输出结构化json，存放到 public 里面
+2、在项目中实现一个slide页面
+
+## Step 1
+读取 public/doc.md
+其中一共会有18页，每2页对应一个公司，需要包含如下几个部分：
+
+### 第一页
+
+- 左侧：公司卡图，来源于 public/corps，参考具体编号一一对应。
+- 右侧：雷达图，包含如下维度
+  - 首轮强度 (作者有一个排序，参考排序)
+  - 公司模型 (使用公司介绍中的综合强度，有一个模型的数值)
+  - 上限能力 (分析作者文本中是否有认为某一个公司上限很高)
+  - 玩家综合评价 (作者对公司的评价基本态度，主观分数)
+
+### 第二页
+- 左侧：公司卡图，
+- 右侧：点评
+
+我希望这个页面是可配置化的，因此你应该提取攻略中的信息，然后返回对应的结构化数据，结构大致如下：
+
+```
+[{
+  id: string;
+  name: string;
+  initStrength: number;
+  model: number;
+  ceiling: 1 | 2 | 3; // (low, medium, high)
+  summary: 1 | 2 | 3; // (low, medium, high)
+  recommendCards: string[]; // if author recommend some cards for combo
+}]
+```
+
+## Step 2
+
+生成一个Slide页面，输入public里面生成的json，输出一个可切换 slide
+
+样式也参考目前项目的设计，需要具有科幻感和高级感，使用tailwind 进行设计。雷达图如果缺少库的支持，可以安装相应的库
+
+页面存放在 pages 里面。
+

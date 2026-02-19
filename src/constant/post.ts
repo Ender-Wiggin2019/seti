@@ -9,6 +9,17 @@ import { EPostCategory, IPostItem } from '@/types/post';
  */
 export const Posts: IPostItem[] = [
   {
+    title: 'posts.corp_tier',
+    path: 'corp-tier',
+    externalPath: '/slide',
+    category: EPostCategory.STRATEGY,
+    author: 'Ender',
+    description: '',
+    date: '2025-02-19',
+    tag: 'hot',
+    cnOnly: true,
+  },
+  {
     title: 'posts.advanced_strategy_1',
     path: 'advanced-strategy-1',
     category: EPostCategory.GENERAL,

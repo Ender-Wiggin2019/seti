@@ -68,12 +68,14 @@ export const getStaticProps: GetStaticProps<Props> = async (props) => {
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 export async function getStaticPaths({ locales }) {
-  const paths = Posts.map((post) =>
-    locales.map((locale: string) => ({
-      params: { id: post.path },
-      locale, //locale should not be inside `params`
-    })),
-  ).flat(); // to avoid nested array
+  const paths = Posts.filter((post) => !post.externalPath)
+    .map((post) =>
+      locales.map((locale: string) => ({
+        params: { id: post.path },
+        locale, //locale should not be inside `params`
+      })),
+    )
+    .flat(); // to avoid nested array
   return {
     paths,
     fallback: false,

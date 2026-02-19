@@ -30,6 +30,16 @@ html.dark {
   color: theme("colors.lime.950");
 }
 
+svg text:focus {
+  outline: none;
+  stroke: none;
+}
+
+svg text {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 @keyframes typing-pulse {
   0%,
   100% {
