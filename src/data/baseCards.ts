@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-12-01 16:41:35
+ * @LastEditTime: 2026-03-03 18:18:46
  * @Description:
  */
 /** biome-ignore-all lint/suspicious/noExplicitAny: <> */
@@ -130,7 +130,7 @@ const _baseCards: IBaseCard[] = [
   },
   {
     id: '97',
-    name: 'Apollo 1 Mission',
+    name: 'Apollo 11 Mission',
     position: { src: '/images/cards/cards-1.webp', row: 0, col: 7 },
     freeAction: [{ type: EResource.DATA, value: 1 }],
     sector: ESector.BLUE,
