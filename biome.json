@@ -24,7 +24,7 @@
       "!**/.env.production.local",
       "!**/.vercel",
       "!**/CHANGELOG.md",
-      "!src/styles/odometer.css"
+      "!**/src/styles/odometer.css"
     ]
   },
   "formatter": {

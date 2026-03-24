@@ -1,0 +1,1021 @@
+@font-face {
+  font-family: "Kobenhavn W03 Bold";
+  src: url("https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.eot");
+  src:
+    url("https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.eot?#iefix")
+    format("embedded-opentype"),
+    url("https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.woff2")
+    format("woff2"),
+    url("https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.woff")
+    format("woff"),
+    url("https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.ttf")
+    format("truetype"),
+    url("https://db.onlinewebfonts.com/t/17a4468736b602928abc66c0a716a06a.svg#Kobenhavn W03 Bold")
+    format("svg");
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(7, 1fr);
+  width: 100%;
+  height: 0;
+  padding-bottom: 70%; /* 10:7 aspect ratio */
+  background-image: url("/seti-assets/cards/cards-1.webp");
+  background-size: 1000% 700%; /* 10x7 grid */
+}
+.card-cell {
+  width: 100%;
+  height: 100%;
+  background-image: inherit;
+  background-size: inherit;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+
+.text-desc-md {
+  font-size: 0.5rem /* 12px */;
+  line-height: 0.8rem /* 16px */;
+}
+
+.text-desc-sm {
+  font-size: 0.45rem /* 12px */;
+  line-height: 0.5rem /* 16px */;
+}
+
+.text-desc-xs {
+  font-size: 0.44rem /* 12px */;
+  line-height: 0.45rem /* 16px */;
+}
+
+.text-desc-xxs {
+  font-size: 0.42rem /* 12px */;
+  line-height: 0.5rem /* 16px */;
+}
+
+.text-desc-desc {
+  font-size: 0.4rem;
+  line-height: 0.45rem;
+}
+
+.text-desc-desc-mini {
+  font-size: 0.4rem;
+  line-height: 0.4rem;
+}
+
+/* Method1: clip */
+/* .card-flavor-text-container {
+  position: absolute;
+  display: flex;
+  align-items: flex-end;
+  bottom: 6px;
+  left: 9px;
+  background-color: white;
+  color: black;
+  font-size: 5px;
+  font-style: italic;
+  width: 124px;
+  height: 24px;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 24px) 100%, 0 100%);
+  box-sizing: border-box;
+  text-overflow: ellipsis;
+} */
+
+.card-watermark {
+  position: absolute;
+  top: 20px;
+  left: -50px;
+  rotate: -90deg;
+  display: flex;
+  align-items: flex-end;
+  color: black;
+  width: 104px;
+  height: 20px;
+  font-size: 6px;
+  /* line-height: 5px; */
+  opacity: 20%;
+  padding-bottom: 2px;
+  box-sizing: border-box;
+}
+
+.card-copyright {
+  position: absolute;
+  top: 45px;
+  left: 0px;
+  color: white;
+  width: 150px;
+  height: 16px;
+  font-size: 16px;
+  line-height: 16px;
+  font-weight: 600;
+  opacity: 70%;
+  text-align: center;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Method2: append */
+.card-flavor-text-container {
+  position: absolute;
+  bottom: 6px;
+  left: 7px;
+  display: flex;
+  align-items: flex-end;
+  /* background-color: white; */
+  color: black;
+  width: 106px;
+  height: 20px;
+  padding-bottom: 2px;
+  box-sizing: border-box;
+  z-index: 12;
+}
+
+.card-flavor-text {
+  z-index: 5;
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+  width: 120px;
+  font-size: 4px;
+  line-height: 4.5px;
+  font-style: italic;
+}
+
+.normal-flavor-text {
+  color: black;
+}
+
+.card-effects-container {
+  position: absolute;
+  top: 2px;
+  background-color: white;
+  color: black;
+  font-size: 9px;
+  line-height: 10px;
+  width: 150px;
+  height: 180px;
+  padding-bottom: 2px;
+  /* opacity: 0.8; */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  padding-top: 18px;
+}
+
+.end-game-container {
+  position: relative;
+  background-image: url("/seti-assets/cards/end-game-container.webp");
+  width: 125px;
+  height: 30px;
+  margin-left: 25px;
+  background-size: cover;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.card-mission-container {
+  position: relative;
+  width: 138px;
+  height: 50px;
+  /* margin-top: 10px; */
+}
+.card-quick-mission-container {
+  position: relative;
+  background-image: url("/seti-assets/cards/mission-container.webp");
+  width: 138px;
+  height: 37px;
+  background-size: cover;
+  margin-right: -11px;
+}
+
+.card-quick-mission-container-large-reward {
+  background-image: url("/seti-assets/cards/mission-container-large-reward.webp");
+}
+.card-quick-mission-container .req-container {
+  position: absolute;
+  display: flex;
+  gap: 1px;
+  top: 0px;
+  left: 0px;
+  width: 73px;
+  height: 37px;
+  padding: 1px 2px 1px 2px;
+}
+
+.card-quick-mission-container .req-container-large {
+  position: absolute;
+  display: flex;
+  gap: 1px;
+  top: 0px;
+  left: 0px;
+  width: 38px;
+  height: 37px;
+  padding: 1px 2px 1px 2px;
+}
+
+.card-quick-mission-container .reward-container {
+  position: absolute;
+  display: flex;
+  top: 0px;
+  right: 0px;
+  width: 65px;
+  height: 37px;
+  padding: 1px 2px 1px 2px;
+}
+
+.card-quick-mission-container .reward-container-large {
+  position: absolute;
+  display: flex;
+  top: 0px;
+  right: 0px;
+  width: 100px;
+  height: 37px;
+  padding: 1px 2px 1px 2px;
+}
+
+.card-full-mission-container {
+  position: relative;
+  background-image: url("/seti-assets/cards/mission-background.webp");
+  width: 138px;
+  height: calc(138px * 302 / 1143);
+  background-size: cover;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0px 8px 0px 8px;
+  margin-left: 6px;
+}
+
+.card-full-mission-container-vertical {
+  position: relative;
+  background-image: url("/seti-assets/cards/mission-container-large.webp");
+  width: 138px;
+  height: calc(138px * 460 / 1142);
+  background-size: cover;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 2px 4px 0px 4px;
+  margin-left: 6px;
+  margin-top: -4px;
+}
+
+.card-full-missions {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+  /* margin-left: 6px; */
+}
+
+.card-mission-item-container {
+  display: flex;
+  /* margin-top: -20px; */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.card-mission-req {
+  position: relative;
+  background-image: url("/seti-assets/cards/mission-req.webp");
+  width: calc(310px * 138 / 1143);
+  height: calc(204px * 138 / 1143);
+  background-size: cover;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding-top: 2px;
+}
+
+.card-mission-reward {
+  position: relative;
+  background-image: url("/seti-assets/cards/mission-reward.webp");
+  width: calc(274px * 138 / 1143);
+  height: calc(270px * 138 / 1143);
+  background-size: cover;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding-top: 3px;
+  margin-top: -4px;
+}
+
+.req-1 {
+}
+
+.card-effects {
+  display: flex;
+  /* flex: 1 1 0%; */
+  /* width: 100%; */
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  /* border: 1px solid green; */
+}
+
+.card-title {
+  position: absolute;
+  top: 95px;
+  left: 46px;
+  width: 103px;
+  height: 9px;
+  background-color: #3f3d40;
+  font-size: 6px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-income-container {
+  position: absolute;
+  width: 150px;
+  height: auto;
+  bottom: 0px;
+  overflow: hidden;
+  z-index: 15;
+  /* border-radius: 12px; */
+}
+.card-income-svg {
+  width: 100%;
+  height: auto;
+}
+
+.card-income-icon {
+  position: absolute;
+  right: 4px;
+}
+
+.card-price-container {
+  position: absolute;
+  height: auto;
+  top: -12px;
+  overflow: hidden;
+  left: -2px;
+}
+
+.card-price-svg {
+  width: 100%;
+  height: auto;
+}
+
+.card-price-icon {
+  position: absolute;
+  left: 11px;
+  top: 3px;
+}
+
+/** Aliens */
+.anomalies {
+  top: 87px;
+  background-color: #1a6983;
+}
+
+.centaurians {
+  top: 87px;
+  background-color: #5fb35e;
+}
+
+.mascamites {
+  top: 87px;
+  background-color: #5d412d;
+}
+
+.oumuamua {
+  top: 87px;
+  background-color: #6940a2;
+}
+
+.exertians {
+  top: 87px;
+  background-color: #ca273a;
+}
+/* icons */
+.seti-icon {
+  background-image: url(/seti-assets/seti-icons.webp);
+  background-size: 500% 700%;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  /* border: 1px solid black; */
+}
+
+.diamond {
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  /* border: 1px solid black; */
+}
+
+.normal {
+  border-radius: 0%;
+}
+
+.icon-credit {
+  background-position: 0 0; /* 第一行第一列 */
+}
+.icon-energy {
+  background-position: -50px 0; /* 第一行第二列 */
+}
+.icon-draw-card {
+  background-position: -100px 0; /* 第一行第三列 */
+}
+.icon-any-card {
+  background-position: -150px 0; /* 第一行第四列 */
+}
+.icon-publicity {
+  background-position: -200px 0; /* 第一行第五列 */
+}
+.icon-data {
+  background-position: 0 -50px; /* 第二行第一列 */
+}
+.icon-move {
+  background-position: -50px -50px; /* 第二行第二列 */
+}
+.icon-move-special {
+  background-image: url(/seti-assets/move-icon.webp);
+  width: 50px;
+  height: 50px;
+  background-size: cover;
+}
+.icon-orbit-count {
+  background-position: -100px -50px; /* 第二行第三列 */
+}
+.icon-land-count {
+  background-position: -150px -50px; /* 第二行第四列 */
+}
+.icon-orbit-or-land-count {
+  background-position: -200px -50px; /* 第二行第五列 */
+}
+.icon-any-signal {
+  background-position: 0 -100px; /* 第三行第一列 */
+}
+.icon-yellow-signal {
+  background-position: -50px -100px; /* 第三行第二列 */
+}
+.icon-red-signal {
+  background-position: -100px -100px; /* 第三行第三列 */
+}
+.icon-blue-signal {
+  background-position: -150px -100px; /* 第三行第四列 */
+}
+.icon-black-signal {
+  background-position: -200px -100px; /* 第三行第五列 */
+}
+
+.icon-yellow-trace {
+  background-position: 0 -150px; /* 第四行第一列 */
+}
+.icon-red-trace {
+  background-position: -50px -150px; /* 第四行第二列 */
+}
+.icon-blue-trace {
+  background-position: -100px -150px; /* 第四行第三列 */
+}
+.icon-any-trace {
+  background-position: -150px -150px; /* 第四行第四列 */
+}
+.icon-score {
+  background-position: -200px -150px; /* 第四行第五列 */
+}
+
+.icon-computer-action {
+  background-position: 0 -200px; /* 第五行第一列 */
+}
+.icon-land-action {
+  background-position: -50px -200px; /* 第五行第二列 */
+}
+.icon-launch-action {
+  background-position: -100px -200px; /* 第五行第三列 */
+}
+.icon-scan-action {
+  background-position: -150px -200px; /* 第五行第四列 */
+}
+.icon-orbit-action {
+  background-position: -200px -200px; /* 第五行第五列 */
+}
+.icon-scan-tech {
+  background-position: 0 -250px; /* 第六行第一列 */
+}
+.icon-probe-tech {
+  background-position: -50px -250px; /* 第六行第二列 */
+}
+.icon-computer-tech {
+  background-position: -100px -250px; /* 第六行第三列 */
+}
+.icon-any-tech {
+  background-position: -150px -250px; /* 第六行第四列 */
+}
+.icon-rotate {
+  background-position: -200px -250px; /* 第六行第五列 */
+}
+
+.icon-any-card-special {
+  background-position: 0 -300px; /* 第七行第一列 */
+}
+
+/** 区别在于一个是收入，一个是正常图标。未来应该要把收入的那个改一下 */
+.icon-draw-card-special {
+  background-position: -50px -300px;
+}
+
+.icon-discard-card-scan {
+  background-position: -100px -300px;
+}
+
+.icon-display-card-scan {
+  background-position: -150px -300px;
+}
+
+/** second  icon file */
+.icon-credit-income {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: 0 0; /* 第一行第一列 */
+}
+.icon-energy-income {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -50px 0; /* 第一行第二列 */
+}
+.icon-card-income {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -100px 0; /* 第一行第三列 */
+}
+.icon-income {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -150px 0; /* 第一行第四列 */
+}
+
+.icon-display-card-signal {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: 0 -50px; /* 第二行第一列 */
+}
+.icon-discard-card-signal {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -50px -50px; /* 第二行第二列 */
+}
+.icon-fulfill-icon {
+  background-image: url(/seti-assets/move-icon.webp);
+  width: 50px;
+  height: 50px;
+  background-size: cover;
+}
+.icon-orbit-count {
+  background-position: -100px -50px; /* 第二行第三列 */
+}
+.icon-land-count {
+  background-position: -150px -50px; /* 第二行第四列 */
+}
+.icon-orbit-or-land-count {
+  background-position: -200px -50px; /* 第二行第五列 */
+}
+
+.icon-signal-token {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -150px -50px; /* 第二行第四列 */
+}
+
+.icon-any-signal-corner {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: 0 -100px; /* 第三行第一列 */
+}
+.icon-yellow-signal-corner {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -50px -100px; /* 第三行第二列 */
+}
+.icon-red-signal-corner {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -100px -100px; /* 第三行第三列 */
+}
+.icon-blue-signal-corner {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -150px -100px; /* 第三行第四列 */
+}
+.icon-black-signal-corner {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -200px -100px; /* 第三行第五列 */
+}
+
+.icon-fulfill-sector-any {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: 0 -150px; /* 第四行第一列 */
+}
+.icon-fulfill-sector-blue {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -50px -150px; /* 第四行第二列 */
+}
+.icon-fulfill-sector-yellow {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -100px -150px; /* 第四行第三列 */
+}
+.icon-fulfill-sector-red {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -150px -150px; /* 第四行第四列 */
+}
+
+.icon-5-1 {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: 0 -200px; /* 第五行第一列 */
+}
+.icon-5-2 {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -50px -200px; /* 第五行第二列 */
+}
+.icon-mission-card {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -100px -200px; /* 第五行第三列 */
+}
+.icon-end-scoring-card {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -150px -200px; /* 第五行第四列 */
+}
+.icon-5-5 {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -200px -200px; /* 第五行第五列 */
+}
+
+.icon-fulfill-sector-black {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -200px -150px; /* 第四行第五列 */
+}
+
+.icon-advanced-15 {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  height: 70px;
+  background-position: 0 -250px; /* 第六行第一列 */
+}
+
+.icon-orbit-or-land-action {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -100px -250px; /* 第六行第三列 */
+}
+.icon-fulfill-advanced {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -150px -250px; /* 第六行第四列 */
+}
+.icon-danger {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -200px -250px; /* 第六行第五列 */
+}
+
+.icon-draw-alien-card {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: 0 -300px; /* 第七行第一列 */
+}
+
+.icon-exofossil {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -50px -300px;
+}
+
+.icon-use-exofossil {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -100px -300px;
+}
+
+.icon-sample {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -150px -300px;
+}
+
+.icon-fulfill-sample {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -200px -300px;
+}
+
+/* third icon file */
+.icon-credit-income {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: 0 0; /* 第一行第一列 */
+}
+.icon-energy-income {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -50px 0; /* 第一行第二列 */
+}
+.icon-card-income {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -100px 0; /* 第一行第三列 */
+}
+.icon-income {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -150px 0; /* 第一行第四列 */
+}
+
+.icon-display-card-signal {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: 0 -50px; /* 第二行第一列 */
+}
+.icon-discard-card-signal {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -50px -50px; /* 第二行第二列 */
+}
+.icon-fulfill-icon {
+  background-image: url(/seti-assets/move-icon.webp);
+  width: 50px;
+  height: 50px;
+  background-size: cover;
+}
+.icon-orbit-count {
+  background-position: -100px -50px; /* 第二行第三列 */
+}
+.icon-land-count {
+  background-position: -150px -50px; /* 第二行第四列 */
+}
+
+.icon-glyph-gray {
+  background-image: url(/seti-assets/seti-icons-3.webp);
+  background-position: 0 0; /* 第一行第一列 */
+}
+.icon-glyph-orange {
+  background-image: url(/seti-assets/seti-icons-3.webp);
+  background-position: -50px 0; /* 第一行第二列 */
+}
+.icon-glyph-yellow {
+  background-image: url(/seti-assets/seti-icons-3.webp);
+  background-position: -100px 0; /* 第一行第三列 */
+}
+.icon-glyph-red {
+  background-image: url(/seti-assets/seti-icons-3.webp);
+  background-position: -150px 0; /* 第一行第四列 */
+}
+.icon-glyph-green {
+  background-image: url(/seti-assets/seti-icons-3.webp);
+  background-position: -200px 0; /* 第一行第五列 */
+}
+.icon-glyph-blue {
+  background-image: url(/seti-assets/seti-icons-3.webp);
+  background-position: 0px -50px; /* 第二行第一列 */
+}
+.icon-glyph-purple {
+  background-image: url(/seti-assets/seti-icons-3.webp);
+  background-position: -50px -50px; /* 第二行第二列 */
+}
+.icon-glyph-count {
+  background-image: url(/seti-assets/seti-icons-3.webp);
+  background-position: -100px -50px; /* 第二行第三列 */
+}
+.icon-glyph-mark {
+  background-image: url(/seti-assets/seti-icons-3.webp);
+  background-position: -150px -50px; /* 第二行第四列 */
+}
+
+.icon-sector-any {
+  background-image: url(/seti-assets/seti-icons-3.webp);
+  background-position: 0 -150px; /* 第四行第一列 */
+}
+.icon-sector-blue {
+  background-image: url(/seti-assets/seti-icons-3.webp);
+  background-position: -50px -150px; /* 第四行第二列 */
+}
+.icon-sector-yellow {
+  background-image: url(/seti-assets/seti-icons-3.webp);
+  background-position: -100px -150px; /* 第四行第三列 */
+}
+.icon-sector-red {
+  background-image: url(/seti-assets/seti-icons-3.webp);
+  background-position: -150px -150px; /* 第四行第四列 */
+}
+
+.icon-organelle-red {
+  background-image: url(/seti-assets/seti-icons-3.webp);
+  background-position: 0 -200px; /* 第五行第一列 */
+}
+.icon-organelle-blue {
+  background-image: url(/seti-assets/seti-icons-3.webp);
+  background-position: -50px -200px; /* 第五行第二列 */
+}
+.icon-organelle-yellow {
+  background-image: url(/seti-assets/seti-icons-3.webp);
+  background-position: -100px -200px; /* 第五行第三列 */
+}
+.icon-5-4 {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -150px -200px; /* 第五行第四列 */
+}
+.icon-5-5 {
+  background-image: url(/seti-assets/seti-icons-2.webp);
+  background-position: -200px -200px; /* 第五行第五列 */
+}
+
+.icon-container {
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: flex-start;
+  align-items: center;
+  /* width: 50px; */
+  gap: 4px;
+  /* border: 1px solid red; */
+}
+
+/* .icon-md {
+  scale: 1;
+}
+
+.icon-sm {
+  scale: 0.6;
+} */
+
+.icon-value {
+  position: absolute;
+  z-index: 5;
+  color: white;
+  font-family: "Kobenhavn W03 Bold", monospace;
+  /* width: 20px; */
+  height: 50px;
+  font-size: 40px;
+  /* font-weight: 800; */
+
+  left: -5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  /* -webkit-text-fill-color: white;
+  -webkit-text-stroke: 4px black; */
+}
+
+.hexagon {
+  position: relative;
+  width: 124px;
+  height: 100px;
+  background: #d8d8d8;
+}
+
+.hexagon:after,
+.hexagon:before {
+  position: absolute;
+  content: "";
+  z-index: 1;
+  top: 0;
+  width: 0px;
+  background: #fff;
+  border-top: 50px transparent solid;
+  border-bottom: 50px transparent solid;
+}
+
+.hexagon:before {
+  left: 0;
+  border-right: 30px #d8d8d8 solid;
+}
+.hexagon:after {
+  right: 0;
+  border-left: 30px #d8d8d8 solid;
+}
+
+.desc-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+}
+
+.card-render {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-image: url("/seti-assets/cards/card-template.webp");
+  background-size: cover;
+  width: 150px;
+  height: 209px;
+  border-radius: 12px;
+  opacity: 1; /* 设置透明度 */
+  /* z-index: -1; */
+}
+
+.card-free-action {
+  z-index: 5;
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  height: 20px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.card-no {
+  color: black;
+  z-index: 5;
+  position: absolute;
+  bottom: 9px;
+  font-weight: 800;
+  left: -2px;
+  height: 20px;
+  width: 24px;
+  font-size: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  rotate: -90deg;
+}
+
+.card-no-bg {
+  color: black;
+  background-color: #ececeb;
+  z-index: 5;
+  position: absolute;
+  bottom: 9px;
+  left: -2px;
+  height: 20px;
+  width: 8px;
+  border-radius: 1px;
+}
+
+.card-sector-corner-background {
+  z-index: 5;
+  position: absolute;
+  right: 0px;
+  width: 0;
+  height: 0;
+  border-left: 15px solid transparent;
+  border-bottom: 30px solid transparent;
+  border-right: 30px solid blue;
+  opacity: 100%;
+}
+
+.card-sector-corner-signal {
+  z-index: 6;
+  position: absolute;
+  top: -6px;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  scale: 0.5;
+}
+
+.card-wrapper {
+  position: relative;
+  overflow: hidden;
+  width: 150px;
+  height: 209px;
+  border-radius: 12px;
+}
+
+.card-title-container {
+  position: absolute;
+  height: auto;
+  overflow: hidden;
+  left: 32px;
+}
+
+.card-render-title {
+  position: absolute;
+  z-index: 10;
+  /* top: 95px; */
+  left: 6px;
+  width: 110px;
+  height: 12px;
+  font-size: 6px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.smaller-text {
+  font-size: 5px;
+}
+
+.card-title-svg {
+}
+
+.card-render-credit {
+  position: absolute;
+  z-index: 10;
+  top: 5px;
+  left: 4px;
+  width: 12px;
+  height: 15px;
+  font-size: 19px;
+  line-height: 18px;
+  color: white;
+  font-family: "Kobenhavn W03 Bold", monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-larger {
+  scale: 2;
+  translate: 52% 55%;
+  width: fit-content;
+}
+
+.card-middle {
+  position: absolute;
+  /* height: auto;
+  top: 95px; */
+  z-index: 10;
+}
+
+.card-render-container {
+  position: absolute;
+  height: auto;
+  top: 95px;
+}
