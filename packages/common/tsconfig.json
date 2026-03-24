@@ -5,6 +5,7 @@
     "incremental": false,
     "types": ["node"],
     "paths": {
+      "@ender-seti/common/*": ["./src/*"],
       "@seti/common/*": ["./src/*"],
       "@/*": ["./src/*"]
     }

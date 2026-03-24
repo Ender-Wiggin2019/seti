@@ -27,7 +27,7 @@ importers:
   packages/cards:
     dependencies:
       '@seti/common':
-        specifier: workspace:*
+        specifier: workspace:@ender-seti/common@*
         version: link:../common
       clsx:
         specifier: ^1.2.1
@@ -125,10 +125,10 @@ importers:
         specifier: ^1.1.2
         version: 1.2.8(@types/react-dom@18.3.1)(@types/react@18.3.0)(react-dom@18.3.1)(react@18.2.0)
       '@seti/cards':
-        specifier: workspace:*
+        specifier: workspace:@ender-seti/cards@*
         version: link:../cards
       '@seti/common':
-        specifier: workspace:*
+        specifier: workspace:@ender-seti/common@*
         version: link:../common
       '@tanstack/react-query':
         specifier: ^4.36.1

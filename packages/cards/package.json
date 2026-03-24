@@ -1,5 +1,5 @@
 {
-  "name": "@seti/cards",
+  "name": "@ender-seti/cards",
   "version": "0.1.1",
   "private": false,
   "type": "module",
@@ -28,7 +28,7 @@
     "react-i18next": "^13.0.1"
   },
   "dependencies": {
-    "@seti/common": "workspace:*",
+    "@seti/common": "workspace:@ender-seti/common@*",
     "clsx": "^1.2.1",
     "tailwind-merge": "^1.13.2"
   },

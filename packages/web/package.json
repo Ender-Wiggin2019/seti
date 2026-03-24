@@ -77,8 +77,8 @@
     "tailwind-merge": "^1.13.2",
     "tailwindcss-animate": "^1.0.6",
     "uuid": "^10.0.0",
-    "@seti/common": "workspace:*",
-    "@seti/cards": "workspace:*"
+    "@seti/common": "workspace:@ender-seti/common@*",
+    "@seti/cards": "workspace:@ender-seti/cards@*"
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.6",

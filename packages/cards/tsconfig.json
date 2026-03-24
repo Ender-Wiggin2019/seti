@@ -6,6 +6,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
+      "@ender-seti/common/*": ["../common/src/*"],
       "@seti/common/*": ["../common/src/*"]
     }
   },

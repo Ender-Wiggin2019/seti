@@ -49,6 +49,8 @@ robots.txt
 sitemap.xml
 sitemap-*.xml
 /public/locales/en/common.missing.json
+*.missing.json
+**/*.missing.json
 /public/img/icons.psd
 
 # sqrpi locale
