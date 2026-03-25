@@ -1,0 +1,148 @@
+{
+  "sector": "Sector",
+  "income": "Income",
+  "Card Type": "Card Type",
+  "free_action": "Free action",
+  "credit": "Credit",
+  "energy": "Energy",
+  "data": "Data",
+  "publicity": "Publicity",
+  "score": "Score",
+  "card": "Card",
+  "move": "Move",
+  "red": "Red",
+  "yellow": "Yellow",
+  "blue": "Blue",
+  "black": "Black",
+  "base_cards": "Base Cards",
+  "aliens": "Aliens",
+  "posts": {
+    "model": "Seti Basic: Card Model",
+    "tech": "Seti Advanced: Tech",
+    "trace": "Seti Advanced: Trace",
+    "diy": "DIY Tool Usage Guide",
+    "about": "About This Site",
+    "expand": "Expand",
+    "hot": "Hot"
+  },
+  "corps": {
+    "desc": "Please note that those corporations are ALL fan made. DO NOT SHARE THEM TO PUBLIC."
+  },
+  "sort": {
+    "ID_ASC": "ID",
+    "ID_DESC": "ID",
+    "DIFF_ASC": "Value",
+    "DIFF_DESC": "Value",
+    "RATING_DESC": "Rating"
+  },
+  "nav": {
+    "go": "Go to",
+    "home": "Home",
+    "cards": "Cards",
+    "about": "About",
+    "diy": "Card Maker",
+    "posts": "Posts",
+    "maps": "Maps",
+    "endgames": "Final Scoring",
+    "random_quiz": "Random Quiz",
+    "daily_quiz": "Daily Quiz",
+    "prelude": "Prelude"
+  },
+  "comment": {
+    "login_to_comment": "login to comment",
+    "login_to_pick": "login for better statistics"
+  },
+  "about": {
+    "title": "About This Site",
+    "intro": "This is an open-source unofficial website of the board game Seti. It is not affiliated with Capstone Games in any way.\nThis project gets inspiration from ssimeonoff's website and for players to easily search for cards and their effects. The initial data for this site is sourced from <1>Cillie's List of animal cards</1>, while the icons and styles were borrowed from <3>BGA</3>. If there are any copyright concerns, I will address them.",
+    "features": {
+      "title": "Features",
+      "intro": "Currently, this site has the following features:",
+      "li_1": "All animal and sponsor cards in base game and Marine World expansion",
+      "li_2": "Multi-language support",
+      "li_3": "Filters for tags, requirements, keywords and so on",
+      "li_4": "Animal value calculation",
+      "li_5": "Rating and comments for each card",
+      "plan_title": "Future Plans",
+      "plan_intro": "In the future, I plan to add the following features:",
+      "plan_li_1": "Animal Card Maker",
+      "plan_li_2": "Maps",
+      "plan_li_3": "All other cards"
+    },
+    "thanks": {
+      "title": "Thanks",
+      "translation": "Thanks for the following players for helping with translation: 小z, 晓慜, Yannick, Propaganda Panda."
+    },
+    "faq": {
+      "title": "FAQ",
+      "q_1": "How can I assist with the translation?",
+      "a_1": "Nice! You can follow the instructions <1>here</1>.",
+      "q_2": "Is this website created for commercial purposes?",
+      "a_2": "No, it's a open-source website dedicated to this fantastic game. Original images and texts belong to Capstone Games. f there are any copyright concerns, I will address them.",
+      "q_3": "What if I have another question, suggestion, or bug report related to this website?",
+      "a_3": "Feel free to comment in the <1>BGG thread</1> or submit an issue at <3>GitHub</3>."
+    }
+  },
+  "helper": {
+    "howto": "How to use icons in description?",
+    "desc": "Full list of icons you can use in description.",
+    "name": "Syntax",
+    "example": "Example",
+    "display": "Display"
+  },
+  "diy": {
+    "card_maker": "Card Maker",
+    "create_your_own_animal_card": "Create your own animal card.",
+    "Download": "Download Image",
+    "animal_name": "Animal Name",
+    "add_new_enclosure": "Add New Enclosure",
+    "add_new_ability": "Customized Ability",
+    "export_json": "Export SETI File",
+    "import_json": "Import .SETI File",
+    "add_exist_ability": "Existing Ability",
+    "bug": "This function has a unsolved bug. Please do not delete original abilities before your customized abilities."
+  },
+  "dialog": {
+    "warning": "Warning",
+    "warning-desc": "This section may contain spoilers and affect your gaming experience. Are you sure you want to continue?",
+    "confirm": "Confirm",
+    "export": "Notice",
+    "export-desc": "After clicking the \"Confirm\" button, a .seti file will be downloaded. This file represents the intermediate state of the card creation process and can be restored using the \"Import\" button. It's recommended to export this file if you plan to edit the card later."
+  },
+  "article": {
+    "enlarge": "Click card to view the larger image"
+  },
+  "Aliens?": "Aliens?",
+  "Placeholder": "Placeholder",
+  "Free Action": "Free Action",
+  "Sector": "Sector",
+  "Image": "Image",
+  "Use URL": "Use URL",
+  "Credit": "Credit",
+  "Title": "Title",
+  "Flavor Text": "Flavor Text",
+  "Card ID": "Card ID",
+  "Effect": "Effect",
+  "Description": "Description",
+  "Go to Full Page": "Go to full page and learn more tips",
+  "Icons": "Icons",
+  "Conditional Mission": "Conditional Mission",
+  "Triggerable Missions": "Triggerable Missions",
+  "Endgame": "Endgame",
+  "Income": "Income",
+  "Tier List": "Tier List",
+  "Advanced": "Advanced",
+  "Filter text": "Filter text",
+  "Reset": "Reset",
+  "Download": "Download",
+  "Export": "Export",
+  "Your card price": "Your card price",
+  "Your card title": "Your card title",
+  "Tell more about your card": "Tell more about your card",
+  "Enter card title": "Enter card title",
+  "Undo": "Undo",
+  "Base": "Base",
+  "Space Agency": "Space Agency",
+  "Promo": "Promo",
+  "Card Source": "Card Source"
+}

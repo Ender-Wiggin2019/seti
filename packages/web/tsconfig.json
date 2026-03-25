@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "~/*": ["./public/*"],
+      "@ender-seti/common/*": ["../common/src/*"],
+      "@ender-seti/cards": ["../cards/src/index.ts"],
+      "@ender-seti/cards/*": ["../cards/src/*"],
+      "@seti/common/*": ["../common/src/*"],
+      "@seti/cards": ["../cards/src/index.ts"],
+      "@seti/cards/*": ["../cards/src/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+}
