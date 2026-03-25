@@ -779,15 +779,282 @@ All randomness (shuffle, setup, alien selection) flows through a `SeededRandom` 
 - **Debug reproducibility**
 - **Anti-cheat verification**
 
-### 6.2 Testing Strategy
+### 6.2 Testing Architecture
 
-| Layer | Approach |
-|-------|----------|
-| Engine (pure logic) | Unit tests + deterministic simulation tests. Seed a game, replay action sequences, assert state. Covers all QA checklist items from PRD §18. |
-| Actions | Per-action validation + resolution tests with edge cases |
-| Cards | Per-card `canPlay` / `play` / scoring tests |
-| Serialization | Round-trip tests: serialize → deserialize → assert equality |
-| Integration | NestJS test module with WebSocket client for end-to-end flows |
+#### Framework: Vitest
+
+选择 Vitest 作为单测框架：
+
+- **ESM 原生支持** — 项目使用 `"type": "module"`，Vitest 零配置即可运行
+- **与 Turbo 集成** — 已有 `turbo run test` pipeline，Vitest 直接对接
+- **TypeScript 原生** — 无需 babel/ts-jest 转换层，直接运行 `.ts`
+- **兼容 Jest API** — `describe`/`it`/`expect` 语法一致，迁移成本为零
+- **内置 coverage** — `vitest --coverage` 通过 `@vitest/coverage-v8` 即可生成覆盖率报告
+
+配置：
+
+```typescript
+// packages/server/vitest.config.ts
+import { defineConfig } from 'vitest/config';
+import path from 'node:path';
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'node',
+    include: ['src/**/*.test.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      include: ['src/engine/**'],
+      thresholds: { statements: 90, branches: 85, functions: 90, lines: 90 },
+    },
+  },
+  resolve: {
+    alias: { '@seti/common': path.resolve(__dirname, '../common/src') },
+  },
+});
+```
+
+#### 1:1 单测文件规则
+
+**每个源文件必须有对应单测文件**，放在同目录下，命名为 `<SourceFile>.test.ts`：
+
+```
+src/engine/
+├── Game.ts
+├── Game.test.ts                    ← 对应 Game.ts
+├── player/
+│   ├── Player.ts
+│   ├── Player.test.ts              ← 对应 Player.ts
+│   ├── Resources.ts
+│   ├── Resources.test.ts           ← 对应 Resources.ts
+│   ├── Computer.ts
+│   ├── Computer.test.ts
+│   ├── DataPool.ts
+│   ├── DataPool.test.ts
+│   ├── Income.ts
+│   ├── Income.test.ts
+│   ├── Pieces.ts
+│   └── Pieces.test.ts
+├── board/
+│   ├── SolarSystem.ts
+│   ├── SolarSystem.test.ts
+│   ├── Sector.ts
+│   ├── Sector.test.ts
+│   ├── PlanetaryBoard.ts
+│   ├── PlanetaryBoard.test.ts
+│   ├── TechBoard.ts
+│   └── TechBoard.test.ts
+├── actions/
+│   ├── LaunchProbe.ts
+│   ├── LaunchProbe.test.ts
+│   ├── Orbit.ts
+│   ├── Orbit.test.ts
+│   ├── Land.ts
+│   ├── Land.test.ts
+│   ├── Scan.ts
+│   ├── Scan.test.ts
+│   ├── AnalyzeData.ts
+│   ├── AnalyzeData.test.ts
+│   ├── PlayCard.ts
+│   ├── PlayCard.test.ts
+│   ├── ResearchTech.ts
+│   ├── ResearchTech.test.ts
+│   ├── Pass.ts
+│   └── Pass.test.ts
+├── freeActions/
+│   ├── Movement.ts
+│   ├── Movement.test.ts
+│   ├── ...（每个 free action 同理）
+├── input/
+│   ├── PlayerInput.ts
+│   ├── PlayerInput.test.ts
+│   ├── OrOptions.ts
+│   ├── OrOptions.test.ts
+│   ├── ...（每个 input type 同理）
+├── deferred/
+│   ├── DeferredAction.ts
+│   ├── DeferredAction.test.ts
+│   ├── DeferredActionsQueue.ts
+│   ├── DeferredActionsQueue.test.ts
+│   ├── Priority.ts
+│   ├── Priority.test.ts
+│   ├── ...（每个 deferred action 同理）
+├── cards/
+│   ├── Card.ts
+│   ├── Card.test.ts
+│   ├── CardRegistry.ts
+│   ├── CardRegistry.test.ts
+│   ├── Behavior.ts
+│   ├── Behavior.test.ts
+│   ├── BehaviorExecutor.ts
+│   ├── BehaviorExecutor.test.ts
+│   ├── Requirements.ts
+│   ├── Requirements.test.ts
+│   ├── base/
+│   │   ├── CardXxx.ts
+│   │   └── CardXxx.test.ts        ← 每张卡牌一个单测
+│   └── alien/
+│       ├── ...（同理）
+├── alien/
+│   ├── AlienRegistry.ts
+│   ├── AlienRegistry.test.ts
+│   ├── Anomalies.ts
+│   ├── Anomalies.test.ts
+│   └── ...（每个 alien module 同理）
+├── scoring/
+│   ├── Milestone.ts
+│   ├── Milestone.test.ts
+│   ├── GoldScoringTile.ts
+│   ├── GoldScoringTile.test.ts
+│   ├── FinalScoring.ts
+│   └── FinalScoring.test.ts
+├── deck/
+│   ├── Deck.ts
+│   ├── Deck.test.ts
+│   ├── MainDeck.ts
+│   ├── MainDeck.test.ts
+│   ├── AlienDeck.ts
+│   └── AlienDeck.test.ts
+├── event/
+│   ├── GameEvent.ts
+│   ├── GameEvent.test.ts
+│   ├── EventLog.ts
+│   └── EventLog.test.ts
+└── ...
+
+src/persistence/
+├── serializer/
+│   ├── GameSerializer.ts
+│   ├── GameSerializer.test.ts
+│   ├── GameDeserializer.ts
+│   └── GameDeserializer.test.ts
+├── repository/
+│   ├── GameRepository.ts
+│   ├── GameRepository.test.ts      ← 需要 DB mock
+│   └── ...
+
+src/gateway/
+├── game.gateway.ts
+├── game.gateway.test.ts            ← NestJS testing module
+└── ...
+
+src/lobby/
+├── lobby.controller.ts
+├── lobby.controller.test.ts
+├── lobby.service.ts
+└── lobby.service.test.ts
+
+src/shared/
+├── rng/
+│   ├── SeededRandom.ts
+│   └── SeededRandom.test.ts
+└── errors/
+    ├── GameError.ts
+    └── GameError.test.ts
+```
+
+#### 测试分层策略
+
+| 层级 | 测试类型 | 覆盖目标 | 说明 |
+|------|---------|----------|------|
+| **Engine 纯逻辑** | 单元测试 | 每个类/函数的独立行为 | 无外部依赖，直接 `new` 构造，断言状态变化 |
+| **Actions** | 单元测试 | 合法性校验 + 解析执行 + 边界条件 | 每个 main action / free action 覆盖合法/非法/边界三类场景 |
+| **Cards** | 单元测试 | `canPlay` / `play` / `bespokePlay` / VP 计算 | 每张卡牌至少一个测试用例 |
+| **Board** | 单元测试 | 旋转、邻接、放置、sector 结算 | 使用固定 seed 确保确定性 |
+| **Deferred/Input** | 单元测试 | 队列排序、优先级、PlayerInput 流程 | 验证 continuation 链正确性 |
+| **Scoring** | 单元测试 | 里程碑、金色计分、终局计算 | 用固定分数状态断言结果 |
+| **Serialization** | Round-trip 测试 | serialize → deserialize → 状态一致性 | 覆盖所有 DTO 字段 |
+| **全流程仿真** | 集成测试 | 完整 5 轮游戏模拟 | 固定 seed + 预编排 action 序列，验证最终分数 |
+| **Gateway/REST** | 集成测试 | WebSocket 事件收发、HTTP 接口 | 使用 NestJS `Test.createTestingModule` + Socket.IO client |
+| **Repository** | 集成测试 | DB 读写 + snapshot undo | 使用 testcontainers 或内存 PG |
+
+#### 测试辅助工具
+
+```typescript
+// test/helpers/TestGame.ts — 快速构造测试用 Game 实例
+function createTestGame(options?: Partial<IGameOptions>): IGame {
+  const seed = 'test-seed-deterministic';
+  const players = [createTestPlayer('Alice'), createTestPlayer('Bob')];
+  return Game.create(players, { ...DEFAULT_OPTIONS, ...options }, seed);
+}
+
+// test/helpers/TestPlayer.ts — 快速构造测试用 Player
+function createTestPlayer(name: string, overrides?: Partial<IPlayerInit>): IPlayer;
+
+// test/helpers/ActionRunner.ts — 简化 action 执行并自动 drain 队列
+class ActionRunner {
+  constructor(private game: IGame) {}
+
+  executeMainAction(player: IPlayer, action: MainAction): void;
+  executeFreeAction(player: IPlayer, action: FreeAction): void;
+  respondToInput(player: IPlayer, response: InputResponse): void;
+  drainAll(): void;
+  advanceToRound(round: number): void;
+  runFullGame(actions: ActionSequence[]): IGame;
+}
+```
+
+#### 全流程仿真测试示例
+
+```typescript
+describe('Full game simulation', () => {
+  it('completes a 2-player 5-round game with deterministic seed', () => {
+    const game = createTestGame({ playerCount: 2 });
+    const runner = new ActionRunner(game);
+
+    // Round 1: Alice launches probe, Bob scans, ...
+    runner.executeMainAction(game.players[0], { type: 'LAUNCH_PROBE' });
+    runner.executeMainAction(game.players[1], { type: 'SCAN', sector: ESector.RED, discardCardIndex: 0 });
+    // ... pre-scripted action sequence ...
+
+    // After 5 rounds
+    runner.advanceToRound(5);
+    // ... final actions ...
+
+    expect(game.phase).toBe(EPhase.GAME_OVER);
+    expect(game.players[0].score).toBe(expectedScore0);
+    expect(game.players[1].score).toBe(expectedScore1);
+  });
+});
+```
+
+#### PRD QA 检查表覆盖（PRD §18）
+
+以下每一项都需要对应具体的 test case：
+
+| QA 项 | 对应测试文件 |
+|-------|------------|
+| Setup 合法性与随机约束 | `Game.test.ts`, `GameSetup.test.ts` |
+| 每个 main action 合法/非法边界 | `actions/*.test.ts` |
+| Scan tie-break (latest marker wins) | `Scan.test.ts`, `Sector.test.ts` |
+| Sector reset (second-place retention) | `Sector.test.ts` |
+| Analyze 合法性 (top-row full only) | `AnalyzeData.test.ts` |
+| Research 始终触发旋转 (含卡牌授予的 tech) | `ResearchTech.test.ts`, `SolarSystem.test.ts` |
+| 每轮第一个 pass 触发旋转 | `Pass.test.ts` |
+| 多玩家同窗口 milestone 顺序 | `Milestone.test.ts` |
+| Discovery 在 milestone 之后 | `ResolveDiscovery.test.ts` |
+| Overflow trace 计分和计数 | `MarkTrace.test.ts` |
+| 终局计算公式 (每个 gold tile side) | `GoldScoringTile.test.ts`, `FinalScoring.test.ts` |
+| Serialization round-trip | `GameSerializer.test.ts` |
+| Undo restore 正确性 | `GameRepository.test.ts` |
+
+#### CI 集成
+
+```yaml
+# turbo.json 已有 test pipeline，Vitest 直接对接
+# packages/server/package.json:
+{
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  }
+}
+```
+
+覆盖率门禁：engine 层要求 **90%+ statements/lines/functions**，**85%+ branches**。CI 中 `vitest run --coverage` 未达标则失败。
 
 ### 6.3 Reconnection & Resilience
 
@@ -805,14 +1072,17 @@ Spectators join the game room via WebSocket and receive the same `game:state` ev
 - Per-player action rate limiting on WebSocket (prevent spam)
 - All inputs validated server-side — client is untrusted
 
-### 6.6 Common Package Integration
+### 6.6 Package Dependencies
 
-The server imports `@seti/common` for:
-- Card static data (`IBaseCard`, `baseCards`, `alienCards`, etc.)
-- Shared enums (`ESector`, `EResource`, `ETrace`, `ETech`, `EAlienType`, etc.)
-- Type definitions shared between client and server
+**`@seti/common`** — 统一的共享包，client 和 server 同时引用：
+- 静态卡牌数据 (`IBaseCard`, `baseCards`, `alienCards`, etc.)
+- 基础枚举 (`ESector`, `EResource`, `ETrace`, `ETech`, `EAlienType`, etc.)
+- Client-server 运行时协议类型 (`IPublicGameState`, `IPlayerInputModel` 等状态投影 DTO)
+- Action request/response types (`IMainActionRequest`, `IFreeActionRequest`, `IInputResponse`)
+- WebSocket event type definitions
+- Error codes enum
 
-New shared types needed for client-server communication (e.g., `IPublicGameState`, `IPlayerInputModel`, action DTOs) should be added to `@seti/common` or a new `@seti/shared` package.
+协议类型建议放在 `@seti/common/types/protocol/` 子目录下，与现有卡牌类型区分。
 
 ### 6.7 Dependency Summary
 
@@ -832,67 +1102,30 @@ New shared types needed for client-server communication (e.g., `IPublicGameState
     "class-transformer": "^0.5.x",
     "bcrypt": "^5.x",
     "jsonwebtoken": "^9.x"
+  },
+  "devDependencies": {
+    "vitest": "^3.x",
+    "@vitest/coverage-v8": "^3.x",
+    "typescript": "^5.x",
+    "tsup": "^8.x",
+    "@types/node": "^22.x"
   }
 }
 ```
 
 ---
 
-## 7. Decision Points (Pending Confirmation)
+## 7. Technical Decisions (Confirmed)
 
-### Decision 1: WebSocket Library
-
-| Option | Pros | Cons |
-|--------|------|------|
-| **A. Socket.IO** (recommended) | Auto-reconnect, room abstraction, fallback transport, broad client support | Slightly heavier than raw WS |
-| B. Raw `ws` | Minimal overhead | No built-in rooms, reconnect, or fallback; more boilerplate |
-
-**Recommendation:** Socket.IO — the room/namespace model maps perfectly to game sessions, and auto-reconnect is critical for multiplayer UX.
-
-### Decision 2: Database
-
-| Option | Pros | Cons |
-|--------|------|------|
-| **A. PostgreSQL** (recommended) | JSONB for snapshots, mature, Drizzle first-class support | Heavier to set up locally |
-| B. SQLite | Zero-config, embedded | JSONB support weaker, concurrency limits |
-
-**Recommendation:** PostgreSQL — JSONB is ideal for game state snapshots, and the project will likely need concurrent access.
-
-### Decision 3: Undo Implementation
-
-| Option | Pros | Cons |
-|--------|------|------|
-| **A. Snapshot-based** (recommended) | Simple, guaranteed correctness, enables any undo depth | Storage cost per action |
-| B. Event-sourcing (reverse each event) | Less storage | Complex reverse logic, hard to guarantee correctness for all card effects |
-
-**Recommendation:** Snapshot-based — simplicity and correctness outweigh storage cost. Snapshots can be pruned after a configurable retention window.
-
-### Decision 4: Shared Types Package
-
-| Option | Pros | Cons |
-|--------|------|------|
-| **A. Extend `@seti/common`** | No new package, simpler dependency graph | Mixes card data with protocol types |
-| B. New `@seti/shared` package | Clean separation of static data vs runtime protocol | One more package to maintain |
-
-**Recommendation:** Start with A (extend `@seti/common`), extract to `@seti/shared` later if the boundary becomes unclear.
-
-### Decision 5: Auth Strategy
-
-| Option | Pros | Cons |
-|--------|------|------|
-| **A. JWT** (recommended) | Stateless, works across REST + WS, standard | Token refresh complexity |
-| B. Session-based | Simpler for WS | Server-side session store needed |
-
-**Recommendation:** JWT — stateless tokens work cleanly with both REST endpoints and WebSocket handshake auth.
-
-### Decision 6: Initial Scope — Alien Species
-
-| Option | Description |
-|--------|-------------|
-| **A. Base 5 aliens** | Implement all 5 base-game aliens from the start |
-| B. Core engine first | Build engine with alien plugin interface but defer species implementations; test with no aliens discovered |
-
-**Recommendation:** B — build the plugin interface first, validate the core engine loop, then implement species one by one.
+| # | Decision | Choice | Notes |
+|---|----------|--------|-------|
+| 1 | WebSocket Library | **Socket.IO** | Room/namespace 模型天然对应游戏房间，auto-reconnect 对多人 UX 至关重要 |
+| 2 | Database | **PostgreSQL** | JSONB 适合游戏快照存储，Drizzle 一等支持，满足并发需求 |
+| 3 | Undo Implementation | **Snapshot-based** | 简单可靠，保证正确性；快照按保留窗口可裁剪 |
+| 4 | Shared Types Package | **统一 `@seti/common`** | 不新建包，协议类型放在 `@seti/common/types/protocol/` 子目录，维护更简单 |
+| 5 | Auth Strategy | **JWT** | 无状态 token，REST + WebSocket 统一鉴权 |
+| 6 | Test Framework | **Vitest** | ESM 原生、TS 零配置、内置 coverage、与 Turbo 无缝对接 |
+| 7 | Alien Species Scope | **Core engine first + 1 alien 验证** | 先建好 plugin 接口，实现 1 个 alien 验证插件系统；每个 alien 视为独立 expansion/plugin，未来可无限扩展 |
 
 ---
 
@@ -907,5 +1140,6 @@ New shared types needed for client-server communication (e.g., `IPublicGameState
 | **P4** | Scoring: milestones, gold tiles, final scoring | Complete game loop from setup to final score |
 | **P5** | Persistence: Drizzle schema, serialization, undo | Games survive server restart |
 | **P6** | NestJS: REST lobby + WebSocket gateway + auth | Playable over network |
-| **P7** | Alien species: implement 2-3 species, validate plugin system | Expansion system proven |
-| **P8** | Polish: reconnection, spectator, rate limiting, full card set | Production-ready |
+| **P7** | Alien species: 实现 1 个 alien (e.g. Centaurians) 验证 plugin 系统 | Expansion/plugin 架构验证通过 |
+| **P8** | 剩余 alien species 逐个实现，每个作为独立 expansion 模块 | 完整 alien 内容 |
+| **P9** | Polish: reconnection, spectator, rate limiting, full card set | Production-ready |
