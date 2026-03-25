@@ -10,13 +10,13 @@
 |---|------|----------|------|
 | 0-1 | Common 协议类型扩展 | **先行** | ✅ |
 | 0-2 | Server 项目脚手架 (NestJS) | 与 0-3 并行 (依赖 0-1) | ✅ |
-| 0-3 | Client 项目脚手架 (Vite + React) | 与 0-2 并行 (依赖 0-1) | 🔨 |
+| 0-3 | Client 项目脚手架 (Vite + React) | 与 0-2 并行 (依赖 0-1) | ✅ |
 
 ## Stage 1: Engine Core (引擎核心)
 
 | # | Task | 并行/串行 | 状态 |
 |---|------|----------|------|
-| 1-1 | Game 聚合根 + GameOptions + Phase 状态机 | **串行起始** | ⬜ |
+| 1-1 | Game 聚合根 + GameOptions + Phase 状态机 | **串行起始** | ✅ |
 | 1-2 | Player 子系统 (Resources, Income, Computer, DataPool, Pieces) | 依赖 1-1 | ⬜ |
 | 1-3 | DeferredAction 队列系统 | 与 1-2 并行 | ⬜ |
 | 1-4 | PlayerInput 续体系统 | 与 1-2 并行 | ⬜ |
