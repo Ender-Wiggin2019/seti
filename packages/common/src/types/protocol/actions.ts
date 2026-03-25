@@ -1,0 +1,130 @@
+import { EResource, ESector } from '@seti/common/types/element';
+import {
+  EFreeAction,
+  EMainAction,
+  EPlanet,
+  ETech,
+  ETrace,
+} from '@seti/common/types/protocol/enums';
+import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
+
+export interface IMainActionRequest {
+  type: EMainAction;
+  payload?: Record<string, unknown>;
+}
+
+export interface IMovementFreeActionRequest {
+  type: EFreeAction.MOVEMENT;
+  fromSpaceId: string;
+  toSpaceId: string;
+}
+
+export interface IConvertEnergyToMovementFreeActionRequest {
+  type: EFreeAction.CONVERT_ENERGY_TO_MOVEMENT;
+  amount: number;
+}
+
+export interface IPlaceDataFreeActionRequest {
+  type: EFreeAction.PLACE_DATA;
+  slotIndex: number;
+}
+
+export interface ICompleteMissionFreeActionRequest {
+  type: EFreeAction.COMPLETE_MISSION;
+  cardId: string;
+}
+
+export interface IUseCardCornerFreeActionRequest {
+  type: EFreeAction.USE_CARD_CORNER;
+  cardId: string;
+}
+
+export interface IBuyCardFreeActionRequest {
+  type: EFreeAction.BUY_CARD;
+  cardId?: string;
+  fromDeck?: boolean;
+}
+
+export interface IExchangeResourcesFreeActionRequest {
+  type: EFreeAction.EXCHANGE_RESOURCES;
+  from: EResource;
+  to: EResource;
+}
+
+export type IFreeActionRequest =
+  | IMovementFreeActionRequest
+  | IConvertEnergyToMovementFreeActionRequest
+  | IPlaceDataFreeActionRequest
+  | ICompleteMissionFreeActionRequest
+  | IUseCardCornerFreeActionRequest
+  | IBuyCardFreeActionRequest
+  | IExchangeResourcesFreeActionRequest;
+
+export interface IOptionInputResponse {
+  type: EPlayerInputType.OPTION;
+  optionId: string;
+}
+
+export interface ICardInputResponse {
+  type: EPlayerInputType.CARD;
+  cardIds: string[];
+}
+
+export interface ISectorInputResponse {
+  type: EPlayerInputType.SECTOR;
+  sector: ESector;
+}
+
+export interface IPlanetInputResponse {
+  type: EPlayerInputType.PLANET;
+  planet: EPlanet;
+}
+
+export interface ITechInputResponse {
+  type: EPlayerInputType.TECH;
+  tech: ETech;
+}
+
+export interface IGoldTileInputResponse {
+  type: EPlayerInputType.GOLD_TILE;
+  tileId: string;
+}
+
+export interface IResourceInputResponse {
+  type: EPlayerInputType.RESOURCE;
+  resource: EResource;
+}
+
+export interface ITraceInputResponse {
+  type: EPlayerInputType.TRACE;
+  trace: ETrace;
+}
+
+export interface IEndOfRoundInputResponse {
+  type: EPlayerInputType.END_OF_ROUND;
+  cardId: string;
+}
+
+export interface IOrInputResponse {
+  type: EPlayerInputType.OR;
+  index: number;
+  response: IInputResponse;
+}
+
+export interface IAndInputResponse {
+  type: EPlayerInputType.AND;
+  responses: IInputResponse[];
+}
+
+export type IInputResponse =
+  | IOptionInputResponse
+  | ICardInputResponse
+  | ISectorInputResponse
+  | IPlanetInputResponse
+  | ITechInputResponse
+  | IGoldTileInputResponse
+  | IResourceInputResponse
+  | ITraceInputResponse
+  | IEndOfRoundInputResponse
+  | IOrInputResponse
+  | IAndInputResponse;

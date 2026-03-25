@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "baseUrl": ".",
+    "rootDir": ".",
+    "outDir": "./dist",
+    "noEmit": false,
+    "incremental": false,
+    "declaration": true,
+    "declarationMap": true,
+    "types": ["node", "vitest/globals"],
+    "paths": {
+      "@/*": ["./src/*"],
+      "@seti/common/*": ["../common/src/*"],
+      "@ender-seti/common/*": ["../common/src/*"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"]
+}

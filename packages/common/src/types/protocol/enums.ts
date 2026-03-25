@@ -1,0 +1,35 @@
+import { EAlienType } from '@seti/common/types/BaseCard';
+import { EPlanet, ETech, ETrace } from '@seti/common/types/element';
+
+export { EAlienType, EPlanet, ETech, ETrace };
+
+export enum EPhase {
+  SETUP = 'SETUP',
+  AWAIT_MAIN_ACTION = 'AWAIT_MAIN_ACTION',
+  IN_RESOLUTION = 'IN_RESOLUTION',
+  BETWEEN_TURNS = 'BETWEEN_TURNS',
+  END_OF_ROUND = 'END_OF_ROUND',
+  FINAL_SCORING = 'FINAL_SCORING',
+  GAME_OVER = 'GAME_OVER',
+}
+
+export enum EMainAction {
+  LAUNCH_PROBE = 'LAUNCH_PROBE',
+  ORBIT = 'ORBIT',
+  LAND = 'LAND',
+  SCAN = 'SCAN',
+  ANALYZE_DATA = 'ANALYZE_DATA',
+  PLAY_CARD = 'PLAY_CARD',
+  RESEARCH_TECH = 'RESEARCH_TECH',
+  PASS = 'PASS',
+}
+
+export enum EFreeAction {
+  MOVEMENT = 'MOVEMENT',
+  CONVERT_ENERGY_TO_MOVEMENT = 'CONVERT_ENERGY_TO_MOVEMENT',
+  PLACE_DATA = 'PLACE_DATA',
+  COMPLETE_MISSION = 'COMPLETE_MISSION',
+  USE_CARD_CORNER = 'USE_CARD_CORNER',
+  BUY_CARD = 'BUY_CARD',
+  EXCHANGE_RESOURCES = 'EXCHANGE_RESOURCES',
+}
