@@ -27,3 +27,17 @@ export function getAllSectors(game: IGame): Sector[] {
       s !== null && typeof s === 'object' && 'markSignal' in (s as object),
   ) as Sector[];
 }
+
+export function extractSectorColorFromCardItem(
+  cardItem: unknown,
+): ESector | null {
+  if (
+    cardItem !== null &&
+    typeof cardItem === 'object' &&
+    'sector' in cardItem
+  ) {
+    return (cardItem as { sector: ESector }).sector;
+  }
+
+  return null;
+}

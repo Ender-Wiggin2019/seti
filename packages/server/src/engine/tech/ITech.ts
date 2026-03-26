@@ -71,6 +71,11 @@ export interface ITechModifiers {
  */
 export interface IScanTechEffect {
   techId: ETechId;
+  effectType:
+    | 'earth-neighbor'
+    | 'mercury-signal'
+    | 'hand-signal'
+    | 'energy-launch';
   description: string;
   cost?: { publicity?: number; energy?: number };
 }

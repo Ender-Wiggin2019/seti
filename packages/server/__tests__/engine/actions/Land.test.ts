@@ -1,5 +1,6 @@
 import { EMainAction, EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
+import { ETechId } from '@seti/common/types/tech';
 import { Game } from '@/engine/Game.js';
 
 const TEST_PLAYERS = [
@@ -116,5 +117,45 @@ describe('Land action', () => {
         code: EErrorCode.INVALID_ACTION,
       }),
     );
+  });
+
+  it('applies rover discount tech to reduce landing energy cost by 1', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'land-probe-tech-2',
+    );
+    const player = game.players[0];
+    player.techs.push(ETechId.PROBE_ROVER_DISCOUNT);
+    placeProbeOnPlanet(game, player.id, EPlanet.MERCURY, 1);
+    player.probesInSpace = 1;
+
+    game.processMainAction(player.id, {
+      type: EMainAction.LAND,
+      payload: { planet: EPlanet.MERCURY },
+    });
+
+    expect(player.resources.energy).toBe(1);
+  });
+
+  it('allows landing on moon with probe moon tech even when moon is locked', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'land-probe-tech-3',
+    );
+    const player = game.players[0];
+    player.techs.push(ETechId.PROBE_MOON);
+    placeProbeOnPlanet(game, player.id, EPlanet.MARS, 1);
+    player.probesInSpace = 1;
+
+    game.processMainAction(player.id, {
+      type: EMainAction.LAND,
+      payload: { planet: EPlanet.MARS, isMoon: true },
+    });
+
+    expect(
+      game.planetaryBoard?.planets.get(EPlanet.MARS)?.moonOccupant?.playerId,
+    ).toBe(player.id);
   });
 });

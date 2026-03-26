@@ -40,6 +40,9 @@ function createPlayer(
     pieces: { probes: 3, orbiters: 3, landers: 3, signalMarkers: 5 },
     techs: [],
     passed: false,
+    movementPoints: 0,
+    dataStashCount: 0,
+    probesInSpace: 0,
     ...overrides,
   };
 }

@@ -46,10 +46,24 @@ export {
   ScanEffect,
 } from './scan/ScanEffect.js';
 export {
+  extractSectorColorFromCardItem,
   findSectorByColor,
   getAllSectors,
   getSectorAt,
 } from './scan/ScanEffectUtils.js';
+export {
+  type IScanEarthNeighborOptions,
+  type IScanEnergyLaunchOptions,
+  type IScanEnergyLaunchResult,
+  type IScanHandSignalOptions,
+  type IScanHandSignalResult,
+  type IScanMercurySignalOptions,
+  ScanEarthNeighborEffect,
+  ScanEnergyLaunchEffect,
+  ScanHandSignalEffect,
+  ScanMercurySignalEffect,
+  type TEnergyLaunchChoice,
+} from './scan/ScanTechEffects.js';
 
 // Solar
 export {

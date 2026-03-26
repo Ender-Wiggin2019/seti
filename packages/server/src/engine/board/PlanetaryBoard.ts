@@ -128,11 +128,16 @@ export class PlanetaryBoard {
   public land(
     planet: EPlanet,
     playerId: string,
-    options?: { isMoon?: boolean },
+    options?: { isMoon?: boolean; allowMoonLanding?: boolean },
   ): ILandingResult {
     assertPlayerId(playerId);
     const isMoon = options?.isMoon ?? false;
-    if (!this.canLand(planet, playerId, { isMoon })) {
+    if (
+      !this.canLand(planet, playerId, {
+        isMoon,
+        allowMoonLanding: options?.allowMoonLanding,
+      })
+    ) {
       throw new GameError(
         EErrorCode.INVALID_ACTION,
         'Player cannot land on this target',
@@ -168,7 +173,7 @@ export class PlanetaryBoard {
   public canLand(
     planet: EPlanet,
     playerId: string,
-    options?: { isMoon?: boolean; energy?: number },
+    options?: { isMoon?: boolean; energy?: number; allowMoonLanding?: boolean },
   ): boolean {
     assertPlayerId(playerId);
     if (!this.canOrbit(planet, playerId)) {
@@ -176,9 +181,10 @@ export class PlanetaryBoard {
     }
 
     const isMoon = options?.isMoon ?? false;
+    const allowMoonLanding = options?.allowMoonLanding ?? false;
     const planetState = this.getPlanetState(planet);
     if (isMoon) {
-      if (!planetState.moonUnlocked) {
+      if (!planetState.moonUnlocked && !allowMoonLanding) {
         return false;
       }
       if (planetState.moonOccupant !== null) {

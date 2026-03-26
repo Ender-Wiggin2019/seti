@@ -26,6 +26,7 @@ import {
   createGameEndEvent,
   createRoundEndEvent,
 } from './event/GameEvent.js';
+import { processFreeAction } from './freeActions/processFreeAction.js';
 import { createGameOptions, type IGameOptions } from './GameOptions.js';
 import { GameSetup } from './GameSetup.js';
 import type { IGame, IGamePlayerIdentity } from './IGame.js';
@@ -186,6 +187,9 @@ export class Game implements IGame {
       EPhase.AWAIT_MAIN_ACTION,
       EPhase.IN_RESOLUTION,
     ]);
+
+    const player = this.getPlayer(playerId);
+    processFreeAction(player, this, action);
 
     this.eventLog.append(
       createActionEvent(playerId, `FREE_ACTION:${action.type}`, {

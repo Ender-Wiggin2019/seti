@@ -15,8 +15,8 @@ export interface IMainActionRequest {
 
 export interface IMovementFreeActionRequest {
   type: EFreeAction.MOVEMENT;
-  fromSpaceId: string;
-  toSpaceId: string;
+  /** Ordered space IDs: [probeCurrentSpace, step1, step2, ...]. At least 2 elements. */
+  path: string[];
 }
 
 export interface IConvertEnergyToMovementFreeActionRequest {

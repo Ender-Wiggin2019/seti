@@ -3,6 +3,7 @@ import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayer } from '../../player/IPlayer.js';
+import { TechModifierQuery } from '../../tech/TechModifierQuery.js';
 
 export interface ILaunchProbeEffectResult {
   probeId: string;
@@ -14,7 +15,11 @@ export class LaunchProbeEffect {
     if (game.solarSystem === null) {
       return false;
     }
-    return player.probesInSpace < player.probeSpaceLimit;
+
+    const effectiveLimit = TechModifierQuery.fromTechIds(
+      player.techs,
+    ).getProbeSpaceLimit(player.probeSpaceLimit);
+    return player.probesInSpace < effectiveLimit;
   }
 
   public static execute(

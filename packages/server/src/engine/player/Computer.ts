@@ -158,17 +158,6 @@ export class Computer {
       );
     }
 
-    const nextBottomIndex = this.bottomSlots.findIndex(
-      (slotFilled) => !slotFilled,
-    );
-    if (nextBottomIndex !== index) {
-      throw new GameError(
-        EErrorCode.INVALID_ACTION,
-        'Bottom row must be filled from left to right',
-        { expectedIndex: nextBottomIndex, actualIndex: index },
-      );
-    }
-
     this.bottomSlots[index] = true;
   }
 }

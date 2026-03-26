@@ -1,4 +1,5 @@
 import { EPlanet } from '@seti/common/types/protocol/enums';
+import { ETechId } from '@seti/common/types/tech';
 import { LaunchProbeAction } from '@/engine/actions/LaunchProbe.js';
 import { BoardBuilder } from '@/engine/board/BoardBuilder.js';
 import { LaunchProbeEffect } from '@/engine/effects/probe/LaunchProbeEffect.js';
@@ -79,6 +80,16 @@ describe('LaunchProbeAction', () => {
     it('returns true with doubled probe limit', () => {
       const game = createMockGame();
       const player = createPlayer({ probesInSpace: 1, probeSpaceLimit: 2 });
+      expect(LaunchProbeAction.canExecute(player, game)).toBe(true);
+    });
+
+    it('returns true when double-probe tech is owned', () => {
+      const game = createMockGame();
+      const player = createPlayer({
+        probesInSpace: 1,
+        probeSpaceLimit: 1,
+        techs: [ETechId.PROBE_DOUBLE_PROBE],
+      });
       expect(LaunchProbeAction.canExecute(player, game)).toBe(true);
     });
 

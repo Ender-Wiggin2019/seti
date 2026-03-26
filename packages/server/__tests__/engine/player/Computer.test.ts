@@ -74,16 +74,23 @@ describe('Computer', () => {
     expect(computer.getBottomSlots()).toEqual([true, true]);
   });
 
-  it('throws when bottom row placement is out of order or duplicated', () => {
+  it('allows bottom row placement in any order when top is filled', () => {
     const computer = new Computer(3, 2);
     computer.placeData({ row: EComputerRow.TOP, index: 0 });
     computer.placeData({ row: EComputerRow.TOP, index: 1 });
 
-    expect(() =>
-      computer.placeData({ row: EComputerRow.BOTTOM, index: 1 }),
-    ).toThrow(GameError);
+    computer.placeData({ row: EComputerRow.BOTTOM, index: 1 });
+    expect(computer.getBottomSlots()).toEqual([false, true]);
 
     computer.placeData({ row: EComputerRow.BOTTOM, index: 0 });
+    expect(computer.getBottomSlots()).toEqual([true, true]);
+  });
+
+  it('throws when bottom slot is duplicated or out of range', () => {
+    const computer = new Computer(3, 2);
+    computer.placeData({ row: EComputerRow.TOP, index: 0 });
+    computer.placeData({ row: EComputerRow.BOTTOM, index: 0 });
+
     expect(() =>
       computer.placeData({ row: EComputerRow.BOTTOM, index: 0 }),
     ).toThrow(GameError);

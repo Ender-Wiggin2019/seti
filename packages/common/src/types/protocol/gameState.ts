@@ -45,6 +45,9 @@ export interface IPublicPlayerState {
   pieces: IPublicPieceInventory;
   techs: ETechId[];
   passed: boolean;
+  movementPoints: number;
+  dataStashCount: number;
+  probesInSpace: number;
 }
 
 export interface IPublicSolarSystemProbe {

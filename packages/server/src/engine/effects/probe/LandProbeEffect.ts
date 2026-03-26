@@ -3,6 +3,7 @@ import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayer } from '../../player/IPlayer.js';
+import { TechModifierQuery } from '../../tech/TechModifierQuery.js';
 import {
   consumeProbeFromPlanet,
   syncProbeCountsForPlayer,
@@ -37,8 +38,12 @@ export class LandProbeEffect {
     }
 
     syncProbeCountsForPlayer(game, player.id);
+    const moonLandingEnabled = TechModifierQuery.fromTechIds(
+      player.techs,
+    ).canLandOnMoon();
     return game.planetaryBoard.canLand(planet, player.id, {
       isMoon: options.isMoon,
+      allowMoonLanding: moonLandingEnabled,
     });
   }
 
@@ -60,7 +65,8 @@ export class LandProbeEffect {
       );
     }
 
-    return game.planetaryBoard!.getLandingCost(planet, player.id);
+    const baseCost = game.planetaryBoard!.getLandingCost(planet, player.id);
+    return TechModifierQuery.fromTechIds(player.techs).getLandingCost(baseCost);
   }
 
   public static execute(
@@ -81,6 +87,13 @@ export class LandProbeEffect {
       );
     }
 
+    const effectiveLandingCost = this.getLandingCost(
+      player,
+      game,
+      planet,
+      options,
+    );
+
     const consumed = consumeProbeFromPlanet(game, player.id, planet);
     if (!consumed) {
       throw new GameError(
@@ -94,8 +107,12 @@ export class LandProbeEffect {
     }
 
     player.probesInSpace = Math.max(0, player.probesInSpace - 1);
+    const moonLandingEnabled = TechModifierQuery.fromTechIds(
+      player.techs,
+    ).canLandOnMoon();
     const landingResult = game.planetaryBoard!.land(planet, player.id, {
       isMoon: options.isMoon,
+      allowMoonLanding: moonLandingEnabled,
     });
     syncProbeCountsForPlayer(game, player.id);
     player.score += landingResult.centerReward.vpGained;
@@ -106,7 +123,7 @@ export class LandProbeEffect {
     return {
       planet,
       isMoon: landingResult.isMoon,
-      landingCost: landingResult.landingCost,
+      landingCost: effectiveLandingCost,
       vpGained: landingResult.centerReward.vpGained,
       firstLandDataGained: landingResult.firstLandDataGained,
       lifeTraceGained: landingResult.centerReward.lifeTraceGained,

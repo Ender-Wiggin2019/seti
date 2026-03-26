@@ -1,4 +1,3 @@
-import type { ESector } from '@seti/common/types/element';
 import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
 import type { IPlayer } from '../../player/IPlayer.js';
@@ -10,6 +9,7 @@ import {
   type IMarkSectorSignalResult,
   MarkSectorSignalEffect,
 } from './MarkSectorSignalEffect.js';
+import { extractSectorColorFromCardItem } from './ScanEffectUtils.js';
 
 export interface IScanEffectResult {
   earthSectorSignal: IMarkSectorSignalResult | null;
@@ -66,7 +66,7 @@ export class ScanEffect {
       onComplete: (cardInfo: ICardRowCardInfo) => {
         result.cardRowCard = cardInfo;
 
-        const sectorColor = this.extractSectorColor(cardInfo.rawItem);
+        const sectorColor = extractSectorColorFromCardItem(cardInfo.rawItem);
         if (sectorColor) {
           result.targetSectorSignal = MarkSectorSignalEffect.markByColor(
             player,
@@ -78,22 +78,5 @@ export class ScanEffect {
         return options.onComplete?.(result);
       },
     });
-  }
-
-  /**
-   * Attempt to derive a sector color from a card row item.
-   *
-   * Supports `IBaseCard`-shaped objects with a `sector` field.
-   * Returns `null` for bare string IDs (card system not yet wired).
-   */
-  private static extractSectorColor(cardItem: unknown): ESector | null {
-    if (
-      cardItem !== null &&
-      typeof cardItem === 'object' &&
-      'sector' in cardItem
-    ) {
-      return (cardItem as { sector: ESector }).sector;
-    }
-    return null;
   }
 }

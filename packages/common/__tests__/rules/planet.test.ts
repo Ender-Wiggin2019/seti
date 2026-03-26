@@ -38,6 +38,9 @@ function createPlayerState(
     pieces: { probes: 0, orbiters: 0, landers: 0, signalMarkers: 0 },
     techs: [],
     passed: false,
+    movementPoints: 0,
+    dataStashCount: 0,
+    probesInSpace: 0,
     ...overrides,
   };
 }
