@@ -32,6 +32,7 @@ export interface IPlaceDataFreeActionRequest {
 export interface ICompleteMissionFreeActionRequest {
   type: EFreeAction.COMPLETE_MISSION;
   cardId: string;
+  branchIndex?: number;
 }
 
 export interface IUseCardCornerFreeActionRequest {

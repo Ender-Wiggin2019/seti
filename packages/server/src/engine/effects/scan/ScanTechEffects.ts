@@ -188,7 +188,7 @@ export class ScanHandSignalEffect {
     return new SelectCard(
       player,
       {
-        cards: handCards.map((card) => ({ id: card.cardId })),
+        cards: handCards.map((card) => ({ id: card.selectionId })),
         minSelections: 1,
         maxSelections: 1,
         onSelect: (selectedCardIds) => {

@@ -8,6 +8,7 @@ import {
   type ETechId,
   FIRST_TAKE_VP_BONUS,
   getTechId,
+  type ITechBonusToken,
   TECH_CATEGORIES,
   TECH_LEVELS,
   TILES_PER_STACK,
@@ -17,10 +18,12 @@ import {
 import { GameError } from '@/shared/errors/GameError.js';
 import type { SeededRandom } from '@/shared/rng/SeededRandom.js';
 import type { ITech } from './ITech.js';
+import { TECH_BONUS_POOLS } from './TechBonusConfig.js';
 import { createTech } from './TechRegistry.js';
 
 export interface ITechTile {
   tech: ITech;
+  bonus?: ITechBonusToken;
 }
 
 export interface ITechStack {
@@ -49,10 +52,16 @@ export class TechBoard {
     for (const category of TECH_CATEGORIES) {
       for (const level of TECH_LEVELS) {
         const techId = getTechId(category, level);
+        const bonusPool = TECH_BONUS_POOLS[techId];
+        const shuffledBonuses = bonusPool
+          ? rng.shuffle([...bonusPool])
+          : undefined;
+
         const tiles: ITechTile[] = Array.from(
           { length: TILES_PER_STACK },
-          () => ({
+          (_, i) => ({
             tech: createTech(techId),
+            bonus: shuffledBonuses?.[i],
           }),
         );
 

@@ -59,15 +59,15 @@
 | # | Task | 并行/串行 | 状态 |
 |---|------|----------|------|
 | 2.5-1 | 4 个 Probe Tech 效果实现 (双探测/小行星/着陆折扣/月球) | 与 2.5-2, 2.5-3 并行 (依赖 2-4, 2-5) | ✅ |
-| 2.5-2 | 4 个 Scan Tech 效果实现 (地球邻域/水星信号/手牌信号/能量发射) | 与 2.5-1, 2.5-3 并行 (依赖 2-4, 2-5) | 🔨 |
-| 2.5-3 | 4 个 Computer Tech 效果实现 (VP+信用/VP+能量/VP+卡牌/VP+声望) | 与 2.5-1, 2.5-2 并行 (依赖 2-4) | ⬜ |
-| 2.5-4 | Tech Bonus Token 系统 (获取科技时的一次性奖励) | 依赖 2.5-1~2.5-3 | ⬜ |
+| 2.5-2 | 4 个 Scan Tech 效果实现 (地球邻域/水星信号/手牌信号/能量发射) | 与 2.5-1, 2.5-3 并行 (依赖 2-4, 2-5) | ✅ |
+| 2.5-3 | 4 个 Computer Tech 效果实现 (VP+信用/VP+能量/VP+卡牌/VP+声望) | 与 2.5-1, 2.5-2 并行 (依赖 2-4) | ✅ |
+| 2.5-4 | Tech Bonus Token 系统 (获取科技时的一次性奖励) | 依赖 2.5-1~2.5-3 | ✅ |
 
 ## Stage 3: Cards & Scoring (卡牌 & 计分)
 
 | # | Task | 并行/串行 | 状态 |
 |---|------|----------|------|
-| 3-1 | Card 体系 (基类, Behavior DSL, Registry) | **串行起始** | ⬜ |
+| 3-1 | Card 体系 (基类, Behavior DSL, Registry) | **串行起始** | ✅ |
 | 3-2 | 基础卡牌实现 (~10 张代表卡) | 依赖 3-1 | ⬜ |
 | 3-3 | Milestone + GoldScoringTile + FinalScoring | 与 3-1 并行 | ⬜ |
 
@@ -103,8 +103,8 @@
 | # | Task | 并行/串行 | 状态 |
 |---|------|----------|------|
 | 7-1 | InputRenderer 分发器 + 全部 Input 组件 | **串行起始** | ✅ |
-| 7-2 | ActionMenu + FreeActionBar | 与 7-1 并行 | ⬜ |
-| 7-3 | PlayerDashboard (资源, 电脑, 手牌, 任务) | 与 7-1, 7-2 并行 | ⬜ |
+| 7-2 | ActionMenu + FreeActionBar | 与 7-1 并行 | ✅ |
+| 7-3 | PlayerDashboard (资源, 电脑, 手牌, 任务) | 与 7-1, 7-2 并行 | ✅ |
 | 7-4 | EventLog + OpponentSummary + GameOverDialog | 依赖 7-1~7-3 | ⬜ |
 
 ## Stage 8: Alien Expansion (外星种族扩展)

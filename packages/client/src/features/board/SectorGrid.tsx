@@ -11,11 +11,15 @@ interface ISectorGridProps {
 
 function sectorPosition(index: number): { xPercent: number; yPercent: number } {
   const angle = (index / 8) * Math.PI * 2 - Math.PI / 2;
-  const radius = 45;
+  const radius = 49;
   return {
     xPercent: 50 + Math.cos(angle) * radius,
     yPercent: 50 + Math.sin(angle) * radius,
   };
+}
+
+function sectorRotation(index: number): number {
+  return (index + 1) * 45;
 }
 
 export function SectorGrid({
@@ -43,6 +47,7 @@ export function SectorGrid({
             playerColors={playerColors}
             xPercent={pos.xPercent}
             yPercent={pos.yPercent}
+            rotationDeg={sectorRotation(index)}
             clickable={clickable}
             highlighted={clickable}
             onClick={() => {

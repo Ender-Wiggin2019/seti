@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IGameContext } from '@/pages/game/GameContext';
 import type { IPublicGameState } from '@/types/re-exports';
@@ -140,9 +140,13 @@ describe('GameLayout', () => {
       });
       await renderLayout();
 
-      expect(screen.getByText('15')).toBeInTheDocument();
-      expect(screen.getByText('8')).toBeInTheDocument();
-      expect(screen.getByText('3')).toBeInTheDocument();
+      const dashboard = screen.getByTestId('bottom-dashboard');
+      const resourceBar = within(dashboard).getByTestId('resource-bar');
+      expect(within(resourceBar).getByText('Credits')).toBeInTheDocument();
+      expect(within(resourceBar).getByText('Energy')).toBeInTheDocument();
+      expect(within(resourceBar).getByText('Publicity')).toBeInTheDocument();
+      expect(within(resourceBar).getByText('15')).toBeInTheDocument();
+      expect(within(resourceBar).getByText('5')).toBeInTheDocument();
     });
 
     it('shows hand card count', async () => {
@@ -155,21 +159,26 @@ describe('GameLayout', () => {
       });
       await renderLayout();
 
-      expect(screen.getByText('7 cards in hand')).toBeInTheDocument();
+      expect(screen.getByText('7 cards')).toBeInTheDocument();
     });
 
-    it('shows action prompt when it is my turn', async () => {
+    it('shows action menu when it is my turn', async () => {
       mockContextValue = createMockContext({ isMyTurn: true });
       await renderLayout();
 
-      expect(screen.getByText('Choose your action...')).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Launch Probe' }),
+      ).toBeInTheDocument();
     });
 
     it('shows waiting message when not my turn', async () => {
-      mockContextValue = createMockContext({ isMyTurn: false });
+      mockContextValue = createMockContext({
+        isMyTurn: false,
+        gameState: createMockGameState({ currentPlayerId: 'player-2' }),
+      });
       await renderLayout();
 
-      expect(screen.getByText('Waiting for opponent...')).toBeInTheDocument();
+      expect(screen.getByText('Waiting for Pilot...')).toBeInTheDocument();
     });
 
     it('shows pending input indicator', async () => {

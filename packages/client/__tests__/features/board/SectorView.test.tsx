@@ -22,6 +22,7 @@ describe('SectorView', () => {
         playerColors={{ 'player-1': 'red' }}
         xPercent={50}
         yPercent={50}
+        rotationDeg={0}
         clickable={false}
         highlighted={false}
         onClick={vi.fn()}
@@ -41,6 +42,7 @@ describe('SectorView', () => {
         playerColors={{ 'player-1': 'red' }}
         xPercent={50}
         yPercent={50}
+        rotationDeg={0}
         clickable
         highlighted
         onClick={onClick}

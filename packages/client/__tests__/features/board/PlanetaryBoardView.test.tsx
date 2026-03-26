@@ -29,7 +29,7 @@ describe('PlanetaryBoardView', () => {
       />,
     );
 
-    expect(screen.getAllByTestId(/^planet-card-/)).toHaveLength(8);
+    expect(screen.getAllByTestId(/^planet-card-/)).toHaveLength(7);
   });
 
   it('renders orbit and landing tokens from player colors', () => {

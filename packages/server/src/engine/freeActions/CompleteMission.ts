@@ -1,27 +1,50 @@
+import { EErrorCode } from '@seti/common/types/protocol/errors';
+import { GameError } from '@/shared/errors/GameError.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
 
 /**
- * CompleteMission free action.
+ * CompleteMission free action — completes a QUICK_MISSION branch.
  *
- * TODO: Full implementation requires the mission condition system.
- * Currently a stub that always returns false for canExecute.
- *
- * When implemented:
- * - Conditional missions can be completed as free action when condition is true
- * - Completed missions are flipped face-down (moved to completedMissions)
- * - Player receives mission completion reward
+ * FULL_MISSION triggers are handled automatically via the deferred action
+ * pipeline (see MissionTracker.checkAndPromptTriggers). This free action
+ * is specifically for QUICK_MISSIONs that the player wants to complete
+ * when a state-based condition is met.
  */
 export class CompleteMissionFreeAction {
-  // TODO: implement when mission card condition evaluation is available
-  static canExecute(_player: IPlayer, _game: IGame): boolean {
-    return false;
+  static canExecute(player: IPlayer, game: IGame): boolean {
+    return game.missionTracker.hasCompletableQuickMissions(player, game);
   }
 
-  // TODO: implement execute - evaluate condition, flip card, grant reward
-  static execute(_player: IPlayer, _game: IGame, _cardId: string): void {
-    throw new Error(
-      'CompleteMission is not yet implemented (pending mission condition system)',
+  static execute(
+    player: IPlayer,
+    game: IGame,
+    cardId: string,
+    branchIndex?: number,
+  ): void {
+    const completable = game.missionTracker.getCompletableQuickMissions(
+      player,
+      game,
+    );
+
+    const resolvedIndex = branchIndex ?? 0;
+    const match = completable.find(
+      (m) => m.cardId === cardId && m.branchIndex === resolvedIndex,
+    );
+
+    if (!match) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        `Mission ${cardId} branch ${resolvedIndex} is not completable`,
+        { cardId, branchIndex: resolvedIndex },
+      );
+    }
+
+    game.missionTracker.completeMissionBranch(
+      player,
+      game,
+      cardId,
+      resolvedIndex,
     );
   }
 }

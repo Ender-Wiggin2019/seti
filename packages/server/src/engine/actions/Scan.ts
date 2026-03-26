@@ -1,10 +1,8 @@
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import { RefillCardRowEffect } from '../effects/cardRow/RefillCardRowEffect.js';
-import {
-  type IScanEffectResult,
-  ScanEffect,
-} from '../effects/scan/ScanEffect.js';
+import type { IScanWithTechsResult } from '../effects/scan/ScanWithTechsEffect.js';
+import { ScanWithTechsEffect } from '../effects/scan/ScanWithTechsEffect.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
 import type { IPlayer } from '../player/IPlayer.js';
@@ -12,7 +10,7 @@ import type { IPlayer } from '../player/IPlayer.js';
 const SCAN_CREDIT_COST = 1;
 const SCAN_ENERGY_COST = 2;
 
-export interface IScanActionResult extends IScanEffectResult {
+export interface IScanActionResult extends IScanWithTechsResult {
   refillCount: number;
 }
 
@@ -28,15 +26,16 @@ export class ScanAction {
    * Execute the scan standard action.
    *
    * 1. Pay costs
-   * 2. Run ScanEffect (mark earth sector → select & discard card → mark target sector)
-   * 3. Refill card row after scan completes
-   *
-   * Returns a `PlayerInput` for the card row selection step.
+   * 2. Run ScanWithTechsEffect (base scan + optional tech activations)
+   * 3. Refill card row after all scan substeps complete
    */
   public static execute(
     player: IPlayer,
     game: IGame,
-    options: { earthSectorIndex?: number } = {},
+    options: {
+      earthSectorIndex?: number;
+      mercurySectorIndex?: number;
+    } = {},
   ): IPlayerInput | undefined {
     if (!this.canExecute(player, game)) {
       throw new GameError(
@@ -51,9 +50,10 @@ export class ScanAction {
       energy: SCAN_ENERGY_COST,
     });
 
-    return ScanEffect.execute(player, game, {
+    return ScanWithTechsEffect.execute(player, game, {
       earthSectorIndex: options.earthSectorIndex,
-      onComplete: (_scanResult) => {
+      mercurySectorIndex: options.mercurySectorIndex,
+      onComplete: () => {
         RefillCardRowEffect.execute(game);
         return undefined;
       },

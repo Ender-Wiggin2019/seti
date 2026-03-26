@@ -83,3 +83,24 @@ export function getTechId(type: TTechCategory, level: TTechLevel): ETechId {
 export function getTechIdsForCategory(category: TTechCategory): ETechId[] {
   return TECH_LEVELS.map((level) => getTechId(category, level));
 }
+
+/**
+ * One-time bonus printed on each tech tile face.
+ * Resolved immediately when the tile is acquired, before
+ * placing the tile on the player board.
+ */
+export enum ETechBonusType {
+  ENERGY = 'ENERGY',
+  DATA = 'DATA',
+  PUBLICITY = 'PUBLICITY',
+  CARD = 'CARD',
+  CREDIT = 'CREDIT',
+  VP_2 = 'VP_2',
+  VP_3 = 'VP_3',
+  LAUNCH_IGNORE_LIMIT = 'LAUNCH_IGNORE_LIMIT',
+  DATA_2 = 'DATA_2',
+}
+
+export interface ITechBonusToken {
+  type: ETechBonusType;
+}

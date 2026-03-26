@@ -1,3 +1,7 @@
+import {
+  PLANET_MISSION_CONFIG,
+  PLANETARY_PLANETS,
+} from '@seti/common/constant/boardLayout';
 import { EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
@@ -5,17 +9,6 @@ import { GameError } from '@/shared/errors/GameError.js';
 const FIRST_ORBIT_VP_BONUS = 3;
 const LANDING_COST_DEFAULT = 3;
 const LANDING_COST_WITH_ORBITER = 2;
-
-const PLANETS: readonly EPlanet[] = [
-  EPlanet.EARTH,
-  EPlanet.MERCURY,
-  EPlanet.VENUS,
-  EPlanet.MARS,
-  EPlanet.JUPITER,
-  EPlanet.SATURN,
-  EPlanet.URANUS,
-  EPlanet.NEPTUNE,
-];
 
 export interface IOrbitSlot {
   playerId: string;
@@ -87,13 +80,16 @@ export class PlanetaryBoard {
     this.planets = new Map();
     this.probesByPlanet = new Map();
 
-    for (const planet of PLANETS) {
+    for (const planet of PLANETARY_PLANETS) {
+      const config = PLANET_MISSION_CONFIG[planet];
       this.planets.set(planet, {
         orbitSlots: [],
         landingSlots: [],
         firstOrbitClaimed: false,
-        firstLandDataBonusTaken:
-          planet === EPlanet.MARS ? [false, false] : [false],
+        firstLandDataBonusTaken: Array.from(
+          { length: config.firstLandDataBonusSlots },
+          () => false,
+        ),
         moonOccupant: null,
         moonUnlocked: false,
       });

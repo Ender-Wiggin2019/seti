@@ -3,6 +3,7 @@ import { EErrorCode } from '@seti/common/types/protocol/errors';
 import {
   type ETechId,
   getTechDescriptor,
+  type ITechBonusToken,
   type TTechCategory,
 } from '@seti/common/types/tech';
 import { GameError } from '@/shared/errors/GameError.js';
@@ -10,10 +11,12 @@ import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
 import type { IPlayer } from '../../player/IPlayer.js';
+import { TechBonusEffect } from './TechBonusEffect.js';
 
 export interface IResearchTechResult {
   techId: ETechId;
   vpBonus: number;
+  tileBonus?: ITechBonusToken;
 }
 
 /**
@@ -122,9 +125,16 @@ export class ResearchTechEffect {
       takeResult.tile.tech.onAcquire(player);
     }
 
+    let tileBonus: ITechBonusToken | undefined;
+    if (takeResult.tile.bonus) {
+      TechBonusEffect.apply(player, game, takeResult.tile.bonus);
+      tileBonus = takeResult.tile.bonus;
+    }
+
     return {
       techId,
       vpBonus: takeResult.vpBonus,
+      tileBonus,
     };
   }
 

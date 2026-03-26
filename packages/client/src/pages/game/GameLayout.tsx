@@ -1,7 +1,11 @@
+import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TopBar } from '@/components/layout/TopBar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ActionConfirm } from '@/features/actions/ActionConfirm';
+import { ActionMenu } from '@/features/actions/ActionMenu';
+import { FreeActionBar } from '@/features/actions/FreeActionBar';
 import { PlanetaryBoardView } from '@/features/board/PlanetaryBoardView';
 import {
   buildMoveAction,
@@ -12,10 +16,12 @@ import { CardDetail } from '@/features/cards/CardDetail';
 import { CardRowView } from '@/features/cards/CardRowView';
 import { EndOfRoundStacks } from '@/features/cards/EndOfRoundStacks';
 import { InputRenderer } from '@/features/input/InputRenderer';
+import { HandView, PlayedMissions, PlayerDashboard } from '@/features/player';
 import { useGameContext } from '@/pages/game/GameContext';
 import { GameOverDialog } from '@/pages/game/GameOverDialog';
 import { type TBoardTab, useGameViewStore } from '@/stores/gameViewStore';
-import { EPlayerInputType } from '@/types/re-exports';
+import type { IFreeActionRequest } from '@/types/re-exports';
+import { EFreeAction, EPlayerInputType } from '@/types/re-exports';
 
 const BOARD_TABS: { value: TBoardTab; label: string }[] = [
   { value: 'board', label: 'Board' },
@@ -263,10 +269,45 @@ function BoardPlaceholder({
 }
 
 function BottomBar(): React.JSX.Element {
-  const { gameState, myPlayerId, isMyTurn, pendingInput, sendInput } =
-    useGameContext();
+  const {
+    gameState,
+    myPlayerId,
+    isMyTurn,
+    pendingInput,
+    sendAction,
+    sendFreeAction,
+    sendInput,
+    requestUndo,
+  } = useGameContext();
+  const [confirmRequest, setConfirmRequest] =
+    useState<IFreeActionRequest | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const myPlayer = gameState?.players.find((p) => p.playerId === myPlayerId);
+  const extendedPlayer = myPlayer as
+    | (typeof myPlayer & {
+        creditIncome?: number;
+        energyIncome?: number;
+        playedMissions?: IBaseCard[];
+      })
+    | undefined;
+  const missionCards = extendedPlayer?.playedMissions ?? [];
+  const canUndo = Boolean((gameState as { canUndo?: boolean } | null)?.canUndo);
+
+  const handleFreeActionClick = (action: EFreeAction) => {
+    if (action === EFreeAction.BUY_CARD) {
+      setConfirmRequest({ type: EFreeAction.BUY_CARD, fromDeck: true });
+      setConfirmOpen(true);
+    }
+  };
+
+  const handleConfirmFreeAction = () => {
+    if (confirmRequest) {
+      sendFreeAction(confirmRequest);
+    }
+    setConfirmOpen(false);
+    setConfirmRequest(null);
+  };
 
   return (
     <div className='shrink-0 border-t border-surface-700/70 bg-surface-900/60 backdrop-blur-sm'>
@@ -278,15 +319,16 @@ function BottomBar(): React.JSX.Element {
             Dashboard
           </h4>
           {myPlayer ? (
-            <div className='grid grid-cols-4 gap-2'>
-              <ResourceCell label='Credits' value={myPlayer.resources.credit} />
-              <ResourceCell label='Energy' value={myPlayer.resources.energy} />
-              <ResourceCell label='Data' value={myPlayer.resources.data} />
-              <ResourceCell
-                label='Publicity'
-                value={myPlayer.resources.publicity}
-              />
-            </div>
+            <PlayerDashboard
+              player={myPlayer}
+              pendingInput={pendingInput}
+              onFreeAction={sendFreeAction}
+              income={{
+                credit: extendedPlayer?.creditIncome ?? 0,
+                energy: extendedPlayer?.energyIncome ?? 0,
+              }}
+              playedMissions={missionCards}
+            />
           ) : (
             <p className='text-xs text-text-500'>Loading...</p>
           )}
@@ -295,13 +337,23 @@ function BottomBar(): React.JSX.Element {
         {/* Hand View */}
         <div className='p-3' data-testid='bottom-hand'>
           <h4 className='mb-1.5 font-mono text-xs font-medium uppercase tracking-widest text-text-500'>
-            Hand
+            Hand & Missions
           </h4>
           {myPlayer ? (
-            <p className='text-xs text-text-300'>
-              {myPlayer.handSize} card{myPlayer.handSize !== 1 ? 's' : ''} in
-              hand
-            </p>
+            <div className='grid h-full min-h-[86px] grid-rows-2 gap-2'>
+              <HandView
+                cards={myPlayer.hand}
+                handSize={myPlayer.handSize}
+                pendingInput={pendingInput}
+                onSubmitSelection={(cardIds) => {
+                  sendInput({
+                    type: EPlayerInputType.CARD,
+                    cardIds,
+                  });
+                }}
+              />
+              <PlayedMissions missions={missionCards} />
+            </div>
           ) : (
             <p className='text-xs text-text-500'>Loading...</p>
           )}
@@ -312,62 +364,44 @@ function BottomBar(): React.JSX.Element {
           <h4 className='mb-1.5 font-mono text-xs font-medium uppercase tracking-widest text-text-500'>
             Actions
           </h4>
-          {pendingInput ? (
+          {pendingInput && pendingInput.type !== EPlayerInputType.OR ? (
             <div className='rounded border border-accent-500/30 bg-accent-500/10 px-3 py-2 text-xs text-accent-400'>
               <InputRenderer model={pendingInput} onSubmit={sendInput} />
             </div>
-          ) : isMyTurn ? (
-            <p className='text-xs text-accent-400'>Choose your action...</p>
           ) : (
-            <p className='text-xs text-text-500'>Waiting for opponent...</p>
+            <ActionMenu
+              gameState={gameState}
+              myPlayerId={myPlayerId}
+              isMyTurn={isMyTurn}
+              pendingInput={pendingInput}
+              canUndo={canUndo}
+              onSendAction={sendAction}
+              onRequestUndo={requestUndo}
+            />
           )}
         </div>
       </div>
 
       {/* Free Action Bar */}
-      {isMyTurn && (
-        <div
-          className='flex items-center gap-2 border-t border-surface-700/40 px-4 py-1.5'
-          data-testid='free-action-bar'
-        >
-          <span className='mr-1 font-mono text-xs text-text-500'>Free:</span>
-          {FREE_ACTIONS.map((fa) => (
-            <button
-              key={fa.id}
-              type='button'
-              disabled
-              className='rounded border border-surface-700/60 bg-surface-800/60 px-2 py-0.5 font-mono text-xs text-text-500 opacity-60'
-              title={fa.label}
-            >
-              {fa.label}
-            </button>
-          ))}
-        </div>
-      )}
+      <FreeActionBar
+        gameState={gameState}
+        myPlayerId={myPlayerId}
+        isMyTurn={isMyTurn}
+        onActionClick={handleFreeActionClick}
+      />
+
+      <ActionConfirm
+        open={confirmOpen}
+        title='Buy Card'
+        description='Spend 3 publicity and draw from the deck?'
+        costs={['3 publicity']}
+        confirmLabel='Buy'
+        onCancel={() => {
+          setConfirmOpen(false);
+          setConfirmRequest(null);
+        }}
+        onConfirm={handleConfirmFreeAction}
+      />
     </div>
   );
 }
-
-function ResourceCell({
-  label,
-  value,
-}: {
-  label: string;
-  value: number;
-}): React.JSX.Element {
-  return (
-    <div className='rounded border border-surface-700/40 bg-surface-800/30 px-2 py-1 text-center'>
-      <p className='font-mono text-sm font-bold text-text-100'>{value}</p>
-      <p className='text-xs text-text-500'>{label}</p>
-    </div>
-  );
-}
-
-const FREE_ACTIONS = [
-  { id: 'move', label: 'Move' },
-  { id: 'place-data', label: 'Data' },
-  { id: 'mission', label: 'Mission' },
-  { id: 'card-corner', label: 'Card' },
-  { id: 'buy-card', label: 'Buy' },
-  { id: 'exchange', label: 'Trade' },
-];

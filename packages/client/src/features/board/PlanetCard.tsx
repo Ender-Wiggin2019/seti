@@ -1,20 +1,9 @@
+import { PLANET_MISSION_CONFIG } from '@seti/common/constant/boardLayout';
 import { cn } from '@/lib/cn';
 import type { IPublicPlanetState } from '@/types/re-exports';
-import { EPlanet } from '@/types/re-exports';
-
-const PLANET_LABEL: Record<EPlanet, string> = {
-  [EPlanet.EARTH]: 'Earth',
-  [EPlanet.MARS]: 'Mars',
-  [EPlanet.JUPITER]: 'Jupiter',
-  [EPlanet.SATURN]: 'Saturn',
-  [EPlanet.MERCURY]: 'Mercury',
-  [EPlanet.VENUS]: 'Venus',
-  [EPlanet.URANUS]: 'Uranus',
-  [EPlanet.NEPTUNE]: 'Neptune',
-};
 
 interface IPlanetCardProps {
-  planet: EPlanet;
+  planet: keyof typeof PLANET_MISSION_CONFIG;
   state: IPublicPlanetState;
   playerColors: Record<string, string>;
   isSelectable: boolean;
@@ -43,6 +32,8 @@ export function PlanetCard({
   playerColors,
   isSelectable,
 }: IPlanetCardProps): React.JSX.Element {
+  const missionConfig = PLANET_MISSION_CONFIG[planet];
+
   return (
     <article
       data-testid={`planet-card-${planet}`}
@@ -53,7 +44,7 @@ export function PlanetCard({
     >
       <header className='mb-2 flex items-center justify-between'>
         <h3 className='font-display text-sm font-semibold uppercase tracking-wide text-text-100'>
-          {PLANET_LABEL[planet]}
+          {missionConfig.label}
         </h3>
         <div className='flex items-center gap-1'>
           <span
@@ -133,14 +124,22 @@ export function PlanetCard({
               : 'border-surface-600 text-text-500',
           )}
         >
-          Moon:{' '}
+          Moons {missionConfig.moonSlots}:{' '}
           {state.moonOccupant
             ? `occupied (${state.moonOccupant.playerId})`
-            : state.moonUnlocked
-              ? 'open'
-              : 'locked'}
+            : missionConfig.moonSlots === 0
+              ? 'n/a'
+              : state.moonUnlocked
+                ? 'open'
+                : 'locked'}
         </span>
       </div>
+
+      {missionConfig.moonNames.length > 0 && (
+        <p className='mt-1 text-[10px] text-text-500'>
+          {missionConfig.moonNames.join(', ')}
+        </p>
+      )}
     </article>
   );
 }

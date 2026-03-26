@@ -1,22 +1,13 @@
+import { PLANETARY_PLANETS } from '@seti/common/constant/boardLayout';
 import { EPlanet } from '@seti/common/types/protocol/enums';
 import type { IGame } from '../../IGame.js';
-
-const NON_EARTH_PLANETS: readonly EPlanet[] = [
-  EPlanet.MERCURY,
-  EPlanet.VENUS,
-  EPlanet.MARS,
-  EPlanet.JUPITER,
-  EPlanet.SATURN,
-  EPlanet.URANUS,
-  EPlanet.NEPTUNE,
-];
 
 export function syncProbeCountsForPlayer(game: IGame, playerId: string): void {
   if (game.solarSystem === null || game.planetaryBoard === null) {
     return;
   }
 
-  for (const planet of NON_EARTH_PLANETS) {
+  for (const planet of PLANETARY_PLANETS) {
     const spaces = game.solarSystem.getSpacesOnPlanet(planet);
     let count = 0;
     for (const space of spaces) {

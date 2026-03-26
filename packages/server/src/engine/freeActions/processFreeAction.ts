@@ -31,7 +31,12 @@ export function processFreeAction(
       return;
 
     case EFreeAction.COMPLETE_MISSION:
-      CompleteMissionFreeAction.execute(player, game, action.cardId);
+      CompleteMissionFreeAction.execute(
+        player,
+        game,
+        action.cardId,
+        action.branchIndex,
+      );
       return;
 
     case EFreeAction.USE_CARD_CORNER:

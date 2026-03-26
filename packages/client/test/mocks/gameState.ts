@@ -32,6 +32,9 @@ export function createMockPlayerState(
     pieces: { probes: 3, orbiters: 2, landers: 2, signalMarkers: 8 },
     techs: [],
     passed: false,
+    movementPoints: 1,
+    dataStashCount: 0,
+    probesInSpace: 1,
     ...overrides,
   };
 }

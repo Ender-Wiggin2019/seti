@@ -30,7 +30,10 @@ function createAdjacencyMap(): Record<string, string[]> {
   return adjacencyMap;
 }
 
-function createDebugGameState(scenario: TDebugScenario): IPublicGameState {
+function createDebugGameState(
+  scenario: TDebugScenario,
+  rotationStep: number,
+): IPublicGameState {
   return {
     gameId: `debug-${scenario}`,
     round: 3,
@@ -107,9 +110,9 @@ function createDebugGameState(scenario: TDebugScenario): IPublicGameState {
         { playerId: 'player-3', spaceId: 'space-21' },
       ],
       discs: [
-        { discIndex: 0, angle: 15 },
-        { discIndex: 1, angle: 35 },
-        { discIndex: 2, angle: 60 },
+        { discIndex: 0, angle: (15 + rotationStep) % 8 },
+        { discIndex: 1, angle: (35 + rotationStep) % 8 },
+        { discIndex: 2, angle: (60 + rotationStep) % 8 },
         { discIndex: 3, angle: 0 },
       ],
     },
@@ -152,7 +155,11 @@ function createDebugGameState(scenario: TDebugScenario): IPublicGameState {
 
 export function GameDebugPage(): React.JSX.Element {
   const [scenario, setScenario] = useState<TDebugScenario>('my-turn');
-  const gameState = useMemo(() => createDebugGameState(scenario), [scenario]);
+  const [rotationStep, setRotationStep] = useState(0);
+  const gameState = useMemo(
+    () => createDebugGameState(scenario, rotationStep),
+    [scenario, rotationStep],
+  );
   const isSpectator = scenario === 'spectator';
   const myPlayerId = isSpectator ? 'spectator-0' : 'player-1';
   const contextValue = useMemo<IGameContext>(
@@ -188,6 +195,13 @@ export function GameDebugPage(): React.JSX.Element {
           <option value='spectator'>Spectator</option>
           <option value='game-over'>Game Over</option>
         </select>
+        <button
+          type='button'
+          onClick={() => setRotationStep((prev) => prev + 1)}
+          className='rounded border border-surface-700 bg-surface-800 px-2 py-1 text-text-100 transition-colors hover:bg-surface-700'
+        >
+          Rotate +45°
+        </button>
       </div>
       <GameLayout />
     </GameContextValueProvider>

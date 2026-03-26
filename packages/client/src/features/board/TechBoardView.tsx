@@ -1,3 +1,7 @@
+import {
+  TECH_BOARD_DIMENSIONS,
+  TECH_STACK_LAYOUT,
+} from '@seti/common/constant/boardLayout';
 import { getTechDescriptor } from '@seti/common/types/tech';
 import type {
   IPlayerInputModel,
@@ -37,6 +41,10 @@ export function TechBoardView({
       ? new Set(pendingInput.options)
       : new Set<string>();
 
+  const stackByKey = new Map(
+    techBoard.stacks.map((stack) => [`${stack.tech}:${stack.level}`, stack]),
+  );
+
   return (
     <section className='w-full rounded-lg border border-surface-700/40 bg-surface-900/40 p-3'>
       <header className='mb-2'>
@@ -45,9 +53,22 @@ export function TechBoardView({
         </h2>
       </header>
 
-      <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-        {techBoard.stacks.map((stack) => {
-          const stackKey = `${stack.tech}:${stack.level}`;
+      <div
+        className='grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+        style={{
+          maxWidth: `${TECH_BOARD_DIMENSIONS.width * 2}px`,
+          minHeight: `${TECH_BOARD_DIMENSIONS.height}px`,
+          backgroundImage:
+            'linear-gradient(rgba(8, 13, 25, 0.35), rgba(8, 13, 25, 0.55))',
+        }}
+      >
+        {TECH_STACK_LAYOUT.map((layout) => {
+          const stackKey = `${layout.tech}:${layout.level}`;
+          const stack = stackByKey.get(stackKey);
+          if (!stack) {
+            return null;
+          }
+
           return (
             <TechStack
               key={stackKey}

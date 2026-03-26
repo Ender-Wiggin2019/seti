@@ -14,8 +14,10 @@ import { GameError } from '@/shared/errors/GameError.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
 import { LandAction } from './actions/Land.js';
 import { OrbitAction } from './actions/Orbit.js';
+import { PlayCardAction } from './actions/PlayCard.js';
 import type { PlanetaryBoard } from './board/PlanetaryBoard.js';
 import type { SolarSystem } from './board/SolarSystem.js';
+import { type EMarkSource, Mark } from './cards/utils/Mark.js';
 import { Deck } from './deck/Deck.js';
 import { DeferredActionsQueue } from './deferred/DeferredActionsQueue.js';
 import { EPriority } from './deferred/Priority.js';
@@ -31,6 +33,8 @@ import { createGameOptions, type IGameOptions } from './GameOptions.js';
 import { GameSetup } from './GameSetup.js';
 import type { IGame, IGamePlayerIdentity } from './IGame.js';
 import type { PlayerInput } from './input/PlayerInput.js';
+import { EMissionEventType } from './missions/IMission.js';
+import { MissionTracker } from './missions/MissionTracker.js';
 import { assertValidPhaseTransition } from './Phase.js';
 import type { IPlayer } from './player/IPlayer.js';
 import { Player } from './player/Player.js';
@@ -75,6 +79,8 @@ export class Game implements IGame {
 
   public deferredActions: DeferredActionsQueue;
 
+  public missionTracker: MissionTracker;
+
   public eventLog: EventLog;
 
   public random: SeededRandom;
@@ -111,6 +117,7 @@ export class Game implements IGame {
     this.neutralMilestones = [];
     this.roundRotationReminderIndex = 0;
     this.deferredActions = new DeferredActionsQueue();
+    this.missionTracker = new MissionTracker();
     this.eventLog = new EventLog();
 
     this.random = new SeededRandom(seed);
@@ -217,6 +224,15 @@ export class Game implements IGame {
     this.runResolutionPipeline();
   }
 
+  public mark(
+    source: EMarkSource,
+    count: number,
+    playerId: string = this.activePlayer.id,
+  ): PlayerInput | undefined {
+    const player = this.getPlayer(playerId);
+    return Mark.execute(player, this, source, count);
+  }
+
   private runResolutionPipeline(): void {
     const pendingInput = this.drainDeferredQueue();
     if (pendingInput !== undefined) {
@@ -266,12 +282,41 @@ export class Game implements IGame {
         (game) => {
           switch (action.type) {
             case EMainAction.ORBIT: {
-              OrbitAction.execute(player, game, this.getPlanetPayload(action));
+              const planet = this.getPlanetPayload(action);
+              OrbitAction.execute(player, game, planet);
+              game.missionTracker.recordEvent({
+                type: EMissionEventType.PROBE_ORBITED,
+                planet,
+              });
               break;
             }
             case EMainAction.LAND: {
-              LandAction.execute(player, game, this.getPlanetPayload(action), {
-                isMoon: this.getMoonPayload(action),
+              const planet = this.getPlanetPayload(action);
+              const isMoon = this.getMoonPayload(action);
+              LandAction.execute(player, game, planet, { isMoon });
+              game.missionTracker.recordEvent({
+                type: EMissionEventType.PROBE_LANDED,
+                planet,
+                isMoon,
+              });
+              break;
+            }
+            case EMainAction.PLAY_CARD: {
+              const result = PlayCardAction.execute(
+                player,
+                game,
+                this.getCardIndexPayload(action),
+              );
+              if (result.destination === 'mission') {
+                game.missionTracker.registerMissionFromCard(
+                  result.cardId,
+                  player.id,
+                );
+              }
+              game.missionTracker.recordEvent({
+                type: EMissionEventType.CARD_PLAYED,
+                cost: result.price,
+                costType: result.priceType,
               });
               break;
             }
@@ -308,6 +353,11 @@ export class Game implements IGame {
           return undefined;
         },
         EPriority.IMMEDIATE_REWARD,
+      ),
+      new SimpleDeferredAction(
+        player,
+        (game) => game.missionTracker.checkAndPromptTriggers(player, game),
+        EPriority.CARD_TRIGGER,
       ),
     ]);
   }
@@ -484,6 +534,30 @@ export class Game implements IGame {
         }
         return;
       }
+      case EMainAction.PLAY_CARD: {
+        const cardIndex = this.getCardIndexPayload(action);
+        if (cardIndex < 0 || cardIndex >= player.hand.length) {
+          throw new GameError(
+            EErrorCode.INVALID_ACTION,
+            'Play card payload.cardIndex is out of range',
+            {
+              playerId: player.id,
+              cardIndex,
+              handSize: player.hand.length,
+            },
+          );
+        }
+        if (!PlayCardAction.canExecute(player, this)) {
+          throw new GameError(
+            EErrorCode.INVALID_ACTION,
+            'Play card requirements are not met',
+            {
+              playerId: player.id,
+            },
+          );
+        }
+        return;
+      }
       default:
         return;
     }
@@ -515,5 +589,20 @@ export class Game implements IGame {
 
   private getMoonPayload(action: IMainActionRequest): boolean {
     return action.payload?.isMoon === true;
+  }
+
+  private getCardIndexPayload(action: IMainActionRequest): number {
+    const cardIndex = action.payload?.cardIndex;
+    if (!Number.isInteger(cardIndex)) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        'Action payload.cardIndex must be an integer',
+        {
+          actionType: action.type,
+          payload: action.payload,
+        },
+      );
+    }
+    return cardIndex as number;
   }
 }

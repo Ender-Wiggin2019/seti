@@ -64,17 +64,26 @@ export {
   ScanMercurySignalEffect,
   type TEnergyLaunchChoice,
 } from './scan/ScanTechEffects.js';
+export {
+  type IScanTechActivationResult,
+  type IScanWithTechsOptions,
+  type IScanWithTechsResult,
+  ScanWithTechsEffect,
+} from './scan/ScanWithTechsEffect.js';
 
 // Solar
 export {
   type IRotateDiscResult,
   RotateDiscEffect,
 } from './solar/RotateDiscEffect.js';
-
-// Tech
 export {
   type IResearchTechEffectOptions,
   type IResearchTechResult,
   ResearchTechEffect,
   type TResearchTechFilter,
 } from './tech/ResearchTechEffect.js';
+// Tech
+export {
+  type ITechBonusResult,
+  TechBonusEffect,
+} from './tech/TechBonusEffect.js';
