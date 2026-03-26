@@ -68,8 +68,12 @@ export class Computer {
     });
   }
 
-  public isFull(): boolean {
+  public isConnected(): boolean {
     return this.topSlots.every((slotFilled) => slotFilled);
+  }
+
+  public isFull(): boolean {
+    return this.getPlacedCount() === this.getCapacity();
   }
 
   public clear(): void {

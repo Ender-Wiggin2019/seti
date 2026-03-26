@@ -1,8 +1,10 @@
+import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { RESEARCH_PUBLICITY_COST } from '@seti/common/types/tech';
 import { vi } from 'vitest';
 import { ResearchTechAction } from '@/engine/actions/ResearchTech.js';
 import { BoardBuilder } from '@/engine/board/BoardBuilder.js';
 import type { Deck } from '@/engine/deck/Deck.js';
+import { ResearchTechEffect } from '@/engine/effects/tech/ResearchTechEffect.js';
 import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
 import { TechBoard } from '@/engine/tech/TechBoard.js';
@@ -103,24 +105,43 @@ describe('ResearchTechAction', () => {
       const techBoard = new TechBoard(rng);
       const game = createMockGame(techBoard);
       const player = createPlayer();
-      const techId = techBoard.getAvailableTechs(player.id)[0]!;
       const before = player.resources.publicity;
-      ResearchTechAction.execute(player, game, techId, false);
+      ResearchTechAction.execute(player, game, false);
       expect(player.resources.publicity).toBe(before - RESEARCH_PUBLICITY_COST);
     });
 
-    it('rotates the solar system and returns rotatedDisc', () => {
+    it('rotates the solar system disc', () => {
       const rng = new SeededRandom('test');
       const techBoard = new TechBoard(rng);
       const game = createMockGame(techBoard);
       const player = createPlayer();
-      const techId = techBoard.getAvailableTechs(player.id)[0]!;
       const before = game.solarSystem!.rotationCounter;
-      const result = ResearchTechAction.execute(player, game, techId, false);
+      ResearchTechAction.execute(player, game, false);
       expect(game.solarSystem!.rotationCounter).toBe(before + 1);
-      expect(result.rotatedDisc).toBeGreaterThanOrEqual(0);
     });
 
+    it('returns a PlayerInput when multiple techs are available', () => {
+      const rng = new SeededRandom('test');
+      const techBoard = new TechBoard(rng);
+      const game = createMockGame(techBoard);
+      const player = createPlayer();
+      const input = ResearchTechAction.execute(player, game, false);
+      expect(input).toBeDefined();
+      expect(input!.type).toBe(EPlayerInputType.OPTION);
+    });
+
+    it('throws when the action is illegal', () => {
+      const rng = new SeededRandom('test');
+      const techBoard = new TechBoard(rng);
+      const game = createMockGame(techBoard);
+      const player = createPlayer({
+        resources: { credits: 10, energy: 10, publicity: 0 },
+      });
+      expect(() => ResearchTechAction.execute(player, game, false)).toThrow();
+    });
+  });
+
+  describe('ResearchTechEffect.acquireTech (direct)', () => {
     it('takes the tech tile from the tech board', () => {
       const rng = new SeededRandom('test');
       const techBoard = new TechBoard(rng);
@@ -128,7 +149,7 @@ describe('ResearchTechAction', () => {
       const game = createMockGame(techBoard);
       const player = createPlayer();
       const techId = techBoard.getAvailableTechs(player.id)[0]!;
-      ResearchTechAction.execute(player, game, techId, false);
+      ResearchTechEffect.acquireTech(player, game, techId);
       expect(takeSpy).toHaveBeenCalledWith(player.id, techId);
     });
 
@@ -139,7 +160,7 @@ describe('ResearchTechAction', () => {
       const player = createPlayer();
       const techId = techBoard.getAvailableTechs(player.id)[0]!;
       const scoreBefore = player.score;
-      const result = ResearchTechAction.execute(player, game, techId, false);
+      const result = ResearchTechEffect.acquireTech(player, game, techId);
       expect(player.score).toBe(scoreBefore + result.vpBonus);
     });
 
@@ -149,21 +170,8 @@ describe('ResearchTechAction', () => {
       const game = createMockGame(techBoard);
       const player = createPlayer();
       const techId = techBoard.getAvailableTechs(player.id)[0]!;
-      ResearchTechAction.execute(player, game, techId, false);
+      ResearchTechEffect.acquireTech(player, game, techId);
       expect(player.techs).toContain(techId);
-    });
-
-    it('throws when the action is illegal', () => {
-      const rng = new SeededRandom('test');
-      const techBoard = new TechBoard(rng);
-      const game = createMockGame(techBoard);
-      const player = createPlayer({
-        resources: { credits: 10, energy: 10, publicity: 0 },
-      });
-      const techId = techBoard.getAvailableTechs(player.id)[0]!;
-      expect(() =>
-        ResearchTechAction.execute(player, game, techId, false),
-      ).toThrow();
     });
   });
 });

@@ -52,7 +52,7 @@ packages/server/
 │   │   │   ├── TechBoard.ts          # 12 tech stacks
 │   │   │   └── BoardBuilder.ts       # Solar system layout constructor
 │   │   │
-│   │   ├── actions/                  # Main action implementations
+│   │   ├── actions/                  # Main action implementations (cost + legality)
 │   │   │   ├── LaunchProbe.ts
 │   │   │   ├── Orbit.ts
 │   │   │   ├── Land.ts
@@ -61,6 +61,27 @@ packages/server/
 │   │   │   ├── PlayCard.ts
 │   │   │   ├── ResearchTech.ts
 │   │   │   └── Pass.ts
+│   │   │
+│   │   ├── effects/                  # ★ Reusable atomic game operations
+│   │   │   ├── index.ts             # Unified barrel export
+│   │   │   ├── scan/
+│   │   │   │   ├── MarkSectorSignalEffect.ts
+│   │   │   │   ├── ScanEffect.ts          # Composed: mark + select card + mark
+│   │   │   │   └── ScanEffectUtils.ts
+│   │   │   ├── tech/
+│   │   │   │   └── ResearchTechEffect.ts  # Interactive: select & acquire tech
+│   │   │   ├── data/
+│   │   │   │   └── AnalyzeDataEffect.ts
+│   │   │   ├── cardRow/
+│   │   │   │   ├── SelectCardFromCardRowEffect.ts  # Interactive
+│   │   │   │   └── RefillCardRowEffect.ts
+│   │   │   ├── solar/
+│   │   │   │   └── RotateDiscEffect.ts
+│   │   │   └── probe/
+│   │   │       ├── LaunchProbeEffect.ts
+│   │   │       ├── OrbitProbeEffect.ts
+│   │   │       ├── LandProbeEffect.ts
+│   │   │       └── ProbeEffectUtils.ts
 │   │   │
 │   │   ├── freeActions/
 │   │   │   ├── Movement.ts
@@ -511,7 +532,97 @@ enum EPriority {
 11. TURN_HANDOFF → next player or END_OF_ROUND
 ```
 
-### 4.5 Cards — Hierarchy & Registration
+### 4.5 Effect — 可复用原子操作层
+
+Effect 是位于 Action 和原始状态变更之间的**可复用游戏操作层**。它是卡牌效果、标准行动和其他 Effect 的共同构建基石。
+
+#### 分层关系
+
+```
+Action (标准玩家行动)
+  ├── 负责费用检查与扣除
+  ├── 负责行动合法性校验
+  └── 委托给 Effect 执行实际游戏状态变更
+
+Effect (原子操作 / 组合操作)
+  ├── 不处理费用 — 费用由 Action 层或卡牌自行管理
+  ├── 可组合 — 复杂 Effect 由多个原子 Effect 组合而成
+  ├── 可交互 — 返回 PlayerInput | undefined
+  │   ├── 同步 Effect: 直接执行并返回结果 (undefined)
+  │   └── 交互 Effect: 返回 PlayerInput，等待玩家选择后继续
+  └── 可被卡牌、Action、其他 Effect 直接调用
+```
+
+#### 命名与接口约定
+
+每个 Effect 是一个静态类，提供以下方法：
+
+```typescript
+class SomeEffect {
+  static canExecute(player, game, ...params): boolean;  // 可选
+  static execute(player, game, options?): PlayerInput | undefined | TResult;
+}
+```
+
+- **同步 Effect** — `execute()` 返回结果对象 (如 `IMarkSectorSignalResult`)
+- **交互 Effect** — `execute()` 返回 `PlayerInput`，通过 `options.onComplete` 回调传递结果
+
+#### 原子 Effect 目录
+
+| Effect | 类型 | 用途 |
+|--------|------|------|
+| `MarkSectorSignalEffect` | 同步 | 标记扇区信号 (byIndex / byColor / onSector) |
+| `SelectCardFromCardRowEffect` | 交互 | 从展示区选牌，支持 hand/discard/choose 三种去向 |
+| `RefillCardRowEffect` | 同步 | 从牌库补充展示区 |
+| `ResearchTechEffect` | 交互 | 选择并获取科技，支持 all/category/specific 过滤 |
+| `AnalyzeDataEffect` | 同步 | 清空电脑（不动 data pool） |
+| `RotateDiscEffect` | 同步 | 旋转太阳系盘 |
+| `LaunchProbeEffect` | 同步 | 在地球放置探测器 |
+| `OrbitProbeEffect` | 同步 | 消耗探测器进入行星轨道 |
+| `LandProbeEffect` | 同步 | 消耗探测器着陆行星 |
+
+#### 组合 Effect 示例
+
+`ScanEffect` 组合了三个原子操作：
+
+```typescript
+ScanEffect.execute(player, game, { onComplete }) {
+  // 1. MarkSectorSignalEffect.markByIndex — 标记地球扇区 (同步)
+  // 2. SelectCardFromCardRowEffect — 选牌并弃置 (交互，不补牌)
+  // 3. MarkSectorSignalEffect.markByColor — 根据卡牌颜色标记目标扇区 (同步)
+  //    ↳ 在 onComplete 回调中执行
+}
+```
+
+Action 层在此基础上添加费用和补牌：
+
+```typescript
+ScanAction.execute(player, game) {
+  player.resources.spend({ credits: 1, energy: 2 });   // 费用
+  return ScanEffect.execute(player, game, {
+    onComplete: () => {
+      RefillCardRowEffect.execute(game);                 // 补牌
+      return undefined;
+    },
+  });
+}
+```
+
+#### ★ 新增 Action / Effect 的设计原则
+
+当需要实现一个新的 Action 或卡牌效果时，**必须**遵循以下流程：
+
+1. **先查现有 Effect** — 检查 `effects/` 目录和 `effects/index.ts` 中是否已有可复用的原子操作
+2. **尽量复用与组合** — 如果现有 Effect 能覆盖需求，直接组合使用，不要重复实现
+3. **拆分为最小原子** — 如果没有现成的 Effect，将新逻辑拆解为最小粒度的原子操作，每个原子操作实现为独立的 Effect 类
+4. **原子操作的粒度判断** — 一个原子 Effect 应该只做一件事且无法再合理拆分。例如「标记扇区信号」是原子的，但「扫描」不是（它包含标记 + 选牌 + 再标记）
+5. **交互与状态变更分离** — 如果一个操作需要玩家交互，将其设计为交互 Effect (返回 PlayerInput)，通过 `onComplete` 回调传递结果供调用方使用
+6. **统一导出** — 新增的 Effect 必须在 `effects/index.ts` 中导出
+
+> **示例:** 一张卡牌效果是「选择一张展示区的牌加入手牌，然后标记该牌颜色对应的扇区」。
+> 不需要写新 Effect — 组合 `SelectCardFromCardRowEffect` (destination='hand') + `MarkSectorSignalEffect.markByColor` 即可。
+
+### 4.6 Cards — Hierarchy & Registration
 
 **Adapting to SETI's card system.** SETI has three card modes (free-action corner, main-action effect, mission/end-game), plus tucked income. The hierarchy:
 
@@ -581,7 +692,7 @@ class CardRegistry {
 
 Base game cards and alien cards each have their own manifest, registered at startup.
 
-### 4.6 Board Components
+### 4.7 Board Components
 
 #### SolarSystem
 
@@ -647,7 +758,7 @@ class TechBoard {
 }
 ```
 
-### 4.7 Alien Species — Plug-in Modules
+### 4.8 Alien Species — Plug-in Modules
 
 Following the reference architecture's expansion pattern (composition, not inheritance):
 
@@ -682,7 +793,7 @@ class AlienModule {
 
 Each alien species is a separate class implementing `IAlienModule`, registered in `AlienRegistry`. Loaded into the game on discovery — the core engine never references species-specific logic directly.
 
-### 4.8 Scoring System
+### 4.9 Scoring System
 
 ```typescript
 class MilestoneState {
@@ -702,7 +813,7 @@ class MilestoneState {
 4. Sum → highest VP wins, ties remain ties
 ```
 
-### 4.9 Event Log
+### 4.10 Event Log
 
 Every state mutation emits a typed event for auditing, replay, and client display:
 
@@ -718,7 +829,7 @@ type TGameEvent =
   | { type: 'GAME_END'; finalScores: Record<string, number> };
 ```
 
-### 4.10 Common Rules Layer (`@ender-seti/common/rules`)
+### 4.11 Common Rules Layer (`@ender-seti/common/rules`)
 
 > **架构决策 (ADR):** 纯游戏规则函数放在 `@ender-seti/common` 共享包中，Server 和 Client 都通过同一套函数进行规则计算。Server 使用它做权威校验，Client 使用它做零延迟的乐观 UI（高亮合法目标、预计算消耗、即时反馈）。
 

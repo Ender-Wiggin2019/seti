@@ -1,20 +1,22 @@
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
+import {
+  AnalyzeDataEffect,
+  type IAnalyzeDataResult,
+} from '../effects/data/AnalyzeDataEffect.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
 
-const ANALYZE_ENERGY_COST = 1;
+export type { IAnalyzeDataResult };
 
-export interface IAnalyzeDataResult {
-  dataCleared: number;
-}
+const ANALYZE_ENERGY_COST = 1;
 
 export class AnalyzeDataAction {
   public static canExecute(player: IPlayer, _game: IGame): boolean {
     if (!player.resources.has({ energy: ANALYZE_ENERGY_COST })) {
       return false;
     }
-    return player.computer.isFull();
+    return AnalyzeDataEffect.canExecute(player);
   }
 
   public static execute(player: IPlayer, game: IGame): IAnalyzeDataResult {
@@ -27,10 +29,6 @@ export class AnalyzeDataAction {
     }
 
     player.resources.spend({ energy: ANALYZE_ENERGY_COST });
-
-    const dataCleared = player.computer.getPlacedCount();
-    player.computer.clear();
-
-    return { dataCleared };
+    return AnalyzeDataEffect.execute(player);
   }
 }

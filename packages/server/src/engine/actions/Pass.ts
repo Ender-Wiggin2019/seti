@@ -1,9 +1,14 @@
+/*
+ * @Author: Ender-Wiggin
+ * @Date: 2026-03-26 15:24:29
+ * @LastEditors: Ender-Wiggin
+ * @LastEditTime: 2026-03-26 16:44:37
+ * @Description:
+ */
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
-
-const HAND_LIMIT_AFTER_PASS = 4;
 
 export interface IPassResult {
   discardedCards: unknown[];
@@ -20,7 +25,7 @@ export class PassAction {
   /**
    * Execute the pass sequence.
    * In the full implementation, this creates PlayerInputs for:
-   * 1. Discarding hand down to 4
+   * 1. Discarding hand down to `player.handLimitAfterPass`
    * 2. Selecting end-of-round card
    *
    * This simplified version takes pre-selected values.
@@ -40,15 +45,13 @@ export class PassAction {
       endOfRoundCardSelected: false,
     };
 
-    if (player.hand.length > HAND_LIMIT_AFTER_PASS) {
+    const handLimit = player.handLimitAfterPass;
+    if (player.hand.length > handLimit) {
       const discardIndexes = options.discardCardIndexes ?? [];
       const toDiscard =
         discardIndexes.length > 0
           ? discardIndexes
-          : Array.from(
-              { length: player.hand.length - HAND_LIMIT_AFTER_PASS },
-              (_, i) => i,
-            );
+          : Array.from({ length: player.hand.length - handLimit }, (_, i) => i);
 
       const sortedDesc = [...toDiscard].sort((a, b) => b - a);
       for (const idx of sortedDesc) {

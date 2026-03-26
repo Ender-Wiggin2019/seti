@@ -40,6 +40,8 @@ export interface IPlayerInit extends IPlayerIdentity {
   passed?: boolean;
   probesInSpace?: number;
   probeSpaceLimit?: number;
+  /** Max hand size after passing; excess cards are discarded. Default 4. */
+  handLimitAfterPass?: number;
 }
 
 export interface IPlayer extends IPlayerIdentity {
@@ -62,6 +64,7 @@ export interface IPlayer extends IPlayerIdentity {
   passed: boolean;
   probesInSpace: number;
   probeSpaceLimit: number;
+  handLimitAfterPass: number;
 
   game: IGame | null;
   waitingFor?: IPlayerInput;

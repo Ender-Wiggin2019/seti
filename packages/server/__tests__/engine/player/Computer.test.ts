@@ -9,17 +9,29 @@ describe('Computer', () => {
     expect(() => new Computer(2, 3)).toThrow(GameError);
   });
 
-  it('fills top row from left to right and reports full status', () => {
+  it('fills top row from left to right and reports connected/full status', () => {
     const computer = new Computer(3, 0);
 
+    expect(computer.isConnected()).toBe(false);
     expect(computer.isFull()).toBe(false);
     computer.placeData({ row: EComputerRow.TOP, index: 0 });
     computer.placeData({ row: EComputerRow.TOP, index: 1 });
     computer.placeData({ row: EComputerRow.TOP, index: 2 });
 
+    expect(computer.isConnected()).toBe(true);
     expect(computer.isFull()).toBe(true);
     expect(computer.getPlacedCount()).toBe(3);
     expect(computer.getTopSlots()).toEqual([true, true, true]);
+  });
+
+  it('is connected when top row is full but not full capacity when bottom exists', () => {
+    const computer = new Computer(3, 2);
+    computer.placeData({ row: EComputerRow.TOP, index: 0 });
+    computer.placeData({ row: EComputerRow.TOP, index: 1 });
+    computer.placeData({ row: EComputerRow.TOP, index: 2 });
+
+    expect(computer.isConnected()).toBe(true);
+    expect(computer.isFull()).toBe(false);
   });
 
   it('throws when top row is not filled sequentially', () => {
@@ -90,6 +102,7 @@ describe('Computer', () => {
     computer.clear();
 
     expect(computer.getPlacedCount()).toBe(0);
+    expect(computer.isConnected()).toBe(false);
     expect(computer.isFull()).toBe(false);
     expect(computer.getTopSlots()).toEqual([false, false, false]);
     expect(computer.getBottomSlots()).toEqual([false, false]);

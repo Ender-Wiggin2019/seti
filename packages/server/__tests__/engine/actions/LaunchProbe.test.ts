@@ -1,6 +1,7 @@
 import { EPlanet } from '@seti/common/types/protocol/enums';
 import { LaunchProbeAction } from '@/engine/actions/LaunchProbe.js';
 import { BoardBuilder } from '@/engine/board/BoardBuilder.js';
+import { LaunchProbeEffect } from '@/engine/effects/probe/LaunchProbeEffect.js';
 import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
@@ -132,6 +133,16 @@ describe('LaunchProbeAction', () => {
       player.resources.gain({ credits: 2 });
       LaunchProbeAction.execute(player, game);
       expect(player.probesInSpace).toBe(2);
+    });
+
+    it('LaunchProbeEffect executes without standard action cost', () => {
+      const game = createMockGame();
+      const player = createPlayer({
+        resources: { credits: 0, energy: 3, publicity: 4 },
+      });
+      LaunchProbeEffect.execute(player, game);
+      expect(player.resources.credits).toBe(0);
+      expect(player.probesInSpace).toBe(1);
     });
   });
 });

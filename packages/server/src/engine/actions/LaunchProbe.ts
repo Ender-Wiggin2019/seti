@@ -1,23 +1,22 @@
-import { EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
+import {
+  type ILaunchProbeEffectResult,
+  LaunchProbeEffect,
+} from '../effects/probe/LaunchProbeEffect.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
 
 const LAUNCH_PROBE_CREDIT_COST = 2;
 
-export interface ILaunchProbeResult {
-  probeId: string;
-  spaceId: string;
-}
+export type ILaunchProbeResult = ILaunchProbeEffectResult;
 
 export class LaunchProbeAction {
   public static canExecute(player: IPlayer, game: IGame): boolean {
-    if (game.solarSystem === null) return false;
     if (!player.resources.has({ credits: LAUNCH_PROBE_CREDIT_COST })) {
       return false;
     }
-    return player.probesInSpace < player.probeSpaceLimit;
+    return LaunchProbeEffect.canExecute(player, game);
   }
 
   public static execute(player: IPlayer, game: IGame): ILaunchProbeResult {
@@ -29,20 +28,7 @@ export class LaunchProbeAction {
       );
     }
 
-    const solarSystem = game.solarSystem!;
     player.resources.spend({ credits: LAUNCH_PROBE_CREDIT_COST });
-
-    const earthSpaces = solarSystem.getSpacesOnPlanet(EPlanet.EARTH);
-    if (earthSpaces.length === 0) {
-      throw new GameError(
-        EErrorCode.INTERNAL_SERVER_ERROR,
-        'No Earth space found on solar system',
-      );
-    }
-    const earthSpaceId = earthSpaces[0].id;
-    const probe = solarSystem.placeProbe(player.id, earthSpaceId);
-    player.probesInSpace += 1;
-
-    return { probeId: probe.id, spaceId: earthSpaceId };
+    return LaunchProbeEffect.execute(player, game);
   }
 }

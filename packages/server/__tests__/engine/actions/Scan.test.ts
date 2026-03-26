@@ -1,7 +1,10 @@
 import { ESector } from '@seti/common/types/element';
+import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { ScanAction } from '@/engine/actions/Scan.js';
 import { Sector } from '@/engine/board/Sector.js';
 import { Deck } from '@/engine/deck/Deck.js';
+import { RefillCardRowEffect } from '@/engine/effects/cardRow/RefillCardRowEffect.js';
+import { MarkSectorSignalEffect } from '@/engine/effects/scan/MarkSectorSignalEffect.js';
 import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
 
@@ -21,7 +24,11 @@ function createMockGame(): IGame {
     techBoard: null,
     sectors,
     mainDeck,
-    cardRow: ['card-row-1', 'card-row-2', 'card-row-3'],
+    cardRow: [
+      { id: 'card-row-1', sector: ESector.BLUE },
+      { id: 'card-row-2', sector: ESector.RED },
+      { id: 'card-row-3', sector: ESector.YELLOW },
+    ],
     endOfRoundStacks: [],
     hiddenAliens: [],
     neutralMilestones: [],
@@ -101,50 +108,47 @@ describe('ScanAction', () => {
     it('spends credits and energy', () => {
       const game = createMockGame();
       const player = basePlayer();
-      ScanAction.execute(player, game, {
-        cardRowDiscardIndex: 0,
-        targetSectorColor: ESector.BLUE,
-      });
+      ScanAction.execute(player, game);
       expect(player.resources.credits).toBe(3);
       expect(player.resources.energy).toBe(1);
     });
 
-    it('marks a signal in the earth sector (default index 0)', () => {
+    it('marks a signal in the earth sector (index 0) immediately', () => {
       const game = createMockGame();
       const player = basePlayer();
       const earth = game.sectors[0] as Sector;
-      ScanAction.execute(player, game, {
-        cardRowDiscardIndex: 0,
-        targetSectorColor: ESector.BLUE,
-      });
+      ScanAction.execute(player, game);
       expect(earth.markerSlots.some((m) => m.playerId === player.id)).toBe(
         true,
       );
     });
 
-    it('discards from the card row and refills from the main deck', () => {
+    it('returns a PlayerInput for card row selection', () => {
       const game = createMockGame();
       const player = basePlayer();
-      const beforeDeck = game.mainDeck.drawSize;
-      ScanAction.execute(player, game, {
-        cardRowDiscardIndex: 0,
-        targetSectorColor: ESector.BLUE,
-      });
-      expect(game.cardRow).toEqual(['card-row-2', 'card-row-3', 'refill-1']);
-      expect(game.mainDeck.drawSize).toBe(beforeDeck - 1);
+      const input = ScanAction.execute(player, game);
+      expect(input).toBeDefined();
+      expect(input!.type).toBe(EPlayerInputType.CARD);
     });
 
-    it('marks a signal in the target sector matching targetSectorColor', () => {
+    it('processes card selection: removes card, marks target sector, refills card row', () => {
       const game = createMockGame();
       const player = basePlayer();
       const target = game.sectors[1] as Sector;
-      ScanAction.execute(player, game, {
-        cardRowDiscardIndex: 0,
-        targetSectorColor: ESector.BLUE,
+
+      const input = ScanAction.execute(player, game);
+      expect(input).toBeDefined();
+
+      input!.process({
+        type: EPlayerInputType.CARD,
+        cardIds: ['card-row-1'],
       });
+
       expect(target.markerSlots.some((m) => m.playerId === player.id)).toBe(
         true,
       );
+
+      expect(game.cardRow.length).toBe(3);
     });
 
     it('throws when the action is illegal (insufficient resources)', () => {
@@ -156,12 +160,45 @@ describe('ScanAction', () => {
         seatIndex: 0,
         resources: { credits: 0, energy: 0, publicity: 4 },
       });
-      expect(() =>
-        ScanAction.execute(player, game, {
-          cardRowDiscardIndex: 0,
-          targetSectorColor: ESector.BLUE,
-        }),
-      ).toThrow();
+      expect(() => ScanAction.execute(player, game)).toThrow();
+    });
+  });
+
+  describe('MarkSectorSignalEffect (atomic)', () => {
+    it('marks signal by index', () => {
+      const game = createMockGame();
+      const player = basePlayer();
+      const result = MarkSectorSignalEffect.markByIndex(player, game, 0);
+      expect(result).not.toBeNull();
+      expect(result!.sectorId).toBe('sector-earth');
+    });
+
+    it('marks signal by color', () => {
+      const game = createMockGame();
+      const player = basePlayer();
+      const result = MarkSectorSignalEffect.markByColor(
+        player,
+        game,
+        ESector.BLUE,
+      );
+      expect(result).not.toBeNull();
+      expect(result!.sectorId).toBe('sector-target');
+    });
+
+    it('returns null for invalid index', () => {
+      const game = createMockGame();
+      const player = basePlayer();
+      expect(MarkSectorSignalEffect.markByIndex(player, game, 99)).toBeNull();
+    });
+  });
+
+  describe('RefillCardRowEffect', () => {
+    it('fills card row to target size', () => {
+      const game = createMockGame();
+      game.cardRow = [];
+      const result = RefillCardRowEffect.execute(game, 3);
+      expect(result.cardsAdded).toBe(2);
+      expect(game.cardRow.length).toBe(2);
     });
   });
 });
