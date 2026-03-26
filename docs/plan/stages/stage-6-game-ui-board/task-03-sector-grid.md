@@ -65,8 +65,33 @@ packages/client/src/features/board/
 - `icons/data.png` → 数据 token（用于数据槽位显示）
 - `playerTokens/redSky.png`, `whiteSky.png`, `purpleSky.png` → 玩家天空标记
 
+## Common Rules Layer 集成
+
+> 详见 `arch-client.md` §4.3 和 `arch-server.md` §4.10。
+
+本任务需要使用 `@ender-seti/common/rules/` 中的纯函数：
+
+| 交互场景 | Common 函数 | UI 效果 |
+|----------|-------------|---------|
+| 扇区进度展示 | `getSectorProgress()` | 数据槽进度条 |
+| 扇区完成状态 | `isSectorComplete()` | 完成高亮样式 |
+| 竞争态势展示 | `getSectorStandings()` | 各玩家标记数量排名 |
+| 信号放置验证 | `canPlaceSignal()` | SelectSector 时有效扇区高亮 |
+
+```typescript
+// SectorView.tsx
+import { getSectorProgress, getSectorStandings, canPlaceSignal } from '@ender-seti/common/rules';
+
+const progress = getSectorProgress(sector);
+const standings = getSectorStandings(sector);
+const isClickable = pendingInput?.type === 'sector' && canPlaceSignal(sector);
+```
+
+**注意:** 这些 common 函数由 Task 2-2 rework 实现。如果尚未完成，可先用直接计算占位。
+
 ## 完成标准
 - [ ] 8 扇区正确渲染（使用信号标记静态资源）
 - [ ] 数据和标记状态准确反映
-- [ ] 选择交互高亮工作
+- [ ] 选择交互高亮工作（使用 common 规则函数）
+- [ ] 扇区进度和竞争态势展示
 - [ ] 所有单测通过

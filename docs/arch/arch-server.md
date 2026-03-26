@@ -708,6 +708,180 @@ type TGameEvent =
   | { type: 'GAME_END'; finalScores: Record<string, number> };
 ```
 
+### 4.10 Common Rules Layer (`@ender-seti/common/rules`)
+
+> **架构决策 (ADR):** 纯游戏规则函数放在 `@ender-seti/common` 共享包中，Server 和 Client 都通过同一套函数进行规则计算。Server 使用它做权威校验，Client 使用它做零延迟的乐观 UI（高亮合法目标、预计算消耗、即时反馈）。
+
+#### 动机
+
+传统 Thin Client 方案中，客户端所有交互反馈都依赖 Server 往返（RTT ≈ 50-200ms）。对于棋盘游戏的移动高亮、合法行动检测等高频交互，这会导致明显延迟。
+
+本项目采用 Monorepo 结构，天然支持共享代码。将**纯规则函数**（无副作用、无状态变更）提取到 `@ender-seti/common/rules/`，实现：
+
+- **零延迟交互** — 客户端使用公开状态 (`IPublicGameState`) 即时计算合法目标
+- **规则唯一** — 同一函数被 Server 和 Client 共用，杜绝逻辑分歧
+- **Server 权威不变** — Client 计算仅用于 UI 展示，所有行动最终由 Server 校验
+
+#### 共享规则函数分类
+
+```
+packages/common/src/rules/
+├── movement.ts          # 移动路径、可达空间、移动成本
+├── actions.ts           # 主行动合法性检查 (canLaunchProbe, canOrbit, ...)
+├── freeActions.ts       # 自由行动合法性检查
+├── sector.ts            # 扇区信号放置验证、完成度计算
+├── planet.ts            # 轨道/着陆验证、费用计算
+├── tech.ts              # 科技可用性检查
+├── computer.ts          # 电脑槽位可用性、奖励预览
+├── coordinates.ts       # 太阳系位置 ↔ 坐标转换 (SVG 渲染用)
+└── index.ts             # 统一导出
+```
+
+#### 函数签名规范
+
+所有共享规则函数必须满足：
+
+1. **纯函数** — 无副作用，不修改入参
+2. **操作公开接口** — 参数类型为 `IPublicGameState`、`IPublicPlayerState` 等公开类型
+3. **无 Server 内部依赖** — 不引用 `Game`、`Player` 等 Server 内部类
+
+```typescript
+// rules/movement.ts
+function getReachableSpaces(
+  solarSystem: IPublicSolarSystemState,
+  probeSpaceId: string,
+  movementPoints: number,
+): IReachableSpace[];
+
+function getMoveCost(
+  solarSystem: IPublicSolarSystemState,
+  fromSpaceId: string,
+  toSpaceId: string,
+): number;
+
+function getMovePath(
+  solarSystem: IPublicSolarSystemState,
+  fromSpaceId: string,
+  toSpaceId: string,
+): string[];
+
+// rules/actions.ts
+function canLaunchProbe(player: IPublicPlayerState): boolean;
+function canOrbit(player: IPublicPlayerState, gameState: IPublicGameState): boolean;
+function canLand(player: IPublicPlayerState, gameState: IPublicGameState): boolean;
+function canScan(player: IPublicPlayerState): boolean;
+function canAnalyzeData(player: IPublicPlayerState): boolean;
+function canResearchTech(player: IPublicPlayerState, gameState: IPublicGameState): boolean;
+function getAvailableMainActions(player: IPublicPlayerState, gameState: IPublicGameState): EMainAction[];
+
+// rules/freeActions.ts
+function canMoveProbe(player: IPublicPlayerState, gameState: IPublicGameState): boolean;
+function canPlaceData(player: IPublicPlayerState): boolean;
+function canBuyCard(player: IPublicPlayerState): boolean;
+function canExchangeResources(player: IPublicPlayerState): boolean;
+function getAvailableFreeActions(player: IPublicPlayerState, gameState: IPublicGameState): EFreeAction[];
+
+// rules/planet.ts
+function getLandingCost(planet: IPublicPlanetState, playerId: string): number;
+function canOrbitPlanet(planet: IPublicPlanetState, player: IPublicPlayerState, gameState: IPublicGameState): boolean;
+function canLandOnPlanet(planet: IPublicPlanetState, player: IPublicPlayerState, gameState: IPublicGameState): boolean;
+
+// rules/sector.ts
+function canPlaceSignal(sector: IPublicSectorState): boolean;
+function getSectorProgress(sector: IPublicSectorState): { filled: number; total: number };
+
+// rules/tech.ts
+function canResearchTechType(techType: ETech, player: IPublicPlayerState, techBoard: IPublicTechBoardState): boolean;
+function getAvailableTechs(player: IPublicPlayerState, techBoard: IPublicTechBoardState): ETech[];
+
+// rules/computer.ts
+function getNextSlot(computer: IPublicComputerState): { row: 'top' | 'bottom'; index: number } | null;
+function isComputerTopRowFull(computer: IPublicComputerState): boolean;
+
+// rules/coordinates.ts
+function systemPosToCoords(pos: number, center: number, ringRadii: number[]): { x: number; y: number };
+function coordsToSystemPos(x: number, y: number, center: number, ringRadii: number[]): number | null;
+```
+
+#### Server 使用方式
+
+Server 的引擎类内部可以直接使用 common 规则函数，也可以在内部类中封装对应的方法（该方法内部调用 common 函数并传入自身的公开状态投影）：
+
+```typescript
+// Server: engine/actions/LaunchProbe.ts
+import { canLaunchProbe } from '@ender-seti/common/rules';
+
+class LaunchProbeAction {
+  canExecute(player: IPlayer, game: IGame): boolean {
+    return canLaunchProbe(projectPlayerState(player));
+  }
+
+  execute(player: IPlayer, game: IGame): void {
+    // 权威执行 — 修改 Server 内部状态
+    player.resources.spend({ credit: 2 });
+    game.solarSystem.placeProbe(player.id, EARTH_SPACE_ID);
+    player.pieces.deployProbe();
+  }
+}
+```
+
+Server 在 `execute()` 中操作内部可变状态（`Resources.spend()`、`SolarSystem.placeProbe()` 等），这些操作是 Server 独有的，不在 common 中。
+
+#### Client 使用方式
+
+Client 将 `IPublicGameState` 传入 common 函数，获得即时的合法性计算结果用于 UI 渲染：
+
+```typescript
+// Client: features/actions/FreeActionBar.tsx
+import { getAvailableFreeActions } from '@ender-seti/common/rules';
+
+function FreeActionBar() {
+  const { gameState, myPlayerId } = useGameContext();
+  const myPlayer = gameState.players.find(p => p.id === myPlayerId);
+
+  const availableActions = getAvailableFreeActions(myPlayer, gameState);
+
+  return (
+    <div>
+      <Button disabled={!availableActions.includes('MOVE')}>Move</Button>
+      <Button disabled={!availableActions.includes('PLACE_DATA')}>Place Data</Button>
+      {/* ... */}
+    </div>
+  );
+}
+```
+
+```typescript
+// Client: features/board/SolarSystemView.tsx
+import { getReachableSpaces } from '@ender-seti/common/rules';
+
+function SolarSystemView() {
+  const { gameState, pendingInput } = useGameContext();
+
+  const reachableSpaces = pendingInput?.type === 'movement'
+    ? getReachableSpaces(gameState.solarSystem, selectedProbeSpaceId, movementPoints)
+    : [];
+
+  return (
+    <svg>
+      {gameState.solarSystem.spaces.map(space => (
+        <SpaceElement
+          key={space.id}
+          highlighted={reachableSpaces.some(r => r.spaceId === space.id)}
+          onClick={() => handleSpaceClick(space.id)}
+        />
+      ))}
+    </svg>
+  );
+}
+```
+
+#### 注意事项
+
+1. **隐藏信息** — 部分校验涉及手牌等隐藏信息（如 PlayCard 的卡牌费用），Client 只能校验自己可见的部分。Server 始终做完整校验
+2. **不可替代 Server 校验** — common 规则函数用于 UI 反馈，**不能**跳过 Server 校验。恶意客户端可以篡改本地状态
+3. **版本一致** — Monorepo 确保 Server 和 Client 使用同一版本的 common 包
+
 ---
 
 ## 5. Data Flow

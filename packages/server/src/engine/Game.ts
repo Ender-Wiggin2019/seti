@@ -8,6 +8,7 @@ import { EMainAction, EPhase } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
+import type { SolarSystem } from './board/SolarSystem.js';
 import { DeferredActionsQueue } from './deferred/DeferredActionsQueue.js';
 import { EPriority } from './deferred/Priority.js';
 import { SimpleDeferredAction } from './deferred/SimpleDeferredAction.js';
@@ -42,7 +43,7 @@ export class Game implements IGame {
 
   public startPlayer: IPlayer;
 
-  public solarSystem: unknown;
+  public solarSystem: SolarSystem | null;
 
   public planetaryBoard: unknown;
 

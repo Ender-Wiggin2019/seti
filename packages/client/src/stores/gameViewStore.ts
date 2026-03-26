@@ -1,8 +1,7 @@
 import { create } from 'zustand';
 
 export type TBoardTab =
-  | 'solar-system'
-  | 'sectors'
+  | 'board'
   | 'planets'
   | 'tech'
   | 'cards'
@@ -19,7 +18,7 @@ interface IGameViewStoreState {
 }
 
 export const useGameViewStore = create<IGameViewStoreState>((set) => ({
-  activeTab: 'solar-system',
+  activeTab: 'board',
   zoom: 1,
   hoveredPieceId: null,
   setActiveTab: (activeTab) => set({ activeTab }),

@@ -60,9 +60,63 @@ packages/server/src/engine/board/
   - moon: 解锁后可着陆 + 单一占位限制
   - 多玩家交叉轨道/着陆
 
+## 🔄 Rework: 提取纯规则函数到 Common
+
+> **原因:** 架构决策要求纯游戏规则函数放在 `@ender-seti/common/rules/` 供 Client 做乐观 UI。详见 `arch-server.md` §4.10。
+
+### 需要提取的函数
+
+新建 `packages/common/src/rules/planet.ts`，从 Server 的 `PlanetaryBoard` 类中提取以下纯函数：
+
+```typescript
+// packages/common/src/rules/planet.ts
+import type { IPublicPlanetState, IPublicPlayerState, IPublicGameState } from '../types/protocol/gameState';
+
+/** 计算着陆费用 (有轨道者时 2, 否则 3) */
+function getLandingCost(planet: IPublicPlanetState, playerId: string): number;
+
+/** 检查某玩家是否可以在该行星入轨 (有探针在该行星空间 + 费用足够) */
+function canOrbitPlanet(
+  planet: IPublicPlanetState,
+  player: IPublicPlayerState,
+  gameState: IPublicGameState,
+): boolean;
+
+/** 检查某玩家是否可以在该行星着陆 */
+function canLandOnPlanet(
+  planet: IPublicPlanetState,
+  player: IPublicPlayerState,
+  gameState: IPublicGameState,
+): boolean;
+
+/** 检查月球是否可着陆 (已解锁 + 无占位) */
+function canLandOnMoon(planet: IPublicPlanetState): boolean;
+
+/** 获取首次轨道奖励是否仍可用 */
+function isFirstOrbitAvailable(planet: IPublicPlanetState): boolean;
+
+/** 获取首次着陆数据奖励剩余 */
+function getFirstLandBonusRemaining(planet: IPublicPlanetState): number;
+```
+
+### Rework 步骤
+
+1. 在 `packages/common/src/rules/planet.ts` 中实现上述纯函数
+2. 修改 Server 的 `PlanetaryBoard` 类，可在 `canOrbit` / `canLand` / `getLandingCost` 中调用 common 纯函数
+3. 确保 `IPublicPlanetState` 包含足够信息（`orbitSlots`, `landingSlots`, `firstOrbitClaimed`, `moonUnlocked`, `moonOccupant` 等）
+4. 添加 common 规则函数的单测 (`packages/common/src/rules/planet.test.ts`)
+5. 从 `packages/common/src/rules/index.ts` 统一导出
+
+### 新增完成标准
+- [ ] `common/rules/planet.ts` 纯函数已实现
+- [ ] 纯函数单测通过
+- [ ] Server 的 PlanetaryBoard 与 common 规则逻辑一致
+- [ ] `IPublicPlanetState` 字段满足 Client 计算需求
+
 ## 完成标准
-- [ ] PlanetaryBoard 完整实现
-- [ ] 着陆费用计算正确
-- [ ] 首次奖励机制正确
-- [ ] 月球解锁/占位逻辑正确
-- [ ] 所有单测通过
+- [x] PlanetaryBoard 完整实现
+- [x] 着陆费用计算正确
+- [x] 首次奖励机制正确
+- [x] 月球解锁/占位逻辑正确
+- [x] 所有单测通过
+- [ ] 🔄 Common 规则函数提取完成（见上方 Rework 小节）

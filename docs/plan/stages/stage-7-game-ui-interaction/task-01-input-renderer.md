@@ -105,9 +105,39 @@ packages/client/src/features/input/
 | `"start income"` evalClick | `SelectEndOfRoundCard` |
 | `"effect queue"` buttons | `SelectOption` (确认效果) |
 
+## Common Rules Layer 集成
+
+> 详见 `arch-client.md` §4.3 和 `arch-server.md` §4.10。
+
+InputRenderer 和各 Input 组件与 common 规则函数深度集成，用于棋盘高亮和选项过滤：
+
+| Input 类型 | Common 函数 | UI 效果 |
+|-----------|-------------|---------|
+| SelectSectorInput | `canPlaceSignal()` | 有效扇区高亮 |
+| SelectPlanetInput | `canOrbitPlanet()`, `canLandOnPlanet()` | 有效行星高亮 |
+| SelectTechInput | `getAvailableTechs()` | 有效科技堆叠高亮 |
+| 移动交互 | `getReachableSpaces()`, `getMoveCost()` | 可达空间高亮 + 费用标签 |
+
+```typescript
+// 高亮集成示例
+import { getReachableSpaces, canPlaceSignal, getAvailableTechs } from '@ender-seti/common/rules';
+
+function useInputHighlights(pendingInput: IPlayerInputModel | null, gameState: IPublicGameState) {
+  if (pendingInput?.type === 'movement') {
+    return { reachableSpaces: getReachableSpaces(gameState.solarSystem, probeId, points) };
+  }
+  if (pendingInput?.type === 'sector') {
+    return { validSectors: gameState.sectors.filter(s => canPlaceSignal(s)) };
+  }
+  // ...
+}
+```
+
+**注意:** 各 common 函数分别由 Stage 2 的各任务实现。如果尚未完成，Input 组件可先仅依赖 Server 推送的 `pendingInput.options` 做选项展示。
+
 ## 完成标准
 - [ ] InputRenderer 分发所有 11 种类型
 - [ ] 每个 Input 组件渲染和交互正确
 - [ ] Or/And 嵌套工作
-- [ ] 与棋盘高亮集成
+- [ ] 与棋盘高亮集成（使用 common 规则函数）
 - [ ] 所有单测通过

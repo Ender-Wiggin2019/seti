@@ -4,7 +4,7 @@ import { useGameViewStore } from './gameViewStore';
 describe('useGameViewStore', () => {
   beforeEach(() => {
     useGameViewStore.setState({
-      activeTab: 'solar-system',
+      activeTab: 'board',
       zoom: 1,
       hoveredPieceId: null,
     });

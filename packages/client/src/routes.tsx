@@ -15,6 +15,12 @@ import { ProfilePage } from '@/pages/profile/ProfilePage';
 import { useAuthStore } from '@/stores/authStore';
 
 const rootRoute = createRootRoute({
+  component: () => <Outlet />,
+});
+
+const appLayoutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: 'app-layout',
   component: () => (
     <AppShell>
       <Outlet />
@@ -23,7 +29,7 @@ const rootRoute = createRootRoute({
 });
 
 const indexRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appLayoutRoute,
   path: '/',
   beforeLoad: () => {
     const isAuthenticated = useAuthStore.getState().isAuthenticated;
@@ -32,13 +38,13 @@ const indexRoute = createRoute({
 });
 
 const authRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appLayoutRoute,
   path: '/auth',
   component: AuthPage,
 });
 
 const lobbyRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appLayoutRoute,
   path: '/lobby',
   component: () => (
     <ProtectedRoute>
@@ -48,7 +54,7 @@ const lobbyRoute = createRoute({
 });
 
 const roomRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appLayoutRoute,
   path: '/room/$roomId',
   component: () => (
     <ProtectedRoute>
@@ -58,7 +64,7 @@ const roomRoute = createRoute({
 });
 
 const profileRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appLayoutRoute,
   path: '/profile',
   component: () => (
     <ProtectedRoute>
@@ -88,11 +94,13 @@ const spectateRoute = createRoute({
 });
 
 const routeTree = rootRoute.addChildren([
-  indexRoute,
-  authRoute,
-  lobbyRoute,
-  roomRoute,
-  profileRoute,
+  appLayoutRoute.addChildren([
+    indexRoute,
+    authRoute,
+    lobbyRoute,
+    roomRoute,
+    profileRoute,
+  ]),
   gameRoute,
   spectateRoute,
 ]);

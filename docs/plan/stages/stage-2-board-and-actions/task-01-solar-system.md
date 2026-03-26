@@ -76,8 +76,54 @@ packages/server/src/engine/board/
   - 恰好 8 扇区, 每扇区 1 近星
   - 不同 seed 产生不同布局
 
+## Common Rules Layer 要求
+
+> 详见 `arch-server.md` §4.10。本任务实现时需**同步**将纯规则函数导出到 `@ender-seti/common/rules/`。
+
+### 需要导出到 Common 的函数
+
+新建 `packages/common/src/rules/movement.ts` 和 `packages/common/src/rules/coordinates.ts`：
+
+```typescript
+// rules/movement.ts — 移动相关纯计算
+function getReachableSpaces(
+  solarSystem: IPublicSolarSystemState,
+  probeSpaceId: string,
+  movementPoints: number,
+): IReachableSpace[];
+
+function getMoveCost(
+  solarSystem: IPublicSolarSystemState,
+  fromSpaceId: string,
+  toSpaceId: string,
+): number;
+
+function getMovePath(
+  solarSystem: IPublicSolarSystemState,
+  fromSpaceId: string,
+  toSpaceId: string,
+): string[];
+
+function getAdjacentSpaceIds(
+  solarSystem: IPublicSolarSystemState,
+  spaceId: string,
+): string[];
+
+// rules/coordinates.ts — SVG 渲染用坐标转换
+function systemPosToCoords(pos: number, center: number, ringRadii: number[]): { x: number; y: number };
+function coordsToSystemPos(x: number, y: number, center: number, ringRadii: number[]): number | null;
+```
+
+### 实现建议
+
+1. Server 的 `SolarSystem` 类的 `getAdjacentSpaces`、移动逻辑等应基于 common 纯函数实现
+2. 邻接图构建逻辑可放在 common（基于静态拓扑结构），Server 在旋转时重算邻接
+3. 坐标转换函数来自 reference 的 `systemPosToCoords()` / `coordsToSystemPos()`，直接放 common
+4. 添加 common 规则函数的单测
+
 ## 完成标准
 - [ ] SolarSystem 完整实现（空间、邻接、旋转、移动）
 - [ ] BoardBuilder 能生成合法布局
 - [ ] 旋转机制完全符合 PRD §9
-- [ ] 所有单测通过
+- [ ] `common/rules/movement.ts` + `coordinates.ts` 纯函数已实现并导出
+- [ ] 所有单测通过（含 common 规则函数单测）

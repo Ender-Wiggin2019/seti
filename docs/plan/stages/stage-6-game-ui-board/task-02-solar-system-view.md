@@ -106,10 +106,35 @@ function spacePosition(ring: number, sectorIndex: number) {
 }
 ```
 
+## Common Rules Layer 集成
+
+> 详见 `arch-client.md` §4.3 和 `arch-server.md` §4.10。
+
+本任务需要使用 `@ender-seti/common/rules/` 中的纯函数实现零延迟交互：
+
+| 交互场景 | Common 函数 | UI 效果 |
+|----------|-------------|---------|
+| 探针移动高亮 | `getReachableSpaces()` | 可到达空间脉冲发光 |
+| 移动路径预览 | `getMovePath()`, `getMoveCost()` | 虚线路径 + 费用数字 |
+| 空间坐标渲染 | `systemPosToCoords()` | 位置 ID → SVG 像素坐标 |
+| 点击验证 | `getAdjacentSpaceIds()` | 判断点击目标是否有效 |
+
+```typescript
+// SolarSystemView.tsx
+import { getReachableSpaces, getMovePath, getMoveCost } from '@ender-seti/common/rules';
+import { systemPosToCoords } from '@ender-seti/common/rules';
+
+// 当有移动 pending input 时，高亮可达空间
+const reachable = getReachableSpaces(gameState.solarSystem, selectedProbeSpaceId, movementPoints);
+```
+
+**注意:** 这些 common 函数由 Task 2-1 实现。如果 2-1 尚未完成，可先用 mock 数据 / hardcoded 占位。
+
 ## 完成标准
 - [ ] SVG 太阳系正确渲染（使用 wheel outline 静态资源）
 - [ ] 3 个圆盘独立旋转
 - [ ] 探针正确显示在空间上（使用 probe 静态资源）
 - [ ] 空间交互 (click/hover) 工作
-- [ ] PlayerInput 高亮集成
+- [ ] PlayerInput 高亮集成（使用 common 规则函数）
+- [ ] 坐标转换使用 `common/rules/coordinates.ts`
 - [ ] 所有单测通过

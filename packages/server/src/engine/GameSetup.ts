@@ -1,4 +1,5 @@
 import { EAlienType, EPhase } from '@seti/common/types/protocol/enums';
+import { BoardBuilder } from './board/BoardBuilder.js';
 import { DeferredActionsQueue } from './deferred/DeferredActionsQueue.js';
 import { EventLog } from './event/EventLog.js';
 import type { Game } from './Game.js';
@@ -6,7 +7,7 @@ import { Resources } from './player/Resources.js';
 
 export class GameSetup {
   public static initialize(game: Game): void {
-    game.solarSystem = { discs: [0, 0, 0], spaces: [] };
+    game.solarSystem = BoardBuilder.buildSolarSystem(game.random);
     game.planetaryBoard = { planets: {} };
     game.techBoard = {
       stacks: Object.fromEntries(

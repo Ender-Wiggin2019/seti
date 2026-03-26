@@ -103,9 +103,62 @@ packages/client/src/features/actions/
 7. Land (通过行星区域点击)
 8. Pass
 
+## Common Rules Layer 集成
+
+> 详见 `arch-client.md` §4.3 和 `arch-server.md` §4.10。
+
+ActionMenu 和 FreeActionBar 是 common 规则函数的核心消费者：
+
+| 组件 | Common 函数 | UI 效果 |
+|------|-------------|---------|
+| ActionMenu | `getAvailableMainActions()` | 不可用主行动 disabled + 灰化 |
+| ActionMenu | `canLaunchProbe()`, `canOrbit()` 等 | 单个按钮 tooltip 说明不可用原因 |
+| FreeActionBar | `getAvailableFreeActions()` | 不可用自由行动 disabled |
+| FreeActionBar | `canMoveProbe()`, `canPlaceData()` 等 | 单个按钮启用/禁用 |
+
+```typescript
+// ActionMenu.tsx
+import { getAvailableMainActions } from '@ender-seti/common/rules';
+
+function ActionMenu() {
+  const { gameState, myPlayerId } = useGameContext();
+  const myPlayer = gameState.players.find(p => p.id === myPlayerId);
+  const available = getAvailableMainActions(myPlayer, gameState);
+
+  return MAIN_ACTIONS.map(action => (
+    <ActionButton
+      key={action}
+      disabled={!available.includes(action)}
+      onClick={() => handleAction(action)}
+    />
+  ));
+}
+```
+
+```typescript
+// FreeActionBar.tsx
+import { getAvailableFreeActions } from '@ender-seti/common/rules';
+
+function FreeActionBar() {
+  const { gameState, myPlayerId } = useGameContext();
+  const myPlayer = gameState.players.find(p => p.id === myPlayerId);
+  const available = getAvailableFreeActions(myPlayer, gameState);
+
+  return FREE_ACTIONS.map(action => (
+    <FreeActionButton
+      key={action}
+      disabled={!available.includes(action)}
+      onClick={() => handleFreeAction(action)}
+    />
+  ));
+}
+```
+
+**注意:** `getAvailableMainActions` 和 `getAvailableFreeActions` 分别由 Task 2-5 和 2-6 实现。如果尚未完成，可先从 Server 推送的 `pendingInput` 中读取可用行动（降级方案）。
+
 ## 完成标准
 - [ ] 主行动菜单 8 按钮工作（使用对应图标静态资源）
 - [ ] 自由行动栏 6 按钮工作
-- [ ] enabled/disabled 状态正确
+- [ ] enabled/disabled 状态使用 common 规则函数计算
 - [ ] 确认对话框工作
 - [ ] 所有单测通过

@@ -12,6 +12,17 @@
 
 前端任务（Stage 6-9）的每个 task 文件中已添加 **"参考代码 & 静态资源"** 小节，指明该任务可参考的具体文件和可复用的静态资源。
 
+### 架构决策：Common Rules Layer
+
+> **决策时间:** Stage 6-1 实施后
+>
+> **决策内容:** 纯游戏规则函数（合法性检查、可达空间计算、费用计算等）提取到 `@ender-seti/common/rules/`，Server 和 Client 共用同一套函数。Server 做权威校验，Client 做零延迟乐观 UI。详见 `arch-server.md` §4.10 和 `arch-client.md` §4.3。
+>
+> **影响范围:**
+> - Stage 2 所有任务 — Server 引擎实现时需同步导出纯规则函数到 common
+> - Stage 6-7 前端任务 — 使用 common 规则函数做交互高亮和按钮启用判定
+> - 已完成的 2-2、2-3 需要 🔄 rework（提取纯函数到 common）
+
 ---
 
 ## Stage 0: Foundation (基础搭建)
@@ -37,8 +48,8 @@
 | # | Task | 并行/串行 | 状态 |
 |---|------|----------|------|
 | 2-1 | SolarSystem 棋盘 + 旋转机制 | 与 2-2, 2-3, 2-4 并行 | ⬜ |
-| 2-2 | Sector 扇区 + 完成结算 | 与 2-1, 2-3, 2-4 并行 | ⬜ |
-| 2-3 | PlanetaryBoard 行星系统 | 与 2-1, 2-2, 2-4 并行 | ⬜ |
+| 2-2 | Sector 扇区 + 完成结算 | 与 2-1, 2-3, 2-4 并行 | 🔄 rework: 提取纯规则函数到 common |
+| 2-3 | PlanetaryBoard 行星系统 | 与 2-1, 2-2, 2-4 并行 | 🔄 rework: 提取纯规则函数到 common |
 | 2-4 | TechBoard + Deck 系统 | 与 2-1, 2-2, 2-3 并行 | ⬜ |
 | 2-5 | 8 个 Main Actions 实现 | 依赖 2-1~2-4 | ⬜ |
 | 2-6 | 6 个 Free Actions 实现 | 与 2-5 并行 (依赖 2-1~2-4) | ⬜ |
@@ -72,7 +83,7 @@
 
 | # | Task | 并行/串行 | 状态 |
 |---|------|----------|------|
-| 6-1 | GamePage 布局 + 响应式 Grid | **串行起始** | ⬜ |
+| 6-1 | GamePage 布局 + 响应式 Grid | **串行起始** | ✅ |
 | 6-2 | SolarSystemView (SVG 同心环) | 与 6-3, 6-4, 6-5 并行 (依赖 6-1) | ⬜ |
 | 6-3 | SectorGrid + SectorView | 与 6-2, 6-4, 6-5 并行 | ⬜ |
 | 6-4 | PlanetaryBoardView + TechBoardView | 与 6-2, 6-3, 6-5 并行 | ⬜ |

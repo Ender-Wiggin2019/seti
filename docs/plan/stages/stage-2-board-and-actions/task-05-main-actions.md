@@ -89,9 +89,42 @@ packages/server/src/engine/input/
 - **PlayerInput**: 生成正确的输入类型 + 选项
 - **边界**: 资源为 0, 棋子用完, 牌堆为空等
 
+## Common Rules Layer 要求
+
+> 详见 `arch-server.md` §4.10。本任务实现时需**同步**将纯规则函数导出到 `@ender-seti/common/rules/`。
+
+### 需要导出到 Common 的函数
+
+新建 `packages/common/src/rules/actions.ts`：
+
+```typescript
+// rules/actions.ts — 主行动合法性检查
+function canLaunchProbe(player: IPublicPlayerState): boolean;
+function canOrbit(player: IPublicPlayerState, gameState: IPublicGameState): boolean;
+function canLand(player: IPublicPlayerState, gameState: IPublicGameState): boolean;
+function canScan(player: IPublicPlayerState): boolean;
+function canAnalyzeData(player: IPublicPlayerState): boolean;
+function canPlayCard(player: IPublicPlayerState): boolean;
+function canResearchTech(player: IPublicPlayerState, gameState: IPublicGameState): boolean;
+
+function getAvailableMainActions(
+  player: IPublicPlayerState,
+  gameState: IPublicGameState,
+): EMainAction[];
+```
+
+### 实现建议
+
+1. 每个 `canXxx` 函数对应一个主行动的资源/条件检查
+2. `getAvailableMainActions` 汇总所有 `canXxx` 返回可用行动列表
+3. Server 的各 Action 类的 `canExecute` 可调用对应的 common 函数
+4. `canPlayCard` 在 Client 端只能检查手牌数量 > 0（费用需 Server 校验）
+5. 添加 common 规则函数的单测
+
 ## 完成标准
 - [ ] 8 个 main actions 全部实现
 - [ ] 剩余 PlayerInput 类型全部实现
 - [ ] 主行动菜单 buildActionMenu 工作正确
+- [ ] `common/rules/actions.ts` 纯函数已实现并导出
 - [ ] 每个 action 至少覆盖 合法/非法/边界 三类场景
-- [ ] 所有单测通过
+- [ ] 所有单测通过（含 common 规则函数单测）

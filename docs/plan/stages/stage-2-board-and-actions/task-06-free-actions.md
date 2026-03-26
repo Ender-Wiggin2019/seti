@@ -92,8 +92,45 @@ packages/server/src/engine/freeActions/
   - 各种合法交换组合
   - 资源不足时拒绝
 
+## Common Rules Layer 要求
+
+> 详见 `arch-server.md` §4.10。本任务实现时需**同步**将纯规则函数导出到 `@ender-seti/common/rules/`。
+
+### 需要导出到 Common 的函数
+
+新建 `packages/common/src/rules/freeActions.ts` 和 `packages/common/src/rules/computer.ts`：
+
+```typescript
+// rules/freeActions.ts — 自由行动合法性检查
+function canMoveProbe(player: IPublicPlayerState, gameState: IPublicGameState): boolean;
+function canPlaceData(player: IPublicPlayerState): boolean;
+function canCompleteMission(player: IPublicPlayerState): boolean;
+function canUseFreeActionCorner(player: IPublicPlayerState): boolean;
+function canBuyCard(player: IPublicPlayerState): boolean;
+function canExchangeResources(player: IPublicPlayerState): boolean;
+
+function getAvailableFreeActions(
+  player: IPublicPlayerState,
+  gameState: IPublicGameState,
+): EFreeAction[];
+
+// rules/computer.ts — 电脑槽位检查
+function getNextSlot(computer: IPublicComputerState): { row: 'top' | 'bottom'; index: number } | null;
+function isComputerTopRowFull(computer: IPublicComputerState): boolean;
+function getSlotReward(computer: IPublicComputerState, row: 'top' | 'bottom', index: number): IReward | null;
+```
+
+### 实现建议
+
+1. Movement 的 `canMoveProbe` 依赖 common 的 `getReachableSpaces`（来自 2-1）
+2. PlaceData 的 `canPlaceData` 依赖 common 的 `getNextSlot`
+3. BuyCard 的 `canBuyCard` 检查宣传 ≥ 3
+4. Server 的各 Free Action 类的 `canExecute` 可调用对应的 common 函数
+5. 添加 common 规则函数的单测
+
 ## 完成标准
 - [ ] 6 个 free actions 全部实现
 - [ ] 每个 action 合法性检查正确
 - [ ] 与子系统 (SolarSystem, Computer, Deck 等) 集成正确
-- [ ] 所有单测通过
+- [ ] `common/rules/freeActions.ts` + `computer.ts` 纯函数已实现并导出
+- [ ] 所有单测通过（含 common 规则函数单测）

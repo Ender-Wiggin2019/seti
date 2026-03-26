@@ -5,6 +5,7 @@ import type {
 } from '@seti/common/types/protocol/actions';
 import { EPhase } from '@seti/common/types/protocol/enums';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
+import type { SolarSystem } from './board/SolarSystem.js';
 import type { DeferredActionsQueue } from './deferred/DeferredActionsQueue.js';
 import type { EventLog } from './event/EventLog.js';
 import type { IGameOptions } from './GameOptions.js';
@@ -27,7 +28,7 @@ export interface IGame {
   activePlayer: IPlayer;
   startPlayer: IPlayer;
 
-  solarSystem: unknown;
+  solarSystem: SolarSystem | null;
   planetaryBoard: unknown;
   techBoard: unknown;
   sectors: unknown[];

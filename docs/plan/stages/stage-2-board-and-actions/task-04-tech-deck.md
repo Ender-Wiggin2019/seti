@@ -80,9 +80,43 @@ packages/server/src/engine/deck/
   - 堆叠耗尽后 canResearch 返回 false
 - `MainDeck.test.ts`: 初始化正确数量的卡牌
 
+## Common Rules Layer 要求
+
+> 详见 `arch-server.md` §4.10。本任务实现时需**同步**将纯规则函数导出到 `@ender-seti/common/rules/`。
+
+### 需要导出到 Common 的函数
+
+新建 `packages/common/src/rules/tech.ts`：
+
+```typescript
+// rules/tech.ts — 科技可用性检查
+function canResearchTechType(
+  techType: ETech,
+  player: IPublicPlayerState,
+  techBoard: IPublicTechBoardState,
+): boolean;
+
+function getAvailableTechs(
+  player: IPublicPlayerState,
+  techBoard: IPublicTechBoardState,
+): ETech[];
+
+function isTechStackEmpty(techBoard: IPublicTechBoardState, techType: ETech): boolean;
+
+function hasTwoPVBonus(techBoard: IPublicTechBoardState, techType: ETech): boolean;
+```
+
+### 实现建议
+
+1. `canResearchTechType` 检查: 堆叠非空 + 玩家未持有同类型
+2. `getAvailableTechs` 遍历所有堆叠返回可用列表
+3. Server 的 `TechBoard.canResearch` 和 `TechBoard.getAvailableTechs` 可调用 common 函数
+4. 添加 common 规则函数的单测
+
 ## 完成标准
 - [ ] Deck<T> 通用牌堆完整
 - [ ] TechBoard 12 堆叠逻辑正确
 - [ ] 首取 2VP 机制正确
 - [ ] 重复获取防护正确
-- [ ] 所有单测通过
+- [ ] `common/rules/tech.ts` 纯函数已实现并导出
+- [ ] 所有单测通过（含 common 规则函数单测）

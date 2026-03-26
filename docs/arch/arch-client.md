@@ -345,19 +345,56 @@ interface IGameContext {
 
 **Update strategy:** On each `game:state` event, the entire `IPublicGameState` is replaced (not patched). This ensures consistency — the server is the single source of truth. React's concurrent rendering + `useDeferredValue` prevents jank on large state updates.
 
-### 4.3 Optimistic UI (Selective)
+### 4.3 Optimistic UI via Common Rules Layer
 
-Optimistic updates are applied only for low-risk, visually immediate interactions:
+> **架构决策:** 客户端通过 `@ender-seti/common/rules` 中的纯规则函数实现零延迟的乐观交互。详见 `arch-server.md` §4.10。
 
-| Action | Optimistic? | Reason |
-|--------|-------------|--------|
-| Free action: Place data | Yes | Visual feedback on drag-drop; revert on server rejection |
-| Free action: Movement | Yes | Animate probe along path immediately |
-| Main action submit | No | Wait for server validation + full state push |
-| Card selection | No | Server may reject based on hidden state |
-| Resource exchange | No | Requires server validation of balance |
+#### 原理
 
-Optimistic state is held in a `useRef` overlay that merges with the last server state. On the next `game:state` push, the overlay is cleared.
+`@ender-seti/common/rules/` 导出的纯函数接受 `IPublicGameState` 等公开接口，返回合法性判定、可达空间、消耗预计算等结果。Client 在收到最新 `game:state` 后，用这些函数即时计算 UI 状态，无需等待 Server 往返。
+
+#### 使用场景
+
+| 场景 | Common 函数 | UI 效果 |
+|------|-------------|---------|
+| 移动高亮 | `getReachableSpaces()` | 可达空间脉冲高亮 |
+| 移动路径预览 | `getMovePath()`, `getMoveCost()` | 虚线路径 + 费用标签 |
+| 主行动按钮启用 | `getAvailableMainActions()` | 不可用行动 disabled + 灰化 |
+| 自由行动按钮启用 | `getAvailableFreeActions()` | 不可用自由行动 disabled |
+| 轨道/着陆费用 | `getLandingCost()` | 行星卡片显示费用 |
+| 科技可研究 | `getAvailableTechs()` | 不可用科技堆叠灰化 |
+| 电脑槽位 | `getNextSlot()` | 下一可用槽位高亮 |
+| 扇区状态 | `getSectorProgress()` | 进度条 |
+
+#### 乐观状态管理
+
+对于需要即时视觉反馈的操作（如拖拽放置数据、探针移动动画），使用 `useRef` 持有乐观覆盖层：
+
+```typescript
+const optimisticOverlay = useRef<Partial<IPublicGameState> | null>(null);
+
+function applyOptimisticMove(probeId: string, toSpaceId: string) {
+  optimisticOverlay.current = computeOptimisticMoveState(gameState, probeId, toSpaceId);
+  forceUpdate();
+}
+
+useEffect(() => {
+  optimisticOverlay.current = null;
+}, [gameState]);
+```
+
+| 操作 | 乐观? | 说明 |
+|------|-------|------|
+| 移动探针 | Yes | 动画即时播放，Server 拒绝时回退 |
+| 放置数据 | Yes | 拖拽即时反馈 |
+| 主行动提交 | No | 等待 Server 校验 + 全量状态推送 |
+| 卡牌选择 | No | 可能涉及隐藏状态 |
+
+#### 重要约束
+
+- Common 规则函数仅用于 **UI 展示和预判**，不替代 Server 校验
+- 所有操作最终由 Server 权威执行，Client 不持有可变游戏状态
+- `IPublicGameState` 不包含其他玩家手牌等隐藏信息，因此部分校验在 Client 端不完整（如 PlayCard 的对手手牌信息），这是可接受的
 
 ---
 

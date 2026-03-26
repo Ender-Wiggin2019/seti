@@ -64,8 +64,48 @@ packages/server/src/engine/board/
   - reset: 数据重新填满, 标记清空
   - 全流程: 多轮标记 → 完成 → 重置 → 再次标记
 
+## 🔄 Rework: 提取纯规则函数到 Common
+
+> **原因:** 架构决策要求纯游戏规则函数放在 `@ender-seti/common/rules/` 供 Client 做乐观 UI。详见 `arch-server.md` §4.10。
+
+### 需要提取的函数
+
+新建 `packages/common/src/rules/sector.ts`，从 Server 的 `Sector` 类中提取以下纯函数：
+
+```typescript
+// packages/common/src/rules/sector.ts
+import type { IPublicSectorState } from '../types/protocol/gameState';
+
+/** 扇区是否还能放置信号（还有数据槽未被移除） */
+function canPlaceSignal(sector: IPublicSectorState): boolean;
+
+/** 扇区完成进度 (filled = 已移除数据数, total = 总槽数) */
+function getSectorProgress(sector: IPublicSectorState): { filled: number; total: number };
+
+/** 扇区是否已完成（所有数据槽已移除） */
+function isSectorComplete(sector: IPublicSectorState): boolean;
+
+/** 获取各玩家在扇区的标记数量排名 (用于 UI 展示竞争态势) */
+function getSectorStandings(sector: IPublicSectorState): Array<{ playerId: string; markerCount: number }>;
+```
+
+### Rework 步骤
+
+1. 在 `packages/common/src/rules/sector.ts` 中实现上述纯函数
+2. 修改 Server 的 `Sector` 类，内部方法调用 common 的纯函数（或直接保留内部实现，但确保逻辑一致）
+3. 确保 `IPublicSectorState` 包含足够信息（`dataSlots`, `markerSlots`, `completed` 等）
+4. 添加 common 规则函数的单测 (`packages/common/src/rules/sector.test.ts`)
+5. 从 `packages/common/src/rules/index.ts` 统一导出
+
+### 新增完成标准
+- [ ] `common/rules/sector.ts` 纯函数已实现
+- [ ] 纯函数单测通过
+- [ ] Server 的 Sector 类与 common 规则逻辑一致
+- [ ] `IPublicSectorState` 字段满足 Client 计算需求
+
 ## 完成标准
-- [ ] Sector 完整实现
-- [ ] 完成结算逻辑符合 PRD §7.4
-- [ ] 平局打破规则正确
-- [ ] 所有单测通过
+- [x] Sector 完整实现
+- [x] 完成结算逻辑符合 PRD §7.4
+- [x] 平局打破规则正确
+- [x] 所有单测通过
+- [ ] 🔄 Common 规则函数提取完成（见上方 Rework 小节）
