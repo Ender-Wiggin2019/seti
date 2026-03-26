@@ -1,5 +1,6 @@
 import { EResource } from '@seti/common/types/element';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
+import type { ETechId } from '@seti/common/types/tech';
 import { GameError } from '@/shared/errors/GameError.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
@@ -51,7 +52,7 @@ export class Player implements IPlayer {
 
   public tuckedIncomeCards: unknown[];
 
-  public techs: unknown[];
+  public techs: ETechId[];
 
   public passed: boolean;
 

@@ -50,9 +50,18 @@
 | 2-1 | SolarSystem 棋盘 + 旋转机制 | 与 2-2, 2-3, 2-4 并行 | ⬜ |
 | 2-2 | Sector 扇区 + 完成结算 | 与 2-1, 2-3, 2-4 并行 | 🔄 rework: 提取纯规则函数到 common |
 | 2-3 | PlanetaryBoard 行星系统 | 与 2-1, 2-2, 2-4 并行 | 🔄 rework: 提取纯规则函数到 common |
-| 2-4 | TechBoard + Deck 系统 | 与 2-1, 2-2, 2-3 并行 | ⬜ |
-| 2-5 | 8 个 Main Actions 实现 | 依赖 2-1~2-4 | ⬜ |
+| 2-4 | TechBoard + Deck 系统 | 与 2-1, 2-2, 2-3 并行 | 🔨 |
+| 2-5 | 8 个 Main Actions 实现 | 依赖 2-1~2-4 | 🔨 |
 | 2-6 | 6 个 Free Actions 实现 | 与 2-5 并行 (依赖 2-1~2-4) | ⬜ |
+
+## Stage 2.5: Tech Effects (科技效果)
+
+| # | Task | 并行/串行 | 状态 |
+|---|------|----------|------|
+| 2.5-1 | 4 个 Probe Tech 效果实现 (双探测/小行星/着陆折扣/月球) | 与 2.5-2, 2.5-3 并行 (依赖 2-4, 2-5) | ⬜ |
+| 2.5-2 | 4 个 Scan Tech 效果实现 (地球邻域/水星信号/手牌信号/能量发射) | 与 2.5-1, 2.5-3 并行 (依赖 2-4, 2-5) | ⬜ |
+| 2.5-3 | 4 个 Computer Tech 效果实现 (VP+信用/VP+能量/VP+卡牌/VP+声望) | 与 2.5-1, 2.5-2 并行 (依赖 2-4) | ⬜ |
+| 2.5-4 | Tech Bonus Token 系统 (获取科技时的一次性奖励) | 依赖 2.5-1~2.5-3 | ⬜ |
 
 ## Stage 3: Cards & Scoring (卡牌 & 计分)
 
@@ -84,7 +93,7 @@
 | # | Task | 并行/串行 | 状态 |
 |---|------|----------|------|
 | 6-1 | GamePage 布局 + 响应式 Grid | **串行起始** | ✅ |
-| 6-2 | SolarSystemView (SVG 同心环) | 与 6-3, 6-4, 6-5 并行 (依赖 6-1) | ⬜ |
+| 6-2 | SolarSystemView (静态资源同心环) | 与 6-3, 6-4, 6-5 并行 (依赖 6-1) | ⬜ |
 | 6-3 | SectorGrid + SectorView | 与 6-2, 6-4, 6-5 并行 | ⬜ |
 | 6-4 | PlanetaryBoardView + TechBoardView | 与 6-2, 6-3, 6-5 并行 | ⬜ |
 | 6-5 | CardRowView + EndOfRoundStacks + CardDetail | 与 6-2, 6-3, 6-4 并行 | ⬜ |
@@ -122,12 +131,12 @@
 
 ```
 Stage 0 (Foundation)
-  ├─→ Stage 1 (Engine Core) ─→ Stage 2 (Board & Actions) ─→ Stage 3 (Cards & Scoring)
-  │                                                              │
-  │                                                              ↓
-  │                                                        Stage 4 (Persistence & Network)
-  │                                                              │
-  │   ┌──────────────────────────────────────────────────────────┘
+  ├─→ Stage 1 (Engine Core) ─→ Stage 2 (Board & Actions) ─→ Stage 2.5 (Tech Effects) ─→ Stage 3 (Cards & Scoring)
+  │                                                                                           │
+  │                                                                                           ↓
+  │                                                                                     Stage 4 (Persistence & Network)
+  │                                                                                           │
+  │   ┌───────────────────────────────────────────────────────────────────────────────────────┘
   │   ↓
   ├─→ Stage 5 (Client Auth & Lobby) ─→ Stage 6 (Game UI Board) ─→ Stage 7 (Game UI Interaction)
   │                                                                         │
@@ -139,7 +148,7 @@ Stage 0 (Foundation)
 ```
 
 **关键并行路径：**
-- Server 路径：Stage 0 → 1 → 2 → 3 → 4 → 8
+- Server 路径：Stage 0 → 1 → 2 → 2.5 → 3 → 4 → 8
 - Client 路径：Stage 0 → 5 → 6 → 7 → 9
 - Client 使用 Mock 数据时，Stage 5~7 可在 Server Stage 4 完成前提前开发
 - Stage 8 (Alien) 可在 Server 完成 Stage 3 后、Client 完成 Stage 7 后开始

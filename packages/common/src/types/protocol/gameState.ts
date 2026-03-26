@@ -8,6 +8,7 @@ import {
   ETrace,
 } from '@seti/common/types/protocol/enums';
 import type { TGameEvent } from '@seti/common/types/protocol/events';
+import type { ETechId } from '@seti/common/types/tech';
 
 export interface IPublicResourceState {
   [EResource.CREDIT]: number;
@@ -42,7 +43,7 @@ export interface IPublicPlayerState {
   dataPoolCount: number;
   dataPoolMax: number;
   pieces: IPublicPieceInventory;
-  techs: ETech[];
+  techs: ETechId[];
   passed: boolean;
 }
 
@@ -63,18 +64,37 @@ export interface IPublicSolarSystem {
   discs: IPublicSolarSystemDiscState[];
 }
 
-export interface IPublicSector {
+export interface IPublicSectorMarkerState {
+  playerId: string;
+  timestamp: number;
+}
+
+export interface IPublicSectorState {
   sectorId: string;
   color: ESector;
   dataSlots: Array<string | null>;
-  markers: string[];
+  markerSlots: IPublicSectorMarkerState[];
   completed: boolean;
 }
 
+export type IPublicSector = IPublicSectorState;
+
+export interface IPublicPlanetSlotState {
+  playerId: string;
+}
+
+export interface IPublicMoonOccupantState {
+  playerId: string;
+}
+
 export interface IPublicPlanetState {
-  orbitPlayerIds: string[];
-  landingPlayerIds: string[];
+  orbitSlots: IPublicPlanetSlotState[];
+  landingSlots: IPublicPlanetSlotState[];
   firstOrbitClaimed: boolean;
+  firstLandDataBonusTaken: boolean[];
+  moonOccupant: IPublicMoonOccupantState | null;
+  moonUnlocked: boolean;
+  planetSpaceId?: string;
 }
 
 export interface IPublicPlanetaryBoard {
@@ -83,6 +103,7 @@ export interface IPublicPlanetaryBoard {
 
 export interface IPublicTechStack {
   tech: ETech;
+  level: number;
   remainingTiles: number;
   firstTakeBonusAvailable: boolean;
 }

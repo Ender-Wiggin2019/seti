@@ -5,11 +5,14 @@ import type {
 } from '@seti/common/types/protocol/actions';
 import { EPhase } from '@seti/common/types/protocol/enums';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
+import type { PlanetaryBoard } from './board/PlanetaryBoard.js';
 import type { SolarSystem } from './board/SolarSystem.js';
+import type { Deck } from './deck/Deck.js';
 import type { DeferredActionsQueue } from './deferred/DeferredActionsQueue.js';
 import type { EventLog } from './event/EventLog.js';
 import type { IGameOptions } from './GameOptions.js';
 import type { IPlayer } from './player/IPlayer.js';
+import type { TechBoard } from './tech/TechBoard.js';
 
 export interface IGamePlayerIdentity {
   id: string;
@@ -29,11 +32,11 @@ export interface IGame {
   startPlayer: IPlayer;
 
   solarSystem: SolarSystem | null;
-  planetaryBoard: unknown;
-  techBoard: unknown;
+  planetaryBoard: PlanetaryBoard | null;
+  techBoard: TechBoard | null;
   sectors: unknown[];
 
-  mainDeck: unknown;
+  mainDeck: Deck<string>;
   cardRow: unknown[];
   endOfRoundStacks: unknown[][];
   hiddenAliens: string[];

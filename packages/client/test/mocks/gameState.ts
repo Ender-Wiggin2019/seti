@@ -65,7 +65,7 @@ export function createMockSectors(): IPublicSector[] {
     sectorId: `sector-${i}`,
     color,
     dataSlots: [null, null, null],
-    markers: [],
+    markerSlots: [],
     completed: false,
   }));
 }

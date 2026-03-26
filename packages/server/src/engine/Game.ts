@@ -4,11 +4,19 @@ import type {
   IInputResponse,
   IMainActionRequest,
 } from '@seti/common/types/protocol/actions';
-import { EMainAction, EPhase } from '@seti/common/types/protocol/enums';
+import {
+  EMainAction,
+  EPhase,
+  EPlanet,
+} from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
+import { LandAction } from './actions/Land.js';
+import { OrbitAction } from './actions/Orbit.js';
+import type { PlanetaryBoard } from './board/PlanetaryBoard.js';
 import type { SolarSystem } from './board/SolarSystem.js';
+import { Deck } from './deck/Deck.js';
 import { DeferredActionsQueue } from './deferred/DeferredActionsQueue.js';
 import { EPriority } from './deferred/Priority.js';
 import { SimpleDeferredAction } from './deferred/SimpleDeferredAction.js';
@@ -25,6 +33,7 @@ import type { PlayerInput } from './input/PlayerInput.js';
 import { assertValidPhaseTransition } from './Phase.js';
 import type { IPlayer } from './player/IPlayer.js';
 import { Player } from './player/Player.js';
+import type { TechBoard } from './tech/TechBoard.js';
 
 const MAX_ROUNDS = 5;
 
@@ -45,13 +54,13 @@ export class Game implements IGame {
 
   public solarSystem: SolarSystem | null;
 
-  public planetaryBoard: unknown;
+  public planetaryBoard: PlanetaryBoard | null;
 
-  public techBoard: unknown;
+  public techBoard: TechBoard | null;
 
   public sectors: unknown[];
 
-  public mainDeck: unknown;
+  public mainDeck: Deck<string>;
 
   public cardRow: unknown[];
 
@@ -94,7 +103,7 @@ export class Game implements IGame {
     this.planetaryBoard = null;
     this.techBoard = null;
     this.sectors = [];
-    this.mainDeck = null;
+    this.mainDeck = new Deck<string>();
     this.cardRow = [];
     this.endOfRoundStacks = [];
     this.hiddenAliens = [];
@@ -166,6 +175,7 @@ export class Game implements IGame {
     this.assertCanTakeTurnAction(playerId, [EPhase.AWAIT_MAIN_ACTION]);
 
     const player = this.getPlayer(playerId);
+    this.assertMainActionIsLegal(player, action);
     this.transitionTo(EPhase.IN_RESOLUTION);
     this.enqueueMainActionPipeline(player, action);
     this.runResolutionPipeline();
@@ -250,6 +260,21 @@ export class Game implements IGame {
       new SimpleDeferredAction(
         player,
         (game) => {
+          switch (action.type) {
+            case EMainAction.ORBIT: {
+              OrbitAction.execute(player, game, this.getPlanetPayload(action));
+              break;
+            }
+            case EMainAction.LAND: {
+              LandAction.execute(player, game, this.getPlanetPayload(action), {
+                isMoon: this.getMoonPayload(action),
+              });
+              break;
+            }
+            default:
+              break;
+          }
+
           if (action.type === EMainAction.PASS) {
             const actor = game.players.find(
               (candidate) => candidate.id === player.id,
@@ -418,5 +443,73 @@ export class Game implements IGame {
     }
 
     return player;
+  }
+
+  private assertMainActionIsLegal(
+    player: IPlayer,
+    action: IMainActionRequest,
+  ): void {
+    switch (action.type) {
+      case EMainAction.ORBIT: {
+        const planet = this.getPlanetPayload(action);
+        if (!OrbitAction.canExecute(player, this, planet)) {
+          throw new GameError(
+            EErrorCode.INVALID_ACTION,
+            'Orbit requirements are not met',
+            {
+              playerId: player.id,
+              planet,
+            },
+          );
+        }
+        return;
+      }
+      case EMainAction.LAND: {
+        const planet = this.getPlanetPayload(action);
+        const isMoon = this.getMoonPayload(action);
+        if (!LandAction.canExecute(player, this, planet, { isMoon })) {
+          throw new GameError(
+            EErrorCode.INVALID_ACTION,
+            'Land requirements are not met',
+            {
+              playerId: player.id,
+              planet,
+              isMoon,
+            },
+          );
+        }
+        return;
+      }
+      default:
+        return;
+    }
+  }
+
+  private getPlanetPayload(action: IMainActionRequest): EPlanet {
+    const candidate = action.payload?.planet;
+    if (!Object.values(EPlanet).includes(candidate as EPlanet)) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        'Action payload.planet must be a valid EPlanet',
+        {
+          actionType: action.type,
+          payload: action.payload,
+        },
+      );
+    }
+    if (candidate === EPlanet.EARTH) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        'Earth cannot be selected for orbit/land',
+        {
+          actionType: action.type,
+        },
+      );
+    }
+    return candidate as EPlanet;
+  }
+
+  private getMoonPayload(action: IMainActionRequest): boolean {
+    return action.payload?.isMoon === true;
   }
 }

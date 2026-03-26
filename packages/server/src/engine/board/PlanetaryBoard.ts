@@ -36,6 +36,7 @@ export interface IPlanetState {
   firstLandDataBonusTaken: boolean[];
   moonOccupant: IMoonOccupant | null;
   moonUnlocked: boolean;
+  planetSpaceId?: string;
 }
 
 export interface IOrbitResult {

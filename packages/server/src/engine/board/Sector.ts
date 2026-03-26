@@ -1,5 +1,7 @@
+import { canPlaceSignal, isSectorComplete } from '@seti/common/rules/sector';
 import { ESector } from '@seti/common/types/element';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
+import type { IPublicSectorState } from '@seti/common/types/protocol/gameState';
 import { GameError } from '@/shared/errors/GameError.js';
 
 export type TDataToken = string;
@@ -117,7 +119,10 @@ export class Sector {
 
     let dataGained: TDataToken | null = null;
     const markerPosition = this.markerSlots.length;
-    if (markerPosition < this.dataSlots.length && !this.isComplete()) {
+    if (
+      markerPosition < this.dataSlots.length &&
+      canPlaceSignal(this.toPublicState())
+    ) {
       dataGained = this.removeLeftmostDataToken();
     }
 
@@ -209,7 +214,7 @@ export class Sector {
   }
 
   public isComplete(): boolean {
-    return this.dataSlots.every((dataToken) => dataToken === null);
+    return isSectorComplete(this.toPublicState());
   }
 
   public reset(secondPlacePlayerId: string | null = null): void {
@@ -262,5 +267,18 @@ export class Sector {
     }
     this.dataSlots[this.dataSlots.length - 1] = null;
     return removed;
+  }
+
+  private toPublicState(): IPublicSectorState {
+    return {
+      sectorId: this.id,
+      color: this.color,
+      dataSlots: [...this.dataSlots],
+      markerSlots: this.markerHistory.map((marker) => ({
+        playerId: marker.playerId,
+        timestamp: marker.timestamp,
+      })),
+      completed: this.completed,
+    };
   }
 }

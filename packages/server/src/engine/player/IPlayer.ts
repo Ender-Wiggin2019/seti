@@ -1,3 +1,4 @@
+import type { ETechId } from '@seti/common/types/tech';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
 import type { Computer } from './Computer.js';
@@ -35,7 +36,7 @@ export interface IPlayerInit extends IPlayerIdentity {
   completedMissions?: unknown[];
   endGameCards?: unknown[];
   tuckedIncomeCards?: unknown[];
-  techs?: unknown[];
+  techs?: ETechId[];
   passed?: boolean;
   probesInSpace?: number;
   probeSpaceLimit?: number;
@@ -56,7 +57,7 @@ export interface IPlayer extends IPlayerIdentity {
   completedMissions: unknown[];
   endGameCards: unknown[];
   tuckedIncomeCards: unknown[];
-  techs: unknown[];
+  techs: ETechId[];
 
   passed: boolean;
   probesInSpace: number;

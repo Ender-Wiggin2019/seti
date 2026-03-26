@@ -48,6 +48,16 @@
       "import": "./dist/utils/*.js",
       "require": "./dist/utils/*.cjs"
     },
+    "./rules": {
+      "types": "./dist/rules/index.d.ts",
+      "import": "./dist/rules/index.js",
+      "require": "./dist/rules/index.cjs"
+    },
+    "./rules/*": {
+      "types": "./dist/rules/*.d.ts",
+      "import": "./dist/rules/*.js",
+      "require": "./dist/rules/*.cjs"
+    },
     "./locales/*": "./dist/locales/*"
   },
   "scripts": {

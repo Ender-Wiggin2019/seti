@@ -1,26 +1,26 @@
-# Task 6-2: SolarSystemView (SVG 同心环)
+# Task 6-2: SolarSystemView (静态资源同心环)
 
 ## Title
-实现太阳系 SVG 可视化 (同心环 + 圆盘 + 探针 + 交互)
+实现太阳系静态资源可视化 (同心环 + 圆盘 + 探针 + 交互)
 
 ## 描述
-实现客户端的太阳系棋盘可视化组件。使用 SVG 渲染同心环结构、3 个可旋转圆盘、探针 token、行星空间、宣传图标等。支持点击空间进行移动交互，以及 PlayerInput 高亮。
+实现客户端的太阳系棋盘可视化组件。使用前端参考项目的静态资源（wheel PNG + token PNG）进行图层化渲染，不再要求 SVG。支持点击空间进行移动交互，以及 PlayerInput 高亮。
 
 ## 功能说明
 
 ### SolarSystemView
-- SVG 容器，随父容器缩放
-- 渲染同心环（外圈静态，内部 3 个圆盘）
-- 每个空间为 SVG 元素 (circle/rect)
-- 探针 token 渲染在对应空间上
+- 相对定位容器，随父容器缩放
+- 渲染同心环图层（ring 4 固定，ring 1-3 可旋转）
+- 每个空间使用绝对定位的交互热点（button/div）
+- 探针 token 使用 PNG 图标渲染在对应空间上
 
-### DiscLayer
-- 单个可旋转圆盘的 SVG group
+### WheelLayer
+- 单个可旋转圆盘的图层组件（`<img>`）
 - CSS `transform: rotate()` 驱动旋转动画
-- 包含属于此圆盘的空间
+- 包含属于此圆盘的空间热点映射
 
 ### ProbeToken
-- 玩家颜色的探针图标
+- 玩家颜色的探针 PNG 图标
 - 放置在空间坐标上
 
 ### 空间交互
@@ -42,40 +42,40 @@
 packages/client/src/features/board/
 ├── SolarSystemView.tsx
 ├── SolarSystemView.test.tsx
-├── DiscLayer.tsx
-├── DiscLayer.test.tsx
+├── WheelLayer.tsx
+├── WheelLayer.test.tsx
 ├── ProbeToken.tsx
 └── ProbeToken.test.tsx
 ```
 
 ## 技术实现方案
 
-1. SolarSystemView: 外层 `<svg viewBox="...">` 容器
-2. 每个环用 `<circle>` 绘制
-3. 空间用 `<circle>` 或 `<rect>` 放在极坐标计算的位置
-4. DiscLayer: `<g transform="rotate(angle)">` 包裹圆盘空间
-5. ProbeToken: 玩家颜色 circle + 标识
+1. SolarSystemView: 外层相对定位容器 + 固定宽高比（`aspect-square`）
+2. ring 图层: 使用 `wheels/wheel1outline.png` ~ `wheel4.png`
+3. 空间热点: 使用 `systemPosToCoords()` + 极坐标换算生成绝对定位 click target
+4. WheelLayer: `<img>` + `transform: rotate(angle * 45deg)`
+5. ProbeToken: 按玩家颜色映射 `playerTokens/*Probe.png`
 6. 交互: onClick handler on spaces → sendFreeAction / sendInput
-7. 高亮: `cn('ring-2 ring-yellow-400 animate-pulse')` 类名
+7. 高亮: 可到达空间使用脉冲边框或发光遮罩（不依赖 SVG）
 
 ## 测试要求
 
 ### 组件测试 (RTL)
 - `SolarSystemView.test.tsx`:
-  - 渲染正确数量的空间元素
+  - 渲染正确数量的空间热点（32 个）
   - 探针 token 在正确位置
   - 可交互空间有 click handler
   - 不可交互空间无 click handler
-- `DiscLayer.test.tsx`:
+- `WheelLayer.test.tsx`:
   - 旋转角度正确应用 transform
-  - 包含正确的子空间
+  - 图层资源路径映射正确
 - `ProbeToken.test.tsx`:
   - 正确颜色渲染
-  - 位置属性正确
+  - 位置样式正确
 
 ### E2E 可行性
-- SVG 交互: 点击空间 → 探针移动 → 状态更新
-- Playwright 可通过 SVG selector 定位元素
+- 图层交互: 点击空间热点 → 探针移动 → 状态更新
+- Playwright 通过 `data-testid` 或角色选择器定位空间热点
 
 ## 参考代码 & 静态资源
 
@@ -91,13 +91,12 @@ packages/client/src/features/board/
 - **`frontend-reference/.../seti/highlight.js`** — `isClickable()` 中探针移动的有效目标判定
 
 ### 静态资源（可直接复用）
-- `wheels/wheel1outline.png` ~ `wheel4outline.png` → 4 个环的轮廓图，可作为 SVG 背景或叠加层
-- `wheels/wheel4.png` → ring 4 的填充版本
+- `wheels/wheel1outline.png`, `wheel2outline.png`, `wheel3outline.png`, `wheel4.png` → 太阳系 4 层环盘图，可直接做图层渲染
 - `playerTokens/redProbe.png`, `whiteProbe.png`, `purpleProbe.png` → 探针图标
 - `playerTokens/redSky.png`, `whiteSky.png`, `purpleSky.png` → 天空标记图标
 
-### SVG 渲染建议
-参考 `arch-client.md` §17.4 的 SVG 结构和极坐标转换公式：
+### 图层渲染建议
+参考 `arch-client.md` §17.4 的极坐标转换公式（用于空间热点和 token 定位）：
 ```typescript
 function spacePosition(ring: number, sectorIndex: number) {
   const radius = RING_RADII[ring]; // e.g. [100, 180, 260, 340]
@@ -131,7 +130,7 @@ const reachable = getReachableSpaces(gameState.solarSystem, selectedProbeSpaceId
 **注意:** 这些 common 函数由 Task 2-1 实现。如果 2-1 尚未完成，可先用 mock 数据 / hardcoded 占位。
 
 ## 完成标准
-- [ ] SVG 太阳系正确渲染（使用 wheel outline 静态资源）
+- [ ] 太阳系图层正确渲染（使用 wheel outline 静态资源）
 - [ ] 3 个圆盘独立旋转
 - [ ] 探针正确显示在空间上（使用 probe 静态资源）
 - [ ] 空间交互 (click/hover) 工作
