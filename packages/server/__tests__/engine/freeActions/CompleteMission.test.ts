@@ -11,18 +11,35 @@ function createTestPlayer(): Player {
   });
 }
 
-const mockGame = {} as unknown as IGame;
+function createMockGame(
+  overrides: Partial<IGame['missionTracker']> = {},
+): IGame {
+  return {
+    missionTracker: {
+      hasCompletableQuickMissions: () => false,
+      getCompletableQuickMissions: () => [],
+      completeMissionBranch: () => undefined,
+      ...overrides,
+    },
+  } as unknown as IGame;
+}
 
 describe('CompleteMissionFreeAction', () => {
-  it('canExecute always returns false (pending implementation)', () => {
+  it('returns mission tracker availability from canExecute', () => {
     const player = createTestPlayer();
-    expect(CompleteMissionFreeAction.canExecute(player, mockGame)).toBe(false);
+    const mockGame = createMockGame({
+      hasCompletableQuickMissions: () => true,
+    });
+
+    expect(CompleteMissionFreeAction.canExecute(player, mockGame)).toBe(true);
   });
 
-  it('execute throws not implemented error', () => {
+  it('throws for non-completable mission branch', () => {
     const player = createTestPlayer();
+    const mockGame = createMockGame();
+
     expect(() =>
       CompleteMissionFreeAction.execute(player, mockGame, 'card-1'),
-    ).toThrow('not yet implemented');
+    ).toThrow('is not completable');
   });
 });

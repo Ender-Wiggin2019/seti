@@ -1,25 +1,17 @@
 import type { IPlayerInputModel, IPublicSector } from '@/types/re-exports';
 import { EPlayerInputType } from '@/types/re-exports';
 import { SectorView } from './SectorView';
+import {
+  getSectorVisualConfig,
+  type ISectorVisualOverrides,
+} from './sectorVisualConfig';
 
 interface ISectorGridProps {
   sectors: IPublicSector[];
   playerColors: Record<string, string>;
   pendingInput: IPlayerInputModel | null;
   onSelectSector: (sectorColor: IPublicSector['color']) => void;
-}
-
-function sectorPosition(index: number): { xPercent: number; yPercent: number } {
-  const angle = (index / 8) * Math.PI * 2 - Math.PI / 2;
-  const radius = 49;
-  return {
-    xPercent: 50 + Math.cos(angle) * radius,
-    yPercent: 50 + Math.sin(angle) * radius,
-  };
-}
-
-function sectorRotation(index: number): number {
-  return (index + 1) * 45;
+  sectorVisualById?: Record<string, ISectorVisualOverrides>;
 }
 
 export function SectorGrid({
@@ -27,6 +19,7 @@ export function SectorGrid({
   playerColors,
   pendingInput,
   onSelectSector,
+  sectorVisualById,
 }: ISectorGridProps): React.JSX.Element {
   const isSectorInput = pendingInput?.type === EPlayerInputType.SECTOR;
   const options =
@@ -35,9 +28,15 @@ export function SectorGrid({
       : new Set<IPublicSector['color']>();
 
   return (
-    <div className='absolute inset-0 z-50' aria-label='Sector ring'>
-      {sectors.slice(0, 8).map((sector, index) => {
-        const pos = sectorPosition(index);
+    <div
+      className='game-situation seti-sector-grid absolute inset-0 z-50'
+      aria-label='Sector ring'
+    >
+      {sectors.slice(0, 8).map((sector) => {
+        const visual = getSectorVisualConfig(
+          sector.sectorId,
+          sectorVisualById?.[sector.sectorId],
+        );
         const clickable = isSectorInput && options.has(sector.color);
 
         return (
@@ -45,9 +44,8 @@ export function SectorGrid({
             key={sector.sectorId}
             sector={sector}
             playerColors={playerColors}
-            xPercent={pos.xPercent}
-            yPercent={pos.yPercent}
-            rotationDeg={sectorRotation(index)}
+            slotIndex={visual.slotIndex}
+            sectorImageSrc={visual.sectorSrc}
             clickable={clickable}
             highlighted={clickable}
             onClick={() => {

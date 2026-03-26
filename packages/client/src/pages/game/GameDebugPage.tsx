@@ -1,5 +1,5 @@
 import { ALL_CARDS } from '@seti/common/data';
-import { EResource, ESector, ETech } from '@seti/common/types/element';
+import { ESector, ETech } from '@seti/common/types/element';
 import { ETechId } from '@seti/common/types/tech';
 import { useMemo, useState } from 'react';
 import {
@@ -60,6 +60,9 @@ function createDebugGameState(
         pieces: { probes: 2, orbiters: 1, landers: 1, signalMarkers: 5 },
         techs: [ETechId.PROBE_DOUBLE_PROBE, ETechId.SCAN_EARTH_LOOK],
         passed: false,
+        movementPoints: 2,
+        dataStashCount: 1,
+        probesInSpace: 2,
       },
       {
         playerId: 'player-2',
@@ -79,6 +82,9 @@ function createDebugGameState(
         pieces: { probes: 2, orbiters: 2, landers: 1, signalMarkers: 6 },
         techs: [ETechId.COMPUTER_VP_CREDIT],
         passed: scenario === 'game-over',
+        movementPoints: 1,
+        dataStashCount: 0,
+        probesInSpace: 1,
       },
       {
         playerId: 'player-3',
@@ -98,6 +104,9 @@ function createDebugGameState(
         pieces: { probes: 1, orbiters: 1, landers: 2, signalMarkers: 4 },
         techs: [ETechId.SCAN_POP_SIGNAL],
         passed: false,
+        movementPoints: 3,
+        dataStashCount: 2,
+        probesInSpace: 1,
       },
     ],
     solarSystem: {

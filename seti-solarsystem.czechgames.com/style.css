@@ -1,0 +1,287 @@
+.app-wrap {
+  margin: 0 auto;
+  width: 100%;
+  height: 100%;
+
+}
+
+body {
+  margin: 0;
+  position: relative;
+  overflow: hidden;
+  background-image: url(assets/background.jpg);
+  background-size: cover;
+}
+
+html, body {
+  overflow: hidden;
+}
+
+
+.title-block {
+  width: 100%;
+  height: 10%;
+  margin: 2% 0;
+  background-image: url(assets/logo_seti_en.png);
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.wheel {
+  width: 100%;
+  height: 100%;
+  background-repeat: no-repeat;
+  background-size: contain;
+  position: absolute;
+}
+
+.fly-wrap {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center;
+  position: absolute;
+  left: 0%;
+  right: 0%;
+  margin: auto;
+  overflow: hidden;
+}
+
+.wheel-wrap {
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  transform: rotate(-10);
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+}
+
+.fly-wrap-1 {
+
+  width: 34%;
+  height: 34%;
+  z-index: 8;
+}
+.fly-wrap-2 {
+  width: 48%;
+  height: 48%;
+  z-index: 7;
+}
+.fly-wrap-3 {
+  width: 62%;
+  height: 62%;
+  z-index: 6;
+}
+.wheel1 {
+  background-image: url(wheels/wheel1.png);
+  animation: sun-rotate 1000s linear;
+}
+.wheel1.wheel-blur {
+  background-image: url(wheels/wheel1blur.png);
+}
+.wheel2 {
+  background-image: url(wheels/wheel2.png);
+  animation: sun-rotate 1600s linear;
+}
+.wheel2.wheel-blur {
+  background-image: url(wheels/wheel2blur.png);
+}
+.wheel3 {
+  background-image: url(wheels/wheel3.png);
+  animation: sun-rotate 2800s linear;
+}
+.wheel3.wheel-blur {
+  background-image: url(wheels/wheel3blur.png);
+}
+.wheel4 {
+  background-image: url(wheels/wheel4.png);
+  z-index: 5;
+  animation: sun-rotate 5000s linear;
+}
+
+.sun {
+  position: absolute;
+  margin: auto;
+  top: 45%;
+  background-image: url(assets/sun.png);
+  background-size: cover;
+  width: 10%;
+  height: 10%;
+  z-index: 200;
+  animation: sun-rotate 1800s linear;
+}
+@keyframes sun-rotate {
+  from {
+    transform: rotate(0);
+  }
+
+  to {
+    transform: rotate(-36000deg);
+  }
+}
+
+
+button {
+  background-image: url(assets/button.png);
+  background-size: cover;
+  width: 36%;
+  aspect-ratio: 1;
+  transition: transform .1s, filter .2s;
+  display: block;
+  border: unset;
+  background-color: transparent;
+  margin-top: -20px;
+}
+
+button.pulsin {
+  animation: pulse 1s alternate infinite;
+
+}
+
+@keyframes pulse {
+  from {
+    filter: drop-shadow(0px 0px 5px #41BFE7)
+  }
+  to {
+    filter: drop-shadow(0px 0px 10px #41BFE7)
+  }
+}
+
+
+
+.connector {
+  aspect-ratio: 0.9;
+  width: 20%;
+  background-repeat: no-repeat;
+  background-image: url(assets/connector.png);
+  background-size: 100% 100%;
+}
+
+button:active {
+  transform: scale(0.9);
+}
+button:hover {
+  transform: scale(1.1);
+  filter: brightness(1.1);
+}
+
+.button-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+
+.sector-wrap {
+  position: absolute;
+  width: 75%;
+  height: 30%;
+  z-index: 250;
+  pointer-events: none;
+}
+
+#sector-wrap-1 {
+  top: 0.2%
+}
+
+#sector-wrap-2 {
+  right: 47.1%;
+  transform: rotate(-90deg)
+}
+
+#sector-wrap-3 {
+  left: 47.1%;
+  transform: rotate(90deg)
+}
+
+#sector-wrap-4 {
+  bottom: 0.2%;
+  transform: rotate(180deg)
+}
+
+.sector {
+  background-repeat: no-repeat;
+  background-size: 100%;
+  width: 100%;
+  height: 100%;
+  animation: sector-name-fadein 2s ease-out forwards;
+}
+
+.sector-1 {
+  background-image: url(assets/sector1.png);
+}
+.sector-2 {
+  background-image: url(assets/sector2.png);
+}
+.sector-3 {
+  background-image: url(assets/sector3.png);
+}
+.sector-4 {
+  background-image: url(assets/sector4.png);
+}
+
+.sector-label {
+  position: absolute;
+  top: 5%;
+  width: 100%;
+  height: 25%;
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  animation: sector-name-fadein 4s ease-out forwards;
+}
+
+@keyframes sector-name-fadein {
+  from {
+    transform: translate(0, -300%) scale(2);
+    opacity: 0;
+  }
+  to {
+    transform: translate(0, 0%) scale(1);
+    opacity: 1;
+  }
+}
+
+
+.sector-label-1 {
+  background-image: url(assets/name1.png);
+}
+.sector-label-2 {
+  background-image: url(assets/name2.png);
+}
+.sector-label-3 {
+  background-image: url(assets/name3.png);
+}
+.sector-label-4 {
+  background-image: url(assets/name4.png);
+}
+
+#cookie-banner {
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 10px;
+  text-align: center;
+  font-size: 12px;
+  border-radius: 5px;
+}
+#cookie-banner button {
+  margin: 5px;
+  border: none;
+  cursor: pointer;
+  border-radius: 3px;
+  width: 50px;
+  height: 30px;
+}
+.accept { background: green; color: white; display: inline-block; }
+.reject { background: red; color: white; display: inline-block; }

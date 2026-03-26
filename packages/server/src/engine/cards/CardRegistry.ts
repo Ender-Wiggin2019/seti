@@ -1,9 +1,15 @@
 import { AdvancedNavigationSystem } from './base/AdvancedNavigationSystemCard.js';
 import { AreciboObservatory } from './base/AreciboObservatoryCard.js';
 import { BarnardsStarObservation } from './base/BarnardsStarObservationCard.js';
+import { ExtremophilesStudy } from './base/ExtremophilesStudyCard.js';
+import { FocusedResearch } from './base/FocusedResearchCard.js';
 import { createGenericCard } from './base/GenericCards.js';
+import { NIACProgram } from './base/NIACProgramCard.js';
+import { OnsalaTelescopeConstruction } from './base/OnsalaTelescopeConstructionCard.js';
+import { PerseveranceRover } from './base/PerseveranceRoverCard.js';
 import { SquareKilometreArray } from './base/SquareKilometreArrayCard.js';
 import { Starship } from './base/StarshipCard.js';
+import { StrategicPlanning } from './base/StrategicPlanningCard.js';
 import type { ICard } from './ICard.js';
 import { loadAllCardData, loadCardData } from './loadCardData.js';
 
@@ -49,6 +55,12 @@ defaultCardRegistry.register('128', () => new AdvancedNavigationSystem());
 defaultCardRegistry.register('38', () => new BarnardsStarObservation());
 defaultCardRegistry.register('50', () => new SquareKilometreArray());
 defaultCardRegistry.register('85', () => new Starship());
+defaultCardRegistry.register('13', () => new PerseveranceRover());
+defaultCardRegistry.register('62', () => new OnsalaTelescopeConstruction());
+defaultCardRegistry.register('71', () => new FocusedResearch());
+defaultCardRegistry.register('75', () => new ExtremophilesStudy());
+defaultCardRegistry.register('89', () => new NIACProgram());
+defaultCardRegistry.register('106', () => new StrategicPlanning());
 
 export function getCardRegistry(): CardRegistry {
   return defaultCardRegistry;

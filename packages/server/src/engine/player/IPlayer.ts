@@ -1,3 +1,4 @@
+import { ETrace } from '@seti/common/types/element';
 import type { ETechId } from '@seti/common/types/tech';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
@@ -37,6 +38,7 @@ export interface IPlayerInit extends IPlayerIdentity {
   endGameCards?: unknown[];
   tuckedIncomeCards?: unknown[];
   techs?: ETechId[];
+  traces?: Partial<Record<ETrace, number>>;
   passed?: boolean;
   probesInSpace?: number;
   probeSpaceLimit?: number;
@@ -60,6 +62,7 @@ export interface IPlayer extends IPlayerIdentity {
   endGameCards: unknown[];
   tuckedIncomeCards: unknown[];
   techs: ETechId[];
+  traces: Partial<Record<ETrace, number>>;
 
   passed: boolean;
   probesInSpace: number;

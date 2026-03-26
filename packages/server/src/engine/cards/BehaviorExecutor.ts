@@ -107,11 +107,12 @@ export class BehaviorExecutor {
     behavior: IBehavior,
     player: IPlayer,
   ): SimpleDeferredAction | undefined {
-    if (!behavior.spendResources) return undefined;
+    const spendResources = behavior.spendResources;
+    if (!spendResources) return undefined;
     return new SimpleDeferredAction(
       player,
       () => {
-        player.resources.spend(behavior.spendResources!);
+        player.resources.spend(spendResources);
         return undefined;
       },
       EPriority.COST,
@@ -122,9 +123,10 @@ export class BehaviorExecutor {
     behavior: IBehavior,
     player: IPlayer,
   ): SimpleDeferredAction | undefined {
-    if (!behavior.gainResources) return undefined;
+    const gainResources = behavior.gainResources;
+    if (!gainResources) return undefined;
     return new SimpleDeferredAction(player, () => {
-      player.resources.gain(behavior.gainResources!);
+      player.resources.gain(gainResources);
       return undefined;
     });
   }
@@ -133,9 +135,10 @@ export class BehaviorExecutor {
     behavior: IBehavior,
     player: IPlayer,
   ): SimpleDeferredAction | undefined {
-    if (!behavior.gainScore) return undefined;
+    const gainScore = behavior.gainScore;
+    if (!gainScore) return undefined;
     return new SimpleDeferredAction(player, () => {
-      player.score += behavior.gainScore!;
+      player.score += gainScore;
       return undefined;
     });
   }
@@ -144,9 +147,10 @@ export class BehaviorExecutor {
     behavior: IBehavior,
     player: IPlayer,
   ): SimpleDeferredAction | undefined {
-    if (!behavior.gainMovement) return undefined;
+    const gainMovement = behavior.gainMovement;
+    if (!gainMovement) return undefined;
     return new SimpleDeferredAction(player, () => {
-      player.gainMove(behavior.gainMovement!);
+      player.gainMove(gainMovement);
       return undefined;
     });
   }
@@ -155,9 +159,10 @@ export class BehaviorExecutor {
     behavior: IBehavior,
     player: IPlayer,
   ): SimpleDeferredAction | undefined {
-    if (!behavior.gainIncome) return undefined;
+    const gainIncome = behavior.gainIncome;
+    if (!gainIncome) return undefined;
     return new SimpleDeferredAction(player, () => {
-      const incomeResource = toIncomeBundle(behavior.gainIncome!);
+      const incomeResource = toIncomeBundle(gainIncome);
       if (incomeResource !== undefined) {
         player.income.addTuckedIncome(incomeResource);
       }
@@ -169,10 +174,11 @@ export class BehaviorExecutor {
     behavior: IBehavior,
     player: IPlayer,
   ): SimpleDeferredAction | undefined {
-    if (!behavior.drawCards || behavior.drawCards <= 0) return undefined;
+    const drawCards = behavior.drawCards;
+    if (!drawCards || drawCards <= 0) return undefined;
     return new SimpleDeferredAction(player, (game) => {
       const drawnCards: unknown[] = [];
-      for (let i = 0; i < behavior.drawCards!; i += 1) {
+      for (let i = 0; i < drawCards; i += 1) {
         const drawn = game.mainDeck.drawWithReshuffle(game.random);
         if (drawn === undefined) {
           break;
@@ -226,12 +232,13 @@ export class BehaviorExecutor {
     behavior: IBehavior,
     player: IPlayer,
   ): SimpleDeferredAction | undefined {
-    if (!behavior.researchTech) return undefined;
+    const researchTech = behavior.researchTech;
+    if (!researchTech) return undefined;
     return new SimpleDeferredAction(player, (game) => {
       return ResearchTechEffect.execute(player, game, {
         filter: {
           mode: 'category',
-          categories: toResearchCategories(behavior.researchTech!),
+          categories: toResearchCategories(researchTech),
         },
       });
     });
@@ -243,9 +250,11 @@ export class BehaviorExecutor {
   ): SimpleDeferredAction | undefined {
     if (!behavior.markTrace) return undefined;
     return new SimpleDeferredAction(player, (game) => {
+      const trace = behavior.markTrace as ETrace;
+      player.traces[trace] = (player.traces[trace] ?? 0) + 1;
       game.eventLog.append(
         createActionEvent(player.id, 'CARD_MARK_TRACE', {
-          trace: behavior.markTrace as ETrace,
+          trace,
         }),
       );
       return undefined;

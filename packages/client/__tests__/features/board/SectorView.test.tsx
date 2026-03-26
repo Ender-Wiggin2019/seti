@@ -1,3 +1,4 @@
+import { ESector } from '@seti/common/types/element';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { SectorView } from '@/features/board/SectorView';
@@ -6,7 +7,7 @@ import type { IPublicSector } from '@/types/re-exports';
 function createSector(overrides?: Partial<IPublicSector>): IPublicSector {
   return {
     sectorId: 'sector-0',
-    color: 'red-signal',
+    color: ESector.RED,
     dataSlots: ['data-1', null, null],
     markerSlots: [{ playerId: 'player-1', timestamp: 1 }],
     completed: false,
@@ -20,9 +21,8 @@ describe('SectorView', () => {
       <SectorView
         sector={createSector({ dataSlots: ['a', null, 'b'] })}
         playerColors={{ 'player-1': 'red' }}
-        xPercent={50}
-        yPercent={50}
-        rotationDeg={0}
+        slotIndex={0}
+        sectorImageSrc='/assets/seti/sectors/sector1.png'
         clickable={false}
         highlighted={false}
         onClick={vi.fn()}
@@ -40,9 +40,8 @@ describe('SectorView', () => {
       <SectorView
         sector={createSector()}
         playerColors={{ 'player-1': 'red' }}
-        xPercent={50}
-        yPercent={50}
-        rotationDeg={0}
+        slotIndex={0}
+        sectorImageSrc='/assets/seti/sectors/sector1.png'
         clickable
         highlighted
         onClick={onClick}

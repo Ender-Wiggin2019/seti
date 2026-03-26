@@ -1,24 +1,46 @@
+import { ESector } from '@seti/common/types/element';
 import { EAlienType, EPhase } from '@seti/common/types/protocol/enums';
 import { BoardBuilder } from './board/BoardBuilder.js';
 import { PlanetaryBoard } from './board/PlanetaryBoard.js';
+import { Sector } from './board/Sector.js';
 import { Deck } from './deck/Deck.js';
 import { DeferredActionsQueue } from './deferred/DeferredActionsQueue.js';
 import { EventLog } from './event/EventLog.js';
 import type { Game } from './Game.js';
 import { Resources } from './player/Resources.js';
+import {
+  GoldScoringTile,
+  type TGoldScoringTileId,
+} from './scoring/GoldScoringTile.js';
+import { MilestoneState } from './scoring/Milestone.js';
 import { TechBoard } from './tech/TechBoard.js';
+
+const GOLD_TILE_IDS: readonly TGoldScoringTileId[] = [
+  'tech',
+  'mission',
+  'income',
+  'other',
+];
 
 export class GameSetup {
   public static initialize(game: Game): void {
     game.solarSystem = BoardBuilder.buildSolarSystem(game.random);
     game.planetaryBoard = new PlanetaryBoard();
     game.techBoard = new TechBoard(game.random);
-    game.sectors = Array.from({ length: 8 }, (_, index) => ({
-      id: `sector-${index + 1}`,
-      dataSlots: ['data-1', 'data-2'],
-      markers: [],
-      completed: false,
-    }));
+    const sectorColors = [
+      ESector.RED,
+      ESector.YELLOW,
+      ESector.BLUE,
+      ESector.BLACK,
+    ];
+    game.sectors = Array.from(
+      { length: 8 },
+      (_, index) =>
+        new Sector({
+          id: `sector-${index + 1}`,
+          color: sectorColors[index % sectorColors.length],
+        }),
+    );
 
     const baseDeckCards = Array.from(
       { length: 80 },
@@ -31,10 +53,20 @@ export class GameSetup {
       game.mainDeck.drawN(game.options.playerCount + 1),
     );
 
-    const alienPool = game.random.shuffle(Object.values(EAlienType));
-    game.hiddenAliens = alienPool.slice(0, 2).map((alien) => String(alien));
+    const alienPool = game.random.shuffle(
+      Object.values(EAlienType) as EAlienType[],
+    );
+    game.hiddenAliens = alienPool.slice(0, 2);
     game.neutralMilestones = GameSetup.buildNeutralMilestones(
       game.options.playerCount,
+    );
+    game.milestoneState = new MilestoneState(game.neutralMilestones);
+    game.goldScoringTiles = GOLD_TILE_IDS.map(
+      (id) =>
+        new GoldScoringTile({
+          id,
+          side: game.random.next() < 0.5 ? 'A' : 'B',
+        }),
     );
     game.roundRotationReminderIndex = 0;
 

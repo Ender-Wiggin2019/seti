@@ -1,5 +1,6 @@
-import { ESector } from '@seti/common/types/element';
+import { ESector, ETrace } from '@seti/common/types/element';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
+import { ETechId } from '@seti/common/types/tech';
 import { getCardRegistry } from '@/engine/cards/CardRegistry.js';
 import { EServerCardKind } from '@/engine/cards/ICard.js';
 import { Deck } from '@/engine/deck/Deck.js';
@@ -144,5 +145,49 @@ describe('Base representative cards', () => {
     expect(rowPathInput).toBeUndefined();
     expect(playerRowPath.hand).toEqual(['55']);
     expect(gameRowPath.cardRow).toEqual(['deck-card-2']);
+  });
+
+  it('Card 89 draws cards through behavior executor', () => {
+    const player = createPlayer({ hand: [] });
+    const game = createGame({
+      mainDeck: new Deck<string>(['draw-1', 'draw-2', 'draw-3']),
+      cardRow: ['55'],
+    });
+    const card = getCardRegistry().create('89');
+
+    card.play({ player, game });
+    game.deferredActions.drain(game);
+
+    expect(player.hand).toEqual(['draw-1', 'draw-2', 'draw-3']);
+  });
+
+  it('Card 75 marks ANY trace once', () => {
+    const player = createPlayer();
+    const game = createGame();
+    const card = getCardRegistry().create('75');
+
+    card.play({ player, game });
+    game.deferredActions.drain(game);
+
+    expect(player.traces[ETrace.ANY]).toBe(1);
+  });
+
+  it('Card 71 canPlay depends on available tech choices', () => {
+    const player = createPlayer();
+    const card = getCardRegistry().create('71');
+
+    const gameNoTech = createGame({
+      techBoard: {
+        getAvailableTechs: () => [],
+      },
+    });
+    expect(card.canPlay({ player, game: gameNoTech })).toBe(false);
+
+    const gameWithTech = createGame({
+      techBoard: {
+        getAvailableTechs: () => [ETechId.SCAN_EARTH_LOOK],
+      },
+    });
+    expect(card.canPlay({ player, game: gameWithTech })).toBe(true);
   });
 });

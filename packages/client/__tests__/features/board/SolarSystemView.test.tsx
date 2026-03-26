@@ -1,3 +1,4 @@
+import { ESector } from '@seti/common/types/element';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { SolarSystemView } from '@/features/board/SolarSystemView';
@@ -21,15 +22,15 @@ function createSolarSystemMock(): IPublicSolarSystem {
 }
 
 function createSectorsMock() {
-  const colors = [
-    'red-signal',
-    'yellow-signal',
-    'blue-signal',
-    'black-signal',
-    'red-signal',
-    'yellow-signal',
-    'blue-signal',
-    'black-signal',
+  const colors: ESector[] = [
+    ESector.RED,
+    ESector.YELLOW,
+    ESector.BLUE,
+    ESector.BLACK,
+    ESector.RED,
+    ESector.YELLOW,
+    ESector.BLUE,
+    ESector.BLACK,
   ];
   return colors.map((color, i) => ({
     sectorId: `sector-${i}`,
@@ -88,7 +89,7 @@ describe('SolarSystemView', () => {
         pendingInput={{
           inputId: 'select-sector',
           type: EPlayerInputType.SECTOR,
-          options: ['red-signal'],
+          options: [ESector.RED],
         }}
         playerColors={{ 'player-1': 'red' }}
         myPlayerId='player-1'
@@ -100,7 +101,7 @@ describe('SolarSystemView', () => {
     fireEvent.click(screen.getByTestId('sector-chip-sector-0'));
     expect(onRespondInput).toHaveBeenCalledWith({
       type: EPlayerInputType.SECTOR,
-      sector: 'red-signal',
+      sector: ESector.RED,
     });
   });
 });

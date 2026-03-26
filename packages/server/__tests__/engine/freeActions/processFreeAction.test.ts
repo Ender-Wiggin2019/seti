@@ -1,6 +1,8 @@
 import { EFreeAction } from '@seti/common/types/protocol/enums';
 import { vi } from 'vitest';
+import type { IBuyCardResult } from '@/engine/freeActions/BuyCard.js';
 import { BuyCardFreeAction } from '@/engine/freeActions/BuyCard.js';
+import type { IMovementResult } from '@/engine/freeActions/Movement.js';
 import { MovementFreeAction } from '@/engine/freeActions/Movement.js';
 import { processFreeAction } from '@/engine/freeActions/processFreeAction.js';
 
@@ -12,7 +14,7 @@ describe('processFreeAction', () => {
   it('dispatches movement action', () => {
     const spy = vi
       .spyOn(MovementFreeAction, 'execute')
-      .mockImplementation(() => undefined);
+      .mockReturnValue({} as IMovementResult);
 
     processFreeAction(
       {} as never,
@@ -26,7 +28,7 @@ describe('processFreeAction', () => {
   it('dispatches buy card action', () => {
     const spy = vi
       .spyOn(BuyCardFreeAction, 'execute')
-      .mockImplementation(() => undefined);
+      .mockReturnValue({} as IBuyCardResult);
 
     processFreeAction(
       {} as never,

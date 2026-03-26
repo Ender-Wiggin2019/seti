@@ -14,7 +14,7 @@ const PHASE_LABELS: Record<EPhase, string> = {
 };
 
 export function TopBar(): React.JSX.Element {
-  const { gameState, isMyTurn, isSpectator, myPlayerId } = useGameContext();
+  const { gameState, isMyTurn, isSpectator } = useGameContext();
 
   const currentPlayerName = gameState?.players.find(
     (p) => p.playerId === gameState.currentPlayerId,

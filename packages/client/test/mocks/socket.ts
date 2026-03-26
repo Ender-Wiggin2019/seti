@@ -7,10 +7,9 @@ export class MockSocket {
   connected = true;
 
   on(event: string, handler: TEventHandler): this {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, new Set());
-    }
-    this.listeners.get(event)!.add(handler);
+    const handlers = this.listeners.get(event) ?? new Set<TEventHandler>();
+    handlers.add(handler);
+    this.listeners.set(event, handlers);
     return this;
   }
 

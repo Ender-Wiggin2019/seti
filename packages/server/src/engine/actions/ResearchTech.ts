@@ -59,7 +59,7 @@ export class ResearchTechAction {
       player.resources.spend({ publicity: RESEARCH_PUBLICITY_COST });
     }
 
-    const rotateResult = RotateDiscEffect.execute(game);
+    RotateDiscEffect.execute(game);
 
     return ResearchTechEffect.execute(player, game, {
       filter,

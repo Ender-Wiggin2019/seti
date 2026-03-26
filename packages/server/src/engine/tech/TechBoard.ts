@@ -100,8 +100,23 @@ export class TechBoard {
       );
     }
 
-    const stack = this.stacks.get(techId)!;
-    const tile = stack.tiles.shift()!;
+    const stack = this.stacks.get(techId);
+    if (!stack || stack.tiles.length === 0) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        'Cannot research this tech',
+        { playerId, techId },
+      );
+    }
+
+    const tile = stack.tiles.shift();
+    if (!tile) {
+      throw new GameError(
+        EErrorCode.INTERNAL_SERVER_ERROR,
+        'Tech stack unexpectedly empty',
+        { techId },
+      );
+    }
 
     let vpBonus = 0;
     if (stack.firstTakeBonusAvailable) {

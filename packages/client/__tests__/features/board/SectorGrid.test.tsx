@@ -1,3 +1,4 @@
+import { ESector } from '@seti/common/types/element';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { SectorGrid } from '@/features/board/SectorGrid';
@@ -5,15 +6,15 @@ import type { IPlayerInputModel, IPublicSector } from '@/types/re-exports';
 import { EPlayerInputType } from '@/types/re-exports';
 
 function createSectors(): IPublicSector[] {
-  const colors = [
-    'red-signal',
-    'yellow-signal',
-    'blue-signal',
-    'black-signal',
-    'red-signal',
-    'yellow-signal',
-    'blue-signal',
-    'black-signal',
+  const colors: ESector[] = [
+    ESector.RED,
+    ESector.YELLOW,
+    ESector.BLUE,
+    ESector.BLACK,
+    ESector.RED,
+    ESector.YELLOW,
+    ESector.BLUE,
+    ESector.BLACK,
   ];
   return colors.map((color, index) => ({
     sectorId: `sector-${index}`,
@@ -43,7 +44,7 @@ describe('SectorGrid', () => {
     const pendingInput: IPlayerInputModel = {
       inputId: 'input-sector',
       type: EPlayerInputType.SECTOR,
-      options: ['yellow-signal'],
+      options: [ESector.YELLOW],
     };
 
     render(
@@ -59,6 +60,6 @@ describe('SectorGrid', () => {
     expect(onSelectSector).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByTestId('sector-chip-sector-1'));
-    expect(onSelectSector).toHaveBeenCalledWith('yellow-signal');
+    expect(onSelectSector).toHaveBeenCalledWith(ESector.YELLOW);
   });
 });

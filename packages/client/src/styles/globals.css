@@ -31,3 +31,138 @@ body {
     40px 40px,
     40px 40px;
 }
+
+/* SETI reference card classes used by SectorView. */
+.seti-sector-grid .component-wrap {
+  position: absolute;
+  transition: transform 0.5s;
+  transform-style: preserve-3d;
+}
+
+.seti-sector-grid .seti-sector-chip {
+  background: transparent;
+  border: 0;
+}
+
+.seti-sector-grid .seti-sector-slice {
+  animation: sector-slice-fadein 0.8s ease-out both;
+}
+
+.seti-sector-grid .seti-sector-label {
+  animation: sector-name-fadein 1s ease-out both;
+}
+
+.seti-sector-grid .cgo-card-layer,
+.seti-sector-grid .cgo-card-image {
+  font-family:
+    Trebuchet MS,
+    sans-serif;
+  position: absolute;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  transform-origin: center;
+}
+
+.seti-sector-grid .cgo-layer-outer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.seti-sector-grid .component-display {
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: absolute;
+}
+
+.seti-sector-grid .card-side-wrap {
+  page-break-inside: avoid;
+  break-inside: avoid-page;
+  background: #fff;
+  border-radius: 37px;
+  pointer-events: none;
+  overflow: hidden;
+  position: relative;
+}
+
+.seti-sector-grid.game-situation .card-side-wrap.overlay-disabled {
+  border-radius: unset;
+  background: transparent;
+  outline: none;
+  pointer-events: none;
+}
+
+.seti-sector-grid .card-flip-wrap,
+.seti-sector-grid .card-rotate-wrap {
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+  transition: transform 0.5s;
+  transform-origin: center;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.seti-sector-grid .card-game-wrap {
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+}
+
+.seti-sector-grid .card-game-wrap .card-back {
+  background-size: cover;
+  transform-origin: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  z-index: 1;
+}
+
+.seti-sector-grid .card-game-wrap :is(.card-front, .card-rev) {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: rotateX(0deg);
+  z-index: 2;
+}
+
+.seti-sector-grid .card-game-wrap .card-front {
+  z-index: 5;
+}
+
+.seti-sector-grid .card-game-wrap .card-rev {
+  transform: rotateY(180deg);
+}
+
+@keyframes sector-slice-fadein {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes sector-name-fadein {
+  from {
+    transform: translateY(-110%) scale(1.35);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}

@@ -20,7 +20,7 @@ describe('createGenericCard', () => {
   it('creates end-game card when END_GAME effect exists', () => {
     const card = createGenericCard(
       createBaseCard({
-        effects: [{ effectType: EEffectType.END_GAME, amount: 1 }],
+        effects: [{ effectType: EEffectType.END_GAME, desc: 'score test' }],
       }),
     );
     expect(card.kind).toBe(EServerCardKind.END_GAME);
@@ -29,7 +29,12 @@ describe('createGenericCard', () => {
   it('creates mission card when mission effect exists', () => {
     const card = createGenericCard(
       createBaseCard({
-        effects: [{ effectType: EEffectType.MISSION_QUICK, amount: 1 }],
+        effects: [
+          {
+            effectType: EEffectType.MISSION_QUICK,
+            missions: [{ req: [], reward: [] }],
+          },
+        ],
       }),
     );
     expect(card.kind).toBe(EServerCardKind.MISSION);

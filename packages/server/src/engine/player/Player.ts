@@ -1,4 +1,4 @@
-import { EResource } from '@seti/common/types/element';
+import { EResource, ETrace } from '@seti/common/types/element';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import type { ETechId } from '@seti/common/types/tech';
 import { GameError } from '@/shared/errors/GameError.js';
@@ -53,6 +53,8 @@ export class Player implements IPlayer {
   public tuckedIncomeCards: unknown[];
 
   public techs: ETechId[];
+
+  public traces: Partial<Record<ETrace, number>>;
 
   public passed: boolean;
 
@@ -114,6 +116,12 @@ export class Player implements IPlayer {
     this.endGameCards = [...(init.endGameCards ?? [])];
     this.tuckedIncomeCards = [...(init.tuckedIncomeCards ?? [])];
     this.techs = [...(init.techs ?? [])];
+    this.traces = {
+      [ETrace.RED]: init.traces?.[ETrace.RED] ?? 0,
+      [ETrace.YELLOW]: init.traces?.[ETrace.YELLOW] ?? 0,
+      [ETrace.BLUE]: init.traces?.[ETrace.BLUE] ?? 0,
+      [ETrace.ANY]: init.traces?.[ETrace.ANY] ?? 0,
+    };
 
     this.passed = init.passed ?? false;
     this.probesInSpace = init.probesInSpace ?? 0;

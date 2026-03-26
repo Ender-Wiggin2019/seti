@@ -39,6 +39,21 @@ export class SeededRandom {
     return shuffledItems;
   }
 
+  public getState(): number {
+    return this.state >>> 0;
+  }
+
+  public setState(state: number): void {
+    const normalized = state >>> 0;
+    this.state = normalized === 0 ? 1 : normalized;
+  }
+
+  public static fromState(seed: string, state: number): SeededRandom {
+    const random = new SeededRandom(seed);
+    random.setState(state);
+    return random;
+  }
+
   private static seedToUint32(seed: string): number {
     let hash = 2166136261;
 

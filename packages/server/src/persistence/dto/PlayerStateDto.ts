@@ -1,0 +1,51 @@
+import type { EResource, ETrace } from '@seti/common/types/element';
+import type { ETechId } from '@seti/common/types/tech';
+import type { TIncomeBundle } from '@/engine/player/Income.js';
+import type { EPieceType } from '@/engine/player/Pieces.js';
+
+export interface IPlayerPiecesStateDto {
+  totalInventory: Record<EPieceType, number>;
+  deployedInventory: Record<EPieceType, number>;
+}
+
+export interface IPlayerStateDto {
+  id: string;
+  name: string;
+  color: string;
+  seatIndex: number;
+  score: number;
+  passed: boolean;
+  probesInSpace: number;
+  probeSpaceLimit: number;
+  handLimitAfterPass: number;
+  resources: {
+    credits: number;
+    energy: number;
+    publicity: number;
+    data: number;
+  };
+  income: {
+    base: TIncomeBundle;
+    tucked: TIncomeBundle;
+  };
+  traces: Partial<Record<ETrace, number>>;
+  techs: ETechId[];
+  hand: unknown[];
+  playedMissions: unknown[];
+  completedMissions: unknown[];
+  endGameCards: unknown[];
+  tuckedIncomeCards: unknown[];
+  moveStashCount: number;
+  pendingCardDrawCount: number;
+  pendingAnyCardDrawCount: number;
+  dataState: {
+    pool: number;
+    stash: number;
+    poolMax: number;
+    computerTopSlots: Array<boolean>;
+    computerBottomSlots: Array<boolean>;
+  };
+  pieces: IPlayerPiecesStateDto;
+  waitingFor: null;
+  resourceByType: Partial<Record<EResource, number>>;
+}

@@ -21,9 +21,8 @@ export class ErrorBoundary extends React.Component<
     return { hasError: true };
   }
 
-  public componentDidCatch(error: unknown): void {
-    // Keep error logging centralized and non-blocking for scaffold stage.
-    console.error('Unhandled render error:', error);
+  public componentDidCatch(_error: unknown): void {
+    // Intentionally noop to avoid throwing inside the error boundary.
   }
 
   public render(): React.ReactNode {

@@ -68,15 +68,15 @@
 | # | Task | 并行/串行 | 状态 |
 |---|------|----------|------|
 | 3-1 | Card 体系 (基类, Behavior DSL, Registry) | **串行起始** | ✅ |
-| 3-2 | 基础卡牌实现 (~10 张代表卡) | 依赖 3-1 | ⬜ |
-| 3-3 | Milestone + GoldScoringTile + FinalScoring | 与 3-1 并行 | ⬜ |
+| 3-2 | 基础卡牌实现 (~10 张代表卡) | 依赖 3-1 | ✅ |
+| 3-3 | Milestone + GoldScoringTile + FinalScoring | 与 3-1 并行 | ✅ |
 
 ## Stage 4: Persistence & Network (持久化 & 网络层)
 
 | # | Task | 并行/串行 | 状态 |
 |---|------|----------|------|
-| 4-1 | 序列化/反序列化 (GameSerializer) | **串行起始** | ⬜ |
-| 4-2 | Drizzle Schema + Repository + Undo | 依赖 4-1 | ⬜ |
+| 4-1 | 序列化/反序列化 (GameSerializer) | **串行起始** | ✅ |
+| 4-2 | Drizzle Schema + Repository + Undo | 依赖 4-1 | ✅ |
 | 4-3 | REST API (Auth + Lobby) | 与 4-2 并行 | ⬜ |
 | 4-4 | WebSocket Gateway (game:action/state/waiting) | 依赖 4-1, 4-2 | ⬜ |
 

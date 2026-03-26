@@ -5,8 +5,6 @@
  * @LastEditTime: 2026-03-26 16:44:37
  * @Description:
  */
-import { EErrorCode } from '@seti/common/types/protocol/errors';
-import { GameError } from '@/shared/errors/GameError.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
 

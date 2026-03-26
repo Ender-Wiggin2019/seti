@@ -212,7 +212,6 @@ export function buildMoveAction(
 ): IMovementFreeActionRequest {
   return {
     type: EFreeAction.MOVEMENT,
-    fromSpaceId,
-    toSpaceId,
+    path: [fromSpaceId, toSpaceId],
   };
 }

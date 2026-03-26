@@ -11,6 +11,8 @@
       "!./coverage",
       "!**/.next",
       "!./.next/",
+      "!**/.turbo",
+      "!**/.turbo/**",
       "!./out/",
       "!./build",
       "!**/.DS_Store",

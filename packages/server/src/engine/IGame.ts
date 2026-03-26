@@ -3,9 +3,11 @@ import type {
   IInputResponse,
   IMainActionRequest,
 } from '@seti/common/types/protocol/actions';
+import type { EAlienType } from '@seti/common/types/protocol/enums';
 import { EPhase } from '@seti/common/types/protocol/enums';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
 import type { PlanetaryBoard } from './board/PlanetaryBoard.js';
+import type { Sector } from './board/Sector.js';
 import type { SolarSystem } from './board/SolarSystem.js';
 import type { EMarkSource } from './cards/utils/Mark.js';
 import type { Deck } from './deck/Deck.js';
@@ -15,6 +17,9 @@ import type { IGameOptions } from './GameOptions.js';
 import type { IPlayerInput } from './input/PlayerInput.js';
 import type { MissionTracker } from './missions/MissionTracker.js';
 import type { IPlayer } from './player/IPlayer.js';
+import type { IFinalScoringResult } from './scoring/FinalScoring.js';
+import type { GoldScoringTile } from './scoring/GoldScoringTile.js';
+import type { MilestoneState } from './scoring/Milestone.js';
 import type { TechBoard } from './tech/TechBoard.js';
 
 export interface IGamePlayerIdentity {
@@ -26,6 +31,7 @@ export interface IGamePlayerIdentity {
 
 export interface IGame {
   readonly id: string;
+  readonly seed: string;
   readonly options: Readonly<IGameOptions>;
   readonly players: ReadonlyArray<IPlayer>;
 
@@ -37,12 +43,16 @@ export interface IGame {
   solarSystem: SolarSystem | null;
   planetaryBoard: PlanetaryBoard | null;
   techBoard: TechBoard | null;
-  sectors: unknown[];
+  sectors: Sector[];
+
+  milestoneState: MilestoneState;
+  goldScoringTiles: GoldScoringTile[];
+  finalScoringResult?: IFinalScoringResult;
 
   mainDeck: Deck<string>;
   cardRow: unknown[];
   endOfRoundStacks: unknown[][];
-  hiddenAliens: string[];
+  hiddenAliens: EAlienType[];
   neutralMilestones: number[];
   roundRotationReminderIndex: number;
 

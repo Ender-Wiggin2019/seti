@@ -60,7 +60,15 @@ export class OrbitProbeEffect {
     }
 
     player.probesInSpace = Math.max(0, player.probesInSpace - 1);
-    const orbitResult = game.planetaryBoard!.orbit(planet, player.id);
+    const planetaryBoard = game.planetaryBoard;
+    if (planetaryBoard === null) {
+      throw new GameError(
+        EErrorCode.INTERNAL_SERVER_ERROR,
+        'Planetary board not initialized',
+      );
+    }
+
+    const orbitResult = planetaryBoard.orbit(planet, player.id);
     syncProbeCountsForPlayer(game, player.id);
     player.score += orbitResult.vpGained;
 

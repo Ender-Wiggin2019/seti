@@ -4,6 +4,7 @@ import type {
   IInputResponse,
   IMainActionRequest,
 } from '@seti/common/types/protocol/actions';
+import type { EAlienType } from '@seti/common/types/protocol/enums';
 import {
   EMainAction,
   EPhase,
@@ -16,11 +17,15 @@ import { LandAction } from './actions/Land.js';
 import { OrbitAction } from './actions/Orbit.js';
 import { PlayCardAction } from './actions/PlayCard.js';
 import type { PlanetaryBoard } from './board/PlanetaryBoard.js';
+import type { Sector } from './board/Sector.js';
 import type { SolarSystem } from './board/SolarSystem.js';
 import { type EMarkSource, Mark } from './cards/utils/Mark.js';
 import { Deck } from './deck/Deck.js';
 import { DeferredActionsQueue } from './deferred/DeferredActionsQueue.js';
 import { EPriority } from './deferred/Priority.js';
+import { ResolveDiscovery } from './deferred/ResolveDiscovery.js';
+import { ResolveMilestone } from './deferred/ResolveMilestone.js';
+import { ResolveSectorCompletion } from './deferred/ResolveSectorCompletion.js';
 import { SimpleDeferredAction } from './deferred/SimpleDeferredAction.js';
 import { EventLog } from './event/EventLog.js';
 import {
@@ -38,12 +43,20 @@ import { MissionTracker } from './missions/MissionTracker.js';
 import { assertValidPhaseTransition } from './Phase.js';
 import type { IPlayer } from './player/IPlayer.js';
 import { Player } from './player/Player.js';
+import {
+  FinalScoring,
+  type IFinalScoringResult,
+} from './scoring/FinalScoring.js';
+import type { GoldScoringTile } from './scoring/GoldScoringTile.js';
+import { MilestoneState } from './scoring/Milestone.js';
 import type { TechBoard } from './tech/TechBoard.js';
 
 const MAX_ROUNDS = 5;
 
 export class Game implements IGame {
   public readonly id: string;
+
+  public readonly seed: string;
 
   public readonly options: Readonly<IGameOptions>;
 
@@ -63,7 +76,13 @@ export class Game implements IGame {
 
   public techBoard: TechBoard | null;
 
-  public sectors: unknown[];
+  public sectors: Sector[];
+
+  public milestoneState: MilestoneState;
+
+  public goldScoringTiles: GoldScoringTile[];
+
+  public finalScoringResult?: IFinalScoringResult;
 
   public mainDeck: Deck<string>;
 
@@ -71,7 +90,7 @@ export class Game implements IGame {
 
   public endOfRoundStacks: unknown[][];
 
-  public hiddenAliens: string[];
+  public hiddenAliens: EAlienType[];
 
   public neutralMilestones: number[];
 
@@ -96,6 +115,7 @@ export class Game implements IGame {
     seed: string,
   ) {
     this.id = id;
+    this.seed = seed;
     this.players = playerIdentities.map(
       (playerIdentity) => new Player(playerIdentity),
     );
@@ -110,6 +130,8 @@ export class Game implements IGame {
     this.planetaryBoard = null;
     this.techBoard = null;
     this.sectors = [];
+    this.milestoneState = new MilestoneState([]);
+    this.goldScoringTiles = [];
     this.mainDeck = new Deck<string>();
     this.cardRow = [];
     this.endOfRoundStacks = [];
@@ -123,6 +145,7 @@ export class Game implements IGame {
     this.random = new SeededRandom(seed);
     this.rotationCounter = 0;
     this.hasRoundFirstPassOccurred = false;
+    this.finalScoringResult = undefined;
 
     this.players.forEach((player) => player.bindGame(this));
   }
@@ -359,6 +382,7 @@ export class Game implements IGame {
         (game) => game.missionTracker.checkAndPromptTriggers(player, game),
         EPriority.CARD_TRIGGER,
       ),
+      new ResolveSectorCompletion(player),
     ]);
   }
 
@@ -372,14 +396,8 @@ export class Game implements IGame {
         },
         EPriority.MILESTONE,
       ),
-      new SimpleDeferredAction(
-        player,
-        (game) => {
-          game.eventLog.append(createActionEvent(player.id, 'DISCOVERY_CHECK'));
-          return undefined;
-        },
-        EPriority.DISCOVERY,
-      ),
+      new ResolveMilestone(player),
+      new ResolveDiscovery(player),
       new SimpleDeferredAction(
         player,
         () => {
@@ -428,10 +446,12 @@ export class Game implements IGame {
 
     if (this.round >= MAX_ROUNDS) {
       this.transitionTo(EPhase.FINAL_SCORING);
-      const finalScores = Object.fromEntries(
-        this.players.map((player) => [player.id, player.score]),
-      );
-      this.eventLog.append(createGameEndEvent(finalScores));
+      this.finalScoringResult = FinalScoring.score(this);
+      for (const player of this.players) {
+        player.score =
+          this.finalScoringResult.scores[player.id] ?? player.score;
+      }
+      this.eventLog.append(createGameEndEvent(this.finalScoringResult.scores));
       this.transitionTo(EPhase.GAME_OVER);
       return;
     }

@@ -34,7 +34,15 @@ export class LaunchProbeEffect {
       );
     }
 
-    const earthSpaces = game.solarSystem!.getSpacesOnPlanet(EPlanet.EARTH);
+    const solarSystem = game.solarSystem;
+    if (solarSystem === null) {
+      throw new GameError(
+        EErrorCode.INTERNAL_SERVER_ERROR,
+        'Solar system not initialized',
+      );
+    }
+
+    const earthSpaces = solarSystem.getSpacesOnPlanet(EPlanet.EARTH);
     if (earthSpaces.length === 0) {
       throw new GameError(
         EErrorCode.INTERNAL_SERVER_ERROR,
@@ -43,7 +51,7 @@ export class LaunchProbeEffect {
     }
 
     const earthSpaceId = earthSpaces[0].id;
-    const probe = game.solarSystem!.placeProbe(player.id, earthSpaceId);
+    const probe = solarSystem.placeProbe(player.id, earthSpaceId);
     player.probesInSpace += 1;
 
     return { probeId: probe.id, spaceId: earthSpaceId };

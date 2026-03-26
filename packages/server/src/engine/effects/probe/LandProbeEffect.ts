@@ -65,7 +65,15 @@ export class LandProbeEffect {
       );
     }
 
-    const baseCost = game.planetaryBoard!.getLandingCost(planet, player.id);
+    const planetaryBoard = game.planetaryBoard;
+    if (planetaryBoard === null) {
+      throw new GameError(
+        EErrorCode.INTERNAL_SERVER_ERROR,
+        'Planetary board not initialized',
+      );
+    }
+
+    const baseCost = planetaryBoard.getLandingCost(planet, player.id);
     return TechModifierQuery.fromTechIds(player.techs).getLandingCost(baseCost);
   }
 
@@ -110,7 +118,15 @@ export class LandProbeEffect {
     const moonLandingEnabled = TechModifierQuery.fromTechIds(
       player.techs,
     ).canLandOnMoon();
-    const landingResult = game.planetaryBoard!.land(planet, player.id, {
+    const planetaryBoard = game.planetaryBoard;
+    if (planetaryBoard === null) {
+      throw new GameError(
+        EErrorCode.INTERNAL_SERVER_ERROR,
+        'Planetary board not initialized',
+      );
+    }
+
+    const landingResult = planetaryBoard.land(planet, player.id, {
       isMoon: options.isMoon,
       allowMoonLanding: moonLandingEnabled,
     });
