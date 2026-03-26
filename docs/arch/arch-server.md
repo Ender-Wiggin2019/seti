@@ -153,6 +153,16 @@ packages/server/
 │       └── errors/
 │           └── GameError.ts
 │
+├── __tests__/                        # Unit tests, mirrors src/ directory structure
+│   ├── engine/
+│   │   ├── Game.test.ts
+│   │   ├── actions/
+│   │   ├── board/
+│   │   ├── player/
+│   │   └── ...
+│   └── shared/
+│       ├── errors/
+│       └── rng/
 ├── drizzle.config.ts
 ├── package.json
 ├── tsconfig.json
@@ -976,7 +986,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['__tests__/**/*.test.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
@@ -992,141 +1002,73 @@ export default defineConfig({
 
 #### 1:1 单测文件规则
 
-**每个源文件必须有对应单测文件**，放在同目录下，命名为 `<SourceFile>.test.ts`：
+**每个源文件必须有对应单测文件**，放在包根目录的 `__tests__/` 文件夹中，镜像 `src/` 的目录结构，命名为 `<SourceFile>.test.ts`：
 
 ```
-src/engine/
-├── Game.ts
-├── Game.test.ts                    ← 对应 Game.ts
-├── player/
-│   ├── Player.ts
-│   ├── Player.test.ts              ← 对应 Player.ts
-│   ├── Resources.ts
-│   ├── Resources.test.ts           ← 对应 Resources.ts
-│   ├── Computer.ts
-│   ├── Computer.test.ts
-│   ├── DataPool.ts
-│   ├── DataPool.test.ts
-│   ├── Income.ts
-│   ├── Income.test.ts
-│   ├── Pieces.ts
-│   └── Pieces.test.ts
-├── board/
-│   ├── SolarSystem.ts
-│   ├── SolarSystem.test.ts
-│   ├── Sector.ts
-│   ├── Sector.test.ts
-│   ├── PlanetaryBoard.ts
-│   ├── PlanetaryBoard.test.ts
-│   ├── TechBoard.ts
-│   └── TechBoard.test.ts
-├── actions/
-│   ├── LaunchProbe.ts
-│   ├── LaunchProbe.test.ts
-│   ├── Orbit.ts
-│   ├── Orbit.test.ts
-│   ├── Land.ts
-│   ├── Land.test.ts
-│   ├── Scan.ts
-│   ├── Scan.test.ts
-│   ├── AnalyzeData.ts
-│   ├── AnalyzeData.test.ts
-│   ├── PlayCard.ts
-│   ├── PlayCard.test.ts
-│   ├── ResearchTech.ts
-│   ├── ResearchTech.test.ts
-│   ├── Pass.ts
-│   └── Pass.test.ts
-├── freeActions/
-│   ├── Movement.ts
-│   ├── Movement.test.ts
-│   ├── ...（每个 free action 同理）
-├── input/
-│   ├── PlayerInput.ts
-│   ├── PlayerInput.test.ts
-│   ├── OrOptions.ts
-│   ├── OrOptions.test.ts
-│   ├── ...（每个 input type 同理）
-├── deferred/
-│   ├── DeferredAction.ts
-│   ├── DeferredAction.test.ts
-│   ├── DeferredActionsQueue.ts
-│   ├── DeferredActionsQueue.test.ts
-│   ├── Priority.ts
-│   ├── Priority.test.ts
-│   ├── ...（每个 deferred action 同理）
-├── cards/
-│   ├── Card.ts
-│   ├── Card.test.ts
-│   ├── CardRegistry.ts
-│   ├── CardRegistry.test.ts
-│   ├── Behavior.ts
-│   ├── Behavior.test.ts
-│   ├── BehaviorExecutor.ts
-│   ├── BehaviorExecutor.test.ts
-│   ├── Requirements.ts
-│   ├── Requirements.test.ts
-│   ├── base/
-│   │   ├── CardXxx.ts
-│   │   └── CardXxx.test.ts        ← 每张卡牌一个单测
-│   └── alien/
-│       ├── ...（同理）
-├── alien/
-│   ├── AlienRegistry.ts
-│   ├── AlienRegistry.test.ts
-│   ├── Anomalies.ts
-│   ├── Anomalies.test.ts
-│   └── ...（每个 alien module 同理）
-├── scoring/
-│   ├── Milestone.ts
-│   ├── Milestone.test.ts
-│   ├── GoldScoringTile.ts
-│   ├── GoldScoringTile.test.ts
-│   ├── FinalScoring.ts
-│   └── FinalScoring.test.ts
-├── deck/
-│   ├── Deck.ts
-│   ├── Deck.test.ts
-│   ├── MainDeck.ts
-│   ├── MainDeck.test.ts
-│   ├── AlienDeck.ts
-│   └── AlienDeck.test.ts
-├── event/
-│   ├── GameEvent.ts
-│   ├── GameEvent.test.ts
-│   ├── EventLog.ts
-│   └── EventLog.test.ts
-└── ...
+packages/server/
+├── src/
+│   └── engine/
+│       ├── Game.ts
+│       ├── player/
+│       │   ├── Player.ts
+│       │   ├── Resources.ts
+│       │   └── ...
+│       ├── actions/
+│       │   ├── LaunchProbe.ts
+│       │   └── ...
+│       └── ...
+│
+└── __tests__/                          ← 测试文件独立目录，镜像 src/ 结构
+    └── engine/
+        ├── Game.test.ts                ← 对应 src/engine/Game.ts
+        ├── player/
+        │   ├── Player.test.ts          ← 对应 src/engine/player/Player.ts
+        │   ├── Resources.test.ts
+        │   ├── Computer.test.ts
+        │   ├── DataPool.test.ts
+        │   ├── Income.test.ts
+        │   └── Pieces.test.ts
+        ├── board/
+        │   ├── SolarSystem.test.ts
+        │   ├── Sector.test.ts
+        │   ├── PlanetaryBoard.test.ts
+        │   └── BoardBuilder.test.ts
+        ├── actions/
+        │   ├── LaunchProbe.test.ts
+        │   ├── Orbit.test.ts
+        │   ├── Land.test.ts
+        │   ├── Scan.test.ts
+        │   ├── AnalyzeData.test.ts
+        │   ├── PlayCard.test.ts
+        │   ├── ResearchTech.test.ts
+        │   └── Pass.test.ts
+        ├── tech/
+        │   └── TechBoard.test.ts
+        ├── input/
+        │   ├── PlayerInput.test.ts
+        │   ├── OrOptions.test.ts
+        │   ├── AndOptions.test.ts
+        │   └── SelectOption.test.ts
+        ├── deferred/
+        │   ├── DeferredAction.test.ts
+        │   ├── DeferredActionsQueue.test.ts
+        │   └── Priority.test.ts
+        ├── deck/
+        │   ├── Deck.test.ts
+        │   ├── MainDeck.test.ts
+        │   └── AlienDeck.test.ts
+        └── event/
+            ├── GameEvent.test.ts
+            └── EventLog.test.ts
+```
 
-src/persistence/
-├── serializer/
-│   ├── GameSerializer.ts
-│   ├── GameSerializer.test.ts
-│   ├── GameDeserializer.ts
-│   └── GameDeserializer.test.ts
-├── repository/
-│   ├── GameRepository.ts
-│   ├── GameRepository.test.ts      ← 需要 DB mock
-│   └── ...
+测试文件使用 `@/` 路径别名引用源文件（vitest.config.ts 中配置了 `@/ → ./src/`），而非相对路径：
 
-src/gateway/
-├── game.gateway.ts
-├── game.gateway.test.ts            ← NestJS testing module
-└── ...
-
-src/lobby/
-├── lobby.controller.ts
-├── lobby.controller.test.ts
-├── lobby.service.ts
-└── lobby.service.test.ts
-
-src/shared/
-├── rng/
-│   ├── SeededRandom.ts
-│   └── SeededRandom.test.ts
-└── errors/
-    ├── GameError.ts
-    └── GameError.test.ts
+```typescript
+// __tests__/engine/actions/LaunchProbe.test.ts
+import { LaunchProbeAction } from '@/engine/actions/LaunchProbe.js';
+import { Player } from '@/engine/player/Player.js';
+import type { IGame } from '@/engine/IGame.js';
 ```
 
 #### 测试分层策略

@@ -8,6 +8,7 @@ import {
 import { AppShell } from '@/components/layout/AppShell';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AuthPage } from '@/pages/auth/AuthPage';
+import { GameDebugPage } from '@/pages/game/GameDebugPage';
 import { GamePage, SpectatePage } from '@/pages/game/GamePage';
 import { LobbyPage } from '@/pages/lobby/LobbyPage';
 import { RoomPage } from '@/pages/lobby/RoomPage';
@@ -93,6 +94,12 @@ const spectateRoute = createRoute({
   ),
 });
 
+const gameDebugRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/debug/game',
+  component: GameDebugPage,
+});
+
 const routeTree = rootRoute.addChildren([
   appLayoutRoute.addChildren([
     indexRoute,
@@ -103,6 +110,7 @@ const routeTree = rootRoute.addChildren([
   ]),
   gameRoute,
   spectateRoute,
+  gameDebugRoute,
 ]);
 
 export const router = createRouter({ routeTree });

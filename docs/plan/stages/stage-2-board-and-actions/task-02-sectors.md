@@ -98,14 +98,14 @@ function getSectorStandings(sector: IPublicSectorState): Array<{ playerId: strin
 5. 从 `packages/common/src/rules/index.ts` 统一导出
 
 ### 新增完成标准
-- [ ] `common/rules/sector.ts` 纯函数已实现
-- [ ] 纯函数单测通过
-- [ ] Server 的 Sector 类与 common 规则逻辑一致
-- [ ] `IPublicSectorState` 字段满足 Client 计算需求
+- [x] `common/rules/sector.ts` 纯函数已实现
+- [x] 纯函数单测通过
+- [x] Server 的 Sector 类与 common 规则逻辑一致
+- [x] `IPublicSectorState` 字段满足 Client 计算需求
 
 ## 完成标准
 - [x] Sector 完整实现
 - [x] 完成结算逻辑符合 PRD §7.4
 - [x] 平局打破规则正确
 - [x] 所有单测通过
-- [ ] 🔄 Common 规则函数提取完成（见上方 Rework 小节）
+- [x] 🔄 Common 规则函数提取完成（见上方 Rework 小节）

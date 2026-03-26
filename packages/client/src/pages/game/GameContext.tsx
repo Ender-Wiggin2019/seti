@@ -53,6 +53,11 @@ interface IGameContextProviderProps {
   children: ReactNode;
 }
 
+interface IGameContextValueProviderProps {
+  value: IGameContext;
+  children: ReactNode;
+}
+
 export function GameContextProvider({
   gameId,
   spectate = false,
@@ -133,5 +138,12 @@ export function GameContextProvider({
     ],
   );
 
+  return <GameCtx.Provider value={value}>{children}</GameCtx.Provider>;
+}
+
+export function GameContextValueProvider({
+  value,
+  children,
+}: IGameContextValueProviderProps): React.JSX.Element {
   return <GameCtx.Provider value={value}>{children}</GameCtx.Provider>;
 }

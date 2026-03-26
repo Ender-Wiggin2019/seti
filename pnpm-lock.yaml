@@ -57,6 +57,9 @@ importers:
 
   packages/client:
     dependencies:
+      '@seti/cards':
+        specifier: workspace:@ender-seti/cards@*
+        version: link:../cards
       '@seti/common':
         specifier: workspace:@ender-seti/common@*
         version: link:../common
@@ -158,6 +161,9 @@ importers:
       tsup:
         specifier: ^8.5.0
         version: 8.5.1(typescript@4.9.5)
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/node@22.19.15)(jsdom@26.1.0)(msw@2.12.14)
 
   packages/server:
     dependencies:

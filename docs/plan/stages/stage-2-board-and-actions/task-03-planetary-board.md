@@ -108,10 +108,10 @@ function getFirstLandBonusRemaining(planet: IPublicPlanetState): number;
 5. 从 `packages/common/src/rules/index.ts` 统一导出
 
 ### 新增完成标准
-- [ ] `common/rules/planet.ts` 纯函数已实现
-- [ ] 纯函数单测通过
-- [ ] Server 的 PlanetaryBoard 与 common 规则逻辑一致
-- [ ] `IPublicPlanetState` 字段满足 Client 计算需求
+- [x] `common/rules/planet.ts` 纯函数已实现
+- [x] 纯函数单测通过
+- [x] Server 的 PlanetaryBoard 与 common 规则逻辑一致
+- [x] `IPublicPlanetState` 字段满足 Client 计算需求
 
 ## 完成标准
 - [x] PlanetaryBoard 完整实现
@@ -119,4 +119,4 @@ function getFirstLandBonusRemaining(planet: IPublicPlanetState): number;
 - [x] 首次奖励机制正确
 - [x] 月球解锁/占位逻辑正确
 - [x] 所有单测通过
-- [ ] 🔄 Common 规则函数提取完成（见上方 Rework 小节）
+- [x] 🔄 Common 规则函数提取完成（见上方 Rework 小节）

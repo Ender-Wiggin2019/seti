@@ -64,6 +64,7 @@
     "build": "tsup --config tsup.config.ts && mkdir -p dist/locales && cp -R locales/* dist/locales/",
     "clean": "rm -rf dist",
     "lint": "biome check src",
+    "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -72,6 +73,7 @@
   "devDependencies": {
     "@types/node": "^22.15.3",
     "@types/uuid": "^10.0.0",
-    "tsup": "^8.5.0"
+    "tsup": "^8.5.0",
+    "vitest": "^3.2.4"
   }
 }

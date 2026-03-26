@@ -1,4 +1,4 @@
-import type { IPublicSectorState } from '@seti/common/types/protocol/gameState';
+import type { IPublicSectorState } from '../types/protocol/gameState';
 
 export interface ISectorProgress {
   filled: number;

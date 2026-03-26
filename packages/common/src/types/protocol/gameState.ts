@@ -57,12 +57,23 @@ export interface IPublicSolarSystemDiscState {
   angle: number;
 }
 
-export interface IPublicSolarSystem {
+export interface IPublicSolarSystemSpaceState {
+  spaceId: string;
+  ringIndex: number;
+  indexInRing: number;
+  hasPublicityIcon: boolean;
+  elementTypes: string[];
+}
+
+export interface IPublicSolarSystemState {
   spaces: string[];
   adjacency: Record<string, string[]>;
   probes: IPublicSolarSystemProbe[];
   discs: IPublicSolarSystemDiscState[];
+  spaceStates?: Record<string, IPublicSolarSystemSpaceState>;
 }
+
+export type IPublicSolarSystem = IPublicSolarSystemState;
 
 export interface IPublicSectorMarkerState {
   playerId: string;
@@ -130,6 +141,8 @@ export interface IPublicGameState {
   planetaryBoard: IPublicPlanetaryBoard;
   techBoard: IPublicTechBoard;
   cardRow: IBaseCard[];
+  endOfRoundStacks?: IBaseCard[][];
+  currentEndOfRoundStackIndex?: number;
   aliens: IPublicAlienState[];
   recentEvents: TGameEvent[];
 }

@@ -9,15 +9,21 @@
     "types": ["vite/client", "vitest/globals", "node"],
     "paths": {
       "@/*": ["./src/*"],
+      "@seti/cards": ["../cards/src/index.ts"],
+      "@seti/cards/*": ["../cards/src/*"],
+      "@ender-seti/cards": ["../cards/src/index.ts"],
+      "@ender-seti/cards/*": ["../cards/src/*"],
       "@seti/common/*": ["../common/src/*"],
       "@ender-seti/common/*": ["../common/src/*"]
     }
   },
   "include": [
+    "__tests__",
     "src",
     "test",
     "vite.config.ts",
     "vitest.config.ts",
     "tailwind.config.ts"
-  ]
+  ],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }

@@ -163,13 +163,34 @@ packages/client/
 │       ├── client.ts                # Client-only types (UI state, view models)
 │       └── re-exports.ts            # Re-export from @seti/common/types/protocol
 │
+├── __tests__/                         # Unit tests, mirrors src/ directory structure
+│   ├── components/
+│   │   ├── ErrorBoundary.test.tsx
+│   │   └── ProtectedRoute.test.tsx
+│   ├── features/
+│   │   ├── board/
+│   │   │   ├── SolarSystemView.test.tsx
+│   │   │   └── ...
+│   │   ├── cards/
+│   │   │   └── ...
+│   │   └── input/
+│   │       └── ...
+│   ├── pages/
+│   │   └── game/
+│   │       ├── GameLayout.test.tsx
+│   │       └── GamePage.test.tsx
+│   └── stores/
+│       ├── authStore.test.ts
+│       ├── gameViewStore.test.ts
+│       └── settingsStore.test.ts
+│
 ├── test/
 │   ├── setup.ts                     # Vitest setup (jsdom, MSW, etc.)
 │   ├── mocks/
 │   │   ├── handlers.ts              # MSW request handlers
 │   │   ├── gameState.ts             # Mock IPublicGameState fixtures
 │   │   └── socket.ts                # Mock Socket.IO client
-│   └── ...                          # Co-located tests preferred
+│   └── ...
 │
 └── e2e/
     └── ...                          # Playwright E2E tests (future)
@@ -1089,7 +1110,7 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./test/setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ['__tests__/**/*.test.{ts,tsx}'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],

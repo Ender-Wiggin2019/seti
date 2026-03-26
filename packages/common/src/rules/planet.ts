@@ -1,12 +1,12 @@
-import { EResource } from '@seti/common/types/element';
 import type {
   IPublicGameState,
   IPublicPlanetState,
   IPublicPlayerState,
-} from '@seti/common/types/protocol/gameState';
+} from '../types/protocol/gameState';
 
 const LANDING_COST_DEFAULT = 3;
 const LANDING_COST_WITH_ORBITER = 2;
+const ENERGY_RESOURCE_KEY = 'energy';
 
 /** 计算着陆费用 (有轨道者时 2, 否则 3) */
 export function getLandingCost(
@@ -45,7 +45,10 @@ export function canLandOnPlanet(
     return false;
   }
 
-  const energy = player.resources[EResource.ENERGY];
+  const energy =
+    (player.resources as unknown as Record<string, number>)[
+      ENERGY_RESOURCE_KEY
+    ] ?? 0;
   return energy >= getLandingCost(planet, player.playerId);
 }
 

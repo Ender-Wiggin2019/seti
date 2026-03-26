@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -p tsconfig.build.json && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -14,6 +14,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@seti/cards": "workspace:@ender-seti/cards@*",
     "@seti/common": "workspace:@ender-seti/common@*",
     "@tanstack/react-query": "^5.90.7",
     "@tanstack/react-router": "^1.132.23",

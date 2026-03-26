@@ -2,10 +2,20 @@ import { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TopBar } from '@/components/layout/TopBar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { cn } from '@/lib/cn';
+import { PlanetaryBoardView } from '@/features/board/PlanetaryBoardView';
+import {
+  buildMoveAction,
+  SolarSystemView,
+} from '@/features/board/SolarSystemView';
+import { TechBoardView } from '@/features/board/TechBoardView';
+import { CardDetail } from '@/features/cards/CardDetail';
+import { CardRowView } from '@/features/cards/CardRowView';
+import { EndOfRoundStacks } from '@/features/cards/EndOfRoundStacks';
+import { InputRenderer } from '@/features/input/InputRenderer';
 import { useGameContext } from '@/pages/game/GameContext';
 import { GameOverDialog } from '@/pages/game/GameOverDialog';
 import { type TBoardTab, useGameViewStore } from '@/stores/gameViewStore';
+import { EPlayerInputType } from '@/types/re-exports';
 
 const BOARD_TABS: { value: TBoardTab; label: string }[] = [
   { value: 'board', label: 'Board' },
@@ -75,7 +85,18 @@ function BoardTabs({
   activeTab: TBoardTab;
   onTabChange: (tab: TBoardTab) => void;
 }): React.JSX.Element {
-  const { gameState } = useGameContext();
+  const { gameState, myPlayerId, pendingInput, sendFreeAction, sendInput } =
+    useGameContext();
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailCardId, setDetailCardId] = useState<string | null>(null);
+
+  const playerColors =
+    gameState?.players.reduce<Record<string, string>>((acc, p) => {
+      acc[p.playerId] = p.color;
+      return acc;
+    }, {}) ?? {};
+  const detailCard =
+    gameState?.cardRow.find((card) => card.id === detailCardId) ?? null;
 
   return (
     <Tabs
@@ -96,68 +117,75 @@ function BoardTabs({
 
       <div className='min-h-0 flex-1 overflow-auto p-4'>
         <TabsContent value='board' className='mt-0 h-full'>
-          <BoardPlaceholder
-            title='Main Board'
-            description='Solar system (4 concentric rings) with 8 sectors arranged as the outer perimeter. Card market above, probes overlaid.'
-            bgImage='/assets/seti/boards/_board.png'
-          >
+          <div className='space-y-3'>
             {gameState && (
-              <div className='mt-3 grid grid-cols-4 gap-2'>
-                {gameState.sectors.map((s) => (
-                  <div
-                    key={s.sectorId}
-                    className={cn(
-                      'rounded border border-surface-700/60 bg-surface-800/40 px-2 py-1.5 text-center font-mono text-xs',
-                      s.completed && 'border-accent-500/40 bg-accent-500/10',
-                    )}
-                  >
-                    <span className='text-text-300'>{s.color}</span>
-                    {s.completed && (
-                      <span className='ml-1 text-accent-400'>OK</span>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <SolarSystemView
+                solarSystem={gameState.solarSystem}
+                sectors={gameState.sectors}
+                pendingInput={pendingInput}
+                playerColors={playerColors}
+                myPlayerId={myPlayerId}
+                onMoveProbe={(fromSpaceId, toSpaceId) => {
+                  sendFreeAction(buildMoveAction(fromSpaceId, toSpaceId));
+                }}
+                onRespondInput={sendInput}
+              />
             )}
-          </BoardPlaceholder>
+          </div>
         </TabsContent>
 
         <TabsContent value='planets' className='mt-0 h-full'>
-          <BoardPlaceholder
-            title='Planetary Board'
-            description='Planets with orbit/landing slots, moon availability, and first-arrive bonuses.'
-            bgImage='/assets/seti/boards/planetBoard.jpg'
-          />
+          {gameState && (
+            <PlanetaryBoardView
+              planetaryBoard={gameState.planetaryBoard}
+              pendingInput={pendingInput}
+              playerColors={playerColors}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value='tech' className='mt-0 h-full'>
-          <BoardPlaceholder
-            title='Tech Board'
-            description='12 tech stacks grid with 2VP tiles and player acquisition markers.'
-          >
-            {gameState && gameState.techBoard.stacks.length > 0 && (
-              <div className='mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4'>
-                {gameState.techBoard.stacks.map((stack) => (
-                  <div
-                    key={stack.tech}
-                    className='rounded border border-surface-700/60 bg-surface-800/40 px-2 py-1.5 text-center font-mono text-xs'
-                  >
-                    <span className='text-text-300'>{stack.tech}</span>
-                    <span className='ml-1 text-text-500'>
-                      x{stack.remainingTiles}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </BoardPlaceholder>
+          {gameState && (
+            <TechBoardView
+              techBoard={gameState.techBoard}
+              players={gameState.players}
+              pendingInput={pendingInput}
+              playerColors={playerColors}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value='cards' className='mt-0 h-full'>
-          <BoardPlaceholder
-            title='Cards'
-            description='Card market (3 open cards) and end-of-round card stacks.'
-          />
+          {gameState && (
+            <div className='space-y-3'>
+              <CardRowView
+                cards={gameState.cardRow}
+                mode={
+                  pendingInput?.type === EPlayerInputType.CARD
+                    ? 'discard'
+                    : 'idle'
+                }
+                onCardInspect={(card) => {
+                  setDetailCardId(card.id);
+                  setDetailOpen(true);
+                }}
+              />
+              <EndOfRoundStacks
+                stacks={gameState.endOfRoundStacks ?? [[], [], [], []]}
+                currentRoundIndex={gameState.currentEndOfRoundStackIndex ?? 0}
+                mode={
+                  pendingInput?.type === EPlayerInputType.END_OF_ROUND
+                    ? 'select'
+                    : 'idle'
+                }
+              />
+              <CardDetail
+                card={detailCard}
+                open={detailOpen}
+                onOpenChange={setDetailOpen}
+              />
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value='aliens' className='mt-0 h-full'>
@@ -235,7 +263,8 @@ function BoardPlaceholder({
 }
 
 function BottomBar(): React.JSX.Element {
-  const { gameState, myPlayerId, isMyTurn, pendingInput } = useGameContext();
+  const { gameState, myPlayerId, isMyTurn, pendingInput, sendInput } =
+    useGameContext();
 
   const myPlayer = gameState?.players.find((p) => p.playerId === myPlayerId);
 
@@ -285,7 +314,7 @@ function BottomBar(): React.JSX.Element {
           </h4>
           {pendingInput ? (
             <div className='rounded border border-accent-500/30 bg-accent-500/10 px-3 py-2 text-xs text-accent-400'>
-              Input required: {pendingInput.type}
+              <InputRenderer model={pendingInput} onSubmit={sendInput} />
             </div>
           ) : isMyTurn ? (
             <p className='text-xs text-accent-400'>Choose your action...</p>

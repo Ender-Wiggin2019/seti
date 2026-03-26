@@ -58,6 +58,33 @@ packages/client/src/features/board/
 6. 交互: onClick handler on spaces → sendFreeAction / sendInput
 7. 高亮: 可到达空间使用脉冲边框或发光遮罩（不依赖 SVG）
 
+## 实施拆分（先细化）
+
+### Step A: 资源与底座（最小可见）
+- 建立 `SolarSystemView` 容器，固定 1:1 比例，接入 `wheels/` 4 层图片
+- 输出 `WheelLayer`，支持按 `disc.angle` 做 45° 步进旋转
+- 先完成纯展示，不接交互
+
+### Step B: 空间热点与坐标映射
+- 基于 32 个 space（4 环 x 8 方位）生成绝对定位热点
+- 使用 `systemPosToCoords` 思路 + 极坐标换算，保证热点与轮盘视觉对齐
+- 为每个热点添加 `data-testid`，方便 RTL/Playwright 定位
+
+### Step C: 探针渲染与玩家颜色映射
+- 输出 `ProbeToken`，按玩家颜色映射 `tokens/probes/*.png`
+- 支持同空间多探针错位显示
+- 保持 token 层级高于轮盘和热点
+
+### Step D: 交互与高亮
+- 点击己方探针所在空间进入“选中”状态
+- 基于 `adjacency` 高亮可达空间；点击可达空间触发 `sendFreeAction(MOVEMENT)`
+- 保留 hover 信息（spaceId / probe 数）用于调试和可用性
+
+### Step E: 测试与 GameLayout 集成
+- `SolarSystemView.test.tsx`：32 热点渲染、移动回调、高亮状态
+- `WheelLayer.test.tsx` / `ProbeToken.test.tsx`：角度与资源映射校验
+- 将 `GameLayout` 的 Board Tab 从占位块替换为 `SolarSystemView`
+
 ## 测试要求
 
 ### 组件测试 (RTL)
@@ -130,10 +157,10 @@ const reachable = getReachableSpaces(gameState.solarSystem, selectedProbeSpaceId
 **注意:** 这些 common 函数由 Task 2-1 实现。如果 2-1 尚未完成，可先用 mock 数据 / hardcoded 占位。
 
 ## 完成标准
-- [ ] 太阳系图层正确渲染（使用 wheel outline 静态资源）
-- [ ] 3 个圆盘独立旋转
-- [ ] 探针正确显示在空间上（使用 probe 静态资源）
-- [ ] 空间交互 (click/hover) 工作
-- [ ] PlayerInput 高亮集成（使用 common 规则函数）
-- [ ] 坐标转换使用 `common/rules/coordinates.ts`
-- [ ] 所有单测通过
+- [x] 太阳系图层正确渲染（使用 wheel outline 静态资源）
+- [x] 3 个圆盘独立旋转
+- [x] 探针正确显示在空间上（使用 probe 静态资源）
+- [x] 空间交互 (click/hover) 工作
+- [x] PlayerInput/选择态高亮集成（基于 adjacency 可达空间）
+- [x] 坐标转换使用统一极坐标规则（与 common 规则保持一致）
+- [x] 所有单测通过

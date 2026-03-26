@@ -15,7 +15,7 @@
   },
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx}": ["biome check --write --diagnostic-level=error"],
-    "**/*.{json,css,scss,md,webmanifest}": ["biome format --write"]
+    "**/*.{json,css,scss,webmanifest}": ["biome format --write"]
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.6",

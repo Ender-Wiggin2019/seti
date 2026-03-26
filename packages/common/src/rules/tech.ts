@@ -2,7 +2,7 @@ import type {
   IPublicPlayerState,
   IPublicTechBoard,
   IPublicTechStack,
-} from '@seti/common/types/protocol/gameState';
+} from '../types/protocol/gameState';
 import {
   type ETechId,
   getTechDescriptor,
@@ -12,7 +12,7 @@ import {
   TECH_LEVELS,
   type TTechCategory,
   type TTechLevel,
-} from '@seti/common/types/tech';
+} from '../types/tech';
 
 /** Find a specific stack by category + level */
 export function findTechStack(

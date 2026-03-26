@@ -10,6 +10,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(currentDir, './src'),
+      '@seti/cards': path.resolve(currentDir, '../cards/src'),
+      '@ender-seti/cards': path.resolve(currentDir, '../cards/src'),
       '@seti/common': path.resolve(currentDir, '../common/src'),
       '@ender-seti/common': path.resolve(currentDir, '../common/src'),
     },
@@ -18,6 +20,6 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./test/setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ['__tests__/**/*.test.{ts,tsx}'],
   },
 });

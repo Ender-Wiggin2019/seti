@@ -47,11 +47,11 @@
 
 | # | Task | 并行/串行 | 状态 |
 |---|------|----------|------|
-| 2-1 | SolarSystem 棋盘 + 旋转机制 | 与 2-2, 2-3, 2-4 并行 | ⬜ |
-| 2-2 | Sector 扇区 + 完成结算 | 与 2-1, 2-3, 2-4 并行 | 🔄 rework: 提取纯规则函数到 common |
-| 2-3 | PlanetaryBoard 行星系统 | 与 2-1, 2-2, 2-4 并行 | 🔄 rework: 提取纯规则函数到 common |
-| 2-4 | TechBoard + Deck 系统 | 与 2-1, 2-2, 2-3 并行 | 🔨 |
-| 2-5 | 8 个 Main Actions 实现 | 依赖 2-1~2-4 | 🔨 |
+| 2-1 | SolarSystem 棋盘 + 旋转机制 | 与 2-2, 2-3, 2-4 并行 | ✅ |
+| 2-2 | Sector 扇区 + 完成结算 | 与 2-1, 2-3, 2-4 并行 | ✅ |
+| 2-3 | PlanetaryBoard 行星系统 | 与 2-1, 2-2, 2-4 并行 | ✅ |
+| 2-4 | TechBoard + Deck 系统 | 与 2-1, 2-2, 2-3 并行 | ✅ |
+| 2-5 | 8 个 Main Actions 实现 | 依赖 2-1~2-4 | ✅ |
 | 2-6 | 6 个 Free Actions 实现 | 与 2-5 并行 (依赖 2-1~2-4) | ⬜ |
 
 ## Stage 2.5: Tech Effects (科技效果)
@@ -93,16 +93,16 @@
 | # | Task | 并行/串行 | 状态 |
 |---|------|----------|------|
 | 6-1 | GamePage 布局 + 响应式 Grid | **串行起始** | ✅ |
-| 6-2 | SolarSystemView (静态资源同心环) | 与 6-3, 6-4, 6-5 并行 (依赖 6-1) | ⬜ |
-| 6-3 | SectorGrid + SectorView | 与 6-2, 6-4, 6-5 并行 | ⬜ |
-| 6-4 | PlanetaryBoardView + TechBoardView | 与 6-2, 6-3, 6-5 并行 | ⬜ |
-| 6-5 | CardRowView + EndOfRoundStacks + CardDetail | 与 6-2, 6-3, 6-4 并行 | ⬜ |
+| 6-2 | SolarSystemView (静态资源同心环) | 与 6-3, 6-4, 6-5 并行 (依赖 6-1) | ✅ |
+| 6-3 | SectorGrid + SectorView | 与 6-2, 6-4, 6-5 并行 | ✅ |
+| 6-4 | PlanetaryBoardView + TechBoardView | 与 6-2, 6-3, 6-5 并行 | ✅ |
+| 6-5 | CardRowView + EndOfRoundStacks + CardDetail | 与 6-2, 6-3, 6-4 并行 | ✅ |
 
 ## Stage 7: Game UI — Interaction (游戏 UI — 交互)
 
 | # | Task | 并行/串行 | 状态 |
 |---|------|----------|------|
-| 7-1 | InputRenderer 分发器 + 全部 Input 组件 | **串行起始** | ⬜ |
+| 7-1 | InputRenderer 分发器 + 全部 Input 组件 | **串行起始** | ✅ |
 | 7-2 | ActionMenu + FreeActionBar | 与 7-1 并行 | ⬜ |
 | 7-3 | PlayerDashboard (资源, 电脑, 手牌, 任务) | 与 7-1, 7-2 并行 | ⬜ |
 | 7-4 | EventLog + OpponentSummary + GameOverDialog | 依赖 7-1~7-3 | ⬜ |

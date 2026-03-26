@@ -101,6 +101,8 @@ export function createMockGameState(
     planetaryBoard: createMockPlanetaryBoard(),
     techBoard: createMockTechBoard(),
     cardRow: [],
+    endOfRoundStacks: [[], [], [], []],
+    currentEndOfRoundStackIndex: 0,
     aliens: [],
     recentEvents: [],
     ...overrides,

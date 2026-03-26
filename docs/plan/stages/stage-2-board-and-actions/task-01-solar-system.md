@@ -122,8 +122,8 @@ function coordsToSystemPos(x: number, y: number, center: number, ringRadii: numb
 4. 添加 common 规则函数的单测
 
 ## 完成标准
-- [ ] SolarSystem 完整实现（空间、邻接、旋转、移动）
-- [ ] BoardBuilder 能生成合法布局
-- [ ] 旋转机制完全符合 PRD §9
-- [ ] `common/rules/movement.ts` + `coordinates.ts` 纯函数已实现并导出
-- [ ] 所有单测通过（含 common 规则函数单测）
+- [x] SolarSystem 完整实现（空间、邻接、旋转、移动）
+- [x] BoardBuilder 能生成合法布局
+- [x] 旋转机制完全符合 PRD §9
+- [x] `common/rules/movement.ts` + `coordinates.ts` 纯函数已实现并导出
+- [x] 所有单测通过（含 common 规则函数单测）
