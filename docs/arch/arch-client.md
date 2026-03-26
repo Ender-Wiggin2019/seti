@@ -1237,7 +1237,327 @@ import type { IPublicGameState, IPlayerInputModel } from '@ender-seti/common/typ
 
 ---
 
-## 17. Technical Decisions (Confirmed)
+## 17. Frontend Reference Analysis
+
+> Source: `frontend-reference/czech-gaming-online.herokuapp.com/src/projects/seti/`
+> Static assets: `frontend-reference/storage.googleapis.com/cgo-projects/seti/`
+>
+> **Important:** The reference uses a config-driven component engine (CGO platform). Our project uses standard React function components + Tailwind + shadcn/ui. Reference code provides **game logic, data structures, and UI interaction patterns** — not component code to copy directly.
+
+### 17.1 Reference Module Map
+
+| Reference File | Purpose | Our Mapping (packages/client) |
+|---|---|---|
+| `components.js` | Declarative UI layout config (positions, slots, conditionals) | `features/board/*`, `features/player/*` — standard React components |
+| `states.js` | Game state machine: phases, click handlers, auto-transitions | `hooks/usePlayerInput`, `features/input/InputRenderer`, `features/actions/*` |
+| `setup.js` | Initial game state construction (wheels, decks, players, boards) | Server-side (`packages/server`); client receives via `game:state` |
+| `doEffect.js` | Effect interpreter (`["money", 2]`, `["tech", "fly"]`) | Server-side; client only renders the resulting state |
+| `solarSystem.js` | Ring model, rotation, probe movement, sky-sector links | `features/board/SolarSystemView` + `DiscLayer` + `ProbeToken` |
+| `tech.js` | Tech acquisition, upgrade, costs, bonuses | `features/board/TechBoardView` + `TechStack`; logic reusable for validation display |
+| `globals.js` | Board accessors, mission resolution, counting DSL | Server-side; some patterns useful for client-side display helpers |
+| `look.js` | Look action: signal placement, sector effects | `features/board/SectorView` interaction; server drives state |
+| `highlight.js` | Valid target highlighting (probes, data, tech, quests) | `hooks/usePlayerInput` + `pendingInput` highlight integration |
+| `computer.js` | Data computer: slot availability, placement, rewards | `features/player/ComputerView` |
+| `moveManager.js` | Central UI move dispatch (click → game action) | `features/input/*` + `features/actions/ActionMenu` |
+| `turnManager.js` | Round lifecycle, pass, next player, final scoring | Server-side; client reads `phase` + `currentPlayerId` from state |
+| `playCard.js` | Card play: costs, quests, production effects | `features/cards/CardRowView` interaction; server handles logic |
+| `corporations.js` | Corporation draft, abilities, production | Future scope; `features/player/CorporationView` |
+| `life.js` | Alien life tiles: traces, samples, rewards | `features/alien/AlienBoardView` |
+| `amoebaLife.js` | Amoeba alien: position track, color-based activation | `features/alien/AlienBoardView` (amoeba variant) |
+| `alphabetLife.js` | Alphabet/cipher alien: sign tokens, tables | `features/alien/AlienBoardView` (alphabet variant) |
+| `microbeLab.js` | Microbe lab board: sections A/B/C, microbe movement | `features/alien/AlienBoardView` (microbe variant) |
+| `customTooltip.js` | Hover text for board positions | `features/board/*` tooltip content |
+| `customMoves.js` | Extensibility stub (unused) | N/A |
+
+### 17.2 Component System (Reference vs Ours)
+
+The reference uses a **config-driven component engine** where every game piece is defined as a JSON-like object with:
+
+- **Layout:** `width`, `height`, `x`, `y`, `zIndex`, `image`
+- **Positions (slots):** Named attachment points with `accepts`, `coords`, `multi`, `gapSize`, `scaleMult`
+- **Conditionals:** `__cond_image`, `__cond_hidden`, `__cond_selectable` etc. — arrays of `{ condition, result }` that switch appearance based on runtime options (`color`, `level`, `rotation`, `type`)
+- **Clickable areas:** Named rectangles on boards (`startProbe`, `techPop`, `look`, `clearComputer`)
+- **Constants:** Inline helper children (`constantComponents`) for labels, scores
+
+**Our approach:** Standard React components. The reference's slot/position system translates to React props and CSS Grid/Flex layouts. Conditionals become React conditional rendering (`isSelectable && 'ring-2 ring-yellow-400'`). Clickable areas become `onClick` handlers on SVG elements or buttons.
+
+**Key reference helper functions to be aware of:**
+- `generateWheelPositions(level)` — generates 8 polar-coordinate positions per ring
+- `getWheelSize(level)` — maps ring level to pixel size (4→largest, 1→smallest)
+
+### 17.3 State Machine (Reference Flow)
+
+The reference defines ~40+ named game states. Key flow for a normal turn:
+
+```
+corporation draft → start draft → start income
+    ↓
+do action  ← ← ← ← ← ← ← ← ← ← (free actions loop back here)
+    ↓
+[player picks one of 8 main actions]
+    ├── play card → card effect → effect queue
+    ├── look → place signals → targeted signal
+    ├── gain tech → test tech → return tech
+    ├── complete mission → ...
+    ├── launch probe → ...
+    └── ... (other actions)
+    ↓
+after main → [free actions available]
+    ↓
+activateNextPlayer (or pass → end of round)
+    ↓
+[all passed] → threshold queue → rotation → income phase → new round
+    ↓
+[round 5 complete] → final scoring
+```
+
+**Client implication:** The server drives state transitions. The client:
+1. Reads `game:state` to know current phase/state
+2. Reads `game:waiting` to know what input is needed
+3. Renders the appropriate `InputRenderer` component
+4. Board components read `pendingInput` for highlighting
+
+### 17.4 Solar System Model (Reference)
+
+The reference models the solar system as:
+
+- **32 positions:** `pos = (distance - 1) * 8 + rot` where `distance` ∈ {1,2,3,4} (rings) and `rot` ∈ {0..7} (sector angles)
+- **4 nested wheels:** Level 4 (outermost) → Level 1 (innermost), each independently rotatable
+- **Physical rotation:** `getPhysicalRotation(wheel)` sums rotations from base down
+- **Space data:** Looked up from `dataSheet["wheel" + level]` adjusted by rotation to get object type (planet, asteroid, Earth, etc.)
+- **Rotation logic:** `rotateWheel()` decrements rotation, moves tokens on "moving" spaces vs "pushed" tokens. `rotateSystem()` rotates rings 1-3 (not 4)
+- **Sky mapping:** `pos % 8` maps any position to one of 8 sector/sky tokens
+
+**Client rendering approach:**
+```
+SVG structure:
+  <svg viewBox="0 0 800 800">
+    <!-- Static outer frame ring -->
+    <circle cx="400" cy="400" r="380" />
+
+    <!-- Level 4 disc (outermost, rotatable) -->
+    <g transform="rotate(angle4, 400, 400)">
+      <!-- 8 spaces at radius ~340 -->
+    </g>
+
+    <!-- Level 3 disc -->
+    <g transform="rotate(angle3, 400, 400)">
+      <!-- 8 spaces at radius ~260 -->
+    </g>
+
+    <!-- Level 2 disc -->
+    <g transform="rotate(angle2, 400, 400)">
+      <!-- 8 spaces at radius ~180 -->
+    </g>
+
+    <!-- Level 1 disc (innermost) -->
+    <g transform="rotate(angle1, 400, 400)">
+      <!-- 8 spaces at radius ~100 -->
+    </g>
+
+    <!-- Probes (positioned above discs) -->
+    <!-- Sun center -->
+  </svg>
+```
+
+Space coordinates use polar → cartesian conversion:
+```typescript
+function spacePosition(ring: number, sectorIndex: number): { x: number; y: number } {
+  const radius = RING_RADII[ring]; // e.g. [100, 180, 260, 340]
+  const angle = (sectorIndex / 8) * 2 * Math.PI - Math.PI / 2;
+  return {
+    x: CENTER + radius * Math.cos(angle),
+    y: CENTER + radius * Math.sin(angle),
+  };
+}
+```
+
+**Reference wheel outlines available as static assets** — can be used as background images for each ring:
+- `wheels/wheel1outline.png` through `wheels/wheel4outline.png`
+- `wheels/wheel4.png` (filled version)
+
+### 17.5 Effect System (Reference)
+
+Effects are encoded as arrays: `["money", 2]`, `["tech", "fly"]`, `["vp", 3, "techBonus"]`. The `doEffect` function is a large switch:
+
+| Effect Name | Behavior | Client Relevance |
+|---|---|---|
+| `money`, `pop`, `energy`, `vp` | Increment player counter (with caps) | ResourceBar animation |
+| `move` | Grant movement points | Probe movement highlight |
+| `data` | Add data token to pool | DataPoolView update |
+| `tech` | Enter "gain tech" substate | TechBoardView highlight |
+| `signal` | Place signal tokens | SectorView marker update |
+| `launch` | Start probe launch substate | SolarSystemView interaction |
+| `look` | Start look action | SectorGrid interaction |
+| `clearComputer` | Clear computer substate | ComputerView animation |
+| `completeMission` | Mission completion substate | PlayedMissions update |
+| `progress` | Advance progress track | Progress display |
+
+**Client implication:** The client does NOT execute effects. It renders the **result** from `game:state`. The effect names are useful for:
+1. **Event log display** — translating effect names to user-friendly messages
+2. **Animation triggers** — `game:event` payloads reference these effect types
+3. **Tooltip content** — showing card/tech effects in human-readable form
+
+### 17.6 Static Assets Catalog
+
+All assets are in `frontend-reference/storage.googleapis.com/cgo-projects/seti/assets/`. These can be **directly copied** to `packages/client/public/assets/seti/`.
+
+#### Board & Background Images
+
+| File | Purpose | Reuse Priority |
+|---|---|---|
+| `_board.png` | Main board background | ★★★ Core |
+| `planetBoard-SE0.4.0.jpg` | Planet board artwork | ★★★ Core |
+| `playerboardSE0.0.B.png` | Player mat / player board | ★★★ Core |
+| `overview.png` | Game overview diagram | ★★ Reference |
+| `scoringReminder.jpg` | End-game scoring reference | ★★ UI helper |
+| `automaboards/automaBoard1.jpg` | Solo/automa board | ★ Future |
+
+#### Wheel / Solar System
+
+| File | Purpose | Reuse Priority |
+|---|---|---|
+| `wheels/wheel1outline.png` | Ring 1 (innermost) outline | ★★★ Core |
+| `wheels/wheel2outline.png` | Ring 2 outline | ★★★ Core |
+| `wheels/wheel3outline.png` | Ring 3 outline | ★★★ Core |
+| `wheels/wheel4outline.png` | Ring 4 (outermost) outline | ★★★ Core |
+| `wheels/wheel4.png` | Ring 4 filled graphic | ★★ Alternate |
+
+#### Player Tokens
+
+| File | Purpose | Reuse Priority |
+|---|---|---|
+| `playerTokens/redProbe.png` | Red probe | ★★★ Core |
+| `playerTokens/whiteProbe.png` | White probe | ★★★ Core |
+| `playerTokens/purpleProbe.png` | Purple probe | ★★★ Core |
+| `playerTokens/redSky.png` | Red sky marker | ★★★ Core |
+| `playerTokens/whiteSky.png` | White sky marker | ★★★ Core |
+| `playerTokens/purpleSky.png` | Purple sky marker | ★★★ Core |
+| `playerTokens/data.png` | Data token | ★★★ Core |
+| `2vpToken.png` | 2VP token | ★★★ Core |
+| `player-passed.png` | Pass indicator | ★★ UI |
+
+#### Tech Tiles (12 tiles: 3 tracks × 4 levels)
+
+| Track | Files | Format |
+|---|---|---|
+| Computer (Comp) | `techComp1-4.webp` | webp |
+| Movement (Fly) | `techFly1-4` (.webp/.jpg mixed) | mixed |
+| Survey (Look) | `techLook1-4` (.webp/.jpg mixed) | mixed |
+
+#### Tech Bonuses (9 bonus markers)
+
+| File | Purpose |
+|---|---|
+| `techBonus/tech1.png`, `tech3.png`, `tech4.png`, `tech6.png` | Numbered tech bonuses |
+| `techBonus/techRotation1-3.png` | Rotation bonuses |
+| `techBonus/data.png`, `launch.png` | Data/launch bonuses |
+
+#### Card Backs
+
+| File | Purpose |
+|---|---|
+| `cardBacks/back_base.jpg` | Default card back |
+| `cardBacks/back_4.jpg`, `back_6.jpg` | Round-specific backs |
+| `cardBacks/goalBack.jpg` | Goal/mission card back |
+
+#### Icons (25 icons)
+
+| Category | Files |
+|---|---|
+| Resources | `money.png`, `energy.png`, `data.png`, `pop.png`, `vp.png` |
+| Actions | `move.png`, `look.png`, `launch.png`, `draw.png`, `income.png`, `tech.png` |
+| Signals | `signalYellow.png`, `signalBlue.png`, `signalRed.png`, `signalBlack.png`, `signalToken.png` |
+| Status | `danger.png`, `dangerThreshold1.png`, `dangerThreshold2.png`, `clearComputer.png`, `questsComplete.png`, `startPlayer.png`, `progress.png`, `missionSatellite.png` |
+| Other | `distantBonus-purple.png` |
+
+#### Distant Bonuses
+
+| File | Purpose |
+|---|---|
+| `distantBonus/bonus1-4.png` | 4 distant planet bonus tiles |
+
+#### Life / Alien Assets
+
+| File | Purpose |
+|---|---|
+| `lifes/lifeBasicLeftDistinct.jpg` | Basic life tile (left) |
+| `lifes/lifeBasicRightDistinct.jpg` | Basic life tile (right) |
+| `lifes/back.jpg` | Life card back |
+
+#### Corporation Assets
+
+| File | Purpose |
+|---|---|
+| `corporations/cards.jpg` | Corporation reference sheet |
+| `corporations/probes.jpg` | Probe reference art |
+
+### 17.7 Asset Integration Plan
+
+```
+packages/client/public/assets/seti/
+├── boards/
+│   ├── _board.png                   # ← from assets/_board.png
+│   ├── planetBoard.jpg              # ← from assets/planetBoard-SE0.4.0.jpg
+│   ├── playerBoard.png              # ← from assets/playerboardSE0.0.B.png
+│   └── scoringReminder.jpg
+├── wheels/
+│   ├── wheel1outline.png
+│   ├── wheel2outline.png
+│   ├── wheel3outline.png
+│   ├── wheel4outline.png
+│   └── wheel4.png
+├── tokens/
+│   ├── probes/                      # redProbe.png, whiteProbe.png, purpleProbe.png
+│   ├── sky/                         # redSky.png, whiteSky.png, purpleSky.png
+│   ├── data.png
+│   ├── 2vp.png
+│   └── passed.png
+├── tech/
+│   ├── tiles/                       # techComp1-4, techFly1-4, techLook1-4
+│   └── bonuses/                     # tech1.png, techRotation1-3.png, data.png, launch.png
+├── cards/
+│   ├── back_base.jpg
+│   ├── back_4.jpg
+│   ├── back_6.jpg
+│   └── goalBack.jpg
+├── icons/                           # All 25 icon PNGs
+├── distantBonus/                    # bonus1-4.png
+├── lifes/                           # lifeBasicLeftDistinct.jpg, etc.
+└── corporations/                    # cards.jpg, probes.jpg
+```
+
+Access from React components:
+```typescript
+const ASSET_BASE = '/assets/seti';
+
+const assetUrl = (path: string) => `${ASSET_BASE}/${path}`;
+
+// Usage
+<img src={assetUrl('wheels/wheel3outline.png')} alt="Ring 3" />
+<img src={assetUrl('tokens/probes/redProbe.png')} alt="Red probe" />
+<img src={assetUrl('icons/money.png')} alt="Credits" />
+```
+
+### 17.8 Key Logic That Can Be Reused
+
+These reference modules contain game logic calculations that can be adapted for client-side display helpers:
+
+| Module | Reusable Logic | Our Usage |
+|---|---|---|
+| `tech.js` | `hasTech()`, `canUseTech()`, `canAcquireTech()` cost checks, upgrade side-effects | Client-side display: grey-out unavailable techs, show costs |
+| `solarSystem.js` | `systemPosToCoords()`, `coordsToSystemPos()`, `getPath()`, `moveCost()` | SVG rendering: convert position IDs to pixel coordinates; show reachable spaces |
+| `computer.js` | `posAvailable()`, `compPosToDataPos()`, `getComputerReward()` | ComputerView: show which slots are available, preview rewards |
+| `highlight.js` | `isClickable()` conditions for probes, data, tech, quests | Client highlighting: determine what glows during PlayerInput |
+| `customTooltip.js` | Tooltip text generators for positions, effects, tech | Tooltip content for board positions |
+| `alphabetLife.js` | `getAlphabetEffect()`, cipher table lookups | Alien UI: display expected rewards for sign placement |
+| `amoebaLife.js` | `amoebaPosColor()`, position-to-color mapping | Alien UI: amoeba track coloring |
+
+**Note:** Server is the single source of truth. These client-side calculations are for **display/preview** only — all actions are validated server-side.
+
+---
+
+## 18. Technical Decisions (Confirmed)
 
 | # | Decision | Choice | Notes |
 |---|----------|--------|-------|
@@ -1251,14 +1571,16 @@ import type { IPublicGameState, IPlayerInputModel } from '@ender-seti/common/typ
 | 8 | Test Framework | **Vitest + RTL** | Aligned with server; jsdom for components |
 | 9 | Build | **Vite** | Fast dev, optimized prod build, ESM-native |
 | 10 | Game State Delivery | **Full state push (not delta)** | Simpler client logic; server is SSoT; acceptable payload size for board game |
+| 11 | Static Assets | **Copied from reference** | Wheel outlines, player tokens, tech tiles, icons — see §17.6 |
 
 ---
 
-## 18. Implementation Phases (Suggested)
+## 19. Implementation Phases (Suggested)
 
 | Phase | Scope | Goal |
 |-------|-------|------|
 | **P0** | Project scaffold: Vite + TanStack Router + Tailwind + shadcn/ui + providers | App skeleton builds and runs |
+| **P0.5** | **Copy static assets** from reference to `public/assets/seti/` (see §17.7) | All game art available |
 | **P1** | Auth + profile pages, httpClient, authStore, JWT flow | Login/register works end-to-end |
 | **P2** | Lobby: room list, create room, room page, game settings | Can create and join rooms |
 | **P3** | WebSocket integration: wsClient, useSocket, useGameState, GameContextProvider | Client connects to game, receives state |

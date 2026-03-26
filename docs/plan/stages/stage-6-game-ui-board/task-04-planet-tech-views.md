@@ -70,8 +70,35 @@ packages/client/src/features/board/
   - 已取走标记
   - SelectTech input 高亮
 
+## 参考代码 & 静态资源
+
+### 参考文件
+- **`frontend-reference/.../seti/tech.js`** — 可直接复用的逻辑：
+  - `hasTech()`, `canUseTech()`, `canAcquireTech()` — 科技状态判定
+  - `upgradeTech()`, `upgradeTechSideEffects()` — 升级效果（包含 `rotateSystem` 触发）
+  - `techStatId()` — 科技统计 ID
+  - 3 条科技线路：`comp`(电脑)、`fly`(飞行)、`look`(观测)，每线 4 级
+- **`frontend-reference/.../seti/components.js`** — 搜索 `technologyBoard` 和 `techTile`，理解科技面板的布局配置
+- **`frontend-reference/.../seti/solarSystem.js`** — `allPlanets` 行星列表，`evalVisit()` 中行星访问效果
+
+### 静态资源
+**行星面板：**
+- `planetBoard-SE0.4.0.jpg` → 行星面板完整图片 ★★★
+
+**科技面板：**
+- `techTiles/techComp1-4.webp` → 电脑线路 4 级 tile
+- `techTiles/techFly1-4` (.webp/.jpg) → 飞行线路 4 级 tile
+- `techTiles/techLook1-4` (.webp/.jpg) → 观测线路 4 级 tile
+- `techBonus/tech1.png`, `tech3.png`, `tech4.png`, `tech6.png` → 科技奖励标记
+- `techBonus/techRotation1-3.png` → 旋转奖励标记
+- `techBonus/data.png`, `launch.png` → 数据/发射奖励
+- `2vpToken.png` → 2VP token
+
+**玩家 token：**
+- `playerTokens/redProbe.png`, `whiteProbe.png`, `purpleProbe.png` → 用于轨道/着陆显示
+
 ## 完成标准
-- [ ] PlanetaryBoardView 完整渲染
-- [ ] TechBoardView 完整渲染
+- [ ] PlanetaryBoardView 完整渲染（使用 planetBoard 背景图）
+- [ ] TechBoardView 完整渲染（使用 tech tile 静态资源）
 - [ ] 交互高亮工作
 - [ ] 所有单测通过

@@ -79,8 +79,24 @@ packages/client/src/pages/game/
 - `GameOverDialog.test.tsx`: 计分明细表正确, 胜者高亮
 - `ScoreBreakdown.test.tsx`: 各分项汇总正确
 
+## 参考代码 & 静态资源
+
+### 参考文件
+- **`frontend-reference/.../seti/doEffect.js`** — `emojiDictionary` 提供了效果名称到 emoji 的映射，可参考做事件日志的图标选择：
+  - `money` → 💰, `energy` → ⚡, `vp` → ⭐, `data` → 💾, `pop` → 📢 等
+- **`frontend-reference/.../seti/turnManager.js`** — `finalScoring()` 计分逻辑，`activateNextPlayer()` 回合切换 — 理解事件类型和计分明细
+- **`frontend-reference/.../seti/customTooltip.js`** — 位置悬浮提示文本生成器，可参考做事件描述
+
+### 静态资源
+- `icons/vp.png` → 胜利点图标（计分明细表）
+- `icons/danger.png`, `dangerThreshold1.png`, `dangerThreshold2.png` → 里程碑/阈值图标
+- `icons/startPlayer.png` → 起始玩家标记
+- `scoringReminder.jpg` → 计分提示卡图片（可嵌入到 GameOverDialog）
+- `distantBonus/bonus1-4.png` → 远距奖励图片（计分明细）
+- `2vpToken.png` → 2VP token 图标
+
 ## 完成标准
 - [ ] 事件日志完整可滚动
 - [ ] 对手概览信息正确
-- [ ] 游戏结束弹窗计分明细完整
+- [ ] 游戏结束弹窗计分明细完整（使用计分相关静态资源）
 - [ ] 所有单测通过

@@ -48,8 +48,32 @@ packages/client/src/features/alien/
   - 发现后正确渲染种族面板
   - 种族状态正确
 
+## 参考代码 & 静态资源
+
+### 参考文件（重要）
+- **`frontend-reference/.../seti/life.js`** — 外星生命基础系统：
+  - `parseEffect()` — 效果字符串解析（可理解生命卡效果格式）
+  - `completeLife()` — 完成生命发现的奖励流程
+  - `lifeRevealEvent()` — 揭示生命事件
+- **`frontend-reference/.../seti/amoebaLife.js`** — 变形虫外星人：
+  - `amoebaPosColor()` — 位置到颜色映射（可用于 UI 着色）
+  - `activateAmoeba()`, `moveAmoeba()` — 变形虫轨道交互
+- **`frontend-reference/.../seti/alphabetLife.js`** — 字母外星人：
+  - `getAlphabetEffect()` — 密码表查找（可在 UI 预览奖励）
+  - `gainSignToken()`, `isSignPositionAvaialable()` — 符号放置逻辑
+  - 两个 `alphabetTable` 等级
+- **`frontend-reference/.../seti/microbeLab.js`** — 微生物实验室：
+  - `getLabBoard()`, `labPositionInfo()` — 实验室面板结构
+  - `activateMicrobe()`, `moveMicrobe()` — 微生物移动
+  - A/B/C 三个区域
+
+### 静态资源
+- `lifes/lifeBasicLeftDistinct.jpg` → 基础生命 tile（左面）
+- `lifes/lifeBasicRightDistinct.jpg` → 基础生命 tile（右面）
+- `lifes/back.jpg` → 生命卡背面
+
 ## 完成标准
 - [ ] 发现轨道完整渲染
-- [ ] 种族面板条件显示
+- [ ] 种族面板条件显示（使用 life 静态资源）
 - [ ] SelectTrace 交互工作
 - [ ] 所有单测通过

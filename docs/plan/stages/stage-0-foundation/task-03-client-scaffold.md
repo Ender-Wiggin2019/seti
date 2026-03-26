@@ -86,6 +86,20 @@ packages/client/
 - `ProtectedRoute.test.tsx`: 验证未认证重定向
 - `pnpm run test` 在 client 包内通过
 
+## 静态资源准备
+
+脚手架搭建完成后，将参考项目中的游戏静态资源复制到 `public/assets/seti/`。详细的资源清单和目录结构见 `docs/arch/arch-client.md` §17.6 和 §17.7。
+
+源目录：`frontend-reference/storage.googleapis.com/cgo-projects/seti/assets/`
+
+```bash
+# 复制静态资源
+mkdir -p packages/client/public/assets/seti
+cp -r frontend-reference/storage.googleapis.com/cgo-projects/seti/assets/* packages/client/public/assets/seti/
+```
+
+资源分类：boards (棋盘背景)、wheels (太阳系环)、tokens (玩家棋子)、tech (科技 tile)、cards (卡背)、icons (图标 ×25)、lifes (外星生命)、distantBonus、corporations
+
 ## 完成标准
 - [ ] `packages/client` 包已创建，monorepo 能识别
 - [ ] `pnpm run dev` 启动 Vite dev server，浏览器可访问
@@ -93,3 +107,4 @@ packages/client/
 - [ ] Router 空壳路由工作
 - [ ] Vitest 测试可运行且通过
 - [ ] `turbo run build test typecheck` 包含 client 包
+- [ ] 静态资源已复制到 `public/assets/seti/`（约 78 个文件）

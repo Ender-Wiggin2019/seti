@@ -77,10 +77,39 @@ packages/client/src/features/board/
 - SVG 交互: 点击空间 → 探针移动 → 状态更新
 - Playwright 可通过 SVG selector 定位元素
 
+## 参考代码 & 静态资源
+
+### 参考文件（重要）
+- **`frontend-reference/.../seti/solarSystem.js`** — 核心参考！包含：
+  - 32 位置模型：`pos = (distance - 1) * 8 + rot`，distance ∈ {1,2,3,4}，rot ∈ {0..7}
+  - `systemPosToCoords()` / `coordsToSystemPos()` — 位置 ID ↔ 坐标转换
+  - `getPhysicalRotation(wheel)` — 计算累计旋转角度
+  - `rotateWheel()` / `rotateSystem()` — 旋转逻辑（ring 1-3 旋转，ring 4 不旋转）
+  - `getPath()` / `moveCost()` — 探针移动路径和成本
+  - `evalVisit()` — 进入空间触发效果
+- **`frontend-reference/.../seti/components.js`** — `generateWheelPositions(level)` 生成每环 8 个极坐标位置，`getWheelSize(level)` 映射环级到尺寸
+- **`frontend-reference/.../seti/highlight.js`** — `isClickable()` 中探针移动的有效目标判定
+
+### 静态资源（可直接复用）
+- `wheels/wheel1outline.png` ~ `wheel4outline.png` → 4 个环的轮廓图，可作为 SVG 背景或叠加层
+- `wheels/wheel4.png` → ring 4 的填充版本
+- `playerTokens/redProbe.png`, `whiteProbe.png`, `purpleProbe.png` → 探针图标
+- `playerTokens/redSky.png`, `whiteSky.png`, `purpleSky.png` → 天空标记图标
+
+### SVG 渲染建议
+参考 `arch-client.md` §17.4 的 SVG 结构和极坐标转换公式：
+```typescript
+function spacePosition(ring: number, sectorIndex: number) {
+  const radius = RING_RADII[ring]; // e.g. [100, 180, 260, 340]
+  const angle = (sectorIndex / 8) * 2 * Math.PI - Math.PI / 2;
+  return { x: CENTER + radius * Math.cos(angle), y: CENTER + radius * Math.sin(angle) };
+}
+```
+
 ## 完成标准
-- [ ] SVG 太阳系正确渲染
+- [ ] SVG 太阳系正确渲染（使用 wheel outline 静态资源）
 - [ ] 3 个圆盘独立旋转
-- [ ] 探针正确显示在空间上
+- [ ] 探针正确显示在空间上（使用 probe 静态资源）
 - [ ] 空间交互 (click/hover) 工作
 - [ ] PlayerInput 高亮集成
 - [ ] 所有单测通过

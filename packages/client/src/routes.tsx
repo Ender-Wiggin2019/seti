@@ -7,6 +7,11 @@ import {
 } from '@tanstack/react-router';
 import { AppShell } from '@/components/layout/AppShell';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { AuthPage } from '@/pages/auth/AuthPage';
+import { GamePage, SpectatePage } from '@/pages/game/GamePage';
+import { LobbyPage } from '@/pages/lobby/LobbyPage';
+import { RoomPage } from '@/pages/lobby/RoomPage';
+import { ProfilePage } from '@/pages/profile/ProfilePage';
 import { useAuthStore } from '@/stores/authStore';
 
 const rootRoute = createRootRoute({
@@ -29,14 +34,7 @@ const indexRoute = createRoute({
 const authRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/auth',
-  component: () => (
-    <section className='rounded-2xl border border-surface-700 bg-surface-900/70 p-6 shadow-panel'>
-      <h1 className='font-display text-3xl text-text-100'>Authentication</h1>
-      <p className='mt-2 text-sm text-text-300'>
-        Auth screens are implemented in Stage 5.
-      </p>
-    </section>
-  ),
+  component: AuthPage,
 });
 
 const lobbyRoute = createRoute({
@@ -44,17 +42,60 @@ const lobbyRoute = createRoute({
   path: '/lobby',
   component: () => (
     <ProtectedRoute>
-      <section className='rounded-2xl border border-surface-700 bg-surface-900/70 p-6 shadow-panel'>
-        <h1 className='font-display text-3xl text-text-100'>Lobby</h1>
-        <p className='mt-2 text-sm text-text-300'>
-          TanStack Router is wired and ready for page expansion.
-        </p>
-      </section>
+      <LobbyPage />
     </ProtectedRoute>
   ),
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, authRoute, lobbyRoute]);
+const roomRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/room/$roomId',
+  component: () => (
+    <ProtectedRoute>
+      <RoomPage />
+    </ProtectedRoute>
+  ),
+});
+
+const profileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/profile',
+  component: () => (
+    <ProtectedRoute>
+      <ProfilePage />
+    </ProtectedRoute>
+  ),
+});
+
+const gameRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/game/$gameId',
+  component: () => (
+    <ProtectedRoute>
+      <GamePage />
+    </ProtectedRoute>
+  ),
+});
+
+const spectateRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/game/$gameId/spectate',
+  component: () => (
+    <ProtectedRoute>
+      <SpectatePage />
+    </ProtectedRoute>
+  ),
+});
+
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  authRoute,
+  lobbyRoute,
+  roomRoute,
+  profileRoute,
+  gameRoute,
+  spectateRoute,
+]);
 
 export const router = createRouter({ routeTree });
 

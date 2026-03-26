@@ -76,10 +76,25 @@ packages/client/src/
 - GamePage 加载 → 布局正确 → tab 切换 → 响应式缩放
 - 适合 Playwright viewport 测试
 
+## 参考代码 & 静态资源
+
+### 参考文件
+- `frontend-reference/.../seti/components.js` — 定义了整个游戏的布局结构，包括 `mainBoard`、`playerBoard`、各 board 的嵌套关系。参考其 `positions` 定义理解各区域的空间排布。
+- `frontend-reference/.../seti/states.js` — `"do action"` state 展示了主操作阶段的 UI 结构：clickable areas 对应我们的 ActionMenu 按钮。
+
+### 静态资源
+- `assets/_board.png` → 主棋盘背景（可用于 Board Area 的整体背景图）
+- `assets/overview.png` → 游戏总览图（可用于新手引导或 reference overlay）
+- `assets/playerboardSE0.0.B.png` → 玩家面板背景（用于 PlayerDashboard 底图）
+
+### 架构文档参考
+- 详见 `docs/arch/arch-client.md` §7 (Game Page — Component Architecture) 和 §17 (Frontend Reference Analysis)
+
 ## 完成标准
 - [ ] GamePage 路由和 Provider 配置正确
 - [ ] 三栏布局在桌面端正确显示
 - [ ] 响应式断点切换正确
 - [ ] Tab 导航工作
 - [ ] TopBar 显示游戏状态信息
+- [ ] 静态资源已复制到 public/assets/seti/ (参考 arch-client.md §17.7)
 - [ ] 所有单测通过

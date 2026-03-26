@@ -83,6 +83,28 @@ packages/client/src/features/input/
 - 嵌套 input: Or → 选择 tab → 子 input → submit
 - 非常适合 E2E 测试
 
+## 参考代码 & 静态资源
+
+### 参考文件（重要）
+- **`frontend-reference/.../seti/states.js`** — 核心参考！每个 state 定义了：
+  - `message` — 提示文字（可参考各 state 的 message 作为 Input 组件的 prompt）
+  - `buttons` — 按钮名称和文字（对应 SelectOptionInput 的选项）
+  - `behavior.evalClick()` — 点击处理逻辑（理解每种 input 的交互模式）
+  - `isClickable()` — 高亮判定（理解棋盘组件在 input 期间的行为）
+  - 重点关注：`"do action"`, `"gain tech"`, `"place signals"`, `"complete mission"`, `"start income"`
+- **`frontend-reference/.../seti/moveManager.js`** — `evalClick()`, `evalGameEvent()` — 从 UI 事件到游戏操作的分发逻辑
+- **`frontend-reference/.../seti/highlight.js`** — `isClickable()` 的完整实现，展示每种 input 对应哪些棋盘元素应高亮
+
+### 状态 → Input 类型映射
+| Reference State | Our Input Type |
+|---|---|
+| `"do action"` buttons | `OrOptions` (8 个 main action) |
+| `"gain tech"` evalClick | `SelectTech` |
+| `"place signals"` evalClick | `SelectSector` |
+| `"complete mission"` | `SelectCard` (选择完成哪个任务) |
+| `"start income"` evalClick | `SelectEndOfRoundCard` |
+| `"effect queue"` buttons | `SelectOption` (确认效果) |
+
 ## 完成标准
 - [ ] InputRenderer 分发所有 11 种类型
 - [ ] 每个 Input 组件渲染和交互正确

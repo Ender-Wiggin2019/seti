@@ -5,6 +5,8 @@ description: Architecture patterns for building turn-based tabletop/card game se
 
 # Board Game Architecture
 
+> reference: `/backend-reference`
+> 
 A general-purpose OOP architecture for turn-based tabletop and card games, distilled from a production implementation (~5000+ source files). Focuses on game logic — not framework concerns like auth, DB, or serialization.
 
 ## Full Architecture Map

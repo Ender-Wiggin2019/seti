@@ -52,8 +52,21 @@ packages/client/src/features/board/
   - SelectSector input 时可交互 + 高亮
   - 非选择状态时不可交互
 
+## 参考代码 & 静态资源
+
+### 参考文件
+- **`frontend-reference/.../seti/look.js`** — `startLook()`, `placeToSky()`, `evalSkies()` — 扫描行动和信号放置的完整逻辑
+- **`frontend-reference/.../seti/solarSystem.js`** — `getSkyToken()`, `systemPosToSkyToken()` — 太阳系位置到扇区的映射（`pos % 8`）
+- **`frontend-reference/.../seti/components.js`** — 搜索 `sky` 相关的 position 定义，理解 8 个扇区的布局
+
+### 静态资源
+- `icons/signalYellow.png`, `signalBlue.png`, `signalRed.png`, `signalBlack.png` → 4 色信号标记
+- `icons/signalToken.png` → 通用信号 token
+- `icons/data.png` → 数据 token（用于数据槽位显示）
+- `playerTokens/redSky.png`, `whiteSky.png`, `purpleSky.png` → 玩家天空标记
+
 ## 完成标准
-- [ ] 8 扇区正确渲染
+- [ ] 8 扇区正确渲染（使用信号标记静态资源）
 - [ ] 数据和标记状态准确反映
 - [ ] 选择交互高亮工作
 - [ ] 所有单测通过

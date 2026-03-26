@@ -80,9 +80,22 @@ packages/client/src/features/cards/
   - 确认按钮 enable/disable
   - 选择状态视觉反馈
 
+## 参考代码 & 静态资源
+
+### 参考文件
+- **`frontend-reference/.../seti/playCard.js`** — `playCard()`, `initialIncomeCard()` — 打牌逻辑、成本计算、任务触发
+- **`frontend-reference/.../seti/components.js`** — 搜索 `__card-actions`, `deck-actions`, `sky` — 卡牌区域的配置化布局
+- **`frontend-reference/.../seti/states.js`** — `"start income"` state 展示了回合末选卡的交互流程
+
+### 静态资源
+- `cardBacks/back_base.jpg` → 默认卡背
+- `cardBacks/back_4.jpg`, `back_6.jpg` → 回合特定卡背
+- `cardBacks/goalBack.jpg` → 目标/任务卡背
+- `icons/draw.png` → 抽卡图标
+
 ## 完成标准
 - [ ] CardRender 集成工作
 - [ ] 卡牌行 3 张正确显示
-- [ ] 回合末卡堆正确显示
+- [ ] 回合末卡堆正确显示（使用卡背静态资源）
 - [ ] CardList 选择交互完整
 - [ ] 所有单测通过

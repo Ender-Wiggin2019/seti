@@ -70,8 +70,41 @@ packages/client/src/features/actions/
   - 显示消耗内容
   - 确认/取消
 
+## 参考代码 & 静态资源
+
+### 参考文件（重要）
+- **`frontend-reference/.../seti/states.js`** — `"do action"` state 定义了 8 个主行动的按钮和点击处理：
+  - `clickableAreas`: `startProbe`, `techPop`, `look`, `clearComputer` 等主行动区域
+  - `buttons`: `pass`, `end turn` 等
+  - `behavior.evalClick()`: 处理棋盘点击 → 播放卡牌、完成任务等
+- **`frontend-reference/.../seti/globals.js`** — `doDefaultMainAction()` 定义了主行动名称到行为的映射
+- **`frontend-reference/.../seti/components.js`** — 搜索 `clickableAreas` 在 `playerBoard` 上的定义，展示了 8 个主行动按钮的布局和位置
+- **`frontend-reference/.../seti/highlight.js`** — 自由行动的启用条件判定
+
+### 静态资源
+- `icons/move.png` → Move Probe 按钮图标
+- `icons/look.png` → Scan/Look 按钮图标
+- `icons/launch.png` → Launch Probe 按钮图标
+- `icons/tech.png` → Research Tech 按钮图标
+- `icons/draw.png` → Draw/Play Card 图标
+- `icons/data.png` → Place Data 图标
+- `icons/clearComputer.png` → Clear Computer 图标
+- `icons/income.png` → Income 图标
+- `player-passed.png` → Pass 状态指示
+
+### 8 个主行动名称参考
+从 reference `components.js` playerBoard clickableAreas:
+1. `startProbe` (Launch Probe)
+2. `look` (Scan)
+3. `techPop` (Research Tech)
+4. `clearComputer` (Analyze Data)
+5. Play Card (通过卡牌区域点击)
+6. Orbit (通过行星区域点击)
+7. Land (通过行星区域点击)
+8. Pass
+
 ## 完成标准
-- [ ] 主行动菜单 8 按钮工作
+- [ ] 主行动菜单 8 按钮工作（使用对应图标静态资源）
 - [ ] 自由行动栏 6 按钮工作
 - [ ] enabled/disabled 状态正确
 - [ ] 确认对话框工作

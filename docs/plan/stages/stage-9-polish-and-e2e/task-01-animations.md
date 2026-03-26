@@ -49,6 +49,21 @@
 - 单测验证: 动画状态 hook 的状态转换正确
 - 不测试动画视觉效果本身
 
+## 参考代码
+
+### 参考文件
+- **`frontend-reference/.../seti/solarSystem.js`** — `rotateWheel()`, `rotateSystem()` — 旋转逻辑，包括哪些 token 随旋转移动、哪些被推动
+- **`frontend-reference/.../seti/highlight.js`** — `isClickable()` 返回 `"animated"` 标志，指示需要脉冲动画的元素
+- **`frontend-reference/.../seti/components.js`** — `variables.rotation` 定义了旋转变量域 (0..7)，条件渲染 `__cond_transform` 展示了旋转变换的条件逻辑
+
+### 动画触发映射
+| game:event type | 动画 | 参考 |
+|---|---|---|
+| `ROTATION` | 圆盘 CSS rotate transition | `solarSystem.js` rotateWheel |
+| `PROBE_MOVE` | 探针位移 transition | `solarSystem.js` getPath |
+| `TOKEN_PLACE` | scale + fade-in | `computer.js` addDataToComputer |
+| `SCORE_CHANGE` | 数字滚动 + 弹出 indicator | `doEffect.js` vp 效果 |
+
 ## 完成标准
 - [ ] 旋转动画流畅
 - [ ] 探针移动平滑

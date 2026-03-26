@@ -82,8 +82,34 @@ packages/client/src/features/player/
 - `HandView.test.tsx`: 卡牌渲染, 选择模式交互
 - `PlayerDashboard.test.tsx`: 所有子组件正确渲染
 
+## 参考代码 & 静态资源
+
+### 参考文件
+- **`frontend-reference/.../seti/computer.js`** — 可直接参考的逻辑：
+  - `posAvailable()` — 判断电脑槽位是否可放
+  - `compPosToDataPos()` — 电脑位置到数据位置映射
+  - `getComputerReward()` — 放置数据后的奖励预览
+  - `addDataToComputer()` — 数据放置逻辑
+  - `clearComputer()` — 清空电脑逻辑
+- **`frontend-reference/.../seti/components.js`** — `playerBoard` 的完整布局配置：
+  - `clickableAreas` — 玩家面板上各可点击区域
+  - `positions` — 资源计数器、探针、标记、卡牌的位置定义
+  - 条件渲染规则（`__cond_image` 等根据玩家颜色/状态切换显示）
+- **`frontend-reference/.../seti/globals.js`** — `getPlayerBoard()`, `countThing()` — 获取玩家面板和统计数据的工具函数
+
+### 静态资源
+- `playerboardSE0.0.B.png` → 玩家面板背景图 ★★★
+- `playerTokens/data.png` → 数据 token
+- `icons/money.png`, `energy.png`, `pop.png`, `vp.png` → 资源图标
+- `icons/income.png` → 收入图标
+- `icons/missionSatellite.png` → 任务标记
+- `icons/questsComplete.png` → 任务完成标记
+- `icons/progress.png` → 进度图标
+- `distantBonus/bonus1-4.png` → 远距奖励（玩家面板上的成就区域）
+
 ## 完成标准
-- [ ] 所有玩家状态子组件实现
+- [ ] 所有玩家状态子组件实现（使用 playerBoard 背景图和资源图标）
 - [ ] 数据正确映射到 UI
+- [ ] ComputerView 使用参考逻辑实现槽位交互
 - [ ] 手牌交互完整
 - [ ] 所有单测通过
