@@ -1,5 +1,11 @@
 import { ETrace } from '@seti/common/types/element';
+import type { EPlanet } from '@seti/common/types/protocol/enums';
 import type { ETechId } from '@seti/common/types/tech';
+import type { ICard } from '../cards/ICard.js';
+import type {
+  ILandOptions,
+  ILandResult,
+} from '../effects/probe/LandProbeEffect.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
 import type { Computer } from './Computer.js';
@@ -20,6 +26,14 @@ export interface IPlayerIdentity {
   seatIndex: number;
 }
 
+export type TCardItem =
+  | string
+  | {
+      id?: string;
+      [key: string]: unknown;
+    }
+  | ICard;
+
 export interface IPlayerInit extends IPlayerIdentity {
   score?: number;
   publicity?: number;
@@ -32,11 +46,11 @@ export interface IPlayerInit extends IPlayerIdentity {
   dataStashCount?: number;
   dataPoolMax?: number;
   pieceInventory?: Partial<IPieceInventory>;
-  hand?: unknown[];
-  playedMissions?: unknown[];
-  completedMissions?: unknown[];
-  endGameCards?: unknown[];
-  tuckedIncomeCards?: unknown[];
+  hand?: TCardItem[];
+  playedMissions?: TCardItem[];
+  completedMissions?: TCardItem[];
+  endGameCards?: TCardItem[];
+  tuckedIncomeCards?: TCardItem[];
   techs?: ETechId[];
   traces?: Partial<Record<ETrace, number>>;
   passed?: boolean;
@@ -56,11 +70,11 @@ export interface IPlayer extends IPlayerIdentity {
   dataPool: DataPool;
   pieces: Pieces;
 
-  hand: unknown[];
-  playedMissions: unknown[];
-  completedMissions: unknown[];
-  endGameCards: unknown[];
-  tuckedIncomeCards: unknown[];
+  hand: TCardItem[];
+  playedMissions: TCardItem[];
+  completedMissions: TCardItem[];
+  endGameCards: TCardItem[];
+  tuckedIncomeCards: TCardItem[];
   techs: ETechId[];
   traces: Partial<Record<ETrace, number>>;
 
@@ -83,4 +97,13 @@ export interface IPlayer extends IPlayerIdentity {
     moveDiscarded: number;
   };
   getResourceSnapshot(): IResourceBundle;
+
+  canLand(planet: EPlanet, options?: ILandOptions): boolean;
+  getLandingCost(planet: EPlanet, options?: ILandOptions): number;
+  land(planet: EPlanet, options?: ILandOptions): ILandResult;
+
+  getCardIdAt(index: number): string;
+  findCardInHand(cardId: string): number;
+  removeCardAt(index: number): TCardItem;
+  removeCardById(cardId: string): TCardItem | undefined;
 }

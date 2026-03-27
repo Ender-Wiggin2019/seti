@@ -97,54 +97,16 @@ describe('Base representative cards', () => {
     expect(yellowSector.state.marks).toBe(1);
   });
 
-  it('Card 106 supports spend-2 branch with deck draw and row selection input', () => {
-    const playerDeckPath = createPlayer({ resources: { credits: 4 } });
-    const gameDeckPath = createGame({
-      mainDeck: new Deck<string>(['deck-card-1']),
-      cardRow: ['55', '85'],
-    });
-    const cardDeckPath = getCardRegistry().create('106');
+  it('Card 106 is a FULL_MISSION card with no bespoke play logic', () => {
+    const card = getCardRegistry().create('106');
+    expect(card.id).toBe('106');
+    expect(card.kind).toBe(EServerCardKind.MISSION);
 
-    cardDeckPath.play({ player: playerDeckPath, game: gameDeckPath });
-    let deckPathInput = gameDeckPath.deferredActions.drain(gameDeckPath);
-    expect(deckPathInput?.type).toBe(EPlayerInputType.OPTION);
-    deckPathInput = deckPathInput?.process({
-      type: EPlayerInputType.OPTION,
-      optionId: 'spend-2',
-    } as never);
-    expect(deckPathInput?.type).toBe(EPlayerInputType.OPTION);
-    deckPathInput = deckPathInput?.process({
-      type: EPlayerInputType.OPTION,
-      optionId: 'draw-deck',
-    } as never);
-    expect(deckPathInput).toBeUndefined();
-    expect(playerDeckPath.hand).toEqual(['deck-card-1']);
-
-    const playerRowPath = createPlayer({ resources: { credits: 4 } });
-    const gameRowPath = createGame({
-      mainDeck: new Deck<string>(['deck-card-2']),
-      cardRow: ['55'],
-    });
-    const cardRowPath = getCardRegistry().create('106');
-
-    cardRowPath.play({ player: playerRowPath, game: gameRowPath });
-    let rowPathInput = gameRowPath.deferredActions.drain(gameRowPath);
-    rowPathInput = rowPathInput?.process({
-      type: EPlayerInputType.OPTION,
-      optionId: 'spend-2',
-    } as never);
-    rowPathInput = rowPathInput?.process({
-      type: EPlayerInputType.OPTION,
-      optionId: 'select-row',
-    } as never);
-    expect(rowPathInput?.type).toBe(EPlayerInputType.CARD);
-    rowPathInput = rowPathInput?.process({
-      type: EPlayerInputType.CARD,
-      cardIds: ['55'],
-    } as never);
-    expect(rowPathInput).toBeUndefined();
-    expect(playerRowPath.hand).toEqual(['55']);
-    expect(gameRowPath.cardRow).toEqual(['deck-card-2']);
+    const player = createPlayer();
+    const game = createGame();
+    card.play({ player, game });
+    const input = game.deferredActions.drain(game);
+    expect(input).toBeUndefined();
   });
 
   it('Card 89 draws cards through behavior executor', () => {

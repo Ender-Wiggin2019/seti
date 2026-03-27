@@ -1,25 +1,24 @@
+import type { ISolarSystemSetupConfig } from '@seti/common/constant/sectorSetup';
+import { useMemo } from 'react';
 import type { IPlayerInputModel, IPublicSector } from '@/types/re-exports';
 import { EPlayerInputType } from '@/types/re-exports';
 import { SectorView } from './SectorView';
-import {
-  getSectorVisualConfig,
-  type ISectorVisualOverrides,
-} from './sectorVisualConfig';
+import { buildSectorPairs } from './sectorVisualConfig';
 
 interface ISectorGridProps {
   sectors: IPublicSector[];
+  setupConfig: ISolarSystemSetupConfig;
   playerColors: Record<string, string>;
   pendingInput: IPlayerInputModel | null;
   onSelectSector: (sectorColor: IPublicSector['color']) => void;
-  sectorVisualById?: Record<string, ISectorVisualOverrides>;
 }
 
 export function SectorGrid({
   sectors,
+  setupConfig,
   playerColors,
   pendingInput,
   onSelectSector,
-  sectorVisualById,
 }: ISectorGridProps): React.JSX.Element {
   const isSectorInput = pendingInput?.type === EPlayerInputType.SECTOR;
   const options =
@@ -27,30 +26,34 @@ export function SectorGrid({
       ? new Set(pendingInput.options)
       : new Set<IPublicSector['color']>();
 
+  const sectorPairs = useMemo(
+    () => buildSectorPairs(setupConfig, sectors),
+    [setupConfig, sectors],
+  );
+
   return (
     <div
-      className='game-situation seti-sector-grid absolute inset-0 z-50'
+      className='absolute inset-0 z-250 pointer-events-none'
       aria-label='Sector ring'
     >
-      {sectors.slice(0, 8).map((sector) => {
-        const visual = getSectorVisualConfig(
-          sector.sectorId,
-          sectorVisualById?.[sector.sectorId],
+      {sectorPairs.map((pair) => {
+        const colors = pair.sectors.map((s) => s.color);
+        const clickableColors = colors.filter(
+          (c) => isSectorInput && options.has(c),
         );
-        const clickable = isSectorInput && options.has(sector.color);
+        const clickable = clickableColors.length > 0;
+        const firstClickable = clickableColors[0];
 
         return (
           <SectorView
-            key={sector.sectorId}
-            sector={sector}
+            key={pair.placement.position}
+            pair={pair}
             playerColors={playerColors}
-            slotIndex={visual.slotIndex}
-            sectorImageSrc={visual.sectorSrc}
             clickable={clickable}
             highlighted={clickable}
             onClick={() => {
-              if (clickable) {
-                onSelectSector(sector.color);
+              if (clickable && firstClickable != null) {
+                onSelectSector(firstClickable);
               }
             }}
           />

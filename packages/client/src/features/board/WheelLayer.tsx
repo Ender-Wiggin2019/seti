@@ -7,17 +7,24 @@ interface IWheelLayerProps {
 }
 
 const RING_SIZE_PERCENT: Record<IWheelLayerProps['ring'], number> = {
-  1: 60.9,
-  2: 82.6,
-  3: 95.7,
+  1: 34,
+  2: 48,
+  3: 62,
   4: 100,
 };
 
 const RING_ASSET: Record<IWheelLayerProps['ring'], string> = {
-  1: '/assets/seti/wheels/wheel1outline.png',
-  2: '/assets/seti/wheels/wheel2outline.png',
-  3: '/assets/seti/wheels/wheel3outline.png',
+  1: '/assets/seti/wheels/wheel1.png',
+  2: '/assets/seti/wheels/wheel2.png',
+  3: '/assets/seti/wheels/wheel3.png',
   4: '/assets/seti/wheels/wheel4.png',
+};
+
+const TRANSITION_DURATION_MS: Record<IWheelLayerProps['ring'], number> = {
+  1: 800,
+  2: 1200,
+  3: 1600,
+  4: 0,
 };
 
 export function WheelLayer({
@@ -27,15 +34,13 @@ export function WheelLayer({
 }: IWheelLayerProps): React.JSX.Element {
   const size = `${RING_SIZE_PERCENT[ring]}%`;
   const angleDeg = angle * 45;
+  const duration = TRANSITION_DURATION_MS[ring];
 
   return (
-    <img
-      src={RING_ASSET[ring]}
-      alt=''
-      aria-hidden
+    <div
       data-testid={`wheel-layer-ring-${ring}`}
       className={cn(
-        'absolute left-1/2 top-1/2 select-none object-contain',
+        'pointer-events-none absolute left-1/2 top-1/2 aspect-square select-none',
         className,
       )}
       style={{
@@ -43,8 +48,17 @@ export function WheelLayer({
         height: size,
         transform: `translate(-50%, -50%) rotate(${angleDeg}deg)`,
         transformOrigin: 'center',
+        transition:
+          duration > 0 ? `transform ${duration}ms ease-out` : undefined,
       }}
-      draggable={false}
-    />
+    >
+      <img
+        src={RING_ASSET[ring]}
+        alt=''
+        aria-hidden
+        className='h-full w-full object-contain'
+        draggable={false}
+      />
+    </div>
   );
 }

@@ -12,6 +12,8 @@ import type {
 
 class WsClient {
   private socket: Socket | null = null;
+  private connectionRefs = 0;
+  private authToken: string | null = null;
 
   get instance(): Socket | null {
     return this.socket;
@@ -22,9 +24,15 @@ class WsClient {
   }
 
   connect(token: string): Socket {
-    if (this.socket?.connected) {
+    if (this.socket && this.authToken === token) {
       return this.socket;
     }
+
+    if (this.socket && this.authToken !== token) {
+      this.disconnect();
+    }
+
+    this.authToken = token;
 
     this.socket = io(CLIENT_ENV.VITE_WS_URL, {
       auth: { token },
@@ -36,6 +44,17 @@ class WsClient {
     });
 
     return this.socket;
+  }
+
+  retainConnection(): void {
+    this.connectionRefs += 1;
+  }
+
+  releaseConnection(): void {
+    this.connectionRefs = Math.max(0, this.connectionRefs - 1);
+    if (this.connectionRefs === 0) {
+      this.disconnect();
+    }
   }
 
   joinGame(gameId: string): void {
@@ -58,47 +77,43 @@ class WsClient {
     this.socket?.emit('game:input', { gameId, inputResponse });
   }
 
-  onState(cb: (state: IPublicGameState) => void): void {
-    this.socket?.on('game:state', (data: { gameState: IPublicGameState }) =>
-      cb(data.gameState),
-    );
+  onState(cb: (state: IPublicGameState) => void): () => void {
+    const handler = (data: { gameState: IPublicGameState }) =>
+      cb(data.gameState);
+    this.socket?.on('game:state', handler);
+    return () => {
+      this.socket?.off('game:state', handler);
+    };
   }
 
   onWaiting(
     cb: (data: { playerId: string; input: IPlayerInputModel }) => void,
-  ): void {
+  ): () => void {
     this.socket?.on('game:waiting', cb);
+    return () => {
+      this.socket?.off('game:waiting', cb);
+    };
   }
 
-  onEvent(cb: (event: TGameEvent) => void): void {
-    this.socket?.on('game:event', (data: { event: TGameEvent }) =>
-      cb(data.event),
-    );
+  onEvent(cb: (event: TGameEvent) => void): () => void {
+    const handler = (data: { event: TGameEvent }) => cb(data.event);
+    this.socket?.on('game:event', handler);
+    return () => {
+      this.socket?.off('game:event', handler);
+    };
   }
 
-  onError(cb: (error: IErrorPayload) => void): void {
+  onError(cb: (error: IErrorPayload) => void): () => void {
     this.socket?.on('game:error', cb);
-  }
-
-  offState(cb?: (...args: unknown[]) => void): void {
-    this.socket?.off('game:state', cb);
-  }
-
-  offWaiting(cb?: (...args: unknown[]) => void): void {
-    this.socket?.off('game:waiting', cb);
-  }
-
-  offEvent(cb?: (...args: unknown[]) => void): void {
-    this.socket?.off('game:event', cb);
-  }
-
-  offError(cb?: (...args: unknown[]) => void): void {
-    this.socket?.off('game:error', cb);
+    return () => {
+      this.socket?.off('game:error', cb);
+    };
   }
 
   disconnect(): void {
     this.socket?.disconnect();
     this.socket = null;
+    this.authToken = null;
   }
 }
 

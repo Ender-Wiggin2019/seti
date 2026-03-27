@@ -1,10 +1,14 @@
 import { EResource, ETech, type ETrace } from '@seti/common/types/element';
+import { EPlanet } from '@seti/common/types/protocol/enums';
 import type { TTechCategory } from '@seti/common/types/tech';
 import { EPriority } from '../deferred/Priority.js';
 import { SimpleDeferredAction } from '../deferred/SimpleDeferredAction.js';
+import { TuckCardForIncomeEffect } from '../effects/income/TuckCardForIncomeEffect.js';
 import {
+  buildLandPlanetSelection,
   LaunchProbeEffect,
   MarkSectorSignalEffect,
+  OrbitProbeEffect,
   RefillCardRowEffect,
   ResearchTechEffect,
   RotateDiscEffect,
@@ -12,9 +16,20 @@ import {
 import { createActionEvent } from '../event/GameEvent.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
+import { SelectOption } from '../input/SelectOption.js';
 import type { IPlayer } from '../player/IPlayer.js';
 import type { IBehavior } from './Behavior.js';
 import type { ICard } from './ICard.js';
+
+const ORBITABLE_PLANETS: readonly EPlanet[] = [
+  EPlanet.MERCURY,
+  EPlanet.VENUS,
+  EPlanet.MARS,
+  EPlanet.JUPITER,
+  EPlanet.SATURN,
+  EPlanet.URANUS,
+  EPlanet.NEPTUNE,
+];
 
 type TCustomBehaviorHandler = (
   player: IPlayer,
@@ -90,8 +105,11 @@ export class BehaviorExecutor {
       this.buildGainScoreAction(behavior, player),
       this.buildGainMovementAction(behavior, player),
       this.buildGainIncomeAction(behavior, player),
+      this.buildTuckForIncomeAction(behavior, player),
       this.buildDrawCardsAction(behavior, player),
       this.buildLaunchProbeAction(behavior, player),
+      this.buildOrbitAction(behavior, player),
+      this.buildLandAction(behavior, player, card),
       this.buildScanAction(behavior, player, card),
       this.buildResearchTechAction(behavior, player),
       this.buildMarkTraceAction(behavior, player),
@@ -170,6 +188,16 @@ export class BehaviorExecutor {
     });
   }
 
+  private buildTuckForIncomeAction(
+    behavior: IBehavior,
+    player: IPlayer,
+  ): SimpleDeferredAction | undefined {
+    if (!behavior.tuckForIncome) return undefined;
+    return new SimpleDeferredAction(player, (game) => {
+      return TuckCardForIncomeEffect.execute(player, game);
+    });
+  }
+
   private buildDrawCardsAction(
     behavior: IBehavior,
     player: IPlayer,
@@ -177,7 +205,7 @@ export class BehaviorExecutor {
     const drawCards = behavior.drawCards;
     if (!drawCards || drawCards <= 0) return undefined;
     return new SimpleDeferredAction(player, (game) => {
-      const drawnCards: unknown[] = [];
+      const drawnCards: string[] = [];
       for (let i = 0; i < drawCards; i += 1) {
         const drawn = game.mainDeck.drawWithReshuffle(game.random);
         if (drawn === undefined) {
@@ -202,6 +230,47 @@ export class BehaviorExecutor {
       LaunchProbeEffect.execute(player, game);
       return undefined;
     });
+  }
+
+  private buildOrbitAction(
+    behavior: IBehavior,
+    player: IPlayer,
+  ): SimpleDeferredAction | undefined {
+    if (!behavior.orbit) return undefined;
+    return new SimpleDeferredAction(player, (game) => {
+      const orbitablePlanets = ORBITABLE_PLANETS.filter((planet) =>
+        OrbitProbeEffect.canExecute(player, game, planet),
+      );
+      if (orbitablePlanets.length === 0) return undefined;
+
+      const options = orbitablePlanets.map((planet) => ({
+        id: `orbit-${planet}`,
+        label: `Orbit ${planet}`,
+        onSelect: () => {
+          OrbitProbeEffect.execute(player, game, planet);
+          return undefined;
+        },
+      }));
+      options.push({
+        id: 'skip-orbit',
+        label: 'Skip orbit',
+        onSelect: () => undefined,
+      });
+      return new SelectOption(player, options, 'Select a planet to orbit');
+    });
+  }
+
+  private buildLandAction(
+    behavior: IBehavior,
+    player: IPlayer,
+    _card: ICard,
+  ): SimpleDeferredAction | undefined {
+    if (!behavior.land) return undefined;
+    return new SimpleDeferredAction(player, (game) =>
+      buildLandPlanetSelection(player, game, {
+        prompt: 'Select a planet to land on',
+      }),
+    );
   }
 
   private buildScanAction(

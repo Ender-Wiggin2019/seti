@@ -2,6 +2,7 @@ import { EResource } from '@seti/common/types/element';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import { getCardRegistry } from '../cards/CardRegistry.js';
+import type { ICard } from '../cards/ICard.js';
 import { EServerCardKind } from '../cards/ICard.js';
 import { hasCardData } from '../cards/loadCardData.js';
 import type { IGame } from '../IGame.js';
@@ -12,6 +13,7 @@ export interface IPlayCardResult {
   destination: 'discard' | 'mission' | 'endGame';
   price: number;
   priceType: string;
+  card?: ICard;
 }
 
 export class PlayCardAction {
@@ -40,15 +42,10 @@ export class PlayCardAction {
       });
     }
 
-    const card = player.hand[cardIndex];
-    const cardId =
-      typeof card === 'string'
-        ? card
-        : ((card as { id?: string })?.id ?? 'unknown');
+    const cardId = player.getCardIdAt(cardIndex);
 
-    // Backward compatibility for placeholder test cards like `card-1`.
     if (!hasCardData(cardId)) {
-      player.hand.splice(cardIndex, 1);
+      player.removeCardAt(cardIndex);
       game.mainDeck.discard(cardId);
       return {
         cardId,
@@ -74,12 +71,18 @@ export class PlayCardAction {
     const priceType = runtimeCard.priceType ?? EResource.CREDIT;
 
     player.resources.spend(this.getPriceResourceBundle(runtimeCard));
-    player.hand.splice(cardIndex, 1);
+    player.removeCardAt(cardIndex);
     runtimeCard.play({ player, game });
 
     if (runtimeCard.kind === EServerCardKind.MISSION) {
       player.playedMissions.push(runtimeCard);
-      return { cardId, destination: 'mission', price, priceType };
+      return {
+        cardId,
+        destination: 'mission',
+        price,
+        priceType,
+        card: runtimeCard,
+      };
     }
     if (runtimeCard.kind === EServerCardKind.END_GAME) {
       player.endGameCards.push(runtimeCard);

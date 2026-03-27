@@ -13,9 +13,6 @@ export function useGameError(): void {
       });
     };
 
-    wsClient.onError(handler);
-    return () => {
-      wsClient.offError();
-    };
+    return wsClient.onError(handler);
   }, []);
 }

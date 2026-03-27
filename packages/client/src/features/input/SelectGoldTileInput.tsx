@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
 import type {
@@ -17,6 +17,10 @@ export function SelectGoldTileInput({
   onSubmit,
 }: ISelectGoldTileInputProps): React.JSX.Element {
   const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSelectedTileId(null);
+  }, [model.inputId]);
 
   return (
     <div className='space-y-2'>

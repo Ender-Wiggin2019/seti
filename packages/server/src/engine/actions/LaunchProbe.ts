@@ -1,3 +1,4 @@
+import { LAUNCH_PROBE_CREDIT_COST } from '@seti/common/constant/actionCosts';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import {
@@ -6,8 +7,6 @@ import {
 } from '../effects/probe/LaunchProbeEffect.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
-
-const LAUNCH_PROBE_CREDIT_COST = 2;
 
 export type ILaunchProbeResult = ILaunchProbeEffectResult;
 

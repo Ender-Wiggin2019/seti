@@ -1,3 +1,7 @@
+import {
+  SCAN_CREDIT_COST,
+  SCAN_ENERGY_COST,
+} from '@seti/common/constant/actionCosts';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import { RefillCardRowEffect } from '../effects/cardRow/RefillCardRowEffect.js';
@@ -6,9 +10,6 @@ import { ScanWithTechsEffect } from '../effects/scan/ScanWithTechsEffect.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
 import type { IPlayer } from '../player/IPlayer.js';
-
-const SCAN_CREDIT_COST = 1;
-const SCAN_ENERGY_COST = 2;
 
 export interface IScanActionResult extends IScanWithTechsResult {
   refillCount: number;

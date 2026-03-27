@@ -45,6 +45,7 @@ function createPlayer(
     movementPoints: 0,
     dataStashCount: 0,
     probesInSpace: 1,
+    probeSpaceLimit: 1,
     ...overrides,
   };
 }

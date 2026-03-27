@@ -1,14 +1,21 @@
 import { EResource, ETrace } from '@seti/common/types/element';
+import { EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import type { ETechId } from '@seti/common/types/tech';
 import { GameError } from '@/shared/errors/GameError.js';
+import type {
+  ILandOptions,
+  ILandResult,
+} from '../effects/probe/LandProbeEffect.js';
+import { LandProbeEffect } from '../effects/probe/LandProbeEffect.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
+import { EMissionEventType } from '../missions/IMission.js';
 import type { Computer } from './Computer.js';
 import { Data } from './Data.js';
 import type { DataPool } from './DataPool.js';
 import { Income, type TIncomeBundle } from './Income.js';
-import type { IPlayer, IPlayerInit } from './IPlayer.js';
+import type { IPlayer, IPlayerInit, TCardItem } from './IPlayer.js';
 import { Pieces } from './Pieces.js';
 import type { IResourceBundle } from './Resources.js';
 import { Resources } from './Resources.js';
@@ -42,15 +49,15 @@ export class Player implements IPlayer {
 
   public pieces: Pieces;
 
-  public hand: unknown[];
+  public hand: TCardItem[];
 
-  public playedMissions: unknown[];
+  public playedMissions: TCardItem[];
 
-  public completedMissions: unknown[];
+  public completedMissions: TCardItem[];
 
-  public endGameCards: unknown[];
+  public endGameCards: TCardItem[];
 
-  public tuckedIncomeCards: unknown[];
+  public tuckedIncomeCards: TCardItem[];
 
   public techs: ETechId[];
 
@@ -232,5 +239,101 @@ export class Player implements IPlayer {
 
   public getResourceSnapshot(): IResourceBundle {
     return this.resources.toObject();
+  }
+
+  public canLand(planet: EPlanet, options: ILandOptions = {}): boolean {
+    const game = this.game;
+    if (!game || planet === EPlanet.EARTH) return false;
+    if (!LandProbeEffect.canExecute(this, game, planet, options)) return false;
+    const cost = LandProbeEffect.getLandingCost(this, game, planet, options);
+    return this.resources.has({ energy: cost });
+  }
+
+  public getLandingCost(planet: EPlanet, options: ILandOptions = {}): number {
+    const game = this.game;
+    if (!game) {
+      throw new GameError(
+        EErrorCode.INTERNAL_SERVER_ERROR,
+        'Player is not bound to a game',
+      );
+    }
+    return LandProbeEffect.getLandingCost(this, game, planet, options);
+  }
+
+  public land(planet: EPlanet, options: ILandOptions = {}): ILandResult {
+    const game = this.game;
+    if (!game) {
+      throw new GameError(
+        EErrorCode.INTERNAL_SERVER_ERROR,
+        'Player is not bound to a game',
+      );
+    }
+    if (!this.canLand(planet, options)) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        'Land action is not currently legal',
+        { playerId: this.id, planet, isMoon: options.isMoon ?? false },
+      );
+    }
+
+    const cost = LandProbeEffect.getLandingCost(this, game, planet, options);
+    this.resources.spend({ energy: cost });
+    const result = LandProbeEffect.execute(this, game, planet, options);
+
+    game.missionTracker.recordEvent({
+      type: EMissionEventType.PROBE_LANDED,
+      planet,
+      isMoon: result.isMoon,
+    });
+
+    return result;
+  }
+
+  public getCardIdAt(index: number): string {
+    if (index < 0 || index >= this.hand.length) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        'Card index out of range',
+        { index, handSize: this.hand.length },
+      );
+    }
+    const card = this.hand[index];
+    if (typeof card === 'string') {
+      return card;
+    }
+    const cardId = (card as { id?: string })?.id;
+    if (!cardId) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        'Card at index does not have a valid id',
+        { index },
+      );
+    }
+    return cardId;
+  }
+
+  public findCardInHand(cardId: string): number {
+    return this.hand.findIndex(
+      (card) =>
+        (typeof card === 'string' ? card : (card as { id?: string })?.id) ===
+        cardId,
+    );
+  }
+
+  public removeCardAt(index: number): TCardItem {
+    if (index < 0 || index >= this.hand.length) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        'Card index out of range',
+        { index, handSize: this.hand.length },
+      );
+    }
+    return this.hand.splice(index, 1)[0];
+  }
+
+  public removeCardById(cardId: string): TCardItem | undefined {
+    const index = this.findCardInHand(cardId);
+    if (index < 0) return undefined;
+    return this.hand.splice(index, 1)[0];
   }
 }

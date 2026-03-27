@@ -1,3 +1,4 @@
+import type { ISolarSystemSetupConfig } from '@seti/common/constant/sectorSetup';
 import { IBaseCard } from '@seti/common/types/BaseCard';
 import { EResource, ESector } from '@seti/common/types/element';
 import {
@@ -48,6 +49,7 @@ export interface IPublicPlayerState {
   movementPoints: number;
   dataStashCount: number;
   probesInSpace: number;
+  probeSpaceLimit: number;
 }
 
 export interface IPublicSolarSystemProbe {
@@ -141,6 +143,7 @@ export interface IPublicGameState {
   players: IPublicPlayerState[];
   solarSystem: IPublicSolarSystem;
   sectors: IPublicSector[];
+  solarSystemSetup?: ISolarSystemSetupConfig;
   planetaryBoard: IPublicPlanetaryBoard;
   techBoard: IPublicTechBoard;
   cardRow: IBaseCard[];

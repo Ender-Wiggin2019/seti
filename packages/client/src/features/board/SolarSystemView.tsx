@@ -1,3 +1,4 @@
+import type { ISolarSystemSetupConfig } from '@seti/common/constant/sectorSetup';
 import { useMemo, useState } from 'react';
 import type {
   IInputResponse,
@@ -12,11 +13,11 @@ import { SectorGrid } from './SectorGrid';
 import { WheelLayer } from './WheelLayer';
 
 const SPACE_RADII_PERCENT = [13, 22.8, 32.6, 42.4] as const;
-const SOLAR_DISC_SCALE_PERCENT = 85;
 
 interface ISolarSystemViewProps {
   solarSystem: IPublicSolarSystem;
   sectors: IPublicSector[];
+  setupConfig: ISolarSystemSetupConfig;
   pendingInput: IPlayerInputModel | null;
   playerColors: Record<string, string>;
   myPlayerId: string;
@@ -58,6 +59,7 @@ function getDiscAngle(
 export function SolarSystemView({
   solarSystem,
   sectors,
+  setupConfig,
   pendingInput,
   playerColors,
   myPlayerId,
@@ -110,85 +112,43 @@ export function SolarSystemView({
         </h2>
       </header>
 
-      <div className='relative mx-auto aspect-square w-full max-w-[760px] overflow-visible rounded-md'>
-        <div className='absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(36,54,89,0.35),rgba(8,13,25,0.2)_45%,rgba(8,13,25,0.7)_100%)]' />
+      <div
+        className='relative mx-auto aspect-square w-full max-w-[760px] overflow-hidden rounded-md'
+        style={{
+          backgroundImage: 'url(/assets/seti/boards/background.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <WheelLayer ring={4} angle={0} className='z-5' />
+        <WheelLayer
+          ring={3}
+          angle={getDiscAngle(solarSystem, 3)}
+          className='z-6'
+        />
+        <WheelLayer
+          ring={2}
+          angle={getDiscAngle(solarSystem, 2)}
+          className='z-7'
+        />
+        <WheelLayer
+          ring={1}
+          angle={getDiscAngle(solarSystem, 1)}
+          className='z-8'
+        />
 
-        <div
-          className='absolute left-1/2 top-1/2 z-10 aspect-square -translate-x-1/2 -translate-y-1/2'
-          style={{ width: `${SOLAR_DISC_SCALE_PERCENT}%` }}
-        >
-          <WheelLayer ring={4} angle={0} className='z-0' />
-          <WheelLayer
-            ring={3}
-            angle={getDiscAngle(solarSystem, 3)}
-            className='z-10'
-          />
-          <WheelLayer
-            ring={2}
-            angle={getDiscAngle(solarSystem, 2)}
-            className='z-20'
-          />
-          <WheelLayer
-            ring={1}
-            angle={getDiscAngle(solarSystem, 1)}
-            className='z-30'
-          />
-
-          {spacePoints.map((space) => {
-            const probeCount = probesBySpace[space.spaceId]?.length ?? 0;
-            const hasMyProbe = (probesBySpace[space.spaceId] ?? []).includes(
-              myPlayerId,
-            );
-            const isSelected = selectedSpaceId === space.spaceId;
-            const isReachable = reachable.has(space.spaceId);
-
-            return (
-              <button
-                key={space.spaceId}
-                type='button'
-                data-testid={`solar-space-${space.spaceId}`}
-                className='absolute z-30 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border border-transparent bg-transparent transition-all hover:border-accent-400/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/60'
-                style={{
-                  left: `${space.xPercent}%`,
-                  top: `${space.yPercent}%`,
-                }}
-                onClick={() => handleSpaceClick(space.spaceId)}
-                title={`${space.spaceId} - probes: ${probeCount}`}
-                aria-label={`Space ${space.spaceId}`}
-              >
-                {(isSelected || isReachable || hasMyProbe) && (
-                  <span
-                    className={[
-                      'absolute inset-0 rounded-full',
-                      isSelected
-                        ? 'border border-accent-400 bg-accent-500/20'
-                        : isReachable
-                          ? 'animate-pulse border border-accent-500/80 bg-accent-500/10'
-                          : 'border border-surface-400/60 bg-surface-300/10',
-                    ].join(' ')}
-                  />
-                )}
-              </button>
-            );
-          })}
-
-          {spacePoints.map((space) => {
-            const players = probesBySpace[space.spaceId] ?? [];
-            return players.map((playerId, tokenIndex) => (
-              <ProbeToken
-                key={`${space.spaceId}-${playerId}-${tokenIndex}`}
-                playerColor={playerColors[playerId] ?? 'white'}
-                xPercent={space.xPercent}
-                yPercent={space.yPercent}
-                offsetIndex={tokenIndex}
-                offsetCount={players.length}
-              />
-            ));
-          })}
-        </div>
+        <img
+          src='/assets/seti/sun.png'
+          alt=''
+          aria-hidden
+          className='pointer-events-none absolute left-1/2 top-1/2 z-200 w-[10%] -translate-x-1/2 -translate-y-1/2 select-none'
+          style={{ animation: 'spin 1800s linear infinite' }}
+          draggable={false}
+        />
 
         <SectorGrid
           sectors={sectors}
+          setupConfig={setupConfig}
           playerColors={playerColors}
           pendingInput={pendingInput}
           onSelectSector={(sectorColor) => {
@@ -201,6 +161,58 @@ export function SolarSystemView({
             });
           }}
         />
+
+        {spacePoints.map((space) => {
+          const probeCount = probesBySpace[space.spaceId]?.length ?? 0;
+          const hasMyProbe = (probesBySpace[space.spaceId] ?? []).includes(
+            myPlayerId,
+          );
+          const isSelected = selectedSpaceId === space.spaceId;
+          const isReachable = reachable.has(space.spaceId);
+
+          return (
+            <button
+              key={space.spaceId}
+              type='button'
+              data-testid={`solar-space-${space.spaceId}`}
+              className='absolute z-300 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border border-transparent bg-transparent transition-all hover:border-accent-400/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/60'
+              style={{
+                left: `${space.xPercent}%`,
+                top: `${space.yPercent}%`,
+              }}
+              onClick={() => handleSpaceClick(space.spaceId)}
+              title={`${space.spaceId} - probes: ${probeCount}`}
+              aria-label={`Space ${space.spaceId}`}
+            >
+              {(isSelected || isReachable || hasMyProbe) && (
+                <span
+                  className={[
+                    'absolute inset-0 rounded-full',
+                    isSelected
+                      ? 'border border-accent-400 bg-accent-500/20'
+                      : isReachable
+                        ? 'animate-pulse border border-accent-500/80 bg-accent-500/10'
+                        : 'border border-surface-400/60 bg-surface-300/10',
+                  ].join(' ')}
+                />
+              )}
+            </button>
+          );
+        })}
+
+        {spacePoints.map((space) => {
+          const players = probesBySpace[space.spaceId] ?? [];
+          return players.map((playerId, tokenIndex) => (
+            <ProbeToken
+              key={`${space.spaceId}-${playerId}-${tokenIndex}`}
+              playerColor={playerColors[playerId] ?? 'white'}
+              xPercent={space.xPercent}
+              yPercent={space.yPercent}
+              offsetIndex={tokenIndex}
+              offsetCount={players.length}
+            />
+          ));
+        })}
       </div>
     </section>
   );

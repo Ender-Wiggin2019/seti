@@ -1,3 +1,4 @@
+export { buildQuickMissionDef } from './buildMissionDef.js';
 export {
   EMissionEventType,
   EMissionType,
@@ -14,3 +15,9 @@ export {
 } from './MissionCondition.js';
 export { applyMissionRewards } from './MissionReward.js';
 export { MissionTracker } from './MissionTracker.js';
+export {
+  orbitOrLandAt,
+  probeOnComet,
+  totalLandings,
+  totalOrbitAndLand,
+} from './QuickMissionConditions.js';

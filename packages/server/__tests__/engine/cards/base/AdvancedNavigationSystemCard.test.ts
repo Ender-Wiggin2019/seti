@@ -1,9 +1,9 @@
-import { AdvancedNavigationSystem } from '@/engine/cards/base/AdvancedNavigationSystemCard.js';
+import { getCardRegistry } from '@/engine/cards/CardRegistry.js';
 import { EServerCardKind } from '@/engine/cards/ICard.js';
 
-describe('AdvancedNavigationSystem', () => {
-  it('loads expected card id and metadata', () => {
-    const card = new AdvancedNavigationSystem();
+describe('AdvancedNavigationSystem (card 128)', () => {
+  it('loads expected card id and metadata via registry', () => {
+    const card = getCardRegistry().create('128');
 
     expect(card.id).toBe('128');
     expect(card.name.length).toBeGreaterThan(0);

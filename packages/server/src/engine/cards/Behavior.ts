@@ -35,6 +35,7 @@ export interface IBehavior {
   launchProbe?: boolean;
   orbit?: boolean;
   land?: boolean;
+  tuckForIncome?: boolean;
   scan?: IScanBehavior;
   researchTech?: ETech;
   markTrace?: ETrace;
@@ -204,6 +205,8 @@ function applyBaseEffect(behavior: IBehavior, effect: IBaseEffect): IBehavior {
       };
     case EMiscIcon.ROTATE:
       return { ...behavior, rotateSolarSystem: true };
+    case EMiscIcon.INCOME:
+      return { ...behavior, tuckForIncome: true };
     case EMiscIcon.CREDIT_INCOME:
       return { ...behavior, gainIncome: EResource.CREDIT };
     case EMiscIcon.ENERGY_INCOME:

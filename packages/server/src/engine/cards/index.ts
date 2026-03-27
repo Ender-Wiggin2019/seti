@@ -4,17 +4,9 @@ export {
   type IScanBehavior,
 } from './Behavior.js';
 export { BehaviorExecutor, getBehaviorExecutor } from './BehaviorExecutor.js';
-export { AdvancedNavigationSystem } from './base/AdvancedNavigationSystemCard.js';
-export { AreciboObservatory } from './base/AreciboObservatoryCard.js';
-export { BarnardsStarObservation } from './base/BarnardsStarObservationCard.js';
-export { ExtremophilesStudy } from './base/ExtremophilesStudyCard.js';
-export { FocusedResearch } from './base/FocusedResearchCard.js';
-export { NIACProgram } from './base/NIACProgramCard.js';
-export { OnsalaTelescopeConstruction } from './base/OnsalaTelescopeConstructionCard.js';
-export { PerseveranceRover } from './base/PerseveranceRoverCard.js';
+export { Dragonfly } from './base/DragonflyCard.js';
+export { createGenericCard } from './base/GenericCards.js';
 export { SquareKilometreArray } from './base/SquareKilometreArrayCard.js';
-export { Starship } from './base/StarshipCard.js';
-export { StrategicPlanning } from './base/StrategicPlanningCard.js';
 export {
   Card,
   EndGameScoringCard,

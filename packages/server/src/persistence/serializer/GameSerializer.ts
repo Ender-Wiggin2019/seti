@@ -334,6 +334,9 @@ export function serializeGame(game: IGame, version = 0): IGameStateDto {
     roundRotationReminderIndex: game.roundRotationReminderIndex,
 
     solarSystem: serializeSolarSystem(game),
+    solarSystemSetup: game.solarSystemSetup
+      ? cloneValue(game.solarSystemSetup)
+      : null,
     planetaryBoard: serializePlanetaryBoard(game),
     techBoard: serializeTechBoard(game),
     sectors: serializeSectors(game),
@@ -397,6 +400,7 @@ function toPublicPlayerState(
     dataStashCount: (player.data as unknown as IDataInternalState)
       .stashCountValue,
     probesInSpace: player.probesInSpace,
+    probeSpaceLimit: player.probeSpaceLimit,
   };
 }
 
@@ -458,6 +462,7 @@ export function projectGameState(
     ),
     solarSystem: toPublicSolarSystemState(game.solarSystem),
     sectors: toPublicSectors(game),
+    solarSystemSetup: game.solarSystemSetup ?? undefined,
     planetaryBoard: toPublicPlanetaryBoard(game),
     techBoard: toPublicTechBoard(game),
     cardRow: cloneValue(game.cardRow as never),

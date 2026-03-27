@@ -6,10 +6,10 @@
  * @Description:
  */
 import type { IGame } from '../IGame.js';
-import type { IPlayer } from '../player/IPlayer.js';
+import type { IPlayer, TCardItem } from '../player/IPlayer.js';
 
 export interface IPassResult {
-  discardedCards: unknown[];
+  discardedCards: TCardItem[];
   rotatedSolarSystem: boolean;
   rotatedDisc: number;
   endOfRoundCardSelected: boolean;
@@ -54,8 +54,7 @@ export class PassAction {
       const sortedDesc = [...toDiscard].sort((a, b) => b - a);
       for (const idx of sortedDesc) {
         if (idx >= 0 && idx < player.hand.length) {
-          const removed = player.hand.splice(idx, 1);
-          result.discardedCards.push(...removed);
+          result.discardedCards.push(player.removeCardAt(idx));
         }
       }
     }

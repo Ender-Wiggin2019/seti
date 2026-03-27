@@ -35,6 +35,7 @@ export function createMockPlayerState(
     movementPoints: 1,
     dataStashCount: 0,
     probesInSpace: 1,
+    probeSpaceLimit: 1,
     ...overrides,
   };
 }

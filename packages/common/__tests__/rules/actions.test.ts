@@ -10,7 +10,7 @@ import {
   getAvailableMainActions,
 } from '@/rules/actions';
 import { EResource, ETech } from '@/types/element';
-import { EMainAction, EPhase } from '@/types/protocol/enums';
+import { EMainAction, EPhase, EPlanet } from '@/types/protocol/enums';
 import type {
   IPublicGameState,
   IPublicPlayerState,
@@ -43,6 +43,7 @@ function createPlayer(
     movementPoints: 0,
     dataStashCount: 0,
     probesInSpace: 0,
+    probeSpaceLimit: 1,
     ...overrides,
   };
 }
@@ -72,9 +73,26 @@ function createGameState(
     currentPlayerId: 'p1',
     startPlayerId: 'p1',
     players: [],
-    solarSystem: { spaces: [], adjacency: {}, probes: [], discs: [] },
+    solarSystem: {
+      spaces: ['planet-space-1'],
+      adjacency: {},
+      probes: [{ playerId: 'p1', spaceId: 'planet-space-1' }],
+      discs: [],
+    },
     sectors: [],
-    planetaryBoard: { planets: {} },
+    planetaryBoard: {
+      planets: {
+        [EPlanet.MERCURY]: {
+          orbitSlots: [],
+          landingSlots: [],
+          firstOrbitClaimed: false,
+          firstLandDataBonusTaken: [false],
+          moonOccupant: null,
+          moonUnlocked: false,
+          planetSpaceId: 'planet-space-1',
+        },
+      },
+    },
     techBoard: createTechBoard(),
     cardRow: [],
     aliens: [],
@@ -86,7 +104,9 @@ function createGameState(
 describe('action rules', () => {
   describe('canLaunchProbe', () => {
     it('returns true with sufficient credits', () => {
-      expect(canLaunchProbe(createPlayer())).toBe(true);
+      expect(
+        canLaunchProbe(createPlayer({ probesInSpace: 0, probeSpaceLimit: 1 })),
+      ).toBe(true);
     });
 
     it('returns false with insufficient credits', () => {
@@ -97,6 +117,8 @@ describe('action rules', () => {
           [EResource.DATA]: 0,
           [EResource.PUBLICITY]: 6,
         },
+        probesInSpace: 0,
+        probeSpaceLimit: 1,
       });
       expect(canLaunchProbe(player)).toBe(false);
     });

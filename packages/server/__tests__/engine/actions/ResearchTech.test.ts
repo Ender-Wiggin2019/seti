@@ -12,7 +12,7 @@ import { SeededRandom } from '@/shared/rng/SeededRandom.js';
 
 function createMockGame(techBoard?: TechBoard | null): IGame {
   const rng = new SeededRandom('test');
-  const solarSystem = BoardBuilder.buildSolarSystem(rng);
+  const solarSystem = BoardBuilder.buildSolarSystemFromRandom(rng);
   const board =
     techBoard === undefined
       ? new TechBoard(new SeededRandom('tech-board'))

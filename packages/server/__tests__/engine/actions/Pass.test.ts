@@ -54,7 +54,7 @@ describe('PassAction', () => {
 
     it('rotates the solar system on the first pass of the round', () => {
       const rng = new SeededRandom('pass-first-rotate');
-      const solarSystem = BoardBuilder.buildSolarSystem(rng);
+      const solarSystem = BoardBuilder.buildSolarSystemFromRandom(rng);
       const game = createMockGame({
         solarSystem,
         hasRoundFirstPassOccurred: false,
@@ -68,7 +68,7 @@ describe('PassAction', () => {
 
     it('does not rotate the solar system on the second pass of the round', () => {
       const rng = new SeededRandom('pass-second-no-rotate');
-      const solarSystem = BoardBuilder.buildSolarSystem(rng);
+      const solarSystem = BoardBuilder.buildSolarSystemFromRandom(rng);
       const rotateSpy = vi.spyOn(solarSystem, 'rotateNextDisc');
       const game = createMockGame({
         solarSystem,

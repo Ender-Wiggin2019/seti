@@ -1,5 +1,11 @@
+import {
+  ESectorPosition,
+  ESectorTileId,
+  type ISolarSystemSetupConfig,
+  SECTOR_TILE_DEFINITIONS,
+} from '@seti/common/constant/sectorSetup';
 import { ALL_CARDS } from '@seti/common/data';
-import { ESector, ETech } from '@seti/common/types/element';
+import { ETech } from '@seti/common/types/element';
 import { ETechId } from '@seti/common/types/tech';
 import { useMemo, useState } from 'react';
 import {
@@ -11,6 +17,7 @@ import {
   EGameEventType,
   EPhase,
   type IPublicGameState,
+  type IPublicSolarSystemDiscState,
 } from '@/types/re-exports';
 
 type TDebugScenario = 'my-turn' | 'opponent-turn' | 'spectator' | 'game-over';
@@ -30,10 +37,63 @@ function createAdjacencyMap(): Record<string, string[]> {
   return adjacencyMap;
 }
 
+function createDebugSetupConfig(
+  discAngles: [number, number, number],
+): ISolarSystemSetupConfig {
+  return {
+    tilePlacements: [
+      {
+        tileId: ESectorTileId.TILE_1,
+        position: ESectorPosition.NORTH,
+        sectorIds: ['sector-0', 'sector-1'],
+      },
+      {
+        tileId: ESectorTileId.TILE_2,
+        position: ESectorPosition.WEST,
+        sectorIds: ['sector-2', 'sector-3'],
+      },
+      {
+        tileId: ESectorTileId.TILE_3,
+        position: ESectorPosition.EAST,
+        sectorIds: ['sector-4', 'sector-5'],
+      },
+      {
+        tileId: ESectorTileId.TILE_4,
+        position: ESectorPosition.SOUTH,
+        sectorIds: ['sector-6', 'sector-7'],
+      },
+    ],
+    initialDiscAngles: discAngles,
+  };
+}
+
+function createSectorsFromSetup(setupConfig: ISolarSystemSetupConfig) {
+  return setupConfig.tilePlacements.flatMap((placement) => {
+    const tileDef = SECTOR_TILE_DEFINITIONS[placement.tileId];
+    return tileDef.sectors.map((sectorOnTile, idx) => ({
+      sectorId: placement.sectorIds[idx],
+      color: sectorOnTile.color,
+      dataSlots:
+        idx === 0 ? ['player-1', null, null] : ['player-2', 'player-3', null],
+      markerSlots: [] as { playerId: string; timestamp: number }[],
+      completed: placement.tileId === ESectorTileId.TILE_3 && idx === 1,
+    }));
+  });
+}
+
 function createDebugGameState(
   scenario: TDebugScenario,
-  rotationStep: number,
+  discAngles: [number, number, number],
 ): IPublicGameState {
+  const setupConfig = createDebugSetupConfig(discAngles);
+
+  const discs: IPublicSolarSystemDiscState[] = [
+    { discIndex: 0, angle: discAngles[0] % 8 },
+    { discIndex: 1, angle: discAngles[1] % 8 },
+    { discIndex: 2, angle: discAngles[2] % 8 },
+    { discIndex: 3, angle: 0 },
+  ];
+
   return {
     gameId: `debug-${scenario}`,
     round: 3,
@@ -63,6 +123,7 @@ function createDebugGameState(
         movementPoints: 2,
         dataStashCount: 1,
         probesInSpace: 2,
+        probeSpaceLimit: 2,
       },
       {
         playerId: 'player-2',
@@ -85,6 +146,7 @@ function createDebugGameState(
         movementPoints: 1,
         dataStashCount: 0,
         probesInSpace: 1,
+        probeSpaceLimit: 1,
       },
       {
         playerId: 'player-3',
@@ -107,6 +169,7 @@ function createDebugGameState(
         movementPoints: 3,
         dataStashCount: 2,
         probesInSpace: 1,
+        probeSpaceLimit: 1,
       },
     ],
     solarSystem: {
@@ -118,31 +181,10 @@ function createDebugGameState(
         { playerId: 'player-2', spaceId: 'space-13' },
         { playerId: 'player-3', spaceId: 'space-21' },
       ],
-      discs: [
-        { discIndex: 0, angle: (15 + rotationStep) % 8 },
-        { discIndex: 1, angle: (35 + rotationStep) % 8 },
-        { discIndex: 2, angle: (60 + rotationStep) % 8 },
-        { discIndex: 3, angle: 0 },
-      ],
+      discs,
     },
-    sectors: [ESector.RED, ESector.YELLOW, ESector.BLUE, ESector.BLACK].flatMap(
-      (color, index) => [
-        {
-          sectorId: `sector-${index * 2}`,
-          color,
-          dataSlots: ['player-1', null, null],
-          markerSlots: [],
-          completed: false,
-        },
-        {
-          sectorId: `sector-${index * 2 + 1}`,
-          color,
-          dataSlots: ['player-2', 'player-3', null],
-          markerSlots: [],
-          completed: index === 2,
-        },
-      ],
-    ),
+    sectors: createSectorsFromSetup(setupConfig),
+    solarSystemSetup: setupConfig,
     planetaryBoard: { planets: {} },
     techBoard: {
       stacks: [ETech.PROBE, ETech.SCAN, ETech.COMPUTER].flatMap((tech) =>
@@ -164,10 +206,30 @@ function createDebugGameState(
 
 export function GameDebugPage(): React.JSX.Element {
   const [scenario, setScenario] = useState<TDebugScenario>('my-turn');
-  const [rotationStep, setRotationStep] = useState(0);
+  const [discAngles, setDiscAngles] = useState<[number, number, number]>([
+    15, 35, 60,
+  ]);
+
+  const rotateRing = (ring: 1 | 2 | 3): void => {
+    setDiscAngles((prev) => {
+      const next: [number, number, number] = [...prev];
+      if (ring === 1) {
+        next[0] += 1;
+      } else if (ring === 2) {
+        next[0] += 1;
+        next[1] += 1;
+      } else {
+        next[0] += 1;
+        next[1] += 1;
+        next[2] += 1;
+      }
+      return next;
+    });
+  };
+
   const gameState = useMemo(
-    () => createDebugGameState(scenario, rotationStep),
-    [scenario, rotationStep],
+    () => createDebugGameState(scenario, discAngles),
+    [scenario, discAngles],
   );
   const isSpectator = scenario === 'spectator';
   const myPlayerId = isSpectator ? 'spectator-0' : 'player-1';
@@ -204,13 +266,37 @@ export function GameDebugPage(): React.JSX.Element {
           <option value='spectator'>Spectator</option>
           <option value='game-over'>Game Over</option>
         </select>
-        <button
-          type='button'
-          onClick={() => setRotationStep((prev) => prev + 1)}
-          className='rounded border border-surface-700 bg-surface-800 px-2 py-1 text-text-100 transition-colors hover:bg-surface-700'
-        >
-          Rotate +45°
-        </button>
+
+        <div className='flex items-center gap-1 border-l border-surface-700 pl-2'>
+          <button
+            type='button'
+            onClick={() => rotateRing(1)}
+            className='rounded border border-amber-700/60 bg-amber-900/40 px-2 py-1 text-amber-200 transition-colors hover:bg-amber-800/50'
+            title='Ring 1 only rotates'
+          >
+            R1
+          </button>
+          <button
+            type='button'
+            onClick={() => rotateRing(2)}
+            className='rounded border border-sky-700/60 bg-sky-900/40 px-2 py-1 text-sky-200 transition-colors hover:bg-sky-800/50'
+            title='Ring 2 carries Ring 1'
+          >
+            R2
+          </button>
+          <button
+            type='button'
+            onClick={() => rotateRing(3)}
+            className='rounded border border-emerald-700/60 bg-emerald-900/40 px-2 py-1 text-emerald-200 transition-colors hover:bg-emerald-800/50'
+            title='Ring 3 carries Ring 2 and Ring 1'
+          >
+            R3
+          </button>
+        </div>
+
+        <span className='font-mono text-[10px] text-text-500'>
+          [{discAngles.map((a) => a % 8).join(', ')}]
+        </span>
       </div>
       <GameLayout />
     </GameContextValueProvider>

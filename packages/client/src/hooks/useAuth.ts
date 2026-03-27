@@ -50,10 +50,12 @@ export function useRegister() {
 
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
+  const setUser = useAuthStore((s) => s.setUser);
 
   return useMutation({
     mutationFn: (data: IUpdateProfileRequest) => authApi.updateMe(data),
-    onSuccess: () => {
+    onSuccess: (updatedUser) => {
+      setUser(updatedUser);
       queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
     },
   });

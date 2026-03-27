@@ -16,12 +16,18 @@ export {
   AnalyzeDataEffect,
   type IAnalyzeDataResult,
 } from './data/AnalyzeDataEffect.js';
+// Probe
 export {
+  buildLandPlanetSelection,
+  type ILandSelectionOptions,
+} from './probe/BuildLandPlanetSelection.js';
+export {
+  type ILandOptions,
   type ILandProbeEffectOptions,
   type ILandProbeEffectResult,
+  type ILandResult,
   LandProbeEffect,
 } from './probe/LandProbeEffect.js';
-// Probe
 export {
   type ILaunchProbeEffectResult,
   LaunchProbeEffect,

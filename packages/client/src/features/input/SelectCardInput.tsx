@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
 import type { IInputResponse, ISelectCardInputModel } from '@/types/re-exports';
@@ -14,6 +14,10 @@ export function SelectCardInput({
   onSubmit,
 }: ISelectCardInputProps): React.JSX.Element {
   const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    setSelectedCardIds([]);
+  }, [model.inputId]);
 
   const canSubmit = useMemo(() => {
     return (

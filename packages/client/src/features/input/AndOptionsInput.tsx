@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import type { IAndOptionsInputModel, IInputResponse } from '@/types/re-exports';
 import { EPlayerInputType } from '@/types/re-exports';
@@ -21,6 +21,11 @@ export function AndOptionsInput({
   const [responses, setResponses] = useState<Array<IInputResponse | undefined>>(
     Array.from({ length: model.options.length }),
   );
+
+  useEffect(() => {
+    setCurrentStepIndex(0);
+    setResponses(Array.from({ length: model.options.length }));
+  }, [model.inputId, model.options.length]);
 
   const currentStep = model.options[currentStepIndex];
 

@@ -1,11 +1,13 @@
+import {
+  LANDING_COST_DEFAULT,
+  LANDING_COST_WITH_ORBITER,
+} from '../constant/actionCosts';
 import type {
   IPublicGameState,
   IPublicPlanetState,
   IPublicPlayerState,
 } from '../types/protocol/gameState';
 
-const LANDING_COST_DEFAULT = 3;
-const LANDING_COST_WITH_ORBITER = 2;
 const ENERGY_RESOURCE_KEY = 'energy';
 
 /** 计算着陆费用 (有轨道者时 2, 否则 3) */

@@ -1,124 +1,81 @@
-interface ISectorSlotLayout {
-  xPercent: number;
-  yPercent: number;
-  rotationDeg: number;
+import {
+  type ESectorPosition,
+  type IResolvedTilePlacement,
+  type ISolarSystemSetupConfig,
+  resolveSetupConfig,
+} from '@seti/common/constant/sectorSetup';
+import type { IPublicSector } from '@/types/re-exports';
+
+export interface ISectorPairConfig {
+  placement: IResolvedTilePlacement;
+  sectors: IPublicSector[];
 }
 
-interface ISectorAssetSet {
-  sectorSrc: string;
-  labelSrc: string;
+export interface ISectorPositionStyle {
+  top?: string;
+  bottom?: string;
+  left?: string;
+  right?: string;
+  transform?: string;
+  width: string;
+  height: string;
 }
 
-export interface ISectorVisualOverrides {
-  slotIndex?: number;
-  xPercent?: number;
-  yPercent?: number;
-  rotationDeg?: number;
-  imageVariant?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-}
-
-export interface ISectorVisualConfig {
-  slotIndex: number;
-  xPercent: number;
-  yPercent: number;
-  rotationDeg: number;
-  sectorSrc: string;
-  labelSrc: string;
-}
-
-const SECTOR_SLOT_LAYOUTS: readonly ISectorSlotLayout[] = [
-  { xPercent: 50, yPercent: -10, rotationDeg: 0 },
-  { xPercent: 94, yPercent: 6, rotationDeg: 45 },
-  { xPercent: 112, yPercent: 50, rotationDeg: 90 },
-  { xPercent: 94, yPercent: 94, rotationDeg: 135 },
-  { xPercent: 50, yPercent: 112, rotationDeg: 180 },
-  { xPercent: 6, yPercent: 94, rotationDeg: 225 },
-  { xPercent: -12, yPercent: 50, rotationDeg: 270 },
-  { xPercent: 6, yPercent: 6, rotationDeg: 315 },
-];
-
-const SECTOR_ASSETS: Record<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8, ISectorAssetSet> = {
-  1: {
-    sectorSrc: '/assets/seti/sky/skySiriusA.png',
-    labelSrc: '',
+const POSITION_STYLES: Record<ESectorPosition, ISectorPositionStyle> = {
+  north: {
+    top: '0.2%',
+    left: '12.5%',
+    width: '75%',
+    height: '30%',
   },
-  2: {
-    sectorSrc: '/assets/seti/sky/skyBernard.png',
-    labelSrc: '',
+  west: {
+    top: '35%',
+    right: '47.1%',
+    width: '75%',
+    height: '30%',
+    transform: 'rotate(-90deg)',
   },
-  3: {
-    sectorSrc: '/assets/seti/sky/skyVega.png',
-    labelSrc: '',
+  east: {
+    top: '35%',
+    left: '47.1%',
+    width: '75%',
+    height: '30%',
+    transform: 'rotate(90deg)',
   },
-  4: {
-    sectorSrc: '/assets/seti/sky/skyKepler22.png',
-    labelSrc: '',
-  },
-  5: {
-    sectorSrc: '/assets/seti/sky/skyProximaCentauri.png',
-    labelSrc: '',
-  },
-  6: {
-    sectorSrc: '/assets/seti/sky/skyBetaPictoris.png',
-    labelSrc: '',
-  },
-  7: {
-    sectorSrc: '/assets/seti/sky/skyProcryon.png',
-    labelSrc: '',
-  },
-  8: {
-    sectorSrc: '/assets/seti/sky/sky61Virginis.png',
-    labelSrc: '',
+  south: {
+    bottom: '0.2%',
+    left: '12.5%',
+    width: '75%',
+    height: '30%',
+    transform: 'rotate(180deg)',
   },
 };
 
-function modulo(input: number, size: number): number {
-  return ((input % size) + size) % size;
+export function getPositionStyle(
+  position: ESectorPosition,
+): ISectorPositionStyle {
+  return POSITION_STYLES[position];
 }
 
-function hashString(input: string): number {
-  let hash = 0;
-  for (let i = 0; i < input.length; i += 1) {
-    hash = (hash * 31 + input.charCodeAt(i)) >>> 0;
-  }
-  return hash;
-}
+/**
+ * Build the visual config for each sector tile pair from the setup config.
+ * Groups `IPublicSector[]` by the tile they belong to (using sectorId matching).
+ */
+export function buildSectorPairs(
+  setupConfig: ISolarSystemSetupConfig,
+  sectors: IPublicSector[],
+): ISectorPairConfig[] {
+  const resolved = resolveSetupConfig(setupConfig);
+  const sectorById = new Map(sectors.map((s) => [s.sectorId, s]));
 
-function inferSlotIndexFromSectorId(sectorId: string): number {
-  const numericSuffix = sectorId.match(/(\d+)$/);
-  if (numericSuffix) {
-    return modulo(
-      Number.parseInt(numericSuffix[1], 10),
-      SECTOR_SLOT_LAYOUTS.length,
-    );
-  }
+  return resolved.map((placement) => {
+    const matched = placement.sectorIds
+      .map((id) => sectorById.get(id))
+      .filter((s): s is IPublicSector => s != null);
 
-  return modulo(hashString(sectorId), SECTOR_SLOT_LAYOUTS.length);
-}
-
-function inferAssetVariant(slotIndex: number): 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 {
-  return (modulo(slotIndex, 8) + 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-}
-
-export function getSectorVisualConfig(
-  sectorId: string,
-  overrides?: ISectorVisualOverrides,
-): ISectorVisualConfig {
-  const inferredSlot = inferSlotIndexFromSectorId(sectorId);
-  const slotIndex = modulo(
-    overrides?.slotIndex ?? inferredSlot,
-    SECTOR_SLOT_LAYOUTS.length,
-  );
-  const layout = SECTOR_SLOT_LAYOUTS[slotIndex];
-  const variant = overrides?.imageVariant ?? inferAssetVariant(slotIndex);
-  const assets = SECTOR_ASSETS[variant];
-
-  return {
-    slotIndex,
-    xPercent: overrides?.xPercent ?? layout.xPercent,
-    yPercent: overrides?.yPercent ?? layout.yPercent,
-    rotationDeg: overrides?.rotationDeg ?? layout.rotationDeg,
-    sectorSrc: assets.sectorSrc,
-    labelSrc: assets.labelSrc,
-  };
+    return {
+      placement,
+      sectors: matched,
+    };
+  });
 }

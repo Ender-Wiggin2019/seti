@@ -2,9 +2,10 @@ import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { Deck } from '@/engine/deck/Deck.js';
 import { FreeActionCornerFreeAction } from '@/engine/freeActions/FreeActionCorner.js';
 import type { IGame } from '@/engine/IGame.js';
+import type { TCardItem } from '@/engine/player/IPlayer.js';
 import { Player } from '@/engine/player/Player.js';
 
-function createTestPlayer(hand: unknown[] = ['card-a', 'card-b']): Player {
+function createTestPlayer(hand: TCardItem[] = ['card-a', 'card-b']): Player {
   return new Player({
     id: 'p1',
     name: 'Alice',
@@ -69,6 +70,16 @@ describe('FreeActionCornerFreeAction', () => {
       ).toThrowError(
         expect.objectContaining({ code: EErrorCode.INVALID_ACTION }),
       );
+    });
+
+    it('executes free-action corner rewards from card data', () => {
+      const player = createTestPlayer(['39']);
+      const game = createMockGame();
+
+      const beforeMove = player.getMoveStash();
+      FreeActionCornerFreeAction.execute(player, game, '39');
+
+      expect(player.getMoveStash()).toBe(beforeMove + 1);
     });
   });
 });

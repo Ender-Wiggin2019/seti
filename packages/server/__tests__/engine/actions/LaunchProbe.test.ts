@@ -9,7 +9,7 @@ import { SeededRandom } from '@/shared/rng/SeededRandom.js';
 
 function createMockGame(): IGame {
   const rng = new SeededRandom('launch-probe-test');
-  const solarSystem = BoardBuilder.buildSolarSystem(rng);
+  const solarSystem = BoardBuilder.buildSolarSystemFromRandom(rng);
   return {
     solarSystem,
     planetaryBoard: null,

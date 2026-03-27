@@ -1,3 +1,4 @@
+import type { ISolarSystemSetupConfig } from '@seti/common/constant/sectorSetup';
 import type { ESector, ETrace } from '@seti/common/types/element';
 import type {
   EAlienType,
@@ -16,6 +17,7 @@ import type {
   IMissionEvent,
   IMissionRuntimeState,
 } from '@/engine/missions/IMission.js';
+import type { TCardItem } from '@/engine/player/IPlayer.js';
 import type {
   TGoldScoringTileId,
   TGoldScoringTileSide,
@@ -162,14 +164,15 @@ export interface IGameStateDto {
   roundRotationReminderIndex: number;
 
   solarSystem: ISolarSystemDto | null;
+  solarSystemSetup: ISolarSystemSetupConfig | null;
   planetaryBoard: IPlanetaryBoardDto | null;
   techBoard: ITechBoardDto | null;
   sectors: ISectorDto[];
   alienState: IAlienStateDto;
 
   mainDeck: ISerializedDeckDto;
-  cardRow: unknown[];
-  endOfRoundStacks: unknown[][];
+  cardRow: TCardItem[];
+  endOfRoundStacks: TCardItem[][];
 
   players: IPlayerStateDto[];
   eventLog: TGameEvent[];

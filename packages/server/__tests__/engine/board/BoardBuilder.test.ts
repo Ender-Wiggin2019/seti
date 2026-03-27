@@ -12,7 +12,7 @@ function snapshotLayout(seed: string): {
   publicity: string[];
   stars: string[];
 } {
-  const board = BoardBuilder.buildSolarSystem(new SeededRandom(seed));
+  const board = BoardBuilder.buildSolarSystemFromRandom(new SeededRandom(seed));
   return {
     elements: board.spaces.map(
       (space) =>
@@ -40,7 +40,7 @@ describe('BoardBuilder', () => {
   });
 
   it('generates exactly 8 sectors with one nearby star each', () => {
-    const board = BoardBuilder.buildSolarSystem(
+    const board = BoardBuilder.buildSolarSystemFromRandom(
       new SeededRandom('sector-test'),
     );
 
@@ -56,7 +56,7 @@ describe('BoardBuilder', () => {
   });
 
   it('uses real board constants for planets, cutouts, and publicity', () => {
-    const board = BoardBuilder.buildSolarSystem(
+    const board = BoardBuilder.buildSolarSystemFromRandom(
       new SeededRandom('real-config'),
     );
 

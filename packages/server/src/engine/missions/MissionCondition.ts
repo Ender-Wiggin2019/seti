@@ -8,6 +8,7 @@ import {
   EPlanet,
   EResource,
   ESpecialAction,
+  ETech,
 } from '@seti/common/types/element';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
@@ -70,6 +71,17 @@ function matchesSingleEventReq(
         event.type === EMissionEventType.PROBE_LANDED
       );
 
+    case ETech.PROBE:
+    case ETech.SCAN:
+    case ETech.COMPUTER:
+      return (
+        event.type === EMissionEventType.TECH_RESEARCHED &&
+        event.techCategory === baseReq.type
+      );
+
+    case ETech.ANY:
+      return event.type === EMissionEventType.TECH_RESEARCHED;
+
     default:
       return false;
   }
@@ -77,12 +89,16 @@ function matchesSingleEventReq(
 
 /**
  * QUICK_MISSION: check whether the current game state satisfies a branch's req.
+ * If the branch provides a custom `checkCondition`, it takes precedence.
  */
 export function checkQuickMissionCondition(
   branch: IMissionBranchDef,
   player: IPlayer,
   game: IGame,
 ): boolean {
+  if (branch.checkCondition) {
+    return branch.checkCondition(player, game);
+  }
   if (branch.req.length === 0) return false;
   return branch.req.every((req) => {
     if (req.effectType === EEffectType.CUSTOMIZED) {

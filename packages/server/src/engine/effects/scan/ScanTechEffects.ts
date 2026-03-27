@@ -203,14 +203,7 @@ export class ScanHandSignalEffect {
             );
           }
 
-          const [discardedCard] = player.hand.splice(selectedCard.handIndex, 1);
-          if (discardedCard === undefined) {
-            throw new GameError(
-              EErrorCode.INTERNAL_SERVER_ERROR,
-              'Failed to discard selected hand card',
-              { playerId: player.id, handIndex: selectedCard.handIndex },
-            );
-          }
+          const discardedCard = player.removeCardAt(selectedCard.handIndex);
 
           const sectorColor = extractSectorColorFromCardItem(discardedCard);
           const markResult =

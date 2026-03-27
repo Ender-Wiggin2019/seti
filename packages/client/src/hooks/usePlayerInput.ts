@@ -20,10 +20,7 @@ export function usePlayerInput(): IUsePlayerInputReturn {
       setPendingInput(data.input);
     };
 
-    wsClient.onWaiting(handler);
-    return () => {
-      wsClient.offWaiting();
-    };
+    return wsClient.onWaiting(handler);
   }, []);
 
   const respond = useCallback((gameId: string, response: IInputResponse) => {

@@ -1,36 +1,61 @@
+import {
+  ESectorPosition,
+  ESectorTileId,
+  EStarName,
+} from '@seti/common/constant/sectorSetup';
 import { ESector } from '@seti/common/types/element';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { SectorView } from '@/features/board/SectorView';
+import type { ISectorPairConfig } from '@/features/board/sectorVisualConfig';
 import type { IPublicSector } from '@/types/re-exports';
 
-function createSector(overrides?: Partial<IPublicSector>): IPublicSector {
+function createPair(): ISectorPairConfig {
+  const sectors: IPublicSector[] = [
+    {
+      sectorId: 'sector-0',
+      color: ESector.BLUE,
+      dataSlots: ['data-1', null, null],
+      markerSlots: [{ playerId: 'player-1', timestamp: 1 }],
+      completed: false,
+    },
+    {
+      sectorId: 'sector-1',
+      color: ESector.BLACK,
+      dataSlots: [null, null, null],
+      markerSlots: [],
+      completed: false,
+    },
+  ];
+
   return {
-    sectorId: 'sector-0',
-    color: ESector.RED,
-    dataSlots: ['data-1', null, null],
-    markerSlots: [{ playerId: 'player-1', timestamp: 1 }],
-    completed: false,
-    ...overrides,
+    placement: {
+      tileId: ESectorTileId.TILE_1,
+      position: ESectorPosition.NORTH,
+      sectorIds: ['sector-0', 'sector-1'] as [string, string],
+      imageSrc: '/assets/seti/sectors/sector1.png',
+      sectors: [
+        { starName: EStarName.PROCYON, color: ESector.BLUE },
+        { starName: EStarName.VEGA, color: ESector.BLACK },
+      ],
+    },
+    sectors,
   };
 }
 
 describe('SectorView', () => {
-  it('renders data slot fill state', () => {
+  it('renders sector pair', () => {
     render(
       <SectorView
-        sector={createSector({ dataSlots: ['a', null, 'b'] })}
+        pair={createPair()}
         playerColors={{ 'player-1': 'red' }}
-        slotIndex={0}
-        sectorImageSrc='/assets/seti/sectors/sector1.png'
         clickable={false}
         highlighted={false}
         onClick={vi.fn()}
       />,
     );
 
-    const button = screen.getByTestId('sector-chip-sector-0');
-    expect(button).toHaveAttribute('title', 'red | data 2/3');
+    const button = screen.getByTestId('sector-pair-north');
     expect(button).toBeDisabled();
   });
 
@@ -38,17 +63,15 @@ describe('SectorView', () => {
     const onClick = vi.fn();
     render(
       <SectorView
-        sector={createSector()}
+        pair={createPair()}
         playerColors={{ 'player-1': 'red' }}
-        slotIndex={0}
-        sectorImageSrc='/assets/seti/sectors/sector1.png'
         clickable
         highlighted
         onClick={onClick}
       />,
     );
 
-    const button = screen.getByTestId('sector-chip-sector-0');
+    const button = screen.getByTestId('sector-pair-north');
     fireEvent.click(button);
     expect(onClick).toHaveBeenCalledTimes(1);
   });

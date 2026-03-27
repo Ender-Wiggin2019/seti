@@ -16,6 +16,7 @@ export function useSocket(): IUseSocketReturn {
   useEffect(() => {
     if (!token) return;
 
+    wsClient.retainConnection();
     const socket = wsClient.connect(token);
     socketRef.current = socket;
 
@@ -30,7 +31,7 @@ export function useSocket(): IUseSocketReturn {
     return () => {
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
-      wsClient.disconnect();
+      wsClient.releaseConnection();
       socketRef.current = null;
       setIsConnected(false);
     };

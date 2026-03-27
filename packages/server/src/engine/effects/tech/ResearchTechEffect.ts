@@ -10,6 +10,7 @@ import { GameError } from '@/shared/errors/GameError.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
+import { EMissionEventType } from '../../missions/IMission.js';
 import type { IPlayer } from '../../player/IPlayer.js';
 import { TechBonusEffect } from './TechBonusEffect.js';
 
@@ -130,6 +131,11 @@ export class ResearchTechEffect {
       TechBonusEffect.apply(player, game, takeResult.tile.bonus);
       tileBonus = takeResult.tile.bonus;
     }
+
+    game.missionTracker?.recordEvent({
+      type: EMissionEventType.TECH_RESEARCHED,
+      techCategory: takeResult.tile.tech.type,
+    });
 
     return {
       techId,

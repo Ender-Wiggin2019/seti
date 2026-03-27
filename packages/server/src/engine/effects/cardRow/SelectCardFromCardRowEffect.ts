@@ -4,13 +4,13 @@ import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
 import { SelectCard } from '../../input/SelectCard.js';
 import { SelectOption } from '../../input/SelectOption.js';
-import type { IPlayer } from '../../player/IPlayer.js';
+import type { IPlayer, TCardItem } from '../../player/IPlayer.js';
 
 export type TCardRowDestination = 'hand' | 'discard' | 'choose';
 
 export interface ICardRowCardInfo {
   /** Raw item from the card row (string ID or card object). */
-  rawItem: unknown;
+  rawItem: TCardItem;
   /** Index the card occupied before removal. */
   originalIndex: number;
   /** Where the card ended up. */
@@ -116,7 +116,7 @@ export class SelectCardFromCardRowEffect {
   private static buildDestinationChoice(
     player: IPlayer,
     game: IGame,
-    entry: { id: string; index: number; rawItem: unknown },
+    entry: { id: string; index: number; rawItem: TCardItem },
     onComplete?: (info: ICardRowCardInfo) => IPlayerInput | undefined,
   ): IPlayerInput {
     return new SelectOption(
@@ -142,7 +142,7 @@ export class SelectCardFromCardRowEffect {
   private static applyDestination(
     player: IPlayer,
     game: IGame,
-    entry: { id: string; index: number; rawItem: unknown },
+    entry: { id: string; index: number; rawItem: TCardItem },
     destination: 'hand' | 'discard',
     onComplete?: (info: ICardRowCardInfo) => IPlayerInput | undefined,
   ): IPlayerInput | undefined {

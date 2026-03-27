@@ -1,6 +1,7 @@
 import type { EResource, ETrace } from '@seti/common/types/element';
 import type { ETechId } from '@seti/common/types/tech';
 import type { TIncomeBundle } from '@/engine/player/Income.js';
+import type { TCardItem } from '@/engine/player/IPlayer.js';
 import type { EPieceType } from '@/engine/player/Pieces.js';
 
 export interface IPlayerPiecesStateDto {
@@ -30,11 +31,11 @@ export interface IPlayerStateDto {
   };
   traces: Partial<Record<ETrace, number>>;
   techs: ETechId[];
-  hand: unknown[];
-  playedMissions: unknown[];
-  completedMissions: unknown[];
-  endGameCards: unknown[];
-  tuckedIncomeCards: unknown[];
+  hand: TCardItem[];
+  playedMissions: TCardItem[];
+  completedMissions: TCardItem[];
+  endGameCards: TCardItem[];
+  tuckedIncomeCards: TCardItem[];
   moveStashCount: number;
   pendingCardDrawCount: number;
   pendingAnyCardDrawCount: number;

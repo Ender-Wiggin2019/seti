@@ -1,8 +1,7 @@
-import { ESector } from '@seti/common/types/element';
 import { EAlienType, EPhase } from '@seti/common/types/protocol/enums';
 import { BoardBuilder } from './board/BoardBuilder.js';
 import { PlanetaryBoard } from './board/PlanetaryBoard.js';
-import { Sector } from './board/Sector.js';
+import { loadAllCardData } from './cards/loadCardData.js';
 import { Deck } from './deck/Deck.js';
 import { DeferredActionsQueue } from './deferred/DeferredActionsQueue.js';
 import { EventLog } from './event/EventLog.js';
@@ -24,28 +23,15 @@ const GOLD_TILE_IDS: readonly TGoldScoringTileId[] = [
 
 export class GameSetup {
   public static initialize(game: Game): void {
-    game.solarSystem = BoardBuilder.buildSolarSystem(game.random);
+    const boardResult = BoardBuilder.buildAll(game.random);
+
+    game.solarSystem = boardResult.solarSystem;
+    game.solarSystemSetup = boardResult.setupConfig;
+    game.sectors = boardResult.sectors;
     game.planetaryBoard = new PlanetaryBoard();
     game.techBoard = new TechBoard(game.random);
-    const sectorColors = [
-      ESector.RED,
-      ESector.YELLOW,
-      ESector.BLUE,
-      ESector.BLACK,
-    ];
-    game.sectors = Array.from(
-      { length: 8 },
-      (_, index) =>
-        new Sector({
-          id: `sector-${index + 1}`,
-          color: sectorColors[index % sectorColors.length],
-        }),
-    );
 
-    const baseDeckCards = Array.from(
-      { length: 80 },
-      (_, index) => `card-${index + 1}`,
-    );
+    const baseDeckCards = loadAllCardData().map((card) => card.id);
     game.mainDeck = new Deck(baseDeckCards);
     game.mainDeck.shuffle(game.random);
     game.cardRow = game.mainDeck.drawN(3);

@@ -124,7 +124,11 @@ export class PlanetaryBoard {
   public land(
     planet: EPlanet,
     playerId: string,
-    options?: { isMoon?: boolean; allowMoonLanding?: boolean },
+    options?: {
+      isMoon?: boolean;
+      allowMoonLanding?: boolean;
+      allowDuplicate?: boolean;
+    },
   ): ILandingResult {
     assertPlayerId(playerId);
     const isMoon = options?.isMoon ?? false;
@@ -132,6 +136,7 @@ export class PlanetaryBoard {
       !this.canLand(planet, playerId, {
         isMoon,
         allowMoonLanding: options?.allowMoonLanding,
+        allowDuplicate: options?.allowDuplicate,
       })
     ) {
       throw new GameError(
@@ -169,7 +174,12 @@ export class PlanetaryBoard {
   public canLand(
     planet: EPlanet,
     playerId: string,
-    options?: { isMoon?: boolean; energy?: number; allowMoonLanding?: boolean },
+    options?: {
+      isMoon?: boolean;
+      energy?: number;
+      allowMoonLanding?: boolean;
+      allowDuplicate?: boolean;
+    },
   ): boolean {
     assertPlayerId(playerId);
     if (!this.canOrbit(planet, playerId)) {
@@ -184,6 +194,14 @@ export class PlanetaryBoard {
         return false;
       }
       if (planetState.moonOccupant !== null) {
+        return false;
+      }
+    } else {
+      const allowDuplicate = options?.allowDuplicate ?? false;
+      if (
+        !allowDuplicate &&
+        planetState.landingSlots.some((slot) => slot.playerId === playerId)
+      ) {
         return false;
       }
     }

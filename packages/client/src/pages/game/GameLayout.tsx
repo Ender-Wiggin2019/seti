@@ -1,8 +1,10 @@
+import { createDefaultSetupConfig } from '@seti/common/constant/sectorSetup';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TopBar } from '@/components/layout/TopBar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from '@/components/ui/toast';
 import { ActionConfirm } from '@/features/actions/ActionConfirm';
 import { ActionMenu } from '@/features/actions/ActionMenu';
 import { FreeActionBar } from '@/features/actions/FreeActionBar';
@@ -128,6 +130,9 @@ function BoardTabs({
               <SolarSystemView
                 solarSystem={gameState.solarSystem}
                 sectors={gameState.sectors}
+                setupConfig={
+                  gameState.solarSystemSetup ?? createDefaultSetupConfig()
+                }
                 pendingInput={pendingInput}
                 playerColors={playerColors}
                 myPlayerId={myPlayerId}
@@ -295,9 +300,60 @@ function BottomBar(): React.JSX.Element {
   const canUndo = Boolean((gameState as { canUndo?: boolean } | null)?.canUndo);
 
   const handleFreeActionClick = (action: EFreeAction) => {
-    if (action === EFreeAction.BUY_CARD) {
-      setConfirmRequest({ type: EFreeAction.BUY_CARD, fromDeck: true });
-      setConfirmOpen(true);
+    switch (action) {
+      case EFreeAction.BUY_CARD:
+        setConfirmRequest({ type: EFreeAction.BUY_CARD, fromDeck: true });
+        setConfirmOpen(true);
+        return;
+      case EFreeAction.PLACE_DATA:
+        sendFreeAction({ type: EFreeAction.PLACE_DATA, slotIndex: 0 });
+        return;
+      case EFreeAction.COMPLETE_MISSION:
+        if (missionCards.length === 1) {
+          sendFreeAction({
+            type: EFreeAction.COMPLETE_MISSION,
+            cardId: missionCards[0].id,
+          });
+          return;
+        }
+        toast({
+          title: 'Mission selection required',
+          description:
+            'Use mission controls to pick which mission to complete.',
+          variant: 'error',
+        });
+        return;
+      case EFreeAction.USE_CARD_CORNER:
+        if (myPlayer?.hand?.length === 1 && myPlayer.hand[0]?.id) {
+          sendFreeAction({
+            type: EFreeAction.USE_CARD_CORNER,
+            cardId: myPlayer.hand[0].id,
+          });
+          return;
+        }
+        toast({
+          title: 'Card selection required',
+          description: 'Select a specific card to use its corner free action.',
+          variant: 'error',
+        });
+        return;
+      case EFreeAction.MOVEMENT:
+        toast({
+          title: 'Select probe movement on board',
+          description:
+            'Click a probe and choose a destination in the board view.',
+        });
+        return;
+      case EFreeAction.EXCHANGE_RESOURCES:
+      case EFreeAction.CONVERT_ENERGY_TO_MOVEMENT:
+        toast({
+          title: 'Action requires extra selection',
+          description:
+            'This free action needs additional options before sending.',
+        });
+        return;
+      default:
+        return;
     }
   };
 

@@ -15,10 +15,7 @@ export function useGameEvents(): TGameEvent[] {
   }, []);
 
   useEffect(() => {
-    wsClient.onEvent(handleEvent);
-    return () => {
-      wsClient.offEvent();
-    };
+    return wsClient.onEvent(handleEvent);
   }, [handleEvent]);
 
   return events;

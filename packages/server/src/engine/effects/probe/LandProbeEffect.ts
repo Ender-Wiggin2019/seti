@@ -9,11 +9,13 @@ import {
   syncProbeCountsForPlayer,
 } from './ProbeEffectUtils.js';
 
-export interface ILandProbeEffectOptions {
+export interface ILandOptions {
   isMoon?: boolean;
+  allowMoons?: boolean;
+  allowDuplicate?: boolean;
 }
 
-export interface ILandProbeEffectResult {
+export interface ILandResult {
   planet: EPlanet;
   isMoon: boolean;
   landingCost: number;
@@ -22,12 +24,27 @@ export interface ILandProbeEffectResult {
   lifeTraceGained: number;
 }
 
+/** @deprecated Use ILandOptions instead */
+export type ILandProbeEffectOptions = ILandOptions;
+/** @deprecated Use ILandResult instead */
+export type ILandProbeEffectResult = ILandResult;
+
 export class LandProbeEffect {
+  private static resolveMoonFlag(
+    player: IPlayer,
+    options: ILandOptions,
+  ): boolean {
+    return (
+      options.allowMoons ??
+      TechModifierQuery.fromTechIds(player.techs).canLandOnMoon()
+    );
+  }
+
   public static canExecute(
     player: IPlayer,
     game: IGame,
     planet: EPlanet,
-    options: ILandProbeEffectOptions = {},
+    options: ILandOptions = {},
   ): boolean {
     if (
       planet === EPlanet.EARTH ||
@@ -38,12 +55,10 @@ export class LandProbeEffect {
     }
 
     syncProbeCountsForPlayer(game, player.id);
-    const moonLandingEnabled = TechModifierQuery.fromTechIds(
-      player.techs,
-    ).canLandOnMoon();
     return game.planetaryBoard.canLand(planet, player.id, {
       isMoon: options.isMoon,
-      allowMoonLanding: moonLandingEnabled,
+      allowMoonLanding: this.resolveMoonFlag(player, options),
+      allowDuplicate: options.allowDuplicate,
     });
   }
 
@@ -51,7 +66,7 @@ export class LandProbeEffect {
     player: IPlayer,
     game: IGame,
     planet: EPlanet,
-    options: ILandProbeEffectOptions = {},
+    options: ILandOptions = {},
   ): number {
     if (!this.canExecute(player, game, planet, options)) {
       throw new GameError(
@@ -81,8 +96,8 @@ export class LandProbeEffect {
     player: IPlayer,
     game: IGame,
     planet: EPlanet,
-    options: ILandProbeEffectOptions = {},
-  ): ILandProbeEffectResult {
+    options: ILandOptions = {},
+  ): ILandResult {
     if (!this.canExecute(player, game, planet, options)) {
       throw new GameError(
         EErrorCode.INVALID_ACTION,
@@ -115,9 +130,6 @@ export class LandProbeEffect {
     }
 
     player.probesInSpace = Math.max(0, player.probesInSpace - 1);
-    const moonLandingEnabled = TechModifierQuery.fromTechIds(
-      player.techs,
-    ).canLandOnMoon();
     const planetaryBoard = game.planetaryBoard;
     if (planetaryBoard === null) {
       throw new GameError(
@@ -128,7 +140,8 @@ export class LandProbeEffect {
 
     const landingResult = planetaryBoard.land(planet, player.id, {
       isMoon: options.isMoon,
-      allowMoonLanding: moonLandingEnabled,
+      allowMoonLanding: this.resolveMoonFlag(player, options),
+      allowDuplicate: options.allowDuplicate,
     });
     syncProbeCountsForPlayer(game, player.id);
     player.score += landingResult.centerReward.vpGained;

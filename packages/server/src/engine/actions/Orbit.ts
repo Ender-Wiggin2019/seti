@@ -1,3 +1,7 @@
+import {
+  ORBIT_CREDIT_COST,
+  ORBIT_ENERGY_COST,
+} from '@seti/common/constant/actionCosts';
 import { EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
@@ -24,7 +28,12 @@ export class OrbitAction {
       return false;
     }
 
-    if (!player.resources.has({ credits: 1, energy: 1 })) {
+    if (
+      !player.resources.has({
+        credits: ORBIT_CREDIT_COST,
+        energy: ORBIT_ENERGY_COST,
+      })
+    ) {
       return false;
     }
     return OrbitProbeEffect.canExecute(player, game, planet);
@@ -46,7 +55,10 @@ export class OrbitAction {
       );
     }
 
-    player.resources.spend({ credits: 1, energy: 1 });
+    player.resources.spend({
+      credits: ORBIT_CREDIT_COST,
+      energy: ORBIT_ENERGY_COST,
+    });
     return OrbitProbeEffect.execute(player, game, planet);
   }
 }

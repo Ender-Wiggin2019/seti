@@ -1,3 +1,4 @@
+import type { ISolarSystemSetupConfig } from '@seti/common/constant/sectorSetup';
 import type {
   IFreeActionRequest,
   IInputResponse,
@@ -16,7 +17,7 @@ import type { EventLog } from './event/EventLog.js';
 import type { IGameOptions } from './GameOptions.js';
 import type { IPlayerInput } from './input/PlayerInput.js';
 import type { MissionTracker } from './missions/MissionTracker.js';
-import type { IPlayer } from './player/IPlayer.js';
+import type { IPlayer, TCardItem } from './player/IPlayer.js';
 import type { IFinalScoringResult } from './scoring/FinalScoring.js';
 import type { GoldScoringTile } from './scoring/GoldScoringTile.js';
 import type { MilestoneState } from './scoring/Milestone.js';
@@ -41,6 +42,7 @@ export interface IGame {
   startPlayer: IPlayer;
 
   solarSystem: SolarSystem | null;
+  solarSystemSetup: ISolarSystemSetupConfig | null;
   planetaryBoard: PlanetaryBoard | null;
   techBoard: TechBoard | null;
   sectors: Sector[];
@@ -50,8 +52,8 @@ export interface IGame {
   finalScoringResult?: IFinalScoringResult;
 
   mainDeck: Deck<string>;
-  cardRow: unknown[];
-  endOfRoundStacks: unknown[][];
+  cardRow: TCardItem[];
+  endOfRoundStacks: TCardItem[][];
   hiddenAliens: EAlienType[];
   neutralMilestones: number[];
   roundRotationReminderIndex: number;

@@ -2,6 +2,7 @@ import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EEffectType } from '@seti/common/types/effect';
 import { EResource } from '@seti/common/types/element';
 import type { IPlayerInput } from '../input/PlayerInput.js';
+import type { IMissionDef } from '../missions/IMission.js';
 import { behaviorFromEffects, type IBehavior } from './Behavior.js';
 import { getBehaviorExecutor } from './BehaviorExecutor.js';
 import {
@@ -177,6 +178,10 @@ export abstract class MissionCard extends Card {
     options: { behavior?: IBehavior; requirements?: ICardRequirements } = {},
   ) {
     super(cardData, { ...options, kind: EServerCardKind.MISSION });
+  }
+
+  public getMissionDef(): IMissionDef | undefined {
+    return undefined;
   }
 }
 

@@ -20,6 +20,15 @@ httpClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
+      const requestUrl = error.config?.url ?? '';
+      const isAuthFormRequest =
+        requestUrl.includes('/auth/login') ||
+        requestUrl.includes('/auth/register');
+
+      if (isAuthFormRequest) {
+        return Promise.reject(error);
+      }
+
       useAuthStore.getState().logout();
       window.location.href = '/auth';
     }

@@ -1,38 +1,74 @@
+import {
+  ANALYZE_ENERGY_COST,
+  LAUNCH_PROBE_CREDIT_COST,
+  ORBIT_CREDIT_COST,
+  ORBIT_ENERGY_COST,
+  SCAN_CREDIT_COST,
+  SCAN_ENERGY_COST,
+} from '../constant/actionCosts';
 import { EResource } from '../types/element';
 import { EMainAction } from '../types/protocol/enums';
 import type {
   IPublicGameState,
+  IPublicPlanetState,
   IPublicPlayerState,
 } from '../types/protocol/gameState';
-import { RESEARCH_PUBLICITY_COST } from '../types/tech';
+import { ETechId, RESEARCH_PUBLICITY_COST } from '../types/tech';
+import { canOrbitPlanet, getLandingCost } from './planet';
 import { getAvailableTechs } from './tech';
 
-const LAUNCH_PROBE_CREDIT_COST = 2;
-const ORBIT_CREDIT_COST = 1;
-const ORBIT_ENERGY_COST = 1;
-const SCAN_CREDIT_COST = 1;
-const SCAN_ENERGY_COST = 2;
-const ANALYZE_ENERGY_COST = 1;
-
 export function canLaunchProbe(player: IPublicPlayerState): boolean {
-  return player.resources[EResource.CREDIT] >= LAUNCH_PROBE_CREDIT_COST;
+  return (
+    player.resources[EResource.CREDIT] >= LAUNCH_PROBE_CREDIT_COST &&
+    player.probesInSpace < player.probeSpaceLimit
+  );
+}
+
+function getPlanetsInGame(gameState: IPublicGameState): IPublicPlanetState[] {
+  return Object.values(gameState.planetaryBoard.planets).filter(
+    (planet): planet is IPublicPlanetState => planet !== undefined,
+  );
+}
+
+function getLandingCostForPlayer(
+  player: IPublicPlayerState,
+  planet: IPublicPlanetState,
+): number {
+  const baseLandingCost = getLandingCost(planet, player.playerId);
+  if (player.techs.includes(ETechId.PROBE_ROVER_DISCOUNT)) {
+    return Math.max(1, baseLandingCost - 1);
+  }
+  return baseLandingCost;
 }
 
 export function canOrbit(
   player: IPublicPlayerState,
-  _gameState: IPublicGameState,
+  gameState: IPublicGameState,
 ): boolean {
-  return (
+  if (
     player.resources[EResource.CREDIT] >= ORBIT_CREDIT_COST &&
     player.resources[EResource.ENERGY] >= ORBIT_ENERGY_COST
-  );
+  ) {
+    return getPlanetsInGame(gameState).some((planet) =>
+      canOrbitPlanet(planet, player, gameState),
+    );
+  }
+  return false;
 }
 
 export function canLand(
   player: IPublicPlayerState,
-  _gameState: IPublicGameState,
+  gameState: IPublicGameState,
 ): boolean {
-  return player.resources[EResource.ENERGY] >= 2;
+  return getPlanetsInGame(gameState).some((planet) => {
+    if (!canOrbitPlanet(planet, player, gameState)) {
+      return false;
+    }
+    return (
+      player.resources[EResource.ENERGY] >=
+      getLandingCostForPlayer(player, planet)
+    );
+  });
 }
 
 export function canScan(player: IPublicPlayerState): boolean {

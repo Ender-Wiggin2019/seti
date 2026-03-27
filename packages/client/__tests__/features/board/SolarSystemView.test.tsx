@@ -1,9 +1,12 @@
+import { createDefaultSetupConfig } from '@seti/common/constant/sectorSetup';
 import { ESector } from '@seti/common/types/element';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { SolarSystemView } from '@/features/board/SolarSystemView';
-import type { IPublicSolarSystem } from '@/types/re-exports';
+import type { IPublicSector, IPublicSolarSystem } from '@/types/re-exports';
 import { EPlayerInputType } from '@/types/re-exports';
+
+const defaultSetup = createDefaultSetupConfig();
 
 function createSolarSystemMock(): IPublicSolarSystem {
   return {
@@ -21,24 +24,27 @@ function createSolarSystemMock(): IPublicSolarSystem {
   };
 }
 
-function createSectorsMock() {
-  const colors: ESector[] = [
-    ESector.RED,
-    ESector.YELLOW,
-    ESector.BLUE,
-    ESector.BLACK,
-    ESector.RED,
-    ESector.YELLOW,
-    ESector.BLUE,
-    ESector.BLACK,
-  ];
-  return colors.map((color, i) => ({
-    sectorId: `sector-${i}`,
-    color,
-    dataSlots: [null, null, null],
-    markerSlots: [],
-    completed: false,
-  }));
+function createSectorsMock(): IPublicSector[] {
+  return defaultSetup.tilePlacements.flatMap((placement) => {
+    const colors: ESector[] =
+      placement.tileId === 1
+        ? [ESector.BLUE, ESector.BLACK]
+        : placement.tileId === 2
+          ? [ESector.BLUE, ESector.RED]
+          : placement.tileId === 3
+            ? [ESector.YELLOW, ESector.RED]
+            : [ESector.YELLOW, ESector.BLACK];
+
+    return placement.sectorIds.map(
+      (id, idx): IPublicSector => ({
+        sectorId: id,
+        color: colors[idx] as ESector,
+        dataSlots: [null, null, null] as Array<string | null>,
+        markerSlots: [] as { playerId: string; timestamp: number }[],
+        completed: false,
+      }),
+    );
+  });
 }
 
 describe('SolarSystemView', () => {
@@ -47,6 +53,7 @@ describe('SolarSystemView', () => {
       <SolarSystemView
         solarSystem={createSolarSystemMock()}
         sectors={createSectorsMock()}
+        setupConfig={defaultSetup}
         pendingInput={null}
         playerColors={{ 'player-1': 'red' }}
         myPlayerId='player-1'
@@ -66,6 +73,7 @@ describe('SolarSystemView', () => {
       <SolarSystemView
         solarSystem={createSolarSystemMock()}
         sectors={createSectorsMock()}
+        setupConfig={defaultSetup}
         pendingInput={null}
         playerColors={{ 'player-1': 'red' }}
         myPlayerId='player-1'
@@ -80,16 +88,17 @@ describe('SolarSystemView', () => {
     expect(onMoveProbe).toHaveBeenCalledWith('space-0', 'space-1');
   });
 
-  it('responds to sector input on outer-ring sector click', () => {
+  it('responds to sector input on sector pair click', () => {
     const onRespondInput = vi.fn();
     render(
       <SolarSystemView
         solarSystem={createSolarSystemMock()}
         sectors={createSectorsMock()}
+        setupConfig={defaultSetup}
         pendingInput={{
           inputId: 'select-sector',
           type: EPlayerInputType.SECTOR,
-          options: [ESector.RED],
+          options: [ESector.BLUE],
         }}
         playerColors={{ 'player-1': 'red' }}
         myPlayerId='player-1'
@@ -98,10 +107,10 @@ describe('SolarSystemView', () => {
       />,
     );
 
-    fireEvent.click(screen.getByTestId('sector-chip-sector-0'));
+    fireEvent.click(screen.getByTestId('sector-pair-north'));
     expect(onRespondInput).toHaveBeenCalledWith({
       type: EPlayerInputType.SECTOR,
-      sector: ESector.RED,
+      sector: ESector.BLUE,
     });
   });
 });

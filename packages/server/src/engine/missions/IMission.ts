@@ -1,5 +1,7 @@
 import type { IBaseEffect, ICustomizedEffect } from '@seti/common/types/effect';
 import type { EPlanet } from '@seti/common/types/element';
+import type { IGame } from '../IGame.js';
+import type { IPlayer } from '../player/IPlayer.js';
 
 export enum EMissionType {
   FULL = 'FULL',
@@ -9,6 +11,7 @@ export enum EMissionType {
 export interface IMissionBranchDef {
   readonly req: ReadonlyArray<IBaseEffect | ICustomizedEffect>;
   readonly rewards: ReadonlyArray<IBaseEffect | ICustomizedEffect>;
+  readonly checkCondition?: (player: IPlayer, game: IGame) => boolean;
 }
 
 export interface IMissionDef {
@@ -34,6 +37,7 @@ export enum EMissionEventType {
   PROBE_LAUNCHED = 'PROBE_LAUNCHED',
   PROBE_ORBITED = 'PROBE_ORBITED',
   PROBE_LANDED = 'PROBE_LANDED',
+  TECH_RESEARCHED = 'TECH_RESEARCHED',
 }
 
 export type IMissionEvent =
@@ -51,6 +55,10 @@ export type IMissionEvent =
       readonly type: EMissionEventType.PROBE_LANDED;
       readonly planet: EPlanet;
       readonly isMoon: boolean;
+    }
+  | {
+      readonly type: EMissionEventType.TECH_RESEARCHED;
+      readonly techCategory: string;
     };
 
 export interface ICompletableMission {

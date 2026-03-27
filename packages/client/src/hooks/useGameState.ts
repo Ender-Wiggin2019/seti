@@ -12,10 +12,7 @@ export function useGameState(): IPublicGameState | null {
   }, []);
 
   useEffect(() => {
-    wsClient.onState(handleState);
-    return () => {
-      wsClient.offState();
-    };
+    return wsClient.onState(handleState);
   }, [handleState]);
 
   return gameState;

@@ -1,5 +1,7 @@
+import { EResource } from '@seti/common/types/element';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
+import { hasCardData, loadCardData } from '../cards/loadCardData.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
 
@@ -7,12 +9,6 @@ export interface IFreeActionCornerResult {
   discardedCardId: string;
 }
 
-/**
- * Discard a hand card to execute its free-action corner effect.
- *
- * TODO: The actual corner effect execution requires the card system (Card class
- * with freeActionCorner data). For now, this only validates and discards the card.
- */
 export class FreeActionCornerFreeAction {
   static canExecute(player: IPlayer, _game: IGame): boolean {
     return player.hand.length > 0;
@@ -27,12 +23,8 @@ export class FreeActionCornerFreeAction {
       throw new GameError(EErrorCode.INVALID_ACTION, 'No cards in hand');
     }
 
-    const cardIndex = player.hand.findIndex(
-      (card) =>
-        (typeof card === 'string' ? card : (card as { id?: string })?.id) ===
-        cardId,
-    );
-    if (cardIndex < 0) {
+    const removed = player.removeCardById(cardId);
+    if (removed === undefined) {
       throw new GameError(
         EErrorCode.INVALID_ACTION,
         `Card ${cardId} not found in hand`,
@@ -40,16 +32,60 @@ export class FreeActionCornerFreeAction {
       );
     }
 
-    const [removed] = player.hand.splice(cardIndex, 1);
-    const removedId =
-      typeof removed === 'string'
-        ? removed
-        : ((removed as { id?: string })?.id ?? cardId);
-    game.mainDeck.discard(removedId);
+    game.mainDeck.discard(cardId);
+    this.executeCardCornerRewards(player, game, cardId);
 
-    // TODO: execute the card's free-action corner effect
-    // when the card system provides `card.freeActionCorner.execute(player, game)`
+    return { discardedCardId: cardId };
+  }
 
-    return { discardedCardId: removedId };
+  private static executeCardCornerRewards(
+    player: IPlayer,
+    game: IGame,
+    cardId: string,
+  ): void {
+    if (!hasCardData(cardId)) {
+      return;
+    }
+
+    const cardData = loadCardData(cardId);
+    for (const cornerReward of cardData.freeAction ?? []) {
+      const value = cornerReward.value;
+      if (value <= 0) {
+        continue;
+      }
+
+      switch (cornerReward.type) {
+        case EResource.CREDIT:
+          player.resources.gain({ credits: value });
+          break;
+        case EResource.ENERGY:
+          player.resources.gain({ energy: value });
+          break;
+        case EResource.DATA:
+          player.resources.gain({ data: value });
+          break;
+        case EResource.PUBLICITY:
+          player.resources.gain({ publicity: value });
+          break;
+        case EResource.SCORE:
+          player.score += value;
+          break;
+        case EResource.MOVE:
+          player.gainMove(value);
+          break;
+        case EResource.CARD:
+        case EResource.CARD_ANY:
+          for (let index = 0; index < value; index += 1) {
+            const drawnCardId = game.mainDeck.draw();
+            if (drawnCardId === undefined) {
+              break;
+            }
+            player.hand.push(drawnCardId);
+          }
+          break;
+        default:
+          break;
+      }
+    }
   }
 }

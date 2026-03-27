@@ -41,6 +41,7 @@ function createPlayerState(
     movementPoints: 0,
     dataStashCount: 0,
     probesInSpace: 0,
+    probeSpaceLimit: 1,
     ...overrides,
   };
 }

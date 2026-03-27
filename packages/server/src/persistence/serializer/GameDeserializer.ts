@@ -371,7 +371,6 @@ export function deserializeGame(dto: IGameStateDto): Game {
 
   game.round = dto.round;
   game.phase = dto.phase;
-  game.rotationCounter = dto.rotationCounter;
   game.roundRotationReminderIndex = dto.roundRotationReminderIndex;
   game.hasRoundFirstPassOccurred = dto.hasRoundFirstPassOccurred;
 
@@ -388,6 +387,10 @@ export function deserializeGame(dto: IGameStateDto): Game {
   game.activePlayer = activePlayer;
 
   game.solarSystem = deserializeSolarSystem(dto);
+  game.rotationCounter = dto.rotationCounter;
+  game.solarSystemSetup = dto.solarSystemSetup
+    ? cloneValue(dto.solarSystemSetup)
+    : null;
   game.planetaryBoard = deserializePlanetaryBoard(dto);
   game.techBoard = deserializeTechBoard(dto);
   game.sectors = deserializeSectors(dto);

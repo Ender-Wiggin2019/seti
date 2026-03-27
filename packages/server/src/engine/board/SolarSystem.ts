@@ -1,3 +1,7 @@
+import {
+  normalizeDiscAngle,
+  ROTATION_STEPS_PER_RING,
+} from '@seti/common/constant/sectorSetup';
 import { EPlanet } from '@seti/common/types/protocol/enums';
 
 export enum ESolarSystemElementType {
@@ -56,7 +60,6 @@ const DISC_TO_MOVING_RINGS: Readonly<Record<number, readonly number[]>> = {
   1: [1, 2],
   2: [1, 2, 3],
 };
-const TOTAL_ROTATION_STEPS = 8;
 const BASE_MOVE_COST = 1;
 const ASTEROID_EXTRA_COST = 1;
 
@@ -77,7 +80,11 @@ export class SolarSystem {
 
   private readonly publicityByPlayer: Map<string, number>;
 
-  public constructor(spaces: ISolarSystemSpace[], sectorNearStars: string[]) {
+  public constructor(
+    spaces: ISolarSystemSpace[],
+    sectorNearStars: string[],
+    initialDiscAngles: [number, number, number] = [0, 0, 0],
+  ) {
     this.spaces = spaces;
     this.sectorNearStars = [...sectorNearStars];
     this.spaceById = new Map(this.spaces.map((space) => [space.id, space]));
@@ -86,6 +93,9 @@ export class SolarSystem {
       this.buildDisc(1, 2),
       this.buildDisc(2, 3),
     ];
+    for (let i = 0; i < 3; i += 1) {
+      this.discs[i].currentRotation = normalizeDiscAngle(initialDiscAngles[i]);
+    }
     this.adjacency = this.buildAdjacency();
     this.rotationCounter = 0;
     this.probeCounter = 0;
@@ -122,7 +132,7 @@ export class SolarSystem {
     ) {
       this.discs[movingDiscIndex].currentRotation =
         (this.discs[movingDiscIndex].currentRotation + 1) %
-        TOTAL_ROTATION_STEPS;
+        ROTATION_STEPS_PER_RING;
     }
 
     for (const [targetRingIndex, coverStates] of coverStatesByRing.entries()) {

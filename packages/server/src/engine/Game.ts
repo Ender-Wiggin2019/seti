@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import type { ISolarSystemSetupConfig } from '@seti/common/constant/sectorSetup';
 import type {
   IFreeActionRequest,
   IInputResponse,
@@ -13,8 +14,8 @@ import {
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
-import { LandAction } from './actions/Land.js';
 import { OrbitAction } from './actions/Orbit.js';
+import { PassAction } from './actions/Pass.js';
 import { PlayCardAction } from './actions/PlayCard.js';
 import type { PlanetaryBoard } from './board/PlanetaryBoard.js';
 import type { Sector } from './board/Sector.js';
@@ -41,7 +42,7 @@ import type { PlayerInput } from './input/PlayerInput.js';
 import { EMissionEventType } from './missions/IMission.js';
 import { MissionTracker } from './missions/MissionTracker.js';
 import { assertValidPhaseTransition } from './Phase.js';
-import type { IPlayer } from './player/IPlayer.js';
+import type { IPlayer, TCardItem } from './player/IPlayer.js';
 import { Player } from './player/Player.js';
 import {
   FinalScoring,
@@ -72,6 +73,8 @@ export class Game implements IGame {
 
   public solarSystem: SolarSystem | null;
 
+  public solarSystemSetup: ISolarSystemSetupConfig | null;
+
   public planetaryBoard: PlanetaryBoard | null;
 
   public techBoard: TechBoard | null;
@@ -86,9 +89,9 @@ export class Game implements IGame {
 
   public mainDeck: Deck<string>;
 
-  public cardRow: unknown[];
+  public cardRow: TCardItem[];
 
-  public endOfRoundStacks: unknown[][];
+  public endOfRoundStacks: TCardItem[][];
 
   public hiddenAliens: EAlienType[];
 
@@ -104,7 +107,7 @@ export class Game implements IGame {
 
   public random: SeededRandom;
 
-  public rotationCounter: number;
+  private rotationCounterValue: number;
 
   public hasRoundFirstPassOccurred: boolean;
 
@@ -127,6 +130,7 @@ export class Game implements IGame {
     this.activePlayer = this.startPlayer;
 
     this.solarSystem = null;
+    this.solarSystemSetup = null;
     this.planetaryBoard = null;
     this.techBoard = null;
     this.sectors = [];
@@ -143,7 +147,7 @@ export class Game implements IGame {
     this.eventLog = new EventLog();
 
     this.random = new SeededRandom(seed);
-    this.rotationCounter = 0;
+    this.rotationCounterValue = 0;
     this.hasRoundFirstPassOccurred = false;
     this.finalScoringResult = undefined;
 
@@ -177,6 +181,17 @@ export class Game implements IGame {
 
   public getActivePlayer(): IPlayer {
     return this.activePlayer;
+  }
+
+  public get rotationCounter(): number {
+    return this.solarSystem?.rotationCounter ?? this.rotationCounterValue;
+  }
+
+  public set rotationCounter(value: number) {
+    this.rotationCounterValue = value;
+    if (this.solarSystem !== null) {
+      this.solarSystem.rotationCounter = value;
+    }
   }
 
   public getNextPlayer(fromPlayerId: string = this.activePlayer.id): IPlayer {
@@ -316,12 +331,7 @@ export class Game implements IGame {
             case EMainAction.LAND: {
               const planet = this.getPlanetPayload(action);
               const isMoon = this.getMoonPayload(action);
-              LandAction.execute(player, game, planet, { isMoon });
-              game.missionTracker.recordEvent({
-                type: EMissionEventType.PROBE_LANDED,
-                planet,
-                isMoon,
-              });
+              player.land(planet, { isMoon });
               break;
             }
             case EMainAction.PLAY_CARD: {
@@ -331,10 +341,15 @@ export class Game implements IGame {
                 this.getCardIndexPayload(action),
               );
               if (result.destination === 'mission') {
-                game.missionTracker.registerMissionFromCard(
-                  result.cardId,
-                  player.id,
-                );
+                const missionDef = result.card?.getMissionDef?.();
+                if (missionDef) {
+                  game.missionTracker.registerMission(missionDef, player.id);
+                } else {
+                  game.missionTracker.registerMissionFromCard(
+                    result.cardId,
+                    player.id,
+                  );
+                }
               }
               game.missionTracker.recordEvent({
                 type: EMissionEventType.CARD_PLAYED,
@@ -343,21 +358,12 @@ export class Game implements IGame {
               });
               break;
             }
+            case EMainAction.PASS: {
+              PassAction.execute(player, game);
+              break;
+            }
             default:
               break;
-          }
-
-          if (action.type === EMainAction.PASS) {
-            const actor = game.players.find(
-              (candidate) => candidate.id === player.id,
-            );
-            if (actor) {
-              actor.passed = true;
-              if (!game.hasRoundFirstPassOccurred) {
-                game.hasRoundFirstPassOccurred = true;
-                game.rotationCounter += 1;
-              }
-            }
           }
 
           game.eventLog.append(createActionEvent(player.id, action.type));
@@ -541,7 +547,7 @@ export class Game implements IGame {
       case EMainAction.LAND: {
         const planet = this.getPlanetPayload(action);
         const isMoon = this.getMoonPayload(action);
-        if (!LandAction.canExecute(player, this, planet, { isMoon })) {
+        if (!player.canLand(planet, { isMoon })) {
           throw new GameError(
             EErrorCode.INVALID_ACTION,
             'Land requirements are not met',
