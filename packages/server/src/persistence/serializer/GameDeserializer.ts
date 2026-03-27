@@ -1,4 +1,6 @@
-import type { EPlanet } from '@seti/common/types/protocol/enums';
+import { DEFAULT_COLUMN_CONFIGS } from '@seti/common/types/computer';
+import { ETrace, type EPlanet } from '@seti/common/types/protocol/enums';
+import { AlienState } from '@/engine/alien/AlienState.js';
 import {
   type IPlanetState,
   PlanetaryBoard,
@@ -18,6 +20,7 @@ import type {
 } from '@/engine/missions/IMission.js';
 import { MissionTracker } from '@/engine/missions/MissionTracker.js';
 import { Computer } from '@/engine/player/Computer.js';
+import type { ComputerColumn } from '@/engine/player/ComputerColumn.js';
 import { DataPool } from '@/engine/player/DataPool.js';
 import { Income } from '@/engine/player/Income.js';
 import { Pieces } from '@/engine/player/Pieces.js';
@@ -55,6 +58,12 @@ interface IDataInternalState {
   dataPoolInstance: DataPool;
   computerInstance: Computer;
   stashCountValue: number;
+}
+
+interface IComputerColumnInternal {
+  topFilledValue: boolean;
+  bottomFilledValue: boolean;
+  techPlacementValue: { techId: string; bottomReward: unknown } | null;
 }
 
 interface IMilestoneBucketState {
@@ -247,22 +256,23 @@ function deserializePlayers(game: Game, dto: IGameStateDto): void {
       playerDto.dataState.pool,
       playerDto.dataState.poolMax,
     );
-    dataInternal.computerInstance = new Computer(
-      playerDto.dataState.computerTopSlots.length,
-      playerDto.dataState.computerBottomSlots.length,
-    );
-    (
-      dataInternal.computerInstance as unknown as {
-        topSlots: boolean[];
-        bottomSlots: boolean[];
+    dataInternal.computerInstance = new Computer(DEFAULT_COLUMN_CONFIGS);
+    const computerInternal = dataInternal.computerInstance as unknown as {
+      columns: ComputerColumn[];
+    };
+    for (let i = 0; i < playerDto.dataState.computerColumns.length; i++) {
+      const colDto = playerDto.dataState.computerColumns[i];
+      const col = computerInternal.columns[i] as unknown as IComputerColumnInternal;
+      if (!col) continue;
+      if (colDto.techId) {
+        col.techPlacementValue = {
+          techId: colDto.techId,
+          bottomReward: colDto.bottomReward ?? {},
+        };
       }
-    ).topSlots = [...playerDto.dataState.computerTopSlots];
-    (
-      dataInternal.computerInstance as unknown as {
-        topSlots: boolean[];
-        bottomSlots: boolean[];
-      }
-    ).bottomSlots = [...playerDto.dataState.computerBottomSlots];
+      col.topFilledValue = colDto.topFilled;
+      col.bottomFilledValue = colDto.bottomFilled;
+    }
     dataInternal.stashCountValue = playerDto.dataState.stash;
 
     concretePlayer.resources = new Resources(
@@ -294,6 +304,7 @@ function deserializePlayers(game: Game, dto: IGameStateDto): void {
     concretePlayer.tuckedIncomeCards = cloneValue(playerDto.tuckedIncomeCards);
     concretePlayer.techs = [...playerDto.techs];
     concretePlayer.traces = cloneValue(playerDto.traces);
+    concretePlayer.tracesByAlien = cloneValue(playerDto.tracesByAlien ?? {});
     concretePlayer.waitingFor = undefined;
 
     const playerInternal = concretePlayer as unknown as IPlayerInternalState;
@@ -398,7 +409,26 @@ export function deserializeGame(dto: IGameStateDto): Game {
   game.mainDeck = new Deck(dto.mainDeck.drawPile, dto.mainDeck.discardPile);
   game.cardRow = cloneValue(dto.cardRow);
   game.endOfRoundStacks = cloneValue(dto.endOfRoundStacks);
-  game.hiddenAliens = [...dto.alienState.hiddenAliens];
+  game.hiddenAliens = dto.alienState.aliens.map((a) => a.alienType);
+  game.alienState = new AlienState({
+    aliens: dto.alienState.aliens.map((a) => ({
+      alienType: a.alienType,
+      alienIndex: a.alienIndex,
+      discovered: a.discovered,
+      slots: a.slots.map((s) => ({
+        slotId: s.slotId,
+        alienIndex: s.alienIndex,
+        traceColor: s.traceColor,
+        occupants: s.occupants.map((occ) => ({
+          source: occ.source,
+          traceColor: occ.traceColor,
+        })),
+        maxOccupants: s.maxOccupants,
+        rewards: s.rewards.map((r) => ({ ...r })),
+        isDiscovery: s.isDiscovery,
+      })),
+    })),
+  });
 
   deserializePlayers(game, dto);
 

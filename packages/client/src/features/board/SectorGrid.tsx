@@ -38,22 +38,24 @@ export function SectorGrid({
     >
       {sectorPairs.map((pair) => {
         const colors = pair.sectors.map((s) => s.color);
-        const clickableColors = colors.filter(
+        const selectableColors = colors.filter(
           (c) => isSectorInput && options.has(c),
         );
-        const clickable = clickableColors.length > 0;
-        const firstClickable = clickableColors[0];
+        const clickable = selectableColors.length > 0;
+        const firstSelectable = selectableColors[0];
 
         return (
           <SectorView
             key={pair.placement.position}
             pair={pair}
             playerColors={playerColors}
+            selectableColors={new Set(selectableColors)}
             clickable={clickable}
             highlighted={clickable}
+            onSelectSector={onSelectSector}
             onClick={() => {
-              if (clickable && firstClickable != null) {
-                onSelectSector(firstClickable);
+              if (selectableColors.length === 1 && firstSelectable != null) {
+                onSelectSector(firstSelectable);
               }
             }}
           />

@@ -1,5 +1,6 @@
 import { ETrace } from '@seti/common/types/element';
-import { EPlanet } from '@seti/common/types/protocol/enums';
+import { EAlienType, EPlanet } from '@seti/common/types/protocol/enums';
+import { AlienState } from '@/engine/alien/AlienState.js';
 import { PlanetaryBoard } from '@/engine/board/PlanetaryBoard.js';
 import {
   ESolarSystemElementType,
@@ -206,33 +207,15 @@ describe('Card 61 — Quantum Computer: score ≥ 50', () => {
 });
 
 // ================================================================
-// Trace-based mission cards (64, 66, 70, 97)
+// Trace-threshold mission cards (70)
 // ================================================================
 
 describe.each([
-  {
-    cardId: '64',
-    name: 'ALICE',
-    trace: ETrace.BLUE,
-    count: 1,
-  },
-  {
-    cardId: '66',
-    name: 'GMRT Telescope',
-    trace: ETrace.RED,
-    count: 1,
-  },
   {
     cardId: '70',
     name: 'ATLAS',
     trace: ETrace.BLUE,
     count: 3,
-  },
-  {
-    cardId: '97',
-    name: 'Apollo 11 Mission',
-    trace: ETrace.YELLOW,
-    count: 1,
   },
 ])(
   'Card $cardId ($name): requires $count $trace trace(s)',
@@ -280,6 +263,90 @@ describe.each([
       const def = getCardRegistry().create(cardId).getMissionDef?.()!;
 
       expect(def.branches[0].checkCondition!(player, game)).toBe(true);
+    });
+  },
+);
+
+// ================================================================
+// "On each species" trace mission cards (64, 66, 97)
+// Condition: trace of the required color on ALL alien species.
+// ================================================================
+
+function createAlienState(): AlienState {
+  return AlienState.createFromHiddenAliens([
+    EAlienType.CENTAURIANS,
+    EAlienType.EXERTIANS,
+  ]);
+}
+
+describe.each([
+  { cardId: '64', name: 'ALICE', trace: ETrace.BLUE },
+  { cardId: '66', name: 'GMRT Telescope', trace: ETrace.RED },
+  { cardId: '97', name: 'Apollo 11 Mission', trace: ETrace.YELLOW },
+])(
+  'Card $cardId ($name): $trace on each species',
+  ({ cardId, trace }) => {
+    it('is registered as MISSION card kind', () => {
+      const card = getCardRegistry().create(cardId);
+      expect(card.kind).toBe(EServerCardKind.MISSION);
+    });
+
+    it('provides QUICK mission def with checkCondition', () => {
+      const def = getCardRegistry().create(cardId).getMissionDef?.()!;
+      expect(def.type).toBe(EMissionType.QUICK);
+      expect(def.branches[0].checkCondition).toBeTypeOf('function');
+    });
+
+    it('condition false when no traces on any species', () => {
+      const player = createPlayer({ traces: {}, tracesByAlien: {} });
+      const game = createGame({ alienState: createAlienState() });
+      const def = getCardRegistry().create(cardId).getMissionDef?.()!;
+
+      expect(def.branches[0].checkCondition!(player, game)).toBe(false);
+    });
+
+    it('condition false when trace on only 1 of 2 species', () => {
+      const player = createPlayer({
+        traces: { [trace]: 1 },
+        tracesByAlien: { 0: { [trace]: 1 } },
+      });
+      const game = createGame({ alienState: createAlienState() });
+      const def = getCardRegistry().create(cardId).getMissionDef?.()!;
+
+      expect(def.branches[0].checkCondition!(player, game)).toBe(false);
+    });
+
+    it('condition true when trace on all species', () => {
+      const player = createPlayer({
+        traces: { [trace]: 2 },
+        tracesByAlien: { 0: { [trace]: 1 }, 1: { [trace]: 1 } },
+      });
+      const game = createGame({ alienState: createAlienState() });
+      const def = getCardRegistry().create(cardId).getMissionDef?.()!;
+
+      expect(def.branches[0].checkCondition!(player, game)).toBe(true);
+    });
+
+    it('condition true when multiple traces per species', () => {
+      const player = createPlayer({
+        traces: { [trace]: 4 },
+        tracesByAlien: { 0: { [trace]: 3 }, 1: { [trace]: 1 } },
+      });
+      const game = createGame({ alienState: createAlienState() });
+      const def = getCardRegistry().create(cardId).getMissionDef?.()!;
+
+      expect(def.branches[0].checkCondition!(player, game)).toBe(true);
+    });
+
+    it('condition false when no alienState', () => {
+      const player = createPlayer({
+        traces: { [trace]: 2 },
+        tracesByAlien: { 0: { [trace]: 1 }, 1: { [trace]: 1 } },
+      });
+      const game = createGame({ alienState: null });
+      const def = getCardRegistry().create(cardId).getMissionDef?.()!;
+
+      expect(def.branches[0].checkCondition!(player, game)).toBe(false);
     });
   },
 );
@@ -545,10 +612,16 @@ describe('Card 112 — Planetary Geologic Mapping: orbit+land same planet', () =
 // ================================================================
 
 describe('MissionTracker integration with tech mission quick missions', () => {
-  it('registers and completes a trace-based quick mission', () => {
-    const player = createPlayer({ traces: { [ETrace.BLUE]: 2 } });
+  it('registers and completes an on-each-species quick mission', () => {
+    const player = createPlayer({
+      traces: { [ETrace.BLUE]: 2 },
+      tracesByAlien: { 0: { [ETrace.BLUE]: 1 }, 1: { [ETrace.BLUE]: 1 } },
+    });
     const tracker = new MissionTracker();
-    const game = createGame({ missionTracker: tracker });
+    const game = createGame({
+      missionTracker: tracker,
+      alienState: createAlienState(),
+    });
 
     const card = getCardRegistry().create('64');
     const def = card.getMissionDef?.()!;
@@ -558,6 +631,29 @@ describe('MissionTracker integration with tech mission quick missions', () => {
     const completable = tracker.getCompletableQuickMissions(player, game);
     expect(completable.length).toBe(1);
     expect(completable[0].cardId).toBe('64');
+
+    const initialData = player.resources.data;
+    tracker.completeMissionBranch(player, game, '64', 0);
+    expect(player.resources.data).toBe(initialData + 2);
+  });
+
+  it('on-each-species mission not completable when only 1 of 2 species covered', () => {
+    const player = createPlayer({
+      traces: { [ETrace.BLUE]: 1 },
+      tracesByAlien: { 0: { [ETrace.BLUE]: 1 } },
+    });
+    const tracker = new MissionTracker();
+    const game = createGame({
+      missionTracker: tracker,
+      alienState: createAlienState(),
+    });
+
+    const card = getCardRegistry().create('64');
+    const def = card.getMissionDef?.()!;
+    tracker.registerMission(def, player.id);
+
+    const completable = tracker.getCompletableQuickMissions(player, game);
+    expect(completable.length).toBe(0);
   });
 
   it('returns empty when trace condition not met', () => {

@@ -9,6 +9,8 @@
     "types": ["vite/client", "vitest/globals", "node"],
     "paths": {
       "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*", "../cards/src/components/*"],
+      "@/lib/*": ["./src/lib/*", "../cards/src/lib/*"],
       "@seti/cards": ["../cards/src/index.ts"],
       "@seti/cards/*": ["../cards/src/*"],
       "@ender-seti/cards": ["../cards/src/index.ts"],

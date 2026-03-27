@@ -97,6 +97,7 @@ function serializePlayer(player: IPlayer): IPlayerStateDto {
       tucked: player.income.tuckedCardIncome,
     },
     traces: cloneValue(player.traces),
+    tracesByAlien: cloneValue(player.tracesByAlien),
     techs: [...player.techs],
     hand: cloneValue(player.hand),
     playedMissions: cloneValue(player.playedMissions),
@@ -110,8 +111,12 @@ function serializePlayer(player: IPlayer): IPlayerStateDto {
       pool: player.data.dataPool.count,
       stash: dataInternal.stashCountValue,
       poolMax: player.data.dataPool.max,
-      computerTopSlots: [...player.data.computer.getTopSlots()],
-      computerBottomSlots: [...player.data.computer.getBottomSlots()],
+      computerColumns: player.data.computer.getColumnStates().map((col) => ({
+        topFilled: col.topFilled,
+        bottomFilled: col.bottomFilled,
+        techId: col.techId,
+        ...(col.bottomReward ? { bottomReward: col.bottomReward } : {}),
+      })),
     },
     pieces: {
       totalInventory: {
@@ -270,8 +275,23 @@ function serializeSectors(game: IGame): ISectorDto[] {
 
 function serializeAlienState(game: IGame): IAlienStateDto {
   return {
-    hiddenAliens: [...game.hiddenAliens],
-    discovered: [],
+    aliens: game.alienState.boards.map((board) => ({
+      alienType: board.alienType,
+      alienIndex: board.alienIndex,
+      discovered: board.discovered,
+      slots: board.slots.map((slot) => ({
+        slotId: slot.slotId,
+        alienIndex: slot.alienIndex,
+        traceColor: slot.traceColor,
+        occupants: slot.occupants.map((occ) => ({
+          source: occ.source === 'neutral' ? ('neutral' as const) : { playerId: occ.source.playerId },
+          traceColor: occ.traceColor,
+        })),
+        maxOccupants: slot.maxOccupants,
+        rewards: slot.rewards.map((r) => ({ ...r })),
+        isDiscovery: slot.isDiscovery,
+      })),
+    })),
   };
 }
 
@@ -378,13 +398,17 @@ function toPublicPlayerState(
       [EResource.PUBLICITY]: player.resources.publicity,
     },
     traces: cloneValue(player.traces),
+    tracesByAlien: cloneValue(player.tracesByAlien),
     computer: {
-      topSlots: player.computer
-        .getTopSlots()
-        .map((filled) => (filled ? 'data' : null)),
-      bottomSlots: player.computer
-        .getBottomSlots()
-        .map((filled) => (filled ? 'data' : null)),
+      columns: player.computer.getColumnStates().map((col) => ({
+        topFilled: col.topFilled,
+        topReward: col.topReward,
+        techId: col.techId,
+        hasBottomSlot: col.hasBottomSlot,
+        bottomFilled: col.bottomFilled,
+        bottomReward: col.bottomReward,
+        techSlotAvailable: col.techSlotAvailable,
+      })),
     },
     dataPoolCount: player.dataPool.count,
     dataPoolMax: player.dataPool.max,
@@ -468,7 +492,25 @@ export function projectGameState(
     cardRow: cloneValue(game.cardRow as never),
     endOfRoundStacks: cloneValue(game.endOfRoundStacks as never),
     currentEndOfRoundStackIndex: game.roundRotationReminderIndex,
-    aliens: [],
+    aliens: game.alienState.boards.map((board) => ({
+      alienIndex: board.alienIndex,
+      alienType: board.discovered ? board.alienType : null,
+      discovered: board.discovered,
+      slots: board.slots.map((slot) => ({
+        slotId: slot.slotId,
+        traceColor: slot.traceColor,
+        occupants: slot.occupants.map((occ) => ({
+          source:
+            occ.source === 'neutral'
+              ? ('neutral' as const)
+              : { playerId: occ.source.playerId },
+          traceColor: occ.traceColor,
+        })),
+        maxOccupants: slot.maxOccupants,
+        rewards: slot.rewards.map((r) => ({ ...r })),
+        isDiscovery: slot.isDiscovery,
+      })),
+    })),
     recentEvents: game.eventLog.recent(20) as never,
   };
 }

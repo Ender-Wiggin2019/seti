@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import '@seti/cards/styles/card.css';
 import App from './App';
 import './styles/globals.css';
 

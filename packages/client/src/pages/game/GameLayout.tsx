@@ -38,6 +38,13 @@ export function GameLayout(): React.JSX.Element {
   const activeTab = useGameViewStore((s) => s.activeTab);
   const setActiveTab = useGameViewStore((s) => s.setActiveTab);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailCard, setDetailCard] = useState<IBaseCard | null>(null);
+
+  const handleInspectCard = (card: IBaseCard): void => {
+    setDetailCard(card);
+    setDetailOpen(true);
+  };
 
   return (
     <div className='flex h-screen flex-col overflow-hidden bg-background-950 text-text-100'>
@@ -53,7 +60,11 @@ export function GameLayout(): React.JSX.Element {
         <div className='flex min-h-0 flex-1 flex-col lg:flex-row'>
           {/* Board area */}
           <main className='relative flex min-h-0 flex-1 flex-col overflow-hidden'>
-            <BoardTabs activeTab={activeTab} onTabChange={setActiveTab} />
+            <BoardTabs
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              onInspectCard={handleInspectCard}
+            />
 
             {/* Mobile sidebar toggle */}
             <button
@@ -79,7 +90,13 @@ export function GameLayout(): React.JSX.Element {
       </div>
 
       {/* Bottom bar */}
-      <BottomBar />
+      <BottomBar onInspectCard={handleInspectCard} />
+
+      <CardDetail
+        card={detailCard}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+      />
 
       <GameOverDialog />
     </div>
@@ -89,22 +106,44 @@ export function GameLayout(): React.JSX.Element {
 function BoardTabs({
   activeTab,
   onTabChange,
+  onInspectCard,
 }: {
   activeTab: TBoardTab;
   onTabChange: (tab: TBoardTab) => void;
+  onInspectCard: (card: IBaseCard) => void;
 }): React.JSX.Element {
   const { gameState, myPlayerId, pendingInput, sendFreeAction, sendInput } =
     useGameContext();
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [detailCardId, setDetailCardId] = useState<string | null>(null);
+  const [armedCardRowBuy, setArmedCardRowBuy] = useState(false);
 
   const playerColors =
     gameState?.players.reduce<Record<string, string>>((acc, p) => {
       acc[p.playerId] = p.color;
       return acc;
     }, {}) ?? {};
-  const detailCard =
-    gameState?.cardRow.find((card) => card.id === detailCardId) ?? null;
+  const cardSelectionInput =
+    pendingInput?.type === EPlayerInputType.CARD ? pendingInput : null;
+  const selectableCardIds = new Set(
+    cardSelectionInput?.cards.map((c) => c.id) ?? [],
+  );
+  const isSelectingFromCardRow =
+    cardSelectionInput !== null &&
+    gameState?.cardRow.some((card) => selectableCardIds.has(card.id));
+
+  function handleCardRowClick(card: IBaseCard): void {
+    if (isSelectingFromCardRow) {
+      sendInput({ type: EPlayerInputType.CARD, cardIds: [card.id] });
+      return;
+    }
+
+    if (armedCardRowBuy) {
+      sendFreeAction({ type: EFreeAction.BUY_CARD, cardId: card.id });
+      setArmedCardRowBuy(false);
+      return;
+    }
+
+    onInspectCard(card);
+  }
 
   return (
     <Tabs
@@ -169,17 +208,45 @@ function BoardTabs({
         <TabsContent value='cards' className='mt-0 h-full'>
           {gameState && (
             <div className='space-y-3'>
+              <div className='flex flex-wrap items-center gap-2 rounded border border-surface-700/40 bg-surface-900/30 p-2'>
+                <button
+                  type='button'
+                  className='rounded border border-accent-500/60 bg-accent-500/10 px-2 py-1 font-mono text-[11px] uppercase tracking-wide text-accent-300 transition-colors hover:bg-accent-500/20'
+                  onClick={() =>
+                    sendFreeAction({
+                      type: EFreeAction.BUY_CARD,
+                      fromDeck: true,
+                    })
+                  }
+                >
+                  Buy From Deck
+                </button>
+                <button
+                  type='button'
+                  className='rounded border border-surface-700/70 bg-surface-800/60 px-2 py-1 font-mono text-[11px] uppercase tracking-wide text-text-300 transition-colors hover:bg-surface-700/70'
+                  onClick={() => setArmedCardRowBuy((v) => !v)}
+                >
+                  {armedCardRowBuy ? 'Cancel Row Buy' : 'Buy From Row'}
+                </button>
+                <div className='ml-auto flex items-center gap-2'>
+                  <div className='h-[72px] w-[52px] rounded border border-surface-700/60 bg-[url(/assets/seti/cards/back_base.jpg)] bg-cover bg-center shadow-lg' />
+                  <span className='font-mono text-[11px] uppercase tracking-wide text-text-500'>
+                    Main Deck
+                  </span>
+                </div>
+              </div>
+
               <CardRowView
                 cards={gameState.cardRow}
                 mode={
-                  pendingInput?.type === EPlayerInputType.CARD
+                  isSelectingFromCardRow
                     ? 'discard'
-                    : 'idle'
+                    : armedCardRowBuy
+                      ? 'buy'
+                      : 'idle'
                 }
-                onCardInspect={(card) => {
-                  setDetailCardId(card.id);
-                  setDetailOpen(true);
-                }}
+                onCardClick={handleCardRowClick}
+                onCardInspect={onInspectCard}
               />
               <EndOfRoundStacks
                 stacks={gameState.endOfRoundStacks ?? [[], [], [], []]}
@@ -189,11 +256,17 @@ function BoardTabs({
                     ? 'select'
                     : 'idle'
                 }
-              />
-              <CardDetail
-                card={detailCard}
-                open={detailOpen}
-                onOpenChange={setDetailOpen}
+                onSelectCard={(card) => {
+                  if (pendingInput?.type !== EPlayerInputType.END_OF_ROUND) {
+                    onInspectCard(card);
+                    return;
+                  }
+
+                  sendInput({
+                    type: EPlayerInputType.END_OF_ROUND,
+                    cardId: card.id,
+                  });
+                }}
               />
             </div>
           )}
@@ -273,7 +346,11 @@ function BoardPlaceholder({
   );
 }
 
-function BottomBar(): React.JSX.Element {
+function BottomBar({
+  onInspectCard,
+}: {
+  onInspectCard: (card: IBaseCard) => void;
+}): React.JSX.Element {
   const {
     gameState,
     myPlayerId,
@@ -287,6 +364,7 @@ function BottomBar(): React.JSX.Element {
   const [confirmRequest, setConfirmRequest] =
     useState<IFreeActionRequest | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [cornerSelectionMode, setCornerSelectionMode] = useState(false);
 
   const myPlayer = gameState?.players.find((p) => p.playerId === myPlayerId);
   const extendedPlayer = myPlayer as
@@ -302,13 +380,16 @@ function BottomBar(): React.JSX.Element {
   const handleFreeActionClick = (action: EFreeAction) => {
     switch (action) {
       case EFreeAction.BUY_CARD:
+        setCornerSelectionMode(false);
         setConfirmRequest({ type: EFreeAction.BUY_CARD, fromDeck: true });
         setConfirmOpen(true);
         return;
       case EFreeAction.PLACE_DATA:
+        setCornerSelectionMode(false);
         sendFreeAction({ type: EFreeAction.PLACE_DATA, slotIndex: 0 });
         return;
       case EFreeAction.COMPLETE_MISSION:
+        setCornerSelectionMode(false);
         if (missionCards.length === 1) {
           sendFreeAction({
             type: EFreeAction.COMPLETE_MISSION,
@@ -324,20 +405,26 @@ function BottomBar(): React.JSX.Element {
         });
         return;
       case EFreeAction.USE_CARD_CORNER:
+        if (!myPlayer?.hand?.length) {
+          return;
+        }
+
         if (myPlayer?.hand?.length === 1 && myPlayer.hand[0]?.id) {
+          setCornerSelectionMode(false);
           sendFreeAction({
             type: EFreeAction.USE_CARD_CORNER,
             cardId: myPlayer.hand[0].id,
           });
           return;
         }
+        setCornerSelectionMode(true);
         toast({
           title: 'Card selection required',
           description: 'Select a specific card to use its corner free action.',
-          variant: 'error',
         });
         return;
       case EFreeAction.MOVEMENT:
+        setCornerSelectionMode(false);
         toast({
           title: 'Select probe movement on board',
           description:
@@ -346,6 +433,7 @@ function BottomBar(): React.JSX.Element {
         return;
       case EFreeAction.EXCHANGE_RESOURCES:
       case EFreeAction.CONVERT_ENERGY_TO_MOVEMENT:
+        setCornerSelectionMode(false);
         toast({
           title: 'Action requires extra selection',
           description:
@@ -396,18 +484,32 @@ function BottomBar(): React.JSX.Element {
             Hand & Missions
           </h4>
           {myPlayer ? (
-            <div className='grid h-full min-h-[86px] grid-rows-2 gap-2'>
+            <div className='flex h-full min-h-[86px] flex-col gap-2'>
               <HandView
                 cards={myPlayer.hand}
                 handSize={myPlayer.handSize}
                 pendingInput={pendingInput}
+                cornerSelectionMode={cornerSelectionMode}
                 onSubmitSelection={(cardIds) => {
                   sendInput({
                     type: EPlayerInputType.CARD,
                     cardIds,
                   });
                 }}
+                onCardCornerSelect={(cardId) => {
+                  sendFreeAction({
+                    type: EFreeAction.USE_CARD_CORNER,
+                    cardId,
+                  });
+                  setCornerSelectionMode(false);
+                }}
+                onCardInspect={onInspectCard}
               />
+              {cornerSelectionMode && (
+                <p className='rounded border border-amber-500/50 bg-amber-500/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wide text-amber-200'>
+                  Click a hand card to use its corner action
+                </p>
+              )}
               <PlayedMissions missions={missionCards} />
             </div>
           ) : (

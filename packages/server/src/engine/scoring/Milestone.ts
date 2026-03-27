@@ -194,10 +194,14 @@ export class MilestoneState {
     milestone.resolvedPlayerIds.add(claim.player.id);
     this.neutralDiscoveryMarkersUsed += 1;
 
+    const placement = game.alienState.placeNeutralMarker();
+
     game.eventLog.append(
       createActionEvent(claim.player.id, 'MILESTONE_NEUTRAL_RESOLVED', {
         threshold: claim.threshold,
         neutralDiscoveryMarkersUsed: this.neutralDiscoveryMarkersUsed,
+        alienIndex: placement?.alienIndex ?? null,
+        traceColor: placement?.traceColor ?? null,
       }),
     );
   }

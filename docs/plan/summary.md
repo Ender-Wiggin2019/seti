@@ -77,8 +77,8 @@
 |---|------|----------|------|
 | 4-1 | 序列化/反序列化 (GameSerializer) | **串行起始** | ✅ |
 | 4-2 | Drizzle Schema + Repository + Undo | 依赖 4-1 | ✅ |
-| 4-3 | REST API (Auth + Lobby) | 与 4-2 并行 | ⬜ |
-| 4-4 | WebSocket Gateway (game:action/state/waiting) | 依赖 4-1, 4-2 | ⬜ |
+| 4-3 | REST API (Auth + Lobby) | 与 4-2 并行 | ✅ |
+| 4-4 | WebSocket Gateway (game:action/state/waiting) | 依赖 4-1, 4-2 | ✅ |
 
 ## Stage 5: Client Auth & Lobby (客户端认证 & 大厅)
 
@@ -105,13 +105,13 @@
 | 7-1 | InputRenderer 分发器 + 全部 Input 组件 | **串行起始** | ✅ |
 | 7-2 | ActionMenu + FreeActionBar | 与 7-1 并行 | ✅ |
 | 7-3 | PlayerDashboard (资源, 电脑, 手牌, 任务) | 与 7-1, 7-2 并行 | ✅ |
-| 7-4 | EventLog + OpponentSummary + GameOverDialog | 依赖 7-1~7-3 | ⬜ |
+| 7-4 | EventLog + OpponentSummary + GameOverDialog | 依赖 7-1~7-3 | ✅ |
 
 ## Stage 8: Alien Expansion (外星种族扩展)
 
 | # | Task | 并行/串行 | 状态 |
 |---|------|----------|------|
-| 8-1 | Alien Plugin 接口 + AlienRegistry + 发现流程 | **串行起始** | ⬜ |
+| 8-1 | Alien Plugin 接口 + AlienRegistry + 发现流程 | **串行起始** | ✅ |
 | 8-2 | 首个 Alien 实现 (Centaurians) + 验证 | 依赖 8-1 | ⬜ |
 | 8-3 | 剩余 Alien 实现 (Anomalies, Exertians, Mascamites, Oumuamua) | 依赖 8-2, 各 alien 间可并行 | ⬜ |
 | 8-4 | Alien UI 组件 (AlienBoardView, DiscoveryTrack) | 与 8-2 并行 | ⬜ |

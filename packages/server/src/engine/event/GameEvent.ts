@@ -1,4 +1,4 @@
-import { EAlienType } from '@seti/common/types/protocol/enums';
+import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
 
 export type TGameEvent =
   | {
@@ -29,8 +29,17 @@ export type TGameEvent =
       at: number;
     }
   | {
+      type: 'TRACE_MARKED';
+      playerId: string;
+      traceColor: ETrace;
+      alienIndex: number;
+      isOverflow: boolean;
+      at: number;
+    }
+  | {
       type: 'ALIEN_DISCOVERED';
       alienType: EAlienType;
+      alienIndex: number;
       at: number;
     }
   | {
@@ -55,6 +64,34 @@ export function createActionEvent(
   details?: Record<string, unknown>,
 ): TGameEvent {
   return { type: 'ACTION', playerId, action, details, at: Date.now() };
+}
+
+export function createTraceMarkedEvent(
+  playerId: string,
+  traceColor: ETrace,
+  alienIndex: number,
+  isOverflow: boolean,
+): TGameEvent {
+  return {
+    type: 'TRACE_MARKED',
+    playerId,
+    traceColor,
+    alienIndex,
+    isOverflow,
+    at: Date.now(),
+  };
+}
+
+export function createAlienDiscoveredEvent(
+  alienType: EAlienType,
+  alienIndex: number,
+): TGameEvent {
+  return {
+    type: 'ALIEN_DISCOVERED',
+    alienType,
+    alienIndex,
+    at: Date.now(),
+  };
 }
 
 export function createRoundEndEvent(round: number): TGameEvent {

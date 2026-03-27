@@ -1,3 +1,4 @@
+import { AlienRegistry } from '../alien/AlienRegistry.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
 import { scoreEndGameCard } from './GoldScoringTile.js';
@@ -16,9 +17,16 @@ export interface IFinalScoringResult {
   winnerIds: string[];
 }
 
-function getAlienBonus(_player: IPlayer, _game: IGame): number {
-  // Alien-specific end-game scoring is added in Stage 8.
-  return 0;
+function getAlienBonus(player: IPlayer, game: IGame): number {
+  let bonus = 0;
+  for (const board of game.alienState.boards) {
+    if (!board.discovered) continue;
+    const plugin = AlienRegistry.get(board.alienType);
+    if (plugin?.onGameEndScoring) {
+      bonus += plugin.onGameEndScoring(game, player);
+    }
+  }
+  return bonus;
 }
 
 export class FinalScoring {

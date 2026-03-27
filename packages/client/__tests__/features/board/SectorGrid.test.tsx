@@ -89,4 +89,26 @@ describe('SectorGrid', () => {
     fireEvent.click(screen.getByTestId('sector-pair-east'));
     expect(onSelectSector).toHaveBeenCalledWith(ESector.YELLOW);
   });
+
+  it('allows choosing exact sector node when multiple options are valid', () => {
+    const onSelectSector = vi.fn();
+    const pendingInput: IPlayerInputModel = {
+      inputId: 'input-sector-multi',
+      type: EPlayerInputType.SECTOR,
+      options: [ESector.BLUE, ESector.BLACK],
+    };
+
+    render(
+      <SectorGrid
+        sectors={createSectors()}
+        setupConfig={testSetup}
+        playerColors={{}}
+        pendingInput={pendingInput}
+        onSelectSector={onSelectSector}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('sector-node-north-1'));
+    expect(onSelectSector).toHaveBeenCalledWith(ESector.BLACK);
+  });
 });

@@ -1,7 +1,14 @@
+import type { IComputerColumnConfig } from '@seti/common/types/computer';
 import { AnalyzeDataAction } from '@/engine/actions/AnalyzeData.js';
 import type { IGame } from '@/engine/IGame.js';
 import { EComputerRow } from '@/engine/player/Computer.js';
 import { Player } from '@/engine/player/Player.js';
+
+const SIMPLE_3_COL: IComputerColumnConfig[] = [
+  { topReward: null, techSlotAvailable: true },
+  { topReward: null, techSlotAvailable: true },
+  { topReward: null, techSlotAvailable: true },
+];
 
 function createMockGame(): IGame {
   return {
@@ -27,12 +34,13 @@ function createPlayer(overrides: Record<string, unknown> = {}): Player {
     color: 'red',
     seatIndex: 0,
     resources: { credits: 4, energy: 3, publicity: 4 },
+    computerColumnConfigs: SIMPLE_3_COL,
     ...overrides,
   });
 }
 
 function fillTopComputer(player: Player): void {
-  for (let i = 0; i < 3; i += 1) {
+  for (let i = 0; i < player.computer.columnCount; i += 1) {
     player.computer.placeData({ row: EComputerRow.TOP, index: i });
   }
 }

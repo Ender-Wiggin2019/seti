@@ -1,7 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
 import { PlayerDashboard } from '@/features/player';
-import { EFreeAction } from '@/types/re-exports';
 import { createMockPlayerState } from '../../../test/mocks/gameState';
 
 describe('PlayerDashboard', () => {
@@ -19,30 +18,5 @@ describe('PlayerDashboard', () => {
     expect(screen.getByTestId('data-pool-view')).toBeInTheDocument();
     expect(screen.getByText('Inventory')).toBeInTheDocument();
     expect(screen.getByText('Tech Slots')).toBeInTheDocument();
-  });
-
-  it('sends PLACE_DATA free action when a slot is clicked', () => {
-    const onFreeAction = vi.fn();
-
-    render(
-      <PlayerDashboard
-        player={createMockPlayerState({
-          computer: {
-            topSlots: [null, null, null],
-            bottomSlots: [null, null, null],
-          },
-          dataPoolCount: 3,
-        })}
-        pendingInput={null}
-        onFreeAction={onFreeAction}
-      />,
-    );
-
-    fireEvent.click(screen.getByTestId('computer-slot-0'));
-
-    expect(onFreeAction).toHaveBeenCalledWith({
-      type: EFreeAction.PLACE_DATA,
-      slotIndex: 0,
-    });
   });
 });

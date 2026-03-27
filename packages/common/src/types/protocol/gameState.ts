@@ -1,5 +1,6 @@
 import type { ISolarSystemSetupConfig } from '@seti/common/constant/sectorSetup';
 import { IBaseCard } from '@seti/common/types/BaseCard';
+import type { IComputerSlotReward } from '@seti/common/types/computer';
 import { EResource, ESector } from '@seti/common/types/element';
 import {
   EAlienType,
@@ -18,9 +19,18 @@ export interface IPublicResourceState {
   [EResource.PUBLICITY]: number;
 }
 
+export interface IPublicComputerColumnState {
+  topFilled: boolean;
+  topReward: IComputerSlotReward | null;
+  techId: ETechId | null;
+  hasBottomSlot: boolean;
+  bottomFilled: boolean;
+  bottomReward: IComputerSlotReward | null;
+  techSlotAvailable: boolean;
+}
+
 export interface IPublicComputerState {
-  topSlots: Array<string | null>;
-  bottomSlots: Array<string | null>;
+  columns: IPublicComputerColumnState[];
 }
 
 export interface IPublicPieceInventory {
@@ -40,6 +50,7 @@ export interface IPublicPlayerState {
   hand?: IBaseCard[];
   resources: IPublicResourceState;
   traces: Partial<Record<ETrace, number>>;
+  tracesByAlien: Record<number, Partial<Record<ETrace, number>>>;
   computer: IPublicComputerState;
   dataPoolCount: number;
   dataPoolMax: number;
@@ -128,10 +139,29 @@ export interface IPublicTechBoard {
   stacks: IPublicTechStack[];
 }
 
+export type TPublicSlotReward =
+  | { type: 'VP'; amount: number }
+  | { type: 'CUSTOM'; effectId: string };
+
+export interface IPublicTraceOccupant {
+  source: { playerId: string } | 'neutral';
+  traceColor: ETrace;
+}
+
+export interface IPublicTraceSlot {
+  slotId: string;
+  traceColor: ETrace;
+  occupants: IPublicTraceOccupant[];
+  maxOccupants: number;
+  rewards: TPublicSlotReward[];
+  isDiscovery: boolean;
+}
+
 export interface IPublicAlienState {
-  alienType: EAlienType;
+  alienIndex: number;
+  alienType: EAlienType | null;
   discovered: boolean;
-  traces: Partial<Record<ETrace, number>>;
+  slots: IPublicTraceSlot[];
 }
 
 export interface IPublicGameState {

@@ -10,6 +10,7 @@ import {
   EMainAction,
   EPhase,
   EPlanet,
+  ETrace,
 } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
@@ -17,6 +18,7 @@ import { SeededRandom } from '@/shared/rng/SeededRandom.js';
 import { OrbitAction } from './actions/Orbit.js';
 import { PassAction } from './actions/Pass.js';
 import { PlayCardAction } from './actions/PlayCard.js';
+import { AlienState } from './alien/AlienState.js';
 import type { PlanetaryBoard } from './board/PlanetaryBoard.js';
 import type { Sector } from './board/Sector.js';
 import type { SolarSystem } from './board/SolarSystem.js';
@@ -81,6 +83,8 @@ export class Game implements IGame {
 
   public sectors: Sector[];
 
+  public alienState: AlienState;
+
   public milestoneState: MilestoneState;
 
   public goldScoringTiles: GoldScoringTile[];
@@ -134,6 +138,7 @@ export class Game implements IGame {
     this.planetaryBoard = null;
     this.techBoard = null;
     this.sectors = [];
+    this.alienState = AlienState.createFromHiddenAliens([]);
     this.milestoneState = new MilestoneState([]);
     this.goldScoringTiles = [];
     this.mainDeck = new Deck<string>();
@@ -269,6 +274,15 @@ export class Game implements IGame {
   ): PlayerInput | undefined {
     const player = this.getPlayer(playerId);
     return Mark.execute(player, this, source, count);
+  }
+
+  public markTrace(
+    traceColor: ETrace,
+    playerId: string = this.activePlayer.id,
+    onComplete?: () => PlayerInput | undefined,
+  ): PlayerInput | undefined {
+    const player = this.getPlayer(playerId);
+    return this.alienState.createTraceInput(player, this, traceColor, onComplete);
   }
 
   private runResolutionPipeline(): void {

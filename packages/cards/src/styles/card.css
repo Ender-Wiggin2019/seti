@@ -812,6 +812,413 @@
   /* border: 1px solid red; */
 }
 
+/* Size variants for icon layouts used by IconFactory. */
+.icon-container-2xl-1,
+.icon-container-2xl-2,
+.icon-container-2xl-3,
+.icon-container-2xl-4,
+.icon-container-xl-1,
+.icon-container-xl-2,
+.icon-container-xl-3,
+.icon-container-xl-4,
+.icon-container-lg-1,
+.icon-container-lg-2,
+.icon-container-lg-3,
+.icon-container-lg-4,
+.icon-container-md-1,
+.icon-container-md-2,
+.icon-container-md-3,
+.icon-container-md-4,
+.icon-container-sm-1,
+.icon-container-sm-2,
+.icon-container-sm-3,
+.icon-container-sm-4,
+.icon-container-xs-1,
+.icon-container-xs-2,
+.icon-container-xs-3,
+.icon-container-xs-4,
+.icon-container-xxs-1,
+.icon-container-xxs-2,
+.icon-container-xxs-3,
+.icon-container-xxs-4,
+.icon-container-desc-1,
+.icon-container-desc-2,
+.icon-container-desc-3,
+.icon-container-desc-4,
+.icon-container-desc-mini-1,
+.icon-container-desc-mini-2,
+.icon-container-desc-mini-3,
+.icon-container-desc-mini-4 {
+  transform-origin: 0% 50%;
+}
+
+.icon-container-2xl-1 {
+  scale: 1.5;
+  width: 75px;
+  height: 75px;
+}
+.icon-container-2xl-2 {
+  scale: 1.5;
+  width: 150px;
+  height: 75px;
+}
+.icon-container-2xl-3 {
+  scale: 1.5;
+  width: 225px;
+  height: 75px;
+}
+.icon-container-2xl-4 {
+  scale: 1.5;
+  width: 300px;
+  height: 75px;
+}
+.icon-container-xl-1 {
+  scale: 1.2;
+  width: 60px;
+  height: 60px;
+}
+.icon-container-xl-2 {
+  scale: 1.2;
+  width: 120px;
+  height: 60px;
+}
+.icon-container-xl-3 {
+  scale: 1.2;
+  width: 180px;
+  height: 60px;
+}
+.icon-container-xl-4 {
+  scale: 1.2;
+  width: 240px;
+  height: 60px;
+}
+.icon-container-lg-1 {
+  scale: 1;
+  width: 50px;
+  height: 50px;
+}
+.icon-container-lg-2 {
+  scale: 1;
+  width: 100px;
+  height: 50px;
+}
+.icon-container-lg-3 {
+  scale: 1;
+  width: 150px;
+  height: 50px;
+}
+.icon-container-lg-4 {
+  scale: 1;
+  width: 200px;
+  height: 50px;
+}
+.icon-container-md-1 {
+  scale: 0.8;
+  width: 40px;
+  height: 40px;
+}
+.icon-container-md-2 {
+  scale: 0.8;
+  width: 80px;
+  height: 40px;
+}
+.icon-container-md-3 {
+  scale: 0.8;
+  width: 120px;
+  height: 40px;
+}
+.icon-container-md-4 {
+  scale: 0.8;
+  width: 160px;
+  height: 40px;
+}
+.icon-container-sm-1 {
+  scale: 0.6;
+  width: 30px;
+  height: 30px;
+}
+.icon-container-sm-2 {
+  scale: 0.6;
+  width: 60px;
+  height: 30px;
+}
+.icon-container-sm-3 {
+  scale: 0.6;
+  width: 90px;
+  height: 30px;
+}
+.icon-container-sm-4 {
+  scale: 0.6;
+  width: 120px;
+  height: 30px;
+}
+.icon-container-xs-1 {
+  scale: 0.45;
+  width: 22.5px;
+  height: 22.5px;
+}
+.icon-container-xs-2 {
+  scale: 0.45;
+  width: 45px;
+  height: 22.5px;
+}
+.icon-container-xs-3 {
+  scale: 0.45;
+  width: 67.5px;
+  height: 22.5px;
+}
+.icon-container-xs-4 {
+  scale: 0.45;
+  width: 90px;
+  height: 22.5px;
+}
+.icon-container-xxs-1 {
+  scale: 0.4;
+  width: 20px;
+  height: 20px;
+}
+.icon-container-xxs-2 {
+  scale: 0.4;
+  width: 40px;
+  height: 20px;
+}
+.icon-container-xxs-3 {
+  scale: 0.4;
+  width: 60px;
+  height: 20px;
+}
+.icon-container-xxs-4 {
+  scale: 0.4;
+  width: 80px;
+  height: 20px;
+}
+.icon-container-desc-1 {
+  scale: 0.3;
+  width: 15px;
+  height: 15px;
+}
+.icon-container-desc-2 {
+  scale: 0.3;
+  width: 30px;
+  height: 15px;
+}
+.icon-container-desc-3 {
+  scale: 0.3;
+  width: 45px;
+  height: 15px;
+}
+.icon-container-desc-4 {
+  scale: 0.3;
+  width: 60px;
+  height: 15px;
+}
+.icon-container-desc-mini-1 {
+  scale: 0.2;
+  width: 10px;
+  height: 10px;
+}
+.icon-container-desc-mini-2 {
+  scale: 0.2;
+  width: 20px;
+  height: 10px;
+}
+.icon-container-desc-mini-3 {
+  scale: 0.2;
+  width: 30px;
+  height: 10px;
+}
+.icon-container-desc-mini-4 {
+  scale: 0.2;
+  width: 40px;
+  height: 10px;
+}
+
+.icon-text-2xl-1 {
+  transform-origin: 0% 50%;
+  scale: 1.5;
+  width: 30px;
+  height: 75px;
+}
+.icon-text-xl-1 {
+  transform-origin: 0% 50%;
+  scale: 1.2;
+  width: 24px;
+  height: 60px;
+}
+.icon-text-lg-1 {
+  transform-origin: 0% 50%;
+  scale: 1;
+  width: 20px;
+  height: 50px;
+}
+.icon-text-md-1 {
+  transform-origin: 0% 50%;
+  scale: 0.8;
+  width: 16px;
+  height: 40px;
+}
+.icon-text-sm-1 {
+  transform-origin: 0% 50%;
+  scale: 0.6;
+  width: 12px;
+  height: 30px;
+}
+.icon-text-xs-1 {
+  transform-origin: 0% 50%;
+  scale: 0.45;
+  width: 9px;
+  height: 22.5px;
+}
+.icon-text-xxs-1 {
+  transform-origin: 0% 50%;
+  scale: 0.4;
+  width: 8px;
+  height: 20px;
+}
+.icon-text-desc-1 {
+  transform-origin: 0% 50%;
+  scale: 0.3;
+  width: 6px;
+  height: 15px;
+}
+.icon-text-desc-mini-1 {
+  transform-origin: 0% 50%;
+  scale: 0.2;
+  width: 4px;
+  height: 10px;
+}
+
+.icon-value-size-2xl {
+  position: absolute;
+  height: 75px;
+  bottom: 6px;
+}
+.icon-value-size-xl {
+  position: absolute;
+  height: 60px;
+  bottom: 4.8px;
+}
+.icon-value-size-lg {
+  position: absolute;
+  height: 50px;
+  bottom: 4px;
+}
+.icon-value-size-md {
+  position: absolute;
+  height: 40px;
+  bottom: 3.2px;
+}
+.icon-value-size-sm {
+  position: absolute;
+  height: 30px;
+  bottom: 2.4px;
+}
+.icon-value-size-xs {
+  position: absolute;
+  height: 22.5px;
+  bottom: 1.8px;
+}
+.icon-value-size-xxs {
+  position: absolute;
+  height: 20px;
+  bottom: 1.6px;
+}
+.icon-value-size-desc {
+  position: absolute;
+  height: 15px;
+  bottom: 1.2px;
+}
+.icon-value-size-desc-mini {
+  position: absolute;
+  height: 10px;
+  bottom: 0.8px;
+}
+
+.icon-value-large {
+  left: -27px !important;
+}
+
+.icon-value-credit,
+.icon-value-energy,
+.icon-value-score,
+.icon-value-card,
+.icon-value-any-card,
+.icon-value-draw-card-special,
+.icon-value-any-card-special,
+.icon-value-move,
+.icon-value-move-special,
+.icon-value-data,
+.icon-value-publicity,
+.icon-value-draw-alien-card,
+.icon-value-danger,
+.icon-value-exofossil,
+.icon-value-use-exofossil {
+  text-shadow:
+    var(--icon-value-shadow-color) 3px 0px 0px,
+    var(--icon-value-shadow-color) 2.83487px 0.981584px 0px,
+    var(--icon-value-shadow-color) 2.35766px 1.85511px 0px,
+    var(--icon-value-shadow-color) 1.62091px 2.52441px 0px,
+    var(--icon-value-shadow-color) 0.705713px 2.91581px 0px,
+    var(--icon-value-shadow-color) -0.287171px 2.98622px 0px,
+    var(--icon-value-shadow-color) -1.24844px 2.72789px 0px,
+    var(--icon-value-shadow-color) -2.07227px 2.16926px 0px,
+    var(--icon-value-shadow-color) -2.66798px 1.37182px 0px,
+    var(--icon-value-shadow-color) -2.96998px 0.42336px 0px,
+    var(--icon-value-shadow-color) -2.94502px -0.571704px 0px,
+    var(--icon-value-shadow-color) -2.59586px -1.50383px 0px,
+    var(--icon-value-shadow-color) -1.96093px -2.27041px 0px,
+    var(--icon-value-shadow-color) -1.11013px -2.78704px 0px,
+    var(--icon-value-shadow-color) -0.137119px -2.99686px 0px,
+    var(--icon-value-shadow-color) 0.850987px -2.87677px 0px,
+    var(--icon-value-shadow-color) 1.74541px -2.43999px 0px,
+    var(--icon-value-shadow-color) 2.44769px -1.73459px 0px,
+    var(--icon-value-shadow-color) 2.88051px -0.838247px 0px;
+}
+
+.icon-value-credit {
+  --icon-value-shadow-color: #b09530;
+}
+.icon-value-energy {
+  --icon-value-shadow-color: #3aaa23;
+}
+.icon-value-score {
+  --icon-value-shadow-color: #156853;
+  text-align: center;
+  margin-top: -2px;
+  left: 0px;
+  width: 50px;
+  font-size: 35px;
+}
+.icon-value-card,
+.icon-value-any-card,
+.icon-value-draw-card-special,
+.icon-value-any-card-special {
+  --icon-value-shadow-color: #3b3947;
+  left: -3px;
+}
+.icon-value-move,
+.icon-value-move-special {
+  --icon-value-shadow-color: #182031;
+  left: -6px;
+  font-size: 45px;
+}
+.icon-value-data {
+  --icon-value-shadow-color: #567fd1;
+}
+.icon-value-publicity {
+  --icon-value-shadow-color: #f14927;
+}
+.icon-value-draw-alien-card {
+  --icon-value-shadow-color: #1b4448;
+}
+.icon-value-danger {
+  --icon-value-shadow-color: #061114;
+}
+.icon-value-exofossil,
+.icon-value-use-exofossil {
+  --icon-value-shadow-color: #694d96;
+}
+
 /* .icon-md {
   scale: 1;
 }

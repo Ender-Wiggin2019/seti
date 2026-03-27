@@ -107,13 +107,31 @@ export interface ISectorDto {
   markerHistory: Array<{ playerId: string; timestamp: number }>;
 }
 
-export interface IAlienStateDto {
-  hiddenAliens: EAlienType[];
-  discovered: Array<{
-    alienType: EAlienType;
-    discovered: boolean;
-    traces: Partial<Record<ETrace, number>>;
+export interface ITraceSlotDto {
+  slotId: string;
+  alienIndex: number;
+  traceColor: ETrace;
+  occupants: Array<{
+    source: { playerId: string } | 'neutral';
+    traceColor: ETrace;
   }>;
+  maxOccupants: number;
+  rewards: Array<
+    | { type: 'VP'; amount: number }
+    | { type: 'CUSTOM'; effectId: string }
+  >;
+  isDiscovery: boolean;
+}
+
+export interface IAlienBoardDto {
+  alienType: EAlienType;
+  alienIndex: number;
+  discovered: boolean;
+  slots: ITraceSlotDto[];
+}
+
+export interface IAlienStateDto {
+  aliens: IAlienBoardDto[];
 }
 
 export interface IMilestoneStateDto {

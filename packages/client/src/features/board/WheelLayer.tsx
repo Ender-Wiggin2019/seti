@@ -20,10 +20,12 @@ const RING_ASSET: Record<IWheelLayerProps['ring'], string> = {
   4: '/assets/seti/wheels/wheel4.png',
 };
 
+const ROTATING_RING_TRANSITION_MS = 900;
+
 const TRANSITION_DURATION_MS: Record<IWheelLayerProps['ring'], number> = {
-  1: 800,
-  2: 1200,
-  3: 1600,
+  1: ROTATING_RING_TRANSITION_MS,
+  2: ROTATING_RING_TRANSITION_MS,
+  3: ROTATING_RING_TRANSITION_MS,
   4: 0,
 };
 

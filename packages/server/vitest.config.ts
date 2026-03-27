@@ -1,10 +1,12 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import swc from 'unplugin-swc';
 import { defineConfig } from 'vitest/config';
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  plugins: [swc.vite({ tsconfigFile: './tsconfig.json' })],
   test: {
     globals: true,
     environment: 'node',

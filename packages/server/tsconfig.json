@@ -11,6 +11,8 @@
     "incremental": false,
     "declaration": true,
     "declarationMap": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "types": ["node", "vitest/globals"],
     "paths": {
       "@/*": ["./src/*"],

@@ -1,3 +1,4 @@
+import type { IComputerSlotReward } from '@seti/common/types/computer';
 import type { EResource, ETrace } from '@seti/common/types/element';
 import type { ETechId } from '@seti/common/types/tech';
 import type { TIncomeBundle } from '@/engine/player/Income.js';
@@ -30,6 +31,7 @@ export interface IPlayerStateDto {
     tucked: TIncomeBundle;
   };
   traces: Partial<Record<ETrace, number>>;
+  tracesByAlien: Record<number, Partial<Record<ETrace, number>>>;
   techs: ETechId[];
   hand: TCardItem[];
   playedMissions: TCardItem[];
@@ -43,8 +45,12 @@ export interface IPlayerStateDto {
     pool: number;
     stash: number;
     poolMax: number;
-    computerTopSlots: Array<boolean>;
-    computerBottomSlots: Array<boolean>;
+    computerColumns: Array<{
+      topFilled: boolean;
+      bottomFilled: boolean;
+      techId: ETechId | null;
+      bottomReward?: IComputerSlotReward;
+    }>;
   };
   pieces: IPlayerPiecesStateDto;
   waitingFor: null;

@@ -82,7 +82,7 @@ export function canAnalyzeData(player: IPublicPlayerState): boolean {
   if (player.resources[EResource.ENERGY] < ANALYZE_ENERGY_COST) {
     return false;
   }
-  return player.computer.topSlots.every((slot) => slot !== null);
+  return player.computer.columns.every((col) => col.topFilled);
 }
 
 export function canPlayCard(player: IPublicPlayerState): boolean {

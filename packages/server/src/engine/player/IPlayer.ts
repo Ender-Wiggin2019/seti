@@ -8,6 +8,7 @@ import type {
 } from '../effects/probe/LandProbeEffect.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
+import type { IComputerColumnConfig } from '@seti/common/types/computer';
 import type { Computer } from './Computer.js';
 import type { Data } from './Data.js';
 import type { DataPool } from './DataPool.js';
@@ -40,8 +41,8 @@ export interface IPlayerInit extends IPlayerIdentity {
   resources?: TPartialResourceBundle;
   baseIncome?: TPartialIncomeBundle;
   tuckedCardIncome?: TPartialIncomeBundle;
-  computerTopSlots?: number;
-  computerBottomSlots?: number;
+  /** Column configs for the player's computer. Defaults to DEFAULT_COLUMN_CONFIGS (6 columns). */
+  computerColumnConfigs?: readonly IComputerColumnConfig[];
   dataPoolCount?: number;
   dataStashCount?: number;
   dataPoolMax?: number;
@@ -53,6 +54,7 @@ export interface IPlayerInit extends IPlayerIdentity {
   tuckedIncomeCards?: TCardItem[];
   techs?: ETechId[];
   traces?: Partial<Record<ETrace, number>>;
+  tracesByAlien?: Record<number, Partial<Record<ETrace, number>>>;
   passed?: boolean;
   probesInSpace?: number;
   probeSpaceLimit?: number;
@@ -77,6 +79,7 @@ export interface IPlayer extends IPlayerIdentity {
   tuckedIncomeCards: TCardItem[];
   techs: ETechId[];
   traces: Partial<Record<ETrace, number>>;
+  tracesByAlien: Record<number, Partial<Record<ETrace, number>>>;
 
   passed: boolean;
   probesInSpace: number;

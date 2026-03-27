@@ -63,6 +63,8 @@ export class Player implements IPlayer {
 
   public traces: Partial<Record<ETrace, number>>;
 
+  public tracesByAlien: Record<number, Partial<Record<ETrace, number>>>;
+
   public passed: boolean;
 
   public probesInSpace: number;
@@ -95,8 +97,7 @@ export class Player implements IPlayer {
       poolCount: init.dataPoolCount,
       stashCount: init.dataStashCount,
       poolMax: init.dataPoolMax,
-      computerTopSlots: init.computerTopSlots,
-      computerBottomSlots: init.computerBottomSlots,
+      columnConfigs: init.computerColumnConfigs,
     });
     const defaultResourceBundle = {
       credits: 4,
@@ -129,6 +130,7 @@ export class Player implements IPlayer {
       [ETrace.BLUE]: init.traces?.[ETrace.BLUE] ?? 0,
       [ETrace.ANY]: init.traces?.[ETrace.ANY] ?? 0,
     };
+    this.tracesByAlien = { ...(init.tracesByAlien ?? {}) };
 
     this.passed = init.passed ?? false;
     this.probesInSpace = init.probesInSpace ?? 0;

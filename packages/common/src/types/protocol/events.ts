@@ -78,11 +78,20 @@ export interface IGameWsEventPayloadMap {
   'game:error': IErrorPayload;
 }
 
+export interface IRoomWsEventPayloadMap {
+  'room:playerJoined': { playerId: string; playerName: string };
+  'room:playerLeft': { playerId: string };
+}
+
 export interface IGameWsClientEmitPayloadMap {
+  'room:join': { gameId: string };
+  'room:leave': { gameId: string };
   'game:action': { gameId: string; action: IMainActionRequest };
   'game:freeAction': { gameId: string; action: IFreeActionRequest };
   'game:input': { gameId: string; inputResponse: IInputResponse };
 }
 
-export type TGameWsServerEventName = keyof IGameWsEventPayloadMap;
+export type TGameWsServerEventName =
+  | keyof IGameWsEventPayloadMap
+  | keyof IRoomWsEventPayloadMap;
 export type TGameWsClientEventName = keyof IGameWsClientEmitPayloadMap;

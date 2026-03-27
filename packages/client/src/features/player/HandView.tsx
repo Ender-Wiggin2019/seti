@@ -12,6 +12,9 @@ interface IHandViewProps {
   handSize: number;
   pendingInput: IPlayerInputModel | null;
   onSubmitSelection?: (cardIds: string[]) => void;
+  cornerSelectionMode?: boolean;
+  onCardCornerSelect?: (cardId: string) => void;
+  onCardInspect?: (card: IBaseCard) => void;
 }
 
 export function HandView({
@@ -19,6 +22,9 @@ export function HandView({
   handSize,
   pendingInput,
   onSubmitSelection,
+  cornerSelectionMode = false,
+  onCardCornerSelect,
+  onCardInspect,
 }: IHandViewProps): React.JSX.Element {
   const selectCardInput = useMemo<ISelectCardInputModel | null>(() => {
     if (pendingInput?.type !== EPlayerInputType.CARD) {
@@ -50,6 +56,20 @@ export function HandView({
     });
   }
 
+  function handleCardClick(card: IBaseCard): void {
+    if (selectCardInput) {
+      toggleCard(card.id);
+      return;
+    }
+
+    if (cornerSelectionMode) {
+      onCardCornerSelect?.(card.id);
+      return;
+    }
+
+    onCardInspect?.(card);
+  }
+
   return (
     <section
       className='h-full rounded border border-surface-700/45 bg-surface-900/65 p-2'
@@ -77,12 +97,17 @@ export function HandView({
                 data-testid={`hand-card-${card.id}`}
                 className={[
                   'origin-center rounded border border-surface-700/60 bg-surface-900/70 p-1 transition-transform hover:-translate-y-0.5',
-                  selectCardInput ? 'cursor-pointer' : 'cursor-default',
+                  selectCardInput || cornerSelectionMode
+                    ? 'cursor-pointer'
+                    : 'cursor-default',
+                  cornerSelectionMode
+                    ? 'border-amber-500/80 bg-amber-500/10 hover:border-amber-400'
+                    : '',
                   isSelected
                     ? 'border-accent-500 ring-1 ring-accent-500/80'
                     : '',
                 ].join(' ')}
-                onClick={() => toggleCard(card.id)}
+                onClick={() => handleCardClick(card)}
               >
                 <div className='origin-top-left scale-[0.46]'>
                   <CardRender card={card} />

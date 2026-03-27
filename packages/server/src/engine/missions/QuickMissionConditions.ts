@@ -87,10 +87,26 @@ export function probeOnComet(): TConditionFn {
 }
 
 /**
- * Check if a player has at least `count` traces of a specific color.
+ * Check if a player has at least `count` traces of a specific color (total across all aliens).
  */
 export function hasTrace(color: ETrace, count = 1): TConditionFn {
   return (player) => (player.traces[color] ?? 0) >= count;
+}
+
+/**
+ * Check if a player has at least 1 trace of the given color on EVERY
+ * alien species in the game. Used for "on each species" mission cards
+ * (e.g. ALICE: blue trace on each species → 2 data).
+ */
+export function hasTraceOnAllSpecies(color: ETrace): TConditionFn {
+  return (player, game) => {
+    const boards = game.alienState?.boards;
+    if (!boards || boards.length === 0) return false;
+    return boards.every((board) => {
+      const alienTraces = player.tracesByAlien[board.alienIndex];
+      return (alienTraces?.[color] ?? 0) >= 1;
+    });
+  };
 }
 
 /**

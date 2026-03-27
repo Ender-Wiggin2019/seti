@@ -1,3 +1,4 @@
+import type { IComputerColumnConfig } from '@seti/common/types/computer';
 import { EResource } from '@seti/common/types/element';
 import { ETechId } from '@seti/common/types/tech';
 import type { IGame } from '@/engine/IGame.js';
@@ -33,6 +34,12 @@ describe('Player', () => {
   });
 
   it('supports custom initialization and subsystem options', () => {
+    const customCols: IComputerColumnConfig[] = [
+      { topReward: null, techSlotAvailable: true },
+      { topReward: null, techSlotAvailable: true },
+      { topReward: null, techSlotAvailable: true },
+      { topReward: null, techSlotAvailable: true },
+    ];
     const player = new Player({
       id: 'p2',
       name: 'Bob',
@@ -47,8 +54,7 @@ describe('Player', () => {
         [EResource.ENERGY]: 2,
         [EResource.MOVE]: 1,
       },
-      computerTopSlots: 4,
-      computerBottomSlots: 2,
+      computerColumnConfigs: customCols,
       dataPoolCount: 3,
       hand: ['card-1'],
       techs: [ETechId.PROBE_DOUBLE_PROBE],
@@ -68,7 +74,7 @@ describe('Player', () => {
     expect(player.income.computeRoundPayout()[EResource.ENERGY]).toBe(3);
     expect(player.income.computeRoundPayout()[EResource.MOVE]).toBe(1);
     expect(player.computer.getTopSlots()).toHaveLength(4);
-    expect(player.computer.getBottomSlots()).toHaveLength(2);
+    expect(player.computer.columnCount).toBe(4);
     expect(player.dataPool.count).toBe(3);
     expect(player.hand).toEqual(['card-1']);
     expect(player.techs).toEqual([ETechId.PROBE_DOUBLE_PROBE]);

@@ -7,6 +7,7 @@ import type {
 import type { EAlienType } from '@seti/common/types/protocol/enums';
 import { EPhase } from '@seti/common/types/protocol/enums';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
+import type { AlienState } from './alien/AlienState.js';
 import type { PlanetaryBoard } from './board/PlanetaryBoard.js';
 import type { Sector } from './board/Sector.js';
 import type { SolarSystem } from './board/SolarSystem.js';
@@ -47,6 +48,7 @@ export interface IGame {
   techBoard: TechBoard | null;
   sectors: Sector[];
 
+  alienState: AlienState;
   milestoneState: MilestoneState;
   goldScoringTiles: GoldScoringTile[];
   finalScoringResult?: IFinalScoringResult;

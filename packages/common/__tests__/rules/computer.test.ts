@@ -2,214 +2,186 @@ import { describe, expect, it } from 'vitest';
 import {
   getComputerPlacedCount,
   getNextSlot,
-  getUnlockedBottomIndices,
   isComputerFull,
   isComputerTopRowFull,
 } from '@/rules/computer';
-import type { IPublicComputerState } from '@/types/protocol/gameState';
-import { ETechId } from '@/types/tech';
+import type {
+  IPublicComputerColumnState,
+  IPublicComputerState,
+} from '@/types/protocol/gameState';
 
-function createComputer(
-  overrides?: Partial<IPublicComputerState>,
-): IPublicComputerState {
+function col(overrides?: Partial<IPublicComputerColumnState>): IPublicComputerColumnState {
   return {
-    topSlots: [null, null, null],
-    bottomSlots: [],
+    topFilled: false,
+    topReward: null,
+    techId: null,
+    hasBottomSlot: false,
+    bottomFilled: false,
+    bottomReward: null,
+    techSlotAvailable: true,
     ...overrides,
   };
 }
 
+function createComputer(
+  columns: IPublicComputerColumnState[],
+): IPublicComputerState {
+  return { columns };
+}
+
 describe('computer rules', () => {
-  describe('getUnlockedBottomIndices', () => {
-    it('returns empty set when player has no computer techs', () => {
-      const result = getUnlockedBottomIndices([ETechId.PROBE_DOUBLE_PROBE]);
-      expect(result.size).toBe(0);
-    });
-
-    it('returns level indices for owned computer techs', () => {
-      const result = getUnlockedBottomIndices([
-        ETechId.COMPUTER_VP_CREDIT,
-        ETechId.COMPUTER_VP_CARD,
-      ]);
-      expect(result).toEqual(new Set([0, 2]));
-    });
-
-    it('ignores non-computer techs', () => {
-      const result = getUnlockedBottomIndices([
-        ETechId.SCAN_EARTH_LOOK,
-        ETechId.COMPUTER_VP_ENERGY,
-      ]);
-      expect(result).toEqual(new Set([1]));
-    });
-  });
-
   describe('getNextSlot', () => {
     it('returns top row index 0 when all empty', () => {
-      const slot = getNextSlot(createComputer());
+      const slot = getNextSlot(createComputer([col(), col(), col()]));
       expect(slot).toEqual({ row: 'top', index: 0 });
     });
 
     it('returns next unfilled top slot', () => {
       const slot = getNextSlot(
-        createComputer({ topSlots: ['d1', null, null] }),
+        createComputer([
+          col({ topFilled: true }),
+          col(),
+          col(),
+        ]),
       );
       expect(slot).toEqual({ row: 'top', index: 1 });
     });
 
-    it('returns bottom row when top is full and bottom has space (no techs filter)', () => {
+    it('returns bottom row when top is full and bottom has space', () => {
       const slot = getNextSlot(
-        createComputer({
-          topSlots: ['d1', 'd2', 'd3'],
-          bottomSlots: [null, null],
-        }),
+        createComputer([
+          col({ topFilled: true, hasBottomSlot: true }),
+          col({ topFilled: true }),
+          col({ topFilled: true }),
+        ]),
       );
       expect(slot).toEqual({ row: 'bottom', index: 0 });
     });
 
     it('returns null when fully occupied', () => {
       const slot = getNextSlot(
-        createComputer({
-          topSlots: ['d1', 'd2', 'd3'],
-          bottomSlots: ['d4', 'd5'],
-        }),
+        createComputer([
+          col({ topFilled: true, hasBottomSlot: true, bottomFilled: true }),
+          col({ topFilled: true }),
+          col({ topFilled: true }),
+        ]),
       );
       expect(slot).toBeNull();
     });
 
     it('returns null when top is full and no bottom slots', () => {
       const slot = getNextSlot(
-        createComputer({
-          topSlots: ['d1', 'd2', 'd3'],
-          bottomSlots: [],
-        }),
+        createComputer([
+          col({ topFilled: true }),
+          col({ topFilled: true }),
+          col({ topFilled: true }),
+        ]),
       );
       expect(slot).toBeNull();
     });
 
     it('skips bottom slot if corresponding top slot is empty', () => {
       const slot = getNextSlot(
-        createComputer({
-          topSlots: ['d1', null, null],
-          bottomSlots: [null, null],
-        }),
+        createComputer([
+          col({ topFilled: true }),
+          col({ hasBottomSlot: true }),
+          col(),
+        ]),
       );
       expect(slot).toEqual({ row: 'top', index: 1 });
     });
-  });
 
-  describe('getNextSlot with techs filter', () => {
-    it('returns bottom slot only for tech-unlocked columns', () => {
+    it('returns first available bottom slot skipping filled ones', () => {
       const slot = getNextSlot(
-        createComputer({
-          topSlots: ['d1', 'd2', 'd3'],
-          bottomSlots: [null, null, null],
-        }),
-        [ETechId.COMPUTER_VP_ENERGY],
+        createComputer([
+          col({ topFilled: true, hasBottomSlot: true, bottomFilled: true }),
+          col({ topFilled: true, hasBottomSlot: true }),
+          col({ topFilled: true }),
+        ]),
       );
       expect(slot).toEqual({ row: 'bottom', index: 1 });
-    });
-
-    it('returns null if no bottom slots are tech-unlocked', () => {
-      const slot = getNextSlot(
-        createComputer({
-          topSlots: ['d1', 'd2', 'd3'],
-          bottomSlots: [null, null, null],
-        }),
-        [ETechId.PROBE_DOUBLE_PROBE],
-      );
-      expect(slot).toBeNull();
-    });
-
-    it('skips filled bottom slots even if tech-unlocked', () => {
-      const slot = getNextSlot(
-        createComputer({
-          topSlots: ['d1', 'd2', 'd3'],
-          bottomSlots: ['d4', null, null],
-        }),
-        [ETechId.COMPUTER_VP_CREDIT, ETechId.COMPUTER_VP_CARD],
-      );
-      expect(slot).toEqual({ row: 'bottom', index: 2 });
-    });
-
-    it('skips column 0 if only column 2 tech is owned', () => {
-      const slot = getNextSlot(
-        createComputer({
-          topSlots: ['d1', 'd2', 'd3'],
-          bottomSlots: [null, null, null],
-        }),
-        [ETechId.COMPUTER_VP_CARD],
-      );
-      expect(slot).toEqual({ row: 'bottom', index: 2 });
     });
   });
 
   describe('isComputerTopRowFull', () => {
     it('returns false when top has empty slots', () => {
       expect(
-        isComputerTopRowFull(createComputer({ topSlots: ['d1', null, null] })),
+        isComputerTopRowFull(
+          createComputer([col({ topFilled: true }), col(), col()]),
+        ),
       ).toBe(false);
     });
 
     it('returns true when top row is full', () => {
       expect(
-        isComputerTopRowFull(createComputer({ topSlots: ['d1', 'd2', 'd3'] })),
+        isComputerTopRowFull(
+          createComputer([
+            col({ topFilled: true }),
+            col({ topFilled: true }),
+            col({ topFilled: true }),
+          ]),
+        ),
       ).toBe(true);
     });
   });
 
   describe('isComputerFull', () => {
     it('returns false when slots available', () => {
-      expect(isComputerFull(createComputer())).toBe(false);
+      expect(isComputerFull(createComputer([col(), col(), col()]))).toBe(false);
     });
 
-    it('returns true when all slots filled (no techs)', () => {
+    it('returns true when all slots filled (no bottom)', () => {
       expect(
         isComputerFull(
-          createComputer({
-            topSlots: ['d1', 'd2', 'd3'],
-            bottomSlots: ['d4'],
-          }),
+          createComputer([
+            col({ topFilled: true }),
+            col({ topFilled: true }),
+            col({ topFilled: true }),
+          ]),
         ),
       ).toBe(true);
     });
 
-    it('returns false when bottom slots exist but no tech to unlock them', () => {
+    it('returns false when bottom slot exists but not filled', () => {
       expect(
         isComputerFull(
-          createComputer({
-            topSlots: ['d1', 'd2', 'd3'],
-            bottomSlots: [null, null],
-          }),
-          [ETechId.PROBE_DOUBLE_PROBE],
-        ),
-      ).toBe(true);
-    });
-
-    it('returns false when tech-unlocked bottom slots are empty', () => {
-      expect(
-        isComputerFull(
-          createComputer({
-            topSlots: ['d1', 'd2', 'd3'],
-            bottomSlots: [null, null],
-          }),
-          [ETechId.COMPUTER_VP_CREDIT],
+          createComputer([
+            col({ topFilled: true, hasBottomSlot: true }),
+            col({ topFilled: true }),
+            col({ topFilled: true }),
+          ]),
         ),
       ).toBe(false);
+    });
+
+    it('returns true when bottom slots exist and all filled', () => {
+      expect(
+        isComputerFull(
+          createComputer([
+            col({ topFilled: true, hasBottomSlot: true, bottomFilled: true }),
+            col({ topFilled: true }),
+            col({ topFilled: true }),
+          ]),
+        ),
+      ).toBe(true);
     });
   });
 
   describe('getComputerPlacedCount', () => {
     it('returns 0 for empty computer', () => {
-      expect(getComputerPlacedCount(createComputer())).toBe(0);
+      expect(
+        getComputerPlacedCount(createComputer([col(), col(), col()])),
+      ).toBe(0);
     });
 
     it('counts top and bottom slots', () => {
       expect(
         getComputerPlacedCount(
-          createComputer({
-            topSlots: ['d1', 'd2', null],
-            bottomSlots: ['d3', null],
-          }),
+          createComputer([
+            col({ topFilled: true }),
+            col({ topFilled: true, hasBottomSlot: true, bottomFilled: true }),
+            col(),
+          ]),
         ),
       ).toBe(3);
     });

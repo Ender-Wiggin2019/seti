@@ -43,7 +43,8 @@ export function CardRowView({
                   'cursor-pointer hover:border-accent-500 hover:shadow-hud-glow',
                 mode === 'discard' &&
                   'cursor-pointer hover:border-error-500/70 hover:bg-error-500/10',
-                mode === 'idle' && 'cursor-default',
+                mode === 'idle' &&
+                  (onCardClick ? 'cursor-pointer' : 'cursor-default'),
                 isSelected &&
                   'border-error-500 bg-error-500/10 ring-1 ring-error-500/80',
               )}

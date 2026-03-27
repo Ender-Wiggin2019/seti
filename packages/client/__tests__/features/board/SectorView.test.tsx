@@ -49,14 +49,16 @@ describe('SectorView', () => {
       <SectorView
         pair={createPair()}
         playerColors={{ 'player-1': 'red' }}
+        selectableColors={new Set()}
         clickable={false}
         highlighted={false}
         onClick={vi.fn()}
+        onSelectSector={vi.fn()}
       />,
     );
 
     const button = screen.getByTestId('sector-pair-north');
-    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('aria-disabled', 'true');
   });
 
   it('is clickable when enabled', () => {
@@ -65,14 +67,34 @@ describe('SectorView', () => {
       <SectorView
         pair={createPair()}
         playerColors={{ 'player-1': 'red' }}
+        selectableColors={new Set([ESector.BLUE])}
         clickable
         highlighted
         onClick={onClick}
+        onSelectSector={vi.fn()}
       />,
     );
 
     const button = screen.getByTestId('sector-pair-north');
     fireEvent.click(button);
     expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('supports selecting a specific sector node', () => {
+    const onSelectSector = vi.fn();
+    render(
+      <SectorView
+        pair={createPair()}
+        playerColors={{ 'player-1': 'red' }}
+        selectableColors={new Set([ESector.BLACK])}
+        clickable
+        highlighted
+        onClick={vi.fn()}
+        onSelectSector={onSelectSector}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('sector-node-north-1'));
+    expect(onSelectSector).toHaveBeenCalledWith(ESector.BLACK);
   });
 });

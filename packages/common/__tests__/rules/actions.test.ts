@@ -34,7 +34,14 @@ function createPlayer(
       [EResource.PUBLICITY]: 6,
     },
     traces: {},
-    computer: { topSlots: [null, null, null], bottomSlots: [] },
+    tracesByAlien: {},
+    computer: {
+      columns: [
+        { topFilled: false, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
+        { topFilled: false, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
+        { topFilled: false, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
+      ],
+    },
     dataPoolCount: 0,
     dataPoolMax: 6,
     pieces: { probes: 3, orbiters: 3, landers: 3, signalMarkers: 5 },
@@ -206,8 +213,11 @@ describe('action rules', () => {
     it('returns true when top row is full and energy >= 1', () => {
       const player = createPlayer({
         computer: {
-          topSlots: ['data-1', 'data-2', 'data-3'],
-          bottomSlots: [],
+          columns: [
+            { topFilled: true, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
+            { topFilled: true, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
+            { topFilled: true, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
+          ],
         },
       });
       expect(canAnalyzeData(player)).toBe(true);
@@ -215,7 +225,13 @@ describe('action rules', () => {
 
     it('returns false when top row is not full', () => {
       const player = createPlayer({
-        computer: { topSlots: ['data-1', null, null], bottomSlots: [] },
+        computer: {
+          columns: [
+            { topFilled: true, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
+            { topFilled: false, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
+            { topFilled: false, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
+          ],
+        },
       });
       expect(canAnalyzeData(player)).toBe(false);
     });
@@ -229,8 +245,11 @@ describe('action rules', () => {
           [EResource.PUBLICITY]: 6,
         },
         computer: {
-          topSlots: ['data-1', 'data-2', 'data-3'],
-          bottomSlots: [],
+          columns: [
+            { topFilled: true, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
+            { topFilled: true, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
+            { topFilled: true, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
+          ],
         },
       });
       expect(canAnalyzeData(player)).toBe(false);
@@ -298,8 +317,11 @@ describe('action rules', () => {
     it('includes all actions for a well-resourced player', () => {
       const player = createPlayer({
         computer: {
-          topSlots: ['d1', 'd2', 'd3'],
-          bottomSlots: [],
+          columns: [
+            { topFilled: true, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
+            { topFilled: true, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
+            { topFilled: true, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
+          ],
         },
       });
       const actions = getAvailableMainActions(player, createGameState());

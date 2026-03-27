@@ -12,28 +12,37 @@ export function OpponentSummary({
       <p className='mb-1.5 font-mono text-[10px] uppercase tracking-wide text-text-500'>
         Opponents
       </p>
-      <div className='space-y-1'>
+      <div className='space-y-1.5'>
         {opponents.map((player) => (
-          <div
+          <details
             key={player.playerId}
-            className='rounded border border-surface-700/50 bg-surface-900/50 px-1.5 py-1'
+            className='rounded border border-surface-700/50 bg-surface-900/50 px-2 py-1'
           >
-            <div className='flex items-center justify-between'>
-              <span className='text-xs font-medium text-text-100'>
+            <summary className='flex cursor-pointer list-none items-center justify-between gap-2'>
+              <span className='flex items-center gap-1.5 text-xs font-medium text-text-100'>
+                <span
+                  className='h-2.5 w-2.5 rounded-full border border-surface-200/60'
+                  style={{ backgroundColor: player.color }}
+                  aria-hidden
+                />
                 {player.playerName}
               </span>
-              <span className='font-mono text-xs text-text-400'>
-                {player.score} VP
-              </span>
-            </div>
-            <div className='mt-0.5 flex gap-2 font-mono text-[10px] text-text-500'>
-              <span>H:{player.handSize}</span>
-              <span>D:{player.dataPoolCount}</span>
+              <span className='font-mono text-xs text-text-300'>{player.score} VP</span>
+            </summary>
+            <div className='mt-1.5 grid grid-cols-2 gap-x-2 gap-y-1 font-mono text-[10px] text-text-400'>
+              <span>Hand: {player.handSize}</span>
+              <span>Tech: {player.techs.length}</span>
+              <span>Credit: {player.resources.credit}</span>
+              <span>Energy: {player.resources.energy}</span>
+              <span>Data: {player.resources.data}</span>
+              <span>Publicity: {player.resources.publicity}</span>
+              <span>Pool: {player.dataPoolCount}</span>
+              <span>Signals: {player.pieces.signalMarkers}</span>
               {player.passed ? (
-                <span className='text-warning-300'>Passed</span>
+                <span className='col-span-2 text-warning-300'>Passed this round</span>
               ) : null}
             </div>
-          </div>
+          </details>
         ))}
       </div>
     </section>

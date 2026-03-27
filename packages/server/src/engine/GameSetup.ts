@@ -1,4 +1,5 @@
 import { EAlienType, EPhase } from '@seti/common/types/protocol/enums';
+import { AlienState } from './alien/AlienState.js';
 import { BoardBuilder } from './board/BoardBuilder.js';
 import { PlanetaryBoard } from './board/PlanetaryBoard.js';
 import { loadAllCardData } from './cards/loadCardData.js';
@@ -43,6 +44,7 @@ export class GameSetup {
       Object.values(EAlienType) as EAlienType[],
     );
     game.hiddenAliens = alienPool.slice(0, 2);
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
     game.neutralMilestones = GameSetup.buildNeutralMilestones(
       game.options.playerCount,
     );

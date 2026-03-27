@@ -79,7 +79,7 @@ export function canPlaceData(player: IPublicPlayerState): boolean {
   if (player.dataPoolCount <= 0) {
     return false;
   }
-  return getNextSlot(player.computer, player.techs) !== null;
+  return getNextSlot(player.computer) !== null;
 }
 
 export function canCompleteMission(_player: IPublicPlayerState): boolean {

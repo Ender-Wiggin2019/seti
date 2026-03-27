@@ -18,6 +18,27 @@ export interface IUndoOptions {
 export class GameRepository {
   public constructor(private readonly db: NodePgDatabase) {}
 
+  public async startFromLobby(game: IGame): Promise<void> {
+    await this.db
+      .update(games)
+      .set({
+        status: this.toStatus(game.phase),
+        playerCount: game.options.playerCount,
+        currentRound: game.round,
+        seed: game.seed,
+        options: game.options,
+        updatedAt: new Date(),
+      })
+      .where(eq(games.id, game.id));
+
+    const versionZero = await this.loadSnapshot(game.id, 0);
+    if (!versionZero) {
+      await this.saveSnapshot(game.id, 0, serializeGame(game, 0), {
+        type: 'GAME_STARTED',
+      });
+    }
+  }
+
   public async create(game: IGame): Promise<void> {
     await this.db.insert(games).values({
       id: game.id,

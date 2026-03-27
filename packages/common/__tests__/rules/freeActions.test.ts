@@ -13,11 +13,24 @@ import {
 import { EResource } from '@/types/element';
 import { EFreeAction, EPhase } from '@/types/protocol/enums';
 import type {
+  IPublicComputerColumnState,
   IPublicGameState,
   IPublicPlayerState,
   IPublicSolarSystemState,
 } from '@/types/protocol/gameState';
-import { ETechId } from '@/types/tech';
+
+function emptyCol(overrides?: Partial<IPublicComputerColumnState>): IPublicComputerColumnState {
+  return {
+    topFilled: false,
+    topReward: null,
+    techId: null,
+    hasBottomSlot: false,
+    bottomFilled: false,
+    bottomReward: null,
+    techSlotAvailable: true,
+    ...overrides,
+  };
+}
 
 function createPlayer(
   overrides?: Partial<IPublicPlayerState>,
@@ -36,7 +49,8 @@ function createPlayer(
       [EResource.PUBLICITY]: 4,
     },
     traces: {},
-    computer: { topSlots: [null, null, null], bottomSlots: [] },
+    tracesByAlien: {},
+    computer: { columns: [emptyCol(), emptyCol(), emptyCol()] },
     dataPoolCount: 2,
     dataPoolMax: 6,
     pieces: { probes: 3, orbiters: 3, landers: 3, signalMarkers: 5 },
@@ -234,33 +248,40 @@ describe('free action rules', () => {
       expect(canPlaceData(createPlayer({ dataPoolCount: 0 }))).toBe(false);
     });
 
-    it('returns false when top full and no computer tech for bottom', () => {
+    it('returns false when top full and no bottom slots available', () => {
       const player = createPlayer({
         computer: {
-          topSlots: ['d1', 'd2', 'd3'],
-          bottomSlots: [null, null, null],
+          columns: [
+            emptyCol({ topFilled: true }),
+            emptyCol({ topFilled: true }),
+            emptyCol({ topFilled: true }),
+          ],
         },
-        techs: [],
       });
       expect(canPlaceData(player)).toBe(false);
     });
 
-    it('returns true when top full and has tech for bottom slot', () => {
+    it('returns true when top full and has tech-unlocked bottom slot', () => {
       const player = createPlayer({
         computer: {
-          topSlots: ['d1', 'd2', 'd3'],
-          bottomSlots: [null, null, null],
+          columns: [
+            emptyCol({ topFilled: true, hasBottomSlot: true, techId: 'comp-0' }),
+            emptyCol({ topFilled: true }),
+            emptyCol({ topFilled: true }),
+          ],
         },
-        techs: [ETechId.COMPUTER_VP_CREDIT],
       });
       expect(canPlaceData(player)).toBe(true);
     });
 
-    it('returns false when top full, no bottom slots array', () => {
+    it('returns false when all bottom slots filled', () => {
       const player = createPlayer({
         computer: {
-          topSlots: ['d1', 'd2', 'd3'],
-          bottomSlots: [],
+          columns: [
+            emptyCol({ topFilled: true, hasBottomSlot: true, bottomFilled: true }),
+            emptyCol({ topFilled: true }),
+            emptyCol({ topFilled: true }),
+          ],
         },
       });
       expect(canPlaceData(player)).toBe(false);

@@ -1,5 +1,18 @@
+import type {
+  IComputerColumnConfig,
+  IComputerSlotReward,
+} from '@seti/common/types/computer';
+import { DEFAULT_COLUMN_CONFIGS } from '@seti/common/types/computer';
+import type { ETechId } from '@seti/common/types/tech';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
+import {
+  ComputerColumn,
+  type IComputerColumnState,
+  type ITechPlacement,
+} from './ComputerColumn.js';
+
+export { type ITechPlacement, type IComputerColumnState } from './ComputerColumn.js';
 
 export enum EComputerRow {
   TOP = 'TOP',
@@ -11,56 +24,40 @@ export interface IComputerPosition {
   index: number;
 }
 
-function assertValidSlotCount(
-  label: string,
-  value: number,
-  minValue: number,
-): void {
-  if (!Number.isInteger(value) || value < minValue) {
-    throw new GameError(
-      EErrorCode.VALIDATION_ERROR,
-      `${label} must be an integer >= ${minValue}`,
-      { label, value, minValue },
-    );
-  }
-}
-
 export class Computer {
-  private topSlots: boolean[];
+  private readonly columns: ComputerColumn[];
 
-  private bottomSlots: boolean[];
-
-  public constructor(topSlotCount = 3, bottomSlotCount = 0) {
-    assertValidSlotCount('topSlotCount', topSlotCount, 1);
-    assertValidSlotCount('bottomSlotCount', bottomSlotCount, 0);
-    if (bottomSlotCount > topSlotCount) {
+  public constructor(
+    configs: readonly IComputerColumnConfig[] = DEFAULT_COLUMN_CONFIGS,
+  ) {
+    if (configs.length === 0) {
       throw new GameError(
         EErrorCode.VALIDATION_ERROR,
-        'bottomSlotCount cannot be greater than topSlotCount',
-        { topSlotCount, bottomSlotCount },
+        'Computer must have at least one column',
       );
     }
-    this.topSlots = new Array<boolean>(topSlotCount).fill(false);
-    this.bottomSlots = new Array<boolean>(bottomSlotCount).fill(false);
+    this.columns = configs.map((c) => new ComputerColumn(c));
   }
 
-  public placeData(position: IComputerPosition): void {
-    if (!Number.isInteger(position.index) || position.index < 0) {
-      throw new GameError(
-        EErrorCode.VALIDATION_ERROR,
-        'position.index must be a non-negative integer',
-        { position },
-      );
-    }
+  public get columnCount(): number {
+    return this.columns.length;
+  }
+
+  /**
+   * Place data on the specified position.
+   * Returns the slot reward if one exists, or null.
+   */
+  public placeData(position: IComputerPosition): IComputerSlotReward | null {
+    this.validatePosition(position);
+    const column = this.columns[position.index];
 
     if (position.row === EComputerRow.TOP) {
-      this.placeTopData(position.index);
-      return;
+      this.enforceLeftToRight(position.index);
+      return column.placeTopData();
     }
 
     if (position.row === EComputerRow.BOTTOM) {
-      this.placeBottomData(position.index);
-      return;
+      return column.placeBottomData();
     }
 
     throw new GameError(EErrorCode.VALIDATION_ERROR, 'Unknown computer row', {
@@ -68,8 +65,17 @@ export class Computer {
     });
   }
 
+  /**
+   * Place a blue tech tile on a column, creating a bottom slot.
+   * The column's top reward becomes 2 VP; the bottom slot uses the tech's reward.
+   */
+  public placeTech(columnIndex: number, placement: ITechPlacement): void {
+    this.validateColumnIndex(columnIndex);
+    this.columns[columnIndex].placeTech(placement);
+  }
+
   public isConnected(): boolean {
-    return this.topSlots.every((slotFilled) => slotFilled);
+    return this.columns.every((c) => c.topFilled);
   }
 
   public isFull(): boolean {
@@ -77,87 +83,116 @@ export class Computer {
   }
 
   public clear(): void {
-    this.topSlots = this.topSlots.map(() => false);
-    this.bottomSlots = this.bottomSlots.map(() => false);
+    for (const column of this.columns) {
+      column.clear();
+    }
   }
 
   public getPlacedCount(): number {
-    const topCount = this.topSlots.filter((slotFilled) => slotFilled).length;
-    const bottomCount = this.bottomSlots.filter(
-      (slotFilled) => slotFilled,
-    ).length;
-    return topCount + bottomCount;
+    let count = 0;
+    for (const column of this.columns) {
+      if (column.topFilled) count++;
+      if (column.bottomFilled) count++;
+    }
+    return count;
   }
 
   public getCapacity(): number {
-    return this.topSlots.length + this.bottomSlots.length;
+    let cap = this.columns.length;
+    for (const column of this.columns) {
+      if (column.hasBottomSlot) cap++;
+    }
+    return cap;
   }
 
   public getTopSlots(): ReadonlyArray<boolean> {
-    return [...this.topSlots];
+    return this.columns.map((c) => c.topFilled);
   }
 
-  public getBottomSlots(): ReadonlyArray<boolean> {
-    return [...this.bottomSlots];
+  /**
+   * Returns per-column bottom slot state:
+   *   null  = no bottom slot (no tech placed)
+   *   false = empty bottom slot
+   *   true  = filled bottom slot
+   */
+  public getBottomSlotStates(): ReadonlyArray<boolean | null> {
+    return this.columns.map((c) =>
+      c.hasBottomSlot ? c.bottomFilled : null,
+    );
   }
 
-  private placeTopData(index: number): void {
-    if (index >= this.topSlots.length) {
+  public getColumnStates(): ReadonlyArray<IComputerColumnState> {
+    return this.columns.map((c) => c.getState());
+  }
+
+  public getColumnState(index: number): IComputerColumnState {
+    this.validateColumnIndex(index);
+    return this.columns[index].getState();
+  }
+
+  /** Index of the next empty top slot (-1 if all filled). */
+  public getNextTopIndex(): number {
+    return this.columns.findIndex((c) => !c.topFilled);
+  }
+
+  /** Column indices with an unfilled bottom slot whose top is already filled. */
+  public getAvailableBottomIndices(): number[] {
+    const result: number[] = [];
+    for (let i = 0; i < this.columns.length; i++) {
+      const c = this.columns[i];
+      if (c.hasBottomSlot && c.topFilled && !c.bottomFilled) {
+        result.push(i);
+      }
+    }
+    return result;
+  }
+
+  /** Map of columnIndex → techId for all placed tech tiles. */
+  public getTechPlacementMap(): ReadonlyMap<number, ETechId> {
+    const map = new Map<number, ETechId>();
+    for (let i = 0; i < this.columns.length; i++) {
+      const techId = this.columns[i].techId;
+      if (techId) map.set(i, techId);
+    }
+    return map;
+  }
+
+  /** Column indices eligible for tech placement (techSlotAvailable and no tech yet). */
+  public getEligibleTechColumns(): number[] {
+    return this.columns
+      .map((c, i) => (c.canPlaceTech ? i : -1))
+      .filter((i) => i >= 0);
+  }
+
+  private validatePosition(position: IComputerPosition): void {
+    if (!Number.isInteger(position.index) || position.index < 0) {
       throw new GameError(
-        EErrorCode.INVALID_ACTION,
-        'Top slot index out of range',
-        {
-          index,
-          slotCount: this.topSlots.length,
-        },
+        EErrorCode.VALIDATION_ERROR,
+        'position.index must be a non-negative integer',
+        { position },
       );
     }
-    if (this.topSlots[index]) {
+    this.validateColumnIndex(position.index);
+  }
+
+  private validateColumnIndex(index: number): void {
+    if (index < 0 || index >= this.columns.length) {
       throw new GameError(
-        EErrorCode.INVALID_ACTION,
-        'Top slot is already occupied',
-        {
-          index,
-        },
+        EErrorCode.VALIDATION_ERROR,
+        'Column index out of range',
+        { index, columnCount: this.columns.length },
       );
     }
-    const nextTopIndex = this.topSlots.findIndex((slotFilled) => !slotFilled);
-    if (nextTopIndex !== index) {
+  }
+
+  private enforceLeftToRight(index: number): void {
+    const nextEmpty = this.columns.findIndex((c) => !c.topFilled);
+    if (nextEmpty !== index) {
       throw new GameError(
         EErrorCode.INVALID_ACTION,
         'Top row must be filled from left to right',
-        { expectedIndex: nextTopIndex, actualIndex: index },
+        { expectedIndex: nextEmpty, actualIndex: index },
       );
     }
-    this.topSlots[index] = true;
-  }
-
-  private placeBottomData(index: number): void {
-    if (index >= this.bottomSlots.length) {
-      throw new GameError(
-        EErrorCode.INVALID_ACTION,
-        'Bottom slot index out of range',
-        {
-          index,
-          slotCount: this.bottomSlots.length,
-        },
-      );
-    }
-    if (this.bottomSlots[index]) {
-      throw new GameError(
-        EErrorCode.INVALID_ACTION,
-        'Bottom slot is already occupied',
-        { index },
-      );
-    }
-    if (!this.topSlots[index]) {
-      throw new GameError(
-        EErrorCode.INVALID_ACTION,
-        'Bottom slot requires corresponding top slot to be filled',
-        { index },
-      );
-    }
-
-    this.bottomSlots[index] = true;
   }
 }

@@ -1,3 +1,4 @@
+import { AlienState } from '@/engine/alien/AlienState.js';
 import { Player } from '@/engine/player/Player.js';
 import { FinalScoring } from '@/engine/scoring/FinalScoring.js';
 import { GoldScoringTile } from '@/engine/scoring/GoldScoringTile.js';
@@ -35,6 +36,7 @@ describe('FinalScoring', () => {
       players: [p1, p2],
       goldScoringTiles: [missionTile],
       sectors: [],
+      alienState: AlienState.createFromHiddenAliens([]),
       eventLog: { append: () => undefined },
     } as never;
 
@@ -65,6 +67,7 @@ describe('FinalScoring', () => {
       players: [p1, p2],
       goldScoringTiles: [],
       sectors: [],
+      alienState: AlienState.createFromHiddenAliens([]),
       eventLog: { append: () => undefined },
     } as never;
 

@@ -14,17 +14,7 @@ export interface IScanModifierContext {
   signalSectors: string[];
 }
 
-/**
- * Reward yielded when placing data on a computer tech column.
- * Computer techs define top-slot and bottom-slot rewards.
- */
-export interface IComputerSlotReward {
-  vp?: number;
-  credits?: number;
-  energy?: number;
-  publicity?: number;
-  drawCard?: number;
-}
+export type { IComputerSlotReward } from '@seti/common/types/computer';
 
 /**
  * Modifier hooks that a tech can implement to alter game rules for its owner.

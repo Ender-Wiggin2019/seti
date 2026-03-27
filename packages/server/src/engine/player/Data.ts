@@ -1,3 +1,7 @@
+import type {
+  IComputerColumnConfig,
+  IComputerSlotReward,
+} from '@seti/common/types/computer';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import { Computer, type IComputerPosition } from './Computer.js';
@@ -17,8 +21,7 @@ export interface IDataInit {
   poolCount?: number;
   stashCount?: number;
   poolMax?: number;
-  computerTopSlots?: number;
-  computerBottomSlots?: number;
+  columnConfigs?: readonly IComputerColumnConfig[];
 }
 
 function assertValidAmount(label: string, amount: number): void {
@@ -46,10 +49,7 @@ export class Data {
       init.poolCount,
       init.poolMax ?? DATA_POOL_MAX,
     );
-    this.computerInstance = new Computer(
-      init.computerTopSlots,
-      init.computerBottomSlots,
-    );
+    this.computerInstance = new Computer(init.columnConfigs);
     this.stashCountValue = stashCount;
 
     const overflow = this.total - this.totalMax;
@@ -138,12 +138,16 @@ export class Data {
     }
   }
 
-  public placeFromPoolToComputer(position: IComputerPosition): void {
+  public placeFromPoolToComputer(
+    position: IComputerPosition,
+  ): IComputerSlotReward | null {
     this.dataPoolInstance.remove(1);
-    this.computerInstance.placeData(position);
+    return this.computerInstance.placeData(position);
   }
 
-  public placeFromStashToComputer(position: IComputerPosition): void {
+  public placeFromStashToComputer(
+    position: IComputerPosition,
+  ): IComputerSlotReward | null {
     if (this.stashCountValue < 1) {
       throw new GameError(
         EErrorCode.INSUFFICIENT_RESOURCES,
@@ -153,8 +157,9 @@ export class Data {
         },
       );
     }
-    this.computerInstance.placeData(position);
+    const reward = this.computerInstance.placeData(position);
     this.stashCountValue -= 1;
+    return reward;
   }
 
   public flushStashToPool(): { movedToPool: number; discarded: number } {

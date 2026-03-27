@@ -1,4 +1,5 @@
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
+import { AlienState } from '@/engine/alien/AlienState.js';
 import { Player } from '@/engine/player/Player.js';
 import { GoldScoringTile } from '@/engine/scoring/GoldScoringTile.js';
 import { MilestoneState } from '@/engine/scoring/Milestone.js';
@@ -53,6 +54,7 @@ describe('MilestoneState', () => {
     const game = {
       players: [p1, p2],
       goldScoringTiles: [new GoldScoringTile({ id: 'tech', side: 'A' })],
+      alienState: AlienState.createFromHiddenAliens([]),
       eventLog: { append: () => undefined },
     };
 

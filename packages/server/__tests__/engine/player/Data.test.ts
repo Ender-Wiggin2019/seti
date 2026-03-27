@@ -1,14 +1,20 @@
+import type { IComputerColumnConfig } from '@seti/common/types/computer';
 import { EComputerRow } from '@/engine/player/Computer.js';
 import { Data } from '@/engine/player/Data.js';
 import { GameError } from '@/shared/errors/GameError.js';
+
+const SIMPLE_3_COL: IComputerColumnConfig[] = [
+  { topReward: null, techSlotAvailable: true },
+  { topReward: null, techSlotAvailable: true },
+  { topReward: null, techSlotAvailable: true },
+];
 
 describe('Data', () => {
   it('tracks pool, computer, stash and total capacities', () => {
     const data = new Data({
       poolCount: 2,
       stashCount: 1,
-      computerTopSlots: 3,
-      computerBottomSlots: 1,
+      columnConfigs: SIMPLE_3_COL,
     });
 
     expect(data.getState()).toEqual({
@@ -17,8 +23,8 @@ describe('Data', () => {
       stash: 1,
       total: 3,
       poolMax: 6,
-      computerMax: 4,
-      totalMax: 10,
+      computerMax: 3,
+      totalMax: 9,
     });
   });
 
@@ -26,8 +32,7 @@ describe('Data', () => {
     const data = new Data({
       poolCount: 6,
       stashCount: 0,
-      computerTopSlots: 3,
-      computerBottomSlots: 0,
+      columnConfigs: SIMPLE_3_COL,
     });
     const actualAdded = data.addToStash(5);
     expect(actualAdded).toBe(3);
@@ -39,8 +44,7 @@ describe('Data', () => {
     const data = new Data({
       poolCount: 5,
       stashCount: 3,
-      computerTopSlots: 3,
-      computerBottomSlots: 0,
+      columnConfigs: SIMPLE_3_COL,
     });
 
     const result = data.flushStashToPool();
@@ -53,8 +57,7 @@ describe('Data', () => {
     const data = new Data({
       poolCount: 2,
       stashCount: 1,
-      computerTopSlots: 3,
-      computerBottomSlots: 1,
+      columnConfigs: SIMPLE_3_COL,
     });
 
     data.placeFromPoolToComputer({ row: EComputerRow.TOP, index: 0 });
@@ -69,8 +72,7 @@ describe('Data', () => {
     const data = new Data({
       poolCount: 2,
       stashCount: 2,
-      computerTopSlots: 3,
-      computerBottomSlots: 0,
+      columnConfigs: SIMPLE_3_COL,
     });
     data.placeFromPoolToComputer({ row: EComputerRow.TOP, index: 0 });
 
@@ -90,5 +92,30 @@ describe('Data', () => {
     ).toThrow(GameError);
     expect(() => data.spend(1)).toThrow(GameError);
     expect(() => data.discardComputerData(1)).toThrow(GameError);
+  });
+
+  it('placeFromPoolToComputer returns slot reward', () => {
+    const configs: IComputerColumnConfig[] = [
+      { topReward: { publicity: 1 }, techSlotAvailable: false },
+      { topReward: null, techSlotAvailable: true },
+    ];
+    const data = new Data({ poolCount: 2, columnConfigs: configs });
+
+    const reward = data.placeFromPoolToComputer({
+      row: EComputerRow.TOP,
+      index: 0,
+    });
+    expect(reward).toEqual({ publicity: 1 });
+
+    const noReward = data.placeFromPoolToComputer({
+      row: EComputerRow.TOP,
+      index: 1,
+    });
+    expect(noReward).toBeNull();
+  });
+
+  it('uses default 6-column config when no configs specified', () => {
+    const data = new Data();
+    expect(data.computer.columnCount).toBe(6);
   });
 });

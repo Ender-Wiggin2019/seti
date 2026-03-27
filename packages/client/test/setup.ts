@@ -1,6 +1,12 @@
 import '@testing-library/jest-dom/vitest';
-import { afterAll, afterEach, beforeAll } from 'vitest';
+import { createElement } from 'react';
+import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 import { server } from './mocks/server';
+
+vi.mock('@seti/cards', () => ({
+  CardRender: ({ card }: { card: { id: string; name: string } }) =>
+    createElement('div', { 'data-testid': `seti-card-${card.id}` }, card.name),
+}));
 
 beforeAll(() => {
   server.listen({ onUnhandledRequest: 'error' });

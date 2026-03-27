@@ -1,9 +1,9 @@
+import { AlienState } from '@/engine/alien/AlienState.js';
 import { ResolveDiscovery } from '@/engine/deferred/ResolveDiscovery.js';
 import { Player } from '@/engine/player/Player.js';
-import { MilestoneState } from '@/engine/scoring/Milestone.js';
 
 describe('ResolveDiscovery', () => {
-  it('is a no-op framework action before Stage 8', () => {
+  it('is a no-op when no aliens are fully marked', () => {
     const player = new Player({
       id: 'p1',
       name: 'Alice',
@@ -12,7 +12,7 @@ describe('ResolveDiscovery', () => {
     });
     const game = {
       players: [player],
-      milestoneState: new MilestoneState([20]),
+      alienState: AlienState.createFromHiddenAliens([]),
       eventLog: { append: () => undefined },
     } as never;
 
