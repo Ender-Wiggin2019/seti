@@ -1,13 +1,19 @@
 import {
+  createDefaultSolarSystemWheels,
   ESectorPosition,
   ESectorTileId,
   type ISolarSystemSetupConfig,
+  type ISolarSystemWheelCell,
+  type ISolarSystemWheelRuntimeElement,
   SECTOR_TILE_DEFINITIONS,
+  type TSolarSystemWheelIndex,
+  type TSolarSystemWheels,
 } from '@seti/common/constant/sectorSetup';
 import { ALL_CARDS } from '@seti/common/data';
 import { ETech } from '@seti/common/types/element';
 import { ETechId } from '@seti/common/types/tech';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { TProbeInsetPxByRing } from '@/features/board/SolarSystemView';
 import {
   GameContextValueProvider,
   type IGameContext,
@@ -23,6 +29,7 @@ import {
   type IPlayerInputModel,
   type IPublicGameState,
   type IPublicSolarSystemDiscState,
+  type IPublicSolarSystemSpaceState,
 } from '@/types/re-exports';
 
 type TDebugScenario = 'my-turn' | 'opponent-turn' | 'spectator' | 'game-over';
@@ -31,6 +38,335 @@ type TCardInputDebugMode =
   | 'hand-select'
   | 'row-select'
   | 'end-of-round';
+
+type TDiscAngles = [number, number, number];
+
+const WHEEL_ORDER: ReadonlyArray<TSolarSystemWheelIndex> = [1, 2, 3, 4];
+
+function cloneWheels(wheels: TSolarSystemWheels): TSolarSystemWheels {
+  return {
+    1: wheels[1].map((row) =>
+      row.map((slot) => ({
+        cell: { ...slot.cell },
+        elements: slot.elements.map((element) => ({ ...element })),
+      })),
+    ) as TSolarSystemWheels[1],
+    2: wheels[2].map((row) =>
+      row.map((slot) => ({
+        cell: { ...slot.cell },
+        elements: slot.elements.map((element) => ({ ...element })),
+      })),
+    ) as TSolarSystemWheels[2],
+    3: wheels[3].map((row) =>
+      row.map((slot) => ({
+        cell: { ...slot.cell },
+        elements: slot.elements.map((element) => ({ ...element })),
+      })),
+    ) as TSolarSystemWheels[3],
+    4: wheels[4].map((row) =>
+      row.map((slot) => ({
+        cell: { ...slot.cell },
+        elements: slot.elements.map((element) => ({ ...element })),
+      })),
+    ) as TSolarSystemWheels[4],
+  };
+}
+
+function normalizeSlotIndex(index: number): number {
+  return ((index % 8) + 8) % 8;
+}
+
+function getWheelAngle(
+  wheel: TSolarSystemWheelIndex,
+  discAngles: TDiscAngles,
+): number {
+  if (wheel === 4) {
+    return 0;
+  }
+  return discAngles[wheel - 1] ?? 0;
+}
+
+function getLocalIndexFromBoardIndex(
+  boardIndex: number,
+  wheel: TSolarSystemWheelIndex,
+  discAngles: TDiscAngles,
+): number {
+  return normalizeSlotIndex(boardIndex + getWheelAngle(wheel, discAngles));
+}
+
+function getBoardIndexFromLocalIndex(
+  localIndex: number,
+  wheel: TSolarSystemWheelIndex,
+  discAngles: TDiscAngles,
+): number {
+  return normalizeSlotIndex(localIndex - getWheelAngle(wheel, discAngles));
+}
+
+function cellAtBoard(
+  wheels: TSolarSystemWheels,
+  wheel: TSolarSystemWheelIndex,
+  band: number,
+  boardIndex: number,
+  discAngles: TDiscAngles,
+): ISolarSystemWheelCell {
+  const localIndex = getLocalIndexFromBoardIndex(boardIndex, wheel, discAngles);
+  return wheels[wheel][band][localIndex];
+}
+
+function isOpaqueCell(cell: ISolarSystemWheelCell): boolean {
+  return cell.cell.type !== 'NULL';
+}
+
+function resolveTopVisibleCell(
+  wheels: TSolarSystemWheels,
+  band: number,
+  boardIndex: number,
+  discAngles: TDiscAngles,
+): { wheel: TSolarSystemWheelIndex; cell: ISolarSystemWheelCell } | null {
+  for (const wheel of WHEEL_ORDER) {
+    const cell = cellAtBoard(wheels, wheel, band, boardIndex, discAngles);
+    if (isOpaqueCell(cell)) {
+      return { wheel, cell };
+    }
+  }
+  return null;
+}
+
+function isCoveredByUpperWheel(
+  wheels: TSolarSystemWheels,
+  lowerWheel: TSolarSystemWheelIndex,
+  band: number,
+  boardIndex: number,
+  discAngles: TDiscAngles,
+): boolean {
+  for (const wheel of WHEEL_ORDER) {
+    if (wheel >= lowerWheel) {
+      break;
+    }
+    if (
+      isOpaqueCell(cellAtBoard(wheels, wheel, band, boardIndex, discAngles))
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function createDefaultDebugWheels(): TSolarSystemWheels {
+  const wheels = cloneWheels(createDefaultSolarSystemWheels());
+  wheels[3][0][1].elements.push({ type: 'PROBE', playerId: 'player-1' });
+  wheels[2][1][4].elements.push({ type: 'PROBE', playerId: 'player-2' });
+  wheels[4][2][5].elements.push({ type: 'PROBE', playerId: 'player-3' });
+  wheels[4][3][0].elements.push({ type: 'PROBE', playerId: 'player-1' });
+  return wheels;
+}
+
+function movedWheelsForRotation(ring: 1 | 2 | 3): Set<TSolarSystemWheelIndex> {
+  if (ring === 1) {
+    return new Set([1]);
+  }
+  if (ring === 2) {
+    return new Set([1, 2]);
+  }
+  return new Set([1, 2, 3]);
+}
+
+function nextDiscAnglesForRotation(
+  current: TDiscAngles,
+  ring: 1 | 2 | 3,
+): TDiscAngles {
+  const next: TDiscAngles = [...current];
+  if (ring === 1) {
+    next[0] += 1;
+  } else if (ring === 2) {
+    next[0] += 1;
+    next[1] += 1;
+  } else {
+    next[0] += 1;
+    next[1] += 1;
+    next[2] += 1;
+  }
+  return next;
+}
+
+function applyCoveragePushAfterRotation(
+  wheels: TSolarSystemWheels,
+  prevAngles: TDiscAngles,
+  nextAngles: TDiscAngles,
+  rotatedRing: 1 | 2 | 3,
+): TSolarSystemWheels {
+  const nextWheels = cloneWheels(wheels);
+  const movedWheels = movedWheelsForRotation(rotatedRing);
+
+  for (const wheel of WHEEL_ORDER) {
+    if (movedWheels.has(wheel)) {
+      continue;
+    }
+
+    for (let band = 0; band < 4; band += 1) {
+      for (let localIndex = 0; localIndex < 8; localIndex += 1) {
+        const sourceCell = nextWheels[wheel][band][localIndex];
+        if (sourceCell.elements.length === 0) {
+          continue;
+        }
+
+        const boardIndex = getBoardIndexFromLocalIndex(
+          localIndex,
+          wheel,
+          prevAngles,
+        );
+        const wasCovered = isCoveredByUpperWheel(
+          nextWheels,
+          wheel,
+          band,
+          boardIndex,
+          prevAngles,
+        );
+        const nowCovered = isCoveredByUpperWheel(
+          nextWheels,
+          wheel,
+          band,
+          boardIndex,
+          nextAngles,
+        );
+
+        if (wasCovered || !nowCovered) {
+          continue;
+        }
+
+        const targetBoardIndex = normalizeSlotIndex(boardIndex - 1);
+        const target = resolveTopVisibleCell(
+          nextWheels,
+          band,
+          targetBoardIndex,
+          nextAngles,
+        );
+        if (!target) {
+          continue;
+        }
+
+        target.cell.elements.push(...sourceCell.elements);
+        sourceCell.elements = [];
+      }
+    }
+  }
+
+  return nextWheels;
+}
+
+function getBoardCoordFromSpaceId(
+  spaceId: string,
+): { band: number; boardIndex: number } | null {
+  const numeric = Number(spaceId.replace('space-', ''));
+  if (!Number.isInteger(numeric) || numeric < 0 || numeric >= 32) {
+    return null;
+  }
+  return { band: Math.floor(numeric / 8), boardIndex: numeric % 8 };
+}
+
+function moveVisibleProbe(
+  wheels: TSolarSystemWheels,
+  discAngles: TDiscAngles,
+  fromSpaceId: string,
+  toSpaceId: string,
+  playerId: string,
+): TSolarSystemWheels {
+  const from = getBoardCoordFromSpaceId(fromSpaceId);
+  const to = getBoardCoordFromSpaceId(toSpaceId);
+  if (!from || !to) {
+    return wheels;
+  }
+
+  const nextWheels = cloneWheels(wheels);
+  const fromTop = resolveTopVisibleCell(
+    nextWheels,
+    from.band,
+    from.boardIndex,
+    discAngles,
+  );
+  if (!fromTop) {
+    return wheels;
+  }
+
+  const probeIndex = fromTop.cell.elements.findIndex(
+    (element) => element.type === 'PROBE' && element.playerId === playerId,
+  );
+  if (probeIndex === -1) {
+    return wheels;
+  }
+
+  const [probeElement] = fromTop.cell.elements.splice(probeIndex, 1);
+  const toTop = resolveTopVisibleCell(
+    nextWheels,
+    to.band,
+    to.boardIndex,
+    discAngles,
+  );
+  if (!toTop) {
+    fromTop.cell.elements.splice(probeIndex, 0, probeElement);
+    return wheels;
+  }
+
+  toTop.cell.elements.push(probeElement as ISolarSystemWheelRuntimeElement);
+  return nextWheels;
+}
+
+function createDebugSpaceStates(
+  wheels: TSolarSystemWheels,
+  discAngles: TDiscAngles,
+): Record<string, IPublicSolarSystemSpaceState> {
+  const states: Record<string, IPublicSolarSystemSpaceState> = {};
+
+  for (let band = 0; band < 4; band += 1) {
+    for (let indexInRing = 0; indexInRing < 8; indexInRing += 1) {
+      const spaceIndex = band * 8 + indexInRing;
+      const spaceId = `space-${spaceIndex}`;
+      const top = resolveTopVisibleCell(wheels, band, indexInRing, discAngles);
+      const mapCell = top?.cell.cell;
+
+      states[spaceId] = {
+        spaceId,
+        ringIndex: band + 1,
+        indexInRing,
+        hasPublicityIcon: mapCell?.hasPublicityIcon ?? false,
+        elementTypes: [mapCell?.type ?? 'NULL'],
+        elements: [
+          mapCell?.planet
+            ? { type: mapCell.type, planet: mapCell.planet }
+            : { type: mapCell?.type ?? 'NULL' },
+        ],
+      };
+    }
+  }
+
+  return states;
+}
+
+function extractVisibleProbes(
+  wheels: TSolarSystemWheels,
+  discAngles: TDiscAngles,
+): IPublicGameState['solarSystem']['probes'] {
+  const probes: IPublicGameState['solarSystem']['probes'] = [];
+
+  for (let band = 0; band < 4; band += 1) {
+    for (let indexInRing = 0; indexInRing < 8; indexInRing += 1) {
+      const top = resolveTopVisibleCell(wheels, band, indexInRing, discAngles);
+      if (!top) {
+        continue;
+      }
+
+      const spaceId = `space-${band * 8 + indexInRing}`;
+      for (const element of top.cell.elements) {
+        if (element.type !== 'PROBE' || typeof element.playerId !== 'string') {
+          continue;
+        }
+        probes.push({ playerId: element.playerId, spaceId });
+      }
+    }
+  }
+
+  return probes;
+}
 
 function createAdjacencyMap(): Record<string, string[]> {
   const adjacencyMap: Record<string, string[]> = {};
@@ -48,7 +384,8 @@ function createAdjacencyMap(): Record<string, string[]> {
 }
 
 function createDebugSetupConfig(
-  discAngles: [number, number, number],
+  discAngles: TDiscAngles,
+  wheels: TSolarSystemWheels,
 ): ISolarSystemSetupConfig {
   return {
     tilePlacements: [
@@ -74,6 +411,7 @@ function createDebugSetupConfig(
       },
     ],
     initialDiscAngles: discAngles,
+    wheels: cloneWheels(wheels),
   };
 }
 
@@ -100,12 +438,12 @@ function sliceDebugCards(start: number, count: number) {
 
 function createDebugGameState(
   scenario: TDebugScenario,
-  discAngles: [number, number, number],
+  discAngles: TDiscAngles,
+  wheels: TSolarSystemWheels,
   cardRowStartIndex: number,
   handStartIndex: number,
-  probeOverrides?: IPublicGameState['solarSystem']['probes'],
 ): IPublicGameState {
-  const setupConfig = createDebugSetupConfig(discAngles);
+  const setupConfig = createDebugSetupConfig(discAngles, wheels);
   const cardRow = sliceDebugCards(cardRowStartIndex, 3);
   const myHand = sliceDebugCards(handStartIndex, 5);
   const roundStacks = [
@@ -121,6 +459,9 @@ function createDebugGameState(
     { discIndex: 2, angle: discAngles[2] },
     { discIndex: 3, angle: 0 },
   ];
+
+  const spaceStates = createDebugSpaceStates(wheels, discAngles);
+  const probes = extractVisibleProbes(wheels, discAngles);
 
   return {
     gameId: `debug-${scenario}`,
@@ -143,8 +484,12 @@ function createDebugGameState(
         tracesByAlien: {},
         computer: {
           columns: Array.from({ length: 6 }, () => ({
-            topFilled: false, topReward: null, techId: null,
-            hasBottomSlot: false, bottomFilled: false, bottomReward: null,
+            topFilled: false,
+            topReward: null,
+            techId: null,
+            hasBottomSlot: false,
+            bottomFilled: false,
+            bottomReward: null,
             techSlotAvailable: true,
           })),
         },
@@ -170,8 +515,12 @@ function createDebugGameState(
         tracesByAlien: {},
         computer: {
           columns: Array.from({ length: 6 }, () => ({
-            topFilled: false, topReward: null, techId: null,
-            hasBottomSlot: false, bottomFilled: false, bottomReward: null,
+            topFilled: false,
+            topReward: null,
+            techId: null,
+            hasBottomSlot: false,
+            bottomFilled: false,
+            bottomReward: null,
             techSlotAvailable: true,
           })),
         },
@@ -197,8 +546,12 @@ function createDebugGameState(
         tracesByAlien: {},
         computer: {
           columns: Array.from({ length: 6 }, () => ({
-            topFilled: false, topReward: null, techId: null,
-            hasBottomSlot: false, bottomFilled: false, bottomReward: null,
+            topFilled: false,
+            topReward: null,
+            techId: null,
+            hasBottomSlot: false,
+            bottomFilled: false,
+            bottomReward: null,
             techSlotAvailable: true,
           })),
         },
@@ -216,13 +569,9 @@ function createDebugGameState(
     solarSystem: {
       spaces: Array.from({ length: 32 }, (_, index) => `space-${index}`),
       adjacency: createAdjacencyMap(),
-      probes: probeOverrides ?? [
-        { playerId: 'player-1', spaceId: 'space-0' },
-        { playerId: 'player-1', spaceId: 'space-9' },
-        { playerId: 'player-2', spaceId: 'space-13' },
-        { playerId: 'player-3', spaceId: 'space-21' },
-      ],
+      probes,
       discs,
+      spaceStates,
     },
     sectors: createSectorsFromSetup(setupConfig),
     solarSystemSetup: setupConfig,
@@ -247,32 +596,29 @@ function createDebugGameState(
 
 export function GameDebugPage(): React.JSX.Element {
   const [scenario, setScenario] = useState<TDebugScenario>('my-turn');
-  const [discAngles, setDiscAngles] = useState<[number, number, number]>([
-    7, 3, 4,
-  ]);
+  const [discAngles, setDiscAngles] = useState<TDiscAngles>([7, 3, 4]);
+  const [debugWheels, setDebugWheels] = useState<TSolarSystemWheels>(
+    createDefaultDebugWheels,
+  );
   const [cardRowStartIndex, setCardRowStartIndex] = useState(0);
   const [handStartIndex, setHandStartIndex] = useState(18);
   const [cardInputMode, setCardInputMode] =
     useState<TCardInputDebugMode>('none');
-  const [lastInputResponse, setLastInputResponse] = useState<string>('none');
-  const [probeOverrides, setProbeOverrides] = useState<
-    IPublicGameState['solarSystem']['probes'] | undefined
-  >(undefined);
   const [nextRotateRing, setNextRotateRing] = useState<1 | 2 | 3>(1);
+  const [probeInsetPxByRing, setProbeInsetPxByRing] =
+    useState<TProbeInsetPxByRing>({
+      1: 89,
+      2: 95,
+      3: 91,
+      4: 229,
+    });
 
   const rotateRing = (ring: 1 | 2 | 3): void => {
     setDiscAngles((prev) => {
-      const next: [number, number, number] = [...prev];
-      if (ring === 1) {
-        next[0] += 1;
-      } else if (ring === 2) {
-        next[0] += 1;
-        next[1] += 1;
-      } else {
-        next[0] += 1;
-        next[1] += 1;
-        next[2] += 1;
-      }
+      const next = nextDiscAnglesForRotation(prev, ring);
+      setDebugWheels((prevWheels) =>
+        applyCoveragePushAfterRotation(prevWheels, prev, next, ring),
+      );
       return next;
     });
   };
@@ -282,15 +628,15 @@ export function GameDebugPage(): React.JSX.Element {
       createDebugGameState(
         scenario,
         discAngles,
+        debugWheels,
         cardRowStartIndex,
         handStartIndex,
-        probeOverrides,
       ),
-    [scenario, discAngles, cardRowStartIndex, handStartIndex, probeOverrides],
+    [scenario, discAngles, debugWheels, cardRowStartIndex, handStartIndex],
   );
 
   useEffect(() => {
-    setProbeOverrides(undefined);
+    setDebugWheels(createDefaultDebugWheels());
   }, [scenario]);
 
   const pendingInput = useMemo<IPlayerInputModel | null>(() => {
@@ -331,8 +677,8 @@ export function GameDebugPage(): React.JSX.Element {
     return null;
   }, [cardInputMode, gameState]);
 
-  const handleDebugInput = (response: IInputResponse): void => {
-    setLastInputResponse(JSON.stringify(response));
+  const handleDebugInput = (_response: IInputResponse): void => {
+    void _response;
   };
 
   const isSpectator = scenario === 'spectator';
@@ -353,22 +699,15 @@ export function GameDebugPage(): React.JSX.Element {
           return;
         }
 
-        setProbeOverrides((prev) => {
-          const next = [...(prev ?? gameState.solarSystem.probes)];
-          const myProbeIndex = next.findIndex(
-            (probe) =>
-              probe.playerId === myPlayerId && probe.spaceId === fromSpaceId,
-          );
-          if (myProbeIndex === -1) {
-            return prev;
-          }
-
-          next[myProbeIndex] = {
-            ...next[myProbeIndex],
-            spaceId: toSpaceId,
-          };
-          return next;
-        });
+        setDebugWheels((prev) =>
+          moveVisibleProbe(
+            prev,
+            discAngles,
+            fromSpaceId,
+            toSpaceId,
+            myPlayerId,
+          ),
+        );
         return;
       }
 
@@ -386,7 +725,7 @@ export function GameDebugPage(): React.JSX.Element {
         setHandStartIndex((prev) => (prev + 1) % ALL_CARDS.length);
       }
     },
-    [gameState.solarSystem.adjacency, gameState.solarSystem.probes, myPlayerId],
+    [discAngles, gameState.solarSystem.adjacency, myPlayerId],
   );
 
   const rotateByRuleOrder = (): void => {
@@ -503,15 +842,37 @@ export function GameDebugPage(): React.JSX.Element {
           </button>
         </div>
 
-        <span className='font-mono text-[10px] text-text-500'>
-          [{discAngles.map((a) => a % 8).join(', ')}]
-        </span>
-
-        <span className='max-w-[320px] truncate font-mono text-[10px] text-text-500'>
-          input: {lastInputResponse}
-        </span>
+        <div className='flex items-center gap-2 border-l border-surface-700 pl-2'>
+          {([1, 2, 3, 4] as const).map((ring) => (
+            <label
+              key={`probe-inset-ring-${ring}`}
+              className='flex items-center gap-1 font-mono text-[10px] text-text-300'
+              title={`Probe inset for wheel ${ring}`}
+            >
+              R{ring}
+              <input
+                type='range'
+                min={0}
+                max={260}
+                step={1}
+                value={probeInsetPxByRing[ring]}
+                onChange={(event) => {
+                  const nextValue = Number(event.target.value);
+                  setProbeInsetPxByRing((prev) => ({
+                    ...prev,
+                    [ring]: nextValue,
+                  }));
+                }}
+                className='w-16 accent-accent-500'
+              />
+              <span className='w-6 text-right text-text-500'>
+                {probeInsetPxByRing[ring]}
+              </span>
+            </label>
+          ))}
+        </div>
       </div>
-      <GameLayout />
+      <GameLayout probeInsetPxByRing={probeInsetPxByRing} />
     </GameContextValueProvider>
   );
 }

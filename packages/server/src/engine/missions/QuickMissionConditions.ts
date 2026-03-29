@@ -117,6 +117,77 @@ export function hasMinScore(minScore: number): TConditionFn {
 }
 
 /**
+ * Check if a player's publicity is at least `minPublicity`.
+ */
+export function hasMinPublicity(minPublicity: number): TConditionFn {
+  return (player) => player.publicity >= minPublicity;
+}
+
+/**
+ * Check if a player has no cards in hand.
+ */
+export function hasNoCardsInHand(): TConditionFn {
+  return (player) => player.hand.length === 0;
+}
+
+/**
+ * Check if a player has a probe on an asteroid space adjacent to Earth.
+ */
+export function probeOnAsteroidAdjacentToEarth(): TConditionFn {
+  return (player, game) => {
+    const ss = game.solarSystem;
+    if (!ss) return false;
+
+    const earthSpaceIds = new Set(
+      ss.spaces
+        .filter((space) =>
+          space.elements.some(
+            (el) => el.type === ESolarSystemElementType.EARTH && el.amount > 0,
+          ),
+        )
+        .map((space) => space.id),
+    );
+
+    if (earthSpaceIds.size === 0) return false;
+
+    return ss.spaces.some((space) => {
+      const hasPlayerProbe = space.occupants.some(
+        (o) => o.playerId === player.id,
+      );
+      if (!hasPlayerProbe) return false;
+
+      const hasAsteroid = space.elements.some(
+        (el) => el.type === ESolarSystemElementType.ASTEROID && el.amount > 0,
+      );
+      if (!hasAsteroid) return false;
+
+      const neighbors = ss.adjacency.get(space.id) ?? [];
+      return neighbors.some((id) => earthSpaceIds.has(id));
+    });
+  };
+}
+
+/**
+ * Check if a player has at least one red, yellow, and blue trace
+ * on a single alien species.
+ */
+export function hasAllPrimaryTracesOnSingleSpecies(): TConditionFn {
+  return (player, game) => {
+    const boards = game.alienState?.boards;
+    if (!boards || boards.length === 0) return false;
+
+    return boards.some((board) => {
+      const alienTraces = player.tracesByAlien[board.alienIndex];
+      return (
+        (alienTraces?.[ETrace.RED] ?? 0) >= 1 &&
+        (alienTraces?.[ETrace.YELLOW] ?? 0) >= 1 &&
+        (alienTraces?.[ETrace.BLUE] ?? 0) >= 1
+      );
+    });
+  };
+}
+
+/**
  * Check if a player has at least `count` total orbit slots across all planets.
  */
 export function totalOrbits(count: number): TConditionFn {

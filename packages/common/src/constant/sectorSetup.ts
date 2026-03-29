@@ -1,4 +1,299 @@
 import { ESector } from '@seti/common/types/element';
+import { EPlanet } from '@seti/common/types/protocol/enums';
+
+type TFixed4<T> = [T, T, T, T];
+type TFixed8<T> = [T, T, T, T, T, T, T, T];
+
+export type TSolarSystemMapCellType =
+  | 'NULL'
+  | 'EMPTY'
+  | 'ASTEROID'
+  | 'COMET'
+  | 'EARTH'
+  | 'PLANET';
+
+/** Static map data for one slot on a wheel. */
+export interface ISolarSystemWheelMapCell {
+  type: TSolarSystemMapCellType;
+  hasPublicityIcon: boolean;
+  planet?: EPlanet;
+}
+
+/** Runtime elements that can occupy a wheel slot (probe, marker, etc). */
+export interface ISolarSystemWheelRuntimeElement {
+  type: string;
+  playerId?: string;
+  [key: string]: unknown;
+}
+
+/** Each wheel slot always has static map data + runtime elements. */
+export interface ISolarSystemWheelCell {
+  cell: ISolarSystemWheelMapCell;
+  elements: ISolarSystemWheelRuntimeElement[];
+}
+
+/** A wheel is always 4 rows * 8 slots. */
+export type TSolarSystemWheelGrid = TFixed4<TFixed8<ISolarSystemWheelCell>>;
+
+export type TSolarSystemWheelIndex = 1 | 2 | 3 | 4;
+
+export type TSolarSystemWheels = Record<
+  TSolarSystemWheelIndex,
+  TSolarSystemWheelGrid
+>;
+
+interface IWheelSlotDefinition {
+  type: TSolarSystemMapCellType;
+  planet?: EPlanet;
+  hasPublicityIcon?: boolean;
+}
+
+function createWheelCell(
+  definition: IWheelSlotDefinition,
+): ISolarSystemWheelCell {
+  return {
+    cell: {
+      type: definition.type,
+      hasPublicityIcon: Boolean(definition.hasPublicityIcon),
+      planet: definition.planet,
+    },
+    elements: [],
+  };
+}
+
+/**
+ * Input order is SETI rulebook style: slot 1..8.
+ * Internal index order is 0..7, where slot-8 maps to index-0.
+ */
+function createWheelRow(
+  slotsByRulebookOrder: TFixed8<IWheelSlotDefinition>,
+): TFixed8<ISolarSystemWheelCell> {
+  const row = new Array<ISolarSystemWheelCell>(8);
+  for (let slotNumber = 1; slotNumber <= 8; slotNumber += 1) {
+    const internalIndex = slotNumber === 8 ? 0 : slotNumber;
+    row[internalIndex] = createWheelCell(slotsByRulebookOrder[slotNumber - 1]);
+  }
+
+  return row as TFixed8<ISolarSystemWheelCell>;
+}
+
+function cloneWheelCell(cell: ISolarSystemWheelCell): ISolarSystemWheelCell {
+  return {
+    cell: {
+      type: cell.cell.type,
+      hasPublicityIcon: cell.cell.hasPublicityIcon,
+      planet: cell.cell.planet,
+    },
+    elements: cell.elements.map((element) => ({ ...element })),
+  };
+}
+
+function cloneWheelGrid(grid: TSolarSystemWheelGrid): TSolarSystemWheelGrid {
+  return grid.map((row) => row.map(cloneWheelCell)) as TSolarSystemWheelGrid;
+}
+
+const NULL_SLOT: IWheelSlotDefinition = { type: 'NULL' };
+const EMPTY_SLOT: IWheelSlotDefinition = { type: 'EMPTY' };
+const ASTEROID_SLOT: IWheelSlotDefinition = { type: 'ASTEROID' };
+const EARTH_SLOT: IWheelSlotDefinition = {
+  type: 'EARTH',
+  planet: EPlanet.EARTH,
+};
+
+function planetSlot(planet: EPlanet): IWheelSlotDefinition {
+  return {
+    type: 'PLANET',
+    planet,
+    hasPublicityIcon: true,
+  };
+}
+
+function cometSlotWithPublicity(): IWheelSlotDefinition {
+  return {
+    type: 'COMET',
+    hasPublicityIcon: true,
+  };
+}
+
+const DEFAULT_SOLAR_SYSTEM_WHEELS_TEMPLATE: TSolarSystemWheels = {
+  1: [
+    createWheelRow([
+      planetSlot(EPlanet.MERCURY),
+      EMPTY_SLOT,
+      planetSlot(EPlanet.VENUS),
+      NULL_SLOT,
+      EARTH_SLOT,
+      EMPTY_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+    ]),
+    createWheelRow([
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+    ]),
+    createWheelRow([
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+    ]),
+    createWheelRow([
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+    ]),
+  ],
+  2: [
+    createWheelRow([
+      NULL_SLOT,
+      EMPTY_SLOT,
+      ASTEROID_SLOT,
+      EMPTY_SLOT,
+      ASTEROID_SLOT,
+      EMPTY_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+    ]),
+    createWheelRow([
+      NULL_SLOT,
+      planetSlot(EPlanet.MARS),
+      NULL_SLOT,
+      NULL_SLOT,
+      EMPTY_SLOT,
+      ASTEROID_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+    ]),
+    createWheelRow([
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+    ]),
+    createWheelRow([
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+    ]),
+  ],
+  3: [
+    createWheelRow([
+      cometSlotWithPublicity(),
+      ASTEROID_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      EMPTY_SLOT,
+      ASTEROID_SLOT,
+      ASTEROID_SLOT,
+      EMPTY_SLOT,
+    ]),
+    createWheelRow([
+      NULL_SLOT,
+      EMPTY_SLOT,
+      NULL_SLOT,
+      ASTEROID_SLOT,
+      EMPTY_SLOT,
+      NULL_SLOT,
+      ASTEROID_SLOT,
+      cometSlotWithPublicity(),
+    ]),
+    createWheelRow([
+      NULL_SLOT,
+      EMPTY_SLOT,
+      planetSlot(EPlanet.JUPITER),
+      EMPTY_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      planetSlot(EPlanet.SATURN),
+      NULL_SLOT,
+    ]),
+    createWheelRow([
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+      NULL_SLOT,
+    ]),
+  ],
+  4: [
+    createWheelRow([
+      cometSlotWithPublicity(),
+      EMPTY_SLOT,
+      ASTEROID_SLOT,
+      ASTEROID_SLOT,
+      EMPTY_SLOT,
+      cometSlotWithPublicity(),
+      cometSlotWithPublicity(),
+      ASTEROID_SLOT,
+    ]),
+    createWheelRow([
+      cometSlotWithPublicity(),
+      ASTEROID_SLOT,
+      EMPTY_SLOT,
+      cometSlotWithPublicity(),
+      EMPTY_SLOT,
+      ASTEROID_SLOT,
+      EMPTY_SLOT,
+      EMPTY_SLOT,
+    ]),
+    createWheelRow([
+      ASTEROID_SLOT,
+      cometSlotWithPublicity(),
+      ASTEROID_SLOT,
+      ASTEROID_SLOT,
+      EMPTY_SLOT,
+      EMPTY_SLOT,
+      ASTEROID_SLOT,
+      EMPTY_SLOT,
+    ]),
+    createWheelRow([
+      EMPTY_SLOT,
+      EMPTY_SLOT,
+      planetSlot(EPlanet.NEPTUNE),
+      EMPTY_SLOT,
+      cometSlotWithPublicity(),
+      EMPTY_SLOT,
+      cometSlotWithPublicity(),
+      planetSlot(EPlanet.URANUS),
+    ]),
+  ],
+};
+
+export function createDefaultSolarSystemWheels(): TSolarSystemWheels {
+  return {
+    1: cloneWheelGrid(DEFAULT_SOLAR_SYSTEM_WHEELS_TEMPLATE[1]),
+    2: cloneWheelGrid(DEFAULT_SOLAR_SYSTEM_WHEELS_TEMPLATE[2]),
+    3: cloneWheelGrid(DEFAULT_SOLAR_SYSTEM_WHEELS_TEMPLATE[3]),
+    4: cloneWheelGrid(DEFAULT_SOLAR_SYSTEM_WHEELS_TEMPLATE[4]),
+  };
+}
 
 /** Physical sector tile IDs — each tile covers 2 game sectors */
 export enum ESectorTileId {
@@ -57,6 +352,7 @@ export interface ISectorTilePlacement {
 export interface ISolarSystemSetupConfig {
   tilePlacements: ISectorTilePlacement[];
   initialDiscAngles: [number, number, number];
+  wheels: TSolarSystemWheels;
 }
 
 // ---------------------------------------------------------------------------
@@ -175,6 +471,7 @@ export function createDefaultSetupConfig(): ISolarSystemSetupConfig {
       },
     ],
     initialDiscAngles: [0, 0, 0],
+    wheels: createDefaultSolarSystemWheels(),
   };
 }
 

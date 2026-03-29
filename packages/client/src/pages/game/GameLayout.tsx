@@ -8,11 +8,10 @@ import { toast } from '@/components/ui/toast';
 import { ActionConfirm } from '@/features/actions/ActionConfirm';
 import { ActionMenu } from '@/features/actions/ActionMenu';
 import { FreeActionBar } from '@/features/actions/FreeActionBar';
+import { buildMoveAction } from '@/features/board/moveAction';
 import { PlanetaryBoardView } from '@/features/board/PlanetaryBoardView';
-import {
-  buildMoveAction,
-  SolarSystemView,
-} from '@/features/board/SolarSystemView';
+import type { TProbeInsetPxByRing } from '@/features/board/SolarSystemView';
+import { SolarSystemView } from '@/features/board/SolarSystemView';
 import { TechBoardView } from '@/features/board/TechBoardView';
 import { CardDetail } from '@/features/cards/CardDetail';
 import { CardRowView } from '@/features/cards/CardRowView';
@@ -34,7 +33,13 @@ const BOARD_TABS: { value: TBoardTab; label: string }[] = [
   { value: 'scoring', label: 'Scoring' },
 ];
 
-export function GameLayout(): React.JSX.Element {
+export function GameLayout({
+  showSolarSystemSpaceConfig = false,
+  probeInsetPxByRing,
+}: {
+  showSolarSystemSpaceConfig?: boolean;
+  probeInsetPxByRing?: TProbeInsetPxByRing;
+}): React.JSX.Element {
   const activeTab = useGameViewStore((s) => s.activeTab);
   const setActiveTab = useGameViewStore((s) => s.setActiveTab);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -64,6 +69,8 @@ export function GameLayout(): React.JSX.Element {
               activeTab={activeTab}
               onTabChange={setActiveTab}
               onInspectCard={handleInspectCard}
+              showSolarSystemSpaceConfig={showSolarSystemSpaceConfig}
+              probeInsetPxByRing={probeInsetPxByRing}
             />
 
             {/* Mobile sidebar toggle */}
@@ -107,10 +114,14 @@ function BoardTabs({
   activeTab,
   onTabChange,
   onInspectCard,
+  showSolarSystemSpaceConfig,
+  probeInsetPxByRing,
 }: {
   activeTab: TBoardTab;
   onTabChange: (tab: TBoardTab) => void;
   onInspectCard: (card: IBaseCard) => void;
+  showSolarSystemSpaceConfig: boolean;
+  probeInsetPxByRing?: TProbeInsetPxByRing;
 }): React.JSX.Element {
   const { gameState, myPlayerId, pendingInput, sendFreeAction, sendInput } =
     useGameContext();
@@ -179,6 +190,8 @@ function BoardTabs({
                   sendFreeAction(buildMoveAction(fromSpaceId, toSpaceId));
                 }}
                 onRespondInput={sendInput}
+                showSpaceConfigDebug={showSolarSystemSpaceConfig}
+                probeInsetPxByRing={probeInsetPxByRing}
               />
             )}
           </div>

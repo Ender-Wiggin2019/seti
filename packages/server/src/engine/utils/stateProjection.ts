@@ -20,6 +20,7 @@ export function toPublicSolarSystemState(
       indexInRing: space.indexInRing,
       hasPublicityIcon: space.hasPublicityIcon,
       elementTypes: space.elements.map((e) => e.type),
+      elements: space.elements.map((e) => ({ type: e.type, planet: e.planet })),
     };
   }
 

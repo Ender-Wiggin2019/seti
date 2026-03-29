@@ -2,17 +2,27 @@ import type { ISolarSystemSetupConfig } from '@seti/common/constant/sectorSetup'
 import { useMemo, useState } from 'react';
 import type {
   IInputResponse,
-  IMovementFreeActionRequest,
   IPlayerInputModel,
   IPublicSector,
   IPublicSolarSystem,
 } from '@/types/re-exports';
-import { EFreeAction, EPlayerInputType } from '@/types/re-exports';
+import { EPlayerInputType } from '@/types/re-exports';
 import { ProbeToken } from './ProbeToken';
 import { SectorGrid } from './SectorGrid';
 import { WheelLayer } from './WheelLayer';
 
-const SPACE_RADII_PERCENT = [13, 22.8, 32.6, 42.4] as const;
+const WHEEL_RENDER_SIZE_PERCENT = [34, 48, 62, 100] as const;
+const WHEEL_IMAGE_SIZE_PX = [397, 548, 702, 1125] as const;
+const DEFAULT_PROBE_INSET_PX_BY_RING: Readonly<Record<1 | 2 | 3 | 4, number>> =
+  {
+    1: 50,
+    2: 50,
+    3: 50,
+    4: 50,
+  };
+const PROBE_TRANSITION_MS = 900;
+
+export type TProbeInsetPxByRing = Readonly<Record<1 | 2 | 3 | 4, number>>;
 
 interface ISolarSystemViewProps {
   solarSystem: IPublicSolarSystem;
@@ -23,24 +33,37 @@ interface ISolarSystemViewProps {
   myPlayerId: string;
   onMoveProbe: (fromSpaceId: string, toSpaceId: string) => void;
   onRespondInput: (response: IInputResponse) => void;
+  showSpaceConfigDebug?: boolean;
+  probeInsetPxByRing?: TProbeInsetPxByRing;
 }
 
 interface ISpacePoint {
   spaceId: string;
+  ringIndex: 1 | 2 | 3 | 4;
+  indexInRing: number;
   xPercent: number;
   yPercent: number;
 }
 
-function extractSpaceIndex(spaceId: string): number | null {
-  const m = spaceId.match(/(\d+)$/);
-  if (!m) return null;
-  return Number.parseInt(m[1], 10);
+function normalizeRingIndex(ringIndex: number): 1 | 2 | 3 | 4 | null {
+  if (
+    ringIndex === 1 ||
+    ringIndex === 2 ||
+    ringIndex === 3 ||
+    ringIndex === 4
+  ) {
+    return ringIndex;
+  }
+  return null;
 }
 
-function spacePosition(index: number): { xPercent: number; yPercent: number } {
-  const distance = Math.floor(index / 8) + 1;
-  const direction = index % 8;
-  const radius = SPACE_RADII_PERCENT[distance - 1] ?? SPACE_RADII_PERCENT[0];
+function spacePosition(
+  ringIndex: 1 | 2 | 3 | 4,
+  indexInRing: number,
+  spaceRadiiPercent: readonly number[],
+): { xPercent: number; yPercent: number } {
+  const direction = ((indexInRing % 8) + 8) % 8;
+  const radius = spaceRadiiPercent[ringIndex - 1] ?? spaceRadiiPercent[0] ?? 0;
   const angle = (Math.PI / 4) * (0.5 + direction);
   return {
     xPercent: 50 + Math.sin(angle) * radius,
@@ -65,17 +88,80 @@ export function SolarSystemView({
   myPlayerId,
   onMoveProbe,
   onRespondInput,
+  showSpaceConfigDebug = false,
+  probeInsetPxByRing,
 }: ISolarSystemViewProps): React.JSX.Element {
   const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(null);
 
+  const spaceRadiiPercent = useMemo(() => {
+    const insets = probeInsetPxByRing ?? DEFAULT_PROBE_INSET_PX_BY_RING;
+    return WHEEL_RENDER_SIZE_PERCENT.map((wheelSizePercent, ringOffset) => {
+      const ring = (ringOffset + 1) as 1 | 2 | 3 | 4;
+      const imageSizePx =
+        WHEEL_IMAGE_SIZE_PX[ringOffset] ?? WHEEL_IMAGE_SIZE_PX[0];
+      const insetPx = insets[ring] ?? DEFAULT_PROBE_INSET_PX_BY_RING[ring];
+      const outerRadiusPercent = wheelSizePercent / 2;
+      const insetPercent = wheelSizePercent * (insetPx / imageSizePx);
+      return Math.max(0, outerRadiusPercent - insetPercent);
+    }) as [number, number, number, number];
+  }, [probeInsetPxByRing]);
+
   const spacePoints = useMemo<ISpacePoint[]>(() => {
+    const states = solarSystem.spaceStates;
+    const usesZeroBasedRingIndex = Boolean(
+      states && Object.values(states).some((state) => state.ringIndex === 0),
+    );
+
     return solarSystem.spaces.map((spaceId, idx) => {
-      const parsed = extractSpaceIndex(spaceId);
-      const index = parsed ?? idx;
-      const pos = spacePosition(index);
-      return { spaceId, ...pos };
+      const state = states?.[spaceId];
+      const fallbackRing = (Math.floor(idx / 8) + 1) as 1 | 2 | 3 | 4;
+      const fallbackIndexInRing = idx % 8;
+
+      let ringIndex = fallbackRing;
+      let indexInRing = fallbackIndexInRing;
+
+      if (state) {
+        const rawRingIndex = usesZeroBasedRingIndex
+          ? state.ringIndex + 1
+          : state.ringIndex;
+        const normalizedRingIndex = normalizeRingIndex(rawRingIndex);
+        if (normalizedRingIndex) {
+          ringIndex = normalizedRingIndex;
+          indexInRing = ((state.indexInRing % 8) + 8) % 8;
+        }
+      }
+
+      const pos = spacePosition(ringIndex, indexInRing, spaceRadiiPercent);
+      return { spaceId, ringIndex, indexInRing, ...pos };
     });
-  }, [solarSystem.spaces]);
+  }, [solarSystem.spaces, solarSystem.spaceStates, spaceRadiiPercent]);
+
+  const debugLabelsBySpaceId = useMemo(() => {
+    if (!showSpaceConfigDebug) {
+      return undefined;
+    }
+
+    const labels: Record<string, string> = {};
+    for (const space of spacePoints) {
+      const state = solarSystem.spaceStates?.[space.spaceId];
+      const slotPrefix = `${space.indexInRing}:`;
+      if (!state) {
+        labels[space.spaceId] = slotPrefix;
+        continue;
+      }
+
+      const primaryElement = state.elements?.[0];
+      const firstType = primaryElement?.type ?? state.elementTypes[0] ?? '-';
+      if (firstType === 'PLANET' && primaryElement?.planet) {
+        labels[space.spaceId] =
+          `${slotPrefix}${primaryElement.planet.toLowerCase()}`;
+      } else {
+        labels[space.spaceId] = `${slotPrefix}${firstType.toLowerCase()}`;
+      }
+    }
+
+    return labels;
+  }, [showSpaceConfigDebug, spacePoints, solarSystem.spaceStates]);
 
   const probesBySpace = useMemo(() => {
     const map: Record<string, string[]> = {};
@@ -202,28 +288,54 @@ export function SolarSystemView({
 
         {spacePoints.map((space) => {
           const players = probesBySpace[space.spaceId] ?? [];
-          return players.map((playerId, tokenIndex) => (
-            <ProbeToken
-              key={`${space.spaceId}-${playerId}-${tokenIndex}`}
-              playerColor={playerColors[playerId] ?? 'white'}
-              xPercent={space.xPercent}
-              yPercent={space.yPercent}
-              offsetIndex={tokenIndex}
-              offsetCount={players.length}
-            />
-          ));
+          if (players.length === 0) {
+            return null;
+          }
+
+          return (
+            <div
+              key={`probe-stack-${space.spaceId}`}
+              className='pointer-events-none absolute z-350 flex min-h-6 min-w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full'
+              style={{
+                left: `${space.xPercent}%`,
+                top: `${space.yPercent}%`,
+                transition: `left ${PROBE_TRANSITION_MS}ms ease-out, top ${PROBE_TRANSITION_MS}ms ease-out`,
+              }}
+            >
+              <div className='flex max-w-10 flex-wrap items-center justify-center gap-0.5'>
+                {players.map((playerId, tokenIndex) => (
+                  <ProbeToken
+                    key={`${space.spaceId}-${playerId}-${tokenIndex}`}
+                    playerColor={playerColors[playerId] ?? 'white'}
+                  />
+                ))}
+              </div>
+            </div>
+          );
         })}
+
+        {showSpaceConfigDebug && (
+          <div
+            className='pointer-events-none absolute inset-0'
+            style={{ zIndex: 450 }}
+          >
+            {spacePoints.map((space) => (
+              <span
+                key={`debug-space-label-${space.spaceId}`}
+                className='absolute z-20 rounded bg-surface-950/85 px-1 py-0.5 text-[9px] font-mono uppercase leading-none text-text-200 shadow'
+                style={{
+                  left: `${space.xPercent}%`,
+                  top: `${space.yPercent}%`,
+                  transform: 'translate(-50%, -50%)',
+                }}
+              >
+                {debugLabelsBySpaceId?.[space.spaceId] ??
+                  `${space.indexInRing}:`}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
-}
-
-export function buildMoveAction(
-  fromSpaceId: string,
-  toSpaceId: string,
-): IMovementFreeActionRequest {
-  return {
-    type: EFreeAction.MOVEMENT,
-    path: [fromSpaceId, toSpaceId],
-  };
 }

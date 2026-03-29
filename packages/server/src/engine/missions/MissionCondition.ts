@@ -7,6 +7,7 @@ import {
   EMiscIcon,
   EPlanet,
   EResource,
+  ESector,
   ESpecialAction,
   ETech,
 } from '@seti/common/types/element';
@@ -122,9 +123,43 @@ function checkBaseStateCondition(
       return checkOrbitAtPlanet(req.desc, value, player, game);
     case EMiscIcon.LAND_COUNT:
       return checkLandAtPlanet(req.desc, value, player, game);
+    case EMiscIcon.FULFILL_SECTOR_ANY:
+    case EMiscIcon.FULFILL_ICON:
+      return countSectorFulfills(player, game) >= value;
+    case EMiscIcon.FULFILL_SECTOR_RED:
+      return countSectorFulfills(player, game, ESector.RED) >= value;
+    case EMiscIcon.FULFILL_SECTOR_YELLOW:
+      return countSectorFulfills(player, game, ESector.YELLOW) >= value;
+    case EMiscIcon.FULFILL_SECTOR_BLUE:
+      return countSectorFulfills(player, game, ESector.BLUE) >= value;
+    case EMiscIcon.FULFILL_SECTOR_BLACK:
+      return countSectorFulfills(player, game, ESector.BLACK) >= value;
     default:
       return false;
   }
+}
+
+function countSectorFulfills(
+  player: IPlayer,
+  game: IGame,
+  color?: ESector,
+): number {
+  return game.sectors.reduce((total, sectorLike) => {
+    const sector = sectorLike as {
+      color?: ESector;
+      winnerMarkers?: Array<{ playerId: string }>;
+    };
+
+    if (color && sector.color !== color) {
+      return total;
+    }
+
+    return (
+      total +
+      (sector.winnerMarkers?.filter((marker) => marker.playerId === player.id)
+        .length ?? 0)
+    );
+  }, 0);
 }
 
 function parsePlanetFromDesc(desc?: string): EPlanet | undefined {

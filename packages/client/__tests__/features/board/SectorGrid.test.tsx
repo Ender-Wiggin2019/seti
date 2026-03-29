@@ -1,4 +1,5 @@
 import {
+  createDefaultSolarSystemWheels,
   ESectorPosition,
   ESectorTileId,
   type ISolarSystemSetupConfig,
@@ -35,6 +36,7 @@ const testSetup: ISolarSystemSetupConfig = {
     },
   ],
   initialDiscAngles: [0, 0, 0],
+  wheels: createDefaultSolarSystemWheels(),
 };
 
 function createSectors(): IPublicSector[] {

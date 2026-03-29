@@ -1,6 +1,7 @@
 import {
   ALL_SECTOR_POSITIONS,
   ALL_SECTOR_TILE_IDS,
+  createDefaultSolarSystemWheels,
   type ESectorPosition,
   type ESectorTileId,
   type ISectorTilePlacement,
@@ -30,6 +31,7 @@ export class BoardBuilder {
     const setupConfig: ISolarSystemSetupConfig = {
       tilePlacements,
       initialDiscAngles,
+      wheels: createDefaultSolarSystemWheels(),
     };
 
     const nearStars = tilePlacements.flatMap((placement) => {

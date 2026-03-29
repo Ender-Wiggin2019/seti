@@ -1,3 +1,4 @@
+import { EStarName } from '@seti/common/constant/sectorSetup';
 import { Alice } from '../base/AliceCard.js';
 import { Apollo11Mission } from '../base/Apollo11MissionCard.js';
 import { Atlas } from '../base/AtlasCard.js';
@@ -5,8 +6,14 @@ import { CassiniProbe } from '../base/CassiniProbeCard.js';
 import { Dragonfly } from '../base/DragonflyCard.js';
 import { createGenericCard } from '../base/GenericCards.js';
 import { GmrtTelescope } from '../base/GmrtTelescopeCard.js';
+import { GreenBankTelescope } from '../base/GreenBankTelescopeCard.js';
 import { JunoProbe } from '../base/JunoProbeCard.js';
+import { LinguisticAnalysis } from '../base/LinguisticAnalysisCard.js';
+import { LovellTelescope } from '../base/LovellTelescopeCard.js';
 import { MessengerProbe } from '../base/MessengerProbeCard.js';
+import { NearEarthAsteroidsSurvey } from '../base/NearEarthAsteroidsSurveyCard.js';
+import { NiacProgram } from '../base/NiacProgramCard.js';
+import { ObservationQuickMissionCard } from '../base/ObservationQuickMissionCard.js';
 import { OdinusMission } from '../base/OdinusMissionCard.js';
 import { PlanetaryGeologicMap } from '../base/PlanetaryGeologicMapCard.js';
 import { ProjectLongshot } from '../base/ProjectLongshotCard.js';
@@ -16,6 +23,7 @@ import { RosettaProbe } from '../base/RosettaProbeCard.js';
 import { SpaceLaunchSystem } from '../base/SpaceLaunchSystemCard.js';
 import { SpaceShuttle } from '../base/SpaceShuttleCard.js';
 import { SquareKilometreArray } from '../base/SquareKilometreArrayCard.js';
+import { TardigradesStudy } from '../base/TardigradesStudyCard.js';
 import { TridentProbe } from '../base/TridentProbeCard.js';
 import { UranusOrbiter } from '../base/UranusOrbiterCard.js';
 import { VeneraProbe } from '../base/VeneraProbeCard.js';
@@ -79,24 +87,36 @@ export function registerBaseCards(registry: CardRegistry): void {
   registry.register('112', () => new PlanetaryGeologicMap()); // QM: orbit+land same planet
 
   // QUICK MISSION — scan / signal + mission
-  g(registry, '51'); // Lovell Telescope        | DATA, SCAN, QM
-  g(registry, '105'); // Green Bank Telescope    | SCAN, QM
+  registry.register('51', () => new LovellTelescope()); // QM: publicity >= 8
+  registry.register('105', () => new GreenBankTelescope()); // QM: red trace >= 3
 
   // QUICK MISSION — resource + mission
-  g(registry, '89'); // NIAC Program            | CARD(3), QM
-  g(registry, '95'); // Near-Earth Asteroids    | PUBLICITY(2), QM
-  g(registry, '96'); // Tardigrades Study       | PUBLICITY, DATA, CARD, QM
-  g(registry, '102'); // Linguistic Analysis     | PUBLICITY(3), QM
+  registry.register('89', () => new NiacProgram()); // QM: no cards in hand
+  registry.register('95', () => new NearEarthAsteroidsSurvey()); // QM: probe on near-Earth asteroids
+  registry.register('96', () => new TardigradesStudy()); // QM: 3 yellow traces
+  registry.register('102', () => new LinguisticAnalysis()); // QM: R+Y+B on one species
 
   // ============================================================
   // QUICK MISSION + DESC — need custom handler for DESC portion
   // ============================================================
 
   // Observation quick-missions: signal + star location + QM
-  g(registry, '37'); // Proxima Centauri Obs    | SIGNAL_RED(2), DESC(location), QM
-  g(registry, '39'); // 61 Virginis Obs         | SIGNAL_YELLOW(2), DESC(location), QM
-  g(registry, '41'); // Sirius A Obs            | SIGNAL_BLUE(2), DESC(location), QM
-  g(registry, '43'); // Beta Pictoris Obs       | SIGNAL_BLACK, DESC(location), QM
+  registry.register(
+    '37',
+    () => new ObservationQuickMissionCard('37', EStarName.PROXIMA_CENTAURI),
+  ); // Proxima Centauri Obs    | SIGNAL_RED(2), DESC(location), QM
+  registry.register(
+    '39',
+    () => new ObservationQuickMissionCard('39', EStarName.SIXTY_ONE_VIRGINIS),
+  ); // 61 Virginis Obs         | SIGNAL_YELLOW(2), DESC(location), QM
+  registry.register(
+    '41',
+    () => new ObservationQuickMissionCard('41', EStarName.SIRIUS_A),
+  ); // Sirius A Obs            | SIGNAL_BLUE(2), DESC(location), QM
+  registry.register(
+    '43',
+    () => new ObservationQuickMissionCard('43', EStarName.BETA_PICTORIS),
+  ); // Beta Pictoris Obs       | SIGNAL_BLACK, DESC(location), QM
 
   // ============================================================
   // QUICK MISSION + UNHANDLED — TODO: implement base effect mapping

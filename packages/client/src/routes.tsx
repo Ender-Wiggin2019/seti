@@ -10,6 +10,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AuthPage } from '@/pages/auth/AuthPage';
 import { GameDebugPage } from '@/pages/game/GameDebugPage';
 import { GamePage, SpectatePage } from '@/pages/game/GamePage';
+import { SolarDebugPage } from '@/pages/game/SolarDebugPage';
 import { LobbyPage } from '@/pages/lobby/LobbyPage';
 import { RoomPage } from '@/pages/lobby/RoomPage';
 import { ProfilePage } from '@/pages/profile/ProfilePage';
@@ -100,6 +101,12 @@ const gameDebugRoute = createRoute({
   component: GameDebugPage,
 });
 
+const solarDebugRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/debug/solar',
+  component: SolarDebugPage,
+});
+
 const routeTree = rootRoute.addChildren([
   appLayoutRoute.addChildren([
     indexRoute,
@@ -111,6 +118,7 @@ const routeTree = rootRoute.addChildren([
   gameRoute,
   spectateRoute,
   gameDebugRoute,
+  solarDebugRoute,
 ]);
 
 export const router = createRouter({ routeTree });

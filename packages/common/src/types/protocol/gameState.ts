@@ -79,6 +79,7 @@ export interface IPublicSolarSystemSpaceState {
   indexInRing: number;
   hasPublicityIcon: boolean;
   elementTypes: string[];
+  elements?: Array<{ type: string; planet?: EPlanet }>;
 }
 
 export interface IPublicSolarSystemState {
