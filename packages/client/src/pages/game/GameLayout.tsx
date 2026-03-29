@@ -36,9 +36,11 @@ const BOARD_TABS: { value: TBoardTab; label: string }[] = [
 export function GameLayout({
   showSolarSystemSpaceConfig = false,
   probeInsetPxByRing,
+  allowMoveAnyProbe = false,
 }: {
   showSolarSystemSpaceConfig?: boolean;
   probeInsetPxByRing?: TProbeInsetPxByRing;
+  allowMoveAnyProbe?: boolean;
 }): React.JSX.Element {
   const activeTab = useGameViewStore((s) => s.activeTab);
   const setActiveTab = useGameViewStore((s) => s.setActiveTab);
@@ -71,6 +73,7 @@ export function GameLayout({
               onInspectCard={handleInspectCard}
               showSolarSystemSpaceConfig={showSolarSystemSpaceConfig}
               probeInsetPxByRing={probeInsetPxByRing}
+              allowMoveAnyProbe={allowMoveAnyProbe}
             />
 
             {/* Mobile sidebar toggle */}
@@ -116,12 +119,14 @@ function BoardTabs({
   onInspectCard,
   showSolarSystemSpaceConfig,
   probeInsetPxByRing,
+  allowMoveAnyProbe,
 }: {
   activeTab: TBoardTab;
   onTabChange: (tab: TBoardTab) => void;
   onInspectCard: (card: IBaseCard) => void;
   showSolarSystemSpaceConfig: boolean;
   probeInsetPxByRing?: TProbeInsetPxByRing;
+  allowMoveAnyProbe: boolean;
 }): React.JSX.Element {
   const { gameState, myPlayerId, pendingInput, sendFreeAction, sendInput } =
     useGameContext();
@@ -192,6 +197,7 @@ function BoardTabs({
                 onRespondInput={sendInput}
                 showSpaceConfigDebug={showSolarSystemSpaceConfig}
                 probeInsetPxByRing={probeInsetPxByRing}
+                allowMoveAnyProbe={allowMoveAnyProbe}
               />
             )}
           </div>

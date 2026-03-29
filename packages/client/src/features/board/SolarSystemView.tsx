@@ -15,10 +15,10 @@ const WHEEL_RENDER_SIZE_PERCENT = [34, 48, 62, 100] as const;
 const WHEEL_IMAGE_SIZE_PX = [397, 548, 702, 1125] as const;
 const DEFAULT_PROBE_INSET_PX_BY_RING: Readonly<Record<1 | 2 | 3 | 4, number>> =
   {
-    1: 50,
-    2: 50,
-    3: 50,
-    4: 50,
+    1: 89,
+    2: 95,
+    3: 91,
+    4: 229,
   };
 const PROBE_TRANSITION_MS = 900;
 
@@ -35,6 +35,7 @@ interface ISolarSystemViewProps {
   onRespondInput: (response: IInputResponse) => void;
   showSpaceConfigDebug?: boolean;
   probeInsetPxByRing?: TProbeInsetPxByRing;
+  allowMoveAnyProbe?: boolean;
 }
 
 interface ISpacePoint {
@@ -43,6 +44,36 @@ interface ISpacePoint {
   indexInRing: number;
   xPercent: number;
   yPercent: number;
+}
+
+interface IProbeRenderItem {
+  key: string;
+  playerId: string;
+  xPercent: number;
+  yPercent: number;
+  offsetX: number;
+  offsetY: number;
+  transitionDelayMs: number;
+}
+
+function tokenStackOffset(
+  index: number,
+  count: number,
+): { x: number; y: number } {
+  if (count <= 1) {
+    return { x: 0, y: 0 };
+  }
+
+  const columns = Math.min(2, count);
+  const rows = Math.ceil(count / columns);
+  const col = index % columns;
+  const row = Math.floor(index / columns);
+  const spacingPx = 10;
+
+  return {
+    x: (col - (columns - 1) / 2) * spacingPx,
+    y: (row - (rows - 1) / 2) * spacingPx,
+  };
 }
 
 function normalizeRingIndex(ringIndex: number): 1 | 2 | 3 | 4 | null {
@@ -90,6 +121,7 @@ export function SolarSystemView({
   onRespondInput,
   showSpaceConfigDebug = false,
   probeInsetPxByRing,
+  allowMoveAnyProbe = false,
 }: ISolarSystemViewProps): React.JSX.Element {
   const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(null);
 
@@ -163,14 +195,61 @@ export function SolarSystemView({
     return labels;
   }, [showSpaceConfigDebug, spacePoints, solarSystem.spaceStates]);
 
-  const probesBySpace = useMemo(() => {
-    const map: Record<string, string[]> = {};
+  const probeView = useMemo(() => {
+    const bySpacePlayers: Record<string, string[]> = {};
+    const spacePointById = new Map(
+      spacePoints.map((point) => [point.spaceId, point]),
+    );
+    const playerOccurrence: Record<string, number> = {};
+    const grouped: Record<
+      string,
+      Array<{ key: string; playerId: string; transitionDelayMs: number }>
+    > = {};
+
     for (const probe of solarSystem.probes) {
-      if (!map[probe.spaceId]) map[probe.spaceId] = [];
-      map[probe.spaceId].push(probe.playerId);
+      if (!bySpacePlayers[probe.spaceId]) {
+        bySpacePlayers[probe.spaceId] = [];
+      }
+      bySpacePlayers[probe.spaceId].push(probe.playerId);
+
+      const occurrence = playerOccurrence[probe.playerId] ?? 0;
+      playerOccurrence[probe.playerId] = occurrence + 1;
+      const key = probe.probeId ?? `${probe.playerId}-${occurrence}`;
+
+      if (!grouped[probe.spaceId]) {
+        grouped[probe.spaceId] = [];
+      }
+      grouped[probe.spaceId].push({
+        key,
+        playerId: probe.playerId,
+        transitionDelayMs: probe.transitionDelayMs ?? 0,
+      });
     }
-    return map;
-  }, [solarSystem.probes]);
+
+    const renderItems: IProbeRenderItem[] = [];
+    for (const [spaceId, probes] of Object.entries(grouped)) {
+      const point = spacePointById.get(spaceId);
+      if (!point) {
+        continue;
+      }
+
+      for (let index = 0; index < probes.length; index += 1) {
+        const probe = probes[index];
+        const offset = tokenStackOffset(index, probes.length);
+        renderItems.push({
+          key: probe.key,
+          playerId: probe.playerId,
+          xPercent: point.xPercent,
+          yPercent: point.yPercent,
+          offsetX: offset.x,
+          offsetY: offset.y,
+          transitionDelayMs: probe.transitionDelayMs,
+        });
+      }
+    }
+
+    return { bySpacePlayers, renderItems };
+  }, [solarSystem.probes, spacePoints]);
 
   const reachable = useMemo(() => {
     if (!selectedSpaceId) return new Set<string>();
@@ -178,8 +257,11 @@ export function SolarSystemView({
   }, [selectedSpaceId, solarSystem.adjacency]);
 
   function handleSpaceClick(spaceId: string): void {
-    const hasMyProbe = (probesBySpace[spaceId] ?? []).includes(myPlayerId);
-    if (hasMyProbe) {
+    const hasMyProbe = (probeView.bySpacePlayers[spaceId] ?? []).includes(
+      myPlayerId,
+    );
+    const hasAnyProbe = (probeView.bySpacePlayers[spaceId] ?? []).length > 0;
+    if (hasMyProbe || (allowMoveAnyProbe && hasAnyProbe)) {
       setSelectedSpaceId((prev) => (prev === spaceId ? null : spaceId));
       return;
     }
@@ -249,10 +331,11 @@ export function SolarSystemView({
         />
 
         {spacePoints.map((space) => {
-          const probeCount = probesBySpace[space.spaceId]?.length ?? 0;
-          const hasMyProbe = (probesBySpace[space.spaceId] ?? []).includes(
-            myPlayerId,
-          );
+          const probeCount =
+            probeView.bySpacePlayers[space.spaceId]?.length ?? 0;
+          const hasMyProbe = (
+            probeView.bySpacePlayers[space.spaceId] ?? []
+          ).includes(myPlayerId);
           const isSelected = selectedSpaceId === space.spaceId;
           const isReachable = reachable.has(space.spaceId);
 
@@ -286,33 +369,24 @@ export function SolarSystemView({
           );
         })}
 
-        {spacePoints.map((space) => {
-          const players = probesBySpace[space.spaceId] ?? [];
-          if (players.length === 0) {
-            return null;
-          }
-
-          return (
-            <div
-              key={`probe-stack-${space.spaceId}`}
-              className='pointer-events-none absolute z-350 flex min-h-6 min-w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full'
-              style={{
-                left: `${space.xPercent}%`,
-                top: `${space.yPercent}%`,
-                transition: `left ${PROBE_TRANSITION_MS}ms ease-out, top ${PROBE_TRANSITION_MS}ms ease-out`,
-              }}
-            >
-              <div className='flex max-w-10 flex-wrap items-center justify-center gap-0.5'>
-                {players.map((playerId, tokenIndex) => (
-                  <ProbeToken
-                    key={`${space.spaceId}-${playerId}-${tokenIndex}`}
-                    playerColor={playerColors[playerId] ?? 'white'}
-                  />
-                ))}
-              </div>
-            </div>
-          );
-        })}
+        {probeView.renderItems.map((probe) => (
+          <div
+            key={probe.key}
+            className='pointer-events-none absolute z-350 h-6 w-6'
+            style={{
+              left: `${probe.xPercent}%`,
+              top: `${probe.yPercent}%`,
+              transform: `translate(calc(-50% + ${probe.offsetX}px), calc(-50% + ${probe.offsetY}px))`,
+              transition: `left ${PROBE_TRANSITION_MS}ms ease-out, top ${PROBE_TRANSITION_MS}ms ease-out, transform ${PROBE_TRANSITION_MS}ms ease-out`,
+              transitionDelay:
+                probe.transitionDelayMs > 0
+                  ? `${probe.transitionDelayMs}ms`
+                  : undefined,
+            }}
+          >
+            <ProbeToken playerColor={playerColors[probe.playerId] ?? 'white'} />
+          </div>
+        ))}
 
         {showSpaceConfigDebug && (
           <div

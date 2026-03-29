@@ -66,6 +66,8 @@ export interface IPublicPlayerState {
 export interface IPublicSolarSystemProbe {
   playerId: string;
   spaceId: string;
+  probeId?: string;
+  transitionDelayMs?: number;
 }
 
 export interface IPublicSolarSystemDiscState {

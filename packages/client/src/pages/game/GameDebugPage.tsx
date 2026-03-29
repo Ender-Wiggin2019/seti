@@ -12,7 +12,7 @@ import {
 import { ALL_CARDS } from '@seti/common/data';
 import { ETech } from '@seti/common/types/element';
 import { ETechId } from '@seti/common/types/tech';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { TProbeInsetPxByRing } from '@/features/board/SolarSystemView';
 import {
   GameContextValueProvider,
@@ -40,6 +40,7 @@ type TCardInputDebugMode =
   | 'end-of-round';
 
 type TDiscAngles = [number, number, number];
+const PUSHED_PROBE_DELAY_RESET_BASE_MS = 1100;
 
 const WHEEL_ORDER: ReadonlyArray<TSolarSystemWheelIndex> = [1, 2, 3, 4];
 
@@ -154,10 +155,26 @@ function isCoveredByUpperWheel(
 
 function createDefaultDebugWheels(): TSolarSystemWheels {
   const wheels = cloneWheels(createDefaultSolarSystemWheels());
-  wheels[3][0][1].elements.push({ type: 'PROBE', playerId: 'player-1' });
-  wheels[2][1][4].elements.push({ type: 'PROBE', playerId: 'player-2' });
-  wheels[4][2][5].elements.push({ type: 'PROBE', playerId: 'player-3' });
-  wheels[4][3][0].elements.push({ type: 'PROBE', playerId: 'player-1' });
+  wheels[3][0][1].elements.push({
+    type: 'PROBE',
+    playerId: 'player-1',
+    probeId: 'p1-a',
+  });
+  wheels[2][1][4].elements.push({
+    type: 'PROBE',
+    playerId: 'player-2',
+    probeId: 'p2-a',
+  });
+  wheels[4][2][5].elements.push({
+    type: 'PROBE',
+    playerId: 'player-3',
+    probeId: 'p3-a',
+  });
+  wheels[4][3][0].elements.push({
+    type: 'PROBE',
+    playerId: 'player-1',
+    probeId: 'p1-b',
+  });
   return wheels;
 }
 
@@ -194,9 +211,13 @@ function applyCoveragePushAfterRotation(
   prevAngles: TDiscAngles,
   nextAngles: TDiscAngles,
   rotatedRing: 1 | 2 | 3,
-): TSolarSystemWheels {
+): { wheels: TSolarSystemWheels; pushedProbeIds: string[] } {
   const nextWheels = cloneWheels(wheels);
   const movedWheels = movedWheelsForRotation(rotatedRing);
+  const pushedProbeIds = new Set<string>();
+  const rotatedDiscDelta =
+    nextAngles[rotatedRing - 1] - prevAngles[rotatedRing - 1];
+  const pushStep = rotatedDiscDelta >= 0 ? -1 : 1;
 
   for (const wheel of WHEEL_ORDER) {
     if (movedWheels.has(wheel)) {
@@ -234,7 +255,7 @@ function applyCoveragePushAfterRotation(
           continue;
         }
 
-        const targetBoardIndex = normalizeSlotIndex(boardIndex - 1);
+        const targetBoardIndex = normalizeSlotIndex(boardIndex + pushStep);
         const target = resolveTopVisibleCell(
           nextWheels,
           band,
@@ -245,13 +266,19 @@ function applyCoveragePushAfterRotation(
           continue;
         }
 
+        for (const element of sourceCell.elements) {
+          if (element.type === 'PROBE' && typeof element.probeId === 'string') {
+            pushedProbeIds.add(element.probeId);
+          }
+        }
+
         target.cell.elements.push(...sourceCell.elements);
         sourceCell.elements = [];
       }
     }
   }
 
-  return nextWheels;
+  return { wheels: nextWheels, pushedProbeIds: [...pushedProbeIds] };
 }
 
 function getBoardCoordFromSpaceId(
@@ -269,7 +296,7 @@ function moveVisibleProbe(
   discAngles: TDiscAngles,
   fromSpaceId: string,
   toSpaceId: string,
-  playerId: string,
+  playerId?: string,
 ): TSolarSystemWheels {
   const from = getBoardCoordFromSpaceId(fromSpaceId);
   const to = getBoardCoordFromSpaceId(toSpaceId);
@@ -288,9 +315,15 @@ function moveVisibleProbe(
     return wheels;
   }
 
-  const probeIndex = fromTop.cell.elements.findIndex(
-    (element) => element.type === 'PROBE' && element.playerId === playerId,
-  );
+  const probeIndex = fromTop.cell.elements.findIndex((element) => {
+    if (element.type !== 'PROBE') {
+      return false;
+    }
+    if (typeof playerId !== 'string') {
+      return true;
+    }
+    return element.playerId === playerId;
+  });
   if (probeIndex === -1) {
     return wheels;
   }
@@ -345,6 +378,7 @@ function createDebugSpaceStates(
 function extractVisibleProbes(
   wheels: TSolarSystemWheels,
   discAngles: TDiscAngles,
+  probeTransitionDelayById: Record<string, number>,
 ): IPublicGameState['solarSystem']['probes'] {
   const probes: IPublicGameState['solarSystem']['probes'] = [];
 
@@ -360,7 +394,16 @@ function extractVisibleProbes(
         if (element.type !== 'PROBE' || typeof element.playerId !== 'string') {
           continue;
         }
-        probes.push({ playerId: element.playerId, spaceId });
+        probes.push({
+          playerId: element.playerId,
+          spaceId,
+          probeId:
+            typeof element.probeId === 'string' ? element.probeId : undefined,
+          transitionDelayMs:
+            typeof element.probeId === 'string'
+              ? probeTransitionDelayById[element.probeId]
+              : undefined,
+        });
       }
     }
   }
@@ -440,6 +483,7 @@ function createDebugGameState(
   scenario: TDebugScenario,
   discAngles: TDiscAngles,
   wheels: TSolarSystemWheels,
+  probeTransitionDelayById: Record<string, number>,
   cardRowStartIndex: number,
   handStartIndex: number,
 ): IPublicGameState {
@@ -461,7 +505,11 @@ function createDebugGameState(
   ];
 
   const spaceStates = createDebugSpaceStates(wheels, discAngles);
-  const probes = extractVisibleProbes(wheels, discAngles);
+  const probes = extractVisibleProbes(
+    wheels,
+    discAngles,
+    probeTransitionDelayById,
+  );
 
   return {
     gameId: `debug-${scenario}`,
@@ -605,6 +653,16 @@ export function GameDebugPage(): React.JSX.Element {
   const [cardInputMode, setCardInputMode] =
     useState<TCardInputDebugMode>('none');
   const [nextRotateRing, setNextRotateRing] = useState<1 | 2 | 3>(1);
+  const [pushedProbeDelayMsByRing, setPushedProbeDelayMsByRing] = useState<
+    Record<1 | 2 | 3, number>
+  >({
+    1: 90,
+    2: 150,
+    3: 180,
+  });
+  const [probeTransitionDelayById, setProbeTransitionDelayById] = useState<
+    Record<string, number>
+  >({});
   const [probeInsetPxByRing, setProbeInsetPxByRing] =
     useState<TProbeInsetPxByRing>({
       1: 89,
@@ -612,13 +670,38 @@ export function GameDebugPage(): React.JSX.Element {
       3: 91,
       4: 229,
     });
+  const clearProbeDelayTimerRef = useRef<number | null>(null);
 
   const rotateRing = (ring: 1 | 2 | 3): void => {
     setDiscAngles((prev) => {
       const next = nextDiscAnglesForRotation(prev, ring);
-      setDebugWheels((prevWheels) =>
-        applyCoveragePushAfterRotation(prevWheels, prev, next, ring),
-      );
+      setDebugWheels((prevWheels) => {
+        const result = applyCoveragePushAfterRotation(
+          prevWheels,
+          prev,
+          next,
+          ring,
+        );
+
+        if (result.pushedProbeIds.length > 0) {
+          const delayMs = pushedProbeDelayMsByRing[ring] ?? 0;
+          const nextDelayById: Record<string, number> = {};
+          for (const probeId of result.pushedProbeIds) {
+            nextDelayById[probeId] = delayMs;
+          }
+          setProbeTransitionDelayById(nextDelayById);
+
+          if (clearProbeDelayTimerRef.current !== null) {
+            window.clearTimeout(clearProbeDelayTimerRef.current);
+          }
+          clearProbeDelayTimerRef.current = window.setTimeout(() => {
+            setProbeTransitionDelayById({});
+            clearProbeDelayTimerRef.current = null;
+          }, delayMs + PUSHED_PROBE_DELAY_RESET_BASE_MS);
+        }
+
+        return result.wheels;
+      });
       return next;
     });
   };
@@ -629,15 +712,32 @@ export function GameDebugPage(): React.JSX.Element {
         scenario,
         discAngles,
         debugWheels,
+        probeTransitionDelayById,
         cardRowStartIndex,
         handStartIndex,
       ),
-    [scenario, discAngles, debugWheels, cardRowStartIndex, handStartIndex],
+    [
+      scenario,
+      discAngles,
+      debugWheels,
+      probeTransitionDelayById,
+      cardRowStartIndex,
+      handStartIndex,
+    ],
   );
 
   useEffect(() => {
     setDebugWheels(createDefaultDebugWheels());
+    setProbeTransitionDelayById({});
   }, [scenario]);
+
+  useEffect(() => {
+    return () => {
+      if (clearProbeDelayTimerRef.current !== null) {
+        window.clearTimeout(clearProbeDelayTimerRef.current);
+      }
+    };
+  }, []);
 
   const pendingInput = useMemo<IPlayerInputModel | null>(() => {
     if (cardInputMode === 'hand-select') {
@@ -699,15 +799,21 @@ export function GameDebugPage(): React.JSX.Element {
           return;
         }
 
-        setDebugWheels((prev) =>
-          moveVisibleProbe(
+        setDebugWheels((prev) => {
+          const movedMine = moveVisibleProbe(
             prev,
             discAngles,
             fromSpaceId,
             toSpaceId,
             myPlayerId,
-          ),
-        );
+          );
+
+          if (movedMine !== prev) {
+            return movedMine;
+          }
+
+          return moveVisibleProbe(prev, discAngles, fromSpaceId, toSpaceId);
+        });
         return;
       }
 
@@ -843,6 +949,34 @@ export function GameDebugPage(): React.JSX.Element {
         </div>
 
         <div className='flex items-center gap-2 border-l border-surface-700 pl-2'>
+          {([1, 2, 3] as const).map((ring) => (
+            <label
+              key={`push-delay-ring-${ring}`}
+              className='flex items-center gap-1 font-mono text-[10px] text-text-300'
+              title={`Delay for pushed probes when rotating ring ${ring}`}
+            >
+              D{ring}
+              <input
+                type='range'
+                min={0}
+                max={700}
+                step={10}
+                value={pushedProbeDelayMsByRing[ring]}
+                onChange={(event) => {
+                  const nextValue = Number(event.target.value);
+                  setPushedProbeDelayMsByRing((prev) => ({
+                    ...prev,
+                    [ring]: nextValue,
+                  }));
+                }}
+                className='w-16 accent-accent-500'
+              />
+              <span className='w-8 text-right text-text-500'>
+                {pushedProbeDelayMsByRing[ring]}
+              </span>
+            </label>
+          ))}
+
           {([1, 2, 3, 4] as const).map((ring) => (
             <label
               key={`probe-inset-ring-${ring}`}
@@ -872,7 +1006,7 @@ export function GameDebugPage(): React.JSX.Element {
           ))}
         </div>
       </div>
-      <GameLayout probeInsetPxByRing={probeInsetPxByRing} />
+      <GameLayout probeInsetPxByRing={probeInsetPxByRing} allowMoveAnyProbe />
     </GameContextValueProvider>
   );
 }
