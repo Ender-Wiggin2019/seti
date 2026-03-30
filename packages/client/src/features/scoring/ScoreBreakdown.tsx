@@ -14,7 +14,9 @@ interface IScoreBreakdownProps {
   rows: IScoreBreakdownRow[];
 }
 
-export function ScoreBreakdown({ rows }: IScoreBreakdownProps): React.JSX.Element {
+export function ScoreBreakdown({
+  rows,
+}: IScoreBreakdownProps): React.JSX.Element {
   if (rows.length === 0) {
     return <p className='text-xs text-text-500'>No scoring data.</p>;
   }
@@ -45,14 +47,24 @@ export function ScoreBreakdown({ rows }: IScoreBreakdownProps): React.JSX.Elemen
                 className={isWinner ? 'bg-accent-500/10' : 'bg-transparent'}
               >
                 <td className='px-2 py-1.5 text-text-200'>{row.playerName}</td>
-                <td className='px-2 py-1.5 font-mono text-text-300'>{row.base ?? 0}</td>
-                <td className='px-2 py-1.5 font-mono text-text-300'>{row.cards ?? 0}</td>
-                <td className='px-2 py-1.5 font-mono text-text-300'>{row.tech ?? 0}</td>
+                <td className='px-2 py-1.5 font-mono text-text-300'>
+                  {row.base ?? 0}
+                </td>
+                <td className='px-2 py-1.5 font-mono text-text-300'>
+                  {row.cards ?? 0}
+                </td>
+                <td className='px-2 py-1.5 font-mono text-text-300'>
+                  {row.tech ?? 0}
+                </td>
                 <td className='px-2 py-1.5 font-mono text-text-300'>
                   {row.milestone ?? 0}
                 </td>
-                <td className='px-2 py-1.5 font-mono text-text-300'>{row.gold ?? 0}</td>
-                <td className='px-2 py-1.5 font-mono text-text-300'>{row.alien ?? 0}</td>
+                <td className='px-2 py-1.5 font-mono text-text-300'>
+                  {row.gold ?? 0}
+                </td>
+                <td className='px-2 py-1.5 font-mono text-text-300'>
+                  {row.alien ?? 0}
+                </td>
                 <td className='px-2 py-1.5 font-mono font-bold text-text-100'>
                   {row.total}
                   {isWinner ? ' 👑' : ''}

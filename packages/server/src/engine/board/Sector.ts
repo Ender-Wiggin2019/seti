@@ -1,43 +1,61 @@
-import { canPlaceSignal, isSectorComplete } from '@seti/common/rules/sector';
-import { ESector } from '@seti/common/types/element';
+import type { TSectorWinnerBonus } from '@seti/common/constant/sectorSetup';
+import { ESector, ETrace } from '@seti/common/types/element';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import type { IPublicSectorState } from '@seti/common/types/protocol/gameState';
 import { GameError } from '@/shared/errors/GameError.js';
 
-export type TDataToken = string;
+// ── Re-exports for convenience ──────────────────────────────────────────
 
-export interface ISectorMarker {
-  playerId: string;
-  timestamp: number;
+export type { TSectorWinnerBonus } from '@seti/common/constant/sectorSetup';
+
+// ── Signal types ────────────────────────────────────────────────────────
+
+export interface IDataSignal {
+  type: 'data';
+  tokenId: string;
 }
 
-export interface ISectorOverflowMarker {
+export interface IPlayerSignal {
+  type: 'player';
   playerId: string;
 }
 
-export interface ISectorWinnerMarker {
-  playerId: string;
-  reward: number;
-}
+export type TSectorSignal = IDataSignal | IPlayerSignal;
+
+// ── Mark result ─────────────────────────────────────────────────────────
 
 export interface ISectorMarkSignalResult {
-  dataGained: TDataToken | null;
-  vpGained: number;
+  /** Whether a data token was displaced (player gains 1 data). */
+  dataGained: boolean;
 }
+
+// ── Completion result ───────────────────────────────────────────────────
 
 export interface ISectorCompletionResult {
   winnerPlayerId: string | null;
   secondPlacePlayerId: string | null;
-  winnerReward: number;
+  isFirstWin: boolean;
   participants: string[];
-  publicityGains: Record<string, number>;
 }
+
+// ── Default bonuses (simple single-item arrays) ─────────────────────────
+
+export const DEFAULT_FIRST_WIN_BONUS: TSectorWinnerBonus = [
+  { type: 'trace', trace: ETrace.RED },
+];
+
+export const DEFAULT_REPEAT_WIN_BONUS: TSectorWinnerBonus = [
+  { type: 'vp', amount: 3 },
+];
+
+// ── Init ────────────────────────────────────────────────────────────────
 
 export interface ISectorInit {
   id: string;
   color: ESector;
   dataSlotCapacity?: number;
-  winnerReward?: number;
+  firstWinBonus?: TSectorWinnerBonus;
+  repeatWinBonus?: TSectorWinnerBonus;
 }
 
 function assertPlayerId(playerId: string): void {
@@ -50,139 +68,130 @@ function assertPlayerId(playerId: string): void {
   }
 }
 
+// ── Sector class ────────────────────────────────────────────────────────
+
+/**
+ * A sector on the game board.
+ *
+ * Internally tracks a **unified signal list** where each entry is either a
+ * data token or a player marker. Marking a signal replaces the rightmost
+ * data token; if no data remains the marker is appended.
+ *
+ * The sector is "fulfilled" when no data signals remain (all replaced by
+ * player markers). Fulfillment resolution determines a winner, resets the
+ * sector, and places the second-place marker at position 0.
+ */
 export class Sector {
   public readonly id: string;
 
   public readonly color: ESector;
 
-  public readonly dataSlots: Array<TDataToken | null>;
+  public readonly dataSlotCapacity: number;
 
-  public readonly markerSlots: ISectorMarker[];
+  public readonly firstWinBonus: TSectorWinnerBonus;
 
-  public readonly overflowMarkers: ISectorOverflowMarker[];
+  public readonly repeatWinBonus: TSectorWinnerBonus;
 
-  public readonly winnerMarkers: ISectorWinnerMarker[];
+  /**
+   * Unified signal list — each entry is either `{ type: 'data' }` or
+   * `{ type: 'player', playerId }`. The array starts fully populated
+   * with data signals and player markers replace data from right to left.
+   */
+  public signals: TSectorSignal[];
 
+  /** History of winner player IDs across completion cycles. */
+  public sectorWinners: string[];
+
+  /** True when no data signals remain (all slots occupied by players). */
   public completed: boolean;
-
-  private readonly winnerRewardValue: number;
 
   private nextDataTokenId: number;
 
-  private nextTimestamp: number;
-
-  private markerHistory: ISectorMarker[];
-
   public constructor(init: ISectorInit) {
-    if (
-      !Number.isInteger(init.dataSlotCapacity ?? 2) ||
-      (init.dataSlotCapacity ?? 2) < 1
-    ) {
+    const capacity = init.dataSlotCapacity ?? 5;
+    if (!Number.isInteger(capacity) || capacity < 1) {
       throw new GameError(
         EErrorCode.VALIDATION_ERROR,
         'dataSlotCapacity must be an integer >= 1',
-        { dataSlotCapacity: init.dataSlotCapacity },
-      );
-    }
-    if (
-      !Number.isInteger(init.winnerReward ?? 3) ||
-      (init.winnerReward ?? 3) < 0
-    ) {
-      throw new GameError(
-        EErrorCode.VALIDATION_ERROR,
-        'winnerReward must be an integer >= 0',
-        { winnerReward: init.winnerReward },
+        { dataSlotCapacity: capacity },
       );
     }
 
     this.id = init.id;
     this.color = init.color;
-    this.dataSlots = [];
-    this.markerSlots = [];
-    this.overflowMarkers = [];
-    this.winnerMarkers = [];
+    this.dataSlotCapacity = capacity;
+    this.firstWinBonus = init.firstWinBonus ?? DEFAULT_FIRST_WIN_BONUS;
+    this.repeatWinBonus = init.repeatWinBonus ?? DEFAULT_REPEAT_WIN_BONUS;
+    this.signals = [];
+    this.sectorWinners = [];
     this.completed = false;
-
-    this.winnerRewardValue = init.winnerReward ?? 3;
     this.nextDataTokenId = 1;
-    this.nextTimestamp = 1;
-    this.markerHistory = [];
 
-    const dataSlotCapacity = init.dataSlotCapacity ?? 2;
-    for (let index = 0; index < dataSlotCapacity; index += 1) {
-      this.dataSlots.push(this.createDataToken());
+    for (let i = 0; i < capacity; i++) {
+      this.signals.push(this.createDataSignal());
     }
   }
 
+  // ── Mark signal ───────────────────────────────────────────────────────
+
+  /**
+   * Mark a signal on this sector for the given player.
+   *
+   * - Finds the **rightmost** data signal and replaces it with a player marker.
+   *   The player gains 1 data.
+   * - If no data signals remain, **appends** a player marker. The player
+   *   does NOT gain data in this case.
+   */
   public markSignal(playerId: string): ISectorMarkSignalResult {
     assertPlayerId(playerId);
 
-    let dataGained: TDataToken | null = null;
-    const markerPosition = this.markerSlots.length;
-    if (
-      markerPosition < this.dataSlots.length &&
-      canPlaceSignal(this.toPublicState())
-    ) {
-      dataGained = this.removeLeftmostDataToken();
+    const rightmostDataIdx = this.findRightmostDataIndex();
+
+    if (rightmostDataIdx >= 0) {
+      this.signals[rightmostDataIdx] = { type: 'player', playerId };
+      this.completed = this.isFulfilled();
+      return { dataGained: true };
     }
 
-    if (markerPosition < this.dataSlots.length) {
-      const marker: ISectorMarker = {
-        playerId,
-        timestamp: this.nextTimestamp,
-      };
-      this.nextTimestamp += 1;
-      this.markerSlots.push(marker);
-      this.markerHistory.push(marker);
-    } else {
-      this.overflowMarkers.push({ playerId });
-      this.markerHistory.push({
-        playerId,
-        timestamp: this.nextTimestamp,
-      });
-      this.nextTimestamp += 1;
-    }
-
-    this.completed = this.isComplete();
-
-    return {
-      dataGained,
-      vpGained: markerPosition === 1 ? 2 : 0,
-    };
+    this.signals.push({ type: 'player', playerId });
+    return { dataGained: false };
   }
 
+  // ── Fulfillment ───────────────────────────────────────────────────────
+
+  /** True when all data signals have been replaced by player markers. */
+  public isFulfilled(): boolean {
+    return (
+      this.signals.length > 0 && !this.signals.some((s) => s.type === 'data')
+    );
+  }
+
+  /**
+   * Resolve a fulfilled sector.
+   *
+   * 1. Determine winner (most markers, tie-break: rightmost position)
+   * 2. Determine second place (same logic, excluding winner)
+   * 3. Append winner to `sectorWinners`
+   * 4. Reset the sector: clear all signals, refill data, place 2nd-place
+   *    marker at index 0 (replaces data, player does NOT gain data)
+   */
   public resolveCompletion(): ISectorCompletionResult {
-    if (!this.completed) {
+    if (!this.isFulfilled()) {
       throw new GameError(
         EErrorCode.VALIDATION_ERROR,
-        'Cannot resolve an incomplete sector',
-        {
-          sectorId: this.id,
-        },
+        'Cannot resolve an unfulfilled sector',
+        { sectorId: this.id },
       );
     }
 
-    const markerCountByPlayer = new Map<string, number>();
-    const latestTimestampByPlayer = new Map<string, number>();
-    for (const marker of this.markerHistory) {
-      markerCountByPlayer.set(
-        marker.playerId,
-        (markerCountByPlayer.get(marker.playerId) ?? 0) + 1,
-      );
-      latestTimestampByPlayer.set(marker.playerId, marker.timestamp);
-    }
+    const { markerCounts, rightmostPositions, participants } =
+      this.computeRanking();
 
-    const participants = Array.from(markerCountByPlayer.keys());
-    const ranking = [...participants].sort((left, right) => {
-      const countDiff =
-        (markerCountByPlayer.get(right) ?? 0) -
-        (markerCountByPlayer.get(left) ?? 0);
-      if (countDiff !== 0) {
-        return countDiff;
-      }
+    const ranking = [...participants].sort((a, b) => {
+      const countDiff = (markerCounts.get(b) ?? 0) - (markerCounts.get(a) ?? 0);
+      if (countDiff !== 0) return countDiff;
       return (
-        (latestTimestampByPlayer.get(right) ?? 0) -
-        (latestTimestampByPlayer.get(left) ?? 0)
+        (rightmostPositions.get(b) ?? 0) - (rightmostPositions.get(a) ?? 0)
       );
     });
 
@@ -190,95 +199,114 @@ export class Sector {
     const secondPlacePlayerId = ranking[1] ?? null;
 
     if (winnerPlayerId !== null) {
-      this.winnerMarkers.push({
-        playerId: winnerPlayerId,
-        reward: this.winnerRewardValue,
-      });
+      this.sectorWinners.push(winnerPlayerId);
     }
 
-    const publicityGains: Record<string, number> = {};
-    for (const playerId of participants) {
-      publicityGains[playerId] = 1;
-    }
+    const isFirstWin =
+      winnerPlayerId !== null &&
+      this.sectorWinners.filter((id) => id === winnerPlayerId).length === 1;
 
     const result: ISectorCompletionResult = {
       winnerPlayerId,
       secondPlacePlayerId,
-      winnerReward: winnerPlayerId === null ? 0 : this.winnerRewardValue,
+      isFirstWin,
       participants,
-      publicityGains,
     };
 
     this.reset(secondPlacePlayerId);
     return result;
   }
 
-  public isComplete(): boolean {
-    return isSectorComplete(this.toPublicState());
-  }
+  // ── Reset ─────────────────────────────────────────────────────────────
 
+  /**
+   * Clear all signals, refill data to capacity, optionally place a
+   * second-place marker at the first position (replacing a data token).
+   * The second-place marker does NOT grant data to the player.
+   */
   public reset(secondPlacePlayerId: string | null = null): void {
-    for (let index = 0; index < this.dataSlots.length; index += 1) {
-      this.dataSlots[index] = this.createDataToken();
-    }
-    this.markerSlots.length = 0;
-    this.overflowMarkers.length = 0;
-    this.markerHistory = [];
+    this.signals = [];
     this.completed = false;
+
+    for (let i = 0; i < this.dataSlotCapacity; i++) {
+      this.signals.push(this.createDataSignal());
+    }
 
     if (secondPlacePlayerId !== null) {
       assertPlayerId(secondPlacePlayerId);
-
-      const retainedMarker: ISectorMarker = {
-        playerId: secondPlacePlayerId,
-        timestamp: this.nextTimestamp,
-      };
-      this.nextTimestamp += 1;
-      this.markerSlots.push(retainedMarker);
-      this.markerHistory.push(retainedMarker);
-
-      // The retained marker occupies the first signal position after reset.
-      this.removeLeftmostDataToken();
-      this.completed = this.isComplete();
+      this.signals[0] = { type: 'player', playerId: secondPlacePlayerId };
     }
   }
 
-  private createDataToken(): TDataToken {
-    const token = `data-${this.nextDataTokenId}`;
-    this.nextDataTokenId += 1;
-    return token;
+  // ── Query helpers ─────────────────────────────────────────────────────
+
+  public getDataCount(): number {
+    return this.signals.filter((s) => s.type === 'data').length;
   }
 
-  private removeLeftmostDataToken(): TDataToken | null {
-    const leftmostIndex = this.dataSlots.findIndex(
-      (dataToken) => dataToken !== null,
-    );
-    if (leftmostIndex < 0) {
-      return null;
+  public getPlayerMarkerCount(playerId?: string): number {
+    if (playerId) {
+      return this.signals.filter(
+        (s) => s.type === 'player' && s.playerId === playerId,
+      ).length;
     }
-
-    const removed = this.dataSlots[leftmostIndex];
-    for (
-      let index = leftmostIndex;
-      index < this.dataSlots.length - 1;
-      index += 1
-    ) {
-      this.dataSlots[index] = this.dataSlots[index + 1];
-    }
-    this.dataSlots[this.dataSlots.length - 1] = null;
-    return removed;
+    return this.signals.filter((s) => s.type === 'player').length;
   }
 
-  private toPublicState(): IPublicSectorState {
+  /**
+   * Project to the common public state for client consumption.
+   */
+  public toPublicState(): IPublicSectorState {
     return {
       sectorId: this.id,
       color: this.color,
-      dataSlots: [...this.dataSlots],
-      markerSlots: this.markerHistory.map((marker) => ({
-        playerId: marker.playerId,
-        timestamp: marker.timestamp,
-      })),
+      signals: this.signals.map((s) =>
+        s.type === 'data'
+          ? { type: 'data' as const }
+          : { type: 'player' as const, playerId: s.playerId },
+      ),
+      dataSlotCapacity: this.dataSlotCapacity,
+      sectorWinners: [...this.sectorWinners],
       completed: this.completed,
+    };
+  }
+
+  // ── Private ───────────────────────────────────────────────────────────
+
+  private createDataSignal(): IDataSignal {
+    const tokenId = `data-${this.nextDataTokenId}`;
+    this.nextDataTokenId += 1;
+    return { type: 'data', tokenId };
+  }
+
+  private findRightmostDataIndex(): number {
+    for (let i = this.signals.length - 1; i >= 0; i--) {
+      if (this.signals[i].type === 'data') return i;
+    }
+    return -1;
+  }
+
+  private computeRanking(): {
+    markerCounts: Map<string, number>;
+    rightmostPositions: Map<string, number>;
+    participants: string[];
+  } {
+    const markerCounts = new Map<string, number>();
+    const rightmostPositions = new Map<string, number>();
+
+    for (let i = 0; i < this.signals.length; i++) {
+      const signal = this.signals[i];
+      if (signal.type === 'player') {
+        const pid = signal.playerId;
+        markerCounts.set(pid, (markerCounts.get(pid) ?? 0) + 1);
+        rightmostPositions.set(pid, i);
+      }
+    }
+
+    return {
+      markerCounts,
+      rightmostPositions,
+      participants: Array.from(markerCounts.keys()),
     };
   }
 }

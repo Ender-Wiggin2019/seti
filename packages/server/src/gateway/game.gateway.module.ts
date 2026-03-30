@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { GameGateway } from './game.gateway.js';
 import { GameManager } from './GameManager.js';
+import { GameGateway } from './game.gateway.js';
 
 @Module({
   providers: [GameManager, GameGateway],

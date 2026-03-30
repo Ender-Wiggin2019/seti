@@ -1,5 +1,5 @@
 import { DEFAULT_COLUMN_CONFIGS } from '@seti/common/types/computer';
-import { ETrace, type EPlanet } from '@seti/common/types/protocol/enums';
+import { type EPlanet } from '@seti/common/types/protocol/enums';
 import { AlienState } from '@/engine/alien/AlienState.js';
 import {
   type IPlanetState,
@@ -37,10 +37,7 @@ interface ITechBoardInternalState {
 }
 
 interface ISectorInternalState {
-  winnerRewardValue: number;
   nextDataTokenId: number;
-  nextTimestamp: number;
-  markerHistory: Array<{ playerId: string; timestamp: number }>;
 }
 
 interface ISolarSystemInternalState {
@@ -201,36 +198,15 @@ function deserializeSectors(dto: IGameStateDto): Sector[] {
     const sector = new Sector({
       id: sectorDto.id,
       color: sectorDto.color,
-      dataSlotCapacity: sectorDto.dataSlots.length,
-      winnerReward: sectorDto.winnerRewardValue,
+      dataSlotCapacity: sectorDto.dataSlotCapacity,
     });
 
-    for (let index = 0; index < sector.dataSlots.length; index += 1) {
-      sector.dataSlots[index] = sectorDto.dataSlots[index] ?? null;
-    }
-    sector.markerSlots.splice(
-      0,
-      sector.markerSlots.length,
-      ...sectorDto.markerSlots.map((marker) => ({ ...marker })),
-    );
-    sector.overflowMarkers.splice(
-      0,
-      sector.overflowMarkers.length,
-      ...sectorDto.overflowMarkers.map((marker) => ({ ...marker })),
-    );
-    sector.winnerMarkers.splice(
-      0,
-      sector.winnerMarkers.length,
-      ...sectorDto.winnerMarkers.map((marker) => ({ ...marker })),
-    );
+    sector.signals = sectorDto.signals.map((s) => ({ ...s }) as never);
+    sector.sectorWinners = [...sectorDto.sectorWinners];
     sector.completed = sectorDto.completed;
 
     const internal = sector as unknown as ISectorInternalState;
     internal.nextDataTokenId = sectorDto.nextDataTokenId;
-    internal.nextTimestamp = sectorDto.nextTimestamp;
-    internal.markerHistory = sectorDto.markerHistory.map((marker) => ({
-      ...marker,
-    }));
     return sector;
   });
 }
@@ -262,7 +238,9 @@ function deserializePlayers(game: Game, dto: IGameStateDto): void {
     };
     for (let i = 0; i < playerDto.dataState.computerColumns.length; i++) {
       const colDto = playerDto.dataState.computerColumns[i];
-      const col = computerInternal.columns[i] as unknown as IComputerColumnInternal;
+      const col = computerInternal.columns[
+        i
+      ] as unknown as IComputerColumnInternal;
       if (!col) continue;
       if (colDto.techId) {
         col.techPlacementValue = {

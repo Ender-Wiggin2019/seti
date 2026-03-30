@@ -147,7 +147,7 @@ function countSectorFulfills(
   return game.sectors.reduce((total, sectorLike) => {
     const sector = sectorLike as {
       color?: ESector;
-      winnerMarkers?: Array<{ playerId: string }>;
+      sectorWinners?: string[];
     };
 
     if (color && sector.color !== color) {
@@ -156,8 +156,7 @@ function countSectorFulfills(
 
     return (
       total +
-      (sector.winnerMarkers?.filter((marker) => marker.playerId === player.id)
-        .length ?? 0)
+      (sector.sectorWinners?.filter((id) => id === player.id).length ?? 0)
     );
   }, 0);
 }

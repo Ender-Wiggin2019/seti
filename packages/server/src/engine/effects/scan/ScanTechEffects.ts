@@ -204,18 +204,25 @@ export class ScanHandSignalEffect {
           }
 
           const discardedCard = player.removeCardAt(selectedCard.handIndex);
-
           const sectorColor = extractSectorColorFromCardItem(discardedCard);
-          const markResult =
-            sectorColor === null
-              ? null
-              : MarkSectorSignalEffect.markByColor(player, game, sectorColor);
-
           game.mainDeck.discard(selectedCard.discardCardId);
+
+          if (sectorColor !== null) {
+            return MarkSectorSignalEffect.markByColor(
+              player,
+              game,
+              sectorColor,
+              (markResult) =>
+                options.onComplete?.({
+                  discardedCardId: selectedCard.discardCardId,
+                  markedSignal: markResult,
+                }),
+            );
+          }
 
           return options.onComplete?.({
             discardedCardId: selectedCard.discardCardId,
-            markedSignal: markResult,
+            markedSignal: null,
           });
         },
       },

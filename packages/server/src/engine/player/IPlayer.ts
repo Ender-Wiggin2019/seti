@@ -1,3 +1,4 @@
+import type { IComputerColumnConfig } from '@seti/common/types/computer';
 import { ETrace } from '@seti/common/types/element';
 import type { EPlanet } from '@seti/common/types/protocol/enums';
 import type { ETechId } from '@seti/common/types/tech';
@@ -8,7 +9,6 @@ import type {
 } from '../effects/probe/LandProbeEffect.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
-import type { IComputerColumnConfig } from '@seti/common/types/computer';
 import type { Computer } from './Computer.js';
 import type { Data } from './Data.js';
 import type { DataPool } from './DataPool.js';

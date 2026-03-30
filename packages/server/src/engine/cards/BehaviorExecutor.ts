@@ -1,4 +1,9 @@
-import { EResource, ETech, type ETrace } from '@seti/common/types/element';
+import {
+  EResource,
+  type ESector,
+  ETech,
+  type ETrace,
+} from '@seti/common/types/element';
 import { EPlanet } from '@seti/common/types/protocol/enums';
 import type { TTechCategory } from '@seti/common/types/tech';
 import { EPriority } from '../deferred/Priority.js';
@@ -287,13 +292,14 @@ export class BehaviorExecutor {
           behavior.scan.markEarthSectorIndex,
         );
       }
+
+      const colorMarks: ESector[] = [];
       if (behavior.scan?.markCardSector && card.sector) {
-        MarkSectorSignalEffect.markByColor(player, game, card.sector);
+        colorMarks.push(card.sector);
       }
-      for (const sectorColor of behavior.scan?.markSectors ?? []) {
-        MarkSectorSignalEffect.markByColor(player, game, sectorColor);
-      }
-      return undefined;
+      colorMarks.push(...(behavior.scan?.markSectors ?? []));
+
+      return MarkSectorSignalEffect.markByColorChain(player, game, colorMarks);
     });
   }
 

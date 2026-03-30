@@ -4,15 +4,7 @@ import { ProbeToken } from '@/features/board/ProbeToken';
 
 describe('ProbeToken', () => {
   it('maps player color to probe asset', () => {
-    render(
-      <ProbeToken
-        playerColor='purple'
-        xPercent={50}
-        yPercent={50}
-        offsetIndex={0}
-        offsetCount={1}
-      />,
-    );
+    render(<ProbeToken playerColor='purple' />);
 
     const token = screen.getByAltText('purple probe');
     expect(token).toHaveAttribute(

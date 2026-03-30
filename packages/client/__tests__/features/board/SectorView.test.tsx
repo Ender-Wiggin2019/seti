@@ -15,15 +15,21 @@ function createPair(): ISectorPairConfig {
     {
       sectorId: 'sector-0',
       color: ESector.BLUE,
-      dataSlots: ['data-1', null, null],
-      markerSlots: [{ playerId: 'player-1', timestamp: 1 }],
+      signals: [
+        { type: 'data' },
+        { type: 'player', playerId: 'player-1' },
+        { type: 'player', playerId: 'player-1' },
+      ],
+      dataSlotCapacity: 3,
+      sectorWinners: [],
       completed: false,
     },
     {
       sectorId: 'sector-1',
       color: ESector.BLACK,
-      dataSlots: [null, null, null],
-      markerSlots: [],
+      signals: [{ type: 'data' }, { type: 'data' }, { type: 'data' }],
+      dataSlotCapacity: 3,
+      sectorWinners: [],
       completed: false,
     },
   ];

@@ -93,18 +93,20 @@ export interface ITechBoardDto {
   }>;
 }
 
+export interface ISectorSignalDto {
+  type: 'data' | 'player';
+  tokenId?: string;
+  playerId?: string;
+}
+
 export interface ISectorDto {
   id: string;
   color: ESector;
-  dataSlots: Array<string | null>;
-  markerSlots: Array<{ playerId: string; timestamp: number }>;
-  overflowMarkers: Array<{ playerId: string }>;
-  winnerMarkers: Array<{ playerId: string; reward: number }>;
+  signals: ISectorSignalDto[];
+  dataSlotCapacity: number;
+  sectorWinners: string[];
   completed: boolean;
-  winnerRewardValue: number;
   nextDataTokenId: number;
-  nextTimestamp: number;
-  markerHistory: Array<{ playerId: string; timestamp: number }>;
 }
 
 export interface ITraceSlotDto {
@@ -117,8 +119,7 @@ export interface ITraceSlotDto {
   }>;
   maxOccupants: number;
   rewards: Array<
-    | { type: 'VP'; amount: number }
-    | { type: 'CUSTOM'; effectId: string }
+    { type: 'VP'; amount: number } | { type: 'CUSTOM'; effectId: string }
   >;
   isDiscovery: boolean;
 }

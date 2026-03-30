@@ -83,16 +83,12 @@ function getTraceCount(player: IPlayer, trace: ETrace): number {
 
 function getSectorWinCount(player: IPlayer, game: IGame): number {
   return game.sectors.reduce((total, sectorLike) => {
-    const winnerMarkers = (
-      sectorLike as { winnerMarkers?: Array<{ playerId: string }> }
-    ).winnerMarkers;
-    if (!winnerMarkers) {
+    const sectorWinners = (sectorLike as { sectorWinners?: string[] })
+      .sectorWinners;
+    if (!sectorWinners) {
       return total;
     }
-    return (
-      total +
-      winnerMarkers.filter((marker) => marker.playerId === player.id).length
-    );
+    return total + sectorWinners.filter((id) => id === player.id).length;
   }, 0);
 }
 

@@ -56,7 +56,10 @@ export class GameManager {
     this.cache.set(gameId, game);
 
     const snapshot = await this.gameRepo.loadLatestSnapshot(gameId);
-    this.versions.set(gameId, snapshot ? (snapshot as { version?: number }).version ?? 0 : 0);
+    this.versions.set(
+      gameId,
+      snapshot ? ((snapshot as { version?: number }).version ?? 0) : 0,
+    );
 
     this.refreshTimer(gameId);
     return game;

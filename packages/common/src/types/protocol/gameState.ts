@@ -94,16 +94,17 @@ export interface IPublicSolarSystemState {
 
 export type IPublicSolarSystem = IPublicSolarSystemState;
 
-export interface IPublicSectorMarkerState {
-  playerId: string;
-  timestamp: number;
+export interface IPublicSectorSignal {
+  type: 'data' | 'player';
+  playerId?: string;
 }
 
 export interface IPublicSectorState {
   sectorId: string;
   color: ESector;
-  dataSlots: Array<string | null>;
-  markerSlots: IPublicSectorMarkerState[];
+  signals: IPublicSectorSignal[];
+  dataSlotCapacity: number;
+  sectorWinners: string[];
   completed: boolean;
 }
 

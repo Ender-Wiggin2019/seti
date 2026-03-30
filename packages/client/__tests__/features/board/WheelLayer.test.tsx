@@ -7,6 +7,6 @@ describe('WheelLayer', () => {
     render(<WheelLayer ring={2} angle={2} />);
 
     const ring = screen.getByTestId('wheel-layer-ring-2');
-    expect(ring.style.transform).toContain('rotate(90deg)');
+    expect(ring.style.transform).toContain('rotate(-90deg)');
   });
 });

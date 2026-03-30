@@ -27,7 +27,9 @@ export function OpponentSummary({
                 />
                 {player.playerName}
               </span>
-              <span className='font-mono text-xs text-text-300'>{player.score} VP</span>
+              <span className='font-mono text-xs text-text-300'>
+                {player.score} VP
+              </span>
             </summary>
             <div className='mt-1.5 grid grid-cols-2 gap-x-2 gap-y-1 font-mono text-[10px] text-text-400'>
               <span>Hand: {player.handSize}</span>
@@ -39,7 +41,9 @@ export function OpponentSummary({
               <span>Pool: {player.dataPoolCount}</span>
               <span>Signals: {player.pieces.signalMarkers}</span>
               {player.passed ? (
-                <span className='col-span-2 text-warning-300'>Passed this round</span>
+                <span className='col-span-2 text-warning-300'>
+                  Passed this round
+                </span>
               ) : null}
             </div>
           </details>

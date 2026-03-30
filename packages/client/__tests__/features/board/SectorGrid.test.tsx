@@ -45,8 +45,13 @@ function createSectors(): IPublicSector[] {
     return tileDef.sectors.map((sectorOnTile, idx) => ({
       sectorId: placement.sectorIds[idx],
       color: sectorOnTile.color as ESector,
-      dataSlots: [null, null, null] as Array<string | null>,
-      markerSlots: [] as { playerId: string; timestamp: number }[],
+      signals: [
+        { type: 'data' as const },
+        { type: 'data' as const },
+        { type: 'data' as const },
+      ],
+      dataSlotCapacity: 3,
+      sectorWinners: [] as string[],
       completed: false,
     }));
   });

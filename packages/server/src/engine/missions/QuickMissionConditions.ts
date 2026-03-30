@@ -249,7 +249,8 @@ export function probeMinDistanceFromEarth(minDistance: number): TConditionFn {
     let head = 0;
     while (head < queue.length) {
       const cur = queue[head++];
-      const d = dist.get(cur)!;
+      const d = dist.get(cur);
+      if (d === undefined) continue;
       for (const neighbor of ss.adjacency.get(cur) ?? []) {
         if (!dist.has(neighbor)) {
           dist.set(neighbor, d + 1);

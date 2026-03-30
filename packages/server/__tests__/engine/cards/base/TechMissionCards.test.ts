@@ -432,8 +432,8 @@ describe('Observation quick missions use sector fulfill counts', () => {
     const player = createPlayer();
     const game = createGame({
       sectors: [
-        { color: ESector.RED, winnerMarkers: [{ playerId: player.id }] },
-        { color: ESector.RED, winnerMarkers: [{ playerId: 'p2' }] },
+        { color: ESector.RED, sectorWinners: [player.id] },
+        { color: ESector.RED, sectorWinners: ['p2'] },
       ],
     });
 
@@ -447,8 +447,8 @@ describe('Observation quick missions use sector fulfill counts', () => {
     const player = createPlayer();
     const game = createGame({
       sectors: [
-        { color: ESector.RED, winnerMarkers: [{ playerId: player.id }] },
-        { color: ESector.RED, winnerMarkers: [{ playerId: player.id }] },
+        { color: ESector.RED, sectorWinners: [player.id] },
+        { color: ESector.RED, sectorWinners: [player.id] },
       ],
     });
 
@@ -464,8 +464,8 @@ describe('Observation quick missions use sector fulfill counts', () => {
     const player = createPlayer();
     const game = createGame({
       sectors: [
-        { color: ESector.RED, winnerMarkers: [{ playerId: player.id }] },
-        { color: ESector.BLACK, winnerMarkers: [{ playerId: player.id }] },
+        { color: ESector.RED, sectorWinners: [player.id] },
+        { color: ESector.BLACK, sectorWinners: [player.id] },
       ],
     });
 

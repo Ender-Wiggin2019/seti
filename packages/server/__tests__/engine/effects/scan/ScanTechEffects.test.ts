@@ -27,10 +27,10 @@ function createMockGame(): IGame {
     new Sector({ id: 'sector-0', color: ESector.RED, dataSlotCapacity: 3 }),
     new Sector({ id: 'sector-1', color: ESector.YELLOW, dataSlotCapacity: 3 }),
     new Sector({ id: 'sector-2', color: ESector.BLUE, dataSlotCapacity: 3 }),
-    new Sector({ id: 'sector-3', color: ESector.RED, dataSlotCapacity: 3 }),
+    new Sector({ id: 'sector-3', color: ESector.BLACK, dataSlotCapacity: 3 }),
     new Sector({ id: 'sector-4', color: ESector.YELLOW, dataSlotCapacity: 3 }),
-    new Sector({ id: 'sector-5', color: ESector.BLUE, dataSlotCapacity: 3 }),
-    new Sector({ id: 'sector-6', color: ESector.RED, dataSlotCapacity: 3 }),
+    new Sector({ id: 'sector-5', color: ESector.BLACK, dataSlotCapacity: 3 }),
+    new Sector({ id: 'sector-6', color: ESector.YELLOW, dataSlotCapacity: 3 }),
     new Sector({ id: 'sector-7', color: ESector.YELLOW, dataSlotCapacity: 3 }),
   ];
   const mainDeck = new Deck<string>();
@@ -96,7 +96,9 @@ describe('Scan tech atomic effects', () => {
 
     expect(player.publicity).toBe(beforePublicity - 1);
     expect(
-      mercurySector.markerSlots.some((m) => m.playerId === player.id),
+      mercurySector.signals.some(
+        (s) => s.type === 'player' && s.playerId === player.id,
+      ),
     ).toBe(true);
   });
 
@@ -123,9 +125,11 @@ describe('Scan tech atomic effects', () => {
       (sector) =>
         sector instanceof Sector && (sector as Sector).color === ESector.BLUE,
     ) as Sector;
-    expect(blueSector.markerSlots.some((m) => m.playerId === player.id)).toBe(
-      true,
-    );
+    expect(
+      blueSector.signals.some(
+        (s) => s.type === 'player' && s.playerId === player.id,
+      ),
+    ).toBe(true);
   });
 
   it('allows choosing move in energy launch effect', () => {

@@ -31,15 +31,20 @@ export function SectorView({
   const positionStyle = getPositionStyle(pair.placement.position);
 
   const totalData = pair.sectors.reduce(
-    (sum, s) => sum + s.dataSlots.filter((d) => d !== null).length,
+    (sum, s) => sum + s.signals.filter((sig) => sig.type === 'data').length,
     0,
   );
-  const totalDataSlots = pair.sectors.reduce(
-    (sum, s) => sum + s.dataSlots.length,
+  const totalSlots = pair.sectors.reduce(
+    (sum, s) => sum + s.dataSlotCapacity,
     0,
   );
 
-  const allMarkers = pair.sectors.flatMap((s) => s.markerSlots);
+  const allPlayerSignals = pair.sectors.flatMap((s) =>
+    s.signals.filter(
+      (sig): sig is { type: 'player'; playerId: string } =>
+        sig.type === 'player' && sig.playerId !== undefined,
+    ),
+  );
   const isCompleted =
     pair.sectors.length > 0 && pair.sectors.every((s) => s.completed);
 
@@ -103,23 +108,23 @@ export function SectorView({
           style={{ transform: counterRotateTransform(pair.placement.position) }}
         >
           <span className='rounded bg-surface-950/70 px-1.5 py-0.5 font-mono text-[9px] text-text-100'>
-            {totalData}/{totalDataSlots}
+            {totalData}/{totalSlots}
           </span>
 
-          {allMarkers.length > 0 && (
+          {allPlayerSignals.length > 0 && (
             <span className='flex items-center gap-0.5 rounded bg-surface-950/70 px-1.5 py-0.5'>
-              {allMarkers.slice(0, 4).map((marker, idx) => (
+              {allPlayerSignals.slice(0, 4).map((sig, idx) => (
                 <span
-                  key={`marker-${marker.playerId}-${idx}`}
+                  key={`marker-${sig.playerId}-${idx}`}
                   className='inline-block h-2 w-2 rounded-full'
                   style={{
-                    backgroundColor: playerColors[marker.playerId] ?? '#888',
+                    backgroundColor: playerColors[sig.playerId] ?? '#888',
                   }}
                 />
               ))}
-              {allMarkers.length > 4 && (
+              {allPlayerSignals.length > 4 && (
                 <span className='font-mono text-[8px] text-text-200'>
-                  +{allMarkers.length - 4}
+                  +{allPlayerSignals.length - 4}
                 </span>
               )}
             </span>
@@ -134,8 +139,8 @@ export function SectorView({
 
         <div className='pointer-events-none absolute inset-0'>
           {pair.sectors.map((sector, index) => {
-            const remainingData = sector.dataSlots.filter(
-              (d) => d !== null,
+            const remainingData = sector.signals.filter(
+              (sig) => sig.type === 'data',
             ).length;
             const isSelectable = selectableColors.has(sector.color);
             const xPos = index === 0 ? '30%' : '70%';
@@ -171,20 +176,29 @@ export function SectorView({
                     {sector.color}
                   </span>
                   <span className='font-mono text-[8px] text-text-300'>
-                    {remainingData}/{sector.dataSlots.length}
+                    {remainingData}/{sector.dataSlotCapacity}
                   </span>
                 </div>
 
                 <div className='mt-0.5 flex items-center gap-0.5'>
-                  {sector.dataSlots.map((token, slotIndex) => (
+                  {sector.signals.map((sig, slotIndex) => (
                     <span
-                      key={`${sector.sectorId}-data-${slotIndex}`}
+                      key={`${sector.sectorId}-sig-${slotIndex}`}
                       className={cn(
                         'inline-block h-1.5 w-1.5 rounded-full border',
-                        token
+                        sig.type === 'data'
                           ? 'border-cyan-300/80 bg-cyan-200/90'
                           : 'border-surface-500/60 bg-transparent',
                       )}
+                      style={
+                        sig.type === 'player' && sig.playerId
+                          ? {
+                              backgroundColor:
+                                playerColors[sig.playerId] ?? '#888',
+                              borderColor: playerColors[sig.playerId] ?? '#888',
+                            }
+                          : undefined
+                      }
                     />
                   ))}
                 </div>

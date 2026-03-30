@@ -14,41 +14,65 @@ function createSectorState(
   return {
     sectorId: 'sector-1',
     color: ESector.RED,
-    dataSlots: ['data-1', 'data-2'],
-    markerSlots: [],
+    signals: [{ type: 'data' }, { type: 'data' }],
+    dataSlotCapacity: 2,
+    sectorWinners: [],
     completed: false,
     ...overrides,
   };
 }
 
 describe('sector rules', () => {
-  it('canPlaceSignal returns true while data remains', () => {
+  it('canPlaceSignal returns true while data signals remain', () => {
     const sector = createSectorState();
     expect(canPlaceSignal(sector)).toBe(true);
   });
 
-  it('getSectorProgress returns filled and total slots', () => {
+  it('canPlaceSignal returns false when no data signals remain', () => {
     const sector = createSectorState({
-      dataSlots: ['data-2', null, null],
+      signals: [
+        { type: 'player', playerId: 'p1' },
+        { type: 'player', playerId: 'p2' },
+      ],
+    });
+    expect(canPlaceSignal(sector)).toBe(false);
+  });
+
+  it('getSectorProgress returns filled (player) and total (capacity)', () => {
+    const sector = createSectorState({
+      signals: [
+        { type: 'data' },
+        { type: 'player', playerId: 'p1' },
+        { type: 'player', playerId: 'p2' },
+      ],
+      dataSlotCapacity: 3,
     });
     expect(getSectorProgress(sector)).toEqual({ filled: 2, total: 3 });
   });
 
-  it('isSectorComplete returns true when all slots are null', () => {
+  it('isSectorComplete returns true when all signals are player markers', () => {
     const sector = createSectorState({
-      dataSlots: [null, null],
+      signals: [
+        { type: 'player', playerId: 'p1' },
+        { type: 'player', playerId: 'p2' },
+      ],
       completed: true,
     });
     expect(isSectorComplete(sector)).toBe(true);
     expect(canPlaceSignal(sector)).toBe(false);
   });
 
+  it('isSectorComplete returns false for empty signals', () => {
+    const sector = createSectorState({ signals: [] });
+    expect(isSectorComplete(sector)).toBe(false);
+  });
+
   it('getSectorStandings aggregates marker counts by player', () => {
     const sector = createSectorState({
-      markerSlots: [
-        { playerId: 'player-a', timestamp: 1 },
-        { playerId: 'player-b', timestamp: 2 },
-        { playerId: 'player-a', timestamp: 3 },
+      signals: [
+        { type: 'player', playerId: 'player-a' },
+        { type: 'player', playerId: 'player-b' },
+        { type: 'player', playerId: 'player-a' },
       ],
     });
 

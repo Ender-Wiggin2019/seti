@@ -1,6 +1,6 @@
-import { cn } from '@/lib/cn';
 import { EventLog } from '@/features/log';
 import { OpponentSummary } from '@/features/player';
+import { cn } from '@/lib/cn';
 import { useGameContext } from '@/pages/game/GameContext';
 
 interface ISidebarProps {

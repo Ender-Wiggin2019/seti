@@ -64,11 +64,10 @@ export function PlayerDashboard({
             <ComputerView
               computer={player.computer}
               dataPoolCount={player.dataPoolCount}
-              onPlaceData={(row, columnIndex) =>
+              onPlaceData={(row) =>
                 onFreeAction({
                   type: EFreeAction.PLACE_DATA,
-                  row,
-                  columnIndex,
+                  slotIndex: row === 'top' ? 0 : 1,
                 })
               }
             />

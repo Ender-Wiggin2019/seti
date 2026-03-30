@@ -4,18 +4,17 @@ import {
   createDefaultSolarSystemWheels,
   type ESectorPosition,
   type ESectorTileId,
+  type EStarName,
   type ISectorTilePlacement,
   type ISolarSystemSetupConfig,
   ROTATION_STEPS_PER_RING,
+  SECTOR_STAR_CONFIGS,
   SECTOR_TILE_DEFINITIONS,
 } from '@seti/common/constant/sectorSetup';
 import type { SeededRandom } from '@/shared/rng/SeededRandom.js';
 import { type ISectorInit, Sector } from './Sector.js';
 import { type ISolarSystemSpace, SolarSystem } from './SolarSystem.js';
-import {
-  SOLAR_SYSTEM_CELL_CONFIGS,
-  SOLAR_SYSTEM_NEAR_STAR_POOL,
-} from './SolarSystemConfig.js';
+import { SOLAR_SYSTEM_CELL_CONFIGS } from './SolarSystemConfig.js';
 
 export interface IBoardBuildResult {
   solarSystem: SolarSystem;
@@ -113,9 +112,15 @@ export class BoardBuilder {
 
       for (let idx = 0; idx < tileDef.sectors.length; idx += 1) {
         const sectorOnTile = tileDef.sectors[idx];
+        const starConfig =
+          SECTOR_STAR_CONFIGS[sectorOnTile.starName as EStarName];
+
         const init: ISectorInit = {
           id: placement.sectorIds[idx],
           color: sectorOnTile.color,
+          dataSlotCapacity: starConfig?.dataSlotCapacity,
+          firstWinBonus: starConfig?.firstWinBonus,
+          repeatWinBonus: starConfig?.repeatWinBonus,
         };
         sectors.push(new Sector(init));
       }

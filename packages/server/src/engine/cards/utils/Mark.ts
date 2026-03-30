@@ -70,7 +70,12 @@ export class Mark {
           const selectedRowItem = game.cardRow[selected.rowIndex];
           const sectorColor = this.resolveCardSector(selectedRowItem);
           if (sectorColor !== null) {
-            MarkSectorSignalEffect.markByColor(player, game, sectorColor);
+            return MarkSectorSignalEffect.markByColor(
+              player,
+              game,
+              sectorColor,
+              () => this.markFromCardRow(player, game, remainingCount - 1),
+            );
           }
 
           return this.markFromCardRow(player, game, remainingCount - 1);

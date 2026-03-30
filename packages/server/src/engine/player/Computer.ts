@@ -3,8 +3,8 @@ import type {
   IComputerSlotReward,
 } from '@seti/common/types/computer';
 import { DEFAULT_COLUMN_CONFIGS } from '@seti/common/types/computer';
-import type { ETechId } from '@seti/common/types/tech';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
+import type { ETechId } from '@seti/common/types/tech';
 import { GameError } from '@/shared/errors/GameError.js';
 import {
   ComputerColumn,
@@ -12,7 +12,10 @@ import {
   type ITechPlacement,
 } from './ComputerColumn.js';
 
-export { type ITechPlacement, type IComputerColumnState } from './ComputerColumn.js';
+export {
+  type IComputerColumnState,
+  type ITechPlacement,
+} from './ComputerColumn.js';
 
 export enum EComputerRow {
   TOP = 'TOP',
@@ -116,9 +119,7 @@ export class Computer {
    *   true  = filled bottom slot
    */
   public getBottomSlotStates(): ReadonlyArray<boolean | null> {
-    return this.columns.map((c) =>
-      c.hasBottomSlot ? c.bottomFilled : null,
-    );
+    return this.columns.map((c) => (c.hasBottomSlot ? c.bottomFilled : null));
   }
 
   public getColumnStates(): ReadonlyArray<IComputerColumnState> {

@@ -5,6 +5,7 @@ import { Sector } from '@/engine/board/Sector.js';
 import { Deck } from '@/engine/deck/Deck.js';
 import { RefillCardRowEffect } from '@/engine/effects/cardRow/RefillCardRowEffect.js';
 import { MarkSectorSignalEffect } from '@/engine/effects/scan/MarkSectorSignalEffect.js';
+import { EScanSubAction } from '@/engine/effects/scan/ScanActionPool.js';
 import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
 
@@ -113,40 +114,63 @@ describe('ScanAction', () => {
       expect(player.resources.energy).toBe(1);
     });
 
-    it('marks a signal in the earth sector (index 0) immediately', () => {
-      const game = createMockGame();
-      const player = basePlayer();
-      const earth = game.sectors[0] as Sector;
-      ScanAction.execute(player, game);
-      expect(earth.markerSlots.some((m) => m.playerId === player.id)).toBe(
-        true,
-      );
-    });
-
-    it('returns a PlayerInput for card row selection', () => {
+    it('returns a pool menu (SelectOption)', () => {
       const game = createMockGame();
       const player = basePlayer();
       const input = ScanAction.execute(player, game);
       expect(input).toBeDefined();
-      expect(input!.type).toBe(EPlayerInputType.CARD);
+      expect(input!.type).toBe(EPlayerInputType.OPTION);
     });
 
-    it('processes card selection: removes card, marks target sector, refills card row', () => {
+    it('Mark Earth marks sector 0 (fallback) then returns to pool', () => {
+      const game = createMockGame();
+      const player = basePlayer();
+      const earth = game.sectors[0] as Sector;
+
+      const poolMenu = ScanAction.execute(player, game);
+      const nextMenu = poolMenu!.process({
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_EARTH,
+      });
+
+      expect(
+        earth.signals.some(
+          (s) => s.type === 'player' && s.playerId === player.id,
+        ),
+      ).toBe(true);
+      expect(nextMenu).toBeDefined();
+      expect(nextMenu!.type).toBe(EPlayerInputType.OPTION);
+    });
+
+    it('Mark Card Row → select card → mark target sector → refills on done', () => {
       const game = createMockGame();
       const player = basePlayer();
       const target = game.sectors[1] as Sector;
 
-      const input = ScanAction.execute(player, game);
-      expect(input).toBeDefined();
+      const poolMenu = ScanAction.execute(player, game);
 
-      input!.process({
+      const cardSelect = poolMenu!.process({
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_CARD_ROW,
+      });
+      expect(cardSelect).toBeDefined();
+      expect(cardSelect!.type).toBe(EPlayerInputType.CARD);
+
+      const afterCard = cardSelect!.process({
         type: EPlayerInputType.CARD,
         cardIds: ['card-row-1'],
       });
 
-      expect(target.markerSlots.some((m) => m.playerId === player.id)).toBe(
-        true,
-      );
+      expect(
+        target.signals.some(
+          (s) => s.type === 'player' && s.playerId === player.id,
+        ),
+      ).toBe(true);
+
+      afterCard!.process({
+        type: EPlayerInputType.OPTION,
+        optionId: 'done',
+      });
 
       expect(game.cardRow.length).toBe(3);
     });
@@ -176,11 +200,11 @@ describe('ScanAction', () => {
     it('marks signal by color', () => {
       const game = createMockGame();
       const player = basePlayer();
-      const result = MarkSectorSignalEffect.markByColor(
-        player,
-        game,
-        ESector.BLUE,
-      );
+      let result: { sectorId: string } | null = null;
+      MarkSectorSignalEffect.markByColor(player, game, ESector.BLUE, (r) => {
+        result = r;
+        return undefined;
+      });
       expect(result).not.toBeNull();
       expect(result!.sectorId).toBe('sector-target');
     });

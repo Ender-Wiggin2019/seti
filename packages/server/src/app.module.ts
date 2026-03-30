@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from '@/auth/auth.module.js';
 import { GatewayModule } from '@/gateway/game.gateway.module.js';
 import { LobbyModule } from '@/lobby/lobby.module.js';

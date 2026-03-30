@@ -1,4 +1,4 @@
-import { ESector } from '@seti/common/types/element';
+import { ESector, ETrace } from '@seti/common/types/element';
 import { EPlanet } from '@seti/common/types/protocol/enums';
 
 type TFixed4<T> = [T, T, T, T];
@@ -405,6 +405,70 @@ export const ALL_SECTOR_POSITIONS = [
   ESectorPosition.EAST,
   ESectorPosition.SOUTH,
 ] as const;
+
+// ---------------------------------------------------------------------------
+// Sector winner bonus & per-star config
+// ---------------------------------------------------------------------------
+
+export type TSectorWinnerBonusItem =
+  | { type: 'trace'; trace: ETrace }
+  | { type: 'vp'; amount: number };
+
+export type TSectorWinnerBonus = readonly TSectorWinnerBonusItem[];
+
+export interface ISectorStarConfig {
+  dataSlotCapacity: number;
+  firstWinBonus: TSectorWinnerBonus;
+  repeatWinBonus: TSectorWinnerBonus;
+}
+
+const TRACE_RED: TSectorWinnerBonusItem = { type: 'trace', trace: ETrace.RED };
+const VP3: TSectorWinnerBonusItem = { type: 'vp', amount: 3 };
+
+export const SECTOR_STAR_CONFIGS: Readonly<
+  Record<EStarName, ISectorStarConfig>
+> = {
+  [EStarName.PROCYON]: {
+    dataSlotCapacity: 5,
+    firstWinBonus: [TRACE_RED],
+    repeatWinBonus: [VP3],
+  },
+  [EStarName.VEGA]: {
+    dataSlotCapacity: 4,
+    firstWinBonus: [TRACE_RED, { type: 'vp', amount: 2 }],
+    repeatWinBonus: [{ type: 'vp', amount: 5 }],
+  },
+  [EStarName.SIRIUS_A]: {
+    dataSlotCapacity: 6,
+    firstWinBonus: [TRACE_RED],
+    repeatWinBonus: [TRACE_RED],
+  },
+  [EStarName.BARNARDS_STAR]: {
+    dataSlotCapacity: 5,
+    firstWinBonus: [TRACE_RED],
+    repeatWinBonus: [VP3],
+  },
+  [EStarName.KEPLER_22]: {
+    dataSlotCapacity: 5,
+    firstWinBonus: [TRACE_RED],
+    repeatWinBonus: [VP3],
+  },
+  [EStarName.PROXIMA_CENTAURI]: {
+    dataSlotCapacity: 6,
+    firstWinBonus: [TRACE_RED],
+    repeatWinBonus: [TRACE_RED],
+  },
+  [EStarName.SIXTY_ONE_VIRGINIS]: {
+    dataSlotCapacity: 6,
+    firstWinBonus: [TRACE_RED],
+    repeatWinBonus: [TRACE_RED],
+  },
+  [EStarName.BETA_PICTORIS]: {
+    dataSlotCapacity: 5,
+    firstWinBonus: [TRACE_RED, VP3],
+    repeatWinBonus: [TRACE_RED],
+  },
+};
 
 /** Rotation is quantized to 8 steps of 45° each */
 export const ROTATION_STEPS_PER_RING = 8;

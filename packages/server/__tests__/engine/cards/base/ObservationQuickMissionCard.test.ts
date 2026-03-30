@@ -58,27 +58,20 @@ describe('ObservationQuickMissionCard (37/39/41/43)', () => {
   });
 
   it('falls back to color-based signal placement when setup config is missing', () => {
-    const firstYellowSector = {
+    const yellowSector = {
       id: 'sector-a',
-      color: ESector.YELLOW,
-      completed: false,
-      markSignal: vi.fn(() => ({ dataGained: null, vpGained: 0 })),
-    };
-    const secondYellowSector = {
-      id: 'sector-b',
       color: ESector.YELLOW,
       completed: false,
       markSignal: vi.fn(() => ({ dataGained: null, vpGained: 0 })),
     };
 
     const player = createPlayer();
-    const game = createGame([firstYellowSector, secondYellowSector], false);
+    const game = createGame([yellowSector], false);
     const card = getCardRegistry().create('39');
 
     card.play({ player, game });
     game.deferredActions.drain(game);
 
-    expect(firstYellowSector.markSignal).toHaveBeenCalledTimes(2);
-    expect(secondYellowSector.markSignal).not.toHaveBeenCalled();
+    expect(yellowSector.markSignal).toHaveBeenCalledTimes(2);
   });
 });

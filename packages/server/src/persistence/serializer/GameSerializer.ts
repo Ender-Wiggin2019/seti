@@ -29,10 +29,7 @@ import type {
 import type { IPlayerStateDto } from '../dto/PlayerStateDto.js';
 
 interface ISectorInternalState {
-  winnerRewardValue: number;
   nextDataTokenId: number;
-  nextTimestamp: number;
-  markerHistory: Array<{ playerId: string; timestamp: number }>;
 }
 
 interface IMilestoneBucketState {
@@ -260,15 +257,11 @@ function serializeSectors(game: IGame): ISectorDto[] {
     return {
       id: sector.id,
       color: sector.color,
-      dataSlots: [...sector.dataSlots],
-      markerSlots: sector.markerSlots.map((marker) => ({ ...marker })),
-      overflowMarkers: sector.overflowMarkers.map((marker) => ({ ...marker })),
-      winnerMarkers: sector.winnerMarkers.map((marker) => ({ ...marker })),
+      signals: sector.signals.map((s) => ({ ...s })),
+      dataSlotCapacity: sector.dataSlotCapacity,
+      sectorWinners: [...sector.sectorWinners],
       completed: sector.completed,
-      winnerRewardValue: internal.winnerRewardValue,
       nextDataTokenId: internal.nextDataTokenId,
-      nextTimestamp: internal.nextTimestamp,
-      markerHistory: internal.markerHistory.map((marker) => ({ ...marker })),
     };
   });
 }
@@ -284,7 +277,10 @@ function serializeAlienState(game: IGame): IAlienStateDto {
         alienIndex: slot.alienIndex,
         traceColor: slot.traceColor,
         occupants: slot.occupants.map((occ) => ({
-          source: occ.source === 'neutral' ? ('neutral' as const) : { playerId: occ.source.playerId },
+          source:
+            occ.source === 'neutral'
+              ? ('neutral' as const)
+              : { playerId: occ.source.playerId },
           traceColor: occ.traceColor,
         })),
         maxOccupants: slot.maxOccupants,
@@ -450,13 +446,7 @@ function toPublicPlanetaryBoard(game: IGame): IPublicPlanetaryBoard {
 }
 
 function toPublicSectors(game: IGame): IPublicSector[] {
-  return game.sectors.map((sector) => ({
-    sectorId: sector.id,
-    color: sector.color,
-    dataSlots: [...sector.dataSlots],
-    markerSlots: [...sector.markerSlots],
-    completed: sector.completed,
-  }));
+  return game.sectors.map((sector) => sector.toPublicState());
 }
 
 function toPublicTechBoard(game: IGame): IPublicTechBoard {

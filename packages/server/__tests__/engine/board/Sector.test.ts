@@ -2,180 +2,345 @@ import { ESector } from '@seti/common/types/element';
 import { Sector } from '@/engine/board/Sector.js';
 
 describe('Sector', () => {
-  it('markSignal gains leftmost data and places marker', () => {
-    const sector = new Sector({
-      id: 'sector-red',
-      color: ESector.RED,
-      dataSlotCapacity: 2,
-      winnerReward: 3,
+  describe('markSignal', () => {
+    it('replaces rightmost data with player marker and gains data', () => {
+      const sector = new Sector({
+        id: 'sector-red',
+        color: ESector.RED,
+        dataSlotCapacity: 3,
+      });
+
+      const result = sector.markSignal('player-a');
+
+      expect(result.dataGained).toBe(true);
+      expect(sector.signals).toHaveLength(3);
+      expect(sector.signals[2]).toEqual({
+        type: 'player',
+        playerId: 'player-a',
+      });
+      expect(sector.signals[0].type).toBe('data');
+      expect(sector.signals[1].type).toBe('data');
+      expect(sector.completed).toBe(false);
     });
 
-    const result = sector.markSignal('player-a');
+    it('replaces rightmost data (not leftmost) progressively', () => {
+      const sector = new Sector({
+        id: 'sector-blue',
+        color: ESector.BLUE,
+        dataSlotCapacity: 5,
+      });
 
-    expect(result.dataGained).toBe('data-1');
-    expect(result.vpGained).toBe(0);
-    expect(sector.markerSlots).toHaveLength(1);
-    expect(sector.markerSlots[0]?.playerId).toBe('player-a');
-    expect(sector.dataSlots).toEqual(['data-2', null]);
-    expect(sector.completed).toBe(false);
-  });
+      sector.markSignal('player-a');
+      sector.markSignal('player-b');
+      sector.markSignal('player-a');
 
-  it('markSignal grants +2 VP when occupying second signal position', () => {
-    const sector = new Sector({
-      id: 'sector-blue',
-      color: ESector.BLUE,
-      dataSlotCapacity: 3,
+      expect(sector.signals[4]).toEqual({
+        type: 'player',
+        playerId: 'player-a',
+      });
+      expect(sector.signals[3]).toEqual({
+        type: 'player',
+        playerId: 'player-b',
+      });
+      expect(sector.signals[2]).toEqual({
+        type: 'player',
+        playerId: 'player-a',
+      });
+      expect(sector.signals[0].type).toBe('data');
+      expect(sector.signals[1].type).toBe('data');
     });
 
-    sector.markSignal('player-a');
-    const secondResult = sector.markSignal('player-b');
+    it('appends marker when no data remains (no data gain)', () => {
+      const sector = new Sector({
+        id: 'sector-yellow',
+        color: ESector.YELLOW,
+        dataSlotCapacity: 2,
+      });
 
-    expect(secondResult.vpGained).toBe(2);
-    expect(secondResult.dataGained).toBe('data-2');
-  });
+      sector.markSignal('player-a');
+      sector.markSignal('player-b');
+      expect(sector.completed).toBe(true);
 
-  it('markSignal overflows when slots are full and still counts marker', () => {
-    const sector = new Sector({
-      id: 'sector-yellow',
-      color: ESector.YELLOW,
-      dataSlotCapacity: 1,
+      const overflow = sector.markSignal('player-c');
+
+      expect(overflow.dataGained).toBe(false);
+      expect(sector.signals).toHaveLength(3);
+      expect(sector.signals[2]).toEqual({
+        type: 'player',
+        playerId: 'player-c',
+      });
     });
 
-    sector.markSignal('player-a');
-    const overflowResult = sector.markSignal('player-b');
+    it('sets completed=true when all data displaced', () => {
+      const sector = new Sector({
+        id: 'sector-black',
+        color: ESector.BLACK,
+        dataSlotCapacity: 2,
+      });
 
-    expect(overflowResult.dataGained).toBeNull();
-    expect(sector.overflowMarkers).toHaveLength(1);
-    expect(sector.overflowMarkers[0]?.playerId).toBe('player-b');
-  });
+      sector.markSignal('player-a');
+      expect(sector.completed).toBe(false);
 
-  it('resolveCompletion selects winner by marker majority', () => {
-    const sector = new Sector({
-      id: 'sector-black',
-      color: ESector.BLACK,
-      dataSlotCapacity: 3,
-      winnerReward: 4,
-    });
-
-    sector.markSignal('player-a');
-    sector.markSignal('player-a');
-    sector.markSignal('player-b');
-
-    const completion = sector.resolveCompletion();
-
-    expect(completion.winnerPlayerId).toBe('player-a');
-    expect(completion.secondPlacePlayerId).toBe('player-b');
-    expect(completion.winnerReward).toBe(4);
-    expect(sector.winnerMarkers).toHaveLength(1);
-    expect(sector.winnerMarkers[0]).toEqual({
-      playerId: 'player-a',
-      reward: 4,
-    });
-  });
-
-  it('resolveCompletion breaks ties by latest marker', () => {
-    const sector = new Sector({
-      id: 'sector-tie',
-      color: ESector.RED,
-      dataSlotCapacity: 2,
-    });
-
-    sector.markSignal('player-a');
-    sector.markSignal('player-b');
-
-    const completion = sector.resolveCompletion();
-
-    expect(completion.winnerPlayerId).toBe('player-b');
-    expect(completion.secondPlacePlayerId).toBe('player-a');
-  });
-
-  it('resolveCompletion grants +1 publicity to all contributors', () => {
-    const sector = new Sector({
-      id: 'sector-publicity',
-      color: ESector.BLUE,
-      dataSlotCapacity: 3,
-    });
-
-    sector.markSignal('player-a');
-    sector.markSignal('player-b');
-    sector.markSignal('player-a');
-
-    const completion = sector.resolveCompletion();
-
-    expect(completion.participants.sort()).toEqual(['player-a', 'player-b']);
-    expect(completion.publicityGains).toEqual({
-      'player-a': 1,
-      'player-b': 1,
+      sector.markSignal('player-b');
+      expect(sector.completed).toBe(true);
     });
   });
 
-  it('resolveCompletion retains second place marker after reset', () => {
-    const sector = new Sector({
-      id: 'sector-retain',
-      color: ESector.YELLOW,
-      dataSlotCapacity: 3,
+  describe('isFulfilled', () => {
+    it('returns false when data remains', () => {
+      const sector = new Sector({
+        id: 's1',
+        color: ESector.RED,
+        dataSlotCapacity: 3,
+      });
+      sector.markSignal('player-a');
+      expect(sector.isFulfilled()).toBe(false);
     });
 
-    sector.markSignal('player-a');
-    sector.markSignal('player-b');
-    sector.markSignal('player-b');
-
-    sector.resolveCompletion();
-
-    expect(sector.markerSlots).toHaveLength(1);
-    expect(sector.markerSlots[0]?.playerId).toBe('player-a');
-    expect(sector.overflowMarkers).toHaveLength(0);
-    expect(sector.completed).toBe(false);
+    it('returns true when no data remains', () => {
+      const sector = new Sector({
+        id: 's1',
+        color: ESector.RED,
+        dataSlotCapacity: 2,
+      });
+      sector.markSignal('player-a');
+      sector.markSignal('player-b');
+      expect(sector.isFulfilled()).toBe(true);
+    });
   });
 
-  it('reset refills data slots and clears temporary markers', () => {
-    const sector = new Sector({
-      id: 'sector-reset',
-      color: ESector.BLACK,
-      dataSlotCapacity: 2,
+  describe('resolveCompletion', () => {
+    it('selects winner by marker majority', () => {
+      const sector = new Sector({
+        id: 'sector-resolve',
+        color: ESector.BLACK,
+        dataSlotCapacity: 3,
+      });
+
+      sector.markSignal('player-a');
+      sector.markSignal('player-a');
+      sector.markSignal('player-b');
+
+      const result = sector.resolveCompletion();
+
+      expect(result.winnerPlayerId).toBe('player-a');
+      expect(result.secondPlacePlayerId).toBe('player-b');
+      expect(result.isFirstWin).toBe(true);
+      expect(sector.sectorWinners).toEqual(['player-a']);
     });
 
-    sector.markSignal('player-a');
-    sector.markSignal('player-b');
-    sector.resolveCompletion();
-    sector.reset();
+    it('breaks ties by rightmost position', () => {
+      const sector = new Sector({
+        id: 'sector-tie',
+        color: ESector.RED,
+        dataSlotCapacity: 2,
+      });
 
-    expect(sector.dataSlots.every((dataToken) => dataToken !== null)).toBe(
-      true,
-    );
-    expect(sector.markerSlots).toHaveLength(0);
-    expect(sector.overflowMarkers).toHaveLength(0);
-    expect(sector.completed).toBe(false);
+      // Data at [0,1] → markSignal replaces rightmost first
+      sector.markSignal('player-a'); // index 1
+      sector.markSignal('player-b'); // index 0
+
+      // player-a at index 1 (rightmost), player-b at index 0
+      // Both have 1 marker. Rightmost wins → player-a
+      const result = sector.resolveCompletion();
+
+      expect(result.winnerPlayerId).toBe('player-a');
+      expect(result.secondPlacePlayerId).toBe('player-b');
+    });
+
+    it('resets sector after resolution with second-place at position 0', () => {
+      const sector = new Sector({
+        id: 'sector-reset',
+        color: ESector.YELLOW,
+        dataSlotCapacity: 3,
+      });
+
+      sector.markSignal('player-a');
+      sector.markSignal('player-b');
+      sector.markSignal('player-b');
+
+      sector.resolveCompletion();
+
+      // Sector reset: [player-a, Data, Data] (capacity 3, 2nd place at 0)
+      expect(sector.signals).toHaveLength(3);
+      expect(sector.signals[0]).toEqual({
+        type: 'player',
+        playerId: 'player-a',
+      });
+      expect(sector.signals[1].type).toBe('data');
+      expect(sector.signals[2].type).toBe('data');
+      expect(sector.completed).toBe(false);
+    });
+
+    it('tracks multiple winners across completion cycles', () => {
+      const sector = new Sector({
+        id: 'sector-multi',
+        color: ESector.RED,
+        dataSlotCapacity: 2,
+      });
+
+      sector.markSignal('player-a');
+      sector.markSignal('player-b');
+      sector.resolveCompletion();
+
+      // 2nd round: sector-a is pre-placed at 0
+      // markSignal replaces rightmost data (index 1) → player-b
+      sector.markSignal('player-b');
+
+      expect(sector.isFulfilled()).toBe(true);
+      sector.resolveCompletion();
+
+      expect(sector.sectorWinners).toEqual(['player-a', 'player-b']);
+    });
+
+    it('isFirstWin is false on repeat win', () => {
+      const sector = new Sector({
+        id: 'sector-repeat',
+        color: ESector.BLUE,
+        dataSlotCapacity: 2,
+      });
+
+      sector.markSignal('player-a');
+      sector.markSignal('player-b');
+      const first = sector.resolveCompletion();
+      expect(first.isFirstWin).toBe(true);
+
+      sector.markSignal('player-a');
+      const second = sector.resolveCompletion();
+      expect(second.winnerPlayerId).toBe('player-a');
+      expect(second.isFirstWin).toBe(false);
+    });
+
+    it('throws when sector is not fulfilled', () => {
+      const sector = new Sector({
+        id: 'sector-error',
+        color: ESector.RED,
+        dataSlotCapacity: 3,
+      });
+      sector.markSignal('player-a');
+      expect(() => sector.resolveCompletion()).toThrow();
+    });
   });
 
-  it('supports full flow across multiple completion rounds', () => {
-    const sector = new Sector({
-      id: 'sector-flow',
-      color: ESector.RED,
-      dataSlotCapacity: 2,
-      winnerReward: 5,
+  describe('reset', () => {
+    it('refills data to capacity and clears markers', () => {
+      const sector = new Sector({
+        id: 'sector-reset-full',
+        color: ESector.BLACK,
+        dataSlotCapacity: 4,
+      });
+
+      sector.markSignal('player-a');
+      sector.markSignal('player-b');
+      sector.reset();
+
+      expect(sector.signals).toHaveLength(4);
+      expect(sector.signals.every((s) => s.type === 'data')).toBe(true);
+      expect(sector.completed).toBe(false);
     });
 
-    sector.markSignal('player-a');
-    sector.markSignal('player-b');
-    const firstCompletion = sector.resolveCompletion();
+    it('places second-place marker at index 0 without data gain', () => {
+      const sector = new Sector({
+        id: 'sector-reset-2nd',
+        color: ESector.RED,
+        dataSlotCapacity: 5,
+      });
+      sector.reset('player-b');
 
-    expect(firstCompletion.winnerPlayerId).toBe('player-b');
-    expect(sector.markerSlots).toHaveLength(1);
-    expect(sector.markerSlots[0]?.playerId).toBe('player-a');
+      expect(sector.signals).toHaveLength(5);
+      expect(sector.signals[0]).toEqual({
+        type: 'player',
+        playerId: 'player-b',
+      });
+      for (let i = 1; i < 5; i++) {
+        expect(sector.signals[i].type).toBe('data');
+      }
+    });
+  });
 
-    const secondRoundMark = sector.markSignal('player-b');
-    expect(secondRoundMark.vpGained).toBe(2);
-    expect(sector.completed).toBe(true);
+  describe('user example: [Red, Green, Red, Green, Blue, Blue]', () => {
+    it('resolves Blue as winner, Green as 2nd, resets to [Green, D, D, D, D]', () => {
+      const sector = new Sector({
+        id: 'example',
+        color: ESector.RED,
+        dataSlotCapacity: 5,
+      });
 
-    const secondCompletion = sector.resolveCompletion();
+      // Build: [Red, Green, Red, Green, Blue, Blue]
+      // Start: [D, D, D, D, D]
+      sector.markSignal('Red'); // → [D, D, D, D, Red]
+      sector.markSignal('Green'); // → [D, D, D, Green, Red]
+      sector.markSignal('Red'); // → [D, D, Red, Green, Red]
+      sector.markSignal('Green'); // → [D, Green, Red, Green, Red]
+      sector.markSignal('Blue'); // → [Blue, Green, Red, Green, Red]
+      // All 5 data consumed. Sector fulfilled.
+      expect(sector.isFulfilled()).toBe(true);
 
-    expect(secondCompletion.winnerPlayerId).toBe('player-b');
-    expect(secondCompletion.secondPlacePlayerId).toBe('player-a');
-    expect(sector.winnerMarkers).toHaveLength(2);
-    expect(sector.winnerMarkers[1]).toEqual({
-      playerId: 'player-b',
-      reward: 5,
+      // Append extra Blue (no data to displace)
+      sector.markSignal('Blue'); // → [Blue, Green, Red, Green, Red, Blue]
+
+      // Counts: Red=2 (idx 2,4), Green=2 (idx 1,3), Blue=2 (idx 0,5)
+      // Rightmost: Blue@5, Red@4, Green@3 → Blue wins, Red 2nd
+      const result = sector.resolveCompletion();
+
+      expect(result.winnerPlayerId).toBe('Blue');
+      expect(result.secondPlacePlayerId).toBe('Red');
+
+      // Reset: capacity 5 → [Red, D, D, D, D]
+      expect(sector.signals).toHaveLength(5);
+      expect(sector.signals[0]).toEqual({
+        type: 'player',
+        playerId: 'Red',
+      });
+      for (let i = 1; i < 5; i++) {
+        expect(sector.signals[i].type).toBe('data');
+      }
+    });
+  });
+
+  describe('query helpers', () => {
+    it('getDataCount returns remaining data', () => {
+      const sector = new Sector({
+        id: 's1',
+        color: ESector.RED,
+        dataSlotCapacity: 3,
+      });
+      sector.markSignal('player-a');
+      expect(sector.getDataCount()).toBe(2);
+    });
+
+    it('getPlayerMarkerCount counts all or by player', () => {
+      const sector = new Sector({
+        id: 's1',
+        color: ESector.RED,
+        dataSlotCapacity: 3,
+      });
+      sector.markSignal('player-a');
+      sector.markSignal('player-b');
+      expect(sector.getPlayerMarkerCount()).toBe(2);
+      expect(sector.getPlayerMarkerCount('player-a')).toBe(1);
+    });
+
+    it('toPublicState returns unified signal view', () => {
+      const sector = new Sector({
+        id: 's1',
+        color: ESector.RED,
+        dataSlotCapacity: 3,
+      });
+      sector.markSignal('player-a');
+
+      const pub = sector.toPublicState();
+
+      expect(pub.sectorId).toBe('s1');
+      expect(pub.signals).toHaveLength(3);
+      expect(pub.signals[0].type).toBe('data');
+      expect(pub.signals[1].type).toBe('data');
+      expect(pub.signals[2]).toEqual({
+        type: 'player',
+        playerId: 'player-a',
+      });
+      expect(pub.dataSlotCapacity).toBe(3);
+      expect(pub.sectorWinners).toEqual([]);
     });
   });
 });

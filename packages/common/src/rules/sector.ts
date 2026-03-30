@@ -10,36 +10,37 @@ export interface ISectorStanding {
   markerCount: number;
 }
 
-/** 扇区是否还能放置信号（还有数据槽未被移除） */
+/** Whether the sector still has data signals that can be displaced. */
 export function canPlaceSignal(sector: IPublicSectorState): boolean {
-  return !isSectorComplete(sector);
+  return sector.signals.some((s) => s.type === 'data');
 }
 
-/** 扇区完成进度 (filled = 已移除数据数, total = 总槽数) */
+/** Sector fill progress (filled = player markers, total = capacity). */
 export function getSectorProgress(sector: IPublicSectorState): ISectorProgress {
-  const total = sector.dataSlots.length;
-  const remaining = sector.dataSlots.filter((slot) => slot !== null).length;
-  return {
-    filled: total - remaining,
-    total,
-  };
+  const total = sector.dataSlotCapacity;
+  const filled = sector.signals.filter((s) => s.type === 'player').length;
+  return { filled, total };
 }
 
-/** 扇区是否已完成（所有数据槽已移除） */
+/** True when no data signals remain — sector is fulfilled. */
 export function isSectorComplete(sector: IPublicSectorState): boolean {
-  return sector.dataSlots.every((dataToken) => dataToken === null);
+  return (
+    sector.signals.length > 0 && !sector.signals.some((s) => s.type === 'data')
+  );
 }
 
-/** 获取各玩家在扇区的标记数量排名 (用于 UI 展示竞争态势) */
+/** Marker counts per player sorted descending (for UI standings display). */
 export function getSectorStandings(
   sector: IPublicSectorState,
 ): ISectorStanding[] {
   const markerCountByPlayer = new Map<string, number>();
-  for (const marker of sector.markerSlots) {
-    markerCountByPlayer.set(
-      marker.playerId,
-      (markerCountByPlayer.get(marker.playerId) ?? 0) + 1,
-    );
+  for (const signal of sector.signals) {
+    if (signal.type === 'player' && signal.playerId) {
+      markerCountByPlayer.set(
+        signal.playerId,
+        (markerCountByPlayer.get(signal.playerId) ?? 0) + 1,
+      );
+    }
   }
 
   return Array.from(markerCountByPlayer.entries())

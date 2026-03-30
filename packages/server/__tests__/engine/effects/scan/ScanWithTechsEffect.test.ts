@@ -14,10 +14,10 @@ function createMockGame(): IGame {
     new Sector({ id: 'sector-0', color: ESector.RED, dataSlotCapacity: 3 }),
     new Sector({ id: 'sector-1', color: ESector.YELLOW, dataSlotCapacity: 3 }),
     new Sector({ id: 'sector-2', color: ESector.BLUE, dataSlotCapacity: 3 }),
-    new Sector({ id: 'sector-3', color: ESector.RED, dataSlotCapacity: 3 }),
+    new Sector({ id: 'sector-3', color: ESector.BLACK, dataSlotCapacity: 3 }),
     new Sector({ id: 'sector-4', color: ESector.YELLOW, dataSlotCapacity: 3 }),
-    new Sector({ id: 'sector-5', color: ESector.BLUE, dataSlotCapacity: 3 }),
-    new Sector({ id: 'sector-6', color: ESector.RED, dataSlotCapacity: 3 }),
+    new Sector({ id: 'sector-5', color: ESector.BLACK, dataSlotCapacity: 3 }),
+    new Sector({ id: 'sector-6', color: ESector.YELLOW, dataSlotCapacity: 3 }),
     new Sector({ id: 'sector-7', color: ESector.YELLOW, dataSlotCapacity: 3 }),
   ];
   const mainDeck = new Deck<string>();
@@ -119,7 +119,9 @@ describe('ScanWithTechsEffect', () => {
       });
 
       expect(
-        adjacentSector.markerSlots.some((m) => m.playerId === player.id),
+        adjacentSector.signals.some(
+          (s) => s.type === 'player' && s.playerId === player.id,
+        ),
       ).toBe(true);
       expect(cardInput).toBeDefined();
       expect(cardInput!.type).toBe(EPlayerInputType.CARD);
@@ -140,7 +142,9 @@ describe('ScanWithTechsEffect', () => {
       });
 
       expect(
-        earthSector.markerSlots.some((m) => m.playerId === player.id),
+        earthSector.signals.some(
+          (s) => s.type === 'player' && s.playerId === player.id,
+        ),
       ).toBe(true);
       expect(cardInput).toBeDefined();
     });
@@ -196,7 +200,9 @@ describe('ScanWithTechsEffect', () => {
 
       expect(player.publicity).toBe(beforePublicity - 1);
       expect(
-        mercurySector.markerSlots.some((m) => m.playerId === player.id),
+        mercurySector.signals.some(
+          (s) => s.type === 'player' && s.playerId === player.id,
+        ),
       ).toBe(true);
       expect(completedResult).not.toBeNull();
       expect(completedResult!.techActivations).toHaveLength(1);
@@ -415,7 +421,9 @@ describe('ScanWithTechsEffect', () => {
 
       expect(player.getMoveStash()).toBe(1);
       expect(
-        mercurySector.markerSlots.some((m) => m.playerId === player.id),
+        mercurySector.signals.some(
+          (s) => s.type === 'player' && s.playerId === player.id,
+        ),
       ).toBe(true);
       expect(completedResult).not.toBeNull();
       expect(completedResult!.techActivations).toHaveLength(2);
@@ -505,7 +513,9 @@ describe('ScanWithTechsEffect', () => {
       });
 
       expect(
-        adjacentSector.markerSlots.some((m) => m.playerId === player.id),
+        adjacentSector.signals.some(
+          (s) => s.type === 'player' && s.playerId === player.id,
+        ),
       ).toBe(true);
 
       const techMenu = cardInput!.process({
@@ -529,7 +539,9 @@ describe('ScanWithTechsEffect', () => {
       });
 
       expect(
-        mercurySector.markerSlots.some((m) => m.playerId === player.id),
+        mercurySector.signals.some(
+          (s) => s.type === 'player' && s.playerId === player.id,
+        ),
       ).toBe(true);
       expect(player.getMoveStash()).toBe(1);
       expect(completedResult).not.toBeNull();
@@ -552,9 +564,11 @@ describe('ScanWithTechsEffect', () => {
 
       expect(markResult).not.toBeNull();
       const sector = game.sectors[2] as Sector;
-      expect(sector.markerSlots.some((m) => m.playerId === player.id)).toBe(
-        true,
-      );
+      expect(
+        sector.signals.some(
+          (s) => s.type === 'player' && s.playerId === player.id,
+        ),
+      ).toBe(true);
     });
 
     it('presents choice for multiple candidates', () => {
@@ -596,9 +610,11 @@ describe('ScanWithTechsEffect', () => {
 
       expect(markResult).not.toBeNull();
       const sector = game.sectors[1] as Sector;
-      expect(sector.markerSlots.some((m) => m.playerId === player.id)).toBe(
-        true,
-      );
+      expect(
+        sector.signals.some(
+          (s) => s.type === 'player' && s.playerId === player.id,
+        ),
+      ).toBe(true);
     });
 
     it('returns null for empty candidates', () => {

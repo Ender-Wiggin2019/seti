@@ -108,9 +108,7 @@ export class AlienBoard {
   }
 
   public getFirstEmptyDiscoverySlot(): ITraceSlot | undefined {
-    return this.slots.find(
-      (s) => s.isDiscovery && s.occupants.length === 0,
-    );
+    return this.slots.find((s) => s.isDiscovery && s.occupants.length === 0);
   }
 
   public isFullyMarked(): boolean {
@@ -198,10 +196,7 @@ export class AlienBoard {
 
   // ---- Private helpers -----------------------------------------------------
 
-  private colorMatches(
-    slotColor: ETrace,
-    placedColor: ETrace,
-  ): boolean {
+  private colorMatches(slotColor: ETrace, placedColor: ETrace): boolean {
     const ANY = 'any-trace';
     if (slotColor === ANY || placedColor === ANY) return true;
     return slotColor === placedColor;

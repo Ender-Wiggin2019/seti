@@ -9,7 +9,7 @@ describe('ScanEffect', () => {
         {
           id: 'earth-sector',
           completed: false,
-          markSignal: () => ({ dataGained: null, vpGained: 0 }),
+          markSignal: () => ({ dataGained: false }),
         },
       ],
       cardRow: [],

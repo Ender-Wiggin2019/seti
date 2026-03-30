@@ -68,10 +68,14 @@ export class ScanEffect {
 
         const sectorColor = extractSectorColorFromCardItem(cardInfo.rawItem);
         if (sectorColor) {
-          result.targetSectorSignal = MarkSectorSignalEffect.markByColor(
+          return MarkSectorSignalEffect.markByColor(
             player,
             game,
             sectorColor,
+            (markResult) => {
+              result.targetSectorSignal = markResult;
+              return options.onComplete?.(result);
+            },
           );
         }
 

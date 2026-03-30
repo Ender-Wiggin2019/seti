@@ -35,9 +35,7 @@ export function isComputerFull(computer: IPublicComputerState): boolean {
   return getNextSlot(computer) === null;
 }
 
-export function getComputerPlacedCount(
-  computer: IPublicComputerState,
-): number {
+export function getComputerPlacedCount(computer: IPublicComputerState): number {
   let count = 0;
   for (const col of computer.columns) {
     if (col.topFilled) count++;

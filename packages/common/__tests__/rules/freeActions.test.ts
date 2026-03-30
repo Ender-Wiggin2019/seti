@@ -18,8 +18,11 @@ import type {
   IPublicPlayerState,
   IPublicSolarSystemState,
 } from '@/types/protocol/gameState';
+import { ETechId } from '@/types/tech';
 
-function emptyCol(overrides?: Partial<IPublicComputerColumnState>): IPublicComputerColumnState {
+function emptyCol(
+  overrides?: Partial<IPublicComputerColumnState>,
+): IPublicComputerColumnState {
   return {
     topFilled: false,
     topReward: null,
@@ -265,7 +268,11 @@ describe('free action rules', () => {
       const player = createPlayer({
         computer: {
           columns: [
-            emptyCol({ topFilled: true, hasBottomSlot: true, techId: 'comp-0' }),
+            emptyCol({
+              topFilled: true,
+              hasBottomSlot: true,
+              techId: ETechId.COMPUTER_VP_CREDIT,
+            }),
             emptyCol({ topFilled: true }),
             emptyCol({ topFilled: true }),
           ],
@@ -278,7 +285,11 @@ describe('free action rules', () => {
       const player = createPlayer({
         computer: {
           columns: [
-            emptyCol({ topFilled: true, hasBottomSlot: true, bottomFilled: true }),
+            emptyCol({
+              topFilled: true,
+              hasBottomSlot: true,
+              bottomFilled: true,
+            }),
             emptyCol({ topFilled: true }),
             emptyCol({ topFilled: true }),
           ],

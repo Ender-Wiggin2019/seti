@@ -6,11 +6,11 @@ import {
 } from '@/components/ui/dialog';
 import {
   GoldTileSelector,
-  MilestoneTrack,
-  ScoreBreakdown,
   type IGoldTileItem,
   type IMilestoneItem,
   type IScoreBreakdownRow,
+  MilestoneTrack,
+  ScoreBreakdown,
 } from '@/features/scoring';
 import { useGameContext } from '@/pages/game/GameContext';
 import { EPhase } from '@/types/re-exports';
@@ -59,7 +59,10 @@ export function GameOverDialog(): React.JSX.Element | null {
             Game Over
           </DialogTitle>
           <p className='text-xs text-text-400'>
-            Winner: <span className='font-semibold text-text-100'>{winner?.playerName}</span>
+            Winner:{' '}
+            <span className='font-semibold text-text-100'>
+              {winner?.playerName}
+            </span>
           </p>
         </DialogHeader>
 

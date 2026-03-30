@@ -459,14 +459,14 @@ function createDebugSetupConfig(
 }
 
 function createSectorsFromSetup(setupConfig: ISolarSystemSetupConfig) {
-  let nextDataId = 1;
   return setupConfig.tilePlacements.flatMap((placement) => {
     const tileDef = SECTOR_TILE_DEFINITIONS[placement.tileId];
     return tileDef.sectors.map((sectorOnTile, idx) => ({
       sectorId: placement.sectorIds[idx],
       color: sectorOnTile.color,
-      dataSlots: [`data-${nextDataId++}`, `data-${nextDataId++}`],
-      markerSlots: [] as { playerId: string; timestamp: number }[],
+      signals: [{ type: 'data' as const }, { type: 'data' as const }],
+      dataSlotCapacity: 2,
+      sectorWinners: [] as string[],
       completed: false,
     }));
   });

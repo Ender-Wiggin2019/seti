@@ -78,7 +78,9 @@ export function EventEntry({
             {event.type}
           </p>
         </div>
-        <span className='font-mono text-[10px] text-text-500'>#{index + 1}</span>
+        <span className='font-mono text-[10px] text-text-500'>
+          #{index + 1}
+        </span>
       </div>
     </article>
   );

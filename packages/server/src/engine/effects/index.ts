@@ -40,12 +40,18 @@ export {
   consumeProbeFromPlanet,
   syncProbeCountsForPlayer,
 } from './probe/ProbeEffectUtils.js';
-
-// Scan
 export {
   type IMarkSectorSignalResult,
   MarkSectorSignalEffect,
 } from './scan/MarkSectorSignalEffect.js';
+// Scan
+export {
+  EScanSubAction,
+  type IScanActionPoolOptions,
+  type IScanActionPoolResult,
+  type IScanSubActionRecord,
+  ScanActionPool,
+} from './scan/ScanActionPool.js';
 export {
   type IScanEffectOptions,
   type IScanEffectResult,
@@ -53,9 +59,14 @@ export {
 } from './scan/ScanEffect.js';
 export {
   extractSectorColorFromCardItem,
+  findAllSectorsByColor,
   findSectorByColor,
+  findSectorById,
+  findSectorIdByStarName,
   getAllSectors,
   getSectorAt,
+  getSectorByPlanet,
+  getSectorIndexByPlanet,
 } from './scan/ScanEffectUtils.js';
 export {
   type IScanEarthNeighborOptions,
@@ -76,6 +87,10 @@ export {
   type IScanWithTechsResult,
   ScanWithTechsEffect,
 } from './scan/ScanWithTechsEffect.js';
+export {
+  type ISectorFulfillmentResult,
+  SectorFulfillmentEffect,
+} from './scan/SectorFulfillmentEffect.js';
 
 // Solar
 export {

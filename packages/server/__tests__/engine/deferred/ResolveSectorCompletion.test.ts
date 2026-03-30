@@ -4,7 +4,7 @@ import { ResolveSectorCompletion } from '@/engine/deferred/ResolveSectorCompleti
 import { Player } from '@/engine/player/Player.js';
 
 describe('ResolveSectorCompletion', () => {
-  it('resolves completed sectors and applies rewards', () => {
+  it('resolves completed sectors via SectorFulfillmentEffect', () => {
     const p1 = new Player({
       id: 'p1',
       name: 'Alice',
@@ -20,12 +20,13 @@ describe('ResolveSectorCompletion', () => {
     const sector = new Sector({
       id: 's1',
       color: ESector.RED,
-      dataSlotCapacity: 1,
-      winnerReward: 3,
+      dataSlotCapacity: 2,
     });
 
     sector.markSignal('p1');
     sector.markSignal('p2');
+
+    expect(sector.isFulfilled()).toBe(true);
 
     const game = {
       players: [p1, p2],
@@ -36,7 +37,8 @@ describe('ResolveSectorCompletion', () => {
     const action = new ResolveSectorCompletion(p1);
     action.execute(game);
 
-    expect(p2.score).toBe(5);
+    expect(sector.sectorWinners).toHaveLength(1);
+    expect(sector.sectorWinners[0]).toBe('p1');
     expect(p1.publicity).toBe(5);
     expect(p2.publicity).toBe(5);
   });

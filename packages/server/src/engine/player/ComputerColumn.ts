@@ -2,8 +2,8 @@ import type {
   IComputerColumnConfig,
   IComputerSlotReward,
 } from '@seti/common/types/computer';
-import type { ETechId } from '@seti/common/types/tech';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
+import type { ETechId } from '@seti/common/types/tech';
 import { GameError } from '@/shared/errors/GameError.js';
 
 export const TECH_TOP_REWARD: Readonly<IComputerSlotReward> = Object.freeze({

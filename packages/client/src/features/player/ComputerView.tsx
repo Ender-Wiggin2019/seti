@@ -26,7 +26,14 @@ function canPlaceBottomSlot(
 }
 
 function getRewardLabel(
-  reward: { vp?: number; credits?: number; energy?: number; publicity?: number; drawCard?: number; tuckIncome?: number } | null,
+  reward: {
+    vp?: number;
+    credits?: number;
+    energy?: number;
+    publicity?: number;
+    drawCard?: number;
+    tuckIncome?: number;
+  } | null,
 ): string | null {
   if (!reward) return null;
   if (reward.vp) return `${reward.vp}VP`;
@@ -58,7 +65,12 @@ export function ComputerView({
 
       <div className='flex flex-col gap-1'>
         {/* Top row */}
-        <div className='grid gap-1' style={{ gridTemplateColumns: `repeat(${computer.columns.length}, 1fr)` }}>
+        <div
+          className='grid gap-1'
+          style={{
+            gridTemplateColumns: `repeat(${computer.columns.length}, 1fr)`,
+          }}
+        >
           {computer.columns.map((col, i) => {
             const occupied = col.topFilled;
             const available = canPlaceTopSlot(computer, i);
@@ -81,7 +93,11 @@ export function ComputerView({
                 aria-label={`Computer top slot ${i + 1}`}
               >
                 {occupied ? (
-                  <img src='/assets/seti/tokens/data.png' alt='Data token' className='h-5 w-5' />
+                  <img
+                    src='/assets/seti/tokens/data.png'
+                    alt='Data token'
+                    className='h-5 w-5'
+                  />
                 ) : label ? (
                   <span className='text-[8px] text-text-400'>{label}</span>
                 ) : null}
@@ -92,7 +108,12 @@ export function ComputerView({
 
         {/* Bottom row (only columns with tech) */}
         {computer.columns.some((c) => c.hasBottomSlot) && (
-          <div className='grid gap-1' style={{ gridTemplateColumns: `repeat(${computer.columns.length}, 1fr)` }}>
+          <div
+            className='grid gap-1'
+            style={{
+              gridTemplateColumns: `repeat(${computer.columns.length}, 1fr)`,
+            }}
+          >
             {computer.columns.map((col, i) => {
               if (!col.hasBottomSlot) {
                 return <div key={`bottom-${i}`} className='h-7 w-7' />;
@@ -118,7 +139,11 @@ export function ComputerView({
                   aria-label={`Computer bottom slot ${i + 1}`}
                 >
                   {occupied ? (
-                    <img src='/assets/seti/tokens/data.png' alt='Data token' className='h-5 w-5' />
+                    <img
+                      src='/assets/seti/tokens/data.png'
+                      alt='Data token'
+                      className='h-5 w-5'
+                    />
                   ) : label ? (
                     <span className='text-[8px] text-text-400'>{label}</span>
                   ) : null}

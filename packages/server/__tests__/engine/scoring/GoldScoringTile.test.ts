@@ -39,11 +39,7 @@ describe('GoldScoringTile', () => {
     const game = {
       sectors: [
         {
-          winnerMarkers: [
-            { playerId: 'p1' },
-            { playerId: 'p1' },
-            { playerId: 'p2' },
-          ],
+          sectorWinners: ['p1', 'p1', 'p2'],
         },
       ],
     } as never;

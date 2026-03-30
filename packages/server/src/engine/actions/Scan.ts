@@ -5,13 +5,14 @@ import {
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import { RefillCardRowEffect } from '../effects/cardRow/RefillCardRowEffect.js';
-import type { IScanWithTechsResult } from '../effects/scan/ScanWithTechsEffect.js';
-import { ScanWithTechsEffect } from '../effects/scan/ScanWithTechsEffect.js';
+import type { IScanActionPoolResult } from '../effects/scan/ScanActionPool.js';
+import { ScanActionPool } from '../effects/scan/ScanActionPool.js';
+import { SectorFulfillmentEffect } from '../effects/scan/SectorFulfillmentEffect.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
 import type { IPlayer } from '../player/IPlayer.js';
 
-export interface IScanActionResult extends IScanWithTechsResult {
+export interface IScanActionResult extends IScanActionPoolResult {
   refillCount: number;
 }
 
@@ -27,16 +28,13 @@ export class ScanAction {
    * Execute the scan standard action.
    *
    * 1. Pay costs
-   * 2. Run ScanWithTechsEffect (base scan + optional tech activations)
-   * 3. Refill card row after all scan substeps complete
+   * 2. Enter scan action pool (free-order sub-actions)
+   * 3. Check sector fulfillment (resolve any completed sectors)
+   * 4. Refill card row
    */
   public static execute(
     player: IPlayer,
     game: IGame,
-    options: {
-      earthSectorIndex?: number;
-      mercurySectorIndex?: number;
-    } = {},
   ): IPlayerInput | undefined {
     if (!this.canExecute(player, game)) {
       throw new GameError(
@@ -51,13 +49,12 @@ export class ScanAction {
       energy: SCAN_ENERGY_COST,
     });
 
-    return ScanWithTechsEffect.execute(player, game, {
-      earthSectorIndex: options.earthSectorIndex,
-      mercurySectorIndex: options.mercurySectorIndex,
-      onComplete: () => {
-        RefillCardRowEffect.execute(game);
-        return undefined;
-      },
+    return ScanActionPool.execute(player, game, {
+      onComplete: () =>
+        SectorFulfillmentEffect.checkAll(game, () => {
+          RefillCardRowEffect.execute(game);
+          return undefined;
+        }),
     });
   }
 }

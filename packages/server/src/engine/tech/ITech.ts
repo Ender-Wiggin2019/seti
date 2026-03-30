@@ -1,3 +1,4 @@
+import type { IComputerSlotReward } from '@seti/common/types/computer';
 import type {
   ETechId,
   TTechCategory,

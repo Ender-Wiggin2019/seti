@@ -9,10 +9,7 @@ import {
 import { and, desc, eq } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Game } from '@/engine/Game.js';
-import {
-  createGameOptions,
-  type IGameOptions,
-} from '@/engine/GameOptions.js';
+import { createGameOptions, type IGameOptions } from '@/engine/GameOptions.js';
 import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
 import { GameRepository } from '@/persistence/repository/GameRepository.js';
 import { games } from '@/persistence/schema/games.js';
@@ -149,7 +146,10 @@ export class LobbyService {
     return this.getRoomById(gameId);
   }
 
-  async leaveRoom(gameId: string, userId: string): Promise<IRoomResponse | null> {
+  async leaveRoom(
+    gameId: string,
+    userId: string,
+  ): Promise<IRoomResponse | null> {
     const [room] = await this.db
       .select()
       .from(games)

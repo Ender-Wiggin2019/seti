@@ -139,13 +139,22 @@ export class AlienState {
 
     const resolvedColor = traceColor === ETrace.ANY ? ETrace.RED : traceColor;
 
-    const placed = board.placeTrace(slot, { playerId: player.id }, resolvedColor);
+    const placed = board.placeTrace(
+      slot,
+      { playerId: player.id },
+      resolvedColor,
+    );
     if (!placed) return false;
 
     this.executeRewards(player, slot.rewards);
     this.incrementPlayerTrace(player, resolvedColor, board.alienIndex);
     game.eventLog.append(
-      createTraceMarkedEvent(player.id, resolvedColor, board.alienIndex, !slot.isDiscovery),
+      createTraceMarkedEvent(
+        player.id,
+        resolvedColor,
+        board.alienIndex,
+        !slot.isDiscovery,
+      ),
     );
 
     const plugin = AlienRegistry.get(board.alienType);

@@ -68,9 +68,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const payload: IJwtPayload = this.jwtService.verify(token);
       setUserData(client, { userId: payload.sub, email: payload.email });
       this.socketToGames.set(client.id, new Set());
-      this.logger.log(
-        `Client ${client.id} connected as user ${payload.sub}`,
-      );
+      this.logger.log(`Client ${client.id} connected as user ${payload.sub}`);
     } catch {
       this.logger.warn(`Client ${client.id} rejected: invalid token`);
       client.emit('game:error', {

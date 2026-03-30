@@ -1,9 +1,15 @@
+import { ETechId } from '@seti/common/types/tech';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ComputerView } from '@/features/player';
-import type { IPublicComputerColumnState, IPublicComputerState } from '@/types/re-exports';
+import type {
+  IPublicComputerColumnState,
+  IPublicComputerState,
+} from '@/types/re-exports';
 
-function emptyCol(overrides?: Partial<IPublicComputerColumnState>): IPublicComputerColumnState {
+function emptyCol(
+  overrides?: Partial<IPublicComputerColumnState>,
+): IPublicComputerColumnState {
   return {
     topFilled: false,
     topReward: null,
@@ -16,7 +22,9 @@ function emptyCol(overrides?: Partial<IPublicComputerColumnState>): IPublicCompu
   };
 }
 
-function makeComputer(columns: IPublicComputerColumnState[]): IPublicComputerState {
+function makeComputer(
+  columns: IPublicComputerColumnState[],
+): IPublicComputerState {
   return { columns };
 }
 
@@ -68,7 +76,11 @@ describe('ComputerView', () => {
     render(
       <ComputerView
         computer={makeComputer([
-          emptyCol({ topFilled: true, hasBottomSlot: true, techId: 'comp-0' }),
+          emptyCol({
+            topFilled: true,
+            hasBottomSlot: true,
+            techId: ETechId.COMPUTER_VP_CREDIT,
+          }),
           emptyCol({ topFilled: true }),
           emptyCol(),
         ])}

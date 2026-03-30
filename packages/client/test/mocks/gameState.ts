@@ -79,8 +79,13 @@ export function createMockSectors(): IPublicSector[] {
   return colors.map((color, i) => ({
     sectorId: `sector-${i}`,
     color,
-    dataSlots: [null, null, null],
-    markerSlots: [],
+    signals: [
+      { type: 'data' as const },
+      { type: 'data' as const },
+      { type: 'data' as const },
+    ],
+    dataSlotCapacity: 3,
+    sectorWinners: [] as string[],
     completed: false,
   }));
 }
