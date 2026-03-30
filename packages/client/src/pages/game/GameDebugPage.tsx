@@ -2,6 +2,7 @@ import {
   createDefaultSolarSystemWheels,
   ESectorPosition,
   ESectorTileId,
+  type EStarName,
   type ISolarSystemSetupConfig,
   type ISolarSystemWheelCell,
   type ISolarSystemWheelRuntimeElement,
@@ -9,7 +10,6 @@ import {
   SECTOR_TILE_DEFINITIONS,
   type TSolarSystemWheelIndex,
   type TSolarSystemWheels,
-  type EStarName,
 } from '@seti/common/constant/sectorSetup';
 import { ALL_CARDS } from '@seti/common/data';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
@@ -26,6 +26,7 @@ import {
   EFreeAction,
   EGameEventType,
   EPhase,
+  EPlanet,
   EPlayerInputType,
   type IFreeActionRequest,
   type IInputResponse,
@@ -69,8 +70,16 @@ const ALL_SCAN_SUB_ACTIONS = [
   'energy-launch-or-move',
 ];
 
-const EARTH_SECTOR_ID = 'sector-0';
-const MERCURY_SECTOR_ID = 'sector-2';
+const DEBUG_STAR_COLOR_MAP: Readonly<Record<string, ESector>> = {
+  procyon: ESector.BLUE,
+  vega: ESector.BLACK,
+  'sirius-a': ESector.BLUE,
+  'barnards-star': ESector.RED,
+  'kepler-22': ESector.YELLOW,
+  'proxima-centauri': ESector.RED,
+  '61-virginis': ESector.YELLOW,
+  'beta-pictoris': ESector.BLACK,
+};
 
 function markSignalOnSectors(
   sectors: IPublicGameState['sectors'],
@@ -80,17 +89,35 @@ function markSignalOnSectors(
   return sectors.map((s) => {
     if (s.sectorId !== sectorId) return s;
     const signals = [...s.signals];
-    const rightmostDataIdx = signals.reduce(
-      (last, sig, idx) => (sig.type === 'data' ? idx : last),
-      -1,
-    );
-    if (rightmostDataIdx >= 0) {
-      signals[rightmostDataIdx] = { type: 'player', playerId };
-    } else {
-      signals.push({ type: 'player', playerId });
+    const leftmostDataIdx = signals.findIndex((sig) => sig.type === 'data');
+    if (leftmostDataIdx < 0) {
+      return s;
     }
+    signals[leftmostDataIdx] = { type: 'player', playerId };
     return { ...s, signals };
   });
+}
+
+function getSectorIdByPlanet(
+  gameState: IPublicGameState,
+  planet: EPlanet,
+): string | null {
+  const spaceStates = gameState.solarSystem.spaceStates;
+  if (!spaceStates) {
+    return null;
+  }
+
+  for (const space of Object.values(spaceStates)) {
+    const hasPlanet = (space.elements ?? []).some(
+      (element) => 'planet' in element && element.planet === planet,
+    );
+    if (!hasPlanet) {
+      continue;
+    }
+    const idx = ((space.indexInRing % 8) + 8) % 8;
+    return `sector-${idx}`;
+  }
+  return null;
 }
 
 function findSectorsByColor(
@@ -115,7 +142,10 @@ function buildScanPoolInput(
   if (remaining.has('mark-hand') && handLength > 0)
     options.push({ id: 'mark-hand', label: 'Mark Hand Signal' });
   if (remaining.has('energy-launch-or-move'))
-    options.push({ id: 'energy-launch-or-move', label: 'Energy Launch or Move' });
+    options.push({
+      id: 'energy-launch-or-move',
+      label: 'Energy Launch or Move',
+    });
   options.push({ id: 'done', label: 'Done (end scan)' });
   return {
     inputId: 'scan-pool',
@@ -589,9 +619,11 @@ function createSectorsFromSetup(setupConfig: ISolarSystemSetupConfig) {
       const starConfig =
         SECTOR_STAR_CONFIGS[sectorOnTile.starName as EStarName];
       const capacity = starConfig?.dataSlotCapacity ?? 5;
+      const color =
+        DEBUG_STAR_COLOR_MAP[sectorOnTile.starName] ?? sectorOnTile.color;
       return {
         sectorId: placement.sectorIds[idx],
-        color: sectorOnTile.color,
+        color,
         signals: Array.from({ length: capacity }, () => ({
           type: 'data' as const,
         })),
@@ -951,17 +983,26 @@ export function GameDebugPage(): React.JSX.Element {
 
   const handleScanInput = useCallback(
     (response: IInputResponse) => {
-      if (scanPhase.step === 'pool' && response.type === EPlayerInputType.OPTION) {
+      if (
+        scanPhase.step === 'pool' &&
+        response.type === EPlayerInputType.OPTION
+      ) {
         const optionId = (response as { optionId: string }).optionId;
         const next = new Set(scanPhase.remaining);
         next.delete(optionId);
 
         switch (optionId) {
           case 'mark-earth':
-            markAndReturn(EARTH_SECTOR_ID, next);
+            markAndReturn(
+              getSectorIdByPlanet(gameState, EPlanet.EARTH) ?? 'sector-0',
+              next,
+            );
             break;
           case 'mark-mercury':
-            markAndReturn(MERCURY_SECTOR_ID, next);
+            markAndReturn(
+              getSectorIdByPlanet(gameState, EPlanet.MERCURY) ?? 'sector-2',
+              next,
+            );
             break;
           case 'mark-card-row':
             setScanPhase({ step: 'card-row', remaining: next });
@@ -980,7 +1021,10 @@ export function GameDebugPage(): React.JSX.Element {
         return;
       }
 
-      if (scanPhase.step === 'card-row' && response.type === EPlayerInputType.CARD) {
+      if (
+        scanPhase.step === 'card-row' &&
+        response.type === EPlayerInputType.CARD
+      ) {
         const cardIds = (response as { cardIds: string[] }).cardIds;
         const card = gameState.cardRow.find((c) => c.id === cardIds[0]);
         if (card) {
@@ -991,7 +1035,10 @@ export function GameDebugPage(): React.JSX.Element {
         return;
       }
 
-      if (scanPhase.step === 'hand' && response.type === EPlayerInputType.CARD) {
+      if (
+        scanPhase.step === 'hand' &&
+        response.type === EPlayerInputType.CARD
+      ) {
         const cardIds = (response as { cardIds: string[] }).cardIds;
         const hand = gameState.players[0]?.hand ?? [];
         const rawId = cardIds[0]?.split('@')[0];
@@ -1004,13 +1051,19 @@ export function GameDebugPage(): React.JSX.Element {
         return;
       }
 
-      if (scanPhase.step === 'color-pick' && response.type === EPlayerInputType.OPTION) {
+      if (
+        scanPhase.step === 'color-pick' &&
+        response.type === EPlayerInputType.OPTION
+      ) {
         const sectorId = (response as { optionId: string }).optionId;
         markAndReturn(sectorId, scanPhase.remaining);
         return;
       }
 
-      if (scanPhase.step === 'energy' && response.type === EPlayerInputType.OPTION) {
+      if (
+        scanPhase.step === 'energy' &&
+        response.type === EPlayerInputType.OPTION
+      ) {
         goBackToPool(scanPhase.remaining);
         return;
       }
@@ -1018,26 +1071,60 @@ export function GameDebugPage(): React.JSX.Element {
     [scanPhase, gameState, markAndReturn, markByCardColor, goBackToPool],
   );
 
-  const pendingInput = useMemo<IPlayerInputModel | null>(() => {
+  const scanPlanetHintSectorIds = useMemo(() => {
+    if (scanPhase.step === 'idle') {
+      return [] as string[];
+    }
+    const earth = getSectorIdByPlanet(gameState, EPlanet.EARTH);
+    const mercury = getSectorIdByPlanet(gameState, EPlanet.MERCURY);
+    return [...new Set([earth, mercury].filter((id): id is string => !!id))];
+  }, [scanPhase.step, gameState]);
+
+  const pendingInput = useMemo<
+    (IPlayerInputModel & { debugSectorHighlights?: string[] }) | null
+  >(() => {
     if (scanPhase.step === 'pool') {
       const handLen = gameState.players[0]?.hand?.length ?? 0;
-      return buildScanPoolInput(
+      const model = buildScanPoolInput(
         scanPhase.remaining,
         gameState.cardRow.length,
         handLen,
       );
+      return {
+        ...model,
+        debugSectorHighlights: scanPlanetHintSectorIds,
+      };
     }
     if (scanPhase.step === 'card-row') {
-      return buildCardSelectInput('row', gameState.cardRow);
+      const model = buildCardSelectInput('row', gameState.cardRow);
+      return {
+        ...model,
+        debugSectorHighlights: scanPlanetHintSectorIds,
+      };
     }
     if (scanPhase.step === 'hand') {
-      return buildCardSelectInput('hand', gameState.players[0]?.hand ?? []);
+      const model = buildCardSelectInput(
+        'hand',
+        gameState.players[0]?.hand ?? [],
+      );
+      return {
+        ...model,
+        debugSectorHighlights: scanPlanetHintSectorIds,
+      };
     }
     if (scanPhase.step === 'color-pick') {
-      return buildColorPickInput(scanPhase.color, scanPhase.sectorIds);
+      const model = buildColorPickInput(scanPhase.color, scanPhase.sectorIds);
+      return {
+        ...model,
+        debugSectorHighlights: scanPlanetHintSectorIds,
+      };
     }
     if (scanPhase.step === 'energy') {
-      return buildEnergyInput();
+      const model = buildEnergyInput();
+      return {
+        ...model,
+        debugSectorHighlights: scanPlanetHintSectorIds,
+      };
     }
 
     if (cardInputMode === 'hand-select') {
@@ -1075,7 +1162,7 @@ export function GameDebugPage(): React.JSX.Element {
     }
 
     return null;
-  }, [scanPhase, cardInputMode, gameState]);
+  }, [scanPhase, cardInputMode, gameState, scanPlanetHintSectorIds]);
 
   const handleDebugInput = useCallback(
     (response: IInputResponse): void => {
@@ -1346,64 +1433,129 @@ export function GameDebugPage(): React.JSX.Element {
 
         <div className='flex w-full flex-wrap items-center gap-2 border-t border-surface-700 pt-2'>
           <span className='font-mono text-text-500'>Sig0</span>
-          {([
-            ['Rot', -180, 180, sigRot0, setSigRot0],
-            ['X', -50, 50, sigX0, setSigX0],
-            ['Y', -50, 50, sigY0, setSigY0],
-          ] as const).map(([label, min, max, val, set]) => (
-            <label key={`sig0-${label}`} className='flex items-center gap-1 font-mono text-[10px] text-text-300'>
+          {(
+            [
+              ['Rot', -180, 180, sigRot0, setSigRot0],
+              ['X', -50, 50, sigX0, setSigX0],
+              ['Y', -50, 50, sigY0, setSigY0],
+            ] as const
+          ).map(([label, min, max, val, set]) => (
+            <label
+              key={`sig0-${label}`}
+              className='flex items-center gap-1 font-mono text-[10px] text-text-300'
+            >
               {label}
-              <input type='range' min={min} max={max} step={1} value={val}
-                onChange={(e) => (set as (v: number) => void)(Number(e.target.value))} className='w-14 accent-accent-500' />
+              <input
+                type='range'
+                min={min}
+                max={max}
+                step={1}
+                value={val}
+                onChange={(e) =>
+                  (set as (v: number) => void)(Number(e.target.value))
+                }
+                className='w-14 accent-accent-500'
+              />
               <span className='w-8 text-right text-text-500'>{val}</span>
             </label>
           ))}
 
           <span className='ml-1 font-mono text-text-500'>Sig1</span>
-          {([
-            ['Rot', -180, 180, sigRot1, setSigRot1],
-            ['X', -50, 50, sigX1, setSigX1],
-            ['Y', -50, 50, sigY1, setSigY1],
-          ] as const).map(([label, min, max, val, set]) => (
-            <label key={`sig1-${label}`} className='flex items-center gap-1 font-mono text-[10px] text-text-300'>
+          {(
+            [
+              ['Rot', -180, 180, sigRot1, setSigRot1],
+              ['X', -50, 50, sigX1, setSigX1],
+              ['Y', -50, 50, sigY1, setSigY1],
+            ] as const
+          ).map(([label, min, max, val, set]) => (
+            <label
+              key={`sig1-${label}`}
+              className='flex items-center gap-1 font-mono text-[10px] text-text-300'
+            >
               {label}
-              <input type='range' min={min} max={max} step={1} value={val}
-                onChange={(e) => (set as (v: number) => void)(Number(e.target.value))} className='w-14 accent-accent-500' />
+              <input
+                type='range'
+                min={min}
+                max={max}
+                step={1}
+                value={val}
+                onChange={(e) =>
+                  (set as (v: number) => void)(Number(e.target.value))
+                }
+                className='w-14 accent-accent-500'
+              />
               <span className='w-8 text-right text-text-500'>{val}</span>
             </label>
           ))}
 
           <span className='ml-1 font-mono text-text-500'>Dot</span>
           <label className='flex items-center gap-1 font-mono text-[10px] text-text-300'>
-            <input type='range' min={2} max={30} step={1} value={sectorDataSize}
-              onChange={(e) => setSectorDataSize(Number(e.target.value))} className='w-16 accent-accent-500' />
-            <span className='w-6 text-right text-text-500'>{sectorDataSize}</span>
+            <input
+              type='range'
+              min={2}
+              max={30}
+              step={1}
+              value={sectorDataSize}
+              onChange={(e) => setSectorDataSize(Number(e.target.value))}
+              className='w-16 accent-accent-500'
+            />
+            <span className='w-6 text-right text-text-500'>
+              {sectorDataSize}
+            </span>
           </label>
         </div>
 
         <div className='flex w-full flex-wrap items-center gap-2 border-t border-surface-700/50 pt-1'>
           <span className='font-mono text-text-500'>Circle0</span>
-          {([
-            ['X', -50, 50, circleX0, setCircleX0],
-            ['Y', -50, 50, circleY0, setCircleY0],
-          ] as const).map(([label, min, max, val, set]) => (
-            <label key={`c0-${label}`} className='flex items-center gap-1 font-mono text-[10px] text-text-300'>
+          {(
+            [
+              ['X', -50, 50, circleX0, setCircleX0],
+              ['Y', -50, 50, circleY0, setCircleY0],
+            ] as const
+          ).map(([label, min, max, val, set]) => (
+            <label
+              key={`c0-${label}`}
+              className='flex items-center gap-1 font-mono text-[10px] text-text-300'
+            >
               {label}
-              <input type='range' min={min} max={max} step={1} value={val}
-                onChange={(e) => (set as (v: number) => void)(Number(e.target.value))} className='w-14 accent-accent-500' />
+              <input
+                type='range'
+                min={min}
+                max={max}
+                step={1}
+                value={val}
+                onChange={(e) =>
+                  (set as (v: number) => void)(Number(e.target.value))
+                }
+                className='w-14 accent-accent-500'
+              />
               <span className='w-8 text-right text-text-500'>{val}</span>
             </label>
           ))}
 
           <span className='ml-1 font-mono text-text-500'>Circle1</span>
-          {([
-            ['X', -50, 50, circleX1, setCircleX1],
-            ['Y', -50, 50, circleY1, setCircleY1],
-          ] as const).map(([label, min, max, val, set]) => (
-            <label key={`c1-${label}`} className='flex items-center gap-1 font-mono text-[10px] text-text-300'>
+          {(
+            [
+              ['X', -50, 50, circleX1, setCircleX1],
+              ['Y', -50, 50, circleY1, setCircleY1],
+            ] as const
+          ).map(([label, min, max, val, set]) => (
+            <label
+              key={`c1-${label}`}
+              className='flex items-center gap-1 font-mono text-[10px] text-text-300'
+            >
               {label}
-              <input type='range' min={min} max={max} step={1} value={val}
-                onChange={(e) => (set as (v: number) => void)(Number(e.target.value))} className='w-14 accent-accent-500' />
+              <input
+                type='range'
+                min={min}
+                max={max}
+                step={1}
+                value={val}
+                onChange={(e) =>
+                  (set as (v: number) => void)(Number(e.target.value))
+                }
+                className='w-14 accent-accent-500'
+              />
               <span className='w-8 text-right text-text-500'>{val}</span>
             </label>
           ))}

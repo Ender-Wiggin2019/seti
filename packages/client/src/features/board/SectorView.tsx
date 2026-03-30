@@ -6,10 +6,13 @@ interface ISectorViewProps {
   pair: ISectorPairConfig;
   playerColors: Record<string, string>;
   selectableColors: Set<IPublicSector['color']>;
+  selectableSectorIds?: Set<string>;
+  emphasizedSectorIds?: Set<string>;
   clickable: boolean;
   highlighted: boolean;
   onClick: () => void;
   onSelectSector: (sectorColor: IPublicSector['color']) => void;
+  onSelectSectorId?: (sectorId: string) => void;
 }
 
 function counterRotateTransform(position: string): string | undefined {
@@ -23,10 +26,13 @@ export function SectorView({
   pair,
   playerColors,
   selectableColors,
+  selectableSectorIds = new Set<string>(),
+  emphasizedSectorIds = new Set<string>(),
   clickable,
   highlighted,
   onClick,
   onSelectSector,
+  onSelectSectorId,
 }: ISectorViewProps): React.JSX.Element {
   const positionStyle = getPositionStyle(pair.placement.position);
 
@@ -62,7 +68,6 @@ export function SectorView({
         clickable
           ? 'pointer-events-auto cursor-pointer'
           : 'pointer-events-none cursor-default',
-        highlighted && 'animate-pulse',
       )}
       style={{
         ...positionStyle,
@@ -89,19 +94,9 @@ export function SectorView({
           src={pair.placement.imageSrc}
           alt=''
           aria-hidden
-          className={cn(
-            'h-full w-full object-contain object-top transition-all duration-300',
-            highlighted && 'brightness-125',
-          )}
+          className='h-full w-full object-contain object-top transition-all duration-300'
           draggable={false}
         />
-
-        {highlighted && (
-          <div
-            className='absolute inset-0 rounded bg-accent-500/15'
-            aria-hidden
-          />
-        )}
 
         <div
           className='absolute bottom-[8%] left-1/2 flex items-center gap-1'
@@ -142,7 +137,11 @@ export function SectorView({
             const remainingData = sector.signals.filter(
               (sig) => sig.type === 'data',
             ).length;
-            const isSelectable = selectableColors.has(sector.color);
+            const canPickByColor = selectableColors.has(sector.color);
+            const canPickBySectorId = selectableSectorIds.has(sector.sectorId);
+            const isSelectable = canPickByColor || canPickBySectorId;
+            const isEmphasized = emphasizedSectorIds.has(sector.sectorId);
+            const isSectorHighlighted = isSelectable || isEmphasized;
             const xPos = index === 0 ? '30%' : '70%';
 
             return (
@@ -208,6 +207,8 @@ export function SectorView({
                     isSelectable
                       ? 'cursor-pointer border-accent-400 bg-accent-500/25 hover:bg-accent-500/45'
                       : 'cursor-default border-surface-500/40 bg-surface-800/30',
+                    isEmphasized &&
+                      'border-amber-300/90 bg-amber-500/20 shadow-[0_0_0_2px_rgba(251,191,36,0.55)]',
                   )}
                   style={{
                     width: 'var(--sector-circle-size, 24px)',
@@ -224,11 +225,37 @@ export function SectorView({
                     if (!isSelectable) {
                       return;
                     }
+                    if (canPickBySectorId && onSelectSectorId) {
+                      onSelectSectorId(sector.sectorId);
+                      return;
+                    }
                     onSelectSector(sector.color);
                   }}
                   disabled={!isSelectable}
-                  aria-label={`Mark ${sector.color} sector`}
+                  aria-label={`Mark ${sector.color} (${sector.sectorId}) sector`}
                 />
+
+                {isSectorHighlighted && (
+                  <span
+                    aria-hidden
+                    className={cn(
+                      'pointer-events-none absolute rounded-full border',
+                      isEmphasized
+                        ? 'border-amber-300/90 bg-amber-500/18 shadow-[0_0_14px_rgba(251,191,36,0.55)]'
+                        : 'border-accent-300/80 bg-accent-500/14 shadow-[0_0_12px_rgba(34,197,94,0.35)]',
+                    )}
+                    style={{
+                      width: 'var(--sector-circle-size, 24px)',
+                      height: 'var(--sector-circle-size, 24px)',
+                      left: '50%',
+                      top: '50%',
+                      transform: [
+                        'translate(-50%, -50%) scale(1.9)',
+                        `translate(var(--sector-circle-x-${index}, 0px), var(--sector-circle-y-${index}, 0px))`,
+                      ].join(' '),
+                    }}
+                  />
+                )}
               </div>
             );
           })}

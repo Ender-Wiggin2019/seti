@@ -11,6 +11,7 @@ interface ISectorGridProps {
   playerColors: Record<string, string>;
   pendingInput: IPlayerInputModel | null;
   onSelectSector: (sectorColor: IPublicSector['color']) => void;
+  onSelectSectorId?: (sectorId: string) => void;
 }
 
 export function SectorGrid({
@@ -19,12 +20,24 @@ export function SectorGrid({
   playerColors,
   pendingInput,
   onSelectSector,
+  onSelectSectorId,
 }: ISectorGridProps): React.JSX.Element {
   const isSectorInput = pendingInput?.type === EPlayerInputType.SECTOR;
-  const options =
+  const colorOptions =
     isSectorInput && 'options' in pendingInput
       ? new Set(pendingInput.options)
       : new Set<IPublicSector['color']>();
+  const sectorIdOptions =
+    pendingInput?.type === EPlayerInputType.OPTION
+      ? new Set(pendingInput.options.map((option) => option.id))
+      : new Set<string>();
+  const emphasizedSectorIdOptions = new Set(
+    (
+      pendingInput as
+        | ({ debugSectorHighlights?: string[] } & IPlayerInputModel)
+        | null
+    )?.debugSectorHighlights ?? [],
+  );
 
   const sectorPairs = useMemo(
     () => buildSectorPairs(setupConfig, sectors),
@@ -39,10 +52,18 @@ export function SectorGrid({
       {sectorPairs.map((pair) => {
         const colors = pair.sectors.map((s) => s.color);
         const selectableColors = colors.filter(
-          (c) => isSectorInput && options.has(c),
+          (c) => isSectorInput && colorOptions.has(c),
         );
-        const clickable = selectableColors.length > 0;
+        const selectableSectorIds = pair.sectors
+          .map((s) => s.sectorId)
+          .filter((sectorId) => sectorIdOptions.has(sectorId));
+        const emphasizedSectorIds = pair.sectors
+          .map((s) => s.sectorId)
+          .filter((sectorId) => emphasizedSectorIdOptions.has(sectorId));
+        const clickable =
+          selectableColors.length > 0 || selectableSectorIds.length > 0;
         const firstSelectable = selectableColors[0];
+        const firstSelectableSectorId = selectableSectorIds[0];
 
         return (
           <SectorView
@@ -50,11 +71,27 @@ export function SectorGrid({
             pair={pair}
             playerColors={playerColors}
             selectableColors={new Set(selectableColors)}
+            selectableSectorIds={new Set(selectableSectorIds)}
+            emphasizedSectorIds={new Set(emphasizedSectorIds)}
             clickable={clickable}
             highlighted={clickable}
             onSelectSector={onSelectSector}
+            onSelectSectorId={onSelectSectorId}
             onClick={() => {
-              if (selectableColors.length === 1 && firstSelectable != null) {
+              if (
+                selectableSectorIds.length === 1 &&
+                firstSelectableSectorId != null &&
+                onSelectSectorId
+              ) {
+                onSelectSectorId(firstSelectableSectorId);
+                return;
+              }
+
+              if (
+                selectableSectorIds.length === 0 &&
+                selectableColors.length === 1 &&
+                firstSelectable != null
+              ) {
                 onSelectSector(firstSelectable);
               }
             }}

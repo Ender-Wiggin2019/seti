@@ -328,6 +328,15 @@ export function SolarSystemView({
               sector: sectorColor,
             });
           }}
+          onSelectSectorId={(sectorId) => {
+            if (pendingInput?.type !== EPlayerInputType.OPTION) {
+              return;
+            }
+            onRespondInput({
+              type: EPlayerInputType.OPTION,
+              optionId: sectorId,
+            });
+          }}
         />
 
         {spacePoints.map((space) => {
