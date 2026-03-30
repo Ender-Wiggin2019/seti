@@ -5,9 +5,11 @@ import {
   type ISolarSystemSetupConfig,
   type ISolarSystemWheelCell,
   type ISolarSystemWheelRuntimeElement,
+  SECTOR_STAR_CONFIGS,
   SECTOR_TILE_DEFINITIONS,
   type TSolarSystemWheelIndex,
   type TSolarSystemWheels,
+  type EStarName,
 } from '@seti/common/constant/sectorSetup';
 import { ALL_CARDS } from '@seti/common/data';
 import { ETech } from '@seti/common/types/element';
@@ -461,14 +463,21 @@ function createDebugSetupConfig(
 function createSectorsFromSetup(setupConfig: ISolarSystemSetupConfig) {
   return setupConfig.tilePlacements.flatMap((placement) => {
     const tileDef = SECTOR_TILE_DEFINITIONS[placement.tileId];
-    return tileDef.sectors.map((sectorOnTile, idx) => ({
-      sectorId: placement.sectorIds[idx],
-      color: sectorOnTile.color,
-      signals: [{ type: 'data' as const }, { type: 'data' as const }],
-      dataSlotCapacity: 2,
-      sectorWinners: [] as string[],
-      completed: false,
-    }));
+    return tileDef.sectors.map((sectorOnTile, idx) => {
+      const starConfig =
+        SECTOR_STAR_CONFIGS[sectorOnTile.starName as EStarName];
+      const capacity = starConfig?.dataSlotCapacity ?? 5;
+      return {
+        sectorId: placement.sectorIds[idx],
+        color: sectorOnTile.color,
+        signals: Array.from({ length: capacity }, () => ({
+          type: 'data' as const,
+        })),
+        dataSlotCapacity: capacity,
+        sectorWinners: [] as string[],
+        completed: false,
+      };
+    });
   });
 }
 
@@ -670,6 +679,19 @@ export function GameDebugPage(): React.JSX.Element {
       3: 91,
       4: 229,
     });
+
+  const [sigRot0, setSigRot0] = useState(-24);
+  const [sigX0, setSigX0] = useState(-3);
+  const [sigY0, setSigY0] = useState(10);
+  const [sigRot1, setSigRot1] = useState(21);
+  const [sigX1, setSigX1] = useState(-19);
+  const [sigY1, setSigY1] = useState(-1);
+  const [sectorDataSize, setSectorDataSize] = useState(21);
+  const [circleX0, setCircleX0] = useState(0);
+  const [circleY0, setCircleY0] = useState(-38);
+  const [circleX1, setCircleX1] = useState(8);
+  const [circleY1, setCircleY1] = useState(-33);
+
   const clearProbeDelayTimerRef = useRef<number | null>(null);
 
   const rotateRing = (ring: 1 | 2 | 3): void => {
@@ -862,6 +884,21 @@ export function GameDebugPage(): React.JSX.Element {
     ],
   );
 
+  const sectorDebugVars = {
+    '--sector-sig-rot-0': `${sigRot0}deg`,
+    '--sector-sig-x-0': `${sigX0}px`,
+    '--sector-sig-y-0': `${sigY0}px`,
+    '--sector-sig-rot-1': `${sigRot1}deg`,
+    '--sector-sig-x-1': `${sigX1}px`,
+    '--sector-sig-y-1': `${sigY1}px`,
+    '--sector-data-size': `${sectorDataSize}px`,
+    '--sector-circle-x-0': `${circleX0}px`,
+    '--sector-circle-y-0': `${circleY0}px`,
+    '--sector-circle-x-1': `${circleX1}px`,
+    '--sector-circle-y-1': `${circleY1}px`,
+    '--sector-circle-size': '24px',
+  } as React.CSSProperties;
+
   return (
     <GameContextValueProvider value={contextValue}>
       <div className='fixed right-3 top-3 z-50 flex max-w-[calc(100vw-1.5rem)] flex-wrap items-center justify-end gap-2 rounded border border-surface-700/70 bg-surface-900/90 p-2 text-xs backdrop-blur'>
@@ -1005,8 +1042,75 @@ export function GameDebugPage(): React.JSX.Element {
             </label>
           ))}
         </div>
+
+        <div className='flex w-full flex-wrap items-center gap-2 border-t border-surface-700 pt-2'>
+          <span className='font-mono text-text-500'>Sig0</span>
+          {([
+            ['Rot', -180, 180, sigRot0, setSigRot0],
+            ['X', -50, 50, sigX0, setSigX0],
+            ['Y', -50, 50, sigY0, setSigY0],
+          ] as const).map(([label, min, max, val, set]) => (
+            <label key={`sig0-${label}`} className='flex items-center gap-1 font-mono text-[10px] text-text-300'>
+              {label}
+              <input type='range' min={min} max={max} step={1} value={val}
+                onChange={(e) => (set as (v: number) => void)(Number(e.target.value))} className='w-14 accent-accent-500' />
+              <span className='w-8 text-right text-text-500'>{val}</span>
+            </label>
+          ))}
+
+          <span className='ml-1 font-mono text-text-500'>Sig1</span>
+          {([
+            ['Rot', -180, 180, sigRot1, setSigRot1],
+            ['X', -50, 50, sigX1, setSigX1],
+            ['Y', -50, 50, sigY1, setSigY1],
+          ] as const).map(([label, min, max, val, set]) => (
+            <label key={`sig1-${label}`} className='flex items-center gap-1 font-mono text-[10px] text-text-300'>
+              {label}
+              <input type='range' min={min} max={max} step={1} value={val}
+                onChange={(e) => (set as (v: number) => void)(Number(e.target.value))} className='w-14 accent-accent-500' />
+              <span className='w-8 text-right text-text-500'>{val}</span>
+            </label>
+          ))}
+
+          <span className='ml-1 font-mono text-text-500'>Dot</span>
+          <label className='flex items-center gap-1 font-mono text-[10px] text-text-300'>
+            <input type='range' min={2} max={30} step={1} value={sectorDataSize}
+              onChange={(e) => setSectorDataSize(Number(e.target.value))} className='w-16 accent-accent-500' />
+            <span className='w-6 text-right text-text-500'>{sectorDataSize}</span>
+          </label>
+        </div>
+
+        <div className='flex w-full flex-wrap items-center gap-2 border-t border-surface-700/50 pt-1'>
+          <span className='font-mono text-text-500'>Circle0</span>
+          {([
+            ['X', -50, 50, circleX0, setCircleX0],
+            ['Y', -50, 50, circleY0, setCircleY0],
+          ] as const).map(([label, min, max, val, set]) => (
+            <label key={`c0-${label}`} className='flex items-center gap-1 font-mono text-[10px] text-text-300'>
+              {label}
+              <input type='range' min={min} max={max} step={1} value={val}
+                onChange={(e) => (set as (v: number) => void)(Number(e.target.value))} className='w-14 accent-accent-500' />
+              <span className='w-8 text-right text-text-500'>{val}</span>
+            </label>
+          ))}
+
+          <span className='ml-1 font-mono text-text-500'>Circle1</span>
+          {([
+            ['X', -50, 50, circleX1, setCircleX1],
+            ['Y', -50, 50, circleY1, setCircleY1],
+          ] as const).map(([label, min, max, val, set]) => (
+            <label key={`c1-${label}`} className='flex items-center gap-1 font-mono text-[10px] text-text-300'>
+              {label}
+              <input type='range' min={min} max={max} step={1} value={val}
+                onChange={(e) => (set as (v: number) => void)(Number(e.target.value))} className='w-14 accent-accent-500' />
+              <span className='w-8 text-right text-text-500'>{val}</span>
+            </label>
+          ))}
+        </div>
       </div>
-      <GameLayout probeInsetPxByRing={probeInsetPxByRing} allowMoveAnyProbe />
+      <div style={sectorDebugVars}>
+        <GameLayout probeInsetPxByRing={probeInsetPxByRing} allowMoveAnyProbe />
+      </div>
     </GameContextValueProvider>
   );
 }

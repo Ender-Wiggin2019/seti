@@ -146,32 +146,52 @@ export function SectorView({
             const xPos = index === 0 ? '30%' : '70%';
 
             return (
-              <button
+              <div
                 key={`${pair.placement.position}-${sector.sectorId}`}
-                type='button'
-                data-testid={`sector-node-${pair.placement.position}-${index}`}
-                className={cn(
-                  'pointer-events-auto absolute -translate-x-1/2 rounded-md border px-1 py-0.5 text-left transition-colors',
-                  isSelectable
-                    ? 'cursor-pointer border-accent-500/80 bg-accent-500/15 hover:bg-accent-500/25'
-                    : 'cursor-default border-surface-700/70 bg-surface-950/65 opacity-85',
-                )}
+                className='absolute'
                 style={{
                   left: xPos,
-                  top: '56%',
+                  top: '50%',
                   transform: 'translate(-50%, -50%)',
                 }}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  if (!isSelectable) {
-                    return;
-                  }
-                  onSelectSector(sector.color);
-                }}
-                disabled={!isSelectable}
-                aria-label={`Sector ${sector.color}`}
               >
-                <div className='flex items-center gap-1'>
+                <div
+                  className='flex items-center gap-[2px]'
+                  style={{
+                    transform: [
+                      `translate(var(--sector-sig-x-${index}, 0px), var(--sector-sig-y-${index}, 0px))`,
+                      `rotate(var(--sector-sig-rot-${index}, 0deg))`,
+                    ].join(' '),
+                    transformOrigin: 'center',
+                  }}
+                >
+                  {sector.signals.map((sig, slotIndex) => (
+                    <span
+                      key={`${sector.sectorId}-sig-${slotIndex}`}
+                      className='inline-block rounded-full border'
+                      style={{
+                        width: 'var(--sector-data-size, 6px)',
+                        height: 'var(--sector-data-size, 6px)',
+                        ...(sig.type === 'data'
+                          ? {
+                              borderColor: 'rgba(103, 232, 249, 0.8)',
+                              backgroundColor: 'rgba(165, 243, 252, 0.9)',
+                            }
+                          : {
+                              backgroundColor:
+                                (sig.playerId && playerColors[sig.playerId]) ??
+                                '#888',
+                              borderColor:
+                                (sig.playerId && playerColors[sig.playerId]) ??
+                                '#888',
+                            }),
+                      }}
+                    />
+                  ))}
+                </div>
+
+                {/* Label */}
+                <div className='mt-0.5 flex items-center justify-center gap-1'>
                   <span className='font-mono text-[9px] uppercase tracking-wide text-text-100'>
                     {sector.color}
                   </span>
@@ -180,29 +200,36 @@ export function SectorView({
                   </span>
                 </div>
 
-                <div className='mt-0.5 flex items-center gap-0.5'>
-                  {sector.signals.map((sig, slotIndex) => (
-                    <span
-                      key={`${sector.sectorId}-sig-${slotIndex}`}
-                      className={cn(
-                        'inline-block h-1.5 w-1.5 rounded-full border',
-                        sig.type === 'data'
-                          ? 'border-cyan-300/80 bg-cyan-200/90'
-                          : 'border-surface-500/60 bg-transparent',
-                      )}
-                      style={
-                        sig.type === 'player' && sig.playerId
-                          ? {
-                              backgroundColor:
-                                playerColors[sig.playerId] ?? '#888',
-                              borderColor: playerColors[sig.playerId] ?? '#888',
-                            }
-                          : undefined
-                      }
-                    />
-                  ))}
-                </div>
-              </button>
+                <button
+                  type='button'
+                  data-testid={`sector-node-${pair.placement.position}-${index}`}
+                  className={cn(
+                    'pointer-events-auto absolute rounded-full border-2 transition-colors',
+                    isSelectable
+                      ? 'cursor-pointer border-accent-400 bg-accent-500/25 hover:bg-accent-500/45'
+                      : 'cursor-default border-surface-500/40 bg-surface-800/30',
+                  )}
+                  style={{
+                    width: 'var(--sector-circle-size, 24px)',
+                    height: 'var(--sector-circle-size, 24px)',
+                    left: '50%',
+                    top: '50%',
+                    transform: [
+                      'translate(-50%, -50%)',
+                      `translate(var(--sector-circle-x-${index}, 0px), var(--sector-circle-y-${index}, 0px))`,
+                    ].join(' '),
+                  }}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    if (!isSelectable) {
+                      return;
+                    }
+                    onSelectSector(sector.color);
+                  }}
+                  disabled={!isSelectable}
+                  aria-label={`Mark ${sector.color} sector`}
+                />
+              </div>
             );
           })}
         </div>
