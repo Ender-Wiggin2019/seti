@@ -27,6 +27,10 @@
 .smoke-screenshots/
 .opencode/skills/skill-creator/scripts/
 
+# python artifacts
+**/__pycache__/
+*.py[cod]
+
 # debug
 npm-debug.log*
 yarn-debug.log*
