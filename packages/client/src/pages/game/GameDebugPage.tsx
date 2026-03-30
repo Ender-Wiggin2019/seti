@@ -12,7 +12,8 @@ import {
   type EStarName,
 } from '@seti/common/constant/sectorSetup';
 import { ALL_CARDS } from '@seti/common/data';
-import { ETech } from '@seti/common/types/element';
+import type { IBaseCard } from '@seti/common/types/BaseCard';
+import { ESector, ETech } from '@seti/common/types/element';
 import { ETechId } from '@seti/common/types/tech';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { TProbeInsetPxByRing } from '@/features/board/SolarSystemView';
@@ -43,6 +44,127 @@ type TCardInputDebugMode =
 
 type TDiscAngles = [number, number, number];
 const PUSHED_PROBE_DELAY_RESET_BASE_MS = 1100;
+
+// ── Scan debug state machine ───────────────────────────────────────────
+type TScanPhase =
+  | { step: 'idle' }
+  | { step: 'pool'; remaining: Set<string> }
+  | { step: 'card-row'; remaining: Set<string> }
+  | { step: 'hand'; remaining: Set<string> }
+  | { step: 'earth-adjacent'; remaining: Set<string> }
+  | { step: 'energy'; remaining: Set<string> }
+  | {
+      step: 'color-pick';
+      remaining: Set<string>;
+      color: ESector;
+      sectorIds: string[];
+    };
+
+const SCAN_IDLE: TScanPhase = { step: 'idle' };
+const ALL_SCAN_SUB_ACTIONS = [
+  'mark-earth',
+  'mark-card-row',
+  'mark-mercury',
+  'mark-hand',
+  'energy-launch-or-move',
+];
+
+const EARTH_SECTOR_ID = 'sector-0';
+const MERCURY_SECTOR_ID = 'sector-2';
+
+function markSignalOnSectors(
+  sectors: IPublicGameState['sectors'],
+  sectorId: string,
+  playerId: string,
+): IPublicGameState['sectors'] {
+  return sectors.map((s) => {
+    if (s.sectorId !== sectorId) return s;
+    const signals = [...s.signals];
+    const rightmostDataIdx = signals.reduce(
+      (last, sig, idx) => (sig.type === 'data' ? idx : last),
+      -1,
+    );
+    if (rightmostDataIdx >= 0) {
+      signals[rightmostDataIdx] = { type: 'player', playerId };
+    } else {
+      signals.push({ type: 'player', playerId });
+    }
+    return { ...s, signals };
+  });
+}
+
+function findSectorsByColor(
+  sectors: IPublicGameState['sectors'],
+  color: ESector,
+): string[] {
+  return sectors.filter((s) => s.color === color).map((s) => s.sectorId);
+}
+
+function buildScanPoolInput(
+  remaining: Set<string>,
+  cardRowLength: number,
+  handLength: number,
+): IPlayerInputModel {
+  const options: Array<{ id: string; label: string }> = [];
+  if (remaining.has('mark-earth'))
+    options.push({ id: 'mark-earth', label: 'Mark Earth' });
+  if (remaining.has('mark-card-row') && cardRowLength > 0)
+    options.push({ id: 'mark-card-row', label: 'Mark Card Row' });
+  if (remaining.has('mark-mercury'))
+    options.push({ id: 'mark-mercury', label: 'Mark Mercury (1 publicity)' });
+  if (remaining.has('mark-hand') && handLength > 0)
+    options.push({ id: 'mark-hand', label: 'Mark Hand Signal' });
+  if (remaining.has('energy-launch-or-move'))
+    options.push({ id: 'energy-launch-or-move', label: 'Energy Launch or Move' });
+  options.push({ id: 'done', label: 'Done (end scan)' });
+  return {
+    inputId: 'scan-pool',
+    type: EPlayerInputType.OPTION,
+    title: 'Scan: choose sub-action',
+    options,
+  };
+}
+
+function buildCardSelectInput(
+  source: 'row' | 'hand',
+  cards: IBaseCard[],
+): IPlayerInputModel {
+  return {
+    inputId: `scan-${source}`,
+    type: EPlayerInputType.CARD,
+    title:
+      source === 'row'
+        ? 'Select a card from the card row'
+        : 'Select a hand card to discard for signal',
+    cards,
+    minSelections: 1,
+    maxSelections: 1,
+  };
+}
+
+function buildColorPickInput(
+  color: ESector,
+  sectorIds: string[],
+): IPlayerInputModel {
+  return {
+    inputId: 'scan-color-pick',
+    type: EPlayerInputType.OPTION,
+    title: `Choose ${color} sector to mark signal`,
+    options: sectorIds.map((id) => ({ id, label: `Sector ${id}` })),
+  };
+}
+
+function buildEnergyInput(): IPlayerInputModel {
+  return {
+    inputId: 'scan-energy',
+    type: EPlayerInputType.OPTION,
+    title: 'Select Scan Energy Launch effect',
+    options: [
+      { id: 'launch', label: 'Pay 1 energy to launch a probe' },
+      { id: 'move', label: 'Gain 1 movement' },
+    ],
+  };
+}
 
 const WHEEL_ORDER: ReadonlyArray<TSolarSystemWheelIndex> = [1, 2, 3, 4];
 
@@ -495,6 +617,7 @@ function createDebugGameState(
   probeTransitionDelayById: Record<string, number>,
   cardRowStartIndex: number,
   handStartIndex: number,
+  sectorOverrides?: IPublicGameState['sectors'],
 ): IPublicGameState {
   const setupConfig = createDebugSetupConfig(discAngles, wheels);
   const cardRow = sliceDebugCards(cardRowStartIndex, 3);
@@ -630,7 +753,7 @@ function createDebugGameState(
       discs,
       spaceStates,
     },
-    sectors: createSectorsFromSetup(setupConfig),
+    sectors: sectorOverrides ?? createSectorsFromSetup(setupConfig),
     solarSystemSetup: setupConfig,
     planetaryBoard: { planets: {} },
     techBoard: {
@@ -692,6 +815,11 @@ export function GameDebugPage(): React.JSX.Element {
   const [circleX1, setCircleX1] = useState(8);
   const [circleY1, setCircleY1] = useState(-33);
 
+  const [scanPhase, setScanPhase] = useState<TScanPhase>(SCAN_IDLE);
+  const [debugSectors, setDebugSectors] = useState<
+    IPublicGameState['sectors'] | null
+  >(null);
+
   const clearProbeDelayTimerRef = useRef<number | null>(null);
 
   const rotateRing = (ring: 1 | 2 | 3): void => {
@@ -737,6 +865,7 @@ export function GameDebugPage(): React.JSX.Element {
         probeTransitionDelayById,
         cardRowStartIndex,
         handStartIndex,
+        debugSectors ?? undefined,
       ),
     [
       scenario,
@@ -745,12 +874,15 @@ export function GameDebugPage(): React.JSX.Element {
       probeTransitionDelayById,
       cardRowStartIndex,
       handStartIndex,
+      debugSectors,
     ],
   );
 
   useEffect(() => {
     setDebugWheels(createDefaultDebugWheels());
     setProbeTransitionDelayById({});
+    setDebugSectors(null);
+    setScanPhase(SCAN_IDLE);
   }, [scenario]);
 
   useEffect(() => {
@@ -761,7 +893,153 @@ export function GameDebugPage(): React.JSX.Element {
     };
   }, []);
 
+  const startScan = useCallback(() => {
+    const setupConfig = createDebugSetupConfig(discAngles, debugWheels);
+    setDebugSectors((prev) => prev ?? createSectorsFromSetup(setupConfig));
+    setScanPhase({
+      step: 'pool',
+      remaining: new Set(ALL_SCAN_SUB_ACTIONS),
+    });
+    setCardInputMode('none');
+  }, [discAngles, debugWheels]);
+
+  const goBackToPool = useCallback((remaining: Set<string>) => {
+    if (remaining.size === 0) {
+      setScanPhase(SCAN_IDLE);
+    } else {
+      setScanPhase({ step: 'pool', remaining });
+    }
+  }, []);
+
+  const markAndReturn = useCallback(
+    (sectorId: string, remaining: Set<string>) => {
+      setDebugSectors((prev) => {
+        if (!prev) return prev;
+        return markSignalOnSectors(prev, sectorId, 'player-1');
+      });
+      goBackToPool(remaining);
+    },
+    [goBackToPool],
+  );
+
+  const markByCardColor = useCallback(
+    (card: IBaseCard, remaining: Set<string>) => {
+      const color = card.sector;
+      if (!color) {
+        goBackToPool(remaining);
+        return;
+      }
+      const matching = findSectorsByColor(
+        debugSectors ?? gameState.sectors,
+        color,
+      );
+      if (matching.length === 0) {
+        goBackToPool(remaining);
+      } else if (matching.length === 1) {
+        markAndReturn(matching[0], remaining);
+      } else {
+        setScanPhase({
+          step: 'color-pick',
+          remaining,
+          color,
+          sectorIds: matching,
+        });
+      }
+    },
+    [debugSectors, gameState.sectors, goBackToPool, markAndReturn],
+  );
+
+  const handleScanInput = useCallback(
+    (response: IInputResponse) => {
+      if (scanPhase.step === 'pool' && response.type === EPlayerInputType.OPTION) {
+        const optionId = (response as { optionId: string }).optionId;
+        const next = new Set(scanPhase.remaining);
+        next.delete(optionId);
+
+        switch (optionId) {
+          case 'mark-earth':
+            markAndReturn(EARTH_SECTOR_ID, next);
+            break;
+          case 'mark-mercury':
+            markAndReturn(MERCURY_SECTOR_ID, next);
+            break;
+          case 'mark-card-row':
+            setScanPhase({ step: 'card-row', remaining: next });
+            break;
+          case 'mark-hand':
+            setScanPhase({ step: 'hand', remaining: next });
+            break;
+          case 'energy-launch-or-move':
+            setScanPhase({ step: 'energy', remaining: next });
+            break;
+          case 'done':
+          default:
+            setScanPhase(SCAN_IDLE);
+            break;
+        }
+        return;
+      }
+
+      if (scanPhase.step === 'card-row' && response.type === EPlayerInputType.CARD) {
+        const cardIds = (response as { cardIds: string[] }).cardIds;
+        const card = gameState.cardRow.find((c) => c.id === cardIds[0]);
+        if (card) {
+          markByCardColor(card, scanPhase.remaining);
+        } else {
+          goBackToPool(scanPhase.remaining);
+        }
+        return;
+      }
+
+      if (scanPhase.step === 'hand' && response.type === EPlayerInputType.CARD) {
+        const cardIds = (response as { cardIds: string[] }).cardIds;
+        const hand = gameState.players[0]?.hand ?? [];
+        const rawId = cardIds[0]?.split('@')[0];
+        const card = hand.find((c) => c.id === rawId);
+        if (card) {
+          markByCardColor(card, scanPhase.remaining);
+        } else {
+          goBackToPool(scanPhase.remaining);
+        }
+        return;
+      }
+
+      if (scanPhase.step === 'color-pick' && response.type === EPlayerInputType.OPTION) {
+        const sectorId = (response as { optionId: string }).optionId;
+        markAndReturn(sectorId, scanPhase.remaining);
+        return;
+      }
+
+      if (scanPhase.step === 'energy' && response.type === EPlayerInputType.OPTION) {
+        goBackToPool(scanPhase.remaining);
+        return;
+      }
+    },
+    [scanPhase, gameState, markAndReturn, markByCardColor, goBackToPool],
+  );
+
   const pendingInput = useMemo<IPlayerInputModel | null>(() => {
+    if (scanPhase.step === 'pool') {
+      const handLen = gameState.players[0]?.hand?.length ?? 0;
+      return buildScanPoolInput(
+        scanPhase.remaining,
+        gameState.cardRow.length,
+        handLen,
+      );
+    }
+    if (scanPhase.step === 'card-row') {
+      return buildCardSelectInput('row', gameState.cardRow);
+    }
+    if (scanPhase.step === 'hand') {
+      return buildCardSelectInput('hand', gameState.players[0]?.hand ?? []);
+    }
+    if (scanPhase.step === 'color-pick') {
+      return buildColorPickInput(scanPhase.color, scanPhase.sectorIds);
+    }
+    if (scanPhase.step === 'energy') {
+      return buildEnergyInput();
+    }
+
     if (cardInputMode === 'hand-select') {
       const handCards = gameState.players[0]?.hand ?? [];
       return {
@@ -797,11 +1075,17 @@ export function GameDebugPage(): React.JSX.Element {
     }
 
     return null;
-  }, [cardInputMode, gameState]);
+  }, [scanPhase, cardInputMode, gameState]);
 
-  const handleDebugInput = (_response: IInputResponse): void => {
-    void _response;
-  };
+  const handleDebugInput = useCallback(
+    (response: IInputResponse): void => {
+      if (scanPhase.step !== 'idle') {
+        handleScanInput(response);
+        return;
+      }
+    },
+    [scanPhase, handleScanInput],
+  );
 
   const isSpectator = scenario === 'spectator';
   const myPlayerId = isSpectator ? 'spectator-0' : 'player-1';
@@ -948,6 +1232,23 @@ export function GameDebugPage(): React.JSX.Element {
           >
             Next Hand
           </button>
+          {scanPhase.step === 'idle' ? (
+            <button
+              type='button'
+              onClick={startScan}
+              className='rounded border border-teal-500/60 bg-teal-500/15 px-2 py-1 text-teal-200 transition-colors hover:bg-teal-500/25'
+            >
+              Start Scan
+            </button>
+          ) : (
+            <button
+              type='button'
+              onClick={() => setScanPhase(SCAN_IDLE)}
+              className='rounded border border-rose-500/60 bg-rose-500/15 px-2 py-1 text-rose-200 transition-colors hover:bg-rose-500/25'
+            >
+              Cancel Scan ({scanPhase.step})
+            </button>
+          )}
         </div>
 
         <div className='flex items-center gap-1 border-l border-surface-700 pl-2'>
