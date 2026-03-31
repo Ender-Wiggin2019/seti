@@ -17,6 +17,7 @@ import {
   MarkSectorSignalEffect,
 } from '@/engine/effects/scan/MarkSectorSignalEffect.js';
 import type { IGame } from '@/engine/IGame.js';
+import { EMissionEventType } from '@/engine/missions/IMission.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
 
 function createMarkCompleteSpy() {
@@ -47,6 +48,9 @@ function createMockGame(sectors: unknown[]): IGame {
   return {
     sectors,
     solarSystemSetup: createDefaultSetupConfig(),
+    missionTracker: {
+      recordEvent: vi.fn(),
+    },
   } as unknown as IGame;
 }
 
@@ -61,33 +65,41 @@ function createSolarSystem(): SolarSystem {
 
 describe('MarkSectorSignalEffect', () => {
   describe('markOnSector', () => {
-    it('marks sector and applies player data reward', () => {
+    it('marks sector, emits mission event, and applies data reward', () => {
       const player = createMockPlayer();
+      const game = createMockGame([]);
       const sector = {
         id: 's1',
+        color: ESector.RED,
         completed: false,
         markSignal: vi.fn(() => ({ dataGained: true })),
       };
 
-      const result = MarkSectorSignalEffect.markOnSector(player, sector);
+      const result = MarkSectorSignalEffect.markOnSector(player, game, sector);
 
       expect(result).toEqual({
         sectorId: 's1',
         dataGained: true,
         completed: false,
       });
+      expect(game.missionTracker.recordEvent).toHaveBeenCalledWith({
+        type: EMissionEventType.SIGNAL_PLACED,
+        color: ESector.RED,
+      });
       expect(player.resources.gain).toHaveBeenCalledWith({ data: 1 });
     });
 
     it('does not grant data when dataGained is false', () => {
       const player = createMockPlayer();
+      const game = createMockGame([]);
       const sector = {
         id: 's1',
+        color: ESector.BLUE,
         completed: false,
         markSignal: vi.fn(() => ({ dataGained: false })),
       };
 
-      const result = MarkSectorSignalEffect.markOnSector(player, sector);
+      const result = MarkSectorSignalEffect.markOnSector(player, game, sector);
 
       expect(result.dataGained).toBe(false);
       expect(player.resources.gain).not.toHaveBeenCalled();

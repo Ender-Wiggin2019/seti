@@ -1,3 +1,4 @@
+import { getAlienRewardsForIndex } from '@seti/common/constant/alienBoardConfig';
 import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
 import { createTraceMarkedEvent } from '../event/GameEvent.js';
 import type { IGame } from '../IGame.js';
@@ -18,17 +19,16 @@ import { AlienRegistry } from './AlienRegistry.js';
 //  Base-game slot factory
 // ---------------------------------------------------------------------------
 
-const OVERFLOW_VP = 3;
-
 function createBaseSlots(alienIndex: number): ITraceSlotInit[] {
   const discoveryColors: ETrace[] = [ETrace.RED, ETrace.YELLOW, ETrace.BLUE];
+  const rewardConfig = getAlienRewardsForIndex(alienIndex);
 
   const discovery: ITraceSlotInit[] = discoveryColors.map((color) => ({
     slotId: `alien-${alienIndex}-discovery-${color}`,
     alienIndex,
     traceColor: color,
     maxOccupants: 1,
-    rewards: [],
+    rewards: rewardConfig.discoveryRewards.map((r) => ({ ...r })),
     isDiscovery: true,
   }));
 
@@ -37,7 +37,7 @@ function createBaseSlots(alienIndex: number): ITraceSlotInit[] {
     alienIndex,
     traceColor: ETrace.ANY,
     maxOccupants: -1,
-    rewards: [{ type: 'VP', amount: OVERFLOW_VP }],
+    rewards: rewardConfig.overflowRewards.map((r) => ({ ...r })),
     isDiscovery: false,
   };
 
@@ -304,6 +304,9 @@ export class AlienState {
       switch (reward.type) {
         case 'VP':
           player.score += reward.amount;
+          break;
+        case 'PUBLICITY':
+          player.resources.gain({ publicity: reward.amount });
           break;
         case 'CUSTOM':
           break;

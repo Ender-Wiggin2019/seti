@@ -1,7 +1,10 @@
 import { EErrorCode } from '@seti/common/types/protocol/errors';
+import { EResource } from '@seti/common/types/element';
+import { vi } from 'vitest';
 import { Deck } from '@/engine/deck/Deck.js';
 import { FreeActionCornerFreeAction } from '@/engine/freeActions/FreeActionCorner.js';
 import type { IGame } from '@/engine/IGame.js';
+import { EMissionEventType } from '@/engine/missions/IMission.js';
 import type { TCardItem } from '@/engine/player/IPlayer.js';
 import { Player } from '@/engine/player/Player.js';
 
@@ -18,6 +21,9 @@ function createTestPlayer(hand: TCardItem[] = ['card-a', 'card-b']): Player {
 function createMockGame(): IGame {
   return {
     mainDeck: new Deck<string>(),
+    missionTracker: {
+      recordEvent: vi.fn(),
+    },
   } as unknown as IGame;
 }
 
@@ -80,6 +86,10 @@ describe('FreeActionCornerFreeAction', () => {
       FreeActionCornerFreeAction.execute(player, game, '39');
 
       expect(player.getMoveStash()).toBe(beforeMove + 1);
+      expect(game.missionTracker.recordEvent).toHaveBeenCalledWith({
+        type: EMissionEventType.CARD_CORNER_USED,
+        resourceType: EResource.MOVE,
+      });
     });
   });
 });

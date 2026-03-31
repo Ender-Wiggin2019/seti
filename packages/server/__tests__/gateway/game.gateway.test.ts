@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { EMainAction } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
+import { DebugSessionRegistry } from '@/debug/DebugSessionRegistry.js';
 import { GameGateway } from '@/gateway/game.gateway.js';
 import { GameManager } from '@/gateway/GameManager.js';
 
@@ -38,6 +39,13 @@ const mockJwtService = {
   verify: vi.fn().mockReturnValue({ sub: 'user-1', email: 'u@t.com' }),
 };
 
+const mockDebugSessionRegistry = {
+  register: vi.fn(),
+  isDebugGame: vi.fn().mockReturnValue(false),
+  isBotPlayer: vi.fn().mockReturnValue(false),
+  getHumanPlayerId: vi.fn().mockReturnValue(null),
+};
+
 describe('GameGateway', () => {
   let gateway: GameGateway;
 
@@ -49,6 +57,7 @@ describe('GameGateway', () => {
         GameGateway,
         { provide: GameManager, useValue: mockGameManager },
         { provide: JwtService, useValue: mockJwtService },
+        { provide: DebugSessionRegistry, useValue: mockDebugSessionRegistry },
       ],
     }).compile();
 

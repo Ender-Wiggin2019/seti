@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { PassAction } from '@/engine/actions/Pass.js';
 import { BoardBuilder } from '@/engine/board/BoardBuilder.js';
 import type { IGame } from '@/engine/IGame.js';
@@ -44,74 +45,144 @@ describe('PassAction', () => {
   });
 
   describe('execute', () => {
-    it('sets player.passed to true', () => {
-      const game = createMockGame();
-      const player = createPlayer();
-      expect(player.passed).toBe(false);
-      PassAction.execute(player, game);
+    it('sets player.passed when no discard and no end-of-round stack', () => {
+      const game = createMockGame({ endOfRoundStacks: [[]] });
+      const player = createPlayer({ hand: [] });
+      const input = PassAction.execute(player, game);
+      expect(input).toBeUndefined();
       expect(player.passed).toBe(true);
     });
 
     it('rotates the solar system on the first pass of the round', () => {
       const rng = new SeededRandom('pass-first-rotate');
       const solarSystem = BoardBuilder.buildSolarSystemFromRandom(rng);
+      const rotateSpy = vi.spyOn(solarSystem, 'rotateNextDisc');
       const game = createMockGame({
         solarSystem,
         hasRoundFirstPassOccurred: false,
+        endOfRoundStacks: [['eor-1']],
       });
       const player = createPlayer({ hand: [] });
-      const result = PassAction.execute(player, game);
-      expect(result.rotatedSolarSystem).toBe(true);
-      expect(result.rotatedDisc).toBeGreaterThanOrEqual(0);
+
+      const input = PassAction.execute(player, game);
+
+      expect(rotateSpy).toHaveBeenCalledTimes(1);
       expect(game.hasRoundFirstPassOccurred).toBe(true);
+      expect(input).toBeDefined();
+      expect(input!.type).toBe(EPlayerInputType.END_OF_ROUND);
     });
 
     it('does not rotate the solar system on the second pass of the round', () => {
       const rng = new SeededRandom('pass-second-no-rotate');
       const solarSystem = BoardBuilder.buildSolarSystemFromRandom(rng);
-      const rotateSpy = vi.spyOn(solarSystem, 'rotateNextDisc');
       const game = createMockGame({
         solarSystem,
         hasRoundFirstPassOccurred: false,
+        endOfRoundStacks: [['eor-1', 'eor-2', 'eor-3']],
       });
-      PassAction.execute(createPlayer({ id: 'p1', hand: [] }), game);
-      rotateSpy.mockClear();
-      const result = PassAction.execute(
-        createPlayer({ id: 'p2', seatIndex: 1, hand: [] }),
-        game,
-      );
+
+      const p1 = createPlayer({ id: 'p1', hand: [] });
+      const input1 = PassAction.execute(p1, game);
+      input1!.process({
+        type: EPlayerInputType.END_OF_ROUND,
+        cardId: 'eor-1',
+      });
+
+      const rotateSpy = vi.spyOn(solarSystem, 'rotateNextDisc');
+      const p2 = createPlayer({ id: 'p2', seatIndex: 1, hand: [] });
+      PassAction.execute(p2, game);
+
       expect(rotateSpy).not.toHaveBeenCalled();
-      expect(result.rotatedSolarSystem).toBe(false);
     });
 
-    it('discards hand down when holding more than 4 cards', () => {
+    it('returns SelectCard when hand exceeds limit', () => {
       const game = createMockGame({ endOfRoundStacks: [[]] });
       const player = createPlayer({
         hand: ['a', 'b', 'c', 'd', 'e', 'f'],
       });
-      PassAction.execute(player, game);
+      const input = PassAction.execute(player, game);
+
+      expect(input).toBeDefined();
+      expect(input!.type).toBe(EPlayerInputType.CARD);
+
+      const nextInput = input!.process({
+        type: EPlayerInputType.CARD,
+        cardIds: ['a', 'b'],
+      });
+
       expect(player.hand.length).toBe(4);
-    });
-
-    it('picks an end-of-round card from the active stack', () => {
-      const game = createMockGame();
-      const player = createPlayer({ hand: [] });
-      PassAction.execute(player, game);
-      expect(player.hand).toContain('eor-1');
-    });
-
-    it('works with an empty hand', () => {
-      const game = createMockGame();
-      const player = createPlayer({ hand: [] });
-      expect(() => PassAction.execute(player, game)).not.toThrow();
+      expect(nextInput).toBeUndefined();
       expect(player.passed).toBe(true);
     });
 
-    it('works when end-of-round stacks are empty', () => {
+    it('chains discard → end-of-round card selection', () => {
+      const game = createMockGame({
+        endOfRoundStacks: [['eor-1', 'eor-2']],
+      });
+      const player = createPlayer({
+        hand: ['a', 'b', 'c', 'd', 'e'],
+      });
+      const discardInput = PassAction.execute(player, game);
+
+      expect(discardInput).toBeDefined();
+      expect(discardInput!.type).toBe(EPlayerInputType.CARD);
+
+      const eorInput = discardInput!.process({
+        type: EPlayerInputType.CARD,
+        cardIds: ['a'],
+      });
+
+      expect(player.hand.length).toBe(4);
+      expect(eorInput).toBeDefined();
+      expect(eorInput!.type).toBe(EPlayerInputType.END_OF_ROUND);
+
+      const finalInput = eorInput!.process({
+        type: EPlayerInputType.END_OF_ROUND,
+        cardId: 'eor-2',
+      });
+
+      expect(finalInput).toBeUndefined();
+      expect(player.passed).toBe(true);
+      expect(player.hand).toContain('eor-2');
+    });
+
+    it('returns SelectEndOfRoundCard when stack is available', () => {
+      const game = createMockGame();
+      const player = createPlayer({ hand: [] });
+      const input = PassAction.execute(player, game);
+
+      expect(input).toBeDefined();
+      expect(input!.type).toBe(EPlayerInputType.END_OF_ROUND);
+
+      const nextInput = input!.process({
+        type: EPlayerInputType.END_OF_ROUND,
+        cardId: 'eor-1',
+      });
+
+      expect(nextInput).toBeUndefined();
+      expect(player.passed).toBe(true);
+      expect(player.hand).toContain('eor-1');
+    });
+
+    it('works with an empty hand and empty stack', () => {
       const game = createMockGame({ endOfRoundStacks: [[]] });
       const player = createPlayer({ hand: [] });
-      const result = PassAction.execute(player, game);
-      expect(result.endOfRoundCardSelected).toBe(false);
+      const input = PassAction.execute(player, game);
+
+      expect(input).toBeUndefined();
+      expect(player.passed).toBe(true);
+    });
+
+    it('skips end-of-round card in the last round (no stack)', () => {
+      const game = createMockGame({
+        roundRotationReminderIndex: 4,
+        endOfRoundStacks: [['a'], ['b'], ['c'], ['d']],
+      });
+      const player = createPlayer({ hand: [] });
+      const input = PassAction.execute(player, game);
+
+      expect(input).toBeUndefined();
+      expect(player.passed).toBe(true);
       expect(player.hand).toEqual([]);
     });
   });

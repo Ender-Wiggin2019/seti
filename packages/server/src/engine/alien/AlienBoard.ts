@@ -6,6 +6,7 @@ import type { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
 
 export type TSlotReward =
   | { type: 'VP'; amount: number }
+  | { type: 'PUBLICITY'; amount: number }
   | { type: 'CUSTOM'; effectId: string };
 
 // ---------------------------------------------------------------------------

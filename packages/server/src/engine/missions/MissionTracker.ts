@@ -103,7 +103,9 @@ export class MissionTracker {
 
         const branch = mission.def.branches[i];
         const isTriggered = events.some((event) =>
-          matchesFullMissionTrigger(branch, event),
+          branch.matchEvent
+            ? branch.matchEvent(event)
+            : matchesFullMissionTrigger(branch, event),
         );
 
         if (isTriggered) {

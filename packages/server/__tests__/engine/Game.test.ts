@@ -1,10 +1,34 @@
 import { EMainAction, EPhase } from '@seti/common/types/protocol/enums';
+import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
+import type { ISelectEndOfRoundCardInputModel } from '@seti/common/types/protocol/playerInput';
 import { Game } from '@/engine/Game.js';
+import type { IPlayer } from '@/engine/player/IPlayer.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
   { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
 ] as const;
+
+function resolvePassInputs(game: Game, player: IPlayer): void {
+  while (player.waitingFor) {
+    const model = player.waitingFor.toModel();
+
+    if (model.type === EPlayerInputType.CARD) {
+      const cardIds = (model as { cards: { id: string }[]; minSelections: number })
+        .cards.slice(0, (model as { minSelections: number }).minSelections)
+        .map((c) => c.id);
+      game.processInput(player.id, { type: EPlayerInputType.CARD, cardIds });
+    } else if (model.type === EPlayerInputType.END_OF_ROUND) {
+      const eorModel = model as ISelectEndOfRoundCardInputModel;
+      game.processInput(player.id, {
+        type: EPlayerInputType.END_OF_ROUND,
+        cardId: eorModel.cards[0].id,
+      });
+    } else {
+      break;
+    }
+  }
+}
 
 describe('Game', () => {
   it('creates game with expected initial state', () => {
@@ -48,7 +72,9 @@ describe('Game', () => {
   it('processes a full turn and hands off to next player', () => {
     const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, 'test-seed');
 
-    game.processMainAction('p1', { type: EMainAction.SCAN });
+    const p1 = game.players.find((p) => p.id === 'p1')!;
+    game.processMainAction('p1', { type: EMainAction.PASS });
+    resolvePassInputs(game, p1);
 
     expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
     expect(game.activePlayer.id).toBe('p2');
@@ -60,8 +86,14 @@ describe('Game', () => {
   it('advances round after all players pass', () => {
     const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, 'test-seed');
 
+    const p1 = game.players.find((p) => p.id === 'p1')!;
+    const p2 = game.players.find((p) => p.id === 'p2')!;
+
     game.processMainAction('p1', { type: EMainAction.PASS });
+    resolvePassInputs(game, p1);
+
     game.processMainAction('p2', { type: EMainAction.PASS });
+    resolvePassInputs(game, p2);
 
     expect(game.round).toBe(2);
     expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
@@ -72,15 +104,21 @@ describe('Game', () => {
     const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, 'test-seed');
 
     for (let index = 0; index < 5; index += 1) {
-      game.processMainAction(game.activePlayer.id, { type: EMainAction.PASS });
-      if ((game.phase as string) === EPhase.GAME_OVER) {
-        break;
-      }
+      const activeId = game.activePlayer.id;
+      const activePlayer = game.players.find((p) => p.id === activeId)!;
 
-      game.processMainAction(game.activePlayer.id, { type: EMainAction.PASS });
-      if ((game.phase as string) === EPhase.GAME_OVER) {
-        break;
-      }
+      game.processMainAction(activeId, { type: EMainAction.PASS });
+      resolvePassInputs(game, activePlayer);
+
+      if ((game.phase as string) === EPhase.GAME_OVER) break;
+
+      const nextId = game.activePlayer.id;
+      const nextPlayer = game.players.find((p) => p.id === nextId)!;
+
+      game.processMainAction(nextId, { type: EMainAction.PASS });
+      resolvePassInputs(game, nextPlayer);
+
+      if ((game.phase as string) === EPhase.GAME_OVER) break;
     }
 
     expect(game.phase).toBe(EPhase.GAME_OVER);

@@ -3,6 +3,7 @@ import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import { hasCardData, loadCardData } from '../cards/loadCardData.js';
 import type { IGame } from '../IGame.js';
+import { EMissionEventType } from '../missions/IMission.js';
 import type { IPlayer } from '../player/IPlayer.js';
 
 export interface IFreeActionCornerResult {
@@ -53,6 +54,10 @@ export class FreeActionCornerFreeAction {
       if (value <= 0) {
         continue;
       }
+      game.missionTracker.recordEvent({
+        type: EMissionEventType.CARD_CORNER_USED,
+        resourceType: cornerReward.type,
+      });
 
       switch (cornerReward.type) {
         case EResource.CREDIT:

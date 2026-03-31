@@ -1,7 +1,13 @@
 import { EMainAction, EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
+import {
+  EPlayerInputType,
+  type ISelectOptionInputModel,
+  type ISelectTraceInputModel,
+} from '@seti/common/types/protocol/playerInput';
 import { ETechId } from '@seti/common/types/tech';
 import { Game } from '@/engine/Game.js';
+import type { IPlayer } from '@/engine/player/IPlayer.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -21,6 +27,27 @@ function placeProbeOnPlanet(
 
   for (let index = 0; index < count; index += 1) {
     game.solarSystem.placeProbe(playerId, targetSpace.id);
+  }
+}
+
+function resolveAllInputs(game: Game, player: IPlayer): void {
+  while (player.waitingFor) {
+    const model = player.waitingFor.toModel();
+    if (model.type === EPlayerInputType.TRACE) {
+      const traceModel = model as ISelectTraceInputModel;
+      game.processInput(player.id, {
+        type: EPlayerInputType.TRACE,
+        trace: traceModel.options[0],
+      });
+    } else if (model.type === EPlayerInputType.OPTION) {
+      const optModel = model as ISelectOptionInputModel;
+      game.processInput(player.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: optModel.options[0].id,
+      });
+    } else {
+      break;
+    }
   }
 }
 
@@ -103,6 +130,7 @@ describe('Land action', () => {
       type: EMainAction.LAND,
       payload: { planet: EPlanet.MARS, isMoon: true },
     });
+    resolveAllInputs(game, p1);
 
     expect(
       game.planetaryBoard?.planets.get(EPlanet.MARS)?.moonOccupant?.playerId,

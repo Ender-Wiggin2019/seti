@@ -3,6 +3,7 @@ import { EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import type { ETechId } from '@seti/common/types/tech';
 import { GameError } from '@/shared/errors/GameError.js';
+import { SimpleDeferredAction } from '../deferred/SimpleDeferredAction.js';
 import type {
   ILandOptions,
   ILandResult,
@@ -287,6 +288,17 @@ export class Player implements IPlayer {
       planet,
       isMoon: result.isMoon,
     });
+
+    if (result.lifeTraceGained > 0) {
+      for (let i = 0; i < result.lifeTraceGained; i++) {
+        game.deferredActions.push(
+          new SimpleDeferredAction(
+            this,
+            (g) => g.alienState.createTraceInput(this, g, ETrace.ANY),
+          ),
+        );
+      }
+    }
 
     return result;
   }

@@ -1,12 +1,17 @@
 import { EStarName } from '@seti/common/constant/sectorSetup';
+import { EPlanet } from '@seti/common/types/protocol/enums';
+import { AdvancedNavigationSystem } from '../base/AdvancedNavigationSystemCard.js';
 import { Alice } from '../base/AliceCard.js';
+import { AnySignalQuickMissionCard } from '../base/AnySignalQuickMissionCard.js';
 import { Apollo11Mission } from '../base/Apollo11MissionCard.js';
+import { AsteroidsResearch } from '../base/AsteroidsResearchCard.js';
 import { Atlas } from '../base/AtlasCard.js';
 import { CassiniProbe } from '../base/CassiniProbeCard.js';
 import { Dragonfly } from '../base/DragonflyCard.js';
 import { createGenericCard } from '../base/GenericCards.js';
 import { GmrtTelescope } from '../base/GmrtTelescopeCard.js';
 import { GreenBankTelescope } from '../base/GreenBankTelescopeCard.js';
+import { HerschelSpaceObservatory } from '../base/HerschelSpaceObservatoryCard.js';
 import { JunoProbe } from '../base/JunoProbeCard.js';
 import { LinguisticAnalysis } from '../base/LinguisticAnalysisCard.js';
 import { LovellTelescope } from '../base/LovellTelescopeCard.js';
@@ -28,6 +33,7 @@ import { TridentProbe } from '../base/TridentProbeCard.js';
 import { UranusOrbiter } from '../base/UranusOrbiterCard.js';
 import { VeneraProbe } from '../base/VeneraProbeCard.js';
 import { WesterborkTelescope } from '../base/WesterborkTelescopeCard.js';
+import { CornellUniversity } from '../base/CornellUniversityCard.js';
 import type { CardRegistry } from '../CardRegistry.js';
 import { loadCardData } from '../loadCardData.js';
 
@@ -119,22 +125,62 @@ export function registerBaseCards(registry: CardRegistry): void {
   ); // Beta Pictoris Obs       | SIGNAL_BLACK, DESC(location), QM
 
   // ============================================================
-  // QUICK MISSION + UNHANDLED — TODO: implement base effect mapping
+  // QUICK MISSION + custom signal placement
   // ============================================================
 
-  // Exploration programs: any-signal + QM
-  // TODO: UNHANDLED_EFFECT(any-signal) — needs player signal-color choice
-  g(registry, '32'); // Mercury Exploration     | ANY_SIGNAL(2), QM
-  g(registry, '33'); // Venus Exploration       | ANY_SIGNAL(2), QM
-  g(registry, '34'); // Mars Exploration        | ANY_SIGNAL(2), QM
-  g(registry, '35'); // Jupiter Exploration     | ANY_SIGNAL(2), QM
-  g(registry, '36'); // Saturn Exploration      | ANY_SIGNAL(2), QM
-  g(registry, '88'); // Chandra Space Obs       | ANY_SIGNAL(2), QM
-  g(registry, '115'); // Canadian Hydrogen Tel   | ANY_SIGNAL, QM
+  // Exploration programs: any-signal constrained by planet sector + QM
+  registry.register(
+    '32',
+    () =>
+      new AnySignalQuickMissionCard('32', {
+        placementMode: 'planet-sector',
+        targetPlanet: EPlanet.MERCURY,
+      }),
+  ); // Mercury Exploration     | ANY_SIGNAL(2), QM
+  registry.register(
+    '33',
+    () =>
+      new AnySignalQuickMissionCard('33', {
+        placementMode: 'planet-sector',
+        targetPlanet: EPlanet.VENUS,
+      }),
+  ); // Venus Exploration       | ANY_SIGNAL(2), QM
+  registry.register(
+    '34',
+    () =>
+      new AnySignalQuickMissionCard('34', {
+        placementMode: 'planet-sector',
+        targetPlanet: EPlanet.MARS,
+      }),
+  ); // Mars Exploration        | ANY_SIGNAL(2), QM
+  registry.register(
+    '35',
+    () =>
+      new AnySignalQuickMissionCard('35', {
+        placementMode: 'planet-sector',
+        targetPlanet: EPlanet.JUPITER,
+      }),
+  ); // Jupiter Exploration     | ANY_SIGNAL(2), QM
+  registry.register(
+    '36',
+    () =>
+      new AnySignalQuickMissionCard('36', {
+        placementMode: 'planet-sector',
+        targetPlanet: EPlanet.SATURN,
+      }),
+  ); // Saturn Exploration      | ANY_SIGNAL(2), QM
+  registry.register(
+    '88',
+    () =>
+      new AnySignalQuickMissionCard('88', { placementMode: 'probe-sector' }),
+  ); // Chandra Space Obs       | ANY_SIGNAL(2), QM
+  registry.register(
+    '115',
+    () => new AnySignalQuickMissionCard('115', { placementMode: 'any-sector' }),
+  ); // Canadian Hydrogen Tel   | ANY_SIGNAL, QM
 
-  // DESC + UNHANDLED + QM
-  // TODO: UNHANDLED_EFFECT(any-signal) + DESC handler
-  g(registry, '134'); // Herschel Space Obs      | ANY_SIGNAL, DESC, QM
+  // DESC + any-signal + QM
+  registry.register('134', () => new HerschelSpaceObservatory()); // Herschel Space Obs      | ANY_SIGNAL, DESC, QM
 
   // ============================================================
   // FULL MISSION — multi-objective missions
@@ -150,10 +196,10 @@ export function registerBaseCards(registry: CardRegistry): void {
   g(registry, '82'); // Johnson Space Center
   g(registry, '101'); // Telescope Time Allocation
   g(registry, '116'); // Control Center
-  g(registry, '128'); // Advanced Navigation System
-  g(registry, '129'); // Asteroids Research
+  registry.register('128', () => new AdvancedNavigationSystem()); // Advanced Navigation System
+  registry.register('129', () => new AsteroidsResearch()); // Asteroids Research
   g(registry, '106'); // Strategic Planning
-  g(registry, '138'); // Cornell University
+  registry.register('138', () => new CornellUniversity()); // Cornell University
 
   // Full missions with base effects
   g(registry, '77'); // NASA Astrobiology Inst  | PUBLICITY, FM

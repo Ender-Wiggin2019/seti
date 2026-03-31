@@ -1,19 +1,8 @@
-/*
- * @Author: Ender-Wiggin
- * @Date: 2026-03-26 15:24:29
- * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2026-03-26 16:44:37
- * @Description:
- */
 import type { IGame } from '../IGame.js';
+import { SelectCard } from '../input/SelectCard.js';
+import { SelectEndOfRoundCard } from '../input/SelectEndOfRoundCard.js';
+import type { PlayerInput } from '../input/PlayerInput.js';
 import type { IPlayer, TCardItem } from '../player/IPlayer.js';
-
-export interface IPassResult {
-  discardedCards: TCardItem[];
-  rotatedSolarSystem: boolean;
-  rotatedDisc: number;
-  endOfRoundCardSelected: boolean;
-}
 
 export class PassAction {
   public static canExecute(_player: IPlayer, _game: IGame): boolean {
@@ -21,68 +10,118 @@ export class PassAction {
   }
 
   /**
-   * Execute the pass sequence.
-   * In the full implementation, this creates PlayerInputs for:
-   * 1. Discarding hand down to `player.handLimitAfterPass`
-   * 2. Selecting end-of-round card
-   *
-   * This simplified version takes pre-selected values.
+   * Pass sequence (PRD §7.8):
+   *  1. Discard hand down to `player.handLimitAfterPass`  (PlayerInput if excess)
+   *  2. First-pass-this-round → rotate SolarSystem
+   *  3. Pick one card from end-of-round stack             (PlayerInput)
+   *  4. Mark player as passed
    */
   public static execute(
     player: IPlayer,
     game: IGame,
-    options: {
-      discardCardIndexes?: number[];
-      endOfRoundCardIndex?: number;
-    } = {},
-  ): IPassResult {
-    const result: IPassResult = {
-      discardedCards: [],
-      rotatedSolarSystem: false,
-      rotatedDisc: -1,
-      endOfRoundCardSelected: false,
-    };
+  ): PlayerInput | undefined {
+    return this.discardStep(player, game);
+  }
 
+  private static discardStep(
+    player: IPlayer,
+    game: IGame,
+  ): PlayerInput | undefined {
     const handLimit = player.handLimitAfterPass;
-    if (player.hand.length > handLimit) {
-      const discardIndexes = options.discardCardIndexes ?? [];
-      const toDiscard =
-        discardIndexes.length > 0
-          ? discardIndexes
-          : Array.from({ length: player.hand.length - handLimit }, (_, i) => i);
+    const excessCount = player.hand.length - handLimit;
 
-      const sortedDesc = [...toDiscard].sort((a, b) => b - a);
-      for (const idx of sortedDesc) {
-        if (idx >= 0 && idx < player.hand.length) {
-          result.discardedCards.push(player.removeCardAt(idx));
-        }
-      }
+    if (excessCount > 0) {
+      const cards = player.hand.map((card, index) =>
+        PassAction.toCardDescriptor(card, player.getCardIdAt(index)),
+      );
+
+      return new SelectCard(
+        player,
+        {
+          cards,
+          minSelections: excessCount,
+          maxSelections: excessCount,
+          onSelect: (selectedCardIds) => {
+            for (const cardId of selectedCardIds) {
+              player.removeCardById(cardId);
+            }
+            return PassAction.rotateAndPickStep(player, game);
+          },
+        },
+        'Discard down to hand limit',
+      );
     }
 
+    return PassAction.rotateAndPickStep(player, game);
+  }
+
+  private static rotateAndPickStep(
+    player: IPlayer,
+    game: IGame,
+  ): PlayerInput | undefined {
     if (!game.hasRoundFirstPassOccurred) {
       game.hasRoundFirstPassOccurred = true;
       if (game.solarSystem !== null) {
-        result.rotatedDisc = game.solarSystem.rotateNextDisc();
-        result.rotatedSolarSystem = true;
+        game.solarSystem.rotateNextDisc();
       }
     }
 
+    return PassAction.endOfRoundCardStep(player, game);
+  }
+
+  private static endOfRoundCardStep(
+    player: IPlayer,
+    game: IGame,
+  ): PlayerInput | undefined {
     const stackIndex = game.roundRotationReminderIndex;
+
     if (stackIndex >= 0 && stackIndex < game.endOfRoundStacks.length) {
       const stack = game.endOfRoundStacks[stackIndex];
+
       if (stack.length > 0) {
-        const cardIdx = options.endOfRoundCardIndex ?? 0;
-        const validIdx = Math.min(Math.max(0, cardIdx), stack.length - 1);
-        const selectedCard = stack.splice(validIdx, 1)[0];
-        if (selectedCard !== undefined) {
-          player.hand.push(selectedCard);
-          result.endOfRoundCardSelected = true;
-        }
+        const cards = stack.map((card, index) =>
+          PassAction.toCardDescriptor(card, `eor-${index}`),
+        );
+
+        return new SelectEndOfRoundCard(
+          player,
+          cards,
+          (cardId) => {
+            const cardIndex = stack.findIndex(
+              (c) => PassAction.getCardItemId(c) === cardId,
+            );
+            if (cardIndex >= 0) {
+              const selected = stack.splice(cardIndex, 1)[0];
+              if (selected !== undefined) {
+                player.hand.push(selected);
+              }
+            }
+
+            player.passed = true;
+            return undefined;
+          },
+          'Select end-of-round card',
+        );
       }
     }
 
     player.passed = true;
+    return undefined;
+  }
 
-    return result;
+  private static toCardDescriptor(
+    card: TCardItem,
+    fallbackId: string,
+  ): { id: string; [key: string]: unknown } {
+    if (typeof card === 'string') {
+      return { id: card };
+    }
+    const obj = card as Record<string, unknown>;
+    return { ...obj, id: (obj.id as string) ?? fallbackId };
+  }
+
+  private static getCardItemId(card: TCardItem): string | undefined {
+    if (typeof card === 'string') return card;
+    return (card as { id?: string }).id;
   }
 }

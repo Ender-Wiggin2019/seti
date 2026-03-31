@@ -126,6 +126,12 @@ export class GameManager {
     return this.cache.has(gameId);
   }
 
+  registerGame(game: IGame): void {
+    this.cache.set(game.id, game);
+    this.versions.set(game.id, 0);
+    this.refreshTimer(game.id);
+  }
+
   async unloadGame(gameId: string): Promise<void> {
     const game = this.cache.get(gameId);
     if (!game) {

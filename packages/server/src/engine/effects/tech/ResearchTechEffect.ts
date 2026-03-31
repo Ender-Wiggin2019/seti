@@ -1,4 +1,4 @@
-import type { ETech } from '@seti/common/types/element';
+import { ETech } from '@seti/common/types/element';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import {
   type ETechId,
@@ -12,6 +12,7 @@ import type { IPlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
 import { EMissionEventType } from '../../missions/IMission.js';
 import type { IPlayer } from '../../player/IPlayer.js';
+import { createTech } from '../../tech/TechRegistry.js';
 import { TechBonusEffect } from './TechBonusEffect.js';
 
 export interface IResearchTechResult {
@@ -75,7 +76,7 @@ export class ResearchTechEffect {
 
     if (techs.length === 1) {
       const result = this.acquireTech(player, game, techs[0]);
-      return options.onComplete?.(result);
+      return this.handlePostAcquire(player, result, options.onComplete);
     }
 
     return new SelectOption(
@@ -85,10 +86,61 @@ export class ResearchTechEffect {
         label: techId,
         onSelect: () => {
           const result = this.acquireTech(player, game, techId);
-          return options.onComplete?.(result);
+          return this.handlePostAcquire(player, result, options.onComplete);
         },
       })),
       'Select a technology to research',
+    );
+  }
+
+  /**
+   * After acquiring a tech, if it's a COMPUTER tech, present column selection.
+   * Otherwise, delegate to the onComplete callback.
+   */
+  private static handlePostAcquire(
+    player: IPlayer,
+    result: IResearchTechResult,
+    onComplete?: (result: IResearchTechResult) => IPlayerInput | undefined,
+  ): IPlayerInput | undefined {
+    const descriptor = getTechDescriptor(result.techId);
+    if (descriptor.type === ETech.COMPUTER) {
+      const columnInput = this.buildComputerTechPlacement(
+        player,
+        result.techId,
+        () => onComplete?.(result),
+      );
+      if (columnInput) return columnInput;
+    }
+    return onComplete?.(result);
+  }
+
+  private static buildComputerTechPlacement(
+    player: IPlayer,
+    techId: ETechId,
+    onComplete?: () => IPlayerInput | undefined,
+  ): IPlayerInput | undefined {
+    const eligible = player.computer.getEligibleTechColumns();
+    if (eligible.length === 0) return onComplete?.();
+
+    const tech = createTech(techId);
+    const bottomReward = tech.getComputerSlotReward?.(1) ?? {};
+
+    if (eligible.length === 1) {
+      player.computer.placeTech(eligible[0], { techId, bottomReward });
+      return onComplete?.();
+    }
+
+    return new SelectOption(
+      player,
+      eligible.map((colIdx) => ({
+        id: `col-${colIdx}`,
+        label: `Column ${colIdx + 1}`,
+        onSelect: () => {
+          player.computer.placeTech(colIdx, { techId, bottomReward });
+          return onComplete?.();
+        },
+      })),
+      'Select a computer column for the tech',
     );
   }
 

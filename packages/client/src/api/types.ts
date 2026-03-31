@@ -26,6 +26,16 @@ export interface IRegisterResponse {
   user: IAuthUser;
 }
 
+export interface IDebugServerSessionResponse {
+  gameId: string;
+  accessToken: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
 export enum ERoomStatus {
   WAITING = 'waiting',
   PLAYING = 'playing',

@@ -15,9 +15,13 @@ import {
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
+import { AnalyzeDataAction } from './actions/AnalyzeData.js';
+import { LaunchProbeAction } from './actions/LaunchProbe.js';
 import { OrbitAction } from './actions/Orbit.js';
 import { PassAction } from './actions/Pass.js';
 import { PlayCardAction } from './actions/PlayCard.js';
+import { ResearchTechAction } from './actions/ResearchTech.js';
+import { ScanAction } from './actions/Scan.js';
 import { AlienState } from './alien/AlienState.js';
 import type { PlanetaryBoard } from './board/PlanetaryBoard.js';
 import type { Sector } from './board/Sector.js';
@@ -241,6 +245,16 @@ export class Game implements IGame {
     const player = this.getPlayer(playerId);
     processFreeAction(player, this, action);
 
+    if (!player.waitingFor) {
+      const missionInput = this.missionTracker.checkAndPromptTriggers(
+        player,
+        this,
+      );
+      if (missionInput) {
+        player.waitingFor = missionInput;
+      }
+    }
+
     this.eventLog.append(
       createActionEvent(playerId, `FREE_ACTION:${action.type}`, {
         type: action.type,
@@ -337,7 +351,16 @@ export class Game implements IGame {
       new SimpleDeferredAction(
         player,
         (game) => {
+          let pendingInput: PlayerInput | undefined;
+
           switch (action.type) {
+            case EMainAction.LAUNCH_PROBE: {
+              LaunchProbeAction.execute(player, game);
+              game.missionTracker.recordEvent({
+                type: EMissionEventType.PROBE_LAUNCHED,
+              });
+              break;
+            }
             case EMainAction.ORBIT: {
               const planet = this.getPlanetPayload(action);
               OrbitAction.execute(player, game, planet);
@@ -351,6 +374,22 @@ export class Game implements IGame {
               const planet = this.getPlanetPayload(action);
               const isMoon = this.getMoonPayload(action);
               player.land(planet, { isMoon });
+              game.missionTracker.recordEvent({
+                type: EMissionEventType.PROBE_LANDED,
+                planet,
+                isMoon,
+              });
+              break;
+            }
+            case EMainAction.SCAN: {
+              pendingInput = ScanAction.execute(player, game);
+              game.missionTracker.recordEvent({
+                type: EMissionEventType.SCAN_PERFORMED,
+              });
+              break;
+            }
+            case EMainAction.ANALYZE_DATA: {
+              AnalyzeDataAction.execute(player, game);
               break;
             }
             case EMainAction.PLAY_CARD: {
@@ -377,16 +416,18 @@ export class Game implements IGame {
               });
               break;
             }
-            case EMainAction.PASS: {
-              PassAction.execute(player, game);
+            case EMainAction.RESEARCH_TECH: {
+              pendingInput = ResearchTechAction.execute(player, game);
               break;
             }
-            default:
+            case EMainAction.PASS: {
+              pendingInput = PassAction.execute(player, game);
               break;
+            }
           }
 
           game.eventLog.append(createActionEvent(player.id, action.type));
-          return undefined;
+          return pendingInput;
         },
         EPriority.CORE_EFFECT,
       ),
@@ -549,6 +590,16 @@ export class Game implements IGame {
     action: IMainActionRequest,
   ): void {
     switch (action.type) {
+      case EMainAction.LAUNCH_PROBE: {
+        if (!LaunchProbeAction.canExecute(player, this)) {
+          throw new GameError(
+            EErrorCode.INVALID_ACTION,
+            'LaunchProbe requirements are not met',
+            { playerId: player.id },
+          );
+        }
+        return;
+      }
       case EMainAction.ORBIT: {
         const planet = this.getPlanetPayload(action);
         if (!OrbitAction.canExecute(player, this, planet)) {
@@ -579,6 +630,26 @@ export class Game implements IGame {
         }
         return;
       }
+      case EMainAction.SCAN: {
+        if (!ScanAction.canExecute(player, this)) {
+          throw new GameError(
+            EErrorCode.INVALID_ACTION,
+            'Scan requirements are not met',
+            { playerId: player.id },
+          );
+        }
+        return;
+      }
+      case EMainAction.ANALYZE_DATA: {
+        if (!AnalyzeDataAction.canExecute(player, this)) {
+          throw new GameError(
+            EErrorCode.INVALID_ACTION,
+            'AnalyzeData requirements are not met',
+            { playerId: player.id },
+          );
+        }
+        return;
+      }
       case EMainAction.PLAY_CARD: {
         const cardIndex = this.getCardIndexPayload(action);
         if (cardIndex < 0 || cardIndex >= player.hand.length) {
@@ -603,8 +674,26 @@ export class Game implements IGame {
         }
         return;
       }
-      default:
+      case EMainAction.RESEARCH_TECH: {
+        if (!ResearchTechAction.canExecute(player, this)) {
+          throw new GameError(
+            EErrorCode.INVALID_ACTION,
+            'ResearchTech requirements are not met',
+            { playerId: player.id },
+          );
+        }
         return;
+      }
+      case EMainAction.PASS: {
+        if (!PassAction.canExecute(player, this)) {
+          throw new GameError(
+            EErrorCode.INVALID_ACTION,
+            'Pass is not currently allowed',
+            { playerId: player.id },
+          );
+        }
+        return;
+      }
     }
   }
 

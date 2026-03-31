@@ -1,5 +1,7 @@
 import { EErrorCode } from '@seti/common/types/protocol/errors';
+import { EPlanet } from '@seti/common/types/protocol/enums';
 import { ETechId } from '@seti/common/types/tech';
+import { vi } from 'vitest';
 import {
   ESolarSystemElementType,
   type ISolarSystemSpace,
@@ -7,6 +9,7 @@ import {
 } from '@/engine/board/SolarSystem.js';
 import { MovementFreeAction } from '@/engine/freeActions/Movement.js';
 import type { IGame } from '@/engine/IGame.js';
+import { EMissionEventType } from '@/engine/missions/IMission.js';
 import { Player } from '@/engine/player/Player.js';
 
 function createMockSpace(
@@ -54,9 +57,16 @@ function createTestPlayer(overrides?: Record<string, unknown>): Player {
   });
 }
 
-function createMockGame(ss: SolarSystem): IGame {
+function createMockGame(
+  ss: SolarSystem,
+  overrides: Record<string, unknown> = {},
+): IGame {
   return {
     solarSystem: ss,
+    missionTracker: {
+      recordEvent: vi.fn(),
+    },
+    ...overrides,
   } as unknown as IGame;
 }
 
@@ -147,6 +157,41 @@ describe('MovementFreeAction', () => {
 
       expect(result.totalCost).toBe(2);
       expect(ss.getProbesAt('s2')).toHaveLength(1);
+    });
+
+    it('records planet/asteroid visit mission events while moving', () => {
+      const ss = createLinearSolarSystem();
+      ss.spaces.find((space) => space.id === 's1')!.elements = [
+        {
+          type: ESolarSystemElementType.PLANET,
+          amount: 1,
+          planet: EPlanet.MARS,
+        },
+      ];
+      ss.spaces.find((space) => space.id === 's2')!.elements = [
+        {
+          type: ESolarSystemElementType.ASTEROID,
+          amount: 1,
+        },
+      ];
+
+      const recordEvent = vi.fn();
+      const game = createMockGame(ss, {
+        missionTracker: { recordEvent },
+      });
+      const player = createTestPlayer();
+      player.gainMove(3);
+      ss.placeProbe('p1', 's0');
+
+      MovementFreeAction.execute(player, game, ['s0', 's1', 's2']);
+
+      expect(recordEvent).toHaveBeenCalledWith({
+        type: EMissionEventType.PROBE_VISITED_PLANET,
+        planet: EPlanet.MARS,
+      });
+      expect(recordEvent).toHaveBeenCalledWith({
+        type: EMissionEventType.PROBE_VISITED_ASTEROIDS,
+      });
     });
 
     it('costs extra to leave asteroid space', () => {

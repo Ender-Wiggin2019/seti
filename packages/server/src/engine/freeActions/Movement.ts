@@ -3,6 +3,7 @@ import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import { ESolarSystemElementType } from '../board/SolarSystem.js';
 import type { IGame } from '../IGame.js';
+import { EMissionEventType } from '../missions/IMission.js';
 import type { IPlayer } from '../player/IPlayer.js';
 import { TechModifierQuery } from '../tech/TechModifierQuery.js';
 import { toPublicSolarSystemState } from '../utils/stateProjection.js';
@@ -80,6 +81,7 @@ export class MovementFreeAction {
     for (let i = 0; i < path.length - 1; i++) {
       const result = game.solarSystem.moveProbe(probe.id, path[i], path[i + 1]);
       totalPublicity += result.publicityGained;
+      this.recordVisitEvents(game, path[i + 1]);
 
       if (
         techQuery.hasAsteroidPublicity() &&
@@ -139,5 +141,35 @@ export class MovementFreeAction {
       (element) =>
         element.type === ESolarSystemElementType.ASTEROID && element.amount > 0,
     );
+  }
+
+  private static recordVisitEvents(game: IGame, spaceId: string): void {
+    const space = game.solarSystem?.spaces.find(
+      (candidate) => candidate.id === spaceId,
+    );
+    if (!space) {
+      return;
+    }
+
+    for (const element of space.elements) {
+      if (
+        (element.type === ESolarSystemElementType.PLANET ||
+          element.type === ESolarSystemElementType.EARTH) &&
+        element.planet
+      ) {
+        game.missionTracker.recordEvent({
+          type: EMissionEventType.PROBE_VISITED_PLANET,
+          planet: element.planet,
+        });
+      }
+      if (
+        element.type === ESolarSystemElementType.ASTEROID &&
+        element.amount > 0
+      ) {
+        game.missionTracker.recordEvent({
+          type: EMissionEventType.PROBE_VISITED_ASTEROIDS,
+        });
+      }
+    }
   }
 }

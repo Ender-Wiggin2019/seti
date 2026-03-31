@@ -1,5 +1,5 @@
 import type { IBaseEffect, ICustomizedEffect } from '@seti/common/types/effect';
-import type { EPlanet } from '@seti/common/types/element';
+import type { EPlanet, EResource, ESector } from '@seti/common/types/element';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
 
@@ -12,6 +12,7 @@ export interface IMissionBranchDef {
   readonly req: ReadonlyArray<IBaseEffect | ICustomizedEffect>;
   readonly rewards: ReadonlyArray<IBaseEffect | ICustomizedEffect>;
   readonly checkCondition?: (player: IPlayer, game: IGame) => boolean;
+  readonly matchEvent?: (event: IMissionEvent) => boolean;
 }
 
 export interface IMissionDef {
@@ -38,6 +39,11 @@ export enum EMissionEventType {
   PROBE_ORBITED = 'PROBE_ORBITED',
   PROBE_LANDED = 'PROBE_LANDED',
   TECH_RESEARCHED = 'TECH_RESEARCHED',
+  PROBE_VISITED_PLANET = 'PROBE_VISITED_PLANET',
+  PROBE_VISITED_ASTEROIDS = 'PROBE_VISITED_ASTEROIDS',
+  SCAN_PERFORMED = 'SCAN_PERFORMED',
+  SIGNAL_PLACED = 'SIGNAL_PLACED',
+  CARD_CORNER_USED = 'CARD_CORNER_USED',
 }
 
 export type IMissionEvent =
@@ -59,6 +65,20 @@ export type IMissionEvent =
   | {
       readonly type: EMissionEventType.TECH_RESEARCHED;
       readonly techCategory: string;
+    }
+  | {
+      readonly type: EMissionEventType.PROBE_VISITED_PLANET;
+      readonly planet: EPlanet;
+    }
+  | { readonly type: EMissionEventType.PROBE_VISITED_ASTEROIDS }
+  | { readonly type: EMissionEventType.SCAN_PERFORMED }
+  | {
+      readonly type: EMissionEventType.SIGNAL_PLACED;
+      readonly color: ESector;
+    }
+  | {
+      readonly type: EMissionEventType.CARD_CORNER_USED;
+      readonly resourceType: EResource;
     };
 
 export interface ICompletableMission {

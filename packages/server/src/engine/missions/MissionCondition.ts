@@ -7,6 +7,7 @@ import {
   EMiscIcon,
   EPlanet,
   EResource,
+  EScanAction,
   ESector,
   ESpecialAction,
   ETech,
@@ -37,7 +38,14 @@ function matchesSingleEventReq(
   req: IBaseEffect | ICustomizedEffect,
   event: IMissionEvent,
 ): boolean {
-  if (req.effectType === EEffectType.CUSTOMIZED) return false;
+  if (req.effectType === EEffectType.CUSTOMIZED) {
+    const planet = parsePlanetFromDesc(req.desc);
+    if (!planet) return false;
+    return (
+      event.type === EMissionEventType.PROBE_VISITED_PLANET &&
+      event.planet === planet
+    );
+  }
 
   const baseReq = req as IBaseEffect;
   const value = baseReq.value ?? 1;
@@ -70,6 +78,24 @@ function matchesSingleEventReq(
       return (
         event.type === EMissionEventType.PROBE_ORBITED ||
         event.type === EMissionEventType.PROBE_LANDED
+      );
+    case ESpecialAction.SCAN:
+      return event.type === EMissionEventType.SCAN_PERFORMED;
+
+    case EScanAction.YELLOW:
+      return (
+        event.type === EMissionEventType.SIGNAL_PLACED &&
+        event.color === ESector.YELLOW
+      );
+    case EScanAction.RED:
+      return (
+        event.type === EMissionEventType.SIGNAL_PLACED &&
+        event.color === ESector.RED
+      );
+    case EScanAction.BLUE:
+      return (
+        event.type === EMissionEventType.SIGNAL_PLACED &&
+        event.color === ESector.BLUE
       );
 
     case ETech.PROBE:

@@ -34,6 +34,21 @@ pnpm --filter @seti/web dev
 
 默认端口 `3000`。
 
+### 3) 初始化 server 数据库（首次）
+
+如果你要跑 `packages/server`，第一次建议先初始化数据库：
+
+```bash
+pnpm --filter @seti/server db:init
+```
+
+这个脚本会连接到 PostgreSQL 的 `postgres` 默认库，并按当前环境配置推导目标库名：
+
+- 优先读取 `DATABASE_URL` 里的库名
+- 否则读取 `PGDATABASE` / `PGUSER` / 当前系统用户名
+
+若目标库不存在会自动创建；已存在则跳过。
+
 ## client + server 联调
 
 需要两个终端分别启动：
@@ -57,6 +72,12 @@ pnpm --filter @seti/client dev
 - `client` 会读取：
   - `VITE_API_URL=http://localhost:3000`
   - `VITE_WS_URL=http://localhost:3000`
+
+### Debug 页面
+
+- 纯前端调试（本地 mock 状态，不连后端）：`http://localhost:5173/debug/game`
+- Server 联动调试（进入即由 server 创建新局并通过 ws 联动）：`http://localhost:5173/debug/server`
+- Debug 页面中的位置/尺寸/旋转默认参数集中在 `packages/common/src/constant/debugGame.ts`
 
 ## 各包常用命令
 

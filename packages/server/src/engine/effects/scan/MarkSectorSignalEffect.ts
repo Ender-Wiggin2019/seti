@@ -4,6 +4,7 @@ import type { EPlanet } from '@seti/common/types/protocol/enums';
 import type { IGame } from '../../IGame.js';
 import type { PlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
+import { EMissionEventType } from '../../missions/IMission.js';
 import type { IPlayer } from '../../player/IPlayer.js';
 import {
   findAllSectorsByColor,
@@ -38,13 +39,19 @@ export class MarkSectorSignalEffect {
 
   public static markOnSector(
     player: IPlayer,
+    game: IGame,
     sector: {
       markSignal(playerId: string): { dataGained: boolean };
       id: string;
+      color: ESector;
       completed: boolean;
     },
   ): IMarkSectorSignalResult {
     const signalResult = sector.markSignal(player.id);
+    game.missionTracker.recordEvent({
+      type: EMissionEventType.SIGNAL_PLACED,
+      color: sector.color,
+    });
     if (signalResult.dataGained) {
       player.resources.gain({ data: 1 });
     }
@@ -67,7 +74,7 @@ export class MarkSectorSignalEffect {
   ): IMarkSectorSignalResult | null {
     const sector = findSectorById(game, sectorId);
     if (!sector) return null;
-    return this.markOnSector(player, sector);
+    return this.markOnSector(player, game, sector);
   }
 
   public static markByIndex(
@@ -77,7 +84,7 @@ export class MarkSectorSignalEffect {
   ): IMarkSectorSignalResult | null {
     const sector = getSectorAt(game, sectorIndex);
     if (!sector) return null;
-    return this.markOnSector(player, sector);
+    return this.markOnSector(player, game, sector);
   }
 
   public static markByStarName(
@@ -133,7 +140,7 @@ export class MarkSectorSignalEffect {
     }
 
     if (sectors.length === 1) {
-      const result = this.markOnSector(player, sectors[0]);
+      const result = this.markOnSector(player, game, sectors[0]);
       return onComplete?.(result);
     }
 
@@ -143,7 +150,7 @@ export class MarkSectorSignalEffect {
         id: sector.id,
         label: `Sector ${sector.id}`,
         onSelect: () => {
-          const result = this.markOnSector(player, sector);
+          const result = this.markOnSector(player, game, sector);
           return onComplete?.(result);
         },
       })),

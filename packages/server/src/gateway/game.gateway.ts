@@ -10,12 +10,18 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import type {
-  IFreeActionRequest,
   IInputResponse,
+  IFreeActionRequest,
   IMainActionRequest,
 } from '@seti/common/types/protocol/actions';
+import { EFreeAction, EMainAction } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
+import {
+  EPlayerInputType,
+  type IPlayerInputModel,
+} from '@seti/common/types/protocol/playerInput';
 import type { Server, Socket } from 'socket.io';
+import { DebugSessionRegistry } from '@/debug/DebugSessionRegistry.js';
 import { GameError } from '@/shared/errors/GameError.js';
 import type { IJwtPayload } from '../auth/jwt-auth.guard.js';
 import type { IActionResult } from './GameManager.js';
@@ -43,10 +49,20 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private readonly logger = new Logger(GameGateway.name);
   private readonly socketToGames = new Map<string, Set<string>>();
+  private static readonly BOT_MAIN_ACTIONS: ReadonlyArray<EMainAction> = [
+    EMainAction.LAUNCH_PROBE,
+    EMainAction.RESEARCH_TECH,
+    EMainAction.LAND,
+    EMainAction.SCAN,
+    EMainAction.ORBIT,
+    EMainAction.PASS,
+  ];
 
   constructor(
     @Inject(GameManager) private readonly gameManager: GameManager,
     @Inject(JwtService) private readonly jwtService: JwtService,
+    @Inject(DebugSessionRegistry)
+    private readonly debugSessionRegistry: DebugSessionRegistry,
   ) {}
 
   handleConnection(client: Socket): void {
@@ -122,6 +138,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         playerName:
           game.players.find((p) => p.id === userId)?.name ?? 'Unknown',
       });
+      await this.runDebugBots(gameId);
     } catch (err) {
       this.emitError(client, err);
     }
@@ -153,6 +170,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data.action,
       );
       this.broadcastResult(data.gameId, result);
+      await this.runDebugBots(data.gameId);
     } catch (err) {
       this.emitError(client, err);
     }
@@ -170,6 +188,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data.action,
       );
       this.broadcastResult(data.gameId, result);
+      await this.runDebugBots(data.gameId);
     } catch (err) {
       this.emitError(client, err);
     }
@@ -187,6 +206,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data.inputResponse,
       );
       this.broadcastResult(data.gameId, result);
+      await this.runDebugBots(data.gameId);
     } catch (err) {
       this.emitError(client, err);
     }
@@ -219,7 +239,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private getPlayerSockets(gameId: string, playerId: string): Socket[] {
     const roomKey = this.roomKey(gameId);
-    const room = this.server.sockets.adapter.rooms.get(roomKey);
+    const adapterRooms = this.server?.sockets?.adapter?.rooms;
+    if (!adapterRooms) {
+      return [];
+    }
+    const room = adapterRooms.get(roomKey);
     if (!room) {
       return [];
     }
@@ -253,5 +277,187 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private roomKey(gameId: string): string {
     return `game:${gameId}`;
+  }
+
+  private async runDebugBots(gameId: string): Promise<void> {
+    if (!this.debugSessionRegistry.isDebugGame(gameId)) {
+      return;
+    }
+
+    for (let step = 0; step < 20; step += 1) {
+      const game = await this.gameManager.getGame(gameId);
+      const botPlayerId = game.activePlayer.id;
+      if (!this.debugSessionRegistry.isBotPlayer(gameId, botPlayerId)) {
+        return;
+      }
+
+      const inputModel = game.activePlayer.waitingFor?.toModel();
+      if (inputModel) {
+        const botResponse = this.pickRandomInputResponse(inputModel);
+        if (!botResponse) {
+          return;
+        }
+        const inputResult = await this.gameManager.processInput(
+          gameId,
+          botPlayerId,
+          botResponse,
+        );
+        this.broadcastResult(gameId, inputResult);
+        continue;
+      }
+
+      if (Math.random() < 0.6) {
+        const movementResult = await this.tryBotMovement(gameId, botPlayerId);
+        if (movementResult) {
+          this.broadcastResult(gameId, movementResult);
+        }
+      }
+
+      const mainActionResult = await this.tryBotMainAction(gameId, botPlayerId);
+      if (!mainActionResult) {
+        return;
+      }
+      this.broadcastResult(gameId, mainActionResult);
+    }
+  }
+
+  private async tryBotMovement(
+    gameId: string,
+    botPlayerId: string,
+  ): Promise<IActionResult | null> {
+    const state = this.gameManager.getProjectedState(gameId, botPlayerId);
+    if (!state) {
+      return null;
+    }
+
+    const botProbeSpaces = state.solarSystem.probes
+      .filter((probe) => probe.playerId === botPlayerId)
+      .map((probe) => probe.spaceId);
+    const shuffledSpaces = this.shuffle(botProbeSpaces);
+
+    for (const fromSpaceId of shuffledSpaces) {
+      const neighbors = this.shuffle(state.solarSystem.adjacency[fromSpaceId] ?? []);
+      for (const toSpaceId of neighbors) {
+        try {
+          return await this.gameManager.processFreeAction(gameId, botPlayerId, {
+            type: EFreeAction.MOVEMENT,
+            path: [fromSpaceId, toSpaceId],
+          });
+        } catch {
+          // Try another random path.
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private async tryBotMainAction(
+    gameId: string,
+    botPlayerId: string,
+  ): Promise<IActionResult | null> {
+    const candidateActions = this.shuffle([
+      ...GameGateway.BOT_MAIN_ACTIONS,
+    ] as EMainAction[]);
+    for (const actionType of candidateActions) {
+      try {
+        return await this.gameManager.processAction(gameId, botPlayerId, {
+          type: actionType,
+        });
+      } catch {
+        // Try next action candidate.
+      }
+    }
+    return null;
+  }
+
+  private pickRandomInputResponse(model: IPlayerInputModel): IInputResponse | null {
+    switch (model.type) {
+      case EPlayerInputType.OPTION: {
+        if (model.options.length === 0) {
+          return null;
+        }
+        const option = this.pickRandom(model.options);
+        return option
+          ? { type: EPlayerInputType.OPTION, optionId: option.id }
+          : null;
+      }
+      case EPlayerInputType.CARD: {
+        const card = this.pickRandom(model.cards);
+        if (!card) {
+          return null;
+        }
+        return { type: EPlayerInputType.CARD, cardIds: [card.id] };
+      }
+      case EPlayerInputType.SECTOR: {
+        const sector = this.pickRandom(model.options);
+        return sector ? { type: EPlayerInputType.SECTOR, sector } : null;
+      }
+      case EPlayerInputType.PLANET: {
+        const planet = this.pickRandom(model.options);
+        return planet ? { type: EPlayerInputType.PLANET, planet } : null;
+      }
+      case EPlayerInputType.TECH: {
+        const tech = this.pickRandom(model.options);
+        return tech ? { type: EPlayerInputType.TECH, tech } : null;
+      }
+      case EPlayerInputType.GOLD_TILE: {
+        const tileId = this.pickRandom(model.options);
+        return tileId ? { type: EPlayerInputType.GOLD_TILE, tileId } : null;
+      }
+      case EPlayerInputType.RESOURCE: {
+        const resource = this.pickRandom(model.options);
+        return resource ? { type: EPlayerInputType.RESOURCE, resource } : null;
+      }
+      case EPlayerInputType.TRACE: {
+        const trace = this.pickRandom(model.options);
+        return trace ? { type: EPlayerInputType.TRACE, trace } : null;
+      }
+      case EPlayerInputType.END_OF_ROUND: {
+        const card = this.pickRandom(model.cards);
+        return card
+          ? { type: EPlayerInputType.END_OF_ROUND, cardId: card.id }
+          : null;
+      }
+      case EPlayerInputType.OR: {
+        if (model.options.length === 0) {
+          return null;
+        }
+        const index = Math.floor(Math.random() * model.options.length);
+        const response = this.pickRandomInputResponse(model.options[index]);
+        if (!response) {
+          return null;
+        }
+        return { type: EPlayerInputType.OR, index, response };
+      }
+      case EPlayerInputType.AND: {
+        const responses = model.options
+          .map((item) => this.pickRandomInputResponse(item))
+          .filter((response): response is IInputResponse => response !== null);
+        if (responses.length !== model.options.length) {
+          return null;
+        }
+        return { type: EPlayerInputType.AND, responses };
+      }
+      default:
+        return null;
+    }
+  }
+
+  private pickRandom<TValue>(items: TValue[]): TValue | null {
+    if (items.length === 0) {
+      return null;
+    }
+    const index = Math.floor(Math.random() * items.length);
+    return items[index] ?? null;
+  }
+
+  private shuffle<TValue>(items: TValue[]): TValue[] {
+    const next = [...items];
+    for (let index = next.length - 1; index > 0; index -= 1) {
+      const rand = Math.floor(Math.random() * (index + 1));
+      [next[index], next[rand]] = [next[rand], next[index]];
+    }
+    return next;
   }
 }

@@ -11,6 +11,10 @@ import {
   type TSolarSystemWheelIndex,
   type TSolarSystemWheels,
 } from '@seti/common/constant/sectorSetup';
+import {
+  GAME_DEBUG_DEFAULTS,
+  GAME_DEBUG_RANGES,
+} from '@seti/common/constant/debugGame';
 import { ALL_CARDS } from '@seti/common/data';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { ESector, ETech } from '@seti/common/types/element';
@@ -820,32 +824,54 @@ export function GameDebugPage(): React.JSX.Element {
   const [pushedProbeDelayMsByRing, setPushedProbeDelayMsByRing] = useState<
     Record<1 | 2 | 3, number>
   >({
-    1: 90,
-    2: 150,
-    3: 180,
+    1: GAME_DEBUG_DEFAULTS.pushedProbeDelayMsByRing[1],
+    2: GAME_DEBUG_DEFAULTS.pushedProbeDelayMsByRing[2],
+    3: GAME_DEBUG_DEFAULTS.pushedProbeDelayMsByRing[3],
   });
   const [probeTransitionDelayById, setProbeTransitionDelayById] = useState<
     Record<string, number>
   >({});
   const [probeInsetPxByRing, setProbeInsetPxByRing] =
     useState<TProbeInsetPxByRing>({
-      1: 89,
-      2: 95,
-      3: 91,
-      4: 229,
+      1: GAME_DEBUG_DEFAULTS.probeInsetPxByRing[1],
+      2: GAME_DEBUG_DEFAULTS.probeInsetPxByRing[2],
+      3: GAME_DEBUG_DEFAULTS.probeInsetPxByRing[3],
+      4: GAME_DEBUG_DEFAULTS.probeInsetPxByRing[4],
     });
 
-  const [sigRot0, setSigRot0] = useState(-24);
-  const [sigX0, setSigX0] = useState(-3);
-  const [sigY0, setSigY0] = useState(10);
-  const [sigRot1, setSigRot1] = useState(21);
-  const [sigX1, setSigX1] = useState(-19);
-  const [sigY1, setSigY1] = useState(-1);
-  const [sectorDataSize, setSectorDataSize] = useState(21);
-  const [circleX0, setCircleX0] = useState(0);
-  const [circleY0, setCircleY0] = useState(-38);
-  const [circleX1, setCircleX1] = useState(8);
-  const [circleY1, setCircleY1] = useState(-33);
+  const [sigRot0, setSigRot0] = useState<number>(
+    GAME_DEBUG_DEFAULTS.sectorSignal.sigRot0,
+  );
+  const [sigX0, setSigX0] = useState<number>(
+    GAME_DEBUG_DEFAULTS.sectorSignal.sigX0,
+  );
+  const [sigY0, setSigY0] = useState<number>(
+    GAME_DEBUG_DEFAULTS.sectorSignal.sigY0,
+  );
+  const [sigRot1, setSigRot1] = useState<number>(
+    GAME_DEBUG_DEFAULTS.sectorSignal.sigRot1,
+  );
+  const [sigX1, setSigX1] = useState<number>(
+    GAME_DEBUG_DEFAULTS.sectorSignal.sigX1,
+  );
+  const [sigY1, setSigY1] = useState<number>(
+    GAME_DEBUG_DEFAULTS.sectorSignal.sigY1,
+  );
+  const [sectorDataSize, setSectorDataSize] = useState<number>(
+    GAME_DEBUG_DEFAULTS.sectorSignal.sectorDataSize,
+  );
+  const [circleX0, setCircleX0] = useState<number>(
+    GAME_DEBUG_DEFAULTS.sectorSignal.circleX0,
+  );
+  const [circleY0, setCircleY0] = useState<number>(
+    GAME_DEBUG_DEFAULTS.sectorSignal.circleY0,
+  );
+  const [circleX1, setCircleX1] = useState<number>(
+    GAME_DEBUG_DEFAULTS.sectorSignal.circleX1,
+  );
+  const [circleY1, setCircleY1] = useState<number>(
+    GAME_DEBUG_DEFAULTS.sectorSignal.circleY1,
+  );
 
   const [scanPhase, setScanPhase] = useState<TScanPhase>(SCAN_IDLE);
   const [debugSectors, setDebugSectors] = useState<
@@ -1383,9 +1409,9 @@ export function GameDebugPage(): React.JSX.Element {
               D{ring}
               <input
                 type='range'
-                min={0}
-                max={700}
-                step={10}
+                min={GAME_DEBUG_RANGES.pushedProbeDelayMs.min}
+                max={GAME_DEBUG_RANGES.pushedProbeDelayMs.max}
+                step={GAME_DEBUG_RANGES.pushedProbeDelayMs.step}
                 value={pushedProbeDelayMsByRing[ring]}
                 onChange={(event) => {
                   const nextValue = Number(event.target.value);
@@ -1411,9 +1437,9 @@ export function GameDebugPage(): React.JSX.Element {
               R{ring}
               <input
                 type='range'
-                min={0}
-                max={260}
-                step={1}
+                min={GAME_DEBUG_RANGES.probeInsetPx.min}
+                max={GAME_DEBUG_RANGES.probeInsetPx.max}
+                step={GAME_DEBUG_RANGES.probeInsetPx.step}
                 value={probeInsetPxByRing[ring]}
                 onChange={(event) => {
                   const nextValue = Number(event.target.value);
@@ -1435,9 +1461,27 @@ export function GameDebugPage(): React.JSX.Element {
           <span className='font-mono text-text-500'>Sig0</span>
           {(
             [
-              ['Rot', -180, 180, sigRot0, setSigRot0],
-              ['X', -50, 50, sigX0, setSigX0],
-              ['Y', -50, 50, sigY0, setSigY0],
+              [
+                'Rot',
+                GAME_DEBUG_RANGES.rotation.min,
+                GAME_DEBUG_RANGES.rotation.max,
+                sigRot0,
+                setSigRot0,
+              ],
+              [
+                'X',
+                GAME_DEBUG_RANGES.offset.min,
+                GAME_DEBUG_RANGES.offset.max,
+                sigX0,
+                setSigX0,
+              ],
+              [
+                'Y',
+                GAME_DEBUG_RANGES.offset.min,
+                GAME_DEBUG_RANGES.offset.max,
+                sigY0,
+                setSigY0,
+              ],
             ] as const
           ).map(([label, min, max, val, set]) => (
             <label
@@ -1463,9 +1507,27 @@ export function GameDebugPage(): React.JSX.Element {
           <span className='ml-1 font-mono text-text-500'>Sig1</span>
           {(
             [
-              ['Rot', -180, 180, sigRot1, setSigRot1],
-              ['X', -50, 50, sigX1, setSigX1],
-              ['Y', -50, 50, sigY1, setSigY1],
+              [
+                'Rot',
+                GAME_DEBUG_RANGES.rotation.min,
+                GAME_DEBUG_RANGES.rotation.max,
+                sigRot1,
+                setSigRot1,
+              ],
+              [
+                'X',
+                GAME_DEBUG_RANGES.offset.min,
+                GAME_DEBUG_RANGES.offset.max,
+                sigX1,
+                setSigX1,
+              ],
+              [
+                'Y',
+                GAME_DEBUG_RANGES.offset.min,
+                GAME_DEBUG_RANGES.offset.max,
+                sigY1,
+                setSigY1,
+              ],
             ] as const
           ).map(([label, min, max, val, set]) => (
             <label
@@ -1492,9 +1554,9 @@ export function GameDebugPage(): React.JSX.Element {
           <label className='flex items-center gap-1 font-mono text-[10px] text-text-300'>
             <input
               type='range'
-              min={2}
-              max={30}
-              step={1}
+              min={GAME_DEBUG_RANGES.sectorDataSize.min}
+              max={GAME_DEBUG_RANGES.sectorDataSize.max}
+              step={GAME_DEBUG_RANGES.sectorDataSize.step}
               value={sectorDataSize}
               onChange={(e) => setSectorDataSize(Number(e.target.value))}
               className='w-16 accent-accent-500'
@@ -1509,8 +1571,20 @@ export function GameDebugPage(): React.JSX.Element {
           <span className='font-mono text-text-500'>Circle0</span>
           {(
             [
-              ['X', -50, 50, circleX0, setCircleX0],
-              ['Y', -50, 50, circleY0, setCircleY0],
+              [
+                'X',
+                GAME_DEBUG_RANGES.offset.min,
+                GAME_DEBUG_RANGES.offset.max,
+                circleX0,
+                setCircleX0,
+              ],
+              [
+                'Y',
+                GAME_DEBUG_RANGES.offset.min,
+                GAME_DEBUG_RANGES.offset.max,
+                circleY0,
+                setCircleY0,
+              ],
             ] as const
           ).map(([label, min, max, val, set]) => (
             <label
@@ -1536,8 +1610,20 @@ export function GameDebugPage(): React.JSX.Element {
           <span className='ml-1 font-mono text-text-500'>Circle1</span>
           {(
             [
-              ['X', -50, 50, circleX1, setCircleX1],
-              ['Y', -50, 50, circleY1, setCircleY1],
+              [
+                'X',
+                GAME_DEBUG_RANGES.offset.min,
+                GAME_DEBUG_RANGES.offset.max,
+                circleX1,
+                setCircleX1,
+              ],
+              [
+                'Y',
+                GAME_DEBUG_RANGES.offset.min,
+                GAME_DEBUG_RANGES.offset.max,
+                circleY1,
+                setCircleY1,
+              ],
             ] as const
           ).map(([label, min, max, val, set]) => (
             <label
