@@ -49,6 +49,7 @@ function createMockGame(options?: {
     roundRotationReminderIndex: 0,
     hasRoundFirstPassOccurred: false,
     rotationCounter: 0,
+    missionTracker: { recordEvent: () => undefined },
   } as unknown as IGame;
 }
 

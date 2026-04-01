@@ -1,5 +1,5 @@
-import { EFreeAction } from '@seti/common/types/protocol/enums';
 import { EResource } from '@seti/common/types/element';
+import { EFreeAction } from '@seti/common/types/protocol/enums';
 import { vi } from 'vitest';
 import { BuyCardFreeAction } from '@/engine/freeActions/BuyCard.js';
 import { CompleteMissionFreeAction } from '@/engine/freeActions/CompleteMission.js';
@@ -26,11 +26,10 @@ describe('processFreeAction — full dispatch coverage', () => {
     });
 
     expect(spy).toHaveBeenCalledOnce();
-    expect(spy).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.anything(),
-      ['a', 'b'],
-    );
+    expect(spy).toHaveBeenCalledWith(expect.anything(), expect.anything(), [
+      'a',
+      'b',
+    ]);
   });
 
   it('dispatches CONVERT_ENERGY_TO_MOVEMENT', () => {
@@ -138,9 +137,13 @@ describe('processFreeAction — full dispatch coverage', () => {
 
   it('throws on unsupported action type', () => {
     expect(() =>
-      processFreeAction({} as never, {} as never, {
-        type: '__unknown__',
-      } as never),
+      processFreeAction(
+        {} as never,
+        {} as never,
+        {
+          type: '__unknown__',
+        } as never,
+      ),
     ).toThrow();
   });
 });

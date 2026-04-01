@@ -30,7 +30,7 @@ function createMarkableSector(color: ESector) {
     completed: false,
     markSignal: () => {
       state.marks += 1;
-      return { dataGained: null, vpGained: 0 };
+      return { dataGained: false, vpAwarded: 0 };
     },
     state,
   };
@@ -44,6 +44,7 @@ function createGame(overrides: Record<string, unknown> = {}): IGame {
     deferredActions: new DeferredActionsQueue(),
     eventLog: new EventLog(),
     random: new SeededRandom('base-card-tests'),
+    missionTracker: { recordEvent: () => undefined },
     ...overrides,
   } as unknown as IGame;
 }

@@ -10,8 +10,8 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import type {
-  IInputResponse,
   IFreeActionRequest,
+  IInputResponse,
   IMainActionRequest,
 } from '@seti/common/types/protocol/actions';
 import { EFreeAction, EMainAction } from '@seti/common/types/protocol/enums';
@@ -336,7 +336,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const shuffledSpaces = this.shuffle(botProbeSpaces);
 
     for (const fromSpaceId of shuffledSpaces) {
-      const neighbors = this.shuffle(state.solarSystem.adjacency[fromSpaceId] ?? []);
+      const neighbors = this.shuffle(
+        state.solarSystem.adjacency[fromSpaceId] ?? [],
+      );
       for (const toSpaceId of neighbors) {
         try {
           return await this.gameManager.processFreeAction(gameId, botPlayerId, {
@@ -371,7 +373,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return null;
   }
 
-  private pickRandomInputResponse(model: IPlayerInputModel): IInputResponse | null {
+  private pickRandomInputResponse(
+    model: IPlayerInputModel,
+  ): IInputResponse | null {
     switch (model.type) {
       case EPlayerInputType.OPTION: {
         if (model.options.length === 0) {

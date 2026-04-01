@@ -7,7 +7,9 @@ import {
 
 @Controller('debug')
 export class DebugController {
-  constructor(@Inject(DebugService) private readonly debugService: DebugService) {}
+  constructor(
+    @Inject(DebugService) private readonly debugService: DebugService,
+  ) {}
 
   @Public()
   @Post('server/session')

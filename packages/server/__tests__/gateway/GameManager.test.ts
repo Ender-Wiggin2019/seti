@@ -47,10 +47,7 @@ describe('GameManager', () => {
     setupMockDbForSnapshot();
 
     const module = await Test.createTestingModule({
-      providers: [
-        GameManager,
-        { provide: DRIZZLE_DB, useValue: mockDb },
-      ],
+      providers: [GameManager, { provide: DRIZZLE_DB, useValue: mockDb }],
     }).compile();
 
     manager = module.get(GameManager);
@@ -96,11 +93,9 @@ describe('GameManager', () => {
         0,
       );
 
-      const result = await manager.processAction(
-        'game-mgr-test',
-        'p1',
-        { type: EMainAction.PASS },
-      );
+      const result = await manager.processAction('game-mgr-test', 'p1', {
+        type: EMainAction.PASS,
+      });
 
       expect(result.states.size).toBe(2);
       expect(result.states.has('p1')).toBe(true);
@@ -121,11 +116,9 @@ describe('GameManager', () => {
         0,
       );
 
-      await manager.processAction(
-        'game-mgr-test',
-        'p1',
-        { type: EMainAction.PASS },
-      );
+      await manager.processAction('game-mgr-test', 'p1', {
+        type: EMainAction.PASS,
+      });
 
       expect(mockDb.insert).toHaveBeenCalled();
     });
@@ -139,11 +132,11 @@ describe('GameManager', () => {
         game,
       );
 
-      const result = await manager.processFreeAction(
-        'game-mgr-test',
-        'p1',
-        { type: 'EXCHANGE_RESOURCES' as never, from: 'credit' as never, to: 'energy' as never },
-      );
+      const result = await manager.processFreeAction('game-mgr-test', 'p1', {
+        type: 'EXCHANGE_RESOURCES' as never,
+        from: 'credit' as never,
+        to: 'energy' as never,
+      });
 
       expect(result.states.size).toBe(2);
     });
@@ -186,9 +179,7 @@ describe('GameManager', () => {
   describe('unloadGame', () => {
     it('removes game from cache', async () => {
       const game = createTestGame();
-      const cache = (
-        manager as unknown as { cache: Map<string, IGame> }
-      ).cache;
+      const cache = (manager as unknown as { cache: Map<string, IGame> }).cache;
       cache.set('game-mgr-test', game);
 
       await manager.unloadGame('game-mgr-test');

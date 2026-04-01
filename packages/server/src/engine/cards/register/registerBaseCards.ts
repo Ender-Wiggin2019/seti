@@ -7,6 +7,7 @@ import { Apollo11Mission } from '../base/Apollo11MissionCard.js';
 import { AsteroidsResearch } from '../base/AsteroidsResearchCard.js';
 import { Atlas } from '../base/AtlasCard.js';
 import { CassiniProbe } from '../base/CassiniProbeCard.js';
+import { CornellUniversity } from '../base/CornellUniversityCard.js';
 import { Dragonfly } from '../base/DragonflyCard.js';
 import { createGenericCard } from '../base/GenericCards.js';
 import { GmrtTelescope } from '../base/GmrtTelescopeCard.js';
@@ -33,7 +34,6 @@ import { TridentProbe } from '../base/TridentProbeCard.js';
 import { UranusOrbiter } from '../base/UranusOrbiterCard.js';
 import { VeneraProbe } from '../base/VeneraProbeCard.js';
 import { WesterborkTelescope } from '../base/WesterborkTelescopeCard.js';
-import { CornellUniversity } from '../base/CornellUniversityCard.js';
 import type { CardRegistry } from '../CardRegistry.js';
 import { loadCardData } from '../loadCardData.js';
 

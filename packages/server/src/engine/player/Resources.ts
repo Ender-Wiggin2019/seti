@@ -12,6 +12,7 @@ export type TPartialResourceBundle = Partial<IResourceBundle>;
 
 export interface IDataResourceController {
   has(amount: number): boolean;
+  gain(amount: number): number;
   addToStash(amount: number): number;
   spend(amount: number): void;
   getState(): {
@@ -166,7 +167,7 @@ export class Resources {
           { gainDataAmount },
         );
       }
-      this.dataController.addToStash(gainDataAmount);
+      this.dataController.gain(gainDataAmount);
     }
   }
 

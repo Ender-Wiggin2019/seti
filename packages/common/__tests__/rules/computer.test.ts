@@ -10,7 +10,9 @@ import type {
   IPublicComputerState,
 } from '@/types/protocol/gameState';
 
-function col(overrides?: Partial<IPublicComputerColumnState>): IPublicComputerColumnState {
+function col(
+  overrides?: Partial<IPublicComputerColumnState>,
+): IPublicComputerColumnState {
   return {
     topFilled: false,
     topReward: null,
@@ -38,11 +40,7 @@ describe('computer rules', () => {
 
     it('returns next unfilled top slot', () => {
       const slot = getNextSlot(
-        createComputer([
-          col({ topFilled: true }),
-          col(),
-          col(),
-        ]),
+        createComputer([col({ topFilled: true }), col(), col()]),
       );
       expect(slot).toEqual({ row: 'top', index: 1 });
     });

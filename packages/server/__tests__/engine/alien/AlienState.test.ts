@@ -5,9 +5,7 @@ import { EventLog } from '@/engine/event/EventLog.js';
 import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
 
-function createMockGame(
-  overrides: Partial<IGame> = {},
-): IGame {
+function createMockGame(overrides: Partial<IGame> = {}): IGame {
   return {
     players: [],
     eventLog: new EventLog(),
@@ -245,7 +243,9 @@ describe('AlienState', () => {
       const targets = state.getAvailableTargets(ETrace.RED);
 
       expect(targets.length).toBeGreaterThanOrEqual(2);
-      const discoveryTarget = targets.find((t) => t.label.includes('Discovery'));
+      const discoveryTarget = targets.find((t) =>
+        t.label.includes('Discovery'),
+      );
       const overflowTarget = targets.find((t) => t.label.includes('Overflow'));
       expect(discoveryTarget).toBeDefined();
       expect(overflowTarget).toBeDefined();
@@ -363,17 +363,37 @@ describe('AlienBoard', () => {
   describe('isFullyMarked', () => {
     it('returns false when any discovery slot is empty', () => {
       const board = createBoard();
-      board.placeTrace(board.getSlot('disc-R')!, { playerId: 'p1' }, ETrace.RED);
-      board.placeTrace(board.getSlot('disc-Y')!, { playerId: 'p1' }, ETrace.YELLOW);
+      board.placeTrace(
+        board.getSlot('disc-R')!,
+        { playerId: 'p1' },
+        ETrace.RED,
+      );
+      board.placeTrace(
+        board.getSlot('disc-Y')!,
+        { playerId: 'p1' },
+        ETrace.YELLOW,
+      );
 
       expect(board.isFullyMarked()).toBe(false);
     });
 
     it('returns true when all 3 discovery slots are occupied', () => {
       const board = createBoard();
-      board.placeTrace(board.getSlot('disc-R')!, { playerId: 'p1' }, ETrace.RED);
-      board.placeTrace(board.getSlot('disc-Y')!, { playerId: 'p1' }, ETrace.YELLOW);
-      board.placeTrace(board.getSlot('disc-B')!, { playerId: 'p1' }, ETrace.BLUE);
+      board.placeTrace(
+        board.getSlot('disc-R')!,
+        { playerId: 'p1' },
+        ETrace.RED,
+      );
+      board.placeTrace(
+        board.getSlot('disc-Y')!,
+        { playerId: 'p1' },
+        ETrace.YELLOW,
+      );
+      board.placeTrace(
+        board.getSlot('disc-B')!,
+        { playerId: 'p1' },
+        ETrace.BLUE,
+      );
 
       expect(board.isFullyMarked()).toBe(true);
     });
@@ -382,9 +402,21 @@ describe('AlienBoard', () => {
   describe('getDiscoverers', () => {
     it('returns unique player IDs from discovery slots', () => {
       const board = createBoard();
-      board.placeTrace(board.getSlot('disc-R')!, { playerId: 'p1' }, ETrace.RED);
-      board.placeTrace(board.getSlot('disc-Y')!, { playerId: 'p2' }, ETrace.YELLOW);
-      board.placeTrace(board.getSlot('disc-B')!, { playerId: 'p1' }, ETrace.BLUE);
+      board.placeTrace(
+        board.getSlot('disc-R')!,
+        { playerId: 'p1' },
+        ETrace.RED,
+      );
+      board.placeTrace(
+        board.getSlot('disc-Y')!,
+        { playerId: 'p2' },
+        ETrace.YELLOW,
+      );
+      board.placeTrace(
+        board.getSlot('disc-B')!,
+        { playerId: 'p1' },
+        ETrace.BLUE,
+      );
 
       const discoverers = board.getDiscoverers();
       expect(discoverers).toContain('p1');
@@ -395,8 +427,16 @@ describe('AlienBoard', () => {
     it('excludes neutral markers from discoverers', () => {
       const board = createBoard();
       board.placeTrace(board.getSlot('disc-R')!, 'neutral', ETrace.RED);
-      board.placeTrace(board.getSlot('disc-Y')!, { playerId: 'p1' }, ETrace.YELLOW);
-      board.placeTrace(board.getSlot('disc-B')!, { playerId: 'p1' }, ETrace.BLUE);
+      board.placeTrace(
+        board.getSlot('disc-Y')!,
+        { playerId: 'p1' },
+        ETrace.YELLOW,
+      );
+      board.placeTrace(
+        board.getSlot('disc-B')!,
+        { playerId: 'p1' },
+        ETrace.BLUE,
+      );
 
       const discoverers = board.getDiscoverers();
       expect(discoverers).toEqual(['p1']);
@@ -406,8 +446,16 @@ describe('AlienBoard', () => {
   describe('getPlayerTraceCount / getPlayerTraceCountByColor', () => {
     it('counts all traces for a player across all slots', () => {
       const board = createBoard();
-      board.placeTrace(board.getSlot('disc-R')!, { playerId: 'p1' }, ETrace.RED);
-      board.placeTrace(board.getSlot('overflow')!, { playerId: 'p1' }, ETrace.BLUE);
+      board.placeTrace(
+        board.getSlot('disc-R')!,
+        { playerId: 'p1' },
+        ETrace.RED,
+      );
+      board.placeTrace(
+        board.getSlot('overflow')!,
+        { playerId: 'p1' },
+        ETrace.BLUE,
+      );
 
       expect(board.getPlayerTraceCount('p1')).toBe(2);
       expect(board.getPlayerTraceCount('p2')).toBe(0);
@@ -415,9 +463,21 @@ describe('AlienBoard', () => {
 
     it('counts traces by color', () => {
       const board = createBoard();
-      board.placeTrace(board.getSlot('disc-R')!, { playerId: 'p1' }, ETrace.RED);
-      board.placeTrace(board.getSlot('overflow')!, { playerId: 'p1' }, ETrace.RED);
-      board.placeTrace(board.getSlot('overflow')!, { playerId: 'p1' }, ETrace.BLUE);
+      board.placeTrace(
+        board.getSlot('disc-R')!,
+        { playerId: 'p1' },
+        ETrace.RED,
+      );
+      board.placeTrace(
+        board.getSlot('overflow')!,
+        { playerId: 'p1' },
+        ETrace.RED,
+      );
+      board.placeTrace(
+        board.getSlot('overflow')!,
+        { playerId: 'p1' },
+        ETrace.BLUE,
+      );
 
       expect(board.getPlayerTraceCountByColor('p1', ETrace.RED)).toBe(2);
       expect(board.getPlayerTraceCountByColor('p1', ETrace.BLUE)).toBe(1);

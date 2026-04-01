@@ -9,7 +9,11 @@ interface IDebugSessionMeta {
 export class DebugSessionRegistry {
   private readonly sessionByGameId = new Map<string, IDebugSessionMeta>();
 
-  register(gameId: string, humanPlayerId: string, botPlayerIds: string[]): void {
+  register(
+    gameId: string,
+    humanPlayerId: string,
+    botPlayerIds: string[],
+  ): void {
     this.sessionByGameId.set(gameId, {
       humanPlayerId,
       botPlayerIds: new Set(botPlayerIds),
@@ -21,7 +25,9 @@ export class DebugSessionRegistry {
   }
 
   isBotPlayer(gameId: string, playerId: string): boolean {
-    return this.sessionByGameId.get(gameId)?.botPlayerIds.has(playerId) ?? false;
+    return (
+      this.sessionByGameId.get(gameId)?.botPlayerIds.has(playerId) ?? false
+    );
   }
 
   getHumanPlayerId(gameId: string): string | null {

@@ -1,5 +1,5 @@
-import { vi } from 'vitest';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
+import { vi } from 'vitest';
 import { PassAction } from '@/engine/actions/Pass.js';
 import { BoardBuilder } from '@/engine/board/BoardBuilder.js';
 import type { IGame } from '@/engine/IGame.js';
@@ -72,7 +72,7 @@ describe('PassAction', () => {
       expect(input!.type).toBe(EPlayerInputType.END_OF_ROUND);
     });
 
-    it('does not rotate the solar system on the second pass of the round', () => {
+    it('rotates the solar system on the second pass of the round too', () => {
       const rng = new SeededRandom('pass-second-no-rotate');
       const solarSystem = BoardBuilder.buildSolarSystemFromRandom(rng);
       const game = createMockGame({
@@ -92,7 +92,7 @@ describe('PassAction', () => {
       const p2 = createPlayer({ id: 'p2', seatIndex: 1, hand: [] });
       PassAction.execute(p2, game);
 
-      expect(rotateSpy).not.toHaveBeenCalled();
+      expect(rotateSpy).toHaveBeenCalledTimes(1);
     });
 
     it('returns SelectCard when hand exceeds limit', () => {

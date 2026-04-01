@@ -1,6 +1,6 @@
 import { EMainAction, EPhase } from '@seti/common/types/protocol/enums';
-import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import type { ISelectEndOfRoundCardInputModel } from '@seti/common/types/protocol/playerInput';
+import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { Game } from '@/engine/Game.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
 
@@ -14,8 +14,10 @@ function resolvePassInputs(game: Game, player: IPlayer): void {
     const model = player.waitingFor.toModel();
 
     if (model.type === EPlayerInputType.CARD) {
-      const cardIds = (model as { cards: { id: string }[]; minSelections: number })
-        .cards.slice(0, (model as { minSelections: number }).minSelections)
+      const cardIds = (
+        model as { cards: { id: string }[]; minSelections: number }
+      ).cards
+        .slice(0, (model as { minSelections: number }).minSelections)
         .map((c) => c.id);
       game.processInput(player.id, { type: EPlayerInputType.CARD, cardIds });
     } else if (model.type === EPlayerInputType.END_OF_ROUND) {

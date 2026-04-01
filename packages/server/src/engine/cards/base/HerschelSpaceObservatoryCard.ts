@@ -5,8 +5,8 @@ import { MarkSectorSignalEffect } from '@/engine/effects/scan/MarkSectorSignalEf
 import { findAllSectorsByColor } from '@/engine/effects/scan/ScanEffectUtils.js';
 import type { IGame } from '@/engine/IGame.js';
 import { SelectOption } from '@/engine/input/SelectOption.js';
-import type { IMissionDef } from '@/engine/missions/IMission.js';
 import { buildQuickMissionDef } from '@/engine/missions/buildMissionDef.js';
+import type { IMissionDef } from '@/engine/missions/IMission.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
 import { MissionCard } from '../Card.js';
 import type { ICardRuntimeContext } from '../ICard.js';
@@ -85,7 +85,12 @@ export class HerschelSpaceObservatory extends MissionCard {
         id: `herschel-color-${color}`,
         label: color,
         onSelect: () =>
-          this.createSectorInputForColor(player, game, color, sectorIdsWithProbe),
+          this.createSectorInputForColor(
+            player,
+            game,
+            color,
+            sectorIdsWithProbe,
+          ),
       })),
       'Choose signal color',
     );

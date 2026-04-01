@@ -17,9 +17,7 @@ describe('AuthController', () => {
 
     const module = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [
-        { provide: AuthService, useValue: mockAuthService },
-      ],
+      providers: [{ provide: AuthService, useValue: mockAuthService }],
     }).compile();
 
     controller = module.get(AuthController);
@@ -79,7 +77,9 @@ describe('AuthController', () => {
       };
       mockAuthService.getProfile.mockResolvedValue(expected);
 
-      const result = await controller.me({ user: { sub: 'u1', email: 'a@b.com' } });
+      const result = await controller.me({
+        user: { sub: 'u1', email: 'a@b.com' },
+      });
 
       expect(mockAuthService.getProfile).toHaveBeenCalledWith('u1');
       expect(result).toEqual(expected);

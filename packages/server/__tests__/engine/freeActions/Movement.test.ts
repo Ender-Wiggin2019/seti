@@ -1,5 +1,5 @@
-import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { EPlanet } from '@seti/common/types/protocol/enums';
+import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { ETechId } from '@seti/common/types/tech';
 import { vi } from 'vitest';
 import {

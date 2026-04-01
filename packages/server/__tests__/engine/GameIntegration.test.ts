@@ -1,4 +1,8 @@
-import { EMainAction, EPhase, EPlanet } from '@seti/common/types/protocol/enums';
+import {
+  EMainAction,
+  EPhase,
+  EPlanet,
+} from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import {
   EPlayerInputType,
@@ -8,10 +12,10 @@ import {
 } from '@seti/common/types/protocol/playerInput';
 import { vi } from 'vitest';
 import { Game } from '@/engine/Game.js';
-import { GameError } from '@/shared/errors/GameError.js';
-import type { IPlayer } from '@/engine/player/IPlayer.js';
-import { EComputerRow } from '@/engine/player/Computer.js';
 import { EMissionEventType } from '@/engine/missions/IMission.js';
+import { EComputerRow } from '@/engine/player/Computer.js';
+import type { IPlayer } from '@/engine/player/IPlayer.js';
+import { GameError } from '@/shared/errors/GameError.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -99,13 +103,12 @@ function advanceRounds(game: Game, rounds: number): void {
   }
 }
 
-function assertThrowsGameError(
-  fn: () => void,
-  code: EErrorCode,
-): GameError {
+function assertThrowsGameError(fn: () => void, code: EErrorCode): GameError {
   try {
     fn();
-    throw new Error(`Expected GameError with code ${code}, but no error thrown`);
+    throw new Error(
+      `Expected GameError with code ${code}, but no error thrown`,
+    );
   } catch (error) {
     expect(error).toBeInstanceOf(GameError);
     expect((error as GameError).code).toBe(code);
@@ -142,8 +145,7 @@ describe('Game Integration: Main Action Legality', () => {
       const game = createGame();
 
       assertThrowsGameError(
-        () =>
-          game.processMainAction('unknown', { type: EMainAction.PASS }),
+        () => game.processMainAction('unknown', { type: EMainAction.PASS }),
         EErrorCode.NOT_YOUR_TURN,
       );
     });
@@ -343,8 +345,7 @@ describe('Game Integration: Main Action Legality', () => {
       const game = createGame();
 
       assertThrowsGameError(
-        () =>
-          game.processMainAction('p1', { type: EMainAction.PLAY_CARD }),
+        () => game.processMainAction('p1', { type: EMainAction.PLAY_CARD }),
         EErrorCode.INVALID_ACTION,
       );
     });
@@ -458,7 +459,7 @@ describe('Game Integration: Rotation', () => {
     expect(game.solarSystem!.rotationCounter).toBe(rotBefore + 1);
   });
 
-  it('second pass of the same round does NOT rotate', () => {
+  it('second pass of the same round also triggers rotation', () => {
     const game = createGame('rotation-second-pass');
 
     passPlayer(game, 'p1');
@@ -466,7 +467,7 @@ describe('Game Integration: Rotation', () => {
 
     passPlayer(game, 'p2');
 
-    expect(game.solarSystem!.rotationCounter).toBe(rotAfterFirst);
+    expect(game.solarSystem!.rotationCounter).toBe(rotAfterFirst + 1);
   });
 
   it('first pass resets each new round', () => {
@@ -532,7 +533,9 @@ describe('Game Integration: Milestone & Discovery Timing', () => {
     const milestoneEvents = game.eventLog
       .recent(20)
       .filter(
-        (e) => e.type === 'ACTION' && (e as { action: string }).action === 'MILESTONE_CHECK',
+        (e) =>
+          e.type === 'ACTION' &&
+          (e as { action: string }).action === 'MILESTONE_CHECK',
       );
     expect(milestoneEvents.length).toBeGreaterThan(0);
   });
@@ -545,7 +548,9 @@ describe('Game Integration: Milestone & Discovery Timing', () => {
 
     const recentEvents = events.recent(20);
     const milestoneIdx = recentEvents.findIndex(
-      (e) => e.type === 'ACTION' && (e as { action: string }).action === 'MILESTONE_CHECK',
+      (e) =>
+        e.type === 'ACTION' &&
+        (e as { action: string }).action === 'MILESTONE_CHECK',
     );
 
     expect(milestoneIdx).toBeGreaterThanOrEqual(0);
@@ -561,7 +566,9 @@ describe('Game Integration: Milestone & Discovery Timing', () => {
     if (p1.waitingFor) {
       const model = p1.waitingFor.toModel();
       if (model.type === EPlayerInputType.GOLD_TILE) {
-        expect((model as ISelectGoldTileInputModel).options.length).toBeGreaterThan(0);
+        expect(
+          (model as ISelectGoldTileInputModel).options.length,
+        ).toBeGreaterThan(0);
       }
       resolveAllInputs(game, p1);
     }

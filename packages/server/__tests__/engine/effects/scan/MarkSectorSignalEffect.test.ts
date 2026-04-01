@@ -72,7 +72,7 @@ describe('MarkSectorSignalEffect', () => {
         id: 's1',
         color: ESector.RED,
         completed: false,
-        markSignal: vi.fn(() => ({ dataGained: true })),
+        markSignal: vi.fn(() => ({ dataGained: true, vpAwarded: 0 })),
       };
 
       const result = MarkSectorSignalEffect.markOnSector(player, game, sector);
@@ -80,6 +80,7 @@ describe('MarkSectorSignalEffect', () => {
       expect(result).toEqual({
         sectorId: 's1',
         dataGained: true,
+        vpAwarded: 0,
         completed: false,
       });
       expect(game.missionTracker.recordEvent).toHaveBeenCalledWith({
@@ -96,13 +97,29 @@ describe('MarkSectorSignalEffect', () => {
         id: 's1',
         color: ESector.BLUE,
         completed: false,
-        markSignal: vi.fn(() => ({ dataGained: false })),
+        markSignal: vi.fn(() => ({ dataGained: false, vpAwarded: 0 })),
       };
 
       const result = MarkSectorSignalEffect.markOnSector(player, game, sector);
 
       expect(result.dataGained).toBe(false);
       expect(player.resources.gain).not.toHaveBeenCalled();
+    });
+
+    it('awards VP when position has a reward', () => {
+      const player = createMockPlayer();
+      const game = createMockGame([]);
+      const sector = {
+        id: 's1',
+        color: ESector.RED,
+        completed: false,
+        markSignal: vi.fn(() => ({ dataGained: true, vpAwarded: 2 })),
+      };
+
+      const result = MarkSectorSignalEffect.markOnSector(player, game, sector);
+
+      expect(result.vpAwarded).toBe(2);
+      expect(player.score).toBe(2);
     });
   });
 

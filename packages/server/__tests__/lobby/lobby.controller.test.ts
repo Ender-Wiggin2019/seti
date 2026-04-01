@@ -32,9 +32,7 @@ describe('LobbyController', () => {
 
     const module = await Test.createTestingModule({
       controllers: [LobbyController],
-      providers: [
-        { provide: LobbyService, useValue: mockLobbyService },
-      ],
+      providers: [{ provide: LobbyService, useValue: mockLobbyService }],
     }).compile();
 
     controller = module.get(LobbyController);
@@ -81,10 +79,7 @@ describe('LobbyController', () => {
     const req = { user: { sub: 'user-2', email: 'u2@t.com' } };
     const result = await controller.leaveRoom(req, 'room-1');
 
-    expect(mockLobbyService.leaveRoom).toHaveBeenCalledWith(
-      'room-1',
-      'user-2',
-    );
+    expect(mockLobbyService.leaveRoom).toHaveBeenCalledWith('room-1', 'user-2');
     expect(result).toBeDefined();
   });
 
@@ -92,10 +87,7 @@ describe('LobbyController', () => {
     const req = { user: { sub: 'host-1', email: 'host@t.com' } };
     const result = await controller.startGame(req, 'room-1');
 
-    expect(mockLobbyService.startGame).toHaveBeenCalledWith(
-      'room-1',
-      'host-1',
-    );
+    expect(mockLobbyService.startGame).toHaveBeenCalledWith('room-1', 'host-1');
     expect(result).toBeDefined();
   });
 });

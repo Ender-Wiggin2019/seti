@@ -63,22 +63,22 @@ describe('TechBonusEffect.apply', () => {
     expect(player.resources.energy).toBe(before + 1);
   });
 
-  it('DATA: grants +1 data (to stash)', () => {
+  it('DATA: grants +1 data (to pool)', () => {
     const player = createTestPlayer();
-    const before = player.data.stashCount;
+    const before = player.data.poolCount;
     TechBonusEffect.apply(player, createMockGame(), {
       type: ETechBonusType.DATA,
     });
-    expect(player.data.stashCount).toBe(before + 1);
+    expect(player.data.poolCount).toBe(before + 1);
   });
 
-  it('DATA_2: grants +2 data (to stash)', () => {
+  it('DATA_2: grants +2 data (to pool)', () => {
     const player = createTestPlayer();
-    const before = player.data.stashCount;
+    const before = player.data.poolCount;
     TechBonusEffect.apply(player, createMockGame(), {
       type: ETechBonusType.DATA_2,
     });
-    expect(player.data.stashCount).toBe(before + 2);
+    expect(player.data.poolCount).toBe(before + 2);
   });
 
   it('PUBLICITY: grants +1 publicity', () => {

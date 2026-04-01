@@ -2,8 +2,8 @@ import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import { compare } from 'bcryptjs';
-import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
 import { AuthService } from '@/auth/auth.service.js';
+import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
 
 const MOCK_USER = {
   id: 'user-1',
@@ -53,7 +53,9 @@ describe('AuthService', () => {
           provide: JwtService,
           useValue: {
             sign: vi.fn().mockReturnValue('mock-jwt-token'),
-            verify: vi.fn().mockReturnValue({ sub: 'user-1', email: 'alice@test.com' }),
+            verify: vi
+              .fn()
+              .mockReturnValue({ sub: 'user-1', email: 'alice@test.com' }),
           },
         },
       ],
@@ -69,7 +71,11 @@ describe('AuthService', () => {
       chain.limit.mockResolvedValueOnce([]);
       chain.returning.mockResolvedValueOnce([{ ...MOCK_USER }]);
 
-      const result = await service.register('Alice', 'alice@test.com', 'password123');
+      const result = await service.register(
+        'Alice',
+        'alice@test.com',
+        'password123',
+      );
 
       expect(result.accessToken).toBe('mock-jwt-token');
       expect(result.user.name).toBe('Alice');
@@ -155,9 +161,7 @@ describe('AuthService', () => {
     it('updates user name', async () => {
       const chain = setupChainedQuery([]);
       chain.limit.mockResolvedValueOnce([]);
-      chain.returning.mockResolvedValueOnce([
-        { ...MOCK_USER, name: 'Bob' },
-      ]);
+      chain.returning.mockResolvedValueOnce([{ ...MOCK_USER, name: 'Bob' }]);
 
       const profile = await service.updateProfile('user-1', { name: 'Bob' });
 

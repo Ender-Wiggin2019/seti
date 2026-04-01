@@ -37,9 +37,33 @@ function createPlayer(
     tracesByAlien: {},
     computer: {
       columns: [
-        { topFilled: false, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
-        { topFilled: false, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
-        { topFilled: false, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
+        {
+          topFilled: false,
+          topReward: null,
+          techId: null,
+          hasBottomSlot: false,
+          bottomFilled: false,
+          bottomReward: null,
+          techSlotAvailable: true,
+        },
+        {
+          topFilled: false,
+          topReward: null,
+          techId: null,
+          hasBottomSlot: false,
+          bottomFilled: false,
+          bottomReward: null,
+          techSlotAvailable: true,
+        },
+        {
+          topFilled: false,
+          topReward: null,
+          techId: null,
+          hasBottomSlot: false,
+          bottomFilled: false,
+          bottomReward: null,
+          techSlotAvailable: true,
+        },
       ],
     },
     dataPoolCount: 0,
@@ -214,9 +238,33 @@ describe('action rules', () => {
       const player = createPlayer({
         computer: {
           columns: [
-            { topFilled: true, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
-            { topFilled: true, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
-            { topFilled: true, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
+            {
+              topFilled: true,
+              topReward: null,
+              techId: null,
+              hasBottomSlot: false,
+              bottomFilled: false,
+              bottomReward: null,
+              techSlotAvailable: true,
+            },
+            {
+              topFilled: true,
+              topReward: null,
+              techId: null,
+              hasBottomSlot: false,
+              bottomFilled: false,
+              bottomReward: null,
+              techSlotAvailable: true,
+            },
+            {
+              topFilled: true,
+              topReward: null,
+              techId: null,
+              hasBottomSlot: false,
+              bottomFilled: false,
+              bottomReward: null,
+              techSlotAvailable: true,
+            },
           ],
         },
       });
@@ -227,9 +275,33 @@ describe('action rules', () => {
       const player = createPlayer({
         computer: {
           columns: [
-            { topFilled: true, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
-            { topFilled: false, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
-            { topFilled: false, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
+            {
+              topFilled: true,
+              topReward: null,
+              techId: null,
+              hasBottomSlot: false,
+              bottomFilled: false,
+              bottomReward: null,
+              techSlotAvailable: true,
+            },
+            {
+              topFilled: false,
+              topReward: null,
+              techId: null,
+              hasBottomSlot: false,
+              bottomFilled: false,
+              bottomReward: null,
+              techSlotAvailable: true,
+            },
+            {
+              topFilled: false,
+              topReward: null,
+              techId: null,
+              hasBottomSlot: false,
+              bottomFilled: false,
+              bottomReward: null,
+              techSlotAvailable: true,
+            },
           ],
         },
       });
@@ -246,9 +318,33 @@ describe('action rules', () => {
         },
         computer: {
           columns: [
-            { topFilled: true, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
-            { topFilled: true, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
-            { topFilled: true, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
+            {
+              topFilled: true,
+              topReward: null,
+              techId: null,
+              hasBottomSlot: false,
+              bottomFilled: false,
+              bottomReward: null,
+              techSlotAvailable: true,
+            },
+            {
+              topFilled: true,
+              topReward: null,
+              techId: null,
+              hasBottomSlot: false,
+              bottomFilled: false,
+              bottomReward: null,
+              techSlotAvailable: true,
+            },
+            {
+              topFilled: true,
+              topReward: null,
+              techId: null,
+              hasBottomSlot: false,
+              bottomFilled: false,
+              bottomReward: null,
+              techSlotAvailable: true,
+            },
           ],
         },
       });
@@ -318,9 +414,33 @@ describe('action rules', () => {
       const player = createPlayer({
         computer: {
           columns: [
-            { topFilled: true, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
-            { topFilled: true, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
-            { topFilled: true, topReward: null, techId: null, hasBottomSlot: false, bottomFilled: false, bottomReward: null, techSlotAvailable: true },
+            {
+              topFilled: true,
+              topReward: null,
+              techId: null,
+              hasBottomSlot: false,
+              bottomFilled: false,
+              bottomReward: null,
+              techSlotAvailable: true,
+            },
+            {
+              topFilled: true,
+              topReward: null,
+              techId: null,
+              hasBottomSlot: false,
+              bottomFilled: false,
+              bottomReward: null,
+              techSlotAvailable: true,
+            },
+            {
+              topFilled: true,
+              topReward: null,
+              techId: null,
+              hasBottomSlot: false,
+              bottomFilled: false,
+              bottomReward: null,
+              techSlotAvailable: true,
+            },
           ],
         },
       });

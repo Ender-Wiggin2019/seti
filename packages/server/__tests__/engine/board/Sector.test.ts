@@ -13,6 +13,7 @@ describe('Sector', () => {
       const result = sector.markSignal('player-a');
 
       expect(result.dataGained).toBe(true);
+      expect(result.vpAwarded).toBe(0);
       expect(sector.signals).toHaveLength(3);
       expect(sector.signals[2]).toEqual({
         type: 'player',
@@ -64,6 +65,7 @@ describe('Sector', () => {
       const overflow = sector.markSignal('player-c');
 
       expect(overflow.dataGained).toBe(false);
+      expect(overflow.vpAwarded).toBe(0);
       expect(sector.signals).toHaveLength(3);
       expect(sector.signals[2]).toEqual({
         type: 'player',

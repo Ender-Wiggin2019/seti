@@ -1,7 +1,7 @@
 import type { IGame } from '../IGame.js';
+import type { PlayerInput } from '../input/PlayerInput.js';
 import { SelectCard } from '../input/SelectCard.js';
 import { SelectEndOfRoundCard } from '../input/SelectEndOfRoundCard.js';
-import type { PlayerInput } from '../input/PlayerInput.js';
 import type { IPlayer, TCardItem } from '../player/IPlayer.js';
 
 export class PassAction {
@@ -12,14 +12,11 @@ export class PassAction {
   /**
    * Pass sequence (PRD §7.8):
    *  1. Discard hand down to `player.handLimitAfterPass`  (PlayerInput if excess)
-   *  2. First-pass-this-round → rotate SolarSystem
+   *  2. Rotate SolarSystem disc (every pass triggers rotation)
    *  3. Pick one card from end-of-round stack             (PlayerInput)
    *  4. Mark player as passed
    */
-  public static execute(
-    player: IPlayer,
-    game: IGame,
-  ): PlayerInput | undefined {
+  public static execute(player: IPlayer, game: IGame): PlayerInput | undefined {
     return this.discardStep(player, game);
   }
 
@@ -61,9 +58,9 @@ export class PassAction {
   ): PlayerInput | undefined {
     if (!game.hasRoundFirstPassOccurred) {
       game.hasRoundFirstPassOccurred = true;
-      if (game.solarSystem !== null) {
-        game.solarSystem.rotateNextDisc();
-      }
+    }
+    if (game.solarSystem !== null) {
+      game.solarSystem.rotateNextDisc();
     }
 
     return PassAction.endOfRoundCardStep(player, game);

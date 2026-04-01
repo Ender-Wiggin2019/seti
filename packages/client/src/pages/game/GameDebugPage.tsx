@@ -1,4 +1,8 @@
 import {
+  GAME_DEBUG_DEFAULTS,
+  GAME_DEBUG_RANGES,
+} from '@seti/common/constant/debugGame';
+import {
   createDefaultSolarSystemWheels,
   ESectorPosition,
   ESectorTileId,
@@ -11,10 +15,6 @@ import {
   type TSolarSystemWheelIndex,
   type TSolarSystemWheels,
 } from '@seti/common/constant/sectorSetup';
-import {
-  GAME_DEBUG_DEFAULTS,
-  GAME_DEBUG_RANGES,
-} from '@seti/common/constant/debugGame';
 import { ALL_CARDS } from '@seti/common/data';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { ESector, ETech } from '@seti/common/types/element';

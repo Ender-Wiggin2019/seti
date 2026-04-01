@@ -1,0 +1,9 @@
+devMode: false
+rules: []
+skills: []
+agents: []
+contextBranch: master
+contextTag: ''
+targetDirPath: .cursor
+syncInterval: 15
+lastUpdatePromptDate: Wed Apr 01 2026

@@ -4,8 +4,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
 import { LobbyService } from '@/lobby/lobby.service.js';
+import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
 
 const MOCK_GAME = {
   id: 'game-1',
@@ -66,10 +66,7 @@ describe('LobbyService', () => {
     db = createMockDb();
 
     const module = await Test.createTestingModule({
-      providers: [
-        LobbyService,
-        { provide: DRIZZLE_DB, useValue: db },
-      ],
+      providers: [LobbyService, { provide: DRIZZLE_DB, useValue: db }],
     }).compile();
 
     service = module.get(LobbyService);
@@ -77,18 +74,21 @@ describe('LobbyService', () => {
 
   describe('createRoom', () => {
     it('creates a room and auto-joins the host', async () => {
-      db._selectChain.limit
-        .mockResolvedValueOnce([{
+      db._selectChain.limit.mockResolvedValueOnce([
+        {
           ...MOCK_GAME,
           id: expect.any(String),
-        }]);
+        },
+      ]);
       db._selectChain.innerJoin.mockReturnValue(db._selectChain);
       db._selectChain.from.mockReturnValue(db._selectChain);
       db._selectChain.where.mockReturnValue(db._selectChain);
-      db._selectChain.limit.mockResolvedValueOnce([{
-        ...MOCK_GAME,
-        id: 'new-game',
-      }]);
+      db._selectChain.limit.mockResolvedValueOnce([
+        {
+          ...MOCK_GAME,
+          id: 'new-game',
+        },
+      ]);
       db._selectChain.orderBy.mockReturnValue(db._selectChain);
 
       const selectCallIndex = { count: 0 };
@@ -151,16 +151,16 @@ describe('LobbyService', () => {
       db.select.mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([
-              { ...MOCK_GAME, status: 'playing' },
-            ]),
+            limit: vi
+              .fn()
+              .mockResolvedValue([{ ...MOCK_GAME, status: 'playing' }]),
           }),
         }),
       });
 
-      await expect(
-        service.joinRoom('game-1', 'user-2'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.joinRoom('game-1', 'user-2')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('rejects duplicate join', async () => {
@@ -170,17 +170,17 @@ describe('LobbyService', () => {
             limit: vi.fn().mockResolvedValue([MOCK_GAME]),
           }),
           innerJoin: vi.fn().mockReturnValue({
-            where: vi.fn().mockResolvedValue([
-              { ...MOCK_PLAYER, userId: 'user-2' },
-            ]),
+            where: vi
+              .fn()
+              .mockResolvedValue([{ ...MOCK_PLAYER, userId: 'user-2' }]),
           }),
         }),
       });
       db.select.mockImplementation(selectImpl);
 
-      await expect(
-        service.joinRoom('game-1', 'user-2'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.joinRoom('game-1', 'user-2')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -194,9 +194,9 @@ describe('LobbyService', () => {
         }),
       });
 
-      await expect(
-        service.startGame('game-1', 'not-host'),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.startGame('game-1', 'not-host')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('rejects starting with fewer than 2 players', async () => {
@@ -212,9 +212,9 @@ describe('LobbyService', () => {
       });
       db.select.mockImplementation(selectImpl);
 
-      await expect(
-        service.startGame('game-1', 'host-user'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.startGame('game-1', 'host-user')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -228,25 +228,25 @@ describe('LobbyService', () => {
         }),
       });
 
-      await expect(
-        service.leaveRoom('nonexistent', 'user'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.leaveRoom('nonexistent', 'user')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('rejects leaving started room', async () => {
       db.select.mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([
-              { ...MOCK_GAME, status: 'playing' },
-            ]),
+            limit: vi
+              .fn()
+              .mockResolvedValue([{ ...MOCK_GAME, status: 'playing' }]),
           }),
         }),
       });
 
-      await expect(
-        service.leaveRoom('game-1', 'host-user'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.leaveRoom('game-1', 'host-user')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });

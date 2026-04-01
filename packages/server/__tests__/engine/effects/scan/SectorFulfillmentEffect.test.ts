@@ -1,4 +1,4 @@
-import { ETrace, ESector } from '@seti/common/types/element';
+import { ESector, ETrace } from '@seti/common/types/element';
 import { Sector } from '@/engine/board/Sector.js';
 import { SectorFulfillmentEffect } from '@/engine/effects/scan/SectorFulfillmentEffect.js';
 import type { IGame } from '@/engine/IGame.js';
@@ -13,10 +13,7 @@ function createPlayer(id: string, seatIndex = 0): Player {
   });
 }
 
-function createMockGame(
-  players: Player[],
-  sectors: Sector[],
-): IGame {
+function createMockGame(players: Player[], sectors: Sector[]): IGame {
   return {
     players,
     sectors,

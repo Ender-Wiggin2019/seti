@@ -1,16 +1,18 @@
-import { Test } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
+import { Test } from '@nestjs/testing';
 import { EMainAction } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { DebugSessionRegistry } from '@/debug/DebugSessionRegistry.js';
-import { GameGateway } from '@/gateway/game.gateway.js';
 import { GameManager } from '@/gateway/GameManager.js';
+import { GameGateway } from '@/gateway/game.gateway.js';
 
-function createMockSocket(overrides: Partial<{
-  id: string;
-  data: Record<string, string>;
-  handshake: Record<string, unknown>;
-}> = {}) {
+function createMockSocket(
+  overrides: Partial<{
+    id: string;
+    data: Record<string, string>;
+    handshake: Record<string, unknown>;
+  }> = {},
+) {
   return {
     id: overrides.id ?? 'socket-1',
     data: overrides.data ?? {},
@@ -130,8 +132,9 @@ describe('GameGateway', () => {
       const socket = createMockSocket();
       socket.data.userId = 'user-1';
 
-      (gateway as unknown as { socketToGames: Map<string, Set<string>> })
-        .socketToGames.set('socket-1', new Set());
+      (
+        gateway as unknown as { socketToGames: Map<string, Set<string>> }
+      ).socketToGames.set('socket-1', new Set());
 
       await gateway.handleRoomJoin(socket as never, { gameId: 'game-1' });
 
@@ -146,9 +149,7 @@ describe('GameGateway', () => {
         toModel: vi.fn().mockReturnValue({ type: 'option', options: [] }),
       };
       const mockGame = {
-        players: [
-          { id: 'user-1', name: 'Alice', waitingFor: mockInput },
-        ],
+        players: [{ id: 'user-1', name: 'Alice', waitingFor: mockInput }],
       };
       mockGameManager.getGame.mockResolvedValue(mockGame);
       mockGameManager.getProjectedState.mockReturnValue({
@@ -157,8 +158,9 @@ describe('GameGateway', () => {
 
       const socket = createMockSocket();
       socket.data.userId = 'user-1';
-      (gateway as unknown as { socketToGames: Map<string, Set<string>> })
-        .socketToGames.set('socket-1', new Set());
+      (
+        gateway as unknown as { socketToGames: Map<string, Set<string>> }
+      ).socketToGames.set('socket-1', new Set());
 
       await gateway.handleRoomJoin(socket as never, { gameId: 'game-1' });
 
@@ -220,8 +222,9 @@ describe('GameGateway', () => {
     it('leaves the socket room', () => {
       const socket = createMockSocket();
       socket.data.userId = 'user-1';
-      (gateway as unknown as { socketToGames: Map<string, Set<string>> })
-        .socketToGames.set('socket-1', new Set(['g1']));
+      (
+        gateway as unknown as { socketToGames: Map<string, Set<string>> }
+      ).socketToGames.set('socket-1', new Set(['g1']));
 
       gateway.handleRoomLeave(socket as never, { gameId: 'g1' });
 
@@ -233,8 +236,9 @@ describe('GameGateway', () => {
     it('notifies other players on disconnect', () => {
       const socket = createMockSocket();
       socket.data.userId = 'user-1';
-      (gateway as unknown as { socketToGames: Map<string, Set<string>> })
-        .socketToGames.set('socket-1', new Set(['g1']));
+      (
+        gateway as unknown as { socketToGames: Map<string, Set<string>> }
+      ).socketToGames.set('socket-1', new Set(['g1']));
 
       gateway.handleDisconnect(socket as never);
 

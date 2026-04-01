@@ -1,4 +1,4 @@
-import { EResource, ETech, ETrace } from '@seti/common/types/element';
+import { EResource, ESector, ETech, ETrace } from '@seti/common/types/element';
 import {
   EFreeAction,
   EMainAction,
@@ -7,6 +7,7 @@ import {
 } from '@seti/common/types/protocol/enums';
 import {
   EPlayerInputType,
+  type ISelectCardInputModel,
   type ISelectEndOfRoundCardInputModel,
   type ISelectOptionInputModel,
   type ISelectTraceInputModel,
@@ -15,12 +16,12 @@ import { ETechBonusType, ETechId } from '@seti/common/types/tech';
 import { LaunchProbeAction } from '@/engine/actions/LaunchProbe.js';
 import { PlayCardAction } from '@/engine/actions/PlayCard.js';
 import { ScanAction } from '@/engine/actions/Scan.js';
-import { Game } from '@/engine/Game.js';
 import { ESolarSystemElementType } from '@/engine/board/SolarSystem.js';
-import { loadCardData } from '@/engine/cards/loadCardData.js';
-import { EComputerRow } from '@/engine/player/Computer.js';
+import { loadAllCardData } from '@/engine/cards/loadCardData.js';
+import { TuckCardForIncomeEffect } from '@/engine/effects/income/TuckCardForIncomeEffect.js';
+import { getSectorIndexByPlanet } from '@/engine/effects/scan/ScanEffectUtils.js';
+import { Game } from '@/engine/Game.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
-import type { TPartialResourceBundle } from '@/engine/player/Resources.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -110,48 +111,7 @@ function patchSolarSystemForScenario(game: Game): void {
   const cell2 = ss.spaces.find((s) => s.id === 'ring-1-cell-2');
   if (!cell2) throw new Error('ring-1-cell-2 not found');
 
-  cell2.elements = [
-    { type: ESolarSystemElementType.ASTEROID, amount: 1 },
-  ];
-}
-
-/** Map an EResource income type to a single-unit resource gain bundle. */
-function incomeResourceToGainBundle(resource: EResource): TPartialResourceBundle {
-  switch (resource) {
-    case EResource.CREDIT: return { credits: 1 };
-    case EResource.ENERGY: return { energy: 1 };
-    case EResource.DATA: return { data: 1 };
-    case EResource.PUBLICITY: return { publicity: 1 };
-    default: return {};
-  }
-}
-
-/**
- * Tuck a card from the player's hand for income using engine methods.
- *
- * Resolves the card's income type via `loadCardData`, then applies:
- *   - tucked card income (+1 of the income resource per round)
- *   - immediate tuck bonus (+1 resource of the income type)
- */
-function tuckCardForIncome(player: IPlayer, cardId: string): void {
-  const cardIndex = player.findCardInHand(cardId);
-  if (cardIndex < 0) throw new Error(`Card ${cardId} not found in hand`);
-
-  player.removeCardAt(cardIndex);
-  player.tuckedIncomeCards.push(cardId);
-
-  const cardData = loadCardData(cardId);
-  player.income.addTuckedIncome(cardData.income);
-  player.resources.gain(incomeResourceToGainBundle(cardData.income));
-}
-
-/**
- * Set up the player's initial 5-card hand and clear any auto-tucked state.
- * Only card IDs are fixed here; the tuck choice happens in the test.
- */
-function setupPlayerHand(player: IPlayer): void {
-  player.hand = ['8', '80', '130', '110', '16'];
-  player.tuckedIncomeCards = [];
+  cell2.elements = [{ type: ESolarSystemElementType.ASTEROID, amount: 1 }];
 }
 
 /**
@@ -180,8 +140,9 @@ function patchTechBoardForScenario(game: Game): void {
 //
 // Scenario: p1 plays mission card '80', launches a probe, moves through
 // an asteroid to reach Venus, gaining publicity along the way.
+// Then passes, round-end income is applied, and round 2 features a scan.
 // ─────────────────────────────────────────────────────────────────────────
-describe('Game Flow: Play Card → Launch → Move → Visit Venus', () => {
+describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan', () => {
   let game: Game;
   let p1: IPlayer;
   let p2: IPlayer;
@@ -199,7 +160,6 @@ describe('Game Flow: Play Card → Launch → Move → Visit Venus', () => {
 
     patchSolarSystemForScenario(game);
     patchTechBoardForScenario(game);
-    setupPlayerHand(p1);
   });
 
   // ── 1. Game initialization ───────────────────────────────────────────
@@ -222,42 +182,69 @@ describe('Game Flow: Play Card → Launch → Move → Visit Venus', () => {
     ).toBe(true);
   });
 
-  // ── 3. Initial resources (before tuck) ───────────────────────────────
-  it('3. p1 initial resources before tuck (credits 4, energy 3, publicity 4)', () => {
+  // ── 3. Check initial GameSetup state ─────────────────────────────────
+  it('3. GameSetup dealt 5 cards, auto-tucked 1 → 4 in hand, base resources', () => {
+    expect(p1.hand).toHaveLength(4);
+    expect(p1.tuckedIncomeCards).toHaveLength(1);
     expect(p1.resources.credits).toBe(4);
     expect(p1.resources.energy).toBe(3);
     expect(p1.resources.publicity).toBe(4);
     expect(p1.resources.data).toBe(0);
-    expect(p1.score).toBe(1); // seatIndex 0 + 1
   });
 
-  // ── 4. Initial 5-card hand ───────────────────────────────────────────
-  it('4. p1 has 5 cards dealt, including card 80 and card 8', () => {
+  // ── 3b. Card row has 3 cards, end-of-round stacks have 3 each ───────
+  it('3b. card row has 3 cards, end-of-round stacks have playerCount+1 cards each', () => {
+    expect(game.cardRow).toHaveLength(3);
+    for (const stack of game.endOfRoundStacks) {
+      expect(stack).toHaveLength(TEST_PLAYERS.length + 1);
+    }
+  });
+
+  // ── 4. Mock hand to 5 specific cards (undo auto-tuck) ───────────────
+  it('4. mock hand to 5 specific cards, clear auto-tuck for deterministic testing', () => {
+    p1.hand = ['8', '80', '16', '130', '110'];
+    p1.tuckedIncomeCards = [];
+
     expect(p1.hand).toHaveLength(5);
-    expect(p1.hand).toContain('80');
-    expect(p1.hand).toContain('8');
     expect(p1.tuckedIncomeCards).toHaveLength(0);
+    expect(p1.income.computeRoundPayout()[EResource.ENERGY]).toBe(0);
   });
 
-  // ── 5. Tuck card '8' for income ──────────────────────────────────────
-  it('5. tuck card 8 → energy income +1, energy resource +1', () => {
+  // ── 5. Tuck card '8' via TuckCardForIncomeEffect ────────────────────
+  it('5. tuck card 8 via engine → energy income +1, immediate +1 energy', () => {
     const energyBefore = p1.resources.energy;
-    const energyIncomeBefore = p1.income.computeRoundPayout()[EResource.ENERGY];
 
-    tuckCardForIncome(p1, '8');
+    const tuckInput = TuckCardForIncomeEffect.execute(p1, game);
+    expect(tuckInput).toBeDefined();
 
-    expect(p1.tuckedIncomeCards).toEqual(['8']);
+    const tuckModel = tuckInput!.toModel() as ISelectCardInputModel;
+    expect(tuckModel.type).toBe(EPlayerInputType.CARD);
+    expect(tuckModel.cards).toHaveLength(5);
+
+    p1.waitingFor = tuckInput!;
+    game.processInput('p1', {
+      type: EPlayerInputType.CARD,
+      cardIds: ['8'],
+    });
+
+    expect(p1.tuckedIncomeCards).toContain('8');
     expect(p1.hand).toHaveLength(4);
     expect(p1.hand).not.toContain('8');
-    expect(p1.hand[0]).toBe('80');
-
-    expect(p1.income.computeRoundPayout()[EResource.ENERGY]).toBe(
-      energyIncomeBefore + 1,
-    );
-    expect(p1.resources.energy).toBe(energyBefore + 1); // 3 → 4
+    expect(p1.income.computeRoundPayout()[EResource.ENERGY]).toBe(1);
+    expect(p1.resources.energy).toBe(energyBefore + 1);
   });
 
-  // ── 6. Available actions check ───────────────────────────────────────
+  // ── 5b. Verify post-tuck initial state ──────────────────────────────
+  it('5b. post-tuck: hand = [80,16,130,110], credits 4, energy 4, publicity 4', () => {
+    expect(p1.hand).toEqual(['80', '16', '130', '110']);
+    expect(p1.resources.credits).toBe(4);
+    expect(p1.resources.energy).toBe(4);
+    expect(p1.resources.publicity).toBe(4);
+    expect(p1.resources.data).toBe(0);
+    expect(p1.score).toBe(1);
+  });
+
+  // ── 6. Available actions check ──────────────────────────────────────
   it('6. p1 can launch, scan, play card, pass — cannot orbit/land', () => {
     expect(LaunchProbeAction.canExecute(p1, game)).toBe(true);
     expect(ScanAction.canExecute(p1, game)).toBe(true);
@@ -269,7 +256,7 @@ describe('Game Flow: Play Card → Launch → Move → Visit Venus', () => {
 
   // ── 7. Play card '80' (Cape Canaveral SFS) ──────────────────────────
   it('7. p1 plays card 80 — spends 1 credit, registers 3-branch LAUNCH mission', () => {
-    const creditsBefore = p1.resources.credits; // 4
+    const creditsBefore = p1.resources.credits;
 
     game.processMainAction('p1', {
       type: EMainAction.PLAY_CARD,
@@ -277,7 +264,7 @@ describe('Game Flow: Play Card → Launch → Move → Visit Venus', () => {
     });
     resolveAllInputs(game, p1);
 
-    expect(p1.resources.credits).toBe(creditsBefore - 1); // 3
+    expect(p1.resources.credits).toBe(creditsBefore - 1);
     expect(p1.hand).not.toContain('80');
     expect(p1.playedMissions.length).toBeGreaterThanOrEqual(1);
 
@@ -322,29 +309,36 @@ describe('Game Flow: Play Card → Launch → Move → Visit Venus', () => {
     expect(venusSpaces[0].hasPublicityIcon).toBe(true);
   });
 
-  // ── 9. p1 launches probe ─────────────────────────────────────────────
-  it('9. p1 launches probe — spends 2 credits, probe lands on Earth, mission triggers', () => {
-    const creditsBefore = p1.resources.credits; // 3
+  // ── 9. p1 launches probe, completes 2 mission branches ──────────────
+  it('9. p1 launches probe — spends 2 credits, probe on Earth, 2 branches completed', () => {
+    const creditsBefore = p1.resources.credits;
 
     game.processMainAction('p1', { type: EMainAction.LAUNCH_PROBE });
 
-    // Full mission branch should trigger — player gets a SelectOption prompt
     expect(p1.waitingFor).toBeDefined();
     const model = p1.waitingFor!.toModel() as ISelectOptionInputModel;
     expect(model.type).toBe(EPlayerInputType.OPTION);
 
-    const missionOption = model.options.find(
-      (o) => o.id === 'complete-80-0',
-    );
-    expect(missionOption).toBeDefined();
+    const branch0 = model.options.find((o) => o.id === 'complete-80-0');
+    expect(branch0).toBeDefined();
 
-    // Claim branch 0 reward: +1 MOVE
     game.processInput('p1', {
       type: EPlayerInputType.OPTION,
       optionId: 'complete-80-0',
     });
 
-    // Skip remaining triggered branches (branches 1 & 2 also match LAUNCH)
+    expect(p1.waitingFor).toBeDefined();
+    const model2 = p1.waitingFor!.toModel() as ISelectOptionInputModel;
+    expect(model2.type).toBe(EPlayerInputType.OPTION);
+
+    const branch1 = model2.options.find((o) => o.id === 'complete-80-1');
+    expect(branch1).toBeDefined();
+
+    game.processInput('p1', {
+      type: EPlayerInputType.OPTION,
+      optionId: 'complete-80-1',
+    });
+
     if (p1.waitingFor) {
       const nextModel = p1.waitingFor.toModel() as ISelectOptionInputModel;
       if (
@@ -359,8 +353,7 @@ describe('Game Flow: Play Card → Launch → Move → Visit Venus', () => {
     }
     resolveAllInputs(game, p1);
 
-    // Verify costs and probe placement
-    expect(p1.resources.credits).toBe(creditsBefore - 2); // 1
+    expect(p1.resources.credits).toBe(creditsBefore - 2);
     expect(p1.probesInSpace).toBe(1);
 
     const earthSpaces = game.solarSystem!.getSpacesOnPlanet(EPlanet.EARTH);
@@ -370,83 +363,82 @@ describe('Game Flow: Play Card → Launch → Move → Visit Venus', () => {
     expect(probesOnEarth).toHaveLength(1);
   });
 
-  it('9b. mission branch 0 is completed — p1 has 1 movement point', () => {
+  it('9b. branches 0 & 1 completed — p1 has 2 movement points', () => {
     const missionState = game.missionTracker.getMissionState('p1', '80');
     expect(missionState).toBeDefined();
     expect(missionState!.branchStates[0].completed).toBe(true);
-    expect(missionState!.branchStates[1].completed).toBe(false);
+    expect(missionState!.branchStates[1].completed).toBe(true);
     expect(missionState!.branchStates[2].completed).toBe(false);
 
-    expect(p1.getMoveStash()).toBe(1);
+    expect(p1.getMoveStash()).toBe(2);
     expect(game.activePlayer.id).toBe('p1');
     expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
   });
 
-  // ── 10. Move probe from Earth to asteroid (counterclockwise) ─────────
+  // ── 10. Move probe from Earth to asteroid (counterclockwise) ────────
   it('10. p1 moves probe Earth→Asteroid — costs 1 movement point', () => {
-    const moveBefore = p1.getMoveStash(); // 1
+    const moveBefore = p1.getMoveStash();
 
     game.processFreeAction('p1', {
       type: EFreeAction.MOVEMENT,
       path: ['ring-1-cell-4', 'ring-1-cell-3'],
     });
 
-    expect(p1.getMoveStash()).toBe(moveBefore - 1); // 0
+    expect(p1.getMoveStash()).toBe(moveBefore - 1);
 
     const cell3 = game.solarSystem!.spaces.find(
       (s) => s.id === 'ring-1-cell-3',
     )!;
-    expect(
-      cell3.occupants.some((probe) => probe.playerId === 'p1'),
-    ).toBe(true);
+    expect(cell3.occupants.some((probe) => probe.playerId === 'p1')).toBe(true);
   });
 
-  // ── 11. Convert energy → movement, then move Asteroid → Venus ────────
-  it('11a. p1 converts 2 energy to 2 movement', () => {
-    const energyBefore = p1.resources.energy; // 4
+  // ── 11. Convert energy → movement, then move Asteroid → Venus ───────
+  it('11a. p1 converts 1 energy → 1 movement (1 remaining from missions + 1 new = 2)', () => {
+    const energyBefore = p1.resources.energy;
 
     game.processFreeAction('p1', {
       type: EFreeAction.CONVERT_ENERGY_TO_MOVEMENT,
-      amount: 2,
+      amount: 1,
     });
 
-    expect(p1.resources.energy).toBe(energyBefore - 2); // 2
+    expect(p1.resources.energy).toBe(energyBefore - 1);
+    // 2 from missions → spent 1 on Earth→Asteroid → 1 remaining + 1 converted = 2
     expect(p1.getMoveStash()).toBe(2);
   });
 
   it('11b. p1 moves probe Asteroid→Venus — costs 2 (1 base + 1 asteroid leave)', () => {
-    const moveBefore = p1.getMoveStash(); // 2
-    const publicityBefore = p1.resources.publicity; // 4
+    const moveBefore = p1.getMoveStash();
+    const publicityBefore = p1.resources.publicity;
 
     game.processFreeAction('p1', {
       type: EFreeAction.MOVEMENT,
       path: ['ring-1-cell-3', 'ring-1-cell-2'],
     });
 
-    expect(p1.getMoveStash()).toBe(moveBefore - 2); // 0
-    expect(p1.resources.publicity).toBe(publicityBefore + 1); // 5
+    expect(p1.getMoveStash()).toBe(moveBefore - 2);
+    expect(p1.resources.publicity).toBe(publicityBefore + 1);
   });
 
-  // ── 12. Probe at Venus verification ────────────────────────────────────
+  // ── 12. Probe at Venus verification ─────────────────────────────────
   it('12. probe is now at Venus (ring-1-cell-2)', () => {
     const venusCell = game.solarSystem!.spaces.find(
       (s) => s.id === 'ring-1-cell-2',
     )!;
-    expect(
-      venusCell.occupants.some((probe) => probe.playerId === 'p1'),
-    ).toBe(true);
+    expect(venusCell.occupants.some((probe) => probe.playerId === 'p1')).toBe(
+      true,
+    );
 
     expect(p1.resources.credits).toBe(1);
-    expect(p1.resources.energy).toBe(2);
+    expect(p1.resources.energy).toBe(3);
     expect(p1.resources.publicity).toBe(5);
     expect(p1.getMoveStash()).toBe(0);
     expect(p1.probesInSpace).toBe(1);
   });
 
   // ── 13. Action list check (after move to Venus) ─────────────────────
-  it('13. no launch/land; orbit and scan allowed', () => {
+  it('13. no launch; can land on Venus (enough energy); scan and play card allowed', () => {
     expect(LaunchProbeAction.canExecute(p1, game)).toBe(false);
-    expect(p1.canLand(EPlanet.VENUS)).toBe(false);
+    expect(p1.canLand(EPlanet.VENUS)).toBe(true);
 
     expect(ScanAction.canExecute(p1, game)).toBe(true);
     expect(PlayCardAction.canExecute(p1, game)).toBe(true);
@@ -454,11 +446,8 @@ describe('Game Flow: Play Card → Launch → Move → Visit Venus', () => {
 
   // ── 14. Play card '16' (Dragonfly) → land on Venus ─────────────────
   it('14. p1 plays card 16 → Dragonfly triggers landing on Venus', () => {
-    // Grant extra energy so the player can afford the landing cost (3 energy)
-    p1.resources.gain({ energy: 3 });
-
-    const creditsBefore = p1.resources.credits; // 1
-    const energyBefore = p1.resources.energy; // 5
+    const creditsBefore = p1.resources.credits;
+    const energyBefore = p1.resources.energy;
     const scoreBefore = p1.score;
     const cardIndex = p1.hand.indexOf('16');
 
@@ -467,7 +456,6 @@ describe('Game Flow: Play Card → Launch → Move → Visit Venus', () => {
       payload: { cardIndex },
     });
 
-    // Dragonfly's deferred land selection should produce an input
     expect(p1.waitingFor).toBeDefined();
     const landModel = p1.waitingFor!.toModel() as ISelectOptionInputModel;
     expect(landModel.type).toBe(EPlayerInputType.OPTION);
@@ -477,16 +465,14 @@ describe('Game Flow: Play Card → Launch → Move → Visit Venus', () => {
     );
     expect(venusOption).toBeDefined();
 
-    // Select Venus — landing queues a life trace deferred action automatically
     game.processInput('p1', {
       type: EPlayerInputType.OPTION,
       optionId: `land-${EPlanet.VENUS}`,
     });
 
-    // Card 16 costs 1 credit. Landing on Venus costs 3 energy (no orbiter).
-    expect(p1.resources.credits).toBe(creditsBefore - 1); // 0
-    expect(p1.resources.energy).toBe(energyBefore - 3); // 5 - 3 (landing) = 2
-    expect(p1.score).toBe(scoreBefore + 3); // Venus center: 3 VP
+    expect(p1.resources.credits).toBe(creditsBefore - 1);
+    expect(p1.resources.energy).toBe(energyBefore - 3);
+    expect(p1.score).toBe(scoreBefore + 3);
     expect(p1.hand).not.toContain('16');
   });
 
@@ -495,19 +481,15 @@ describe('Game Flow: Play Card → Launch → Move → Visit Venus', () => {
     const scoreBefore = p1.score;
     const publicityBefore = p1.resources.publicity;
 
-    // The life trace from Venus landing is automatically queued by the engine.
-    // Player should be prompted to choose a trace color (ANY → pick color).
     expect(p1.waitingFor).toBeDefined();
     const traceModel = p1.waitingFor!.toModel();
     expect(traceModel.type).toBe(EPlayerInputType.TRACE);
 
-    // Select YELLOW trace color
     game.processInput('p1', {
       type: EPlayerInputType.TRACE,
       trace: ETrace.YELLOW,
     });
 
-    // Now should be prompted to pick which slot to place the trace
     expect(p1.waitingFor).toBeDefined();
     const slotModel = p1.waitingFor!.toModel() as ISelectOptionInputModel;
     expect(slotModel.type).toBe(EPlayerInputType.OPTION);
@@ -532,39 +514,47 @@ describe('Game Flow: Play Card → Launch → Move → Visit Venus', () => {
   // ── 16. Game state after landing ────────────────────────────────────
   it('16. Venus landing slot occupied, no probes in solar system', () => {
     const venusState = game.planetaryBoard!.planets.get(EPlanet.VENUS)!;
-    expect(
-      venusState.landingSlots.some((s) => s.playerId === 'p1'),
-    ).toBe(true);
+    expect(venusState.landingSlots.some((s) => s.playerId === 'p1')).toBe(true);
 
     const venusCell = game.solarSystem!.spaces.find(
       (s) => s.id === 'ring-1-cell-2',
     )!;
-    expect(
-      venusCell.occupants.filter((o) => o.playerId === 'p1'),
-    ).toHaveLength(0);
+    expect(venusCell.occupants.filter((o) => o.playerId === 'p1')).toHaveLength(
+      0,
+    );
 
     expect(p1.probesInSpace).toBe(0);
   });
 
   // ── 17. Player state after landing + trace ──────────────────────────
-  it('17. resources: 0 credits, 2 energy, 6 publicity, data ≥ 1', () => {
+  it('17. resources: 0 credits, 0 energy, 6 publicity, data ≥ 1', () => {
     expect(p1.resources.credits).toBe(0);
-    expect(p1.resources.energy).toBe(2);
+    expect(p1.resources.energy).toBe(0);
     expect(p1.resources.publicity).toBe(6);
     expect(p1.resources.data).toBeGreaterThanOrEqual(1);
   });
 
   // ── 18. p2 already passed — p1 gets next turn ──────────────────────
-  it('18. p1 active on next turn, can research tech', () => {
-    // After card 16 main action resolves, the turn auto-advances past p2
+  it('18. p1 active on next turn', () => {
     expect(game.activePlayer.id).toBe('p1');
     expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
-
-    expect(p1.resources.publicity).toBeGreaterThanOrEqual(6);
   });
 
-  // ── 19. Research tech — select comp-0, place on column 0 ───────────
-  it('19. p1 researches tech → spends 6 publicity, comp-0 acquired', () => {
+  // ── 19. Use card corner '110' for +1 data ──────────────────────────
+  it('19. p1 uses card 110 corner → +1 data', () => {
+    const dataBefore = p1.resources.data;
+
+    game.processFreeAction('p1', {
+      type: EFreeAction.USE_CARD_CORNER,
+      cardId: '110',
+    });
+
+    expect(p1.resources.data).toBe(dataBefore + 1);
+    expect(p1.hand).not.toContain('110');
+  });
+
+  // ── 20. Research tech — select comp-0, place on column 0 ───────────
+  it('20. p1 researches tech → spends 6 publicity, comp-0 acquired', () => {
     const scoreBefore = p1.score;
     const publicityBefore = p1.resources.publicity;
     const energyBefore = p1.resources.energy;
@@ -572,12 +562,10 @@ describe('Game Flow: Play Card → Launch → Move → Visit Venus', () => {
 
     game.processMainAction('p1', { type: EMainAction.RESEARCH_TECH });
 
-    // Should produce a SelectOption for tech choice
     expect(p1.waitingFor).toBeDefined();
     const techModel = p1.waitingFor!.toModel() as ISelectOptionInputModel;
     expect(techModel.type).toBe(EPlayerInputType.OPTION);
 
-    // Select comp-0 (first blue tech = VP + Credit)
     const comp0Option = techModel.options.find(
       (o) => o.id === ETechId.COMPUTER_VP_CREDIT,
     );
@@ -588,11 +576,9 @@ describe('Game Flow: Play Card → Launch → Move → Visit Venus', () => {
       optionId: ETechId.COMPUTER_VP_CREDIT,
     });
 
-    // Engine should now present column selection for computer tech placement
     if (p1.waitingFor) {
       const colModel = p1.waitingFor.toModel() as ISelectOptionInputModel;
       if (colModel.type === EPlayerInputType.OPTION) {
-        // Pick column 0
         const col0Option = colModel.options.find((o) => o.id === 'col-0');
         if (col0Option) {
           game.processInput('p1', {
@@ -606,13 +592,13 @@ describe('Game Flow: Play Card → Launch → Move → Visit Venus', () => {
 
     expect(p1.resources.publicity).toBe(publicityBefore - 6);
     expect(p1.techs).toContain(ETechId.COMPUTER_VP_CREDIT);
-    expect(p1.score).toBe(scoreBefore + 2); // FIRST_TAKE_VP_BONUS = 2
-    expect(p1.resources.energy).toBe(energyBefore + 1); // tile bonus = ENERGY
+    expect(p1.score).toBe(scoreBefore + 2);
+    expect(p1.resources.energy).toBe(energyBefore + 1);
     expect(game.solarSystem!.rotationCounter).toBe(rotBefore + 1);
   });
 
-  // ── 20. Post-tech state checks ──────────────────────────────────────
-  it('20. publicity = 0, disc rotated, +2 VP from first-take', () => {
+  // ── 21. Post-tech state checks ──────────────────────────────────────
+  it('21. publicity = 0, disc rotated, +2 VP from first-take', () => {
     expect(p1.resources.publicity).toBe(0);
     expect(p1.techs).toContain(ETechId.COMPUTER_VP_CREDIT);
 
@@ -622,38 +608,262 @@ describe('Game Flow: Play Card → Launch → Move → Visit Venus', () => {
     expect(col0.bottomReward).toEqual({ credits: 1 });
   });
 
-  // ── 21. Place data on first top slot and tech bottom slot ───────────
-  it('21. p1 places 2 data → +2 VP (top), +1 credit (bottom)', () => {
-    // Ensure data is in pool (flush stash from landing bonus)
-    p1.data.flushStashToPool();
-    // Grant additional data so the player has at least 2 in pool
-    if (p1.dataPool.count < 2) {
-      const needed = 2 - p1.dataPool.count;
-      p1.resources.gain({ data: needed });
-      p1.data.flushStashToPool();
-    }
+  // ── 22. Place data on computer via PLACE_DATA free action ───────────
+  it('22. p1 places 2 data → +2 VP (tech-col top), +1 publicity (col-1 top)', () => {
+    expect(p1.dataPool.count).toBeGreaterThanOrEqual(2);
 
     const scoreBefore = p1.score;
-    const creditsBefore = p1.resources.credits;
+    const publicityBefore = p1.resources.publicity;
 
-    // First placement via free action: top of column 0 → { vp: 2 }
-    game.processFreeAction('p1', { type: EFreeAction.PLACE_DATA, slotIndex: 0 });
+    game.processFreeAction('p1', {
+      type: EFreeAction.PLACE_DATA,
+      slotIndex: 0,
+    });
     expect(p1.score).toBe(scoreBefore + 2);
 
-    // Second placement: bottom of column 0 (tech slot)
-    // PlaceDataFreeAction fills top rows left-to-right first.
-    // To target the bottom slot directly, use the Data API.
-    const bottomReward = p1.data.placeFromPoolToComputer({
-      row: EComputerRow.BOTTOM,
-      index: 0,
+    game.processFreeAction('p1', {
+      type: EFreeAction.PLACE_DATA,
+      slotIndex: 1,
     });
-    if (bottomReward?.credits) {
-      p1.resources.gain({ credits: bottomReward.credits });
-    }
-    expect(p1.resources.credits).toBe(creditsBefore + 1);
+    expect(p1.resources.publicity).toBe(publicityBefore + 1);
 
     const col0 = p1.computer.getColumnState(0);
     expect(col0.topFilled).toBe(true);
-    expect(col0.bottomFilled).toBe(true);
+
+    const col1 = p1.computer.getColumnState(1);
+    expect(col1.topFilled).toBe(true);
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // PHASE 3: Pass & Round End
+  // ═══════════════════════════════════════════════════════════════════════
+
+  // ── 23. p1 passes — end-of-round card selection ─────────────────────
+  let rotBeforeP1Pass: number;
+
+  it('23. p1 passes — selects end-of-round card', () => {
+    const handBefore = p1.hand.length;
+    rotBeforeP1Pass = game.solarSystem!.rotationCounter;
+
+    const stackIndex = game.roundRotationReminderIndex;
+    const stackLengthBefore = game.endOfRoundStacks[stackIndex].length;
+
+    game.processMainAction('p1', { type: EMainAction.PASS });
+
+    // End-of-round card selection
+    expect(p1.waitingFor).toBeDefined();
+    const eorModel =
+      p1.waitingFor!.toModel() as ISelectEndOfRoundCardInputModel;
+    expect(eorModel.type).toBe(EPlayerInputType.END_OF_ROUND);
+    expect(eorModel.cards.length).toBeGreaterThan(0);
+
+    const selectedCardId = eorModel.cards[0].id;
+    game.processInput('p1', {
+      type: EPlayerInputType.END_OF_ROUND,
+      cardId: selectedCardId,
+    });
+
+    expect(p1.hand.length).toBe(handBefore + 1);
+    expect(game.endOfRoundStacks[stackIndex].length).toBe(
+      stackLengthBefore - 1,
+    );
+  });
+
+  it('23b. each pass should trigger disc rotation (2nd from pass)', () => {
+    // Per game design, every pass should trigger a disc rotation.
+    // Currently, only the first pass of the round triggers rotation.
+    expect(game.solarSystem!.rotationCounter).toBe(rotBeforeP1Pass + 1);
+  });
+
+  // ── 24. Round end — income applied, round advances ──────────────────
+  it('24. both players passed → round end, income applied', () => {
+    // After both p1 and p2 passed, resolveEndOfRound fires automatically
+    expect(game.round).toBe(2);
+    expect(p1.passed).toBe(false);
+    expect(p2.passed).toBe(false);
+
+    // p1 should have received +1 energy from tucked card '8' income
+    // (round-end income payout)
+    expect(p1.resources.energy).toBeGreaterThanOrEqual(2);
+  });
+
+  // ── 25. Round 2: start player rotates to p2 ────────────────────────
+  it('25. round 2: p2 is now start player and active player', () => {
+    expect(game.activePlayer.id).toBe('p2');
+    expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
+  });
+
+  // ── 26. p2 passes in round 2 (first pass → disc rotation) ──────────
+  it('26. p2 passes in round 2 — first pass triggers disc rotation', () => {
+    const rotBefore = game.solarSystem!.rotationCounter;
+
+    passPlayer(game, 'p2');
+
+    expect(game.solarSystem!.rotationCounter).toBe(rotBefore + 1);
+    expect(p2.passed).toBe(true);
+    expect(game.activePlayer.id).toBe('p1');
+    expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // PHASE 4: Scan Action
+  // ═══════════════════════════════════════════════════════════════════════
+
+  // ── 27. Card row check & mock ───────────────────────────────────────
+  let earthSectorIndex: number;
+  let earthSectorId: string;
+  let earthSectorColor: ESector;
+
+  it('27. card row setup: determine Earth sector, mock card row with matching sector', () => {
+    // Determine Earth's current sector position
+    earthSectorIndex = getSectorIndexByPlanet(
+      game.solarSystem!,
+      EPlanet.EARTH,
+    )!;
+    expect(earthSectorIndex).not.toBeNull();
+
+    const earthSector = game.sectors[earthSectorIndex];
+    expect(earthSector).toBeDefined();
+    earthSectorId = earthSector.id;
+    earthSectorColor = earthSector.color;
+
+    // Find cards matching Earth's sector color for the card row
+    const allCards = loadAllCardData();
+    const matchingCards = allCards.filter((c) => c.sector === earthSectorColor);
+    expect(matchingCards.length).toBeGreaterThan(0);
+
+    const otherCards = allCards.filter(
+      (c) => c.sector !== earthSectorColor && c.sector !== undefined,
+    );
+
+    // Mock card row: first card matches Earth's sector, others are filler
+    // Use full card objects so extractSectorColorFromCardItem can read .sector
+    game.cardRow = [
+      matchingCards[0],
+      otherCards[0] ?? matchingCards[1],
+      otherCards[1] ?? matchingCards[2],
+    ] as typeof game.cardRow;
+
+    expect(game.cardRow).toHaveLength(3);
+  });
+
+  // ── 28. p1 exchanges 2 cards → 1 credit (to afford scan) ───────────
+  it('28. p1 exchanges 2 cards → 1 credit', () => {
+    const creditsBefore = p1.resources.credits;
+    const handBefore = p1.hand.length;
+    expect(handBefore).toBeGreaterThanOrEqual(2);
+
+    game.processFreeAction('p1', {
+      type: EFreeAction.EXCHANGE_RESOURCES,
+      from: EResource.CARD,
+      to: EResource.CREDIT,
+    });
+
+    expect(p1.resources.credits).toBe(creditsBefore + 1);
+    expect(p1.hand.length).toBe(handBefore - 2);
+  });
+
+  // ── 29. p1 scans: card row signal ───────────────────────────────────
+  let scoreBeforeScan: number;
+
+  it('29. p1 scans — choose mark-card-row, select matching card', () => {
+    scoreBeforeScan = p1.score;
+    const creditsBefore = p1.resources.credits;
+    const energyBefore = p1.resources.energy;
+    const dataBefore = p1.resources.data;
+
+    expect(creditsBefore).toBeGreaterThanOrEqual(1);
+    expect(energyBefore).toBeGreaterThanOrEqual(2);
+
+    game.processMainAction('p1', { type: EMainAction.SCAN });
+
+    // Scan costs: 1 credit + 2 energy
+    expect(p1.resources.credits).toBe(creditsBefore - 1);
+    expect(p1.resources.energy).toBe(energyBefore - 2);
+
+    // Sub-action menu: mark-earth, mark-card-row, done
+    expect(p1.waitingFor).toBeDefined();
+    const menuModel = p1.waitingFor!.toModel() as ISelectOptionInputModel;
+    expect(menuModel.type).toBe(EPlayerInputType.OPTION);
+    expect(menuModel.options.some((o) => o.id === 'mark-earth')).toBe(true);
+    expect(menuModel.options.some((o) => o.id === 'mark-card-row')).toBe(true);
+    expect(menuModel.options.some((o) => o.id === 'done')).toBe(true);
+
+    // Choose mark-card-row
+    game.processInput('p1', {
+      type: EPlayerInputType.OPTION,
+      optionId: 'mark-card-row',
+    });
+
+    // SelectCard: pick a card from the card row
+    expect(p1.waitingFor).toBeDefined();
+    const cardModel = p1.waitingFor!.toModel() as ISelectCardInputModel;
+    expect(cardModel.type).toBe(EPlayerInputType.CARD);
+
+    const matchingCardId = cardModel.cards[0].id;
+    game.processInput('p1', {
+      type: EPlayerInputType.CARD,
+      cardIds: [matchingCardId],
+    });
+
+    // If 2 sectors share the same color → player must choose which sector
+    if (p1.waitingFor) {
+      const sectorChoiceModel =
+        p1.waitingFor.toModel() as ISelectOptionInputModel;
+      if (
+        sectorChoiceModel.type === EPlayerInputType.OPTION &&
+        sectorChoiceModel.options.some((o) => o.id === earthSectorId)
+      ) {
+        game.processInput('p1', {
+          type: EPlayerInputType.OPTION,
+          optionId: earthSectorId,
+        });
+      }
+    }
+
+    // After marking card row signal: +1 data (replaced a data token)
+    expect(p1.resources.data).toBe(dataBefore + 1);
+  });
+
+  // ── 30. p1 continues scan: mark earth signal ───────────────────────
+  it('30. p1 marks earth signal → same sector, +1 data', () => {
+    const dataBefore = p1.resources.data;
+
+    // Sub-action menu should show mark-earth and done (mark-card-row consumed)
+    expect(p1.waitingFor).toBeDefined();
+    const menuModel = p1.waitingFor!.toModel() as ISelectOptionInputModel;
+    expect(menuModel.type).toBe(EPlayerInputType.OPTION);
+    expect(menuModel.options.some((o) => o.id === 'mark-earth')).toBe(true);
+    expect(menuModel.options.some((o) => o.id === 'mark-card-row')).toBe(false);
+
+    game.processInput('p1', {
+      type: EPlayerInputType.OPTION,
+      optionId: 'mark-earth',
+    });
+
+    // Earth mark is auto-applied (no earth-neighbor tech)
+    // After marking earth signal in same sector: +1 data
+    expect(p1.resources.data).toBe(dataBefore + 1);
+  });
+
+  // ── 31. Scan results: verify 2 data and 2 VP from sector position ──
+  it('31. scan complete: 2 data total, +2 VP from second signal position', () => {
+    const sector = game.sectors[earthSectorIndex];
+    expect(sector).toBeDefined();
+
+    // Two player markers in the Earth sector
+    expect(sector.getPlayerMarkerCount('p1')).toBe(2);
+
+    // Player gained 2 data total from the two signal marks
+    // (each mark that replaces a data token grants +1 data)
+    expect(p1.resources.data).toBeGreaterThanOrEqual(2);
+
+    // Each sector's second signal position should award 2 VP
+    // (per-position sector rewards — may not be implemented yet)
+    expect(p1.score).toBe(scoreBeforeScan + 2);
+
+    // Scan has concluded — game returns to AWAIT_MAIN_ACTION
+    expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
+    expect(game.activePlayer.id).toBe('p1');
   });
 });

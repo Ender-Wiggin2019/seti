@@ -34,11 +34,17 @@ function createPlayerState(
     traces: {},
     tracesByAlien: {},
     computer: {
-      columns: [{
-        topFilled: false, topReward: null, techId: null,
-        hasBottomSlot: false, bottomFilled: false, bottomReward: null,
-        techSlotAvailable: true,
-      }],
+      columns: [
+        {
+          topFilled: false,
+          topReward: null,
+          techId: null,
+          hasBottomSlot: false,
+          bottomFilled: false,
+          bottomReward: null,
+          techSlotAvailable: true,
+        },
+      ],
     },
     dataPoolCount: 0,
     dataPoolMax: 0,

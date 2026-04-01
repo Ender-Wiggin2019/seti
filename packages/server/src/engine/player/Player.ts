@@ -292,9 +292,8 @@ export class Player implements IPlayer {
     if (result.lifeTraceGained > 0) {
       for (let i = 0; i < result.lifeTraceGained; i++) {
         game.deferredActions.push(
-          new SimpleDeferredAction(
-            this,
-            (g) => g.alienState.createTraceInput(this, g, ETrace.ANY),
+          new SimpleDeferredAction(this, (g) =>
+            g.alienState.createTraceInput(this, g, ETrace.ANY),
           ),
         );
       }

@@ -27,6 +27,8 @@ export type TSectorSignal = IDataSignal | IPlayerSignal;
 export interface ISectorMarkSignalResult {
   /** Whether a data token was displaced (player gains 1 data). */
   dataGained: boolean;
+  /** VP awarded from the position where the signal was placed. */
+  vpAwarded: number;
 }
 
 // ── Completion result ───────────────────────────────────────────────────
@@ -56,6 +58,22 @@ export interface ISectorInit {
   dataSlotCapacity?: number;
   firstWinBonus?: TSectorWinnerBonus;
   repeatWinBonus?: TSectorWinnerBonus;
+  /** VP awarded at each slot position when a data token is displaced.
+   *  Array length must equal `dataSlotCapacity`. */
+  positionRewards?: number[];
+}
+
+/**
+ * Build the default per-position VP rewards for a sector.
+ * Signals fill right-to-left, so the 2nd signal placed lands at
+ * index `capacity - 2`. That position awards 2 VP; all others award 0.
+ */
+function defaultPositionRewards(capacity: number): number[] {
+  const rewards = new Array<number>(capacity).fill(0);
+  if (capacity >= 3) {
+    rewards[capacity - 2] = 2;
+  }
+  return rewards;
 }
 
 function assertPlayerId(playerId: string): void {
@@ -92,6 +110,9 @@ export class Sector {
 
   public readonly repeatWinBonus: TSectorWinnerBonus;
 
+  /** VP awarded at each slot position when a data token is displaced. */
+  public readonly positionRewards: number[];
+
   /**
    * Unified signal list — each entry is either `{ type: 'data' }` or
    * `{ type: 'player', playerId }`. The array starts fully populated
@@ -122,6 +143,8 @@ export class Sector {
     this.dataSlotCapacity = capacity;
     this.firstWinBonus = init.firstWinBonus ?? DEFAULT_FIRST_WIN_BONUS;
     this.repeatWinBonus = init.repeatWinBonus ?? DEFAULT_REPEAT_WIN_BONUS;
+    this.positionRewards =
+      init.positionRewards ?? defaultPositionRewards(capacity);
     this.signals = [];
     this.sectorWinners = [];
     this.completed = false;
@@ -148,13 +171,14 @@ export class Sector {
     const rightmostDataIdx = this.findRightmostDataIndex();
 
     if (rightmostDataIdx >= 0) {
+      const vpAwarded = this.positionRewards[rightmostDataIdx] ?? 0;
       this.signals[rightmostDataIdx] = { type: 'player', playerId };
       this.completed = this.isFulfilled();
-      return { dataGained: true };
+      return { dataGained: true, vpAwarded };
     }
 
     this.signals.push({ type: 'player', playerId });
-    return { dataGained: false };
+    return { dataGained: false, vpAwarded: 0 };
   }
 
   // ── Fulfillment ───────────────────────────────────────────────────────

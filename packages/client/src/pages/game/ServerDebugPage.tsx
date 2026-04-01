@@ -5,9 +5,9 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { GameContextProvider, useGameContext } from '@/pages/game/GameContext';
 import { GameLayout } from '@/pages/game/GameLayout';
-import { useGameViewStore } from '@/stores/gameViewStore';
 import type { IAuthUser } from '@/stores/authStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useGameViewStore } from '@/stores/gameViewStore';
 
 interface IAuthSnapshot {
   token: string | null;
@@ -36,7 +36,9 @@ function ServerDebugGameContent(): React.JSX.Element {
     return (
       <div className='flex h-screen flex-col items-center justify-center gap-4 bg-background-950'>
         <LoadingSpinner />
-        <p className='text-sm text-text-500'>Waiting for server game state...</p>
+        <p className='text-sm text-text-500'>
+          Waiting for server game state...
+        </p>
       </div>
     );
   }
@@ -45,7 +47,9 @@ function ServerDebugGameContent(): React.JSX.Element {
 }
 
 export function ServerDebugPage(): React.JSX.Element {
-  const [session, setSession] = useState<IDebugServerSessionResponse | null>(null);
+  const [session, setSession] = useState<IDebugServerSessionResponse | null>(
+    null,
+  );
   const [isCreating, setIsCreating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const authSnapshotRef = useRef<IAuthSnapshot | null>(null);
@@ -71,7 +75,9 @@ export function ServerDebugPage(): React.JSX.Element {
       setSession(nextSession);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Failed to create debug session';
+        error instanceof Error
+          ? error.message
+          : 'Failed to create debug session';
       setErrorMessage(message);
     } finally {
       setIsCreating(false);
@@ -103,7 +109,9 @@ export function ServerDebugPage(): React.JSX.Element {
     return (
       <div className='flex h-screen flex-col items-center justify-center gap-4 bg-background-950'>
         <LoadingSpinner />
-        <p className='text-sm text-text-500'>Creating server debug session...</p>
+        <p className='text-sm text-text-500'>
+          Creating server debug session...
+        </p>
       </div>
     );
   }

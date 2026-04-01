@@ -9,10 +9,11 @@ describe('ScanEffect', () => {
         {
           id: 'earth-sector',
           completed: false,
-          markSignal: () => ({ dataGained: false }),
+          markSignal: () => ({ dataGained: false, vpAwarded: 0 }),
         },
       ],
       cardRow: [],
+      missionTracker: { recordEvent: () => undefined },
     };
     const onComplete = vi.fn(() => undefined);
 

@@ -43,7 +43,11 @@ function createGame(overrides: Record<string, unknown> = {}): IGame {
   } as unknown as IGame;
 }
 
-function registerCardMission(cardId: string, player: Player, game: IGame): void {
+function registerCardMission(
+  cardId: string,
+  player: Player,
+  game: IGame,
+): void {
   const card = getCardRegistry().create(cardId);
   const missionDef = card.getMissionDef?.();
   if (missionDef) {
@@ -139,9 +143,9 @@ describe('Special full mission cards (128/129/138) and card 134 quick mission', 
       ],
     });
 
-    expect(missionDef!.branches[0].checkCondition!(player, gameWithFourSignals)).toBe(
-      true,
-    );
+    expect(
+      missionDef!.branches[0].checkCondition!(player, gameWithFourSignals),
+    ).toBe(true);
     expect(
       missionDef!.branches[0].checkCondition!(player, gameWithThreeSignals),
     ).toBe(false);

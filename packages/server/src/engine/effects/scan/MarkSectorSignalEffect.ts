@@ -17,6 +17,7 @@ import {
 export interface IMarkSectorSignalResult {
   sectorId: string;
   dataGained: boolean;
+  vpAwarded: number;
   completed: boolean;
 }
 
@@ -41,7 +42,7 @@ export class MarkSectorSignalEffect {
     player: IPlayer,
     game: IGame,
     sector: {
-      markSignal(playerId: string): { dataGained: boolean };
+      markSignal(playerId: string): { dataGained: boolean; vpAwarded: number };
       id: string;
       color: ESector;
       completed: boolean;
@@ -55,10 +56,14 @@ export class MarkSectorSignalEffect {
     if (signalResult.dataGained) {
       player.resources.gain({ data: 1 });
     }
+    if (signalResult.vpAwarded > 0) {
+      player.score += signalResult.vpAwarded;
+    }
 
     return {
       sectorId: sector.id,
       dataGained: signalResult.dataGained,
+      vpAwarded: signalResult.vpAwarded,
       completed: sector.completed,
     };
   }

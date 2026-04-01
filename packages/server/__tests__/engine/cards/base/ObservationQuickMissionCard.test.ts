@@ -28,6 +28,7 @@ function createGame(sectors: unknown[], withSetup = true): IGame {
     deferredActions: new DeferredActionsQueue(),
     eventLog: new EventLog(),
     random: new SeededRandom('observation-quick-mission-test'),
+    missionTracker: { recordEvent: () => undefined },
   } as unknown as IGame;
 }
 
@@ -37,13 +38,13 @@ describe('ObservationQuickMissionCard (37/39/41/43)', () => {
       id: 'sector-5', // Proxima Centauri in default setup
       color: ESector.RED,
       completed: false,
-      markSignal: vi.fn(() => ({ dataGained: null, vpGained: 0 })),
+      markSignal: vi.fn(() => ({ dataGained: false, vpAwarded: 0 })),
     };
     const otherRedSector = {
       id: 'sector-3',
       color: ESector.RED,
       completed: false,
-      markSignal: vi.fn(() => ({ dataGained: null, vpGained: 0 })),
+      markSignal: vi.fn(() => ({ dataGained: false, vpAwarded: 0 })),
     };
 
     const player = createPlayer();
@@ -62,7 +63,7 @@ describe('ObservationQuickMissionCard (37/39/41/43)', () => {
       id: 'sector-a',
       color: ESector.YELLOW,
       completed: false,
-      markSignal: vi.fn(() => ({ dataGained: null, vpGained: 0 })),
+      markSignal: vi.fn(() => ({ dataGained: false, vpAwarded: 0 })),
     };
 
     const player = createPlayer();

@@ -9,6 +9,11 @@ function createDataController(initialTotal = 0) {
     has(amount: number): boolean {
       return total >= amount;
     },
+    gain(amount: number): number {
+      const actual = Math.min(amount, totalMax - total);
+      total += actual;
+      return actual;
+    },
     addToStash(amount: number): number {
       const actual = Math.min(amount, totalMax - total);
       total += actual;

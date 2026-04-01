@@ -44,7 +44,10 @@ function getAdminConnectionConfig(): ClientConfig {
     user: process.env.PGUSER,
     password: process.env.PGPASSWORD,
     database: DEFAULT_ADMIN_DATABASE,
-    ssl: process.env.PGSSLMODE === 'require' ? { rejectUnauthorized: false } : undefined,
+    ssl:
+      process.env.PGSSLMODE === 'require'
+        ? { rejectUnauthorized: false }
+        : undefined,
   };
 }
 
@@ -52,7 +55,9 @@ async function initDatabase(): Promise<void> {
   const targetDatabase = getTargetDatabaseName();
 
   if (targetDatabase === DEFAULT_ADMIN_DATABASE) {
-    console.log(`Target database is "${DEFAULT_ADMIN_DATABASE}", skip creation.`);
+    console.log(
+      `Target database is "${DEFAULT_ADMIN_DATABASE}", skip creation.`,
+    );
     return;
   }
 
@@ -60,9 +65,10 @@ async function initDatabase(): Promise<void> {
   await adminClient.connect();
 
   try {
-    const existingDbResult = await adminClient.query('SELECT 1 FROM pg_database WHERE datname = $1', [
-      targetDatabase,
-    ]);
+    const existingDbResult = await adminClient.query(
+      'SELECT 1 FROM pg_database WHERE datname = $1',
+      [targetDatabase],
+    );
 
     if (existingDbResult.rowCount && existingDbResult.rowCount > 0) {
       console.log(`Database "${targetDatabase}" already exists.`);
