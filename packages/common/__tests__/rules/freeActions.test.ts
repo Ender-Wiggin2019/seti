@@ -63,6 +63,9 @@ function createPlayer(
     dataStashCount: 0,
     probesInSpace: 1,
     probeSpaceLimit: 1,
+    creditIncome: 4,
+    energyIncome: 3,
+    cardIncome: 0,
     ...overrides,
   };
 }
@@ -84,6 +87,8 @@ function createGameState(
     cardRow: [],
     aliens: [],
     recentEvents: [],
+    milestones: { goldMilestones: [], neutralMilestones: [] },
+    goldScoringTiles: [],
     ...overrides,
   };
 }

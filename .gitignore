@@ -73,6 +73,7 @@ packages/*/dist/
 
 /frontend-reference
 /backend-reference
+/solar-system-reference
 
 # generated card assets for client (synced from packages/cards)
 packages/client/public/seti-assets/

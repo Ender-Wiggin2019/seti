@@ -47,6 +47,9 @@ export function createMockPlayerState(
     dataStashCount: 0,
     probesInSpace: 1,
     probeSpaceLimit: 1,
+    creditIncome: 0,
+    energyIncome: 0,
+    cardIncome: 0,
     ...overrides,
   };
 }
@@ -125,6 +128,8 @@ export function createMockGameState(
     currentEndOfRoundStackIndex: 0,
     aliens: [],
     recentEvents: [],
+    milestones: { goldMilestones: [], neutralMilestones: [] },
+    goldScoringTiles: [],
     ...overrides,
   };
 }

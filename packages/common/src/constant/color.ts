@@ -34,4 +34,5 @@ export const EAlienColor: Record<EAlienType, string> = {
   [EAlienType.EXERTIANS]: '#ca273a',
   [EAlienType.AMOEBA]: '#9DA7BE',
   [EAlienType.GLYPHIDS]: '#B8D429',
+  [EAlienType.DUMMY]: '#888888',
 };

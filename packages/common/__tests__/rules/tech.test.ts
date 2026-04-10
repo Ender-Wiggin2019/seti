@@ -57,6 +57,9 @@ function createPlayerState(
     dataStashCount: 0,
     probesInSpace: 0,
     probeSpaceLimit: 1,
+    creditIncome: 4,
+    energyIncome: 3,
+    cardIncome: 0,
     ...overrides,
   };
 }

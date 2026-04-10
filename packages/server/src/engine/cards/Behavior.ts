@@ -92,7 +92,7 @@ function appendCustom(
   custom: string[] | undefined,
   effect: ICustomizedEffect,
 ): string[] {
-  const token = effect.id || effect.desc;
+  const token = effect.desc || effect.id;
   return [...(custom ?? []), token];
 }
 

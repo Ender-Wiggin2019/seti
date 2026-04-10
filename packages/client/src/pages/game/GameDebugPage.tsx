@@ -718,6 +718,9 @@ function createDebugGameState(
         dataStashCount: 1,
         probesInSpace: 2,
         probeSpaceLimit: 2,
+        creditIncome: 4,
+        energyIncome: 3,
+        cardIncome: 1,
       },
       {
         playerId: 'player-2',
@@ -749,6 +752,9 @@ function createDebugGameState(
         dataStashCount: 0,
         probesInSpace: 1,
         probeSpaceLimit: 1,
+        creditIncome: 4,
+        energyIncome: 3,
+        cardIncome: 0,
       },
       {
         playerId: 'player-3',
@@ -780,6 +786,9 @@ function createDebugGameState(
         dataStashCount: 2,
         probesInSpace: 1,
         probeSpaceLimit: 1,
+        creditIncome: 4,
+        energyIncome: 3,
+        cardIncome: 0,
       },
     ],
     solarSystem: {
@@ -807,6 +816,8 @@ function createDebugGameState(
     currentEndOfRoundStackIndex: 1,
     aliens: [],
     recentEvents: [],
+    milestones: { goldMilestones: [], neutralMilestones: [] },
+    goldScoringTiles: [],
   };
 }
 

@@ -1,13 +1,22 @@
 import { createDefaultSetupConfig } from '@seti/common/constant/sectorSetup';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
+import { EResource } from '@seti/common/types/element';
 import { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TopBar } from '@/components/layout/TopBar';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/toast';
 import { ActionConfirm } from '@/features/actions/ActionConfirm';
 import { ActionMenu } from '@/features/actions/ActionMenu';
 import { FreeActionBar } from '@/features/actions/FreeActionBar';
+import { AlienBoardView } from '@/features/board/AlienBoardView';
 import { buildMoveAction } from '@/features/board/moveAction';
 import { PlanetaryBoardView } from '@/features/board/PlanetaryBoardView';
 import type { TProbeInsetPxByRing } from '@/features/board/SolarSystemView';
@@ -18,10 +27,17 @@ import { CardRowView } from '@/features/cards/CardRowView';
 import { EndOfRoundStacks } from '@/features/cards/EndOfRoundStacks';
 import { InputRenderer } from '@/features/input/InputRenderer';
 import { HandView, PlayedMissions, PlayerDashboard } from '@/features/player';
+import type { IMilestoneItem } from '@/features/scoring';
+import { MilestoneTrack } from '@/features/scoring';
 import { useGameContext } from '@/pages/game/GameContext';
 import { GameOverDialog } from '@/pages/game/GameOverDialog';
 import { type TBoardTab, useGameViewStore } from '@/stores/gameViewStore';
-import type { IFreeActionRequest } from '@/types/re-exports';
+import type {
+  IFreeActionRequest,
+  IPublicGoldScoringTile,
+  IPublicMilestoneState,
+  IPublicPlayerState,
+} from '@/types/re-exports';
 import { EFreeAction, EPlayerInputType } from '@/types/re-exports';
 
 const BOARD_TABS: { value: TBoardTab; label: string }[] = [
@@ -292,38 +308,57 @@ function BoardTabs({
         </TabsContent>
 
         <TabsContent value='aliens' className='mt-0 h-full'>
-          <BoardPlaceholder
-            title='Aliens'
-            description='Discovery track and species-specific boards after discovery.'
-          />
+          {gameState && (
+            <AlienBoardView
+              aliens={gameState.aliens}
+              playerColors={playerColors}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value='scoring' className='mt-0 h-full'>
-          <BoardPlaceholder
-            title='Scoring'
-            description='Gold/neutral milestones, current scores, and score breakdown.'
-          >
-            {gameState && (
-              <div className='mt-3 flex flex-col gap-1'>
-                {gameState.players
-                  .slice()
-                  .sort((a, b) => b.score - a.score)
-                  .map((p) => (
-                    <div
-                      key={p.playerId}
-                      className='flex items-center justify-between rounded border border-surface-700/40 bg-surface-800/30 px-3 py-1.5'
-                    >
-                      <span className='text-xs font-medium text-text-100'>
-                        {p.playerName}
-                      </span>
-                      <span className='font-mono text-sm font-bold text-accent-400'>
-                        {p.score}
-                      </span>
-                    </div>
-                  ))}
+          {gameState && (
+            <div className='space-y-4'>
+              {/* Score Rankings */}
+              <div className='rounded border border-surface-700/40 bg-surface-900/30 p-3'>
+                <h3 className='mb-2 font-mono text-xs font-medium uppercase tracking-widest text-text-500'>
+                  Scores
+                </h3>
+                <div className='flex flex-col gap-1'>
+                  {gameState.players
+                    .slice()
+                    .sort((a, b) => b.score - a.score)
+                    .map((p) => (
+                      <div
+                        key={p.playerId}
+                        className='flex items-center justify-between rounded border border-surface-700/40 bg-surface-800/30 px-3 py-1.5'
+                      >
+                        <span className='text-xs font-medium text-text-100'>
+                          {p.playerName}
+                        </span>
+                        <span className='font-mono text-sm font-bold text-accent-400'>
+                          {p.score}
+                        </span>
+                      </div>
+                    ))}
+                </div>
               </div>
-            )}
-          </BoardPlaceholder>
+
+              {/* Milestones */}
+              <MilestoneTrack
+                milestones={buildMilestoneItems(
+                  gameState.milestones,
+                  playerColors,
+                )}
+              />
+
+              {/* Gold Scoring Tiles */}
+              <GoldScoringTilesView
+                tiles={gameState.goldScoringTiles}
+                playerColors={playerColors}
+              />
+            </div>
+          )}
         </TabsContent>
       </div>
     </Tabs>
@@ -365,6 +400,143 @@ function BoardPlaceholder({
   );
 }
 
+/**
+ * Convert IPublicMilestoneState (buckets with resolvedPlayerIds[]) into
+ * the flat IMilestoneItem[] that MilestoneTrack expects.
+ *
+ * Because a bucket can have multiple resolved players we create one
+ * IMilestoneItem per player-resolution (showing who claimed it) plus one
+ * "open" entry when nobody has resolved a bucket yet.
+ */
+function buildMilestoneItems(
+  milestones: IPublicMilestoneState,
+  _playerColors: Record<string, string>,
+): IMilestoneItem[] {
+  const items: IMilestoneItem[] = [];
+
+  for (const bucket of milestones.goldMilestones) {
+    if (bucket.resolvedPlayerIds.length === 0) {
+      items.push({
+        id: `gold-${bucket.threshold}`,
+        threshold: bucket.threshold,
+        type: 'gold',
+      });
+    } else {
+      for (const pid of bucket.resolvedPlayerIds) {
+        items.push({
+          id: `gold-${bucket.threshold}-${pid}`,
+          threshold: bucket.threshold,
+          type: 'gold',
+          claimedBy: pid,
+        });
+      }
+    }
+  }
+
+  for (const bucket of milestones.neutralMilestones) {
+    if (bucket.resolvedPlayerIds.length === 0) {
+      items.push({
+        id: `neutral-${bucket.threshold}`,
+        threshold: bucket.threshold,
+        type: 'neutral',
+      });
+    } else {
+      for (const pid of bucket.resolvedPlayerIds) {
+        items.push({
+          id: `neutral-${bucket.threshold}-${pid}`,
+          threshold: bucket.threshold,
+          type: 'neutral',
+          claimedBy: pid,
+        });
+      }
+    }
+  }
+
+  return items;
+}
+
+/**
+ * Inline display for gold scoring tiles — richer than GoldTileSelector
+ * because we show per-slot values and individual claims.
+ */
+function GoldScoringTilesView({
+  tiles,
+  playerColors,
+}: {
+  tiles: IPublicGoldScoringTile[];
+  playerColors: Record<string, string>;
+}): React.JSX.Element {
+  if (tiles.length === 0) {
+    return <p className='text-xs text-text-500'>No gold scoring tiles.</p>;
+  }
+
+  return (
+    <section className='rounded border border-surface-700/55 bg-surface-950/45 p-2'>
+      <p className='mb-2 font-mono text-[10px] uppercase tracking-wide text-text-500'>
+        Gold Scoring Tiles
+      </p>
+      <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
+        {tiles.map((tile) => {
+          const claimedSlots = new Map(
+            tile.claims.map((c) => [c.value, c.playerId]),
+          );
+          return (
+            <div
+              key={tile.id}
+              className='rounded border border-surface-700/60 bg-surface-900/65 p-2'
+            >
+              {/* Tile header */}
+              <div className='mb-1.5 flex items-center gap-1.5'>
+                <img
+                  src='/assets/seti/icons/vp.png'
+                  alt='gold tile'
+                  className='h-3.5 w-3.5'
+                />
+                <span className='font-mono text-[11px] font-medium text-text-200'>
+                  {tile.id}
+                </span>
+                <span className='rounded bg-surface-700/50 px-1 py-0.5 font-mono text-[9px] uppercase text-text-400'>
+                  Side {tile.side}
+                </span>
+              </div>
+
+              {/* Slot values */}
+              <div className='flex flex-wrap gap-1'>
+                {tile.slotValues.map((value, idx) => {
+                  const claimer = claimedSlots.get(value);
+                  const claimerColor = claimer
+                    ? (playerColors[claimer] ?? '#888')
+                    : undefined;
+                  return (
+                    <div
+                      key={`${tile.id}-slot-${idx}`}
+                      className={[
+                        'flex min-w-[36px] items-center justify-center rounded border px-1.5 py-0.5 font-mono text-[11px]',
+                        claimer
+                          ? 'border-accent-500/50 bg-accent-500/10 text-accent-300'
+                          : 'border-surface-600/50 bg-surface-800/40 text-text-400',
+                      ].join(' ')}
+                      title={claimer ? `Claimed by ${claimer}` : 'Open'}
+                    >
+                      {claimer && (
+                        <span
+                          className='mr-1 inline-block h-2 w-2 rounded-full'
+                          style={{ backgroundColor: claimerColor }}
+                        />
+                      )}
+                      {value}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function BottomBar({
   onInspectCard,
 }: {
@@ -384,6 +556,7 @@ function BottomBar({
     useState<IFreeActionRequest | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [cornerSelectionMode, setCornerSelectionMode] = useState(false);
+  const [exchangeOpen, setExchangeOpen] = useState(false);
 
   const myPlayer = gameState?.players.find((p) => p.playerId === myPlayerId);
   const extendedPlayer = myPlayer as
@@ -451,12 +624,14 @@ function BottomBar({
         });
         return;
       case EFreeAction.EXCHANGE_RESOURCES:
+        setCornerSelectionMode(false);
+        setExchangeOpen(true);
+        return;
       case EFreeAction.CONVERT_ENERGY_TO_MOVEMENT:
         setCornerSelectionMode(false);
-        toast({
-          title: 'Action requires extra selection',
-          description:
-            'This free action needs additional options before sending.',
+        sendFreeAction({
+          type: EFreeAction.CONVERT_ENERGY_TO_MOVEMENT,
+          amount: 1,
         });
         return;
       default:
@@ -579,6 +754,90 @@ function BottomBar({
         }}
         onConfirm={handleConfirmFreeAction}
       />
+
+      <ExchangeResourcesDialog
+        open={exchangeOpen}
+        player={myPlayer}
+        onCancel={() => setExchangeOpen(false)}
+        onConfirm={(from, to) => {
+          sendFreeAction({
+            type: EFreeAction.EXCHANGE_RESOURCES,
+            from,
+            to,
+          });
+          setExchangeOpen(false);
+        }}
+      />
     </div>
+  );
+}
+
+const EXCHANGE_OPTIONS: Array<{
+  from: EResource;
+  to: EResource;
+  label: string;
+}> = [
+  {
+    from: EResource.CREDIT,
+    to: EResource.ENERGY,
+    label: '2 Credits → 1 Energy',
+  },
+  { from: EResource.CREDIT, to: EResource.CARD, label: '2 Credits → 1 Card' },
+  {
+    from: EResource.ENERGY,
+    to: EResource.CREDIT,
+    label: '2 Energy → 1 Credit',
+  },
+  { from: EResource.ENERGY, to: EResource.CARD, label: '2 Energy → 1 Card' },
+  { from: EResource.CARD, to: EResource.CREDIT, label: '2 Cards → 1 Credit' },
+  { from: EResource.CARD, to: EResource.ENERGY, label: '2 Cards → 1 Energy' },
+];
+
+function ExchangeResourcesDialog({
+  open,
+  player,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  player: IPublicPlayerState | null | undefined;
+  onCancel: () => void;
+  onConfirm: (from: EResource, to: EResource) => void;
+}): React.JSX.Element {
+  const canAfford = (from: EResource): boolean => {
+    if (!player) return false;
+    if (from === EResource.CARD) return (player.handSize ?? 0) >= 2;
+    if (from === EResource.CREDIT)
+      return (player.resources[EResource.CREDIT] ?? 0) >= 2;
+    if (from === EResource.ENERGY)
+      return (player.resources[EResource.ENERGY] ?? 0) >= 2;
+    return false;
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => !next && onCancel()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Exchange Resources</DialogTitle>
+          <p className='text-sm text-text-300'>
+            Trade 2 of one resource for 1 of another.
+          </p>
+        </DialogHeader>
+        <div className='grid grid-cols-1 gap-2'>
+          {EXCHANGE_OPTIONS.map((opt) => (
+            <Button
+              key={`${opt.from}-${opt.to}`}
+              type='button'
+              variant='ghost'
+              disabled={!canAfford(opt.from)}
+              onClick={() => onConfirm(opt.from, opt.to)}
+              className='h-10 justify-start border border-surface-700/60 bg-surface-800/50 px-3 text-left text-sm text-text-200 hover:bg-surface-700/70 disabled:opacity-40'
+            >
+              {opt.label}
+            </Button>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

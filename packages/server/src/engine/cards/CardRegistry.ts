@@ -3,6 +3,7 @@ import { registerAlienCards } from './register/registerAlienCards.js';
 import { registerBaseCards } from './register/registerBaseCards.js';
 import { registerSpaceAgencyAliens } from './register/registerSpaceAgencyAliens.js';
 import { registerSpaceAgencyCards } from './register/registerSpaceAgencyCards.js';
+import { registerDescHandlers } from './registerDescHandlers.js';
 
 export type TCardFactory = () => ICard;
 
@@ -39,6 +40,7 @@ registerBaseCards(defaultCardRegistry);
 registerAlienCards(defaultCardRegistry);
 registerSpaceAgencyCards(defaultCardRegistry);
 registerSpaceAgencyAliens(defaultCardRegistry);
+registerDescHandlers();
 
 export function getCardRegistry(): CardRegistry {
   return defaultCardRegistry;

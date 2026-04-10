@@ -18,7 +18,6 @@ import {
   ResearchTechEffect,
   RotateDiscEffect,
 } from '../effects/index.js';
-import { createActionEvent } from '../event/GameEvent.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
 import { SelectOption } from '../input/SelectOption.js';
@@ -326,13 +325,7 @@ export class BehaviorExecutor {
     if (!behavior.markTrace) return undefined;
     return new SimpleDeferredAction(player, (game) => {
       const trace = behavior.markTrace as ETrace;
-      player.traces[trace] = (player.traces[trace] ?? 0) + 1;
-      game.eventLog.append(
-        createActionEvent(player.id, 'CARD_MARK_TRACE', {
-          trace,
-        }),
-      );
-      return undefined;
+      return game.alienState.createTraceInput(player, game, trace);
     });
   }
 
@@ -360,15 +353,10 @@ export class BehaviorExecutor {
     return customIds.map((customId) => {
       const handler = this.customHandlers.get(customId);
       if (!handler) {
-        return new SimpleDeferredAction(player, (game) => {
-          game.eventLog.append(
-            createActionEvent(player.id, 'CARD_CUSTOM_EFFECT_UNHANDLED', {
-              cardId: card.id,
-              customId,
-            }),
-          );
-          return undefined;
-        });
+        // DESC effects without a registered handler are skipped gracefully.
+        // This is expected for many cards whose DESC text describes a rule
+        // modification or contextual reminder rather than a programmable action.
+        return undefined;
       }
       return new SimpleDeferredAction(player, (game) =>
         handler(player, game, card),

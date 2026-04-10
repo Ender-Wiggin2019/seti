@@ -119,7 +119,9 @@ export interface ITraceSlotDto {
   }>;
   maxOccupants: number;
   rewards: Array<
-    { type: 'VP'; amount: number } | { type: 'CUSTOM'; effectId: string }
+    | { type: 'VP'; amount: number }
+    | { type: 'PUBLICITY'; amount: number }
+    | { type: 'CUSTOM'; effectId: string }
   >;
   isDiscovery: boolean;
 }

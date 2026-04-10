@@ -61,6 +61,13 @@ export interface IPublicPlayerState {
   dataStashCount: number;
   probesInSpace: number;
   probeSpaceLimit: number;
+  tuckedIncomeCards?: IBaseCard[];
+  playedMissions?: IBaseCard[];
+  completedMissions?: string[];
+  endGameCards?: IBaseCard[];
+  creditIncome: number;
+  energyIncome: number;
+  cardIncome: number;
 }
 
 export interface IPublicSolarSystemProbe {
@@ -145,6 +152,7 @@ export interface IPublicTechBoard {
 
 export type TPublicSlotReward =
   | { type: 'VP'; amount: number }
+  | { type: 'PUBLICITY'; amount: number }
   | { type: 'CUSTOM'; effectId: string };
 
 export interface IPublicTraceOccupant {
@@ -168,6 +176,32 @@ export interface IPublicAlienState {
   slots: IPublicTraceSlot[];
 }
 
+export interface IPublicMilestoneBucket {
+  threshold: number;
+  resolvedPlayerIds: string[];
+}
+
+export interface IPublicNeutralMilestoneBucket extends IPublicMilestoneBucket {
+  markersRemaining: number;
+}
+
+export interface IPublicMilestoneState {
+  goldMilestones: IPublicMilestoneBucket[];
+  neutralMilestones: IPublicNeutralMilestoneBucket[];
+}
+
+export interface IPublicGoldScoringTileClaim {
+  playerId: string;
+  value: number;
+}
+
+export interface IPublicGoldScoringTile {
+  id: string;
+  side: 'A' | 'B';
+  slotValues: number[];
+  claims: IPublicGoldScoringTileClaim[];
+}
+
 export interface IPublicGameState {
   gameId: string;
   round: number;
@@ -185,4 +219,6 @@ export interface IPublicGameState {
   currentEndOfRoundStackIndex?: number;
   aliens: IPublicAlienState[];
   recentEvents: TGameEvent[];
+  milestones: IPublicMilestoneState;
+  goldScoringTiles: IPublicGoldScoringTile[];
 }

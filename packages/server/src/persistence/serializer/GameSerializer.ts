@@ -1,6 +1,8 @@
 import { EResource } from '@seti/common/types/element';
 import type {
   IPublicGameState,
+  IPublicGoldScoringTile,
+  IPublicMilestoneState,
   IPublicPlanetaryBoard,
   IPublicPlayerState,
   IPublicSector,
@@ -421,6 +423,15 @@ function toPublicPlayerState(
       .stashCountValue,
     probesInSpace: player.probesInSpace,
     probeSpaceLimit: player.probeSpaceLimit,
+    tuckedIncomeCards: isViewer
+      ? cloneValue(player.tuckedIncomeCards as never)
+      : undefined,
+    playedMissions: cloneValue(player.playedMissions as never),
+    completedMissions: cloneValue(player.completedMissions) as string[],
+    endGameCards: cloneValue(player.endGameCards as never),
+    creditIncome: player.income.computeRoundPayout()[EResource.CREDIT],
+    energyIncome: player.income.computeRoundPayout()[EResource.ENERGY],
+    cardIncome: player.income.computeRoundPayout()[EResource.CARD],
   };
 }
 
@@ -455,6 +466,31 @@ function toPublicTechBoard(game: IGame): IPublicTechBoard {
   }
 
   return game.techBoard.toPublicState();
+}
+
+function toPublicMilestones(game: IGame): IPublicMilestoneState {
+  const milestoneInternal =
+    game.milestoneState as unknown as IMilestoneInternalState;
+  return {
+    goldMilestones: milestoneInternal.goldMilestones.map((m) => ({
+      threshold: m.threshold,
+      resolvedPlayerIds: [...m.resolvedPlayerIds],
+    })),
+    neutralMilestones: milestoneInternal.neutralMilestones.map((m) => ({
+      threshold: m.threshold,
+      markersRemaining: m.markersRemaining,
+      resolvedPlayerIds: [...m.resolvedPlayerIds],
+    })),
+  };
+}
+
+function toPublicGoldScoringTiles(game: IGame): IPublicGoldScoringTile[] {
+  return game.goldScoringTiles.map((tile) => ({
+    id: tile.id,
+    side: tile.side,
+    slotValues: [...tile.slotValues],
+    claims: tile.claims.map((c) => ({ ...c })),
+  }));
 }
 
 export function projectGameState(
@@ -502,5 +538,7 @@ export function projectGameState(
       })),
     })),
     recentEvents: game.eventLog.recent(20) as never,
+    milestones: toPublicMilestones(game),
+    goldScoringTiles: toPublicGoldScoringTiles(game),
   };
 }
