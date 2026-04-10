@@ -8,6 +8,7 @@ import type {
   IMainActionRequest,
 } from '@seti/common/types/protocol/actions';
 import type { IPublicGameState } from '@seti/common/types/protocol/gameState';
+import type { IPlayerInputModel } from '@seti/common/types/protocol/playerInput';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { ETechBonusType } from '@seti/common/types/tech';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
@@ -104,7 +105,10 @@ export class DebugService {
       throw new Error('ring-1-cell-2 not found');
     }
 
-    cell2.elements = [{ type: ESolarSystemElementType.ASTEROID, amount: 1 }];
+    cell2.elements = [
+      ...cell2.elements,
+      { type: ESolarSystemElementType.ASTEROID, amount: 1 },
+    ];
   }
 
   private patchTechBoardForBehaviorScenario(game: Game): void {
@@ -307,5 +311,17 @@ export class DebugService {
   ): Promise<IPublicGameState> {
     await this.gameManager.processInput(gameId, playerId, inputResponse);
     return this.getProjectedState(gameId, viewerId);
+  }
+
+  async getPendingInput(
+    gameId: string,
+    playerId: string,
+  ): Promise<IPlayerInputModel | null> {
+    const game = await this.gameManager.getGame(gameId);
+    const player = game.players.find((entry) => entry.id === playerId);
+    if (!player?.waitingFor) {
+      return null;
+    }
+    return player.waitingFor.toModel();
   }
 }

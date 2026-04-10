@@ -36,11 +36,24 @@ export interface IDebugGameState {
   players: IDebugGameStatePlayer[];
   solarSystem: {
     adjacency: Record<string, string[]>;
-    spaceStates?: Record<string, { elementTypes: string[] }>;
+    spaceStates?: Record<
+      string,
+      {
+        elementTypes: string[];
+        elements?: Array<{ type: string; planet?: string }>;
+      }
+    >;
   };
   planetaryBoard?: {
     planets?: Record<string, { landingSlots?: Array<{ playerId: string }> }>;
   };
+}
+
+export interface IDebugPendingInput {
+  inputId: string;
+  type: string;
+  options?: Array<{ id: string; label?: string }> | string[];
+  cards?: Array<{ id: string }>;
 }
 
 export interface IRoomResponse {
@@ -225,6 +238,25 @@ export class SetiApi {
       throw new Error(`Debug input failed: ${res.status()}`);
     }
     return res.json();
+  }
+
+  async debugGetPendingInput(
+    gameId: string,
+    playerId: string,
+  ): Promise<IDebugPendingInput | null> {
+    const res = await this.withRetry(() =>
+      this.request.get(
+        `${SERVER_URL}/debug/server/game/${gameId}/pending/${playerId}`,
+      ),
+    );
+    if (!res.ok()) {
+      throw new Error(`Debug pending-input failed: ${res.status()}`);
+    }
+    const bodyText = await res.text();
+    if (!bodyText) {
+      return null;
+    }
+    return JSON.parse(bodyText) as IDebugPendingInput | null;
   }
 
   async createRoom(name: string, playerCount: number): Promise<IRoomResponse> {

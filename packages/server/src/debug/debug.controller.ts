@@ -5,6 +5,7 @@ import type {
   IMainActionRequest,
 } from '@seti/common/types/protocol/actions';
 import type { IPublicGameState } from '@seti/common/types/protocol/gameState';
+import type { IPlayerInputModel } from '@seti/common/types/protocol/playerInput';
 import { Public } from '@/auth/public.decorator.js';
 import {
   DebugService,
@@ -94,5 +95,14 @@ export class DebugController {
       body.inputResponse,
       body.viewerId ?? body.playerId,
     );
+  }
+
+  @Public()
+  @Get('server/game/:gameId/pending/:playerId')
+  async getPendingInput(
+    @Param('gameId') gameId: string,
+    @Param('playerId') playerId: string,
+  ): Promise<IPlayerInputModel | null> {
+    return this.debugService.getPendingInput(gameId, playerId);
   }
 }

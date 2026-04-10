@@ -1,5 +1,9 @@
 import { expect, type Page, type TestInfo, test } from '@playwright/test';
-import { type IDebugGameState, SetiApi } from '../helpers/api';
+import {
+  type IDebugGameState,
+  type IDebugPendingInput,
+  SetiApi,
+} from '../helpers/api';
 import { injectAuth } from '../helpers/auth';
 import { sel } from '../helpers/selectors';
 
@@ -27,14 +31,106 @@ function findSpaceByElement(
   state: IDebugGameState,
   elementType: string,
 ): string {
+  const lowered = elementType.toLowerCase();
   const entries = Object.entries(state.solarSystem.spaceStates ?? {});
-  const matched = entries.find(([, space]) =>
-    (space.elementTypes ?? []).includes(elementType),
+  const matched = entries.find(
+    ([, space]) =>
+      (space.elementTypes ?? []).includes(elementType) ||
+      (space.elements ?? []).some(
+        (element) =>
+          (element.planet ?? '').toLowerCase() === lowered ||
+          element.type.toLowerCase() === lowered,
+      ),
   );
   if (!matched) {
     throw new Error(`No space contains element ${elementType}`);
   }
   return matched[0];
+}
+
+function optionId(option: { id: string; label?: string } | string): string {
+  return typeof option === 'string' ? option : option.id;
+}
+
+async function resolvePendingInputs(
+  api: SetiApi,
+  gameId: string,
+  playerId: string,
+  viewerId: string,
+): Promise<IDebugGameState> {
+  let state = await api.debugGetState(gameId, viewerId);
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const pending = await api.debugGetPendingInput(gameId, playerId);
+    if (!pending) {
+      return state;
+    }
+
+    state = await resolveSinglePendingInput(
+      api,
+      gameId,
+      playerId,
+      viewerId,
+      pending,
+    );
+  }
+
+  return state;
+}
+
+async function resolveSinglePendingInput(
+  api: SetiApi,
+  gameId: string,
+  playerId: string,
+  viewerId: string,
+  pending: IDebugPendingInput,
+): Promise<IDebugGameState> {
+  if (pending.type === 'option') {
+    const options = (pending.options ?? []).map((entry) =>
+      optionId(entry as { id: string; label?: string } | string),
+    );
+    const chosen =
+      options.find((entry) => entry === 'done') ??
+      options.find((entry) => entry === 'skip-missions') ??
+      options[0];
+    return api.debugInput(
+      gameId,
+      playerId,
+      { type: 'option', optionId: chosen },
+      viewerId,
+    );
+  }
+
+  if (pending.type === 'card') {
+    const cardId = pending.cards?.[0]?.id;
+    return api.debugInput(
+      gameId,
+      playerId,
+      { type: 'card', cardIds: cardId ? [cardId] : [] },
+      viewerId,
+    );
+  }
+
+  if (pending.type === 'endOfRound') {
+    const cardId = pending.cards?.[0]?.id;
+    return api.debugInput(
+      gameId,
+      playerId,
+      { type: 'endOfRound', cardId },
+      viewerId,
+    );
+  }
+
+  if (pending.type === 'trace') {
+    const trace = optionId(
+      (pending.options?.[0] ?? 'yellow') as
+        | { id: string; label?: string }
+        | string,
+    );
+    return api.debugInput(gameId, playerId, { type: 'trace', trace }, viewerId);
+  }
+
+  return api.debugGetState(gameId, viewerId);
 }
 
 async function attachStepScreenshot(
@@ -88,48 +184,7 @@ test('behavior flow e2e (api-driven): play -> launch -> move -> venus', async ({
   // If Bob became active, pass Bob once to continue Alice flow.
   if (state.currentPlayerId === bobId) {
     state = await api.debugMainAction(gameId, bobId, { type: 'PASS' }, aliceId);
-
-    for (let attempt = 0; attempt < 6 && state.currentPlayerId === bobId; attempt += 1) {
-      const bob = getPlayer(state, bobId);
-      const fallbackEorCard =
-        (state as unknown as {
-          endOfRoundStacks?: Array<Array<{ id: string } | string>>;
-        }).endOfRoundStacks?.[0]?.[0];
-
-      const candidates: Array<Record<string, unknown>> = [
-        { type: 'OPTION', optionId: 'done' },
-        { type: 'OPTION', optionId: 'skip-missions' },
-      ];
-
-      const firstBobHandCard = (bob.hand ?? [])[0];
-      if (firstBobHandCard) {
-        candidates.push({
-          type: 'CARD',
-          cardIds: [getCardId(firstBobHandCard)],
-        });
-      }
-      if (fallbackEorCard) {
-        candidates.push({
-          type: 'END_OF_ROUND',
-          cardId: getCardId(fallbackEorCard),
-        });
-      }
-
-      let resolved = false;
-      for (const input of candidates) {
-        try {
-          state = await api.debugInput(gameId, bobId, input, aliceId);
-          resolved = true;
-          break;
-        } catch {
-          // try next input shape
-        }
-      }
-
-      if (!resolved) {
-        break;
-      }
-    }
+    state = await resolvePendingInputs(api, gameId, bobId, aliceId);
   }
   expect(state.currentPlayerId).toBe(aliceId);
 
@@ -140,16 +195,20 @@ test('behavior flow e2e (api-driven): play -> launch -> move -> venus', async ({
     { type: 'LAUNCH_PROBE' },
     aliceId,
   );
+  let pending = await api.debugGetPendingInput(gameId, aliceId);
+  expect(pending?.type).toBe('option');
   state = await api.debugInput(
     gameId,
     aliceId,
-    { type: 'OPTION', optionId: 'complete-80-0' },
+    { type: 'option', optionId: 'complete-80-0' },
     aliceId,
   );
+  pending = await api.debugGetPendingInput(gameId, aliceId);
+  expect(pending?.type).toBe('option');
   state = await api.debugInput(
     gameId,
     aliceId,
-    { type: 'OPTION', optionId: 'complete-80-1' },
+    { type: 'option', optionId: 'complete-80-1' },
     aliceId,
   );
   // Optional follow-up input in some branches.
@@ -157,7 +216,7 @@ test('behavior flow e2e (api-driven): play -> launch -> move -> venus', async ({
     .debugInput(
       gameId,
       aliceId,
-      { type: 'OPTION', optionId: 'skip-missions' },
+      { type: 'option', optionId: 'skip-missions' },
       aliceId,
     )
     .then((next) => {
@@ -205,32 +264,60 @@ test('behavior flow e2e (api-driven): play -> launch -> move -> venus', async ({
     { type: 'PLAY_CARD', payload: { cardIndex: card16Index } },
     aliceId,
   );
+  pending = await api.debugGetPendingInput(gameId, aliceId);
+  expect(pending?.type).toBe('option');
+  const landOptionId =
+    (pending?.options ?? [])
+      .map((entry) =>
+        optionId(entry as { id: string; label?: string } | string),
+      )
+      .find((entry) => entry.startsWith('land-')) ?? 'land-venus';
   state = await api.debugInput(
     gameId,
     aliceId,
-    { type: 'OPTION', optionId: 'land-VENUS' },
+    { type: 'option', optionId: landOptionId },
     aliceId,
+  );
+  pending = await api.debugGetPendingInput(gameId, aliceId);
+  expect(pending?.type).toBe('trace');
+  const traceId = optionId(
+    ((pending?.options ?? [])[0] ?? 'yellow') as
+      | { id: string; label?: string }
+      | string,
   );
   state = await api.debugInput(
     gameId,
     aliceId,
-    { type: 'TRACE', trace: 'YELLOW' },
+    { type: 'trace', trace: traceId },
     aliceId,
   );
+  pending = await api.debugGetPendingInput(gameId, aliceId);
+  expect(pending?.type).toBe('option');
+  const discoveryOptionId =
+    (pending?.options ?? [])
+      .map((entry) =>
+        optionId(entry as { id: string; label?: string } | string),
+      )
+      .find((entry) => entry.includes('discovery')) ??
+    optionId(
+      (pending?.options ?? [])[0] as { id: string; label?: string } | string,
+    );
   state = await api.debugInput(
     gameId,
     aliceId,
-    { type: 'OPTION', optionId: 'alien-0-discovery-YELLOW' },
+    { type: 'option', optionId: discoveryOptionId },
     aliceId,
   );
 
   const afterLand = getPlayer(state, aliceId);
   expect(afterLand.probesInSpace).toBe(0);
   expect(getResources(afterLand.resources).publicity).toBeGreaterThanOrEqual(5);
+  const venusBoard =
+    state.planetaryBoard?.planets?.VENUS ??
+    state.planetaryBoard?.planets?.venus;
   expect(
-    state.planetaryBoard?.planets?.VENUS?.landingSlots?.some(
-      (slot) => slot.playerId === aliceId,
-    ),
+    venusBoard?.landingSlots?.some((slot) => slot.playerId === aliceId) ??
+      false,
   ).toBe(true);
 
   await injectAuth(page, aliceSession.accessToken, aliceSession.user);
