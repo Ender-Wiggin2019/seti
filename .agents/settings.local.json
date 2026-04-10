@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(pnpm --filter @seti/client exec tsc --noEmit)",
+      "Bash(pnpm --filter @seti/server exec tsc --noEmit)",
+      "Bash(pnpm --filter @seti/common run build)",
+      "Bash(git -C /Users/oushuohuang/Documents/demo-a2ui diff --name-only)",
+      "Bash(git -C /Users/oushuohuang/Documents/demo-a2ui status --short)",
+      "Bash(pnpm --filter @ender-seti/server exec tsc --noEmit)",
+      "Bash(git stash:*)",
+      "Bash(npx tsup:*)",
+      "Bash(grep:*)",
+      "mcp__plugin_oh-my-claudecode_t__ast_grep_replace"
+    ]
+  }
+}

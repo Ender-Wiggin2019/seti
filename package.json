@@ -6,12 +6,15 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "pnpm --filter @seti/web dev",
+    "dev:client-server": "./scripts/dev-client-server.sh",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "smoke:web": "./scripts/smoke-web.sh",
     "test:e2e": "pnpm --filter @seti/e2e test",
     "test:e2e:ui": "pnpm --filter @seti/e2e test:ui",
+    "report:e2e": "pnpm --filter @seti/e2e report",
+    "report:e2e:alt-port": "pnpm --filter @seti/e2e exec playwright show-report --port 9333",
     "format": "biome format --write .",
     "format:check": "biome format ."
   },

@@ -57,6 +57,7 @@ describe('processFreeAction — full dispatch coverage', () => {
     });
 
     expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith(expect.anything(), expect.anything(), 0);
   });
 
   it('dispatches COMPLETE_MISSION', () => {

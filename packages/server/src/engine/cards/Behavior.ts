@@ -39,6 +39,9 @@ export interface IBehavior {
   scan?: IScanBehavior;
   researchTech?: ETech;
   markTrace?: ETrace;
+  markAnySignal?: number;
+  markDisplayCardSignal?: number;
+  markSignalToken?: number;
   rotateSolarSystem?: boolean;
   custom?: string[];
 }
@@ -203,6 +206,16 @@ function applyBaseEffect(behavior: IBehavior, effect: IBaseEffect): IBehavior {
           markSectors: [ESector.BLACK],
         }),
       };
+    case EScanAction.ANY:
+      return {
+        ...behavior,
+        markAnySignal: (behavior.markAnySignal ?? 0) + amount,
+      };
+    case EScanAction.DISPLAY_CARD:
+      return {
+        ...behavior,
+        markDisplayCardSignal: (behavior.markDisplayCardSignal ?? 0) + amount,
+      };
     case EMiscIcon.ROTATE:
       return { ...behavior, rotateSolarSystem: true };
     case EMiscIcon.INCOME:
@@ -213,6 +226,11 @@ function applyBaseEffect(behavior: IBehavior, effect: IBaseEffect): IBehavior {
       return { ...behavior, gainIncome: EResource.ENERGY };
     case EMiscIcon.CARD_INCOME:
       return { ...behavior, gainIncome: EResource.CARD };
+    case EMiscIcon.SIGNAL_TOKEN:
+      return {
+        ...behavior,
+        markSignalToken: (behavior.markSignalToken ?? 0) + amount,
+      };
     default:
       return behavior;
   }

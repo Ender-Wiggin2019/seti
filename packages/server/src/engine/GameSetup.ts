@@ -40,9 +40,10 @@ export class GameSetup {
       game.mainDeck.drawN(game.options.playerCount + 1),
     );
 
-    const alienPool = game.random.shuffle(
-      Object.values(EAlienType) as EAlienType[],
+    const selectableAliens = (Object.values(EAlienType) as EAlienType[]).filter(
+      (alienType) => alienType !== EAlienType.DUMMY,
     );
+    const alienPool = game.random.shuffle(selectableAliens);
     game.hiddenAliens = alienPool.slice(0, 2);
     game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
     game.neutralMilestones = GameSetup.buildNeutralMilestones(

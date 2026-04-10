@@ -61,6 +61,7 @@ export class PassAction {
     }
     if (game.solarSystem !== null) {
       game.solarSystem.rotateNextDisc();
+      game.alienState?.onSolarSystemRotated(game);
     }
 
     return PassAction.endOfRoundCardStep(player, game);

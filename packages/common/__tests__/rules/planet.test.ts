@@ -55,6 +55,8 @@ function createPlayerState(
     dataStashCount: 0,
     probesInSpace: 0,
     probeSpaceLimit: 1,
+    completedMissionCount: 0,
+    endGameCardCount: 0,
     creditIncome: 4,
     energyIncome: 3,
     cardIncome: 0,

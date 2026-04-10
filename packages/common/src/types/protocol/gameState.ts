@@ -65,6 +65,8 @@ export interface IPublicPlayerState {
   playedMissions?: IBaseCard[];
   completedMissions?: string[];
   endGameCards?: IBaseCard[];
+  completedMissionCount: number;
+  endGameCardCount: number;
   creditIncome: number;
   energyIncome: number;
   cardIncome: number;

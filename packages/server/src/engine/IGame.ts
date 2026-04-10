@@ -1,4 +1,5 @@
 import type { ISolarSystemSetupConfig } from '@seti/common/constant/sectorSetup';
+import type { ETrace } from '@seti/common/types/element';
 import type {
   IFreeActionRequest,
   IInputResponse,
@@ -76,4 +77,5 @@ export interface IGame {
     count: number,
     playerId?: string,
   ): IPlayerInput | undefined;
+  markTrace(traceColor: ETrace, playerId?: string): IPlayerInput | undefined;
 }

@@ -243,7 +243,11 @@ export class Game implements IGame {
     ]);
 
     const player = this.getPlayer(playerId);
-    processFreeAction(player, this, action);
+    const pendingInput = processFreeAction(player, this, action);
+
+    if (pendingInput) {
+      player.waitingFor = pendingInput;
+    }
 
     if (!player.waitingFor) {
       const missionInput = this.missionTracker.checkAndPromptTriggers(

@@ -4,6 +4,7 @@ const WS_URL = process.env.WS_URL ?? 'http://localhost:3000';
 
 export interface IWsGameState {
   currentPlayerId: string;
+  startPlayerId?: string;
   round: number;
   phase: string;
   players: Array<{
@@ -11,22 +12,54 @@ export interface IWsGameState {
     playerName: string;
     color: string;
     score: number;
-    hand: Array<{ id: string }>;
+    hand?: Array<{ id: string } | string>;
     handSize: number;
+    playedMissions?: Array<{ id: string } | string>;
+    techs?: string[];
+    movementPoints?: number;
+    probesInSpace?: number;
     resources: {
       credits: number;
       energy: number;
       publicity: number;
       data: number;
     };
+    computer?: {
+      columns?: Array<{
+        topFilled?: boolean;
+        techId?: string | null;
+      }>;
+    };
+    passed?: boolean;
   }>;
   solarSystem: {
     probes: Array<{ playerId: string; spaceId: string }>;
     adjacency: Record<string, string[]>;
+    discs?: Array<{ discIndex: number; angle: number }>;
+    spaceStates?: Record<
+      string,
+      {
+        spaceId: string;
+        hasPublicityIcon: boolean;
+        elementTypes: string[];
+      }
+    >;
   };
-  cardRow: Array<{ id: string }>;
-  endOfRoundStacks: Array<Array<{ id: string }>>;
-  sectors: Array<{ id: string; color: string }>;
+  cardRow: Array<{ id: string } | string>;
+  endOfRoundStacks: Array<Array<{ id: string } | string>>;
+  sectors: Array<{
+    id: string;
+    color: string;
+    signals?: Array<{ type: 'data' | 'player'; playerId?: string }>;
+  }>;
+  planetaryBoard?: {
+    planets?: Record<
+      string,
+      {
+        landingSlots?: Array<{ playerId: string }>;
+      }
+    >;
+  };
   [key: string]: unknown;
 }
 
@@ -50,6 +83,7 @@ export class WsTestClient {
   private _pendingInput: IWsPendingInput | null = null;
   private _events: unknown[] = [];
   private _errors: unknown[] = [];
+  private _connected = false;
 
   private stateWaiters: Array<(state: IWsGameState) => void> = [];
   private inputWaiters: Array<(input: IWsPendingInput) => void> = [];
@@ -66,6 +100,9 @@ export class WsTestClient {
   get errors(): unknown[] {
     return this._errors;
   }
+  get connected(): boolean {
+    return this._connected;
+  }
 
   connect(token: string): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -75,8 +112,14 @@ export class WsTestClient {
         reconnection: false,
       });
 
-      this.socket.on('connect', () => resolve());
+      this.socket.on('connect', () => {
+        this._connected = true;
+        resolve();
+      });
       this.socket.on('connect_error', (err) => reject(err));
+      this.socket.on('disconnect', () => {
+        this._connected = false;
+      });
 
       this.socket.on('game:state', (data: { gameState: IWsGameState }) => {
         this._gameState = data.gameState;
@@ -103,6 +146,7 @@ export class WsTestClient {
   disconnect(): void {
     this.socket?.disconnect();
     this.socket = null;
+    this._connected = false;
   }
 
   joinGame(gameId: string): void {
@@ -130,14 +174,24 @@ export class WsTestClient {
    */
   waitForState(timeoutMs = 5_000): Promise<IWsGameState> {
     return new Promise((resolve, reject) => {
+      let settled = false;
+      const onState = (state: IWsGameState) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(state);
+      };
+
       const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        this.stateWaiters = this.stateWaiters.filter(
+          (waiter) => waiter !== onState,
+        );
         reject(new Error('Timed out waiting for game:state'));
       }, timeoutMs);
 
-      this.stateWaiters.push((state) => {
-        clearTimeout(timer);
-        resolve(state);
-      });
+      this.stateWaiters.push(onState);
     });
   }
 
@@ -146,14 +200,24 @@ export class WsTestClient {
    */
   waitForInput(timeoutMs = 5_000): Promise<IWsPendingInput> {
     return new Promise((resolve, reject) => {
+      let settled = false;
+      const onInput = (input: IWsPendingInput) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(input);
+      };
+
       const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        this.inputWaiters = this.inputWaiters.filter(
+          (waiter) => waiter !== onInput,
+        );
         reject(new Error('Timed out waiting for game:waiting'));
       }, timeoutMs);
 
-      this.inputWaiters.push((input) => {
-        clearTimeout(timer);
-        resolve(input);
-      });
+      this.inputWaiters.push(onInput);
     });
   }
 

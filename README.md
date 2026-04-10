@@ -51,6 +51,20 @@ pnpm --filter @seti/server db:init
 
 ## client + server 联调
 
+推荐一键启动（仓库根目录）：
+
+```bash
+pnpm dev:client-server
+```
+
+这个命令会：
+
+- 同时启动 `@seti/server` 与 `@seti/client`
+- 如果不存在 `packages/client/.env`，会自动从 `.env.example` 复制一份
+- 在你按 `Ctrl + C` 时同时关闭两个进程
+
+如果你希望手动分终端控制，也可以使用下面的方式。
+
 需要两个终端分别启动：
 
 终端 1（启动 server）：

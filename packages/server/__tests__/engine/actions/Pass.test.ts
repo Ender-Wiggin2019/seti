@@ -9,6 +9,7 @@ import { SeededRandom } from '@/shared/rng/SeededRandom.js';
 function createMockGame(overrides: Record<string, unknown> = {}): IGame {
   return {
     solarSystem: { rotateNextDisc: vi.fn().mockReturnValue(1) },
+    alienState: { onSolarSystemRotated: vi.fn() },
     planetaryBoard: null,
     techBoard: null,
     sectors: [],
@@ -93,6 +94,20 @@ describe('PassAction', () => {
       PassAction.execute(p2, game);
 
       expect(rotateSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('dispatches alien rotation hook after rotating', () => {
+      const onSolarSystemRotated = vi.fn();
+      const game = createMockGame({
+        alienState: { onSolarSystemRotated },
+        endOfRoundStacks: [[]],
+      });
+      const player = createPlayer({ hand: [] });
+
+      PassAction.execute(player, game);
+
+      expect(onSolarSystemRotated).toHaveBeenCalledTimes(1);
+      expect(onSolarSystemRotated).toHaveBeenCalledWith(game);
     });
 
     it('returns SelectCard when hand exceeds limit', () => {

@@ -240,6 +240,16 @@ export class AlienState {
     return undefined;
   }
 
+  // ---- Plugin event dispatch ----------------------------------------------
+
+  public onSolarSystemRotated(game: IGame): void {
+    for (const board of this.boards) {
+      if (!board.discovered) continue;
+      const plugin = AlienRegistry.get(board.alienType);
+      plugin?.onSolarSystemRotated?.(game);
+    }
+  }
+
   // ---- Private: input builders ---------------------------------------------
 
   private createColorSelectionInput(

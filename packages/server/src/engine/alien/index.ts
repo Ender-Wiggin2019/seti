@@ -1,4 +1,5 @@
 import { AlienRegistry } from './AlienRegistry.js';
+import { AnomaliesAlienPlugin } from './plugins/AnomaliesAlienPlugin.js';
 import { DummyAlienPlugin } from './plugins/DummyAlienPlugin.js';
 
 export type {
@@ -16,4 +17,5 @@ export type { IAlienPlugin } from './IAlienPlugin.js';
 
 // ---- Plugin registration ---------------------------------------------------
 
+AlienRegistry.register(new AnomaliesAlienPlugin());
 AlienRegistry.register(new DummyAlienPlugin());

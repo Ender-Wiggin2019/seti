@@ -1,7 +1,9 @@
 import type { IComputerSlotReward } from '@seti/common/types/computer';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
+import { TuckCardForIncomeEffect } from '../effects/income/TuckCardForIncomeEffect.js';
 import type { IGame } from '../IGame.js';
+import type { IPlayerInput } from '../input/PlayerInput.js';
 import { EComputerRow } from '../player/Computer.js';
 import type { IPlayer } from '../player/IPlayer.js';
 
@@ -9,6 +11,7 @@ export interface IPlaceDataResult {
   row: 'top' | 'bottom';
   index: number;
   reward?: IComputerSlotReward;
+  pendingInput?: IPlayerInput;
 }
 
 export class PlaceDataFreeAction {
@@ -25,7 +28,11 @@ export class PlaceDataFreeAction {
     return computer.getAvailableBottomIndices().length > 0;
   }
 
-  static execute(player: IPlayer, game: IGame): IPlaceDataResult {
+  static execute(
+    player: IPlayer,
+    game: IGame,
+    slotIndex?: number,
+  ): IPlaceDataResult {
     if (player.dataPool.count <= 0) {
       throw new GameError(
         EErrorCode.INSUFFICIENT_RESOURCES,
@@ -37,26 +44,51 @@ export class PlaceDataFreeAction {
 
     const nextTopIndex = computer.getNextTopIndex();
     if (nextTopIndex >= 0) {
+      if (slotIndex !== undefined && slotIndex !== nextTopIndex) {
+        throw new GameError(
+          EErrorCode.INVALID_ACTION,
+          `Top row must be filled left-to-right. Next available top slot is ${nextTopIndex}`,
+          { requested: slotIndex, expected: nextTopIndex },
+        );
+      }
       const reward = player.data.placeFromPoolToComputer({
         row: EComputerRow.TOP,
         index: nextTopIndex,
       });
-      if (reward) this.applyReward(player, game, reward);
-      return { row: 'top', index: nextTopIndex, reward: reward ?? undefined };
+      const pendingInput = reward
+        ? this.applyReward(player, game, reward)
+        : undefined;
+      return {
+        row: 'top',
+        index: nextTopIndex,
+        reward: reward ?? undefined,
+        pendingInput,
+      };
     }
 
     const availableBottom = computer.getAvailableBottomIndices();
     if (availableBottom.length > 0) {
-      const nextBottomIndex = availableBottom[0];
+      const nextBottomIndex =
+        slotIndex !== undefined ? slotIndex : availableBottom[0];
+      if (!availableBottom.includes(nextBottomIndex)) {
+        throw new GameError(
+          EErrorCode.INVALID_ACTION,
+          `Bottom slot ${nextBottomIndex} is not available`,
+          { requested: nextBottomIndex, available: availableBottom },
+        );
+      }
       const reward = player.data.placeFromPoolToComputer({
         row: EComputerRow.BOTTOM,
         index: nextBottomIndex,
       });
-      if (reward) this.applyReward(player, game, reward);
+      const pendingInput = reward
+        ? this.applyReward(player, game, reward)
+        : undefined;
       return {
         row: 'bottom',
         index: nextBottomIndex,
         reward: reward ?? undefined,
+        pendingInput,
       };
     }
 
@@ -70,7 +102,7 @@ export class PlaceDataFreeAction {
     player: IPlayer,
     game: IGame,
     reward: IComputerSlotReward,
-  ): void {
+  ): IPlayerInput | undefined {
     if (reward.vp) {
       player.score += reward.vp;
     }
@@ -88,9 +120,8 @@ export class PlaceDataFreeAction {
       player.hand.push(...drawn);
     }
     if (reward.tuckIncome && reward.tuckIncome > 0) {
-      // TODO: tuck income requires a deferred player choice (select card to tuck).
-      // For now, this flag signals the caller that a tuck-income action is pending.
-      // The actual deferred action will be implemented in the tuck-income pipeline.
+      return TuckCardForIncomeEffect.execute(player, game);
     }
+    return undefined;
   }
 }

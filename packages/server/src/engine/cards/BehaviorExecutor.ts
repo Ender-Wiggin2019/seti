@@ -18,12 +18,14 @@ import {
   ResearchTechEffect,
   RotateDiscEffect,
 } from '../effects/index.js';
+import { createActionEvent } from '../event/GameEvent.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
 import { SelectOption } from '../input/SelectOption.js';
 import type { IPlayer } from '../player/IPlayer.js';
 import type { IBehavior } from './Behavior.js';
 import type { ICard } from './ICard.js';
+import { EMarkSource } from './utils/Mark.js';
 
 const ORBITABLE_PLANETS: readonly EPlanet[] = [
   EPlanet.MERCURY,
@@ -117,6 +119,9 @@ export class BehaviorExecutor {
       this.buildScanAction(behavior, player, card),
       this.buildResearchTechAction(behavior, player),
       this.buildMarkTraceAction(behavior, player),
+      this.buildMarkAnySignalAction(behavior, player),
+      this.buildMarkDisplayCardSignalAction(behavior, player),
+      this.buildMarkSignalTokenAction(behavior, player),
       this.buildRotateAction(behavior, player),
       ...this.buildCustomActions(behavior, player, card),
     ].filter((action): action is SimpleDeferredAction => action !== undefined);
@@ -325,6 +330,15 @@ export class BehaviorExecutor {
     if (!behavior.markTrace) return undefined;
     return new SimpleDeferredAction(player, (game) => {
       const trace = behavior.markTrace as ETrace;
+      if (!game.alienState) {
+        player.traces[trace] = (player.traces[trace] ?? 0) + 1;
+        game.eventLog.append(
+          createActionEvent(player.id, 'CARD_MARK_TRACE', {
+            trace,
+          }),
+        );
+        return undefined;
+      }
       return game.alienState.createTraceInput(player, game, trace);
     });
   }
@@ -344,6 +358,39 @@ export class BehaviorExecutor {
     );
   }
 
+  private buildMarkAnySignalAction(
+    behavior: IBehavior,
+    player: IPlayer,
+  ): SimpleDeferredAction | undefined {
+    const count = behavior.markAnySignal ?? 0;
+    if (count <= 0) return undefined;
+    return new SimpleDeferredAction(player, (game) =>
+      game.mark(EMarkSource.ANY, count, player.id),
+    );
+  }
+
+  private buildMarkDisplayCardSignalAction(
+    behavior: IBehavior,
+    player: IPlayer,
+  ): SimpleDeferredAction | undefined {
+    const count = behavior.markDisplayCardSignal ?? 0;
+    if (count <= 0) return undefined;
+    return new SimpleDeferredAction(player, (game) =>
+      game.mark(EMarkSource.CARD_ROW, count, player.id),
+    );
+  }
+
+  private buildMarkSignalTokenAction(
+    behavior: IBehavior,
+    player: IPlayer,
+  ): SimpleDeferredAction | undefined {
+    const count = behavior.markSignalToken ?? 0;
+    if (count <= 0) return undefined;
+    return new SimpleDeferredAction(player, (game) =>
+      game.mark(EMarkSource.ANY, count, player.id),
+    );
+  }
+
   private buildCustomActions(
     behavior: IBehavior,
     player: IPlayer,
@@ -353,10 +400,15 @@ export class BehaviorExecutor {
     return customIds.map((customId) => {
       const handler = this.customHandlers.get(customId);
       if (!handler) {
-        // DESC effects without a registered handler are skipped gracefully.
-        // This is expected for many cards whose DESC text describes a rule
-        // modification or contextual reminder rather than a programmable action.
-        return undefined;
+        return new SimpleDeferredAction(player, (game) => {
+          game.eventLog.append(
+            createActionEvent(player.id, 'CARD_CUSTOM_EFFECT_UNHANDLED', {
+              cardId: card.id,
+              customId,
+            }),
+          );
+          return undefined;
+        });
       }
       return new SimpleDeferredAction(player, (game) =>
         handler(player, game, card),

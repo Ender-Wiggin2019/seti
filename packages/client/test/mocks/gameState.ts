@@ -47,6 +47,8 @@ export function createMockPlayerState(
     dataStashCount: 0,
     probesInSpace: 1,
     probeSpaceLimit: 1,
+    completedMissionCount: 0,
+    endGameCardCount: 0,
     creditIncome: 0,
     energyIncome: 0,
     cardIncome: 0,

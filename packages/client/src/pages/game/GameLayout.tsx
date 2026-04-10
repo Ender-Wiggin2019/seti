@@ -365,41 +365,6 @@ function BoardTabs({
   );
 }
 
-function BoardPlaceholder({
-  title,
-  description,
-  bgImage,
-  children,
-}: {
-  title: string;
-  description: string;
-  bgImage?: string;
-  children?: React.ReactNode;
-}): React.JSX.Element {
-  return (
-    <div
-      className='relative flex h-full flex-col items-center justify-center rounded-lg border border-surface-700/40 bg-surface-900/30 p-6'
-      style={
-        bgImage
-          ? {
-              backgroundImage: `linear-gradient(rgba(8, 13, 25, 0.75), rgba(8, 13, 25, 0.85)), url(${bgImage})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }
-          : undefined
-      }
-    >
-      <h2 className='font-display text-lg font-bold uppercase tracking-wider text-text-100'>
-        {title}
-      </h2>
-      <p className='mt-1 max-w-md text-center text-xs text-text-500'>
-        {description}
-      </p>
-      {children}
-    </div>
-  );
-}
-
 /**
  * Convert IPublicMilestoneState (buckets with resolvedPlayerIds[]) into
  * the flat IMilestoneItem[] that MilestoneTrack expects.
@@ -408,47 +373,47 @@ function BoardPlaceholder({
  * IMilestoneItem per player-resolution (showing who claimed it) plus one
  * "open" entry when nobody has resolved a bucket yet.
  */
-function buildMilestoneItems(
+export function buildMilestoneItems(
   milestones: IPublicMilestoneState,
-  _playerColors: Record<string, string>,
+  playerColors: Record<string, string>,
 ): IMilestoneItem[] {
   const items: IMilestoneItem[] = [];
+  const totalPlayers = Math.max(Object.keys(playerColors).length, 1);
 
   for (const bucket of milestones.goldMilestones) {
-    if (bucket.resolvedPlayerIds.length === 0) {
+    for (const pid of bucket.resolvedPlayerIds) {
       items.push({
-        id: `gold-${bucket.threshold}`,
+        id: `gold-${bucket.threshold}-${pid}`,
+        threshold: bucket.threshold,
+        type: 'gold',
+        claimedBy: pid,
+      });
+    }
+    const canStillClaim = bucket.resolvedPlayerIds.length < totalPlayers;
+    if (canStillClaim) {
+      items.push({
+        id: `gold-${bucket.threshold}-open`,
         threshold: bucket.threshold,
         type: 'gold',
       });
-    } else {
-      for (const pid of bucket.resolvedPlayerIds) {
-        items.push({
-          id: `gold-${bucket.threshold}-${pid}`,
-          threshold: bucket.threshold,
-          type: 'gold',
-          claimedBy: pid,
-        });
-      }
     }
   }
 
   for (const bucket of milestones.neutralMilestones) {
-    if (bucket.resolvedPlayerIds.length === 0) {
+    for (const pid of bucket.resolvedPlayerIds) {
       items.push({
-        id: `neutral-${bucket.threshold}`,
+        id: `neutral-${bucket.threshold}-${pid}`,
+        threshold: bucket.threshold,
+        type: 'neutral',
+        claimedBy: pid,
+      });
+    }
+    for (let i = 0; i < bucket.markersRemaining; i++) {
+      items.push({
+        id: `neutral-${bucket.threshold}-open-${i}`,
         threshold: bucket.threshold,
         type: 'neutral',
       });
-    } else {
-      for (const pid of bucket.resolvedPlayerIds) {
-        items.push({
-          id: `neutral-${bucket.threshold}-${pid}`,
-          threshold: bucket.threshold,
-          type: 'neutral',
-          claimedBy: pid,
-        });
-      }
     }
   }
 
@@ -557,6 +522,8 @@ function BottomBar({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [cornerSelectionMode, setCornerSelectionMode] = useState(false);
   const [exchangeOpen, setExchangeOpen] = useState(false);
+  const [placeDataOpen, setPlaceDataOpen] = useState(false);
+  const [convertEnergyOpen, setConvertEnergyOpen] = useState(false);
 
   const myPlayer = gameState?.players.find((p) => p.playerId === myPlayerId);
   const extendedPlayer = myPlayer as
@@ -568,6 +535,8 @@ function BottomBar({
     | undefined;
   const missionCards = extendedPlayer?.playedMissions ?? [];
   const canUndo = Boolean((gameState as { canUndo?: boolean } | null)?.canUndo);
+  const placeDataOptions = buildPlaceDataOptions(myPlayer);
+  const maxConvertibleEnergy = myPlayer?.resources?.[EResource.ENERGY] ?? 0;
 
   const handleFreeActionClick = (action: EFreeAction) => {
     switch (action) {
@@ -578,7 +547,15 @@ function BottomBar({
         return;
       case EFreeAction.PLACE_DATA:
         setCornerSelectionMode(false);
-        sendFreeAction({ type: EFreeAction.PLACE_DATA, slotIndex: 0 });
+        if (placeDataOptions.length <= 0) {
+          toast({
+            title: 'No available computer slot',
+            description: 'Fill data pool and unlock a slot first.',
+            variant: 'error',
+          });
+          return;
+        }
+        setPlaceDataOpen(true);
         return;
       case EFreeAction.COMPLETE_MISSION:
         setCornerSelectionMode(false);
@@ -629,10 +606,15 @@ function BottomBar({
         return;
       case EFreeAction.CONVERT_ENERGY_TO_MOVEMENT:
         setCornerSelectionMode(false);
-        sendFreeAction({
-          type: EFreeAction.CONVERT_ENERGY_TO_MOVEMENT,
-          amount: 1,
-        });
+        if (maxConvertibleEnergy <= 0) {
+          toast({
+            title: 'Not enough energy',
+            description: 'You need at least 1 energy to convert.',
+            variant: 'error',
+          });
+          return;
+        }
+        setConvertEnergyOpen(true);
         return;
       default:
         return;
@@ -768,6 +750,29 @@ function BottomBar({
           setExchangeOpen(false);
         }}
       />
+
+      <PlaceDataDialog
+        open={placeDataOpen}
+        options={placeDataOptions}
+        onCancel={() => setPlaceDataOpen(false)}
+        onConfirm={(slotIndex) => {
+          sendFreeAction({ type: EFreeAction.PLACE_DATA, slotIndex });
+          setPlaceDataOpen(false);
+        }}
+      />
+
+      <ConvertEnergyDialog
+        open={convertEnergyOpen}
+        maxAmount={maxConvertibleEnergy}
+        onCancel={() => setConvertEnergyOpen(false)}
+        onConfirm={(amount) => {
+          sendFreeAction({
+            type: EFreeAction.CONVERT_ENERGY_TO_MOVEMENT,
+            amount,
+          });
+          setConvertEnergyOpen(false);
+        }}
+      />
     </div>
   );
 }
@@ -834,6 +839,120 @@ function ExchangeResourcesDialog({
               className='h-10 justify-start border border-surface-700/60 bg-surface-800/50 px-3 text-left text-sm text-text-200 hover:bg-surface-700/70 disabled:opacity-40'
             >
               {opt.label}
+            </Button>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface IPlaceDataOption {
+  slotIndex: number;
+  row: 'top' | 'bottom';
+  label: string;
+}
+
+function buildPlaceDataOptions(
+  player: IPublicPlayerState | null | undefined,
+): IPlaceDataOption[] {
+  const columns = player?.computer?.columns ?? [];
+  if (!columns.length) return [];
+
+  const topIndex = columns.findIndex((col) => !col.topFilled);
+  if (topIndex >= 0) {
+    return [
+      {
+        slotIndex: topIndex,
+        row: 'top',
+        label: `Top slot C${topIndex + 1} (left-to-right)`,
+      },
+    ];
+  }
+
+  return columns
+    .map((col, index) => ({ col, index }))
+    .filter(({ col }) => col.hasBottomSlot && !col.bottomFilled)
+    .map(({ index }) => ({
+      slotIndex: index,
+      row: 'bottom' as const,
+      label: `Bottom slot C${index + 1}`,
+    }));
+}
+
+function PlaceDataDialog({
+  open,
+  options,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  options: IPlaceDataOption[];
+  onCancel: () => void;
+  onConfirm: (slotIndex: number) => void;
+}): React.JSX.Element {
+  return (
+    <Dialog open={open} onOpenChange={(next) => !next && onCancel()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Place Data</DialogTitle>
+          <p className='text-sm text-text-300'>
+            Choose which computer slot to fill.
+          </p>
+        </DialogHeader>
+        <div className='grid grid-cols-1 gap-2'>
+          {options.map((opt) => (
+            <Button
+              key={`${opt.row}-${opt.slotIndex}`}
+              type='button'
+              variant='ghost'
+              onClick={() => onConfirm(opt.slotIndex)}
+              className='h-10 justify-start border border-surface-700/60 bg-surface-800/50 px-3 text-left text-sm text-text-200 hover:bg-surface-700/70'
+            >
+              {opt.label}
+            </Button>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ConvertEnergyDialog({
+  open,
+  maxAmount,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  maxAmount: number;
+  onCancel: () => void;
+  onConfirm: (amount: number) => void;
+}): React.JSX.Element {
+  const options = Array.from(
+    { length: Math.max(0, maxAmount) },
+    (_, i) => i + 1,
+  ).slice(0, 8);
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => !next && onCancel()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Convert Energy</DialogTitle>
+          <p className='text-sm text-text-300'>
+            Spend energy to gain the same amount of movement points.
+          </p>
+        </DialogHeader>
+        <div className='grid grid-cols-2 gap-2'>
+          {options.map((amount) => (
+            <Button
+              key={amount}
+              type='button'
+              variant='ghost'
+              onClick={() => onConfirm(amount)}
+              className='h-10 justify-center border border-surface-700/60 bg-surface-800/50 text-sm text-text-200 hover:bg-surface-700/70'
+            >
+              {amount} Energy → {amount} Move
             </Button>
           ))}
         </div>

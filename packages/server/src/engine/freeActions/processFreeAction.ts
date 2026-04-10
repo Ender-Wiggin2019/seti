@@ -3,6 +3,7 @@ import { EFreeAction } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import type { IGame } from '../IGame.js';
+import type { IPlayerInput } from '../input/PlayerInput.js';
 import type { IPlayer } from '../player/IPlayer.js';
 import { BuyCardFreeAction } from './BuyCard.js';
 import { CompleteMissionFreeAction } from './CompleteMission.js';
@@ -16,19 +17,19 @@ export function processFreeAction(
   player: IPlayer,
   game: IGame,
   action: IFreeActionRequest,
-): void {
+): IPlayerInput | undefined {
   switch (action.type) {
     case EFreeAction.MOVEMENT:
       MovementFreeAction.execute(player, game, action.path);
-      return;
+      return undefined;
 
     case EFreeAction.CONVERT_ENERGY_TO_MOVEMENT:
       ConvertEnergyToMovementFreeAction.execute(player, game, action.amount);
-      return;
+      return undefined;
 
     case EFreeAction.PLACE_DATA:
-      PlaceDataFreeAction.execute(player, game);
-      return;
+      return PlaceDataFreeAction.execute(player, game, action.slotIndex)
+        .pendingInput;
 
     case EFreeAction.COMPLETE_MISSION:
       CompleteMissionFreeAction.execute(
@@ -37,22 +38,22 @@ export function processFreeAction(
         action.cardId,
         action.branchIndex,
       );
-      return;
+      return undefined;
 
     case EFreeAction.USE_CARD_CORNER:
       FreeActionCornerFreeAction.execute(player, game, action.cardId);
-      return;
+      return undefined;
 
     case EFreeAction.BUY_CARD:
       BuyCardFreeAction.execute(player, game, {
         cardId: action.cardId,
         fromDeck: action.fromDeck,
       });
-      return;
+      return undefined;
 
     case EFreeAction.EXCHANGE_RESOURCES:
       ExchangeResourcesFreeAction.execute(player, game, action.from, action.to);
-      return;
+      return undefined;
 
     default:
       throw new GameError(

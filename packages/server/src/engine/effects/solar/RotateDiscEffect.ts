@@ -20,6 +20,8 @@ export class RotateDiscEffect {
     if (game.solarSystem === null) {
       return { rotatedDisc: -1 };
     }
-    return { rotatedDisc: game.solarSystem.rotateNextDisc() };
+    const rotatedDisc = game.solarSystem.rotateNextDisc();
+    game.alienState?.onSolarSystemRotated(game);
+    return { rotatedDisc };
   }
 }

@@ -1,6 +1,10 @@
 import { EResource, ESector } from '@seti/common/types/element';
 import type { IBehavior } from '@/engine/cards/Behavior.js';
-import { BehaviorExecutor } from '@/engine/cards/BehaviorExecutor.js';
+import {
+  BehaviorExecutor,
+  getBehaviorExecutor,
+} from '@/engine/cards/BehaviorExecutor.js';
+import { EMarkSource } from '@/engine/cards/utils/Mark.js';
 import { getCardRegistry } from '@/engine/cards/CardRegistry.js';
 import { Deck } from '@/engine/deck/Deck.js';
 import { DeferredActionsQueue } from '@/engine/deferred/DeferredActionsQueue.js';
@@ -21,6 +25,8 @@ function createPlayer(overrides: Record<string, unknown> = {}): Player {
 }
 
 function createGame(): IGame {
+  const markCalls: Array<{ source: EMarkSource; count: number; playerId: string }> =
+    [];
   return {
     sectors: [
       {
@@ -35,6 +41,19 @@ function createGame(): IGame {
     deferredActions: new DeferredActionsQueue(),
     eventLog: new EventLog(),
     random: new SeededRandom('behavior-executor-test'),
+    mark: (
+      source: EMarkSource,
+      count: number,
+      playerId?: string,
+    ): undefined => {
+      markCalls.push({
+        source,
+        count,
+        playerId: playerId ?? 'unknown',
+      });
+      return undefined;
+    },
+    __markCalls: markCalls,
     solarSystem: {
       rotateNextDisc: () => 0,
     },
@@ -100,5 +119,73 @@ describe('BehaviorExecutor', () => {
     expect(player.score).toBe(4);
     expect(player.getMoveStash()).toBe(1);
     expect(player.income.tuckedCardIncome[EResource.ENERGY]).toBe(1);
+  });
+
+  it('dispatches any-signal/display-card/signal-token marks via game.mark', () => {
+    const executor = new BehaviorExecutor();
+    const player = createPlayer();
+    const game = createGame() as IGame & {
+      __markCalls: Array<{
+        source: EMarkSource;
+        count: number;
+        playerId: string;
+      }>;
+    };
+    const card = getCardRegistry().create('55');
+
+    executor.execute(
+      {
+        markAnySignal: 2,
+        markDisplayCardSignal: 1,
+        markSignalToken: 3,
+      },
+      player,
+      game,
+      card,
+    );
+    game.deferredActions.drain(game);
+
+    expect(game.__markCalls).toEqual([
+      { source: EMarkSource.ANY, count: 2, playerId: player.id },
+      { source: EMarkSource.CARD_ROW, count: 1, playerId: player.id },
+      { source: EMarkSource.ANY, count: 3, playerId: player.id },
+    ]);
+  });
+
+  it('applies registered DESC handler: desc.card-119', () => {
+    const executor = getBehaviorExecutor();
+    const player = createPlayer({
+      resources: { credits: 0, energy: 0, publicity: 4, data: 0 },
+    });
+    const game = createGame();
+    const card = getCardRegistry().create('119');
+    const scoreBefore = player.score;
+
+    executor.execute({ custom: ['desc.card-119'] }, player, game, card);
+    game.deferredActions.drain(game);
+
+    expect(player.score).toBe(scoreBefore + 4);
+  });
+
+  it('applies registered DESC handler: desc.card-55 marks one any-signal', () => {
+    const executor = getBehaviorExecutor();
+    const player = createPlayer();
+    const game = createGame() as IGame & {
+      __markCalls: Array<{
+        source: EMarkSource;
+        count: number;
+        playerId: string;
+      }>;
+    };
+    const card = getCardRegistry().create('55');
+
+    executor.execute({ custom: ['desc.card-55'] }, player, game, card);
+    game.deferredActions.drain(game);
+
+    expect(game.__markCalls).toContainEqual({
+      source: EMarkSource.ANY,
+      count: 1,
+      playerId: player.id,
+    });
   });
 });

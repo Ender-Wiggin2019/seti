@@ -56,13 +56,11 @@ export function registerSpaceAgencyCards(registry: CardRegistry): void {
   g(registry, 'SA.18'); // Contracted Research       | DESC, ROTATE, TECH_ANY, DESC
 
   // ============================================================
-  // IMMEDIATE + UNHANDLED
-  // TODO: UNHANDLED_EFFECT(signal-token)
+  // IMMEDIATE — signal-token
   // ============================================================
   g(registry, 'SA.3'); // NASA Deep Space Network   | SIGNAL_TOKEN(3)
   g(registry, 'SA.4'); // Breakthrough Message      | SIGNAL_TOKEN, MOVE
 
-  // TODO: UNHANDLED_EFFECT(any-signal)
   g(registry, 'SA.22'); // TESS Satellite            | ANY_SIGNAL(2), DESC
   g(registry, 'SA.37'); // Pandora Satellite         | ANY_SIGNAL, DESC
 
@@ -82,8 +80,7 @@ export function registerSpaceAgencyCards(registry: CardRegistry): void {
   // QUICK MISSION + DESC
   g(registry, 'SA.28'); // Restructuring             | DESC, QM
 
-  // QUICK MISSION + UNHANDLED
-  // TODO: UNHANDLED_EFFECT(signal-token)
+  // QUICK MISSION + signal-token
   g(registry, 'SA.35'); // NASA Exoplanet Archive    | SIGNAL_TOKEN, QM
   g(registry, 'SA.41'); // Exoplanet Survey          | SIGNAL_TOKEN, PUBLICITY, CARD_ANY, QM
 

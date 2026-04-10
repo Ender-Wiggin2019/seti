@@ -237,8 +237,7 @@ export function registerBaseCards(registry: CardRegistry): void {
   g(registry, '12'); // Europa Clipper          | LAND, DESC, EG
   g(registry, '126'); // Euclid Telescope        | OR(ROTATE+TECH), DESC, EG
 
-  // END GAME + UNHANDLED
-  // TODO: UNHANDLED_EFFECT(display-card-signal)
+  // END GAME + display-card-signal
   g(registry, '86'); // Giant Magellan Tel      | DISPLAY_CARD_SIGNAL, EG
 
   // ============================================================
@@ -276,15 +275,13 @@ export function registerBaseCards(registry: CardRegistry): void {
   g(registry, '119'); // PIXL                    | ROTATE, TECH_COMPUTER, DESC
 
   // ============================================================
-  // IMMEDIATE + DESC — telescope/signal + UNHANDLED
-  // TODO: UNHANDLED_EFFECT(display-card-signal)
+  // IMMEDIATE + DESC — telescope/signal
   // ============================================================
   g(registry, '45'); // Allen Telescope Array   | DISPLAY_CARD_SIGNAL(2), DESC
   g(registry, '46'); // ALMA Observatory        | DISPLAY_CARD_SIGNAL(2), DESC
   g(registry, '47'); // Very Large Array        | DISPLAY_CARD_SIGNAL(2), DESC
   g(registry, '65'); // FAST Telescope          | DISPLAY_CARD_SIGNAL(2), ROTATE, TECH_SCAN
 
-  // TODO: UNHANDLED_EFFECT(any-signal)
   g(registry, '83'); // Wow! Signal             | PUBLICITY, ANY_SIGNAL(2)
   g(registry, '118'); // PLATO                   | ANY_SIGNAL(3), DESC
 

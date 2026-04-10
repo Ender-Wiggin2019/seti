@@ -39,7 +39,7 @@ describe('behaviorFromEffects', () => {
     const custom = DESC('desc.card-custom-test');
     const behavior = behaviorFromEffects([custom, e.CREDIT()]);
 
-    expect(behavior.custom).toContain(custom.id);
+    expect(behavior.custom).toContain(custom.desc);
     expect(behavior.gainResources).toEqual({ credits: 1 });
   });
 
@@ -53,5 +53,17 @@ describe('behaviorFromEffects', () => {
   it('maps income icons', () => {
     const behavior = behaviorFromEffects([e.CREDIT_INCOME()]);
     expect(behavior.gainIncome).toBe(EResource.CREDIT);
+  });
+
+  it('maps any-signal/display-card/signal-token effects', () => {
+    const behavior = behaviorFromEffects([
+      e.SIGNAL_ANY(2),
+      e.SIGNAL_DISPLAY_CARD(3),
+      e.SIGNAL_TOKEN(1),
+    ]);
+
+    expect(behavior.markAnySignal).toBe(2);
+    expect(behavior.markDisplayCardSignal).toBe(3);
+    expect(behavior.markSignalToken).toBe(1);
   });
 });

@@ -13,7 +13,7 @@ import {
   ScoreBreakdown,
 } from '@/features/scoring';
 import { useGameContext } from '@/pages/game/GameContext';
-import { EPhase } from '@/types/re-exports';
+import { EPhase, type IPublicMilestoneState } from '@/types/re-exports';
 
 export function GameOverDialog(): React.JSX.Element | null {
   const { gameState } = useGameContext();
@@ -27,7 +27,7 @@ export function GameOverDialog(): React.JSX.Element | null {
         total?: number;
       }
     >;
-    milestones?: IMilestoneItem[];
+    milestones?: IMilestoneItem[] | IPublicMilestoneState;
     goldTiles?: IGoldTileItem[];
   };
 
@@ -50,6 +50,8 @@ export function GameOverDialog(): React.JSX.Element | null {
     });
 
   const winner = rows[0];
+  const milestoneItems = normalizeMilestones(extendedState.milestones);
+  const goldTiles = extendedState.goldTiles ?? [];
 
   return (
     <Dialog open onOpenChange={() => undefined}>
@@ -74,11 +76,8 @@ export function GameOverDialog(): React.JSX.Element | null {
             </p>
           </div>
           <div className='space-y-3'>
-            <MilestoneTrack milestones={extendedState.milestones ?? []} />
-            <GoldTileSelector
-              tiles={extendedState.goldTiles ?? []}
-              selectedTileId={null}
-            />
+            <MilestoneTrack milestones={milestoneItems} />
+            <GoldTileSelector tiles={goldTiles} selectedTileId={null} />
             <img
               src='/assets/seti/boards/scoringReminder.jpg'
               alt='Scoring reminder'
@@ -89,4 +88,53 @@ export function GameOverDialog(): React.JSX.Element | null {
       </DialogContent>
     </Dialog>
   );
+}
+
+function normalizeMilestones(
+  raw: IMilestoneItem[] | IPublicMilestoneState | undefined,
+): IMilestoneItem[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+
+  const items: IMilestoneItem[] = [];
+
+  for (const bucket of raw.goldMilestones) {
+    if (!bucket.resolvedPlayerIds.length) {
+      items.push({
+        id: `gold-${bucket.threshold}`,
+        threshold: bucket.threshold,
+        type: 'gold',
+      });
+      continue;
+    }
+    for (const playerId of bucket.resolvedPlayerIds) {
+      items.push({
+        id: `gold-${bucket.threshold}-${playerId}`,
+        threshold: bucket.threshold,
+        type: 'gold',
+        claimedBy: playerId,
+      });
+    }
+  }
+
+  for (const bucket of raw.neutralMilestones) {
+    if (!bucket.resolvedPlayerIds.length) {
+      items.push({
+        id: `neutral-${bucket.threshold}`,
+        threshold: bucket.threshold,
+        type: 'neutral',
+      });
+      continue;
+    }
+    for (const playerId of bucket.resolvedPlayerIds) {
+      items.push({
+        id: `neutral-${bucket.threshold}-${playerId}`,
+        threshold: bucket.threshold,
+        type: 'neutral',
+        claimedBy: playerId,
+      });
+    }
+  }
+
+  return items;
 }

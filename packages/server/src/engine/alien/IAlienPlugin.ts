@@ -17,5 +17,7 @@ export interface IAlienPlugin {
 
   onRoundEnd?(game: IGame): void;
 
+  onSolarSystemRotated?(game: IGame): void;
+
   onGameEndScoring?(game: IGame, player: IPlayer): number;
 }

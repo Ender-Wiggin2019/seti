@@ -426,13 +426,21 @@ function toPublicPlayerState(
     tuckedIncomeCards: isViewer
       ? cloneValue(player.tuckedIncomeCards as never)
       : undefined,
-    playedMissions: cloneValue(player.playedMissions as never),
-    completedMissions: cloneValue(player.completedMissions) as string[],
-    endGameCards: cloneValue(player.endGameCards as never),
+    playedMissions: isViewer
+      ? cloneValue(player.playedMissions as never)
+      : undefined,
+    completedMissions: isViewer
+      ? (cloneValue(player.completedMissions) as string[])
+      : undefined,
+    completedMissionCount: player.completedMissions.length,
+    endGameCards: isViewer
+      ? cloneValue(player.endGameCards as never)
+      : undefined,
+    endGameCardCount: player.endGameCards.length,
     creditIncome: player.income.computeRoundPayout()[EResource.CREDIT],
     energyIncome: player.income.computeRoundPayout()[EResource.ENERGY],
     cardIncome: player.income.computeRoundPayout()[EResource.CARD],
-  };
+  } as IPublicPlayerState;
 }
 
 function toPublicPlanetaryBoard(game: IGame): IPublicPlanetaryBoard {

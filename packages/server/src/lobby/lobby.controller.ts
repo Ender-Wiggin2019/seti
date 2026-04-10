@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -28,11 +29,12 @@ export class LobbyController {
     @Req() req: { user: IJwtPayload },
     @Body() dto: CreateRoomDto,
   ) {
-    return this.lobbyService.createRoom(
-      req.user.sub,
-      dto.name,
-      dto.playerCount,
-    );
+    const playerCount = dto.playerCount ?? dto.options?.playerCount;
+    if (typeof playerCount !== 'number' || !Number.isInteger(playerCount)) {
+      throw new BadRequestException('playerCount is required');
+    }
+
+    return this.lobbyService.createRoom(req.user.sub, dto.name, playerCount);
   }
 
   @Get('rooms/:id')

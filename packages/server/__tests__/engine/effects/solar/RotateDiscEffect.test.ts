@@ -11,14 +11,20 @@ describe('RotateDiscEffect', () => {
   });
 
   it('rotates next disc when solar system exists', () => {
+    const onSolarSystemRotated = vi.fn();
     const game = {
       solarSystem: {
         rotateNextDisc: vi.fn(() => 2),
+      },
+      alienState: {
+        onSolarSystemRotated,
       },
     };
 
     expect(RotateDiscEffect.canExecute(game as never)).toBe(true);
     expect(RotateDiscEffect.execute(game as never)).toEqual({ rotatedDisc: 2 });
     expect(game.solarSystem.rotateNextDisc).toHaveBeenCalledOnce();
+    expect(onSolarSystemRotated).toHaveBeenCalledOnce();
+    expect(onSolarSystemRotated).toHaveBeenCalledWith(game);
   });
 });
