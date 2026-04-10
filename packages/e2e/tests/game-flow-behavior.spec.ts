@@ -6,6 +6,7 @@ import {
 } from '../helpers/api';
 import { injectAuth } from '../helpers/auth';
 import { sel } from '../helpers/selectors';
+import { waitForServerReady } from '../helpers/server-ready';
 
 function getCardId(card: { id: string } | string): string {
   return typeof card === 'string' ? card : card.id;
@@ -151,6 +152,7 @@ test('behavior flow e2e (api-driven): play -> launch -> move -> venus', async ({
   request,
 }, testInfo) => {
   const api = new SetiApi(request);
+  await waitForServerReady(request);
   const session = await api.createBehaviorFlowSession();
   const aliceSession = session.players.find((p) => p.user.name === 'Alice');
   const bobSession = session.players.find((p) => p.user.name === 'Bob');

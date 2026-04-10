@@ -1,5 +1,4 @@
 import {
-  type APIRequestContext,
   type Browser,
   expect,
   type Page,
@@ -9,28 +8,12 @@ import {
 import { SetiApi } from '../helpers/api';
 import { injectAuth } from '../helpers/auth';
 import { sel } from '../helpers/selectors';
+import { waitForServerReady } from '../helpers/server-ready';
 
-const SERVER_URL = process.env.SERVER_URL ?? 'http://localhost:3000';
 type TAuthSession = {
   accessToken: string;
   user: { id: string; name: string; email: string };
 };
-
-async function waitForServerReady(request: APIRequestContext): Promise<void> {
-  for (let attempt = 0; attempt < 20; attempt++) {
-    try {
-      const res = await request.get(`${SERVER_URL}/auth/me`);
-      if (res.status() === 401) {
-        return;
-      }
-    } catch {
-      // Ignore boot-time network failures and retry.
-    }
-    await new Promise((resolve) => setTimeout(resolve, 500));
-  }
-
-  throw new Error('Server did not become ready in time');
-}
 
 async function attachStepScreenshot(
   page: Page,
