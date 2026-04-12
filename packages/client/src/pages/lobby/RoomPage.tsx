@@ -73,6 +73,8 @@ export function RoomPage(): React.JSX.Element {
   const isInRoom = room.players.some((p) => p.id === userId);
   const isFull = room.players.length >= room.options.playerCount;
   const canStart = isHost && isFull && room.status === ERoomStatus.WAITING;
+  const canEnterGame = isInRoom && room.status === ERoomStatus.PLAYING;
+  const canLeave = isInRoom && !isHost && room.status === ERoomStatus.WAITING;
 
   const emptySlots = Array.from(
     { length: room.options.playerCount - room.players.length },
@@ -136,13 +138,25 @@ export function RoomPage(): React.JSX.Element {
                 {joinMutation.isPending ? 'Joining...' : 'Join Mission'}
               </Button>
             )}
-            {isInRoom && !isHost && (
+            {canLeave && (
               <Button
                 variant='ghost'
                 onClick={() => leaveMutation.mutate()}
                 disabled={leaveMutation.isPending}
               >
                 Leave Mission
+              </Button>
+            )}
+            {canEnterGame && (
+              <Button
+                onClick={() =>
+                  navigate({
+                    to: '/game/$gameId',
+                    params: { gameId: room.gameId ?? room.id },
+                  })
+                }
+              >
+                Enter Game
               </Button>
             )}
             {canStart && (

@@ -66,6 +66,10 @@ export const useAuthStore = create<IAuthStoreState>()(
     (set) => ({
       ...INITIAL_STATE,
       login: (token, user) => {
+        if (!token) {
+          set(INITIAL_STATE);
+          return;
+        }
         set({ token, user, isAuthenticated: true });
       },
       setUser: (user) => {

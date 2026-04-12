@@ -123,6 +123,9 @@ export class WsTestClient {
 
       this.socket.on('game:state', (data: { gameState: IWsGameState }) => {
         this._gameState = data.gameState;
+        // Clear stale pending input snapshot; if new input is needed
+        // server will emit a fresh `game:waiting` immediately after.
+        this._pendingInput = null;
         const waiter = this.stateWaiters.shift();
         if (waiter) waiter(data.gameState);
       });

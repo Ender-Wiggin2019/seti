@@ -8,18 +8,32 @@ import type {
   IUpdateProfileRequest,
 } from '@/api/types';
 
+interface IServerAuthResponse {
+  token?: string;
+  accessToken?: string;
+  user: IAuthUser;
+}
+
+function normalizeAuthResponse(data: IServerAuthResponse): ILoginResponse {
+  const token = data.token ?? data.accessToken;
+  if (!token) {
+    throw new Error('Invalid auth response: missing token');
+  }
+  return { token, user: data.user };
+}
+
 export const authApi = {
   login: async (data: ILoginRequest): Promise<ILoginResponse> => {
-    const res = await httpClient.post<ILoginResponse>('/auth/login', data);
-    return res.data;
+    const res = await httpClient.post<IServerAuthResponse>('/auth/login', data);
+    return normalizeAuthResponse(res.data);
   },
 
   register: async (data: IRegisterRequest): Promise<IRegisterResponse> => {
-    const res = await httpClient.post<IRegisterResponse>(
+    const res = await httpClient.post<IServerAuthResponse>(
       '/auth/register',
       data,
     );
-    return res.data;
+    return normalizeAuthResponse(res.data);
   },
 
   getMe: async (): Promise<IAuthUser> => {
