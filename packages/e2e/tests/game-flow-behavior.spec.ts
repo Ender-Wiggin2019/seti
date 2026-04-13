@@ -4,6 +4,9 @@ import { sel } from '../helpers/selectors';
 import { waitForServerReady } from '../helpers/server-ready';
 import { type IWsGameState, WsTestClient } from '../helpers/ws-client';
 
+const BEHAVIOR_FLOW_SEED = 'behavior-flow-seed';
+const BEHAVIOR_FLOW_SCENARIO_PRESET = 'behavior-flow';
+
 interface IUserCred {
   name: string;
   email: string;
@@ -18,43 +21,31 @@ function getPlayer(state: IWsGameState, playerId: string) {
   return player;
 }
 
+function getCardIds(cards: Array<{ id: string } | string> | undefined): string[] {
+  return (cards ?? []).map((card) => (typeof card === 'string' ? card : card.id));
+}
+
 function getOptionId(entry: { id: string; label?: string } | string): string {
   return typeof entry === 'string' ? entry : entry.id;
 }
 
-function pickCardIndexToPlay(player: ReturnType<typeof getPlayer>): number {
-  const cards = player.hand ?? [];
-  const credits = player.resources.credits;
-
-  const affordableCreditCardIndex = cards.findIndex((card) => {
-    if (typeof card === 'string') {
-      return false;
-    }
-    const price = typeof card.price === 'number' ? card.price : Number.NaN;
-    const priceType = card.priceType ?? 'credit';
-    return Number.isFinite(price) && priceType === 'credit' && price <= credits;
-  });
-
-  return affordableCreditCardIndex;
+function getProbeSpaceId(state: IWsGameState, playerId: string): string | undefined {
+  return state.solarSystem.probes.find((probe) => probe.playerId === playerId)?.spaceId;
 }
 
-function findSimpleProbePath(
-  state: IWsGameState,
-  playerId: string,
-): string[] | null {
-  const probe = state.solarSystem.probes.find((p) => p.playerId === playerId);
-  if (!probe) {
-    return null;
+function getDiscAngles(state: IWsGameState): number[] {
+  return (state.solarSystem.discs ?? []).map((disc) => disc.angle);
+}
+
+function getResource(
+  player: ReturnType<typeof getPlayer>,
+  resource: 'credit' | 'energy' | 'publicity' | 'data',
+): number {
+  const resources = player.resources as Record<string, number | undefined>;
+  if (resource === 'credit') {
+    return resources.credit ?? resources.credits ?? 0;
   }
-
-  const neighbors = state.solarSystem.adjacency[probe.spaceId] ?? [];
-  const target = neighbors.find((spaceId) => {
-    const elementTypes =
-      state.solarSystem.spaceStates?.[spaceId]?.elementTypes ?? [];
-    return !elementTypes.includes('SUN');
-  });
-
-  return target ? [probe.spaceId, target] : null;
+  return resources[resource] ?? 0;
 }
 
 function assertNoNewErrors(
@@ -66,6 +57,53 @@ function assertNoNewErrors(
   expect(newErrors, `${stepName} should not emit game:error`).toEqual([]);
 }
 
+async function waitForNextState(
+  ws: WsTestClient,
+  stepName: string,
+  timeoutMs = 10_000,
+): Promise<IWsGameState> {
+  try {
+    return await ws.waitForState(timeoutMs);
+  } catch (error) {
+    const state = ws.gameState;
+    const latestError = ws.errors.at(-1);
+    const pendingInput = ws.pendingInput;
+    throw new Error(
+      `${stepName}: ${error instanceof Error ? error.message : String(error)} | currentPlayer=${state?.currentPlayerId ?? 'unknown'} round=${state?.round ?? 'unknown'} latestError=${JSON.stringify(latestError ?? null)} pendingInput=${JSON.stringify(pendingInput ?? null)}`,
+    );
+  }
+}
+
+async function waitForProjectedState(
+  api: SetiApi,
+  gameId: string,
+  viewerId: string,
+  predicate: (state: IWsGameState) => boolean,
+  stepName: string,
+  timeoutMs = 10_000,
+): Promise<IWsGameState> {
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    try {
+      const state = (await api.debugGetState(
+        gameId,
+        viewerId,
+      )) as unknown as IWsGameState;
+      if (predicate(state)) {
+        return state;
+      }
+    } catch (error) {
+      if (!String(error).includes('429')) {
+        throw error;
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 300));
+  }
+
+  throw new Error(`${stepName}: projected state did not reach expected shape`);
+}
+
 async function sendMainActionAndExpectState(
   ws: WsTestClient,
   gameId: string,
@@ -73,8 +111,31 @@ async function sendMainActionAndExpectState(
   stepName: string,
 ): Promise<IWsGameState> {
   const beforeErrorCount = ws.errors.length;
+  const nextStatePromise = waitForNextState(ws, stepName);
   ws.sendAction(gameId, action);
-  const next = await ws.waitForState(10_000);
+  const next = await nextStatePromise;
+  assertNoNewErrors(ws, beforeErrorCount, stepName);
+  return next;
+}
+
+async function sendMainActionAndWaitForProjection(
+  ws: WsTestClient,
+  api: SetiApi,
+  gameId: string,
+  viewerId: string,
+  action: Record<string, unknown>,
+  stepName: string,
+  predicate: (state: IWsGameState) => boolean,
+): Promise<IWsGameState> {
+  const beforeErrorCount = ws.errors.length;
+  ws.sendAction(gameId, action);
+  const next = await waitForProjectedState(
+    api,
+    gameId,
+    viewerId,
+    predicate,
+    stepName,
+  );
   assertNoNewErrors(ws, beforeErrorCount, stepName);
   return next;
 }
@@ -86,8 +147,31 @@ async function sendFreeActionAndExpectState(
   stepName: string,
 ): Promise<IWsGameState> {
   const beforeErrorCount = ws.errors.length;
+  const nextStatePromise = waitForNextState(ws, stepName);
   ws.sendFreeAction(gameId, action);
-  const next = await ws.waitForState(10_000);
+  const next = await nextStatePromise;
+  assertNoNewErrors(ws, beforeErrorCount, stepName);
+  return next;
+}
+
+async function sendFreeActionAndWaitForProjection(
+  ws: WsTestClient,
+  api: SetiApi,
+  gameId: string,
+  viewerId: string,
+  action: Record<string, unknown>,
+  stepName: string,
+  predicate: (state: IWsGameState) => boolean,
+): Promise<IWsGameState> {
+  const beforeErrorCount = ws.errors.length;
+  ws.sendFreeAction(gameId, action);
+  const next = await waitForProjectedState(
+    api,
+    gameId,
+    viewerId,
+    predicate,
+    stepName,
+  );
   assertNoNewErrors(ws, beforeErrorCount, stepName);
   return next;
 }
@@ -99,70 +183,84 @@ async function sendInputAndExpectState(
   stepName: string,
 ): Promise<IWsGameState> {
   const beforeErrorCount = ws.errors.length;
+  const nextStatePromise = waitForNextState(ws, stepName);
   ws.sendInput(gameId, inputResponse);
-  const next = await ws.waitForState(10_000);
+  const next = await nextStatePromise;
   assertNoNewErrors(ws, beforeErrorCount, stepName);
   return next;
 }
 
 async function resolvePendingInputs(
+  api: SetiApi,
   ws: WsTestClient,
   gameId: string,
   playerId: string,
+  preferredOptionIds: string[] = [],
 ): Promise<void> {
   for (let attempt = 0; attempt < 20; attempt += 1) {
-    const pending = ws.pendingInput;
-    if (!pending || pending.playerId !== playerId) {
+    let input = null;
+    try {
+      input = await api.debugGetPendingInput(gameId, playerId);
+    } catch (error) {
+      if (!String(error).includes('429')) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      continue;
+    }
+    if (!input) {
       return;
     }
-
-    const input = pending.input;
     const inputType = String(input.type).toLowerCase();
 
     if (inputType === 'option') {
       const options = (input.options ?? []) as Array<
         { id: string; label?: string } | string
       >;
-      if (!options.length) return;
+      if (!options.length) {
+        return;
+      }
 
       const optionIds = options.map(getOptionId);
       const selectedOptionId =
+        preferredOptionIds.find((id) => optionIds.includes(id)) ??
         optionIds.find((id) => id === 'done') ??
         optionIds.find((id) => id === 'skip-missions') ??
         optionIds[0];
 
-      await sendInputAndExpectState(
-        ws,
-        gameId,
-        { type: 'OPTION', optionId: selectedOptionId },
-        `resolve OPTION(${selectedOptionId})`,
-      );
+      const stepName = `resolve OPTION(${selectedOptionId})`;
+      const beforeErrorCount = ws.errors.length;
+      ws.sendInput(gameId, { type: input.type, optionId: selectedOptionId });
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      assertNoNewErrors(ws, beforeErrorCount, stepName);
       continue;
     }
 
     if (inputType === 'card') {
       const cardId = input.cards?.[0]?.id;
-      if (!cardId) return;
+      if (!cardId) {
+        return;
+      }
 
-      await sendInputAndExpectState(
-        ws,
-        gameId,
-        { type: 'CARD', cardIds: [cardId] },
-        `resolve CARD(${cardId})`,
-      );
+      const stepName = `resolve CARD(${cardId})`;
+      const beforeErrorCount = ws.errors.length;
+      ws.sendInput(gameId, { type: input.type, cardIds: [cardId] });
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      assertNoNewErrors(ws, beforeErrorCount, stepName);
       continue;
     }
 
     if (inputType === 'endofround') {
       const cardId = input.cards?.[0]?.id;
-      if (!cardId) return;
+      if (!cardId) {
+        return;
+      }
 
-      await sendInputAndExpectState(
-        ws,
-        gameId,
-        { type: 'END_OF_ROUND', cardId },
-        `resolve END_OF_ROUND(${cardId})`,
-      );
+      const stepName = `resolve END_OF_ROUND(${cardId})`;
+      const beforeErrorCount = ws.errors.length;
+      ws.sendInput(gameId, { type: input.type, cardId });
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      assertNoNewErrors(ws, beforeErrorCount, stepName);
       continue;
     }
 
@@ -171,14 +269,15 @@ async function resolvePendingInputs(
         { id: string; label?: string } | string
       >;
       const trace = options.length ? getOptionId(options[0]) : null;
-      if (!trace) return;
+      if (!trace) {
+        return;
+      }
 
-      await sendInputAndExpectState(
-        ws,
-        gameId,
-        { type: 'TRACE', trace },
-        `resolve TRACE(${trace})`,
-      );
+      const stepName = `resolve TRACE(${trace})`;
+      const beforeErrorCount = ws.errors.length;
+      ws.sendInput(gameId, { type: input.type, trace });
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      assertNoNewErrors(ws, beforeErrorCount, stepName);
       continue;
     }
 
@@ -187,14 +286,15 @@ async function resolvePendingInputs(
         { id: string; label?: string } | string
       >;
       const tech = options.length ? getOptionId(options[0]) : null;
-      if (!tech) return;
+      if (!tech) {
+        return;
+      }
 
-      await sendInputAndExpectState(
-        ws,
-        gameId,
-        { type: 'TECH', tech },
-        `resolve TECH(${tech})`,
-      );
+      const stepName = `resolve TECH(${tech})`;
+      const beforeErrorCount = ws.errors.length;
+      ws.sendInput(gameId, { type: input.type, tech });
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      assertNoNewErrors(ws, beforeErrorCount, stepName);
       continue;
     }
 
@@ -203,14 +303,15 @@ async function resolvePendingInputs(
         { id: string; label?: string } | string
       >;
       const tileId = options.length ? getOptionId(options[0]) : null;
-      if (!tileId) return;
+      if (!tileId) {
+        return;
+      }
 
-      await sendInputAndExpectState(
-        ws,
-        gameId,
-        { type: 'GOLD_TILE', tileId },
-        `resolve GOLD_TILE(${tileId})`,
-      );
+      const stepName = `resolve GOLD_TILE(${tileId})`;
+      const beforeErrorCount = ws.errors.length;
+      ws.sendInput(gameId, { type: input.type, tileId });
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      assertNoNewErrors(ws, beforeErrorCount, stepName);
       continue;
     }
 
@@ -219,13 +320,14 @@ async function resolvePendingInputs(
 }
 
 async function ensurePlayerTurn(
+  api: SetiApi,
   actorWs: WsTestClient,
   opponentWs: WsTestClient,
   gameId: string,
   actorId: string,
   opponentId: string,
 ): Promise<void> {
-  for (let round = 0; round < 8; round += 1) {
+  for (let attempt = 0; attempt < 8; attempt += 1) {
     const state = actorWs.gameState ?? (await actorWs.waitForState(10_000));
     if (state.currentPlayerId === actorId) {
       return;
@@ -237,16 +339,17 @@ async function ensurePlayerTurn(
       );
     }
 
-    await resolvePendingInputs(opponentWs, gameId, opponentId);
-    await sendMainActionAndExpectState(
+    await resolvePendingInputs(api, opponentWs, gameId, opponentId);
+    await sendMainActionAndWaitForProjection(
       opponentWs,
+      api,
       gameId,
+      actorId,
       { type: 'PASS' },
-      'opponent PASS to hand turn over',
+      'opponent PASS to return turn',
+      (nextState) => nextState.currentPlayerId === actorId,
     );
-    await resolvePendingInputs(opponentWs, gameId, opponentId);
-
-    await actorWs.waitForState(10_000).catch(() => undefined);
+    await resolvePendingInputs(api, opponentWs, gameId, opponentId);
   }
 
   throw new Error(`Failed to transfer turn to ${actorId} within retry budget`);
@@ -282,7 +385,7 @@ async function attachStepScreenshot(
   });
 }
 
-test('behavior flow e2e (real path): register/login -> room -> game -> actions', async ({
+test('behavior flow e2e: real auth/lobby path with deterministic engine scenario', async ({
   page,
   request,
 }, testInfo) => {
@@ -310,7 +413,10 @@ test('behavior flow e2e (real path): register/login -> room -> game -> actions',
   const hostSession = await hostApi.login(host.email, host.password);
   const guestSession = await guestApi.login(guest.email, guest.password);
 
-  const room = await hostApi.createRoom(`Behavior Room ${suffix}`, 2);
+  const room = await hostApi.createRoom(`Behavior Room ${suffix}`, 2, {
+    seed: BEHAVIOR_FLOW_SEED,
+    scenarioPreset: BEHAVIOR_FLOW_SCENARIO_PRESET,
+  });
   await guestApi.joinRoom(room.id);
 
   await loginByUi(page, host);
@@ -327,7 +433,7 @@ test('behavior flow e2e (real path): register/login -> room -> game -> actions',
   await expect(page.locator(sel.bottomDashboard)).toBeVisible({
     timeout: 15_000,
   });
-  await attachStepScreenshot(page, testInfo, 'behavior-real-flow-game-loaded');
+  await attachStepScreenshot(page, testInfo, 'behavior-flow-loaded');
 
   const resolvedGameId = gameId as string;
   const hostId = hostSession.user.id;
@@ -344,8 +450,8 @@ test('behavior flow e2e (real path): register/login -> room -> game -> actions',
     guestWs.joinGame(resolvedGameId);
 
     await Promise.all([
-      hostWs.waitForState(10_000),
-      guestWs.waitForState(10_000),
+      waitForNextState(hostWs, 'host initial room join'),
+      waitForNextState(guestWs, 'guest initial room join'),
     ]);
 
     const initialState = hostWs.gameState;
@@ -353,157 +459,233 @@ test('behavior flow e2e (real path): register/login -> room -> game -> actions',
     expect(initialState?.round).toBe(1);
     expect(initialState?.players).toHaveLength(2);
 
-    await ensurePlayerTurn(hostWs, guestWs, resolvedGameId, hostId, guestId);
+    const initialHost = getPlayer(initialState!, hostId);
+    expect(getCardIds(initialHost.hand)).toEqual(['80', '16', '130', '110']);
+    expect(getResource(initialHost, 'credit')).toBe(4);
+    expect(getResource(initialHost, 'energy')).toBe(4);
+    expect(getResource(initialHost, 'publicity')).toBe(4);
+    expect(initialHost.score).toBe(1);
 
-    // 1) PLAY_CARD (when there is an affordable credit-cost card)
-    let hostState = hostWs.gameState!;
-    let hostPlayer = getPlayer(hostState, hostId);
-    const cardIndex = pickCardIndexToPlay(hostPlayer);
-
-    if (cardIndex >= 0) {
-      const beforeSnapshot = {
-        handSize: hostPlayer.handSize,
-        credits: hostPlayer.resources.credits,
-        score: hostPlayer.score,
-      };
-
-      await sendMainActionAndExpectState(
-        hostWs,
-        resolvedGameId,
-        { type: 'PLAY_CARD', payload: { cardIndex } },
-        'host PLAY_CARD',
-      );
-      await resolvePendingInputs(hostWs, resolvedGameId, hostId);
-
-      hostState = hostWs.gameState!;
-      hostPlayer = getPlayer(hostState, hostId);
-      const afterSnapshot = {
-        handSize: hostPlayer.handSize,
-        credits: hostPlayer.resources.credits,
-        score: hostPlayer.score,
-      };
-
-      expect(afterSnapshot).not.toEqual(beforeSnapshot);
-    }
-
-    // 2) LAUNCH_PROBE (if resources allow)
-    await ensurePlayerTurn(hostWs, guestWs, resolvedGameId, hostId, guestId);
-    hostState = hostWs.gameState!;
-    hostPlayer = getPlayer(hostState, hostId);
-
-    if (hostPlayer.resources.credits >= 2) {
-      const probesBefore = hostPlayer.probesInSpace ?? 0;
-
-      await sendMainActionAndExpectState(
-        hostWs,
-        resolvedGameId,
-        { type: 'LAUNCH_PROBE' },
-        'host LAUNCH_PROBE',
-      );
-      await resolvePendingInputs(hostWs, resolvedGameId, hostId);
-
-      hostState = hostWs.gameState!;
-      hostPlayer = getPlayer(hostState, hostId);
-      expect(hostPlayer.probesInSpace ?? 0).toBeGreaterThanOrEqual(
-        probesBefore + 1,
-      );
-    }
-
-    // 3) MOVEMENT chain (convert energy if needed)
-    hostState = hostWs.gameState!;
-    hostPlayer = getPlayer(hostState, hostId);
-
-    if ((hostPlayer.probesInSpace ?? 0) > 0) {
-      if (
-        (hostPlayer.movementPoints ?? 0) <= 0 &&
-        hostPlayer.resources.energy > 0
-      ) {
-        await sendFreeActionAndExpectState(
-          hostWs,
-          resolvedGameId,
-          { type: 'CONVERT_ENERGY_TO_MOVEMENT', amount: 1 },
-          'host CONVERT_ENERGY_TO_MOVEMENT',
-        );
-      }
-
-      hostState = hostWs.gameState!;
-      hostPlayer = getPlayer(hostState, hostId);
-
-      const path = findSimpleProbePath(hostState, hostId);
-      if (
-        path &&
-        ((hostPlayer.movementPoints ?? 0) > 0 ||
-          hostPlayer.resources.energy > 0)
-      ) {
-        const probeSpaceBefore = hostState.solarSystem.probes.find(
-          (probe) => probe.playerId === hostId,
-        )?.spaceId;
-
-        await sendFreeActionAndExpectState(
-          hostWs,
-          resolvedGameId,
-          { type: 'MOVEMENT', path },
-          'host MOVEMENT',
-        );
-
-        hostState = hostWs.gameState!;
-        const probeSpaceAfter = hostState.solarSystem.probes.find(
-          (probe) => probe.playerId === hostId,
-        )?.spaceId;
-
-        if (probeSpaceBefore && probeSpaceAfter) {
-          expect(probeSpaceAfter).not.toBe(probeSpaceBefore);
-        }
-      }
-    }
-
-    // 4) SCAN (if resources allow)
-    await ensurePlayerTurn(hostWs, guestWs, resolvedGameId, hostId, guestId);
-    hostState = hostWs.gameState!;
-    hostPlayer = getPlayer(hostState, hostId);
-
-    if (hostPlayer.resources.credits >= 1 && hostPlayer.resources.energy >= 2) {
-      const creditsBefore = hostPlayer.resources.credits;
-      const energyBefore = hostPlayer.resources.energy;
-
-      await sendMainActionAndExpectState(
-        hostWs,
-        resolvedGameId,
-        { type: 'SCAN' },
-        'host SCAN',
-      );
-      await resolvePendingInputs(hostWs, resolvedGameId, hostId);
-
-      hostState = hostWs.gameState!;
-      hostPlayer = getPlayer(hostState, hostId);
-      expect(hostPlayer.resources.credits).toBeLessThanOrEqual(
-        creditsBefore - 1,
-      );
-      expect(hostPlayer.resources.energy).toBeLessThanOrEqual(energyBefore - 2);
-    }
-
-    // 5) PASS and verify turn progression
-    await ensurePlayerTurn(hostWs, guestWs, resolvedGameId, hostId, guestId);
-    await sendMainActionAndExpectState(
+    await ensurePlayerTurn(
+      hostApi,
       hostWs,
+      guestWs,
       resolvedGameId,
-      { type: 'PASS' },
-      'host PASS',
+      hostId,
+      guestId,
     );
-    await resolvePendingInputs(hostWs, resolvedGameId, hostId);
 
-    const postPass = await hostWs.waitForCondition(
-      (state) => state.currentPlayerId !== hostId || state.round > 1,
-      15_000,
+    let hostState = await sendMainActionAndWaitForProjection(
+      hostWs,
+      hostApi,
+      resolvedGameId,
+      hostId,
+      { type: 'PLAY_CARD', payload: { cardIndex: 0 } },
+      'host PLAY_CARD(80)',
+      (state) => {
+        const player = getPlayer(state, hostId);
+        return (
+          getCardIds(player.hand).join(',') === '16,130,110' &&
+          getCardIds(player.playedMissions).includes('80')
+        );
+      },
     );
-    expect(postPass.round).toBeGreaterThanOrEqual(1);
+    await resolvePendingInputs(hostApi, hostWs, resolvedGameId, hostId);
+    hostState = await waitForProjectedState(
+      hostApi,
+      resolvedGameId,
+      hostId,
+      () => true,
+      'refresh projected state after play-card inputs',
+    );
+
+    let hostPlayer = getPlayer(hostState, hostId);
+    expect(getResource(hostPlayer, 'credit')).toBe(3);
+    expect(getCardIds(hostPlayer.hand)).toEqual(['16', '130', '110']);
+    expect(getCardIds(hostPlayer.playedMissions)).toContain('80');
+
+    const rotationBeforeGuestPass = getDiscAngles(hostState);
+    if (hostState.currentPlayerId !== hostId) {
+      await resolvePendingInputs(hostApi, guestWs, resolvedGameId, guestId);
+      const guestPassErrorCount = guestWs.errors.length;
+      guestWs.sendAction(resolvedGameId, { type: 'PASS' });
+      hostState = await waitForProjectedState(
+        hostApi,
+        resolvedGameId,
+        hostId,
+        () => true,
+        'guest PASS after host played card',
+      );
+      assertNoNewErrors(
+        guestWs,
+        guestPassErrorCount,
+        'guest PASS after host played card',
+      );
+      await resolvePendingInputs(hostApi, guestWs, resolvedGameId, guestId);
+      hostState = await waitForProjectedState(
+        hostApi,
+        resolvedGameId,
+        hostId,
+        (state) => state.currentPlayerId === hostId,
+        'guest PASS resolves back to host turn',
+      );
+      expect(getDiscAngles(hostState)).not.toEqual(rotationBeforeGuestPass);
+    }
+    expect(hostState.currentPlayerId).toBe(hostId);
+
+    hostState = await sendMainActionAndWaitForProjection(
+      hostWs,
+      hostApi,
+      resolvedGameId,
+      hostId,
+      { type: 'LAUNCH_PROBE' },
+      'host LAUNCH_PROBE',
+      (state) => getProbeSpaceId(state, hostId) === 'ring-1-cell-4',
+    );
+    await resolvePendingInputs(hostApi, hostWs, resolvedGameId, hostId, [
+      'complete-80-0',
+      'complete-80-1',
+      'skip-missions',
+    ]);
+
+    hostState = await waitForProjectedState(
+      hostApi,
+      resolvedGameId,
+      hostId,
+      () => true,
+      'refresh projected state after launch inputs',
+    );
+    hostPlayer = getPlayer(hostState, hostId);
+    expect(getResource(hostPlayer, 'credit')).toBe(1);
+    expect(hostPlayer.probesInSpace).toBe(1);
+    expect(hostPlayer.movementPoints).toBe(2);
+    expect(getProbeSpaceId(hostState, hostId)).toBe('ring-1-cell-4');
+
+    hostState = await sendFreeActionAndWaitForProjection(
+      hostWs,
+      hostApi,
+      resolvedGameId,
+      hostId,
+      { type: 'MOVEMENT', path: ['ring-1-cell-4', 'ring-1-cell-3'] },
+      'host MOVEMENT Earth->Asteroid',
+      (state) => getProbeSpaceId(state, hostId) === 'ring-1-cell-3',
+    );
+    await resolvePendingInputs(hostApi, hostWs, resolvedGameId, hostId);
+
+    hostPlayer = getPlayer(hostState, hostId);
+    expect(hostPlayer.movementPoints).toBe(1);
+    expect(getProbeSpaceId(hostState, hostId)).toBe('ring-1-cell-3');
+
+    hostState = await sendFreeActionAndWaitForProjection(
+      hostWs,
+      hostApi,
+      resolvedGameId,
+      hostId,
+      { type: 'CONVERT_ENERGY_TO_MOVEMENT', amount: 1 },
+      'host CONVERT_ENERGY_TO_MOVEMENT',
+      (state) => getResource(getPlayer(state, hostId), 'energy') === 3,
+    );
+    await resolvePendingInputs(hostApi, hostWs, resolvedGameId, hostId);
+
+    hostPlayer = getPlayer(hostState, hostId);
+    expect(getResource(hostPlayer, 'energy')).toBe(3);
+    expect(hostPlayer.movementPoints).toBe(2);
+
+    hostState = await sendFreeActionAndWaitForProjection(
+      hostWs,
+      hostApi,
+      resolvedGameId,
+      hostId,
+      { type: 'MOVEMENT', path: ['ring-1-cell-3', 'ring-1-cell-2'] },
+      'host MOVEMENT Asteroid->Venus',
+      (state) => getProbeSpaceId(state, hostId) === 'ring-1-cell-2',
+    );
+    await resolvePendingInputs(hostApi, hostWs, resolvedGameId, hostId);
+
+    hostPlayer = getPlayer(hostState, hostId);
+    expect(getResource(hostPlayer, 'publicity')).toBe(5);
+    expect(hostPlayer.movementPoints).toBe(0);
+    expect(getProbeSpaceId(hostState, hostId)).toBe('ring-1-cell-2');
+
+    const hostPassErrorCount = hostWs.errors.length;
+    hostWs.sendAction(resolvedGameId, { type: 'PASS' });
+    hostState = await waitForProjectedState(
+      hostApi,
+      resolvedGameId,
+      hostId,
+      () => true,
+      'host PASS to end round',
+    );
+    assertNoNewErrors(hostWs, hostPassErrorCount, 'host PASS to end round');
+    await resolvePendingInputs(hostApi, hostWs, resolvedGameId, hostId);
+
+    const roundTwoState = await waitForProjectedState(
+      hostApi,
+      resolvedGameId,
+      hostId,
+      (state) => state.round === 2,
+      'host PASS resolves round 2',
+    );
+    hostState = roundTwoState;
+    expect(roundTwoState.currentPlayerId).toBe(guestId);
+
+    const guestRoundTwoPassErrorCount = guestWs.errors.length;
+    guestWs.sendAction(resolvedGameId, { type: 'PASS' });
+    hostState = await waitForProjectedState(
+      hostApi,
+      resolvedGameId,
+      hostId,
+      () => true,
+      'guest PASS in round 2',
+    );
+    assertNoNewErrors(
+      guestWs,
+      guestRoundTwoPassErrorCount,
+      'guest PASS in round 2',
+    );
+    await resolvePendingInputs(hostApi, guestWs, resolvedGameId, guestId);
+    hostState = await waitForProjectedState(
+      hostApi,
+      resolvedGameId,
+      hostId,
+      (state) => state.currentPlayerId === hostId,
+      'guest PASS resolves back to host in round 2',
+    );
+
+    hostPlayer = getPlayer(hostState, hostId);
+    expect(hostState.round).toBe(2);
+    expect(hostState.currentPlayerId).toBe(hostId);
+    expect(getResource(hostPlayer, 'credit')).toBeGreaterThanOrEqual(1);
+    expect(getResource(hostPlayer, 'energy')).toBeGreaterThanOrEqual(2);
+
+    const creditsBeforeScan = getResource(hostPlayer, 'credit');
+    const energyBeforeScan = getResource(hostPlayer, 'energy');
+
+    hostState = await sendMainActionAndWaitForProjection(
+      hostWs,
+      hostApi,
+      resolvedGameId,
+      hostId,
+      { type: 'SCAN' },
+      'host SCAN in round 2',
+      (state) =>
+        getResource(getPlayer(state, hostId), 'credit') <=
+          creditsBeforeScan - 1 &&
+        getResource(getPlayer(state, hostId), 'energy') <=
+          energyBeforeScan - 2,
+    );
+    await resolvePendingInputs(hostApi, hostWs, resolvedGameId, hostId);
+
+    hostPlayer = getPlayer(hostState, hostId);
+    expect(getResource(hostPlayer, 'credit')).toBeLessThanOrEqual(
+      creditsBeforeScan - 1,
+    );
+    expect(getResource(hostPlayer, 'energy')).toBeLessThanOrEqual(
+      energyBeforeScan - 2,
+    );
 
     await expect(page.locator(sel.bottomDashboard)).toBeVisible();
-    await attachStepScreenshot(
-      page,
-      testInfo,
-      'behavior-real-flow-after-actions',
-    );
+    await attachStepScreenshot(page, testInfo, 'behavior-flow-after-scan');
   } finally {
     hostWs.disconnect();
     guestWs.disconnect();

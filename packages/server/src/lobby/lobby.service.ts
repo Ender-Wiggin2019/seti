@@ -15,9 +15,14 @@ import { GameRepository } from '@/persistence/repository/GameRepository.js';
 import { games } from '@/persistence/schema/games.js';
 import { gamePlayers } from '@/persistence/schema/players.js';
 import { users } from '@/persistence/schema/users.js';
+import {
+  applyBehaviorFlowScenario,
+  BEHAVIOR_FLOW_SCENARIO_PRESET,
+} from '@/testing/behaviorFlowScenario.js';
 import type { IRoomPlayer, IRoomResponse } from './dto/RoomResponseDto.js';
 
 const PLAYER_COLORS = ['red', 'blue', 'green', 'yellow'];
+type TRoomOptions = Partial<IGameOptions> & { scenarioPreset?: string };
 
 @Injectable()
 export class LobbyService {
@@ -31,9 +36,14 @@ export class LobbyService {
     userId: string,
     name: string,
     playerCount: number,
+    seed?: string,
+    scenarioPreset?: string,
   ): Promise<IRoomResponse> {
     const gameId = randomUUID();
     const options = createGameOptions({ playerCount });
+    const roomOptions: TRoomOptions = scenarioPreset
+      ? { ...options, scenarioPreset }
+      : options;
 
     await this.db.insert(games).values({
       id: gameId,
@@ -42,8 +52,8 @@ export class LobbyService {
       status: 'waiting',
       playerCount,
       currentRound: 0,
-      seed: randomUUID(),
-      options,
+      seed: seed ?? randomUUID(),
+      options: roomOptions,
     });
 
     await this.db.insert(gamePlayers).values({
@@ -221,15 +231,20 @@ export class LobbyService {
       seatIndex: p.seatIndex,
     }));
 
-    const options = room.options as Partial<IGameOptions>;
+    const options = room.options as TRoomOptions;
+    const { scenarioPreset, ...gameOptions } = options;
     const seed = room.seed;
 
     const game = Game.create(
       identities,
-      { ...options, playerCount: players.length },
+      { ...gameOptions, playerCount: players.length },
       seed,
       gameId,
     );
+
+    if (scenarioPreset === BEHAVIOR_FLOW_SCENARIO_PRESET) {
+      applyBehaviorFlowScenario(game);
+    }
 
     await this.gameRepo.startFromLobby(game);
 

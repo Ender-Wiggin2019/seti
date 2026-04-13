@@ -19,10 +19,11 @@ export interface IWsGameState {
     movementPoints?: number;
     probesInSpace?: number;
     resources: {
-      credits: number;
-      energy: number;
-      publicity: number;
-      data: number;
+      credit?: number;
+      credits?: number;
+      energy?: number;
+      publicity?: number;
+      data?: number;
     };
     computer?: {
       columns?: Array<{

@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { ETech } from '@seti/common/types/element';
 import type {
   IFreeActionRequest,
   IInputResponse,
@@ -9,18 +8,18 @@ import type {
 } from '@seti/common/types/protocol/actions';
 import type { IPublicGameState } from '@seti/common/types/protocol/gameState';
 import type { IPlayerInputModel } from '@seti/common/types/protocol/playerInput';
-import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
-import { ETechBonusType } from '@seti/common/types/tech';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { IJwtPayload } from '@/auth/jwt-auth.guard.js';
-import { ESolarSystemElementType } from '@/engine/board/SolarSystem.js';
-import { TuckCardForIncomeEffect } from '@/engine/effects/income/TuckCardForIncomeEffect.js';
 import { Game } from '@/engine/Game.js';
 import { createGameOptions } from '@/engine/GameOptions.js';
 import type { IGamePlayerIdentity } from '@/engine/IGame.js';
 import { GameManager } from '@/gateway/GameManager.js';
 import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
 import { GameRepository } from '@/persistence/repository/GameRepository.js';
+import {
+  applyBehaviorFlowScenario,
+  BEHAVIOR_FLOW_SEED,
+} from '@/testing/behaviorFlowScenario.js';
 import { DebugSessionRegistry } from './DebugSessionRegistry.js';
 
 interface IDebugAuthUser {
@@ -52,7 +51,6 @@ const DEBUG_PLAYER_BLUEPRINTS: ReadonlyArray<{
   { name: 'Bot Vega', color: 'blue' },
 ];
 
-const BEHAVIOR_FLOW_SEED = 'behavior-flow-seed';
 const BEHAVIOR_FLOW_PLAYER_BLUEPRINTS: ReadonlyArray<{
   name: string;
   color: string;
@@ -60,12 +58,6 @@ const BEHAVIOR_FLOW_PLAYER_BLUEPRINTS: ReadonlyArray<{
   { name: 'Alice', color: 'red' },
   { name: 'Bob', color: 'blue' },
 ];
-
-const BEHAVIOR_FLOW_START_RESOURCES = {
-  credits: 4,
-  energy: 4,
-  publicity: 4,
-} as const;
 
 @Injectable()
 export class DebugService {
@@ -95,93 +87,6 @@ export class DebugService {
       accessToken: this.jwtService.sign(payload, { expiresIn: '2h' }),
       user,
     };
-  }
-
-  private patchSolarSystemForBehaviorScenario(game: Game): void {
-    const cell2 = game.solarSystem?.spaces.find(
-      (s) => s.id === 'ring-1-cell-2',
-    );
-    if (!cell2) {
-      throw new Error('ring-1-cell-2 not found');
-    }
-
-    cell2.elements = [
-      ...cell2.elements,
-      { type: ESolarSystemElementType.ASTEROID, amount: 1 },
-    ];
-  }
-
-  private patchTechBoardForBehaviorScenario(game: Game): void {
-    const techBoard = game.techBoard;
-    if (!techBoard) {
-      return;
-    }
-
-    for (const [, stack] of techBoard.stacks) {
-      if (stack.tiles.length === 0) {
-        continue;
-      }
-
-      if (stack.category === ETech.COMPUTER) {
-        stack.tiles[0].bonus = { type: ETechBonusType.ENERGY };
-      } else if (stack.category === ETech.SCAN) {
-        stack.tiles[0].bonus = { type: ETechBonusType.CARD };
-      } else if (stack.category === ETech.PROBE) {
-        stack.tiles[0].bonus = { type: ETechBonusType.PUBLICITY };
-      }
-    }
-  }
-
-  private patchP1HandForBehaviorScenario(game: Game): void {
-    const p1 = game.players[0];
-    if (!p1) {
-      throw new Error('Behavior scenario requires player p1');
-    }
-
-    p1.hand = ['8', '80', '16', '130', '110'];
-    p1.tuckedIncomeCards = [];
-
-    const tuckInput = TuckCardForIncomeEffect.execute(p1, game);
-    if (!tuckInput) {
-      throw new Error('Failed to create tuck input for behavior scenario');
-    }
-
-    p1.waitingFor = tuckInput;
-    game.processInput(p1.id, {
-      type: EPlayerInputType.CARD,
-      cardIds: ['8'],
-    });
-
-    this.setPlayerNumericResource(
-      p1,
-      'credits',
-      BEHAVIOR_FLOW_START_RESOURCES.credits,
-    );
-    this.setPlayerNumericResource(
-      p1,
-      'energy',
-      BEHAVIOR_FLOW_START_RESOURCES.energy,
-    );
-    p1.resources.setPublicity(BEHAVIOR_FLOW_START_RESOURCES.publicity);
-    p1.score = 1;
-  }
-
-  private setPlayerNumericResource(
-    player: Game['players'][number],
-    resource: 'credits' | 'energy',
-    target: number,
-  ): void {
-    const current = player.resources[resource];
-    if (current === target) {
-      return;
-    }
-
-    if (current < target) {
-      player.resources.gain({ [resource]: target - current });
-      return;
-    }
-
-    player.resources.spend({ [resource]: current - target });
   }
 
   async createServerSession(): Promise<IDebugServerSessionResponse> {
@@ -244,9 +149,7 @@ export class DebugService {
       gameId,
     );
 
-    this.patchSolarSystemForBehaviorScenario(game);
-    this.patchTechBoardForBehaviorScenario(game);
-    this.patchP1HandForBehaviorScenario(game);
+    applyBehaviorFlowScenario(game);
 
     this.gameManager.registerGame(game);
     try {

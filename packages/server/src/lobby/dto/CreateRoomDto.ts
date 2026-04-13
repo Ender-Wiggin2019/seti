@@ -15,6 +15,10 @@ class CreateRoomOptionsDto {
   @Min(2)
   @Max(4)
   playerCount!: number;
+
+  @IsOptional()
+  @IsString()
+  scenarioPreset?: string;
 }
 
 export class CreateRoomDto {
@@ -27,6 +31,14 @@ export class CreateRoomDto {
   @Min(2)
   @Max(4)
   playerCount?: number;
+
+  @IsOptional()
+  @IsString()
+  seed?: string;
+
+  @IsOptional()
+  @IsString()
+  scenarioPreset?: string;
 
   @IsOptional()
   @IsObject()

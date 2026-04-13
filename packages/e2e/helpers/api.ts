@@ -70,6 +70,11 @@ export interface IRoomResponse {
   }>;
 }
 
+export interface ICreateRoomOptions {
+  seed?: string;
+  scenarioPreset?: string;
+}
+
 export class SetiApi {
   constructor(
     private readonly request: APIRequestContext,
@@ -259,11 +264,15 @@ export class SetiApi {
     return JSON.parse(bodyText) as IDebugPendingInput | null;
   }
 
-  async createRoom(name: string, playerCount: number): Promise<IRoomResponse> {
+  async createRoom(
+    name: string,
+    playerCount: number,
+    options?: ICreateRoomOptions,
+  ): Promise<IRoomResponse> {
     const res = await this.withRetry(() =>
       this.request.post(`${SERVER_URL}/lobby/rooms`, {
         headers: this.headers(),
-        data: { name, playerCount },
+        data: { name, playerCount, ...options },
       }),
     );
     if (!res.ok()) throw new Error(`Create room failed: ${res.status()}`);

@@ -56,6 +56,8 @@ describe('LobbyController', () => {
       'host-1',
       'My Room',
       2,
+      undefined,
+      undefined,
     );
     expect(result.id).toBe('room-1');
   });
