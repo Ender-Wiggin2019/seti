@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import type { IAndOptionsInputModel, IInputResponse } from '@/types/re-exports';
 import { EPlayerInputType } from '@/types/re-exports';
@@ -13,8 +14,13 @@ export function AndOptionsInput({
   model,
   onSubmit,
 }: IAndOptionsInputProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   if (model.options.length === 0) {
-    return <p className='text-xs text-text-500'>No step is required.</p>;
+    return (
+      <p className='text-xs text-text-500'>
+        {t('client.input.no_step_required')}
+      </p>
+    );
   }
 
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -52,7 +58,10 @@ export function AndOptionsInput({
     <div className='space-y-3'>
       <div className='flex items-center justify-between text-xs text-text-400'>
         <span>
-          Step {currentStepIndex + 1} / {model.options.length}
+          {t('client.input.step', {
+            current: currentStepIndex + 1,
+            total: model.options.length,
+          })}
         </span>
         {currentStep.title && <span>{currentStep.title}</span>}
       </div>
@@ -65,7 +74,7 @@ export function AndOptionsInput({
           disabled={currentStepIndex === 0}
           onClick={() => setCurrentStepIndex((prev) => Math.max(prev - 1, 0))}
         >
-          Back
+          {t('client.common.back')}
         </Button>
         {responses[currentStepIndex] && (
           <Button
@@ -79,7 +88,7 @@ export function AndOptionsInput({
               )
             }
           >
-            Next
+            {t('client.common.next')}
           </Button>
         )}
       </div>

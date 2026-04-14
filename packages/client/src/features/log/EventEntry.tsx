@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { EGameEventType, type TGameEvent } from '@/types/re-exports';
 
 interface IEventEntryProps {
@@ -29,30 +30,57 @@ function getPlayerName(
 function getEventDescription(
   event: TGameEvent,
   playerNames: Record<string, string>,
+  t: (key: string, options?: Record<string, unknown>) => string,
 ): string {
   switch (event.type) {
     case EGameEventType.ACTION:
-      return `${getPlayerName(event.playerId, playerNames)} used ${event.action.type}`;
+      return t('client.event_entry.action', {
+        player: getPlayerName(event.playerId, playerNames),
+        action: event.action.type,
+      });
     case EGameEventType.FREE_ACTION:
-      return `${getPlayerName(event.playerId, playerNames)} used free ${event.action.type}`;
+      return t('client.event_entry.free_action', {
+        player: getPlayerName(event.playerId, playerNames),
+        action: event.action.type,
+      });
     case EGameEventType.INPUT:
-      return `${getPlayerName(event.playerId, playerNames)} responded with ${event.response.type}`;
+      return t('client.event_entry.input', {
+        player: getPlayerName(event.playerId, playerNames),
+        response: event.response.type,
+      });
     case EGameEventType.RESOURCE_CHANGE:
-      return `${getPlayerName(event.playerId, playerNames)} ${event.delta >= 0 ? 'gained' : 'lost'} ${Math.abs(event.delta)} ${event.resource}`;
+      return t('client.event_entry.resource_change', {
+        player: getPlayerName(event.playerId, playerNames),
+        direction:
+          event.delta >= 0
+            ? t('client.event_entry.gained')
+            : t('client.event_entry.lost'),
+        amount: Math.abs(event.delta),
+        resource: event.resource,
+      });
     case EGameEventType.SCORE_CHANGE:
-      return `${getPlayerName(event.playerId, playerNames)} ${event.delta >= 0 ? '+' : ''}${event.delta} VP (${event.source})`;
+      return t('client.event_entry.score_change', {
+        player: getPlayerName(event.playerId, playerNames),
+        delta: `${event.delta >= 0 ? '+' : ''}${event.delta}`,
+        source: event.source,
+      });
     case EGameEventType.SECTOR_COMPLETED:
-      return `Sector ${event.sectorId} completed, winner: ${getPlayerName(event.winnerId, playerNames)}`;
+      return t('client.event_entry.sector_completed', {
+        sector: event.sectorId,
+        winner: getPlayerName(event.winnerId, playerNames),
+      });
     case EGameEventType.ALIEN_DISCOVERED:
-      return `Alien discovered: ${event.alienType}`;
+      return t('client.event_entry.alien_discovered', {
+        alien: event.alienType,
+      });
     case EGameEventType.ROTATION:
-      return `Solar disc ${event.discIndex + 1} rotated`;
+      return t('client.event_entry.rotation', { disc: event.discIndex + 1 });
     case EGameEventType.ROUND_END:
-      return `Round ${event.round} ended`;
+      return t('client.event_entry.round_end', { round: event.round });
     case EGameEventType.GAME_END:
-      return 'Game ended';
+      return t('client.event_entry.game_end');
     default:
-      return 'Unknown event';
+      return t('client.event_entry.unknown');
   }
 }
 
@@ -61,6 +89,7 @@ export function EventEntry({
   playerNames = {},
   index,
 }: IEventEntryProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <article
       className='rounded border border-surface-700/55 bg-surface-900/55 px-2 py-1.5'
@@ -72,7 +101,7 @@ export function EventEntry({
         </span>
         <div className='min-w-0 flex-1'>
           <p className='text-xs text-text-200'>
-            {getEventDescription(event, playerNames)}
+            {getEventDescription(event, playerNames, t)}
           </p>
           <p className='mt-0.5 font-mono text-[10px] uppercase tracking-wide text-text-500'>
             {event.type}

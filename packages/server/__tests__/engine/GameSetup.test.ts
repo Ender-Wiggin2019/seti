@@ -1,3 +1,4 @@
+import { baseCards } from '@seti/common/data/baseCards';
 import { EPhase } from '@seti/common/types/protocol/enums';
 import { Game } from '@/engine/Game.js';
 
@@ -9,6 +10,28 @@ const BASE_PLAYERS = [
 ] as const;
 
 describe('GameSetup', () => {
+  it('builds initial draw pool from base cards only', () => {
+    const game = Game.create(
+      BASE_PLAYERS.slice(0, 2),
+      { playerCount: 2 },
+      'seed-base-only',
+    );
+
+    const baseCardIdSet = new Set(baseCards.map((card) => card.id));
+    const dealtCardIds = [
+      ...game.cardRow,
+      ...game.endOfRoundStacks.flat(),
+      ...game.players.flatMap((player) => [
+        ...player.hand,
+        ...player.tuckedIncomeCards,
+      ]),
+    ];
+
+    for (const cardId of dealtCardIds) {
+      expect(baseCardIdSet.has(cardId as string)).toBe(true);
+    }
+  });
+
   it('initializes 2-player setup values', () => {
     const game = Game.create(
       BASE_PLAYERS.slice(0, 2),

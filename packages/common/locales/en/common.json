@@ -144,5 +144,415 @@
   "Base": "Base",
   "Space Agency": "Space Agency",
   "Promo": "Promo",
-  "Card Source": "Card Source"
+  "Card Source": "Card Source",
+  "home": {
+    "title": "Mission Control",
+    "subtitle_authenticated": "Welcome back, {{name}}. Continue your mission from the lobby.",
+    "subtitle_guest": "Sign in to create rooms, join missions, and play real-time games.",
+    "language": "Language",
+    "open_lobby": "Open Lobby",
+    "profile": "Profile",
+    "sign_in": "Sign In",
+    "create_account": "Create Account"
+  },
+  "client": {
+    "app_shell": {
+      "lobby": "Lobby",
+      "login": "Login",
+      "profile": "Profile"
+    },
+    "home": {
+      "default_name": "Commander"
+    },
+    "common": {
+      "loading": "Loading...",
+      "empty_value": "—",
+      "empty": "Empty",
+      "unknown": "Unknown",
+      "save": "Save",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "back": "Back",
+      "next": "Next",
+      "confirm": "Confirm",
+      "undo": "Undo",
+      "on": "On",
+      "off": "Off",
+      "open": "Open",
+      "locked": "Locked",
+      "na": "N/A",
+      "seconds_short": "{{count}}s"
+    },
+    "auth": {
+      "hero": {
+        "badge": "Mission Control",
+        "title": "SETI Terminal Access",
+        "subtitle": "Authenticate to access the command interface"
+      },
+      "tabs": {
+        "login": "Login",
+        "register": "Register"
+      },
+      "fields": {
+        "email": "Email",
+        "password": "Password",
+        "callsign": "Callsign",
+        "access_code": "Access Code"
+      },
+      "placeholders": {
+        "email": "commander@mars.gov",
+        "callsign": "Commander Shepard"
+      },
+      "actions": {
+        "authenticating": "Authenticating...",
+        "access_terminal": "Access Terminal",
+        "initializing": "Initializing...",
+        "register": "Register New Operative"
+      },
+      "toast": {
+        "login_failed": "Login failed",
+        "registration_failed": "Registration failed"
+      },
+      "validation": {
+        "invalid_email": "Invalid email address",
+        "password_min": "Password must be at least 8 characters",
+        "name_min": "Name must be at least 2 characters",
+        "invalid_field": "Invalid field"
+      }
+    },
+    "lobby": {
+      "title": "Mission Lobby",
+      "new_mission": "+ New Mission",
+      "filters": {
+        "all": "All",
+        "waiting": "Waiting",
+        "in_progress": "In Progress"
+      },
+      "empty": "No missions found. Create one to begin.",
+      "toast": {
+        "created": "Mission created",
+        "create_failed": "Failed to create room"
+      }
+    },
+    "room": {
+      "back": "Back",
+      "crew": "Crew",
+      "status": {
+        "waiting": "Waiting",
+        "playing": "In Progress",
+        "finished": "Finished"
+      },
+      "actions": {
+        "joining": "Joining...",
+        "join": "Join Mission",
+        "leave": "Leave Mission",
+        "enter_game": "Enter Game",
+        "launching": "Launching...",
+        "launch": "Launch Game"
+      },
+      "toast": {
+        "join_failed": "Join failed",
+        "leave_failed": "Leave failed",
+        "start_failed": "Start failed"
+      }
+    },
+    "profile": {
+      "title": "Operative Profile",
+      "identity": "Identity",
+      "callsign": "Callsign",
+      "disconnect": "Disconnect Terminal",
+      "toast": {
+        "invalid_name": "Name must be at least 2 characters",
+        "updated": "Profile updated",
+        "update_failed": "Update failed"
+      }
+    },
+    "create_room": {
+      "title": "Create New Mission",
+      "name": "Mission Name",
+      "name_placeholder": "Mars Alpha-7",
+      "players": "Operatives",
+      "player_count": {
+        "2": "2 Players",
+        "3": "3 Players",
+        "4": "4 Players"
+      },
+      "alien_modules": "Alien Modules",
+      "undo": "Allow Undo",
+      "turn_timer": "Turn Timer (seconds, 0 = off)",
+      "actions": {
+        "launching": "Launching...",
+        "launch": "Launch Mission"
+      },
+      "validation": {
+        "name_required": "Room name is required",
+        "invalid_options": "Invalid room options"
+      }
+    },
+    "room_card": {
+      "status": {
+        "waiting": "Waiting",
+        "playing": "In Progress",
+        "finished": "Finished"
+      },
+      "host": "Host",
+      "players": "{{current}}/{{total}} players",
+      "aliens": "Aliens",
+      "timer": "{{seconds}}s timer"
+    },
+    "player_slot": {
+      "empty": "Seat {{index}} - Empty",
+      "you": "You",
+      "host": "Host",
+      "ready": "Ready",
+      "not_ready": "Not ready"
+    },
+    "game_settings": {
+      "title": "Mission Parameters",
+      "players": "Operatives",
+      "alien_modules": "Alien Modules",
+      "undo": "Undo",
+      "undo_allowed": "Allowed",
+      "undo_disabled": "Disabled",
+      "turn_timer": "Turn Timer"
+    },
+    "top_bar": {
+      "exit": "Exit",
+      "round": "Round",
+      "current": "Current:",
+      "your_turn": "Your Turn",
+      "spectating": "Spectating",
+      "phases": {
+        "SETUP": "Setup",
+        "AWAIT_MAIN_ACTION": "Action Phase",
+        "IN_RESOLUTION": "Resolving",
+        "BETWEEN_TURNS": "Between Turns",
+        "END_OF_ROUND": "End of Round",
+        "FINAL_SCORING": "Final Scoring",
+        "GAME_OVER": "Game Over"
+      }
+    },
+    "sidebar": {
+      "opponents": "Opponents",
+      "no_opponents": "No opponents.",
+      "alien_boards": "Alien Boards",
+      "alien_boards_hint": "Alien boards will appear here after discovery."
+    },
+    "action_menu": {
+      "loading_actions": "Loading actions...",
+      "waiting_for": "Waiting for {{player}}...",
+      "another_player": "another player",
+      "player_unavailable": "Player data unavailable.",
+      "title": "Main Actions",
+      "actions": {
+        "LAUNCH_PROBE": "Launch Probe",
+        "ORBIT": "Orbit",
+        "LAND": "Land",
+        "SCAN": "Scan",
+        "ANALYZE_DATA": "Analyze Data",
+        "PLAY_CARD": "Play Card",
+        "RESEARCH_TECH": "Research Tech",
+        "PASS": "Pass"
+      }
+    },
+    "free_action_bar": {
+      "title": "Free",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "actions": {
+        "MOVEMENT": "Move Probe",
+        "CONVERT_ENERGY_TO_MOVEMENT": "Energy -> Move",
+        "PLACE_DATA": "Place Data",
+        "COMPLETE_MISSION": "Complete Mission",
+        "USE_CARD_CORNER": "Use Card",
+        "BUY_CARD": "Buy Card (3 PR)",
+        "EXCHANGE_RESOURCES": "Exchange"
+      }
+    },
+    "action_confirm": {
+      "cost": "Cost"
+    },
+    "event_log": {
+      "title": "Event Log",
+      "empty": "No events yet."
+    },
+    "event_entry": {
+      "action": "{{player}} used {{action}}",
+      "free_action": "{{player}} used free {{action}}",
+      "input": "{{player}} responded with {{response}}",
+      "resource_change": "{{player}} {{direction}} {{amount}} {{resource}}",
+      "score_change": "{{player}} {{delta}} VP ({{source}})",
+      "sector_completed": "Sector {{sector}} completed, winner: {{winner}}",
+      "alien_discovered": "Alien discovered: {{alien}}",
+      "rotation": "Solar disc {{disc}} rotated",
+      "round_end": "Round {{round}} ended",
+      "game_end": "Game ended",
+      "unknown": "Unknown event",
+      "gained": "gained",
+      "lost": "lost"
+    },
+    "input": {
+      "no_step_required": "No step is required.",
+      "no_available_options": "No available options.",
+      "option": "Option {{index}}",
+      "step": "Step {{current}} / {{total}}",
+      "choose_end_of_round": "Choose one end-of-round card:"
+    },
+    "score": {
+      "empty": "No scoring data.",
+      "player": "Player",
+      "base": "Base",
+      "cards": "Cards",
+      "tech": "Tech",
+      "milestone": "Milestone",
+      "gold": "Gold",
+      "alien": "Alien",
+      "total": "Total"
+    },
+    "milestone": {
+      "empty": "No milestone data.",
+      "title": "Milestone Track",
+      "open": "open"
+    },
+    "player_dashboard": {
+      "missions": "Missions",
+      "mission_alt": "Mission",
+      "played": "Played",
+      "tech_alt": "Tech count",
+      "tech": "Tech",
+      "card_selection_active": "Card selection active"
+    },
+    "tech_display": {
+      "title": "Tech Slots",
+      "empty": "No tech tiles yet",
+      "types": {
+        "probe": "Probe",
+        "scan": "Scan",
+        "computer": "Computer",
+        "any": "Any"
+      }
+    },
+    "tech_stack": {
+      "types": {
+        "probe": "Probe",
+        "scan": "Scan",
+        "computer": "Computer",
+        "any": "Any"
+      },
+      "tile_alt": "{{tech}} level {{level}}",
+      "first_take_bonus": "2VP {{status}}",
+      "available": "available",
+      "taken": "taken",
+      "no_owner": "No owner"
+    },
+    "board": {
+      "planetary_board": "Planetary Board",
+      "tech_board": "Tech Board"
+    },
+    "alien_board": {
+      "title": "Alien Discovery",
+      "alien_index": "Alien {{index}}",
+      "discovered": "Discovered",
+      "types": {
+        "anomalies": "Anomalies",
+        "centaurians": "Centaurians",
+        "exertians": "Exertians",
+        "mascamites": "Mascamites",
+        "oumuamua": "Oumuamua",
+        "amoeba": "Amoeba",
+        "glyphids": "Glyphids",
+        "dummy": "Dummy"
+      }
+    },
+    "planet_card": {
+      "orbit_bonus": "Orbit +3VP",
+      "orbit": "Orbit",
+      "landing": "Landing",
+      "data_slot": "Data {{index}}",
+      "moons": "Moons {{count}}",
+      "occupied": "occupied ({{player}})"
+    },
+    "card_row": {
+      "title": "Card Row"
+    },
+    "end_of_round": {
+      "title": "End of Round Stacks",
+      "round": "Round {{index}}",
+      "cards": "{{count}} cards",
+      "select_one": "Select one from current stack"
+    },
+    "game_page": {
+      "connecting": "Establishing secure connection...",
+      "awaiting": "Awaiting mission data..."
+    },
+    "game": {
+      "toast": {
+        "error": "Game Error"
+      }
+    },
+    "game_layout": {
+      "toggle_sidebar": "Toggle sidebar",
+      "board": "Board",
+      "info": "Info",
+      "tabs": {
+        "board": "Board",
+        "planets": "Planets",
+        "tech": "Tech",
+        "cards": "Cards",
+        "aliens": "Aliens",
+        "scoring": "Scoring"
+      },
+      "buy_from_deck": "Buy From Deck",
+      "buy_from_row": "Buy From Row",
+      "cancel_row_buy": "Cancel Row Buy",
+      "main_deck": "Main Deck",
+      "scores": "Scores",
+      "no_gold_tiles": "No gold scoring tiles.",
+      "gold_scoring_tiles": "Gold Scoring Tiles",
+      "gold_tile_alt": "gold tile",
+      "side": "Side {{side}}",
+      "claimed_by": "Claimed by {{player}}",
+      "dashboard": "Dashboard",
+      "hand_and_missions": "Hand & Missions",
+      "corner_selection_hint": "Click a hand card to use its corner action",
+      "actions": "Actions",
+      "buy_card_title": "Buy Card",
+      "buy_card_desc": "Spend 3 publicity and draw from the deck?",
+      "buy_card_cost": "3 publicity",
+      "buy": "Buy",
+      "exchange_title": "Exchange Resources",
+      "exchange_desc": "Trade 2 of one resource for 1 of another.",
+      "exchange_option": "2 {{from}} -> 1 {{to}}",
+      "place_data_title": "Place Data",
+      "place_data_desc": "Choose which computer slot to fill.",
+      "place_data_top": "Top slot C{{index}} (left-to-right)",
+      "place_data_bottom": "Bottom slot C{{index}}",
+      "convert_energy_title": "Convert Energy",
+      "convert_energy_desc": "Spend energy to gain the same amount of movement points.",
+      "convert_energy_option": "{{amount}} Energy -> {{amount}} Move",
+      "toast": {
+        "no_computer_slot": "No available computer slot",
+        "no_computer_slot_desc": "Fill data pool and unlock a slot first.",
+        "mission_required": "Mission selection required",
+        "mission_required_desc": "Use mission controls to pick which mission to complete.",
+        "card_required": "Card selection required",
+        "card_required_desc": "Select a specific card to use its corner free action.",
+        "select_probe": "Select probe movement on board",
+        "select_probe_desc": "Click a probe and choose a destination in the board view.",
+        "not_enough_energy": "Not enough energy",
+        "not_enough_energy_desc": "You need at least 1 energy to convert."
+      }
+    },
+    "resources": {
+      "credit": "Credits",
+      "energy": "Energy",
+      "card": "Cards"
+    },
+    "game_over": {
+      "title": "Game Over",
+      "winner": "Winner",
+      "breakdown_hint": "Detailed scoring breakdown by source is shown above.",
+      "scoring_reminder_alt": "Scoring reminder"
+    }
+  }
 }

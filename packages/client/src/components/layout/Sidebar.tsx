@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { EventLog } from '@/features/log';
 import { OpponentSummary } from '@/features/player';
 import { cn } from '@/lib/cn';
@@ -8,6 +9,7 @@ interface ISidebarProps {
 }
 
 export function Sidebar({ className }: ISidebarProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const { gameState, myPlayerId, events } = useGameContext();
 
   const opponents = gameState?.players.filter((p) => p.playerId !== myPlayerId);
@@ -22,16 +24,18 @@ export function Sidebar({ className }: ISidebarProps): React.JSX.Element {
       <EventLog events={events} players={gameState?.players ?? []} />
 
       {!opponents?.length ? (
-        <SidebarSection title='Opponents'>
-          <p className='text-xs italic text-text-500'>No opponents.</p>
+        <SidebarSection title={t('client.sidebar.opponents')}>
+          <p className='text-xs italic text-text-500'>
+            {t('client.sidebar.no_opponents')}
+          </p>
         </SidebarSection>
       ) : (
         <OpponentSummary opponents={opponents} />
       )}
 
-      <SidebarSection title='Alien Boards'>
+      <SidebarSection title={t('client.sidebar.alien_boards')}>
         <p className='text-xs italic text-text-500'>
-          Alien boards will appear here after discovery.
+          {t('client.sidebar.alien_boards_hint')}
         </p>
       </SidebarSection>
     </aside>

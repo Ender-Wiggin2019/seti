@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import type {
   IInputResponse,
@@ -14,9 +15,12 @@ export function SelectEndOfRoundCardInput({
   model,
   onSubmit,
 }: ISelectEndOfRoundCardInputProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <div className='space-y-2'>
-      <p className='text-xs text-text-300'>Choose one end-of-round card:</p>
+      <p className='text-xs text-text-300'>
+        {t('client.input.choose_end_of_round')}
+      </p>
       <div className='grid gap-2 sm:grid-cols-2'>
         {model.cards.map((card) => (
           <Button

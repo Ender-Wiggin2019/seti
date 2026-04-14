@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { lobbyApi } from '@/api/lobbyApi';
 import type { IGameOptions } from '@/api/types';
 import { ERoomStatus } from '@/api/types';
@@ -13,6 +14,7 @@ import { toast } from '@/components/ui/toast';
 type TFilterValue = 'all' | ERoomStatus.WAITING | ERoomStatus.PLAYING;
 
 export function LobbyPage(): React.JSX.Element {
+  const { t } = useTranslation('common');
   const [filter, setFilter] = useState<TFilterValue>('all');
   const [createOpen, setCreateOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -32,11 +34,11 @@ export function LobbyPage(): React.JSX.Element {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
       setCreateOpen(false);
-      toast({ title: 'Mission created', variant: 'success' });
+      toast({ title: t('client.lobby.toast.created'), variant: 'success' });
     },
     onError: (err) =>
       toast({
-        title: 'Failed to create room',
+        title: t('client.lobby.toast.create_failed'),
         description: err.message,
         variant: 'error',
       }),
@@ -46,9 +48,14 @@ export function LobbyPage(): React.JSX.Element {
     <div className='space-y-6'>
       <div className='flex items-center justify-between'>
         <h1 className='font-display text-2xl font-bold uppercase tracking-wider text-text-100'>
-          Mission Lobby
+          {t('client.lobby.title')}
         </h1>
-        <Button onClick={() => setCreateOpen(true)}>+ New Mission</Button>
+        <Button
+          onClick={() => setCreateOpen(true)}
+          data-testid='lobby-new-mission'
+        >
+          {t('client.lobby.new_mission')}
+        </Button>
       </div>
 
       <Tabs
@@ -56,9 +63,13 @@ export function LobbyPage(): React.JSX.Element {
         onValueChange={(v) => setFilter(v as TFilterValue)}
       >
         <TabsList>
-          <TabsTrigger value='all'>All</TabsTrigger>
-          <TabsTrigger value={ERoomStatus.WAITING}>Waiting</TabsTrigger>
-          <TabsTrigger value={ERoomStatus.PLAYING}>In Progress</TabsTrigger>
+          <TabsTrigger value='all'>{t('client.lobby.filters.all')}</TabsTrigger>
+          <TabsTrigger value={ERoomStatus.WAITING}>
+            {t('client.lobby.filters.waiting')}
+          </TabsTrigger>
+          <TabsTrigger value={ERoomStatus.PLAYING}>
+            {t('client.lobby.filters.in_progress')}
+          </TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -68,9 +79,7 @@ export function LobbyPage(): React.JSX.Element {
         </div>
       ) : !rooms?.length ? (
         <div className='rounded-lg border border-surface-700 bg-surface-900/50 p-8 text-center'>
-          <p className='text-text-500'>
-            No missions found. Create one to begin.
-          </p>
+          <p className='text-text-500'>{t('client.lobby.empty')}</p>
         </div>
       ) : (
         <div className='grid gap-3 sm:grid-cols-2'>

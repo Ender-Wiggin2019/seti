@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 import type {
   IPublicAlienState,
@@ -6,15 +7,15 @@ import type {
 } from '@/types/re-exports';
 import { EAlienType, ETrace } from '@/types/re-exports';
 
-const ALIEN_TYPE_LABEL: Partial<Record<EAlienType, string>> = {
-  [EAlienType.ANOMALIES]: 'Anomalies',
-  [EAlienType.CENTAURIANS]: 'Centaurians',
-  [EAlienType.EXERTIANS]: 'Exertians',
-  [EAlienType.MASCAMITES]: 'Mascamites',
-  [EAlienType.OUMUAMUA]: 'Oumuamua',
-  [EAlienType.AMOEBA]: 'Amoeba',
-  [EAlienType.GLYPHIDS]: 'Glyphids',
-  [EAlienType.DUMMY]: 'Dummy',
+const ALIEN_TYPE_I18N_KEY: Partial<Record<EAlienType, string>> = {
+  [EAlienType.ANOMALIES]: 'anomalies',
+  [EAlienType.CENTAURIANS]: 'centaurians',
+  [EAlienType.EXERTIANS]: 'exertians',
+  [EAlienType.MASCAMITES]: 'mascamites',
+  [EAlienType.OUMUAMUA]: 'oumuamua',
+  [EAlienType.AMOEBA]: 'amoeba',
+  [EAlienType.GLYPHIDS]: 'glyphids',
+  [EAlienType.DUMMY]: 'dummy',
 };
 
 const TRACE_COLOR: Record<ETrace, string> = {
@@ -40,11 +41,12 @@ export function AlienBoardView({
   aliens,
   playerColors,
 }: IAlienBoardViewProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <section className='w-full rounded-lg border border-surface-700/40 bg-surface-900/40 p-3'>
       <header className='mb-2'>
         <h2 className='font-display text-base font-bold uppercase tracking-wider text-text-100'>
-          Alien Discovery
+          {t('client.alien_board.title')}
         </h2>
       </header>
 
@@ -68,10 +70,15 @@ function AlienCard({
   alien: IPublicAlienState;
   playerColors: Record<string, string>;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
+  const discoveredName =
+    alien.alienType != null ? ALIEN_TYPE_I18N_KEY[alien.alienType] : null;
   const title =
     alien.discovered && alien.alienType != null
-      ? (ALIEN_TYPE_LABEL[alien.alienType] ?? `Alien ${alien.alienIndex + 1}`)
-      : `Alien ${alien.alienIndex + 1}`;
+      ? discoveredName
+        ? t(`client.alien_board.types.${discoveredName}`)
+        : t('client.alien_board.alien_index', { index: alien.alienIndex + 1 })
+      : t('client.alien_board.alien_index', { index: alien.alienIndex + 1 });
 
   return (
     <article className='rounded-md border border-surface-700/50 bg-surface-900/60 p-3'>
@@ -87,7 +94,9 @@ function AlienCard({
               : 'border-surface-600 bg-surface-800/50 text-text-500',
           )}
         >
-          {alien.discovered ? 'Discovered' : 'Unknown'}
+          {alien.discovered
+            ? t('client.alien_board.discovered')
+            : t('client.common.unknown')}
         </span>
       </div>
 

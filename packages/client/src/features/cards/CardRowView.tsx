@@ -1,4 +1,5 @@
 import type { IBaseCard } from '@seti/common/types/BaseCard';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 import { CardRender } from './CardRender';
 
@@ -19,11 +20,12 @@ export function CardRowView({
   onCardClick,
   onCardInspect,
 }: ICardRowViewProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <section className='w-full rounded-lg border border-surface-700/40 bg-surface-900/40 p-3'>
       <header className='mb-2'>
         <h2 className='font-display text-base font-bold uppercase tracking-wider text-text-100'>
-          Card Row
+          {t('client.card_row.title')}
         </h2>
       </header>
 

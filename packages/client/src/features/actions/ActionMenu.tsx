@@ -1,4 +1,5 @@
 import { getAvailableMainActions } from '@seti/common/rules';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { UndoButton } from '@/features/actions/UndoButton';
 import type {
@@ -8,15 +9,15 @@ import type {
 } from '@/types/re-exports';
 import { EMainAction, EPhase, EPlayerInputType } from '@/types/re-exports';
 
-const MAIN_ACTIONS: Array<{ type: EMainAction; label: string }> = [
-  { type: EMainAction.LAUNCH_PROBE, label: 'Launch Probe' },
-  { type: EMainAction.ORBIT, label: 'Orbit' },
-  { type: EMainAction.LAND, label: 'Land' },
-  { type: EMainAction.SCAN, label: 'Scan' },
-  { type: EMainAction.ANALYZE_DATA, label: 'Analyze Data' },
-  { type: EMainAction.PLAY_CARD, label: 'Play Card' },
-  { type: EMainAction.RESEARCH_TECH, label: 'Research Tech' },
-  { type: EMainAction.PASS, label: 'Pass' },
+const MAIN_ACTIONS: EMainAction[] = [
+  EMainAction.LAUNCH_PROBE,
+  EMainAction.ORBIT,
+  EMainAction.LAND,
+  EMainAction.SCAN,
+  EMainAction.ANALYZE_DATA,
+  EMainAction.PLAY_CARD,
+  EMainAction.RESEARCH_TECH,
+  EMainAction.PASS,
 ];
 
 const ACTION_KEYWORDS: Record<EMainAction, string[]> = {
@@ -49,8 +50,13 @@ export function ActionMenu({
   onSendAction,
   onRequestUndo,
 }: IActionMenuProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   if (!gameState) {
-    return <p className='text-xs text-text-500'>Loading actions...</p>;
+    return (
+      <p className='text-xs text-text-500'>
+        {t('client.action_menu.loading_actions')}
+      </p>
+    );
   }
 
   const currentPlayer = gameState.players.find(
@@ -60,7 +66,10 @@ export function ActionMenu({
   if (!isMyTurn || gameState.phase !== EPhase.AWAIT_MAIN_ACTION) {
     return (
       <p className='text-xs text-text-400'>
-        Waiting for {currentPlayer?.playerName ?? 'another player'}...
+        {t('client.action_menu.waiting_for', {
+          player:
+            currentPlayer?.playerName ?? t('client.action_menu.another_player'),
+        })}
       </p>
     );
   }
@@ -70,7 +79,11 @@ export function ActionMenu({
   );
 
   if (!myPlayer) {
-    return <p className='text-xs text-text-500'>Player data unavailable.</p>;
+    return (
+      <p className='text-xs text-text-500'>
+        {t('client.action_menu.player_unavailable')}
+      </p>
+    );
   }
 
   const serverAvailable = getServerAvailableActions(pendingInput);
@@ -81,27 +94,27 @@ export function ActionMenu({
     <div className='space-y-2'>
       <div className='flex items-center justify-between gap-2'>
         <p className='font-mono text-xs uppercase tracking-wide text-text-400'>
-          Main Actions
+          {t('client.action_menu.title')}
         </p>
         <UndoButton disabled={!canUndo} onRequestUndo={onRequestUndo} />
       </div>
 
       <div className='grid grid-cols-2 gap-2'>
-        {MAIN_ACTIONS.map((action) => {
-          const enabled = available.has(action.type);
+        {MAIN_ACTIONS.map((actionType) => {
+          const enabled = available.has(actionType);
 
           return (
             <Button
-              key={action.type}
+              key={actionType}
               type='button'
               variant='ghost'
               size='sm'
               disabled={!enabled}
-              onClick={() => onSendAction({ type: action.type })}
-              data-testid={`action-menu-${action.type}`}
+              onClick={() => onSendAction({ type: actionType })}
+              data-testid={`action-menu-${actionType}`}
               className='h-9 justify-start border border-surface-700/60 bg-surface-800/50 px-2 text-left text-xs text-text-200 hover:bg-surface-700/70 disabled:opacity-40'
             >
-              {action.label}
+              {t(`client.action_menu.actions.${actionType}`)}
             </Button>
           );
         })}

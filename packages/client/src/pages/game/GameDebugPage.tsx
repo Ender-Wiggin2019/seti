@@ -20,6 +20,13 @@ import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { ESector, ETech } from '@seti/common/types/element';
 import { ETechId } from '@seti/common/types/tech';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { TProbeInsetPxByRing } from '@/features/board/SolarSystemView';
 import {
   GameContextValueProvider,
@@ -1317,31 +1324,37 @@ export function GameDebugPage(): React.JSX.Element {
     <GameContextValueProvider value={contextValue}>
       <div className='fixed right-3 top-3 z-50 flex max-w-[calc(100vw-1.5rem)] flex-wrap items-center justify-end gap-2 rounded border border-surface-700/70 bg-surface-900/90 p-2 text-xs backdrop-blur'>
         <span className='font-mono text-text-500'>Debug</span>
-        <select
+        <Select
           value={scenario}
-          onChange={(event) =>
-            setScenario(event.target.value as TDebugScenario)
-          }
-          className='rounded border border-surface-700 bg-surface-800 px-2 py-1 text-text-100'
+          onValueChange={(value) => setScenario(value as TDebugScenario)}
         >
-          <option value='my-turn'>My Turn</option>
-          <option value='opponent-turn'>Opponent Turn</option>
-          <option value='spectator'>Spectator</option>
-          <option value='game-over'>Game Over</option>
-        </select>
+          <SelectTrigger className='h-8 w-[150px] text-xs'>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value='my-turn'>My Turn</SelectItem>
+            <SelectItem value='opponent-turn'>Opponent Turn</SelectItem>
+            <SelectItem value='spectator'>Spectator</SelectItem>
+            <SelectItem value='game-over'>Game Over</SelectItem>
+          </SelectContent>
+        </Select>
 
-        <select
+        <Select
           value={cardInputMode}
-          onChange={(event) =>
-            setCardInputMode(event.target.value as TCardInputDebugMode)
+          onValueChange={(value) =>
+            setCardInputMode(value as TCardInputDebugMode)
           }
-          className='rounded border border-surface-700 bg-surface-800 px-2 py-1 text-text-100'
         >
-          <option value='none'>No Input</option>
-          <option value='hand-select'>Input: Hand Cards</option>
-          <option value='row-select'>Input: Card Row</option>
-          <option value='end-of-round'>Input: End Of Round</option>
-        </select>
+          <SelectTrigger className='h-8 w-[170px] text-xs'>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value='none'>No Input</SelectItem>
+            <SelectItem value='hand-select'>Input: Hand Cards</SelectItem>
+            <SelectItem value='row-select'>Input: Card Row</SelectItem>
+            <SelectItem value='end-of-round'>Input: End Of Round</SelectItem>
+          </SelectContent>
+        </Select>
 
         <div className='flex items-center gap-1 border-l border-surface-700 pl-2'>
           <button

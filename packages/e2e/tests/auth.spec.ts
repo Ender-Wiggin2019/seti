@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { SetiApi } from '../helpers/api';
+import { waitForServerReady } from '../helpers/server-ready';
 
 const SERVER_URL = process.env.SERVER_URL ?? 'http://localhost:3000';
 
@@ -12,6 +13,10 @@ const SERVER_URL = process.env.SERVER_URL ?? 'http://localhost:3000';
 
 test.describe('Authentication', () => {
   const uniqueEmail = `auth-e2e-${Date.now()}@test.local`;
+
+  test.beforeEach(async ({ request }) => {
+    await waitForServerReady(request);
+  });
 
   // ── API-level auth tests ───────────────────────────────────
 
@@ -85,18 +90,13 @@ test.describe('Authentication', () => {
 
   test('auth page renders login form', async ({ page }) => {
     await page.goto('/auth');
-    await page.waitForTimeout(1_000);
-
-    // The auth page should show a form with email and password inputs
-    const emailInput = page.locator('input[type="email"], input[name="email"]');
-    const passwordInput = page.locator(
-      'input[type="password"], input[name="password"]',
-    );
-
-    // At least one of these should exist
-    const hasForm =
-      (await emailInput.count()) > 0 || (await passwordInput.count()) > 0;
-    expect(hasForm).toBe(true);
+    await expect(page.locator('#login-email')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('#login-password')).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(page.getByTestId('auth-login-submit')).toBeVisible({
+      timeout: 10_000,
+    });
   });
 
   test('successful login redirects to lobby', async ({ page, request }) => {
@@ -105,31 +105,31 @@ test.describe('Authentication', () => {
     const api = new SetiApi(request);
     await api.register('Browser User', email, 'password123');
 
-    // Now login through the UI
     await page.goto('/auth');
-    await page.waitForTimeout(1_000);
-
-    const emailInput = page.locator('input[type="email"], input[name="email"]');
-    const passwordInput = page.locator(
-      'input[type="password"], input[name="password"]',
-    );
-
-    if ((await emailInput.count()) > 0 && (await passwordInput.count()) > 0) {
-      await emailInput.first().fill(email);
-      await passwordInput.first().fill('password123');
-
-      // Find and click the login/submit button
-      const submitBtn = page.locator(
-        'button[type="submit"], button:has-text("Login"), button:has-text("Sign in")',
-      );
-      if ((await submitBtn.count()) > 0) {
-        await submitBtn.first().click();
-
-        // Should redirect to /lobby after successful login
-        await page
-          .waitForURL('**/lobby', { timeout: 5_000 })
-          .catch(() => undefined);
-      }
+    if (
+      !(await page
+        .locator('#login-email')
+        .isVisible()
+        .catch(() => false))
+    ) {
+      await page.getByTestId('auth-tab-login').click();
     }
+    await expect(page.locator('#login-email')).toBeVisible({ timeout: 10_000 });
+    await page.locator('#login-email').fill(email);
+    await page.locator('#login-password').fill('password123');
+
+    const loginResponse = page.waitForResponse(
+      (res) =>
+        res.url().includes('/auth/login') && res.request().method() === 'POST',
+      { timeout: 15_000 },
+    );
+    await page.getByTestId('auth-login-submit').click();
+    const response = await loginResponse;
+    expect(response.ok()).toBe(true);
+
+    await page.waitForURL('**/lobby', { timeout: 15_000 });
+    await expect(page.getByTestId('lobby-new-mission')).toBeVisible({
+      timeout: 10_000,
+    });
   });
 });

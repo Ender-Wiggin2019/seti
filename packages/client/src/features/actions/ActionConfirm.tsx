@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -26,6 +27,7 @@ export function ActionConfirm({
   onConfirm,
   onCancel,
 }: IActionConfirmProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onCancel()}>
       <DialogContent>
@@ -39,7 +41,7 @@ export function ActionConfirm({
         {costs.length > 0 ? (
           <div className='rounded border border-surface-700/70 bg-surface-900/70 p-3'>
             <p className='font-mono text-xs uppercase tracking-wide text-text-400'>
-              Cost
+              {t('client.action_confirm.cost')}
             </p>
             <ul className='mt-2 space-y-1 text-sm text-text-200'>
               {costs.map((item) => (
@@ -51,10 +53,12 @@ export function ActionConfirm({
 
         <DialogFooter>
           <Button type='button' variant='ghost' onClick={onCancel}>
-            Cancel
+            {t('client.common.cancel')}
           </Button>
           <Button type='button' onClick={onConfirm}>
-            {confirmLabel}
+            {confirmLabel === 'Confirm'
+              ? t('client.common.confirm')
+              : confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

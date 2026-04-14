@@ -46,7 +46,7 @@ export function SectorGrid({
 
   return (
     <div
-      className='absolute inset-0 z-250 pointer-events-none'
+      className='absolute inset-0 z-60 pointer-events-none'
       aria-label='Sector ring'
     >
       {sectorPairs.map((pair) => {

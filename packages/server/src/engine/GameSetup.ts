@@ -1,8 +1,8 @@
+import { baseCards } from '@seti/common/data/baseCards';
 import { EAlienType, EPhase } from '@seti/common/types/protocol/enums';
 import { AlienState } from './alien/AlienState.js';
 import { BoardBuilder } from './board/BoardBuilder.js';
 import { PlanetaryBoard } from './board/PlanetaryBoard.js';
-import { loadAllCardData } from './cards/loadCardData.js';
 import { Deck } from './deck/Deck.js';
 import { DeferredActionsQueue } from './deferred/DeferredActionsQueue.js';
 import { EventLog } from './event/EventLog.js';
@@ -32,8 +32,8 @@ export class GameSetup {
     game.planetaryBoard = new PlanetaryBoard();
     game.techBoard = new TechBoard(game.random);
 
-    const baseDeckCards = loadAllCardData().map((card) => card.id);
-    game.mainDeck = new Deck(baseDeckCards);
+    const baseDeckCardIds = baseCards.map((card) => card.id);
+    game.mainDeck = new Deck(baseDeckCardIds);
     game.mainDeck.shuffle(game.random);
     game.cardRow = game.mainDeck.drawN(3);
     game.endOfRoundStacks = Array.from({ length: 4 }, () =>

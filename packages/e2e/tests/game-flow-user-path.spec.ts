@@ -1,6 +1,14 @@
 import { expect, type Page, type TestInfo, test } from '@playwright/test';
-import { SetiApi } from '../helpers/api';
-import { injectAuth } from '../helpers/auth';
+import {
+  clickPassAndWaitForLogSync,
+  createRoomByUi,
+  createUser,
+  enterGameByUi,
+  joinRoomByUi,
+  launchGameByUi,
+  registerByUi,
+  waitForActionOwner,
+} from '../helpers/real-flow';
 import { sel } from '../helpers/selectors';
 import { waitForServerReady } from '../helpers/server-ready';
 
@@ -17,74 +25,78 @@ async function attachStepScreenshot(
   });
 }
 
-test('user-path game flow e2e (normal interfaces): register/login -> room -> game -> interaction', async ({
+test('user-path game flow e2e (strict real interfaces): register -> room -> game -> pass', async ({
   browser,
-  page,
   request,
 }, testInfo) => {
-  test.setTimeout(120_000);
+  test.setTimeout(240_000);
   await waitForServerReady(request);
 
-  const hostApi = new SetiApi(request);
-  const guestApi = new SetiApi(request);
-  const host = await hostApi.register(
-    'Path Host',
-    `path-host-${Date.now()}@e2e.test`,
-    'password123',
-  );
-  const guest = await guestApi.register(
-    'Path Guest',
-    `path-guest-${Date.now()}@e2e.test`,
-    'password123',
-  );
-
-  const room = await hostApi.createRoom(`Path Room ${Date.now()}`, 2);
-  await guestApi.joinRoom(room.id);
-
-  await injectAuth(page, host.accessToken, host.user);
-  await page.goto(`/room/${room.id}`);
-  const launchBtn = page.getByRole('button', { name: 'Launch Game' });
-  await expect(launchBtn).toBeVisible({ timeout: 15_000 });
-  await launchBtn.click();
-
-  await page.waitForURL(/\/game\/[^/?#]+$/, { timeout: 15_000 });
-  const gameId = page.url().split('/game/')[1]?.split(/[?#]/)[0];
-  expect(gameId).toBeTruthy();
-
-  await expect(page.locator(sel.bottomDashboard)).toBeVisible({
-    timeout: 15_000,
-  });
-  await attachStepScreenshot(page, testInfo, 'user-path-host-game-loaded');
-
+  const hostContext = await browser.newContext();
   const guestContext = await browser.newContext();
+  const hostPage = await hostContext.newPage();
   const guestPage = await guestContext.newPage();
+
+  const host = createUser('path-host');
+  const guest = createUser('path-guest');
+
   try {
-    await injectAuth(guestPage, guest.accessToken, guest.user);
-    await guestPage.goto(`/game/${gameId}`);
+    await test.step('register host', async () => {
+      await registerByUi(hostPage, host);
+    });
+    await test.step('register guest', async () => {
+      await registerByUi(guestPage, guest);
+    });
+
+    const roomId = await test.step('host creates room', async () => {
+      return createRoomByUi(hostPage, `Path Room ${Date.now()}`, 2);
+    });
+    await test.step('guest joins room', async () => {
+      await joinRoomByUi(guestPage, roomId);
+    });
+
+    const hostGameId = await test.step('host launches game', async () => {
+      return launchGameByUi(hostPage, roomId);
+    });
+    const guestGameId = await test.step('guest enters game', async () => {
+      return enterGameByUi(guestPage, roomId);
+    });
+    expect(guestGameId).toBe(hostGameId);
+
+    await expect(hostPage.locator(sel.bottomDashboard)).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(guestPage.locator(sel.bottomDashboard)).toBeVisible({
       timeout: 15_000,
     });
+    await attachStepScreenshot(
+      hostPage,
+      testInfo,
+      'user-path-host-game-loaded',
+    );
     await attachStepScreenshot(
       guestPage,
       testInfo,
       'user-path-guest-game-loaded',
     );
 
-    const hostPass = page.locator(sel.actionMenu('PASS'));
-    await expect(hostPass).toBeVisible({ timeout: 10_000 });
-    await hostPass.click();
-    await attachStepScreenshot(page, testInfo, 'user-path-host-after-pass');
-
-    await expect(guestPage.locator(sel.bottomActions)).toBeVisible();
-    await attachStepScreenshot(
+    const { actor, other } = await waitForActionOwner(
+      hostPage,
       guestPage,
-      testInfo,
-      'user-path-guest-after-pass',
+      'PASS',
     );
+    await expect(actor.locator(sel.actionMenu('PASS'))).toBeVisible({
+      timeout: 10_000,
+    });
+    await clickPassAndWaitForLogSync(actor, other);
+    await attachStepScreenshot(actor, testInfo, 'user-path-after-pass-actor');
 
-    await expect(page.locator(sel.bottomDashboard)).toBeVisible();
-    await expect(guestPage.locator(sel.bottomDashboard)).toBeVisible();
+    await expect(other.locator(sel.eventLog)).toBeVisible({
+      timeout: 10_000,
+    });
+    await attachStepScreenshot(other, testInfo, 'user-path-after-pass-other');
   } finally {
+    await hostContext.close();
     await guestContext.close();
   }
 });

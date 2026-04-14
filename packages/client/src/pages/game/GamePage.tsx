@@ -1,9 +1,11 @@
 import { useParams } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { GameContextProvider, useGameContext } from '@/pages/game/GameContext';
 import { GameLayout } from '@/pages/game/GameLayout';
 
 function GameContent(): React.JSX.Element {
+  const { t } = useTranslation('common');
   const { isConnected, gameState } = useGameContext();
 
   if (!isConnected) {
@@ -11,7 +13,7 @@ function GameContent(): React.JSX.Element {
       <div className='flex h-screen flex-col items-center justify-center gap-4 bg-background-950'>
         <LoadingSpinner />
         <p className='text-sm text-text-500'>
-          Establishing secure connection...
+          {t('client.game_page.connecting')}
         </p>
       </div>
     );
@@ -21,7 +23,9 @@ function GameContent(): React.JSX.Element {
     return (
       <div className='flex h-screen flex-col items-center justify-center gap-4 bg-background-950'>
         <LoadingSpinner />
-        <p className='text-sm text-text-500'>Awaiting mission data...</p>
+        <p className='text-sm text-text-500'>
+          {t('client.game_page.awaiting')}
+        </p>
       </div>
     );
   }

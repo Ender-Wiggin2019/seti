@@ -3,6 +3,7 @@ import {
   PLANETARY_BOARD_DIMENSIONS,
   PLANETARY_PLANETS,
 } from '@seti/common/constant/boardLayout';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 import type {
   IPlayerInputModel,
@@ -66,6 +67,7 @@ export function PlanetaryBoardView({
   pendingInput,
   playerColors,
 }: IPlanetaryBoardViewProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const selectablePlanets =
     pendingInput?.type === EPlayerInputType.PLANET
       ? new Set(pendingInput.options)
@@ -75,7 +77,7 @@ export function PlanetaryBoardView({
     <section className='w-full rounded-lg border border-surface-700/40 bg-surface-900/40 p-3'>
       <header className='mb-2'>
         <h2 className='font-display text-base font-bold uppercase tracking-wider text-text-100'>
-          Planetary Board
+          {t('client.board.planetary_board')}
         </h2>
       </header>
 

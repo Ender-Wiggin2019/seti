@@ -1,5 +1,6 @@
 import { getAvailableFreeActions } from '@seti/common/rules';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import type { IPublicGameState } from '@/types/re-exports';
 import { EFreeAction } from '@/types/re-exports';
@@ -17,16 +18,6 @@ const COLLAPSIBLE_ACTIONS: EFreeAction[] = [
   EFreeAction.EXCHANGE_RESOURCES,
 ];
 
-const ACTION_LABELS: Record<EFreeAction, string> = {
-  [EFreeAction.MOVEMENT]: 'Move Probe',
-  [EFreeAction.CONVERT_ENERGY_TO_MOVEMENT]: 'Energy -> Move',
-  [EFreeAction.PLACE_DATA]: 'Place Data',
-  [EFreeAction.COMPLETE_MISSION]: 'Complete Mission',
-  [EFreeAction.USE_CARD_CORNER]: 'Use Card',
-  [EFreeAction.BUY_CARD]: 'Buy Card (3 PR)',
-  [EFreeAction.EXCHANGE_RESOURCES]: 'Exchange',
-};
-
 export interface IFreeActionBarProps {
   gameState: IPublicGameState | null;
   myPlayerId: string;
@@ -40,6 +31,7 @@ export function FreeActionBar({
   isMyTurn,
   onActionClick,
 }: IFreeActionBarProps): React.JSX.Element | null {
+  const { t } = useTranslation('common');
   const [expanded, setExpanded] = useState(false);
 
   if (!isMyTurn || !gameState) {
@@ -62,13 +54,14 @@ export function FreeActionBar({
       data-testid='free-action-bar'
     >
       <span className='mr-1 font-mono text-xs uppercase tracking-wide text-text-500'>
-        Free
+        {t('client.free_action_bar.title')}
       </span>
 
       {VISIBLE_ACTIONS.map((action) => (
         <FreeActionButton
           key={action}
           action={action}
+          label={t(`client.free_action_bar.actions.${action}`)}
           disabled={!available.has(action)}
           onClick={onActionClick}
         />
@@ -79,6 +72,7 @@ export function FreeActionBar({
             <FreeActionButton
               key={action}
               action={action}
+              label={t(`client.free_action_bar.actions.${action}`)}
               disabled={!available.has(action)}
               onClick={onActionClick}
             />
@@ -93,7 +87,9 @@ export function FreeActionBar({
         onClick={() => setExpanded((prev) => !prev)}
         data-testid='free-action-toggle'
       >
-        {expanded ? 'Collapse' : 'Expand'}
+        {expanded
+          ? t('client.free_action_bar.collapse')
+          : t('client.free_action_bar.expand')}
       </Button>
     </div>
   );
@@ -101,10 +97,12 @@ export function FreeActionBar({
 
 function FreeActionButton({
   action,
+  label,
   disabled,
   onClick,
 }: {
   action: EFreeAction;
+  label: string;
   disabled: boolean;
   onClick: (action: EFreeAction) => void;
 }): React.JSX.Element {
@@ -118,7 +116,7 @@ function FreeActionButton({
       data-testid={`free-action-${action}`}
       className='h-8 border border-surface-700/60 bg-surface-800/60 px-2 text-xs text-text-300 hover:bg-surface-700/70 disabled:opacity-40'
     >
-      {ACTION_LABELS[action]}
+      {label}
     </Button>
   );
 }

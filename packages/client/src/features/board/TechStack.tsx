@@ -1,12 +1,13 @@
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 import type { IPublicTechStack } from '@/types/re-exports';
 import { ETech } from '@/types/re-exports';
 
-const TECH_LABEL: Record<ETech, string> = {
-  [ETech.ANY]: 'Any',
-  [ETech.PROBE]: 'Probe',
-  [ETech.SCAN]: 'Scan',
-  [ETech.COMPUTER]: 'Computer',
+const TECH_TYPE_I18N_KEY: Record<ETech, string> = {
+  [ETech.ANY]: 'any',
+  [ETech.PROBE]: 'probe',
+  [ETech.SCAN]: 'scan',
+  [ETech.COMPUTER]: 'computer',
 };
 
 function getTechTileImage(tech: ETech, level: number): string {
@@ -36,6 +37,10 @@ export function TechStack({
   playerColors,
   isSelectable,
 }: ITechStackProps): React.JSX.Element {
+  const { t } = useTranslation('common');
+  const techName = t(
+    `client.tech_stack.types.${TECH_TYPE_I18N_KEY[stack.tech]}`,
+  );
   return (
     <article
       data-testid={`tech-stack-${stack.tech}-${stack.level}`}
@@ -46,7 +51,7 @@ export function TechStack({
     >
       <div className='flex items-center justify-between'>
         <h3 className='font-mono text-xs font-semibold uppercase tracking-wider text-text-200'>
-          {TECH_LABEL[stack.tech]} L{stack.level + 1}
+          {techName} L{stack.level + 1}
         </h3>
         <span className='font-mono text-[10px] text-text-500'>
           x{stack.remainingTiles}
@@ -56,7 +61,10 @@ export function TechStack({
       <div className='mt-2 flex items-center gap-2'>
         <img
           src={getTechTileImage(stack.tech, stack.level)}
-          alt={`${TECH_LABEL[stack.tech]} level ${stack.level + 1}`}
+          alt={t('client.tech_stack.tile_alt', {
+            tech: techName,
+            level: stack.level + 1,
+          })}
           className='h-10 w-10 rounded border border-surface-700/60 object-cover'
         />
         <span
@@ -67,13 +75,19 @@ export function TechStack({
               : 'border-surface-600 text-text-500',
           )}
         >
-          2VP {stack.firstTakeBonusAvailable ? 'available' : 'taken'}
+          {t('client.tech_stack.first_take_bonus', {
+            status: stack.firstTakeBonusAvailable
+              ? t('client.tech_stack.available')
+              : t('client.tech_stack.taken'),
+          })}
         </span>
       </div>
 
       <div className='mt-2 flex min-h-4 flex-wrap gap-1'>
         {ownerPlayerIds.length === 0 ? (
-          <span className='font-mono text-[10px] text-text-500'>No owner</span>
+          <span className='font-mono text-[10px] text-text-500'>
+            {t('client.tech_stack.no_owner')}
+          </span>
         ) : (
           ownerPlayerIds.map((playerId) => (
             <span

@@ -3,6 +3,7 @@ import {
   TECH_STACK_LAYOUT,
 } from '@seti/common/constant/boardLayout';
 import { getTechDescriptor } from '@seti/common/types/tech';
+import { useTranslation } from 'react-i18next';
 import type {
   IPlayerInputModel,
   IPublicPlayerState,
@@ -24,6 +25,7 @@ export function TechBoardView({
   pendingInput,
   playerColors,
 }: ITechBoardViewProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const ownerByStackKey = new Map<string, string[]>();
 
   for (const player of players) {
@@ -49,7 +51,7 @@ export function TechBoardView({
     <section className='w-full rounded-lg border border-surface-700/40 bg-surface-900/40 p-3'>
       <header className='mb-2'>
         <h2 className='font-display text-base font-bold uppercase tracking-wider text-text-100'>
-          Tech Board
+          {t('client.board.tech_board')}
         </h2>
       </header>
 
