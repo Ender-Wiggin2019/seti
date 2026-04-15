@@ -12,6 +12,7 @@ pnpm install
 - Server 单测：见 `docs/tests/server.md`
 - Client 单测：见 `docs/tests/client.md`
 - Common 单测：见 `docs/tests/common.md`
+- E2E / Playwright：见 `docs/tests/e2e.md`
 
 ## 常见场景
 

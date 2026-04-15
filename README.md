@@ -112,6 +112,21 @@ pnpm --filter @seti/client build
 pnpm --filter @seti/client test
 ```
 
+## E2E / Playwright
+
+推荐入口：
+
+```bash
+./scripts/init-e2e-local.sh
+./scripts/run-e2e-local.sh
+```
+
+默认会准备 E2E 数据库、启动 `@seti/server` + `@seti/client`，并执行 `packages/e2e/tests/game-flow-behavior.spec.ts`。
+
+更多细节见：
+
+- `docs/tests/e2e.md`
+
 ### server（Nest）
 
 ```bash
