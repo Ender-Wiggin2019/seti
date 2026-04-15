@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 import { lobbyApi } from '@/api/lobbyApi';
 import { ERoomStatus } from '@/api/types';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
@@ -12,6 +13,7 @@ import { GameSettingsPanel } from '@/pages/lobby/GameSettingsPanel';
 import { useAuthStore } from '@/stores/authStore';
 
 export function RoomPage(): React.JSX.Element {
+  const { t } = useTranslation('common');
   const { roomId } = useParams({ strict: false }) as { roomId: string };
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -29,7 +31,7 @@ export function RoomPage(): React.JSX.Element {
       queryClient.invalidateQueries({ queryKey: ['room', roomId] }),
     onError: (err) =>
       toast({
-        title: 'Join failed',
+        title: t('client.room.toast.join_failed'),
         description: err.message,
         variant: 'error',
       }),
@@ -43,7 +45,7 @@ export function RoomPage(): React.JSX.Element {
     },
     onError: (err) =>
       toast({
-        title: 'Leave failed',
+        title: t('client.room.toast.leave_failed'),
         description: err.message,
         variant: 'error',
       }),
@@ -55,7 +57,7 @@ export function RoomPage(): React.JSX.Element {
       navigate({ to: '/game/$gameId', params: { gameId: data.gameId } }),
     onError: (err) =>
       toast({
-        title: 'Start failed',
+        title: t('client.room.toast.start_failed'),
         description: err.message,
         variant: 'error',
       }),
@@ -85,7 +87,7 @@ export function RoomPage(): React.JSX.Element {
     <div className='space-y-6'>
       <div className='flex items-center gap-3'>
         <Button variant='ghost' onClick={() => navigate({ to: '/lobby' })}>
-          ← Back
+          {t('client.room.back')}
         </Button>
         <h1 className='font-display text-2xl font-bold uppercase tracking-wider text-text-100'>
           {room.name}
@@ -93,14 +95,18 @@ export function RoomPage(): React.JSX.Element {
         <Badge
           variant={room.status === ERoomStatus.WAITING ? 'success' : 'warning'}
         >
-          {room.status}
+          {room.status === ERoomStatus.WAITING
+            ? t('client.room.status.waiting')
+            : room.status === ERoomStatus.PLAYING
+              ? t('client.room.status.playing')
+              : t('client.room.status.finished')}
         </Badge>
       </div>
 
       <div className='grid gap-6 lg:grid-cols-[1fr_300px]'>
         <Card>
           <CardHeader>
-            <CardTitle>Crew</CardTitle>
+            <CardTitle>{t('client.room.crew')}</CardTitle>
           </CardHeader>
           <CardContent className='space-y-3'>
             {room.players.map((player) => (
@@ -134,8 +140,11 @@ export function RoomPage(): React.JSX.Element {
               <Button
                 onClick={() => joinMutation.mutate()}
                 disabled={joinMutation.isPending}
+                data-testid='room-join'
               >
-                {joinMutation.isPending ? 'Joining...' : 'Join Mission'}
+                {joinMutation.isPending
+                  ? t('client.room.actions.joining')
+                  : t('client.room.actions.join')}
               </Button>
             )}
             {canLeave && (
@@ -143,8 +152,9 @@ export function RoomPage(): React.JSX.Element {
                 variant='ghost'
                 onClick={() => leaveMutation.mutate()}
                 disabled={leaveMutation.isPending}
+                data-testid='room-leave'
               >
-                Leave Mission
+                {t('client.room.actions.leave')}
               </Button>
             )}
             {canEnterGame && (
@@ -155,16 +165,20 @@ export function RoomPage(): React.JSX.Element {
                     params: { gameId: room.gameId ?? room.id },
                   })
                 }
+                data-testid='room-enter-game'
               >
-                Enter Game
+                {t('client.room.actions.enter_game')}
               </Button>
             )}
             {canStart && (
               <Button
                 onClick={() => startMutation.mutate()}
                 disabled={startMutation.isPending}
+                data-testid='room-launch-game'
               >
-                {startMutation.isPending ? 'Launching...' : 'Launch Game'}
+                {startMutation.isPending
+                  ? t('client.room.actions.launching')
+                  : t('client.room.actions.launch')}
               </Button>
             )}
           </div>

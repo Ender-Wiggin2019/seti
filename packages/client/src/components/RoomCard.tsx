@@ -1,4 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 import type { IRoom } from '@/api/types';
 import { ERoomStatus } from '@/api/types';
 import { Badge } from '@/components/ui/badge';
@@ -14,14 +15,15 @@ const STATUS_VARIANT = {
   [ERoomStatus.FINISHED]: 'default',
 } as const;
 
-const STATUS_LABEL = {
-  [ERoomStatus.WAITING]: 'Waiting',
-  [ERoomStatus.PLAYING]: 'In Progress',
-  [ERoomStatus.FINISHED]: 'Finished',
-} as const;
-
 export function RoomCard({ room }: IRoomCardProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const navigate = useNavigate();
+  const statusLabel =
+    room.status === ERoomStatus.WAITING
+      ? t('client.room_card.status.waiting')
+      : room.status === ERoomStatus.PLAYING
+        ? t('client.room_card.status.playing')
+        : t('client.room_card.status.finished');
 
   return (
     <button
@@ -41,25 +43,33 @@ export function RoomCard({ room }: IRoomCardProps): React.JSX.Element {
             {room.name}
           </h3>
           <p className='mt-1 text-xs text-text-500'>
-            Host:{' '}
+            {t('client.room_card.host')}:{' '}
             <span className='text-text-300'>
-              {room.players.find((p) => p.isHost)?.name ?? 'Unknown'}
+              {room.players.find((p) => p.isHost)?.name ??
+                t('client.common.unknown')}
             </span>
           </p>
         </div>
-        <Badge variant={STATUS_VARIANT[room.status]}>
-          {STATUS_LABEL[room.status]}
-        </Badge>
+        <Badge variant={STATUS_VARIANT[room.status]}>{statusLabel}</Badge>
       </div>
       <div className='mt-3 flex items-center gap-4 text-xs text-text-500'>
         <span className='font-mono'>
-          {room.players.length}/{room.options.playerCount} players
+          {t('client.room_card.players', {
+            current: room.players.length,
+            total: room.options.playerCount,
+          })}
         </span>
         {room.options.alienModulesEnabled && (
-          <span className='text-accent-400'>Aliens</span>
+          <span className='text-accent-400'>
+            {t('client.room_card.aliens')}
+          </span>
         )}
         {room.options.turnTimerSeconds > 0 && (
-          <span>{room.options.turnTimerSeconds}s timer</span>
+          <span>
+            {t('client.room_card.timer', {
+              seconds: room.options.turnTimerSeconds,
+            })}
+          </span>
         )}
       </div>
     </button>

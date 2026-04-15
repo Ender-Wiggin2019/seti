@@ -5,15 +5,18 @@ import {
   type TestInfo,
   test,
 } from '@playwright/test';
-import { SetiApi } from '../helpers/api';
-import { injectAuth } from '../helpers/auth';
+import {
+  clickPassAndWaitForLogSync,
+  createRoomByUi,
+  createUser,
+  enterGameByUi,
+  joinRoomByUi,
+  launchGameByUi,
+  registerByUi,
+  waitForActionOwner,
+} from '../helpers/real-flow';
 import { sel } from '../helpers/selectors';
 import { waitForServerReady } from '../helpers/server-ready';
-
-type TAuthSession = {
-  accessToken: string;
-  user: { id: string; name: string; email: string };
-};
 
 async function attachStepScreenshot(
   page: Page,
@@ -28,290 +31,128 @@ async function attachStepScreenshot(
   });
 }
 
-async function registerByUiAndAssert(
-  browser: Browser,
-  user: { name: string; email: string; password: string },
-  testInfo: TestInfo,
-): Promise<void> {
-  const registerContext = await browser.newContext();
-  const registerPage = await registerContext.newPage();
-
-  try {
-    await registerPage.goto('/auth');
-    await registerPage.getByRole('tab', { name: 'Register' }).click();
-    await registerPage.locator('#reg-name').fill(user.name);
-    await registerPage.locator('#reg-email').fill(user.email);
-    await registerPage.locator('#reg-password').fill(user.password);
-
-    const registerResponsePromise = registerPage.waitForResponse(
-      (res) =>
-        res.url().includes('/auth/register') &&
-        res.request().method() === 'POST',
-    );
-    await registerPage
-      .getByRole('button', { name: 'Register New Operative' })
-      .click();
-    const registerResponse = await registerResponsePromise;
-    expect(registerResponse.ok()).toBe(true);
-    await attachStepScreenshot(registerPage, testInfo, 'ui-register-success');
-  } finally {
-    await registerContext.close();
-  }
+async function openUserContext(browser: Browser): Promise<{
+  context: Awaited<ReturnType<Browser['newContext']>>;
+  page: Page;
+}> {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  return { context, page };
 }
 
-async function loginByUiAndGetSession(
-  browser: Browser,
-  user: { email: string; password: string },
-  testInfo: TestInfo,
-): Promise<void> {
-  const loginContext = await browser.newContext();
-  const loginPage = await loginContext.newPage();
-
-  try {
-    await loginPage.goto('/auth');
-    await loginPage.locator('#login-email').fill(user.email);
-    await loginPage.locator('#login-password').fill(user.password);
-
-    const loginResponsePromise = loginPage.waitForResponse(
-      (res) =>
-        res.url().includes('/auth/login') && res.request().method() === 'POST',
-    );
-    await loginPage.getByRole('button', { name: 'Access Terminal' }).click();
-    const loginResponse = await loginResponsePromise;
-    expect(loginResponse.ok()).toBe(true);
-    await attachStepScreenshot(loginPage, testInfo, 'ui-login-success');
-  } finally {
-    await loginContext.close();
-  }
-}
-
-test.describe('User Journey E2E', () => {
-  test('register + login + create room + join game + in-game action', async ({
+test.describe('User Journey E2E (Real Flow Only)', () => {
+  test('register + create room + join game + pass action', async ({
     browser,
-    page,
     request,
   }, testInfo) => {
     await waitForServerReady(request);
 
-    const host = {
-      name: 'Journey Host',
-      email: `journey-host-${Date.now()}@e2e.test`,
-      password: 'password123',
-    };
-    const guest = {
-      name: 'Journey Guest',
-      email: `journey-guest-${Date.now()}@e2e.test`,
-      password: 'password123',
-    };
-    const roomName = `Journey Room ${Date.now()}`;
-    const hostApi = new SetiApi(request);
-    const guestApi = new SetiApi(request);
-    let hostLoginSession: TAuthSession;
+    const hostUser = createUser('journey-host');
+    const guestUser = createUser('journey-guest');
 
-    await test.step('register host by UI', async () => {
-      await registerByUiAndAssert(browser, host, testInfo);
-    });
+    const host = await openUserContext(browser);
+    const guest = await openUserContext(browser);
 
-    await test.step('login host by UI', async () => {
-      await loginByUiAndGetSession(browser, host, testInfo);
-      hostLoginSession = await hostApi.login(host.email, host.password);
-      expect(hostLoginSession.accessToken).toBeTruthy();
-      expect(hostLoginSession.user.email).toBe(host.email);
+    try {
+      await registerByUi(host.page, hostUser);
+      await registerByUi(guest.page, guestUser);
 
-      await injectAuth(
-        page,
-        hostLoginSession.accessToken,
-        hostLoginSession.user,
+      const roomId = await createRoomByUi(
+        host.page,
+        `Journey Room ${Date.now()}`,
+        2,
       );
-      await page.goto('/lobby');
-      await expect(
-        page.getByRole('button', { name: /New Mission/ }),
-      ).toBeVisible();
-      await attachStepScreenshot(page, testInfo, 'host-lobby-after-login');
-    });
+      await attachStepScreenshot(host.page, testInfo, 'journey-room-created');
 
-    const { roomId, gameId } =
-      await test.step('create room by UI + guest joins via API + host starts game by UI', async () => {
-        const guestAuth = await guestApi.register(
-          guest.name,
-          guest.email,
-          guest.password,
-        );
-        expect(guestAuth.user.email).toBe(guest.email);
+      await joinRoomByUi(guest.page, roomId);
+      await attachStepScreenshot(guest.page, testInfo, 'journey-guest-joined');
 
-        await page.goto('/lobby');
-        await page.getByRole('button', { name: /New Mission/ }).click();
-        await page.locator('#room-name').fill(roomName);
-        await page.locator('#player-count').selectOption('2');
+      const hostGameId = await launchGameByUi(host.page, roomId);
+      const guestGameId = await enterGameByUi(guest.page, roomId);
+      expect(guestGameId).toBe(hostGameId);
 
-        const createRoomResponsePromise = page.waitForResponse(
-          (res) =>
-            res.url().includes('/lobby/rooms') &&
-            res.request().method() === 'POST',
-        );
-        await page.getByRole('button', { name: 'Launch Mission' }).click();
-        const createRoomResponse = await createRoomResponsePromise;
-        expect(createRoomResponse.ok()).toBe(true);
-        const createdRoom = await createRoomResponse.json();
-        const createdRoomId = createdRoom.id as string;
-        await attachStepScreenshot(page, testInfo, 'host-room-created-2p');
-
-        await guestApi.joinRoom(createdRoomId);
-
-        await page.goto(`/room/${createdRoomId}`);
-        const launchBtn = page.getByRole('button', { name: 'Launch Game' });
-        await expect(launchBtn).toBeVisible({ timeout: 15_000 });
-        await launchBtn.click();
-
-        await page.waitForURL(/\/game\/[^/?#]+$/, { timeout: 15_000 });
-        const createdGameId = page.url().split('/game/')[1]?.split(/[?#]/)[0];
-        expect(createdGameId).toBeTruthy();
-
-        await expect(page.locator(sel.bottomDashboard)).toBeVisible({
-          timeout: 15_000,
-        });
-        await attachStepScreenshot(page, testInfo, 'host-game-loaded-2p');
-        return { roomId: createdRoomId, gameId: createdGameId as string };
+      await expect(host.page.locator(sel.bottomDashboard)).toBeVisible({
+        timeout: 15_000,
       });
+      await expect(guest.page.locator(sel.bottomDashboard)).toBeVisible({
+        timeout: 15_000,
+      });
+      await attachStepScreenshot(host.page, testInfo, 'journey-host-in-game');
+      await attachStepScreenshot(guest.page, testInfo, 'journey-guest-in-game');
 
-    await test.step('perform in-game interaction by UI', async () => {
-      const passBtn = page.locator(sel.actionMenu('PASS'));
-      await expect(passBtn).toBeVisible({ timeout: 10_000 });
+      const { actor, other } = await waitForActionOwner(
+        host.page,
+        guest.page,
+        'PASS',
+      );
+      await expect(actor.locator(sel.actionMenu('PASS'))).toBeVisible({
+        timeout: 10_000,
+      });
+      await clickPassAndWaitForLogSync(actor, other);
 
-      const eventsBefore = await page
-        .locator('[data-testid^="event-entry-"]')
-        .count();
-      await passBtn.click();
-      await page.waitForTimeout(1_000);
-      const eventsAfter = await page
-        .locator('[data-testid^="event-entry-"]')
-        .count();
-
-      expect(eventsAfter).toBeGreaterThanOrEqual(eventsBefore);
-      await expect(page.locator(sel.bottomDashboard)).toBeVisible();
-      await attachStepScreenshot(page, testInfo, 'host-after-pass-2p');
-    });
-
-    expect(roomId).toBeTruthy();
-    expect(gameId).toBeTruthy();
+      await expect(other.locator(sel.eventLog)).toBeVisible({
+        timeout: 10_000,
+      });
+      await attachStepScreenshot(actor, testInfo, 'journey-after-pass-actor');
+      await attachStepScreenshot(other, testInfo, 'journey-after-pass-other');
+    } finally {
+      await host.context.close();
+      await guest.context.close();
+    }
   });
 
-  test('multi-player: 3 players can join and enter the same game', async ({
+  test('three users join the same game and all enter game page', async ({
     browser,
-    page,
     request,
   }, testInfo) => {
     test.setTimeout(120_000);
     await waitForServerReady(request);
 
-    const host = {
-      name: 'Multi Host',
-      email: `multi-host-${Date.now()}@e2e.test`,
-      password: 'password123',
-    };
-    const guest1 = {
-      name: 'Multi Guest One',
-      email: `multi-g1-${Date.now()}@e2e.test`,
-      password: 'password123',
-    };
-    const guest2 = {
-      name: 'Multi Guest Two',
-      email: `multi-g2-${Date.now()}@e2e.test`,
-      password: 'password123',
-    };
+    const hostUser = createUser('multi-host');
+    const guestUser1 = createUser('multi-g1');
+    const guestUser2 = createUser('multi-g2');
 
-    const guestApi1 = new SetiApi(request);
-    const guestApi2 = new SetiApi(request);
-    const hostApi = new SetiApi(request);
-    const roomName = `3P Journey Room ${Date.now()}`;
-
-    await registerByUiAndAssert(browser, host, testInfo);
-    await loginByUiAndGetSession(browser, host, testInfo);
-    const hostLoginSession = await hostApi.login(host.email, host.password);
-    await injectAuth(page, hostLoginSession.accessToken, hostLoginSession.user);
-    await page.goto('/lobby');
-    await expect(
-      page.getByRole('button', { name: /New Mission/ }),
-    ).toBeVisible();
-    await attachStepScreenshot(page, testInfo, 'host-lobby-3p');
-
-    const guestAuth1 = await guestApi1.register(
-      guest1.name,
-      guest1.email,
-      guest1.password,
-    );
-    const guestAuth2 = await guestApi2.register(
-      guest2.name,
-      guest2.email,
-      guest2.password,
-    );
-
-    const createdRoomId =
-      await test.step('host creates a 3-player room via UI', async () => {
-        await page.getByRole('button', { name: /New Mission/ }).click();
-        await page.locator('#room-name').fill(roomName);
-        await page.locator('#player-count').selectOption('3');
-
-        const createRoomResponsePromise = page.waitForResponse(
-          (res) =>
-            res.url().includes('/lobby/rooms') &&
-            res.request().method() === 'POST',
-        );
-        await page.getByRole('button', { name: 'Launch Mission' }).click();
-        const createRoomResponse = await createRoomResponsePromise;
-        expect(createRoomResponse.ok()).toBe(true);
-
-        const body = await createRoomResponse.json();
-        expect(body.id).toBeTruthy();
-        await attachStepScreenshot(page, testInfo, 'host-room-created-3p');
-        return body.id as string;
-      });
-
-    await guestApi1.joinRoom(createdRoomId);
-    await guestApi2.joinRoom(createdRoomId);
-
-    const createdGameId =
-      await test.step('host starts game via UI', async () => {
-        await page.goto(`/room/${createdRoomId}`);
-        const launchBtn = page.getByRole('button', { name: 'Launch Game' });
-        await expect(launchBtn).toBeVisible({ timeout: 15_000 });
-        await launchBtn.click();
-
-        await page.waitForURL(/\/game\/[^/?#]+$/, { timeout: 15_000 });
-        const id = page.url().split('/game/')[1]?.split(/[?#]/)[0];
-        expect(id).toBeTruthy();
-        await attachStepScreenshot(page, testInfo, 'host-game-loaded-3p');
-        return id as string;
-      });
-
-    const guestContext1 = await browser.newContext();
-    const guestContext2 = await browser.newContext();
-    const guestPage1 = await guestContext1.newPage();
-    const guestPage2 = await guestContext2.newPage();
+    const host = await openUserContext(browser);
+    const guest1 = await openUserContext(browser);
+    const guest2 = await openUserContext(browser);
 
     try {
-      await injectAuth(guestPage1, guestAuth1.accessToken, guestAuth1.user);
-      await injectAuth(guestPage2, guestAuth2.accessToken, guestAuth2.user);
+      await registerByUi(host.page, hostUser);
+      await registerByUi(guest1.page, guestUser1);
+      await registerByUi(guest2.page, guestUser2);
 
-      await guestPage1.goto(`/game/${createdGameId}`);
-      await guestPage2.goto(`/game/${createdGameId}`);
+      const roomId = await createRoomByUi(
+        host.page,
+        `3P Journey Room ${Date.now()}`,
+        3,
+      );
+      await joinRoomByUi(guest1.page, roomId);
+      await joinRoomByUi(guest2.page, roomId);
 
-      await expect(page.locator(sel.bottomDashboard)).toBeVisible();
-      await expect(guestPage1.locator(sel.bottomDashboard)).toBeVisible();
-      await expect(guestPage2.locator(sel.bottomDashboard)).toBeVisible();
-      await attachStepScreenshot(guestPage1, testInfo, 'guest1-game-loaded-3p');
-      await attachStepScreenshot(guestPage2, testInfo, 'guest2-game-loaded-3p');
+      const hostGameId = await launchGameByUi(host.page, roomId);
+      const guestGameId1 = await enterGameByUi(guest1.page, roomId);
+      const guestGameId2 = await enterGameByUi(guest2.page, roomId);
 
-      const hostPass = page.locator(sel.actionMenu('PASS'));
-      await expect(hostPass).toBeVisible();
-      await hostPass.click();
-      await attachStepScreenshot(page, testInfo, 'host-after-pass-3p');
+      expect(guestGameId1).toBe(hostGameId);
+      expect(guestGameId2).toBe(hostGameId);
 
-      await expect(guestPage1.locator(sel.bottomDashboard)).toBeVisible();
-      await expect(guestPage2.locator(sel.bottomDashboard)).toBeVisible();
+      await expect(host.page.locator(sel.bottomDashboard)).toBeVisible({
+        timeout: 15_000,
+      });
+      await expect(guest1.page.locator(sel.bottomDashboard)).toBeVisible({
+        timeout: 15_000,
+      });
+      await expect(guest2.page.locator(sel.bottomDashboard)).toBeVisible({
+        timeout: 15_000,
+      });
+
+      await attachStepScreenshot(host.page, testInfo, 'multi-host-in-game');
+      await attachStepScreenshot(guest1.page, testInfo, 'multi-guest1-in-game');
+      await attachStepScreenshot(guest2.page, testInfo, 'multi-guest2-in-game');
     } finally {
-      await guestContext1.close();
-      await guestContext2.close();
+      await host.context.close();
+      await guest1.context.close();
+      await guest2.context.close();
     }
   });
 });

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -16,6 +17,7 @@ import { useGameContext } from '@/pages/game/GameContext';
 import { EPhase, type IPublicMilestoneState } from '@/types/re-exports';
 
 export function GameOverDialog(): React.JSX.Element | null {
+  const { t } = useTranslation('common');
   const { gameState } = useGameContext();
 
   if (gameState?.phase !== EPhase.GAME_OVER) return null;
@@ -58,10 +60,10 @@ export function GameOverDialog(): React.JSX.Element | null {
       <DialogContent className='max-w-4xl bg-surface-900/95'>
         <DialogHeader>
           <DialogTitle className='font-display text-xl uppercase tracking-wider'>
-            Game Over
+            {t('client.game_over.title')}
           </DialogTitle>
           <p className='text-xs text-text-400'>
-            Winner:{' '}
+            {t('client.game_over.winner')}:{' '}
             <span className='font-semibold text-text-100'>
               {winner?.playerName}
             </span>
@@ -72,7 +74,7 @@ export function GameOverDialog(): React.JSX.Element | null {
           <div className='space-y-3'>
             <ScoreBreakdown rows={rows} />
             <p className='text-xs text-text-500'>
-              Detailed scoring breakdown by source is shown above.
+              {t('client.game_over.breakdown_hint')}
             </p>
           </div>
           <div className='space-y-3'>
@@ -80,7 +82,7 @@ export function GameOverDialog(): React.JSX.Element | null {
             <GoldTileSelector tiles={goldTiles} selectedTileId={null} />
             <img
               src='/assets/seti/boards/scoringReminder.jpg'
-              alt='Scoring reminder'
+              alt={t('client.game_over.scoring_reminder_alt')}
               className='w-full rounded border border-surface-700/60'
             />
           </div>

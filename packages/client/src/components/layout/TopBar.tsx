@@ -1,19 +1,11 @@
 import { Link } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 import { useGameContext } from '@/pages/game/GameContext';
 import { EPhase } from '@/types/re-exports';
 
-const PHASE_LABELS: Record<EPhase, string> = {
-  [EPhase.SETUP]: 'Setup',
-  [EPhase.AWAIT_MAIN_ACTION]: 'Action Phase',
-  [EPhase.IN_RESOLUTION]: 'Resolving',
-  [EPhase.BETWEEN_TURNS]: 'Between Turns',
-  [EPhase.END_OF_ROUND]: 'End of Round',
-  [EPhase.FINAL_SCORING]: 'Final Scoring',
-  [EPhase.GAME_OVER]: 'Game Over',
-};
-
 export function TopBar(): React.JSX.Element {
+  const { t } = useTranslation('common');
   const { gameState, isMyTurn, isSpectator } = useGameContext();
 
   const currentPlayerName = gameState?.players.find(
@@ -27,7 +19,7 @@ export function TopBar(): React.JSX.Element {
           to='/lobby'
           className='text-xs font-medium uppercase tracking-wider text-text-500 transition-colors hover:text-accent-400'
         >
-          Exit
+          {t('client.top_bar.exit')}
         </Link>
 
         <div className='h-4 w-px bg-surface-700' />
@@ -36,7 +28,7 @@ export function TopBar(): React.JSX.Element {
           <>
             <div className='flex items-center gap-2'>
               <span className='font-mono text-xs uppercase tracking-widest text-text-500'>
-                Round
+                {t('client.top_bar.round')}
               </span>
               <span className='font-mono text-sm font-bold text-accent-400'>
                 {gameState.round}
@@ -53,7 +45,7 @@ export function TopBar(): React.JSX.Element {
                   : 'bg-surface-800 text-text-300',
               )}
             >
-              {PHASE_LABELS[gameState.phase] ?? gameState.phase}
+              {t(`client.top_bar.phases.${gameState.phase}`)}
             </span>
           </>
         )}
@@ -62,14 +54,16 @@ export function TopBar(): React.JSX.Element {
       <div className='flex items-center gap-4'>
         {gameState && currentPlayerName && (
           <div className='flex items-center gap-2'>
-            <span className='text-xs text-text-500'>Current:</span>
+            <span className='text-xs text-text-500'>
+              {t('client.top_bar.current')}
+            </span>
             <span
               className={cn(
                 'font-mono text-sm font-medium',
                 isMyTurn ? 'text-accent-400' : 'text-text-300',
               )}
             >
-              {isMyTurn ? 'Your Turn' : currentPlayerName}
+              {isMyTurn ? t('client.top_bar.your_turn') : currentPlayerName}
             </span>
             {isMyTurn && (
               <span className='h-2 w-2 animate-pulse rounded-full bg-accent-400' />
@@ -79,7 +73,7 @@ export function TopBar(): React.JSX.Element {
 
         {isSpectator && (
           <span className='rounded bg-surface-800 px-2 py-0.5 font-mono text-xs text-text-500'>
-            Spectating
+            {t('client.top_bar.spectating')}
           </span>
         )}
 

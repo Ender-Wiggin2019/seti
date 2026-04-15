@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import { useCurrentUser, useLogout, useUpdateProfile } from '@/hooks/useAuth';
 import { useAuthStore } from '@/stores/authStore';
 
 export function ProfilePage(): React.JSX.Element {
+  const { t } = useTranslation('common');
   const { data: user, isLoading } = useCurrentUser();
   const updateMutation = useUpdateProfile();
   const logout = useLogout();
@@ -28,19 +30,25 @@ export function ProfilePage(): React.JSX.Element {
 
   const handleSave = () => {
     if (!editName.trim() || editName.trim().length < 2) {
-      toast({ title: 'Name must be at least 2 characters', variant: 'error' });
+      toast({
+        title: t('client.profile.toast.invalid_name'),
+        variant: 'error',
+      });
       return;
     }
     updateMutation.mutate(
       { name: editName.trim() },
       {
         onSuccess: () => {
-          toast({ title: 'Profile updated', variant: 'success' });
+          toast({
+            title: t('client.profile.toast.updated'),
+            variant: 'success',
+          });
           setIsEditing(false);
         },
         onError: (err) =>
           toast({
-            title: 'Update failed',
+            title: t('client.profile.toast.update_failed'),
             description: err.message,
             variant: 'error',
           }),
@@ -51,12 +59,12 @@ export function ProfilePage(): React.JSX.Element {
   return (
     <div className='space-y-6'>
       <h1 className='font-display text-2xl font-bold uppercase tracking-wider text-text-100'>
-        Operative Profile
+        {t('client.profile.title')}
       </h1>
 
       <Card>
         <CardHeader>
-          <CardTitle>Identity</CardTitle>
+          <CardTitle>{t('client.profile.identity')}</CardTitle>
         </CardHeader>
         <CardContent className='space-y-4'>
           <div className='grid grid-cols-[120px_1fr] items-center gap-3'>
@@ -64,16 +72,16 @@ export function ProfilePage(): React.JSX.Element {
               ID
             </span>
             <span className='font-mono text-sm text-text-300'>
-              {displayUser?.id ?? '—'}
+              {displayUser?.id ?? t('client.common.empty_value')}
             </span>
 
             <span className='font-mono text-xs uppercase tracking-wider text-text-500'>
-              Callsign
+              {t('client.profile.callsign')}
             </span>
             {isEditing ? (
               <div className='flex flex-wrap items-center gap-2'>
                 <Label htmlFor='profile-name' className='sr-only'>
-                  Callsign
+                  {t('client.profile.callsign')}
                 </Label>
                 <Input
                   id='profile-name'
@@ -86,20 +94,20 @@ export function ProfilePage(): React.JSX.Element {
                   onClick={handleSave}
                   disabled={updateMutation.isPending}
                 >
-                  Save
+                  {t('client.common.save')}
                 </Button>
                 <Button
                   size='sm'
                   variant='ghost'
                   onClick={() => setIsEditing(false)}
                 >
-                  Cancel
+                  {t('client.common.cancel')}
                 </Button>
               </div>
             ) : (
               <div className='flex items-center gap-2'>
                 <span className='text-sm text-text-100'>
-                  {displayUser?.name ?? '—'}
+                  {displayUser?.name ?? t('client.common.empty_value')}
                 </span>
                 <Button
                   size='sm'
@@ -109,7 +117,7 @@ export function ProfilePage(): React.JSX.Element {
                     setIsEditing(true);
                   }}
                 >
-                  Edit
+                  {t('client.common.edit')}
                 </Button>
               </div>
             )}
@@ -118,7 +126,7 @@ export function ProfilePage(): React.JSX.Element {
               Email
             </span>
             <span className='text-sm text-text-300'>
-              {displayUser?.email ?? '—'}
+              {displayUser?.email ?? t('client.common.empty_value')}
             </span>
           </div>
         </CardContent>
@@ -130,7 +138,7 @@ export function ProfilePage(): React.JSX.Element {
           onClick={logout}
           className='text-danger-500 hover:bg-danger-500/10 hover:text-danger-500'
         >
-          Disconnect Terminal
+          {t('client.profile.disconnect')}
         </Button>
       </div>
     </div>

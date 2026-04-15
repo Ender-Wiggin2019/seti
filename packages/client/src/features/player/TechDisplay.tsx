@@ -1,18 +1,20 @@
 import { type ETechId, getTechDescriptor } from '@seti/common/types/tech';
+import { useTranslation } from 'react-i18next';
 import { ETech } from '@/types/re-exports';
 
 interface ITechDisplayProps {
   techs: ETechId[];
 }
 
-const TYPE_TITLE: Record<ETech, string> = {
-  [ETech.PROBE]: 'Probe',
-  [ETech.SCAN]: 'Scan',
-  [ETech.COMPUTER]: 'Computer',
-  [ETech.ANY]: 'Any',
+const TYPE_I18N_KEY: Record<ETech, string> = {
+  [ETech.PROBE]: 'probe',
+  [ETech.SCAN]: 'scan',
+  [ETech.COMPUTER]: 'computer',
+  [ETech.ANY]: 'any',
 };
 
 export function TechDisplay({ techs }: ITechDisplayProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const grouped = new Map<ETech, ETechId[]>();
 
   for (const techId of techs) {
@@ -25,11 +27,13 @@ export function TechDisplay({ techs }: ITechDisplayProps): React.JSX.Element {
   return (
     <section className='rounded border border-surface-700/55 bg-surface-950/65 p-2'>
       <p className='mb-1.5 font-mono text-[10px] uppercase tracking-wide text-text-500'>
-        Tech Slots
+        {t('client.tech_display.title')}
       </p>
 
       {techs.length === 0 ? (
-        <p className='text-xs text-text-500'>No tech tiles yet</p>
+        <p className='text-xs text-text-500'>
+          {t('client.tech_display.empty')}
+        </p>
       ) : (
         <div className='space-y-1'>
           {[ETech.PROBE, ETech.SCAN, ETech.COMPUTER].map((techType) => {
@@ -37,7 +41,7 @@ export function TechDisplay({ techs }: ITechDisplayProps): React.JSX.Element {
             return (
               <div key={techType} className='flex items-center gap-1'>
                 <span className='w-14 font-mono text-[10px] text-text-400'>
-                  {TYPE_TITLE[techType]}
+                  {t(`client.tech_display.types.${TYPE_I18N_KEY[techType]}`)}
                 </span>
                 <div className='flex flex-wrap gap-1'>
                   {typeTechs.map((techId) => {

@@ -37,7 +37,7 @@ export function Dialog({
     <div
       ref={overlayRef}
       onClick={handleOverlayClick}
-      className='fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm'
+      className='fixed inset-0 z-[1000] flex items-center justify-center bg-black/85'
     >
       <div className='w-full max-w-lg' role='dialog' aria-modal='true'>
         {children}

@@ -3,7 +3,6 @@ import {
   createRoute,
   createRouter,
   Outlet,
-  redirect,
 } from '@tanstack/react-router';
 import { AppShell } from '@/components/layout/AppShell';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
@@ -12,10 +11,10 @@ import { GameDebugPage } from '@/pages/game/GameDebugPage';
 import { GamePage, SpectatePage } from '@/pages/game/GamePage';
 import { ServerDebugPage } from '@/pages/game/ServerDebugPage';
 import { SolarDebugPage } from '@/pages/game/SolarDebugPage';
+import { HomePage } from '@/pages/home/HomePage';
 import { LobbyPage } from '@/pages/lobby/LobbyPage';
 import { RoomPage } from '@/pages/lobby/RoomPage';
 import { ProfilePage } from '@/pages/profile/ProfilePage';
-import { useAuthStore } from '@/stores/authStore';
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -34,10 +33,7 @@ const appLayoutRoute = createRoute({
 const indexRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
   path: '/',
-  beforeLoad: () => {
-    const isAuthenticated = useAuthStore.getState().isAuthenticated;
-    throw redirect({ to: isAuthenticated ? '/lobby' : '/auth' });
-  },
+  component: HomePage,
 });
 
 const authRoute = createRoute({

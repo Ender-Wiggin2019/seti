@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { wsClient } from '@/api/wsClient';
+import { normalizePlayerInputCards } from '@/lib/cardNormalization';
 import type { IInputResponse, IPlayerInputModel } from '@/types/re-exports';
 
 interface IUsePlayerInputReturn {
@@ -17,7 +18,7 @@ export function usePlayerInput(): IUsePlayerInputReturn {
   useEffect(() => {
     const handler = (data: { playerId: string; input: IPlayerInputModel }) => {
       setWaitingPlayerId(data.playerId);
-      setPendingInput(data.input);
+      setPendingInput(normalizePlayerInputCards(data.input));
     };
 
     return wsClient.onWaiting(handler);

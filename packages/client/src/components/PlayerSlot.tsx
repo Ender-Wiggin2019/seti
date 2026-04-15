@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { IRoomPlayer } from '@/api/types';
 import { cn } from '@/lib/cn';
 
@@ -19,10 +20,11 @@ export function PlayerSlot({
   seatIndex,
   isCurrentUser,
 }: IPlayerSlotProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   if (!player) {
     return (
       <div className='flex h-16 items-center justify-center rounded-lg border border-dashed border-surface-700/80 bg-surface-900/30 text-sm text-text-500'>
-        Seat {seatIndex + 1} — Empty
+        {t('client.player_slot.empty', { index: seatIndex + 1 })}
       </div>
     );
   }
@@ -42,11 +44,17 @@ export function PlayerSlot({
         <p className='truncate text-sm font-medium text-text-100'>
           {player.name}
           {isCurrentUser && (
-            <span className='ml-1 text-xs text-accent-400'>(You)</span>
+            <span className='ml-1 text-xs text-accent-400'>
+              ({t('client.player_slot.you')})
+            </span>
           )}
         </p>
         <p className='text-xs text-text-500'>
-          {player.isHost ? 'Host' : player.ready ? 'Ready' : 'Not ready'}
+          {player.isHost
+            ? t('client.player_slot.host')
+            : player.ready
+              ? t('client.player_slot.ready')
+              : t('client.player_slot.not_ready')}
         </p>
       </div>
     </div>

@@ -147,5 +147,415 @@
   "Base": "基础",
   "Space Agency": "太空机构",
   "Promo": "推广",
-  "Card Source": "卡牌来源"
+  "Card Source": "卡牌来源",
+  "home": {
+    "title": "任务控制中心",
+    "subtitle_authenticated": "欢迎回来，{{name}}。从大厅继续你的任务。",
+    "subtitle_guest": "登录后可创建房间、加入任务并进行实时对局。",
+    "language": "语言",
+    "open_lobby": "进入大厅",
+    "profile": "个人资料",
+    "sign_in": "登录",
+    "create_account": "创建账号"
+  },
+  "client": {
+    "app_shell": {
+      "lobby": "大厅",
+      "login": "登录",
+      "profile": "资料"
+    },
+    "home": {
+      "default_name": "指挥官"
+    },
+    "common": {
+      "loading": "加载中...",
+      "empty_value": "—",
+      "empty": "空",
+      "unknown": "未知",
+      "save": "保存",
+      "cancel": "取消",
+      "edit": "编辑",
+      "back": "返回",
+      "next": "下一步",
+      "confirm": "确认",
+      "undo": "撤销",
+      "on": "开",
+      "off": "关",
+      "open": "开放",
+      "locked": "锁定",
+      "na": "不适用",
+      "seconds_short": "{{count}}秒"
+    },
+    "auth": {
+      "hero": {
+        "badge": "任务控制中心",
+        "title": "SETI 终端访问",
+        "subtitle": "登录以访问指挥终端"
+      },
+      "tabs": {
+        "login": "登录",
+        "register": "注册"
+      },
+      "fields": {
+        "email": "邮箱",
+        "password": "密码",
+        "callsign": "代号",
+        "access_code": "访问码"
+      },
+      "placeholders": {
+        "email": "commander@mars.gov",
+        "callsign": "Commander Shepard"
+      },
+      "actions": {
+        "authenticating": "认证中...",
+        "access_terminal": "进入终端",
+        "initializing": "初始化中...",
+        "register": "注册新成员"
+      },
+      "toast": {
+        "login_failed": "登录失败",
+        "registration_failed": "注册失败"
+      },
+      "validation": {
+        "invalid_email": "邮箱格式不正确",
+        "password_min": "密码至少 8 位",
+        "name_min": "名称至少 2 位",
+        "invalid_field": "输入不合法"
+      }
+    },
+    "lobby": {
+      "title": "任务大厅",
+      "new_mission": "+ 新建任务",
+      "filters": {
+        "all": "全部",
+        "waiting": "等待中",
+        "in_progress": "进行中"
+      },
+      "empty": "暂无任务，创建一个开始。",
+      "toast": {
+        "created": "任务已创建",
+        "create_failed": "创建房间失败"
+      }
+    },
+    "room": {
+      "back": "返回",
+      "crew": "成员",
+      "status": {
+        "waiting": "等待中",
+        "playing": "进行中",
+        "finished": "已结束"
+      },
+      "actions": {
+        "joining": "加入中...",
+        "join": "加入任务",
+        "leave": "离开任务",
+        "enter_game": "进入对局",
+        "launching": "启动中...",
+        "launch": "开始对局"
+      },
+      "toast": {
+        "join_failed": "加入失败",
+        "leave_failed": "离开失败",
+        "start_failed": "开始失败"
+      }
+    },
+    "profile": {
+      "title": "个人资料",
+      "identity": "身份信息",
+      "callsign": "代号",
+      "disconnect": "断开终端",
+      "toast": {
+        "invalid_name": "名称至少 2 位",
+        "updated": "资料已更新",
+        "update_failed": "更新失败"
+      }
+    },
+    "create_room": {
+      "title": "创建新任务",
+      "name": "任务名称",
+      "name_placeholder": "Mars Alpha-7",
+      "players": "玩家数",
+      "player_count": {
+        "2": "2人",
+        "3": "3人",
+        "4": "4人"
+      },
+      "alien_modules": "外星模块",
+      "undo": "允许撤销",
+      "turn_timer": "回合计时（秒，0为关闭）",
+      "actions": {
+        "launching": "启动中...",
+        "launch": "启动任务"
+      },
+      "validation": {
+        "name_required": "房间名不能为空",
+        "invalid_options": "房间配置无效"
+      }
+    },
+    "room_card": {
+      "status": {
+        "waiting": "等待中",
+        "playing": "进行中",
+        "finished": "已结束"
+      },
+      "host": "房主",
+      "players": "{{current}}/{{total}} 人",
+      "aliens": "外星模块",
+      "timer": "{{seconds}}秒计时"
+    },
+    "player_slot": {
+      "empty": "座位 {{index}} - 空",
+      "you": "你",
+      "host": "房主",
+      "ready": "已准备",
+      "not_ready": "未准备"
+    },
+    "game_settings": {
+      "title": "任务参数",
+      "players": "玩家数",
+      "alien_modules": "外星模块",
+      "undo": "撤销",
+      "undo_allowed": "允许",
+      "undo_disabled": "禁用",
+      "turn_timer": "回合计时"
+    },
+    "top_bar": {
+      "exit": "退出",
+      "round": "回合",
+      "current": "当前：",
+      "your_turn": "你的回合",
+      "spectating": "观战中",
+      "phases": {
+        "SETUP": "设置阶段",
+        "AWAIT_MAIN_ACTION": "主行动阶段",
+        "IN_RESOLUTION": "结算中",
+        "BETWEEN_TURNS": "回合间",
+        "END_OF_ROUND": "回合结束",
+        "FINAL_SCORING": "最终计分",
+        "GAME_OVER": "对局结束"
+      }
+    },
+    "sidebar": {
+      "opponents": "对手",
+      "no_opponents": "暂无对手。",
+      "alien_boards": "外星板块",
+      "alien_boards_hint": "发现外星人后会显示在这里。"
+    },
+    "action_menu": {
+      "loading_actions": "加载行动中...",
+      "waiting_for": "等待 {{player}} 行动...",
+      "another_player": "其他玩家",
+      "player_unavailable": "玩家数据不可用。",
+      "title": "主行动",
+      "actions": {
+        "LAUNCH_PROBE": "发射探测器",
+        "ORBIT": "进入轨道",
+        "LAND": "着陆",
+        "SCAN": "扫描",
+        "ANALYZE_DATA": "分析数据",
+        "PLAY_CARD": "打出卡牌",
+        "RESEARCH_TECH": "研究科技",
+        "PASS": "跳过"
+      }
+    },
+    "free_action_bar": {
+      "title": "免费行动",
+      "expand": "展开",
+      "collapse": "收起",
+      "actions": {
+        "MOVEMENT": "移动探测器",
+        "CONVERT_ENERGY_TO_MOVEMENT": "能量->移动",
+        "PLACE_DATA": "放置数据",
+        "COMPLETE_MISSION": "完成任务",
+        "USE_CARD_CORNER": "使用卡角",
+        "BUY_CARD": "买卡（3声望）",
+        "EXCHANGE_RESOURCES": "资源交换"
+      }
+    },
+    "action_confirm": {
+      "cost": "花费"
+    },
+    "event_log": {
+      "title": "事件日志",
+      "empty": "暂无事件。"
+    },
+    "event_entry": {
+      "action": "{{player}} 使用了 {{action}}",
+      "free_action": "{{player}} 使用了免费行动 {{action}}",
+      "input": "{{player}} 响应 {{response}}",
+      "resource_change": "{{player}} {{direction}} {{amount}} {{resource}}",
+      "score_change": "{{player}} {{delta}} VP（{{source}}）",
+      "sector_completed": "扇区 {{sector}} 已完成，赢家：{{winner}}",
+      "alien_discovered": "发现外星人：{{alien}}",
+      "rotation": "太阳盘 {{disc}} 已旋转",
+      "round_end": "第 {{round}} 回合结束",
+      "game_end": "对局结束",
+      "unknown": "未知事件",
+      "gained": "获得",
+      "lost": "失去"
+    },
+    "input": {
+      "no_step_required": "无需执行步骤。",
+      "no_available_options": "没有可选项。",
+      "option": "选项 {{index}}",
+      "step": "步骤 {{current}} / {{total}}",
+      "choose_end_of_round": "请选择一张回合结束卡："
+    },
+    "score": {
+      "empty": "暂无计分数据。",
+      "player": "玩家",
+      "base": "基础",
+      "cards": "卡牌",
+      "tech": "科技",
+      "milestone": "里程碑",
+      "gold": "金色",
+      "alien": "外星",
+      "total": "总分"
+    },
+    "milestone": {
+      "empty": "暂无里程碑数据。",
+      "title": "里程碑轨道",
+      "open": "开放"
+    },
+    "player_dashboard": {
+      "missions": "任务",
+      "mission_alt": "任务",
+      "played": "已打出",
+      "tech_alt": "科技数量",
+      "tech": "科技",
+      "card_selection_active": "卡牌选择中"
+    },
+    "tech_display": {
+      "title": "科技槽",
+      "empty": "暂无科技板块",
+      "types": {
+        "probe": "探测",
+        "scan": "扫描",
+        "computer": "计算机",
+        "any": "任意"
+      }
+    },
+    "tech_stack": {
+      "types": {
+        "probe": "探测",
+        "scan": "扫描",
+        "computer": "计算机",
+        "any": "任意"
+      },
+      "tile_alt": "{{tech}} 等级 {{level}}",
+      "first_take_bonus": "2VP {{status}}",
+      "available": "可用",
+      "taken": "已领取",
+      "no_owner": "无人拥有"
+    },
+    "board": {
+      "planetary_board": "行星板块",
+      "tech_board": "科技板块"
+    },
+    "alien_board": {
+      "title": "外星发现",
+      "alien_index": "外星人 {{index}}",
+      "discovered": "已发现",
+      "types": {
+        "anomalies": "异常体",
+        "centaurians": "半人马体",
+        "exertians": "埃泽体",
+        "mascamites": "马斯卡体",
+        "oumuamua": "奥陌陌",
+        "amoeba": "变形体",
+        "glyphids": "符文体",
+        "dummy": "占位体"
+      }
+    },
+    "planet_card": {
+      "orbit_bonus": "轨道 +3VP",
+      "orbit": "轨道",
+      "landing": "着陆",
+      "data_slot": "数据 {{index}}",
+      "moons": "卫星 {{count}}",
+      "occupied": "已占用（{{player}}）"
+    },
+    "card_row": {
+      "title": "卡牌行"
+    },
+    "end_of_round": {
+      "title": "回合结束牌堆",
+      "round": "第 {{index}} 回合",
+      "cards": "{{count}} 张卡",
+      "select_one": "从当前牌堆选择一张"
+    },
+    "game_page": {
+      "connecting": "正在建立安全连接...",
+      "awaiting": "等待任务数据..."
+    },
+    "game": {
+      "toast": {
+        "error": "游戏错误"
+      }
+    },
+    "game_layout": {
+      "toggle_sidebar": "切换侧栏",
+      "board": "棋盘",
+      "info": "信息",
+      "tabs": {
+        "board": "棋盘",
+        "planets": "行星",
+        "tech": "科技",
+        "cards": "卡牌",
+        "aliens": "外星",
+        "scoring": "计分"
+      },
+      "buy_from_deck": "从牌库购买",
+      "buy_from_row": "从牌行购买",
+      "cancel_row_buy": "取消牌行购买",
+      "main_deck": "主牌库",
+      "scores": "分数",
+      "no_gold_tiles": "暂无金色计分板块。",
+      "gold_scoring_tiles": "金色计分板块",
+      "gold_tile_alt": "金色计分板块",
+      "side": "面 {{side}}",
+      "claimed_by": "已被 {{player}} 占用",
+      "dashboard": "面板",
+      "hand_and_missions": "手牌与任务",
+      "corner_selection_hint": "点击手牌以使用其卡角行动",
+      "actions": "行动",
+      "buy_card_title": "买卡",
+      "buy_card_desc": "花费 3 声望从牌库抽一张？",
+      "buy_card_cost": "3 声望",
+      "buy": "购买",
+      "exchange_title": "交换资源",
+      "exchange_desc": "用 2 个资源换 1 个其他资源。",
+      "exchange_option": "2 {{from}} -> 1 {{to}}",
+      "place_data_title": "放置数据",
+      "place_data_desc": "选择要填充的计算机槽位。",
+      "place_data_top": "上层槽位 C{{index}}（从左到右）",
+      "place_data_bottom": "下层槽位 C{{index}}",
+      "convert_energy_title": "转换能量",
+      "convert_energy_desc": "消耗能量，获得等量移动点。",
+      "convert_energy_option": "{{amount}} 能量 -> {{amount}} 移动",
+      "toast": {
+        "no_computer_slot": "没有可用的计算机槽位",
+        "no_computer_slot_desc": "请先填充数据池并解锁槽位。",
+        "mission_required": "需要选择任务",
+        "mission_required_desc": "请在任务区域选择要完成的任务。",
+        "card_required": "需要选择卡牌",
+        "card_required_desc": "请选择具体卡牌来使用其卡角行动。",
+        "select_probe": "请在棋盘上选择探测器移动",
+        "select_probe_desc": "点击探测器并在棋盘上选择目的地。",
+        "not_enough_energy": "能量不足",
+        "not_enough_energy_desc": "至少需要 1 点能量才能转换。"
+      }
+    },
+    "resources": {
+      "credit": "金钱",
+      "energy": "能量",
+      "card": "卡牌"
+    },
+    "game_over": {
+      "title": "对局结束",
+      "winner": "胜者",
+      "breakdown_hint": "上方展示了按来源拆分的详细计分。",
+      "scoring_reminder_alt": "计分提醒"
+    }
+  }
 }

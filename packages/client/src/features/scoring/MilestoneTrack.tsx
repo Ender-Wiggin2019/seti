@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 interface IMilestoneItem {
   id: string;
   threshold: number;
@@ -12,14 +14,17 @@ interface IMilestoneTrackProps {
 export function MilestoneTrack({
   milestones,
 }: IMilestoneTrackProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   if (milestones.length === 0) {
-    return <p className='text-xs text-text-500'>No milestone data.</p>;
+    return (
+      <p className='text-xs text-text-500'>{t('client.milestone.empty')}</p>
+    );
   }
 
   return (
     <section className='rounded border border-surface-700/55 bg-surface-950/45 p-2'>
       <p className='mb-2 font-mono text-[10px] uppercase tracking-wide text-text-500'>
-        Milestone Track
+        {t('client.milestone.title')}
       </p>
       <div className='flex flex-wrap gap-1.5'>
         {milestones
@@ -45,7 +50,7 @@ export function MilestoneTrack({
                 </span>
               </div>
               <p className='mt-0.5 truncate font-mono text-[10px] text-text-500'>
-                {milestone.claimedBy ?? 'open'}
+                {milestone.claimedBy ?? t('client.milestone.open')}
               </p>
             </div>
           ))}

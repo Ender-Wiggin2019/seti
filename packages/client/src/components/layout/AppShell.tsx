@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 import { APP_NAME } from '@/config/constants';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -7,6 +8,7 @@ interface IAppShellProps {
 }
 
 export function AppShell(props: IAppShellProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const userName = useAuthStore((s) => s.user?.name);
 
@@ -32,7 +34,7 @@ export function AppShell(props: IAppShellProps): React.JSX.Element {
                   className='text-sm text-text-300 hover:text-text-100 transition-colors'
                   activeProps={{ className: 'text-accent-400' }}
                 >
-                  Lobby
+                  {t('client.app_shell.lobby')}
                 </Link>
                 <Link
                   to='/profile'
@@ -42,7 +44,7 @@ export function AppShell(props: IAppShellProps): React.JSX.Element {
                   <span className='flex h-6 w-6 items-center justify-center rounded-full bg-surface-800 font-mono text-xs font-bold'>
                     {userName?.charAt(0).toUpperCase() ?? '?'}
                   </span>
-                  {userName}
+                  {userName ?? t('client.app_shell.profile')}
                 </Link>
               </>
             ) : (
@@ -50,7 +52,7 @@ export function AppShell(props: IAppShellProps): React.JSX.Element {
                 to='/auth'
                 className='text-sm text-text-300 hover:text-text-100 transition-colors'
               >
-                Login
+                {t('client.app_shell.login')}
               </Link>
             )}
           </nav>

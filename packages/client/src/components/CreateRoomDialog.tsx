@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import type { IGameOptions } from '@/api/types';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/components/ui/toast';
 
@@ -23,7 +30,7 @@ interface ICreateRoomDialogProps {
 }
 
 const createRoomSchema = z.object({
-  name: z.string().min(1, 'Room name is required').max(50),
+  name: z.string().trim().min(1).max(50),
   playerCount: z.number().min(2).max(4),
 });
 
@@ -33,6 +40,7 @@ export function CreateRoomDialog({
   onSubmit,
   isPending,
 }: ICreateRoomDialogProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const [name, setName] = useState('');
   const [playerCount, setPlayerCount] = useState(2);
   const [alienModulesEnabled, setAlienModulesEnabled] = useState(false);
@@ -43,7 +51,15 @@ export function CreateRoomDialog({
     e.preventDefault();
     const result = createRoomSchema.safeParse({ name, playerCount });
     if (!result.success) {
-      toast({ title: result.error.issues[0].message, variant: 'error' });
+      const nameIssue = result.error.issues.find(
+        (issue) => issue.path[0] === 'name',
+      );
+      toast({
+        title: nameIssue
+          ? t('client.create_room.validation.name_required')
+          : t('client.create_room.validation.invalid_options'),
+        variant: 'error',
+      });
       return;
     }
     onSubmit(name, {
@@ -56,36 +72,50 @@ export function CreateRoomDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent data-testid='create-room-dialog'>
         <DialogHeader>
-          <DialogTitle>Create New Mission</DialogTitle>
+          <DialogTitle>{t('client.create_room.title')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className='space-y-4'>
           <div className='space-y-2'>
-            <Label htmlFor='room-name'>Mission Name</Label>
+            <Label htmlFor='room-name'>{t('client.create_room.name')}</Label>
             <Input
               id='room-name'
-              placeholder='Mars Alpha-7'
+              placeholder={t('client.create_room.name_placeholder')}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
           </div>
 
           <div className='space-y-2'>
-            <Label htmlFor='player-count'>Operatives</Label>
+            <Label htmlFor='player-count'>
+              {t('client.create_room.players')}
+            </Label>
             <Select
-              id='player-count'
               value={String(playerCount)}
-              onChange={(e) => setPlayerCount(Number(e.target.value))}
+              onValueChange={(value) => setPlayerCount(Number(value))}
             >
-              <option value='2'>2 Players</option>
-              <option value='3'>3 Players</option>
-              <option value='4'>4 Players</option>
+              <SelectTrigger id='player-count'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='2'>
+                  {t('client.create_room.player_count.2')}
+                </SelectItem>
+                <SelectItem value='3'>
+                  {t('client.create_room.player_count.3')}
+                </SelectItem>
+                <SelectItem value='4'>
+                  {t('client.create_room.player_count.4')}
+                </SelectItem>
+              </SelectContent>
             </Select>
           </div>
 
           <div className='flex items-center justify-between'>
-            <Label htmlFor='aliens-toggle'>Alien Modules</Label>
+            <Label htmlFor='aliens-toggle'>
+              {t('client.create_room.alien_modules')}
+            </Label>
             <Switch
               id='aliens-toggle'
               checked={alienModulesEnabled}
@@ -94,7 +124,7 @@ export function CreateRoomDialog({
           </div>
 
           <div className='flex items-center justify-between'>
-            <Label htmlFor='undo-toggle'>Allow Undo</Label>
+            <Label htmlFor='undo-toggle'>{t('client.create_room.undo')}</Label>
             <Switch
               id='undo-toggle'
               checked={undoAllowed}
@@ -103,7 +133,7 @@ export function CreateRoomDialog({
           </div>
 
           <div className='space-y-2'>
-            <Label htmlFor='timer'>Turn Timer (seconds, 0 = off)</Label>
+            <Label htmlFor='timer'>{t('client.create_room.turn_timer')}</Label>
             <Input
               id='timer'
               type='number'
@@ -120,10 +150,16 @@ export function CreateRoomDialog({
               variant='ghost'
               onClick={() => onOpenChange(false)}
             >
-              Cancel
+              {t('client.common.cancel')}
             </Button>
-            <Button type='submit' disabled={isPending}>
-              {isPending ? 'Launching...' : 'Launch Mission'}
+            <Button
+              type='submit'
+              disabled={isPending}
+              data-testid='create-room-submit'
+            >
+              {isPending
+                ? t('client.create_room.actions.launching')
+                : t('client.create_room.actions.launch')}
             </Button>
           </DialogFooter>
         </form>

@@ -143,5 +143,415 @@
   "Base": "Base",
   "Space Agency": "Agência Espacial",
   "Promo": "Promocional",
-  "Card Source": "Fonte da Carta"
+  "Card Source": "Fonte da Carta",
+  "home": {
+    "title": "Controle da Missão",
+    "subtitle_authenticated": "Bem-vindo de volta, {{name}}. Continue sua missão no lobby.",
+    "subtitle_guest": "Entre para criar salas, participar de missões e jogar em tempo real.",
+    "language": "Idioma",
+    "open_lobby": "Abrir Lobby",
+    "profile": "Perfil",
+    "sign_in": "Entrar",
+    "create_account": "Criar Conta"
+  },
+  "client": {
+    "app_shell": {
+      "lobby": "Lobby",
+      "login": "Entrar",
+      "profile": "Perfil"
+    },
+    "home": {
+      "default_name": "Comandante"
+    },
+    "common": {
+      "loading": "Carregando...",
+      "empty_value": "—",
+      "empty": "Vazio",
+      "unknown": "Desconhecido",
+      "save": "Salvar",
+      "cancel": "Cancelar",
+      "edit": "Editar",
+      "back": "Voltar",
+      "next": "Próximo",
+      "confirm": "Confirmar",
+      "undo": "Desfazer",
+      "on": "Ligado",
+      "off": "Desligado",
+      "open": "Aberto",
+      "locked": "Bloqueado",
+      "na": "N/A",
+      "seconds_short": "{{count}}s"
+    },
+    "auth": {
+      "hero": {
+        "badge": "Controle da Missão",
+        "title": "Acesso ao Terminal SETI",
+        "subtitle": "Autentique-se para acessar a interface de comando"
+      },
+      "tabs": {
+        "login": "Entrar",
+        "register": "Registrar"
+      },
+      "fields": {
+        "email": "E-mail",
+        "password": "Senha",
+        "callsign": "Codinome",
+        "access_code": "Código de Acesso"
+      },
+      "placeholders": {
+        "email": "commander@mars.gov",
+        "callsign": "Commander Shepard"
+      },
+      "actions": {
+        "authenticating": "Autenticando...",
+        "access_terminal": "Acessar Terminal",
+        "initializing": "Inicializando...",
+        "register": "Registrar Novo Operador"
+      },
+      "toast": {
+        "login_failed": "Falha no login",
+        "registration_failed": "Falha no cadastro"
+      },
+      "validation": {
+        "invalid_email": "E-mail inválido",
+        "password_min": "A senha deve ter pelo menos 8 caracteres",
+        "name_min": "O nome deve ter pelo menos 2 caracteres",
+        "invalid_field": "Campo inválido"
+      }
+    },
+    "lobby": {
+      "title": "Lobby de Missões",
+      "new_mission": "+ Nova Missão",
+      "filters": {
+        "all": "Todas",
+        "waiting": "Aguardando",
+        "in_progress": "Em andamento"
+      },
+      "empty": "Nenhuma missão encontrada. Crie uma para começar.",
+      "toast": {
+        "created": "Missão criada",
+        "create_failed": "Falha ao criar sala"
+      }
+    },
+    "room": {
+      "back": "Voltar",
+      "crew": "Equipe",
+      "status": {
+        "waiting": "Aguardando",
+        "playing": "Em andamento",
+        "finished": "Finalizado"
+      },
+      "actions": {
+        "joining": "Entrando...",
+        "join": "Entrar na Missão",
+        "leave": "Sair da Missão",
+        "enter_game": "Entrar no Jogo",
+        "launching": "Iniciando...",
+        "launch": "Iniciar Jogo"
+      },
+      "toast": {
+        "join_failed": "Falha ao entrar",
+        "leave_failed": "Falha ao sair",
+        "start_failed": "Falha ao iniciar"
+      }
+    },
+    "profile": {
+      "title": "Perfil do Operador",
+      "identity": "Identidade",
+      "callsign": "Codinome",
+      "disconnect": "Desconectar Terminal",
+      "toast": {
+        "invalid_name": "O nome deve ter pelo menos 2 caracteres",
+        "updated": "Perfil atualizado",
+        "update_failed": "Falha na atualização"
+      }
+    },
+    "create_room": {
+      "title": "Criar Nova Missão",
+      "name": "Nome da Missão",
+      "name_placeholder": "Mars Alpha-7",
+      "players": "Operadores",
+      "player_count": {
+        "2": "2 Jogadores",
+        "3": "3 Jogadores",
+        "4": "4 Jogadores"
+      },
+      "alien_modules": "Módulos Alienígenas",
+      "undo": "Permitir Desfazer",
+      "turn_timer": "Timer do turno (segundos, 0 = desligado)",
+      "actions": {
+        "launching": "Iniciando...",
+        "launch": "Iniciar Missão"
+      },
+      "validation": {
+        "name_required": "Nome da sala é obrigatório",
+        "invalid_options": "Opções da sala inválidas"
+      }
+    },
+    "room_card": {
+      "status": {
+        "waiting": "Aguardando",
+        "playing": "Em andamento",
+        "finished": "Finalizado"
+      },
+      "host": "Host",
+      "players": "{{current}}/{{total}} jogadores",
+      "aliens": "Alienígenas",
+      "timer": "timer de {{seconds}}s"
+    },
+    "player_slot": {
+      "empty": "Assento {{index}} - Vazio",
+      "you": "Você",
+      "host": "Host",
+      "ready": "Pronto",
+      "not_ready": "Não pronto"
+    },
+    "game_settings": {
+      "title": "Parâmetros da Missão",
+      "players": "Operadores",
+      "alien_modules": "Módulos Alienígenas",
+      "undo": "Desfazer",
+      "undo_allowed": "Permitido",
+      "undo_disabled": "Desativado",
+      "turn_timer": "Timer do Turno"
+    },
+    "top_bar": {
+      "exit": "Sair",
+      "round": "Rodada",
+      "current": "Atual:",
+      "your_turn": "Sua vez",
+      "spectating": "Espectando",
+      "phases": {
+        "SETUP": "Configuração",
+        "AWAIT_MAIN_ACTION": "Fase de Ação",
+        "IN_RESOLUTION": "Resolvendo",
+        "BETWEEN_TURNS": "Entre Turnos",
+        "END_OF_ROUND": "Fim da Rodada",
+        "FINAL_SCORING": "Pontuação Final",
+        "GAME_OVER": "Fim de Jogo"
+      }
+    },
+    "sidebar": {
+      "opponents": "Oponentes",
+      "no_opponents": "Sem oponentes.",
+      "alien_boards": "Tabuleiros Alienígenas",
+      "alien_boards_hint": "Os tabuleiros alienígenas aparecerão aqui após a descoberta."
+    },
+    "action_menu": {
+      "loading_actions": "Carregando ações...",
+      "waiting_for": "Aguardando {{player}}...",
+      "another_player": "outro jogador",
+      "player_unavailable": "Dados do jogador indisponíveis.",
+      "title": "Ações Principais",
+      "actions": {
+        "LAUNCH_PROBE": "Lançar Sonda",
+        "ORBIT": "Orbitar",
+        "LAND": "Pousar",
+        "SCAN": "Escanear",
+        "ANALYZE_DATA": "Analisar Dados",
+        "PLAY_CARD": "Jogar Carta",
+        "RESEARCH_TECH": "Pesquisar Tecnologia",
+        "PASS": "Passar"
+      }
+    },
+    "free_action_bar": {
+      "title": "Livre",
+      "expand": "Expandir",
+      "collapse": "Recolher",
+      "actions": {
+        "MOVEMENT": "Mover Sonda",
+        "CONVERT_ENERGY_TO_MOVEMENT": "Energia -> Movimento",
+        "PLACE_DATA": "Colocar Dados",
+        "COMPLETE_MISSION": "Completar Missão",
+        "USE_CARD_CORNER": "Usar Carta",
+        "BUY_CARD": "Comprar Carta (3 PR)",
+        "EXCHANGE_RESOURCES": "Trocar"
+      }
+    },
+    "action_confirm": {
+      "cost": "Custo"
+    },
+    "event_log": {
+      "title": "Registro de Eventos",
+      "empty": "Ainda sem eventos."
+    },
+    "event_entry": {
+      "action": "{{player}} usou {{action}}",
+      "free_action": "{{player}} usou ação livre {{action}}",
+      "input": "{{player}} respondeu com {{response}}",
+      "resource_change": "{{player}} {{direction}} {{amount}} {{resource}}",
+      "score_change": "{{player}} {{delta}} VP ({{source}})",
+      "sector_completed": "Setor {{sector}} concluído, vencedor: {{winner}}",
+      "alien_discovered": "Alien descoberto: {{alien}}",
+      "rotation": "Disco solar {{disc}} girou",
+      "round_end": "Rodada {{round}} terminou",
+      "game_end": "Jogo terminado",
+      "unknown": "Evento desconhecido",
+      "gained": "ganhou",
+      "lost": "perdeu"
+    },
+    "input": {
+      "no_step_required": "Nenhuma etapa é necessária.",
+      "no_available_options": "Nenhuma opção disponível.",
+      "option": "Opção {{index}}",
+      "step": "Etapa {{current}} / {{total}}",
+      "choose_end_of_round": "Escolha uma carta de fim de rodada:"
+    },
+    "score": {
+      "empty": "Sem dados de pontuação.",
+      "player": "Jogador",
+      "base": "Base",
+      "cards": "Cartas",
+      "tech": "Tecnologia",
+      "milestone": "Marco",
+      "gold": "Dourado",
+      "alien": "Alien",
+      "total": "Total"
+    },
+    "milestone": {
+      "empty": "Sem dados de marcos.",
+      "title": "Trilha de Marcos",
+      "open": "aberto"
+    },
+    "player_dashboard": {
+      "missions": "Missões",
+      "mission_alt": "Missão",
+      "played": "Jogadas",
+      "tech_alt": "Quantidade de tecnologia",
+      "tech": "Tecnologia",
+      "card_selection_active": "Seleção de carta ativa"
+    },
+    "tech_display": {
+      "title": "Espaços de Tecnologia",
+      "empty": "Sem peças de tecnologia",
+      "types": {
+        "probe": "Sonda",
+        "scan": "Escaneamento",
+        "computer": "Computador",
+        "any": "Qualquer"
+      }
+    },
+    "tech_stack": {
+      "types": {
+        "probe": "Sonda",
+        "scan": "Escaneamento",
+        "computer": "Computador",
+        "any": "Qualquer"
+      },
+      "tile_alt": "{{tech}} nível {{level}}",
+      "first_take_bonus": "2VP {{status}}",
+      "available": "disponível",
+      "taken": "coletado",
+      "no_owner": "Sem dono"
+    },
+    "board": {
+      "planetary_board": "Tabuleiro Planetário",
+      "tech_board": "Tabuleiro de Tecnologia"
+    },
+    "alien_board": {
+      "title": "Descoberta Alienígena",
+      "alien_index": "Alien {{index}}",
+      "discovered": "Descoberto",
+      "types": {
+        "anomalies": "Anomalias",
+        "centaurians": "Centaurianos",
+        "exertians": "Exertianos",
+        "mascamites": "Mascamites",
+        "oumuamua": "Oumuamua",
+        "amoeba": "Ameba",
+        "glyphids": "Glyphids",
+        "dummy": "Dummy"
+      }
+    },
+    "planet_card": {
+      "orbit_bonus": "Órbita +3VP",
+      "orbit": "Órbita",
+      "landing": "Pouso",
+      "data_slot": "Dados {{index}}",
+      "moons": "Luas {{count}}",
+      "occupied": "ocupado ({{player}})"
+    },
+    "card_row": {
+      "title": "Linha de Cartas"
+    },
+    "end_of_round": {
+      "title": "Pilhas de Fim de Rodada",
+      "round": "Rodada {{index}}",
+      "cards": "{{count}} cartas",
+      "select_one": "Selecione uma da pilha atual"
+    },
+    "game_page": {
+      "connecting": "Estabelecendo conexão segura...",
+      "awaiting": "Aguardando dados da missão..."
+    },
+    "game": {
+      "toast": {
+        "error": "Erro de Jogo"
+      }
+    },
+    "game_layout": {
+      "toggle_sidebar": "Alternar barra lateral",
+      "board": "Tabuleiro",
+      "info": "Info",
+      "tabs": {
+        "board": "Tabuleiro",
+        "planets": "Planetas",
+        "tech": "Tecnologia",
+        "cards": "Cartas",
+        "aliens": "Alienígenas",
+        "scoring": "Pontuação"
+      },
+      "buy_from_deck": "Comprar do Baralho",
+      "buy_from_row": "Comprar da Linha",
+      "cancel_row_buy": "Cancelar Compra da Linha",
+      "main_deck": "Baralho Principal",
+      "scores": "Pontuações",
+      "no_gold_tiles": "Sem peças douradas de pontuação.",
+      "gold_scoring_tiles": "Peças Douradas de Pontuação",
+      "gold_tile_alt": "peça dourada",
+      "side": "Lado {{side}}",
+      "claimed_by": "Reivindicado por {{player}}",
+      "dashboard": "Painel",
+      "hand_and_missions": "Mão e Missões",
+      "corner_selection_hint": "Clique em uma carta da mão para usar a ação de canto",
+      "actions": "Ações",
+      "buy_card_title": "Comprar Carta",
+      "buy_card_desc": "Gastar 3 de publicidade e comprar do baralho?",
+      "buy_card_cost": "3 de publicidade",
+      "buy": "Comprar",
+      "exchange_title": "Trocar Recursos",
+      "exchange_desc": "Troque 2 de um recurso por 1 de outro.",
+      "exchange_option": "2 {{from}} -> 1 {{to}}",
+      "place_data_title": "Colocar Dados",
+      "place_data_desc": "Escolha qual espaço do computador preencher.",
+      "place_data_top": "Espaço superior C{{index}} (esquerda para direita)",
+      "place_data_bottom": "Espaço inferior C{{index}}",
+      "convert_energy_title": "Converter Energia",
+      "convert_energy_desc": "Gaste energia para ganhar a mesma quantidade de movimento.",
+      "convert_energy_option": "{{amount}} Energia -> {{amount}} Movimento",
+      "toast": {
+        "no_computer_slot": "Nenhum espaço de computador disponível",
+        "no_computer_slot_desc": "Preencha a reserva de dados e desbloqueie um espaço primeiro.",
+        "mission_required": "Seleção de missão necessária",
+        "mission_required_desc": "Use os controles de missão para escolher qual missão completar.",
+        "card_required": "Seleção de carta necessária",
+        "card_required_desc": "Selecione uma carta específica para usar sua ação de canto.",
+        "select_probe": "Selecione o movimento da sonda no tabuleiro",
+        "select_probe_desc": "Clique em uma sonda e escolha um destino na visão do tabuleiro.",
+        "not_enough_energy": "Energia insuficiente",
+        "not_enough_energy_desc": "Você precisa de pelo menos 1 de energia para converter."
+      }
+    },
+    "resources": {
+      "credit": "Créditos",
+      "energy": "Energia",
+      "card": "Cartas"
+    },
+    "game_over": {
+      "title": "Fim de Jogo",
+      "winner": "Vencedor",
+      "breakdown_hint": "A análise detalhada da pontuação por origem é exibida acima.",
+      "scoring_reminder_alt": "Lembrete de pontuação"
+    }
+  }
 }

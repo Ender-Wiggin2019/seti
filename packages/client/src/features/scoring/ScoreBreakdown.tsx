@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 interface IScoreBreakdownRow {
   playerId: string;
   playerName: string;
@@ -17,8 +19,9 @@ interface IScoreBreakdownProps {
 export function ScoreBreakdown({
   rows,
 }: IScoreBreakdownProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   if (rows.length === 0) {
-    return <p className='text-xs text-text-500'>No scoring data.</p>;
+    return <p className='text-xs text-text-500'>{t('client.score.empty')}</p>;
   }
 
   const winnerScore = Math.max(...rows.map((row) => row.total));
@@ -28,14 +31,14 @@ export function ScoreBreakdown({
       <table className='w-full min-w-[580px] text-left text-xs'>
         <thead className='border-b border-surface-700/60 bg-surface-900/70 font-mono uppercase tracking-wide text-text-500'>
           <tr>
-            <th className='px-2 py-1.5'>Player</th>
-            <th className='px-2 py-1.5'>Base</th>
-            <th className='px-2 py-1.5'>Cards</th>
-            <th className='px-2 py-1.5'>Tech</th>
-            <th className='px-2 py-1.5'>Milestone</th>
-            <th className='px-2 py-1.5'>Gold</th>
-            <th className='px-2 py-1.5'>Alien</th>
-            <th className='px-2 py-1.5'>Total</th>
+            <th className='px-2 py-1.5'>{t('client.score.player')}</th>
+            <th className='px-2 py-1.5'>{t('client.score.base')}</th>
+            <th className='px-2 py-1.5'>{t('client.score.cards')}</th>
+            <th className='px-2 py-1.5'>{t('client.score.tech')}</th>
+            <th className='px-2 py-1.5'>{t('client.score.milestone')}</th>
+            <th className='px-2 py-1.5'>{t('client.score.gold')}</th>
+            <th className='px-2 py-1.5'>{t('client.score.alien')}</th>
+            <th className='px-2 py-1.5'>{t('client.score.total')}</th>
           </tr>
         </thead>
         <tbody>

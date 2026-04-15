@@ -2,6 +2,7 @@ import { createDefaultSetupConfig } from '@seti/common/constant/sectorSetup';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EResource } from '@seti/common/types/element';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TopBar } from '@/components/layout/TopBar';
 import { Button } from '@/components/ui/button';
@@ -40,13 +41,13 @@ import type {
 } from '@/types/re-exports';
 import { EFreeAction, EPlayerInputType } from '@/types/re-exports';
 
-const BOARD_TABS: { value: TBoardTab; label: string }[] = [
-  { value: 'board', label: 'Board' },
-  { value: 'planets', label: 'Planets' },
-  { value: 'tech', label: 'Tech' },
-  { value: 'cards', label: 'Cards' },
-  { value: 'aliens', label: 'Aliens' },
-  { value: 'scoring', label: 'Scoring' },
+const BOARD_TABS: TBoardTab[] = [
+  'board',
+  'planets',
+  'tech',
+  'cards',
+  'aliens',
+  'scoring',
 ];
 
 export function GameLayout({
@@ -58,6 +59,7 @@ export function GameLayout({
   probeInsetPxByRing?: TProbeInsetPxByRing;
   allowMoveAnyProbe?: boolean;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   const activeTab = useGameViewStore((s) => s.activeTab);
   const setActiveTab = useGameViewStore((s) => s.setActiveTab);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -97,9 +99,11 @@ export function GameLayout({
               type='button'
               onClick={() => setSidebarOpen((v) => !v)}
               className='absolute right-3 top-3 z-10 rounded border border-surface-700 bg-surface-900/80 px-2 py-1 font-mono text-xs text-text-300 backdrop-blur-sm transition-colors hover:bg-surface-800 lg:hidden'
-              aria-label='Toggle sidebar'
+              aria-label={t('client.game_layout.toggle_sidebar')}
             >
-              {sidebarOpen ? 'Board' : 'Info'}
+              {sidebarOpen
+                ? t('client.game_layout.board')
+                : t('client.game_layout.info')}
             </button>
 
             {/* Mobile/tablet sidebar overlay */}
@@ -144,6 +148,7 @@ function BoardTabs({
   probeInsetPxByRing?: TProbeInsetPxByRing;
   allowMoveAnyProbe: boolean;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   const { gameState, myPlayerId, pendingInput, sendFreeAction, sendInput } =
     useGameContext();
   const [armedCardRowBuy, setArmedCardRowBuy] = useState(false);
@@ -187,8 +192,8 @@ function BoardTabs({
       <div className='shrink-0 overflow-x-auto border-b border-surface-700/50 bg-surface-900/30 px-3 py-1.5'>
         <TabsList className='w-max'>
           {BOARD_TABS.map((tab) => (
-            <TabsTrigger key={tab.value} value={tab.value}>
-              {tab.label}
+            <TabsTrigger key={tab} value={tab}>
+              {t(`client.game_layout.tabs.${tab}`)}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -254,19 +259,21 @@ function BoardTabs({
                     })
                   }
                 >
-                  Buy From Deck
+                  {t('client.game_layout.buy_from_deck')}
                 </button>
                 <button
                   type='button'
                   className='rounded border border-surface-700/70 bg-surface-800/60 px-2 py-1 font-mono text-[11px] uppercase tracking-wide text-text-300 transition-colors hover:bg-surface-700/70'
                   onClick={() => setArmedCardRowBuy((v) => !v)}
                 >
-                  {armedCardRowBuy ? 'Cancel Row Buy' : 'Buy From Row'}
+                  {armedCardRowBuy
+                    ? t('client.game_layout.cancel_row_buy')
+                    : t('client.game_layout.buy_from_row')}
                 </button>
                 <div className='ml-auto flex items-center gap-2'>
                   <div className='h-[72px] w-[52px] rounded border border-surface-700/60 bg-[url(/assets/seti/cards/back_base.jpg)] bg-cover bg-center shadow-lg' />
                   <span className='font-mono text-[11px] uppercase tracking-wide text-text-500'>
-                    Main Deck
+                    {t('client.game_layout.main_deck')}
                   </span>
                 </div>
               </div>
@@ -322,7 +329,7 @@ function BoardTabs({
               {/* Score Rankings */}
               <div className='rounded border border-surface-700/40 bg-surface-900/30 p-3'>
                 <h3 className='mb-2 font-mono text-xs font-medium uppercase tracking-widest text-text-500'>
-                  Scores
+                  {t('client.game_layout.scores')}
                 </h3>
                 <div className='flex flex-col gap-1'>
                   {gameState.players
@@ -431,14 +438,19 @@ function GoldScoringTilesView({
   tiles: IPublicGoldScoringTile[];
   playerColors: Record<string, string>;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   if (tiles.length === 0) {
-    return <p className='text-xs text-text-500'>No gold scoring tiles.</p>;
+    return (
+      <p className='text-xs text-text-500'>
+        {t('client.game_layout.no_gold_tiles')}
+      </p>
+    );
   }
 
   return (
     <section className='rounded border border-surface-700/55 bg-surface-950/45 p-2'>
       <p className='mb-2 font-mono text-[10px] uppercase tracking-wide text-text-500'>
-        Gold Scoring Tiles
+        {t('client.game_layout.gold_scoring_tiles')}
       </p>
       <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
         {tiles.map((tile) => {
@@ -454,14 +466,14 @@ function GoldScoringTilesView({
               <div className='mb-1.5 flex items-center gap-1.5'>
                 <img
                   src='/assets/seti/icons/vp.png'
-                  alt='gold tile'
+                  alt={t('client.game_layout.gold_tile_alt')}
                   className='h-3.5 w-3.5'
                 />
                 <span className='font-mono text-[11px] font-medium text-text-200'>
                   {tile.id}
                 </span>
                 <span className='rounded bg-surface-700/50 px-1 py-0.5 font-mono text-[9px] uppercase text-text-400'>
-                  Side {tile.side}
+                  {t('client.game_layout.side', { side: tile.side })}
                 </span>
               </div>
 
@@ -481,7 +493,13 @@ function GoldScoringTilesView({
                           ? 'border-accent-500/50 bg-accent-500/10 text-accent-300'
                           : 'border-surface-600/50 bg-surface-800/40 text-text-400',
                       ].join(' ')}
-                      title={claimer ? `Claimed by ${claimer}` : 'Open'}
+                      title={
+                        claimer
+                          ? t('client.game_layout.claimed_by', {
+                              player: claimer,
+                            })
+                          : t('client.common.open')
+                      }
                     >
                       {claimer && (
                         <span
@@ -507,6 +525,7 @@ function BottomBar({
 }: {
   onInspectCard: (card: IBaseCard) => void;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   const {
     gameState,
     myPlayerId,
@@ -549,8 +568,8 @@ function BottomBar({
         setCornerSelectionMode(false);
         if (placeDataOptions.length <= 0) {
           toast({
-            title: 'No available computer slot',
-            description: 'Fill data pool and unlock a slot first.',
+            title: t('client.game_layout.toast.no_computer_slot'),
+            description: t('client.game_layout.toast.no_computer_slot_desc'),
             variant: 'error',
           });
           return;
@@ -567,9 +586,8 @@ function BottomBar({
           return;
         }
         toast({
-          title: 'Mission selection required',
-          description:
-            'Use mission controls to pick which mission to complete.',
+          title: t('client.game_layout.toast.mission_required'),
+          description: t('client.game_layout.toast.mission_required_desc'),
           variant: 'error',
         });
         return;
@@ -588,16 +606,15 @@ function BottomBar({
         }
         setCornerSelectionMode(true);
         toast({
-          title: 'Card selection required',
-          description: 'Select a specific card to use its corner free action.',
+          title: t('client.game_layout.toast.card_required'),
+          description: t('client.game_layout.toast.card_required_desc'),
         });
         return;
       case EFreeAction.MOVEMENT:
         setCornerSelectionMode(false);
         toast({
-          title: 'Select probe movement on board',
-          description:
-            'Click a probe and choose a destination in the board view.',
+          title: t('client.game_layout.toast.select_probe'),
+          description: t('client.game_layout.toast.select_probe_desc'),
         });
         return;
       case EFreeAction.EXCHANGE_RESOURCES:
@@ -608,8 +625,8 @@ function BottomBar({
         setCornerSelectionMode(false);
         if (maxConvertibleEnergy <= 0) {
           toast({
-            title: 'Not enough energy',
-            description: 'You need at least 1 energy to convert.',
+            title: t('client.game_layout.toast.not_enough_energy'),
+            description: t('client.game_layout.toast.not_enough_energy_desc'),
             variant: 'error',
           });
           return;
@@ -636,7 +653,7 @@ function BottomBar({
         {/* Player Dashboard */}
         <div className='p-3' data-testid='bottom-dashboard'>
           <h4 className='mb-1.5 font-mono text-xs font-medium uppercase tracking-widest text-text-500'>
-            Dashboard
+            {t('client.game_layout.dashboard')}
           </h4>
           {myPlayer ? (
             <PlayerDashboard
@@ -650,14 +667,16 @@ function BottomBar({
               playedMissions={missionCards}
             />
           ) : (
-            <p className='text-xs text-text-500'>Loading...</p>
+            <p className='text-xs text-text-500'>
+              {t('client.common.loading')}
+            </p>
           )}
         </div>
 
         {/* Hand View */}
         <div className='p-3' data-testid='bottom-hand'>
           <h4 className='mb-1.5 font-mono text-xs font-medium uppercase tracking-widest text-text-500'>
-            Hand & Missions
+            {t('client.game_layout.hand_and_missions')}
           </h4>
           {myPlayer ? (
             <div className='flex h-full min-h-[86px] flex-col gap-2'>
@@ -683,20 +702,22 @@ function BottomBar({
               />
               {cornerSelectionMode && (
                 <p className='rounded border border-amber-500/50 bg-amber-500/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wide text-amber-200'>
-                  Click a hand card to use its corner action
+                  {t('client.game_layout.corner_selection_hint')}
                 </p>
               )}
               <PlayedMissions missions={missionCards} />
             </div>
           ) : (
-            <p className='text-xs text-text-500'>Loading...</p>
+            <p className='text-xs text-text-500'>
+              {t('client.common.loading')}
+            </p>
           )}
         </div>
 
         {/* Action Menu / Input Renderer */}
         <div className='p-3' data-testid='bottom-actions'>
           <h4 className='mb-1.5 font-mono text-xs font-medium uppercase tracking-widest text-text-500'>
-            Actions
+            {t('client.game_layout.actions')}
           </h4>
           {pendingInput && pendingInput.type !== EPlayerInputType.OR ? (
             <div className='rounded border border-accent-500/30 bg-accent-500/10 px-3 py-2 text-xs text-accent-400'>
@@ -726,10 +747,10 @@ function BottomBar({
 
       <ActionConfirm
         open={confirmOpen}
-        title='Buy Card'
-        description='Spend 3 publicity and draw from the deck?'
-        costs={['3 publicity']}
-        confirmLabel='Buy'
+        title={t('client.game_layout.buy_card_title')}
+        description={t('client.game_layout.buy_card_desc')}
+        costs={[t('client.game_layout.buy_card_cost')]}
+        confirmLabel={t('client.game_layout.buy')}
         onCancel={() => {
           setConfirmOpen(false);
           setConfirmRequest(null);
@@ -780,23 +801,20 @@ function BottomBar({
 const EXCHANGE_OPTIONS: Array<{
   from: EResource;
   to: EResource;
-  label: string;
 }> = [
-  {
-    from: EResource.CREDIT,
-    to: EResource.ENERGY,
-    label: '2 Credits → 1 Energy',
-  },
-  { from: EResource.CREDIT, to: EResource.CARD, label: '2 Credits → 1 Card' },
-  {
-    from: EResource.ENERGY,
-    to: EResource.CREDIT,
-    label: '2 Energy → 1 Credit',
-  },
-  { from: EResource.ENERGY, to: EResource.CARD, label: '2 Energy → 1 Card' },
-  { from: EResource.CARD, to: EResource.CREDIT, label: '2 Cards → 1 Credit' },
-  { from: EResource.CARD, to: EResource.ENERGY, label: '2 Cards → 1 Energy' },
+  { from: EResource.CREDIT, to: EResource.ENERGY },
+  { from: EResource.CREDIT, to: EResource.CARD },
+  { from: EResource.ENERGY, to: EResource.CREDIT },
+  { from: EResource.ENERGY, to: EResource.CARD },
+  { from: EResource.CARD, to: EResource.CREDIT },
+  { from: EResource.CARD, to: EResource.ENERGY },
 ];
+
+const RESOURCE_I18N_KEY: Partial<Record<EResource, string>> = {
+  [EResource.CREDIT]: 'credit',
+  [EResource.ENERGY]: 'energy',
+  [EResource.CARD]: 'card',
+};
 
 function ExchangeResourcesDialog({
   open,
@@ -809,6 +827,7 @@ function ExchangeResourcesDialog({
   onCancel: () => void;
   onConfirm: (from: EResource, to: EResource) => void;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   const canAfford = (from: EResource): boolean => {
     if (!player) return false;
     if (from === EResource.CARD) return (player.handSize ?? 0) >= 2;
@@ -823,9 +842,9 @@ function ExchangeResourcesDialog({
     <Dialog open={open} onOpenChange={(next) => !next && onCancel()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Exchange Resources</DialogTitle>
+          <DialogTitle>{t('client.game_layout.exchange_title')}</DialogTitle>
           <p className='text-sm text-text-300'>
-            Trade 2 of one resource for 1 of another.
+            {t('client.game_layout.exchange_desc')}
           </p>
         </DialogHeader>
         <div className='grid grid-cols-1 gap-2'>
@@ -838,7 +857,10 @@ function ExchangeResourcesDialog({
               onClick={() => onConfirm(opt.from, opt.to)}
               className='h-10 justify-start border border-surface-700/60 bg-surface-800/50 px-3 text-left text-sm text-text-200 hover:bg-surface-700/70 disabled:opacity-40'
             >
-              {opt.label}
+              {t('client.game_layout.exchange_option', {
+                from: t(`client.resources.${RESOURCE_I18N_KEY[opt.from]}`),
+                to: t(`client.resources.${RESOURCE_I18N_KEY[opt.to]}`),
+              })}
             </Button>
           ))}
         </div>
@@ -850,7 +872,6 @@ function ExchangeResourcesDialog({
 interface IPlaceDataOption {
   slotIndex: number;
   row: 'top' | 'bottom';
-  label: string;
 }
 
 function buildPlaceDataOptions(
@@ -865,7 +886,6 @@ function buildPlaceDataOptions(
       {
         slotIndex: topIndex,
         row: 'top',
-        label: `Top slot C${topIndex + 1} (left-to-right)`,
       },
     ];
   }
@@ -876,7 +896,6 @@ function buildPlaceDataOptions(
     .map(({ index }) => ({
       slotIndex: index,
       row: 'bottom' as const,
-      label: `Bottom slot C${index + 1}`,
     }));
 }
 
@@ -891,13 +910,14 @@ function PlaceDataDialog({
   onCancel: () => void;
   onConfirm: (slotIndex: number) => void;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onCancel()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Place Data</DialogTitle>
+          <DialogTitle>{t('client.game_layout.place_data_title')}</DialogTitle>
           <p className='text-sm text-text-300'>
-            Choose which computer slot to fill.
+            {t('client.game_layout.place_data_desc')}
           </p>
         </DialogHeader>
         <div className='grid grid-cols-1 gap-2'>
@@ -909,7 +929,13 @@ function PlaceDataDialog({
               onClick={() => onConfirm(opt.slotIndex)}
               className='h-10 justify-start border border-surface-700/60 bg-surface-800/50 px-3 text-left text-sm text-text-200 hover:bg-surface-700/70'
             >
-              {opt.label}
+              {opt.row === 'top'
+                ? t('client.game_layout.place_data_top', {
+                    index: opt.slotIndex + 1,
+                  })
+                : t('client.game_layout.place_data_bottom', {
+                    index: opt.slotIndex + 1,
+                  })}
             </Button>
           ))}
         </div>
@@ -929,6 +955,7 @@ function ConvertEnergyDialog({
   onCancel: () => void;
   onConfirm: (amount: number) => void;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   const options = Array.from(
     { length: Math.max(0, maxAmount) },
     (_, i) => i + 1,
@@ -938,9 +965,11 @@ function ConvertEnergyDialog({
     <Dialog open={open} onOpenChange={(next) => !next && onCancel()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Convert Energy</DialogTitle>
+          <DialogTitle>
+            {t('client.game_layout.convert_energy_title')}
+          </DialogTitle>
           <p className='text-sm text-text-300'>
-            Spend energy to gain the same amount of movement points.
+            {t('client.game_layout.convert_energy_desc')}
           </p>
         </DialogHeader>
         <div className='grid grid-cols-2 gap-2'>
@@ -952,7 +981,7 @@ function ConvertEnergyDialog({
               onClick={() => onConfirm(amount)}
               className='h-10 justify-center border border-surface-700/60 bg-surface-800/50 text-sm text-text-200 hover:bg-surface-700/70'
             >
-              {amount} Energy → {amount} Move
+              {t('client.game_layout.convert_energy_option', { amount })}
             </Button>
           ))}
         </div>

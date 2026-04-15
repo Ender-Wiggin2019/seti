@@ -288,28 +288,28 @@ export function SolarSystemView({
           backgroundPosition: 'center',
         }}
       >
-        <WheelLayer ring={4} angle={0} className='z-5' />
+        <WheelLayer ring={4} angle={0} className='z-10' />
         <WheelLayer
           ring={3}
           angle={getDiscAngle(solarSystem, 3)}
-          className='z-6'
+          className='z-20'
         />
         <WheelLayer
           ring={2}
           angle={getDiscAngle(solarSystem, 2)}
-          className='z-7'
+          className='z-30'
         />
         <WheelLayer
           ring={1}
           angle={getDiscAngle(solarSystem, 1)}
-          className='z-8'
+          className='z-40'
         />
 
         <img
           src='/assets/seti/sun.png'
           alt=''
           aria-hidden
-          className='pointer-events-none absolute left-1/2 top-1/2 z-200 w-[10%] -translate-x-1/2 -translate-y-1/2 select-none'
+          className='pointer-events-none absolute left-1/2 top-1/2 z-50 w-[10%] -translate-x-1/2 -translate-y-1/2 select-none'
           style={{ animation: 'spin 1800s linear infinite' }}
           draggable={false}
         />
@@ -353,7 +353,7 @@ export function SolarSystemView({
               key={space.spaceId}
               type='button'
               data-testid={`solar-space-${space.spaceId}`}
-              className='absolute z-300 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border border-transparent bg-transparent transition-all hover:border-accent-400/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/60'
+              className='absolute z-70 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border border-transparent bg-transparent transition-all hover:border-accent-400/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/60'
               style={{
                 left: `${space.xPercent}%`,
                 top: `${space.yPercent}%`,
@@ -381,7 +381,7 @@ export function SolarSystemView({
         {probeView.renderItems.map((probe) => (
           <div
             key={probe.key}
-            className='pointer-events-none absolute z-350 h-6 w-6'
+            className='pointer-events-none absolute z-80 h-6 w-6'
             style={{
               left: `${probe.xPercent}%`,
               top: `${probe.yPercent}%`,
@@ -400,7 +400,7 @@ export function SolarSystemView({
         {showSpaceConfigDebug && (
           <div
             className='pointer-events-none absolute inset-0'
-            style={{ zIndex: 450 }}
+            style={{ zIndex: 90 }}
           >
             {spacePoints.map((space) => (
               <span

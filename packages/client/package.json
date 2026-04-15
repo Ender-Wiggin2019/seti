@@ -16,6 +16,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@radix-ui/react-select": "^2.2.6",
     "@seti/cards": "workspace:@ender-seti/cards@*",
     "@seti/common": "workspace:@ender-seti/common@*",
     "@tanstack/react-query": "^5.90.7",

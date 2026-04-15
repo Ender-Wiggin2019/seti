@@ -1,4 +1,5 @@
 import { PLANET_MISSION_CONFIG } from '@seti/common/constant/boardLayout';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 import type { IPublicPlanetState } from '@/types/re-exports';
 
@@ -32,6 +33,7 @@ export function PlanetCard({
   playerColors,
   isSelectable,
 }: IPlanetCardProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const missionConfig = PLANET_MISSION_CONFIG[planet];
 
   return (
@@ -55,7 +57,7 @@ export function PlanetCard({
                 : 'border-accent-500/70 text-accent-300',
             )}
           >
-            Orbit +3VP
+            {t('client.planet_card.orbit_bonus')}
           </span>
         </div>
       </header>
@@ -63,11 +65,13 @@ export function PlanetCard({
       <div className='grid grid-cols-2 gap-2'>
         <section className='rounded border border-surface-700/50 bg-surface-800/40 p-2'>
           <p className='mb-1 font-mono text-[10px] uppercase tracking-wider text-text-500'>
-            Orbit
+            {t('client.planet_card.orbit')}
           </p>
           <div className='flex min-h-5 flex-wrap gap-1'>
             {state.orbitSlots.length === 0 ? (
-              <span className='text-[11px] text-text-500'>Empty</span>
+              <span className='text-[11px] text-text-500'>
+                {t('client.common.empty')}
+              </span>
             ) : (
               state.orbitSlots.map((slot, index) => (
                 <TokenDot
@@ -82,11 +86,13 @@ export function PlanetCard({
 
         <section className='rounded border border-surface-700/50 bg-surface-800/40 p-2'>
           <p className='mb-1 font-mono text-[10px] uppercase tracking-wider text-text-500'>
-            Landing
+            {t('client.planet_card.landing')}
           </p>
           <div className='flex min-h-5 flex-wrap gap-1'>
             {state.landingSlots.length === 0 ? (
-              <span className='text-[11px] text-text-500'>Empty</span>
+              <span className='text-[11px] text-text-500'>
+                {t('client.common.empty')}
+              </span>
             ) : (
               state.landingSlots.map((slot, index) => (
                 <TokenDot
@@ -112,7 +118,7 @@ export function PlanetCard({
                   : 'border-accent-500/70 text-accent-300',
               )}
             >
-              Data {index + 1}
+              {t('client.planet_card.data_slot', { index: index + 1 })}
             </span>
           ))}
         </div>
@@ -124,14 +130,16 @@ export function PlanetCard({
               : 'border-surface-600 text-text-500',
           )}
         >
-          Moons {missionConfig.moonSlots}:{' '}
+          {t('client.planet_card.moons', { count: missionConfig.moonSlots })}:{' '}
           {state.moonOccupant
-            ? `occupied (${state.moonOccupant.playerId})`
+            ? t('client.planet_card.occupied', {
+                player: state.moonOccupant.playerId,
+              })
             : missionConfig.moonSlots === 0
-              ? 'n/a'
+              ? t('client.common.na')
               : state.moonUnlocked
-                ? 'open'
-                : 'locked'}
+                ? t('client.common.open')
+                : t('client.common.locked')}
         </span>
       </div>
 

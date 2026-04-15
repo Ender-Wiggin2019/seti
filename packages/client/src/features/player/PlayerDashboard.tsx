@@ -1,5 +1,6 @@
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import type { ETechId } from '@seti/common/types/tech';
+import { useTranslation } from 'react-i18next';
 import type {
   IFreeActionRequest,
   IPlayerInputModel,
@@ -35,6 +36,7 @@ export function PlayerDashboard({
   playedMissions,
   techs,
 }: IPlayerDashboardProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const missionCount = playedMissions?.length ?? 0;
   const techCount = techs?.length ?? player.techs.length;
   const cardInputActive = pendingInput?.type === EPlayerInputType.CARD;
@@ -83,16 +85,18 @@ export function PlayerDashboard({
 
             <div className='rounded border border-surface-700/55 bg-surface-950/65 p-2'>
               <p className='font-mono text-[10px] uppercase tracking-wide text-text-500'>
-                Missions
+                {t('client.player_dashboard.missions')}
               </p>
               <div className='mt-1 flex items-center justify-between text-xs'>
                 <div className='flex items-center gap-1'>
                   <img
                     src='/assets/seti/icons/missionSatellite.png'
-                    alt='Mission'
+                    alt={t('client.player_dashboard.mission_alt')}
                     className='h-4 w-4'
                   />
-                  <span className='text-text-300'>Played</span>
+                  <span className='text-text-300'>
+                    {t('client.player_dashboard.played')}
+                  </span>
                 </div>
                 <span className='font-mono font-bold text-text-100'>
                   {missionCount}
@@ -102,10 +106,12 @@ export function PlayerDashboard({
                 <div className='flex items-center gap-1'>
                   <img
                     src='/assets/seti/icons/progress.png'
-                    alt='Tech count'
+                    alt={t('client.player_dashboard.tech_alt')}
                     className='h-4 w-4'
                   />
-                  <span className='text-text-300'>Tech</span>
+                  <span className='text-text-300'>
+                    {t('client.player_dashboard.tech')}
+                  </span>
                 </div>
                 <span className='font-mono font-bold text-text-100'>
                   {techCount}
@@ -113,7 +119,7 @@ export function PlayerDashboard({
               </div>
               {cardInputActive ? (
                 <p className='mt-1 text-[10px] uppercase tracking-wide text-accent-300'>
-                  Card selection active
+                  {t('client.player_dashboard.card_selection_active')}
                 </p>
               ) : null}
             </div>
