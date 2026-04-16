@@ -16,6 +16,7 @@ import { EMissionType } from '@/engine/missions/IMission.js';
 import { MissionTracker } from '@/engine/missions/MissionTracker.js';
 import { Player } from '@/engine/player/Player.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
+import { activateMission } from '../../../helpers/missionTestUtils.js';
 
 function createPlayer(overrides: Record<string, unknown> = {}): Player {
   return new Player({
@@ -370,6 +371,7 @@ describe('MissionTracker integration with QUICK_MISSION checkCondition', () => {
     const card = getCardRegistry().create('5');
     const def = card.getMissionDef?.()!;
     tracker.registerMission(def, player.id);
+    activateMission(player, '5');
 
     const completable = tracker.getCompletableQuickMissions(player, game);
     expect(completable.length).toBe(1);
@@ -386,6 +388,7 @@ describe('MissionTracker integration with QUICK_MISSION checkCondition', () => {
     const card = getCardRegistry().create('5');
     const def = card.getMissionDef?.()!;
     tracker.registerMission(def, player.id);
+    activateMission(player, '5');
 
     const completable = tracker.getCompletableQuickMissions(player, game);
     expect(completable.length).toBe(0);
@@ -403,6 +406,7 @@ describe('MissionTracker integration with QUICK_MISSION checkCondition', () => {
     const card = getCardRegistry().create('5');
     const def = card.getMissionDef?.()!;
     tracker.registerMission(def, player.id);
+    activateMission(player, '5');
 
     const initialScore = player.score;
     const initialPublicity = player.resources.publicity;

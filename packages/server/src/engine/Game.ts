@@ -22,7 +22,7 @@ import { PassAction } from './actions/Pass.js';
 import { PlayCardAction } from './actions/PlayCard.js';
 import { ResearchTechAction } from './actions/ResearchTech.js';
 import { ScanAction } from './actions/Scan.js';
-import { AlienState } from './alien/AlienState.js';
+import { AlienState } from './alien/index.js';
 import type { PlanetaryBoard } from './board/PlanetaryBoard.js';
 import type { Sector } from './board/Sector.js';
 import type { SolarSystem } from './board/SolarSystem.js';
@@ -45,7 +45,7 @@ import { createGameOptions, type IGameOptions } from './GameOptions.js';
 import { GameSetup } from './GameSetup.js';
 import type { IGame, IGamePlayerIdentity } from './IGame.js';
 import type { PlayerInput } from './input/PlayerInput.js';
-import { EMissionEventType } from './missions/IMission.js';
+import { EMissionEventType, EMissionType } from './missions/IMission.js';
 import { MissionTracker } from './missions/MissionTracker.js';
 import { assertValidPhaseTransition } from './Phase.js';
 import type { IPlayer, TCardItem } from './player/IPlayer.js';
@@ -232,8 +232,16 @@ export class Game implements IGame {
     const player = this.getPlayer(playerId);
     this.assertMainActionIsLegal(player, action);
     this.transitionTo(EPhase.IN_RESOLUTION);
-    this.enqueueMainActionPipeline(player, action);
-    this.runResolutionPipeline();
+
+    try {
+      this.enqueueMainActionPipeline(player, action);
+      this.runResolutionPipeline();
+    } catch (error) {
+      this.deferredActions.clear();
+      player.waitingFor = undefined;
+      this.phase = EPhase.AWAIT_MAIN_ACTION;
+      throw error;
+    }
   }
 
   public processFreeAction(playerId: string, action: IFreeActionRequest): void {
@@ -394,6 +402,7 @@ export class Game implements IGame {
             }
             case EMainAction.ANALYZE_DATA: {
               AnalyzeDataAction.execute(player, game);
+              pendingInput = game.markTrace(ETrace.BLUE, player.id);
               break;
             }
             case EMainAction.PLAY_CARD: {
@@ -402,8 +411,12 @@ export class Game implements IGame {
                 game,
                 this.getCardIndexPayload(action),
               );
-              if (result.destination === 'mission') {
-                const missionDef = result.card?.getMissionDef?.();
+
+              const missionDef = result.card?.getMissionDef?.();
+              const missionType =
+                missionDef?.type ?? result.card?.getMissionType();
+
+              const registerMission = () => {
                 if (missionDef) {
                   game.missionTracker.registerMission(missionDef, player.id);
                 } else {
@@ -412,12 +425,29 @@ export class Game implements IGame {
                     player.id,
                   );
                 }
-              }
+              };
+
               game.missionTracker.recordEvent({
                 type: EMissionEventType.CARD_PLAYED,
                 cost: result.price,
                 costType: result.priceType,
               });
+              if (result.destination === 'mission') {
+                if (missionType === EMissionType.QUICK) {
+                  registerMission();
+                } else {
+                  game.deferredActions.push(
+                    new SimpleDeferredAction(
+                      player,
+                      () => {
+                        registerMission();
+                        return undefined;
+                      },
+                      EPriority.DEFAULT,
+                    ),
+                  );
+                }
+              }
               break;
             }
             case EMainAction.RESEARCH_TECH: {
@@ -453,6 +483,17 @@ export class Game implements IGame {
         EPriority.CARD_TRIGGER,
       ),
       new ResolveSectorCompletion(player),
+      new SimpleDeferredAction(
+        player,
+        (game) => {
+          if (action.type !== EMainAction.PLAY_CARD) {
+            return undefined;
+          }
+
+          return game.missionTracker.checkAndPromptQuickMissions(player, game);
+        },
+        EPriority.DEFAULT,
+      ),
     ]);
   }
 
@@ -673,6 +714,16 @@ export class Game implements IGame {
             'Play card requirements are not met',
             {
               playerId: player.id,
+            },
+          );
+        }
+        if (!PlayCardAction.canExecuteCardAtIndex(player, this, cardIndex)) {
+          throw new GameError(
+            EErrorCode.INVALID_ACTION,
+            'Play card requirements are not met',
+            {
+              playerId: player.id,
+              cardIndex,
             },
           );
         }

@@ -459,7 +459,7 @@ describe('Game Integration: Rotation', () => {
     expect(game.solarSystem!.rotationCounter).toBe(rotBefore + 1);
   });
 
-  it('second pass of the same round also triggers rotation', () => {
+  it('second pass of the same round does not trigger another rotation', () => {
     const game = createGame('rotation-second-pass');
 
     passPlayer(game, 'p1');
@@ -467,7 +467,7 @@ describe('Game Integration: Rotation', () => {
 
     passPlayer(game, 'p2');
 
-    expect(game.solarSystem!.rotationCounter).toBe(rotAfterFirst + 1);
+    expect(game.solarSystem!.rotationCounter).toBe(rotAfterFirst);
   });
 
   it('first pass resets each new round', () => {

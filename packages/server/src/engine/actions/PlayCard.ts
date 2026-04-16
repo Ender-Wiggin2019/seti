@@ -21,6 +21,27 @@ export class PlayCardAction {
     return player.hand.length > 0;
   }
 
+  public static canExecuteCardAtIndex(
+    player: IPlayer,
+    game: IGame,
+    cardIndex: number,
+  ): boolean {
+    if (!this.canExecute(player, game)) {
+      return false;
+    }
+
+    if (cardIndex < 0 || cardIndex >= player.hand.length) {
+      return false;
+    }
+
+    const cardId = player.getCardIdAt(cardIndex);
+    if (!hasCardData(cardId)) {
+      return true;
+    }
+
+    return getCardRegistry().create(cardId).canPlay({ player, game });
+  }
+
   public static execute(
     player: IPlayer,
     game: IGame,
@@ -56,7 +77,7 @@ export class PlayCardAction {
     }
 
     const runtimeCard = getCardRegistry().create(cardId);
-    if (!runtimeCard.canPlay({ player, game })) {
+    if (!this.canExecuteCardAtIndex(player, game, cardIndex)) {
       throw new GameError(
         EErrorCode.INVALID_ACTION,
         'Card cannot be played now',

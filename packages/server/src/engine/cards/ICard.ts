@@ -3,7 +3,7 @@ import type { EResource, ESector } from '@seti/common/types/element';
 import type { ETechId } from '@seti/common/types/tech';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
-import type { IMissionDef } from '../missions/IMission.js';
+import type { EMissionType, IMissionDef } from '../missions/IMission.js';
 import type { IPlayer } from '../player/IPlayer.js';
 import type { IBehavior } from './Behavior.js';
 import type { ICardRequirements } from './Requirements.js';
@@ -28,6 +28,7 @@ export interface ICard extends IBaseCard {
   canPlay(context: ICardRuntimeContext): boolean;
   play(context: ICardRuntimeContext): IPlayerInput | undefined;
   getMissionDef?(): IMissionDef | undefined;
+  getMissionType(): EMissionType | undefined;
 }
 
 export interface IBaseGameCard extends ICard {

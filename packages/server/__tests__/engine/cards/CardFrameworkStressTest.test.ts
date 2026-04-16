@@ -61,6 +61,8 @@ function createGame(overrides: Record<string, unknown> = {}): IGame {
   } as unknown as IGame;
 }
 
+import { activateMission } from '../../helpers/missionTestUtils.js';
+
 describe('Card 94 — Popularization of Science (FULL_MISSION with tech triggers)', () => {
   it('is registered as MISSION card kind', () => {
     const card = getCardRegistry().create('94');
@@ -86,6 +88,7 @@ describe('Card 94 — Popularization of Science (FULL_MISSION with tech triggers
     const game = createGame({ missionTracker: tracker });
 
     tracker.registerMissionFromCard('94', player.id);
+    activateMission(player, '94');
     const missionState = tracker.getMissionState(player.id, '94');
 
     expect(missionState).toBeDefined();
@@ -99,6 +102,7 @@ describe('Card 94 — Popularization of Science (FULL_MISSION with tech triggers
     const game = createGame({ missionTracker: tracker });
 
     tracker.registerMissionFromCard('94', player.id);
+    activateMission(player, '94');
 
     tracker.recordEvent({
       type: EMissionEventType.TECH_RESEARCHED,
@@ -116,6 +120,7 @@ describe('Card 94 — Popularization of Science (FULL_MISSION with tech triggers
     const game = createGame({ missionTracker: tracker });
 
     tracker.registerMissionFromCard('94', player.id);
+    activateMission(player, '94');
 
     tracker.recordEvent({
       type: EMissionEventType.TECH_RESEARCHED,
@@ -144,6 +149,7 @@ describe('Card 94 — Popularization of Science (FULL_MISSION with tech triggers
     const game = createGame({ missionTracker: tracker });
 
     tracker.registerMissionFromCard('94', player.id);
+    activateMission(player, '94');
 
     tracker.recordEvent({
       type: EMissionEventType.CARD_PLAYED,
@@ -161,7 +167,7 @@ describe('Card 94 — Popularization of Science (FULL_MISSION with tech triggers
     const game = createGame({ missionTracker: tracker });
 
     tracker.registerMissionFromCard('94', player.id);
-    player.playedMissions.push({ id: '94' });
+    activateMission(player, '94');
 
     for (const [idx, category] of [
       ETech.PROBE,
@@ -482,6 +488,7 @@ describe('MissionCondition — extended tech matching', () => {
     const game = createGame({ missionTracker: tracker });
 
     tracker.registerMissionFromCard('94', player.id);
+    activateMission(player, '94');
 
     tracker.recordEvent({
       type: EMissionEventType.TECH_RESEARCHED,
@@ -498,6 +505,7 @@ describe('MissionCondition — extended tech matching', () => {
     const game = createGame({ missionTracker: tracker });
 
     tracker.registerMissionFromCard('94', player.id);
+    activateMission(player, '94');
 
     tracker.recordEvent({
       type: EMissionEventType.TECH_RESEARCHED,
@@ -514,6 +522,7 @@ describe('MissionCondition — extended tech matching', () => {
     const game = createGame({ missionTracker: tracker });
 
     tracker.registerMissionFromCard('94', player.id);
+    activateMission(player, '94');
 
     tracker.recordEvent({
       type: EMissionEventType.TECH_RESEARCHED,
@@ -530,6 +539,7 @@ describe('MissionCondition — extended tech matching', () => {
     const game = createGame({ missionTracker: tracker });
 
     tracker.registerMissionFromCard('94', player.id);
+    activateMission(player, '94');
 
     tracker.recordEvent({
       type: EMissionEventType.PROBE_LAUNCHED,

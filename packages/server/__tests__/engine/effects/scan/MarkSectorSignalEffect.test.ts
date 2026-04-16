@@ -26,11 +26,19 @@ function createMarkCompleteSpy() {
   );
 }
 
-function createMockPlayer(): IPlayer {
+function requireValue<T>(value: T, message: string): NonNullable<T> {
+  if (value == null) {
+    throw new Error(message);
+  }
+  return value;
+}
+
+function createMockPlayer(options: { dataPoolFull?: boolean } = {}): IPlayer {
   return {
     id: 'p1',
     score: 0,
     resources: { gain: vi.fn() },
+    dataPool: { isFull: () => options.dataPoolFull ?? false },
   } as unknown as IPlayer;
 }
 
@@ -106,6 +114,22 @@ describe('MarkSectorSignalEffect', () => {
       expect(player.resources.gain).not.toHaveBeenCalled();
     });
 
+    it('still routes data gain through resources when the pool is full', () => {
+      const player = createMockPlayer({ dataPoolFull: true });
+      const game = createMockGame([]);
+      const sector = {
+        id: 's1',
+        color: ESector.YELLOW,
+        completed: false,
+        markSignal: vi.fn(() => ({ dataGained: true, vpAwarded: 0 })),
+      };
+
+      const result = MarkSectorSignalEffect.markOnSector(player, game, sector);
+
+      expect(result.dataGained).toBe(true);
+      expect(player.resources.gain).toHaveBeenCalledWith({ data: 1 });
+    });
+
     it('awards VP when position has a reward', () => {
       const player = createMockPlayer();
       const game = createMockGame([]);
@@ -138,8 +162,8 @@ describe('MarkSectorSignalEffect', () => {
         'target-sector',
       );
 
-      expect(result).not.toBeNull();
-      expect(result!.sectorId).toBe('target-sector');
+      const markedSector = requireValue(result, 'expected marked sector');
+      expect(markedSector.sectorId).toBe('target-sector');
       expect(hasPlayerMarker(sector, 'p1')).toBe(true);
     });
 
@@ -178,8 +202,8 @@ describe('MarkSectorSignalEffect', () => {
         EStarName.PROXIMA_CENTAURI,
       );
 
-      expect(result).not.toBeNull();
-      expect(result!.sectorId).toBe('sector-5');
+      const markedSector = requireValue(result, 'expected marked sector');
+      expect(markedSector.sectorId).toBe('sector-5');
       expect(hasPlayerMarker(sector5, 'p1')).toBe(true);
     });
 
@@ -216,7 +240,12 @@ describe('MarkSectorSignalEffect', () => {
 
       expect(input).toBeUndefined();
       expect(onComplete).toHaveBeenCalledOnce();
-      expect(onComplete.mock.calls[0][0]!.sectorId).toBe('only-red');
+      expect(
+        requireValue(
+          onComplete.mock.calls[0]?.[0],
+          'expected mark result for unique color',
+        ).sectorId,
+      ).toBe('only-red');
       expect(hasPlayerMarker(redSector, 'p1')).toBe(true);
     });
 
@@ -233,7 +262,9 @@ describe('MarkSectorSignalEffect', () => {
       );
 
       expect(input).toBeDefined();
-      expect(input!.type).toBe(EPlayerInputType.OPTION);
+      expect(requireValue(input, 'expected option input').type).toBe(
+        EPlayerInputType.OPTION,
+      );
     });
 
     it('marks chosen sector when player selects from ambiguous color', () => {
@@ -250,13 +281,18 @@ describe('MarkSectorSignalEffect', () => {
         onComplete,
       );
 
-      input!.process({
+      requireValue(input, 'expected selection input').process({
         type: EPlayerInputType.OPTION,
         optionId: 'red-2',
       });
 
       expect(onComplete).toHaveBeenCalledOnce();
-      expect(onComplete.mock.calls[0][0]!.sectorId).toBe('red-2');
+      expect(
+        requireValue(
+          onComplete.mock.calls[0]?.[0],
+          'expected mark result after selection',
+        ).sectorId,
+      ).toBe('red-2');
       expect(hasPlayerMarker(red2, 'p1')).toBe(true);
       expect(hasPlayerMarker(red1, 'p1')).toBe(false);
     });
@@ -290,8 +326,9 @@ describe('MarkSectorSignalEffect', () => {
         EPlanet.EARTH,
       );
 
-      expect(result).not.toBeNull();
-      expect(result!.sectorId).toBe('sector-3');
+      expect(requireValue(result, 'expected earth sector').sectorId).toBe(
+        'sector-3',
+      );
     });
 
     it('marks the sector that Mercury currently occupies', () => {
@@ -311,8 +348,9 @@ describe('MarkSectorSignalEffect', () => {
         EPlanet.MERCURY,
       );
 
-      expect(result).not.toBeNull();
-      expect(result!.sectorId).toBe('sector-7');
+      expect(requireValue(result, 'expected mercury sector').sectorId).toBe(
+        'sector-7',
+      );
     });
 
     it('reflects rotation — planet moves to adjacent sector', () => {
@@ -333,8 +371,9 @@ describe('MarkSectorSignalEffect', () => {
         EPlanet.EARTH,
       );
 
-      expect(result).not.toBeNull();
-      expect(result!.sectorId).toBe('sector-4');
+      expect(
+        requireValue(result, 'expected rotated earth sector').sectorId,
+      ).toBe('sector-4');
     });
 
     it('returns null when solar system is absent', () => {
@@ -391,9 +430,11 @@ describe('MarkSectorSignalEffect', () => {
       );
 
       expect(input).toBeDefined();
-      expect(input!.type).toBe(EPlayerInputType.OPTION);
+      expect(requireValue(input, 'expected chained option input').type).toBe(
+        EPlayerInputType.OPTION,
+      );
 
-      input!.process({
+      requireValue(input, 'expected chained option input').process({
         type: EPlayerInputType.OPTION,
         optionId: 'red-1',
       });

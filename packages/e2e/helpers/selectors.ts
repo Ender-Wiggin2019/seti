@@ -66,4 +66,11 @@ export const sel = {
   // ── Event log ──────────────────────────────────────────────
   eventLog: '[data-testid="event-log"]',
   eventEntry: (index: number) => `[data-testid="event-entry-${index}"]`,
+
+  // ── Input prompt elements ──────────────────────────────────
+  inputOption: (optionId: string) => `[data-testid="input-option-${optionId}"]`,
+  inputSector: (sector: string) => `[data-testid="input-sector-${sector}"]`,
+  inputOrTab: (index: number) => `[data-testid="input-or-tab-${index}"]`,
+  inputSelectCard: (cardId: string) => `[data-testid="select-card-${cardId}"]`,
+  inputEorCard: (cardId: string) => `[data-testid="input-eor-card-${cardId}"]`,
 } as const;

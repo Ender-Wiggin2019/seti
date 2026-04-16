@@ -40,6 +40,8 @@ function createGame(overrides: Record<string, unknown> = {}): IGame {
   } as unknown as IGame;
 }
 
+import { activateMission } from '../../../helpers/missionTestUtils.js';
+
 describe('Card 106 — Strategic Planning (FULL_MISSION with credit-cost triggers)', () => {
   it('is registered as a MISSION card kind', () => {
     const card = getCardRegistry().create('106');
@@ -61,6 +63,7 @@ describe('Card 106 — Strategic Planning (FULL_MISSION with credit-cost trigger
     const game = createGame({ missionTracker: tracker });
 
     tracker.registerMissionFromCard('106', player.id);
+    activateMission(player, '106');
     const state = tracker.getMissionState(player.id, '106');
 
     expect(state).toBeDefined();
@@ -75,6 +78,7 @@ describe('Card 106 — Strategic Planning (FULL_MISSION with credit-cost trigger
       const game = createGame({ missionTracker: tracker });
 
       tracker.registerMissionFromCard('106', player.id);
+      activateMission(player, '106');
       tracker.recordEvent({
         type: EMissionEventType.CARD_PLAYED,
         cost: 1,
@@ -92,6 +96,7 @@ describe('Card 106 — Strategic Planning (FULL_MISSION with credit-cost trigger
       const game = createGame({ missionTracker: tracker });
 
       tracker.registerMissionFromCard('106', player.id);
+      activateMission(player, '106');
       tracker.recordEvent({
         type: EMissionEventType.CARD_PLAYED,
         cost: 1,
@@ -119,6 +124,7 @@ describe('Card 106 — Strategic Planning (FULL_MISSION with credit-cost trigger
       const game = createGame({ missionTracker: tracker });
 
       tracker.registerMissionFromCard('106', player.id);
+      activateMission(player, '106');
       tracker.recordEvent({
         type: EMissionEventType.CARD_PLAYED,
         cost: 2,
@@ -135,6 +141,7 @@ describe('Card 106 — Strategic Planning (FULL_MISSION with credit-cost trigger
       const game = createGame({ missionTracker: tracker });
 
       tracker.registerMissionFromCard('106', player.id);
+      activateMission(player, '106');
       tracker.recordEvent({
         type: EMissionEventType.CARD_PLAYED,
         cost: 2,
@@ -162,6 +169,7 @@ describe('Card 106 — Strategic Planning (FULL_MISSION with credit-cost trigger
       const game = createGame({ missionTracker: tracker });
 
       tracker.registerMissionFromCard('106', player.id);
+      activateMission(player, '106');
       tracker.recordEvent({
         type: EMissionEventType.CARD_PLAYED,
         cost: 3,
@@ -178,6 +186,7 @@ describe('Card 106 — Strategic Planning (FULL_MISSION with credit-cost trigger
       const game = createGame({ missionTracker: tracker });
 
       tracker.registerMissionFromCard('106', player.id);
+      activateMission(player, '106');
       tracker.recordEvent({
         type: EMissionEventType.CARD_PLAYED,
         cost: 3,
@@ -205,6 +214,7 @@ describe('Card 106 — Strategic Planning (FULL_MISSION with credit-cost trigger
       const game = createGame({ missionTracker: tracker });
 
       tracker.registerMissionFromCard('106', player.id);
+      activateMission(player, '106');
       tracker.recordEvent({
         type: EMissionEventType.CARD_PLAYED,
         cost: 4,
@@ -221,6 +231,7 @@ describe('Card 106 — Strategic Planning (FULL_MISSION with credit-cost trigger
       const game = createGame({ missionTracker: tracker });
 
       tracker.registerMissionFromCard('106', player.id);
+      activateMission(player, '106');
       tracker.recordEvent({
         type: EMissionEventType.CARD_PLAYED,
         cost: 1,
@@ -237,6 +248,7 @@ describe('Card 106 — Strategic Planning (FULL_MISSION with credit-cost trigger
       const game = createGame({ missionTracker: tracker });
 
       tracker.registerMissionFromCard('106', player.id);
+      activateMission(player, '106');
       tracker.recordEvent({ type: EMissionEventType.PROBE_LAUNCHED });
 
       const prompt = tracker.checkAndPromptTriggers(player, game);
@@ -251,6 +263,7 @@ describe('Card 106 — Strategic Planning (FULL_MISSION with credit-cost trigger
       const game = createGame({ missionTracker: tracker });
 
       tracker.registerMissionFromCard('106', player.id);
+      activateMission(player, '106');
 
       tracker.recordEvent({
         type: EMissionEventType.CARD_PLAYED,
@@ -291,6 +304,7 @@ describe('Card 106 — Strategic Planning (FULL_MISSION with credit-cost trigger
       const game = createGame({ missionTracker: tracker });
 
       tracker.registerMissionFromCard('106', player.id);
+      activateMission(player, '106');
 
       tracker.recordEvent({
         type: EMissionEventType.CARD_PLAYED,
@@ -318,6 +332,7 @@ describe('Card 106 — Strategic Planning (FULL_MISSION with credit-cost trigger
       const game = createGame({ missionTracker: tracker });
 
       tracker.registerMissionFromCard('106', player.id);
+      activateMission(player, '106');
       tracker.recordEvent({
         type: EMissionEventType.CARD_PLAYED,
         cost: 1,
@@ -343,7 +358,7 @@ describe('Card 106 — Strategic Planning (FULL_MISSION with credit-cost trigger
       const game = createGame({ missionTracker: tracker });
 
       tracker.registerMissionFromCard('106', player.id);
-      player.playedMissions.push({ id: '106' });
+      activateMission(player, '106');
 
       for (const [idx, cost] of [1, 2, 3].entries()) {
         tracker.recordEvent({
@@ -380,6 +395,7 @@ describe('Card 106 — Strategic Planning (FULL_MISSION with credit-cost trigger
       tracker.checkAndPromptTriggers(player, game);
 
       tracker.registerMissionFromCard('106', player.id);
+      activateMission(player, '106');
 
       tracker.recordEvent({
         type: EMissionEventType.CARD_PLAYED,
@@ -399,6 +415,7 @@ describe('Card 106 — Strategic Planning (FULL_MISSION with credit-cost trigger
       const game = createGame({ missionTracker: tracker });
 
       tracker.registerMissionFromCard('106', player.id);
+      activateMission(player, '106');
 
       tracker.recordEvent({
         type: EMissionEventType.CARD_PLAYED,

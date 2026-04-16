@@ -11,7 +11,7 @@
 - always returns true
 - sets player.passed when no discard and no end-of-round stack
 - rotates the solar system on the first pass of the round
-- rotates the solar system on the second pass of the round too
+- does not rotate the solar system on the second pass of the same round
 - returns SelectCard when hand exceeds limit
 - chains discard → end-of-round card selection
 

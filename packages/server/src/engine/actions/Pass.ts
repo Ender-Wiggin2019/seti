@@ -12,7 +12,7 @@ export class PassAction {
   /**
    * Pass sequence (PRD §7.8):
    *  1. Discard hand down to `player.handLimitAfterPass`  (PlayerInput if excess)
-   *  2. Rotate SolarSystem disc (every pass triggers rotation)
+   *  2. Rotate SolarSystem disc on the first pass of the round
    *  3. Pick one card from end-of-round stack             (PlayerInput)
    *  4. Mark player as passed
    */
@@ -58,10 +58,10 @@ export class PassAction {
   ): PlayerInput | undefined {
     if (!game.hasRoundFirstPassOccurred) {
       game.hasRoundFirstPassOccurred = true;
-    }
-    if (game.solarSystem !== null) {
-      game.solarSystem.rotateNextDisc();
-      game.alienState?.onSolarSystemRotated(game);
+      if (game.solarSystem !== null) {
+        game.solarSystem.rotateNextDisc();
+        game.alienState?.onSolarSystemRotated(game);
+      }
     }
 
     return PassAction.endOfRoundCardStep(player, game);

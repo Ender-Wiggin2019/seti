@@ -40,7 +40,11 @@ export function OrOptionsInput({
     <Tabs defaultValue={defaultTab} className='space-y-2'>
       <TabsList className='flex w-full flex-wrap gap-1'>
         {model.options.map((option, index) => (
-          <TabsTrigger key={option.inputId} value={`or-tab-${index}`}>
+          <TabsTrigger
+            key={option.inputId}
+            value={`or-tab-${index}`}
+            data-testid={`input-or-tab-${index}`}
+          >
             {optionLabel(
               option,
               index,

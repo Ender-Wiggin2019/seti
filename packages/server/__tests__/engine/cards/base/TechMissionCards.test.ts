@@ -16,6 +16,7 @@ import { EMissionType } from '@/engine/missions/IMission.js';
 import { MissionTracker } from '@/engine/missions/MissionTracker.js';
 import { Player } from '@/engine/player/Player.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
+import { activateMission } from '../../../helpers/missionTestUtils.js';
 
 function createPlayer(overrides: Record<string, unknown> = {}): Player {
   return new Player({
@@ -439,6 +440,7 @@ describe('Observation quick missions use sector fulfill counts', () => {
 
     const tracker = new MissionTracker();
     tracker.registerMissionFromCard('37', player.id);
+    activateMission(player, '37');
 
     expect(tracker.getCompletableQuickMissions(player, game)).toHaveLength(0);
   });
@@ -454,6 +456,7 @@ describe('Observation quick missions use sector fulfill counts', () => {
 
     const tracker = new MissionTracker();
     tracker.registerMissionFromCard('37', player.id);
+    activateMission(player, '37');
 
     const completable = tracker.getCompletableQuickMissions(player, game);
     expect(completable).toHaveLength(1);
@@ -471,6 +474,7 @@ describe('Observation quick missions use sector fulfill counts', () => {
 
     const tracker = new MissionTracker();
     tracker.registerMissionFromCard('43', player.id);
+    activateMission(player, '43');
 
     const completable = tracker.getCompletableQuickMissions(player, game);
     expect(completable).toHaveLength(1);
@@ -930,6 +934,7 @@ describe('MissionTracker integration with tech mission quick missions', () => {
     const card = getCardRegistry().create('64');
     const def = card.getMissionDef?.()!;
     tracker.registerMission(def, player.id);
+    activateMission(player, '64');
 
     const completable = tracker.getCompletableQuickMissions(player, game);
     expect(completable.length).toBe(0);
@@ -943,6 +948,7 @@ describe('MissionTracker integration with tech mission quick missions', () => {
     const card = getCardRegistry().create('70');
     const def = card.getMissionDef?.()!;
     tracker.registerMission(def, player.id);
+    activateMission(player, '70');
 
     const completable = tracker.getCompletableQuickMissions(player, game);
     expect(completable.length).toBe(0);

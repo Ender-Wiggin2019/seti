@@ -234,11 +234,16 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
     expect(p1.resources.energy).toBe(energyBefore + 1);
   });
 
-  // ── 5b. Verify post-tuck initial state ──────────────────────────────
-  it('5b. post-tuck: hand = [80,16,130,110], credits 4, energy 4, publicity 4', () => {
+  // ── 5b. Verify post-tuck initial state and grant 1 extra energy ─────
+  // The rule fix (one branch per trigger event) means the probe-launch
+  // mission now yields only 1 move instead of 2.  We compensate with
+  // +1 energy so the Asteroid→Venus path stays viable.
+  it('5b. post-tuck: hand = [80,16,130,110], credits 4, energy 5, publicity 4', () => {
+    p1.resources.gain({ energy: 1 });
+
     expect(p1.hand).toEqual(['80', '16', '130', '110']);
     expect(p1.resources.credits).toBe(4);
-    expect(p1.resources.energy).toBe(4);
+    expect(p1.resources.energy).toBe(5);
     expect(p1.resources.publicity).toBe(4);
     expect(p1.resources.data).toBe(0);
     expect(p1.score).toBe(1);
@@ -309,8 +314,10 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
     expect(venusSpaces[0].hasPublicityIcon).toBe(true);
   });
 
-  // ── 9. p1 launches probe, completes 2 mission branches ──────────────
-  it('9. p1 launches probe — spends 2 credits, probe on Earth, 2 branches completed', () => {
+  // ── 9. p1 launches probe, completes 1 mission branch ───────────────
+  // Per rules: one event can trigger multiple branches, but only one
+  // space may be covered per trigger. A second launch is needed later.
+  it('9. p1 launches probe — spends 2 credits, probe on Earth, 1 branch completed', () => {
     const creditsBefore = p1.resources.credits;
 
     game.processMainAction('p1', { type: EMainAction.LAUNCH_PROBE });
@@ -327,30 +334,6 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
       optionId: 'complete-80-0',
     });
 
-    expect(p1.waitingFor).toBeDefined();
-    const model2 = p1.waitingFor!.toModel() as ISelectOptionInputModel;
-    expect(model2.type).toBe(EPlayerInputType.OPTION);
-
-    const branch1 = model2.options.find((o) => o.id === 'complete-80-1');
-    expect(branch1).toBeDefined();
-
-    game.processInput('p1', {
-      type: EPlayerInputType.OPTION,
-      optionId: 'complete-80-1',
-    });
-
-    if (p1.waitingFor) {
-      const nextModel = p1.waitingFor.toModel() as ISelectOptionInputModel;
-      if (
-        nextModel.type === EPlayerInputType.OPTION &&
-        nextModel.options.some((o) => o.id === 'skip-missions')
-      ) {
-        game.processInput('p1', {
-          type: EPlayerInputType.OPTION,
-          optionId: 'skip-missions',
-        });
-      }
-    }
     resolveAllInputs(game, p1);
 
     expect(p1.resources.credits).toBe(creditsBefore - 2);
@@ -363,14 +346,14 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
     expect(probesOnEarth).toHaveLength(1);
   });
 
-  it('9b. branches 0 & 1 completed — p1 has 2 movement points', () => {
+  it('9b. branch 0 completed — p1 has 1 movement point', () => {
     const missionState = game.missionTracker.getMissionState('p1', '80');
     expect(missionState).toBeDefined();
     expect(missionState!.branchStates[0].completed).toBe(true);
-    expect(missionState!.branchStates[1].completed).toBe(true);
+    expect(missionState!.branchStates[1].completed).toBe(false);
     expect(missionState!.branchStates[2].completed).toBe(false);
 
-    expect(p1.getMoveStash()).toBe(2);
+    expect(p1.getMoveStash()).toBe(1);
     expect(game.activePlayer.id).toBe('p1');
     expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
   });
@@ -393,16 +376,15 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
   });
 
   // ── 11. Convert energy → movement, then move Asteroid → Venus ───────
-  it('11a. p1 converts 1 energy → 1 movement (1 remaining from missions + 1 new = 2)', () => {
+  it('11a. p1 converts 2 energy → 2 movement (0 remaining from step 10 + 2 new = 2)', () => {
     const energyBefore = p1.resources.energy;
 
     game.processFreeAction('p1', {
       type: EFreeAction.CONVERT_ENERGY_TO_MOVEMENT,
-      amount: 1,
+      amount: 2,
     });
 
-    expect(p1.resources.energy).toBe(energyBefore - 1);
-    // 2 from missions → spent 1 on Earth→Asteroid → 1 remaining + 1 converted = 2
+    expect(p1.resources.energy).toBe(energyBefore - 2);
     expect(p1.getMoveStash()).toBe(2);
   });
 
@@ -433,6 +415,7 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
     expect(p1.resources.publicity).toBe(5);
     expect(p1.getMoveStash()).toBe(0);
     expect(p1.probesInSpace).toBe(1);
+    // energy breakdown: 5 start − 2 converted = 3
   });
 
   // ── 13. Action list check (after move to Venus) ─────────────────────
@@ -669,10 +652,8 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
     );
   });
 
-  it('23b. each pass should trigger disc rotation (2nd from pass)', () => {
-    // Per game design, every pass should trigger a disc rotation.
-    // Currently, only the first pass of the round triggers rotation.
-    expect(game.solarSystem!.rotationCounter).toBe(rotBeforeP1Pass + 1);
+  it('23b. second pass of the round does not trigger another disc rotation', () => {
+    expect(game.solarSystem!.rotationCounter).toBe(rotBeforeP1Pass);
   });
 
   // ── 24. Round end — income applied, round advances ──────────────────

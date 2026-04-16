@@ -49,6 +49,8 @@ function createGame(overrides: Record<string, unknown> = {}): IGame {
   } as unknown as IGame;
 }
 
+import { activateMission } from '../../../helpers/missionTestUtils.js';
+
 // ================================================================
 // Card 64 — ALICE: card metadata & mission definition
 // ================================================================
@@ -191,6 +193,7 @@ describe('Card 64 — ALICE: MissionTracker completability', () => {
 
     const def = getCardRegistry().create('64').getMissionDef?.()!;
     tracker.registerMission(def, player.id);
+    activateMission(player, '64');
 
     expect(tracker.getCompletableQuickMissions(player, game)).toHaveLength(0);
     expect(tracker.hasCompletableQuickMissions(player, game)).toBe(false);
@@ -206,6 +209,7 @@ describe('Card 64 — ALICE: MissionTracker completability', () => {
 
     const def = getCardRegistry().create('64').getMissionDef?.()!;
     tracker.registerMission(def, player.id);
+    activateMission(player, '64');
 
     expect(tracker.getCompletableQuickMissions(player, game)).toHaveLength(0);
   });
@@ -223,6 +227,7 @@ describe('Card 64 — ALICE: MissionTracker completability', () => {
 
     const def = getCardRegistry().create('64').getMissionDef?.()!;
     tracker.registerMission(def, player.id);
+    activateMission(player, '64');
 
     const completable = tracker.getCompletableQuickMissions(player, game);
     expect(completable).toHaveLength(1);
@@ -322,6 +327,7 @@ describe('Card 64 — ALICE: CompleteMissionFreeAction', () => {
 
     const card = getCardRegistry().create('64');
     tracker.registerMission(card.getMissionDef?.()!, player.id);
+    activateMission(player, '64');
 
     expect(CompleteMissionFreeAction.canExecute(player, game)).toBe(true);
   });
@@ -336,6 +342,7 @@ describe('Card 64 — ALICE: CompleteMissionFreeAction', () => {
 
     const card = getCardRegistry().create('64');
     tracker.registerMission(card.getMissionDef?.()!, player.id);
+    activateMission(player, '64');
 
     expect(CompleteMissionFreeAction.canExecute(player, game)).toBe(false);
   });
@@ -370,6 +377,7 @@ describe('Card 64 — ALICE: CompleteMissionFreeAction', () => {
 
     const card = getCardRegistry().create('64');
     tracker.registerMission(card.getMissionDef?.()!, player.id);
+    activateMission(player, '64');
 
     expect(() => CompleteMissionFreeAction.execute(player, game, '64')).toThrow(
       /not completable/,
@@ -394,7 +402,7 @@ describe('Card 64 — ALICE: integration with AlienState', () => {
     const card = getCardRegistry().create('64');
     const def = card.getMissionDef?.()!;
     tracker.registerMission(def, player.id);
-    player.playedMissions.push(card);
+    activateMission(player, '64');
 
     expect(tracker.hasCompletableQuickMissions(player, game)).toBe(false);
 
@@ -420,6 +428,7 @@ describe('Card 64 — ALICE: integration with AlienState', () => {
 
     const def = getCardRegistry().create('64').getMissionDef?.()!;
     tracker.registerMission(def, player.id);
+    activateMission(player, '64');
 
     alienState.applyTrace(player, game, ETrace.RED, 0, false);
     alienState.applyTrace(player, game, ETrace.RED, 1, false);
@@ -438,6 +447,7 @@ describe('Card 64 — ALICE: integration with AlienState', () => {
 
     const def = getCardRegistry().create('64').getMissionDef?.()!;
     tracker.registerMission(def, player.id);
+    activateMission(player, '64');
 
     alienState.applyTrace(player, game, ETrace.BLUE, 0, false);
     alienState.applyTrace(player, game, ETrace.RED, 1, false);
@@ -459,6 +469,7 @@ describe('Card 64 — ALICE: integration with AlienState', () => {
 
     const def = getCardRegistry().create('64').getMissionDef?.()!;
     tracker.registerMission(def, player.id);
+    activateMission(player, '64');
 
     alienState.applyTrace(player, game, ETrace.BLUE, 0, true);
     alienState.applyTrace(player, game, ETrace.BLUE, 1, true);

@@ -1,11 +1,46 @@
-import { EPlanet } from '@seti/common/types/protocol/enums';
+import { EMainAction, EPlanet } from '@seti/common/types/protocol/enums';
+import {
+  EPlayerInputType,
+  type ISelectEndOfRoundCardInputModel,
+} from '@seti/common/types/protocol/playerInput';
 import { ETechId } from '@seti/common/types/tech';
 import { LaunchProbeAction } from '@/engine/actions/LaunchProbe.js';
 import { BoardBuilder } from '@/engine/board/BoardBuilder.js';
 import { LaunchProbeEffect } from '@/engine/effects/probe/LaunchProbeEffect.js';
+import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
+
+const TEST_PLAYERS = [
+  { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
+  { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
+] as const;
+
+function resolvePassEndOfRoundPick(game: Game, playerId: string): void {
+  const player = game.players.find((candidate) => candidate.id === playerId);
+  if (!player?.waitingFor) {
+    return;
+  }
+
+  const model = player.waitingFor.toModel() as ISelectEndOfRoundCardInputModel;
+  if (model.type !== EPlayerInputType.END_OF_ROUND) {
+    throw new Error('Expected end-of-round selection');
+  }
+
+  game.processInput(playerId, {
+    type: EPlayerInputType.END_OF_ROUND,
+    cardId: model.cards[0].id,
+  });
+}
+
+function requireSolarSystem(game: IGame) {
+  if (game.solarSystem === null) {
+    throw new Error('Expected solar system to be initialized');
+  }
+
+  return game.solarSystem;
+}
 
 function createMockGame(): IGame {
   const rng = new SeededRandom('launch-probe-test');
@@ -121,9 +156,10 @@ describe('LaunchProbeAction', () => {
       const game = createMockGame();
       const player = createPlayer();
       const result = LaunchProbeAction.execute(player, game);
-      const earthSpaces = game.solarSystem!.getSpacesOnPlanet(EPlanet.EARTH);
+      const solarSystem = requireSolarSystem(game);
+      const earthSpaces = solarSystem.getSpacesOnPlanet(EPlanet.EARTH);
       expect(earthSpaces.length).toBeGreaterThan(0);
-      const probes = game.solarSystem!.getProbesAt(earthSpaces[0].id);
+      const probes = solarSystem.getProbesAt(earthSpaces[0].id);
       expect(probes.some((p) => p.playerId === 'p1')).toBe(true);
       expect(result.spaceId).toBe(earthSpaces[0].id);
     });
@@ -154,6 +190,32 @@ describe('LaunchProbeAction', () => {
       LaunchProbeEffect.execute(player, game);
       expect(player.resources.credits).toBe(0);
       expect(player.probesInSpace).toBe(1);
+    });
+
+    it('integration: double-probe tech allows launching again on a later turn until two probes are in space', () => {
+      const game = Game.create(
+        TEST_PLAYERS,
+        { playerCount: 2 },
+        'launch-probe-double-tech',
+      );
+      const player = game.players[0];
+      player.techs.push(ETechId.PROBE_DOUBLE_PROBE);
+      const otherPlayer = game.players[1];
+
+      game.processMainAction(player.id, { type: EMainAction.LAUNCH_PROBE });
+      game.processMainAction(otherPlayer.id, { type: EMainAction.PASS });
+      resolvePassEndOfRoundPick(game, otherPlayer.id);
+      game.processMainAction(player.id, { type: EMainAction.LAUNCH_PROBE });
+
+      const solarSystem = requireSolarSystem(game);
+      const earthSpaces = solarSystem.getSpacesOnPlanet(EPlanet.EARTH);
+      const earthProbes = solarSystem.getProbesAt(earthSpaces[0].id);
+
+      expect(player.resources.credits).toBe(0);
+      expect(player.probesInSpace).toBe(2);
+      expect(
+        earthProbes.filter((probe) => probe.playerId === player.id),
+      ).toHaveLength(2);
     });
   });
 });

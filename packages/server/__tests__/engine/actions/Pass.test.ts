@@ -73,7 +73,7 @@ describe('PassAction', () => {
       expect(input!.type).toBe(EPlayerInputType.END_OF_ROUND);
     });
 
-    it('rotates the solar system on the second pass of the round too', () => {
+    it('does not rotate the solar system on the second pass of the same round', () => {
       const rng = new SeededRandom('pass-second-no-rotate');
       const solarSystem = BoardBuilder.buildSolarSystemFromRandom(rng);
       const game = createMockGame({
@@ -93,7 +93,7 @@ describe('PassAction', () => {
       const p2 = createPlayer({ id: 'p2', seatIndex: 1, hand: [] });
       PassAction.execute(p2, game);
 
-      expect(rotateSpy).toHaveBeenCalledTimes(1);
+      expect(rotateSpy).not.toHaveBeenCalled();
     });
 
     it('dispatches alien rotation hook after rotating', () => {
@@ -108,6 +108,27 @@ describe('PassAction', () => {
 
       expect(onSolarSystemRotated).toHaveBeenCalledTimes(1);
       expect(onSolarSystemRotated).toHaveBeenCalledWith(game);
+    });
+
+    it('does not dispatch the alien rotation hook on the second pass of the same round', () => {
+      const onSolarSystemRotated = vi.fn();
+      const game = createMockGame({
+        alienState: { onSolarSystemRotated },
+        endOfRoundStacks: [['eor-1', 'eor-2']],
+      });
+
+      const p1 = createPlayer({ id: 'p1', hand: [] });
+      const firstInput = PassAction.execute(p1, game);
+      firstInput!.process({
+        type: EPlayerInputType.END_OF_ROUND,
+        cardId: 'eor-1',
+      });
+      expect(onSolarSystemRotated).toHaveBeenCalledTimes(1);
+
+      const p2 = createPlayer({ id: 'p2', seatIndex: 1, hand: [] });
+      PassAction.execute(p2, game);
+
+      expect(onSolarSystemRotated).toHaveBeenCalledTimes(1);
     });
 
     it('returns SelectCard when hand exceeds limit', () => {

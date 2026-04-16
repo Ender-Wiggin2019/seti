@@ -57,11 +57,14 @@ function registerCardMission(
   }
 }
 
+import { activateMission } from '../../../helpers/missionTestUtils.js';
+
 describe('Special full mission cards (128/129/138) and card 134 quick mission', () => {
-  it('card 128 triggers all reward choices on one non-Earth planet visit', () => {
+  it('card 128 offers all uncompleted branches on one non-Earth planet visit (choose one at a time)', () => {
     const player = createPlayer();
     const game = createGame();
     registerCardMission('128', player, game);
+    activateMission(player, '128');
 
     game.missionTracker.recordEvent({
       type: EMissionEventType.PROBE_VISITED_PLANET,
@@ -79,10 +82,11 @@ describe('Special full mission cards (128/129/138) and card 134 quick mission', 
     expect(completeOptions).toHaveLength(3);
   });
 
-  it('card 129 auto-limits to one branch per asteroid visit event', () => {
+  it('card 129 consumes asteroid-visit event per branch — one branch per event', () => {
     const player = createPlayer();
     const game = createGame();
     registerCardMission('129', player, game);
+    activateMission(player, '129');
 
     game.missionTracker.recordEvent({
       type: EMissionEventType.PROBE_VISITED_ASTEROIDS,
@@ -102,6 +106,7 @@ describe('Special full mission cards (128/129/138) and card 134 quick mission', 
     const player = createPlayer();
     const game = createGame();
     registerCardMission('138', player, game);
+    activateMission(player, '138');
 
     game.missionTracker.recordEvent({
       type: EMissionEventType.CARD_CORNER_USED,

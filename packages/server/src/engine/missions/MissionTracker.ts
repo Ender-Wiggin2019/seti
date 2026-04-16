@@ -5,7 +5,7 @@ import { hasCardData, loadCardData } from '../cards/loadCardData.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
 import { SelectOption } from '../input/SelectOption.js';
-import type { IPlayer } from '../player/IPlayer.js';
+import type { IPlayer, TCardItem } from '../player/IPlayer.js';
 import {
   EMissionType,
   type ICompletableMission,
@@ -80,8 +80,9 @@ export class MissionTracker {
 
   /**
    * Process buffered events against all FULL_MISSION branches for a player.
-   * Returns a SelectOption prompt if any branches triggered, undefined otherwise.
-   * Clears the event buffer after processing.
+   * Each event is an independent checkpoint — per rules, one event can trigger
+   * multiple branches but the player may only claim one space per event.
+   * After that selection (or skip), the next event is evaluated separately.
    */
   public checkAndPromptTriggers(
     player: IPlayer,
@@ -92,21 +93,46 @@ export class MissionTracker {
 
     if (events.length === 0) return undefined;
 
+    return this.processEventChain(player, game, events, 0);
+  }
+
+  private processEventChain(
+    player: IPlayer,
+    game: IGame,
+    events: IMissionEvent[],
+    startIndex: number,
+  ): IPlayerInput | undefined {
+    for (let eventIdx = startIndex; eventIdx < events.length; eventIdx++) {
+      const event = events[eventIdx];
+      const triggered = this.collectTriggeredBranches(player, event);
+
+      if (triggered.length > 0) {
+        return this.buildTriggerPrompt(player, game, triggered, () =>
+          this.processEventChain(player, game, events, eventIdx + 1),
+        );
+      }
+    }
+    return undefined;
+  }
+
+  private collectTriggeredBranches(
+    player: IPlayer,
+    event: IMissionEvent,
+  ): ICompletableMission[] {
     const missions = this.getOrCreatePlayerMissions(player.id);
     const triggered: ICompletableMission[] = [];
 
     for (const mission of missions) {
+      if (!this.isMissionActiveOnBoard(player, mission.def.cardId)) continue;
       if (mission.def.type !== EMissionType.FULL) continue;
 
       for (let i = 0; i < mission.def.branches.length; i++) {
         if (mission.branchStates[i].completed) continue;
 
         const branch = mission.def.branches[i];
-        const isTriggered = events.some((event) =>
-          branch.matchEvent
-            ? branch.matchEvent(event)
-            : matchesFullMissionTrigger(branch, event),
-        );
+        const isTriggered = branch.matchEvent
+          ? branch.matchEvent(event)
+          : matchesFullMissionTrigger(branch, event);
 
         if (isTriggered) {
           triggered.push({
@@ -119,9 +145,7 @@ export class MissionTracker {
       }
     }
 
-    if (triggered.length === 0) return undefined;
-
-    return this.buildTriggerPrompt(player, game, triggered);
+    return triggered;
   }
 
   public getCompletableQuickMissions(
@@ -132,6 +156,7 @@ export class MissionTracker {
     const completable: ICompletableMission[] = [];
 
     for (const mission of missions) {
+      if (!this.isMissionActiveOnBoard(player, mission.def.cardId)) continue;
       if (mission.def.type !== EMissionType.QUICK) continue;
 
       for (let i = 0; i < mission.def.branches.length; i++) {
@@ -154,6 +179,18 @@ export class MissionTracker {
 
   public hasCompletableQuickMissions(player: IPlayer, game: IGame): boolean {
     return this.getCompletableQuickMissions(player, game).length > 0;
+  }
+
+  public checkAndPromptQuickMissions(
+    player: IPlayer,
+    game: IGame,
+  ): IPlayerInput | undefined {
+    const completable = this.getCompletableQuickMissions(player, game);
+    if (completable.length === 0) {
+      return undefined;
+    }
+
+    return this.buildTriggerPrompt(player, game, completable);
   }
 
   public completeMissionBranch(
@@ -229,6 +266,7 @@ export class MissionTracker {
     player: IPlayer,
     game: IGame,
     triggered: ICompletableMission[],
+    onDone?: () => IPlayerInput | undefined,
   ): IPlayerInput {
     const rewardDesc = (t: ICompletableMission) =>
       t.rewards
@@ -240,28 +278,21 @@ export class MissionTracker {
         .filter(Boolean)
         .join(', ');
 
+    const advance = onDone ?? (() => undefined);
+
     const options = [
       ...triggered.map((t) => ({
         id: `complete-${t.cardId}-${t.branchIndex}`,
         label: `${t.cardName}: ${rewardDesc(t)}`,
         onSelect: (): IPlayerInput | undefined => {
           this.completeMissionBranch(player, game, t.cardId, t.branchIndex);
-          const remaining = triggered.filter(
-            (other) =>
-              !(
-                other.cardId === t.cardId && other.branchIndex === t.branchIndex
-              ),
-          );
-          if (remaining.length > 0) {
-            return this.buildTriggerPrompt(player, game, remaining);
-          }
-          return undefined;
+          return advance();
         },
       })),
       {
         id: 'skip-missions',
         label: 'Skip',
-        onSelect: (): IPlayerInput | undefined => undefined,
+        onSelect: (): IPlayerInput | undefined => advance(),
       },
     ];
 
@@ -273,10 +304,9 @@ export class MissionTracker {
   }
 
   private markMissionFullyComplete(player: IPlayer, cardId: string): void {
-    const missionIndex = player.playedMissions.findIndex((m) => {
-      if (typeof m === 'string') return m === cardId;
-      return (m as { id?: string })?.id === cardId;
-    });
+    const missionIndex = player.playedMissions.findIndex(
+      (m) => MissionTracker.resolveCardId(m) === cardId,
+    );
 
     if (missionIndex >= 0) {
       const [removed] = player.playedMissions.splice(missionIndex, 1);
@@ -288,5 +318,16 @@ export class MissionTracker {
     if (trackerIndex >= 0) {
       missions.splice(trackerIndex, 1);
     }
+  }
+
+  private isMissionActiveOnBoard(player: IPlayer, cardId: string): boolean {
+    return player.playedMissions.some(
+      (m) => MissionTracker.resolveCardId(m) === cardId,
+    );
+  }
+
+  private static resolveCardId(item: TCardItem): string | undefined {
+    if (typeof item === 'string') return item;
+    return (item as { id?: string })?.id;
   }
 }

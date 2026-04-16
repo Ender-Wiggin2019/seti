@@ -27,6 +27,7 @@ export function SelectEndOfRoundCardInput({
             key={card.id}
             type='button'
             variant='ghost'
+            data-testid={`input-eor-card-${card.id}`}
             className='h-auto flex-col items-start border border-surface-700/60 bg-surface-800/60 px-2 py-1.5 text-left hover:bg-surface-700/70'
             onClick={() =>
               onSubmit({

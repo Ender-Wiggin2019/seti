@@ -1,5 +1,6 @@
 import { EMainAction, EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
+import { OrbitAction } from '@/engine/actions/Orbit.js';
 import { Game } from '@/engine/Game.js';
 
 const TEST_PLAYERS = [
@@ -24,6 +25,31 @@ function placeProbeOnPlanet(
 }
 
 describe('Orbit action', () => {
+  it('does not allow orbiting while the only probe is still on Earth', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'orbit-earth-boundary',
+    );
+    const player = game.players[0];
+
+    game.processMainAction(player.id, { type: EMainAction.LAUNCH_PROBE });
+    game.setActivePlayer(player.id);
+
+    expect(OrbitAction.canExecute(player, game, EPlanet.EARTH)).toBe(false);
+    expect(OrbitAction.canExecute(player, game, EPlanet.MARS)).toBe(false);
+    expect(() =>
+      game.processMainAction(player.id, {
+        type: EMainAction.ORBIT,
+        payload: { planet: EPlanet.EARTH },
+      }),
+    ).toThrowError(
+      expect.objectContaining({
+        code: EErrorCode.INVALID_ACTION,
+      }),
+    );
+  });
+
   it('spends resources, moves probe from space, and grants first orbit bonus', () => {
     const game = Game.create(
       TEST_PLAYERS,
@@ -95,5 +121,46 @@ describe('Orbit action', () => {
         code: EErrorCode.INVALID_ACTION,
       }),
     );
+  });
+
+  it('rejects orbit attempts from a non-active player even with a valid probe', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'orbit-not-your-turn',
+    );
+    const player = game.players[1];
+    placeProbeOnPlanet(game, player.id, EPlanet.MARS, 1);
+    player.probesInSpace = 1;
+
+    expect(OrbitAction.canExecute(player, game, EPlanet.MARS)).toBe(true);
+    expect(() =>
+      game.processMainAction(player.id, {
+        type: EMainAction.ORBIT,
+        payload: { planet: EPlanet.MARS },
+      }),
+    ).toThrowError(
+      expect.objectContaining({
+        code: EErrorCode.NOT_YOUR_TURN,
+      }),
+    );
+  });
+
+  it('returns false when credits or energy are insufficient even with a valid planet probe', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'orbit-insufficient-resources',
+    );
+    const player = game.players[0];
+    placeProbeOnPlanet(game, player.id, EPlanet.MARS, 1);
+    player.probesInSpace = 1;
+
+    player.resources.spend({ credits: 4 });
+    expect(OrbitAction.canExecute(player, game, EPlanet.MARS)).toBe(false);
+
+    player.resources.gain({ credits: 1 });
+    player.resources.spend({ energy: 3 });
+    expect(OrbitAction.canExecute(player, game, EPlanet.MARS)).toBe(false);
   });
 });

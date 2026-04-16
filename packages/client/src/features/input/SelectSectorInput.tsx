@@ -21,6 +21,7 @@ export function SelectSectorInput({
           key={sector}
           type='button'
           variant='ghost'
+          data-testid={`input-sector-${sector}`}
           className='justify-start border border-surface-700/60 bg-surface-800/60 text-text-100 hover:bg-surface-700/70'
           onClick={() =>
             onSubmit({

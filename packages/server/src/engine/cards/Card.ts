@@ -2,7 +2,7 @@ import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EEffectType } from '@seti/common/types/effect';
 import { EResource } from '@seti/common/types/element';
 import type { IPlayerInput } from '../input/PlayerInput.js';
-import type { IMissionDef } from '../missions/IMission.js';
+import { EMissionType, type IMissionDef } from '../missions/IMission.js';
 import { behaviorFromEffects, type IBehavior } from './Behavior.js';
 import { getBehaviorExecutor } from './BehaviorExecutor.js';
 import {
@@ -150,6 +150,18 @@ export abstract class Card implements ICard {
       this,
     );
     return this.bespokePlay(context);
+  }
+
+  public getMissionType(): EMissionType | undefined {
+    const missionEffect = this.effects.find(
+      (eff) =>
+        eff.effectType === EEffectType.MISSION_FULL ||
+        eff.effectType === EEffectType.MISSION_QUICK,
+    );
+    if (!missionEffect) return undefined;
+    return missionEffect.effectType === EEffectType.MISSION_FULL
+      ? EMissionType.FULL
+      : EMissionType.QUICK;
   }
 
   protected bespokeCanPlay(_context: ICardRuntimeContext): boolean {

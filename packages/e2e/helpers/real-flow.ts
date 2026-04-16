@@ -187,6 +187,36 @@ export async function waitForActionOwner(
   return { actor: secondPage, other: firstPage };
 }
 
+export async function waitForActionHandoff(
+  previousActor: Page,
+  nextActor: Page,
+  actionType: string,
+  timeout = 15_000,
+): Promise<void> {
+  const previousAction = previousActor.locator(sel.actionMenu(actionType));
+  const nextAction = nextActor.locator(sel.actionMenu(actionType));
+
+  await expect
+    .poll(
+      async () => {
+        const [previousVisible, nextVisible] = await Promise.all([
+          previousAction.isVisible().catch(() => false),
+          nextAction.isVisible().catch(() => false),
+        ]);
+
+        if (!previousVisible && nextVisible) return 'handoff';
+        if (previousVisible && !nextVisible) return 'stale-previous';
+        if (!previousVisible && !nextVisible) return 'neither';
+        return 'both';
+      },
+      {
+        timeout,
+        message: `Timed out waiting for action-menu-${actionType} to hand off to the other player`,
+      },
+    )
+    .toBe('handoff');
+}
+
 export async function clickPassAndWaitForLogSync(
   actorPage: Page,
   otherPage: Page,
@@ -207,4 +237,147 @@ export async function clickPassAndWaitForLogSync(
   await expect
     .poll(async () => otherLog.count(), { timeout: 10_000 })
     .toBeGreaterThan(otherBefore);
+}
+
+/**
+ * Click a main action button and wait for the game state to update
+ * (either a new input prompt appears or the action menu re-renders).
+ */
+export async function clickMainAction(
+  page: Page,
+  actionType: string,
+): Promise<void> {
+  const actionBtn = page.locator(sel.actionMenu(actionType));
+  await expect(actionBtn).toBeVisible({ timeout: 10_000 });
+  await expect(actionBtn).toBeEnabled({ timeout: 5_000 });
+  await actionBtn.click();
+}
+
+/**
+ * Wait for any input prompt to become visible in the bottom-actions panel.
+ * Returns true if an input prompt appeared.
+ */
+export async function waitForInputPrompt(
+  page: Page,
+  timeout = 10_000,
+): Promise<boolean> {
+  try {
+    await page
+      .locator('[data-testid="bottom-actions"] [data-testid^="input-"]')
+      .first()
+      .waitFor({ state: 'visible', timeout });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Click the first visible input option button (for SelectOptionInput prompts).
+ * Optionally filter by a partial optionId match.
+ */
+export async function clickFirstInputOption(
+  page: Page,
+  partialId?: string,
+): Promise<void> {
+  const selector = partialId
+    ? `[data-testid*="input-option-"][data-testid*="${partialId}"]`
+    : '[data-testid^="input-option-"]';
+  const option = page.locator(selector).first();
+  await expect(option).toBeVisible({ timeout: 10_000 });
+  await option.click();
+}
+
+/**
+ * Click a specific input option by its exact ID.
+ */
+export async function clickInputOptionById(
+  page: Page,
+  optionId: string,
+): Promise<void> {
+  const option = page.locator(sel.inputOption(optionId));
+  await expect(option).toBeVisible({ timeout: 10_000 });
+  await option.click();
+}
+
+/**
+ * Click a card in a card-selection prompt (data-testid="select-card-{cardId}").
+ */
+export async function clickFirstSelectCard(page: Page): Promise<void> {
+  const card = page.locator('[data-testid^="select-card-"]').first();
+  await expect(card).toBeVisible({ timeout: 10_000 });
+  await card.click();
+}
+
+/**
+ * Wait for any interactive prompt (input options, card selection, sector selection)
+ * to become visible in the bottom-actions panel.
+ */
+async function waitForAnyPrompt(page: Page, timeout = 5_000): Promise<boolean> {
+  try {
+    await page
+      .locator(
+        '[data-testid="bottom-actions"] [data-testid^="input-"],' +
+          '[data-testid="bottom-actions"] [data-testid^="select-card-"]',
+      )
+      .first()
+      .waitFor({ state: 'visible', timeout });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Resolve all scan sub-action prompts by executing real sub-actions first,
+ * then clicking Done when only Done remains.
+ *
+ * Priority per step:
+ *  1. Click a real sub-action option (mark-earth, mark-card-row, …) — skip "done"
+ *  2. If a card-selection prompt appears, pick the first card and confirm
+ *  3. If only "done" is left, click it to finish the scan
+ */
+export async function resolveScanSubActions(
+  page: Page,
+  maxSteps = 10,
+): Promise<void> {
+  for (let step = 0; step < maxSteps; step++) {
+    const hasPrompt = await waitForAnyPrompt(page, 5_000);
+    if (!hasPrompt) return;
+
+    const realOption = page
+      .locator(
+        '[data-testid^="input-option-"]:not([data-testid="input-option-done"])',
+      )
+      .first();
+    const hasRealOption = await realOption.isVisible().catch(() => false);
+    if (hasRealOption) {
+      await realOption.click();
+      await page.waitForTimeout(500);
+      continue;
+    }
+
+    const anyCard = page.locator('[data-testid^="select-card-"]').first();
+    const isCardVisible = await anyCard.isVisible().catch(() => false);
+    if (isCardVisible) {
+      await anyCard.click();
+      await page.waitForTimeout(300);
+      const confirmBtn = page.getByRole('button', { name: /confirm/i });
+      const confirmVisible = await confirmBtn.isVisible().catch(() => false);
+      if (confirmVisible) {
+        await confirmBtn.click();
+      }
+      await page.waitForTimeout(500);
+      continue;
+    }
+
+    const doneBtn = page.locator('[data-testid="input-option-done"]');
+    const isDoneVisible = await doneBtn.isVisible().catch(() => false);
+    if (isDoneVisible) {
+      await doneBtn.click();
+      return;
+    }
+
+    return;
+  }
 }

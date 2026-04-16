@@ -44,4 +44,8 @@ export class DeferredActionsQueue {
   public peek(): DeferredAction | undefined {
     return this.actions[0];
   }
+
+  public clear(): void {
+    this.actions.length = 0;
+  }
 }

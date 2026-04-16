@@ -239,7 +239,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private getPlayerSockets(gameId: string, playerId: string): Socket[] {
     const roomKey = this.roomKey(gameId);
-    const adapterRooms = this.server?.sockets?.adapter?.rooms;
+    const nsp = this.server as unknown as import('socket.io').Namespace;
+    const adapterRooms = nsp.adapter?.rooms;
     if (!adapterRooms) {
       return [];
     }
@@ -250,7 +251,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const sockets: Socket[] = [];
     for (const socketId of room) {
-      const socket = this.server.sockets.sockets.get(socketId);
+      const socket = nsp.sockets.get(socketId);
       if (socket && getUserId(socket) === playerId) {
         sockets.push(socket);
       }
