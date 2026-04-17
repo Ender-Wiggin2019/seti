@@ -250,6 +250,19 @@ RED tests (错误路径 / 非法操作):
 └── 2.4E.2 [错误] 展示区为空时仍可执行（仅标地球扇区信号）
 ```
 
+**回归覆盖（截至 2026-04-17）**
+
+- 已覆盖：`2.4.1`/`2.4.2` 已由 `integration: mark-earth uses the real solar-system sector and grants +1 data` 覆盖，锁定真实太阳系扇区映射、资源扣费、data token 消耗、玩家信号落点与数据入账。
+- 已覆盖：`2.4.3`/`2.4.7` 已由 `integration: refills the card row only after the scan is fully resolved` 覆盖，锁定“先弃展示区牌并保留 2 张，再在 `done` 后补回 3 张”的时序。
+- 已覆盖：`2.4.4` 已由 `integration: the second earth-sector data slot awards +2 VP in the same scan when both marks target it` 覆盖；`integration: projected state dataPoolCount increases after mark-earth` 额外锁定了投影视图中的 `dataPoolCount` 更新。
+- 已覆盖：`2.4.10` 已由 `MarkSectorSignalEffect.test.ts` 中的 `marks sector, emits mission event, and applies data reward` 锁定 `SIGNAL_PLACED` 事件；`GameIntegration.test.ts` 中的 `emits SCAN_PERFORMED mission event` 锁定主行动级 mission 事件。
+- 已覆盖：`2.4E.1` 已由 `ScanAction.canExecute` 边界组 + `GameIntegration.test.ts` 中的 `rejects when credits are zero` / `rejects when energy is insufficient` 覆盖。
+- 已部分覆盖：`2.4.9` 已由 `integration: when the data pool is already full, scan data gains overflow into stash` 锁定当前实现语义为“overflow 进入 stash”；如果规则最终要求“直接弃掉”，这里需要后续规则决策，不宜再按旧文案继续扩测。
+- 待补：`2.4.5` 额外 signal 落位但不再给 data 的容量边界仍缺直接回归。
+- 待补：`2.4.6` sector completion 的 deferred 结算尚未在 `Scan.test.ts` 用真实完成链路锁定。
+- 待补：`2.4.8` “标记信号是强制的”目前缺显式输入流断言。
+- 待补：`2.4E.2` 展示区为空但仍可执行的真实流程尚未补成集成用例。
+
 ### 2.5 Analyze Data — **从 MOCK-HEAVY 升级为 INTEGRATION**
 
 **文件:** `__tests__/engine/actions/AnalyzeData.test.ts` (重大扩展)
@@ -277,6 +290,20 @@ RED tests (错误路径 / 非法操作):
 ├── 2.5E.2 [错误] top row 未满时 canExecute = false
 └── 2.5E.3 [错误] 电脑完全为空（无 data）时 canExecute = false
 ```
+
+**回归覆盖（截至 2026-04-17）**
+
+- 已覆盖：`2.5.1` 已由 `returns true when computer is full and energy >= 1`、`returns false when there is no energy` 与 `integration: analyze data clears the connected computer and prompts for a blue trace placement` 组合锁定，覆盖 top row 满格 + 1 能量门槛。
+- 已覆盖：`2.5.2` 已由 `clears computer data` 与上述 integration 用例覆盖，确认执行后电脑数据清空。
+- 已部分覆盖：`2.5.4` 已由 `integration: analyze data clears the connected computer and prompts for a blue trace placement` 锁定“分析后进入蓝色 trace 选择输入”；`integration: completing Anomalies discovery via analyze data applies the discovery plugin effect` 进一步锁定“选择 discovery slot 后可触发真实外星发现链路”。
+- 已覆盖：`2.5.6` 已由 `integration: completing Anomalies discovery via analyze data applies the discovery plugin effect` 覆盖，确认通过 Analyze Data 走到 discovery deferred/plugin 效果。
+- 已覆盖：`2.5E.1`/`2.5E.2` 已由 `AnalyzeDataAction.canExecute` 边界组与 `GameIntegration.test.ts` 中的非法路径覆盖。
+- 待补：`2.5.3` 仍缺 data pool 完全不受影响的显式断言。
+- 待补：`2.5.4` 仍缺“放到发现位 vs overflow”的分支对照测试。
+- 待补：`2.5.5` 发现位 `+1 声望 + 5 VP` 奖励还没有被断言。
+- 待补：`2.5.7` FAQ“下排可空”缺真实布局样例。
+- 待补：`2.5.8` 分析后立刻重新放 data 的回归尚未补齐。
+- 待补：`2.5E.3` 目前只有“not full”泛化边界，仍缺“电脑完全为空”的单独行为锁定。
 
 ### 2.6 Play Card — **从 MOCK-HEAVY 升级为 INTEGRATION**
 
