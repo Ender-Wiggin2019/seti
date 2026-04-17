@@ -255,13 +255,13 @@ RED tests (错误路径 / 非法操作):
 - 已覆盖：`2.4.1`/`2.4.2` 已由 `integration: mark-earth uses the real solar-system sector and grants +1 data` 覆盖，锁定真实太阳系扇区映射、资源扣费、data token 消耗、玩家信号落点与数据入账。
 - 已覆盖：`2.4.3`/`2.4.7` 已由 `integration: refills the card row only after the scan is fully resolved` 覆盖，锁定“先弃展示区牌并保留 2 张，再在 `done` 后补回 3 张”的时序。
 - 已覆盖：`2.4.4` 已由 `integration: the second earth-sector data slot awards +2 VP in the same scan when both marks target it` 覆盖；`integration: projected state dataPoolCount increases after mark-earth` 额外锁定了投影视图中的 `dataPoolCount` 更新。
+- 已覆盖：`2.4.5` 已由 `appends a player marker without data/VP gain when the sector has no data tokens left` 覆盖，锁定“无 data 但仍可落额外信号”的容量边界。
+- 已覆盖：`2.4.6` 已由 `resolves the sector (winner recorded, reset) after the scan finishes` 覆盖，锁定 scan 结束后触发真实 `SectorFulfillmentEffect` deferred 结算。
+- 已覆盖：`2.4.8` 已由 `does not offer DONE until MARK_EARTH has been executed` + `offers DONE after MARK_EARTH is executed` 覆盖，锁定 Earth 标记的强制性。
 - 已覆盖：`2.4.10` 已由 `MarkSectorSignalEffect.test.ts` 中的 `marks sector, emits mission event, and applies data reward` 锁定 `SIGNAL_PLACED` 事件；`GameIntegration.test.ts` 中的 `emits SCAN_PERFORMED mission event` 锁定主行动级 mission 事件。
 - 已覆盖：`2.4E.1` 已由 `ScanAction.canExecute` 边界组 + `GameIntegration.test.ts` 中的 `rejects when credits are zero` / `rejects when energy is insufficient` 覆盖。
+- 已覆盖：`2.4E.2` 已由 `offers only MARK_EARTH when card row is empty, and scan completes after it` 覆盖。
 - 已部分覆盖：`2.4.9` 已由 `integration: when the data pool is already full, scan data gains overflow into stash` 锁定当前实现语义为“overflow 进入 stash”；如果规则最终要求“直接弃掉”，这里需要后续规则决策，不宜再按旧文案继续扩测。
-- 待补：`2.4.5` 额外 signal 落位但不再给 data 的容量边界仍缺直接回归。
-- 待补：`2.4.6` sector completion 的 deferred 结算尚未在 `Scan.test.ts` 用真实完成链路锁定。
-- 待补：`2.4.8` “标记信号是强制的”目前缺显式输入流断言。
-- 待补：`2.4E.2` 展示区为空但仍可执行的真实流程尚未补成集成用例。
 
 ### 2.5 Analyze Data — **从 MOCK-HEAVY 升级为 INTEGRATION**
 
@@ -295,15 +295,13 @@ RED tests (错误路径 / 非法操作):
 
 - 已覆盖：`2.5.1` 已由 `returns true when computer is full and energy >= 1`、`returns false when there is no energy` 与 `integration: analyze data clears the connected computer and prompts for a blue trace placement` 组合锁定，覆盖 top row 满格 + 1 能量门槛。
 - 已覆盖：`2.5.2` 已由 `clears computer data` 与上述 integration 用例覆盖，确认执行后电脑数据清空。
-- 已部分覆盖：`2.5.4` 已由 `integration: analyze data clears the connected computer and prompts for a blue trace placement` 锁定“分析后进入蓝色 trace 选择输入”；`integration: completing Anomalies discovery via analyze data applies the discovery plugin effect` 进一步锁定“选择 discovery slot 后可触发真实外星发现链路”。
+- 已覆盖：`2.5.3` 已由 `integration: analyze data leaves the data pool and stash untouched while clearing computer data` 覆盖。
+- 已覆盖：`2.5.4` 已由 `integration: analyze data clears the connected computer and prompts for a blue trace placement`、`integration: when blue discovery slots are occupied, analyze data falls back to overflow placement` 覆盖，锁定 discovery/overflow 两条选位路径。
+- 已覆盖：`2.5.5` 已由 `integration: choosing a blue discovery slot grants +5 VP and +1 publicity on the left alien board` 覆盖。
 - 已覆盖：`2.5.6` 已由 `integration: completing Anomalies discovery via analyze data applies the discovery plugin effect` 覆盖，确认通过 Analyze Data 走到 discovery deferred/plugin 效果。
-- 已覆盖：`2.5E.1`/`2.5E.2` 已由 `AnalyzeDataAction.canExecute` 边界组与 `GameIntegration.test.ts` 中的非法路径覆盖。
-- 待补：`2.5.3` 仍缺 data pool 完全不受影响的显式断言。
-- 待补：`2.5.4` 仍缺“放到发现位 vs overflow”的分支对照测试。
-- 待补：`2.5.5` 发现位 `+1 声望 + 5 VP` 奖励还没有被断言。
-- 待补：`2.5.7` FAQ“下排可空”缺真实布局样例。
-- 待补：`2.5.8` 分析后立刻重新放 data 的回归尚未补齐。
-- 待补：`2.5E.3` 目前只有“not full”泛化边界，仍缺“电脑完全为空”的单独行为锁定。
+- 已覆盖：`2.5.7` 已由 `integration: top row can be full while bottom slots stay empty and the action remains legal` 覆盖。
+- 已覆盖：`2.5.8` 已由 `integration: after analyze data clears the computer, the player can immediately place new data` 覆盖。
+- 已覆盖：`2.5E.1`/`2.5E.2`/`2.5E.3` 已由 `AnalyzeDataAction.canExecute` 边界组、`GameIntegration.test.ts` 中的非法路径，以及 `returns false when the computer is completely empty` 覆盖。
 
 ### 2.6 Play Card — **从 MOCK-HEAVY 升级为 INTEGRATION**
 
@@ -1081,8 +1079,8 @@ Phase 1 (Setup)
 | 2.1 | LaunchProbe.test.ts | 🟡 | 已锁 `2.1.1/2.1.3/2.1.4/2.1.5/2.1E.*`；待补 `2.1.2` |
 | 2.2 | Orbit.test.ts | 🟢 | 已锁 `2.2.1/2.2.2/2.2.5/2.2E.*`；待补 `2.2.3` 全行星矩阵与 `2.2.4` |
 | 2.3 | Land.test.ts | 🟢 | `2.3.1-2.3.6` 与 `2.3E.1-2.3E.4` 基本已锁 |
-| 2.4 | Scan.test.ts | 🔴 | 已锁 `2.4.1/2.4.2/2.4.3/2.4.4/2.4.7/2.4.9/2.4.10 + 2.4E.1`；待补 `2.4.5/2.4.6/2.4.8/2.4E.2` |
-| 2.5 | AnalyzeData.test.ts | 🔴 | 已锁 `2.5.1/2.5.2/2.5.6 + 2.5E.1/2.5E.2`；待补 `2.5.3/2.5.4/2.5.5/2.5.7/2.5.8/2.5E.3` |
+| 2.4 | Scan.test.ts | 🔴 | 已锁 `2.4.1-2.4.8/2.4.10 + 2.4E.1/2.4E.2`；`2.4.9` 当前实现语义为 overflow into stash，待规则最终拍板 |
+| 2.5 | AnalyzeData.test.ts | 🔴 | `2.5.1-2.5.8` 与 `2.5E.1-2.5E.3` 已补齐回归覆盖 |
 | 2.6 | PlayCard.test.ts | 🔴 | 已锁 `2.6.1/2.6.2/2.6E.2`，并部分锁定任务提示时序；待补 mission 留场/分支闭环/`2.6E.3` |
 | 2.7 | ResearchTech.test.ts | 🟡 | 已锁付费+旋转+输入入口与 `2.7E.1`；待补 acquire 闭环、奖励、去重与卡牌授予科技路径 |
 | 2.8 | Pass.test.ts | 🟡 | 已锁 `2.8.2/2.8.3/2.8.6/2.8.7`，并部分锁定 `2.8.5`；待补 `2.8.1/2.8.4/2.8.5` 尾部语义 |

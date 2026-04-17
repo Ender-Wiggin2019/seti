@@ -6,6 +6,7 @@ import {
 } from '@seti/common/types/protocol/enums';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { AnalyzeDataAction } from '@/engine/actions/AnalyzeData.js';
+import { PlaceDataFreeAction } from '@/engine/freeActions/PlaceData.js';
 import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
 import { EComputerRow } from '@/engine/player/Computer.js';
@@ -155,6 +156,121 @@ describe('AnalyzeDataAction', () => {
       expect(player.waitingFor?.toModel().type).toBe(EPlayerInputType.OPTION);
     });
 
+    it('integration: analyze data leaves the data pool and stash untouched while clearing computer data', () => {
+      const { game, player } = createIntegrationGame(
+        'analyze-data-pool-unchanged',
+      );
+      player.resources.gain({ data: 2 });
+      fillTopComputer(player);
+      const dataStateBefore = player.data.getState();
+
+      game.processMainAction(player.id, { type: EMainAction.ANALYZE_DATA });
+
+      expect(player.dataPool.count).toBe(dataStateBefore.pool);
+      expect(player.data.getState().stash).toBe(dataStateBefore.stash);
+      expect(player.computer.getPlacedCount()).toBe(0);
+      expect(player.data.getState().computer).toBe(0);
+    });
+
+    it('integration: choosing a blue discovery slot grants +5 VP and +1 publicity on the left alien board', () => {
+      const { game, player } = createIntegrationGame(
+        'analyze-data-discovery-reward',
+      );
+      fillTopComputer(player);
+      const scoreBefore = player.score;
+      const publicityBefore = player.resources.publicity;
+
+      game.processMainAction(player.id, { type: EMainAction.ANALYZE_DATA });
+
+      const optionModel = player.waitingFor?.toModel() as {
+        type: EPlayerInputType;
+        options: Array<{ id: string }>;
+      };
+      const discoverySlotId = `alien-0-discovery-${ETrace.BLUE}`;
+      expect(
+        optionModel.options.some((option) => option.id === discoverySlotId),
+      ).toBe(true);
+
+      game.processInput(player.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: discoverySlotId,
+      });
+
+      expect(player.score).toBe(scoreBefore + 5);
+      expect(player.resources.publicity).toBe(publicityBefore + 1);
+    });
+
+    it('integration: when blue discovery slots are occupied, analyze data falls back to overflow placement', () => {
+      const { game, player } = createIntegrationGame(
+        'analyze-data-overflow-choice',
+      );
+      const otherPlayer = game.players[1] as Player;
+
+      game.alienState.applyTrace(otherPlayer, game, ETrace.BLUE, 0, false);
+      game.alienState.applyTrace(otherPlayer, game, ETrace.BLUE, 1, false);
+      fillTopComputer(player);
+      const scoreBefore = player.score;
+      const publicityBefore = player.resources.publicity;
+
+      game.processMainAction(player.id, { type: EMainAction.ANALYZE_DATA });
+
+      const optionModel = player.waitingFor?.toModel() as {
+        type: EPlayerInputType;
+        options: Array<{ id: string }>;
+      };
+      expect(
+        optionModel.options.some((option) =>
+          option.id.endsWith(`discovery-${ETrace.BLUE}`),
+        ),
+      ).toBe(false);
+      expect(
+        optionModel.options.some((option) => option.id === 'alien-0-overflow'),
+      ).toBe(true);
+      expect(
+        optionModel.options.some((option) => option.id === 'alien-1-overflow'),
+      ).toBe(true);
+
+      game.processInput(player.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: 'alien-0-overflow',
+      });
+
+      expect(player.score).toBe(scoreBefore + 3);
+      expect(player.resources.publicity).toBe(publicityBefore);
+    });
+
+    it('integration: top row can be full while bottom slots stay empty and the action remains legal', () => {
+      const { game, player } = createIntegrationGame(
+        'analyze-data-bottom-empty',
+      );
+      player.computer.placeTech(0, {
+        techId: 'comp-0' as never,
+        bottomReward: { credits: 1 },
+      });
+      fillTopComputer(player);
+
+      expect(player.computer.getBottomSlotStates()[0]).toBe(false);
+      expect(AnalyzeDataAction.canExecute(player, game)).toBe(true);
+    });
+
+    it('integration: after analyze data clears the computer, the player can immediately place new data', () => {
+      const { game, player } = createIntegrationGame('analyze-data-place-next');
+      player.resources.gain({ data: 1 });
+      fillTopComputer(player);
+
+      game.processMainAction(player.id, { type: EMainAction.ANALYZE_DATA });
+      game.processInput(player.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: `alien-0-discovery-${ETrace.BLUE}`,
+      });
+
+      expect(PlaceDataFreeAction.canExecute(player, game)).toBe(true);
+      const placeResult = PlaceDataFreeAction.execute(player, game);
+      expect(placeResult.row).toBe('top');
+      expect(placeResult.index).toBe(0);
+      expect(player.computer.getPlacedCount()).toBe(1);
+    });
+
     it('integration: completing Anomalies discovery via analyze data applies the discovery plugin effect', () => {
       const { game, player } = createIntegrationGame('seed-16');
       expect(game.hiddenAliens[0]).toBe(EAlienType.ANOMALIES);
@@ -193,6 +309,14 @@ describe('AnalyzeDataAction', () => {
           slot.slotId.includes('anomaly-token'),
         ),
       ).toBe(true);
+    });
+
+    it('returns false when the computer is completely empty', () => {
+      const game = createMockGame();
+      const player = createPlayer();
+
+      expect(player.computer.getPlacedCount()).toBe(0);
+      expect(AnalyzeDataAction.canExecute(player, game)).toBe(false);
     });
   });
 });
