@@ -171,7 +171,7 @@ export class ResearchTechEffect {
     }
 
     const takeResult = techBoard.take(player.id, techId);
-    player.techs.push(techId);
+    player.gainTech(techId);
     player.score += takeResult.vpBonus;
 
     if (takeResult.tile.tech.onAcquire) {

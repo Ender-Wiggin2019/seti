@@ -241,6 +241,7 @@ function BoardTabs({
               players={gameState.players}
               pendingInput={pendingInput}
               playerColors={playerColors}
+              myPlayerId={myPlayerId}
             />
           )}
         </TabsContent>
@@ -533,6 +534,7 @@ function BottomBar({
     pendingInput,
     sendAction,
     sendFreeAction,
+    sendEndTurn,
     sendInput,
     requestUndo,
   } = useGameContext();
@@ -731,6 +733,7 @@ function BottomBar({
               pendingInput={pendingInput}
               canUndo={canUndo}
               onSendAction={sendAction}
+              onSendEndTurn={sendEndTurn}
               onRequestUndo={requestUndo}
             />
           )}

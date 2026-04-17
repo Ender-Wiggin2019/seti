@@ -7,6 +7,7 @@ import type { ESector } from '@seti/common/types/element';
 import type { EPlanet } from '@seti/common/types/protocol/enums';
 import type { Sector } from '../../board/Sector.js';
 import type { SolarSystem } from '../../board/SolarSystem.js';
+import { hasCardData, loadCardData } from '../../cards/loadCardData.js';
 import type { IGame } from '../../IGame.js';
 
 export function getSectorAt(game: IGame, index: number): Sector | null {
@@ -108,6 +109,13 @@ export function getAllSectors(game: IGame): Sector[] {
 export function extractSectorColorFromCardItem(
   cardItem: unknown,
 ): ESector | null {
+  if (typeof cardItem === 'string') {
+    if (hasCardData(cardItem)) {
+      return loadCardData(cardItem).sector ?? null;
+    }
+    return null;
+  }
+
   if (
     cardItem !== null &&
     typeof cardItem === 'object' &&

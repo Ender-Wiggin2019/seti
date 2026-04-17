@@ -85,7 +85,7 @@ test.describe('User Journey E2E (Real Flow Only)', () => {
         guest.page,
         'PASS',
       );
-      await expect(actor.locator(sel.actionMenu('PASS'))).toBeVisible({
+      await expect(actor.locator(sel.actionMenu('PASS'))).toBeEnabled({
         timeout: 10_000,
       });
       await clickPassAndWaitForLogSync(actor, other);

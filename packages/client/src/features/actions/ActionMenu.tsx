@@ -38,6 +38,7 @@ export interface IActionMenuProps {
   pendingInput: IPlayerInputModel | null;
   canUndo: boolean;
   onSendAction: (action: IMainActionRequest) => void;
+  onSendEndTurn: () => void;
   onRequestUndo: () => void;
 }
 
@@ -48,6 +49,7 @@ export function ActionMenu({
   pendingInput,
   canUndo,
   onSendAction,
+  onSendEndTurn,
   onRequestUndo,
 }: IActionMenuProps): React.JSX.Element {
   const { t } = useTranslation('common');
@@ -62,6 +64,28 @@ export function ActionMenu({
   const currentPlayer = gameState.players.find(
     (player) => player.playerId === gameState.currentPlayerId,
   );
+
+  if (isMyTurn && gameState.phase === EPhase.AWAIT_END_TURN) {
+    return (
+      <div className='space-y-2'>
+        <div className='flex items-center justify-between gap-2'>
+          <p className='font-mono text-xs uppercase tracking-wide text-text-400'>
+            {t('client.action_menu.title')}
+          </p>
+          <UndoButton disabled={!canUndo} onRequestUndo={onRequestUndo} />
+        </div>
+        <Button
+          type='button'
+          size='sm'
+          onClick={onSendEndTurn}
+          data-testid='action-menu-end-turn'
+          className='h-9 w-full'
+        >
+          {t('client.action_menu.end_turn', { defaultValue: 'End Turn' })}
+        </Button>
+      </div>
+    );
+  }
 
   if (!isMyTurn || gameState.phase !== EPhase.AWAIT_MAIN_ACTION) {
     return (

@@ -69,7 +69,7 @@ test('behavior flow e2e: no debug API, no injected auth, no ws shortcuts', async
       guestPage,
       'PASS',
     );
-    await expect(actor.locator(sel.actionMenu('PASS'))).toBeVisible({
+    await expect(actor.locator(sel.actionMenu('PASS'))).toBeEnabled({
       timeout: 10_000,
     });
     await clickPassAndWaitForLogSync(actor, other);

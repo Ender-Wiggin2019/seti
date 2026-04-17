@@ -1,5 +1,6 @@
 import { expect, type Page, type TestInfo, test } from '@playwright/test';
 import {
+  clickEndTurn,
   clickMainAction,
   createRoomByUi,
   createUser,
@@ -83,6 +84,7 @@ test.describe('Smoke: Room → Launch Probe → Scan', () => {
 
       // ── Step 5: Launch Probe ─────────────────────────────────
       await clickMainAction(p1, 'LAUNCH_PROBE');
+      await clickEndTurn(p1);
 
       await waitForActionHandoff(p1, p2, 'SCAN', 20_000);
 
@@ -92,20 +94,16 @@ test.describe('Smoke: Room → Launch Probe → Scan', () => {
       // ── Step 6: After P1 used main action, turn goes to P2 ──
       const scanActor = p2;
       const scanOther = p1;
-      await expect(scanActor.locator(sel.actionMenu('SCAN'))).toBeVisible({
+      await expect(scanActor.locator(sel.actionMenu('SCAN'))).toBeEnabled({
         timeout: 20_000,
       });
       await attachScreenshot(scanActor, testInfo, '06-scan-actor-ready');
 
       // ── Step 7: Scan ─────────────────────────────────────────
-      // Read data pool before scan
-      const dataPoolBefore = await scanActor
-        .locator(sel.dataPoolView)
-        .textContent();
-      const dataCountBefore = parseInt(
-        dataPoolBefore?.match(/(\d+)\s*\/\s*\d+/)?.[1] ?? '0',
-        10,
-      );
+      const scanActorLog = scanActor.locator('[data-testid^="event-entry-"]');
+      const scanOtherLog = scanOther.locator('[data-testid^="event-entry-"]');
+      const scanActorLogBefore = await scanActorLog.count();
+      const scanOtherLogBefore = await scanOtherLog.count();
 
       await clickMainAction(scanActor, 'SCAN');
 
@@ -117,23 +115,24 @@ test.describe('Smoke: Room → Launch Probe → Scan', () => {
         await resolveScanSubActions(scanActor);
       }
 
-      // Wait for scan resolution to complete and turn to advance
-      await scanActor.waitForTimeout(2_000);
+      // Scan resolved → phase is AWAIT_END_TURN, explicit End Turn required.
+      await clickEndTurn(scanActor);
+
+      // Wait for scan resolution to complete, sync the event log, and hand turn back.
+      await expect
+        .poll(async () => scanActorLog.count(), { timeout: 10_000 })
+        .toBeGreaterThan(scanActorLogBefore);
+      await expect
+        .poll(async () => scanOtherLog.count(), { timeout: 10_000 })
+        .toBeGreaterThan(scanOtherLogBefore);
+      await waitForActionHandoff(scanActor, scanOther, 'PASS', 20_000);
       await attachScreenshot(scanActor, testInfo, '08-after-scan-actor');
       await attachScreenshot(scanOther, testInfo, '08-after-scan-other');
 
-      // ── Step 8: Verify data pool increased after scan mark ───
-      await expect
-        .poll(
-          async () => {
-            const text = await scanActor
-              .locator(sel.dataPoolView)
-              .textContent();
-            return parseInt(text?.match(/(\d+)\s*\/\s*\d+/)?.[1] ?? '0', 10);
-          },
-          { timeout: 10_000 },
-        )
-        .toBeGreaterThan(dataCountBefore);
+      // ── Step 8: Verify the next player received control after scan ─
+      await expect(scanOther.locator(sel.actionMenu('PASS'))).toBeEnabled({
+        timeout: 10_000,
+      });
 
       // ── Step 9: Verify game is still running ─────────────────
       await expect(scanActor.locator(sel.bottomDashboard)).toBeVisible({

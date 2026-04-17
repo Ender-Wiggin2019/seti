@@ -8,6 +8,7 @@ import type {
 interface IUseGameActionsReturn {
   sendAction: (gameId: string, action: IMainActionRequest) => void;
   sendFreeAction: (gameId: string, action: IFreeActionRequest) => void;
+  sendEndTurn: (gameId: string) => void;
   requestUndo: (gameId: string) => void;
 }
 
@@ -26,9 +27,13 @@ export function useGameActions(): IUseGameActionsReturn {
     [],
   );
 
+  const sendEndTurn = useCallback((gameId: string) => {
+    wsClient.sendEndTurn(gameId);
+  }, []);
+
   const requestUndo = useCallback((gameId: string) => {
     wsClient.instance?.emit('game:undo', { gameId });
   }, []);
 
-  return { sendAction, sendFreeAction, requestUndo };
+  return { sendAction, sendFreeAction, sendEndTurn, requestUndo };
 }

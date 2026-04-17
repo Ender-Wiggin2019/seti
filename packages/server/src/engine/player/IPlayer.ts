@@ -91,6 +91,7 @@ export interface IPlayer extends IPlayerIdentity {
 
   bindGame(game: IGame): void;
   applyRoundIncome(): TIncomeBundle;
+  gainTech(techId: ETechId): void;
   gainMove(amount: number): void;
   spendMove(amount: number): void;
   getMoveStash(): number;

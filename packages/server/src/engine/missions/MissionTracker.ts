@@ -30,7 +30,12 @@ import { applyMissionRewards } from './MissionReward.js';
  */
 export class MissionTracker {
   private readonly missionsByPlayer = new Map<string, IMissionRuntimeState[]>();
-  private readonly eventBuffer: IMissionEvent[] = [];
+  private readonly eventBuffer: Array<{
+    checkpointId: number;
+    event: IMissionEvent;
+  }> = [];
+  private nextCheckpointId = 1;
+  private activeCheckpointId?: number;
 
   public registerMission(missionDef: IMissionDef, playerId: string): void {
     const missions = this.getOrCreatePlayerMissions(playerId);
@@ -75,7 +80,42 @@ export class MissionTracker {
   }
 
   public recordEvent(event: IMissionEvent): void {
-    this.eventBuffer.push(event);
+    this.eventBuffer.push({
+      checkpointId: this.activeCheckpointId ?? this.nextCheckpointId++,
+      event,
+    });
+  }
+
+  public runInCheckpoint<T>(callback: () => T): T {
+    if (this.activeCheckpointId !== undefined) {
+      return callback();
+    }
+
+    this.beginCheckpoint();
+
+    try {
+      return callback();
+    } finally {
+      this.endCheckpoint();
+    }
+  }
+
+  public beginCheckpoint(): number {
+    if (this.activeCheckpointId !== undefined) {
+      return this.activeCheckpointId;
+    }
+
+    const checkpointId = this.nextCheckpointId++;
+    this.activeCheckpointId = checkpointId;
+    return checkpointId;
+  }
+
+  public endCheckpoint(): void {
+    this.activeCheckpointId = undefined;
+  }
+
+  public hasActiveCheckpoint(): boolean {
+    return this.activeCheckpointId !== undefined;
   }
 
   /**
@@ -88,39 +128,77 @@ export class MissionTracker {
     player: IPlayer,
     game: IGame,
   ): IPlayerInput | undefined {
-    const events = [...this.eventBuffer];
-    this.eventBuffer.length = 0;
-
-    if (events.length === 0) return undefined;
-
-    return this.processEventChain(player, game, events, 0);
+    return this.checkAndPromptTriggersForPlayers([player], game);
   }
 
-  private processEventChain(
-    player: IPlayer,
+  public checkAndPromptTriggersForPlayers(
+    players: ReadonlyArray<IPlayer>,
     game: IGame,
-    events: IMissionEvent[],
-    startIndex: number,
   ): IPlayerInput | undefined {
-    for (let eventIdx = startIndex; eventIdx < events.length; eventIdx++) {
-      const event = events[eventIdx];
-      const triggered = this.collectTriggeredBranches(player, event);
+    const checkpoints = this.drainCheckpoints();
+    if (checkpoints.length === 0) return undefined;
 
-      if (triggered.length > 0) {
-        return this.buildTriggerPrompt(player, game, triggered, () =>
-          this.processEventChain(player, game, events, eventIdx + 1),
-        );
-      }
+    return this.processCheckpointChain(players, game, checkpoints, 0, 0);
+  }
+
+  private processCheckpointChain(
+    players: ReadonlyArray<IPlayer>,
+    game: IGame,
+    checkpoints: ReadonlyArray<ReadonlyArray<IMissionEvent>>,
+    checkpointIndex: number,
+    playerIndex: number,
+  ): IPlayerInput | undefined {
+    const checkpoint = checkpoints[checkpointIndex];
+    if (!checkpoint) {
+      return undefined;
     }
-    return undefined;
+
+    for (let index = playerIndex; index < players.length; index++) {
+      const player = players[index];
+      const triggered = this.collectTriggeredBranches(player, checkpoint);
+
+      if (triggered.length === 0) {
+        continue;
+      }
+
+      return this.buildTriggerPrompt(player, game, triggered, () => {
+        const nextPlayerIndex = index + 1;
+        if (nextPlayerIndex < players.length) {
+          return this.processCheckpointChain(
+            players,
+            game,
+            checkpoints,
+            checkpointIndex,
+            nextPlayerIndex,
+          );
+        }
+
+        return this.processCheckpointChain(
+          players,
+          game,
+          checkpoints,
+          checkpointIndex + 1,
+          0,
+        );
+      });
+    }
+
+    return this.processCheckpointChain(
+      players,
+      game,
+      checkpoints,
+      checkpointIndex + 1,
+      0,
+    );
   }
 
   private collectTriggeredBranches(
     player: IPlayer,
-    event: IMissionEvent,
+    events: ReadonlyArray<IMissionEvent>,
   ): ICompletableMission[] {
     const missions = this.getOrCreatePlayerMissions(player.id);
     const triggered: ICompletableMission[] = [];
+    const seenBranches = new Set<string>();
 
     for (const mission of missions) {
       if (!this.isMissionActiveOnBoard(player, mission.def.cardId)) continue;
@@ -130,11 +208,18 @@ export class MissionTracker {
         if (mission.branchStates[i].completed) continue;
 
         const branch = mission.def.branches[i];
-        const isTriggered = branch.matchEvent
-          ? branch.matchEvent(event)
-          : matchesFullMissionTrigger(branch, event);
+        const isTriggered = events.some((event) =>
+          branch.matchEvent
+            ? branch.matchEvent(event)
+            : matchesFullMissionTrigger(branch, event),
+        );
 
         if (isTriggered) {
+          const branchKey = `${mission.def.cardId}:${i}`;
+          if (seenBranches.has(branchKey)) {
+            continue;
+          }
+          seenBranches.add(branchKey);
           triggered.push({
             cardId: mission.def.cardId,
             cardName: mission.def.cardName,
@@ -251,6 +336,37 @@ export class MissionTracker {
 
   public clearEventBuffer(): void {
     this.eventBuffer.length = 0;
+  }
+
+  private drainCheckpoints(): IMissionEvent[][] {
+    const buffered = [...this.eventBuffer];
+    this.eventBuffer.length = 0;
+
+    if (buffered.length === 0) {
+      return [];
+    }
+
+    const checkpoints: IMissionEvent[][] = [];
+    let currentCheckpointId: number | undefined;
+    let currentEvents: IMissionEvent[] = [];
+
+    for (const item of buffered) {
+      if (currentCheckpointId !== item.checkpointId) {
+        if (currentEvents.length > 0) {
+          checkpoints.push(currentEvents);
+        }
+        currentCheckpointId = item.checkpointId;
+        currentEvents = [];
+      }
+
+      currentEvents.push(item.event);
+    }
+
+    if (currentEvents.length > 0) {
+      checkpoints.push(currentEvents);
+    }
+
+    return checkpoints;
   }
 
   private getOrCreatePlayerMissions(playerId: string): IMissionRuntimeState[] {

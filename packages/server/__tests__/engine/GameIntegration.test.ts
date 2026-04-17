@@ -264,6 +264,7 @@ describe('Game Integration: Main Action Legality', () => {
 
       game.processMainAction('p1', { type: EMainAction.SCAN });
       resolveAllInputs(game, p1);
+      game.processEndTurn('p1');
 
       expect(game.activePlayer.id).toBe('p2');
     });
@@ -506,6 +507,7 @@ describe('Game Integration: Rotation', () => {
 
     game.processMainAction('p1', { type: EMainAction.RESEARCH_TECH });
     resolveAllInputs(game, p1);
+    game.processEndTurn('p1');
 
     const rotAfterResearch = game.solarSystem!.rotationCounter;
     expect(rotAfterResearch).toBe(rotBefore + 1);
@@ -529,6 +531,7 @@ describe('Game Integration: Milestone & Discovery Timing', () => {
 
     game.processMainAction('p1', { type: EMainAction.LAUNCH_PROBE });
     resolveAllInputs(game, p1);
+    game.processEndTurn('p1');
 
     const milestoneEvents = game.eventLog
       .recent(20)
@@ -735,6 +738,7 @@ describe('Game Integration: Turn Lifecycle', () => {
     const p1 = getPlayer(game, 'p1');
     game.processMainAction('p1', { type: EMainAction.LAUNCH_PROBE });
     resolveAllInputs(game, p1);
+    game.processEndTurn('p1');
 
     expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
     expect(game.activePlayer.id).toBe('p2');
@@ -751,6 +755,7 @@ describe('Game Integration: Turn Lifecycle', () => {
 
     game.processMainAction('p2', { type: EMainAction.LAUNCH_PROBE });
     resolveAllInputs(game, p2);
+    game.processEndTurn('p2');
 
     expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
     expect(game.activePlayer.id).toBe('p2');

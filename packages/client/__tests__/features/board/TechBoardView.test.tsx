@@ -27,6 +27,7 @@ describe('TechBoardView', () => {
         players={[]}
         pendingInput={null}
         playerColors={{}}
+        myPlayerId='player-1'
       />,
     );
 
@@ -40,11 +41,13 @@ describe('TechBoardView', () => {
         players={[]}
         pendingInput={null}
         playerColors={{}}
+        myPlayerId='player-1'
       />,
     );
 
-    expect(screen.getAllByText(/2VP taken/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/2VP available/).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText('client.tech_stack.first_take_bonus').length,
+    ).toBeGreaterThan(0);
   });
 
   it('renders taken markers from player tech list', () => {
@@ -61,6 +64,7 @@ describe('TechBoardView', () => {
         players={players}
         pendingInput={null}
         playerColors={{ 'player-1': 'red' }}
+        myPlayerId='player-1'
       />,
     );
 
@@ -78,10 +82,41 @@ describe('TechBoardView', () => {
           options: [ETech.PROBE],
         }}
         playerColors={{}}
+        myPlayerId='player-1'
       />,
     );
 
     expect(screen.getByTestId('tech-stack-probe-tech-0').className).toContain(
+      'ring-1',
+    );
+  });
+
+  it('does not highlight already-owned stacks as selectable', () => {
+    const players: IPublicPlayerState[] = [
+      createMockPlayerState({
+        playerId: 'player-1',
+        techs: [ETechId.PROBE_DOUBLE_PROBE],
+      }),
+    ];
+
+    render(
+      <TechBoardView
+        techBoard={createTechBoardMock()}
+        players={players}
+        pendingInput={{
+          inputId: 'input-1',
+          type: EPlayerInputType.TECH,
+          options: [ETech.PROBE],
+        }}
+        playerColors={{ 'player-1': 'red' }}
+        myPlayerId='player-1'
+      />,
+    );
+
+    expect(
+      screen.getByTestId('tech-stack-probe-tech-0').className,
+    ).not.toContain('ring-1');
+    expect(screen.getByTestId('tech-stack-probe-tech-1').className).toContain(
       'ring-1',
     );
   });

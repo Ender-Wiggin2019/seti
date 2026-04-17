@@ -169,6 +169,10 @@ export class WsTestClient {
     this.socket?.emit('game:freeAction', { gameId, action });
   }
 
+  sendEndTurn(gameId: string): void {
+    this.socket?.emit('game:endTurn', { gameId });
+  }
+
   sendInput(gameId: string, inputResponse: Record<string, unknown>): void {
     this.socket?.emit('game:input', { gameId, inputResponse });
   }

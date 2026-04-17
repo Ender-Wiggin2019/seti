@@ -1292,6 +1292,7 @@ export function GameDebugPage(): React.JSX.Element {
       events: [{ type: EGameEventType.ROUND_END, round: 2 }],
       sendAction: () => undefined,
       sendFreeAction: handleDebugFreeAction,
+      sendEndTurn: () => undefined,
       sendInput: handleDebugInput,
       requestUndo: () => undefined,
     }),

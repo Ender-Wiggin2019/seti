@@ -53,6 +53,14 @@ function createMockGame(
   } as unknown as IGame;
 }
 
+function getFirstAvailableTechId(board: TechBoard, playerId: string): ETechId {
+  const techId = board.getAvailableTechs(playerId)[0];
+  if (!techId) {
+    throw new Error(`expected an available tech for player ${playerId}`);
+  }
+  return techId;
+}
+
 describe('TechBonusEffect.apply', () => {
   it('ENERGY: grants +1 energy', () => {
     const player = createTestPlayer();
@@ -183,7 +191,12 @@ describe('TechBoard bonus assignment', () => {
     for (const [techId, stack] of board.stacks) {
       const pool = TECH_BONUS_POOLS[techId];
       if (!pool) continue;
-      const tileTypes = stack.tiles.map((t) => t.bonus!.type);
+      const tileTypes = stack.tiles.map((tile) => {
+        if (!tile.bonus) {
+          throw new Error(`expected tile bonus for ${techId}`);
+        }
+        return tile.bonus.type;
+      });
       const poolTypes = pool.map((b) => b.type);
       if (tileTypes.some((t, i) => t !== poolTypes[i])) {
         anyDiffers = true;
@@ -201,8 +214,12 @@ describe('ResearchTechEffect.acquireTech with bonus', () => {
     const game = createMockGame(board, ['card-1', 'card-2']);
     const player = createTestPlayer();
 
-    const techId = board.getAvailableTechs(player.id)[0]!;
-    const topTile = board.getStack(techId)!.tiles[0];
+    const techId = getFirstAvailableTechId(board, player.id);
+    const stack = board.getStack(techId);
+    if (!stack) {
+      throw new Error(`expected tech stack for ${techId}`);
+    }
+    const topTile = stack.tiles[0];
     const expectedBonus = topTile.bonus;
 
     const result = ResearchTechEffect.acquireTech(player, game, techId);
@@ -230,7 +247,7 @@ describe('ResearchTechEffect.acquireTech with bonus', () => {
     const rng = new SeededRandom('vp-bonus');
     const board = new TechBoard(rng);
 
-    const techId = findTechWithBonusType(board, ETechBonusType.VP_2);
+    const techId = findTechWithBonusType(board, ETechBonusType.VP_3);
     if (!techId) return;
 
     const game = createMockGame(board);
@@ -239,7 +256,7 @@ describe('ResearchTechEffect.acquireTech with bonus', () => {
 
     const result = ResearchTechEffect.acquireTech(player, game, techId);
 
-    const expectedGain = result.vpBonus + 2;
+    const expectedGain = result.vpBonus + 3;
     expect(player.score).toBe(scoreBefore + expectedGain);
   });
 

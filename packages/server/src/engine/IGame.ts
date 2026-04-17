@@ -70,6 +70,7 @@ export interface IGame {
   hasRoundFirstPassOccurred: boolean;
 
   processMainAction(playerId: string, action: IMainActionRequest): void;
+  processEndTurn(playerId: string): void;
   processFreeAction(playerId: string, action: IFreeActionRequest): void;
   processInput(playerId: string, response: IInputResponse): void;
   mark(

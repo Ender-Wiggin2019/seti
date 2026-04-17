@@ -23,6 +23,7 @@ describe('ActionMenu', () => {
         canUndo={false}
         onSendAction={vi.fn()}
         onRequestUndo={vi.fn()}
+        onSendEndTurn={vi.fn()}
       />,
     );
 
@@ -54,6 +55,7 @@ describe('ActionMenu', () => {
         canUndo={false}
         onSendAction={vi.fn()}
         onRequestUndo={vi.fn()}
+        onSendEndTurn={vi.fn()}
       />,
     );
 
@@ -89,6 +91,7 @@ describe('ActionMenu', () => {
         canUndo={false}
         onSendAction={vi.fn()}
         onRequestUndo={vi.fn()}
+        onSendEndTurn={vi.fn()}
       />,
     );
 
@@ -117,6 +120,7 @@ describe('ActionMenu', () => {
         canUndo={false}
         onSendAction={onSendAction}
         onRequestUndo={vi.fn()}
+        onSendEndTurn={vi.fn()}
       />,
     );
 

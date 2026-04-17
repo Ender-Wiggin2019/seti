@@ -278,6 +278,7 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
     expect(missionState!.def.branches).toHaveLength(3);
     expect(missionState!.branchStates.every((s) => !s.completed)).toBe(true);
 
+    game.processEndTurn('p1');
     expect(game.activePlayer.id).toBe('p2');
     expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
   });
@@ -344,6 +345,8 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
       (probe) => probe.playerId === 'p1',
     );
     expect(probesOnEarth).toHaveLength(1);
+
+    game.processEndTurn('p1');
   });
 
   it('9b. branch 0 completed — p1 has 1 movement point', () => {
@@ -492,6 +495,8 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
 
     expect(p1.score).toBe(scoreBefore + 5);
     expect(p1.resources.publicity).toBe(publicityBefore + 1);
+
+    game.processEndTurn('p1');
   });
 
   // ── 16. Game state after landing ────────────────────────────────────
@@ -578,6 +583,8 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
     expect(p1.score).toBe(scoreBefore + 2);
     expect(p1.resources.energy).toBe(energyBefore + 1);
     expect(game.solarSystem!.rotationCounter).toBe(rotBefore + 1);
+
+    game.processEndTurn('p1');
   });
 
   // ── 21. Post-tech state checks ──────────────────────────────────────
@@ -768,7 +775,8 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
     expect(menuModel.type).toBe(EPlayerInputType.OPTION);
     expect(menuModel.options.some((o) => o.id === 'mark-earth')).toBe(true);
     expect(menuModel.options.some((o) => o.id === 'mark-card-row')).toBe(true);
-    expect(menuModel.options.some((o) => o.id === 'done')).toBe(true);
+    // MARK_EARTH is mandatory — DONE not offered until it's executed.
+    expect(menuModel.options.some((o) => o.id === 'done')).toBe(false);
 
     // Choose mark-card-row
     game.processInput('p1', {
@@ -825,6 +833,8 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
     // Earth mark is auto-applied (no earth-neighbor tech)
     // After marking earth signal in same sector: +1 data
     expect(p1.resources.data).toBe(dataBefore + 1);
+
+    game.processEndTurn('p1');
   });
 
   // ── 31. Scan results: verify 2 data and 2 VP from sector position ──

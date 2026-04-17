@@ -113,7 +113,8 @@ describe('ScanActionPool', () => {
       );
       expect(optionIds).toContain(EScanSubAction.MARK_EARTH);
       expect(optionIds).toContain(EScanSubAction.MARK_CARD_ROW);
-      expect(optionIds).toContain(EScanSubAction.DONE);
+      // MARK_EARTH is mandatory — DONE is not offered until it's executed.
+      expect(optionIds).not.toContain(EScanSubAction.DONE);
       expect(optionIds).not.toContain(EScanSubAction.MARK_MERCURY);
       expect(optionIds).not.toContain(EScanSubAction.MARK_HAND);
       expect(optionIds).not.toContain(EScanSubAction.ENERGY_LAUNCH_OR_MOVE);
@@ -199,7 +200,7 @@ describe('ScanActionPool', () => {
       expect(afterSectorPick!.type).toBe(EPlayerInputType.OPTION);
     });
 
-    it('Done ends scan immediately', () => {
+    it('Done ends scan after mandatory MARK_EARTH is executed', () => {
       const game = createMockGame();
       const player = createPlayer();
       let completedResult: IScanActionPoolResult | null = null;
@@ -211,14 +212,21 @@ describe('ScanActionPool', () => {
         },
       });
 
-      poolMenu!.process({
+      const afterEarth = poolMenu!.process({
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_EARTH,
+      });
+
+      afterEarth!.process({
         type: EPlayerInputType.OPTION,
         optionId: EScanSubAction.DONE,
       });
 
       expect(completedResult).not.toBeNull();
       expect(completedResult!.subActions).toHaveLength(2);
-      expect(completedResult!.subActions.every((a) => !a.executed)).toBe(true);
+      const executed = completedResult!.subActions.filter((a) => a.executed);
+      expect(executed).toHaveLength(1);
+      expect(executed[0].id).toBe(EScanSubAction.MARK_EARTH);
     });
 
     it('completes when all sub-actions are executed', () => {
@@ -527,7 +535,8 @@ describe('ScanActionPool', () => {
       expect(optionIds).toContain(EScanSubAction.MARK_MERCURY);
       expect(optionIds).toContain(EScanSubAction.MARK_HAND);
       expect(optionIds).toContain(EScanSubAction.ENERGY_LAUNCH_OR_MOVE);
-      expect(optionIds).toContain(EScanSubAction.DONE);
+      // MARK_EARTH is mandatory — DONE not offered until it's done.
+      expect(optionIds).not.toContain(EScanSubAction.DONE);
     });
 
     it('allows executing in arbitrary order: mercury → energy → earth → card → hand', () => {

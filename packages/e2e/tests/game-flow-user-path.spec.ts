@@ -85,7 +85,7 @@ test('user-path game flow e2e (strict real interfaces): register -> room -> game
       guestPage,
       'PASS',
     );
-    await expect(actor.locator(sel.actionMenu('PASS'))).toBeVisible({
+    await expect(actor.locator(sel.actionMenu('PASS'))).toBeEnabled({
       timeout: 10_000,
     });
     await clickPassAndWaitForLogSync(actor, other);

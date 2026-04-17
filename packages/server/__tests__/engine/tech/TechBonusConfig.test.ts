@@ -10,14 +10,16 @@ describe('TECH_BONUS_POOLS', () => {
     }
   });
 
-  it('uses known bonus token types', () => {
-    const allTypes = new Set(
-      Object.values(TECH_BONUS_POOLS).flatMap((pool) =>
-        pool.map((token) => token.type),
-      ),
-    );
+  it('assigns the same four printed tech bonuses to every stack', () => {
+    const expectedTypes = [
+      ETechBonusType.CARD,
+      ETechBonusType.ENERGY,
+      ETechBonusType.PUBLICITY,
+      ETechBonusType.VP_3,
+    ].sort();
 
-    expect(allTypes.has(ETechBonusType.ENERGY)).toBe(true);
-    expect(allTypes.has(ETechBonusType.VP_3)).toBe(true);
+    for (const pool of Object.values(TECH_BONUS_POOLS)) {
+      expect(pool.map((token) => token.type).sort()).toEqual(expectedTypes);
+    }
   });
 });

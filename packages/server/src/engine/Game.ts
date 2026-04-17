@@ -119,6 +119,8 @@ export class Game implements IGame {
 
   public hasRoundFirstPassOccurred: boolean;
 
+  private currentMainActionType: EMainAction | null;
+
   private constructor(
     id: string,
     playerIdentities: ReadonlyArray<IGamePlayerIdentity>,
@@ -158,6 +160,7 @@ export class Game implements IGame {
     this.random = new SeededRandom(seed);
     this.rotationCounterValue = 0;
     this.hasRoundFirstPassOccurred = false;
+    this.currentMainActionType = null;
     this.finalScoringResult = undefined;
 
     this.players.forEach((player) => player.bindGame(this));
@@ -228,44 +231,63 @@ export class Game implements IGame {
 
   public processMainAction(playerId: string, action: IMainActionRequest): void {
     this.assertCanTakeTurnAction(playerId, [EPhase.AWAIT_MAIN_ACTION]);
+    this.ensureMissionCheckpoint();
 
     const player = this.getPlayer(playerId);
     this.assertMainActionIsLegal(player, action);
+    this.currentMainActionType = action.type;
     this.transitionTo(EPhase.IN_RESOLUTION);
 
     try {
       this.enqueueMainActionPipeline(player, action);
       this.runResolutionPipeline();
+      this.closeMissionCheckpointIfSettled();
     } catch (error) {
       this.deferredActions.clear();
       player.waitingFor = undefined;
       this.phase = EPhase.AWAIT_MAIN_ACTION;
+      this.currentMainActionType = null;
+      this.missionTracker.endCheckpoint();
       throw error;
     }
+  }
+
+  public processEndTurn(playerId: string): void {
+    this.assertCanTakeTurnAction(playerId, [EPhase.AWAIT_END_TURN]);
+
+    this.eventLog.append(createActionEvent(playerId, 'END_TURN'));
+    this.currentMainActionType = null;
+    this.runBetweenTurnPipeline();
+    this.closeMissionCheckpointIfSettled();
   }
 
   public processFreeAction(playerId: string, action: IFreeActionRequest): void {
     this.assertCanTakeTurnAction(playerId, [
       EPhase.AWAIT_MAIN_ACTION,
+      EPhase.AWAIT_END_TURN,
       EPhase.IN_RESOLUTION,
     ]);
+    this.ensureMissionCheckpoint();
 
     const player = this.getPlayer(playerId);
-    const pendingInput = processFreeAction(player, this, action);
+    const pendingInput = this.missionTracker.runInCheckpoint(() =>
+      processFreeAction(player, this, action),
+    );
 
     if (pendingInput) {
       player.waitingFor = pendingInput;
     }
 
     if (!player.waitingFor) {
-      const missionInput = this.missionTracker.checkAndPromptTriggers(
-        player,
+      const missionInput = this.missionTracker.checkAndPromptTriggersForPlayers(
+        this.getMissionTriggerPlayers(player.id),
         this,
       );
       if (missionInput) {
-        player.waitingFor = missionInput;
+        missionInput.player.waitingFor = missionInput;
       }
     }
+    this.closeMissionCheckpointIfSettled();
 
     this.eventLog.append(
       createActionEvent(playerId, `FREE_ACTION:${action.type}`, {
@@ -291,6 +313,7 @@ export class Game implements IGame {
 
     player.waitingFor = undefined;
     this.runResolutionPipeline();
+    this.closeMissionCheckpointIfSettled();
   }
 
   public mark(
@@ -323,14 +346,21 @@ export class Game implements IGame {
     }
 
     if (this.phase === EPhase.IN_RESOLUTION) {
-      this.transitionTo(EPhase.BETWEEN_TURNS);
-      this.enqueueBetweenTurnPipeline(this.activePlayer);
-
-      const betweenTurnInput = this.drainDeferredQueue();
-      if (betweenTurnInput !== undefined) {
-        return;
+      // PASS auto-ends the turn; all other main actions wait for an explicit
+      // END_TURN so the player can still take free actions afterwards.
+      if (this.currentMainActionType === EMainAction.PASS) {
+        this.currentMainActionType = null;
+        this.runBetweenTurnPipeline();
+      } else {
+        this.transitionTo(EPhase.AWAIT_END_TURN);
       }
     }
+  }
+
+  private runBetweenTurnPipeline(): void {
+    this.transitionTo(EPhase.BETWEEN_TURNS);
+    this.enqueueBetweenTurnPipeline(this.activePlayer);
+    this.drainDeferredQueue();
   }
 
   private drainDeferredQueue(): PlayerInput | undefined {
@@ -365,100 +395,102 @@ export class Game implements IGame {
         (game) => {
           let pendingInput: PlayerInput | undefined;
 
-          switch (action.type) {
-            case EMainAction.LAUNCH_PROBE: {
-              LaunchProbeAction.execute(player, game);
-              game.missionTracker.recordEvent({
-                type: EMissionEventType.PROBE_LAUNCHED,
-              });
-              break;
-            }
-            case EMainAction.ORBIT: {
-              const planet = this.getPlanetPayload(action);
-              OrbitAction.execute(player, game, planet);
-              game.missionTracker.recordEvent({
-                type: EMissionEventType.PROBE_ORBITED,
-                planet,
-              });
-              break;
-            }
-            case EMainAction.LAND: {
-              const planet = this.getPlanetPayload(action);
-              const isMoon = this.getMoonPayload(action);
-              player.land(planet, { isMoon });
-              game.missionTracker.recordEvent({
-                type: EMissionEventType.PROBE_LANDED,
-                planet,
-                isMoon,
-              });
-              break;
-            }
-            case EMainAction.SCAN: {
-              pendingInput = ScanAction.execute(player, game);
-              game.missionTracker.recordEvent({
-                type: EMissionEventType.SCAN_PERFORMED,
-              });
-              break;
-            }
-            case EMainAction.ANALYZE_DATA: {
-              AnalyzeDataAction.execute(player, game);
-              pendingInput = game.markTrace(ETrace.BLUE, player.id);
-              break;
-            }
-            case EMainAction.PLAY_CARD: {
-              const result = PlayCardAction.execute(
-                player,
-                game,
-                this.getCardIndexPayload(action),
-              );
-
-              const missionDef = result.card?.getMissionDef?.();
-              const missionType =
-                missionDef?.type ?? result.card?.getMissionType();
-
-              const registerMission = () => {
-                if (missionDef) {
-                  game.missionTracker.registerMission(missionDef, player.id);
-                } else {
-                  game.missionTracker.registerMissionFromCard(
-                    result.cardId,
-                    player.id,
-                  );
-                }
-              };
-
-              game.missionTracker.recordEvent({
-                type: EMissionEventType.CARD_PLAYED,
-                cost: result.price,
-                costType: result.priceType,
-              });
-              if (result.destination === 'mission') {
-                if (missionType === EMissionType.QUICK) {
-                  registerMission();
-                } else {
-                  game.deferredActions.push(
-                    new SimpleDeferredAction(
-                      player,
-                      () => {
-                        registerMission();
-                        return undefined;
-                      },
-                      EPriority.DEFAULT,
-                    ),
-                  );
-                }
+          game.missionTracker.runInCheckpoint(() => {
+            switch (action.type) {
+              case EMainAction.LAUNCH_PROBE: {
+                LaunchProbeAction.execute(player, game);
+                game.missionTracker.recordEvent({
+                  type: EMissionEventType.PROBE_LAUNCHED,
+                });
+                break;
               }
-              break;
+              case EMainAction.ORBIT: {
+                const planet = this.getPlanetPayload(action);
+                OrbitAction.execute(player, game, planet);
+                game.missionTracker.recordEvent({
+                  type: EMissionEventType.PROBE_ORBITED,
+                  planet,
+                });
+                break;
+              }
+              case EMainAction.LAND: {
+                const planet = this.getPlanetPayload(action);
+                const isMoon = this.getMoonPayload(action);
+                player.land(planet, { isMoon });
+                game.missionTracker.recordEvent({
+                  type: EMissionEventType.PROBE_LANDED,
+                  planet,
+                  isMoon,
+                });
+                break;
+              }
+              case EMainAction.SCAN: {
+                pendingInput = ScanAction.execute(player, game);
+                game.missionTracker.recordEvent({
+                  type: EMissionEventType.SCAN_PERFORMED,
+                });
+                break;
+              }
+              case EMainAction.ANALYZE_DATA: {
+                AnalyzeDataAction.execute(player, game);
+                pendingInput = game.markTrace(ETrace.BLUE, player.id);
+                break;
+              }
+              case EMainAction.PLAY_CARD: {
+                const result = PlayCardAction.execute(
+                  player,
+                  game,
+                  this.getCardIndexPayload(action),
+                );
+
+                const missionDef = result.card?.getMissionDef?.();
+                const missionType =
+                  missionDef?.type ?? result.card?.getMissionType();
+
+                const registerMission = () => {
+                  if (missionDef) {
+                    game.missionTracker.registerMission(missionDef, player.id);
+                  } else {
+                    game.missionTracker.registerMissionFromCard(
+                      result.cardId,
+                      player.id,
+                    );
+                  }
+                };
+
+                game.missionTracker.recordEvent({
+                  type: EMissionEventType.CARD_PLAYED,
+                  cost: result.price,
+                  costType: result.priceType,
+                });
+                if (result.destination === 'mission') {
+                  if (missionType === EMissionType.QUICK) {
+                    registerMission();
+                  } else {
+                    game.deferredActions.push(
+                      new SimpleDeferredAction(
+                        player,
+                        () => {
+                          registerMission();
+                          return undefined;
+                        },
+                        EPriority.DEFAULT,
+                      ),
+                    );
+                  }
+                }
+                break;
+              }
+              case EMainAction.RESEARCH_TECH: {
+                pendingInput = ResearchTechAction.execute(player, game);
+                break;
+              }
+              case EMainAction.PASS: {
+                pendingInput = PassAction.execute(player, game);
+                break;
+              }
             }
-            case EMainAction.RESEARCH_TECH: {
-              pendingInput = ResearchTechAction.execute(player, game);
-              break;
-            }
-            case EMainAction.PASS: {
-              pendingInput = PassAction.execute(player, game);
-              break;
-            }
-          }
+          });
 
           game.eventLog.append(createActionEvent(player.id, action.type));
           return pendingInput;
@@ -479,7 +511,11 @@ export class Game implements IGame {
       ),
       new SimpleDeferredAction(
         player,
-        (game) => game.missionTracker.checkAndPromptTriggers(player, game),
+        (game) =>
+          game.missionTracker.checkAndPromptTriggersForPlayers(
+            this.getMissionTriggerPlayers(player.id),
+            game,
+          ),
         EPriority.CARD_TRIGGER,
       ),
       new ResolveSectorCompletion(player),
@@ -536,6 +572,39 @@ export class Game implements IGame {
 
     this.activePlayer = nextPlayer;
     this.transitionTo(EPhase.AWAIT_MAIN_ACTION);
+  }
+
+  private getMissionTriggerPlayers(triggeringPlayerId: string): IPlayer[] {
+    const startIndex = this.players.findIndex(
+      (player) => player.id === triggeringPlayerId,
+    );
+
+    if (startIndex < 0) {
+      return [...this.players];
+    }
+
+    return this.players.map(
+      (_, offset) => this.players[(startIndex + offset) % this.players.length],
+    );
+  }
+
+  private ensureMissionCheckpoint(): void {
+    if (!this.missionTracker.hasActiveCheckpoint()) {
+      this.missionTracker.beginCheckpoint();
+    }
+  }
+
+  private closeMissionCheckpointIfSettled(): void {
+    if (!this.missionTracker.hasActiveCheckpoint()) {
+      return;
+    }
+
+    if (
+      this.phase === EPhase.AWAIT_MAIN_ACTION ||
+      this.phase === EPhase.GAME_OVER
+    ) {
+      this.missionTracker.endCheckpoint();
+    }
   }
 
   private resolveEndOfRound(): void {

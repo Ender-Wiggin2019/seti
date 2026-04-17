@@ -296,6 +296,7 @@ describe('AnalyzeDataAction', () => {
         type: EPlayerInputType.OPTION,
         optionId: blueDiscoverySlotId,
       });
+      game.processEndTurn(player.id);
 
       const anomaliesBoard = game.alienState.getBoard(0);
       expect(anomaliesBoard?.discovered).toBe(true);

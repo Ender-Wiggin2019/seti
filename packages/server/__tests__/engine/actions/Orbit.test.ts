@@ -34,6 +34,7 @@ describe('Orbit action', () => {
     const player = game.players[0];
 
     game.processMainAction(player.id, { type: EMainAction.LAUNCH_PROBE });
+    game.processEndTurn(player.id);
     game.setActivePlayer(player.id);
 
     expect(OrbitAction.canExecute(player, game, EPlanet.EARTH)).toBe(false);
@@ -94,11 +95,13 @@ describe('Orbit action', () => {
       type: EMainAction.ORBIT,
       payload: { planet: EPlanet.VENUS },
     });
+    game.processEndTurn(p1.id);
 
     game.processMainAction(p2.id, {
       type: EMainAction.ORBIT,
       payload: { planet: EPlanet.VENUS },
     });
+    game.processEndTurn(p2.id);
 
     expect(p1.score).toBe(4);
     expect(p2.score).toBe(2);
@@ -144,6 +147,86 @@ describe('Orbit action', () => {
         code: EErrorCode.NOT_YOUR_TURN,
       }),
     );
+  });
+
+  it('2.2.3 first orbit grants +3 VP and no other rewards on every non-Earth planet', () => {
+    const nonEarthPlanets: EPlanet[] = [
+      EPlanet.MERCURY,
+      EPlanet.VENUS,
+      EPlanet.MARS,
+      EPlanet.JUPITER,
+      EPlanet.SATURN,
+      EPlanet.URANUS,
+      EPlanet.NEPTUNE,
+    ];
+
+    for (const planet of nonEarthPlanets) {
+      const game = Game.create(
+        TEST_PLAYERS,
+        { playerCount: 2 },
+        `orbit-2-2-3-${planet}`,
+      );
+      const player = game.players[0];
+      placeProbeOnPlanet(game, player.id, planet, 1);
+      player.probesInSpace = 1;
+
+      const creditsBefore = player.resources.credits;
+      const energyBefore = player.resources.energy;
+      const publicityBefore = player.resources.publicity;
+      const dataBefore = player.resources.data;
+      const scoreBefore = player.score;
+      const handBefore = [...player.hand];
+      const tuckedBefore = [...player.tuckedIncomeCards];
+
+      game.processMainAction(player.id, {
+        type: EMainAction.ORBIT,
+        payload: { planet },
+      });
+
+      // Action cost (1 credit + 1 energy) — same for every planet.
+      expect(player.resources.credits).toBe(creditsBefore - 1);
+      expect(player.resources.energy).toBe(energyBefore - 1);
+      // Current engine grants first-orbit reward as +3 VP only; no income,
+      // no publicity, no data, no card tuck. Lock this explicitly so any
+      // future per-planet reward matrix must consciously update this test.
+      expect(player.score).toBe(scoreBefore + 3);
+      expect(player.resources.publicity).toBe(publicityBefore);
+      expect(player.resources.data).toBe(dataBefore);
+      expect(player.hand).toEqual(handBefore);
+      expect(player.tuckedIncomeCards).toEqual(tuckedBefore);
+      expect(
+        game.planetaryBoard?.planets.get(planet)?.orbitSlots,
+      ).toEqual([{ playerId: player.id }]);
+      expect(
+        game.planetaryBoard?.planets.get(planet)?.firstOrbitClaimed,
+      ).toBe(true);
+    }
+  });
+
+  it('2.2.4 orbit does not tuck cards for ongoing income (no tucked-income effect on current rules)', () => {
+    // Regression lock: the orbit action today awards only the +3 VP first-orbit
+    // bonus and does not tuck any card for recurring income. When the planet
+    // reward graphics ("shown orbit bonus") are implemented, this test should
+    // be updated to verify the correct tucked income payload per planet.
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'orbit-2-2-4-no-tucked-income',
+    );
+    const player = game.players[0];
+    placeProbeOnPlanet(game, player.id, EPlanet.MARS, 1);
+    player.probesInSpace = 1;
+
+    const tuckedBefore = [...player.tuckedIncomeCards];
+    const handBefore = [...player.hand];
+
+    game.processMainAction(player.id, {
+      type: EMainAction.ORBIT,
+      payload: { planet: EPlanet.MARS },
+    });
+
+    expect(player.tuckedIncomeCards).toEqual(tuckedBefore);
+    expect(player.hand).toEqual(handBefore);
   });
 
   it('returns false when credits or energy are insufficient even with a valid planet probe', () => {

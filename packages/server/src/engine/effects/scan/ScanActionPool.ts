@@ -119,16 +119,23 @@ export class ScanActionPool {
       },
     }));
 
-    menuOptions.push({
-      id: EScanSubAction.DONE,
-      label: 'Done (end scan)',
-      onSelect: () => {
-        for (const d of remaining) {
-          result.subActions.push({ id: d.id, executed: false });
-        }
-        return options.onComplete?.(result);
-      },
-    });
+    // Rule: marking the earth sector is mandatory on every Scan — do not
+    // offer Done until MARK_EARTH has been executed.
+    const markEarthPending = remaining.some(
+      (d) => d.id === EScanSubAction.MARK_EARTH,
+    );
+    if (!markEarthPending) {
+      menuOptions.push({
+        id: EScanSubAction.DONE,
+        label: 'Done (end scan)',
+        onSelect: () => {
+          for (const d of remaining) {
+            result.subActions.push({ id: d.id, executed: false });
+          }
+          return options.onComplete?.(result);
+        },
+      });
+    }
 
     return new SelectOption(player, menuOptions, 'Scan: choose sub-action');
   }

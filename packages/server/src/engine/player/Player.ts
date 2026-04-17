@@ -194,6 +194,18 @@ export class Player implements IPlayer {
     return payout;
   }
 
+  public gainTech(techId: ETechId): void {
+    if (this.techs.includes(techId)) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        'Player already owns this tech',
+        { playerId: this.id, techId },
+      );
+    }
+
+    this.techs.push(techId);
+  }
+
   public gainMove(amount: number): void {
     assertValidInteger('move', amount);
     this.moveStashCount += amount;

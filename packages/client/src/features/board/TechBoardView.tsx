@@ -2,7 +2,7 @@ import {
   TECH_BOARD_DIMENSIONS,
   TECH_STACK_LAYOUT,
 } from '@seti/common/constant/boardLayout';
-import { getTechDescriptor } from '@seti/common/types/tech';
+import { getTechDescriptor, getTechId } from '@seti/common/types/tech';
 import { useTranslation } from 'react-i18next';
 import type {
   IPlayerInputModel,
@@ -17,6 +17,7 @@ interface ITechBoardViewProps {
   players: IPublicPlayerState[];
   pendingInput: IPlayerInputModel | null;
   playerColors: Record<string, string>;
+  myPlayerId: string;
 }
 
 export function TechBoardView({
@@ -24,6 +25,7 @@ export function TechBoardView({
   players,
   pendingInput,
   playerColors,
+  myPlayerId,
 }: ITechBoardViewProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const ownerByStackKey = new Map<string, string[]>();
@@ -37,6 +39,9 @@ export function TechBoardView({
       ownerByStackKey.set(stackKey, owners);
     }
   }
+
+  const myPlayer = players.find((player) => player.playerId === myPlayerId);
+  const ownedTechIds = new Set(myPlayer?.techs ?? []);
 
   const selectableTechTypes =
     pendingInput?.type === EPlayerInputType.TECH
@@ -77,7 +82,10 @@ export function TechBoardView({
               stack={stack}
               ownerPlayerIds={ownerByStackKey.get(stackKey) ?? []}
               playerColors={playerColors}
-              isSelectable={selectableTechTypes.has(stack.tech)}
+              isSelectable={
+                selectableTechTypes.has(stack.tech) &&
+                !ownedTechIds.has(getTechId(layout.tech, layout.level))
+              }
             />
           );
         })}

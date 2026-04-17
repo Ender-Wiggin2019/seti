@@ -84,6 +84,23 @@ export class GameManager {
     return this.buildResult(game);
   }
 
+  async processEndTurn(
+    gameId: string,
+    playerId: string,
+  ): Promise<IActionResult> {
+    const game = await this.getGame(gameId);
+    const version = this.nextVersion(gameId);
+
+    game.processEndTurn(playerId);
+
+    await this.persistSnapshot(gameId, version, game, {
+      type: 'END_TURN',
+      lastActorId: playerId,
+    });
+
+    return this.buildResult(game);
+  }
+
   async processFreeAction(
     gameId: string,
     playerId: string,

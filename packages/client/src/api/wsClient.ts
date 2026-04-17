@@ -10,10 +10,36 @@ import type {
   TGameEvent,
 } from '@/types/re-exports';
 
+type TStateSocketHandler = (data: { gameState: IPublicGameState }) => void;
+type TWaitingSocketHandler = (data: {
+  playerId: string;
+  input: IPlayerInputModel;
+}) => void;
+type TEventSocketHandler = (data: { event: TGameEvent }) => void;
+type TErrorSocketHandler = (error: IErrorPayload) => void;
+
+interface IGameSocketHandlerMap {
+  'game:state': TStateSocketHandler;
+  'game:waiting': TWaitingSocketHandler;
+  'game:event': TEventSocketHandler;
+  'game:error': TErrorSocketHandler;
+}
+
+type TUntypedSocketListener = (...args: unknown[]) => void;
+
+interface IUntypedSocket {
+  on: (event: string, handler: TUntypedSocketListener) => void;
+  off: (event: string, handler: TUntypedSocketListener) => void;
+}
+
 class WsClient {
   private socket: Socket | null = null;
   private connectionRefs = 0;
   private authToken: string | null = null;
+  private readonly stateHandlers = new Set<TStateSocketHandler>();
+  private readonly waitingHandlers = new Set<TWaitingSocketHandler>();
+  private readonly eventHandlers = new Set<TEventSocketHandler>();
+  private readonly errorHandlers = new Set<TErrorSocketHandler>();
 
   get instance(): Socket | null {
     return this.socket;
@@ -42,6 +68,7 @@ class WsClient {
       reconnectionDelay: 1000,
       reconnectionDelayMax: 10000,
     });
+    this.bindRegisteredHandlers(this.socket);
 
     return this.socket;
   }
@@ -73,47 +100,109 @@ class WsClient {
     this.socket?.emit('game:freeAction', { gameId, action });
   }
 
+  sendEndTurn(gameId: string): void {
+    this.socket?.emit('game:endTurn', { gameId });
+  }
+
   sendInput(gameId: string, inputResponse: IInputResponse): void {
     this.socket?.emit('game:input', { gameId, inputResponse });
   }
 
   onState(cb: (state: IPublicGameState) => void): () => void {
-    const handler = (data: { gameState: IPublicGameState }) =>
-      cb(data.gameState);
-    this.socket?.on('game:state', handler);
-    return () => {
-      this.socket?.off('game:state', handler);
-    };
+    return this.subscribe('game:state', this.stateHandlers, (data) =>
+      cb(data.gameState),
+    );
   }
 
   onWaiting(
     cb: (data: { playerId: string; input: IPlayerInputModel }) => void,
   ): () => void {
-    this.socket?.on('game:waiting', cb);
-    return () => {
-      this.socket?.off('game:waiting', cb);
-    };
+    return this.subscribe('game:waiting', this.waitingHandlers, cb);
   }
 
   onEvent(cb: (event: TGameEvent) => void): () => void {
-    const handler = (data: { event: TGameEvent }) => cb(data.event);
-    this.socket?.on('game:event', handler);
-    return () => {
-      this.socket?.off('game:event', handler);
-    };
+    return this.subscribe('game:event', this.eventHandlers, (data) =>
+      cb(data.event),
+    );
   }
 
   onError(cb: (error: IErrorPayload) => void): () => void {
-    this.socket?.on('game:error', cb);
-    return () => {
-      this.socket?.off('game:error', cb);
-    };
+    return this.subscribe('game:error', this.errorHandlers, cb);
   }
 
   disconnect(): void {
-    this.socket?.disconnect();
+    if (this.socket) {
+      this.unbindRegisteredHandlers(this.socket);
+      this.socket.disconnect();
+    }
     this.socket = null;
     this.authToken = null;
+  }
+
+  private subscribe<TEvent extends keyof IGameSocketHandlerMap>(
+    event: TEvent,
+    handlers: Set<IGameSocketHandlerMap[TEvent]>,
+    handler: IGameSocketHandlerMap[TEvent],
+  ): () => void {
+    handlers.add(handler);
+    this.toUntypedSocket(this.socket)?.on(
+      event,
+      handler as unknown as TUntypedSocketListener,
+    );
+
+    return () => {
+      handlers.delete(handler);
+      this.toUntypedSocket(this.socket)?.off(
+        event,
+        handler as unknown as TUntypedSocketListener,
+      );
+    };
+  }
+
+  private bindRegisteredHandlers(socket: Socket): void {
+    this.bindHandlers(socket, 'game:state', this.stateHandlers);
+    this.bindHandlers(socket, 'game:waiting', this.waitingHandlers);
+    this.bindHandlers(socket, 'game:event', this.eventHandlers);
+    this.bindHandlers(socket, 'game:error', this.errorHandlers);
+  }
+
+  private unbindRegisteredHandlers(socket: Socket): void {
+    this.unbindHandlers(socket, 'game:state', this.stateHandlers);
+    this.unbindHandlers(socket, 'game:waiting', this.waitingHandlers);
+    this.unbindHandlers(socket, 'game:event', this.eventHandlers);
+    this.unbindHandlers(socket, 'game:error', this.errorHandlers);
+  }
+
+  private bindHandlers<TEvent extends keyof IGameSocketHandlerMap>(
+    socket: Socket,
+    event: TEvent,
+    handlers: Set<IGameSocketHandlerMap[TEvent]>,
+  ): void {
+    for (const handler of handlers) {
+      this.toUntypedSocket(socket).on(
+        event,
+        handler as unknown as TUntypedSocketListener,
+      );
+    }
+  }
+
+  private unbindHandlers<TEvent extends keyof IGameSocketHandlerMap>(
+    socket: Socket,
+    event: TEvent,
+    handlers: Set<IGameSocketHandlerMap[TEvent]>,
+  ): void {
+    for (const handler of handlers) {
+      this.toUntypedSocket(socket).off(
+        event,
+        handler as unknown as TUntypedSocketListener,
+      );
+    }
+  }
+
+  private toUntypedSocket(socket: Socket): IUntypedSocket;
+  private toUntypedSocket(socket: Socket | null): IUntypedSocket | null;
+  private toUntypedSocket(socket: Socket | null): IUntypedSocket | null {
+    return socket as unknown as IUntypedSocket | null;
   }
 }
 

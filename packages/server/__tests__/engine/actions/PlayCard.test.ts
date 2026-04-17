@@ -1,45 +1,24 @@
-import { EMainAction, EPhase } from '@seti/common/types/protocol/enums';
-import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
-import { vi } from 'vitest';
-import { PlayCardAction } from '@/engine/actions/PlayCard.js';
+import {
+  EFreeAction,
+  EMainAction,
+  EPhase,
+} from '@seti/common/types/protocol/enums';
+import {
+  EPlayerInputType,
+  type ISelectEndOfRoundCardInputModel,
+} from '@seti/common/types/protocol/playerInput';
 import { Deck } from '@/engine/deck/Deck.js';
 import { Game } from '@/engine/Game.js';
-import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
-
-function createMockGame(): IGame {
-  return {
-    solarSystem: null,
-    planetaryBoard: null,
-    techBoard: null,
-    sectors: [],
-    mainDeck: { draw: () => undefined, discard: vi.fn() },
-    cardRow: [],
-    endOfRoundStacks: [],
-    hiddenAliens: [],
-    neutralMilestones: [],
-    roundRotationReminderIndex: 0,
-    hasRoundFirstPassOccurred: false,
-    rotationCounter: 0,
-  } as unknown as IGame;
-}
-
-function createPlayer(overrides: Record<string, unknown> = {}): Player {
-  return new Player({
-    id: 'p1',
-    name: 'Alice',
-    color: 'red',
-    seatIndex: 0,
-    resources: { credits: 4, energy: 3, publicity: 4 },
-    hand: ['card-1', 'card-2'],
-    ...overrides,
-  });
-}
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
   { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
 ] as const;
+
+function resolveCardId(card: string | { id?: string }): string | undefined {
+  return typeof card === 'string' ? card : card.id;
+}
 
 function createIntegrationGame(seed: string) {
   const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
@@ -48,6 +27,24 @@ function createIntegrationGame(seed: string) {
     throw new Error('p1 not found');
   }
   return { game, player: player as Player };
+}
+
+function resolveEndOfRoundPickIfAny(game: Game, playerId: string): void {
+  const player = game.players.find((candidate) => candidate.id === playerId);
+  if (!player?.waitingFor) {
+    return;
+  }
+
+  const model = player.waitingFor.toModel();
+  if (model.type !== EPlayerInputType.END_OF_ROUND) {
+    return;
+  }
+
+  const picker = model as ISelectEndOfRoundCardInputModel;
+  game.processInput(playerId, {
+    type: EPlayerInputType.END_OF_ROUND,
+    cardId: picker.cards[0].id,
+  });
 }
 
 function resolveUntilMissionPrompt(game: Game, player: Player): void {
@@ -94,56 +91,8 @@ function resolveUntilMissionPrompt(game: Game, player: Player): void {
   }
 }
 
-describe('PlayCardAction', () => {
-  describe('canExecute', () => {
-    it('returns true when the hand has cards', () => {
-      const game = createMockGame();
-      const player = createPlayer();
-      expect(PlayCardAction.canExecute(player, game)).toBe(true);
-    });
-
-    it('returns false when the hand is empty', () => {
-      const game = createMockGame();
-      const player = createPlayer({ hand: [] });
-      expect(PlayCardAction.canExecute(player, game)).toBe(false);
-    });
-  });
-
+describe('PlayCardAction — integration', () => {
   describe('execute', () => {
-    it('removes the card at the given index from hand', () => {
-      const game = createMockGame();
-      const player = createPlayer();
-      PlayCardAction.execute(player, game, 0);
-      expect(player.hand).toEqual(['card-2']);
-    });
-
-    it('discards the played card via mainDeck.discard', () => {
-      const game = createMockGame();
-      const player = createPlayer();
-      PlayCardAction.execute(player, game, 1);
-      expect(game.mainDeck.discard).toHaveBeenCalledWith('card-2');
-    });
-
-    it('returns the played card id', () => {
-      const game = createMockGame();
-      const player = createPlayer();
-      const result = PlayCardAction.execute(player, game, 0);
-      expect(result.cardId).toBe('card-1');
-    });
-
-    it('throws when the hand is empty', () => {
-      const game = createMockGame();
-      const player = createPlayer({ hand: [] });
-      expect(() => PlayCardAction.execute(player, game, 0)).toThrow();
-    });
-
-    it('throws when card index is out of range', () => {
-      const game = createMockGame();
-      const player = createPlayer();
-      expect(() => PlayCardAction.execute(player, game, 2)).toThrow();
-      expect(() => PlayCardAction.execute(player, game, -1)).toThrow();
-    });
-
     it('integration: ordinary immediate cards pay their own cost, apply their effect, and go to discard', () => {
       const { game, player } = createIntegrationGame(
         'play-card-ordinary-immediate',
@@ -159,6 +108,7 @@ describe('PlayCardAction', () => {
         payload: { cardIndex: 0 },
       });
 
+      game.processEndTurn(player.id);
       expect(player.hand).toEqual([]);
       expect(player.resources.credits).toBe(creditsBefore - 1);
       expect(player.resources.publicity).toBe(publicityBefore + 3);
@@ -186,6 +136,7 @@ describe('PlayCardAction', () => {
         payload: { cardIndex: 0 },
       });
 
+      game.processEndTurn(player.id);
       expect(player.resources.credits).toBe(creditsBefore - 1);
       expect(player.resources.energy).toBe(energyBefore);
       expect(player.probesInSpace).toBe(probesBefore + 1);
@@ -263,12 +214,147 @@ describe('PlayCardAction', () => {
       });
 
       expect(player.waitingFor).toBeUndefined();
+      game.processEndTurn(player.id);
       expect(game.activePlayer.id).toBe('p2');
       expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
       expect(
         game.missionTracker.getMissionState(player.id, '106'),
       ).toBeDefined();
       expect(player.playedMissions).toHaveLength(1);
+    });
+
+    it('2.6.4 a played end-game scoring card stays in front of the player and is not discarded', () => {
+      const { game, player } = createIntegrationGame(
+        'play-card-2-6-4-endgame-in-front',
+      );
+      player.hand = ['127'];
+      game.mainDeck = new Deck(['refill-1'], []);
+      const discardBefore = [...game.mainDeck.getDiscardPile()];
+      const publicityBefore = player.resources.publicity;
+
+      game.processMainAction(player.id, {
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 0 },
+      });
+
+      expect(player.hand).not.toContain('127');
+      expect(player.endGameCards.map(resolveCardId)).toContain('127');
+      expect(game.mainDeck.getDiscardPile()).toEqual(discardBefore);
+      expect(game.mainDeck.getDiscardPile()).not.toContain('127');
+      // Immediate effects still fire before the card is filed away.
+      expect(player.resources.publicity).toBe(publicityBefore + 2);
+    });
+
+    it('2.6E.3 a card discarded via the free-action corner cannot also be played as a main action the same turn', () => {
+      const { game, player } = createIntegrationGame(
+        'play-card-2-6e-3-no-double-dip',
+      );
+      player.hand = ['110'];
+      game.mainDeck = new Deck(['refill-1'], []);
+      const creditsBefore = player.resources.credits;
+
+      // Step 1: consume card '110' as a free-action corner discard.
+      game.processFreeAction(player.id, {
+        type: EFreeAction.USE_CARD_CORNER,
+        cardId: '110',
+      });
+      expect(player.hand).not.toContain('110');
+      expect(game.mainDeck.getDiscardPile()).toContain('110');
+      expect(game.activePlayer.id).toBe(player.id);
+
+      // Step 2: attempt to also play the same card as a main action → rejected,
+      // because it has already left the hand. No credit spent on the second try.
+      expect(() =>
+        game.processMainAction(player.id, {
+          type: EMainAction.PLAY_CARD,
+          payload: { cardIndex: 0 },
+        }),
+      ).toThrow();
+      expect(player.resources.credits).toBe(creditsBefore);
+      expect(game.activePlayer.id).toBe(player.id);
+    });
+
+    it('2.6.8/2.6.9 a trigger mission registered earlier stamps exactly one circle on a later matching CARD_PLAYED', () => {
+      const { game, player } = createIntegrationGame(
+        'play-card-2-6-8-trigger-mission',
+      );
+      const other = game.players.find((p) => p.id !== player.id) as Player;
+      player.hand = ['106', '110'];
+      game.mainDeck = new Deck(['refill-1', 'refill-2', 'refill-3'], []);
+      game.cardRow = ['50', '55', '71'];
+
+      // Step 1: register the trigger mission via real main action.
+      game.processMainAction(player.id, {
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 0 },
+      });
+      expect(player.playedMissions.map(resolveCardId)).toEqual(['106']);
+      game.processEndTurn(player.id);
+      expect(game.activePlayer.id).toBe(other.id);
+
+      // Step 2: other player passes so p1 regains the turn within the same round.
+      game.processMainAction(other.id, { type: EMainAction.PASS });
+      resolveEndOfRoundPickIfAny(game, other.id);
+      expect(game.activePlayer.id).toBe(player.id);
+
+      const scoreBefore = player.score;
+
+      // Step 3: play a 1-credit card → CARD_PLAYED event matches branch 0 only.
+      game.processMainAction(player.id, {
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 0 },
+      });
+
+      const promptModel = player.waitingFor?.toModel() as {
+        type: EPlayerInputType;
+        title?: string;
+        options: Array<{ id: string }>;
+      };
+      expect(promptModel.type).toBe(EPlayerInputType.OPTION);
+      expect(promptModel.title).toBe('Mission triggered! Claim reward?');
+      const optionIds = promptModel.options.map((o) => o.id);
+      expect(optionIds).toContain('complete-106-0');
+      expect(optionIds).toContain('skip-missions');
+      // 2.6.9 guard: only branch 0 is offered — branches 1 and 2 do not stamp
+      // from the same single CARD_PLAYED(cost=1) event.
+      expect(optionIds).not.toContain('complete-106-1');
+      expect(optionIds).not.toContain('complete-106-2');
+
+      // Step 4: claim the reward → branch 0 completes, rest remain open.
+      game.processInput(player.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: 'complete-106-0',
+      });
+
+      const missionState = game.missionTracker.getMissionState(
+        player.id,
+        '106',
+      );
+      expect(missionState).toBeDefined();
+      expect(missionState!.branchStates[0].completed).toBe(true);
+      expect(missionState!.branchStates[1].completed).toBe(false);
+      expect(missionState!.branchStates[2].completed).toBe(false);
+      expect(player.playedMissions.map(resolveCardId)).toContain('106');
+      expect(player.score).toBe(scoreBefore + 2);
+    });
+
+    it('2.6.3 a played mission card stays in front of the player and is not discarded', () => {
+      const { game, player } = createIntegrationGame(
+        'play-card-2-6-3-mission-in-front',
+      );
+      player.hand = ['106'];
+      game.mainDeck = new Deck(['refill-1'], []);
+      const discardBefore = [...game.mainDeck.getDiscardPile()];
+
+      game.processMainAction(player.id, {
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 0 },
+      });
+
+      expect(player.hand).not.toContain('106');
+      expect(player.playedMissions.map(resolveCardId)).toContain('106');
+      expect(game.mainDeck.getDiscardPile()).toEqual(discardBefore);
+      expect(game.mainDeck.getDiscardPile()).not.toContain('106');
     });
   });
 });

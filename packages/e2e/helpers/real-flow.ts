@@ -158,30 +158,30 @@ export async function waitForActionOwner(
   actionType: string,
   timeout = 15_000,
 ): Promise<{ actor: Page; other: Page }> {
-  const firstAction = firstPage.locator(sel.actionMenu(actionType));
-  const secondAction = secondPage.locator(sel.actionMenu(actionType));
-
   await expect
     .poll(
       async () => {
-        const [firstVisible, secondVisible] = await Promise.all([
-          firstAction.isVisible().catch(() => false),
-          secondAction.isVisible().catch(() => false),
+        const [firstState, secondState] = await Promise.all([
+          getActionAvailability(firstPage, actionType),
+          getActionAvailability(secondPage, actionType),
         ]);
 
-        if (firstVisible) return 'first';
-        if (secondVisible) return 'second';
+        if (firstState === 'enabled' && secondState === 'enabled') {
+          return 'both';
+        }
+        if (firstState === 'enabled') return 'first';
+        if (secondState === 'enabled') return 'second';
         return 'none';
       },
       {
         timeout,
-        message: `Timed out waiting for action-menu-${actionType} to appear on either page`,
+        message: `Timed out waiting for action-menu-${actionType} to become enabled on either page`,
       },
     )
     .not.toBe('none');
 
-  const firstVisible = await firstAction.isVisible().catch(() => false);
-  if (firstVisible) {
+  const firstState = await getActionAvailability(firstPage, actionType);
+  if (firstState === 'enabled') {
     return { actor: firstPage, other: secondPage };
   }
   return { actor: secondPage, other: firstPage };
@@ -193,28 +193,48 @@ export async function waitForActionHandoff(
   actionType: string,
   timeout = 15_000,
 ): Promise<void> {
-  const previousAction = previousActor.locator(sel.actionMenu(actionType));
-  const nextAction = nextActor.locator(sel.actionMenu(actionType));
-
   await expect
     .poll(
       async () => {
-        const [previousVisible, nextVisible] = await Promise.all([
-          previousAction.isVisible().catch(() => false),
-          nextAction.isVisible().catch(() => false),
+        const [previousState, nextState] = await Promise.all([
+          getActionAvailability(previousActor, actionType),
+          getActionAvailability(nextActor, actionType),
         ]);
 
-        if (!previousVisible && nextVisible) return 'handoff';
-        if (previousVisible && !nextVisible) return 'stale-previous';
-        if (!previousVisible && !nextVisible) return 'neither';
+        if (previousState !== 'enabled' && nextState === 'enabled') {
+          return 'handoff';
+        }
+        if (previousState === 'enabled' && nextState !== 'enabled') {
+          return 'stale-previous';
+        }
+        if (previousState !== 'enabled' && nextState !== 'enabled') {
+          return 'neither';
+        }
         return 'both';
       },
       {
         timeout,
-        message: `Timed out waiting for action-menu-${actionType} to hand off to the other player`,
+        message: `Timed out waiting for action-menu-${actionType} to hand off via enabled state to the other player`,
       },
     )
     .toBe('handoff');
+}
+
+type TActionAvailability = 'enabled' | 'disabled' | 'hidden';
+
+async function getActionAvailability(
+  page: Page,
+  actionType: string,
+): Promise<TActionAvailability> {
+  const action = page.locator(sel.actionMenu(actionType));
+  const visible = await action.isVisible().catch(() => false);
+
+  if (!visible) {
+    return 'hidden';
+  }
+
+  const enabled = await action.isEnabled().catch(() => false);
+  return enabled ? 'enabled' : 'disabled';
 }
 
 export async function clickPassAndWaitForLogSync(
@@ -251,6 +271,18 @@ export async function clickMainAction(
   await expect(actionBtn).toBeVisible({ timeout: 10_000 });
   await expect(actionBtn).toBeEnabled({ timeout: 5_000 });
   await actionBtn.click();
+}
+
+/**
+ * Click the explicit End Turn button shown during the AWAIT_END_TURN phase.
+ * Non-PASS main actions leave the turn open so players can still take free
+ * actions — the turn only closes once End Turn is triggered.
+ */
+export async function clickEndTurn(page: Page): Promise<void> {
+  const endTurnBtn = page.locator('[data-testid="action-menu-end-turn"]');
+  await expect(endTurnBtn).toBeVisible({ timeout: 10_000 });
+  await expect(endTurnBtn).toBeEnabled({ timeout: 5_000 });
+  await endTurnBtn.click();
 }
 
 /**
@@ -357,16 +389,34 @@ export async function resolveScanSubActions(
       continue;
     }
 
-    const anyCard = page.locator('[data-testid^="select-card-"]').first();
-    const isCardVisible = await anyCard.isVisible().catch(() => false);
-    if (isCardVisible) {
-      await anyCard.click();
-      await page.waitForTimeout(300);
-      const confirmBtn = page.getByRole('button', { name: /confirm/i });
-      const confirmVisible = await confirmBtn.isVisible().catch(() => false);
-      if (confirmVisible) {
-        await confirmBtn.click();
-      }
+    const actionCard = page
+      .locator('[data-testid="bottom-actions"] [data-testid^="select-card-"]')
+      .first();
+    const isActionCardVisible = await actionCard.isVisible().catch(() => false);
+    if (isActionCardVisible) {
+      await actionCard.click();
+      const actionConfirm = page
+        .locator('[data-testid="bottom-actions"]')
+        .getByRole('button', { name: /confirm/i });
+      await actionConfirm.scrollIntoViewIfNeeded().catch(() => undefined);
+      await expect(actionConfirm).toBeEnabled({ timeout: 5_000 });
+      await actionConfirm.click();
+      await page.waitForTimeout(500);
+      continue;
+    }
+
+    const handCard = page
+      .locator('[data-testid="bottom-hand"] [data-testid^="hand-card-"]')
+      .first();
+    const isHandCardVisible = await handCard.isVisible().catch(() => false);
+    if (isHandCardVisible) {
+      await handCard.click();
+      const handConfirm = page
+        .locator('[data-testid="bottom-hand"]')
+        .getByRole('button', { name: /^confirm$/i });
+      await handConfirm.scrollIntoViewIfNeeded().catch(() => undefined);
+      await expect(handConfirm).toBeEnabled({ timeout: 5_000 });
+      await handConfirm.click();
       await page.waitForTimeout(500);
       continue;
     }

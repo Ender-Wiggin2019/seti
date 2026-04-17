@@ -1,11 +1,19 @@
 import { EEffectType } from '@seti/common/types/effect';
 import { EResource } from '@seti/common/types/element';
-import { EPlanet } from '@seti/common/types/protocol/enums';
+import {
+  EMainAction,
+  EPhase,
+  EPlanet,
+} from '@seti/common/types/protocol/enums';
 import {
   EPlayerInputType,
+  type ISelectEndOfRoundCardInputModel,
   type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
 import { getCardRegistry } from '@/engine/cards/CardRegistry.js';
+import { Deck } from '@/engine/deck/Deck.js';
+import { getSectorIndexByPlanet } from '@/engine/effects/scan/ScanEffectUtils.js';
+import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
 import {
   EMissionEventType,
@@ -33,6 +41,83 @@ function createGame(): IGame {
       drawWithReshuffle: () => undefined,
     },
   } as unknown as IGame;
+}
+
+const TEST_PLAYERS = [
+  { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
+  { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
+] as const;
+
+function resolveCardId(card: string | { id?: string }): string | undefined {
+  return typeof card === 'string' ? card : card.id;
+}
+
+function createIntegrationGame(seed: string) {
+  const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
+  const player1 = game.players.find(
+    (candidate) => candidate.id === 'p1',
+  ) as Player;
+  const player2 = game.players.find(
+    (candidate) => candidate.id === 'p2',
+  ) as Player;
+  return { game, player1, player2 };
+}
+
+function resolveEndOfRoundPickIfAny(game: Game, playerId: string): void {
+  const player = game.players.find((candidate) => candidate.id === playerId);
+  if (!player?.waitingFor) {
+    return;
+  }
+
+  const model = player.waitingFor.toModel();
+  if (model.type !== EPlayerInputType.END_OF_ROUND) {
+    return;
+  }
+
+  const picker = model as ISelectEndOfRoundCardInputModel;
+  game.processInput(playerId, {
+    type: EPlayerInputType.END_OF_ROUND,
+    cardId: picker.cards[0].id,
+  });
+}
+
+function passTurn(game: Game, playerId: string): void {
+  game.processMainAction(playerId, { type: EMainAction.PASS });
+  resolveEndOfRoundPickIfAny(game, playerId);
+}
+
+function resolveScanUntilMissionPrompt(game: Game, player: Player): void {
+  while (player.waitingFor) {
+    const model = player.waitingFor.toModel() as {
+      type: EPlayerInputType;
+      title?: string;
+      options?: Array<{ id: string }>;
+    };
+
+    if (model.title === 'Mission triggered! Claim reward?') {
+      return;
+    }
+
+    if (model.type !== EPlayerInputType.OPTION) {
+      throw new Error(`unsupported scan input type: ${model.type}`);
+    }
+
+    const optionIds = model.options?.map((option) => option.id) ?? [];
+    const optionId = optionIds.includes('mark-earth')
+      ? 'mark-earth'
+      : optionIds.includes('done')
+        ? 'done'
+        : optionIds[0];
+
+    if (!optionId) {
+      throw new Error('expected scan option input to have at least one option');
+    }
+
+    game.processInput(player.id, {
+      type: EPlayerInputType.OPTION,
+      optionId,
+    });
+  }
 }
 
 describe('MissionTracker', () => {
@@ -305,5 +390,126 @@ describe('MissionTracker', () => {
     expect(player.score).toBe(beforeScore + 1);
     expect(player.completedMissions).toContain('m1');
     expect(tracker.getMissionState(player.id, 'm1')).toBeUndefined();
+  });
+
+  describe('integration with real game flow', () => {
+    it('prompts the mission owner when another player triggers a full mission on their turn', () => {
+      const { game, player1, player2 } = createIntegrationGame(
+        'mission-tracker-opponent-trigger',
+      );
+      player1.hand = ['106'];
+      player2.hand = ['110'];
+      game.mainDeck = new Deck(['refill-1', 'refill-2'], []);
+
+      game.processMainAction(player1.id, {
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 0 },
+      });
+      game.processEndTurn(player1.id);
+
+      expect(game.activePlayer.id).toBe(player2.id);
+      expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
+      expect(player1.playedMissions.map(resolveCardId)).toEqual(['106']);
+
+      game.processMainAction(player2.id, {
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 0 },
+      });
+
+      const prompt = player1.waitingFor?.toModel() as
+        | ISelectOptionInputModel
+        | undefined;
+
+      expect(prompt?.type).toBe(EPlayerInputType.OPTION);
+      expect(prompt?.title).toBe('Mission triggered! Claim reward?');
+      expect(
+        prompt?.options.some((option) => option.id === 'complete-106-0'),
+      ).toBe(true);
+      expect(player2.waitingFor).toBeUndefined();
+    });
+
+    it('offers only one mission prompt for a scan that triggers rewards across multiple mission cards', () => {
+      const { game, player1, player2 } = createIntegrationGame(
+        'mission-tracker-single-checkpoint-prompt',
+      );
+      player1.hand = ['78', '116'];
+      game.mainDeck = new Deck(['refill-1', 'refill-2', 'refill-3'], []);
+      game.cardRow = ['110', '110', '110'];
+
+      game.processMainAction(player1.id, {
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 0 },
+      });
+      game.processEndTurn(player1.id);
+      if (game.activePlayer.id === player2.id) {
+        passTurn(game, player2.id);
+      }
+      expect(game.activePlayer.id).toBe(player1.id);
+
+      game.processMainAction(player1.id, {
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 0 },
+      });
+      game.processEndTurn(player1.id);
+      if (game.activePlayer.id === player2.id) {
+        passTurn(game, player2.id);
+      }
+      expect(game.activePlayer.id).toBe(player1.id);
+
+      const earthSectorIndex = getSectorIndexByPlanet(
+        game.solarSystem!,
+        EPlanet.EARTH,
+      );
+      const earthSignalBranchIdByColor: Record<string, string> = {
+        'yellow-signal': 'complete-116-0',
+        'red-signal': 'complete-116-1',
+        'blue-signal': 'complete-116-2',
+      };
+      if (earthSectorIndex === null) {
+        throw new Error('expected Earth sector index to resolve');
+      }
+
+      const expectedControlCenterOptionId =
+        earthSignalBranchIdByColor[game.sectors[earthSectorIndex].color];
+
+      if (!expectedControlCenterOptionId) {
+        throw new Error(
+          'expected Earth sector to match a Control Center branch',
+        );
+      }
+
+      game.processMainAction(player1.id, {
+        type: EMainAction.SCAN,
+      });
+      resolveScanUntilMissionPrompt(game, player1);
+
+      const prompt = player1.waitingFor?.toModel() as
+        | ISelectOptionInputModel
+        | undefined;
+      const optionIds = prompt?.options.map((option) => option.id) ?? [];
+
+      expect(prompt?.title).toBe('Mission triggered! Claim reward?');
+      expect(optionIds).toContain('complete-78-0');
+      expect(optionIds).toContain('complete-78-1');
+      expect(optionIds).toContain('complete-78-2');
+      expect(optionIds).toContain(expectedControlCenterOptionId);
+
+      game.processInput(player1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: 'complete-78-0',
+      });
+      game.processEndTurn(player1.id);
+
+      expect(player1.waitingFor).toBeUndefined();
+      expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
+      const state78 = game.missionTracker.getMissionState(player1.id, '78');
+      const state116 = game.missionTracker.getMissionState(player1.id, '116');
+      expect(state78?.branchStates[0]?.completed).toBe(true);
+      expect(
+        state116?.branchStates[
+          Number.parseInt(expectedControlCenterOptionId.slice(-1), 10)
+        ]?.completed,
+      ).toBe(false);
+    });
   });
 });

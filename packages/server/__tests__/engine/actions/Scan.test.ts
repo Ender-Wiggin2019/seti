@@ -3,125 +3,17 @@ import { EMainAction, EPlanet } from '@seti/common/types/protocol/enums';
 import {
   EPlayerInputType,
   type IPlayerInputModel,
-  type ISelectCardInputModel,
   type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
 import { ScanAction } from '@/engine/actions/Scan.js';
 import { Sector } from '@/engine/board/Sector.js';
-import { Deck } from '@/engine/deck/Deck.js';
-import { RefillCardRowEffect } from '@/engine/effects/cardRow/RefillCardRowEffect.js';
-import { MarkSectorSignalEffect } from '@/engine/effects/scan/MarkSectorSignalEffect.js';
 import { EScanSubAction } from '@/engine/effects/scan/ScanActionPool.js';
-import { getSectorIndexByPlanet } from '@/engine/effects/scan/ScanEffectUtils.js';
+import {
+  extractSectorColorFromCardItem,
+  getSectorIndexByPlanet,
+} from '@/engine/effects/scan/ScanEffectUtils.js';
 import { Game } from '@/engine/Game.js';
-import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
-import { projectGameState } from '@/persistence/serializer/GameSerializer.js';
-
-const TEST_PLAYERS = [
-  { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
-  { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
-] as const;
-
-function createMockGame(): IGame {
-  const sectors = [
-    new Sector({ id: 'sector-earth', color: ESector.RED, dataSlotCapacity: 3 }),
-    new Sector({
-      id: 'sector-target',
-      color: ESector.BLUE,
-      dataSlotCapacity: 3,
-    }),
-  ];
-  const mainDeck = new Deck(['refill-1', 'refill-2']);
-  return {
-    solarSystem: null,
-    planetaryBoard: null,
-    techBoard: null,
-    sectors,
-    mainDeck,
-    cardRow: [
-      { id: 'card-row-1', sector: ESector.BLUE },
-      { id: 'card-row-2', sector: ESector.RED },
-      { id: 'card-row-3', sector: ESector.YELLOW },
-    ],
-    endOfRoundStacks: [],
-    hiddenAliens: [],
-    neutralMilestones: [],
-    roundRotationReminderIndex: 0,
-    hasRoundFirstPassOccurred: false,
-    rotationCounter: 0,
-    missionTracker: { recordEvent: () => undefined },
-  } as unknown as IGame;
-}
-
-const basePlayer = () =>
-  new Player({
-    id: 'p1',
-    name: 'Alice',
-    color: 'red',
-    seatIndex: 0,
-    resources: { credits: 4, energy: 3, publicity: 4 },
-  });
-
-function createIntegrationGame(seed: string) {
-  const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
-  game.cardRow = [
-    { id: 'card-row-1', sector: ESector.BLUE },
-    { id: 'card-row-2', sector: ESector.RED },
-    { id: 'card-row-3', sector: ESector.YELLOW },
-  ];
-  game.mainDeck = new Deck(['refill-1', 'refill-2', 'refill-3']);
-  const player = game.players.find((candidate) => candidate.id === 'p1');
-  if (!player) {
-    throw new Error('p1 not found');
-  }
-  return { game, player };
-}
-
-function advanceScanToPoolAfterDiscard(game: Game, player: { id: string }) {
-  game.processInput(player.id, {
-    type: EPlayerInputType.OPTION,
-    optionId: EScanSubAction.MARK_CARD_ROW,
-  });
-
-  const cardInput = playerWaitingFor(
-    game,
-    player.id,
-    EPlayerInputType.CARD,
-  ) as ISelectCardInputModel;
-  const firstCardId = cardInput.cards[0]?.id;
-  if (!firstCardId) {
-    throw new Error('expected a card-row choice');
-  }
-
-  game.processInput(player.id, {
-    type: EPlayerInputType.CARD,
-    cardIds: [firstCardId],
-  });
-
-  let optionInput = playerWaitingFor(
-    game,
-    player.id,
-    EPlayerInputType.OPTION,
-  ) as ISelectOptionInputModel;
-  if (
-    !optionInput.options.some(
-      (option: { id: string }) => option.id === EScanSubAction.DONE,
-    )
-  ) {
-    game.processInput(player.id, {
-      type: EPlayerInputType.OPTION,
-      optionId: optionInput.options[0].id,
-    });
-    optionInput = playerWaitingFor(
-      game,
-      player.id,
-      EPlayerInputType.OPTION,
-    ) as ISelectOptionInputModel;
-  }
-
-  return optionInput;
-}
 
 function finishScanWithDone(game: Game, playerId: string): void {
   const optionInput = playerWaitingFor(
@@ -137,25 +29,6 @@ function finishScanWithDone(game: Game, playerId: string): void {
         (option: { id: string }) => option.id === EScanSubAction.DONE,
       )?.id ?? EScanSubAction.DONE,
   });
-}
-
-function countSignals(
-  sector: Sector,
-  type: 'data' | 'player',
-  playerId?: string,
-): number {
-  return sector.signals.filter((signal) => {
-    if (type === 'data') {
-      return signal.type === 'data';
-    }
-    if (signal.type !== 'player') {
-      return false;
-    }
-    if (playerId) {
-      return signal.playerId === playerId;
-    }
-    return true;
-  }).length;
 }
 
 function requireValue<T>(value: T, message: string): NonNullable<T> {
@@ -180,413 +53,504 @@ function playerWaitingFor(
   return model;
 }
 
-describe('ScanAction', () => {
-  describe('canExecute', () => {
-    it('returns true with sufficient resources', () => {
-      const game = createMockGame();
-      const player = basePlayer();
-      expect(ScanAction.canExecute(player, game)).toBe(true);
-    });
+// -----------------------------------------------------------------------------
+// Integration test suite (rewrite of the prior mock-heavy legacy suite).
+// Each test drives `Game.create()` + `processMainAction(SCAN)` to exercise the
+// real engine pipeline.  Helpers live inline for now; shared builders can be
+// extracted into `__tests__/helpers/` in a later refactor pass.
+// -----------------------------------------------------------------------------
 
-    it('returns false without credits', () => {
-      const game = createMockGame();
-      const player = new Player({
-        id: 'p1',
-        name: 'Alice',
-        color: 'red',
-        seatIndex: 0,
-        resources: { credits: 0, energy: 3, publicity: 4 },
-      });
-      expect(ScanAction.canExecute(player, game)).toBe(false);
-    });
+const INTEGRATION_TEST_PLAYERS = [
+  { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
+  { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
+] as const;
 
-    it('returns false without energy', () => {
-      const game = createMockGame();
-      const player = new Player({
-        id: 'p1',
-        name: 'Alice',
-        color: 'red',
-        seatIndex: 0,
-        resources: { credits: 4, energy: 0, publicity: 4 },
-      });
-      expect(ScanAction.canExecute(player, game)).toBe(false);
-    });
+function createScanIntegrationGame(seed: string): {
+  game: Game;
+  p1: Player;
+  p2: Player;
+} {
+  const game = Game.create(
+    INTEGRATION_TEST_PLAYERS,
+    { playerCount: 2 },
+    seed,
+    seed,
+  );
+  const p1 = requireValue(
+    game.players.find((candidate) => candidate.id === 'p1'),
+    'p1 missing',
+  ) as Player;
+  const p2 = requireValue(
+    game.players.find((candidate) => candidate.id === 'p2'),
+    'p2 missing',
+  ) as Player;
+  return { game, p1, p2 };
+}
 
-    it('returns false without both credits and energy', () => {
-      const game = createMockGame();
-      const player = new Player({
-        id: 'p1',
-        name: 'Alice',
-        color: 'red',
-        seatIndex: 0,
-        resources: { credits: 0, energy: 0, publicity: 4 },
-      });
-      expect(ScanAction.canExecute(player, game)).toBe(false);
-    });
+describe('ScanAction — integration (rewrite)', () => {
+  describe('2.4.1 cost payment', () => {
+    it('deducts 1 credit and 2 energy when processMainAction(SCAN) starts', () => {
+      const { game, p1 } = createScanIntegrationGame('scan-2-4-1');
+      const creditsBefore = p1.resources.credits;
+      const energyBefore = p1.resources.energy;
 
-    it('returns true with exact cost amounts (1 credit, 2 energy)', () => {
-      const game = createMockGame();
-      const player = new Player({
-        id: 'p1',
-        name: 'Alice',
-        color: 'red',
-        seatIndex: 0,
-        resources: { credits: 1, energy: 2, publicity: 0 },
-      });
-      expect(ScanAction.canExecute(player, game)).toBe(true);
+      game.processMainAction(p1.id, { type: EMainAction.SCAN });
+
+      expect(p1.resources.credits).toBe(creditsBefore - 1);
+      expect(p1.resources.energy).toBe(energyBefore - 2);
     });
   });
 
-  describe('execute', () => {
-    it('spends credits and energy', () => {
-      const game = createMockGame();
-      const player = basePlayer();
-      ScanAction.execute(player, game);
-      expect(player.resources.credits).toBe(3);
-      expect(player.resources.energy).toBe(1);
-    });
+  describe('2.4.3 MARK_CARD_ROW discards chosen card and marks matching-color sector', () => {
+    it('discards picked card and marks a sector of matching color, granting +1 data', () => {
+      const { game, p1 } = createScanIntegrationGame('scan-2-4-3');
+      // Find the first card-row entry whose underlying card data has a sector.
+      let firstCardId: string | null = null;
+      let sectorColor: ESector | null = null;
+      for (const entry of game.cardRow) {
+        const id = typeof entry === 'string' ? entry : entry.id;
+        const color = extractSectorColorFromCardItem(entry);
+        if (color && id) {
+          firstCardId = id;
+          sectorColor = color;
+          break;
+        }
+      }
+      if (!firstCardId || !sectorColor) {
+        throw new Error('expected a card-row card with sector color');
+      }
+      const matchingSectorIds = game.sectors
+        .filter((sector) => sector.color === sectorColor)
+        .map((sector) => sector.id);
+      expect(matchingSectorIds.length).toBeGreaterThan(0);
 
-    it('returns a pool menu (SelectOption)', () => {
-      const game = createMockGame();
-      const player = basePlayer();
-      const input = ScanAction.execute(player, game);
-      expect(input).toBeDefined();
-      expect(requireValue(input, 'expected scan pool menu').type).toBe(
-        EPlayerInputType.OPTION,
-      );
-    });
+      const totalDataBefore = p1.resources.data;
+      const cardRowSizeBefore = game.cardRow.length;
 
-    it('Mark Earth marks sector 0 (fallback) then returns to pool', () => {
-      const game = createMockGame();
-      const player = basePlayer();
-      const earth = game.sectors[0] as Sector;
-
-      const poolMenu = ScanAction.execute(player, game);
-      const nextMenu = requireValue(
-        poolMenu,
-        'expected scan pool menu',
-      ).process({
-        type: EPlayerInputType.OPTION,
-        optionId: EScanSubAction.MARK_EARTH,
-      });
-
-      expect(
-        earth.signals.some(
-          (s) => s.type === 'player' && s.playerId === player.id,
-        ),
-      ).toBe(true);
-      expect(nextMenu).toBeDefined();
-      expect(requireValue(nextMenu, 'expected returned pool menu').type).toBe(
-        EPlayerInputType.OPTION,
-      );
-    });
-
-    it('Mark Card Row → select card → mark target sector → refills on done', () => {
-      const game = createMockGame();
-      const player = basePlayer();
-      const target = game.sectors[1] as Sector;
-
-      const poolMenu = ScanAction.execute(player, game);
-
-      const cardSelect = requireValue(
-        poolMenu,
-        'expected scan pool menu',
-      ).process({
+      game.processMainAction(p1.id, { type: EMainAction.SCAN });
+      game.processInput(p1.id, {
         type: EPlayerInputType.OPTION,
         optionId: EScanSubAction.MARK_CARD_ROW,
       });
-      expect(cardSelect).toBeDefined();
-      expect(
-        requireValue(cardSelect, 'expected card selection input').type,
-      ).toBe(EPlayerInputType.CARD);
-
-      const afterCard = requireValue(
-        cardSelect,
-        'expected card selection input',
-      ).process({
+      game.processInput(p1.id, {
         type: EPlayerInputType.CARD,
-        cardIds: ['card-row-1'],
+        cardIds: [firstCardId],
       });
 
-      expect(
-        target.signals.some(
-          (s) => s.type === 'player' && s.playerId === player.id,
-        ),
-      ).toBe(true);
-
-      requireValue(afterCard, 'expected returned scan pool menu').process({
-        type: EPlayerInputType.OPTION,
-        optionId: 'done',
-      });
-
-      expect(game.cardRow.length).toBe(3);
-    });
-
-    it('throws when the action is illegal (insufficient resources)', () => {
-      const game = createMockGame();
-      const player = new Player({
-        id: 'p1',
-        name: 'Alice',
-        color: 'red',
-        seatIndex: 0,
-        resources: { credits: 0, energy: 0, publicity: 4 },
-      });
-      expect(() => ScanAction.execute(player, game)).toThrow();
-    });
-
-    it('integration: refills the card row only after the scan is fully resolved', () => {
-      const { game, player } = createIntegrationGame('scan-row-refill');
-      const initialCardIds = game.cardRow.map((card) =>
-        typeof card === 'string' ? card : card.id,
-      );
-      const removedCardId = initialCardIds[0];
-
-      game.processMainAction(player.id, { type: EMainAction.SCAN });
-      const returnedPool = advanceScanToPoolAfterDiscard(game, player);
-
-      const preDoneCardIds = game.cardRow.map((card) =>
-        typeof card === 'string' ? card : card.id,
-      );
-
-      expect(preDoneCardIds).toHaveLength(2);
-      expect(preDoneCardIds).not.toContain(removedCardId);
-      expect(preDoneCardIds).not.toContain('refill-1');
-      expect(
-        (returnedPool as ISelectOptionInputModel).options.some(
-          (option: { id: string }) => option.id === 'done',
-        ),
-      ).toBe(true);
-
-      game.processInput(player.id, {
-        type: EPlayerInputType.OPTION,
-        optionId: 'done',
-      });
-
-      const refilledCardIds = game.cardRow.map((card) =>
-        typeof card === 'string' ? card : card.id,
-      );
-
-      expect(refilledCardIds).toHaveLength(3);
-      expect(refilledCardIds).not.toContain(removedCardId);
-      expect(refilledCardIds).toContain('refill-1');
-    });
-
-    it('integration: mark-earth uses the real solar-system sector and grants +1 data', () => {
-      const { game, player } = createIntegrationGame('scan-mark-earth');
-      const earthSectorIndex = getSectorIndexByPlanet(
-        requireValue(game.solarSystem, 'expected solar system'),
-        EPlanet.EARTH,
-      );
-      const sectorIndex = requireValue(
-        earthSectorIndex,
-        'expected earth sector index',
-      );
-
-      const earthSector = game.sectors[sectorIndex] as Sector;
-      const signalCountBefore = earthSector.signals.length;
-      const dataSignalsBefore = countSignals(earthSector, 'data');
-      const playerSignalsBefore = countSignals(
-        earthSector,
-        'player',
-        player.id,
-      );
-      const dataBefore = player.resources.data;
-      const creditsBefore = player.resources.credits;
-      const energyBefore = player.resources.energy;
-
-      game.processMainAction(player.id, { type: EMainAction.SCAN });
-      game.processInput(player.id, {
-        type: EPlayerInputType.OPTION,
-        optionId: EScanSubAction.MARK_EARTH,
-      });
-
-      const returnedPool = playerWaitingFor(
-        game,
-        player.id,
-        EPlayerInputType.OPTION,
-      ) as ISelectOptionInputModel;
-      expect(
-        earthSector.signals.some(
-          (signal) => signal.type === 'player' && signal.playerId === player.id,
-        ),
-      ).toBe(true);
-      expect(earthSector.signals).toHaveLength(signalCountBefore);
-      expect(countSignals(earthSector, 'data')).toBe(dataSignalsBefore - 1);
-      expect(countSignals(earthSector, 'player', player.id)).toBe(
-        playerSignalsBefore + 1,
-      );
-      expect(player.resources.data).toBe(dataBefore + 1);
-      expect(player.resources.credits).toBe(creditsBefore - 1);
-      expect(player.resources.energy).toBe(energyBefore - 2);
-
-      game.processInput(player.id, {
-        type: EPlayerInputType.OPTION,
-        optionId:
-          returnedPool.options.find(
-            (option: { id: string }) => option.id === EScanSubAction.DONE,
-          )?.id ?? EScanSubAction.DONE,
-      });
-
-      expect(player.waitingFor).toBeUndefined();
-      expect(game.activePlayer.id).toBe('p2');
-    });
-
-    it('integration: projected state dataPoolCount increases after mark-earth', () => {
-      const { game, player } = createIntegrationGame(
-        'scan-data-pool-projection',
-      );
-      const poolBefore = player.dataPool.count;
-
-      game.processMainAction(player.id, { type: EMainAction.SCAN });
-
-      const stateAfterScan = projectGameState(game, player.id);
-      const myStateAfterScan = stateAfterScan.players.find(
-        (p) => p.playerId === player.id,
-      );
-      expect(requireValue(myStateAfterScan, 'player state').dataPoolCount).toBe(
-        poolBefore,
-      );
-
-      game.processInput(player.id, {
-        type: EPlayerInputType.OPTION,
-        optionId: EScanSubAction.MARK_EARTH,
-      });
-
-      const stateAfterMark = projectGameState(game, player.id);
-      const myStateAfterMark = stateAfterMark.players.find(
-        (p) => p.playerId === player.id,
-      );
-      expect(requireValue(myStateAfterMark, 'player state').dataPoolCount).toBe(
-        poolBefore + 1,
-      );
-    });
-
-    it('integration: the second earth-sector data slot awards +2 VP in the same scan when both marks target it', () => {
-      const { game, player } = createIntegrationGame(
-        'scan-second-slot-vp-same-scan',
-      );
-      const earthSectorIndex = getSectorIndexByPlanet(
-        requireValue(game.solarSystem, 'expected solar system'),
-        EPlanet.EARTH,
-      );
-
-      if (earthSectorIndex === null) {
-        throw new Error('expected earth sector');
+      // If color maps to >1 sector, resolve the forced sector choice.
+      let chosenSectorId: string | null = null;
+      if (matchingSectorIds.length > 1) {
+        const sectorPick = playerWaitingFor(
+          game,
+          p1.id,
+          EPlayerInputType.OPTION,
+        ) as ISelectOptionInputModel;
+        const option = sectorPick.options.find((o) =>
+          matchingSectorIds.includes(o.id),
+        );
+        chosenSectorId = requireValue(option, 'expected sector choice').id;
+        game.processInput(p1.id, {
+          type: EPlayerInputType.OPTION,
+          optionId: chosenSectorId,
+        });
+      } else {
+        chosenSectorId = matchingSectorIds[0];
       }
 
-      const earthSector = game.sectors[earthSectorIndex] as Sector;
-      game.cardRow = [{ id: 'earth-match', sector: earthSector.color }];
-      const scoreBefore = player.score;
-      const dataBefore = player.resources.data;
+      const markedSector = requireValue(
+        game.sectors.find((s) => s.id === chosenSectorId),
+        'expected marked sector to exist',
+      ) as Sector;
 
-      game.processMainAction(player.id, { type: EMainAction.SCAN });
-      game.processInput(player.id, {
+      expect(markedSector.getPlayerMarkerCount(p1.id)).toBe(1);
+      expect(p1.resources.data).toBe(totalDataBefore + 1);
+      expect(
+        game.cardRow.some((c) =>
+          typeof c === 'string' ? c === firstCardId : c.id === firstCardId,
+        ),
+      ).toBe(false);
+      // Card row not yet refilled (happens on scan Done — covered in 2.4.7).
+      expect(game.cardRow.length).toBe(cardRowSizeBefore - 1);
+    });
+  });
+
+  describe('2.4.4 second data slot awards +2 VP', () => {
+    it('grants +2 VP on the 2nd signal placed in the same sector within one scan', () => {
+      const { game, p1 } = createScanIntegrationGame('scan-2-4-4');
+      const earthIdx = requireValue(
+        getSectorIndexByPlanet(
+          requireValue(game.solarSystem, 'expected solar system'),
+          EPlanet.EARTH,
+        ),
+        'expected earth sector index',
+      );
+      const earthSector = game.sectors[earthIdx] as Sector;
+
+      // Inject a single card-row card matching earth's color so MARK_CARD_ROW
+      // targets earth too — both marks land in the same sector.
+      game.cardRow = [{ id: 'earth-match', sector: earthSector.color }];
+      const scoreBefore = p1.score;
+      const dataBefore = p1.resources.data;
+
+      game.processMainAction(p1.id, { type: EMainAction.SCAN });
+      game.processInput(p1.id, {
         type: EPlayerInputType.OPTION,
         optionId: EScanSubAction.MARK_EARTH,
       });
-      game.processInput(player.id, {
+      game.processInput(p1.id, {
         type: EPlayerInputType.OPTION,
         optionId: EScanSubAction.MARK_CARD_ROW,
       });
-      game.processInput(player.id, {
+      game.processInput(p1.id, {
         type: EPlayerInputType.CARD,
         cardIds: ['earth-match'],
       });
 
-      while (player.waitingFor) {
-        const model = player.waitingFor.toModel();
-        if (model.type !== EPlayerInputType.OPTION) break;
-        const optionModel = model as ISelectOptionInputModel;
-        const earthOption = optionModel.options.find(
-          (option) => option.id === earthSector.id,
-        );
-        const doneOption = optionModel.options.find(
-          (option) => option.id === EScanSubAction.DONE,
-        );
-        const chosen = earthOption ?? doneOption;
-        if (!chosen) break;
-        game.processInput(player.id, {
+      // The card row card's color may match multiple sectors; if a sector
+      // picker appears, pick earth explicitly.
+      const sectorIds = game.sectors
+        .filter((s) => s.color === earthSector.color)
+        .map((s) => s.id);
+      if (sectorIds.length > 1) {
+        const pick = playerWaitingFor(
+          game,
+          p1.id,
+          EPlayerInputType.OPTION,
+        ) as ISelectOptionInputModel;
+        const earthChoice = pick.options.find((o) => o.id === earthSector.id);
+        game.processInput(p1.id, {
           type: EPlayerInputType.OPTION,
-          optionId: chosen.id,
+          optionId: requireValue(earthChoice, 'expected earth option').id,
         });
       }
 
-      expect(player.score).toBe(scoreBefore + 2);
-      expect(player.resources.data).toBe(dataBefore + 2);
-      expect(countSignals(earthSector, 'data')).toBe(
-        earthSector.dataSlotCapacity - 2,
-      );
-      expect(countSignals(earthSector, 'player', player.id)).toBe(2);
-      expect(player.waitingFor).toBeUndefined();
-      expect(game.activePlayer.id).toBe('p2');
+      expect(earthSector.getPlayerMarkerCount(p1.id)).toBe(2);
+      expect(p1.score).toBe(scoreBefore + 2);
+      // Both marks yielded a data each (they displaced data tokens).
+      expect(p1.resources.data).toBe(dataBefore + 2);
     });
+  });
 
-    it('integration: when the data pool is already full, scan data gains overflow into stash', () => {
-      const { game, player } = createIntegrationGame(
-        'scan-full-data-pool-overflow',
+  describe('2.4.5 overflow signals beyond slot capacity', () => {
+    it('appends a player marker without data/VP gain when the sector has no data tokens left', () => {
+      const { game, p1, p2 } = createScanIntegrationGame('scan-2-4-5');
+      const earthIdx = requireValue(
+        getSectorIndexByPlanet(
+          requireValue(game.solarSystem, 'expected solar system'),
+          EPlanet.EARTH,
+        ),
+        'expected earth sector index',
       );
-      player.resources.gain({ data: player.dataPool.max });
+      const earthSector = game.sectors[earthIdx] as Sector;
 
-      const totalDataBefore = player.resources.data;
-      const poolBefore = player.dataPool.count;
-      const stashBefore = player.data.getState().stash;
+      // Pre-fill every data slot with p2's markers so the sector is fulfilled
+      // but not yet resolved.
+      for (let i = 0; i < earthSector.dataSlotCapacity; i += 1) {
+        earthSector.markSignal(p2.id);
+      }
+      expect(earthSector.getDataCount()).toBe(0);
+      expect(earthSector.isFulfilled()).toBe(true);
 
-      game.processMainAction(player.id, { type: EMainAction.SCAN });
-      game.processInput(player.id, {
+      const dataBefore = p1.resources.data;
+      const scoreBefore = p1.score;
+      const signalsBefore = earthSector.signals.length;
+
+      game.processMainAction(p1.id, { type: EMainAction.SCAN });
+      game.processInput(p1.id, {
         type: EPlayerInputType.OPTION,
         optionId: EScanSubAction.MARK_EARTH,
       });
 
-      expect(player.resources.data).toBe(totalDataBefore + 1);
-      expect(player.dataPool.count).toBe(poolBefore);
-      expect(player.data.getState().stash).toBe(stashBefore + 1);
-
-      finishScanWithDone(game, player.id);
-
-      expect(player.waitingFor).toBeUndefined();
-      expect(game.activePlayer.id).toBe('p2');
+      // Assert overflow state *before* the scan's Done resolves fulfillment.
+      expect(earthSector.signals.length).toBe(signalsBefore + 1);
+      expect(earthSector.getPlayerMarkerCount(p1.id)).toBe(1);
+      expect(p1.resources.data).toBe(dataBefore);
+      expect(p1.score).toBe(scoreBefore);
     });
   });
 
-  describe('MarkSectorSignalEffect (atomic)', () => {
-    it('marks signal by index', () => {
-      const game = createMockGame();
-      const player = basePlayer();
-      const result = MarkSectorSignalEffect.markByIndex(player, game, 0);
-      expect(requireValue(result, 'expected marked sector').sectorId).toBe(
-        'sector-earth',
+  describe('2.4.6 completing a sector via scan triggers deferred resolution', () => {
+    it('resolves the sector (winner recorded, reset) after the scan finishes', () => {
+      const { game, p1, p2 } = createScanIntegrationGame('scan-2-4-6');
+      const earthIdx = requireValue(
+        getSectorIndexByPlanet(
+          requireValue(game.solarSystem, 'expected solar system'),
+          EPlanet.EARTH,
+        ),
+        'expected earth sector index',
       );
-    });
+      const earthSector = game.sectors[earthIdx] as Sector;
 
-    it('marks signal by color', () => {
-      const game = createMockGame();
-      const player = basePlayer();
-      let result: { sectorId: string } | null = null;
-      MarkSectorSignalEffect.markByColor(player, game, ESector.BLUE, (r) => {
-        result = r;
-        return undefined;
+      // Leave 1 data token remaining; scan's MARK_EARTH will displace it.
+      for (let i = 0; i < earthSector.dataSlotCapacity - 1; i += 1) {
+        earthSector.markSignal(p2.id);
+      }
+      expect(earthSector.getDataCount()).toBe(1);
+      expect(earthSector.sectorWinners).toHaveLength(0);
+
+      game.processMainAction(p1.id, { type: EMainAction.SCAN });
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_EARTH,
       });
-      const markedSector = requireValue(
-        result as { sectorId: string } | null,
-        'expected marked sector',
-      );
-      expect(markedSector.sectorId).toBe('sector-target');
-    });
+      // End scan → triggers SectorFulfillmentEffect.checkAll.
+      finishScanWithDone(game, p1.id);
 
-    it('returns null for invalid index', () => {
-      const game = createMockGame();
-      const player = basePlayer();
-      expect(MarkSectorSignalEffect.markByIndex(player, game, 99)).toBeNull();
+      // p2 has more markers → p2 wins; p1 is 2nd-place marker at idx 0.
+      expect(earthSector.sectorWinners).toEqual([p2.id]);
+      expect(earthSector.signals.length).toBe(earthSector.dataSlotCapacity);
+      expect(earthSector.signals[0]).toEqual({
+        type: 'player',
+        playerId: p1.id,
+      });
+      // Other slots refilled with data.
+      expect(earthSector.getDataCount()).toBe(earthSector.dataSlotCapacity - 1);
+      expect(earthSector.completed).toBe(false);
     });
   });
 
-  describe('RefillCardRowEffect', () => {
-    it('fills card row to target size', () => {
-      const game = createMockGame();
+  describe('2.4.7 card row refill is deferred until scan Done', () => {
+    it('does not refill the card row immediately after MARK_CARD_ROW; only after Done', () => {
+      const { game, p1 } = createScanIntegrationGame('scan-2-4-7');
+      const initialIds = game.cardRow.map((c) =>
+        typeof c === 'string' ? c : (c.id ?? ''),
+      );
+      const pickedId = requireValue(initialIds[0], 'expected card-row card');
+
+      game.processMainAction(p1.id, { type: EMainAction.SCAN });
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_CARD_ROW,
+      });
+      game.processInput(p1.id, {
+        type: EPlayerInputType.CARD,
+        cardIds: [pickedId],
+      });
+
+      // Resolve any sector picker that may appear when the card's color
+      // matches multiple sectors.
+      const maybePick = p1.waitingFor?.toModel();
+      if (
+        maybePick?.type === EPlayerInputType.OPTION &&
+        !(maybePick as ISelectOptionInputModel).options.some(
+          (o) => o.id === EScanSubAction.DONE,
+        )
+      ) {
+        game.processInput(p1.id, {
+          type: EPlayerInputType.OPTION,
+          optionId: (maybePick as ISelectOptionInputModel).options[0].id,
+        });
+      }
+
+      // Between pick and Done: card row is short by 1 and NOT refilled.
+      const midIds = game.cardRow.map((c) =>
+        typeof c === 'string' ? c : c.id,
+      );
+      expect(midIds).toHaveLength(initialIds.length - 1);
+      expect(midIds).not.toContain(pickedId);
+
+      // MARK_EARTH is required before the scan can finish. When it is the
+      // last remaining sub-action, the pool auto-closes after it resolves.
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_EARTH,
+      });
+      if (p1.waitingFor) {
+        finishScanWithDone(game, p1.id);
+      }
+
+      // After Done: card row refilled to original size.
+      expect(game.cardRow).toHaveLength(3);
+      expect(
+        game.cardRow.map((c) => (typeof c === 'string' ? c : c.id)),
+      ).not.toContain(pickedId);
+    });
+  });
+
+  describe('2.4.8 MARK_EARTH is mandatory before scan can finish', () => {
+    it('does not offer DONE until MARK_EARTH has been executed', () => {
+      const { game, p1 } = createScanIntegrationGame('scan-2-4-8-a');
+
+      game.processMainAction(p1.id, { type: EMainAction.SCAN });
+
+      const initialPool = playerWaitingFor(
+        game,
+        p1.id,
+        EPlayerInputType.OPTION,
+      ) as ISelectOptionInputModel;
+
+      expect(initialPool.options.some((o) => o.id === EScanSubAction.MARK_EARTH)).toBe(true);
+      expect(initialPool.options.some((o) => o.id === EScanSubAction.DONE)).toBe(false);
+    });
+
+    it('offers DONE after MARK_EARTH is executed', () => {
+      const { game, p1 } = createScanIntegrationGame('scan-2-4-8-b');
+
+      game.processMainAction(p1.id, { type: EMainAction.SCAN });
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_EARTH,
+      });
+
+      const poolAfterMark = playerWaitingFor(
+        game,
+        p1.id,
+        EPlayerInputType.OPTION,
+      ) as ISelectOptionInputModel;
+
+      expect(poolAfterMark.options.some((o) => o.id === EScanSubAction.DONE)).toBe(true);
+    });
+  });
+
+  describe('2.4.9 data pool full → overflow to stash', () => {
+    it('routes scan data to stash when data pool is already at max', () => {
+      const { game, p1 } = createScanIntegrationGame('scan-2-4-9');
+      p1.resources.gain({ data: p1.dataPool.max });
+      expect(p1.dataPool.count).toBe(p1.dataPool.max);
+
+      const totalDataBefore = p1.resources.data;
+      const poolBefore = p1.dataPool.count;
+      const stashBefore = p1.data.getState().stash;
+
+      game.processMainAction(p1.id, { type: EMainAction.SCAN });
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_EARTH,
+      });
+
+      expect(p1.resources.data).toBe(totalDataBefore + 1);
+      expect(p1.dataPool.count).toBe(poolBefore);
+      expect(p1.data.getState().stash).toBe(stashBefore + 1);
+    });
+  });
+
+  describe('2.4.10 missionTracker records SIGNAL_PLACED events', () => {
+    it('emits one SIGNAL_PLACED event per mark, carrying the sector color', async () => {
+      const { game, p1 } = createScanIntegrationGame('scan-2-4-10');
+      const earthIdx = requireValue(
+        getSectorIndexByPlanet(
+          requireValue(game.solarSystem, 'expected solar system'),
+          EPlanet.EARTH,
+        ),
+        'expected earth sector index',
+      );
+      const earthSector = game.sectors[earthIdx] as Sector;
+
+      const { EMissionEventType } = await import(
+        '@/engine/missions/IMission.js'
+      );
+      const captured: Array<{ type: string; color?: string }> = [];
+      const originalRecord = game.missionTracker.recordEvent.bind(
+        game.missionTracker,
+      );
+      game.missionTracker.recordEvent = (event) => {
+        captured.push(event as { type: string; color?: string });
+        originalRecord(event);
+      };
+
+      game.processMainAction(p1.id, { type: EMainAction.SCAN });
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_EARTH,
+      });
+
+      const signalPlacedEvents = captured.filter(
+        (e) => e.type === EMissionEventType.SIGNAL_PLACED,
+      );
+      expect(signalPlacedEvents).toHaveLength(1);
+      expect(signalPlacedEvents[0].color).toBe(earthSector.color);
+    });
+  });
+
+  describe('2.4E.1 insufficient resources', () => {
+    it('cannot scan when player has fewer than 1 credit', () => {
+      const { game, p1 } = createScanIntegrationGame('scan-2-4-e1-credits');
+      p1.resources.spend({ credits: p1.resources.credits });
+
+      expect(ScanAction.canExecute(p1, game)).toBe(false);
+      expect(() =>
+        game.processMainAction(p1.id, { type: EMainAction.SCAN }),
+      ).toThrowError(/Scan/i);
+    });
+
+    it('cannot scan when player has fewer than 2 energy', () => {
+      const { game, p1 } = createScanIntegrationGame('scan-2-4-e1-energy');
+      p1.resources.spend({ energy: p1.resources.energy - 1 });
+      expect(p1.resources.energy).toBeLessThan(2);
+
+      expect(ScanAction.canExecute(p1, game)).toBe(false);
+      expect(() =>
+        game.processMainAction(p1.id, { type: EMainAction.SCAN }),
+      ).toThrowError(/Scan/i);
+    });
+  });
+
+  describe('2.4E.2 empty card row still allows scan (earth-only)', () => {
+    it('offers only MARK_EARTH when card row is empty, and scan completes after it', () => {
+      const { game, p1 } = createScanIntegrationGame('scan-2-4-e2');
       game.cardRow = [];
-      const result = RefillCardRowEffect.execute(game, 3);
-      expect(result.cardsAdded).toBe(2);
-      expect(game.cardRow.length).toBe(2);
+      const earthIdx = requireValue(
+        getSectorIndexByPlanet(
+          requireValue(game.solarSystem, 'expected solar system'),
+          EPlanet.EARTH,
+        ),
+        'expected earth sector index',
+      );
+      const earthSector = game.sectors[earthIdx] as Sector;
+
+      game.processMainAction(p1.id, { type: EMainAction.SCAN });
+
+      const initialPool = playerWaitingFor(
+        game,
+        p1.id,
+        EPlayerInputType.OPTION,
+      ) as ISelectOptionInputModel;
+      const optionIds = initialPool.options.map((o) => o.id);
+      expect(optionIds).toContain(EScanSubAction.MARK_EARTH);
+      expect(optionIds).not.toContain(EScanSubAction.MARK_CARD_ROW);
+      expect(optionIds).not.toContain(EScanSubAction.DONE);
+
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_EARTH,
+      });
+
+      expect(earthSector.getPlayerMarkerCount(p1.id)).toBe(1);
+      expect(p1.waitingFor).toBeUndefined();
+    });
+  });
+
+  describe('2.4.2 MARK_EARTH displaces data token and routes it to player', () => {
+    it('replaces the rightmost data signal on the earth sector with a player marker and gains 1 data', () => {
+      const { game, p1 } = createScanIntegrationGame('scan-2-4-2');
+      const earthIdx = requireValue(
+        getSectorIndexByPlanet(
+          requireValue(game.solarSystem, 'expected solar system'),
+          EPlanet.EARTH,
+        ),
+        'expected earth sector index',
+      );
+      const earthSector = game.sectors[earthIdx] as Sector;
+
+      const signalsCountBefore = earthSector.signals.length;
+      const dataCountBefore = earthSector.getDataCount();
+      const playerMarksBefore = earthSector.getPlayerMarkerCount(p1.id);
+      const totalDataBefore = p1.resources.data;
+      const dataPoolBefore = p1.dataPool.count;
+
+      game.processMainAction(p1.id, { type: EMainAction.SCAN });
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_EARTH,
+      });
+
+      expect(earthSector.signals.length).toBe(signalsCountBefore);
+      expect(earthSector.getDataCount()).toBe(dataCountBefore - 1);
+      expect(earthSector.getPlayerMarkerCount(p1.id)).toBe(
+        playerMarksBefore + 1,
+      );
+      expect(p1.resources.data).toBe(totalDataBefore + 1);
+      expect(p1.dataPool.count).toBe(dataPoolBefore + 1);
     });
   });
 });

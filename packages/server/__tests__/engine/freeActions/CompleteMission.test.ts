@@ -1,6 +1,12 @@
-import { ETrace } from '@seti/common/types/element';
-import { EFreeAction } from '@seti/common/types/protocol/enums';
+import { ESector, ETrace } from '@seti/common/types/element';
+import { EFreeAction, EMainAction } from '@seti/common/types/protocol/enums';
+import {
+  EPlayerInputType,
+  type ISelectEndOfRoundCardInputModel,
+} from '@seti/common/types/protocol/playerInput';
 import { getCardRegistry } from '@/engine/cards/CardRegistry.js';
+import { Deck } from '@/engine/deck/Deck.js';
+import { CompleteMissionFreeAction } from '@/engine/freeActions/CompleteMission.js';
 import { Game } from '@/engine/Game.js';
 
 const TEST_PLAYERS = [
@@ -8,7 +14,29 @@ const TEST_PLAYERS = [
   { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
 ] as const;
 
+function resolveCardId(card: string | { id?: string }): string | undefined {
+  return typeof card === 'string' ? card : card.id;
+}
+
 describe('CompleteMissionFreeAction', () => {
+  function resolveEndOfRoundPickIfAny(game: Game, playerId: string): void {
+    const player = game.players.find((candidate) => candidate.id === playerId);
+    if (!player?.waitingFor) {
+      return;
+    }
+
+    const model = player.waitingFor.toModel();
+    if (model.type !== EPlayerInputType.END_OF_ROUND) {
+      return;
+    }
+
+    const picker = model as ISelectEndOfRoundCardInputModel;
+    game.processInput(playerId, {
+      type: EPlayerInputType.END_OF_ROUND,
+      cardId: picker.cards[0].id,
+    });
+  }
+
   it('completes an active quick mission through game.processFreeAction', () => {
     const game = Game.create(
       TEST_PLAYERS,
@@ -123,5 +151,106 @@ describe('CompleteMissionFreeAction', () => {
     expect(
       game.missionTracker.getMissionState(player.id, '64'),
     ).toBeUndefined();
+  });
+
+  it('integrates real mission play, delayed completion, and reward payout for an observation quick mission', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'complete-mission-real-play-delay',
+    );
+    const player = game.players[0];
+    const opponent = game.players[1];
+    player.hand = ['37'];
+    game.mainDeck = new Deck(['refill-1', 'refill-2'], []);
+
+    game.processMainAction(player.id, {
+      type: EMainAction.PLAY_CARD,
+      payload: { cardIndex: 0 },
+    });
+
+    expect(player.playedMissions.map(resolveCardId)).toEqual(['37']);
+    expect(CompleteMissionFreeAction.canExecute(player, game)).toBe(false);
+
+    for (const sector of game.sectors.filter(
+      (sector) => sector.color === ESector.RED,
+    )) {
+      sector.sectorWinners.push(player.id);
+    }
+
+    expect(CompleteMissionFreeAction.canExecute(player, game)).toBe(true);
+
+    game.processEndTurn(player.id);
+    game.processMainAction(opponent.id, { type: EMainAction.PASS });
+    resolveEndOfRoundPickIfAny(game, opponent.id);
+
+    const scoreBefore = player.score;
+    const publicityBefore = player.resources.publicity;
+
+    game.processFreeAction(player.id, {
+      type: EFreeAction.COMPLETE_MISSION,
+      cardId: '37',
+    });
+
+    expect(player.score).toBe(scoreBefore + 4);
+    expect(player.resources.publicity).toBe(publicityBefore + 1);
+    expect(player.playedMissions).toHaveLength(0);
+    expect(
+      player.completedMissions.map((card) =>
+        typeof card === 'string' ? card : card.id,
+      ),
+    ).toEqual(['37']);
+    expect(
+      game.missionTracker.getMissionState(player.id, '37'),
+    ).toBeUndefined();
+  });
+
+  it('keeps canExecute false for an unmet quick mission that was played through the real action pipeline', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'complete-mission-unmet-condition',
+    );
+    const player = game.players[0];
+    player.hand = ['37'];
+    game.mainDeck = new Deck(['refill-1'], []);
+
+    game.processMainAction(player.id, {
+      type: EMainAction.PLAY_CARD,
+      payload: { cardIndex: 0 },
+    });
+
+    expect(CompleteMissionFreeAction.canExecute(player, game)).toBe(false);
+  });
+
+  it('rejects completing a satisfied quick mission outside the owner turn', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'complete-mission-not-your-turn',
+    );
+    const player = game.players[0];
+    player.hand = ['37'];
+    game.mainDeck = new Deck(['refill-1'], []);
+
+    game.processMainAction(player.id, {
+      type: EMainAction.PLAY_CARD,
+      payload: { cardIndex: 0 },
+    });
+    game.processEndTurn(player.id);
+
+    for (const sector of game.sectors.filter(
+      (sector) => sector.color === ESector.RED,
+    )) {
+      sector.sectorWinners.push(player.id);
+    }
+
+    expect(CompleteMissionFreeAction.canExecute(player, game)).toBe(true);
+    expect(() =>
+      game.processFreeAction(player.id, {
+        type: EFreeAction.COMPLETE_MISSION,
+        cardId: '37',
+      }),
+    ).toThrow('not the active player');
   });
 });

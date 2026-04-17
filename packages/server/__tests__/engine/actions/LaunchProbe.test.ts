@@ -1,3 +1,4 @@
+import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { EMainAction, EPlanet } from '@seti/common/types/protocol/enums';
 import {
   EPlayerInputType,
@@ -5,12 +6,9 @@ import {
 } from '@seti/common/types/protocol/playerInput';
 import { ETechId } from '@seti/common/types/tech';
 import { LaunchProbeAction } from '@/engine/actions/LaunchProbe.js';
-import { BoardBuilder } from '@/engine/board/BoardBuilder.js';
-import { LaunchProbeEffect } from '@/engine/effects/probe/LaunchProbeEffect.js';
 import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
-import { Player } from '@/engine/player/Player.js';
-import { SeededRandom } from '@/shared/rng/SeededRandom.js';
+import { GameError } from '@/shared/errors/GameError.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -42,156 +40,8 @@ function requireSolarSystem(game: IGame) {
   return game.solarSystem;
 }
 
-function createMockGame(): IGame {
-  const rng = new SeededRandom('launch-probe-test');
-  const solarSystem = BoardBuilder.buildSolarSystemFromRandom(rng);
-  return {
-    solarSystem,
-    planetaryBoard: null,
-    techBoard: null,
-    sectors: [],
-    mainDeck: { draw: () => undefined, discard: () => undefined },
-    cardRow: [],
-    endOfRoundStacks: [],
-    hiddenAliens: [],
-    neutralMilestones: [],
-    roundRotationReminderIndex: 0,
-    hasRoundFirstPassOccurred: false,
-    rotationCounter: 0,
-  } as unknown as IGame;
-}
-
-function createPlayer(overrides: Record<string, unknown> = {}): Player {
-  return new Player({
-    id: 'p1',
-    name: 'Alice',
-    color: 'red',
-    seatIndex: 0,
-    resources: { credits: 4, energy: 3, publicity: 4 },
-    probesInSpace: 0,
-    probeSpaceLimit: 1,
-    ...overrides,
-  });
-}
-
-describe('LaunchProbeAction', () => {
-  describe('canExecute', () => {
-    it('returns true with 2+ credits and probes below limit', () => {
-      const game = createMockGame();
-      const player = createPlayer();
-      expect(LaunchProbeAction.canExecute(player, game)).toBe(true);
-    });
-
-    it('returns true with exactly 2 credits', () => {
-      const game = createMockGame();
-      const player = createPlayer({
-        resources: { credits: 2, energy: 0, publicity: 0 },
-      });
-      expect(LaunchProbeAction.canExecute(player, game)).toBe(true);
-    });
-
-    it('returns false with only 1 credit', () => {
-      const game = createMockGame();
-      const player = createPlayer({
-        resources: { credits: 1, energy: 3, publicity: 4 },
-      });
-      expect(LaunchProbeAction.canExecute(player, game)).toBe(false);
-    });
-
-    it('returns false with 0 credits', () => {
-      const game = createMockGame();
-      const player = createPlayer({
-        resources: { credits: 0, energy: 3, publicity: 4 },
-      });
-      expect(LaunchProbeAction.canExecute(player, game)).toBe(false);
-    });
-
-    it('returns false when probes in space equals limit', () => {
-      const game = createMockGame();
-      const player = createPlayer({ probesInSpace: 1, probeSpaceLimit: 1 });
-      expect(LaunchProbeAction.canExecute(player, game)).toBe(false);
-    });
-
-    it('returns true with doubled probe limit', () => {
-      const game = createMockGame();
-      const player = createPlayer({ probesInSpace: 1, probeSpaceLimit: 2 });
-      expect(LaunchProbeAction.canExecute(player, game)).toBe(true);
-    });
-
-    it('returns true when double-probe tech is owned', () => {
-      const game = createMockGame();
-      const player = createPlayer({
-        probesInSpace: 1,
-        probeSpaceLimit: 1,
-        techs: [ETechId.PROBE_DOUBLE_PROBE],
-      });
-      expect(LaunchProbeAction.canExecute(player, game)).toBe(true);
-    });
-
-    it('returns false when solarSystem is null', () => {
-      const game = createMockGame();
-      game.solarSystem = null;
-      const player = createPlayer();
-      expect(LaunchProbeAction.canExecute(player, game)).toBe(false);
-    });
-  });
-
+describe('LaunchProbeAction — integration', () => {
   describe('execute', () => {
-    it('spends 2 credits', () => {
-      const game = createMockGame();
-      const player = createPlayer();
-      LaunchProbeAction.execute(player, game);
-      expect(player.resources.credits).toBe(2);
-    });
-
-    it('increments probesInSpace', () => {
-      const game = createMockGame();
-      const player = createPlayer();
-      expect(player.probesInSpace).toBe(0);
-      LaunchProbeAction.execute(player, game);
-      expect(player.probesInSpace).toBe(1);
-    });
-
-    it('places probe on Earth space', () => {
-      const game = createMockGame();
-      const player = createPlayer();
-      const result = LaunchProbeAction.execute(player, game);
-      const solarSystem = requireSolarSystem(game);
-      const earthSpaces = solarSystem.getSpacesOnPlanet(EPlanet.EARTH);
-      expect(earthSpaces.length).toBeGreaterThan(0);
-      const probes = solarSystem.getProbesAt(earthSpaces[0].id);
-      expect(probes.some((p) => p.playerId === 'p1')).toBe(true);
-      expect(result.spaceId).toBe(earthSpaces[0].id);
-    });
-
-    it('throws when action is illegal', () => {
-      const game = createMockGame();
-      const player = createPlayer({
-        resources: { credits: 0, energy: 0, publicity: 0 },
-      });
-      expect(() => LaunchProbeAction.execute(player, game)).toThrow();
-    });
-
-    it('allows two probes with limit 2', () => {
-      const game = createMockGame();
-      const player = createPlayer({ probeSpaceLimit: 2 });
-      LaunchProbeAction.execute(player, game);
-      expect(player.probesInSpace).toBe(1);
-      player.resources.gain({ credits: 2 });
-      LaunchProbeAction.execute(player, game);
-      expect(player.probesInSpace).toBe(2);
-    });
-
-    it('LaunchProbeEffect executes without standard action cost', () => {
-      const game = createMockGame();
-      const player = createPlayer({
-        resources: { credits: 0, energy: 3, publicity: 4 },
-      });
-      LaunchProbeEffect.execute(player, game);
-      expect(player.resources.credits).toBe(0);
-      expect(player.probesInSpace).toBe(1);
-    });
-
     it('integration: double-probe tech allows launching again on a later turn until two probes are in space', () => {
       const game = Game.create(
         TEST_PLAYERS,
@@ -199,13 +49,15 @@ describe('LaunchProbeAction', () => {
         'launch-probe-double-tech',
       );
       const player = game.players[0];
-      player.techs.push(ETechId.PROBE_DOUBLE_PROBE);
+      player.gainTech(ETechId.PROBE_DOUBLE_PROBE);
       const otherPlayer = game.players[1];
 
       game.processMainAction(player.id, { type: EMainAction.LAUNCH_PROBE });
+      game.processEndTurn(player.id);
       game.processMainAction(otherPlayer.id, { type: EMainAction.PASS });
       resolvePassEndOfRoundPick(game, otherPlayer.id);
       game.processMainAction(player.id, { type: EMainAction.LAUNCH_PROBE });
+      game.processEndTurn(player.id);
 
       const solarSystem = requireSolarSystem(game);
       const earthSpaces = solarSystem.getSpacesOnPlanet(EPlanet.EARTH);
@@ -216,6 +68,143 @@ describe('LaunchProbeAction', () => {
       expect(
         earthProbes.filter((probe) => probe.playerId === player.id),
       ).toHaveLength(2);
+    });
+  });
+
+  describe('processMainAction integration', () => {
+    it('2.1.1 spends 2 credits, places probe on Earth, increments probesInSpace', () => {
+      const game = Game.create(
+        TEST_PLAYERS,
+        { playerCount: 2 },
+        'launch-probe-integration-2-1-1',
+      );
+      const player = game.players[0];
+      const initialCredits = player.resources.credits;
+
+      game.processMainAction(player.id, { type: EMainAction.LAUNCH_PROBE });
+
+      expect(player.resources.credits).toBe(initialCredits - 2);
+      expect(player.probesInSpace).toBe(1);
+      const solarSystem = requireSolarSystem(game);
+      const earthSpaces = solarSystem.getSpacesOnPlanet(EPlanet.EARTH);
+      const earthProbes = solarSystem.getProbesAt(earthSpaces[0].id);
+      expect(
+        earthProbes.some((probe) => probe.playerId === player.id),
+      ).toBe(true);
+    });
+
+    it('2.1.4 throws GameError when credits are below 2', () => {
+      const game = Game.create(
+        TEST_PLAYERS,
+        { playerCount: 2 },
+        'launch-probe-integration-2-1-4',
+      );
+      const player = game.players[0];
+      player.resources.spend({ credits: player.resources.credits - 1 });
+      expect(player.resources.credits).toBe(1);
+
+      expect(() =>
+        game.processMainAction(player.id, { type: EMainAction.LAUNCH_PROBE }),
+      ).toThrow(GameError);
+
+      try {
+        game.processMainAction(player.id, { type: EMainAction.LAUNCH_PROBE });
+      } catch (err) {
+        expect((err as GameError).code).toBe(EErrorCode.INVALID_ACTION);
+      }
+      expect(player.resources.credits).toBe(1);
+      expect(player.probesInSpace).toBe(0);
+    });
+
+    it('2.1.5 throws GameError when probesInSpace has reached the limit', () => {
+      const game = Game.create(
+        TEST_PLAYERS,
+        { playerCount: 2 },
+        'launch-probe-integration-2-1-5',
+      );
+      const player = game.players[0];
+      player.probesInSpace = player.probeSpaceLimit;
+
+      expect(() =>
+        game.processMainAction(player.id, { type: EMainAction.LAUNCH_PROBE }),
+      ).toThrow(GameError);
+
+      try {
+        game.processMainAction(player.id, { type: EMainAction.LAUNCH_PROBE });
+      } catch (err) {
+        expect((err as GameError).code).toBe(EErrorCode.INVALID_ACTION);
+      }
+    });
+
+    it('2.1.2 orbiters and landers do not count toward the probesInSpace limit', () => {
+      const game = Game.create(
+        TEST_PLAYERS,
+        { playerCount: 2 },
+        'launch-probe-integration-2-1-2',
+      );
+      const player = game.players[0];
+      const other = game.players[1];
+
+      // Place a probe on Mars directly so the player can orbit it as a main
+      // action without first needing movement. probesInSpace must reflect the
+      // live probe on a planet (not Earth).
+      const marsSpace = game.solarSystem?.getSpacesOnPlanet(EPlanet.MARS)[0];
+      if (!marsSpace || game.solarSystem === null) {
+        throw new Error('Expected Mars space');
+      }
+      game.solarSystem.placeProbe(player.id, marsSpace.id);
+      player.probesInSpace = 1;
+      expect(player.probeSpaceLimit).toBe(1);
+      expect(LaunchProbeAction.canExecute(player, game)).toBe(false);
+
+      // Orbit the Mars probe → probe leaves space into the orbit slot.
+      game.processMainAction(player.id, {
+        type: EMainAction.ORBIT,
+        payload: { planet: EPlanet.MARS },
+      });
+      game.processEndTurn(player.id);
+      expect(player.probesInSpace).toBe(0);
+      expect(
+        game.planetaryBoard?.planets.get(EPlanet.MARS)?.orbitSlots,
+      ).toEqual([{ playerId: player.id }]);
+
+      // Hand the turn back so p1 can take another main action.
+      game.processMainAction(other.id, { type: EMainAction.PASS });
+      resolvePassEndOfRoundPick(game, other.id);
+      expect(game.activePlayer.id).toBe(player.id);
+
+      // The orbiter must NOT count toward probesInSpace; launch is legal again
+      // even though the total probe footprint (orbiter + new probe) is 2.
+      expect(LaunchProbeAction.canExecute(player, game)).toBe(true);
+      game.processMainAction(player.id, { type: EMainAction.LAUNCH_PROBE });
+      expect(player.probesInSpace).toBe(1);
+      expect(
+        game.planetaryBoard?.planets.get(EPlanet.MARS)?.orbitSlots,
+      ).toEqual([{ playerId: player.id }]);
+    });
+
+    it('2.1E.3 rejects launch attempted by a non-active player', () => {
+      const game = Game.create(
+        TEST_PLAYERS,
+        { playerCount: 2 },
+        'launch-probe-integration-2-1E-3',
+      );
+      const active = game.activePlayer;
+      const other = game.players.find((p) => p.id !== active.id);
+      if (!other) {
+        throw new Error('Expected a second player');
+      }
+
+      expect(() =>
+        game.processMainAction(other.id, { type: EMainAction.LAUNCH_PROBE }),
+      ).toThrow(GameError);
+
+      try {
+        game.processMainAction(other.id, { type: EMainAction.LAUNCH_PROBE });
+      } catch (err) {
+        expect((err as GameError).code).toBe(EErrorCode.NOT_YOUR_TURN);
+      }
+      expect(other.probesInSpace).toBe(0);
     });
   });
 });

@@ -1,5 +1,6 @@
 import type { IComputerColumnConfig } from '@seti/common/types/computer';
 import { EResource } from '@seti/common/types/element';
+import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { ETechId } from '@seti/common/types/tech';
 import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
@@ -80,6 +81,35 @@ describe('Player', () => {
     expect(player.techs).toEqual([ETechId.PROBE_DOUBLE_PROBE]);
     expect(player.probesInSpace).toBe(1);
     expect(player.probeSpaceLimit).toBe(2);
+  });
+
+  it('gainTech records a newly acquired tech', () => {
+    const player = new Player({
+      id: 'p-tech-gain',
+      name: 'Alice',
+      color: 'red',
+      seatIndex: 0,
+    });
+
+    player.gainTech(ETechId.PROBE_DOUBLE_PROBE);
+
+    expect(player.techs).toEqual([ETechId.PROBE_DOUBLE_PROBE]);
+  });
+
+  it('gainTech rejects duplicate tech acquisition', () => {
+    const player = new Player({
+      id: 'p-tech-dup',
+      name: 'Alice',
+      color: 'red',
+      seatIndex: 0,
+      techs: [ETechId.PROBE_DOUBLE_PROBE],
+    });
+
+    expect(() => player.gainTech(ETechId.PROBE_DOUBLE_PROBE)).toThrowError(
+      expect.objectContaining({
+        code: EErrorCode.INVALID_ACTION,
+      }),
+    );
   });
 
   it('flushes stash data into data pool at turn end', () => {

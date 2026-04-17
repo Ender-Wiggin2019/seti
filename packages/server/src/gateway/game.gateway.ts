@@ -14,7 +14,11 @@ import type {
   IInputResponse,
   IMainActionRequest,
 } from '@seti/common/types/protocol/actions';
-import { EFreeAction, EMainAction } from '@seti/common/types/protocol/enums';
+import {
+  EFreeAction,
+  EMainAction,
+  EPhase,
+} from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import {
   EPlayerInputType,
@@ -176,6 +180,23 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage('game:endTurn')
+  async handleEndTurn(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { gameId: string },
+  ): Promise<void> {
+    try {
+      const result = await this.gameManager.processEndTurn(
+        data.gameId,
+        getUserId(client),
+      );
+      this.broadcastResult(data.gameId, result);
+      await this.runDebugBots(data.gameId);
+    } catch (err) {
+      this.emitError(client, err);
+    }
+  }
+
   @SubscribeMessage('game:freeAction')
   async handleFreeAction(
     @ConnectedSocket() client: Socket,
@@ -312,6 +333,15 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         if (movementResult) {
           this.broadcastResult(gameId, movementResult);
         }
+      }
+
+      if (game.phase === EPhase.AWAIT_END_TURN) {
+        const endTurnResult = await this.gameManager.processEndTurn(
+          gameId,
+          botPlayerId,
+        );
+        this.broadcastResult(gameId, endTurnResult);
+        continue;
       }
 
       const mainActionResult = await this.tryBotMainAction(gameId, botPlayerId);

@@ -34,6 +34,7 @@ export interface IGameContext {
   events: TGameEvent[];
   sendAction: (action: IMainActionRequest) => void;
   sendFreeAction: (action: IFreeActionRequest) => void;
+  sendEndTurn: () => void;
   sendInput: (response: IInputResponse) => void;
   requestUndo: () => void;
 }
@@ -69,6 +70,7 @@ export function GameContextProvider({
   const {
     sendAction: rawSendAction,
     sendFreeAction: rawSendFreeAction,
+    sendEndTurn: rawSendEndTurn,
     requestUndo: rawRequestUndo,
   } = useGameActions();
   const events = useGameEvents();
@@ -98,6 +100,11 @@ export function GameContextProvider({
     [gameId, rawSendFreeAction],
   );
 
+  const sendEndTurn = useCallback(
+    () => rawSendEndTurn(gameId),
+    [gameId, rawSendEndTurn],
+  );
+
   const sendInput = useCallback(
     (response: IInputResponse) => respond(gameId, response),
     [gameId, respond],
@@ -119,6 +126,7 @@ export function GameContextProvider({
       events,
       sendAction,
       sendFreeAction,
+      sendEndTurn,
       sendInput,
       requestUndo,
     }),
@@ -133,6 +141,7 @@ export function GameContextProvider({
       events,
       sendAction,
       sendFreeAction,
+      sendEndTurn,
       sendInput,
       requestUndo,
     ],

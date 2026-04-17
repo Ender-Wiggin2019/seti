@@ -179,6 +179,7 @@ describe('Land action', () => {
       type: EMainAction.ORBIT,
       payload: { planet: EPlanet.SATURN },
     });
+    game.processEndTurn(p1.id);
     game.processMainAction(p2.id, {
       type: EMainAction.LAND,
       payload: { planet: EPlanet.SATURN },
@@ -210,18 +211,21 @@ describe('Land action', () => {
       payload: { planet: EPlanet.MARS },
     });
     resolveAllInputs(threePlayerGame, p1);
+    threePlayerGame.processEndTurn(p1.id);
 
     threePlayerGame.processMainAction(p2.id, {
       type: EMainAction.LAND,
       payload: { planet: EPlanet.MARS },
     });
     resolveAllInputs(threePlayerGame, p2);
+    threePlayerGame.processEndTurn(p2.id);
 
     threePlayerGame.processMainAction(p3.id, {
       type: EMainAction.LAND,
       payload: { planet: EPlanet.MARS },
     });
     resolveAllInputs(threePlayerGame, p3);
+    threePlayerGame.processEndTurn(p3.id);
 
     expect(p1.resources.data).toBe(1);
     expect(p2.resources.data).toBe(1);
@@ -262,6 +266,7 @@ describe('Land action', () => {
       payload: { planet: EPlanet.MARS, isMoon: true },
     });
     resolveAllInputs(game, p1);
+    game.processEndTurn(p1.id);
 
     expect(
       game.planetaryBoard?.planets.get(EPlanet.MARS)?.moonOccupant?.playerId,
@@ -285,7 +290,7 @@ describe('Land action', () => {
       'land-probe-tech-2',
     );
     const player = game.players[0];
-    player.techs.push(ETechId.PROBE_ROVER_DISCOUNT);
+    player.gainTech(ETechId.PROBE_ROVER_DISCOUNT);
     placeProbeOnPlanet(game, player.id, EPlanet.MERCURY, 1);
     player.probesInSpace = 1;
 
@@ -306,7 +311,8 @@ describe('Land action', () => {
     const p1 = game.players[0];
     const p2 = game.players[1];
 
-    p1.techs.push(ETechId.PROBE_ROVER_DISCOUNT, ETechId.PROBE_MOON);
+    p1.gainTech(ETechId.PROBE_ROVER_DISCOUNT);
+    p1.gainTech(ETechId.PROBE_MOON);
     placeProbeOnPlanet(game, p1.id, EPlanet.MARS, 1);
     placeProbeOnPlanet(game, p2.id, EPlanet.MARS, 1);
     p1.probesInSpace = 1;
@@ -317,6 +323,7 @@ describe('Land action', () => {
       type: EMainAction.ORBIT,
       payload: { planet: EPlanet.MARS },
     });
+    game.processEndTurn(p2.id);
     game.processMainAction(p1.id, {
       type: EMainAction.LAND,
       payload: { planet: EPlanet.MARS, isMoon: true },
@@ -336,7 +343,7 @@ describe('Land action', () => {
       'land-probe-tech-3',
     );
     const player = game.players[0];
-    player.techs.push(ETechId.PROBE_MOON);
+    player.gainTech(ETechId.PROBE_MOON);
     placeProbeOnPlanet(game, player.id, EPlanet.MARS, 1);
     player.probesInSpace = 1;
 
@@ -364,6 +371,7 @@ describe('Land action', () => {
       type: EMainAction.ORBIT,
       payload: { planet: EPlanet.VENUS },
     });
+    game.processEndTurn(player.id);
 
     game.setActivePlayer(player.id);
 
@@ -388,6 +396,7 @@ describe('Land action', () => {
     const player = game.players[0];
 
     game.processMainAction(player.id, { type: EMainAction.LAUNCH_PROBE });
+    game.processEndTurn(player.id);
     game.setActivePlayer(player.id);
 
     expect(LandAction.canExecute(player, EPlanet.MARS)).toBe(false);
