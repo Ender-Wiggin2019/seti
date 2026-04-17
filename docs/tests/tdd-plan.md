@@ -1,6 +1,6 @@
 # SETI 完整规则 TDD 实施计划
 
-> 基于 `docs/arch/rule-simple.md`、`rule-raw.md`、`rule-tech.md`、`rule-faq.md`、`prd-rule.md` 的完整规则，  
+> 基于 `docs/arch/rule-simple.md`、`rule-raw.md`、`rule-tech.md`、`rule-faq.md`、`prd-rule.md` 的完整规则，
 > 对照现有 `packages/server/__tests__/` 已有测试覆盖 + Mock 审计结果，识别缺口并制定 TDD 计划。
 
 ---
@@ -69,7 +69,7 @@
 
 ## Phase 1: Setup 规则验证
 
-**规则来源:** rule-simple §2, prd-rule §5  
+**规则来源:** rule-simple §2, prd-rule §5
 **现有覆盖:** `GameSetup.test.ts` — INTEGRATION/GOOD，需补充细节
 
 ### 1.1 共享棋盘 Setup
@@ -112,8 +112,8 @@ RED tests:
 
 **规则来源:** rule-simple §5, rule-raw §MAIN ACTIONS, rule-faq
 
-> **关键发现:** Scan、AnalyzeData、PlayCard 被评为 MOCK-HEAVY，LaunchProbe/ResearchTech/Pass 为 MIXED。  
-> 这些测试需要补充 **通过 `Game.processMainAction` 走完整管线的集成测试**。  
+> **关键发现:** Scan、AnalyzeData、PlayCard 被评为 MOCK-HEAVY，LaunchProbe/ResearchTech/Pass 为 MIXED。
+> 这些测试需要补充 **通过 `Game.processMainAction` 走完整管线的集成测试**。
 > 已有的 INTEGRATION 测试（Orbit、Land）也需要补充 mock 绕过的边界。
 
 ### 2.1 Launch Probe — 升级为 INTEGRATION
@@ -140,6 +140,13 @@ RED tests (错误路径 / 非法操作):
 └── 2.1E.3 [错误] 非当前玩家尝试 launch 被拒绝
 ```
 
+**回归覆盖（截至 2026-04-17）**
+
+- 已覆盖：`2.1.1` 已由 `2.1.1 spends 2 credits, places probe on Earth, increments probesInSpace` 锁定完整主行动路径；`2.1.3` 已由 `integration: double-probe tech allows launching again on a later turn until two probes are in space` 覆盖真实跨回合二次发射。
+- 已覆盖：`2.1.4`/`2.1E.1` 已由 `2.1.4 throws GameError when credits are below 2` + `canExecute` 信用边界组覆盖；`2.1.5`/`2.1E.2` 已由 `2.1.5 throws GameError when probesInSpace has reached the limit` + `canExecute` 上限边界组覆盖。
+- 已覆盖：`2.1E.3` 已由 `2.1E.3 rejects launch attempted by a non-active player` 覆盖。
+- 待补：`2.1.2` 仍缺“orbiter/lander 不计入 probesInSpace”的显式回归，当前 Launch Probe 用例尚未从真实 orbit/land 后再验证 launch 上限。
+
 ### 2.2 Orbit — 补全 mock 绕过的边界
 
 **文件:** `__tests__/engine/actions/Orbit.test.ts` (扩展)
@@ -164,6 +171,17 @@ RED tests (错误路径 / 非法操作):
 ├── 2.2E.3 [错误] 信用或能量不足时 canExecute = false
 └── 2.2E.4 [错误] 非当前玩家尝试 orbit 被拒绝
 ```
+
+**回归覆盖（截至 2026-04-17）**
+
+- 已覆盖：`2.2.1`/`2.2E.1` 已由 `does not allow orbiting while the only probe is still on Earth` 覆盖，既验证 `canExecute=false`，也验证 `processMainAction` 抛出 `INVALID_ACTION`。
+- 已覆盖：`2.2.2`/`2.2E.2` 已由 `rejects orbit when no own probe is on selected planet` 覆盖；`2.2E.4` 已由 `rejects orbit attempts from a non-active player even with a valid probe` 覆盖。
+- 已部分覆盖：`2.2.3` 已锁定两个已实现的真实奖励路径。
+- `spends resources, moves probe from space, and grants first orbit bonus` 覆盖了真实 orbit 成功路径、扣费、从太阳系移除探测器、写入 `orbitSlots`、以及首个 orbiter 的 `+3 VP`。
+- `only grants +3 VP for the first orbiter on a planet` 覆盖了多人同一行星时“首个 +3VP、后续无奖励”，对应 `2.2.5`。
+- 已覆盖：`2.2E.3` 已由 `returns false when credits or energy are insufficient even with a valid planet probe` 覆盖。
+- 待补：`2.2.3` 仍缺“每个行星奖励矩阵”逐一验收，目前只锁定了 Mars/Venus 的真实首轨道奖励语义。
+- 待补：`2.2.4` 的收入增长 / tucked income 断言尚未进入 `Orbit.test.ts`。
 
 ### 2.3 Land — 补全 mock 绕过的边界
 
@@ -191,11 +209,22 @@ RED tests (错误路径 / 非法操作):
 └── 2.3E.4 [错误] 月球 slot 已满时着陆被拒绝
 ```
 
+**回归覆盖（截至 2026-04-17）**
+
+- 已覆盖：`2.3.1` 已由 `lets the player place a landing life trace onto the selected discovery slot` 覆盖，显式验证 trace 输入、选位分支、未选 discovery slot 保持为空。
+- 已覆盖：`2.3.2` 已由 `gives Mars first-land data only to the first two landers` 覆盖，包含 3 人顺序、前两位拿 data、第三位无 bonus。
+- 已覆盖：`2.3.3` 已由 `uses reduced landing cost when any orbiter is already present` 覆盖，确认“对手 orbiter 也算折扣”。
+- 已覆盖：`2.3.4` 已由 `applies orbiter and rover discounts together when landing on a moon` 覆盖，锁定 `3 - 1 - 1 = 1` 的折扣叠加语义。
+- 已覆盖：`2.3.5` 已由 `applies orbiter and rover discounts together when landing on a moon` + `allows landing on moon with probe moon tech even when moon is locked` 覆盖月球折扣与月球科技路径。
+- 已覆盖：`2.3.6` 已由 `does not let an existing orbiter land later on the same planet` 覆盖。
+- 已覆盖：`2.3E.1` 已由 `returns false when landing energy is insufficient for the current discount state` 覆盖；`2.3E.2` 已由 `returns false when there is no probe on a non-Earth planet to land with` 覆盖。
+- 已覆盖：`2.3E.3`/`2.3E.4` 已由 `enforces moon unlock and single occupancy through Land action` 覆盖，前半段锁定无科技不可登月，后半段锁定月球格单占位。
+
 ### 2.4 Scan — **从 MOCK-HEAVY 升级为 INTEGRATION**
 
 **文件:** `__tests__/engine/actions/Scan.test.ts` (重大扩展)
 
-**Mock 问题:** 
+**Mock 问题:**
 - `solarSystem: null` / `missionTracker: noop` / `cardRow` 为假对象
 - 不测真实 data token 流转、data pool、2VP scoring、sector completion
 
@@ -463,9 +492,8 @@ RED tests (错误路径 / 非法操作):
 ```
 RED tests:
 ├── 3.4.1 [集成] 弃牌执行 MOVE 角效果 — 获得移动点
-├── 3.4.2 [集成] 弃牌执行 CREDIT 角效果 — 获得信用
-├── 3.4.3 [集成] 弃牌执行 ENERGY 角效果 — 获得能量
-├── 3.4.4 [集成] 弃牌执行 CARD 角效果 — 抽牌
+├── 3.4.2 [集成] 弃牌执行 PUBLICITY 角效果 — 获得信用
+├── 3.4.3 [集成] 弃牌执行 DATA 角效果 — 获得能量
 ├── 3.4.5 [集成] 同一张牌不能既主行动又自由行动
 └── 3.4.6 [集成] 角效果触发 missionTracker 真实事件
 ```
@@ -521,8 +549,8 @@ RED tests (错误路径 / 非法操作):
 
 ### 3.7 MissionTracker — **从 MOCK-HEAVY 升级为 INTEGRATION**
 
-**文件:** `__tests__/engine/missions/MissionTracker.test.ts` (重大扩展)  
-+ `__tests__/engine/cards/base/TechMissionCards.test.ts` (扩展)  
+**文件:** `__tests__/engine/missions/MissionTracker.test.ts` (重大扩展)
++ `__tests__/engine/cards/base/TechMissionCards.test.ts` (扩展)
 + `__tests__/engine/cards/base/ObservationQuickMissionCard.test.ts` (重大扩展)
 
 **Mock 问题:**
@@ -588,7 +616,7 @@ RED tests:
 
 **规则来源:** rule-simple §5.4, rule-raw §Completing a Sector, §Resetting the Sector
 
-**文件:** `__tests__/engine/deferred/ResolveSectorCompletion.test.ts` + `__tests__/engine/board/Sector.test.ts` (扩展)  
+**文件:** `__tests__/engine/deferred/ResolveSectorCompletion.test.ts` + `__tests__/engine/board/Sector.test.ts` (扩展)
 + `__tests__/engine/effects/scan/SectorFulfillmentEffect.test.ts` (扩展)
 
 ```
@@ -854,7 +882,7 @@ RED tests:
 
 ### 10.4 收入系统
 
-**文件:** `__tests__/engine/income/IncomeSystem.test.ts` (新建)  
+**文件:** `__tests__/engine/income/IncomeSystem.test.ts` (新建)
 + `__tests__/engine/effects/income/TuckCardForIncomeEffect.test.ts` (扩展)
 
 **说明:** 收入是每回合结束的关键逻辑，但缺少系统性集成测试。
@@ -888,7 +916,7 @@ RED tests (全部通过 Game.create):
 
 #### 单测试节奏（严格执行）
 
-每个 RED test 独立执行一轮 Red-Green-Refactor 循环，**不可批量写多个 test 再一起实现**。  
+每个 RED test 独立执行一轮 Red-Green-Refactor 循环，**不可批量写多个 test 再一起实现**。
 即使 plan 中列出了一组 RED tests，执行时必须逐个进行：写 1 个 → 验证失败 → 实现 → 验证通过 → 重构 → 下一个。
 
 #### Verify RED 判断标准
@@ -898,7 +926,7 @@ RED tests (全部通过 Game.create):
 - 失败原因是 **目标功能缺失**（非拼写错误 / 测试自身 bug）
 - 失败消息与预期一致（如 `expected X, received Y`）
 
-如果测试直接通过 → 说明在测已有行为，需要修改测试。  
+如果测试直接通过 → 说明在测已有行为，需要修改测试。
 如果测试报 error（非 assertion failure）→ 先修复 error，重跑直到正确失败。
 
 #### Verify GREEN 输出干净标准
