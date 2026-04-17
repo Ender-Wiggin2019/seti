@@ -338,6 +338,18 @@ RED tests (错误路径 / 非法操作):
 └── 2.6E.3 [错误] 同一张牌不能同时做主行动和自由行动
 ```
 
+**回归覆盖（截至 2026-04-17）**
+
+- 已覆盖：`2.6.1` 已由 `integration: ordinary immediate cards pay their own cost, apply their effect, and go to discard` 覆盖，锁定支付费用、执行即时效果、进入弃牌堆、并在结算后交接回合。
+- 已覆盖：`2.6.2` 已由 `integration: launch-effect cards do not charge the normal launch action cost` 覆盖，确认卡牌授予的 Launch 不额外扣 2 信用。
+- 已部分覆盖：`2.6.5`/`2.6.6`/`2.6.12` 已由 `integration: an already-satisfied quick mission prompts complete-or-skip before handoff` 覆盖，锁定“主效果完成后，先给 mission prompt，再 handoff”的时序，以及 `complete-*` / `skip-missions` 两个分支入口。
+- 已部分覆盖：`2.6.7` 已由 `integration: a full mission card does not trigger from its own play event` 锁定“注册当下不会被自身事件立即触发”；相邻的 `StrategicPlanningCard.test.ts` 还锁定了 `events before mission registration do not trigger branches`。
+- 已覆盖：`2.6E.2` 已由 `integration: insufficient resources rejects the play without mutating turn state` 覆盖，确认失败时手牌、phase、active player、eventLog 都不漂移。
+- 已部分覆盖：`2.6E.1` 已由 `GameIntegration.test.ts` 中的 `rejects with out-of-range cardIndex`、`rejects with negative cardIndex`、`rejects when hand is empty` 覆盖输入边界，但还没写成“指定 cardIndex 指向一张当前已不在手里的真实卡”这种更贴近文案的回归。
+- 待补：`2.6.3`/`2.6.4` 任务牌和终局计分牌打出后留场的断言仍未补入 `PlayCard.test.ts`。
+- 待补：`2.6.8`/`2.6.9`/`2.6.10`/`2.6.11` 触发任务的“逐圈盖圈、单次只盖一个、盖满自动完成”目前只在 mission/card 专项测试里零散覆盖，还没有通过真实 `processMainAction(PLAY_CARD)` 串成一条主行动回归。
+- 待补：`2.6E.3` “同一张牌不能同时做主行动和自由行动”仍缺主行动级约束测试。
+
 ### 2.7 Research Tech — 升级为 INTEGRATION
 
 **文件:** `__tests__/engine/actions/ResearchTech.test.ts` (扩展)
@@ -367,6 +379,16 @@ RED tests (错误路径 / 非法操作):
 └── 2.7E.3 [错误] 选择已拥有的同种科技被拒绝
 ```
 
+**回归覆盖（截至 2026-04-17）**
+
+- 已部分覆盖：`2.7.1` 已由 `ResearchTechAction.test.ts` 中的 `spends publicity (6) when not a card effect`、`returns a PlayerInput when multiple techs are available`，以及 `GameIntegration.test.ts` 中的 `research tech action triggers solar system rotation` 组合锁定，覆盖付 6 声望、真实主行动触发旋转、进入科技选择输入。
+- 已部分覆盖：`2.7.2` 目前只锁定了 `rotationCounter` 递增与 pass 旋转相互独立；真实“探测器随盘移动”的盘面断言仍未补上。
+- 已覆盖：`2.7E.1` 已由 `returns false without enough publicity` 与 `GameIntegration.test.ts` 中的 `rejects when publicity is insufficient` 覆盖。
+- 待补：`2.7.1` 还缺“选科技后真正 acquire 到玩家面板”的主行动级闭环断言。
+- 待补：`2.7.3`/`2.7E.2`/`2.7E.3` 的去重与满科技板边界目前仍主要停留在 `TechBoard`/`acquireTech` 层，没有通过 `processMainAction(RESEARCH_TECH)` 锁定。
+- 待补：`2.7.4`/`2.7.5`/`2.7.6` 还缺 2VP tile、即时奖励、蓝科技 slot 与 data 放置区分的主行动回归。
+- 待补：`2.7.7`/`2.7.8` 卡牌授予科技的“免 6 声望但仍旋转”与“已有科技则忽略但仍旋转”尚未入 action 集成。
+
 ### 2.8 Pass — 升级为 INTEGRATION
 
 **文件:** `__tests__/engine/actions/Pass.test.ts` (扩展)
@@ -385,6 +407,16 @@ RED tests (通过 Game.create + processMainAction):
 ├── 2.8.6 [集成] 所有人 pass → 回合结束 → 收入 → 起始玩家轮转
 └── 2.8.7 [集成] 非首 pass 不触发旋转
 ```
+
+**回归覆盖（截至 2026-04-17）**
+
+- 已覆盖：`2.8.2` 已由 `returns SelectCard when hand exceeds limit` 与 `chains discard → end-of-round card selection` 覆盖，锁定超过 4 张时先弃牌，再进入回合末选牌链路。
+- 已覆盖：`2.8.3` 已由 `Pass.test.ts` 中的 `rotates the solar system on the first pass of the round`、`GameIntegration.test.ts` 中的 `first pass of the round triggers solar system rotation`，以及 `GameFlowBehavior.test.ts` 中的 `8b. after rotation: Earth→cell-4, Asteroid→cell-3, Venus→cell-2` 组合覆盖，已经锁定真实盘面旋转而不只是 spy 调用。
+- 已部分覆盖：`2.8.5` 已由 `returns SelectEndOfRoundCard when stack is available` 与 `chains discard → end-of-round card selection` 覆盖，但“最后一人选 1 弃 1”的剩余牌处理语义仍未单独断言。
+- 已覆盖：`2.8.6` 已由 `GameIntegration.test.ts` 中的 `all players pass ends round`、`round-end income is applied each round`、`start player rotates each round`，以及 `GameFlowBehavior.test.ts` 中的 `24. both players passed → round end, income applied` / `25. round 2: p2 is now start player and active player` 组合覆盖。
+- 已覆盖：`2.8.7` 已由 `does not rotate the solar system on the second pass of the same round`、`does not dispatch the alien rotation hook on the second pass of the same round`，以及 `GameFlowBehavior.test.ts` 中的 `23b. second pass of the round does not trigger another disc rotation` 覆盖。
+- 待补：`2.8.1` “buy card → pass” 的真实自由行动前置仍未写成专门回归。
+- 待补：`2.8.4` 第 5 回合首 pass 仍旋转且 reminder token 被弃的行为还没有独立锁定。
 
 ### 2.9 BehaviorExecutor — **从 MOCK-HEAVY 升级为 INTEGRATION**
 
@@ -1046,14 +1078,14 @@ Phase 1 (Setup)
 | Phase | 文件 | Mock 评级 | 需要动作 |
 |-------|------|----------|---------|
 | 1 | GameSetup.test.ts | 🟢 | 补充细节 |
-| 2.1 | LaunchProbe.test.ts | 🟡 | 补充 processMainAction 集成 + 错误路径 |
-| 2.2 | Orbit.test.ts | 🟢 | 补充边界 + 错误路径 |
-| 2.3 | Land.test.ts | 🟢 | 补充 trace 选择 + Mars 双位 + 错误路径 |
-| 2.4 | Scan.test.ts | 🔴 | **重大扩展 — 需要真实 data 流转测试 + 错误路径** |
-| 2.5 | AnalyzeData.test.ts | 🔴 | **重大扩展 — 需要真实 trace + discovery + 错误路径** |
-| 2.6 | PlayCard.test.ts | 🔴 | **重大扩展 — 需要真实卡牌效果/任务 + 错误路径** |
-| 2.7 | ResearchTech.test.ts | 🟡 | 补充 processMainAction 集成 + 错误路径 |
-| 2.8 | Pass.test.ts | 🟡 | 补充真实旋转验证 |
+| 2.1 | LaunchProbe.test.ts | 🟡 | 已锁 `2.1.1/2.1.3/2.1.4/2.1.5/2.1E.*`；待补 `2.1.2` |
+| 2.2 | Orbit.test.ts | 🟢 | 已锁 `2.2.1/2.2.2/2.2.5/2.2E.*`；待补 `2.2.3` 全行星矩阵与 `2.2.4` |
+| 2.3 | Land.test.ts | 🟢 | `2.3.1-2.3.6` 与 `2.3E.1-2.3E.4` 基本已锁 |
+| 2.4 | Scan.test.ts | 🔴 | 已锁 `2.4.1/2.4.2/2.4.3/2.4.4/2.4.7/2.4.9/2.4.10 + 2.4E.1`；待补 `2.4.5/2.4.6/2.4.8/2.4E.2` |
+| 2.5 | AnalyzeData.test.ts | 🔴 | 已锁 `2.5.1/2.5.2/2.5.6 + 2.5E.1/2.5E.2`；待补 `2.5.3/2.5.4/2.5.5/2.5.7/2.5.8/2.5E.3` |
+| 2.6 | PlayCard.test.ts | 🔴 | 已锁 `2.6.1/2.6.2/2.6E.2`，并部分锁定任务提示时序；待补 mission 留场/分支闭环/`2.6E.3` |
+| 2.7 | ResearchTech.test.ts | 🟡 | 已锁付费+旋转+输入入口与 `2.7E.1`；待补 acquire 闭环、奖励、去重与卡牌授予科技路径 |
+| 2.8 | Pass.test.ts | 🟡 | 已锁 `2.8.2/2.8.3/2.8.6/2.8.7`，并部分锁定 `2.8.5`；待补 `2.8.1/2.8.4/2.8.5` 尾部语义 |
 | 2.9 | BehaviorExecutor.test.ts | 🔴 | **重大扩展 — 当前完全 mock game.mark + techBoard** |
 | 2.10 | CardEffectsIntegration.test.ts | 🆕 | 新建 — 代表性卡牌集成抽检 |
 | 3.1 | Movement.test.ts | 🟡 | 补充真实棋盘 + mission 事件 + 错误路径 |
