@@ -362,6 +362,8 @@ export function deserializeGame(dto: IGameStateDto): Game {
   game.phase = dto.phase;
   game.roundRotationReminderIndex = dto.roundRotationReminderIndex;
   game.hasRoundFirstPassOccurred = dto.hasRoundFirstPassOccurred;
+  game.turnIndex = dto.turnIndex ?? 0;
+  game.turnLocked = dto.turnLocked ?? false;
 
   const startPlayer = game.players.find(
     (player) => player.id === dto.startPlayerId,

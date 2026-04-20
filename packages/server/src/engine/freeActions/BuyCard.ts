@@ -92,6 +92,7 @@ export class BuyCardFreeAction {
       );
     }
     player.hand.push(card);
+    game.lockCurrentTurn();
     return { cardId: card, source: 'deck', refilled: false };
   }
 
@@ -134,6 +135,7 @@ export class BuyCardFreeAction {
     if (drawn !== undefined) {
       game.cardRow.push(drawn);
       refilled = true;
+      game.lockCurrentTurn();
     }
 
     return { cardId: removedId, source: 'row', refilled };

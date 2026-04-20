@@ -28,7 +28,7 @@ import type { Server, Socket } from 'socket.io';
 import { DebugSessionRegistry } from '@/debug/DebugSessionRegistry.js';
 import { GameError } from '@/shared/errors/GameError.js';
 import type { IJwtPayload } from '../auth/jwt-auth.guard.js';
-import type { IActionResult } from './GameManager.js';
+import type { IActionResult, IUndoResult } from './GameManager.js';
 import { GameManager } from './GameManager.js';
 
 function getUserId(socket: Socket): string {
@@ -233,6 +233,22 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage('game:undo')
+  async handleGameUndo(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { gameId: string },
+  ): Promise<void> {
+    try {
+      const result = await this.gameManager.undoToTurnStart(
+        data.gameId,
+        getUserId(client),
+      );
+      this.broadcastUndoResult(data.gameId, result);
+    } catch (err) {
+      this.emitError(client, err);
+    }
+  }
+
   private broadcastResult(gameId: string, result: IActionResult): void {
     const roomKey = this.roomKey(gameId);
 
@@ -256,6 +272,23 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     for (const event of result.events) {
       this.server.to(roomKey).emit('game:event', { event });
     }
+  }
+
+  private broadcastUndoResult(gameId: string, result: IUndoResult): void {
+    const roomKey = this.roomKey(gameId);
+
+    for (const [playerId, state] of result.states) {
+      const sockets = this.getPlayerSockets(gameId, playerId);
+      for (const socket of sockets) {
+        socket.emit('game:state', { gameState: state });
+      }
+    }
+
+    this.server.to(roomKey).emit('game:undoApplied', {
+      undoneByPlayerId: result.undoneByPlayerId,
+      turnIndex: result.turnIndex,
+      affectedPlayerIds: result.interactedPlayerIds,
+    });
   }
 
   private getPlayerSockets(gameId: string, playerId: string): Socket[] {

@@ -86,6 +86,7 @@ export class FreeActionCornerFreeAction {
               break;
             }
             player.hand.push(drawnCardId);
+            game.lockCurrentTurn();
           }
           break;
         default:

@@ -78,6 +78,7 @@ export class TuckCardForIncomeEffect {
               const drawn = game.mainDeck.drawWithReshuffle(game.random);
               if (drawn !== undefined) {
                 player.hand.push(drawn);
+                game.lockCurrentTurn();
               }
             } else {
               const gain =

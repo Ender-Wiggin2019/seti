@@ -1,5 +1,6 @@
 import type { ISolarSystemSetupConfig } from '@seti/common/constant/sectorSetup';
 import { useMemo, useState } from 'react';
+import { useTextMode } from '@/stores/debugStore';
 import type {
   IInputResponse,
   IPlayerInputModel,
@@ -124,6 +125,7 @@ export function SolarSystemView({
   allowMoveAnyProbe = false,
 }: ISolarSystemViewProps): React.JSX.Element {
   const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(null);
+  const textMode = useTextMode();
 
   const spaceRadiiPercent = useMemo(() => {
     const insets = probeInsetPxByRing ?? DEFAULT_PROBE_INSET_PX_BY_RING;
@@ -194,6 +196,35 @@ export function SolarSystemView({
 
     return labels;
   }, [showSpaceConfigDebug, spacePoints, solarSystem.spaceStates]);
+
+  /**
+   * Text-mode labels per space — only the top-most element is shown
+   * when a space has multiple layered elements. Spaces with no element
+   * ("null") are intentionally omitted so they render no box in text mode.
+   */
+  const textModeLabelsBySpaceId = useMemo<Record<string, string>>(() => {
+    if (!textMode) {
+      return {};
+    }
+    const labels: Record<string, string> = {};
+    for (const space of spacePoints) {
+      const state = solarSystem.spaceStates?.[space.spaceId];
+      if (!state) {
+        continue;
+      }
+      const primaryElement = state.elements?.[0];
+      const firstType = primaryElement?.type ?? state.elementTypes[0];
+      if (!firstType || firstType === 'null' || firstType === 'NULL') {
+        continue;
+      }
+      if (firstType === 'PLANET' && primaryElement?.planet) {
+        labels[space.spaceId] = primaryElement.planet.toLowerCase();
+      } else {
+        labels[space.spaceId] = firstType.toLowerCase();
+      }
+    }
+    return labels;
+  }, [textMode, spacePoints, solarSystem.spaceStates]);
 
   const probeView = useMemo(() => {
     const bySpacePlayers: Record<string, string[]> = {};
@@ -282,37 +313,46 @@ export function SolarSystemView({
 
       <div
         className='relative mx-auto aspect-square w-full max-w-[760px] overflow-hidden rounded-md'
-        style={{
-          backgroundImage: 'url(/assets/seti/boards/background.jpg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
+        style={
+          textMode
+            ? { backgroundColor: 'rgba(8, 13, 25, 0.6)' }
+            : {
+                backgroundImage: 'url(/assets/seti/boards/background.jpg)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }
+        }
       >
-        <WheelLayer ring={4} angle={0} className='z-10' />
+        <WheelLayer ring={4} angle={0} className='z-10' showImage={!textMode} />
         <WheelLayer
           ring={3}
           angle={getDiscAngle(solarSystem, 3)}
           className='z-20'
+          showImage={!textMode}
         />
         <WheelLayer
           ring={2}
           angle={getDiscAngle(solarSystem, 2)}
           className='z-30'
+          showImage={!textMode}
         />
         <WheelLayer
           ring={1}
           angle={getDiscAngle(solarSystem, 1)}
           className='z-40'
+          showImage={!textMode}
         />
 
-        <img
-          src='/assets/seti/sun.png'
-          alt=''
-          aria-hidden
-          className='pointer-events-none absolute left-1/2 top-1/2 z-50 w-[10%] -translate-x-1/2 -translate-y-1/2 select-none'
-          style={{ animation: 'spin 1800s linear infinite' }}
-          draggable={false}
-        />
+        {!textMode && (
+          <img
+            src='/assets/seti/sun.png'
+            alt=''
+            aria-hidden
+            className='pointer-events-none absolute left-1/2 top-1/2 z-50 w-[10%] -translate-x-1/2 -translate-y-1/2 select-none'
+            style={{ animation: 'spin 1800s linear infinite' }}
+            draggable={false}
+          />
+        )}
 
         <SectorGrid
           sectors={sectors}
@@ -338,6 +378,50 @@ export function SolarSystemView({
             });
           }}
         />
+
+        {textMode && (
+          <div
+            className='pointer-events-none absolute inset-0'
+            style={{ zIndex: 65 }}
+          >
+            {spacePoints.map((space) => {
+              const label = textModeLabelsBySpaceId[space.spaceId];
+              if (!label) {
+                return null;
+              }
+              const rotationDeg = space.indexInRing * 45 + 22.5;
+              const isSelected = selectedSpaceId === space.spaceId;
+              const isReachable = reachable.has(space.spaceId);
+              const hasMyProbe = (
+                probeView.bySpacePlayers[space.spaceId] ?? []
+              ).includes(myPlayerId);
+
+              return (
+                <span
+                  key={`text-label-${space.spaceId}`}
+                  className={[
+                    'absolute whitespace-nowrap rounded-sm border px-1.5 py-0.5 font-mono text-[9px] uppercase leading-none shadow-sm',
+                    isSelected
+                      ? 'border-accent-400 bg-accent-500/25 text-accent-100'
+                      : isReachable
+                        ? 'animate-pulse border-accent-500/80 bg-accent-500/15 text-accent-100'
+                        : hasMyProbe
+                          ? 'border-surface-300/70 bg-surface-900/85 text-text-100'
+                          : 'border-surface-500/60 bg-surface-950/85 text-text-200',
+                  ].join(' ')}
+                  style={{
+                    left: `${space.xPercent}%`,
+                    top: `${space.yPercent}%`,
+                    transform: `translate(-50%, -50%) rotate(${rotationDeg}deg)`,
+                    transformOrigin: 'center',
+                  }}
+                >
+                  {label}
+                </span>
+              );
+            })}
+          </div>
+        )}
 
         {spacePoints.map((space) => {
           const probeCount =

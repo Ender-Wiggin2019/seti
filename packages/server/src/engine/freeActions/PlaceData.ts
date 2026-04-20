@@ -118,6 +118,9 @@ export class PlaceDataFreeAction {
     if (reward.drawCard && reward.drawCard > 0) {
       const drawn = game.mainDeck.drawN(reward.drawCard);
       player.hand.push(...drawn);
+      if (drawn.length > 0) {
+        game.lockCurrentTurn();
+      }
     }
     if (reward.tuckIncome && reward.tuckIncome > 0) {
       return TuckCardForIncomeEffect.execute(player, game);

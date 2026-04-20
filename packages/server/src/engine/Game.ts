@@ -119,6 +119,10 @@ export class Game implements IGame {
 
   public hasRoundFirstPassOccurred: boolean;
 
+  public turnIndex: number;
+
+  public turnLocked: boolean;
+
   private currentMainActionType: EMainAction | null;
 
   private constructor(
@@ -162,6 +166,8 @@ export class Game implements IGame {
     this.hasRoundFirstPassOccurred = false;
     this.currentMainActionType = null;
     this.finalScoringResult = undefined;
+    this.turnIndex = 0;
+    this.turnLocked = false;
 
     this.players.forEach((player) => player.bindGame(this));
   }
@@ -188,7 +194,32 @@ export class Game implements IGame {
 
   public transitionTo(nextPhase: EPhase): void {
     assertValidPhaseTransition(this.phase, nextPhase);
+    const previousPhase = this.phase;
     this.phase = nextPhase;
+
+    if (
+      nextPhase === EPhase.AWAIT_MAIN_ACTION &&
+      Game.TURN_START_ENTRY_PHASES.has(previousPhase)
+    ) {
+      this.turnIndex += 1;
+      this.turnLocked = false;
+    }
+  }
+
+  /**
+   * Phases we consider "turn boundaries": entering `AWAIT_MAIN_ACTION`
+   * from any of these means a new player turn has begun. Moving from
+   * `IN_RESOLUTION` back to `AWAIT_MAIN_ACTION` (error rollback inside
+   * `processMainAction`) is NOT a new turn.
+   */
+  private static readonly TURN_START_ENTRY_PHASES: ReadonlySet<EPhase> =
+    new Set<EPhase>([EPhase.SETUP, EPhase.BETWEEN_TURNS, EPhase.END_OF_ROUND]);
+
+  public lockCurrentTurn(): void {
+    if (!this.options.undoAllowed) {
+      return;
+    }
+    this.turnLocked = true;
   }
 
   public getActivePlayer(): IPlayer {

@@ -1,4 +1,5 @@
 import { cn } from '@/lib/cn';
+import { useTextMode } from '@/stores/debugStore';
 import type { IPublicSector } from '@/types/re-exports';
 import { getPositionStyle, type ISectorPairConfig } from './sectorVisualConfig';
 
@@ -34,6 +35,7 @@ export function SectorView({
   onSelectSector,
   onSelectSectorId,
 }: ISectorViewProps): React.JSX.Element {
+  const textMode = useTextMode();
   const positionStyle = getPositionStyle(pair.placement.position);
 
   const totalData = pair.sectors.reduce(
@@ -90,13 +92,15 @@ export function SectorView({
       }}
     >
       <div className='relative h-full w-full'>
-        <img
-          src={pair.placement.imageSrc}
-          alt=''
-          aria-hidden
-          className='h-full w-full object-contain object-top transition-all duration-300'
-          draggable={false}
-        />
+        {!textMode && (
+          <img
+            src={pair.placement.imageSrc}
+            alt=''
+            aria-hidden
+            className='h-full w-full object-contain object-top transition-all duration-300'
+            draggable={false}
+          />
+        )}
 
         <div
           className='absolute bottom-[8%] left-1/2 flex items-center gap-1'

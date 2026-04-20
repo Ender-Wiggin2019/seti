@@ -153,6 +153,19 @@ async function ensureSchema(targetDatabase: string): Promise<void> {
         CONSTRAINT game_snapshots_game_id_version_unique UNIQUE (game_id, version)
       );
     `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS turn_checkpoints (
+        game_id uuid NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+        turn_index integer NOT NULL,
+        player_id text NOT NULL,
+        round integer NOT NULL,
+        state jsonb NOT NULL,
+        interacted_player_ids jsonb NOT NULL DEFAULT '[]'::jsonb,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        PRIMARY KEY (game_id, turn_index)
+      );
+    `);
   } finally {
     await client.end();
   }

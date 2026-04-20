@@ -92,6 +92,9 @@ export class PassAction {
               const selected = stack.splice(cardIndex, 1)[0];
               if (selected !== undefined) {
                 player.hand.push(selected);
+                // Picking from the pass pile reveals the rest of the
+                // stack to the active player, so lock the turn.
+                game.lockCurrentTurn();
               }
             }
 

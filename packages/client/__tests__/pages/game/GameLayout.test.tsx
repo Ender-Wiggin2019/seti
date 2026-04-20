@@ -1,8 +1,9 @@
+import type { IBaseCard } from '@seti/common/types/BaseCard';
+import { EResource } from '@seti/common/types/element';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IGameContext } from '@/pages/game/GameContext';
-import type { IPublicGameState } from '@/types/re-exports';
-import { EPhase, EPlayerInputType } from '@/types/re-exports';
+import { EFreeAction, EPhase, EPlayerInputType } from '@/types/re-exports';
 import {
   createMockGameState,
   createMockPlayerState,
@@ -35,6 +36,16 @@ function createMockContext(overrides?: Partial<IGameContext>): IGameContext {
     requestUndo: vi.fn(),
     sendEndTurn: vi.fn(),
     ...overrides,
+  };
+}
+
+function createCard(id: string, name = `Card ${id}`): IBaseCard {
+  return {
+    id,
+    name,
+    price: 1,
+    income: EResource.CREDIT,
+    effects: [],
   };
 }
 
@@ -209,6 +220,65 @@ describe('GameLayout', () => {
       await renderLayout();
 
       expect(screen.queryByTestId('free-action-bar')).not.toBeInTheDocument();
+    });
+
+    it('opens buy-card chooser and lets player buy from row', async () => {
+      const sendFreeAction = vi.fn();
+      mockContextValue = createMockContext({
+        sendFreeAction,
+        gameState: createMockGameState({
+          cardRow: [createCard('row-1')],
+          players: [
+            createMockPlayerState({
+              playerId: 'player-1',
+              resources: { credit: 10, energy: 5, data: 0, publicity: 3 },
+            }),
+            createMockPlayerState({
+              playerId: 'player-2',
+              playerName: 'Pilot',
+              seatIndex: 1,
+              color: 'blue',
+            }),
+          ],
+        }),
+      });
+      await renderLayout();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Buy Card (3 PR)' }));
+      const dialog = screen.getByRole('dialog');
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: 'Buy From Row' }),
+      );
+
+      expect(screen.getByRole('tab', { name: 'Cards' })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      );
+
+      fireEvent.click(screen.getByTestId('card-row-row-1'));
+      expect(sendFreeAction).toHaveBeenCalledWith({
+        type: EFreeAction.BUY_CARD,
+        cardId: 'row-1',
+      });
+    });
+
+    it('opens buy-card chooser and lets player draw from deck directly', async () => {
+      const sendFreeAction = vi.fn();
+      mockContextValue = createMockContext({ sendFreeAction });
+      await renderLayout();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Buy Card (3 PR)' }));
+      const dialog = screen.getByRole('dialog');
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: 'Buy From Deck' }),
+      );
+
+      expect(sendFreeAction).toHaveBeenCalledWith({
+        type: EFreeAction.BUY_CARD,
+        fromDeck: true,
+      });
     });
   });
 

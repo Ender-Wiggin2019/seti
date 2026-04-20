@@ -76,6 +76,17 @@ export interface IGameWsEventPayloadMap {
   'game:waiting': { playerId: string; input: IPlayerInputModel };
   'game:event': { event: TGameEvent };
   'game:error': IErrorPayload;
+  /**
+   * Fan-out broadcast sent to every player in a game after an undo
+   * completes successfully. Client uses it to drop any pending input
+   * UI and, for `affectedPlayerIds`, display a popup ("an opponent
+   * undid their turn").
+   */
+  'game:undoApplied': {
+    undoneByPlayerId: string;
+    turnIndex: number;
+    affectedPlayerIds: string[];
+  };
 }
 
 export interface IRoomWsEventPayloadMap {
@@ -87,8 +98,15 @@ export interface IGameWsClientEmitPayloadMap {
   'room:join': { gameId: string };
   'room:leave': { gameId: string };
   'game:action': { gameId: string; action: IMainActionRequest };
+  'game:endTurn': { gameId: string };
   'game:freeAction': { gameId: string; action: IFreeActionRequest };
   'game:input': { gameId: string; inputResponse: IInputResponse };
+  /**
+   * Request to roll the game state back to the start of the current
+   * turn. Server validates that the requester is the active player,
+   * the turn is not locked, and an in-memory checkpoint exists.
+   */
+  'game:undo': { gameId: string };
 }
 
 export type TGameWsServerEventName =

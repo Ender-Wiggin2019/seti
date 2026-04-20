@@ -350,6 +350,8 @@ export function serializeGame(game: IGame, version = 0): IGameStateDto {
     hasRoundFirstPassOccurred: game.hasRoundFirstPassOccurred,
     rotationCounter: game.rotationCounter,
     roundRotationReminderIndex: game.roundRotationReminderIndex,
+    turnIndex: game.turnIndex,
+    turnLocked: game.turnLocked,
 
     solarSystem: serializeSolarSystem(game),
     solarSystemSetup: game.solarSystemSetup
@@ -501,13 +503,31 @@ function toPublicGoldScoringTiles(game: IGame): IPublicGoldScoringTile[] {
   }));
 }
 
+export interface IProjectGameStateOptions {
+  /**
+   * Whether a turn-start checkpoint exists in memory (or was restored
+   * from DB) that could be used to roll back the current turn. Only
+   * meaningful when the viewer is the active player and the turn is
+   * not locked.
+   */
+  hasTurnCheckpoint?: boolean;
+}
+
 export function projectGameState(
   game: IGame,
   viewerId: string,
+  options: IProjectGameStateOptions = {},
 ): IPublicGameState {
   if (!game.solarSystem) {
     throw new Error('solarSystem is required to project game state');
   }
+
+  const undoAllowed = game.options.undoAllowed;
+  const canUndo =
+    undoAllowed &&
+    !game.turnLocked &&
+    game.activePlayer.id === viewerId &&
+    Boolean(options.hasTurnCheckpoint);
 
   return {
     gameId: game.id,
@@ -515,6 +535,9 @@ export function projectGameState(
     phase: game.phase,
     currentPlayerId: game.activePlayer.id,
     startPlayerId: game.startPlayer.id,
+    undoAllowed,
+    canUndo,
+    turnIndex: game.turnIndex,
     players: game.players.map((player) =>
       toPublicPlayerState(player, viewerId),
     ),

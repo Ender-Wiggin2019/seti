@@ -150,6 +150,7 @@ export class ExchangeResourcesFreeAction {
         const card = game.mainDeck.drawWithReshuffle(game.random);
         if (card !== undefined) {
           player.hand.push(card);
+          game.lockCurrentTurn();
         }
         break;
       }

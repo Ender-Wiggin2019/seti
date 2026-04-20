@@ -230,4 +230,16 @@ export interface IPublicGameState {
   recentEvents: TGameEvent[];
   milestones: IPublicMilestoneState;
   goldScoringTiles: IPublicGoldScoringTile[];
+  /** Whether room-level undo is enabled for this game. */
+  undoAllowed: boolean;
+  /**
+   * Whether the current viewer (if they are the active player) is
+   * allowed to press Undo right now. Always false for non-active
+   * players. False once the active player's turn is locked (any card
+   * drawn from the deck / card row refilled / pass-pile revealed) or
+   * when no turn-start checkpoint is available.
+   */
+  canUndo: boolean;
+  /** Monotonic index of the current turn (server-side). */
+  turnIndex: number;
 }

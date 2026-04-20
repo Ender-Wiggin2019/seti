@@ -1,7 +1,7 @@
 import { createDefaultSetupConfig } from '@seti/common/constant/sectorSetup';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EResource } from '@seti/common/types/element';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TopBar } from '@/components/layout/TopBar';
@@ -9,12 +9,12 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/toast';
-import { ActionConfirm } from '@/features/actions/ActionConfirm';
 import { ActionMenu } from '@/features/actions/ActionMenu';
 import { FreeActionBar } from '@/features/actions/FreeActionBar';
 import { AlienBoardView } from '@/features/board/AlienBoardView';
@@ -35,12 +35,17 @@ import { useGameContext } from '@/pages/game/GameContext';
 import { GameOverDialog } from '@/pages/game/GameOverDialog';
 import { type TBoardTab, useGameViewStore } from '@/stores/gameViewStore';
 import type {
-  IFreeActionRequest,
+  IMainActionRequest,
   IPublicGoldScoringTile,
   IPublicMilestoneState,
   IPublicPlayerState,
 } from '@/types/re-exports';
-import { EFreeAction, EPlayerInputType } from '@/types/re-exports';
+import {
+  EFreeAction,
+  EMainAction,
+  EPhase,
+  EPlayerInputType,
+} from '@/types/re-exports';
 
 const BOARD_TABS: TBoardTab[] = [
   'board',
@@ -91,13 +96,35 @@ export function GameLayout({
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailCard, setDetailCard] = useState<IBaseCard | null>(null);
   const [handExpanded, setHandExpanded] = useState(true);
+  const [armedCardRowBuy, setArmedCardRowBuy] = useState(false);
+  const [playCardSelectionMode, setPlayCardSelectionMode] = useState(false);
+  const { gameState, myPlayerId, isMyTurn, pendingInput } = useGameContext();
+
+  useEffect(() => {
+    if (!playCardSelectionMode) return;
+    if (
+      !isMyTurn ||
+      pendingInput !== null ||
+      gameState?.phase !== EPhase.AWAIT_MAIN_ACTION
+    ) {
+      setPlayCardSelectionMode(false);
+    }
+  }, [gameState?.phase, isMyTurn, pendingInput, playCardSelectionMode]);
 
   const handleInspectCard = (card: IBaseCard): void => {
     setDetailCard(card);
     setDetailOpen(true);
   };
 
-  const actionController = useActionController();
+  const actionController = useActionController({
+    armCardRowBuy: () => {
+      setArmedCardRowBuy(true);
+      setActiveTab('cards');
+    },
+    clearCardRowBuy: () => {
+      setArmedCardRowBuy(false);
+    },
+  });
 
   return (
     <div className='flex h-screen flex-col overflow-hidden bg-background-950 text-text-100'>
@@ -111,6 +138,10 @@ export function GameLayout({
       <TopActionBar
         onFreeActionClick={actionController.handleFreeActionClick}
         cornerSelectionHint={actionController.cornerSelectionMode}
+        onRequestPlayCardSelection={() => {
+          setPlayCardSelectionMode(true);
+          setHandExpanded(true);
+        }}
       />
 
       <div className='flex min-h-0 flex-1'>
@@ -122,6 +153,8 @@ export function GameLayout({
             showSolarSystemSpaceConfig={showSolarSystemSpaceConfig}
             probeInsetPxByRing={probeInsetPxByRing}
             allowMoveAnyProbe={allowMoveAnyProbe}
+            armedCardRowBuy={armedCardRowBuy}
+            setArmedCardRowBuy={setArmedCardRowBuy}
           />
 
           <button
@@ -153,9 +186,11 @@ export function GameLayout({
         expanded={handExpanded}
         onToggle={() => setHandExpanded((v) => !v)}
         cornerSelectionMode={actionController.cornerSelectionMode}
+        playCardSelectionMode={playCardSelectionMode}
         clearCornerSelectionMode={() =>
           actionController.setCornerSelectionMode(false)
         }
+        clearPlayCardSelectionMode={() => setPlayCardSelectionMode(false)}
         onInspectCard={handleInspectCard}
       />
 
@@ -182,7 +217,13 @@ export function GameLayout({
  *    picks a card (the corner free-action has been dispatched)
  *  • `dialogs` — JSX to render once at the bottom of the layout
  */
-function useActionController(): {
+function useActionController({
+  armCardRowBuy,
+  clearCardRowBuy,
+}: {
+  armCardRowBuy: () => void;
+  clearCardRowBuy: () => void;
+}): {
   handleFreeActionClick: (action: EFreeAction) => void;
   cornerSelectionMode: boolean;
   setCornerSelectionMode: (next: boolean) => void;
@@ -190,9 +231,7 @@ function useActionController(): {
 } {
   const { t } = useTranslation('common');
   const { gameState, myPlayerId, sendFreeAction } = useGameContext();
-  const [confirmRequest, setConfirmRequest] =
-    useState<IFreeActionRequest | null>(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [buyCardOpen, setBuyCardOpen] = useState(false);
   const [cornerSelectionMode, setCornerSelectionMode] = useState(false);
   const [exchangeOpen, setExchangeOpen] = useState(false);
   const [placeDataOpen, setPlaceDataOpen] = useState(false);
@@ -209,8 +248,8 @@ function useActionController(): {
     switch (action) {
       case EFreeAction.BUY_CARD:
         setCornerSelectionMode(false);
-        setConfirmRequest({ type: EFreeAction.BUY_CARD, fromDeck: true });
-        setConfirmOpen(true);
+        clearCardRowBuy();
+        setBuyCardOpen(true);
         return;
       case EFreeAction.PLACE_DATA:
         setCornerSelectionMode(false);
@@ -286,28 +325,52 @@ function useActionController(): {
     }
   };
 
-  const handleConfirmFreeAction = () => {
-    if (confirmRequest) {
-      sendFreeAction(confirmRequest);
-    }
-    setConfirmOpen(false);
-    setConfirmRequest(null);
-  };
-
   const dialogs = (
     <>
-      <ActionConfirm
-        open={confirmOpen}
-        title={t('client.game_layout.buy_card_title')}
-        description={t('client.game_layout.buy_card_desc')}
-        costs={[t('client.game_layout.buy_card_cost')]}
-        confirmLabel={t('client.game_layout.buy')}
-        onCancel={() => {
-          setConfirmOpen(false);
-          setConfirmRequest(null);
-        }}
-        onConfirm={handleConfirmFreeAction}
-      />
+      <Dialog
+        open={buyCardOpen}
+        onOpenChange={(next) => !next && setBuyCardOpen(false)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('client.game_layout.buy_card_title')}</DialogTitle>
+            <p className='text-sm text-text-300'>
+              {t('client.game_layout.buy_card_desc')}
+            </p>
+          </DialogHeader>
+
+          <div className='instrument-panel p-3'>
+            <div className='section-head mb-2'>
+              <span aria-hidden className='section-head__tick' />
+              <p className='micro-label'>{t('client.action_confirm.cost')}</p>
+              <div aria-hidden className='section-head__rule' />
+            </div>
+            <p className='readout font-mono text-[13px] text-text-100'>
+              {t('client.game_layout.buy_card_cost')}
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant='ghost'
+              onClick={() => {
+                setBuyCardOpen(false);
+                armCardRowBuy();
+              }}
+            >
+              {t('client.game_layout.buy_from_row')}
+            </Button>
+            <Button
+              onClick={() => {
+                sendFreeAction({ type: EFreeAction.BUY_CARD, fromDeck: true });
+                setBuyCardOpen(false);
+              }}
+            >
+              {t('client.game_layout.buy_from_deck')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <ExchangeResourcesDialog
         open={exchangeOpen}
@@ -368,9 +431,11 @@ function useActionController(): {
 function TopActionBar({
   onFreeActionClick,
   cornerSelectionHint,
+  onRequestPlayCardSelection,
 }: {
   onFreeActionClick: (action: EFreeAction) => void;
   cornerSelectionHint: boolean;
+  onRequestPlayCardSelection: () => void;
 }): React.JSX.Element {
   const { t } = useTranslation('common');
   const {
@@ -384,9 +449,35 @@ function TopActionBar({
     requestUndo,
   } = useGameContext();
 
-  const canUndo = Boolean((gameState as { canUndo?: boolean } | null)?.canUndo);
+  const canUndo = gameState?.canUndo ?? false;
   const showInputRenderer =
     pendingInput !== null && pendingInput.type !== EPlayerInputType.OR;
+
+  const handleMainAction = (action: IMainActionRequest) => {
+    if (action.type !== EMainAction.PLAY_CARD) {
+      sendAction(action);
+      return;
+    }
+
+    const myPlayer = gameState?.players.find(
+      (player) => player.playerId === myPlayerId,
+    );
+    const hand = myPlayer?.hand ?? [];
+    if (hand.length <= 0) {
+      return;
+    }
+
+    if (hand.length === 1) {
+      sendAction({ type: EMainAction.PLAY_CARD, payload: { cardIndex: 0 } });
+      return;
+    }
+
+    onRequestPlayCardSelection();
+    toast({
+      title: t('client.game_layout.toast.card_required'),
+      description: t('client.game_layout.toast.card_required_desc'),
+    });
+  };
 
   return (
     <section
@@ -425,7 +516,7 @@ function TopActionBar({
             isMyTurn={isMyTurn}
             pendingInput={pendingInput}
             canUndo={canUndo}
-            onSendAction={sendAction}
+            onSendAction={handleMainAction}
             onSendEndTurn={sendEndTurn}
             onRequestUndo={requestUndo}
             orientation='horizontal'
@@ -548,17 +639,27 @@ function HandDockBlock({
   expanded,
   onToggle,
   cornerSelectionMode,
+  playCardSelectionMode,
   clearCornerSelectionMode,
+  clearPlayCardSelectionMode,
   onInspectCard,
 }: {
   expanded: boolean;
   onToggle: () => void;
   cornerSelectionMode: boolean;
+  playCardSelectionMode: boolean;
   clearCornerSelectionMode: () => void;
+  clearPlayCardSelectionMode: () => void;
   onInspectCard: (card: IBaseCard) => void;
 }): React.JSX.Element {
-  const { gameState, myPlayerId, pendingInput, sendFreeAction, sendInput } =
-    useGameContext();
+  const {
+    gameState,
+    myPlayerId,
+    pendingInput,
+    sendFreeAction,
+    sendInput,
+    sendAction,
+  } = useGameContext();
   const myPlayer = gameState?.players.find((p) => p.playerId === myPlayerId);
 
   return (
@@ -568,6 +669,7 @@ function HandDockBlock({
         handSize={myPlayer?.handSize ?? 0}
         pendingInput={pendingInput}
         cornerSelectionMode={cornerSelectionMode}
+        playCardSelectionMode={playCardSelectionMode}
         expanded={expanded}
         onToggle={onToggle}
         onSubmitSelection={(cardIds) => {
@@ -576,6 +678,20 @@ function HandDockBlock({
         onCardCornerSelect={(cardId) => {
           sendFreeAction({ type: EFreeAction.USE_CARD_CORNER, cardId });
           clearCornerSelectionMode();
+        }}
+        onCardPlaySelect={(cardId) => {
+          const hand = myPlayer?.hand ?? [];
+          const cardIndex = hand.findIndex((card) => card.id === cardId);
+          if (cardIndex < 0) {
+            clearPlayCardSelectionMode();
+            return;
+          }
+
+          sendAction({
+            type: EMainAction.PLAY_CARD,
+            payload: { cardIndex },
+          });
+          clearPlayCardSelectionMode();
         }}
         onCardInspect={onInspectCard}
       />
@@ -590,6 +706,8 @@ function BoardTabs({
   showSolarSystemSpaceConfig,
   probeInsetPxByRing,
   allowMoveAnyProbe,
+  armedCardRowBuy,
+  setArmedCardRowBuy,
 }: {
   activeTab: TBoardTab;
   onTabChange: (tab: TBoardTab) => void;
@@ -597,12 +715,12 @@ function BoardTabs({
   showSolarSystemSpaceConfig: boolean;
   probeInsetPxByRing?: TProbeInsetPxByRing;
   allowMoveAnyProbe: boolean;
+  armedCardRowBuy: boolean;
+  setArmedCardRowBuy: (next: boolean | ((prev: boolean) => boolean)) => void;
 }): React.JSX.Element {
   const { t } = useTranslation('common');
   const { gameState, myPlayerId, pendingInput, sendFreeAction, sendInput } =
     useGameContext();
-  const [armedCardRowBuy, setArmedCardRowBuy] = useState(false);
-
   const playerColors =
     gameState?.players.reduce<Record<string, string>>((acc, p) => {
       acc[p.playerId] = p.color;

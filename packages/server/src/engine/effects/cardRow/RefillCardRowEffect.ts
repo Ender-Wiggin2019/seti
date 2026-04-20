@@ -22,6 +22,9 @@ export class RefillCardRowEffect {
       game.cardRow.push(card);
       cardsAdded++;
     }
+    if (cardsAdded > 0) {
+      game.lockCurrentTurn();
+    }
     return { cardsAdded };
   }
 }

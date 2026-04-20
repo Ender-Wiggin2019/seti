@@ -183,6 +183,8 @@ export interface IGameStateDto {
   hasRoundFirstPassOccurred: boolean;
   rotationCounter: number;
   roundRotationReminderIndex: number;
+  turnIndex: number;
+  turnLocked: boolean;
 
   solarSystem: ISolarSystemDto | null;
   solarSystemSetup: ISolarSystemSetupConfig | null;

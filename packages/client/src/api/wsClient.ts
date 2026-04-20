@@ -17,12 +17,19 @@ type TWaitingSocketHandler = (data: {
 }) => void;
 type TEventSocketHandler = (data: { event: TGameEvent }) => void;
 type TErrorSocketHandler = (error: IErrorPayload) => void;
+export interface IUndoAppliedPayload {
+  undoneByPlayerId: string;
+  turnIndex: number;
+  affectedPlayerIds: string[];
+}
+type TUndoAppliedHandler = (data: IUndoAppliedPayload) => void;
 
 interface IGameSocketHandlerMap {
   'game:state': TStateSocketHandler;
   'game:waiting': TWaitingSocketHandler;
   'game:event': TEventSocketHandler;
   'game:error': TErrorSocketHandler;
+  'game:undoApplied': TUndoAppliedHandler;
 }
 
 type TUntypedSocketListener = (...args: unknown[]) => void;
@@ -40,6 +47,7 @@ class WsClient {
   private readonly waitingHandlers = new Set<TWaitingSocketHandler>();
   private readonly eventHandlers = new Set<TEventSocketHandler>();
   private readonly errorHandlers = new Set<TErrorSocketHandler>();
+  private readonly undoAppliedHandlers = new Set<TUndoAppliedHandler>();
 
   get instance(): Socket | null {
     return this.socket;
@@ -108,6 +116,10 @@ class WsClient {
     this.socket?.emit('game:input', { gameId, inputResponse });
   }
 
+  sendUndo(gameId: string): void {
+    this.socket?.emit('game:undo', { gameId });
+  }
+
   onState(cb: (state: IPublicGameState) => void): () => void {
     return this.subscribe('game:state', this.stateHandlers, (data) =>
       cb(data.gameState),
@@ -128,6 +140,10 @@ class WsClient {
 
   onError(cb: (error: IErrorPayload) => void): () => void {
     return this.subscribe('game:error', this.errorHandlers, cb);
+  }
+
+  onUndoApplied(cb: TUndoAppliedHandler): () => void {
+    return this.subscribe('game:undoApplied', this.undoAppliedHandlers, cb);
   }
 
   disconnect(): void {
@@ -164,6 +180,7 @@ class WsClient {
     this.bindHandlers(socket, 'game:waiting', this.waitingHandlers);
     this.bindHandlers(socket, 'game:event', this.eventHandlers);
     this.bindHandlers(socket, 'game:error', this.errorHandlers);
+    this.bindHandlers(socket, 'game:undoApplied', this.undoAppliedHandlers);
   }
 
   private unbindRegisteredHandlers(socket: Socket): void {
@@ -171,6 +188,7 @@ class WsClient {
     this.unbindHandlers(socket, 'game:waiting', this.waitingHandlers);
     this.unbindHandlers(socket, 'game:event', this.eventHandlers);
     this.unbindHandlers(socket, 'game:error', this.errorHandlers);
+    this.unbindHandlers(socket, 'game:undoApplied', this.undoAppliedHandlers);
   }
 
   private bindHandlers<TEvent extends keyof IGameSocketHandlerMap>(

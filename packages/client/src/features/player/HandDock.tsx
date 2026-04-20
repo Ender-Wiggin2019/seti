@@ -11,10 +11,12 @@ interface IHandDockProps {
   handSize: number;
   pendingInput: IPlayerInputModel | null;
   cornerSelectionMode: boolean;
+  playCardSelectionMode: boolean;
   expanded: boolean;
   onToggle: () => void;
   onSubmitSelection: (cardIds: string[]) => void;
   onCardCornerSelect: (cardId: string) => void;
+  onCardPlaySelect: (cardId: string) => void;
   onCardInspect: (card: IBaseCard) => void;
 }
 
@@ -34,10 +36,12 @@ export function HandDock({
   handSize,
   pendingInput,
   cornerSelectionMode,
+  playCardSelectionMode,
   expanded,
   onToggle,
   onSubmitSelection,
   onCardCornerSelect,
+  onCardPlaySelect,
   onCardInspect,
 }: IHandDockProps): React.JSX.Element {
   const { t } = useTranslation('common');
@@ -45,30 +49,45 @@ export function HandDock({
   const isCardSelectionActive = pendingInput?.type === EPlayerInputType.CARD;
 
   const effectiveExpanded = useMemo(
-    () => expanded || isCardSelectionActive || cornerSelectionMode,
-    [expanded, isCardSelectionActive, cornerSelectionMode],
+    () =>
+      expanded ||
+      isCardSelectionActive ||
+      cornerSelectionMode ||
+      playCardSelectionMode,
+    [
+      expanded,
+      isCardSelectionActive,
+      cornerSelectionMode,
+      playCardSelectionMode,
+    ],
   );
 
   useEffect(() => {
-    if ((isCardSelectionActive || cornerSelectionMode) && !expanded) {
+    if (
+      (isCardSelectionActive || cornerSelectionMode || playCardSelectionMode) &&
+      !expanded
+    ) {
       onToggle();
     }
     // We only want to trigger a force-open when a new input or corner mode
     // begins while the dock is collapsed. Disabling the exhaustive-deps lint
     // here is intentional — re-running on `onToggle` identity would loop.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isCardSelectionActive, cornerSelectionMode]);
+  }, [isCardSelectionActive, cornerSelectionMode, playCardSelectionMode]);
 
   const modeLabel = isCardSelectionActive
     ? t('client.hand_view.mode_select', { defaultValue: 'SELECT' })
     : cornerSelectionMode
       ? t('client.hand_view.mode_corner', { defaultValue: 'CORNER' })
-      : null;
+      : playCardSelectionMode
+        ? t('client.hand_view.mode_play', { defaultValue: 'PLAY' })
+        : null;
 
   const toggleLabel = effectiveExpanded
     ? t('client.game_layout.hide_hand')
     : t('client.game_layout.show_hand');
-  const toggleLocked = isCardSelectionActive || cornerSelectionMode;
+  const toggleLocked =
+    isCardSelectionActive || cornerSelectionMode || playCardSelectionMode;
 
   return (
     <div
@@ -161,8 +180,10 @@ export function HandDock({
               handSize={handSize}
               pendingInput={pendingInput}
               cornerSelectionMode={cornerSelectionMode}
+              playCardSelectionMode={playCardSelectionMode}
               onSubmitSelection={onSubmitSelection}
               onCardCornerSelect={onCardCornerSelect}
+              onCardPlaySelect={onCardPlaySelect}
               onCardInspect={onCardInspect}
               variant='dock'
             />

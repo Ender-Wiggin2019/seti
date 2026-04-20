@@ -62,5 +62,8 @@ export class TechBonusEffect {
   private static drawCards(player: IPlayer, game: IGame, count: number): void {
     const drawn = game.mainDeck.drawN(count);
     player.hand.push(...drawn);
+    if (drawn.length > 0) {
+      game.lockCurrentTurn();
+    }
   }
 }

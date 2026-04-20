@@ -17,6 +17,8 @@ interface IHandViewProps {
   onSubmitSelection?: (cardIds: string[]) => void;
   cornerSelectionMode?: boolean;
   onCardCornerSelect?: (cardId: string) => void;
+  playCardSelectionMode?: boolean;
+  onCardPlaySelect?: (cardId: string) => void;
   onCardInspect?: (card: IBaseCard) => void;
   /**
    * `panel` (default) — renders the hand as a bounded instrument panel
@@ -36,6 +38,8 @@ export function HandView({
   onSubmitSelection,
   cornerSelectionMode = false,
   onCardCornerSelect,
+  playCardSelectionMode = false,
+  onCardPlaySelect,
   onCardInspect,
   variant = 'panel',
 }: IHandViewProps): React.JSX.Element {
@@ -76,6 +80,10 @@ export function HandView({
       onCardCornerSelect?.(card.id);
       return;
     }
+    if (playCardSelectionMode) {
+      onCardPlaySelect?.(card.id);
+      return;
+    }
     onCardInspect?.(card);
   }
 
@@ -83,7 +91,9 @@ export function HandView({
     ? t('client.hand_view.mode_select', { defaultValue: 'SELECT' })
     : cornerSelectionMode
       ? t('client.hand_view.mode_corner', { defaultValue: 'CORNER' })
-      : null;
+      : playCardSelectionMode
+        ? t('client.hand_view.mode_play', { defaultValue: 'PLAY' })
+        : null;
 
   const isDock = variant === 'dock';
 
@@ -118,7 +128,7 @@ export function HandView({
               className={cn(
                 'relative rounded-[4px] border p-1 transition-[transform,border-color,box-shadow] duration-150 hover:-translate-y-0.5',
                 'focus-visible:outline-none focus-visible:shadow-focus-ring',
-                selectCardInput || cornerSelectionMode
+                selectCardInput || cornerSelectionMode || playCardSelectionMode
                   ? 'cursor-pointer'
                   : 'cursor-default',
                 cornerSelectionMode

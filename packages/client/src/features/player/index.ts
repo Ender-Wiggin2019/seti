@@ -1,3 +1,4 @@
+export { ComputerRow } from './ComputerRow';
 export { ComputerView } from './ComputerView';
 export { DataPoolView } from './DataPoolView';
 export { HandDock } from './HandDock';
@@ -9,3 +10,4 @@ export { PlayedMissions } from './PlayedMissions';
 export { PlayerDashboard } from './PlayerDashboard';
 export { ResourceBar } from './ResourceBar';
 export { TechDisplay } from './TechDisplay';
+export { TechRow } from './TechRow';

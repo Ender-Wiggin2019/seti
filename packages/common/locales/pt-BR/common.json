@@ -431,6 +431,29 @@
         "any": "Qualquer"
       }
     },
+    "tech_row": {
+      "types": {
+        "launch": "Lançar",
+        "scan": "Escanear"
+      },
+      "launch": {
+        "double_probe": "Lançar +1",
+        "asteroid": "Asteroide +★",
+        "land_discount": "Pousar −1⚡",
+        "moon": "Pousar na Lua"
+      },
+      "scan": {
+        "earth": "Terra (ou adj.)",
+        "card_row": "Linha de Cartas",
+        "mercury": "Mercúrio (−★)",
+        "discard_card": "Descartar Carta",
+        "energy_launch": "Mover / Lançar (⚡)"
+      }
+    },
+    "computer_row": {
+      "tuck": "Guardar",
+      "analyze": "Analisar"
+    },
     "tech_stack": {
       "types": {
         "probe": "Sonda",
@@ -523,7 +546,7 @@
       "corner_selection_hint": "Clique em uma carta da mão para usar a ação de canto",
       "actions": "Ações",
       "buy_card_title": "Comprar Carta",
-      "buy_card_desc": "Gastar 3 de publicidade e comprar do baralho?",
+      "buy_card_desc": "Gaste 3 de publicidade para comprar da linha ou comprar 1 carta do baralho.",
       "buy_card_cost": "3 de publicidade",
       "buy": "Comprar",
       "exchange_title": "Trocar Recursos",

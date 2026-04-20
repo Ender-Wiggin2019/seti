@@ -435,6 +435,29 @@
         "any": "任意"
       }
     },
+    "tech_row": {
+      "types": {
+        "launch": "发射",
+        "scan": "扫描"
+      },
+      "launch": {
+        "double_probe": "发射 +1",
+        "asteroid": "小行星 +★",
+        "land_discount": "着陆 −1⚡",
+        "moon": "登月"
+      },
+      "scan": {
+        "earth": "地球（或邻接）",
+        "card_row": "卡牌行",
+        "mercury": "水星（−★）",
+        "discard_card": "弃手牌",
+        "energy_launch": "移动 / 发射（⚡）"
+      }
+    },
+    "computer_row": {
+      "tuck": "藏入",
+      "analyze": "分析"
+    },
     "tech_stack": {
       "types": {
         "probe": "探测",
@@ -527,7 +550,7 @@
       "corner_selection_hint": "点击手牌以使用其卡角行动",
       "actions": "行动",
       "buy_card_title": "买卡",
-      "buy_card_desc": "花费 3 声望从牌库抽一张？",
+      "buy_card_desc": "花费 3 声望：可从牌行购买一张，或直接从牌库抽 1 张。",
       "buy_card_cost": "3 声望",
       "buy": "购买",
       "exchange_title": "交换资源",

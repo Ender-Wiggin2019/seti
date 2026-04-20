@@ -1,18 +1,18 @@
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import type { ETechId } from '@seti/common/types/tech';
 import { useTranslation } from 'react-i18next';
+import { useTextMode } from '@/stores/debugStore';
 import type {
   IFreeActionRequest,
   IPlayerInputModel,
   IPublicPlayerState,
 } from '@/types/re-exports';
 import { EFreeAction, EPlayerInputType } from '@/types/re-exports';
-import { ComputerView } from './ComputerView';
-import { DataPoolView } from './DataPoolView';
+import { ComputerRow } from './ComputerRow';
 import { IncomeTracker } from './IncomeTracker';
 import { PieceInventory } from './PieceInventory';
 import { ResourceBar } from './ResourceBar';
-import { TechDisplay } from './TechDisplay';
+import { TechRow } from './TechRow';
 
 interface IPlayerIncomeInfo {
   credit: number;
@@ -29,10 +29,16 @@ interface IPlayerDashboardProps {
 }
 
 /**
- * PlayerDashboard — the observation deck at the bottom of the game.
- * Layout: top resource rail, then a player-board substrate with
- * two instrument columns (left: income / computer / inventory;
- * right: data pool / tech / missions+tech counts).
+ * PlayerDashboard — the player's personal board.
+ *
+ * Three primary rows mirror the physical board:
+ *   1. ResourceBar  — credit / energy / publicity / score readouts
+ *   2. TechRow      — Launch (4) and Scan (5) tech slots
+ *   3. ComputerRow  — Data Pool, six computer columns, and Analyze cap
+ *
+ * A compact aux strip below carries the income forecast, piece inventory,
+ * and mission/tech counts so they remain glanceable without dominating
+ * the player board itself.
  */
 export function PlayerDashboard({
   player,
@@ -43,8 +49,10 @@ export function PlayerDashboard({
   techs,
 }: IPlayerDashboardProps): React.JSX.Element {
   const { t } = useTranslation('common');
+  const textMode = useTextMode();
+  const playerTechs = techs ?? player.techs;
   const missionCount = playedMissions?.length ?? 0;
-  const techCount = techs?.length ?? player.techs.length;
+  const techCount = playerTechs.length;
   const cardInputActive = pendingInput?.type === EPlayerInputType.CARD;
 
   return (
@@ -52,44 +60,42 @@ export function PlayerDashboard({
       <ResourceBar player={player} />
 
       <div className='instrument-panel relative overflow-hidden p-1.5'>
-        <div
-          className='pointer-events-none absolute inset-0 opacity-50 mix-blend-luminosity'
-          style={{
-            backgroundImage:
-              'linear-gradient(oklch(0.08 0.018 260 / 0.72), oklch(0.08 0.018 260 / 0.72)), url(/assets/seti/boards/playerBoard.png)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-          aria-hidden
-        />
+        {!textMode && (
+          <div
+            className='pointer-events-none absolute inset-0 opacity-40 mix-blend-luminosity'
+            style={{
+              backgroundImage:
+                'linear-gradient(oklch(0.08 0.018 260 / 0.78), oklch(0.08 0.018 260 / 0.78)), url(/assets/seti/boards/playerBoard.png)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+            aria-hidden
+          />
+        )}
 
-        <div className='relative grid min-h-[174px] grid-cols-[1.25fr_0.85fr] gap-1.5'>
-          <div className='space-y-1.5'>
+        <div className='relative flex flex-col gap-1.5'>
+          <TechRow techs={playerTechs} />
+
+          <ComputerRow
+            computer={player.computer}
+            dataPoolCount={player.dataPoolCount}
+            dataPoolMax={player.dataPoolMax}
+            onPlaceData={(row, columnIndex) =>
+              onFreeAction({
+                type: EFreeAction.PLACE_DATA,
+                slotIndex: columnIndex,
+              })
+            }
+          />
+
+          <div className='grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.9fr)] gap-1.5'>
             <IncomeTracker
               creditIncome={income?.credit ?? 0}
               energyIncome={income?.energy ?? 0}
             />
-            <ComputerView
-              computer={player.computer}
-              dataPoolCount={player.dataPoolCount}
-              onPlaceData={(row) =>
-                onFreeAction({
-                  type: EFreeAction.PLACE_DATA,
-                  slotIndex: row === 'top' ? 0 : 1,
-                })
-              }
-            />
             <PieceInventory pieces={player.pieces} />
-          </div>
 
-          <div className='space-y-1.5'>
-            <DataPoolView
-              count={player.dataPoolCount}
-              max={player.dataPoolMax}
-            />
-            <TechDisplay techs={techs ?? player.techs} />
-
-            <div className='instrument-panel p-2'>
+            <section className='instrument-panel p-2'>
               <div className='section-head mb-1.5'>
                 <span aria-hidden className='section-head__tick' />
                 <p className='micro-label'>
@@ -109,7 +115,7 @@ export function PlayerDashboard({
                     {t('client.player_dashboard.played')}
                   </span>
                 </div>
-                <span className='readout text-sm font-semibold text-text-100 leading-none'>
+                <span className='readout text-sm font-semibold leading-none text-text-100'>
                   {missionCount}
                 </span>
               </div>
@@ -125,7 +131,7 @@ export function PlayerDashboard({
                     {t('client.player_dashboard.tech')}
                   </span>
                 </div>
-                <span className='readout text-sm font-semibold text-text-100 leading-none'>
+                <span className='readout text-sm font-semibold leading-none text-text-100'>
                   {techCount}
                 </span>
               </div>
@@ -140,7 +146,7 @@ export function PlayerDashboard({
                   </p>
                 </div>
               ) : null}
-            </div>
+            </section>
           </div>
         </div>
       </div>

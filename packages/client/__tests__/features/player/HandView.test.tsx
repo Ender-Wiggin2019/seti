@@ -53,4 +53,22 @@ describe('HandView', () => {
 
     expect(onSubmitSelection).toHaveBeenCalledWith(['card-a']);
   });
+
+  it('fires play-card callback when play selection mode is active', () => {
+    const onCardPlaySelect = vi.fn();
+
+    render(
+      <HandView
+        cards={[createCard('card-a', 'Alpha')]}
+        handSize={1}
+        pendingInput={null}
+        playCardSelectionMode
+        onCardPlaySelect={onCardPlaySelect}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('hand-card-card-a'));
+
+    expect(onCardPlaySelect).toHaveBeenCalledWith('card-a');
+  });
 });

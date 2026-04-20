@@ -69,6 +69,29 @@ export interface IGame {
   rotationCounter: number;
   hasRoundFirstPassOccurred: boolean;
 
+  /**
+   * Monotonic counter incremented every time the engine enters a new
+   * player turn (transition into `AWAIT_MAIN_ACTION` from a turn-boundary
+   * phase). Used by the undo subsystem to key the "current turn start"
+   * checkpoint.
+   */
+  turnIndex: number;
+
+  /**
+   * Set whenever the current turn reveals hidden information that would
+   * make a rollback unfair — any draw from the main deck, a successful
+   * card-row refill, or a pick from the end-of-round pass pile. Reset
+   * to `false` at the start of every new turn.
+   */
+  turnLocked: boolean;
+
+  /**
+   * Mark the current turn as locked. No-op if undo is disabled for this
+   * game. Safe to call from effect handlers; no-op before the first turn
+   * starts.
+   */
+  lockCurrentTurn(): void;
+
   processMainAction(playerId: string, action: IMainActionRequest): void;
   processEndTurn(playerId: string): void;
   processFreeAction(playerId: string, action: IFreeActionRequest): void;

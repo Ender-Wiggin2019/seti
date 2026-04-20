@@ -224,6 +224,7 @@ export class BehaviorExecutor {
       }
       if (drawnCards.length > 0) {
         player.hand.push(...drawnCards);
+        game.lockCurrentTurn();
       }
       RefillCardRowEffect.execute(game);
       return undefined;

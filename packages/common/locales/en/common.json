@@ -432,6 +432,29 @@
         "any": "Any"
       }
     },
+    "tech_row": {
+      "types": {
+        "launch": "Launch",
+        "scan": "Scan"
+      },
+      "launch": {
+        "double_probe": "Launch +1",
+        "asteroid": "Asteroid +★",
+        "land_discount": "Land −1⚡",
+        "moon": "Moon Landing"
+      },
+      "scan": {
+        "earth": "Earth (or adj.)",
+        "card_row": "Card Row",
+        "mercury": "Mercury (−★)",
+        "discard_card": "Discard Card",
+        "energy_launch": "Move / Launch (⚡)"
+      }
+    },
+    "computer_row": {
+      "tuck": "Tuck",
+      "analyze": "Analyze"
+    },
     "tech_stack": {
       "types": {
         "probe": "Probe",
@@ -524,7 +547,7 @@
       "corner_selection_hint": "Click a hand card to use its corner action",
       "actions": "Actions",
       "buy_card_title": "Buy Card",
-      "buy_card_desc": "Spend 3 publicity and draw from the deck?",
+      "buy_card_desc": "Spend 3 publicity to buy from the row or draw 1 card from the deck.",
       "buy_card_cost": "3 publicity",
       "buy": "Buy",
       "exchange_title": "Exchange Resources",
