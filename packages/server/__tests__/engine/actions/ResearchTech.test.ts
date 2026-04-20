@@ -1,10 +1,10 @@
-import { EMainAction } from '@seti/common/types/protocol/enums';
+import { EMainAction, EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import {
   EPlayerInputType,
   type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
-import { type ETechId, RESEARCH_PUBLICITY_COST } from '@seti/common/types/tech';
+import { ETechId, RESEARCH_PUBLICITY_COST } from '@seti/common/types/tech';
 import { vi } from 'vitest';
 import { ResearchTechAction } from '@/engine/actions/ResearchTech.js';
 import { BoardBuilder } from '@/engine/board/BoardBuilder.js';
@@ -102,6 +102,15 @@ function getRequiredNonComputerPick(model: ISelectOptionInputModel): {
     throw new Error('expected a non-computer tech option');
   }
   return pick;
+}
+
+function findProbeSpaceId(
+  game: Game | IGame,
+  probeId: string,
+): string | undefined {
+  return game.solarSystem?.spaces.find((space) =>
+    space.occupants.some((probe) => probe.id === probeId),
+  )?.id;
 }
 
 describe('ResearchTechAction', () => {
@@ -326,6 +335,32 @@ describe('ResearchTechAction — integration (2.7.x closure)', () => {
     });
   });
 
+  describe('2.7.2 research rotation moves probes with the real solar system disc', () => {
+    it('rotates an existing Mercury probe onto a different ring-1 space before tech selection', () => {
+      const { game, player } = createIntegrationGame('research-2-7-2-rotation');
+      player.resources.gain({ publicity: RESEARCH_PUBLICITY_COST });
+      const mercurySpace = game.solarSystem?.getSpacesOnPlanet(
+        EPlanet.MERCURY,
+      )[0];
+      if (!mercurySpace || !game.solarSystem) {
+        throw new Error('expected Mercury space in the solar system');
+      }
+
+      const probe = game.solarSystem.placeProbe(player.id, mercurySpace.id);
+      const beforeSpaceId = findProbeSpaceId(game, probe.id);
+
+      game.processMainAction(player.id, { type: EMainAction.RESEARCH_TECH });
+
+      expect(findProbeSpaceId(game, probe.id)).toBeDefined();
+      expect(findProbeSpaceId(game, probe.id)).not.toBe(beforeSpaceId);
+      expect(
+        game.solarSystem.spaces.filter((space) =>
+          space.occupants.some((occupant) => occupant.id === probe.id),
+        ),
+      ).toHaveLength(1);
+    });
+  });
+
   describe('2.7.3 / 2.7E.3 the same tech cannot be acquired twice', () => {
     it('the chosen techId is removed from the available list after acquisition', () => {
       const { game, player } = createIntegrationGame('research-2-7-3-no-dup');
@@ -361,8 +396,8 @@ describe('ResearchTechAction — integration (2.7.x closure)', () => {
     });
   });
 
-  describe('2.7.7 card-effect path skips the 6-publicity cost but still rotates', () => {
-    it('isCardEffect=true executes without deducting publicity and advances rotation', () => {
+  describe('2.7.7 card-effect path skips the 6-publicity cost and delegates rotation', () => {
+    it('isCardEffect=true executes without deducting publicity and does not rotate on its own', () => {
       const { game, player } = createIntegrationGame(
         'research-2-7-7-card-effect',
       );
@@ -371,9 +406,83 @@ describe('ResearchTechAction — integration (2.7.x closure)', () => {
 
       const input = ResearchTechAction.execute(player, game, true);
 
+      // Decoupled model: rotation (if any) is driven by the card's own
+      // ROTATE icon via `BehaviorExecutor.buildRotateAction`, not by the
+      // research effect itself.
       expect(player.resources.publicity).toBe(0);
-      expect(getRotationCounter(game)).toBe(rotationBefore + 1);
+      expect(getRotationCounter(game)).toBe(rotationBefore);
       expect(input).toBeDefined();
+    });
+  });
+
+  describe('2.7.6 computer tech placement does not count as placed data', () => {
+    it('leaves the top slot empty after acquiring comp-0 and only creates the bottom slot', () => {
+      const { game, player } = createIntegrationGame('research-2-7-6-computer');
+      player.resources.gain({ publicity: RESEARCH_PUBLICITY_COST });
+      const computerTechId = ETechId.COMPUTER_VP_CREDIT;
+
+      game.processMainAction(player.id, { type: EMainAction.RESEARCH_TECH });
+
+      const techPick = getWaitingOptionModel(player);
+      expect(
+        techPick.options.some((option) => option.id === computerTechId),
+      ).toBe(true);
+      game.processInput(player.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: computerTechId,
+      });
+
+      const columnPick = getWaitingOptionModel(player);
+      const chosenColumnId =
+        columnPick.options.find((option) => option.id === 'col-0')?.id ??
+        columnPick.options[0]?.id;
+      if (!chosenColumnId) {
+        throw new Error('expected a computer column selection');
+      }
+      game.processInput(player.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: chosenColumnId,
+      });
+
+      const columnState = player.computer.getColumnState(0);
+      expect(player.techs).toContain(computerTechId);
+      expect(columnState.techId).toBe(computerTechId);
+      expect(columnState.hasBottomSlot).toBe(true);
+      expect(columnState.topFilled).toBe(false);
+      expect(columnState.bottomFilled).toBe(false);
+      expect(player.computer.getPlacedCount()).toBe(0);
+    });
+  });
+
+  describe('2.7.8 duplicate specific-tech card effects are ignored', () => {
+    it('does not throw when a card grants an already-owned specific tech; rotation is decoupled', () => {
+      const { game, player } = createIntegrationGame(
+        'research-2-7-8-duplicate-card-effect',
+      );
+      const ownedTech = ETechId.COMPUTER_VP_CREDIT;
+      const techBoard = getRequiredTechBoard(game);
+      techBoard.take(player.id, ownedTech);
+      player.gainTech(ownedTech);
+      const rotationBefore = getRotationCounter(game);
+
+      let input: ReturnType<typeof ResearchTechAction.execute> | undefined;
+
+      expect(() => {
+        input = ResearchTechAction.execute(player, game, true, {
+          mode: 'specific',
+          techIds: [ownedTech],
+        });
+      }).not.toThrow();
+
+      expect(input).toBeUndefined();
+      // Decoupled: the card-effect path never rotates on its own. If the
+      // host card has a printed ROTATE icon, the rotation already happened
+      // in `buildRotateAction` prior to the research effect.
+      expect(getRotationCounter(game)).toBe(rotationBefore);
+      expect(
+        player.techs.filter((techId) => techId === ownedTech),
+      ).toHaveLength(1);
+      expect(player.resources.publicity).toBe(4);
     });
   });
 

@@ -7,7 +7,6 @@ import { GameError } from '@/shared/errors/GameError.js';
 import { RefillCardRowEffect } from '../effects/cardRow/RefillCardRowEffect.js';
 import type { IScanActionPoolResult } from '../effects/scan/ScanActionPool.js';
 import { ScanActionPool } from '../effects/scan/ScanActionPool.js';
-import { SectorFulfillmentEffect } from '../effects/scan/SectorFulfillmentEffect.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
 import type { IPlayer } from '../player/IPlayer.js';
@@ -29,8 +28,14 @@ export class ScanAction {
    *
    * 1. Pay costs
    * 2. Enter scan action pool (free-order sub-actions)
-   * 3. Check sector fulfillment (resolve any completed sectors)
-   * 4. Refill card row
+   * 3. Refill card row once the sub-action pool completes
+   *
+   * Sector fulfillment is NOT handled here — it's enqueued centrally for
+   * every main action via `Game.enqueueMainActionPipeline` as a
+   * {@link ResolveSectorCompletion} deferred action, which runs after
+   * CORE_EFFECT / IMMEDIATE_REWARD / CARD_TRIGGER. Keeping the
+   * fulfillment check there ensures a single, consistent resolution path
+   * for Scan, PlayCard, and any future mark-signal producers.
    */
   public static execute(
     player: IPlayer,
@@ -50,11 +55,10 @@ export class ScanAction {
     });
 
     return ScanActionPool.execute(player, game, {
-      onComplete: () =>
-        SectorFulfillmentEffect.checkAll(game, () => {
-          RefillCardRowEffect.execute(game);
-          return undefined;
-        }),
+      onComplete: () => {
+        RefillCardRowEffect.execute(game);
+        return undefined;
+      },
     });
   }
 }

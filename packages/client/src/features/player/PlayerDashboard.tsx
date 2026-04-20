@@ -28,6 +28,12 @@ interface IPlayerDashboardProps {
   techs?: ETechId[];
 }
 
+/**
+ * PlayerDashboard — the observation deck at the bottom of the game.
+ * Layout: top resource rail, then a player-board substrate with
+ * two instrument columns (left: income / computer / inventory;
+ * right: data pool / tech / missions+tech counts).
+ */
 export function PlayerDashboard({
   player,
   pendingInput,
@@ -45,12 +51,12 @@ export function PlayerDashboard({
     <section className='space-y-1.5' data-testid='player-dashboard'>
       <ResourceBar player={player} />
 
-      <div className='relative overflow-hidden rounded-md border border-surface-700/50 bg-surface-950/60 p-1.5'>
+      <div className='instrument-panel relative overflow-hidden p-1.5'>
         <div
-          className='absolute inset-0 opacity-65'
+          className='pointer-events-none absolute inset-0 opacity-50 mix-blend-luminosity'
           style={{
             backgroundImage:
-              'linear-gradient(rgba(8, 13, 25, 0.68), rgba(8, 13, 25, 0.68)), url(/assets/seti/boards/playerBoard.png)',
+              'linear-gradient(oklch(0.08 0.018 260 / 0.72), oklch(0.08 0.018 260 / 0.72)), url(/assets/seti/boards/playerBoard.png)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
@@ -83,44 +89,56 @@ export function PlayerDashboard({
             />
             <TechDisplay techs={techs ?? player.techs} />
 
-            <div className='rounded border border-surface-700/55 bg-surface-950/65 p-2'>
-              <p className='font-mono text-[10px] uppercase tracking-wide text-text-500'>
-                {t('client.player_dashboard.missions')}
-              </p>
-              <div className='mt-1 flex items-center justify-between text-xs'>
-                <div className='flex items-center gap-1'>
+            <div className='instrument-panel p-2'>
+              <div className='section-head mb-1.5'>
+                <span aria-hidden className='section-head__tick' />
+                <p className='micro-label'>
+                  {t('client.player_dashboard.missions')}
+                </p>
+                <div aria-hidden className='section-head__rule' />
+              </div>
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center gap-1.5'>
                   <img
                     src='/assets/seti/icons/missionSatellite.png'
-                    alt={t('client.player_dashboard.mission_alt')}
-                    className='h-4 w-4'
+                    alt=''
+                    aria-hidden
+                    className='h-4 w-4 opacity-90'
                   />
-                  <span className='text-text-300'>
+                  <span className='font-mono text-[10px] uppercase tracking-[0.1em] text-text-500'>
                     {t('client.player_dashboard.played')}
                   </span>
                 </div>
-                <span className='font-mono font-bold text-text-100'>
+                <span className='readout text-sm font-semibold text-text-100 leading-none'>
                   {missionCount}
                 </span>
               </div>
-              <div className='mt-1 flex items-center justify-between text-xs'>
-                <div className='flex items-center gap-1'>
+              <div className='mt-1.5 flex items-center justify-between'>
+                <div className='flex items-center gap-1.5'>
                   <img
                     src='/assets/seti/icons/progress.png'
-                    alt={t('client.player_dashboard.tech_alt')}
-                    className='h-4 w-4'
+                    alt=''
+                    aria-hidden
+                    className='h-4 w-4 opacity-90'
                   />
-                  <span className='text-text-300'>
+                  <span className='font-mono text-[10px] uppercase tracking-[0.1em] text-text-500'>
                     {t('client.player_dashboard.tech')}
                   </span>
                 </div>
-                <span className='font-mono font-bold text-text-100'>
+                <span className='readout text-sm font-semibold text-text-100 leading-none'>
                   {techCount}
                 </span>
               </div>
               {cardInputActive ? (
-                <p className='mt-1 text-[10px] uppercase tracking-wide text-accent-300'>
-                  {t('client.player_dashboard.card_selection_active')}
-                </p>
+                <div className='mt-2 flex items-center gap-1.5 border-t border-[color:var(--metal-edge-soft)] pt-1.5'>
+                  <span
+                    aria-hidden
+                    className='h-1.5 w-1.5 shrink-0 rounded-full bg-accent-500 shadow-[0_0_6px_oklch(0.68_0.11_240/0.8)] motion-safe:animate-pulse'
+                  />
+                  <p className='font-mono text-[10px] uppercase tracking-[0.12em] text-accent-400'>
+                    {t('client.player_dashboard.card_selection_active')}
+                  </p>
+                </div>
               ) : null}
             </div>
           </div>

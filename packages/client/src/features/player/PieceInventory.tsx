@@ -1,20 +1,40 @@
+import { useTranslation } from 'react-i18next';
 import type { IPublicPieceInventory } from '@/types/re-exports';
 
 interface IPieceInventoryProps {
   pieces: IPublicPieceInventory;
 }
 
-const PIECE_ITEMS: Array<{
+interface IPieceItem {
   id: keyof IPublicPieceInventory;
-  label: string;
+  i18nKey: string;
+  fallback: string;
   icon: string;
-}> = [
-  { id: 'probes', label: 'Probe', icon: '/assets/seti/icons/launch.png' },
-  { id: 'orbiters', label: 'Orbiter', icon: '/assets/seti/icons/progress.png' },
-  { id: 'landers', label: 'Lander', icon: '/assets/seti/icons/look.png' },
+}
+
+const PIECE_ITEMS: IPieceItem[] = [
+  {
+    id: 'probes',
+    i18nKey: 'client.piece_inventory.probe',
+    fallback: 'Probe',
+    icon: '/assets/seti/icons/launch.png',
+  },
+  {
+    id: 'orbiters',
+    i18nKey: 'client.piece_inventory.orbiter',
+    fallback: 'Orbiter',
+    icon: '/assets/seti/icons/progress.png',
+  },
+  {
+    id: 'landers',
+    i18nKey: 'client.piece_inventory.lander',
+    fallback: 'Lander',
+    icon: '/assets/seti/icons/look.png',
+  },
   {
     id: 'signalMarkers',
-    label: 'Signals',
+    i18nKey: 'client.piece_inventory.signal',
+    fallback: 'Signal',
     icon: '/assets/seti/icons/signalToken.png',
   },
 ];
@@ -22,26 +42,46 @@ const PIECE_ITEMS: Array<{
 export function PieceInventory({
   pieces,
 }: IPieceInventoryProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
-    <section className='rounded border border-surface-700/55 bg-surface-950/65 p-2'>
-      <p className='mb-1.5 font-mono text-[10px] uppercase tracking-wide text-text-500'>
-        Inventory
-      </p>
-      <div className='grid grid-cols-2 gap-1.5'>
-        {PIECE_ITEMS.map((item) => (
-          <div
-            key={item.id}
-            className='flex items-center gap-1 rounded border border-surface-700/50 bg-surface-900/70 px-1 py-0.5'
-          >
-            <img src={item.icon} alt={item.label} className='h-3.5 w-3.5' />
-            <span className='font-mono text-[10px] text-text-400'>
-              {item.label}
-            </span>
-            <span className='ml-auto font-mono text-xs font-bold text-text-100'>
-              {pieces[item.id]}
-            </span>
-          </div>
-        ))}
+    <section className='instrument-panel p-2'>
+      <div className='section-head mb-1.5'>
+        <span aria-hidden className='section-head__tick' />
+        <p className='micro-label'>
+          {t('client.piece_inventory.title', { defaultValue: 'Inventory' })}
+        </p>
+        <div aria-hidden className='section-head__rule' />
+      </div>
+      <div className='grid grid-cols-2 gap-1'>
+        {PIECE_ITEMS.map((item) => {
+          const value = pieces[item.id];
+          const depleted = value === 0;
+          return (
+            <div
+              key={item.id}
+              className='flex items-center gap-1.5 rounded-[3px] border border-[color:var(--metal-edge-soft)] bg-background-900/70 px-1.5 py-1'
+            >
+              <img
+                src={item.icon}
+                alt=''
+                aria-hidden
+                className='h-3.5 w-3.5 shrink-0 opacity-90'
+              />
+              <span className='flex-1 truncate font-mono text-[10px] uppercase tracking-[0.1em] text-text-500'>
+                {t(item.i18nKey, { defaultValue: item.fallback })}
+              </span>
+              <span
+                className={
+                  depleted
+                    ? 'readout text-[12px] text-text-500 leading-none'
+                    : 'readout text-[12px] font-semibold text-text-100 leading-none'
+                }
+              >
+                {value}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </section>
   );

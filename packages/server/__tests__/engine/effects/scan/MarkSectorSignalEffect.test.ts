@@ -39,6 +39,12 @@ function createMockPlayer(options: { dataPoolFull?: boolean } = {}): IPlayer {
     score: 0,
     resources: { gain: vi.fn() },
     dataPool: { isFull: () => options.dataPoolFull ?? false },
+    pieces: {
+      deploy: vi.fn(),
+      return: vi.fn(),
+      deployed: vi.fn(() => 0),
+      available: vi.fn(() => 20),
+    },
   } as unknown as IPlayer;
 }
 
@@ -452,6 +458,33 @@ describe('MarkSectorSignalEffect', () => {
       MarkSectorSignalEffect.markByColorChain(player, game, [], onComplete);
 
       expect(onComplete).toHaveBeenCalledOnce();
+    });
+  });
+
+  // 5.9 Deploy side — marking a sector takes a SECTOR_MARKER piece from
+  // the player's inventory. The corresponding "return" happens when the
+  // sector resolves (see SectorFulfillmentEffect 5.9 tests).
+  describe('5.9 sector marker deploy', () => {
+    it('deploys one SECTOR_MARKER piece per markOnSector call', async () => {
+      const { Player } = await import('@/engine/player/Player.js');
+      const { EPieceType } = await import('@/engine/player/Pieces.js');
+      const player = new Player({
+        id: 'p1',
+        name: 'Alice',
+        color: 'red',
+        seatIndex: 0,
+      });
+      const sector = createMockSector('s-deploy', ESector.RED);
+      const game = createMockGame([sector]);
+
+      const availableBefore = player.pieces.available(EPieceType.SECTOR_MARKER);
+      MarkSectorSignalEffect.markOnSector(player, game, sector);
+      MarkSectorSignalEffect.markOnSector(player, game, sector);
+
+      expect(player.pieces.deployed(EPieceType.SECTOR_MARKER)).toBe(2);
+      expect(player.pieces.available(EPieceType.SECTOR_MARKER)).toBe(
+        availableBefore - 2,
+      );
     });
   });
 });

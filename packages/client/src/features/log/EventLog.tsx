@@ -9,6 +9,14 @@ interface IEventLogProps {
   players?: IPublicPlayerState[];
 }
 
+/**
+ * EventLog — the mission log scroll.
+ *
+ * The container is a hairline-framed instrument pane with a
+ * micro-label header and a live count readout in the corner.
+ * Entries stream newest-at-bottom; the pane auto-scrolls on
+ * new entries like an oscilloscope trace.
+ */
 export function EventLog({
   events,
   players = [],
@@ -33,19 +41,22 @@ export function EventLog({
 
   return (
     <section data-testid='event-log'>
-      <h3 className='mb-2 font-mono text-xs font-medium uppercase tracking-widest text-text-500'>
-        {t('client.event_log.title')}
-      </h3>
+      <header className='mb-2 flex items-baseline justify-between gap-2'>
+        <h3 className='micro-label'>{t('client.event_log.title')}</h3>
+        <span className='readout text-[10px] text-text-500'>
+          {String(deferredEvents.length).padStart(3, '0')}
+        </span>
+      </header>
       <ScrollArea
         ref={scrollRef}
-        className='max-h-[260px] rounded border border-surface-700/55 bg-surface-950/45 p-2'
+        className='max-h-[260px] rounded-[3px] border border-[color:var(--metal-edge-soft)] bg-[oklch(0.09_0.018_260/0.6)] shadow-hairline-inset p-2'
       >
         {deferredEvents.length === 0 ? (
           <p className='text-xs italic text-text-500'>
             {t('client.event_log.empty')}
           </p>
         ) : (
-          <div className='space-y-1.5'>
+          <div className='flex flex-col gap-1'>
             {deferredEvents.map((event, index) => (
               <EventEntry
                 key={`${event.type}-${index}`}

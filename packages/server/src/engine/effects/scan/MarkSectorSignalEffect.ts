@@ -6,6 +6,7 @@ import type { PlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
 import { EMissionEventType } from '../../missions/IMission.js';
 import type { IPlayer } from '../../player/IPlayer.js';
+import { EPieceType } from '../../player/Pieces.js';
 import {
   findAllSectorsByColor,
   findSectorById,
@@ -48,6 +49,7 @@ export class MarkSectorSignalEffect {
       completed: boolean;
     },
   ): IMarkSectorSignalResult {
+    player.pieces.deploy(EPieceType.SECTOR_MARKER);
     const signalResult = sector.markSignal(player.id);
     game.missionTracker.recordEvent({
       type: EMissionEventType.SIGNAL_PLACED,

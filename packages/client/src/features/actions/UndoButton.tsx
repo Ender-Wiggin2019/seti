@@ -6,6 +6,11 @@ export interface IUndoButtonProps {
   onRequestUndo: () => void;
 }
 
+/**
+ * UndoButton — small ghost-metal pill. The leading glyph is an
+ * instrument-style "back" triangle rendered in CSS so we don't pull
+ * an icon dependency for a single chrome element.
+ */
 export function UndoButton({
   disabled,
   onRequestUndo,
@@ -13,14 +18,17 @@ export function UndoButton({
   const { t } = useTranslation('common');
   return (
     <Button
-      type='button'
       variant='ghost'
       size='sm'
       disabled={disabled}
       onClick={onRequestUndo}
       data-testid='undo-button'
-      className='h-8 border border-surface-700/60 bg-surface-800/50 font-mono text-xs uppercase tracking-wide text-text-200 hover:bg-surface-700/70'
+      className='h-7 gap-1.5 px-2 font-mono text-[11px] uppercase tracking-[0.14em]'
     >
+      <span
+        aria-hidden
+        className='inline-block h-0 w-0 border-y-[4px] border-r-[5px] border-y-transparent border-r-current'
+      />
       {t('client.common.undo')}
     </Button>
   );

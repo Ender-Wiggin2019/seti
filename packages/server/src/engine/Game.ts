@@ -684,6 +684,17 @@ export class Game implements IGame {
         },
       );
     }
+
+    if (this.activePlayer.waitingFor) {
+      throw new GameError(
+        EErrorCode.INVALID_INPUT_RESPONSE,
+        `Player ${playerId} must resolve the pending input before taking another action`,
+        {
+          playerId,
+          inputType: this.activePlayer.waitingFor.toModel().type,
+        },
+      );
+    }
   }
 
   private getPlayer(playerId: string): IPlayer {

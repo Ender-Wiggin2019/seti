@@ -1,47 +1,51 @@
+import { useTranslation } from 'react-i18next';
+
 interface IDataPoolViewProps {
   count: number;
   max: number;
 }
 
+/**
+ * DataPoolView — mission-log styled gauge for the data-token pool.
+ * A hairline meter sits under a mono readout, with a subtle accent
+ * flag only when the pool is full (because "full" is a game-state
+ * moment that demands action, not a warning).
+ */
 export function DataPoolView({
   count,
   max,
 }: IDataPoolViewProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const ratio = max <= 0 ? 0 : Math.min(100, Math.round((count / max) * 100));
   const isFull = count >= max;
 
   return (
-    <section
-      className='rounded border border-surface-700/55 bg-surface-950/65 p-2'
-      data-testid='data-pool-view'
-    >
-      <div className='mb-1 flex items-center gap-1'>
-        <img
-          src='/assets/seti/icons/data.png'
-          alt='Data pool'
-          className='h-4 w-4'
-        />
-        <p className='font-mono text-[10px] uppercase tracking-wide text-text-500'>
-          Data Pool
+    <section className='instrument-panel p-2' data-testid='data-pool-view'>
+      <div className='section-head mb-1.5'>
+        <span aria-hidden className='section-head__tick' />
+        <p className='micro-label'>
+          {t('client.data_pool.title', { defaultValue: 'Data Pool' })}
         </p>
+        <div aria-hidden className='section-head__rule' />
       </div>
-      <p className='font-mono text-sm font-bold text-text-100'>
-        {count} / {max}
-      </p>
-      <div className='mt-1 h-1.5 w-full rounded bg-surface-800/80'>
-        <div
-          className={[
-            'h-full rounded transition-[width]',
-            isFull ? 'bg-warning-400' : 'bg-cyan-400',
-          ].join(' ')}
-          style={{ width: `${ratio}%` }}
-        />
-      </div>
-      {isFull ? (
-        <p className='mt-1 text-[10px] font-medium uppercase tracking-wide text-warning-300'>
-          Full
+
+      <div className='flex items-baseline gap-1'>
+        <p className='readout text-lg font-semibold text-text-100 leading-none tabular-nums'>
+          {`${count} / ${max}`}
         </p>
-      ) : null}
+        {isFull ? (
+          <span className='ml-auto font-mono text-[9px] uppercase tracking-[0.14em] text-accent-400'>
+            {t('client.data_pool.full', { defaultValue: 'Full' })}
+          </span>
+        ) : null}
+      </div>
+
+      <div className='mt-1.5'>
+        <div className='meter' data-full={isFull}>
+          <div className='meter__fill' style={{ width: `${ratio}%` }} />
+        </div>
+        <div className='tick-row mt-0.5' aria-hidden />
+      </div>
     </section>
   );
 }

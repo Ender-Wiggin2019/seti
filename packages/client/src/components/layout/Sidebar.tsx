@@ -8,6 +8,14 @@ interface ISidebarProps {
   className?: string;
 }
 
+/**
+ * Sidebar — the secondary instrument column.
+ *
+ * Hairline-bordered columns of grouped intel: mission log, opponents,
+ * alien boards. Each section is a micro-label capped subsection;
+ * sections are separated by a thin instrument tick rather than card
+ * walls to keep the column reading as one continuous strip.
+ */
 export function Sidebar({ className }: ISidebarProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const { gameState, myPlayerId, events } = useGameContext();
@@ -17,44 +25,55 @@ export function Sidebar({ className }: ISidebarProps): React.JSX.Element {
   return (
     <aside
       className={cn(
-        'flex flex-col gap-3 overflow-y-auto border-l border-surface-700/70 bg-surface-900/40 p-3',
+        'flex flex-col gap-4 overflow-y-auto p-4',
+        'border-l border-[color:var(--metal-edge-soft)]',
+        'bg-[oklch(0.13_0.022_260/0.5)] backdrop-blur-sm',
         className,
       )}
+      aria-label={t('client.sidebar.opponents')}
     >
       <EventLog events={events} players={gameState?.players ?? []} />
 
+      <div className='instrument-tick' />
+
       {!opponents?.length ? (
         <SidebarSection title={t('client.sidebar.opponents')}>
-          <p className='text-xs italic text-text-500'>
-            {t('client.sidebar.no_opponents')}
-          </p>
+          <EmptyNote>{t('client.sidebar.no_opponents')}</EmptyNote>
         </SidebarSection>
       ) : (
         <OpponentSummary opponents={opponents} />
       )}
 
+      <div className='instrument-tick' />
+
       <SidebarSection title={t('client.sidebar.alien_boards')}>
-        <p className='text-xs italic text-text-500'>
-          {t('client.sidebar.alien_boards_hint')}
-        </p>
+        <EmptyNote>{t('client.sidebar.alien_boards_hint')}</EmptyNote>
       </SidebarSection>
     </aside>
   );
 }
 
+interface ISidebarSectionProps {
+  title: string;
+  children: React.ReactNode;
+}
+
 function SidebarSection({
   title,
   children,
+}: ISidebarSectionProps): React.JSX.Element {
+  return (
+    <section>
+      <h3 className='micro-label mb-2.5'>{title}</h3>
+      {children}
+    </section>
+  );
+}
+
+function EmptyNote({
+  children,
 }: {
-  title: string;
   children: React.ReactNode;
 }): React.JSX.Element {
-  return (
-    <div>
-      <h3 className='mb-2 font-mono text-xs font-medium uppercase tracking-widest text-text-500'>
-        {title}
-      </h3>
-      {children}
-    </div>
-  );
+  return <p className='text-xs italic text-text-500'>{children}</p>;
 }

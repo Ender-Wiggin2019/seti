@@ -1,13 +1,21 @@
 import { useTranslation } from 'react-i18next';
 import type { IGameOptions } from '@/api/types';
-import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/cn';
 
 interface IGameSettingsPanelProps {
   options: IGameOptions;
   readOnly: boolean;
 }
 
+/**
+ * GameSettingsPanel — the mission parameters readout.
+ *
+ * Each row is an instrument line: micro-label caption on the left,
+ * mono-readout value (or a Switch when mutable) on the right.
+ * Rows are joined by hairlines — no card walls between them — so the
+ * whole panel reads as a single instrument strip.
+ */
 export function GameSettingsPanel({
   options,
   readOnly,
@@ -15,48 +23,100 @@ export function GameSettingsPanel({
   const { t } = useTranslation('common');
   return (
     <div className='space-y-3'>
-      <h3 className='font-mono text-xs uppercase tracking-wider text-text-500'>
-        {t('client.game_settings.title')}
-      </h3>
-      <div className='grid gap-2 text-sm'>
-        <div className='flex items-center justify-between rounded-md bg-surface-900/50 px-3 py-2'>
-          <Label>{t('client.game_settings.players')}</Label>
-          <span className='font-mono text-text-100'>{options.playerCount}</span>
-        </div>
-        <div className='flex items-center justify-between rounded-md bg-surface-900/50 px-3 py-2'>
-          <Label>{t('client.game_settings.alien_modules')}</Label>
+      <h3 className='micro-label'>{t('client.game_settings.title')}</h3>
+      <dl
+        className={cn(
+          'divide-y divide-[color:var(--metal-edge-soft)]',
+          'rounded-[4px] border border-[color:var(--metal-edge-soft)]',
+          'bg-[oklch(0.10_0.02_260/0.5)] shadow-hairline-inset',
+        )}
+      >
+        <ReadoutRow
+          label={t('client.game_settings.players')}
+          value={String(options.playerCount)}
+        />
+        <ReadoutRow label={t('client.game_settings.alien_modules')}>
           {readOnly ? (
-            <span className='font-mono text-text-100'>
-              {options.alienModulesEnabled
-                ? t('client.common.on')
-                : t('client.common.off')}
-            </span>
+            <StatusValue
+              active={options.alienModulesEnabled}
+              on={t('client.common.on')}
+              off={t('client.common.off')}
+            />
           ) : (
             <Switch
               checked={options.alienModulesEnabled}
               onCheckedChange={() => undefined}
             />
           )}
-        </div>
-        <div className='flex items-center justify-between rounded-md bg-surface-900/50 px-3 py-2'>
-          <Label>{t('client.game_settings.undo')}</Label>
-          <span className='font-mono text-text-100'>
-            {options.undoAllowed
-              ? t('client.game_settings.undo_allowed')
-              : t('client.game_settings.undo_disabled')}
-          </span>
-        </div>
-        <div className='flex items-center justify-between rounded-md bg-surface-900/50 px-3 py-2'>
-          <Label>{t('client.game_settings.turn_timer')}</Label>
-          <span className='font-mono text-text-100'>
-            {options.turnTimerSeconds > 0
+        </ReadoutRow>
+        <ReadoutRow label={t('client.game_settings.undo')}>
+          <StatusValue
+            active={options.undoAllowed}
+            on={t('client.game_settings.undo_allowed')}
+            off={t('client.game_settings.undo_disabled')}
+          />
+        </ReadoutRow>
+        <ReadoutRow
+          label={t('client.game_settings.turn_timer')}
+          value={
+            options.turnTimerSeconds > 0
               ? t('client.common.seconds_short', {
                   count: options.turnTimerSeconds,
                 })
-              : t('client.common.off')}
-          </span>
-        </div>
-      </div>
+              : t('client.common.off')
+          }
+        />
+      </dl>
     </div>
+  );
+}
+
+interface IReadoutRowProps {
+  label: string;
+  value?: string;
+  children?: React.ReactNode;
+}
+
+function ReadoutRow({
+  label,
+  value,
+  children,
+}: IReadoutRowProps): React.JSX.Element {
+  return (
+    <div className='flex items-center justify-between gap-3 px-3 py-2.5'>
+      <dt className='micro-label text-text-400'>{label}</dt>
+      <dd>
+        {value != null ? (
+          <span className='readout text-sm text-text-100'>{value}</span>
+        ) : (
+          children
+        )}
+      </dd>
+    </div>
+  );
+}
+
+function StatusValue({
+  active,
+  on,
+  off,
+}: {
+  active: boolean;
+  on: string;
+  off: string;
+}): React.JSX.Element {
+  return (
+    <span className='flex items-center gap-1.5'>
+      <span
+        aria-hidden
+        className={cn(
+          'h-1.5 w-1.5 rounded-full',
+          active
+            ? 'bg-[oklch(0.74_0.13_150)] shadow-[0_0_4px_oklch(0.68_0.14_150/0.6)]'
+            : 'bg-[oklch(0.40_0.02_260)]',
+        )}
+      />
+      <span className='readout text-sm text-text-100'>{active ? on : off}</span>
+    </span>
   );
 }

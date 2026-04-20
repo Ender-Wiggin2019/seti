@@ -393,6 +393,39 @@ describe('MissionTracker', () => {
   });
 
   describe('integration with real game flow', () => {
+    it('does not retroactively trigger a full mission from an event that happened before the mission was played', () => {
+      const { game, player1, player2 } = createIntegrationGame(
+        'mission-tracker-no-retroactive-trigger',
+      );
+      player1.hand = ['110', '106'];
+      game.mainDeck = new Deck(['refill-1', 'refill-2', 'refill-3'], []);
+
+      game.processMainAction(player1.id, {
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 0 },
+      });
+      expect(player1.waitingFor).toBeUndefined();
+      game.processEndTurn(player1.id);
+
+      if (game.activePlayer.id === player2.id) {
+        passTurn(game, player2.id);
+      }
+      expect(game.activePlayer.id).toBe(player1.id);
+
+      game.processMainAction(player1.id, {
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 0 },
+      });
+
+      expect(player1.waitingFor).toBeUndefined();
+      const state = game.missionTracker.getMissionState(player1.id, '106');
+      expect(state).toBeDefined();
+      expect(state?.branchStates.every((branch) => branch.completed)).toBe(
+        false,
+      );
+      expect(player1.playedMissions.map(resolveCardId)).toContain('106');
+    });
+
     it('prompts the mission owner when another player triggers a full mission on their turn', () => {
       const { game, player1, player2 } = createIntegrationGame(
         'mission-tracker-opponent-trigger',

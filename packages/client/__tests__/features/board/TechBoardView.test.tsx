@@ -45,9 +45,7 @@ describe('TechBoardView', () => {
       />,
     );
 
-    expect(
-      screen.getAllByText('client.tech_stack.first_take_bonus').length,
-    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/2VP/).length).toBeGreaterThan(0);
   });
 
   it('renders taken markers from player tech list', () => {

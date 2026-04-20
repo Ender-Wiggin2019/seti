@@ -1,6 +1,68 @@
+import { EMainAction } from '@seti/common/types/protocol/enums';
+import {
+  EPlayerInputType,
+  type ISelectEndOfRoundCardInputModel,
+  type ISelectOptionInputModel,
+} from '@seti/common/types/protocol/playerInput';
 import { BoardBuilder } from '@/engine/board/BoardBuilder.js';
 import { ESolarSystemElementType } from '@/engine/board/SolarSystem.js';
+import { Deck } from '@/engine/deck/Deck.js';
+import { Game } from '@/engine/Game.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
+
+const TEST_PLAYERS = [
+  { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
+  { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
+] as const;
+
+function createIntegrationGame(seed: string): Game {
+  return Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
+}
+
+function resolveAllInputs(game: Game, playerId: string): void {
+  const player = game.players.find((candidate) => candidate.id === playerId);
+  if (!player) {
+    throw new Error(`expected player ${playerId} to exist`);
+  }
+
+  while (player.waitingFor) {
+    const model = player.waitingFor.toModel();
+
+    if (model.type === EPlayerInputType.CARD) {
+      const cardModel = model as {
+        cards: Array<{ id: string }>;
+        minSelections: number;
+      };
+      game.processInput(playerId, {
+        type: EPlayerInputType.CARD,
+        cardIds: cardModel.cards
+          .slice(0, cardModel.minSelections)
+          .map((card) => card.id),
+      });
+      continue;
+    }
+
+    if (model.type === EPlayerInputType.END_OF_ROUND) {
+      const picker = model as ISelectEndOfRoundCardInputModel;
+      game.processInput(playerId, {
+        type: EPlayerInputType.END_OF_ROUND,
+        cardId: picker.cards[0].id,
+      });
+      continue;
+    }
+
+    if (model.type === EPlayerInputType.OPTION) {
+      const options = model as ISelectOptionInputModel;
+      game.processInput(playerId, {
+        type: EPlayerInputType.OPTION,
+        optionId: options.options[0].id,
+      });
+      continue;
+    }
+
+    break;
+  }
+}
 
 describe('SolarSystem', () => {
   it('builds expected total space count from 4 rings', () => {
@@ -154,5 +216,76 @@ describe('SolarSystem', () => {
     const moveResult = board.moveProbe(probe.id, from.id, to.id);
 
     expect(moveResult.movementCost).toBe(2);
+  });
+
+  it('rotates the solar system on RESEARCH_TECH main action', () => {
+    const game = createIntegrationGame('solar-research-tech-rotates');
+    const player = game.players[0];
+    player.resources.gain({ publicity: 2 });
+    const before = game.solarSystem!.rotationCounter;
+
+    game.processMainAction(player.id, { type: EMainAction.RESEARCH_TECH });
+    resolveAllInputs(game, player.id);
+
+    expect(game.solarSystem!.rotationCounter).toBe(before + 1);
+  });
+
+  it('rotates the solar system exactly once when a played card has both ROTATE and TECH', () => {
+    // Card 59 "Ion Propulsion System" prints ENERGY + ROTATE + TECH_PROBE.
+    // Under the decoupled behavior model the printed ROTATE icon is the
+    // sole rotation source — the embedded tech-grant must NOT rotate
+    // again, so we expect exactly +1.
+    const game = createIntegrationGame('solar-card-rotate-plus-tech');
+    const player = game.players[0];
+    player.hand = ['59'];
+    game.mainDeck = new Deck(['refill-1', 'refill-2'], []);
+    const before = game.solarSystem!.rotationCounter;
+
+    game.processMainAction(player.id, {
+      type: EMainAction.PLAY_CARD,
+      payload: { cardIndex: 0 },
+    });
+    resolveAllInputs(game, player.id);
+
+    expect(player.techs).toHaveLength(1);
+    expect(game.solarSystem!.rotationCounter).toBe(before + 1);
+  });
+
+  it('does not rotate the solar system when a card grants TECH without a printed ROTATE icon', () => {
+    // Card 81 "Int'l Collaboration" prints TECH_ANY + DESC only (no ROTATE).
+    // Decoupled behavior: no ROTATE icon → no rotation, even though a tech
+    // is granted. The rule §5.7 "card-tech includes rotation" is honored at
+    // the card design layer: any card that is meant to rotate prints ROTATE.
+    const game = createIntegrationGame('solar-card-tech-only-no-rotate');
+    const player = game.players[0];
+    player.hand = ['81'];
+    game.mainDeck = new Deck(['refill-1', 'refill-2'], []);
+    const before = game.solarSystem!.rotationCounter;
+
+    game.processMainAction(player.id, {
+      type: EMainAction.PLAY_CARD,
+      payload: { cardIndex: 0 },
+    });
+    resolveAllInputs(game, player.id);
+
+    expect(player.techs).toHaveLength(1);
+    expect(game.solarSystem!.rotationCounter).toBe(before);
+  });
+
+  it('rotates only on the first PASS of the round', () => {
+    const game = createIntegrationGame('solar-first-pass-only');
+    const firstPlayer = game.players[0];
+    const secondPlayer = game.players[1];
+
+    game.processMainAction(firstPlayer.id, { type: EMainAction.PASS });
+    resolveAllInputs(game, firstPlayer.id);
+
+    const afterFirstPass = game.solarSystem!.rotationCounter;
+    expect(afterFirstPass).toBe(1);
+
+    game.processMainAction(secondPlayer.id, { type: EMainAction.PASS });
+    resolveAllInputs(game, secondPlayer.id);
+
+    expect(game.solarSystem!.rotationCounter).toBe(afterFirstPass);
   });
 });

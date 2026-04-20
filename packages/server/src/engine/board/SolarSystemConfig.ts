@@ -78,6 +78,13 @@ export interface ISolarSystemCellConfig {
   discIndex: number | null;
   elements: ISolarSystemElement[];
   hasPublicityIcon: boolean;
+  /**
+   * Optional amount for the printed publicity icon on this cell. Defaults
+   * to `1` when omitted, matching the base-game board. Set a value `> 1`
+   * to model future "+2"/"+3" publicity icons without introducing a new
+   * type.
+   */
+  publicityIconAmount?: number;
 }
 
 interface IBuildResult {

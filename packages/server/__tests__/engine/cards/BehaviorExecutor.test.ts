@@ -23,7 +23,6 @@ import { DeferredActionsQueue } from '@/engine/deferred/DeferredActionsQueue.js'
 import { EventLog } from '@/engine/event/EventLog.js';
 import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
-import type { IPlayer } from '@/engine/player/IPlayer.js';
 import { Player } from '@/engine/player/Player.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
 
@@ -43,6 +42,13 @@ function createIntegrationGame(seed = 'behavior-executor-integration'): {
 
 function drain(game: IGame) {
   return game.deferredActions.drain(game);
+}
+
+function requireSolarSystem(game: Game | IGame) {
+  if (!game.solarSystem) {
+    throw new Error('expected solar system to be initialized');
+  }
+  return game.solarSystem;
 }
 
 function sampleCard(cardId = '55'): ICard {
@@ -106,17 +112,22 @@ describe('BehaviorExecutor — integration', () => {
       drain(game);
 
       expect(player.probesInSpace).toBe(probesBefore + 1);
-      const earthSpaces = game.solarSystem!.getSpacesOnPlanet(EPlanet.EARTH);
-      const earthId = earthSpaces[0]!.id;
-      const probesAtEarth = game.solarSystem!.getProbesAt(earthId);
-      expect(
-        probesAtEarth.some((probe) => probe.playerId === player.id),
-      ).toBe(true);
+      const solarSystem = requireSolarSystem(game);
+      const earthSpaces = solarSystem.getSpacesOnPlanet(EPlanet.EARTH);
+      const earthId = earthSpaces[0]?.id;
+      if (!earthId) {
+        throw new Error('expected an Earth space for the launch test');
+      }
+      const probesAtEarth = solarSystem.getProbesAt(earthId);
+      expect(probesAtEarth.some((probe) => probe.playerId === player.id)).toBe(
+        true,
+      );
     });
 
     it('rotateSolarSystem advances rotationCounter through the real SolarSystem', () => {
       const { game, player } = createIntegrationGame('beh-2-9-2-rotate');
-      const before = game.solarSystem!.rotationCounter;
+      const solarSystem = requireSolarSystem(game);
+      const before = solarSystem.rotationCounter;
 
       getBehaviorExecutor().execute(
         { rotateSolarSystem: true },
@@ -126,7 +137,41 @@ describe('BehaviorExecutor — integration', () => {
       );
       drain(game);
 
-      expect(game.solarSystem!.rotationCounter).toBe(before + 1);
+      expect(solarSystem.rotationCounter).toBe(before + 1);
+    });
+
+    it('orbit presents a real planet choice and moves the selected probe into orbit', () => {
+      const { game, player } = createIntegrationGame('beh-2-9-2-orbit');
+      const marsSpace = game.solarSystem?.getSpacesOnPlanet(EPlanet.MARS)[0];
+      if (!marsSpace) {
+        throw new Error('expected a Mars space for the orbit integration test');
+      }
+      game.solarSystem?.placeProbe(player.id, marsSpace.id);
+      player.probesInSpace = 1;
+
+      const pending = drainReturningInput(game, () => {
+        getBehaviorExecutor().execute(
+          { orbit: true },
+          player,
+          game,
+          sampleCard(),
+        );
+      });
+
+      expect(pending).toBeDefined();
+      const model = pending?.toModel() as ISelectOptionInputModel;
+      expect(
+        model.options.some((option) => option.id === `orbit-${EPlanet.MARS}`),
+      ).toBe(true);
+      pending?.process({
+        type: EPlayerInputType.OPTION,
+        optionId: `orbit-${EPlanet.MARS}`,
+      });
+
+      expect(player.probesInSpace).toBe(0);
+      expect(
+        game.planetaryBoard?.planets.get(EPlanet.MARS)?.orbitSlots,
+      ).toEqual([{ playerId: player.id }]);
     });
 
     it('drawCards pulls from the real mainDeck and refills the card row', () => {
@@ -164,9 +209,9 @@ describe('BehaviorExecutor — integration', () => {
       });
 
       expect(pending).toBeDefined();
-      const model = pending!.toModel() as ISelectOptionInputModel;
+      const model = pending?.toModel() as ISelectOptionInputModel;
       expect(model.type).toBe(EPlayerInputType.OPTION);
-      const available = game.techBoard!.getAvailableTechs(player.id);
+      const available = game.techBoard?.getAvailableTechs(player.id);
       for (const option of model.options) {
         expect(available).toContain(option.id);
       }
@@ -190,8 +235,27 @@ describe('BehaviorExecutor — integration', () => {
       // The alien state always emits one of the standard interactive inputs —
       // either an option, card, or trace-placement prompt — never undefined
       // for a color that has unresolved alien species.
-      const model = pending!.toModel() as { type: EPlayerInputType };
+      const model = pending?.toModel() as { type: EPlayerInputType };
       expect(Object.values(EPlayerInputType)).toContain(model.type);
+    });
+
+    it('falls back to the player trace ledger when alienState is unavailable', () => {
+      const { game, player } = createIntegrationGame('beh-2-9-4-fallback');
+      const eventsBefore = game.eventLog.size();
+      game.alienState = undefined as never;
+
+      const pending = drainReturningInput(game, () => {
+        getBehaviorExecutor().execute(
+          { markTrace: ETrace.BLUE },
+          player,
+          game,
+          sampleCard(),
+        );
+      });
+
+      expect(pending).toBeUndefined();
+      expect(player.traces[ETrace.BLUE]).toBe(1);
+      expect(game.eventLog.size()).toBe(eventsBefore + 1);
     });
   });
 
@@ -209,7 +273,7 @@ describe('BehaviorExecutor — integration', () => {
       });
 
       expect(pending).toBeDefined();
-      const model = pending!.toModel() as ISelectOptionInputModel;
+      const model = pending?.toModel() as ISelectOptionInputModel;
       const labels = model.options.map((o) => o.id);
       expect(labels).toEqual([
         'any-signal-red',
@@ -233,16 +297,12 @@ describe('BehaviorExecutor — integration', () => {
       });
 
       expect(pending).toBeDefined();
-      const model = pending!.toModel() as {
+      const model = pending?.toModel() as {
         type: EPlayerInputType;
         cards: Array<{ id: string }>;
       };
       expect(model.type).toBe(EPlayerInputType.CARD);
-      expect(model.cards.map((c) => c.id)).toEqual([
-        '55@0',
-        '71@1',
-        '110@2',
-      ]);
+      expect(model.cards.map((c) => c.id)).toEqual(['55@0', '71@1', '110@2']);
     });
   });
 
@@ -280,7 +340,12 @@ describe('BehaviorExecutor — integration', () => {
       const scoreBefore = player.score;
       const card = sampleCard('119');
 
-      getBehaviorExecutor().execute({ custom: ['desc.card-119'] }, player, game, card);
+      getBehaviorExecutor().execute(
+        { custom: ['desc.card-119'] },
+        player,
+        game,
+        card,
+      );
       drain(game);
 
       expect(player.score).toBe(scoreBefore + 4);
@@ -316,17 +381,20 @@ describe('BehaviorExecutor — integration', () => {
         spendResources: { credits: 1 },
         launchProbe: true,
       };
-      expect(new BehaviorExecutor().canExecute(behavior, player, game)).toBe(false);
+      expect(new BehaviorExecutor().canExecute(behavior, player, game)).toBe(
+        false,
+      );
     });
 
     it('canExecute returns false for researchTech when the board has no matching tech', () => {
       const { game, player } = createIntegrationGame('beh-2-9-8-tech');
       // Drain every PROBE tech by giving them to p1.
-      const probeTechs = game
-        .techBoard!.getAvailableTechs(player.id)
-        .filter((id) => id.startsWith('probe-'));
+      const probeTechs =
+        game.techBoard
+          ?.getAvailableTechs(player.id)
+          .filter((id) => id.startsWith('probe-')) ?? [];
       for (const techId of probeTechs) {
-        game.techBoard!.take(player.id, techId);
+        game.techBoard?.take(player.id, techId);
         player.gainTech(techId);
       }
 
@@ -344,11 +412,7 @@ describe('BehaviorExecutor — integration', () => {
       player.probesInSpace = player.probeSpaceLimit;
 
       expect(
-        new BehaviorExecutor().canExecute(
-          { launchProbe: true },
-          player,
-          game,
-        ),
+        new BehaviorExecutor().canExecute({ launchProbe: true }, player, game),
       ).toBe(false);
     });
   });
@@ -356,7 +420,8 @@ describe('BehaviorExecutor — integration', () => {
   describe('2.9.9 composite behavior runs all steps in order', () => {
     it('combines spend + gain + score + movement + tuck income + rotate in one execute', () => {
       const { game, player } = createIntegrationGame('beh-2-9-9-composite');
-      const rotationBefore = game.solarSystem!.rotationCounter;
+      const solarSystem = requireSolarSystem(game);
+      const rotationBefore = solarSystem.rotationCounter;
       const scoreBefore = player.score;
       const creditsBefore = player.resources.credits;
 
@@ -380,7 +445,7 @@ describe('BehaviorExecutor — integration', () => {
       expect(player.score).toBe(scoreBefore + 3);
       expect(player.getMoveStash()).toBe(1);
       expect(player.income.tuckedCardIncome[EResource.CREDIT]).toBe(1);
-      expect(game.solarSystem!.rotationCounter).toBe(rotationBefore + 1);
+      expect(solarSystem.rotationCounter).toBe(rotationBefore + 1);
     });
   });
 });
@@ -413,8 +478,11 @@ function createLegacyPlayer(overrides: Record<string, unknown> = {}): Player {
 }
 
 function createLegacyGame(): IGame {
-  const markCalls: Array<{ source: EMarkSource; count: number; playerId: string }> =
-    [];
+  const markCalls: Array<{
+    source: EMarkSource;
+    count: number;
+    playerId: string;
+  }> = [];
   return {
     sectors: [
       {

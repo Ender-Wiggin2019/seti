@@ -1,5 +1,6 @@
 export { ComputerView } from './ComputerView';
 export { DataPoolView } from './DataPoolView';
+export { HandDock } from './HandDock';
 export { HandView } from './HandView';
 export { IncomeTracker } from './IncomeTracker';
 export { OpponentSummary } from './OpponentSummary';

@@ -66,7 +66,7 @@ export function RoomPage(): React.JSX.Element {
   if (isLoading || !room) {
     return (
       <div className='flex min-h-[50vh] items-center justify-center'>
-        <LoadingSpinner />
+        <LoadingSpinner variant='block' />
       </div>
     );
   }
@@ -78,37 +78,74 @@ export function RoomPage(): React.JSX.Element {
   const canEnterGame = isInRoom && room.status === ERoomStatus.PLAYING;
   const canLeave = isInRoom && !isHost && room.status === ERoomStatus.WAITING;
 
+  const statusLabel =
+    room.status === ERoomStatus.WAITING
+      ? t('client.room.status.waiting')
+      : room.status === ERoomStatus.PLAYING
+        ? t('client.room.status.playing')
+        : t('client.room.status.finished');
+
   const emptySlots = Array.from(
     { length: room.options.playerCount - room.players.length },
     (_, i) => room.players.length + i,
   );
 
   return (
-    <div className='space-y-6'>
-      <div className='flex items-center gap-3'>
-        <Button variant='ghost' onClick={() => navigate({ to: '/lobby' })}>
+    <div className='space-y-8'>
+      {/* Header: back chevron, display-font name, status tag. */}
+      <header className='space-y-3'>
+        <Button
+          variant='ghost'
+          size='sm'
+          onClick={() => navigate({ to: '/lobby' })}
+        >
+          <svg
+            viewBox='0 0 24 24'
+            className='h-3.5 w-3.5'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            aria-hidden
+          >
+            <path d='M15 18l-6-6 6-6' />
+          </svg>
           {t('client.room.back')}
         </Button>
-        <h1 className='font-display text-2xl font-bold uppercase tracking-wider text-text-100'>
-          {room.name}
-        </h1>
-        <Badge
-          variant={room.status === ERoomStatus.WAITING ? 'success' : 'warning'}
-        >
-          {room.status === ERoomStatus.WAITING
-            ? t('client.room.status.waiting')
-            : room.status === ERoomStatus.PLAYING
-              ? t('client.room.status.playing')
-              : t('client.room.status.finished')}
-        </Badge>
-      </div>
 
-      <div className='grid gap-6 lg:grid-cols-[1fr_300px]'>
-        <Card>
+        <div className='flex flex-wrap items-end justify-between gap-3'>
+          <div className='space-y-1.5'>
+            <span className='micro-label text-[oklch(0.74_0.10_240)]'>
+              {t('client.common.mission', { defaultValue: 'Mission' })} ·{' '}
+              <span className='text-text-500'>{room.id.slice(0, 8)}</span>
+            </span>
+            <h1 className='font-display text-3xl font-semibold tracking-[0.08em] text-text-100'>
+              {room.name}
+            </h1>
+          </div>
+          <Badge
+            variant={
+              room.status === ERoomStatus.WAITING ? 'success' : 'warning'
+            }
+          >
+            {statusLabel}
+          </Badge>
+        </div>
+      </header>
+
+      <div className='grid gap-6 lg:grid-cols-[1fr_320px]'>
+        {/* Crew manifest */}
+        <Card variant='instrument'>
           <CardHeader>
-            <CardTitle>{t('client.room.crew')}</CardTitle>
+            <div className='flex items-center justify-between'>
+              <CardTitle>{t('client.room.crew')}</CardTitle>
+              <span className='readout text-xs text-text-500'>
+                {room.players.length}/{room.options.playerCount}
+              </span>
+            </div>
           </CardHeader>
-          <CardContent className='space-y-3'>
+          <CardContent className='space-y-2.5'>
             {room.players.map((player) => (
               <PlayerSlot
                 key={player.id}
@@ -128,9 +165,10 @@ export function RoomPage(): React.JSX.Element {
           </CardContent>
         </Card>
 
+        {/* Right column: mission parameters + action group */}
         <div className='space-y-4'>
           <Card>
-            <CardContent className='pt-5'>
+            <CardContent className='py-5'>
               <GameSettingsPanel options={room.options} readOnly={!isHost} />
             </CardContent>
           </Card>
@@ -138,6 +176,7 @@ export function RoomPage(): React.JSX.Element {
           <div className='flex flex-col gap-2'>
             {!isInRoom && room.status === ERoomStatus.WAITING && !isFull && (
               <Button
+                size='lg'
                 onClick={() => joinMutation.mutate()}
                 disabled={joinMutation.isPending}
                 data-testid='room-join'
@@ -159,6 +198,7 @@ export function RoomPage(): React.JSX.Element {
             )}
             {canEnterGame && (
               <Button
+                size='lg'
                 onClick={() =>
                   navigate({
                     to: '/game/$gameId',
@@ -172,6 +212,7 @@ export function RoomPage(): React.JSX.Element {
             )}
             {canStart && (
               <Button
+                size='lg'
                 onClick={() => startMutation.mutate()}
                 disabled={startMutation.isPending}
                 data-testid='room-launch-game'

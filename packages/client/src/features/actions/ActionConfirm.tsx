@@ -18,6 +18,11 @@ export interface IActionConfirmProps {
   onCancel: () => void;
 }
 
+/**
+ * ActionConfirm — a small mission-log style confirmation for free
+ * actions that cost resources. Costs are itemized as mono readouts
+ * inside an instrument panel with a leading bullet tick.
+ */
 export function ActionConfirm({
   open,
   title,
@@ -39,23 +44,34 @@ export function ActionConfirm({
         </DialogHeader>
 
         {costs.length > 0 ? (
-          <div className='rounded border border-surface-700/70 bg-surface-900/70 p-3'>
-            <p className='font-mono text-xs uppercase tracking-wide text-text-400'>
-              {t('client.action_confirm.cost')}
-            </p>
-            <ul className='mt-2 space-y-1 text-sm text-text-200'>
+          <div className='instrument-panel p-3'>
+            <div className='section-head mb-2'>
+              <span aria-hidden className='section-head__tick' />
+              <p className='micro-label'>{t('client.action_confirm.cost')}</p>
+              <div aria-hidden className='section-head__rule' />
+            </div>
+            <ul className='space-y-1'>
               {costs.map((item) => (
-                <li key={item}>- {item}</li>
+                <li
+                  key={item}
+                  className='flex items-start gap-2 font-mono text-[13px] text-text-100'
+                >
+                  <span
+                    aria-hidden
+                    className='mt-[7px] inline-block h-px w-2 bg-accent-500/80'
+                  />
+                  <span className='readout'>{item}</span>
+                </li>
               ))}
             </ul>
           </div>
         ) : null}
 
         <DialogFooter>
-          <Button type='button' variant='ghost' onClick={onCancel}>
+          <Button variant='ghost' onClick={onCancel}>
             {t('client.common.cancel')}
           </Button>
-          <Button type='button' onClick={onConfirm}>
+          <Button onClick={onConfirm}>
             {confirmLabel === 'Confirm'
               ? t('client.common.confirm')
               : confirmLabel}

@@ -29,22 +29,53 @@ function createIntegrationGame(seed: string) {
   return { game, player: player as Player };
 }
 
+/**
+ * Drain the prompts that a PASS action can surface for the given player
+ * (typically `other`): first a CARD-discard prompt if the hand exceeds
+ * the 4-card limit, then the END_OF_ROUND card pick.
+ *
+ * Unlike the initial implementation, this helper keeps looping while a
+ * prompt is pending so intermediate CARD-discard prompts don't leave the
+ * game stuck (which otherwise stalls the main-action hand-off back to
+ * `p1` and breaks the 2.6.11 mission-completion flow).
+ */
 function resolveEndOfRoundPickIfAny(game: Game, playerId: string): void {
   const player = game.players.find((candidate) => candidate.id === playerId);
-  if (!player?.waitingFor) {
+  if (!player) return;
+
+  while (player.waitingFor) {
+    const model = player.waitingFor.toModel() as {
+      type: EPlayerInputType;
+      cards?: Array<{ id: string }>;
+    };
+
+    if (model.type === EPlayerInputType.CARD) {
+      // Discard-down-to-4 prompt emitted by PassAction. Pick the first
+      // available card ID to satisfy it; the helper is deliberately
+      // opinion-free about which card goes.
+      const firstCardId = model.cards?.[0]?.id;
+      if (!firstCardId) {
+        throw new Error('expected card input to have at least one card');
+      }
+      game.processInput(playerId, {
+        type: EPlayerInputType.CARD,
+        cardIds: [firstCardId],
+      });
+      continue;
+    }
+
+    if (model.type === EPlayerInputType.END_OF_ROUND) {
+      const picker = model as unknown as ISelectEndOfRoundCardInputModel;
+      game.processInput(playerId, {
+        type: EPlayerInputType.END_OF_ROUND,
+        cardId: picker.cards[0].id,
+      });
+      continue;
+    }
+
+    // Unknown prompt type: stop to avoid masking real test failures.
     return;
   }
-
-  const model = player.waitingFor.toModel();
-  if (model.type !== EPlayerInputType.END_OF_ROUND) {
-    return;
-  }
-
-  const picker = model as ISelectEndOfRoundCardInputModel;
-  game.processInput(playerId, {
-    type: EPlayerInputType.END_OF_ROUND,
-    cardId: picker.cards[0].id,
-  });
 }
 
 function resolveUntilMissionPrompt(game: Game, player: Player): void {
@@ -331,9 +362,9 @@ describe('PlayCardAction — integration', () => {
         '106',
       );
       expect(missionState).toBeDefined();
-      expect(missionState!.branchStates[0].completed).toBe(true);
-      expect(missionState!.branchStates[1].completed).toBe(false);
-      expect(missionState!.branchStates[2].completed).toBe(false);
+      expect(missionState?.branchStates[0].completed).toBe(true);
+      expect(missionState?.branchStates[1].completed).toBe(false);
+      expect(missionState?.branchStates[2].completed).toBe(false);
       expect(player.playedMissions.map(resolveCardId)).toContain('106');
       expect(player.score).toBe(scoreBefore + 2);
     });
@@ -355,6 +386,76 @@ describe('PlayCardAction — integration', () => {
       expect(player.playedMissions.map(resolveCardId)).toContain('106');
       expect(game.mainDeck.getDiscardPile()).toEqual(discardBefore);
       expect(game.mainDeck.getDiscardPile()).not.toContain('106');
+    });
+
+    it('2.6.11 completing the final trigger branch moves the mission to completedMissions automatically', () => {
+      const { game, player } = createIntegrationGame(
+        'play-card-2-6-11-auto-complete',
+      );
+      const other = game.players.find((p) => p.id !== player.id) as Player;
+      player.hand = ['106', '110', '29', '91'];
+      player.resources.gain({ credits: 10 });
+      game.mainDeck = new Deck(
+        ['refill-1', 'refill-2', 'refill-3', 'refill-4'],
+        [],
+      );
+      game.cardRow = ['50', '55', '71'];
+
+      const handBackToPlayer = () => {
+        if (game.activePlayer.id === other.id) {
+          game.processMainAction(other.id, { type: EMainAction.PASS });
+          resolveEndOfRoundPickIfAny(game, other.id);
+        }
+        expect(game.activePlayer.id).toBe(player.id);
+      };
+
+      const playTriggerCardAndClaim = (expectedOptionId: string) => {
+        game.processMainAction(player.id, {
+          type: EMainAction.PLAY_CARD,
+          payload: { cardIndex: 0 },
+        });
+
+        resolveUntilMissionPrompt(game, player);
+        const promptModel = player.waitingFor?.toModel() as {
+          type: EPlayerInputType;
+          title?: string;
+          options: Array<{ id: string }>;
+        };
+        expect(promptModel.title).toBe('Mission triggered! Claim reward?');
+        expect(
+          promptModel.options.some((option) => option.id === expectedOptionId),
+        ).toBe(true);
+
+        game.processInput(player.id, {
+          type: EPlayerInputType.OPTION,
+          optionId: expectedOptionId,
+        });
+        game.processEndTurn(player.id);
+      };
+
+      game.processMainAction(player.id, {
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 0 },
+      });
+      expect(player.playedMissions.map(resolveCardId)).toContain('106');
+      game.processEndTurn(player.id);
+
+      handBackToPlayer();
+      playTriggerCardAndClaim('complete-106-0');
+      expect(player.playedMissions.map(resolveCardId)).toContain('106');
+
+      handBackToPlayer();
+      playTriggerCardAndClaim('complete-106-1');
+      expect(player.playedMissions.map(resolveCardId)).toContain('106');
+
+      handBackToPlayer();
+      playTriggerCardAndClaim('complete-106-2');
+
+      expect(player.playedMissions.map(resolveCardId)).not.toContain('106');
+      expect(player.completedMissions.map(resolveCardId)).toContain('106');
+      expect(
+        game.missionTracker.getMissionState(player.id, '106'),
+      ).toBeUndefined();
     });
   });
 });

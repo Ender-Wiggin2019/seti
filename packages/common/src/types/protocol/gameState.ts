@@ -89,6 +89,13 @@ export interface IPublicSolarSystemSpaceState {
   ringIndex: number;
   indexInRing: number;
   hasPublicityIcon: boolean;
+  /**
+   * Amount of publicity granted when a probe enters this space via the
+   * publicity icon. Optional; callers that don't emit this field default
+   * to +1 (existing board data) while newer sector configs may specify
+   * any positive integer for extensibility.
+   */
+  publicityIconAmount?: number;
   elementTypes: string[];
   elements?: Array<{ type: string; planet?: EPlanet }>;
 }

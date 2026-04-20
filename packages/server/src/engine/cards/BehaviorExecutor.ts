@@ -313,14 +313,18 @@ export class BehaviorExecutor {
   ): SimpleDeferredAction | undefined {
     const researchTech = behavior.researchTech;
     if (!researchTech) return undefined;
-    return new SimpleDeferredAction(player, (game) => {
-      return ResearchTechEffect.execute(player, game, {
+    // Rotation is decoupled from the tech-grant at the card layer: a card
+    // with a printed ROTATE icon produces its rotation via
+    // `buildRotateAction`, so the research effect itself must not rotate
+    // (otherwise cards like 71/109 would rotate twice).
+    return new SimpleDeferredAction(player, (game) =>
+      ResearchTechEffect.execute(player, game, {
         filter: {
           mode: 'category',
           categories: toResearchCategories(researchTech),
         },
-      });
-    });
+      }),
+    );
   }
 
   private buildMarkTraceAction(

@@ -13,6 +13,12 @@ const TYPE_I18N_KEY: Record<ETech, string> = {
   [ETech.ANY]: 'any',
 };
 
+const TYPE_ORDER: readonly ETech[] = [
+  ETech.PROBE,
+  ETech.SCAN,
+  ETech.COMPUTER,
+] as const;
+
 export function TechDisplay({ techs }: ITechDisplayProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const grouped = new Map<ETech, ETechId[]>();
@@ -25,37 +31,48 @@ export function TechDisplay({ techs }: ITechDisplayProps): React.JSX.Element {
   }
 
   return (
-    <section className='rounded border border-surface-700/55 bg-surface-950/65 p-2'>
-      <p className='mb-1.5 font-mono text-[10px] uppercase tracking-wide text-text-500'>
-        {t('client.tech_display.title')}
-      </p>
+    <section className='instrument-panel p-2'>
+      <div className='section-head mb-1.5'>
+        <span aria-hidden className='section-head__tick' />
+        <p className='micro-label'>{t('client.tech_display.title')}</p>
+        <div aria-hidden className='section-head__rule' />
+      </div>
 
       {techs.length === 0 ? (
-        <p className='text-xs text-text-500'>
+        <p className='font-mono text-[10px] tracking-[0.08em] text-text-500'>
           {t('client.tech_display.empty')}
         </p>
       ) : (
         <div className='space-y-1'>
-          {[ETech.PROBE, ETech.SCAN, ETech.COMPUTER].map((techType) => {
+          {TYPE_ORDER.map((techType) => {
             const typeTechs = grouped.get(techType) ?? [];
             return (
-              <div key={techType} className='flex items-center gap-1'>
-                <span className='w-14 font-mono text-[10px] text-text-400'>
+              <div key={techType} className='flex items-center gap-1.5'>
+                <span className='w-14 shrink-0 font-mono text-[10px] uppercase tracking-[0.1em] text-text-500'>
                   {t(`client.tech_display.types.${TYPE_I18N_KEY[techType]}`)}
                 </span>
-                <div className='flex flex-wrap gap-1'>
-                  {typeTechs.map((techId) => {
-                    const descriptor = getTechDescriptor(techId);
-                    return (
-                      <span
-                        key={techId}
-                        className='rounded border border-info-400/50 bg-info-500/10 px-1 py-[1px] font-mono text-[10px] text-info-300'
-                      >
-                        L{descriptor.level + 1}
-                      </span>
-                    );
-                  })}
-                </div>
+                {typeTechs.length === 0 ? (
+                  <span
+                    aria-hidden
+                    className='inline-block h-px w-3 bg-[color:var(--surface-700)]'
+                  />
+                ) : (
+                  <div className='flex flex-wrap gap-1'>
+                    {typeTechs.map((techId) => {
+                      const descriptor = getTechDescriptor(techId);
+                      return (
+                        <span
+                          key={techId}
+                          className='chip'
+                          data-active='true'
+                          title={techId}
+                        >
+                          L{descriptor.level + 1}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })}

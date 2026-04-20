@@ -10,6 +10,7 @@ import { RoomCard } from '@/components/RoomCard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/toast';
+import { cn } from '@/lib/cn';
 
 type TFilterValue = 'all' | ERoomStatus.WAITING | ERoomStatus.PLAYING;
 
@@ -45,18 +46,29 @@ export function LobbyPage(): React.JSX.Element {
   });
 
   return (
-    <div className='space-y-6'>
-      <div className='flex items-center justify-between'>
-        <h1 className='font-display text-2xl font-bold uppercase tracking-wider text-text-100'>
-          {t('client.lobby.title')}
-        </h1>
+    <div className='space-y-8'>
+      {/* Header strip: instrument kicker → display title → primary CTA. */}
+      <header className='flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'>
+        <div className='space-y-2'>
+          <span className='micro-label inline-flex items-center gap-2 text-[oklch(0.74_0.10_240)]'>
+            <span className='h-px w-6 bg-[oklch(0.68_0.11_240)]' />
+            {t('client.lobby.kicker', { defaultValue: 'Open Channels' })}
+            <span className='readout text-[10px] text-text-500'>
+              {String(rooms?.length ?? 0).padStart(2, '0')}
+            </span>
+          </span>
+          <h1 className='font-display text-3xl font-semibold tracking-[0.08em] text-text-100'>
+            {t('client.lobby.title')}
+          </h1>
+        </div>
         <Button
           onClick={() => setCreateOpen(true)}
           data-testid='lobby-new-mission'
+          size='lg'
         >
           {t('client.lobby.new_mission')}
         </Button>
-      </div>
+      </header>
 
       <Tabs
         defaultValue='all'
@@ -75,14 +87,12 @@ export function LobbyPage(): React.JSX.Element {
 
       {isLoading ? (
         <div className='flex justify-center py-12'>
-          <LoadingSpinner />
+          <LoadingSpinner variant='block' />
         </div>
       ) : !rooms?.length ? (
-        <div className='rounded-lg border border-surface-700 bg-surface-900/50 p-8 text-center'>
-          <p className='text-text-500'>{t('client.lobby.empty')}</p>
-        </div>
+        <EmptyState label={t('client.lobby.empty')} />
       ) : (
-        <div className='grid gap-3 sm:grid-cols-2'>
+        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
           {rooms.map((room) => (
             <RoomCard key={room.id} room={room} />
           ))}
@@ -96,5 +106,47 @@ export function LobbyPage(): React.JSX.Element {
         isPending={createMutation.isPending}
       />
     </div>
+  );
+}
+
+function EmptyState({ label }: { label: string }): React.JSX.Element {
+  return (
+    <div
+      className={cn(
+        'metal-hairline-rounded relative overflow-hidden p-12 text-center',
+        'bg-[oklch(0.10_0.02_260/0.4)]',
+      )}
+    >
+      {/* A single scanning instrument-light pool, nothing more. */}
+      <span
+        aria-hidden
+        className='pointer-events-none absolute inset-0 bg-[radial-gradient(420px_200px_at_50%_30%,oklch(0.28_0.08_240/0.12),transparent_70%)]'
+      />
+      <div className='relative flex flex-col items-center gap-3'>
+        <EmptyRadarMark />
+        <p className='font-mono text-[0.75rem] uppercase tracking-microlabel text-text-400'>
+          {label}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function EmptyRadarMark(): React.JSX.Element {
+  return (
+    <svg
+      viewBox='0 0 48 48'
+      className='h-10 w-10 text-[oklch(0.55_0.06_240)]'
+      fill='none'
+      stroke='currentColor'
+      strokeWidth='1'
+      aria-hidden
+    >
+      <circle cx='24' cy='24' r='20' />
+      <circle cx='24' cy='24' r='13' opacity='0.6' />
+      <circle cx='24' cy='24' r='6' opacity='0.4' />
+      <path d='M24 4v40M4 24h40' strokeDasharray='2 3' opacity='0.4' />
+      <path d='M24 24l14-8' stroke='oklch(0.74 0.10 240)' strokeWidth='1.4' />
+    </svg>
   );
 }

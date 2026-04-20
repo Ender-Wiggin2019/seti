@@ -65,13 +65,16 @@ export interface ISectorInit {
 
 /**
  * Build the default per-position VP rewards for a sector.
- * Signals fill right-to-left, so the 2nd signal placed lands at
- * index `capacity - 2`. That position awards 2 VP; all others award 0.
+ *
+ * Per rule-raw §Marking a Signal: signals fill left-to-right and placing
+ * a marker in the sector's **second** data slot (index 1) immediately
+ * scores +2 VP. All other slots award 0 by default. Callers can override
+ * via `ISectorInit.positionRewards`.
  */
 function defaultPositionRewards(capacity: number): number[] {
   const rewards = new Array<number>(capacity).fill(0);
-  if (capacity >= 3) {
-    rewards[capacity - 2] = 2;
+  if (capacity >= 2) {
+    rewards[1] = 2;
   }
   return rewards;
 }
@@ -160,19 +163,23 @@ export class Sector {
   /**
    * Mark a signal on this sector for the given player.
    *
-   * - Finds the **rightmost** data signal and replaces it with a player marker.
+   * Per rule-raw §Marking a Signal: data is replaced by markers in order
+   * from **left to right**.
+   *
+   * - Finds the **leftmost** data signal, replaces it with a player marker
+   *   and awards the VP configured for that slot (default: +2 VP at index 1).
    *   The player gains 1 data.
-   * - If no data signals remain, **appends** a player marker. The player
-   *   does NOT gain data in this case.
+   * - If no data signals remain, **appends** a player marker (overflow).
+   *   The player does NOT gain data in this case.
    */
   public markSignal(playerId: string): ISectorMarkSignalResult {
     assertPlayerId(playerId);
 
-    const rightmostDataIdx = this.findRightmostDataIndex();
+    const leftmostDataIdx = this.findLeftmostDataIndex();
 
-    if (rightmostDataIdx >= 0) {
-      const vpAwarded = this.positionRewards[rightmostDataIdx] ?? 0;
-      this.signals[rightmostDataIdx] = { type: 'player', playerId };
+    if (leftmostDataIdx >= 0) {
+      const vpAwarded = this.positionRewards[leftmostDataIdx] ?? 0;
+      this.signals[leftmostDataIdx] = { type: 'player', playerId };
       this.completed = this.isFulfilled();
       return { dataGained: true, vpAwarded };
     }
@@ -199,6 +206,17 @@ export class Sector {
    * 4. Reset the sector: clear all signals, refill data, place 2nd-place
    *    marker at index 0 (replaces data, player does NOT gain data)
    */
+  /**
+   * Read-only peek at the winner a fulfilled sector would produce without
+   * mutating state. Used by callers that need to order multiple pending
+   * sector resolutions by winner identity before invoking
+   * {@link resolveCompletion}.
+   */
+  public peekWinnerId(): string | null {
+    if (!this.isFulfilled()) return null;
+    return this.computeRanking().ranking[0] ?? null;
+  }
+
   public resolveCompletion(): ISectorCompletionResult {
     if (!this.isFulfilled()) {
       throw new GameError(
@@ -208,16 +226,7 @@ export class Sector {
       );
     }
 
-    const { markerCounts, rightmostPositions, participants } =
-      this.computeRanking();
-
-    const ranking = [...participants].sort((a, b) => {
-      const countDiff = (markerCounts.get(b) ?? 0) - (markerCounts.get(a) ?? 0);
-      if (countDiff !== 0) return countDiff;
-      return (
-        (rightmostPositions.get(b) ?? 0) - (rightmostPositions.get(a) ?? 0)
-      );
-    });
+    const { ranking, participants } = this.computeRanking();
 
     const winnerPlayerId = ranking[0] ?? null;
     const secondPlacePlayerId = ranking[1] ?? null;
@@ -303,8 +312,8 @@ export class Sector {
     return { type: 'data', tokenId };
   }
 
-  private findRightmostDataIndex(): number {
-    for (let i = this.signals.length - 1; i >= 0; i--) {
+  private findLeftmostDataIndex(): number {
+    for (let i = 0; i < this.signals.length; i++) {
       if (this.signals[i].type === 'data') return i;
     }
     return -1;
@@ -314,6 +323,7 @@ export class Sector {
     markerCounts: Map<string, number>;
     rightmostPositions: Map<string, number>;
     participants: string[];
+    ranking: string[];
   } {
     const markerCounts = new Map<string, number>();
     const rightmostPositions = new Map<string, number>();
@@ -327,10 +337,15 @@ export class Sector {
       }
     }
 
-    return {
-      markerCounts,
-      rightmostPositions,
-      participants: Array.from(markerCounts.keys()),
-    };
+    const participants = Array.from(markerCounts.keys());
+    const ranking = [...participants].sort((a, b) => {
+      const countDiff = (markerCounts.get(b) ?? 0) - (markerCounts.get(a) ?? 0);
+      if (countDiff !== 0) return countDiff;
+      return (
+        (rightmostPositions.get(b) ?? 0) - (rightmostPositions.get(a) ?? 0)
+      );
+    });
+
+    return { markerCounts, rightmostPositions, participants, ranking };
   }
 }

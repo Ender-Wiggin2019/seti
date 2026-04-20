@@ -32,6 +32,12 @@ export class BuyCardFreeAction {
       );
     }
 
+    if (options.fromDeck) {
+      this.assertDeckPurchaseAvailable(game);
+    } else {
+      this.assertRowPurchaseAvailable(game, options.cardId);
+    }
+
     player.resources.spend({ publicity: BUY_CARD_PUBLICITY_COST });
 
     if (options.fromDeck) {
@@ -39,6 +45,42 @@ export class BuyCardFreeAction {
     }
 
     return this.buyFromRow(player, game, options.cardId);
+  }
+
+  private static assertDeckPurchaseAvailable(game: IGame): void {
+    if (game.mainDeck.totalSize === 0) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        'No cards available in deck or discard pile',
+      );
+    }
+  }
+
+  private static assertRowPurchaseAvailable(
+    game: IGame,
+    cardId?: string,
+  ): void {
+    if (game.cardRow.length === 0) {
+      throw new GameError(EErrorCode.INVALID_ACTION, 'Card row is empty');
+    }
+
+    if (cardId === undefined) {
+      return;
+    }
+
+    const cardExists = game.cardRow.some(
+      (item) =>
+        (typeof item === 'string' ? item : (item as { id?: string })?.id) ===
+        cardId,
+    );
+
+    if (!cardExists) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        `Card ${cardId} not found in card row`,
+        { cardId },
+      );
+    }
   }
 
   private static buyFromDeck(player: IPlayer, game: IGame): IBuyCardResult {

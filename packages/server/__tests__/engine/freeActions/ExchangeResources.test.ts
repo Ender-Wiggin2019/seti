@@ -98,6 +98,21 @@ describe('ExchangeResourcesFreeAction', () => {
       expect(player.hand.length).toBe(initialHandSize - 2);
       expect(player.resources.credits).toBe(initialCredits + 1);
     });
+
+    it('puts the spent cards into the deck discard pile', () => {
+      const player = createTestPlayer();
+      const game = createMockGame();
+
+      ExchangeResourcesFreeAction.execute(
+        player,
+        game,
+        EResource.CARD,
+        EResource.CREDIT,
+      );
+
+      expect(game.mainDeck.getDiscardPile()).toEqual(['card-c', 'card-b']);
+      expect(player.hand).toEqual(['card-a']);
+    });
   });
 
   describe('execute — credit to card', () => {

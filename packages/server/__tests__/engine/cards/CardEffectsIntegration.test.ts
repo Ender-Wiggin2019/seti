@@ -1,7 +1,4 @@
-import {
-  EMainAction,
-  EPhase,
-} from '@seti/common/types/protocol/enums';
+import { EMainAction, EPhase } from '@seti/common/types/protocol/enums';
 import {
   EPlayerInputType,
   type ISelectOptionInputModel,
@@ -30,6 +27,13 @@ function createGame(seed: string): { game: Game; player: Player } {
   const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
   const player = game.players.find((p) => p.id === 'p1') as Player;
   return { game, player };
+}
+
+function requireSolarSystem(game: Game): NonNullable<Game['solarSystem']> {
+  if (!game.solarSystem) {
+    throw new Error('expected solar system to be initialized');
+  }
+  return game.solarSystem;
 }
 
 function resolveFirstOptionUntilDone(game: Game, player: IPlayer): void {
@@ -157,7 +161,8 @@ describe('CardEffectsIntegration — representative cards through processMainAct
       player.hand = ['71'];
       game.mainDeck = new Deck(['refill-1'], []);
       game.cardRow = ['50', '55', '110'];
-      const rotationBefore = game.solarSystem!.rotationCounter;
+      const solarSystem = requireSolarSystem(game);
+      const rotationBefore = solarSystem.rotationCounter;
       const publicityBefore = player.resources.publicity;
 
       game.processMainAction(player.id, {
@@ -166,14 +171,25 @@ describe('CardEffectsIntegration — representative cards through processMainAct
       });
 
       // A tech selection input is surfaced; we should NOT have been
-      // charged the 6-publicity research cost (card-granted tech).
+      // charged the 6-publicity research cost (card-granted tech). Rotation
+      // and tech-grant are decoupled at the card layer: the printed ROTATE
+      // icon produces exactly one rotation — the embedded tech effect must
+      // not rotate again.
       expect(player.resources.publicity).toBe(publicityBefore);
-      expect(game.solarSystem!.rotationCounter).toBe(rotationBefore + 1);
+      expect(solarSystem.rotationCounter).toBe(rotationBefore + 1);
       expect(player.waitingFor).toBeDefined();
-      const model = player.waitingFor!.toModel() as ISelectOptionInputModel;
+      const waitingFor = player.waitingFor;
+      if (!waitingFor) {
+        throw new Error('expected a pending tech-selection input');
+      }
+      const model = waitingFor.toModel() as ISelectOptionInputModel;
       expect(model.type).toBe(EPlayerInputType.OPTION);
 
-      const available = game.techBoard!.getAvailableTechs(player.id);
+      const techBoard = game.techBoard;
+      if (!techBoard) {
+        throw new Error('expected tech board to be initialized');
+      }
+      const available = techBoard.getAvailableTechs(player.id);
       for (const opt of model.options) {
         expect(available).toContain(opt.id);
       }
@@ -192,7 +208,8 @@ describe('CardEffectsIntegration — representative cards through processMainAct
       game.mainDeck = new Deck(['refill-1'], []);
       game.cardRow = ['50', '55', '71'];
       const energyBefore = player.resources.energy;
-      const rotationBefore = game.solarSystem!.rotationCounter;
+      const solarSystem = requireSolarSystem(game);
+      const rotationBefore = solarSystem.rotationCounter;
 
       game.processMainAction(player.id, {
         type: EMainAction.PLAY_CARD,
@@ -200,10 +217,15 @@ describe('CardEffectsIntegration — representative cards through processMainAct
       });
 
       expect(player.resources.energy).toBe(energyBefore + 1);
-      expect(game.solarSystem!.rotationCounter).toBe(rotationBefore + 1);
+      // Decoupled rotation: the printed ROTATE icon rotates exactly once.
+      expect(solarSystem.rotationCounter).toBe(rotationBefore + 1);
 
       // All options offered should be COMPUTER-tier techs.
-      const model = player.waitingFor!.toModel() as ISelectOptionInputModel;
+      const waitingFor = player.waitingFor;
+      if (!waitingFor) {
+        throw new Error('expected a pending computer-tech input');
+      }
+      const model = waitingFor.toModel() as ISelectOptionInputModel;
       expect(model.type).toBe(EPlayerInputType.OPTION);
       expect(model.options.length).toBeGreaterThan(0);
       for (const opt of model.options) {

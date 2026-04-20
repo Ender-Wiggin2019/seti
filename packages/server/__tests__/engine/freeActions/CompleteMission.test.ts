@@ -1,8 +1,10 @@
 import { ESector, ETrace } from '@seti/common/types/element';
 import { EFreeAction, EMainAction } from '@seti/common/types/protocol/enums';
+import { EErrorCode } from '@seti/common/types/protocol/errors';
 import {
   EPlayerInputType,
   type ISelectEndOfRoundCardInputModel,
+  type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
 import { getCardRegistry } from '@/engine/cards/CardRegistry.js';
 import { Deck } from '@/engine/deck/Deck.js';
@@ -34,6 +36,31 @@ describe('CompleteMissionFreeAction', () => {
     game.processInput(playerId, {
       type: EPlayerInputType.END_OF_ROUND,
       cardId: picker.cards[0].id,
+    });
+  }
+
+  function resolveMissionPromptIfAny(game: Game, playerId: string): void {
+    const player = game.players.find((candidate) => candidate.id === playerId);
+    if (!player?.waitingFor) {
+      return;
+    }
+
+    const model = player.waitingFor.toModel();
+    if (model.type !== EPlayerInputType.OPTION) {
+      return;
+    }
+
+    const prompt = model as ISelectOptionInputModel;
+    const completeOption = prompt.options.find((option) =>
+      option.id.startsWith('complete-'),
+    );
+    if (!completeOption) {
+      return;
+    }
+
+    game.processInput(playerId, {
+      type: EPlayerInputType.OPTION,
+      optionId: completeOption.id,
     });
   }
 
@@ -150,6 +177,57 @@ describe('CompleteMissionFreeAction', () => {
     expect(player.completedMissions).toHaveLength(1);
     expect(
       game.missionTracker.getMissionState(player.id, '64'),
+    ).toBeUndefined();
+  });
+
+  it('rejects COMPLETE_MISSION while a triggered mission prompt is still pending', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'complete-mission-prompt-lock',
+    );
+    const player = game.players[0];
+    player.hand = ['51'];
+    player.resources.gain({ publicity: 4 });
+    game.mainDeck = new Deck(['refill-1', 'reward-card'], []);
+
+    game.processMainAction(player.id, {
+      type: EMainAction.PLAY_CARD,
+      payload: { cardIndex: 0 },
+    });
+
+    const scoreBefore = player.score;
+    const handBefore = player.hand.length;
+    const prompt = player.waitingFor?.toModel() as
+      | ISelectOptionInputModel
+      | undefined;
+    expect(prompt?.type).toBe(EPlayerInputType.OPTION);
+    expect(prompt?.title).toBe('Mission triggered! Claim reward?');
+    expect(
+      prompt?.options.some((option) => option.id === 'complete-51-0'),
+    ).toBe(true);
+
+    expect(() =>
+      game.processFreeAction(player.id, {
+        type: EFreeAction.COMPLETE_MISSION,
+        cardId: '51',
+      }),
+    ).toThrowError(
+      expect.objectContaining({ code: EErrorCode.INVALID_INPUT_RESPONSE }),
+    );
+
+    expect(player.score).toBe(scoreBefore);
+    expect(player.hand).toHaveLength(handBefore);
+    expect(player.completedMissions).toHaveLength(0);
+    expect(player.waitingFor).toBeDefined();
+
+    resolveMissionPromptIfAny(game, player.id);
+
+    expect(player.score).toBe(scoreBefore + 3);
+    expect(player.hand).toHaveLength(handBefore + 1);
+    expect(player.completedMissions.map(resolveCardId)).toEqual(['51']);
+    expect(
+      game.missionTracker.getMissionState(player.id, '51'),
     ).toBeUndefined();
   });
 

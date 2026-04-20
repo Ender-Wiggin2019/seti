@@ -31,6 +31,14 @@ export interface ISolarSystemSpace {
   indexInRing: number;
   discIndex: number | null;
   hasPublicityIcon: boolean;
+  /**
+   * Amount of publicity granted when a probe enters via the publicity
+   * icon. Optional: when `hasPublicityIcon === true` and this field is
+   * omitted, it defaults to `1` (the standard printed icon). Declaring
+   * a larger value lets future sector setups print "+2"/"+3" icons
+   * without a boolean/number type migration.
+   */
+  publicityIconAmount?: number;
   elements: ISolarSystemElement[];
   occupants: ISolarProbe[];
 }
@@ -500,8 +508,11 @@ export class SolarSystem {
       return 0;
     }
 
+    // Honor an optional numeric amount on the icon; default to +1 for
+    // legacy/default-printed icons that don't carry an explicit value.
+    const amount = Math.max(1, Math.trunc(toSpace.publicityIconAmount ?? 1));
     const current = this.publicityByPlayer.get(playerId) ?? 0;
-    this.publicityByPlayer.set(playerId, current + 1);
-    return 1;
+    this.publicityByPlayer.set(playerId, current + amount);
+    return amount;
   }
 }

@@ -1,50 +1,122 @@
+import { useTranslation } from 'react-i18next';
 import type { IPublicPlayerState } from '@/types/re-exports';
 
 interface IOpponentSummaryProps {
   opponents: IPublicPlayerState[];
 }
 
+interface IOpponentStatProps {
+  labelKey: string;
+  fallback: string;
+  value: number | string;
+}
+
+function OpponentStat({
+  labelKey,
+  fallback,
+  value,
+}: IOpponentStatProps): React.JSX.Element {
+  const { t } = useTranslation('common');
+  const label = t(labelKey, { defaultValue: fallback });
+  return (
+    <p className='font-mono text-[10px] tracking-[0.06em] text-text-300 tabular-nums'>
+      {`${label}: ${value}`}
+    </p>
+  );
+}
+
 export function OpponentSummary({
   opponents,
 }: IOpponentSummaryProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
-    <section className='rounded border border-surface-700/45 bg-surface-900/65 p-2'>
-      <p className='mb-1.5 font-mono text-[10px] uppercase tracking-wide text-text-500'>
-        Opponents
-      </p>
+    <section className='instrument-panel p-2'>
+      <div className='section-head mb-1.5'>
+        <span aria-hidden className='section-head__tick' />
+        <p className='micro-label'>
+          {t('client.opponent_summary.title', { defaultValue: 'Opponents' })}
+        </p>
+        <div aria-hidden className='section-head__rule' />
+      </div>
+
       <div className='space-y-1.5'>
         {opponents.map((player) => (
           <details
             key={player.playerId}
-            className='rounded border border-surface-700/50 bg-surface-900/50 px-2 py-1'
+            className='group rounded-[4px] border border-[color:var(--metal-edge-soft)] bg-background-900/70 px-2 py-1 shadow-hairline-inset open:bg-background-900/90'
           >
             <summary className='flex cursor-pointer list-none items-center justify-between gap-2'>
-              <span className='flex items-center gap-1.5 text-xs font-medium text-text-100'>
+              <span className='flex min-w-0 items-center gap-1.5'>
                 <span
-                  className='h-2.5 w-2.5 rounded-full border border-surface-200/60'
-                  style={{ backgroundColor: player.color }}
                   aria-hidden
+                  className='h-2.5 w-2.5 shrink-0 rounded-full border border-[oklch(0.96_0.008_260/0.5)] shadow-[inset_0_1px_0_oklch(1_0_0/0.3)]'
+                  style={{ backgroundColor: player.color }}
                 />
-                {player.playerName}
+                <span className='truncate text-[12px] font-medium text-text-100'>
+                  {player.playerName}
+                </span>
+                {player.passed ? (
+                  <span className='chip shrink-0 font-mono text-[9px] tracking-[0.14em]'>
+                    {t('client.opponent_summary.passed', {
+                      defaultValue: 'PASS',
+                    })}
+                  </span>
+                ) : null}
               </span>
-              <span className='font-mono text-xs text-text-300'>
-                {player.score} VP
+              <span className='flex items-baseline gap-1 shrink-0'>
+                <span className='readout text-[13px] font-semibold text-text-100 leading-none'>
+                  {player.score}
+                </span>
+                <span className='font-mono text-[9px] uppercase tracking-[0.14em] text-text-500'>
+                  VP
+                </span>
+                <span
+                  aria-hidden
+                  className='ml-1 inline-block h-0 w-0 border-x-[4px] border-t-[5px] border-x-transparent border-t-text-500 transition-transform group-open:rotate-180'
+                />
               </span>
             </summary>
-            <div className='mt-1.5 grid grid-cols-2 gap-x-2 gap-y-1 font-mono text-[10px] text-text-400'>
-              <span>Hand: {player.handSize}</span>
-              <span>Tech: {player.techs.length}</span>
-              <span>Credit: {player.resources.credit}</span>
-              <span>Energy: {player.resources.energy}</span>
-              <span>Data: {player.resources.data}</span>
-              <span>Publicity: {player.resources.publicity}</span>
-              <span>Pool: {player.dataPoolCount}</span>
-              <span>Signals: {player.pieces.signalMarkers}</span>
-              {player.passed ? (
-                <span className='col-span-2 text-warning-300'>
-                  Passed this round
-                </span>
-              ) : null}
+            <div className='mt-2 grid grid-cols-2 gap-x-3 gap-y-1 border-t border-[color:var(--metal-edge-soft)] pt-2'>
+              <OpponentStat
+                labelKey='client.opponent_summary.hand'
+                fallback='Hand'
+                value={player.handSize}
+              />
+              <OpponentStat
+                labelKey='client.opponent_summary.tech'
+                fallback='Tech'
+                value={player.techs.length}
+              />
+              <OpponentStat
+                labelKey='client.opponent_summary.credit'
+                fallback='Credit'
+                value={player.resources.credit}
+              />
+              <OpponentStat
+                labelKey='client.opponent_summary.energy'
+                fallback='Energy'
+                value={player.resources.energy}
+              />
+              <OpponentStat
+                labelKey='client.opponent_summary.data'
+                fallback='Data'
+                value={player.resources.data}
+              />
+              <OpponentStat
+                labelKey='client.opponent_summary.publicity'
+                fallback='Publicity'
+                value={player.resources.publicity}
+              />
+              <OpponentStat
+                labelKey='client.opponent_summary.pool'
+                fallback='Pool'
+                value={player.dataPoolCount}
+              />
+              <OpponentStat
+                labelKey='client.opponent_summary.signals'
+                fallback='Signals'
+                value={player.pieces.signalMarkers}
+              />
             </div>
           </details>
         ))}

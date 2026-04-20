@@ -12,6 +12,7 @@ import {
   ESpecialAction,
   ETech,
 } from '@seti/common/types/element';
+import { getTechDescriptor } from '@seti/common/types/tech';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
 import {
@@ -160,9 +161,21 @@ function checkBaseStateCondition(
       return countSectorFulfills(player, game, ESector.BLUE) >= value;
     case EMiscIcon.FULFILL_SECTOR_BLACK:
       return countSectorFulfills(player, game, ESector.BLACK) >= value;
+    case ETech.PROBE:
+    case ETech.SCAN:
+    case ETech.COMPUTER:
+      return countTechsInCategory(player, req.type) >= value;
+    case ETech.ANY:
+      return player.techs.length >= value;
     default:
       return false;
   }
+}
+
+function countTechsInCategory(player: IPlayer, category: ETech): number {
+  return player.techs.filter(
+    (techId) => getTechDescriptor(techId).type === category,
+  ).length;
 }
 
 function countSectorFulfills(

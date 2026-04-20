@@ -3,7 +3,12 @@ import { ScanEffect } from '@/engine/effects/scan/ScanEffect.js';
 
 describe('ScanEffect', () => {
   it('finishes immediately when card row is empty', () => {
-    const player = { id: 'p1', score: 0, resources: { gain: vi.fn() } };
+    const player = {
+      id: 'p1',
+      score: 0,
+      resources: { gain: vi.fn() },
+      pieces: { deploy: vi.fn(), return: vi.fn(), deployed: vi.fn(() => 0) },
+    };
     const game = {
       sectors: [
         {

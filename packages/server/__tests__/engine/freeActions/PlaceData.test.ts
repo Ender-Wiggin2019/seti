@@ -1,9 +1,13 @@
 import type { IComputerColumnConfig } from '@seti/common/types/computer';
+import { EFreeAction } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
+import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { ETechId } from '@seti/common/types/tech';
 import type { Deck } from '@/engine/deck/Deck.js';
 import { PlaceDataFreeAction } from '@/engine/freeActions/PlaceData.js';
+import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
+import { EComputerRow } from '@/engine/player/Computer.js';
 import { Player } from '@/engine/player/Player.js';
 
 const SIMPLE_3_COL: IComputerColumnConfig[] = [
@@ -31,6 +35,15 @@ function createMockGame(deckCards: string[] = []): IGame {
       },
     } as Deck<string>,
   } as unknown as IGame;
+}
+
+const TEST_PLAYERS = [
+  { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
+  { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
+] as const;
+
+function createIntegrationGame(seed: string): Game {
+  return Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
 }
 
 describe('PlaceDataFreeAction', () => {
@@ -302,6 +315,38 @@ describe('PlaceDataFreeAction', () => {
       expect(result.index).toBe(0);
       expect(result.reward).toEqual({ publicity: 2 });
       expect(player.resources.publicity).toBe(publicityBefore + 2);
+    });
+  });
+
+  describe('integration with real game flow', () => {
+    it('does not allow another free action while a place-data reward input is still pending', () => {
+      const game = createIntegrationGame('place-data-pending-input-lock');
+      const player = game.players[0];
+
+      player.computer.placeTech(0, {
+        techId: ETechId.COMPUTER_VP_CREDIT,
+        bottomReward: { tuckIncome: 1 },
+      });
+      for (let index = 0; index < player.computer.columnCount; index += 1) {
+        player.computer.placeData({ row: EComputerRow.TOP, index });
+      }
+      player.dataPool.add(1);
+
+      game.processFreeAction(player.id, {
+        type: EFreeAction.PLACE_DATA,
+        slotIndex: 0,
+      });
+
+      expect(player.waitingFor?.toModel().type).toBe(EPlayerInputType.CARD);
+
+      expect(() =>
+        game.processFreeAction(player.id, {
+          type: EFreeAction.BUY_CARD,
+          fromDeck: true,
+        }),
+      ).toThrowError(
+        expect.objectContaining({ code: EErrorCode.INVALID_INPUT_RESPONSE }),
+      );
     });
   });
 });

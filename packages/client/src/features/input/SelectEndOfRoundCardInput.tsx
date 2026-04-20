@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
 import type {
   IInputResponse,
   ISelectEndOfRoundCardInputModel,
@@ -18,17 +17,14 @@ export function SelectEndOfRoundCardInput({
   const { t } = useTranslation('common');
   return (
     <div className='space-y-2'>
-      <p className='text-xs text-text-300'>
-        {t('client.input.choose_end_of_round')}
-      </p>
-      <div className='grid gap-2 sm:grid-cols-2'>
+      <p className='micro-label'>{t('client.input.choose_end_of_round')}</p>
+      <div className='grid gap-1.5 sm:grid-cols-2'>
         {model.cards.map((card) => (
-          <Button
+          <button
             key={card.id}
             type='button'
-            variant='ghost'
             data-testid={`input-eor-card-${card.id}`}
-            className='h-auto flex-col items-start border border-surface-700/60 bg-surface-800/60 px-2 py-1.5 text-left hover:bg-surface-700/70'
+            className='group flex flex-col gap-0.5 rounded-[4px] border border-[color:var(--metal-edge-soft)] bg-background-900/75 px-2.5 py-1.5 text-left shadow-hairline-inset transition-[background,border-color] duration-150 hover:border-accent-500/60 hover:bg-accent-500/[0.06] focus-visible:outline-none focus-visible:shadow-focus-ring'
             onClick={() =>
               onSubmit({
                 type: EPlayerInputType.END_OF_ROUND,
@@ -36,13 +32,13 @@ export function SelectEndOfRoundCardInput({
               })
             }
           >
-            <span className='text-xs font-medium text-text-100'>
+            <span className='truncate font-body text-[12px] font-medium text-text-100 group-hover:text-text-100'>
               {card.name}
             </span>
-            <span className='font-mono text-[10px] text-text-500'>
+            <span className='truncate font-mono text-[10px] tracking-[0.06em] text-text-500'>
               {card.id}
             </span>
-          </Button>
+          </button>
         ))}
       </div>
     </div>

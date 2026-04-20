@@ -1,4 +1,4 @@
-import { EPlanet } from '@seti/common/types/protocol/enums';
+import { EFreeAction, EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { ETechId } from '@seti/common/types/tech';
 import { vi } from 'vitest';
@@ -8,6 +8,7 @@ import {
   SolarSystem,
 } from '@/engine/board/SolarSystem.js';
 import { MovementFreeAction } from '@/engine/freeActions/Movement.js';
+import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
 import { EMissionEventType } from '@/engine/missions/IMission.js';
 import { Player } from '@/engine/player/Player.js';
@@ -68,6 +69,22 @@ function createMockGame(
     },
     ...overrides,
   } as unknown as IGame;
+}
+
+const TEST_PLAYERS = [
+  { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
+  { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
+] as const;
+
+function createIntegrationGame(seed: string): Game {
+  return Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
+}
+
+function containsAsteroid(space: ISolarSystemSpace): boolean {
+  return space.elements.some(
+    (element) =>
+      element.type === ESolarSystemElementType.ASTEROID && element.amount > 0,
+  );
 }
 
 describe('MovementFreeAction', () => {
@@ -276,6 +293,50 @@ describe('MovementFreeAction', () => {
       ).toThrowError(
         expect.objectContaining({ code: EErrorCode.INSUFFICIENT_RESOURCES }),
       );
+    });
+  });
+
+  describe('integration with real game flow', () => {
+    it('moves across a stable real-board path through Game.processFreeAction', () => {
+      const game = createIntegrationGame('movement-real-board-path');
+      const player = game.players[0];
+      player.probesInSpace = 1;
+      const startSpace = game.solarSystem!.spaces.find((space) => {
+        if (containsAsteroid(space)) {
+          return false;
+        }
+
+        return game
+          .solarSystem!.getAdjacentSpaces(space.id)
+          .some((adjacent) => !adjacent.hasPublicityIcon);
+      });
+
+      expect(startSpace).toBeDefined();
+
+      const destinationSpace = game
+        .solarSystem!.getAdjacentSpaces(startSpace!.id)
+        .find((adjacent) => !adjacent.hasPublicityIcon);
+
+      expect(destinationSpace).toBeDefined();
+
+      player.gainMove(1);
+      game.solarSystem!.placeProbe(player.id, startSpace!.id);
+
+      const publicityBefore = player.resources.publicity;
+
+      game.processFreeAction(player.id, {
+        type: EFreeAction.MOVEMENT,
+        path: [startSpace!.id, destinationSpace!.id],
+      });
+
+      expect(player.getMoveStash()).toBe(0);
+      expect(player.resources.publicity).toBe(publicityBefore);
+      expect(
+        game
+          .solarSystem!.getProbesAt(destinationSpace!.id)
+          .some((probe) => probe.playerId === player.id),
+      ).toBe(true);
+      expect(game.solarSystem!.getProbesAt(startSpace!.id)).toHaveLength(0);
     });
   });
 });

@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import { createElement } from 'react';
 import { afterAll, afterEach, beforeAll, vi } from 'vitest';
+import '@/i18n';
 import { server } from './mocks/server';
 
 vi.mock('@seti/cards', () => ({

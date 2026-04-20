@@ -1,5 +1,10 @@
 import { ESector, ETrace } from '@seti/common/types/element';
-import { EAlienType, EPlanet } from '@seti/common/types/protocol/enums';
+import {
+  EAlienType,
+  EMainAction,
+  EPlanet,
+} from '@seti/common/types/protocol/enums';
+import { ETechId } from '@seti/common/types/tech';
 import { AlienState } from '@/engine/alien/AlienState.js';
 import { PlanetaryBoard } from '@/engine/board/PlanetaryBoard.js';
 import {
@@ -10,13 +15,30 @@ import { getCardRegistry } from '@/engine/cards/CardRegistry.js';
 import { EServerCardKind } from '@/engine/cards/ICard.js';
 import { Deck } from '@/engine/deck/Deck.js';
 import { DeferredActionsQueue } from '@/engine/deferred/DeferredActionsQueue.js';
+import { ResearchTechEffect } from '@/engine/effects/tech/ResearchTechEffect.js';
 import { EventLog } from '@/engine/event/EventLog.js';
+import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
 import { EMissionType } from '@/engine/missions/IMission.js';
 import { MissionTracker } from '@/engine/missions/MissionTracker.js';
 import { Player } from '@/engine/player/Player.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
 import { activateMission } from '../../../helpers/missionTestUtils.js';
+
+const TEST_PLAYERS = [
+  { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
+  { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
+] as const;
+
+function resolveCardId(card: string | { id?: string }): string | undefined {
+  return typeof card === 'string' ? card : card.id;
+}
+
+function createIntegrationGame(seed: string) {
+  const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
+  const player = game.players[0] as Player;
+  return { game, player };
+}
 
 function createPlayer(overrides: Record<string, unknown> = {}): Player {
   return new Player({
@@ -895,6 +917,31 @@ describe('Card 112 — Planetary Geologic Mapping: orbit+land same planet', () =
 // ================================================================
 
 describe('MissionTracker integration with tech mission quick missions', () => {
+  it('uses the real TechBoard to satisfy a three-scan-tech quick mission after the card is played', () => {
+    const { game, player } = createIntegrationGame(
+      'tech-mission-real-tech-board',
+    );
+    player.hand = ['115'];
+    game.mainDeck = new Deck(['refill-1', 'refill-2'], []);
+
+    game.processMainAction(player.id, {
+      type: EMainAction.PLAY_CARD,
+      payload: { cardIndex: 0 },
+    });
+
+    expect(player.playedMissions.map(resolveCardId)).toContain('115');
+
+    ResearchTechEffect.acquireTech(player, game, ETechId.SCAN_EARTH_LOOK);
+    ResearchTechEffect.acquireTech(player, game, ETechId.SCAN_POP_SIGNAL);
+    ResearchTechEffect.acquireTech(player, game, ETechId.SCAN_HAND_SIGNAL);
+
+    const completable = game.missionTracker.getCompletableQuickMissions(
+      player,
+      game,
+    );
+    expect(completable.map((mission) => mission.cardId)).toContain('115');
+  });
+
   it('registers and completes an on-each-species quick mission', () => {
     const player = createPlayer({
       traces: { [ETrace.BLUE]: 2 },

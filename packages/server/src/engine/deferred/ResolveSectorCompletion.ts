@@ -1,4 +1,3 @@
-import type { Sector } from '@/engine/board/Sector.js';
 import { createActionEvent } from '@/engine/event/GameEvent.js';
 import type { IGame, IGamePlayerIdentity } from '@/engine/IGame.js';
 import { SectorFulfillmentEffect } from '../effects/scan/SectorFulfillmentEffect.js';
@@ -14,21 +13,24 @@ export class ResolveSectorCompletion extends DeferredAction {
   }
 
   public execute(game: IGame): PlayerInput | undefined {
-    return SectorFulfillmentEffect.checkAll(game, () => {
-      const sectors = game.sectors as Sector[];
-      for (const sector of sectors) {
-        if (sector.sectorWinners.length > 0) {
-          const latestWinner =
-            sector.sectorWinners[sector.sectorWinners.length - 1];
-          game.eventLog.append(
-            createActionEvent(this.player.id, 'SECTOR_COMPLETION_RESOLVED', {
-              sectorId: sector.id,
-              winnerPlayerId: latestWinner,
-            }),
-          );
-        }
-      }
-      return undefined;
-    });
+    const turnOwner = game.players.find(
+      (candidate) => candidate.id === this.player.id,
+    );
+    return SectorFulfillmentEffect.checkAll(
+      game,
+      undefined,
+      turnOwner,
+      (sectorId) => {
+        const sector = game.sectors.find((s) => s.id === sectorId);
+        const latestWinner = sector?.sectorWinners.at(-1);
+        if (!latestWinner) return;
+        game.eventLog.append(
+          createActionEvent(this.player.id, 'SECTOR_COMPLETION_RESOLVED', {
+            sectorId,
+            winnerPlayerId: latestWinner,
+          }),
+        );
+      },
+    );
   }
 }

@@ -102,4 +102,32 @@ describe('ObservationQuickMissionCard (37/39/41/43)', () => {
 
     expect(result).toBeNull();
   });
+
+  it('becomes a completable quick mission after the owner fulfills the matching sector condition', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'observation-quick-mission-completable',
+    );
+    const player = game.players[0];
+    player.hand = ['37'];
+    game.mainDeck = new Deck(['refill-1', 'refill-2'], []);
+
+    game.processMainAction(player.id, {
+      type: EMainAction.PLAY_CARD,
+      payload: { cardIndex: 0 },
+    });
+
+    for (const sector of game.sectors.filter(
+      (sector) => sector.color === ESector.RED,
+    )) {
+      sector.sectorWinners.push(player.id);
+    }
+
+    const completable = game.missionTracker.getCompletableQuickMissions(
+      player,
+      game,
+    );
+    expect(completable.map((mission) => mission.cardId)).toContain('37');
+  });
 });

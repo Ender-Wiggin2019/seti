@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
 import type { IInputResponse, ISelectCardInputModel } from '@/types/re-exports';
@@ -13,6 +14,7 @@ export function SelectCardInput({
   model,
   onSubmit,
 }: ISelectCardInputProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -40,10 +42,19 @@ export function SelectCardInput({
 
   return (
     <div className='space-y-2'>
-      <p className='text-xs text-text-300'>
-        Select {model.minSelections}-{model.maxSelections} card(s)
-      </p>
-      <div className='grid max-h-48 gap-2 overflow-auto sm:grid-cols-2'>
+      <div className='flex items-center justify-between gap-2'>
+        <p className='micro-label'>
+          {t('client.input.select_cards', {
+            min: model.minSelections,
+            max: model.maxSelections,
+            defaultValue: `Select ${model.minSelections}–${model.maxSelections} cards`,
+          })}
+        </p>
+        <span className='font-mono text-[11px] tabular-nums text-text-300'>
+          {selectedCardIds.length}/{model.maxSelections}
+        </span>
+      </div>
+      <div className='grid max-h-48 gap-1.5 overflow-auto sm:grid-cols-2'>
         {model.cards.map((card) => {
           const isSelected = selectedCardIds.includes(card.id);
           return (
@@ -51,23 +62,42 @@ export function SelectCardInput({
               key={card.id}
               type='button'
               data-testid={`select-card-${card.id}`}
+              aria-pressed={isSelected}
               className={cn(
-                'rounded border px-2 py-1.5 text-left text-xs transition-colors',
+                'flex flex-col gap-0.5 rounded-[4px] px-2.5 py-1.5 text-left',
+                'border transition-[background,border-color,box-shadow] duration-150',
+                'focus-visible:outline-none focus-visible:shadow-focus-ring',
                 isSelected
-                  ? 'border-accent-500 bg-accent-500/15 text-accent-300'
-                  : 'border-surface-700/60 bg-surface-800/60 text-text-200 hover:border-accent-400/60',
+                  ? [
+                      'border-accent-500/70 bg-accent-500/[0.08]',
+                      'shadow-[inset_0_1px_0_oklch(0.78_0.07_240/0.25),inset_0_0_0_1px_oklch(0.68_0.11_240/0.25)]',
+                    ]
+                  : [
+                      'border-[color:var(--metal-edge-soft)] bg-background-900/75',
+                      'shadow-hairline-inset',
+                      'hover:border-[oklch(0.40_0.04_240)]',
+                    ],
               )}
               onClick={() => toggleCard(card.id)}
             >
-              <p className='font-medium'>{card.name}</p>
-              <p className='font-mono text-[10px] text-text-500'>{card.id}</p>
+              <p
+                className={cn(
+                  'truncate font-body text-[12px] font-medium',
+                  isSelected ? 'text-text-100' : 'text-text-200',
+                )}
+              >
+                {card.name}
+              </p>
+              <p className='truncate font-mono text-[10px] tracking-[0.06em] text-text-500'>
+                {card.id}
+              </p>
             </button>
           );
         })}
       </div>
       <Button
-        type='button'
         disabled={!canSubmit}
+        className='w-full'
         onClick={() =>
           onSubmit({
             type: EPlayerInputType.CARD,
@@ -75,7 +105,9 @@ export function SelectCardInput({
           })
         }
       >
-        Confirm Selection
+        {t('client.input.confirm_selection', {
+          defaultValue: 'Confirm Selection',
+        })}
       </Button>
     </div>
   );

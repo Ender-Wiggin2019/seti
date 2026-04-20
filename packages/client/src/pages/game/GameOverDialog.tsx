@@ -13,6 +13,7 @@ import {
   MilestoneTrack,
   ScoreBreakdown,
 } from '@/features/scoring';
+import { cn } from '@/lib/cn';
 import { useGameContext } from '@/pages/game/GameContext';
 import { EPhase, type IPublicMilestoneState } from '@/types/re-exports';
 
@@ -57,20 +58,27 @@ export function GameOverDialog(): React.JSX.Element | null {
 
   return (
     <Dialog open onOpenChange={() => undefined}>
-      <DialogContent className='max-w-4xl bg-surface-900/95'>
-        <DialogHeader>
-          <DialogTitle className='font-display text-xl uppercase tracking-wider'>
+      <DialogContent className='max-w-4xl p-0'>
+        <DialogHeader className='px-6 pt-6'>
+          <span className='micro-label inline-flex items-center gap-2 text-[oklch(0.74_0.10_240)]'>
+            <span className='h-px w-6 bg-[oklch(0.68_0.11_240)]' />
+            {t('client.game_over.kicker', {
+              defaultValue: 'Mission Concluded',
+            })}
+          </span>
+          <DialogTitle className='text-2xl tracking-[0.08em]'>
             {t('client.game_over.title')}
           </DialogTitle>
-          <p className='text-xs text-text-400'>
-            {t('client.game_over.winner')}:{' '}
-            <span className='font-semibold text-text-100'>
-              {winner?.playerName}
-            </span>
-          </p>
+          <WinnerReadout
+            label={t('client.game_over.winner')}
+            name={winner?.playerName}
+            score={winner?.total}
+          />
         </DialogHeader>
 
-        <div className='grid gap-3 lg:grid-cols-[1.4fr_0.9fr]'>
+        <div className='border-t border-[color:var(--metal-edge-soft)]' />
+
+        <div className='grid gap-4 p-6 lg:grid-cols-[1.4fr_0.9fr]'>
           <div className='space-y-3'>
             <ScoreBreakdown rows={rows} />
             <p className='text-xs text-text-500'>
@@ -83,12 +91,45 @@ export function GameOverDialog(): React.JSX.Element | null {
             <img
               src='/assets/seti/boards/scoringReminder.jpg'
               alt={t('client.game_over.scoring_reminder_alt')}
-              className='w-full rounded border border-surface-700/60'
+              className={cn(
+                'w-full rounded-[4px]',
+                'border border-[color:var(--metal-edge-soft)]',
+                'shadow-hairline-inset',
+              )}
             />
           </div>
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function WinnerReadout({
+  label,
+  name,
+  score,
+}: {
+  label: string;
+  name?: string;
+  score?: number;
+}): React.JSX.Element {
+  if (!name) {
+    return <p className='text-xs text-text-500'>{label}</p>;
+  }
+  return (
+    <div className='flex flex-wrap items-baseline gap-3 pt-2'>
+      <p className='flex items-baseline gap-2'>
+        <span className='micro-label text-text-500'>{label}:</span>
+        <span className='font-display text-lg font-semibold text-text-100'>
+          {name}
+        </span>
+      </p>
+      {typeof score === 'number' && (
+        <span className='readout text-sm text-[oklch(0.82_0.10_240)]'>
+          {score} pts
+        </span>
+      )}
+    </div>
   );
 }
 

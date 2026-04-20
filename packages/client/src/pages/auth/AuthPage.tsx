@@ -31,6 +31,19 @@ const registerSchema = z.object({
 type TLoginForm = z.infer<typeof loginSchema>;
 type TRegisterForm = z.infer<typeof registerSchema>;
 
+function FieldError({
+  message,
+}: {
+  message?: string;
+}): React.JSX.Element | null {
+  if (!message) return null;
+  return (
+    <p className='font-mono text-[0.6875rem] uppercase tracking-microlabel text-[oklch(0.65_0.16_28)]'>
+      {message}
+    </p>
+  );
+}
+
 function LoginForm(): React.JSX.Element {
   const { t } = useTranslation('common');
   const navigate = useNavigate();
@@ -74,22 +87,23 @@ function LoginForm(): React.JSX.Element {
   };
 
   return (
-    <form onSubmit={handleSubmit} className='space-y-4'>
-      <div className='space-y-2'>
-        <Label htmlFor='login-email'>{t('client.auth.fields.email')}</Label>
+    <form onSubmit={handleSubmit} className='space-y-5'>
+      <div className='space-y-1.5'>
+        <Label htmlFor='login-email' variant='micro'>
+          {t('client.auth.fields.email')}
+        </Label>
         <Input
           id='login-email'
           type='email'
           placeholder={t('client.auth.placeholders.email')}
           value={form.email}
+          mono
           onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
         />
-        {errors.email && (
-          <p className='text-xs text-danger-500'>{errors.email}</p>
-        )}
+        <FieldError message={errors.email} />
       </div>
-      <div className='space-y-2'>
-        <Label htmlFor='login-password'>
+      <div className='space-y-1.5'>
+        <Label htmlFor='login-password' variant='micro'>
           {t('client.auth.fields.password')}
         </Label>
         <Input
@@ -99,12 +113,11 @@ function LoginForm(): React.JSX.Element {
           value={form.password}
           onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
         />
-        {errors.password && (
-          <p className='text-xs text-danger-500'>{errors.password}</p>
-        )}
+        <FieldError message={errors.password} />
       </div>
       <Button
         type='submit'
+        size='lg'
         className='w-full'
         disabled={loginMutation.isPending}
         data-testid='auth-login-submit'
@@ -168,9 +181,11 @@ function RegisterForm(): React.JSX.Element {
   };
 
   return (
-    <form onSubmit={handleSubmit} className='space-y-4'>
-      <div className='space-y-2'>
-        <Label htmlFor='reg-name'>{t('client.auth.fields.callsign')}</Label>
+    <form onSubmit={handleSubmit} className='space-y-5'>
+      <div className='space-y-1.5'>
+        <Label htmlFor='reg-name' variant='micro'>
+          {t('client.auth.fields.callsign')}
+        </Label>
         <Input
           id='reg-name'
           type='text'
@@ -178,25 +193,24 @@ function RegisterForm(): React.JSX.Element {
           value={form.name}
           onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
         />
-        {errors.name && (
-          <p className='text-xs text-danger-500'>{errors.name}</p>
-        )}
+        <FieldError message={errors.name} />
       </div>
-      <div className='space-y-2'>
-        <Label htmlFor='reg-email'>{t('client.auth.fields.email')}</Label>
+      <div className='space-y-1.5'>
+        <Label htmlFor='reg-email' variant='micro'>
+          {t('client.auth.fields.email')}
+        </Label>
         <Input
           id='reg-email'
           type='email'
           placeholder={t('client.auth.placeholders.email')}
           value={form.email}
+          mono
           onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
         />
-        {errors.email && (
-          <p className='text-xs text-danger-500'>{errors.email}</p>
-        )}
+        <FieldError message={errors.email} />
       </div>
-      <div className='space-y-2'>
-        <Label htmlFor='reg-password'>
+      <div className='space-y-1.5'>
+        <Label htmlFor='reg-password' variant='micro'>
           {t('client.auth.fields.access_code')}
         </Label>
         <Input
@@ -206,12 +220,11 @@ function RegisterForm(): React.JSX.Element {
           value={form.password}
           onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
         />
-        {errors.password && (
-          <p className='text-xs text-danger-500'>{errors.password}</p>
-        )}
+        <FieldError message={errors.password} />
       </div>
       <Button
         type='submit'
+        size='lg'
         className='w-full'
         disabled={registerMutation.isPending}
         data-testid='auth-register-submit'
@@ -229,36 +242,33 @@ export function AuthPage(): React.JSX.Element {
   return (
     <div
       className={cn(
-        'relative flex min-h-[calc(100vh-4rem)] items-center justify-center overflow-hidden px-4 py-8',
+        'relative flex min-h-[calc(100vh-4rem)] items-center justify-center overflow-hidden px-4 py-10',
       )}
     >
+      {/* Deep-space instrument-light pool — pure blue radial on void.
+          Replaces the previous orange/cyan orb stack. */}
       <div
-        className='pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(1200px_600px_at_10%_-20%,rgba(226,82,14,0.2),transparent_60%),radial-gradient(1200px_700px_at_90%_120%,rgba(34,211,238,0.1),transparent_55%)]'
+        className='pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(1100px_620px_at_50%_-10%,oklch(0.22_0.06_240/0.20),transparent_60%),radial-gradient(900px_700px_at_50%_120%,oklch(0.16_0.05_280/0.18),transparent_55%)]'
         aria-hidden
       />
-      <div className='pointer-events-none absolute left-1/4 top-1/3 h-64 w-64 -translate-x-1/2 rounded-full bg-accent-500/5 blur-3xl' />
-      <div className='pointer-events-none absolute bottom-1/4 right-1/4 h-48 w-48 rounded-full bg-cyan-500/5 blur-3xl' />
 
-      <Card
-        className={cn(
-          'relative w-full max-w-md overflow-hidden border-surface-700/80 bg-surface-900/90 shadow-panel backdrop-blur-sm',
-          'before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:shadow-[inset_0_1px_0_0_rgba(249,115,22,0.12)]',
-        )}
-      >
-        <CardHeader className='relative text-center'>
-          <div className='mb-2 font-mono text-xs uppercase tracking-[0.3em] text-accent-400'>
+      <Card variant='instrument' className='w-full max-w-md'>
+        <CardHeader className='text-center'>
+          <span className='micro-label mx-auto inline-flex items-center justify-center gap-2 text-[oklch(0.74_0.10_240)]'>
+            <span className='h-px w-4 bg-[oklch(0.68_0.11_240)]' />
             {t('client.auth.hero.badge')}
-          </div>
-          <CardTitle className='text-2xl tracking-wide'>
+            <span className='h-px w-4 bg-[oklch(0.68_0.11_240)]' />
+          </span>
+          <CardTitle className='mt-2 text-2xl tracking-[0.08em]'>
             {t('client.auth.hero.title')}
           </CardTitle>
-          <CardDescription className='text-text-500'>
+          <CardDescription className='mx-auto mt-1 max-w-sm'>
             {t('client.auth.hero.subtitle')}
           </CardDescription>
         </CardHeader>
-        <CardContent className='relative'>
+        <CardContent>
           <Tabs defaultValue='login'>
-            <TabsList className='w-full bg-surface-800/80'>
+            <TabsList className='w-full'>
               <TabsTrigger
                 value='login'
                 className='flex-1'

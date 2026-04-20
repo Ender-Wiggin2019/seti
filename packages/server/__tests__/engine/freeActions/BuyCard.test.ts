@@ -91,6 +91,19 @@ describe('BuyCardFreeAction', () => {
         expect.objectContaining({ code: EErrorCode.INVALID_ACTION }),
       );
     });
+
+    it('does not spend publicity when the selected row card is missing', () => {
+      const player = createTestPlayer();
+      const game = createMockGame();
+      const publicityBefore = player.resources.publicity;
+
+      expect(() =>
+        BuyCardFreeAction.execute(player, game, { cardId: 'non-existent' }),
+      ).toThrowError(
+        expect.objectContaining({ code: EErrorCode.INVALID_ACTION }),
+      );
+      expect(player.resources.publicity).toBe(publicityBefore);
+    });
   });
 
   describe('execute — from deck', () => {
@@ -133,6 +146,19 @@ describe('BuyCardFreeAction', () => {
       ).toThrowError(
         expect.objectContaining({ code: EErrorCode.INVALID_ACTION }),
       );
+    });
+
+    it('does not spend publicity when deck and discard are both empty', () => {
+      const player = createTestPlayer();
+      const game = createMockGame([], []);
+      const publicityBefore = player.resources.publicity;
+
+      expect(() =>
+        BuyCardFreeAction.execute(player, game, { fromDeck: true }),
+      ).toThrowError(
+        expect.objectContaining({ code: EErrorCode.INVALID_ACTION }),
+      );
+      expect(player.resources.publicity).toBe(publicityBefore);
     });
   });
 

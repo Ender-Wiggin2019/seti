@@ -2,6 +2,7 @@ import { getAvailableFreeActions } from '@seti/common/rules';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/cn';
 import type { IPublicGameState } from '@/types/re-exports';
 import { EFreeAction } from '@/types/re-exports';
 
@@ -25,6 +26,12 @@ export interface IFreeActionBarProps {
   onActionClick: (action: EFreeAction) => void;
 }
 
+/**
+ * FreeActionBar — a secondary instrument strip below the main
+ * action menu. Fixed-height rail with a leading micro-label, a
+ * row of ghost-metal chips for the always-visible actions, and
+ * a collapse/expand chevron that reveals the rest.
+ */
 export function FreeActionBar({
   gameState,
   myPlayerId,
@@ -48,49 +55,72 @@ export function FreeActionBar({
 
   const available = new Set(getAvailableFreeActions(myPlayer, gameState));
 
+  const availableCount = [...VISIBLE_ACTIONS, ...COLLAPSIBLE_ACTIONS].filter(
+    (a) => available.has(a),
+  ).length;
+
   return (
     <div
-      className='flex flex-wrap items-center gap-2 border-t border-surface-700/40 px-4 py-1.5'
+      className='relative border-t border-[color:var(--metal-edge-soft)] bg-background-950/70 px-4 py-1.5'
       data-testid='free-action-bar'
     >
-      <span className='mr-1 font-mono text-xs uppercase tracking-wide text-text-500'>
-        {t('client.free_action_bar.title')}
-      </span>
+      <div
+        aria-hidden
+        className='pointer-events-none absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-[color:var(--surface-700)] to-transparent opacity-70'
+      />
 
-      {VISIBLE_ACTIONS.map((action) => (
-        <FreeActionButton
-          key={action}
-          action={action}
-          label={t(`client.free_action_bar.actions.${action}`)}
-          disabled={!available.has(action)}
-          onClick={onActionClick}
-        />
-      ))}
+      <div className='flex flex-wrap items-center gap-1.5'>
+        <div className='flex items-center gap-1.5 pr-1'>
+          <span aria-hidden className='section-head__tick' />
+          <p className='micro-label'>{t('client.free_action_bar.title')}</p>
+          <span className='font-mono text-[10px] text-text-500'>
+            {availableCount}
+          </span>
+        </div>
 
-      {expanded
-        ? COLLAPSIBLE_ACTIONS.map((action) => (
-            <FreeActionButton
-              key={action}
-              action={action}
-              label={t(`client.free_action_bar.actions.${action}`)}
-              disabled={!available.has(action)}
-              onClick={onActionClick}
-            />
-          ))
-        : null}
+        {VISIBLE_ACTIONS.map((action) => (
+          <FreeActionButton
+            key={action}
+            action={action}
+            label={t(`client.free_action_bar.actions.${action}`)}
+            disabled={!available.has(action)}
+            onClick={onActionClick}
+          />
+        ))}
 
-      <Button
-        type='button'
-        variant='ghost'
-        size='sm'
-        className='h-8 border border-surface-700/60 bg-surface-800/40 px-2 font-mono text-[11px] uppercase tracking-wide text-text-300 hover:bg-surface-700/60'
-        onClick={() => setExpanded((prev) => !prev)}
-        data-testid='free-action-toggle'
-      >
         {expanded
-          ? t('client.free_action_bar.collapse')
-          : t('client.free_action_bar.expand')}
-      </Button>
+          ? COLLAPSIBLE_ACTIONS.map((action) => (
+              <FreeActionButton
+                key={action}
+                action={action}
+                label={t(`client.free_action_bar.actions.${action}`)}
+                disabled={!available.has(action)}
+                onClick={onActionClick}
+              />
+            ))
+          : null}
+
+        <Button
+          variant='ghost'
+          size='sm'
+          className='ml-auto h-7 gap-1.5 px-2 font-mono text-[10px] uppercase tracking-[0.14em]'
+          onClick={() => setExpanded((prev) => !prev)}
+          data-testid='free-action-toggle'
+        >
+          {expanded
+            ? t('client.free_action_bar.collapse')
+            : t('client.free_action_bar.expand')}
+          <span
+            aria-hidden
+            className={cn(
+              'inline-block h-0 w-0 border-x-[4px] border-x-transparent transition-transform',
+              expanded
+                ? 'border-b-[5px] border-b-current'
+                : 'border-t-[5px] border-t-current',
+            )}
+          />
+        </Button>
+      </div>
     </div>
   );
 }
@@ -108,13 +138,12 @@ function FreeActionButton({
 }): React.JSX.Element {
   return (
     <Button
-      type='button'
       variant='ghost'
       size='sm'
       disabled={disabled}
       onClick={() => onClick(action)}
       data-testid={`free-action-${action}`}
-      className='h-8 border border-surface-700/60 bg-surface-800/60 px-2 text-xs text-text-300 hover:bg-surface-700/70 disabled:opacity-40'
+      className='h-7 px-2 font-mono text-[11px] uppercase tracking-[0.1em]'
     >
       {label}
     </Button>

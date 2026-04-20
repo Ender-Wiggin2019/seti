@@ -63,6 +63,7 @@ export class BoardBuilder {
         indexInRing: cell.indexInRing,
         discIndex: cell.discIndex,
         hasPublicityIcon: cell.hasPublicityIcon,
+        publicityIconAmount: cell.publicityIconAmount,
         elements: cell.elements.map((element) => ({ ...element })),
         occupants: [],
       }),

@@ -3,6 +3,12 @@ import { createPortal } from 'react-dom';
 import { create } from 'zustand';
 import { cn } from '@/lib/cn';
 
+/**
+ * Toast — ephemeral status messages, styled as mission-log entries.
+ * Each toast is a hairline-metal panel with a single colored accent
+ * stripe on the *bottom* (instrument underline; never a left stripe,
+ * which is the #1 AI design tell and explicitly banned).
+ */
 interface IToast {
   id: string;
   title: string;
@@ -32,6 +38,18 @@ export function toast(opts: Omit<IToast, 'id'>): void {
   useToastStore.getState().addToast(opts);
 }
 
+const ACCENT_LINE: Record<NonNullable<IToast['variant']>, string> = {
+  default: 'oklch(0.68 0.11 240)',
+  success: 'oklch(0.75 0.16 160)',
+  error: 'oklch(0.68 0.18 28)',
+};
+
+const ACCENT_TEXT: Record<NonNullable<IToast['variant']>, string> = {
+  default: 'text-text-100',
+  success: 'text-[oklch(0.90_0.12_160)]',
+  error: 'text-[oklch(0.88_0.14_28)]',
+};
+
 function ToastItem({
   toast: t,
   onDismiss,
@@ -44,29 +62,64 @@ function ToastItem({
     return () => clearTimeout(timer);
   }, [t.duration, onDismiss]);
 
+  const variant = t.variant ?? 'default';
+
   return (
     <div
+      role='status'
+      aria-live='polite'
       className={cn(
-        'pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-lg border p-4 shadow-panel backdrop-blur-sm transition-all',
-        t.variant === 'error'
-          ? 'border-danger-500/30 bg-danger-500/10 text-danger-500'
-          : t.variant === 'success'
-            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
-            : 'border-surface-700 bg-surface-900/95 text-text-100',
+        'pointer-events-auto relative flex w-full max-w-sm items-start gap-3',
+        'rounded-[6px] overflow-hidden',
+        'bg-surface-900/95 backdrop-blur-sm',
+        'border border-[color:var(--metal-edge)]',
+        'shadow-instrument',
+        'p-4',
+        'animate-panel-rise',
       )}
     >
-      <div className='flex-1'>
-        <p className='text-sm font-medium'>{t.title}</p>
+      {/* Bottom accent line — instrument underline (explicitly NOT a left stripe). */}
+      <span
+        aria-hidden
+        className='pointer-events-none absolute inset-x-0 bottom-0 h-px'
+        style={{
+          background: `linear-gradient(to right, transparent 0%, ${ACCENT_LINE[variant]} 15%, ${ACCENT_LINE[variant]} 85%, transparent 100%)`,
+        }}
+      />
+      <div className='flex-1 min-w-0'>
+        <p
+          className={cn(
+            'font-body text-sm font-medium leading-snug',
+            ACCENT_TEXT[variant],
+          )}
+        >
+          {t.title}
+        </p>
         {t.description && (
-          <p className='mt-1 text-xs opacity-80'>{t.description}</p>
+          <p className='mt-1 text-xs leading-relaxed text-text-500'>
+            {t.description}
+          </p>
         )}
       </div>
       <button
+        type='button'
         onClick={onDismiss}
-        className='text-text-500 hover:text-text-100 transition'
+        className='-mr-1 -mt-1 flex h-6 w-6 items-center justify-center rounded-sm text-text-500 transition-colors hover:bg-surface-800 hover:text-text-100'
         aria-label='Dismiss'
       >
-        ✕
+        <svg
+          xmlns='http://www.w3.org/2000/svg'
+          viewBox='0 0 24 24'
+          fill='none'
+          stroke='currentColor'
+          strokeWidth='2'
+          strokeLinecap='round'
+          strokeLinejoin='round'
+          className='h-3.5 w-3.5'
+        >
+          <path d='M18 6 6 18' />
+          <path d='m6 6 12 12' />
+        </svg>
       </button>
     </div>
   );

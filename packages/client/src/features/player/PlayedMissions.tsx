@@ -1,4 +1,5 @@
 import type { IBaseCard } from '@seti/common/types/BaseCard';
+import { useTranslation } from 'react-i18next';
 import { CardRender } from '@/features/cards/CardRender';
 
 interface IPlayedMissionsProps {
@@ -8,32 +9,37 @@ interface IPlayedMissionsProps {
 export function PlayedMissions({
   missions,
 }: IPlayedMissionsProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <section
-      className='h-full rounded border border-surface-700/45 bg-surface-900/65 p-2'
+      className='instrument-panel h-full p-2'
       data-testid='played-missions'
     >
-      <div className='mb-1.5 flex items-center gap-1'>
-        <img
-          src='/assets/seti/icons/missionSatellite.png'
-          alt='Missions'
-          className='h-4 w-4'
-        />
-        <p className='font-mono text-[10px] uppercase tracking-wide text-text-500'>
-          Missions
+      <div className='section-head mb-1.5'>
+        <span aria-hidden className='section-head__tick' />
+        <p className='micro-label'>
+          {t('client.played_missions.title', { defaultValue: 'Missions' })}
         </p>
+        <div aria-hidden className='section-head__rule' />
+        <span className='font-mono text-[10px] tabular-nums text-text-500'>
+          {missions.length}
+        </span>
       </div>
 
       {missions.length === 0 ? (
-        <div className='rounded border border-dashed border-surface-700/60 bg-surface-950/40 px-2 py-4 text-center text-xs text-text-500'>
-          No active missions
+        <div className='flex items-center justify-center rounded-[4px] border border-dashed border-[color:var(--metal-edge-soft)] bg-background-950/50 px-2 py-5'>
+          <p className='font-mono text-[10px] uppercase tracking-[0.14em] text-text-500'>
+            {t('client.played_missions.empty', {
+              defaultValue: 'No active missions',
+            })}
+          </p>
         </div>
       ) : (
-        <div className='grid max-h-[150px] grid-cols-2 gap-1 overflow-auto'>
+        <div className='grid max-h-[150px] grid-cols-2 gap-1.5 overflow-auto'>
           {missions.map((mission) => (
             <div
               key={mission.id}
-              className='rounded border border-surface-700/60 bg-surface-900/60 p-1'
+              className='rounded-[4px] border border-[color:var(--metal-edge-soft)] bg-background-900/70 p-1 shadow-hairline-inset'
             >
               <div className='origin-top-left scale-[0.44]'>
                 <CardRender card={mission} />
