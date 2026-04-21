@@ -706,6 +706,23 @@ export class Game implements IGame {
     playerId: string,
     allowedPhases: readonly EPhase[],
   ): void {
+    const hasSetupPrompt = this.players.some((player) => player.waitingFor);
+    const hasUnresolvedSetupTuck =
+      this.round === 1 &&
+      hasSetupPrompt &&
+      this.players.some(
+        (player) =>
+          player.tuckedIncomeCards.length === 0 && player.hand.length > 0,
+      );
+
+    if (hasUnresolvedSetupTuck) {
+      throw new GameError(
+        EErrorCode.INVALID_INPUT_RESPONSE,
+        'All players must resolve setup tuck input before turn actions',
+        { playerId },
+      );
+    }
+
     if (!allowedPhases.includes(this.phase)) {
       throw new GameError(
         EErrorCode.INVALID_PHASE,

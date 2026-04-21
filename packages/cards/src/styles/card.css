@@ -1232,6 +1232,7 @@
   z-index: 5;
   color: white;
   font-family: "Kobenhavn W03 Bold", monospace;
+  line-height: 1;
   /* width: 20px; */
   height: 50px;
   font-size: 40px;

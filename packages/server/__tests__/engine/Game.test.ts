@@ -71,10 +71,24 @@ describe('Game', () => {
     expect(game.getNextPlayer().id).toBe('p1');
   });
 
+  it('blocks turn actions until all players resolve setup tuck prompts', () => {
+    const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, 'test-seed');
+    const p1 = game.players.find((p) => p.id === 'p1')!;
+
+    resolvePassInputs(game, p1);
+
+    expect(() =>
+      game.processMainAction('p1', { type: EMainAction.PASS }),
+    ).toThrow(/setup tuck input/i);
+  });
+
   it('processes a full turn and hands off to next player', () => {
     const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, 'test-seed');
 
     const p1 = game.players.find((p) => p.id === 'p1')!;
+    const p2 = game.players.find((p) => p.id === 'p2')!;
+    resolvePassInputs(game, p1);
+    resolvePassInputs(game, p2);
     game.processMainAction('p1', { type: EMainAction.PASS });
     resolvePassInputs(game, p1);
 
@@ -90,6 +104,8 @@ describe('Game', () => {
 
     const p1 = game.players.find((p) => p.id === 'p1')!;
     const p2 = game.players.find((p) => p.id === 'p2')!;
+    resolvePassInputs(game, p1);
+    resolvePassInputs(game, p2);
 
     game.processMainAction('p1', { type: EMainAction.PASS });
     resolvePassInputs(game, p1);
@@ -104,6 +120,10 @@ describe('Game', () => {
 
   it('ends game after round 5 pass sequence', () => {
     const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, 'test-seed');
+    const setupP1 = game.players.find((p) => p.id === 'p1')!;
+    const setupP2 = game.players.find((p) => p.id === 'p2')!;
+    resolvePassInputs(game, setupP1);
+    resolvePassInputs(game, setupP2);
 
     for (let index = 0; index < 5; index += 1) {
       const activeId = game.activePlayer.id;

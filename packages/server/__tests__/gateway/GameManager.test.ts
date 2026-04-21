@@ -1,12 +1,13 @@
 import { Test } from '@nestjs/testing';
 import { EMainAction, EPhase } from '@seti/common/types/protocol/enums';
+import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
 import { GameManager } from '@/gateway/GameManager.js';
 import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
 
 function createTestGame(): IGame {
-  return Game.create(
+  const game = Game.create(
     [
       { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
       { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
@@ -15,6 +16,18 @@ function createTestGame(): IGame {
     'manager-test-seed',
     'game-mgr-test',
   );
+  for (const player of game.players) {
+    const waiting = player.waitingFor?.toModel() as
+      | { type: EPlayerInputType; cards?: Array<{ id: string }> }
+      | undefined;
+    if (waiting?.type === EPlayerInputType.CARD && waiting.cards?.[0]?.id) {
+      game.processInput(player.id, {
+        type: EPlayerInputType.CARD,
+        cardIds: [waiting.cards[0].id],
+      });
+    }
+  }
+  return game;
 }
 
 const mockDb = {
