@@ -52,7 +52,8 @@ export const sel = {
     `[data-testid="round-stack-card-${cardId}"]`,
 
   // ── Input prompts ──────────────────────────────────────────
-  selectCard: (cardId: string) => `[data-testid="select-card-${cardId}"]`,
+  selectCard: (cardId: string) =>
+    `[data-testid="hand-card-${cardId}"], [data-testid="select-card-${cardId}"]`,
   goldTile: (tileId: string) => `[data-testid="gold-tile-${tileId}"]`,
 
   // ── Action menu & free actions ─────────────────────────────
@@ -71,6 +72,7 @@ export const sel = {
   inputOption: (optionId: string) => `[data-testid="input-option-${optionId}"]`,
   inputSector: (sector: string) => `[data-testid="input-sector-${sector}"]`,
   inputOrTab: (index: number) => `[data-testid="input-or-tab-${index}"]`,
-  inputSelectCard: (cardId: string) => `[data-testid="select-card-${cardId}"]`,
+  inputSelectCard: (cardId: string) =>
+    `[data-testid="hand-card-${cardId}"], [data-testid="select-card-${cardId}"]`,
   inputEorCard: (cardId: string) => `[data-testid="input-eor-card-${cardId}"]`,
 } as const;

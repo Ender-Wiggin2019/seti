@@ -102,7 +102,7 @@ function passPlayer(game: Game, playerId: string): void {
  * Modify ring-1-cell-2 from NULL to ASTEROID so that after the first
  * disc rotation (triggered by p2's pass), the board layout becomes:
  *
- *   ..., VENUS (cell-2), ASTEROID (cell-3), EARTH (cell-4), ...
+ *   ..., VENUS (cell-0), ASTEROID (cell-1), EARTH (cell-2), ...
  *
  * This enables the probe movement scenario: Earth → Asteroid → Venus.
  */
@@ -158,6 +158,10 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
     p1 = getPlayer(game, 'p1');
     p2 = getPlayer(game, 'p2');
 
+    // Keep p1 setup tuck prompt for explicit assertions; auto-resolve p2 so
+    // scenario steps can issue p2 actions without setup blocking noise.
+    resolveAllInputs(game, p2);
+
     patchSolarSystemForScenario(game);
     patchTechBoardForScenario(game);
   });
@@ -183,9 +187,10 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
   });
 
   // ── 3. Check initial GameSetup state ─────────────────────────────────
-  it('3. GameSetup dealt 5 cards, auto-tucked 1 → 4 in hand, base resources', () => {
-    expect(p1.hand).toHaveLength(4);
-    expect(p1.tuckedIncomeCards).toHaveLength(1);
+  it('3. GameSetup deals 5 cards and prompts tuck selection, base resources', () => {
+    expect(p1.hand).toHaveLength(5);
+    expect(p1.tuckedIncomeCards).toHaveLength(0);
+    expect(p1.waitingFor?.toModel().type).toBe(EPlayerInputType.CARD);
     expect(p1.resources.credits).toBe(4);
     expect(p1.resources.energy).toBe(3);
     expect(p1.resources.publicity).toBe(4);
@@ -200,10 +205,11 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
     }
   });
 
-  // ── 4. Mock hand to 5 specific cards (undo auto-tuck) ───────────────
-  it('4. mock hand to 5 specific cards, clear auto-tuck for deterministic testing', () => {
+  // ── 4. Mock hand to 5 specific cards for deterministic testing ──────
+  it('4. mock hand to 5 specific cards and clear setup prompt for deterministic testing', () => {
     p1.hand = ['8', '80', '16', '130', '110'];
     p1.tuckedIncomeCards = [];
+    p1.waitingFor = undefined;
 
     expect(p1.hand).toHaveLength(5);
     expect(p1.tuckedIncomeCards).toHaveLength(0);
@@ -288,7 +294,7 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
   });
 
   // ── 8. p2 passes (first pass triggers disc rotation) ────────────────
-  it('8. p2 passes — disc rotation shifts ring-1 elements clockwise by 1', () => {
+  it('8. p2 passes — disc rotation shifts ring-1 elements counterclockwise by 1', () => {
     const rotBefore = game.solarSystem!.rotationCounter;
 
     passPlayer(game, 'p2');
@@ -299,23 +305,23 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
     expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
   });
 
-  it('8b. after rotation: Earth→cell-4, Asteroid→cell-3, Venus→cell-2', () => {
+  it('8b. after rotation: Earth→cell-2, Asteroid→cell-1, Venus→cell-0', () => {
     const ss = game.solarSystem!;
 
     const earthSpaces = ss.getSpacesOnPlanet(EPlanet.EARTH);
     expect(earthSpaces.length).toBeGreaterThan(0);
-    expect(earthSpaces[0].id).toBe('ring-1-cell-4');
+    expect(earthSpaces[0].id).toBe('ring-1-cell-2');
 
-    const cell3 = ss.spaces.find((s) => s.id === 'ring-1-cell-3')!;
+    const cell1 = ss.spaces.find((s) => s.id === 'ring-1-cell-1')!;
     expect(
-      cell3.elements.some(
+      cell1.elements.some(
         (e) => e.type === ESolarSystemElementType.ASTEROID && e.amount > 0,
       ),
     ).toBe(true);
 
     const venusSpaces = ss.getSpacesOnPlanet(EPlanet.VENUS);
     expect(venusSpaces.length).toBeGreaterThan(0);
-    expect(venusSpaces[0].id).toBe('ring-1-cell-2');
+    expect(venusSpaces[0].id).toBe('ring-1-cell-0');
     expect(venusSpaces[0].hasPublicityIcon).toBe(true);
   });
 
@@ -371,15 +377,15 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
 
     game.processFreeAction('p1', {
       type: EFreeAction.MOVEMENT,
-      path: ['ring-1-cell-4', 'ring-1-cell-3'],
+      path: ['ring-1-cell-2', 'ring-1-cell-1'],
     });
 
     expect(p1.getMoveStash()).toBe(moveBefore - 1);
 
-    const cell3 = game.solarSystem!.spaces.find(
-      (s) => s.id === 'ring-1-cell-3',
+    const cell1 = game.solarSystem!.spaces.find(
+      (s) => s.id === 'ring-1-cell-1',
     )!;
-    expect(cell3.occupants.some((probe) => probe.playerId === 'p1')).toBe(true);
+    expect(cell1.occupants.some((probe) => probe.playerId === 'p1')).toBe(true);
   });
 
   // ── 11. Convert energy → movement, then move Asteroid → Venus ───────
@@ -401,7 +407,7 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
 
     game.processFreeAction('p1', {
       type: EFreeAction.MOVEMENT,
-      path: ['ring-1-cell-3', 'ring-1-cell-2'],
+      path: ['ring-1-cell-1', 'ring-1-cell-0'],
     });
 
     expect(p1.getMoveStash()).toBe(moveBefore - 2);
@@ -409,9 +415,9 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
   });
 
   // ── 12. Probe at Venus verification ─────────────────────────────────
-  it('12. probe is now at Venus (ring-1-cell-2)', () => {
+  it('12. probe is now at Venus (ring-1-cell-0)', () => {
     const venusCell = game.solarSystem!.spaces.find(
-      (s) => s.id === 'ring-1-cell-2',
+      (s) => s.id === 'ring-1-cell-0',
     )!;
     expect(venusCell.occupants.some((probe) => probe.playerId === 'p1')).toBe(
       true,
@@ -509,7 +515,7 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
     expect(venusState.landingSlots.some((s) => s.playerId === 'p1')).toBe(true);
 
     const venusCell = game.solarSystem!.spaces.find(
-      (s) => s.id === 'ring-1-cell-2',
+      (s) => s.id === 'ring-1-cell-0',
     )!;
     expect(venusCell.occupants.filter((o) => o.playerId === 'p1')).toHaveLength(
       0,

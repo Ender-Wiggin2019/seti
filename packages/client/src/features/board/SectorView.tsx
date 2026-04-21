@@ -23,6 +23,13 @@ function counterRotateTransform(position: string): string | undefined {
   return 'translate(-50%, 0)';
 }
 
+const DEFAULT_SECTOR_SIGNAL_STYLE = {
+  0: { sigX: -3, sigY: 10, sigRot: -24, circleX: 0, circleY: -38 },
+  1: { sigX: -19, sigY: -1, sigRot: 21, circleX: 8, circleY: -33 },
+  dataSize: 21,
+  circleSize: 24,
+} as const;
+
 export function SectorView({
   pair,
   playerColors,
@@ -161,9 +168,11 @@ export function SectorView({
                 <div
                   className='flex items-center gap-[2px]'
                   style={{
+                    // Keep base board aligned with debug-game calibration while
+                    // allowing page-level CSS var overrides.
                     transform: [
-                      `translate(var(--sector-sig-x-${index}, 0px), var(--sector-sig-y-${index}, 0px))`,
-                      `rotate(var(--sector-sig-rot-${index}, 0deg))`,
+                      `translate(var(--sector-sig-x-${index}, ${DEFAULT_SECTOR_SIGNAL_STYLE[index as 0 | 1].sigX}px), var(--sector-sig-y-${index}, ${DEFAULT_SECTOR_SIGNAL_STYLE[index as 0 | 1].sigY}px))`,
+                      `rotate(var(--sector-sig-rot-${index}, ${DEFAULT_SECTOR_SIGNAL_STYLE[index as 0 | 1].sigRot}deg))`,
                     ].join(' '),
                     transformOrigin: 'center',
                   }}
@@ -173,8 +182,8 @@ export function SectorView({
                       key={`${sector.sectorId}-sig-${slotIndex}`}
                       className='inline-block rounded-full border'
                       style={{
-                        width: 'var(--sector-data-size, 6px)',
-                        height: 'var(--sector-data-size, 6px)',
+                        width: `var(--sector-data-size, ${DEFAULT_SECTOR_SIGNAL_STYLE.dataSize}px)`,
+                        height: `var(--sector-data-size, ${DEFAULT_SECTOR_SIGNAL_STYLE.dataSize}px)`,
                         ...(sig.type === 'data'
                           ? {
                               borderColor: 'rgba(103, 232, 249, 0.8)',
@@ -215,13 +224,13 @@ export function SectorView({
                       'border-amber-300/90 bg-amber-500/20 shadow-[0_0_0_2px_rgba(251,191,36,0.55)]',
                   )}
                   style={{
-                    width: 'var(--sector-circle-size, 24px)',
-                    height: 'var(--sector-circle-size, 24px)',
+                    width: `var(--sector-circle-size, ${DEFAULT_SECTOR_SIGNAL_STYLE.circleSize}px)`,
+                    height: `var(--sector-circle-size, ${DEFAULT_SECTOR_SIGNAL_STYLE.circleSize}px)`,
                     left: '50%',
                     top: '50%',
                     transform: [
                       'translate(-50%, -50%)',
-                      `translate(var(--sector-circle-x-${index}, 0px), var(--sector-circle-y-${index}, 0px))`,
+                      `translate(var(--sector-circle-x-${index}, ${DEFAULT_SECTOR_SIGNAL_STYLE[index as 0 | 1].circleX}px), var(--sector-circle-y-${index}, ${DEFAULT_SECTOR_SIGNAL_STYLE[index as 0 | 1].circleY}px))`,
                     ].join(' '),
                   }}
                   onClick={(event) => {
@@ -249,13 +258,13 @@ export function SectorView({
                         : 'border-accent-300/80 bg-accent-500/14 shadow-[0_0_12px_rgba(34,197,94,0.35)]',
                     )}
                     style={{
-                      width: 'var(--sector-circle-size, 24px)',
-                      height: 'var(--sector-circle-size, 24px)',
+                      width: `var(--sector-circle-size, ${DEFAULT_SECTOR_SIGNAL_STYLE.circleSize}px)`,
+                      height: `var(--sector-circle-size, ${DEFAULT_SECTOR_SIGNAL_STYLE.circleSize}px)`,
                       left: '50%',
                       top: '50%',
                       transform: [
                         'translate(-50%, -50%) scale(1.9)',
-                        `translate(var(--sector-circle-x-${index}, 0px), var(--sector-circle-y-${index}, 0px))`,
+                        `translate(var(--sector-circle-x-${index}, ${DEFAULT_SECTOR_SIGNAL_STYLE[index as 0 | 1].circleX}px), var(--sector-circle-y-${index}, ${DEFAULT_SECTOR_SIGNAL_STYLE[index as 0 | 1].circleY}px))`,
                       ].join(' '),
                     }}
                   />

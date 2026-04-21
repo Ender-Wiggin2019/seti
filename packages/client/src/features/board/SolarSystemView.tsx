@@ -1,4 +1,5 @@
 import type { ISolarSystemSetupConfig } from '@seti/common/constant/sectorSetup';
+import { getReachableSpaces } from '@seti/common/rules';
 import { useMemo, useState } from 'react';
 import { useTextMode } from '@/stores/debugStore';
 import type {
@@ -32,7 +33,8 @@ interface ISolarSystemViewProps {
   pendingInput: IPlayerInputModel | null;
   playerColors: Record<string, string>;
   myPlayerId: string;
-  onMoveProbe: (fromSpaceId: string, toSpaceId: string) => void;
+  movementPoints?: number;
+  onMoveProbe: (path: string[]) => void;
   onRespondInput: (response: IInputResponse) => void;
   showSpaceConfigDebug?: boolean;
   probeInsetPxByRing?: TProbeInsetPxByRing;
@@ -118,6 +120,7 @@ export function SolarSystemView({
   pendingInput,
   playerColors,
   myPlayerId,
+  movementPoints = 0,
   onMoveProbe,
   onRespondInput,
   showSpaceConfigDebug = false,
@@ -282,10 +285,21 @@ export function SolarSystemView({
     return { bySpacePlayers, renderItems };
   }, [solarSystem.probes, spacePoints]);
 
-  const reachable = useMemo(() => {
-    if (!selectedSpaceId) return new Set<string>();
-    return new Set(solarSystem.adjacency[selectedSpaceId] ?? []);
-  }, [selectedSpaceId, solarSystem.adjacency]);
+  const reachablePathBySpaceId = useMemo(() => {
+    if (!selectedSpaceId || movementPoints <= 0) {
+      return new Map<string, string[]>();
+    }
+    return new Map(
+      getReachableSpaces(solarSystem, selectedSpaceId, movementPoints).map(
+        (entry) => [entry.spaceId, entry.path] as const,
+      ),
+    );
+  }, [selectedSpaceId, movementPoints, solarSystem]);
+
+  const reachable = useMemo(
+    () => new Set(reachablePathBySpaceId.keys()),
+    [reachablePathBySpaceId],
+  );
 
   function handleSpaceClick(spaceId: string): void {
     const hasMyProbe = (probeView.bySpacePlayers[spaceId] ?? []).includes(
@@ -297,8 +311,12 @@ export function SolarSystemView({
       return;
     }
 
-    if (selectedSpaceId && reachable.has(spaceId)) {
-      onMoveProbe(selectedSpaceId, spaceId);
+    if (selectedSpaceId) {
+      const path = reachablePathBySpaceId.get(spaceId);
+      if (!path) {
+        return;
+      }
+      onMoveProbe(path);
       setSelectedSpaceId(spaceId);
     }
   }

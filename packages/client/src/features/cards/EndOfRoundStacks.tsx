@@ -68,7 +68,7 @@ export function EndOfRoundStacks({
                 onClick={() => onSelectCard?.(card)}
                 className='overflow-hidden rounded border border-surface-700/50 bg-surface-900/70 p-2 text-left transition-colors hover:border-accent-500'
               >
-                <div className='pointer-events-none origin-top-left scale-[0.52]'>
+                <div className='pointer-events-none'>
                   <CardRender card={card} />
                 </div>
               </button>

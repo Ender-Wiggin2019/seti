@@ -89,7 +89,7 @@ describe('SolarSystem', () => {
       new SeededRandom('rotation-move'),
     );
     const space0 = 'ring-1-cell-0';
-    const space1 = 'ring-1-cell-1';
+    const space1 = 'ring-1-cell-7';
     const probe = board.placeProbe('p1', space0);
 
     board.rotate(0);
@@ -125,17 +125,17 @@ describe('SolarSystem', () => {
     const ring2cell0 = board.spaces.find(
       (space) => space.id === 'ring-2-cell-0',
     );
-    const ring2cell1 = board.spaces.find(
-      (space) => space.id === 'ring-2-cell-1',
+    const ring2cell15 = board.spaces.find(
+      (space) => space.id === 'ring-2-cell-15',
     );
 
-    if (!ring1cell0 || !ring1cell7 || !ring2cell0 || !ring2cell1) {
+    if (!ring1cell0 || !ring1cell7 || !ring2cell0 || !ring2cell15) {
       throw new Error('Expected ring cells to exist');
     }
 
     ring1cell0.elements = [{ type: ESolarSystemElementType.NULL, amount: 1 }];
     ring1cell7.elements = [{ type: ESolarSystemElementType.EMPTY, amount: 1 }];
-    ring2cell1.hasPublicityIcon = true;
+    ring2cell15.hasPublicityIcon = true;
 
     const probe = board.placeProbe('p1', ring2cell0.id);
     board.rotate(0);
@@ -144,7 +144,7 @@ describe('SolarSystem', () => {
       board.getProbesAt(ring2cell0.id).some((item) => item.id === probe.id),
     ).toBe(false);
     expect(
-      board.getProbesAt(ring2cell1.id).some((item) => item.id === probe.id),
+      board.getProbesAt(ring2cell15.id).some((item) => item.id === probe.id),
     ).toBe(true);
     expect(board.getPlayerPublicity('p1')).toBe(1);
   });
@@ -297,7 +297,7 @@ describe('SolarSystem', () => {
 
       // Place probe on disc 0 (top disc, ring 1)
       const probeSpace = 'ring-1-cell-0';
-      const expectedNextSpace = 'ring-1-cell-1';
+      const expectedNextSpace = 'ring-1-cell-7';
       const probe = game.solarSystem!.placeProbe(player.id, probeSpace);
 
       // Verify initial position
@@ -333,7 +333,7 @@ describe('SolarSystem', () => {
 
       // Place probe on disc 0 (will be rotated)
       const probeSpace = 'ring-1-cell-0';
-      const expectedNextSpace = 'ring-1-cell-1';
+      const expectedNextSpace = 'ring-1-cell-7';
       const probe = game.solarSystem!.placeProbe(player.id, probeSpace);
 
       expect(
@@ -368,7 +368,7 @@ describe('SolarSystem', () => {
 
       // Place probe on disc 0
       const probeSpace = 'ring-1-cell-0';
-      const expectedNextSpace = 'ring-1-cell-1';
+      const expectedNextSpace = 'ring-1-cell-7';
       const probe = game.solarSystem!.placeProbe(firstPlayer.id, probeSpace);
 
       expect(
@@ -451,7 +451,7 @@ describe('SolarSystem', () => {
       // Ring 1 moved
       expect(
         game
-          .solarSystem!.getProbesAt('ring-1-cell-1')
+          .solarSystem!.getProbesAt('ring-1-cell-7')
           .some((p) => p.id === probe1.id),
       ).toBe(true);
       // Ring 2 unchanged
@@ -466,16 +466,16 @@ describe('SolarSystem', () => {
       resolveAllInputs(game, p2.id);
       game.processEndTurn(p2.id);
       expect(game.solarSystem!.rotationCounter).toBe(2);
-      // Ring 1 moved again (from cell-1 to cell-2) due to cascading
+      // Ring 1 moved again (from cell-7 to cell-6) due to cascading
       expect(
         game
-          .solarSystem!.getProbesAt('ring-1-cell-2')
+          .solarSystem!.getProbesAt('ring-1-cell-6')
           .some((p) => p.id === probe1.id),
       ).toBe(true);
-      // Ring 2 moved for first time (from cell-0 to cell-1)
+      // Ring 2 moved for first time (from cell-0 to cell-15)
       expect(
         game
-          .solarSystem!.getProbesAt('ring-2-cell-1')
+          .solarSystem!.getProbesAt('ring-2-cell-15')
           .some((p) => p.id === probe2.id),
       ).toBe(true);
 

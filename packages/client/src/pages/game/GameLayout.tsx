@@ -18,7 +18,6 @@ import { toast } from '@/components/ui/toast';
 import { ActionMenu } from '@/features/actions/ActionMenu';
 import { FreeActionBar } from '@/features/actions/FreeActionBar';
 import { AlienBoardView } from '@/features/board/AlienBoardView';
-import { buildMoveAction } from '@/features/board/moveAction';
 import { PlanetaryBoardView } from '@/features/board/PlanetaryBoardView';
 import type { TProbeInsetPxByRing } from '@/features/board/SolarSystemView';
 import { SolarSystemView } from '@/features/board/SolarSystemView';
@@ -623,6 +622,7 @@ function PersonalColumn({
     | (typeof myPlayer & {
         creditIncome?: number;
         energyIncome?: number;
+        cardIncome?: number;
         playedMissions?: IBaseCard[];
       })
     | undefined;
@@ -654,6 +654,7 @@ function PersonalColumn({
             income={{
               credit: extendedPlayer?.creditIncome ?? 0,
               energy: extendedPlayer?.energyIncome ?? 0,
+              card: extendedPlayer?.cardIncome ?? 0,
             }}
             playedMissions={missionCards}
           />
@@ -784,6 +785,7 @@ function BoardTabs({
   const isSelectingFromCardRow =
     cardSelectionInput !== null &&
     gameState?.cardRow.some((card) => selectableCardIds.has(card.id));
+  const myPlayer = gameState?.players.find((p) => p.playerId === myPlayerId);
 
   function handleCardRowClick(card: IBaseCard): void {
     if (isSelectingFromCardRow) {
@@ -834,8 +836,9 @@ function BoardTabs({
                 pendingInput={pendingInput}
                 playerColors={playerColors}
                 myPlayerId={myPlayerId}
-                onMoveProbe={(fromSpaceId, toSpaceId) => {
-                  sendFreeAction(buildMoveAction(fromSpaceId, toSpaceId));
+                movementPoints={myPlayer?.movementPoints ?? 0}
+                onMoveProbe={(path) => {
+                  sendFreeAction({ type: EFreeAction.MOVEMENT, path });
                 }}
                 onRespondInput={sendInput}
                 showSpaceConfigDebug={showSolarSystemSpaceConfig}

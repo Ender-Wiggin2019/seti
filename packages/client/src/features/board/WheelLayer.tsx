@@ -46,7 +46,9 @@ export function WheelLayer({
   showImage = true,
 }: IWheelLayerProps): React.JSX.Element {
   const size = `${RING_SIZE_PERCENT[ring]}%`;
-  const angleDeg = angle * -45;
+  // One rotation step is rendered counterclockwise to match rule behavior.
+  // State angle still increments by +1 per step; CSS uses negative degrees.
+  const angleDeg = -angle * 45;
   const duration = TRANSITION_DURATION_MS[ring];
 
   return (

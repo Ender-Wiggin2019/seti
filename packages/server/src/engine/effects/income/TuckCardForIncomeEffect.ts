@@ -30,6 +30,7 @@ export class TuckCardForIncomeEffect {
   public static execute(
     player: IPlayer,
     game: IGame,
+    onComplete?: () => IPlayerInput | undefined,
   ): IPlayerInput | undefined {
     if (!this.canExecute(player)) return undefined;
 
@@ -78,7 +79,7 @@ export class TuckCardForIncomeEffect {
             }
           }
 
-          return undefined;
+          return onComplete?.();
         },
       },
       'Select a card to tuck for income',

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 interface IIncomeTrackerProps {
   creditIncome: number;
   energyIncome: number;
+  cardIncome: number;
 }
 
 interface IStreamProps {
@@ -34,13 +35,14 @@ function Stream({ label, value, icon }: IStreamProps): React.JSX.Element {
 }
 
 /**
- * IncomeTracker — "next tick" income readout. Two streams (credit,
- * energy) rendered like instrumentation channels, each with a
+ * IncomeTracker — "next tick" income readout. Three streams (credit,
+ * energy, cards) rendered like instrumentation channels, each with a
  * micro-label and a mono +N readout.
  */
 export function IncomeTracker({
   creditIncome,
   energyIncome,
+  cardIncome,
 }: IIncomeTrackerProps): React.JSX.Element {
   const { t } = useTranslation('common');
   return (
@@ -55,7 +57,7 @@ export function IncomeTracker({
         </p>
         <div aria-hidden className='section-head__rule' />
       </div>
-      <div className='grid grid-cols-2 gap-2'>
+      <div className='grid grid-cols-3 gap-2'>
         <Stream
           label={t('client.income_tracker.credit', { defaultValue: 'Credit' })}
           value={creditIncome}
@@ -65,6 +67,11 @@ export function IncomeTracker({
           label={t('client.income_tracker.energy', { defaultValue: 'Energy' })}
           value={energyIncome}
           icon='/assets/seti/icons/energy.png'
+        />
+        <Stream
+          label={t('client.income_tracker.card', { defaultValue: 'Cards' })}
+          value={cardIncome}
+          icon='/assets/seti/icons/draw.png'
         />
       </div>
     </section>

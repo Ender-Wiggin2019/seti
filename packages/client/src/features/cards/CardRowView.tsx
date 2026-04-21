@@ -52,7 +52,7 @@ export function CardRowView({
               )}
               aria-label={`card-row-${card.name}`}
             >
-              <div className='pointer-events-none origin-top-left scale-[0.6]'>
+              <div className='pointer-events-none'>
                 <CardRender card={card} />
               </div>
             </button>

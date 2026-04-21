@@ -16,6 +16,7 @@ import { TechRow } from './TechRow';
 interface IPlayerIncomeInfo {
   credit: number;
   energy: number;
+  card: number;
 }
 
 interface IPlayerDashboardProps {
@@ -91,6 +92,7 @@ export function PlayerDashboard({
             <IncomeTracker
               creditIncome={income?.credit ?? 0}
               energyIncome={income?.energy ?? 0}
+              cardIncome={income?.card ?? 0}
             />
 
             <section className='instrument-panel p-2'>

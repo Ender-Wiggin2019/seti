@@ -21,7 +21,16 @@ const TWO_P: readonly IGamePlayerIdentity[] = [
 ] as const;
 
 function createGame2p(seed: string): Game {
-  return Game.create(TWO_P, { playerCount: 2 }, seed, `income-sys-${seed}`);
+  const game = Game.create(
+    TWO_P,
+    { playerCount: 2 },
+    seed,
+    `income-sys-${seed}`,
+  );
+  for (const player of game.players) {
+    resolveAllInputs(game, player);
+  }
+  return game;
 }
 
 function getPlayer(game: Game, id: string): IPlayer {

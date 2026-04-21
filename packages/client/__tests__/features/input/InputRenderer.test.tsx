@@ -32,7 +32,7 @@ describe('InputRenderer', () => {
       maxSelections: 1,
     };
     render(<InputRenderer model={model} onSubmit={vi.fn()} />);
-    expect(screen.getByTestId('select-card-card-1')).toBeInTheDocument();
+    expect(screen.getByTestId('hand-card-card-1')).toBeInTheDocument();
   });
 
   it('routes sector input to SelectSectorInput', () => {

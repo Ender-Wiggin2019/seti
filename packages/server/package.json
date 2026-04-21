@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "tsx watch src/main.ts",
     "db:init": "tsx scripts/init-db.ts",
+    "db:migrate": "tsx scripts/migrate-db.ts",
+    "db:prepare": "tsx scripts/prepare-db.ts",
     "db:prepare:e2e": "tsx scripts/prepare-e2e-db.ts",
+    "db:generate": "drizzle-kit generate",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/main.js",
     "test": "vitest run",

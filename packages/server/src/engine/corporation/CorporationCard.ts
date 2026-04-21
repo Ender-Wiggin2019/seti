@@ -1,4 +1,3 @@
-import { resolveIncomeResourceFromCardId } from '../effects/income/incomeCardUtils.js';
 import type { IGame } from '../IGame.js';
 import type { IMissionDef } from '../missions/IMission.js';
 import { Income, type TPartialIncomeBundle } from '../player/Income.js';
@@ -64,19 +63,5 @@ export class CorporationCard {
     );
 
     player.hand.push(...game.mainDeck.drawN(this.startResources.drawCards));
-
-    for (let i = 0; i < this.startActions.tuckIncome; i += 1) {
-      if (player.hand.length === 0) {
-        break;
-      }
-      const tuckedCard = player.removeCardAt(0);
-      player.tuckedIncomeCards.push(tuckedCard);
-      const incomeResource = resolveIncomeResourceFromCardId(
-        typeof tuckedCard === 'string' ? tuckedCard : (tuckedCard.id ?? ''),
-      );
-      if (incomeResource) {
-        player.income.addTuckedIncome(incomeResource);
-      }
-    }
   }
 }

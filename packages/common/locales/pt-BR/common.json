@@ -414,6 +414,12 @@
       "title": "Trilha de Marcos",
       "open": "aberto"
     },
+    "income_tracker": {
+      "title": "Renda",
+      "credit": "Créditos",
+      "energy": "Energia",
+      "card": "Cartas"
+    },
     "player_dashboard": {
       "missions": "Missões",
       "mission_alt": "Missão",

@@ -20,6 +20,44 @@ export function createUser(prefix: string): IUserCred {
   };
 }
 
+async function resolveCardPromptIfVisible(
+  page: Page,
+  timeoutMs = 8_000,
+): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    const cardPrompt = page
+      .locator(
+        '[data-testid="bottom-actions"] [data-testid^="hand-card-"],' +
+          '[data-testid="bottom-actions"] [data-testid^="select-card-"]',
+      )
+      .first();
+    const visible = await cardPrompt.isVisible().catch(() => false);
+
+    if (visible) {
+      await cardPrompt.click();
+      const confirmBtn = page
+        .locator('[data-testid="bottom-actions"]')
+        .getByRole('button', { name: /^confirm$/i });
+      await confirmBtn.scrollIntoViewIfNeeded().catch(() => undefined);
+      await expect(confirmBtn).toBeEnabled({ timeout: 5_000 });
+      await confirmBtn.click();
+      return true;
+    }
+
+    const anyAction = page.locator('[data-testid^="action-menu-"]').first();
+    const anyActionVisible = await anyAction.isVisible().catch(() => false);
+    if (anyActionVisible) {
+      return false;
+    }
+
+    await page.waitForTimeout(150);
+  }
+
+  return false;
+}
+
 export async function registerByUi(page: Page, user: IUserCred): Promise<void> {
   await page.goto('/auth');
   await page.getByRole('tab').nth(1).click();
@@ -132,6 +170,7 @@ export async function launchGameByUi(
   expect(response.ok()).toBe(true);
 
   await page.waitForURL(/\/game\/[^/?#]+$/, { timeout: 15_000 });
+  await resolveCardPromptIfVisible(page);
   const gameId = page.url().split('/game/')[1]?.split(/[?#]/)[0];
   expect(gameId).toBeTruthy();
   return gameId as string;
@@ -147,6 +186,7 @@ export async function enterGameByUi(
   await enterBtn.click();
 
   await page.waitForURL(/\/game\/[^/?#]+$/, { timeout: 15_000 });
+  await resolveCardPromptIfVisible(page);
   const gameId = page.url().split('/game/')[1]?.split(/[?#]/)[0];
   expect(gameId).toBeTruthy();
   return gameId as string;
@@ -295,7 +335,11 @@ export async function waitForInputPrompt(
 ): Promise<boolean> {
   try {
     await page
-      .locator('[data-testid="bottom-actions"] [data-testid^="input-"]')
+      .locator(
+        '[data-testid="bottom-actions"] [data-testid^="input-"],' +
+          '[data-testid="bottom-actions"] [data-testid^="hand-card-"],' +
+          '[data-testid="bottom-actions"] [data-testid^="select-card-"]',
+      )
       .first()
       .waitFor({ state: 'visible', timeout });
     return true;
@@ -336,7 +380,9 @@ export async function clickInputOptionById(
  * Click a card in a card-selection prompt (data-testid="select-card-{cardId}").
  */
 export async function clickFirstSelectCard(page: Page): Promise<void> {
-  const card = page.locator('[data-testid^="select-card-"]').first();
+  const card = page
+    .locator('[data-testid^="hand-card-"], [data-testid^="select-card-"]')
+    .first();
   await expect(card).toBeVisible({ timeout: 10_000 });
   await card.click();
 }
@@ -350,7 +396,8 @@ async function waitForAnyPrompt(page: Page, timeout = 5_000): Promise<boolean> {
     await page
       .locator(
         '[data-testid="bottom-actions"] [data-testid^="input-"],' +
-          '[data-testid="bottom-actions"] [data-testid^="select-card-"]',
+          '[data-testid="bottom-actions"] [data-testid^="select-card-"],' +
+          '[data-testid="bottom-actions"] [data-testid^="hand-card-"]',
       )
       .first()
       .waitFor({ state: 'visible', timeout });
@@ -390,7 +437,10 @@ export async function resolveScanSubActions(
     }
 
     const actionCard = page
-      .locator('[data-testid="bottom-actions"] [data-testid^="select-card-"]')
+      .locator(
+        '[data-testid="bottom-actions"] [data-testid^="hand-card-"],' +
+          '[data-testid="bottom-actions"] [data-testid^="select-card-"]',
+      )
       .first();
     const isActionCardVisible = await actionCard.isVisible().catch(() => false);
     if (isActionCardVisible) {

@@ -341,7 +341,8 @@ export class SolarSystem {
     const occupantSnapshots = ringSpaces.map((space) => [...space.occupants]);
 
     for (let sourceIndex = 0; sourceIndex < count; sourceIndex += 1) {
-      const targetIndex = (sourceIndex + 1) % count;
+      // Counterclockwise rotation: source i moves to i-1 on screen.
+      const targetIndex = (sourceIndex + count - 1) % count;
       const targetSpace = ringSpaces[targetIndex];
       targetSpace.elements = elementSnapshots[sourceIndex];
       targetSpace.hasPublicityIcon = publicitySnapshots[sourceIndex];
@@ -413,7 +414,8 @@ export class SolarSystem {
       }
 
       const fromIndex = targetSpace.indexInRing;
-      const toIndex = (fromIndex + 1) % targetRingSpaces.length;
+      const toIndex =
+        (fromIndex + targetRingSpaces.length - 1) % targetRingSpaces.length;
       for (const probe of targetSpace.occupants) {
         pushes.push({ probe, fromIndex, toIndex });
       }

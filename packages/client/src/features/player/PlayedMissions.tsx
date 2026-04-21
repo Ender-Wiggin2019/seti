@@ -41,7 +41,7 @@ export function PlayedMissions({
               key={mission.id}
               className='rounded-[4px] border border-[color:var(--metal-edge-soft)] bg-background-900/70 p-1 shadow-hairline-inset'
             >
-              <div className='origin-top-left scale-[0.44]'>
+              <div>
                 <CardRender card={mission} />
               </div>
             </div>

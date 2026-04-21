@@ -418,6 +418,12 @@
       "title": "里程碑轨道",
       "open": "开放"
     },
+    "income_tracker": {
+      "title": "收入",
+      "credit": "金钱",
+      "energy": "能量",
+      "card": "卡牌"
+    },
     "player_dashboard": {
       "missions": "任务",
       "mission_alt": "任务",
@@ -481,13 +487,13 @@
       "alien_index": "外星人 {{index}}",
       "discovered": "已发现",
       "types": {
-        "anomalies": "异常体",
-        "centaurians": "半人马体",
-        "exertians": "埃泽体",
-        "mascamites": "马斯卡体",
+        "anomalies": "异象者",
+        "centaurians": "半人马族",
+        "exertians": "动能族",
+        "mascamites": "虫族",
         "oumuamua": "奥陌陌",
-        "amoeba": "变形体",
-        "glyphids": "符文体",
+        "amoeba": "变形虫",
+        "glyphids": "字形族",
         "dummy": "占位体"
       }
     },

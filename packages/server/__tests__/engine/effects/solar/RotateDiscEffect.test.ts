@@ -80,7 +80,7 @@ describe('RotateDiscEffect', () => {
       solarSystem.getProbesAt('ring-1-cell-0').some((p) => p.id === probe.id),
     ).toBe(false);
     expect(
-      solarSystem.getProbesAt('ring-1-cell-1').some((p) => p.id === probe.id),
+      solarSystem.getProbesAt('ring-1-cell-7').some((p) => p.id === probe.id),
     ).toBe(true);
   });
 
@@ -99,11 +99,11 @@ describe('RotateDiscEffect', () => {
     const ring2cell0 = solarSystem.spaces.find(
       (space) => space.id === 'ring-2-cell-0',
     );
-    const ring2cell1 = solarSystem.spaces.find(
-      (space) => space.id === 'ring-2-cell-1',
+    const ring2cell15 = solarSystem.spaces.find(
+      (space) => space.id === 'ring-2-cell-15',
     );
 
-    if (!ring1cell0 || !ring1cell7 || !ring2cell0 || !ring2cell1) {
+    if (!ring1cell0 || !ring1cell7 || !ring2cell0 || !ring2cell15) {
       throw new Error('expected ring cells to exist');
     }
 
@@ -118,7 +118,7 @@ describe('RotateDiscEffect', () => {
       solarSystem.getProbesAt(ring2cell0.id).some((p) => p.id === probe.id),
     ).toBe(false);
     expect(
-      solarSystem.getProbesAt(ring2cell1.id).some((p) => p.id === probe.id),
+      solarSystem.getProbesAt(ring2cell15.id).some((p) => p.id === probe.id),
     ).toBe(true);
   });
 
@@ -137,17 +137,17 @@ describe('RotateDiscEffect', () => {
     const ring2cell0 = solarSystem.spaces.find(
       (space) => space.id === 'ring-2-cell-0',
     );
-    const ring2cell1 = solarSystem.spaces.find(
-      (space) => space.id === 'ring-2-cell-1',
+    const ring2cell15 = solarSystem.spaces.find(
+      (space) => space.id === 'ring-2-cell-15',
     );
 
-    if (!ring1cell0 || !ring1cell7 || !ring2cell0 || !ring2cell1) {
+    if (!ring1cell0 || !ring1cell7 || !ring2cell0 || !ring2cell15) {
       throw new Error('expected ring cells to exist');
     }
 
     ring1cell0.elements = [{ type: ESolarSystemElementType.NULL, amount: 1 }];
     ring1cell7.elements = [{ type: ESolarSystemElementType.EMPTY, amount: 1 }];
-    ring2cell1.hasPublicityIcon = true;
+    ring2cell15.hasPublicityIcon = true;
 
     const probe = solarSystem.placeProbe('player-1', ring2cell0.id);
 
@@ -156,7 +156,7 @@ describe('RotateDiscEffect', () => {
     RotateDiscEffect.execute(game as never);
 
     expect(
-      solarSystem.getProbesAt(ring2cell1.id).some((p) => p.id === probe.id),
+      solarSystem.getProbesAt(ring2cell15.id).some((p) => p.id === probe.id),
     ).toBe(true);
     expect(solarSystem.getPlayerPublicity('player-1')).toBe(1);
   });

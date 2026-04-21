@@ -34,20 +34,45 @@ pnpm --filter @seti/web dev
 
 默认端口 `3000`。
 
-### 3) 初始化 server 数据库（首次）
+### 3) 初始化并迁移 server 数据库（首次）
 
 如果你要跑 `packages/server`，第一次建议先初始化数据库：
 
 ```bash
-pnpm --filter @seti/server db:init
+pnpm --filter @seti/server db:prepare
 ```
 
-这个脚本会连接到 PostgreSQL 的 `postgres` 默认库，并按当前环境配置推导目标库名：
+这个脚本会先连接到 PostgreSQL 的 `postgres` 默认库并确保目标库存在，然后执行 Drizzle migration。目标库名按当前环境配置推导：
 
 - 优先读取 `DATABASE_URL` 里的库名
 - 否则读取 `PGDATABASE` / `PGUSER` / 当前系统用户名
 
 若目标库不存在会自动创建；已存在则跳过。
+
+如需单独执行某一步：
+
+```bash
+pnpm --filter @seti/server db:init
+pnpm --filter @seti/server db:migrate
+pnpm --filter @seti/server db:generate
+```
+
+### 4) 最简单开发流程（建议）
+
+首次开发（新机器或新数据库）：
+
+```bash
+pnpm install
+pnpm --filter @seti/server db:prepare
+pnpm dev:client-server
+```
+
+日常开发（已经初始化过数据库）：
+
+```bash
+pnpm --filter @seti/server db:migrate
+pnpm dev:client-server
+```
 
 ## client + server 联调
 

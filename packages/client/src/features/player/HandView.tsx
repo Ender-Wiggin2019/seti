@@ -139,7 +139,7 @@ export function HandView({
               )}
               onClick={() => handleCardClick(card)}
             >
-              <div className='origin-top-left scale-[0.46]'>
+              <div className='pointer-events-none'>
                 <CardRender card={card} />
               </div>
             </button>

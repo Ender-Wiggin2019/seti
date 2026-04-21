@@ -62,6 +62,7 @@ describe('SolarSystemView', () => {
         pendingInput={null}
         playerColors={{ 'player-1': 'red' }}
         myPlayerId='player-1'
+        movementPoints={1}
         onMoveProbe={vi.fn()}
         onRespondInput={vi.fn()}
       />,
@@ -82,6 +83,7 @@ describe('SolarSystemView', () => {
         pendingInput={null}
         playerColors={{ 'player-1': 'red' }}
         myPlayerId='player-1'
+        movementPoints={1}
         onMoveProbe={onMoveProbe}
         onRespondInput={vi.fn()}
       />,
@@ -90,7 +92,7 @@ describe('SolarSystemView', () => {
     fireEvent.click(screen.getByTestId('solar-space-space-0'));
     fireEvent.click(screen.getByTestId('solar-space-space-1'));
 
-    expect(onMoveProbe).toHaveBeenCalledWith('space-0', 'space-1');
+    expect(onMoveProbe).toHaveBeenCalledWith(['space-0', 'space-1']);
   });
 
   it('responds to sector input on sector pair click', () => {
@@ -107,6 +109,7 @@ describe('SolarSystemView', () => {
         }}
         playerColors={{ 'player-1': 'red' }}
         myPlayerId='player-1'
+        movementPoints={1}
         onMoveProbe={vi.fn()}
         onRespondInput={onRespondInput}
       />,

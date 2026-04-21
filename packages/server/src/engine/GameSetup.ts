@@ -6,8 +6,10 @@ import { PlanetaryBoard } from './board/PlanetaryBoard.js';
 import { BaseCorporation } from './corporation/BaseCorporation.js';
 import { Deck } from './deck/Deck.js';
 import { DeferredActionsQueue } from './deferred/DeferredActionsQueue.js';
+import { TuckCardForIncomeEffect } from './effects/income/TuckCardForIncomeEffect.js';
 import { EventLog } from './event/EventLog.js';
 import type { Game } from './Game.js';
+import type { PlayerInput } from './input/PlayerInput.js';
 import {
   GoldScoringTile,
   type TGoldScoringTileId,
@@ -75,12 +77,31 @@ export class GameSetup {
       player.tuckedIncomeCards = [];
       player.hand = [];
       BaseCorporation.resolve(player, game);
+      player.waitingFor = GameSetup.createSetupTuckInputChain(
+        player,
+        game,
+        BaseCorporation.startActions.tuckIncome,
+      );
     });
 
     game.deferredActions = new DeferredActionsQueue();
     game.eventLog = new EventLog();
 
     game.transitionTo(EPhase.AWAIT_MAIN_ACTION);
+  }
+
+  private static createSetupTuckInputChain(
+    player: Game['players'][number],
+    game: Game,
+    remainingTucks: number,
+  ): PlayerInput | undefined {
+    if (remainingTucks <= 0) {
+      return undefined;
+    }
+
+    return TuckCardForIncomeEffect.execute(player, game, () =>
+      GameSetup.createSetupTuckInputChain(player, game, remainingTucks - 1),
+    );
   }
 
   private static buildNeutralMilestones(playerCount: number): number[] {

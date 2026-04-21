@@ -24,12 +24,10 @@ describe('SelectCardInput', () => {
       />,
     );
 
-    const submitButton = screen.getByRole('button', {
-      name: 'Confirm Selection',
-    });
+    const submitButton = screen.getByRole('button', { name: 'Confirm' });
     expect(submitButton).toBeDisabled();
 
-    fireEvent.click(screen.getByTestId('select-card-c-1'));
+    fireEvent.click(screen.getByTestId('hand-card-c-1'));
     expect(submitButton).not.toBeDisabled();
 
     fireEvent.click(submitButton);

@@ -1,6 +1,7 @@
 import { baseCards } from '@seti/common/data/baseCards';
 import { EResource } from '@seti/common/types/element';
 import { EAlienType, EPhase } from '@seti/common/types/protocol/enums';
+import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import {
   FIRST_TAKE_VP_BONUS,
   TECH_CATEGORIES,
@@ -66,7 +67,7 @@ describe('GameSetup', () => {
     expect(game4.neutralMilestones).toEqual([]);
   });
 
-  it('assigns player defaults by seat and setup draw/tuck', () => {
+  it('assigns player defaults by seat and setup draw, then prompts tuck selection', () => {
     const game = Game.create(
       BASE_PLAYERS.slice(0, 2),
       { playerCount: 2 },
@@ -82,14 +83,17 @@ describe('GameSetup', () => {
       publicity: 4,
       data: 0,
     });
-    expect(game.players[0].hand).toHaveLength(4);
-    expect(game.players[0].tuckedIncomeCards).toHaveLength(1);
+    expect(game.players[0].hand).toHaveLength(5);
+    expect(game.players[0].tuckedIncomeCards).toHaveLength(0);
     const tuckedIncome = game.players[0].income.tuckedCardIncome;
     const totalTuckedIncome = Object.values(tuckedIncome).reduce(
       (sum, value) => sum + value,
       0,
     );
-    expect(totalTuckedIncome).toBe(1);
+    expect(totalTuckedIncome).toBe(0);
+    expect(game.players[0].waitingFor?.toModel().type).toBe(
+      EPlayerInputType.CARD,
+    );
   });
 
   describe('shared board details', () => {

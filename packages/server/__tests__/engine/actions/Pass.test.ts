@@ -54,6 +54,21 @@ function createIntegrationGame(seed: string): {
   const game = Game.create(INTEGRATION_PLAYERS, { playerCount: 2 }, seed, seed);
   const player = game.players[0] as Player;
   const other = game.players[1] as Player;
+
+  // Setup now includes tuck-for-income card prompts; resolve them so PASS
+  // integration cases focus only on pass flow behavior.
+  for (const current of [player, other]) {
+    const pending = current.waitingFor?.toModel() as
+      | { type: EPlayerInputType; cards?: Array<{ id: string }> }
+      | undefined;
+    if (pending?.type === EPlayerInputType.CARD && pending.cards?.[0]?.id) {
+      game.processInput(current.id, {
+        type: EPlayerInputType.CARD,
+        cardIds: [pending.cards[0].id],
+      });
+    }
+  }
+
   return { game, player, other };
 }
 

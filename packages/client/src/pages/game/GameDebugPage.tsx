@@ -36,11 +36,13 @@ import { GameLayout } from '@/pages/game/GameLayout';
 import {
   EFreeAction,
   EGameEventType,
+  EMainAction,
   EPhase,
   EPlanet,
   EPlayerInputType,
   type IFreeActionRequest,
   type IInputResponse,
+  type IMainActionRequest,
   type IPlayerInputModel,
   type IPublicGameState,
   type IPublicSolarSystemDiscState,
@@ -509,6 +511,57 @@ function moveVisibleProbe(
   return nextWheels;
 }
 
+function findVisiblePlanetBoardCoord(
+  wheels: TSolarSystemWheels,
+  discAngles: TDiscAngles,
+  planet: EPlanet,
+): { band: number; boardIndex: number } | null {
+  for (let band = 0; band < 4; band += 1) {
+    for (let boardIndex = 0; boardIndex < 8; boardIndex += 1) {
+      const top = resolveTopVisibleCell(wheels, band, boardIndex, discAngles);
+      if (!top) {
+        continue;
+      }
+      const cell = top.cell.cell;
+      if (
+        cell.type === 'EARTH' ||
+        (cell.type === 'PLANET' && cell.planet === planet)
+      ) {
+        return { band, boardIndex };
+      }
+    }
+  }
+
+  return null;
+}
+
+function placeProbeOnPlanet(
+  wheels: TSolarSystemWheels,
+  discAngles: TDiscAngles,
+  planet: EPlanet,
+  playerId: string,
+  probeId: string,
+): TSolarSystemWheels {
+  const targetCoord = findVisiblePlanetBoardCoord(wheels, discAngles, planet);
+  if (!targetCoord) {
+    return wheels;
+  }
+
+  const nextWheels = cloneWheels(wheels);
+  const top = resolveTopVisibleCell(
+    nextWheels,
+    targetCoord.band,
+    targetCoord.boardIndex,
+    discAngles,
+  );
+  if (!top) {
+    return wheels;
+  }
+
+  top.cell.elements.push({ type: 'PROBE', playerId, probeId });
+  return nextWheels;
+}
+
 function createDebugSpaceStates(
   wheels: TSolarSystemWheels,
   discAngles: TDiscAngles,
@@ -906,6 +959,18 @@ export function GameDebugPage(): React.JSX.Element {
   >(null);
 
   const clearProbeDelayTimerRef = useRef<number | null>(null);
+  const debugProbeSeqRef = useRef(100);
+
+  const launchDebugProbeToEarth = useCallback(
+    (playerId: string) => {
+      const probeId = `dbg-probe-${debugProbeSeqRef.current}`;
+      debugProbeSeqRef.current += 1;
+      setDebugWheels((prev) =>
+        placeProbeOnPlanet(prev, discAngles, EPlanet.EARTH, playerId, probeId),
+      );
+    },
+    [discAngles],
+  );
 
   const rotateRing = (ring: 1 | 2 | 3): void => {
     setDiscAngles((prev) => {
@@ -1117,11 +1182,22 @@ export function GameDebugPage(): React.JSX.Element {
         scanPhase.step === 'energy' &&
         response.type === EPlayerInputType.OPTION
       ) {
+        const optionId = (response as { optionId: string }).optionId;
+        if (optionId === 'launch') {
+          launchDebugProbeToEarth('player-1');
+        }
         goBackToPool(scanPhase.remaining);
         return;
       }
     },
-    [scanPhase, gameState, markAndReturn, markByCardColor, goBackToPool],
+    [
+      scanPhase,
+      gameState,
+      markAndReturn,
+      markByCardColor,
+      goBackToPool,
+      launchDebugProbeToEarth,
+    ],
   );
 
   const scanPlanetHintSectorIds = useMemo(() => {
@@ -1230,35 +1306,50 @@ export function GameDebugPage(): React.JSX.Element {
   const isSpectator = scenario === 'spectator';
   const myPlayerId = isSpectator ? 'spectator-0' : 'player-1';
 
+  const handleDebugAction = useCallback(
+    (action: IMainActionRequest) => {
+      if (action.type !== EMainAction.LAUNCH_PROBE || isSpectator) {
+        return;
+      }
+      launchDebugProbeToEarth(myPlayerId);
+    },
+    [isSpectator, launchDebugProbeToEarth, myPlayerId],
+  );
+
   const handleDebugFreeAction = useCallback(
     (action: IFreeActionRequest) => {
       if (action.type === EFreeAction.MOVEMENT) {
-        const fromSpaceId = action.path[0];
-        const toSpaceId = action.path[action.path.length - 1];
-        if (!fromSpaceId || !toSpaceId) {
-          return;
-        }
-
-        const reachableSpaces =
-          gameState.solarSystem.adjacency[fromSpaceId] ?? [];
-        if (!reachableSpaces.includes(toSpaceId)) {
+        if (action.path.length < 2) {
           return;
         }
 
         setDebugWheels((prev) => {
-          const movedMine = moveVisibleProbe(
-            prev,
-            discAngles,
-            fromSpaceId,
-            toSpaceId,
-            myPlayerId,
-          );
+          let wheels = prev;
+          for (let i = 0; i < action.path.length - 1; i += 1) {
+            const fromSpaceId = action.path[i];
+            const toSpaceId = action.path[i + 1];
+            if (!fromSpaceId || !toSpaceId) {
+              return prev;
+            }
+            const reachableSpaces =
+              gameState.solarSystem.adjacency[fromSpaceId] ?? [];
+            if (!reachableSpaces.includes(toSpaceId)) {
+              return prev;
+            }
 
-          if (movedMine !== prev) {
-            return movedMine;
+            const movedMine = moveVisibleProbe(
+              wheels,
+              discAngles,
+              fromSpaceId,
+              toSpaceId,
+              myPlayerId,
+            );
+            wheels =
+              movedMine !== wheels
+                ? movedMine
+                : moveVisibleProbe(wheels, discAngles, fromSpaceId, toSpaceId);
           }
-
-          return moveVisibleProbe(prev, discAngles, fromSpaceId, toSpaceId);
+          return wheels;
         });
         return;
       }
@@ -1293,7 +1384,7 @@ export function GameDebugPage(): React.JSX.Element {
       isSpectator,
       myPlayerId,
       events: [{ type: EGameEventType.ROUND_END, round: 2 }],
-      sendAction: () => undefined,
+      sendAction: handleDebugAction,
       sendFreeAction: handleDebugFreeAction,
       sendEndTurn: () => undefined,
       sendInput: handleDebugInput,
@@ -1304,6 +1395,7 @@ export function GameDebugPage(): React.JSX.Element {
       pendingInput,
       isSpectator,
       myPlayerId,
+      handleDebugAction,
       handleDebugInput,
       handleDebugFreeAction,
     ],
