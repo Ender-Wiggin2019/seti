@@ -1025,3 +1025,100 @@ describe('MissionTracker integration with tech mission quick missions', () => {
     expect(player.resources.data).toBeGreaterThan(initialData);
   });
 });
+
+// ================================================================
+// Phase 3.7: TechMissionCards Integration Extension
+// ================================================================
+
+describe('TechMissionCards - Integration Extension (Phase 3.7)', () => {
+  it('[Integration] Card 10 (ODINUS) completable after orbiting both Neptune & Uranus through real actions', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'tech-card-10-integration',
+    );
+    const player = game.players[0];
+    player.hand = ['10'];
+    game.mainDeck = new Deck(['refill-1'], []);
+
+    // Play the mission card first
+    game.processMainAction(player.id, {
+      type: EMainAction.PLAY_CARD,
+      payload: { cardIndex: 0 },
+    });
+
+    // Not completable yet
+    expect(game.missionTracker.hasCompletableQuickMissions(player, game)).toBe(
+      false,
+    );
+
+    // Orbit both planets (bypassing probe placement for brevity)
+    if (game.planetaryBoard) {
+      game.planetaryBoard.setProbeCount(EPlanet.NEPTUNE, player.id, 1);
+      game.planetaryBoard.orbit(EPlanet.NEPTUNE, player.id);
+      game.planetaryBoard.setProbeCount(EPlanet.URANUS, player.id, 1);
+      game.planetaryBoard.orbit(EPlanet.URANUS, player.id);
+    }
+
+    // Now completable
+    expect(game.missionTracker.hasCompletableQuickMissions(player, game)).toBe(
+      true,
+    );
+  });
+
+  it('[Integration] Card 61 (Quantum Computer) completable when score >= 50', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'tech-card-61-integration',
+    );
+    const player = game.players[0];
+    player.hand = ['61'];
+    player.score = 49;
+    game.mainDeck = new Deck(['refill-1'], []);
+
+    game.processMainAction(player.id, {
+      type: EMainAction.PLAY_CARD,
+      payload: { cardIndex: 0 },
+    });
+
+    expect(game.missionTracker.hasCompletableQuickMissions(player, game)).toBe(
+      false,
+    );
+
+    // Gain 1 score
+    player.score += 1;
+
+    expect(game.missionTracker.hasCompletableQuickMissions(player, game)).toBe(
+      true,
+    );
+  });
+
+  it('[Integration] Card 70 (ATLAS) completable with 3+ blue traces', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'tech-card-70-integration',
+    );
+    const player = game.players[0];
+    player.hand = ['70'];
+    player.traces[ETrace.BLUE] = 2;
+    game.mainDeck = new Deck(['refill-1'], []);
+
+    game.processMainAction(player.id, {
+      type: EMainAction.PLAY_CARD,
+      payload: { cardIndex: 0 },
+    });
+
+    expect(game.missionTracker.hasCompletableQuickMissions(player, game)).toBe(
+      false,
+    );
+
+    // Gain one more trace
+    player.traces[ETrace.BLUE] += 1;
+
+    expect(game.missionTracker.hasCompletableQuickMissions(player, game)).toBe(
+      true,
+    );
+  });
+});

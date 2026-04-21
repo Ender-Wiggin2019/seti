@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { CORE_RANDOM_ALIEN_TYPES } from '@seti/common/constant/alienLobby';
+import { EAlienMap } from '@seti/common/types/BaseCard';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
-import type { IGameOptions } from '@/api/types';
+import type { IAlienTypeOption, IGameOptions } from '@/api/types';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -29,6 +31,7 @@ interface ICreateRoomDialogProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (name: string, options: IGameOptions) => void;
   isPending: boolean;
+  alienTypeMap?: Record<string, IAlienTypeOption>;
 }
 
 const createRoomSchema = z.object({
@@ -50,13 +53,76 @@ export function CreateRoomDialog({
   onOpenChange,
   onSubmit,
   isPending,
+  alienTypeMap,
 }: ICreateRoomDialogProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const [name, setName] = useState('');
   const [playerCount, setPlayerCount] = useState(2);
-  const [alienModulesEnabled, setAlienModulesEnabled] = useState(false);
+  const [selectedAlienTypes, setSelectedAlienTypes] = useState<number[]>([]);
   const [undoAllowed, setUndoAllowed] = useState(true);
-  const [turnTimerSeconds, setTurnTimerSeconds] = useState(0);
+  const [timerPerTurn, setTimerPerTurn] = useState(0);
+
+  const alienTypeOptions = useMemo(() => {
+    const values = Object.values(alienTypeMap ?? {});
+    if (values.length > 0) {
+      return values.sort((a, b) => a.alienType - b.alienType);
+    }
+
+    return CORE_RANDOM_ALIEN_TYPES.map((alienType) => ({
+      alienType,
+      alienName: EAlienMap[alienType],
+      disabled: false,
+    }));
+  }, [alienTypeMap]);
+
+  const enabledAlienTypes = useMemo(
+    () => alienTypeOptions.filter((option) => !option.disabled),
+    [alienTypeOptions],
+  );
+
+  const selectedCoreCount = useMemo(
+    () =>
+      CORE_RANDOM_ALIEN_TYPES.filter((alienType) =>
+        selectedAlienTypes.includes(alienType),
+      ).length,
+    [selectedAlienTypes],
+  );
+
+  useEffect(() => {
+    setSelectedAlienTypes((previous) => {
+      const enabledTypeSet = new Set(
+        enabledAlienTypes.map((type) => type.alienType),
+      );
+      const filtered = previous.filter((type) => enabledTypeSet.has(type));
+
+      if (filtered.length >= 2) {
+        return filtered;
+      }
+
+      const missing = enabledAlienTypes
+        .map((type) => type.alienType)
+        .filter((type) => !filtered.includes(type));
+
+      return [...filtered, ...missing].slice(0, 2);
+    });
+  }, [enabledAlienTypes]);
+
+  const handleAlienTypeToggle = (alienType: number, nextChecked: boolean) => {
+    setSelectedAlienTypes((previous) => {
+      if (nextChecked) {
+        return previous.includes(alienType)
+          ? previous
+          : [...previous, alienType];
+      }
+      if (!previous.includes(alienType)) {
+        return previous;
+      }
+      if (previous.length <= 2) {
+        return previous;
+      }
+      return previous.filter((type) => type !== alienType);
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,11 +139,26 @@ export function CreateRoomDialog({
       });
       return;
     }
+
+    const selectedCoreAlienTypes = CORE_RANDOM_ALIEN_TYPES.filter((alienType) =>
+      selectedAlienTypes.includes(alienType),
+    );
+
+    if (selectedCoreAlienTypes.length < 2) {
+      toast({
+        title: t('client.create_room.validation.invalid_options'),
+        variant: 'error',
+      });
+      return;
+    }
+
     onSubmit(name, {
       playerCount,
-      alienModulesEnabled,
+      alienModulesEnabled: CORE_RANDOM_ALIEN_TYPES.map((alienType) =>
+        selectedCoreAlienTypes.includes(alienType),
+      ),
       undoAllowed,
-      turnTimerSeconds,
+      timerPerTurn,
     });
   };
 
@@ -147,12 +228,57 @@ export function CreateRoomDialog({
                 defaultValue: 'Rules',
               })}
             >
-              <ToggleRow
-                id='aliens-toggle'
-                label={t('client.create_room.alien_modules')}
-                checked={alienModulesEnabled}
-                onChange={setAlienModulesEnabled}
-              />
+              <div className='space-y-1.5'>
+                <Label htmlFor='alien-pool' variant='micro'>
+                  {t('client.create_room.alien_pool', {
+                    defaultValue: 'Alien random pool',
+                  })}
+                </Label>
+                <div id='alien-pool' className='space-y-2'>
+                  {alienTypeOptions.map((option) => {
+                    const isChecked = selectedAlienTypes.includes(
+                      option.alienType,
+                    );
+                    const lockMinimumCount =
+                      isChecked &&
+                      selectedCoreCount <= 2 &&
+                      CORE_RANDOM_ALIEN_TYPES.includes(option.alienType);
+                    const isDisabled = option.disabled || lockMinimumCount;
+
+                    return (
+                      <div
+                        key={option.alienType}
+                        className='flex items-center justify-between'
+                      >
+                        <Label
+                          htmlFor={`alien-type-${option.alienType}`}
+                          className={cn(
+                            'cursor-pointer',
+                            isDisabled && 'cursor-not-allowed opacity-60',
+                          )}
+                        >
+                          {t(`client.alien_board.types.${option.alienName}`, {
+                            defaultValue: option.alienName,
+                          })}
+                          {option.disabled
+                            ? t('client.create_room.alien_pool_disabled', {
+                                defaultValue: ' (disabled)',
+                              })
+                            : ''}
+                        </Label>
+                        <Switch
+                          id={`alien-type-${option.alienType}`}
+                          checked={isChecked}
+                          onCheckedChange={(next) =>
+                            handleAlienTypeToggle(option.alienType, next)
+                          }
+                          disabled={isDisabled}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
               <ToggleRow
                 id='undo-toggle'
                 label={t('client.create_room.undo')}
@@ -176,11 +302,9 @@ export function CreateRoomDialog({
                     type='number'
                     min={0}
                     max={600}
-                    value={turnTimerSeconds}
+                    value={timerPerTurn}
                     mono
-                    onChange={(e) =>
-                      setTurnTimerSeconds(Number(e.target.value))
-                    }
+                    onChange={(e) => setTimerPerTurn(Number(e.target.value))}
                     className='max-w-[120px]'
                   />
                   <span className='font-mono text-[0.6875rem] uppercase tracking-microlabel text-text-500'>

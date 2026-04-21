@@ -1,5 +1,9 @@
 import { ESector } from '@seti/common/types/element';
-import { EMainAction, EPlanet } from '@seti/common/types/protocol/enums';
+import {
+  EFreeAction,
+  EMainAction,
+  EPlanet,
+} from '@seti/common/types/protocol/enums';
 import {
   EPlayerInputType,
   type IPlayerInputModel,
@@ -269,6 +273,46 @@ describe('ScanAction — integration (rewrite)', () => {
     });
   });
 
+  describe('2.4.11 FAQ timing: free action can interrupt a main action', () => {
+    it('allows PLACE_DATA between SCAN sub-actions, then resumes SCAN to DONE', () => {
+      const { game, p1 } = createScanIntegrationGame(
+        'scan-2-4-11-interrupt-main',
+      );
+
+      expect(p1.dataPool.count).toBe(0);
+
+      game.processMainAction(p1.id, { type: EMainAction.SCAN });
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_EARTH,
+      });
+
+      // MARK_EARTH grants one data; spend it via a free action while SCAN is still pending.
+      expect(p1.dataPool.count).toBe(1);
+      game.processFreeAction(p1.id, {
+        type: EFreeAction.PLACE_DATA,
+        slotIndex: 0,
+      });
+      expect(p1.dataPool.count).toBe(0);
+      expect(p1.computer.getTopSlots()[0]).toBe(true);
+
+      const afterInterrupt = playerWaitingFor(
+        game,
+        p1.id,
+        EPlayerInputType.OPTION,
+      ) as ISelectOptionInputModel;
+      expect(
+        afterInterrupt.options.some((o) => o.id === EScanSubAction.DONE),
+      ).toBe(true);
+
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.DONE,
+      });
+      expect(p1.waitingFor).toBeUndefined();
+    });
+  });
+
   describe('2.4.6 completing a sector via scan triggers deferred resolution', () => {
     it('resolves the sector (winner recorded, reset) after the scan finishes', () => {
       const { game, p1, p2 } = createScanIntegrationGame('scan-2-4-6');
@@ -379,8 +423,12 @@ describe('ScanAction — integration (rewrite)', () => {
         EPlayerInputType.OPTION,
       ) as ISelectOptionInputModel;
 
-      expect(initialPool.options.some((o) => o.id === EScanSubAction.MARK_EARTH)).toBe(true);
-      expect(initialPool.options.some((o) => o.id === EScanSubAction.DONE)).toBe(false);
+      expect(
+        initialPool.options.some((o) => o.id === EScanSubAction.MARK_EARTH),
+      ).toBe(true);
+      expect(
+        initialPool.options.some((o) => o.id === EScanSubAction.DONE),
+      ).toBe(false);
     });
 
     it('offers DONE after MARK_EARTH is executed', () => {
@@ -398,7 +446,9 @@ describe('ScanAction — integration (rewrite)', () => {
         EPlayerInputType.OPTION,
       ) as ISelectOptionInputModel;
 
-      expect(poolAfterMark.options.some((o) => o.id === EScanSubAction.DONE)).toBe(true);
+      expect(
+        poolAfterMark.options.some((o) => o.id === EScanSubAction.DONE),
+      ).toBe(true);
     });
   });
 

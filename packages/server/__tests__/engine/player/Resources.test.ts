@@ -109,9 +109,15 @@ describe('Resources', () => {
     expect(() => resources.spend({ credits: -1 })).toThrow(GameError);
   });
 
-  it('caps publicity gain at 10 and allows explicit set', () => {
-    const resources = new Resources({ credits: 1, energy: 1, publicity: 9 });
-    resources.gain({ publicity: 5 });
+  it('caps credits and energy at 999 and publicity at 10', () => {
+    const resources = new Resources({
+      credits: 998,
+      energy: 999,
+      publicity: 8,
+    });
+    resources.gain({ credits: 5, energy: 1, publicity: 5 });
+    expect(resources.credits).toBe(999);
+    expect(resources.energy).toBe(999);
     expect(resources.publicity).toBe(10);
     resources.setPublicity(7);
     expect(resources.publicity).toBe(7);

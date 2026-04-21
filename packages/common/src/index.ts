@@ -1,5 +1,6 @@
 export * from '@seti/common/constant/alien';
 export * from '@seti/common/constant/alienBoardConfig';
+export * from '@seti/common/constant/alienLobby';
 export * from '@seti/common/constant/boardLayout';
 export * from '@seti/common/constant/color';
 export * from '@seti/common/constant/debugGame';

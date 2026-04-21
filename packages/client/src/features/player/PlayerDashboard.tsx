@@ -10,7 +10,6 @@ import type {
 import { EFreeAction, EPlayerInputType } from '@/types/re-exports';
 import { ComputerRow } from './ComputerRow';
 import { IncomeTracker } from './IncomeTracker';
-import { PieceInventory } from './PieceInventory';
 import { ResourceBar } from './ResourceBar';
 import { TechRow } from './TechRow';
 
@@ -88,12 +87,11 @@ export function PlayerDashboard({
             }
           />
 
-          <div className='grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.9fr)] gap-1.5'>
+          <div className='grid grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] gap-1.5'>
             <IncomeTracker
               creditIncome={income?.credit ?? 0}
               energyIncome={income?.energy ?? 0}
             />
-            <PieceInventory pieces={player.pieces} />
 
             <section className='instrument-panel p-2'>
               <div className='section-head mb-1.5'>

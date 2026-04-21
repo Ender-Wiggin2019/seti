@@ -190,18 +190,27 @@ export class MilestoneState {
       return;
     }
 
+    if (!game.alienState.hasEmptyDiscoverySlot()) {
+      milestone.resolvedPlayerIds.add(claim.player.id);
+      return;
+    }
+
     milestone.markersRemaining -= 1;
     milestone.resolvedPlayerIds.add(claim.player.id);
-    this.neutralDiscoveryMarkersUsed += 1;
 
     const placement = game.alienState.placeNeutralMarker();
+    if (!placement) {
+      return;
+    }
+
+    this.neutralDiscoveryMarkersUsed += 1;
 
     game.eventLog.append(
       createActionEvent(claim.player.id, 'MILESTONE_NEUTRAL_RESOLVED', {
         threshold: claim.threshold,
         neutralDiscoveryMarkersUsed: this.neutralDiscoveryMarkersUsed,
-        alienIndex: placement?.alienIndex ?? null,
-        traceColor: placement?.traceColor ?? null,
+        alienIndex: placement.alienIndex,
+        traceColor: placement.traceColor,
       }),
     );
   }

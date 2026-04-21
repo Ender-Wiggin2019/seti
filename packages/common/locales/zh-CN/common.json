@@ -283,6 +283,7 @@
       "alien_modules": "外星模块",
       "undo": "允许撤销",
       "turn_timer": "回合计时（秒，0为关闭）",
+      "alien_pool_disabled": "（不可用）",
       "actions": {
         "launching": "启动中...",
         "launch": "启动任务"
@@ -555,6 +556,7 @@
       "buy": "购买",
       "exchange_title": "交换资源",
       "exchange_desc": "用 2 个资源换 1 个其他资源。",
+      "exchange_into_card": "2 {{from}} → 1 张牌 — {{source}}",
       "exchange_option": "2 {{from}} -> 1 {{to}}",
       "place_data_title": "放置数据",
       "place_data_desc": "选择要填充的计算机槽位。",
@@ -573,7 +575,9 @@
         "select_probe": "请在棋盘上选择探测器移动",
         "select_probe_desc": "点击探测器并在棋盘上选择目的地。",
         "not_enough_energy": "能量不足",
-        "not_enough_energy_desc": "至少需要 1 点能量才能转换。"
+        "not_enough_energy_desc": "至少需要 1 点能量才能转换。",
+        "card_custom_effect_unhandled": "卡牌效果暂不可用",
+        "card_custom_effect_unhandled_desc": "卡牌 {{cardId}} 的自定义效果 \"{{customId}}\" 已跳过，游戏继续进行。"
       }
     },
     "resources": {

@@ -274,6 +274,9 @@ function serializeAlienState(game: IGame): IAlienStateDto {
       alienType: board.alienType,
       alienIndex: board.alienIndex,
       discovered: board.discovered,
+      alienDeckDrawPile: [...board.alienDeckDrawPile],
+      alienDeckDiscardPile: [...board.alienDeckDiscardPile],
+      faceUpAlienCardId: board.faceUpAlienCardId,
       slots: board.slots.map((slot) => ({
         slotId: slot.slotId,
         alienIndex: slot.alienIndex,
@@ -553,6 +556,9 @@ export function projectGameState(
       alienIndex: board.alienIndex,
       alienType: board.discovered ? board.alienType : null,
       discovered: board.discovered,
+      faceUpAlienCardId: board.discovered ? board.faceUpAlienCardId : null,
+      alienDeckSize: board.alienDeckDrawPile.length,
+      alienDiscardSize: board.alienDeckDiscardPile.length,
       slots: board.slots.map((slot) => ({
         slotId: slot.slotId,
         traceColor: slot.traceColor,

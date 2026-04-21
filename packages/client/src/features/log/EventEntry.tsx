@@ -131,11 +131,14 @@ function getEventDescription(
   t: (key: string, options?: Record<string, unknown>) => string,
 ): string {
   switch (event.type) {
-    case EGameEventType.ACTION:
+    case EGameEventType.ACTION: {
+      const actionLabel =
+        typeof event.action === 'string' ? event.action : event.action.type;
       return t('client.event_entry.action', {
         player: getPlayerName(event.playerId, playerNames),
-        action: event.action.type,
+        action: actionLabel,
       });
+    }
     case EGameEventType.FREE_ACTION:
       return t('client.event_entry.free_action', {
         player: getPlayerName(event.playerId, playerNames),

@@ -52,9 +52,15 @@ export interface IRoomPlayer {
 
 export interface IGameOptions {
   playerCount: number;
-  alienModulesEnabled: boolean;
+  alienModulesEnabled: boolean[];
   undoAllowed: boolean;
-  turnTimerSeconds: number;
+  timerPerTurn: number;
+}
+
+export interface IAlienTypeOption {
+  alienType: number;
+  alienName: string;
+  disabled: boolean;
 }
 
 export interface IRoom {

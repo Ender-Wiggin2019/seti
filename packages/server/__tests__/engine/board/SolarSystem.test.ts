@@ -288,4 +288,201 @@ describe('SolarSystem', () => {
 
     expect(game.solarSystem!.rotationCounter).toBe(afterFirstPass);
   });
+
+  describe('Phase 4.2: Rotation Trigger Timing Integration', () => {
+    it('4.2.1 [Integration] RESEARCH_TECH main action physically rotates disc and moves probes', () => {
+      const game = createIntegrationGame('rotation-research-physical');
+      const player = game.players[0];
+      player.resources.gain({ publicity: 6 });
+
+      // Place probe on disc 0 (top disc, ring 1)
+      const probeSpace = 'ring-1-cell-0';
+      const expectedNextSpace = 'ring-1-cell-1';
+      const probe = game.solarSystem!.placeProbe(player.id, probeSpace);
+
+      // Verify initial position
+      expect(
+        game
+          .solarSystem!.getProbesAt(probeSpace)
+          .some((p) => p.id === probe.id),
+      ).toBe(true);
+
+      // Perform RESEARCH_TECH (should rotate disc 0 first)
+      game.processMainAction(player.id, { type: EMainAction.RESEARCH_TECH });
+      resolveAllInputs(game, player.id);
+
+      // Verify probe physically moved to next space
+      expect(
+        game
+          .solarSystem!.getProbesAt(probeSpace)
+          .some((p) => p.id === probe.id),
+      ).toBe(false);
+      expect(
+        game
+          .solarSystem!.getProbesAt(expectedNextSpace)
+          .some((p) => p.id === probe.id),
+      ).toBe(true);
+    });
+
+    it('4.2.2 [Integration] Card effect with ROTATE icon triggers physical disc rotation', () => {
+      // Card 59 "Ion Propulsion System" has ROTATE icon
+      const game = createIntegrationGame('rotation-card-physical');
+      const player = game.players[0];
+      player.hand = ['59'];
+      game.mainDeck = new Deck(['refill-1', 'refill-2'], []);
+
+      // Place probe on disc 0 (will be rotated)
+      const probeSpace = 'ring-1-cell-0';
+      const expectedNextSpace = 'ring-1-cell-1';
+      const probe = game.solarSystem!.placeProbe(player.id, probeSpace);
+
+      expect(
+        game
+          .solarSystem!.getProbesAt(probeSpace)
+          .some((p) => p.id === probe.id),
+      ).toBe(true);
+
+      // Play card with ROTATE
+      game.processMainAction(player.id, {
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 0 },
+      });
+      resolveAllInputs(game, player.id);
+
+      // Verify physical rotation occurred
+      expect(
+        game
+          .solarSystem!.getProbesAt(probeSpace)
+          .some((p) => p.id === probe.id),
+      ).toBe(false);
+      expect(
+        game
+          .solarSystem!.getProbesAt(expectedNextSpace)
+          .some((p) => p.id === probe.id),
+      ).toBe(true);
+    });
+
+    it('4.2.3 [Integration] First PASS of the round physically rotates disc and moves probes', () => {
+      const game = createIntegrationGame('rotation-first-pass-physical');
+      const firstPlayer = game.players[0];
+
+      // Place probe on disc 0
+      const probeSpace = 'ring-1-cell-0';
+      const expectedNextSpace = 'ring-1-cell-1';
+      const probe = game.solarSystem!.placeProbe(firstPlayer.id, probeSpace);
+
+      expect(
+        game
+          .solarSystem!.getProbesAt(probeSpace)
+          .some((p) => p.id === probe.id),
+      ).toBe(true);
+
+      // First player passes
+      game.processMainAction(firstPlayer.id, { type: EMainAction.PASS });
+      resolveAllInputs(game, firstPlayer.id);
+
+      // Verify physical rotation occurred
+      expect(
+        game
+          .solarSystem!.getProbesAt(probeSpace)
+          .some((p) => p.id === probe.id),
+      ).toBe(false);
+      expect(
+        game
+          .solarSystem!.getProbesAt(expectedNextSpace)
+          .some((p) => p.id === probe.id),
+      ).toBe(true);
+    });
+
+    it('4.2.4 [Integration] Non-first PASS does not physically rotate disc or move probes', () => {
+      const game = createIntegrationGame('rotation-second-pass-no-physical');
+      const firstPlayer = game.players[0];
+      const secondPlayer = game.players[1];
+
+      // First player passes (triggers rotation)
+      game.processMainAction(firstPlayer.id, { type: EMainAction.PASS });
+      resolveAllInputs(game, firstPlayer.id);
+
+      // Place probe on disc 1 (next disc in sequence) after first rotation
+      const probeSpace = 'ring-2-cell-0';
+      const probe = game.solarSystem!.placeProbe(secondPlayer.id, probeSpace);
+
+      expect(
+        game
+          .solarSystem!.getProbesAt(probeSpace)
+          .some((p) => p.id === probe.id),
+      ).toBe(true);
+
+      // Second player passes (should NOT rotate)
+      game.processMainAction(secondPlayer.id, { type: EMainAction.PASS });
+      resolveAllInputs(game, secondPlayer.id);
+
+      // Verify probe stayed in same position
+      expect(
+        game
+          .solarSystem!.getProbesAt(probeSpace)
+          .some((p) => p.id === probe.id),
+      ).toBe(true);
+    });
+
+    it('4.2.5 [Integration] Rotation counter cycles through all three discs physically', () => {
+      // NOTE: Discs are nested - rotating an outer disc also rotates all inner discs:
+      // - Disc 0 rotates: ring 1 only
+      // - Disc 1 rotates: rings 1 AND 2
+      // - Disc 2 rotates: rings 1, 2, AND 3
+      // This test verifies the counter cycles: disc 0 → disc 1 → disc 2 → disc 0...
+      const game = createIntegrationGame('rotation-cycle-physical');
+      const p1 = game.players[0];
+      const p2 = game.players[1];
+      p1.resources.gain({ publicity: 12 });
+      p2.resources.gain({ publicity: 6 });
+
+      // Place probes on the first two rotating discs to verify cycling
+      const probe1 = game.solarSystem!.placeProbe(p1.id, 'ring-1-cell-0');
+      const probe2 = game.solarSystem!.placeProbe(p2.id, 'ring-2-cell-0');
+
+      expect(game.solarSystem!.rotationCounter).toBe(0);
+
+      // First rotation: disc 0 (rotates ring 1 only) - P1's turn
+      game.processMainAction(p1.id, { type: EMainAction.RESEARCH_TECH });
+      resolveAllInputs(game, p1.id);
+      game.processEndTurn(p1.id);
+      expect(game.solarSystem!.rotationCounter).toBe(1);
+      // Ring 1 moved
+      expect(
+        game
+          .solarSystem!.getProbesAt('ring-1-cell-1')
+          .some((p) => p.id === probe1.id),
+      ).toBe(true);
+      // Ring 2 unchanged
+      expect(
+        game
+          .solarSystem!.getProbesAt('ring-2-cell-0')
+          .some((p) => p.id === probe2.id),
+      ).toBe(true);
+
+      // Second rotation: disc 1 (rotates rings 1 AND 2) - P2's turn
+      game.processMainAction(p2.id, { type: EMainAction.RESEARCH_TECH });
+      resolveAllInputs(game, p2.id);
+      game.processEndTurn(p2.id);
+      expect(game.solarSystem!.rotationCounter).toBe(2);
+      // Ring 1 moved again (from cell-1 to cell-2) due to cascading
+      expect(
+        game
+          .solarSystem!.getProbesAt('ring-1-cell-2')
+          .some((p) => p.id === probe1.id),
+      ).toBe(true);
+      // Ring 2 moved for first time (from cell-0 to cell-1)
+      expect(
+        game
+          .solarSystem!.getProbesAt('ring-2-cell-1')
+          .some((p) => p.id === probe2.id),
+      ).toBe(true);
+
+      // Next rotation would be disc 2, then cycle back to disc 0
+      // Counter at 2 means next is: 2 % 3 = disc 2
+      expect(game.solarSystem!.rotationCounter % 3).toBe(2);
+      // After one more rotation, counter would be 3, meaning: 3 % 3 = disc 0 (cycles back)
+    });
+  });
 });

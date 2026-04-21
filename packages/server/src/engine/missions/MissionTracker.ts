@@ -1,4 +1,9 @@
-import { EEffectType, type IMissionEffect } from '@seti/common/types/effect';
+import {
+  EEffectType,
+  type IBaseEffect,
+  type IMissionEffect,
+} from '@seti/common/types/effect';
+import { EScanAction } from '@seti/common/types/element';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import { hasCardData, loadCardData } from '../cards/loadCardData.js';
@@ -7,6 +12,7 @@ import type { IPlayerInput } from '../input/PlayerInput.js';
 import { SelectOption } from '../input/SelectOption.js';
 import type { IPlayer, TCardItem } from '../player/IPlayer.js';
 import {
+  EMissionEventType,
   EMissionType,
   type ICompletableMission,
   type IMissionDef,
@@ -230,7 +236,83 @@ export class MissionTracker {
       }
     }
 
-    return triggered;
+    return this.applySignalOnlyMissionTriggerCap(triggered, events, missions);
+  }
+
+  /**
+   * FAQ (rule-faq): one effect may satisfy multiple mission spaces, but only one
+   * circle is covered at a time. For missions whose branches are exclusively
+   * sector-signal triggers, a single checkpoint with multiple SIGNAL_PLACED
+   * events (e.g. DISPLAY_CARD ×2) may only offer one branch until the player
+   * triggers the mission again. SCAN checkpoints include SCAN_PERFORMED and
+   * are not capped here.
+   */
+  private applySignalOnlyMissionTriggerCap(
+    triggered: ICompletableMission[],
+    events: ReadonlyArray<IMissionEvent>,
+    missions: IMissionRuntimeState[],
+  ): ICompletableMission[] {
+    const signalPlacedCount = events.filter(
+      (e) => e.type === EMissionEventType.SIGNAL_PLACED,
+    ).length;
+    if (
+      signalPlacedCount <= 1 ||
+      events.some((e) => e.type === EMissionEventType.SCAN_PERFORMED)
+    ) {
+      return triggered;
+    }
+
+    const byCard = new Map<string, ICompletableMission[]>();
+    for (const item of triggered) {
+      const list = byCard.get(item.cardId) ?? [];
+      list.push(item);
+      byCard.set(item.cardId, list);
+    }
+
+    const limited: ICompletableMission[] = [];
+    for (const [cardId, list] of byCard) {
+      const mission = missions.find((m) => m.def.cardId === cardId);
+      if (
+        !mission ||
+        !this.isSignalSectorOnlyFullMission(mission) ||
+        list.length <= 1
+      ) {
+        limited.push(...list);
+        continue;
+      }
+
+      list.sort((a, b) => a.branchIndex - b.branchIndex);
+      const first = list[0];
+      if (first !== undefined) {
+        limited.push(first);
+      }
+    }
+
+    return limited;
+  }
+
+  private isSignalSectorOnlyFullMission(
+    mission: IMissionRuntimeState,
+  ): boolean {
+    if (mission.def.type !== EMissionType.FULL) {
+      return false;
+    }
+
+    const signalTypes = new Set<string>([
+      EScanAction.YELLOW,
+      EScanAction.RED,
+      EScanAction.BLUE,
+      EScanAction.BLACK,
+    ]);
+
+    return mission.def.branches.every((branch) =>
+      branch.req.every((req) => {
+        if (req.effectType === EEffectType.CUSTOMIZED) {
+          return false;
+        }
+        return signalTypes.has((req as IBaseEffect).type as string);
+      }),
+    );
   }
 
   public getCompletableQuickMissions(

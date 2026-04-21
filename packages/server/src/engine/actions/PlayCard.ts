@@ -110,8 +110,24 @@ export class PlayCardAction {
       return { cardId, destination: 'endGame', price, priceType };
     }
 
-    game.mainDeck.discard(cardId);
+    this.discardPlayedCard(game, cardId, runtimeCard.alien);
     return { cardId, destination: 'discard', price, priceType };
+  }
+
+  private static discardPlayedCard(
+    game: IGame,
+    cardId: string,
+    alienType: ICard['alien'] | undefined,
+  ): void {
+    if (alienType !== undefined) {
+      const board = game.alienState.getBoardByType(alienType as never);
+      if (board) {
+        board.discardAlienCard(cardId);
+        return;
+      }
+    }
+
+    game.mainDeck.discard(cardId);
   }
 
   private static getPriceResourceBundle(card: {

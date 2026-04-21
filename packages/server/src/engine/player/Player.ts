@@ -180,7 +180,22 @@ export class Player implements IPlayer {
   }
 
   public applyRoundIncome(): TIncomeBundle {
-    const payout = this.income.computeRoundPayout();
+    return this.applyIncomePayout(this.income.computeRoundPayout());
+  }
+
+  /**
+   * End-of-round income: round 1 pays base corporation income only (setup tuck
+   * does not recur yet). From round 2 onward, base + tucked stacks per Income.
+   */
+  public applyEndOfRoundIncome(round: number): TIncomeBundle {
+    const payout =
+      round === 1
+        ? { ...this.income.baseIncome }
+        : this.income.computeRoundPayout();
+    return this.applyIncomePayout(payout);
+  }
+
+  private applyIncomePayout(payout: TIncomeBundle): TIncomeBundle {
     this.resources.gain({
       credits: payout[EResource.CREDIT],
       energy: payout[EResource.ENERGY],

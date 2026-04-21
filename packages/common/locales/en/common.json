@@ -280,6 +280,7 @@
       "alien_modules": "Alien Modules",
       "undo": "Allow Undo",
       "turn_timer": "Turn Timer (seconds, 0 = off)",
+      "alien_pool_disabled": " (disabled)",
       "actions": {
         "launching": "Launching...",
         "launch": "Launch Mission"
@@ -552,6 +553,7 @@
       "buy": "Buy",
       "exchange_title": "Exchange Resources",
       "exchange_desc": "Trade 2 of one resource for 1 of another.",
+      "exchange_into_card": "2 {{from}} → 1 card — {{source}}",
       "exchange_option": "2 {{from}} -> 1 {{to}}",
       "place_data_title": "Place Data",
       "place_data_desc": "Choose which computer slot to fill.",
@@ -570,7 +572,9 @@
         "select_probe": "Select probe movement on board",
         "select_probe_desc": "Click a probe and choose a destination in the board view.",
         "not_enough_energy": "Not enough energy",
-        "not_enough_energy_desc": "You need at least 1 energy to convert."
+        "not_enough_energy_desc": "You need at least 1 energy to convert.",
+        "card_custom_effect_unhandled": "Card effect not available",
+        "card_custom_effect_unhandled_desc": "Custom effect \"{{customId}}\" on card {{cardId}} was skipped. The game continued."
       }
     },
     "resources": {

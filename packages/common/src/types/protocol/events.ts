@@ -25,7 +25,10 @@ export type TGameEvent =
   | {
       type: EGameEventType.ACTION;
       playerId: string;
-      action: IMainActionRequest;
+      /** Main-action requests use `IMainActionRequest`; the engine may log string keys (e.g. `CARD_CUSTOM_EFFECT_UNHANDLED`). */
+      action: IMainActionRequest | string;
+      details?: Record<string, unknown>;
+      at?: number;
     }
   | {
       type: EGameEventType.FREE_ACTION;

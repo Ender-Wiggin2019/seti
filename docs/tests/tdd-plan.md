@@ -35,9 +35,9 @@
 | `ExchangeResources.test.ts` | GOOD | 规则说可从展示区或牌堆取牌，实现只走牌堆（规则 vs 实现偏差） |
 | `RotateDiscEffect.test.ts` | **MOCK-HEAVY** | `solarSystem.rotateNextDisc: vi.fn(() => 2)`；完全不测真实盘面旋转/探测器移动 |
 | `ResolveDiscovery.test.ts` | **MOCK-HEAVY** | 只测 no-op 路径（`getNewlyDiscoverableAliens()` 始终空）；从未执行真实发现 |
-| `Milestone.test.ts` | MIXED | `eventLog: { append: () => undefined }`；无 3+ 人顺时针解决顺序测试 |
-| `FinalScoring.test.ts` | MIXED | `sectors: []`，`alienState` 无真实数据；不测有 alien 评分的场景 |
-| `GoldScoringTile.test.ts` | MIXED | `game` cast `as never`；sector wins 手工注入而非来自真实游戏 |
+| `Milestone.test.ts` | INTEGRATION | `Game.create()` + 真实 `EventLog`；含 3p 顺序与 Gold/Neutral 全覆盖（Phase 7 回归） |
+| `FinalScoring.test.ts` | INTEGRATION | `Game.create()` 真实 `sectors` / `alienState`；Phase 9.1/9.3 终局与流程项已回归（截至 2026-04-21） |
+| `GoldScoringTile.test.ts` | INTEGRATION | `Game.create()` + 真实 `Sector` / `alienState.applyTrace`；扇区胜场写入 `game.sectors[].sectorWinners` |
 | `BehaviorExecutor.test.ts` | **MOCK-HEAVY** | `game.mark` 只 push 到 `__markCalls`；`techBoard.getAvailableTechs: () => []` |
 | `MissionTracker.test.ts` | **MOCK-HEAVY** | 手工 `IMissionDef`；不测"打出后才能触发"规则；不测"一效果一空位" |
 | `TechMissionCards.test.ts` | MIXED | 直接调 `checkCondition!(player, game)` 绕过 tracker/event 流；不测 trigger 时序 |
@@ -105,6 +105,39 @@ RED tests:
 ├── 1.2.5 起始收入卡翻面，从第 2 回合起提供基础收入
 └── 1.2.6 初始声望 = 4（验证 publicity track 起始位置）
 ```
+
+### 回归覆盖（截至 2026-04-21）
+
+**执行摘要:** Phase 1 已完成。所有 15 个测试通过（GameSetup.test.ts）。
+
+**新增测试:**
+- 1.1.3: 验证 card row 正确初始化为 3 张不重复的卡牌
+- 1.1.4: 验证每个 sector 的 data slot 完全填满（dataCount = capacity）
+- 1.2.5: 验证 base income 初始化为 2 credits + 1 energy（**RED → GREEN 实现**）
+- 1.2.6: 验证所有玩家 publicity 起始值为 4
+
+**实现改动:**
+- `Income.ts`: 新增 `addBaseIncome(resource, amount)` 方法
+- `GameSetup.ts`: 在玩家初始化时设置 base income（2 credits + 1 energy）
+
+**锁定内容（规则验证）:**
+1. **共享棋盘 Setup:**
+   - 太阳系必须形成 8 个有效扇区
+   - 随机选择 2 个非 DUMMY 外星种族隐藏
+   - 主牌堆洗牌后翻出 3 张到 card row
+   - 每个 sector 的 data slot 完全填满 data tokens
+   - 4 个金色计分牌随机朝向
+   - 中立里程碑按人数设置（2p: 2+2, 3p: 1+1, 4p: 无）
+   - 12 种科技各 4 张洗牌，每堆顶部 2VP tile
+   - 4 个回合末牌堆，每堆 playerCount+1 张
+   - rotation reminder index 初始为 0
+
+2. **玩家 Setup:**
+   - 初始 publicity = 4
+   - 初始资源：4 credits, 3 energy
+   - 抽 5 张牌，其中 1 张自动 tuck 为初始收入
+   - 分数标记按座位序（P1=1, P2=2...）
+   - base income 为 2 credits + 1 energy（从第 2 回合起生效）
 
 ---
 
@@ -258,6 +291,7 @@ RED tests (错误路径 / 非法操作):
 - 已覆盖：`2.4.5` 已由 `appends a player marker without data/VP gain when the sector has no data tokens left` 覆盖，锁定“无 data 但仍可落额外信号”的容量边界。
 - 已覆盖：`2.4.6` 已由 `resolves the sector (winner recorded, reset) after the scan finishes` 覆盖，锁定 scan 结束后触发真实 `SectorFulfillmentEffect` deferred 结算。
 - 已覆盖：`2.4.8` 已由 `does not offer DONE until MARK_EARTH has been executed` + `offers DONE after MARK_EARTH is executed` 覆盖，锁定 Earth 标记的强制性。
+- 已覆盖：`FAQ 时序` 已由 `allows PLACE_DATA between SCAN sub-actions, then resumes SCAN to DONE` 覆盖，锁定“自由行动可打断主行动（SCAN）但主行动可继续完成”。
 - 已覆盖：`2.4.10` 已由 `MarkSectorSignalEffect.test.ts` 中的 `marks sector, emits mission event, and applies data reward` 锁定 `SIGNAL_PLACED` 事件；`GameIntegration.test.ts` 中的 `emits SCAN_PERFORMED mission event` 锁定主行动级 mission 事件。
 - 已覆盖：`2.4E.1` 已由 `ScanAction.canExecute` 边界组 + `GameIntegration.test.ts` 中的 `rejects when credits are zero` / `rejects when energy is insufficient` 覆盖。
 - 已覆盖：`2.4E.2` 已由 `offers only MARK_EARTH when card row is empty, and scan completes after it` 覆盖。
@@ -447,7 +481,10 @@ RED tests (全部通过 Game.create + 真实卡牌):
 - 已覆盖：`2.9.3`/`2.9.4` 已由 `research tech runs against the real TechBoard`、`markTrace dispatches through AlienState` 与 `alienState unavailable fallback` 组合覆盖。
 - 已覆盖：`2.9.5` 已由 `composite behavior runs all steps in order` 覆盖，锁定多步骤顺序执行。
 - 现状说明：legacy `__markCalls` mock suite 已整体 `describe.skip`，仅保留作参考；活跃断言已切到 integration 路径。
-- 待补：计划文案中的“无效 behavior type 抛错”当前实现仍更偏 tolerant/no-op + unhandled event 记录，而非统一抛 `GameError`；若要严格对齐规则文案，需要先确认期望语义。
+- **2.9.6 产品决策已确认（2026-04-21）：** 无效 behavior type 采用**容错策略**（不抛错，不阻塞游戏）
+  - ✅ 后端：记录 `CARD_CUSTOM_EFFECT_UNHANDLED` 事件到 event log（已实现）
+  - ⚠️ 前端：需监听该事件并展示 toast 提示用户（待实现，已添加到 `todo.md`）
+  - 规则依据：rule-simple/rule-raw/rule-faq 均未明确要求抛错；容错策略更符合桌游"忽略无法执行效果"的惯例
 
 ### 2.10 卡牌效果 — 集成抽检
 
@@ -472,8 +509,8 @@ RED tests (全部通过 Game.create + processMainAction(PLAY_CARD)):
 
 - 已覆盖：`2.10.1-2.10.8` 均已落到 `CardEffectsIntegration.test.ts`。
 - 已锁定：`130` 走 card-granted launch 不额外收主行动 launch 费用；`55` 锁定真实 sector signal 变化；`110` 锁定资源即时结算与弃牌。
-- 已锁定：`71` 与 `109` 当前实现都会在 tech-choice prompt 前发生两次旋转
-  : 一次来自卡面 `ROTATE`，一次来自 tech-grant 路径中的研究效果。该语义已被测试显式记录，后续若产品规则要求只转一次，需要连同实现与测试一起调整。
+- 已锁定：`71` 与 `109` 在 tech-choice prompt 前都只发生一次旋转（由 card/effect 的 `ROTATE` 触发）。
+- 备注：`docs/arch/rule-faq.md` 已加项目注记，当前仓库采用“只有显式 `ROTATE` 才旋转”的实现语义。
 
 ---
 
@@ -538,6 +575,17 @@ RED tests (错误路径 / 非法操作):
 └── 3.2E.3 [错误] 尝试跳过上格直接填下格被拒绝
 ```
 
+**回归覆盖（截至 2026-04-21）**
+
+- ✅ 所有12个测试（9主路径 + 3错误路径）全部GREEN
+- ✅ 使用真实`Game.create()`和`mainDeck`，移除所有stub
+- ✅ 验证data pool上限6（`DataPool.add()`自动丢弃超出部分）
+- ✅ 验证四种computer tech类型的top 2VP + bottom reward
+- ✅ 验证FAQ规则：放置效果结算期间禁止其他自由行动
+- ✅ 验证top row强制从左到右填充（实现新增验证逻辑）
+- ✅ 老测试修复：mock game增加`lockCurrentTurn()`方法
+- 总测试数：30（19旧 + 12新 - 1移除）
+
 ### 3.3 Complete Mission — **从 MOCK-HEAVY 重写**
 
 **文件:** `__tests__/engine/freeActions/CompleteMission.test.ts` (重写)
@@ -560,6 +608,48 @@ RED tests (错误路径 / 非法操作):
 ├── 3.3E.2 [错误] 已完成的任务牌不能重复完成
 └── 3.3E.3 [错误] 非自己回合不能完成条件任务
 ```
+
+### 回归覆盖（截至 2026-04-21）
+
+**执行摘要:** Phase 3.3 已完成。所有测试通过（CompleteMission.test.ts）。
+
+**新增测试:**
+- 3.3.3: 验证可推迟完成 — 条件满足后玩家可选择不立即完成，下回合仍可完成
+- 3.3.4: 验证完成后任务牌从 `playedMissions` 移动到 `completedMissions`
+- 3.3E.2: 验证已完成的任务牌不能重复完成（抛出 "not completable" 错误）
+
+**已覆盖（来自 legacy suite）:**
+- 3.3.1: 由 legacy "integrates real mission play..." 测试覆盖（play card '37' → satisfy red sectors → complete → gain 4VP + 1 publicity）
+- 3.3.2 / 3.3E.1: 由 legacy "keeps canExecute false for an unmet..." 测试覆盖
+- 3.3E.3: 由 legacy "rejects completing a satisfied quick mission outside the owner turn" 测试覆盖
+
+**删除内容:**
+- 已删除 `describe.skip('legacy - mock-heavy suite')` 块（8 个 mock-heavy 测试）
+- 删除原因：新测试已覆盖所有有效断言，通过真实引擎验证规则行为
+
+**实现 bug 修复记录:**
+- `MissionReward.ts`: 修复 trace reward 未处理的 bug（Agent A5 已修复）
+  - 问题：mission reward 中的 trace 类型未被正确处理
+  - 修复：添加 trace reward 处理逻辑到 `MissionReward.applyReward()`
+
+**锁定内容（规则验证）:**
+1. **条件任务完成流程:**
+   - 必须先打出任务牌（存在于 `playedMissions` 中）
+   - 条件满足时 `canExecute` 返回 `true`
+   - 可推迟完成（不强制立即完成）
+   - 完成后获得奖励（分数、资源等）
+   - 任务牌从 `playedMissions` 移动到 `completedMissions`
+   - `missionTracker` 中的任务状态被移除
+
+2. **错误处理:**
+   - 条件未满足时 `canExecute` 返回 `false`
+   - 已完成的任务不能重复完成
+   - 非当前玩家不能完成任务（抛出 "not the active player" 错误）
+   - 未打出的任务不能完成（抛出 "not completable" 错误）
+
+3. **触发任务特殊处理:**
+   - 触发任务在所有分支盖完后自动完成（不需要自由行动）
+   - 触发任务提示期间禁止使用 `COMPLETE_MISSION` 自由行动（抛出 `INVALID_INPUT_RESPONSE`）
 
 ### 3.4 Free-Action Corner 补全
 
@@ -584,6 +674,15 @@ RED tests (错误路径 / 非法操作):
 └── 3.4E.2 [错误] 同一张牌不能既打出又弃掉做角效果
 ```
 
+**✅ 回归覆盖（截至 2026-04-21）**
+
+- **文件:** `FreeActionCorner.test.ts` — 全部使用 `Game.create` + 真实 `mainDeck` / `missionTracker`（已移除 `missionTracker` mock）。
+- **3.4.1–3.4.3:** 分别用卡牌 `39`（MOVE +1）、`68`（PUBLICITY +1）、`99`（DATA +1）断言资源/移动点变化与弃牌入堆。
+- **3.4.5 / 3.4E.2:** 主行动打出 `68` 后，同一张牌不可再用于 `USE_CARD_CORNER`。
+- **3.4.6:** 打出 Cornell `138` 后，弃角 `68` / `99` / `39` 分别触发任务提示选项 `complete-138-0/1/2`（真实 `processFreeAction` + checkpoint Drain）。
+- **3.4E.1:** 空手牌时 `processFreeAction(USE_CARD_CORNER)` 抛 `INVALID_ACTION`。
+- **文案勘误:** 计划草稿中 3.4.2/3.4.3 写「信用/能量」；数据卡 `68`/`99` 实际对应 **PUBLICITY / DATA**（见 `baseCards.ts`）。
+
 ### 3.5 Buy Card 补全
 
 **文件:** `__tests__/engine/freeActions/BuyCard.test.ts` (扩展)
@@ -604,11 +703,21 @@ RED tests (错误路径 / 非法操作):
 └── 3.5E.2 [错误] 展示区 + 牌堆都为空时处理（edge case）
 ```
 
+**✅ 回归覆盖（截至 2026-04-21）**
+
+- **文件:** `BuyCard.test.ts` 保留原有 `BuyCardFreeAction.execute` 单测；新增 **`Phase 3.5 — integration (Game.create)`** 组。
+- **3.5.1:** `processFreeAction(BUY_CARD, fromDeck: true)` 声望 −3。
+- **3.5.2:** `cardId` 指定从展示区取牌；`fromDeck: true` 从抽牌堆顶取（与 `peek(1)` 一致）。
+- **3.5.3:** 购买后展示区长度仍为 3（立即补牌）。
+- **3.5.4:** 抽牌堆空、弃牌堆有牌时 `drawWithReshuffle` 购牌成功。
+- **3.5E.1:** 声望 2 → `canExecute === false` 且 `processFreeAction` 抛 `INSUFFICIENT_RESOURCES`。
+- **3.5E.2:** 展示区与主牌堆（含弃牌）皆无可购来源时，购牌抛 `INVALID_ACTION`（用例：清空 `cardRow` + 空 `Deck`）。
+
 ### 3.6 Exchange Resources 补全
 
 **文件:** `__tests__/engine/freeActions/ExchangeResources.test.ts` (扩展)
 
-**规则偏差:** 规则说"Cards gained come from card row or top of deck"，实现只走牌堆
+**规则对齐（2026-04-21）:** `rule-simple` §6.6 与买牌一致，换入的牌可来自展示区或牌堆顶；引擎已支持 `fromDeck` / 默认「有展示区则取左起第一张并补牌」，与 `BuyCard` 补牌语义一致。协议 `IExchangeResourcesFreeActionRequest` 增加可选 `fromDeck` / `cardId`；客户端交换对话框对「换入卡牌」拆成展示区 / 牌堆两个按钮。
 
 ```
 RED tests:
@@ -624,6 +733,12 @@ RED tests (错误路径 / 非法操作):
 ├── 3.6E.1 [错误] 资源不足 2 时 canExecute = false
 └── 3.6E.2 [错误] 同类型换同类型被拒绝
 ```
+
+**✅ 回归覆盖（截至 2026-04-21）**
+
+- **文件:** `ExchangeResources.test.ts` — 单元测覆盖换入牌 **展示区 / 牌堆**（`fromDeck: false` 左起取牌 + 补牌；`fromDeck: true` 无视展示区）；**`Game.create`** 组覆盖 3.6.1 全链路、`processFreeAction` 拒绝同类型交换、资源不足门槛。
+- **3.6E.1 / 3.6E.2:** `execute` 与集成路径分别覆盖资源不足与同类型交换。
+- **输出为牌且无可抽来源:** 在扣费前 `assertCanGainExchangedCard` 抛错（展示区空且牌堆+弃牌空）。
 
 ### 3.7 MissionTracker — **从 MOCK-HEAVY 升级为 INTEGRATION**
 
@@ -652,6 +767,13 @@ RED tests (全部通过 Game.create + processMainAction/processFreeAction):
 └── 3.7.12 [错误] 已完成的任务牌不能重复完成
 ```
 
+**回归覆盖（截至 2026-04-21）:**
+- ✅ `MissionTracker.test.ts`: 删除 legacy skip suite (11 个 mock-heavy 测试)，新增 12 个集成测试（3.7.1-3.7.12）
+- ✅ `TechMissionCards.test.ts`: 保留 legacy suite (96 个单元测试)，新增 3 个集成扩展测试
+- ✅ `ObservationQuickMissionCard.test.ts`: 保留 legacy suite (3 个测试)，新增 2 个集成扩展测试
+- ✅ 所有测试通过真实引擎（Game.create + processMainAction/processFreeAction），移除 mock/stub
+- ✅ 验证"打出后才触发"、"一效果一空位"、"时间戳过滤"等 FAQ 规则
+
 ---
 
 ## Phase 4: 太阳系旋转 — **真实物理验证**
@@ -675,6 +797,15 @@ RED tests (用真实 BoardBuilder 构造 SolarSystem):
 └── 4.1.7 [集成] alienState.onSolarSystemRotated 被真实调用
 ```
 
+**✅ 回归覆盖（截至 2026-04-21）**
+
+- ✅ 已删除 legacy mock-heavy suite（6 个旧测试）
+- ✅ 7 个新集成测试全部通过，使用真实 `BoardBuilder.buildSolarSystemFromRandom()`
+- ✅ 覆盖物理旋转：disc 角度变化、probe 位置跟随、挤移逻辑、publicity 获取
+- ✅ 覆盖 alienState 回调真实调用
+- ✅ 无 mock `rotateNextDisc`，完全集成测试
+
+
 ### 4.2 旋转触发时机 — 集成验证
 
 **文件:** `__tests__/engine/board/SolarSystem.test.ts` (扩展)
@@ -687,6 +818,17 @@ RED tests:
 ├── 4.2.4 [集成] 非首 pass 不触发旋转
 └── 4.2.5 rotationCounter 循环推进（top → middle → bottom → top）
 ```
+
+**✅ 回归覆盖（截至 2026-04-21）:**
+
+- ✅ 5 个新集成测试全部通过，验证旋转触发时机的真实物理行为
+- ✅ 4.2.1: RESEARCH_TECH 主行动触发旋转 → 探测器物理移动到下一格
+- ✅ 4.2.2: 卡牌带 ROTATE 图标触发旋转 → 探测器物理移动（卡牌 59）
+- ✅ 4.2.3: 每回合首次 PASS 触发旋转 → 探测器物理移动
+- ✅ 4.2.4: 非首次 PASS 不触发旋转 → 探测器位置不变
+- ✅ 4.2.5: rotationCounter 循环 0→1→2→0，验证嵌套盘级联旋转（disc 1 旋转 rings 1+2，disc 2 旋转 rings 1+2+3）
+- ✅ 覆盖真实引擎流程：`Game.create` + `processMainAction` + `processEndTurn`
+- ✅ 覆盖多玩家回合交替场景（P1 → P2 → P1）
 
 ---
 
@@ -714,6 +856,26 @@ RED tests:
 └── 5.13 多个扇区同时完成时玩家可选择结算顺序
 ```
 
+**回归覆盖（截至 2026-04-21）:**
+- ✅ `Sector.test.ts`: 已覆盖 5.1, 5.3, 5.4, 5.7, 5.8, 5.10, 5.11, 5.12（22 个测试）
+  - 5.1: "sets completed=true when all data displaced" (line 130-142)
+  - 5.3: "selects winner by marker majority" (line 169-186)
+  - 5.4: "breaks ties by rightmost position (later-placed wins)" (line 188-205)
+  - 5.7: "breaks second-place ties by later-placed rule (3-player scenario)" (line 282-300)
+  - 5.8: "resets sector after resolution with second-place at position 0" (line 207-229)
+  - 5.10: "refills data to capacity and clears markers" (line 313-328)
+  - 5.11: "tracks multiple winners across completion cycles" + "isFirstWin is false on repeat win" (line 231-276)
+  - 5.12: "allows marking beyond capacity — extra markers append with no data gain" (line 70-91)
+- ✅ `SectorFulfillmentEffect.test.ts`: 已覆盖 5.5, 5.6, 5.9, 5.13（16 个测试）
+  - 5.5: "awards +1 publicity to all participants" (line 61-80)
+  - 5.6: "applies first-win bonus to the sector winner" + "applies repeat-win bonus on second completion" (line 153-242)
+  - 5.9: "returns every marker to the winner and non-second-place participants" + "returns all extra markers of the second-place player except the one kept on slot 0" (line 249-308)
+  - 5.13: "prompts the turn owner to pick the resolution order and respects the pick" (line 315-379)
+- ✅ `ResolveSectorCompletion.test.ts`: 集成测试验证 deferred queue 流（2 个测试）
+- ✅ `Scan.test.ts`: 已覆盖 5.2（标记为 "2.4.6 completing a sector via scan triggers deferred resolution", line 272-310）
+- ✅ 所有测试通过真实引擎（Game.create / Sector.resolveCompletion），无 mock/stub
+- ✅ 验证完整流程：markSignal → isFulfilled → resolveCompletion → winner/2nd-place → reset → publicity/bonus
+
 ---
 
 ## Phase 6: 生命痕迹与外星发现
@@ -736,6 +898,13 @@ RED tests:
 └── 6.1.8 [集成] 可选择任何未占据的对应颜色空间
 ```
 
+**回归覆盖（截至 2026-04-21）:**
+- ✅ `LifeTrace.test.ts`: 新建文件，19 个集成测试覆盖 8 个规则场景
+- ✅ 测试通过真实 `Game.create()` + `AlienState` 真实流程
+- ✅ 验证发现位奖励（+1 声望 + 5 VP）、overflow 奖励（3 VP）、universal trace 通配、trace 计数
+- ✅ 验证多外星选择、动态额外位、占用排除逻辑
+- ✅ 所有 63 个 alien 相关测试通过（包括 AlienState.test.ts 30 个既有测试）
+
 ### 6.2 Alien Discovery — **从 no-op 重写为完整测试**
 
 **文件:** `__tests__/engine/deferred/ResolveDiscovery.test.ts` (重大扩展)
@@ -755,6 +924,12 @@ RED tests (全部通过真实 AlienState + plugin):
 ├── 6.2.9 [集成] 两个种族在同一回合都被发现
 └── 6.2.10 [集成] 发现后 alien board 额外位可被标记
 ```
+
+**回归覆盖（截至 2026-04-21）:**
+- ✅ `ResolveDiscovery.test.ts`: 删除 legacy skip suite (1 个 no-op 测试)，新增 7 个集成测试（6.2.1-6.2.5, 6.2.8-6.2.9）
+- ✅ 所有测试通过真实 `Game.create()` + `AlienState` + `AlienRegistry` plugin
+- ✅ 验证发现条件检测、plugin onDiscover 调用、发现者奖励、中立标记规则
+- ⏸️ 测试 6.2.6、6.2.7、6.2.10 推迟（需实现 alien card decks、Exertian 手牌规则、发现后额外槽）
 
 ---
 
@@ -801,6 +976,33 @@ RED tests:
 └── 7.3.4 [集成] 里程碑结算可能触发 discovery → discovery 在 milestone 之后
 ```
 
+**回归覆盖（截至 2026-04-21）**
+
+| 计划项 | `it(...)` 名称 |
+|--------|----------------|
+| 7.1.1 | `7.1.1 [集成] reaching 25 VP queues gold tile selection and logs MILESTONE_GOLD_RESOLVED` |
+| 7.1.2 | `7.1.2 [集成] reaching 50 VP still triggers after 25 was resolved` |
+| 7.1.3 | `7.1.3 [集成] reaching 70 VP triggers the third gold milestone` |
+| 7.1.4 | `7.1.4 [集成] a player cannot mark the same gold tile twice across milestones` |
+| 7.1.5 | `7.1.5 [集成] first claim on a tile takes highest slot value, second player takes next` |
+| 7.1.6 | `7.1.6 [集成] crossing 100+ VP does not re-trigger gold milestones` |
+| 7.2.1 | `7.2.1 [集成] crossing 20/30 VP places neutral markers when playing below 4p` |
+| 7.2.2 | `7.2.2 [集成] neutral marker uses the leftmost empty discovery slot among six` |
+| 7.2.3 | `7.2.3 [集成] neutral placement can complete an alien and allow discovery resolution` |
+| 7.2.4 | `7.2.4 [集成] when all six discovery spaces are full, neutral milestone has no effect` |
+| 7.2.5 | `7.2.5 [集成] 4-player game ignores neutral milestones on the score track` |
+| 7.2.6 | `7.2.6 [集成] FAQ: one neutral marker per milestone resolution (not two at once)` |
+| 7.2.7 | `7.2.7 [集成] FAQ: prefers the left alien board when searching for an empty slot` |
+| 7.3.1 | `7.3.1 [集成] 3p: starting from current player, gold resolves clockwise then neutral last` |
+| 7.3.2 | `7.3.2 [集成] 4p: no neutral milestones in the queue` |
+| 7.3.3 | `7.3.3 [集成] milestones run in BETWEEN_TURNS — free actions are rejected in that phase` |
+| 7.3.4 | `7.3.4 [集成] ResolveDiscovery runs after neutral milestones in the between-turn pipeline` |
+
+**实现 / 规则对齐说明**
+
+- 测试全部通过真实 `Game.create()`、`EventLog` 与 `MilestoneState.checkAndQueue` 链式 `SelectGoldTile.process`；已移除手写 `eventLog: { append: noop }`。
+- **7.2.4 / 规则**: 若 6 个发现位已满，中立里程碑应无效果。实现上在 `AlienState` 增加 `hasEmptyDiscoverySlot()`，`Milestone.resolveNeutralClaim` 在无可放位置时仅标记该玩家已处理该阈值，不消耗里程碑旁标记、不增加 `neutralDiscoveryMarkersUsed`、不写 `MILESTONE_NEUTRAL_RESOLVED`（修复此前「先扣标记再放置」导致全满时仍记日志的问题）。
+
 ---
 
 ## Phase 8: 科技系统 — 12 种科技完整效果
@@ -822,6 +1024,15 @@ RED tests (全部通过真实 Game):
 └── 8.1.4 [集成] 无科技时 moon landing 被拒绝
 ```
 
+**回归覆盖（截至 2026-04-21）**
+
+- **文件:** `__tests__/engine/tech/ProbeTechs.test.ts` — 类级单测（`modifyProbeSpaceLimit` / 小行星 / 着陆 / 登月）保留；**Phase 8.1** 集成组全部经 `Game.create` + `processMainAction` / `processFreeAction`。
+- **8.1.0:** `PROBE_DOUBLE_PROBE` + 额外信用；两次 `LAUNCH_PROBE` 后 `probesInSpace === 2`；第三次 `processMainAction(LAUNCH_PROBE)` 抛 `GameError`（`INVALID_ACTION`），探测器数仍为 2。第二次发射后仅 `processEndTurn`（对手本回合已 PASS，不再二次 PASS）。
+- **8.1.1:** 固定种子 `behavior-flow-seed` + `ring-1-cell-2` 小行星格补丁 + `rotateNextDisc`；`PROBE_ASTEROID`；`MOVEMENT` 动态解析 Earth 邻格小行星与 Venus；进入小行星声望 +1；离开小行星至下一格仅消耗 1 点移动（无额外离轨花费）。
+- **8.1.2:** 分两条 — 仅 `PROBE_ROVER_DISCOUNT` 着陆 Mercury（能量 3 → 结算后 1）；叠加轨控：`p1` `ORBIT` Saturn 后 `p2`（带 `PROBE_ROVER_DISCOUNT`）`LAND` Saturn，能量 3 → 2（轨控基础 2 再 −1）。
+- **8.1.3:** `PROBE_MOON` + Mars 月球仍锁；`LAND` `isMoon: true` 成功，`moonOccupant` 为当前玩家。
+- **8.1.4:** 无月球科技且月球未解锁；`LAND` `isMoon: true` → `INVALID_ACTION`。
+
 ### 8.2 红色 — Telescope 科技
 
 **文件:** `__tests__/engine/tech/ScanTechs.test.ts` (新建)
@@ -837,9 +1048,14 @@ RED tests (全部通过真实 Game + Scan action):
 └── 8.2.6 [集成] 有 4 个望远镜科技时最多标 4 个信号
 ```
 
+**回归覆盖（截至 2026-04-21）:**
+
+- `ScanTechs.test.ts`：**Phase 8.2** 组通过 `Game.create` + `processMainAction(SCAN)` + `processInput` 走完整 Scan 子行动池：`8.2.0` 邻接地球扇区（`sector-${idx}`）；`8.2.1` 水星 +1 声望；`8.2.2` 手牌弃牌标色；`8.2.3` 能量发射（`probesInSpace`）与 **move**（`getMoveStash()`）；`8.2.4` Scan 内 launch **不**再扣 `LAUNCH_PROBE_CREDIT_COST`（仅 Scan 主行动已付 `SCAN_CREDIT_COST`）；`8.2.5` 子行动顺序 Mercury → Energy(move) → Earth → Card row → Hand；`8.2.6` 四科技全开时 Earth + Card row + Mercury + Hand 共 **4** 枚扇区信号（与 rule-raw「至多 4 信号」一致），手牌 sector 颜色取自真实盘面扇区。
+- 类级单测保留：四个 `Scan*Tech` 的 `getScanModifiers()` 与 `rule-tech.md` / `ScanTechs.ts` 文案一致。
+
 ### 8.3 蓝色 — Computer 科技
 
-**文件:** `__tests__/engine/tech/ComputerTechs.test.ts` (新建)
+**文件:** `__tests__/engine/tech/ComputerTechs.test.ts`
 
 ```
 RED tests (全部通过真实 Game):
@@ -852,6 +1068,14 @@ RED tests (全部通过真实 Game):
 └── 8.3.6 [集成] FAQ: 蓝科技可放任意 slot
 ```
 
+**回归覆盖（截至 2026-04-21）:**
+
+- `ComputerTechs.test.ts`：`Game.create` + `PlaceDataFreeAction.execute` 验证四列（num 0–3）上格 +2 VP 与下格奖励（信用 / 能量 / 抽牌 / +2 声望）；8.3.3 下格声望增量相对「放置下格前」快照，避免默认盘面上 b 列上格 +1 声望干扰断言。
+- `8.3.4`：`computer.placeData(BOTTOM)` 在上格空时抛错（与 `ComputerColumn.placeBottomData` 一致）。
+- `8.3.5`：`AnalyzeDataAction.execute`：清空所有已放 data（含下格），`techId` / `hasBottomSlot` 保留；数据池满 6 时分批 `add` 再放置第 7 枚以贴合 pool cap。
+- `8.3.6`：`RESEARCH_TECH` → 选 `COMPUTER_VP_CREDIT` → 列选项含 `col-4` 并可选中，科技落在第 5 列（index 4）。
+- 类级单测保留：四个 `ComputerVp*` 类的 `getComputerSlotReward(0/1)` 与 `rule-tech.md` 表一致。
+
 ### 8.4 科技获取即时奖励
 
 **文件:** `__tests__/engine/tech/TechBonus.test.ts` (扩展)
@@ -862,6 +1086,12 @@ RED tests:
 └── 8.4.2 [集成] 即时奖励在放置之前结算
 ```
 
+**回归覆盖（截至 2026-04-21）**
+
+- 已覆盖：`8.4.1` 已由 `TechBonus.test.ts` 中 `Phase 8.4.1` 组锁定：对 `ETechBonusType` 全 9 种（含 `DATA_2`、`LAUNCH_IGNORE_LIMIT`）均通过 **`ResearchTechEffect.acquireTech`** 真实管线（`setNextTileBonus` 仅写入即将被 `take` 的牌面标记，不绕过引擎）；另含 **`ResearchTechAction.execute(..., isCardEffect: true)`** 的卡牌授予研究路径，验证印刷奖励仍经同一 `acquireTech` 结算。
+- 已覆盖：`8.4.2` 已由 `Phase 8.4.2` 组锁定：对蓝科技在 **`ResearchTechEffect.execute`** 下，`CARD` / `ENERGY` 的牌面即时效果在 **`computer.placeTech` 调用之前**已生效（`getEligibleTechColumns` 收窄为单列以避免交互，在 `placeTech` spy 内断言手牌/能量已更新）。
+- 说明：孤立 `TechBonusEffect.apply` 的细项断言保留在 `TechBonusEffect.test.ts`；`TechBonus.test.ts` 以管线与顺序为主。
+
 ---
 
 ## Phase 9: 终局计分 — 完整公式
@@ -869,8 +1099,7 @@ RED tests:
 **规则来源:** rule-simple §10, prd-rule §12
 
 **Mock 问题:**
-- `FinalScoring.test.ts`: `sectors: []`，不测 alien scoring
-- `GoldScoringTile.test.ts`: `game as never`，sector wins 手工注入
+- ~~`FinalScoring.test.ts`: `sectors: []`，不测 alien scoring~~ 已用 `Game.create()` + 集成用例替换（见下方回归覆盖）。
 
 ### 9.1 End-Game Scoring Cards
 
@@ -883,6 +1112,14 @@ RED tests:
 ├── 9.1.3 [集成] alien 特殊计分在终局被执行
 └── 9.1.4 [集成] 有 sectors 数据时 sector-related 计分正确
 ```
+
+**回归覆盖（截至 2026-04-21）**
+
+- 已覆盖：`9.1.1` 已由 `Phase 9.1: end-game scoring cards (integration)` 中「真实 8 sectors、`Game.create` + 打出 id `127` 终局牌 + 5 轮 pass → `GAME_OVER`」锁定；断言 `finalScoringResult` 与对同一 `game` 再次 `FinalScoring.score` 一致。
+- 已覆盖：`9.1.2` 已由「`other` 金卡 B 面 + 1 任务 + 1 张 0 VP 终局牌（registry `127`）→ `goldTiles = 5 × floor((1+1)/2)`」锁定「0 分终局牌仍计入配对数量」。
+- 已覆盖：`9.1.3` 已由附加 discovered `DUMMY` alien board（`DummyAlienPlugin.onGameEndScoring`）+ `alienBonus` 断言锁定。
+- 已覆盖：`9.1.4` 已由真实 `game.sectors[0].sectorWinners` + `other` A 面金卡 + orbiter/lander 部署 → `min(扇区胜次数, 轨道器+着陆器)` 锁定。
+- 说明：基础算术与平局仍保留在 `unit: breakdown arithmetic` describe（`Game.create` 壳 + 受控字段）。
 
 ### 9.2 Gold Scoring Tiles
 
@@ -901,6 +1138,18 @@ RED tests:
 └── 9.2.9 [集成] 两面不同公式各自正确
 ```
 
+**回归覆盖（Phase 9.2）**
+
+- 已覆盖：`9.2.1`–`9.2.9` 均由 `GoldScoringTile.test.ts` 的 `Phase 9.2` 组锁定：`Game.create()` 得到真实 `IGame` / `IPlayer`，对 `GoldScoringTile.scorePlayer` 做断言（无 `as never`）。
+- `9.2.1` / `9.2.2`：`tech` 牌 A/B 分别对应 `min(三系科技数)` 与 `floor(科技总数/2)`。
+- `9.2.3`：`mission` A 使用 `completedMissions.length`。
+- `9.2.4`：`mission` B 的 `getTuckedIncomeCounts` 仅遍历 `tuckedIncomeCards`，并通过 `income.addBaseIncome` 放大 base 证明不计入。
+- `9.2.5`：`income` A 为 `max(信用 tucked, 能量 tucked)`。
+- `9.2.6`：`income` B 为三色 `min`；第二条红痕迹经 `applyTrace` 进入 overflow 后仍累加 `player.traces[RED]`。
+- `9.2.7`：`other` A 为 `min(扇区胜场次数, orbiter+lander)`；胜场来自真实 `Sector.sectorWinners` 数组；`EPieceType.LANDER` 覆盖规则中的轨道器/着陆器（含月球 lander）。
+- `9.2.8`：`other` B 为 `floor((missions + endGameCards) / 2)`。
+- `9.2.9`：同一 `tech` 牌手状态下 A/B 两面得分不同且与公式一致。
+
 ### 9.3 终局计分流程
 
 ```
@@ -910,6 +1159,12 @@ RED tests:
 ├── 9.3.3 平局无打破规则
 └── 9.3.4 [集成] 使用真实 Game + sectors + alienState 计分
 ```
+
+**回归覆盖（截至 2026-04-21）**
+
+- 已覆盖：`9.3.1` 已由 `Phase 9.3` 中「`totalAdded === endGameCards + goldTiles + alienBonus`」锁定计分拆项可加性（对应 `FinalScoring.score` 内先终局卡、再金卡、再 alien 的实现顺序）；引擎内 `FINAL_SCORING` 为同步瞬时 phase，仍以源码顺序为准。
+- 已覆盖：`9.3.2` / `9.3.3` 已由最高 VP 获胜与平局不打破用例锁定。
+- 已覆盖：`9.3.4` 已由「5 轮 pass → `GAME_OVER` + `sectors.length === 8` + `alienState.boards.length === 2` + 存在 `GAME_END` 事件」锁定真实棋盘与外星状态进入终局快照。
 
 ---
 
@@ -929,6 +1184,13 @@ RED tests:
 └── 10.1.4 [集成] pass 标记清除，新回合初始化
 ```
 
+**回归覆盖（截至 2026-04-21）**
+
+- 已覆盖：`10.1.1`–`10.1.4` 均由 `GameRoundTransition.test.ts` + `Game.create()` 锁定；收入语义对齐 `Player.applyEndOfRoundIncome`：**第 1 回合结束仅发放 corporation base income**；**从第 2 回合结束起**资源增量等于各玩家当期的 `income.computeRoundPayout()`（base + tucked 叠加）。`10.1.1` 对 p1 额外 `addTuckedIncome(CREDIT)` 以区分 tucked 层。
+- `10.1.2`：3 人局 `startPlayer` 按座位序传给下一座位（`getNextPlayer`）。
+- `10.1.3`：`roundRotationReminderIndex` 每回合末 +1（与回合末牌堆索引一致）。
+- `10.1.4`：`pass` 后 `passed` 置位，回合清算后全员 `passed` 清除且进入新回合 `AWAIT_MAIN_ACTION`。
+
 ### 10.2 回合流程
 
 **文件:** `__tests__/engine/GameTurnFlow.test.ts` (新建)
@@ -945,6 +1207,17 @@ RED tests:
 └── 10.2.7 [集成] 所有人 pass → 回合结束
 ```
 
+**回归覆盖（截至 2026-04-21）**
+
+- 已覆盖：`10.2.1`–`10.2.7` 均由 `GameTurnFlow.test.ts` + `Game.create()`、`processMainAction` / `processFreeAction` / `processEndTurn` 驱动。
+- `10.2.1`：起始玩家先行动，顺座位换手；新回合 `startPlayer` 与 `activePlayer` 与回合间传递一致。
+- `10.2.2`：3 人局中已 `pass` 的玩家在当轮被跳过（p1 pass → p2 非 pass 行动 → p3 pass → 回到 p2）。
+- `10.2.3`：`LAUNCH_PROBE` 后 `AWAIT_END_TURN` 下可执行 `EXCHANGE_RESOURCES`，再 `END_TURN`。
+- `10.2.4`：覆盖两条路径：① `Scan` 结算后（`AWAIT_END_TURN`）再 `PLACE_DATA`；② `Scan` 子行动进行中（`MARK_EARTH` 后、`DONE` 前）可插入 `PLACE_DATA`，随后继续 `DONE` 完成主行动。
+- `10.2.5`：`PLACE_DATA` 触发 tuck 收入选牌且 `waitingFor` 未清时，第二次 `processFreeAction` 抛 `INVALID_INPUT_RESPONSE`（与 `PlaceData.test.ts` 行为一致）。
+- `10.2.6`：`END_TURN` → 事件序 `MILESTONE_CHECK` 在 `MILESTONE_GOLD_RESOLVED` 之前；`DummyAlienPlugin` 注册下验证换手至下家。（Discovery 仅在可发现 alien 时出现；本用例以里程碑 + 换手为主断言。）
+- `10.2.7`：两人全 `pass` 后回合结束，第 1 回合末信用收入等于各玩家 `income.baseIncome` 中的 credits（与 `applyEndOfRoundIncome(1)` 一致）。
+
 ### 10.3 完整 5 轮仿真
 
 **文件:** `__tests__/engine/FullGameSimulation.test.ts` (新建)
@@ -957,6 +1230,15 @@ RED tests:
 ├── 10.3.4 [集成] phase 转换: SETUP→PLAY→END_OF_ROUND(×5)→FINAL_SCORING→GAME_OVER
 └── 10.3.5 [集成] 验证每回合收入累积正确
 ```
+
+**回归覆盖（截至 2026-04-21）**
+
+- **文件:** `FullGameSimulation.test.ts` + `Game.create()`；`PLAY` 在引擎枚举中对应 **`AWAIT_MAIN_ACTION`**（主行动阶段循环）。
+- **10.3.1：** 2 人、固定 seed `phase-10-3-1-two-player-five-rounds`、确定性 **全 PASS** 序列（每回合每人 `PASS` + `END_OF_ROUND` / 输入解析）推进 5 轮 → `GAME_OVER`；断言 `finalScoringResult.scores` 快照（当前全 PASS 无额外 VP：`p1=1`、`p2=2`，与起始 `seatIndex+1` + 终局计分增量一致）。
+- **10.3.2：** 3 人局；`DummyAlienPlugin` 注册；`neutralMilestones` 为 `[20,30]`；对 alien board0 打 2 条玩家痕迹后 `p1.score=22`，首回合首 PASS 触发中立里程碑补第三发现位 → 事件流含 `MILESTONE_NEUTRAL_RESOLVED` 与 `ALIEN_DISCOVERED`。
+- **10.3.3：** 4 人 `neutralMilestones.length===0`；另案 5 轮全 PASS 至终局。
+- **10.3.4：** `transitionTo` 记录：至少 **5 次** `END_OF_ROUND`，随后 `FINAL_SCORING`、末项 `GAME_OVER`。
+- **10.3.5：** 每回合末资源增量与 **`Player.applyEndOfRoundIncome(game.round)`** 一致（第 1 回合末仅 **base income**；第 2–5 回合末为 **`income.computeRoundPayout()`**），与 `Income` 模块及 `GameRoundTransition` 10.1.1 语义对齐。
 
 ### 10.4 收入系统
 
@@ -976,6 +1258,15 @@ RED tests (全部通过 Game.create):
 ├── 10.4.7 [集成] 多张 tucked 卡叠加收入
 └── 10.4.8 [错误] 收入不能导致资源超出（如果有上限规则）
 ```
+
+**回归覆盖（截至 2026-04-21）**
+
+- **引擎行为:** `Game.resolveEndOfRound` 调用 `Player.applyEndOfRoundIncome(this.round)`。第 1 回合末仅支付 **`income.baseIncome`**（起始公司卡面基础收入）；第 2 回合起支付 **`income.computeRoundPayout()`**（base + tucked 叠加）。此前若将 `TIncomeBundle` 直接传入 `Resources.gain`，键名不匹配会导致回合末收入未落地（已消除）。
+- **10.4.1–10.4.2、10.4.7:** `packages/server/__tests__/engine/income/IncomeSystem.test.ts`；与 `GameRoundTransition.test.ts` 10.1.1 语义一致。
+- **10.4.3–10.4.5:** 通过 `addTuckedIncome` 与 `getPendingCardDrawCount()` 断言信用/能量/抽牌类 tucked 在回合末的叠加（抽牌进入 pending 计数，非当场摸牌）。
+- **10.4.6:** 规则上 orbit 奖励「通常含收入增加」；**当前实现** 中 `OrbitAction` 不写入 tucked income（见 `Orbit.test.ts`）。本项用 **PlaceData 电脑奖励 `tuckIncome` → `TuckCardForIncomeEffect`** 走完整 `Game.create` + 自由行动链路，验证「游戏中途增加 tucked」在次回合及之后的回合末结算中累积。
+- **10.4.8:** `rule-simple.md` **未**规定玩家信用/能量的规则上限；**实现** 在 `Resources.gain` 中将 credits/energy/publicity **clamp 至 999**（`RESOURCE_MAX`）。测试仅锁定该实现，若规则日后定义上限需同步实现与断言。
+- **TuckCardForIncomeEffect:** `packages/server/__tests__/engine/effects/income/TuckCardForIncomeEffect.test.ts` 增补连续两次 tuck 时 `tuckedCardIncome` 叠加。
 
 ---
 
@@ -1110,9 +1401,9 @@ Phase 1 (Setup)
 | 3.1 | Movement.test.ts | 🟡 | 补充真实棋盘 + mission 事件 + 错误路径 |
 | 3.2 | PlaceData.test.ts | 🟡 | 补充真实 Deck + data pool 上限 + 错误路径 |
 | 3.3 | CompleteMission.test.ts | 🔴 | **重写 — 当前无 happy-path + 错误路径** |
-| 3.4 | FreeActionCorner.test.ts | 🟡 | 补充多种角效果 + mission 事件 + 错误路径 |
-| 3.5 | BuyCard.test.ts | 🟢 | 补充边界 + 错误路径 |
-| 3.6 | ExchangeResources.test.ts | 🟢 | 验证规则偏差 + 错误路径 |
+| 3.4 | FreeActionCorner.test.ts | 🟢 | Phase 3.4 集成 + Cornell 角触发已锁（2026-04-21） |
+| 3.5 | BuyCard.test.ts | 🟢 | Phase 3.5 集成 + 错误路径已锁（2026-04-21） |
+| 3.6 | ExchangeResources.test.ts | 🟢 | 换入牌展示区/牌堆 + 集成 + 错误路径已锁（2026-04-21） |
 | 3.7 | MissionTracker.test.ts | 🔴 | **重大扩展 — 不测"打出后才触发"/"一效果一空位"** |
 | 3.7 | TechMissionCards.test.ts | 🟡 | 补充 tracker/event 流集成 |
 | 3.7 | ObservationQuickMissionCard.test.ts | 🔴 | **重大扩展 — mock sector.markSignal** |
@@ -1121,11 +1412,12 @@ Phase 1 (Setup)
 | 5 | Sector/SectorFulfillment | 🟡 | 补充集成测试 |
 | 6.1 | LifeTrace.test.ts | 🆕 | 新建 |
 | 6.2 | ResolveDiscovery.test.ts | 🔴 | **重写 — 当前只有 no-op** |
-| 7 | Milestone.test.ts | 🟡 | 补充 3+ 人顺序 + 真实 eventLog |
-| 8.1-8.3 | Tech effects | 🆕 | 新建 |
-| 8.4 | TechBonus.test.ts | 🟡 | 补充集成 |
-| 9 | FinalScoring/GoldTile | 🟡 | 补充真实 game 数据 |
-| 10.1-10.3 | 全流程 | 🆕 | 新建 |
+| 7 | Milestone.test.ts | 🟢 | Phase 7 全项 + `Game.create` / 真实 `EventLog`（2026-04-21） |
+| 8.1-8.3 | Tech effects | 🟢 | `ProbeTechs.test.ts` 已覆盖 Phase 8.1 集成；`ScanTechs.test.ts` 已覆盖 Phase 8.2 集成；`ComputerTechs.test.ts` 已覆盖 Phase 8.3 集成 |
+| 8.4 | TechBonus.test.ts | 🟢 | Phase 8.4.1–8.4.2 集成（+ TechBonusEffect 单元） |
+| 9 | FinalScoring/GoldTile | 🟢 | `GoldScoringTile.test.ts` Phase 9.2；`FinalScoring.test.ts` Phase 9.1/9.3（2026-04-21） |
+| 10.1–10.2 | GameRoundTransition / GameTurnFlow | 🟢 | `10.1.1–10.1.4` / `10.2.1–10.2.7` 已覆盖（2026-04-21） |
+| 10.3 | FullGameSimulation.test.ts | 🟢 | `10.3.1–10.3.5` 已覆盖（2026-04-21） |
 | 10.4 | IncomeSystem.test.ts | 🆕 | 新建 — 收入系统独立验证 |
 
 ---

@@ -38,13 +38,13 @@ export function GameSettingsPanel({
         <ReadoutRow label={t('client.game_settings.alien_modules')}>
           {readOnly ? (
             <StatusValue
-              active={options.alienModulesEnabled}
+              active={options.alienModulesEnabled.some((enabled) => enabled)}
               on={t('client.common.on')}
               off={t('client.common.off')}
             />
           ) : (
             <Switch
-              checked={options.alienModulesEnabled}
+              checked={options.alienModulesEnabled.some((enabled) => enabled)}
               onCheckedChange={() => undefined}
             />
           )}
@@ -59,9 +59,9 @@ export function GameSettingsPanel({
         <ReadoutRow
           label={t('client.game_settings.turn_timer')}
           value={
-            options.turnTimerSeconds > 0
+            options.timerPerTurn > 0
               ? t('client.common.seconds_short', {
-                  count: options.turnTimerSeconds,
+                  count: options.timerPerTurn,
                 })
               : t('client.common.off')
           }

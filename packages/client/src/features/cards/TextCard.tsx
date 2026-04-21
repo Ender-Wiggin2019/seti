@@ -1,11 +1,15 @@
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EEffectType, type Effect } from '@seti/common/types/effect';
+import { useTranslation } from 'react-i18next';
 
 interface ITextCardProps {
   card: IBaseCard;
 }
 
-function formatEffect(effect: Effect): string {
+function formatEffect(
+  effect: Effect,
+  translate: (value: string) => string,
+): string {
   switch (effect.effectType) {
     case EEffectType.BASE: {
       const parts: string[] = [];
@@ -14,12 +18,12 @@ function formatEffect(effect: Effect): string {
       }
       parts.push(effect.type);
       if (effect.desc) {
-        parts.push(`(${effect.desc})`);
+        parts.push(`(${translate(effect.desc)})`);
       }
       return parts.join(' ');
     }
     case EEffectType.CUSTOMIZED:
-      return effect.desc;
+      return translate(effect.desc);
     case EEffectType.MISSION_QUICK:
     case EEffectType.MISSION_FULL: {
       const missionLines = effect.missions.map((m) => {
@@ -27,31 +31,35 @@ function formatEffect(effect: Effect): string {
           .map((r) =>
             r.effectType === EEffectType.BASE
               ? `${r.value ?? ''}${r.type}`
-              : r.desc,
+              : translate(r.desc),
           )
           .join(' + ');
         const reward = m.reward
           .map((r) =>
             r.effectType === EEffectType.BASE
               ? `${r.value ?? ''}${r.type}`
-              : r.desc,
+              : translate(r.desc),
           )
           .join(' + ');
         return `${req} → ${reward}`;
       });
       const header =
         effect.effectType === EEffectType.MISSION_FULL ? 'MISSION' : 'QUICK';
-      return [header, effect.desc, ...missionLines].filter(Boolean).join(' | ');
+      return [header, translate(effect.desc), ...missionLines]
+        .filter(Boolean)
+        .join(' | ');
     }
     case EEffectType.END_GAME: {
       const per = effect.per
         ? ` per ${effect.per.value ?? ''}${effect.per.type}`
         : '';
       const score = effect.score != null ? ` (+${effect.score}VP${per})` : '';
-      return `END: ${effect.desc}${score}`;
+      return `END: ${translate(effect.desc)}${score}`;
     }
     case EEffectType.OR:
-      return effect.effects.map(formatEffect).join(' OR ');
+      return effect.effects
+        .map((nestedEffect) => formatEffect(nestedEffect, translate))
+        .join(' OR ');
     default:
       return '?';
   }
@@ -64,8 +72,11 @@ function formatEffect(effect: Effect): string {
  * it is unchanged.
  */
 export function TextCard({ card }: ITextCardProps): React.JSX.Element {
+  const { t } = useTranslation('seti');
   const freeActions = card.freeAction ?? [];
   const effects = card.effects ?? [];
+  const translate = (value: string): string =>
+    t(value, { defaultValue: value });
 
   return (
     <div
@@ -75,7 +86,7 @@ export function TextCard({ card }: ITextCardProps): React.JSX.Element {
     >
       <div className='flex items-center justify-between gap-1 border-b border-surface-700/60 pb-1'>
         <span className='truncate text-[11px] font-semibold uppercase tracking-wider'>
-          {card.name}
+          {translate(card.name)}
         </span>
         <span className='shrink-0 text-[9px] text-text-400'>#{card.id}</span>
       </div>
@@ -123,7 +134,7 @@ export function TextCard({ card }: ITextCardProps): React.JSX.Element {
           <ul className='mt-0.5 list-disc pl-3 text-[10px] text-text-100'>
             {effects.map((effect, index) => (
               <li key={`e-${index}`} className='break-words'>
-                {formatEffect(effect)}
+                {formatEffect(effect, translate)}
               </li>
             ))}
           </ul>
@@ -132,7 +143,7 @@ export function TextCard({ card }: ITextCardProps): React.JSX.Element {
 
       {card.description && (
         <p className='text-[9px] italic leading-snug text-text-300'>
-          {card.description}
+          {translate(card.description)}
         </p>
       )}
     </div>

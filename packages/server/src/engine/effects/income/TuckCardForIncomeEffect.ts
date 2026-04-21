@@ -1,16 +1,12 @@
 import { EResource } from '@seti/common/types/element';
-import { hasCardData, loadCardData } from '../../cards/loadCardData.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
 import { SelectCard } from '../../input/SelectCard.js';
 import type { IPlayer } from '../../player/IPlayer.js';
-
-const INCOME_RESOURCE_MAP: Record<string, keyof typeof RESOURCE_GAIN_MAP> = {
-  [EResource.CREDIT]: EResource.CREDIT,
-  [EResource.ENERGY]: EResource.ENERGY,
-  [EResource.CARD]: EResource.CARD,
-  [EResource.DATA]: EResource.DATA,
-};
+import {
+  resolveCardIncomeType,
+  resolveIncomeResourceFromCardId,
+} from './incomeCardUtils.js';
 
 const RESOURCE_GAIN_MAP = {
   [EResource.CREDIT]: { credits: 1 },
@@ -18,12 +14,6 @@ const RESOURCE_GAIN_MAP = {
   [EResource.CARD]: {},
   [EResource.DATA]: { data: 1 },
 } as const;
-
-function resolveCardIncomeType(cardId: string): EResource | undefined {
-  if (!hasCardData(cardId)) return undefined;
-  const data = loadCardData(cardId);
-  return data.income;
-}
 
 /**
  * Tuck a card from hand into the income area.
@@ -66,10 +56,7 @@ export class TuckCardForIncomeEffect {
 
           player.tuckedIncomeCards.push(removed);
 
-          const incomeType = resolveCardIncomeType(selectedId);
-          const mappedResource = incomeType
-            ? INCOME_RESOURCE_MAP[incomeType]
-            : undefined;
+          const mappedResource = resolveIncomeResourceFromCardId(selectedId);
 
           if (mappedResource) {
             player.income.addTuckedIncome(mappedResource as EResource);

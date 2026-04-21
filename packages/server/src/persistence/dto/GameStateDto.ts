@@ -131,6 +131,9 @@ export interface IAlienBoardDto {
   alienIndex: number;
   discovered: boolean;
   slots: ITraceSlotDto[];
+  alienDeckDrawPile: string[];
+  alienDeckDiscardPile: string[];
+  faceUpAlienCardId: string | null;
 }
 
 export interface IAlienStateDto {

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { lobbyApi } from '@/api/lobbyApi';
-import type { IGameOptions } from '@/api/types';
+import type { IAlienTypeOption, IGameOptions } from '@/api/types';
 import { ERoomStatus } from '@/api/types';
 import { CreateRoomDialog } from '@/components/CreateRoomDialog';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
@@ -27,6 +27,12 @@ export function LobbyPage(): React.JSX.Element {
         filter === 'all' ? undefined : { status: filter as ERoomStatus },
       ),
     refetchInterval: 5000,
+  });
+
+  const { data: alienTypeMap } = useQuery<Record<string, IAlienTypeOption>>({
+    queryKey: ['lobby-alien-types'],
+    queryFn: () => lobbyApi.getAlienTypeMap(),
+    staleTime: 5 * 60 * 1000,
   });
 
   const createMutation = useMutation({
@@ -104,6 +110,7 @@ export function LobbyPage(): React.JSX.Element {
         onOpenChange={setCreateOpen}
         onSubmit={(name, options) => createMutation.mutate({ name, options })}
         isPending={createMutation.isPending}
+        alienTypeMap={alienTypeMap}
       />
     </div>
   );

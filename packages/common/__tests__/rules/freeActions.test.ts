@@ -92,6 +92,9 @@ function createGameState(
     milestones: { goldMilestones: [], neutralMilestones: [] },
     goldScoringTiles: [],
     ...overrides,
+    undoAllowed: overrides?.undoAllowed ?? false,
+    canUndo: overrides?.canUndo ?? false,
+    turnIndex: overrides?.turnIndex ?? 0,
   };
 }
 

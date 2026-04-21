@@ -3,11 +3,11 @@ import { EAlienType, EPhase } from '@seti/common/types/protocol/enums';
 import { AlienState } from './alien/AlienState.js';
 import { BoardBuilder } from './board/BoardBuilder.js';
 import { PlanetaryBoard } from './board/PlanetaryBoard.js';
+import { BaseCorporation } from './corporation/BaseCorporation.js';
 import { Deck } from './deck/Deck.js';
 import { DeferredActionsQueue } from './deferred/DeferredActionsQueue.js';
 import { EventLog } from './event/EventLog.js';
 import type { Game } from './Game.js';
-import { Resources } from './player/Resources.js';
 import {
   GoldScoringTile,
   type TGoldScoringTileId,
@@ -20,6 +20,14 @@ const GOLD_TILE_IDS: readonly TGoldScoringTileId[] = [
   'mission',
   'income',
   'other',
+];
+
+const CORE_RANDOM_ALIENS: readonly EAlienType[] = [
+  EAlienType.ANOMALIES,
+  EAlienType.CENTAURIANS,
+  EAlienType.EXERTIANS,
+  EAlienType.MASCAMITES,
+  EAlienType.OUMUAMUA,
 ];
 
 export class GameSetup {
@@ -40,9 +48,7 @@ export class GameSetup {
       game.mainDeck.drawN(game.options.playerCount + 1),
     );
 
-    const selectableAliens = (Object.values(EAlienType) as EAlienType[]).filter(
-      (alienType) => alienType !== EAlienType.DUMMY,
-    );
+    const selectableAliens = GameSetup.getSelectableAliens(game);
     const alienPool = game.random.shuffle(selectableAliens);
     game.hiddenAliens = alienPool.slice(0, 2);
     game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
@@ -62,21 +68,13 @@ export class GameSetup {
     game.players.forEach((player) => {
       player.score = player.seatIndex + 1;
       player.publicity = 4;
-      player.resources = new Resources(
-        { credits: 4, energy: 3, publicity: 4, data: 0 },
-        { dataController: player.data },
-      );
       player.passed = false;
       player.playedMissions = [];
       player.completedMissions = [];
       player.endGameCards = [];
       player.tuckedIncomeCards = [];
-      player.hand = game.mainDeck.drawN(5);
-
-      const tuckedCard = player.hand.shift();
-      if (tuckedCard !== undefined) {
-        player.tuckedIncomeCards = [tuckedCard];
-      }
+      player.hand = [];
+      BaseCorporation.resolve(player, game);
     });
 
     game.deferredActions = new DeferredActionsQueue();
@@ -93,5 +91,12 @@ export class GameSetup {
       return [20, 30];
     }
     return [];
+  }
+
+  private static getSelectableAliens(game: Game): EAlienType[] {
+    const enabledFlags = game.options.alienModulesEnabled;
+    return CORE_RANDOM_ALIENS.filter(
+      (_, index) => enabledFlags[index] !== false,
+    );
   }
 }

@@ -831,6 +831,9 @@ function createDebugGameState(
     recentEvents: [],
     milestones: { goldMilestones: [], neutralMilestones: [] },
     goldScoringTiles: [],
+    undoAllowed: false,
+    canUndo: false,
+    turnIndex: 0,
   };
 }
 

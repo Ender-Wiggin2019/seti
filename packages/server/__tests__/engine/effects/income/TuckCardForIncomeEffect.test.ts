@@ -75,4 +75,20 @@ describe('TuckCardForIncomeEffect', () => {
       }
     }
   });
+
+  it('second tuck stacks tuckedCardIncome for future round-end payout', () => {
+    const player = createPlayer(['64', '46']);
+    const game = createGame([]);
+
+    const first = TuckCardForIncomeEffect.execute(player, game);
+    expect(first).toBeDefined();
+    first?.process({ type: EPlayerInputType.CARD, cardIds: ['64'] });
+
+    const second = TuckCardForIncomeEffect.execute(player, game);
+    expect(second).toBeDefined();
+    second?.process({ type: EPlayerInputType.CARD, cardIds: ['46'] });
+
+    expect(player.tuckedIncomeCards.length).toBe(2);
+    expect(player.income.tuckedCardIncome[EResource.CREDIT]).toBe(2);
+  });
 });

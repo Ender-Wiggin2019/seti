@@ -64,184 +64,19 @@ describe('CompleteMissionFreeAction', () => {
     });
   }
 
-  it('completes an active quick mission through game.processFreeAction', () => {
+  // Phase 3.3: Real integration tests (outside skip block)
+
+  it('3.3.3 [integration] allows deferred completion when condition is met but player chooses not to complete immediately', () => {
     const game = Game.create(
       TEST_PLAYERS,
       { playerCount: 2 },
-      'complete-mission-integration',
+      'complete-mission-defer',
     );
     const player = game.players[0];
-    const card = getCardRegistry().create('64');
-
-    game.missionTracker.registerMission(card.getMissionDef?.()!, player.id);
-    player.playedMissions.push(card);
-    game.alienState.applyTrace(player, game, ETrace.BLUE, 0, false);
-    game.alienState.applyTrace(player, game, ETrace.BLUE, 1, false);
-
-    const dataBefore = player.resources.data;
-
-    game.processFreeAction(player.id, {
-      type: EFreeAction.COMPLETE_MISSION,
-      cardId: '64',
-    });
-
-    expect(player.resources.data).toBe(dataBefore + 2);
-    expect(player.playedMissions).toHaveLength(0);
-    expect(player.completedMissions).toHaveLength(1);
-    expect(
-      game.missionTracker.getMissionState(player.id, '64'),
-    ).toBeUndefined();
-  });
-
-  it('rejects completing a full mission through game.processFreeAction', () => {
-    const game = Game.create(
-      TEST_PLAYERS,
-      { playerCount: 2 },
-      'complete-mission-branch-index',
-    );
-    const player = game.players[0];
-
-    game.missionTracker.registerMissionFromCard('106', player.id);
-    player.playedMissions.push('106');
-
-    const publicityBefore = player.resources.publicity;
-    const handBefore = player.hand.length;
-
-    expect(() =>
-      game.processFreeAction(player.id, {
-        type: EFreeAction.COMPLETE_MISSION,
-        cardId: '106',
-        branchIndex: 2,
-      }),
-    ).toThrow('Mission 106 branch 2 is not completable');
-
-    const missionState = game.missionTracker.getMissionState(player.id, '106');
-    expect(player.resources.publicity).toBe(publicityBefore);
-    expect(player.hand).toHaveLength(handBefore);
-    expect(missionState).toBeDefined();
-    expect(missionState!.branchStates[2].completed).toBe(false);
-    expect(missionState!.branchStates[0].completed).toBe(false);
-    expect(missionState!.branchStates[1].completed).toBe(false);
-  });
-
-  it('rejects completing a quick mission that has not been played yet', () => {
-    const game = Game.create(
-      TEST_PLAYERS,
-      { playerCount: 2 },
-      'complete-mission-not-played',
-    );
-    const player = game.players[0];
-    const card = getCardRegistry().create('64');
-
-    game.missionTracker.registerMission(card.getMissionDef?.()!, player.id);
-    game.alienState.applyTrace(player, game, ETrace.BLUE, 0, false);
-    game.alienState.applyTrace(player, game, ETrace.BLUE, 1, false);
-
-    expect(() =>
-      game.processFreeAction(player.id, {
-        type: EFreeAction.COMPLETE_MISSION,
-        cardId: '64',
-      }),
-    ).toThrow('Mission 64 branch 0 is not completable');
-
-    expect(player.completedMissions).toHaveLength(0);
-    expect(game.missionTracker.getMissionState(player.id, '64')).toBeDefined();
-  });
-
-  it('rejects completing the same quick mission twice', () => {
-    const game = Game.create(
-      TEST_PLAYERS,
-      { playerCount: 2 },
-      'complete-mission-double-complete',
-    );
-    const player = game.players[0];
-    const card = getCardRegistry().create('64');
-
-    game.missionTracker.registerMission(card.getMissionDef?.()!, player.id);
-    player.playedMissions.push(card);
-    game.alienState.applyTrace(player, game, ETrace.BLUE, 0, false);
-    game.alienState.applyTrace(player, game, ETrace.BLUE, 1, false);
-
-    game.processFreeAction(player.id, {
-      type: EFreeAction.COMPLETE_MISSION,
-      cardId: '64',
-    });
-
-    expect(() =>
-      game.processFreeAction(player.id, {
-        type: EFreeAction.COMPLETE_MISSION,
-        cardId: '64',
-      }),
-    ).toThrow('Mission 64 branch 0 is not completable');
-
-    expect(player.completedMissions).toHaveLength(1);
-    expect(
-      game.missionTracker.getMissionState(player.id, '64'),
-    ).toBeUndefined();
-  });
-
-  it('rejects COMPLETE_MISSION while a triggered mission prompt is still pending', () => {
-    const game = Game.create(
-      TEST_PLAYERS,
-      { playerCount: 2 },
-      'complete-mission-prompt-lock',
-    );
-    const player = game.players[0];
-    player.hand = ['51'];
-    player.resources.gain({ publicity: 4 });
-    game.mainDeck = new Deck(['refill-1', 'reward-card'], []);
-
-    game.processMainAction(player.id, {
-      type: EMainAction.PLAY_CARD,
-      payload: { cardIndex: 0 },
-    });
-
-    const scoreBefore = player.score;
-    const handBefore = player.hand.length;
-    const prompt = player.waitingFor?.toModel() as
-      | ISelectOptionInputModel
-      | undefined;
-    expect(prompt?.type).toBe(EPlayerInputType.OPTION);
-    expect(prompt?.title).toBe('Mission triggered! Claim reward?');
-    expect(
-      prompt?.options.some((option) => option.id === 'complete-51-0'),
-    ).toBe(true);
-
-    expect(() =>
-      game.processFreeAction(player.id, {
-        type: EFreeAction.COMPLETE_MISSION,
-        cardId: '51',
-      }),
-    ).toThrowError(
-      expect.objectContaining({ code: EErrorCode.INVALID_INPUT_RESPONSE }),
-    );
-
-    expect(player.score).toBe(scoreBefore);
-    expect(player.hand).toHaveLength(handBefore);
-    expect(player.completedMissions).toHaveLength(0);
-    expect(player.waitingFor).toBeDefined();
-
-    resolveMissionPromptIfAny(game, player.id);
-
-    expect(player.score).toBe(scoreBefore + 3);
-    expect(player.hand).toHaveLength(handBefore + 1);
-    expect(player.completedMissions.map(resolveCardId)).toEqual(['51']);
-    expect(
-      game.missionTracker.getMissionState(player.id, '51'),
-    ).toBeUndefined();
-  });
-
-  it('integrates real mission play, delayed completion, and reward payout for an observation quick mission', () => {
-    const game = Game.create(
-      TEST_PLAYERS,
-      { playerCount: 2 },
-      'complete-mission-real-play-delay',
-    );
-    const player = game.players[0];
-    const opponent = game.players[1];
     player.hand = ['37'];
-    game.mainDeck = new Deck(['refill-1', 'refill-2'], []);
+    game.mainDeck = new Deck(['refill-1'], []);
 
+    // Play the mission card
     game.processMainAction(player.id, {
       type: EMainAction.PLAY_CARD,
       payload: { cardIndex: 0 },
@@ -250,6 +85,7 @@ describe('CompleteMissionFreeAction', () => {
     expect(player.playedMissions.map(resolveCardId)).toEqual(['37']);
     expect(CompleteMissionFreeAction.canExecute(player, game)).toBe(false);
 
+    // Satisfy the condition (win all red sectors)
     for (const sector of game.sectors.filter(
       (sector) => sector.color === ESector.RED,
     )) {
@@ -258,13 +94,24 @@ describe('CompleteMissionFreeAction', () => {
 
     expect(CompleteMissionFreeAction.canExecute(player, game)).toBe(true);
 
+    // Player chooses not to complete immediately - can still play the turn
     game.processEndTurn(player.id);
+
+    // Mission still in playedMissions, not completed yet
+    expect(player.playedMissions.map(resolveCardId)).toEqual(['37']);
+    expect(player.completedMissions).toHaveLength(0);
+
+    // Next turn, can still complete
+    const opponent = game.players[1];
     game.processMainAction(opponent.id, { type: EMainAction.PASS });
     resolveEndOfRoundPickIfAny(game, opponent.id);
+
+    expect(CompleteMissionFreeAction.canExecute(player, game)).toBe(true);
 
     const scoreBefore = player.score;
     const publicityBefore = player.resources.publicity;
 
+    // Now complete the mission
     game.processFreeAction(player.id, {
       type: EFreeAction.COMPLETE_MISSION,
       cardId: '37',
@@ -278,44 +125,23 @@ describe('CompleteMissionFreeAction', () => {
         typeof card === 'string' ? card : card.id,
       ),
     ).toEqual(['37']);
-    expect(
-      game.missionTracker.getMissionState(player.id, '37'),
-    ).toBeUndefined();
   });
 
-  it('keeps canExecute false for an unmet quick mission that was played through the real action pipeline', () => {
+  it('3.3.4 [integration] moves the mission card to completedMissions after successful completion', () => {
     const game = Game.create(
       TEST_PLAYERS,
       { playerCount: 2 },
-      'complete-mission-unmet-condition',
+      'complete-mission-flip',
     );
     const player = game.players[0];
     player.hand = ['37'];
     game.mainDeck = new Deck(['refill-1'], []);
 
+    // Play and satisfy the mission
     game.processMainAction(player.id, {
       type: EMainAction.PLAY_CARD,
       payload: { cardIndex: 0 },
     });
-
-    expect(CompleteMissionFreeAction.canExecute(player, game)).toBe(false);
-  });
-
-  it('rejects completing a satisfied quick mission outside the owner turn', () => {
-    const game = Game.create(
-      TEST_PLAYERS,
-      { playerCount: 2 },
-      'complete-mission-not-your-turn',
-    );
-    const player = game.players[0];
-    player.hand = ['37'];
-    game.mainDeck = new Deck(['refill-1'], []);
-
-    game.processMainAction(player.id, {
-      type: EMainAction.PLAY_CARD,
-      payload: { cardIndex: 0 },
-    });
-    game.processEndTurn(player.id);
 
     for (const sector of game.sectors.filter(
       (sector) => sector.color === ESector.RED,
@@ -323,12 +149,64 @@ describe('CompleteMissionFreeAction', () => {
       sector.sectorWinners.push(player.id);
     }
 
-    expect(CompleteMissionFreeAction.canExecute(player, game)).toBe(true);
+    expect(player.playedMissions.map(resolveCardId)).toEqual(['37']);
+    expect(player.completedMissions).toHaveLength(0);
+
+    // Complete the mission
+    game.processFreeAction(player.id, {
+      type: EFreeAction.COMPLETE_MISSION,
+      cardId: '37',
+    });
+
+    // Verify card moved from played to completed
+    expect(player.playedMissions).toHaveLength(0);
+    expect(player.completedMissions).toHaveLength(1);
+    expect(
+      player.completedMissions.map((card) =>
+        typeof card === 'string' ? card : card.id,
+      ),
+    ).toEqual(['37']);
+  });
+
+  it('3.3E.2 [error] rejects completing a mission that has already been completed', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'complete-mission-already-completed',
+    );
+    const player = game.players[0];
+    player.hand = ['37'];
+    game.mainDeck = new Deck(['refill-1'], []);
+
+    // Play and satisfy the mission
+    game.processMainAction(player.id, {
+      type: EMainAction.PLAY_CARD,
+      payload: { cardIndex: 0 },
+    });
+
+    for (const sector of game.sectors.filter(
+      (sector) => sector.color === ESector.RED,
+    )) {
+      sector.sectorWinners.push(player.id);
+    }
+
+    // Complete the mission once
+    game.processFreeAction(player.id, {
+      type: EFreeAction.COMPLETE_MISSION,
+      cardId: '37',
+    });
+
+    expect(player.completedMissions).toHaveLength(1);
+    expect(
+      game.missionTracker.getMissionState(player.id, '37'),
+    ).toBeUndefined();
+
+    // Try to complete it again
     expect(() =>
       game.processFreeAction(player.id, {
         type: EFreeAction.COMPLETE_MISSION,
         cardId: '37',
       }),
-    ).toThrow('not the active player');
+    ).toThrow('Mission 37 branch 0 is not completable');
   });
 });

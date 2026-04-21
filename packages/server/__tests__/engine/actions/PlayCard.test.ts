@@ -3,6 +3,7 @@ import {
   EMainAction,
   EPhase,
 } from '@seti/common/types/protocol/enums';
+import { EErrorCode } from '@seti/common/types/protocol/errors';
 import {
   EPlayerInputType,
   type ISelectEndOfRoundCardInputModel,
@@ -10,6 +11,7 @@ import {
 import { Deck } from '@/engine/deck/Deck.js';
 import { Game } from '@/engine/Game.js';
 import { Player } from '@/engine/player/Player.js';
+import { GameError } from '@/shared/errors/GameError.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -74,6 +76,46 @@ function resolveEndOfRoundPickIfAny(game: Game, playerId: string): void {
     }
 
     // Unknown prompt type: stop to avoid masking real test failures.
+    return;
+  }
+}
+
+function resolveInputsUntilMissionPromptOrDone(
+  game: Game,
+  player: Player,
+): void {
+  while (player.waitingFor) {
+    const model = player.waitingFor.toModel() as {
+      type: string;
+      title?: string;
+      cards?: Array<{ id: string }>;
+      options?: Array<{ id: string }>;
+    };
+
+    if (model.title === 'Mission triggered! Claim reward?') {
+      return;
+    }
+
+    if (model.type === EPlayerInputType.CARD) {
+      const cardId = model.cards?.[0]?.id;
+      if (!cardId) {
+        throw new Error('expected card input');
+      }
+      game.processInput(player.id, {
+        type: EPlayerInputType.CARD,
+        cardIds: [cardId],
+      });
+      continue;
+    }
+
+    if (model.type === EPlayerInputType.OPTION) {
+      game.processInput(player.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: model.options![0]!.id,
+      });
+      continue;
+    }
+
     return;
   }
 }
@@ -274,6 +316,67 @@ describe('PlayCardAction — integration', () => {
       expect(game.mainDeck.getDiscardPile()).not.toContain('127');
       // Immediate effects still fire before the card is filed away.
       expect(player.resources.publicity).toBe(publicityBefore + 2);
+    });
+
+    it('2.6.10 one DISPLAY_CARD effect placing two signals offers only one Control Center branch until the next trigger', () => {
+      const { game, player } = createIntegrationGame(
+        'play-card-2-6-10-single-signal-mission-stamp',
+      );
+      const other = game.players.find((p) => p.id !== player.id) as Player;
+      player.hand = ['116', '45'];
+      player.resources.gain({ credits: 10 });
+      game.mainDeck = new Deck(['refill-1', 'refill-2', 'refill-3'], []);
+      game.cardRow = ['55', '129'];
+
+      game.processMainAction(player.id, {
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 0 },
+      });
+      game.processEndTurn(player.id);
+      game.processMainAction(other.id, { type: EMainAction.PASS });
+      resolveEndOfRoundPickIfAny(game, other.id);
+
+      game.processMainAction(player.id, {
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 0 },
+      });
+      resolveInputsUntilMissionPromptOrDone(game, player);
+
+      const state = game.missionTracker.getMissionState(player.id, '116');
+      expect(state?.branchStates.every((b) => !b.completed)).toBe(true);
+
+      const prompt = player.waitingFor?.toModel() as {
+        title?: string;
+        options?: Array<{ id: string }>;
+      };
+      expect(prompt?.title).toBe('Mission triggered! Claim reward?');
+      const controlCenterOptions =
+        prompt?.options?.filter((o) => o.id.startsWith('complete-116')) ?? [];
+      expect(controlCenterOptions).toHaveLength(1);
+    });
+
+    it('2.6E.1 rejects PLAY_CARD when declared cardId does not match the hand slot (stale client selection)', () => {
+      const { game, player } = createIntegrationGame(
+        'play-card-2-6e-1-declared-card-mismatch',
+      );
+      player.hand = ['110', '50'];
+      game.mainDeck = new Deck(['refill-1'], []);
+
+      expect(() =>
+        game.processMainAction(player.id, {
+          type: EMainAction.PLAY_CARD,
+          payload: { cardIndex: 0, cardId: '50' },
+        }),
+      ).toThrow(GameError);
+
+      try {
+        game.processMainAction(player.id, {
+          type: EMainAction.PLAY_CARD,
+          payload: { cardIndex: 0, cardId: '50' },
+        });
+      } catch (err) {
+        expect((err as GameError).code).toBe(EErrorCode.INVALID_ACTION);
+      }
     });
 
     it('2.6E.3 a card discarded via the free-action corner cannot also be played as a main action the same turn', () => {

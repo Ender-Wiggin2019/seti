@@ -133,6 +133,7 @@ describe('processFreeAction — full dispatch coverage', () => {
       expect.anything(),
       EResource.CREDIT,
       EResource.ENERGY,
+      { fromDeck: undefined, cardId: undefined },
     );
   });
 

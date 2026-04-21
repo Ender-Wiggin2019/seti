@@ -1,6 +1,10 @@
 import { getAlienRewardsForIndex } from '@seti/common/constant/alienBoardConfig';
+import { alienCards } from '@seti/common/data/alienCards';
 import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
-import { createTraceMarkedEvent } from '../event/GameEvent.js';
+import {
+  createActionEvent,
+  createTraceMarkedEvent,
+} from '../event/GameEvent.js';
 import type { IGame } from '../IGame.js';
 import type { PlayerInput } from '../input/PlayerInput.js';
 import { SelectOption } from '../input/SelectOption.js';
@@ -123,6 +127,18 @@ export class AlienState {
     return this.createSlotSelectionInput(player, game, traceColor, onComplete);
   }
 
+  public promptForTraceChoice(
+    player: IPlayer,
+    game: IGame,
+    traceColor: ETrace,
+    onComplete?: () => PlayerInput | undefined,
+  ): void {
+    const input = this.createTraceInput(player, game, traceColor, onComplete);
+    if (input) {
+      player.waitingFor = input;
+    }
+  }
+
   // ---- Programmatic placement ----------------------------------------------
 
   /**
@@ -134,6 +150,85 @@ export class AlienState {
     slotId: string,
     traceColor: ETrace,
   ): boolean {
+    const result = this.applyTraceToSlotInternal(
+      player,
+      game,
+      slotId,
+      traceColor,
+    );
+    return result !== false;
+  }
+
+  public createDrawAlienCardInput(
+    player: IPlayer,
+    game: IGame,
+    options?: {
+      alienType?: EAlienType;
+      defaultAlienType?: EAlienType;
+    },
+    onComplete?: () => PlayerInput | undefined,
+  ): PlayerInput | undefined {
+    const targetBoard =
+      options?.alienType !== undefined
+        ? this.getBoardByType(options.alienType)
+        : undefined;
+
+    if (targetBoard) {
+      return this.createDrawAlienSourceInput(
+        player,
+        game,
+        targetBoard,
+        onComplete,
+      );
+    }
+
+    const drawableBoards = this.getDrawableAlienBoards();
+    if (drawableBoards.length === 0) {
+      return undefined;
+    }
+
+    if (options?.defaultAlienType !== undefined) {
+      const preferred = drawableBoards.find(
+        (board) => board.alienType === options.defaultAlienType,
+      );
+      if (preferred) {
+        return this.createDrawAlienSourceInput(
+          player,
+          game,
+          preferred,
+          onComplete,
+        );
+      }
+    }
+
+    if (drawableBoards.length === 1) {
+      return this.createDrawAlienSourceInput(
+        player,
+        game,
+        drawableBoards[0],
+        onComplete,
+      );
+    }
+
+    return new SelectOption(
+      player,
+      drawableBoards.map((board) => ({
+        id: `alien:${board.alienType}`,
+        label: `${formatAlienType(board.alienType)} (Alien ${board.alienIndex + 1})`,
+        onSelect: () =>
+          this.createDrawAlienSourceInput(player, game, board, onComplete),
+      })),
+      'Choose alien board to draw from',
+    );
+  }
+
+  private applyTraceToSlotInternal(
+    player: IPlayer,
+    game: IGame,
+    slotId: string,
+    traceColor: ETrace,
+    onComplete?: () => PlayerInput | undefined,
+  ): PlayerInput | false | undefined {
     const { board, slot } = this.findSlot(slotId);
     if (!board || !slot) return false;
 
@@ -146,7 +241,13 @@ export class AlienState {
     );
     if (!placed) return false;
 
-    this.executeRewards(player, slot.rewards);
+    const rewardInput = this.executeRewards(
+      player,
+      game,
+      board,
+      slot.rewards,
+      onComplete,
+    );
     this.incrementPlayerTrace(player, resolvedColor, board.alienIndex);
     game.eventLog.append(
       createTraceMarkedEvent(
@@ -160,7 +261,11 @@ export class AlienState {
     const plugin = AlienRegistry.get(board.alienType);
     plugin?.onTraceMark?.(game, player, resolvedColor, !slot.isDiscovery);
 
-    return true;
+    if (rewardInput !== undefined) {
+      return rewardInput;
+    }
+
+    return onComplete?.();
   }
 
   /**
@@ -191,6 +296,18 @@ export class AlienState {
   }
 
   // ---- Neutral markers -----------------------------------------------------
+
+  /**
+   * True if at least one discovery slot (non-overflow) is empty on any alien board.
+   */
+  public hasEmptyDiscoverySlot(): boolean {
+    for (const board of this.boards) {
+      if (board.getFirstEmptyDiscoverySlot()) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   /**
    * Places a neutral marker on the leftmost empty discovery slot across all aliens.
@@ -229,6 +346,10 @@ export class AlienState {
     board.discovered = true;
 
     const plugin = AlienRegistry.get(board.alienType);
+    this.initializeAlienDeck(board, game, plugin);
+    this.resolveDiscoverySlots(board, game, plugin);
+    board.revealNextFaceUpAlienCard(game.random);
+
     if (plugin) {
       const discovererIds = board.getDiscoverers();
       const discoverers = game.players.filter((p) =>
@@ -238,6 +359,36 @@ export class AlienState {
     }
 
     return undefined;
+  }
+
+  public drawAlienCard(
+    player: IPlayer,
+    board: AlienBoard,
+    source: 'face-up' | 'deck',
+    game?: IGame,
+  ): string | undefined {
+    const drawnCardId =
+      source === 'face-up'
+        ? board.drawFaceUpAlienCard(game?.random)
+        : board.drawAlienCardFromDeck(game?.random);
+
+    if (!drawnCardId) {
+      return undefined;
+    }
+
+    player.hand.push(drawnCardId);
+    if (game) {
+      game.lockCurrentTurn();
+      game.eventLog.append(
+        createActionEvent(player.id, 'DRAW_ALIEN_CARD', {
+          alienType: board.alienType,
+          source,
+          cardId: drawnCardId,
+          alienIndex: board.alienIndex,
+        }),
+      );
+    }
+    return drawnCardId;
   }
 
   // ---- Plugin event dispatch ----------------------------------------------
@@ -278,8 +429,17 @@ export class AlienState {
     }
 
     if (targets.length === 1) {
-      this.applyTraceToSlot(player, game, targets[0].slotId, traceColor);
-      return onComplete?.();
+      const nextInput = this.applyTraceToSlotInternal(
+        player,
+        game,
+        targets[0].slotId,
+        traceColor,
+        onComplete,
+      );
+      if (nextInput === false) {
+        return onComplete?.();
+      }
+      return nextInput;
     }
 
     return new SelectOption(
@@ -288,8 +448,17 @@ export class AlienState {
         id: target.slotId,
         label: target.label,
         onSelect: () => {
-          this.applyTraceToSlot(player, game, target.slotId, traceColor);
-          return onComplete?.();
+          const nextInput = this.applyTraceToSlotInternal(
+            player,
+            game,
+            target.slotId,
+            traceColor,
+            onComplete,
+          );
+          if (nextInput === false) {
+            return onComplete?.();
+          }
+          return nextInput;
         },
       })),
       `Place ${formatTraceColor(traceColor)} trace`,
@@ -309,7 +478,13 @@ export class AlienState {
     return { board: undefined, slot: undefined };
   }
 
-  private executeRewards(player: IPlayer, rewards: TSlotReward[]): void {
+  private executeRewards(
+    player: IPlayer,
+    game: IGame,
+    board: AlienBoard,
+    rewards: TSlotReward[],
+    onComplete?: () => PlayerInput | undefined,
+  ): PlayerInput | undefined {
     for (const reward of rewards) {
       switch (reward.type) {
         case 'VP':
@@ -319,9 +494,78 @@ export class AlienState {
           player.resources.gain({ publicity: reward.amount });
           break;
         case 'CUSTOM':
+          if (reward.effectId === 'DRAW_ALIEN_CARD') {
+            return this.createDrawAlienCardInput(
+              player,
+              game,
+              {
+                alienType: board.alienType,
+              },
+              onComplete,
+            );
+          }
           break;
       }
     }
+    return undefined;
+  }
+
+  private getDrawableAlienBoards(): AlienBoard[] {
+    return this.boards.filter(
+      (board) =>
+        board.discovered &&
+        (board.faceUpAlienCardId !== null ||
+          board.alienDeckDrawPile.length > 0 ||
+          board.alienDeckDiscardPile.length > 0),
+    );
+  }
+
+  private createDrawAlienSourceInput(
+    player: IPlayer,
+    game: IGame,
+    board: AlienBoard,
+    onComplete?: () => PlayerInput | undefined,
+  ): PlayerInput | undefined {
+    const hasFaceUp = board.faceUpAlienCardId !== null;
+    const hasDeck =
+      board.alienDeckDrawPile.length > 0 ||
+      board.alienDeckDiscardPile.length > 0;
+    if (!hasFaceUp && !hasDeck) {
+      return undefined;
+    }
+
+    if (hasFaceUp && !hasDeck) {
+      this.drawAlienCard(player, board, 'face-up', game);
+      return onComplete?.();
+    }
+
+    if (!hasFaceUp && hasDeck) {
+      this.drawAlienCard(player, board, 'deck', game);
+      return onComplete?.();
+    }
+
+    return new SelectOption(
+      player,
+      [
+        {
+          id: 'draw-face-up',
+          label: 'Draw face-up alien card',
+          onSelect: () => {
+            this.drawAlienCard(player, board, 'face-up', game);
+            return onComplete?.();
+          },
+        },
+        {
+          id: 'draw-random',
+          label: 'Draw random alien card',
+          onSelect: () => {
+            this.drawAlienCard(player, board, 'deck', game);
+            return onComplete?.();
+          },
+        },
+      ],
+      `Choose how to draw from ${formatAlienType(board.alienType)}`,
+    );
   }
 
   private buildSlotLabel(
@@ -352,6 +596,79 @@ export class AlienState {
     }
     player.tracesByAlien[alienIndex][traceColor] =
       (player.tracesByAlien[alienIndex][traceColor] ?? 0) + 1;
+  }
+
+  private initializeAlienDeck(
+    board: AlienBoard,
+    game: IGame,
+    plugin: ReturnType<typeof AlienRegistry.get>,
+  ): void {
+    if (
+      board.alienDeckDrawPile.length > 0 ||
+      board.faceUpAlienCardId !== null
+    ) {
+      return;
+    }
+
+    const pluginDeck = plugin?.getAlienDeckCardIds?.(game, board) ?? [];
+    const candidateDeck =
+      pluginDeck.length > 0
+        ? pluginDeck
+        : alienCards
+            .filter((card) => card.alien === board.alienType)
+            .map((card) => card.id);
+    const shuffled = game.random.shuffle([...candidateDeck]);
+    board.initializeAlienDeck(shuffled);
+  }
+
+  private resolveDiscoverySlots(
+    board: AlienBoard,
+    game: IGame,
+    plugin: ReturnType<typeof AlienRegistry.get>,
+  ): void {
+    for (const slot of board.getDiscoverySlots()) {
+      for (const occ of slot.occupants) {
+        const source = occ.source;
+        if (source === 'neutral') {
+          continue;
+        }
+
+        const player = game.players.find((p) => p.id === source.playerId);
+        if (!player) {
+          continue;
+        }
+
+        if (plugin?.resolveDiscoverySlot) {
+          plugin.resolveDiscoverySlot(game, board, slot, player);
+          continue;
+        }
+
+        this.drawAlienCard(player, board, 'deck');
+      }
+    }
+  }
+}
+
+function formatAlienType(alienType: EAlienType): string {
+  switch (alienType) {
+    case EAlienType.ANOMALIES:
+      return 'Anomalies';
+    case EAlienType.CENTAURIANS:
+      return 'Centaurians';
+    case EAlienType.EXERTIANS:
+      return 'Exertians';
+    case EAlienType.MASCAMITES:
+      return 'Mascamites';
+    case EAlienType.OUMUAMUA:
+      return 'Oumuamua';
+    case EAlienType.AMOEBA:
+      return 'Amoeba';
+    case EAlienType.GLYPHIDS:
+      return 'Glyphids';
+    case EAlienType.DUMMY:
+      return 'Dummy';
+    default:
+      return String(alienType);
   }
 }
 

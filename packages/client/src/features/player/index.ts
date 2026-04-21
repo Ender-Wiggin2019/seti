@@ -5,7 +5,6 @@ export { HandDock } from './HandDock';
 export { HandView } from './HandView';
 export { IncomeTracker } from './IncomeTracker';
 export { OpponentSummary } from './OpponentSummary';
-export { PieceInventory } from './PieceInventory';
 export { PlayedMissions } from './PlayedMissions';
 export { PlayerDashboard } from './PlayerDashboard';
 export { ResourceBar } from './ResourceBar';

@@ -1,11 +1,13 @@
 import {
   ETechBonusType,
-  type ETechId,
+  ETechId,
+  FIRST_TAKE_VP_BONUS,
   type ITechBonusToken,
 } from '@seti/common/types/tech';
+import { vi } from 'vitest';
+import { ResearchTechAction } from '@/engine/actions/ResearchTech.js';
 import type { Deck } from '@/engine/deck/Deck.js';
 import { ResearchTechEffect } from '@/engine/effects/tech/ResearchTechEffect.js';
-import { TechBonusEffect } from '@/engine/effects/tech/TechBonusEffect.js';
 import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
 import { TechBoard } from '@/engine/tech/TechBoard.js';
@@ -50,7 +52,25 @@ function createMockGame(
     roundRotationReminderIndex: 0,
     hasRoundFirstPassOccurred: false,
     rotationCounter: 0,
+    lockCurrentTurn: vi.fn(),
   } as unknown as IGame;
+}
+
+/**
+ * The next tile taken from `techId` is `stack.tiles[0]` (see TechBoard.take).
+ * Forces a known printed bonus for integration tests without calling TechBonusEffect in isolation.
+ */
+function setNextTileBonus(
+  board: TechBoard,
+  techId: ETechId,
+  bonus: ITechBonusToken,
+): void {
+  const stack = board.getStack(techId);
+  const tile = stack?.tiles[0];
+  if (!tile) {
+    throw new Error(`no next tile for ${techId}`);
+  }
+  tile.bonus = bonus;
 }
 
 function getFirstAvailableTechId(board: TechBoard, playerId: string): ETechId {
@@ -61,96 +81,209 @@ function getFirstAvailableTechId(board: TechBoard, playerId: string): ETechId {
   return techId;
 }
 
-describe('TechBonusEffect.apply', () => {
-  it('ENERGY: grants +1 energy', () => {
-    const player = createTestPlayer();
-    const before = player.resources.energy;
-    TechBonusEffect.apply(player, createMockGame(), {
+describe('Phase 8.4.1 — integration: printed bonus via ResearchTechEffect.acquireTech', () => {
+  it('ENERGY: +1 energy (pipeline, not TechBonusEffect alone)', () => {
+    const board = new TechBoard(new SeededRandom('p841-energy'));
+    setNextTileBonus(board, ETechId.PROBE_DOUBLE_PROBE, {
       type: ETechBonusType.ENERGY,
     });
+    const player = createTestPlayer();
+    const game = createMockGame(board);
+    const before = player.resources.energy;
+    const scoreBefore = player.score;
+
+    ResearchTechEffect.acquireTech(player, game, ETechId.PROBE_DOUBLE_PROBE);
+
     expect(player.resources.energy).toBe(before + 1);
+    expect(player.score).toBe(scoreBefore + FIRST_TAKE_VP_BONUS);
   });
 
-  it('DATA: grants +1 data (to pool)', () => {
-    const player = createTestPlayer();
-    const before = player.data.poolCount;
-    TechBonusEffect.apply(player, createMockGame(), {
+  it('DATA: +1 data in pool', () => {
+    const board = new TechBoard(new SeededRandom('p841-data'));
+    setNextTileBonus(board, ETechId.PROBE_ASTEROID, {
       type: ETechBonusType.DATA,
     });
-    expect(player.data.poolCount).toBe(before + 1);
+    const player = createTestPlayer();
+    const game = createMockGame(board);
+    const before = player.resources.data;
+
+    ResearchTechEffect.acquireTech(player, game, ETechId.PROBE_ASTEROID);
+
+    expect(player.resources.data).toBe(before + 1);
   });
 
-  it('DATA_2: grants +2 data (to pool)', () => {
-    const player = createTestPlayer();
-    const before = player.data.poolCount;
-    TechBonusEffect.apply(player, createMockGame(), {
+  it('DATA_2: +2 data in pool', () => {
+    const board = new TechBoard(new SeededRandom('p841-data2'));
+    setNextTileBonus(board, ETechId.PROBE_ROVER_DISCOUNT, {
       type: ETechBonusType.DATA_2,
     });
-    expect(player.data.poolCount).toBe(before + 2);
+    const player = createTestPlayer();
+    const game = createMockGame(board);
+    const before = player.resources.data;
+
+    ResearchTechEffect.acquireTech(player, game, ETechId.PROBE_ROVER_DISCOUNT);
+
+    expect(player.resources.data).toBe(before + 2);
   });
 
-  it('PUBLICITY: grants +1 publicity', () => {
+  it('PUBLICITY: +1 publicity', () => {
+    const board = new TechBoard(new SeededRandom('p841-pub'));
+    setNextTileBonus(board, ETechId.PROBE_MOON, {
+      type: ETechBonusType.PUBLICITY,
+    });
     const player = createTestPlayer({
       resources: { credits: 10, energy: 10, publicity: 5 },
     });
+    const game = createMockGame(board);
     const before = player.resources.publicity;
-    TechBonusEffect.apply(player, createMockGame(), {
-      type: ETechBonusType.PUBLICITY,
-    });
+
+    ResearchTechEffect.acquireTech(player, game, ETechId.PROBE_MOON);
+
     expect(player.resources.publicity).toBe(before + 1);
   });
 
-  it('CARD: draws 1 card', () => {
+  it('CARD: draws from mainDeck through acquireTech', () => {
+    const board = new TechBoard(new SeededRandom('p841-card'));
+    setNextTileBonus(board, ETechId.SCAN_EARTH_LOOK, {
+      type: ETechBonusType.CARD,
+    });
     const player = createTestPlayer();
-    const game = createMockGame(null, ['bonus-card']);
+    const game = createMockGame(board, ['bonus-card']);
     const before = player.hand.length;
-    TechBonusEffect.apply(player, game, { type: ETechBonusType.CARD });
+
+    ResearchTechEffect.acquireTech(player, game, ETechId.SCAN_EARTH_LOOK);
+
     expect(player.hand.length).toBe(before + 1);
     expect(player.hand).toContain('bonus-card');
   });
 
-  it('CREDIT: grants +1 credit', () => {
-    const player = createTestPlayer();
-    const before = player.resources.credits;
-    TechBonusEffect.apply(player, createMockGame(), {
+  it('CREDIT: +1 credit', () => {
+    const board = new TechBoard(new SeededRandom('p841-credit'));
+    setNextTileBonus(board, ETechId.SCAN_POP_SIGNAL, {
       type: ETechBonusType.CREDIT,
     });
+    const player = createTestPlayer();
+    const game = createMockGame(board);
+    const before = player.resources.credits;
+
+    ResearchTechEffect.acquireTech(player, game, ETechId.SCAN_POP_SIGNAL);
+
     expect(player.resources.credits).toBe(before + 1);
   });
 
-  it('VP_2: grants +2 VP', () => {
-    const player = createTestPlayer();
-    const before = player.score;
-    TechBonusEffect.apply(player, createMockGame(), {
+  it('VP_2: +2 VP from tile (plus first-take VP)', () => {
+    const board = new TechBoard(new SeededRandom('p841-vp2'));
+    setNextTileBonus(board, ETechId.SCAN_HAND_SIGNAL, {
       type: ETechBonusType.VP_2,
     });
-    expect(player.score).toBe(before + 2);
+    const player = createTestPlayer();
+    const game = createMockGame(board);
+    const scoreBefore = player.score;
+
+    ResearchTechEffect.acquireTech(player, game, ETechId.SCAN_HAND_SIGNAL);
+
+    expect(player.score).toBe(scoreBefore + FIRST_TAKE_VP_BONUS + 2);
   });
 
-  it('VP_3: grants +3 VP', () => {
-    const player = createTestPlayer();
-    const before = player.score;
-    TechBonusEffect.apply(player, createMockGame(), {
+  it('VP_3: +3 VP from tile (plus first-take VP)', () => {
+    const board = new TechBoard(new SeededRandom('p841-vp3'));
+    setNextTileBonus(board, ETechId.SCAN_ENERGY_LAUNCH, {
       type: ETechBonusType.VP_3,
     });
-    expect(player.score).toBe(before + 3);
+    const player = createTestPlayer();
+    const game = createMockGame(board);
+    const scoreBefore = player.score;
+
+    ResearchTechEffect.acquireTech(player, game, ETechId.SCAN_ENERGY_LAUNCH);
+
+    expect(player.score).toBe(scoreBefore + FIRST_TAKE_VP_BONUS + 3);
   });
 
-  it('LAUNCH_IGNORE_LIMIT: increases probe space limit by 1', () => {
-    const player = createTestPlayer();
-    const before = player.probeSpaceLimit;
-    TechBonusEffect.apply(player, createMockGame(), {
+  it('LAUNCH_IGNORE_LIMIT: +1 probe space limit', () => {
+    const board = new TechBoard(new SeededRandom('p841-launch'));
+    setNextTileBonus(board, ETechId.COMPUTER_VP_PUBLICITY, {
       type: ETechBonusType.LAUNCH_IGNORE_LIMIT,
     });
+    const player = createTestPlayer();
+    const game = createMockGame(board);
+    const before = player.probeSpaceLimit;
+
+    ResearchTechEffect.acquireTech(player, game, ETechId.COMPUTER_VP_PUBLICITY);
+
     expect(player.probeSpaceLimit).toBe(before + 1);
   });
 
-  it('returns applied: true with the bonus', () => {
+  it('card-grant path (ResearchTechAction isCardEffect): still applies printed bonus', () => {
+    const board = new TechBoard(new SeededRandom('p841-card-action'));
+    setNextTileBonus(board, ETechId.SCAN_POP_SIGNAL, {
+      type: ETechBonusType.CREDIT,
+    });
+    const player = createTestPlayer({
+      resources: { credits: 4, energy: 3, publicity: 0 },
+    });
+    const game = createMockGame(board);
+    const creditsBefore = player.resources.credits;
+
+    ResearchTechAction.execute(player, game, true, {
+      mode: 'specific',
+      techIds: [ETechId.SCAN_POP_SIGNAL],
+    });
+
+    expect(player.resources.credits).toBe(creditsBefore + 1);
+    expect(player.techs).toContain(ETechId.SCAN_POP_SIGNAL);
+  });
+});
+
+describe('Phase 8.4.2 — integration: printed bonus before blue-tech column placement', () => {
+  it('CARD bonus: card is drawn before computer.placeTech runs', () => {
+    const board = new TechBoard(new SeededRandom('p842-card-order'));
+    setNextTileBonus(board, ETechId.COMPUTER_VP_CREDIT, {
+      type: ETechBonusType.CARD,
+    });
+    const game = createMockGame(board, ['draw-before-place']);
     const player = createTestPlayer();
-    const bonus: ITechBonusToken = { type: ETechBonusType.ENERGY };
-    const result = TechBonusEffect.apply(player, createMockGame(), bonus);
-    expect(result.applied).toBe(true);
-    expect(result.bonus).toBe(bonus);
+    const handBefore = player.hand.length;
+
+    vi.spyOn(player.computer, 'getEligibleTechColumns').mockReturnValue([2]);
+    const placeTechImpl = player.computer.placeTech.bind(player.computer);
+    const placeSpy = vi
+      .spyOn(player.computer, 'placeTech')
+      .mockImplementation((columnIndex, placement) => {
+        expect(player.hand.length).toBe(handBefore + 1);
+        expect(player.hand).toContain('draw-before-place');
+        placeTechImpl(columnIndex, placement);
+      });
+
+    ResearchTechEffect.execute(player, game, {
+      filter: { mode: 'specific', techIds: [ETechId.COMPUTER_VP_CREDIT] },
+    });
+
+    expect(placeSpy).toHaveBeenCalled();
+  });
+
+  it('ENERGY bonus: energy gained before computer.placeTech runs', () => {
+    const board = new TechBoard(new SeededRandom('p842-energy-order'));
+    setNextTileBonus(board, ETechId.COMPUTER_VP_ENERGY, {
+      type: ETechBonusType.ENERGY,
+    });
+    const game = createMockGame(board);
+    const player = createTestPlayer();
+    const energyBefore = player.resources.energy;
+
+    vi.spyOn(player.computer, 'getEligibleTechColumns').mockReturnValue([0]);
+    const placeTechImpl = player.computer.placeTech.bind(player.computer);
+    const placeSpy = vi
+      .spyOn(player.computer, 'placeTech')
+      .mockImplementation((columnIndex, placement) => {
+        expect(player.resources.energy).toBe(energyBefore + 1);
+        placeTechImpl(columnIndex, placement);
+      });
+
+    ResearchTechEffect.execute(player, game, {
+      filter: { mode: 'specific', techIds: [ETechId.COMPUTER_VP_ENERGY] },
+    });
+
+    expect(placeSpy).toHaveBeenCalled();
   });
 });
 
@@ -207,7 +340,7 @@ describe('TechBoard bonus assignment', () => {
   });
 });
 
-describe('ResearchTechEffect.acquireTech with bonus', () => {
+describe('ResearchTechEffect.acquireTech — tile metadata', () => {
   it('result includes tileBonus when tile has a bonus', () => {
     const rng = new SeededRandom('acquire-bonus');
     const board = new TechBoard(rng);
@@ -226,66 +359,4 @@ describe('ResearchTechEffect.acquireTech with bonus', () => {
 
     expect(result.tileBonus).toEqual(expectedBonus);
   });
-
-  it('applies the tile bonus to the player', () => {
-    const rng = new SeededRandom('apply-bonus');
-    const board = new TechBoard(rng);
-
-    const techId = findTechWithBonusType(board, ETechBonusType.ENERGY);
-    if (!techId) return;
-
-    const game = createMockGame(board);
-    const player = createTestPlayer();
-    const energyBefore = player.resources.energy;
-
-    ResearchTechEffect.acquireTech(player, game, techId);
-
-    expect(player.resources.energy).toBe(energyBefore + 1);
-  });
-
-  it('applies VP bonus from tile on top of first-take bonus', () => {
-    const rng = new SeededRandom('vp-bonus');
-    const board = new TechBoard(rng);
-
-    const techId = findTechWithBonusType(board, ETechBonusType.VP_3);
-    if (!techId) return;
-
-    const game = createMockGame(board);
-    const player = createTestPlayer();
-    const scoreBefore = player.score;
-
-    const result = ResearchTechEffect.acquireTech(player, game, techId);
-
-    const expectedGain = result.vpBonus + 3;
-    expect(player.score).toBe(scoreBefore + expectedGain);
-  });
-
-  it('applies CARD bonus by drawing from deck', () => {
-    const rng = new SeededRandom('card-bonus');
-    const board = new TechBoard(rng);
-
-    const techId = findTechWithBonusType(board, ETechBonusType.CARD);
-    if (!techId) return;
-
-    const game = createMockGame(board, ['bonus-draw-card']);
-    const player = createTestPlayer();
-    const handBefore = player.hand.length;
-
-    ResearchTechEffect.acquireTech(player, game, techId);
-
-    expect(player.hand.length).toBe(handBefore + 1);
-    expect(player.hand).toContain('bonus-draw-card');
-  });
 });
-
-function findTechWithBonusType(
-  board: TechBoard,
-  bonusType: ETechBonusType,
-): ETechId | undefined {
-  for (const [techId, stack] of board.stacks) {
-    if (stack.tiles[0]?.bonus?.type === bonusType) {
-      return techId;
-    }
-  }
-  return undefined;
-}

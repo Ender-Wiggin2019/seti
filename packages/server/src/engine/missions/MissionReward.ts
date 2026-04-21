@@ -3,8 +3,10 @@ import {
   type IBaseEffect,
   type ICustomizedEffect,
 } from '@seti/common/types/effect';
-import { EResource } from '@seti/common/types/element';
+import { EResource, ETrace } from '@seti/common/types/element';
+import { drawCard } from '../deck/drawCard.js';
 import type { IGame } from '../IGame.js';
+import type { PlayerInput } from '../input/PlayerInput.js';
 import type { IPlayer } from '../player/IPlayer.js';
 
 export function applyMissionRewards(
@@ -46,12 +48,29 @@ function applyBaseReward(
       break;
     case EResource.CARD:
     case EResource.CARD_ANY: {
-      for (let i = 0; i < value; i++) {
-        const drawn = game.mainDeck.drawWithReshuffle(game.random);
-        if (drawn !== undefined) {
-          player.hand.push(drawn);
-          game.lockCurrentTurn();
+      drawCard(player, game, { source: 'base', count: value });
+      break;
+    }
+    case ETrace.RED:
+    case ETrace.YELLOW:
+    case ETrace.BLUE:
+    case ETrace.ANY: {
+      const chainTraceChoice = (remaining: number): PlayerInput | undefined => {
+        if (remaining <= 0) {
+          return undefined;
         }
+
+        return game.alienState.createTraceInput(
+          player,
+          game,
+          reward.type as ETrace,
+          () => chainTraceChoice(remaining - 1),
+        );
+      };
+
+      const firstTraceChoice = chainTraceChoice(value);
+      if (firstTraceChoice) {
+        player.waitingFor = firstTraceChoice;
       }
       break;
     }

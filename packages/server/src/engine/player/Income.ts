@@ -132,4 +132,17 @@ export class Income {
     }
     this.tuckedCardIncomeBundle[resource] += 1;
   }
+
+  public addBaseIncome(resource: TIncomeResource, amount: number): void {
+    if (!(resource in this.baseIncomeBundle)) {
+      throw new GameError(
+        EErrorCode.VALIDATION_ERROR,
+        'Unknown income resource',
+        {
+          resource,
+        },
+      );
+    }
+    this.baseIncomeBundle[resource] += amount;
+  }
 }

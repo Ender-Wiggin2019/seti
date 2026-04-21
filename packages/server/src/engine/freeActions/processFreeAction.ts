@@ -52,7 +52,16 @@ export function processFreeAction(
       return undefined;
 
     case EFreeAction.EXCHANGE_RESOURCES:
-      ExchangeResourcesFreeAction.execute(player, game, action.from, action.to);
+      ExchangeResourcesFreeAction.execute(
+        player,
+        game,
+        action.from,
+        action.to,
+        {
+          fromDeck: action.fromDeck,
+          cardId: action.cardId,
+        },
+      );
       return undefined;
 
     default:

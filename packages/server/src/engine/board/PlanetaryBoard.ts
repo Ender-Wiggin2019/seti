@@ -2,11 +2,28 @@ import {
   PLANET_MISSION_CONFIG,
   PLANETARY_PLANETS,
 } from '@seti/common/constant/boardLayout';
+import { EResource } from '@seti/common/types/element';
 import { EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 
 const FIRST_ORBIT_VP_BONUS = 3;
+
+/**
+ * Orbit bonus printed above each planet (rule-simple §5.2). First orbiter also
+ * scores +3 VP separately. Income is tracked like tucked income for round payout.
+ */
+export const PLANET_ORBIT_INCOME: Readonly<
+  Record<(typeof PLANETARY_PLANETS)[number], EResource>
+> = {
+  [EPlanet.MERCURY]: EResource.CREDIT,
+  [EPlanet.VENUS]: EResource.ENERGY,
+  [EPlanet.MARS]: EResource.CARD,
+  [EPlanet.JUPITER]: EResource.DATA,
+  [EPlanet.SATURN]: EResource.CREDIT,
+  [EPlanet.URANUS]: EResource.ENERGY,
+  [EPlanet.NEPTUNE]: EResource.PUBLICITY,
+};
 const LANDING_COST_DEFAULT = 3;
 const LANDING_COST_WITH_ORBITER = 2;
 
@@ -34,6 +51,7 @@ export interface IPlanetState {
 
 export interface IOrbitResult {
   vpGained: number;
+  incomeResource: EResource;
 }
 
 export interface ILandingCenterReward {
@@ -113,12 +131,15 @@ export class PlanetaryBoard {
     const planetState = this.getPlanetState(planet);
     planetState.orbitSlots.push({ playerId });
 
+    const incomeResource =
+      PLANET_ORBIT_INCOME[planet as (typeof PLANETARY_PLANETS)[number]];
+
     if (!planetState.firstOrbitClaimed) {
       planetState.firstOrbitClaimed = true;
-      return { vpGained: FIRST_ORBIT_VP_BONUS };
+      return { vpGained: FIRST_ORBIT_VP_BONUS, incomeResource };
     }
 
-    return { vpGained: 0 };
+    return { vpGained: 0, incomeResource };
   }
 
   public land(

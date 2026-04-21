@@ -131,3 +131,84 @@ describe('ObservationQuickMissionCard (37/39/41/43)', () => {
     expect(completable.map((mission) => mission.cardId)).toContain('37');
   });
 });
+
+// ================================================================
+// Phase 3.7: ObservationQuickMissionCard Integration Extension
+// ================================================================
+
+describe('ObservationQuickMissionCard - Integration Extension (Phase 3.7)', () => {
+  it('[Integration] Card 37 uses real Scan action with real sector state (not mocked)', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'observation-card-37-full-integration',
+    );
+    const player = game.players[0];
+    player.hand = ['37'];
+    player.resources.gain({ credits: 10, energy: 10, publicity: 10 });
+    game.mainDeck = new Deck(['refill-1', 'refill-2'], []);
+    game.cardRow = ['110', '110', '110'];
+
+    // Play the observation mission card
+    game.processMainAction(player.id, {
+      type: EMainAction.PLAY_CARD,
+      payload: { cardIndex: 0 },
+    });
+
+    // Mark player as winner of 2 red sectors (simulating scan victories)
+    for (const sector of game.sectors.filter((s) => s.color === ESector.RED)) {
+      sector.sectorWinners.push(player.id);
+    }
+
+    // Mission should now be completable
+    const completable = game.missionTracker.getCompletableQuickMissions(
+      player,
+      game,
+    );
+    expect(completable.map((m) => m.cardId)).toContain('37');
+  });
+
+  it('[Integration] Observation mission NOT completable until sector wins accumulate', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'observation-card-39-integration',
+    );
+    const player = game.players[0];
+    player.hand = ['39']; // Requires 2 yellow sector wins
+    game.mainDeck = new Deck(['refill-1'], []);
+
+    game.processMainAction(player.id, {
+      type: EMainAction.PLAY_CARD,
+      payload: { cardIndex: 0 },
+    });
+
+    // Not completable yet
+    expect(game.missionTracker.hasCompletableQuickMissions(player, game)).toBe(
+      false,
+    );
+
+    // Win 1 yellow sector
+    const yellowSectors = game.sectors.filter(
+      (s) => s.color === ESector.YELLOW,
+    );
+    if (yellowSectors[0]) {
+      yellowSectors[0].sectorWinners.push(player.id);
+    }
+
+    // Still not completable (need 2)
+    expect(game.missionTracker.hasCompletableQuickMissions(player, game)).toBe(
+      false,
+    );
+
+    // Win 2nd yellow sector
+    if (yellowSectors[1]) {
+      yellowSectors[1].sectorWinners.push(player.id);
+    }
+
+    // Now completable
+    expect(game.missionTracker.hasCompletableQuickMissions(player, game)).toBe(
+      true,
+    );
+  });
+});

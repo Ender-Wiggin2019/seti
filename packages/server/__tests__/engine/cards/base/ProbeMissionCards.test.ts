@@ -17,6 +17,7 @@ import { MissionTracker } from '@/engine/missions/MissionTracker.js';
 import { Player } from '@/engine/player/Player.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
 import { activateMission } from '../../../helpers/missionTestUtils.js';
+import { stubTurnLockFields } from '../../../helpers/stubTurnLock.js';
 
 function createPlayer(overrides: Record<string, unknown> = {}): Player {
   return new Player({
@@ -60,6 +61,7 @@ function createEmptySpace(): ISolarSystemSpace {
 
 function createGame(overrides: Record<string, unknown> = {}): IGame {
   return {
+    ...stubTurnLockFields(),
     sectors: [],
     mainDeck: new Deck<string>(['d1', 'd2', 'd3', 'd4', 'd5']),
     cardRow: [],

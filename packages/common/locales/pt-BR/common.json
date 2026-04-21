@@ -279,6 +279,7 @@
       "alien_modules": "Módulos Alienígenas",
       "undo": "Permitir Desfazer",
       "turn_timer": "Timer do turno (segundos, 0 = desligado)",
+      "alien_pool_disabled": " (desativado)",
       "actions": {
         "launching": "Iniciando...",
         "launch": "Iniciar Missão"
@@ -551,6 +552,7 @@
       "buy": "Comprar",
       "exchange_title": "Trocar Recursos",
       "exchange_desc": "Troque 2 de um recurso por 1 de outro.",
+      "exchange_into_card": "2 {{from}} → 1 carta — {{source}}",
       "exchange_option": "2 {{from}} -> 1 {{to}}",
       "place_data_title": "Colocar Dados",
       "place_data_desc": "Escolha qual espaço do computador preencher.",
@@ -569,7 +571,9 @@
         "select_probe": "Selecione o movimento da sonda no tabuleiro",
         "select_probe_desc": "Clique em uma sonda e escolha um destino na visão do tabuleiro.",
         "not_enough_energy": "Energia insuficiente",
-        "not_enough_energy_desc": "Você precisa de pelo menos 1 de energia para converter."
+        "not_enough_energy_desc": "Você precisa de pelo menos 1 de energia para converter.",
+        "card_custom_effect_unhandled": "Efeito de carta indisponível",
+        "card_custom_effect_unhandled_desc": "O efeito personalizado \"{{customId}}\" na carta {{cardId}} foi ignorado. O jogo continuou."
       }
     },
     "resources": {

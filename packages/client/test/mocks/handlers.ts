@@ -1,5 +1,6 @@
 import { HttpResponse, http } from 'msw';
 import type {
+  IAlienTypeOption,
   IAuthUser,
   ILoginResponse,
   IRegisterResponse,
@@ -36,9 +37,9 @@ const mockRooms: IRoom[] = [
     ],
     options: {
       playerCount: 2,
-      alienModulesEnabled: false,
+      alienModulesEnabled: [true, true, true, true, true],
       undoAllowed: true,
-      turnTimerSeconds: 0,
+      timerPerTurn: 0,
     },
     gameId: null,
     createdAt: '2026-03-25T10:00:00Z',
@@ -61,15 +62,26 @@ const mockRooms: IRoom[] = [
     ],
     options: {
       playerCount: 2,
-      alienModulesEnabled: true,
+      alienModulesEnabled: [true, true, true, true, true],
       undoAllowed: true,
-      turnTimerSeconds: 120,
+      timerPerTurn: 120,
     },
     gameId: 'game-1',
     createdAt: '2026-03-25T09:00:00Z',
     updatedAt: '2026-03-25T09:30:00Z',
   },
 ];
+
+const mockAlienTypeMap: Record<string, IAlienTypeOption> = {
+  '1': { alienType: 1, alienName: 'anomalies', disabled: false },
+  '2': { alienType: 2, alienName: 'centaurians', disabled: false },
+  '3': { alienType: 3, alienName: 'exertians', disabled: false },
+  '4': { alienType: 4, alienName: 'mascamites', disabled: false },
+  '5': { alienType: 5, alienName: 'oumuamua', disabled: false },
+  '6': { alienType: 6, alienName: 'amoeba', disabled: true },
+  '7': { alienType: 7, alienName: 'glyphids', disabled: true },
+  '8': { alienType: 8, alienName: 'dummy', disabled: true },
+};
 
 export const handlers = [
   http.get(`${API}/health`, () => {
@@ -105,6 +117,10 @@ export const handlers = [
     return HttpResponse.json<IRoom[]>(mockRooms);
   }),
 
+  http.get(`${API}/lobby/alien-types`, () => {
+    return HttpResponse.json(mockAlienTypeMap);
+  }),
+
   http.post(`${API}/lobby/rooms`, () => {
     const newRoom: IRoom = {
       id: 'room-new',
@@ -122,9 +138,9 @@ export const handlers = [
       ],
       options: {
         playerCount: 2,
-        alienModulesEnabled: false,
+        alienModulesEnabled: [true, true, true, true, true],
         undoAllowed: true,
-        turnTimerSeconds: 0,
+        timerPerTurn: 0,
       },
       gameId: null,
       createdAt: new Date().toISOString(),

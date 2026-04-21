@@ -50,6 +50,14 @@ export interface IExchangeResourcesFreeActionRequest {
   type: EFreeAction.EXCHANGE_RESOURCES;
   from: EResource;
   to: EResource;
+  /**
+   * When exchanging into a card: `true` = draw from deck (after reshuffle if needed);
+   * `false` / omitted with a non-empty card row = take from card row (leftmost, or
+   * `cardId` if set), then refill from deck like Buy Card.
+   */
+  fromDeck?: boolean;
+  /** When taking from the card row, optional specific card id. */
+  cardId?: string;
 }
 
 export type IFreeActionRequest =

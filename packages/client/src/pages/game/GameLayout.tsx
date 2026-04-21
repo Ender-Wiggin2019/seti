@@ -1,7 +1,7 @@
 import { createDefaultSetupConfig } from '@seti/common/constant/sectorSetup';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EResource } from '@seti/common/types/element';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TopBar } from '@/components/layout/TopBar';
@@ -39,13 +39,27 @@ import type {
   IPublicGoldScoringTile,
   IPublicMilestoneState,
   IPublicPlayerState,
+  TGameEvent,
 } from '@/types/re-exports';
 import {
   EFreeAction,
+  EGameEventType,
   EMainAction,
   EPhase,
   EPlayerInputType,
 } from '@/types/re-exports';
+
+const CARD_CUSTOM_EFFECT_UNHANDLED = 'CARD_CUSTOM_EFFECT_UNHANDLED';
+
+function actionEventName(event: TGameEvent): string | null {
+  if (event.type !== EGameEventType.ACTION) return null;
+  const a = event.action;
+  if (typeof a === 'string') return a;
+  if (a && typeof a === 'object' && 'type' in a) {
+    return String((a as { type: string }).type);
+  }
+  return null;
+}
 
 const BOARD_TABS: TBoardTab[] = [
   'board',
@@ -98,7 +112,40 @@ export function GameLayout({
   const [handExpanded, setHandExpanded] = useState(true);
   const [armedCardRowBuy, setArmedCardRowBuy] = useState(false);
   const [playCardSelectionMode, setPlayCardSelectionMode] = useState(false);
-  const { gameState, myPlayerId, isMyTurn, pendingInput } = useGameContext();
+  const { gameState, isMyTurn, pendingInput, events } = useGameContext();
+  const unhandledEffectToastKeysRef = useRef<Set<string>>(new Set());
+  const lastGameIdRef = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    const gid = gameState?.gameId;
+    if (gid !== lastGameIdRef.current) {
+      unhandledEffectToastKeysRef.current.clear();
+      lastGameIdRef.current = gid;
+    }
+  }, [gameState?.gameId]);
+
+  useEffect(() => {
+    for (const event of events) {
+      if (event.type !== EGameEventType.ACTION) continue;
+      if (actionEventName(event) !== CARD_CUSTOM_EFFECT_UNHANDLED) continue;
+      const details = event.details as
+        | { cardId?: string; customId?: string }
+        | undefined;
+      const at = event.at ?? 0;
+      const cardId = details?.cardId ?? '';
+      const customId = details?.customId ?? '';
+      const dedupeKey = `${at}|${event.playerId}|${cardId}|${customId}`;
+      if (unhandledEffectToastKeysRef.current.has(dedupeKey)) continue;
+      unhandledEffectToastKeysRef.current.add(dedupeKey);
+      toast({
+        title: t('client.game_layout.toast.card_custom_effect_unhandled'),
+        description: t(
+          'client.game_layout.toast.card_custom_effect_unhandled_desc',
+          { cardId, customId },
+        ),
+      });
+    }
+  }, [events, t]);
 
   useEffect(() => {
     if (!playCardSelectionMode) return;
@@ -376,11 +423,14 @@ function useActionController({
         open={exchangeOpen}
         player={myPlayer}
         onCancel={() => setExchangeOpen(false)}
-        onConfirm={(from, to) => {
+        onConfirm={(from, to, cardPick) => {
           sendFreeAction({
             type: EFreeAction.EXCHANGE_RESOURCES,
             from,
             to,
+            ...(to === EResource.CARD && cardPick
+              ? { fromDeck: cardPick.fromDeck }
+              : {}),
           });
           setExchangeOpen(false);
         }}
@@ -1168,14 +1218,21 @@ function LoadingLine({ label }: { label: string }): React.JSX.Element {
   );
 }
 
-const EXCHANGE_OPTIONS: Array<{
-  from: EResource;
-  to: EResource;
-}> = [
+type TExchangeOption =
+  | { from: EResource; to: EResource; cardSource?: undefined }
+  | {
+      from: EResource;
+      to: EResource.CARD;
+      cardSource: 'row' | 'deck';
+    };
+
+const EXCHANGE_OPTIONS: TExchangeOption[] = [
   { from: EResource.CREDIT, to: EResource.ENERGY },
-  { from: EResource.CREDIT, to: EResource.CARD },
+  { from: EResource.CREDIT, to: EResource.CARD, cardSource: 'row' },
+  { from: EResource.CREDIT, to: EResource.CARD, cardSource: 'deck' },
   { from: EResource.ENERGY, to: EResource.CREDIT },
-  { from: EResource.ENERGY, to: EResource.CARD },
+  { from: EResource.ENERGY, to: EResource.CARD, cardSource: 'row' },
+  { from: EResource.ENERGY, to: EResource.CARD, cardSource: 'deck' },
   { from: EResource.CARD, to: EResource.CREDIT },
   { from: EResource.CARD, to: EResource.ENERGY },
 ];
@@ -1195,7 +1252,11 @@ function ExchangeResourcesDialog({
   open: boolean;
   player: IPublicPlayerState | null | undefined;
   onCancel: () => void;
-  onConfirm: (from: EResource, to: EResource) => void;
+  onConfirm: (
+    from: EResource,
+    to: EResource,
+    cardPick?: { fromDeck: boolean },
+  ) => void;
 }): React.JSX.Element {
   const { t } = useTranslation('common');
   const canAfford = (from: EResource): boolean => {
@@ -1218,26 +1279,48 @@ function ExchangeResourcesDialog({
           </p>
         </DialogHeader>
         <div className='grid grid-cols-1 gap-1.5'>
-          {EXCHANGE_OPTIONS.map((opt) => (
-            <Button
-              key={`${opt.from}-${opt.to}`}
-              variant='ghost'
-              disabled={!canAfford(opt.from)}
-              onClick={() => onConfirm(opt.from, opt.to)}
-              className='h-10 justify-start gap-2 px-3 text-left text-sm'
-            >
-              <span
-                aria-hidden
-                className='inline-block h-px w-3 bg-accent-500/80'
-              />
-              <span className='flex-1 font-body text-[13px] text-text-100'>
-                {t('client.game_layout.exchange_option', {
-                  from: t(`client.resources.${RESOURCE_I18N_KEY[opt.from]}`),
-                  to: t(`client.resources.${RESOURCE_I18N_KEY[opt.to]}`),
-                })}
-              </span>
-            </Button>
-          ))}
+          {EXCHANGE_OPTIONS.map((opt) => {
+            const key =
+              opt.to === EResource.CARD && opt.cardSource
+                ? `${opt.from}-${opt.to}-${opt.cardSource}`
+                : `${opt.from}-${opt.to}`;
+            const label =
+              opt.to === EResource.CARD && opt.cardSource
+                ? t('client.game_layout.exchange_into_card', {
+                    from: t(`client.resources.${RESOURCE_I18N_KEY[opt.from]}`),
+                    source:
+                      opt.cardSource === 'row'
+                        ? t('client.game_layout.buy_from_row')
+                        : t('client.game_layout.buy_from_deck'),
+                  })
+                : t('client.game_layout.exchange_option', {
+                    from: t(`client.resources.${RESOURCE_I18N_KEY[opt.from]}`),
+                    to: t(`client.resources.${RESOURCE_I18N_KEY[opt.to]}`),
+                  });
+            return (
+              <Button
+                key={key}
+                variant='ghost'
+                disabled={!canAfford(opt.from)}
+                onClick={() =>
+                  opt.to === EResource.CARD && opt.cardSource
+                    ? onConfirm(opt.from, opt.to, {
+                        fromDeck: opt.cardSource === 'deck',
+                      })
+                    : onConfirm(opt.from, opt.to)
+                }
+                className='h-10 justify-start gap-2 px-3 text-left text-sm'
+              >
+                <span
+                  aria-hidden
+                  className='inline-block h-px w-3 bg-accent-500/80'
+                />
+                <span className='flex-1 font-body text-[13px] text-text-100'>
+                  {label}
+                </span>
+              </Button>
+            );
+          })}
         </div>
       </DialogContent>
     </Dialog>

@@ -1,4 +1,5 @@
 import { baseCards } from '@seti/common/data/baseCards';
+import { EResource } from '@seti/common/types/element';
 import { EAlienType, EPhase } from '@seti/common/types/protocol/enums';
 import {
   FIRST_TAKE_VP_BONUS,
@@ -83,6 +84,12 @@ describe('GameSetup', () => {
     });
     expect(game.players[0].hand).toHaveLength(4);
     expect(game.players[0].tuckedIncomeCards).toHaveLength(1);
+    const tuckedIncome = game.players[0].income.tuckedCardIncome;
+    const totalTuckedIncome = Object.values(tuckedIncome).reduce(
+      (sum, value) => sum + value,
+      0,
+    );
+    expect(totalTuckedIncome).toBe(1);
   });
 
   describe('shared board details', () => {
@@ -113,6 +120,57 @@ describe('GameSetup', () => {
       expect(game.hiddenAliens).toHaveLength(2);
       expect(new Set(game.hiddenAliens).size).toBe(2);
       expect(game.hiddenAliens).not.toContain(EAlienType.DUMMY);
+    });
+
+    it('1.1.2E selects random hidden aliens from enabled alien module pool', () => {
+      const game = Game.create(
+        BASE_PLAYERS.slice(0, 2),
+        {
+          playerCount: 2,
+          alienModulesEnabled: [true, false, true, false, false],
+        },
+        'seed-aliens-enabled-pool',
+      );
+
+      expect(game.hiddenAliens).toHaveLength(2);
+      expect(new Set(game.hiddenAliens)).toEqual(
+        new Set([EAlienType.ANOMALIES, EAlienType.EXERTIANS]),
+      );
+    });
+
+    it('1.1.3 shuffles main deck and reveals exactly 3 cards to card row', () => {
+      const game = Game.create(
+        BASE_PLAYERS.slice(0, 2),
+        { playerCount: 2 },
+        'seed-card-row',
+      );
+
+      expect(game.cardRow).toHaveLength(3);
+      const cardRowIds = new Set(game.cardRow);
+      expect(cardRowIds.size).toBe(3);
+      for (const cardId of game.cardRow) {
+        expect(typeof cardId).toBe('string');
+        if (typeof cardId === 'string') {
+          expect(cardId.length).toBeGreaterThan(0);
+        }
+      }
+    });
+
+    it('1.1.4 fills each nearby star data slot completely with data tokens', () => {
+      const game = Game.create(
+        BASE_PLAYERS.slice(0, 2),
+        { playerCount: 2 },
+        'seed-data-slots',
+      );
+
+      expect(game.sectors).toHaveLength(8);
+      for (const sector of game.sectors) {
+        const dataCount = sector.signals.filter(
+          (s) => s.type === 'data',
+        ).length;
+        expect(dataCount).toBe(sector.dataSlotCapacity);
+        expect(sector.signals).toHaveLength(sector.dataSlotCapacity);
+      }
     });
 
     it('1.1.7 builds 12 tech stacks, each with 4 tiles and a first-take VP bonus', () => {
@@ -203,6 +261,33 @@ describe('GameSetup', () => {
 
       expect(game3.players.map((p) => p.score)).toEqual([1, 2, 3]);
       expect(game4.players.map((p) => p.score)).toEqual([1, 2, 3, 4]);
+    });
+
+    it('1.2.5 starting base income provides 3 credits, 2 energy, and 1 card per round', () => {
+      const game = Game.create(
+        BASE_PLAYERS.slice(0, 2),
+        { playerCount: 2 },
+        'seed-base-income',
+      );
+
+      for (const player of game.players) {
+        const baseIncome = player.income.baseIncome;
+        expect(baseIncome[EResource.CREDIT]).toBe(3);
+        expect(baseIncome[EResource.ENERGY]).toBe(2);
+        expect(baseIncome[EResource.CARD]).toBe(1);
+      }
+    });
+
+    it('1.2.6 every player starts with publicity at 4', () => {
+      const game = Game.create(
+        BASE_PLAYERS.slice(0, 2),
+        { playerCount: 2 },
+        'seed-publicity',
+      );
+
+      for (const player of game.players) {
+        expect(player.publicity).toBe(4);
+      }
     });
   });
 });

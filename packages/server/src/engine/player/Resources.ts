@@ -28,7 +28,17 @@ const EMPTY_RESOURCE_BUNDLE: IResourceBundle = {
   data: 0,
 };
 
+/** Credits / energy track cap (implementation limit). */
+const CREDIT_ENERGY_MAX = 999;
+
+/** Publicity track max — rule board is 0–10 (see rule-simple / prd-rule). */
 const PUBLICITY_MAX = 10;
+
+function maxForScalarResource(
+  resource: 'credits' | 'energy' | 'publicity',
+): number {
+  return resource === 'publicity' ? PUBLICITY_MAX : CREDIT_ENERGY_MAX;
+}
 
 function normalizeResourceAmount(
   resource: keyof IResourceBundle,
@@ -43,6 +53,20 @@ function normalizeResourceAmount(
     );
   }
   return normalizedAmount;
+}
+
+function assertMaxResourceAmount(
+  resource: 'credits' | 'energy' | 'publicity',
+  amount: number,
+): void {
+  const max = maxForScalarResource(resource);
+  if (amount > max) {
+    throw new GameError(
+      EErrorCode.VALIDATION_ERROR,
+      `${resource} cannot exceed ${max}`,
+      { resource, amount, max },
+    );
+  }
 }
 
 export class Resources {
@@ -62,18 +86,14 @@ export class Resources {
       'credits',
       initialBundle.credits,
     );
+    assertMaxResourceAmount('credits', this.creditsAmount);
     this.energyAmount = normalizeResourceAmount('energy', initialBundle.energy);
+    assertMaxResourceAmount('energy', this.energyAmount);
     this.publicityAmount = normalizeResourceAmount(
       'publicity',
       initialBundle.publicity,
     );
-    if (this.publicityAmount > PUBLICITY_MAX) {
-      throw new GameError(
-        EErrorCode.VALIDATION_ERROR,
-        `publicity cannot exceed ${PUBLICITY_MAX}`,
-        { publicity: this.publicityAmount, max: PUBLICITY_MAX },
-      );
-    }
+    assertMaxResourceAmount('publicity', this.publicityAmount);
     this.dataController = options.dataController;
     const initialData = normalizeResourceAmount('data', initialBundle.data);
     if (initialData > 0) {
@@ -106,13 +126,7 @@ export class Resources {
 
   public setPublicity(value: number): void {
     const normalizedValue = normalizeResourceAmount('publicity', value);
-    if (normalizedValue > PUBLICITY_MAX) {
-      throw new GameError(
-        EErrorCode.VALIDATION_ERROR,
-        `publicity cannot exceed ${PUBLICITY_MAX}`,
-        { publicity: normalizedValue, max: PUBLICITY_MAX },
-      );
-    }
+    assertMaxResourceAmount('publicity', normalizedValue);
     this.publicityAmount = normalizedValue;
   }
 
@@ -148,8 +162,14 @@ export class Resources {
   }
 
   public gain(bundle: TPartialResourceBundle): void {
-    this.creditsAmount += normalizeResourceAmount('credits', bundle.credits);
-    this.energyAmount += normalizeResourceAmount('energy', bundle.energy);
+    this.creditsAmount = Math.min(
+      CREDIT_ENERGY_MAX,
+      this.creditsAmount + normalizeResourceAmount('credits', bundle.credits),
+    );
+    this.energyAmount = Math.min(
+      CREDIT_ENERGY_MAX,
+      this.energyAmount + normalizeResourceAmount('energy', bundle.energy),
+    );
     const gainPublicityAmount = normalizeResourceAmount(
       'publicity',
       bundle.publicity,

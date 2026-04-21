@@ -1,6 +1,7 @@
 import type { IComputerSlotReward } from '@seti/common/types/computer';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
+import { drawCard } from '../deck/drawCard.js';
 import { TuckCardForIncomeEffect } from '../effects/income/TuckCardForIncomeEffect.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
@@ -116,11 +117,7 @@ export class PlaceDataFreeAction {
       player.resources.gain({ publicity: reward.publicity });
     }
     if (reward.drawCard && reward.drawCard > 0) {
-      const drawn = game.mainDeck.drawN(reward.drawCard);
-      player.hand.push(...drawn);
-      if (drawn.length > 0) {
-        game.lockCurrentTurn();
-      }
+      drawCard(player, game, { source: 'base', count: reward.drawCard });
     }
     if (reward.tuckIncome && reward.tuckIncome > 0) {
       return TuckCardForIncomeEffect.execute(player, game);

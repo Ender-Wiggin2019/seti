@@ -182,6 +182,9 @@ export interface IPublicAlienState {
   alienIndex: number;
   alienType: EAlienType | null;
   discovered: boolean;
+  faceUpAlienCardId?: string | null;
+  alienDeckSize?: number;
+  alienDiscardSize?: number;
   slots: IPublicTraceSlot[];
 }
 

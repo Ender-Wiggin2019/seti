@@ -10,6 +10,7 @@ import { EMissionEventType } from '@/engine/missions/IMission.js';
 import { MissionTracker } from '@/engine/missions/MissionTracker.js';
 import { Player } from '@/engine/player/Player.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
+import { stubTurnLockFields } from '../../../helpers/stubTurnLock.js';
 
 function createPlayer(overrides: Record<string, unknown> = {}): Player {
   return new Player({
@@ -25,6 +26,7 @@ function createPlayer(overrides: Record<string, unknown> = {}): Player {
 
 function createGame(overrides: Record<string, unknown> = {}): IGame {
   return {
+    ...stubTurnLockFields(),
     sectors: [],
     mainDeck: new Deck<string>(['d1', 'd2', 'd3', 'd4', 'd5']),
     cardRow: [],

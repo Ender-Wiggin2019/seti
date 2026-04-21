@@ -86,7 +86,7 @@ export function RoomCard({ room }: IRoomCardProps): React.JSX.Element {
           </span>
         </span>
 
-        {room.options.alienModulesEnabled && (
+        {room.options.alienModulesEnabled.some((enabled) => enabled) && (
           <span className='flex items-center gap-1'>
             <span className='h-1 w-1 rounded-full bg-[oklch(0.70_0.13_300)]' />
             <span className='font-mono text-[0.6875rem] uppercase tracking-microlabel text-[oklch(0.78_0.11_300)]'>
@@ -95,12 +95,12 @@ export function RoomCard({ room }: IRoomCardProps): React.JSX.Element {
           </span>
         )}
 
-        {room.options.turnTimerSeconds > 0 && (
+        {room.options.timerPerTurn > 0 && (
           <span className='flex items-center gap-1.5 text-text-500'>
             <TimerGlyph />
             <span className='readout'>
               {t('client.room_card.timer', {
-                seconds: room.options.turnTimerSeconds,
+                seconds: room.options.timerPerTurn,
               })}
             </span>
           </span>

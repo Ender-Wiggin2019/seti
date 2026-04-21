@@ -32,6 +32,18 @@ export function validateGameOptions(gameOptions: IGameOptions): void {
     throw new Error('alienModulesEnabled must be an array');
   }
 
+  if (gameOptions.alienModulesEnabled.length < 5) {
+    throw new Error('alienModulesEnabled must define at least 5 alien toggles');
+  }
+
+  const enabledCoreAlienCount = gameOptions.alienModulesEnabled
+    .slice(0, 5)
+    .filter((enabled) => enabled !== false).length;
+
+  if (enabledCoreAlienCount < 2) {
+    throw new Error('alienModulesEnabled must enable at least 2 core aliens');
+  }
+
   if (
     !Number.isInteger(gameOptions.timerPerTurn) ||
     gameOptions.timerPerTurn < 0

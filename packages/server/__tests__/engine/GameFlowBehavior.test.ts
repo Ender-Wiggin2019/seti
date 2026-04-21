@@ -207,7 +207,9 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
 
     expect(p1.hand).toHaveLength(5);
     expect(p1.tuckedIncomeCards).toHaveLength(0);
-    expect(p1.income.computeRoundPayout()[EResource.ENERGY]).toBe(0);
+    expect(p1.income.computeRoundPayout()[EResource.ENERGY]).toBe(
+      p1.income.baseIncome[EResource.ENERGY],
+    );
   });
 
   // ── 5. Tuck card '8' via TuckCardForIncomeEffect ────────────────────
@@ -230,7 +232,9 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
     expect(p1.tuckedIncomeCards).toContain('8');
     expect(p1.hand).toHaveLength(4);
     expect(p1.hand).not.toContain('8');
-    expect(p1.income.computeRoundPayout()[EResource.ENERGY]).toBe(1);
+    expect(p1.income.computeRoundPayout()[EResource.ENERGY]).toBe(
+      p1.income.baseIncome[EResource.ENERGY] + 1,
+    );
     expect(p1.resources.energy).toBe(energyBefore + 1);
   });
 

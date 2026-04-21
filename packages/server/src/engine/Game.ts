@@ -13,6 +13,7 @@ import {
   ETrace,
 } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
+import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { GameError } from '@/shared/errors/GameError.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
 import { AnalyzeDataAction } from './actions/AnalyzeData.js';
@@ -376,6 +377,18 @@ export class Game implements IGame {
       return;
     }
 
+    // DISPLAY_CARD (and similar) may record mission events at DEFAULT priority,
+    // after the CARD_TRIGGER pass. Flush buffered checkpoints once the deferred
+    // queue has caught up so SIGNAL_PLACED events are not stranded.
+    const missionPrompt = this.missionTracker.checkAndPromptTriggersForPlayers(
+      this.getMissionTriggerPlayers(this.activePlayer.id),
+      this,
+    );
+    if (missionPrompt !== undefined) {
+      missionPrompt.player.waitingFor = missionPrompt;
+      return;
+    }
+
     if (this.phase === EPhase.IN_RESOLUTION) {
       // PASS auto-ends the turn; all other main actions wait for an explicit
       // END_TURN so the player can still take free actions afterwards.
@@ -642,8 +655,7 @@ export class Game implements IGame {
     this.eventLog.append(createRoundEndEvent(this.round));
 
     for (const player of this.players) {
-      const payout = player.income.computeRoundPayout();
-      player.resources.gain(payout);
+      player.applyEndOfRoundIncome(this.round);
       player.passed = false;
     }
 
@@ -716,13 +728,21 @@ export class Game implements IGame {
       );
     }
 
-    if (this.activePlayer.waitingFor) {
+    const pendingInput = this.activePlayer.waitingFor;
+    const canInterruptScanMainActionWithFreeAction =
+      pendingInput !== undefined &&
+      this.phase === EPhase.IN_RESOLUTION &&
+      allowedPhases.includes(EPhase.IN_RESOLUTION) &&
+      this.currentMainActionType === EMainAction.SCAN &&
+      pendingInput.toModel().type === EPlayerInputType.OPTION;
+
+    if (pendingInput && !canInterruptScanMainActionWithFreeAction) {
       throw new GameError(
         EErrorCode.INVALID_INPUT_RESPONSE,
         `Player ${playerId} must resolve the pending input before taking another action`,
         {
           playerId,
-          inputType: this.activePlayer.waitingFor.toModel().type,
+          inputType: pendingInput.toModel().type,
         },
       );
     }
@@ -816,6 +836,23 @@ export class Game implements IGame {
               playerId: player.id,
               cardIndex,
               handSize: player.hand.length,
+            },
+          );
+        }
+        const declaredCardId = action.payload?.cardId;
+        if (
+          typeof declaredCardId === 'string' &&
+          declaredCardId.length > 0 &&
+          player.getCardIdAt(cardIndex) !== declaredCardId
+        ) {
+          throw new GameError(
+            EErrorCode.INVALID_ACTION,
+            'Declared card is not at the chosen hand index',
+            {
+              playerId: player.id,
+              cardIndex,
+              declaredCardId,
+              actualCardId: player.getCardIdAt(cardIndex),
             },
           );
         }

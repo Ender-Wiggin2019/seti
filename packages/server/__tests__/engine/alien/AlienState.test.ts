@@ -1,4 +1,5 @@
 import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
+import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { AlienBoard } from '@/engine/alien/AlienBoard.js';
 import { AlienState } from '@/engine/alien/AlienState.js';
 import { EventLog } from '@/engine/event/EventLog.js';
@@ -9,6 +10,7 @@ function createMockGame(overrides: Partial<IGame> = {}): IGame {
   return {
     players: [],
     eventLog: new EventLog(),
+    lockCurrentTurn: () => undefined,
     ...overrides,
   } as unknown as IGame;
 }
@@ -265,6 +267,187 @@ describe('AlienState', () => {
       expect(discoveryTarget).toBeUndefined();
     });
   });
+
+  describe('draw alien card input flow', () => {
+    it('prompts alien selection when no alien type is provided', () => {
+      const state = AlienState.createFromHiddenAliens([
+        EAlienType.ANOMALIES,
+        EAlienType.CENTAURIANS,
+      ]);
+      const player = createPlayer();
+      const game = createMockGame({ players: [player] });
+
+      state.boards[0].discovered = true;
+      state.boards[0].initializeAlienDeck(['ET.11']);
+      state.boards[1].discovered = true;
+      state.boards[1].initializeAlienDeck(['ET.31']);
+
+      const input = state.createDrawAlienCardInput(player, game);
+      expect(input).toBeDefined();
+
+      const model = input!.toModel();
+      expect(model.type).toBe(EPlayerInputType.OPTION);
+      if (model.type !== EPlayerInputType.OPTION) {
+        throw new Error('Expected option input model');
+      }
+      expect(model.options).toHaveLength(2);
+    });
+
+    it('draws from selected source when alien type is specified', () => {
+      const state = AlienState.createFromHiddenAliens([EAlienType.ANOMALIES]);
+      const player = createPlayer();
+      const game = createMockGame({ players: [player] });
+      const board = state.boards[0];
+
+      board.discovered = true;
+      board.initializeAlienDeck(['ET.11', 'ET.12']);
+      board.revealNextFaceUpAlienCard();
+
+      const input = state.createDrawAlienCardInput(player, game, {
+        alienType: EAlienType.ANOMALIES,
+      });
+      expect(input).toBeDefined();
+
+      const sourceModel = input!.toModel();
+      expect(sourceModel.type).toBe(EPlayerInputType.OPTION);
+
+      const next = input!.process({
+        type: EPlayerInputType.OPTION,
+        optionId: 'draw-face-up',
+      });
+      expect(next).toBeUndefined();
+      expect(player.hand).toContain('ET.11');
+      expect(board.faceUpAlienCardId).toBe('ET.12');
+    });
+
+    it('reshuffles alien discard when drawing from deck and draw pile is empty', () => {
+      const state = AlienState.createFromHiddenAliens([EAlienType.ANOMALIES]);
+      const player = createPlayer();
+      const game = createMockGame({ players: [player] });
+      const board = state.boards[0];
+
+      board.discovered = true;
+      board.alienDeckDrawPile = [];
+      board.alienDeckDiscardPile = ['ET.31', 'ET.32'];
+
+      const drawn = state.drawAlienCard(player, board, 'deck', game);
+
+      expect(drawn).toBe('ET.31');
+      expect(player.hand).toContain('ET.31');
+      expect(board.alienDeckDrawPile).toEqual(['ET.32']);
+      expect(board.alienDeckDiscardPile).toEqual([]);
+    });
+
+    it('refills face-up from reshuffled alien discard after drawing face-up', () => {
+      const state = AlienState.createFromHiddenAliens([EAlienType.ANOMALIES]);
+      const player = createPlayer();
+      const game = createMockGame({ players: [player] });
+      const board = state.boards[0];
+
+      board.discovered = true;
+      board.alienDeckDrawPile = ['ET.11'];
+      board.alienDeckDiscardPile = ['ET.12'];
+      board.revealNextFaceUpAlienCard();
+
+      const input = state.createDrawAlienCardInput(player, game, {
+        alienType: EAlienType.ANOMALIES,
+      });
+      expect(input).toBeDefined();
+
+      const next = input!.process({
+        type: EPlayerInputType.OPTION,
+        optionId: 'draw-face-up',
+      });
+
+      expect(next).toBeUndefined();
+      expect(player.hand).toContain('ET.11');
+      expect(board.faceUpAlienCardId).toBe('ET.12');
+      expect(board.alienDeckDiscardPile).toEqual([]);
+    });
+
+    it('trace bonus DRAW_ALIEN_CARD defaults to current alien board', () => {
+      const state = new AlienState({
+        aliens: [
+          {
+            alienType: EAlienType.ANOMALIES,
+            alienIndex: 0,
+            discovered: true,
+            slots: [
+              {
+                slotId: 'custom-red',
+                alienIndex: 0,
+                traceColor: ETrace.RED,
+                maxOccupants: 1,
+                rewards: [{ type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' }],
+                isDiscovery: false,
+              },
+            ],
+          },
+        ],
+      });
+      const player = createPlayer();
+      const game = createMockGame({ players: [player] });
+      const board = state.boards[0];
+      board.initializeAlienDeck(['ET.11', 'ET.12']);
+      board.revealNextFaceUpAlienCard();
+
+      const input = state.createTraceInput(player, game, ETrace.RED);
+      expect(input).toBeDefined();
+
+      const model = input!.toModel();
+      expect(model.type).toBe(EPlayerInputType.OPTION);
+      if (model.type !== EPlayerInputType.OPTION) {
+        throw new Error('Expected option input model');
+      }
+      // Must be source choice directly, not alien-board choice.
+      expect(model.options.some((option) => option.id === 'draw-face-up')).toBe(
+        true,
+      );
+    });
+
+    it('continues onComplete after resolving trace bonus DRAW_ALIEN_CARD input', () => {
+      const state = new AlienState({
+        aliens: [
+          {
+            alienType: EAlienType.ANOMALIES,
+            alienIndex: 0,
+            discovered: true,
+            slots: [
+              {
+                slotId: 'custom-red',
+                alienIndex: 0,
+                traceColor: ETrace.RED,
+                maxOccupants: 1,
+                rewards: [{ type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' }],
+                isDiscovery: false,
+              },
+            ],
+          },
+        ],
+      });
+      const player = createPlayer();
+      const game = createMockGame({ players: [player] });
+      const board = state.boards[0];
+      board.initializeAlienDeck(['ET.11', 'ET.12']);
+      board.revealNextFaceUpAlienCard();
+
+      let didContinue = false;
+      const input = state.createTraceInput(player, game, ETrace.RED, () => {
+        didContinue = true;
+        return undefined;
+      });
+      expect(input).toBeDefined();
+
+      const next = input!.process({
+        type: EPlayerInputType.OPTION,
+        optionId: 'draw-face-up',
+      });
+
+      expect(next).toBeUndefined();
+      expect(player.hand).toContain('ET.11');
+      expect(didContinue).toBe(true);
+    });
+  });
 });
 
 describe('AlienBoard', () => {
@@ -499,6 +682,44 @@ describe('AlienBoard', () => {
 
       expect(board.slots.length).toBe(before + 1);
       expect(board.getSlot('extra')).toBeDefined();
+    });
+  });
+
+  describe('alien deck helpers', () => {
+    it('initializes deck and reveals face-up card', () => {
+      const board = createBoard();
+      board.initializeAlienDeck(['a1', 'a2', 'a3']);
+
+      expect(board.faceUpAlienCardId).toBeNull();
+      expect(board.alienDeckDrawPile).toEqual(['a1', 'a2', 'a3']);
+
+      board.revealNextFaceUpAlienCard();
+      expect(board.faceUpAlienCardId).toBe('a1');
+      expect(board.alienDeckDrawPile).toEqual(['a2', 'a3']);
+    });
+
+    it('draws face-up card and auto-refills next face-up', () => {
+      const board = createBoard();
+      board.initializeAlienDeck(['a1', 'a2']);
+      board.revealNextFaceUpAlienCard();
+
+      const drawn = board.drawFaceUpAlienCard();
+
+      expect(drawn).toBe('a1');
+      expect(board.faceUpAlienCardId).toBe('a2');
+      expect(board.alienDeckDrawPile).toEqual([]);
+    });
+
+    it('recycles discard pile when deck is empty', () => {
+      const board = createBoard();
+      board.alienDeckDrawPile = [];
+      board.alienDeckDiscardPile = ['d1', 'd2'];
+
+      const drawn = board.drawAlienCardFromDeck();
+
+      expect(drawn).toBe('d1');
+      expect(board.alienDeckDrawPile).toEqual(['d2']);
+      expect(board.alienDeckDiscardPile).toEqual([]);
     });
   });
 });

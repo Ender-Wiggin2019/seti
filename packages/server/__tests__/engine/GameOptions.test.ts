@@ -20,4 +20,20 @@ describe('GameOptions', () => {
       'playerCount must be an integer between 2 and 4',
     );
   });
+
+  it('throws when alienModulesEnabled has fewer than 5 toggles', () => {
+    expect(() =>
+      createGameOptions({
+        alienModulesEnabled: [true, true, true, true],
+      }),
+    ).toThrow('alienModulesEnabled must define at least 5 alien toggles');
+  });
+
+  it('throws when fewer than 2 core aliens are enabled', () => {
+    expect(() =>
+      createGameOptions({
+        alienModulesEnabled: [true, false, false, false, false],
+      }),
+    ).toThrow('alienModulesEnabled must enable at least 2 core aliens');
+  });
 });

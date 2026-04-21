@@ -1,5 +1,9 @@
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsBoolean,
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsObject,
@@ -19,6 +23,25 @@ class CreateRoomOptionsDto {
   @IsOptional()
   @IsString()
   scenarioPreset?: string;
+
+  @IsOptional()
+  @ArrayMinSize(5)
+  @ArrayMaxSize(7)
+  @IsBoolean({ each: true })
+  alienModulesEnabled?: boolean[];
+
+  @IsOptional()
+  @IsBoolean()
+  undoAllowed?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  timerPerTurn?: number;
+
+  @IsOptional()
+  @IsIn([0, 120, 240, 300, 600])
+  turnTimerSeconds?: number;
 }
 
 export class CreateRoomDto {

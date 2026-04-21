@@ -8,9 +8,11 @@ import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
+import { stubTurnLockFields } from '../../helpers/stubTurnLock.js';
 
 function createMockGame(overrides: Record<string, unknown> = {}): IGame {
   return {
+    ...stubTurnLockFields(),
     solarSystem: { rotateNextDisc: vi.fn().mockReturnValue(1) },
     alienState: { onSolarSystemRotated: vi.fn() },
     planetaryBoard: null,

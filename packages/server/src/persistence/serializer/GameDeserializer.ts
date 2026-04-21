@@ -395,6 +395,9 @@ export function deserializeGame(dto: IGameStateDto): Game {
       alienType: a.alienType,
       alienIndex: a.alienIndex,
       discovered: a.discovered,
+      alienDeckDrawPile: [...(a.alienDeckDrawPile ?? [])],
+      alienDeckDiscardPile: [...(a.alienDeckDiscardPile ?? [])],
+      faceUpAlienCardId: a.faceUpAlienCardId ?? null,
       slots: a.slots.map((s) => ({
         slotId: s.slotId,
         alienIndex: s.alienIndex,

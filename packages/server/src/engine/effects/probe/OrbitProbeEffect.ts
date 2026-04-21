@@ -71,6 +71,7 @@ export class OrbitProbeEffect {
     const orbitResult = planetaryBoard.orbit(planet, player.id);
     syncProbeCountsForPlayer(game, player.id);
     player.score += orbitResult.vpGained;
+    player.income.addTuckedIncome(orbitResult.incomeResource);
 
     return {
       planet,

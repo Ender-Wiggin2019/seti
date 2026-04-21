@@ -101,6 +101,9 @@ function createGameState(playerId: string, spaceId: string): IPublicGameState {
     recentEvents: [],
     milestones: { goldMilestones: [], neutralMilestones: [] },
     goldScoringTiles: [],
+    undoAllowed: false,
+    canUndo: false,
+    turnIndex: 0,
   };
 }
 

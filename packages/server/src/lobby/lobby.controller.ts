@@ -24,6 +24,11 @@ export class LobbyController {
     return this.lobbyService.listRooms(status);
   }
 
+  @Get('alien-types')
+  getAlienTypeMap() {
+    return this.lobbyService.getAlienTypeMap();
+  }
+
   @Post('rooms')
   async createRoom(
     @Req() req: { user: IJwtPayload },
@@ -41,6 +46,7 @@ export class LobbyController {
       playerCount,
       dto.seed,
       scenarioPreset,
+      dto.options,
     );
   }
 

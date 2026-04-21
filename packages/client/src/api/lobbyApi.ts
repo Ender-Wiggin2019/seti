@@ -1,5 +1,10 @@
 import { httpClient } from '@/api/httpClient';
-import type { ICreateRoomRequest, IRoom, IRoomListFilter } from '@/api/types';
+import type {
+  IAlienTypeOption,
+  ICreateRoomRequest,
+  IRoom,
+  IRoomListFilter,
+} from '@/api/types';
 
 interface IServerRoomPlayer {
   userId: string;
@@ -17,6 +22,33 @@ interface IServerRoom {
   currentPlayers?: IServerRoomPlayer[];
   options?: IRoom['options'];
   createdAt?: string | Date;
+}
+
+function normalizeAlienModuleFlags(raw: unknown): boolean[] {
+  if (Array.isArray(raw)) {
+    return raw
+      .map((value) => value !== false)
+      .concat([true, true, true, true, true])
+      .slice(0, 5);
+  }
+  if (typeof raw === 'boolean') {
+    return [raw, raw, raw, raw, raw];
+  }
+  return [true, true, true, true, true];
+}
+
+function normalizeOptions(room: IServerRoom): IRoom['options'] {
+  const raw = (room.options ?? {}) as Record<string, unknown>;
+  return {
+    playerCount:
+      room.playerCount ?? Math.max((room.currentPlayers ?? []).length, 2),
+    alienModulesEnabled: normalizeAlienModuleFlags(raw.alienModulesEnabled),
+    undoAllowed: (raw.undoAllowed as boolean | undefined) ?? true,
+    timerPerTurn:
+      (raw.timerPerTurn as number | undefined) ??
+      (raw.turnTimerSeconds as number | undefined) ??
+      0,
+  };
 }
 
 function toIsoString(value: string | Date | undefined): string {
@@ -41,14 +73,7 @@ function normalizeRoom(room: IServerRoom): IRoom {
     hostId: room.hostUserId ?? '',
     status: room.status,
     players,
-    options:
-      room.options ??
-      ({
-        playerCount: room.playerCount ?? Math.max(players.length, 2),
-        alienModulesEnabled: false,
-        undoAllowed: true,
-        turnTimerSeconds: 0,
-      } as const),
+    options: normalizeOptions(room),
     gameId: room.status === 'playing' ? room.id : null,
     createdAt: toIsoString(room.createdAt),
     updatedAt: toIsoString(room.createdAt),
@@ -66,6 +91,14 @@ export const lobbyApi = {
   createRoom: async (data: ICreateRoomRequest): Promise<IRoom> => {
     const res = await httpClient.post<IServerRoom>('/lobby/rooms', data);
     return normalizeRoom(res.data);
+  },
+
+  getAlienTypeMap: async (): Promise<Record<string, IAlienTypeOption>> => {
+    const res =
+      await httpClient.get<Record<string, IAlienTypeOption>>(
+        '/lobby/alien-types',
+      );
+    return res.data;
   },
 
   getRoom: async (id: string): Promise<IRoom> => {

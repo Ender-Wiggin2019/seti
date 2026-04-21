@@ -216,6 +216,8 @@ The Exertian cards are an exception – they can’t be discarded by any means. 
 [heading]🛰️ How many times do I rotate the Solar system with cards that have both a rotation and a tech effect?[/heading]
 [color=#006d8f]Each time you research a tech, you first rotate the Solar system. The rotation icon on those cards is only a reminder to do so. You rotate the Solar system only once.[/color]
 
+[color=#c06a00][b]Project note (implementation decision):[/b] In this codebase, Solar system rotation is triggered only when a card/effect explicitly includes a ROTATE icon/effect. So a tech-grant effect without ROTATE does not rotate. Keep tests and implementation aligned with this project rule.[/color]
+
 [size=18]❗FAQ for individual cards can be found in a [article=45072009]separate post[/article] below this one.[/size]
 
 [size=24]SOLO GAME[/size]

@@ -34,6 +34,9 @@ function createMockGame(deckCards: string[] = []): IGame {
         return deckCards.splice(0, count);
       },
     } as Deck<string>,
+    lockCurrentTurn(): void {
+      // no-op for unit tests
+    },
   } as unknown as IGame;
 }
 
@@ -347,6 +350,327 @@ describe('PlaceDataFreeAction', () => {
       ).toThrowError(
         expect.objectContaining({ code: EErrorCode.INVALID_INPUT_RESPONSE }),
       );
+    });
+  });
+
+  describe('Phase 3.2: Integration tests with real Deck', () => {
+    describe('3.2 main path', () => {
+      it('3.2.1 [integration] places data left to right using real game', () => {
+        const game = createIntegrationGame('place-data-left-to-right');
+        const player = game.players[0];
+
+        player.dataPool.add(6);
+
+        for (let i = 0; i < 6; i++) {
+          const result = PlaceDataFreeAction.execute(player, game);
+          expect(result.row).toBe('top');
+          expect(result.index).toBe(i);
+          const topSlots = player.computer.getTopSlots();
+          expect(topSlots[i]).toBe(true);
+        }
+
+        expect(player.dataPool.count).toBe(0);
+        const finalTopSlots = player.computer.getTopSlots();
+        expect(finalTopSlots.every(Boolean)).toBe(true);
+      });
+
+      it('3.2.2 [integration] resolves reward immediately when placing on slot with effect (real deck)', () => {
+        const game = createIntegrationGame('place-data-reward-immediate');
+        const player = game.players[0];
+
+        player.computer.placeTech(2, {
+          techId: ETechId.COMPUTER_VP_CARD,
+          bottomReward: { drawCard: 1 },
+        });
+
+        for (let i = 0; i < 6; i++) {
+          player.dataPool.add(1);
+          PlaceDataFreeAction.execute(player, game);
+        }
+
+        const handBefore = player.hand.length;
+        const deckSizeBefore = game.mainDeck.drawSize;
+
+        player.dataPool.add(1);
+        const result = PlaceDataFreeAction.execute(player, game, 2);
+
+        expect(result.row).toBe('bottom');
+        expect(result.index).toBe(2);
+        expect(result.reward).toEqual({ drawCard: 1 });
+        expect(player.hand.length).toBe(handBefore + 1);
+        expect(game.mainDeck.drawSize).toBe(deckSizeBefore - 1);
+        expect(typeof player.hand[player.hand.length - 1]).toBe('string');
+      });
+
+      it('3.2.3 [integration] tech column top slot must be filled before bottom slot', () => {
+        const game = createIntegrationGame('tech-top-before-bottom');
+        const player = game.players[0];
+
+        player.computer.placeTech(0, {
+          techId: ETechId.COMPUTER_VP_CREDIT,
+          bottomReward: { credits: 1 },
+        });
+
+        const added = player.dataPool.add(10);
+        expect(added).toBe(6);
+        expect(player.dataPool.count).toBe(6);
+
+        const result1 = PlaceDataFreeAction.execute(player, game);
+        expect(result1.row).toBe('top');
+        expect(result1.index).toBe(0);
+
+        player.dataPool.add(10);
+        for (let i = 1; i < 6; i++) {
+          PlaceDataFreeAction.execute(player, game);
+        }
+
+        const availableBottom = player.computer.getAvailableBottomIndices();
+        expect(availableBottom).toEqual([0]);
+
+        const result2 = PlaceDataFreeAction.execute(player, game, 0);
+        expect(result2.row).toBe('bottom');
+        expect(result2.index).toBe(0);
+
+        const bottomStates = player.computer.getBottomSlotStates();
+        expect(bottomStates[0]).toBe(true);
+      });
+
+      it('3.2.4 [integration] data pool cap is 6, overflow is discarded', () => {
+        const game = createIntegrationGame('data-pool-cap-six');
+        const player = game.players[0];
+
+        expect(player.dataPool.max).toBe(6);
+        expect(player.dataPool.count).toBe(0);
+
+        const actualAdded = player.dataPool.add(10);
+        expect(actualAdded).toBe(6);
+        expect(player.dataPool.count).toBe(6);
+        expect(player.dataPool.isFull()).toBe(true);
+
+        const moreAdded = player.dataPool.add(5);
+        expect(moreAdded).toBe(0);
+        expect(player.dataPool.count).toBe(6);
+      });
+
+      it('3.2.5 [integration] FAQ: cannot interrupt place-data effect resolution', () => {
+        const game = createIntegrationGame('no-interrupt-place-data');
+        const player = game.players[0];
+
+        player.computer.placeTech(0, {
+          techId: ETechId.COMPUTER_VP_CREDIT,
+          bottomReward: { tuckIncome: 1 },
+        });
+        for (let i = 0; i < 6; i++) {
+          player.computer.placeData({ row: EComputerRow.TOP, index: i });
+        }
+        player.dataPool.add(1);
+
+        game.processFreeAction(player.id, {
+          type: EFreeAction.PLACE_DATA,
+          slotIndex: 0,
+        });
+
+        expect(player.waitingFor?.toModel().type).toBe(EPlayerInputType.CARD);
+
+        expect(() =>
+          game.processFreeAction(player.id, {
+            type: EFreeAction.BUY_CARD,
+            fromDeck: true,
+          }),
+        ).toThrowError(
+          expect.objectContaining({ code: EErrorCode.INVALID_INPUT_RESPONSE }),
+        );
+      });
+
+      it('3.2.6 [integration] comp-0 (credit tech) grants 2VP top + 1 credit bottom', () => {
+        const game = createIntegrationGame('comp-credit-tech');
+        const player = game.players[0];
+
+        player.computer.placeTech(0, {
+          techId: ETechId.COMPUTER_VP_CREDIT,
+          bottomReward: { credits: 1 },
+        });
+
+        const scoreBefore = player.score;
+        const creditsBefore = player.resources.credits;
+
+        player.dataPool.add(1);
+        const resultTop = PlaceDataFreeAction.execute(player, game);
+        expect(resultTop.row).toBe('top');
+        expect(resultTop.index).toBe(0);
+        expect(resultTop.reward).toEqual({ vp: 2 });
+        expect(player.score).toBe(scoreBefore + 2);
+
+        player.dataPool.add(5);
+        for (let i = 1; i < 6; i++) {
+          PlaceDataFreeAction.execute(player, game);
+        }
+
+        player.dataPool.add(1);
+        const resultBottom = PlaceDataFreeAction.execute(player, game, 0);
+        expect(resultBottom.row).toBe('bottom');
+        expect(resultBottom.index).toBe(0);
+        expect(resultBottom.reward).toEqual({ credits: 1 });
+        expect(player.resources.credits).toBe(creditsBefore + 1);
+      });
+
+      it('3.2.7 [integration] comp-1 (energy tech) grants 2VP top + 1 energy bottom', () => {
+        const game = createIntegrationGame('comp-energy-tech');
+        const player = game.players[0];
+
+        player.computer.placeTech(2, {
+          techId: ETechId.COMPUTER_VP_ENERGY,
+          bottomReward: { energy: 1 },
+        });
+
+        const scoreBefore = player.score;
+        const energyBefore = player.resources.energy;
+
+        player.dataPool.add(3);
+        PlaceDataFreeAction.execute(player, game);
+        PlaceDataFreeAction.execute(player, game);
+
+        const resultTop2 = PlaceDataFreeAction.execute(player, game);
+        expect(resultTop2.row).toBe('top');
+        expect(resultTop2.index).toBe(2);
+        expect(resultTop2.reward).toEqual({ vp: 2 });
+        expect(player.score).toBe(scoreBefore + 2);
+
+        player.dataPool.add(4);
+        for (let i = 3; i < 6; i++) {
+          PlaceDataFreeAction.execute(player, game);
+        }
+
+        player.dataPool.add(1);
+        const resultBottom = PlaceDataFreeAction.execute(player, game, 2);
+        expect(resultBottom.row).toBe('bottom');
+        expect(resultBottom.index).toBe(2);
+        expect(resultBottom.reward).toEqual({ energy: 1 });
+        expect(player.resources.energy).toBe(energyBefore + 1);
+      });
+
+      it('3.2.8 [integration] comp-2 (card tech) grants 2VP top + draws 1 card bottom', () => {
+        const game = createIntegrationGame('comp-card-tech');
+        const player = game.players[0];
+
+        player.computer.placeTech(4, {
+          techId: ETechId.COMPUTER_VP_CARD,
+          bottomReward: { drawCard: 1 },
+        });
+
+        const scoreBefore = player.score;
+
+        player.dataPool.add(5);
+        for (let i = 0; i < 4; i++) {
+          PlaceDataFreeAction.execute(player, game);
+        }
+
+        const resultTop4 = PlaceDataFreeAction.execute(player, game);
+        expect(resultTop4.row).toBe('top');
+        expect(resultTop4.index).toBe(4);
+        expect(resultTop4.reward).toEqual({ vp: 2 });
+        expect(player.score).toBe(scoreBefore + 2);
+
+        player.dataPool.add(2);
+        PlaceDataFreeAction.execute(player, game);
+
+        const handBefore = player.hand.length;
+        const deckBefore = game.mainDeck.drawSize;
+        const resultBottom = PlaceDataFreeAction.execute(player, game, 4);
+        expect(resultBottom.row).toBe('bottom');
+        expect(resultBottom.index).toBe(4);
+        expect(resultBottom.reward).toEqual({ drawCard: 1 });
+        expect(player.hand.length).toBe(handBefore + 1);
+        expect(game.mainDeck.drawSize).toBe(deckBefore - 1);
+      });
+
+      it('3.2.9 [integration] comp-3 (publicity tech) grants 2VP top + 2 publicity bottom', () => {
+        const game = createIntegrationGame('comp-publicity-tech');
+        const player = game.players[0];
+
+        player.computer.placeTech(5, {
+          techId: ETechId.COMPUTER_VP_PUBLICITY,
+          bottomReward: { publicity: 2 },
+        });
+
+        const scoreBefore = player.score;
+
+        player.dataPool.add(6);
+        for (let i = 0; i < 5; i++) {
+          PlaceDataFreeAction.execute(player, game);
+        }
+
+        const resultTop5 = PlaceDataFreeAction.execute(player, game);
+        expect(resultTop5.row).toBe('top');
+        expect(resultTop5.index).toBe(5);
+        expect(resultTop5.reward).toEqual({ vp: 2 });
+        expect(player.score).toBe(scoreBefore + 2);
+
+        player.dataPool.add(1);
+        const publicityBefore = player.resources.publicity;
+        const resultBottom = PlaceDataFreeAction.execute(player, game, 5);
+        expect(resultBottom.row).toBe('bottom');
+        expect(resultBottom.index).toBe(5);
+        expect(resultBottom.reward).toEqual({ publicity: 2 });
+        expect(player.resources.publicity).toBe(publicityBefore + 2);
+      });
+    });
+
+    describe('3.2E error path', () => {
+      it('3.2E.1 [error] cannot place data when pool is empty', () => {
+        const game = createIntegrationGame('empty-pool-error');
+        const player = game.players[0];
+
+        expect(player.dataPool.count).toBe(0);
+        expect(PlaceDataFreeAction.canExecute(player, game)).toBe(false);
+
+        expect(() => PlaceDataFreeAction.execute(player, game)).toThrowError(
+          expect.objectContaining({
+            code: EErrorCode.INSUFFICIENT_RESOURCES,
+            message: 'No data in pool to place',
+          }),
+        );
+      });
+
+      it('3.2E.2 [error] cannot place data when all slots full', () => {
+        const game = createIntegrationGame('full-computer-error');
+        const player = game.players[0];
+
+        for (let i = 0; i < 6; i++) {
+          player.dataPool.add(1);
+          PlaceDataFreeAction.execute(player, game);
+        }
+
+        expect(player.computer.getTopSlots().every(Boolean)).toBe(true);
+        expect(PlaceDataFreeAction.canExecute(player, game)).toBe(false);
+
+        player.dataPool.add(1);
+        expect(() => PlaceDataFreeAction.execute(player, game)).toThrowError(
+          expect.objectContaining({
+            code: EErrorCode.INVALID_ACTION,
+            message: 'Computer is full, no available slot',
+          }),
+        );
+      });
+
+      it('3.2E.3 [error] rejects requesting non-sequential top slot index', () => {
+        const game = createIntegrationGame('skip-top-slot-error');
+        const player = game.players[0];
+
+        player.dataPool.add(3);
+        PlaceDataFreeAction.execute(player, game);
+
+        const nextTop = player.computer.getNextTopIndex();
+        expect(nextTop).toBe(1);
+
+        expect(() => PlaceDataFreeAction.execute(player, game, 3)).toThrowError(
+          expect.objectContaining({
+            code: EErrorCode.INVALID_ACTION,
+            message:
+              'Top row must be filled left-to-right. Next available top slot is 1',
+          }),
+        );
+      });
     });
   });
 });

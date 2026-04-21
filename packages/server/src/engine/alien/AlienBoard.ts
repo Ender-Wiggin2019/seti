@@ -1,4 +1,5 @@
 import type { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
+import type { SeededRandom } from '@/shared/rng/SeededRandom.js';
 
 // ---------------------------------------------------------------------------
 //  Slot reward types (declarative, executable by AlienState)
@@ -53,6 +54,9 @@ export interface IAlienBoardInit {
   alienIndex: number;
   discovered?: boolean;
   slots?: ITraceSlotInit[];
+  alienDeckDrawPile?: string[];
+  alienDeckDiscardPile?: string[];
+  faceUpAlienCardId?: string | null;
 }
 
 export class AlienBoard {
@@ -63,6 +67,12 @@ export class AlienBoard {
   public discovered: boolean;
 
   public readonly slots: ITraceSlot[];
+
+  public alienDeckDrawPile: string[];
+
+  public alienDeckDiscardPile: string[];
+
+  public faceUpAlienCardId: string | null;
 
   public constructor(init: IAlienBoardInit) {
     this.alienType = init.alienType;
@@ -77,6 +87,10 @@ export class AlienBoard {
       rewards: [...(s.rewards ?? [])],
       isDiscovery: s.isDiscovery ?? false,
     }));
+
+    this.alienDeckDrawPile = [...(init.alienDeckDrawPile ?? [])];
+    this.alienDeckDiscardPile = [...(init.alienDeckDiscardPile ?? [])];
+    this.faceUpAlienCardId = init.faceUpAlienCardId ?? null;
   }
 
   // ---- Query helpers -------------------------------------------------------
@@ -110,6 +124,49 @@ export class AlienBoard {
 
   public getFirstEmptyDiscoverySlot(): ITraceSlot | undefined {
     return this.slots.find((s) => s.isDiscovery && s.occupants.length === 0);
+  }
+
+  public initializeAlienDeck(cardIds: readonly string[]): void {
+    this.alienDeckDrawPile = [...cardIds];
+    this.alienDeckDiscardPile = [];
+    this.faceUpAlienCardId = null;
+  }
+
+  public drawAlienCardFromDeck(rng?: SeededRandom): string | undefined {
+    if (
+      this.alienDeckDrawPile.length === 0 &&
+      this.alienDeckDiscardPile.length > 0
+    ) {
+      const recycled = rng
+        ? rng.shuffle([...this.alienDeckDiscardPile])
+        : [...this.alienDeckDiscardPile];
+      this.alienDeckDrawPile.push(...recycled);
+      this.alienDeckDiscardPile = [];
+    }
+    return this.alienDeckDrawPile.shift();
+  }
+
+  public revealNextFaceUpAlienCard(rng?: SeededRandom): string | null {
+    if (this.faceUpAlienCardId !== null) {
+      return this.faceUpAlienCardId;
+    }
+    const next = this.drawAlienCardFromDeck(rng);
+    this.faceUpAlienCardId = next ?? null;
+    return this.faceUpAlienCardId;
+  }
+
+  public drawFaceUpAlienCard(rng?: SeededRandom): string | undefined {
+    if (this.faceUpAlienCardId === null) {
+      return undefined;
+    }
+    const cardId = this.faceUpAlienCardId;
+    this.faceUpAlienCardId = null;
+    this.revealNextFaceUpAlienCard(rng);
+    return cardId;
+  }
+
+  public discardAlienCard(cardId: string): void {
+    this.alienDeckDiscardPile.push(cardId);
   }
 
   public isFullyMarked(): boolean {

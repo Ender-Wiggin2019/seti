@@ -1,3 +1,4 @@
+import { EResource } from '@seti/common/types/element';
 import { EPlanet } from '@seti/common/types/protocol/enums';
 import { PlanetaryBoard } from '@/engine/board/PlanetaryBoard.js';
 
@@ -11,7 +12,9 @@ describe('PlanetaryBoard', () => {
     const secondOrbit = board.orbit(EPlanet.VENUS, 'player-b');
 
     expect(firstOrbit.vpGained).toBe(3);
+    expect(firstOrbit.incomeResource).toBe(EResource.ENERGY);
     expect(secondOrbit.vpGained).toBe(0);
+    expect(secondOrbit.incomeResource).toBe(EResource.ENERGY);
     expect(board.planets.get(EPlanet.VENUS)?.orbitSlots).toEqual([
       { playerId: 'player-a' },
       { playerId: 'player-b' },

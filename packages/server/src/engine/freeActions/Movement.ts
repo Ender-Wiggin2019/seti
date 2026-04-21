@@ -1,6 +1,7 @@
 import { validateMovementPath } from '@seti/common/rules/freeActions';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
+import { isMovementPublicityDisabledForCurrentTurn } from '../alien/plugins/AnomaliesTurnEffects.js';
 import { ESolarSystemElementType } from '../board/SolarSystem.js';
 import type { IGame } from '../IGame.js';
 import { EMissionEventType } from '../missions/IMission.js';
@@ -92,6 +93,10 @@ export class MovementFreeAction {
     }
 
     player.spendMove(effectiveCost);
+
+    if (isMovementPublicityDisabledForCurrentTurn(game, player.id)) {
+      totalPublicity = 0;
+    }
 
     if (totalPublicity > 0) {
       player.resources.gain({ publicity: totalPublicity });

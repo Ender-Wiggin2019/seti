@@ -6,6 +6,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ALIEN_LOBBY_OPTION_MAP } from '@seti/common/constant/alienLobby';
 import { and, desc, eq } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Game } from '@/engine/Game.js';
@@ -38,9 +39,26 @@ export class LobbyService {
     playerCount: number,
     seed?: string,
     scenarioPreset?: string,
+    roomOptionsInput?: Partial<IGameOptions>,
   ): Promise<IRoomResponse> {
     const gameId = randomUUID();
-    const options = createGameOptions({ playerCount });
+    const roomOptionsAny = (roomOptionsInput ?? {}) as Partial<IGameOptions> & {
+      turnTimerSeconds?: number;
+    };
+    const normalizedRoomOptions: Partial<IGameOptions> = {
+      ...roomOptionsAny,
+      timerPerTurn:
+        roomOptionsAny.timerPerTurn ?? roomOptionsAny.turnTimerSeconds,
+    };
+    let options: Readonly<IGameOptions>;
+    try {
+      options = createGameOptions({
+        ...normalizedRoomOptions,
+        playerCount,
+      });
+    } catch (error) {
+      throw new BadRequestException((error as Error).message);
+    }
     const roomOptions: TRoomOptions = scenarioPreset
       ? { ...options, scenarioPreset }
       : options;
@@ -91,6 +109,10 @@ export class LobbyService {
     }
 
     return rooms;
+  }
+
+  getAlienTypeMap() {
+    return ALIEN_LOBBY_OPTION_MAP;
   }
 
   async getRoomById(gameId: string): Promise<IRoomResponse> {

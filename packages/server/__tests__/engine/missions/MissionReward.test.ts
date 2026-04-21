@@ -1,8 +1,9 @@
 import { EEffectType } from '@seti/common/types/effect';
 import { EResource } from '@seti/common/types/element';
-import { applyMissionRewards } from '@/engine/missions/MissionReward.js';
 import type { IGame } from '@/engine/IGame.js';
+import { applyMissionRewards } from '@/engine/missions/MissionReward.js';
 import { Player } from '@/engine/player/Player.js';
+import { stubTurnLockFields } from '../../helpers/stubTurnLock.js';
 
 function createPlayer(): Player {
   return new Player({
@@ -15,6 +16,7 @@ function createPlayer(): Player {
 
 function createGame(draws: string[] = []): IGame {
   return {
+    ...stubTurnLockFields(),
     random: { next: () => 0.5 },
     mainDeck: {
       drawWithReshuffle: () => draws.shift(),

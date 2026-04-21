@@ -16,7 +16,6 @@ describe('PlayerDashboard', () => {
     expect(screen.getByTestId('resource-bar')).toBeInTheDocument();
     expect(screen.getByTestId('income-tracker')).toBeInTheDocument();
     expect(screen.getByTestId('data-pool-view')).toBeInTheDocument();
-    expect(screen.getByText('Inventory')).toBeInTheDocument();
     expect(screen.getByText('Tech Slots')).toBeInTheDocument();
   });
 });
