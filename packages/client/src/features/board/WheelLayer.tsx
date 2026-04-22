@@ -6,6 +6,7 @@ interface IWheelLayerProps {
   angle: number;
   className?: string;
   slotLabels?: string[];
+  textModeLabels?: Array<string | null>;
   showImage?: boolean;
 }
 
@@ -54,6 +55,7 @@ export function WheelLayer({
   angle,
   className,
   slotLabels,
+  textModeLabels,
   showImage = true,
 }: IWheelLayerProps): React.JSX.Element {
   const [renderAngle, setRenderAngle] = useState(angle);
@@ -111,6 +113,28 @@ export function WheelLayer({
           <span
             key={`${ring}-slot-label-${index}`}
             className='pointer-events-none absolute z-20 rounded bg-surface-950/85 px-1 py-0.5 text-[9px] font-mono uppercase leading-none text-text-200 shadow'
+            style={{
+              left: `${xPercent}%`,
+              top: `${yPercent}%`,
+              transform: `translate(-50%, -50%) rotate(${-angleDeg}deg)`,
+            }}
+          >
+            {label}
+          </span>
+        );
+      })}
+
+      {textModeLabels?.map((label, index) => {
+        if (label === null) return null;
+        const theta = (Math.PI / 4) * (0.5 + index);
+        const radiusPercent = SLOT_LABEL_RADIUS_PERCENT[ring];
+        const xPercent = 50 + Math.sin(theta) * radiusPercent;
+        const yPercent = 50 - Math.cos(theta) * radiusPercent;
+
+        return (
+          <span
+            key={`${ring}-text-label-${index}`}
+            className='pointer-events-none absolute rounded-sm border border-surface-500/60 bg-surface-950 px-1.5 py-0.5 font-mono text-[9px] uppercase leading-none text-text-200 shadow-sm'
             style={{
               left: `${xPercent}%`,
               top: `${yPercent}%`,

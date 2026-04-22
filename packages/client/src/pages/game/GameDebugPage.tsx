@@ -901,7 +901,7 @@ function createDebugGameState(
 
 export function GameDebugPage(): React.JSX.Element {
   const [scenario, setScenario] = useState<TDebugScenario>('my-turn');
-  const [sourceMode, setSourceMode] = useState<TDebugSourceMode>('local');
+  const [sourceMode, setSourceMode] = useState<TDebugSourceMode>('server');
   const [discAngles, setDiscAngles] = useState<TDiscAngles>([7, 3, 4]);
   const [debugWheels, setDebugWheels] = useState<TSolarSystemWheels>(
     createDefaultDebugWheels,
