@@ -35,14 +35,16 @@ export function PlayedMissions({
           </p>
         </div>
       ) : (
-        <div className='grid max-h-[150px] grid-cols-2 gap-1.5 overflow-auto'>
+        <div className='grid max-h-[138px] grid-cols-[repeat(auto-fill,minmax(88px,1fr))] gap-1 overflow-auto'>
           {missions.map((mission) => (
             <div
               key={mission.id}
-              className='rounded-[4px] border border-[color:var(--metal-edge-soft)] bg-background-900/70 p-1 shadow-hairline-inset'
+              className='flex items-center justify-center rounded-[4px] border border-[color:var(--metal-edge-soft)] bg-background-900/70 p-0.5 shadow-hairline-inset'
             >
-              <div>
-                <CardRender card={mission} />
+              <div className='pointer-events-none relative h-[109px] w-[78px]'>
+                <div className='absolute left-0 top-0 origin-top-left scale-[0.52]'>
+                  <CardRender card={mission} />
+                </div>
               </div>
             </div>
           ))}

@@ -22,6 +22,14 @@ const DEFAULT_PROBE_INSET_PX_BY_RING: Readonly<Record<1 | 2 | 3 | 4, number>> =
     3: 91,
     4: 229,
   };
+const IMAGE_ALIGNMENT_OFFSET_CW_BY_RING: Readonly<
+  Record<1 | 2 | 3 | 4, number>
+> = {
+  1: 2,
+  2: 6,
+  3: 4,
+  4: 4,
+};
 const PROBE_TRANSITION_MS = 900;
 
 export type TProbeInsetPxByRing = Readonly<Record<1 | 2 | 3 | 4, number>>;
@@ -95,10 +103,15 @@ function spacePosition(
   ringIndex: 1 | 2 | 3 | 4,
   indexInRing: number,
   spaceRadiiPercent: readonly number[],
+  discAngle: number,
 ): { xPercent: number; yPercent: number } {
-  const direction = ((indexInRing % 8) + 8) % 8;
+  const baseDirection = ((indexInRing % 8) + 8) % 8;
+  const imageOffset = IMAGE_ALIGNMENT_OFFSET_CW_BY_RING[ringIndex] ?? 0;
+  // disc rotates CCW by discAngle steps → visual position shifts CW → add discAngle
+  const direction =
+    ((baseDirection + imageOffset + discAngle) % 8 + 8) % 8;
   const radius = spaceRadiiPercent[ringIndex - 1] ?? spaceRadiiPercent[0] ?? 0;
-  const angle = (Math.PI / 4) * (0.5 + direction);
+  const angle = (Math.PI / 4) * (direction + 0.5);
   return {
     xPercent: 50 + Math.sin(angle) * radius,
     yPercent: 50 - Math.cos(angle) * radius,
@@ -143,6 +156,18 @@ export function SolarSystemView({
     }) as [number, number, number, number];
   }, [probeInsetPxByRing]);
 
+  const discAngleByRing = useMemo<Record<1 | 2 | 3 | 4, number>>(() => {
+    const byDisc = new Map(
+      solarSystem.discs.map((d) => [d.discIndex, d.angle]),
+    );
+    return {
+      1: byDisc.get(0) ?? 0,
+      2: byDisc.get(1) ?? 0,
+      3: byDisc.get(2) ?? 0,
+      4: 0,
+    };
+  }, [solarSystem.discs]);
+
   const spacePoints = useMemo<ISpacePoint[]>(() => {
     const states = solarSystem.spaceStates;
     const usesZeroBasedRingIndex = Boolean(
@@ -168,10 +193,11 @@ export function SolarSystemView({
         }
       }
 
-      const pos = spacePosition(ringIndex, indexInRing, spaceRadiiPercent);
+      const discAngle = discAngleByRing[ringIndex];
+      const pos = spacePosition(ringIndex, indexInRing, spaceRadiiPercent, discAngle);
       return { spaceId, ringIndex, indexInRing, ...pos };
     });
-  }, [solarSystem.spaces, solarSystem.spaceStates, spaceRadiiPercent]);
+  }, [solarSystem.spaces, solarSystem.spaceStates, spaceRadiiPercent, discAngleByRing]);
 
   const debugLabelsBySpaceId = useMemo(() => {
     if (!showSpaceConfigDebug) {
@@ -407,7 +433,15 @@ export function SolarSystemView({
               if (!label) {
                 return null;
               }
-              const rotationDeg = space.indexInRing * 45 + 22.5;
+              const baseDirection = ((space.indexInRing % 8) + 8) % 8;
+              const rotationDirection =
+                ((baseDirection +
+                  (IMAGE_ALIGNMENT_OFFSET_CW_BY_RING[space.ringIndex] ?? 0) +
+                  (discAngleByRing[space.ringIndex] ?? 0)) %
+                  8 +
+                  8) %
+                8;
+              const rotationDeg = rotationDirection * 45 + 22.5;
               const isSelected = selectedSpaceId === space.spaceId;
               const isReachable = reachable.has(space.spaceId);
               const hasMyProbe = (

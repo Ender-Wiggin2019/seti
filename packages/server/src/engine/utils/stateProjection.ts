@@ -93,6 +93,7 @@ export function toPublicSolarSystemState(
       discIndex: disc.index,
       angle: disc.currentRotation,
     })),
+    nextRotateRing: ((ss.rotationCounter % ss.discs.length) + 1) as 1 | 2 | 3,
     spaceStates,
     planetSpaceIds,
     sectorSpaceIds,

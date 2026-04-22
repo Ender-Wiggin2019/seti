@@ -1,4 +1,5 @@
 import { cn } from '@/lib/cn';
+import { useEffect, useRef, useState } from 'react';
 
 interface IWheelLayerProps {
   ring: 1 | 2 | 3 | 4;
@@ -38,6 +39,16 @@ const SLOT_LABEL_RADIUS_PERCENT: Record<IWheelLayerProps['ring'], number> = {
   4: 46.22,
 };
 
+const ROTATION_STEPS_PER_RING = 8;
+function normalizeStepDelta(delta: number): number {
+  const normalized =
+    ((delta % ROTATION_STEPS_PER_RING) + ROTATION_STEPS_PER_RING) %
+    ROTATION_STEPS_PER_RING;
+  return normalized > ROTATION_STEPS_PER_RING / 2
+    ? normalized - ROTATION_STEPS_PER_RING
+    : normalized;
+}
+
 export function WheelLayer({
   ring,
   angle,
@@ -45,10 +56,23 @@ export function WheelLayer({
   slotLabels,
   showImage = true,
 }: IWheelLayerProps): React.JSX.Element {
+  const [renderAngle, setRenderAngle] = useState(angle);
+  const prevAngleRef = useRef(angle);
+
+  useEffect(() => {
+    const prevAngle = prevAngleRef.current;
+    const delta = normalizeStepDelta(angle - prevAngle);
+
+    if (delta !== 0) {
+      setRenderAngle((prevRenderAngle) => prevRenderAngle + delta);
+    }
+    prevAngleRef.current = angle;
+  }, [angle]);
+
   const size = `${RING_SIZE_PERCENT[ring]}%`;
   // One rotation step is rendered counterclockwise to match rule behavior.
   // State angle still increments by +1 per step; CSS uses negative degrees.
-  const angleDeg = -angle * 45;
+  const angleDeg = -renderAngle * 45;
   const duration = TRANSITION_DURATION_MS[ring];
 
   return (

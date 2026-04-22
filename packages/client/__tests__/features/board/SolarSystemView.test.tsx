@@ -21,6 +21,7 @@ function createSolarSystemMock(): IPublicSolarSystem {
       { discIndex: 2, angle: 3 },
       { discIndex: 3, angle: 0 },
     ],
+    nextRotateRing: 2,
   };
 }
 
@@ -120,5 +121,28 @@ describe('SolarSystemView', () => {
       type: EPlayerInputType.SECTOR,
       sector: ESector.BLUE,
     });
+  });
+
+  it('renders next rotate indicator from server state', () => {
+    render(
+      <SolarSystemView
+        solarSystem={createSolarSystemMock()}
+        sectors={createSectorsMock()}
+        setupConfig={defaultSetup}
+        pendingInput={null}
+        playerColors={{ 'player-1': 'red' }}
+        myPlayerId='player-1'
+        movementPoints={1}
+        onMoveProbe={vi.fn()}
+        onRespondInput={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Next Rotate:')).toBeInTheDocument();
+    const image = screen.getByAltText('Next rotate ring');
+    expect(image).toHaveAttribute(
+      'src',
+      '/assets/seti/tech/bonuses/techRotation2.png',
+    );
   });
 });

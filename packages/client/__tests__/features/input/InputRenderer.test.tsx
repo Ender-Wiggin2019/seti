@@ -66,9 +66,7 @@ describe('InputRenderer', () => {
       options: [ETech.PROBE],
     };
     render(<InputRenderer model={model} onSubmit={vi.fn()} />);
-    expect(
-      screen.getByRole('button', { name: ETech.PROBE }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Launch \+1/i })).toBeInTheDocument();
   });
 
   it('routes gold tile input to SelectGoldTileInput', () => {
