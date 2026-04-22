@@ -16,6 +16,7 @@ import {
   type TSolarSystemWheels,
 } from '@seti/common/constant/sectorSetup';
 import { ALL_CARDS } from '@seti/common/data';
+import { findPlanetSpaceId } from '@seti/common/rules/solarSystem';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { ESector, ETech } from '@seti/common/types/element';
 import { ETechId } from '@seti/common/types/tech';
@@ -28,6 +29,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { TProbeInsetPxByRing } from '@/features/board/SolarSystemView';
+import { useServerDebugSession } from '@/hooks/useServerDebugSession';
 import {
   GameContextValueProvider,
   type IGameContext,
@@ -50,6 +52,7 @@ import {
 } from '@/types/re-exports';
 
 type TDebugScenario = 'my-turn' | 'opponent-turn' | 'spectator' | 'game-over';
+type TDebugSourceMode = 'local' | 'server';
 type TCardInputDebugMode =
   | 'none'
   | 'hand-select'
@@ -892,6 +895,7 @@ function createDebugGameState(
 
 export function GameDebugPage(): React.JSX.Element {
   const [scenario, setScenario] = useState<TDebugScenario>('my-turn');
+  const [sourceMode, setSourceMode] = useState<TDebugSourceMode>('local');
   const [discAngles, setDiscAngles] = useState<TDiscAngles>([7, 3, 4]);
   const [debugWheels, setDebugWheels] = useState<TSolarSystemWheels>(
     createDefaultDebugWheels,
@@ -1303,7 +1307,8 @@ export function GameDebugPage(): React.JSX.Element {
     [scanPhase, handleScanInput],
   );
 
-  const isSpectator = scenario === 'spectator';
+  const isServerMode = sourceMode === 'server';
+  const isSpectator = !isServerMode && scenario === 'spectator';
   const myPlayerId = isSpectator ? 'spectator-0' : 'player-1';
 
   const handleDebugAction = useCallback(
@@ -1372,32 +1377,145 @@ export function GameDebugPage(): React.JSX.Element {
   );
 
   const rotateByRuleOrder = (): void => {
-    rotateRing(nextRotateRing);
+    if (isServerMode && serverSession) {
+      void serverSession.solarRotate(nextRotateRing - 1);
+    } else {
+      rotateRing(nextRotateRing);
+    }
     setNextRotateRing((prev) => (prev === 3 ? 1 : ((prev + 1) as 1 | 2 | 3)));
   };
+
+  // ── Server-mode data source ────────────────────────────────────────────
+  const serverSession = useServerDebugSession(isServerMode);
+
+  const effectiveGameState = useMemo<IPublicGameState>(() => {
+    if (isServerMode && serverSession?.gameState) {
+      return serverSession.gameState;
+    }
+    return gameState;
+  }, [isServerMode, serverSession?.gameState, gameState]);
+
+  const effectiveMyPlayerId =
+    isServerMode && serverSession?.viewerId
+      ? serverSession.viewerId
+      : myPlayerId;
+
+  const handleAction: IGameContext['sendAction'] = useCallback(
+    (action) => {
+      if (isServerMode && serverSession) {
+        // Sandbox: LAUNCH_PROBE maps to the direct place-probe endpoint so
+        // it works regardless of the server-side turn/resources state.
+        if (action.type === EMainAction.LAUNCH_PROBE) {
+          const earthSpaceId = findPlanetSpaceId(
+            effectiveGameState.solarSystem,
+            EPlanet.EARTH,
+          );
+          if (earthSpaceId) {
+            void serverSession.placeProbeOn(earthSpaceId);
+            return;
+          }
+        }
+        void serverSession.sendMainAction(action);
+        return;
+      }
+      handleDebugAction(action);
+    },
+    [
+      isServerMode,
+      serverSession,
+      effectiveGameState.solarSystem,
+      handleDebugAction,
+    ],
+  );
+
+  const handleFreeAction: IGameContext['sendFreeAction'] = useCallback(
+    (action) => {
+      if (isServerMode && serverSession) {
+        if (action.type === EFreeAction.MOVEMENT) {
+          // Resolve the probe currently sitting on the path's first space so
+          // we can drive the direct move-probe sandbox endpoint.
+          const fromSpaceId = action.path[0];
+          const probe = effectiveGameState.solarSystem.probes.find(
+            (p) =>
+              p.spaceId === fromSpaceId && p.playerId === effectiveMyPlayerId,
+          );
+          if (!probe?.probeId) {
+            void serverSession.sendFreeAction(action);
+            return;
+          }
+          const probeId = probe.probeId;
+          void (async () => {
+            for (let i = 0; i < action.path.length - 1; i += 1) {
+              const nextSpaceId = action.path[i + 1];
+              if (!nextSpaceId) {
+                return;
+              }
+              await serverSession.moveProbeTo(probeId, nextSpaceId);
+            }
+          })();
+          return;
+        }
+        void serverSession.sendFreeAction(action);
+        return;
+      }
+      handleDebugFreeAction(action);
+    },
+    [
+      isServerMode,
+      serverSession,
+      effectiveGameState.solarSystem,
+      effectiveMyPlayerId,
+      handleDebugFreeAction,
+    ],
+  );
+
+  const handleInput: IGameContext['sendInput'] = useCallback(
+    (response) => {
+      if (isServerMode && serverSession) {
+        void serverSession.sendInput(response);
+        return;
+      }
+      handleDebugInput(response);
+    },
+    [isServerMode, serverSession, handleDebugInput],
+  );
+
+  const handleEndTurn: IGameContext['sendEndTurn'] = useCallback(() => {
+    if (isServerMode && serverSession) {
+      void serverSession.sendEndTurn();
+    }
+  }, [isServerMode, serverSession]);
+
+  const effectivePendingInput = isServerMode
+    ? (serverSession?.pendingInput ?? null)
+    : pendingInput;
+
   const contextValue = useMemo<IGameContext>(
     () => ({
-      gameState,
-      pendingInput,
-      isConnected: true,
-      isMyTurn: gameState.currentPlayerId === myPlayerId,
+      gameState: effectiveGameState,
+      pendingInput: effectivePendingInput,
+      isConnected: isServerMode ? !!serverSession?.gameState : true,
+      isMyTurn: effectiveGameState.currentPlayerId === effectiveMyPlayerId,
       isSpectator,
-      myPlayerId,
+      myPlayerId: effectiveMyPlayerId,
       events: [{ type: EGameEventType.ROUND_END, round: 2 }],
-      sendAction: handleDebugAction,
-      sendFreeAction: handleDebugFreeAction,
-      sendEndTurn: () => undefined,
-      sendInput: handleDebugInput,
+      sendAction: handleAction,
+      sendFreeAction: handleFreeAction,
+      sendEndTurn: handleEndTurn,
+      sendInput: handleInput,
       requestUndo: () => undefined,
     }),
     [
-      gameState,
-      pendingInput,
+      effectiveGameState,
+      effectivePendingInput,
+      isServerMode,
+      serverSession?.gameState,
+      effectiveMyPlayerId,
       isSpectator,
-      myPlayerId,
-      handleDebugAction,
-      handleDebugInput,
-      handleDebugFreeAction,
+      handleAction,
+      handleFreeAction,
+      handleEndTurn,
+      handleInput,
     ],
   );
 
@@ -1421,74 +1539,119 @@ export function GameDebugPage(): React.JSX.Element {
       <div className='fixed right-3 top-3 z-50 flex max-w-[calc(100vw-1.5rem)] flex-wrap items-center justify-end gap-2 rounded border border-surface-700/70 bg-surface-900/90 p-2 text-xs backdrop-blur'>
         <span className='font-mono text-text-500'>Debug</span>
         <Select
-          value={scenario}
-          onValueChange={(value) => setScenario(value as TDebugScenario)}
+          value={sourceMode}
+          onValueChange={(value) => setSourceMode(value as TDebugSourceMode)}
         >
-          <SelectTrigger className='h-8 w-[150px] text-xs'>
+          <SelectTrigger
+            className='h-8 w-[140px] text-xs'
+            title='Where game state comes from'
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value='my-turn'>My Turn</SelectItem>
-            <SelectItem value='opponent-turn'>Opponent Turn</SelectItem>
-            <SelectItem value='spectator'>Spectator</SelectItem>
-            <SelectItem value='game-over'>Game Over</SelectItem>
+            <SelectItem value='local'>Source: Local</SelectItem>
+            <SelectItem value='server'>Source: Server</SelectItem>
           </SelectContent>
         </Select>
-
-        <Select
-          value={cardInputMode}
-          onValueChange={(value) =>
-            setCardInputMode(value as TCardInputDebugMode)
-          }
-        >
-          <SelectTrigger className='h-8 w-[170px] text-xs'>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value='none'>No Input</SelectItem>
-            <SelectItem value='hand-select'>Input: Hand Cards</SelectItem>
-            <SelectItem value='row-select'>Input: Card Row</SelectItem>
-            <SelectItem value='end-of-round'>Input: End Of Round</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <div className='flex items-center gap-1 border-l border-surface-700 pl-2'>
+        {sourceMode === 'server' && (
+          <span className='font-mono text-[10px] text-text-400'>
+            {serverSession?.isCreating
+              ? 'Creating…'
+              : serverSession?.gameId
+                ? `Game ${serverSession.gameId.slice(0, 8)}`
+                : 'idle'}
+            {serverSession?.errorMessage ? (
+              <span className='ml-1 text-rose-300'>
+                · {serverSession.errorMessage}
+              </span>
+            ) : null}
+          </span>
+        )}
+        {sourceMode === 'server' && (
           <button
             type='button'
-            onClick={() =>
-              setCardRowStartIndex((prev) => (prev + 3) % ALL_CARDS.length)
-            }
-            className='rounded border border-surface-700/60 bg-surface-800/60 px-2 py-1 text-text-200 transition-colors hover:bg-surface-700/70'
+            onClick={() => void serverSession?.createSession()}
+            disabled={!serverSession || serverSession.isCreating}
+            className='rounded border border-surface-700/60 bg-surface-800/60 px-2 py-1 text-text-200 transition-colors hover:bg-surface-700/70 disabled:opacity-50'
           >
-            Next Row
+            New Server Game
           </button>
-          <button
-            type='button'
-            onClick={() =>
-              setHandStartIndex((prev) => (prev + 2) % ALL_CARDS.length)
-            }
-            className='rounded border border-surface-700/60 bg-surface-800/60 px-2 py-1 text-text-200 transition-colors hover:bg-surface-700/70'
+        )}
+        {!isServerMode && (
+          <Select
+            value={scenario}
+            onValueChange={(value) => setScenario(value as TDebugScenario)}
           >
-            Next Hand
-          </button>
-          {scanPhase.step === 'idle' ? (
+            <SelectTrigger className='h-8 w-[150px] text-xs'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='my-turn'>My Turn</SelectItem>
+              <SelectItem value='opponent-turn'>Opponent Turn</SelectItem>
+              <SelectItem value='spectator'>Spectator</SelectItem>
+              <SelectItem value='game-over'>Game Over</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+
+        {!isServerMode && (
+          <Select
+            value={cardInputMode}
+            onValueChange={(value) =>
+              setCardInputMode(value as TCardInputDebugMode)
+            }
+          >
+            <SelectTrigger className='h-8 w-[170px] text-xs'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='none'>No Input</SelectItem>
+              <SelectItem value='hand-select'>Input: Hand Cards</SelectItem>
+              <SelectItem value='row-select'>Input: Card Row</SelectItem>
+              <SelectItem value='end-of-round'>Input: End Of Round</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+
+        {!isServerMode && (
+          <div className='flex items-center gap-1 border-l border-surface-700 pl-2'>
             <button
               type='button'
-              onClick={startScan}
-              className='rounded border border-teal-500/60 bg-teal-500/15 px-2 py-1 text-teal-200 transition-colors hover:bg-teal-500/25'
+              onClick={() =>
+                setCardRowStartIndex((prev) => (prev + 3) % ALL_CARDS.length)
+              }
+              className='rounded border border-surface-700/60 bg-surface-800/60 px-2 py-1 text-text-200 transition-colors hover:bg-surface-700/70'
             >
-              Start Scan
+              Next Row
             </button>
-          ) : (
             <button
               type='button'
-              onClick={() => setScanPhase(SCAN_IDLE)}
-              className='rounded border border-rose-500/60 bg-rose-500/15 px-2 py-1 text-rose-200 transition-colors hover:bg-rose-500/25'
+              onClick={() =>
+                setHandStartIndex((prev) => (prev + 2) % ALL_CARDS.length)
+              }
+              className='rounded border border-surface-700/60 bg-surface-800/60 px-2 py-1 text-text-200 transition-colors hover:bg-surface-700/70'
             >
-              Cancel Scan ({scanPhase.step})
+              Next Hand
             </button>
-          )}
-        </div>
+            {scanPhase.step === 'idle' ? (
+              <button
+                type='button'
+                onClick={startScan}
+                className='rounded border border-teal-500/60 bg-teal-500/15 px-2 py-1 text-teal-200 transition-colors hover:bg-teal-500/25'
+              >
+                Start Scan
+              </button>
+            ) : (
+              <button
+                type='button'
+                onClick={() => setScanPhase(SCAN_IDLE)}
+                className='rounded border border-rose-500/60 bg-rose-500/15 px-2 py-1 text-rose-200 transition-colors hover:bg-rose-500/25'
+              >
+                Cancel Scan ({scanPhase.step})
+              </button>
+            )}
+          </div>
+        )}
 
         <div className='flex items-center gap-1 border-l border-surface-700 pl-2'>
           <button
@@ -1501,7 +1664,11 @@ export function GameDebugPage(): React.JSX.Element {
           </button>
           <button
             type='button'
-            onClick={() => rotateRing(1)}
+            onClick={() =>
+              sourceMode === 'server' && serverSession
+                ? void serverSession.solarRotate(0)
+                : rotateRing(1)
+            }
             className='rounded border border-amber-700/60 bg-amber-900/40 px-2 py-1 text-amber-200 transition-colors hover:bg-amber-800/50'
             title='Ring 1 only rotates'
           >
@@ -1509,7 +1676,11 @@ export function GameDebugPage(): React.JSX.Element {
           </button>
           <button
             type='button'
-            onClick={() => rotateRing(2)}
+            onClick={() =>
+              sourceMode === 'server' && serverSession
+                ? void serverSession.solarRotate(1)
+                : rotateRing(2)
+            }
             className='rounded border border-sky-700/60 bg-sky-900/40 px-2 py-1 text-sky-200 transition-colors hover:bg-sky-800/50'
             title='Ring 2 carries Ring 1'
           >
@@ -1517,7 +1688,11 @@ export function GameDebugPage(): React.JSX.Element {
           </button>
           <button
             type='button'
-            onClick={() => rotateRing(3)}
+            onClick={() =>
+              sourceMode === 'server' && serverSession
+                ? void serverSession.solarRotate(2)
+                : rotateRing(3)
+            }
             className='rounded border border-emerald-700/60 bg-emerald-900/40 px-2 py-1 text-emerald-200 transition-colors hover:bg-emerald-800/50'
             title='Ring 3 carries Ring 2 and Ring 1'
           >

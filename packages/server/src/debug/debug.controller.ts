@@ -79,6 +79,23 @@ export class DebugController {
   }
 
   @Public()
+  @Post('server/game/:gameId/end-turn')
+  async processEndTurn(
+    @Param('gameId') gameId: string,
+    @Body()
+    body: {
+      playerId: string;
+      viewerId?: string;
+    },
+  ): Promise<IPublicGameState> {
+    return this.debugService.processEndTurn(
+      gameId,
+      body.playerId,
+      body.viewerId ?? body.playerId,
+    );
+  }
+
+  @Public()
   @Post('server/game/:gameId/input')
   async processInput(
     @Param('gameId') gameId: string,
@@ -104,5 +121,50 @@ export class DebugController {
     @Param('playerId') playerId: string,
   ): Promise<IPlayerInputModel | null> {
     return this.debugService.getPendingInput(gameId, playerId);
+  }
+
+  // ── Solar-system sandbox ────────────────────────────────────────────────
+  // Low-level board mutators that bypass action validation. Intended for the
+  // client debug page (/debug/game) to verify data-driven view effects.
+
+  @Public()
+  @Post('server/game/:gameId/solar-rotate')
+  async solarRotate(
+    @Param('gameId') gameId: string,
+    @Body() body: { discIndex: number; viewerId?: string },
+  ): Promise<IPublicGameState> {
+    return this.debugService.solarRotate(
+      gameId,
+      body.discIndex,
+      body.viewerId ?? '',
+    );
+  }
+
+  @Public()
+  @Post('server/game/:gameId/place-probe')
+  async placeProbeDirect(
+    @Param('gameId') gameId: string,
+    @Body() body: { playerId: string; spaceId: string; viewerId?: string },
+  ): Promise<IPublicGameState> {
+    return this.debugService.placeProbeDirect(
+      gameId,
+      body.playerId,
+      body.spaceId,
+      body.viewerId ?? body.playerId,
+    );
+  }
+
+  @Public()
+  @Post('server/game/:gameId/move-probe')
+  async moveProbeDirect(
+    @Param('gameId') gameId: string,
+    @Body() body: { probeId: string; toSpaceId: string; viewerId?: string },
+  ): Promise<IPublicGameState> {
+    return this.debugService.moveProbeDirect(
+      gameId,
+      body.probeId,
+      body.toSpaceId,
+      body.viewerId ?? '',
+    );
   }
 }

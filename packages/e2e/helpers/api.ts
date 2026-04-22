@@ -245,6 +245,85 @@ export class SetiApi {
     return res.json();
   }
 
+  async debugEndTurn(
+    gameId: string,
+    playerId: string,
+    viewerId = playerId,
+  ): Promise<IDebugGameState> {
+    const res = await this.withRetry(() =>
+      this.request.post(`${SERVER_URL}/debug/server/game/${gameId}/end-turn`, {
+        headers: { 'Content-Type': 'application/json' },
+        data: { playerId, viewerId },
+      }),
+    );
+    if (!res.ok()) {
+      throw new Error(`Debug end-turn failed: ${res.status()}`);
+    }
+    return res.json();
+  }
+
+  async debugSolarRotate(
+    gameId: string,
+    discIndex: number,
+    viewerId: string,
+  ): Promise<IDebugGameState> {
+    const res = await this.withRetry(() =>
+      this.request.post(
+        `${SERVER_URL}/debug/server/game/${gameId}/solar-rotate`,
+        {
+          headers: { 'Content-Type': 'application/json' },
+          data: { discIndex, viewerId },
+        },
+      ),
+    );
+    if (!res.ok()) {
+      throw new Error(`Debug solar-rotate failed: ${res.status()}`);
+    }
+    return res.json();
+  }
+
+  async debugPlaceProbe(
+    gameId: string,
+    playerId: string,
+    spaceId: string,
+    viewerId = playerId,
+  ): Promise<IDebugGameState> {
+    const res = await this.withRetry(() =>
+      this.request.post(
+        `${SERVER_URL}/debug/server/game/${gameId}/place-probe`,
+        {
+          headers: { 'Content-Type': 'application/json' },
+          data: { playerId, spaceId, viewerId },
+        },
+      ),
+    );
+    if (!res.ok()) {
+      throw new Error(`Debug place-probe failed: ${res.status()}`);
+    }
+    return res.json();
+  }
+
+  async debugMoveProbe(
+    gameId: string,
+    probeId: string,
+    toSpaceId: string,
+    viewerId: string,
+  ): Promise<IDebugGameState> {
+    const res = await this.withRetry(() =>
+      this.request.post(
+        `${SERVER_URL}/debug/server/game/${gameId}/move-probe`,
+        {
+          headers: { 'Content-Type': 'application/json' },
+          data: { probeId, toSpaceId, viewerId },
+        },
+      ),
+    );
+    if (!res.ok()) {
+      throw new Error(`Debug move-probe failed: ${res.status()}`);
+    }
+    return res.json();
+  }
+
   async debugGetPendingInput(
     gameId: string,
     playerId: string,

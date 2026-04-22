@@ -114,8 +114,10 @@ pnpm --filter @seti/client dev
 
 ### Debug 页面
 
-- 纯前端调试（本地 mock 状态，不连后端）：`http://localhost:5173/debug/game`
-- Server 联动调试（进入即由 server 创建新局并通过 ws 联动）：`http://localhost:5173/debug/server`
+- `/debug/game` 同时支持 `Source: Local` 与 `Source: Server`
+  - `Local`：纯前端 mock 状态，可切换 scenario/spectator 与 scan/card 输入调试
+  - `Server`：通过 REST 调试端点联动真实 server game（含 end-turn / solar sandbox）
+- `/debug/server` 是独立的 ws 联动页，进入后由 server 创建新局并按实时会话推送
 - Debug 页面中的位置/尺寸/旋转默认参数集中在 `packages/common/src/constant/debugGame.ts`
 
 ## 各包常用命令
