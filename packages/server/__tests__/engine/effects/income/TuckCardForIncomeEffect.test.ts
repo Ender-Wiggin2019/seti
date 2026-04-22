@@ -91,4 +91,14 @@ describe('TuckCardForIncomeEffect', () => {
     expect(player.tuckedIncomeCards.length).toBe(2);
     expect(player.income.tuckedCardIncome[EResource.CREDIT]).toBe(2);
   });
+
+  it('clears pending setup tucks when no card can be selected', () => {
+    const player = createPlayer([]);
+    player.pendingSetupTucks = 1;
+
+    const input = TuckCardForIncomeEffect.executeSetupChain(player, createGame());
+
+    expect(input).toBeUndefined();
+    expect(player.pendingSetupTucks).toBe(0);
+  });
 });

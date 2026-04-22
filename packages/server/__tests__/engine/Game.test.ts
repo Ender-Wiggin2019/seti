@@ -1,35 +1,17 @@
 import { EMainAction, EPhase } from '@seti/common/types/protocol/enums';
-import type { ISelectEndOfRoundCardInputModel } from '@seti/common/types/protocol/playerInput';
-import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { Game } from '@/engine/Game.js';
-import type { IPlayer } from '@/engine/player/IPlayer.js';
+import {
+  resolveAllInputsDefault,
+  resolveSetupTucks,
+} from '../helpers/TestGameBuilder.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
   { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
 ] as const;
 
-function resolvePassInputs(game: Game, player: IPlayer): void {
-  while (player.waitingFor) {
-    const model = player.waitingFor.toModel();
-
-    if (model.type === EPlayerInputType.CARD) {
-      const cardIds = (
-        model as { cards: { id: string }[]; minSelections: number }
-      ).cards
-        .slice(0, (model as { minSelections: number }).minSelections)
-        .map((c) => c.id);
-      game.processInput(player.id, { type: EPlayerInputType.CARD, cardIds });
-    } else if (model.type === EPlayerInputType.END_OF_ROUND) {
-      const eorModel = model as ISelectEndOfRoundCardInputModel;
-      game.processInput(player.id, {
-        type: EPlayerInputType.END_OF_ROUND,
-        cardId: eorModel.cards[0].id,
-      });
-    } else {
-      break;
-    }
-  }
+function createGame(): Game {
+  return Game.create(TEST_PLAYERS, { playerCount: 2 }, 'test-seed');
 }
 
 describe('Game', () => {
@@ -52,7 +34,7 @@ describe('Game', () => {
   });
 
   it('transitions through valid phases', () => {
-    const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, 'test-seed');
+    const game = createGame();
 
     game.transitionTo(EPhase.IN_RESOLUTION);
     game.transitionTo(EPhase.BETWEEN_TURNS);
@@ -61,7 +43,7 @@ describe('Game', () => {
   });
 
   it('returns active and next players', () => {
-    const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, 'test-seed');
+    const game = createGame();
 
     expect(game.getActivePlayer().id).toBe('p1');
     expect(game.getNextPlayer().id).toBe('p2');
@@ -72,10 +54,10 @@ describe('Game', () => {
   });
 
   it('blocks turn actions until all players resolve setup tuck prompts', () => {
-    const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, 'test-seed');
+    const game = createGame();
     const p1 = game.players.find((p) => p.id === 'p1')!;
 
-    resolvePassInputs(game, p1);
+    resolveAllInputsDefault(game, p1);
 
     expect(() =>
       game.processMainAction('p1', { type: EMainAction.PASS }),
@@ -83,14 +65,12 @@ describe('Game', () => {
   });
 
   it('processes a full turn and hands off to next player', () => {
-    const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, 'test-seed');
+    const game = createGame();
+    resolveSetupTucks(game);
 
     const p1 = game.players.find((p) => p.id === 'p1')!;
-    const p2 = game.players.find((p) => p.id === 'p2')!;
-    resolvePassInputs(game, p1);
-    resolvePassInputs(game, p2);
     game.processMainAction('p1', { type: EMainAction.PASS });
-    resolvePassInputs(game, p1);
+    resolveAllInputsDefault(game, p1);
 
     expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
     expect(game.activePlayer.id).toBe('p2');
@@ -100,18 +80,17 @@ describe('Game', () => {
   });
 
   it('advances round after all players pass', () => {
-    const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, 'test-seed');
+    const game = createGame();
+    resolveSetupTucks(game);
 
     const p1 = game.players.find((p) => p.id === 'p1')!;
     const p2 = game.players.find((p) => p.id === 'p2')!;
-    resolvePassInputs(game, p1);
-    resolvePassInputs(game, p2);
 
     game.processMainAction('p1', { type: EMainAction.PASS });
-    resolvePassInputs(game, p1);
+    resolveAllInputsDefault(game, p1);
 
     game.processMainAction('p2', { type: EMainAction.PASS });
-    resolvePassInputs(game, p2);
+    resolveAllInputsDefault(game, p2);
 
     expect(game.round).toBe(2);
     expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
@@ -119,18 +98,15 @@ describe('Game', () => {
   });
 
   it('ends game after round 5 pass sequence', () => {
-    const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, 'test-seed');
-    const setupP1 = game.players.find((p) => p.id === 'p1')!;
-    const setupP2 = game.players.find((p) => p.id === 'p2')!;
-    resolvePassInputs(game, setupP1);
-    resolvePassInputs(game, setupP2);
+    const game = createGame();
+    resolveSetupTucks(game);
 
     for (let index = 0; index < 5; index += 1) {
       const activeId = game.activePlayer.id;
       const activePlayer = game.players.find((p) => p.id === activeId)!;
 
       game.processMainAction(activeId, { type: EMainAction.PASS });
-      resolvePassInputs(game, activePlayer);
+      resolveAllInputsDefault(game, activePlayer);
 
       if ((game.phase as string) === EPhase.GAME_OVER) break;
 
@@ -138,7 +114,7 @@ describe('Game', () => {
       const nextPlayer = game.players.find((p) => p.id === nextId)!;
 
       game.processMainAction(nextId, { type: EMainAction.PASS });
-      resolvePassInputs(game, nextPlayer);
+      resolveAllInputsDefault(game, nextPlayer);
 
       if ((game.phase as string) === EPhase.GAME_OVER) break;
     }

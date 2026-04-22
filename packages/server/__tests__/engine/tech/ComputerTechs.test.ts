@@ -16,6 +16,7 @@ import {
   ComputerVpEnergyTech,
   ComputerVpPublicityTech,
 } from '@/engine/tech/techs/ComputerTechs.js';
+import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
 
 describe('Computer tech slot rewards (class-level)', () => {
   it('comp-0: top slot +2VP, bottom slot +1 credit', () => {
@@ -86,6 +87,7 @@ const INTEGRATION_PLAYERS = [
 
 function createIntegrationGame(seed: string): { game: Game; player: Player } {
   const game = Game.create(INTEGRATION_PLAYERS, { playerCount: 2 }, seed, seed);
+  resolveSetupTucks(game);
   const player = game.players.find((p) => p.id === 'p1') as Player;
   return { game, player };
 }

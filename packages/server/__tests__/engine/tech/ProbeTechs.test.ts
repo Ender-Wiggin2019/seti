@@ -1,6 +1,7 @@
 import {
   EFreeAction,
   EMainAction,
+  EPhase,
   EPlanet,
 } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
@@ -18,6 +19,10 @@ import {
   ProbeRoverDiscountTech,
 } from '@/engine/tech/techs/ProbeTechs.js';
 import { GameError } from '@/shared/errors/GameError.js';
+import {
+  resolveSetupTucks,
+  skipSetupTucks,
+} from '../../helpers/TestGameBuilder.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -27,18 +32,44 @@ const TEST_PLAYERS = [
 function resolvePassEndOfRoundPick(game: Game, playerId: string): void {
   const player = game.players.find((candidate) => candidate.id === playerId);
   if (!player?.waitingFor) {
+    if (game.phase === EPhase.AWAIT_END_TURN && game.activePlayer.id === playerId) {
+      game.processEndTurn(playerId);
+    }
     return;
   }
 
-  const model = player.waitingFor.toModel() as ISelectEndOfRoundCardInputModel;
-  if (model.type !== EPlayerInputType.END_OF_ROUND) {
-    throw new Error('Expected end-of-round selection');
+  while (player.waitingFor) {
+    const model = player.waitingFor.toModel();
+    if (model.type === EPlayerInputType.END_OF_ROUND) {
+      game.processInput(playerId, {
+        type: EPlayerInputType.END_OF_ROUND,
+        cardId: (model as ISelectEndOfRoundCardInputModel).cards[0].id,
+      });
+      continue;
+    }
+
+    if (model.type === EPlayerInputType.CARD) {
+      game.processInput(playerId, {
+        type: EPlayerInputType.CARD,
+        cardIds: [model.cards[0].id],
+      });
+      continue;
+    }
+
+    if (model.type === EPlayerInputType.OPTION) {
+      game.processInput(playerId, {
+        type: EPlayerInputType.OPTION,
+        optionId: model.options[0].id,
+      });
+      continue;
+    }
+
+    throw new Error(`Unexpected pass input type: ${model.type}`);
   }
 
-  game.processInput(playerId, {
-    type: EPlayerInputType.END_OF_ROUND,
-    cardId: model.cards[0].id,
-  });
+  if (game.phase === EPhase.AWAIT_END_TURN && game.activePlayer.id === playerId) {
+    game.processEndTurn(playerId);
+  }
 }
 
 /** Same patch as GameFlowBehavior: ring-1-cell-2 becomes an asteroid cell. */
@@ -125,6 +156,7 @@ describe('Phase 8.1 — orange Probe tech (integration)', () => {
       { playerCount: 2 },
       'phase-8-1-0-probe-limit',
     );
+    resolveSetupTucks(game);
     const p1 = game.players[0];
     const p2 = game.players[1];
     p1.gainTech(ETechId.PROBE_DOUBLE_PROBE);
@@ -161,6 +193,7 @@ describe('Phase 8.1 — orange Probe tech (integration)', () => {
       'behavior-flow-seed',
       'phase-8-1-1-meteorite',
     );
+    resolveSetupTucks(game);
     patchSolarSystemForMeteoriteScenario(game);
     game.solarSystem!.rotateNextDisc();
 
@@ -210,6 +243,7 @@ describe('Phase 8.1 — orange Probe tech (integration)', () => {
       { playerCount: 2 },
       'phase-8-1-2-rover',
     );
+    skipSetupTucks(game);
     const player = game.players[0];
     player.gainTech(ETechId.PROBE_ROVER_DISCOUNT);
     placeProbeOnPlanet(game, player.id, EPlanet.MERCURY, 1);
@@ -230,6 +264,7 @@ describe('Phase 8.1 — orange Probe tech (integration)', () => {
       { playerCount: 2 },
       'phase-8-1-2-rover-stack',
     );
+    resolveSetupTucks(game);
     const p1 = game.players[0];
     const p2 = game.players[1];
 
@@ -260,6 +295,7 @@ describe('Phase 8.1 — orange Probe tech (integration)', () => {
       { playerCount: 2 },
       'phase-8-1-3-moon',
     );
+    resolveSetupTucks(game);
     const player = game.players[0];
     player.gainTech(ETechId.PROBE_MOON);
     placeProbeOnPlanet(game, player.id, EPlanet.MARS, 1);
@@ -282,6 +318,7 @@ describe('Phase 8.1 — orange Probe tech (integration)', () => {
       { playerCount: 2 },
       'phase-8-1-4-no-moon',
     );
+    resolveSetupTucks(game);
     const p1 = game.players[0];
     const p2 = game.players[1];
     placeProbeOnPlanet(game, p1.id, EPlanet.MARS, 1);

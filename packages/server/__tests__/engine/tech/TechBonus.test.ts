@@ -38,10 +38,10 @@ function createMockGame(
   return {
     techBoard: board,
     mainDeck: {
-      drawN(count: number): string[] {
-        return deckCards.splice(0, count);
+      drawWithReshuffle(): string | undefined {
+        return deckCards.shift();
       },
-    } as Deck<string>,
+    } as unknown as Deck<string>,
     solarSystem: null,
     planetaryBoard: null,
     sectors: [],

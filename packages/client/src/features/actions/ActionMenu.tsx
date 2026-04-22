@@ -1,4 +1,7 @@
-import { getAvailableMainActions } from '@seti/common/rules';
+import {
+  getAvailableMainActions,
+  isAnySetupTuckPending,
+} from '@seti/common/rules';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { UndoButton } from '@/features/actions/UndoButton';
@@ -255,6 +258,34 @@ export function ActionMenu({
       >
         <StatusLine dotClass='bg-danger-500/80' orientation={orientation}>
           {t('client.action_menu.player_unavailable')}
+        </StatusLine>
+      </MenuFrame>
+    );
+  }
+
+  // Setup tucks must finish for every player before any main action is
+  // legal. Rule returns an empty set in that case; we surface a clearer
+  // status line instead of showing all buttons as disabled.
+  if (isAnySetupTuckPending(gameState)) {
+    const pendingPeer = gameState.players.find(
+      (p) => p.playerId !== myPlayerId && (p.pendingSetupTucks ?? 0) > 0,
+    );
+    return (
+      <MenuFrame
+        statusLabel={t('client.action_menu.status.waiting', {
+          defaultValue: 'Standby',
+        })}
+        canUndo={canUndo}
+        onRequestUndo={onRequestUndo}
+        orientation={orientation}
+      >
+        <StatusLine dotClass='bg-text-500/70' orientation={orientation}>
+          {t('client.action_menu.waiting_for_setup', {
+            player:
+              pendingPeer?.playerName ?? t('client.action_menu.another_player'),
+            defaultValue:
+              'Waiting for {{player}} to finish setup tuck before turn actions',
+          })}
         </StatusLine>
       </MenuFrame>
     );

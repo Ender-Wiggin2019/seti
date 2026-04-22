@@ -12,6 +12,7 @@ import { Deck } from '@/engine/deck/Deck.js';
 import { Game } from '@/engine/Game.js';
 import { Player } from '@/engine/player/Player.js';
 import { GameError } from '@/shared/errors/GameError.js';
+import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -24,6 +25,7 @@ function resolveCardId(card: string | { id?: string }): string | undefined {
 
 function createIntegrationGame(seed: string) {
   const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
+  resolveSetupTucks(game);
   const player = game.players.find((candidate) => candidate.id === 'p1');
   if (!player) {
     throw new Error('p1 not found');

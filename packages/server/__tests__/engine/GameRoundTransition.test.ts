@@ -7,6 +7,7 @@ import {
 import { Game } from '@/engine/Game.js';
 import type { IGamePlayerIdentity } from '@/engine/IGame.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
+import { resolveSetupTucks } from '../helpers/TestGameBuilder.js';
 
 const TWO_P: readonly IGamePlayerIdentity[] = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -20,11 +21,20 @@ const THREE_P: readonly IGamePlayerIdentity[] = [
 ] as const;
 
 function createGame2p(seed: string): Game {
-  return Game.create(TWO_P, { playerCount: 2 }, seed, `round-tr-${seed}`);
+  const game = Game.create(TWO_P, { playerCount: 2 }, seed, `round-tr-${seed}`);
+  resolveSetupTucks(game);
+  return game;
 }
 
 function createGame3p(seed: string): Game {
-  return Game.create(THREE_P, { playerCount: 3 }, seed, `round-tr-3-${seed}`);
+  const game = Game.create(
+    THREE_P,
+    { playerCount: 3 },
+    seed,
+    `round-tr-3-${seed}`,
+  );
+  resolveSetupTucks(game);
+  return game;
 }
 
 function getPlayer(game: Game, id: string): IPlayer {

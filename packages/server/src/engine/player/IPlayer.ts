@@ -60,6 +60,13 @@ export interface IPlayerInit extends IPlayerIdentity {
   probeSpaceLimit?: number;
   /** Max hand size after passing; excess cards are discarded. Default 4. */
   handLimitAfterPass?: number;
+  /**
+   * Number of tuck-for-income inputs the player still owes from game
+   * setup (determined by the owned corporation's startActions). Tracked
+   * explicitly so it survives (de)serialization and rehydration, and so
+   * chain progress is preserved mid-setup.
+   */
+  pendingSetupTucks?: number;
 }
 
 export interface IPlayer extends IPlayerIdentity {
@@ -85,6 +92,13 @@ export interface IPlayer extends IPlayerIdentity {
   probesInSpace: number;
   probeSpaceLimit: number;
   handLimitAfterPass: number;
+  /**
+   * Remaining tuck-for-income inputs owed from game setup. `0` means
+   * setup tucks are complete. Decremented by the setup-tuck chain as
+   * each tuck resolves; read by `Game` and `GameDeserializer` to detect
+   * and rebuild outstanding setup prompts.
+   */
+  pendingSetupTucks: number;
 
   game: IGame | null;
   waitingFor?: IPlayerInput;

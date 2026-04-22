@@ -125,7 +125,7 @@ describe('ScanEffectUtils', () => {
 
       expect(getSectorIndexByPlanet(ss, EPlanet.EARTH)).toBe(3);
       ss.rotate(0);
-      expect(getSectorIndexByPlanet(ss, EPlanet.EARTH)).toBe(4);
+      expect(getSectorIndexByPlanet(ss, EPlanet.EARTH)).toBe(2);
     });
   });
 });

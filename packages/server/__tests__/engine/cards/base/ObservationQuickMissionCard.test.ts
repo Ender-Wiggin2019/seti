@@ -15,6 +15,7 @@ import type { IGame } from '@/engine/IGame.js';
 import { MissionTracker } from '@/engine/missions/MissionTracker.js';
 import { Player } from '@/engine/player/Player.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
+import { resolveSetupTucks } from '../../../helpers/TestGameBuilder.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -55,6 +56,7 @@ describe('ObservationQuickMissionCard (37/39/41/43)', () => {
       { playerCount: 2 },
       'observation-quick-mission-real-play',
     );
+    resolveSetupTucks(game);
     const player = game.players[0];
     player.hand = ['37'];
     game.mainDeck = new Deck(['refill-1', 'refill-2'], []);
@@ -109,6 +111,7 @@ describe('ObservationQuickMissionCard (37/39/41/43)', () => {
       { playerCount: 2 },
       'observation-quick-mission-completable',
     );
+    resolveSetupTucks(game);
     const player = game.players[0];
     player.hand = ['37'];
     game.mainDeck = new Deck(['refill-1', 'refill-2'], []);
@@ -143,6 +146,7 @@ describe('ObservationQuickMissionCard - Integration Extension (Phase 3.7)', () =
       { playerCount: 2 },
       'observation-card-37-full-integration',
     );
+    resolveSetupTucks(game);
     const player = game.players[0];
     player.hand = ['37'];
     player.resources.gain({ credits: 10, energy: 10, publicity: 10 });
@@ -174,6 +178,7 @@ describe('ObservationQuickMissionCard - Integration Extension (Phase 3.7)', () =
       { playerCount: 2 },
       'observation-card-39-integration',
     );
+    resolveSetupTucks(game);
     const player = game.players[0];
     player.hand = ['39']; // Requires 2 yellow sector wins
     game.mainDeck = new Deck(['refill-1'], []);

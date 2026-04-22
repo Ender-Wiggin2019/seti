@@ -15,7 +15,9 @@ function mockPlayer() {
 
 function mockGame(drawn: string[] = []) {
   return {
-    mainDeck: { drawN: () => [...drawn] },
+    mainDeck: {
+      drawWithReshuffle: () => drawn.shift(),
+    },
     lockCurrentTurn: vi.fn(),
   };
 }

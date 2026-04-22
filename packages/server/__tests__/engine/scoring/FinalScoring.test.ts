@@ -18,6 +18,7 @@ import type { IPlayer } from '@/engine/player/IPlayer.js';
 import { EPieceType } from '@/engine/player/Pieces.js';
 import { FinalScoring } from '@/engine/scoring/FinalScoring.js';
 import { GoldScoringTile } from '@/engine/scoring/GoldScoringTile.js';
+import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
 
 const TWO_PLAYER_IDENTITIES = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -25,12 +26,14 @@ const TWO_PLAYER_IDENTITIES = [
 ] as const;
 
 function createTwoPlayerGame(seed: string): Game {
-  return Game.create(
+  const game = Game.create(
     TWO_PLAYER_IDENTITIES,
     { playerCount: 2 },
     seed,
     `final-scoring-${seed}`,
   );
+  resolveSetupTucks(game);
+  return game;
 }
 
 function getPlayer(game: Game, id: string): IPlayer {

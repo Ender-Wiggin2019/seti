@@ -13,6 +13,7 @@ import { Game } from '@/engine/Game.js';
 import type { IGamePlayerIdentity } from '@/engine/IGame.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
 import { GameError } from '@/shared/errors/GameError.js';
+import { skipSetupTucks } from '../../helpers/TestGameBuilder.js';
 
 const BASE_PLAYERS: readonly IGamePlayerIdentity[] = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -22,7 +23,13 @@ const BASE_PLAYERS: readonly IGamePlayerIdentity[] = [
 ] as const;
 
 function createGame(playerCount: 2 | 3 | 4, seed: string): Game {
-  return Game.create(BASE_PLAYERS.slice(0, playerCount), { playerCount }, seed);
+  const game = Game.create(
+    BASE_PLAYERS.slice(0, playerCount),
+    { playerCount },
+    seed,
+  );
+  skipSetupTucks(game);
+  return game;
 }
 
 function drainAllMilestoneInputs(game: Game, startPlayer: IPlayer): void {

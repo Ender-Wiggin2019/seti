@@ -10,6 +10,7 @@ import { getCardRegistry } from '@/engine/cards/CardRegistry.js';
 import { Deck } from '@/engine/deck/Deck.js';
 import { CompleteMissionFreeAction } from '@/engine/freeActions/CompleteMission.js';
 import { Game } from '@/engine/Game.js';
+import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -72,6 +73,7 @@ describe('CompleteMissionFreeAction', () => {
       { playerCount: 2 },
       'complete-mission-defer',
     );
+    resolveSetupTucks(game);
     const player = game.players[0];
     player.hand = ['37'];
     game.mainDeck = new Deck(['refill-1'], []);
@@ -133,6 +135,7 @@ describe('CompleteMissionFreeAction', () => {
       { playerCount: 2 },
       'complete-mission-flip',
     );
+    resolveSetupTucks(game);
     const player = game.players[0];
     player.hand = ['37'];
     game.mainDeck = new Deck(['refill-1'], []);
@@ -174,6 +177,7 @@ describe('CompleteMissionFreeAction', () => {
       { playerCount: 2 },
       'complete-mission-already-completed',
     );
+    resolveSetupTucks(game);
     const player = game.players[0];
     player.hand = ['37'];
     game.mainDeck = new Deck(['refill-1'], []);

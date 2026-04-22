@@ -1,60 +1,75 @@
 import {
+  ALL_SECTOR_POSITIONS,
+  ALL_SECTOR_TILE_IDS,
+  createDefaultSolarSystemWheels,
+  type ESectorPosition,
+  type ESectorTileId,
+  type EStarName,
+  type ISectorTilePlacement,
+  type ISolarSystemSetupConfig,
   normalizeDiscAngle,
   ROTATION_STEPS_PER_RING,
+  SECTOR_STAR_CONFIGS,
+  SECTOR_TILE_DEFINITIONS,
 } from '@seti/common/constant/sectorSetup';
+import {
+  buildCoordinate,
+  type ISolarCoordinate,
+  RING_CELL_COUNTS as SHARED_RING_CELL_COUNTS,
+  SECTOR_COUNT,
+  sectorIndexOf,
+  SOLAR_RING_COUNT,
+  type TSolarRingIndex,
+} from '@seti/common/constant/solarCoordinate';
 import { EPlanet } from '@seti/common/types/protocol/enums';
+import type { SeededRandom } from '@/shared/rng/SeededRandom.js';
+import { Sector } from './Sector.js';
+import { SOLAR_SYSTEM_CELL_CONFIGS } from './SolarSystemConfig.js';
+import {
+  ESolarSystemElementType,
+  type IDisc,
+  type IProbeMoveResult,
+  type ISolarProbe,
+  type ISolarSystemElement,
+  type ISolarSystemSpace,
+} from './SolarSystemTypes.js';
 
-export enum ESolarSystemElementType {
-  NULL = 'NULL',
-  EMPTY = 'EMPTY',
-  COMET = 'COMET',
-  ASTEROID = 'ASTEROID',
-  PLANET = 'PLANET',
-  EARTH = 'EARTH',
-  SUN = 'SUN',
+export {
+  ESolarSystemElementType,
+  type IDisc,
+  type IProbeMoveResult,
+  type ISolarProbe,
+  type ISolarSystemElement,
+  type ISolarSystemSpace,
+};
+
+export interface IPlanetLocation {
+  planet: EPlanet;
+  space: ISolarSystemSpace;
+  coordinate: ISolarCoordinate;
 }
 
-export interface ISolarSystemElement {
-  type: ESolarSystemElementType;
-  amount: number;
-  planet?: EPlanet;
+export interface IProbeLocation {
+  probe: ISolarProbe;
+  space: ISolarSystemSpace;
+  coordinate: ISolarCoordinate;
 }
 
-export interface ISolarProbe {
-  id: string;
-  playerId: string;
+export interface ITopSectorElement {
+  ringIndex: TSolarRingIndex;
+  space: ISolarSystemSpace;
+  element: ISolarSystemElement;
 }
 
-export interface ISolarSystemSpace {
-  id: string;
-  ringIndex: number;
-  indexInRing: number;
-  discIndex: number | null;
-  hasPublicityIcon: boolean;
-  /**
-   * Amount of publicity granted when a probe enters via the publicity
-   * icon. Optional: when `hasPublicityIcon === true` and this field is
-   * omitted, it defaults to `1` (the standard printed icon). Declaring
-   * a larger value lets future sector setups print "+2"/"+3" icons
-   * without a boolean/number type migration.
-   */
-  publicityIconAmount?: number;
-  elements: ISolarSystemElement[];
-  occupants: ISolarProbe[];
+export interface ISolarSystemInitResult {
+  solarSystem: SolarSystem;
+  sectors: Sector[];
+  setupConfig: ISolarSystemSetupConfig;
 }
 
-export interface IDisc {
-  index: number;
-  currentRotation: number;
-  spaces: string[];
-}
-
-export interface IProbeMoveResult {
-  probeId: string;
-  fromId: string;
-  toId: string;
-  movementCost: number;
-  publicityGained: number;
+export interface ISolarSystemInitOptions {
+  initialDiscAngles?: [number, number, number];
+  tilePlacements?: ISectorTilePlacement[];
 }
 
 interface IRingCoverState {
@@ -62,7 +77,6 @@ interface IRingCoverState {
   after: boolean;
 }
 
-const RING_CELL_COUNTS = [8, 16, 24, 32] as const;
 const DISC_TO_MOVING_RINGS: Readonly<Record<number, readonly number[]>> = {
   0: [1],
   1: [1, 2],
@@ -83,6 +97,15 @@ export class SolarSystem {
   public rotationCounter: number;
 
   private readonly spaceById: Map<string, ISolarSystemSpace>;
+
+  /** Static: which spaces live inside a given sector (0..7). Never changes. */
+  private readonly spacesBySector: Map<number, ISolarSystemSpace[]>;
+
+  /** Dynamic: which space currently carries the given planet element. */
+  private readonly planetSpaceByPlanet: Map<EPlanet, ISolarSystemSpace>;
+
+  /** Dynamic: fast probe-id → space lookup. */
+  private readonly probeLocationById: Map<string, ISolarSystemSpace>;
 
   private probeCounter: number;
 
@@ -108,6 +131,53 @@ export class SolarSystem {
     this.rotationCounter = 0;
     this.probeCounter = 0;
     this.publicityByPlayer = new Map();
+
+    this.spacesBySector = this.buildSpacesBySector();
+    this.planetSpaceByPlanet = new Map();
+    this.probeLocationById = new Map();
+    this.rebuildElementAndProbeIndexes();
+  }
+
+  /**
+   * One-call factory that implements the shared setup rule from
+   * `docs/arch/prd-rule.md §5.1 #3`:
+   *   - shuffle 4 physical sector tiles over 4 board positions (→ 8 sectors)
+   *   - randomize 3 rotatable disc angles (ring 1/2/3 independently)
+   *   - build SolarSystem, Sector[] (each with its star's data capacity)
+   *
+   * Callers may override either randomized axis via `opts` for tests.
+   */
+  public static init(
+    random: SeededRandom,
+    opts: ISolarSystemInitOptions = {},
+  ): ISolarSystemInitResult {
+    const tilePlacements =
+      opts.tilePlacements ?? this.randomizeTilePlacements(random);
+    const initialDiscAngles =
+      opts.initialDiscAngles ?? this.randomizeDiscAngles(random);
+
+    const setupConfig = buildSetupConfig(tilePlacements, initialDiscAngles);
+    const solarSystem = buildSolarSystemFromConfig(setupConfig);
+    const sectors = buildSectorsFromPlacements(tilePlacements);
+
+    return { solarSystem, sectors, setupConfig };
+  }
+
+  /** Exposed for tests & serializers that need the randomized half only. */
+  public static randomizeTilePlacements(
+    random: SeededRandom,
+  ): ISectorTilePlacement[] {
+    return randomizeTilePlacementsImpl(random);
+  }
+
+  public static randomizeDiscAngles(
+    random: SeededRandom,
+  ): [number, number, number] {
+    return [
+      Math.floor(random.next() * ROTATION_STEPS_PER_RING),
+      Math.floor(random.next() * ROTATION_STEPS_PER_RING),
+      Math.floor(random.next() * ROTATION_STEPS_PER_RING),
+    ];
   }
 
   public rotate(discIndex: number): void {
@@ -148,6 +218,7 @@ export class SolarSystem {
     }
 
     this.rebuildAdjacencyInPlace();
+    this.rebuildElementAndProbeIndexes();
   }
 
   public rotateNextDisc(): number {
@@ -157,6 +228,8 @@ export class SolarSystem {
     return discIndex;
   }
 
+  // ── Query API ─────────────────────────────────────────────────────────
+
   public getAdjacentSpaces(spaceId: string): ISolarSystemSpace[] {
     const adjacentIds = this.adjacency.get(spaceId) ?? [];
     return adjacentIds
@@ -164,16 +237,115 @@ export class SolarSystem {
       .filter((space): space is ISolarSystemSpace => space !== undefined);
   }
 
+  /**
+   * Legacy accessor retained for callers that expect an array (e.g. setup
+   * paths that run before a planet is placed). Prefer {@link getPlanetLocation}
+   * for new code — it is O(1) after the index is built in the constructor.
+   */
   public getSpacesOnPlanet(planet: EPlanet): ISolarSystemSpace[] {
-    return this.spaces.filter((space) =>
-      space.elements.some(
-        (element) =>
-          (element.type === ESolarSystemElementType.PLANET ||
-            element.type === ESolarSystemElementType.EARTH) &&
-          element.planet === planet &&
-          element.amount > 0,
-      ),
+    const space = this.planetSpaceByPlanet.get(planet);
+    return space ? [space] : [];
+  }
+
+  public getPlanetLocation(planet: EPlanet): IPlanetLocation | null {
+    const space = this.planetSpaceByPlanet.get(planet);
+    if (!space) return null;
+    return {
+      planet,
+      space,
+      coordinate: buildCoordinate(space.ringIndex, space.indexInRing),
+    };
+  }
+
+  public getSectorIndexOfPlanet(planet: EPlanet): number | null {
+    const space = this.planetSpaceByPlanet.get(planet);
+    if (!space) return null;
+    return sectorIndexOf(space.ringIndex, space.indexInRing);
+  }
+
+  public getCoordinate(spaceId: string): ISolarCoordinate | null {
+    const space = this.spaceById.get(spaceId);
+    if (!space) return null;
+    try {
+      return buildCoordinate(space.ringIndex, space.indexInRing);
+    } catch {
+      return null;
+    }
+  }
+
+  public getSectorIndexOfSpace(spaceId: string): number | null {
+    const space = this.spaceById.get(spaceId);
+    if (!space) return null;
+    return sectorIndexOf(space.ringIndex, space.indexInRing);
+  }
+
+  /** Ordered ring-1 → ring-4 cells that belong to a given sector (0..7). */
+  public getSpacesInSector(sectorIndex: number): ISolarSystemSpace[] {
+    return this.spacesBySector.get(sectorIndex) ?? [];
+  }
+
+  /**
+   * The topmost *covering* space in a sector — walking ring-1 down to ring-4
+   * and stopping at the first space whose element is NOT `NULL`. That cell
+   * is the one that would "hide" the ones below it during rotation.
+   */
+  public getTopSpaceInSector(
+    sectorIndex: number,
+  ): ISolarSystemSpace | null {
+    for (const space of this.getSpacesInSector(sectorIndex)) {
+      if (!this.containsElement(space, ESolarSystemElementType.NULL)) {
+        return space;
+      }
+    }
+    return null;
+  }
+
+  public getTopElementInSector(
+    sectorIndex: number,
+  ): ITopSectorElement | null {
+    const space = this.getTopSpaceInSector(sectorIndex);
+    if (!space) return null;
+    const element = space.elements.find(
+      (el) => el.type !== ESolarSystemElementType.NULL && el.amount > 0,
     );
+    if (!element) return null;
+    return {
+      ringIndex: space.ringIndex as TSolarRingIndex,
+      space,
+      element,
+    };
+  }
+
+  public getProbesInSector(
+    sectorIndex: number,
+    filter?: { playerId?: string },
+  ): IProbeLocation[] {
+    const result: IProbeLocation[] = [];
+    for (const space of this.getSpacesInSector(sectorIndex)) {
+      for (const probe of space.occupants) {
+        if (filter?.playerId && probe.playerId !== filter.playerId) {
+          continue;
+        }
+        result.push({
+          probe,
+          space,
+          coordinate: buildCoordinate(space.ringIndex, space.indexInRing),
+        });
+      }
+    }
+    return result;
+  }
+
+  public findProbe(probeId: string): IProbeLocation | null {
+    const space = this.probeLocationById.get(probeId);
+    if (!space) return null;
+    const probe = space.occupants.find((p) => p.id === probeId);
+    if (!probe) return null;
+    return {
+      probe,
+      space,
+      coordinate: buildCoordinate(space.ringIndex, space.indexInRing),
+    };
   }
 
   public getProbesAt(spaceId: string): ISolarProbe[] {
@@ -190,6 +362,7 @@ export class SolarSystem {
     };
     this.probeCounter += 1;
     targetSpace.occupants.push(probe);
+    this.probeLocationById.set(probe.id, targetSpace);
     return probe;
   }
 
@@ -217,6 +390,7 @@ export class SolarSystem {
 
     const [probe] = fromSpace.occupants.splice(probeIndex, 1);
     toSpace.occupants.push(probe);
+    this.probeLocationById.set(probe.id, toSpace);
 
     const movementCost =
       BASE_MOVE_COST +
@@ -234,9 +408,34 @@ export class SolarSystem {
     };
   }
 
+  /**
+   * Remove one probe belonging to `playerId` currently sitting on the space
+   * that carries `planet`. Returns the removed probe (or null when no such
+   * probe exists). Replaces the old ad-hoc `ProbeEffectUtils.consumeProbeFromPlanet`
+   * splice so the probe-location index stays consistent.
+   */
+  public consumeProbeByPlanet(
+    playerId: string,
+    planet: EPlanet,
+  ): ISolarProbe | null {
+    const space = this.planetSpaceByPlanet.get(planet);
+    if (!space) return null;
+
+    const probeIndex = space.occupants.findIndex(
+      (probe) => probe.playerId === playerId,
+    );
+    if (probeIndex < 0) return null;
+
+    const [probe] = space.occupants.splice(probeIndex, 1);
+    this.probeLocationById.delete(probe.id);
+    return probe;
+  }
+
   public getPlayerPublicity(playerId: string): number {
     return this.publicityByPlayer.get(playerId) ?? 0;
   }
+
+  // ── Internal setup helpers ────────────────────────────────────────────
 
   private buildDisc(index: number, ringIndex: number): IDisc {
     const spaces = this.spaces
@@ -249,6 +448,55 @@ export class SolarSystem {
       currentRotation: 0,
       spaces,
     };
+  }
+
+  private buildSpacesBySector(): Map<number, ISolarSystemSpace[]> {
+    const bySector = new Map<number, ISolarSystemSpace[]>();
+    for (let s = 0; s < SECTOR_COUNT; s += 1) {
+      bySector.set(s, []);
+    }
+
+    for (const space of this.spaces) {
+      if (space.ringIndex < 1 || space.ringIndex > SOLAR_RING_COUNT) {
+        continue;
+      }
+      const sector = sectorIndexOf(space.ringIndex, space.indexInRing);
+      bySector.get(sector)?.push(space);
+    }
+
+    for (const list of bySector.values()) {
+      list.sort((a, b) => {
+        if (a.ringIndex !== b.ringIndex) return a.ringIndex - b.ringIndex;
+        return a.indexInRing - b.indexInRing;
+      });
+    }
+    return bySector;
+  }
+
+  /**
+   * Rebuild the dynamic indexes from the current `spaces` array. Called on
+   * construction and after every rotation. O(N) where N is the total
+   * number of cells (~80). The hit is negligible compared to adjacency
+   * rebuild which already runs on each rotation.
+   */
+  private rebuildElementAndProbeIndexes(): void {
+    this.planetSpaceByPlanet.clear();
+    this.probeLocationById.clear();
+    for (const space of this.spaces) {
+      for (const element of space.elements) {
+        if (
+          (element.type === ESolarSystemElementType.PLANET ||
+            element.type === ESolarSystemElementType.EARTH) &&
+          element.planet !== undefined &&
+          element.amount > 0
+        ) {
+          this.planetSpaceByPlanet.set(element.planet, space);
+        }
+      }
+      for (const probe of space.occupants) {
+        this.probeLocationById.set(probe.id, space);
+      }
+    }
   }
 
   private buildAdjacency(): Map<string, string[]> {
@@ -449,7 +697,7 @@ export class SolarSystem {
 
   private getRingCellCount(ringIndex: number): number {
     const ringOffset = ringIndex - 1;
-    return RING_CELL_COUNTS[ringOffset];
+    return SHARED_RING_CELL_COUNTS[ringOffset];
   }
 
   private linkUndirected(
@@ -517,4 +765,84 @@ export class SolarSystem {
     this.publicityByPlayer.set(playerId, current + amount);
     return amount;
   }
+}
+
+// ── Factory helpers ─────────────────────────────────────────────────────
+
+function buildSetupConfig(
+  tilePlacements: ISectorTilePlacement[],
+  initialDiscAngles: [number, number, number],
+): ISolarSystemSetupConfig {
+  return {
+    tilePlacements,
+    initialDiscAngles,
+    wheels: createDefaultSolarSystemWheels(),
+  };
+}
+
+function buildSolarSystemFromConfig(
+  setupConfig: ISolarSystemSetupConfig,
+): SolarSystem {
+  const nearStars = setupConfig.tilePlacements.flatMap((placement) => {
+    const tileDef = SECTOR_TILE_DEFINITIONS[placement.tileId];
+    return tileDef.sectors.map((s) => s.starName);
+  });
+
+  const spaces: ISolarSystemSpace[] = SOLAR_SYSTEM_CELL_CONFIGS.map((cell) => ({
+    id: cell.id,
+    ringIndex: cell.ringIndex,
+    indexInRing: cell.indexInRing,
+    discIndex: cell.discIndex,
+    hasPublicityIcon: cell.hasPublicityIcon,
+    publicityIconAmount: cell.publicityIconAmount,
+    elements: cell.elements.map((element) => ({ ...element })),
+    occupants: [],
+  }));
+
+  return new SolarSystem(spaces, [...nearStars], setupConfig.initialDiscAngles);
+}
+
+function buildSectorsFromPlacements(
+  tilePlacements: ISectorTilePlacement[],
+): Sector[] {
+  const sectors: Sector[] = [];
+  for (const placement of tilePlacements) {
+    const tileDef = SECTOR_TILE_DEFINITIONS[placement.tileId];
+    for (let idx = 0; idx < tileDef.sectors.length; idx += 1) {
+      const sectorOnTile = tileDef.sectors[idx];
+      const starConfig =
+        SECTOR_STAR_CONFIGS[sectorOnTile.starName as EStarName];
+      sectors.push(
+        new Sector({
+          id: placement.sectorIds[idx],
+          color: sectorOnTile.color,
+          dataSlotCapacity: starConfig?.dataSlotCapacity,
+          firstWinBonus: starConfig?.firstWinBonus,
+          repeatWinBonus: starConfig?.repeatWinBonus,
+        }),
+      );
+    }
+  }
+  return sectors;
+}
+
+function randomizeTilePlacementsImpl(
+  random: SeededRandom,
+): ISectorTilePlacement[] {
+  const shuffledTileIds = random.shuffle([
+    ...ALL_SECTOR_TILE_IDS,
+  ]) as ESectorTileId[];
+  const positions = [...ALL_SECTOR_POSITIONS] as ESectorPosition[];
+
+  let sectorCounter = 0;
+  return shuffledTileIds.map((tileId, idx) => {
+    const sectorId0 = `sector-${sectorCounter}`;
+    const sectorId1 = `sector-${sectorCounter + 1}`;
+    sectorCounter += 2;
+    return {
+      tileId,
+      position: positions[idx],
+      sectorIds: [sectorId0, sectorId1] as [string, string],
+    };
+  });
 }

@@ -9,6 +9,7 @@ import { ESolarSystemElementType } from '@/engine/board/SolarSystem.js';
 import { Deck } from '@/engine/deck/Deck.js';
 import { Game } from '@/engine/Game.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
+import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -16,7 +17,9 @@ const TEST_PLAYERS = [
 ] as const;
 
 function createIntegrationGame(seed: string): Game {
-  return Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
+  const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
+  resolveSetupTucks(game);
+  return game;
 }
 
 function resolveAllInputs(game: Game, playerId: string): void {

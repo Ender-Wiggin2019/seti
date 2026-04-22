@@ -24,6 +24,7 @@ import { MissionTracker } from '@/engine/missions/MissionTracker.js';
 import { Player } from '@/engine/player/Player.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
 import { activateMission } from '../../../helpers/missionTestUtils.js';
+import { resolveSetupTucks } from '../../../helpers/TestGameBuilder.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -36,6 +37,7 @@ function resolveCardId(card: string | { id?: string }): string | undefined {
 
 function createIntegrationGame(seed: string) {
   const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
+  resolveSetupTucks(game);
   const player = game.players[0] as Player;
   return { game, player };
 }
@@ -1037,6 +1039,7 @@ describe('TechMissionCards - Integration Extension (Phase 3.7)', () => {
       { playerCount: 2 },
       'tech-card-10-integration',
     );
+    resolveSetupTucks(game);
     const player = game.players[0];
     player.hand = ['10'];
     game.mainDeck = new Deck(['refill-1'], []);
@@ -1072,6 +1075,7 @@ describe('TechMissionCards - Integration Extension (Phase 3.7)', () => {
       { playerCount: 2 },
       'tech-card-61-integration',
     );
+    resolveSetupTucks(game);
     const player = game.players[0];
     player.hand = ['61'];
     player.score = 49;
@@ -1100,6 +1104,7 @@ describe('TechMissionCards - Integration Extension (Phase 3.7)', () => {
       { playerCount: 2 },
       'tech-card-70-integration',
     );
+    resolveSetupTucks(game);
     const player = game.players[0];
     player.hand = ['70'];
     player.traces[ETrace.BLUE] = 2;

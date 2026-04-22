@@ -17,6 +17,7 @@ import { Game } from '@/engine/Game.js';
 import type { IGamePlayerIdentity } from '@/engine/IGame.js';
 import type { TIncomeBundle } from '@/engine/player/Income.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
+import { resolveSetupTucks } from '../helpers/TestGameBuilder.js';
 
 const BASE_PLAYERS: readonly IGamePlayerIdentity[] = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -150,6 +151,7 @@ describe('FullGameSimulation (Phase 10.3)', () => {
         seed,
         seed,
       );
+      resolveSetupTucks(game);
 
       expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
       expect(game.round).toBe(1);
@@ -183,6 +185,7 @@ describe('FullGameSimulation (Phase 10.3)', () => {
         seed,
         seed,
       );
+      resolveSetupTucks(game);
 
       expect(game.neutralMilestones).toEqual([20, 30]);
 
@@ -224,6 +227,7 @@ describe('FullGameSimulation (Phase 10.3)', () => {
     it('5-round all-PASS simulation reaches GAME_OVER', () => {
       const seed = 'phase-10-3-3-four-player-sim';
       const game = Game.create(BASE_PLAYERS, { playerCount: 4 }, seed, seed);
+      resolveSetupTucks(game);
       advanceRounds(game, 5);
       expect(game.phase).toBe(EPhase.GAME_OVER);
       expect(game.finalScoringResult?.scores).toBeDefined();
@@ -239,6 +243,7 @@ describe('FullGameSimulation (Phase 10.3)', () => {
         seed,
         seed,
       );
+      resolveSetupTucks(game);
 
       const transitions = attachPhaseSpy(game);
       advanceRounds(game, 5);
@@ -260,6 +265,7 @@ describe('FullGameSimulation (Phase 10.3)', () => {
         seed,
         seed,
       );
+      resolveSetupTucks(game);
 
       const perRoundCredits: number[] = [];
 

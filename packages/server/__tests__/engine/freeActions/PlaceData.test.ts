@@ -9,6 +9,7 @@ import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
 import { EComputerRow } from '@/engine/player/Computer.js';
 import { Player } from '@/engine/player/Player.js';
+import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
 
 const SIMPLE_3_COL: IComputerColumnConfig[] = [
   { topReward: null, techSlotAvailable: true },
@@ -30,10 +31,10 @@ function createTestPlayer(overrides?: Record<string, unknown>): Player {
 function createMockGame(deckCards: string[] = []): IGame {
   return {
     mainDeck: {
-      drawN(count: number): string[] {
-        return deckCards.splice(0, count);
+      drawWithReshuffle(): string | undefined {
+        return deckCards.shift();
       },
-    } as Deck<string>,
+    } as unknown as Deck<string>,
     lockCurrentTurn(): void {
       // no-op for unit tests
     },
@@ -46,7 +47,9 @@ const TEST_PLAYERS = [
 ] as const;
 
 function createIntegrationGame(seed: string): Game {
-  return Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
+  const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
+  resolveSetupTucks(game);
+  return game;
 }
 
 describe('PlaceDataFreeAction', () => {

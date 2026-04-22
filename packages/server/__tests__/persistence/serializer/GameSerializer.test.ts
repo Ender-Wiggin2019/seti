@@ -4,9 +4,10 @@ import {
   projectGameState,
   serializeGame,
 } from '@/persistence/serializer/GameSerializer.js';
+import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
 
 function createTestGame(): Game {
-  return Game.create(
+  const game = Game.create(
     [
       { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
       { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
@@ -15,6 +16,8 @@ function createTestGame(): Game {
     'serializer-seed',
     'game-serializer-test',
   );
+  resolveSetupTucks(game);
+  return game;
 }
 
 describe('GameSerializer', () => {

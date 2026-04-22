@@ -11,6 +11,7 @@ import { FreeActionCornerFreeAction } from '@/engine/freeActions/FreeActionCorne
 import { Game } from '@/engine/Game.js';
 import type { TCardItem } from '@/engine/player/IPlayer.js';
 import type { Player } from '@/engine/player/Player.js';
+import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -18,7 +19,9 @@ const TEST_PLAYERS = [
 ] as const;
 
 function createIntegrationGame(seed: string): Game {
-  return Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
+  const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
+  resolveSetupTucks(game);
+  return game;
 }
 
 function resolveCardId(card: string | { id?: string }): string | undefined {

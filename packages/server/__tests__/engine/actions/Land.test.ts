@@ -13,6 +13,10 @@ import { ETechId } from '@seti/common/types/tech';
 import { LandAction } from '@/engine/actions/Land.js';
 import { Game } from '@/engine/Game.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
+import {
+  resolveSetupTucks,
+  skipSetupTucks,
+} from '../../helpers/TestGameBuilder.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -89,6 +93,7 @@ describe('Land action', () => {
       { playerCount: 2 },
       'land-trace-selection',
     );
+    resolveSetupTucks(game);
     const player = game.players[0];
     placeProbeOnPlanet(game, player.id, EPlanet.VENUS, 1);
     player.probesInSpace = 1;
@@ -144,6 +149,7 @@ describe('Land action', () => {
       { playerCount: 2 },
       'land-main-action',
     );
+    resolveSetupTucks(game);
     const player = game.players[0];
     placeProbeOnPlanet(game, player.id, EPlanet.MARS, 1);
     player.probesInSpace = 1;
@@ -168,6 +174,7 @@ describe('Land action', () => {
       { playerCount: 2 },
       'land-reduced-cost',
     );
+    skipSetupTucks(game);
     const p1 = game.players[0];
     const p2 = game.players[1];
     placeProbeOnPlanet(game, p1.id, EPlanet.SATURN, 1);
@@ -197,6 +204,7 @@ describe('Land action', () => {
       { playerCount: 3 },
       'land-mars-first-two',
     );
+    resolveSetupTucks(threePlayerGame);
     const [p1, p2, p3] = threePlayerGame.players;
 
     placeProbeOnPlanet(threePlayerGame, p1.id, EPlanet.MARS, 1);
@@ -242,6 +250,7 @@ describe('Land action', () => {
       { playerCount: 2 },
       'land-moon-rules',
     );
+    resolveSetupTucks(game);
     const p1 = game.players[0];
     const p2 = game.players[1];
     placeProbeOnPlanet(game, p1.id, EPlanet.MARS, 1);
@@ -289,6 +298,7 @@ describe('Land action', () => {
       { playerCount: 2 },
       'land-probe-tech-2',
     );
+    skipSetupTucks(game);
     const player = game.players[0];
     player.gainTech(ETechId.PROBE_ROVER_DISCOUNT);
     placeProbeOnPlanet(game, player.id, EPlanet.MERCURY, 1);
@@ -308,6 +318,7 @@ describe('Land action', () => {
       { playerCount: 2 },
       'land-moon-stacked-discount',
     );
+    resolveSetupTucks(game);
     const p1 = game.players[0];
     const p2 = game.players[1];
 
@@ -342,6 +353,7 @@ describe('Land action', () => {
       { playerCount: 2 },
       'land-probe-tech-3',
     );
+    resolveSetupTucks(game);
     const player = game.players[0];
     player.gainTech(ETechId.PROBE_MOON);
     placeProbeOnPlanet(game, player.id, EPlanet.MARS, 1);
@@ -363,6 +375,7 @@ describe('Land action', () => {
       { playerCount: 2 },
       'land-orbiter-cannot-land',
     );
+    resolveSetupTucks(game);
     const player = game.players[0];
     placeProbeOnPlanet(game, player.id, EPlanet.VENUS, 1);
     player.probesInSpace = 1;
@@ -393,6 +406,7 @@ describe('Land action', () => {
       { playerCount: 2 },
       'land-no-planet-probe',
     );
+    resolveSetupTucks(game);
     const player = game.players[0];
 
     game.processMainAction(player.id, { type: EMainAction.LAUNCH_PROBE });
@@ -409,6 +423,7 @@ describe('Land action', () => {
       { playerCount: 2 },
       'land-insufficient-energy',
     );
+    resolveSetupTucks(game);
     const p1 = game.players[0];
     const p2 = game.players[1];
 

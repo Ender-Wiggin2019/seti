@@ -1228,23 +1228,27 @@
 } */
 
 .icon-value {
+  /*
+   * Base styles for the numeric value layered on top of an icon.
+   * Size-dependent geometry (height / bottom) is owned by
+   * `.icon-value-size-*`; do NOT set `height` here — doing so would
+   * override every size variant because this rule is declared after
+   * them and has the same specificity.
+   *
+   * `font-size` stays fixed at 40px on purpose: the parent
+   * `.icon-container-*` applies a CSS `scale` that visually resizes
+   * the label together with the icon artwork.
+   */
   position: absolute;
   z-index: 5;
   color: white;
   font-family: "Kobenhavn W03 Bold", monospace;
   line-height: 1;
-  /* width: 20px; */
-  height: 50px;
   font-size: 40px;
-  /* font-weight: 800; */
-
   left: -5px;
   display: flex;
   justify-content: center;
   align-items: center;
-  color: white;
-  /* -webkit-text-fill-color: white;
-  -webkit-text-stroke: 4px black; */
 }
 
 .hexagon {

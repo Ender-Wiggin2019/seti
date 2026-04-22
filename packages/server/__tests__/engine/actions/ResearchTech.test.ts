@@ -15,6 +15,7 @@ import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
 import { TechBoard } from '@/engine/tech/TechBoard.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
+import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
 
 function createMockGame(techBoard?: TechBoard | null): IGame {
   const rng = new SeededRandom('test');
@@ -263,6 +264,7 @@ const INTEGRATION_PLAYERS = [
 
 function createIntegrationGame(seed: string): { game: Game; player: Player } {
   const game = Game.create(INTEGRATION_PLAYERS, { playerCount: 2 }, seed, seed);
+  resolveSetupTucks(game);
   const player = game.players.find((p) => p.id === 'p1') as Player;
   return { game, player };
 }

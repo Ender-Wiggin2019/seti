@@ -103,6 +103,10 @@ export function getAvailableMainActions(
   player: IPublicPlayerState,
   gameState: IPublicGameState,
 ): EMainAction[] {
+  if (isAnySetupTuckPending(gameState)) {
+    return [];
+  }
+
   const actions: EMainAction[] = [];
 
   if (canLaunchProbe(player)) actions.push(EMainAction.LAUNCH_PROBE);
@@ -116,4 +120,16 @@ export function getAvailableMainActions(
   actions.push(EMainAction.PASS);
 
   return actions;
+}
+
+/**
+ * True while any player in the game still owes setup-tuck inputs. The
+ * server blocks turn actions until every player's setup tucks are
+ * resolved; mirror that on the client so PASS and other main-action
+ * buttons stay disabled instead of hitting an error path.
+ */
+export function isAnySetupTuckPending(gameState: IPublicGameState): boolean {
+  return gameState.players.some(
+    (player) => (player.pendingSetupTucks ?? 0) > 0,
+  );
 }

@@ -18,6 +18,7 @@ import {
 } from '@/engine/effects/scan/ScanEffectUtils.js';
 import { Game } from '@/engine/Game.js';
 import { Player } from '@/engine/player/Player.js';
+import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
 
 function finishScanWithDone(game: Game, playerId: string): void {
   const optionInput = playerWaitingFor(
@@ -80,6 +81,7 @@ function createScanIntegrationGame(seed: string): {
     seed,
     seed,
   );
+  resolveSetupTucks(game);
   const p1 = requireValue(
     game.players.find((candidate) => candidate.id === 'p1'),
     'p1 missing',

@@ -114,7 +114,7 @@ export function HandView({
         className={cn(
           'grid overflow-auto',
           isDock
-            ? 'grid-cols-[repeat(auto-fill,minmax(104px,1fr))] gap-1'
+            ? 'grid-cols-[repeat(auto-fill,minmax(88px,1fr))] gap-1'
             : 'max-h-[150px] grid-cols-2 gap-1.5 lg:grid-cols-3',
         )}
       >
@@ -139,14 +139,25 @@ export function HandView({
               )}
               onClick={() => handleCardClick(card)}
             >
-              <div
-                className={cn(
-                  'pointer-events-none',
-                  isDock && 'origin-top-left scale-[0.52]',
-                )}
-              >
-                <CardRender card={card} />
-              </div>
+              {isDock ? (
+                // CardRender is intrinsically 150×209. In dock mode we
+                // show a scaled-down preview, but `transform: scale` does
+                // not affect layout size — without an outer sized box
+                // the button would keep its natural 150px width and
+                // leave a big empty region. Constrain layout to the
+                // post-scale dimensions (78×109) so the button hugs the
+                // visible card, and apply the transform on the inner
+                // full-size card.
+                <div className='pointer-events-none relative h-[109px] w-[78px]'>
+                  <div className='absolute top-0 left-0 origin-top-left scale-[0.52]'>
+                    <CardRender card={card} />
+                  </div>
+                </div>
+              ) : (
+                <div className='pointer-events-none'>
+                  <CardRender card={card} />
+                </div>
+              )}
             </button>
           );
         })}

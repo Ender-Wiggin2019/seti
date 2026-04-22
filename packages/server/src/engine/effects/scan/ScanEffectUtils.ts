@@ -73,17 +73,23 @@ export function findSectorIdByStarName(
 /**
  * Resolve a planet's current position on the solar system to a sector index (0..7).
  *
- * Each ring is divided into 8 equal wedges. A planet at `indexInRing` on
- * ring N occupies wedge `floor(indexInRing / N)` — this holds because ring N
- * always has `8 * N` cells, giving `N` cells per wedge.
+ * Prefers the O(1) index maintained by {@link SolarSystem}. Falls back to
+ * the legacy `getSpacesOnPlanet(...)` scan so tests that stub `solarSystem`
+ * with a minimal duck-typed object keep working.
  */
 export function getSectorIndexByPlanet(
   solarSystem: SolarSystem,
   planet: EPlanet,
 ): number | null {
+  const maybe = solarSystem as {
+    getSectorIndexOfPlanet?: (p: EPlanet) => number | null;
+  };
+  if (typeof maybe.getSectorIndexOfPlanet === 'function') {
+    return maybe.getSectorIndexOfPlanet(planet);
+  }
+
   const spaces = solarSystem.getSpacesOnPlanet(planet);
   if (spaces.length === 0) return null;
-
   const space = spaces[0];
   return Math.floor(space.indexInRing / space.ringIndex);
 }

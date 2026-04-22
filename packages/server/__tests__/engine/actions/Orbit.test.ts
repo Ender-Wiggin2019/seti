@@ -5,6 +5,10 @@ import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { OrbitAction } from '@/engine/actions/Orbit.js';
 import { PLANET_ORBIT_INCOME } from '@/engine/board/PlanetaryBoard.js';
 import { Game } from '@/engine/Game.js';
+import {
+  resolveSetupTucks,
+  skipSetupTucks,
+} from '../../helpers/TestGameBuilder.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -34,6 +38,7 @@ describe('Orbit action', () => {
       { playerCount: 2 },
       'orbit-earth-boundary',
     );
+    resolveSetupTucks(game);
     const player = game.players[0];
 
     game.processMainAction(player.id, { type: EMainAction.LAUNCH_PROBE });
@@ -60,6 +65,7 @@ describe('Orbit action', () => {
       { playerCount: 2 },
       'orbit-main-action',
     );
+    skipSetupTucks(game);
     const player = game.players[0];
     placeProbeOnPlanet(game, player.id, EPlanet.MARS, 1);
     player.probesInSpace = 1;
@@ -91,6 +97,7 @@ describe('Orbit action', () => {
       { playerCount: 2 },
       'orbit-first-bonus-once',
     );
+    resolveSetupTucks(game);
     const p1 = game.players[0];
     const p2 = game.players[1];
     placeProbeOnPlanet(game, p1.id, EPlanet.VENUS, 1);
@@ -119,6 +126,7 @@ describe('Orbit action', () => {
 
   it('rejects orbit when no own probe is on selected planet', () => {
     const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, 'orbit-invalid');
+    resolveSetupTucks(game);
     const player = game.players[0];
 
     expect(() =>
@@ -139,6 +147,7 @@ describe('Orbit action', () => {
       { playerCount: 2 },
       'orbit-not-your-turn',
     );
+    resolveSetupTucks(game);
     const player = game.players[1];
     placeProbeOnPlanet(game, player.id, EPlanet.MARS, 1);
     player.probesInSpace = 1;
@@ -173,6 +182,7 @@ describe('Orbit action', () => {
         { playerCount: 2 },
         `orbit-2-2-3-${planet}`,
       );
+      resolveSetupTucks(game);
       const player = game.players[0];
       placeProbeOnPlanet(game, player.id, planet, 1);
       player.probesInSpace = 1;
@@ -219,6 +229,7 @@ describe('Orbit action', () => {
       { playerCount: 2 },
       'orbit-2-2-4-income-track',
     );
+    resolveSetupTucks(game);
     const player = game.players[0];
     placeProbeOnPlanet(game, player.id, EPlanet.VENUS, 1);
     player.probesInSpace = 1;
@@ -245,6 +256,7 @@ describe('Orbit action', () => {
       { playerCount: 2 },
       'orbit-insufficient-resources',
     );
+    resolveSetupTucks(game);
     const player = game.players[0];
     placeProbeOnPlanet(game, player.id, EPlanet.MARS, 1);
     player.probesInSpace = 1;

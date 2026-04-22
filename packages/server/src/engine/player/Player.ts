@@ -74,6 +74,8 @@ export class Player implements IPlayer {
 
   public handLimitAfterPass: number;
 
+  public pendingSetupTucks: number;
+
   public game: IGame | null;
 
   public waitingFor?: IPlayerInput;
@@ -151,6 +153,9 @@ export class Player implements IPlayer {
 
     this.handLimitAfterPass = init.handLimitAfterPass ?? 4;
     assertValidInteger('handLimitAfterPass', this.handLimitAfterPass, 0);
+
+    this.pendingSetupTucks = init.pendingSetupTucks ?? 0;
+    assertValidInteger('pendingSetupTucks', this.pendingSetupTucks, 0);
 
     this.moveStashCount = 0;
     this.pendingCardDrawCount = 0;

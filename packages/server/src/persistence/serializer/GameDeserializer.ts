@@ -12,6 +12,7 @@ import {
 } from '@/engine/board/SolarSystem.js';
 import { Deck } from '@/engine/deck/Deck.js';
 import { DeferredActionsQueue } from '@/engine/deferred/DeferredActionsQueue.js';
+import { TuckCardForIncomeEffect } from '@/engine/effects/income/TuckCardForIncomeEffect.js';
 import { EventLog } from '@/engine/event/EventLog.js';
 import { Game } from '@/engine/Game.js';
 import type {
@@ -225,6 +226,7 @@ function deserializePlayers(game: Game, dto: IGameStateDto): void {
     player.probesInSpace = playerDto.probesInSpace;
     player.probeSpaceLimit = playerDto.probeSpaceLimit;
     player.handLimitAfterPass = playerDto.handLimitAfterPass;
+    player.pendingSetupTucks = resolvePendingSetupTucks(playerDto, dto);
 
     const concretePlayer = player as Player;
     const dataInternal = concretePlayer.data as unknown as IDataInternalState;
@@ -290,6 +292,22 @@ function deserializePlayers(game: Game, dto: IGameStateDto): void {
     playerInternal.pendingCardDrawCount = playerDto.pendingCardDrawCount;
     playerInternal.pendingAnyCardDrawCount = playerDto.pendingAnyCardDrawCount;
   }
+}
+
+function resolvePendingSetupTucks(
+  playerDto: IGameStateDto['players'][number],
+  gameDto: IGameStateDto,
+): number {
+  if (typeof playerDto.pendingSetupTucks === 'number') {
+    return Math.max(0, playerDto.pendingSetupTucks);
+  }
+
+  // Backward compatibility for snapshots written before
+  // `pendingSetupTucks` existed: infer the legacy setup-guard semantics.
+  if (gameDto.round !== 1) return 0;
+  if (playerDto.tuckedIncomeCards.length > 0) return 0;
+  if (playerDto.hand.length <= 0) return 0;
+  return 1;
 }
 
 function deserializeMilestones(game: Game, dto: IGameStateDto): void {
@@ -425,5 +443,32 @@ export function deserializeGame(dto: IGameStateDto): Game {
   deserializeMissionTracker(game, dto);
 
   game.deferredActions = new DeferredActionsQueue();
+
+  rehydratePendingInputs(game);
+
   return game;
+}
+
+/**
+ * Pending inputs (`player.waitingFor`) are intentionally not persisted:
+ * they contain closures. For deterministic inputs whose shape is fully
+ * implied by explicit player state, we reconstruct them here so that
+ * any path that goes through deserialize (DB cold-load, undo rollback,
+ * tests) yields a fully playable game state.
+ *
+ * Currently only the setup-tuck chain qualifies — see
+ * {@link TuckCardForIncomeEffect.executeSetupChain} and
+ * `IPlayer.pendingSetupTucks`. Add additional resumable inputs here as
+ * they are introduced.
+ */
+function rehydratePendingInputs(game: Game): void {
+  for (const player of game.players) {
+    if (player.waitingFor) continue;
+    if (player.pendingSetupTucks > 0) {
+      player.waitingFor = TuckCardForIncomeEffect.executeSetupChain(
+        player,
+        game,
+      );
+    }
+  }
 }

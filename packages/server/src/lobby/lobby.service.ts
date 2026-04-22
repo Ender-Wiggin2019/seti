@@ -45,10 +45,14 @@ export class LobbyService {
     const roomOptionsAny = (roomOptionsInput ?? {}) as Partial<IGameOptions> & {
       turnTimerSeconds?: number;
     };
+    const { turnTimerSeconds, ...rawRoomOptions } = roomOptionsAny;
+    const normalizedTimerPerTurn =
+      roomOptionsAny.timerPerTurn ?? turnTimerSeconds;
     const normalizedRoomOptions: Partial<IGameOptions> = {
-      ...roomOptionsAny,
-      timerPerTurn:
-        roomOptionsAny.timerPerTurn ?? roomOptionsAny.turnTimerSeconds,
+      ...rawRoomOptions,
+      ...(normalizedTimerPerTurn === undefined
+        ? {}
+        : { timerPerTurn: normalizedTimerPerTurn }),
     };
     let options: Readonly<IGameOptions>;
     try {

@@ -19,6 +19,7 @@ import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
 import { toPublicSolarSystemState } from '@/engine/utils/stateProjection.js';
 import { GameError } from '@/shared/errors/GameError.js';
+import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -193,6 +194,7 @@ describe('LaunchProbeAction — integration', () => {
         { playerCount: 2 },
         'launch-probe-double-tech',
       );
+      resolveSetupTucks(game);
       const player = game.players[0];
       player.gainTech(ETechId.PROBE_DOUBLE_PROBE);
       const otherPlayer = game.players[1];
@@ -223,6 +225,7 @@ describe('LaunchProbeAction — integration', () => {
         { playerCount: 2 },
         'launch-probe-integration-2-1-1',
       );
+      resolveSetupTucks(game);
       const player = game.players[0];
       const initialCredits = player.resources.credits;
 
@@ -244,6 +247,7 @@ describe('LaunchProbeAction — integration', () => {
         { playerCount: 2 },
         'launch-probe-integration-2-1-4',
       );
+      resolveSetupTucks(game);
       const player = game.players[0];
       player.resources.spend({ credits: player.resources.credits - 1 });
       expect(player.resources.credits).toBe(1);
@@ -267,6 +271,7 @@ describe('LaunchProbeAction — integration', () => {
         { playerCount: 2 },
         'launch-probe-integration-2-1-5',
       );
+      resolveSetupTucks(game);
       const player = game.players[0];
       player.probesInSpace = player.probeSpaceLimit;
 
@@ -288,6 +293,7 @@ describe('LaunchProbeAction — integration', () => {
         'behavior-flow-seed',
         'launch-probe-integration-2-1-2-orbit',
       );
+      resolveSetupTucks(game);
       alignSolarSystemForEarthToVenusMovement(game);
       const player = game.players[0];
       const other = game.players[1];
@@ -353,6 +359,7 @@ describe('LaunchProbeAction — integration', () => {
         'behavior-flow-seed',
         'launch-probe-integration-2-1-2-land',
       );
+      resolveSetupTucks(game);
       alignSolarSystemForEarthToVenusMovement(game);
       const player = game.players[0];
       const other = game.players[1];
@@ -410,6 +417,7 @@ describe('LaunchProbeAction — integration', () => {
         { playerCount: 2 },
         'launch-probe-integration-2-1E-3',
       );
+      resolveSetupTucks(game);
       const active = game.activePlayer;
       const other = game.players.find((p) => p.id !== active.id);
       if (!other) {

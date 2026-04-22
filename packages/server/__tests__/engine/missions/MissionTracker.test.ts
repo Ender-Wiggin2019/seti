@@ -22,6 +22,7 @@ import {
 } from '@/engine/missions/IMission.js';
 import { MissionTracker } from '@/engine/missions/MissionTracker.js';
 import { Player } from '@/engine/player/Player.js';
+import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
 
 function createPlayer(): Player {
   return new Player({
@@ -54,6 +55,7 @@ function resolveCardId(card: string | { id?: string }): string | undefined {
 
 function createIntegrationGame(seed: string) {
   const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
+  resolveSetupTucks(game);
   const player1 = game.players.find(
     (candidate) => candidate.id === 'p1',
   ) as Player;
@@ -84,6 +86,76 @@ function resolveEndOfRoundPickIfAny(game: Game, playerId: string): void {
 function passTurn(game: Game, playerId: string): void {
   game.processMainAction(playerId, { type: EMainAction.PASS });
   resolveEndOfRoundPickIfAny(game, playerId);
+  if (game.phase === EPhase.AWAIT_END_TURN && game.activePlayer.id === playerId) {
+    game.processEndTurn(playerId);
+  }
+}
+
+function ensurePlayer1Turn(game: Game, player1Id: string, player2Id: string): void {
+  let guard = 0;
+  while (game.activePlayer.id !== player1Id) {
+    guard += 1;
+    if (guard > 10) {
+      throw new Error('failed to hand off turn back to player1');
+    }
+
+    const waitingPlayer = game.players.find((p) => p.waitingFor);
+    if (waitingPlayer?.waitingFor) {
+      const model = waitingPlayer.waitingFor.toModel() as {
+        type: EPlayerInputType;
+        options?: Array<{ id: string }>;
+        cards?: Array<{ id: string }>;
+        minSelections?: number;
+      };
+      if (model.type === EPlayerInputType.OPTION) {
+        const optionId =
+          model.options?.find((option) => option.id === 'skip-missions')?.id ??
+          model.options?.[0]?.id;
+        if (!optionId) {
+          throw new Error('expected OPTION input to contain at least one option');
+        }
+        game.processInput(waitingPlayer.id, {
+          type: EPlayerInputType.OPTION,
+          optionId,
+        });
+        continue;
+      }
+      if (model.type === EPlayerInputType.END_OF_ROUND) {
+        const cardId = model.cards?.[0]?.id;
+        if (!cardId) {
+          throw new Error('expected END_OF_ROUND input to contain at least one card');
+        }
+        game.processInput(waitingPlayer.id, {
+          type: EPlayerInputType.END_OF_ROUND,
+          cardId,
+        });
+        continue;
+      }
+      if (model.type === EPlayerInputType.CARD) {
+        const pickCount = Math.max(1, model.minSelections ?? 1);
+        const cardIds = (model.cards ?? []).slice(0, pickCount).map((c) => c.id);
+        if (cardIds.length < pickCount) {
+          throw new Error('expected CARD input to contain enough cards');
+        }
+        game.processInput(waitingPlayer.id, {
+          type: EPlayerInputType.CARD,
+          cardIds,
+        });
+        continue;
+      }
+      throw new Error(`unsupported pending input type: ${model.type}`);
+    }
+
+    if (game.phase === EPhase.AWAIT_END_TURN && game.activePlayer.id === player2Id) {
+      game.processEndTurn(player2Id);
+      continue;
+    }
+
+    if (game.activePlayer.id !== player2Id) {
+      throw new Error(`unexpected active player: ${game.activePlayer.id}`);
+    }
+    passTurn(game, player2Id);
+  }
 }
 
 function resolveScanUntilMissionPrompt(game: Game, player: Player): void {
@@ -474,9 +546,7 @@ describe('MissionTracker', () => {
         payload: { cardIndex: 0 },
       });
       game.processEndTurn(player1.id);
-      if (game.activePlayer.id === player2.id) {
-        passTurn(game, player2.id);
-      }
+      ensurePlayer1Turn(game, player1.id, player2.id);
       expect(game.activePlayer.id).toBe(player1.id);
 
       game.processMainAction(player1.id, {
@@ -484,9 +554,7 @@ describe('MissionTracker', () => {
         payload: { cardIndex: 0 },
       });
       game.processEndTurn(player1.id);
-      if (game.activePlayer.id === player2.id) {
-        passTurn(game, player2.id);
-      }
+      ensurePlayer1Turn(game, player1.id, player2.id);
       expect(game.activePlayer.id).toBe(player1.id);
 
       const earthSectorIndex = getSectorIndexByPlanet(

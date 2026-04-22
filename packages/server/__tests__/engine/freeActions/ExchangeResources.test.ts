@@ -8,6 +8,7 @@ import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
 import { stubTurnLockFields } from '../../helpers/stubTurnLock.js';
+import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
 
 const EXCHANGE_INTEGRATION_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -15,12 +16,14 @@ const EXCHANGE_INTEGRATION_PLAYERS = [
 ] as const;
 
 function createExchangeIntegrationGame(seed: string): Game {
-  return Game.create(
+  const game = Game.create(
     EXCHANGE_INTEGRATION_PLAYERS,
     { playerCount: 2 },
     seed,
     seed,
   );
+  resolveSetupTucks(game);
+  return game;
 }
 
 function createTestPlayer(overrides?: Record<string, unknown>): Player {

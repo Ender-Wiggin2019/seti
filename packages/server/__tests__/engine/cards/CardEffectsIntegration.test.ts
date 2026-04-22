@@ -7,6 +7,7 @@ import { Deck } from '@/engine/deck/Deck.js';
 import { Game } from '@/engine/Game.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
 import { Player } from '@/engine/player/Player.js';
+import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
 
 // ─────────────────────────────────────────────────────────────
 // §2.10  CardEffectsIntegration — exercise representative real
@@ -25,6 +26,7 @@ const TEST_PLAYERS = [
 
 function createGame(seed: string): { game: Game; player: Player } {
   const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
+  resolveSetupTucks(game);
   const player = game.players.find((p) => p.id === 'p1') as Player;
   return { game, player };
 }

@@ -2,7 +2,7 @@ import { EPlanet } from '@seti/common/types/protocol/enums';
 import {
   ESolarSystemElementType,
   type ISolarSystemElement,
-} from './SolarSystem.js';
+} from './SolarSystemTypes.js';
 
 const SECTOR_COUNT = 8;
 const RING_CELL_COUNTS = [8, 16, 24, 32] as const;

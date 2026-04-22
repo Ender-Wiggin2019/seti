@@ -3,6 +3,7 @@ import type { EPlanet } from '@seti/common/types/protocol/enums';
 import {
   EPlayerInputType,
   type IPlayerInputModel,
+  type ISelectCardInputModel,
   type ISelectEndOfRoundCardInputModel,
   type ISelectOptionInputModel,
   type ISelectTraceInputModel,
@@ -45,6 +46,13 @@ export interface ITestGameConfig {
   seed?: string;
   options?: Partial<IGameOptions>;
   players?: ReadonlyArray<IGamePlayerIdentity>;
+  /**
+   * Whether to auto-drain the setup-tuck prompts every player receives
+   * from the corporation's `startActions.tuckIncome`. Defaults to
+   * `true` so most tests can skip setup boilerplate. Pass `false` when
+   * the test is specifically exercising the setup flow.
+   */
+  autoResolveSetupTucks?: boolean;
 }
 
 function selectPlayers(count: 2 | 3 | 4): ReadonlyArray<IGamePlayerIdentity> {
@@ -74,7 +82,11 @@ export function buildTestGame(config: ITestGameConfig = {}): Game {
     playerCount,
     ...(config.options ?? {}),
   };
-  return Game.create(players, options, seed, seed);
+  const game = Game.create(players, options, seed, seed);
+  if (config.autoResolveSetupTucks !== false) {
+    resolveSetupTucks(game);
+  }
+  return game;
 }
 
 /** Look up a player by id, throwing a clear error on miss. */
@@ -189,12 +201,59 @@ export function resolveAllInputsDefault(
         });
         break;
       }
+      case EPlayerInputType.CARD: {
+        const cardModel = model as ISelectCardInputModel;
+        const pickCount = Math.max(1, cardModel.minSelections);
+        const cardIds = cardModel.cards
+          .slice(0, pickCount)
+          .map((card) => card.id);
+        if (cardIds.length < cardModel.minSelections) {
+          return resolved;
+        }
+        game.processInput(player.id, {
+          type: EPlayerInputType.CARD,
+          cardIds,
+        });
+        break;
+      }
       default:
         return resolved;
     }
     resolved += 1;
   }
   return resolved;
+}
+
+/**
+ * Drain setup-tuck prompts for every player in `game`. Every fresh game
+ * puts each player on the hook for one-or-more setup tucks (based on
+ * the corporation's `startActions.tuckIncome`). Tests that don't care
+ * about setup should call this once after `Game.create(...)` to arrive
+ * at a "ready for round 1 main actions" state.
+ *
+ * Picks the first card for each prompt by default. Handles multi-tuck
+ * chains (corporations with `tuckIncome > 1`) correctly.
+ */
+export function resolveSetupTucks(game: Game): number {
+  let resolved = 0;
+  for (const player of game.players) {
+    resolved += resolveAllInputsDefault(game, player);
+  }
+  return resolved;
+}
+
+/**
+ * Bypass setup-tuck gating without granting any income. Use this when
+ * a test asserts exact resource/credit counts from corporation defaults
+ * and cannot tolerate the +1 resource side-effect that
+ * {@link resolveSetupTucks} produces. Unlike `resolveSetupTucks`, this
+ * does NOT tuck a card, draw a replacement, or consume RNG.
+ */
+export function skipSetupTucks(game: Game): void {
+  for (const player of game.players) {
+    player.pendingSetupTucks = 0;
+    player.waitingFor = undefined;
+  }
 }
 
 /** Assert the player is waiting for an OPTION input and return its model. */

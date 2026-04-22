@@ -1,15 +1,14 @@
 import { baseCards } from '@seti/common/data/baseCards';
 import { EAlienType, EPhase } from '@seti/common/types/protocol/enums';
 import { AlienState } from './alien/AlienState.js';
-import { BoardBuilder } from './board/BoardBuilder.js';
 import { PlanetaryBoard } from './board/PlanetaryBoard.js';
+import { SolarSystem } from './board/SolarSystem.js';
 import { BaseCorporation } from './corporation/BaseCorporation.js';
 import { Deck } from './deck/Deck.js';
 import { DeferredActionsQueue } from './deferred/DeferredActionsQueue.js';
 import { TuckCardForIncomeEffect } from './effects/income/TuckCardForIncomeEffect.js';
 import { EventLog } from './event/EventLog.js';
 import type { Game } from './Game.js';
-import type { PlayerInput } from './input/PlayerInput.js';
 import {
   GoldScoringTile,
   type TGoldScoringTileId,
@@ -34,7 +33,7 @@ const CORE_RANDOM_ALIENS: readonly EAlienType[] = [
 
 export class GameSetup {
   public static initialize(game: Game): void {
-    const boardResult = BoardBuilder.buildAll(game.random);
+    const boardResult = SolarSystem.init(game.random);
 
     game.solarSystem = boardResult.solarSystem;
     game.solarSystemSetup = boardResult.setupConfig;
@@ -77,10 +76,10 @@ export class GameSetup {
       player.tuckedIncomeCards = [];
       player.hand = [];
       BaseCorporation.resolve(player, game);
-      player.waitingFor = GameSetup.createSetupTuckInputChain(
+      player.pendingSetupTucks = BaseCorporation.startActions.tuckIncome;
+      player.waitingFor = TuckCardForIncomeEffect.executeSetupChain(
         player,
         game,
-        BaseCorporation.startActions.tuckIncome,
       );
     });
 
@@ -88,20 +87,6 @@ export class GameSetup {
     game.eventLog = new EventLog();
 
     game.transitionTo(EPhase.AWAIT_MAIN_ACTION);
-  }
-
-  private static createSetupTuckInputChain(
-    player: Game['players'][number],
-    game: Game,
-    remainingTucks: number,
-  ): PlayerInput | undefined {
-    if (remainingTucks <= 0) {
-      return undefined;
-    }
-
-    return TuckCardForIncomeEffect.execute(player, game, () =>
-      GameSetup.createSetupTuckInputChain(player, game, remainingTucks - 1),
-    );
   }
 
   private static buildNeutralMilestones(playerCount: number): number[] {

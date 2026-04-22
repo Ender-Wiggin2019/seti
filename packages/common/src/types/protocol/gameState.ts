@@ -70,6 +70,15 @@ export interface IPublicPlayerState {
   creditIncome: number;
   energyIncome: number;
   cardIncome: number;
+  /**
+   * Number of setup-tuck inputs this player still owes. `0` / undefined
+   * means setup is complete for this player. Broadcast publicly so
+   * peers can reflect "waiting for all players to finish setup" in the
+   * UI (e.g. disable the PASS button until every peer has
+   * pendingSetupTucks === 0). Marked optional so stale/minimal fixture
+   * consumers can omit it and default to 0.
+   */
+  pendingSetupTucks?: number;
 }
 
 export interface IPublicSolarSystemProbe {
@@ -98,6 +107,15 @@ export interface IPublicSolarSystemSpaceState {
   publicityIconAmount?: number;
   elementTypes: string[];
   elements?: Array<{ type: string; planet?: EPlanet }>;
+  /**
+   * Pre-computed sector index (0..7) this space belongs to. Stable per
+   * spaceId — does not change on rotation (only the element living on
+   * the space does). Emitted by the server projection so clients don't
+   * have to replicate `floor(indexInRing / ringIndex)` logic.
+   */
+  sectorIndex?: number;
+  /** Offset inside the owning sector (0..ringIndex-1). */
+  cellInSector?: number;
 }
 
 export interface IPublicSolarSystemState {
@@ -106,6 +124,20 @@ export interface IPublicSolarSystemState {
   probes: IPublicSolarSystemProbe[];
   discs: IPublicSolarSystemDiscState[];
   spaceStates?: Record<string, IPublicSolarSystemSpaceState>;
+  /**
+   * Runtime planet → current spaceId lookup. Reflects the current
+   * rotation state; server rebuilds on every rotation so clients can
+   * highlight planet targets in O(1) without scanning `spaceStates`.
+   */
+  planetSpaceIds?: Partial<Record<EPlanet, string>>;
+  /**
+   * Static sector → ordered spaceIds (ring-1 first) index. Stable for
+   * the whole game. Lets clients render "sector zoom" or sector-scoped
+   * probe badges without deriving the topology.
+   */
+  sectorSpaceIds?: Record<number, string[]>;
+  /** probeId → spaceId. Enables probe-centric views (e.g. "which sector?"). */
+  probeSpaceById?: Record<string, string>;
 }
 
 export type IPublicSolarSystem = IPublicSolarSystemState;

@@ -16,6 +16,7 @@ import { EMissionEventType } from '@/engine/missions/IMission.js';
 import { EComputerRow } from '@/engine/player/Computer.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
 import { GameError } from '@/shared/errors/GameError.js';
+import { resolveSetupTucks } from '../helpers/TestGameBuilder.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -23,7 +24,9 @@ const TEST_PLAYERS = [
 ] as const;
 
 function createGame(seed = 'integration-test'): Game {
-  return Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, 'test-game');
+  const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, 'test-game');
+  resolveSetupTucks(game);
+  return game;
 }
 
 function getPlayer(game: Game, id: string): IPlayer {

@@ -123,7 +123,17 @@ export class AnomaliesAlienPlugin implements IAlienPlugin {
 
   private getEarthSectorIndex(game: IGame): number | null {
     if (!game.solarSystem) return null;
-    const earthSpaces = game.solarSystem.getSpacesOnPlanet(EPlanet.EARTH);
+    const ss = game.solarSystem as {
+      getSectorIndexOfPlanet?: (p: EPlanet) => number | null;
+      getSpacesOnPlanet: (p: EPlanet) => Array<{
+        ringIndex: number;
+        indexInRing: number;
+      }>;
+    };
+    if (typeof ss.getSectorIndexOfPlanet === 'function') {
+      return ss.getSectorIndexOfPlanet(EPlanet.EARTH);
+    }
+    const earthSpaces = ss.getSpacesOnPlanet(EPlanet.EARTH);
     if (earthSpaces.length === 0) return null;
     const earthSpace = earthSpaces[0];
     return Math.floor(earthSpace.indexInRing / earthSpace.ringIndex);

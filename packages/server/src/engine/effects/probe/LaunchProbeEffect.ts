@@ -42,18 +42,29 @@ export class LaunchProbeEffect {
       );
     }
 
-    const earthSpaces = solarSystem.getSpacesOnPlanet(EPlanet.EARTH);
-    if (earthSpaces.length === 0) {
+    const earthSpaceId = resolveEarthSpaceId(solarSystem);
+    if (earthSpaceId === null) {
       throw new GameError(
         EErrorCode.INTERNAL_SERVER_ERROR,
         'No Earth space found on solar system',
       );
     }
 
-    const earthSpaceId = earthSpaces[0].id;
     const probe = solarSystem.placeProbe(player.id, earthSpaceId);
     player.probesInSpace += 1;
 
     return { probeId: probe.id, spaceId: earthSpaceId };
   }
+}
+
+function resolveEarthSpaceId(solarSystem: {
+  getPlanetLocation?: (planet: EPlanet) => { space: { id: string } } | null;
+  getSpacesOnPlanet: (planet: EPlanet) => Array<{ id: string }>;
+}): string | null {
+  if (typeof solarSystem.getPlanetLocation === 'function') {
+    const location = solarSystem.getPlanetLocation(EPlanet.EARTH);
+    return location?.space.id ?? null;
+  }
+  const spaces = solarSystem.getSpacesOnPlanet(EPlanet.EARTH);
+  return spaces[0]?.id ?? null;
 }

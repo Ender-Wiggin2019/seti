@@ -19,6 +19,7 @@ import { AlienState } from '@/engine/alien/AlienState.js';
 import { Deck } from '@/engine/deck/Deck.js';
 import { Game } from '@/engine/Game.js';
 import { Player } from '@/engine/player/Player.js';
+import { resolveSetupTucks } from '../../../helpers/TestGameBuilder.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -27,6 +28,7 @@ const TEST_PLAYERS = [
 
 function createGame(seed: string): { game: Game; player: Player } {
   const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
+  resolveSetupTucks(game);
   const player = game.players[0] as Player;
   game.alienState = AlienState.createFromHiddenAliens([EAlienType.ANOMALIES]);
   const board = game.alienState.getBoardByType(EAlienType.ANOMALIES);

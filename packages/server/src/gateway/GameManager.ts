@@ -9,7 +9,6 @@ import type { IPublicGameState } from '@seti/common/types/protocol/gameState';
 import type { IPlayerInputModel } from '@seti/common/types/protocol/playerInput';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { IGame } from '@/engine/IGame.js';
-import { TuckCardForIncomeEffect } from '@/engine/effects/income/TuckCardForIncomeEffect.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
 import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
 import type { IGameStateDto } from '@/persistence/dto/GameStateDto.js';
@@ -88,8 +87,6 @@ export class GameManager {
       throw new Error(`Game ${gameId} not found`);
     }
 
-    this.restoreSetupTuckPromptsIfNeeded(game);
-
     this.cache.set(gameId, game);
 
     const snapshot = await this.gameRepo.loadLatestSnapshot(gameId);
@@ -99,27 +96,6 @@ export class GameManager {
 
     this.refreshTimer(gameId);
     return game;
-  }
-
-  private restoreSetupTuckPromptsIfNeeded(game: IGame): void {
-    // Pending inputs are not persisted. Rebuild setup tuck prompts for any
-    // player who still has not tucked their initial income card.
-    if (game.round !== 1) {
-      return;
-    }
-
-    for (const player of game.players) {
-      if (player.waitingFor) {
-        continue;
-      }
-      if (player.tuckedIncomeCards.length > 0) {
-        continue;
-      }
-      const setupInput = TuckCardForIncomeEffect.execute(player, game);
-      if (setupInput) {
-        player.waitingFor = setupInput;
-      }
-    }
   }
 
   async processAction(

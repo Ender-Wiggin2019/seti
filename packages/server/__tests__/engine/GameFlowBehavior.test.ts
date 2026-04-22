@@ -210,6 +210,7 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
     p1.hand = ['8', '80', '16', '130', '110'];
     p1.tuckedIncomeCards = [];
     p1.waitingFor = undefined;
+    p1.pendingSetupTucks = 0;
 
     expect(p1.hand).toHaveLength(5);
     expect(p1.tuckedIncomeCards).toHaveLength(0);

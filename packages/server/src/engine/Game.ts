@@ -706,14 +706,13 @@ export class Game implements IGame {
     playerId: string,
     allowedPhases: readonly EPhase[],
   ): void {
-    const hasSetupPrompt = this.players.some((player) => player.waitingFor);
-    const hasUnresolvedSetupTuck =
-      this.round === 1 &&
-      hasSetupPrompt &&
-      this.players.some(
-        (player) =>
-          player.tuckedIncomeCards.length === 0 && player.hand.length > 0,
-      );
+    // Block turn actions while ANY player still owes setup tucks. This
+    // is tracked explicitly on Player (survives persistence/undo) so the
+    // check does not rely on round number or heuristics over tucked-card
+    // counts — both of which break for corps with tuckIncome > 1.
+    const hasUnresolvedSetupTuck = this.players.some(
+      (player) => player.pendingSetupTucks > 0,
+    );
 
     if (hasUnresolvedSetupTuck) {
       throw new GameError(

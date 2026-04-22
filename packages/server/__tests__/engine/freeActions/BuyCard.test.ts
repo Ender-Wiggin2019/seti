@@ -7,6 +7,7 @@ import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
 import { stubTurnLockFields } from '../../helpers/stubTurnLock.js';
+import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
 
 const BUY_INTEGRATION_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -14,7 +15,14 @@ const BUY_INTEGRATION_PLAYERS = [
 ] as const;
 
 function createBuyIntegrationGame(seed: string): Game {
-  return Game.create(BUY_INTEGRATION_PLAYERS, { playerCount: 2 }, seed, seed);
+  const game = Game.create(
+    BUY_INTEGRATION_PLAYERS,
+    { playerCount: 2 },
+    seed,
+    seed,
+  );
+  resolveSetupTucks(game);
+  return game;
 }
 
 function createTestPlayer(overrides?: Record<string, unknown>): Player {

@@ -23,7 +23,17 @@ export function getAnomaliesBoard(game: IGame): AlienBoard | undefined {
 
 export function getEarthSectorIndex(game: IGame): number | undefined {
   if (!game.solarSystem) return undefined;
-  const earthSpace = game.solarSystem.getSpacesOnPlanet(EPlanet.EARTH)[0];
+  const ss = game.solarSystem as {
+    getSectorIndexOfPlanet?: (p: EPlanet) => number | null;
+    getSpacesOnPlanet: (p: EPlanet) => Array<{
+      ringIndex: number;
+      indexInRing: number;
+    }>;
+  };
+  if (typeof ss.getSectorIndexOfPlanet === 'function') {
+    return ss.getSectorIndexOfPlanet(EPlanet.EARTH) ?? undefined;
+  }
+  const earthSpace = ss.getSpacesOnPlanet(EPlanet.EARTH)[0];
   if (!earthSpace) return undefined;
   return Math.floor(earthSpace.indexInRing / earthSpace.ringIndex);
 }

@@ -6,11 +6,13 @@ import {
 } from '@seti/common/types/protocol/enums';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { AnalyzeDataAction } from '@/engine/actions/AnalyzeData.js';
+import { AlienState } from '@/engine/alien/AlienState.js';
 import { PlaceDataFreeAction } from '@/engine/freeActions/PlaceData.js';
 import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
 import { EComputerRow } from '@/engine/player/Computer.js';
 import { Player } from '@/engine/player/Player.js';
+import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
 
 const SIMPLE_3_COL: IComputerColumnConfig[] = [
   { topReward: null, techSlotAvailable: true },
@@ -29,7 +31,10 @@ function createMockGame(): IGame {
     planetaryBoard: null,
     techBoard: null,
     sectors: [],
-    mainDeck: { draw: () => undefined, discard: () => undefined },
+    mainDeck: {
+      drawWithReshuffle: () => undefined,
+      discard: () => undefined,
+    },
     cardRow: [],
     endOfRoundStacks: [],
     hiddenAliens: [],
@@ -60,6 +65,7 @@ function fillTopComputer(player: Player): void {
 
 function createIntegrationGame(seed: string) {
   const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
+  resolveSetupTucks(game);
   const player = game.players.find((candidate) => candidate.id === 'p1');
   if (!player) {
     throw new Error('p1 not found');
@@ -273,7 +279,8 @@ describe('AnalyzeDataAction', () => {
 
     it('integration: completing Anomalies discovery via analyze data applies the discovery plugin effect', () => {
       const { game, player } = createIntegrationGame('seed-16');
-      expect(game.hiddenAliens[0]).toBe(EAlienType.ANOMALIES);
+      game.hiddenAliens = [EAlienType.ANOMALIES, EAlienType.CENTAURIANS];
+      game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
 
       game.alienState.applyTrace(player, game, ETrace.RED, 0, false);
       game.alienState.applyTrace(player, game, ETrace.YELLOW, 0, false);

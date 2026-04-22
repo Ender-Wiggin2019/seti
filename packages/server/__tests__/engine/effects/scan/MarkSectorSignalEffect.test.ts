@@ -379,7 +379,7 @@ describe('MarkSectorSignalEffect', () => {
 
       expect(
         requireValue(result, 'expected rotated earth sector').sectorId,
-      ).toBe('sector-4');
+      ).toBe('sector-2');
     });
 
     it('returns null when solar system is absent', () => {

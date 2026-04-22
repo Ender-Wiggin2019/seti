@@ -20,6 +20,7 @@ import { ScanEarthNeighborEffect } from '@/engine/effects/scan/ScanTechEffects.j
 import { Game } from '@/engine/Game.js';
 import { EPieceType } from '@/engine/player/Pieces.js';
 import { Player } from '@/engine/player/Player.js';
+import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
 import {
   ScanEarthLookTech,
   ScanEnergyLaunchTech,
@@ -111,6 +112,7 @@ function playerWaitingFor(
 
 function createScanTechGame(seed: string): { game: Game; p1: Player } {
   const game = Game.create(INTEGRATION_PLAYERS, { playerCount: 2 }, seed, seed);
+  resolveSetupTucks(game);
   const p1 = requireValue(
     game.players.find((c) => c.id === 'p1'),
     'p1 missing',

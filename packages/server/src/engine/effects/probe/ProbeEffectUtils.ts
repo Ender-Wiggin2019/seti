@@ -28,18 +28,26 @@ export function consumeProbeFromPlanet(
     return false;
   }
 
-  const spaces = game.solarSystem.getSpacesOnPlanet(planet);
+  const ss = game.solarSystem as unknown as {
+    consumeProbeByPlanet?: (pid: string, p: EPlanet) => unknown;
+    getSpacesOnPlanet: (p: EPlanet) => Array<{
+      occupants: Array<{ playerId: string }>;
+    }>;
+  };
+
+  if (typeof ss.consumeProbeByPlanet === 'function') {
+    return ss.consumeProbeByPlanet(playerId, planet) !== null;
+  }
+
+  const spaces = ss.getSpacesOnPlanet(planet);
   for (const space of spaces) {
     const probeIndex = space.occupants.findIndex(
       (probe) => probe.playerId === playerId,
     );
-    if (probeIndex < 0) {
-      continue;
+    if (probeIndex >= 0) {
+      space.occupants.splice(probeIndex, 1);
+      return true;
     }
-
-    space.occupants.splice(probeIndex, 1);
-    return true;
   }
-
   return false;
 }

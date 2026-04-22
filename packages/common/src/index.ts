@@ -8,6 +8,7 @@ export * from '@seti/common/constant/desc';
 export * from '@seti/common/constant/effect';
 export * from '@seti/common/constant/icons';
 export * from '@seti/common/constant/sectorSetup';
+export * from '@seti/common/constant/solarCoordinate';
 export * from '@seti/common/constant/tier';
 export * from '@seti/common/data';
 export { alienCards } from '@seti/common/data/alienCards';
