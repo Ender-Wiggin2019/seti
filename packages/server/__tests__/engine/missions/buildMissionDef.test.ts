@@ -1,8 +1,8 @@
-import { EMissionEventType, EMissionType } from '@/engine/missions/IMission.js';
 import {
   buildMissionDefWithEventMatchers,
   buildQuickMissionDef,
 } from '@/engine/missions/buildMissionDef.js';
+import { EMissionEventType, EMissionType } from '@/engine/missions/IMission.js';
 
 describe('buildMissionDef', () => {
   it('buildQuickMissionDef attaches custom condition to all branches', () => {

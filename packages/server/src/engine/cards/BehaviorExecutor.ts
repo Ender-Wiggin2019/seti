@@ -6,6 +6,7 @@ import {
 } from '@seti/common/types/element';
 import { EPlanet } from '@seti/common/types/protocol/enums';
 import type { TTechCategory } from '@seti/common/types/tech';
+import { ResearchTechAction } from '../actions/ResearchTech.js';
 import { EPriority } from '../deferred/Priority.js';
 import { SimpleDeferredAction } from '../deferred/SimpleDeferredAction.js';
 import { TuckCardForIncomeEffect } from '../effects/income/TuckCardForIncomeEffect.js';
@@ -314,17 +315,22 @@ export class BehaviorExecutor {
   ): SimpleDeferredAction | undefined {
     const researchTech = behavior.researchTech;
     if (!researchTech) return undefined;
-    // Rotation is decoupled from the tech-grant at the card layer: a card
-    // with a printed ROTATE icon produces its rotation via
-    // `buildRotateAction`, so the research effect itself must not rotate
-    // (otherwise cards like 71/109 would rotate twice).
     return new SimpleDeferredAction(player, (game) =>
-      ResearchTechEffect.execute(player, game, {
-        filter: {
+      ResearchTechAction.execute(
+        player,
+        game,
+        true,
+        {
           mode: 'category',
           categories: toResearchCategories(researchTech),
         },
-      }),
+        {
+          // Cards with an explicit ROTATE behavior already rotate via
+          // `buildRotateAction`; tech-grant cards without that icon still
+          // rotate here to match the rules.
+          skipRotation: behavior.rotateSolarSystem === true,
+        },
+      ),
     );
   }
 

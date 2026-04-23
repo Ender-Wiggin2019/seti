@@ -32,7 +32,12 @@ const THREE_P: readonly IGamePlayerIdentity[] = [
 ] as const;
 
 function createGame2p(seed: string): Game {
-  const game = Game.create(TWO_P, { playerCount: 2 }, seed, `turn-flow-${seed}`);
+  const game = Game.create(
+    TWO_P,
+    { playerCount: 2 },
+    seed,
+    `turn-flow-${seed}`,
+  );
   resolveSetupTucks(game);
   return game;
 }

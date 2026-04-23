@@ -20,13 +20,13 @@ import { ScanEarthNeighborEffect } from '@/engine/effects/scan/ScanTechEffects.j
 import { Game } from '@/engine/Game.js';
 import { EPieceType } from '@/engine/player/Pieces.js';
 import { Player } from '@/engine/player/Player.js';
-import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
 import {
   ScanEarthLookTech,
   ScanEnergyLaunchTech,
   ScanHandSignalTech,
   ScanPopSignalTech,
 } from '@/engine/tech/techs/ScanTechs.js';
+import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
 
 // ── Modifier metadata (tech classes) ───────────────────────────────────────
 

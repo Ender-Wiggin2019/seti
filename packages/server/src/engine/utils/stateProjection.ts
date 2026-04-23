@@ -8,7 +8,10 @@ import type {
   IPublicSolarSystemSpaceState,
   IPublicSolarSystemState,
 } from '@seti/common/types/protocol/gameState';
-import { ESolarSystemElementType, type SolarSystem } from '../board/SolarSystem.js';
+import {
+  ESolarSystemElementType,
+  type SolarSystem,
+} from '../board/SolarSystem.js';
 
 export function toPublicSolarSystemState(
   ss: SolarSystem,

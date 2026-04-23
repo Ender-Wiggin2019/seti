@@ -1,4 +1,5 @@
-import { EMainAction } from '@seti/common/types/protocol/enums';
+import { getAvailableMainActions } from '@seti/common/rules';
+import { EMainAction, EPlanet } from '@seti/common/types/protocol/enums';
 import { Game } from '@/engine/Game.js';
 import {
   projectGameState,
@@ -48,5 +49,27 @@ describe('GameSerializer', () => {
     const p2Self = p2View.players.find((player) => player.playerId === 'p2');
     expect(Array.isArray(p2Self?.hand)).toBe(true);
     expect(p2View.solarSystem.spaces.length).toBeGreaterThan(0);
+  });
+
+  it('projects orbit and land as available when a probe is on a planet', () => {
+    const game = createTestGame();
+    const player = game.players[0];
+    const marsSpace = game.solarSystem?.getSpacesOnPlanet(EPlanet.MARS)[0];
+    if (!marsSpace || !game.solarSystem) {
+      throw new Error('expected Mars space in solar system');
+    }
+
+    game.solarSystem.placeProbe(player.id, marsSpace.id);
+    player.probesInSpace = 1;
+
+    const publicState = projectGameState(game, player.id);
+    const publicPlayer = publicState.players.find((p) => p.playerId === player.id);
+    if (!publicPlayer) {
+      throw new Error('expected projected player state');
+    }
+
+    const actions = getAvailableMainActions(publicPlayer, publicState);
+    expect(actions).toContain(EMainAction.ORBIT);
+    expect(actions).toContain(EMainAction.LAND);
   });
 });

@@ -1,4 +1,5 @@
 import { ETrace } from '@seti/common/types/element';
+import { ESolarSystemElementType } from '@/engine/board/SolarSystem.js';
 import {
   hasNoCardsInHand,
   hasTrace,
@@ -6,7 +7,6 @@ import {
   playedCardsInSameSector,
   probeOnAsteroidAdjacentToEarth,
 } from '@/engine/missions/QuickMissionConditions.js';
-import { ESolarSystemElementType } from '@/engine/board/SolarSystem.js';
 
 describe('QuickMissionConditions', () => {
   it('hasTrace checks required color count', () => {
@@ -68,6 +68,8 @@ describe('QuickMissionConditions', () => {
 
   it('hasNoCardsInHand checks boundary 0 cards', () => {
     expect(hasNoCardsInHand()({ hand: [] } as never, {} as never)).toBe(true);
-    expect(hasNoCardsInHand()({ hand: ['1'] } as never, {} as never)).toBe(false);
+    expect(hasNoCardsInHand()({ hand: ['1'] } as never, {} as never)).toBe(
+      false,
+    );
   });
 });

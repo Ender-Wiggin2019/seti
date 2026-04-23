@@ -15,10 +15,10 @@ import {
 import {
   buildCoordinate,
   type ISolarCoordinate,
-  RING_CELL_COUNTS as SHARED_RING_CELL_COUNTS,
   SECTOR_COUNT,
-  sectorIndexOf,
+  RING_CELL_COUNTS as SHARED_RING_CELL_COUNTS,
   SOLAR_RING_COUNT,
+  sectorIndexOf,
   type TSolarRingIndex,
 } from '@seti/common/constant/solarCoordinate';
 import { EPlanet } from '@seti/common/types/protocol/enums';
@@ -289,9 +289,7 @@ export class SolarSystem {
    * and stopping at the first space whose element is NOT `NULL`. That cell
    * is the one that would "hide" the ones below it during rotation.
    */
-  public getTopSpaceInSector(
-    sectorIndex: number,
-  ): ISolarSystemSpace | null {
+  public getTopSpaceInSector(sectorIndex: number): ISolarSystemSpace | null {
     for (const space of this.getSpacesInSector(sectorIndex)) {
       if (!this.containsElement(space, ESolarSystemElementType.NULL)) {
         return space;
@@ -300,9 +298,7 @@ export class SolarSystem {
     return null;
   }
 
-  public getTopElementInSector(
-    sectorIndex: number,
-  ): ITopSectorElement | null {
+  public getTopElementInSector(sectorIndex: number): ITopSectorElement | null {
     const space = this.getTopSpaceInSector(sectorIndex);
     if (!space) return null;
     const element = space.elements.find(

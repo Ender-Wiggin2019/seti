@@ -33,8 +33,7 @@ export function findPlanetSpaceId(
     if (
       s.elements.some(
         (el) =>
-          (el.type === 'PLANET' || el.type === 'EARTH') &&
-          el.planet === planet,
+          (el.type === 'PLANET' || el.type === 'EARTH') && el.planet === planet,
       )
     ) {
       return spaceId;

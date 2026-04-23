@@ -235,9 +235,9 @@ describe('SolarSystem', () => {
 
   it('rotates the solar system exactly once when a played card has both ROTATE and TECH', () => {
     // Card 59 "Ion Propulsion System" prints ENERGY + ROTATE + TECH_PROBE.
-    // Under the decoupled behavior model the printed ROTATE icon is the
-    // sole rotation source — the embedded tech-grant must NOT rotate
-    // again, so we expect exactly +1.
+    // The card should still rotate exactly once overall: the printed ROTATE
+    // covers the research rotation, so the embedded tech-grant must not add
+    // a second rotation on top.
     const game = createIntegrationGame('solar-card-rotate-plus-tech');
     const player = game.players[0];
     player.hand = ['59'];
@@ -254,11 +254,10 @@ describe('SolarSystem', () => {
     expect(game.solarSystem!.rotationCounter).toBe(before + 1);
   });
 
-  it('does not rotate the solar system when a card grants TECH without a printed ROTATE icon', () => {
+  it('rotates the solar system when a card grants TECH without a printed ROTATE icon', () => {
     // Card 81 "Int'l Collaboration" prints TECH_ANY + DESC only (no ROTATE).
-    // Decoupled behavior: no ROTATE icon → no rotation, even though a tech
-    // is granted. The rule §5.7 "card-tech includes rotation" is honored at
-    // the card design layer: any card that is meant to rotate prints ROTATE.
+    // Rule: card-granted tech still performs a research flow, including a
+    // solar-system rotation.
     const game = createIntegrationGame('solar-card-tech-only-no-rotate');
     const player = game.players[0];
     player.hand = ['81'];
@@ -272,7 +271,7 @@ describe('SolarSystem', () => {
     resolveAllInputs(game, player.id);
 
     expect(player.techs).toHaveLength(1);
-    expect(game.solarSystem!.rotationCounter).toBe(before);
+    expect(game.solarSystem!.rotationCounter).toBe(before + 1);
   });
 
   it('rotates only on the first PASS of the round', () => {

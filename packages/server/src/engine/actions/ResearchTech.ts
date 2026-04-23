@@ -15,6 +15,10 @@ export interface IResearchTechActionResult extends IResearchTechResult {
   rotatedDisc: number;
 }
 
+export interface IResearchTechActionOptions {
+  skipRotation?: boolean;
+}
+
 export class ResearchTechAction {
   /**
    * @param isCardEffect - true when granted by a card (skips publicity cost)
@@ -46,7 +50,9 @@ export class ResearchTechAction {
     game: IGame,
     isCardEffect = false,
     filter?: TResearchTechFilter,
+    options: IResearchTechActionOptions = {},
   ): IPlayerInput | undefined {
+    const shouldRotate = !options.skipRotation;
     const hasAvailableTech = ResearchTechEffect.canExecute(
       player,
       game,
@@ -59,9 +65,9 @@ export class ResearchTechAction {
       !hasAvailableTech;
 
     if (shouldIgnoreDuplicateSpecificCardEffect) {
-      // Card-effect path: rotation (if any) is driven by the card's own
-      // ROTATE icon via `BehaviorExecutor.buildRotateAction`, so we do
-      // not rotate here when the grant is a no-op.
+      if (shouldRotate) {
+        RotateDiscEffect.execute(game);
+      }
       return undefined;
     }
 
@@ -75,10 +81,9 @@ export class ResearchTechAction {
 
     if (!isCardEffect) {
       player.resources.spend({ publicity: RESEARCH_PUBLICITY_COST });
-      // Only the main RESEARCH_TECH action pays publicity AND rotates. The
-      // card-effect path keeps rotation decoupled: if the card has a
-      // printed ROTATE icon, `buildRotateAction` rotates once; otherwise
-      // the card was authored without rotation by design (e.g. card 81).
+    }
+
+    if (shouldRotate) {
       RotateDiscEffect.execute(game);
     }
 

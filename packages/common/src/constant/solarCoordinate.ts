@@ -16,13 +16,14 @@ export type TSolarRingIndex = 1 | 2 | 3 | 4;
 export const RING_CELL_COUNTS = [8, 16, 24, 32] as const;
 
 /** Cells a single sector owns on each ring (same as ringIndex by construction). */
-export const CELLS_PER_SECTOR_BY_RING: Readonly<Record<TSolarRingIndex, number>> =
-  {
-    1: 1,
-    2: 2,
-    3: 3,
-    4: 4,
-  };
+export const CELLS_PER_SECTOR_BY_RING: Readonly<
+  Record<TSolarRingIndex, number>
+> = {
+  1: 1,
+  2: 2,
+  3: 3,
+  4: 4,
+};
 
 export interface ISolarCoordinate {
   spaceId: string;
@@ -52,20 +53,14 @@ function asRingIndex(raw: number): TSolarRingIndex {
  * consecutive cells `[s * ringIndex, (s + 1) * ringIndex)`. Therefore
  * `sectorIndex = floor(indexInRing / ringIndex)`.
  */
-export function sectorIndexOf(
-  ringIndex: number,
-  indexInRing: number,
-): number {
+export function sectorIndexOf(ringIndex: number, indexInRing: number): number {
   if (ringIndex <= 0) {
     throw new Error(`Invalid ringIndex: ${ringIndex}`);
   }
   return Math.floor(indexInRing / ringIndex);
 }
 
-export function cellInSectorOf(
-  ringIndex: number,
-  indexInRing: number,
-): number {
+export function cellInSectorOf(ringIndex: number, indexInRing: number): number {
   if (ringIndex <= 0) {
     throw new Error(`Invalid ringIndex: ${ringIndex}`);
   }
@@ -112,7 +107,11 @@ export function coordinateFromSpaceId(
 
 /** Returns the ordered list of spaceIds inside `sectorIndex`, ring-1 first. */
 export function sectorSpaceIds(sectorIndex: number): string[] {
-  if (!Number.isInteger(sectorIndex) || sectorIndex < 0 || sectorIndex >= SECTOR_COUNT) {
+  if (
+    !Number.isInteger(sectorIndex) ||
+    sectorIndex < 0 ||
+    sectorIndex >= SECTOR_COUNT
+  ) {
     throw new Error(`Invalid sectorIndex: ${sectorIndex}`);
   }
   const ids: string[] = [];

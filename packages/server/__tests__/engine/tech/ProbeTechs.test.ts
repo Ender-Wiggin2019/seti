@@ -32,7 +32,10 @@ const TEST_PLAYERS = [
 function resolvePassEndOfRoundPick(game: Game, playerId: string): void {
   const player = game.players.find((candidate) => candidate.id === playerId);
   if (!player?.waitingFor) {
-    if (game.phase === EPhase.AWAIT_END_TURN && game.activePlayer.id === playerId) {
+    if (
+      game.phase === EPhase.AWAIT_END_TURN &&
+      game.activePlayer.id === playerId
+    ) {
       game.processEndTurn(playerId);
     }
     return;
@@ -67,7 +70,10 @@ function resolvePassEndOfRoundPick(game: Game, playerId: string): void {
     throw new Error(`Unexpected pass input type: ${model.type}`);
   }
 
-  if (game.phase === EPhase.AWAIT_END_TURN && game.activePlayer.id === playerId) {
+  if (
+    game.phase === EPhase.AWAIT_END_TURN &&
+    game.activePlayer.id === playerId
+  ) {
     game.processEndTurn(playerId);
   }
 }

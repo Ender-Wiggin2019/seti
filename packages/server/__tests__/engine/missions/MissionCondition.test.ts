@@ -8,8 +8,8 @@ import {
 import { EPlanet } from '@seti/common/types/protocol/enums';
 import type { IMissionBranchDef } from '@/engine/missions/IMission.js';
 import {
-  EMissionEventType,
   checkQuickMissionCondition,
+  EMissionEventType,
   matchesFullMissionTrigger,
 } from '@/engine/missions/index.js';
 
@@ -37,7 +37,9 @@ describe('matchesFullMissionTrigger', () => {
 
   it('matches ORBIT_OR_LAND requirement on landing event', () => {
     const branch: IMissionBranchDef = {
-      req: [{ effectType: EEffectType.BASE, type: ESpecialAction.ORBIT_OR_LAND }],
+      req: [
+        { effectType: EEffectType.BASE, type: ESpecialAction.ORBIT_OR_LAND },
+      ],
       rewards: [],
     };
 
@@ -68,7 +70,11 @@ describe('checkQuickMissionCondition', () => {
       checkCondition: () => true,
     };
 
-    const ok = checkQuickMissionCondition(branch, { id: 'p1' } as never, {} as never);
+    const ok = checkQuickMissionCondition(
+      branch,
+      { id: 'p1' } as never,
+      {} as never,
+    );
     expect(ok).toBe(true);
   });
 

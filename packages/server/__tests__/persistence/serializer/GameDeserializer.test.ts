@@ -51,7 +51,7 @@ describe('GameDeserializer', () => {
       const dto = serializeGame(game, 1);
 
       for (const player of dto.players as Array<
-        typeof dto.players[number] & { pendingSetupTucks?: number }
+        (typeof dto.players)[number] & { pendingSetupTucks?: number }
       >) {
         delete player.pendingSetupTucks;
       }
@@ -70,7 +70,7 @@ describe('GameDeserializer', () => {
       dto.round = 2;
 
       for (const player of dto.players as Array<
-        typeof dto.players[number] & { pendingSetupTucks?: number }
+        (typeof dto.players)[number] & { pendingSetupTucks?: number }
       >) {
         delete player.pendingSetupTucks;
       }
@@ -179,9 +179,7 @@ describe('GameDeserializer', () => {
 
       const secondDto = serializeGame(afterFirstRestore, 2);
       const afterSecondRestore = deserializeGame(secondDto);
-      const restoredP1 = afterSecondRestore.players.find(
-        (p) => p.id === 'p1',
-      )!;
+      const restoredP1 = afterSecondRestore.players.find((p) => p.id === 'p1')!;
 
       expect(restoredP1.pendingSetupTucks).toBe(0);
       expect(restoredP1.waitingFor).toBeUndefined();

@@ -8,7 +8,7 @@ import {
   isFirstOrbitAvailable,
 } from '@/rules/planet';
 import { EResource } from '@/types/element';
-import { EPhase } from '@/types/protocol/enums';
+import { EPhase, EPlanet } from '@/types/protocol/enums';
 import type {
   IPublicGameState,
   IPublicPlanetState,
@@ -122,10 +122,12 @@ describe('planet rules', () => {
     const player = createPlayerState();
     const planet = createPlanetState({ planetSpaceId: 'planet-space-1' });
     const gameState = createGameState(player.playerId, 'planet-space-1');
-    expect(canOrbitPlanet(planet, player, gameState)).toBe(true);
+    expect(canOrbitPlanet(EPlanet.MERCURY, planet, player, gameState)).toBe(true);
 
     const noProbeState = createGameState(player.playerId, 'another-space');
-    expect(canOrbitPlanet(planet, player, noProbeState)).toBe(false);
+    expect(canOrbitPlanet(EPlanet.MERCURY, planet, player, noProbeState)).toBe(
+      false,
+    );
   });
 
   it('canLandOnPlanet checks probe presence and energy against landing cost', () => {
@@ -135,7 +137,9 @@ describe('planet rules', () => {
       planetSpaceId: 'planet-space-1',
     });
     const gameState = createGameState(player.playerId, 'planet-space-1');
-    expect(canLandOnPlanet(planet, player, gameState)).toBe(true);
+    expect(canLandOnPlanet(EPlanet.MERCURY, planet, player, gameState)).toBe(
+      true,
+    );
 
     const lowEnergy = createPlayerState({
       resources: {
@@ -145,7 +149,9 @@ describe('planet rules', () => {
         [EResource.PUBLICITY]: 0,
       },
     });
-    expect(canLandOnPlanet(planet, lowEnergy, gameState)).toBe(false);
+    expect(canLandOnPlanet(EPlanet.MERCURY, planet, lowEnergy, gameState)).toBe(
+      false,
+    );
   });
 
   it('canLandOnMoon requires unlocked moon and empty occupancy', () => {

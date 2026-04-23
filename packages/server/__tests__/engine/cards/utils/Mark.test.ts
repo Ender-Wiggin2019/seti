@@ -1,5 +1,5 @@
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
-import { Mark, EMarkSource } from '@/engine/cards/utils/Mark.js';
+import { EMarkSource, Mark } from '@/engine/cards/utils/Mark.js';
 
 describe('Mark', () => {
   const player = { id: 'p1' } as never;

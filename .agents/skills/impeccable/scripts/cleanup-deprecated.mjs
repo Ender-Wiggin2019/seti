@@ -18,23 +18,41 @@
  *   4. Removes the corresponding entries from skills-lock.json.
  */
 
-import { existsSync, readFileSync, writeFileSync, rmSync, readdirSync, statSync, lstatSync, unlinkSync } from 'node:fs';
+import {
+  existsSync,
+  lstatSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { join, resolve } from 'node:path';
 
 // Skills that were renamed, merged, or folded in v2.0 and v2.1.
 const DEPRECATED_NAMES = [
-  'frontend-design',    // renamed to impeccable (v2.0)
-  'teach-impeccable',   // folded into /impeccable teach (v2.0)
-  'arrange',            // renamed to layout (v2.1)
-  'normalize',          // merged into polish (v2.1)
-  'onboard',            // merged into harden (v2.1)
-  'extract',            // merged into /impeccable extract (v2.1)
+  'frontend-design', // renamed to impeccable (v2.0)
+  'teach-impeccable', // folded into /impeccable teach (v2.0)
+  'arrange', // renamed to layout (v2.1)
+  'normalize', // merged into polish (v2.1)
+  'onboard', // merged into harden (v2.1)
+  'extract', // merged into /impeccable extract (v2.1)
 ];
 
 // All known harness directories that may contain a skills/ subfolder.
 const HARNESS_DIRS = [
-  '.claude', '.cursor', '.gemini', '.codex', '.agents',
-  '.trae', '.trae-cn', '.pi', '.opencode', '.kiro', '.rovodev',
+  '.claude',
+  '.cursor',
+  '.gemini',
+  '.codex',
+  '.agents',
+  '.trae',
+  '.trae-cn',
+  '.pi',
+  '.opencode',
+  '.kiro',
+  '.rovodev',
 ];
 
 /**
@@ -197,9 +215,15 @@ export function cleanup(projectRoot) {
 }
 
 // CLI entry point
-if (process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.url).pathname)) {
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === resolve(new URL(import.meta.url).pathname)
+) {
   const result = cleanup();
-  if (result.deletedPaths.length === 0 && result.removedLockEntries.length === 0) {
+  if (
+    result.deletedPaths.length === 0 &&
+    result.removedLockEntries.length === 0
+  ) {
     console.log('No deprecated Impeccable skills found. Nothing to clean up.');
   } else {
     if (result.deletedPaths.length > 0) {
@@ -207,7 +231,9 @@ if (process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.
       for (const p of result.deletedPaths) console.log(`  - ${p}`);
     }
     if (result.removedLockEntries.length > 0) {
-      console.log(`Cleaned ${result.removedLockEntries.length} entry/entries from skills-lock.json:`);
+      console.log(
+        `Cleaned ${result.removedLockEntries.length} entry/entries from skills-lock.json:`,
+      );
       for (const name of result.removedLockEntries) console.log(`  - ${name}`);
     }
   }

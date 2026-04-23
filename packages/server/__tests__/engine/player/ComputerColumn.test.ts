@@ -1,4 +1,7 @@
-import { ComputerColumn, TECH_TOP_REWARD } from '@/engine/player/ComputerColumn.js';
+import {
+  ComputerColumn,
+  TECH_TOP_REWARD,
+} from '@/engine/player/ComputerColumn.js';
 
 describe('ComputerColumn', () => {
   it('uses config top reward before tech placement and TECH_TOP_REWARD after placement', () => {
@@ -10,7 +13,10 @@ describe('ComputerColumn', () => {
     expect(column.topReward).toEqual({ credits: 1 });
     expect(column.hasBottomSlot).toBe(false);
 
-    column.placeTech({ techId: 'computer-tech-1' as never, bottomReward: { energy: 1 } });
+    column.placeTech({
+      techId: 'computer-tech-1' as never,
+      bottomReward: { energy: 1 },
+    });
 
     expect(column.topReward).toEqual(TECH_TOP_REWARD);
     expect(column.bottomReward).toEqual({ energy: 1 });
@@ -18,8 +24,14 @@ describe('ComputerColumn', () => {
   });
 
   it('enforces top-before-bottom placement order', () => {
-    const column = new ComputerColumn({ topReward: null, techSlotAvailable: true });
-    column.placeTech({ techId: 'computer-tech-1' as never, bottomReward: { vp: 1 } });
+    const column = new ComputerColumn({
+      topReward: null,
+      techSlotAvailable: true,
+    });
+    column.placeTech({
+      techId: 'computer-tech-1' as never,
+      bottomReward: { vp: 1 },
+    });
 
     expect(() => column.placeBottomData()).toThrow('Top slot must be filled');
 
@@ -28,16 +40,28 @@ describe('ComputerColumn', () => {
   });
 
   it('throws when placing tech on non-tech column', () => {
-    const column = new ComputerColumn({ topReward: { publicity: 1 }, techSlotAvailable: false });
+    const column = new ComputerColumn({
+      topReward: { publicity: 1 },
+      techSlotAvailable: false,
+    });
 
     expect(() =>
-      column.placeTech({ techId: 'computer-tech-2' as never, bottomReward: { credits: 1 } }),
+      column.placeTech({
+        techId: 'computer-tech-2' as never,
+        bottomReward: { credits: 1 },
+      }),
     ).toThrow('does not accept tech placement');
   });
 
   it('clear resets filled state but keeps placed tech', () => {
-    const column = new ComputerColumn({ topReward: null, techSlotAvailable: true });
-    column.placeTech({ techId: 'computer-tech-3' as never, bottomReward: { credits: 1 } });
+    const column = new ComputerColumn({
+      topReward: null,
+      techSlotAvailable: true,
+    });
+    column.placeTech({
+      techId: 'computer-tech-3' as never,
+      bottomReward: { credits: 1 },
+    });
     column.placeTopData();
     column.placeBottomData();
 

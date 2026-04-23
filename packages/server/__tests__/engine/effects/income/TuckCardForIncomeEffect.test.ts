@@ -96,7 +96,10 @@ describe('TuckCardForIncomeEffect', () => {
     const player = createPlayer([]);
     player.pendingSetupTucks = 1;
 
-    const input = TuckCardForIncomeEffect.executeSetupChain(player, createGame());
+    const input = TuckCardForIncomeEffect.executeSetupChain(
+      player,
+      createGame(),
+    );
 
     expect(input).toBeUndefined();
     expect(player.pendingSetupTucks).toBe(0);

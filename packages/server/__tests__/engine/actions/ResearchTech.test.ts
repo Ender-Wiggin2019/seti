@@ -398,8 +398,8 @@ describe('ResearchTechAction — integration (2.7.x closure)', () => {
     });
   });
 
-  describe('2.7.7 card-effect path skips the 6-publicity cost and delegates rotation', () => {
-    it('isCardEffect=true executes without deducting publicity and does not rotate on its own', () => {
+  describe('2.7.7 card-effect path skips the 6-publicity cost and still rotates once', () => {
+    it('isCardEffect=true executes without deducting publicity and rotates the solar system', () => {
       const { game, player } = createIntegrationGame(
         'research-2-7-7-card-effect',
       );
@@ -408,11 +408,8 @@ describe('ResearchTechAction — integration (2.7.x closure)', () => {
 
       const input = ResearchTechAction.execute(player, game, true);
 
-      // Decoupled model: rotation (if any) is driven by the card's own
-      // ROTATE icon via `BehaviorExecutor.buildRotateAction`, not by the
-      // research effect itself.
       expect(player.resources.publicity).toBe(0);
-      expect(getRotationCounter(game)).toBe(rotationBefore);
+      expect(getRotationCounter(game)).toBe(rotationBefore + 1);
       expect(input).toBeDefined();
     });
   });
@@ -457,7 +454,7 @@ describe('ResearchTechAction — integration (2.7.x closure)', () => {
   });
 
   describe('2.7.8 duplicate specific-tech card effects are ignored', () => {
-    it('does not throw when a card grants an already-owned specific tech; rotation is decoupled', () => {
+    it('does not throw when a card grants an already-owned specific tech; the card still rotates the solar system', () => {
       const { game, player } = createIntegrationGame(
         'research-2-7-8-duplicate-card-effect',
       );
@@ -477,10 +474,7 @@ describe('ResearchTechAction — integration (2.7.x closure)', () => {
       }).not.toThrow();
 
       expect(input).toBeUndefined();
-      // Decoupled: the card-effect path never rotates on its own. If the
-      // host card has a printed ROTATE icon, the rotation already happened
-      // in `buildRotateAction` prior to the research effect.
-      expect(getRotationCounter(game)).toBe(rotationBefore);
+      expect(getRotationCounter(game)).toBe(rotationBefore + 1);
       expect(
         player.techs.filter((techId) => techId === ownedTech),
       ).toHaveLength(1);

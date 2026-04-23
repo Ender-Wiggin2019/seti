@@ -1,6 +1,6 @@
 import { EAlienType } from '@seti/common/types/protocol/enums';
-import * as alienModule from '@/engine/alien/index.js';
 import { AlienRegistry } from '@/engine/alien/AlienRegistry.js';
+import * as alienModule from '@/engine/alien/index.js';
 
 describe('alien index exports', () => {
   it('exports public members', () => {

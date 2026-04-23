@@ -173,10 +173,9 @@ describe('CardEffectsIntegration — representative cards through processMainAct
       });
 
       // A tech selection input is surfaced; we should NOT have been
-      // charged the 6-publicity research cost (card-granted tech). Rotation
-      // and tech-grant are decoupled at the card layer: the printed ROTATE
-      // icon produces exactly one rotation — the embedded tech effect must
-      // not rotate again.
+      // charged the 6-publicity research cost (card-granted tech). The card
+      // still rotates exactly once overall; its printed ROTATE covers the
+      // research rotation for this effect.
       expect(player.resources.publicity).toBe(publicityBefore);
       expect(solarSystem.rotationCounter).toBe(rotationBefore + 1);
       expect(player.waitingFor).toBeDefined();
@@ -219,7 +218,8 @@ describe('CardEffectsIntegration — representative cards through processMainAct
       });
 
       expect(player.resources.energy).toBe(energyBefore + 1);
-      // Decoupled rotation: the printed ROTATE icon rotates exactly once.
+      // Printed ROTATE + card-granted tech should still add only one total
+      // rotation for the card resolution.
       expect(solarSystem.rotationCounter).toBe(rotationBefore + 1);
 
       // All options offered should be COMPUTER-tier techs.

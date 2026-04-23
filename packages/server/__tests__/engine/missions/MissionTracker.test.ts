@@ -86,12 +86,19 @@ function resolveEndOfRoundPickIfAny(game: Game, playerId: string): void {
 function passTurn(game: Game, playerId: string): void {
   game.processMainAction(playerId, { type: EMainAction.PASS });
   resolveEndOfRoundPickIfAny(game, playerId);
-  if (game.phase === EPhase.AWAIT_END_TURN && game.activePlayer.id === playerId) {
+  if (
+    game.phase === EPhase.AWAIT_END_TURN &&
+    game.activePlayer.id === playerId
+  ) {
     game.processEndTurn(playerId);
   }
 }
 
-function ensurePlayer1Turn(game: Game, player1Id: string, player2Id: string): void {
+function ensurePlayer1Turn(
+  game: Game,
+  player1Id: string,
+  player2Id: string,
+): void {
   let guard = 0;
   while (game.activePlayer.id !== player1Id) {
     guard += 1;
@@ -112,7 +119,9 @@ function ensurePlayer1Turn(game: Game, player1Id: string, player2Id: string): vo
           model.options?.find((option) => option.id === 'skip-missions')?.id ??
           model.options?.[0]?.id;
         if (!optionId) {
-          throw new Error('expected OPTION input to contain at least one option');
+          throw new Error(
+            'expected OPTION input to contain at least one option',
+          );
         }
         game.processInput(waitingPlayer.id, {
           type: EPlayerInputType.OPTION,
@@ -123,7 +132,9 @@ function ensurePlayer1Turn(game: Game, player1Id: string, player2Id: string): vo
       if (model.type === EPlayerInputType.END_OF_ROUND) {
         const cardId = model.cards?.[0]?.id;
         if (!cardId) {
-          throw new Error('expected END_OF_ROUND input to contain at least one card');
+          throw new Error(
+            'expected END_OF_ROUND input to contain at least one card',
+          );
         }
         game.processInput(waitingPlayer.id, {
           type: EPlayerInputType.END_OF_ROUND,
@@ -133,7 +144,9 @@ function ensurePlayer1Turn(game: Game, player1Id: string, player2Id: string): vo
       }
       if (model.type === EPlayerInputType.CARD) {
         const pickCount = Math.max(1, model.minSelections ?? 1);
-        const cardIds = (model.cards ?? []).slice(0, pickCount).map((c) => c.id);
+        const cardIds = (model.cards ?? [])
+          .slice(0, pickCount)
+          .map((c) => c.id);
         if (cardIds.length < pickCount) {
           throw new Error('expected CARD input to contain enough cards');
         }
@@ -146,7 +159,10 @@ function ensurePlayer1Turn(game: Game, player1Id: string, player2Id: string): vo
       throw new Error(`unsupported pending input type: ${model.type}`);
     }
 
-    if (game.phase === EPhase.AWAIT_END_TURN && game.activePlayer.id === player2Id) {
+    if (
+      game.phase === EPhase.AWAIT_END_TURN &&
+      game.activePlayer.id === player2Id
+    ) {
       game.processEndTurn(player2Id);
       continue;
     }

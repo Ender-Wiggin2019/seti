@@ -1,6 +1,6 @@
 import { EAlienType } from '@seti/common/types/protocol/enums';
-import type { IAlienPlugin } from '@/engine/alien/IAlienPlugin.js';
 import { AlienRegistry } from '@/engine/alien/AlienRegistry.js';
+import type { IAlienPlugin } from '@/engine/alien/IAlienPlugin.js';
 
 describe('AlienRegistry', () => {
   beforeEach(() => {

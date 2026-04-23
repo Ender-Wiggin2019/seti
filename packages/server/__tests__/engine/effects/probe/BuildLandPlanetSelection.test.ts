@@ -1,5 +1,5 @@
-import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { EPlanet } from '@seti/common/types/protocol/enums';
+import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { buildLandPlanetSelection } from '@/engine/effects/probe/BuildLandPlanetSelection.js';
 
 function createPlayer(canLandMap: Partial<Record<string, boolean>>) {
@@ -46,9 +46,9 @@ describe('buildLandPlanetSelection', () => {
     const model = input?.toModel();
     expect(model?.type).toBe(EPlayerInputType.OPTION);
     if (!model || model.type !== EPlayerInputType.OPTION) return;
-    expect(model.options.some((option) => option.id.includes('land-mars'))).toBe(
-      true,
-    );
+    expect(
+      model.options.some((option) => option.id.includes('land-mars')),
+    ).toBe(true);
 
     input?.process({ type: EPlayerInputType.OPTION, optionId: 'land-mars' });
     expect(calls).toEqual([{ planet: EPlanet.MARS, isMoon: false }]);
@@ -65,6 +65,8 @@ describe('buildLandPlanetSelection', () => {
 
     const model = input?.toModel();
     if (!model || model.type !== EPlayerInputType.OPTION) return;
-    expect(model.options.some((option) => option.id === 'skip-land')).toBe(true);
+    expect(model.options.some((option) => option.id === 'skip-land')).toBe(
+      true,
+    );
   });
 });

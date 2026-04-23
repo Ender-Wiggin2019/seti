@@ -170,6 +170,35 @@ describe('action rules', () => {
       expect(canOrbit(createPlayer(), createGameState())).toBe(true);
     });
 
+    it('returns true when current planet position is available via solarSystem indexes only', () => {
+      const player = createPlayer();
+      const gameState = createGameState({
+        solarSystem: {
+          spaces: ['planet-space-1'],
+          adjacency: {},
+          probes: [{ playerId: 'p1', spaceId: 'planet-space-1', probeId: 'pr-1' }],
+          discs: [],
+          planetSpaceIds: {
+            [EPlanet.MERCURY]: 'planet-space-1',
+          },
+        },
+        planetaryBoard: {
+          planets: {
+            [EPlanet.MERCURY]: {
+              orbitSlots: [],
+              landingSlots: [],
+              firstOrbitClaimed: false,
+              firstLandDataBonusTaken: [false],
+              moonOccupant: null,
+              moonUnlocked: false,
+            },
+          },
+        },
+      });
+
+      expect(canOrbit(player, gameState)).toBe(true);
+    });
+
     it('returns false without credit', () => {
       const player = createPlayer({
         resources: {
@@ -198,6 +227,35 @@ describe('action rules', () => {
   describe('canLand', () => {
     it('returns true with enough energy', () => {
       expect(canLand(createPlayer(), createGameState())).toBe(true);
+    });
+
+    it('returns true when landing target is derived from solarSystem indexes only', () => {
+      const player = createPlayer();
+      const gameState = createGameState({
+        solarSystem: {
+          spaces: ['planet-space-1'],
+          adjacency: {},
+          probes: [{ playerId: 'p1', spaceId: 'planet-space-1', probeId: 'pr-1' }],
+          discs: [],
+          planetSpaceIds: {
+            [EPlanet.MERCURY]: 'planet-space-1',
+          },
+        },
+        planetaryBoard: {
+          planets: {
+            [EPlanet.MERCURY]: {
+              orbitSlots: [],
+              landingSlots: [],
+              firstOrbitClaimed: false,
+              firstLandDataBonusTaken: [false],
+              moonOccupant: null,
+              moonUnlocked: false,
+            },
+          },
+        },
+      });
+
+      expect(canLand(player, gameState)).toBe(true);
     });
 
     it('returns false with insufficient energy', () => {

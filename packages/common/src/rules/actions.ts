@@ -7,7 +7,7 @@ import {
   SCAN_ENERGY_COST,
 } from '../constant/actionCosts';
 import { EResource } from '../types/element';
-import { EMainAction } from '../types/protocol/enums';
+import { EMainAction, EPlanet } from '../types/protocol/enums';
 import type {
   IPublicGameState,
   IPublicPlanetState,
@@ -24,9 +24,11 @@ export function canLaunchProbe(player: IPublicPlayerState): boolean {
   );
 }
 
-function getPlanetsInGame(gameState: IPublicGameState): IPublicPlanetState[] {
-  return Object.values(gameState.planetaryBoard.planets).filter(
-    (planet): planet is IPublicPlanetState => planet !== undefined,
+function getPlanetEntriesInGame(
+  gameState: IPublicGameState,
+): Array<[EPlanet, IPublicPlanetState]> {
+  return Object.entries(gameState.planetaryBoard.planets).filter(
+    (entry): entry is [EPlanet, IPublicPlanetState] => entry[1] !== undefined,
   );
 }
 
@@ -49,8 +51,8 @@ export function canOrbit(
     player.resources[EResource.CREDIT] >= ORBIT_CREDIT_COST &&
     player.resources[EResource.ENERGY] >= ORBIT_ENERGY_COST
   ) {
-    return getPlanetsInGame(gameState).some((planet) =>
-      canOrbitPlanet(planet, player, gameState),
+    return getPlanetEntriesInGame(gameState).some(([planetId, planet]) =>
+      canOrbitPlanet(planetId, planet, player, gameState),
     );
   }
   return false;
@@ -60,8 +62,8 @@ export function canLand(
   player: IPublicPlayerState,
   gameState: IPublicGameState,
 ): boolean {
-  return getPlanetsInGame(gameState).some((planet) => {
-    if (!canOrbitPlanet(planet, player, gameState)) {
+  return getPlanetEntriesInGame(gameState).some(([planetId, planet]) => {
+    if (!canOrbitPlanet(planetId, planet, player, gameState)) {
       return false;
     }
     return (

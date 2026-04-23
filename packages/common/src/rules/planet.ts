@@ -2,11 +2,13 @@ import {
   LANDING_COST_DEFAULT,
   LANDING_COST_WITH_ORBITER,
 } from '../constant/actionCosts';
+import { EPlanet } from '../types/protocol/enums';
 import type {
   IPublicGameState,
   IPublicPlanetState,
   IPublicPlayerState,
 } from '../types/protocol/gameState';
+import { findPlanetSpaceId } from './solarSystem';
 
 const ENERGY_RESOURCE_KEY = 'energy';
 
@@ -22,11 +24,13 @@ export function getLandingCost(
 
 /** 检查某玩家是否可以在该行星入轨 (有探针在该行星空间) */
 export function canOrbitPlanet(
+  planetId: EPlanet,
   planet: IPublicPlanetState,
   player: IPublicPlayerState,
   gameState: IPublicGameState,
 ): boolean {
-  const planetSpaceId = planet.planetSpaceId;
+  const planetSpaceId =
+    findPlanetSpaceId(gameState.solarSystem, planetId) ?? planet.planetSpaceId;
   if (!planetSpaceId) {
     return false;
   }
@@ -39,11 +43,12 @@ export function canOrbitPlanet(
 
 /** 检查某玩家是否可以在该行星着陆 */
 export function canLandOnPlanet(
+  planetId: EPlanet,
   planet: IPublicPlanetState,
   player: IPublicPlayerState,
   gameState: IPublicGameState,
 ): boolean {
-  if (!canOrbitPlanet(planet, player, gameState)) {
+  if (!canOrbitPlanet(planetId, planet, player, gameState)) {
     return false;
   }
 
