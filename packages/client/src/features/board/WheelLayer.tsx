@@ -1,10 +1,12 @@
 import { cn } from '@/lib/cn';
+import { useEffect, useRef, useState } from 'react';
 
 interface IWheelLayerProps {
   ring: 1 | 2 | 3 | 4;
   angle: number;
   className?: string;
   slotLabels?: string[];
+  textModeLabels?: Array<string | null>;
   showImage?: boolean;
 }
 
@@ -38,17 +40,41 @@ const SLOT_LABEL_RADIUS_PERCENT: Record<IWheelLayerProps['ring'], number> = {
   4: 46.22,
 };
 
+const ROTATION_STEPS_PER_RING = 8;
+function normalizeStepDelta(delta: number): number {
+  const normalized =
+    ((delta % ROTATION_STEPS_PER_RING) + ROTATION_STEPS_PER_RING) %
+    ROTATION_STEPS_PER_RING;
+  return normalized > ROTATION_STEPS_PER_RING / 2
+    ? normalized - ROTATION_STEPS_PER_RING
+    : normalized;
+}
+
 export function WheelLayer({
   ring,
   angle,
   className,
   slotLabels,
+  textModeLabels,
   showImage = true,
 }: IWheelLayerProps): React.JSX.Element {
+  const [renderAngle, setRenderAngle] = useState(angle);
+  const prevAngleRef = useRef(angle);
+
+  useEffect(() => {
+    const prevAngle = prevAngleRef.current;
+    const delta = normalizeStepDelta(angle - prevAngle);
+
+    if (delta !== 0) {
+      setRenderAngle((prevRenderAngle) => prevRenderAngle + delta);
+    }
+    prevAngleRef.current = angle;
+  }, [angle]);
+
   const size = `${RING_SIZE_PERCENT[ring]}%`;
   // One rotation step is rendered counterclockwise to match rule behavior.
   // State angle still increments by +1 per step; CSS uses negative degrees.
-  const angleDeg = -angle * 45;
+  const angleDeg = -renderAngle * 45;
   const duration = TRANSITION_DURATION_MS[ring];
 
   return (
@@ -87,6 +113,28 @@ export function WheelLayer({
           <span
             key={`${ring}-slot-label-${index}`}
             className='pointer-events-none absolute z-20 rounded bg-surface-950/85 px-1 py-0.5 text-[9px] font-mono uppercase leading-none text-text-200 shadow'
+            style={{
+              left: `${xPercent}%`,
+              top: `${yPercent}%`,
+              transform: `translate(-50%, -50%) rotate(${-angleDeg}deg)`,
+            }}
+          >
+            {label}
+          </span>
+        );
+      })}
+
+      {textModeLabels?.map((label, index) => {
+        if (label === null) return null;
+        const theta = (Math.PI / 4) * (0.5 + index);
+        const radiusPercent = SLOT_LABEL_RADIUS_PERCENT[ring];
+        const xPercent = 50 + Math.sin(theta) * radiusPercent;
+        const yPercent = 50 - Math.cos(theta) * radiusPercent;
+
+        return (
+          <span
+            key={`${ring}-text-label-${index}`}
+            className='pointer-events-none absolute rounded-sm border border-surface-500/60 bg-surface-950 px-1.5 py-0.5 font-mono text-[9px] uppercase leading-none text-text-200 shadow-sm'
             style={{
               left: `${xPercent}%`,
               top: `${yPercent}%`,

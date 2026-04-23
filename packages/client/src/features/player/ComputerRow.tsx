@@ -20,7 +20,10 @@ function makeIconItem(icon: TIcon, value = 1): IIconItem {
   return {
     type: icon,
     value,
-    options: { size: 'xs' },
+    options: {
+      size: 'xs',
+      showValue: true,
+    },
   };
 }
 

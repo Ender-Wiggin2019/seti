@@ -1,4 +1,4 @@
-import type { ISolarSystemSetupConfig } from '@seti/common/constant/sectorSetup';
+import type { ISolarSystemSetupConfig, TSolarSystemWheelIndex } from '@seti/common/constant/sectorSetup';
 import { getReachableSpaces } from '@seti/common/rules';
 import { useMemo, useState } from 'react';
 import { useTextMode } from '@/stores/debugStore';
@@ -22,6 +22,14 @@ const DEFAULT_PROBE_INSET_PX_BY_RING: Readonly<Record<1 | 2 | 3 | 4, number>> =
     3: 91,
     4: 229,
   };
+const IMAGE_ALIGNMENT_OFFSET_CW_BY_RING: Readonly<
+  Record<1 | 2 | 3 | 4, number>
+> = {
+  1: 2,
+  2: 6,
+  3: 4,
+  4: 4,
+};
 const PROBE_TRANSITION_MS = 900;
 
 export type TProbeInsetPxByRing = Readonly<Record<1 | 2 | 3 | 4, number>>;
@@ -95,10 +103,15 @@ function spacePosition(
   ringIndex: 1 | 2 | 3 | 4,
   indexInRing: number,
   spaceRadiiPercent: readonly number[],
+  discAngle: number,
 ): { xPercent: number; yPercent: number } {
-  const direction = ((indexInRing % 8) + 8) % 8;
+  const baseDirection = ((indexInRing % 8) + 8) % 8;
+  const imageOffset = IMAGE_ALIGNMENT_OFFSET_CW_BY_RING[ringIndex] ?? 0;
+  // disc rotates CCW by discAngle steps → visual position shifts CW → add discAngle
+  const direction =
+    ((baseDirection + imageOffset + discAngle) % 8 + 8) % 8;
   const radius = spaceRadiiPercent[ringIndex - 1] ?? spaceRadiiPercent[0] ?? 0;
-  const angle = (Math.PI / 4) * (0.5 + direction);
+  const angle = (Math.PI / 4) * (direction + 0.5);
   return {
     xPercent: 50 + Math.sin(angle) * radius,
     yPercent: 50 - Math.cos(angle) * radius,
@@ -143,6 +156,35 @@ export function SolarSystemView({
     }) as [number, number, number, number];
   }, [probeInsetPxByRing]);
 
+  const discAngleByRing = useMemo<Record<1 | 2 | 3 | 4, number>>(() => {
+    const byDisc = new Map(
+      solarSystem.discs.map((d) => [d.discIndex, d.angle]),
+    );
+    return {
+      1: byDisc.get(0) ?? 0,
+      2: byDisc.get(1) ?? 0,
+      3: byDisc.get(2) ?? 0,
+      4: 0,
+    };
+  }, [solarSystem.discs]);
+
+  const textModeLabelsByRing = useMemo<
+    Record<TSolarSystemWheelIndex, Array<string | null>>
+  >(() => {
+    const wheels = setupConfig.wheels;
+    const result = {} as Record<TSolarSystemWheelIndex, Array<string | null>>;
+    for (const ring of [1, 2, 3, 4] as const) {
+      const band = ring - 1;
+      const row = wheels[ring][band];
+      result[ring] = row.map((slot) => {
+        if (slot.cell.type === 'NULL') return null;
+        if (slot.cell.planet) return slot.cell.planet.toLowerCase();
+        return slot.cell.type.toLowerCase();
+      });
+    }
+    return result;
+  }, [setupConfig.wheels]);
+
   const spacePoints = useMemo<ISpacePoint[]>(() => {
     const states = solarSystem.spaceStates;
     const usesZeroBasedRingIndex = Boolean(
@@ -168,10 +210,11 @@ export function SolarSystemView({
         }
       }
 
-      const pos = spacePosition(ringIndex, indexInRing, spaceRadiiPercent);
+      const discAngle = discAngleByRing[ringIndex];
+      const pos = spacePosition(ringIndex, indexInRing, spaceRadiiPercent, discAngle);
       return { spaceId, ringIndex, indexInRing, ...pos };
     });
-  }, [solarSystem.spaces, solarSystem.spaceStates, spaceRadiiPercent]);
+  }, [solarSystem.spaces, solarSystem.spaceStates, spaceRadiiPercent, discAngleByRing]);
 
   const debugLabelsBySpaceId = useMemo(() => {
     if (!showSpaceConfigDebug) {
@@ -199,35 +242,6 @@ export function SolarSystemView({
 
     return labels;
   }, [showSpaceConfigDebug, spacePoints, solarSystem.spaceStates]);
-
-  /**
-   * Text-mode labels per space — only the top-most element is shown
-   * when a space has multiple layered elements. Spaces with no element
-   * ("null") are intentionally omitted so they render no box in text mode.
-   */
-  const textModeLabelsBySpaceId = useMemo<Record<string, string>>(() => {
-    if (!textMode) {
-      return {};
-    }
-    const labels: Record<string, string> = {};
-    for (const space of spacePoints) {
-      const state = solarSystem.spaceStates?.[space.spaceId];
-      if (!state) {
-        continue;
-      }
-      const primaryElement = state.elements?.[0];
-      const firstType = primaryElement?.type ?? state.elementTypes[0];
-      if (!firstType || firstType === 'null' || firstType === 'NULL') {
-        continue;
-      }
-      if (firstType === 'PLANET' && primaryElement?.planet) {
-        labels[space.spaceId] = primaryElement.planet.toLowerCase();
-      } else {
-        labels[space.spaceId] = firstType.toLowerCase();
-      }
-    }
-    return labels;
-  }, [textMode, spacePoints, solarSystem.spaceStates]);
 
   const probeView = useMemo(() => {
     const bySpacePlayers: Record<string, string[]> = {};
@@ -341,24 +355,27 @@ export function SolarSystemView({
               }
         }
       >
-        <WheelLayer ring={4} angle={0} className='z-10' showImage={!textMode} />
+        <WheelLayer ring={4} angle={0} className='z-10' showImage={!textMode} textModeLabels={textMode ? textModeLabelsByRing[4] : undefined} />
         <WheelLayer
           ring={3}
           angle={getDiscAngle(solarSystem, 3)}
           className='z-20'
           showImage={!textMode}
+          textModeLabels={textMode ? textModeLabelsByRing[3] : undefined}
         />
         <WheelLayer
           ring={2}
           angle={getDiscAngle(solarSystem, 2)}
           className='z-30'
           showImage={!textMode}
+          textModeLabels={textMode ? textModeLabelsByRing[2] : undefined}
         />
         <WheelLayer
           ring={1}
           angle={getDiscAngle(solarSystem, 1)}
           className='z-40'
           showImage={!textMode}
+          textModeLabels={textMode ? textModeLabelsByRing[1] : undefined}
         />
 
         {!textMode && (
@@ -396,50 +413,6 @@ export function SolarSystemView({
             });
           }}
         />
-
-        {textMode && (
-          <div
-            className='pointer-events-none absolute inset-0'
-            style={{ zIndex: 65 }}
-          >
-            {spacePoints.map((space) => {
-              const label = textModeLabelsBySpaceId[space.spaceId];
-              if (!label) {
-                return null;
-              }
-              const rotationDeg = space.indexInRing * 45 + 22.5;
-              const isSelected = selectedSpaceId === space.spaceId;
-              const isReachable = reachable.has(space.spaceId);
-              const hasMyProbe = (
-                probeView.bySpacePlayers[space.spaceId] ?? []
-              ).includes(myPlayerId);
-
-              return (
-                <span
-                  key={`text-label-${space.spaceId}`}
-                  className={[
-                    'absolute whitespace-nowrap rounded-sm border px-1.5 py-0.5 font-mono text-[9px] uppercase leading-none shadow-sm',
-                    isSelected
-                      ? 'border-accent-400 bg-accent-500/25 text-accent-100'
-                      : isReachable
-                        ? 'animate-pulse border-accent-500/80 bg-accent-500/15 text-accent-100'
-                        : hasMyProbe
-                          ? 'border-surface-300/70 bg-surface-900/85 text-text-100'
-                          : 'border-surface-500/60 bg-surface-950/85 text-text-200',
-                  ].join(' ')}
-                  style={{
-                    left: `${space.xPercent}%`,
-                    top: `${space.yPercent}%`,
-                    transform: `translate(-50%, -50%) rotate(${rotationDeg}deg)`,
-                    transformOrigin: 'center',
-                  }}
-                >
-                  {label}
-                </span>
-              );
-            })}
-          </div>
-        )}
 
         {spacePoints.map((space) => {
           const probeCount =

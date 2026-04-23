@@ -3,7 +3,7 @@ import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EResource } from '@seti/common/types/element';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Sidebar } from '@/components/layout/Sidebar';
+import { EventSidebarDrawer } from '@/components/layout/EventSidebarDrawer';
 import { TopBar } from '@/components/layout/TopBar';
 import { Button } from '@/components/ui/button';
 import {
@@ -76,12 +76,10 @@ const BOARD_TABS: TBoardTab[] = [
  *
  *   ┌─────────────────────────── TopBar ───────────────────────────┐
  *   ├── TopActionBar (main actions + free actions + undo) ─────────┤
- *   ├──────────────────────────────┬───────────────────────────────┤
- *   │ Board area (Solar System +   │ Personal column:              │
- *   │ Planets / Tech / Cards / …)  │   • Personal board            │
- *   │                              │   • Mission area              │
- *   │                              │   • Intel (log + opponents)   │
- *   ├──────────────────────────────┴───────────────────────────────┤
+ *   ├──────────────────────────────┬──────────────────────────────────────────┤
+ *   │ Board area (Solar System +   │ Personal column + event intel drawer    │
+ *   │ Planets / Tech / Cards / …)  │ (drawer opens from right edge)          │
+ *   ├──────────────────────────────┴──────────────────────────────────────────┤
  *   │ HandDock (collapsible grid of hand cards)                    │
  *   └──────────────────────────────────────────────────────────────┘
  *
@@ -225,7 +223,8 @@ export function GameLayout({
           )}
         </main>
 
-        <PersonalColumn className='hidden w-[360px] shrink-0 xl:w-[400px] lg:flex' />
+        <PersonalColumn className='hidden w-[440px] shrink-0 xl:w-[520px] lg:flex' />
+        <EventSidebarDrawer />
       </div>
 
       <HandDockBlock
@@ -605,10 +604,9 @@ interface IPersonalColumnProps {
  * Order (top to bottom):
  *  1. PlayerDashboard — resources, computer, inventory, tech, data pool
  *  2. PlayedMissions — cards currently in play
- *  3. Intel strip — EventLog + opponents (rehomed from the old Sidebar)
  *
- * The column owns its own scroll so the dashboard + missions never push
- * the log out of view on short screens.
+ * The column owns its own scroll so dashboard and missions remain stable
+ * regardless of hand/board height changes.
  */
 function PersonalColumn({
   className,
@@ -671,10 +669,6 @@ function PersonalColumn({
         </div>
         <PlayedMissions missions={missionCards} />
       </section>
-
-      <div className='instrument-tick' />
-
-      <Sidebar className='-mx-3 border-l-0 bg-transparent p-3 pt-1' />
     </aside>
   );
 }
@@ -825,7 +819,7 @@ function BoardTabs({
 
       <div className='min-h-0 flex-1 overflow-auto p-4'>
         <TabsContent value='board' className='mt-0 h-full'>
-          <div className='space-y-3'>
+          <div className='mx-auto w-full max-w-[800px] space-y-3'>
             {gameState && (
               <SolarSystemView
                 solarSystem={gameState.solarSystem}

@@ -123,6 +123,11 @@ export interface IPublicSolarSystemState {
   adjacency: Record<string, string[]>;
   probes: IPublicSolarSystemProbe[];
   discs: IPublicSolarSystemDiscState[];
+  /**
+   * Next ring that will rotate when a rotation resolves (rule order 1 -> 2 -> 3).
+   * Produced by the server from runtime rotation counter; client should render only.
+   */
+  nextRotateRing?: 1 | 2 | 3;
   spaceStates?: Record<string, IPublicSolarSystemSpaceState>;
   /**
    * Runtime planet → current spaceId lookup. Reflects the current

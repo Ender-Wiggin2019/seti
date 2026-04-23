@@ -572,16 +572,22 @@ function createDebugSpaceStates(
   const states: Record<string, IPublicSolarSystemSpaceState> = {};
 
   for (let band = 0; band < 4; band += 1) {
-    for (let indexInRing = 0; indexInRing < 8; indexInRing += 1) {
-      const spaceIndex = band * 8 + indexInRing;
-      const spaceId = `space-${spaceIndex}`;
-      const top = resolveTopVisibleCell(wheels, band, indexInRing, discAngles);
+    for (let boardIndex = 0; boardIndex < 8; boardIndex += 1) {
+      // boardIndex is the visual position (0-7 on screen).
+      // physicalIndex is the fixed indexInRing used by SolarSystemView for positioning.
+      const ring = (band + 1) as TSolarSystemWheelIndex;
+      const physicalIndex = normalizeSlotIndex(
+        boardIndex + getWheelAngle(ring, discAngles),
+      );
+      const spaceId = `space-${band * 8 + boardIndex}`;
+      // resolveTopVisibleCell expects a boardIndex
+      const top = resolveTopVisibleCell(wheels, band, boardIndex, discAngles);
       const mapCell = top?.cell.cell;
 
       states[spaceId] = {
         spaceId,
         ringIndex: band + 1,
-        indexInRing,
+        indexInRing: physicalIndex,
         hasPublicityIcon: mapCell?.hasPublicityIcon ?? false,
         elementTypes: [mapCell?.type ?? 'NULL'],
         elements: [
@@ -895,7 +901,7 @@ function createDebugGameState(
 
 export function GameDebugPage(): React.JSX.Element {
   const [scenario, setScenario] = useState<TDebugScenario>('my-turn');
-  const [sourceMode, setSourceMode] = useState<TDebugSourceMode>('local');
+  const [sourceMode, setSourceMode] = useState<TDebugSourceMode>('server');
   const [discAngles, setDiscAngles] = useState<TDiscAngles>([7, 3, 4]);
   const [debugWheels, setDebugWheels] = useState<TSolarSystemWheels>(
     createDefaultDebugWheels,
@@ -1949,7 +1955,7 @@ export function GameDebugPage(): React.JSX.Element {
         </div>
       </div>
       <div style={sectorDebugVars}>
-        <GameLayout probeInsetPxByRing={probeInsetPxByRing} allowMoveAnyProbe />
+        <GameLayout probeInsetPxByRing={probeInsetPxByRing} allowMoveAnyProbe showSolarSystemSpaceConfig />
       </div>
     </GameContextValueProvider>
   );

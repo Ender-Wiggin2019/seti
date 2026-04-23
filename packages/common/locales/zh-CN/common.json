@@ -456,7 +456,7 @@
       "scan": {
         "earth": "地球（或邻接）",
         "card_row": "卡牌行",
-        "mercury": "水星（−★）",
+        "mercury": "声望水星",
         "discard_card": "弃手牌",
         "energy_launch": "移动 / 发射（⚡）"
       }

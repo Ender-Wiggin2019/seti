@@ -283,14 +283,16 @@ describe('GameLayout', () => {
   });
 
   describe('Sidebar', () => {
-    it('displays opponents in sidebar', async () => {
+    it('opens right drawer and displays opponents in sidebar', async () => {
       await renderLayout();
+      fireEvent.click(screen.getByRole('button', { name: 'Event Log' }));
 
       expect(screen.getByText('Pilot')).toBeInTheDocument();
     });
 
-    it('shows event log section', async () => {
+    it('shows event log section after opening drawer', async () => {
       await renderLayout();
+      fireEvent.click(screen.getByRole('button', { name: 'Event Log' }));
 
       expect(screen.getByText('Event Log')).toBeInTheDocument();
     });

@@ -16,6 +16,7 @@ export function SelectCardInput({
       cards={model.cards}
       handSize={model.cards.length}
       pendingInput={model}
+      variant='dock'
       onSubmitSelection={(cardIds) =>
         onSubmit({
           type: EPlayerInputType.CARD,
