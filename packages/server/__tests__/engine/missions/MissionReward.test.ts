@@ -1,5 +1,5 @@
 import { EEffectType } from '@seti/common/types/effect';
-import { EResource } from '@seti/common/types/element';
+import { EAlienIcon, EResource } from '@seti/common/types/element';
 import type { IGame } from '@/engine/IGame.js';
 import { applyMissionRewards } from '@/engine/missions/MissionReward.js';
 import { Player } from '@/engine/player/Player.js';
@@ -53,5 +53,24 @@ describe('applyMissionRewards', () => {
     );
 
     expect(player.hand).toEqual(['c1']);
+  });
+
+  it('handles exofossil gain and spend rewards', () => {
+    const player = createPlayer();
+
+    applyMissionRewards(
+      [
+        { effectType: EEffectType.BASE, type: EAlienIcon.EXOFOSSIL, value: 2 },
+        {
+          effectType: EEffectType.BASE,
+          type: EAlienIcon.USE_EXOFOSSIL,
+          value: 1,
+        },
+      ],
+      player,
+      createGame(),
+    );
+
+    expect(player.exofossils).toBe(1);
   });
 });

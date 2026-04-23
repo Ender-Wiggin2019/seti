@@ -4,6 +4,8 @@ import type {
   IDebugReplaySessionRequest,
   IDebugReplaySessionResponse,
   IDebugServerSessionResponse,
+  IDebugSnapshotSessionRequest,
+  IDebugSnapshotSessionResponse,
 } from '@seti/common/types/protocol/debug';
 import type {
   IFreeActionRequest,
@@ -42,6 +44,14 @@ export class DebugController {
     @Body() body: IDebugReplaySessionRequest,
   ): Promise<IDebugReplaySessionResponse> {
     return this.debugService.createReplaySession(body);
+  }
+
+  @Public()
+  @Post('server/snapshot-session')
+  async createSnapshotSession(
+    @Body() body: IDebugSnapshotSessionRequest,
+  ): Promise<IDebugSnapshotSessionResponse> {
+    return this.debugService.createSnapshotSession(body);
   }
 
   @Public()

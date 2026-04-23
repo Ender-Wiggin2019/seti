@@ -3,6 +3,7 @@ import type {
   IDebugReplayPresetDefinition,
   IDebugReplaySessionResponse,
   IDebugServerSessionResponse,
+  IDebugSnapshotSessionResponse,
 } from '@/api/types';
 import type {
   IFreeActionRequest,
@@ -35,6 +36,17 @@ export const debugApi = {
   createServerSession: async (): Promise<IDebugServerSessionResponse> => {
     const response = await httpClient.post<IDebugServerSessionResponse>(
       '/debug/server/session',
+    );
+    return response.data;
+  },
+
+  createSnapshotSession: async (payload: {
+    gameId: string;
+    version?: number;
+  }): Promise<IDebugSnapshotSessionResponse> => {
+    const response = await httpClient.post<IDebugSnapshotSessionResponse>(
+      '/debug/server/snapshot-session',
+      payload,
     );
     return response.data;
   },

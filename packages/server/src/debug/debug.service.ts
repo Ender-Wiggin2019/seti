@@ -6,6 +6,8 @@ import type {
   IDebugReplaySessionRequest,
   IDebugReplaySessionResponse,
   IDebugServerSessionResponse,
+  IDebugSnapshotSessionRequest,
+  IDebugSnapshotSessionResponse,
 } from '@seti/common/types/protocol/debug';
 import type {
   IFreeActionRequest,
@@ -31,6 +33,7 @@ import type { IGamePlayerIdentity } from '@/engine/IGame.js';
 import { GameManager } from '@/gateway/GameManager.js';
 import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
 import { GameRepository } from '@/persistence/repository/GameRepository.js';
+import { deserializeGame } from '@/persistence/serializer/GameDeserializer.js';
 import { GameError } from '@/shared/errors/GameError.js';
 import {
   applyBehaviorFlowScenario,
@@ -250,6 +253,56 @@ export class DebugService {
       accessToken: session.accessToken,
       user: session.user,
       replay,
+    };
+  }
+
+  async createSnapshotSession(
+    request: IDebugSnapshotSessionRequest,
+  ): Promise<IDebugSnapshotSessionResponse> {
+    const snapshot =
+      request.version !== undefined
+        ? await this.gameRepository.loadSnapshot(request.gameId, request.version)
+        : await this.gameRepository.loadLatestSnapshot(request.gameId);
+
+    if (!snapshot) {
+      throw new GameError(
+        EErrorCode.GAME_NOT_FOUND,
+        `No snapshot found for game ${request.gameId}${request.version !== undefined ? ` version ${request.version}` : ''}`,
+      );
+    }
+
+    const sourceGameId = snapshot.gameId;
+    const snapshotVersion = snapshot.version;
+    snapshot.gameId = randomUUID();
+
+    const game = deserializeGame(snapshot);
+
+    const humanPlayer = game.players[0];
+    const botPlayerIds = game.players
+      .slice(1)
+      .map((player) => player.id);
+
+    this.debugSessionRegistry.register(
+      game.id,
+      humanPlayer.id,
+      botPlayerIds,
+    );
+    this.gameManager.registerGame(game);
+
+    const session = this.createAuthSession({
+      id: humanPlayer.id,
+      name: humanPlayer.name,
+      email: `${humanPlayer.id}@debug.local`,
+    });
+
+    return {
+      gameId: game.id,
+      accessToken: session.accessToken,
+      user: session.user,
+      sourceGameId,
+      snapshotVersion,
+      phase: game.phase,
+      round: game.round,
     };
   }
 

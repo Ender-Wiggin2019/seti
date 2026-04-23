@@ -46,6 +46,8 @@ export class Player implements IPlayer {
 
   public income: Income;
 
+  public exofossils: number;
+
   public data: Data;
 
   public pieces: Pieces;
@@ -118,6 +120,8 @@ export class Player implements IPlayer {
       dataController: this.data,
     });
     assertValidInteger('publicity', this.resources.publicity);
+    this.exofossils = init.exofossils ?? 0;
+    assertValidInteger('exofossils', this.exofossils);
     this.income = new Income(init.baseIncome, init.tuckedCardIncome);
     this.pieces = new Pieces(init.pieceInventory);
 
@@ -248,6 +252,20 @@ export class Player implements IPlayer {
 
   public getMoveStash(): number {
     return this.moveStashCount;
+  }
+
+  public gainExofossils(amount = 1): void {
+    assertValidInteger('exofossils', amount);
+    this.exofossils += amount;
+  }
+
+  public spendExofossils(amount = 1): boolean {
+    assertValidInteger('exofossils', amount);
+    if (this.exofossils < amount) {
+      return false;
+    }
+    this.exofossils -= amount;
+    return true;
   }
 
   public getPendingCardDrawCount(): number {

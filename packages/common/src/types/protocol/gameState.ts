@@ -79,6 +79,7 @@ export interface IPublicPlayerState {
    * consumers can omit it and default to 0.
    */
   pendingSetupTucks?: number;
+  exofossils?: number;
 }
 
 export interface IPublicSolarSystemProbe {

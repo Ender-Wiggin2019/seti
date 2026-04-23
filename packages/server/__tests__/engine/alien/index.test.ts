@@ -18,4 +18,9 @@ describe('alien index exports', () => {
     expect(AlienRegistry.has(EAlienType.ANOMALIES)).toBe(true);
     expect(AlienRegistry.get(EAlienType.ANOMALIES)).toBeDefined();
   });
+
+  it('registers oumuamua plugin as side effect', () => {
+    expect(AlienRegistry.has(EAlienType.OUMUAMUA)).toBe(true);
+    expect(AlienRegistry.get(EAlienType.OUMUAMUA)).toBeDefined();
+  });
 });

@@ -1,6 +1,8 @@
 import type { EStarName } from '@seti/common/constant/sectorSetup';
 import type { ESector } from '@seti/common/types/element';
-import type { EPlanet } from '@seti/common/types/protocol/enums';
+import { EAlienType, type EPlanet } from '@seti/common/types/protocol/enums';
+import { AlienRegistry } from '../../alien/AlienRegistry.js';
+import { OumuamuaAlienPlugin } from '../../alien/plugins/OumuamuaAlienPlugin.js';
 import type { IGame } from '../../IGame.js';
 import type { PlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
@@ -156,10 +158,8 @@ export class MarkSectorSignalEffect {
       sectors.map((sector) => ({
         id: sector.id,
         label: `Sector ${sector.id}`,
-        onSelect: () => {
-          const result = this.markOnSector(player, game, sector);
-          return onComplete?.(result);
-        },
+        onSelect: () =>
+          this.markSectorWithOumuamuaChoice(player, game, sector, onComplete),
       })),
       `Choose ${color} sector to mark signal`,
     );
@@ -183,5 +183,46 @@ export class MarkSectorSignalEffect {
     return this.markByColor(player, game, colors[0], () =>
       this.markByColorChain(player, game, colors.slice(1), onComplete),
     );
+  }
+
+  public static markByIndexWithAlternatives(
+    player: IPlayer,
+    game: IGame,
+    sectorIndex: number,
+    onComplete?: (
+      result: IMarkSectorSignalResult | null,
+    ) => PlayerInput | undefined,
+  ): PlayerInput | undefined {
+    const sector = getSectorAt(game, sectorIndex);
+    if (!sector) return onComplete?.(null);
+    return this.markSectorWithOumuamuaChoice(player, game, sector, onComplete);
+  }
+
+  private static markSectorWithOumuamuaChoice(
+    player: IPlayer,
+    game: IGame,
+    sector: {
+      id: string;
+      color: ESector;
+      completed: boolean;
+      markSignal(playerId: string): { dataGained: boolean; vpAwarded: number };
+    },
+    onComplete?: (
+      result: IMarkSectorSignalResult | null,
+    ) => PlayerInput | undefined,
+  ): PlayerInput | undefined {
+    const plugin = AlienRegistry.get(EAlienType.OUMUAMUA);
+    if (plugin instanceof OumuamuaAlienPlugin) {
+      return plugin.createSectorOrTileSignalInput(
+        player,
+        game,
+        sector.id,
+        () => this.markOnSector(player, game, sector),
+        onComplete,
+      );
+    }
+
+    const result = this.markOnSector(player, game, sector);
+    return onComplete?.(result);
   }
 }

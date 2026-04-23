@@ -189,5 +189,30 @@ describe('GameManager', () => {
 
       expect(cache.has('game-mgr-test')).toBe(false);
     });
+
+    it('persists unload snapshot using next version', async () => {
+      const game = createTestGame();
+      const cache = (manager as unknown as { cache: Map<string, IGame> }).cache;
+      const versions = (manager as unknown as { versions: Map<string, number> })
+        .versions;
+      cache.set('game-mgr-test', game);
+      versions.set('game-mgr-test', 3);
+
+      const saveSnapshotMock = vi.fn().mockResolvedValue(undefined);
+      (
+        manager as unknown as {
+          gameRepo: { saveSnapshot: typeof saveSnapshotMock };
+        }
+      ).gameRepo.saveSnapshot = saveSnapshotMock;
+
+      await manager.unloadGame('game-mgr-test');
+
+      expect(saveSnapshotMock).toHaveBeenCalledWith(
+        'game-mgr-test',
+        4,
+        expect.any(Object),
+        { type: 'UNLOAD' },
+      );
+    });
   });
 });

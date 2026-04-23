@@ -91,6 +91,7 @@ function serializePlayer(player: IPlayer): IPlayerStateDto {
     probeSpaceLimit: player.probeSpaceLimit,
     handLimitAfterPass: player.handLimitAfterPass,
     pendingSetupTucks: player.pendingSetupTucks,
+    exofossils: player.exofossils,
     resources: player.resources.toObject(),
     income: {
       base: player.income.baseIncome,
@@ -445,6 +446,7 @@ function toPublicPlayerState(
     energyIncome: player.income.computeRoundPayout()[EResource.ENERGY],
     cardIncome: player.income.computeRoundPayout()[EResource.CARD],
     pendingSetupTucks: player.pendingSetupTucks,
+    exofossils: player.exofossils,
   } as IPublicPlayerState;
 }
 

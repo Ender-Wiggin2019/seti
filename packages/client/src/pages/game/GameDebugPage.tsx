@@ -1955,7 +1955,10 @@ export function GameDebugPage(): React.JSX.Element {
         </div>
       </div>
       <div style={sectorDebugVars}>
-        <GameLayout probeInsetPxByRing={probeInsetPxByRing} allowMoveAnyProbe showSolarSystemSpaceConfig />
+        <GameLayout
+          probeInsetPxByRing={probeInsetPxByRing}
+          allowMoveAnyProbe
+        />
       </div>
     </GameContextValueProvider>
   );

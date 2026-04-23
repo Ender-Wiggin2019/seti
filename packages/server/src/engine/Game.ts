@@ -601,6 +601,7 @@ export class Game implements IGame {
   }
 
   private handoffTurnFrom(playerId: string): void {
+    this.missionTracker.clearTurnEventHistory();
     if (this.players.every((player) => player.passed)) {
       this.transitionTo(EPhase.END_OF_ROUND);
       this.resolveEndOfRound();

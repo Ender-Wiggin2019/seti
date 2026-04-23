@@ -21,6 +21,7 @@ export interface IPlayerStateDto {
   probeSpaceLimit: number;
   handLimitAfterPass: number;
   pendingSetupTucks?: number;
+  exofossils?: number;
   resources: {
     credits: number;
     energy: number;

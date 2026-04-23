@@ -1,4 +1,3 @@
-import { PLANETARY_PLANETS } from '@seti/common/constant/boardLayout';
 import { EPlanet } from '@seti/common/types/protocol/enums';
 import type { IGame } from '../../IGame.js';
 
@@ -7,7 +6,13 @@ export function syncProbeCountsForPlayer(game: IGame, playerId: string): void {
     return;
   }
 
-  for (const planet of PLANETARY_PLANETS) {
+  for (const planet of Object.values(EPlanet)) {
+    if (planet === EPlanet.EARTH) {
+      continue;
+    }
+    if (!game.solarSystem.getPlanetLocation(planet)) {
+      continue;
+    }
     const spaces = game.solarSystem.getSpacesOnPlanet(planet);
     let count = 0;
     for (const space of spaces) {

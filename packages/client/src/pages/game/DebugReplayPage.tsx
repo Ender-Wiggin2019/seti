@@ -3,9 +3,11 @@ import { debugApi } from '@/api/debugApi';
 import type {
   IDebugReplayPresetDefinition,
   IDebugReplaySessionResponse,
+  IDebugSnapshotSessionResponse,
 } from '@/api/types';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -53,6 +55,11 @@ export function DebugReplayPage(): React.JSX.Element {
   const [session, setSession] = useState<IDebugReplaySessionResponse | null>(
     null,
   );
+  const [snapshotSession, setSnapshotSession] =
+    useState<IDebugSnapshotSessionResponse | null>(null);
+  const [snapshotGameId, setSnapshotGameId] = useState('');
+  const [snapshotVersion, setSnapshotVersion] = useState('');
+  const [isLoadingSnapshot, setIsLoadingSnapshot] = useState(false);
   const [isLoadingPresets, setIsLoadingPresets] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -177,6 +184,75 @@ export function DebugReplayPage(): React.JSX.Element {
       setIsCreating(false);
     }
   }, [fieldValues, selectedCheckpointId, selectedPreset]);
+
+  const loadSnapshot = useCallback(async () => {
+    if (!snapshotGameId.trim()) {
+      return;
+    }
+
+    if (!authSnapshotRef.current) {
+      const authState = useAuthStore.getState();
+      authSnapshotRef.current = {
+        token: authState.token,
+        user: authState.user,
+        isAuthenticated: authState.isAuthenticated,
+      };
+    }
+
+    setIsLoadingSnapshot(true);
+    setErrorMessage(null);
+    try {
+      const version = snapshotVersion.trim()
+        ? Number(snapshotVersion.trim())
+        : undefined;
+      const nextSession = await debugApi.createSnapshotSession({
+        gameId: snapshotGameId.trim(),
+        version,
+      });
+      useAuthStore
+        .getState()
+        .login(nextSession.accessToken, nextSession.user as IAuthUser);
+      setSnapshotSession(nextSession);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Failed to load snapshot session',
+      );
+    } finally {
+      setIsLoadingSnapshot(false);
+    }
+  }, [snapshotGameId, snapshotVersion]);
+
+  if (snapshotSession) {
+    return (
+      <>
+        <div className='fixed right-3 top-3 z-50 flex items-center gap-2 rounded border border-surface-700/70 bg-surface-900/90 p-2 text-xs backdrop-blur'>
+          <span className='font-mono text-text-500'>Snapshot</span>
+          <span className='font-mono text-text-300'>
+            R{snapshotSession.round} · {snapshotSession.phase}
+          </span>
+          <span className='font-mono text-[10px] text-text-500'>
+            src: {snapshotSession.sourceGameId.slice(0, 8)}
+          </span>
+          <Button
+            size='sm'
+            variant='ghost'
+            onClick={() => setSnapshotSession(null)}
+            className='h-7'
+          >
+            New Replay
+          </Button>
+        </div>
+        <GameContextProvider
+          key={snapshotSession.gameId}
+          gameId={snapshotSession.gameId}
+        >
+          <DebugReplayGameContent />
+        </GameContextProvider>
+      </>
+    );
+  }
 
   if (session) {
     return (
@@ -325,6 +401,52 @@ export function DebugReplayPage(): React.JSX.Element {
             No replay presets available.
           </div>
         )}
+
+        <div className='mt-6 border-t border-surface-700/50 pt-6'>
+          <div className='mb-4 space-y-2'>
+            <p className='font-mono text-xs uppercase tracking-[0.18em] text-text-500'>
+              Load from Snapshot
+            </p>
+            <p className='text-sm text-text-400'>
+              Resume a game from a database snapshot by entering its game ID.
+            </p>
+          </div>
+
+          <div className='space-y-4'>
+            <div className='space-y-2'>
+              <label className='text-sm text-text-300'>Game ID</label>
+              <Input
+                value={snapshotGameId}
+                onChange={(e) => setSnapshotGameId(e.target.value)}
+                placeholder='Enter game UUID'
+                data-testid='debug-snapshot-game-id'
+              />
+            </div>
+
+            <div className='space-y-2'>
+              <label className='text-sm text-text-300'>
+                Version (optional, latest if empty)
+              </label>
+              <Input
+                value={snapshotVersion}
+                onChange={(e) => setSnapshotVersion(e.target.value)}
+                placeholder='e.g. 5'
+                type='number'
+                data-testid='debug-snapshot-version'
+              />
+            </div>
+
+            <div className='flex items-center justify-end pt-2'>
+              <Button
+                onClick={() => void loadSnapshot()}
+                disabled={isLoadingSnapshot || !snapshotGameId.trim()}
+                data-testid='debug-snapshot-start'
+              >
+                {isLoadingSnapshot ? 'Loading...' : 'Load Snapshot'}
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

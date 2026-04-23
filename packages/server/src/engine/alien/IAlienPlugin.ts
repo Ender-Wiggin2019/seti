@@ -25,6 +25,18 @@ export interface IAlienPlugin {
     isOverflow: boolean,
   ): void;
 
+  canPlaceTraceOnSlot?(
+    game: IGame,
+    player: IPlayer,
+    slot: ITraceSlot,
+  ): boolean;
+
+  onPlaceTraceOnSlot?(
+    game: IGame,
+    player: IPlayer,
+    slot: ITraceSlot,
+  ): void;
+
   onRoundEnd?(game: IGame): void;
 
   onSolarSystemRotated?(game: IGame): void;

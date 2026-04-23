@@ -19,6 +19,7 @@ const ALL_LANDABLE_PLANETS: readonly EPlanet[] = [
   EPlanet.SATURN,
   EPlanet.URANUS,
   EPlanet.NEPTUNE,
+  EPlanet.OUMUAMUA,
 ];
 
 interface ILandTarget {
@@ -28,11 +29,15 @@ interface ILandTarget {
 
 function collectLandTargets(
   player: IPlayer,
+  game: IGame,
   options: ILandOptions,
 ): ILandTarget[] {
   const targets: ILandTarget[] = [];
 
   for (const planet of ALL_LANDABLE_PLANETS) {
+    if (planet === EPlanet.OUMUAMUA && !game.solarSystem?.getPlanetLocation(planet)) {
+      continue;
+    }
     if (player.canLand(planet, { ...options, isMoon: false })) {
       targets.push({ planet, isMoon: false });
     }
@@ -49,11 +54,11 @@ function collectLandTargets(
 
 export function buildLandPlanetSelection(
   player: IPlayer,
-  _game: IGame,
+  game: IGame,
   options: ILandSelectionOptions,
 ): IPlayerInput | undefined {
   const { prompt, includeSkipOption, skipLabel, ...landOptions } = options;
-  const targets = collectLandTargets(player, landOptions);
+  const targets = collectLandTargets(player, game, landOptions);
 
   if (targets.length === 0) return undefined;
 

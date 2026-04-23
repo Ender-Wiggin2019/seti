@@ -155,12 +155,12 @@ export class ScanMercurySignalEffect {
     }
 
     player.resources.spend({ publicity: MERCURY_SIGNAL_PUBLICITY_COST });
-    const markResult = MarkSectorSignalEffect.markByIndex(
+    return MarkSectorSignalEffect.markByIndexWithAlternatives(
       player,
       game,
       options.mercurySectorIndex,
+      (markResult) => options.onComplete?.(markResult),
     );
-    return options.onComplete?.(markResult);
   }
 }
 

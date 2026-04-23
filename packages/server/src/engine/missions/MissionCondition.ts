@@ -3,6 +3,7 @@ import {
   type IBaseEffect,
   type ICustomizedEffect,
 } from '@seti/common/types/effect';
+import { EAlienType } from '@seti/common/types/protocol/enums';
 import {
   EMiscIcon,
   EPlanet,
@@ -130,10 +131,55 @@ export function checkQuickMissionCondition(
   if (branch.req.length === 0) return false;
   return branch.req.every((req) => {
     if (req.effectType === EEffectType.CUSTOMIZED) {
-      return false;
+      return checkCustomQuickMissionCondition(req.desc, player, game);
     }
     return checkBaseStateCondition(req as IBaseEffect, player, game);
   });
+}
+
+function checkCustomQuickMissionCondition(
+  desc: string,
+  player: IPlayer,
+  game: IGame,
+): boolean {
+  if (desc === 'desc.et-23-req') {
+    return player.exofossils >= 3;
+  }
+  if (desc === 'desc.et-21-req') {
+    const board = game.alienState?.getBoardByType(EAlienType.OUMUAMUA);
+    if (!board) return false;
+    return board.slots.some((slot) => {
+      if (!slot.slotId.includes('oumuamua-trace|')) return false;
+      const parts = slot.slotId.split('|');
+      if (parts.length !== 4) return false;
+      const exofossilCost = Number(parts[3]);
+      if (!Number.isInteger(exofossilCost) || exofossilCost <= 0) return false;
+      return slot.occupants.some(
+        (occ) => occ.source !== 'neutral' && occ.source.playerId === player.id,
+      );
+    });
+  }
+  if (desc === 'desc.et-22-req') {
+    if (!game.planetaryBoard) return false;
+    const state = game.planetaryBoard.planets.get(EPlanet.OUMUAMUA);
+    if (!state) return false;
+    const landCount = state.landingSlots.filter(
+      (slot) => slot.playerId === player.id,
+    ).length;
+    return landCount >= 1;
+  }
+  if (desc === 'desc.et-27-req') {
+    const board = game.alienState?.getBoardByType(EAlienType.OUMUAMUA);
+    if (!board) return false;
+    const markerSlot = board.slots.find((slot) =>
+      slot.slotId.includes('oumuamua-tile-markers'),
+    );
+    if (!markerSlot) return false;
+    return markerSlot.occupants.some(
+      (occ) => occ.source !== 'neutral' && occ.source.playerId === player.id,
+    );
+  }
+  return false;
 }
 
 function checkBaseStateCondition(
@@ -210,6 +256,7 @@ function parsePlanetFromDesc(desc?: string): EPlanet | undefined {
   if (lower.includes('saturn')) return EPlanet.SATURN;
   if (lower.includes('uranus')) return EPlanet.URANUS;
   if (lower.includes('neptune')) return EPlanet.NEPTUNE;
+  if (lower.includes('oumuamua')) return EPlanet.OUMUAMUA;
   return undefined;
 }
 

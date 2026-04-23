@@ -3,7 +3,7 @@ import {
   type IBaseEffect,
   type ICustomizedEffect,
 } from '@seti/common/types/effect';
-import { EResource, ETrace } from '@seti/common/types/element';
+import { EAlienIcon, EResource, ETrace } from '@seti/common/types/element';
 import { drawCard } from '../deck/drawCard.js';
 import type { IGame } from '../IGame.js';
 import type { PlayerInput } from '../input/PlayerInput.js';
@@ -74,6 +74,12 @@ function applyBaseReward(
       }
       break;
     }
+    case EAlienIcon.EXOFOSSIL:
+      player.gainExofossils(value);
+      break;
+    case EAlienIcon.USE_EXOFOSSIL:
+      player.spendExofossils(value);
+      break;
     default:
       break;
   }

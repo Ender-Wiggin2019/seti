@@ -227,6 +227,7 @@ function deserializePlayers(game: Game, dto: IGameStateDto): void {
     player.probeSpaceLimit = playerDto.probeSpaceLimit;
     player.handLimitAfterPass = playerDto.handLimitAfterPass;
     player.pendingSetupTucks = resolvePendingSetupTucks(playerDto, dto);
+    player.exofossils = Math.max(0, playerDto.exofossils ?? 0);
 
     const concretePlayer = player as Player;
     const dataInternal = concretePlayer.data as unknown as IDataInternalState;

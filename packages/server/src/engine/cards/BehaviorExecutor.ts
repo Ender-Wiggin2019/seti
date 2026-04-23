@@ -36,6 +36,7 @@ const ORBITABLE_PLANETS: readonly EPlanet[] = [
   EPlanet.SATURN,
   EPlanet.URANUS,
   EPlanet.NEPTUNE,
+  EPlanet.OUMUAMUA,
 ];
 
 type TCustomBehaviorHandler = (
@@ -124,6 +125,7 @@ export class BehaviorExecutor {
       this.buildMarkDisplayCardSignalAction(behavior, player),
       this.buildMarkSignalTokenAction(behavior, player),
       this.buildRotateAction(behavior, player),
+      this.buildGainExofossilsAction(behavior, player),
       ...this.buildCustomActions(behavior, player, card),
     ].filter((action): action is SimpleDeferredAction => action !== undefined);
 
@@ -400,6 +402,18 @@ export class BehaviorExecutor {
     return new SimpleDeferredAction(player, (game) =>
       game.mark(EMarkSource.ANY, count, player.id),
     );
+  }
+
+  private buildGainExofossilsAction(
+    behavior: IBehavior,
+    player: IPlayer,
+  ): SimpleDeferredAction | undefined {
+    const gainExofossils = behavior.gainExofossils;
+    if (!gainExofossils || gainExofossils <= 0) return undefined;
+    return new SimpleDeferredAction(player, () => {
+      player.gainExofossils(gainExofossils);
+      return undefined;
+    });
   }
 
   private buildCustomActions(

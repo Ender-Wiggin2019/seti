@@ -38,6 +38,7 @@ export type TCardItem =
 export interface IPlayerInit extends IPlayerIdentity {
   score?: number;
   publicity?: number;
+  exofossils?: number;
   resources?: TPartialResourceBundle;
   baseIncome?: TPartialIncomeBundle;
   tuckedCardIncome?: TPartialIncomeBundle;
@@ -73,6 +74,7 @@ export interface IPlayer extends IPlayerIdentity {
   score: number;
   resources: Resources;
   publicity: number;
+  exofossils: number;
   income: Income;
   data: Data;
   computer: Computer;
@@ -110,6 +112,8 @@ export interface IPlayer extends IPlayerIdentity {
   gainMove(amount: number): void;
   spendMove(amount: number): void;
   getMoveStash(): number;
+  gainExofossils(amount?: number): void;
+  spendExofossils(amount?: number): boolean;
   flushDataStashAtTurnEnd(): { movedToPool: number; discarded: number };
   flushTurnStashAtTurnEnd(): {
     data: { movedToPool: number; discarded: number };

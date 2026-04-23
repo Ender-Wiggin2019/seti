@@ -49,7 +49,7 @@ export interface IPlanetState {
 
 export interface IOrbitResult {
   vpGained: number;
-  incomeResource: EResource;
+  incomeResource?: EResource;
 }
 
 export interface ILandingCenterReward {
@@ -64,7 +64,7 @@ export interface ILandingResult {
   isMoon: boolean;
 }
 
-const PLANET_CENTER_REWARDS: Readonly<Record<EPlanet, ILandingCenterReward>> = {
+const PLANET_CENTER_REWARDS: Readonly<Partial<Record<EPlanet, ILandingCenterReward>>> = {
   [EPlanet.EARTH]: { vpGained: 0, lifeTraceGained: 0 },
   [EPlanet.MERCURY]: { vpGained: 2, lifeTraceGained: 1 },
   [EPlanet.VENUS]: { vpGained: 3, lifeTraceGained: 1 },
@@ -74,6 +74,11 @@ const PLANET_CENTER_REWARDS: Readonly<Record<EPlanet, ILandingCenterReward>> = {
   [EPlanet.URANUS]: { vpGained: 7, lifeTraceGained: 1 },
   [EPlanet.NEPTUNE]: { vpGained: 8, lifeTraceGained: 1 },
 };
+const DEFAULT_PLANET_CENTER_REWARD: ILandingCenterReward = {
+  vpGained: 0,
+  lifeTraceGained: 0,
+};
+const DEFAULT_FIRST_LAND_DATA_SLOTS = 0;
 
 function assertPlayerId(playerId: string): void {
   if (playerId.trim().length === 0) {
@@ -129,7 +134,8 @@ export class PlanetaryBoard {
     planetState.orbitSlots.push({ playerId });
 
     const incomeResource =
-      PLANET_ORBIT_INCOME[planet as (typeof PLANETARY_PLANETS)[number]];
+      PLANET_ORBIT_INCOME[planet as (typeof PLANETARY_PLANETS)[number]] ??
+      undefined;
 
     if (!planetState.firstOrbitClaimed) {
       planetState.firstOrbitClaimed = true;
@@ -178,7 +184,8 @@ export class PlanetaryBoard {
     const firstLandDataGained = this.takeFirstLandDataBonus(planetState);
     return {
       landingCost: this.getLandingCost(planet, playerId),
-      centerReward: PLANET_CENTER_REWARDS[planet],
+      centerReward:
+        PLANET_CENTER_REWARDS[planet] ?? DEFAULT_PLANET_CENTER_REWARD,
       firstLandDataGained,
       isMoon,
     };
@@ -262,21 +269,38 @@ export class PlanetaryBoard {
   }
 
   private getPlanetState(planet: EPlanet): IPlanetState {
-    const planetState = this.planets.get(planet);
+    let planetState = this.planets.get(planet);
     if (!planetState) {
-      throw new GameError(EErrorCode.VALIDATION_ERROR, 'Unknown planet', {
-        planet,
-      });
+      if (planet === EPlanet.EARTH) {
+        throw new GameError(EErrorCode.VALIDATION_ERROR, 'Unknown planet', {
+          planet,
+        });
+      }
+      planetState = {
+        orbitSlots: [],
+        landingSlots: [],
+        firstOrbitClaimed: false,
+        firstLandDataBonusTaken: Array.from(
+          { length: DEFAULT_FIRST_LAND_DATA_SLOTS },
+          () => false,
+        ),
+        moonOccupant: null,
+      };
+      this.planets.set(planet, planetState);
     }
     return planetState;
   }
 
   private getProbesMap(planet: EPlanet): Map<string, number> {
-    const probesOnPlanet = this.probesByPlanet.get(planet);
+    let probesOnPlanet = this.probesByPlanet.get(planet);
     if (!probesOnPlanet) {
-      throw new GameError(EErrorCode.VALIDATION_ERROR, 'Unknown planet', {
-        planet,
-      });
+      if (planet === EPlanet.EARTH) {
+        throw new GameError(EErrorCode.VALIDATION_ERROR, 'Unknown planet', {
+          planet,
+        });
+      }
+      probesOnPlanet = new Map();
+      this.probesByPlanet.set(planet, probesOnPlanet);
     }
     return probesOnPlanet;
   }

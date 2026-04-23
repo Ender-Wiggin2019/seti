@@ -348,6 +348,42 @@ export class SolarSystem {
     return [...this.getSpace(spaceId).occupants];
   }
 
+  /**
+   * Place or move a dynamic planet marker (e.g. Oumuamua) onto a specific
+   * space on the solar-system board.
+   */
+  public setDynamicPlanetAtSpace(
+    planet: EPlanet,
+    spaceId: string,
+    options?: { grantVisitPublicity?: boolean },
+  ): void {
+    const targetSpace = this.getSpace(spaceId);
+    const planetElementType =
+      planet === EPlanet.EARTH
+        ? ESolarSystemElementType.EARTH
+        : ESolarSystemElementType.PLANET;
+
+    for (const space of this.spaces) {
+      space.elements = space.elements.filter(
+        (element) => !(element.planet === planet && element.amount > 0),
+      );
+    }
+
+    targetSpace.elements.push({
+      type: planetElementType,
+      amount: 1,
+      planet,
+    });
+    if (options?.grantVisitPublicity) {
+      targetSpace.hasPublicityIcon = true;
+      if (!targetSpace.publicityIconAmount || targetSpace.publicityIconAmount < 1) {
+        targetSpace.publicityIconAmount = 1;
+      }
+    }
+
+    this.rebuildElementAndProbeIndexes();
+  }
+
   public placeProbe(playerId: string, spaceId: string): ISolarProbe {
     const targetSpace = this.getSpace(spaceId);
     this.assertTraversable(targetSpace);

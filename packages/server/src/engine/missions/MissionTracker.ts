@@ -40,6 +40,7 @@ export class MissionTracker {
     checkpointId: number;
     event: IMissionEvent;
   }> = [];
+  private readonly turnEventHistory: IMissionEvent[] = [];
   private nextCheckpointId = 1;
   private activeCheckpointId?: number;
 
@@ -86,10 +87,19 @@ export class MissionTracker {
   }
 
   public recordEvent(event: IMissionEvent): void {
+    this.turnEventHistory.push(event);
     this.eventBuffer.push({
       checkpointId: this.activeCheckpointId ?? this.nextCheckpointId++,
       event,
     });
+  }
+
+  public hasTurnEvent(predicate: (event: IMissionEvent) => boolean): boolean {
+    return this.turnEventHistory.some(predicate);
+  }
+
+  public clearTurnEventHistory(): void {
+    this.turnEventHistory.length = 0;
   }
 
   public runInCheckpoint<T>(callback: () => T): T {

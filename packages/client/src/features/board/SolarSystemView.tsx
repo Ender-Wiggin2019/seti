@@ -1,4 +1,4 @@
-import type { ISolarSystemSetupConfig, TSolarSystemWheelIndex } from '@seti/common/constant/sectorSetup';
+import type { ISolarSystemSetupConfig } from '@seti/common/constant/sectorSetup';
 import { getReachableSpaces } from '@seti/common/rules';
 import { useMemo, useState } from 'react';
 import { useTextMode } from '@/stores/debugStore';
@@ -31,6 +31,13 @@ const IMAGE_ALIGNMENT_OFFSET_CW_BY_RING: Readonly<
   4: 4,
 };
 const PROBE_TRANSITION_MS = 900;
+const TEXT_MODE_LABEL_Z_INDEX_BY_RING: Readonly<Record<1 | 2 | 3 | 4, number>> =
+  {
+    1: 75,
+    2: 74,
+    3: 73,
+    4: 72,
+  };
 
 export type TProbeInsetPxByRing = Readonly<Record<1 | 2 | 3 | 4, number>>;
 
@@ -168,23 +175,6 @@ export function SolarSystemView({
     };
   }, [solarSystem.discs]);
 
-  const textModeLabelsByRing = useMemo<
-    Record<TSolarSystemWheelIndex, Array<string | null>>
-  >(() => {
-    const wheels = setupConfig.wheels;
-    const result = {} as Record<TSolarSystemWheelIndex, Array<string | null>>;
-    for (const ring of [1, 2, 3, 4] as const) {
-      const band = ring - 1;
-      const row = wheels[ring][band];
-      result[ring] = row.map((slot) => {
-        if (slot.cell.type === 'NULL') return null;
-        if (slot.cell.planet) return slot.cell.planet.toLowerCase();
-        return slot.cell.type.toLowerCase();
-      });
-    }
-    return result;
-  }, [setupConfig.wheels]);
-
   const spacePoints = useMemo<ISpacePoint[]>(() => {
     const states = solarSystem.spaceStates;
     const usesZeroBasedRingIndex = Boolean(
@@ -242,6 +232,35 @@ export function SolarSystemView({
 
     return labels;
   }, [showSpaceConfigDebug, spacePoints, solarSystem.spaceStates]);
+
+  const textModeLabelBySpaceId = useMemo(() => {
+    if (!textMode) {
+      return undefined;
+    }
+
+    const labels: Record<string, string> = {};
+    for (const space of spacePoints) {
+      const state = solarSystem.spaceStates?.[space.spaceId];
+      if (!state) {
+        continue;
+      }
+
+      const primaryElement = state.elements?.[0];
+      const firstType = primaryElement?.type ?? state.elementTypes[0] ?? null;
+      if (!firstType) {
+        continue;
+      }
+
+      if (firstType === 'PLANET' && primaryElement?.planet) {
+        labels[space.spaceId] = primaryElement.planet.toLowerCase();
+        continue;
+      }
+
+      labels[space.spaceId] = firstType.toLowerCase();
+    }
+
+    return labels;
+  }, [textMode, spacePoints, solarSystem.spaceStates]);
 
   const probeView = useMemo(() => {
     const bySpacePlayers: Record<string, string[]> = {};
@@ -355,27 +374,24 @@ export function SolarSystemView({
               }
         }
       >
-        <WheelLayer ring={4} angle={0} className='z-10' showImage={!textMode} textModeLabels={textMode ? textModeLabelsByRing[4] : undefined} />
+        <WheelLayer ring={4} angle={0} className='z-10' showImage={!textMode} />
         <WheelLayer
           ring={3}
           angle={getDiscAngle(solarSystem, 3)}
           className='z-20'
           showImage={!textMode}
-          textModeLabels={textMode ? textModeLabelsByRing[3] : undefined}
         />
         <WheelLayer
           ring={2}
           angle={getDiscAngle(solarSystem, 2)}
           className='z-30'
           showImage={!textMode}
-          textModeLabels={textMode ? textModeLabelsByRing[2] : undefined}
         />
         <WheelLayer
           ring={1}
           angle={getDiscAngle(solarSystem, 1)}
           className='z-40'
           showImage={!textMode}
-          textModeLabels={textMode ? textModeLabelsByRing[1] : undefined}
         />
 
         {!textMode && (
@@ -452,6 +468,38 @@ export function SolarSystemView({
             </button>
           );
         })}
+
+        {textMode &&
+          ([4, 3, 2, 1] as const).map((ring) => (
+            <div
+              key={`text-mode-layer-${ring}`}
+              className='pointer-events-none absolute inset-0'
+              style={{ zIndex: TEXT_MODE_LABEL_Z_INDEX_BY_RING[ring] }}
+            >
+              {spacePoints
+                .filter((space) => space.ringIndex === ring)
+                .map((space) => {
+                  const label = textModeLabelBySpaceId?.[space.spaceId];
+                  if (!label) {
+                    return null;
+                  }
+
+                  return (
+                    <span
+                      key={`text-mode-label-${space.spaceId}`}
+                      className='absolute inline-flex h-[18px] w-[62px] items-center justify-center overflow-hidden rounded-sm border border-surface-500 bg-surface-900 font-mono text-[9px] uppercase leading-none text-text-100 shadow-[0_1px_2px_rgba(0,0,0,0.65)]'
+                      style={{
+                        left: `${space.xPercent}%`,
+                        top: `${space.yPercent}%`,
+                        transform: 'translate(-50%, -50%)',
+                      }}
+                    >
+                      {label}
+                    </span>
+                  );
+                })}
+            </div>
+          ))}
 
         {probeView.renderItems.map((probe) => (
           <div

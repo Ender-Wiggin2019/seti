@@ -281,7 +281,9 @@ export class GameManager {
       return;
     }
 
-    const version = this.versions.get(gameId) ?? 0;
+    // Unload also persists a snapshot (e.g. to capture free-action-only
+    // changes), so it must advance version to avoid unique-key collisions.
+    const version = this.nextVersion(gameId);
     await this.persistSnapshot(gameId, version, game, {
       type: 'UNLOAD',
     });

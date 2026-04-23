@@ -96,6 +96,19 @@ describe('BehaviorExecutor — integration', () => {
       expect(player.getMoveStash()).toBe(moveBefore + 2);
       expect(player.income.tuckedCardIncome[EResource.ENERGY]).toBe(1);
     });
+
+    it('applies exofossil gains from alien-icon behavior', () => {
+      const { game, player } = createIntegrationGame('beh-2-9-1-exofossil');
+      const before = player.exofossils;
+
+      const behavior: IBehavior = {
+        gainExofossils: 2,
+      };
+      getBehaviorExecutor().execute(behavior, player, game, sampleCard());
+      drain(game);
+
+      expect(player.exofossils).toBe(before + 2);
+    });
   });
 
   describe('2.9.2 action behaviors go through real effect classes', () => {

@@ -12,13 +12,15 @@
  */
 
 import { EResource, ETrace } from '@seti/common/types/element';
-import { EAlienType } from '@seti/common/types/protocol/enums';
+import { EAlienType, EPlanet } from '@seti/common/types/protocol/enums';
 import {
   countPlayerSignalsInAnomalySectors,
   getAnomalyTokenAtSector,
   getEarthSectorIndex,
   getNextTriggeredAnomalyToken,
 } from '../alien/plugins/AnomaliesResolver.js';
+import { AlienRegistry } from '../alien/AlienRegistry.js';
+import { OumuamuaAlienPlugin } from '../alien/plugins/OumuamuaAlienPlugin.js';
 import { disableMovementPublicityForCurrentTurn } from '../alien/plugins/AnomaliesTurnEffects.js';
 import {
   extractSectorColorFromCardItem,
@@ -26,6 +28,8 @@ import {
 } from '../effects/index.js';
 import { FreeActionCornerFreeAction } from '../freeActions/FreeActionCorner.js';
 import { SelectCard } from '../input/SelectCard.js';
+import { SelectOption } from '../input/SelectOption.js';
+import { EMissionEventType } from '../missions/IMission.js';
 import { getBehaviorExecutor } from './BehaviorExecutor.js';
 import { hasCardData, loadCardData } from './loadCardData.js';
 import { EMarkSource } from './utils/Mark.js';
@@ -332,6 +336,149 @@ export function registerDescHandlers(): void {
     const signalCount = countPlayerSignalsInAnomalySectors(game, player.id);
     if (signalCount > 0) {
       player.score += signalCount;
+    }
+    return undefined;
+  });
+
+  executor.registerCustomHandler('desc.et-21', (player, game) => {
+    const plugin = AlienRegistry.get(EAlienType.OUMUAMUA);
+    if (!(plugin instanceof OumuamuaAlienPlugin)) {
+      return undefined;
+    }
+    const count = plugin.getTileMarkerCountByPlayer(game, player.id);
+    if (count > 0) {
+      player.score += count * 2;
+    }
+    return undefined;
+  });
+
+  executor.registerCustomHandler('desc.et-22', (player, game) => {
+    const plugin = AlienRegistry.get(EAlienType.OUMUAMUA);
+    if (!(plugin instanceof OumuamuaAlienPlugin)) {
+      return undefined;
+    }
+    const count = plugin.getTileMarkerCountByPlayer(game, player.id);
+    if (count > 0) {
+      player.gainExofossils(1);
+    }
+    return undefined;
+  });
+
+  executor.registerCustomHandler('desc.et-23', (player, game) => {
+    const plugin = AlienRegistry.get(EAlienType.OUMUAMUA);
+    if (!(plugin instanceof OumuamuaAlienPlugin)) {
+      return undefined;
+    }
+
+    const state = plugin.getRuntimeState(game);
+    if (!state?.meta) return undefined;
+
+    const sectorIndex = game.sectors.findIndex(
+      (sector) => sector.id === state.meta?.sectorId,
+    );
+    if (sectorIndex < 0) return undefined;
+
+    return MarkSectorSignalEffect.markByIndexWithAlternatives(
+      player,
+      game,
+      sectorIndex,
+    );
+  });
+
+  executor.registerCustomHandler('desc.et-24', (player, game) => {
+    if (player.exofossils < 1) return undefined;
+    return new SelectOption(
+      player,
+      [
+        {
+          id: 'use-exofossil-mark-any-signal',
+          label: 'Spend 1 exofossil to mark any signal',
+          onSelect: () => {
+            if (!player.spendExofossils(1)) return undefined;
+            return game.mark(EMarkSource.ANY, 1, player.id);
+          },
+        },
+        {
+          id: 'skip-use-exofossil-mark-any-signal',
+          label: 'Skip',
+          onSelect: () => undefined,
+        },
+      ],
+      'Use exofossil for extra signal?',
+    );
+  });
+
+  executor.registerCustomHandler('desc.et-25', (player) => {
+    const promptLoop = (): SelectOption | undefined => {
+      if (player.exofossils < 1) return undefined;
+      return new SelectOption(
+        player,
+        [
+          {
+            id: 'use-exofossil-gain-2-move',
+            label: 'Spend 1 exofossil to gain 2 move',
+            onSelect: () => {
+              if (!player.spendExofossils(1)) return undefined;
+              player.gainMove(2);
+              return promptLoop();
+            },
+          },
+          {
+            id: 'stop-use-exofossil-gain-2-move',
+            label: 'Done',
+            onSelect: () => undefined,
+          },
+        ],
+        'Use exofossil to gain movement?',
+      );
+    };
+    return promptLoop();
+  });
+
+  executor.registerCustomHandler('desc.et-27', (player, game) => {
+    const visited = game.missionTracker.hasTurnEvent(
+      (event) =>
+        event.type === EMissionEventType.PROBE_VISITED_PLANET &&
+        event.planet === EPlanet.OUMUAMUA,
+    );
+    if (visited) {
+      player.gainExofossils(1);
+    }
+    return undefined;
+  });
+
+  executor.registerCustomHandler('desc.et-28', (player) => {
+    if (player.exofossils < 1) return undefined;
+    return new SelectOption(
+      player,
+      [
+        {
+          id: 'use-exofossil-gain-data',
+          label: 'Spend 1 exofossil to gain 1 data',
+          onSelect: () => {
+            if (!player.spendExofossils(1)) return undefined;
+            player.resources.gain({ data: 1 });
+            return undefined;
+          },
+        },
+        {
+          id: 'skip-use-exofossil-gain-data',
+          label: 'Skip',
+          onSelect: () => undefined,
+        },
+      ],
+      'Use exofossil to gain data?',
+    );
+  });
+
+  executor.registerCustomHandler('desc.et-30', (player, game) => {
+    const landedWithThisAction = game.missionTracker.hasTurnEvent(
+      (event) =>
+        event.type === EMissionEventType.PROBE_LANDED &&
+        event.planet === EPlanet.OUMUAMUA,
+    );
+    if (landedWithThisAction) {
+      player.score += 3;
     }
     return undefined;
   });

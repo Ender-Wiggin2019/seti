@@ -6,6 +6,7 @@ import {
   type IOrEffect,
 } from '@seti/common/types/effect';
 import {
+  EAlienIcon,
   EMiscIcon,
   EResource,
   EScanAction,
@@ -43,6 +44,7 @@ export interface IBehavior {
   markDisplayCardSignal?: number;
   markSignalToken?: number;
   rotateSolarSystem?: boolean;
+  gainExofossils?: number;
   custom?: string[];
 }
 
@@ -231,6 +233,11 @@ function applyBaseEffect(behavior: IBehavior, effect: IBaseEffect): IBehavior {
         ...behavior,
         markSignalToken: (behavior.markSignalToken ?? 0) + amount,
       };
+    case EAlienIcon.EXOFOSSIL:
+      return {
+        ...behavior,
+        gainExofossils: (behavior.gainExofossils ?? 0) + amount,
+      };
     default:
       return behavior;
   }
@@ -238,26 +245,35 @@ function applyBaseEffect(behavior: IBehavior, effect: IBaseEffect): IBehavior {
 
 export function behaviorFromEffects(effects: Effect[]): IBehavior {
   const flatEffects = flattenEffects(effects);
-  return flatEffects.reduce<IBehavior>(
-    (draftBehavior, effect) => {
-      if (effect.effectType === EEffectType.BASE) {
-        return applyBaseEffect(draftBehavior, effect);
+  let behavior: IBehavior = { ...EMPTY_BEHAVIOR };
+  for (let i = 0; i < flatEffects.length; i += 1) {
+    const effect = flatEffects[i];
+
+    if (effect.effectType === EEffectType.BASE) {
+      // ET.23 models "mark signal in Oumuamua sector" as SIGNAL_ANY + DESC.
+      // Skip the generic mark-any translation; the DESC handler resolves
+      // the constrained placement (including sector/tile choice).
+      if (effect.type === EScanAction.ANY) {
+        const next = flatEffects[i + 1];
+        if (
+          next?.effectType === EEffectType.CUSTOMIZED &&
+          (next as ICustomizedEffect).desc === 'desc.et-23'
+        ) {
+          continue;
+        }
       }
-      if (effect.effectType === EEffectType.CUSTOMIZED) {
-        return {
-          ...draftBehavior,
-          custom: appendCustom(draftBehavior.custom, effect),
-        };
-      }
-      if (
-        effect.effectType === EEffectType.MISSION_FULL ||
-        effect.effectType === EEffectType.MISSION_QUICK ||
-        effect.effectType === EEffectType.END_GAME
-      ) {
-        return draftBehavior;
-      }
-      return draftBehavior;
-    },
-    { ...EMPTY_BEHAVIOR },
-  );
+
+      behavior = applyBaseEffect(behavior, effect);
+      continue;
+    }
+
+    if (effect.effectType === EEffectType.CUSTOMIZED) {
+      behavior = {
+        ...behavior,
+        custom: appendCustom(behavior.custom, effect),
+      };
+      continue;
+    }
+  }
+  return behavior;
 }

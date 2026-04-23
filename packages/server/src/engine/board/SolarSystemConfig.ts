@@ -1,4 +1,5 @@
 import { EPlanet } from '@seti/common/types/protocol/enums';
+import { SOLAR_SYSTEM_PLANETS } from '@seti/common/constant/boardLayout';
 import {
   ESolarSystemElementType,
   type ISolarSystemElement,
@@ -89,7 +90,7 @@ export interface ISolarSystemCellConfig {
 
 interface IBuildResult {
   cells: ISolarSystemCellConfig[];
-  planetSpaceIds: Readonly<Record<EPlanet, string>>;
+  planetSpaceIds: Readonly<Partial<Record<EPlanet, string>>>;
   cutoutSpaceIds: readonly string[];
   publicitySpaceIds: readonly string[];
 }
@@ -159,7 +160,7 @@ function buildRealConfig(): IBuildResult {
     }
   }
 
-  const missingPlanets = Object.values(EPlanet).filter(
+  const missingPlanets = SOLAR_SYSTEM_PLANETS.filter(
     (planet) => planetSpaceIdsMutable[planet] === undefined,
   );
   if (missingPlanets.length > 0) {
@@ -170,7 +171,8 @@ function buildRealConfig(): IBuildResult {
 
   return {
     cells,
-    planetSpaceIds: planetSpaceIdsMutable as Readonly<Record<EPlanet, string>>,
+    planetSpaceIds:
+      planetSpaceIdsMutable as Readonly<Partial<Record<EPlanet, string>>>,
     cutoutSpaceIds,
     publicitySpaceIds,
   };

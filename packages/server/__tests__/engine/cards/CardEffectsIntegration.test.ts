@@ -157,6 +157,28 @@ describe('CardEffectsIntegration — representative cards through processMainAct
     });
   });
 
+  describe('2.10.3b oumuamua exofossil icon grants exofossils on play', () => {
+    it('ET.26 pays card cost, launches, and gains 1 exofossil', () => {
+      const { game, player } = createGame('2-10-3b-oumuamua-exofossil');
+      player.hand = ['ET.26'];
+      game.mainDeck = new Deck(['refill-1'], []);
+      game.cardRow = ['50', '55', '71'];
+      const creditsBefore = player.resources.credits;
+      const exofossilsBefore = player.exofossils;
+      const probesBefore = player.probesInSpace;
+
+      game.processMainAction(player.id, {
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 0 },
+      });
+      resolveFirstOptionUntilDone(game, player);
+
+      expect(player.resources.credits).toBe(creditsBefore - 1);
+      expect(player.exofossils).toBe(exofossilsBefore + 1);
+      expect(player.probesInSpace).toBe(probesBefore + 1);
+    });
+  });
+
   describe('2.10.4 tech card triggers rotation and presents a real tech choice', () => {
     it('card 71 rotates the solar system and prompts tech selection with board-valid ids', () => {
       const { game, player } = createGame('2-10-4-tech-card');

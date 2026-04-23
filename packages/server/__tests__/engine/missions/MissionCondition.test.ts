@@ -103,4 +103,126 @@ describe('checkQuickMissionCondition', () => {
 
     expect(ok).toBe(true);
   });
+
+  it('supports oumuamua exofossil requirement custom desc', () => {
+    const branch: IMissionBranchDef = {
+      req: [{ effectType: EEffectType.CUSTOMIZED, desc: 'desc.et-23-req' }],
+      rewards: [],
+    };
+
+    expect(
+      checkQuickMissionCondition(
+        branch,
+        { exofossils: 2 } as never,
+        {} as never,
+      ),
+    ).toBe(false);
+    expect(
+      checkQuickMissionCondition(
+        branch,
+        { exofossils: 3 } as never,
+        {} as never,
+      ),
+    ).toBe(true);
+  });
+
+  it('parses oumuamua in planet mission descriptions', () => {
+    const branch: IMissionBranchDef = {
+      req: [
+        {
+          effectType: EEffectType.BASE,
+          type: EMiscIcon.LAND_COUNT,
+          value: 1,
+          desc: 'Land on Oumuamua',
+        },
+      ],
+      rewards: [],
+    };
+
+    const ok = checkQuickMissionCondition(
+      branch,
+      { id: 'p1' } as never,
+      {
+        planetaryBoard: {
+          planets: new Map([
+            [
+              EPlanet.OUMUAMUA,
+              {
+                orbitSlots: [],
+                landingSlots: [{ playerId: 'p1' }],
+                moonOccupant: null,
+              },
+            ],
+          ]),
+        },
+      } as never,
+    );
+
+    expect(ok).toBe(true);
+  });
+
+  it('supports desc.et-21-req: marked paid oumuamua trace', () => {
+    const branch: IMissionBranchDef = {
+      req: [{ effectType: EEffectType.CUSTOMIZED, desc: 'desc.et-21-req' }],
+      rewards: [],
+    };
+
+    const ok = checkQuickMissionCondition(
+      branch,
+      { id: 'p1' } as never,
+      {
+        alienState: {
+          getBoardByType: () => ({
+            slots: [
+              {
+                slotId: 'alien-0-oumuamua-trace|red-trace|1|4',
+                occupants: [{ source: { playerId: 'p1' } }],
+              },
+            ],
+          }),
+        },
+      } as never,
+    );
+
+    expect(ok).toBe(true);
+  });
+
+  it('supports desc.et-22-req and desc.et-27-req custom quick conditions', () => {
+    const et22: IMissionBranchDef = {
+      req: [{ effectType: EEffectType.CUSTOMIZED, desc: 'desc.et-22-req' }],
+      rewards: [],
+    };
+    const et27: IMissionBranchDef = {
+      req: [{ effectType: EEffectType.CUSTOMIZED, desc: 'desc.et-27-req' }],
+      rewards: [],
+    };
+
+    const game = {
+      planetaryBoard: {
+        planets: new Map([
+          [
+            EPlanet.OUMUAMUA,
+            {
+              landingSlots: [{ playerId: 'p1' }],
+              orbitSlots: [],
+              moonOccupant: null,
+            },
+          ],
+        ]),
+      },
+      alienState: {
+        getBoardByType: () => ({
+          slots: [
+            {
+              slotId: 'alien-0-oumuamua-tile-markers',
+              occupants: [{ source: { playerId: 'p1' } }],
+            },
+          ],
+        }),
+      },
+    };
+
+    expect(checkQuickMissionCondition(et22, { id: 'p1' } as never, game as never)).toBe(true);
+    expect(checkQuickMissionCondition(et27, { id: 'p1' } as never, game as never)).toBe(true);
+  });
 });

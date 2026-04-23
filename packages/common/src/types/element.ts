@@ -130,6 +130,7 @@ export enum EPlanet {
   VENUS = 'venus',
   URANUS = 'uranus',
   NEPTUNE = 'neptune',
+  OUMUAMUA = 'oumuamua',
 }
 
 export enum ECardType {

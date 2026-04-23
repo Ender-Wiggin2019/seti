@@ -7,7 +7,6 @@ import type { IScanTechEffect } from '../../tech/ITech.js';
 import { TechModifierQuery } from '../../tech/TechModifierQuery.js';
 import type { ICardRowCardInfo } from '../cardRow/SelectCardFromCardRowEffect.js';
 import { SelectCardFromCardRowEffect } from '../cardRow/SelectCardFromCardRowEffect.js';
-import type { IMarkSectorSignalResult } from './MarkSectorSignalEffect.js';
 import { MarkSectorSignalEffect } from './MarkSectorSignalEffect.js';
 import {
   extractSectorColorFromCardItem,
@@ -192,8 +191,7 @@ export class ScanActionPool {
       canExecute: () => true,
       execute: (onDone) => {
         if (!hasEarthNeighborTech) {
-          this.markPlanet(player, game, EPlanet.EARTH);
-          return onDone();
+          return this.markPlanet(player, game, EPlanet.EARTH, onDone);
         }
         return this.markEarthWithNeighborChoice(player, game, onDone);
       },
@@ -284,11 +282,26 @@ export class ScanActionPool {
     player: IPlayer,
     game: IGame,
     planet: EPlanet,
-  ): IMarkSectorSignalResult | null {
+    onDone: () => IPlayerInput | undefined,
+  ): IPlayerInput | undefined {
     if (game.solarSystem) {
-      return MarkSectorSignalEffect.markByPlanet(player, game, planet);
+      const sectorIndex = getSectorIndexByPlanet(game.solarSystem, planet);
+      if (sectorIndex === null) {
+        return onDone();
+      }
+      return MarkSectorSignalEffect.markByIndexWithAlternatives(
+        player,
+        game,
+        sectorIndex,
+        () => onDone(),
+      );
     }
-    return MarkSectorSignalEffect.markByIndex(player, game, 0);
+    return MarkSectorSignalEffect.markByIndexWithAlternatives(
+      player,
+      game,
+      0,
+      () => onDone(),
+    );
   }
 
   private static resolvePlanetIndex(game: IGame, planet: EPlanet): number {
@@ -327,8 +340,12 @@ export class ScanActionPool {
             ? `Earth sector (${idx})`
             : `Adjacent sector (${idx})`,
         onSelect: () => {
-          MarkSectorSignalEffect.markByIndex(player, game, idx);
-          return onDone();
+          return MarkSectorSignalEffect.markByIndexWithAlternatives(
+            player,
+            game,
+            idx,
+            () => onDone(),
+          );
         },
       })),
       'Earth Look: choose sector for earth signal',

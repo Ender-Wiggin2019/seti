@@ -60,3 +60,16 @@ export interface IDebugReplaySessionResponse
   extends IDebugServerSessionResponse {
   replay: IDebugReplaySessionMetadata;
 }
+
+export interface IDebugSnapshotSessionRequest {
+  gameId: string;
+  version?: number;
+}
+
+export interface IDebugSnapshotSessionResponse
+  extends IDebugServerSessionResponse {
+  sourceGameId: string;
+  snapshotVersion: number;
+  phase: EPhase;
+  round: number;
+}

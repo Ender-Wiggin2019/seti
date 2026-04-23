@@ -1,6 +1,7 @@
 import { AlienRegistry } from './AlienRegistry.js';
 import { AnomaliesAlienPlugin } from './plugins/AnomaliesAlienPlugin.js';
 import { DummyAlienPlugin } from './plugins/DummyAlienPlugin.js';
+import { OumuamuaAlienPlugin } from './plugins/OumuamuaAlienPlugin.js';
 
 export type {
   IAlienBoardInit,
@@ -18,4 +19,5 @@ export type { IAlienPlugin } from './IAlienPlugin.js';
 // ---- Plugin registration ---------------------------------------------------
 
 AlienRegistry.register(new AnomaliesAlienPlugin());
+AlienRegistry.register(new OumuamuaAlienPlugin());
 AlienRegistry.register(new DummyAlienPlugin());

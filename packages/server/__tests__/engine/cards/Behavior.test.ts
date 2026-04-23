@@ -1,5 +1,10 @@
 import { DESC, e } from '@seti/common/constant/effect';
-import { EResource, ESector, ETech, ETrace } from '@seti/common/types/element';
+import {
+  EResource,
+  ESector,
+  ETech,
+  ETrace,
+} from '@seti/common/types/element';
 import { behaviorFromEffects } from '@/engine/cards/Behavior.js';
 
 describe('behaviorFromEffects', () => {
@@ -65,5 +70,16 @@ describe('behaviorFromEffects', () => {
     expect(behavior.markAnySignal).toBe(2);
     expect(behavior.markDisplayCardSignal).toBe(3);
     expect(behavior.markSignalToken).toBe(1);
+  });
+
+  it('maps exofossil icon into gainExofossils behavior', () => {
+    const behavior = behaviorFromEffects([e.EXOFOSSIL(2)]);
+    expect(behavior.gainExofossils).toBe(2);
+  });
+
+  it('keeps ET.23 signal constrained to custom handler instead of generic any-signal', () => {
+    const behavior = behaviorFromEffects([e.SIGNAL_ANY(), DESC('desc.et-23')]);
+    expect(behavior.markAnySignal).toBeUndefined();
+    expect(behavior.custom).toContain('desc.et-23');
   });
 });

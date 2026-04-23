@@ -2,6 +2,7 @@ import type {
   IDebugReplayPresetDefinition,
   IDebugReplaySessionResponse,
   IDebugServerSessionResponse,
+  IDebugSnapshotSessionResponse,
 } from '@seti/common/types/protocol/debug';
 
 export interface IAuthUser {
@@ -36,6 +37,7 @@ export type {
   IDebugReplayPresetDefinition,
   IDebugReplaySessionResponse,
   IDebugServerSessionResponse,
+  IDebugSnapshotSessionResponse,
 };
 
 export enum ERoomStatus {

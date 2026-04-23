@@ -231,8 +231,12 @@ export class AlienState {
   ): PlayerInput | false | undefined {
     const { board, slot } = this.findSlot(slotId);
     if (!board || !slot) return false;
+    const plugin = AlienRegistry.get(board.alienType);
 
     const resolvedColor = traceColor === ETrace.ANY ? ETrace.RED : traceColor;
+    if (plugin?.canPlaceTraceOnSlot?.(game, player, slot) === false) {
+      return false;
+    }
 
     const placed = board.placeTrace(
       slot,
@@ -240,6 +244,7 @@ export class AlienState {
       resolvedColor,
     );
     if (!placed) return false;
+    plugin?.onPlaceTraceOnSlot?.(game, player, slot);
 
     const rewardInput = this.executeRewards(
       player,
@@ -258,7 +263,6 @@ export class AlienState {
       ),
     );
 
-    const plugin = AlienRegistry.get(board.alienType);
     plugin?.onTraceMark?.(game, player, resolvedColor, !slot.isDiscovery);
 
     if (rewardInput !== undefined) {
@@ -423,7 +427,12 @@ export class AlienState {
     traceColor: ETrace,
     onComplete?: () => PlayerInput | undefined,
   ): PlayerInput | undefined {
-    const targets = this.getAvailableTargets(traceColor);
+    const targets = this.getAvailableTargets(traceColor).filter((target) => {
+      const { board, slot } = this.findSlot(target.slotId);
+      if (!board || !slot) return false;
+      const plugin = AlienRegistry.get(board.alienType);
+      return plugin?.canPlaceTraceOnSlot?.(game, player, slot) !== false;
+    });
     if (targets.length === 0) {
       return onComplete?.();
     }
@@ -503,6 +512,9 @@ export class AlienState {
               },
               onComplete,
             );
+          }
+          if (reward.effectId === 'GAIN_EXOFOSSIL') {
+            player.gainExofossils(1);
           }
           break;
       }
