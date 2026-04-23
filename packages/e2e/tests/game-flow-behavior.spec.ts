@@ -6,6 +6,7 @@ import {
   enterGameByUi,
   joinRoomByUi,
   launchGameByUi,
+  openEventLog,
   registerByUi,
   waitForActionOwner,
 } from '../helpers/real-flow';
@@ -74,9 +75,7 @@ test('behavior flow e2e: no debug API, no injected auth, no ws shortcuts', async
     });
     await clickPassAndWaitForLogSync(actor, other);
 
-    await expect(other.locator(sel.eventLog)).toBeVisible({
-      timeout: 10_000,
-    });
+    await openEventLog(other);
     await attachStepScreenshot(actor, testInfo, 'behavior-after-pass-actor');
     await attachStepScreenshot(other, testInfo, 'behavior-after-pass-other');
   } finally {

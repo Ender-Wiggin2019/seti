@@ -70,17 +70,21 @@ describe('PlanetaryBoard', () => {
     ).toBe(false);
   });
 
-  it('moon unlock enables landing and enforces single occupancy', () => {
+  it('player moon permission enables landing and enforces single occupancy', () => {
     const board = new PlanetaryBoard();
     board.setProbeCount(EPlanet.MARS, 'player-a', 1);
     board.setProbeCount(EPlanet.MARS, 'player-b', 1);
-    board.unlockMoon(EPlanet.MARS);
 
     expect(
-      board.canLand(EPlanet.MARS, 'player-a', { isMoon: true, energy: 3 }),
+      board.canLand(EPlanet.MARS, 'player-a', {
+        isMoon: true,
+        energy: 3,
+        allowMoonLanding: true,
+      }),
     ).toBe(true);
     const firstMoonLanding = board.land(EPlanet.MARS, 'player-a', {
       isMoon: true,
+      allowMoonLanding: true,
     });
     expect(firstMoonLanding.isMoon).toBe(true);
     expect(board.planets.get(EPlanet.MARS)?.moonOccupant?.playerId).toBe(
@@ -88,10 +92,17 @@ describe('PlanetaryBoard', () => {
     );
 
     expect(
-      board.canLand(EPlanet.MARS, 'player-b', { isMoon: true, energy: 3 }),
+      board.canLand(EPlanet.MARS, 'player-b', {
+        isMoon: true,
+        energy: 3,
+        allowMoonLanding: true,
+      }),
     ).toBe(false);
     expect(() =>
-      board.land(EPlanet.MARS, 'player-b', { isMoon: true }),
+      board.land(EPlanet.MARS, 'player-b', {
+        isMoon: true,
+        allowMoonLanding: true,
+      }),
     ).toThrow();
   });
 

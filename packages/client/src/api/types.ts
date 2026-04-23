@@ -1,3 +1,9 @@
+import type {
+  IDebugReplayPresetDefinition,
+  IDebugReplaySessionResponse,
+  IDebugServerSessionResponse,
+} from '@seti/common/types/protocol/debug';
+
 export interface IAuthUser {
   id: string;
   name: string;
@@ -26,15 +32,11 @@ export interface IRegisterResponse {
   user: IAuthUser;
 }
 
-export interface IDebugServerSessionResponse {
-  gameId: string;
-  accessToken: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  };
-}
+export type {
+  IDebugReplayPresetDefinition,
+  IDebugReplaySessionResponse,
+  IDebugServerSessionResponse,
+};
 
 export enum ERoomStatus {
   WAITING = 'waiting',

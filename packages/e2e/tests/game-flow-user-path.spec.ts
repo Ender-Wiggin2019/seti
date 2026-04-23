@@ -6,6 +6,7 @@ import {
   enterGameByUi,
   joinRoomByUi,
   launchGameByUi,
+  openEventLog,
   registerByUi,
   waitForActionOwner,
 } from '../helpers/real-flow';
@@ -91,9 +92,7 @@ test('user-path game flow e2e (strict real interfaces): register -> room -> game
     await clickPassAndWaitForLogSync(actor, other);
     await attachStepScreenshot(actor, testInfo, 'user-path-after-pass-actor');
 
-    await expect(other.locator(sel.eventLog)).toBeVisible({
-      timeout: 10_000,
-    });
+    await openEventLog(other);
     await attachStepScreenshot(other, testInfo, 'user-path-after-pass-other');
   } finally {
     await hostContext.close();

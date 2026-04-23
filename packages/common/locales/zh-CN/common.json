@@ -503,7 +503,8 @@
       "landing": "着陆",
       "data_slot": "数据 {{index}}",
       "moons": "卫星 {{count}}",
-      "occupied": "已占用（{{player}}）"
+      "occupied": "已占用（{{player}}）",
+      "unoccupied": "未占用"
     },
     "card_row": {
       "title": "卡牌行"

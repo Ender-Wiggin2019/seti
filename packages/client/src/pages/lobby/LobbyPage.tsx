@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { lobbyApi } from '@/api/lobbyApi';
@@ -19,6 +24,7 @@ export function LobbyPage(): React.JSX.Element {
   const [filter, setFilter] = useState<TFilterValue>('all');
   const [createOpen, setCreateOpen] = useState(false);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: rooms, isLoading } = useQuery({
     queryKey: ['rooms', filter],
@@ -38,10 +44,11 @@ export function LobbyPage(): React.JSX.Element {
   const createMutation = useMutation({
     mutationFn: (vars: { name: string; options: IGameOptions }) =>
       lobbyApi.createRoom({ name: vars.name, options: vars.options }),
-    onSuccess: () => {
+    onSuccess: (room) => {
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
       setCreateOpen(false);
       toast({ title: t('client.lobby.toast.created'), variant: 'success' });
+      navigate({ to: '/room/$roomId', params: { roomId: room.id } });
     },
     onError: (err) =>
       toast({

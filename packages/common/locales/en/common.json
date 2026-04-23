@@ -500,7 +500,8 @@
       "landing": "Landing",
       "data_slot": "Data {{index}}",
       "moons": "Moons {{count}}",
-      "occupied": "occupied ({{player}})"
+      "occupied": "occupied ({{player}})",
+      "unoccupied": "unoccupied"
     },
     "card_row": {
       "title": "Card Row"

@@ -67,8 +67,6 @@ export interface IPlanetaryBoardDto {
       firstOrbitClaimed: boolean;
       firstLandDataBonusTaken: boolean[];
       moonOccupant: { playerId: string } | null;
-      moonUnlocked: boolean;
-      planetSpaceId?: string;
     };
   }>;
   probesByPlanet: Array<{

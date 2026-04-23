@@ -23,7 +23,7 @@ function formatEffect(
       return parts.join(' ');
     }
     case EEffectType.CUSTOMIZED:
-      return translate(effect.desc);
+      return translate(effect.desc ?? '');
     case EEffectType.MISSION_QUICK:
     case EEffectType.MISSION_FULL: {
       const missionLines = effect.missions.map((m) => {
@@ -45,7 +45,7 @@ function formatEffect(
       });
       const header =
         effect.effectType === EEffectType.MISSION_FULL ? 'MISSION' : 'QUICK';
-      return [header, translate(effect.desc), ...missionLines]
+      return [header, translate(effect.desc ?? ''), ...missionLines]
         .filter(Boolean)
         .join(' | ');
     }
@@ -54,7 +54,7 @@ function formatEffect(
         ? ` per ${effect.per.value ?? ''}${effect.per.type}`
         : '';
       const score = effect.score != null ? ` (+${effect.score}VP${per})` : '';
-      return `END: ${translate(effect.desc)}${score}`;
+      return `END: ${translate(effect.desc ?? '')}${score}`;
     }
     case EEffectType.OR:
       return effect.effects

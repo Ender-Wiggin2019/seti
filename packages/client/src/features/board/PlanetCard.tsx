@@ -125,7 +125,7 @@ export function PlanetCard({
         <span
           className={cn(
             'rounded border px-1.5 py-0.5 font-mono text-[10px]',
-            state.moonUnlocked
+            state.moonOccupant
               ? 'border-info-500/70 text-info-300'
               : 'border-surface-600 text-text-500',
           )}
@@ -137,9 +137,7 @@ export function PlanetCard({
               })
             : missionConfig.moonSlots === 0
               ? t('client.common.na')
-              : state.moonUnlocked
-                ? t('client.common.open')
-                : t('client.common.locked')}
+              : t('client.planet_card.unoccupied')}
         </span>
       </div>
 

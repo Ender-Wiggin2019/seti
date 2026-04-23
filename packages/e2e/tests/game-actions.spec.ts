@@ -6,6 +6,7 @@ import {
   enterGameByUi,
   joinRoomByUi,
   launchGameByUi,
+  openEventLog,
   registerByUi,
   waitForActionOwner,
 } from '../helpers/real-flow';
@@ -66,12 +67,8 @@ test.describe('Action E2E (Real Flow Only)', () => {
         await waitForActionOwner(hostPage, guestPage, 'PASS');
 
       await clickPassAndWaitForLogSync(activePage, passivePage);
-      await expect(activePage.locator(sel.eventLog)).toBeVisible({
-        timeout: 10_000,
-      });
-      await expect(passivePage.locator(sel.eventLog)).toBeVisible({
-        timeout: 10_000,
-      });
+      await openEventLog(activePage);
+      await openEventLog(passivePage);
     } finally {
       await hostContext.close();
       await guestContext.close();

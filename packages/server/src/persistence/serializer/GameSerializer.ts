@@ -215,8 +215,6 @@ function serializePlanetaryBoard(game: IGame): IPlanetaryBoardDto | null {
           firstOrbitClaimed: state.firstOrbitClaimed,
           firstLandDataBonusTaken: [...state.firstLandDataBonusTaken],
           moonOccupant: state.moonOccupant ? { ...state.moonOccupant } : null,
-          moonUnlocked: state.moonUnlocked,
-          planetSpaceId: state.planetSpaceId,
         },
       }),
     ),
@@ -463,8 +461,6 @@ function toPublicPlanetaryBoard(game: IGame): IPublicPlanetaryBoard {
       firstOrbitClaimed: state.firstOrbitClaimed,
       firstLandDataBonusTaken: [...state.firstLandDataBonusTaken],
       moonOccupant: state.moonOccupant ? { ...state.moonOccupant } : null,
-      moonUnlocked: state.moonUnlocked,
-      planetSpaceId: state.planetSpaceId,
     };
   }
 

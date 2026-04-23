@@ -34,13 +34,15 @@ export function GameSettingsPanel({
         <ReadoutRow
           label={t('client.game_settings.players')}
           value={String(options.playerCount)}
+          testId='players'
         />
-        <ReadoutRow label={t('client.game_settings.alien_modules')}>
+        <ReadoutRow label={t('client.game_settings.alien_modules')} testId='alien-modules'>
           {readOnly ? (
             <StatusValue
               active={options.alienModulesEnabled.some((enabled) => enabled)}
               on={t('client.common.on')}
               off={t('client.common.off')}
+              testId='alien-modules'
             />
           ) : (
             <Switch
@@ -54,6 +56,7 @@ export function GameSettingsPanel({
             active={options.undoAllowed}
             on={t('client.game_settings.undo_allowed')}
             off={t('client.game_settings.undo_disabled')}
+            testId='undo'
           />
         </ReadoutRow>
         <ReadoutRow
@@ -65,6 +68,7 @@ export function GameSettingsPanel({
                 })
               : t('client.common.off')
           }
+          testId='turn-timer'
         />
       </dl>
     </div>
@@ -75,19 +79,29 @@ interface IReadoutRowProps {
   label: string;
   value?: string;
   children?: React.ReactNode;
+  testId?: string;
 }
 
 function ReadoutRow({
   label,
   value,
   children,
+  testId,
 }: IReadoutRowProps): React.JSX.Element {
   return (
-    <div className='flex items-center justify-between gap-3 px-3 py-2.5'>
+    <div
+      className='flex items-center justify-between gap-3 px-3 py-2.5'
+      data-testid={testId ? `game-setting-${testId}` : undefined}
+    >
       <dt className='micro-label text-text-400'>{label}</dt>
       <dd>
         {value != null ? (
-          <span className='readout text-sm text-text-100'>{value}</span>
+          <span
+            className='readout text-sm text-text-100'
+            data-testid={testId ? `game-setting-value-${testId}` : undefined}
+          >
+            {value}
+          </span>
         ) : (
           children
         )}
@@ -100,13 +114,18 @@ function StatusValue({
   active,
   on,
   off,
+  testId,
 }: {
   active: boolean;
   on: string;
   off: string;
+  testId?: string;
 }): React.JSX.Element {
   return (
-    <span className='flex items-center gap-1.5'>
+    <span
+      className='flex items-center gap-1.5'
+      data-testid={testId ? `game-setting-value-${testId}` : undefined}
+    >
       <span
         aria-hidden
         className={cn(

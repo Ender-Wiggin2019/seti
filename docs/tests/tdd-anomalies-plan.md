@@ -123,6 +123,7 @@ RED tests:
 
 ## 实现注意点（配合 TDD）
 
+- anomaly 调试 / 回放链路统一走 [`docs/tests/debug-replay.md`](</Users/oushuohuang/Documents/demo-a2ui/docs/tests/debug-replay.md>) 定义的 replay preset 机制，不再单独扩散新的 debug 页面。
 - 若要支持“按 token 面值奖励”，奖励结构应放在 `common`（遵守 monorepo 复用约束）。
 - 列竞争建议只读取 anomaly-column slots，避免 discovery/overflow 被误计。
 - 旋转触发应由统一 hook 进入（`AlienState.onSolarSystemRotated`），不要在行动里分散触发。

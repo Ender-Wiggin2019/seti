@@ -1,5 +1,11 @@
 import { Body, Controller, Get, Inject, Param, Post } from '@nestjs/common';
 import type {
+  IDebugReplayPresetDefinition,
+  IDebugReplaySessionRequest,
+  IDebugReplaySessionResponse,
+  IDebugServerSessionResponse,
+} from '@seti/common/types/protocol/debug';
+import type {
   IFreeActionRequest,
   IInputResponse,
   IMainActionRequest,
@@ -10,7 +16,6 @@ import { Public } from '@/auth/public.decorator.js';
 import {
   DebugService,
   type IDebugBehaviorFlowSessionResponse,
-  type IDebugServerSessionResponse,
 } from './debug.service.js';
 
 @Controller('debug')
@@ -23,6 +28,20 @@ export class DebugController {
   @Post('server/session')
   async createServerSession(): Promise<IDebugServerSessionResponse> {
     return this.debugService.createServerSession();
+  }
+
+  @Public()
+  @Get('replay-presets')
+  listReplayPresets(): IDebugReplayPresetDefinition[] {
+    return this.debugService.listReplayPresets();
+  }
+
+  @Public()
+  @Post('server/replay-session')
+  async createReplaySession(
+    @Body() body: IDebugReplaySessionRequest,
+  ): Promise<IDebugReplaySessionResponse> {
+    return this.debugService.createReplaySession(body);
   }
 
   @Public()

@@ -1,3 +1,4 @@
+import { PLANET_MISSION_CONFIG } from '@seti/common/constant/boardLayout';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { PlanetaryBoardView } from '@/features/board/PlanetaryBoardView';
@@ -13,7 +14,6 @@ function createPlanetaryBoardMock(): IPublicPlanetaryBoard {
         firstOrbitClaimed: true,
         firstLandDataBonusTaken: [true, false],
         moonOccupant: null,
-        moonUnlocked: true,
       },
     },
   };
@@ -63,5 +63,20 @@ describe('PlanetaryBoardView', () => {
     expect(
       screen.getByTestId(`planet-card-${EPlanet.MARS}`).className,
     ).toContain('ring-1');
+  });
+
+  it('uses neutral moon availability copy instead of open state', () => {
+    render(
+      <PlanetaryBoardView
+        planetaryBoard={createPlanetaryBoardMock()}
+        pendingInput={null}
+        playerColors={{}}
+      />,
+    );
+
+    const marsCard = screen.getByTestId(`planet-card-${EPlanet.MARS}`);
+    const moonCount = PLANET_MISSION_CONFIG[EPlanet.MARS].moonSlots;
+    expect(marsCard).toHaveTextContent(`Moons ${moonCount}: unoccupied`);
+    expect(marsCard).not.toHaveTextContent(`Moons ${moonCount}: open`);
   });
 });

@@ -7,6 +7,7 @@ import {
   joinRoomByUi,
   launchGameByUi,
   loginByUi,
+  openEventLog,
   registerByUi,
   waitForActionOwner,
 } from '../helpers/real-flow';
@@ -92,9 +93,7 @@ test('fixed-user smoke: 111 creates room and completes room flow', async ({
       timeout: 10_000,
     });
     await clickPassAndWaitForLogSync(actor, other);
-    await expect(other.locator(sel.eventLog)).toBeVisible({
-      timeout: 10_000,
-    });
+    await openEventLog(other);
   } finally {
     await hostContext.close();
     await guestContext.close();

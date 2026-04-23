@@ -499,7 +499,8 @@
       "landing": "Pouso",
       "data_slot": "Dados {{index}}",
       "moons": "Luas {{count}}",
-      "occupied": "ocupado ({{player}})"
+      "occupied": "ocupado ({{player}})",
+      "unoccupied": "desocupado"
     },
     "card_row": {
       "title": "Linha de Cartas"

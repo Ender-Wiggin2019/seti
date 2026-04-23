@@ -72,4 +72,15 @@ describe('GameSerializer', () => {
     expect(actions).toContain(EMainAction.ORBIT);
     expect(actions).toContain(EMainAction.LAND);
   });
+
+  it('does not persist redundant planetSpaceId inside planetary board state', () => {
+    const game = createTestGame();
+    const dto = serializeGame(game, 7);
+
+    expect(
+      dto.planetaryBoard?.planets.every(
+        (planet) => !('planetSpaceId' in planet.state),
+      ),
+    ).toBe(true);
+  });
 });

@@ -902,11 +902,14 @@ describe('Card 112 — Planetary Geologic Mapping: orbit+land same planet', () =
 
   it('condition true with orbit and moon landing at same planet', () => {
     const player = createPlayer();
+    player.gainTech(ETechId.PROBE_MOON);
     const board = createPlanetaryBoard();
     board.setProbeCount(EPlanet.JUPITER, player.id, 1);
     board.orbit(EPlanet.JUPITER, player.id);
-    board.unlockMoon(EPlanet.JUPITER);
-    board.land(EPlanet.JUPITER, player.id, { isMoon: true });
+    board.land(EPlanet.JUPITER, player.id, {
+      isMoon: true,
+      allowMoonLanding: true,
+    });
     const game = createGame({ planetaryBoard: board });
     const def = getCardRegistry().create('112').getMissionDef?.()!;
 

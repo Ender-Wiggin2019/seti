@@ -27,6 +27,16 @@ async function resolveCardPromptIfVisible(
   const deadline = Date.now() + timeoutMs;
 
   while (Date.now() < deadline) {
+    const eorCardPrompt = page
+      .locator('[data-testid="bottom-actions"] [data-testid^="input-eor-card-"]')
+      .first();
+    const eorVisible = await eorCardPrompt.isVisible().catch(() => false);
+
+    if (eorVisible) {
+      await eorCardPrompt.click();
+      return true;
+    }
+
     const cardPrompt = page
       .locator(
         '[data-testid="bottom-actions"] [data-testid^="hand-card-"],' +
@@ -109,31 +119,38 @@ export async function createRoomByUi(
   });
   await page.locator('#room-name').fill(roomName);
 
-  const playerCountTrigger = page.locator('#player-count');
-  await expect(playerCountTrigger).toBeVisible({ timeout: 10_000 });
-  await playerCountTrigger.click();
+  if (playerCount !== 2) {
+    const playerCountTrigger = page.locator('#player-count');
+    await expect(playerCountTrigger).toBeVisible({ timeout: 10_000 });
+    await playerCountTrigger.click();
 
-  const playerCountOptionByText = page
-    .getByRole('option')
-    .filter({ hasText: new RegExp(`\\b${playerCount}\\b`) })
-    .first();
-  if ((await playerCountOptionByText.count()) > 0) {
-    await playerCountOptionByText.click();
-  } else {
-    const fallbackIndex = playerCount - 2;
-    await page.getByRole('option').nth(fallbackIndex).click();
+    const playerCountOption = page.getByRole('option', {
+      name: new RegExp(`^${playerCount}\\b`),
+    });
+    await expect(playerCountOption).toBeVisible({ timeout: 10_000 });
+    await playerCountOption.click();
   }
 
   const responsePromise = page.waitForResponse(
     (res) =>
       res.url().includes('/lobby/rooms') && res.request().method() === 'POST',
+    { timeout: 15_000 },
   );
-  await page.getByTestId('create-room-submit').click();
+  const dialog = page.getByTestId('create-room-dialog');
+  await dialog.evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+  });
+  const submitButton = page.getByTestId('create-room-submit');
+  await submitButton.scrollIntoViewIfNeeded();
+  await submitButton.click();
   const response = await responsePromise;
   expect(response.ok()).toBe(true);
 
   const body = (await response.json()) as { id?: string };
   expect(body.id).toBeTruthy();
+  await page.waitForURL(new RegExp(`/room/${body.id as string}$`), {
+    timeout: 15_000,
+  });
   return body.id as string;
 }
 
@@ -281,6 +298,9 @@ export async function clickPassAndWaitForLogSync(
   actorPage: Page,
   otherPage: Page,
 ): Promise<void> {
+  await openEventLog(actorPage);
+  await openEventLog(otherPage);
+
   const actorPass = actorPage.locator(sel.actionMenu('PASS'));
   const actorLog = actorPage.locator('[data-testid^="event-entry-"]');
   const otherLog = otherPage.locator('[data-testid^="event-entry-"]');
@@ -291,12 +311,49 @@ export async function clickPassAndWaitForLogSync(
   await expect(actorPass).toBeVisible({ timeout: 10_000 });
   await actorPass.click();
 
-  await expect
-    .poll(async () => actorLog.count(), { timeout: 10_000 })
-    .toBeGreaterThan(actorBefore);
-  await expect
-    .poll(async () => otherLog.count(), { timeout: 10_000 })
-    .toBeGreaterThan(otherBefore);
+  const deadline = Date.now() + 10_000;
+  while (Date.now() < deadline) {
+    const resolvedActorPrompt = await resolveCardPromptIfVisible(actorPage, 300);
+    const resolvedOtherPrompt = await resolveCardPromptIfVisible(otherPage, 300);
+
+    if (resolvedActorPrompt || resolvedOtherPrompt) {
+      continue;
+    }
+
+    const [actorLogCount, otherLogCount, actorState, otherState] =
+      await Promise.all([
+        actorLog.count(),
+        otherLog.count(),
+        getActionAvailability(actorPage, 'PASS'),
+        getActionAvailability(otherPage, 'PASS'),
+      ]);
+
+    if (
+      actorLogCount > actorBefore &&
+      otherLogCount > otherBefore &&
+      actorState !== 'enabled' &&
+      otherState === 'enabled'
+    ) {
+      return;
+    }
+
+    await actorPage.waitForTimeout(150);
+  }
+
+  throw new Error('Timed out waiting for PASS to sync via log update, prompt resolution, or turn handoff');
+}
+
+export async function openEventLog(page: Page): Promise<void> {
+  const eventLog = page.locator(sel.eventLog);
+  const alreadyVisible = await eventLog.isVisible().catch(() => false);
+  if (alreadyVisible) {
+    return;
+  }
+
+  const eventLogToggle = page.getByRole('button', { name: /event log/i });
+  await expect(eventLogToggle).toBeVisible({ timeout: 10_000 });
+  await eventLogToggle.click();
+  await expect(eventLog).toBeVisible({ timeout: 10_000 });
 }
 
 /**
@@ -338,7 +395,8 @@ export async function waitForInputPrompt(
       .locator(
         '[data-testid="bottom-actions"] [data-testid^="input-"],' +
           '[data-testid="bottom-actions"] [data-testid^="hand-card-"],' +
-          '[data-testid="bottom-actions"] [data-testid^="select-card-"]',
+          '[data-testid="bottom-actions"] [data-testid^="select-card-"],' +
+          '[data-testid="bottom-actions"] [data-testid^="input-eor-card-"]',
       )
       .first()
       .waitFor({ state: 'visible', timeout });

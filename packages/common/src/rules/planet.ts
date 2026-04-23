@@ -8,6 +8,7 @@ import type {
   IPublicPlanetState,
   IPublicPlayerState,
 } from '../types/protocol/gameState';
+import { ETechId } from '../types/tech';
 import { findPlanetSpaceId } from './solarSystem';
 
 const ENERGY_RESOURCE_KEY = 'energy';
@@ -29,8 +30,7 @@ export function canOrbitPlanet(
   player: IPublicPlayerState,
   gameState: IPublicGameState,
 ): boolean {
-  const planetSpaceId =
-    findPlanetSpaceId(gameState.solarSystem, planetId) ?? planet.planetSpaceId;
+  const planetSpaceId = findPlanetSpaceId(gameState.solarSystem, planetId);
   if (!planetSpaceId) {
     return false;
   }
@@ -59,9 +59,14 @@ export function canLandOnPlanet(
   return energy >= getLandingCost(planet, player.playerId);
 }
 
-/** 检查月球是否可着陆 (已解锁 + 无占位) */
-export function canLandOnMoon(planet: IPublicPlanetState): boolean {
-  return planet.moonUnlocked && planet.moonOccupant === null;
+/** 检查月球是否可着陆 (玩家有月球科技 + 无占位) */
+export function canLandOnMoon(
+  planet: IPublicPlanetState,
+  player: Pick<IPublicPlayerState, 'techs'>,
+): boolean {
+  return (
+    player.techs.includes(ETechId.PROBE_MOON) && planet.moonOccupant === null
+  );
 }
 
 /** 获取首次轨道奖励是否仍可用 */

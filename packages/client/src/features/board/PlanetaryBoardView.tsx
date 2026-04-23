@@ -26,7 +26,6 @@ function createEmptyPlanetState(
       () => false,
     ),
     moonOccupant: null,
-    moonUnlocked: false,
   };
 }
 
@@ -182,9 +181,7 @@ export function PlanetaryBoardView({
                         className={cn(
                           'absolute h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border bg-surface-950/60',
                           slotKind === 'moon'
-                            ? planetState.moonUnlocked
-                              ? 'border-info-300/80'
-                              : 'border-surface-400/60'
+                            ? 'border-surface-500/70'
                             : 'border-amber-300/70',
                         )}
                         style={{ left: `${slot.x}%`, top: `${slot.y}%` }}

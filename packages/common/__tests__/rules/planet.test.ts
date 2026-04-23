@@ -7,6 +7,7 @@ import {
   getLandingCost,
   isFirstOrbitAvailable,
 } from '@/rules/planet';
+import { ETechId } from '@/types/tech';
 import { EResource } from '@/types/element';
 import { EPhase, EPlanet } from '@/types/protocol/enums';
 import type {
@@ -73,8 +74,6 @@ function createPlanetState(
     firstOrbitClaimed: false,
     firstLandDataBonusTaken: [false],
     moonOccupant: null,
-    moonUnlocked: false,
-    planetSpaceId: 'planet-space-1',
     ...overrides,
   };
 }
@@ -120,11 +119,15 @@ describe('planet rules', () => {
 
   it('canOrbitPlanet requires player probe on planet space', () => {
     const player = createPlayerState();
-    const planet = createPlanetState({ planetSpaceId: 'planet-space-1' });
+    const planet = createPlanetState();
     const gameState = createGameState(player.playerId, 'planet-space-1');
+    gameState.solarSystem.planetSpaceIds = { [EPlanet.MERCURY]: 'planet-space-1' };
     expect(canOrbitPlanet(EPlanet.MERCURY, planet, player, gameState)).toBe(true);
 
     const noProbeState = createGameState(player.playerId, 'another-space');
+    noProbeState.solarSystem.planetSpaceIds = {
+      [EPlanet.MERCURY]: 'planet-space-1',
+    };
     expect(canOrbitPlanet(EPlanet.MERCURY, planet, player, noProbeState)).toBe(
       false,
     );
@@ -134,9 +137,9 @@ describe('planet rules', () => {
     const player = createPlayerState();
     const planet = createPlanetState({
       orbitSlots: [{ playerId: 'player-b' }],
-      planetSpaceId: 'planet-space-1',
     });
     const gameState = createGameState(player.playerId, 'planet-space-1');
+    gameState.solarSystem.planetSpaceIds = { [EPlanet.MERCURY]: 'planet-space-1' };
     expect(canLandOnPlanet(EPlanet.MERCURY, planet, player, gameState)).toBe(
       true,
     );
@@ -154,15 +157,18 @@ describe('planet rules', () => {
     );
   });
 
-  it('canLandOnMoon requires unlocked moon and empty occupancy', () => {
-    expect(canLandOnMoon(createPlanetState())).toBe(false);
-    expect(canLandOnMoon(createPlanetState({ moonUnlocked: true }))).toBe(true);
+  it('canLandOnMoon requires player moon tech and empty occupancy', () => {
+    const player = createPlayerState();
+    const withMoonTech = createPlayerState({ techs: [ETechId.PROBE_MOON] });
+
+    expect(canLandOnMoon(createPlanetState(), player)).toBe(false);
+    expect(canLandOnMoon(createPlanetState(), withMoonTech)).toBe(true);
     expect(
       canLandOnMoon(
         createPlanetState({
-          moonUnlocked: true,
           moonOccupant: { playerId: 'player-a' },
         }),
+        withMoonTech,
       ),
     ).toBe(false);
   });

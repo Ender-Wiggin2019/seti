@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ActionMenu } from '@/features/actions/ActionMenu';
 import {
   EMainAction,
+  EPlanet,
   EPhase,
   EPlayerInputType,
   type IPlayerInputModel,
@@ -127,5 +128,58 @@ describe('ActionMenu', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Pass' }));
 
     expect(onSendAction).toHaveBeenCalledWith({ type: EMainAction.PASS });
+  });
+
+  it('enables orbit and land when solarSystem indexes show my probe on a planet', () => {
+    const gameState = createMockGameState({
+      players: [
+        createMockPlayerState({
+          playerId: 'player-1',
+          resources: { credit: 10, energy: 5, data: 0, publicity: 3 },
+        }),
+      ],
+      solarSystem: {
+        spaces: ['ring-2-cell-0'],
+        adjacency: {},
+        probes: [
+          {
+            playerId: 'player-1',
+            spaceId: 'ring-2-cell-0',
+            probeId: 'probe-1',
+          },
+        ],
+        discs: [],
+        planetSpaceIds: {
+          [EPlanet.MARS]: 'ring-2-cell-0',
+        },
+      },
+      planetaryBoard: {
+        planets: {
+          [EPlanet.MARS]: {
+            orbitSlots: [],
+            landingSlots: [],
+            firstOrbitClaimed: false,
+            firstLandDataBonusTaken: [false, false],
+            moonOccupant: null,
+          },
+        },
+      },
+    });
+
+    render(
+      <ActionMenu
+        gameState={gameState}
+        myPlayerId='player-1'
+        isMyTurn
+        pendingInput={null}
+        canUndo={false}
+        onSendAction={vi.fn()}
+        onRequestUndo={vi.fn()}
+        onSendEndTurn={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Orbit' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Land' })).toBeEnabled();
   });
 });

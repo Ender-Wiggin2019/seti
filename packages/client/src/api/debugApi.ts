@@ -1,5 +1,9 @@
 import { httpClient } from '@/api/httpClient';
-import type { IDebugServerSessionResponse } from '@/api/types';
+import type {
+  IDebugReplayPresetDefinition,
+  IDebugReplaySessionResponse,
+  IDebugServerSessionResponse,
+} from '@/api/types';
 import type {
   IFreeActionRequest,
   IInputResponse,
@@ -9,6 +13,25 @@ import type {
 } from '@/types/re-exports';
 
 export const debugApi = {
+  getReplayPresets: async (): Promise<IDebugReplayPresetDefinition[]> => {
+    const response = await httpClient.get<IDebugReplayPresetDefinition[]>(
+      '/debug/replay-presets',
+    );
+    return response.data;
+  },
+
+  createReplaySession: async (payload: {
+    presetId: string;
+    checkpointId: string;
+    fieldValues: Record<string, string>;
+  }): Promise<IDebugReplaySessionResponse> => {
+    const response = await httpClient.post<IDebugReplaySessionResponse>(
+      '/debug/server/replay-session',
+      payload,
+    );
+    return response.data;
+  },
+
   createServerSession: async (): Promise<IDebugServerSessionResponse> => {
     const response = await httpClient.post<IDebugServerSessionResponse>(
       '/debug/server/session',

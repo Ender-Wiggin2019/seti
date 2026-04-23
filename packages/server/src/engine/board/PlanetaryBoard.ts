@@ -45,8 +45,6 @@ export interface IPlanetState {
   firstOrbitClaimed: boolean;
   firstLandDataBonusTaken: boolean[];
   moonOccupant: IMoonOccupant | null;
-  moonUnlocked: boolean;
-  planetSpaceId?: string;
 }
 
 export interface IOrbitResult {
@@ -109,7 +107,6 @@ export class PlanetaryBoard {
           () => false,
         ),
         moonOccupant: null,
-        moonUnlocked: false,
       });
       this.probesByPlanet.set(planet, new Map());
     }
@@ -211,7 +208,7 @@ export class PlanetaryBoard {
     const allowMoonLanding = options?.allowMoonLanding ?? false;
     const planetState = this.getPlanetState(planet);
     if (isMoon) {
-      if (!planetState.moonUnlocked && !allowMoonLanding) {
+      if (!allowMoonLanding) {
         return false;
       }
       if (planetState.moonOccupant !== null) {
@@ -239,11 +236,6 @@ export class PlanetaryBoard {
     return planetState.orbitSlots.length > 0
       ? LANDING_COST_WITH_ORBITER
       : LANDING_COST_DEFAULT;
-  }
-
-  public unlockMoon(planet: EPlanet): void {
-    const planetState = this.getPlanetState(planet);
-    planetState.moonUnlocked = true;
   }
 
   public setProbeCount(planet: EPlanet, playerId: string, count: number): void {

@@ -7,6 +7,7 @@ import {
 import { AppShell } from '@/components/layout/AppShell';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AuthPage } from '@/pages/auth/AuthPage';
+import { DebugReplayPage } from '@/pages/game/DebugReplayPage';
 import { GameDebugPage } from '@/pages/game/GameDebugPage';
 import { GamePage, SpectatePage } from '@/pages/game/GamePage';
 import { ServerDebugPage } from '@/pages/game/ServerDebugPage';
@@ -98,6 +99,18 @@ const gameDebugRoute = createRoute({
   component: GameDebugPage,
 });
 
+const debugAlienRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/debug/alien',
+  component: DebugReplayPage,
+});
+
+const debugReplayRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/debug/replay',
+  component: DebugReplayPage,
+});
+
 const solarDebugRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/debug/solar',
@@ -121,6 +134,8 @@ const routeTree = rootRoute.addChildren([
   gameRoute,
   spectateRoute,
   gameDebugRoute,
+  debugAlienRoute,
+  debugReplayRoute,
   solarDebugRoute,
   serverDebugRoute,
 ]);

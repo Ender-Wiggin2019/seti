@@ -244,7 +244,7 @@ describe('Land action', () => {
     ).toEqual([true, true]);
   });
 
-  it('enforces moon unlock and single occupancy through Land action', () => {
+  it('requires moon tech and still enforces single occupancy through Land action', () => {
     const game = Game.create(
       TEST_PLAYERS,
       { playerCount: 2 },
@@ -269,7 +269,7 @@ describe('Land action', () => {
       }),
     );
 
-    game.planetaryBoard?.unlockMoon(EPlanet.MARS);
+    p1.gainTech(ETechId.PROBE_MOON);
     game.processMainAction(p1.id, {
       type: EMainAction.LAND,
       payload: { planet: EPlanet.MARS, isMoon: true },
@@ -280,6 +280,7 @@ describe('Land action', () => {
     expect(
       game.planetaryBoard?.planets.get(EPlanet.MARS)?.moonOccupant?.playerId,
     ).toBe(p1.id);
+    p2.gainTech(ETechId.PROBE_MOON);
     expect(() =>
       game.processMainAction(p2.id, {
         type: EMainAction.LAND,

@@ -240,8 +240,10 @@ describe('Card 31 — Space Launch System: 3 total landings (no moons)', () => {
 
     board.setProbeCount(EPlanet.JUPITER, player.id, 1);
     board.orbit(EPlanet.JUPITER, player.id);
-    board.unlockMoon(EPlanet.JUPITER);
-    board.land(EPlanet.JUPITER, player.id, { isMoon: true });
+    board.land(EPlanet.JUPITER, player.id, {
+      isMoon: true,
+      allowMoonLanding: true,
+    });
 
     const game = createGame({ planetaryBoard: board });
     const def = getCardRegistry().create('31').getMissionDef?.()!;

@@ -164,7 +164,10 @@ export function CreateRoomDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent data-testid='create-room-dialog' className='max-w-lg p-0'>
+      <DialogContent
+        data-testid='create-room-dialog'
+        className='max-h-[calc(100vh-2rem)] max-w-lg overflow-y-auto p-0'
+      >
         <DialogHeader className='px-6 pt-6'>
           <span className='micro-label text-[oklch(0.74_0.10_240)]'>
             {t('client.create_room.kicker', {

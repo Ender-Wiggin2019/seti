@@ -2,6 +2,12 @@ import { randomUUID } from 'node:crypto';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type {
+  IDebugReplayPresetDefinition,
+  IDebugReplaySessionRequest,
+  IDebugReplaySessionResponse,
+  IDebugServerSessionResponse,
+} from '@seti/common/types/protocol/debug';
+import type {
   IFreeActionRequest,
   IInputResponse,
   IMainActionRequest,
@@ -30,18 +36,16 @@ import {
   applyBehaviorFlowScenario,
   BEHAVIOR_FLOW_SEED,
 } from '@/testing/behaviorFlowScenario.js';
+import {
+  applyDebugReplayPreset,
+  listDebugReplayPresets,
+} from './debugReplayPresets.js';
 import { DebugSessionRegistry } from './DebugSessionRegistry.js';
 
 interface IDebugAuthUser {
   id: string;
   name: string;
   email: string;
-}
-
-export interface IDebugServerSessionResponse {
-  gameId: string;
-  accessToken: string;
-  user: IDebugAuthUser;
 }
 
 export interface IDebugBehaviorFlowSessionResponse {
@@ -191,6 +195,61 @@ export class DebugService {
           email: `${player.id}@debug.local`,
         }),
       ),
+    };
+  }
+
+  listReplayPresets(): IDebugReplayPresetDefinition[] {
+    return listDebugReplayPresets();
+  }
+
+  async createReplaySession(
+    request: IDebugReplaySessionRequest,
+  ): Promise<IDebugReplaySessionResponse> {
+    const gameId = randomUUID();
+    const seed = randomUUID();
+    const playerCount = DEBUG_PLAYER_BLUEPRINTS.length;
+    const players: IGamePlayerIdentity[] = DEBUG_PLAYER_BLUEPRINTS.map(
+      (blueprint, seatIndex) => ({
+        id: randomUUID(),
+        name: blueprint.name,
+        color: blueprint.color,
+        seatIndex,
+      }),
+    );
+
+    const gameOptions = createGameOptions({ playerCount });
+    const game = Game.create(players, gameOptions, seed, gameId);
+    const replay = applyDebugReplayPreset(game, request);
+
+    const humanPlayer =
+      players.find((player) => player.id === replay.currentPlayerId) ??
+      players[0];
+    const botPlayerIds = players
+      .filter((player) => player.id !== humanPlayer.id)
+      .map((player) => player.id);
+
+    this.debugSessionRegistry.register(gameId, humanPlayer.id, botPlayerIds);
+    this.gameManager.registerGame(game);
+    try {
+      await this.gameRepository.create(game);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to persist replay debug game ${gameId}, continuing with in-memory mode`,
+      );
+      this.logger.debug(error);
+    }
+
+    const session = this.createAuthSession({
+      id: humanPlayer.id,
+      name: humanPlayer.name,
+      email: `${humanPlayer.id}@debug.local`,
+    });
+
+    return {
+      gameId,
+      accessToken: session.accessToken,
+      user: session.user,
+      replay,
     };
   }
 

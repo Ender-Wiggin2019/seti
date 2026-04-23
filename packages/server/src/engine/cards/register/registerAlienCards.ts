@@ -50,7 +50,6 @@ export function registerAlienCards(registry: CardRegistry): void {
 
   // ============================================================
   // ALIEN — signal/scan group
-  // TODO: UNHANDLED_EFFECT(any-signal)
   // ============================================================
   g(registry, 'ET.20'); // Amazing Uncertainty         | ANY_SIGNAL, DESC, DESC
   g(registry, 'ET.21'); // Visitor in the Sky          | SCAN, DESC, QM

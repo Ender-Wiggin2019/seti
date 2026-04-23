@@ -12,6 +12,7 @@ import {
   enterGameByUi,
   joinRoomByUi,
   launchGameByUi,
+  openEventLog,
   registerByUi,
   waitForActionOwner,
 } from '../helpers/real-flow';
@@ -90,9 +91,7 @@ test.describe('User Journey E2E (Real Flow Only)', () => {
       });
       await clickPassAndWaitForLogSync(actor, other);
 
-      await expect(other.locator(sel.eventLog)).toBeVisible({
-        timeout: 10_000,
-      });
+      await openEventLog(other);
       await attachStepScreenshot(actor, testInfo, 'journey-after-pass-actor');
       await attachStepScreenshot(other, testInfo, 'journey-after-pass-other');
     } finally {

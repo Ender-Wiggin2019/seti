@@ -177,8 +177,6 @@ export interface IPublicPlanetState {
   firstOrbitClaimed: boolean;
   firstLandDataBonusTaken: boolean[];
   moonOccupant: IPublicMoonOccupantState | null;
-  moonUnlocked: boolean;
-  planetSpaceId?: string;
 }
 
 export interface IPublicPlanetaryBoard {
