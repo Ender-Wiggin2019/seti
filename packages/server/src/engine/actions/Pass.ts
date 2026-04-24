@@ -1,3 +1,7 @@
+import {
+  countCardsTowardHandLimit,
+  isHandLimitExemptCard,
+} from '@seti/common/rules';
 import type { IGame } from '../IGame.js';
 import type { PlayerInput } from '../input/PlayerInput.js';
 import { SelectCard } from '../input/SelectCard.js';
@@ -25,12 +29,15 @@ export class PassAction {
     game: IGame,
   ): PlayerInput | undefined {
     const handLimit = player.handLimitAfterPass;
-    const excessCount = player.hand.length - handLimit;
+    const excessCount = countCardsTowardHandLimit(player.hand) - handLimit;
 
     if (excessCount > 0) {
-      const cards = player.hand.map((card, index) =>
-        PassAction.toCardDescriptor(card, player.getCardIdAt(index)),
-      );
+      const cards = player.hand
+        .map((card, index) => ({ card, index }))
+        .filter(({ card }) => !isHandLimitExemptCard(card))
+        .map(({ card, index }) =>
+          PassAction.toCardDescriptor(card, player.getCardIdAt(index)),
+        );
 
       return new SelectCard(
         player,

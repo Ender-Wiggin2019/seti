@@ -454,15 +454,24 @@ describe('ScanAction — integration (rewrite)', () => {
     });
   });
 
-  describe('2.4.9 data pool full → overflow to stash', () => {
-    it('routes scan data to stash when data pool is already at max', () => {
+  describe('2.4.9 data pool full → discard excess data', () => {
+    it('marks the signal but discards scan data when data pool is already at max', () => {
       const { game, p1 } = createScanIntegrationGame('scan-2-4-9');
       p1.resources.gain({ data: p1.dataPool.max });
       expect(p1.dataPool.count).toBe(p1.dataPool.max);
+      const earthIdx = requireValue(
+        getSectorIndexByPlanet(
+          requireValue(game.solarSystem, 'expected solar system'),
+          EPlanet.EARTH,
+        ),
+        'expected earth sector index',
+      );
+      const earthSector = game.sectors[earthIdx] as Sector;
 
       const totalDataBefore = p1.resources.data;
       const poolBefore = p1.dataPool.count;
       const stashBefore = p1.data.getState().stash;
+      const markersBefore = earthSector.getPlayerMarkerCount(p1.id);
 
       game.processMainAction(p1.id, { type: EMainAction.SCAN });
       game.processInput(p1.id, {
@@ -470,9 +479,10 @@ describe('ScanAction — integration (rewrite)', () => {
         optionId: EScanSubAction.MARK_EARTH,
       });
 
-      expect(p1.resources.data).toBe(totalDataBefore + 1);
+      expect(earthSector.getPlayerMarkerCount(p1.id)).toBe(markersBefore + 1);
       expect(p1.dataPool.count).toBe(poolBefore);
-      expect(p1.data.getState().stash).toBe(stashBefore + 1);
+      expect(p1.data.getState().stash).toBe(stashBefore);
+      expect(p1.resources.data).toBe(totalDataBefore);
     });
   });
 

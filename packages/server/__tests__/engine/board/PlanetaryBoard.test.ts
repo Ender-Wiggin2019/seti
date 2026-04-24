@@ -1,9 +1,9 @@
-import { EResource } from '@seti/common/types/element';
+import { EResource, ETrace } from '@seti/common/types/element';
 import { EPlanet } from '@seti/common/types/protocol/enums';
 import { PlanetaryBoard } from '@/engine/board/PlanetaryBoard.js';
 
 describe('PlanetaryBoard', () => {
-  it('orbit places orbiter and grants first-orbit +3 VP once', () => {
+  it('orbit places orbiter and returns configured first-orbit rewards once', () => {
     const board = new PlanetaryBoard();
     board.setProbeCount(EPlanet.VENUS, 'player-a', 1);
     board.setProbeCount(EPlanet.VENUS, 'player-b', 1);
@@ -12,9 +12,16 @@ describe('PlanetaryBoard', () => {
     const secondOrbit = board.orbit(EPlanet.VENUS, 'player-b');
 
     expect(firstOrbit.vpGained).toBe(3);
-    expect(firstOrbit.incomeResource).toBe(EResource.ENERGY);
+    expect(firstOrbit.rewards).toEqual([
+      { type: 'resource', resource: EResource.SCORE, amount: 6 },
+      { type: 'tuck', amount: 1 },
+      { type: 'resource', resource: EResource.SCORE, amount: 3 },
+    ]);
     expect(secondOrbit.vpGained).toBe(0);
-    expect(secondOrbit.incomeResource).toBe(EResource.ENERGY);
+    expect(secondOrbit.rewards).toEqual([
+      { type: 'resource', resource: EResource.SCORE, amount: 6 },
+      { type: 'tuck', amount: 1 },
+    ]);
     expect(board.planets.get(EPlanet.VENUS)?.orbitSlots).toEqual([
       { playerId: 'player-a' },
       { playerId: 'player-b' },
@@ -22,16 +29,23 @@ describe('PlanetaryBoard', () => {
     expect(board.planets.get(EPlanet.VENUS)?.firstOrbitClaimed).toBe(true);
   });
 
-  it('land places lander and returns center reward + first data bonus', () => {
+  it('land places lander and returns configured center reward + first data bonus', () => {
     const board = new PlanetaryBoard();
-    board.setProbeCount(EPlanet.JUPITER, 'player-a', 1);
+    board.setProbeCount(EPlanet.MERCURY, 'player-a', 1);
 
-    const result = board.land(EPlanet.JUPITER, 'player-a');
+    const result = board.land(EPlanet.MERCURY, 'player-a');
 
-    expect(result.centerReward.vpGained).toBeGreaterThan(0);
-    expect(result.centerReward.lifeTraceGained).toBe(1);
-    expect(result.firstLandDataGained).toBe(1);
-    expect(board.planets.get(EPlanet.JUPITER)?.landingSlots).toEqual([
+    expect(result.centerReward.vpGained).toBe(12);
+    expect(result.centerReward.traceRewards).toEqual([
+      { trace: ETrace.YELLOW, amount: 1 },
+    ]);
+    expect(result.firstLandDataGained).toBe(3);
+    expect(result.rewards).toEqual([
+      { type: 'resource', resource: EResource.SCORE, amount: 12 },
+      { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
+      { type: 'resource', resource: EResource.DATA, amount: 3 },
+    ]);
+    expect(board.planets.get(EPlanet.MERCURY)?.landingSlots).toEqual([
       { playerId: 'player-a' },
     ]);
   });
@@ -46,7 +60,7 @@ describe('PlanetaryBoard', () => {
     expect(board.getLandingCost(EPlanet.SATURN, 'player-a')).toBe(2);
   });
 
-  it('mars has two first-land data bonuses', () => {
+  it('mars has configured first-land data bonuses for first and second landers', () => {
     const board = new PlanetaryBoard();
     board.setProbeCount(EPlanet.MARS, 'player-a', 1);
     board.setProbeCount(EPlanet.MARS, 'player-b', 1);
@@ -56,7 +70,7 @@ describe('PlanetaryBoard', () => {
     const second = board.land(EPlanet.MARS, 'player-b');
     const third = board.land(EPlanet.MARS, 'player-c');
 
-    expect(first.firstLandDataGained).toBe(1);
+    expect(first.firstLandDataGained).toBe(2);
     expect(second.firstLandDataGained).toBe(1);
     expect(third.firstLandDataGained).toBe(0);
   });

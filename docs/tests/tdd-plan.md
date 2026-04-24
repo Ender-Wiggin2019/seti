@@ -5,7 +5,9 @@
 
 ---
 
-## 现有测试 Mock 审计总结
+## 初始测试 Mock 审计（历史）
+
+> 本节保留计划启动时的 mock 审计结果，用于解释后续 TDD 拆分来源；当前完成状态以各 Phase 的“回归覆盖”小节和“当前收尾状态”为准。
 
 ### 测试质量评级
 
@@ -16,7 +18,7 @@
 | **MIXED** | 部分测试用真实引擎，部分用手工构造的假 `IGame` |
 | **MOCK-HEAVY** | 大量 mock 绕过核心规则逻辑，测的是"胶水代码"而非规则 |
 
-### 现有测试 Mock 问题汇总
+### 初始测试 Mock 问题汇总
 
 | 文件 | 评级 | 核心 Mock 问题 |
 |------|------|---------------|
@@ -47,9 +49,9 @@
 
 ---
 
-## 计划总览
+## 初始计划总览（历史）
 
-共 **10 个阶段（Phase）**，按依赖关系排序。重点标注 mock 绕过的规则需要补回的集成测试。
+计划启动时共拆分 **10 个阶段（Phase）**，按依赖关系排序。表中“需重写/需补”保留为初始风险说明，不代表当前存在后续实施项；当前状态以文末覆盖表为准。
 
 | Phase | 主题 | 预估用例 | 优先级 | 说明 |
 |-------|------|---------|--------|------|
@@ -70,7 +72,7 @@
 ## Phase 1: Setup 规则验证
 
 **规则来源:** rule-simple §2, prd-rule §5
-**现有覆盖:** `GameSetup.test.ts` — INTEGRATION/GOOD，需补充细节
+**初始覆盖:** `GameSetup.test.ts` — INTEGRATION/GOOD；细节已补齐，当前状态见本节“回归覆盖”。
 
 ### 1.1 共享棋盘 Setup
 
@@ -145,9 +147,8 @@ RED tests:
 
 **规则来源:** rule-simple §5, rule-raw §MAIN ACTIONS, rule-faq
 
-> **关键发现:** Scan、AnalyzeData、PlayCard 被评为 MOCK-HEAVY，LaunchProbe/ResearchTech/Pass 为 MIXED。
-> 这些测试需要补充 **通过 `Game.processMainAction` 走完整管线的集成测试**。
-> 已有的 INTEGRATION 测试（Orbit、Land）也需要补充 mock 绕过的边界。
+> **初始关键发现:** Scan、AnalyzeData、PlayCard 曾被评为 MOCK-HEAVY，LaunchProbe/ResearchTech/Pass 曾为 MIXED。
+> 对应集成测试和边界回归已按本节各小节的“回归覆盖”逐项补齐。
 
 ### 2.1 Launch Probe — 升级为 INTEGRATION
 
@@ -173,12 +174,12 @@ RED tests (错误路径 / 非法操作):
 └── 2.1E.3 [错误] 非当前玩家尝试 launch 被拒绝
 ```
 
-**回归覆盖（截至 2026-04-20）**
+**回归覆盖（校准截至 2026-04-24）**
 
 - 已覆盖：`2.1.1` 已由 `2.1.1 spends 2 credits, places probe on Earth, increments probesInSpace` 锁定完整主行动路径；`2.1.3` 已由 `integration: double-probe tech allows launching again on a later turn until two probes are in space` 覆盖真实跨回合二次发射。
 - 已覆盖：`2.1.4`/`2.1E.1` 已由 `2.1.4 throws GameError when credits are below 2` + `canExecute` 信用边界组覆盖；`2.1.5`/`2.1E.2` 已由 `2.1.5 throws GameError when probesInSpace has reached the limit` + `canExecute` 上限边界组覆盖。
 - 已覆盖：`2.1E.3` 已由 `2.1E.3 rejects launch attempted by a non-active player` 覆盖。
-- 待补：`2.1.2` 仍缺“orbiter/lander 不计入 probesInSpace”的显式回归，当前 Launch Probe 用例尚未从真实 orbit/land 后再验证 launch 上限。
+- 已覆盖：`2.1.2` 已由 `2.1.2 after real ORBIT, orbiter does not count toward probesInSpace (third launch with double-probe tech)` 与 `2.1.2 after real LAND, lander does not count toward probesInSpace (third launch with double-probe tech)` 覆盖真实 orbit / land 后再 launch 的上限语义。
 
 ### 2.2 Orbit — 补全 mock 绕过的边界
 
@@ -205,16 +206,15 @@ RED tests (错误路径 / 非法操作):
 └── 2.2E.4 [错误] 非当前玩家尝试 orbit 被拒绝
 ```
 
-**回归覆盖（截至 2026-04-17）**
+**回归覆盖（校准截至 2026-04-24）**
 
 - 已覆盖：`2.2.1`/`2.2E.1` 已由 `does not allow orbiting while the only probe is still on Earth` 覆盖，既验证 `canExecute=false`，也验证 `processMainAction` 抛出 `INVALID_ACTION`。
 - 已覆盖：`2.2.2`/`2.2E.2` 已由 `rejects orbit when no own probe is on selected planet` 覆盖；`2.2E.4` 已由 `rejects orbit attempts from a non-active player even with a valid probe` 覆盖。
-- 已部分覆盖：`2.2.3` 已锁定两个已实现的真实奖励路径。
+- 已覆盖：`2.2.3` 已由 `2.2.3 first orbit grants +3 VP and a distinct orbit income bonus per planet` 覆盖每个行星的首轨道奖励矩阵。
 - `spends resources, moves probe from space, and grants first orbit bonus` 覆盖了真实 orbit 成功路径、扣费、从太阳系移除探测器、写入 `orbitSlots`、以及首个 orbiter 的 `+3 VP`。
 - `only grants +3 VP for the first orbiter on a planet` 覆盖了多人同一行星时“首个 +3VP、后续无奖励”，对应 `2.2.5`。
 - 已覆盖：`2.2E.3` 已由 `returns false when credits or energy are insufficient even with a valid planet probe` 覆盖。
-- 待补：`2.2.3` 仍缺“每个行星奖励矩阵”逐一验收，目前只锁定了 Mars/Venus 的真实首轨道奖励语义。
-- 待补：`2.2.4` 的收入增长 / tucked income 断言尚未进入 `Orbit.test.ts`。
+- 已覆盖：`2.2.4` 已由 `2.2.4 orbit increases tucked income (round payout) without drawing or tucking hand cards` 覆盖 orbit 收入增长与 tucked income 结算语义。
 
 ### 2.3 Land — 补全 mock 绕过的边界
 
@@ -242,7 +242,7 @@ RED tests (错误路径 / 非法操作):
 └── 2.3E.4 [错误] 月球 slot 已满时着陆被拒绝
 ```
 
-**回归覆盖（截至 2026-04-17）**
+**回归覆盖（校准截至 2026-04-24）**
 
 - 已覆盖：`2.3.1` 已由 `lets the player place a landing life trace onto the selected discovery slot` 覆盖，显式验证 trace 输入、选位分支、未选 discovery slot 保持为空。
 - 已覆盖：`2.3.2` 已由 `gives Mars first-land data only to the first two landers` 覆盖，包含 3 人顺序、前两位拿 data、第三位无 bonus。
@@ -283,7 +283,7 @@ RED tests (错误路径 / 非法操作):
 └── 2.4E.2 [错误] 展示区为空时仍可执行（仅标地球扇区信号）
 ```
 
-**回归覆盖（截至 2026-04-17）**
+**回归覆盖（截至 2026-04-24）**
 
 - 已覆盖：`2.4.1`/`2.4.2` 已由 `integration: mark-earth uses the real solar-system sector and grants +1 data` 覆盖，锁定真实太阳系扇区映射、资源扣费、data token 消耗、玩家信号落点与数据入账。
 - 已覆盖：`2.4.3`/`2.4.7` 已由 `integration: refills the card row only after the scan is fully resolved` 覆盖，锁定“先弃展示区牌并保留 2 张，再在 `done` 后补回 3 张”的时序。
@@ -295,7 +295,7 @@ RED tests (错误路径 / 非法操作):
 - 已覆盖：`2.4.10` 已由 `MarkSectorSignalEffect.test.ts` 中的 `marks sector, emits mission event, and applies data reward` 锁定 `SIGNAL_PLACED` 事件；`GameIntegration.test.ts` 中的 `emits SCAN_PERFORMED mission event` 锁定主行动级 mission 事件。
 - 已覆盖：`2.4E.1` 已由 `ScanAction.canExecute` 边界组 + `GameIntegration.test.ts` 中的 `rejects when credits are zero` / `rejects when energy is insufficient` 覆盖。
 - 已覆盖：`2.4E.2` 已由 `offers only MARK_EARTH when card row is empty, and scan completes after it` 覆盖。
-- 已部分覆盖：`2.4.9` 已由 `integration: when the data pool is already full, scan data gains overflow into stash` 锁定当前实现语义为“overflow 进入 stash”；如果规则最终要求“直接弃掉”，这里需要后续规则决策，不宜再按旧文案继续扩测。
+- 已覆盖：`2.4.9` 已由 `marks the signal but discards scan data when data pool is already at max` 锁定；规则结论为 `rule-simple §6.2` / `rule-raw` 所述的“data pool 上限 6，超出 data 直接弃掉”，实现中 `Data.gain()` 不再把超出 data 写入 stash。
 
 ### 2.5 Analyze Data — **从 MOCK-HEAVY 升级为 INTEGRATION**
 
@@ -370,20 +370,21 @@ RED tests (错误路径 / 非法操作):
 └── 2.6E.3 [错误] 同一张牌不能同时做主行动和自由行动
 ```
 
-**回归覆盖（截至 2026-04-17）**
+**回归覆盖（截至 2026-04-24）**
 
 - 已覆盖：`2.6.1` 已由 `integration: ordinary immediate cards pay their own cost, apply their effect, and go to discard` 覆盖，锁定支付费用、执行即时效果、进入弃牌堆、并在结算后交接回合。
 - 已覆盖：`2.6.2` 已由 `integration: launch-effect cards do not charge the normal launch action cost` 覆盖，确认卡牌授予的 Launch 不额外扣 2 信用。
-- 已部分覆盖：`2.6.5`/`2.6.6`/`2.6.12` 已由 `integration: an already-satisfied quick mission prompts complete-or-skip before handoff` 覆盖，锁定“主效果完成后，先给 mission prompt，再 handoff”的时序，以及 `complete-*` / `skip-missions` 两个分支入口。
-- 已部分覆盖：`2.6.7` 已由 `integration: a full mission card does not trigger from its own play event` 锁定“注册当下不会被自身事件立即触发”；相邻的 `StrategicPlanningCard.test.ts` 还锁定了 `events before mission registration do not trigger branches`。
+- 已覆盖：`2.6.5` 已由 `2.6.5 completes an already-satisfied quick mission immediately from the play-card prompt` 覆盖，锁定即时完成、奖励结算、任务移入 `completedMissions`。
+- 已覆盖：`2.6.6` 已由 `2.6.6 keeps an already-satisfied quick mission completable after the player skips the play-card prompt` 覆盖，锁定跳过后下回合仍可通过自由行动完成。
+- 已覆盖：`2.6.12` 已由 `2.6.5` / `2.6.6` 两条 Lovell Telescope 集成路径覆盖：卡牌 Scan 主效果的选项输入先完成，之后才出现 quick mission complete/skip prompt。
+- 已覆盖：`2.6.7` 已由 `integration: a full mission card does not trigger from its own play event` 锁定“注册当下不会被自身事件立即触发”；相邻的 `StrategicPlanningCard.test.ts` 还锁定了 `events before mission registration do not trigger branches`。
 - 已覆盖：`2.6E.2` 已由 `integration: insufficient resources rejects the play without mutating turn state` 覆盖，确认失败时手牌、phase、active player、eventLog 都不漂移。
-- 已部分覆盖：`2.6E.1` 已由 `GameIntegration.test.ts` 中的 `rejects with out-of-range cardIndex`、`rejects with negative cardIndex`、`rejects when hand is empty` 覆盖输入边界，但还没写成“指定 cardIndex 指向一张当前已不在手里的真实卡”这种更贴近文案的回归。
+- 已覆盖：`2.6E.1` 已由 `2.6E.1 rejects PLAY_CARD when declared cardId does not match the hand slot (stale client selection)` 覆盖“指定 cardIndex 指向一张当前已不在手里的真实卡 / 过期客户端选择”的主行动级回归；`GameIntegration.test.ts` 仍覆盖越界、负数、空手牌等输入边界。
 - 已覆盖：`2.6.3`/`2.6.4` 已由 `a played mission card stays in front of the player and is not discarded` 与 `a played end-game scoring card stays in front of the player and is not discarded` 覆盖。
-- 已覆盖：`2.6.8`/`2.6.9` 已由 `a trigger mission registered earlier stamps exactly one circle on a later matching CARD_PLAYED` 覆盖，锁定真实 `processMainAction(PLAY_CARD)` 路径下的单分支盖圈与其余分支保持未完成。
+- 已覆盖：`2.6.8`/`2.6.9` 已由 `a trigger mission registered earlier stamps exactly one circle on a later matching CARD_PLAYED` 覆盖，锁定真实 `processMainAction(PLAY_CARD)` 路径下的单分支盖圈与其余分支不被推进。
 - 已覆盖：`2.6.11` 已由 `completing the final trigger branch moves the mission to completedMissions automatically` 覆盖，锁定最后一格完成后自动翻面/移出 `playedMissions`。
 - 已覆盖：`2.6E.3` 已由 `a card discarded via the free-action corner cannot also be played as a main action the same turn` 覆盖。
-- 待补：`2.6.10` “一个效果多奖励时一次只盖一个” 仍主要由 mission 专项测试承担，尚未补成主行动级单条回归。
-- 待补：`2.6E.1` 更贴近文案的“该张牌已不在手里”主行动级回归仍未单独补上。
+- 已覆盖：`2.6.10` 已由 `2.6.10 one DISPLAY_CARD effect placing two signals offers only one Control Center branch until the next trigger` 覆盖主行动级“一效果多奖励一次只盖一个圈”的 FAQ 语义。
 
 ### 2.7 Research Tech — 升级为 INTEGRATION
 
@@ -414,7 +415,7 @@ RED tests (错误路径 / 非法操作):
 └── 2.7E.3 [错误] 选择已拥有的同种科技被拒绝
 ```
 
-**回归覆盖（截至 2026-04-20）**
+**回归覆盖（截至 2026-04-24）**
 
 - 已覆盖：`2.7.1` 已由 `happy-path acquire loop` 覆盖，锁定付 6 声望、旋转、选择科技并真正写入玩家面板/TechBoard 的主行动闭环。
 - 已覆盖：`2.7.2` 已由 `research rotation moves probes with the real solar system disc` 覆盖，锁定研究科技时真实 `SolarSystem` 旋转会移动现有探测器。
@@ -444,16 +445,15 @@ RED tests (通过 Game.create + processMainAction):
 └── 2.8.7 [集成] 非首 pass 不触发旋转
 ```
 
-**回归覆盖（截至 2026-04-20）**
+**回归覆盖（截至 2026-04-24）**
 
 - 已覆盖：`2.8.2` 已由 `returns SelectCard when hand exceeds limit` 与 `chains discard → end-of-round card selection` 覆盖，锁定超过 4 张时先弃牌，再进入回合末选牌链路。
 - 已覆盖：`2.8.3` 已由 `Pass.test.ts` 中的 `rotates the solar system on the first pass of the round`、`GameIntegration.test.ts` 中的 `first pass of the round triggers solar system rotation`，以及 `GameFlowBehavior.test.ts` 中的 `8b. after rotation: Earth→cell-4, Asteroid→cell-3, Venus→cell-2` 组合覆盖，已经锁定真实盘面旋转而不只是 spy 调用。
-- 已部分覆盖：`2.8.5` 已由 `returns SelectEndOfRoundCard when stack is available` 与 `chains discard → end-of-round card selection` 覆盖，但“最后一人选 1 弃 1”的剩余牌处理语义仍未单独断言。
+- 已覆盖：`2.8.5` 已由 `returns SelectEndOfRoundCard when stack is available`、`chains discard → end-of-round card selection` 与 `the last passing player takes one card and leaves exactly one unclaimed in the stack` 覆盖，锁定最后一人选 1 后末牌堆只剩 1 张未领取牌。
 - 已覆盖：`2.8.6` 已由 `GameIntegration.test.ts` 中的 `all players pass ends round`、`round-end income is applied each round`、`start player rotates each round`，以及 `GameFlowBehavior.test.ts` 中的 `24. both players passed → round end, income applied` / `25. round 2: p2 is now start player and active player` 组合覆盖。
 - 已覆盖：`2.8.7` 已由 `does not rotate the solar system on the second pass of the same round`、`does not dispatch the alien rotation hook on the second pass of the same round`，以及 `GameFlowBehavior.test.ts` 中的 `23b. second pass of the round does not trigger another disc rotation` 覆盖。
 - 已覆盖：`2.8.1` 已由 `allows a BUY_CARD free action immediately before PASS` 覆盖。
-- 已覆盖：`2.8.4` 的“第 5 回合首 pass 仍旋转”已由 `first pass of round 5 still rotates the solar system even without end-of-round cards` 锁定；“reminder token 被弃”目前无独立状态位可单测，只能由 `roundRotationReminderIndex=4` + 无可选末牌行为间接体现。
-- 已覆盖：`2.8.5` 的尾部语义已由 `the last passing player takes one card and leaves exactly one unclaimed in the stack` 补锁。
+- 已覆盖：`2.8.4` 的“第 5 回合首 pass 仍旋转”已由 `first pass of round 5 still rotates the solar system even without end-of-round cards` 锁定；“reminder token 被弃”在当前模型中没有独立可观测状态，已接受由 `roundRotationReminderIndex=4` + 无可选末牌行为体现，不作为后续实施项。
 
 ### 2.9 BehaviorExecutor — **从 MOCK-HEAVY 升级为 INTEGRATION**
 
@@ -480,10 +480,10 @@ RED tests (全部通过 Game.create + 真实卡牌):
 - 已覆盖：`2.9.2` 已由 launch / orbit / rotate / draw 的真实引擎路径锁定，其中 orbit 走真实行星选择与 `planetaryBoard` 写入。
 - 已覆盖：`2.9.3`/`2.9.4` 已由 `research tech runs against the real TechBoard`、`markTrace dispatches through AlienState` 与 `alienState unavailable fallback` 组合覆盖。
 - 已覆盖：`2.9.5` 已由 `composite behavior runs all steps in order` 覆盖，锁定多步骤顺序执行。
-- 现状说明：legacy `__markCalls` mock suite 已整体 `describe.skip`，仅保留作参考；活跃断言已切到 integration 路径。
-- **2.9.6 产品决策已确认（2026-04-21）：** 无效 behavior type 采用**容错策略**（不抛错，不阻塞游戏）
+- 已清理：legacy `__markCalls` mock suite 已删除；活跃断言全部保留在 integration 路径。
+- **2.9.6 产品决策已确认（校准截至 2026-04-24）：** 无效 behavior type 采用**容错策略**（不抛错，不阻塞游戏）
   - ✅ 后端：记录 `CARD_CUSTOM_EFFECT_UNHANDLED` 事件到 event log（已实现）
-  - ⚠️ 前端：需监听该事件并展示 toast 提示用户（待实现，已添加到 `todo.md`）
+  - ✅ 前端：`GameLayout` 监听该事件并展示 toast；`common.json` 已补齐 en / pt-BR / zh-CN 文案
   - 规则依据：rule-simple/rule-raw/rule-faq 均未明确要求抛错；容错策略更符合桌游"忽略无法执行效果"的惯例
 
 ### 2.10 卡牌效果 — 集成抽检
@@ -925,11 +925,14 @@ RED tests (全部通过真实 AlienState + plugin):
 └── 6.2.10 [集成] 发现后 alien board 额外位可被标记
 ```
 
-**回归覆盖（截至 2026-04-21）:**
-- ✅ `ResolveDiscovery.test.ts`: 删除 legacy skip suite (1 个 no-op 测试)，新增 7 个集成测试（6.2.1-6.2.5, 6.2.8-6.2.9）
+**回归覆盖（截至 2026-04-24）:**
+- ✅ `ResolveDiscovery.test.ts`: 删除 legacy skip suite (1 个 no-op 测试)，新增 9 个集成测试（6.2.1-6.2.6, 6.2.8-6.2.10）
 - ✅ 所有测试通过真实 `Game.create()` + `AlienState` + `AlienRegistry` plugin
 - ✅ 验证发现条件检测、plugin onDiscover 调用、发现者奖励、中立标记规则
-- ⏸️ 测试 6.2.6、6.2.7、6.2.10 推迟（需实现 alien card decks、Exertian 手牌规则、发现后额外槽）
+- ✅ `6.2.6` 基础发现发牌链路已由 `generic discovery flow initializes alien deck and deals by discovery occupants` 覆盖：初始化 alien deck、按发现位占用者发牌、翻开 face-up alien card。
+- ✅ `6.2.6` 后续获取路径已规则确认：alien cards 只能通过 species effects 获取，不存在通用 card row/deck 后续获取路径；`AlienState.test.ts` / `drawCard.test.ts` 已覆盖 face-up/deck 选择能力，discovery flow 已覆盖初始化与发现奖励。
+- ✅ `6.2.7` 已由 `Pass.test.ts` 中 `6.2.7 excludes Exertian alien cards from the pass hand limit` 覆盖，Pass 手牌上限计数排除 Exertian alien cards。
+- ✅ `6.2.10` 已由 `discovers Anomalies, then lets a later red trace choose and mark the anomaly column slot` 覆盖：真实 discovery 后由 plugin 增加 extra slot，再通过真实 trace 输入标记额外位。
 
 ---
 
@@ -1245,7 +1248,7 @@ RED tests:
 **文件:** `__tests__/engine/income/IncomeSystem.test.ts` (新建)
 + `__tests__/engine/effects/income/TuckCardForIncomeEffect.test.ts` (扩展)
 
-**说明:** 收入是每回合结束的关键逻辑，但缺少系统性集成测试。
+**初始说明:** 收入是每回合结束的关键逻辑，计划启动时缺少系统性集成测试；当前覆盖见下方“回归覆盖”。
 
 ```
 RED tests (全部通过 Game.create):
@@ -1254,7 +1257,7 @@ RED tests (全部通过 Game.create):
 ├── 10.4.3 [集成] tucked 信用卡 → 每回合 +1 信用
 ├── 10.4.4 [集成] tucked 能量卡 → 每回合 +1 能量
 ├── 10.4.5 [集成] tucked 抽牌卡 → 每回合 +1 牌
-├── 10.4.6 [集成] orbit 奖励中的收入增加被正确累积
+├── 10.4.6 [集成] 游戏中途增加 tucked income 后，后续回合收入被正确累积
 ├── 10.4.7 [集成] 多张 tucked 卡叠加收入
 └── 10.4.8 [错误] 收入不能导致资源超出（如果有上限规则）
 ```
@@ -1267,6 +1270,18 @@ RED tests (全部通过 Game.create):
 - **10.4.6:** 规则上 orbit 奖励「通常含收入增加」；**当前实现** 中 `OrbitAction` 不写入 tucked income（见 `Orbit.test.ts`）。本项用 **PlaceData 电脑奖励 `tuckIncome` → `TuckCardForIncomeEffect`** 走完整 `Game.create` + 自由行动链路，验证「游戏中途增加 tucked」在次回合及之后的回合末结算中累积。
 - **10.4.8:** `rule-simple.md` **未**规定玩家信用/能量的规则上限；**实现** 在 `Resources.gain` 中将 credits/energy/publicity **clamp 至 999**（`RESOURCE_MAX`）。测试仅锁定该实现，若规则日后定义上限需同步实现与断言。
 - **TuckCardForIncomeEffect:** `packages/server/__tests__/engine/effects/income/TuckCardForIncomeEffect.test.ts` 增补连续两次 tuck 时 `tuckedCardIncome` 叠加。
+
+---
+
+## 当前收尾状态（校准截至 2026-04-24）
+
+当前 `docs/tests/tdd-plan.md` 中已不保留“完成但仍显示未处理”的条目。最近一轮收尾已完成：
+
+- `2.4.9`: data pool 满时超出 data 按规则弃掉，不进入 stash。
+- `2.6.5` / `2.6.6` / `2.6.12`: quick mission 的立即完成、跳过后延迟完成、以及主效果先于任务完成 prompt 的时序均已覆盖。
+- `6.2.7`: Exertian alien cards 不计入 pass 手牌上限。
+- `6.2.10`: 真实 Anomalies discovery 后新增的 extra slot 可通过 trace 输入标记。
+- `BehaviorExecutor`: legacy `describe.skip` mock suite 已删除。
 
 ---
 
@@ -1387,42 +1402,44 @@ Phase 1 (Setup)
 
 | Phase | 文件 | Mock 评级 | 需要动作 |
 |-------|------|----------|---------|
-| 1 | GameSetup.test.ts | 🟢 | 补充细节 |
-| 2.1 | LaunchProbe.test.ts | 🟡 | 已锁 `2.1.1/2.1.3/2.1.4/2.1.5/2.1E.*`；待补 `2.1.2` |
-| 2.2 | Orbit.test.ts | 🟢 | 已锁 `2.2.1/2.2.2/2.2.5/2.2E.*`；待补 `2.2.3` 全行星矩阵与 `2.2.4` |
+| 1 | GameSetup.test.ts | 🟢 | Phase 1 已完成（2026-04-21） |
+| 2.1 | LaunchProbe.test.ts | 🟢 | `2.1.1-2.1.5` 与 `2.1E.*` 已覆盖，含真实 orbit / land 后 probesInSpace 上限语义（2026-04-24 校准） |
+| 2.2 | Orbit.test.ts | 🟢 | `2.2.1-2.2.5` 与 `2.2E.*` 已覆盖，含全行星奖励矩阵与 orbit income（2026-04-24 校准） |
 | 2.3 | Land.test.ts | 🟢 | `2.3.1-2.3.6` 与 `2.3E.1-2.3E.4` 基本已锁 |
-| 2.4 | Scan.test.ts | 🔴 | 已锁 `2.4.1-2.4.8/2.4.10 + 2.4E.1/2.4E.2`；`2.4.9` 当前实现语义为 overflow into stash，待规则最终拍板 |
-| 2.5 | AnalyzeData.test.ts | 🔴 | `2.5.1-2.5.8` 与 `2.5E.1-2.5E.3` 已补齐回归覆盖 |
-| 2.6 | PlayCard.test.ts | 🟡 | 已锁 mission/endgame 留场、触发盖圈、最终自动完成与 `2.6E.3`；剩 `2.6.10` 与更贴文案的 `2.6E.1` |
+| 2.4 | Scan.test.ts | 🟢 | `2.4.1-2.4.10` 与 `2.4E.1-2.4E.2` 已锁；`2.4.9` 已按规则改为 data pool 满时超出 data 直接弃掉 |
+| 2.5 | AnalyzeData.test.ts | 🟢 | `2.5.1-2.5.8` 与 `2.5E.1-2.5E.3` 已补齐回归覆盖 |
+| 2.6 | PlayCard.test.ts | 🟢 | `2.6.1-2.6.12` 与 `2.6E.1-2.6E.3` 已覆盖，含主行动级“一效果一圈”与 stale cardId 输入 |
 | 2.7 | ResearchTech.test.ts | 🟢 | `2.7.1-2.7.8` 与 `2.7E.1-2.7E.3` 已基本锁定，含 card-effect duplicate-tech `no-op + rotate` |
-| 2.8 | Pass.test.ts | 🟢 | `2.8.1-2.8.7` 已基本锁定；round-5 token discard 仅能间接体现，无独立状态位 |
-| 2.9 | BehaviorExecutor.test.ts | 🟡 | integration 主路径已接管；legacy mock suite 已 skip，剩“无效 behavior type 是否应抛错”语义待定 |
+| 2.8 | Pass.test.ts | 🟢 | `2.8.1-2.8.7` 已锁定；round-5 token discard 无独立可观测状态，已接受间接体现且不作为后续实施项 |
+| 2.9 | BehaviorExecutor.test.ts | 🟢 | integration 主路径已接管；无效 behavior type 已定为容错 + event log + 前端 toast；legacy skip suite 已删除 |
 | 2.10 | CardEffectsIntegration.test.ts | 🟢 | `2.10.1-2.10.8` 已覆盖；`71/109` 当前双旋转语义已显式锁定 |
-| 3.1 | Movement.test.ts | 🟡 | 补充真实棋盘 + mission 事件 + 错误路径 |
-| 3.2 | PlaceData.test.ts | 🟡 | 补充真实 Deck + data pool 上限 + 错误路径 |
-| 3.3 | CompleteMission.test.ts | 🔴 | **重写 — 当前无 happy-path + 错误路径** |
+| 3.1 | Movement.test.ts | 🟢 | Phase 3.1 真实棋盘、mission 事件与 `3.1E.*` 错误路径已覆盖（2026-04-24 校准） |
+| 3.2 | PlaceData.test.ts | 🟢 | Phase 3.2 真实 Deck、data pool 上限、电脑奖励与错误路径已覆盖（2026-04-21） |
+| 3.3 | CompleteMission.test.ts | 🟢 | Phase 3.3 已重写并覆盖 happy path、可推迟完成、重复完成与非当前玩家错误路径（2026-04-21） |
 | 3.4 | FreeActionCorner.test.ts | 🟢 | Phase 3.4 集成 + Cornell 角触发已锁（2026-04-21） |
 | 3.5 | BuyCard.test.ts | 🟢 | Phase 3.5 集成 + 错误路径已锁（2026-04-21） |
 | 3.6 | ExchangeResources.test.ts | 🟢 | 换入牌展示区/牌堆 + 集成 + 错误路径已锁（2026-04-21） |
-| 3.7 | MissionTracker.test.ts | 🔴 | **重大扩展 — 不测"打出后才触发"/"一效果一空位"** |
-| 3.7 | TechMissionCards.test.ts | 🟡 | 补充 tracker/event 流集成 |
-| 3.7 | ObservationQuickMissionCard.test.ts | 🔴 | **重大扩展 — mock sector.markSignal** |
-| 4.1 | RotateDiscEffect.test.ts | 🔴 | **重大扩展 — 当前完全 mock 物理旋转** |
-| 4.2 | SolarSystem.test.ts | 🟢 | 补充集成触发时机 |
-| 5 | Sector/SectorFulfillment | 🟡 | 补充集成测试 |
-| 6.1 | LifeTrace.test.ts | 🆕 | 新建 |
-| 6.2 | ResolveDiscovery.test.ts | 🔴 | **重写 — 当前只有 no-op** |
+| 3.7 | MissionTracker.test.ts | 🟢 | Phase 3.7 `3.7.1-3.7.12` 已覆盖，含“打出后才触发”“一效果一空位” |
+| 3.7 | TechMissionCards.test.ts | 🟢 | 保留单元测试并补充 tracker/event 流集成 |
+| 3.7 | ObservationQuickMissionCard.test.ts | 🟢 | 保留 legacy suite 并补充真实 Scan / sector 标记集成 |
+| 4.1 | RotateDiscEffect.test.ts | 🟢 | Phase 4.1 真实 SolarSystem 物理旋转、probe 跟随/挤移与 alienState 回调已覆盖 |
+| 4.2 | SolarSystem.test.ts | 🟢 | Phase 4.2 旋转触发时机与 rotationCounter 循环已覆盖 |
+| 5 | Sector/SectorFulfillment | 🟢 | Phase 5 扇区完成、胜者/第二名、重置、重复胜利与多扇区结算顺序已覆盖 |
+| 6.1 | LifeTrace.test.ts | 🟢 | Phase 6.1 新建并覆盖发现位、overflow、universal trace 与额外位选择 |
+| 6.2 | ResolveDiscovery.test.ts | 🟢 | no-op 已重写；`6.2.1-6.2.10` 已覆盖或规则确认，含 Exertian 手牌上限与 Anomalies discovery 后 extra slot |
 | 7 | Milestone.test.ts | 🟢 | Phase 7 全项 + `Game.create` / 真实 `EventLog`（2026-04-21） |
 | 8.1-8.3 | Tech effects | 🟢 | `ProbeTechs.test.ts` 已覆盖 Phase 8.1 集成；`ScanTechs.test.ts` 已覆盖 Phase 8.2 集成；`ComputerTechs.test.ts` 已覆盖 Phase 8.3 集成 |
 | 8.4 | TechBonus.test.ts | 🟢 | Phase 8.4.1–8.4.2 集成（+ TechBonusEffect 单元） |
 | 9 | FinalScoring/GoldTile | 🟢 | `GoldScoringTile.test.ts` Phase 9.2；`FinalScoring.test.ts` Phase 9.1/9.3（2026-04-21） |
 | 10.1–10.2 | GameRoundTransition / GameTurnFlow | 🟢 | `10.1.1–10.1.4` / `10.2.1–10.2.7` 已覆盖（2026-04-21） |
 | 10.3 | FullGameSimulation.test.ts | 🟢 | `10.3.1–10.3.5` 已覆盖（2026-04-21） |
-| 10.4 | IncomeSystem.test.ts | 🆕 | 新建 — 收入系统独立验证 |
+| 10.4 | IncomeSystem.test.ts | 🟢 | `10.4.1-10.4.8` 已覆盖，含 base/tucked 叠加、抽牌收入 pending 与资源 clamp（2026-04-21） |
 
 ---
 
-## 预估测试用例总数
+## 初始预估测试用例总数
+
+> 该表为计划启动时的规模估算，保留作历史参考；本轮收尾状态以“当前收尾状态”章节为准。
 
 | Phase | 预估 test cases | 🔴 需重写 | 🟡 需补充 | 🆕 新建 | 🚫 错误路径 |
 |-------|----------------|----------|----------|--------|-----------|

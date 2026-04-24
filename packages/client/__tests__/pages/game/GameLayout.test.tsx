@@ -1,9 +1,15 @@
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EResource } from '@seti/common/types/element';
+import { ETechBonusType, ETechId } from '@seti/common/types/tech';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IGameContext } from '@/pages/game/GameContext';
-import { EFreeAction, EPhase, EPlayerInputType } from '@/types/re-exports';
+import {
+  EFreeAction,
+  EPhase,
+  EPlayerInputType,
+  ETech,
+} from '@/types/re-exports';
 import {
   createMockGameState,
   createMockPlayerState,
@@ -73,6 +79,19 @@ describe('GameLayout', () => {
 
     expect(screen.getByText('1')).toBeInTheDocument();
     expect(screen.getByText('Action Phase')).toBeInTheDocument();
+  });
+
+  it('renders end-turn phase label instead of the raw translation key', async () => {
+    mockContextValue = createMockContext({
+      gameState: createMockGameState({ phase: EPhase.AWAIT_END_TURN }),
+    });
+
+    await renderLayout();
+
+    expect(screen.getByText('End Turn Phase')).toBeInTheDocument();
+    expect(
+      screen.queryByText('client.top_bar.phases.AWAIT_END_TURN'),
+    ).not.toBeInTheDocument();
   });
 
   it('shows "Your Turn" indicator when it is my turn', async () => {
@@ -206,6 +225,48 @@ describe('GameLayout', () => {
       expect(
         screen.getByRole('button', { name: 'red-signal' }),
       ).toBeInTheDocument();
+    });
+
+    it('reuses the tech board for tech option input and submits the clicked stack', async () => {
+      const sendInput = vi.fn();
+      mockContextValue = createMockContext({
+        sendInput,
+        pendingInput: {
+          inputId: 'input-tech',
+          type: EPlayerInputType.OPTION,
+          options: [
+            {
+              id: ETechId.SCAN_EARTH_LOOK,
+              label: ETechId.SCAN_EARTH_LOOK,
+            },
+          ],
+        } as unknown as IGameContext['pendingInput'],
+        gameState: createMockGameState({
+          techBoard: {
+            stacks: [
+              {
+                tech: ETech.SCAN,
+                level: 0,
+                remainingTiles: 4,
+                firstTakeBonusAvailable: true,
+                topTileBonuses: [{ type: ETechBonusType.DATA_2 }],
+              },
+            ],
+          },
+        }),
+      });
+
+      await renderLayout();
+
+      const actions = screen.getByTestId('bottom-actions');
+      expect(within(actions).getByText('Tech Board')).toBeInTheDocument();
+
+      fireEvent.click(within(actions).getByTestId('tech-stack-scan-tech-0'));
+
+      expect(sendInput).toHaveBeenCalledWith({
+        type: EPlayerInputType.OPTION,
+        optionId: ETechId.SCAN_EARTH_LOOK,
+      });
     });
 
     it('shows free action bar when it is my turn', async () => {

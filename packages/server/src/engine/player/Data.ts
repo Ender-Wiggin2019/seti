@@ -102,12 +102,7 @@ export class Data {
 
   public gain(amount: number): number {
     assertValidAmount('amount', amount);
-    const available = this.totalMax - this.total;
-    const actualAdded = Math.min(amount, available);
-    const addedToPool = this.dataPoolInstance.add(actualAdded);
-    const remainder = actualAdded - addedToPool;
-    this.stashCountValue += remainder;
-    return actualAdded;
+    return this.dataPoolInstance.add(amount);
   }
 
   public addToStash(amount: number): number {

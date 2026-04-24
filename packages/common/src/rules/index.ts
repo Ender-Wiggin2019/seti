@@ -2,6 +2,7 @@ export * from './actions';
 export * from './computer';
 export * from './coordinates';
 export * from './freeActions';
+export * from './handLimit';
 export * from './movement';
 export * from './planet';
 export * from './sector';

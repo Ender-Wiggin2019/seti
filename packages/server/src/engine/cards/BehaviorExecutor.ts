@@ -45,6 +45,13 @@ type TCustomBehaviorHandler = (
   card: ICard,
 ) => IPlayerInput | undefined;
 
+function buildCoreEffectAction(
+  player: IPlayer,
+  callback: (game: IGame) => IPlayerInput | undefined,
+): SimpleDeferredAction {
+  return new SimpleDeferredAction(player, callback, EPriority.CORE_EFFECT);
+}
+
 function toResearchCategories(tech: ETech): TTechCategory[] {
   if (tech === ETech.ANY) {
     return [ETech.PROBE, ETech.SCAN, ETech.COMPUTER];
@@ -155,7 +162,7 @@ export class BehaviorExecutor {
   ): SimpleDeferredAction | undefined {
     const gainResources = behavior.gainResources;
     if (!gainResources) return undefined;
-    return new SimpleDeferredAction(player, () => {
+    return buildCoreEffectAction(player, () => {
       player.resources.gain(gainResources);
       return undefined;
     });
@@ -167,7 +174,7 @@ export class BehaviorExecutor {
   ): SimpleDeferredAction | undefined {
     const gainScore = behavior.gainScore;
     if (!gainScore) return undefined;
-    return new SimpleDeferredAction(player, () => {
+    return buildCoreEffectAction(player, () => {
       player.score += gainScore;
       return undefined;
     });
@@ -179,7 +186,7 @@ export class BehaviorExecutor {
   ): SimpleDeferredAction | undefined {
     const gainMovement = behavior.gainMovement;
     if (!gainMovement) return undefined;
-    return new SimpleDeferredAction(player, () => {
+    return buildCoreEffectAction(player, () => {
       player.gainMove(gainMovement);
       return undefined;
     });
@@ -191,7 +198,7 @@ export class BehaviorExecutor {
   ): SimpleDeferredAction | undefined {
     const gainIncome = behavior.gainIncome;
     if (!gainIncome) return undefined;
-    return new SimpleDeferredAction(player, () => {
+    return buildCoreEffectAction(player, () => {
       const incomeResource = toIncomeBundle(gainIncome);
       if (incomeResource !== undefined) {
         player.income.addTuckedIncome(incomeResource);
@@ -205,7 +212,7 @@ export class BehaviorExecutor {
     player: IPlayer,
   ): SimpleDeferredAction | undefined {
     if (!behavior.tuckForIncome) return undefined;
-    return new SimpleDeferredAction(player, (game) => {
+    return buildCoreEffectAction(player, (game) => {
       return TuckCardForIncomeEffect.execute(player, game);
     });
   }
@@ -216,7 +223,7 @@ export class BehaviorExecutor {
   ): SimpleDeferredAction | undefined {
     const drawCards = behavior.drawCards;
     if (!drawCards || drawCards <= 0) return undefined;
-    return new SimpleDeferredAction(player, (game) => {
+    return buildCoreEffectAction(player, (game) => {
       const drawnCards: string[] = [];
       for (let i = 0; i < drawCards; i += 1) {
         const drawn = game.mainDeck.drawWithReshuffle(game.random);
@@ -239,7 +246,7 @@ export class BehaviorExecutor {
     player: IPlayer,
   ): SimpleDeferredAction | undefined {
     if (!behavior.launchProbe) return undefined;
-    return new SimpleDeferredAction(player, (game) => {
+    return buildCoreEffectAction(player, (game) => {
       LaunchProbeEffect.execute(player, game);
       return undefined;
     });
@@ -250,7 +257,7 @@ export class BehaviorExecutor {
     player: IPlayer,
   ): SimpleDeferredAction | undefined {
     if (!behavior.orbit) return undefined;
-    return new SimpleDeferredAction(player, (game) => {
+    return buildCoreEffectAction(player, (game) => {
       const orbitablePlanets = ORBITABLE_PLANETS.filter((planet) =>
         OrbitProbeEffect.canExecute(player, game, planet),
       );
@@ -279,7 +286,7 @@ export class BehaviorExecutor {
     _card: ICard,
   ): SimpleDeferredAction | undefined {
     if (!behavior.land) return undefined;
-    return new SimpleDeferredAction(player, (game) =>
+    return buildCoreEffectAction(player, (game) =>
       buildLandPlanetSelection(player, game, {
         prompt: 'Select a planet to land on',
       }),
@@ -292,7 +299,7 @@ export class BehaviorExecutor {
     card: ICard,
   ): SimpleDeferredAction | undefined {
     if (!behavior.scan) return undefined;
-    return new SimpleDeferredAction(player, (game) => {
+    return buildCoreEffectAction(player, (game) => {
       if (behavior.scan?.markEarthSectorIndex !== undefined) {
         MarkSectorSignalEffect.markByIndex(
           player,
@@ -317,7 +324,7 @@ export class BehaviorExecutor {
   ): SimpleDeferredAction | undefined {
     const researchTech = behavior.researchTech;
     if (!researchTech) return undefined;
-    return new SimpleDeferredAction(player, (game) =>
+    return buildCoreEffectAction(player, (game) =>
       ResearchTechAction.execute(
         player,
         game,
@@ -341,7 +348,7 @@ export class BehaviorExecutor {
     player: IPlayer,
   ): SimpleDeferredAction | undefined {
     if (!behavior.markTrace) return undefined;
-    return new SimpleDeferredAction(player, (game) => {
+    return buildCoreEffectAction(player, (game) => {
       const trace = behavior.markTrace as ETrace;
       if (!game.alienState) {
         player.traces[trace] = (player.traces[trace] ?? 0) + 1;
@@ -377,7 +384,7 @@ export class BehaviorExecutor {
   ): SimpleDeferredAction | undefined {
     const count = behavior.markAnySignal ?? 0;
     if (count <= 0) return undefined;
-    return new SimpleDeferredAction(player, (game) =>
+    return buildCoreEffectAction(player, (game) =>
       game.mark(EMarkSource.ANY, count, player.id),
     );
   }
@@ -388,7 +395,7 @@ export class BehaviorExecutor {
   ): SimpleDeferredAction | undefined {
     const count = behavior.markDisplayCardSignal ?? 0;
     if (count <= 0) return undefined;
-    return new SimpleDeferredAction(player, (game) =>
+    return buildCoreEffectAction(player, (game) =>
       game.mark(EMarkSource.CARD_ROW, count, player.id),
     );
   }
@@ -399,7 +406,7 @@ export class BehaviorExecutor {
   ): SimpleDeferredAction | undefined {
     const count = behavior.markSignalToken ?? 0;
     if (count <= 0) return undefined;
-    return new SimpleDeferredAction(player, (game) =>
+    return buildCoreEffectAction(player, (game) =>
       game.mark(EMarkSource.ANY, count, player.id),
     );
   }
@@ -410,7 +417,7 @@ export class BehaviorExecutor {
   ): SimpleDeferredAction | undefined {
     const gainExofossils = behavior.gainExofossils;
     if (!gainExofossils || gainExofossils <= 0) return undefined;
-    return new SimpleDeferredAction(player, () => {
+    return buildCoreEffectAction(player, () => {
       player.gainExofossils(gainExofossils);
       return undefined;
     });
@@ -425,7 +432,7 @@ export class BehaviorExecutor {
     return customIds.map((customId) => {
       const handler = this.customHandlers.get(customId);
       if (!handler) {
-        return new SimpleDeferredAction(player, (game) => {
+        return buildCoreEffectAction(player, (game) => {
           game.eventLog.append(
             createActionEvent(player.id, 'CARD_CUSTOM_EFFECT_UNHANDLED', {
               cardId: card.id,
@@ -435,7 +442,7 @@ export class BehaviorExecutor {
           return undefined;
         });
       }
-      return new SimpleDeferredAction(player, (game) =>
+      return buildCoreEffectAction(player, (game) =>
         handler(player, game, card),
       );
     });

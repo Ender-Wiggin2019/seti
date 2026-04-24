@@ -184,10 +184,27 @@ function TraceSlot({
 function formatRewards(rewards: TPublicSlotReward[]): string {
   if (rewards.length === 0) return '';
   return rewards
-    .map((r) => {
-      if (r.type === 'VP') return `${r.amount}VP`;
-      if (r.type === 'PUBLICITY') return `${r.amount}PR`;
-      return r.effectId;
+    .map((reward) => {
+      switch (reward.type) {
+        case 'VP':
+          return `${reward.amount}VP`;
+        case 'PUBLICITY':
+          return `${reward.amount}PR`;
+        case 'CREDIT':
+          return `${reward.amount}CR`;
+        case 'ENERGY':
+          return `${reward.amount}EN`;
+        case 'DATA':
+          return `${reward.amount}DATA`;
+        case 'CARD':
+          return `${reward.amount}CARD`;
+        case 'CUSTOM':
+          return reward.effectId;
+        default: {
+          const _exhaustive: never = reward;
+          return _exhaustive;
+        }
+      }
     })
     .join(', ');
 }

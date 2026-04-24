@@ -35,7 +35,10 @@ function collectLandTargets(
   const targets: ILandTarget[] = [];
 
   for (const planet of ALL_LANDABLE_PLANETS) {
-    if (planet === EPlanet.OUMUAMUA && !game.solarSystem?.getPlanetLocation(planet)) {
+    if (
+      planet === EPlanet.OUMUAMUA &&
+      !game.solarSystem?.getPlanetLocation(planet)
+    ) {
       continue;
     }
     if (player.canLand(planet, { ...options, isMoon: false })) {

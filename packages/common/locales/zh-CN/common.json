@@ -329,6 +329,7 @@
       "phases": {
         "SETUP": "设置阶段",
         "AWAIT_MAIN_ACTION": "主行动阶段",
+        "AWAIT_END_TURN": "结束回合阶段",
         "IN_RESOLUTION": "结算中",
         "BETWEEN_TURNS": "回合间",
         "END_OF_ROUND": "回合结束",
@@ -499,6 +500,10 @@
     },
     "planet_card": {
       "orbit_bonus": "轨道 +3VP",
+      "orbit_reward": "轨道奖励",
+      "first_orbit": "首次轨道",
+      "land_reward": "着陆奖励",
+      "first_land_data": "首次着陆数据",
       "orbit": "轨道",
       "landing": "着陆",
       "data_slot": "数据 {{index}}",

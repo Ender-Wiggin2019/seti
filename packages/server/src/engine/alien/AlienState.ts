@@ -18,6 +18,7 @@ import {
   type TSlotReward,
 } from './AlienBoard.js';
 import { AlienRegistry } from './AlienRegistry.js';
+import { executeSimpleSlotReward } from './AlienRewards.js';
 
 // ---------------------------------------------------------------------------
 //  Base-game slot factory
@@ -495,13 +496,11 @@ export class AlienState {
     onComplete?: () => PlayerInput | undefined,
   ): PlayerInput | undefined {
     for (const reward of rewards) {
+      if (executeSimpleSlotReward(player, game, reward)) {
+        continue;
+      }
+
       switch (reward.type) {
-        case 'VP':
-          player.score += reward.amount;
-          break;
-        case 'PUBLICITY':
-          player.resources.gain({ publicity: reward.amount });
-          break;
         case 'CUSTOM':
           if (reward.effectId === 'DRAW_ALIEN_CARD') {
             return this.createDrawAlienCardInput(
@@ -590,7 +589,7 @@ export class AlienState {
       return `${alienLabel} — Discovery (${formatTraceColor(traceColor)})`;
     }
     const vpReward = slot.rewards.find((r) => r.type === 'VP');
-    if (vpReward) {
+    if (vpReward && 'amount' in vpReward) {
       return `${alienLabel} — Overflow (+${vpReward.amount} VP)`;
     }
     return `${alienLabel} — ${slot.slotId}`;

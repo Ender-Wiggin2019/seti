@@ -64,6 +64,7 @@ export interface IDebugReplaySessionResponse
 export interface IDebugSnapshotSessionRequest {
   gameId: string;
   version?: number;
+  viewerPlayerId?: string;
 }
 
 export interface IDebugSnapshotSessionResponse

@@ -1,3 +1,4 @@
+import type { TAlienSlotReward } from '@seti/common/constant/alienBoardConfig';
 import type { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
 import type { SeededRandom } from '@/shared/rng/SeededRandom.js';
 
@@ -5,10 +6,7 @@ import type { SeededRandom } from '@/shared/rng/SeededRandom.js';
 //  Slot reward types (declarative, executable by AlienState)
 // ---------------------------------------------------------------------------
 
-export type TSlotReward =
-  | { type: 'VP'; amount: number }
-  | { type: 'PUBLICITY'; amount: number }
-  | { type: 'CUSTOM'; effectId: string };
+export type TSlotReward = TAlienSlotReward;
 
 // ---------------------------------------------------------------------------
 //  Occupant types

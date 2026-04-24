@@ -1,31 +1,40 @@
 import {
+  type IPlanetMissionConfig,
   PLANET_MISSION_CONFIG,
   PLANETARY_PLANETS,
+  type TPlanetReward,
 } from '@seti/common/constant/boardLayout';
-import { EResource } from '@seti/common/types/element';
+import { EResource, ETrace } from '@seti/common/types/element';
 import { EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 
-const FIRST_ORBIT_VP_BONUS = 3;
-
-/**
- * Orbit bonus printed above each planet (rule-simple §5.2). First orbiter also
- * scores +3 VP separately. Income is tracked like tucked income for round payout.
- */
-export const PLANET_ORBIT_INCOME: Readonly<
-  Record<(typeof PLANETARY_PLANETS)[number], EResource>
-> = {
-  [EPlanet.MERCURY]: EResource.CREDIT,
-  [EPlanet.VENUS]: EResource.ENERGY,
-  [EPlanet.MARS]: EResource.CARD,
-  [EPlanet.JUPITER]: EResource.DATA,
-  [EPlanet.SATURN]: EResource.CREDIT,
-  [EPlanet.URANUS]: EResource.ENERGY,
-  [EPlanet.NEPTUNE]: EResource.PUBLICITY,
-};
 const LANDING_COST_DEFAULT = 3;
 const LANDING_COST_WITH_ORBITER = 2;
+const DEFAULT_DYNAMIC_PLANET_CONFIG: IPlanetMissionConfig = {
+  label: 'Other Planet',
+  anchor: { x: 50, y: 50 },
+  orbitSlots: [],
+  landingSlots: [],
+  landingSlotKinds: [],
+  orbit: {
+    rewards: [
+      { type: 'resource', resource: EResource.SCORE, amount: 6 },
+      { type: 'tuck', amount: 1 },
+    ],
+    firstRewards: [{ type: 'resource', resource: EResource.SCORE, amount: 3 }],
+  },
+  land: {
+    rewards: [
+      { type: 'resource', resource: EResource.SCORE, amount: 5 },
+      { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
+    ],
+    firstData: [2],
+  },
+  firstLandDataBonusSlots: 1,
+  moonSlots: 0,
+  moonNames: [],
+};
 
 export interface IOrbitSlot {
   playerId: string;
@@ -49,11 +58,20 @@ export interface IPlanetState {
 
 export interface IOrbitResult {
   vpGained: number;
+  rewards: TPlanetReward[];
+  /** @deprecated Use rewards instead. */
   incomeResource?: EResource;
+}
+
+export interface ITraceReward {
+  trace: ETrace;
+  amount: number;
 }
 
 export interface ILandingCenterReward {
   vpGained: number;
+  traceRewards: ITraceReward[];
+  /** @deprecated Use traceRewards instead. */
   lifeTraceGained: number;
 }
 
@@ -62,22 +80,9 @@ export interface ILandingResult {
   centerReward: ILandingCenterReward;
   firstLandDataGained: number;
   isMoon: boolean;
+  rewards: TPlanetReward[];
 }
 
-const PLANET_CENTER_REWARDS: Readonly<Partial<Record<EPlanet, ILandingCenterReward>>> = {
-  [EPlanet.EARTH]: { vpGained: 0, lifeTraceGained: 0 },
-  [EPlanet.MERCURY]: { vpGained: 2, lifeTraceGained: 1 },
-  [EPlanet.VENUS]: { vpGained: 3, lifeTraceGained: 1 },
-  [EPlanet.MARS]: { vpGained: 4, lifeTraceGained: 1 },
-  [EPlanet.JUPITER]: { vpGained: 5, lifeTraceGained: 1 },
-  [EPlanet.SATURN]: { vpGained: 6, lifeTraceGained: 1 },
-  [EPlanet.URANUS]: { vpGained: 7, lifeTraceGained: 1 },
-  [EPlanet.NEPTUNE]: { vpGained: 8, lifeTraceGained: 1 },
-};
-const DEFAULT_PLANET_CENTER_REWARD: ILandingCenterReward = {
-  vpGained: 0,
-  lifeTraceGained: 0,
-};
 const DEFAULT_FIRST_LAND_DATA_SLOTS = 0;
 
 function assertPlayerId(playerId: string): void {
@@ -90,6 +95,46 @@ function assertPlayerId(playerId: string): void {
       },
     );
   }
+}
+
+function getPlanetMissionConfig(planet: EPlanet): IPlanetMissionConfig {
+  return (
+    PLANET_MISSION_CONFIG[planet as (typeof PLANETARY_PLANETS)[number]] ??
+    DEFAULT_DYNAMIC_PLANET_CONFIG
+  );
+}
+
+function cloneRewards(rewards: readonly TPlanetReward[]): TPlanetReward[] {
+  return rewards.map((reward) => ({ ...reward }));
+}
+
+function getScoreRewardAmount(rewards: readonly TPlanetReward[]): number {
+  return rewards.reduce((total, reward) => {
+    if (reward.type !== 'resource' || reward.resource !== EResource.SCORE) {
+      return total;
+    }
+    return total + reward.amount;
+  }, 0);
+}
+
+function getCenterReward(
+  rewards: readonly TPlanetReward[],
+): ILandingCenterReward {
+  const traceRewards: ITraceReward[] = [];
+  for (const reward of rewards) {
+    if (reward.type === 'trace') {
+      traceRewards.push({ trace: reward.trace, amount: reward.amount });
+    }
+  }
+
+  return {
+    vpGained: getScoreRewardAmount(rewards),
+    traceRewards,
+    lifeTraceGained: traceRewards.reduce(
+      (total, reward) => total + reward.amount,
+      0,
+    ),
+  };
 }
 
 export class PlanetaryBoard {
@@ -108,7 +153,7 @@ export class PlanetaryBoard {
         landingSlots: [],
         firstOrbitClaimed: false,
         firstLandDataBonusTaken: Array.from(
-          { length: config.firstLandDataBonusSlots },
+          { length: config.land.firstData.length },
           () => false,
         ),
         moonOccupant: null,
@@ -133,16 +178,17 @@ export class PlanetaryBoard {
     const planetState = this.getPlanetState(planet);
     planetState.orbitSlots.push({ playerId });
 
-    const incomeResource =
-      PLANET_ORBIT_INCOME[planet as (typeof PLANETARY_PLANETS)[number]] ??
-      undefined;
+    const config = getPlanetMissionConfig(planet);
+    const rewards = cloneRewards(config.orbit.rewards);
 
     if (!planetState.firstOrbitClaimed) {
       planetState.firstOrbitClaimed = true;
-      return { vpGained: FIRST_ORBIT_VP_BONUS, incomeResource };
+      const firstRewards = cloneRewards(config.orbit.firstRewards);
+      rewards.push(...firstRewards);
+      return { vpGained: getScoreRewardAmount(firstRewards), rewards };
     }
 
-    return { vpGained: 0, incomeResource };
+    return { vpGained: 0, rewards };
   }
 
   public land(
@@ -181,13 +227,27 @@ export class PlanetaryBoard {
       planetState.landingSlots.push({ playerId });
     }
 
-    const firstLandDataGained = this.takeFirstLandDataBonus(planetState);
+    const config = getPlanetMissionConfig(planet);
+    const firstLandDataGained = this.takeFirstLandDataBonus(
+      planetState,
+      config,
+    );
+    const rewards = cloneRewards(config.land.rewards);
+    if (firstLandDataGained > 0) {
+      rewards.push({
+        type: 'resource',
+        resource: EResource.DATA,
+        amount: firstLandDataGained,
+      });
+    }
+    const centerReward = getCenterReward(config.land.rewards);
+
     return {
       landingCost: this.getLandingCost(planet, playerId),
-      centerReward:
-        PLANET_CENTER_REWARDS[planet] ?? DEFAULT_PLANET_CENTER_REWARD,
+      centerReward,
       firstLandDataGained,
       isMoon,
+      rewards,
     };
   }
 
@@ -281,7 +341,11 @@ export class PlanetaryBoard {
         landingSlots: [],
         firstOrbitClaimed: false,
         firstLandDataBonusTaken: Array.from(
-          { length: DEFAULT_FIRST_LAND_DATA_SLOTS },
+          {
+            length:
+              getPlanetMissionConfig(planet).land.firstData.length ||
+              DEFAULT_FIRST_LAND_DATA_SLOTS,
+          },
           () => false,
         ),
         moonOccupant: null,
@@ -310,7 +374,10 @@ export class PlanetaryBoard {
     return probesOnPlanet.get(playerId) ?? 0;
   }
 
-  private takeFirstLandDataBonus(planetState: IPlanetState): number {
+  private takeFirstLandDataBonus(
+    planetState: IPlanetState,
+    config: IPlanetMissionConfig,
+  ): number {
     const openIndex = planetState.firstLandDataBonusTaken.findIndex(
       (taken) => !taken,
     );
@@ -319,6 +386,6 @@ export class PlanetaryBoard {
     }
 
     planetState.firstLandDataBonusTaken[openIndex] = true;
-    return 1;
+    return config.land.firstData[openIndex] ?? 0;
   }
 }

@@ -1,5 +1,10 @@
 import { ETech } from '@seti/common/types/element';
-import { ETechId, TECH_CATEGORIES, TECH_LEVELS } from '@seti/common/types/tech';
+import {
+  ETechBonusType,
+  ETechId,
+  TECH_CATEGORIES,
+  TECH_LEVELS,
+} from '@seti/common/types/tech';
 import { TechBoard } from '@/engine/tech/TechBoard.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
 
@@ -20,13 +25,10 @@ describe('TechBoard', () => {
 
     it('covers all category + level combinations', () => {
       const board = createBoard();
-      for (const category of TECH_CATEGORIES) {
-        for (const level of TECH_LEVELS) {
-          const available = board.getAvailableTechs('any-player');
-          const techIds = available.map((id) => id);
-          expect(techIds.length).toBe(12);
-        }
-      }
+      const available = board.getAvailableTechs('any-player');
+      expect(available).toHaveLength(
+        TECH_CATEGORIES.length * TECH_LEVELS.length,
+      );
     });
   });
 
@@ -63,7 +65,10 @@ describe('TechBoard', () => {
   describe('take', () => {
     it('removes a tile from the stack', () => {
       const board = createBoard();
-      const stack = board.getStack(ETechId.SCAN_EARTH_LOOK)!;
+      const stack = board.getStack(ETechId.SCAN_EARTH_LOOK);
+      if (!stack) {
+        throw new Error('expected scan earth stack');
+      }
       expect(stack.tiles).toHaveLength(4);
 
       board.take('p1', ETechId.SCAN_EARTH_LOOK);
@@ -142,15 +147,33 @@ describe('TechBoard', () => {
         (s) => s.tech === ETech.PROBE && s.level === 0,
       );
       expect(probeStack0).toBeDefined();
-      expect(probeStack0!.remainingTiles).toBe(3);
-      expect(probeStack0!.firstTakeBonusAvailable).toBe(false);
+      expect(probeStack0?.remainingTiles).toBe(3);
+      expect(probeStack0?.firstTakeBonusAvailable).toBe(false);
 
       const scanStack0 = publicState.stacks.find(
         (s) => s.tech === ETech.SCAN && s.level === 0,
       );
       expect(scanStack0).toBeDefined();
-      expect(scanStack0!.remainingTiles).toBe(4);
-      expect(scanStack0!.firstTakeBonusAvailable).toBe(true);
+      expect(scanStack0?.remainingTiles).toBe(4);
+      expect(scanStack0?.firstTakeBonusAvailable).toBe(true);
+    });
+
+    it('exposes the visible bonuses on the top tile of each stack', () => {
+      const board = createBoard('visible-bonuses');
+      const stack = board.getStack(ETechId.SCAN_EARTH_LOOK);
+      if (!stack) {
+        throw new Error('expected scan earth stack');
+      }
+      const publicState = board.toPublicState();
+
+      const scanStack0 = publicState.stacks.find(
+        (s) => s.tech === ETech.SCAN && s.level === 0,
+      );
+
+      expect(scanStack0?.topTileBonuses).toEqual(stack.tiles[0].bonuses);
+      expect(scanStack0?.topTileBonuses).toContainEqual({
+        type: ETechBonusType.DATA_2,
+      });
     });
   });
 

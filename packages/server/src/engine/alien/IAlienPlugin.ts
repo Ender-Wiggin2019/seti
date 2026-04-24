@@ -25,17 +25,9 @@ export interface IAlienPlugin {
     isOverflow: boolean,
   ): void;
 
-  canPlaceTraceOnSlot?(
-    game: IGame,
-    player: IPlayer,
-    slot: ITraceSlot,
-  ): boolean;
+  canPlaceTraceOnSlot?(game: IGame, player: IPlayer, slot: ITraceSlot): boolean;
 
-  onPlaceTraceOnSlot?(
-    game: IGame,
-    player: IPlayer,
-    slot: ITraceSlot,
-  ): void;
+  onPlaceTraceOnSlot?(game: IGame, player: IPlayer, slot: ITraceSlot): void;
 
   onRoundEnd?(game: IGame): void;
 

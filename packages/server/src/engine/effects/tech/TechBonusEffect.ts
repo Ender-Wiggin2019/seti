@@ -2,6 +2,7 @@ import { ETechBonusType, type ITechBonusToken } from '@seti/common/types/tech';
 import { drawCard } from '../../deck/drawCard.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayer } from '../../player/IPlayer.js';
+import { LaunchProbeEffect } from '../probe/LaunchProbeEffect.js';
 
 export interface ITechBonusResult {
   bonus: ITechBonusToken;
@@ -54,7 +55,10 @@ export class TechBonusEffect {
         break;
 
       case ETechBonusType.LAUNCH_IGNORE_LIMIT:
-        player.probeSpaceLimit += 1;
+        if (!LaunchProbeEffect.canExecute(player, game)) {
+          return { bonus, applied: false };
+        }
+        LaunchProbeEffect.execute(player, game);
         break;
     }
     return { bonus, applied: true };

@@ -1,13 +1,11 @@
+import { ANOMALY_TOKEN_REWARD_OPTIONS } from '@seti/common/constant/alienBoardConfig';
 import { ETrace } from '@seti/common/types/element';
-import {
-  EAlienType,
-  EPhase,
-} from '@seti/common/types/protocol/enums';
-import { buildTestGame, getPlayer } from '../helpers/TestGameBuilder.js';
+import { EAlienType, EPhase } from '@seti/common/types/protocol/enums';
 import {
   applyDebugReplayPreset,
   listDebugReplayPresets,
 } from '@/debug/debugReplayPresets.js';
+import { buildTestGame, getPlayer } from '../helpers/TestGameBuilder.js';
 
 describe('debugReplayPresets', () => {
   it('lists the anomaly discovery replay preset with selectable checkpoints', () => {
@@ -158,7 +156,7 @@ describe('debugReplayPresets', () => {
       ).toBe(true);
     });
 
-    it('anomaly token slots have VP:2 reward and maxOccupants 0', () => {
+    it('anomaly token slots have color-specific rewards and maxOccupants 0', () => {
       const { game, replay, board } = applyAnomalyDiscovery();
 
       game.processEndTurn(replay.currentPlayerId);
@@ -167,11 +165,13 @@ describe('debugReplayPresets', () => {
         s.slotId.includes('anomaly-token'),
       );
       for (const slot of tokenSlots) {
+        const color = slot.slotId.split('|')[2] as
+          | ETrace.RED
+          | ETrace.YELLOW
+          | ETrace.BLUE;
         expect(slot.maxOccupants).toBe(0);
-        expect(slot.rewards).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({ type: 'VP', amount: 2 }),
-          ]),
+        expect(ANOMALY_TOKEN_REWARD_OPTIONS[color]).toContainEqual(
+          slot.rewards[0],
         );
       }
     });
@@ -228,7 +228,14 @@ describe('debugReplayPresets', () => {
       (player) => player.id === replay.currentPlayerId,
     );
     const board = game.alienState.getBoardByType(EAlienType.ANOMALIES);
-    const scoreBefore = currentPlayer?.score ?? 0;
+    const before = {
+      score: currentPlayer?.score ?? 0,
+      credits: currentPlayer?.resources.credits ?? 0,
+      energy: currentPlayer?.resources.energy ?? 0,
+      data: currentPlayer?.resources.data ?? 0,
+      publicity: currentPlayer?.resources.publicity ?? 0,
+      handSize: currentPlayer?.hand.length ?? 0,
+    };
 
     expect(replay.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
     expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
@@ -240,10 +247,18 @@ describe('debugReplayPresets', () => {
 
     const recentEvents = game.eventLog.toArray();
 
-    expect(currentPlayer?.score).toBeGreaterThan(scoreBefore);
+    const rewardChanged =
+      (currentPlayer?.score ?? 0) > before.score ||
+      (currentPlayer?.resources.credits ?? 0) > before.credits ||
+      (currentPlayer?.resources.energy ?? 0) > before.energy ||
+      (currentPlayer?.resources.data ?? 0) > before.data ||
+      (currentPlayer?.resources.publicity ?? 0) > before.publicity ||
+      (currentPlayer?.hand.length ?? 0) > before.handSize;
+    expect(rewardChanged).toBe(true);
     expect(
       recentEvents.some(
-        (event) => event.type === 'ACTION' && event.action === 'ANOMALY_TRIGGERED',
+        (event) =>
+          event.type === 'ACTION' && event.action === 'ANOMALY_TRIGGERED',
       ),
     ).toBe(true);
   });

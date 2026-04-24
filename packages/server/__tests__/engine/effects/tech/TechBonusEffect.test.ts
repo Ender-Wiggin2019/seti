@@ -1,14 +1,17 @@
-import { ETechBonusType } from '@seti/common/types/tech';
+import { ETechBonusType, ETechId } from '@seti/common/types/tech';
 import { vi } from 'vitest';
 import { TechBonusEffect } from '@/engine/effects/tech/TechBonusEffect.js';
 
 function mockPlayer() {
   return {
+    id: 'p1',
     resources: {
       gain: vi.fn(),
     },
     hand: [] as string[],
     score: 0,
+    techs: [] as ETechId[],
+    probesInSpace: 0,
     probeSpaceLimit: 1,
   };
 }
@@ -18,6 +21,7 @@ function mockGame(drawn: string[] = []) {
     mainDeck: {
       drawWithReshuffle: () => drawn.shift(),
     },
+    solarSystem: null,
     lockCurrentTurn: vi.fn(),
   };
 }
@@ -90,15 +94,37 @@ describe('TechBonusEffect', () => {
     expect(player.score).toBe(5);
   });
 
-  it('applies LAUNCH_IGNORE_LIMIT', () => {
+  it('applies LAUNCH_IGNORE_LIMIT as a free probe launch using the acquired tech limit', () => {
     const player = mockPlayer();
+    player.techs = [ETechId.PROBE_DOUBLE_PROBE];
+    player.probesInSpace = 1;
     const game = mockGame();
+    const solarSystem = {
+      getSpacesOnPlanet: vi.fn(() => [{ id: 'earth-space' }]),
+      placeProbe: vi.fn(() => ({ id: 'probe-1' })),
+    };
+    game.solarSystem = solarSystem as never;
 
-    TechBonusEffect.apply(player as never, game as never, {
+    const result = TechBonusEffect.apply(player as never, game as never, {
       type: ETechBonusType.LAUNCH_IGNORE_LIMIT,
     });
 
-    expect(player.probeSpaceLimit).toBe(2);
+    expect(result.applied).toBe(true);
+    expect(player.probeSpaceLimit).toBe(1);
+    expect(player.probesInSpace).toBe(2);
+    expect(solarSystem.placeProbe).toHaveBeenCalledWith('p1', 'earth-space');
+  });
+
+  it('skips LAUNCH_IGNORE_LIMIT when a launch cannot be resolved', () => {
+    const player = mockPlayer();
+    const game = mockGame();
+
+    const result = TechBonusEffect.apply(player as never, game as never, {
+      type: ETechBonusType.LAUNCH_IGNORE_LIMIT,
+    });
+
+    expect(result.applied).toBe(false);
+    expect(player.probesInSpace).toBe(0);
   });
 
   it('returns applied: true with the bonus', () => {

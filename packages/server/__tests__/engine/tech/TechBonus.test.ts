@@ -65,12 +65,21 @@ function setNextTileBonus(
   techId: ETechId,
   bonus: ITechBonusToken,
 ): void {
+  setNextTileBonuses(board, techId, [bonus]);
+}
+
+function setNextTileBonuses(
+  board: TechBoard,
+  techId: ETechId,
+  bonuses: ITechBonusToken[],
+): void {
   const stack = board.getStack(techId);
   const tile = stack?.tiles[0];
   if (!tile) {
     throw new Error(`no next tile for ${techId}`);
   }
-  tile.bonus = bonus;
+  tile.bonus = bonuses[0];
+  (tile as typeof tile & { bonuses: ITechBonusToken[] }).bonuses = bonuses;
 }
 
 function getFirstAvailableTechId(board: TechBoard, playerId: string): ETechId {
@@ -199,18 +208,72 @@ describe('Phase 8.4.1 — integration: printed bonus via ResearchTechEffect.acqu
     expect(player.score).toBe(scoreBefore + FIRST_TAKE_VP_BONUS + 3);
   });
 
-  it('LAUNCH_IGNORE_LIMIT: +1 probe space limit', () => {
+  it('LAUNCH_IGNORE_LIMIT: launches a probe for free after the launch-limit tech is gained', () => {
     const board = new TechBoard(new SeededRandom('p841-launch'));
+    setNextTileBonuses(board, ETechId.PROBE_DOUBLE_PROBE, [
+      { type: ETechBonusType.ENERGY },
+      {
+        type: ETechBonusType.LAUNCH_IGNORE_LIMIT,
+      },
+    ]);
+    const player = createTestPlayer();
+    player.probesInSpace = 1;
+    const game = createMockGame(board);
+    const solarSystem = {
+      getSpacesOnPlanet: vi.fn(() => [{ id: 'earth-space' }]),
+      placeProbe: vi.fn(() => ({ id: 'probe-1', playerId: player.id })),
+    };
+    game.solarSystem = solarSystem as never;
+
+    ResearchTechEffect.acquireTech(player, game, ETechId.PROBE_DOUBLE_PROBE);
+
+    expect(player.probeSpaceLimit).toBe(1);
+    expect(player.probesInSpace).toBe(2);
+    expect(solarSystem.placeProbe).toHaveBeenCalledWith(
+      player.id,
+      'earth-space',
+    );
+  });
+
+  it('applies every bonus token printed on a tech tile', () => {
+    const board = new TechBoard(new SeededRandom('p841-multi-bonus'));
+    setNextTileBonuses(board, ETechId.SCAN_EARTH_LOOK, [
+      { type: ETechBonusType.ENERGY },
+      {
+        type: ETechBonusType.DATA_2,
+      },
+    ]);
+    const player = createTestPlayer();
+    const game = createMockGame(board);
+    const energyBefore = player.resources.energy;
+    const dataBefore = player.resources.data;
+
+    const result = ResearchTechEffect.acquireTech(
+      player,
+      game,
+      ETechId.SCAN_EARTH_LOOK,
+    );
+
+    expect(player.resources.energy).toBe(energyBefore + 1);
+    expect(player.resources.data).toBe(dataBefore + 2);
+    expect(result.tileBonuses).toEqual([
+      { type: ETechBonusType.ENERGY },
+      { type: ETechBonusType.DATA_2 },
+    ]);
+  });
+
+  it('LAUNCH_IGNORE_LIMIT skips when a probe cannot be launched', () => {
+    const board = new TechBoard(new SeededRandom('p841-launch-skip'));
     setNextTileBonus(board, ETechId.COMPUTER_VP_PUBLICITY, {
       type: ETechBonusType.LAUNCH_IGNORE_LIMIT,
     });
     const player = createTestPlayer();
     const game = createMockGame(board);
-    const before = player.probeSpaceLimit;
+    const before = player.probesInSpace;
 
     ResearchTechEffect.acquireTech(player, game, ETechId.COMPUTER_VP_PUBLICITY);
 
-    expect(player.probeSpaceLimit).toBe(before + 1);
+    expect(player.probesInSpace).toBe(before);
   });
 
   it('card-grant path (ResearchTechAction isCardEffect): still applies printed bonus', () => {

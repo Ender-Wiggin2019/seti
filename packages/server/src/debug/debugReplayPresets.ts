@@ -1,7 +1,6 @@
-import {
-  CORE_RANDOM_ALIEN_TYPES,
-} from '@seti/common/constant/alienLobby';
+import { CORE_RANDOM_ALIEN_TYPES } from '@seti/common/constant/alienLobby';
 import { EAlienMap } from '@seti/common/types/BaseCard';
+import { ETrace } from '@seti/common/types/element';
 import type {
   IDebugReplayPresetDefinition,
   IDebugReplaySessionMetadata,
@@ -9,9 +8,8 @@ import type {
 } from '@seti/common/types/protocol/debug';
 import { EAlienType, EPhase } from '@seti/common/types/protocol/enums';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
-import { ETrace } from '@seti/common/types/element';
-import { AlienState } from '@/engine/alien/index.js';
 import type { AlienBoard } from '@/engine/alien/AlienBoard.js';
+import { AlienState } from '@/engine/alien/index.js';
 import { EventLog } from '@/engine/event/EventLog.js';
 import type { Game } from '@/engine/Game.js';
 
@@ -22,7 +20,10 @@ const BEFORE_PASS_ROTATION_CHECKPOINT_ID = 'before-pass-rotation';
 
 interface IDebugReplayPreset {
   definition: IDebugReplayPresetDefinition;
-  apply: (game: Game, request: IDebugReplaySessionRequest) => {
+  apply: (
+    game: Game,
+    request: IDebugReplaySessionRequest,
+  ) => {
     phase: EPhase;
     summary: string;
     alienIndex: number;
@@ -76,7 +77,9 @@ const DEBUG_REPLAY_PRESETS: Readonly<Record<string, IDebugReplayPreset>> = {
           options: [
             {
               value: String(EAlienType.ANOMALIES),
-              label: toTitleCase(EAlienMap[EAlienType.ANOMALIES] ?? 'Anomalies'),
+              label: toTitleCase(
+                EAlienMap[EAlienType.ANOMALIES] ?? 'Anomalies',
+              ),
             },
           ],
         },
@@ -240,11 +243,7 @@ function applyAnomalyTriggerReplay(
   if (!columnSlot) {
     throw new Error('Anomaly column slot missing for RED');
   }
-  board.placeTrace(
-    columnSlot,
-    { playerId: activePlayer.id },
-    ETrace.RED,
-  );
+  board.placeTrace(columnSlot, { playerId: activePlayer.id }, ETrace.RED);
 
   game.phase = EPhase.AWAIT_MAIN_ACTION;
   game.hasRoundFirstPassOccurred = false;
@@ -291,16 +290,13 @@ function buildAnomalyColumnSlotId(alienIndex: number, color: string): string {
   return `alien-${alienIndex}-anomaly-column|${color}`;
 }
 
-function normalizeAnomalyTokensForTriggerReplay(
-  board: AlienBoard,
-): void {
+function normalizeAnomalyTokensForTriggerReplay(board: AlienBoard): void {
   const existingTokenSlots = board.slots.filter((slot) =>
     slot.slotId.includes('anomaly-token'),
   );
-  const templateRewards =
-    existingTokenSlots[0]?.rewards.map((reward) => ({ ...reward })) ?? [
-      { type: 'VP' as const, amount: 2 },
-    ];
+  const templateRewards = existingTokenSlots[0]?.rewards.map((reward) => ({
+    ...reward,
+  })) ?? [{ type: 'VP' as const, amount: 2 }];
 
   for (let index = board.slots.length - 1; index >= 0; index -= 1) {
     if (board.slots[index]?.slotId.includes('anomaly-token')) {

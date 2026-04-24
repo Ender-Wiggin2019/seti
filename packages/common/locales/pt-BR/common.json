@@ -325,6 +325,7 @@
       "phases": {
         "SETUP": "Configuração",
         "AWAIT_MAIN_ACTION": "Fase de Ação",
+        "AWAIT_END_TURN": "Fase de Fim de Turno",
         "IN_RESOLUTION": "Resolvendo",
         "BETWEEN_TURNS": "Entre Turnos",
         "END_OF_ROUND": "Fim da Rodada",
@@ -495,6 +496,10 @@
     },
     "planet_card": {
       "orbit_bonus": "Órbita +3VP",
+      "orbit_reward": "Recompensa de órbita",
+      "first_orbit": "Primeira órbita",
+      "land_reward": "Recompensa de pouso",
+      "first_land_data": "Dados do primeiro pouso",
       "orbit": "Órbita",
       "landing": "Pouso",
       "data_slot": "Dados {{index}}",

@@ -2,6 +2,11 @@ import { randomUUID } from 'node:crypto';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type {
+  IFreeActionRequest,
+  IInputResponse,
+  IMainActionRequest,
+} from '@seti/common/types/protocol/actions';
+import type {
   IDebugReplayPresetDefinition,
   IDebugReplaySessionRequest,
   IDebugReplaySessionResponse,
@@ -9,11 +14,6 @@ import type {
   IDebugSnapshotSessionRequest,
   IDebugSnapshotSessionResponse,
 } from '@seti/common/types/protocol/debug';
-import type {
-  IFreeActionRequest,
-  IInputResponse,
-  IMainActionRequest,
-} from '@seti/common/types/protocol/actions';
 import {
   EFreeAction,
   EMainAction,
@@ -32,6 +32,7 @@ import { createGameOptions } from '@/engine/GameOptions.js';
 import type { IGamePlayerIdentity } from '@/engine/IGame.js';
 import { GameManager } from '@/gateway/GameManager.js';
 import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
+import type { IGameStateDto } from '@/persistence/dto/GameStateDto.js';
 import { GameRepository } from '@/persistence/repository/GameRepository.js';
 import { deserializeGame } from '@/persistence/serializer/GameDeserializer.js';
 import { GameError } from '@/shared/errors/GameError.js';
@@ -39,11 +40,11 @@ import {
   applyBehaviorFlowScenario,
   BEHAVIOR_FLOW_SEED,
 } from '@/testing/behaviorFlowScenario.js';
+import { DebugSessionRegistry } from './DebugSessionRegistry.js';
 import {
   applyDebugReplayPreset,
   listDebugReplayPresets,
 } from './debugReplayPresets.js';
-import { DebugSessionRegistry } from './DebugSessionRegistry.js';
 
 interface IDebugAuthUser {
   id: string;
@@ -222,7 +223,7 @@ export class DebugService {
 
     const gameOptions = createGameOptions({ playerCount });
     const game = Game.create(players, gameOptions, seed, gameId);
-    const replay = applyDebugReplayPreset(game, request);
+    const replay = this.applyReplayPreset(game, request);
 
     const humanPlayer =
       players.find((player) => player.id === replay.currentPlayerId) ??
@@ -259,9 +260,14 @@ export class DebugService {
   async createSnapshotSession(
     request: IDebugSnapshotSessionRequest,
   ): Promise<IDebugSnapshotSessionResponse> {
+    this.assertSnapshotReplayAllowed();
+
     const snapshot =
       request.version !== undefined
-        ? await this.gameRepository.loadSnapshot(request.gameId, request.version)
+        ? await this.gameRepository.loadSnapshot(
+            request.gameId,
+            request.version,
+          )
         : await this.gameRepository.loadLatestSnapshot(request.gameId);
 
     if (!snapshot) {
@@ -271,22 +277,42 @@ export class DebugService {
       );
     }
 
+    this.assertSnapshotReplayResumable(snapshot);
+
     const sourceGameId = snapshot.gameId;
     const snapshotVersion = snapshot.version;
-    snapshot.gameId = randomUUID();
+    const replaySnapshot: IGameStateDto = {
+      ...snapshot,
+      gameId: randomUUID(),
+    };
 
-    const game = deserializeGame(snapshot);
+    const game = deserializeGame(replaySnapshot);
 
-    const humanPlayer = game.players[0];
+    const humanPlayer =
+      request.viewerPlayerId !== undefined
+        ? game.players.find((player) => player.id === request.viewerPlayerId)
+        : game.activePlayer;
+    if (!humanPlayer) {
+      throw new GameError(
+        EErrorCode.PLAYER_NOT_FOUND,
+        `Viewer player ${request.viewerPlayerId} not found in snapshot ${sourceGameId}`,
+        { sourceGameId, viewerPlayerId: request.viewerPlayerId },
+      );
+    }
     const botPlayerIds = game.players
-      .slice(1)
+      .filter((player) => player.id !== humanPlayer.id)
       .map((player) => player.id);
 
-    this.debugSessionRegistry.register(
-      game.id,
-      humanPlayer.id,
-      botPlayerIds,
-    );
+    try {
+      await this.gameRepository.create(game);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to persist snapshot replay game ${game.id}, continuing with in-memory mode`,
+      );
+      this.logger.debug(error);
+    }
+
+    this.debugSessionRegistry.register(game.id, humanPlayer.id, botPlayerIds);
     this.gameManager.registerGame(game);
 
     const session = this.createAuthSession({
@@ -304,6 +330,56 @@ export class DebugService {
       phase: game.phase,
       round: game.round,
     };
+  }
+
+  private applyReplayPreset(game: Game, request: IDebugReplaySessionRequest) {
+    try {
+      return applyDebugReplayPreset(game, request);
+    } catch (error) {
+      throw new GameError(
+        EErrorCode.VALIDATION_ERROR,
+        error instanceof Error
+          ? error.message
+          : 'Invalid replay preset request',
+      );
+    }
+  }
+
+  private assertSnapshotReplayAllowed(): void {
+    if (
+      process.env.NODE_ENV === 'production' &&
+      process.env.SETI_ENABLE_DEBUG_SNAPSHOT_REPLAY !== 'true'
+    ) {
+      throw new GameError(
+        EErrorCode.FORBIDDEN,
+        'Snapshot replay is disabled in production',
+      );
+    }
+  }
+
+  private assertSnapshotReplayResumable(snapshot: IGameStateDto): void {
+    const resumablePhases = new Set<EPhase>([
+      EPhase.SETUP,
+      EPhase.AWAIT_MAIN_ACTION,
+      EPhase.AWAIT_END_TURN,
+      EPhase.END_OF_ROUND,
+      EPhase.FINAL_SCORING,
+      EPhase.GAME_OVER,
+    ]);
+
+    if (resumablePhases.has(snapshot.phase)) {
+      return;
+    }
+
+    throw new GameError(
+      EErrorCode.INVALID_PHASE,
+      `Snapshot ${snapshot.gameId} version ${snapshot.version} is in ${snapshot.phase} and cannot be replayed safely`,
+      {
+        gameId: snapshot.gameId,
+        version: snapshot.version,
+        phase: snapshot.phase,
+      },
+    );
   }
 
   async getProjectedState(

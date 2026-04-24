@@ -1,3 +1,5 @@
+import { ETrace } from '@seti/common/types/element';
+
 /**
  * Alien board slot reward configuration.
  *
@@ -6,16 +8,26 @@
  * All overflow areas grant 3 VP.
  */
 
-export type TAlienSlotRewardType = 'VP' | 'PUBLICITY';
+export type TAlienSlotResourceRewardType =
+  | 'VP'
+  | 'PUBLICITY'
+  | 'CREDIT'
+  | 'ENERGY'
+  | 'DATA'
+  | 'CARD';
 
 export interface IAlienSlotRewardDef {
-  type: TAlienSlotRewardType;
+  type: TAlienSlotResourceRewardType;
   amount: number;
 }
 
+export type TAlienSlotReward =
+  | IAlienSlotRewardDef
+  | { type: 'CUSTOM'; effectId: string };
+
 export interface IAlienBoardRewardConfig {
-  discoveryRewards: IAlienSlotRewardDef[];
-  overflowRewards: IAlienSlotRewardDef[];
+  discoveryRewards: TAlienSlotReward[];
+  overflowRewards: TAlienSlotReward[];
 }
 
 export const LEFT_ALIEN_REWARDS: Readonly<IAlienBoardRewardConfig> = {
@@ -38,4 +50,50 @@ export function getAlienRewardsForIndex(
   alienIndex: number,
 ): IAlienBoardRewardConfig {
   return alienIndex === 0 ? LEFT_ALIEN_REWARDS : RIGHT_ALIEN_REWARDS;
+}
+
+export const ANOMALY_TOKEN_REWARD_OPTIONS: Readonly<
+  Record<ETrace.RED | ETrace.YELLOW | ETrace.BLUE, readonly TAlienSlotReward[]>
+> = {
+  [ETrace.RED]: [
+    { type: 'CREDIT', amount: 1 },
+    { type: 'VP', amount: 4 },
+  ],
+  [ETrace.YELLOW]: [
+    { type: 'CARD', amount: 1 },
+    { type: 'PUBLICITY', amount: 2 },
+  ],
+  [ETrace.BLUE]: [
+    { type: 'DATA', amount: 1 },
+    { type: 'ENERGY', amount: 1 },
+  ],
+};
+
+export const ANOMALY_COLUMN_REWARD_LADDER: readonly (readonly TAlienSlotReward[])[] =
+  [
+    [
+      { type: 'VP', amount: 5 },
+      { type: 'CARD', amount: 1 },
+    ],
+    [
+      { type: 'VP', amount: 3 },
+      { type: 'CARD', amount: 1 },
+    ],
+    [
+      { type: 'VP', amount: 2 },
+      { type: 'PUBLICITY', amount: 1 },
+    ],
+    [{ type: 'VP', amount: 3 }],
+    [{ type: 'VP', amount: 2 }],
+  ];
+
+export function getAnomalyColumnRewardsForPlacement(
+  occupantCountAfterPlacement: number,
+): TAlienSlotReward[] {
+  if (occupantCountAfterPlacement <= 0) return [];
+  const index = Math.min(
+    occupantCountAfterPlacement - 1,
+    ANOMALY_COLUMN_REWARD_LADDER.length - 1,
+  );
+  return ANOMALY_COLUMN_REWARD_LADDER[index].map((reward) => ({ ...reward }));
 }

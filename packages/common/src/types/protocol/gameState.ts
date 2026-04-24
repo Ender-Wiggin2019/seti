@@ -1,3 +1,4 @@
+import type { IPlanetMissionConfig } from '@seti/common/constant/boardLayout';
 import type { ISolarSystemSetupConfig } from '@seti/common/constant/sectorSetup';
 import { IBaseCard } from '@seti/common/types/BaseCard';
 import type { IComputerSlotReward } from '@seti/common/types/computer';
@@ -10,7 +11,7 @@ import {
   ETrace,
 } from '@seti/common/types/protocol/enums';
 import type { TGameEvent } from '@seti/common/types/protocol/events';
-import type { ETechId } from '@seti/common/types/tech';
+import type { ETechId, ITechBonusToken } from '@seti/common/types/tech';
 
 export interface IPublicResourceState {
   [EResource.CREDIT]: number;
@@ -181,6 +182,7 @@ export interface IPublicPlanetState {
 }
 
 export interface IPublicPlanetaryBoard {
+  configs?: Partial<Record<EPlanet, IPlanetMissionConfig>>;
   planets: Partial<Record<EPlanet, IPublicPlanetState>>;
 }
 
@@ -189,6 +191,7 @@ export interface IPublicTechStack {
   level: number;
   remainingTiles: number;
   firstTakeBonusAvailable: boolean;
+  topTileBonuses?: ITechBonusToken[];
 }
 
 export interface IPublicTechBoard {
@@ -198,6 +201,10 @@ export interface IPublicTechBoard {
 export type TPublicSlotReward =
   | { type: 'VP'; amount: number }
   | { type: 'PUBLICITY'; amount: number }
+  | { type: 'CREDIT'; amount: number }
+  | { type: 'ENERGY'; amount: number }
+  | { type: 'DATA'; amount: number }
+  | { type: 'CARD'; amount: number }
   | { type: 'CUSTOM'; effectId: string };
 
 export interface IPublicTraceOccupant {

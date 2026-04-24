@@ -1,6 +1,9 @@
 import { EAlienType, EPlanet, ETrace } from '@seti/common/types/protocol/enums';
+import type { TSlotReward } from '@/engine/alien/AlienBoard.js';
+import { AlienRegistry } from '@/engine/alien/AlienRegistry.js';
 import { AlienState } from '@/engine/alien/AlienState.js';
 import { AnomaliesAlienPlugin } from '@/engine/alien/plugins/AnomaliesAlienPlugin.js';
+import { Deck } from '@/engine/deck/Deck.js';
 import { EventLog } from '@/engine/event/EventLog.js';
 import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
@@ -32,6 +35,8 @@ function createGame(options?: {
     players: options?.players ?? [],
     eventLog: new EventLog(),
     random: new SeededRandom(options?.seed ?? 'anomalies-seed'),
+    mainDeck: new Deck<string>(['55', '56', '57', '58'], []),
+    lockCurrentTurn: () => undefined,
     sectors: Array.from({ length: options?.sectorsCount ?? 8 }, (_, i) => ({
       id: `s${i}`,
     })),
@@ -77,6 +82,24 @@ function getTokenBySector(
   );
 }
 
+function getTokenByColor(
+  board: ReturnType<typeof createGame>['board'],
+  color: ETrace,
+) {
+  return board.slots.find(
+    (slot) =>
+      slot.slotId.includes(`anomaly-token|`) &&
+      slot.slotId.endsWith(`|${color}`),
+  );
+}
+
+function expectRewardInOptions(
+  rewards: TSlotReward[],
+  options: TSlotReward[][],
+): void {
+  expect(options).toContainEqual(rewards);
+}
+
 describe('AnomaliesAlienPlugin', () => {
   it('creates exactly 3 anomaly columns and exactly 3 tokens at Earth / Earth+3 / Earth-3', () => {
     const plugin = new AnomaliesAlienPlugin();
@@ -115,6 +138,27 @@ describe('AnomaliesAlienPlugin', () => {
     );
   });
 
+  it('assigns one color-specific bonus side to each anomaly token', () => {
+    const plugin = new AnomaliesAlienPlugin();
+    const { game, board } = createGame({ seed: 'anomalies-token-rewards' });
+    board.discovered = true;
+
+    plugin.onDiscover(game, []);
+
+    expectRewardInOptions(getTokenByColor(board, ETrace.RED)!.rewards, [
+      [{ type: 'CREDIT', amount: 1 }],
+      [{ type: 'VP', amount: 4 }],
+    ]);
+    expectRewardInOptions(getTokenByColor(board, ETrace.YELLOW)!.rewards, [
+      [{ type: 'CARD', amount: 1 }],
+      [{ type: 'PUBLICITY', amount: 2 }],
+    ]);
+    expectRewardInOptions(getTokenByColor(board, ETrace.BLUE)!.rewards, [
+      [{ type: 'DATA', amount: 1 }],
+      [{ type: 'ENERGY', amount: 1 }],
+    ]);
+  });
+
   it('discover is idempotent and does not add duplicate columns/tokens', () => {
     const plugin = new AnomaliesAlienPlugin();
     const { game, board, setEarthSector } = createGame({ earthSector: 0 });
@@ -138,6 +182,7 @@ describe('AnomaliesAlienPlugin', () => {
 
     const tokenAtEarth = getTokenBySector(board, 0);
     expect(tokenAtEarth).toBeDefined();
+    tokenAtEarth!.rewards = [{ type: 'VP', amount: 2 }];
 
     const triggeredColor = tokenAtEarth!.slotId.split('|')[2] as ETrace;
     const columnSlot = board.getSlot(
@@ -182,6 +227,7 @@ describe('AnomaliesAlienPlugin', () => {
 
     const tokenAtEarth = getTokenBySector(board, 0);
     const color = tokenAtEarth!.slotId.split('|')[2] as ETrace;
+    tokenAtEarth!.rewards = [{ type: 'VP', amount: 2 }];
     const columnSlot = board.getSlot(
       `alien-${board.alienIndex}-anomaly-column|${color}`,
     );
@@ -206,6 +252,7 @@ describe('AnomaliesAlienPlugin', () => {
 
     const tokenAtEarth = getTokenBySector(board, 0);
     const color = tokenAtEarth!.slotId.split('|')[2] as ETrace;
+    tokenAtEarth!.rewards = [{ type: 'VP', amount: 2 }];
     const columnSlot = board.getSlot(
       `alien-${board.alienIndex}-anomaly-column|${color}`,
     );
@@ -263,6 +310,8 @@ describe('AnomaliesAlienPlugin', () => {
 
     const colorAt0 = tokenAt0!.slotId.split('|')[2] as ETrace;
     const colorAt3 = tokenAt3!.slotId.split('|')[2] as ETrace;
+    tokenAt0!.rewards = [{ type: 'VP', amount: 2 }];
+    tokenAt3!.rewards = [{ type: 'VP', amount: 2 }];
     expect(colorAt0).not.toBe(colorAt3);
 
     const column0 = board.getSlot(
@@ -363,5 +412,83 @@ describe('AnomaliesAlienPlugin', () => {
         sectorIndex: 0,
       });
     }
+  });
+
+  it('executes all anomaly token reward resource types', () => {
+    const plugin = new AnomaliesAlienPlugin();
+    const p1 = createPlayer('p1', 0);
+    const { game, board } = createGame({ players: [p1] });
+    board.discovered = true;
+
+    plugin.onDiscover(game, []);
+
+    const tokenAtEarth = getTokenBySector(board, 0);
+    expect(tokenAtEarth).toBeDefined();
+    tokenAtEarth!.rewards = [
+      { type: 'CREDIT', amount: 1 },
+      { type: 'DATA', amount: 1 },
+      { type: 'ENERGY', amount: 1 },
+      { type: 'CARD', amount: 1 },
+      { type: 'PUBLICITY', amount: 2 },
+      { type: 'VP', amount: 4 },
+    ];
+
+    const triggeredColor = tokenAtEarth!.slotId.split('|')[2] as ETrace;
+    const columnSlot = board.getSlot(
+      `alien-${board.alienIndex}-anomaly-column|${triggeredColor}`,
+    );
+    expect(columnSlot).toBeDefined();
+
+    board.placeTrace(columnSlot!, { playerId: p1.id }, triggeredColor);
+
+    const before = {
+      credits: p1.resources.credits,
+      data: p1.resources.data,
+      energy: p1.resources.energy,
+      publicity: p1.resources.publicity,
+      score: p1.score,
+      handSize: p1.hand.length,
+    };
+    plugin.onSolarSystemRotated(game);
+
+    expect(p1.resources.credits).toBe(before.credits + 1);
+    expect(p1.resources.data).toBe(before.data + 1);
+    expect(p1.resources.energy).toBe(before.energy + 1);
+    expect(p1.resources.publicity).toBe(before.publicity + 2);
+    expect(p1.score).toBe(before.score + 4);
+    expect(p1.hand).toHaveLength(before.handSize + 1);
+  });
+
+  it('awards anomaly column trace spaces from bottom to repeatable top', () => {
+    const plugin = new AnomaliesAlienPlugin();
+    AlienRegistry.register(plugin);
+    const p1 = createPlayer('p1', 0);
+    const { game, board } = createGame({ players: [p1] });
+    board.discovered = true;
+
+    plugin.onDiscover(game, []);
+
+    const columnSlot = board.getSlot(
+      `alien-${board.alienIndex}-anomaly-column|${ETrace.RED}`,
+    );
+    expect(columnSlot).toBeDefined();
+
+    const scoreBefore = p1.score;
+    const publicityBefore = p1.resources.publicity;
+    const handBefore = p1.hand.length;
+
+    for (let i = 0; i < 6; i += 1) {
+      game.alienState.applyTraceToSlot(
+        p1,
+        game,
+        columnSlot!.slotId,
+        ETrace.RED,
+      );
+    }
+
+    expect(p1.score).toBe(scoreBefore + 5 + 3 + 2 + 3 + 2 + 2);
+    expect(p1.resources.publicity).toBe(publicityBefore + 1);
+    expect(p1.hand).toHaveLength(handBefore + 2);
+    expect(columnSlot!.occupants).toHaveLength(6);
   });
 });

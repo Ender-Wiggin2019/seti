@@ -1,3 +1,4 @@
+import { PLANET_MISSION_CONFIG } from '@seti/common/constant/boardLayout';
 import { EResource } from '@seti/common/types/element';
 import type {
   IPublicGameState,
@@ -16,6 +17,7 @@ import {
 } from '@/engine/missions/IMission.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
 import { EPieceType } from '@/engine/player/Pieces.js';
+import { buildTechTileBonuses } from '@/engine/tech/TechBonusConfig.js';
 import { toPublicSolarSystemState } from '@/engine/utils/stateProjection.js';
 import type {
   IAlienStateDto,
@@ -241,6 +243,7 @@ function serializeTechBoard(game: IGame): ITechBoardDto | null {
       level: stack.level,
       tiles: stack.tiles.map((tile) => ({
         bonus: tile.bonus,
+        bonuses: buildTechTileBonuses(stack.techId, tile.bonus),
       })),
       firstTakeBonusAvailable: stack.firstTakeBonusAvailable,
     })),
@@ -452,7 +455,7 @@ function toPublicPlayerState(
 
 function toPublicPlanetaryBoard(game: IGame): IPublicPlanetaryBoard {
   if (!game.planetaryBoard) {
-    return { planets: {} };
+    return { configs: { ...PLANET_MISSION_CONFIG }, planets: {} };
   }
 
   const planets: IPublicPlanetaryBoard['planets'] = {};
@@ -466,7 +469,7 @@ function toPublicPlanetaryBoard(game: IGame): IPublicPlanetaryBoard {
     };
   }
 
-  return { planets };
+  return { configs: { ...PLANET_MISSION_CONFIG }, planets };
 }
 
 function toPublicSectors(game: IGame): IPublicSector[] {

@@ -46,9 +46,13 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
     const preferred = this.findPreferredSpace(game);
     if (!preferred) return undefined;
 
-    game.solarSystem?.setDynamicPlanetAtSpace(EPlanet.OUMUAMUA, preferred.spaceId, {
-      grantVisitPublicity: true,
-    });
+    game.solarSystem?.setDynamicPlanetAtSpace(
+      EPlanet.OUMUAMUA,
+      preferred.spaceId,
+      {
+        grantVisitPublicity: true,
+      },
+    );
 
     board.addSlot({
       slotId: `alien-${board.alienIndex}-${OUMUAMUA_META_PREFIX}|${preferred.spaceId}|${preferred.sectorId}`,
@@ -106,7 +110,9 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
         ?.getProbesAt(preferred.spaceId)
         .map((probe) => probe.playerId) ?? [];
     for (const playerId of new Set(playerIdsOnSpace)) {
-      const player = game.players.find((candidate) => candidate.id === playerId);
+      const player = game.players.find(
+        (candidate) => candidate.id === playerId,
+      );
       player?.resources.gain({ publicity: 1 });
     }
 
@@ -138,7 +144,9 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
     game: IGame,
     sectorId: string,
     markSector: () => IMarkSectorSignalResult,
-    onComplete?: (result: IMarkSectorSignalResult | null) => PlayerInput | undefined,
+    onComplete?: (
+      result: IMarkSectorSignalResult | null,
+    ) => PlayerInput | undefined,
   ): PlayerInput | undefined {
     const board = game.alienState.getBoardByType(EAlienType.OUMUAMUA);
     if (!board || !board.discovered) {
@@ -206,9 +214,7 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
       meta: this.getMeta(board),
       tileDataRemaining: this.getDataSlot(board)?.occupants.length ?? 0,
       tileMarkerPlayerIds: (this.getMarkerSlot(board)?.occupants ?? [])
-        .map((occ) =>
-          occ.source === 'neutral' ? null : occ.source.playerId,
-        )
+        .map((occ) => (occ.source === 'neutral' ? null : occ.source.playerId))
         .filter((id): id is string => id !== null),
       exofossilSupplyRemaining:
         this.getSupplySlot(board)?.occupants.length ?? 0,
@@ -229,7 +235,9 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
     game: IGame,
   ): { spaceId: string; sectorId: string } | null {
     if (!game.solarSystem || game.sectors.length <= 0) return null;
-    const jupiterSector = game.solarSystem.getSectorIndexOfPlanet(EPlanet.JUPITER);
+    const jupiterSector = game.solarSystem.getSectorIndexOfPlanet(
+      EPlanet.JUPITER,
+    );
     if (jupiterSector === null) return null;
 
     // Placement rule: Oumuamua is 2 sectors clockwise from Jupiter.
@@ -265,7 +273,9 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
   }
 
   private getMarkerSlot(board: AlienBoard): ITraceSlot | undefined {
-    return board.slots.find((slot) => slot.slotId.includes(OUMUAMUA_TILE_MARKERS));
+    return board.slots.find((slot) =>
+      slot.slotId.includes(OUMUAMUA_TILE_MARKERS),
+    );
   }
 
   private getDataSlot(board: AlienBoard): ITraceSlot | undefined {
@@ -386,15 +396,15 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
     const markerOwners = [
       ...new Set(
         markerSlot.occupants
-          .map((occ) =>
-            occ.source === 'neutral' ? null : occ.source.playerId,
-          )
+          .map((occ) => (occ.source === 'neutral' ? null : occ.source.playerId))
           .filter((id): id is string => id !== null),
       ),
     ];
 
     for (const playerId of markerOwners) {
-      const player = game.players.find((candidate) => candidate.id === playerId);
+      const player = game.players.find(
+        (candidate) => candidate.id === playerId,
+      );
       if (!player) continue;
       if (supplySlot && supplySlot.occupants.length > 0) {
         supplySlot.occupants.pop();
@@ -403,9 +413,12 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
     }
 
     markerSlot.occupants = [];
-    dataSlot.occupants = Array.from({ length: OUMUAMUA_TILE_DATA_CAPACITY }, () => ({
-      source: 'neutral',
-      traceColor: ETrace.ANY,
-    }));
+    dataSlot.occupants = Array.from(
+      { length: OUMUAMUA_TILE_DATA_CAPACITY },
+      () => ({
+        source: 'neutral',
+        traceColor: ETrace.ANY,
+      }),
+    );
   }
 }

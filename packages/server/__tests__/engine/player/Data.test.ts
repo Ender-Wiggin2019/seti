@@ -28,7 +28,23 @@ describe('Data', () => {
     });
   });
 
-  it('adds incoming data into stash with overflow discard', () => {
+  it('adds gained data to pool and discards excess without using stash', () => {
+    const data = new Data({
+      poolCount: 5,
+      stashCount: 0,
+      columnConfigs: SIMPLE_3_COL,
+    });
+
+    const actualAdded = data.gain(3);
+    expect(actualAdded).toBe(1);
+    expect(data.getState()).toMatchObject({
+      pool: 6,
+      stash: 0,
+      total: 6,
+    });
+  });
+
+  it('adds explicit stash data with overflow discard', () => {
     const data = new Data({
       poolCount: 6,
       stashCount: 0,

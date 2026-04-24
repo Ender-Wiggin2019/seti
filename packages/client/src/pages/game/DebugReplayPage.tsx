@@ -83,10 +83,13 @@ export function DebugReplayPage(): React.JSX.Element {
       setSelectedPresetId(firstPreset.id);
       setSelectedCheckpointId(firstPreset.checkpoints[0]?.id ?? '');
       setFieldValues(
-        firstPreset.fields.reduce<Record<string, string>>((accumulator, field) => {
-          accumulator[field.id] = field.options[0]?.value ?? '';
-          return accumulator;
-        }, {}),
+        firstPreset.fields.reduce<Record<string, string>>(
+          (accumulator, field) => {
+            accumulator[field.id] = field.options[0]?.value ?? '';
+            return accumulator;
+          },
+          {},
+        ),
       );
     },
     [],
@@ -101,7 +104,9 @@ export function DebugReplayPage(): React.JSX.Element {
       initializeSelections(nextPresets);
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : 'Failed to load replay presets',
+        error instanceof Error
+          ? error.message
+          : 'Failed to load replay presets',
       );
     } finally {
       setIsLoadingPresets(false);
@@ -141,10 +146,13 @@ export function DebugReplayPage(): React.JSX.Element {
       setSelectedPresetId(nextPreset.id);
       setSelectedCheckpointId(nextPreset.checkpoints[0]?.id ?? '');
       setFieldValues(
-        nextPreset.fields.reduce<Record<string, string>>((accumulator, field) => {
-          accumulator[field.id] = field.options[0]?.value ?? '';
-          return accumulator;
-        }, {}),
+        nextPreset.fields.reduce<Record<string, string>>(
+          (accumulator, field) => {
+            accumulator[field.id] = field.options[0]?.value ?? '';
+            return accumulator;
+          },
+          {},
+        ),
       );
     },
     [presets],
@@ -178,7 +186,9 @@ export function DebugReplayPage(): React.JSX.Element {
       setSession(nextSession);
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : 'Failed to create replay session',
+        error instanceof Error
+          ? error.message
+          : 'Failed to create replay session',
       );
     } finally {
       setIsCreating(false);
@@ -318,7 +328,9 @@ export function DebugReplayPage(): React.JSX.Element {
                   ))}
                 </SelectContent>
               </Select>
-              <p className='text-xs text-text-500'>{selectedPreset.description}</p>
+              <p className='text-xs text-text-500'>
+                {selectedPreset.description}
+              </p>
             </div>
 
             <div className='space-y-2'>
@@ -357,9 +369,7 @@ export function DebugReplayPage(): React.JSX.Element {
                     }))
                   }
                 >
-                  <SelectTrigger
-                    data-testid={`debug-replay-field-${field.id}`}
-                  >
+                  <SelectTrigger data-testid={`debug-replay-field-${field.id}`}>
                     <SelectValue placeholder={`Select ${field.label}`} />
                   </SelectTrigger>
                   <SelectContent>

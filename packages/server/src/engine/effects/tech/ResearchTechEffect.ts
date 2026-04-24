@@ -12,6 +12,7 @@ import type { IPlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
 import { EMissionEventType } from '../../missions/IMission.js';
 import type { IPlayer } from '../../player/IPlayer.js';
+import { buildTechTileBonuses } from '../../tech/TechBonusConfig.js';
 import { createTech } from '../../tech/TechRegistry.js';
 import { TechBonusEffect } from './TechBonusEffect.js';
 
@@ -19,6 +20,7 @@ export interface IResearchTechResult {
   techId: ETechId;
   vpBonus: number;
   tileBonus?: ITechBonusToken;
+  tileBonuses: ITechBonusToken[];
 }
 
 /**
@@ -178,10 +180,9 @@ export class ResearchTechEffect {
       takeResult.tile.tech.onAcquire(player);
     }
 
-    let tileBonus: ITechBonusToken | undefined;
-    if (takeResult.tile.bonus) {
-      TechBonusEffect.apply(player, game, takeResult.tile.bonus);
-      tileBonus = takeResult.tile.bonus;
+    const tileBonuses = buildTechTileBonuses(techId, takeResult.tile.bonus);
+    for (const tileBonusToken of tileBonuses) {
+      TechBonusEffect.apply(player, game, tileBonusToken);
     }
 
     game.missionTracker?.recordEvent({
@@ -192,7 +193,8 @@ export class ResearchTechEffect {
     return {
       techId,
       vpBonus: takeResult.vpBonus,
-      tileBonus,
+      tileBonus: takeResult.tile.bonus,
+      tileBonuses,
     };
   }
 

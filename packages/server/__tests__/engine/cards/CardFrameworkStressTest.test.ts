@@ -44,6 +44,13 @@ function createMarkableSector(color: ESector) {
 }
 
 function createGame(overrides: Record<string, unknown> = {}): IGame {
+  const overrideSolarSystem =
+    overrides.solarSystem && typeof overrides.solarSystem === 'object'
+      ? (overrides.solarSystem as Record<string, unknown>)
+      : {};
+  const restOverrides = { ...overrides };
+  delete restOverrides.solarSystem;
+
   return {
     ...stubTurnLockFields(),
     sectors: [],
@@ -55,11 +62,15 @@ function createGame(overrides: Record<string, unknown> = {}): IGame {
     missionTracker: new MissionTracker(),
     solarSystem: {
       rotateNextDisc: () => 0,
+      getPlanetLocation: () => null,
+      getSpacesOnPlanet: () => [],
+      getProbesAt: () => [],
+      ...overrideSolarSystem,
     },
     techBoard: null,
     planetaryBoard: null,
     round: 1,
-    ...overrides,
+    ...restOverrides,
   } as unknown as IGame;
 }
 
@@ -380,9 +391,10 @@ describe('Card 16 — Dragonfly (LAND from card effect)', () => {
         getLandingCost: () => 1,
         land: () => ({
           landingCost: 1,
-          centerReward: { vpGained: 2, lifeTraceGained: 0 },
+          centerReward: { vpGained: 2, traceRewards: [], lifeTraceGained: 0 },
           firstLandDataGained: 1,
           isMoon: false,
+          rewards: [],
         }),
       },
       solarSystem: {
@@ -451,9 +463,10 @@ describe('Card 16 — Dragonfly (LAND from card effect)', () => {
           landCalled = true;
           return {
             landingCost: 1,
-            centerReward: { vpGained: 2, lifeTraceGained: 0 },
+            centerReward: { vpGained: 2, traceRewards: [], lifeTraceGained: 0 },
             firstLandDataGained: 0,
             isMoon: false,
+            rewards: [],
           };
         },
       },

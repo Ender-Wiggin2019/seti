@@ -36,7 +36,10 @@ export function GameSettingsPanel({
           value={String(options.playerCount)}
           testId='players'
         />
-        <ReadoutRow label={t('client.game_settings.alien_modules')} testId='alien-modules'>
+        <ReadoutRow
+          label={t('client.game_settings.alien_modules')}
+          testId='alien-modules'
+        >
           {readOnly ? (
             <StatusValue
               active={options.alienModulesEnabled.some((enabled) => enabled)}

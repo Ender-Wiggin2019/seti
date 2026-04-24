@@ -106,7 +106,13 @@ describe('checkQuickMissionCondition', () => {
 
   it('supports oumuamua exofossil requirement custom desc', () => {
     const branch: IMissionBranchDef = {
-      req: [{ effectType: EEffectType.CUSTOMIZED, desc: 'desc.et-23-req' }],
+      req: [
+        {
+          effectType: EEffectType.CUSTOMIZED,
+          id: 'et-23-req',
+          desc: 'desc.et-23-req',
+        },
+      ],
       rewards: [],
     };
 
@@ -163,7 +169,13 @@ describe('checkQuickMissionCondition', () => {
 
   it('supports desc.et-21-req: marked paid oumuamua trace', () => {
     const branch: IMissionBranchDef = {
-      req: [{ effectType: EEffectType.CUSTOMIZED, desc: 'desc.et-21-req' }],
+      req: [
+        {
+          effectType: EEffectType.CUSTOMIZED,
+          id: 'et-21-req',
+          desc: 'desc.et-21-req',
+        },
+      ],
       rewards: [],
     };
 
@@ -189,11 +201,23 @@ describe('checkQuickMissionCondition', () => {
 
   it('supports desc.et-22-req and desc.et-27-req custom quick conditions', () => {
     const et22: IMissionBranchDef = {
-      req: [{ effectType: EEffectType.CUSTOMIZED, desc: 'desc.et-22-req' }],
+      req: [
+        {
+          effectType: EEffectType.CUSTOMIZED,
+          id: 'et-22-req',
+          desc: 'desc.et-22-req',
+        },
+      ],
       rewards: [],
     };
     const et27: IMissionBranchDef = {
-      req: [{ effectType: EEffectType.CUSTOMIZED, desc: 'desc.et-27-req' }],
+      req: [
+        {
+          effectType: EEffectType.CUSTOMIZED,
+          id: 'et-27-req',
+          desc: 'desc.et-27-req',
+        },
+      ],
       rewards: [],
     };
 
@@ -222,7 +246,11 @@ describe('checkQuickMissionCondition', () => {
       },
     };
 
-    expect(checkQuickMissionCondition(et22, { id: 'p1' } as never, game as never)).toBe(true);
-    expect(checkQuickMissionCondition(et27, { id: 'p1' } as never, game as never)).toBe(true);
+    expect(
+      checkQuickMissionCondition(et22, { id: 'p1' } as never, game as never),
+    ).toBe(true);
+    expect(
+      checkQuickMissionCondition(et27, { id: 'p1' } as never, game as never),
+    ).toBe(true);
   });
 });

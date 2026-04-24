@@ -86,7 +86,7 @@ export function getNextTriggeredAnomalyToken(
   }
 
   for (let offset = 1; offset <= sectorCount; offset += 1) {
-    const targetSector = (earthSector + offset) % sectorCount;
+    const targetSector = (earthSector + sectorCount - offset) % sectorCount;
     const token = tokens.find(
       (candidate) => candidate.sectorIndex === targetSector,
     );

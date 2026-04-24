@@ -1,41 +1,37 @@
 # TODO
 
-## 前端待办事项
+## 高优先级
 
-### 卡牌效果错误提示 Toast（优先级：P2）
+- [ ] 修复 server 现存测试失败（4 个）
+  - `packages/server/__tests__/engine/cards/CardFrameworkStressTest.test.ts`：3 failures
+  - `packages/server/__tests__/engine/effects/probe/ProbeEffectUtils.test.ts`：1 failure
+  - 当前错误：`game.solarSystem.getPlanetLocation is not a function`
+  - 处理方向：补齐测试 mock，或统一 `getSpacesOnPlanet` / `getPlanetLocation` 的兼容边界，确保真实 `SolarSystem` 与测试替身一致。
 
-**背景：** 后端在遇到无效 behavior type（如未注册的 custom effect ID）时，采用容错策略：记录 `CARD_CUSTOM_EFFECT_UNHANDLED` 事件到 event log，但不阻塞游戏流程。
+## 中优先级
 
-**需求：** 前端需监听该事件并展示 toast 提示用户，让玩家知道某个卡牌效果未生效。
+- [ ] 补齐 debug snapshot replay E2E 覆盖
+  - 文件：`packages/e2e/tests/debug-snapshot-replay.spec.ts`
+  - 覆盖无效 `gameId` 错误提示、指定 `version` 加载、snapshot HUD 元数据、加载后的交互操作（end turn / main action）。
 
-**实现建议：**
-```typescript
-// 在 GameContext 或 event handler 中监听
-game.eventLog.on('CARD_CUSTOM_EFFECT_UNHANDLED', (event) => {
-  toast.warning(
-    `卡牌效果 "${event.data.customId}" 暂未实现（卡牌ID: ${event.data.cardId}）`
-  );
-});
-```
+- [ ] 补齐 debug replay E2E 覆盖
+  - 文件：`packages/e2e/tests/debug-replay.spec.ts`
+  - 覆盖切换 preset 后字段更新、`New Replay` 返回表单。
 
-**相关文档：**
-- 后端实现：`packages/server/src/engine/cards/BehaviorExecutor.ts` 第 407-416 行
-- 决策记录：`docs/tests/tdd-plan.md` Phase 2.9.6
+- [ ] 增加 Oumuamua debug replay preset
+  - 文件：`packages/server/src/debug/debugReplayPresets.ts`
+  - 覆盖 tile signal、exofossil、trace columns 等 Oumuamua 专属调试场景。
 
----
+## 低优先级
 
-## E2E
+- [ ] 校验 Client 端 snapshot version 输入
+  - 文件：`packages/client/src/pages/game/DebugReplayPage.tsx`
+  - 拦截负数、小数、0、`NaN` 等无效值，并给出友好的错误提示。
 
-- [x] Fix stale game-state sync after `LAUNCH_PROBE` in `packages/e2e/tests/smoke-probe-scan.spec.ts`.
-  Resolved on 2026-04-17:
-  The client websocket layer now retains `game:state` / `game:waiting` /
-  `game:event` / `game:error` subscriptions independently from the current
-  socket instance and automatically rebinds them when the socket connects late
-  or gets replaced.
-  Regression coverage:
-  `packages/client/__tests__/api/wsClient.test.ts`
-  Verification:
-  `pnpm --filter @seti/client exec vitest run __tests__/api/wsClient.test.ts`
-  `pnpm typecheck` in `packages/client`
-  `pnpm exec biome check src/api/wsClient.ts __tests__/api/wsClient.test.ts`
-  `pnpm exec playwright test tests/smoke-probe-scan.spec.ts --project=chromium`
+- [ ] 统一 `/debug/alien` 和 `/debug/replay` 路由策略
+  - 文件：`packages/client/src/routes.tsx`
+  - 选择保留单一路由，或让 `/debug/alien` 带默认 preset 行为，避免 E2E 混用入口。
+
+- [ ] 扩展 `IDebugReplayFieldDefinition.kind`
+  - 文件：`packages/common/src/types/protocol/debug.ts`
+  - 从仅支持 `'select'` 扩展为 union type，便于后续支持 text input 等字段类型。

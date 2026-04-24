@@ -1,5 +1,10 @@
 import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
+import {
+  EPlayerInputType,
+  type ISelectOptionInputModel,
+} from '@seti/common/types/protocol/playerInput';
 import { AlienRegistry } from '@/engine/alien/AlienRegistry.js';
+import { AnomaliesAlienPlugin } from '@/engine/alien/plugins/AnomaliesAlienPlugin.js';
 import { DummyAlienPlugin } from '@/engine/alien/plugins/DummyAlienPlugin.js';
 import { ResolveDiscovery } from '@/engine/deferred/ResolveDiscovery.js';
 import { Game } from '@/engine/Game.js';
@@ -8,6 +13,13 @@ const BASE_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
   { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
 ] as const;
+
+function forceAlienType(
+  board: { readonly alienType: EAlienType },
+  alienType: EAlienType,
+): void {
+  (board as { alienType: EAlienType }).alienType = alienType;
+}
 
 describe('ResolveDiscovery', () => {
   beforeEach(() => {
@@ -92,7 +104,7 @@ describe('ResolveDiscovery', () => {
       const board = game.alienState.boards[0];
 
       // Override alien type to DUMMY for predictable plugin behavior
-      (board as any).alienType = EAlienType.DUMMY;
+      forceAlienType(board, EAlienType.DUMMY);
 
       const p1InitialScore = p1.score;
       const p2InitialScore = p2.score;
@@ -137,7 +149,7 @@ describe('ResolveDiscovery', () => {
       const p1 = game.players[0];
       const board = game.alienState.boards[0];
 
-      (board as any).alienType = EAlienType.DUMMY;
+      forceAlienType(board, EAlienType.DUMMY);
 
       // Place 2 player traces
       game.alienState.applyTrace(p1, game, ETrace.RED, 0, false);
@@ -173,7 +185,7 @@ describe('ResolveDiscovery', () => {
       const p2 = game.players[1];
       const board = game.alienState.boards[0];
 
-      (board as any).alienType = EAlienType.DUMMY;
+      forceAlienType(board, EAlienType.DUMMY);
 
       const p2InitialScore = p2.score;
 
@@ -253,8 +265,8 @@ describe('ResolveDiscovery', () => {
       const board0 = game.alienState.boards[0];
       const board1 = game.alienState.boards[1];
 
-      (board0 as any).alienType = EAlienType.DUMMY;
-      (board1 as any).alienType = EAlienType.DUMMY;
+      forceAlienType(board0, EAlienType.DUMMY);
+      forceAlienType(board1, EAlienType.DUMMY);
 
       const p1InitialScore = p1.score;
       const p2InitialScore = p2.score;
@@ -291,6 +303,59 @@ describe('ResolveDiscovery', () => {
 
       // No more discoverable aliens
       expect(game.alienState.getNewlyDiscoverableAliens()).toHaveLength(0);
+    });
+  });
+
+  describe('6.2.10 [集成] 发现后 alien board 额外位可被标记', () => {
+    it('discovers Anomalies, then lets a later red trace choose and mark the anomaly column slot', () => {
+      AlienRegistry.register(new AnomaliesAlienPlugin());
+
+      const game = Game.create(
+        BASE_PLAYERS,
+        { playerCount: 2 },
+        'discovery-anomaly-extra-slot',
+      );
+      const p1 = game.players[0];
+      const board = game.alienState.boards[0];
+      forceAlienType(board, EAlienType.ANOMALIES);
+
+      game.alienState.applyTrace(p1, game, ETrace.RED, 0, false);
+      game.alienState.applyTrace(p1, game, ETrace.YELLOW, 0, false);
+      game.alienState.applyTrace(p1, game, ETrace.BLUE, 0, false);
+
+      new ResolveDiscovery(p1).execute(game);
+
+      expect(board.discovered).toBe(true);
+      const redColumnSlotId = `alien-${board.alienIndex}-anomaly-column|${ETrace.RED}`;
+      const redColumnSlot = board.getSlot(redColumnSlotId);
+      expect(redColumnSlot).toBeDefined();
+      expect(redColumnSlot?.occupants).toHaveLength(0);
+
+      const scoreBeforeExtraTrace = p1.score;
+      const handSizeBeforeExtraTrace = p1.hand.length;
+      const input = game.alienState.createTraceInput(p1, game, ETrace.RED);
+      expect(input?.toModel().type).toBe(EPlayerInputType.OPTION);
+      if (!input) {
+        throw new Error('expected trace input for anomaly extra slot');
+      }
+
+      const model = input.toModel() as ISelectOptionInputModel;
+      expect(model.options.map((option) => option.id)).toContain(
+        redColumnSlotId,
+      );
+
+      p1.waitingFor = input;
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: redColumnSlotId,
+      });
+
+      expect(p1.waitingFor).toBeUndefined();
+      expect(redColumnSlot?.occupants).toEqual([
+        { source: { playerId: p1.id }, traceColor: ETrace.RED },
+      ]);
+      expect(p1.score).toBe(scoreBeforeExtraTrace + 5);
+      expect(p1.hand).toHaveLength(handSizeBeforeExtraTrace + 1);
     });
   });
 });

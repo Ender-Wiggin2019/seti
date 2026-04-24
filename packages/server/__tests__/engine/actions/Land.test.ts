@@ -14,6 +14,7 @@ import { LandAction } from '@/engine/actions/Land.js';
 import { Game } from '@/engine/Game.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
 import {
+  resolveAllInputsDefault,
   resolveSetupTucks,
   skipSetupTucks,
 } from '../../helpers/TestGameBuilder.js';
@@ -60,19 +61,6 @@ function resolveAllInputs(game: Game, player: IPlayer): void {
   }
 }
 
-function expectTraceInput(player: IPlayer): ISelectTraceInputModel {
-  if (!player.waitingFor) {
-    throw new Error('Expected player to be waiting for trace input');
-  }
-
-  const model = player.waitingFor.toModel();
-  if (model.type !== EPlayerInputType.TRACE) {
-    throw new Error(`Expected trace input, received ${model.type}`);
-  }
-
-  return model as ISelectTraceInputModel;
-}
-
 function expectOptionInput(player: IPlayer): ISelectOptionInputModel {
   if (!player.waitingFor) {
     throw new Error('Expected player to be waiting for option input');
@@ -87,7 +75,7 @@ function expectOptionInput(player: IPlayer): ISelectOptionInputModel {
 }
 
 describe('Land action', () => {
-  it('lets the player place a landing life trace onto the selected discovery slot', () => {
+  it('lets the player place a landing yellow trace onto the selected discovery slot', () => {
     const game = Game.create(
       TEST_PLAYERS,
       { playerCount: 2 },
@@ -101,14 +89,6 @@ describe('Land action', () => {
     game.processMainAction(player.id, {
       type: EMainAction.LAND,
       payload: { planet: EPlanet.VENUS },
-    });
-
-    const traceInput = expectTraceInput(player);
-    expect(traceInput.options).toContain(ETrace.BLUE);
-
-    game.processInput(player.id, {
-      type: EPlayerInputType.TRACE,
-      trace: ETrace.BLUE,
     });
 
     const optionInput = expectOptionInput(player);
@@ -139,7 +119,7 @@ describe('Land action', () => {
     expect(selectedSlot?.occupants).toHaveLength(1);
     expect(selectedSlot?.occupants[0]).toMatchObject({
       source: { playerId: player.id },
-      traceColor: ETrace.BLUE,
+      traceColor: ETrace.YELLOW,
     });
   });
 
@@ -160,12 +140,12 @@ describe('Land action', () => {
     });
 
     expect(player.resources.energy).toBe(0);
-    expect(player.resources.data).toBe(1);
+    expect(player.resources.data).toBe(2);
     expect(player.probesInSpace).toBe(0);
     expect(
       game.planetaryBoard?.planets.get(EPlanet.MARS)?.landingSlots,
     ).toEqual([{ playerId: player.id }]);
-    expect(player.score).toBe(5);
+    expect(player.score).toBe(7);
   });
 
   it('uses reduced landing cost when any orbiter is already present', () => {
@@ -186,6 +166,7 @@ describe('Land action', () => {
       type: EMainAction.ORBIT,
       payload: { planet: EPlanet.SATURN },
     });
+    resolveAllInputsDefault(game, p1);
     game.processEndTurn(p1.id);
     game.processMainAction(p2.id, {
       type: EMainAction.LAND,
@@ -235,7 +216,7 @@ describe('Land action', () => {
     resolveAllInputs(threePlayerGame, p3);
     threePlayerGame.processEndTurn(p3.id);
 
-    expect(p1.resources.data).toBe(1);
+    expect(p1.resources.data).toBe(2);
     expect(p2.resources.data).toBe(1);
     expect(p3.resources.data).toBe(0);
     expect(
@@ -335,6 +316,7 @@ describe('Land action', () => {
       type: EMainAction.ORBIT,
       payload: { planet: EPlanet.MARS },
     });
+    resolveAllInputsDefault(game, p2);
     game.processEndTurn(p2.id);
     game.processMainAction(p1.id, {
       type: EMainAction.LAND,
@@ -385,6 +367,7 @@ describe('Land action', () => {
       type: EMainAction.ORBIT,
       payload: { planet: EPlanet.VENUS },
     });
+    resolveAllInputsDefault(game, player);
     game.processEndTurn(player.id);
 
     game.setActivePlayer(player.id);

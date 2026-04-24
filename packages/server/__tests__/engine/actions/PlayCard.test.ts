@@ -111,9 +111,13 @@ function resolveInputsUntilMissionPromptOrDone(
     }
 
     if (model.type === EPlayerInputType.OPTION) {
+      const optionId = model.options?.[0]?.id;
+      if (!optionId) {
+        throw new Error('expected option input');
+      }
       game.processInput(player.id, {
         type: EPlayerInputType.OPTION,
-        optionId: model.options![0]!.id,
+        optionId,
       });
       continue;
     }
@@ -274,6 +278,89 @@ describe('PlayCardAction — integration', () => {
       expect(
         missionPrompt.options?.some((option) => option.id === 'skip-missions'),
       ).toBe(true);
+    });
+
+    it('2.6.5 completes an already-satisfied quick mission immediately from the play-card prompt', () => {
+      const { game, player } = createIntegrationGame(
+        'play-card-2-6-5-complete-quick-mission-immediately',
+      );
+      player.hand = ['51'];
+      player.resources.gain({ publicity: 4 });
+      game.mainDeck = new Deck(['refill-1', 'reward-card'], []);
+
+      game.processMainAction(player.id, {
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 0 },
+      });
+      resolveUntilMissionPrompt(game, player);
+
+      const scoreBeforeCompletion = player.score;
+      const handBeforeCompletion = player.hand.length;
+      game.processInput(player.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: 'complete-51-0',
+      });
+
+      expect(player.playedMissions.map(resolveCardId)).not.toContain('51');
+      expect(player.completedMissions.map(resolveCardId)).toContain('51');
+      expect(
+        game.missionTracker.getMissionState(player.id, '51'),
+      ).toBeUndefined();
+      expect(player.score).toBe(scoreBeforeCompletion + 3);
+      expect(player.hand).toHaveLength(handBeforeCompletion + 1);
+      expect(game.activePlayer.id).toBe(player.id);
+      expect(game.phase).toBe(EPhase.AWAIT_END_TURN);
+    });
+
+    it('2.6.6 keeps an already-satisfied quick mission completable after the player skips the play-card prompt', () => {
+      const { game, player } = createIntegrationGame(
+        'play-card-2-6-6-defer-quick-mission-completion',
+      );
+      const other = game.players.find((p) => p.id !== player.id) as Player;
+      player.hand = ['51'];
+      player.resources.gain({ publicity: 4 });
+      game.mainDeck = new Deck(
+        ['refill-1', 'refill-2', 'reward-card', 'later-reward'],
+        [],
+      );
+
+      game.processMainAction(player.id, {
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 0 },
+      });
+      resolveUntilMissionPrompt(game, player);
+
+      game.processInput(player.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: 'skip-missions',
+      });
+
+      expect(player.playedMissions.map(resolveCardId)).toContain('51');
+      expect(player.completedMissions.map(resolveCardId)).not.toContain('51');
+      expect(
+        game.missionTracker.getMissionState(player.id, '51'),
+      ).toBeDefined();
+      expect(game.phase).toBe(EPhase.AWAIT_END_TURN);
+
+      game.processEndTurn(player.id);
+      game.processMainAction(other.id, { type: EMainAction.PASS });
+      resolveEndOfRoundPickIfAny(game, other.id);
+      expect(game.activePlayer.id).toBe(player.id);
+
+      const scoreBeforeCompletion = player.score;
+      const handBeforeCompletion = player.hand.length;
+      game.processFreeAction(player.id, {
+        type: EFreeAction.COMPLETE_MISSION,
+        cardId: '51',
+      });
+
+      expect(player.playedMissions.map(resolveCardId)).not.toContain('51');
+      expect(player.completedMissions.map(resolveCardId)).toContain('51');
+      expect(
+        game.missionTracker.getMissionState(player.id, '51'),
+      ).toBeUndefined();
+      expect(player.score).toBe(scoreBeforeCompletion + 3);
+      expect(player.hand).toHaveLength(handBeforeCompletion + 1);
     });
 
     it('integration: a full mission card does not trigger from its own play event', () => {

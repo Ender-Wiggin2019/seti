@@ -219,18 +219,26 @@ describe('Anomalies alien cards ET.11-ET.20', () => {
     expect(player.resources.publicity).toBe(publicityBefore);
   });
 
-  it('ET.14 marks the additional signal on the next-trigger anomaly sector', () => {
+  it('ET.14 marks the additional signal on the closest counter-clockwise anomaly sector', () => {
     const { game, player } = createGame('et-14-next-anomaly-sector');
     const earth = getEarthSectorIndex(game);
-    const next = (earth + 3) % game.sectors.length;
-    addAnomalyToken(game, next, ETrace.YELLOW);
+    const counterClockwise =
+      (earth + game.sectors.length - 1) % game.sectors.length;
+    const clockwise = (earth + 1) % game.sectors.length;
+    addAnomalyToken(game, counterClockwise, ETrace.YELLOW);
+    addAnomalyToken(game, clockwise, ETrace.BLUE);
 
     player.hand = ['ET.14'];
-    const before = game.sectors[next].getPlayerMarkerCount(player.id);
+    const before = game.sectors[counterClockwise].getPlayerMarkerCount(
+      player.id,
+    );
     playCard(game, player, 'ET.14');
     resolveInputs(game, player);
 
-    expect(game.sectors[next].getPlayerMarkerCount(player.id)).toBe(before + 1);
+    expect(game.sectors[counterClockwise].getPlayerMarkerCount(player.id)).toBe(
+      before + 1,
+    );
+    expect(game.sectors[clockwise]).toBeDefined();
   });
 
   it('ET.15 follows draw3 -> discard for corner -> discard for income resource', () => {
@@ -293,20 +301,25 @@ describe('Anomalies alien cards ET.11-ET.20', () => {
     expect(emptySafe.player.hand).toEqual(expect.arrayContaining(['ET.11']));
   });
 
-  it('ET.17 immediately gains next anomaly reward and still keeps quick mission card state', () => {
+  it('ET.17 immediately gains closest counter-clockwise anomaly reward and still keeps quick mission card state', () => {
     const { game, player } = createGame('et-17-immediate-next-reward');
     const earth = getEarthSectorIndex(game);
-    const next = (earth + 1) % game.sectors.length;
-    addAnomalyToken(game, next, ETrace.BLUE, [
+    const counterClockwise =
+      (earth + game.sectors.length - 1) % game.sectors.length;
+    const clockwise = (earth + 1) % game.sectors.length;
+    addAnomalyToken(game, counterClockwise, ETrace.BLUE, [
       { type: 'PUBLICITY', amount: 2 },
     ]);
+    addAnomalyToken(game, clockwise, ETrace.RED, [{ type: 'VP', amount: 5 }]);
 
     player.hand = ['ET.17'];
     const publicityBefore = player.resources.publicity;
+    const scoreBefore = player.score;
     playCard(game, player, 'ET.17');
     resolveInputs(game, player);
 
     expect(player.resources.publicity).toBe(publicityBefore + 2);
+    expect(player.score).toBe(scoreBefore);
     expect(
       player.playedMissions.some(
         (card) => (typeof card === 'string' ? card : card.id) === 'ET.17',

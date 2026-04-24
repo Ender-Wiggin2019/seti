@@ -1,11 +1,11 @@
-import { PLANETARY_PLANETS } from '@seti/common/constant/boardLayout';
-import { EResource } from '@seti/common/types/element';
+import { PLANET_MISSION_CONFIG } from '@seti/common/constant/boardLayout';
 import { EMainAction, EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
+import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { OrbitAction } from '@/engine/actions/Orbit.js';
-import { PLANET_ORBIT_INCOME } from '@/engine/board/PlanetaryBoard.js';
 import { Game } from '@/engine/Game.js';
 import {
+  resolveAllInputsDefault,
   resolveSetupTucks,
   skipSetupTucks,
 } from '../../helpers/TestGameBuilder.js';
@@ -69,7 +69,7 @@ describe('Orbit action', () => {
     const player = game.players[0];
     placeProbeOnPlanet(game, player.id, EPlanet.MARS, 1);
     player.probesInSpace = 1;
-    const cardIncomeBefore = player.income.tuckedCardIncome[EResource.CARD];
+    const handBefore = player.hand.length;
 
     game.processMainAction(player.id, {
       type: EMainAction.ORBIT,
@@ -86,9 +86,12 @@ describe('Orbit action', () => {
       { playerId: player.id },
     ]);
     expect(player.score).toBe(4);
-    expect(player.income.tuckedCardIncome[EResource.CARD]).toBe(
-      cardIncomeBefore + 1,
-    );
+    expect(player.resources.data).toBe(1);
+    expect(player.hand).toHaveLength(handBefore + 1);
+    expect(player.waitingFor?.toModel().type).toBe(EPlayerInputType.CARD);
+
+    resolveAllInputsDefault(game, player);
+    expect(player.tuckedIncomeCards).toHaveLength(1);
   });
 
   it('only grants +3 VP for the first orbiter on a planet', () => {
@@ -109,16 +112,18 @@ describe('Orbit action', () => {
       type: EMainAction.ORBIT,
       payload: { planet: EPlanet.VENUS },
     });
+    resolveAllInputsDefault(game, p1);
     game.processEndTurn(p1.id);
 
     game.processMainAction(p2.id, {
       type: EMainAction.ORBIT,
       payload: { planet: EPlanet.VENUS },
     });
+    resolveAllInputsDefault(game, p2);
     game.processEndTurn(p2.id);
 
-    expect(p1.score).toBe(4);
-    expect(p2.score).toBe(2);
+    expect(p1.score).toBe(10);
+    expect(p2.score).toBe(8);
     expect(
       game.planetaryBoard?.planets.get(EPlanet.VENUS)?.orbitSlots,
     ).toHaveLength(2);
@@ -165,18 +170,23 @@ describe('Orbit action', () => {
     );
   });
 
-  it('2.2.3 first orbit grants +3 VP and a distinct orbit income bonus per planet', () => {
-    const nonEarthPlanets: EPlanet[] = [
-      EPlanet.MERCURY,
-      EPlanet.VENUS,
-      EPlanet.MARS,
-      EPlanet.JUPITER,
-      EPlanet.SATURN,
-      EPlanet.URANUS,
-      EPlanet.NEPTUNE,
+  it('2.2.3 applies configured orbit rewards per planet', () => {
+    const cases: Array<{
+      planet: EPlanet;
+      scoreDelta: number;
+      dataDelta: number;
+      cardDraws: number;
+    }> = [
+      { planet: EPlanet.MERCURY, scoreDelta: 5, dataDelta: 2, cardDraws: 1 },
+      { planet: EPlanet.VENUS, scoreDelta: 9, dataDelta: 0, cardDraws: 0 },
+      { planet: EPlanet.MARS, scoreDelta: 3, dataDelta: 1, cardDraws: 1 },
+      { planet: EPlanet.JUPITER, scoreDelta: 9, dataDelta: 0, cardDraws: 0 },
+      { planet: EPlanet.SATURN, scoreDelta: 9, dataDelta: 0, cardDraws: 0 },
+      { planet: EPlanet.URANUS, scoreDelta: 9, dataDelta: 0, cardDraws: 0 },
+      { planet: EPlanet.NEPTUNE, scoreDelta: 9, dataDelta: 0, cardDraws: 0 },
     ];
 
-    for (const planet of nonEarthPlanets) {
+    for (const { planet, scoreDelta, dataDelta, cardDraws } of cases) {
       const game = Game.create(
         TEST_PLAYERS,
         { playerCount: 2 },
@@ -192,11 +202,8 @@ describe('Orbit action', () => {
       const publicityBefore = player.resources.publicity;
       const dataBefore = player.resources.data;
       const scoreBefore = player.score;
-      const handBefore = [...player.hand];
-      const tuckedCardsBefore = [...player.tuckedIncomeCards];
-      const incomeResource =
-        PLANET_ORBIT_INCOME[planet as (typeof PLANETARY_PLANETS)[number]];
-      const incomeBefore = player.income.tuckedCardIncome[incomeResource];
+      const handBefore = player.hand.length;
+      const tuckedCardsBefore = player.tuckedIncomeCards.length;
 
       game.processMainAction(player.id, {
         type: EMainAction.ORBIT,
@@ -206,14 +213,14 @@ describe('Orbit action', () => {
       // Action cost (1 credit + 1 energy) — same for every planet.
       expect(player.resources.credits).toBe(creditsBefore - 1);
       expect(player.resources.energy).toBe(energyBefore - 1);
-      expect(player.score).toBe(scoreBefore + 3);
+      expect(player.score).toBe(scoreBefore + scoreDelta);
       expect(player.resources.publicity).toBe(publicityBefore);
-      expect(player.resources.data).toBe(dataBefore);
-      expect(player.hand).toEqual(handBefore);
-      expect(player.tuckedIncomeCards).toEqual(tuckedCardsBefore);
-      expect(player.income.tuckedCardIncome[incomeResource]).toBe(
-        incomeBefore + 1,
-      );
+      expect(player.resources.data).toBe(dataBefore + dataDelta);
+      expect(player.hand).toHaveLength(handBefore + cardDraws);
+      expect(player.waitingFor?.toModel().type).toBe(EPlayerInputType.CARD);
+
+      resolveAllInputsDefault(game, player);
+      expect(player.tuckedIncomeCards).toHaveLength(tuckedCardsBefore + 1);
       expect(game.planetaryBoard?.planets.get(planet)?.orbitSlots).toEqual([
         { playerId: player.id },
       ]);
@@ -223,7 +230,7 @@ describe('Orbit action', () => {
     }
   });
 
-  it('2.2.4 orbit increases tucked income (round payout) without drawing or tucking hand cards', () => {
+  it('2.2.4 orbit tuck reward prompts a selected hand card to become income', () => {
     const game = Game.create(
       TEST_PLAYERS,
       { playerCount: 2 },
@@ -234,20 +241,25 @@ describe('Orbit action', () => {
     placeProbeOnPlanet(game, player.id, EPlanet.VENUS, 1);
     player.probesInSpace = 1;
 
-    const tuckedCardsBefore = [...player.tuckedIncomeCards];
-    const handBefore = [...player.hand];
-    const energyIncomeBefore = player.income.tuckedCardIncome[EResource.ENERGY];
+    const tuckedCardsBefore = player.tuckedIncomeCards.length;
+    const handBefore = player.hand.length;
 
     game.processMainAction(player.id, {
       type: EMainAction.ORBIT,
       payload: { planet: EPlanet.VENUS },
     });
 
-    expect(player.tuckedIncomeCards).toEqual(tuckedCardsBefore);
-    expect(player.hand).toEqual(handBefore);
-    expect(player.income.tuckedCardIncome[EResource.ENERGY]).toBe(
-      energyIncomeBefore + 1,
+    expect(player.score).toBe(
+      1 +
+        PLANET_MISSION_CONFIG[EPlanet.VENUS].orbit.rewards[0].amount +
+        PLANET_MISSION_CONFIG[EPlanet.VENUS].orbit.firstRewards[0].amount,
     );
+    expect(player.waitingFor?.toModel().type).toBe(EPlayerInputType.CARD);
+
+    resolveAllInputsDefault(game, player);
+
+    expect(player.tuckedIncomeCards).toHaveLength(tuckedCardsBefore + 1);
+    expect(player.hand.length).toBeLessThanOrEqual(handBefore);
   });
 
   it('returns false when credits or energy are insufficient even with a valid planet probe', () => {

@@ -9,6 +9,7 @@ describe('ProbeEffectUtils', () => {
   it('syncProbeCountsForPlayer writes per-planet counts', () => {
     const game = {
       solarSystem: {
+        getPlanetLocation: () => ({ space: { id: 's1' } }),
         getSpacesOnPlanet: () => [{ id: 's1' }],
         getProbesAt: () => [{ playerId: 'p1' }, { playerId: 'p2' }],
       },

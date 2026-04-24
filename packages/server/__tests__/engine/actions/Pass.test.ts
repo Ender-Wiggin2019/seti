@@ -1,5 +1,10 @@
+import { alienCards } from '@seti/common/data/alienCards';
+import { EAlienType } from '@seti/common/types/BaseCard';
 import { EFreeAction, EMainAction } from '@seti/common/types/protocol/enums';
-import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
+import {
+  EPlayerInputType,
+  type ISelectCardInputModel,
+} from '@seti/common/types/protocol/playerInput';
 import { vi } from 'vitest';
 import { PassAction } from '@/engine/actions/Pass.js';
 import { BoardBuilder } from '@/engine/board/BoardBuilder.js';
@@ -352,7 +357,10 @@ describe('PassAction — integration closure (2.8.x)', () => {
     // PASS must first ask for a discard (hand is 5, limit is 4).
     const discardPrompt = player.waitingFor;
     expect(discardPrompt).toBeDefined();
-    expect(discardPrompt!.toModel().type).toBe(EPlayerInputType.CARD);
+    if (!discardPrompt) {
+      throw new Error('expected discard prompt before end-of-round pick');
+    }
+    expect(discardPrompt.toModel().type).toBe(EPlayerInputType.CARD);
 
     // Discard the just-bought card to prove that any card in hand is
     // eligible regardless of how it was acquired.
@@ -369,6 +377,51 @@ describe('PassAction — integration closure (2.8.x)', () => {
     expect(player.passed).toBe(true);
     expect(game.activePlayer.id).toBe(other.id);
     expect(game.phase).toBe('AWAIT_MAIN_ACTION');
+  });
+
+  it('6.2.7 excludes Exertian alien cards from the pass hand limit', () => {
+    const { game, player, other } = createIntegrationGame(
+      'pass-6-2-7-exertian-hand-limit',
+    );
+    const ordinaryCardIds = ['39', '128', '136', '73', '98'];
+    const exertianCards = alienCards
+      .filter((card) => card.alien === EAlienType.EXERTIANS)
+      .slice(0, 3);
+    expect(exertianCards).toHaveLength(3);
+    const exertianHandCards = exertianCards.map((card) => ({ ...card }));
+    player.hand = [...ordinaryCardIds, ...exertianHandCards];
+
+    game.processMainAction(player.id, { type: EMainAction.PASS });
+
+    const discardPrompt = player.waitingFor;
+    expect(discardPrompt).toBeDefined();
+    if (!discardPrompt) {
+      throw new Error('expected discard prompt for non-Exertian excess cards');
+    }
+    const model = discardPrompt.toModel() as ISelectCardInputModel;
+    expect(model.type).toBe(EPlayerInputType.CARD);
+    expect(model.minSelections).toBe(1);
+    expect(model.maxSelections).toBe(1);
+    expect(model.cards.map((card) => card.id).sort()).toEqual(
+      [...ordinaryCardIds].sort(),
+    );
+
+    game.processInput(player.id, {
+      type: EPlayerInputType.CARD,
+      cardIds: [ordinaryCardIds[0]],
+    });
+    resolveEndOfRoundPick(game, player.id);
+
+    const ordinaryCardsAfterPass = player.hand.filter(
+      (card) => typeof card === 'string' && ordinaryCardIds.includes(card),
+    );
+    const exertianCardsAfterPass = player.hand.filter(
+      (card) => typeof card !== 'string' && card.alien === EAlienType.EXERTIANS,
+    );
+    expect(ordinaryCardsAfterPass).toHaveLength(4);
+    expect(exertianCardsAfterPass).toHaveLength(3);
+    expect(player.passed).toBe(true);
+    expect(game.activePlayer.id).toBe(other.id);
   });
 
   it('2.8.4 first pass of round 5 still rotates the solar system even without end-of-round cards', () => {

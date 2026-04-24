@@ -326,6 +326,7 @@
       "phases": {
         "SETUP": "Setup",
         "AWAIT_MAIN_ACTION": "Action Phase",
+        "AWAIT_END_TURN": "End Turn Phase",
         "IN_RESOLUTION": "Resolving",
         "BETWEEN_TURNS": "Between Turns",
         "END_OF_ROUND": "End of Round",
@@ -496,6 +497,10 @@
     },
     "planet_card": {
       "orbit_bonus": "Orbit +3VP",
+      "orbit_reward": "Orbit reward",
+      "first_orbit": "First orbit",
+      "land_reward": "Land reward",
+      "first_land_data": "First land data",
       "orbit": "Orbit",
       "landing": "Landing",
       "data_slot": "Data {{index}}",

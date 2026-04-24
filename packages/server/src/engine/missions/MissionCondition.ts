@@ -3,7 +3,6 @@ import {
   type IBaseEffect,
   type ICustomizedEffect,
 } from '@seti/common/types/effect';
-import { EAlienType } from '@seti/common/types/protocol/enums';
 import {
   EMiscIcon,
   EPlanet,
@@ -13,6 +12,7 @@ import {
   ESpecialAction,
   ETech,
 } from '@seti/common/types/element';
+import { EAlienType } from '@seti/common/types/protocol/enums';
 import { getTechDescriptor } from '@seti/common/types/tech';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';

@@ -1,19 +1,29 @@
+import {
+  ANOMALY_TOKEN_REWARD_OPTIONS,
+  getAnomalyColumnRewardsForPlacement,
+} from '@seti/common/constant/alienBoardConfig';
 import { EAlienType, EPlanet, ETrace } from '@seti/common/types/protocol/enums';
 import { createActionEvent } from '../../event/GameEvent.js';
 import type { IGame } from '../../IGame.js';
 import type { PlayerInput } from '../../input/PlayerInput.js';
 import type { IPlayer } from '../../player/IPlayer.js';
-import type { AlienBoard, TSlotReward } from '../AlienBoard.js';
+import type { AlienBoard, ITraceSlot } from '../AlienBoard.js';
+import { executeSimpleSlotRewards } from '../AlienRewards.js';
 import type { IAlienPlugin } from '../IAlienPlugin.js';
 
 const ANOMALY_COLUMN_PREFIX = 'anomaly-column';
 const ANOMALY_TOKEN_PREFIX = 'anomaly-token';
-const ANOMALY_TRIGGER_REWARD: TSlotReward[] = [{ type: 'VP', amount: 2 }];
-const TRACE_COLORS: ETrace[] = [ETrace.RED, ETrace.YELLOW, ETrace.BLUE];
+type TAnomalyTraceColor = ETrace.RED | ETrace.YELLOW | ETrace.BLUE;
+
+const TRACE_COLORS: TAnomalyTraceColor[] = [
+  ETrace.RED,
+  ETrace.YELLOW,
+  ETrace.BLUE,
+];
 
 interface IParsedAnomalyToken {
   sectorIndex: number;
-  color: ETrace;
+  color: TAnomalyTraceColor;
 }
 
 export class AnomaliesAlienPlugin implements IAlienPlugin {
@@ -66,17 +76,29 @@ export class AnomaliesAlienPlugin implements IAlienPlugin {
         color,
       );
       if (board.getSlot(tokenSlotId)) continue;
+      const rewardOptions = ANOMALY_TOKEN_REWARD_OPTIONS[color];
+      const reward = rewardOptions[game.random.nextInt(rewardOptions.length)];
       board.addSlot({
         slotId: tokenSlotId,
         alienIndex: board.alienIndex,
         traceColor: color,
         maxOccupants: 0,
-        rewards: ANOMALY_TRIGGER_REWARD.map((reward) => ({ ...reward })),
+        rewards: reward ? [{ ...reward }] : [],
         isDiscovery: false,
       });
     }
 
     return undefined;
+  }
+
+  public onPlaceTraceOnSlot(
+    game: IGame,
+    player: IPlayer,
+    slot: ITraceSlot,
+  ): void {
+    if (!this.isAnomalyColumnSlot(slot.slotId)) return;
+    const rewards = getAnomalyColumnRewardsForPlacement(slot.occupants.length);
+    executeSimpleSlotRewards(player, game, rewards);
   }
 
   public onSolarSystemRotated(game: IGame): void {
@@ -105,13 +127,7 @@ export class AnomaliesAlienPlugin implements IAlienPlugin {
     );
     if (!player) return;
 
-    for (const reward of triggeredToken.slot.rewards) {
-      if (reward.type === 'VP') {
-        player.score += reward.amount;
-      } else if (reward.type === 'PUBLICITY') {
-        player.resources.gain({ publicity: reward.amount });
-      }
-    }
+    executeSimpleSlotRewards(player, game, triggeredToken.slot.rewards);
 
     game.eventLog.append(
       createActionEvent(player.id, 'ANOMALY_TRIGGERED', {
@@ -173,7 +189,7 @@ export class AnomaliesAlienPlugin implements IAlienPlugin {
     const parts = slotId.split('|');
     if (parts.length !== 3) return null;
     const sectorIndex = Number(parts[1]);
-    const color = parts[2] as ETrace;
+    const color = parts[2] as TAnomalyTraceColor;
     if (!Number.isInteger(sectorIndex)) return null;
     if (!TRACE_COLORS.includes(color)) return null;
     return { sectorIndex, color };
@@ -181,5 +197,9 @@ export class AnomaliesAlienPlugin implements IAlienPlugin {
 
   private isAnomalyTokenSlot(slotId: string): boolean {
     return slotId.includes(ANOMALY_TOKEN_PREFIX);
+  }
+
+  private isAnomalyColumnSlot(slotId: string): boolean {
+    return slotId.includes(ANOMALY_COLUMN_PREFIX);
   }
 }

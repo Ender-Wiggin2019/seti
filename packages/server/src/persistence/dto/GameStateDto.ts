@@ -82,6 +82,7 @@ export interface ITechBoardDto {
     level: TTechLevel;
     tiles: Array<{
       bonus?: ITechBonusToken;
+      bonuses?: ITechBonusToken[];
     }>;
     firstTakeBonusAvailable: boolean;
   }>;
@@ -119,6 +120,10 @@ export interface ITraceSlotDto {
   rewards: Array<
     | { type: 'VP'; amount: number }
     | { type: 'PUBLICITY'; amount: number }
+    | { type: 'CREDIT'; amount: number }
+    | { type: 'ENERGY'; amount: number }
+    | { type: 'DATA'; amount: number }
+    | { type: 'CARD'; amount: number }
     | { type: 'CUSTOM'; effectId: string }
   >;
   isDiscovery: boolean;

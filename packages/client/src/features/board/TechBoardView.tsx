@@ -2,9 +2,15 @@ import {
   TECH_BOARD_DIMENSIONS,
   TECH_STACK_LAYOUT,
 } from '@seti/common/constant/boardLayout';
-import { getTechDescriptor, getTechId } from '@seti/common/types/tech';
+import {
+  ALL_TECH_IDS,
+  type ETechId,
+  getTechDescriptor,
+  getTechId,
+} from '@seti/common/types/tech';
 import { useTranslation } from 'react-i18next';
 import type {
+  IInputResponse,
   IPlayerInputModel,
   IPublicPlayerState,
   IPublicTechBoard,
@@ -12,12 +18,15 @@ import type {
 import { EPlayerInputType } from '@/types/re-exports';
 import { TechStack } from './TechStack';
 
+const ALL_TECH_ID_SET = new Set<string>(ALL_TECH_IDS);
+
 interface ITechBoardViewProps {
   techBoard: IPublicTechBoard;
   players: IPublicPlayerState[];
   pendingInput: IPlayerInputModel | null;
   playerColors: Record<string, string>;
   myPlayerId: string;
+  onSubmit?: (response: IInputResponse) => void;
 }
 
 export function TechBoardView({
@@ -26,6 +35,7 @@ export function TechBoardView({
   pendingInput,
   playerColors,
   myPlayerId,
+  onSubmit,
 }: ITechBoardViewProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const ownerByStackKey = new Map<string, string[]>();
@@ -47,10 +57,45 @@ export function TechBoardView({
     pendingInput?.type === EPlayerInputType.TECH
       ? new Set(pendingInput.options)
       : new Set<string>();
+  const selectableOptionTechIds =
+    pendingInput?.type === EPlayerInputType.OPTION
+      ? new Set(
+          pendingInput.options
+            .map((option) => option.id)
+            .filter((id): id is ETechId => ALL_TECH_ID_SET.has(id)),
+        )
+      : new Set<ETechId>();
 
   const stackByKey = new Map(
     techBoard.stacks.map((stack) => [`${stack.tech}:${stack.level}`, stack]),
   );
+
+  function buildSelectionResponse(
+    techId: ETechId,
+    techType: IPublicTechBoard['stacks'][number]['tech'],
+  ): IInputResponse | null {
+    if (
+      pendingInput?.type === EPlayerInputType.OPTION &&
+      selectableOptionTechIds.has(techId)
+    ) {
+      return {
+        type: EPlayerInputType.OPTION,
+        optionId: techId,
+      };
+    }
+
+    if (
+      pendingInput?.type === EPlayerInputType.TECH &&
+      selectableTechTypes.has(techType)
+    ) {
+      return {
+        type: EPlayerInputType.TECH,
+        tech: techType,
+      };
+    }
+
+    return null;
+  }
 
   return (
     <section className='w-full rounded-lg border border-surface-700/40 bg-surface-900/40 p-3'>
@@ -75,6 +120,12 @@ export function TechBoardView({
           if (!stack) {
             return null;
           }
+          const techId = getTechId(layout.tech, layout.level);
+          const selectionResponse = buildSelectionResponse(techId, stack.tech);
+          const isSelectable =
+            selectionResponse !== null &&
+            stack.remainingTiles > 0 &&
+            !ownedTechIds.has(techId);
 
           return (
             <TechStack
@@ -82,9 +133,11 @@ export function TechBoardView({
               stack={stack}
               ownerPlayerIds={ownerByStackKey.get(stackKey) ?? []}
               playerColors={playerColors}
-              isSelectable={
-                selectableTechTypes.has(stack.tech) &&
-                !ownedTechIds.has(getTechId(layout.tech, layout.level))
+              isSelectable={isSelectable}
+              onSelect={
+                isSelectable && onSubmit
+                  ? () => onSubmit(selectionResponse)
+                  : undefined
               }
             />
           );

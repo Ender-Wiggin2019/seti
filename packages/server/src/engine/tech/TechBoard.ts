@@ -18,12 +18,13 @@ import {
 import { GameError } from '@/shared/errors/GameError.js';
 import type { SeededRandom } from '@/shared/rng/SeededRandom.js';
 import type { ITech } from './ITech.js';
-import { TECH_BONUS_POOLS } from './TechBonusConfig.js';
+import { buildTechTileBonuses, TECH_BONUS_POOLS } from './TechBonusConfig.js';
 import { createTech } from './TechRegistry.js';
 
 export interface ITechTile {
   tech: ITech;
   bonus?: ITechBonusToken;
+  bonuses: ITechBonusToken[];
 }
 
 export interface ITechStack {
@@ -59,10 +60,14 @@ export class TechBoard {
 
         const tiles: ITechTile[] = Array.from(
           { length: TILES_PER_STACK },
-          (_, i) => ({
-            tech: createTech(techId),
-            bonus: shuffledBonuses?.[i],
-          }),
+          (_, i) => {
+            const bonus = shuffledBonuses?.[i];
+            return {
+              tech: createTech(techId),
+              bonus,
+              bonuses: buildTechTileBonuses(techId, bonus),
+            };
+          },
         );
 
         const shuffledTiles = rng.shuffle(tiles);
@@ -169,6 +174,9 @@ export class TechBoard {
             level,
             remainingTiles: stack.tiles.length,
             firstTakeBonusAvailable: stack.firstTakeBonusAvailable,
+            topTileBonuses: stack.tiles[0]
+              ? buildTechTileBonuses(techId, stack.tiles[0].bonus)
+              : [],
           });
         }
       }

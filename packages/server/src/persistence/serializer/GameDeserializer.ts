@@ -30,6 +30,7 @@ import { Resources } from '@/engine/player/Resources.js';
 import { GoldScoringTile } from '@/engine/scoring/GoldScoringTile.js';
 import { MilestoneState } from '@/engine/scoring/Milestone.js';
 import { type ITechStack, TechBoard } from '@/engine/tech/TechBoard.js';
+import { buildTechTileBonuses } from '@/engine/tech/TechBonusConfig.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
 import type { IGameStateDto } from '../dto/GameStateDto.js';
 
@@ -177,6 +178,9 @@ function deserializeTechBoard(dto: IGameStateDto): TechBoard | null {
       tiles: stackDto.tiles.map((tileDto, index) => ({
         tech: sourceStack.tiles[index % sourceStack.tiles.length].tech,
         bonus: tileDto.bonus,
+        bonuses:
+          tileDto.bonuses ??
+          buildTechTileBonuses(stackDto.techId, tileDto.bonus),
       })),
     };
 

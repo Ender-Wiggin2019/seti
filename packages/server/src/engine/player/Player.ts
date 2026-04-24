@@ -339,11 +339,11 @@ export class Player implements IPlayer {
       isMoon: result.isMoon,
     });
 
-    if (result.lifeTraceGained > 0) {
-      for (let i = 0; i < result.lifeTraceGained; i++) {
+    for (const traceReward of result.traceRewards) {
+      for (let i = 0; i < traceReward.amount; i++) {
         game.deferredActions.push(
           new SimpleDeferredAction(this, (g) =>
-            g.alienState.createTraceInput(this, g, ETrace.ANY),
+            g.alienState.createTraceInput(this, g, traceReward.trace),
           ),
         );
       }

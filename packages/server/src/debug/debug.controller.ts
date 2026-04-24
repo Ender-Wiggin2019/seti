@@ -1,5 +1,10 @@
 import { Body, Controller, Get, Inject, Param, Post } from '@nestjs/common';
 import type {
+  IFreeActionRequest,
+  IInputResponse,
+  IMainActionRequest,
+} from '@seti/common/types/protocol/actions';
+import type {
   IDebugReplayPresetDefinition,
   IDebugReplaySessionRequest,
   IDebugReplaySessionResponse,
@@ -7,11 +12,6 @@ import type {
   IDebugSnapshotSessionRequest,
   IDebugSnapshotSessionResponse,
 } from '@seti/common/types/protocol/debug';
-import type {
-  IFreeActionRequest,
-  IInputResponse,
-  IMainActionRequest,
-} from '@seti/common/types/protocol/actions';
 import type { IPublicGameState } from '@seti/common/types/protocol/gameState';
 import type { IPlayerInputModel } from '@seti/common/types/protocol/playerInput';
 import { Public } from '@/auth/public.decorator.js';

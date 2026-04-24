@@ -1,3 +1,4 @@
+import type { ETrace } from '@seti/common/types/element';
 import { EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
@@ -22,6 +23,7 @@ export interface ILandResult {
   vpGained: number;
   firstLandDataGained: number;
   lifeTraceGained: number;
+  traceRewards: Array<{ trace: ETrace; amount: number }>;
 }
 
 /** @deprecated Use ILandOptions instead */
@@ -156,6 +158,7 @@ export class LandProbeEffect {
       vpGained: landingResult.centerReward.vpGained,
       firstLandDataGained: landingResult.firstLandDataGained,
       lifeTraceGained: landingResult.centerReward.lifeTraceGained,
+      traceRewards: landingResult.centerReward.traceRewards,
     };
   }
 }

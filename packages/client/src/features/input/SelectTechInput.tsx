@@ -1,9 +1,9 @@
-import { useTranslation } from 'react-i18next';
 import { ETech } from '@seti/common/types/element';
 import {
-  TECH_IDS_BY_CATEGORY_TEXT_ORDER,
   getTechPresentation,
+  TECH_IDS_BY_CATEGORY_TEXT_ORDER,
 } from '@seti/common/types/techPresentation';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import type { IInputResponse, ISelectTechInputModel } from '@/types/re-exports';
 import { EPlayerInputType } from '@/types/re-exports';
@@ -29,7 +29,11 @@ export function SelectTechInput({
   });
 
   function categoryText(tech: ETech): string {
-    if (tech === ETech.PROBE || tech === ETech.SCAN || tech === ETech.COMPUTER) {
+    if (
+      tech === ETech.PROBE ||
+      tech === ETech.SCAN ||
+      tech === ETech.COMPUTER
+    ) {
       const labels = TECH_IDS_BY_CATEGORY_TEXT_ORDER[tech].map((id) => {
         const meta = getTechPresentation(id);
         return t(meta.i18nKey, { defaultValue: meta.fallback });

@@ -13,15 +13,17 @@
 
 import { EResource, ETrace } from '@seti/common/types/element';
 import { EAlienType, EPlanet } from '@seti/common/types/protocol/enums';
+import type { TSlotReward } from '../alien/AlienBoard.js';
+import { AlienRegistry } from '../alien/AlienRegistry.js';
+import { executeSimpleSlotRewards } from '../alien/AlienRewards.js';
 import {
   countPlayerSignalsInAnomalySectors,
   getAnomalyTokenAtSector,
   getEarthSectorIndex,
   getNextTriggeredAnomalyToken,
 } from '../alien/plugins/AnomaliesResolver.js';
-import { AlienRegistry } from '../alien/AlienRegistry.js';
-import { OumuamuaAlienPlugin } from '../alien/plugins/OumuamuaAlienPlugin.js';
 import { disableMovementPublicityForCurrentTurn } from '../alien/plugins/AnomaliesTurnEffects.js';
+import { OumuamuaAlienPlugin } from '../alien/plugins/OumuamuaAlienPlugin.js';
 import {
   extractSectorColorFromCardItem,
   MarkSectorSignalEffect,
@@ -103,18 +105,14 @@ function gainAnomalyRewards(
       ReturnType<typeof getBehaviorExecutor>['registerCustomHandler']
     >[1]
   >[0],
-  rewards: Array<{ type: 'VP' | 'PUBLICITY' | 'CUSTOM'; amount?: number }>,
+  game: Parameters<
+    Parameters<
+      ReturnType<typeof getBehaviorExecutor>['registerCustomHandler']
+    >[1]
+  >[1],
+  rewards: TSlotReward[],
 ): void {
-  for (const reward of rewards) {
-    if (reward.type === 'VP' && typeof reward.amount === 'number') {
-      player.score += reward.amount;
-    } else if (
-      reward.type === 'PUBLICITY' &&
-      typeof reward.amount === 'number'
-    ) {
-      player.resources.gain({ publicity: reward.amount });
-    }
-  }
+  executeSimpleSlotRewards(player, game, rewards);
 }
 
 export function registerDescHandlers(): void {
@@ -328,7 +326,7 @@ export function registerDescHandlers(): void {
   executor.registerCustomHandler('desc.et-17', (player, game) => {
     const token = getNextTriggeredAnomalyToken(game);
     if (!token) return undefined;
-    gainAnomalyRewards(player, token.rewards);
+    gainAnomalyRewards(player, game, token.rewards);
     return undefined;
   });
 

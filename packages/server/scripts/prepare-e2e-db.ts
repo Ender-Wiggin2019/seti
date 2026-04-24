@@ -1,12 +1,14 @@
-import { ensureDatabaseExists, getTargetDatabaseName } from './lib/dbAdmin.ts';
-import { runMigrations } from './lib/migrateDatabase.ts';
+import { ensureDatabaseExists, getTargetDatabaseName } from './lib/dbAdmin';
+import { runMigrations } from './lib/migrateDatabase';
+import { resetTargetE2eDatabase } from './lib/resetE2eDatabase';
 
 async function main(): Promise<void> {
   const targetDatabase = getTargetDatabaseName();
   await ensureDatabaseExists(targetDatabase);
   await runMigrations();
+  await resetTargetE2eDatabase();
   // biome-ignore lint/suspicious/noConsole: E2E bootstrap should emit readiness for troubleshooting.
-  console.log(`[db:prepare:e2e] Ready: ${targetDatabase}`);
+  console.log(`[db:prepare:e2e] Ready and reset: ${targetDatabase}`);
 }
 
 void main().catch((error: unknown) => {

@@ -20,6 +20,7 @@ import type { IGame } from '@/engine/IGame.js';
 import { toPublicSolarSystemState } from '@/engine/utils/stateProjection.js';
 import { GameError } from '@/shared/errors/GameError.js';
 import {
+  resolveAllInputsDefault,
   resolveSetupTucks,
   setSolarSystemInitialDiscAngles,
 } from '../../helpers/TestGameBuilder.js';
@@ -336,6 +337,7 @@ describe('LaunchProbeAction — integration', () => {
         game.planetaryBoard?.planets.get(EPlanet.VENUS)?.orbitSlots,
       ).toEqual([{ playerId: player.id }]);
 
+      resolveAllInputsDefault(game, player);
       game.processEndTurn(player.id);
       advanceUntilPlayersMainTurn(game, player.id);
 

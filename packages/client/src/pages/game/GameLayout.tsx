@@ -1,6 +1,7 @@
 import { createDefaultSetupConfig } from '@seti/common/constant/sectorSetup';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EResource } from '@seti/common/types/element';
+import { ALL_TECH_IDS } from '@seti/common/types/tech';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EventSidebarDrawer } from '@/components/layout/EventSidebarDrawer';
@@ -35,6 +36,7 @@ import { GameOverDialog } from '@/pages/game/GameOverDialog';
 import { type TBoardTab, useGameViewStore } from '@/stores/gameViewStore';
 import type {
   IMainActionRequest,
+  IPlayerInputModel,
   IPublicGoldScoringTile,
   IPublicMilestoneState,
   IPublicPlayerState,
@@ -49,6 +51,7 @@ import {
 } from '@/types/re-exports';
 
 const CARD_CUSTOM_EFFECT_UNHANDLED = 'CARD_CUSTOM_EFFECT_UNHANDLED';
+const ALL_TECH_ID_SET = new Set<string>(ALL_TECH_IDS);
 
 function actionEventName(event: TGameEvent): string | null {
   if (event.type !== EGameEventType.ACTION) return null;
@@ -68,6 +71,13 @@ const BOARD_TABS: TBoardTab[] = [
   'aliens',
   'scoring',
 ];
+
+function isTechBoardInput(model: IPlayerInputModel | null): boolean {
+  if (!model) return false;
+  if (model.type === EPlayerInputType.TECH) return true;
+  if (model.type !== EPlayerInputType.OPTION) return false;
+  return model.options.some((option) => ALL_TECH_ID_SET.has(option.id));
+}
 
 /**
  * GameLayout — the top-level in-game shell.
@@ -500,6 +510,13 @@ function TopActionBar({
   const canUndo = gameState?.canUndo ?? false;
   const showInputRenderer =
     pendingInput !== null && pendingInput.type !== EPlayerInputType.OR;
+  const showTechBoardInput =
+    gameState != null && isTechBoardInput(pendingInput);
+  const playerColors =
+    gameState?.players.reduce<Record<string, string>>((acc, player) => {
+      acc[player.playerId] = player.color;
+      return acc;
+    }, {}) ?? {};
 
   const handleMainAction = (action: IMainActionRequest) => {
     if (action.type !== EMainAction.PLAY_CARD) {
@@ -553,7 +570,18 @@ function TopActionBar({
                 className='h-1.5 w-1.5 rounded-full bg-accent-500 shadow-[0_0_6px_oklch(0.68_0.11_240/0.8)] motion-safe:animate-pulse'
               />
             </div>
-            <InputRenderer model={pendingInput} onSubmit={sendInput} />
+            {showTechBoardInput && gameState ? (
+              <TechBoardView
+                techBoard={gameState.techBoard}
+                players={gameState.players}
+                pendingInput={pendingInput}
+                playerColors={playerColors}
+                myPlayerId={myPlayerId}
+                onSubmit={sendInput}
+              />
+            ) : (
+              <InputRenderer model={pendingInput} onSubmit={sendInput} />
+            )}
           </div>
         </div>
       ) : (
@@ -861,6 +889,7 @@ function BoardTabs({
               pendingInput={pendingInput}
               playerColors={playerColors}
               myPlayerId={myPlayerId}
+              onSubmit={sendInput}
             />
           )}
         </TabsContent>

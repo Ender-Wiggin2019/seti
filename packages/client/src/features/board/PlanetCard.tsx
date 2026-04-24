@@ -1,10 +1,15 @@
-import { PLANET_MISSION_CONFIG } from '@seti/common/constant/boardLayout';
+import type {
+  IPlanetMissionConfig,
+  TPlanetReward,
+} from '@seti/common/constant/boardLayout';
+import { EResource, ETrace } from '@seti/common/types/element';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 import type { IPublicPlanetState } from '@/types/re-exports';
 
 interface IPlanetCardProps {
-  planet: keyof typeof PLANET_MISSION_CONFIG;
+  planet: string;
+  config: IPlanetMissionConfig;
   state: IPublicPlanetState;
   playerColors: Record<string, string>;
   isSelectable: boolean;
@@ -27,14 +32,74 @@ function TokenDot({
   );
 }
 
+function traceLabel(trace: ETrace): string {
+  switch (trace) {
+    case ETrace.RED:
+      return 'red';
+    case ETrace.YELLOW:
+      return 'yellow';
+    case ETrace.BLUE:
+      return 'blue';
+    case ETrace.ANY:
+      return 'any';
+    default:
+      return String(trace);
+  }
+}
+
+export function formatPlanetReward(reward: TPlanetReward): string {
+  switch (reward.type) {
+    case 'resource':
+      if (reward.resource === EResource.SCORE) {
+        return `${reward.amount} VP`;
+      }
+      if (reward.resource === EResource.DATA) {
+        return `${reward.amount} data`;
+      }
+      return `${reward.amount} ${reward.resource}`;
+    case 'trace':
+      return `${reward.amount} ${traceLabel(reward.trace)} trace`;
+    case 'signal':
+      return `${reward.amount} signal @ planet sector`;
+    case 'card':
+      return `${reward.amount} ${reward.source} card`;
+    case 'tuck':
+      return `${reward.amount} tuck`;
+    default: {
+      const exhaustive: never = reward;
+      return exhaustive;
+    }
+  }
+}
+
+export function formatPlanetRewardList(
+  rewards: readonly TPlanetReward[],
+): string {
+  return rewards.map(formatPlanetReward).join(' + ');
+}
+
+export function formatFirstOrbitRewardList(
+  rewards: readonly TPlanetReward[],
+): string {
+  return rewards
+    .map((reward) => `first ${formatPlanetReward(reward)}`)
+    .join(' + ');
+}
+
+export function formatFirstLandData(firstData: readonly number[]): string {
+  return firstData.join(' / ');
+}
+
 export function PlanetCard({
   planet,
+  config,
   state,
   playerColors,
   isSelectable,
 }: IPlanetCardProps): React.JSX.Element {
   const { t } = useTranslation('common');
-  const missionConfig = PLANET_MISSION_CONFIG[planet];
+  const missionConfig = config;
+  const firstLandData = formatFirstLandData(missionConfig.land.firstData);
 
   return (
     <article
@@ -61,6 +126,41 @@ export function PlanetCard({
           </span>
         </div>
       </header>
+
+      <div className='mb-2 grid gap-1.5 rounded border border-surface-700/50 bg-surface-950/40 p-2 font-mono text-[10px] leading-snug text-text-300'>
+        <p>
+          <span className='uppercase tracking-[0.12em] text-text-500'>
+            {t('client.planet_card.orbit_reward')}:{' '}
+          </span>
+          <span className='text-text-100'>
+            {formatPlanetRewardList(missionConfig.orbit.rewards)}
+          </span>
+        </p>
+        <p>
+          <span className='uppercase tracking-[0.12em] text-text-500'>
+            {t('client.planet_card.first_orbit')}:{' '}
+          </span>
+          <span className='text-text-100'>
+            {formatPlanetRewardList(missionConfig.orbit.firstRewards)}
+          </span>
+        </p>
+        <p>
+          <span className='uppercase tracking-[0.12em] text-text-500'>
+            {t('client.planet_card.land_reward')}:{' '}
+          </span>
+          <span className='text-text-100'>
+            {formatPlanetRewardList(missionConfig.land.rewards)}
+          </span>
+        </p>
+        {firstLandData.length > 0 && (
+          <p>
+            <span className='uppercase tracking-[0.12em] text-text-500'>
+              {t('client.planet_card.first_land_data')}:{' '}
+            </span>
+            <span className='text-text-100'>{firstLandData}</span>
+          </p>
+        )}
+      </div>
 
       <div className='grid grid-cols-2 gap-2'>
         <section className='rounded border border-surface-700/50 bg-surface-800/40 p-2'>
