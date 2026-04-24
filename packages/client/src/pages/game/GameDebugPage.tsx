@@ -35,6 +35,7 @@ import {
   type IGameContext,
 } from '@/pages/game/GameContext';
 import { GameLayout } from '@/pages/game/GameLayout';
+import { useDebugStore } from '@/stores/debugStore';
 import {
   EFreeAction,
   EGameEventType,
@@ -900,6 +901,8 @@ function createDebugGameState(
 }
 
 export function GameDebugPage(): React.JSX.Element {
+  const textMode = useDebugStore((state) => state.textMode);
+  const setTextMode = useDebugStore((state) => state.setTextMode);
   const [scenario, setScenario] = useState<TDebugScenario>('my-turn');
   const [sourceMode, setSourceMode] = useState<TDebugSourceMode>('server');
   const [discAngles, setDiscAngles] = useState<TDiscAngles>([7, 3, 4]);
@@ -1544,6 +1547,19 @@ export function GameDebugPage(): React.JSX.Element {
     <GameContextValueProvider value={contextValue}>
       <div className='fixed right-3 top-3 z-50 flex max-w-[calc(100vw-1.5rem)] flex-wrap items-center justify-end gap-2 rounded border border-surface-700/70 bg-surface-900/90 p-2 text-xs backdrop-blur'>
         <span className='font-mono text-text-500'>Debug</span>
+        <button
+          type='button'
+          aria-pressed={textMode}
+          onClick={() => setTextMode(!textMode)}
+          className={[
+            'rounded border px-2 py-1 font-mono text-[10px] uppercase transition-colors',
+            textMode
+              ? 'border-accent-500/60 bg-accent-500/20 text-accent-100'
+              : 'border-surface-700/60 bg-surface-800/60 text-text-300 hover:bg-surface-700/70',
+          ].join(' ')}
+        >
+          Text Mode {textMode ? 'On' : 'Off'}
+        </button>
         <Select
           value={sourceMode}
           onValueChange={(value) => setSourceMode(value as TDebugSourceMode)}
@@ -1955,10 +1971,7 @@ export function GameDebugPage(): React.JSX.Element {
         </div>
       </div>
       <div style={sectorDebugVars}>
-        <GameLayout
-          probeInsetPxByRing={probeInsetPxByRing}
-          allowMoveAnyProbe
-        />
+        <GameLayout probeInsetPxByRing={probeInsetPxByRing} allowMoveAnyProbe />
       </div>
     </GameContextValueProvider>
   );

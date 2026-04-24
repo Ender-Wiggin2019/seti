@@ -1,5 +1,5 @@
-import { cn } from '@/lib/cn';
 import { useEffect, useRef, useState } from 'react';
+import { cn } from '@/lib/cn';
 
 interface IWheelLayerProps {
   ring: 1 | 2 | 3 | 4;
@@ -41,6 +41,31 @@ const SLOT_LABEL_RADIUS_PERCENT: Record<IWheelLayerProps['ring'], number> = {
 };
 
 const ROTATION_STEPS_PER_RING = 8;
+
+export function getWheelSlotLabelLocalPositionPercent(
+  ring: IWheelLayerProps['ring'],
+  index: number,
+): { xPercent: number; yPercent: number } {
+  const theta = (Math.PI / 4) * (0.5 + index);
+  const radiusPercent = SLOT_LABEL_RADIUS_PERCENT[ring];
+  return {
+    xPercent: 50 + Math.sin(theta) * radiusPercent,
+    yPercent: 50 - Math.cos(theta) * radiusPercent,
+  };
+}
+
+export function getWheelSlotLabelBoardPositionPercent(
+  ring: IWheelLayerProps['ring'],
+  index: number,
+): { xPercent: number; yPercent: number } {
+  const local = getWheelSlotLabelLocalPositionPercent(ring, index);
+  const ringSizePercent = RING_SIZE_PERCENT[ring];
+  return {
+    xPercent: 50 + (local.xPercent - 50) * (ringSizePercent / 100),
+    yPercent: 50 + (local.yPercent - 50) * (ringSizePercent / 100),
+  };
+}
+
 function normalizeStepDelta(delta: number): number {
   const normalized =
     ((delta % ROTATION_STEPS_PER_RING) + ROTATION_STEPS_PER_RING) %
@@ -104,10 +129,10 @@ export function WheelLayer({
       )}
 
       {slotLabels?.map((label, index) => {
-        const theta = (Math.PI / 4) * (0.5 + index);
-        const radiusPercent = SLOT_LABEL_RADIUS_PERCENT[ring];
-        const xPercent = 50 + Math.sin(theta) * radiusPercent;
-        const yPercent = 50 - Math.cos(theta) * radiusPercent;
+        const { xPercent, yPercent } = getWheelSlotLabelLocalPositionPercent(
+          ring,
+          index,
+        );
 
         return (
           <span
@@ -126,10 +151,10 @@ export function WheelLayer({
 
       {textModeLabels?.map((label, index) => {
         if (label === null) return null;
-        const theta = (Math.PI / 4) * (0.5 + index);
-        const radiusPercent = SLOT_LABEL_RADIUS_PERCENT[ring];
-        const xPercent = 50 + Math.sin(theta) * radiusPercent;
-        const yPercent = 50 - Math.cos(theta) * radiusPercent;
+        const { xPercent, yPercent } = getWheelSlotLabelLocalPositionPercent(
+          ring,
+          index,
+        );
 
         return (
           <span

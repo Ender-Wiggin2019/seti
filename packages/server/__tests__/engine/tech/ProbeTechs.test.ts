@@ -21,6 +21,7 @@ import {
 import { GameError } from '@/shared/errors/GameError.js';
 import {
   resolveSetupTucks,
+  setSolarSystemInitialDiscAngles,
   skipSetupTucks,
 } from '../../helpers/TestGameBuilder.js';
 
@@ -78,17 +79,43 @@ function resolvePassEndOfRoundPick(game: Game, playerId: string): void {
   }
 }
 
-/** Same patch as GameFlowBehavior: ring-1-cell-2 becomes an asteroid cell. */
+/** Shape ring 1 so rotating once puts Earth next to an asteroid and Venus. */
 function patchSolarSystemForMeteoriteScenario(game: Game): void {
+  setSolarSystemInitialDiscAngles(game, [0, 0, 0]);
   const ss = game.solarSystem;
   if (!ss) {
     throw new Error('Expected solar system');
   }
-  const cell2 = ss.spaces.find((s) => s.id === 'ring-1-cell-2');
-  if (!cell2) {
-    throw new Error('ring-1-cell-2 not found');
-  }
-  cell2.elements = [{ type: ESolarSystemElementType.ASTEROID, amount: 1 }];
+
+  const setSpace = (
+    id: string,
+    elements: Array<{ type: ESolarSystemElementType; amount: number }>,
+    hasPublicityIcon = false,
+  ) => {
+    const space = ss.spaces.find((s) => s.id === id);
+    if (!space) {
+      throw new Error(`${id} not found`);
+    }
+    space.elements = elements;
+    space.hasPublicityIcon = hasPublicityIcon;
+  };
+
+  setSpace('ring-1-cell-1', [
+    { type: ESolarSystemElementType.EMPTY, amount: 1 },
+  ]);
+  setSpace('ring-1-cell-2', [
+    { type: ESolarSystemElementType.ASTEROID, amount: 1 },
+  ]);
+  setSpace('ring-1-cell-3', [
+    { type: ESolarSystemElementType.EMPTY, amount: 1 },
+  ]);
+  setSpace('ring-1-cell-5', [
+    { type: ESolarSystemElementType.EMPTY, amount: 1 },
+  ]);
+  ss.setDynamicPlanetAtSpace(EPlanet.EARTH, 'ring-1-cell-3');
+  ss.setDynamicPlanetAtSpace(EPlanet.VENUS, 'ring-1-cell-1', {
+    grantVisitPublicity: true,
+  });
 }
 
 function placeProbeOnPlanet(

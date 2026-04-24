@@ -1,11 +1,14 @@
-import { EMainAction } from '@seti/common/types/protocol/enums';
+import { EMainAction, EPlanet } from '@seti/common/types/protocol/enums';
 import {
   EPlayerInputType,
   type ISelectEndOfRoundCardInputModel,
   type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
 import { BoardBuilder } from '@/engine/board/BoardBuilder.js';
-import { ESolarSystemElementType } from '@/engine/board/SolarSystem.js';
+import {
+  ESolarSystemElementType,
+  SolarSystem,
+} from '@/engine/board/SolarSystem.js';
 import { Deck } from '@/engine/deck/Deck.js';
 import { Game } from '@/engine/Game.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
@@ -105,6 +108,44 @@ describe('SolarSystem', () => {
     );
   });
 
+  it('applies initial disc angles to element positions', () => {
+    const result = SolarSystem.init(new SeededRandom('initial-angle'), {
+      initialDiscAngles: [1, 0, 0],
+    });
+
+    expect(result.solarSystem.discs[0].currentRotation).toBe(1);
+    expect(result.solarSystem.getPlanetLocation(EPlanet.EARTH)?.space.id).toBe(
+      'ring-1-cell-4',
+    );
+  });
+
+  it('applies expanded ring initial angles by visual sector steps', () => {
+    const result = SolarSystem.init(new SeededRandom('initial-angle-ring-2'), {
+      initialDiscAngles: [0, 2, 0],
+    });
+
+    expect(result.solarSystem.discs[1].currentRotation).toBe(2);
+    expect(result.solarSystem.getPlanetLocation(EPlanet.MARS)?.space.id).toBe(
+      'ring-2-cell-0',
+    );
+  });
+
+  it('moves expanded ring probes by one visual sector when their disc rotates', () => {
+    const board = SolarSystem.init(new SeededRandom('expanded-rotation'), {
+      initialDiscAngles: [0, 0, 0],
+    }).solarSystem;
+    const probe = board.placeProbe('p1', 'ring-2-cell-4');
+
+    board.rotate(1);
+
+    expect(
+      board.getProbesAt('ring-2-cell-4').some((item) => item.id === probe.id),
+    ).toBe(false);
+    expect(
+      board.getProbesAt('ring-2-cell-2').some((item) => item.id === probe.id),
+    ).toBe(true);
+  });
+
   it('rotates in sequence top -> middle -> bottom -> top', () => {
     const board = BoardBuilder.buildSolarSystemFromRandom(
       new SeededRandom('rotation-seq'),
@@ -116,9 +157,9 @@ describe('SolarSystem', () => {
   });
 
   it('pushes lower-ring probes when upper NULL closes after rotation', () => {
-    const board = BoardBuilder.buildSolarSystemFromRandom(
-      new SeededRandom('push'),
-    );
+    const board = SolarSystem.init(new SeededRandom('push'), {
+      initialDiscAngles: [0, 0, 0],
+    }).solarSystem;
     const ring1cell0 = board.spaces.find(
       (space) => space.id === 'ring-1-cell-0',
     );
@@ -474,10 +515,10 @@ describe('SolarSystem', () => {
           .solarSystem!.getProbesAt('ring-1-cell-6')
           .some((p) => p.id === probe1.id),
       ).toBe(true);
-      // Ring 2 moved for first time (from cell-0 to cell-15)
+      // Ring 2 moved for first time by one visual sector (from cell-0 to cell-14)
       expect(
         game
-          .solarSystem!.getProbesAt('ring-2-cell-15')
+          .solarSystem!.getProbesAt('ring-2-cell-14')
           .some((p) => p.id === probe2.id),
       ).toBe(true);
 

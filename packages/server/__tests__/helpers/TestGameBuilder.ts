@@ -8,7 +8,7 @@ import {
   type ISelectOptionInputModel,
   type ISelectTraceInputModel,
 } from '@seti/common/types/protocol/playerInput';
-import type { SolarSystem } from '@/engine/board/SolarSystem.js';
+import { SolarSystem } from '@/engine/board/SolarSystem.js';
 import { Game } from '@/engine/Game.js';
 import type { IGameOptions } from '@/engine/GameOptions.js';
 import type { IGamePlayerIdentity } from '@/engine/IGame.js';
@@ -46,6 +46,7 @@ export interface ITestGameConfig {
   seed?: string;
   options?: Partial<IGameOptions>;
   players?: ReadonlyArray<IGamePlayerIdentity>;
+  initialDiscAngles?: [number, number, number];
   /**
    * Whether to auto-drain the setup-tuck prompts every player receives
    * from the corporation's `startActions.tuckIncome`. Defaults to
@@ -83,10 +84,30 @@ export function buildTestGame(config: ITestGameConfig = {}): Game {
     ...(config.options ?? {}),
   };
   const game = Game.create(players, options, seed, seed);
+  if (config.initialDiscAngles) {
+    setSolarSystemInitialDiscAngles(game, config.initialDiscAngles);
+  }
   if (config.autoResolveSetupTucks !== false) {
     resolveSetupTucks(game);
   }
   return game;
+}
+
+export function setSolarSystemInitialDiscAngles(
+  game: Game,
+  initialDiscAngles: [number, number, number],
+): void {
+  if (!game.solarSystemSetup) {
+    throw new Error('Test setup error: game.solarSystemSetup is null');
+  }
+
+  const boardResult = SolarSystem.init(game.random, {
+    tilePlacements: game.solarSystemSetup.tilePlacements,
+    initialDiscAngles,
+  });
+  game.solarSystem = boardResult.solarSystem;
+  game.solarSystemSetup = boardResult.setupConfig;
+  game.sectors = boardResult.sectors;
 }
 
 /** Look up a player by id, throwing a clear error on miss. */

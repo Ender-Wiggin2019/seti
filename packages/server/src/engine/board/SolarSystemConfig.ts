@@ -1,65 +1,15 @@
-import { EPlanet } from '@seti/common/types/protocol/enums';
 import { SOLAR_SYSTEM_PLANETS } from '@seti/common/constant/boardLayout';
+import {
+  createDefaultSolarSystemExpandedMapCells,
+  type ISolarSystemWheelMapCell,
+} from '@seti/common/constant/sectorSetup';
+import { EPlanet } from '@seti/common/types/protocol/enums';
 import {
   ESolarSystemElementType,
   type ISolarSystemElement,
 } from './SolarSystemTypes.js';
 
-const SECTOR_COUNT = 8;
-const RING_CELL_COUNTS = [8, 16, 24, 32] as const;
 const RING_DISC_INDEXES: ReadonlyArray<number | null> = [0, 1, 2, null];
-
-const WHEEL_LEVEL_1 = [
-  ['⚫'],
-  ['VENUS'],
-  ['O'],
-  ['EARTH'],
-  ['⚫'],
-  ['O'],
-  ['O'],
-  ['MERCURY'],
-] as const;
-const WHEEL_LEVEL_2 = [
-  ['⚫', 'O'],
-  ['🪨', '⚫'],
-  ['⚫', '🪨'],
-  ['O', 'O'],
-  ['O', 'O'],
-  ['O', 'O'],
-  ['⚫', 'MARS'],
-  ['🪨', 'O'],
-] as const;
-const WHEEL_LEVEL_3 = [
-  ['🪨', 'O', 'O'],
-  ['🪨', '🪨', 'SATURN'],
-  ['⚫', '⭐', 'O'],
-  ['⭐', 'O', 'O'],
-  ['🪨', '⚫', '⚫'],
-  ['O', 'O', 'JUPITER'],
-  ['O', '🪨', '⚫'],
-  ['⚫', '⚫', 'O'],
-] as const;
-const WHEEL_LEVEL_4 = [
-  ['⭐', '⭐', '🪨', '⚫'],
-  ['⚫', '🪨', '⭐', '⚫'],
-  ['🪨', '⚫', '🪨', 'NEPTUNE'],
-  ['🪨', '⭐', '🪨', '⚫'],
-  ['⚫', '⚫', '⚫', '⭐'],
-  ['⭐', '🪨', '⚫', '⚫'],
-  ['⭐', '⚫', '🪨', '⭐'],
-  ['🪨', '⚫', '⚫', 'URANUS'],
-] as const;
-
-const PLANET_TOKEN_MAP: Readonly<Record<string, EPlanet>> = {
-  EARTH: EPlanet.EARTH,
-  MERCURY: EPlanet.MERCURY,
-  VENUS: EPlanet.VENUS,
-  MARS: EPlanet.MARS,
-  JUPITER: EPlanet.JUPITER,
-  SATURN: EPlanet.SATURN,
-  URANUS: EPlanet.URANUS,
-  NEPTUNE: EPlanet.NEPTUNE,
-};
 
 export const SOLAR_SYSTEM_NEAR_STAR_POOL = [
   '61Virginis',
@@ -108,56 +58,32 @@ function buildRealConfig(): IBuildResult {
   const publicitySpaceIds: string[] = [];
   const planetSpaceIdsMutable: Partial<Record<EPlanet, string>> = {};
 
-  for (
-    let ringOffset = 0;
-    ringOffset < RING_CELL_COUNTS.length;
-    ringOffset += 1
-  ) {
-    const ringIndex = ringOffset + 1;
-    const ringCellCount = RING_CELL_COUNTS[ringOffset];
-    const cellsPerSector = ringCellCount / SECTOR_COUNT;
-    for (let sectorIndex = 0; sectorIndex < SECTOR_COUNT; sectorIndex += 1) {
-      const symbol = resolveLayerSymbol(ringIndex, sectorIndex);
-      for (
-        let sectorCellOffset = 0;
-        sectorCellOffset < cellsPerSector;
-        sectorCellOffset += 1
-      ) {
-        const indexInRing = sectorIndex * cellsPerSector + sectorCellOffset;
-        const id = `ring-${ringIndex}-cell-${indexInRing}`;
-        const isAnchorCell = sectorCellOffset === 0;
+  for (const expandedCell of createDefaultSolarSystemExpandedMapCells()) {
+    const mapCell = expandedCell.cell;
+    const elements = [toElement(mapCell)];
+    const hasPublicityIcon =
+      mapCell.hasPublicityIcon && mapCell.type !== 'EARTH';
 
-        let elements: ISolarSystemElement[] = [
-          { type: ESolarSystemElementType.EMPTY, amount: 1 },
-        ];
-        if (symbol === 'O') {
-          elements = [{ type: ESolarSystemElementType.NULL, amount: 1 }];
-          cutoutSpaceIds.push(id);
-        } else if (isAnchorCell) {
-          elements = [toElement(symbol)];
-        }
-
-        const hasPublicityIcon =
-          isAnchorCell && isPublicitySymbol(symbol) && symbol !== 'EARTH';
-        if (hasPublicityIcon) {
-          publicitySpaceIds.push(id);
-        }
-
-        const planet = PLANET_TOKEN_MAP[symbol];
-        if (isAnchorCell && planet !== undefined) {
-          planetSpaceIdsMutable[planet] = id;
-        }
-
-        cells.push({
-          id,
-          ringIndex,
-          indexInRing,
-          discIndex: RING_DISC_INDEXES[ringOffset],
-          elements,
-          hasPublicityIcon,
-        });
-      }
+    if (mapCell.type === 'NULL') {
+      cutoutSpaceIds.push(expandedCell.id);
     }
+
+    if (hasPublicityIcon) {
+      publicitySpaceIds.push(expandedCell.id);
+    }
+
+    if (mapCell.planet !== undefined) {
+      planetSpaceIdsMutable[mapCell.planet] = expandedCell.id;
+    }
+
+    cells.push({
+      id: expandedCell.id,
+      ringIndex: expandedCell.ringIndex,
+      indexInRing: expandedCell.indexInRing,
+      discIndex: RING_DISC_INDEXES[expandedCell.ringIndex - 1],
+      elements,
+      hasPublicityIcon,
+    });
   }
 
   const missingPlanets = SOLAR_SYSTEM_PLANETS.filter(
@@ -171,52 +97,43 @@ function buildRealConfig(): IBuildResult {
 
   return {
     cells,
-    planetSpaceIds:
-      planetSpaceIdsMutable as Readonly<Partial<Record<EPlanet, string>>>,
+    planetSpaceIds: planetSpaceIdsMutable as Readonly<
+      Partial<Record<EPlanet, string>>
+    >,
     cutoutSpaceIds,
     publicitySpaceIds,
   };
 }
 
-function resolveLayerSymbol(ringIndex: number, sectorIndex: number): string {
-  if (ringIndex === 1) {
-    return WHEEL_LEVEL_1[sectorIndex][0] ?? 'O';
-  }
-  if (ringIndex === 2) {
-    return WHEEL_LEVEL_2[sectorIndex][1] ?? 'O';
-  }
-  if (ringIndex === 3) {
-    return WHEEL_LEVEL_3[sectorIndex][2] ?? 'O';
-  }
-  if (ringIndex === 4) {
-    return WHEEL_LEVEL_4[sectorIndex][3] ?? 'O';
-  }
-
-  return 'O';
-}
-
-function toElement(symbol: string): ISolarSystemElement {
-  if (symbol === '⚫') {
+function toElement(cell: ISolarSystemWheelMapCell): ISolarSystemElement {
+  if (cell.type === 'EMPTY') {
     return { type: ESolarSystemElementType.EMPTY, amount: 1 };
   }
-  if (symbol === '🪨') {
+  if (cell.type === 'NULL') {
+    return { type: ESolarSystemElementType.NULL, amount: 1 };
+  }
+  if (cell.type === 'ASTEROID') {
     return { type: ESolarSystemElementType.ASTEROID, amount: 1 };
   }
-  if (symbol === '⭐') {
+  if (cell.type === 'COMET') {
     return { type: ESolarSystemElementType.COMET, amount: 1 };
   }
 
-  const planet = PLANET_TOKEN_MAP[symbol];
-  if (planet !== undefined) {
-    if (planet === EPlanet.EARTH) {
-      return { type: ESolarSystemElementType.EARTH, amount: 1, planet };
-    }
-    return { type: ESolarSystemElementType.PLANET, amount: 1, planet };
+  if (cell.type === 'EARTH' && cell.planet === EPlanet.EARTH) {
+    return {
+      type: ESolarSystemElementType.EARTH,
+      amount: 1,
+      planet: cell.planet,
+    };
   }
 
-  throw new Error(`Unknown solar system symbol: ${symbol}`);
-}
+  if (cell.type === 'PLANET' && cell.planet !== undefined) {
+    return {
+      type: ESolarSystemElementType.PLANET,
+      amount: 1,
+      planet: cell.planet,
+    };
+  }
 
-function isPublicitySymbol(symbol: string): boolean {
-  return symbol !== 'O' && symbol !== '⚫';
+  throw new Error(`Unknown solar system cell: ${cell.type}`);
 }

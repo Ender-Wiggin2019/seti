@@ -127,6 +127,11 @@ export class SolarSystem {
     for (let i = 0; i < 3; i += 1) {
       this.discs[i].currentRotation = normalizeDiscAngle(initialDiscAngles[i]);
     }
+    for (let i = 0; i < 3; i += 1) {
+      for (let step = 0; step < this.discs[i].currentRotation; step += 1) {
+        this.rotateRingByOneStep(i + 1);
+      }
+    }
     this.adjacency = this.buildAdjacency();
     this.rotationCounter = 0;
     this.probeCounter = 0;
@@ -376,7 +381,10 @@ export class SolarSystem {
     });
     if (options?.grantVisitPublicity) {
       targetSpace.hasPublicityIcon = true;
-      if (!targetSpace.publicityIconAmount || targetSpace.publicityIconAmount < 1) {
+      if (
+        !targetSpace.publicityIconAmount ||
+        targetSpace.publicityIconAmount < 1
+      ) {
         targetSpace.publicityIconAmount = 1;
       }
     }
@@ -619,10 +627,13 @@ export class SolarSystem {
       (space) => space.hasPublicityIcon,
     );
     const occupantSnapshots = ringSpaces.map((space) => [...space.occupants]);
+    const cellsPerVisualStep = Math.max(1, ringIndex);
 
     for (let sourceIndex = 0; sourceIndex < count; sourceIndex += 1) {
-      // Counterclockwise rotation: source i moves to i-1 on screen.
-      const targetIndex = (sourceIndex + count - 1) % count;
+      // Counterclockwise rotation: one wheel step is 45deg. Expanded rings have
+      // `ringIndex` cells per visual sector, so preserve each cell's offset
+      // inside the sector while moving the whole wheel one visible slot.
+      const targetIndex = (sourceIndex + count - cellsPerVisualStep) % count;
       const targetSpace = ringSpaces[targetIndex];
       targetSpace.elements = elementSnapshots[sourceIndex];
       targetSpace.hasPublicityIcon = publicitySnapshots[sourceIndex];

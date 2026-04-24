@@ -22,7 +22,10 @@ import {
 } from '@/engine/missions/IMission.js';
 import { MissionTracker } from '@/engine/missions/MissionTracker.js';
 import { Player } from '@/engine/player/Player.js';
-import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
+import {
+  resolveSetupTucks,
+  setSolarSystemInitialDiscAngles,
+} from '../../helpers/TestGameBuilder.js';
 
 function createPlayer(): Player {
   return new Player({
@@ -55,6 +58,7 @@ function resolveCardId(card: string | { id?: string }): string | undefined {
 
 function createIntegrationGame(seed: string) {
   const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
+  setSolarSystemInitialDiscAngles(game, [0, 0, 0]);
   resolveSetupTucks(game);
   const player1 = game.players.find(
     (candidate) => candidate.id === 'p1',

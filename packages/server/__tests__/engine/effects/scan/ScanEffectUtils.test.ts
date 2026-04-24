@@ -110,22 +110,22 @@ describe('ScanEffectUtils', () => {
     it('resolves initial planet positions to correct wedge indices', () => {
       const ss = createSolarSystem();
 
-      expect(getSectorIndexByPlanet(ss, EPlanet.EARTH)).toBe(3);
-      expect(getSectorIndexByPlanet(ss, EPlanet.MERCURY)).toBe(7);
-      expect(getSectorIndexByPlanet(ss, EPlanet.VENUS)).toBe(1);
-      expect(getSectorIndexByPlanet(ss, EPlanet.MARS)).toBe(6);
-      expect(getSectorIndexByPlanet(ss, EPlanet.JUPITER)).toBe(5);
-      expect(getSectorIndexByPlanet(ss, EPlanet.SATURN)).toBe(1);
-      expect(getSectorIndexByPlanet(ss, EPlanet.NEPTUNE)).toBe(2);
-      expect(getSectorIndexByPlanet(ss, EPlanet.URANUS)).toBe(7);
+      expect(getSectorIndexByPlanet(ss, EPlanet.EARTH)).toBe(5);
+      expect(getSectorIndexByPlanet(ss, EPlanet.MERCURY)).toBe(1);
+      expect(getSectorIndexByPlanet(ss, EPlanet.VENUS)).toBe(3);
+      expect(getSectorIndexByPlanet(ss, EPlanet.MARS)).toBe(2);
+      expect(getSectorIndexByPlanet(ss, EPlanet.JUPITER)).toBe(3);
+      expect(getSectorIndexByPlanet(ss, EPlanet.SATURN)).toBe(7);
+      expect(getSectorIndexByPlanet(ss, EPlanet.NEPTUNE)).toBe(3);
+      expect(getSectorIndexByPlanet(ss, EPlanet.URANUS)).toBe(0);
     });
 
     it('updates after disc rotation', () => {
       const ss = createSolarSystem();
 
-      expect(getSectorIndexByPlanet(ss, EPlanet.EARTH)).toBe(3);
+      expect(getSectorIndexByPlanet(ss, EPlanet.EARTH)).toBe(5);
       ss.rotate(0);
-      expect(getSectorIndexByPlanet(ss, EPlanet.EARTH)).toBe(2);
+      expect(getSectorIndexByPlanet(ss, EPlanet.EARTH)).toBe(4);
     });
   });
 });

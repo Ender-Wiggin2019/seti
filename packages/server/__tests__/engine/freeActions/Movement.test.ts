@@ -27,6 +27,7 @@ import {
   getPlayer,
   requireSolarSystem,
   resolveAllInputsDefault,
+  setSolarSystemInitialDiscAngles,
 } from '../../helpers/TestGameBuilder.js';
 
 function createMockSpace(
@@ -169,12 +170,21 @@ function shortestPathBetween(
 }
 
 function patchAsteroidAtRing1Cell2(game: Game): void {
+  setSolarSystemInitialDiscAngles(game, [0, 0, 0]);
   const ss = requireSolarSystem(game);
+  const cell3 = ss.spaces.find((s) => s.id === 'ring-1-cell-3');
+  if (!cell3) {
+    throw new Error('Test setup: ring-1-cell-3 missing');
+  }
+  cell3.elements = [{ type: ESolarSystemElementType.EMPTY, amount: 1 }];
+  ss.setDynamicPlanetAtSpace(EPlanet.EARTH, 'ring-1-cell-3');
+
   const cell2 = ss.spaces.find((s) => s.id === 'ring-1-cell-2');
   if (!cell2) {
     throw new Error('Test setup: ring-1-cell-2 missing');
   }
   cell2.elements = [{ type: ESolarSystemElementType.ASTEROID, amount: 1 }];
+  cell2.hasPublicityIcon = false;
 }
 
 describe('MovementFreeAction', () => {

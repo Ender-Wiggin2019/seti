@@ -1,4 +1,5 @@
 import { ESector } from '@seti/common/types/element';
+import { EPlanet } from '@seti/common/types/protocol/enums';
 import type { ISelectOptionInputModel } from '@seti/common/types/protocol/playerInput';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { vi } from 'vitest';
@@ -86,7 +87,13 @@ describe('AnySignalQuickMissionCard', () => {
 
     const pendingInput = game.deferredActions.drain(game);
     expect(pendingInput).toBeUndefined();
-    expect(sectors[7].getPlayerMarkerCount(player.id)).toBe(2);
+    const mercurySectorIndex = game.solarSystem?.getSectorIndexOfPlanet(
+      EPlanet.MERCURY,
+    );
+    if (mercurySectorIndex === null || mercurySectorIndex === undefined) {
+      throw new Error('Expected Mercury sector');
+    }
+    expect(sectors[mercurySectorIndex].getPlayerMarkerCount(player.id)).toBe(2);
   });
 
   it('card 115 asks for signal color and then sector when color is ambiguous', () => {

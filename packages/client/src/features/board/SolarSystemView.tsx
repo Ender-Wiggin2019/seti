@@ -11,7 +11,10 @@ import type {
 import { EPlayerInputType } from '@/types/re-exports';
 import { ProbeToken } from './ProbeToken';
 import { SectorGrid } from './SectorGrid';
-import { WheelLayer } from './WheelLayer';
+import {
+  getWheelSlotLabelBoardPositionPercent,
+  WheelLayer,
+} from './WheelLayer';
 
 const WHEEL_RENDER_SIZE_PERCENT = [34, 48, 62, 100] as const;
 const WHEEL_IMAGE_SIZE_PX = [397, 548, 702, 1125] as const;
@@ -25,10 +28,10 @@ const DEFAULT_PROBE_INSET_PX_BY_RING: Readonly<Record<1 | 2 | 3 | 4, number>> =
 const IMAGE_ALIGNMENT_OFFSET_CW_BY_RING: Readonly<
   Record<1 | 2 | 3 | 4, number>
 > = {
-  1: 2,
-  2: 6,
-  3: 4,
-  4: 4,
+  1: 0,
+  2: 0,
+  3: 0,
+  4: 0,
 };
 const PROBE_TRANSITION_MS = 900;
 const TEXT_MODE_LABEL_Z_INDEX_BY_RING: Readonly<Record<1 | 2 | 3 | 4, number>> =
@@ -60,6 +63,7 @@ interface ISpacePoint {
   spaceId: string;
   ringIndex: 1 | 2 | 3 | 4;
   indexInRing: number;
+  visualIndexInRing: number;
   xPercent: number;
   yPercent: number;
 }
@@ -114,9 +118,9 @@ function spacePosition(
 ): { xPercent: number; yPercent: number } {
   const baseDirection = ((indexInRing % 8) + 8) % 8;
   const imageOffset = IMAGE_ALIGNMENT_OFFSET_CW_BY_RING[ringIndex] ?? 0;
-  // disc rotates CCW by discAngle steps → visual position shifts CW → add discAngle
-  const direction =
-    ((baseDirection + imageOffset + discAngle) % 8 + 8) % 8;
+  // WheelLayer renders disc angle N as rotate(-N * 45deg), so hotspots must
+  // apply the same visual rotation direction as the wheel image.
+  const direction = (((baseDirection + imageOffset - discAngle) % 8) + 8) % 8;
   const radius = spaceRadiiPercent[ringIndex - 1] ?? spaceRadiiPercent[0] ?? 0;
   const angle = (Math.PI / 4) * (direction + 0.5);
   return {
@@ -131,6 +135,23 @@ function getDiscAngle(
 ): number {
   const disc = solarSystem.discs.find((d) => d.discIndex === ring - 1);
   return disc?.angle ?? 0;
+}
+
+function isExpandedServerRingIndex(
+  state: { ringIndex: number; indexInRing: number },
+  usesZeroBasedRingIndex: boolean,
+): boolean {
+  const rawRingIndex = usesZeroBasedRingIndex
+    ? state.ringIndex + 1
+    : state.ringIndex;
+  const ringIndex = normalizeRingIndex(rawRingIndex);
+  return Boolean(ringIndex && ringIndex > 1 && state.indexInRing >= 8);
+}
+
+function textLabelPriority(label: string): number {
+  if (label === 'null') return 0;
+  if (label === 'empty') return 1;
+  return 2;
 }
 
 export function SolarSystemView({
@@ -180,6 +201,12 @@ export function SolarSystemView({
     const usesZeroBasedRingIndex = Boolean(
       states && Object.values(states).some((state) => state.ringIndex === 0),
     );
+    const usesExpandedRingIndexes = Boolean(
+      states &&
+        Object.values(states).some((state) =>
+          isExpandedServerRingIndex(state, usesZeroBasedRingIndex),
+        ),
+    );
 
     return solarSystem.spaces.map((spaceId, idx) => {
       const state = states?.[spaceId];
@@ -188,6 +215,8 @@ export function SolarSystemView({
 
       let ringIndex = fallbackRing;
       let indexInRing = fallbackIndexInRing;
+      let positionIndexInRing = fallbackIndexInRing;
+      let isStateBackedPosition = false;
 
       if (state) {
         const rawRingIndex = usesZeroBasedRingIndex
@@ -196,15 +225,35 @@ export function SolarSystemView({
         const normalizedRingIndex = normalizeRingIndex(rawRingIndex);
         if (normalizedRingIndex) {
           ringIndex = normalizedRingIndex;
-          indexInRing = ((state.indexInRing % 8) + 8) % 8;
+          indexInRing = state.indexInRing;
+          positionIndexInRing = usesExpandedRingIndexes
+            ? Math.floor(state.indexInRing / normalizedRingIndex)
+            : ((state.indexInRing % 8) + 8) % 8;
+          isStateBackedPosition = true;
         }
       }
 
-      const discAngle = discAngleByRing[ringIndex];
-      const pos = spacePosition(ringIndex, indexInRing, spaceRadiiPercent, discAngle);
-      return { spaceId, ringIndex, indexInRing, ...pos };
+      const discAngle = isStateBackedPosition ? 0 : discAngleByRing[ringIndex];
+      const pos = spacePosition(
+        ringIndex,
+        positionIndexInRing,
+        spaceRadiiPercent,
+        discAngle,
+      );
+      return {
+        spaceId,
+        ringIndex,
+        indexInRing,
+        visualIndexInRing: positionIndexInRing,
+        ...pos,
+      };
     });
-  }, [solarSystem.spaces, solarSystem.spaceStates, spaceRadiiPercent, discAngleByRing]);
+  }, [
+    solarSystem.spaces,
+    solarSystem.spaceStates,
+    spaceRadiiPercent,
+    discAngleByRing,
+  ]);
 
   const debugLabelsBySpaceId = useMemo(() => {
     if (!showSpaceConfigDebug) {
@@ -261,6 +310,51 @@ export function SolarSystemView({
 
     return labels;
   }, [textMode, spacePoints, solarSystem.spaceStates]);
+
+  const textModeLabelItems = useMemo(() => {
+    if (!textMode || !textModeLabelBySpaceId) {
+      return [];
+    }
+
+    const byVisualSlot = new Map<
+      string,
+      {
+        key: string;
+        label: string;
+        space: ISpacePoint;
+        xPercent: number;
+        yPercent: number;
+        priority: number;
+      }
+    >();
+    for (const space of spacePoints) {
+      const label = textModeLabelBySpaceId[space.spaceId];
+      if (!label) {
+        continue;
+      }
+
+      const key = `${space.ringIndex}:${space.visualIndexInRing}`;
+      const priority = textLabelPriority(label);
+      const existing = byVisualSlot.get(key);
+      if (existing && existing.priority >= priority) {
+        continue;
+      }
+
+      const labelPosition = getWheelSlotLabelBoardPositionPercent(
+        space.ringIndex,
+        space.visualIndexInRing,
+      );
+      byVisualSlot.set(key, {
+        key,
+        label,
+        space,
+        ...labelPosition,
+        priority,
+      });
+    }
+
+    return [...byVisualSlot.values()];
+  }, [textMode, textModeLabelBySpaceId, spacePoints]);
 
   const probeView = useMemo(() => {
     const bySpacePlayers: Record<string, string[]> = {};
@@ -356,10 +450,20 @@ export function SolarSystemView({
 
   return (
     <section className='w-full rounded-lg border border-surface-700/40 bg-surface-900/30 p-3'>
-      <header className='mb-2'>
+      <header className='mb-2 flex items-center justify-between gap-3'>
         <h2 className='font-display text-base font-bold uppercase tracking-wider text-text-100'>
           Solar System
         </h2>
+        {solarSystem.nextRotateRing ? (
+          <div className='flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-text-400'>
+            <span>Next Rotate:</span>
+            <img
+              src={`/assets/seti/tech/bonuses/techRotation${solarSystem.nextRotateRing}.png`}
+              alt='Next rotate ring'
+              className='h-6 w-6'
+            />
+          </div>
+        ) : null}
       </header>
 
       <div
@@ -476,25 +580,20 @@ export function SolarSystemView({
               className='pointer-events-none absolute inset-0'
               style={{ zIndex: TEXT_MODE_LABEL_Z_INDEX_BY_RING[ring] }}
             >
-              {spacePoints
-                .filter((space) => space.ringIndex === ring)
-                .map((space) => {
-                  const label = textModeLabelBySpaceId?.[space.spaceId];
-                  if (!label) {
-                    return null;
-                  }
-
+              {textModeLabelItems
+                .filter((item) => item.space.ringIndex === ring)
+                .map((item) => {
                   return (
                     <span
-                      key={`text-mode-label-${space.spaceId}`}
+                      key={`text-mode-label-${item.key}`}
                       className='absolute inline-flex h-[18px] w-[62px] items-center justify-center overflow-hidden rounded-sm border border-surface-500 bg-surface-900 font-mono text-[9px] uppercase leading-none text-text-100 shadow-[0_1px_2px_rgba(0,0,0,0.65)]'
                       style={{
-                        left: `${space.xPercent}%`,
-                        top: `${space.yPercent}%`,
+                        left: `${item.xPercent}%`,
+                        top: `${item.yPercent}%`,
                         transform: 'translate(-50%, -50%)',
                       }}
                     >
-                      {label}
+                      {item.label}
                     </span>
                   );
                 })}

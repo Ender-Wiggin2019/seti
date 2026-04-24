@@ -1,10 +1,11 @@
 import { createDefaultSetupConfig } from '@seti/common/constant/sectorSetup';
 import { ESector } from '@seti/common/types/element';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SolarSystemView } from '@/features/board/SolarSystemView';
+import { useDebugStore } from '@/stores/debugStore';
 import type { IPublicSector, IPublicSolarSystem } from '@/types/re-exports';
-import { EPlayerInputType } from '@/types/re-exports';
+import { EPlanet, EPlayerInputType } from '@/types/re-exports';
 
 const defaultSetup = createDefaultSetupConfig();
 
@@ -22,6 +23,76 @@ function createSolarSystemMock(): IPublicSolarSystem {
       { discIndex: 3, angle: 0 },
     ],
     nextRotateRing: 2,
+  };
+}
+
+function createRotatedRingOneMock(): IPublicSolarSystem {
+  return {
+    spaces: ['ring-1-cell-3'],
+    adjacency: {
+      'ring-1-cell-3': [],
+    },
+    probes: [],
+    discs: [
+      { discIndex: 0, angle: 5 },
+      { discIndex: 1, angle: 0 },
+      { discIndex: 2, angle: 0 },
+    ],
+    nextRotateRing: 1,
+    spaceStates: {
+      'ring-1-cell-3': {
+        spaceId: 'ring-1-cell-3',
+        ringIndex: 1,
+        indexInRing: 3,
+        hasPublicityIcon: false,
+        elementTypes: ['EARTH'],
+        elements: [{ type: 'EARTH' }],
+      },
+    },
+  };
+}
+
+function createExpandedOuterRingMock(): IPublicSolarSystem {
+  return {
+    spaces: ['ring-4-cell-8', 'ring-4-cell-9', 'ring-4-cell-15'],
+    adjacency: {
+      'ring-4-cell-8': [],
+      'ring-4-cell-9': [],
+      'ring-4-cell-15': [],
+    },
+    probes: [],
+    discs: [
+      { discIndex: 0, angle: 0 },
+      { discIndex: 1, angle: 0 },
+      { discIndex: 2, angle: 0 },
+    ],
+    nextRotateRing: 1,
+    spaceStates: {
+      'ring-4-cell-8': {
+        spaceId: 'ring-4-cell-8',
+        ringIndex: 4,
+        indexInRing: 8,
+        hasPublicityIcon: true,
+        elementTypes: ['PLANET'],
+        elements: [{ type: 'PLANET', planet: EPlanet.NEPTUNE }],
+      },
+      'ring-4-cell-9': {
+        spaceId: 'ring-4-cell-9',
+        ringIndex: 4,
+        indexInRing: 9,
+        hasPublicityIcon: false,
+        elementTypes: ['EMPTY'],
+        elements: [{ type: 'EMPTY' }],
+      },
+      'ring-4-cell-15': {
+        spaceId: 'ring-4-cell-15',
+        ringIndex: 4,
+        indexInRing: 15,
+        hasPublicityIcon: false,
+        elementTypes: ['EMPTY'],
+        elements: [{ type: 'EMPTY' }],
+      },
+    },
   };
 }
 
@@ -54,6 +125,11 @@ function createSectorsMock(): IPublicSector[] {
 }
 
 describe('SolarSystemView', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    useDebugStore.setState({ textMode: false });
+  });
+
   it('renders all 32 space hotspots', () => {
     render(
       <SolarSystemView
@@ -144,5 +220,140 @@ describe('SolarSystemView', () => {
       'src',
       '/assets/seti/tech/bonuses/techRotation2.png',
     );
+  });
+
+  it('trusts state-backed space indexes as current board positions', () => {
+    render(
+      <SolarSystemView
+        solarSystem={createRotatedRingOneMock()}
+        sectors={createSectorsMock()}
+        setupConfig={defaultSetup}
+        pendingInput={null}
+        playerColors={{}}
+        myPlayerId='player-1'
+        movementPoints={1}
+        onMoveProbe={vi.fn()}
+        onRespondInput={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('wheel-layer-ring-1').style.transform).toContain(
+      'rotate(-225deg)',
+    );
+
+    const earthHotspot = screen.getByTestId('solar-space-ring-1-cell-3');
+    expect(parseFloat(earthHotspot.style.left)).toBeCloseTo(53.589, 3);
+    expect(parseFloat(earthHotspot.style.top)).toBeCloseTo(58.664, 3);
+  });
+
+  it('projects expanded server ring cells by sector on outer rings', () => {
+    render(
+      <SolarSystemView
+        solarSystem={createExpandedOuterRingMock()}
+        sectors={createSectorsMock()}
+        setupConfig={defaultSetup}
+        pendingInput={null}
+        playerColors={{}}
+        myPlayerId='player-1'
+        movementPoints={1}
+        onMoveProbe={vi.fn()}
+        onRespondInput={vi.fn()}
+      />,
+    );
+
+    const neptuneHotspot = screen.getByTestId('solar-space-ring-4-cell-8');
+    expect(parseFloat(neptuneHotspot.style.left)).toBeCloseTo(77.388, 3);
+    expect(parseFloat(neptuneHotspot.style.top)).toBeCloseTo(61.344, 3);
+  });
+
+  it('uses the same visual slot origin as solar debug wheel labels', () => {
+    render(
+      <SolarSystemView
+        solarSystem={{
+          ...createExpandedOuterRingMock(),
+          spaces: ['ring-4-cell-12'],
+          adjacency: { 'ring-4-cell-12': [] },
+          spaceStates: {
+            'ring-4-cell-12': {
+              spaceId: 'ring-4-cell-12',
+              ringIndex: 4,
+              indexInRing: 12,
+              hasPublicityIcon: true,
+              elementTypes: ['PLANET'],
+              elements: [{ type: 'PLANET', planet: EPlanet.NEPTUNE }],
+            },
+          },
+        }}
+        sectors={createSectorsMock()}
+        setupConfig={defaultSetup}
+        pendingInput={null}
+        playerColors={{}}
+        myPlayerId='player-1'
+        movementPoints={1}
+        onMoveProbe={vi.fn()}
+        onRespondInput={vi.fn()}
+      />,
+    );
+
+    const neptuneHotspot = screen.getByTestId('solar-space-ring-4-cell-12');
+    expect(parseFloat(neptuneHotspot.style.left)).toBeCloseTo(61.344, 3);
+    expect(parseFloat(neptuneHotspot.style.top)).toBeCloseTo(77.388, 3);
+  });
+
+  it('renders one text label per expanded server visual slot', () => {
+    useDebugStore.setState({ textMode: true });
+
+    render(
+      <SolarSystemView
+        solarSystem={createExpandedOuterRingMock()}
+        sectors={createSectorsMock()}
+        setupConfig={defaultSetup}
+        pendingInput={null}
+        playerColors={{}}
+        myPlayerId='player-1'
+        movementPoints={1}
+        onMoveProbe={vi.fn()}
+        onRespondInput={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('neptune')).toBeInTheDocument();
+    expect(screen.getAllByText('empty')).toHaveLength(1);
+  });
+
+  it('places text labels on the same wheel geometry as solar debug labels', () => {
+    useDebugStore.setState({ textMode: true });
+
+    render(
+      <SolarSystemView
+        solarSystem={{
+          ...createExpandedOuterRingMock(),
+          spaces: ['ring-4-cell-12'],
+          adjacency: { 'ring-4-cell-12': [] },
+          spaceStates: {
+            'ring-4-cell-12': {
+              spaceId: 'ring-4-cell-12',
+              ringIndex: 4,
+              indexInRing: 12,
+              hasPublicityIcon: true,
+              elementTypes: ['PLANET'],
+              elements: [{ type: 'PLANET', planet: EPlanet.NEPTUNE }],
+            },
+          },
+        }}
+        sectors={createSectorsMock()}
+        setupConfig={defaultSetup}
+        pendingInput={null}
+        playerColors={{}}
+        myPlayerId='player-1'
+        movementPoints={1}
+        onMoveProbe={vi.fn()}
+        onRespondInput={vi.fn()}
+      />,
+    );
+
+    const neptuneLabel = screen.getByText('neptune');
+    expect(parseFloat(neptuneLabel.style.left)).toBeCloseTo(67.69, 2);
+    expect(parseFloat(neptuneLabel.style.top)).toBeCloseTo(92.702, 2);
   });
 });

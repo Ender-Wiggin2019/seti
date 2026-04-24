@@ -22,6 +22,7 @@ import { TuckCardForIncomeEffect } from '@/engine/effects/income/TuckCardForInco
 import { getSectorIndexByPlanet } from '@/engine/effects/scan/ScanEffectUtils.js';
 import { Game } from '@/engine/Game.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
+import { setSolarSystemInitialDiscAngles } from '../helpers/TestGameBuilder.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -99,19 +100,44 @@ function passPlayer(game: Game, playerId: string): void {
 }
 
 /**
- * Modify ring-1-cell-2 from NULL to ASTEROID so that after the first
- * disc rotation (triggered by p2's pass), the board layout becomes:
+ * Shape ring 1 so that after the first disc rotation (triggered by p2's
+ * pass), the board layout becomes:
  *
  *   ..., VENUS (cell-0), ASTEROID (cell-1), EARTH (cell-2), ...
  *
- * This enables the probe movement scenario: Earth → Asteroid → Venus.
+ * This keeps the scenario focused on the intended Earth → Asteroid → Venus
+ * flow without depending on the canonical planet slots.
  */
 function patchSolarSystemForScenario(game: Game): void {
+  setSolarSystemInitialDiscAngles(game, [0, 0, 0]);
   const ss = game.solarSystem!;
-  const cell2 = ss.spaces.find((s) => s.id === 'ring-1-cell-2');
-  if (!cell2) throw new Error('ring-1-cell-2 not found');
+  const setSpace = (
+    id: string,
+    elements: Array<{ type: ESolarSystemElementType; amount: number }>,
+    hasPublicityIcon = false,
+  ) => {
+    const space = ss.spaces.find((s) => s.id === id);
+    if (!space) throw new Error(`${id} not found`);
+    space.elements = elements;
+    space.hasPublicityIcon = hasPublicityIcon;
+  };
 
-  cell2.elements = [{ type: ESolarSystemElementType.ASTEROID, amount: 1 }];
+  setSpace('ring-1-cell-1', [
+    { type: ESolarSystemElementType.EMPTY, amount: 1 },
+  ]);
+  setSpace('ring-1-cell-2', [
+    { type: ESolarSystemElementType.ASTEROID, amount: 1 },
+  ]);
+  setSpace('ring-1-cell-3', [
+    { type: ESolarSystemElementType.EMPTY, amount: 1 },
+  ]);
+  setSpace('ring-1-cell-5', [
+    { type: ESolarSystemElementType.EMPTY, amount: 1 },
+  ]);
+  ss.setDynamicPlanetAtSpace(EPlanet.EARTH, 'ring-1-cell-3');
+  ss.setDynamicPlanetAtSpace(EPlanet.VENUS, 'ring-1-cell-1', {
+    grantVisitPublicity: true,
+  });
 }
 
 /**
@@ -176,7 +202,7 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
   });
 
   // ── 2. Solar system layout after patch ───────────────────────────────
-  it('2. ring-1-cell-2 is patched to ASTEROID (between Venus and Earth)', () => {
+  it('2. ring 1 is patched for the Earth → Asteroid → Venus scenario', () => {
     const ss = game.solarSystem!;
     const cell2 = ss.spaces.find((s) => s.id === 'ring-1-cell-2')!;
     expect(

@@ -19,7 +19,10 @@ import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
 import { toPublicSolarSystemState } from '@/engine/utils/stateProjection.js';
 import { GameError } from '@/shared/errors/GameError.js';
-import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
+import {
+  resolveSetupTucks,
+  setSolarSystemInitialDiscAngles,
+} from '../../helpers/TestGameBuilder.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -103,6 +106,7 @@ function resolveLandFollowUpInputs(game: Game, playerId: string): void {
  * Earth on `ring-1-cell-4`, asteroid on `ring-1-cell-3`, Venus on `ring-1-cell-2`.
  */
 function alignSolarSystemForEarthToVenusMovement(game: Game): void {
+  setSolarSystemInitialDiscAngles(game, [0, 0, 0]);
   const solar = game.solarSystem;
   if (!solar) {
     throw new Error('Expected solar system');

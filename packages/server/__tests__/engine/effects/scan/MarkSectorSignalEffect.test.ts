@@ -332,8 +332,9 @@ describe('MarkSectorSignalEffect', () => {
         EPlanet.EARTH,
       );
 
+      const expectedSector = solarSystem.getSectorIndexOfPlanet(EPlanet.EARTH);
       expect(requireValue(result, 'expected earth sector').sectorId).toBe(
-        'sector-3',
+        `sector-${expectedSector}`,
       );
     });
 
@@ -354,8 +355,11 @@ describe('MarkSectorSignalEffect', () => {
         EPlanet.MERCURY,
       );
 
+      const expectedSector = solarSystem.getSectorIndexOfPlanet(
+        EPlanet.MERCURY,
+      );
       expect(requireValue(result, 'expected mercury sector').sectorId).toBe(
-        'sector-7',
+        `sector-${expectedSector}`,
       );
     });
 
@@ -377,9 +381,10 @@ describe('MarkSectorSignalEffect', () => {
         EPlanet.EARTH,
       );
 
+      const expectedSector = solarSystem.getSectorIndexOfPlanet(EPlanet.EARTH);
       expect(
         requireValue(result, 'expected rotated earth sector').sectorId,
-      ).toBe('sector-2');
+      ).toBe(`sector-${expectedSector}`);
     });
 
     it('returns null when solar system is absent', () => {

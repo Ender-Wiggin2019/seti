@@ -56,9 +56,7 @@ describe('BoardBuilder', () => {
   });
 
   it('uses real board constants for planets, cutouts, and publicity', () => {
-    const board = BoardBuilder.buildSolarSystemFromRandom(
-      new SeededRandom('real-config'),
-    );
+    const board = BoardBuilder.buildSolarSystem([], [0, 0, 0]);
 
     expect(board.getSpacesOnPlanet(EPlanet.EARTH)[0]?.id).toBe(
       SOLAR_SYSTEM_PLANET_SPACE_IDS[EPlanet.EARTH],

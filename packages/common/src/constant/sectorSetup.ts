@@ -1,5 +1,10 @@
 import { ESector, ETrace } from '@seti/common/types/element';
 import { EPlanet } from '@seti/common/types/protocol/enums';
+import {
+  CELLS_PER_SECTOR_BY_RING,
+  formatSpaceId,
+  SECTOR_COUNT,
+} from './solarCoordinate';
 
 type TFixed4<T> = [T, T, T, T];
 type TFixed8<T> = [T, T, T, T, T, T, T, T];
@@ -41,6 +46,17 @@ export type TSolarSystemWheels = Record<
   TSolarSystemWheelIndex,
   TSolarSystemWheelGrid
 >;
+
+export interface ISolarSystemExpandedMapCell {
+  id: string;
+  ringIndex: TSolarSystemWheelIndex;
+  indexInRing: number;
+  sectorIndex: number;
+  cellInSector: number;
+  sourceBandIndex: number;
+  sourceSlotIndex: number;
+  cell: ISolarSystemWheelMapCell;
+}
 
 interface IWheelSlotDefinition {
   type: TSolarSystemMapCellType;
@@ -90,6 +106,16 @@ function cloneWheelCell(cell: ISolarSystemWheelCell): ISolarSystemWheelCell {
 
 function cloneWheelGrid(grid: TSolarSystemWheelGrid): TSolarSystemWheelGrid {
   return grid.map((row) => row.map(cloneWheelCell)) as TSolarSystemWheelGrid;
+}
+
+function cloneWheelMapCell(
+  cell: ISolarSystemWheelMapCell,
+): ISolarSystemWheelMapCell {
+  return {
+    type: cell.type,
+    hasPublicityIcon: cell.hasPublicityIcon,
+    planet: cell.planet,
+  };
 }
 
 const NULL_SLOT: IWheelSlotDefinition = { type: 'NULL' };
@@ -293,6 +319,47 @@ export function createDefaultSolarSystemWheels(): TSolarSystemWheels {
     3: cloneWheelGrid(DEFAULT_SOLAR_SYSTEM_WHEELS_TEMPLATE[3]),
     4: cloneWheelGrid(DEFAULT_SOLAR_SYSTEM_WHEELS_TEMPLATE[4]),
   };
+}
+
+export function createDefaultSolarSystemExpandedMapCells(
+  wheels: TSolarSystemWheels = createDefaultSolarSystemWheels(),
+): ISolarSystemExpandedMapCell[] {
+  const cells: ISolarSystemExpandedMapCell[] = [];
+
+  for (const ringIndex of [1, 2, 3, 4] as const) {
+    const sourceBandIndex = ringIndex - 1;
+    const visibleBand = wheels[ringIndex][sourceBandIndex];
+    const cellsPerSector = CELLS_PER_SECTOR_BY_RING[ringIndex];
+
+    for (let sectorIndex = 0; sectorIndex < SECTOR_COUNT; sectorIndex += 1) {
+      const sourceCell = visibleBand[sectorIndex].cell;
+
+      for (
+        let cellInSector = 0;
+        cellInSector < cellsPerSector;
+        cellInSector += 1
+      ) {
+        const indexInRing = sectorIndex * cellsPerSector + cellInSector;
+        const cell: ISolarSystemWheelMapCell =
+          sourceCell.type === 'NULL' || cellInSector === 0
+            ? cloneWheelMapCell(sourceCell)
+            : { type: 'EMPTY', hasPublicityIcon: false };
+
+        cells.push({
+          id: formatSpaceId(ringIndex, indexInRing),
+          ringIndex,
+          indexInRing,
+          sectorIndex,
+          cellInSector,
+          sourceBandIndex,
+          sourceSlotIndex: sectorIndex,
+          cell,
+        });
+      }
+    }
+  }
+
+  return cells;
 }
 
 /** Physical sector tile IDs — each tile covers 2 game sectors */
