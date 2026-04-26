@@ -261,9 +261,12 @@ function serializeSectors(game: IGame): ISectorDto[] {
     const internal = sector as unknown as ISectorInternalState;
     return {
       id: sector.id,
+      name: sector.name,
       color: sector.color,
       signals: sector.signals.map((s) => ({ ...s })),
       dataSlotCapacity: sector.dataSlotCapacity,
+      firstWinBonus: sector.firstWinBonus,
+      repeatWinBonus: sector.repeatWinBonus,
       sectorWinners: [...sector.sectorWinners],
       completed: sector.completed,
       nextDataTokenId: internal.nextDataTokenId,

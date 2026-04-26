@@ -296,7 +296,7 @@ export class SolarSystem {
    */
   public getTopSpaceInSector(sectorIndex: number): ISolarSystemSpace | null {
     for (const space of this.getSpacesInSector(sectorIndex)) {
-      if (!this.containsElement(space, ESolarSystemElementType.NULL)) {
+      if (this.hasVisibleElement(space)) {
         return space;
       }
     }
@@ -654,10 +654,7 @@ export class SolarSystem {
         upperRingIndex,
         lowerSpace,
       );
-      const isCoveredBefore = !this.containsElement(
-        upperSpace,
-        ESolarSystemElementType.NULL,
-      );
+      const isCoveredBefore = this.hasVisibleElement(upperSpace);
       coverStates.set(lowerSpace.id, {
         before: isCoveredBefore,
         after: false,
@@ -692,10 +689,7 @@ export class SolarSystem {
         targetRingIndex - 1,
         targetSpace,
       );
-      coverState.after = !this.containsElement(
-        upperSpace,
-        ESolarSystemElementType.NULL,
-      );
+      coverState.after = this.hasVisibleElement(upperSpace);
       if (
         coverState.before ||
         !coverState.after ||
@@ -793,6 +787,13 @@ export class SolarSystem {
     );
   }
 
+  private hasVisibleElement(space: ISolarSystemSpace): boolean {
+    return space.elements.some(
+      (element) =>
+        element.type !== ESolarSystemElementType.NULL && element.amount > 0,
+    );
+  }
+
   private grantPublicityOnEnter(
     playerId: string,
     toSpace: ISolarSystemSpace,
@@ -858,6 +859,7 @@ function buildSectorsFromPlacements(
       sectors.push(
         new Sector({
           id: placement.sectorIds[idx],
+          name: sectorOnTile.starName,
           color: sectorOnTile.color,
           dataSlotCapacity: starConfig?.dataSlotCapacity,
           firstWinBonus: starConfig?.firstWinBonus,

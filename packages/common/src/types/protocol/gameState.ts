@@ -1,5 +1,9 @@
 import type { IPlanetMissionConfig } from '@seti/common/constant/boardLayout';
-import type { ISolarSystemSetupConfig } from '@seti/common/constant/sectorSetup';
+import type {
+  EStarName,
+  ISolarSystemSetupConfig,
+  TSectorWinnerBonus,
+} from '@seti/common/constant/sectorSetup';
 import { IBaseCard } from '@seti/common/types/BaseCard';
 import type { IComputerSlotReward } from '@seti/common/types/computer';
 import { EResource, ESector } from '@seti/common/types/element';
@@ -156,9 +160,15 @@ export interface IPublicSectorSignal {
 
 export interface IPublicSectorState {
   sectorId: string;
+  name: EStarName | string;
   color: ESector;
   signals: IPublicSectorSignal[];
+  /** Printed/original sector data capacity from setup. */
+  dataCapability: number;
+  /** Current effective number of data slots represented by `signals`. */
   dataSlotCapacity: number;
+  firstWinnerBonus: TSectorWinnerBonus;
+  otherWinnerBonus: TSectorWinnerBonus;
   sectorWinners: string[];
   completed: boolean;
 }

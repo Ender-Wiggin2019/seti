@@ -202,8 +202,11 @@ function deserializeSectors(dto: IGameStateDto): Sector[] {
   return dto.sectors.map((sectorDto) => {
     const sector = new Sector({
       id: sectorDto.id,
+      name: sectorDto.name,
       color: sectorDto.color,
       dataSlotCapacity: sectorDto.dataSlotCapacity,
+      firstWinBonus: sectorDto.firstWinBonus,
+      repeatWinBonus: sectorDto.repeatWinBonus,
     });
 
     sector.signals = sectorDto.signals.map((s) => ({ ...s }) as never);

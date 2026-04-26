@@ -1,4 +1,7 @@
-import type { TSectorWinnerBonus } from '@seti/common/constant/sectorSetup';
+import type {
+  EStarName,
+  TSectorWinnerBonus,
+} from '@seti/common/constant/sectorSetup';
 import { ESector, ETrace } from '@seti/common/types/element';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import type { IPublicSectorState } from '@seti/common/types/protocol/gameState';
@@ -54,6 +57,7 @@ export const DEFAULT_REPEAT_WIN_BONUS: TSectorWinnerBonus = [
 
 export interface ISectorInit {
   id: string;
+  name?: EStarName | string;
   color: ESector;
   dataSlotCapacity?: number;
   firstWinBonus?: TSectorWinnerBonus;
@@ -105,6 +109,8 @@ function assertPlayerId(playerId: string): void {
 export class Sector {
   public readonly id: string;
 
+  public readonly name: EStarName | string;
+
   public readonly color: ESector;
 
   public readonly dataSlotCapacity: number;
@@ -142,6 +148,7 @@ export class Sector {
     }
 
     this.id = init.id;
+    this.name = init.name ?? init.id;
     this.color = init.color;
     this.dataSlotCapacity = capacity;
     this.firstWinBonus = init.firstWinBonus ?? DEFAULT_FIRST_WIN_BONUS;
@@ -292,13 +299,17 @@ export class Sector {
   public toPublicState(): IPublicSectorState {
     return {
       sectorId: this.id,
+      name: this.name,
       color: this.color,
       signals: this.signals.map((s) =>
         s.type === 'data'
           ? { type: 'data' as const }
           : { type: 'player' as const, playerId: s.playerId },
       ),
+      dataCapability: this.dataSlotCapacity,
       dataSlotCapacity: this.dataSlotCapacity,
+      firstWinnerBonus: this.firstWinBonus,
+      otherWinnerBonus: this.repeatWinBonus,
       sectorWinners: [...this.sectorWinners],
       completed: this.completed,
     };

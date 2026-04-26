@@ -697,11 +697,15 @@ function createSectorsFromSetup(setupConfig: ISolarSystemSetupConfig) {
         DEBUG_STAR_COLOR_MAP[sectorOnTile.starName] ?? sectorOnTile.color;
       return {
         sectorId: placement.sectorIds[idx],
+        name: sectorOnTile.starName,
         color,
         signals: Array.from({ length: capacity }, () => ({
           type: 'data' as const,
         })),
+        dataCapability: capacity,
         dataSlotCapacity: capacity,
+        firstWinnerBonus: starConfig?.firstWinBonus ?? [],
+        otherWinnerBonus: starConfig?.repeatWinBonus ?? [],
         sectorWinners: [] as string[],
         completed: false,
       };

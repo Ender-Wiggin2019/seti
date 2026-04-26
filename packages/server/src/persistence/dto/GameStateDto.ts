@@ -1,4 +1,8 @@
-import type { ISolarSystemSetupConfig } from '@seti/common/constant/sectorSetup';
+import type {
+  EStarName,
+  ISolarSystemSetupConfig,
+  TSectorWinnerBonus,
+} from '@seti/common/constant/sectorSetup';
 import type { ESector, ETrace } from '@seti/common/types/element';
 import type {
   EAlienType,
@@ -100,9 +104,12 @@ export interface ISectorSignalDto {
 
 export interface ISectorDto {
   id: string;
+  name?: EStarName | string;
   color: ESector;
   signals: ISectorSignalDto[];
   dataSlotCapacity: number;
+  firstWinBonus?: TSectorWinnerBonus;
+  repeatWinBonus?: TSectorWinnerBonus;
   sectorWinners: string[];
   completed: boolean;
   nextDataTokenId: number;

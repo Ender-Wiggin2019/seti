@@ -1,4 +1,8 @@
-import { createDefaultSetupConfig } from '@seti/common/constant/sectorSetup';
+import {
+  createDefaultSetupConfig,
+  SECTOR_STAR_CONFIGS,
+  SECTOR_TILE_DEFINITIONS,
+} from '@seti/common/constant/sectorSetup';
 import { ESector } from '@seti/common/types/element';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -52,13 +56,25 @@ function createRotatedRingOneMock(): IPublicSolarSystem {
   };
 }
 
-function createExpandedOuterRingMock(): IPublicSolarSystem {
+function createExpandedOuterRingMock(
+  overrides?: Partial<IPublicSolarSystem>,
+): IPublicSolarSystem {
   return {
-    spaces: ['ring-4-cell-8', 'ring-4-cell-9', 'ring-4-cell-15'],
+    spaces: [
+      'ring-4-cell-8',
+      'ring-4-cell-9',
+      'ring-4-cell-10',
+      'ring-4-cell-12',
+      'ring-4-cell-15',
+      'ring-4-cell-16',
+    ],
     adjacency: {
       'ring-4-cell-8': [],
       'ring-4-cell-9': [],
+      'ring-4-cell-10': [],
+      'ring-4-cell-12': [],
       'ring-4-cell-15': [],
+      'ring-4-cell-16': [],
     },
     probes: [],
     discs: [
@@ -84,6 +100,24 @@ function createExpandedOuterRingMock(): IPublicSolarSystem {
         elementTypes: ['EMPTY'],
         elements: [{ type: 'EMPTY' }],
       },
+      'ring-4-cell-10': {
+        spaceId: 'ring-4-cell-10',
+        ringIndex: 4,
+        indexInRing: 10,
+        cellInSector: 2,
+        hasPublicityIcon: false,
+        elementTypes: ['ASTEROID'],
+        elements: [{ type: 'ASTEROID' }],
+      },
+      'ring-4-cell-12': {
+        spaceId: 'ring-4-cell-12',
+        ringIndex: 4,
+        indexInRing: 12,
+        cellInSector: 0,
+        hasPublicityIcon: false,
+        elementTypes: ['ASTEROID'],
+        elements: [{ type: 'ASTEROID' }],
+      },
       'ring-4-cell-15': {
         spaceId: 'ring-4-cell-15',
         ringIndex: 4,
@@ -92,7 +126,17 @@ function createExpandedOuterRingMock(): IPublicSolarSystem {
         elementTypes: ['EMPTY'],
         elements: [{ type: 'EMPTY' }],
       },
+      'ring-4-cell-16': {
+        spaceId: 'ring-4-cell-16',
+        ringIndex: 4,
+        indexInRing: 16,
+        cellInSector: 0,
+        hasPublicityIcon: false,
+        elementTypes: ['EMPTY'],
+        elements: [{ type: 'EMPTY' }],
+      },
     },
+    ...overrides,
   };
 }
 
@@ -107,16 +151,24 @@ function createSectorsMock(): IPublicSector[] {
             ? [ESector.YELLOW, ESector.RED]
             : [ESector.YELLOW, ESector.BLACK];
 
+    const tileDef = SECTOR_TILE_DEFINITIONS[placement.tileId];
+
     return placement.sectorIds.map(
       (id, idx): IPublicSector => ({
         sectorId: id,
+        name: tileDef.sectors[idx].starName,
         color: colors[idx] as ESector,
         signals: [
           { type: 'data' as const },
           { type: 'data' as const },
           { type: 'data' as const },
         ],
+        dataCapability: 3,
         dataSlotCapacity: 3,
+        firstWinnerBonus:
+          SECTOR_STAR_CONFIGS[tileDef.sectors[idx].starName].firstWinBonus,
+        otherWinnerBonus:
+          SECTOR_STAR_CONFIGS[tileDef.sectors[idx].starName].repeatWinBonus,
         sectorWinners: [] as string[],
         completed: false,
       }),
@@ -279,8 +331,11 @@ describe('SolarSystemView', () => {
               ringIndex: 4,
               indexInRing: 12,
               hasPublicityIcon: true,
-              elementTypes: ['PLANET'],
-              elements: [{ type: 'PLANET', planet: EPlanet.NEPTUNE }],
+              elementTypes: ['NULL', 'PLANET'],
+              elements: [
+                { type: 'NULL' },
+                { type: 'PLANET', planet: EPlanet.NEPTUNE },
+              ],
             },
           },
         }}
@@ -300,7 +355,7 @@ describe('SolarSystemView', () => {
     expect(parseFloat(neptuneHotspot.style.top)).toBeCloseTo(77.388, 3);
   });
 
-  it('renders one text label per expanded server visual slot', () => {
+  it('renders every non-null expanded server cell in text mode', () => {
     useDebugStore.setState({ textMode: true });
 
     render(
@@ -318,7 +373,8 @@ describe('SolarSystemView', () => {
     );
 
     expect(screen.getByText('neptune')).toBeInTheDocument();
-    expect(screen.getAllByText('empty')).toHaveLength(1);
+    expect(screen.getByText('asteroid')).toBeInTheDocument();
+    expect(screen.queryByText('empty')).not.toBeInTheDocument();
   });
 
   it('places text labels on the same wheel geometry as solar debug labels', () => {
@@ -353,7 +409,13 @@ describe('SolarSystemView', () => {
     );
 
     const neptuneLabel = screen.getByText('neptune');
-    expect(parseFloat(neptuneLabel.style.left)).toBeCloseTo(67.69, 2);
-    expect(parseFloat(neptuneLabel.style.top)).toBeCloseTo(92.702, 2);
+    const neptuneAnchor = neptuneLabel.parentElement;
+    expect(neptuneAnchor).not.toBeNull();
+    expect(parseFloat(neptuneAnchor?.style.left ?? '')).toBeCloseTo(62.667, 2);
+    expect(parseFloat(neptuneAnchor?.style.top ?? '')).toBeCloseTo(80.58, 2);
+    expect(neptuneAnchor?.style.transform).toBe('translate(-50%, -50%)');
+    expect(neptuneLabel.style.transform).toContain('rotate(157.5deg)');
+    expect(neptuneLabel.style.color).toBe('rgb(2, 6, 23)');
+    expect(neptuneLabel.style.borderColor).toBe('rgb(255, 255, 255)');
   });
 });
