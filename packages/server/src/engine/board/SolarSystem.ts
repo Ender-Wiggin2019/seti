@@ -373,6 +373,9 @@ export class SolarSystem {
         (element) => !(element.planet === planet && element.amount > 0),
       );
     }
+    targetSpace.elements = targetSpace.elements.filter(
+      (element) => element.type !== ESolarSystemElementType.NULL,
+    );
 
     targetSpace.elements.push({
       type: planetElementType,

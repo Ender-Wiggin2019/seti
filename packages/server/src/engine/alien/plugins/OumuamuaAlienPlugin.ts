@@ -1,9 +1,16 @@
+import {
+  createSolarSystemWheelsWithOumuamua,
+  getOumuamuaSolarSystemSpaceId,
+} from '@seti/common/constant/sectorSetup';
+import type { ESector } from '@seti/common/types/element';
 import { EAlienType, EPlanet, ETrace } from '@seti/common/types/protocol/enums';
 import type { IMarkSectorSignalResult } from '@/engine/effects/scan/MarkSectorSignalEffect.js';
 import type { IGame } from '../../IGame.js';
 import type { PlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
+import { EMissionEventType } from '../../missions/IMission.js';
 import type { IPlayer } from '../../player/IPlayer.js';
+import { EPieceType } from '../../player/Pieces.js';
 import type { AlienBoard, ITraceSlot } from '../AlienBoard.js';
 import type { IAlienPlugin } from '../IAlienPlugin.js';
 
@@ -39,23 +46,15 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
     game: IGame,
     _discoverers: IPlayer[],
   ): PlayerInput | undefined {
-    const board = game.alienState.getBoardByType(EAlienType.OUMUAMUA);
+    const board = game.alienState?.getBoardByType(EAlienType.OUMUAMUA);
     if (!board) return undefined;
     if (this.getMeta(board) !== null) return undefined;
 
-    const preferred = this.findPreferredSpace(game);
-    if (!preferred) return undefined;
-
-    game.solarSystem?.setDynamicPlanetAtSpace(
-      EPlanet.OUMUAMUA,
-      preferred.spaceId,
-      {
-        grantVisitPublicity: true,
-      },
-    );
+    const placement = this.placeOumuamuaPlanet(game);
+    if (!placement) return undefined;
 
     board.addSlot({
-      slotId: `alien-${board.alienIndex}-${OUMUAMUA_META_PREFIX}|${preferred.spaceId}|${preferred.sectorId}`,
+      slotId: `alien-${board.alienIndex}-${OUMUAMUA_META_PREFIX}|${placement.spaceId}|${placement.sectorId}`,
       alienIndex: board.alienIndex,
       traceColor: ETrace.ANY,
       maxOccupants: 0,
@@ -107,7 +106,7 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
 
     const playerIdsOnSpace =
       game.solarSystem
-        ?.getProbesAt(preferred.spaceId)
+        ?.getProbesAt(placement.spaceId)
         .map((probe) => probe.playerId) ?? [];
     for (const playerId of new Set(playerIdsOnSpace)) {
       const player = game.players.find(
@@ -148,14 +147,16 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
       result: IMarkSectorSignalResult | null,
     ) => PlayerInput | undefined,
   ): PlayerInput | undefined {
-    const board = game.alienState.getBoardByType(EAlienType.OUMUAMUA);
+    const board = game.alienState?.getBoardByType(EAlienType.OUMUAMUA);
     if (!board || !board.discovered) {
-      return onComplete?.(markSector());
+      const result = markSector();
+      return onComplete?.(result);
     }
 
-    const meta = this.getMeta(board);
-    if (!meta || meta.sectorId !== sectorId) {
-      return onComplete?.(markSector());
+    const currentSector = this.getCurrentSector(game);
+    if (!this.getMeta(board) || currentSector?.id !== sectorId) {
+      const result = markSector();
+      return onComplete?.(result);
     }
 
     return new SelectOption(
@@ -164,7 +165,10 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
         {
           id: 'oumuamua-sector',
           label: 'Mark sector',
-          onSelect: () => onComplete?.(markSector()),
+          onSelect: () => {
+            const result = markSector();
+            return onComplete?.(result);
+          },
         },
         {
           id: 'oumuamua-tile',
@@ -180,7 +184,7 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
   }
 
   public markTileSignal(player: IPlayer, game: IGame): void {
-    const board = game.alienState.getBoardByType(EAlienType.OUMUAMUA);
+    const board = game.alienState?.getBoardByType(EAlienType.OUMUAMUA);
     if (!board) return;
 
     const markerSlot = this.getMarkerSlot(board);
@@ -188,11 +192,20 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
     if (!markerSlot || !dataSlot) return;
     if (dataSlot.occupants.length <= 0) return;
 
+    player.pieces.deploy(EPieceType.SECTOR_MARKER);
     markerSlot.occupants.push({
       source: { playerId: player.id },
       traceColor: ETrace.ANY,
     });
     dataSlot.occupants.pop();
+
+    const currentSector = this.getCurrentSector(game);
+    if (currentSector) {
+      game.missionTracker.recordEvent({
+        type: EMissionEventType.SIGNAL_PLACED,
+        color: currentSector.color,
+      });
+    }
 
     const markerCount = markerSlot.occupants.length;
     if (markerCount === 1) {
@@ -207,7 +220,7 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
   }
 
   public getRuntimeState(game: IGame): IOumuamuaRuntimeState | null {
-    const board = game.alienState.getBoardByType(EAlienType.OUMUAMUA);
+    const board = game.alienState?.getBoardByType(EAlienType.OUMUAMUA);
     if (!board) return null;
 
     return {
@@ -222,7 +235,7 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
   }
 
   public getTileMarkerCountByPlayer(game: IGame, playerId: string): number {
-    const board = game.alienState.getBoardByType(EAlienType.OUMUAMUA);
+    const board = game.alienState?.getBoardByType(EAlienType.OUMUAMUA);
     if (!board) return 0;
     const markerSlot = this.getMarkerSlot(board);
     if (!markerSlot) return 0;
@@ -231,30 +244,37 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
     ).length;
   }
 
-  private findPreferredSpace(
+  private placeOumuamuaPlanet(
     game: IGame,
   ): { spaceId: string; sectorId: string } | null {
     if (!game.solarSystem || game.sectors.length <= 0) return null;
-    const jupiterSector = game.solarSystem.getSectorIndexOfPlanet(
-      EPlanet.JUPITER,
-    );
-    if (jupiterSector === null) return null;
 
-    // Placement rule: Oumuamua is 2 sectors clockwise from Jupiter.
-    const targetSectorIndex = (jupiterSector + 2) % game.sectors.length;
-    const sector = game.sectors[targetSectorIndex];
+    const ringRotation =
+      game.solarSystem.discs[2]?.currentRotation ??
+      game.solarSystemSetup?.initialDiscAngles[2] ??
+      0;
+    const spaceId = getOumuamuaSolarSystemSpaceId(ringRotation);
+    const sectorIndex = game.solarSystem.getSectorIndexOfSpace(spaceId);
+    if (sectorIndex === null) return null;
+
+    const sector = game.sectors[sectorIndex];
     if (!sector) return null;
 
-    const candidateSpaces = game.solarSystem
-      .getSpacesInSector(targetSectorIndex)
-      .filter((space) => this.isTraversableSpace(space));
-    const preferred =
-      candidateSpaces.find((space) => space.discIndex === 2) ??
-      candidateSpaces[0];
-    if (!preferred) return null;
+    if (game.solarSystemSetup) {
+      game.solarSystemSetup = {
+        ...game.solarSystemSetup,
+        wheels: createSolarSystemWheelsWithOumuamua(
+          game.solarSystemSetup.wheels,
+        ),
+      };
+    }
+
+    game.solarSystem.setDynamicPlanetAtSpace(EPlanet.OUMUAMUA, spaceId, {
+      grantVisitPublicity: true,
+    });
 
     return {
-      spaceId: preferred.id,
+      spaceId,
       sectorId: sector.id,
     };
   }
@@ -286,6 +306,19 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
     return board.slots.find((slot) =>
       slot.slotId.includes(OUMUAMUA_EXOFOSSIL_SUPPLY),
     );
+  }
+
+  private getCurrentSector(game: IGame): { id: string; color: ESector } | null {
+    const sectorIndex = game.solarSystem?.getSectorIndexOfPlanet(
+      EPlanet.OUMUAMUA,
+    );
+    if (sectorIndex === undefined || sectorIndex === null) return null;
+    const sector = game.sectors[sectorIndex];
+    if (!sector) return null;
+    return {
+      id: sector.id,
+      color: sector.color,
+    };
   }
 
   private addTraceColumn(board: AlienBoard, color: ETrace): void {
@@ -381,31 +414,33 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
     return cost;
   }
 
-  private isTraversableSpace(space: {
-    elements: Array<{ type: string; amount: number }>;
-  }): boolean {
-    return !space.elements.some((el) => el.type === 'NULL' && el.amount > 0);
-  }
-
   private resolveTileCompletion(game: IGame, board: AlienBoard): void {
     const markerSlot = this.getMarkerSlot(board);
     const dataSlot = this.getDataSlot(board);
     const supplySlot = this.getSupplySlot(board);
     if (!markerSlot || !dataSlot) return;
 
-    const markerOwners = [
-      ...new Set(
-        markerSlot.occupants
-          .map((occ) => (occ.source === 'neutral' ? null : occ.source.playerId))
-          .filter((id): id is string => id !== null),
-      ),
-    ];
+    const markerCountsByPlayer = new Map<string, number>();
+    for (const occupant of markerSlot.occupants) {
+      if (occupant.source === 'neutral') continue;
+      markerCountsByPlayer.set(
+        occupant.source.playerId,
+        (markerCountsByPlayer.get(occupant.source.playerId) ?? 0) + 1,
+      );
+    }
 
-    for (const playerId of markerOwners) {
+    for (const [playerId, markerCount] of markerCountsByPlayer.entries()) {
       const player = game.players.find(
         (candidate) => candidate.id === playerId,
       );
       if (!player) continue;
+      const toReturn = Math.min(
+        markerCount,
+        player.pieces.deployed(EPieceType.SECTOR_MARKER),
+      );
+      for (let i = 0; i < toReturn; i += 1) {
+        player.pieces.return(EPieceType.SECTOR_MARKER);
+      }
       if (supplySlot && supplySlot.occupants.length > 0) {
         supplySlot.occupants.pop();
       }

@@ -1,23 +1,51 @@
+import { getOumuamuaSolarSystemSpaceId } from '@seti/common/constant/sectorSetup';
 import { EAlienType, EPlanet, ETrace } from '@seti/common/types/protocol/enums';
 import {
   EPlayerInputType,
   type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
+import { vi } from 'vitest';
 import { AlienState } from '@/engine/alien/AlienState.js';
 import { OumuamuaAlienPlugin } from '@/engine/alien/plugins/OumuamuaAlienPlugin.js';
 import { LandProbeEffect } from '@/engine/effects/probe/LandProbeEffect.js';
 import { OrbitProbeEffect } from '@/engine/effects/probe/OrbitProbeEffect.js';
 import { Game } from '@/engine/Game.js';
+import { EMissionEventType } from '@/engine/missions/IMission.js';
+import { EPieceType } from '@/engine/player/Pieces.js';
 import { Player } from '@/engine/player/Player.js';
-import { resolveSetupTucks } from '../../../helpers/TestGameBuilder.js';
+import {
+  resolveSetupTucks,
+  setSolarSystemInitialDiscAngles,
+} from '../../../helpers/TestGameBuilder.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
   { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
 ] as const;
 
-function createGame(seed: string): { game: Game; p1: Player; p2: Player } {
-  const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
+const TEST_PLAYERS_3P = [
+  { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
+  { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
+  { id: 'p3', name: 'Carol', color: 'green', seatIndex: 2 },
+] as const;
+
+function createGame(
+  seed: string,
+  options: {
+    players?: typeof TEST_PLAYERS | typeof TEST_PLAYERS_3P;
+    initialDiscAngles?: [number, number, number];
+  } = {},
+): { game: Game; p1: Player; p2: Player; p3?: Player } {
+  const players = options.players ?? TEST_PLAYERS;
+  const game = Game.create(
+    players,
+    { playerCount: players.length },
+    seed,
+    seed,
+  );
+  if (options.initialDiscAngles) {
+    setSolarSystemInitialDiscAngles(game, options.initialDiscAngles);
+  }
   resolveSetupTucks(game);
   game.alienState = AlienState.createFromHiddenAliens([EAlienType.OUMUAMUA]);
   const board = game.alienState.getBoardByType(EAlienType.OUMUAMUA);
@@ -25,23 +53,18 @@ function createGame(seed: string): { game: Game; p1: Player; p2: Player } {
     throw new Error('expected oumuamua board');
   }
   board.discovered = true;
-  return { game, p1: game.players[0] as Player, p2: game.players[1] as Player };
+  return {
+    game,
+    p1: game.players[0] as Player,
+    p2: game.players[1] as Player,
+    p3: game.players[2] as Player | undefined,
+  };
 }
 
 function findExpectedOumuamuaSpaceId(game: Game): string {
   const ss = game.solarSystem;
   if (!ss) throw new Error('expected solar system');
-  const jupiterSector = ss.getSectorIndexOfPlanet(EPlanet.JUPITER);
-  if (jupiterSector === null) throw new Error('expected jupiter sector');
-  const targetSector = (jupiterSector + 2) % game.sectors.length;
-  const candidates = ss.getSpacesInSector(targetSector).filter(
-    (space) =>
-      !space.elements.some((el) => el.type === 'NULL' && el.amount > 0),
-  );
-  const preferred =
-    candidates.find((space) => space.discIndex === 2) ?? candidates[0];
-  if (!preferred) throw new Error('expected oumuamua target space');
-  return preferred.id;
+  return getOumuamuaSolarSystemSpaceId(ss.discs[2].currentRotation);
 }
 
 function findTraceSlotId(
@@ -69,6 +92,28 @@ describe('OumuamuaAlienPlugin', () => {
     expect(state?.meta).not.toBeNull();
     expect(state?.tileDataRemaining).toBe(3);
     expect(state?.exofossilSupplyRemaining).toBe(20);
+  });
+
+  it('places oumuamua on the fixed ring-3 wheel slot from the alien setup', () => {
+    const { game } = createGame('oumuamua-fixed-slot', {
+      initialDiscAngles: [0, 0, 0],
+    });
+    const plugin = new OumuamuaAlienPlugin();
+
+    plugin.onDiscover(game, []);
+    const state = plugin.getRuntimeState(game);
+
+    expect(state?.meta?.spaceId).toBe('ring-3-cell-3');
+    const location = game.solarSystem?.getPlanetLocation(EPlanet.OUMUAMUA);
+    expect(location?.space.id).toBe('ring-3-cell-3');
+    expect(
+      location?.space.elements.some((element) => element.type === 'NULL'),
+    ).toBe(false);
+    expect(game.solarSystemSetup?.wheels[3][2][1].cell).toEqual({
+      type: 'PLANET',
+      hasPublicityIcon: true,
+      planet: EPlanet.OUMUAMUA,
+    });
   });
 
   it('grants +1 publicity if a probe is already on the oumuamua space at discover', () => {
@@ -118,11 +163,66 @@ describe('OumuamuaAlienPlugin', () => {
     );
   });
 
+  it('uses oumuamua current sector after the solar system rotates', () => {
+    const { game, p1 } = createGame('oumuamua-rotating-sector', {
+      initialDiscAngles: [0, 0, 0],
+    });
+    const plugin = new OumuamuaAlienPlugin();
+    plugin.onDiscover(game, []);
+    const state = plugin.getRuntimeState(game);
+    if (!state?.meta) throw new Error('missing oumuamua meta');
+    const originalSectorId = state.meta.sectorId;
+    const solarSystem = game.solarSystem;
+    if (!solarSystem) throw new Error('expected solar system');
+
+    solarSystem.rotate(2);
+    const currentSectorIndex = solarSystem.getSectorIndexOfPlanet(
+      EPlanet.OUMUAMUA,
+    );
+    if (currentSectorIndex === null) {
+      throw new Error('expected current oumuamua sector');
+    }
+    const currentSector = game.sectors[currentSectorIndex];
+    expect(currentSector.id).not.toBe(originalSectorId);
+
+    const oldSectorMark = vi.fn(() => ({
+      sectorId: originalSectorId,
+      dataGained: false,
+      vpAwarded: 0,
+      completed: false,
+    }));
+    const oldSectorInput = plugin.createSectorOrTileSignalInput(
+      p1,
+      game,
+      originalSectorId,
+      oldSectorMark,
+    );
+    expect(oldSectorInput).toBeUndefined();
+    expect(oldSectorMark).toHaveBeenCalledOnce();
+
+    const currentSectorInput = plugin.createSectorOrTileSignalInput(
+      p1,
+      game,
+      currentSector.id,
+      () => {
+        throw new Error('should not auto-mark current oumuamua sector');
+      },
+    );
+    const model = currentSectorInput?.toModel() as
+      | ISelectOptionInputModel
+      | undefined;
+    expect(model?.type).toBe(EPlayerInputType.OPTION);
+    expect(model?.options.map((option) => option.id)).toEqual(
+      expect.arrayContaining(['oumuamua-sector', 'oumuamua-tile']),
+    );
+  });
+
   it('tile marking consumes one data and records marker owner', () => {
     const { game, p1 } = createGame('oumuamua-b3');
     const plugin = new OumuamuaAlienPlugin();
     plugin.onDiscover(game, []);
     const scoreBefore = p1.score;
+    const deployedBefore = p1.pieces.deployed(EPieceType.SECTOR_MARKER);
 
     plugin.markTileSignal(p1, game);
     const state = plugin.getRuntimeState(game);
@@ -130,12 +230,26 @@ describe('OumuamuaAlienPlugin', () => {
     expect(state?.tileDataRemaining).toBe(2);
     expect(state?.tileMarkerPlayerIds).toEqual([p1.id]);
     expect(p1.score).toBe(scoreBefore + 1);
+    expect(p1.pieces.deployed(EPieceType.SECTOR_MARKER)).toBe(
+      deployedBefore + 1,
+    );
+    expect(
+      game.missionTracker.hasTurnEvent(
+        (event) => event.type === EMissionEventType.SIGNAL_PLACED,
+      ),
+    ).toBe(true);
   });
 
   it('on tile completion, each marker owner gains exofossil and tile resets', () => {
     const { game, p1, p2 } = createGame('oumuamua-c1-c4');
     const plugin = new OumuamuaAlienPlugin();
     plugin.onDiscover(game, []);
+    const stateBefore = plugin.getRuntimeState(game);
+    if (!stateBefore?.meta) throw new Error('missing oumuamua meta');
+    const sector = game.sectors.find(
+      (s) => s.id === stateBefore.meta?.sectorId,
+    );
+    if (!sector) throw new Error('missing oumuamua sector');
     const p1Before = p1.exofossils;
     const p2Before = p2.exofossils;
 
@@ -148,6 +262,9 @@ describe('OumuamuaAlienPlugin', () => {
     expect(p2.exofossils).toBe(p2Before + 1);
     expect(state?.tileDataRemaining).toBe(3);
     expect(state?.tileMarkerPlayerIds).toEqual([]);
+    expect(p1.pieces.deployed(EPieceType.SECTOR_MARKER)).toBe(0);
+    expect(p2.pieces.deployed(EPieceType.SECTOR_MARKER)).toBe(0);
+    expect(sector.sectorWinners).toEqual([]);
   });
 
   it('second marker grants no score and third marker grants +2 score', () => {
@@ -195,10 +312,11 @@ describe('OumuamuaAlienPlugin', () => {
     if (!solarSystem) throw new Error('expected solar system');
 
     const adjacentId =
-      (solarSystem.adjacency.get(state.meta.spaceId) ?? []).find((spaceId) =>
-        !solarSystem
-          .getProbesAt(spaceId)
-          .some((probe) => probe.playerId === p1.id),
+      (solarSystem.adjacency.get(state.meta.spaceId) ?? []).find(
+        (spaceId) =>
+          !solarSystem
+            .getProbesAt(spaceId)
+            .some((probe) => probe.playerId === p1.id),
       ) ?? null;
     if (!adjacentId) throw new Error('expected adjacent space');
 
@@ -220,6 +338,70 @@ describe('OumuamuaAlienPlugin', () => {
     expect(LandProbeEffect.canExecute(p1, game, EPlanet.OUMUAMUA)).toBe(true);
     const land = LandProbeEffect.execute(p1, game, EPlanet.OUMUAMUA);
     expect(land.planet).toBe(EPlanet.OUMUAMUA);
+  });
+
+  it('orbiting oumuamua grants 10 VP, first-orbit alien card, and marks the oumuamua tile', () => {
+    const { game, p1 } = createGame('oumuamua-orbit-reward', {
+      initialDiscAngles: [0, 0, 0],
+    });
+    const plugin = new OumuamuaAlienPlugin();
+    plugin.onDiscover(game, []);
+    const board = game.alienState.getBoardByType(EAlienType.OUMUAMUA);
+    if (!board) throw new Error('expected oumuamua board');
+    board.faceUpAlienCardId = 'ET.21';
+    board.alienDeckDrawPile = ['ET.22'];
+
+    const state = plugin.getRuntimeState(game);
+    if (!state?.meta) throw new Error('missing oumuamua meta');
+    game.solarSystem?.placeProbe(p1.id, state.meta.spaceId);
+    p1.probesInSpace = 1;
+    const scoreBefore = p1.score;
+
+    const orbit = OrbitProbeEffect.execute(p1, game, EPlanet.OUMUAMUA);
+
+    expect(orbit.vpGained).toBe(10);
+    expect(p1.score).toBe(scoreBefore + 11);
+    expect(p1.hand).toContain('ET.21');
+    expect(plugin.getRuntimeState(game)?.tileDataRemaining).toBe(2);
+  });
+
+  it('landing on oumuamua grants 9 VP, 2 exofossils, and 3/2/1 first land data', () => {
+    const { game, p1, p2, p3 } = createGame('oumuamua-land-reward', {
+      players: TEST_PLAYERS_3P,
+      initialDiscAngles: [0, 0, 0],
+    });
+    if (!p3) throw new Error('expected p3');
+    const plugin = new OumuamuaAlienPlugin();
+    plugin.onDiscover(game, []);
+    const state = plugin.getRuntimeState(game);
+    if (!state?.meta) throw new Error('missing oumuamua meta');
+
+    const players = [p1, p2, p3];
+    const dataBefore = players.map((player) => player.resources.data);
+    const scoreBefore = players.map((player) => player.score);
+    const exoBefore = players.map((player) => player.exofossils);
+
+    for (const player of players) {
+      game.solarSystem?.placeProbe(player.id, state.meta.spaceId);
+      player.probesInSpace = 1;
+    }
+
+    const first = LandProbeEffect.execute(p1, game, EPlanet.OUMUAMUA);
+    const second = LandProbeEffect.execute(p2, game, EPlanet.OUMUAMUA);
+    const third = LandProbeEffect.execute(p3, game, EPlanet.OUMUAMUA);
+
+    expect([
+      first.firstLandDataGained,
+      second.firstLandDataGained,
+      third.firstLandDataGained,
+    ]).toEqual([3, 2, 1]);
+    for (const [index, player] of players.entries()) {
+      expect(player.score).toBe(scoreBefore[index] + 9);
+      expect(player.exofossils).toBe(exoBefore[index] + 2);
+    }
+    expect(
+      players.map((player, index) => player.resources.data - dataBefore[index]),
+    ).toEqual([3, 2, 1]);
   });
 
   it('creates 3 columns x 6 slots with expected repeatable top tier', () => {
@@ -270,9 +452,9 @@ describe('OumuamuaAlienPlugin', () => {
     const exoBefore = p1.exofossils;
     const publicityBefore = p1.resources.publicity;
 
-    expect(game.alienState.applyTraceToSlot(p1, game, tier4, ETrace.YELLOW)).toBe(
-      true,
-    );
+    expect(
+      game.alienState.applyTraceToSlot(p1, game, tier4, ETrace.YELLOW),
+    ).toBe(true);
     expect(game.alienState.applyTraceToSlot(p1, game, tier5, ETrace.BLUE)).toBe(
       true,
     );

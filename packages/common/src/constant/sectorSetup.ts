@@ -321,6 +321,47 @@ export function createDefaultSolarSystemWheels(): TSolarSystemWheels {
   };
 }
 
+export const OUMUAMUA_SOLAR_SYSTEM_WHEEL_POSITION = {
+  ringIndex: 3,
+  sourceBandIndex: 2,
+  // createWheelRow stores rulebook slot 1 at internal index 1.
+  sourceSlotIndex: 1,
+} as const;
+
+export function createSolarSystemWheelsWithOumuamua(
+  wheels: TSolarSystemWheels,
+): TSolarSystemWheels {
+  const nextWheels: TSolarSystemWheels = {
+    1: cloneWheelGrid(wheels[1]),
+    2: cloneWheelGrid(wheels[2]),
+    3: cloneWheelGrid(wheels[3]),
+    4: cloneWheelGrid(wheels[4]),
+  };
+  const slot =
+    nextWheels[OUMUAMUA_SOLAR_SYSTEM_WHEEL_POSITION.ringIndex][
+      OUMUAMUA_SOLAR_SYSTEM_WHEEL_POSITION.sourceBandIndex
+    ][OUMUAMUA_SOLAR_SYSTEM_WHEEL_POSITION.sourceSlotIndex];
+  slot.cell = {
+    type: 'PLANET',
+    hasPublicityIcon: true,
+    planet: EPlanet.OUMUAMUA,
+  };
+  slot.elements = [];
+  return nextWheels;
+}
+
+export function getOumuamuaSolarSystemSpaceId(ringRotation: number): string {
+  const { ringIndex, sourceSlotIndex } = OUMUAMUA_SOLAR_SYSTEM_WHEEL_POSITION;
+  const cellsPerSector = CELLS_PER_SECTOR_BY_RING[ringIndex];
+  const ringCellCount = SECTOR_COUNT * cellsPerSector;
+  const sourceIndex = sourceSlotIndex * cellsPerSector;
+  const normalizedRotation = normalizeDiscAngle(ringRotation);
+  const currentIndex =
+    (sourceIndex - normalizedRotation * cellsPerSector + ringCellCount) %
+    ringCellCount;
+  return formatSpaceId(ringIndex, currentIndex);
+}
+
 export function createDefaultSolarSystemExpandedMapCells(
   wheels: TSolarSystemWheels = createDefaultSolarSystemWheels(),
 ): ISolarSystemExpandedMapCell[] {
