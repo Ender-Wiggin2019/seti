@@ -1,4 +1,9 @@
-import { createDefaultSetupConfig } from '@seti/common/constant/sectorSetup';
+import {
+  createDefaultSetupConfig,
+  type ISolarSystemSetupConfig,
+  type ISolarSystemWheelCell,
+  type TSolarSystemWheels,
+} from '@seti/common/constant/sectorSetup';
 import { ESector } from '@seti/common/types/element';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -122,6 +127,36 @@ function createSectorsMock(): IPublicSector[] {
       }),
     );
   });
+}
+
+function createNullWheelCell(): ISolarSystemWheelCell {
+  return {
+    cell: { type: 'NULL', hasPublicityIcon: false },
+    elements: [],
+  };
+}
+
+function createTextModeLayerSetup(): ISolarSystemSetupConfig {
+  const setup = createDefaultSetupConfig();
+  const makeGrid = (wheel: keyof TSolarSystemWheels) =>
+    setup.wheels[wheel].map((row) => row.map(() => createNullWheelCell()));
+  const wheels = {
+    1: makeGrid(1),
+    2: makeGrid(2),
+    3: makeGrid(3),
+    4: makeGrid(4),
+  } as TSolarSystemWheels;
+
+  wheels[2][0][1] = {
+    cell: { type: 'ASTEROID', hasPublicityIcon: false },
+    elements: [],
+  };
+  wheels[4][0][1] = {
+    cell: { type: 'COMET', hasPublicityIcon: true },
+    elements: [],
+  };
+
+  return { ...setup, wheels };
 }
 
 describe('SolarSystemView', () => {
@@ -300,14 +335,15 @@ describe('SolarSystemView', () => {
     expect(parseFloat(neptuneHotspot.style.top)).toBeCloseTo(77.388, 3);
   });
 
-  it('renders one text label per expanded server visual slot', () => {
+  it('renders text mode cells from setup wheel layers and skips null cells', () => {
     useDebugStore.setState({ textMode: true });
+    const layeredSetup = createTextModeLayerSetup();
 
     render(
       <SolarSystemView
         solarSystem={createExpandedOuterRingMock()}
         sectors={createSectorsMock()}
-        setupConfig={defaultSetup}
+        setupConfig={layeredSetup}
         pendingInput={null}
         playerColors={{}}
         myPlayerId='player-1'
@@ -317,8 +353,14 @@ describe('SolarSystemView', () => {
       />,
     );
 
-    expect(screen.getByText('neptune')).toBeInTheDocument();
-    expect(screen.getAllByText('empty')).toHaveLength(1);
+    const asteroid = screen.getByText('asteroid');
+    const comet = screen.getByText('comet');
+    expect(screen.queryByText('null')).not.toBeInTheDocument();
+    expect(asteroid.style.left).toBe(comet.style.left);
+    expect(asteroid.style.top).toBe(comet.style.top);
+    expect(Number(asteroid.style.zIndex)).toBeGreaterThan(
+      Number(comet.style.zIndex),
+    );
   });
 
   it('places text labels on the same wheel geometry as solar debug labels', () => {

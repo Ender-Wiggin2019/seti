@@ -7,4 +7,5 @@ export * from './movement';
 export * from './planet';
 export * from './sector';
 export * from './solarSystem';
+export * from './solarWheels';
 export * from './tech';

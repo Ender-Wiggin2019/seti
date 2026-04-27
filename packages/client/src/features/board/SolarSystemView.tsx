@@ -1,6 +1,13 @@
-import type { ISolarSystemSetupConfig } from '@seti/common/constant/sectorSetup';
-import { getReachableSpaces } from '@seti/common/rules';
-import { useMemo, useState } from 'react';
+import type {
+  ISolarSystemSetupConfig,
+  ISolarSystemWheelMapCell,
+  TSolarSystemWheelIndex,
+} from '@seti/common/constant/sectorSetup';
+import {
+  getReachableSpaces,
+  getSolarWheelCellAtBoard,
+} from '@seti/common/rules';
+import { type CSSProperties, useMemo, useState } from 'react';
 import { useTextMode } from '@/stores/debugStore';
 import type {
   IInputResponse,
@@ -34,13 +41,39 @@ const IMAGE_ALIGNMENT_OFFSET_CW_BY_RING: Readonly<
   4: 0,
 };
 const PROBE_TRANSITION_MS = 900;
-const TEXT_MODE_LABEL_Z_INDEX_BY_RING: Readonly<Record<1 | 2 | 3 | 4, number>> =
-  {
-    1: 75,
-    2: 74,
-    3: 73,
-    4: 72,
-  };
+const TEXT_MODE_LABEL_Z_INDEX_BY_WHEEL: Readonly<
+  Record<TSolarSystemWheelIndex, number>
+> = {
+  1: 75,
+  2: 74,
+  3: 73,
+  4: 72,
+};
+const TEXT_MODE_LABEL_STYLE_BY_WHEEL: Readonly<
+  Record<TSolarSystemWheelIndex, CSSProperties>
+> = {
+  1: {
+    backgroundColor: 'rgba(45, 87, 126, 0.95)',
+    borderColor: 'rgba(134, 192, 255, 0.72)',
+    color: 'rgb(235, 247, 255)',
+  },
+  2: {
+    backgroundColor: 'rgba(43, 63, 84, 0.93)',
+    borderColor: 'rgba(120, 154, 190, 0.62)',
+    color: 'rgb(222, 235, 248)',
+  },
+  3: {
+    backgroundColor: 'rgba(39, 48, 61, 0.91)',
+    borderColor: 'rgba(103, 119, 139, 0.58)',
+    color: 'rgb(204, 214, 228)',
+  },
+  4: {
+    backgroundColor: 'rgba(31, 35, 43, 0.9)',
+    borderColor: 'rgba(86, 94, 108, 0.55)',
+    color: 'rgb(184, 193, 207)',
+  },
+};
+const SOLAR_TEXT_WHEELS: ReadonlyArray<TSolarSystemWheelIndex> = [4, 3, 2, 1];
 
 export type TProbeInsetPxByRing = Readonly<Record<1 | 2 | 3 | 4, number>>;
 
@@ -148,10 +181,14 @@ function isExpandedServerRingIndex(
   return Boolean(ringIndex && ringIndex > 1 && state.indexInRing >= 8);
 }
 
-function textLabelPriority(label: string): number {
-  if (label === 'null') return 0;
-  if (label === 'empty') return 1;
-  return 2;
+function getTextModeCellLabel(cell: ISolarSystemWheelMapCell): string | null {
+  if (cell.type === 'NULL') {
+    return null;
+  }
+  if (cell.planet) {
+    return cell.planet.toLowerCase();
+  }
+  return cell.type.toLowerCase();
 }
 
 export function SolarSystemView({
@@ -282,79 +319,60 @@ export function SolarSystemView({
     return labels;
   }, [showSpaceConfigDebug, spacePoints, solarSystem.spaceStates]);
 
-  const textModeLabelBySpaceId = useMemo(() => {
-    if (!textMode) {
-      return undefined;
-    }
-
-    const labels: Record<string, string> = {};
-    for (const space of spacePoints) {
-      const state = solarSystem.spaceStates?.[space.spaceId];
-      if (!state) {
-        continue;
-      }
-
-      const primaryElement = state.elements?.[0];
-      const firstType = primaryElement?.type ?? state.elementTypes[0] ?? null;
-      if (!firstType) {
-        continue;
-      }
-
-      if (firstType === 'PLANET' && primaryElement?.planet) {
-        labels[space.spaceId] = primaryElement.planet.toLowerCase();
-        continue;
-      }
-
-      labels[space.spaceId] = firstType.toLowerCase();
-    }
-
-    return labels;
-  }, [textMode, spacePoints, solarSystem.spaceStates]);
-
   const textModeLabelItems = useMemo(() => {
-    if (!textMode || !textModeLabelBySpaceId) {
+    if (!textMode) {
       return [];
     }
 
-    const byVisualSlot = new Map<
-      string,
-      {
-        key: string;
-        label: string;
-        space: ISpacePoint;
-        xPercent: number;
-        yPercent: number;
-        priority: number;
-      }
-    >();
-    for (const space of spacePoints) {
-      const label = textModeLabelBySpaceId[space.spaceId];
-      if (!label) {
-        continue;
-      }
+    const discAngles = [
+      discAngleByRing[1],
+      discAngleByRing[2],
+      discAngleByRing[3],
+    ];
+    const items: Array<{
+      key: string;
+      label: string;
+      wheel: TSolarSystemWheelIndex;
+      boardRing: 1 | 2 | 3 | 4;
+      boardIndex: number;
+      xPercent: number;
+      yPercent: number;
+    }> = [];
 
-      const key = `${space.ringIndex}:${space.visualIndexInRing}`;
-      const priority = textLabelPriority(label);
-      const existing = byVisualSlot.get(key);
-      if (existing && existing.priority >= priority) {
-        continue;
-      }
+    for (const wheel of SOLAR_TEXT_WHEELS) {
+      for (let bandIndex = 0; bandIndex < 4; bandIndex += 1) {
+        const boardRing = (bandIndex + 1) as 1 | 2 | 3 | 4;
+        for (let boardIndex = 0; boardIndex < 8; boardIndex += 1) {
+          const cell = getSolarWheelCellAtBoard(
+            setupConfig.wheels,
+            wheel,
+            bandIndex,
+            boardIndex,
+            discAngles,
+          );
+          const label = getTextModeCellLabel(cell.cell);
+          if (!label) {
+            continue;
+          }
 
-      const labelPosition = getWheelSlotLabelBoardPositionPercent(
-        space.ringIndex,
-        space.visualIndexInRing,
-      );
-      byVisualSlot.set(key, {
-        key,
-        label,
-        space,
-        ...labelPosition,
-        priority,
-      });
+          const labelPosition = getWheelSlotLabelBoardPositionPercent(
+            boardRing,
+            boardIndex,
+          );
+          items.push({
+            key: `${wheel}:${bandIndex}:${boardIndex}`,
+            label,
+            wheel,
+            boardRing,
+            boardIndex,
+            ...labelPosition,
+          });
+        }
+      }
     }
 
-    return [...byVisualSlot.values()];
-  }, [textMode, textModeLabelBySpaceId, spacePoints]);
+    return items;
+  }, [textMode, setupConfig.wheels, discAngleByRing]);
 
   const probeView = useMemo(() => {
     const bySpacePlayers: Record<string, string[]> = {};
@@ -574,30 +592,21 @@ export function SolarSystemView({
         })}
 
         {textMode &&
-          ([4, 3, 2, 1] as const).map((ring) => (
-            <div
-              key={`text-mode-layer-${ring}`}
-              className='pointer-events-none absolute inset-0'
-              style={{ zIndex: TEXT_MODE_LABEL_Z_INDEX_BY_RING[ring] }}
+          textModeLabelItems.map((item) => (
+            <span
+              key={`text-mode-label-${item.key}`}
+              className='pointer-events-none absolute inline-flex h-[18px] w-[62px] items-center justify-center overflow-hidden rounded-sm border font-mono text-[9px] uppercase leading-none shadow-[0_1px_2px_rgba(0,0,0,0.65)]'
+              data-testid={`solar-text-cell-${item.key}`}
+              style={{
+                left: `${item.xPercent}%`,
+                top: `${item.yPercent}%`,
+                transform: 'translate(-50%, -50%)',
+                zIndex: TEXT_MODE_LABEL_Z_INDEX_BY_WHEEL[item.wheel],
+                ...TEXT_MODE_LABEL_STYLE_BY_WHEEL[item.wheel],
+              }}
             >
-              {textModeLabelItems
-                .filter((item) => item.space.ringIndex === ring)
-                .map((item) => {
-                  return (
-                    <span
-                      key={`text-mode-label-${item.key}`}
-                      className='absolute inline-flex h-[18px] w-[62px] items-center justify-center overflow-hidden rounded-sm border border-surface-500 bg-surface-900 font-mono text-[9px] uppercase leading-none text-text-100 shadow-[0_1px_2px_rgba(0,0,0,0.65)]'
-                      style={{
-                        left: `${item.xPercent}%`,
-                        top: `${item.yPercent}%`,
-                        transform: 'translate(-50%, -50%)',
-                      }}
-                    >
-                      {item.label}
-                    </span>
-                  );
-                })}
-            </div>
+              {item.label}
+            </span>
           ))}
 
         {probeView.renderItems.map((probe) => (
