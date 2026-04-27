@@ -4,8 +4,14 @@ import type {
   TSolarSystemWheelIndex,
 } from '@seti/common/constant/sectorSetup';
 import {
+  cellInSectorOf,
+  coordinateFromSpaceId,
+  SECTOR_COUNT,
+  sectorIndexOf,
+} from '@seti/common/constant/solarCoordinate';
+import {
   getReachableSpaces,
-  getSolarWheelCellAtBoard,
+  resolveTopVisibleSolarWheelCell,
 } from '@seti/common/rules';
 import { useMemo, useState } from 'react';
 import { cn } from '@/lib/cn';
@@ -47,8 +53,6 @@ const TEXT_MODE_LABEL_Z_INDEX_BY_WHEEL: Readonly<
   3: 73,
   4: 72,
 };
-const SOLAR_TEXT_WHEELS: ReadonlyArray<TSolarSystemWheelIndex> = [4, 3, 2, 1];
-
 export type TProbeInsetPxByRing = Readonly<Record<1 | 2 | 3 | 4, number>>;
 
 interface ISolarSystemViewProps {
@@ -59,6 +63,7 @@ interface ISolarSystemViewProps {
   playerColors: Record<string, string>;
   myPlayerId: string;
   movementPoints?: number;
+  moveModeActive?: boolean;
   onMoveProbe: (path: string[]) => void;
   onRespondInput: (response: IInputResponse) => void;
   showSpaceConfigDebug?: boolean;
@@ -70,10 +75,12 @@ interface ISpacePoint {
   spaceId: string;
   ringIndex: 1 | 2 | 3 | 4;
   indexInRing: number;
+  sectorIndex: number;
   cellInSector: number;
   visualIndexInRing: number;
   xPercent: number;
   yPercent: number;
+  rotationDeg: number;
 }
 
 interface IProbeRenderItem {
@@ -99,6 +106,15 @@ interface ITextModeSpaceLabel {
   kind: TTextModeSpaceLabelKind;
 }
 
+interface ITextModeLabelItem {
+  key: string;
+  label: ITextModeSpaceLabel;
+  styleLayer: TSolarSystemWheelIndex;
+  xPercent: number;
+  yPercent: number;
+  rotationDeg: number;
+}
+
 const TEXT_MODE_SPACE_STYLE_BY_RING: Readonly<
   Record<1 | 2 | 3 | 4, { borderColor: string; textColor: string }>
 > = {
@@ -107,15 +123,6 @@ const TEXT_MODE_SPACE_STYLE_BY_RING: Readonly<
   3: { borderColor: 'rgba(156,163,175,0.78)', textColor: '#cbd5e1' },
   4: { borderColor: 'rgba(100,116,139,0.72)', textColor: '#94a3b8' },
 };
-const TEXT_MODE_LABEL_RADIUS_PERCENT_BY_RING: Readonly<
-  Record<1 | 2 | 3 | 4, number>
-> = {
-  1: 12.4168,
-  2: 19.272,
-  3: 26.2756,
-  4: 33.1,
-};
-
 function tokenStackOffset(
   index: number,
   count: number,
@@ -148,22 +155,42 @@ function normalizeRingIndex(ringIndex: number): 1 | 2 | 3 | 4 | null {
   return null;
 }
 
+function normalizeAngleDeg(angleDeg: number): number {
+  return ((angleDeg % 360) + 360) % 360;
+}
+
 function spacePosition(
   ringIndex: 1 | 2 | 3 | 4,
-  indexInRing: number,
+  sectorIndex: number,
+  cellInSector: number,
+  cellsPerSector: number,
   spaceRadiiPercent: readonly number[],
   discAngle: number,
-): { xPercent: number; yPercent: number } {
-  const baseDirection = ((indexInRing % 8) + 8) % 8;
+): { xPercent: number; yPercent: number; rotationDeg: number } {
+  const safeCellsPerSector = Math.max(1, cellsPerSector);
+  const normalizedSectorIndex =
+    ((sectorIndex % SECTOR_COUNT) + SECTOR_COUNT) % SECTOR_COUNT;
+  const normalizedCellInSector =
+    ((cellInSector % safeCellsPerSector) + safeCellsPerSector) %
+    safeCellsPerSector;
+  const cellAngleDeg = 45 / safeCellsPerSector;
   const imageOffset = IMAGE_ALIGNMENT_OFFSET_CW_BY_RING[ringIndex] ?? 0;
   // WheelLayer renders disc angle N as rotate(-N * 45deg), so hotspots must
   // apply the same visual rotation direction as the wheel image.
-  const direction = (((baseDirection + imageOffset - discAngle) % 8) + 8) % 8;
+  const rotationDeg = normalizeAngleDeg(
+    (normalizedSectorIndex * safeCellsPerSector +
+      normalizedCellInSector +
+      0.5) *
+      cellAngleDeg +
+      imageOffset * 45 -
+      discAngle * 45,
+  );
   const radius = spaceRadiiPercent[ringIndex - 1] ?? spaceRadiiPercent[0] ?? 0;
-  const angle = (Math.PI / 4) * (direction + 0.5);
+  const angle = (rotationDeg * Math.PI) / 180;
   return {
     xPercent: 50 + Math.sin(angle) * radius,
     yPercent: 50 - Math.cos(angle) * radius,
+    rotationDeg,
   };
 }
 
@@ -219,15 +246,16 @@ function getTextModeCellLabel(
 function textModeCellPosition(
   ringIndex: 1 | 2 | 3 | 4,
   visualIndexInRing: number,
+  spaceRadiiPercent: readonly number[],
 ): { xPercent: number; yPercent: number; rotationDeg: number } {
-  const rotationDeg = (visualIndexInRing + 0.5) * 45;
-  const theta = (rotationDeg * Math.PI) / 180;
-  const radius = TEXT_MODE_LABEL_RADIUS_PERCENT_BY_RING[ringIndex];
-  return {
-    xPercent: 50 + Math.sin(theta) * radius,
-    yPercent: 50 - Math.cos(theta) * radius,
-    rotationDeg,
-  };
+  return spacePosition(
+    ringIndex,
+    visualIndexInRing,
+    0,
+    1,
+    spaceRadiiPercent,
+    0,
+  );
 }
 
 export function SolarSystemView({
@@ -238,6 +266,7 @@ export function SolarSystemView({
   playerColors,
   myPlayerId,
   movementPoints = 0,
+  moveModeActive = false,
   onMoveProbe,
   onRespondInput,
   showSpaceConfigDebug = false,
@@ -291,8 +320,9 @@ export function SolarSystemView({
 
       let ringIndex = fallbackRing;
       let indexInRing = fallbackIndexInRing;
-      let cellInSector = fallbackIndexInRing % fallbackRing;
-      let positionIndexInRing = fallbackIndexInRing;
+      let sectorIndex = fallbackIndexInRing;
+      let cellInSector = 0;
+      let cellsPerSector = 1;
       let isStateBackedPosition = false;
 
       if (state) {
@@ -303,18 +333,42 @@ export function SolarSystemView({
         if (normalizedRingIndex) {
           ringIndex = normalizedRingIndex;
           indexInRing = state.indexInRing;
-          cellInSector = state.cellInSector ?? state.indexInRing % ringIndex;
-          positionIndexInRing = usesExpandedRingIndexes
-            ? Math.floor(state.indexInRing / normalizedRingIndex)
-            : ((state.indexInRing % 8) + 8) % 8;
+          if (usesExpandedRingIndexes) {
+            sectorIndex =
+              state.sectorIndex ??
+              sectorIndexOf(normalizedRingIndex, state.indexInRing);
+            cellInSector =
+              state.cellInSector ??
+              cellInSectorOf(normalizedRingIndex, state.indexInRing);
+            cellsPerSector = normalizedRingIndex;
+          } else {
+            sectorIndex = ((state.indexInRing % 8) + 8) % 8;
+          }
           isStateBackedPosition = true;
         }
+      } else {
+        const coord = coordinateFromSpaceId(spaceId);
+        if (coord) {
+          ringIndex = coord.ringIndex;
+          indexInRing = coord.indexInRing;
+          sectorIndex = coord.sectorIndex;
+          cellInSector = coord.cellInSector;
+          cellsPerSector = coord.ringIndex;
+          isStateBackedPosition = true;
+        }
+      }
+
+      if (textMode) {
+        cellInSector = 0;
+        cellsPerSector = 1;
       }
 
       const discAngle = isStateBackedPosition ? 0 : discAngleByRing[ringIndex];
       const pos = spacePosition(
         ringIndex,
-        positionIndexInRing,
+        sectorIndex,
+        cellInSector,
+        cellsPerSector,
         spaceRadiiPercent,
         discAngle,
       );
@@ -322,8 +376,9 @@ export function SolarSystemView({
         spaceId,
         ringIndex,
         indexInRing,
+        sectorIndex,
         cellInSector,
-        visualIndexInRing: positionIndexInRing,
+        visualIndexInRing: sectorIndex * cellsPerSector + cellInSector,
         ...pos,
       };
     });
@@ -332,6 +387,7 @@ export function SolarSystemView({
     solarSystem.spaceStates,
     spaceRadiiPercent,
     discAngleByRing,
+    textMode,
   ]);
 
   const debugLabelsBySpaceId = useMemo(() => {
@@ -361,7 +417,7 @@ export function SolarSystemView({
     return labels;
   }, [showSpaceConfigDebug, spacePoints, solarSystem.spaceStates]);
 
-  const textModeLabelItems = useMemo(() => {
+  const textModeLabelItems = useMemo<ITextModeLabelItem[]>(() => {
     if (!textMode) {
       return [];
     }
@@ -371,48 +427,42 @@ export function SolarSystemView({
       discAngleByRing[2],
       discAngleByRing[3],
     ];
-    const items: Array<{
-      key: string;
-      label: ITextModeSpaceLabel;
-      wheel: TSolarSystemWheelIndex;
-      boardRing: 1 | 2 | 3 | 4;
-      boardIndex: number;
-      xPercent: number;
-      yPercent: number;
-      rotationDeg: number;
-    }> = [];
+    const items: ITextModeLabelItem[] = [];
 
-    for (const wheel of SOLAR_TEXT_WHEELS) {
-      for (let bandIndex = 0; bandIndex < 4; bandIndex += 1) {
-        const boardRing = (bandIndex + 1) as 1 | 2 | 3 | 4;
-        for (let boardIndex = 0; boardIndex < 8; boardIndex += 1) {
-          const cell = getSolarWheelCellAtBoard(
-            setupConfig.wheels,
-            wheel,
-            bandIndex,
-            boardIndex,
-            discAngles,
-          );
-          const label = getTextModeCellLabel(cell.cell);
-          if (!label) {
-            continue;
-          }
-
-          const labelPosition = textModeCellPosition(boardRing, boardIndex);
-          items.push({
-            key: `${wheel}:${bandIndex}:${boardIndex}`,
-            label,
-            wheel,
-            boardRing,
-            boardIndex,
-            ...labelPosition,
-          });
+    for (let bandIndex = 0; bandIndex < 4; bandIndex += 1) {
+      const boardRing = (bandIndex + 1) as 1 | 2 | 3 | 4;
+      for (let boardIndex = 0; boardIndex < 8; boardIndex += 1) {
+        const visible = resolveTopVisibleSolarWheelCell(
+          setupConfig.wheels,
+          bandIndex,
+          boardIndex,
+          discAngles,
+        );
+        if (!visible) {
+          continue;
         }
+
+        const label = getTextModeCellLabel(visible.cell.cell);
+        if (!label) {
+          continue;
+        }
+
+        const labelPosition = textModeCellPosition(
+          boardRing,
+          boardIndex,
+          spaceRadiiPercent,
+        );
+        items.push({
+          key: `${visible.wheel}:${bandIndex}:${boardIndex}`,
+          label,
+          styleLayer: visible.wheel,
+          ...labelPosition,
+        });
       }
     }
 
     return items;
-  }, [textMode, setupConfig.wheels, discAngleByRing]);
+  }, [textMode, setupConfig.wheels, discAngleByRing, spaceRadiiPercent]);
 
   const probeView = useMemo(() => {
     const bySpacePlayers: Record<string, string[]> = {};
@@ -481,12 +531,76 @@ export function SolarSystemView({
     );
   }, [selectedSpaceId, movementPoints, solarSystem]);
 
+  const activeMovePathBySpaceId = useMemo(() => {
+    if (!moveModeActive || movementPoints <= 0) {
+      return new Map<string, { movementCost: number; path: string[] }>();
+    }
+
+    const paths = new Map<string, { movementCost: number; path: string[] }>();
+    for (const probe of solarSystem.probes) {
+      if (!allowMoveAnyProbe && probe.playerId !== myPlayerId) {
+        continue;
+      }
+
+      for (const reachableSpace of getReachableSpaces(
+        solarSystem,
+        probe.spaceId,
+        movementPoints,
+      )) {
+        const known = paths.get(reachableSpace.spaceId);
+        if (known && known.movementCost <= reachableSpace.movementCost) {
+          continue;
+        }
+        paths.set(reachableSpace.spaceId, {
+          movementCost: reachableSpace.movementCost,
+          path: reachableSpace.path,
+        });
+      }
+    }
+
+    return paths;
+  }, [
+    allowMoveAnyProbe,
+    moveModeActive,
+    movementPoints,
+    myPlayerId,
+    solarSystem,
+  ]);
+
+  const visibleReachablePathBySpaceId = useMemo(() => {
+    if (selectedSpaceId) {
+      return reachablePathBySpaceId;
+    }
+
+    if (!moveModeActive) {
+      return new Map<string, string[]>();
+    }
+
+    return new Map(
+      [...activeMovePathBySpaceId.entries()].map(
+        ([spaceId, entry]) => [spaceId, entry.path] as const,
+      ),
+    );
+  }, [
+    activeMovePathBySpaceId,
+    moveModeActive,
+    reachablePathBySpaceId,
+    selectedSpaceId,
+  ]);
+
   const reachable = useMemo(
-    () => new Set(reachablePathBySpaceId.keys()),
-    [reachablePathBySpaceId],
+    () => new Set(visibleReachablePathBySpaceId.keys()),
+    [visibleReachablePathBySpaceId],
   );
 
   function handleSpaceClick(spaceId: string): void {
+    const activeMovePath = visibleReachablePathBySpaceId.get(spaceId);
+    if (activeMovePath) {
+      onMoveProbe(activeMovePath);
+      setSelectedSpaceId(moveModeActive ? null : spaceId);
+      return;
+    }
+
     const hasMyProbe = (probeView.bySpacePlayers[spaceId] ?? []).includes(
       myPlayerId,
     );
@@ -497,12 +611,12 @@ export function SolarSystemView({
     }
 
     if (selectedSpaceId) {
-      const path = reachablePathBySpaceId.get(spaceId);
+      const path = visibleReachablePathBySpaceId.get(spaceId);
       if (!path) {
         return;
       }
       onMoveProbe(path);
-      setSelectedSpaceId(spaceId);
+      setSelectedSpaceId(moveModeActive ? null : spaceId);
     }
   }
 
@@ -617,6 +731,7 @@ export function SolarSystemView({
             >
               {(isSelected || isReachable || hasMyProbe) && (
                 <span
+                  data-reachable-indicator={isReachable ? 'true' : undefined}
                   className={[
                     'absolute inset-0 rounded-full',
                     isSelected
@@ -633,7 +748,7 @@ export function SolarSystemView({
 
         {textMode &&
           textModeLabelItems.map((item) => {
-            const layerStyle = TEXT_MODE_SPACE_STYLE_BY_RING[item.wheel];
+            const layerStyle = TEXT_MODE_SPACE_STYLE_BY_RING[item.styleLayer];
             const isPlanetLabel =
               item.label.kind === 'planet' || item.label.kind === 'earth';
             return (
@@ -645,25 +760,31 @@ export function SolarSystemView({
                   left: `${item.xPercent}%`,
                   top: `${item.yPercent}%`,
                   transform: 'translate(-50%, -50%)',
-                  zIndex: TEXT_MODE_LABEL_Z_INDEX_BY_WHEEL[item.wheel],
+                  zIndex: TEXT_MODE_LABEL_Z_INDEX_BY_WHEEL[item.styleLayer],
                 }}
               >
                 <span
                   className={cn(
-                    'inline-flex h-[18px] w-[58px] items-center justify-center overflow-hidden rounded-sm border font-mono text-[8px] uppercase leading-none shadow-[0_1px_2px_rgba(0,0,0,0.65)]',
+                    'inline-flex h-[16px] w-[38px] items-center justify-center overflow-hidden rounded-sm border font-mono text-[7px] uppercase leading-none shadow-[0_1px_2px_rgba(0,0,0,0.65)]',
                     item.label.kind === 'empty'
-                      ? 'bg-transparent text-transparent'
-                      : isPlanetLabel
-                        ? 'bg-white'
-                        : 'border-surface-500 bg-surface-900 text-text-100',
+                      ? 'border-surface-500 bg-surface-950 text-transparent'
+                      : 'border-surface-500 bg-surface-900 text-text-100',
+                    isPlanetLabel && 'font-bold',
                   )}
                   style={{
                     transform: `rotate(${item.rotationDeg}deg)`,
                     transformOrigin: 'center',
-                    borderColor: isPlanetLabel
-                      ? '#ffffff'
-                      : layerStyle.borderColor,
-                    color: isPlanetLabel ? '#020617' : layerStyle.textColor,
+                    backgroundColor:
+                      item.label.kind === 'empty'
+                        ? 'rgba(2, 6, 23, 0.96)'
+                        : undefined,
+                    borderColor: layerStyle.borderColor,
+                    color:
+                      item.label.kind === 'empty'
+                        ? 'transparent'
+                        : isPlanetLabel
+                          ? '#ffffff'
+                          : layerStyle.textColor,
                   }}
                 >
                   {item.label.label}

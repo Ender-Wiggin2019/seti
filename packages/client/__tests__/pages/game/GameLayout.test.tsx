@@ -276,6 +276,21 @@ describe('GameLayout', () => {
       expect(screen.getByTestId('free-action-bar')).toBeInTheDocument();
     });
 
+    it('arms and ends movement mode from the free action bar', async () => {
+      mockContextValue = createMockContext({ isMyTurn: true });
+      await renderLayout();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Move Probe (1)' }));
+
+      expect(screen.getByTestId('movement-mode-hint')).toHaveTextContent(
+        '1 step',
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'End Move' }));
+
+      expect(screen.queryByTestId('movement-mode-hint')).not.toBeInTheDocument();
+    });
+
     it('hides free action bar when not my turn', async () => {
       mockContextValue = createMockContext({ isMyTurn: false });
       await renderLayout();

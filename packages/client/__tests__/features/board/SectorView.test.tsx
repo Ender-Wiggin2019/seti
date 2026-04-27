@@ -135,6 +135,20 @@ describe('SectorView', () => {
 
     expect(screen.getByText('procyon')).toBeInTheDocument();
     expect(screen.getByText('blue-signal')).toBeInTheDocument();
+    const firstSectorPanel = screen.getByTestId('sector-node-north-0')
+      .parentElement;
+    const firstSectorWrapper = firstSectorPanel?.parentElement;
+    expect(firstSectorPanel?.firstElementChild).toHaveTextContent('procyon');
+    expect(firstSectorPanel?.firstElementChild).toHaveTextContent('blue');
+    expect(parseFloat(firstSectorWrapper?.style.left ?? '')).toBeCloseTo(
+      66.074,
+      2,
+    );
+    expect(parseFloat(firstSectorWrapper?.style.top ?? '')).toBeCloseTo(
+      11.197,
+      2,
+    );
+    expect(firstSectorWrapper?.style.transform).toContain('rotate(22.5deg)');
     expect(screen.getAllByText('1st').length).toBeGreaterThan(0);
     expect(screen.getAllByText('2+').length).toBeGreaterThan(0);
     expect(screen.getByText('red-trace+2VP')).toBeInTheDocument();

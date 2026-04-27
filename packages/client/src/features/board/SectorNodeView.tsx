@@ -8,10 +8,12 @@ const DEFAULT_SECTOR_SIGNAL_STYLE = {
   dataSize: 21,
   circleSize: 24,
 } as const;
+const TEXT_MODE_SECTOR_RADIUS_PERCENT = 42;
 
 interface ISectorNodeViewProps {
   sector: IPublicSector;
   index: 0 | 1;
+  sectorIndex: number;
   position: string;
   sectorName: string;
   playerColors: Record<string, string>;
@@ -25,6 +27,27 @@ interface ISectorNodeViewProps {
 
 function formatSectorName(name: string): string {
   return name.replaceAll('-', ' ');
+}
+
+function normalizeRotationDeg(rotationDeg: number): number {
+  const normalized = ((rotationDeg % 360) + 360) % 360;
+  return normalized > 180 ? normalized - 360 : normalized;
+}
+
+function getTextModeSectorPosition(sectorIndex: number): {
+  xPercent: number;
+  yPercent: number;
+  rotationDeg: number;
+} {
+  const normalizedSectorIndex = ((sectorIndex % 8) + 8) % 8;
+  const rotationDeg = (normalizedSectorIndex + 0.5) * 45;
+  const theta = (rotationDeg * Math.PI) / 180;
+
+  return {
+    xPercent: 50 + Math.sin(theta) * TEXT_MODE_SECTOR_RADIUS_PERCENT,
+    yPercent: 50 - Math.cos(theta) * TEXT_MODE_SECTOR_RADIUS_PERCENT,
+    rotationDeg: normalizeRotationDeg(rotationDeg),
+  };
 }
 
 function formatBonus(bonus: IPublicSector['firstWinnerBonus']): string {
@@ -126,6 +149,7 @@ function WinnerBonus({
 export function SectorNodeView({
   sector,
   index,
+  sectorIndex,
   position,
   sectorName,
   playerColors,
@@ -165,17 +189,18 @@ export function SectorNodeView({
   }
 
   if (textMode) {
+    const textPosition = getTextModeSectorPosition(sectorIndex);
+
     return (
       <div
         key={`${position}-${sector.sectorId}`}
         className='absolute'
         style={{
-          left: xPos,
-          top: '50%',
+          left: `${textPosition.xPercent}%`,
+          top: `${textPosition.yPercent}%`,
           transform: [
             'translate(-50%, -50%)',
-            `translate(var(--sector-sig-x-${index}, ${style.sigX}px), var(--sector-sig-y-${index}, ${style.sigY}px))`,
-            `rotate(var(--sector-sig-rot-${index}, ${style.sigRot}deg))`,
+            `rotate(${textPosition.rotationDeg}deg)`,
           ].join(' '),
           transformOrigin: 'center',
         }}
@@ -193,6 +218,21 @@ export function SectorNodeView({
                 : 'polygon(0 0, 96% 8%, 100% 92%, 6% 100%)',
           }}
         >
+          <div className='w-full text-center uppercase leading-tight'>
+            <div className='truncate text-[8px] font-bold text-text-100'>
+              {formatSectorName(sectorName)}
+            </div>
+            <div className='mt-0.5 flex items-center justify-center gap-1 text-[7px] text-text-300'>
+              <span>{sector.color}</span>
+              <span>
+                {remainingData}/{dataCapability}
+              </span>
+              {sector.sectorWinners.length > 0 ? (
+                <span>W{sector.sectorWinners.length}</span>
+              ) : null}
+            </div>
+          </div>
+
           <div className='grid w-full grid-cols-2 gap-1'>
             {bonusesAreSame ? (
               <WinnerBonus
@@ -215,21 +255,6 @@ export function SectorNodeView({
             {signalIndexes.map((slotIndex) =>
               renderSignalDot(sector, playerColors, slotIndex, true),
             )}
-          </div>
-
-          <div className='w-full text-center uppercase leading-tight'>
-            <div className='truncate text-[8px] text-text-100'>
-              {formatSectorName(sectorName)}
-            </div>
-            <div className='mt-0.5 flex items-center justify-center gap-1 text-[7px] text-text-300'>
-              <span>{sector.color}</span>
-              <span>
-                {remainingData}/{dataCapability}
-              </span>
-              {sector.sectorWinners.length > 0 ? (
-                <span>W{sector.sectorWinners.length}</span>
-              ) : null}
-            </div>
           </div>
 
           <button

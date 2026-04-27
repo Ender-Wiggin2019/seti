@@ -19,7 +19,7 @@ describe('FreeActionBar', () => {
     );
 
     expect(
-      screen.getByRole('button', { name: 'Move Probe' }),
+      screen.getByRole('button', { name: 'Move Probe (1)' }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Complete Mission' }),
@@ -81,7 +81,9 @@ describe('FreeActionBar', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Move Probe' })).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Move Probe (0)' }),
+    ).toBeDisabled();
     expect(
       screen.getByRole('button', { name: 'Complete Mission' }),
     ).toBeDisabled();
@@ -99,7 +101,7 @@ describe('FreeActionBar', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Move Probe' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Move Probe (1)' }));
 
     expect(onActionClick).toHaveBeenCalledWith(EFreeAction.MOVEMENT);
   });

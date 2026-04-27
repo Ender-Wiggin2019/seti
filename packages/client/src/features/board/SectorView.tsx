@@ -24,6 +24,23 @@ function counterRotateTransform(position: string): string | undefined {
   return 'translate(-50%, 0)';
 }
 
+function getSectorIndexFromId(sectorId: string): number | null {
+  const match = /(\d+)$/.exec(sectorId);
+  if (!match) {
+    return null;
+  }
+
+  const sectorIndex = Number(match[1]);
+  return Number.isInteger(sectorIndex) ? sectorIndex : null;
+}
+
+function getFallbackSectorIndex(position: string, index: 0 | 1): number {
+  if (position === 'north') return index;
+  if (position === 'west') return index + 2;
+  if (position === 'east') return index + 4;
+  return index + 6;
+}
+
 export function SectorView({
   pair,
   playerColors,
@@ -68,22 +85,26 @@ export function SectorView({
       tabIndex={clickable ? 0 : -1}
       className={cn(
         'absolute transition-all duration-300',
-        clickable
-          ? 'pointer-events-auto cursor-pointer'
-          : 'pointer-events-none cursor-default',
+        textMode
+          ? 'pointer-events-none cursor-default'
+          : clickable
+            ? 'pointer-events-auto cursor-pointer'
+            : 'pointer-events-none cursor-default',
       )}
       style={{
-        ...positionStyle,
+        ...(textMode
+          ? { inset: '0', width: '100%', height: '100%' }
+          : positionStyle),
         transformOrigin: 'center',
       }}
       onClick={() => {
-        if (!clickable) {
+        if (!clickable || textMode) {
           return;
         }
         onClick();
       }}
       onKeyDown={(event) => {
-        if (!clickable) {
+        if (!clickable || textMode) {
           return;
         }
         if (event.key === 'Enter' || event.key === ' ') {
@@ -156,6 +177,14 @@ export function SectorView({
                 key={`${pair.placement.position}-${sector.sectorId}`}
                 sector={sector}
                 index={index as 0 | 1}
+                sectorIndex={
+                  getSectorIndexFromId(sector.sectorId) ??
+                  getSectorIndexFromId(pair.placement.sectorIds[index]) ??
+                  getFallbackSectorIndex(
+                    pair.placement.position,
+                    index as 0 | 1,
+                  )
+                }
                 position={pair.placement.position}
                 sectorName={String(sectorName)}
                 playerColors={playerColors}

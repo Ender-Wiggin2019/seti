@@ -82,7 +82,11 @@ export function FreeActionBar({
           <FreeActionButton
             key={action}
             action={action}
-            label={t(`client.free_action_bar.actions.${action}`)}
+            label={getFreeActionLabel(
+              action,
+              t(`client.free_action_bar.actions.${action}`),
+              myPlayer.movementPoints,
+            )}
             disabled={!available.has(action)}
             onClick={onActionClick}
           />
@@ -93,7 +97,11 @@ export function FreeActionBar({
               <FreeActionButton
                 key={action}
                 action={action}
-                label={t(`client.free_action_bar.actions.${action}`)}
+                label={getFreeActionLabel(
+                  action,
+                  t(`client.free_action_bar.actions.${action}`),
+                  myPlayer.movementPoints,
+                )}
                 disabled={!available.has(action)}
                 onClick={onActionClick}
               />
@@ -123,6 +131,18 @@ export function FreeActionBar({
       </div>
     </div>
   );
+}
+
+function getFreeActionLabel(
+  action: EFreeAction,
+  label: string,
+  movementPoints: number,
+): string {
+  if (action !== EFreeAction.MOVEMENT) {
+    return label;
+  }
+
+  return `${label} (${movementPoints})`;
 }
 
 function FreeActionButton({

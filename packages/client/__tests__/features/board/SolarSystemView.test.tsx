@@ -205,12 +205,29 @@ function createTextModeLayerSetup(): ISolarSystemSetupConfig {
     cell: { type: 'COMET', hasPublicityIcon: true },
     elements: [],
   };
+  wheels[4][1][0] = {
+    cell: { type: 'COMET', hasPublicityIcon: true },
+    elements: [],
+  };
   wheels[3][0][2] = {
     cell: { type: 'EMPTY', hasPublicityIcon: false },
     elements: [],
   };
 
   return { ...setup, wheels };
+}
+
+function getStylePolarAngle(element: HTMLElement): number {
+  const x = parseFloat(element.style.left) - 50;
+  const y = 50 - parseFloat(element.style.top);
+  const angle = (Math.atan2(x, y) * 180) / Math.PI;
+  return ((angle % 360) + 360) % 360;
+}
+
+function getStyleRadius(element: HTMLElement): number {
+  const x = parseFloat(element.style.left) - 50;
+  const y = 50 - parseFloat(element.style.top);
+  return Math.hypot(x, y);
 }
 
 describe('SolarSystemView', () => {
@@ -257,6 +274,34 @@ describe('SolarSystemView', () => {
 
     fireEvent.click(screen.getByTestId('solar-space-space-0'));
     fireEvent.click(screen.getByTestId('solar-space-space-1'));
+
+    expect(onMoveProbe).toHaveBeenCalledWith(['space-0', 'space-1']);
+  });
+
+  it('highlights and submits reachable cells when move mode is active', () => {
+    const onMoveProbe = vi.fn();
+
+    render(
+      <SolarSystemView
+        solarSystem={createSolarSystemMock()}
+        sectors={createSectorsMock()}
+        setupConfig={defaultSetup}
+        pendingInput={null}
+        playerColors={{ 'player-1': 'red' }}
+        myPlayerId='player-1'
+        movementPoints={1}
+        moveModeActive
+        onMoveProbe={onMoveProbe}
+        onRespondInput={vi.fn()}
+      />,
+    );
+
+    const reachableSpace = screen.getByTestId('solar-space-space-1');
+    expect(
+      reachableSpace.querySelector('[data-reachable-indicator="true"]'),
+    ).toBeInTheDocument();
+
+    fireEvent.click(reachableSpace);
 
     expect(onMoveProbe).toHaveBeenCalledWith(['space-0', 'space-1']);
   });
@@ -351,8 +396,92 @@ describe('SolarSystemView', () => {
     );
 
     const neptuneHotspot = screen.getByTestId('solar-space-ring-4-cell-8');
-    expect(parseFloat(neptuneHotspot.style.left)).toBeCloseTo(77.388, 3);
-    expect(parseFloat(neptuneHotspot.style.top)).toBeCloseTo(61.344, 3);
+    expect(parseFloat(neptuneHotspot.style.left)).toBeCloseTo(79.502, 3);
+    expect(parseFloat(neptuneHotspot.style.top)).toBeCloseTo(52.906, 3);
+  });
+
+  it('centers expanded cells as a group inside their sector', () => {
+    useDebugStore.setState({ textMode: true });
+
+    render(
+      <SolarSystemView
+        solarSystem={{
+          spaces: [
+            'ring-3-cell-15',
+            'ring-3-cell-16',
+            'ring-3-cell-17',
+          ],
+          adjacency: {
+            'ring-3-cell-15': [],
+            'ring-3-cell-16': [],
+            'ring-3-cell-17': [],
+          },
+          probes: [],
+          discs: [
+            { discIndex: 0, angle: 0 },
+            { discIndex: 1, angle: 0 },
+            { discIndex: 2, angle: 0 },
+          ],
+          nextRotateRing: 1,
+          spaceStates: {
+            'ring-3-cell-15': {
+              spaceId: 'ring-3-cell-15',
+              ringIndex: 3,
+              indexInRing: 15,
+              sectorIndex: 5,
+              cellInSector: 0,
+              hasPublicityIcon: false,
+              elementTypes: ['EMPTY'],
+              elements: [{ type: 'EMPTY' }],
+            },
+            'ring-3-cell-16': {
+              spaceId: 'ring-3-cell-16',
+              ringIndex: 3,
+              indexInRing: 16,
+              sectorIndex: 5,
+              cellInSector: 1,
+              hasPublicityIcon: false,
+              elementTypes: ['ASTEROID'],
+              elements: [{ type: 'ASTEROID' }],
+            },
+            'ring-3-cell-17': {
+              spaceId: 'ring-3-cell-17',
+              ringIndex: 3,
+              indexInRing: 17,
+              sectorIndex: 5,
+              cellInSector: 2,
+              hasPublicityIcon: false,
+              elementTypes: ['EMPTY'],
+              elements: [{ type: 'EMPTY' }],
+            },
+          },
+        }}
+        sectors={createSectorsMock()}
+        setupConfig={defaultSetup}
+        pendingInput={null}
+        playerColors={{}}
+        myPlayerId='player-1'
+        movementPoints={1}
+        onMoveProbe={vi.fn()}
+        onRespondInput={vi.fn()}
+      />,
+    );
+
+    const firstCell = screen.getByTestId('solar-space-ring-3-cell-15');
+    const centerCell = screen.getByTestId('solar-space-ring-3-cell-16');
+    const lastCell = screen.getByTestId('solar-space-ring-3-cell-17');
+    const sectorWrapper = screen.getByTestId('sector-node-east-1')
+      .parentElement?.parentElement as HTMLElement | null;
+
+    expect(sectorWrapper).not.toBeNull();
+    expect(getStylePolarAngle(firstCell)).toBeCloseTo(247.5, 1);
+    expect(getStylePolarAngle(centerCell)).toBeCloseTo(247.5, 1);
+    expect(getStylePolarAngle(lastCell)).toBeCloseTo(247.5, 1);
+    expect(getStylePolarAngle(sectorWrapper!)).toBeCloseTo(
+      getStylePolarAngle(centerCell),
+      1,
+    );
+    expect(screen.queryByTestId('solar-text-cell-ring-3-cell-17')).toBeNull();
   });
 
   it('uses the same visual slot origin as solar debug wheel labels', () => {
@@ -388,8 +517,8 @@ describe('SolarSystemView', () => {
     );
 
     const neptuneHotspot = screen.getByTestId('solar-space-ring-4-cell-12');
-    expect(parseFloat(neptuneHotspot.style.left)).toBeCloseTo(61.344, 3);
-    expect(parseFloat(neptuneHotspot.style.top)).toBeCloseTo(77.388, 3);
+    expect(parseFloat(neptuneHotspot.style.left)).toBeCloseTo(68.806, 3);
+    expect(parseFloat(neptuneHotspot.style.top)).toBeCloseTo(72.915, 3);
   });
 
   it('renders text mode cells from setup wheel layers and skips null cells', () => {
@@ -398,7 +527,15 @@ describe('SolarSystemView', () => {
 
     render(
       <SolarSystemView
-        solarSystem={createExpandedOuterRingMock()}
+        solarSystem={{
+          ...createSolarSystemMock(),
+          discs: [
+            { discIndex: 0, angle: 0 },
+            { discIndex: 1, angle: 0 },
+            { discIndex: 2, angle: 0 },
+            { discIndex: 3, angle: 0 },
+          ],
+        }}
         sectors={createSectorsMock()}
         setupConfig={layeredSetup}
         pendingInput={null}
@@ -414,14 +551,30 @@ describe('SolarSystemView', () => {
     const comet = screen.getByText('comet');
     const asteroidAnchor = asteroid.parentElement;
     const cometAnchor = comet.parentElement;
+    const emptyCell = screen.getByTestId('solar-text-cell-3:0:2')
+      .firstElementChild as HTMLElement | null;
     expect(asteroidAnchor).not.toBeNull();
     expect(cometAnchor).not.toBeNull();
+    expect(asteroid.className).toContain('w-[38px]');
+    expect(asteroid.className).toContain('text-[7px]');
+    expect(emptyCell).not.toBeNull();
+    expect(emptyCell?.style.backgroundColor).toBe('rgba(2, 6, 23, 0.96)');
     expect(screen.queryByText('null')).not.toBeInTheDocument();
     expect(screen.queryByText('empty')).not.toBeInTheDocument();
-    expect(asteroidAnchor?.style.left).toBe(cometAnchor?.style.left);
-    expect(asteroidAnchor?.style.top).toBe(cometAnchor?.style.top);
-    expect(Number(asteroidAnchor?.style.zIndex)).toBeGreaterThan(
-      Number(cometAnchor?.style.zIndex),
+    expect(
+      screen.queryByTestId('solar-text-cell-4:0:1'),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('solar-text-cell-4:1:0')).toBeInTheDocument();
+    expect(asteroidAnchor?.style.left).not.toBe(cometAnchor?.style.left);
+    expect(asteroidAnchor?.style.top).not.toBe(cometAnchor?.style.top);
+    const matchingHotspot = screen.getByTestId('solar-space-space-1');
+    expect(parseFloat(asteroidAnchor?.style.left ?? '')).toBeCloseTo(
+      parseFloat(matchingHotspot.style.left),
+      3,
+    );
+    expect(parseFloat(asteroidAnchor?.style.top ?? '')).toBeCloseTo(
+      parseFloat(matchingHotspot.style.top),
+      3,
     );
   });
 
@@ -459,11 +612,63 @@ describe('SolarSystemView', () => {
     const neptuneLabel = screen.getByText('neptune');
     const neptuneAnchor = neptuneLabel.parentElement;
     expect(neptuneAnchor).not.toBeNull();
-    expect(parseFloat(neptuneAnchor?.style.left ?? '')).toBeCloseTo(62.667, 2);
-    expect(parseFloat(neptuneAnchor?.style.top ?? '')).toBeCloseTo(80.58, 2);
+    expect(parseFloat(neptuneAnchor?.style.left ?? '')).toBeCloseTo(61.344, 2);
+    expect(parseFloat(neptuneAnchor?.style.top ?? '')).toBeCloseTo(77.388, 2);
     expect(neptuneAnchor?.style.transform).toBe('translate(-50%, -50%)');
     expect(neptuneLabel.style.transform).toContain('rotate(157.5deg)');
-    expect(neptuneLabel.style.color).toBe('rgb(2, 6, 23)');
-    expect(neptuneLabel.style.borderColor).toBe('rgb(255, 255, 255)');
+    expect(neptuneLabel.className).toContain('bg-surface-900');
+    expect(neptuneLabel.className).toContain('font-bold');
+    expect(neptuneLabel.className).not.toContain('bg-white');
+    expect(neptuneLabel.style.color).toBe('rgb(255, 255, 255)');
+  });
+
+  it('aligns text-mode sector panels with their solar sector spokes', () => {
+    useDebugStore.setState({ textMode: true });
+
+    render(
+      <SolarSystemView
+        solarSystem={{
+          ...createSolarSystemMock(),
+          discs: [
+            { discIndex: 0, angle: 0 },
+            { discIndex: 1, angle: 0 },
+            { discIndex: 2, angle: 0 },
+            { discIndex: 3, angle: 0 },
+          ],
+        }}
+        sectors={createSectorsMock()}
+        setupConfig={defaultSetup}
+        pendingInput={null}
+        playerColors={{}}
+        myPlayerId='player-1'
+        movementPoints={1}
+        onMoveProbe={vi.fn()}
+        onRespondInput={vi.fn()}
+      />,
+    );
+
+    const sector0Wrapper = screen.getByTestId('sector-node-north-0')
+      .parentElement?.parentElement as HTMLElement | null;
+    const sector1Wrapper = screen.getByTestId('sector-node-north-1')
+      .parentElement?.parentElement as HTMLElement | null;
+    const sector0Cell = screen.getByTestId('solar-space-space-0');
+    const sector1Cell = screen.getByTestId('solar-space-space-1');
+
+    expect(sector0Wrapper).not.toBeNull();
+    expect(sector1Wrapper).not.toBeNull();
+    expect(getStylePolarAngle(sector0Wrapper!)).toBeCloseTo(
+      getStylePolarAngle(sector0Cell),
+      1,
+    );
+    expect(getStylePolarAngle(sector1Wrapper!)).toBeCloseTo(
+      getStylePolarAngle(sector1Cell),
+      1,
+    );
+    expect(getStyleRadius(sector0Wrapper!)).toBeGreaterThan(
+      getStyleRadius(sector0Cell),
+    );
+    expect(getStyleRadius(sector1Wrapper!)).toBeGreaterThan(
+      getStyleRadius(sector1Cell),
+    );
   });
 });

@@ -119,9 +119,13 @@ export function GameLayout({
   const [handExpanded, setHandExpanded] = useState(true);
   const [armedCardRowBuy, setArmedCardRowBuy] = useState(false);
   const [playCardSelectionMode, setPlayCardSelectionMode] = useState(false);
-  const { gameState, isMyTurn, pendingInput, events } = useGameContext();
+  const [movementModeActive, setMovementModeActive] = useState(false);
+  const { gameState, isMyTurn, pendingInput, events, myPlayerId } =
+    useGameContext();
   const unhandledEffectToastKeysRef = useRef<Set<string>>(new Set());
   const lastGameIdRef = useRef<string | undefined>(undefined);
+  const myPlayer = gameState?.players.find((p) => p.playerId === myPlayerId);
+  const currentPlayerMovementPoints = myPlayer?.movementPoints ?? 0;
 
   useEffect(() => {
     const gid = gameState?.gameId;
@@ -165,6 +169,24 @@ export function GameLayout({
     }
   }, [gameState?.phase, isMyTurn, pendingInput, playCardSelectionMode]);
 
+  useEffect(() => {
+    if (!movementModeActive) return;
+    if (
+      !isMyTurn ||
+      pendingInput !== null ||
+      gameState?.phase !== EPhase.AWAIT_MAIN_ACTION ||
+      currentPlayerMovementPoints <= 0
+    ) {
+      setMovementModeActive(false);
+    }
+  }, [
+    currentPlayerMovementPoints,
+    gameState?.phase,
+    isMyTurn,
+    movementModeActive,
+    pendingInput,
+  ]);
+
   const handleInspectCard = (card: IBaseCard): void => {
     setDetailCard(card);
     setDetailOpen(true);
@@ -177,6 +199,13 @@ export function GameLayout({
     },
     clearCardRowBuy: () => {
       setArmedCardRowBuy(false);
+    },
+    armMoveMode: () => {
+      setMovementModeActive(true);
+      setActiveTab('board');
+    },
+    clearMoveMode: () => {
+      setMovementModeActive(false);
     },
   });
 
@@ -192,6 +221,8 @@ export function GameLayout({
       <TopActionBar
         onFreeActionClick={actionController.handleFreeActionClick}
         cornerSelectionHint={actionController.cornerSelectionMode}
+        movementModeActive={movementModeActive}
+        onEndMovementMode={() => setMovementModeActive(false)}
         onRequestPlayCardSelection={() => {
           setPlayCardSelectionMode(true);
           setHandExpanded(true);
@@ -207,6 +238,7 @@ export function GameLayout({
             showSolarSystemSpaceConfig={showSolarSystemSpaceConfig}
             probeInsetPxByRing={probeInsetPxByRing}
             allowMoveAnyProbe={allowMoveAnyProbe}
+            movementModeActive={movementModeActive}
             armedCardRowBuy={armedCardRowBuy}
             setArmedCardRowBuy={setArmedCardRowBuy}
           />
@@ -275,9 +307,13 @@ export function GameLayout({
 function useActionController({
   armCardRowBuy,
   clearCardRowBuy,
+  armMoveMode,
+  clearMoveMode,
 }: {
   armCardRowBuy: () => void;
   clearCardRowBuy: () => void;
+  armMoveMode: () => void;
+  clearMoveMode: () => void;
 }): {
   handleFreeActionClick: (action: EFreeAction) => void;
   cornerSelectionMode: boolean;
@@ -303,11 +339,13 @@ function useActionController({
     switch (action) {
       case EFreeAction.BUY_CARD:
         setCornerSelectionMode(false);
+        clearMoveMode();
         clearCardRowBuy();
         setBuyCardOpen(true);
         return;
       case EFreeAction.PLACE_DATA:
         setCornerSelectionMode(false);
+        clearMoveMode();
         if (placeDataOptions.length <= 0) {
           toast({
             title: t('client.game_layout.toast.no_computer_slot'),
@@ -320,6 +358,7 @@ function useActionController({
         return;
       case EFreeAction.COMPLETE_MISSION:
         setCornerSelectionMode(false);
+        clearMoveMode();
         if (missionCards.length === 1) {
           sendFreeAction({
             type: EFreeAction.COMPLETE_MISSION,
@@ -334,6 +373,7 @@ function useActionController({
         });
         return;
       case EFreeAction.USE_CARD_CORNER:
+        clearMoveMode();
         if (!myPlayer?.hand?.length) {
           return;
         }
@@ -354,6 +394,8 @@ function useActionController({
         return;
       case EFreeAction.MOVEMENT:
         setCornerSelectionMode(false);
+        clearCardRowBuy();
+        armMoveMode();
         toast({
           title: t('client.game_layout.toast.select_probe'),
           description: t('client.game_layout.toast.select_probe_desc'),
@@ -361,10 +403,12 @@ function useActionController({
         return;
       case EFreeAction.EXCHANGE_RESOURCES:
         setCornerSelectionMode(false);
+        clearMoveMode();
         setExchangeOpen(true);
         return;
       case EFreeAction.CONVERT_ENERGY_TO_MOVEMENT:
         setCornerSelectionMode(false);
+        clearMoveMode();
         if (maxConvertibleEnergy <= 0) {
           toast({
             title: t('client.game_layout.toast.not_enough_energy'),
@@ -489,10 +533,14 @@ function useActionController({
 function TopActionBar({
   onFreeActionClick,
   cornerSelectionHint,
+  movementModeActive,
+  onEndMovementMode,
   onRequestPlayCardSelection,
 }: {
   onFreeActionClick: (action: EFreeAction) => void;
   cornerSelectionHint: boolean;
+  movementModeActive: boolean;
+  onEndMovementMode: () => void;
   onRequestPlayCardSelection: () => void;
 }): React.JSX.Element {
   const { t } = useTranslation('common');
@@ -512,6 +560,10 @@ function TopActionBar({
     pendingInput !== null && pendingInput.type !== EPlayerInputType.OR;
   const showTechBoardInput =
     gameState != null && isTechBoardInput(pendingInput);
+  const myPlayer = gameState?.players.find(
+    (player) => player.playerId === myPlayerId,
+  );
+  const movementPoints = myPlayer?.movementPoints ?? 0;
   const playerColors =
     gameState?.players.reduce<Record<string, string>>((acc, player) => {
       acc[player.playerId] = player.color;
@@ -524,9 +576,6 @@ function TopActionBar({
       return;
     }
 
-    const myPlayer = gameState?.players.find(
-      (player) => player.playerId === myPlayerId,
-    );
     const hand = myPlayer?.hand ?? [];
     if (hand.length <= 0) {
       return;
@@ -606,6 +655,32 @@ function TopActionBar({
         isMyTurn={isMyTurn}
         onActionClick={onFreeActionClick}
       />
+
+      {movementModeActive && (
+        <div
+          className='flex items-center gap-2 border-t border-accent-500/40 bg-accent-500/[0.05] px-4 py-1.5'
+          data-testid='movement-mode-hint'
+        >
+          <span
+            aria-hidden
+            className='h-1.5 w-1.5 rounded-full bg-accent-500 shadow-[0_0_4px_oklch(0.68_0.11_240/0.7)] motion-safe:animate-pulse'
+          />
+          <p className='font-mono text-[10px] uppercase tracking-[0.12em] text-accent-400'>
+            Move Probe
+          </p>
+          <span className='font-mono text-[10px] uppercase tracking-[0.12em] text-text-300'>
+            {movementPoints} {movementPoints === 1 ? 'step' : 'steps'}
+          </span>
+          <Button
+            variant='ghost'
+            size='sm'
+            className='ml-auto h-6 px-2 font-mono text-[10px] uppercase tracking-[0.12em]'
+            onClick={onEndMovementMode}
+          >
+            End Move
+          </Button>
+        </div>
+      )}
 
       {cornerSelectionHint && (
         <div className='flex items-center gap-2 border-t border-accent-500/40 bg-accent-500/[0.05] px-4 py-1.5'>
@@ -779,6 +854,7 @@ function BoardTabs({
   showSolarSystemSpaceConfig,
   probeInsetPxByRing,
   allowMoveAnyProbe,
+  movementModeActive,
   armedCardRowBuy,
   setArmedCardRowBuy,
 }: {
@@ -788,6 +864,7 @@ function BoardTabs({
   showSolarSystemSpaceConfig: boolean;
   probeInsetPxByRing?: TProbeInsetPxByRing;
   allowMoveAnyProbe: boolean;
+  movementModeActive: boolean;
   armedCardRowBuy: boolean;
   setArmedCardRowBuy: (next: boolean | ((prev: boolean) => boolean)) => void;
 }): React.JSX.Element {
@@ -859,6 +936,7 @@ function BoardTabs({
                 playerColors={playerColors}
                 myPlayerId={myPlayerId}
                 movementPoints={myPlayer?.movementPoints ?? 0}
+                moveModeActive={movementModeActive}
                 onMoveProbe={(path) => {
                   sendFreeAction({ type: EFreeAction.MOVEMENT, path });
                 }}
