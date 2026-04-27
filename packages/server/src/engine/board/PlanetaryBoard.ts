@@ -2,6 +2,7 @@ import {
   type IPlanetMissionConfig,
   PLANET_MISSION_CONFIG,
   PLANETARY_PLANETS,
+  type TPlanetMissionConfigId,
   type TPlanetReward,
 } from '@seti/common/constant/boardLayout';
 import { EResource, ETrace } from '@seti/common/types/element';
@@ -99,7 +100,7 @@ function assertPlayerId(playerId: string): void {
 
 function getPlanetMissionConfig(planet: EPlanet): IPlanetMissionConfig {
   return (
-    PLANET_MISSION_CONFIG[planet as (typeof PLANETARY_PLANETS)[number]] ??
+    PLANET_MISSION_CONFIG[planet as TPlanetMissionConfigId] ??
     DEFAULT_DYNAMIC_PLANET_CONFIG
   );
 }

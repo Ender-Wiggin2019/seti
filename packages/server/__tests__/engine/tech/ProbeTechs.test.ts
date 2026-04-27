@@ -146,6 +146,11 @@ function resolveAllInputs(game: Game, playerId: string): void {
         type: EPlayerInputType.TRACE,
         trace: model.options[0],
       });
+    } else if (model.type === EPlayerInputType.CARD) {
+      game.processInput(playerId, {
+        type: EPlayerInputType.CARD,
+        cardIds: [model.cards[0].id],
+      });
     } else if (model.type === EPlayerInputType.OPTION) {
       game.processInput(playerId, {
         type: EPlayerInputType.OPTION,
@@ -311,6 +316,7 @@ describe('Phase 8.1 — orange Probe tech (integration)', () => {
       type: EMainAction.ORBIT,
       payload: { planet: EPlanet.SATURN },
     });
+    resolveAllInputs(game, p1.id);
     game.processEndTurn(p1.id);
 
     game.processMainAction(p2.id, {

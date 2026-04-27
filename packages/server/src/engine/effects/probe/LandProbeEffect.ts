@@ -22,6 +22,7 @@ export interface ILandResult {
   landingCost: number;
   vpGained: number;
   firstLandDataGained: number;
+  exofossilsGained: number;
   lifeTraceGained: number;
   traceRewards: Array<{ trace: ETrace; amount: number }>;
 }
@@ -150,6 +151,13 @@ export class LandProbeEffect {
     if (landingResult.firstLandDataGained > 0) {
       player.resources.gain({ data: landingResult.firstLandDataGained });
     }
+    const exofossilsGained = landingResult.rewards.reduce((total, reward) => {
+      if (reward.type !== 'exofossil') {
+        return total;
+      }
+      player.gainExofossils(reward.amount);
+      return total + reward.amount;
+    }, 0);
 
     return {
       planet,
@@ -157,6 +165,7 @@ export class LandProbeEffect {
       landingCost: effectiveLandingCost,
       vpGained: landingResult.centerReward.vpGained,
       firstLandDataGained: landingResult.firstLandDataGained,
+      exofossilsGained,
       lifeTraceGained: landingResult.centerReward.lifeTraceGained,
       traceRewards: landingResult.centerReward.traceRewards,
     };

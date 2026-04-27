@@ -192,6 +192,18 @@ describe('FinalScoring', () => {
       const result = FinalScoring.score(game);
       expect(result.winnerIds).toEqual(['p1', 'p2']);
     });
+
+    it('does not score leftover oumuamua exofossils', () => {
+      const game = createTwoPlayerGame('fs-exofossils-zero');
+      const p1 = getPlayer(game, 'p1');
+      p1.score = 10;
+      p1.gainExofossils(5);
+
+      const result = FinalScoring.score(game);
+
+      expect(result.breakdown.p1.totalAdded).toBe(0);
+      expect(result.scores.p1).toBe(10);
+    });
   });
 
   describe('Phase 9.1: end-game scoring cards (integration)', () => {

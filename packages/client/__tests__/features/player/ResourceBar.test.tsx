@@ -24,6 +24,13 @@ describe('ResourceBar', () => {
     expect(screen.getByText('23')).toBeInTheDocument();
   });
 
+  it('renders oumuamua exofossils when present on public player state', () => {
+    render(<ResourceBar player={createMockPlayerState({ exofossils: 4 })} />);
+
+    expect(screen.getByText('Exofossils')).toBeInTheDocument();
+    expect(screen.getByText('4')).toBeInTheDocument();
+  });
+
   it('renders resource icons', () => {
     render(<ResourceBar player={createMockPlayerState()} />);
 
@@ -31,5 +38,6 @@ describe('ResourceBar', () => {
     expect(screen.getByAltText('Energy')).toBeInTheDocument();
     expect(screen.getByAltText('Publicity')).toBeInTheDocument();
     expect(screen.getByAltText('Score')).toBeInTheDocument();
+    expect(screen.getByAltText('Exofossils')).toBeInTheDocument();
   });
 });

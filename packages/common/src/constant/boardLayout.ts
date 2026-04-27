@@ -1,3 +1,4 @@
+import { EAlienType } from '@seti/common/types/BaseCard';
 import { EPlanet, EResource, ETech, ETrace } from '@seti/common/types/element';
 
 export interface IBoardPosition {
@@ -24,6 +25,15 @@ export type TPlanetReward =
   | {
       type: 'card';
       source: 'random' | 'any';
+      amount: number;
+    }
+  | {
+      type: 'alien-card';
+      alienType: EAlienType;
+      amount: number;
+    }
+  | {
+      type: 'exofossil';
       amount: number;
     }
   | {
@@ -86,8 +96,12 @@ export const SOLAR_SYSTEM_PLANETS = [
   ...PLANETARY_PLANETS,
 ] as const;
 
+export type TPlanetMissionConfigId =
+  | (typeof PLANETARY_PLANETS)[number]
+  | EPlanet.OUMUAMUA;
+
 export const PLANET_MISSION_CONFIG: Readonly<
-  Record<(typeof PLANETARY_PLANETS)[number], IPlanetMissionConfig>
+  Record<TPlanetMissionConfigId, IPlanetMissionConfig>
 > = {
   [EPlanet.MERCURY]: {
     label: 'Mercury',
@@ -292,6 +306,36 @@ export const PLANET_MISSION_CONFIG: Readonly<
     firstLandDataBonusSlots: 1,
     moonSlots: 1,
     moonNames: ['Triton'],
+  },
+  [EPlanet.OUMUAMUA]: {
+    label: 'Oumuamua',
+    anchor: { x: 50, y: 50 },
+    orbitSlots: [{ x: 50, y: 38 }],
+    landingSlots: [
+      { x: 40, y: 52 },
+      { x: 50, y: 56 },
+      { x: 60, y: 52 },
+    ],
+    landingSlotKinds: ['planet', 'planet', 'planet'],
+    orbit: {
+      rewards: [
+        { type: 'resource', resource: EResource.SCORE, amount: 10 },
+        { type: 'signal', target: 'planet-sector', amount: 1 },
+      ],
+      firstRewards: [
+        { type: 'alien-card', alienType: EAlienType.OUMUAMUA, amount: 1 },
+      ],
+    },
+    land: {
+      rewards: [
+        { type: 'resource', resource: EResource.SCORE, amount: 9 },
+        { type: 'exofossil', amount: 2 },
+      ],
+      firstData: [3, 2, 1],
+    },
+    firstLandDataBonusSlots: 3,
+    moonSlots: 0,
+    moonNames: [],
   },
 };
 

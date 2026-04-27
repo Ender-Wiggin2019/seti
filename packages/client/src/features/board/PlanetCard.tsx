@@ -63,6 +63,10 @@ export function formatPlanetReward(reward: TPlanetReward): string {
       return `${reward.amount} signal @ planet sector`;
     case 'card':
       return `${reward.amount} ${reward.source} card`;
+    case 'alien-card':
+      return `${reward.amount} alien card`;
+    case 'exofossil':
+      return `${reward.amount} exofossil`;
     case 'tuck':
       return `${reward.amount} tuck`;
     default: {

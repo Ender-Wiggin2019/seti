@@ -1,7 +1,9 @@
 import type { TPlanetReward } from '@seti/common/constant/boardLayout';
 import { EResource } from '@seti/common/types/element';
-import { EPlanet } from '@seti/common/types/protocol/enums';
+import { EAlienType, EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
+import { AlienRegistry } from '@/engine/alien/AlienRegistry.js';
+import { OumuamuaAlienPlugin } from '@/engine/alien/plugins/OumuamuaAlienPlugin.js';
 import { SimpleDeferredAction } from '@/engine/deferred/SimpleDeferredAction.js';
 import { TuckCardForIncomeEffect } from '@/engine/effects/income/TuckCardForIncomeEffect.js';
 import { MarkSectorSignalEffect } from '@/engine/effects/scan/MarkSectorSignalEffect.js';
@@ -73,6 +75,13 @@ export class OrbitProbeEffect {
         return gainResourceReward(player, reward);
       case 'signal':
         for (let index = 0; index < reward.amount; index += 1) {
+          if (planet === EPlanet.OUMUAMUA) {
+            const plugin = AlienRegistry.get(EAlienType.OUMUAMUA);
+            if (plugin instanceof OumuamuaAlienPlugin) {
+              plugin.markTileSignal(player, game);
+              continue;
+            }
+          }
           MarkSectorSignalEffect.markByPlanet(player, game, planet);
         }
         return 0;
@@ -92,6 +101,24 @@ export class OrbitProbeEffect {
             this.buildTuckChain(player, g, reward.amount),
           ),
         );
+        return 0;
+      case 'alien-card': {
+        const board = game.alienState.getBoardByType(reward.alienType);
+        if (!board) return 0;
+        for (let index = 0; index < reward.amount; index += 1) {
+          const source = board.faceUpAlienCardId ? 'face-up' : 'deck';
+          const drawn = game.alienState.drawAlienCard(
+            player,
+            board,
+            source,
+            game,
+          );
+          if (!drawn) break;
+        }
+        return 0;
+      }
+      case 'exofossil':
+        player.gainExofossils(reward.amount);
         return 0;
       case 'trace':
         return 0;

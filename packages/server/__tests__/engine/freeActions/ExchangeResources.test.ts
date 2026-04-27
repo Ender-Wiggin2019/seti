@@ -1,4 +1,4 @@
-import { EResource } from '@seti/common/types/element';
+import { EAlienIcon, EResource } from '@seti/common/types/element';
 import { EFreeAction } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { Deck } from '@/engine/deck/Deck.js';
@@ -224,6 +224,33 @@ describe('ExchangeResourcesFreeAction', () => {
       ).toThrowError(
         expect.objectContaining({ code: EErrorCode.INVALID_ACTION }),
       );
+    });
+
+    it('rejects exofossil as an exchange input or output', () => {
+      const player = createTestPlayer({ exofossils: 3 });
+      const exofossil = EAlienIcon.EXOFOSSIL as unknown as EResource;
+
+      expect(() =>
+        ExchangeResourcesFreeAction.execute(
+          player,
+          createMockGame(),
+          exofossil,
+          EResource.CREDIT,
+        ),
+      ).toThrowError(
+        expect.objectContaining({ code: EErrorCode.INVALID_ACTION }),
+      );
+      expect(() =>
+        ExchangeResourcesFreeAction.execute(
+          player,
+          createMockGame(),
+          EResource.CREDIT,
+          exofossil,
+        ),
+      ).toThrowError(
+        expect.objectContaining({ code: EErrorCode.INVALID_ACTION }),
+      );
+      expect(player.exofossils).toBe(3);
     });
 
     it('3.6E.1 [错误] throws when not enough credits', () => {

@@ -46,6 +46,13 @@ const RESOURCE_ITEMS: IResourceItem[] = [
     value: (p) => p.score,
     emphasize: true,
   },
+  {
+    id: 'exofossils',
+    i18nKey: 'client.resource_bar.exofossils',
+    fallback: 'Exofossils',
+    icon: '/seti-assets/aliens/oumuamua.webp',
+    value: (p) => p.exofossils ?? 0,
+  },
 ];
 
 /**
@@ -57,7 +64,7 @@ export function ResourceBar({ player }: IResourceBarProps): React.JSX.Element {
   const { t } = useTranslation('common');
   return (
     <section
-      className='instrument-panel grid grid-cols-4 overflow-hidden'
+      className='instrument-panel grid grid-cols-5 overflow-hidden'
       data-testid='resource-bar'
     >
       {RESOURCE_ITEMS.map((item, index) => {
