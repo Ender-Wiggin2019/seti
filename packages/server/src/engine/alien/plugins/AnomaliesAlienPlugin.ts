@@ -3,6 +3,7 @@ import {
   getAnomalyColumnRewardsForPlacement,
 } from '@seti/common/constant/alienBoardConfig';
 import { EAlienType, EPlanet, ETrace } from '@seti/common/types/protocol/enums';
+import { getSectorIndexByPlanet } from '../../effects/scan/ScanEffectUtils.js';
 import { createActionEvent } from '../../event/GameEvent.js';
 import type { IGame } from '../../IGame.js';
 import type { PlayerInput } from '../../input/PlayerInput.js';
@@ -139,20 +140,7 @@ export class AnomaliesAlienPlugin implements IAlienPlugin {
 
   private getEarthSectorIndex(game: IGame): number | null {
     if (!game.solarSystem) return null;
-    const ss = game.solarSystem as {
-      getSectorIndexOfPlanet?: (p: EPlanet) => number | null;
-      getSpacesOnPlanet: (p: EPlanet) => Array<{
-        ringIndex: number;
-        indexInRing: number;
-      }>;
-    };
-    if (typeof ss.getSectorIndexOfPlanet === 'function') {
-      return ss.getSectorIndexOfPlanet(EPlanet.EARTH);
-    }
-    const earthSpaces = ss.getSpacesOnPlanet(EPlanet.EARTH);
-    if (earthSpaces.length === 0) return null;
-    const earthSpace = earthSpaces[0];
-    return Math.floor(earthSpace.indexInRing / earthSpace.ringIndex);
+    return getSectorIndexByPlanet(game.solarSystem, EPlanet.EARTH);
   }
 
   private getColumnLeaderPlayerId(

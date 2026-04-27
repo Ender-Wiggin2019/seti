@@ -8,6 +8,8 @@ import { ESector } from '@seti/common/types/element';
 import { EPriority } from '@/engine/deferred/Priority.js';
 import { SimpleDeferredAction } from '@/engine/deferred/SimpleDeferredAction.js';
 import { MarkSectorSignalEffect } from '@/engine/effects/scan/MarkSectorSignalEffect.js';
+import { findSectorIdByStarName } from '@/engine/effects/scan/ScanEffectUtils.js';
+import type { IPlayerInput } from '@/engine/input/PlayerInput.js';
 import { MissionCard } from '../Card.js';
 import type { ICardRuntimeContext } from '../ICard.js';
 import { loadCardData } from '../loadCardData.js';
@@ -49,32 +51,31 @@ export class ObservationQuickMissionCard extends MissionCard {
       new SimpleDeferredAction(
         context.player,
         (game) => {
-          if (
-            MarkSectorSignalEffect.markByStarName(
+          if (!findSectorIdByStarName(game.solarSystemSetup, this.starName)) {
+            const colors = Array.from<ESector>({ length: signalCount }).fill(
+              signalColor,
+            );
+            return MarkSectorSignalEffect.markByColorChain(
+              context.player,
+              game,
+              colors,
+            );
+          }
+
+          const markStarChain = (
+            remaining: number,
+          ): IPlayerInput | undefined => {
+            if (remaining <= 0) return undefined;
+
+            return MarkSectorSignalEffect.markByStarNameWithAlternatives(
               context.player,
               game,
               this.starName,
-            )
-          ) {
-            for (let i = 1; i < signalCount; i += 1) {
-              MarkSectorSignalEffect.markByStarName(
-                context.player,
-                game,
-                this.starName,
-              );
-            }
-            return undefined;
-          }
+              () => markStarChain(remaining - 1),
+            );
+          };
 
-          // Fallback: star name unresolvable (missing setup) → use color.
-          const colors = Array.from<ESector>({ length: signalCount }).fill(
-            signalColor,
-          );
-          return MarkSectorSignalEffect.markByColorChain(
-            context.player,
-            game,
-            colors,
-          );
+          return markStarChain(signalCount);
         },
         EPriority.DEFAULT,
       ),

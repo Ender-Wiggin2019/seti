@@ -8,7 +8,7 @@ import type { EPlanet } from '@seti/common/types/protocol/enums';
 import { EPriority } from '@/engine/deferred/Priority.js';
 import { SimpleDeferredAction } from '@/engine/deferred/SimpleDeferredAction.js';
 import { MarkSectorSignalEffect } from '@/engine/effects/scan/MarkSectorSignalEffect.js';
-import { getSectorAt } from '@/engine/effects/scan/ScanEffectUtils.js';
+import { getSectorIdsWithPlayerProbes } from '@/engine/effects/scan/ScanEffectUtils.js';
 import type { IGame } from '@/engine/IGame.js';
 import type { IPlayerInput } from '@/engine/input/PlayerInput.js';
 import { SelectOption } from '@/engine/input/SelectOption.js';
@@ -104,13 +104,12 @@ export class AnySignalQuickMissionCard extends MissionCard {
 
     if (this.placementMode === 'planet-sector') {
       if (!this.targetPlanet) return undefined;
-      const markResult = MarkSectorSignalEffect.markByPlanet(
+      return MarkSectorSignalEffect.markByPlanetWithAlternatives(
         player,
         game,
         this.targetPlanet,
+        () => this.resolveMarks(player, game, remainingCount - 1),
       );
-      if (!markResult) return undefined;
-      return this.resolveMarks(player, game, remainingCount - 1);
     }
 
     if (this.placementMode === 'probe-sector') {
@@ -152,8 +151,12 @@ export class AnySignalQuickMissionCard extends MissionCard {
     const onMarked = () => this.resolveMarks(player, game, remainingCount - 1);
 
     if (sectorIds.length === 1) {
-      MarkSectorSignalEffect.markById(player, game, sectorIds[0]);
-      return onMarked();
+      return MarkSectorSignalEffect.markByIdWithAlternatives(
+        player,
+        game,
+        sectorIds[0],
+        () => onMarked(),
+      );
     }
 
     return new SelectOption(
@@ -161,37 +164,19 @@ export class AnySignalQuickMissionCard extends MissionCard {
       sectorIds.map((sectorId) => ({
         id: `probe-sector-${sectorId}`,
         label: `Sector ${sectorId}`,
-        onSelect: () => {
-          MarkSectorSignalEffect.markById(player, game, sectorId);
-          return onMarked();
-        },
+        onSelect: () =>
+          MarkSectorSignalEffect.markByIdWithAlternatives(
+            player,
+            game,
+            sectorId,
+            () => onMarked(),
+          ),
       })),
       'Choose sector with your probe',
     );
   }
 
   private getPlayerProbeSectorIds(player: IPlayer, game: IGame): string[] {
-    if (!game.solarSystem) return [];
-
-    const uniqueIds = new Set<string>();
-
-    for (const space of game.solarSystem.spaces) {
-      if (
-        !space.occupants.some((occupant) => occupant.playerId === player.id)
-      ) {
-        continue;
-      }
-      if (space.ringIndex <= 0) {
-        continue;
-      }
-
-      const sectorIndex = Math.floor(space.indexInRing / space.ringIndex);
-      const sector = getSectorAt(game, sectorIndex);
-      if (sector) {
-        uniqueIds.add(sector.id);
-      }
-    }
-
-    return Array.from(uniqueIds.values());
+    return getSectorIdsWithPlayerProbes(game, player.id);
   }
 }

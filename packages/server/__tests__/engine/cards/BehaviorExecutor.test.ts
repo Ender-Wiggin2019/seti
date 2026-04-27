@@ -15,6 +15,7 @@ import { Deck } from '@/engine/deck/Deck.js';
 import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
+import { discoverOumuamua } from '../../helpers/OumuamuaTestUtils.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -334,6 +335,28 @@ describe('BehaviorExecutor — integration', () => {
           (s) => s.type === 'player' && s.playerId === player.id,
         ),
       ).toBe(true);
+    });
+
+    it('markEarthSectorIndex offers sector/tile choice when targeting oumuamua', () => {
+      const { game, player } = createIntegrationGame(
+        'beh-2-9-6-oumuamua-scan',
+      );
+      const { sectorIndex } = discoverOumuamua(game);
+
+      const pending = drainReturningInput(game, () => {
+        getBehaviorExecutor().execute(
+          { scan: { markEarthSectorIndex: sectorIndex } },
+          player,
+          game,
+          sampleCard(),
+        );
+      });
+
+      const model = pending?.toModel() as ISelectOptionInputModel | undefined;
+      expect(model?.type).toBe(EPlayerInputType.OPTION);
+      expect(model?.options.map((option) => option.id)).toEqual(
+        expect.arrayContaining(['oumuamua-sector', 'oumuamua-tile']),
+      );
     });
   });
 

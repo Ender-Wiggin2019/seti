@@ -2,7 +2,10 @@ import { ESector } from '@seti/common/types/element';
 import { EPriority } from '@/engine/deferred/Priority.js';
 import { SimpleDeferredAction } from '@/engine/deferred/SimpleDeferredAction.js';
 import { MarkSectorSignalEffect } from '@/engine/effects/scan/MarkSectorSignalEffect.js';
-import { findAllSectorsByColor } from '@/engine/effects/scan/ScanEffectUtils.js';
+import {
+  findAllSectorsByColor,
+  getSectorIdsWithPlayerProbes,
+} from '@/engine/effects/scan/ScanEffectUtils.js';
 import type { IGame } from '@/engine/IGame.js';
 import { SelectOption } from '@/engine/input/SelectOption.js';
 import { buildQuickMissionDef } from '@/engine/missions/buildMissionDef.js';
@@ -109,42 +112,29 @@ export class HerschelSpaceObservatory extends MissionCard {
       return undefined;
     }
     if (sectors.length === 1) {
-      MarkSectorSignalEffect.markOnSector(player, game, sectors[0]);
-      return undefined;
+      return MarkSectorSignalEffect.markOnSectorWithAlternatives(
+        player,
+        game,
+        sectors[0],
+      );
     }
     return new SelectOption(
       player,
       sectors.map((sector) => ({
         id: `herschel-sector-${sector.id}`,
         label: `Sector ${sector.id}`,
-        onSelect: () => {
-          MarkSectorSignalEffect.markOnSector(player, game, sector);
-          return undefined;
-        },
+        onSelect: () =>
+          MarkSectorSignalEffect.markOnSectorWithAlternatives(
+            player,
+            game,
+            sector,
+          ),
       })),
       'Choose sector to mark signal',
     );
   }
 
   private getSectorIdsWithProbe(player: IPlayer, game: IGame): Set<string> {
-    const sectorIds = new Set<string>();
-    if (!game.solarSystem) {
-      return sectorIds;
-    }
-
-    for (const space of game.solarSystem.spaces) {
-      if (
-        space.ringIndex <= 0 ||
-        !space.occupants.some((occupant) => occupant.playerId === player.id)
-      ) {
-        continue;
-      }
-      const sectorIndex = Math.floor(space.indexInRing / space.ringIndex);
-      const sector = game.sectors[sectorIndex];
-      if (sector) {
-        sectorIds.add(sector.id);
-      }
-    }
-    return sectorIds;
+    return new Set(getSectorIdsWithPlayerProbes(game, player.id));
   }
 }

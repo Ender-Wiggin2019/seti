@@ -1,13 +1,24 @@
 import { ESector } from '@seti/common/types/element';
 import { EPlanet } from '@seti/common/types/protocol/enums';
-import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
+import {
+  EPlayerInputType,
+  type ISelectOptionInputModel,
+} from '@seti/common/types/protocol/playerInput';
 import { ETechId } from '@seti/common/types/tech';
 import { Sector } from '@/engine/board/Sector.js';
 import { Deck } from '@/engine/deck/Deck.js';
 import type { IScanWithTechsResult } from '@/engine/effects/scan/ScanWithTechsEffect.js';
 import { ScanWithTechsEffect } from '@/engine/effects/scan/ScanWithTechsEffect.js';
+import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
+import { resolveSetupTucks } from '../../../helpers/TestGameBuilder.js';
+import { discoverOumuamua } from '../../../helpers/OumuamuaTestUtils.js';
+
+const TEST_PLAYERS = [
+  { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
+  { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
+] as const;
 
 function createMockGame(): IGame {
   const sectors = [
@@ -61,7 +72,34 @@ function createPlayer(overrides: { techs?: ETechId[] } = {}): Player {
   });
 }
 
+function createOumuamuaGame(seed: string): { game: Game; player: Player } {
+  const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
+  resolveSetupTucks(game);
+  return { game, player: game.players[0] as Player };
+}
+
 describe('ScanWithTechsEffect', () => {
+  describe('oumuamua signal choice', () => {
+    it('offers sector/tile choice for a single candidate in the oumuamua sector', () => {
+      const { game, player } = createOumuamuaGame(
+        'scan-tech-single-oumuamua',
+      );
+      const { sectorIndex } = discoverOumuamua(game);
+
+      const input = ScanWithTechsEffect.markSignalWithChoice(
+        player,
+        game,
+        [sectorIndex],
+      );
+
+      const model = input?.toModel() as ISelectOptionInputModel | undefined;
+      expect(model?.type).toBe(EPlayerInputType.OPTION);
+      expect(model?.options.map((option) => option.id)).toEqual(
+        expect.arrayContaining(['oumuamua-sector', 'oumuamua-tile']),
+      );
+    });
+  });
+
   describe('no scan techs (fallback to base ScanEffect)', () => {
     it('runs base scan without tech menu', () => {
       const game = createMockGame();

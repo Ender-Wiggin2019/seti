@@ -300,21 +300,25 @@ export class BehaviorExecutor {
   ): SimpleDeferredAction | undefined {
     if (!behavior.scan) return undefined;
     return buildCoreEffectAction(player, (game) => {
-      if (behavior.scan?.markEarthSectorIndex !== undefined) {
-        MarkSectorSignalEffect.markByIndex(
-          player,
-          game,
-          behavior.scan.markEarthSectorIndex,
-        );
-      }
-
       const colorMarks: ESector[] = [];
       if (behavior.scan?.markCardSector && card.sector) {
         colorMarks.push(card.sector);
       }
       colorMarks.push(...(behavior.scan?.markSectors ?? []));
 
-      return MarkSectorSignalEffect.markByColorChain(player, game, colorMarks);
+      const continueWithColorMarks = () =>
+        MarkSectorSignalEffect.markByColorChain(player, game, colorMarks);
+
+      if (behavior.scan?.markEarthSectorIndex !== undefined) {
+        return MarkSectorSignalEffect.markByIndexWithAlternatives(
+          player,
+          game,
+          behavior.scan.markEarthSectorIndex,
+          () => continueWithColorMarks(),
+        );
+      }
+
+      return continueWithColorMarks();
     });
   }
 

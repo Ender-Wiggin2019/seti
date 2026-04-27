@@ -3,6 +3,7 @@ import {
   type ISolarSystemSetupConfig,
   SECTOR_TILE_DEFINITIONS,
 } from '@seti/common/constant/sectorSetup';
+import { sectorIndexOf } from '@seti/common/constant/solarCoordinate';
 import type { ESector } from '@seti/common/types/element';
 import type { EPlanet } from '@seti/common/types/protocol/enums';
 import type { Sector } from '../../board/Sector.js';
@@ -94,6 +95,17 @@ export function getSectorIndexByPlanet(
   return Math.floor(space.indexInRing / space.ringIndex);
 }
 
+export function getSectorIndexBySpace(space: {
+  ringIndex: number;
+  indexInRing: number;
+}): number | null {
+  try {
+    return sectorIndexOf(space.ringIndex, space.indexInRing);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Resolve a planet's current position to the Sector object it occupies.
  * Returns null if the solar system is absent or the planet can't be resolved.
@@ -110,6 +122,41 @@ export function getAllSectors(game: IGame): Sector[] {
     (s): s is Sector =>
       s !== null && typeof s === 'object' && 'markSignal' in (s as object),
   ) as Sector[];
+}
+
+export function getSectorIdsWithPlayerProbes(
+  game: IGame,
+  playerId: string,
+): string[] {
+  if (!game.solarSystem) return [];
+
+  const uniqueIds = new Set<string>();
+  const solarSystem = game.solarSystem as SolarSystem & {
+    getSectorIndexOfSpace?: (spaceId: string) => number | null;
+  };
+
+  for (const space of game.solarSystem.spaces) {
+    if (!space.occupants.some((occupant) => occupant.playerId === playerId)) {
+      continue;
+    }
+    if (space.ringIndex <= 0) {
+      continue;
+    }
+
+    const sectorIndex =
+      solarSystem.getSectorIndexOfSpace?.(space.id) ??
+      getSectorIndexBySpace(space);
+    if (sectorIndex === null) {
+      continue;
+    }
+
+    const sector = getSectorAt(game, sectorIndex);
+    if (sector) {
+      uniqueIds.add(sector.id);
+    }
+  }
+
+  return Array.from(uniqueIds.values());
 }
 
 export function extractSectorColorFromCardItem(

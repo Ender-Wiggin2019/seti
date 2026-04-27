@@ -50,37 +50,44 @@ export class ScanEffect {
       targetSectorSignal: null,
     };
 
+    const continueAfterEarthSignal = (
+      earthSignal: IMarkSectorSignalResult | null,
+    ): IPlayerInput | undefined => {
+      result.earthSectorSignal = earthSignal;
+
+      if (game.cardRow.length === 0) {
+        return options.onComplete?.(result);
+      }
+
+      return SelectCardFromCardRowEffect.execute(player, game, {
+        destination: 'discard',
+        onComplete: (cardInfo: ICardRowCardInfo) => {
+          result.cardRowCard = cardInfo;
+
+          const sectorColor = extractSectorColorFromCardItem(cardInfo.rawItem);
+          if (sectorColor) {
+            return MarkSectorSignalEffect.markByColor(
+              player,
+              game,
+              sectorColor,
+              (markResult) => {
+                result.targetSectorSignal = markResult;
+                return options.onComplete?.(result);
+              },
+            );
+          }
+
+          return options.onComplete?.(result);
+        },
+      });
+    };
+
     const earthSectorIdx = options.earthSectorIndex ?? 0;
-    result.earthSectorSignal = MarkSectorSignalEffect.markByIndex(
+    return MarkSectorSignalEffect.markByIndexWithAlternatives(
       player,
       game,
       earthSectorIdx,
+      continueAfterEarthSignal,
     );
-
-    if (game.cardRow.length === 0) {
-      return options.onComplete?.(result);
-    }
-
-    return SelectCardFromCardRowEffect.execute(player, game, {
-      destination: 'discard',
-      onComplete: (cardInfo: ICardRowCardInfo) => {
-        result.cardRowCard = cardInfo;
-
-        const sectorColor = extractSectorColorFromCardItem(cardInfo.rawItem);
-        if (sectorColor) {
-          return MarkSectorSignalEffect.markByColor(
-            player,
-            game,
-            sectorColor,
-            (markResult) => {
-              result.targetSectorSignal = markResult;
-              return options.onComplete?.(result);
-            },
-          );
-        }
-
-        return options.onComplete?.(result);
-      },
-    });
   }
 }

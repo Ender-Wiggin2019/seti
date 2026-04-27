@@ -327,8 +327,12 @@ export class ScanActionPool {
     const candidates = [...new Set([earthIndex, left, right])];
 
     if (candidates.length <= 1) {
-      MarkSectorSignalEffect.markByIndex(player, game, earthIndex);
-      return onDone();
+      return MarkSectorSignalEffect.markByIndexWithAlternatives(
+        player,
+        game,
+        earthIndex,
+        () => onDone(),
+      );
     }
 
     return new SelectOption(

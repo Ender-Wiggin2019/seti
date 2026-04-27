@@ -1,6 +1,6 @@
 import type { EStarName } from '@seti/common/constant/sectorSetup';
 import type { ESector } from '@seti/common/types/element';
-import { EAlienType, type EPlanet } from '@seti/common/types/protocol/enums';
+import { EAlienType, EPlanet } from '@seti/common/types/protocol/enums';
 import { AlienRegistry } from '../../alien/AlienRegistry.js';
 import { OumuamuaAlienPlugin } from '../../alien/plugins/OumuamuaAlienPlugin.js';
 import type { IGame } from '../../IGame.js';
@@ -24,6 +24,13 @@ export interface IMarkSectorSignalResult {
   completed: boolean;
 }
 
+type TSectorSignalTarget = {
+  id: string;
+  color: ESector;
+  completed: boolean;
+  markSignal(playerId: string): { dataGained: boolean; vpAwarded: number };
+};
+
 /**
  * Atomic + composed effect: mark a signal on a sector for a player.
  *
@@ -44,12 +51,7 @@ export class MarkSectorSignalEffect {
   public static markOnSector(
     player: IPlayer,
     game: IGame,
-    sector: {
-      markSignal(playerId: string): { dataGained: boolean; vpAwarded: number };
-      id: string;
-      color: ESector;
-      completed: boolean;
-    },
+    sector: TSectorSignalTarget,
   ): IMarkSectorSignalResult {
     player.pieces.deploy(EPieceType.SECTOR_MARKER);
     const signalResult = sector.markSignal(player.id);
@@ -106,6 +108,19 @@ export class MarkSectorSignalEffect {
     return this.markById(player, game, sectorId);
   }
 
+  public static markByStarNameWithAlternatives(
+    player: IPlayer,
+    game: IGame,
+    starName: EStarName,
+    onComplete?: (
+      result: IMarkSectorSignalResult | null,
+    ) => PlayerInput | undefined,
+  ): PlayerInput | undefined {
+    const sectorId = findSectorIdByStarName(game.solarSystemSetup, starName);
+    if (!sectorId) return onComplete?.(null);
+    return this.markByIdWithAlternatives(player, game, sectorId, onComplete);
+  }
+
   /**
    * Mark the sector that a planet currently occupies on the solar system.
    *
@@ -115,12 +130,101 @@ export class MarkSectorSignalEffect {
   public static markByPlanet(
     player: IPlayer,
     game: IGame,
+    planet: Exclude<EPlanet, EPlanet.OUMUAMUA>,
+  ): IMarkSectorSignalResult | null;
+  public static markByPlanet(
+    player: IPlayer,
+    game: IGame,
+    planet: EPlanet.OUMUAMUA,
+  ): PlayerInput | IMarkSectorSignalResult | null;
+  public static markByPlanet(
+    player: IPlayer,
+    game: IGame,
     planet: EPlanet,
-  ): IMarkSectorSignalResult | null {
+  ): PlayerInput | IMarkSectorSignalResult | null;
+  public static markByPlanet(
+    player: IPlayer,
+    game: IGame,
+    planet: EPlanet,
+  ): PlayerInput | IMarkSectorSignalResult | null {
     if (!game.solarSystem) return null;
     const sectorIndex = getSectorIndexByPlanet(game.solarSystem, planet);
     if (sectorIndex === null) return null;
-    return this.markByIndex(player, game, sectorIndex);
+    const sector = getSectorAt(game, sectorIndex);
+    if (!sector) return null;
+    if (planet === EPlanet.OUMUAMUA) {
+      const plugin = AlienRegistry.get(EAlienType.OUMUAMUA);
+      if (plugin instanceof OumuamuaAlienPlugin) {
+        let syncResult: IMarkSectorSignalResult | null = null;
+        const input = plugin.createSectorOrTileSignalInput(
+          player,
+          game,
+          sector.id,
+          () => this.markOnSector(player, game, sector),
+          (result) => {
+            syncResult = result;
+            return undefined;
+          },
+        );
+        return input ?? syncResult;
+      }
+    }
+    return this.markOnSector(player, game, sector);
+  }
+
+  public static markByPlanetWithAlternatives(
+    player: IPlayer,
+    game: IGame,
+    planet: EPlanet,
+    onComplete?: (
+      result: IMarkSectorSignalResult | null,
+    ) => PlayerInput | undefined,
+  ): PlayerInput | undefined {
+    if (!game.solarSystem) return onComplete?.(null);
+    const sectorIndex = getSectorIndexByPlanet(game.solarSystem, planet);
+    if (sectorIndex === null) return onComplete?.(null);
+    const sector = getSectorAt(game, sectorIndex);
+    if (!sector) return onComplete?.(null);
+
+    if (planet === EPlanet.OUMUAMUA) {
+      const plugin = AlienRegistry.get(EAlienType.OUMUAMUA);
+      if (plugin instanceof OumuamuaAlienPlugin) {
+        return plugin.createSectorOrTileSignalInput(
+          player,
+          game,
+          sector.id,
+          () => this.markOnSector(player, game, sector),
+          onComplete,
+        );
+      }
+    }
+
+    const result = this.markOnSector(player, game, sector);
+    return onComplete?.(result);
+  }
+
+  public static markByIdWithAlternatives(
+    player: IPlayer,
+    game: IGame,
+    sectorId: string,
+    onComplete?: (
+      result: IMarkSectorSignalResult | null,
+    ) => PlayerInput | undefined,
+  ): PlayerInput | undefined {
+    const sector = findSectorById(game, sectorId);
+    if (!sector) return onComplete?.(null);
+    return this.markOnSectorWithAlternatives(player, game, sector, onComplete);
+  }
+
+  public static markOnSectorWithAlternatives(
+    player: IPlayer,
+    game: IGame,
+    sector: TSectorSignalTarget,
+    onComplete?: (
+      result: IMarkSectorSignalResult | null,
+    ) => PlayerInput | undefined,
+  ): PlayerInput | undefined {
+    return this.markSectorWithOumuamuaChoice(player, game, sector, onComplete);
   }
 
   // ---------------------------------------------------------------------------
@@ -149,8 +253,12 @@ export class MarkSectorSignalEffect {
     }
 
     if (sectors.length === 1) {
-      const result = this.markOnSector(player, game, sectors[0]);
-      return onComplete?.(result);
+      return this.markSectorWithOumuamuaChoice(
+        player,
+        game,
+        sectors[0],
+        onComplete,
+      );
     }
 
     return new SelectOption(
@@ -195,18 +303,13 @@ export class MarkSectorSignalEffect {
   ): PlayerInput | undefined {
     const sector = getSectorAt(game, sectorIndex);
     if (!sector) return onComplete?.(null);
-    return this.markSectorWithOumuamuaChoice(player, game, sector, onComplete);
+    return this.markOnSectorWithAlternatives(player, game, sector, onComplete);
   }
 
   private static markSectorWithOumuamuaChoice(
     player: IPlayer,
     game: IGame,
-    sector: {
-      id: string;
-      color: ESector;
-      completed: boolean;
-      markSignal(playerId: string): { dataGained: boolean; vpAwarded: number };
-    },
+    sector: TSectorSignalTarget,
     onComplete?: (
       result: IMarkSectorSignalResult | null,
     ) => PlayerInput | undefined,

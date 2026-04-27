@@ -4,7 +4,10 @@ import {
 } from '@seti/common/constant/sectorSetup';
 import { ESector } from '@seti/common/types/element';
 import { EPlanet } from '@seti/common/types/protocol/enums';
-import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
+import {
+  EPlayerInputType,
+  type ISelectOptionInputModel,
+} from '@seti/common/types/protocol/playerInput';
 import { vi } from 'vitest';
 import { Sector } from '@/engine/board/Sector.js';
 import { SolarSystem } from '@/engine/board/SolarSystem.js';
@@ -19,6 +22,10 @@ import {
 import type { IGame } from '@/engine/IGame.js';
 import { EMissionEventType } from '@/engine/missions/IMission.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
+import { Game } from '@/engine/Game.js';
+import { Player } from '@/engine/player/Player.js';
+import { resolveSetupTucks } from '../../../helpers/TestGameBuilder.js';
+import { discoverOumuamua } from '../../../helpers/OumuamuaTestUtils.js';
 
 function createMarkCompleteSpy() {
   return vi.fn<(result: IMarkSectorSignalResult | null) => undefined>(
@@ -75,6 +82,17 @@ function createSolarSystem(): SolarSystem {
     occupants: [],
   }));
   return new SolarSystem(spaces, [...SOLAR_SYSTEM_NEAR_STAR_POOL]);
+}
+
+const OUMUAMUA_TEST_PLAYERS = [
+  { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
+  { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
+] as const;
+
+function createOumuamuaGame(seed: string): { game: Game; player: Player } {
+  const game = Game.create(OUMUAMUA_TEST_PLAYERS, { playerCount: 2 }, seed, seed);
+  resolveSetupTucks(game);
+  return { game, player: game.players[0] as Player };
 }
 
 describe('MarkSectorSignalEffect', () => {
@@ -255,6 +273,32 @@ describe('MarkSectorSignalEffect', () => {
       expect(hasPlayerMarker(redSector, 'p1')).toBe(true);
     });
 
+    it('still offers the sector/tile choice when the only matching sector contains oumuamua', () => {
+      const { game, player } = createOumuamuaGame(
+        'mark-color-single-oumuamua',
+      );
+      const { sector } = discoverOumuamua(game);
+      for (const candidate of game.sectors) {
+        if (candidate.id !== sector.id && candidate.color === sector.color) {
+          (candidate as unknown as { color: ESector }).color =
+            sector.color === ESector.RED ? ESector.BLUE : ESector.RED;
+        }
+      }
+
+      const input = MarkSectorSignalEffect.markByColor(
+        player,
+        game,
+        sector.color,
+      );
+
+      const model = input?.toModel() as ISelectOptionInputModel | undefined;
+      expect(model?.type).toBe(EPlayerInputType.OPTION);
+      expect(model?.options.map((option) => option.id)).toEqual(
+        expect.arrayContaining(['oumuamua-sector', 'oumuamua-tile']),
+      );
+      expect(sector.getPlayerMarkerCount(player.id)).toBe(0);
+    });
+
     it('presents SelectOption when multiple sectors share the color', () => {
       const player = createMockPlayer();
       const red1 = createMockSector('red-1', ESector.RED);
@@ -402,6 +446,27 @@ describe('MarkSectorSignalEffect', () => {
       );
 
       expect(result).toBeNull();
+    });
+
+    it('offers the sector/tile choice when marking the oumuamua planet signal', () => {
+      const { game, player } = createOumuamuaGame('mark-oumuamua-planet');
+      const { sector } = discoverOumuamua(game);
+
+      const input = MarkSectorSignalEffect.markByPlanet(
+        player,
+        game,
+        EPlanet.OUMUAMUA,
+      );
+      if (input === null || !('toModel' in input)) {
+        throw new Error('expected oumuamua planet signal input');
+      }
+
+      const model = input.toModel() as ISelectOptionInputModel;
+      expect(model?.type).toBe(EPlayerInputType.OPTION);
+      expect(model?.options.map((option) => option.id)).toEqual(
+        expect.arrayContaining(['oumuamua-sector', 'oumuamua-tile']),
+      );
+      expect(sector.getPlayerMarkerCount(player.id)).toBe(0);
     });
   });
 

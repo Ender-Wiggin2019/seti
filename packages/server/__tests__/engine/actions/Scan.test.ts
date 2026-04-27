@@ -1,5 +1,6 @@
 import { ESector } from '@seti/common/types/element';
 import {
+  EAlienType,
   EFreeAction,
   EMainAction,
   EPlanet,
@@ -10,6 +11,8 @@ import {
   type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
 import { ScanAction } from '@/engine/actions/Scan.js';
+import { AlienState } from '@/engine/alien/AlienState.js';
+import { OumuamuaAlienPlugin } from '@/engine/alien/plugins/OumuamuaAlienPlugin.js';
 import { Sector } from '@/engine/board/Sector.js';
 import { EScanSubAction } from '@/engine/effects/scan/ScanActionPool.js';
 import {
@@ -91,6 +94,16 @@ function createScanIntegrationGame(seed: string): {
     'p2 missing',
   ) as Player;
   return { game, p1, p2 };
+}
+
+function discoverOumuamuaForScan(game: Game): OumuamuaAlienPlugin {
+  game.alienState = AlienState.createFromHiddenAliens([EAlienType.OUMUAMUA]);
+  const board = game.alienState.getBoardByType(EAlienType.OUMUAMUA);
+  if (!board) throw new Error('expected oumuamua board');
+  board.discovered = true;
+  const plugin = new OumuamuaAlienPlugin();
+  plugin.onDiscover(game, []);
+  return plugin;
 }
 
 describe('ScanAction — integration (rewrite)', () => {
@@ -177,6 +190,82 @@ describe('ScanAction — integration (rewrite)', () => {
       ).toBe(false);
       // Card row not yet refilled (happens on scan Done — covered in 2.4.7).
       expect(game.cardRow.length).toBe(cardRowSizeBefore - 1);
+    });
+
+    it('routes a real card-row scan into oumuamua sector/tile choice', () => {
+      const { game, p1 } = createScanIntegrationGame('scan-2-4-3-oumuamua');
+      const plugin = discoverOumuamuaForScan(game);
+      const state = plugin.getRuntimeState(game);
+      if (!state?.meta) throw new Error('expected oumuamua metadata');
+      const oumuamuaSector = requireValue(
+        game.sectors.find((sector) => sector.id === state.meta?.sectorId),
+        'expected oumuamua sector',
+      ) as Sector;
+      game.cardRow = [{ id: 'oumuamua-match', sector: oumuamuaSector.color }];
+
+      game.processMainAction(p1.id, { type: EMainAction.SCAN });
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_EARTH,
+      });
+      const afterEarth = p1.waitingFor?.toModel();
+      if (
+        afterEarth?.type === EPlayerInputType.OPTION &&
+        (afterEarth as ISelectOptionInputModel).options.some(
+          (option) => option.id === 'oumuamua-sector',
+        )
+      ) {
+        game.processInput(p1.id, {
+          type: EPlayerInputType.OPTION,
+          optionId: 'oumuamua-sector',
+        });
+      }
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_CARD_ROW,
+      });
+      game.processInput(p1.id, {
+        type: EPlayerInputType.CARD,
+        cardIds: ['oumuamua-match'],
+      });
+
+      const sectorPick = playerWaitingFor(
+        game,
+        p1.id,
+        EPlayerInputType.OPTION,
+      ) as ISelectOptionInputModel;
+      const oumuamuaSectorOption = requireValue(
+        sectorPick.options.find((option) => option.id === oumuamuaSector.id),
+        'expected oumuamua sector option',
+      );
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: oumuamuaSectorOption.id,
+      });
+
+      const branchPick = playerWaitingFor(
+        game,
+        p1.id,
+        EPlayerInputType.OPTION,
+      ) as ISelectOptionInputModel;
+      expect(branchPick.options.map((option) => option.id)).toEqual(
+        expect.arrayContaining(['oumuamua-sector', 'oumuamua-tile']),
+      );
+
+      const dataBefore = plugin.getRuntimeState(game)?.tileDataRemaining ?? 0;
+      const sectorMarkerCountBeforeTileChoice =
+        oumuamuaSector.getPlayerMarkerCount(p1.id);
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: 'oumuamua-tile',
+      });
+
+      expect(plugin.getRuntimeState(game)?.tileDataRemaining).toBe(
+        dataBefore - 1,
+      );
+      expect(oumuamuaSector.getPlayerMarkerCount(p1.id)).toBe(
+        sectorMarkerCountBeforeTileChoice,
+      );
     });
   });
 

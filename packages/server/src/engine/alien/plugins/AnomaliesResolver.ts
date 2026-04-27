@@ -1,4 +1,5 @@
 import { EAlienType, EPlanet, ETrace } from '@seti/common/types/protocol/enums';
+import { getSectorIndexByPlanet } from '../../effects/scan/ScanEffectUtils.js';
 import type { IGame } from '../../IGame.js';
 import type { AlienBoard, ITraceSlot, TSlotReward } from '../AlienBoard.js';
 
@@ -23,19 +24,7 @@ export function getAnomaliesBoard(game: IGame): AlienBoard | undefined {
 
 export function getEarthSectorIndex(game: IGame): number | undefined {
   if (!game.solarSystem) return undefined;
-  const ss = game.solarSystem as {
-    getSectorIndexOfPlanet?: (p: EPlanet) => number | null;
-    getSpacesOnPlanet: (p: EPlanet) => Array<{
-      ringIndex: number;
-      indexInRing: number;
-    }>;
-  };
-  if (typeof ss.getSectorIndexOfPlanet === 'function') {
-    return ss.getSectorIndexOfPlanet(EPlanet.EARTH) ?? undefined;
-  }
-  const earthSpace = ss.getSpacesOnPlanet(EPlanet.EARTH)[0];
-  if (!earthSpace) return undefined;
-  return Math.floor(earthSpace.indexInRing / earthSpace.ringIndex);
+  return getSectorIndexByPlanet(game.solarSystem, EPlanet.EARTH) ?? undefined;
 }
 
 export function getAnomalyTokens(game: IGame): IAnomalyToken[] {

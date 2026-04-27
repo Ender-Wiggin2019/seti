@@ -495,7 +495,7 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
 
     expect(p1.resources.credits).toBe(creditsBefore - 1);
     expect(p1.resources.energy).toBe(energyBefore - 3);
-    expect(p1.score).toBe(scoreBefore + 3);
+    expect(p1.score).toBe(scoreBefore + 5);
     expect(p1.hand).not.toContain('16');
   });
 
@@ -503,15 +503,6 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
   it('15. place yellow trace on alien 0 discovery → +5 VP, +1 publicity', () => {
     const scoreBefore = p1.score;
     const publicityBefore = p1.resources.publicity;
-
-    expect(p1.waitingFor).toBeDefined();
-    const traceModel = p1.waitingFor!.toModel();
-    expect(traceModel.type).toBe(EPlayerInputType.TRACE);
-
-    game.processInput('p1', {
-      type: EPlayerInputType.TRACE,
-      trace: ETrace.YELLOW,
-    });
 
     expect(p1.waitingFor).toBeDefined();
     const slotModel = p1.waitingFor!.toModel() as ISelectOptionInputModel;

@@ -66,7 +66,9 @@ export {
   getAllSectors,
   getSectorAt,
   getSectorByPlanet,
+  getSectorIdsWithPlayerProbes,
   getSectorIndexByPlanet,
+  getSectorIndexBySpace,
 } from './scan/ScanEffectUtils.js';
 export {
   type IScanEarthNeighborOptions,

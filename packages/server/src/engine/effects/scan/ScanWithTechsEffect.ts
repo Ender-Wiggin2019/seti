@@ -125,12 +125,12 @@ export class ScanWithTechsEffect {
     }
 
     if (candidateIndexes.length === 1) {
-      const markResult = MarkSectorSignalEffect.markByIndex(
+      return MarkSectorSignalEffect.markByIndexWithAlternatives(
         player,
         game,
         candidateIndexes[0],
+        (markResult) => options.onComplete?.(markResult),
       );
-      return options.onComplete?.(markResult);
     }
 
     return new SelectOption(
@@ -138,14 +138,13 @@ export class ScanWithTechsEffect {
       candidateIndexes.map((idx) => ({
         id: `sector-${idx}`,
         label: `Sector ${idx}`,
-        onSelect: () => {
-          const markResult = MarkSectorSignalEffect.markByIndex(
+        onSelect: () =>
+          MarkSectorSignalEffect.markByIndexWithAlternatives(
             player,
             game,
             idx,
-          );
-          return options.onComplete?.(markResult);
-        },
+            (markResult) => options.onComplete?.(markResult),
+          ),
       })),
       options.title ?? 'Choose sector for signal',
     );

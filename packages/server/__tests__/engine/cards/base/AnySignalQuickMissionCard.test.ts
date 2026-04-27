@@ -9,13 +9,17 @@ import {
   SOLAR_SYSTEM_CELL_CONFIGS,
   SOLAR_SYSTEM_NEAR_STAR_POOL,
 } from '@/engine/board/SolarSystemConfig.js';
+import { AnySignalQuickMissionCard } from '@/engine/cards/base/AnySignalQuickMissionCard.js';
 import { getCardRegistry } from '@/engine/cards/CardRegistry.js';
 import { Deck } from '@/engine/deck/Deck.js';
 import { DeferredActionsQueue } from '@/engine/deferred/DeferredActionsQueue.js';
 import { EventLog } from '@/engine/event/EventLog.js';
+import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
+import { discoverOumuamua } from '../../../helpers/OumuamuaTestUtils.js';
+import { resolveSetupTucks } from '../../../helpers/TestGameBuilder.js';
 
 function createPlayer(): Player {
   return new Player({
@@ -96,6 +100,36 @@ describe('AnySignalQuickMissionCard', () => {
     expect(sectors[mercurySectorIndex].getPlayerMarkerCount(player.id)).toBe(2);
   });
 
+  it('planet-sector placement waits for the oumuamua sector/tile choice', () => {
+    const game = Game.create(
+      [
+        { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
+        { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
+      ],
+      { playerCount: 2 },
+      'planet-sector-oumuamua-choice',
+      'planet-sector-oumuamua-choice',
+    );
+    resolveSetupTucks(game);
+    const player = game.players[0] as Player;
+    discoverOumuamua(game);
+
+    const card = new AnySignalQuickMissionCard('32', {
+      placementMode: 'planet-sector',
+      targetPlanet: EPlanet.OUMUAMUA,
+    });
+    card.play({ player, game });
+
+    const pendingInput = game.deferredActions.drain(game);
+    const model = pendingInput?.toModel() as
+      | ISelectOptionInputModel
+      | undefined;
+    expect(model?.type).toBe(EPlayerInputType.OPTION);
+    expect(model?.options.map((option) => option.id)).toEqual(
+      expect.arrayContaining(['oumuamua-sector', 'oumuamua-tile']),
+    );
+  });
+
   it('card 115 asks for signal color and then sector when color is ambiguous', () => {
     const player = createPlayer();
     const redA = new Sector({ id: 'sector-red-a', color: ESector.RED });
@@ -138,6 +172,36 @@ describe('AnySignalQuickMissionCard', () => {
     const pendingInput = game.deferredActions.drain(game);
     expect(pendingInput).toBeUndefined();
     expect(sectors[2].getPlayerMarkerCount(player.id)).toBe(2);
+  });
+
+  it('card 88 offers sector/tile choice when the only probe sector contains oumuamua', () => {
+    const game = Game.create(
+      [
+        { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
+        { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
+      ],
+      { playerCount: 2 },
+      'card-88-oumuamua-probe-sector',
+      'card-88-oumuamua-probe-sector',
+    );
+    resolveSetupTucks(game);
+    const player = game.players[0] as Player;
+    const { plugin } = discoverOumuamua(game);
+    const state = plugin.getRuntimeState(game);
+    if (!state?.meta) throw new Error('missing oumuamua state');
+    game.solarSystem?.placeProbe(player.id, state.meta.spaceId);
+
+    const card = getCardRegistry().create('88');
+    card.play({ player, game });
+
+    const pendingInput = game.deferredActions.drain(game);
+    const model = pendingInput?.toModel() as
+      | ISelectOptionInputModel
+      | undefined;
+    expect(model?.type).toBe(EPlayerInputType.OPTION);
+    expect(model?.options.map((option) => option.id)).toEqual(
+      expect.arrayContaining(['oumuamua-sector', 'oumuamua-tile']),
+    );
   });
 
   it('card 134 lets player choose between multiple probe sectors', () => {

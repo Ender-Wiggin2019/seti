@@ -241,8 +241,11 @@ export function registerDescHandlers(): void {
   executor.registerCustomHandler('desc.et-14', (player, game) => {
     const token = getNextTriggeredAnomalyToken(game);
     if (!token) return undefined;
-    MarkSectorSignalEffect.markByIndex(player, game, token.sectorIndex);
-    return undefined;
+    return MarkSectorSignalEffect.markByIndexWithAlternatives(
+      player,
+      game,
+      token.sectorIndex,
+    );
   });
 
   executor.registerCustomHandler('desc.et-15', (player, game) => {
@@ -371,10 +374,10 @@ export function registerDescHandlers(): void {
     const state = plugin.getRuntimeState(game);
     if (!state?.meta) return undefined;
 
-    const sectorIndex = game.sectors.findIndex(
-      (sector) => sector.id === state.meta?.sectorId,
+    const sectorIndex = game.solarSystem?.getSectorIndexOfPlanet(
+      EPlanet.OUMUAMUA,
     );
-    if (sectorIndex < 0) return undefined;
+    if (sectorIndex === undefined || sectorIndex === null) return undefined;
 
     return MarkSectorSignalEffect.markByIndexWithAlternatives(
       player,
