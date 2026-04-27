@@ -1,5 +1,12 @@
+import type { IInputResponse } from '@seti/common/types/protocol/actions';
 import { EMainAction, EPhase } from '@seti/common/types/protocol/enums';
+import {
+  EPlayerInputType,
+  type IPlayerInputModel,
+} from '@seti/common/types/protocol/playerInput';
+import { SimpleDeferredAction } from '@/engine/deferred/SimpleDeferredAction.js';
 import { Game } from '@/engine/Game.js';
+import type { PlayerInput } from '@/engine/input/PlayerInput.js';
 import {
   resolveAllInputsDefault,
   resolveSetupTucks,
@@ -12,6 +19,25 @@ const TEST_PLAYERS = [
 
 function createGame(): Game {
   return Game.create(TEST_PLAYERS, { playerCount: 2 }, 'test-seed');
+}
+
+function createOptionInput(
+  player: Game['players'][number],
+  process: (response: IInputResponse) => PlayerInput | undefined,
+): PlayerInput {
+  return {
+    inputId: 'test-option-input',
+    type: EPlayerInputType.OPTION,
+    player,
+    title: 'Test option',
+    toModel: (): IPlayerInputModel => ({
+      inputId: 'test-option-input',
+      type: EPlayerInputType.OPTION,
+      title: 'Test option',
+      options: [{ id: 'ok', label: 'OK' }],
+    }),
+    process,
+  };
 }
 
 describe('Game', () => {
@@ -120,5 +146,56 @@ describe('Game', () => {
     }
 
     expect(game.phase).toBe(EPhase.GAME_OVER);
+  });
+
+  it('cleans mission checkpoint when waiting input processing throws', () => {
+    const game = createGame();
+    resolveSetupTucks(game);
+    const player = game.players[0];
+    const error = new Error('input failed');
+    game.transitionTo(EPhase.IN_RESOLUTION);
+    game.missionTracker.beginCheckpoint();
+    player.waitingFor = createOptionInput(player, () => {
+      throw error;
+    });
+
+    expect(() =>
+      game.processInput(player.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: 'ok',
+      }),
+    ).toThrow(error);
+    expect(game.missionTracker.hasActiveCheckpoint()).toBe(false);
+    expect(player.waitingFor).toBeUndefined();
+    expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
+  });
+
+  it('cleans mission checkpoint and pending deferred actions when input resolution throws', () => {
+    const game = createGame();
+    resolveSetupTucks(game);
+    const player = game.players[0];
+    const error = new Error('pipeline failed');
+    game.transitionTo(EPhase.IN_RESOLUTION);
+    game.missionTracker.beginCheckpoint();
+    player.waitingFor = createOptionInput(player, () => undefined);
+    game.deferredActions.push(
+      new SimpleDeferredAction(player, () => {
+        throw error;
+      }),
+    );
+    game.deferredActions.push(
+      new SimpleDeferredAction(player, () => undefined),
+    );
+
+    expect(() =>
+      game.processInput(player.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: 'ok',
+      }),
+    ).toThrow(error);
+    expect(game.missionTracker.hasActiveCheckpoint()).toBe(false);
+    expect(player.waitingFor).toBeUndefined();
+    expect(game.deferredActions.isEmpty()).toBe(true);
+    expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
   });
 });

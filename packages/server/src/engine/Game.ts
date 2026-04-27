@@ -337,15 +337,30 @@ export class Game implements IGame {
       );
     }
 
-    const nextInput = player.waitingFor.process(response);
-    if (nextInput !== undefined) {
-      player.waitingFor = nextInput;
-      return;
-    }
+    const hadResolutionContext =
+      this.missionTracker.hasActiveCheckpoint() ||
+      this.phase === EPhase.IN_RESOLUTION;
 
-    player.waitingFor = undefined;
-    this.runResolutionPipeline();
-    this.closeMissionCheckpointIfSettled();
+    try {
+      const nextInput = player.waitingFor.process(response);
+      if (nextInput !== undefined) {
+        player.waitingFor = nextInput;
+        return;
+      }
+
+      player.waitingFor = undefined;
+      this.runResolutionPipeline();
+      this.closeMissionCheckpointIfSettled();
+    } catch (error) {
+      if (
+        hadResolutionContext ||
+        this.missionTracker.hasActiveCheckpoint() ||
+        this.phase === EPhase.IN_RESOLUTION
+      ) {
+        this.rollbackInputResolution(player);
+      }
+      throw error;
+    }
   }
 
   public mark(
@@ -650,6 +665,16 @@ export class Game implements IGame {
     ) {
       this.missionTracker.endCheckpoint();
     }
+  }
+
+  private rollbackInputResolution(player: IPlayer): void {
+    this.deferredActions.clear();
+    player.waitingFor = undefined;
+    if (this.phase === EPhase.IN_RESOLUTION) {
+      this.phase = EPhase.AWAIT_MAIN_ACTION;
+    }
+    this.currentMainActionType = null;
+    this.missionTracker.endCheckpoint();
   }
 
   private resolveEndOfRound(): void {

@@ -2,6 +2,7 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  Navigate,
   Outlet,
 } from '@tanstack/react-router';
 import { AppShell } from '@/components/layout/AppShell';
@@ -102,7 +103,7 @@ const gameDebugRoute = createRoute({
 const debugAlienRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/debug/alien',
-  component: DebugReplayPage,
+  component: () => <Navigate to='/debug/replay' replace />,
 });
 
 const debugReplayRoute = createRoute({

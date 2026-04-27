@@ -1,5 +1,11 @@
 import { getAvailableMainActions } from '@seti/common/rules';
-import { EMainAction, EPlanet } from '@seti/common/types/protocol/enums';
+import {
+  EAlienType,
+  EMainAction,
+  EPlanet,
+  ETrace,
+} from '@seti/common/types/protocol/enums';
+import { AlienState } from '@/engine/alien/AlienState.js';
 import { Game } from '@/engine/Game.js';
 import {
   projectGameState,
@@ -63,7 +69,9 @@ describe('GameSerializer', () => {
     player.probesInSpace = 1;
 
     const publicState = projectGameState(game, player.id);
-    const publicPlayer = publicState.players.find((p) => p.playerId === player.id);
+    const publicPlayer = publicState.players.find(
+      (p) => p.playerId === player.id,
+    );
     if (!publicPlayer) {
       throw new Error('expected projected player state');
     }
@@ -82,5 +90,40 @@ describe('GameSerializer', () => {
         (planet) => !('planetSpaceId' in planet.state),
       ),
     ).toBe(true);
+  });
+
+  it('hides undiscovered alien board-only slots from public projection', () => {
+    const game = createTestGame();
+    game.hiddenAliens = [EAlienType.ANOMALIES];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.boards[0];
+    board.addSlot({
+      slotId: 'alien-0-anomaly-column|red-trace',
+      alienIndex: 0,
+      traceColor: ETrace.RED,
+      maxOccupants: -1,
+      rewards: [],
+      isDiscovery: false,
+    });
+    board.addSlot({
+      slotId: 'alien-0-anomaly-token|0|red-trace',
+      alienIndex: 0,
+      traceColor: ETrace.RED,
+      maxOccupants: 0,
+      rewards: [{ type: 'VP', amount: 4 }],
+      isDiscovery: false,
+    });
+
+    const publicState = projectGameState(game, game.activePlayer.id);
+    const publicAlien = publicState.aliens[0];
+
+    expect(publicAlien.alienType).toBeNull();
+    expect(publicAlien.slots).toHaveLength(4);
+    expect(publicAlien.slots.map((slot) => slot.slotId)).toEqual([
+      'alien-0-discovery-red-trace',
+      'alien-0-discovery-yellow-trace',
+      'alien-0-discovery-blue-trace',
+      'alien-0-overflow',
+    ]);
   });
 });

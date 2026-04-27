@@ -8,7 +8,9 @@ import type {
   IPublicPlayerState,
   IPublicSector,
   IPublicTechBoard,
+  IPublicTraceSlot,
 } from '@seti/common/types/protocol/gameState';
+import type { AlienBoard, ITraceSlot } from '@/engine/alien/AlienBoard.js';
 import type { TGameEvent } from '@/engine/event/GameEvent.js';
 import type { IGame } from '@/engine/IGame.js';
 import {
@@ -76,6 +78,49 @@ interface ISolarSystemInternalState {
 
 function cloneValue<TValue>(value: TValue): TValue {
   return JSON.parse(JSON.stringify(value)) as TValue;
+}
+
+function getPublicAlienSlotKind(
+  slot: ITraceSlot,
+): IPublicTraceSlot['slotKind'] {
+  if (slot.isDiscovery) {
+    return 'discovery';
+  }
+  if (slot.slotId.includes('anomaly-column')) {
+    return 'anomaly-column';
+  }
+  if (slot.slotId.includes('anomaly-token')) {
+    return 'anomaly-token';
+  }
+  if (slot.slotId.includes('overflow')) {
+    return 'overflow';
+  }
+  return 'board';
+}
+
+function toPublicAlienSlots(board: AlienBoard): IPublicTraceSlot[] {
+  const visibleSlots = board.discovered
+    ? board.slots
+    : board.slots.filter(
+        (slot) =>
+          slot.isDiscovery || getPublicAlienSlotKind(slot) === 'overflow',
+      );
+
+  return visibleSlots.map((slot) => ({
+    slotId: slot.slotId,
+    traceColor: slot.traceColor,
+    occupants: slot.occupants.map((occ) => ({
+      source:
+        occ.source === 'neutral'
+          ? ('neutral' as const)
+          : { playerId: occ.source.playerId },
+      traceColor: occ.traceColor,
+    })),
+    maxOccupants: slot.maxOccupants,
+    rewards: slot.rewards.map((r) => ({ ...r })),
+    isDiscovery: slot.isDiscovery,
+    slotKind: getPublicAlienSlotKind(slot),
+  }));
 }
 
 function serializePlayer(player: IPlayer): IPlayerStateDto {
@@ -563,22 +608,11 @@ export function projectGameState(
       alienType: board.discovered ? board.alienType : null,
       discovered: board.discovered,
       faceUpAlienCardId: board.discovered ? board.faceUpAlienCardId : null,
-      alienDeckSize: board.alienDeckDrawPile.length,
-      alienDiscardSize: board.alienDeckDiscardPile.length,
-      slots: board.slots.map((slot) => ({
-        slotId: slot.slotId,
-        traceColor: slot.traceColor,
-        occupants: slot.occupants.map((occ) => ({
-          source:
-            occ.source === 'neutral'
-              ? ('neutral' as const)
-              : { playerId: occ.source.playerId },
-          traceColor: occ.traceColor,
-        })),
-        maxOccupants: slot.maxOccupants,
-        rewards: slot.rewards.map((r) => ({ ...r })),
-        isDiscovery: slot.isDiscovery,
-      })),
+      alienDeckSize: board.discovered ? board.alienDeckDrawPile.length : 0,
+      alienDiscardSize: board.discovered
+        ? board.alienDeckDiscardPile.length
+        : 0,
+      slots: toPublicAlienSlots(board),
     })),
     recentEvents: game.eventLog.recent(20) as never,
     milestones: toPublicMilestones(game),

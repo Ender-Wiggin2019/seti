@@ -222,6 +222,13 @@ export interface IPublicTraceOccupant {
   traceColor: ETrace;
 }
 
+export type TPublicAlienSlotKind =
+  | 'discovery'
+  | 'overflow'
+  | 'anomaly-column'
+  | 'anomaly-token'
+  | 'board';
+
 export interface IPublicTraceSlot {
   slotId: string;
   traceColor: ETrace;
@@ -229,6 +236,7 @@ export interface IPublicTraceSlot {
   maxOccupants: number;
   rewards: TPublicSlotReward[];
   isDiscovery: boolean;
+  slotKind?: TPublicAlienSlotKind;
 }
 
 export interface IPublicAlienState {

@@ -10,6 +10,7 @@ import { EAlienType, EPhase } from '@seti/common/types/protocol/enums';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import type { AlienBoard } from '@/engine/alien/AlienBoard.js';
 import { AlienState } from '@/engine/alien/index.js';
+import { OumuamuaAlienPlugin } from '@/engine/alien/plugins/OumuamuaAlienPlugin.js';
 import { EventLog } from '@/engine/event/EventLog.js';
 import type { Game } from '@/engine/Game.js';
 
@@ -17,6 +18,9 @@ const ANOMALY_DISCOVERY_PRESET_ID = 'anomaly-discovery';
 const BEFORE_END_TURN_CHECKPOINT_ID = 'before-end-turn';
 const ANOMALY_TRIGGER_PRESET_ID = 'anomaly-trigger-resolution';
 const BEFORE_PASS_ROTATION_CHECKPOINT_ID = 'before-pass-rotation';
+const OUMUAMUA_PRESET_ID = 'oumuamua-debug';
+const AFTER_OUMUAMUA_TILE_SIGNAL_CHECKPOINT_ID = 'after-tile-signal';
+const OUMUAMUA_TRACE_COLUMNS_CHECKPOINT_ID = 'trace-columns';
 
 interface IDebugReplayPreset {
   definition: IDebugReplayPresetDefinition;
@@ -94,6 +98,30 @@ const DEBUG_REPLAY_PRESETS: Readonly<Record<string, IDebugReplayPreset>> = {
       ],
     },
     apply: applyAnomalyTriggerReplay,
+  },
+  [OUMUAMUA_PRESET_ID]: {
+    definition: {
+      id: OUMUAMUA_PRESET_ID,
+      label: 'Oumuamua Replay',
+      description:
+        'Prepare a discovered Oumuamua board with its tile, exofossils, and trace columns available for debugging.',
+      fields: [],
+      checkpoints: [
+        {
+          id: AFTER_OUMUAMUA_TILE_SIGNAL_CHECKPOINT_ID,
+          label: 'After Tile Signal',
+          description:
+            'The Oumuamua tile has one player signal and two data remaining.',
+        },
+        {
+          id: OUMUAMUA_TRACE_COLUMNS_CHECKPOINT_ID,
+          label: 'Trace Columns',
+          description:
+            'The Oumuamua trace columns are initialized and the active player has exofossils to spend.',
+        },
+      ],
+    },
+    apply: applyOumuamuaReplay,
   },
 };
 
@@ -256,6 +284,69 @@ function applyAnomalyTriggerReplay(
       'Replay ready: PASS will rotate Earth onto a prepared anomaly token and resolve the reward.',
     alienIndex: board.alienIndex,
     selectedAlienType,
+    currentPlayerId: activePlayer.id,
+  };
+}
+
+function applyOumuamuaReplay(
+  game: Game,
+  request: IDebugReplaySessionRequest,
+): {
+  phase: EPhase;
+  summary: string;
+  alienIndex: number;
+  selectedAlienType: EAlienType;
+  currentPlayerId: string;
+} {
+  if (
+    request.checkpointId !== AFTER_OUMUAMUA_TILE_SIGNAL_CHECKPOINT_ID &&
+    request.checkpointId !== OUMUAMUA_TRACE_COLUMNS_CHECKPOINT_ID
+  ) {
+    throw new Error(`Unsupported replay checkpoint: ${request.checkpointId}`);
+  }
+
+  const companionAlienType = CORE_RANDOM_ALIEN_TYPES.find(
+    (alienType) => alienType !== EAlienType.OUMUAMUA,
+  );
+  if (companionAlienType === undefined) {
+    throw new Error('Could not resolve companion alien for replay preset');
+  }
+
+  game.hiddenAliens = [EAlienType.OUMUAMUA, companionAlienType];
+  game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+  resolveSetupTucks(game);
+
+  const activePlayer = game.getActivePlayer();
+  activePlayer.resources.gain({ credits: 10, energy: 10, publicity: 10 });
+  activePlayer.gainExofossils(4);
+
+  const board = game.alienState.getBoardByType(EAlienType.OUMUAMUA);
+  if (!board) {
+    throw new Error('Oumuamua board not found for replay preset');
+  }
+
+  const pluginInput = game.alienState.discoverAlien(board, game);
+  if (pluginInput !== undefined) {
+    activePlayer.waitingFor = pluginInput;
+  }
+
+  const plugin = new OumuamuaAlienPlugin();
+  if (request.checkpointId === AFTER_OUMUAMUA_TILE_SIGNAL_CHECKPOINT_ID) {
+    plugin.markTileSignal(activePlayer, game);
+  }
+
+  game.phase = EPhase.AWAIT_MAIN_ACTION;
+  activePlayer.waitingFor = undefined;
+  game.eventLog = new EventLog();
+
+  return {
+    phase: game.phase,
+    summary:
+      request.checkpointId === AFTER_OUMUAMUA_TILE_SIGNAL_CHECKPOINT_ID
+        ? 'Replay ready: Oumuamua tile has one signal marker and can continue toward completion.'
+        : 'Replay ready: Oumuamua trace columns are available with exofossils to spend.',
+    alienIndex: board.alienIndex,
+    selectedAlienType: EAlienType.OUMUAMUA,
     currentPlayerId: activePlayer.id,
   };
 }

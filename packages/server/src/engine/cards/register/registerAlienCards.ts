@@ -7,9 +7,8 @@ function g(registry: CardRegistry, id: string): void {
 }
 
 /**
- * All alien cards require custom implementation.
- * They involve alien-specific mechanics (exofossils, organelles, glyphs, samples, etc.)
- * that are not handled by the base BehaviorExecutor.
+ * Alien cards are registered through generic card metadata plus DESC handlers
+ * for species-specific behavior.
  */
 export function registerAlienCards(registry: CardRegistry): void {
   // ============================================================
@@ -65,11 +64,9 @@ export function registerAlienCards(registry: CardRegistry): void {
   // ALIEN — probe/land + special
   // ============================================================
   g(registry, 'ET.25'); // Probe Customisation         | DESC, LAND
-  // TODO: UNHANDLED_EFFECT(exofossil)
   g(registry, 'ET.26'); // Race Against Time           | LAUNCH, EXOFOSSIL
   g(registry, 'ET.27'); // Perfect Timing              | MOVE(4), DESC, QM
   g(registry, 'ET.28'); // Exofossil Samples           | ROTATE, TECH_COMPUTER, DESC
-  // TODO: UNHANDLED_EFFECT(exofossil)
   g(registry, 'ET.29'); // Comparative Analysis        | EXOFOSSIL, FM
   g(registry, 'ET.30'); // Excavation Rover            | LAND, DESC, QM
 

@@ -18,13 +18,35 @@ export interface IDebugReplayFieldOption {
   disabled?: boolean;
 }
 
-export interface IDebugReplayFieldDefinition {
+export type TDebugReplayFieldKind =
+  | 'select'
+  | 'text'
+  | 'number'
+  | 'player'
+  | 'card';
+
+interface IDebugReplayFieldDefinitionBase {
   id: string;
   label: string;
-  kind: 'select';
   required: boolean;
+}
+
+export interface IDebugReplaySelectFieldDefinition
+  extends IDebugReplayFieldDefinitionBase {
+  kind: 'select';
   options: IDebugReplayFieldOption[];
 }
+
+export interface IDebugReplayTextFieldDefinition
+  extends IDebugReplayFieldDefinitionBase {
+  kind: Exclude<TDebugReplayFieldKind, 'select'>;
+  defaultValue?: string;
+  placeholder?: string;
+}
+
+export type IDebugReplayFieldDefinition =
+  | IDebugReplaySelectFieldDefinition
+  | IDebugReplayTextFieldDefinition;
 
 export interface IDebugReplayCheckpointDefinition {
   id: string;

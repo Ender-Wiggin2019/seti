@@ -86,7 +86,7 @@ describe('ObservationQuickMissionCard (37/39/41/43)', () => {
     expect(game.missionTracker.getMissionState(player.id, '37')).toBeDefined();
   });
 
-  it('falls back to color-based placement when the setup cannot resolve the target star', () => {
+  it('does not mark a fallback sector when the target star cannot be resolved', () => {
     const yellowSector = {
       id: 'sector-a',
       color: ESector.YELLOW,

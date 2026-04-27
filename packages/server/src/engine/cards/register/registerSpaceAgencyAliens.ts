@@ -17,8 +17,8 @@ export function registerSpaceAgencyAliens(registry: CardRegistry): void {
   // SA.ET.1-10: glyphid alien species mechanic
   // ============================================================
 
-  // Glyph immediate + endgame
-  // TODO: UNHANDLED_EFFECT(glyph-*)
+  // Glyph immediate + endgame. Glyph resource accounting is deferred until
+  // Glyphids are enabled in the game setup flow.
   g(registry, 'SA.ET.1'); // Glyphids               | glyph-yellow, glyph-green OR glyph-blue, glyph-purple, EG
   g(registry, 'SA.ET.9'); // Glyphids               | glyph-yellow, glyph-purple OR glyph-blue, glyph-orange, EG
 
@@ -33,8 +33,8 @@ export function registerSpaceAgencyAliens(registry: CardRegistry): void {
   g(registry, 'SA.ET.6'); // Glyphids               | PUBLICITY, DATA, FM
   g(registry, 'SA.ET.7'); // Glyphids               | CARD_ANY, FM
 
-  // Glyph quick mission
-  // TODO: UNHANDLED_EFFECT(glyph-green)
+  // Glyph quick mission. Glyph resource accounting is deferred until Glyphids
+  // are enabled in the game setup flow.
   g(registry, 'SA.ET.10'); // Glyphids               | LAUNCH, glyph-green, QM
 
   // ============================================================
@@ -42,8 +42,8 @@ export function registerSpaceAgencyAliens(registry: CardRegistry): void {
   // SA.ET.11-20: amoeba alien species mechanic
   // ============================================================
 
-  // Organelle + endgame
-  // TODO: UNHANDLED_EFFECT(organelle-*)
+  // Organelle + endgame. Organelle resource accounting is deferred until
+  // Amoeba is enabled in the game setup flow.
   g(registry, 'SA.ET.11'); // Biosignature Screening | CARD_ANY, organelle-red, EG
   g(registry, 'SA.ET.12'); // Physical Characterize  | CARD_ANY, organelle-yellow, EG
   g(registry, 'SA.ET.13'); // Genome Characterize    | CARD_ANY, organelle-blue, EG
@@ -51,8 +51,8 @@ export function registerSpaceAgencyAliens(registry: CardRegistry): void {
   // Organelle quick mission
   g(registry, 'SA.ET.14'); // Breakthrough Theory    | PUBLICITY(3), QM
 
-  // Organelle full missions
-  // TODO: UNHANDLED_EFFECT(organelle-*)
+  // Organelle full missions. Organelle resource accounting is deferred until
+  // Amoeba is enabled in the game setup flow.
   g(registry, 'SA.ET.15'); // Low-gravity Research   | LAUNCH, organelle-yellow, FM
   g(registry, 'SA.ET.16'); // Automated Analysis     | DATA(3), organelle-blue, FM
   g(registry, 'SA.ET.17'); // Safety Protocols       | PUBLICITY, FM
@@ -60,6 +60,7 @@ export function registerSpaceAgencyAliens(registry: CardRegistry): void {
 
   // Organelle special
   g(registry, 'SA.ET.19'); // Extreme Conditions Test | DESC
-  // TODO: UNHANDLED_EFFECT(signal-token, organelle-red)
+  // Signal-token behavior is generic; organelle accounting is deferred until
+  // Amoeba is enabled in the game setup flow.
   g(registry, 'SA.ET.20'); // Place of Origin        | SIGNAL_TOKEN, PUBLICITY, organelle-red
 }

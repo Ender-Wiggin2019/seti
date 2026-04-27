@@ -5,6 +5,7 @@ import {
   applyDebugReplayPreset,
   listDebugReplayPresets,
 } from '@/debug/debugReplayPresets.js';
+import { OumuamuaAlienPlugin } from '@/engine/alien/plugins/OumuamuaAlienPlugin.js';
 import { buildTestGame, getPlayer } from '../helpers/TestGameBuilder.js';
 
 describe('debugReplayPresets', () => {
@@ -37,6 +38,16 @@ describe('debugReplayPresets', () => {
         expect.objectContaining({ id: 'before-pass-rotation' }),
       ]),
     );
+    expect(
+      presets.find((preset) => preset.id === 'oumuamua-debug'),
+    ).toMatchObject({
+      id: 'oumuamua-debug',
+      fields: [],
+      checkpoints: expect.arrayContaining([
+        expect.objectContaining({ id: 'after-tile-signal' }),
+        expect.objectContaining({ id: 'trace-columns' }),
+      ]),
+    });
   });
 
   it('replays anomaly discovery to the before-end-turn checkpoint', () => {
@@ -90,7 +101,10 @@ describe('debugReplayPresets', () => {
         checkpointId: 'before-end-turn',
         fieldValues: { alienType: String(EAlienType.ANOMALIES) },
       });
-      const board = game.alienState.getBoardByType(EAlienType.ANOMALIES)!;
+      const board = game.alienState.getBoardByType(EAlienType.ANOMALIES);
+      if (!board) {
+        throw new Error('Expected Anomalies board to exist');
+      }
       const player = getPlayer(game, replay.currentPlayerId);
       return { game, replay, board, player };
     }
@@ -261,5 +275,34 @@ describe('debugReplayPresets', () => {
           event.type === 'ACTION' && event.action === 'ANOMALY_TRIGGERED',
       ),
     ).toBe(true);
+  });
+
+  it('replays oumuamua debug state with tile signal, exofossils, and trace columns', () => {
+    const game = buildTestGame();
+
+    const replay = applyDebugReplayPreset(game, {
+      presetId: 'oumuamua-debug',
+      checkpointId: 'after-tile-signal',
+      fieldValues: {},
+    });
+
+    const board = game.alienState.getBoardByType(EAlienType.OUMUAMUA);
+    const player = getPlayer(game, replay.currentPlayerId);
+    const plugin = new OumuamuaAlienPlugin();
+    const runtime = plugin.getRuntimeState(game);
+    const traceColumnSlots =
+      board?.slots.filter((slot) => slot.slotId.includes('oumuamua-trace')) ??
+      [];
+
+    expect(replay.selectedAlienType).toBe(EAlienType.OUMUAMUA);
+    expect(replay.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
+    expect(board?.discovered).toBe(true);
+    expect(runtime?.tileDataRemaining).toBe(2);
+    expect(runtime?.tileMarkerPlayerIds).toContain(player.id);
+    expect(player.exofossils).toBeGreaterThanOrEqual(4);
+    expect(traceColumnSlots).toHaveLength(18);
+    expect(traceColumnSlots.some((slot) => slot.slotId.endsWith('|1|4'))).toBe(
+      true,
+    );
   });
 });

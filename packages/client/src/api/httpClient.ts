@@ -8,6 +8,50 @@ export const httpClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+function responseMessage(data: unknown): string {
+  if (!data || typeof data !== 'object') {
+    return '';
+  }
+
+  const message = (data as { message?: unknown }).message;
+  if (Array.isArray(message)) {
+    return message.join(' ');
+  }
+  return typeof message === 'string' ? message : '';
+}
+
+export function shouldLogoutForUnauthorizedResponse({
+  status,
+  requestUrl,
+  responseData,
+}: {
+  status?: number;
+  requestUrl: string;
+  responseData?: unknown;
+}): boolean {
+  if (status !== 401) {
+    return false;
+  }
+
+  if (
+    requestUrl.includes('/auth/login') ||
+    requestUrl.includes('/auth/register')
+  ) {
+    return false;
+  }
+
+  if (requestUrl.includes('/auth/me')) {
+    return true;
+  }
+
+  const message = responseMessage(responseData).toLowerCase();
+  return (
+    message.includes('authorization token') ||
+    message.includes('expired token') ||
+    message.includes('invalid token')
+  );
+}
+
 httpClient.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token;
   if (token) {
@@ -19,18 +63,18 @@ httpClient.interceptors.request.use((config) => {
 httpClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
+    if (axios.isAxiosError(error)) {
       const requestUrl = error.config?.url ?? '';
-      const isAuthFormRequest =
-        requestUrl.includes('/auth/login') ||
-        requestUrl.includes('/auth/register');
-
-      if (isAuthFormRequest) {
-        return Promise.reject(error);
+      if (
+        shouldLogoutForUnauthorizedResponse({
+          status: error.response?.status,
+          requestUrl,
+          responseData: error.response?.data,
+        })
+      ) {
+        useAuthStore.getState().logout();
+        window.location.href = '/auth';
       }
-
-      useAuthStore.getState().logout();
-      window.location.href = '/auth';
     }
     return Promise.reject(error);
   },

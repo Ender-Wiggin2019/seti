@@ -20,6 +20,7 @@ import {
   getSectorIndexByPlanet,
 } from '@/engine/effects/scan/ScanEffectUtils.js';
 import { Game } from '@/engine/Game.js';
+import { EMissionEventType } from '@/engine/missions/IMission.js';
 import { Player } from '@/engine/player/Player.js';
 import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
 
@@ -266,6 +267,69 @@ describe('ScanAction — integration (rewrite)', () => {
       expect(oumuamuaSector.getPlayerMarkerCount(p1.id)).toBe(
         sectorMarkerCountBeforeTileChoice,
       );
+    });
+
+    it('routes the oumuamua-sector branch through normal sector signal settlement', () => {
+      const { game, p1 } = createScanIntegrationGame(
+        'scan-2-4-3-oumuamua-sector',
+      );
+      const plugin = discoverOumuamuaForScan(game);
+      const state = plugin.getRuntimeState(game);
+      if (!state?.meta) throw new Error('expected oumuamua metadata');
+      const oumuamuaSector = requireValue(
+        game.sectors.find((sector) => sector.id === state.meta?.sectorId),
+        'expected oumuamua sector',
+      ) as Sector;
+      game.cardRow = [{ id: 'oumuamua-match', sector: oumuamuaSector.color }];
+
+      game.processMainAction(p1.id, { type: EMainAction.SCAN });
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_CARD_ROW,
+      });
+      game.processInput(p1.id, {
+        type: EPlayerInputType.CARD,
+        cardIds: ['oumuamua-match'],
+      });
+
+      const sectorPick = playerWaitingFor(
+        game,
+        p1.id,
+        EPlayerInputType.OPTION,
+      ) as ISelectOptionInputModel;
+      const oumuamuaSectorOption = requireValue(
+        sectorPick.options.find((option) => option.id === oumuamuaSector.id),
+        'expected oumuamua sector option',
+      );
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: oumuamuaSectorOption.id,
+      });
+
+      const branchPick = playerWaitingFor(
+        game,
+        p1.id,
+        EPlayerInputType.OPTION,
+      ) as ISelectOptionInputModel;
+      expect(branchPick.options.map((option) => option.id)).toEqual(
+        expect.arrayContaining(['oumuamua-sector', 'oumuamua-tile']),
+      );
+
+      const tileDataBefore = plugin.getRuntimeState(game)?.tileDataRemaining;
+      const sectorMarkersBefore = oumuamuaSector.getPlayerMarkerCount(p1.id);
+      const dataBefore = p1.resources.data;
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: 'oumuamua-sector',
+      });
+
+      expect(oumuamuaSector.getPlayerMarkerCount(p1.id)).toBe(
+        sectorMarkersBefore + 1,
+      );
+      expect(plugin.getRuntimeState(game)?.tileDataRemaining).toBe(
+        tileDataBefore,
+      );
+      expect(p1.resources.data).toBe(dataBefore + 1);
     });
   });
 
@@ -576,7 +640,7 @@ describe('ScanAction — integration (rewrite)', () => {
   });
 
   describe('2.4.10 missionTracker records SIGNAL_PLACED events', () => {
-    it('emits one SIGNAL_PLACED event per mark, carrying the sector color', async () => {
+    it('emits one SIGNAL_PLACED event per mark, carrying the sector color', () => {
       const { game, p1 } = createScanIntegrationGame('scan-2-4-10');
       const earthIdx = requireValue(
         getSectorIndexByPlanet(
@@ -587,29 +651,19 @@ describe('ScanAction — integration (rewrite)', () => {
       );
       const earthSector = game.sectors[earthIdx] as Sector;
 
-      const { EMissionEventType } = await import(
-        '@/engine/missions/IMission.js'
-      );
-      const captured: Array<{ type: string; color?: string }> = [];
-      const originalRecord = game.missionTracker.recordEvent.bind(
-        game.missionTracker,
-      );
-      game.missionTracker.recordEvent = (event) => {
-        captured.push(event as { type: string; color?: string });
-        originalRecord(event);
-      };
-
       game.processMainAction(p1.id, { type: EMainAction.SCAN });
       game.processInput(p1.id, {
         type: EPlayerInputType.OPTION,
         optionId: EScanSubAction.MARK_EARTH,
       });
 
-      const signalPlacedEvents = captured.filter(
-        (e) => e.type === EMissionEventType.SIGNAL_PLACED,
-      );
-      expect(signalPlacedEvents).toHaveLength(1);
-      expect(signalPlacedEvents[0].color).toBe(earthSector.color);
+      expect(
+        game.missionTracker.hasTurnEvent(
+          (event) =>
+            event.type === EMissionEventType.SIGNAL_PLACED &&
+            event.color === earthSector.color,
+        ),
+      ).toBe(true);
     });
   });
 

@@ -288,7 +288,9 @@ describe('GameLayout', () => {
 
       fireEvent.click(screen.getByRole('button', { name: 'End Move' }));
 
-      expect(screen.queryByTestId('movement-mode-hint')).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId('movement-mode-hint'),
+      ).not.toBeInTheDocument();
     });
 
     it('hides free action bar when not my turn', async () => {
@@ -354,6 +356,72 @@ describe('GameLayout', () => {
       expect(sendFreeAction).toHaveBeenCalledWith({
         type: EFreeAction.BUY_CARD,
         fromDeck: true,
+      });
+    });
+
+    it('disables resource exchange options the player cannot afford', async () => {
+      mockContextValue = createMockContext({
+        gameState: createMockGameState({
+          players: [
+            createMockPlayerState({
+              playerId: 'player-1',
+              handSize: 1,
+              resources: { credit: 1, energy: 2, data: 0, publicity: 3 },
+            }),
+          ],
+        }),
+      });
+      await renderLayout();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+      fireEvent.click(screen.getByTestId('free-action-EXCHANGE_RESOURCES'));
+
+      const dialog = screen.getByRole('dialog');
+      expect(
+        within(dialog).getByRole('button', { name: /2 Credits -> 1 Energy/i }),
+      ).toBeDisabled();
+      expect(
+        within(dialog).getByRole('button', { name: /2 Energy -> 1 Credits/i }),
+      ).toBeEnabled();
+      expect(
+        within(dialog).getByRole('button', { name: /2 Cards -> 1 Credits/i }),
+      ).toBeDisabled();
+    });
+
+    it('sends the selected resource exchange payload', async () => {
+      const sendFreeAction = vi.fn();
+      mockContextValue = createMockContext({
+        sendFreeAction,
+        gameState: createMockGameState({
+          players: [
+            createMockPlayerState({
+              playerId: 'player-1',
+              resources: { credit: 2, energy: 0, data: 0, publicity: 3 },
+            }),
+          ],
+        }),
+      });
+      await renderLayout();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+      fireEvent.click(screen.getByTestId('free-action-EXCHANGE_RESOURCES'));
+
+      expect(
+        within(screen.getByRole('dialog')).getByRole('button', {
+          name: /2 Energy -> 1 Credits/i,
+        }),
+      ).toBeDisabled();
+
+      fireEvent.click(
+        within(screen.getByRole('dialog')).getByRole('button', {
+          name: /2 Credits -> 1 Energy/i,
+        }),
+      );
+
+      expect(sendFreeAction).toHaveBeenCalledWith({
+        type: EFreeAction.EXCHANGE_RESOURCES,
+        from: EResource.CREDIT,
+        to: EResource.ENERGY,
       });
     });
   });

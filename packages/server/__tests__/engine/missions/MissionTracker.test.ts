@@ -581,23 +581,24 @@ describe('MissionTracker', () => {
         game.solarSystem!,
         EPlanet.EARTH,
       );
-      const earthSignalBranchIdByColor: Record<string, string> = {
-        'yellow-signal': 'complete-116-0',
-        'red-signal': 'complete-116-1',
-        'blue-signal': 'complete-116-2',
+      const earthSignalBranchIndexByColor: Record<string, number> = {
+        'yellow-signal': 0,
+        'red-signal': 1,
+        'blue-signal': 2,
       };
       if (earthSectorIndex === null) {
         throw new Error('expected Earth sector index to resolve');
       }
 
-      const expectedControlCenterOptionId =
-        earthSignalBranchIdByColor[game.sectors[earthSectorIndex].color];
+      const expectedControlCenterBranchIndex =
+        earthSignalBranchIndexByColor[game.sectors[earthSectorIndex].color];
 
-      if (!expectedControlCenterOptionId) {
+      if (expectedControlCenterBranchIndex === undefined) {
         throw new Error(
           'expected Earth sector to match a Control Center branch',
         );
       }
+      const expectedControlCenterOptionId = `complete-116-${expectedControlCenterBranchIndex}`;
 
       game.processMainAction(player1.id, {
         type: EMainAction.SCAN,
@@ -627,9 +628,7 @@ describe('MissionTracker', () => {
       const state116 = game.missionTracker.getMissionState(player1.id, '116');
       expect(state78?.branchStates[0]?.completed).toBe(true);
       expect(
-        state116?.branchStates[
-          Number.parseInt(expectedControlCenterOptionId.slice(-1), 10)
-        ]?.completed,
+        state116?.branchStates[expectedControlCenterBranchIndex]?.completed,
       ).toBe(false);
     });
   });

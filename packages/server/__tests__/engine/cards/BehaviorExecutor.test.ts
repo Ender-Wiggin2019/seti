@@ -338,9 +338,7 @@ describe('BehaviorExecutor — integration', () => {
     });
 
     it('markEarthSectorIndex offers sector/tile choice when targeting oumuamua', () => {
-      const { game, player } = createIntegrationGame(
-        'beh-2-9-6-oumuamua-scan',
-      );
+      const { game, player } = createIntegrationGame('beh-2-9-6-oumuamua-scan');
       const { sectorIndex } = discoverOumuamua(game);
 
       const pending = drainReturningInput(game, () => {
@@ -356,6 +354,35 @@ describe('BehaviorExecutor — integration', () => {
       expect(model?.type).toBe(EPlayerInputType.OPTION);
       expect(model?.options.map((option) => option.id)).toEqual(
         expect.arrayContaining(['oumuamua-sector', 'oumuamua-tile']),
+      );
+    });
+
+    it('ET.23 desc handler targets the oumuamua sector and preserves tile choice', () => {
+      const { game, player } = createIntegrationGame('beh-2-9-6-et-23');
+      const { plugin } = discoverOumuamua(game);
+      const card = sampleCard('ET.23');
+
+      const pending = drainReturningInput(game, () => {
+        getBehaviorExecutor().execute(card.behavior, player, game, card);
+      });
+
+      const model = pending?.toModel() as ISelectOptionInputModel | undefined;
+      expect(card.behavior.custom).toEqual(
+        expect.arrayContaining(['desc.et-23']),
+      );
+      expect(model?.type).toBe(EPlayerInputType.OPTION);
+      expect(model?.options.map((option) => option.id)).toEqual(
+        expect.arrayContaining(['oumuamua-sector', 'oumuamua-tile']),
+      );
+
+      const tileDataBefore = plugin.getRuntimeState(game)?.tileDataRemaining;
+      pending?.process({
+        type: EPlayerInputType.OPTION,
+        optionId: 'oumuamua-tile',
+      });
+
+      expect(plugin.getRuntimeState(game)?.tileDataRemaining).toBe(
+        (tileDataBefore ?? 0) - 1,
       );
     });
   });

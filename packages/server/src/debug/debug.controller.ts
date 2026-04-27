@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Inject, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import type {
   IFreeActionRequest,
   IInputResponse,
@@ -19,8 +27,10 @@ import {
   DebugService,
   type IDebugBehaviorFlowSessionResponse,
 } from './debug.service.js';
+import { DebugAccessGuard } from './debugAccess.js';
 
 @Controller('debug')
+@UseGuards(DebugAccessGuard)
 export class DebugController {
   constructor(
     @Inject(DebugService) private readonly debugService: DebugService,

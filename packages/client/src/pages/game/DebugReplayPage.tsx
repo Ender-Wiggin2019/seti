@@ -27,6 +27,40 @@ interface IAuthSnapshot {
   isAuthenticated: boolean;
 }
 
+export interface IDebugSnapshotVersionParseResult {
+  version?: number;
+  errorMessage?: string;
+}
+
+export function parseDebugSnapshotVersionInput(
+  rawVersion: string,
+): IDebugSnapshotVersionParseResult {
+  const trimmed = rawVersion.trim();
+  if (!trimmed) {
+    return { version: undefined };
+  }
+
+  const version = Number(trimmed);
+  if (!Number.isInteger(version) || version <= 0) {
+    return {
+      errorMessage:
+        'Snapshot version must be a positive whole number greater than 0.',
+    };
+  }
+
+  return { version };
+}
+
+function getInitialReplayFieldValue(
+  field: IDebugReplayPresetDefinition['fields'][number],
+): string {
+  if (field.kind === 'select') {
+    return field.options[0]?.value ?? '';
+  }
+
+  return field.defaultValue ?? '';
+}
+
 function DebugReplayGameContent(): React.JSX.Element {
   const { isConnected, gameState } = useGameContext();
   const setActiveTab = useGameViewStore((state) => state.setActiveTab);
@@ -85,7 +119,7 @@ export function DebugReplayPage(): React.JSX.Element {
       setFieldValues(
         firstPreset.fields.reduce<Record<string, string>>(
           (accumulator, field) => {
-            accumulator[field.id] = field.options[0]?.value ?? '';
+            accumulator[field.id] = getInitialReplayFieldValue(field);
             return accumulator;
           },
           {},
@@ -148,7 +182,7 @@ export function DebugReplayPage(): React.JSX.Element {
       setFieldValues(
         nextPreset.fields.reduce<Record<string, string>>(
           (accumulator, field) => {
-            accumulator[field.id] = field.options[0]?.value ?? '';
+            accumulator[field.id] = getInitialReplayFieldValue(field);
             return accumulator;
           },
           {},
@@ -200,6 +234,12 @@ export function DebugReplayPage(): React.JSX.Element {
       return;
     }
 
+    const parsedVersion = parseDebugSnapshotVersionInput(snapshotVersion);
+    if (parsedVersion.errorMessage) {
+      setErrorMessage(parsedVersion.errorMessage);
+      return;
+    }
+
     if (!authSnapshotRef.current) {
       const authState = useAuthStore.getState();
       authSnapshotRef.current = {
@@ -212,12 +252,9 @@ export function DebugReplayPage(): React.JSX.Element {
     setIsLoadingSnapshot(true);
     setErrorMessage(null);
     try {
-      const version = snapshotVersion.trim()
-        ? Number(snapshotVersion.trim())
-        : undefined;
       const nextSession = await debugApi.createSnapshotSession({
         gameId: snapshotGameId.trim(),
-        version,
+        version: parsedVersion.version,
       });
       useAuthStore
         .getState()
@@ -360,30 +397,47 @@ export function DebugReplayPage(): React.JSX.Element {
             {selectedPreset.fields.map((field) => (
               <div key={field.id} className='space-y-2'>
                 <label className='text-sm text-text-300'>{field.label}</label>
-                <Select
-                  value={fieldValues[field.id] ?? ''}
-                  onValueChange={(value) =>
-                    setFieldValues((current) => ({
-                      ...current,
-                      [field.id]: value,
-                    }))
-                  }
-                >
-                  <SelectTrigger data-testid={`debug-replay-field-${field.id}`}>
-                    <SelectValue placeholder={`Select ${field.label}`} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {field.options.map((option) => (
-                      <SelectItem
-                        key={option.value}
-                        value={option.value}
-                        disabled={option.disabled}
-                      >
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {field.kind === 'select' ? (
+                  <Select
+                    value={fieldValues[field.id] ?? ''}
+                    onValueChange={(value) =>
+                      setFieldValues((current) => ({
+                        ...current,
+                        [field.id]: value,
+                      }))
+                    }
+                  >
+                    <SelectTrigger
+                      data-testid={`debug-replay-field-${field.id}`}
+                    >
+                      <SelectValue placeholder={`Select ${field.label}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {field.options.map((option) => (
+                        <SelectItem
+                          key={option.value}
+                          value={option.value}
+                          disabled={option.disabled}
+                        >
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    value={fieldValues[field.id] ?? ''}
+                    onChange={(event) =>
+                      setFieldValues((current) => ({
+                        ...current,
+                        [field.id]: event.target.value,
+                      }))
+                    }
+                    placeholder={field.placeholder ?? field.label}
+                    type={field.kind === 'number' ? 'number' : 'text'}
+                    data-testid={`debug-replay-field-${field.id}`}
+                  />
+                )}
               </div>
             ))}
 
@@ -441,7 +495,8 @@ export function DebugReplayPage(): React.JSX.Element {
                 value={snapshotVersion}
                 onChange={(e) => setSnapshotVersion(e.target.value)}
                 placeholder='e.g. 5'
-                type='number'
+                type='text'
+                inputMode='numeric'
                 data-testid='debug-snapshot-version'
               />
             </div>
