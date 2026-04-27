@@ -13,9 +13,13 @@ function createSectorState(
 ): IPublicSectorState {
   return {
     sectorId: 'sector-1',
+    name: 'sector-1',
     color: ESector.RED,
     signals: [{ type: 'data' }, { type: 'data' }],
+    dataCapability: 2,
     dataSlotCapacity: 2,
+    firstWinnerBonus: [],
+    otherWinnerBonus: [],
     sectorWinners: [],
     completed: false,
     ...overrides,

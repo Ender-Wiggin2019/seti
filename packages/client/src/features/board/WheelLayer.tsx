@@ -37,7 +37,7 @@ const SLOT_LABEL_RADIUS_PERCENT: Record<IWheelLayerProps['ring'], number> = {
   1: 36.52,
   2: 40.15,
   3: 42.38,
-  4: 46.22,
+  4: 33.1,
 };
 
 const ROTATION_STEPS_PER_RING = 8;

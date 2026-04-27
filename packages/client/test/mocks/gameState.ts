@@ -1,3 +1,8 @@
+import {
+  ALL_SECTOR_TILE_IDS,
+  SECTOR_STAR_CONFIGS,
+  SECTOR_TILE_DEFINITIONS,
+} from '@seti/common/constant/sectorSetup';
 import { EResource, ESector } from '@seti/common/types/element';
 import { EPhase } from '@seti/common/types/protocol/enums';
 import type {
@@ -81,18 +86,29 @@ export function createMockSectors(): IPublicSector[] {
     ESector.BLUE,
     ESector.BLACK,
   ];
-  return colors.map((color, i) => ({
-    sectorId: `sector-${i}`,
-    color,
-    signals: [
-      { type: 'data' as const },
-      { type: 'data' as const },
-      { type: 'data' as const },
-    ],
-    dataSlotCapacity: 3,
-    sectorWinners: [] as string[],
-    completed: false,
-  }));
+  return colors.map((color, i) => {
+    const tileDefinition =
+      SECTOR_TILE_DEFINITIONS[ALL_SECTOR_TILE_IDS[Math.floor(i / 2)]];
+    const sectorOnTile = tileDefinition.sectors[i % 2];
+    const starConfig = SECTOR_STAR_CONFIGS[sectorOnTile.starName];
+
+    return {
+      sectorId: `sector-${i}`,
+      name: sectorOnTile.starName,
+      color,
+      signals: [
+        { type: 'data' as const },
+        { type: 'data' as const },
+        { type: 'data' as const },
+      ],
+      dataCapability: 3,
+      dataSlotCapacity: 3,
+      firstWinnerBonus: starConfig.firstWinBonus,
+      otherWinnerBonus: starConfig.repeatWinBonus,
+      sectorWinners: [] as string[],
+      completed: false,
+    };
+  });
 }
 
 export function createMockPlanetaryBoard(): IPublicPlanetaryBoard {

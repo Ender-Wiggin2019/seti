@@ -3,6 +3,7 @@ import {
   ESectorPosition,
   ESectorTileId,
   type ISolarSystemSetupConfig,
+  SECTOR_STAR_CONFIGS,
   SECTOR_TILE_DEFINITIONS,
 } from '@seti/common/constant/sectorSetup';
 import { ESector } from '@seti/common/types/element';
@@ -44,13 +45,17 @@ function createSectors(): IPublicSector[] {
     const tileDef = SECTOR_TILE_DEFINITIONS[placement.tileId];
     return tileDef.sectors.map((sectorOnTile, idx) => ({
       sectorId: placement.sectorIds[idx],
+      name: sectorOnTile.starName,
       color: sectorOnTile.color as ESector,
       signals: [
         { type: 'data' as const },
         { type: 'data' as const },
         { type: 'data' as const },
       ],
+      dataCapability: 3,
       dataSlotCapacity: 3,
+      firstWinnerBonus: SECTOR_STAR_CONFIGS[sectorOnTile.starName].firstWinBonus,
+      otherWinnerBonus: SECTOR_STAR_CONFIGS[sectorOnTile.starName].repeatWinBonus,
       sectorWinners: [] as string[],
       completed: false,
     }));

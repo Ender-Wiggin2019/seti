@@ -1,6 +1,7 @@
 import { cn } from '@/lib/cn';
 import { useTextMode } from '@/stores/debugStore';
 import type { IPublicSector } from '@/types/re-exports';
+import { SectorNodeView } from './SectorNodeView';
 import { getPositionStyle, type ISectorPairConfig } from './sectorVisualConfig';
 
 interface ISectorViewProps {
@@ -22,13 +23,6 @@ function counterRotateTransform(position: string): string | undefined {
   if (position === 'east') return 'translate(-50%, 0) rotate(-90deg)';
   return 'translate(-50%, 0)';
 }
-
-const DEFAULT_SECTOR_SIGNAL_STYLE = {
-  0: { sigX: -3, sigY: 10, sigRot: -24, circleX: 0, circleY: -38 },
-  1: { sigX: -19, sigY: -1, sigRot: 21, circleX: 8, circleY: -33 },
-  dataSize: 21,
-  circleSize: 24,
-} as const;
 
 export function SectorView({
   pair,
@@ -109,167 +103,69 @@ export function SectorView({
           />
         )}
 
-        <div
-          className='absolute bottom-[8%] left-1/2 flex items-center gap-1'
-          style={{ transform: counterRotateTransform(pair.placement.position) }}
-        >
-          <span className='rounded bg-surface-950/70 px-1.5 py-0.5 font-mono text-[9px] text-text-100'>
-            {totalData}/{totalSlots}
-          </span>
-
-          {allPlayerSignals.length > 0 && (
-            <span className='flex items-center gap-0.5 rounded bg-surface-950/70 px-1.5 py-0.5'>
-              {allPlayerSignals.slice(0, 4).map((sig, idx) => (
-                <span
-                  key={`marker-${sig.playerId}-${idx}`}
-                  className='inline-block h-2 w-2 rounded-full'
-                  style={{
-                    backgroundColor: playerColors[sig.playerId] ?? '#888',
-                  }}
-                />
-              ))}
-              {allPlayerSignals.length > 4 && (
-                <span className='font-mono text-[8px] text-text-200'>
-                  +{allPlayerSignals.length - 4}
-                </span>
-              )}
+        {!textMode && (
+          <div
+            className='absolute bottom-[8%] left-1/2 flex items-center gap-1'
+            style={{
+              transform: counterRotateTransform(pair.placement.position),
+            }}
+          >
+            <span className='rounded bg-surface-950/70 px-1.5 py-0.5 font-mono text-[9px] text-text-100'>
+              {totalData}/{totalSlots}
             </span>
-          )}
 
-          {isCompleted && (
-            <span className='rounded bg-accent-500/85 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-surface-950'>
-              done
-            </span>
-          )}
-        </div>
+            {allPlayerSignals.length > 0 && (
+              <span className='flex items-center gap-0.5 rounded bg-surface-950/70 px-1.5 py-0.5'>
+                {allPlayerSignals.slice(0, 4).map((sig, idx) => (
+                  <span
+                    key={`marker-${sig.playerId}-${idx}`}
+                    className='inline-block h-2 w-2 rounded-full'
+                    style={{
+                      backgroundColor: playerColors[sig.playerId] ?? '#888',
+                    }}
+                  />
+                ))}
+                {allPlayerSignals.length > 4 && (
+                  <span className='font-mono text-[8px] text-text-200'>
+                    +{allPlayerSignals.length - 4}
+                  </span>
+                )}
+              </span>
+            )}
+
+            {isCompleted && (
+              <span className='rounded bg-accent-500/85 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-surface-950'>
+                done
+              </span>
+            )}
+          </div>
+        )}
 
         <div className='pointer-events-none absolute inset-0'>
           {pair.sectors.map((sector, index) => {
-            const remainingData = sector.signals.filter(
-              (sig) => sig.type === 'data',
-            ).length;
             const canPickByColor = selectableColors.has(sector.color);
             const canPickBySectorId = selectableSectorIds.has(sector.sectorId);
             const isSelectable = canPickByColor || canPickBySectorId;
             const isEmphasized = emphasizedSectorIds.has(sector.sectorId);
-            const isSectorHighlighted = isSelectable || isEmphasized;
-            const xPos = index === 0 ? '30%' : '70%';
+            const configuredSector = pair.placement.sectors[index];
+            const sectorName =
+              sector.name ?? configuredSector?.starName ?? sector.sectorId;
 
             return (
-              <div
+              <SectorNodeView
                 key={`${pair.placement.position}-${sector.sectorId}`}
-                className='absolute'
-                style={{
-                  left: xPos,
-                  top: '50%',
-                  transform: 'translate(-50%, -50%)',
-                }}
-              >
-                <div
-                  className='flex items-center gap-[2px]'
-                  style={{
-                    // Keep base board aligned with debug-game calibration while
-                    // allowing page-level CSS var overrides.
-                    transform: [
-                      `translate(var(--sector-sig-x-${index}, ${DEFAULT_SECTOR_SIGNAL_STYLE[index as 0 | 1].sigX}px), var(--sector-sig-y-${index}, ${DEFAULT_SECTOR_SIGNAL_STYLE[index as 0 | 1].sigY}px))`,
-                      `rotate(var(--sector-sig-rot-${index}, ${DEFAULT_SECTOR_SIGNAL_STYLE[index as 0 | 1].sigRot}deg))`,
-                    ].join(' '),
-                    transformOrigin: 'center',
-                  }}
-                >
-                  {sector.signals.map((sig, slotIndex) => (
-                    <span
-                      key={`${sector.sectorId}-sig-${slotIndex}`}
-                      className='inline-block rounded-full border'
-                      style={{
-                        width: `var(--sector-data-size, ${DEFAULT_SECTOR_SIGNAL_STYLE.dataSize}px)`,
-                        height: `var(--sector-data-size, ${DEFAULT_SECTOR_SIGNAL_STYLE.dataSize}px)`,
-                        ...(sig.type === 'data'
-                          ? {
-                              borderColor: 'rgba(103, 232, 249, 0.8)',
-                              backgroundColor: 'rgba(165, 243, 252, 0.9)',
-                            }
-                          : {
-                              backgroundColor:
-                                (sig.playerId && playerColors[sig.playerId]) ??
-                                '#888',
-                              borderColor:
-                                (sig.playerId && playerColors[sig.playerId]) ??
-                                '#888',
-                            }),
-                      }}
-                    />
-                  ))}
-                </div>
-
-                {/* Label */}
-                <div className='mt-0.5 flex items-center justify-center gap-1'>
-                  <span className='font-mono text-[9px] uppercase tracking-wide text-text-100'>
-                    {sector.color}
-                  </span>
-                  <span className='font-mono text-[8px] text-text-300'>
-                    {remainingData}/{sector.dataSlotCapacity}
-                  </span>
-                </div>
-
-                <button
-                  type='button'
-                  data-testid={`sector-node-${pair.placement.position}-${index}`}
-                  className={cn(
-                    'pointer-events-auto absolute rounded-full border-2 transition-colors',
-                    isSelectable
-                      ? 'cursor-pointer border-accent-400 bg-accent-500/25 hover:bg-accent-500/45'
-                      : 'cursor-default border-surface-500/40 bg-surface-800/30',
-                    isEmphasized &&
-                      'border-amber-300/90 bg-amber-500/20 shadow-[0_0_0_2px_rgba(251,191,36,0.55)]',
-                  )}
-                  style={{
-                    width: `var(--sector-circle-size, ${DEFAULT_SECTOR_SIGNAL_STYLE.circleSize}px)`,
-                    height: `var(--sector-circle-size, ${DEFAULT_SECTOR_SIGNAL_STYLE.circleSize}px)`,
-                    left: '50%',
-                    top: '50%',
-                    transform: [
-                      'translate(-50%, -50%)',
-                      `translate(var(--sector-circle-x-${index}, ${DEFAULT_SECTOR_SIGNAL_STYLE[index as 0 | 1].circleX}px), var(--sector-circle-y-${index}, ${DEFAULT_SECTOR_SIGNAL_STYLE[index as 0 | 1].circleY}px))`,
-                    ].join(' '),
-                  }}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    if (!isSelectable) {
-                      return;
-                    }
-                    if (canPickBySectorId && onSelectSectorId) {
-                      onSelectSectorId(sector.sectorId);
-                      return;
-                    }
-                    onSelectSector(sector.color);
-                  }}
-                  disabled={!isSelectable}
-                  aria-label={`Mark ${sector.color} (${sector.sectorId}) sector`}
-                />
-
-                {isSectorHighlighted && (
-                  <span
-                    aria-hidden
-                    className={cn(
-                      'pointer-events-none absolute rounded-full border',
-                      isEmphasized
-                        ? 'border-amber-300/90 bg-amber-500/18 shadow-[0_0_14px_rgba(251,191,36,0.55)]'
-                        : 'border-accent-300/80 bg-accent-500/14 shadow-[0_0_12px_rgba(34,197,94,0.35)]',
-                    )}
-                    style={{
-                      width: `var(--sector-circle-size, ${DEFAULT_SECTOR_SIGNAL_STYLE.circleSize}px)`,
-                      height: `var(--sector-circle-size, ${DEFAULT_SECTOR_SIGNAL_STYLE.circleSize}px)`,
-                      left: '50%',
-                      top: '50%',
-                      transform: [
-                        'translate(-50%, -50%) scale(1.9)',
-                        `translate(var(--sector-circle-x-${index}, ${DEFAULT_SECTOR_SIGNAL_STYLE[index as 0 | 1].circleX}px), var(--sector-circle-y-${index}, ${DEFAULT_SECTOR_SIGNAL_STYLE[index as 0 | 1].circleY}px))`,
-                      ].join(' '),
-                    }}
-                  />
-                )}
-              </div>
+                sector={sector}
+                index={index as 0 | 1}
+                position={pair.placement.position}
+                sectorName={String(sectorName)}
+                playerColors={playerColors}
+                textMode={textMode}
+                isSelectable={isSelectable}
+                isEmphasized={isEmphasized}
+                canPickBySectorId={canPickBySectorId}
+                onSelectSector={onSelectSector}
+                onSelectSectorId={onSelectSectorId}
+              />
             );
           })}
         </div>

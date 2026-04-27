@@ -7,7 +7,8 @@ import {
   getReachableSpaces,
   getSolarWheelCellAtBoard,
 } from '@seti/common/rules';
-import { type CSSProperties, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { cn } from '@/lib/cn';
 import { useTextMode } from '@/stores/debugStore';
 import type {
   IInputResponse,
@@ -18,10 +19,7 @@ import type {
 import { EPlayerInputType } from '@/types/re-exports';
 import { ProbeToken } from './ProbeToken';
 import { SectorGrid } from './SectorGrid';
-import {
-  getWheelSlotLabelBoardPositionPercent,
-  WheelLayer,
-} from './WheelLayer';
+import { WheelLayer } from './WheelLayer';
 
 const WHEEL_RENDER_SIZE_PERCENT = [34, 48, 62, 100] as const;
 const WHEEL_IMAGE_SIZE_PX = [397, 548, 702, 1125] as const;
@@ -49,30 +47,6 @@ const TEXT_MODE_LABEL_Z_INDEX_BY_WHEEL: Readonly<
   3: 73,
   4: 72,
 };
-const TEXT_MODE_LABEL_STYLE_BY_WHEEL: Readonly<
-  Record<TSolarSystemWheelIndex, CSSProperties>
-> = {
-  1: {
-    backgroundColor: 'rgba(45, 87, 126, 0.95)',
-    borderColor: 'rgba(134, 192, 255, 0.72)',
-    color: 'rgb(235, 247, 255)',
-  },
-  2: {
-    backgroundColor: 'rgba(43, 63, 84, 0.93)',
-    borderColor: 'rgba(120, 154, 190, 0.62)',
-    color: 'rgb(222, 235, 248)',
-  },
-  3: {
-    backgroundColor: 'rgba(39, 48, 61, 0.91)',
-    borderColor: 'rgba(103, 119, 139, 0.58)',
-    color: 'rgb(204, 214, 228)',
-  },
-  4: {
-    backgroundColor: 'rgba(31, 35, 43, 0.9)',
-    borderColor: 'rgba(86, 94, 108, 0.55)',
-    color: 'rgb(184, 193, 207)',
-  },
-};
 const SOLAR_TEXT_WHEELS: ReadonlyArray<TSolarSystemWheelIndex> = [4, 3, 2, 1];
 
 export type TProbeInsetPxByRing = Readonly<Record<1 | 2 | 3 | 4, number>>;
@@ -96,6 +70,7 @@ interface ISpacePoint {
   spaceId: string;
   ringIndex: 1 | 2 | 3 | 4;
   indexInRing: number;
+  cellInSector: number;
   visualIndexInRing: number;
   xPercent: number;
   yPercent: number;
@@ -110,6 +85,36 @@ interface IProbeRenderItem {
   offsetY: number;
   transitionDelayMs: number;
 }
+
+type TTextModeSpaceLabelKind =
+  | 'empty'
+  | 'planet'
+  | 'earth'
+  | 'asteroid'
+  | 'comet'
+  | 'other';
+
+interface ITextModeSpaceLabel {
+  label: string;
+  kind: TTextModeSpaceLabelKind;
+}
+
+const TEXT_MODE_SPACE_STYLE_BY_RING: Readonly<
+  Record<1 | 2 | 3 | 4, { borderColor: string; textColor: string }>
+> = {
+  1: { borderColor: 'rgba(255,255,255,0.96)', textColor: '#ffffff' },
+  2: { borderColor: 'rgba(226,232,240,0.86)', textColor: '#e5e7eb' },
+  3: { borderColor: 'rgba(156,163,175,0.78)', textColor: '#cbd5e1' },
+  4: { borderColor: 'rgba(100,116,139,0.72)', textColor: '#94a3b8' },
+};
+const TEXT_MODE_LABEL_RADIUS_PERCENT_BY_RING: Readonly<
+  Record<1 | 2 | 3 | 4, number>
+> = {
+  1: 12.4168,
+  2: 19.272,
+  3: 26.2756,
+  4: 33.1,
+};
 
 function tokenStackOffset(
   index: number,
@@ -181,14 +186,48 @@ function isExpandedServerRingIndex(
   return Boolean(ringIndex && ringIndex > 1 && state.indexInRing >= 8);
 }
 
-function getTextModeCellLabel(cell: ISolarSystemWheelMapCell): string | null {
+function getTextModeCellLabel(
+  cell: ISolarSystemWheelMapCell,
+): ITextModeSpaceLabel | null {
   if (cell.type === 'NULL') {
     return null;
   }
-  if (cell.planet) {
-    return cell.planet.toLowerCase();
+
+  if (cell.type === 'EMPTY') {
+    return { label: '', kind: 'empty' };
   }
-  return cell.type.toLowerCase();
+
+  if (cell.type === 'EARTH') {
+    return { label: 'earth', kind: 'earth' };
+  }
+
+  if (cell.type === 'PLANET' && cell.planet) {
+    return { label: cell.planet.toLowerCase(), kind: 'planet' };
+  }
+
+  if (cell.type === 'ASTEROID') {
+    return { label: 'asteroid', kind: 'asteroid' };
+  }
+
+  if (cell.type === 'COMET') {
+    return { label: 'comet', kind: 'comet' };
+  }
+
+  return { label: cell.type.toLowerCase(), kind: 'other' };
+}
+
+function textModeCellPosition(
+  ringIndex: 1 | 2 | 3 | 4,
+  visualIndexInRing: number,
+): { xPercent: number; yPercent: number; rotationDeg: number } {
+  const rotationDeg = (visualIndexInRing + 0.5) * 45;
+  const theta = (rotationDeg * Math.PI) / 180;
+  const radius = TEXT_MODE_LABEL_RADIUS_PERCENT_BY_RING[ringIndex];
+  return {
+    xPercent: 50 + Math.sin(theta) * radius,
+    yPercent: 50 - Math.cos(theta) * radius,
+    rotationDeg,
+  };
 }
 
 export function SolarSystemView({
@@ -252,6 +291,7 @@ export function SolarSystemView({
 
       let ringIndex = fallbackRing;
       let indexInRing = fallbackIndexInRing;
+      let cellInSector = fallbackIndexInRing % fallbackRing;
       let positionIndexInRing = fallbackIndexInRing;
       let isStateBackedPosition = false;
 
@@ -263,6 +303,7 @@ export function SolarSystemView({
         if (normalizedRingIndex) {
           ringIndex = normalizedRingIndex;
           indexInRing = state.indexInRing;
+          cellInSector = state.cellInSector ?? state.indexInRing % ringIndex;
           positionIndexInRing = usesExpandedRingIndexes
             ? Math.floor(state.indexInRing / normalizedRingIndex)
             : ((state.indexInRing % 8) + 8) % 8;
@@ -281,6 +322,7 @@ export function SolarSystemView({
         spaceId,
         ringIndex,
         indexInRing,
+        cellInSector,
         visualIndexInRing: positionIndexInRing,
         ...pos,
       };
@@ -331,12 +373,13 @@ export function SolarSystemView({
     ];
     const items: Array<{
       key: string;
-      label: string;
+      label: ITextModeSpaceLabel;
       wheel: TSolarSystemWheelIndex;
       boardRing: 1 | 2 | 3 | 4;
       boardIndex: number;
       xPercent: number;
       yPercent: number;
+      rotationDeg: number;
     }> = [];
 
     for (const wheel of SOLAR_TEXT_WHEELS) {
@@ -355,10 +398,7 @@ export function SolarSystemView({
             continue;
           }
 
-          const labelPosition = getWheelSlotLabelBoardPositionPercent(
-            boardRing,
-            boardIndex,
-          );
+          const labelPosition = textModeCellPosition(boardRing, boardIndex);
           items.push({
             key: `${wheel}:${bandIndex}:${boardIndex}`,
             label,
@@ -592,22 +632,45 @@ export function SolarSystemView({
         })}
 
         {textMode &&
-          textModeLabelItems.map((item) => (
-            <span
-              key={`text-mode-label-${item.key}`}
-              className='pointer-events-none absolute inline-flex h-[18px] w-[62px] items-center justify-center overflow-hidden rounded-sm border font-mono text-[9px] uppercase leading-none shadow-[0_1px_2px_rgba(0,0,0,0.65)]'
-              data-testid={`solar-text-cell-${item.key}`}
-              style={{
-                left: `${item.xPercent}%`,
-                top: `${item.yPercent}%`,
-                transform: 'translate(-50%, -50%)',
-                zIndex: TEXT_MODE_LABEL_Z_INDEX_BY_WHEEL[item.wheel],
-                ...TEXT_MODE_LABEL_STYLE_BY_WHEEL[item.wheel],
-              }}
-            >
-              {item.label}
-            </span>
-          ))}
+          textModeLabelItems.map((item) => {
+            const layerStyle = TEXT_MODE_SPACE_STYLE_BY_RING[item.wheel];
+            const isPlanetLabel =
+              item.label.kind === 'planet' || item.label.kind === 'earth';
+            return (
+              <span
+                key={`text-mode-label-${item.key}`}
+                className='pointer-events-none absolute'
+                data-testid={`solar-text-cell-${item.key}`}
+                style={{
+                  left: `${item.xPercent}%`,
+                  top: `${item.yPercent}%`,
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: TEXT_MODE_LABEL_Z_INDEX_BY_WHEEL[item.wheel],
+                }}
+              >
+                <span
+                  className={cn(
+                    'inline-flex h-[18px] w-[58px] items-center justify-center overflow-hidden rounded-sm border font-mono text-[8px] uppercase leading-none shadow-[0_1px_2px_rgba(0,0,0,0.65)]',
+                    item.label.kind === 'empty'
+                      ? 'bg-transparent text-transparent'
+                      : isPlanetLabel
+                        ? 'bg-white'
+                        : 'border-surface-500 bg-surface-900 text-text-100',
+                  )}
+                  style={{
+                    transform: `rotate(${item.rotationDeg}deg)`,
+                    transformOrigin: 'center',
+                    borderColor: isPlanetLabel
+                      ? '#ffffff'
+                      : layerStyle.borderColor,
+                    color: isPlanetLabel ? '#020617' : layerStyle.textColor,
+                  }}
+                >
+                  {item.label.label}
+                </span>
+              </span>
+            );
+          })}
 
         {probeView.renderItems.map((probe) => (
           <div

@@ -1243,6 +1243,8 @@
   z-index: 5;
   color: white;
   font-family: "Kobenhavn W03 Bold", monospace;
+  font-feature-settings: normal;
+  font-variant-numeric: normal;
   line-height: 1;
   font-size: 40px;
   left: -5px;

@@ -119,6 +119,35 @@ describe('SolarSystem', () => {
     );
   });
 
+  it('treats a mixed NULL/non-NULL space as visible for sector top element', () => {
+    const board = new SolarSystem(
+      [
+        {
+          id: 'ring-1-cell-0',
+          ringIndex: 1,
+          indexInRing: 0,
+          discIndex: 0,
+          hasPublicityIcon: false,
+          elements: [
+            { type: ESolarSystemElementType.NULL, amount: 1 },
+            {
+              type: ESolarSystemElementType.PLANET,
+              amount: 1,
+              planet: EPlanet.MARS,
+            },
+          ],
+          occupants: [],
+        },
+      ],
+      ['mars'],
+    );
+
+    expect(board.getTopSpaceInSector(0)?.id).toBe('ring-1-cell-0');
+    expect(board.getTopElementInSector(0)?.element.type).toBe(
+      ESolarSystemElementType.PLANET,
+    );
+  });
+
   it('applies expanded ring initial angles by visual sector steps', () => {
     const result = SolarSystem.init(new SeededRandom('initial-angle-ring-2'), {
       initialDiscAngles: [0, 2, 0],
@@ -179,6 +208,50 @@ describe('SolarSystem', () => {
 
     ring1cell0.elements = [{ type: ESolarSystemElementType.NULL, amount: 1 }];
     ring1cell7.elements = [{ type: ESolarSystemElementType.EMPTY, amount: 1 }];
+    ring2cell15.hasPublicityIcon = true;
+
+    const probe = board.placeProbe('p1', ring2cell0.id);
+    board.rotate(0);
+
+    expect(
+      board.getProbesAt(ring2cell0.id).some((item) => item.id === probe.id),
+    ).toBe(false);
+    expect(
+      board.getProbesAt(ring2cell15.id).some((item) => item.id === probe.id),
+    ).toBe(true);
+    expect(board.getPlayerPublicity('p1')).toBe(1);
+  });
+
+  it('treats mixed NULL/non-NULL upper spaces as covering lower-ring probes', () => {
+    const board = SolarSystem.init(new SeededRandom('mixed-cover-push'), {
+      initialDiscAngles: [0, 0, 0],
+    }).solarSystem;
+    const ring1cell0 = board.spaces.find(
+      (space) => space.id === 'ring-1-cell-0',
+    );
+    const ring1cell1 = board.spaces.find(
+      (space) => space.id === 'ring-1-cell-1',
+    );
+    const ring2cell0 = board.spaces.find(
+      (space) => space.id === 'ring-2-cell-0',
+    );
+    const ring2cell15 = board.spaces.find(
+      (space) => space.id === 'ring-2-cell-15',
+    );
+
+    if (!ring1cell0 || !ring1cell1 || !ring2cell0 || !ring2cell15) {
+      throw new Error('Expected ring cells to exist');
+    }
+
+    ring1cell0.elements = [{ type: ESolarSystemElementType.NULL, amount: 1 }];
+    ring1cell1.elements = [
+      { type: ESolarSystemElementType.NULL, amount: 1 },
+      {
+        type: ESolarSystemElementType.PLANET,
+        amount: 1,
+        planet: EPlanet.MARS,
+      },
+    ];
     ring2cell15.hasPublicityIcon = true;
 
     const probe = board.placeProbe('p1', ring2cell0.id);

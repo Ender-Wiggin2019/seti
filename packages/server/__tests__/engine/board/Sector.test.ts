@@ -419,6 +419,7 @@ describe('Sector', () => {
       const pub = sector.toPublicState();
 
       expect(pub.sectorId).toBe('s1');
+      expect(pub.name).toBe('s1');
       expect(pub.signals).toHaveLength(3);
       expect(pub.signals[0]).toEqual({
         type: 'player',
@@ -427,6 +428,9 @@ describe('Sector', () => {
       expect(pub.signals[1].type).toBe('data');
       expect(pub.signals[2].type).toBe('data');
       expect(pub.dataSlotCapacity).toBe(3);
+      expect(pub.dataCapability).toBe(3);
+      expect(pub.firstWinnerBonus).toEqual(sector.firstWinBonus);
+      expect(pub.otherWinnerBonus).toEqual(sector.repeatWinBonus);
       expect(pub.sectorWinners).toEqual([]);
     });
   });
