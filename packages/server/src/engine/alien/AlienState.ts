@@ -8,14 +8,15 @@ import {
 import type { IGame } from '../IGame.js';
 import type { PlayerInput } from '../input/PlayerInput.js';
 import { SelectOption } from '../input/SelectOption.js';
-import { SelectTrace } from '../input/SelectTrace.js';
 import type { IPlayer } from '../player/IPlayer.js';
 import {
   AlienBoard,
-  type IAlienBoardInit,
+  createAlienBoard,
   type ITraceSlot,
   type ITraceSlotInit,
+  type TAlienBoardInit,
   type TSlotReward,
+  type TTracePlayerRef,
 } from './AlienBoard.js';
 import { AlienRegistry } from './AlienRegistry.js';
 import { executeSimpleSlotReward } from './AlienRewards.js';
@@ -24,7 +25,10 @@ import { executeSimpleSlotReward } from './AlienRewards.js';
 //  Base-game slot factory
 // ---------------------------------------------------------------------------
 
-function createBaseSlots(alienIndex: number): ITraceSlotInit[] {
+function createBaseSlotGroups(alienIndex: number): {
+  discoverySlots: ITraceSlotInit[];
+  overflowSlots: ITraceSlotInit[];
+} {
   const discoveryColors: ETrace[] = [ETrace.RED, ETrace.YELLOW, ETrace.BLUE];
   const rewardConfig = getAlienRewardsForIndex(alienIndex);
 
@@ -37,16 +41,19 @@ function createBaseSlots(alienIndex: number): ITraceSlotInit[] {
     isDiscovery: true,
   }));
 
-  const overflow: ITraceSlotInit = {
-    slotId: `alien-${alienIndex}-overflow`,
+  const overflow: ITraceSlotInit[] = discoveryColors.map((color) => ({
+    slotId: `alien-${alienIndex}-overflow-${color}`,
     alienIndex,
-    traceColor: ETrace.ANY,
+    traceColor: color,
     maxOccupants: -1,
     rewards: rewardConfig.overflowRewards.map((r) => ({ ...r })),
     isDiscovery: false,
-  };
+  }));
 
-  return [...discovery, overflow];
+  return {
+    discoverySlots: discovery,
+    overflowSlots: overflow,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -54,9 +61,28 @@ function createBaseSlots(alienIndex: number): ITraceSlotInit[] {
 // ---------------------------------------------------------------------------
 
 export interface ITraceTarget {
+  optionId: string;
   slotId: string;
   alienIndex: number;
+  traceColor: ETrace;
   label: string;
+}
+
+export type TSingleAlienTraceScope =
+  | AlienBoard
+  | number
+  | { alienIndex: number }
+  | { alienType: EAlienType };
+
+export type TAlienTraceScope =
+  | TSingleAlienTraceScope
+  | 'both'
+  | 'all'
+  | readonly TSingleAlienTraceScope[];
+
+export interface ICreateTraceInputOptions {
+  alien?: TAlienTraceScope;
+  onComplete?: () => PlayerInput | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -64,14 +90,14 @@ export interface ITraceTarget {
 // ---------------------------------------------------------------------------
 
 export interface IAlienStateInit {
-  aliens: IAlienBoardInit[];
+  aliens: TAlienBoardInit[];
 }
 
 export class AlienState {
   public readonly boards: AlienBoard[];
 
   public constructor(init: IAlienStateInit) {
-    this.boards = init.aliens.map((alienInit) => new AlienBoard(alienInit));
+    this.boards = init.aliens.map((alienInit) => createAlienBoard(alienInit));
   }
 
   public static createFromHiddenAliens(hiddenAliens: EAlienType[]): AlienState {
@@ -79,7 +105,7 @@ export class AlienState {
       aliens: hiddenAliens.map((alienType, index) => ({
         alienType,
         alienIndex: index,
-        slots: createBaseSlots(index),
+        ...createBaseSlotGroups(index),
       })),
     });
   }
@@ -94,15 +120,39 @@ export class AlienState {
     return this.boards.find((b) => b.alienType === alienType);
   }
 
+  // ---- Trace counts --------------------------------------------------------
+
+  public getPlayerTraceCount(
+    player: TTracePlayerRef,
+    traceColor: ETrace = ETrace.ANY,
+    alien: TAlienTraceScope = 'both',
+  ): number {
+    return this.resolveTraceBoards(alien).reduce(
+      (total, board) => total + board.getPlayerTraceCount(player, traceColor),
+      0,
+    );
+  }
+
   // ---- Available targets ---------------------------------------------------
 
-  public getAvailableTargets(traceColor: ETrace): ITraceTarget[] {
+  public getAvailableTargets(
+    traceColor: ETrace,
+    alien: TAlienTraceScope = 'both',
+  ): ITraceTarget[] {
+    if (traceColor === ETrace.ANY) {
+      return [ETrace.RED, ETrace.YELLOW, ETrace.BLUE].flatMap((color) =>
+        this.getAvailableTargets(color, alien),
+      );
+    }
+
     const targets: ITraceTarget[] = [];
-    for (const board of this.boards) {
+    for (const board of this.resolveTraceBoards(alien)) {
       for (const slot of board.getAvailableSlots(traceColor)) {
         targets.push({
+          optionId: slot.slotId,
           slotId: slot.slotId,
           alienIndex: board.alienIndex,
+          traceColor,
           label: this.buildSlotLabel(board, slot, traceColor),
         });
       }
@@ -114,18 +164,21 @@ export class AlienState {
 
   /**
    * Creates a PlayerInput chain for marking a trace.
-   * If traceColor is ANY, the player first picks a color, then picks the slot.
+   * If traceColor is ANY, the slot options include every legal concrete color.
    */
   public createTraceInput(
     player: IPlayer,
     game: IGame,
     traceColor: ETrace,
-    onComplete?: () => PlayerInput | undefined,
+    options: ICreateTraceInputOptions = {},
   ): PlayerInput | undefined {
-    if (traceColor === ETrace.ANY) {
-      return this.createColorSelectionInput(player, game, onComplete);
-    }
-    return this.createSlotSelectionInput(player, game, traceColor, onComplete);
+    return this.createSlotSelectionInput(
+      player,
+      game,
+      traceColor,
+      options.onComplete,
+      options.alien,
+    );
   }
 
   public promptForTraceChoice(
@@ -134,7 +187,9 @@ export class AlienState {
     traceColor: ETrace,
     onComplete?: () => PlayerInput | undefined,
   ): void {
-    const input = this.createTraceInput(player, game, traceColor, onComplete);
+    const input = this.createTraceInput(player, game, traceColor, {
+      onComplete,
+    });
     if (input) {
       player.waitingFor = input;
     }
@@ -234,7 +289,17 @@ export class AlienState {
     if (!board || !slot) return false;
     const plugin = AlienRegistry.get(board.alienType);
 
-    const resolvedColor = traceColor === ETrace.ANY ? ETrace.RED : traceColor;
+    if (traceColor === ETrace.ANY) {
+      return false;
+    }
+    if (
+      !board
+        .getAvailableSlots(traceColor)
+        .some((candidate) => candidate.slotId === slot.slotId)
+    ) {
+      return false;
+    }
+    const resolvedColor = traceColor;
     if (plugin?.canPlaceTraceOnSlot?.(game, player, slot) === false) {
       return false;
     }
@@ -271,33 +336,6 @@ export class AlienState {
     }
 
     return onComplete?.();
-  }
-
-  /**
-   * Legacy convenience: place on the first matching slot of a given alien.
-   * Chooses the first available discovery slot, falling back to overflow.
-   */
-  public applyTrace(
-    player: IPlayer,
-    game: IGame,
-    traceColor: ETrace,
-    alienIndex: number,
-    forceOverflow: boolean,
-  ): void {
-    const board = this.boards[alienIndex];
-    if (!board) return;
-
-    const resolvedColor = traceColor === ETrace.ANY ? ETrace.RED : traceColor;
-    const available = board.getAvailableSlots(resolvedColor);
-
-    let target: ITraceSlot | undefined;
-    if (!forceOverflow) {
-      target = available.find((s) => s.isDiscovery);
-    }
-    target ??= available.find((s) => !s.isDiscovery);
-    if (!target) return;
-
-    this.applyTraceToSlot(player, game, target.slotId, resolvedColor);
   }
 
   // ---- Neutral markers -----------------------------------------------------
@@ -408,32 +446,21 @@ export class AlienState {
 
   // ---- Private: input builders ---------------------------------------------
 
-  private createColorSelectionInput(
-    player: IPlayer,
-    game: IGame,
-    onComplete?: () => PlayerInput | undefined,
-  ): PlayerInput | undefined {
-    return new SelectTrace(
-      player,
-      [ETrace.RED, ETrace.YELLOW, ETrace.BLUE],
-      (selectedColor) =>
-        this.createSlotSelectionInput(player, game, selectedColor, onComplete),
-      'Choose trace color',
-    );
-  }
-
   private createSlotSelectionInput(
     player: IPlayer,
     game: IGame,
     traceColor: ETrace,
     onComplete?: () => PlayerInput | undefined,
+    alien: TAlienTraceScope = 'both',
   ): PlayerInput | undefined {
-    const targets = this.getAvailableTargets(traceColor).filter((target) => {
-      const { board, slot } = this.findSlot(target.slotId);
-      if (!board || !slot) return false;
-      const plugin = AlienRegistry.get(board.alienType);
-      return plugin?.canPlaceTraceOnSlot?.(game, player, slot) !== false;
-    });
+    const targets = this.getAvailableTargets(traceColor, alien).filter(
+      (target) => {
+        const { board, slot } = this.findSlot(target.slotId);
+        if (!board || !slot) return false;
+        const plugin = AlienRegistry.get(board.alienType);
+        return plugin?.canPlaceTraceOnSlot?.(game, player, slot) !== false;
+      },
+    );
     if (targets.length === 0) {
       return onComplete?.();
     }
@@ -443,7 +470,7 @@ export class AlienState {
         player,
         game,
         targets[0].slotId,
-        traceColor,
+        targets[0].traceColor,
         onComplete,
       );
       if (nextInput === false) {
@@ -455,14 +482,14 @@ export class AlienState {
     return new SelectOption(
       player,
       targets.map((target) => ({
-        id: target.slotId,
+        id: target.optionId,
         label: target.label,
         onSelect: () => {
           const nextInput = this.applyTraceToSlotInternal(
             player,
             game,
             target.slotId,
-            traceColor,
+            target.traceColor,
             onComplete,
           );
           if (nextInput === false) {
@@ -590,7 +617,7 @@ export class AlienState {
     }
     const vpReward = slot.rewards.find((r) => r.type === 'VP');
     if (vpReward && 'amount' in vpReward) {
-      return `${alienLabel} — Overflow (+${vpReward.amount} VP)`;
+      return `${alienLabel} — Overflow (${formatTraceColor(traceColor)}, +${vpReward.amount} VP)`;
     }
     return `${alienLabel} — ${slot.slotId}`;
   }
@@ -607,6 +634,33 @@ export class AlienState {
     }
     player.tracesByAlien[alienIndex][traceColor] =
       (player.tracesByAlien[alienIndex][traceColor] ?? 0) + 1;
+  }
+
+  private resolveTraceBoards(alien: TAlienTraceScope): AlienBoard[] {
+    if (alien === 'both' || alien === 'all') {
+      return this.boards;
+    }
+
+    if (isAlienTraceScopeList(alien)) {
+      const boards = alien.flatMap((scope) => this.resolveTraceBoards(scope));
+      return [...new Set(boards)];
+    }
+
+    if (alien instanceof AlienBoard) {
+      return this.boards.includes(alien) ? [alien] : [];
+    }
+
+    if (typeof alien === 'number') {
+      const board = this.getBoard(alien);
+      return board ? [board] : [];
+    }
+
+    if ('alienIndex' in alien) {
+      const board = this.getBoard(alien.alienIndex);
+      return board ? [board] : [];
+    }
+
+    return this.boards.filter((board) => board.alienType === alien.alienType);
   }
 
   private initializeAlienDeck(
@@ -694,4 +748,10 @@ function formatTraceColor(traceColor: ETrace): string {
     default:
       return 'Any';
   }
+}
+
+function isAlienTraceScopeList(
+  alien: TAlienTraceScope,
+): alien is readonly TSingleAlienTraceScope[] {
+  return Array.isArray(alien);
 }

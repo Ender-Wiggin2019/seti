@@ -24,6 +24,7 @@ export function createMockPlayerState(
     color: 'red',
     score: 0,
     handSize: 5,
+    pendingSetupTucks: 0,
     resources: {
       [EResource.CREDIT]: 10,
       [EResource.ENERGY]: 5,
@@ -72,6 +73,7 @@ export function createMockSolarSystem(): IPublicSolarSystem {
       { discIndex: 2, angle: 0 },
       { discIndex: 3, angle: 0 },
     ],
+    alienTokens: [],
   };
 }
 

@@ -4,10 +4,12 @@ import {
   type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
 import { AlienRegistry } from '@/engine/alien/AlienRegistry.js';
+import { AlienState } from '@/engine/alien/AlienState.js';
 import { AnomaliesAlienPlugin } from '@/engine/alien/plugins/AnomaliesAlienPlugin.js';
 import { DummyAlienPlugin } from '@/engine/alien/plugins/DummyAlienPlugin.js';
 import { ResolveDiscovery } from '@/engine/deferred/ResolveDiscovery.js';
 import { Game } from '@/engine/Game.js';
+import { placeTraceForTestSetup } from '../../helpers/traceTestUtils.js';
 
 const BASE_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -40,13 +42,13 @@ describe('ResolveDiscovery', () => {
       expect(board.discovered).toBe(false);
       expect(game.alienState.getNewlyDiscoverableAliens()).toHaveLength(0);
 
-      game.alienState.applyTrace(player, game, ETrace.RED, 0, false);
+      placeTraceForTestSetup(game.alienState, player, game, ETrace.RED, 0);
       expect(game.alienState.getNewlyDiscoverableAliens()).toHaveLength(0);
 
-      game.alienState.applyTrace(player, game, ETrace.YELLOW, 0, false);
+      placeTraceForTestSetup(game.alienState, player, game, ETrace.YELLOW, 0);
       expect(game.alienState.getNewlyDiscoverableAliens()).toHaveLength(0);
 
-      game.alienState.applyTrace(player, game, ETrace.BLUE, 0, false);
+      placeTraceForTestSetup(game.alienState, player, game, ETrace.BLUE, 0);
       expect(game.alienState.getNewlyDiscoverableAliens()).toHaveLength(1);
       expect(game.alienState.getNewlyDiscoverableAliens()[0]).toBe(board);
     });
@@ -66,9 +68,9 @@ describe('ResolveDiscovery', () => {
       const p1HandBefore = p1.hand.length;
       const p2HandBefore = p2.hand.length;
 
-      game.alienState.applyTrace(p1, game, ETrace.RED, 0, false);
-      game.alienState.applyTrace(p1, game, ETrace.YELLOW, 0, false);
-      game.alienState.applyTrace(p2, game, ETrace.BLUE, 0, false);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
+      placeTraceForTestSetup(game.alienState, p2, game, ETrace.BLUE, 0);
 
       const action = new ResolveDiscovery(p1);
       action.execute(game);
@@ -110,9 +112,9 @@ describe('ResolveDiscovery', () => {
       const p2InitialScore = p2.score;
 
       // Fill all 3 discovery slots: p1 fills RED and YELLOW, p2 fills BLUE
-      game.alienState.applyTrace(p1, game, ETrace.RED, 0, false);
-      game.alienState.applyTrace(p1, game, ETrace.YELLOW, 0, false);
-      game.alienState.applyTrace(p2, game, ETrace.BLUE, 0, false);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
+      placeTraceForTestSetup(game.alienState, p2, game, ETrace.BLUE, 0);
 
       // At this point, p1 has already received rewards from filling slots:
       // RED slot: 5 VP + 1 publicity (alien 0 reward)
@@ -152,8 +154,8 @@ describe('ResolveDiscovery', () => {
       forceAlienType(board, EAlienType.DUMMY);
 
       // Place 2 player traces
-      game.alienState.applyTrace(p1, game, ETrace.RED, 0, false);
-      game.alienState.applyTrace(p1, game, ETrace.YELLOW, 0, false);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
 
       expect(game.alienState.getNewlyDiscoverableAliens()).toHaveLength(0);
 
@@ -190,14 +192,19 @@ describe('ResolveDiscovery', () => {
       const p2InitialScore = p2.score;
 
       // p1 fills all 3 discovery slots
-      game.alienState.applyTrace(p1, game, ETrace.RED, 0, false);
-      game.alienState.applyTrace(p1, game, ETrace.YELLOW, 0, false);
-      game.alienState.applyTrace(p1, game, ETrace.BLUE, 0, false);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.BLUE, 0);
 
       // p2 places overflow marker (should not make them a discoverer)
-      game.alienState.applyTrace(p2, game, ETrace.RED, 0, false);
+      placeTraceForTestSetup(game.alienState, p2, game, ETrace.RED, 0);
 
-      const overflowSlot = board.slots.find((s) => !s.isDiscovery);
+      const overflowSlot = board.slots.find(
+        (s) =>
+          !s.isDiscovery &&
+          s.slotId.includes('overflow') &&
+          s.traceColor === ETrace.RED,
+      );
       expect(overflowSlot!.occupants).toHaveLength(1);
       expect(overflowSlot!.occupants[0].source).toEqual({ playerId: p2.id });
 
@@ -273,14 +280,14 @@ describe('ResolveDiscovery', () => {
 
       // Fill all discovery slots on both aliens
       // Alien 0: p1 fills all 3
-      game.alienState.applyTrace(p1, game, ETrace.RED, 0, false);
-      game.alienState.applyTrace(p1, game, ETrace.YELLOW, 0, false);
-      game.alienState.applyTrace(p1, game, ETrace.BLUE, 0, false);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.BLUE, 0);
 
       // Alien 1: p2 fills all 3
-      game.alienState.applyTrace(p2, game, ETrace.RED, 1, false);
-      game.alienState.applyTrace(p2, game, ETrace.YELLOW, 1, false);
-      game.alienState.applyTrace(p2, game, ETrace.BLUE, 1, false);
+      placeTraceForTestSetup(game.alienState, p2, game, ETrace.RED, 1);
+      placeTraceForTestSetup(game.alienState, p2, game, ETrace.YELLOW, 1);
+      placeTraceForTestSetup(game.alienState, p2, game, ETrace.BLUE, 1);
 
       // Both should be discoverable
       expect(game.alienState.getNewlyDiscoverableAliens()).toHaveLength(2);
@@ -315,13 +322,14 @@ describe('ResolveDiscovery', () => {
         { playerCount: 2 },
         'discovery-anomaly-extra-slot',
       );
+      game.hiddenAliens = [EAlienType.ANOMALIES, EAlienType.DUMMY];
+      game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
       const p1 = game.players[0];
       const board = game.alienState.boards[0];
-      forceAlienType(board, EAlienType.ANOMALIES);
 
-      game.alienState.applyTrace(p1, game, ETrace.RED, 0, false);
-      game.alienState.applyTrace(p1, game, ETrace.YELLOW, 0, false);
-      game.alienState.applyTrace(p1, game, ETrace.BLUE, 0, false);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.BLUE, 0);
 
       new ResolveDiscovery(p1).execute(game);
 

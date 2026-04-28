@@ -1,4 +1,8 @@
 import { ESector } from '@seti/common/types/element';
+import {
+  EPlayerInputType,
+  type ISelectOptionInputModel,
+} from '@seti/common/types/protocol/playerInput';
 import { Sector } from '@/engine/board/Sector.js';
 import { ResolveSectorCompletion } from '@/engine/deferred/ResolveSectorCompletion.js';
 import { Player } from '@/engine/player/Player.js';
@@ -69,8 +73,19 @@ describe('ResolveSectorCompletion', () => {
     game.deferredActions.push(new ResolveSectorCompletion(p1));
     const pending = game.deferredActions.drain(game);
 
-    // Non-interactive bonuses only → drain completes to undefined.
-    expect(pending).toBeUndefined();
+    expect(pending).toBeDefined();
+    if (!pending) {
+      throw new Error('Expected trace placement input');
+    }
+    expect(pending.toModel().type).toBe(EPlayerInputType.OPTION);
+
+    const model = pending.toModel() as ISelectOptionInputModel;
+    const done = pending.process({
+      type: EPlayerInputType.OPTION,
+      optionId: model.options[0].id,
+    });
+
+    expect(done).toBeUndefined();
     expect(sector.sectorWinners).toEqual([p1.id]);
     expect(sector.completed).toBe(false);
     expect(sector.signals[0]).toEqual({ type: 'player', playerId: p2.id });

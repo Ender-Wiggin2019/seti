@@ -8,12 +8,15 @@ import { createActionEvent } from '../../event/GameEvent.js';
 import type { IGame } from '../../IGame.js';
 import type { PlayerInput } from '../../input/PlayerInput.js';
 import type { IPlayer } from '../../player/IPlayer.js';
-import type { AlienBoard, ITraceSlot } from '../AlienBoard.js';
+import {
+  type AnomaliesAlienBoard,
+  type ITraceSlot,
+  isAnomaliesAlienBoard,
+} from '../AlienBoard.js';
 import { executeSimpleSlotRewards } from '../AlienRewards.js';
 import type { IAlienPlugin } from '../IAlienPlugin.js';
 
 const ANOMALY_COLUMN_PREFIX = 'anomaly-column';
-const ANOMALY_TOKEN_PREFIX = 'anomaly-token';
 type TAnomalyTraceColor = ETrace.RED | ETrace.YELLOW | ETrace.BLUE;
 
 const TRACE_COLORS: TAnomalyTraceColor[] = [
@@ -21,11 +24,6 @@ const TRACE_COLORS: TAnomalyTraceColor[] = [
   ETrace.YELLOW,
   ETrace.BLUE,
 ];
-
-interface IParsedAnomalyToken {
-  sectorIndex: number;
-  color: TAnomalyTraceColor;
-}
 
 export class AnomaliesAlienPlugin implements IAlienPlugin {
   public readonly alienType = EAlienType.ANOMALIES;
@@ -35,13 +33,15 @@ export class AnomaliesAlienPlugin implements IAlienPlugin {
     _discoverers: IPlayer[],
   ): PlayerInput | undefined {
     const board = game.alienState.getBoardByType(EAlienType.ANOMALIES);
-    if (!board) return undefined;
+    if (!isAnomaliesAlienBoard(board)) return undefined;
+    const solarSystem = game.solarSystem;
+    if (!solarSystem) return undefined;
 
     for (const color of TRACE_COLORS) {
       if (board.getSlot(this.buildColumnSlotId(board.alienIndex, color))) {
         continue;
       }
-      board.addSlot({
+      board.addAnomalyColumn({
         slotId: this.buildColumnSlotId(board.alienIndex, color),
         alienIndex: board.alienIndex,
         traceColor: color,
@@ -51,9 +51,10 @@ export class AnomaliesAlienPlugin implements IAlienPlugin {
       });
     }
 
-    const existingTokenCount = board.slots.filter((slot) =>
-      this.isAnomalyTokenSlot(slot.slotId),
-    ).length;
+    const existingTokens = solarSystem.getAlienTokensByType(
+      EAlienType.ANOMALIES,
+    );
+    const existingTokenCount = existingTokens.length;
     if (existingTokenCount >= TRACE_COLORS.length) {
       return undefined;
     }
@@ -71,21 +72,22 @@ export class AnomaliesAlienPlugin implements IAlienPlugin {
     const shuffledColors = game.random.shuffle([...TRACE_COLORS]);
     for (let i = 0; i < anomalySectors.length; i += 1) {
       const color = shuffledColors[i] ?? TRACE_COLORS[i];
-      const tokenSlotId = this.buildTokenSlotId(
+      const tokenId = this.buildTokenId(
         board.alienIndex,
         anomalySectors[i],
         color,
       );
-      if (board.getSlot(tokenSlotId)) continue;
+      if (existingTokens.some((token) => token.tokenId === tokenId)) {
+        continue;
+      }
       const rewardOptions = ANOMALY_TOKEN_REWARD_OPTIONS[color];
       const reward = rewardOptions[game.random.nextInt(rewardOptions.length)];
-      board.addSlot({
-        slotId: tokenSlotId,
-        alienIndex: board.alienIndex,
+      solarSystem.addAlienToken({
+        tokenId,
+        alienType: EAlienType.ANOMALIES,
+        sectorIndex: anomalySectors[i],
         traceColor: color,
-        maxOccupants: 0,
         rewards: reward ? [{ ...reward }] : [],
-        isDiscovery: false,
       });
     }
 
@@ -104,22 +106,19 @@ export class AnomaliesAlienPlugin implements IAlienPlugin {
 
   public onSolarSystemRotated(game: IGame): void {
     const board = game.alienState.getBoardByType(EAlienType.ANOMALIES);
-    if (!board || !board.discovered) return;
+    if (!isAnomaliesAlienBoard(board) || !board.discovered) return;
 
     const earthSectorIndex = this.getEarthSectorIndex(game);
     if (earthSectorIndex === null) return;
 
-    const triggeredToken = board.slots
-      .filter((slot) => this.isAnomalyTokenSlot(slot.slotId))
-      .map((slot) => ({ slot, token: this.parseToken(slot.slotId) }))
-      .find(
-        ({ token }) => token !== null && token.sectorIndex === earthSectorIndex,
-      );
-    if (!triggeredToken || !triggeredToken.token) return;
+    const triggeredToken = game.solarSystem
+      ?.getAlienTokensByType(EAlienType.ANOMALIES)
+      .find((token) => token.sectorIndex === earthSectorIndex);
+    if (!triggeredToken) return;
 
     const leaderPlayerId = this.getColumnLeaderPlayerId(
       board,
-      triggeredToken.token.color,
+      triggeredToken.traceColor,
     );
     if (!leaderPlayerId) return;
 
@@ -128,12 +127,12 @@ export class AnomaliesAlienPlugin implements IAlienPlugin {
     );
     if (!player) return;
 
-    executeSimpleSlotRewards(player, game, triggeredToken.slot.rewards);
+    executeSimpleSlotRewards(player, game, triggeredToken.rewards);
 
     game.eventLog.append(
       createActionEvent(player.id, 'ANOMALY_TRIGGERED', {
-        color: triggeredToken.token.color,
-        sectorIndex: triggeredToken.token.sectorIndex,
+        color: triggeredToken.traceColor,
+        sectorIndex: triggeredToken.sectorIndex,
       }),
     );
   }
@@ -144,11 +143,11 @@ export class AnomaliesAlienPlugin implements IAlienPlugin {
   }
 
   private getColumnLeaderPlayerId(
-    board: AlienBoard,
+    board: AnomaliesAlienBoard,
     color: ETrace,
   ): string | undefined {
-    const columnSlot = board.getSlot(
-      this.buildColumnSlotId(board.alienIndex, color),
+    const columnSlot = board.anomalyColumns.find(
+      (slot) => slot.slotId === this.buildColumnSlotId(board.alienIndex, color),
     );
     if (!columnSlot || columnSlot.occupants.length === 0) return undefined;
 
@@ -165,26 +164,12 @@ export class AnomaliesAlienPlugin implements IAlienPlugin {
     return `alien-${alienIndex}-${ANOMALY_COLUMN_PREFIX}|${color}`;
   }
 
-  private buildTokenSlotId(
+  private buildTokenId(
     alienIndex: number,
     sectorIndex: number,
     color: ETrace,
   ): string {
-    return `alien-${alienIndex}-${ANOMALY_TOKEN_PREFIX}|${sectorIndex}|${color}`;
-  }
-
-  private parseToken(slotId: string): IParsedAnomalyToken | null {
-    const parts = slotId.split('|');
-    if (parts.length !== 3) return null;
-    const sectorIndex = Number(parts[1]);
-    const color = parts[2] as TAnomalyTraceColor;
-    if (!Number.isInteger(sectorIndex)) return null;
-    if (!TRACE_COLORS.includes(color)) return null;
-    return { sectorIndex, color };
-  }
-
-  private isAnomalyTokenSlot(slotId: string): boolean {
-    return slotId.includes(ANOMALY_TOKEN_PREFIX);
+    return `alien-${alienIndex}-anomaly-token|${sectorIndex}|${color}`;
   }
 
   private isAnomalyColumnSlot(slotId: string): boolean {

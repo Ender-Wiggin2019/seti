@@ -1,9 +1,9 @@
 import {
   createDefaultSetupConfig,
-  SECTOR_STAR_CONFIGS,
-  SECTOR_TILE_DEFINITIONS,
   type ISolarSystemSetupConfig,
   type ISolarSystemWheelCell,
+  SECTOR_STAR_CONFIGS,
+  SECTOR_TILE_DEFINITIONS,
   type TSolarSystemWheels,
 } from '@seti/common/constant/sectorSetup';
 import { ESector } from '@seti/common/types/element';
@@ -12,7 +12,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SolarSystemView } from '@/features/board/SolarSystemView';
 import { useDebugStore } from '@/stores/debugStore';
 import type { IPublicSector, IPublicSolarSystem } from '@/types/re-exports';
-import { EPlanet, EPlayerInputType } from '@/types/re-exports';
+import {
+  EAlienType,
+  EPlanet,
+  EPlayerInputType,
+  ETrace,
+} from '@/types/re-exports';
 
 const defaultSetup = createDefaultSetupConfig();
 
@@ -29,6 +34,7 @@ function createSolarSystemMock(): IPublicSolarSystem {
       { discIndex: 2, angle: 3 },
       { discIndex: 3, angle: 0 },
     ],
+    alienTokens: [],
     nextRotateRing: 2,
   };
 }
@@ -45,6 +51,7 @@ function createRotatedRingOneMock(): IPublicSolarSystem {
       { discIndex: 1, angle: 0 },
       { discIndex: 2, angle: 0 },
     ],
+    alienTokens: [],
     nextRotateRing: 1,
     spaceStates: {
       'ring-1-cell-3': {
@@ -85,6 +92,7 @@ function createExpandedOuterRingMock(
       { discIndex: 1, angle: 0 },
       { discIndex: 2, angle: 0 },
     ],
+    alienTokens: [],
     nextRotateRing: 1,
     spaceStates: {
       'ring-4-cell-8': {
@@ -255,6 +263,39 @@ describe('SolarSystemView', () => {
     expect(allSpaces).toHaveLength(32);
   });
 
+  it('renders alien tokens on the solar system board', () => {
+    render(
+      <SolarSystemView
+        solarSystem={{
+          ...createSolarSystemMock(),
+          alienTokens: [
+            {
+              tokenId: 'alien-0-anomaly-token|3|red-trace',
+              alienType: EAlienType.ANOMALIES,
+              sectorIndex: 3,
+              traceColor: ETrace.RED,
+              rewards: [{ type: 'VP', amount: 4 }],
+            },
+          ],
+        }}
+        sectors={createSectorsMock()}
+        setupConfig={defaultSetup}
+        pendingInput={null}
+        playerColors={{ 'player-1': 'red' }}
+        myPlayerId='player-1'
+        movementPoints={1}
+        onMoveProbe={vi.fn()}
+        onRespondInput={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByTestId(
+        `solar-alien-token-${EAlienType.ANOMALIES}-3-${ETrace.RED}`,
+      ),
+    ).toBeInTheDocument();
+  });
+
   it('sends movement action after selecting own probe and clicking reachable space', () => {
     const onMoveProbe = vi.fn();
 
@@ -406,11 +447,7 @@ describe('SolarSystemView', () => {
     render(
       <SolarSystemView
         solarSystem={{
-          spaces: [
-            'ring-3-cell-15',
-            'ring-3-cell-16',
-            'ring-3-cell-17',
-          ],
+          spaces: ['ring-3-cell-15', 'ring-3-cell-16', 'ring-3-cell-17'],
           adjacency: {
             'ring-3-cell-15': [],
             'ring-3-cell-16': [],
@@ -422,6 +459,7 @@ describe('SolarSystemView', () => {
             { discIndex: 1, angle: 0 },
             { discIndex: 2, angle: 0 },
           ],
+          alienTokens: [],
           nextRotateRing: 1,
           spaceStates: {
             'ring-3-cell-15': {
@@ -470,8 +508,8 @@ describe('SolarSystemView', () => {
     const firstCell = screen.getByTestId('solar-space-ring-3-cell-15');
     const centerCell = screen.getByTestId('solar-space-ring-3-cell-16');
     const lastCell = screen.getByTestId('solar-space-ring-3-cell-17');
-    const sectorWrapper = screen.getByTestId('sector-node-east-1')
-      .parentElement?.parentElement as HTMLElement | null;
+    const sectorWrapper = screen.getByTestId('sector-node-east-1').parentElement
+      ?.parentElement as HTMLElement | null;
 
     expect(sectorWrapper).not.toBeNull();
     expect(getStylePolarAngle(firstCell)).toBeCloseTo(247.5, 1);

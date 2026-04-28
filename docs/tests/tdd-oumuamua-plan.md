@@ -9,8 +9,8 @@
 - 规则来源（优先级）：`docs/arch/rule-faq.md` > Alien PDF > 现有代码。
 - 关键语义：
   - setup：在指定 disc-3 空间放 Oumuamua tile；若已有 probe 在该位，玩家立即 +1 publicity。
-  - Oumuamua tile data slot 初始放 3 data；同时准备 exofossil token 供应。
-  - exofossil 是独立货币：不可用常规兑换动作交易；残局剩余 exofossil 计 0 分。
+  - Oumuamua tile data slot 初始放 3 data。
+  - exofossil 是独立玩家货币，无全局供应上限；不可用常规兑换动作交易；残局剩余 exofossil 计 0 分。
   - 标记 Oumuamua 扇区信号时可二选一：标普通 sector 或标 Oumuamua tile。
   - Oumuamua tile 的第 1 / 第 3 次标记给对应奖励。
   - 当取走 tile 最后一个 data 时视为完成：每个标记者得 1 exofossil；无赢家判定；随后 data 补满并清空标记，可再次循环。
@@ -25,6 +25,7 @@
 - 风险点：
   - Oumuamua 完成流程与普通 sector 完成流程不同，容易误用 `ResolveSectorCompletion`。
   - exofossil 作为新货币的消费来源与禁止兑换约束易遗漏。
+  - exofossil 没有全局 supply limit，测试应验证玩家资源增减，而不是 species board 供应池。
 
 ---
 
@@ -38,8 +39,7 @@
 RED tests:
 ├── OUM-A1 onDiscover 在指定 disc-3 空间生成 Oumuamua tile
 ├── OUM-A2 若该格已有 probe，占位玩家立即 +1 publicity
-├── OUM-A3 tile data slot 初始 data=3
-└── OUM-A4 exofossil 供应池初始化并可追踪消耗/剩余
+└── OUM-A3 tile data slot 初始 data=3
 ```
 
 ### Phase B: 信号双路选择与 tile 标记奖励
@@ -93,6 +93,7 @@ RED tests:
 ## 实现注意点（配合 TDD）
 
 - Oumuamua tile 建议独立于 `Sector` 结构，避免误入扇区多数结算。
+- exofossil 是玩家资源；server 侧使用 `Player.exofossils` / `gainExofossils` / `spendExofossils` 管理，不通过 Oumuamua board supply slot 限制数量。
 - exofossil 字段与协议枚举应放 `common`，确保 client/server 序列化一致。
 - 双路输入建议复用现有 `SelectOption` 管线，保持 Scan 行为一致性。
 

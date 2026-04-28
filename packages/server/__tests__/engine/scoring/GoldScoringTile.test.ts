@@ -6,6 +6,7 @@ import {
   GoldScoringTile,
   type TGoldScoringTileId,
 } from '@/engine/scoring/GoldScoringTile.js';
+import { placeTraceForTestSetup } from '../../helpers/traceTestUtils.js';
 
 const BASE_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -104,13 +105,34 @@ describe('GoldScoringTile', () => {
       const game = createTestGame('g92-income-b-overflow');
       const p1 = game.players[0];
       // Red: discovery + overflow → 2；Y/B：各 1（discovery）
-      game.alienState.applyTrace(p1, game, ETrace.RED, 0, false);
-      game.alienState.applyTrace(p1, game, ETrace.RED, 0, false);
-      game.alienState.applyTrace(p1, game, ETrace.YELLOW, 0, false);
-      game.alienState.applyTrace(p1, game, ETrace.BLUE, 0, false);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.BLUE, 0);
       expect(p1.traces[ETrace.RED]).toBe(2);
       expect(p1.traces[ETrace.YELLOW]).toBe(1);
       expect(p1.traces[ETrace.BLUE]).toBe(1);
+
+      const tile = tileClaimed('income', 'B', 'p1', 6);
+      expect(tile.scorePlayer(p1, game)).toBe(6);
+    });
+
+    it('9.2.6b [集成] 收入 B 从 alien board 统计 trace，而不是依赖 player 缓存', () => {
+      const game = createTestGame('g92-income-b-board-count');
+      const p1 = game.players[0];
+      const board = game.alienState.boards[0];
+
+      for (const color of [ETrace.RED, ETrace.YELLOW, ETrace.BLUE]) {
+        const slot = board.getSlot(`alien-0-discovery-${color}`);
+        if (!slot) throw new Error(`missing discovery slot: ${color}`);
+        board.placeTrace(slot, { playerId: p1.id }, color);
+      }
+      p1.traces = {
+        [ETrace.RED]: 0,
+        [ETrace.YELLOW]: 0,
+        [ETrace.BLUE]: 0,
+        [ETrace.ANY]: 0,
+      };
 
       const tile = tileClaimed('income', 'B', 'p1', 6);
       expect(tile.scorePlayer(p1, game)).toBe(6);

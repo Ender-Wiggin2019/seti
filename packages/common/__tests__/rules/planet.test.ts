@@ -7,7 +7,6 @@ import {
   getLandingCost,
   isFirstOrbitAvailable,
 } from '@/rules/planet';
-import { ETechId } from '@/types/tech';
 import { EResource } from '@/types/element';
 import { EPhase, EPlanet } from '@/types/protocol/enums';
 import type {
@@ -15,6 +14,7 @@ import type {
   IPublicPlanetState,
   IPublicPlayerState,
 } from '@/types/protocol/gameState';
+import { ETechId } from '@/types/tech';
 
 function createPlayerState(
   overrides?: Partial<IPublicPlayerState>,
@@ -26,6 +26,7 @@ function createPlayerState(
     color: 'red',
     score: 0,
     handSize: 0,
+    pendingSetupTucks: 0,
     resources: {
       [EResource.CREDIT]: 0,
       [EResource.ENERGY]: 3,
@@ -91,6 +92,7 @@ function createGameState(playerId: string, spaceId: string): IPublicGameState {
       adjacency: {},
       probes: [{ playerId, spaceId }],
       discs: [],
+      alienTokens: [],
     },
     sectors: [],
     planetaryBoard: { planets: {} },
@@ -121,8 +123,12 @@ describe('planet rules', () => {
     const player = createPlayerState();
     const planet = createPlanetState();
     const gameState = createGameState(player.playerId, 'planet-space-1');
-    gameState.solarSystem.planetSpaceIds = { [EPlanet.MERCURY]: 'planet-space-1' };
-    expect(canOrbitPlanet(EPlanet.MERCURY, planet, player, gameState)).toBe(true);
+    gameState.solarSystem.planetSpaceIds = {
+      [EPlanet.MERCURY]: 'planet-space-1',
+    };
+    expect(canOrbitPlanet(EPlanet.MERCURY, planet, player, gameState)).toBe(
+      true,
+    );
 
     const noProbeState = createGameState(player.playerId, 'another-space');
     noProbeState.solarSystem.planetSpaceIds = {
@@ -139,7 +145,9 @@ describe('planet rules', () => {
       orbitSlots: [{ playerId: 'player-b' }],
     });
     const gameState = createGameState(player.playerId, 'planet-space-1');
-    gameState.solarSystem.planetSpaceIds = { [EPlanet.MERCURY]: 'planet-space-1' };
+    gameState.solarSystem.planetSpaceIds = {
+      [EPlanet.MERCURY]: 'planet-space-1',
+    };
     expect(canLandOnPlanet(EPlanet.MERCURY, planet, player, gameState)).toBe(
       true,
     );

@@ -1,16 +1,31 @@
 import { PLANET_MISSION_CONFIG } from '@seti/common/constant/boardLayout';
 import { EResource } from '@seti/common/types/element';
+import { ETrace } from '@seti/common/types/protocol/enums';
 import type {
+  IPublicAlienCardZone,
+  IPublicAlienState,
+  IPublicAnomaliesBoard,
   IPublicGameState,
   IPublicGoldScoringTile,
   IPublicMilestoneState,
+  IPublicOumuamuaBoard,
   IPublicPlanetaryBoard,
   IPublicPlayerState,
   IPublicSector,
+  IPublicSolarSystemAlienToken,
   IPublicTechBoard,
   IPublicTraceSlot,
+  TPublicAlienBoard,
+  TPublicAnomalyTraceColor,
 } from '@seti/common/types/protocol/gameState';
-import type { AlienBoard, ITraceSlot } from '@/engine/alien/AlienBoard.js';
+import {
+  type AlienBoard,
+  type AnomaliesAlienBoard,
+  type ITraceSlot,
+  isAnomaliesAlienBoard,
+  isOumuamuaAlienBoard,
+  type OumuamuaAlienBoard,
+} from '@/engine/alien/AlienBoard.js';
 import type { TGameEvent } from '@/engine/event/GameEvent.js';
 import type { IGame } from '@/engine/IGame.js';
 import {
@@ -31,6 +46,7 @@ import type {
   ISectorDto,
   ISolarSystemDto,
   ITechBoardDto,
+  ITraceSlotDto,
 } from '../dto/GameStateDto.js';
 import type { IPlayerStateDto } from '../dto/PlayerStateDto.js';
 
@@ -80,33 +96,14 @@ function cloneValue<TValue>(value: TValue): TValue {
   return JSON.parse(JSON.stringify(value)) as TValue;
 }
 
-function getPublicAlienSlotKind(
-  slot: ITraceSlot,
-): IPublicTraceSlot['slotKind'] {
-  if (slot.isDiscovery) {
-    return 'discovery';
-  }
-  if (slot.slotId.includes('anomaly-column')) {
-    return 'anomaly-column';
-  }
-  if (slot.slotId.includes('anomaly-token')) {
-    return 'anomaly-token';
-  }
-  if (slot.slotId.includes('overflow')) {
-    return 'overflow';
-  }
-  return 'board';
-}
+const ANOMALY_TRACE_COLORS: readonly TPublicAnomalyTraceColor[] = [
+  ETrace.RED,
+  ETrace.YELLOW,
+  ETrace.BLUE,
+];
 
-function toPublicAlienSlots(board: AlienBoard): IPublicTraceSlot[] {
-  const visibleSlots = board.discovered
-    ? board.slots
-    : board.slots.filter(
-        (slot) =>
-          slot.isDiscovery || getPublicAlienSlotKind(slot) === 'overflow',
-      );
-
-  return visibleSlots.map((slot) => ({
+function toPublicTraceSlot(slot: ITraceSlot): IPublicTraceSlot {
+  return {
     slotId: slot.slotId,
     traceColor: slot.traceColor,
     occupants: slot.occupants.map((occ) => ({
@@ -119,8 +116,129 @@ function toPublicAlienSlots(board: AlienBoard): IPublicTraceSlot[] {
     maxOccupants: slot.maxOccupants,
     rewards: slot.rewards.map((r) => ({ ...r })),
     isDiscovery: slot.isDiscovery,
-    slotKind: getPublicAlienSlotKind(slot),
-  }));
+  };
+}
+
+function toTraceSlotDto(slot: ITraceSlot): ITraceSlotDto {
+  return {
+    slotId: slot.slotId,
+    alienIndex: slot.alienIndex,
+    traceColor: slot.traceColor,
+    occupants: slot.occupants.map((occ) => ({
+      source:
+        occ.source === 'neutral'
+          ? ('neutral' as const)
+          : { playerId: occ.source.playerId },
+      traceColor: occ.traceColor,
+    })),
+    maxOccupants: slot.maxOccupants,
+    rewards: slot.rewards.map((r) => ({ ...r })),
+    isDiscovery: slot.isDiscovery,
+  };
+}
+
+function toPublicAlienCardZone(board: AlienBoard): IPublicAlienCardZone {
+  return {
+    faceUpCardId: board.faceUpAlienCardId,
+    drawPileSize: board.alienDeckDrawPile.length,
+    discardPileSize: board.alienDeckDiscardPile.length,
+  };
+}
+
+function toPublicAnomaliesBoard(
+  board: AnomaliesAlienBoard,
+): IPublicAnomaliesBoard {
+  const columns = Object.fromEntries(
+    ANOMALY_TRACE_COLORS.map((color) => [
+      color,
+      toPublicTraceSlot(
+        board.anomalyColumns.find((slot) => slot.traceColor === color) ??
+          createEmptyAnomalyColumn(board.alienIndex, color),
+      ),
+    ]),
+  ) as Record<TPublicAnomalyTraceColor, IPublicTraceSlot>;
+
+  return {
+    type: 'anomalies',
+    traceBoard: { columns },
+  };
+}
+
+function toPublicOumuamuaBoard(
+  board: OumuamuaAlienBoard,
+): IPublicOumuamuaBoard {
+  return {
+    type: 'oumuamua',
+    tile: board.oumuamuaTile
+      ? {
+          ...board.oumuamuaTile,
+          markerPlayerIds: [...board.oumuamuaTile.markerPlayerIds],
+        }
+      : null,
+    traceSlots: board.speciesTraceSlots.map((slot) => toPublicTraceSlot(slot)),
+  };
+}
+
+function toPublicAlienBoard(board: AlienBoard): TPublicAlienBoard {
+  if (isAnomaliesAlienBoard(board)) {
+    return toPublicAnomaliesBoard(board);
+  }
+  if (isOumuamuaAlienBoard(board)) {
+    return toPublicOumuamuaBoard(board);
+  }
+  return {
+    type: 'generic',
+    slots: board.speciesTraceSlots.map((slot) => toPublicTraceSlot(slot)),
+  };
+}
+
+function toPublicAlienState(board: AlienBoard): IPublicAlienState {
+  if (board.overflowSlots.length === 0) {
+    throw new Error(`Alien ${board.alienIndex} is missing overflow state`);
+  }
+
+  return {
+    alienIndex: board.alienIndex,
+    alienType: board.discovered ? board.alienType : null,
+    discovered: board.discovered,
+    discovery: {
+      zones: board.discoverySlots.map((slot) => toPublicTraceSlot(slot)),
+      overflowZones: board.overflowSlots.map((slot) => toPublicTraceSlot(slot)),
+    },
+    cardZone: board.discovered ? toPublicAlienCardZone(board) : null,
+    board: board.discovered ? toPublicAlienBoard(board) : null,
+  };
+}
+
+function createEmptyAnomalyColumn(
+  alienIndex: number,
+  traceColor: TPublicAnomalyTraceColor,
+): ITraceSlot {
+  return {
+    slotId: `alien-${alienIndex}-anomaly-column|${traceColor}`,
+    alienIndex,
+    traceColor,
+    occupants: [],
+    maxOccupants: -1,
+    rewards: [],
+    isDiscovery: false,
+  };
+}
+
+function toPublicSolarAlienTokens(game: IGame): IPublicSolarSystemAlienToken[] {
+  return (game.solarSystem?.alienTokens ?? []).flatMap((token) => {
+    const board = game.alienState.getBoardByType(token.alienType);
+    if (!board?.discovered) return [];
+    return [
+      {
+        tokenId: token.tokenId,
+        alienType: token.alienType,
+        sectorIndex: token.sectorIndex,
+        traceColor: token.traceColor,
+        rewards: token.rewards.map((reward) => ({ ...reward })),
+      },
+    ];
+  });
 }
 
 function serializePlayer(player: IPlayer): IPlayerStateDto {
@@ -241,6 +359,13 @@ function serializeSolarSystem(game: IGame): ISolarSystemDto | null {
     publicityByPlayer: Object.fromEntries(
       solarInternal.publicityByPlayer.entries(),
     ),
+    alienTokens: game.solarSystem.alienTokens.map((token) => ({
+      tokenId: token.tokenId,
+      alienType: token.alienType,
+      sectorIndex: token.sectorIndex,
+      traceColor: token.traceColor,
+      rewards: token.rewards.map((reward) => ({ ...reward })),
+    })),
   };
 }
 
@@ -321,29 +446,38 @@ function serializeSectors(game: IGame): ISectorDto[] {
 
 function serializeAlienState(game: IGame): IAlienStateDto {
   return {
-    aliens: game.alienState.boards.map((board) => ({
-      alienType: board.alienType,
-      alienIndex: board.alienIndex,
-      discovered: board.discovered,
-      alienDeckDrawPile: [...board.alienDeckDrawPile],
-      alienDeckDiscardPile: [...board.alienDeckDiscardPile],
-      faceUpAlienCardId: board.faceUpAlienCardId,
-      slots: board.slots.map((slot) => ({
-        slotId: slot.slotId,
-        alienIndex: slot.alienIndex,
-        traceColor: slot.traceColor,
-        occupants: slot.occupants.map((occ) => ({
-          source:
-            occ.source === 'neutral'
-              ? ('neutral' as const)
-              : { playerId: occ.source.playerId },
-          traceColor: occ.traceColor,
-        })),
-        maxOccupants: slot.maxOccupants,
-        rewards: slot.rewards.map((r) => ({ ...r })),
-        isDiscovery: slot.isDiscovery,
-      })),
-    })),
+    aliens: game.alienState.boards.map((board) => {
+      const dto: IAlienStateDto['aliens'][number] = {
+        alienType: board.alienType,
+        alienIndex: board.alienIndex,
+        discovered: board.discovered,
+        discoverySlots: board.discoverySlots.map((slot) =>
+          toTraceSlotDto(slot),
+        ),
+        overflowSlots: board.overflowSlots.map((slot) => toTraceSlotDto(slot)),
+        speciesTraceSlots: board.speciesTraceSlots.map((slot) =>
+          toTraceSlotDto(slot),
+        ),
+        alienDeckDrawPile: [...board.alienDeckDrawPile],
+        alienDeckDiscardPile: [...board.alienDeckDiscardPile],
+        faceUpAlienCardId: board.faceUpAlienCardId,
+        oumuamuaTile:
+          isOumuamuaAlienBoard(board) && board.oumuamuaTile
+            ? {
+                ...board.oumuamuaTile,
+                markerPlayerIds: [...board.oumuamuaTile.markerPlayerIds],
+              }
+            : null,
+      };
+
+      if (isAnomaliesAlienBoard(board)) {
+        dto.anomalyColumns = board.anomalyColumns.map((slot) =>
+          toTraceSlotDto(slot),
+        );
+      }
+
+      return dto;
+    }),
   };
 }
 
@@ -595,7 +729,10 @@ export function projectGameState(
     players: game.players.map((player) =>
       toPublicPlayerState(player, viewerId),
     ),
-    solarSystem: toPublicSolarSystemState(game.solarSystem),
+    solarSystem: toPublicSolarSystemState(
+      game.solarSystem,
+      toPublicSolarAlienTokens(game),
+    ),
     sectors: toPublicSectors(game),
     solarSystemSetup: game.solarSystemSetup ?? undefined,
     planetaryBoard: toPublicPlanetaryBoard(game),
@@ -603,17 +740,7 @@ export function projectGameState(
     cardRow: cloneValue(game.cardRow as never),
     endOfRoundStacks: cloneValue(game.endOfRoundStacks as never),
     currentEndOfRoundStackIndex: game.roundRotationReminderIndex,
-    aliens: game.alienState.boards.map((board) => ({
-      alienIndex: board.alienIndex,
-      alienType: board.discovered ? board.alienType : null,
-      discovered: board.discovered,
-      faceUpAlienCardId: board.discovered ? board.faceUpAlienCardId : null,
-      alienDeckSize: board.discovered ? board.alienDeckDrawPile.length : 0,
-      alienDiscardSize: board.discovered
-        ? board.alienDeckDiscardPile.length
-        : 0,
-      slots: toPublicAlienSlots(board),
-    })),
+    aliens: game.alienState.boards.map((board) => toPublicAlienState(board)),
     recentEvents: game.eventLog.recent(20) as never,
     milestones: toPublicMilestones(game),
     goldScoringTiles: toPublicGoldScoringTiles(game),

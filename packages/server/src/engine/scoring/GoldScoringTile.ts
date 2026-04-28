@@ -70,7 +70,24 @@ function getTuckedIncomeCounts(player: IPlayer): Record<EResource, number> {
   return counts;
 }
 
-function getTraceCount(player: IPlayer, trace: ETrace): number {
+function getTraceCount(player: IPlayer, game: IGame, trace: ETrace): number {
+  const alienState = game.alienState;
+  if (
+    alienState?.boards?.length > 0 &&
+    typeof alienState.getPlayerTraceCount === 'function'
+  ) {
+    const authoritativeCount = alienState.getPlayerTraceCount(
+      player,
+      trace,
+      'both',
+    );
+    const hasAuthoritativeTrace =
+      alienState.getPlayerTraceCount(player, ETrace.ANY, 'both') > 0;
+    if (hasAuthoritativeTrace) {
+      return authoritativeCount;
+    }
+  }
+
   if (trace === ETrace.ANY) {
     return (
       (player.traces[ETrace.RED] ?? 0) +
@@ -140,11 +157,11 @@ function getFormula(
   }
 
   if (id === 'income' && side === 'B') {
-    return (player) =>
+    return (player, game) =>
       Math.min(
-        getTraceCount(player, ETrace.RED),
-        getTraceCount(player, ETrace.YELLOW),
-        getTraceCount(player, ETrace.BLUE),
+        getTraceCount(player, game, ETrace.RED),
+        getTraceCount(player, game, ETrace.YELLOW),
+        getTraceCount(player, game, ETrace.BLUE),
       );
   }
 
@@ -252,7 +269,7 @@ export function scoreEndGameCard(
       effect.per.type === ETrace.BLUE ||
       effect.per.type === ETrace.ANY
     ) {
-      return total + baseScore * getTraceCount(player, effect.per.type);
+      return total + baseScore * getTraceCount(player, game, effect.per.type);
     }
 
     if (effect.per.type === ECardType.MISSION) {

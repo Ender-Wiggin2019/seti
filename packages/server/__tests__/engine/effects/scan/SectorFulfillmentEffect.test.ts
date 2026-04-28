@@ -1,5 +1,7 @@
 import { ESector, ETrace } from '@seti/common/types/element';
+import { EAlienType } from '@seti/common/types/protocol/enums';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
+import { AlienState } from '@/engine/alien/AlienState.js';
 import { Sector } from '@/engine/board/Sector.js';
 import { SectorFulfillmentEffect } from '@/engine/effects/scan/SectorFulfillmentEffect.js';
 import type { IGame } from '@/engine/IGame.js';
@@ -15,11 +17,17 @@ function createPlayer(id: string, seatIndex = 0): Player {
   });
 }
 
-function createMockGame(players: Player[], sectors: Sector[]): IGame {
+function createMockGame(
+  players: Player[],
+  sectors: Sector[],
+  overrides: Partial<IGame> = {},
+): IGame {
   return {
     players,
     sectors,
     eventLog: { append: () => undefined },
+    lockCurrentTurn: () => undefined,
+    ...overrides,
   } as unknown as IGame;
 }
 
@@ -216,6 +224,65 @@ describe('SectorFulfillmentEffect', () => {
       SectorFulfillmentEffect.checkAll(game);
 
       expect(p1.traces[ETrace.RED]).toBe(1);
+    });
+
+    it('routes trace bonus through alien trace placement when alien state is available', () => {
+      const p1 = createPlayer('p1');
+      const scoreBefore = p1.score;
+      const alienState = AlienState.createFromHiddenAliens([
+        EAlienType.CENTAURIANS,
+        EAlienType.EXERTIANS,
+      ]);
+
+      const sector = new Sector({
+        id: 's1',
+        color: ESector.RED,
+        dataSlotCapacity: 1,
+        firstWinBonus: [{ type: 'trace', trace: ETrace.RED }],
+      });
+      sector.markSignal('p1');
+
+      let didComplete = false;
+      const game = createMockGame([p1], [sector], { alienState });
+      const input = SectorFulfillmentEffect.checkAll(game, () => {
+        didComplete = true;
+        return undefined;
+      });
+
+      expect(input).toBeDefined();
+      if (!input) {
+        throw new Error('Expected trace placement input');
+      }
+      expect(input.toModel().type).toBe(EPlayerInputType.OPTION);
+      expect(p1.traces[ETrace.RED]).toBe(0);
+      expect(didComplete).toBe(false);
+
+      const model = input.toModel() as {
+        options: { id: string; label: string }[];
+      };
+      const redDiscoveryOption = model.options.find(
+        (option) => option.id === `alien-0-discovery-${ETrace.RED}`,
+      );
+      expect(redDiscoveryOption).toBeDefined();
+      if (!redDiscoveryOption) {
+        throw new Error('Expected red discovery option');
+      }
+
+      const done = input.process({
+        type: EPlayerInputType.OPTION,
+        optionId: redDiscoveryOption.id,
+      });
+
+      const redDiscoverySlot = alienState.boards[0].getSlot(
+        redDiscoveryOption.id,
+      );
+      expect(done).toBeUndefined();
+      expect(didComplete).toBe(true);
+      expect(redDiscoverySlot?.occupants).toEqual([
+        { source: { playerId: p1.id }, traceColor: ETrace.RED },
+      ]);
+      expect(p1.traces[ETrace.RED]).toBe(1);
+      expect(p1.score).toBe(scoreBefore + 5);
     });
 
     it('applies compound bonus (vp + trace)', () => {

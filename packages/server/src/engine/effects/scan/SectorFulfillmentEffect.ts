@@ -160,7 +160,7 @@ export class SectorFulfillmentEffect {
         const bonus = result.isFirstWin
           ? sector.firstWinBonus
           : sector.repeatWinBonus;
-        return this.applyWinnerBonuses(winner, bonus, onDone);
+        return this.applyWinnerBonuses(winner, game, bonus, onDone);
       }
     }
 
@@ -173,26 +173,39 @@ export class SectorFulfillmentEffect {
    */
   private static applyWinnerBonuses(
     player: IPlayer,
+    game: IGame,
     bonus: TSectorWinnerBonus,
     onDone: () => IPlayerInput | undefined,
+    index = 0,
   ): IPlayerInput | undefined {
-    for (const item of bonus) {
-      this.applyBonusItem(player, item);
+    if (index >= bonus.length) {
+      return onDone();
     }
-    return onDone();
+
+    const item = bonus[index];
+    return this.applyBonusItem(player, game, item, () =>
+      this.applyWinnerBonuses(player, game, bonus, onDone, index + 1),
+    );
   }
 
   private static applyBonusItem(
     player: IPlayer,
+    game: IGame,
     item: TSectorWinnerBonusItem,
-  ): void {
+    onDone: () => IPlayerInput | undefined,
+  ): IPlayerInput | undefined {
     switch (item.type) {
       case 'trace':
-        this.addTrace(player, item.trace);
-        break;
+        if (!game.alienState) {
+          this.addTrace(player, item.trace);
+          return onDone();
+        }
+        return game.alienState.createTraceInput(player, game, item.trace, {
+          onComplete: onDone,
+        });
       case 'vp':
         player.score += item.amount;
-        break;
+        return onDone();
     }
   }
 

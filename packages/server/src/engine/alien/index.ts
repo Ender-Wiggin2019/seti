@@ -5,13 +5,23 @@ import { OumuamuaAlienPlugin } from './plugins/OumuamuaAlienPlugin.js';
 
 export type {
   IAlienBoardInit,
+  IAnomaliesAlienBoardInit,
+  IOumuamuaAlienBoardInit,
   ITraceOccupant,
   ITraceSlot,
   ITraceSlotInit,
+  TAlienBoardInit,
   TSlotOccupantSource,
   TSlotReward,
 } from './AlienBoard.js';
-export { AlienBoard } from './AlienBoard.js';
+export {
+  AlienBoard,
+  AnomaliesAlienBoard,
+  createAlienBoard,
+  isAnomaliesAlienBoard,
+  isOumuamuaAlienBoard,
+  OumuamuaAlienBoard,
+} from './AlienBoard.js';
 export { AlienRegistry } from './AlienRegistry.js';
 export { AlienState } from './AlienState.js';
 export type { IAlienPlugin } from './IAlienPlugin.js';

@@ -76,14 +76,11 @@ export interface IPublicPlayerState {
   energyIncome: number;
   cardIncome: number;
   /**
-   * Number of setup-tuck inputs this player still owes. `0` / undefined
-   * means setup is complete for this player. Broadcast publicly so
-   * peers can reflect "waiting for all players to finish setup" in the
-   * UI (e.g. disable the PASS button until every peer has
-   * pendingSetupTucks === 0). Marked optional so stale/minimal fixture
-   * consumers can omit it and default to 0.
+   * Number of setup-tuck inputs this player still owes. `0` means setup
+   * is complete for this player. Broadcast publicly so peers can reflect
+   * "waiting for all players to finish setup" in the UI.
    */
-  pendingSetupTucks?: number;
+  pendingSetupTucks: number;
   exofossils?: number;
 }
 
@@ -92,6 +89,16 @@ export interface IPublicSolarSystemProbe {
   spaceId: string;
   probeId?: string;
   transitionDelayMs?: number;
+}
+
+export type TPublicAnomalyTraceColor = ETrace.RED | ETrace.YELLOW | ETrace.BLUE;
+
+export interface IPublicSolarSystemAlienToken {
+  tokenId: string;
+  alienType: EAlienType;
+  sectorIndex: number;
+  traceColor: TPublicAnomalyTraceColor;
+  rewards: TPublicSlotReward[];
 }
 
 export interface IPublicSolarSystemDiscState {
@@ -149,6 +156,8 @@ export interface IPublicSolarSystemState {
   sectorSpaceIds?: Record<number, string[]>;
   /** probeId → spaceId. Enables probe-centric views (e.g. "which sector?"). */
   probeSpaceById?: Record<string, string>;
+  /** Alien components physically located on the solar-system board. */
+  alienTokens: IPublicSolarSystemAlienToken[];
 }
 
 export type IPublicSolarSystem = IPublicSolarSystemState;
@@ -222,13 +231,6 @@ export interface IPublicTraceOccupant {
   traceColor: ETrace;
 }
 
-export type TPublicAlienSlotKind =
-  | 'discovery'
-  | 'overflow'
-  | 'anomaly-column'
-  | 'anomaly-token'
-  | 'board';
-
 export interface IPublicTraceSlot {
   slotId: string;
   traceColor: ETrace;
@@ -236,17 +238,58 @@ export interface IPublicTraceSlot {
   maxOccupants: number;
   rewards: TPublicSlotReward[];
   isDiscovery: boolean;
-  slotKind?: TPublicAlienSlotKind;
 }
+
+export interface IPublicAlienDiscoveryState {
+  zones: IPublicTraceSlot[];
+  overflowZones: IPublicTraceSlot[];
+}
+
+export interface IPublicAlienCardZone {
+  faceUpCardId: string | null;
+  drawPileSize: number;
+  discardPileSize: number;
+}
+
+export interface IPublicAnomaliesTraceBoard {
+  columns: Record<TPublicAnomalyTraceColor, IPublicTraceSlot>;
+}
+
+export interface IPublicAnomaliesBoard {
+  type: 'anomalies';
+  traceBoard: IPublicAnomaliesTraceBoard;
+}
+
+export interface IPublicOumuamuaTile {
+  spaceId: string;
+  sectorId: string;
+  dataRemaining: number;
+  markerPlayerIds: string[];
+}
+
+export interface IPublicOumuamuaBoard {
+  type: 'oumuamua';
+  tile: IPublicOumuamuaTile | null;
+  traceSlots: IPublicTraceSlot[];
+}
+
+export interface IPublicGenericAlienBoard {
+  type: 'generic';
+  slots: IPublicTraceSlot[];
+}
+
+export type TPublicAlienBoard =
+  | IPublicAnomaliesBoard
+  | IPublicOumuamuaBoard
+  | IPublicGenericAlienBoard;
 
 export interface IPublicAlienState {
   alienIndex: number;
   alienType: EAlienType | null;
   discovered: boolean;
-  faceUpAlienCardId?: string | null;
-  alienDeckSize?: number;
-  alienDiscardSize?: number;
-  slots: IPublicTraceSlot[];
+  discovery: IPublicAlienDiscoveryState;
+  cardZone: IPublicAlienCardZone | null;
+  board: TPublicAlienBoard | null;
 }
 
 export interface IPublicMilestoneBucket {

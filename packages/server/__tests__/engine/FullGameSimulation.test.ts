@@ -18,6 +18,7 @@ import type { IGamePlayerIdentity } from '@/engine/IGame.js';
 import type { TIncomeBundle } from '@/engine/player/Income.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
 import { resolveSetupTucks } from '../helpers/TestGameBuilder.js';
+import { placeTraceForTestSetup } from '../helpers/traceTestUtils.js';
 
 const BASE_PLAYERS: readonly IGamePlayerIdentity[] = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -193,8 +194,8 @@ describe('FullGameSimulation (Phase 10.3)', () => {
       const board = game.alienState.boards[0];
       Object.assign(board, { alienType: EAlienType.DUMMY });
 
-      game.alienState.applyTrace(p1, game, ETrace.RED, 0, false);
-      game.alienState.applyTrace(p1, game, ETrace.YELLOW, 0, false);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
       p1.score = 22;
 
       passPlayer(game, game.activePlayer.id);

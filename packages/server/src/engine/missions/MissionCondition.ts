@@ -14,6 +14,7 @@ import {
 } from '@seti/common/types/element';
 import { EAlienType } from '@seti/common/types/protocol/enums';
 import { getTechDescriptor } from '@seti/common/types/tech';
+import { isOumuamuaAlienBoard } from '../alien/AlienBoard.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
 import {
@@ -170,14 +171,8 @@ function checkCustomQuickMissionCondition(
   }
   if (desc === 'desc.et-27-req') {
     const board = game.alienState?.getBoardByType(EAlienType.OUMUAMUA);
-    if (!board) return false;
-    const markerSlot = board.slots.find((slot) =>
-      slot.slotId.includes('oumuamua-tile-markers'),
-    );
-    if (!markerSlot) return false;
-    return markerSlot.occupants.some(
-      (occ) => occ.source !== 'neutral' && occ.source.playerId === player.id,
-    );
+    if (!isOumuamuaAlienBoard(board)) return false;
+    return (board.oumuamuaTile?.markerPlayerIds ?? []).includes(player.id);
   }
   return false;
 }

@@ -4,6 +4,7 @@ import {
 } from '@seti/common/constant/solarCoordinate';
 import type { EPlanet } from '@seti/common/types/protocol/enums';
 import type {
+  IPublicSolarSystemAlienToken,
   IPublicSolarSystemProbe,
   IPublicSolarSystemSpaceState,
   IPublicSolarSystemState,
@@ -15,6 +16,7 @@ import {
 
 export function toPublicSolarSystemState(
   ss: SolarSystem,
+  alienTokens: IPublicSolarSystemAlienToken[] = [],
 ): IPublicSolarSystemState {
   const adjacencyRecord: Record<string, string[]> = {};
   for (const [spaceId, neighbors] of ss.adjacency.entries()) {
@@ -101,5 +103,6 @@ export function toPublicSolarSystemState(
     planetSpaceIds,
     sectorSpaceIds,
     probeSpaceById,
+    alienTokens,
   };
 }

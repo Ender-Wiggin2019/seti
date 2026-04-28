@@ -60,6 +60,7 @@ export interface ISolarSystemDto {
   rotationCounter: number;
   probeCounter: number;
   publicityByPlayer: Record<string, number>;
+  alienTokens: ISolarSystemAlienTokenDto[];
 }
 
 export interface IPlanetaryBoardDto {
@@ -136,11 +137,30 @@ export interface ITraceSlotDto {
   isDiscovery: boolean;
 }
 
+export interface ISolarSystemAlienTokenDto {
+  tokenId: string;
+  alienType: EAlienType;
+  sectorIndex: number;
+  traceColor: ETrace.RED | ETrace.YELLOW | ETrace.BLUE;
+  rewards: ITraceSlotDto['rewards'];
+}
+
+export interface IOumuamuaTileDto {
+  spaceId: string;
+  sectorId: string;
+  dataRemaining: number;
+  markerPlayerIds: string[];
+}
+
 export interface IAlienBoardDto {
   alienType: EAlienType;
   alienIndex: number;
   discovered: boolean;
-  slots: ITraceSlotDto[];
+  discoverySlots: ITraceSlotDto[];
+  overflowSlots: ITraceSlotDto[];
+  speciesTraceSlots: ITraceSlotDto[];
+  anomalyColumns?: ITraceSlotDto[];
+  oumuamuaTile?: IOumuamuaTileDto | null;
   alienDeckDrawPile: string[];
   alienDeckDiscardPile: string[];
   faceUpAlienCardId: string | null;

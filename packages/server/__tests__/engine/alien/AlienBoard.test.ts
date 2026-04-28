@@ -1,7 +1,27 @@
 import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
-import { AlienBoard } from '@/engine/alien/AlienBoard.js';
+import { AlienBoard, AnomaliesAlienBoard } from '@/engine/alien/AlienBoard.js';
 
 describe('AlienBoard', () => {
+  it('keeps species-specific component state out of the generic board', () => {
+    const board = new AlienBoard({
+      alienType: EAlienType.DUMMY,
+      alienIndex: 0,
+    });
+
+    expect('anomalyTokens' in board).toBe(false);
+    expect('oumuamuaTile' in board).toBe(false);
+  });
+
+  it('keeps solar-system token state out of alien board subclasses', () => {
+    const board = new AnomaliesAlienBoard({
+      alienType: EAlienType.ANOMALIES,
+      alienIndex: 0,
+    });
+
+    expect('anomalyColumns' in board).toBe(true);
+    expect('anomalyTokens' in board).toBe(false);
+  });
+
   it('initializes slots with defaults and queries discovery state', () => {
     const board = new AlienBoard({
       alienType: EAlienType.DUMMY,
@@ -79,7 +99,7 @@ describe('AlienBoard', () => {
     expect(board.placeTrace(slot, { playerId: 'p2' }, ETrace.BLUE)).toBe(false);
     expect(board.isFullyMarked()).toBe(true);
 
-    board.addSlot({
+    board.addTraceSlot({
       slotId: 'n1',
       alienIndex: 2,
       traceColor: ETrace.YELLOW,

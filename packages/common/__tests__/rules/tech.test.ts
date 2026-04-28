@@ -27,6 +27,7 @@ function createPlayerState(
     color: 'red',
     score: 0,
     handSize: 0,
+    pendingSetupTucks: 0,
     resources: {
       [EResource.CREDIT]: 4,
       [EResource.ENERGY]: 3,
@@ -88,8 +89,11 @@ describe('tech rules', () => {
       const board = createTechBoard();
       const stack = findTechStack(board, ETech.PROBE, 0);
       expect(stack).toBeDefined();
-      expect(stack!.tech).toBe(ETech.PROBE);
-      expect(stack!.level).toBe(0);
+      if (!stack) {
+        throw new Error('expected tech stack');
+      }
+      expect(stack.tech).toBe(ETech.PROBE);
+      expect(stack.level).toBe(0);
     });
 
     it('returns undefined for non-existent stack', () => {

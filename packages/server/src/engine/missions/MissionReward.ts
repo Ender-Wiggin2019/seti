@@ -64,7 +64,7 @@ function applyBaseReward(
           player,
           game,
           reward.type as ETrace,
-          () => chainTraceChoice(remaining - 1),
+          { onComplete: () => chainTraceChoice(remaining - 1) },
         );
       };
 

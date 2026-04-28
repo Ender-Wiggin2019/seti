@@ -39,7 +39,7 @@
 | `ResolveDiscovery.test.ts` | **MOCK-HEAVY** | 只测 no-op 路径（`getNewlyDiscoverableAliens()` 始终空）；从未执行真实发现 |
 | `Milestone.test.ts` | INTEGRATION | `Game.create()` + 真实 `EventLog`；含 3p 顺序与 Gold/Neutral 全覆盖（Phase 7 回归） |
 | `FinalScoring.test.ts` | INTEGRATION | `Game.create()` 真实 `sectors` / `alienState`；Phase 9.1/9.3 终局与流程项已回归（截至 2026-04-21） |
-| `GoldScoringTile.test.ts` | INTEGRATION | `Game.create()` + 真实 `Sector` / `alienState.applyTrace`；扇区胜场写入 `game.sectors[].sectorWinners` |
+| `GoldScoringTile.test.ts` | INTEGRATION | `Game.create()` + 真实 `Sector` / trace 测试铺状态 helper；扇区胜场写入 `game.sectors[].sectorWinners` |
 | `BehaviorExecutor.test.ts` | **MOCK-HEAVY** | `game.mark` 只 push 到 `__markCalls`；`techBoard.getAvailableTechs: () => []` |
 | `MissionTracker.test.ts` | **MOCK-HEAVY** | 手工 `IMissionDef`；不测"打出后才能触发"规则；不测"一效果一空位" |
 | `TechMissionCards.test.ts` | MIXED | 直接调 `checkCondition!(player, game)` 绕过 tracker/event 流；不测 trigger 时序 |
@@ -1148,7 +1148,7 @@ RED tests:
 - `9.2.3`：`mission` A 使用 `completedMissions.length`。
 - `9.2.4`：`mission` B 的 `getTuckedIncomeCounts` 仅遍历 `tuckedIncomeCards`，并通过 `income.addBaseIncome` 放大 base 证明不计入。
 - `9.2.5`：`income` A 为 `max(信用 tucked, 能量 tucked)`。
-- `9.2.6`：`income` B 为三色 `min`；第二条红痕迹经 `applyTrace` 进入 overflow 后仍累加 `player.traces[RED]`。
+- `9.2.6`：`income` B 为三色 `min`；第二条红痕迹经测试铺状态 helper 进入 overflow 后仍累加 `player.traces[RED]`。真实业务 trace 奖励必须走 `createTraceInput`。
 - `9.2.7`：`other` A 为 `min(扇区胜场次数, orbiter+lander)`；胜场来自真实 `Sector.sectorWinners` 数组；`EPieceType.LANDER` 覆盖规则中的轨道器/着陆器（含月球 lander）。
 - `9.2.8`：`other` B 为 `floor((missions + endGameCards) / 2)`。
 - `9.2.9`：同一 `tech` 牌手状态下 A/B 两面得分不同且与公式一致。

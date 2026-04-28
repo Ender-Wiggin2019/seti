@@ -1,9 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { EAlienType, EPhase } from '@seti/common/types/protocol/enums';
-import { buildTestGame, getPlayer } from '../helpers/TestGameBuilder.js';
 import { applyDebugReplayPreset } from '@/debug/debugReplayPresets.js';
+import { isAnomaliesAlienBoard } from '@/engine/alien/AlienBoard.js';
 import { deserializeGame } from '@/persistence/serializer/GameDeserializer.js';
 import { serializeGame } from '@/persistence/serializer/GameSerializer.js';
+import { buildTestGame, getPlayer } from '../helpers/TestGameBuilder.js';
 
 describe('DB snapshot replay (engine-level)', () => {
   it('serialized game round-trips and remains playable', () => {
@@ -39,9 +40,13 @@ describe('DB snapshot replay (engine-level)', () => {
 
     expect(board.discovered).toBe(true);
     expect(board.faceUpAlienCardId).not.toBeNull();
+    expect(isAnomaliesAlienBoard(board)).toBe(true);
+    if (!isAnomaliesAlienBoard(board)) {
+      throw new Error('expected anomalies board');
+    }
     expect(
-      board.slots.some((s) => s.slotId.includes('anomaly-token')),
-    ).toBe(true);
+      game.solarSystem?.getAlienTokensByType(EAlienType.ANOMALIES).length,
+    ).toBeGreaterThan(0);
   });
 
   it('snapshot preserves player state through round-trip', () => {

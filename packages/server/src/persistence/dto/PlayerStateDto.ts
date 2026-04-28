@@ -20,7 +20,7 @@ export interface IPlayerStateDto {
   probesInSpace: number;
   probeSpaceLimit: number;
   handLimitAfterPass: number;
-  pendingSetupTucks?: number;
+  pendingSetupTucks: number;
   exofossils?: number;
   resources: {
     credits: number;

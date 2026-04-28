@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { ActionMenu } from '@/features/actions/ActionMenu';
 import {
   EMainAction,
-  EPlanet,
   EPhase,
+  EPlanet,
   EPlayerInputType,
   type IPlayerInputModel,
 } from '@/types/re-exports';
@@ -149,6 +149,7 @@ describe('ActionMenu', () => {
           },
         ],
         discs: [],
+        alienTokens: [],
         planetSpaceIds: {
           [EPlanet.MARS]: 'ring-2-cell-0',
         },

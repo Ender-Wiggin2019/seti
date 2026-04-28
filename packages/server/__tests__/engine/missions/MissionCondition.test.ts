@@ -5,7 +5,8 @@ import {
   ESector,
   ESpecialAction,
 } from '@seti/common/types/element';
-import { EPlanet } from '@seti/common/types/protocol/enums';
+import { EAlienType, EPlanet } from '@seti/common/types/protocol/enums';
+import { OumuamuaAlienBoard } from '@/engine/alien/AlienBoard.js';
 import type { IMissionBranchDef } from '@/engine/missions/IMission.js';
 import {
   checkQuickMissionCondition,
@@ -235,14 +236,17 @@ describe('checkQuickMissionCondition', () => {
         ]),
       },
       alienState: {
-        getBoardByType: () => ({
-          slots: [
-            {
-              slotId: 'alien-0-oumuamua-tile-markers',
-              occupants: [{ source: { playerId: 'p1' } }],
+        getBoardByType: () =>
+          new OumuamuaAlienBoard({
+            alienType: EAlienType.OUMUAMUA,
+            alienIndex: 0,
+            oumuamuaTile: {
+              spaceId: 'ring-3-cell-0',
+              sectorId: 's0',
+              dataRemaining: 2,
+              markerPlayerIds: ['p1'],
             },
-          ],
-        }),
+          }),
       },
     };
 

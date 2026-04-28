@@ -32,7 +32,7 @@ import { MilestoneState } from '@/engine/scoring/Milestone.js';
 import { type ITechStack, TechBoard } from '@/engine/tech/TechBoard.js';
 import { buildTechTileBonuses } from '@/engine/tech/TechBonusConfig.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
-import type { IGameStateDto } from '../dto/GameStateDto.js';
+import type { IGameStateDto, ITraceSlotDto } from '../dto/GameStateDto.js';
 
 interface ITechBoardInternalState {
   playerTechs: Map<string, Set<string>>;
@@ -89,6 +89,29 @@ function cloneValue<TValue>(value: TValue): TValue {
   return JSON.parse(JSON.stringify(value)) as TValue;
 }
 
+function deserializeTraceSlotDto(slot: ITraceSlotDto): {
+  slotId: string;
+  alienIndex: number;
+  traceColor: ITraceSlotDto['traceColor'];
+  occupants: ITraceSlotDto['occupants'];
+  maxOccupants: number;
+  rewards: ITraceSlotDto['rewards'];
+  isDiscovery: boolean;
+} {
+  return {
+    slotId: slot.slotId,
+    alienIndex: slot.alienIndex,
+    traceColor: slot.traceColor,
+    occupants: slot.occupants.map((occ) => ({
+      source: occ.source,
+      traceColor: occ.traceColor,
+    })),
+    maxOccupants: slot.maxOccupants,
+    rewards: slot.rewards.map((reward) => ({ ...reward })),
+    isDiscovery: slot.isDiscovery,
+  };
+}
+
 function deserializeSolarSystem(dto: IGameStateDto): SolarSystem | null {
   if (!dto.solarSystem) {
     return null;
@@ -121,6 +144,16 @@ function deserializeSolarSystem(dto: IGameStateDto): SolarSystem | null {
   internal.publicityByPlayer = new Map(
     Object.entries(dto.solarSystem.publicityByPlayer),
   );
+
+  for (const token of dto.solarSystem.alienTokens) {
+    solarSystem.addAlienToken({
+      tokenId: token.tokenId,
+      alienType: token.alienType,
+      sectorIndex: token.sectorIndex,
+      traceColor: token.traceColor,
+      rewards: token.rewards.map((reward) => ({ ...reward })),
+    });
+  }
 
   return solarSystem;
 }
@@ -233,7 +266,7 @@ function deserializePlayers(game: Game, dto: IGameStateDto): void {
     player.probesInSpace = playerDto.probesInSpace;
     player.probeSpaceLimit = playerDto.probeSpaceLimit;
     player.handLimitAfterPass = playerDto.handLimitAfterPass;
-    player.pendingSetupTucks = resolvePendingSetupTucks(playerDto, dto);
+    player.pendingSetupTucks = Math.max(0, playerDto.pendingSetupTucks);
     player.exofossils = Math.max(0, playerDto.exofossils ?? 0);
 
     const concretePlayer = player as Player;
@@ -300,22 +333,6 @@ function deserializePlayers(game: Game, dto: IGameStateDto): void {
     playerInternal.pendingCardDrawCount = playerDto.pendingCardDrawCount;
     playerInternal.pendingAnyCardDrawCount = playerDto.pendingAnyCardDrawCount;
   }
-}
-
-function resolvePendingSetupTucks(
-  playerDto: IGameStateDto['players'][number],
-  gameDto: IGameStateDto,
-): number {
-  if (typeof playerDto.pendingSetupTucks === 'number') {
-    return Math.max(0, playerDto.pendingSetupTucks);
-  }
-
-  // Backward compatibility for snapshots written before
-  // `pendingSetupTucks` existed: infer the legacy setup-guard semantics.
-  if (gameDto.round !== 1) return 0;
-  if (playerDto.tuckedIncomeCards.length > 0) return 0;
-  if (playerDto.hand.length <= 0) return 0;
-  return 1;
 }
 
 function deserializeMilestones(game: Game, dto: IGameStateDto): void {
@@ -424,18 +441,24 @@ export function deserializeGame(dto: IGameStateDto): Game {
       alienDeckDrawPile: [...(a.alienDeckDrawPile ?? [])],
       alienDeckDiscardPile: [...(a.alienDeckDiscardPile ?? [])],
       faceUpAlienCardId: a.faceUpAlienCardId ?? null,
-      slots: a.slots.map((s) => ({
-        slotId: s.slotId,
-        alienIndex: s.alienIndex,
-        traceColor: s.traceColor,
-        occupants: s.occupants.map((occ) => ({
-          source: occ.source,
-          traceColor: occ.traceColor,
-        })),
-        maxOccupants: s.maxOccupants,
-        rewards: s.rewards.map((r) => ({ ...r })),
-        isDiscovery: s.isDiscovery,
-      })),
+      oumuamuaTile: a.oumuamuaTile
+        ? {
+            ...a.oumuamuaTile,
+            markerPlayerIds: [...a.oumuamuaTile.markerPlayerIds],
+          }
+        : null,
+      discoverySlots: a.discoverySlots.map((slot) =>
+        deserializeTraceSlotDto(slot),
+      ),
+      overflowSlots: a.overflowSlots.map((slot) =>
+        deserializeTraceSlotDto(slot),
+      ),
+      speciesTraceSlots: a.speciesTraceSlots.map((slot) =>
+        deserializeTraceSlotDto(slot),
+      ),
+      anomalyColumns: a.anomalyColumns?.map((slot) =>
+        deserializeTraceSlotDto(slot),
+      ),
     })),
   });
 

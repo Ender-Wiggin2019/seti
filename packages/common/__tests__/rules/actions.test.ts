@@ -27,6 +27,7 @@ function createPlayer(
     color: 'red',
     score: 0,
     handSize: 4,
+    pendingSetupTucks: 0,
     resources: {
       [EResource.CREDIT]: 4,
       [EResource.ENERGY]: 3,
@@ -114,6 +115,7 @@ function createGameState(
       adjacency: {},
       probes: [{ playerId: 'p1', spaceId: 'planet-space-1' }],
       discs: [],
+      alienTokens: [],
       planetSpaceIds: {
         [EPlanet.MERCURY]: 'planet-space-1',
       },
@@ -177,8 +179,11 @@ describe('action rules', () => {
         solarSystem: {
           spaces: ['planet-space-1'],
           adjacency: {},
-          probes: [{ playerId: 'p1', spaceId: 'planet-space-1', probeId: 'pr-1' }],
+          probes: [
+            { playerId: 'p1', spaceId: 'planet-space-1', probeId: 'pr-1' },
+          ],
           discs: [],
+          alienTokens: [],
           planetSpaceIds: {
             [EPlanet.MERCURY]: 'planet-space-1',
           },
@@ -235,8 +240,11 @@ describe('action rules', () => {
         solarSystem: {
           spaces: ['planet-space-1'],
           adjacency: {},
-          probes: [{ playerId: 'p1', spaceId: 'planet-space-1', probeId: 'pr-1' }],
+          probes: [
+            { playerId: 'p1', spaceId: 'planet-space-1', probeId: 'pr-1' },
+          ],
           discs: [],
+          alienTokens: [],
           planetSpaceIds: {
             [EPlanet.MERCURY]: 'planet-space-1',
           },

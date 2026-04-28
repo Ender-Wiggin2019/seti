@@ -82,7 +82,7 @@ function findTraceSlotId(
 }
 
 describe('OumuamuaAlienPlugin', () => {
-  it('initializes oumuamua tile metadata/data/supply on discover', () => {
+  it('initializes oumuamua tile metadata/data on discover', () => {
     const { game } = createGame('oumuamua-a1');
     const plugin = new OumuamuaAlienPlugin();
 
@@ -91,7 +91,6 @@ describe('OumuamuaAlienPlugin', () => {
 
     expect(state?.meta).not.toBeNull();
     expect(state?.tileDataRemaining).toBe(3);
-    expect(state?.exofossilSupplyRemaining).toBe(20);
   });
 
   it('places oumuamua on the fixed ring-3 wheel slot from the alien setup', () => {
@@ -283,12 +282,10 @@ describe('OumuamuaAlienPlugin', () => {
     expect(p1.score).toBe(scoreBefore + 3);
   });
 
-  it('tile can complete repeatedly and exofossil supply is consumed', () => {
+  it('tile can complete repeatedly and grants exofossils', () => {
     const { game, p1 } = createGame('oumuamua-c5');
     const plugin = new OumuamuaAlienPlugin();
     plugin.onDiscover(game, []);
-    const before = plugin.getRuntimeState(game);
-    if (!before) throw new Error('missing runtime state');
 
     for (let i = 0; i < 6; i += 1) {
       plugin.markTileSignal(p1, game);
@@ -297,9 +294,6 @@ describe('OumuamuaAlienPlugin', () => {
     const after = plugin.getRuntimeState(game);
     expect(p1.exofossils).toBe(2);
     expect(after?.tileDataRemaining).toBe(3);
-    expect(after?.exofossilSupplyRemaining).toBe(
-      before.exofossilSupplyRemaining - 2,
-    );
   });
 
   it('visiting oumuamua grants publicity, and orbit/land treat it as a valid planet', () => {
@@ -423,6 +417,24 @@ describe('OumuamuaAlienPlugin', () => {
     }
   });
 
+  it('offers only Oumuamua trace components as tile-specific trace placement targets', () => {
+    const { game } = createGame('oumuamua-placement-targets');
+    const plugin = new OumuamuaAlienPlugin();
+    plugin.onDiscover(game, []);
+
+    const targets = game.alienState.getAvailableTargets(ETrace.RED, {
+      alienType: EAlienType.OUMUAMUA,
+    });
+    const targetIds = targets.map((target) => target.slotId);
+
+    expect(
+      targetIds.some((slotId) =>
+        slotId.includes(`oumuamua-trace|${ETrace.RED}|`),
+      ),
+    ).toBe(true);
+    expect(targetIds.every((slotId) => !slotId.includes('tile'))).toBe(true);
+  });
+
   it('tier-1 slot requires 4 exofossils and grants 25 vp', () => {
     const { game, p1 } = createGame('oumuamua-d1-tier1');
     const plugin = new OumuamuaAlienPlugin();
@@ -488,5 +500,58 @@ describe('OumuamuaAlienPlugin', () => {
     expect(slot?.occupants.length).toBe(2);
     expect(p1.score).toBe(scoreBefore + 12);
     expect(p1.exofossils).toBe(0);
+  });
+
+  it('spends exofossils directly when paying trace costs', () => {
+    const { game, p1 } = createGame('oumuamua-exofossil-spend');
+    const plugin = new OumuamuaAlienPlugin();
+    plugin.onDiscover(game, []);
+    const slotId = findTraceSlotId(game, ETrace.RED, 6);
+
+    plugin.markTileSignal(p1, game);
+    plugin.markTileSignal(p1, game);
+    plugin.markTileSignal(p1, game);
+    expect(p1.exofossils).toBe(1);
+
+    expect(game.alienState.applyTraceToSlot(p1, game, slotId, ETrace.RED)).toBe(
+      true,
+    );
+
+    expect(p1.exofossils).toBe(0);
+  });
+
+  it('counts only marked trace spaces, not tile signal markers', () => {
+    const { game, p1 } = createGame('oumuamua-trace-counts');
+    const plugin = new OumuamuaAlienPlugin();
+    plugin.onDiscover(game, []);
+
+    plugin.markTileSignal(p1, game);
+
+    expect(
+      game.alienState.getPlayerTraceCount(p1, ETrace.ANY, {
+        alienType: EAlienType.OUMUAMUA,
+      }),
+    ).toBe(0);
+
+    const redTraceSlotId = findTraceSlotId(game, ETrace.RED, 5);
+    expect(
+      game.alienState.applyTraceToSlot(
+        p1,
+        game,
+        redTraceSlotId,
+        ETrace.RED,
+      ),
+    ).toBe(true);
+
+    expect(
+      game.alienState.getPlayerTraceCount(p1, ETrace.RED, {
+        alienType: EAlienType.OUMUAMUA,
+      }),
+    ).toBe(1);
+    expect(
+      game.alienState.getPlayerTraceCount(p1, ETrace.ANY, {
+        alienType: EAlienType.OUMUAMUA,
+      }),
+    ).toBe(1);
   });
 });

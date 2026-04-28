@@ -136,8 +136,8 @@ Moons:
 - Moon spaces allow only 1 lander each.
 
 Life traces:
-- On gaining a life-trace icon, place marker on matching discovery space if available.
-- If both matching spaces are full and species not discovered, use overflow space.
+- On gaining a life-trace icon, place marker on any available matching-color trace space.
+- Overflow spaces are also color-specific, available from setup, award 3 VP, and allow unlimited markers.
 - Claiming discovery space gives 1 publicity + 5 VP (plus any printed bonus).
 - Universal trace icon is a wildcard for any trace color.
 
@@ -319,7 +319,7 @@ When discovered (after turn ends):
 Notes:
 - If milestones and discovery both trigger, resolve milestones first.
 - Overflow spaces accept extra traces and still count for "marked trace" checks.
-- If you must mark trace but matching normal spaces are full, place in overflow and score 3 VP.
+- If you mark a trace in a matching-color overflow space, score 3 VP.
 - Alien species come with special card decks:
   - generally stronger than regular cards
   - can only be gained through species effects

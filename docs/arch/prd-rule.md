@@ -473,9 +473,9 @@ Round closes when last active player passes and final end-of-round card selectio
 
 ### 11.4 Overflow and Further Traces
 
-- If required trace color spaces are full, marker may go to overflow and scores 3 VP.
+- Overflow trace spaces are color-specific, available from setup, unlimited, and score 3 VP.
 - Overflow markers count for card/effect checks referencing traces.
-- Player may place in overflow even if some other species space is available.
+- Player may choose which species and matching-color space to mark, including overflow.
 - Neutral markers never occupy species-board extra research spaces (only base six discovery spaces).
 
 ---

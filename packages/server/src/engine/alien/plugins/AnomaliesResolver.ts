@@ -1,25 +1,23 @@
 import { EAlienType, EPlanet, ETrace } from '@seti/common/types/protocol/enums';
+import type { ISolarSystemAlienTokenComponent } from '../../board/SolarSystem.js';
 import { getSectorIndexByPlanet } from '../../effects/scan/ScanEffectUtils.js';
 import type { IGame } from '../../IGame.js';
-import type { AlienBoard, ITraceSlot, TSlotReward } from '../AlienBoard.js';
-
-const ANOMALY_TOKEN_PREFIX = 'anomaly-token';
-const TOKEN_COLORS: readonly ETrace[] = [
-  ETrace.RED,
-  ETrace.YELLOW,
-  ETrace.BLUE,
-];
+import type { AnomaliesAlienBoard, TSlotReward } from '../AlienBoard.js';
+import { isAnomaliesAlienBoard } from '../AlienBoard.js';
 
 export interface IAnomalyToken {
-  board: AlienBoard;
-  slot: ITraceSlot;
+  board: AnomaliesAlienBoard;
+  token: ISolarSystemAlienTokenComponent;
   sectorIndex: number;
   color: ETrace;
   rewards: TSlotReward[];
 }
 
-export function getAnomaliesBoard(game: IGame): AlienBoard | undefined {
-  return game.alienState.getBoardByType(EAlienType.ANOMALIES);
+export function getAnomaliesBoard(
+  game: IGame,
+): AnomaliesAlienBoard | undefined {
+  const board = game.alienState.getBoardByType(EAlienType.ANOMALIES);
+  return isAnomaliesAlienBoard(board) ? board : undefined;
 }
 
 export function getEarthSectorIndex(game: IGame): number | undefined {
@@ -29,22 +27,17 @@ export function getEarthSectorIndex(game: IGame): number | undefined {
 
 export function getAnomalyTokens(game: IGame): IAnomalyToken[] {
   const board = getAnomaliesBoard(game);
-  if (!board) return [];
+  if (!board || !game.solarSystem) return [];
 
-  return board.slots
-    .filter((slot) => slot.slotId.includes(ANOMALY_TOKEN_PREFIX))
-    .map((slot) => {
-      const parsed = parseAnomalyTokenSlotId(slot.slotId);
-      if (!parsed) return undefined;
-      return {
-        board,
-        slot,
-        sectorIndex: parsed.sectorIndex,
-        color: parsed.color,
-        rewards: slot.rewards,
-      } satisfies IAnomalyToken;
-    })
-    .filter((token): token is IAnomalyToken => token !== undefined);
+  return game.solarSystem
+    .getAlienTokensByType(EAlienType.ANOMALIES)
+    .map((token) => ({
+      board,
+      token,
+      sectorIndex: token.sectorIndex,
+      color: token.traceColor,
+      rewards: token.rewards,
+    }));
 }
 
 export function getAnomalySectorIndexes(game: IGame): number[] {
@@ -98,18 +91,4 @@ export function countPlayerSignalsInAnomalySectors(
     total += sector.getPlayerMarkerCount(playerId);
   }
   return total;
-}
-
-function parseAnomalyTokenSlotId(
-  slotId: string,
-): { sectorIndex: number; color: ETrace } | undefined {
-  const parts = slotId.split('|');
-  if (parts.length !== 3) return undefined;
-
-  const sectorIndex = Number(parts[1]);
-  const color = parts[2] as ETrace;
-  if (!Number.isInteger(sectorIndex)) return undefined;
-  if (!TOKEN_COLORS.includes(color)) return undefined;
-
-  return { sectorIndex, color };
 }

@@ -1,4 +1,10 @@
 import {
+  OUMUAMUA_TILE_DATA_CAPACITY,
+  OUMUAMUA_TRACE_COLORS,
+  OUMUAMUA_TRACE_SLOT_DEFS,
+  OUMUAMUA_TRACE_SLOT_PREFIX,
+} from '@seti/common/constant/alienBoardConfig';
+import {
   createSolarSystemWheelsWithOumuamua,
   getOumuamuaSolarSystemSpaceId,
 } from '@seti/common/constant/sectorSetup';
@@ -11,21 +17,12 @@ import { SelectOption } from '../../input/SelectOption.js';
 import { EMissionEventType } from '../../missions/IMission.js';
 import type { IPlayer } from '../../player/IPlayer.js';
 import { EPieceType } from '../../player/Pieces.js';
-import type { AlienBoard, ITraceSlot } from '../AlienBoard.js';
+import {
+  type ITraceSlot,
+  isOumuamuaAlienBoard,
+  type OumuamuaAlienBoard,
+} from '../AlienBoard.js';
 import type { IAlienPlugin } from '../IAlienPlugin.js';
-
-const OUMUAMUA_META_PREFIX = 'oumuamua-meta';
-const OUMUAMUA_TILE_MARKERS = 'oumuamua-tile-markers';
-const OUMUAMUA_TILE_DATA = 'oumuamua-tile-data';
-const OUMUAMUA_EXOFOSSIL_SUPPLY = 'oumuamua-exofossil-supply';
-const OUMUAMUA_TRACE_SLOT_PREFIX = 'oumuamua-trace';
-const OUMUAMUA_TILE_DATA_CAPACITY = 3;
-const OUMUAMUA_EXOFOSSIL_SUPPLY_CAPACITY = 20;
-const OUMUAMUA_TRACE_COLORS: readonly ETrace[] = [
-  ETrace.RED,
-  ETrace.YELLOW,
-  ETrace.BLUE,
-];
 
 interface IOumuamuaMeta {
   spaceId: string;
@@ -36,7 +33,6 @@ export interface IOumuamuaRuntimeState {
   meta: IOumuamuaMeta | null;
   tileDataRemaining: number;
   tileMarkerPlayerIds: string[];
-  exofossilSupplyRemaining: number;
 }
 
 export class OumuamuaAlienPlugin implements IAlienPlugin {
@@ -47,58 +43,18 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
     _discoverers: IPlayer[],
   ): PlayerInput | undefined {
     const board = game.alienState?.getBoardByType(EAlienType.OUMUAMUA);
-    if (!board) return undefined;
+    if (!isOumuamuaAlienBoard(board)) return undefined;
     if (this.getMeta(board) !== null) return undefined;
 
     const placement = this.placeOumuamuaPlanet(game);
     if (!placement) return undefined;
 
-    board.addSlot({
-      slotId: `alien-${board.alienIndex}-${OUMUAMUA_META_PREFIX}|${placement.spaceId}|${placement.sectorId}`,
-      alienIndex: board.alienIndex,
-      traceColor: ETrace.ANY,
-      maxOccupants: 0,
-      rewards: [],
-      isDiscovery: false,
-    });
-
-    board.addSlot({
-      slotId: `alien-${board.alienIndex}-${OUMUAMUA_TILE_MARKERS}`,
-      alienIndex: board.alienIndex,
-      traceColor: ETrace.ANY,
-      maxOccupants: -1,
-      rewards: [],
-      isDiscovery: false,
-    });
-
-    board.addSlot({
-      slotId: `alien-${board.alienIndex}-${OUMUAMUA_TILE_DATA}`,
-      alienIndex: board.alienIndex,
-      traceColor: ETrace.ANY,
-      maxOccupants: -1,
-      occupants: Array.from({ length: OUMUAMUA_TILE_DATA_CAPACITY }, () => ({
-        source: 'neutral' as const,
-        traceColor: ETrace.ANY,
-      })),
-      rewards: [],
-      isDiscovery: false,
-    });
-
-    board.addSlot({
-      slotId: `alien-${board.alienIndex}-${OUMUAMUA_EXOFOSSIL_SUPPLY}`,
-      alienIndex: board.alienIndex,
-      traceColor: ETrace.ANY,
-      maxOccupants: -1,
-      occupants: Array.from(
-        { length: OUMUAMUA_EXOFOSSIL_SUPPLY_CAPACITY },
-        () => ({
-          source: 'neutral' as const,
-          traceColor: ETrace.ANY,
-        }),
-      ),
-      rewards: [],
-      isDiscovery: false,
-    });
+    board.oumuamuaTile = {
+      spaceId: placement.spaceId,
+      sectorId: placement.sectorId,
+      dataRemaining: OUMUAMUA_TILE_DATA_CAPACITY,
+      markerPlayerIds: [],
+    };
 
     for (const color of OUMUAMUA_TRACE_COLORS) {
       this.addTraceColumn(board, color);
@@ -123,6 +79,13 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
     player: IPlayer,
     slot: ITraceSlot,
   ): boolean {
+    if (
+      !slot.isDiscovery &&
+      !slot.slotId.includes('overflow') &&
+      !slot.slotId.includes(OUMUAMUA_TRACE_SLOT_PREFIX)
+    ) {
+      return false;
+    }
     const cost = this.parseTraceSlotCost(slot.slotId);
     if (cost <= 0) return true;
     return player.exofossils >= cost;
@@ -148,7 +111,7 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
     ) => PlayerInput | undefined,
   ): PlayerInput | undefined {
     const board = game.alienState?.getBoardByType(EAlienType.OUMUAMUA);
-    if (!board || !board.discovered) {
+    if (!isOumuamuaAlienBoard(board) || !board.discovered) {
       const result = markSector();
       return onComplete?.(result);
     }
@@ -185,19 +148,14 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
 
   public markTileSignal(player: IPlayer, game: IGame): void {
     const board = game.alienState?.getBoardByType(EAlienType.OUMUAMUA);
-    if (!board) return;
+    if (!isOumuamuaAlienBoard(board)) return;
 
-    const markerSlot = this.getMarkerSlot(board);
-    const dataSlot = this.getDataSlot(board);
-    if (!markerSlot || !dataSlot) return;
-    if (dataSlot.occupants.length <= 0) return;
+    const tile = board.oumuamuaTile;
+    if (!tile || tile.dataRemaining <= 0) return;
 
     player.pieces.deploy(EPieceType.SECTOR_MARKER);
-    markerSlot.occupants.push({
-      source: { playerId: player.id },
-      traceColor: ETrace.ANY,
-    });
-    dataSlot.occupants.pop();
+    tile.markerPlayerIds.push(player.id);
+    tile.dataRemaining -= 1;
 
     const currentSector = this.getCurrentSector(game);
     if (currentSector) {
@@ -207,40 +165,34 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
       });
     }
 
-    const markerCount = markerSlot.occupants.length;
+    const markerCount = tile.markerPlayerIds.length;
     if (markerCount === 1) {
       player.score += 1;
     } else if (markerCount === 3) {
       player.score += 2;
     }
 
-    if (dataSlot.occupants.length <= 0) {
+    if (tile.dataRemaining <= 0) {
       this.resolveTileCompletion(game, board);
     }
   }
 
   public getRuntimeState(game: IGame): IOumuamuaRuntimeState | null {
     const board = game.alienState?.getBoardByType(EAlienType.OUMUAMUA);
-    if (!board) return null;
+    if (!isOumuamuaAlienBoard(board)) return null;
 
     return {
       meta: this.getMeta(board),
-      tileDataRemaining: this.getDataSlot(board)?.occupants.length ?? 0,
-      tileMarkerPlayerIds: (this.getMarkerSlot(board)?.occupants ?? [])
-        .map((occ) => (occ.source === 'neutral' ? null : occ.source.playerId))
-        .filter((id): id is string => id !== null),
-      exofossilSupplyRemaining:
-        this.getSupplySlot(board)?.occupants.length ?? 0,
+      tileDataRemaining: board.oumuamuaTile?.dataRemaining ?? 0,
+      tileMarkerPlayerIds: [...(board.oumuamuaTile?.markerPlayerIds ?? [])],
     };
   }
 
   public getTileMarkerCountByPlayer(game: IGame, playerId: string): number {
     const board = game.alienState?.getBoardByType(EAlienType.OUMUAMUA);
-    if (!board) return 0;
-    const markerSlot = this.getMarkerSlot(board);
-    if (!markerSlot) return 0;
-    return markerSlot.occupants.filter(
-      (occ) => occ.source !== 'neutral' && occ.source.playerId === playerId,
+    if (!isOumuamuaAlienBoard(board)) return 0;
+    return (board.oumuamuaTile?.markerPlayerIds ?? []).filter(
+      (id) => id === playerId,
     ).length;
   }
 
@@ -279,33 +231,13 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
     };
   }
 
-  private getMeta(board: AlienBoard): IOumuamuaMeta | null {
-    const metaSlot = board.slots.find((slot) =>
-      slot.slotId.includes(OUMUAMUA_META_PREFIX),
-    );
-    if (!metaSlot) return null;
-    const parts = metaSlot.slotId.split('|');
-    if (parts.length !== 3) return null;
+  private getMeta(board: OumuamuaAlienBoard): IOumuamuaMeta | null {
+    const tile = board.oumuamuaTile;
+    if (!tile) return null;
     return {
-      spaceId: parts[1],
-      sectorId: parts[2],
+      spaceId: tile.spaceId,
+      sectorId: tile.sectorId,
     };
-  }
-
-  private getMarkerSlot(board: AlienBoard): ITraceSlot | undefined {
-    return board.slots.find((slot) =>
-      slot.slotId.includes(OUMUAMUA_TILE_MARKERS),
-    );
-  }
-
-  private getDataSlot(board: AlienBoard): ITraceSlot | undefined {
-    return board.slots.find((slot) => slot.slotId.includes(OUMUAMUA_TILE_DATA));
-  }
-
-  private getSupplySlot(board: AlienBoard): ITraceSlot | undefined {
-    return board.slots.find((slot) =>
-      slot.slotId.includes(OUMUAMUA_EXOFOSSIL_SUPPLY),
-    );
   }
 
   private getCurrentSector(game: IGame): { id: string; color: ESector } | null {
@@ -321,66 +253,9 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
     };
   }
 
-  private addTraceColumn(board: AlienBoard, color: ETrace): void {
-    const defs: Array<{
-      tierFromBottom: number;
-      maxOccupants: number;
-      exofossilCost: number;
-      rewards: ITraceSlot['rewards'];
-    }> = [
-      {
-        tierFromBottom: 1,
-        maxOccupants: 1,
-        exofossilCost: 4,
-        rewards: [{ type: 'VP', amount: 25 }],
-      },
-      {
-        tierFromBottom: 2,
-        maxOccupants: 1,
-        exofossilCost: 0,
-        rewards: [
-          { type: 'VP', amount: 3 },
-          { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
-        ],
-      },
-      {
-        tierFromBottom: 3,
-        maxOccupants: 1,
-        exofossilCost: 0,
-        rewards: [
-          { type: 'VP', amount: 2 },
-          { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
-        ],
-      },
-      {
-        tierFromBottom: 4,
-        maxOccupants: 1,
-        exofossilCost: 0,
-        rewards: [
-          { type: 'VP', amount: 3 },
-          { type: 'CUSTOM', effectId: 'GAIN_EXOFOSSIL' },
-          { type: 'PUBLICITY', amount: 1 },
-        ],
-      },
-      {
-        tierFromBottom: 5,
-        maxOccupants: 1,
-        exofossilCost: 0,
-        rewards: [
-          { type: 'VP', amount: 2 },
-          { type: 'CUSTOM', effectId: 'GAIN_EXOFOSSIL' },
-        ],
-      },
-      {
-        tierFromBottom: 6,
-        maxOccupants: -1,
-        exofossilCost: 1,
-        rewards: [{ type: 'VP', amount: 6 }],
-      },
-    ];
-
-    for (const def of defs) {
-      board.addSlot({
+  private addTraceColumn(board: OumuamuaAlienBoard, color: ETrace): void {
+    for (const def of OUMUAMUA_TRACE_SLOT_DEFS) {
+      board.addTraceSlot({
         slotId: this.buildTraceSlotId(
           board.alienIndex,
           color,
@@ -414,18 +289,15 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
     return cost;
   }
 
-  private resolveTileCompletion(game: IGame, board: AlienBoard): void {
-    const markerSlot = this.getMarkerSlot(board);
-    const dataSlot = this.getDataSlot(board);
-    const supplySlot = this.getSupplySlot(board);
-    if (!markerSlot || !dataSlot) return;
+  private resolveTileCompletion(game: IGame, board: OumuamuaAlienBoard): void {
+    const tile = board.oumuamuaTile;
+    if (!tile) return;
 
     const markerCountsByPlayer = new Map<string, number>();
-    for (const occupant of markerSlot.occupants) {
-      if (occupant.source === 'neutral') continue;
+    for (const playerId of tile.markerPlayerIds) {
       markerCountsByPlayer.set(
-        occupant.source.playerId,
-        (markerCountsByPlayer.get(occupant.source.playerId) ?? 0) + 1,
+        playerId,
+        (markerCountsByPlayer.get(playerId) ?? 0) + 1,
       );
     }
 
@@ -441,19 +313,10 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
       for (let i = 0; i < toReturn; i += 1) {
         player.pieces.return(EPieceType.SECTOR_MARKER);
       }
-      if (supplySlot && supplySlot.occupants.length > 0) {
-        supplySlot.occupants.pop();
-      }
       player.gainExofossils(1);
     }
 
-    markerSlot.occupants = [];
-    dataSlot.occupants = Array.from(
-      { length: OUMUAMUA_TILE_DATA_CAPACITY },
-      () => ({
-        source: 'neutral',
-        traceColor: ETrace.ANY,
-      }),
-    );
+    tile.markerPlayerIds = [];
+    tile.dataRemaining = OUMUAMUA_TILE_DATA_CAPACITY;
   }
 }

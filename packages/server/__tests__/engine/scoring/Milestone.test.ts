@@ -14,6 +14,7 @@ import type { IGamePlayerIdentity } from '@/engine/IGame.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
 import { GameError } from '@/shared/errors/GameError.js';
 import { skipSetupTucks } from '../../helpers/TestGameBuilder.js';
+import { placeTraceForTestSetup } from '../../helpers/traceTestUtils.js';
 
 const BASE_PLAYERS: readonly IGamePlayerIdentity[] = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -215,10 +216,10 @@ describe('MilestoneState (Phase 7)', () => {
       const game = createGame(2, 'm7-neu-3');
       const p1 = game.players[0];
 
-      game.alienState.applyTrace(p1, game, ETrace.RED, 0, false);
-      game.alienState.applyTrace(p1, game, ETrace.YELLOW, 0, false);
-      game.alienState.applyTrace(p1, game, ETrace.RED, 1, false);
-      game.alienState.applyTrace(p1, game, ETrace.YELLOW, 1, false);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 1);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 1);
 
       p1.score = 22;
       expect(game.alienState.getNewlyDiscoverableAliens()).toHaveLength(0);
@@ -233,10 +234,10 @@ describe('MilestoneState (Phase 7)', () => {
       const p1 = game.players[0];
 
       for (const color of [ETrace.RED, ETrace.YELLOW, ETrace.BLUE]) {
-        game.alienState.applyTrace(p1, game, color, 0, false);
+        placeTraceForTestSetup(game.alienState, p1, game, color, 0);
       }
       for (const color of [ETrace.RED, ETrace.YELLOW, ETrace.BLUE]) {
-        game.alienState.applyTrace(p1, game, color, 1, false);
+        placeTraceForTestSetup(game.alienState, p1, game, color, 1);
       }
 
       expect(game.alienState.hasEmptyDiscoverySlot()).toBe(false);
@@ -286,8 +287,8 @@ describe('MilestoneState (Phase 7)', () => {
       const game = createGame(2, 'm7-neu-7');
       const p1 = game.players[0];
 
-      game.alienState.applyTrace(p1, game, ETrace.YELLOW, 1, false);
-      game.alienState.applyTrace(p1, game, ETrace.BLUE, 1, false);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 1);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.BLUE, 1);
 
       p1.score = 22;
       game.milestoneState.checkAndQueue(game, p1);
@@ -403,10 +404,10 @@ describe('MilestoneState (Phase 7)', () => {
       const game = createGame(2, 'm7-ord-4');
       const p1 = game.players[0];
 
-      game.alienState.applyTrace(p1, game, ETrace.RED, 0, false);
-      game.alienState.applyTrace(p1, game, ETrace.YELLOW, 0, false);
-      game.alienState.applyTrace(p1, game, ETrace.RED, 1, false);
-      game.alienState.applyTrace(p1, game, ETrace.YELLOW, 1, false);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 1);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 1);
 
       p1.score = 24;
       game.milestoneState.checkAndQueue(game, p1);

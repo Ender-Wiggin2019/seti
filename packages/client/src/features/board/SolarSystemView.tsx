@@ -21,8 +21,9 @@ import type {
   IPlayerInputModel,
   IPublicSector,
   IPublicSolarSystem,
+  IPublicSolarSystemAlienToken,
 } from '@/types/re-exports';
-import { EPlayerInputType } from '@/types/re-exports';
+import { EAlienType, EPlayerInputType, ETrace } from '@/types/re-exports';
 import { ProbeToken } from './ProbeToken';
 import { SectorGrid } from './SectorGrid';
 import { WheelLayer } from './WheelLayer';
@@ -45,6 +46,14 @@ const IMAGE_ALIGNMENT_OFFSET_CW_BY_RING: Readonly<
   4: 0,
 };
 const PROBE_TRANSITION_MS = 900;
+const SOLAR_ALIEN_TOKEN_COLOR: Record<
+  ETrace.RED | ETrace.YELLOW | ETrace.BLUE,
+  string
+> = {
+  [ETrace.RED]: '#e93e27',
+  [ETrace.YELLOW]: '#f5c242',
+  [ETrace.BLUE]: '#3478d8',
+};
 const TEXT_MODE_LABEL_Z_INDEX_BY_WHEEL: Readonly<
   Record<TSolarSystemWheelIndex, number>
 > = {
@@ -91,6 +100,15 @@ interface IProbeRenderItem {
   offsetX: number;
   offsetY: number;
   transitionDelayMs: number;
+}
+
+interface ISolarAlienTokenRenderItem {
+  key: string;
+  token: IPublicSolarSystemAlienToken;
+  xPercent: number;
+  yPercent: number;
+  offsetX: number;
+  offsetY: number;
 }
 
 type TTextModeSpaceLabelKind =
@@ -520,6 +538,41 @@ export function SolarSystemView({
     return { bySpacePlayers, renderItems };
   }, [solarSystem.probes, spacePoints]);
 
+  const solarAlienTokenView = useMemo<ISolarAlienTokenRenderItem[]>(() => {
+    const groupedBySector = new Map<number, IPublicSolarSystemAlienToken[]>();
+    for (const token of solarSystem.alienTokens) {
+      const tokens = groupedBySector.get(token.sectorIndex) ?? [];
+      tokens.push(token);
+      groupedBySector.set(token.sectorIndex, tokens);
+    }
+
+    const items: ISolarAlienTokenRenderItem[] = [];
+    for (const [sectorIndex, tokens] of groupedBySector.entries()) {
+      const position = spacePosition(
+        4,
+        sectorIndex,
+        0,
+        1,
+        spaceRadiiPercent,
+        0,
+      );
+      for (let index = 0; index < tokens.length; index += 1) {
+        const token = tokens[index];
+        const offset = tokenStackOffset(index, tokens.length);
+        items.push({
+          key: token.tokenId,
+          token,
+          xPercent: position.xPercent,
+          yPercent: position.yPercent,
+          offsetX: offset.x,
+          offsetY: offset.y,
+        });
+      }
+    }
+
+    return items;
+  }, [solarSystem.alienTokens, spaceRadiiPercent]);
+
   const reachablePathBySpaceId = useMemo(() => {
     if (!selectedSpaceId || movementPoints <= 0) {
       return new Map<string, string[]>();
@@ -793,6 +846,17 @@ export function SolarSystemView({
             );
           })}
 
+        {solarAlienTokenView.map((item) => (
+          <SolarAlienTokenMarker
+            key={item.key}
+            token={item.token}
+            xPercent={item.xPercent}
+            yPercent={item.yPercent}
+            offsetX={item.offsetX}
+            offsetY={item.offsetY}
+          />
+        ))}
+
         {probeView.renderItems.map((probe) => (
           <div
             key={probe.key}
@@ -835,5 +899,43 @@ export function SolarSystemView({
         )}
       </div>
     </section>
+  );
+}
+
+function SolarAlienTokenMarker({
+  token,
+  xPercent,
+  yPercent,
+  offsetX,
+  offsetY,
+}: {
+  token: IPublicSolarSystemAlienToken;
+  xPercent: number;
+  yPercent: number;
+  offsetX: number;
+  offsetY: number;
+}): React.JSX.Element {
+  const color = SOLAR_ALIEN_TOKEN_COLOR[token.traceColor];
+  const label = token.alienType === EAlienType.ANOMALIES ? 'A' : 'ET';
+
+  return (
+    <div
+      className='pointer-events-none absolute flex h-7 w-7 items-center justify-center rounded-sm border border-surface-100/50 bg-surface-950/85 font-mono text-[10px] font-bold text-text-100 shadow-[0_2px_6px_rgba(0,0,0,0.55)]'
+      data-testid={`solar-alien-token-${token.alienType}-${token.sectorIndex}-${token.traceColor}`}
+      style={{
+        left: `${xPercent}%`,
+        top: `${yPercent}%`,
+        transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`,
+        zIndex: 78,
+        boxShadow: `0 0 0 2px ${color}66, 0 2px 6px rgba(0,0,0,0.55)`,
+      }}
+      title={token.tokenId}
+    >
+      <span
+        className='absolute bottom-0.5 right-0.5 h-2 w-2 rounded-full border border-surface-100/50'
+        style={{ backgroundColor: color }}
+      />
+      {label}
+    </div>
   );
 }

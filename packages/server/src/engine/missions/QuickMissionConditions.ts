@@ -90,7 +90,7 @@ export function probeOnComet(): TConditionFn {
  * Check if a player has at least `count` traces of a specific color (total across all aliens).
  */
 export function hasTrace(color: ETrace, count = 1): TConditionFn {
-  return (player) => (player.traces[color] ?? 0) >= count;
+  return (player, game) => getPlayerTraceCount(player, game, color) >= count;
 }
 
 /**
@@ -102,10 +102,10 @@ export function hasTraceOnAllSpecies(color: ETrace): TConditionFn {
   return (player, game) => {
     const boards = game.alienState?.boards;
     if (!boards || boards.length === 0) return false;
-    return boards.every((board) => {
-      const alienTraces = player.tracesByAlien[board.alienIndex];
-      return (alienTraces?.[color] ?? 0) >= 1;
-    });
+    return boards.every(
+      (board) =>
+        getPlayerTraceCount(player, game, color, board.alienIndex) >= 1,
+    );
   };
 }
 
@@ -176,14 +176,13 @@ export function hasAllPrimaryTracesOnSingleSpecies(): TConditionFn {
     const boards = game.alienState?.boards;
     if (!boards || boards.length === 0) return false;
 
-    return boards.some((board) => {
-      const alienTraces = player.tracesByAlien[board.alienIndex];
-      return (
-        (alienTraces?.[ETrace.RED] ?? 0) >= 1 &&
-        (alienTraces?.[ETrace.YELLOW] ?? 0) >= 1 &&
-        (alienTraces?.[ETrace.BLUE] ?? 0) >= 1
-      );
-    });
+    return boards.some(
+      (board) =>
+        getPlayerTraceCount(player, game, ETrace.RED, board.alienIndex) >= 1 &&
+        getPlayerTraceCount(player, game, ETrace.YELLOW, board.alienIndex) >=
+          1 &&
+        getPlayerTraceCount(player, game, ETrace.BLUE, board.alienIndex) >= 1,
+    );
   };
 }
 
@@ -266,6 +265,50 @@ export function probeMinDistanceFromEarth(minDistance: number): TConditionFn {
     }
     return false;
   };
+}
+
+function getPlayerTraceCount(
+  player: IPlayer,
+  game: IGame,
+  color: ETrace,
+  alien: number | 'both' = 'both',
+): number {
+  const alienState = game.alienState;
+  if (
+    alienState?.boards?.length > 0 &&
+    typeof alienState.getPlayerTraceCount === 'function'
+  ) {
+    const authoritativeCount = alienState.getPlayerTraceCount(
+      player,
+      color,
+      alien,
+    );
+    const hasAuthoritativeTrace =
+      alienState.getPlayerTraceCount(player, ETrace.ANY, 'both') > 0;
+    if (hasAuthoritativeTrace) {
+      return authoritativeCount;
+    }
+  }
+
+  if (alien !== 'both') {
+    return getCachedTraceCount(player.tracesByAlien[alien], color);
+  }
+  return getCachedTraceCount(player.traces, color);
+}
+
+function getCachedTraceCount(
+  traces: Partial<Record<ETrace, number>> | undefined,
+  color: ETrace,
+): number {
+  if (!traces) return 0;
+  if (color === ETrace.ANY) {
+    return (
+      (traces[ETrace.RED] ?? 0) +
+      (traces[ETrace.YELLOW] ?? 0) +
+      (traces[ETrace.BLUE] ?? 0)
+    );
+  }
+  return traces[color] ?? 0;
 }
 
 /**

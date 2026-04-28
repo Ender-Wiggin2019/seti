@@ -8,7 +8,10 @@ import type {
 } from '@seti/common/types/protocol/debug';
 import { EAlienType, EPhase } from '@seti/common/types/protocol/enums';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
-import type { AlienBoard } from '@/engine/alien/AlienBoard.js';
+import {
+  type AnomaliesAlienBoard,
+  isAnomaliesAlienBoard,
+} from '@/engine/alien/AlienBoard.js';
 import { AlienState } from '@/engine/alien/index.js';
 import { OumuamuaAlienPlugin } from '@/engine/alien/plugins/OumuamuaAlienPlugin.js';
 import { EventLog } from '@/engine/event/EventLog.js';
@@ -243,7 +246,7 @@ function applyAnomalyTriggerReplay(
   const activePlayer = game.getActivePlayer();
   trimHandForPass(activePlayer);
   const board = game.alienState.getBoardByType(EAlienType.ANOMALIES);
-  if (!board) {
+  if (!isAnomaliesAlienBoard(board)) {
     throw new Error('Anomalies board not found for replay preset');
   }
 
@@ -263,7 +266,7 @@ function applyAnomalyTriggerReplay(
     activePlayer.waitingFor = pluginInput;
   }
 
-  normalizeAnomalyTokensForTriggerReplay(board);
+  normalizeAnomalyTokensForTriggerReplay(game, board);
 
   const columnSlot = board.getSlot(
     buildAnomalyColumnSlotId(board.alienIndex, ETrace.RED),
@@ -318,7 +321,6 @@ function applyOumuamuaReplay(
 
   const activePlayer = game.getActivePlayer();
   activePlayer.resources.gain({ credits: 10, energy: 10, publicity: 10 });
-  activePlayer.gainExofossils(4);
 
   const board = game.alienState.getBoardByType(EAlienType.OUMUAMUA);
   if (!board) {
@@ -329,6 +331,7 @@ function applyOumuamuaReplay(
   if (pluginInput !== undefined) {
     activePlayer.waitingFor = pluginInput;
   }
+  activePlayer.gainExofossils(4);
 
   const plugin = new OumuamuaAlienPlugin();
   if (request.checkpointId === AFTER_OUMUAMUA_TILE_SIGNAL_CHECKPOINT_ID) {
@@ -381,28 +384,34 @@ function buildAnomalyColumnSlotId(alienIndex: number, color: string): string {
   return `alien-${alienIndex}-anomaly-column|${color}`;
 }
 
-function normalizeAnomalyTokensForTriggerReplay(board: AlienBoard): void {
-  const existingTokenSlots = board.slots.filter((slot) =>
-    slot.slotId.includes('anomaly-token'),
+function normalizeAnomalyTokensForTriggerReplay(
+  game: Game,
+  board: AnomaliesAlienBoard,
+): void {
+  if (!game.solarSystem) {
+    throw new Error('Solar system not found for anomaly replay preset');
+  }
+
+  const existingTokens = game.solarSystem.getAlienTokensByType(
+    EAlienType.ANOMALIES,
   );
-  const templateRewards = existingTokenSlots[0]?.rewards.map((reward) => ({
+  const templateRewards = existingTokens[0]?.rewards.map((reward) => ({
     ...reward,
   })) ?? [{ type: 'VP' as const, amount: 2 }];
 
-  for (let index = board.slots.length - 1; index >= 0; index -= 1) {
-    if (board.slots[index]?.slotId.includes('anomaly-token')) {
-      board.slots.splice(index, 1);
+  for (let i = game.solarSystem.alienTokens.length - 1; i >= 0; i -= 1) {
+    if (game.solarSystem.alienTokens[i].alienType === EAlienType.ANOMALIES) {
+      game.solarSystem.alienTokens.splice(i, 1);
     }
   }
 
   for (let sectorIndex = 0; sectorIndex < 8; sectorIndex += 1) {
-    board.addSlot({
-      slotId: `alien-${board.alienIndex}-anomaly-token|${sectorIndex}|${ETrace.RED}`,
-      alienIndex: board.alienIndex,
+    game.solarSystem.addAlienToken({
+      tokenId: `alien-${board.alienIndex}-anomaly-token|${sectorIndex}|${ETrace.RED}`,
+      alienType: EAlienType.ANOMALIES,
+      sectorIndex,
       traceColor: ETrace.RED,
-      maxOccupants: 0,
       rewards: templateRewards.map((reward) => ({ ...reward })),
-      isDiscovery: false,
     });
   }
 }

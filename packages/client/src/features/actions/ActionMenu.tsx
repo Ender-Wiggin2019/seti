@@ -268,7 +268,7 @@ export function ActionMenu({
   // status line instead of showing all buttons as disabled.
   if (isAnySetupTuckPending(gameState)) {
     const pendingPeer = gameState.players.find(
-      (p) => p.playerId !== myPlayerId && (p.pendingSetupTucks ?? 0) > 0,
+      (p) => p.playerId !== myPlayerId && p.pendingSetupTucks > 0,
     );
     return (
       <MenuFrame

@@ -1,12 +1,25 @@
+import { EffectFactory } from '@seti/cards';
 import { ANOMALY_COLUMN_REWARD_LADDER } from '@seti/common/constant/alienBoardConfig';
 import { ALL_CARDS } from '@seti/common/data/index';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
+import {
+  groupTraceSlotsByColor,
+  TRACE_COLUMN_COLORS,
+  type TTraceColumnColor,
+  type TTraceRewardPresentation,
+  toTraceRewardPresentations,
+} from '@seti/common/utils/alienTracePresentation';
 import { useTranslation } from 'react-i18next';
 import { CardRender } from '@/features/cards/CardRender';
 import { cn } from '@/lib/cn';
 import type {
+  IPublicAlienCardZone,
   IPublicAlienState,
+  IPublicAnomaliesBoard,
+  IPublicGenericAlienBoard,
+  IPublicOumuamuaBoard,
   IPublicTraceSlot,
+  TPublicAlienBoard,
   TPublicSlotReward,
 } from '@/types/re-exports';
 import { EAlienType, ETrace } from '@/types/re-exports';
@@ -21,8 +34,6 @@ const ALIEN_TYPE_I18N_KEY: Partial<Record<EAlienType, string>> = {
   [EAlienType.GLYPHIDS]: 'glyphids',
   [EAlienType.DUMMY]: 'dummy',
 };
-
-const TRACE_COLORS = [ETrace.RED, ETrace.YELLOW, ETrace.BLUE] as const;
 
 const TRACE_COLOR: Record<ETrace, string> = {
   [ETrace.RED]: '#e93e27',
@@ -47,13 +58,21 @@ interface IAlienBoardViewProps {
   playerColors: Record<string, string>;
 }
 
-interface IGroupedAlienSlots {
-  discoverySlots: IPublicTraceSlot[];
-  overflowSlot: IPublicTraceSlot | null;
-  anomalyColumns: IPublicTraceSlot[];
-  anomalyTokens: IPublicTraceSlot[];
-  boardSlots: IPublicTraceSlot[];
+interface IAlienBoardRendererProps {
+  board: TPublicAlienBoard;
+  playerColors: Record<string, string>;
+  alienIndex: number;
 }
+
+type TAlienBoardRenderer = (
+  props: IAlienBoardRendererProps,
+) => React.JSX.Element;
+
+const ALIEN_BOARD_RENDERERS: Partial<Record<EAlienType, TAlienBoardRenderer>> =
+  {
+    [EAlienType.ANOMALIES]: AnomaliesBoardRenderer,
+    [EAlienType.OUMUAMUA]: OumuamuaBoardRenderer,
+  };
 
 export function AlienBoardView({
   aliens,
@@ -89,7 +108,6 @@ function AlienCard({
   playerColors: Record<string, string>;
 }): React.JSX.Element {
   const { t } = useTranslation('common');
-  const groupedSlots = groupAlienSlots(alien.slots);
   const discoveredName =
     alien.alienType != null ? ALIEN_TYPE_I18N_KEY[alien.alienType] : null;
   const title =
@@ -100,7 +118,10 @@ function AlienCard({
       : t('client.alien_board.alien_index', { index: alien.alienIndex + 1 });
 
   return (
-    <article className='rounded-md border border-surface-700/50 bg-surface-900/60 p-3'>
+    <article
+      className='rounded-md border border-surface-700/50 bg-surface-900/60 p-3'
+      data-testid={`alien-${alien.alienIndex}-card`}
+    >
       <div className='flex items-center justify-between gap-3'>
         <h3 className='font-mono text-xs font-semibold uppercase tracking-wider text-text-200'>
           {title}
@@ -121,31 +142,34 @@ function AlienCard({
 
       <div className='mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]'>
         <div className='space-y-3'>
-          <DiscoveryZone
-            alienIndex={alien.alienIndex}
-            slots={groupedSlots.discoverySlots}
-            playerColors={playerColors}
-          />
-          {groupedSlots.overflowSlot ? (
-            <OverflowZone
-              alienIndex={alien.alienIndex}
-              slot={groupedSlots.overflowSlot}
-              playerColors={playerColors}
-            />
-          ) : null}
-
-          {alien.discovered ? (
+          {alien.discovered && alien.board ? (
             <DiscoveredAlienBoard
               alien={alien}
-              slots={groupedSlots}
+              board={alien.board}
               playerColors={playerColors}
             />
           ) : (
             <HiddenBoard alienIndex={alien.alienIndex} />
           )}
+
+          <DiscoveryZone
+            alienIndex={alien.alienIndex}
+            slots={alien.discovery.zones}
+            playerColors={playerColors}
+          />
+          <OverflowZone
+            alienIndex={alien.alienIndex}
+            slots={alien.discovery.overflowZones}
+            playerColors={playerColors}
+          />
         </div>
 
-        {alien.discovered ? <AlienDeckPanel alien={alien} /> : null}
+        {alien.cardZone ? (
+          <AlienDeckPanel
+            alienIndex={alien.alienIndex}
+            cardZone={alien.cardZone}
+          />
+        ) : null}
       </div>
     </article>
   );
@@ -168,26 +192,23 @@ function DiscoveryZone({
       <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
         Discovery
       </div>
-      <div className='flex flex-wrap items-start gap-2'>
-        {slots.map((slot) => (
-          <TraceSlot
-            key={slot.slotId}
-            slot={slot}
-            playerColors={playerColors}
-          />
-        ))}
-      </div>
+      <TraceColumnGrid
+        alienIndex={alienIndex}
+        area='discovery'
+        slots={slots}
+        playerColors={playerColors}
+      />
     </section>
   );
 }
 
 function OverflowZone({
   alienIndex,
-  slot,
+  slots,
   playerColors,
 }: {
   alienIndex: number;
-  slot: IPublicTraceSlot;
+  slots: IPublicTraceSlot[];
   playerColors: Record<string, string>;
 }): React.JSX.Element {
   return (
@@ -198,7 +219,12 @@ function OverflowZone({
       <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
         Overflow
       </div>
-      <TraceSlot slot={slot} playerColors={playerColors} />
+      <TraceColumnGrid
+        alienIndex={alienIndex}
+        area='overflow'
+        slots={slots}
+        playerColors={playerColors}
+      />
     </section>
   );
 }
@@ -213,8 +239,27 @@ function HiddenBoard({
       className='min-h-24 rounded border border-surface-700/50 bg-surface-950/30 p-3'
       data-testid={`alien-${alienIndex}-hidden-board`}
     >
-      <div className='font-mono text-[10px] uppercase tracking-widest text-text-500'>
-        Hidden Board
+      <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
+        Alien Board
+      </div>
+      <div className='grid grid-cols-3 gap-2'>
+        {TRACE_COLUMN_COLORS.map((color) => (
+          <div
+            key={color}
+            className='rounded border border-surface-700/50 bg-surface-900/30 p-2'
+            data-testid={`alien-${alienIndex}-hidden-board-column-${color}`}
+          >
+            <TraceColumnHeader color={color} />
+            <div className='flex min-h-14 items-center justify-center'>
+              <div
+                className='flex h-10 w-10 items-center justify-center rounded-full border border-dashed border-surface-500/70 bg-surface-800/40 text-[10px] font-semibold text-text-500'
+                aria-label={`${TRACE_LABEL[color]} hidden trace slot`}
+              >
+                ?
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -222,20 +267,30 @@ function HiddenBoard({
 
 function DiscoveredAlienBoard({
   alien,
-  slots,
+  board,
   playerColors,
 }: {
   alien: IPublicAlienState;
-  slots: IGroupedAlienSlots;
+  board: TPublicAlienBoard;
   playerColors: Record<string, string>;
 }): React.JSX.Element {
-  if (alien.alienType === EAlienType.ANOMALIES) {
+  const Renderer =
+    alien.alienType != null ? ALIEN_BOARD_RENDERERS[alien.alienType] : null;
+  if (Renderer) {
     return (
-      <AnomaliesBoard
+      <Renderer
         alienIndex={alien.alienIndex}
-        columns={slots.anomalyColumns}
-        tokens={slots.anomalyTokens}
-        extraSlots={slots.boardSlots}
+        board={board}
+        playerColors={playerColors}
+      />
+    );
+  }
+
+  if (board.type === 'generic') {
+    return (
+      <GenericAlienBoard
+        alienIndex={alien.alienIndex}
+        board={board}
         playerColors={playerColors}
       />
     );
@@ -244,7 +299,55 @@ function DiscoveredAlienBoard({
   return (
     <GenericAlienBoard
       alienIndex={alien.alienIndex}
-      slots={slots.boardSlots}
+      board={{ type: 'generic', slots: [] }}
+      playerColors={playerColors}
+    />
+  );
+}
+
+function AnomaliesBoardRenderer({
+  alienIndex,
+  board,
+  playerColors,
+}: IAlienBoardRendererProps): React.JSX.Element {
+  if (board.type !== 'anomalies') {
+    return (
+      <GenericAlienBoard
+        alienIndex={alienIndex}
+        board={{ type: 'generic', slots: [] }}
+        playerColors={playerColors}
+      />
+    );
+  }
+
+  return (
+    <AnomaliesBoard
+      alienIndex={alienIndex}
+      board={board}
+      playerColors={playerColors}
+    />
+  );
+}
+
+function OumuamuaBoardRenderer({
+  alienIndex,
+  board,
+  playerColors,
+}: IAlienBoardRendererProps): React.JSX.Element {
+  if (board.type !== 'oumuamua') {
+    return (
+      <GenericAlienBoard
+        alienIndex={alienIndex}
+        board={{ type: 'generic', slots: [] }}
+        playerColors={playerColors}
+      />
+    );
+  }
+
+  return (
+    <OumuamuaBoard
+      alienIndex={alienIndex}
+      board={board}
       playerColors={playerColors}
     />
   );
@@ -252,11 +355,11 @@ function DiscoveredAlienBoard({
 
 function GenericAlienBoard({
   alienIndex,
-  slots,
+  board,
   playerColors,
 }: {
   alienIndex: number;
-  slots: IPublicTraceSlot[];
+  board: IPublicGenericAlienBoard;
   playerColors: Record<string, string>;
 }): React.JSX.Element {
   return (
@@ -264,30 +367,106 @@ function GenericAlienBoard({
       className='rounded border border-surface-700/50 bg-surface-950/30 p-2'
       data-testid={`alien-${alienIndex}-generic-board`}
     >
-      <div className='flex flex-wrap items-start gap-2'>
-        {slots.map((slot) => (
-          <TraceSlot
-            key={slot.slotId}
-            slot={slot}
-            playerColors={playerColors}
-          />
-        ))}
+      <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
+        Alien Board
+      </div>
+      <TraceColumnGrid
+        alienIndex={alienIndex}
+        area='generic-board'
+        slots={board.slots}
+        playerColors={playerColors}
+      />
+    </section>
+  );
+}
+
+function OumuamuaBoard({
+  alienIndex,
+  board,
+  playerColors,
+}: {
+  alienIndex: number;
+  board: IPublicOumuamuaBoard;
+  playerColors: Record<string, string>;
+}): React.JSX.Element {
+  return (
+    <section
+      className='rounded border border-surface-700/50 bg-surface-950/30 p-2'
+      data-testid={`alien-${alienIndex}-oumuamua-board`}
+    >
+      <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
+        Oumuamua Tile
+      </div>
+      <OumuamuaTile
+        alienIndex={alienIndex}
+        tile={board.tile}
+        playerColors={playerColors}
+      />
+      <div className='mt-3'>
+        <TraceColumnGrid
+          alienIndex={alienIndex}
+          area='oumuamua-trace'
+          slots={board.traceSlots}
+          playerColors={playerColors}
+        />
       </div>
     </section>
   );
 }
 
-function AnomaliesBoard({
+function OumuamuaTile({
   alienIndex,
-  columns,
-  tokens,
-  extraSlots,
+  tile,
   playerColors,
 }: {
   alienIndex: number;
-  columns: IPublicTraceSlot[];
-  tokens: IPublicTraceSlot[];
-  extraSlots: IPublicTraceSlot[];
+  tile: IPublicOumuamuaBoard['tile'];
+  playerColors: Record<string, string>;
+}): React.JSX.Element {
+  if (!tile) {
+    return (
+      <div
+        className='rounded border border-dashed border-surface-700/70 bg-surface-900/30 p-3 font-mono text-[10px] text-text-500'
+        data-testid={`alien-${alienIndex}-oumuamua-tile`}
+      >
+        Tile not placed
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className='rounded border border-violet-400/50 bg-violet-500/10 p-3'
+      data-testid={`alien-${alienIndex}-oumuamua-tile`}
+    >
+      <div className='flex items-center justify-between gap-3 font-mono text-[10px] uppercase tracking-widest text-text-300'>
+        <span>Data {tile.dataRemaining}</span>
+        <span>Sector {tile.sectorId}</span>
+      </div>
+      <div className='mt-3 flex min-h-5 flex-wrap items-center gap-1'>
+        {tile.markerPlayerIds.map((playerId, index) => (
+          <span
+            key={`${playerId}-${index}`}
+            className='h-4 w-4 rounded-full border border-surface-100/60 shadow-[0_1px_3px_rgba(0,0,0,0.45)]'
+            data-testid={`oumuamua-tile-marker-${playerId}-${index}`}
+            style={{
+              backgroundColor: playerColors[playerId] ?? '#9ca3af',
+            }}
+            title={playerId}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AnomaliesBoard({
+  alienIndex,
+  board,
+  playerColors,
+}: {
+  alienIndex: number;
+  board: IPublicAnomaliesBoard;
   playerColors: Record<string, string>;
 }): React.JSX.Element {
   return (
@@ -296,13 +475,11 @@ function AnomaliesBoard({
       data-testid={`alien-${alienIndex}-anomalies-board`}
     >
       <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
-        Anomaly Board
+        Alien Board
       </div>
       <div className='grid gap-2 sm:grid-cols-3'>
-        {TRACE_COLORS.map((color) => {
-          const column =
-            columns.find((slot) => slot.traceColor === color) ??
-            createEmptyColumnSlot(alienIndex, color);
+        {TRACE_COLUMN_COLORS.map((color) => {
+          const column = board.traceBoard.columns[color];
           return (
             <AnomalyColumn
               key={color}
@@ -314,35 +491,6 @@ function AnomaliesBoard({
           );
         })}
       </div>
-
-      {tokens.length > 0 ? (
-        <div className='mt-3'>
-          <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
-            Tokens
-          </div>
-          <div className='flex flex-wrap gap-2'>
-            {tokens.map((token) => (
-              <AnomalyToken
-                key={token.slotId}
-                alienIndex={alienIndex}
-                slot={token}
-              />
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {extraSlots.length > 0 ? (
-        <div className='mt-3 flex flex-wrap items-start gap-2'>
-          {extraSlots.map((slot) => (
-            <TraceSlot
-              key={slot.slotId}
-              slot={slot}
-              playerColors={playerColors}
-            />
-          ))}
-        </div>
-      ) : null}
     </section>
   );
 }
@@ -383,7 +531,7 @@ function AnomalyColumn({
             className='flex items-center justify-between gap-2 font-mono text-[9px] text-text-500'
           >
             <span>{index + 1}</span>
-            <span>{formatRewards([...rewards])}</span>
+            <TraceRewardIcons rewards={rewards} size='desc-mini' />
           </div>
         ))}
       </div>
@@ -391,62 +539,36 @@ function AnomalyColumn({
   );
 }
 
-function AnomalyToken({
+function AlienDeckPanel({
   alienIndex,
-  slot,
+  cardZone,
 }: {
   alienIndex: number;
-  slot: IPublicTraceSlot;
+  cardZone: IPublicAlienCardZone;
 }): React.JSX.Element {
-  const parsed = parseAnomalyToken(slot.slotId);
-  const color = parsed?.color ?? slot.traceColor;
-  const sector = parsed?.sectorIndex ?? '?';
-
-  return (
-    <div
-      className='flex min-w-20 items-center gap-2 rounded border border-surface-700/60 bg-surface-900/50 px-2 py-1'
-      data-testid={`alien-${alienIndex}-anomaly-token-${sector}-${color}`}
-    >
-      <span
-        className='h-4 w-4 rounded-full border border-surface-200/30'
-        style={{ backgroundColor: `${TRACE_COLOR[color]}66` }}
-      />
-      <span className='font-mono text-[10px] text-text-300'>S{sector}</span>
-      <span className='font-mono text-[10px] text-text-500'>
-        {formatRewards(slot.rewards)}
-      </span>
-    </div>
-  );
-}
-
-function AlienDeckPanel({
-  alien,
-}: {
-  alien: IPublicAlienState;
-}): React.JSX.Element {
-  const faceUpCard = alien.faceUpAlienCardId
-    ? CARD_BY_ID.get(alien.faceUpAlienCardId)
+  const faceUpCard = cardZone.faceUpCardId
+    ? CARD_BY_ID.get(cardZone.faceUpCardId)
     : undefined;
 
   return (
     <aside
       className='w-full rounded border border-surface-700/50 bg-surface-950/40 p-2 lg:w-28'
-      data-testid={`alien-${alien.alienIndex}-deck-panel`}
+      data-testid={`alien-${alienIndex}-deck-panel`}
     >
       <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
         Alien Deck
       </div>
       <div className='space-y-1 font-mono text-[10px] text-text-300'>
-        <div>Deck {alien.alienDeckSize ?? 0}</div>
-        <div>Discard {alien.alienDiscardSize ?? 0}</div>
+        <div>Deck {cardZone.drawPileSize}</div>
+        <div>Discard {cardZone.discardPileSize}</div>
       </div>
       {faceUpCard ? (
         <div className='mt-2 h-[92px] w-[66px] origin-top-left scale-[0.44] overflow-visible'>
           <CardRender card={faceUpCard} />
         </div>
-      ) : alien.faceUpAlienCardId ? (
+      ) : cardZone.faceUpCardId ? (
         <div className='mt-2 rounded border border-surface-700/60 px-2 py-3 text-center font-mono text-[10px] text-text-400'>
-          {alien.faceUpAlienCardId}
+          {cardZone.faceUpCardId}
         </div>
       ) : null}
     </aside>
@@ -462,18 +584,19 @@ function TraceSlot({
 }): React.JSX.Element {
   const isOverflow = slot.maxOccupants === -1;
   const traceColor = TRACE_COLOR[slot.traceColor];
-  const rewardLabel = formatRewards(slot.rewards);
+  const rewards = toTraceRewardPresentations(slot.rewards);
 
   return (
     <div className='flex flex-col items-center gap-1'>
       <div
         className={cn(
-          'flex h-8 w-8 items-center justify-center rounded-full',
+          'flex h-12 w-12 items-center justify-center rounded-full',
           isOverflow
             ? 'border-2 border-dashed border-surface-500/70 bg-surface-800/50'
             : 'border-2 border-surface-600/80',
           slot.isDiscovery && 'ring-1 ring-accent-400/50',
         )}
+        data-testid={`trace-slot-${slot.slotId}-circle`}
         style={
           !isOverflow
             ? {
@@ -482,12 +605,15 @@ function TraceSlot({
               }
             : undefined
         }
-        title={`${TRACE_LABEL[slot.traceColor]} slot${isOverflow ? ' (overflow)' : ''}${slot.isDiscovery ? ' — Discovery!' : ''}`}
+        title={`${TRACE_LABEL[slot.traceColor]} slot${isOverflow ? ' (overflow)' : ''}${slot.isDiscovery ? ' - Discovery' : ''}`}
       >
-        {slot.isDiscovery && (
+        {rewards.length > 0 ? (
+          <TraceRewardPresentations presentations={rewards} />
+        ) : null}
+        {rewards.length === 0 && slot.isDiscovery && (
           <span className='text-[8px] font-bold text-accent-300'>★</span>
         )}
-        {isOverflow && (
+        {rewards.length === 0 && isOverflow && (
           <span className='font-mono text-[8px] text-text-500'>∞</span>
         )}
       </div>
@@ -501,12 +627,6 @@ function TraceSlot({
           />
         ))}
       </div>
-
-      {rewardLabel && (
-        <span className='font-mono text-[9px] text-text-400'>
-          {rewardLabel}
-        </span>
-      )}
     </div>
   );
 }
@@ -534,92 +654,154 @@ function OccupantMarker({
   );
 }
 
-function groupAlienSlots(slots: IPublicTraceSlot[]): IGroupedAlienSlots {
-  const discoverySlots = slots.filter(
-    (slot) => getSlotKind(slot) === 'discovery',
+function TraceColumnGrid({
+  alienIndex,
+  area,
+  slots,
+  playerColors,
+}: {
+  alienIndex: number;
+  area: string;
+  slots: IPublicTraceSlot[];
+  playerColors: Record<string, string>;
+}): React.JSX.Element {
+  const groupedSlots = groupTraceSlotsByColor(slots);
+
+  return (
+    <div className='grid grid-cols-3 gap-2'>
+      {TRACE_COLUMN_COLORS.map((color) => (
+        <TraceColumn
+          key={color}
+          alienIndex={alienIndex}
+          area={area}
+          color={color}
+          slots={groupedSlots[color]}
+          playerColors={playerColors}
+        />
+      ))}
+    </div>
   );
-  const overflowSlot =
-    slots.find((slot) => getSlotKind(slot) === 'overflow') ?? null;
-  const anomalyColumns = slots.filter(
-    (slot) => getSlotKind(slot) === 'anomaly-column',
+}
+
+function TraceColumn({
+  alienIndex,
+  area,
+  color,
+  slots,
+  playerColors,
+}: {
+  alienIndex: number;
+  area: string;
+  color: TTraceColumnColor;
+  slots: IPublicTraceSlot[];
+  playerColors: Record<string, string>;
+}): React.JSX.Element {
+  return (
+    <div
+      className='rounded border border-surface-700/50 bg-surface-900/30 p-2'
+      data-testid={`alien-${alienIndex}-${area}-column-${color}`}
+    >
+      <TraceColumnHeader color={color} />
+      <div className='flex min-h-14 flex-wrap items-start justify-center gap-2'>
+        {slots.map((slot) => (
+          <TraceSlot
+            key={slot.slotId}
+            slot={slot}
+            playerColors={playerColors}
+          />
+        ))}
+        {slots.length === 0 ? (
+          <span
+            aria-hidden
+            className='mt-1 h-10 w-10 rounded-full border border-dashed border-surface-700/70 bg-surface-950/30'
+          />
+        ) : null}
+      </div>
+    </div>
   );
-  const anomalyTokens = slots.filter(
-    (slot) => getSlotKind(slot) === 'anomaly-token',
+}
+
+function TraceColumnHeader({
+  color,
+}: {
+  color: TTraceColumnColor;
+}): React.JSX.Element {
+  return (
+    <div
+      className='mb-2 h-1 rounded-full'
+      style={{ backgroundColor: TRACE_COLOR[color] }}
+      title={TRACE_LABEL[color]}
+    />
   );
-  const boardSlots = slots.filter((slot) => getSlotKind(slot) === 'board');
-
-  return {
-    discoverySlots,
-    overflowSlot,
-    anomalyColumns,
-    anomalyTokens,
-    boardSlots,
-  };
 }
 
-function getSlotKind(
-  slot: IPublicTraceSlot,
-): NonNullable<IPublicTraceSlot['slotKind']> {
-  if (slot.slotKind) return slot.slotKind;
-  if (slot.isDiscovery) return 'discovery';
-  if (slot.slotId.includes('anomaly-column')) return 'anomaly-column';
-  if (slot.slotId.includes('anomaly-token')) return 'anomaly-token';
-  if (slot.slotId.includes('overflow')) return 'overflow';
-  return 'board';
+function TraceRewardIcons({
+  rewards,
+  size = 'desc-mini',
+}: {
+  rewards: readonly TPublicSlotReward[];
+  size?: 'desc-mini' | 'desc' | 'xxs' | 'xs';
+}): React.JSX.Element {
+  return (
+    <TraceRewardPresentations
+      presentations={toTraceRewardPresentations(rewards)}
+      size={size}
+    />
+  );
 }
 
-function createEmptyColumnSlot(
-  alienIndex: number,
-  color: ETrace.RED | ETrace.YELLOW | ETrace.BLUE,
-): IPublicTraceSlot {
-  return {
-    slotId: `alien-${alienIndex}-anomaly-column|${color}`,
-    traceColor: color,
-    occupants: [],
-    maxOccupants: -1,
-    rewards: [],
-    isDiscovery: false,
-    slotKind: 'anomaly-column',
-  };
+function TraceRewardPresentations({
+  presentations,
+  size = 'desc-mini',
+}: {
+  presentations: TTraceRewardPresentation[];
+  size?: 'desc-mini' | 'desc' | 'xxs' | 'xs';
+}): React.JSX.Element {
+  return (
+    <div className='flex flex-wrap items-center justify-center gap-0.5'>
+      {presentations.map((presentation, index) => (
+        <TraceRewardPresentationItem
+          key={`${presentation.token}-${index}`}
+          presentation={presentation}
+          size={size}
+        />
+      ))}
+    </div>
+  );
 }
 
-function parseAnomalyToken(slotId: string): {
-  sectorIndex: number;
-  color: ETrace.RED | ETrace.YELLOW | ETrace.BLUE;
-} | null {
-  const parts = slotId.split('|');
-  if (parts.length !== 3) return null;
-  const sectorIndex = Number(parts[1]);
-  const color = parts[2] as ETrace.RED | ETrace.YELLOW | ETrace.BLUE;
-  if (!Number.isInteger(sectorIndex)) return null;
-  if (!TRACE_COLORS.includes(color)) return null;
-  return { sectorIndex, color };
-}
+function TraceRewardPresentationItem({
+  presentation,
+  size,
+}: {
+  presentation: TTraceRewardPresentation;
+  size: 'desc-mini' | 'desc' | 'xxs' | 'xs';
+}): React.JSX.Element {
+  const testKey = presentation.token.replace(/[{}]/g, '');
+  if (presentation.kind === 'text') {
+    return (
+      <span
+        className='max-w-10 truncate font-mono text-[8px] text-text-300'
+        data-testid={`trace-reward-icon-${testKey}`}
+        title={presentation.label}
+      >
+        {presentation.text}
+      </span>
+    );
+  }
 
-function formatRewards(rewards: TPublicSlotReward[]): string {
-  if (rewards.length === 0) return '';
-  return rewards
-    .map((reward) => {
-      switch (reward.type) {
-        case 'VP':
-          return `${reward.amount}VP`;
-        case 'PUBLICITY':
-          return `${reward.amount}PR`;
-        case 'CREDIT':
-          return `${reward.amount}CR`;
-        case 'ENERGY':
-          return `${reward.amount}EN`;
-        case 'DATA':
-          return `${reward.amount}DATA`;
-        case 'CARD':
-          return `${reward.amount}CARD`;
-        case 'CUSTOM':
-          return reward.effectId;
-        default: {
-          const _exhaustive: never = reward;
-          return _exhaustive;
-        }
-      }
-    })
-    .join(', ');
+  return (
+    <span
+      className='inline-flex h-4 w-4 items-center justify-center overflow-visible'
+      data-testid={`trace-reward-icon-${testKey}`}
+      title={presentation.label}
+    >
+      <EffectFactory
+        effect={{
+          ...presentation.effect,
+          size,
+        }}
+      />
+    </span>
+  );
 }

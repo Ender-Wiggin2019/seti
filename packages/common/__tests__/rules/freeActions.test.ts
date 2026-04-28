@@ -45,6 +45,7 @@ function createPlayer(
     color: 'red',
     score: 0,
     handSize: 4,
+    pendingSetupTucks: 0,
     resources: {
       [EResource.CREDIT]: 4,
       [EResource.ENERGY]: 3,
@@ -82,7 +83,13 @@ function createGameState(
     currentPlayerId: 'p1',
     startPlayerId: 'p1',
     players: [],
-    solarSystem: { spaces: [], adjacency: {}, probes: [], discs: [] },
+    solarSystem: {
+      spaces: [],
+      adjacency: {},
+      probes: [],
+      discs: [],
+      alienTokens: [],
+    },
     sectors: [],
     planetaryBoard: { planets: {} },
     techBoard: { stacks: [] },
@@ -109,6 +116,7 @@ function createSolarSystem(): IPublicSolarSystemState {
     },
     probes: [{ playerId: 'p1', spaceId: 's0' }],
     discs: [],
+    alienTokens: [],
     spaceStates: {
       s0: {
         spaceId: 's0',
@@ -179,8 +187,12 @@ describe('free action rules', () => {
 
     it('rejects path through sun', () => {
       const ss = createSolarSystem();
-      ss.spaceStates!['s1'] = {
-        ...ss.spaceStates!['s1'],
+      const spaceStates = ss.spaceStates;
+      if (!spaceStates) {
+        throw new Error('expected space states');
+      }
+      spaceStates['s1'] = {
+        ...spaceStates['s1'],
         elementTypes: ['SUN'],
       };
       const result = validateMovementPath(ss, ['s0', 's1']);

@@ -5,6 +5,7 @@ import { AlienState } from '@/engine/alien/AlienState.js';
 import { EventLog } from '@/engine/event/EventLog.js';
 import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
+import { placeTraceForTestSetup } from '../../helpers/traceTestUtils.js';
 
 function createMockGame(overrides: Partial<IGame> = {}): IGame {
   return {
@@ -26,7 +27,7 @@ function createPlayer(id = 'p1'): Player {
 
 describe('AlienState', () => {
   describe('createFromHiddenAliens', () => {
-    it('creates boards with 3 discovery slots + 1 overflow per alien', () => {
+    it('creates boards with 3 discovery slots + 3 color-specific overflow slots per alien', () => {
       const state = AlienState.createFromHiddenAliens([
         EAlienType.CENTAURIANS,
         EAlienType.EXERTIANS,
@@ -37,11 +38,17 @@ describe('AlienState', () => {
       expect(state.boards[1].alienType).toBe(EAlienType.EXERTIANS);
 
       for (const board of state.boards) {
-        expect(board.slots).toHaveLength(4);
+        expect(board.slots).toHaveLength(6);
         const discovery = board.slots.filter((s) => s.isDiscovery);
-        const overflow = board.slots.filter((s) => !s.isDiscovery);
+        const overflow = board.slots.filter((s) =>
+          s.slotId.includes('overflow'),
+        );
         expect(discovery).toHaveLength(3);
-        expect(overflow).toHaveLength(1);
+        expect(overflow).toHaveLength(3);
+        expect(overflow.map((s) => s.traceColor).sort()).toEqual(
+          [ETrace.BLUE, ETrace.RED, ETrace.YELLOW].sort(),
+        );
+        expect(overflow.every((s) => s.maxOccupants === -1)).toBe(true);
       }
     });
 
@@ -62,6 +69,55 @@ describe('AlienState', () => {
     });
   });
 
+  describe('trace player input', () => {
+    it('keeps fixed-color, fixed-alien trace placement as a player slot choice', () => {
+      const state = AlienState.createFromHiddenAliens([
+        EAlienType.CENTAURIANS,
+        EAlienType.EXERTIANS,
+      ]);
+      const player = createPlayer();
+      const game = createMockGame({ players: [player] });
+
+      const input = state.createTraceInput(player, game, ETrace.RED, {
+        alien: 0,
+      });
+
+      expect(input).toBeDefined();
+      const model = input!.toModel();
+      expect(model.type).toBe(EPlayerInputType.OPTION);
+      if (model.type !== EPlayerInputType.OPTION) {
+        throw new Error('Expected trace slot option input');
+      }
+
+      const optionIds = model.options.map((option) => option.id);
+      expect(optionIds).toContain(`alien-0-discovery-${ETrace.RED}`);
+      expect(optionIds).toContain(`alien-0-overflow-${ETrace.RED}`);
+      expect(optionIds.some((id) => id.startsWith('alien-1-'))).toBe(false);
+      expect(state.boards[0].getPlayerTraceCount(player.id)).toBe(0);
+
+      input!.process({
+        type: EPlayerInputType.OPTION,
+        optionId: `alien-0-overflow-${ETrace.RED}`,
+      });
+
+      expect(state.boards[0].getPlayerTraceCount(player.id)).toBe(1);
+      expect(
+        state.boards[0].getSlot(`alien-0-discovery-${ETrace.RED}`)!.occupants,
+      ).toHaveLength(0);
+      expect(
+        state.boards[0].getSlot(`alien-0-overflow-${ETrace.RED}`)!.occupants,
+      ).toHaveLength(1);
+    });
+
+    it('does not expose legacy automatic trace placement as public game logic', () => {
+      const state = AlienState.createFromHiddenAliens([EAlienType.CENTAURIANS]);
+
+      expect(
+        (state as unknown as { applyTrace?: unknown }).applyTrace,
+      ).toBeUndefined();
+    });
+  });
+
   describe('overflow trace placement and VP', () => {
     it('awards 3 VP when placing trace in overflow slot', () => {
       const state = AlienState.createFromHiddenAliens([EAlienType.CENTAURIANS]);
@@ -69,7 +125,9 @@ describe('AlienState', () => {
       const game = createMockGame({ players: [player] });
       const scoreBefore = player.score;
 
-      state.applyTrace(player, game, ETrace.RED, 0, true);
+      placeTraceForTestSetup(state, player, game, ETrace.RED, 0, {
+        forceOverflow: true,
+      });
 
       expect(player.score).toBe(scoreBefore + 3);
     });
@@ -79,7 +137,9 @@ describe('AlienState', () => {
       const player = createPlayer();
       const game = createMockGame({ players: [player] });
 
-      state.applyTrace(player, game, ETrace.RED, 0, true);
+      placeTraceForTestSetup(state, player, game, ETrace.RED, 0, {
+        forceOverflow: true,
+      });
 
       expect(player.traces[ETrace.RED]).toBe(1);
       expect(state.boards[0].getPlayerTraceCount(player.id)).toBe(1);
@@ -90,9 +150,15 @@ describe('AlienState', () => {
       const player = createPlayer();
       const game = createMockGame({ players: [player] });
 
-      state.applyTrace(player, game, ETrace.RED, 0, true);
-      state.applyTrace(player, game, ETrace.YELLOW, 0, true);
-      state.applyTrace(player, game, ETrace.BLUE, 0, true);
+      placeTraceForTestSetup(state, player, game, ETrace.RED, 0, {
+        forceOverflow: true,
+      });
+      placeTraceForTestSetup(state, player, game, ETrace.YELLOW, 0, {
+        forceOverflow: true,
+      });
+      placeTraceForTestSetup(state, player, game, ETrace.BLUE, 0, {
+        forceOverflow: true,
+      });
 
       expect(player.score).toBe(1 + 9);
       expect(state.boards[0].getPlayerTraceCount(player.id)).toBe(3);
@@ -104,7 +170,9 @@ describe('AlienState', () => {
       const eventLog = new EventLog();
       const game = createMockGame({ players: [player], eventLog });
 
-      state.applyTrace(player, game, ETrace.RED, 0, true);
+      placeTraceForTestSetup(state, player, game, ETrace.RED, 0, {
+        forceOverflow: true,
+      });
 
       const events = eventLog.recent(5);
       const traceEvent = events.find((e) => e.type === 'TRACE_MARKED');
@@ -118,7 +186,7 @@ describe('AlienState', () => {
       const eventLog = new EventLog();
       const game = createMockGame({ players: [player], eventLog });
 
-      state.applyTrace(player, game, ETrace.RED, 0, false);
+      placeTraceForTestSetup(state, player, game, ETrace.RED, 0);
 
       const events = eventLog.recent(5);
       const traceEvent = events.find((e) => e.type === 'TRACE_MARKED');
@@ -127,13 +195,13 @@ describe('AlienState', () => {
     });
   });
 
-  describe('applyTrace (discovery vs overflow preference)', () => {
-    it('places in discovery slot when forceOverflow=false', () => {
+  describe('test fixture trace placement helper', () => {
+    it('places in discovery slot by default', () => {
       const state = AlienState.createFromHiddenAliens([EAlienType.CENTAURIANS]);
       const player = createPlayer();
       const game = createMockGame({ players: [player] });
 
-      state.applyTrace(player, game, ETrace.RED, 0, false);
+      placeTraceForTestSetup(state, player, game, ETrace.RED, 0);
 
       const discoverySlot = state.boards[0]
         .getDiscoverySlots()
@@ -141,15 +209,15 @@ describe('AlienState', () => {
       expect(discoverySlot!.occupants).toHaveLength(1);
     });
 
-    it('skips full discovery slot and falls back to overflow', () => {
+    it('falls back to overflow when the matching discovery slot is full', () => {
       const state = AlienState.createFromHiddenAliens([EAlienType.CENTAURIANS]);
       const player = createPlayer();
       const game = createMockGame({ players: [player] });
 
-      state.applyTrace(player, game, ETrace.RED, 0, false);
+      placeTraceForTestSetup(state, player, game, ETrace.RED, 0);
       const scoreBefore = player.score;
 
-      state.applyTrace(player, game, ETrace.RED, 0, false);
+      placeTraceForTestSetup(state, player, game, ETrace.RED, 0);
 
       expect(player.score).toBe(scoreBefore + 3);
     });
@@ -161,11 +229,11 @@ describe('AlienState', () => {
       const player = createPlayer();
       const game = createMockGame({ players: [player] });
 
-      state.applyTrace(player, game, ETrace.RED, 0, false);
-      state.applyTrace(player, game, ETrace.YELLOW, 0, false);
+      placeTraceForTestSetup(state, player, game, ETrace.RED, 0);
+      placeTraceForTestSetup(state, player, game, ETrace.YELLOW, 0);
       expect(state.getNewlyDiscoverableAliens()).toHaveLength(0);
 
-      state.applyTrace(player, game, ETrace.BLUE, 0, false);
+      placeTraceForTestSetup(state, player, game, ETrace.BLUE, 0);
       expect(state.getNewlyDiscoverableAliens()).toHaveLength(1);
     });
 
@@ -174,9 +242,9 @@ describe('AlienState', () => {
       const player = createPlayer();
       const game = createMockGame({ players: [player] });
 
-      state.applyTrace(player, game, ETrace.RED, 0, false);
-      state.applyTrace(player, game, ETrace.YELLOW, 0, false);
-      state.applyTrace(player, game, ETrace.BLUE, 0, false);
+      placeTraceForTestSetup(state, player, game, ETrace.RED, 0);
+      placeTraceForTestSetup(state, player, game, ETrace.YELLOW, 0);
+      placeTraceForTestSetup(state, player, game, ETrace.BLUE, 0);
 
       state.boards[0].discovered = true;
       expect(state.getNewlyDiscoverableAliens()).toHaveLength(0);
@@ -248,9 +316,30 @@ describe('AlienState', () => {
       const discoveryTarget = targets.find((t) =>
         t.label.includes('Discovery'),
       );
-      const overflowTarget = targets.find((t) => t.label.includes('Overflow'));
+      const overflowTarget = targets.find(
+        (t) => t.slotId === `alien-0-overflow-${ETrace.RED}`,
+      );
       expect(discoveryTarget).toBeDefined();
       expect(overflowTarget).toBeDefined();
+      expect(overflowTarget?.traceColor).toBe(ETrace.RED);
+    });
+
+    it('returns concrete overflow option ids for universal traces without synthetic color suffixes', () => {
+      const state = AlienState.createFromHiddenAliens([EAlienType.CENTAURIANS]);
+      const targets = state.getAvailableTargets(ETrace.ANY);
+
+      expect(targets.map((target) => target.optionId)).toContain(
+        `alien-0-overflow-${ETrace.RED}`,
+      );
+      expect(targets.map((target) => target.optionId)).toContain(
+        `alien-0-overflow-${ETrace.YELLOW}`,
+      );
+      expect(targets.map((target) => target.optionId)).toContain(
+        `alien-0-overflow-${ETrace.BLUE}`,
+      );
+      expect(targets.some((target) => target.optionId.includes('|'))).toBe(
+        false,
+      );
     });
 
     it('excludes filled discovery slots', () => {
@@ -258,13 +347,62 @@ describe('AlienState', () => {
       const player = createPlayer();
       const game = createMockGame({ players: [player] });
 
-      state.applyTrace(player, game, ETrace.RED, 0, false);
+      placeTraceForTestSetup(state, player, game, ETrace.RED, 0);
 
       const targets = state.getAvailableTargets(ETrace.RED);
       const discoveryTarget = targets.find(
         (t) => t.label.includes('Discovery') && t.label.includes('Red'),
       );
       expect(discoveryTarget).toBeUndefined();
+    });
+  });
+
+  describe('getPlayerTraceCount', () => {
+    it('counts a player trace by color across one alien or both aliens', () => {
+      const state = AlienState.createFromHiddenAliens([
+        EAlienType.CENTAURIANS,
+        EAlienType.EXERTIANS,
+      ]);
+      const player = createPlayer();
+      const game = createMockGame({ players: [player] });
+
+      state.applyTraceToSlot(
+        player,
+        game,
+        `alien-0-discovery-${ETrace.RED}`,
+        ETrace.RED,
+      );
+      state.applyTraceToSlot(
+        player,
+        game,
+        `alien-0-overflow-${ETrace.RED}`,
+        ETrace.RED,
+      );
+      state.applyTraceToSlot(
+        player,
+        game,
+        `alien-1-discovery-${ETrace.RED}`,
+        ETrace.RED,
+      );
+      state.applyTraceToSlot(
+        player,
+        game,
+        `alien-1-discovery-${ETrace.BLUE}`,
+        ETrace.BLUE,
+      );
+
+      expect(state.boards[0].getPlayerTraceCount(player, ETrace.RED)).toBe(2);
+      expect(
+        state.getPlayerTraceCount(player, ETrace.RED, state.boards[0]),
+      ).toBe(2);
+      expect(state.getPlayerTraceCount(player, ETrace.RED, 1)).toBe(1);
+      expect(
+        state.getPlayerTraceCount(player.id, ETrace.RED, {
+          alienType: EAlienType.EXERTIANS,
+        }),
+      ).toBe(1);
+      expect(state.getPlayerTraceCount(player, ETrace.RED, 'both')).toBe(3);
+      expect(state.getPlayerTraceCount(player, ETrace.ANY, 'both')).toBe(4);
     });
   });
 
@@ -432,9 +570,11 @@ describe('AlienState', () => {
       board.revealNextFaceUpAlienCard();
 
       let didContinue = false;
-      const input = state.createTraceInput(player, game, ETrace.RED, () => {
-        didContinue = true;
-        return undefined;
+      const input = state.createTraceInput(player, game, ETrace.RED, {
+        onComplete: () => {
+          didContinue = true;
+          return undefined;
+        },
       });
       expect(input).toBeDefined();
 
@@ -478,9 +618,25 @@ describe('AlienBoard', () => {
           isDiscovery: true,
         },
         {
-          slotId: 'overflow',
+          slotId: 'overflow-red',
           alienIndex: 0,
-          traceColor: ETrace.ANY,
+          traceColor: ETrace.RED,
+          maxOccupants: -1,
+          rewards: [{ type: 'VP', amount: 3 }],
+          isDiscovery: false,
+        },
+        {
+          slotId: 'overflow-yellow',
+          alienIndex: 0,
+          traceColor: ETrace.YELLOW,
+          maxOccupants: -1,
+          rewards: [{ type: 'VP', amount: 3 }],
+          isDiscovery: false,
+        },
+        {
+          slotId: 'overflow-blue',
+          alienIndex: 0,
+          traceColor: ETrace.BLUE,
           maxOccupants: -1,
           rewards: [{ type: 'VP', amount: 3 }],
           isDiscovery: false,
@@ -511,7 +667,7 @@ describe('AlienBoard', () => {
 
     it('allows unlimited placement in overflow (maxOccupants=-1)', () => {
       const board = createBoard();
-      const slot = board.getSlot('overflow')!;
+      const slot = board.getSlot('overflow-red')!;
 
       for (let i = 0; i < 5; i++) {
         expect(board.placeTrace(slot, { playerId: `p${i}` }, ETrace.RED)).toBe(
@@ -528,7 +684,8 @@ describe('AlienBoard', () => {
       const available = board.getAvailableSlots(ETrace.RED);
 
       expect(available.some((s) => s.slotId === 'disc-R')).toBe(true);
-      expect(available.some((s) => s.slotId === 'overflow')).toBe(true);
+      expect(available.some((s) => s.slotId === 'overflow-red')).toBe(true);
+      expect(available.some((s) => s.slotId === 'overflow-blue')).toBe(false);
       expect(available.some((s) => s.slotId === 'disc-Y')).toBe(false);
     });
 
@@ -539,7 +696,7 @@ describe('AlienBoard', () => {
 
       const available = board.getAvailableSlots(ETrace.RED);
       expect(available.some((s) => s.slotId === 'disc-R')).toBe(false);
-      expect(available.some((s) => s.slotId === 'overflow')).toBe(true);
+      expect(available.some((s) => s.slotId === 'overflow-red')).toBe(true);
     });
   });
 
@@ -635,7 +792,7 @@ describe('AlienBoard', () => {
         ETrace.RED,
       );
       board.placeTrace(
-        board.getSlot('overflow')!,
+        board.getSlot('overflow-blue')!,
         { playerId: 'p1' },
         ETrace.BLUE,
       );
@@ -652,12 +809,12 @@ describe('AlienBoard', () => {
         ETrace.RED,
       );
       board.placeTrace(
-        board.getSlot('overflow')!,
+        board.getSlot('overflow-red')!,
         { playerId: 'p1' },
         ETrace.RED,
       );
       board.placeTrace(
-        board.getSlot('overflow')!,
+        board.getSlot('overflow-blue')!,
         { playerId: 'p1' },
         ETrace.BLUE,
       );
@@ -667,12 +824,12 @@ describe('AlienBoard', () => {
     });
   });
 
-  describe('addSlot', () => {
+  describe('addTraceSlot', () => {
     it('adds a new slot dynamically', () => {
       const board = createBoard();
       const before = board.slots.length;
 
-      board.addSlot({
+      board.addTraceSlot({
         slotId: 'extra',
         alienIndex: 0,
         traceColor: ETrace.RED,

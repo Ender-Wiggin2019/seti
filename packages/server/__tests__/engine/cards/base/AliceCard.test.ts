@@ -12,6 +12,7 @@ import { EMissionType } from '@/engine/missions/IMission.js';
 import { MissionTracker } from '@/engine/missions/MissionTracker.js';
 import { Player } from '@/engine/player/Player.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
+import { placeTraceForTestSetup } from '../../../helpers/traceTestUtils.js';
 
 function createPlayer(overrides: Record<string, unknown> = {}): Player {
   return new Player({
@@ -406,10 +407,10 @@ describe('Card 64 — ALICE: integration with AlienState', () => {
 
     expect(tracker.hasCompletableQuickMissions(player, game)).toBe(false);
 
-    alienState.applyTrace(player, game, ETrace.BLUE, 0, false);
+    placeTraceForTestSetup(alienState, player, game, ETrace.BLUE, 0);
     expect(tracker.hasCompletableQuickMissions(player, game)).toBe(false);
 
-    alienState.applyTrace(player, game, ETrace.BLUE, 1, false);
+    placeTraceForTestSetup(alienState, player, game, ETrace.BLUE, 1);
     expect(tracker.hasCompletableQuickMissions(player, game)).toBe(true);
 
     const initialData = player.resources.data;
@@ -430,8 +431,8 @@ describe('Card 64 — ALICE: integration with AlienState', () => {
     tracker.registerMission(def, player.id);
     activateMission(player, '64');
 
-    alienState.applyTrace(player, game, ETrace.RED, 0, false);
-    alienState.applyTrace(player, game, ETrace.RED, 1, false);
+    placeTraceForTestSetup(alienState, player, game, ETrace.RED, 0);
+    placeTraceForTestSetup(alienState, player, game, ETrace.RED, 1);
 
     expect(tracker.hasCompletableQuickMissions(player, game)).toBe(false);
   });
@@ -449,12 +450,12 @@ describe('Card 64 — ALICE: integration with AlienState', () => {
     tracker.registerMission(def, player.id);
     activateMission(player, '64');
 
-    alienState.applyTrace(player, game, ETrace.BLUE, 0, false);
-    alienState.applyTrace(player, game, ETrace.RED, 1, false);
+    placeTraceForTestSetup(alienState, player, game, ETrace.BLUE, 0);
+    placeTraceForTestSetup(alienState, player, game, ETrace.RED, 1);
 
     expect(tracker.hasCompletableQuickMissions(player, game)).toBe(false);
 
-    alienState.applyTrace(player, game, ETrace.BLUE, 1, false);
+    placeTraceForTestSetup(alienState, player, game, ETrace.BLUE, 1);
     expect(tracker.hasCompletableQuickMissions(player, game)).toBe(true);
   });
 
@@ -471,8 +472,12 @@ describe('Card 64 — ALICE: integration with AlienState', () => {
     tracker.registerMission(def, player.id);
     activateMission(player, '64');
 
-    alienState.applyTrace(player, game, ETrace.BLUE, 0, true);
-    alienState.applyTrace(player, game, ETrace.BLUE, 1, true);
+    placeTraceForTestSetup(alienState, player, game, ETrace.BLUE, 0, {
+      forceOverflow: true,
+    });
+    placeTraceForTestSetup(alienState, player, game, ETrace.BLUE, 1, {
+      forceOverflow: true,
+    });
 
     expect(tracker.hasCompletableQuickMissions(player, game)).toBe(true);
   });

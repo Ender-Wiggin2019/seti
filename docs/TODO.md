@@ -2,7 +2,7 @@
 
 ## 高优先级
 
-- [ ] 重构 alien board / Anomalies 的状态模型与 UI 协议
+- [x] 重构 alien board / Anomalies 的状态模型与 UI 协议
   - 文件：`packages/common/src/types/protocol/gameState.ts`, `packages/server/src/engine/alien/AlienBoard.ts`, `packages/server/src/engine/alien/AlienState.ts`, `packages/server/src/persistence/serializer/GameSerializer.ts`, `packages/client/src/features/board/AlienBoardView.tsx`
   - 当前仍用通用 `slots` 承载 discovery zone、overflow、alien 专属 board slot、anomaly column、anomaly token 等不同概念，容易出现 hidden board 泄漏、UI 错误渲染和规则语义混淆。需要拆分公共协议和服务端内部数据结构：未 discovery 时只公开 3 个 discovery zone + 不限数量 overflow，hidden board 不暴露任何内容；reveal 后按 alien 类型展示独立注册的 board 组件。
   - Anomalies 需要专门建模为 3 列 trace board（red/yellow/blue 各一列）、独立 anomaly token 区域、alien deck / discard / face-up card 区域，并补齐 alien card 分发结算的集成测试和 debug replay 截图验证。

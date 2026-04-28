@@ -378,12 +378,9 @@ export class Game implements IGame {
     onComplete?: () => PlayerInput | undefined,
   ): PlayerInput | undefined {
     const player = this.getPlayer(playerId);
-    return this.alienState.createTraceInput(
-      player,
-      this,
-      traceColor,
+    return this.alienState.createTraceInput(player, this, traceColor, {
       onComplete,
-    );
+    });
   }
 
   private runResolutionPipeline(): void {

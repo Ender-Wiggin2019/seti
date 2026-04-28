@@ -131,7 +131,5 @@ export function getAvailableMainActions(
  * buttons stay disabled instead of hitting an error path.
  */
 export function isAnySetupTuckPending(gameState: IPublicGameState): boolean {
-  return gameState.players.some(
-    (player) => (player.pendingSetupTucks ?? 0) > 0,
-  );
+  return gameState.players.some((player) => player.pendingSetupTucks > 0);
 }

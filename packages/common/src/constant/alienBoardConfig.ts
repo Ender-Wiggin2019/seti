@@ -97,3 +97,70 @@ export function getAnomalyColumnRewardsForPlacement(
   );
   return ANOMALY_COLUMN_REWARD_LADDER[index].map((reward) => ({ ...reward }));
 }
+
+export const OUMUAMUA_TRACE_SLOT_PREFIX = 'oumuamua-trace';
+export const OUMUAMUA_TILE_DATA_CAPACITY = 3;
+export const OUMUAMUA_TRACE_COLORS: readonly ETrace[] = [
+  ETrace.RED,
+  ETrace.YELLOW,
+  ETrace.BLUE,
+];
+
+export interface IOumuamuaTraceSlotDef {
+  tierFromBottom: number;
+  maxOccupants: number;
+  exofossilCost: number;
+  rewards: readonly TAlienSlotReward[];
+}
+
+export const OUMUAMUA_TRACE_SLOT_DEFS: readonly IOumuamuaTraceSlotDef[] = [
+  {
+    tierFromBottom: 1,
+    maxOccupants: 1,
+    exofossilCost: 4,
+    rewards: [{ type: 'VP', amount: 25 }],
+  },
+  {
+    tierFromBottom: 2,
+    maxOccupants: 1,
+    exofossilCost: 0,
+    rewards: [
+      { type: 'VP', amount: 3 },
+      { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
+    ],
+  },
+  {
+    tierFromBottom: 3,
+    maxOccupants: 1,
+    exofossilCost: 0,
+    rewards: [
+      { type: 'VP', amount: 2 },
+      { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
+    ],
+  },
+  {
+    tierFromBottom: 4,
+    maxOccupants: 1,
+    exofossilCost: 0,
+    rewards: [
+      { type: 'VP', amount: 3 },
+      { type: 'CUSTOM', effectId: 'GAIN_EXOFOSSIL' },
+      { type: 'PUBLICITY', amount: 1 },
+    ],
+  },
+  {
+    tierFromBottom: 5,
+    maxOccupants: 1,
+    exofossilCost: 0,
+    rewards: [
+      { type: 'VP', amount: 2 },
+      { type: 'CUSTOM', effectId: 'GAIN_EXOFOSSIL' },
+    ],
+  },
+  {
+    tierFromBottom: 6,
+    maxOccupants: -1,
+    exofossilCost: 1,
+    rewards: [{ type: 'VP', amount: 6 }],
+  },
+];

@@ -80,5 +80,6 @@ packages/client/public/seti-assets/
 .omx/
 
 # local agent/runtime folders
+.codex/
 **/.oxc*/
 **/.omc*/

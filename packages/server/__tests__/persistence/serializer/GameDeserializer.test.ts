@@ -17,6 +17,14 @@ function createTestGame(): Game {
   );
 }
 
+function getPlayer(game: Game, playerId: string) {
+  const player = game.players.find((candidate) => candidate.id === playerId);
+  if (!player) {
+    throw new Error(`expected player ${playerId}`);
+  }
+  return player;
+}
+
 describe('GameDeserializer', () => {
   it('supports round-trip serialization', () => {
     const game = createTestGame();
@@ -46,43 +54,6 @@ describe('GameDeserializer', () => {
   });
 
   describe('rehydratePendingInputs — setup tuck chain', () => {
-    it('rehydrates legacy snapshots that do not contain pendingSetupTucks', () => {
-      const game = createTestGame();
-      const dto = serializeGame(game, 1);
-
-      for (const player of dto.players as Array<
-        (typeof dto.players)[number] & { pendingSetupTucks?: number }
-      >) {
-        delete player.pendingSetupTucks;
-      }
-
-      const restored = deserializeGame(dto);
-
-      for (const player of restored.players) {
-        expect(player.pendingSetupTucks).toBe(1);
-        expect(player.waitingFor?.toModel().type).toBe(EPlayerInputType.CARD);
-      }
-    });
-
-    it('does not infer setup tucks for legacy snapshots outside round 1', () => {
-      const game = createTestGame();
-      const dto = serializeGame(game, 1);
-      dto.round = 2;
-
-      for (const player of dto.players as Array<
-        (typeof dto.players)[number] & { pendingSetupTucks?: number }
-      >) {
-        delete player.pendingSetupTucks;
-      }
-
-      const restored = deserializeGame(dto);
-
-      for (const player of restored.players) {
-        expect(player.pendingSetupTucks).toBe(0);
-        expect(player.waitingFor).toBeUndefined();
-      }
-    });
-
     it('rebuilds setup tuck prompt when a player still owes tucks', () => {
       const game = createTestGame();
       expect(game.players.every((p) => p.pendingSetupTucks > 0)).toBe(true);
@@ -92,9 +63,7 @@ describe('GameDeserializer', () => {
       // Sanity check: pending input is NOT persisted, only the counter
       // survives. Any rebuild must use that counter as source of truth.
       expect(dto.players.every((p) => p.waitingFor === null)).toBe(true);
-      expect(dto.players.every((p) => (p.pendingSetupTucks ?? 0) > 0)).toBe(
-        true,
-      );
+      expect(dto.players.every((p) => p.pendingSetupTucks > 0)).toBe(true);
 
       const restored = deserializeGame(dto);
 
@@ -106,7 +75,7 @@ describe('GameDeserializer', () => {
 
     it('does NOT rebuild a prompt for players who have finished their setup tucks', () => {
       const game = createTestGame();
-      const p1 = game.players.find((p) => p.id === 'p1')!;
+      const p1 = getPlayer(game, 'p1');
       // Fully resolve p1's chain; p2 still owes.
       while (p1.waitingFor) {
         const model = p1.waitingFor.toModel();
@@ -127,8 +96,8 @@ describe('GameDeserializer', () => {
       expect(p1.waitingFor).toBeUndefined();
 
       const restored = deserializeGame(serializeGame(game, 1));
-      const restoredP1 = restored.players.find((p) => p.id === 'p1')!;
-      const restoredP2 = restored.players.find((p) => p.id === 'p2')!;
+      const restoredP1 = getPlayer(restored, 'p1');
+      const restoredP2 = getPlayer(restored, 'p2');
 
       expect(restoredP1.pendingSetupTucks).toBe(0);
       expect(restoredP1.waitingFor).toBeUndefined();
@@ -164,11 +133,14 @@ describe('GameDeserializer', () => {
       const game = createTestGame();
       const firstDto = serializeGame(game, 1);
       const afterFirstRestore = deserializeGame(firstDto);
-      const p1 = afterFirstRestore.players.find((p) => p.id === 'p1')!;
+      const p1 = getPlayer(afterFirstRestore, 'p1');
 
       expect(p1.waitingFor).toBeDefined();
+      if (!p1.waitingFor) {
+        throw new Error('expected setup tuck prompt');
+      }
 
-      const model = p1.waitingFor!.toModel() as {
+      const model = p1.waitingFor.toModel() as {
         cards: Array<{ id: string }>;
         minSelections: number;
       };
@@ -179,7 +151,7 @@ describe('GameDeserializer', () => {
 
       const secondDto = serializeGame(afterFirstRestore, 2);
       const afterSecondRestore = deserializeGame(secondDto);
-      const restoredP1 = afterSecondRestore.players.find((p) => p.id === 'p1')!;
+      const restoredP1 = getPlayer(afterSecondRestore, 'p1');
 
       expect(restoredP1.pendingSetupTucks).toBe(0);
       expect(restoredP1.waitingFor).toBeUndefined();

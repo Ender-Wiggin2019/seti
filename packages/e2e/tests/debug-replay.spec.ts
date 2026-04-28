@@ -1,12 +1,25 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, type TestInfo, test } from '@playwright/test';
 import { sel } from '../helpers/selectors';
 import { waitForServerReady } from '../helpers/server-ready';
+
+async function attachReplayScreenshot(
+  page: Page,
+  testInfo: TestInfo,
+  name: string,
+): Promise<void> {
+  const screenshotPath = testInfo.outputPath(`${name}.png`);
+  await page.screenshot({ path: screenshotPath, fullPage: true });
+  await testInfo.attach(name, {
+    path: screenshotPath,
+    contentType: 'image/png',
+  });
+}
 
 test.describe('Debug Replay Page', () => {
   test('can start the anomaly replay and resolve discovery through the real UI', async ({
     page,
     request,
-  }) => {
+  }, testInfo) => {
     await waitForServerReady(request);
 
     await page.goto('/debug/replay');
@@ -39,12 +52,15 @@ test.describe('Debug Replay Page', () => {
         timeout: 15_000,
       },
     );
+    await expect(page.getByTestId('alien-0-anomalies-board')).toBeVisible();
+    await expect(page.getByTestId('alien-0-deck-panel')).toBeVisible();
+    await attachReplayScreenshot(page, testInfo, 'anomaly-discovery-board');
   });
 
   test('can start the anomaly trigger replay and fire the reward via PASS', async ({
     page,
     request,
-  }) => {
+  }, testInfo) => {
     await waitForServerReady(request);
 
     await page.goto('/debug/replay');
@@ -76,6 +92,9 @@ test.describe('Debug Replay Page', () => {
         timeout: 15_000,
       },
     );
+    await expect(page.getByTestId('alien-0-anomalies-board')).toBeVisible();
+    await expect(page.getByTestId('alien-0-deck-panel')).toBeVisible();
+    await attachReplayScreenshot(page, testInfo, 'anomaly-trigger-board');
   });
 
   test('updates fields after switching preset', async ({ page, request }) => {

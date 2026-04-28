@@ -14,7 +14,10 @@ import {
   type ISelectOptionInputModel,
   type ISelectTraceInputModel,
 } from '@seti/common/types/protocol/playerInput';
-import type { TSlotReward } from '@/engine/alien/AlienBoard.js';
+import {
+  isAnomaliesAlienBoard,
+  type TSlotReward,
+} from '@/engine/alien/AlienBoard.js';
 import { AlienState } from '@/engine/alien/AlienState.js';
 import { Deck } from '@/engine/deck/Deck.js';
 import { Game } from '@/engine/Game.js';
@@ -32,7 +35,7 @@ function createGame(seed: string): { game: Game; player: Player } {
   const player = game.players[0] as Player;
   game.alienState = AlienState.createFromHiddenAliens([EAlienType.ANOMALIES]);
   const board = game.alienState.getBoardByType(EAlienType.ANOMALIES);
-  if (!board) {
+  if (!isAnomaliesAlienBoard(board)) {
     throw new Error('expected anomalies board');
   }
   board.discovered = true;
@@ -68,21 +71,23 @@ function getSpaceIdForSector(game: Game, sectorIndex: number): string {
 function addAnomalyToken(
   game: Game,
   sectorIndex: number,
-  color: ETrace,
+  color: ETrace.RED | ETrace.YELLOW | ETrace.BLUE,
   rewards: TSlotReward[] = [{ type: 'VP', amount: 2 }],
 ): void {
   const board = game.alienState.getBoardByType(EAlienType.ANOMALIES);
-  if (!board) {
+  if (!isAnomaliesAlienBoard(board)) {
     throw new Error('expected anomalies board');
   }
+  if (!game.solarSystem) {
+    throw new Error('expected solar system');
+  }
 
-  board.addSlot({
-    slotId: `alien-${board.alienIndex}-anomaly-token|${sectorIndex}|${color}`,
-    alienIndex: board.alienIndex,
+  game.solarSystem.addAlienToken({
+    tokenId: `alien-${board.alienIndex}-anomaly-token|${sectorIndex}|${color}`,
+    alienType: EAlienType.ANOMALIES,
+    sectorIndex,
     traceColor: color,
-    maxOccupants: 0,
     rewards,
-    isDiscovery: false,
   });
 }
 

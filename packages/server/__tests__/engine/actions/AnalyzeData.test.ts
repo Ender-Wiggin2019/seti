@@ -6,6 +6,7 @@ import {
 } from '@seti/common/types/protocol/enums';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { AnalyzeDataAction } from '@/engine/actions/AnalyzeData.js';
+import { isAnomaliesAlienBoard } from '@/engine/alien/AlienBoard.js';
 import { AlienState } from '@/engine/alien/AlienState.js';
 import { PlaceDataFreeAction } from '@/engine/freeActions/PlaceData.js';
 import { Game } from '@/engine/Game.js';
@@ -13,6 +14,7 @@ import type { IGame } from '@/engine/IGame.js';
 import { EComputerRow } from '@/engine/player/Computer.js';
 import { Player } from '@/engine/player/Player.js';
 import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
+import { placeTraceForTestSetup } from '../../helpers/traceTestUtils.js';
 
 const SIMPLE_3_COL: IComputerColumnConfig[] = [
   { topReward: null, techSlotAvailable: true },
@@ -212,8 +214,20 @@ describe('AnalyzeDataAction', () => {
       );
       const otherPlayer = game.players[1] as Player;
 
-      game.alienState.applyTrace(otherPlayer, game, ETrace.BLUE, 0, false);
-      game.alienState.applyTrace(otherPlayer, game, ETrace.BLUE, 1, false);
+      placeTraceForTestSetup(
+        game.alienState,
+        otherPlayer,
+        game,
+        ETrace.BLUE,
+        0,
+      );
+      placeTraceForTestSetup(
+        game.alienState,
+        otherPlayer,
+        game,
+        ETrace.BLUE,
+        1,
+      );
       fillTopComputer(player);
       const scoreBefore = player.score;
       const publicityBefore = player.resources.publicity;
@@ -230,15 +244,19 @@ describe('AnalyzeDataAction', () => {
         ),
       ).toBe(false);
       expect(
-        optionModel.options.some((option) => option.id === 'alien-0-overflow'),
+        optionModel.options.some(
+          (option) => option.id === `alien-0-overflow-${ETrace.BLUE}`,
+        ),
       ).toBe(true);
       expect(
-        optionModel.options.some((option) => option.id === 'alien-1-overflow'),
+        optionModel.options.some(
+          (option) => option.id === `alien-1-overflow-${ETrace.BLUE}`,
+        ),
       ).toBe(true);
 
       game.processInput(player.id, {
         type: EPlayerInputType.OPTION,
-        optionId: 'alien-0-overflow',
+        optionId: `alien-0-overflow-${ETrace.BLUE}`,
       });
 
       expect(player.score).toBe(scoreBefore + 3);
@@ -282,8 +300,8 @@ describe('AnalyzeDataAction', () => {
       game.hiddenAliens = [EAlienType.ANOMALIES, EAlienType.CENTAURIANS];
       game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
 
-      game.alienState.applyTrace(player, game, ETrace.RED, 0, false);
-      game.alienState.applyTrace(player, game, ETrace.YELLOW, 0, false);
+      placeTraceForTestSetup(game.alienState, player, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, player, game, ETrace.YELLOW, 0);
       fillTopComputer(player);
 
       game.processMainAction(player.id, { type: EMainAction.ANALYZE_DATA });
@@ -307,16 +325,18 @@ describe('AnalyzeDataAction', () => {
 
       const anomaliesBoard = game.alienState.getBoard(0);
       expect(anomaliesBoard?.discovered).toBe(true);
+      expect(isAnomaliesAlienBoard(anomaliesBoard)).toBe(true);
       expect(
         anomaliesBoard?.slots.some((slot) =>
           slot.slotId.includes('anomaly-column'),
         ),
       ).toBe(true);
+      if (!isAnomaliesAlienBoard(anomaliesBoard)) {
+        throw new Error('expected anomalies board');
+      }
       expect(
-        anomaliesBoard?.slots.some((slot) =>
-          slot.slotId.includes('anomaly-token'),
-        ),
-      ).toBe(true);
+        game.solarSystem?.getAlienTokensByType(EAlienType.ANOMALIES).length,
+      ).toBeGreaterThan(0);
     });
 
     it('returns false when the computer is completely empty', () => {

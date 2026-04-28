@@ -5,8 +5,19 @@ import {
   applyDebugReplayPreset,
   listDebugReplayPresets,
 } from '@/debug/debugReplayPresets.js';
+import {
+  type AlienBoard,
+  type AnomaliesAlienBoard,
+  isAnomaliesAlienBoard,
+} from '@/engine/alien/AlienBoard.js';
 import { OumuamuaAlienPlugin } from '@/engine/alien/plugins/OumuamuaAlienPlugin.js';
 import { buildTestGame, getPlayer } from '../helpers/TestGameBuilder.js';
+
+function expectAnomaliesBoard(
+  board: AlienBoard | null | undefined,
+): asserts board is AnomaliesAlienBoard {
+  expect(isAnomaliesAlienBoard(board)).toBe(true);
+}
 
 describe('debugReplayPresets', () => {
   it('lists the anomaly discovery replay preset with selectable checkpoints', () => {
@@ -71,10 +82,11 @@ describe('debugReplayPresets', () => {
 
     game.processEndTurn(replay.currentPlayerId);
 
+    expectAnomaliesBoard(board);
     expect(board?.discovered).toBe(true);
     expect(
-      board?.slots.some((slot) => slot.slotId.includes('anomaly-token')),
-    ).toBe(true);
+      game.solarSystem?.getAlienTokensByType(EAlienType.ANOMALIES).length,
+    ).toBeGreaterThan(0);
   });
 
   it('can retarget the replay to another alien module', () => {
@@ -105,6 +117,7 @@ describe('debugReplayPresets', () => {
       if (!board) {
         throw new Error('Expected Anomalies board to exist');
       }
+      expectAnomaliesBoard(board);
       const player = getPlayer(game, replay.currentPlayerId);
       return { game, replay, board, player };
     }
@@ -137,10 +150,9 @@ describe('debugReplayPresets', () => {
         new Set([ETrace.RED, ETrace.YELLOW, ETrace.BLUE]),
       );
 
-      const tokenSlots = board.slots.filter((s) =>
-        s.slotId.includes('anomaly-token'),
-      );
-      expect(tokenSlots.length).toBeGreaterThanOrEqual(3);
+      expect(
+        game.solarSystem?.getAlienTokensByType(EAlienType.ANOMALIES).length,
+      ).toBeGreaterThanOrEqual(3);
 
       expect(board.faceUpAlienCardId).not.toBeNull();
     });
@@ -170,22 +182,18 @@ describe('debugReplayPresets', () => {
       ).toBe(true);
     });
 
-    it('anomaly token slots have color-specific rewards and maxOccupants 0', () => {
-      const { game, replay, board } = applyAnomalyDiscovery();
+    it('anomaly token components have color-specific rewards', () => {
+      const { game, replay } = applyAnomalyDiscovery();
 
       game.processEndTurn(replay.currentPlayerId);
 
-      const tokenSlots = board.slots.filter((s) =>
-        s.slotId.includes('anomaly-token'),
-      );
-      for (const slot of tokenSlots) {
-        const color = slot.slotId.split('|')[2] as
-          | ETrace.RED
-          | ETrace.YELLOW
-          | ETrace.BLUE;
-        expect(slot.maxOccupants).toBe(0);
+      const tokens =
+        game.solarSystem?.getAlienTokensByType(EAlienType.ANOMALIES) ?? [];
+      for (const token of tokens) {
+        const color = token.traceColor;
+        expect(Number.isInteger(token.sectorIndex)).toBe(true);
         expect(ANOMALY_TOKEN_REWARD_OPTIONS[color]).toContainEqual(
-          slot.rewards[0],
+          token.rewards[0],
         );
       }
     });

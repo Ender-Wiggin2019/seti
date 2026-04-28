@@ -1,3 +1,4 @@
+import type { TAlienSlotReward } from '@seti/common/constant/alienBoardConfig';
 import {
   ALL_SECTOR_POSITIONS,
   ALL_SECTOR_TILE_IDS,
@@ -21,7 +22,7 @@ import {
   sectorIndexOf,
   type TSolarRingIndex,
 } from '@seti/common/constant/solarCoordinate';
-import { EPlanet } from '@seti/common/types/protocol/enums';
+import { EAlienType, EPlanet, ETrace } from '@seti/common/types/protocol/enums';
 import type { SeededRandom } from '@/shared/rng/SeededRandom.js';
 import { Sector } from './Sector.js';
 import { SOLAR_SYSTEM_CELL_CONFIGS } from './SolarSystemConfig.js';
@@ -53,6 +54,27 @@ export interface IProbeLocation {
   probe: ISolarProbe;
   space: ISolarSystemSpace;
   coordinate: ISolarCoordinate;
+}
+
+export type TSolarSystemAnomalyTraceColor =
+  | ETrace.RED
+  | ETrace.YELLOW
+  | ETrace.BLUE;
+
+export interface ISolarSystemAlienTokenComponent {
+  tokenId: string;
+  alienType: EAlienType;
+  sectorIndex: number;
+  traceColor: TSolarSystemAnomalyTraceColor;
+  rewards: TAlienSlotReward[];
+}
+
+export interface ISolarSystemAlienTokenInit {
+  tokenId: string;
+  alienType: EAlienType;
+  sectorIndex: number;
+  traceColor: TSolarSystemAnomalyTraceColor;
+  rewards?: TAlienSlotReward[];
 }
 
 export interface ITopSectorElement {
@@ -94,6 +116,8 @@ export class SolarSystem {
 
   public readonly sectorNearStars: string[];
 
+  public readonly alienTokens: ISolarSystemAlienTokenComponent[];
+
   public rotationCounter: number;
 
   private readonly spaceById: Map<string, ISolarSystemSpace>;
@@ -118,6 +142,7 @@ export class SolarSystem {
   ) {
     this.spaces = spaces;
     this.sectorNearStars = [...sectorNearStars];
+    this.alienTokens = [];
     this.spaceById = new Map(this.spaces.map((space) => [space.id, space]));
     this.discs = [
       this.buildDisc(0, 1),
@@ -166,6 +191,26 @@ export class SolarSystem {
     const sectors = buildSectorsFromPlacements(tilePlacements);
 
     return { solarSystem, sectors, setupConfig };
+  }
+
+  public addAlienToken(
+    init: ISolarSystemAlienTokenInit,
+  ): ISolarSystemAlienTokenComponent {
+    const token: ISolarSystemAlienTokenComponent = {
+      tokenId: init.tokenId,
+      alienType: init.alienType,
+      sectorIndex: init.sectorIndex,
+      traceColor: init.traceColor,
+      rewards: [...(init.rewards ?? [])],
+    };
+    this.alienTokens.push(token);
+    return token;
+  }
+
+  public getAlienTokensByType(
+    alienType: EAlienType,
+  ): ISolarSystemAlienTokenComponent[] {
+    return this.alienTokens.filter((token) => token.alienType === alienType);
   }
 
   /** Exposed for tests & serializers that need the randomized half only. */

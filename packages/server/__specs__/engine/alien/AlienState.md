@@ -4,16 +4,18 @@
 - 源文件：`packages/server/src/engine/alien/AlienState.ts`
 - 对应单测：`packages/server/__tests__/engine/alien/AlienState.test.ts`
 - 模块职责：外星人模块（外星板块、插件、注册与结算）
-- 关键导出：ITraceTarget、IAlienStateInit、AlienState
+- 关键导出：ITraceTarget、TSingleAlienTraceScope、TAlienTraceScope、IAlienStateInit、AlienState
 
 ## 2、单测测试点，以及边界场景处理
 ### 2.1 核心测试点
-- creates boards with 3 discovery slots + 1 overflow per alien
+- creates boards with 3 discovery slots + 3 color-specific overflow slots per alien
 - creates discovery slots for R/Y/B colors
 - creates empty state when no aliens
-- awards 3 VP when placing trace in overflow slot
+- awards 3 VP when placing trace in matching-color overflow slot
 - increments player trace count on overflow
-- allows multiple traces in overflow slot (unlimited)
+- allows multiple traces in each overflow slot (unlimited)
+- getPlayerTraceCount aggregates by player, trace color, and alien scope
+- alien scope supports AlienBoard instance, alien index, { alienIndex }, { alienType }, and 'both'/'all'
 
 ### 2.2 边界场景处理
 - creates empty state when no aliens

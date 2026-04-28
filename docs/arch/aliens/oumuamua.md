@@ -68,6 +68,7 @@
 
 ### 2. Exofossil Economy Contract
 - Exofossils are dedicated species currency.
+- Physical tokens beside the species board are not modeled as a finite server-side supply.
 - Spend gates are hard requirements for specific board spaces.
 - Top repeatable spaces consume one exofossil per claim.
 - FAQ adds strict boundaries:

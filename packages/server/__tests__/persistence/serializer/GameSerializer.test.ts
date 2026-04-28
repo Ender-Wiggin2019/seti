@@ -5,6 +5,10 @@ import {
   EPlanet,
   ETrace,
 } from '@seti/common/types/protocol/enums';
+import {
+  isAnomaliesAlienBoard,
+  isOumuamuaAlienBoard,
+} from '@/engine/alien/AlienBoard.js';
 import { AlienState } from '@/engine/alien/AlienState.js';
 import { Game } from '@/engine/Game.js';
 import {
@@ -92,12 +96,16 @@ describe('GameSerializer', () => {
     ).toBe(true);
   });
 
-  it('hides undiscovered alien board-only slots from public projection', () => {
+  it('persists alien components in explicit component fields', () => {
     const game = createTestGame();
     game.hiddenAliens = [EAlienType.ANOMALIES];
     game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
     const board = game.alienState.boards[0];
-    board.addSlot({
+    if (!isAnomaliesAlienBoard(board)) {
+      throw new Error('expected anomalies board');
+    }
+    board.discovered = true;
+    board.addAnomalyColumn({
       slotId: 'alien-0-anomaly-column|red-trace',
       alienIndex: 0,
       traceColor: ETrace.RED,
@@ -105,25 +113,175 @@ describe('GameSerializer', () => {
       rewards: [],
       isDiscovery: false,
     });
-    board.addSlot({
-      slotId: 'alien-0-anomaly-token|0|red-trace',
+    game.solarSystem?.addAlienToken({
+      tokenId: 'alien-0-anomaly-token|0|red-trace',
+      alienType: EAlienType.ANOMALIES,
+      sectorIndex: 0,
+      traceColor: ETrace.RED,
+      rewards: [{ type: 'VP', amount: 4 }],
+    });
+
+    const dto = serializeGame(game, 7);
+    const alien = dto.alienState.aliens[0];
+
+    expect('slots' in alien).toBe(false);
+    expect('anomalyTokens' in alien).toBe(false);
+    expect(alien.discoverySlots).toHaveLength(3);
+    expect(alien.overflowSlots).toHaveLength(3);
+    expect(alien.speciesTraceSlots).toEqual([]);
+    expect(alien.anomalyColumns?.map((slot) => slot.slotId)).toEqual([
+      'alien-0-anomaly-column|red-trace',
+    ]);
+    expect(dto.solarSystem?.alienTokens).toEqual([
+      {
+        tokenId: 'alien-0-anomaly-token|0|red-trace',
+        alienType: EAlienType.ANOMALIES,
+        sectorIndex: 0,
+        traceColor: ETrace.RED,
+        rewards: [{ type: 'VP', amount: 4 }],
+      },
+    ]);
+  });
+
+  it('projects undiscovered aliens with only discovery zones and overflow', () => {
+    const game = createTestGame();
+    game.hiddenAliens = [EAlienType.ANOMALIES];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.boards[0];
+    if (!isAnomaliesAlienBoard(board)) {
+      throw new Error('expected anomalies board');
+    }
+    board.addAnomalyColumn({
+      slotId: 'alien-0-anomaly-column|red-trace',
       alienIndex: 0,
       traceColor: ETrace.RED,
-      maxOccupants: 0,
-      rewards: [{ type: 'VP', amount: 4 }],
+      maxOccupants: -1,
+      rewards: [],
       isDiscovery: false,
+    });
+    game.solarSystem?.addAlienToken({
+      tokenId: 'alien-0-anomaly-token|0|red-trace',
+      alienType: EAlienType.ANOMALIES,
+      sectorIndex: 0,
+      traceColor: ETrace.RED,
+      rewards: [{ type: 'VP', amount: 4 }],
     });
 
     const publicState = projectGameState(game, game.activePlayer.id);
     const publicAlien = publicState.aliens[0];
 
     expect(publicAlien.alienType).toBeNull();
-    expect(publicAlien.slots).toHaveLength(4);
-    expect(publicAlien.slots.map((slot) => slot.slotId)).toEqual([
+    expect(publicAlien).not.toHaveProperty('slots');
+    expect(publicAlien.board).toBeNull();
+    expect(publicAlien.cardZone).toBeNull();
+    expect(publicAlien.discovery.zones.map((slot) => slot.slotId)).toEqual([
       'alien-0-discovery-red-trace',
       'alien-0-discovery-yellow-trace',
       'alien-0-discovery-blue-trace',
-      'alien-0-overflow',
     ]);
+    expect(
+      publicAlien.discovery.overflowZones.map((slot) => slot.slotId),
+    ).toEqual([
+      'alien-0-overflow-red-trace',
+      'alien-0-overflow-yellow-trace',
+      'alien-0-overflow-blue-trace',
+    ]);
+    expect(
+      publicAlien.discovery.overflowZones.every(
+        (slot) => slot.maxOccupants === -1,
+      ),
+    ).toBe(true);
+    expect(publicState.solarSystem.alienTokens).toEqual([]);
+  });
+
+  it('projects discovered Anomalies as board columns, solar tokens, and a card zone', () => {
+    const game = createTestGame();
+    game.hiddenAliens = [EAlienType.ANOMALIES];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.boards[0];
+    if (!isAnomaliesAlienBoard(board)) {
+      throw new Error('expected anomalies board');
+    }
+    board.discovered = true;
+    board.alienDeckDrawPile = ['ET.12', 'ET.13'];
+    board.alienDeckDiscardPile = ['ET.14'];
+    board.faceUpAlienCardId = 'ET.11';
+
+    for (const color of [ETrace.RED, ETrace.YELLOW, ETrace.BLUE]) {
+      board.addAnomalyColumn({
+        slotId: `alien-0-anomaly-column|${color}`,
+        alienIndex: 0,
+        traceColor: color,
+        maxOccupants: -1,
+        rewards: [],
+        isDiscovery: false,
+      });
+    }
+    game.solarSystem?.addAlienToken({
+      tokenId: 'alien-0-anomaly-token|3|red-trace',
+      alienType: EAlienType.ANOMALIES,
+      sectorIndex: 3,
+      traceColor: ETrace.RED,
+      rewards: [{ type: 'VP', amount: 4 }],
+    });
+
+    const publicState = projectGameState(game, game.activePlayer.id);
+    const publicAlien = publicState.aliens[0];
+
+    expect(publicAlien).not.toHaveProperty('slots');
+    expect(publicAlien.alienType).toBe(EAlienType.ANOMALIES);
+    expect(publicAlien.cardZone).toEqual({
+      faceUpCardId: 'ET.11',
+      drawPileSize: 2,
+      discardPileSize: 1,
+    });
+    if (!publicAlien.board || publicAlien.board.type !== 'anomalies') {
+      throw new Error('expected anomalies public board');
+    }
+    expect(publicAlien.board.type).toBe('anomalies');
+    expect(Object.keys(publicAlien.board.traceBoard.columns)).toEqual([
+      ETrace.RED,
+      ETrace.YELLOW,
+      ETrace.BLUE,
+    ]);
+    expect(publicState.solarSystem.alienTokens).toEqual([
+      {
+        tokenId: 'alien-0-anomaly-token|3|red-trace',
+        alienType: EAlienType.ANOMALIES,
+        sectorIndex: 3,
+        traceColor: ETrace.RED,
+        rewards: [{ type: 'VP', amount: 4 }],
+      },
+    ]);
+  });
+
+  it('projects discovered Oumuamua tile state as a public board component', () => {
+    const game = createTestGame();
+    game.hiddenAliens = [EAlienType.OUMUAMUA];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.boards[0];
+    if (!isOumuamuaAlienBoard(board)) {
+      throw new Error('expected oumuamua board');
+    }
+    board.discovered = true;
+    board.oumuamuaTile = {
+      spaceId: 'ring-3-cell-5',
+      sectorId: 'sector-2',
+      dataRemaining: 2,
+      markerPlayerIds: ['p1'],
+    };
+
+    const publicState = projectGameState(game, game.activePlayer.id);
+    const publicAlien = publicState.aliens[0];
+
+    expect(publicAlien.board).toMatchObject({
+      type: 'oumuamua',
+      tile: {
+        spaceId: 'ring-3-cell-5',
+        sectorId: 'sector-2',
+        dataRemaining: 2,
+        markerPlayerIds: ['p1'],
+      },
+    });
   });
 });
