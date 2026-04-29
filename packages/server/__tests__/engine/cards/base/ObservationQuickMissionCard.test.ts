@@ -5,8 +5,10 @@ import {
 import { ESector } from '@seti/common/types/element';
 import { EMainAction } from '@seti/common/types/protocol/enums';
 import { vi } from 'vitest';
+import { ObservationQuickMissionCard } from '@/engine/cards/base/ObservationQuickMissionCard.js';
 import { Deck } from '@/engine/deck/Deck.js';
 import { DeferredActionsQueue } from '@/engine/deferred/DeferredActionsQueue.js';
+import { EPriority } from '@/engine/deferred/Priority.js';
 import { MarkSectorSignalEffect } from '@/engine/effects/scan/MarkSectorSignalEffect.js';
 import { findSectorById } from '@/engine/effects/scan/ScanEffectUtils.js';
 import { EventLog } from '@/engine/event/EventLog.js';
@@ -50,6 +52,23 @@ function createFallbackPlayer(): Player {
 }
 
 describe('ObservationQuickMissionCard (37/39/41/43)', () => {
+  it('resolves star signal placement before same-turn completion checks', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'observation-quick-priority',
+    );
+    const player = game.players[0];
+    const card = new ObservationQuickMissionCard(
+      '37',
+      EStarName.PROXIMA_CENTAURI,
+    );
+
+    card.play({ player, game });
+
+    expect(game.deferredActions.peek()?.priority).toBe(EPriority.CORE_EFFECT);
+  });
+
   it('plays through the real game pipeline and marks only the star-matched sector', () => {
     const game = Game.create(
       TEST_PLAYERS,

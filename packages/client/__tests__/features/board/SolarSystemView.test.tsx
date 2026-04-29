@@ -8,10 +8,15 @@ import {
 } from '@seti/common/constant/sectorSetup';
 import { ESector } from '@seti/common/types/element';
 import { fireEvent, render, screen } from '@testing-library/react';
+import type { ComponentProps, ComponentType } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SolarSystemView } from '@/features/board/SolarSystemView';
 import { useDebugStore } from '@/stores/debugStore';
-import type { IPublicSector, IPublicSolarSystem } from '@/types/re-exports';
+import type {
+  IPublicOumuamuaTile,
+  IPublicSector,
+  IPublicSolarSystem,
+} from '@/types/re-exports';
 import {
   EAlienType,
   EPlanet,
@@ -149,6 +154,38 @@ function createExpandedOuterRingMock(
     },
     ...overrides,
   };
+}
+
+function renderSolarSystemView(
+  props: Partial<ComponentProps<typeof SolarSystemView>> & {
+    solarSystem?: IPublicSolarSystem;
+    oumuamuaTile?: IPublicOumuamuaTile | null;
+  } = {},
+): ReturnType<typeof render> {
+  const SolarSystemViewWithOumuamua = SolarSystemView as ComponentType<
+    ComponentProps<typeof SolarSystemView> & {
+      oumuamuaTile?: IPublicOumuamuaTile | null;
+    }
+  >;
+
+  return render(
+    <SolarSystemViewWithOumuamua
+      solarSystem={props.solarSystem ?? createSolarSystemMock()}
+      sectors={props.sectors ?? createSectorsMock()}
+      setupConfig={props.setupConfig ?? defaultSetup}
+      pendingInput={props.pendingInput ?? null}
+      playerColors={props.playerColors ?? { 'player-1': 'red' }}
+      myPlayerId={props.myPlayerId ?? 'player-1'}
+      movementPoints={props.movementPoints ?? 1}
+      moveModeActive={props.moveModeActive}
+      onMoveProbe={props.onMoveProbe ?? vi.fn()}
+      onRespondInput={props.onRespondInput ?? vi.fn()}
+      showSpaceConfigDebug={props.showSpaceConfigDebug}
+      probeInsetPxByRing={props.probeInsetPxByRing}
+      allowMoveAnyProbe={props.allowMoveAnyProbe}
+      oumuamuaTile={props.oumuamuaTile}
+    />,
+  );
 }
 
 function createSectorsMock(): IPublicSector[] {
@@ -294,6 +331,52 @@ describe('SolarSystemView', () => {
         `solar-alien-token-${EAlienType.ANOMALIES}-3-${ETrace.RED}`,
       ),
     ).toBeInTheDocument();
+  });
+
+  it('anchors the Oumuamua sector data list above its solar-system cell', () => {
+    const solarSystem = createExpandedOuterRingMock();
+    const tile: IPublicOumuamuaTile = {
+      spaceId: 'ring-4-cell-8',
+      sectorId: 'sector-1',
+      dataRemaining: 2,
+      markerPlayerIds: ['player-1'],
+    };
+
+    renderSolarSystemView({
+      solarSystem,
+      playerColors: { 'player-1': '#f00' },
+      oumuamuaTile: tile,
+    });
+
+    const anchor = screen.getByTestId(
+      'solar-oumuamua-sector-ring-4-cell-8',
+    );
+    const targetCell = screen.getByTestId('solar-space-ring-4-cell-8');
+    const dataList = screen.getByTestId('solar-oumuamua-data-list');
+    const slots = screen.getAllByTestId(/^solar-oumuamua-data-slot-/);
+
+    expect(anchor.style.left).toBe(targetCell.style.left);
+    expect(anchor.style.top).toBe(targetCell.style.top);
+    expect(anchor.style.transform).toContain('rotate(95.625deg)');
+    expect(dataList.style.transform).toContain('calc(-100%');
+    expect(slots).toHaveLength(3);
+    expect(dataList).toHaveAttribute('data-sector-id', 'sector-1');
+    expect(screen.getByTestId('solar-oumuamua-data-slot-0')).toHaveAttribute(
+      'data-signal-type',
+      'player',
+    );
+    expect(screen.getByTestId('solar-oumuamua-data-slot-0')).toHaveAttribute(
+      'data-player-id',
+      'player-1',
+    );
+    expect(screen.getByTestId('solar-oumuamua-data-slot-1')).toHaveAttribute(
+      'data-signal-type',
+      'data',
+    );
+    expect(screen.getByTestId('solar-oumuamua-data-slot-2')).toHaveAttribute(
+      'data-signal-type',
+      'data',
+    );
   });
 
   it('sends movement action after selecting own probe and clicking reachable space', () => {

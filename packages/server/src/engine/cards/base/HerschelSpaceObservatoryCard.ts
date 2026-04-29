@@ -52,7 +52,7 @@ export class HerschelSpaceObservatory extends MissionCard {
       new SimpleDeferredAction(
         context.player,
         (game) => this.createSignalInput(context.player, game),
-        EPriority.DEFAULT,
+        EPriority.CORE_EFFECT,
       ),
     );
     return undefined;

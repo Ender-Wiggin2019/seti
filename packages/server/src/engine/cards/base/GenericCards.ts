@@ -22,15 +22,12 @@ class GenericEndGameCard extends EndGameScoringCard {
 }
 
 export function createGenericCard(cardData: IBaseCard): ICard {
-  if (
-    cardData.effects.some(
-      (effect) => effect.effectType === EEffectType.END_GAME,
-    )
-  ) {
+  const effects = cardData.effects ?? [];
+  if (effects.some((effect) => effect.effectType === EEffectType.END_GAME)) {
     return new GenericEndGameCard(cardData);
   }
   if (
-    cardData.effects.some(
+    effects.some(
       (effect) =>
         effect.effectType === EEffectType.MISSION_FULL ||
         effect.effectType === EEffectType.MISSION_QUICK,

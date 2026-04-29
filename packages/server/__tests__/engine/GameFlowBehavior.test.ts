@@ -494,7 +494,7 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
     });
 
     expect(p1.resources.credits).toBe(creditsBefore - 1);
-    expect(p1.resources.energy).toBe(energyBefore - 3);
+    expect(p1.resources.energy).toBe(energyBefore);
     expect(p1.score).toBe(scoreBefore + 5);
     expect(p1.hand).not.toContain('16');
   });
@@ -543,9 +543,9 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
   });
 
   // ── 17. Player state after landing + trace ──────────────────────────
-  it('17. resources: 0 credits, 0 energy, 6 publicity, data ≥ 1', () => {
+  it('17. resources: 0 credits, 3 energy, 6 publicity, data ≥ 1', () => {
     expect(p1.resources.credits).toBe(0);
-    expect(p1.resources.energy).toBe(0);
+    expect(p1.resources.energy).toBe(3);
     expect(p1.resources.publicity).toBe(6);
     expect(p1.resources.data).toBeGreaterThanOrEqual(1);
   });

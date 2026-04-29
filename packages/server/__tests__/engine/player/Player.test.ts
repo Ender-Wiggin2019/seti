@@ -205,6 +205,21 @@ describe('Player', () => {
     expect(player.hand).toEqual(['card-1']);
   });
 
+  it('tucks income cards atomically with their recurring income', () => {
+    const player = new Player({
+      id: 'p1',
+      name: 'Alice',
+      color: 'red',
+      seatIndex: 0,
+    });
+
+    const incomeResource = player.addTuckedIncomeFromCard('93');
+
+    expect(incomeResource).toBe(EResource.CREDIT);
+    expect(player.tuckedIncomeCards).toEqual(['93']);
+    expect(player.income.tuckedCardIncome[EResource.CREDIT]).toBe(1);
+  });
+
   it('validates numeric initialization constraints', () => {
     expect(
       () =>

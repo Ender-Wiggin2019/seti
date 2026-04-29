@@ -1,7 +1,12 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { AlienBoardView } from '@/features/board/AlienBoardView';
-import type { IPublicAlienState, IPublicTraceSlot } from '@/types/re-exports';
-import { EAlienType, ETrace } from '@/types/re-exports';
+import { useDebugStore } from '@/stores/debugStore';
+import type {
+  IPublicAlienState,
+  IPublicPlanetaryBoard,
+  IPublicTraceSlot,
+} from '@/types/re-exports';
+import { EAlienType, EPlanet, ETrace } from '@/types/re-exports';
 
 function slot(
   slotId: string,
@@ -20,6 +25,32 @@ function slot(
 }
 
 describe('AlienBoardView', () => {
+  beforeEach(() => {
+    useDebugStore.setState({ textMode: false });
+  });
+
+  it('lays out the two alien boards side by side on desktop', () => {
+    const aliens: IPublicAlienState[] = [0, 1].map((alienIndex) => ({
+      alienIndex,
+      alienType: null,
+      discovered: false,
+      discovery: {
+        zones: [],
+        overflowZones: [],
+      },
+      cardZone: null,
+      board: null,
+    }));
+
+    render(<AlienBoardView aliens={aliens} playerColors={{}} />);
+
+    expect(screen.getByTestId('alien-board-grid')).toHaveClass(
+      'sm:grid-cols-2',
+    );
+    expect(screen.getByTestId('alien-0-card')).toHaveClass('min-w-0');
+    expect(screen.getByTestId('alien-1-card')).toHaveClass('min-w-0');
+  });
+
   it('renders all public alien reward labels', () => {
     const alien: IPublicAlienState = {
       alienIndex: 0,
@@ -59,6 +90,8 @@ describe('AlienBoardView', () => {
             ],
             isDiscovery: false,
           },
+          slot('reward-slot-2', ETrace.RED),
+          slot('reward-slot-3', ETrace.RED),
         ],
       },
     };
@@ -87,9 +120,24 @@ describe('AlienBoardView', () => {
     expect(
       within(rewardCircle).getByTestId('trace-reward-icon-draw-alien-card-1'),
     ).toBeInTheDocument();
+    const redColumn = screen.getByTestId(
+      'alien-0-generic-board-column-red-trace',
+    );
     expect(
-      screen.getByTestId('alien-0-generic-board-column-red-trace'),
+      within(redColumn).getByTestId('trace-slot-reward-slot-circle'),
     ).toBeInTheDocument();
+    expect(
+      within(redColumn).getByTestId('trace-slot-reward-slot-2-circle'),
+    ).toBeInTheDocument();
+    expect(
+      within(redColumn).getByTestId('trace-slot-reward-slot-3-circle'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('alien-0-generic-board-column-red-trace-slots'),
+    ).toHaveClass('flex-col');
+    expect(
+      screen.queryByTestId('alien-0-generic-board-row-red-trace'),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByTestId('alien-0-generic-board-column-yellow-trace'),
     ).toBeInTheDocument();
@@ -145,8 +193,20 @@ describe('AlienBoardView', () => {
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
     expect(
+      screen.getByTestId('alien-0-hidden-board-column-red-trace'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('alien-0-hidden-board-column-yellow-trace'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('alien-0-hidden-board-column-blue-trace'),
+    ).toBeInTheDocument();
+    expect(
       screen.getByTestId('alien-0-discovery-column-red-trace'),
     ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('alien-0-discovery-column-red-trace-slots'),
+    ).toHaveClass('flex-col');
     expect(
       screen.getByTestId('alien-0-discovery-column-yellow-trace'),
     ).toBeInTheDocument();
@@ -162,6 +222,9 @@ describe('AlienBoardView', () => {
     expect(
       screen.getByTestId('alien-0-overflow-column-blue-trace'),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('alien-0-discovery-row-red-trace'),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByTestId('alien-0-anomalies-board'),
     ).not.toBeInTheDocument();
@@ -247,7 +310,40 @@ describe('AlienBoardView', () => {
     expect(screen.getByTestId('seti-card-ET.11')).toBeInTheDocument();
   });
 
-  it('renders discovered Oumuamua tile data and markers separately from trace slots', () => {
+  it('opens the shared card preview when clicking the alien deck face-up card', () => {
+    const onCardInspect = vi.fn();
+    const alien: IPublicAlienState = {
+      alienIndex: 0,
+      alienType: EAlienType.ANOMALIES,
+      discovered: true,
+      discovery: { zones: [], overflowZones: [] },
+      cardZone: { faceUpCardId: 'ET.11', drawPileSize: 7, discardPileSize: 2 },
+      board: {
+        type: 'anomalies',
+        traceBoard: {
+          columns: {
+            [ETrace.RED]: slot('red', ETrace.RED),
+            [ETrace.YELLOW]: slot('yellow', ETrace.YELLOW),
+            [ETrace.BLUE]: slot('blue', ETrace.BLUE),
+          },
+        },
+      },
+    };
+
+    const props = { aliens: [alien], playerColors: {}, onCardInspect };
+    render(<AlienBoardView {...props} />);
+
+    const faceUpCard = screen.getByTestId('alien-0-deck-face-up-card');
+    expect(faceUpCard).toHaveClass('overflow-hidden');
+
+    fireEvent.click(faceUpCard);
+
+    expect(onCardInspect).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'ET.11' }),
+    );
+  });
+
+  it('renders discovered Oumuamua as a landing area with planet orbit and land details', () => {
     const alien: IPublicAlienState = {
       alienIndex: 0,
       alienType: EAlienType.OUMUAMUA,
@@ -278,14 +374,80 @@ describe('AlienBoardView', () => {
         traceSlots: [],
       },
     };
+    const planetaryBoard: IPublicPlanetaryBoard = {
+      configs: {},
+      planets: {
+        [EPlanet.OUMUAMUA]: {
+          orbitSlots: [{ playerId: 'p2' }],
+          landingSlots: [{ playerId: 'p1' }],
+          firstOrbitClaimed: true,
+          firstLandDataBonusTaken: [true, false, false],
+          moonOccupant: null,
+        },
+      },
+    };
 
-    render(<AlienBoardView aliens={[alien]} playerColors={{ p1: '#f00' }} />);
+    const props = {
+      aliens: [alien],
+      playerColors: { p1: '#f00', p2: '#00f' },
+      planetaryBoard,
+    };
+    render(<AlienBoardView {...props} />);
 
-    const tile = screen.getByTestId('alien-0-oumuamua-tile');
-    expect(tile).toHaveTextContent('Data 2');
-    expect(tile).toHaveTextContent('Sector sector-2');
     expect(
-      within(tile).getByTestId('oumuamua-tile-marker-p1-0'),
+      screen.getByTestId('alien-0-oumuamua-landing-area'),
+    ).toHaveTextContent('Oumuamua Landing Area');
+    expect(
+      screen.queryByTestId('alien-0-oumuamua-data-box'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId('alien-0-oumuamua-orbit-token-p2-0'),
     ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('alien-0-oumuamua-landing-token-p1-0'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('alien-0-oumuamua-first-land-data-1'),
+    ).toHaveClass('border-surface-600');
+    expect(screen.getByTestId('alien-0-oumuamua-cell')).toHaveTextContent(
+      'Orbit reward',
+    );
+    expect(screen.getByTestId('alien-0-oumuamua-cell')).toHaveTextContent(
+      'Land reward',
+    );
+    expect(
+      screen.queryByTestId('oumuamua-tile-marker-p1-0'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps text-mode Oumuamua focused on its landing cell details', () => {
+    useDebugStore.setState({ textMode: true });
+    const alien: IPublicAlienState = {
+      alienIndex: 0,
+      alienType: EAlienType.OUMUAMUA,
+      discovered: true,
+      discovery: { zones: [], overflowZones: [] },
+      cardZone: null,
+      board: {
+        type: 'oumuamua',
+        tile: {
+          spaceId: 'ring-3-cell-5',
+          sectorId: 'sector-2',
+          dataRemaining: 2,
+          markerPlayerIds: [],
+        },
+        traceSlots: [],
+      },
+    };
+
+    render(<AlienBoardView aliens={[alien]} playerColors={{}} />);
+
+    const cell = screen.getByTestId('alien-0-oumuamua-cell');
+
+    expect(
+      screen.queryByTestId('alien-0-oumuamua-data-box'),
+    ).not.toBeInTheDocument();
+    expect(cell).toHaveTextContent('O: 10 VP');
+    expect(cell).toHaveTextContent('L: 9 VP');
   });
 });

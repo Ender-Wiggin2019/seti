@@ -29,7 +29,7 @@ export class Dragonfly extends ImmediateCard {
             allowDuplicate: true,
             prompt: 'Dragonfly: Select a planet to land on',
           }),
-        EPriority.DEFAULT,
+        EPriority.CORE_EFFECT,
       ),
     );
     return undefined;

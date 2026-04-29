@@ -223,6 +223,26 @@ describe('PlayCardAction — integration', () => {
       expect(game.activePlayer.id).toBe('p2');
     });
 
+    it('integration: Centaurian alien cards spend energy instead of credits', () => {
+      const { game, player } = createIntegrationGame(
+        'play-card-centaurian-energy-cost',
+      );
+      player.hand = ['ET.31'];
+      const creditsBefore = player.resources.credits;
+      const energyBefore = player.resources.energy;
+
+      game.processMainAction(player.id, {
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 0 },
+      });
+
+      expect(player.resources.credits).toBe(creditsBefore);
+      expect(player.resources.energy).toBe(energyBefore - 1);
+      expect(player.playedMissions.map(resolveCardId)).not.toContain('ET.31');
+      expect(player.endGameCards.map(resolveCardId)).not.toContain('ET.31');
+      expect(player.hand).not.toContain('ET.31');
+    });
+
     it('integration: insufficient resources rejects the play without mutating turn state', () => {
       const { game, player } = createIntegrationGame(
         'play-card-insufficient-resources',

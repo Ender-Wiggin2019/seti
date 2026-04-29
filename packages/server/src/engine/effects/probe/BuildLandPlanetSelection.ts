@@ -3,12 +3,18 @@ import type { IPlayerInput } from '@/engine/input/PlayerInput.js';
 import { SelectOption } from '@/engine/input/SelectOption.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayer } from '../../player/IPlayer.js';
-import type { ILandOptions } from './LandProbeEffect.js';
+import {
+  type ILandOptions,
+  type ILandResult,
+  LandProbeEffect,
+} from './LandProbeEffect.js';
 
 export interface ILandSelectionOptions extends ILandOptions {
   prompt: string;
   includeSkipOption?: boolean;
   skipLabel?: string;
+  payCost?: boolean;
+  onLanded?: (result: ILandResult) => void;
 }
 
 const ALL_LANDABLE_PLANETS: readonly EPlanet[] = [
@@ -31,6 +37,7 @@ function collectLandTargets(
   player: IPlayer,
   game: IGame,
   options: ILandOptions,
+  payCost: boolean,
 ): ILandTarget[] {
   const targets: ILandTarget[] = [];
 
@@ -41,12 +48,19 @@ function collectLandTargets(
     ) {
       continue;
     }
-    if (player.canLand(planet, { ...options, isMoon: false })) {
+    if (
+      canLandTarget(
+        player,
+        game,
+        planet,
+        { ...options, isMoon: false },
+        payCost,
+      )
+    ) {
       targets.push({ planet, isMoon: false });
     }
     if (
-      options.allowMoons &&
-      player.canLand(planet, { ...options, isMoon: true })
+      canLandTarget(player, game, planet, { ...options, isMoon: true }, payCost)
     ) {
       targets.push({ planet, isMoon: true });
     }
@@ -55,13 +69,33 @@ function collectLandTargets(
   return targets;
 }
 
+function canLandTarget(
+  player: IPlayer,
+  game: IGame,
+  planet: EPlanet,
+  options: ILandOptions,
+  payCost: boolean,
+): boolean {
+  if (payCost) {
+    return player.canLand(planet, options);
+  }
+  return LandProbeEffect.canExecute(player, game, planet, options);
+}
+
 export function buildLandPlanetSelection(
   player: IPlayer,
   game: IGame,
   options: ILandSelectionOptions,
 ): IPlayerInput | undefined {
-  const { prompt, includeSkipOption, skipLabel, ...landOptions } = options;
-  const targets = collectLandTargets(player, game, landOptions);
+  const {
+    prompt,
+    includeSkipOption,
+    skipLabel,
+    payCost = false,
+    onLanded,
+    ...landOptions
+  } = options;
+  const targets = collectLandTargets(player, game, landOptions, payCost);
 
   if (targets.length === 0) return undefined;
 
@@ -71,15 +105,26 @@ export function buildLandPlanetSelection(
       ? `Land on ${target.planet} (moon)`
       : `Land on ${target.planet}`,
     onSelect: () => {
-      player.land(target.planet, {
-        ...landOptions,
-        isMoon: target.isMoon,
-      });
+      const result = payCost
+        ? player.land(target.planet, {
+            ...landOptions,
+            isMoon: target.isMoon,
+          })
+        : LandProbeEffect.executeCardContainedAction(
+            player,
+            game,
+            target.planet,
+            {
+              ...landOptions,
+              isMoon: target.isMoon,
+            },
+          );
+      onLanded?.(result);
       return undefined;
     },
   }));
 
-  if (includeSkipOption ?? true) {
+  if (includeSkipOption ?? false) {
     optionItems.push({
       id: 'skip-land',
       label: skipLabel ?? 'Skip landing',

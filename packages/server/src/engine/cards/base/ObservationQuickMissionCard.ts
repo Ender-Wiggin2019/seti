@@ -77,7 +77,7 @@ export class ObservationQuickMissionCard extends MissionCard {
 
           return markStarChain(signalCount);
         },
-        EPriority.DEFAULT,
+        EPriority.CORE_EFFECT,
       ),
     );
 

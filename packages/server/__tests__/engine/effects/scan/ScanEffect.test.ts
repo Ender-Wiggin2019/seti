@@ -1,13 +1,16 @@
-import { vi } from 'vitest';
-import { ScanEffect } from '@/engine/effects/scan/ScanEffect.js';
+import { ESector } from '@seti/common/types/element';
 import {
   EPlayerInputType,
   type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
+import { vi } from 'vitest';
+import { Deck } from '@/engine/deck/Deck.js';
+import { EScanSubAction } from '@/engine/effects/scan/ScanActionPool.js';
+import { ScanEffect } from '@/engine/effects/scan/ScanEffect.js';
 import { Game } from '@/engine/Game.js';
 import { Player } from '@/engine/player/Player.js';
-import { resolveSetupTucks } from '../../../helpers/TestGameBuilder.js';
 import { discoverOumuamua } from '../../../helpers/OumuamuaTestUtils.js';
+import { resolveSetupTucks } from '../../../helpers/TestGameBuilder.js';
 
 const TEST_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -21,32 +24,65 @@ function createOumuamuaGame(seed: string): { game: Game; player: Player } {
 }
 
 describe('ScanEffect', () => {
-  it('finishes immediately when card row is empty', () => {
+  it('uses the scan action pool and refills after the pool completes', () => {
     const player = {
       id: 'p1',
       score: 0,
+      techs: [],
+      hand: [],
       resources: { gain: vi.fn() },
       pieces: { deploy: vi.fn(), return: vi.fn(), deployed: vi.fn(() => 0) },
     };
+    const sectors = [
+      {
+        id: 'earth-sector',
+        color: ESector.RED,
+        completed: false,
+        markSignal: () => ({ dataGained: false, vpAwarded: 0 }),
+      },
+      {
+        id: 'row-sector',
+        color: ESector.BLUE,
+        completed: false,
+        markSignal: () => ({ dataGained: false, vpAwarded: 0 }),
+      },
+    ];
     const game = {
-      sectors: [
-        {
-          id: 'earth-sector',
-          completed: false,
-          markSignal: () => ({ dataGained: false, vpAwarded: 0 }),
-        },
-      ],
-      cardRow: [],
+      sectors,
+      cardRow: [{ id: 'row-blue', sector: ESector.BLUE }],
+      mainDeck: new Deck<string>(['refill-a']),
+      solarSystem: null,
       missionTracker: { recordEvent: () => undefined },
+      lockCurrentTurn: () => undefined,
     };
     const onComplete = vi.fn(() => undefined);
 
-    const result = ScanEffect.execute(player as never, game as never, {
+    const scanMenu = ScanEffect.execute(player as never, game as never, {
       onComplete,
     });
 
-    expect(result).toBeUndefined();
+    expect(scanMenu?.type).toBe(EPlayerInputType.OPTION);
+    const afterEarth = scanMenu?.process({
+      type: EPlayerInputType.OPTION,
+      optionId: EScanSubAction.MARK_EARTH,
+    });
+    const rowInput = afterEarth?.process({
+      type: EPlayerInputType.OPTION,
+      optionId: EScanSubAction.MARK_CARD_ROW,
+    });
+    const afterCard = rowInput?.process({
+      type: EPlayerInputType.CARD,
+      cardIds: ['row-blue'],
+    });
+    const done = afterCard?.process({
+      type: EPlayerInputType.OPTION,
+      optionId: EScanSubAction.DONE,
+    });
+
+    expect(done).toBeUndefined();
     expect(onComplete).toHaveBeenCalledOnce();
+    expect(game.cardRow).toEqual(['refill-a']);
+    expect(game.mainDeck.getDiscardPile()).toEqual(['row-blue']);
   });
 
   it('offers sector/tile choice when the earth signal targets oumuamua sector', () => {
@@ -58,14 +94,18 @@ describe('ScanEffect', () => {
     const input = ScanEffect.execute(player, game, {
       earthSectorIndex: sectorIndex,
     });
+    const earthInput = input?.process({
+      type: EPlayerInputType.OPTION,
+      optionId: EScanSubAction.MARK_EARTH,
+    });
 
-    const model = input?.toModel() as ISelectOptionInputModel | undefined;
+    const model = earthInput?.toModel() as ISelectOptionInputModel | undefined;
     expect(model?.type).toBe(EPlayerInputType.OPTION);
     expect(model?.options.map((option) => option.id)).toEqual(
       expect.arrayContaining(['oumuamua-sector', 'oumuamua-tile']),
     );
 
-    input?.process({
+    earthInput?.process({
       type: EPlayerInputType.OPTION,
       optionId: 'oumuamua-tile',
     });

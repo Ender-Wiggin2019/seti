@@ -1,3 +1,4 @@
+import { OUMUAMUA_TILE_DATA_CAPACITY } from '@seti/common/constant/alienBoardConfig';
 import type {
   ISolarSystemSetupConfig,
   ISolarSystemWheelMapCell,
@@ -19,13 +20,16 @@ import { useTextMode } from '@/stores/debugStore';
 import type {
   IInputResponse,
   IPlayerInputModel,
+  IPublicOumuamuaTile,
   IPublicSector,
+  IPublicSectorSignal,
   IPublicSolarSystem,
   IPublicSolarSystemAlienToken,
 } from '@/types/re-exports';
 import { EAlienType, EPlayerInputType, ETrace } from '@/types/re-exports';
 import { ProbeToken } from './ProbeToken';
 import { SectorGrid } from './SectorGrid';
+import { SectorSignalList } from './SectorSignalList';
 import { WheelLayer } from './WheelLayer';
 
 const WHEEL_RENDER_SIZE_PERCENT = [34, 48, 62, 100] as const;
@@ -78,6 +82,7 @@ interface ISolarSystemViewProps {
   showSpaceConfigDebug?: boolean;
   probeInsetPxByRing?: TProbeInsetPxByRing;
   allowMoveAnyProbe?: boolean;
+  oumuamuaTile?: IPublicOumuamuaTile | null;
 }
 
 interface ISpacePoint {
@@ -261,6 +266,24 @@ function getTextModeCellLabel(
   return { label: cell.type.toLowerCase(), kind: 'other' };
 }
 
+function buildOumuamuaTileSignals(
+  tile: IPublicOumuamuaTile,
+): IPublicSectorSignal[] {
+  const markerSignals: IPublicSectorSignal[] = tile.markerPlayerIds
+    .slice(0, OUMUAMUA_TILE_DATA_CAPACITY)
+    .map((playerId) => ({ type: 'player', playerId }));
+  const remainingCapacity = Math.max(
+    0,
+    OUMUAMUA_TILE_DATA_CAPACITY - markerSignals.length,
+  );
+  const dataCount = Math.min(tile.dataRemaining, remainingCapacity);
+  const dataSignals: IPublicSectorSignal[] = Array.from(
+    { length: dataCount },
+    () => ({ type: 'data' }),
+  );
+  return [...markerSignals, ...dataSignals];
+}
+
 function textModeCellPosition(
   ringIndex: 1 | 2 | 3 | 4,
   visualIndexInRing: number,
@@ -290,6 +313,7 @@ export function SolarSystemView({
   showSpaceConfigDebug = false,
   probeInsetPxByRing,
   allowMoveAnyProbe = false,
+  oumuamuaTile = null,
 }: ISolarSystemViewProps): React.JSX.Element {
   const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(null);
   const textMode = useTextMode();
@@ -573,6 +597,25 @@ export function SolarSystemView({
     return items;
   }, [solarSystem.alienTokens, spaceRadiiPercent]);
 
+  const oumuamuaSectorData = useMemo(() => {
+    if (!oumuamuaTile) {
+      return null;
+    }
+
+    const point = spacePoints.find(
+      (space) => space.spaceId === oumuamuaTile.spaceId,
+    );
+    if (!point) {
+      return null;
+    }
+
+    return {
+      point,
+      tile: oumuamuaTile,
+      signals: buildOumuamuaTileSignals(oumuamuaTile),
+    };
+  }, [oumuamuaTile, spacePoints]);
+
   const reachablePathBySpaceId = useMemo(() => {
     if (!selectedSpaceId || movementPoints <= 0) {
       return new Map<string, string[]>();
@@ -846,6 +889,16 @@ export function SolarSystemView({
             );
           })}
 
+        {oumuamuaSectorData ? (
+          <OumuamuaSectorDataList
+            point={oumuamuaSectorData.point}
+            tile={oumuamuaSectorData.tile}
+            signals={oumuamuaSectorData.signals}
+            playerColors={playerColors}
+            textMode={textMode}
+          />
+        ) : null}
+
         {solarAlienTokenView.map((item) => (
           <SolarAlienTokenMarker
             key={item.key}
@@ -899,6 +952,55 @@ export function SolarSystemView({
         )}
       </div>
     </section>
+  );
+}
+
+function OumuamuaSectorDataList({
+  point,
+  tile,
+  signals,
+  playerColors,
+  textMode,
+}: {
+  point: ISpacePoint;
+  tile: IPublicOumuamuaTile;
+  signals: IPublicSectorSignal[];
+  playerColors: Record<string, string>;
+  textMode: boolean;
+}): React.JSX.Element {
+  return (
+    <div
+      className='pointer-events-none absolute h-0 w-0'
+      data-testid={`solar-oumuamua-sector-${point.spaceId}`}
+      style={{
+        left: `${point.xPercent}%`,
+        top: `${point.yPercent}%`,
+        transform: `rotate(${point.rotationDeg}deg)`,
+        transformOrigin: 'center',
+        zIndex: 86,
+      }}
+      title={`Oumuamua sector ${tile.sectorId}`}
+    >
+      <div
+        className={cn(
+          'absolute left-1/2 top-0 flex items-center gap-[2px] rounded-full border bg-surface-950/90 shadow-[0_2px_8px_rgba(0,0,0,0.55)]',
+          textMode
+            ? 'border-white/75 px-1 py-0.5'
+            : 'border-cyan-100/75 px-1.5 py-1',
+        )}
+        style={{ transform: 'translate(-50%, calc(-100% - 10px))' }}
+        data-testid='solar-oumuamua-data-list'
+        data-sector-id={tile.sectorId}
+      >
+        <SectorSignalList
+          signals={signals}
+          capacity={OUMUAMUA_TILE_DATA_CAPACITY}
+          playerColors={playerColors}
+          textMode={textMode}
+          slotTestIdPrefix='solar-oumuamua-data-slot'
+        />
+      </div>
+    </div>
   );
 }
 

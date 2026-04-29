@@ -1,12 +1,19 @@
 import { validateMovementPath } from '@seti/common/rules/freeActions';
+import type { IInputResponse } from '@seti/common/types/protocol/actions';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
+import type { IPlayerInputModel } from '@seti/common/types/protocol/playerInput';
 import { GameError } from '@/shared/errors/GameError.js';
 import { isMovementPublicityDisabledForCurrentTurn } from '../alien/plugins/AnomaliesTurnEffects.js';
 import { ESolarSystemElementType } from '../board/SolarSystem.js';
 import type { IGame } from '../IGame.js';
+import type { IPlayerInput } from '../input/PlayerInput.js';
 import { EMissionEventType } from '../missions/IMission.js';
 import type { IPlayer } from '../player/IPlayer.js';
 import { TechModifierQuery } from '../tech/TechModifierQuery.js';
+import {
+  emitMovementStepTurnEvent,
+  shouldIgnoreAsteroidLeaveCostForTurnEffects,
+} from '../turnEffects/TurnEffects.js';
 import { toPublicSolarSystemState } from '../utils/stateProjection.js';
 import { findProbeAtSpace } from './probeUtils.js';
 
@@ -15,6 +22,58 @@ export interface IMovementResult {
   path: string[];
   totalCost: number;
   publicityGained: number;
+  pendingInput?: IPlayerInput;
+}
+
+interface IPublicityRecord {
+  publicityGained: number;
+}
+
+class MovementPendingInput implements IPlayerInput {
+  public constructor(
+    private readonly input: IPlayerInput,
+    private readonly remainingInputs: readonly IPlayerInput[],
+    private readonly onComplete: () => void,
+  ) {}
+
+  public get inputId(): string {
+    return this.input.inputId;
+  }
+
+  public get type(): IPlayerInput['type'] {
+    return this.input.type;
+  }
+
+  public get player(): IPlayer {
+    return this.input.player;
+  }
+
+  public get title(): string | undefined {
+    return this.input.title;
+  }
+
+  public toModel(): IPlayerInputModel {
+    return this.input.toModel();
+  }
+
+  public process(response: IInputResponse): IPlayerInput | undefined {
+    const nextInput = this.input.process(response);
+    if (nextInput !== undefined) {
+      return new MovementPendingInput(
+        nextInput,
+        this.remainingInputs,
+        this.onComplete,
+      );
+    }
+
+    const [nextMovementInput, ...rest] = this.remainingInputs;
+    if (nextMovementInput !== undefined) {
+      return new MovementPendingInput(nextMovementInput, rest, this.onComplete);
+    }
+
+    this.onComplete();
+    return undefined;
+  }
 }
 
 export class MovementFreeAction {
@@ -78,35 +137,85 @@ export class MovementFreeAction {
     }
 
     const techQuery = TechModifierQuery.fromTechIds(player.techs);
-    let totalPublicity = 0;
+    const publicityRecords: IPublicityRecord[] = [];
+    const pendingInputs: IPlayerInput[] = [];
+    const movementPublicityDisabled = isMovementPublicityDisabledForCurrentTurn(
+      game,
+      player.id,
+    );
     for (let i = 0; i < path.length - 1; i++) {
+      const fromSpace = this.findSpace(game, path[i]);
+      const toSpace = this.findSpace(game, path[i + 1]);
       const result = game.solarSystem.moveProbe(probe.id, path[i], path[i + 1]);
-      totalPublicity += result.publicityGained;
       this.recordVisitEvents(game, path[i + 1]);
+
+      let stepPublicity = movementPublicityDisabled
+        ? 0
+        : result.publicityGained;
 
       if (
         techQuery.hasAsteroidPublicity() &&
-        this.isAsteroidSpace(game, path[i + 1])
+        this.isAsteroidSpace(game, path[i + 1]) &&
+        !movementPublicityDisabled
       ) {
-        totalPublicity += 1;
+        stepPublicity += 1;
       }
+
+      let publicityRecord: IPublicityRecord = {
+        publicityGained: stepPublicity,
+      };
+      if (fromSpace && toSpace) {
+        const event = {
+          fromSpace,
+          toSpace,
+          publicityGained: stepPublicity,
+        };
+        publicityRecord = event;
+        const pendingInput = emitMovementStepTurnEvent(game, player, event);
+        if (pendingInput !== undefined) {
+          pendingInputs.push(pendingInput);
+        }
+      }
+
+      publicityRecords.push(publicityRecord);
     }
 
     player.spendMove(effectiveCost);
 
-    if (isMovementPublicityDisabledForCurrentTurn(game, player.id)) {
-      totalPublicity = 0;
+    const gainMovementPublicity = () => {
+      const totalPublicity = publicityRecords.reduce(
+        (total, record) => total + record.publicityGained,
+        0,
+      );
+      if (totalPublicity > 0) {
+        player.resources.gain({ publicity: totalPublicity });
+      }
+    };
+
+    const publicityGained = publicityRecords.reduce(
+      (total, record) => total + record.publicityGained,
+      0,
+    );
+
+    if (pendingInputs.length === 0) {
+      gainMovementPublicity();
     }
 
-    if (totalPublicity > 0) {
-      player.resources.gain({ publicity: totalPublicity });
-    }
+    const [firstPendingInput, ...remainingPendingInputs] = pendingInputs;
 
     return {
       probeId: probe.id,
       path,
       totalCost: effectiveCost,
-      publicityGained: totalPublicity,
+      publicityGained,
+      pendingInput:
+        firstPendingInput !== undefined
+          ? new MovementPendingInput(
+              firstPendingInput,
+              remainingPendingInputs,
+              gainMovementPublicity,
+            )
+          : undefined,
     };
   }
 
@@ -115,9 +224,12 @@ export class MovementFreeAction {
     game: IGame,
     path: string[],
   ): number {
-    const asteroidLeaveCost = TechModifierQuery.fromTechIds(
-      player.techs,
-    ).getAsteroidLeaveCost(1);
+    const asteroidLeaveCost = shouldIgnoreAsteroidLeaveCostForTurnEffects(
+      game,
+      player.id,
+    )
+      ? 0
+      : TechModifierQuery.fromTechIds(player.techs).getAsteroidLeaveCost(1);
 
     let totalCost = 0;
     for (let i = 0; i < path.length - 1; i++) {
@@ -135,9 +247,7 @@ export class MovementFreeAction {
   }
 
   private static isAsteroidSpace(game: IGame, spaceId: string): boolean {
-    const space = game.solarSystem?.spaces.find(
-      (candidate) => candidate.id === spaceId,
-    );
+    const space = this.findSpace(game, spaceId);
     if (!space) {
       return false;
     }
@@ -145,6 +255,12 @@ export class MovementFreeAction {
     return space.elements.some(
       (element) =>
         element.type === ESolarSystemElementType.ASTEROID && element.amount > 0,
+    );
+  }
+
+  private static findSpace(game: IGame, spaceId: string) {
+    return game.solarSystem?.spaces.find(
+      (candidate) => candidate.id === spaceId,
     );
   }
 

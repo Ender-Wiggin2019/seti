@@ -11,10 +11,12 @@ import {
   ESector,
   ESpecialAction,
   ETech,
+  ETrace,
 } from '@seti/common/types/element';
 import { EAlienType } from '@seti/common/types/protocol/enums';
 import { getTechDescriptor } from '@seti/common/types/tech';
 import { isOumuamuaAlienBoard } from '../alien/AlienBoard.js';
+import { countSectorFulfills } from '../board/sectorFulfillmentCounts.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
 import {
@@ -100,6 +102,17 @@ function matchesSingleEventReq(
         event.type === EMissionEventType.SIGNAL_PLACED &&
         event.color === ESector.BLUE
       );
+
+    case ETrace.RED:
+    case ETrace.YELLOW:
+    case ETrace.BLUE:
+      return (
+        event.type === EMissionEventType.TRACE_MARKED &&
+        event.traceColor === baseReq.type
+      );
+
+    case ETrace.ANY:
+      return event.type === EMissionEventType.TRACE_MARKED;
 
     case ETech.PROBE:
     case ETech.SCAN:
@@ -217,28 +230,6 @@ function countTechsInCategory(player: IPlayer, category: ETech): number {
   return player.techs.filter(
     (techId) => getTechDescriptor(techId).type === category,
   ).length;
-}
-
-function countSectorFulfills(
-  player: IPlayer,
-  game: IGame,
-  color?: ESector,
-): number {
-  return game.sectors.reduce((total, sectorLike) => {
-    const sector = sectorLike as {
-      color?: ESector;
-      sectorWinners?: string[];
-    };
-
-    if (color && sector.color !== color) {
-      return total;
-    }
-
-    return (
-      total +
-      (sector.sectorWinners?.filter((id) => id === player.id).length ?? 0)
-    );
-  }, 0);
 }
 
 function parsePlanetFromDesc(desc?: string): EPlanet | undefined {

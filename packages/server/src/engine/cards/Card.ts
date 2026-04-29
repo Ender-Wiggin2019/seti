@@ -1,4 +1,4 @@
-import type { IBaseCard } from '@seti/common/types/BaseCard';
+import { EAlienType, type IBaseCard } from '@seti/common/types/BaseCard';
 import { EEffectType } from '@seti/common/types/effect';
 import { EResource } from '@seti/common/types/element';
 import type { IPlayerInput } from '../input/PlayerInput.js';
@@ -13,7 +13,7 @@ import {
 import { type ICardRequirements, Requirements } from './Requirements.js';
 
 function toCostRequirements(cardData: IBaseCard): ICardRequirements {
-  const costType = cardData.priceType ?? EResource.CREDIT;
+  const costType = inferCostType(cardData);
   if (costType === EResource.CREDIT) {
     return { resources: { credits: cardData.price } };
   }
@@ -29,16 +29,29 @@ function toCostRequirements(cardData: IBaseCard): ICardRequirements {
   return {};
 }
 
+function inferCostType(cardData: IBaseCard): EResource {
+  return (
+    cardData.priceType ??
+    (cardData.alien === EAlienType.CENTAURIANS
+      ? EResource.ENERGY
+      : EResource.CREDIT)
+  );
+}
+
+function inferRuntimePriceType(cardData: IBaseCard): EResource | undefined {
+  return (
+    cardData.priceType ??
+    (cardData.alien === EAlienType.CENTAURIANS ? EResource.ENERGY : undefined)
+  );
+}
+
 function inferCardKind(cardData: IBaseCard): EServerCardKind {
-  if (
-    cardData.effects.some(
-      (effect) => effect.effectType === EEffectType.END_GAME,
-    )
-  ) {
+  const effects = cardData.effects ?? [];
+  if (effects.some((effect) => effect.effectType === EEffectType.END_GAME)) {
     return EServerCardKind.END_GAME;
   }
   if (
-    cardData.effects.some(
+    effects.some(
       (effect) =>
         effect.effectType === EEffectType.MISSION_FULL ||
         effect.effectType === EEffectType.MISSION_QUICK,
@@ -103,9 +116,9 @@ export abstract class Card implements ICard {
     this.freeAction = cardData.freeAction;
     this.sector = cardData.sector;
     this.price = cardData.price;
-    this.priceType = cardData.priceType;
+    this.priceType = inferRuntimePriceType(cardData);
     this.income = cardData.income;
-    this.effects = cardData.effects;
+    this.effects = cardData.effects ?? [];
     this.description = cardData.description;
     this.flavorText = cardData.flavorText;
     this.special = cardData.special;
@@ -113,7 +126,7 @@ export abstract class Card implements ICard {
     this.cardType = cardData.cardType;
     this.alien = cardData.alien;
     this.kind = options.kind ?? inferCardKind(cardData);
-    this.behavior = options.behavior ?? behaviorFromEffects(cardData.effects);
+    this.behavior = options.behavior ?? behaviorFromEffects(this.effects);
     this.requirements = {
       ...toCostRequirements(cardData),
       ...(options.requirements ?? {}),
@@ -162,6 +175,16 @@ export abstract class Card implements ICard {
     return missionEffect.effectType === EEffectType.MISSION_FULL
       ? EMissionType.FULL
       : EMissionType.QUICK;
+  }
+
+  public canReturnToHandAfterPlay(_context: ICardRuntimeContext): boolean {
+    return false;
+  }
+
+  public movesPlayedCardToIncomeAfterPlay(
+    _context: ICardRuntimeContext,
+  ): boolean {
+    return false;
   }
 
   protected bespokeCanPlay(_context: ICardRuntimeContext): boolean {

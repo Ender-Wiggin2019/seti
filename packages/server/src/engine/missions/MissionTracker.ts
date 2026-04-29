@@ -3,7 +3,7 @@ import {
   type IBaseEffect,
   type IMissionEffect,
 } from '@seti/common/types/effect';
-import { EScanAction } from '@seti/common/types/element';
+import { EPlanet, EScanAction } from '@seti/common/types/element';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import { hasCardData, loadCardData } from '../cards/loadCardData.js';
@@ -24,6 +24,51 @@ import {
   matchesFullMissionTrigger,
 } from './MissionCondition.js';
 import { applyMissionRewards } from './MissionReward.js';
+
+const CARD_IDS_WITH_MARS_FLAVOR_TEXT = new Set([
+  '13',
+  '14',
+  '22',
+  '34',
+  '76',
+  '84',
+  '85',
+  '119',
+  'SE EN 02',
+  'ET.4',
+]);
+
+function getBespokeFullMissionMatcher(
+  cardId: string,
+): ((event: IMissionEvent) => boolean) | undefined {
+  if (cardId === 'SE EN 02') {
+    return matchesGatewayToMarsTrigger;
+  }
+  return undefined;
+}
+
+function matchesGatewayToMarsTrigger(event: IMissionEvent): boolean {
+  if (
+    (event.type === EMissionEventType.PROBE_ORBITED ||
+      event.type === EMissionEventType.PROBE_LANDED) &&
+    event.planet === EPlanet.MARS
+  ) {
+    return true;
+  }
+
+  return (
+    event.type === EMissionEventType.CARD_PLAYED &&
+    cardFlavorTextMentionsMars(event.cardId)
+  );
+}
+
+function cardFlavorTextMentionsMars(cardId: string | undefined): boolean {
+  return (
+    !!cardId &&
+    hasCardData(cardId) &&
+    CARD_IDS_WITH_MARS_FLAVOR_TEXT.has(cardId)
+  );
+}
 
 /**
  * Tracks mission state for all players.
@@ -71,6 +116,10 @@ export class MissionTracker {
       missionEffect.effectType === EEffectType.MISSION_FULL
         ? EMissionType.FULL
         : EMissionType.QUICK;
+    const matchEvent =
+      type === EMissionType.FULL
+        ? getBespokeFullMissionMatcher(cardId)
+        : undefined;
 
     this.registerMission(
       {
@@ -80,6 +129,7 @@ export class MissionTracker {
         branches: missionEffect.missions.map((item) => ({
           req: item.req,
           rewards: item.reward,
+          matchEvent,
         })),
       },
       playerId,
@@ -375,7 +425,8 @@ export class MissionTracker {
     game: IGame,
     cardId: string,
     branchIndex: number,
-  ): void {
+    onComplete?: () => IPlayerInput | undefined,
+  ): IPlayerInput | undefined {
     const missions = this.getOrCreatePlayerMissions(player.id);
     const mission = missions.find((m) => m.def.cardId === cardId);
     if (!mission) {
@@ -403,14 +454,14 @@ export class MissionTracker {
     }
 
     const branch = mission.def.branches[branchIndex];
-    applyMissionRewards(branch.rewards, player, game);
-
     branchState.completed = true;
     branchState.completedAtRound = game.round;
 
     if (mission.branchStates.every((s) => s.completed)) {
       this.markMissionFullyComplete(player, cardId);
     }
+
+    return applyMissionRewards(branch.rewards, player, game, onComplete);
   }
 
   public getMissionState(
@@ -493,8 +544,13 @@ export class MissionTracker {
         id: `complete-${t.cardId}-${t.branchIndex}`,
         label: `${t.cardName}: ${rewardDesc(t)}`,
         onSelect: (): IPlayerInput | undefined => {
-          this.completeMissionBranch(player, game, t.cardId, t.branchIndex);
-          return advance();
+          return this.completeMissionBranch(
+            player,
+            game,
+            t.cardId,
+            t.branchIndex,
+            advance,
+          );
         },
       })),
       {

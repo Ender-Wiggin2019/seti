@@ -18,6 +18,7 @@ import {
   RefillCardRowEffect,
   ResearchTechEffect,
   RotateDiscEffect,
+  ScanEffect,
 } from '../effects/index.js';
 import { createActionEvent } from '../event/GameEvent.js';
 import type { IGame } from '../IGame.js';
@@ -289,6 +290,8 @@ export class BehaviorExecutor {
     return buildCoreEffectAction(player, (game) =>
       buildLandPlanetSelection(player, game, {
         prompt: 'Select a planet to land on',
+        includeSkipOption: false,
+        payCost: false,
       }),
     );
   }
@@ -296,26 +299,21 @@ export class BehaviorExecutor {
   private buildScanAction(
     behavior: IBehavior,
     player: IPlayer,
-    card: ICard,
+    _card: ICard,
   ): SimpleDeferredAction | undefined {
     if (!behavior.scan) return undefined;
     return buildCoreEffectAction(player, (game) => {
-      const colorMarks: ESector[] = [];
-      if (behavior.scan?.markCardSector && card.sector) {
-        colorMarks.push(card.sector);
-      }
-      colorMarks.push(...(behavior.scan?.markSectors ?? []));
-
+      const colorMarks: ESector[] = behavior.scan?.markSectors ?? [];
+      const hasScanAction =
+        behavior.scan?.markEarthSectorIndex !== undefined ||
+        behavior.scan?.markCardSector === true;
       const continueWithColorMarks = () =>
         MarkSectorSignalEffect.markByColorChain(player, game, colorMarks);
 
-      if (behavior.scan?.markEarthSectorIndex !== undefined) {
-        return MarkSectorSignalEffect.markByIndexWithAlternatives(
-          player,
-          game,
-          behavior.scan.markEarthSectorIndex,
-          () => continueWithColorMarks(),
-        );
+      if (hasScanAction) {
+        return ScanEffect.execute(player, game, {
+          onComplete: () => continueWithColorMarks(),
+        });
       }
 
       return continueWithColorMarks();

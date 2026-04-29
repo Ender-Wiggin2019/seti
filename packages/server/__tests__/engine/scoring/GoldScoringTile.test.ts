@@ -1,9 +1,16 @@
-import { EResource, ETrace } from '@seti/common/types/element';
+import {
+  EPlanet,
+  EResource,
+  ESector,
+  ETrace,
+} from '@seti/common/types/element';
 import { ETechId } from '@seti/common/types/tech';
+import { ESolarSystemElementType } from '@/engine/board/SolarSystem.js';
 import { Game } from '@/engine/Game.js';
 import { EPieceType } from '@/engine/player/Pieces.js';
 import {
   GoldScoringTile,
+  scoreEndGameCard,
   type TGoldScoringTileId,
 } from '@/engine/scoring/GoldScoringTile.js';
 import { placeTraceForTestSetup } from '../../helpers/traceTestUtils.js';
@@ -150,6 +157,37 @@ describe('GoldScoringTile', () => {
       expect(tile.scorePlayer(p1, game)).toBe(10);
     });
 
+    it('scores end-game cards per fulfilled sector color', () => {
+      const game = createTestGame('g92-endgame-sector-fulfills');
+      const p1 = game.players[0];
+
+      const redSector = game.sectors.find(
+        (sector) => sector.color === ESector.RED,
+      );
+      const yellowSector = game.sectors.find(
+        (sector) => sector.color === ESector.YELLOW,
+      );
+      const blueSector = game.sectors.find(
+        (sector) => sector.color === ESector.BLUE,
+      );
+      const blackSector = game.sectors.find(
+        (sector) => sector.color === ESector.BLACK,
+      );
+      if (!redSector || !yellowSector || !blueSector || !blackSector) {
+        throw new Error('expected all sector colors in test game');
+      }
+
+      redSector.sectorWinners.push('p1', 'p1', 'p2');
+      yellowSector.sectorWinners.push('p1');
+      blueSector.sectorWinners.push('p1', 'p2');
+      blackSector.sectorWinners.push('p2', 'p1', 'p1', 'p1');
+
+      expect(scoreEndGameCard('38', p1, game)).toBe(6);
+      expect(scoreEndGameCard('40', p1, game)).toBe(3);
+      expect(scoreEndGameCard('42', p1, game)).toBe(3);
+      expect(scoreEndGameCard('44', p1, game)).toBe(9);
+    });
+
     it('9.2.8 [集成] 其他 B：floor((已完成任务 + 终局计分牌) / 2)', () => {
       const game = createTestGame('g92-other-b');
       const p1 = game.players[0];
@@ -183,6 +221,190 @@ describe('GoldScoringTile', () => {
 
       expect(sideA.scorePlayer(p1, game)).toBe(8);
       expect(sideB.scorePlayer(p1, game)).toBe(12);
+    });
+  });
+
+  describe('scoreEndGameCard card-specific Base scoring', () => {
+    it.each([
+      {
+        cardId: '62',
+        name: 'Onsala Telescope Construction',
+        targetTrace: ETrace.RED,
+        ignoredTrace: ETrace.YELLOW,
+      },
+      {
+        cardId: '63',
+        name: 'SHERLOC',
+        targetTrace: ETrace.YELLOW,
+        ignoredTrace: ETrace.BLUE,
+      },
+      {
+        cardId: '68',
+        name: 'DUNE',
+        targetTrace: ETrace.BLUE,
+        ignoredTrace: ETrace.RED,
+      },
+    ])(
+      'scores Base $cardId $name from its printed trace color',
+      ({ cardId, targetTrace, ignoredTrace }) => {
+        const game = createTestGame(`endgame-${cardId}-trace`);
+        const p1 = game.players[0];
+
+        placeTraceForTestSetup(game.alienState, p1, game, targetTrace, 0);
+        placeTraceForTestSetup(game.alienState, p1, game, targetTrace, 0);
+        placeTraceForTestSetup(game.alienState, p1, game, ignoredTrace, 0);
+
+        expect(scoreEndGameCard(cardId, p1, game)).toBe(4);
+      },
+    );
+
+    it('scores Base 126 Euclid Telescope Construction from computer techs', () => {
+      const game = createTestGame('endgame-126-computer-tech');
+      const p1 = game.players[0];
+      p1.techs = [
+        ETechId.COMPUTER_VP_CREDIT,
+        ETechId.COMPUTER_VP_ENERGY,
+        ETechId.SCAN_EARTH_LOOK,
+        ETechId.PROBE_ASTEROID,
+      ];
+
+      expect(scoreEndGameCard('126', p1, game)).toBe(4);
+    });
+
+    it('scores Base 12 Europa Clipper per own orbiter or lander at Jupiter including moons', () => {
+      const game = createTestGame('endgame-12-jupiter');
+      const p1 = game.players[0];
+      const jupiter = game.planetaryBoard?.planets.get(EPlanet.JUPITER);
+      const mars = game.planetaryBoard?.planets.get(EPlanet.MARS);
+      if (!jupiter || !mars) {
+        throw new Error('expected planetary board with Jupiter and Mars');
+      }
+
+      jupiter.orbitSlots.push({ playerId: 'p1' }, { playerId: 'p2' });
+      jupiter.landingSlots.push({ playerId: 'p1' });
+      jupiter.moonOccupant = { playerId: 'p1' };
+      mars.orbitSlots.push({ playerId: 'p1' });
+
+      expect(scoreEndGameCard('12', p1, game)).toBe(9);
+    });
+
+    it('scores Base 14 Mars Science Laboratory per own orbiter or lander at Mars including moons', () => {
+      const game = createTestGame('endgame-14-mars');
+      const p1 = game.players[0];
+      const mars = game.planetaryBoard?.planets.get(EPlanet.MARS);
+      const jupiter = game.planetaryBoard?.planets.get(EPlanet.JUPITER);
+      if (!mars || !jupiter) {
+        throw new Error('expected planetary board with Mars and Jupiter');
+      }
+
+      mars.orbitSlots.push({ playerId: 'p1' });
+      mars.landingSlots.push({ playerId: 'p1' }, { playerId: 'p2' });
+      mars.moonOccupant = { playerId: 'p1' };
+      jupiter.orbitSlots.push({ playerId: 'p1' });
+
+      expect(scoreEndGameCard('14', p1, game)).toBe(12);
+    });
+
+    it('scores Base 86 Giant Magellan Telescope once per sector with an own signal', () => {
+      const game = createTestGame('endgame-86-sector-signals');
+      const p1 = game.players[0];
+      const [firstSector, secondSector, opponentSector] = game.sectors;
+      if (!firstSector || !secondSector || !opponentSector) {
+        throw new Error('expected at least three sectors');
+      }
+
+      firstSector.markSignal('p1');
+      firstSector.markSignal('p1');
+      secondSector.markSignal('p1');
+      opponentSector.markSignal('p2');
+
+      expect(scoreEndGameCard('86', p1, game)).toBe(2);
+    });
+
+    it('scores Base 113 Solvay Conference as the best rightmost slot on a gold tile the player did not mark', () => {
+      const game = createTestGame('endgame-113-solvay');
+      const p1 = game.players[0];
+      p1.completedMissions = Array.from(
+        { length: 10 },
+        (_, index) => `m${index}`,
+      );
+      p1.tuckedIncomeCards = [
+        { income: EResource.ENERGY },
+        { income: EResource.ENERGY },
+        { income: EResource.ENERGY },
+      ];
+
+      const markedMissionTile = new GoldScoringTile({
+        id: 'mission',
+        side: 'A',
+        slotValues: [9, 7, 5],
+      });
+      markedMissionTile.claim(p1.id);
+
+      game.goldScoringTiles = [
+        markedMissionTile,
+        new GoldScoringTile({
+          id: 'tech',
+          side: 'A',
+          slotValues: [8, 6, 4, 2],
+        }),
+        new GoldScoringTile({
+          id: 'income',
+          side: 'A',
+          slotValues: [8, 6, 4, 3],
+        }),
+      ];
+
+      expect(scoreEndGameCard('113', p1, game)).toBe(9);
+    });
+
+    it('scores Base 113 even when the unmarked tile has no claimable spaces, and scores 0 when all tiles were marked by the player', () => {
+      const game = createTestGame('endgame-113-solvay-full-tile');
+      const p1 = game.players[0];
+      p1.completedMissions = ['m1', 'm2', 'm3', 'm4'];
+
+      const fullUnmarkedMissionTile = new GoldScoringTile({
+        id: 'mission',
+        side: 'A',
+        slotValues: [8, 6],
+      });
+      fullUnmarkedMissionTile.claim('p2');
+      fullUnmarkedMissionTile.claim('p3');
+
+      const markedOtherTile = new GoldScoringTile({
+        id: 'other',
+        side: 'B',
+        slotValues: [5, 4, 3, 2],
+      });
+      markedOtherTile.claim(p1.id);
+
+      game.goldScoringTiles = [fullUnmarkedMissionTile, markedOtherTile];
+
+      expect(scoreEndGameCard('113', p1, game)).toBe(24);
+
+      fullUnmarkedMissionTile.claims.push({ playerId: p1.id, value: 0 });
+      expect(scoreEndGameCard('113', p1, game)).toBe(0);
+    });
+
+    it('scores Base 127 NEAR Shoemaker only when the player has a probe on asteroids', () => {
+      const game = createTestGame('endgame-127-asteroids');
+      const p1 = game.players[0];
+      const asteroidSpace = game.solarSystem?.spaces.find((space) =>
+        space.elements.some(
+          (element) =>
+            element.type === ESolarSystemElementType.ASTEROID &&
+            element.amount > 0,
+        ),
+      );
+      if (!game.solarSystem || !asteroidSpace) {
+        throw new Error('expected solar system with an asteroid space');
+      }
+
+      game.solarSystem.placeProbe('p2', asteroidSpace.id);
+      expect(scoreEndGameCard('127', p1, game)).toBe(0);
+
+      game.solarSystem.placeProbe('p1', asteroidSpace.id);
+      expect(scoreEndGameCard('127', p1, game)).toBe(13);
     });
   });
 

@@ -1,3 +1,18 @@
+import { AlteredTrajectory } from '../alien/AlteredTrajectoryCard.js';
+import { AmazingUncertaintyCard } from '../alien/AmazingUncertaintyCard.js';
+import { AreWeBeingObservedCard } from '../alien/AreWeBeingObservedCard.js';
+import { CloseUpViewCard } from '../alien/CloseUpViewCard.js';
+import { ExcavationRover } from '../alien/ExcavationRoverCard.js';
+import { ExofossilDiscovery } from '../alien/ExofossilDiscoveryCard.js';
+import { ExofossilSamples } from '../alien/ExofossilSamplesCard.js';
+import { FloodingTheMediaSpaceCard } from '../alien/FloodingTheMediaSpaceCard.js';
+import { ListeningCarefullyCard } from '../alien/ListeningCarefullyCard.js';
+import { PartOfEverydayLifeCard } from '../alien/PartOfEverydayLifeCard.js';
+import { PerfectTiming } from '../alien/PerfectTimingCard.js';
+import { ProbeCustomisation } from '../alien/ProbeCustomisationCard.js';
+import { SignsOfLifeCard } from '../alien/SignsOfLifeCard.js';
+import { TerrainMapping } from '../alien/TerrainMappingCard.js';
+import { VisitorInTheSky } from '../alien/VisitorInTheSkyCard.js';
 import { createGenericCard } from '../base/GenericCards.js';
 import type { CardRegistry } from '../CardRegistry.js';
 import { loadCardData } from '../loadCardData.js';
@@ -33,11 +48,11 @@ export function registerAlienCards(registry: CardRegistry): void {
   // ============================================================
   // ALIEN — immediate with DESC (alien-specific special effects)
   // ============================================================
-  g(registry, 'ET.11'); // Signs of Life              | LAUNCH, DESC
-  g(registry, 'ET.12'); // Close-up View              | MOVE(5), DESC
-  g(registry, 'ET.14'); // Listening Carefully         | SCAN, DESC
-  g(registry, 'ET.15'); // Part of Everyday Life       | CARD(3), DESC
-  g(registry, 'ET.16'); // Flooding the Media Space    | DESC(special)
+  registry.register('ET.11', () => new SignsOfLifeCard()); // Signs of Life              | LAUNCH, DESC
+  registry.register('ET.12', () => new CloseUpViewCard()); // Close-up View              | MOVE(5), DESC
+  registry.register('ET.14', () => new ListeningCarefullyCard()); // Listening Carefully         | SCAN, DESC
+  registry.register('ET.15', () => new PartOfEverydayLifeCard()); // Part of Everyday Life       | CARD(3), DESC
+  registry.register('ET.16', () => new FloodingTheMediaSpaceCard()); // Flooding the Media Space    | DESC(special)
   g(registry, 'ET.18'); // Message Capsule             | ROTATE, TECH_ANY
   g(registry, 'ET.19'); // New Physics                 | TRACE_ANY
 
@@ -45,30 +60,30 @@ export function registerAlienCards(registry: CardRegistry): void {
   // ALIEN — mission with DESC
   // ============================================================
   g(registry, 'ET.13'); // Concerned People            | PUBLICITY, FM
-  g(registry, 'ET.17'); // Are we Being Observed?      | DESC, QM
+  registry.register('ET.17', () => new AreWeBeingObservedCard()); // Are we Being Observed?      | DESC, QM
 
   // ============================================================
   // ALIEN — signal/scan group
   // ============================================================
-  g(registry, 'ET.20'); // Amazing Uncertainty         | ANY_SIGNAL, DESC, DESC
-  g(registry, 'ET.21'); // Visitor in the Sky          | SCAN, DESC, QM
-  g(registry, 'ET.22'); // Altered Trajectory          | SCAN, DESC, QM
-  g(registry, 'ET.23'); // Exofossil Discovery         | ANY_SIGNAL, DESC, QM
+  registry.register('ET.20', () => new AmazingUncertaintyCard()); // Amazing Uncertainty         | ANY_SIGNAL, DESC, DESC
+  registry.register('ET.21', () => new VisitorInTheSky()); // Visitor in the Sky          | SCAN, DESC, QM
+  registry.register('ET.22', () => new AlteredTrajectory()); // Altered Trajectory          | SCAN, DESC, QM
+  registry.register('ET.23', () => new ExofossilDiscovery()); // Exofossil Discovery         | ANY_SIGNAL, DESC, QM
 
   // ============================================================
   // ALIEN — endgame + signal/observation
   // ============================================================
-  g(registry, 'ET.24'); // Terrain Mapping             | 3-color signals, DESC, EG
+  registry.register('ET.24', () => new TerrainMapping()); // Terrain Mapping             | 3-color signals, DESC, EG
 
   // ============================================================
   // ALIEN — probe/land + special
   // ============================================================
-  g(registry, 'ET.25'); // Probe Customisation         | DESC, LAND
+  registry.register('ET.25', () => new ProbeCustomisation()); // Probe Customisation         | DESC, LAND
   g(registry, 'ET.26'); // Race Against Time           | LAUNCH, EXOFOSSIL
-  g(registry, 'ET.27'); // Perfect Timing              | MOVE(4), DESC, QM
-  g(registry, 'ET.28'); // Exofossil Samples           | ROTATE, TECH_COMPUTER, DESC
+  registry.register('ET.27', () => new PerfectTiming()); // Perfect Timing              | MOVE(4), DESC, QM
+  registry.register('ET.28', () => new ExofossilSamples()); // Exofossil Samples           | ROTATE, TECH_COMPUTER, DESC
   g(registry, 'ET.29'); // Comparative Analysis        | EXOFOSSIL, FM
-  g(registry, 'ET.30'); // Excavation Rover            | LAND, DESC, QM
+  registry.register('ET.30', () => new ExcavationRover()); // Excavation Rover            | LAND, DESC, QM
 
   // ============================================================
   // ALIEN — advanced tech cards (no effects data, alien-specific)

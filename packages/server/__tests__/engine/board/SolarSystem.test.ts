@@ -368,12 +368,18 @@ describe('SolarSystem', () => {
     expect(game.solarSystem!.rotationCounter).toBe(before + 1);
   });
 
-  it('rotates the solar system when a card grants TECH without a printed ROTATE icon', () => {
-    // Card 81 "Int'l Collaboration" prints TECH_ANY + DESC only (no ROTATE).
-    // Rule: card-granted tech still performs a research flow, including a
-    // solar-system rotation.
+  it('does not rotate when the card text says to take tech without advancing the solar system', () => {
+    // Card 81 "Int'l Collaboration" prints TECH_ANY + DESC. Its DESC text
+    // explicitly says not to advance the solar system for this tech.
     const game = createIntegrationGame('solar-card-tech-only-no-rotate');
     const player = game.players[0];
+    const otherPlayer = game.players[1];
+    const techResearchedByOtherPlayer =
+      game.techBoard!.getAvailableTechs(player.id)[0];
+    if (!techResearchedByOtherPlayer) {
+      throw new Error('expected an available tech');
+    }
+    otherPlayer.gainTech(techResearchedByOtherPlayer);
     player.hand = ['81'];
     game.mainDeck = new Deck(['refill-1', 'refill-2'], []);
     const before = game.solarSystem!.rotationCounter;
@@ -385,7 +391,7 @@ describe('SolarSystem', () => {
     resolveAllInputs(game, player.id);
 
     expect(player.techs).toHaveLength(1);
-    expect(game.solarSystem!.rotationCounter).toBe(before + 1);
+    expect(game.solarSystem!.rotationCounter).toBe(before);
   });
 
   it('rotates only on the first PASS of the round', () => {

@@ -3,6 +3,7 @@ import { EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import type { ETechId } from '@seti/common/types/tech';
 import { GameError } from '@/shared/errors/GameError.js';
+import { hasCardData, loadCardData } from '../cards/loadCardData.js';
 import { SimpleDeferredAction } from '../deferred/SimpleDeferredAction.js';
 import type {
   ILandOptions,
@@ -29,6 +30,32 @@ function assertValidInteger(label: string, value: number, minValue = 0): void {
       { label, value, minValue },
     );
   }
+}
+
+const INCOME_RESOURCE_MAP: Record<EResource, EResource | undefined> = {
+  [EResource.CREDIT]: EResource.CREDIT,
+  [EResource.ENERGY]: EResource.ENERGY,
+  [EResource.DATA]: EResource.DATA,
+  [EResource.PUBLICITY]: undefined,
+  [EResource.SCORE]: undefined,
+  [EResource.CARD]: EResource.CARD,
+  [EResource.CARD_ANY]: undefined,
+  [EResource.MOVE]: undefined,
+};
+
+function resolveCardId(card: TCardItem): string | undefined {
+  if (typeof card === 'string') return card;
+  return card.id;
+}
+
+function resolveTuckedIncomeResource(card: TCardItem): EResource | undefined {
+  if (typeof card !== 'string' && card.income !== undefined) {
+    return INCOME_RESOURCE_MAP[card.income as EResource];
+  }
+
+  const cardId = resolveCardId(card);
+  if (!cardId || !hasCardData(cardId)) return undefined;
+  return INCOME_RESOURCE_MAP[loadCardData(cardId).income];
 }
 
 export class Player implements IPlayer {
@@ -252,6 +279,15 @@ export class Player implements IPlayer {
 
   public getMoveStash(): number {
     return this.moveStashCount;
+  }
+
+  public addTuckedIncomeFromCard(card: TCardItem): EResource | undefined {
+    this.tuckedIncomeCards.push(card);
+    const incomeResource = resolveTuckedIncomeResource(card);
+    if (incomeResource !== undefined) {
+      this.income.addTuckedIncome(incomeResource);
+    }
+    return incomeResource;
   }
 
   public gainExofossils(amount = 1): void {

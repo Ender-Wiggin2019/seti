@@ -13,6 +13,7 @@ import { AnySignalQuickMissionCard } from '@/engine/cards/base/AnySignalQuickMis
 import { getCardRegistry } from '@/engine/cards/CardRegistry.js';
 import { Deck } from '@/engine/deck/Deck.js';
 import { DeferredActionsQueue } from '@/engine/deferred/DeferredActionsQueue.js';
+import { EPriority } from '@/engine/deferred/Priority.js';
 import { EventLog } from '@/engine/event/EventLog.js';
 import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
@@ -172,6 +173,69 @@ describe('AnySignalQuickMissionCard', () => {
     const pendingInput = game.deferredActions.drain(game);
     expect(pendingInput).toBeUndefined();
     expect(sectors[2].getPlayerMarkerCount(player.id)).toBe(2);
+  });
+
+  it('card 88 signal placement resolves before same-turn quick mission checks', () => {
+    const player = createPlayer();
+    const sectors = createIndexedSectors();
+    const solarSystem = createSolarSystem();
+    solarSystem.placeProbe(
+      player.id,
+      firstSpaceIdForSectorIndex(solarSystem, 2),
+    );
+    const game = createGame(sectors, solarSystem);
+
+    const card = getCardRegistry().create('88');
+    card.play({ player, game });
+
+    expect(game.deferredActions.peek()?.priority).toBe(EPriority.CORE_EFFECT);
+  });
+
+  it('card 88 marks both signals in the selected probe sector without prompting again', () => {
+    const player = createPlayer();
+    const sectors = createIndexedSectors();
+    const solarSystem = createSolarSystem();
+
+    solarSystem.placeProbe(
+      player.id,
+      firstSpaceIdForSectorIndex(solarSystem, 1),
+    );
+    solarSystem.placeProbe(
+      player.id,
+      firstSpaceIdForSectorIndex(solarSystem, 5),
+    );
+
+    const game = createGame(sectors, solarSystem);
+    const card = getCardRegistry().create('88');
+    card.play({ player, game });
+
+    const sectorInput = game.deferredActions.drain(game);
+    expect(sectorInput?.type).toBe(EPlayerInputType.OPTION);
+
+    const done = sectorInput?.process({
+      type: EPlayerInputType.OPTION,
+      optionId: 'probe-sector-sector-5',
+    });
+
+    expect(done).toBeUndefined();
+    expect(sectors[5].getPlayerMarkerCount(player.id)).toBe(2);
+    expect(sectors[1].getPlayerMarkerCount(player.id)).toBe(0);
+  });
+
+  it('card 88 quick mission completes when the player has signals in four different sectors', () => {
+    const player = createPlayer();
+    const card = getCardRegistry().create('88');
+    const mission = card.getMissionDef?.();
+
+    expect(mission).toBeDefined();
+    expect(mission?.branches[0].checkCondition).toBeTypeOf('function');
+
+    const game = createGame(createIndexedSectors(), createSolarSystem());
+    for (const sector of game.sectors.slice(0, 4)) {
+      sector.markSignal(player.id);
+    }
+
+    expect(mission?.branches[0].checkCondition?.(player, game)).toBe(true);
   });
 
   it('card 88 offers sector/tile choice when the only probe sector contains oumuamua', () => {

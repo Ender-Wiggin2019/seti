@@ -1,39 +1,98 @@
 import { EStarName } from '@seti/common/constant/sectorSetup';
 import { EPlanet } from '@seti/common/types/protocol/enums';
 import { AdvancedNavigationSystem } from '../base/AdvancedNavigationSystemCard.js';
+import { AlgonquinRadioObservatoryCard } from '../base/AlgonquinRadioObservatoryCard.js';
 import { Alice } from '../base/AliceCard.js';
+import { AllenTelescopeArrayCard } from '../base/AllenTelescopeArrayCard.js';
+import { AlmaObservatoryCard } from '../base/AlmaObservatoryCard.js';
+import { AmateurAstronomersCard } from '../base/AmateurAstronomersCard.js';
 import { AnySignalQuickMissionCard } from '../base/AnySignalQuickMissionCard.js';
 import { Apollo11Mission } from '../base/Apollo11MissionCard.js';
+import { AreciboObservatoryCard } from '../base/AreciboObservatoryCard.js';
+import { AsteroidsFlybyCard } from '../base/AsteroidsFlybyCard.js';
 import { AsteroidsResearch } from '../base/AsteroidsResearchCard.js';
 import { Atlas } from '../base/AtlasCard.js';
+import { AtmosphericEntryCard } from '../base/AtmosphericEntryCard.js';
+import { BarnardsStarObservationCard } from '../base/BarnardsStarObservationCard.js';
 import { CassiniProbe } from '../base/CassiniProbeCard.js';
+import { CleanSpaceInitiativeCard } from '../base/CleanSpaceInitiativeCard.js';
+import { CometaryEncounterCard } from '../base/CometaryEncounterCard.js';
 import { CornellUniversity } from '../base/CornellUniversityCard.js';
+import { CoronalSpectrographCard } from '../base/CoronalSpectrographCard.js';
+import { DeepSynopticArrayCard } from '../base/DeepSynopticArrayCard.js';
 import { Dragonfly } from '../base/DragonflyCard.js';
+import { ElectronMicroscopeCard } from '../base/ElectronMicroscopeCard.js';
+import { EuclidTelescopeConstructionCard } from '../base/EuclidTelescopeConstructionCard.js';
+import { EuropaClipperCard } from '../base/EuropaClipperCard.js';
+import { ExascaleSupercomputerCard } from '../base/ExascaleSupercomputerCard.js';
+import { ExtremophilesStudyCard } from '../base/ExtremophilesStudyCard.js';
+import { FalconHeavyCard } from '../base/FalconHeavyCard.js';
+import { FocusedResearchCard } from '../base/FocusedResearchCard.js';
+import { FuelTanksConstruction } from '../base/FuelTanksConstructionCard.js';
+import { FusionReactor } from '../base/FusionReactorCard.js';
 import { createGenericCard } from '../base/GenericCards.js';
 import { GmrtTelescope } from '../base/GmrtTelescopeCard.js';
+import { GovernmentFunding } from '../base/GovernmentFundingCard.js';
+import { GrantCard } from '../base/GrantCard.js';
+import { GravitationalSlingshotCard } from '../base/GravitationalSlingshotCard.js';
+import { GreatObservatoriesProjectCard } from '../base/GreatObservatoriesProjectCard.js';
 import { GreenBankTelescope } from '../base/GreenBankTelescopeCard.js';
+import { HayabusaCard } from '../base/HayabusaCard.js';
 import { HerschelSpaceObservatory } from '../base/HerschelSpaceObservatoryCard.js';
+import { HubbleSpaceTelescope } from '../base/HubbleSpaceTelescopeCard.js';
+import { InternationalCollaborationCard } from '../base/InternationalCollaborationCard.js';
+import { JamesWebbSpaceTelescope } from '../base/JamesWebbSpaceTelescopeCard.js';
 import { JunoProbe } from '../base/JunoProbeCard.js';
+import { JupiterFlybyCard } from '../base/JupiterFlybyCard.js';
+import { Kepler22ObservationCard } from '../base/Kepler22ObservationCard.js';
+import { KeplerSpaceTelescope } from '../base/KeplerSpaceTelescopeCard.js';
+import { LightsailCard } from '../base/LightsailCard.js';
 import { LinguisticAnalysis } from '../base/LinguisticAnalysisCard.js';
 import { LovellTelescope } from '../base/LovellTelescopeCard.js';
+import { MarsFlybyCard } from '../base/MarsFlybyCard.js';
+import { MercuryFlybyCard } from '../base/MercuryFlybyCard.js';
 import { MessengerProbe } from '../base/MessengerProbeCard.js';
+import { NasaImageOfTheDay } from '../base/NasaImageOfTheDayCard.js';
 import { NearEarthAsteroidsSurvey } from '../base/NearEarthAsteroidsSurveyCard.js';
 import { NiacProgram } from '../base/NiacProgramCard.js';
+import { NotAPlanetSince2006Card } from '../base/NotAPlanetSince2006Card.js';
 import { ObservationQuickMissionCard } from '../base/ObservationQuickMissionCard.js';
 import { OdinusMission } from '../base/OdinusMissionCard.js';
+import { OptimalLaunchWindow } from '../base/OptimalLaunchWindowCard.js';
+import { OrbitingLagrangePointCard } from '../base/OrbitingLagrangePointCard.js';
+import { OsirisRexCard } from '../base/OsirisRexCard.js';
+import { ParkesObservatoryCard } from '../base/ParkesObservatoryCard.js';
+import { PerseveranceRoverCard } from '../base/PerseveranceRoverCard.js';
+import { PIXL } from '../base/PixlCard.js';
 import { PlanetaryGeologicMap } from '../base/PlanetaryGeologicMapCard.js';
+import { PlanetHuntersCard } from '../base/PlanetHuntersCard.js';
+import { PlatoCard } from '../base/PlatoCard.js';
+import { PreLaunchTestingCard } from '../base/PreLaunchTestingCard.js';
+import { ProcyonObservationCard } from '../base/ProcyonObservationCard.js';
 import { ProjectLongshot } from '../base/ProjectLongshotCard.js';
 import { QuantumComputer } from '../base/QuantumComputerCard.js';
 import { RomanSpaceTelescope } from '../base/RomanSpaceTelescopeCard.js';
 import { RosettaProbe } from '../base/RosettaProbeCard.js';
+import { SampleReturnCard } from '../base/SampleReturnCard.js';
+import { SaturnFlybyCard } from '../base/SaturnFlybyCard.js';
+import { ScientificCooperationCard } from '../base/ScientificCooperationCard.js';
+import { SetiAtHome } from '../base/SetiAtHomeCard.js';
 import { SpaceLaunchSystem } from '../base/SpaceLaunchSystemCard.js';
 import { SpaceShuttle } from '../base/SpaceShuttleCard.js';
 import { SquareKilometreArray } from '../base/SquareKilometreArrayCard.js';
 import { TardigradesStudy } from '../base/TardigradesStudyCard.js';
+import { ThroughAsteroidBeltCard } from '../base/ThroughAsteroidBeltCard.js';
+import { TrajectoryCorrectionCard } from '../base/TrajectoryCorrectionCard.js';
 import { TridentProbe } from '../base/TridentProbeCard.js';
 import { UranusOrbiter } from '../base/UranusOrbiterCard.js';
+import { VegaObservationCard } from '../base/VegaObservationCard.js';
 import { VeneraProbe } from '../base/VeneraProbeCard.js';
+import { VenusFlybyCard } from '../base/VenusFlybyCard.js';
+import { VeritasTelescopesCard } from '../base/VeritasTelescopesCard.js';
+import { VeryLargeArrayCard } from '../base/VeryLargeArrayCard.js';
 import { WesterborkTelescope } from '../base/WesterborkTelescopeCard.js';
+import { WowSignalCard } from '../base/WowSignalCard.js';
+import { YevpatoriaTelescopeCard } from '../base/YevpatoriaTelescopeCard.js';
 import type { CardRegistry } from '../CardRegistry.js';
 import { loadCardData } from '../loadCardData.js';
 
@@ -228,14 +287,14 @@ export function registerBaseCards(registry: CardRegistry): void {
   // ============================================================
 
   // Observation endgame: signal + star location + EG scoring
-  g(registry, '38'); // Barnard's Star Obs      | SIGNAL_RED(2), DESC(location), EG(per fulfill-red)
-  g(registry, '40'); // Kepler 22 Obs           | SIGNAL_YELLOW(2), DESC(location), EG(per fulfill-yellow)
-  g(registry, '42'); // Procyon Obs             | SIGNAL_BLUE(2), DESC(location), EG(per fulfill-blue)
-  g(registry, '44'); // Vega Obs                | SIGNAL_BLACK, DESC(location), EG(per fulfill-black)
+  registry.register('38', () => new BarnardsStarObservationCard()); // Barnard's Star Obs      | SIGNAL_RED(2), DESC(location), EG(per fulfill-red)
+  registry.register('40', () => new Kepler22ObservationCard()); // Kepler 22 Obs           | SIGNAL_YELLOW(2), DESC(location), EG(per fulfill-yellow)
+  registry.register('42', () => new ProcyonObservationCard()); // Procyon Obs             | SIGNAL_BLUE(2), DESC(location), EG(per fulfill-blue)
+  registry.register('44', () => new VegaObservationCard()); // Vega Obs                | SIGNAL_BLACK, DESC(location), EG(per fulfill-black)
 
   // Other endgame + DESC
-  g(registry, '12'); // Europa Clipper          | LAND, DESC, EG
-  g(registry, '126'); // Euclid Telescope        | OR(ROTATE+TECH), DESC, EG
+  registry.register('12', () => new EuropaClipperCard()); // Europa Clipper          | LAND, DESC, EG
+  registry.register('126', () => new EuclidTelescopeConstructionCard()); // Euclid Telescope        | OR(ROTATE+TECH), DESC, EG
 
   // END GAME + display-card-signal
   g(registry, '86'); // Giant Magellan Tel      | DISPLAY_CARD_SIGNAL, EG
@@ -244,17 +303,17 @@ export function registerBaseCards(registry: CardRegistry): void {
   // IMMEDIATE + DESC — flyby group (MOVE + planet bonus)
   // Cards 19-29: grant movement + bonus when probe passes planet
   // ============================================================
-  g(registry, '19'); // Gravitational Slingshot | MOVE(2), DESC(bonus)
-  g(registry, '20'); // Mercury Flyby          | MOVE(2), DESC(mercury bonus)
-  g(registry, '21'); // Venus Flyby            | MOVE(2), DESC(venus bonus)
-  g(registry, '22'); // Mars Flyby             | MOVE(2), DESC(mars bonus)
-  g(registry, '23'); // Jupiter Flyby          | MOVE(2), DESC(jupiter bonus)
-  g(registry, '24'); // Saturn Flyby           | MOVE(3), DESC(saturn bonus)
-  g(registry, '25'); // Lightsail              | MOVE(4), DESC(bonus)
-  g(registry, '26'); // Through Asteroid Belt  | MOVE(2), DESC(bonus)
-  g(registry, '27'); // Hubble Space Telescope | MOVE(1), DESC(bonus)
-  g(registry, '28'); // Kepler Space Telescope | MOVE(1), DESC(bonus)
-  g(registry, '29'); // James Webb Space Tel   | MOVE(1), DESC(bonus)
+  registry.register('19', () => new GravitationalSlingshotCard()); // Gravitational Slingshot | MOVE(2), DESC(bonus)
+  registry.register('20', () => new MercuryFlybyCard()); // Mercury Flyby          | MOVE(2), DESC(mercury bonus)
+  registry.register('21', () => new VenusFlybyCard()); // Venus Flyby            | MOVE(2), DESC(venus bonus)
+  registry.register('22', () => new MarsFlybyCard()); // Mars Flyby             | MOVE(2), DESC(mars bonus)
+  registry.register('23', () => new JupiterFlybyCard()); // Jupiter Flyby          | MOVE(2), DESC(jupiter bonus)
+  registry.register('24', () => new SaturnFlybyCard()); // Saturn Flyby           | MOVE(3), DESC(saturn bonus)
+  registry.register('25', () => new LightsailCard()); // Lightsail              | MOVE(4), DESC(bonus)
+  registry.register('26', () => new ThroughAsteroidBeltCard()); // Through Asteroid Belt  | MOVE(2), DESC(bonus)
+  registry.register('27', () => new HubbleSpaceTelescope()); // Hubble Space Telescope | MOVE(1), DESC(bonus)
+  registry.register('28', () => new KeplerSpaceTelescope()); // Kepler Space Telescope | MOVE(1), DESC(bonus)
+  registry.register('29', () => new JamesWebbSpaceTelescope()); // James Webb Space Tel   | MOVE(1), DESC(bonus)
 
   // ============================================================
   // IMMEDIATE + DESC — telescope/scan group
@@ -262,90 +321,90 @@ export function registerBaseCards(registry: CardRegistry): void {
   // ============================================================
 
   // Scan action + DESC (custom scan behavior)
-  g(registry, '52'); // Parkes Observatory      | SCAN, DESC
-  g(registry, '53'); // Deep Synoptic Array     | SCAN, DESC
-  g(registry, '54'); // VERITAS Telescopes      | SCAN, DESC
-  g(registry, '55'); // Arecibo Observatory     | SCAN, DESC
+  registry.register('52', () => new ParkesObservatoryCard()); // Parkes Observatory      | SCAN, DESC
+  registry.register('53', () => new DeepSynopticArrayCard()); // Deep Synoptic Array     | SCAN, DESC
+  registry.register('54', () => new VeritasTelescopesCard()); // VERITAS Telescopes      | SCAN, DESC
+  registry.register('55', () => new AreciboObservatoryCard()); // Arecibo Observatory     | SCAN, DESC
 
   // Signal + DESC
-  g(registry, '136'); // Algonquin Radio Obs     | 4-color signals, DESC
+  registry.register('136', () => new AlgonquinRadioObservatoryCard()); // Algonquin Radio Obs     | 4-color signals, DESC
 
   // Telescope + DESC (tech + scan + desc)
-  g(registry, '67'); // Yevpatoria Telescope    | PUBLICITY, ROTATE, TECH_SCAN, DESC
-  g(registry, '119'); // PIXL                    | ROTATE, TECH_COMPUTER, DESC
+  registry.register('67', () => new YevpatoriaTelescopeCard()); // Yevpatoria Telescope    | PUBLICITY, ROTATE, TECH_SCAN, DESC
+  registry.register('119', () => new PIXL()); // PIXL                    | ROTATE, TECH_COMPUTER, DESC
 
   // ============================================================
   // IMMEDIATE + DESC — telescope/signal
   // ============================================================
-  g(registry, '45'); // Allen Telescope Array   | DISPLAY_CARD_SIGNAL(2), DESC
-  g(registry, '46'); // ALMA Observatory        | DISPLAY_CARD_SIGNAL(2), DESC
-  g(registry, '47'); // Very Large Array        | DISPLAY_CARD_SIGNAL(2), DESC
+  registry.register('45', () => new AllenTelescopeArrayCard()); // Allen Telescope Array   | DISPLAY_CARD_SIGNAL(2), DESC
+  registry.register('46', () => new AlmaObservatoryCard()); // ALMA Observatory        | DISPLAY_CARD_SIGNAL(2), DESC
+  registry.register('47', () => new VeryLargeArrayCard()); // Very Large Array        | DISPLAY_CARD_SIGNAL(2), DESC
   g(registry, '65'); // FAST Telescope          | DISPLAY_CARD_SIGNAL(2), ROTATE, TECH_SCAN
 
-  g(registry, '83'); // Wow! Signal             | PUBLICITY, ANY_SIGNAL(2)
-  g(registry, '118'); // PLATO                   | ANY_SIGNAL(3), DESC
+  registry.register('83', () => new WowSignalCard()); // Wow! Signal             | PUBLICITY, Earth sector signals
+  registry.register('118', () => new PlatoCard()); // PLATO                   | ANY_SIGNAL(3), DESC
 
   // ============================================================
   // IMMEDIATE + DESC — tech research group
   // Tech research + additional DESC effects
   // ============================================================
-  g(registry, '71'); // Focused Research        | ROTATE, TECH_ANY, DESC
-  g(registry, '72'); // Scientific Cooperation  | ROTATE, TECH_ANY, DESC
-  g(registry, '81'); // Int'l Collaboration     | TECH_ANY, DESC
+  registry.register('71', () => new FocusedResearchCard()); // Focused Research        | ROTATE, TECH_ANY, DESC
+  registry.register('72', () => new ScientificCooperationCard()); // Scientific Cooperation  | ROTATE, TECH_ANY, DESC
+  registry.register('81', () => new InternationalCollaborationCard()); // Int'l Collaboration     | TECH_ANY, DESC
 
   // ============================================================
   // IMMEDIATE + DESC — launch group
   // Launch probes + additional DESC effects
   // ============================================================
-  g(registry, '9'); // Falcon Heavy            | LAUNCH(2), PUBLICITY, DESC(ignore probe limit)
-  g(registry, '74'); // Pre-launch Testing      | LAUNCH, DESC
-  g(registry, '133'); // Optimal Launch Window   | LAUNCH, DESC
+  registry.register('9', () => new FalconHeavyCard()); // Falcon Heavy            | LAUNCH(2), PUBLICITY, DESC(ignore probe limit)
+  registry.register('74', () => new PreLaunchTestingCard()); // Pre-launch Testing      | LAUNCH, DESC
+  registry.register('133', () => new OptimalLaunchWindow()); // Optimal Launch Window   | LAUNCH, DESC
 
   // ============================================================
   // IMMEDIATE + DESC — land group
   // Landing probes + additional DESC effects
   // ============================================================
-  g(registry, '13'); // Perseverance Rover      | LAND, DESC
+  registry.register('13', () => new PerseveranceRoverCard()); // Perseverance Rover      | LAND, DESC
 
   // ============================================================
   // IMMEDIATE + DESC — movement/flyby related
   // Movement + special effects beyond simple flyby
   // ============================================================
-  g(registry, '123'); // Asteroids Flyby         | MOVE(1), DESC
-  g(registry, '124'); // Cometary Encounter      | MOVE(2), DESC
-  g(registry, '125'); // Trajectory Correction   | MOVE(1), DESC
+  registry.register('123', () => new AsteroidsFlybyCard()); // Asteroids Flyby         | MOVE(1), DESC
+  registry.register('124', () => new CometaryEncounterCard()); // Cometary Encounter      | MOVE(2), DESC
+  registry.register('125', () => new TrajectoryCorrectionCard()); // Trajectory Correction   | MOVE(1), DESC
 
   // ============================================================
   // IMMEDIATE + DESC — resource/draw group
   // Draw cards or gain resources + DESC effects
   // ============================================================
-  g(registry, '11'); // Grant                   | CARD_ANY, DESC(reveal + gain freeAction)
-  g(registry, '15'); // Atmospheric Entry       | DESC, SCORE(3), DATA, CARD_ANY
-  g(registry, '75'); // Extremophiles Study     | TRACE_ANY, DESC
-  g(registry, '92'); // NASA Image of the Day   | PUBLICITY(2), DESC
-  g(registry, '114'); // Planet Hunters          | CARD_ANY, DESC
+  registry.register('11', () => new GrantCard()); // Grant                   | CARD_ANY, DESC(reveal + gain freeAction)
+  registry.register('15', () => new AtmosphericEntryCard()); // Atmospheric Entry       | DESC, SCORE(3), DATA, CARD_ANY
+  registry.register('75', () => new ExtremophilesStudyCard()); // Extremophiles Study     | TRACE_ANY, DESC
+  registry.register('92', () => new NasaImageOfTheDay()); // NASA Image of the Day   | PUBLICITY(2), DESC
+  registry.register('114', () => new PlanetHuntersCard()); // Planet Hunters          | CARD_ANY, DESC
 
   // ============================================================
   // IMMEDIATE + DESC — pure DESC (text-only special effects)
   // Cards with only DESC effects — no standard base effects
   // ============================================================
-  g(registry, '17'); // OSIRIS-REx              | DESC(special)
-  g(registry, '18'); // Hayabusa                | DESC(special)
-  g(registry, '30'); // Great Observatories     | DESC(special)
-  g(registry, '73'); // Clean Space Initiative  | DESC(special)
-  g(registry, '84'); // Sample Return           | DESC(special)
-  g(registry, '90'); // Fuel Tanks Construction | DESC(special)
-  g(registry, '91'); // Fusion Reactor          | DESC(special)
-  g(registry, '93'); // Government Funding      | DESC(special)
-  g(registry, '98'); // Coronal Spectrograph    | DESC(special)
-  g(registry, '99'); // Electron Microscope     | DESC(special)
-  g(registry, '100'); // Exascale Supercomputer  | DESC(special)
-  g(registry, '108'); // SETI@Home               | DESC(special)
-  g(registry, '120'); // Orbiting Lagrange Point | DESC(special)
-  g(registry, '122'); // Amateur Astronomers     | DESC(special)
+  registry.register('17', () => new OsirisRexCard()); // OSIRIS-REx              | DESC(special)
+  registry.register('18', () => new HayabusaCard()); // Hayabusa                | DESC(special)
+  registry.register('30', () => new GreatObservatoriesProjectCard()); // Great Observatories     | DESC(special)
+  registry.register('73', () => new CleanSpaceInitiativeCard()); // Clean Space Initiative  | DESC(special)
+  registry.register('84', () => new SampleReturnCard()); // Sample Return           | DESC(special)
+  registry.register('90', () => new FuelTanksConstruction()); // Fuel Tanks Construction | DESC(special)
+  registry.register('91', () => new FusionReactor()); // Fusion Reactor          | DESC(special)
+  registry.register('93', () => new GovernmentFunding()); // Government Funding      | DESC(special)
+  registry.register('98', () => new CoronalSpectrographCard()); // Coronal Spectrograph    | DESC(special)
+  registry.register('99', () => new ElectronMicroscopeCard()); // Electron Microscope     | DESC(special)
+  registry.register('100', () => new ExascaleSupercomputerCard()); // Exascale Supercomputer  | DESC(special)
+  registry.register('108', () => new SetiAtHome()); // SETI@Home               | DESC(special)
+  registry.register('120', () => new OrbitingLagrangePointCard()); // Orbiting Lagrange Point | DESC(special)
+  registry.register('122', () => new AmateurAstronomersCard()); // Amateur Astronomers     | DESC(special)
 
   // ============================================================
   // SPECIAL EDITION — base set
   // ============================================================
-  g(registry, 'SE EN 01'); // Not a planet since 2006 | DESC
+  registry.register('SE EN 01', () => new NotAPlanetSince2006Card()); // intentionally disabled
 }

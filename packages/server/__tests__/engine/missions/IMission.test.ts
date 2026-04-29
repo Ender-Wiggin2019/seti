@@ -10,5 +10,6 @@ describe('IMission enums', () => {
     expect(EMissionEventType.CARD_PLAYED).toBe('CARD_PLAYED');
     expect(EMissionEventType.TECH_RESEARCHED).toBe('TECH_RESEARCHED');
     expect(EMissionEventType.SIGNAL_PLACED).toBe('SIGNAL_PLACED');
+    expect(EMissionEventType.TRACE_MARKED).toBe('TRACE_MARKED');
   });
 });

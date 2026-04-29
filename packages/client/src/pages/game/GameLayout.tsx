@@ -37,8 +37,10 @@ import { type TBoardTab, useGameViewStore } from '@/stores/gameViewStore';
 import type {
   IMainActionRequest,
   IPlayerInputModel,
+  IPublicAlienState,
   IPublicGoldScoringTile,
   IPublicMilestoneState,
+  IPublicOumuamuaTile,
   IPublicPlayerState,
   TGameEvent,
 } from '@/types/re-exports';
@@ -77,6 +79,15 @@ function isTechBoardInput(model: IPlayerInputModel | null): boolean {
   if (model.type === EPlayerInputType.TECH) return true;
   if (model.type !== EPlayerInputType.OPTION) return false;
   return model.options.some((option) => ALL_TECH_ID_SET.has(option.id));
+}
+
+function findOumuamuaTile(
+  aliens: IPublicAlienState[] | undefined,
+): IPublicOumuamuaTile | null {
+  const oumuamua = aliens?.find((alien) => alien.board?.type === 'oumuamua');
+  return oumuamua?.board?.type === 'oumuamua'
+    ? (oumuamua.board.tile ?? null)
+    : null;
 }
 
 /**
@@ -885,6 +896,7 @@ function BoardTabs({
     cardSelectionInput !== null &&
     gameState?.cardRow.some((card) => selectableCardIds.has(card.id));
   const myPlayer = gameState?.players.find((p) => p.playerId === myPlayerId);
+  const oumuamuaTile = findOumuamuaTile(gameState?.aliens);
 
   function handleCardRowClick(card: IBaseCard): void {
     if (isSelectingFromCardRow) {
@@ -944,6 +956,7 @@ function BoardTabs({
                 showSpaceConfigDebug={showSolarSystemSpaceConfig}
                 probeInsetPxByRing={probeInsetPxByRing}
                 allowMoveAnyProbe={allowMoveAnyProbe}
+                oumuamuaTile={oumuamuaTile}
               />
             )}
           </div>
@@ -1057,6 +1070,8 @@ function BoardTabs({
             <AlienBoardView
               aliens={gameState.aliens}
               playerColors={playerColors}
+              planetaryBoard={gameState.planetaryBoard}
+              onCardInspect={onInspectCard}
             />
           )}
         </TabsContent>

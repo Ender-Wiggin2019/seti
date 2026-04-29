@@ -1,11 +1,14 @@
-import { getCardRegistry } from '@/engine/cards/CardRegistry.js';
-import { EServerCardKind } from '@/engine/cards/ICard.js';
+import { EStarName } from '@seti/common/constant/sectorSetup';
+import { ESector } from '@seti/common/types/element';
+import { expectObservationEndGameCard } from './ObservationEndGameCardTestUtils.js';
 
 describe('BarnardsStarObservation (card 38)', () => {
-  it('loads expected card id and kind via registry', () => {
-    const card = getCardRegistry().create('38');
-
-    expect(card.id).toBe('38');
-    expect(card.kind).toBe(EServerCardKind.END_GAME);
+  it('marks Barnard star sector and scores red fulfilled sectors', () => {
+    expectObservationEndGameCard({
+      cardId: '38',
+      starName: EStarName.BARNARDS_STAR,
+      sectorColor: ESector.RED,
+      signalCount: 2,
+    });
   });
 });

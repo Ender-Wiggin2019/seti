@@ -1,9 +1,10 @@
-import { EResource, ETech, ETrace } from '@seti/common/types/element';
+import { EResource, ESector, ETech, ETrace } from '@seti/common/types/element';
 import { EPlanet } from '@seti/common/types/protocol/enums';
 import {
   EPlayerInputType,
   type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
+import { ETechId } from '@seti/common/types/tech';
 import type { IBehavior } from '@/engine/cards/Behavior.js';
 import {
   BehaviorExecutor,
@@ -12,6 +13,9 @@ import {
 import { getCardRegistry } from '@/engine/cards/CardRegistry.js';
 import type { ICard } from '@/engine/cards/ICard.js';
 import { Deck } from '@/engine/deck/Deck.js';
+import { DeferredActionsQueue } from '@/engine/deferred/DeferredActionsQueue.js';
+import { EScanSubAction } from '@/engine/effects/scan/ScanActionPool.js';
+import { getSectorIndexByPlanet } from '@/engine/effects/scan/ScanEffectUtils.js';
 import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
@@ -44,6 +48,20 @@ function requireSolarSystem(game: Game | IGame) {
 
 function sampleCard(cardId = '55'): ICard {
   return getCardRegistry().create(cardId);
+}
+
+function createSignalSector(color: ESector, index: number) {
+  const state = { marks: 0 };
+  return {
+    id: `sector-${index}`,
+    color,
+    completed: false,
+    markSignal: () => {
+      state.marks += 1;
+      return { dataGained: false, vpAwarded: 0 };
+    },
+    state,
+  };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -311,22 +329,106 @@ describe('BehaviorExecutor — integration', () => {
   });
 
   describe('2.9.6 scan behavior marks a real sector', () => {
+    it('generic card 135 uses the full no-cost scan pool, including card-row discard, scan techs, and refill', () => {
+      const player = new Player({
+        id: 'p1',
+        name: 'Alice',
+        color: 'red',
+        seatIndex: 0,
+        resources: { credits: 5, energy: 5, publicity: 6 },
+        techs: [ETechId.SCAN_POP_SIGNAL],
+      });
+      const sectors = [
+        createSignalSector(ESector.RED, 0),
+        createSignalSector(ESector.YELLOW, 1),
+        createSignalSector(ESector.BLUE, 2),
+      ];
+      const game = {
+        sectors,
+        cardRow: [{ id: 'row-yellow', sector: ESector.YELLOW }],
+        mainDeck: new Deck<string>(['refill-a', 'refill-b', 'refill-c']),
+        deferredActions: new DeferredActionsQueue(),
+        missionTracker: { recordEvent: () => undefined },
+        solarSystem: {
+          getSectorIndexOfPlanet: (planet: EPlanet) => {
+            if (planet === EPlanet.EARTH) return 0;
+            if (planet === EPlanet.MERCURY) return 1;
+            return null;
+          },
+        },
+        lockCurrentTurn: () => undefined,
+      } as unknown as IGame;
+      const card = sampleCard('135');
+
+      card.play({ player, game });
+      const scanMenu = game.deferredActions.drain(game);
+
+      expect(scanMenu?.type).toBe(EPlayerInputType.OPTION);
+      expect(
+        (scanMenu?.toModel() as ISelectOptionInputModel).options.map(
+          (option) => option.id,
+        ),
+      ).toEqual(
+        expect.arrayContaining([
+          EScanSubAction.MARK_EARTH,
+          EScanSubAction.MARK_CARD_ROW,
+          EScanSubAction.MARK_MERCURY,
+        ]),
+      );
+
+      const afterEarth = scanMenu?.process({
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_EARTH,
+      });
+      const rowInput = afterEarth?.process({
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_CARD_ROW,
+      });
+      const afterCardRow = rowInput?.process({
+        type: EPlayerInputType.CARD,
+        cardIds: ['row-yellow'],
+      });
+      const afterMercury = afterCardRow?.process({
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_MERCURY,
+      });
+      const done = afterMercury?.process({
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.DONE,
+      });
+
+      expect(done).toBeUndefined();
+      expect(sectors[0].state.marks).toBe(1);
+      expect(sectors[1].state.marks).toBe(2);
+      expect(game.mainDeck.getDiscardPile()).toEqual(['row-yellow']);
+      expect(game.cardRow).toEqual(['refill-a', 'refill-b', 'refill-c']);
+    });
+
     it('markEarthSectorIndex writes a signal into the active solar system sector', () => {
       const { game, player } = createIntegrationGame('beh-2-9-6-scan');
-      const firstSector = game.sectors[0];
-      const playerSignalsBefore = firstSector.signals.filter(
+      const earthSectorIndex = game.solarSystem
+        ? (getSectorIndexByPlanet(game.solarSystem, EPlanet.EARTH) ?? 0)
+        : 0;
+      const earthSector = game.sectors[earthSectorIndex];
+      const playerSignalsBefore = earthSector.signals.filter(
         (s) => s.type === 'player',
       ).length;
 
-      getBehaviorExecutor().execute(
-        { scan: { markEarthSectorIndex: 0 } },
-        player,
-        game,
-        sampleCard(),
-      );
-      drain(game);
+      const pending = drainReturningInput(game, () => {
+        getBehaviorExecutor().execute(
+          { scan: { markEarthSectorIndex: 0 } },
+          player,
+          game,
+          sampleCard(),
+        );
+      });
 
-      const playerSignalsAfter = firstSector.signals.filter(
+      pending?.process({
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_EARTH,
+      });
+
+      const playerSignalsAfter = earthSector.signals.filter(
         (s) => s.type === 'player',
       );
       expect(playerSignalsAfter.length).toBe(playerSignalsBefore + 1);
@@ -337,13 +439,13 @@ describe('BehaviorExecutor — integration', () => {
       ).toBe(true);
     });
 
-    it('markEarthSectorIndex offers sector/tile choice when targeting oumuamua', () => {
+    it('markEarthSectorIndex starts the scan pool when Oumuamua is discovered', () => {
       const { game, player } = createIntegrationGame('beh-2-9-6-oumuamua-scan');
-      const { sectorIndex } = discoverOumuamua(game);
+      discoverOumuamua(game);
 
       const pending = drainReturningInput(game, () => {
         getBehaviorExecutor().execute(
-          { scan: { markEarthSectorIndex: sectorIndex } },
+          { scan: { markEarthSectorIndex: 0 } },
           player,
           game,
           sampleCard(),
@@ -353,57 +455,15 @@ describe('BehaviorExecutor — integration', () => {
       const model = pending?.toModel() as ISelectOptionInputModel | undefined;
       expect(model?.type).toBe(EPlayerInputType.OPTION);
       expect(model?.options.map((option) => option.id)).toEqual(
-        expect.arrayContaining(['oumuamua-sector', 'oumuamua-tile']),
-      );
-    });
-
-    it('ET.23 desc handler targets the oumuamua sector and preserves tile choice', () => {
-      const { game, player } = createIntegrationGame('beh-2-9-6-et-23');
-      const { plugin } = discoverOumuamua(game);
-      const card = sampleCard('ET.23');
-
-      const pending = drainReturningInput(game, () => {
-        getBehaviorExecutor().execute(card.behavior, player, game, card);
-      });
-
-      const model = pending?.toModel() as ISelectOptionInputModel | undefined;
-      expect(card.behavior.custom).toEqual(
-        expect.arrayContaining(['desc.et-23']),
-      );
-      expect(model?.type).toBe(EPlayerInputType.OPTION);
-      expect(model?.options.map((option) => option.id)).toEqual(
-        expect.arrayContaining(['oumuamua-sector', 'oumuamua-tile']),
-      );
-
-      const tileDataBefore = plugin.getRuntimeState(game)?.tileDataRemaining;
-      pending?.process({
-        type: EPlayerInputType.OPTION,
-        optionId: 'oumuamua-tile',
-      });
-
-      expect(plugin.getRuntimeState(game)?.tileDataRemaining).toBe(
-        (tileDataBefore ?? 0) - 1,
+        expect.arrayContaining([
+          EScanSubAction.MARK_EARTH,
+          EScanSubAction.MARK_CARD_ROW,
+        ]),
       );
     });
   });
 
   describe('2.9.7 custom DESC handlers fire against real game state', () => {
-    it('desc.card-119 applies +4 VP through the registered handler', () => {
-      const { game, player } = createIntegrationGame('beh-2-9-7-custom');
-      const scoreBefore = player.score;
-      const card = sampleCard('119');
-
-      getBehaviorExecutor().execute(
-        { custom: ['desc.card-119'] },
-        player,
-        game,
-        card,
-      );
-      drain(game);
-
-      expect(player.score).toBe(scoreBefore + 4);
-    });
-
     it('unknown custom id is recorded in the event log without crashing', () => {
       const { game, player } = createIntegrationGame('beh-2-9-7-unknown');
       const card = sampleCard();

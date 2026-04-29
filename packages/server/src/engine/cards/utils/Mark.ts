@@ -1,15 +1,14 @@
 import { ESector } from '@seti/common/types/element';
-import { EErrorCode } from '@seti/common/types/protocol/errors';
 import {
   extractSectorColorFromCardItem,
   MarkSectorSignalEffect,
+  RefillCardRowEffect,
+  SelectCardFromCardRowEffect,
 } from '@/engine/effects/index.js';
 import type { IGame } from '@/engine/IGame.js';
 import type { IPlayerInput } from '@/engine/input/PlayerInput.js';
-import { SelectCard } from '@/engine/input/SelectCard.js';
 import { SelectOption } from '@/engine/input/SelectOption.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
-import { GameError } from '@/shared/errors/GameError.js';
 import { hasCardData, loadCardData } from '../loadCardData.js';
 
 export enum EMarkSource {
@@ -80,55 +79,35 @@ export class Mark {
     player: IPlayer,
     game: IGame,
     remainingCount: number,
+    selectedAny = false,
   ): IPlayerInput | undefined {
     if (remainingCount <= 0 || game.cardRow.length === 0) {
+      if (selectedAny) {
+        RefillCardRowEffect.execute(game);
+      }
       return undefined;
     }
 
-    const cardSelections = game.cardRow.map((card, index) => {
-      const cardId =
-        typeof card === 'string'
-          ? card
-          : ((card as { id?: string })?.id ?? `row-card-${index}`);
-      return {
-        id: `${cardId}@${index}`,
-        rowIndex: index,
-      };
-    });
+    return SelectCardFromCardRowEffect.execute(player, game, {
+      destination: 'discard',
+      includeRowIndexInSelectionId: true,
+      onComplete: (cardInfo) => {
+        const sectorColor = this.resolveCardSector(cardInfo.rawItem);
+        const continueBatch = () =>
+          this.markFromCardRow(player, game, remainingCount - 1, true);
 
-    return new SelectCard(
-      player,
-      {
-        cards: cardSelections,
-        minSelections: 1,
-        maxSelections: 1,
-        onSelect: (selectedCardIds) => {
-          const selected = cardSelections.find(
-            (item) => item.id === selectedCardIds[0],
+        if (sectorColor !== null) {
+          return MarkSectorSignalEffect.markByColor(
+            player,
+            game,
+            sectorColor,
+            continueBatch,
           );
-          if (!selected) {
-            throw new GameError(
-              EErrorCode.INVALID_INPUT_RESPONSE,
-              `Invalid card-row selection: ${selectedCardIds[0]}`,
-            );
-          }
+        }
 
-          const selectedRowItem = game.cardRow[selected.rowIndex];
-          const sectorColor = this.resolveCardSector(selectedRowItem);
-          if (sectorColor !== null) {
-            return MarkSectorSignalEffect.markByColor(
-              player,
-              game,
-              sectorColor,
-              () => this.markFromCardRow(player, game, remainingCount - 1),
-            );
-          }
-
-          return this.markFromCardRow(player, game, remainingCount - 1);
-        },
+        return continueBatch();
       },
-      'Select displayed card for signal marking',
-    );
+    });
   }
 
   private static resolveCardSector(card: unknown) {

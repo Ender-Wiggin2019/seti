@@ -12,6 +12,8 @@ import { getSectorIdsWithPlayerProbes } from '@/engine/effects/scan/ScanEffectUt
 import type { IGame } from '@/engine/IGame.js';
 import type { IPlayerInput } from '@/engine/input/PlayerInput.js';
 import { SelectOption } from '@/engine/input/SelectOption.js';
+import { buildQuickMissionDef } from '@/engine/missions/buildMissionDef.js';
+import type { IMissionDef } from '@/engine/missions/IMission.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
 import { MissionCard } from '../Card.js';
 import type { ICardRuntimeContext } from '../ICard.js';
@@ -47,6 +49,19 @@ function signalColorLabel(color: ESector): string {
     default:
       return color;
   }
+}
+
+function countPlayerSignaledSectors(player: IPlayer, game: IGame): number {
+  return game.sectors.reduce((count, sectorLike) => {
+    const sector = sectorLike as {
+      signals?: Array<{ type: string; playerId?: string }>;
+    };
+    const hasSignal =
+      sector.signals?.some(
+        (signal) => signal.type === 'player' && signal.playerId === player.id,
+      ) ?? false;
+    return hasSignal ? count + 1 : count;
+  }, 0);
 }
 
 /**
@@ -86,11 +101,22 @@ export class AnySignalQuickMissionCard extends MissionCard {
       new SimpleDeferredAction(
         context.player,
         (game) => this.resolveMarks(context.player, game, count),
-        EPriority.DEFAULT,
+        EPriority.CORE_EFFECT,
       ),
     );
 
     return undefined;
+  }
+
+  public override getMissionDef(): IMissionDef | undefined {
+    if (this.id !== '88') {
+      return super.getMissionDef();
+    }
+
+    return buildQuickMissionDef(
+      '88',
+      (player, game) => countPlayerSignaledSectors(player, game) >= 4,
+    );
   }
 
   private resolveMarks(
@@ -148,14 +174,12 @@ export class AnySignalQuickMissionCard extends MissionCard {
     const sectorIds = this.getPlayerProbeSectorIds(player, game);
     if (sectorIds.length === 0) return undefined;
 
-    const onMarked = () => this.resolveMarks(player, game, remainingCount - 1);
-
     if (sectorIds.length === 1) {
-      return MarkSectorSignalEffect.markByIdWithAlternatives(
+      return this.markBySectorIdRepeatedly(
         player,
         game,
         sectorIds[0],
-        () => onMarked(),
+        remainingCount,
       );
     }
 
@@ -165,14 +189,31 @@ export class AnySignalQuickMissionCard extends MissionCard {
         id: `probe-sector-${sectorId}`,
         label: `Sector ${sectorId}`,
         onSelect: () =>
-          MarkSectorSignalEffect.markByIdWithAlternatives(
-            player,
-            game,
-            sectorId,
-            () => onMarked(),
-          ),
+          this.markBySectorIdRepeatedly(player, game, sectorId, remainingCount),
       })),
       'Choose sector with your probe',
+    );
+  }
+
+  private markBySectorIdRepeatedly(
+    player: IPlayer,
+    game: IGame,
+    sectorId: string,
+    remainingCount: number,
+  ): IPlayerInput | undefined {
+    if (remainingCount <= 0) return undefined;
+
+    return MarkSectorSignalEffect.markByIdWithAlternatives(
+      player,
+      game,
+      sectorId,
+      () =>
+        this.markBySectorIdRepeatedly(
+          player,
+          game,
+          sectorId,
+          remainingCount - 1,
+        ),
     );
   }
 

@@ -1,4 +1,8 @@
-import { EMainAction, EPhase } from '@seti/common/types/protocol/enums';
+import {
+  EMainAction,
+  EPhase,
+  EPlanet,
+} from '@seti/common/types/protocol/enums';
 import {
   EPlayerInputType,
   type ISelectOptionInputModel,
@@ -108,14 +112,21 @@ describe('CardEffectsIntegration — representative cards through processMainAct
   });
 
   describe('2.10.2 telescope card marks a real sector signal on the solar system', () => {
-    it('card 55 plays SCAN + DESC and writes a player signal into sector index 0', () => {
+    it('card 55 plays SCAN + DESC and writes a player signal into Earth sector', () => {
       const { game, player } = createGame('2-10-2-telescope-card');
       player.hand = ['55'];
       game.mainDeck = new Deck(['refill-1', 'refill-2'], []);
       game.cardRow = ['50', '71', '110'];
 
-      const firstSector = game.sectors[0];
-      const mySignalsBefore = firstSector.signals.filter(
+      const solarSystem = requireSolarSystem(game);
+      const earthSectorIndex = solarSystem.getSectorIndexOfPlanet(
+        EPlanet.EARTH,
+      );
+      if (earthSectorIndex === null) {
+        throw new Error('expected Earth sector');
+      }
+      const earthSector = game.sectors[earthSectorIndex];
+      const mySignalsBefore = earthSector.signals.filter(
         (s) => s.type === 'player' && s.playerId === player.id,
       ).length;
       const creditsBefore = player.resources.credits;
@@ -127,7 +138,7 @@ describe('CardEffectsIntegration — representative cards through processMainAct
       resolveFirstOptionUntilDone(game, player);
 
       expect(player.resources.credits).toBe(creditsBefore - 3);
-      const mySignalsAfter = firstSector.signals.filter(
+      const mySignalsAfter = earthSector.signals.filter(
         (s) => s.type === 'player' && s.playerId === player.id,
       ).length;
       expect(mySignalsAfter).toBeGreaterThan(mySignalsBefore);

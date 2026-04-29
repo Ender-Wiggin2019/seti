@@ -4,7 +4,7 @@ import type { ETechId } from '@seti/common/types/tech';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
 import type { EMissionType, IMissionDef } from '../missions/IMission.js';
-import type { IPlayer } from '../player/IPlayer.js';
+import type { IPlayer, TCardItem } from '../player/IPlayer.js';
 import type { IBehavior } from './Behavior.js';
 import type { ICardRequirements } from './Requirements.js';
 
@@ -18,6 +18,7 @@ export enum EServerCardKind {
 export interface ICardRuntimeContext {
   game: IGame;
   player: IPlayer;
+  playedCard?: TCardItem;
 }
 
 export interface ICard extends IBaseCard {
@@ -27,6 +28,8 @@ export interface ICard extends IBaseCard {
 
   canPlay(context: ICardRuntimeContext): boolean;
   play(context: ICardRuntimeContext): IPlayerInput | undefined;
+  movesPlayedCardToIncomeAfterPlay(context: ICardRuntimeContext): boolean;
+  canReturnToHandAfterPlay(context: ICardRuntimeContext): boolean;
   getMissionDef?(): IMissionDef | undefined;
   getMissionType(): EMissionType | undefined;
 }

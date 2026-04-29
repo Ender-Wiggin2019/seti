@@ -1,5 +1,9 @@
 import { EffectFactory } from '@seti/cards';
 import { ANOMALY_COLUMN_REWARD_LADDER } from '@seti/common/constant/alienBoardConfig';
+import {
+  type IPlanetMissionConfig,
+  PLANET_MISSION_CONFIG,
+} from '@seti/common/constant/boardLayout';
 import { ALL_CARDS } from '@seti/common/data/index';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import {
@@ -12,17 +16,25 @@ import {
 import { useTranslation } from 'react-i18next';
 import { CardRender } from '@/features/cards/CardRender';
 import { cn } from '@/lib/cn';
+import { useTextMode } from '@/stores/debugStore';
 import type {
   IPublicAlienCardZone,
   IPublicAlienState,
   IPublicAnomaliesBoard,
   IPublicGenericAlienBoard,
   IPublicOumuamuaBoard,
+  IPublicPlanetaryBoard,
+  IPublicPlanetState,
   IPublicTraceSlot,
   TPublicAlienBoard,
   TPublicSlotReward,
 } from '@/types/re-exports';
-import { EAlienType, ETrace } from '@/types/re-exports';
+import { EAlienType, EPlanet, ETrace } from '@/types/re-exports';
+import {
+  formatFirstLandData,
+  formatFirstOrbitRewardList,
+  formatPlanetRewardList,
+} from './PlanetCard';
 
 const ALIEN_TYPE_I18N_KEY: Partial<Record<EAlienType, string>> = {
   [EAlienType.ANOMALIES]: 'anomalies',
@@ -56,12 +68,15 @@ const CARD_BY_ID = new Map<string, IBaseCard>(
 interface IAlienBoardViewProps {
   aliens: IPublicAlienState[];
   playerColors: Record<string, string>;
+  planetaryBoard?: IPublicPlanetaryBoard;
+  onCardInspect?: (card: IBaseCard) => void;
 }
 
 interface IAlienBoardRendererProps {
   board: TPublicAlienBoard;
   playerColors: Record<string, string>;
   alienIndex: number;
+  planetaryBoard?: IPublicPlanetaryBoard;
 }
 
 type TAlienBoardRenderer = (
@@ -77,22 +92,26 @@ const ALIEN_BOARD_RENDERERS: Partial<Record<EAlienType, TAlienBoardRenderer>> =
 export function AlienBoardView({
   aliens,
   playerColors,
+  planetaryBoard,
+  onCardInspect,
 }: IAlienBoardViewProps): React.JSX.Element {
   const { t } = useTranslation('common');
   return (
-    <section className='w-full rounded-lg border border-surface-700/40 bg-surface-900/40 p-3'>
+    <section className='w-full min-w-0 rounded-lg border border-surface-700/40 bg-surface-900/40 p-3'>
       <header className='mb-2'>
         <h2 className='font-display text-base font-bold uppercase tracking-wider text-text-100'>
           {t('client.alien_board.title')}
         </h2>
       </header>
 
-      <div className='grid gap-3 xl:grid-cols-2'>
+      <div className='grid gap-3 sm:grid-cols-2' data-testid='alien-board-grid'>
         {aliens.map((alien) => (
           <AlienCard
             key={alien.alienIndex}
             alien={alien}
             playerColors={playerColors}
+            planetaryBoard={planetaryBoard}
+            onCardInspect={onCardInspect}
           />
         ))}
       </div>
@@ -103,9 +122,13 @@ export function AlienBoardView({
 function AlienCard({
   alien,
   playerColors,
+  planetaryBoard,
+  onCardInspect,
 }: {
   alien: IPublicAlienState;
   playerColors: Record<string, string>;
+  planetaryBoard?: IPublicPlanetaryBoard;
+  onCardInspect?: (card: IBaseCard) => void;
 }): React.JSX.Element {
   const { t } = useTranslation('common');
   const discoveredName =
@@ -119,7 +142,7 @@ function AlienCard({
 
   return (
     <article
-      className='rounded-md border border-surface-700/50 bg-surface-900/60 p-3'
+      className='min-w-0 rounded-md border border-surface-700/50 bg-surface-900/60 p-3'
       data-testid={`alien-${alien.alienIndex}-card`}
     >
       <div className='flex items-center justify-between gap-3'>
@@ -140,13 +163,14 @@ function AlienCard({
         </span>
       </div>
 
-      <div className='mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]'>
-        <div className='space-y-3'>
+      <div className='mt-3 grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_auto]'>
+        <div className='min-w-0 space-y-3'>
           {alien.discovered && alien.board ? (
             <DiscoveredAlienBoard
               alien={alien}
               board={alien.board}
               playerColors={playerColors}
+              planetaryBoard={planetaryBoard}
             />
           ) : (
             <HiddenBoard alienIndex={alien.alienIndex} />
@@ -168,6 +192,7 @@ function AlienCard({
           <AlienDeckPanel
             alienIndex={alien.alienIndex}
             cardZone={alien.cardZone}
+            onCardInspect={onCardInspect}
           />
         ) : null}
       </div>
@@ -186,7 +211,7 @@ function DiscoveryZone({
 }): React.JSX.Element {
   return (
     <section
-      className='rounded border border-surface-700/50 bg-surface-950/40 p-2'
+      className='min-w-0 rounded border border-surface-700/50 bg-surface-950/40 p-2'
       data-testid={`alien-${alienIndex}-discovery-zone`}
     >
       <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
@@ -213,7 +238,7 @@ function OverflowZone({
 }): React.JSX.Element {
   return (
     <section
-      className='rounded border border-dashed border-surface-700/60 bg-surface-950/30 p-2'
+      className='min-w-0 rounded border border-dashed border-surface-700/60 bg-surface-950/30 p-2'
       data-testid={`alien-${alienIndex}-overflow-zone`}
     >
       <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
@@ -236,7 +261,7 @@ function HiddenBoard({
 }): React.JSX.Element {
   return (
     <section
-      className='min-h-24 rounded border border-surface-700/50 bg-surface-950/30 p-3'
+      className='min-h-24 min-w-0 rounded border border-surface-700/50 bg-surface-950/30 p-3'
       data-testid={`alien-${alienIndex}-hidden-board`}
     >
       <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
@@ -246,11 +271,11 @@ function HiddenBoard({
         {TRACE_COLUMN_COLORS.map((color) => (
           <div
             key={color}
-            className='rounded border border-surface-700/50 bg-surface-900/30 p-2'
+            className='min-w-0 rounded border border-surface-700/50 bg-surface-900/30 p-2'
             data-testid={`alien-${alienIndex}-hidden-board-column-${color}`}
           >
-            <TraceColumnHeader color={color} />
-            <div className='flex min-h-14 items-center justify-center'>
+            <TraceColumnLabel color={color} />
+            <div className='flex min-h-14 flex-col items-center justify-start gap-2'>
               <div
                 className='flex h-10 w-10 items-center justify-center rounded-full border border-dashed border-surface-500/70 bg-surface-800/40 text-[10px] font-semibold text-text-500'
                 aria-label={`${TRACE_LABEL[color]} hidden trace slot`}
@@ -269,10 +294,12 @@ function DiscoveredAlienBoard({
   alien,
   board,
   playerColors,
+  planetaryBoard,
 }: {
   alien: IPublicAlienState;
   board: TPublicAlienBoard;
   playerColors: Record<string, string>;
+  planetaryBoard?: IPublicPlanetaryBoard;
 }): React.JSX.Element {
   const Renderer =
     alien.alienType != null ? ALIEN_BOARD_RENDERERS[alien.alienType] : null;
@@ -282,6 +309,7 @@ function DiscoveredAlienBoard({
         alienIndex={alien.alienIndex}
         board={board}
         playerColors={playerColors}
+        planetaryBoard={planetaryBoard}
       />
     );
   }
@@ -333,6 +361,7 @@ function OumuamuaBoardRenderer({
   alienIndex,
   board,
   playerColors,
+  planetaryBoard,
 }: IAlienBoardRendererProps): React.JSX.Element {
   if (board.type !== 'oumuamua') {
     return (
@@ -349,6 +378,7 @@ function OumuamuaBoardRenderer({
       alienIndex={alienIndex}
       board={board}
       playerColors={playerColors}
+      planetaryBoard={planetaryBoard}
     />
   );
 }
@@ -364,7 +394,7 @@ function GenericAlienBoard({
 }): React.JSX.Element {
   return (
     <section
-      className='rounded border border-surface-700/50 bg-surface-950/30 p-2'
+      className='min-w-0 rounded border border-surface-700/50 bg-surface-950/30 p-2'
       data-testid={`alien-${alienIndex}-generic-board`}
     >
       <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
@@ -384,24 +414,28 @@ function OumuamuaBoard({
   alienIndex,
   board,
   playerColors,
+  planetaryBoard,
 }: {
   alienIndex: number;
   board: IPublicOumuamuaBoard;
   playerColors: Record<string, string>;
+  planetaryBoard?: IPublicPlanetaryBoard;
 }): React.JSX.Element {
   return (
     <section
-      className='rounded border border-surface-700/50 bg-surface-950/30 p-2'
+      className='min-w-0 rounded border border-surface-700/50 bg-surface-950/30 p-2'
       data-testid={`alien-${alienIndex}-oumuamua-board`}
     >
-      <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
-        Oumuamua Tile
+      <div data-testid={`alien-${alienIndex}-oumuamua-landing-area`}>
+        <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
+          Oumuamua Landing Area
+        </div>
+        <OumuamuaLandingArea
+          alienIndex={alienIndex}
+          planetState={planetaryBoard?.planets[EPlanet.OUMUAMUA]}
+          playerColors={playerColors}
+        />
       </div>
-      <OumuamuaTile
-        alienIndex={alienIndex}
-        tile={board.tile}
-        playerColors={playerColors}
-      />
       <div className='mt-3'>
         <TraceColumnGrid
           alienIndex={alienIndex}
@@ -414,47 +448,177 @@ function OumuamuaBoard({
   );
 }
 
-function OumuamuaTile({
+function createEmptyPlanetState(
+  config: IPlanetMissionConfig,
+): IPublicPlanetState {
+  return {
+    orbitSlots: [],
+    landingSlots: [],
+    firstOrbitClaimed: false,
+    firstLandDataBonusTaken: Array.from(
+      { length: config.land.firstData.length },
+      () => false,
+    ),
+    moonOccupant: null,
+  };
+}
+
+function OumuamuaTokenDot({
   alienIndex,
-  tile,
+  kind,
+  playerId,
+  playerColors,
+  index,
+}: {
+  alienIndex: number;
+  kind: 'orbit' | 'landing';
+  playerId: string;
+  playerColors: Record<string, string>;
+  index: number;
+}): React.JSX.Element {
+  return (
+    <span
+      className='inline-flex h-3.5 w-3.5 rounded-full border border-surface-200/40 shadow-[0_1px_3px_rgba(0,0,0,0.45)]'
+      data-testid={`alien-${alienIndex}-oumuamua-${kind}-token-${playerId}-${index}`}
+      style={{ backgroundColor: playerColors[playerId] ?? '#cbd5e1' }}
+      title={playerId}
+      aria-label={`oumuamua-${kind}-${playerId}`}
+    />
+  );
+}
+
+function OumuamuaLandingArea({
+  alienIndex,
+  planetState,
   playerColors,
 }: {
   alienIndex: number;
-  tile: IPublicOumuamuaBoard['tile'];
+  planetState?: IPublicPlanetState;
   playerColors: Record<string, string>;
 }): React.JSX.Element {
-  if (!tile) {
-    return (
-      <div
-        className='rounded border border-dashed border-surface-700/70 bg-surface-900/30 p-3 font-mono text-[10px] text-text-500'
-        data-testid={`alien-${alienIndex}-oumuamua-tile`}
-      >
-        Tile not placed
-      </div>
-    );
-  }
+  const textMode = useTextMode();
+  const config = PLANET_MISSION_CONFIG[EPlanet.OUMUAMUA];
+  const state = planetState ?? createEmptyPlanetState(config);
+  const orbitSummary = [
+    formatPlanetRewardList(config.orbit.rewards),
+    formatFirstOrbitRewardList(config.orbit.firstRewards),
+  ]
+    .filter(Boolean)
+    .join(' + ');
+  const landSummary = [
+    formatPlanetRewardList(config.land.rewards),
+    config.land.firstData.length > 0
+      ? `first data ${formatFirstLandData(config.land.firstData)}`
+      : '',
+  ]
+    .filter(Boolean)
+    .join(' + ');
 
   return (
     <div
-      className='rounded border border-violet-400/50 bg-violet-500/10 p-3'
-      data-testid={`alien-${alienIndex}-oumuamua-tile`}
+      className='min-w-0 space-y-2 rounded border border-violet-400/50 bg-violet-500/10 p-3'
+      data-testid={`alien-${alienIndex}-oumuamua-landing-surface`}
     >
-      <div className='flex items-center justify-between gap-3 font-mono text-[10px] uppercase tracking-widest text-text-300'>
-        <span>Data {tile.dataRemaining}</span>
-        <span>Sector {tile.sectorId}</span>
-      </div>
-      <div className='mt-3 flex min-h-5 flex-wrap items-center gap-1'>
-        {tile.markerPlayerIds.map((playerId, index) => (
-          <span
-            key={`${playerId}-${index}`}
-            className='h-4 w-4 rounded-full border border-surface-100/60 shadow-[0_1px_3px_rgba(0,0,0,0.45)]'
-            data-testid={`oumuamua-tile-marker-${playerId}-${index}`}
-            style={{
-              backgroundColor: playerColors[playerId] ?? '#9ca3af',
-            }}
-            title={playerId}
-          />
-        ))}
+      <div
+        className={cn(
+          'rounded-sm border border-surface-700/60 bg-surface-950/55 p-2',
+          textMode && 'border-cyan-100/60 bg-surface-950/95 font-mono',
+        )}
+        data-testid={`alien-${alienIndex}-oumuamua-cell`}
+      >
+        {textMode ? (
+          <div className='mb-2 space-y-0.5 font-mono leading-tight'>
+            <div className='text-[10px] font-bold uppercase text-text-100'>
+              oumuamua
+            </div>
+            <div className='text-[8px] text-text-300'>O: {orbitSummary}</div>
+            <div className='text-[8px] text-text-300'>L: {landSummary}</div>
+          </div>
+        ) : null}
+
+        <div className='grid grid-cols-2 gap-2'>
+          <section
+            className='rounded border border-surface-700/50 bg-surface-800/40 p-2'
+            data-testid={`alien-${alienIndex}-oumuamua-orbit-area`}
+          >
+            <p className='mb-1 font-mono text-[10px] uppercase tracking-wider text-text-500'>
+              Orbit
+            </p>
+            <div className='flex min-h-5 flex-wrap gap-1'>
+              {state.orbitSlots.length === 0 ? (
+                <span className='text-[11px] text-text-500'>Empty</span>
+              ) : (
+                state.orbitSlots.map((slot, index) => (
+                  <OumuamuaTokenDot
+                    key={`${slot.playerId}-orbit-${index}`}
+                    alienIndex={alienIndex}
+                    kind='orbit'
+                    playerId={slot.playerId}
+                    playerColors={playerColors}
+                    index={index}
+                  />
+                ))
+              )}
+            </div>
+          </section>
+
+          <section
+            className='rounded border border-surface-700/50 bg-surface-800/40 p-2'
+            data-testid={`alien-${alienIndex}-oumuamua-landing-cells`}
+          >
+            <p className='mb-1 font-mono text-[10px] uppercase tracking-wider text-text-500'>
+              Landing
+            </p>
+            <div className='flex min-h-5 flex-wrap gap-1'>
+              {state.landingSlots.length === 0 ? (
+                <span className='text-[11px] text-text-500'>Empty</span>
+              ) : (
+                state.landingSlots.map((slot, index) => (
+                  <OumuamuaTokenDot
+                    key={`${slot.playerId}-landing-${index}`}
+                    alienIndex={alienIndex}
+                    kind='landing'
+                    playerId={slot.playerId}
+                    playerColors={playerColors}
+                    index={index}
+                  />
+                ))
+              )}
+            </div>
+          </section>
+        </div>
+
+        <div className='mt-2 grid gap-1 font-mono text-[10px] leading-snug text-text-300'>
+          <p>
+            <span className='uppercase tracking-[0.12em] text-text-500'>
+              Orbit reward:{' '}
+            </span>
+            <span className='text-text-100'>{orbitSummary}</span>
+          </p>
+          <p>
+            <span className='uppercase tracking-[0.12em] text-text-500'>
+              Land reward:{' '}
+            </span>
+            <span className='text-text-100'>{landSummary}</span>
+          </p>
+        </div>
+
+        <div className='mt-2 flex flex-wrap gap-1'>
+          {config.land.firstData.map((amount, index) => (
+            <span
+              key={`oumuamua-first-land-data-${index}`}
+              className={cn(
+                'rounded border px-1.5 py-0.5 font-mono text-[10px]',
+                state.firstLandDataBonusTaken[index]
+                  ? 'border-surface-600 text-text-500'
+                  : 'border-accent-500/70 text-accent-300',
+              )}
+              data-testid={`alien-${alienIndex}-oumuamua-first-land-data-${index + 1}`}
+            >
+              Data {index + 1}: {amount}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -471,7 +635,7 @@ function AnomaliesBoard({
 }): React.JSX.Element {
   return (
     <section
-      className='rounded border border-surface-700/50 bg-surface-950/30 p-2'
+      className='min-w-0 rounded border border-surface-700/50 bg-surface-950/30 p-2'
       data-testid={`alien-${alienIndex}-anomalies-board`}
     >
       <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
@@ -542,9 +706,11 @@ function AnomalyColumn({
 function AlienDeckPanel({
   alienIndex,
   cardZone,
+  onCardInspect,
 }: {
   alienIndex: number;
   cardZone: IPublicAlienCardZone;
+  onCardInspect?: (card: IBaseCard) => void;
 }): React.JSX.Element {
   const faceUpCard = cardZone.faceUpCardId
     ? CARD_BY_ID.get(cardZone.faceUpCardId)
@@ -563,9 +729,22 @@ function AlienDeckPanel({
         <div>Discard {cardZone.discardPileSize}</div>
       </div>
       {faceUpCard ? (
-        <div className='mt-2 h-[92px] w-[66px] origin-top-left scale-[0.44] overflow-visible'>
-          <CardRender card={faceUpCard} />
-        </div>
+        <button
+          type='button'
+          className={cn(
+            'relative mt-2 h-[92px] w-[66px] overflow-hidden rounded-[3px] border border-surface-700/60 transition-[border-color,box-shadow,transform] duration-150 focus-visible:outline-none focus-visible:shadow-focus-ring',
+            onCardInspect
+              ? 'cursor-pointer hover:-translate-y-0.5 hover:border-accent-500/70'
+              : 'cursor-default',
+          )}
+          data-testid={`alien-${alienIndex}-deck-face-up-card`}
+          aria-label={`Preview ${faceUpCard.name}`}
+          onClick={() => onCardInspect?.(faceUpCard)}
+        >
+          <div className='pointer-events-none absolute left-0 top-0 origin-top-left scale-[0.44]'>
+            <CardRender card={faceUpCard} />
+          </div>
+        </button>
       ) : cardZone.faceUpCardId ? (
         <div className='mt-2 rounded border border-surface-700/60 px-2 py-3 text-center font-mono text-[10px] text-text-400'>
           {cardZone.faceUpCardId}
@@ -587,7 +766,7 @@ function TraceSlot({
   const rewards = toTraceRewardPresentations(slot.rewards);
 
   return (
-    <div className='flex flex-col items-center gap-1'>
+    <div className='flex shrink-0 flex-col items-center gap-1'>
       <div
         className={cn(
           'flex h-12 w-12 items-center justify-center rounded-full',
@@ -668,9 +847,9 @@ function TraceColumnGrid({
   const groupedSlots = groupTraceSlotsByColor(slots);
 
   return (
-    <div className='grid grid-cols-3 gap-2'>
+    <div className='grid min-w-0 grid-cols-3 gap-2'>
       {TRACE_COLUMN_COLORS.map((color) => (
-        <TraceColumn
+        <TraceColorColumn
           key={color}
           alienIndex={alienIndex}
           area={area}
@@ -683,7 +862,7 @@ function TraceColumnGrid({
   );
 }
 
-function TraceColumn({
+function TraceColorColumn({
   alienIndex,
   area,
   color,
@@ -698,11 +877,14 @@ function TraceColumn({
 }): React.JSX.Element {
   return (
     <div
-      className='rounded border border-surface-700/50 bg-surface-900/30 p-2'
+      className='min-w-0 rounded border border-surface-700/50 bg-surface-900/30 p-2'
       data-testid={`alien-${alienIndex}-${area}-column-${color}`}
     >
-      <TraceColumnHeader color={color} />
-      <div className='flex min-h-14 flex-wrap items-start justify-center gap-2'>
+      <TraceColumnLabel color={color} />
+      <div
+        className='flex min-h-14 flex-col items-center gap-2'
+        data-testid={`alien-${alienIndex}-${area}-column-${color}-slots`}
+      >
         {slots.map((slot) => (
           <TraceSlot
             key={slot.slotId}
@@ -721,17 +903,22 @@ function TraceColumn({
   );
 }
 
-function TraceColumnHeader({
+function TraceColumnLabel({
   color,
 }: {
   color: TTraceColumnColor;
 }): React.JSX.Element {
   return (
-    <div
-      className='mb-2 h-1 rounded-full'
-      style={{ backgroundColor: TRACE_COLOR[color] }}
-      title={TRACE_LABEL[color]}
-    />
+    <div className='mb-2 space-y-1'>
+      <div
+        className='h-1 rounded-full'
+        style={{ backgroundColor: TRACE_COLOR[color] }}
+        title={TRACE_LABEL[color]}
+      />
+      <div className='text-center font-mono text-[9px] uppercase tracking-[0.12em] text-text-500'>
+        {TRACE_LABEL[color]}
+      </div>
+    </div>
   );
 }
 

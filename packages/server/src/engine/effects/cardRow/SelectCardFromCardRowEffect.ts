@@ -9,6 +9,10 @@ import type { IPlayer, TCardItem } from '../../player/IPlayer.js';
 export type TCardRowDestination = 'hand' | 'discard' | 'choose';
 
 export interface ICardRowCardInfo {
+  /** Stable card id used for discard/hand display. */
+  cardId: string;
+  /** Selection id shown in the input model. */
+  selectionId: string;
   /** Raw item from the card row (string ID or card object). */
   rawItem: TCardItem;
   /** Index the card occupied before removal. */
@@ -31,6 +35,8 @@ export interface ISelectCardFromCardRowOptions {
    * `undefined` to finish.
    */
   onComplete?: (info: ICardRowCardInfo) => IPlayerInput | undefined;
+  /** Include row index in selection ids so duplicate displayed cards stay distinct. */
+  includeRowIndexInSelectionId?: boolean;
 }
 
 /**
@@ -54,17 +60,24 @@ export class SelectCardFromCardRowEffect {
       return options.onComplete?.(undefined as never);
     }
 
-    const cardRowItems = game.cardRow.map((item, index) => ({
-      id:
-        typeof item === 'string'
-          ? item
-          : ((item as { id?: string })?.id ?? `row-${index}`),
-      index,
-      rawItem: item,
-    }));
+    const cardRowItems = game.cardRow
+      .map((item, index) => ({
+        cardId:
+          typeof item === 'string'
+            ? item
+            : ((item as { id?: string })?.id ?? `row-${index}`),
+        index,
+        rawItem: item,
+      }))
+      .map((item) => ({
+        ...item,
+        selectionId: options.includeRowIndexInSelectionId
+          ? `${item.cardId}@${item.index}`
+          : item.cardId,
+      }));
 
     const cards = cardRowItems.map((c) => ({
-      id: c.id,
+      id: c.selectionId,
       _rowIndex: c.index,
     }));
 
@@ -76,7 +89,7 @@ export class SelectCardFromCardRowEffect {
         maxSelections: 1,
         onSelect: (selectedCardIds: string[]) => {
           const selectedId = selectedCardIds[0];
-          const entry = cardRowItems.find((c) => c.id === selectedId);
+          const entry = cardRowItems.find((c) => c.selectionId === selectedId);
           if (!entry) {
             throw new GameError(
               EErrorCode.INVALID_INPUT_RESPONSE,
@@ -116,7 +129,12 @@ export class SelectCardFromCardRowEffect {
   private static buildDestinationChoice(
     player: IPlayer,
     game: IGame,
-    entry: { id: string; index: number; rawItem: TCardItem },
+    entry: {
+      cardId: string;
+      selectionId: string;
+      index: number;
+      rawItem: TCardItem;
+    },
     onComplete?: (info: ICardRowCardInfo) => IPlayerInput | undefined,
   ): IPlayerInput {
     return new SelectOption(
@@ -142,17 +160,24 @@ export class SelectCardFromCardRowEffect {
   private static applyDestination(
     player: IPlayer,
     game: IGame,
-    entry: { id: string; index: number; rawItem: TCardItem },
+    entry: {
+      cardId: string;
+      selectionId: string;
+      index: number;
+      rawItem: TCardItem;
+    },
     destination: 'hand' | 'discard',
     onComplete?: (info: ICardRowCardInfo) => IPlayerInput | undefined,
   ): IPlayerInput | undefined {
     if (destination === 'hand') {
       player.hand.push(entry.rawItem);
     } else {
-      game.mainDeck.discard(entry.id);
+      game.mainDeck.discard(entry.cardId);
     }
 
     const info: ICardRowCardInfo = {
+      cardId: entry.cardId,
+      selectionId: entry.selectionId,
       rawItem: entry.rawItem,
       originalIndex: entry.index,
       destination,

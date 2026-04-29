@@ -1,7 +1,8 @@
+import { ALL_CARDS } from '@seti/common/data';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EResource } from '@seti/common/types/element';
 import { ImmediateCard } from '@/engine/cards/Card.js';
-import { CardRegistry } from '@/engine/cards/CardRegistry.js';
+import { CardRegistry, getCardRegistry } from '@/engine/cards/CardRegistry.js';
 
 class TestImmediateCard extends ImmediateCard {
   public constructor(id = 'test-card') {
@@ -40,5 +41,14 @@ describe('CardRegistry', () => {
 
     const cards = registry.createAll(['a', 'b']);
     expect(cards.map((card) => card.id)).toEqual(['a', 'b']);
+  });
+
+  it('default registry creates every card from shared card data', () => {
+    const registry = getCardRegistry();
+
+    for (const cardData of ALL_CARDS) {
+      expect(registry.has(cardData.id), cardData.id).toBe(true);
+      expect(() => registry.create(cardData.id), cardData.id).not.toThrow();
+    }
   });
 });

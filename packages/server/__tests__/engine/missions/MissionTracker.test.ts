@@ -1,5 +1,5 @@
 import { EEffectType } from '@seti/common/types/effect';
-import { EResource } from '@seti/common/types/element';
+import { EResource, ETrace } from '@seti/common/types/element';
 import {
   EMainAction,
   EPhase,
@@ -26,6 +26,7 @@ import {
   resolveSetupTucks,
   setSolarSystemInitialDiscAngles,
 } from '../../helpers/TestGameBuilder.js';
+import { placeTraceForTestSetup } from '../../helpers/traceTestUtils.js';
 
 function createPlayer(): Player {
   return new Player({
@@ -210,6 +211,17 @@ function resolveScanUntilMissionPrompt(game: Game, player: Player): void {
       optionId,
     });
   }
+}
+
+function countSignalsForPlayer(game: Game, playerId: string): number {
+  return game.sectors.reduce(
+    (count, sector) =>
+      count +
+      sector.signals.filter(
+        (signal) => signal.type === 'player' && signal.playerId === playerId,
+      ).length,
+    0,
+  );
 }
 
 describe('MissionTracker', () => {
@@ -447,6 +459,31 @@ describe('MissionTracker', () => {
     expect(completedCount).toBe(2);
   });
 
+  it.each([
+    { cardId: '77', trace: ETrace.RED, optionId: 'complete-77-0' },
+    { cardId: '107', trace: ETrace.BLUE, optionId: 'complete-107-0' },
+  ])(
+    'triggers Card $cardId after the player marks the matching trace',
+    ({ cardId, trace, optionId }) => {
+      const { game, player1 } = createIntegrationGame(
+        `mission-tracker-trace-trigger-${cardId}`,
+      );
+
+      player1.playedMissions.push(cardId);
+      game.missionTracker.registerMissionFromCard(cardId, player1.id);
+
+      placeTraceForTestSetup(game.alienState, player1, game, trace, 0);
+
+      const prompt = game.missionTracker.checkAndPromptTriggers(player1, game);
+      const model = prompt?.toModel() as ISelectOptionInputModel | undefined;
+
+      expect(model?.type).toBe(EPlayerInputType.OPTION);
+      expect(model?.options.some((option) => option.id === optionId)).toBe(
+        true,
+      );
+    },
+  );
+
   it('completes mission branch and moves mission to completed list when done', () => {
     const tracker = new MissionTracker();
     const player = createPlayer();
@@ -630,6 +667,61 @@ describe('MissionTracker', () => {
       expect(
         state116?.branchStates[expectedControlCenterBranchIndex]?.completed,
       ).toBe(false);
+    });
+
+    it('keeps Card 101 signal reward as pending input and resolves the signal placement', () => {
+      const { game, player1 } = createIntegrationGame(
+        'mission-tracker-card-101-signal-reward',
+      );
+
+      player1.playedMissions.push('101');
+      game.missionTracker.registerMissionFromCard('101', player1.id);
+      game.missionTracker.recordEvent({ type: EMissionEventType.SCAN_PERFORMED });
+
+      const prompt = game.missionTracker.checkAndPromptTriggers(player1, game);
+      expect(prompt).toBeDefined();
+      player1.waitingFor = prompt;
+
+      const beforeSignals = countSignalsForPlayer(game, player1.id);
+      game.processInput(player1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: 'complete-101-0',
+      });
+
+      const rewardInput = player1.waitingFor?.toModel() as
+        | ISelectOptionInputModel
+        | undefined;
+      expect(rewardInput?.type).toBe(EPlayerInputType.OPTION);
+
+      const firstSector = rewardInput?.options[0];
+      expect(firstSector).toBeDefined();
+      game.processInput(player1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: firstSector!.id,
+      });
+
+      expect(countSignalsForPlayer(game, player1.id)).toBe(beforeSignals + 1);
+      const state = game.missionTracker.getMissionState(player1.id, '101');
+      expect(state?.branchStates[0]?.completed).toBe(true);
+    });
+
+    it('executes Card 117 launch mission reward when the branch is claimed', () => {
+      const { game, player1 } = createIntegrationGame(
+        'mission-tracker-card-117-launch-reward',
+      );
+
+      player1.playedMissions.push('117');
+      game.missionTracker.registerMissionFromCard('117', player1.id);
+
+      const beforeProbeCount = player1.probesInSpace;
+      game.missionTracker.completeMissionBranch(player1, game, '117', 0);
+
+      expect(player1.probesInSpace).toBe(beforeProbeCount + 1);
+      expect(
+        game.missionTracker.hasTurnEvent(
+          (event) => event.type === EMissionEventType.PROBE_LAUNCHED,
+        ),
+      ).toBe(true);
     });
   });
 });

@@ -1,11 +1,15 @@
 import type React from 'react';
 import { cn } from '@/lib/cn';
 import type { IPublicSector } from '@/types/re-exports';
+import {
+  DEFAULT_SECTOR_DATA_SIZE_PX,
+  SectorSignalList,
+} from './SectorSignalList';
 
 const DEFAULT_SECTOR_SIGNAL_STYLE = {
   0: { sigX: -3, sigY: 10, sigRot: -24, circleX: 0, circleY: -38 },
   1: { sigX: -19, sigY: -1, sigRot: 21, circleX: 8, circleY: -33 },
-  dataSize: 21,
+  dataSize: DEFAULT_SECTOR_DATA_SIZE_PX,
   circleSize: 24,
 } as const;
 const TEXT_MODE_SECTOR_RADIUS_PERCENT = 42;
@@ -72,49 +76,6 @@ function sameBonus(
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-function renderSignalDot(
-  sector: IPublicSector,
-  playerColors: Record<string, string>,
-  slotIndex: number,
-  textMode: boolean,
-): React.JSX.Element {
-  const sig = sector.signals[slotIndex];
-  const isData = sig?.type === 'data';
-  const playerColor =
-    sig?.type === 'player' && sig.playerId
-      ? playerColors[sig.playerId]
-      : undefined;
-
-  return (
-    <span
-      key={`${sector.sectorId}-sig-${slotIndex}`}
-      className='inline-block shrink-0 rounded-full border'
-      style={{
-        width: textMode
-          ? 'var(--sector-text-data-size, 8px)'
-          : `var(--sector-data-size, ${DEFAULT_SECTOR_SIGNAL_STYLE.dataSize}px)`,
-        height: textMode
-          ? 'var(--sector-text-data-size, 8px)'
-          : `var(--sector-data-size, ${DEFAULT_SECTOR_SIGNAL_STYLE.dataSize}px)`,
-        ...(isData
-          ? textMode
-            ? {
-                borderColor: 'rgba(255, 255, 255, 0.95)',
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-              }
-            : {
-                borderColor: 'rgba(103, 232, 249, 0.8)',
-                backgroundColor: 'rgba(165, 243, 252, 0.9)',
-              }
-          : {
-              backgroundColor: playerColor ?? '#888',
-              borderColor: playerColor ?? '#888',
-            }),
-      }}
-    />
-  );
-}
-
 function WinnerBonus({
   label,
   bonus,
@@ -171,11 +132,6 @@ export function SectorNodeView({
     sector.otherWinnerBonus ?? [],
   );
   const xPos = index === 0 ? '30%' : '70%';
-  const signalIndexes = Array.from(
-    { length: Math.max(sector.signals.length, dataCapability) },
-    (_, slotIndex) => slotIndex,
-  );
-
   function handleClick(event: React.MouseEvent<HTMLButtonElement>): void {
     event.stopPropagation();
     if (!isSelectable) {
@@ -252,9 +208,12 @@ export function SectorNodeView({
           </div>
 
           <div className='flex max-w-full items-center gap-[2px] rounded-full border border-white/75 bg-surface-900/90 px-1 py-0.5'>
-            {signalIndexes.map((slotIndex) =>
-              renderSignalDot(sector, playerColors, slotIndex, true),
-            )}
+            <SectorSignalList
+              signals={sector.signals}
+              capacity={dataCapability}
+              playerColors={playerColors}
+              textMode
+            />
           </div>
 
           <button
@@ -295,9 +254,12 @@ export function SectorNodeView({
           transformOrigin: 'center',
         }}
       >
-        {sector.signals.map((_, slotIndex) =>
-          renderSignalDot(sector, playerColors, slotIndex, false),
-        )}
+        <SectorSignalList
+          signals={sector.signals}
+          capacity={sector.signals.length}
+          playerColors={playerColors}
+          textMode={false}
+        />
       </div>
 
       <div className='mt-0.5 flex items-center justify-center gap-1'>

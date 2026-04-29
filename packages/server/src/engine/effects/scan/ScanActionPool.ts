@@ -43,6 +43,7 @@ export interface IScanActionPoolResult {
 }
 
 export interface IScanActionPoolOptions {
+  earthSectorIndex?: number;
   onComplete?: (result: IScanActionPoolResult) => IPlayerInput | undefined;
 }
 
@@ -83,7 +84,7 @@ export class ScanActionPool {
     game: IGame,
     options: IScanActionPoolOptions = {},
   ): IPlayerInput | undefined {
-    const descriptors = this.buildSubActions(player, game);
+    const descriptors = this.buildSubActions(player, game, options);
     const result: IScanActionPoolResult = { subActions: [] };
     return this.presentPool(player, game, descriptors, result, options);
   }
@@ -144,6 +145,7 @@ export class ScanActionPool {
   private static buildSubActions(
     player: IPlayer,
     game: IGame,
+    options: IScanActionPoolOptions,
   ): IScanSubActionDescriptor[] {
     const scanModifiers = TechModifierQuery.fromTechIds(
       player.techs,
@@ -162,7 +164,14 @@ export class ScanActionPool {
 
     const descriptors: IScanSubActionDescriptor[] = [];
 
-    descriptors.push(this.buildMarkEarth(player, game, hasEarthNeighbor));
+    descriptors.push(
+      this.buildMarkEarth(
+        player,
+        game,
+        hasEarthNeighbor,
+        options.earthSectorIndex,
+      ),
+    );
     descriptors.push(this.buildMarkCardRow(player, game));
 
     if (mercuryMod) {
@@ -184,6 +193,7 @@ export class ScanActionPool {
     player: IPlayer,
     game: IGame,
     hasEarthNeighborTech: boolean,
+    earthSectorIndex?: number,
   ): IScanSubActionDescriptor {
     return {
       id: EScanSubAction.MARK_EARTH,
@@ -191,9 +201,14 @@ export class ScanActionPool {
       canExecute: () => true,
       execute: (onDone) => {
         if (!hasEarthNeighborTech) {
-          return this.markPlanet(player, game, EPlanet.EARTH, onDone);
+          return this.markEarth(player, game, earthSectorIndex, onDone);
         }
-        return this.markEarthWithNeighborChoice(player, game, onDone);
+        return this.markEarthWithNeighborChoice(
+          player,
+          game,
+          earthSectorIndex,
+          onDone,
+        );
       },
     };
   }
@@ -278,21 +293,32 @@ export class ScanActionPool {
 
   // ── Helpers ───────────────────────────────────────────────────────────
 
-  private static markPlanet(
+  private static markEarth(
     player: IPlayer,
     game: IGame,
-    planet: EPlanet,
+    sectorIndex: number | undefined,
     onDone: () => IPlayerInput | undefined,
   ): IPlayerInput | undefined {
+    if (sectorIndex !== undefined) {
+      return MarkSectorSignalEffect.markByIndexWithAlternatives(
+        player,
+        game,
+        sectorIndex,
+        () => onDone(),
+      );
+    }
     if (game.solarSystem) {
-      const sectorIndex = getSectorIndexByPlanet(game.solarSystem, planet);
-      if (sectorIndex === null) {
+      const resolvedSectorIndex = getSectorIndexByPlanet(
+        game.solarSystem,
+        EPlanet.EARTH,
+      );
+      if (resolvedSectorIndex === null) {
         return onDone();
       }
       return MarkSectorSignalEffect.markByIndexWithAlternatives(
         player,
         game,
-        sectorIndex,
+        resolvedSectorIndex,
         () => onDone(),
       );
     }
@@ -315,9 +341,11 @@ export class ScanActionPool {
   private static markEarthWithNeighborChoice(
     player: IPlayer,
     game: IGame,
+    sectorIndex: number | undefined,
     onDone: () => IPlayerInput | undefined,
   ): IPlayerInput | undefined {
-    const earthIndex = this.resolvePlanetIndex(game, EPlanet.EARTH);
+    const earthIndex =
+      sectorIndex ?? this.resolvePlanetIndex(game, EPlanet.EARTH);
     const sectorCount = game.sectors.length;
     const [left, right] = ScanEarthNeighborEffect.getAdjacentSectorIndexes(
       earthIndex,

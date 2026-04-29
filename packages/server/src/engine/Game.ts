@@ -58,6 +58,7 @@ import {
 import type { GoldScoringTile } from './scoring/GoldScoringTile.js';
 import { MilestoneState } from './scoring/Milestone.js';
 import type { TechBoard } from './tech/TechBoard.js';
+import { clearTurnEffectsForPlayer } from './turnEffects/TurnEffects.js';
 
 const MAX_ROUNDS = 5;
 
@@ -518,6 +519,7 @@ export class Game implements IGame {
                   type: EMissionEventType.CARD_PLAYED,
                   cost: result.price,
                   costType: result.priceType,
+                  cardId: result.cardId,
                 });
                 if (result.destination === 'mission') {
                   if (missionType === EMissionType.QUICK) {
@@ -613,6 +615,7 @@ export class Game implements IGame {
   }
 
   private handoffTurnFrom(playerId: string): void {
+    clearTurnEffectsForPlayer(this, playerId);
     this.missionTracker.clearTurnEventHistory();
     if (this.players.every((player) => player.passed)) {
       this.transitionTo(EPhase.END_OF_ROUND);

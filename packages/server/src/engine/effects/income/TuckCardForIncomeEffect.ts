@@ -3,10 +3,7 @@ import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
 import { SelectCard } from '../../input/SelectCard.js';
 import type { IPlayer } from '../../player/IPlayer.js';
-import {
-  resolveCardIncomeType,
-  resolveIncomeResourceFromCardId,
-} from './incomeCardUtils.js';
+import { resolveCardIncomeType } from './incomeCardUtils.js';
 
 const RESOURCE_GAIN_MAP = {
   [EResource.CREDIT]: { credits: 1 },
@@ -87,13 +84,9 @@ export class TuckCardForIncomeEffect {
           const removed = player.removeCardById(selectedId);
           if (removed === undefined) return undefined;
 
-          player.tuckedIncomeCards.push(removed);
-
-          const mappedResource = resolveIncomeResourceFromCardId(selectedId);
+          const mappedResource = player.addTuckedIncomeFromCard(removed);
 
           if (mappedResource) {
-            player.income.addTuckedIncome(mappedResource as EResource);
-
             if (mappedResource === EResource.CARD) {
               const drawn = game.mainDeck.drawWithReshuffle(game.random);
               if (drawn !== undefined) {

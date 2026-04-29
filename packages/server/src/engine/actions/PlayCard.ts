@@ -5,12 +5,14 @@ import { getCardRegistry } from '../cards/CardRegistry.js';
 import type { ICard } from '../cards/ICard.js';
 import { EServerCardKind } from '../cards/ICard.js';
 import { hasCardData } from '../cards/loadCardData.js';
+import { EPriority } from '../deferred/Priority.js';
+import { SimpleDeferredAction } from '../deferred/SimpleDeferredAction.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
 
 export interface IPlayCardResult {
   cardId: string;
-  destination: 'discard' | 'mission' | 'endGame';
+  destination: 'discard' | 'mission' | 'endGame' | 'income';
   price: number;
   priceType: string;
   card?: ICard;
@@ -92,8 +94,9 @@ export class PlayCardAction {
     const priceType = runtimeCard.priceType ?? EResource.CREDIT;
 
     player.resources.spend(this.getPriceResourceBundle(runtimeCard));
-    player.removeCardAt(cardIndex);
-    runtimeCard.play({ player, game });
+    const playedCard = player.removeCardAt(cardIndex);
+    const runtimeContext = { player, game, playedCard };
+    runtimeCard.play(runtimeContext);
 
     if (runtimeCard.kind === EServerCardKind.MISSION) {
       player.playedMissions.push(runtimeCard);
@@ -110,7 +113,12 @@ export class PlayCardAction {
       return { cardId, destination: 'endGame', price, priceType };
     }
 
+    if (runtimeCard.movesPlayedCardToIncomeAfterPlay(runtimeContext)) {
+      return { cardId, destination: 'income', price, priceType };
+    }
+
     this.discardPlayedCard(game, cardId, runtimeCard.alien);
+    this.enqueueReturnToHandHook(player, game, cardId, runtimeCard);
     return { cardId, destination: 'discard', price, priceType };
   }
 
@@ -128,6 +136,41 @@ export class PlayCardAction {
     }
 
     game.mainDeck.discard(cardId);
+  }
+
+  private static enqueueReturnToHandHook(
+    player: IPlayer,
+    game: IGame,
+    cardId: string,
+    runtimeCard: ICard,
+  ): void {
+    game.deferredActions.push(
+      new SimpleDeferredAction(
+        player,
+        (currentGame) => {
+          if (
+            !runtimeCard.canReturnToHandAfterPlay({
+              player,
+              game: currentGame,
+            })
+          ) {
+            return undefined;
+          }
+
+          if (runtimeCard.alien !== undefined) {
+            return undefined;
+          }
+
+          const returnedCard = currentGame.mainDeck.removeFromDiscard(cardId);
+          if (returnedCard !== undefined) {
+            player.hand.push(returnedCard);
+          }
+
+          return undefined;
+        },
+        EPriority.DEFAULT,
+      ),
+    );
   }
 
   private static getPriceResourceBundle(card: {

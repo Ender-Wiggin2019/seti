@@ -1,6 +1,8 @@
+import type { IInputResponse } from '@seti/common/types/protocol/actions';
 import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
 import type { IPlayer } from '../../player/IPlayer.js';
+import { RefillCardRowEffect } from '../cardRow/RefillCardRowEffect.js';
 import {
   type ICardRowCardInfo,
   SelectCardFromCardRowEffect,
@@ -9,17 +11,29 @@ import {
   type IMarkSectorSignalResult,
   MarkSectorSignalEffect,
 } from './MarkSectorSignalEffect.js';
+import {
+  type IScanActionPoolResult,
+  ScanActionPool,
+} from './ScanActionPool.js';
 import { extractSectorColorFromCardItem } from './ScanEffectUtils.js';
 
 export interface IScanEffectResult {
   earthSectorSignal: IMarkSectorSignalResult | null;
   cardRowCard: ICardRowCardInfo | null;
   targetSectorSignal: IMarkSectorSignalResult | null;
+  /** All sector signals marked by the scan pool itself, in resolution order. */
+  signalResults?: IMarkSectorSignalResult[];
+  actionPool?: IScanActionPoolResult;
+  refillCount?: number;
 }
 
 export interface IScanEffectOptions {
-  /** Index of the earth-adjacent sector (defaults to 0). */
+  /** Optional override used by card-specific scan effects and tests. */
   earthSectorIndex?: number;
+  /** Internal compatibility path for older scan-tech orchestration. */
+  useActionPool?: boolean;
+  /** Refill the card row after the scan and caller continuation complete. */
+  refillCardRow?: boolean;
   /**
    * Callback fired after the full scan sequence completes.
    * Receives the accumulated results from all sub-effects.
@@ -28,15 +42,11 @@ export interface IScanEffectOptions {
 }
 
 /**
- * Composed effect: execute a scan sequence without paying costs.
+ * Composed effect: execute the full scan action pool without paying costs.
  *
- * 1. Mark a signal on the earth sector (synchronous)
- * 2. Player selects a card from the card row (interactive)
- * 3. The selected card is discarded
- * 4. Mark a signal on the sector matching the card's color (synchronous)
- *
- * Card row is **not** refilled — use `RefillCardRowEffect` after the action.
- * This allows cards to trigger scan without refilling.
+ * This mirrors the Scan main action after costs have been paid: the player
+ * resolves the same sub-action pool, including scan-tech sub-actions, and the
+ * card row is refilled once the scan and caller continuation are complete.
  */
 export class ScanEffect {
   public static execute(
@@ -50,13 +60,69 @@ export class ScanEffect {
       targetSectorSignal: null,
     };
 
+    if (options.useActionPool === false) {
+      return this.executeBaseScan(player, game, options, result);
+    }
+
+    const capture = startSignalCapture(player, game);
+    let restored = false;
+
+    const restore = () => {
+      if (restored) return;
+      restored = true;
+      capture.stop();
+    };
+
+    return ScanActionPool.execute(player, game, {
+      earthSectorIndex: options.earthSectorIndex,
+      onComplete: (poolResult) => {
+        restore();
+
+        result.signalResults = [...capture.signalResults];
+        result.earthSectorSignal = capture.signalResults[0] ?? null;
+        result.targetSectorSignal = capture.signalResults[1] ?? null;
+        result.actionPool = poolResult;
+
+        const continuation = options.onComplete?.(result);
+        return continueAfterInput(continuation, () => {
+          if (options.refillCardRow !== false) {
+            result.refillCount = RefillCardRowEffect.execute(game).cardsAdded;
+          } else {
+            result.refillCount = 0;
+          }
+          return undefined;
+        });
+      },
+    });
+  }
+
+  private static executeBaseScan(
+    player: IPlayer,
+    game: IGame,
+    options: IScanEffectOptions,
+    result: IScanEffectResult,
+  ): IPlayerInput | undefined {
+    const complete = (): IPlayerInput | undefined => {
+      const continuation = options.onComplete?.(result);
+      if (options.refillCardRow === true) {
+        return continueAfterInput(continuation, () => {
+          result.refillCount = RefillCardRowEffect.execute(game).cardsAdded;
+          return undefined;
+        });
+      }
+      return continuation;
+    };
+
     const continueAfterEarthSignal = (
       earthSignal: IMarkSectorSignalResult | null,
     ): IPlayerInput | undefined => {
       result.earthSectorSignal = earthSignal;
 
       if (game.cardRow.length === 0) {
-        return options.onComplete?.(result);
+        result.signalResults = [earthSignal].filter(
+          (signal): signal is IMarkSectorSignalResult => signal !== null,
+        );
+        return complete();
       }
 
       return SelectCardFromCardRowEffect.execute(player, game, {
@@ -72,12 +138,19 @@ export class ScanEffect {
               sectorColor,
               (markResult) => {
                 result.targetSectorSignal = markResult;
-                return options.onComplete?.(result);
+                result.signalResults = [earthSignal, markResult].filter(
+                  (signal): signal is IMarkSectorSignalResult =>
+                    signal !== null,
+                );
+                return complete();
               },
             );
           }
 
-          return options.onComplete?.(result);
+          result.signalResults = [earthSignal].filter(
+            (signal): signal is IMarkSectorSignalResult => signal !== null,
+          );
+          return complete();
         },
       });
     };
@@ -90,4 +163,99 @@ export class ScanEffect {
       continueAfterEarthSignal,
     );
   }
+}
+
+class ContinueAfterInput implements IPlayerInput {
+  public constructor(
+    private readonly input: IPlayerInput,
+    private readonly continuation: () => IPlayerInput | undefined,
+  ) {}
+
+  public get inputId() {
+    return this.input.inputId;
+  }
+
+  public get type() {
+    return this.input.type;
+  }
+
+  public get player() {
+    return this.input.player;
+  }
+
+  public get title() {
+    return this.input.title;
+  }
+
+  public toModel() {
+    return this.input.toModel();
+  }
+
+  public process(response: IInputResponse): IPlayerInput | undefined {
+    return continueAfterInput(this.input.process(response), this.continuation);
+  }
+}
+
+function continueAfterInput(
+  input: IPlayerInput | undefined,
+  continuation: () => IPlayerInput | undefined,
+): IPlayerInput | undefined {
+  if (input !== undefined) {
+    return new ContinueAfterInput(input, continuation);
+  }
+  return continuation();
+}
+
+type TSignalCaptureSector = {
+  id: string;
+  completed: boolean;
+  markSignal(playerId: string): { dataGained: boolean; vpAwarded: number };
+};
+
+function startSignalCapture(
+  player: IPlayer,
+  game: IGame,
+): {
+  signalResults: IMarkSectorSignalResult[];
+  stop: () => void;
+} {
+  const signalResults: IMarkSectorSignalResult[] = [];
+  const restorers: Array<() => void> = [];
+
+  for (const sector of game.sectors) {
+    if (
+      sector === null ||
+      typeof sector !== 'object' ||
+      !('markSignal' in sector)
+    ) {
+      continue;
+    }
+
+    const target = sector as TSignalCaptureSector;
+    const original = target.markSignal;
+    target.markSignal = function captureMarkSignal(playerId: string) {
+      const markResult = original.call(this, playerId);
+      if (playerId === player.id) {
+        signalResults.push({
+          sectorId: target.id,
+          dataGained: markResult.dataGained,
+          vpAwarded: markResult.vpAwarded,
+          completed: target.completed,
+        });
+      }
+      return markResult;
+    };
+    restorers.push(() => {
+      target.markSignal = original;
+    });
+  }
+
+  return {
+    signalResults,
+    stop: () => {
+      for (const restore of restorers.splice(0).reverse()) {
+        restore();
+      }
+    },
+  };
 }

@@ -73,6 +73,12 @@ export class Deck<T> {
     this.discardPile.push(...items);
   }
 
+  public removeFromDiscard(item: T): T | undefined {
+    const index = this.discardPile.lastIndexOf(item);
+    if (index < 0) return undefined;
+    return this.discardPile.splice(index, 1)[0];
+  }
+
   /** Shuffle discard pile into draw pile (appends shuffled discards to bottom of draw pile) */
   public reshuffleDiscards(rng: SeededRandom): void {
     const shuffled = rng.shuffle(this.discardPile);

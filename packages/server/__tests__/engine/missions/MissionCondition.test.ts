@@ -4,6 +4,7 @@ import {
   EResource,
   ESector,
   ESpecialAction,
+  ETrace,
 } from '@seti/common/types/element';
 import { EAlienType, EPlanet } from '@seti/common/types/protocol/enums';
 import { OumuamuaAlienBoard } from '@/engine/alien/AlienBoard.js';
@@ -58,6 +59,26 @@ describe('matchesFullMissionTrigger', () => {
     expect(
       matchesFullMissionTrigger(branch, {
         type: EMissionEventType.SCAN_PERFORMED,
+      }),
+    ).toBe(false);
+  });
+
+  it('matches trace requirements against TRACE_MARKED events', () => {
+    const branch: IMissionBranchDef = {
+      req: [{ effectType: EEffectType.BASE, type: ETrace.RED, value: 1 }],
+      rewards: [],
+    };
+
+    expect(
+      matchesFullMissionTrigger(branch, {
+        type: EMissionEventType.TRACE_MARKED,
+        traceColor: ETrace.RED,
+      }),
+    ).toBe(true);
+    expect(
+      matchesFullMissionTrigger(branch, {
+        type: EMissionEventType.TRACE_MARKED,
+        traceColor: ETrace.BLUE,
       }),
     ).toBe(false);
   });

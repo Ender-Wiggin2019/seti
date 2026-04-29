@@ -5,6 +5,7 @@ import {
   EPlanet,
   ETrace,
 } from '@seti/common/types/protocol/enums';
+import { ETechId } from '@seti/common/types/tech';
 import {
   isAnomaliesAlienBoard,
   isOumuamuaAlienBoard,
@@ -83,6 +84,20 @@ describe('GameSerializer', () => {
     const actions = getAvailableMainActions(publicPlayer, publicState);
     expect(actions).toContain(EMainAction.ORBIT);
     expect(actions).toContain(EMainAction.LAND);
+  });
+
+  it('projects the effective probe limit when double-probe tech is owned', () => {
+    const game = createTestGame();
+    const player = game.players[0];
+    player.gainTech(ETechId.PROBE_DOUBLE_PROBE);
+    player.probesInSpace = 2;
+
+    const publicState = projectGameState(game, player.id);
+    const publicPlayer = publicState.players.find(
+      (p) => p.playerId === player.id,
+    );
+
+    expect(publicPlayer?.probeSpaceLimit).toBe(2);
   });
 
   it('does not persist redundant planetSpaceId inside planetary board state', () => {

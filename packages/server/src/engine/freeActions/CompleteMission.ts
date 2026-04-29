@@ -1,6 +1,7 @@
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import type { IGame } from '../IGame.js';
+import type { IPlayerInput } from '../input/PlayerInput.js';
 import type { IPlayer } from '../player/IPlayer.js';
 
 /**
@@ -21,7 +22,7 @@ export class CompleteMissionFreeAction {
     game: IGame,
     cardId: string,
     branchIndex?: number,
-  ): void {
+  ): IPlayerInput | undefined {
     const completable = game.missionTracker.getCompletableQuickMissions(
       player,
       game,
@@ -40,7 +41,7 @@ export class CompleteMissionFreeAction {
       );
     }
 
-    game.missionTracker.completeMissionBranch(
+    return game.missionTracker.completeMissionBranch(
       player,
       game,
       cardId,

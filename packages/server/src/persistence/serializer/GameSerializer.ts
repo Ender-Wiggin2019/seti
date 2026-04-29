@@ -35,6 +35,7 @@ import {
 import type { IPlayer } from '@/engine/player/IPlayer.js';
 import { EPieceType } from '@/engine/player/Pieces.js';
 import { buildTechTileBonuses } from '@/engine/tech/TechBonusConfig.js';
+import { TechModifierQuery } from '@/engine/tech/TechModifierQuery.js';
 import { toPublicSolarSystemState } from '@/engine/utils/stateProjection.js';
 import type {
   IAlienStateDto,
@@ -571,6 +572,9 @@ function toPublicPlayerState(
   viewerId: string,
 ): IPublicPlayerState {
   const isViewer = player.id === viewerId;
+  const effectiveProbeSpaceLimit = TechModifierQuery.fromTechIds(
+    player.techs,
+  ).getProbeSpaceLimit(player.probeSpaceLimit);
   return {
     playerId: player.id,
     playerName: player.name,
@@ -612,7 +616,7 @@ function toPublicPlayerState(
     dataStashCount: (player.data as unknown as IDataInternalState)
       .stashCountValue,
     probesInSpace: player.probesInSpace,
-    probeSpaceLimit: player.probeSpaceLimit,
+    probeSpaceLimit: effectiveProbeSpaceLimit,
     tuckedIncomeCards: isViewer
       ? cloneValue(player.tuckedIncomeCards as never)
       : undefined,

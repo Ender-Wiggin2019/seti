@@ -1,6 +1,26 @@
 import { createGenericCard } from '../base/GenericCards.js';
 import type { CardRegistry } from '../CardRegistry.js';
 import { loadCardData } from '../loadCardData.js';
+import { AbandonedMission } from '../spaceAgency/AbandonedMissionCard.js';
+import { AkatsukuOrbiter } from '../spaceAgency/AkatsukuOrbiterCard.js';
+import { BetterSolarPanels } from '../spaceAgency/BetterSolarPanelsCard.js';
+import { ContractedResearch } from '../spaceAgency/ContractedResearchCard.js';
+import { IterativeEngineering } from '../spaceAgency/IterativeEngineeringCard.js';
+import { JamesClerkMaxwellTelescope } from '../spaceAgency/JamesClerkMaxwellTelescopeCard.js';
+import { LiveLandingBroadcast } from '../spaceAgency/LiveLandingBroadcastCard.js';
+import { MurepIdeaCompetition } from '../spaceAgency/MurepIdeaCompetitionCard.js';
+import { NewAssignment } from '../spaceAgency/NewAssignmentCard.js';
+import { PaidMediaCoverage } from '../spaceAgency/PaidMediaCoverageCard.js';
+import { PandoraSatellite } from '../spaceAgency/PandoraSatelliteCard.js';
+import { PrivateSectorInvestment } from '../spaceAgency/PrivateSectorInvestmentCard.js';
+import { Restructuring } from '../spaceAgency/RestructuringCard.js';
+import { ReusableLander } from '../spaceAgency/ReusableLanderCard.js';
+import { ReusableRocket } from '../spaceAgency/ReusableRocketCard.js';
+import { SpaceRendezvous } from '../spaceAgency/SpaceRendezvousCard.js';
+import { TessSatellite } from '../spaceAgency/TessSatelliteCard.js';
+import { TrackingAndDataRelaySatellite } from '../spaceAgency/TrackingAndDataRelaySatelliteCard.js';
+import { TwoPlanetFlyby } from '../spaceAgency/TwoPlanetFlybyCard.js';
+import { WellExecutedProject } from '../spaceAgency/WellExecutedProjectCard.js';
 
 function g(registry: CardRegistry, id: string): void {
   registry.register(id, () => createGenericCard(loadCardData(id)));
@@ -16,44 +36,44 @@ export function registerSpaceAgencyCards(registry: CardRegistry): void {
   // ============================================================
   // IMMEDIATE + DESC — land/launch + special
   // ============================================================
-  g(registry, 'SA.1'); // Reusable Lander           | LAND, DESC
-  g(registry, 'SA.6'); // Live Landing Broadcast    | MOVE, LAND, DESC
-  g(registry, 'SA.14'); // Reusable Rocket           | LAUNCH, PUBLICITY, DESC
-  g(registry, 'SA.30'); // Akatsuku Orbiter          | ORBIT, PUBLICITY, DESC
+  registry.register('SA.1', () => new ReusableLander()); // Reusable Lander           | LAND, DESC
+  registry.register('SA.6', () => new LiveLandingBroadcast()); // Live Landing Broadcast    | MOVE, LAND, DESC
+  registry.register('SA.14', () => new ReusableRocket()); // Reusable Rocket           | LAUNCH, PUBLICITY, DESC
+  registry.register('SA.30', () => new AkatsukuOrbiter()); // Akatsuku Orbiter          | ORBIT, PUBLICITY, DESC
 
   // ============================================================
   // IMMEDIATE + DESC — movement + special
   // ============================================================
   g(registry, 'SA.5'); // Servicing Mission         | DATA, MOVE, DESC
-  g(registry, 'SA.12'); // Two-planet Flyby          | MOVE(2), DESC
-  g(registry, 'SA.38'); // Space Rendezvous          | PUBLICITY, MOVE, DESC
+  registry.register('SA.12', () => new TwoPlanetFlyby()); // Two-planet Flyby          | MOVE(2), DESC
+  registry.register('SA.38', () => new SpaceRendezvous()); // Space Rendezvous          | PUBLICITY, MOVE, DESC
 
   // ============================================================
   // IMMEDIATE + DESC — tech + special
   // ============================================================
-  g(registry, 'SA.15'); // Iterative Engineering     | ROTATE, TECH_ANY, DESC
+  registry.register('SA.15', () => new IterativeEngineering()); // Iterative Engineering     | ROTATE, TECH_ANY, DESC
 
   // ============================================================
   // IMMEDIATE + DESC — resource/draw + special
   // ============================================================
-  g(registry, 'SA.2'); // Tracking & Data Relay     | DESC(special)
-  g(registry, 'SA.17'); // Paid Media Coverage       | DESC(special)
-  g(registry, 'SA.19'); // New Assignment            | DESC(special)
-  g(registry, 'SA.20'); // Well Executed Project     | PUBLICITY, DESC
-  g(registry, 'SA.27'); // Better Solar Panels       | DESC(special)
-  g(registry, 'SA.29'); // Abandoned Mission         | DESC(special)
-  g(registry, 'SA.32'); // MUREP Idea Competition    | DESC, PUBLICITY, CARD(2)
-  g(registry, 'SA.34'); // Private Sector Investment | INCOME, DESC
+  registry.register('SA.2', () => new TrackingAndDataRelaySatellite()); // Tracking & Data Relay     | DESC(special)
+  registry.register('SA.17', () => new PaidMediaCoverage()); // Paid Media Coverage       | DESC(special)
+  registry.register('SA.19', () => new NewAssignment()); // New Assignment            | DESC(special)
+  registry.register('SA.20', () => new WellExecutedProject()); // Well Executed Project     | PUBLICITY, DESC
+  registry.register('SA.27', () => new BetterSolarPanels()); // Better Solar Panels       | DESC(special)
+  registry.register('SA.29', () => new AbandonedMission()); // Abandoned Mission         | DESC(special)
+  registry.register('SA.32', () => new MurepIdeaCompetition()); // MUREP Idea Competition    | DESC, PUBLICITY, CARD(2)
+  registry.register('SA.34', () => new PrivateSectorInvestment()); // Private Sector Investment | INCOME, DESC
 
   // ============================================================
   // IMMEDIATE + DESC — scan/signal
   // ============================================================
-  g(registry, 'SA.13'); // James Clerk Maxwell Tel   | SCAN, DESC
+  registry.register('SA.13', () => new JamesClerkMaxwellTelescope()); // James Clerk Maxwell Tel   | SCAN, DESC
 
   // ============================================================
   // IMMEDIATE + DESC — multi-part
   // ============================================================
-  g(registry, 'SA.18'); // Contracted Research       | DESC, ROTATE, TECH_ANY, DESC
+  registry.register('SA.18', () => new ContractedResearch()); // Contracted Research       | DESC, ROTATE, TECH_ANY, DESC
 
   // ============================================================
   // IMMEDIATE — signal-token
@@ -61,8 +81,8 @@ export function registerSpaceAgencyCards(registry: CardRegistry): void {
   g(registry, 'SA.3'); // NASA Deep Space Network   | SIGNAL_TOKEN(3)
   g(registry, 'SA.4'); // Breakthrough Message      | SIGNAL_TOKEN, MOVE
 
-  g(registry, 'SA.22'); // TESS Satellite            | ANY_SIGNAL(2), DESC
-  g(registry, 'SA.37'); // Pandora Satellite         | ANY_SIGNAL, DESC
+  registry.register('SA.22', () => new TessSatellite()); // TESS Satellite            | ANY_SIGNAL(2), DESC
+  registry.register('SA.37', () => new PandoraSatellite()); // Pandora Satellite         | ANY_SIGNAL, DESC
 
   // ============================================================
   // QUICK MISSION — tech + mission
@@ -78,7 +98,7 @@ export function registerSpaceAgencyCards(registry: CardRegistry): void {
   g(registry, 'SA.42'); // LOFAR Array               | SCAN, QM
 
   // QUICK MISSION + DESC
-  g(registry, 'SA.28'); // Restructuring             | DESC, QM
+  registry.register('SA.28', () => new Restructuring()); // Restructuring             | DESC, QM
 
   // QUICK MISSION + signal-token
   g(registry, 'SA.35'); // NASA Exoplanet Archive    | SIGNAL_TOKEN, QM

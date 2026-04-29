@@ -8,6 +8,7 @@ import {
 import type { IGame } from '../IGame.js';
 import type { PlayerInput } from '../input/PlayerInput.js';
 import { SelectOption } from '../input/SelectOption.js';
+import { EMissionEventType } from '../missions/IMission.js';
 import type { IPlayer } from '../player/IPlayer.js';
 import {
   AlienBoard,
@@ -320,6 +321,10 @@ export class AlienState {
       onComplete,
     );
     this.incrementPlayerTrace(player, resolvedColor, board.alienIndex);
+    game.missionTracker?.recordEvent({
+      type: EMissionEventType.TRACE_MARKED,
+      traceColor: resolvedColor,
+    });
     game.eventLog.append(
       createTraceMarkedEvent(
         player.id,

@@ -85,16 +85,18 @@ describe('Base representative cards', () => {
 
     pendingInput = pendingInput?.process({
       type: EPlayerInputType.CARD,
-      cardIds: ['55@1'],
+      cardIds: ['55@0'],
     } as never);
     expect(pendingInput?.type).toBe(EPlayerInputType.CARD);
 
     pendingInput = pendingInput?.process({
       type: EPlayerInputType.CARD,
-      cardIds: ['50@2'],
+      cardIds: ['50@0'],
     } as never);
     expect(pendingInput).toBeUndefined();
 
+    expect(game.cardRow).toEqual([]);
+    expect(game.mainDeck.getDiscardPile()).toEqual(['85', '55', '50']);
     expect(redSector.state.marks).toBe(1);
     expect(blueSector.state.marks).toBe(1);
     expect(yellowSector.state.marks).toBe(1);
@@ -137,7 +139,7 @@ describe('Base representative cards', () => {
     expect(player.traces[ETrace.ANY]).toBe(1);
   });
 
-  it('Card 71 canPlay depends on available tech choices', () => {
+  it('Card 71 remains playable when no tech choices are available', () => {
     const player = createPlayer();
     const card = getCardRegistry().create('71');
 
@@ -146,7 +148,7 @@ describe('Base representative cards', () => {
         getAvailableTechs: () => [],
       },
     });
-    expect(card.canPlay({ player, game: gameNoTech })).toBe(false);
+    expect(card.canPlay({ player, game: gameNoTech })).toBe(true);
 
     const gameWithTech = createGame({
       techBoard: {

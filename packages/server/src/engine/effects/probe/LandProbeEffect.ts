@@ -1,6 +1,8 @@
 import type { ETrace } from '@seti/common/types/element';
 import { EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
+import { SimpleDeferredAction } from '@/engine/deferred/SimpleDeferredAction.js';
+import { EMissionEventType } from '@/engine/missions/IMission.js';
 import { GameError } from '@/shared/errors/GameError.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayer } from '../../player/IPlayer.js';
@@ -169,5 +171,32 @@ export class LandProbeEffect {
       lifeTraceGained: landingResult.centerReward.lifeTraceGained,
       traceRewards: landingResult.centerReward.traceRewards,
     };
+  }
+
+  public static executeCardContainedAction(
+    player: IPlayer,
+    game: IGame,
+    planet: EPlanet,
+    options: ILandOptions = {},
+  ): ILandResult {
+    const result = this.execute(player, game, planet, options);
+
+    game.missionTracker.recordEvent({
+      type: EMissionEventType.PROBE_LANDED,
+      planet,
+      isMoon: result.isMoon,
+    });
+
+    for (const traceReward of result.traceRewards) {
+      for (let i = 0; i < traceReward.amount; i += 1) {
+        game.deferredActions.push(
+          new SimpleDeferredAction(player, (g) =>
+            g.alienState.createTraceInput(player, g, traceReward.trace),
+          ),
+        );
+      }
+    }
+
+    return result;
   }
 }

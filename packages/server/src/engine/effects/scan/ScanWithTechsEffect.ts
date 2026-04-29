@@ -68,6 +68,8 @@ export class ScanWithTechsEffect {
     if (scanModifiers.length === 0) {
       return ScanEffect.execute(player, game, {
         earthSectorIndex: options.earthSectorIndex,
+        useActionPool: false,
+        refillCardRow: false,
         onComplete: (baseScanResult) => {
           result.baseScan = baseScanResult;
           return options.onComplete?.(result);
@@ -201,6 +203,8 @@ export class ScanWithTechsEffect {
   ): IPlayerInput | undefined {
     return ScanEffect.execute(player, game, {
       earthSectorIndex,
+      useActionPool: false,
+      refillCardRow: false,
       onComplete: (baseScanResult) => {
         result.baseScan = baseScanResult;
 

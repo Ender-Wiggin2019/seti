@@ -25,6 +25,7 @@ describe('buildLandPlanetSelection', () => {
     const input = buildLandPlanetSelection(player, {} as never, {
       prompt: 'Choose landing',
       allowMoons: true,
+      payCost: true,
     });
 
     expect(input).toBeUndefined();
@@ -40,6 +41,7 @@ describe('buildLandPlanetSelection', () => {
       prompt: 'Choose landing',
       allowMoons: true,
       includeSkipOption: false,
+      payCost: true,
     });
 
     expect(input).toBeDefined();
@@ -54,13 +56,32 @@ describe('buildLandPlanetSelection', () => {
     expect(calls).toEqual([{ planet: EPlanet.MARS, isMoon: false }]);
   });
 
-  it('includes skip option by default', () => {
+  it('does not include skip option by default', () => {
     const { player } = createPlayer({
       [`${EPlanet.MERCURY}:planet`]: true,
     });
 
     const input = buildLandPlanetSelection(player, {} as never, {
       prompt: 'Choose landing',
+      payCost: true,
+    });
+
+    const model = input?.toModel();
+    if (!model || model.type !== EPlayerInputType.OPTION) return;
+    expect(model.options.some((option) => option.id === 'skip-land')).toBe(
+      false,
+    );
+  });
+
+  it('includes skip option when explicitly requested', () => {
+    const { player } = createPlayer({
+      [`${EPlanet.MERCURY}:planet`]: true,
+    });
+
+    const input = buildLandPlanetSelection(player, {} as never, {
+      prompt: 'Choose landing',
+      includeSkipOption: true,
+      payCost: true,
     });
 
     const model = input?.toModel();

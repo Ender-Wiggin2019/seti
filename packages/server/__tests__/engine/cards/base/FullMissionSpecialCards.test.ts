@@ -124,6 +124,48 @@ describe('Special full mission cards (128/129/138) and card 134 quick mission', 
     expect(completeOptions[0].id).toBe('complete-138-2');
   });
 
+  it('card SE EN 02 triggers from orbiting or landing at Mars', () => {
+    const player = createPlayer();
+    const game = createGame();
+    registerCardMission('SE EN 02', player, game);
+    activateMission(player, 'SE EN 02');
+
+    game.missionTracker.recordEvent({
+      type: EMissionEventType.PROBE_ORBITED,
+      planet: EPlanet.MARS,
+    });
+
+    const prompt = game.missionTracker.checkAndPromptTriggers(player, game);
+    const model = prompt?.toModel() as ISelectOptionInputModel | undefined;
+    const completeOptions = model?.options.filter((o) =>
+      o.id.startsWith('complete-SE EN 02-'),
+    );
+
+    expect(completeOptions).toHaveLength(2);
+  });
+
+  it('card SE EN 02 triggers from a played card whose flavor text mentions Mars', () => {
+    const player = createPlayer();
+    const game = createGame();
+    registerCardMission('SE EN 02', player, game);
+    activateMission(player, 'SE EN 02');
+
+    game.missionTracker.recordEvent({
+      type: EMissionEventType.CARD_PLAYED,
+      cost: 2,
+      costType: EResource.CREDIT,
+      cardId: '34',
+    });
+
+    const prompt = game.missionTracker.checkAndPromptTriggers(player, game);
+    const model = prompt?.toModel() as ISelectOptionInputModel | undefined;
+    const completeOptions = model?.options.filter((o) =>
+      o.id.startsWith('complete-SE EN 02-'),
+    );
+
+    expect(completeOptions).toHaveLength(2);
+  });
+
   it('card 134 quick mission condition checks 4 different sectors', () => {
     const player = createPlayer();
     const card = getCardRegistry().create('134');

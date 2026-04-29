@@ -9,6 +9,7 @@ import { SelectOption } from '../../input/SelectOption.js';
 import { EMissionEventType } from '../../missions/IMission.js';
 import type { IPlayer } from '../../player/IPlayer.js';
 import { EPieceType } from '../../player/Pieces.js';
+import { emitSectorCompletedTurnEvent } from '../../turnEffects/TurnEffects.js';
 import {
   findAllSectorsByColor,
   findSectorById,
@@ -64,6 +65,9 @@ export class MarkSectorSignalEffect {
     }
     if (signalResult.vpAwarded > 0) {
       player.score += signalResult.vpAwarded;
+    }
+    if (sector.completed) {
+      emitSectorCompletedTurnEvent(game, player, sector.id);
     }
 
     return {

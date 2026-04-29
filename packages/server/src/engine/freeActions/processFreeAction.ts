@@ -20,8 +20,7 @@ export function processFreeAction(
 ): IPlayerInput | undefined {
   switch (action.type) {
     case EFreeAction.MOVEMENT:
-      MovementFreeAction.execute(player, game, action.path);
-      return undefined;
+      return MovementFreeAction.execute(player, game, action.path).pendingInput;
 
     case EFreeAction.CONVERT_ENERGY_TO_MOVEMENT:
       ConvertEnergyToMovementFreeAction.execute(player, game, action.amount);
@@ -32,13 +31,12 @@ export function processFreeAction(
         .pendingInput;
 
     case EFreeAction.COMPLETE_MISSION:
-      CompleteMissionFreeAction.execute(
+      return CompleteMissionFreeAction.execute(
         player,
         game,
         action.cardId,
         action.branchIndex,
       );
-      return undefined;
 
     case EFreeAction.USE_CARD_CORNER:
       FreeActionCornerFreeAction.execute(player, game, action.cardId);

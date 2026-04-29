@@ -6,6 +6,7 @@
   "oumuamua": "奥陌陌",
   "amoeba": "变形虫",
   "glyphids": "字形族",
+  "ark": "方舟",
   "Flavor Text": "背景文字",
 
   "61 Virginis Observation": "观测天门增四",
@@ -301,10 +302,10 @@
   "in any sector": {
     "": "在任意扇区。"
   },
-  "{score-3} for each {fulfill-sector-black}": "每有一个 {fulfill-sector-black}} 获得 {score-3}",
-  "{score-3} for each {fulfill-sector-red}}": "每有一个  {fulfill-sector-red}} 获得 {score-3}",
-  "{score-3} for each {fulfill-sector-yellow}}": "每有一个 {fulfill-sector-yellow}} 获得 {score-3}",
-  "{score-3} for each {fulfill-sector-blue}}": "每有一个 {fulfill-sector-blue}} 获得 {score-3}",
+  "{score-3} for each {fulfill-sector-black}": "每有一个 {fulfill-sector-black} 获得 {score-3}",
+  "{score-3} for each {fulfill-sector-red}": "每有一个 {fulfill-sector-red} 获得 {score-3}",
+  "{score-3} for each {fulfill-sector-yellow}": "每有一个 {fulfill-sector-yellow} 获得 {score-3}",
+  "{score-3} for each {fulfill-sector-blue}": "每有一个 {fulfill-sector-blue} 获得 {score-3}",
   "{publicity-8}": "{publicity-8}",
   "Have at least": "拥有至少",
   "Do not count moons": "不包含卫星。",

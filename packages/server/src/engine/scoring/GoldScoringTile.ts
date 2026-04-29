@@ -2,11 +2,15 @@ import { EEffectType } from '@seti/common/types/effect';
 import {
   ECardType,
   EMiscIcon,
+  EPlanet,
   EResource,
+  ESector,
   ETech,
   ETrace,
 } from '@seti/common/types/element';
 import { type ETechId, getTechDescriptor } from '@seti/common/types/tech';
+import { ESolarSystemElementType } from '../board/SolarSystem.js';
+import { countSectorFulfills } from '../board/sectorFulfillmentCounts.js';
 import { hasCardData, loadCardData } from '../cards/loadCardData.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
@@ -99,14 +103,50 @@ function getTraceCount(player: IPlayer, game: IGame, trace: ETrace): number {
 }
 
 function getSectorWinCount(player: IPlayer, game: IGame): number {
-  return game.sectors.reduce((total, sectorLike) => {
-    const sectorWinners = (sectorLike as { sectorWinners?: string[] })
-      .sectorWinners;
-    if (!sectorWinners) {
-      return total;
-    }
-    return total + sectorWinners.filter((id) => id === player.id).length;
-  }, 0);
+  return countSectorFulfills(player, game);
+}
+
+function getOrbitOrLandCountAtPlanet(
+  player: IPlayer,
+  game: IGame,
+  planet: EPlanet,
+): number {
+  const planetState = game.planetaryBoard?.planets.get(planet);
+  if (!planetState) {
+    return 0;
+  }
+
+  const orbitCount = planetState.orbitSlots.filter(
+    (slot) => slot.playerId === player.id,
+  ).length;
+  const landCount = planetState.landingSlots.filter(
+    (slot) => slot.playerId === player.id,
+  ).length;
+  const moonCount = planetState.moonOccupant?.playerId === player.id ? 1 : 0;
+
+  return orbitCount + landCount + moonCount;
+}
+
+function getSectorWithSignalCount(player: IPlayer, game: IGame): number {
+  return game.sectors.filter(
+    (sector) => sector.getPlayerMarkerCount(player.id) > 0,
+  ).length;
+}
+
+function hasProbeOnAsteroids(player: IPlayer, game: IGame): boolean {
+  const solarSystem = game.solarSystem;
+  if (!solarSystem) {
+    return false;
+  }
+
+  return solarSystem.spaces.some(
+    (space) =>
+      space.elements.some(
+        (element) =>
+          element.type === ESolarSystemElementType.ASTEROID &&
+          element.amount > 0,
+      ) && space.occupants.some((probe) => probe.playerId === player.id),
+  );
 }
 
 function getTechCategoryCount(techIds: ETechId[], category: ETech): number {
@@ -181,6 +221,28 @@ function getFormula(
     );
 }
 
+function getSectorFulfillCountForEndGamePer(
+  type: unknown,
+  player: IPlayer,
+  game: IGame,
+): number | undefined {
+  switch (type) {
+    case EMiscIcon.FULFILL_SECTOR_ANY:
+    case EMiscIcon.FULFILL_ICON:
+      return countSectorFulfills(player, game);
+    case EMiscIcon.FULFILL_SECTOR_RED:
+      return countSectorFulfills(player, game, ESector.RED);
+    case EMiscIcon.FULFILL_SECTOR_YELLOW:
+      return countSectorFulfills(player, game, ESector.YELLOW);
+    case EMiscIcon.FULFILL_SECTOR_BLUE:
+      return countSectorFulfills(player, game, ESector.BLUE);
+    case EMiscIcon.FULFILL_SECTOR_BLACK:
+      return countSectorFulfills(player, game, ESector.BLACK);
+    default:
+      return undefined;
+  }
+}
+
 export class GoldScoringTile {
   public readonly id: TGoldScoringTileId;
 
@@ -223,6 +285,23 @@ export class GoldScoringTile {
     }
     return claim.value * this.formula(player, game);
   }
+
+  public scoreRightmostSlot(player: IPlayer, game: IGame): number {
+    const rightmostValue = this.slotValues[this.slotValues.length - 1] ?? 0;
+    return rightmostValue * this.formula(player, game);
+  }
+}
+
+function scoreSolvayConference(player: IPlayer, game: IGame): number {
+  return game.goldScoringTiles
+    .filter(
+      (tile) => !tile.claims.some((claim) => claim.playerId === player.id),
+    )
+    .reduce(
+      (bestScore, tile) =>
+        Math.max(bestScore, tile.scoreRightmostSlot(player, game)),
+      0,
+    );
 }
 
 export function scoreEndGameCard(
@@ -240,6 +319,21 @@ export function scoreEndGameCard(
   const cardId = asCardId(card);
   if (!cardId || !hasCardData(cardId)) {
     return 0;
+  }
+
+  switch (cardId) {
+    case '12':
+      return 3 * getOrbitOrLandCountAtPlanet(player, game, EPlanet.JUPITER);
+    case '14':
+      return 4 * getOrbitOrLandCountAtPlanet(player, game, EPlanet.MARS);
+    case '86':
+      return getSectorWithSignalCount(player, game);
+    case '113':
+      return scoreSolvayConference(player, game);
+    case '127':
+      return hasProbeOnAsteroids(player, game) ? 13 : 0;
+    default:
+      break;
   }
 
   const cardData = loadCardData(cardId);
@@ -307,6 +401,15 @@ export function scoreEndGameCard(
           (player.pieces.deployed(EPieceType.ORBITER) +
             player.pieces.deployed(EPieceType.LANDER))
       );
+    }
+
+    const sectorFulfillCount = getSectorFulfillCountForEndGamePer(
+      effect.per.type,
+      player,
+      game,
+    );
+    if (sectorFulfillCount !== undefined) {
+      return total + baseScore * sectorFulfillCount;
     }
 
     return total;

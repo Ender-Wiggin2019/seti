@@ -4,6 +4,7 @@ import {
 } from '@seti/common/types/protocol/playerInput';
 import { HerschelSpaceObservatory } from '@/engine/cards/base/HerschelSpaceObservatoryCard.js';
 import { getCardRegistry } from '@/engine/cards/CardRegistry.js';
+import { EPriority } from '@/engine/deferred/Priority.js';
 import { Game } from '@/engine/Game.js';
 import { Player } from '@/engine/player/Player.js';
 import { discoverOumuamua } from '../../../helpers/OumuamuaTestUtils.js';
@@ -21,6 +22,23 @@ describe('HerschelSpaceObservatory', () => {
     const mission = card.getMissionDef();
     expect(mission.cardId).toBe('134');
     expect(mission.branches.length).toBeGreaterThan(0);
+  });
+
+  it('resolves signal placement before same-turn quick mission checks', () => {
+    const game = Game.create(
+      [
+        { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
+        { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
+      ],
+      { playerCount: 2 },
+      'herschel-priority',
+    );
+    const player = game.players[0] as Player;
+    const card = new HerschelSpaceObservatory();
+
+    card.play({ player, game });
+
+    expect(game.deferredActions.peek()?.priority).toBe(EPriority.CORE_EFFECT);
   });
 
   it('offers sector/tile choice when the probe sector contains oumuamua', () => {

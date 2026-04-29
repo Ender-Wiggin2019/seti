@@ -1,5 +1,10 @@
 import type { IBaseEffect, ICustomizedEffect } from '@seti/common/types/effect';
-import type { EPlanet, EResource, ESector } from '@seti/common/types/element';
+import type {
+  EPlanet,
+  EResource,
+  ESector,
+  ETrace,
+} from '@seti/common/types/element';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
 
@@ -43,6 +48,7 @@ export enum EMissionEventType {
   PROBE_VISITED_ASTEROIDS = 'PROBE_VISITED_ASTEROIDS',
   SCAN_PERFORMED = 'SCAN_PERFORMED',
   SIGNAL_PLACED = 'SIGNAL_PLACED',
+  TRACE_MARKED = 'TRACE_MARKED',
   CARD_CORNER_USED = 'CARD_CORNER_USED',
 }
 
@@ -51,6 +57,7 @@ export type IMissionEvent =
       readonly type: EMissionEventType.CARD_PLAYED;
       readonly cost: number;
       readonly costType: string;
+      readonly cardId?: string;
     }
   | { readonly type: EMissionEventType.PROBE_LAUNCHED }
   | {
@@ -75,6 +82,10 @@ export type IMissionEvent =
   | {
       readonly type: EMissionEventType.SIGNAL_PLACED;
       readonly color: ESector;
+    }
+  | {
+      readonly type: EMissionEventType.TRACE_MARKED;
+      readonly traceColor: ETrace;
     }
   | {
       readonly type: EMissionEventType.CARD_CORNER_USED;

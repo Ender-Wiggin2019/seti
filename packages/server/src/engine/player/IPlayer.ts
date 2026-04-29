@@ -1,5 +1,5 @@
 import type { IComputerColumnConfig } from '@seti/common/types/computer';
-import { ETrace } from '@seti/common/types/element';
+import { EResource, ETrace } from '@seti/common/types/element';
 import type { EPlanet } from '@seti/common/types/protocol/enums';
 import type { ETechId } from '@seti/common/types/tech';
 import type { ICard } from '../cards/ICard.js';
@@ -112,6 +112,7 @@ export interface IPlayer extends IPlayerIdentity {
   gainMove(amount: number): void;
   spendMove(amount: number): void;
   getMoveStash(): number;
+  addTuckedIncomeFromCard(card: TCardItem): EResource | undefined;
   gainExofossils(amount?: number): void;
   spendExofossils(amount?: number): boolean;
   flushDataStashAtTurnEnd(): { movedToPool: number; discarded: number };
