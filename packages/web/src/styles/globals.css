@@ -142,148 +142,189 @@ svg text {
   @apply bg-gradient-to-r from-[#04CDFF] via-[#FE3496] to-[#F8C422] from-0% via-50% to-100%;
 }
 
-@layer components {
+.alien-filter__group {
+  display: flex;
+  width: 100%;
+  flex-flow: row nowrap;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 0.25rem;
+  overflow: visible;
+  padding-bottom: 0.25rem;
+}
+
+.alien-filter__item {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 3rem;
+}
+
+.alien-filter__button {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: clamp(4.85rem, 24vw, 5.75rem);
+  overflow: hidden;
+  border: 2px solid
+    color-mix(in srgb, var(--alien-filter-accent, #02adc4) 42%, transparent);
+  border-radius: 0.25rem;
+  background-position: center var(--alien-filter-focus-y, 52%);
+  background-repeat: no-repeat;
+  background-size: cover;
+  box-shadow:
+    0 0.5rem 1.75rem rgba(0, 0, 0, 0.32),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  filter: grayscale(0.28) brightness(0.72) saturate(0.88);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    filter 180ms ease,
+    transform 180ms ease;
+}
+
+.alien-filter__button::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0) 24%,
+    rgba(0, 0, 0, 0.22) 100%
+  );
+  pointer-events: none;
+}
+
+.alien-filter__button:hover:not(:disabled),
+.alien-filter__button:focus-visible {
+  border-color: color-mix(
+    in srgb,
+    var(--alien-filter-accent, #02adc4) 72%,
+    white 12%
+  );
+  filter: grayscale(0.14) brightness(0.86) saturate(0.96);
+  box-shadow:
+    0 0.55rem 1.9rem rgba(0, 0, 0, 0.38),
+    0 0 1rem
+    color-mix(in srgb, var(--alien-filter-accent, #02adc4) 22%, transparent),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.alien-filter__button:focus-visible {
+  outline: 2px solid
+    color-mix(in srgb, var(--alien-filter-accent, #02adc4) 72%, white 14%);
+  outline-offset: 2px;
+}
+
+.alien-filter__button--selected,
+.alien-filter__button--selected:hover:not(:disabled),
+.alien-filter__button--selected:focus-visible {
+  border-color: color-mix(
+    in srgb,
+    var(--alien-filter-accent, #02adc4) 82%,
+    white 16%
+  );
+  box-shadow:
+    0 0.6rem 2rem rgba(0, 0, 0, 0.44),
+    0 0 0 1px
+    color-mix(in srgb, var(--alien-filter-accent, #02adc4) 48%, transparent),
+    0 0 1.35rem
+    color-mix(in srgb, var(--alien-filter-accent, #02adc4) 38%, transparent),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  filter: grayscale(0) brightness(1) saturate(1);
+}
+
+.alien-filter__button--placeholder {
+  cursor: not-allowed;
+  filter: grayscale(0.38) brightness(0.68) saturate(0.72);
+  opacity: 0.84;
+}
+
+.alien-filter__badge {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.15rem;
+  z-index: 1;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 9999px;
+  background: rgba(249, 115, 22, 0.92);
+  color: white;
+  font-size: 0.5rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.14rem 0.22rem;
+  pointer-events: none;
+  box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.35);
+}
+
+.alien-filter__image--centaurians {
+  background-image: url("/seti-assets/alien-filter/centaurians.webp");
+  --alien-filter-accent: #00a16c;
+  --alien-filter-focus-y: 58%;
+}
+
+.alien-filter__image--glyphids {
+  background-image: url("/seti-assets/alien-filter/glyphids.webp");
+  --alien-filter-accent: #d2f504;
+  --alien-filter-focus-y: 50%;
+}
+
+.alien-filter__image--anomalies {
+  background-image: url("/seti-assets/alien-filter/anomalies.webp");
+  --alien-filter-accent: #28b6af;
+  --alien-filter-focus-y: 44%;
+}
+
+.alien-filter__image--oumuamua {
+  background-image: url("/seti-assets/alien-filter/oumuamua.webp");
+  --alien-filter-accent: #75509c;
+  --alien-filter-focus-y: 50%;
+}
+
+.alien-filter__image--mascamites {
+  background-image: url("/seti-assets/alien-filter/mascamites.webp");
+  --alien-filter-accent: #ece6c4;
+  --alien-filter-focus-y: 56%;
+}
+
+.alien-filter__image--exertians {
+  background-image: url("/seti-assets/alien-filter/exertians.webp");
+  --alien-filter-accent: #f5c4c0;
+  --alien-filter-focus-y: 48%;
+}
+
+.alien-filter__image--ark {
+  background-image: url("/seti-assets/alien-filter/ark.webp");
+  --alien-filter-accent: #02adc4;
+  --alien-filter-focus-y: 50%;
+}
+
+.alien-filter__image--amoeba {
+  background-image: url("/seti-assets/alien-filter/amoeba.webp");
+  --alien-filter-accent: #ffabec;
+  --alien-filter-focus-y: 52%;
+}
+
+@media (min-width: 768px) {
   .alien-filter__group {
-    @apply flex w-full flex-nowrap items-stretch justify-between gap-1 overflow-visible pb-1;
+    gap: 0.25rem;
+    padding-bottom: 0.5rem;
   }
 
   .alien-filter__item {
-    position: relative;
-    flex: 1 1 0;
-    min-width: 0;
-    max-width: 3rem;
+    max-width: 8.25rem;
   }
 
   .alien-filter__button {
-    position: relative;
-    display: block;
-    width: 100%;
-    height: clamp(4.85rem, 24vw, 5.75rem);
-    overflow: hidden;
-    border: 0;
-    border-radius: 0.25rem;
-    background-position: center var(--alien-filter-focus-y, 52%);
-    background-repeat: no-repeat;
-    background-size: cover;
-    box-shadow: 0 0.5rem 1.75rem rgba(0, 0, 0, 0.32);
-    filter: grayscale(0.28) brightness(0.72) saturate(0.88);
-    transition:
-      box-shadow 180ms ease,
-      filter 180ms ease,
-      transform 180ms ease;
-  }
-
-  .alien-filter__button::after {
-    position: absolute;
-    inset: 0;
-    content: "";
-    background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.1) 0%,
-      rgba(255, 255, 255, 0) 24%,
-      rgba(0, 0, 0, 0.22) 100%
-    );
-    pointer-events: none;
-  }
-
-  .alien-filter__button:hover:not(:disabled),
-  .alien-filter__button:focus-visible {
-    filter: grayscale(0.14) brightness(0.86) saturate(0.96);
-    transform: translateY(-1px);
-  }
-
-  .alien-filter__button:focus-visible {
-    outline: 2px solid rgba(34, 211, 238, 0.52);
-    outline-offset: 2px;
-  }
-
-  .alien-filter__button--selected,
-  .alien-filter__button--selected:hover:not(:disabled),
-  .alien-filter__button--selected:focus-visible {
-    filter: grayscale(0) brightness(1) saturate(1);
-  }
-
-  .alien-filter__button--placeholder {
-    cursor: not-allowed;
-    filter: grayscale(0.38) brightness(0.68) saturate(0.72);
-    opacity: 0.84;
+    height: clamp(10rem, 15vw, 12.5rem);
   }
 
   .alien-filter__badge {
-    position: absolute;
-    top: 0.15rem;
-    right: 0.15rem;
-    z-index: 1;
-    border: 1px solid rgba(255, 255, 255, 0.24);
-    border-radius: 9999px;
-    background: rgba(249, 115, 22, 0.92);
-    color: white;
-    font-size: 0.5rem;
-    font-weight: 700;
-    line-height: 1;
-    padding: 0.14rem 0.22rem;
-    pointer-events: none;
-    box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.35);
-  }
-
-  .alien-filter__image--centaurians {
-    background-image: url("/seti-assets/alien-filter/centaurians.webp");
-    --alien-filter-focus-y: 58%;
-  }
-
-  .alien-filter__image--glyphids {
-    background-image: url("/seti-assets/alien-filter/glyphids.webp");
-    --alien-filter-focus-y: 50%;
-  }
-
-  .alien-filter__image--anomalies {
-    background-image: url("/seti-assets/alien-filter/anomalies.webp");
-    --alien-filter-focus-y: 44%;
-  }
-
-  .alien-filter__image--oumuamua {
-    background-image: url("/seti-assets/alien-filter/oumuamua.webp");
-    --alien-filter-focus-y: 50%;
-  }
-
-  .alien-filter__image--mascamites {
-    background-image: url("/seti-assets/alien-filter/mascamites.webp");
-    --alien-filter-focus-y: 56%;
-  }
-
-  .alien-filter__image--exertians {
-    background-image: url("/seti-assets/alien-filter/exertians.webp");
-    --alien-filter-focus-y: 48%;
-  }
-
-  .alien-filter__image--ark {
-    background-image: url("/seti-assets/alien-filter/ark.webp");
-    --alien-filter-focus-y: 50%;
-  }
-
-  .alien-filter__image--amoeba {
-    background-image: url("/seti-assets/alien-filter/amoeba.webp");
-    --alien-filter-focus-y: 52%;
-  }
-
-  @media (min-width: 768px) {
-    .alien-filter__group {
-      @apply gap-1 pb-2;
-    }
-
-    .alien-filter__item {
-      max-width: 8.25rem;
-    }
-
-    .alien-filter__button {
-      height: clamp(10rem, 15vw, 12.5rem);
-    }
-
-    .alien-filter__badge {
-      top: 0.25rem;
-      right: 0.25rem;
-      font-size: 0.625rem;
-      padding: 0.2rem 0.35rem;
-    }
+    top: 0.25rem;
+    right: 0.25rem;
+    font-size: 0.625rem;
+    padding: 0.2rem 0.35rem;
   }
 }

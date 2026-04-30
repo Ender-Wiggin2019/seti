@@ -19,8 +19,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <div className='pointer-events-none fixed inset-0 select-none bg-black'>
         <div className='h-full w-full'>
           <img
-            src='/images/background.png'
-            className='h-auto w-full object-contain object-top'
+            src='/images/background.webp'
+            className='h-full w-full object-cover object-top lg:object-bottom'
             alt='background'
             // fill
             // priority
@@ -32,7 +32,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       <div className='fixed inset-0 flex justify-center sm:px-8'>
         <div className='flex w-full max-w-7xl lg:px-8'>
-          <div className='w-full bg-primary/10 ring-1 ring-primary-500 dark:bg-zinc-900/80 dark:ring-zinc-400/20' />
+          <div className='w-full bg-primary/10 ring-1 ring-primary-500 dark:bg-zinc-900/60 dark:ring-white/25' />
         </div>
       </div>
 
