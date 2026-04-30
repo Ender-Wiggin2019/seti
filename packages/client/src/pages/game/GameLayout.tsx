@@ -430,6 +430,12 @@ function useActionController({
         }
         setConvertEnergyOpen(true);
         return;
+      case EFreeAction.SPEND_SIGNAL_TOKEN:
+        setCornerSelectionMode(false);
+        clearMoveMode();
+        clearCardRowBuy();
+        sendFreeAction({ type: EFreeAction.SPEND_SIGNAL_TOKEN });
+        return;
       default:
         return;
     }

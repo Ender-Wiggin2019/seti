@@ -367,7 +367,8 @@
         "COMPLETE_MISSION": "Completar Missão",
         "USE_CARD_CORNER": "Usar Carta",
         "BUY_CARD": "Comprar Carta (3 PR)",
-        "EXCHANGE_RESOURCES": "Trocar"
+        "EXCHANGE_RESOURCES": "Trocar",
+        "SPEND_SIGNAL_TOKEN": "Gastar Token de Sinal"
       }
     },
     "action_confirm": {

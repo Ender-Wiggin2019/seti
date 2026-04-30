@@ -3,11 +3,10 @@
  * @Author: Ender-Wiggin
  * @Date: 2023-09-13 06:17:49
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2025-04-14 23:49:46
+ * @LastEditTime: 2026-04-30 10:26:40
  * @Description:
  */
 // import { Analytics } from '@vercel/analytics/react';
-import Image from 'next/image';
 import React, { Suspense } from 'react';
 
 import { Header } from '@/components/layout/Header';
@@ -20,7 +19,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <div className='pointer-events-none fixed inset-0 select-none bg-black'>
         <div className='h-full w-full'>
           <img
-            src='/images/background.jpg'
+            src='/images/background.png'
             className='h-auto w-full object-contain object-top'
             alt='background'
             // fill
@@ -43,13 +42,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <main className='flex flex-col items-center'>
             <div className='relative w-full sm:px-8 sm:md:max-w-3xl md:max-w-4xl lg:max-w-4xl xl:max-w-6xl'>
               <div className='absolute z-10 flex justify-center -top-8 left-2 md:left-8'>
-                <Image
+                <img
                   src='/images/logo.png'
                   alt='logo'
                   width={60}
                   height={60}
-                  priority
-                  className='h-auto w-auto'
+                  className='h-auto w-[60px]'
                 />
               </div>
               {children}

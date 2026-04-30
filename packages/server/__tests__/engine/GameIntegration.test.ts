@@ -1,4 +1,5 @@
 import {
+  EFreeAction,
   EMainAction,
   EPhase,
   EPlanet,
@@ -407,6 +408,48 @@ describe('Game Integration: Main Action Legality', () => {
       resolveAllInputs(game, p1);
 
       expect(p1.hand.length).toBe(1);
+    });
+
+    it('allows spending a signal token while resolving a scan from a played card', () => {
+      const game = createGame('play-card-signal-token');
+      const p1 = getPlayer(game, 'p1');
+      p1.hand = ['55'];
+      p1.resources.gain({ signalTokens: 1 });
+
+      game.processMainAction('p1', {
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 0 },
+      });
+
+      expect(p1.waitingFor?.toModel().title).toBe('Scan: choose sub-action');
+      const beforeCardRowLength = game.cardRow.length;
+
+      game.processFreeAction('p1', {
+        type: EFreeAction.SPEND_SIGNAL_TOKEN,
+      });
+
+      expect(p1.resources.signalTokens).toBe(0);
+      expect(p1.waitingFor?.toModel().type).toBe(EPlayerInputType.CARD);
+
+      const cardModel = p1.waitingFor?.toModel();
+      if (!cardModel || cardModel.type !== EPlayerInputType.CARD) {
+        throw new Error('Expected signal token free action to request a card');
+      }
+      game.processInput('p1', {
+        type: EPlayerInputType.CARD,
+        cardIds: [cardModel.cards[0].id],
+      });
+
+      if (p1.waitingFor?.toModel().type === EPlayerInputType.OPTION) {
+        const optionModel = p1.waitingFor.toModel() as ISelectOptionInputModel;
+        game.processInput('p1', {
+          type: EPlayerInputType.OPTION,
+          optionId: optionModel.options[0].id,
+        });
+      }
+
+      expect(game.cardRow).toHaveLength(beforeCardRowLength - 1);
+      expect(p1.waitingFor?.toModel().title).toBe('Scan: choose sub-action');
     });
   });
 

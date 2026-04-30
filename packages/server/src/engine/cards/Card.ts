@@ -26,6 +26,9 @@ function toCostRequirements(cardData: IBaseCard): ICardRequirements {
   if (costType === EResource.DATA) {
     return { resources: { data: cardData.price } };
   }
+  if (costType === EResource.SIGNAL_TOKEN) {
+    return { resources: { signalTokens: cardData.price } };
+  }
   return {};
 }
 

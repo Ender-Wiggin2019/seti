@@ -15,11 +15,13 @@ import { cn } from '@/lib/utils';
 type TextFilterProps = {
   onTextChange: (newText: string) => void;
   reset: boolean;
+  className?: string;
 };
 
 export const TextFilter: React.FC<TextFilterProps> = ({
   onTextChange,
   reset,
+  className,
 }) => {
   const { t } = useTranslation('common');
   const [text, setText] = useState<string>('');
@@ -56,6 +58,7 @@ export const TextFilter: React.FC<TextFilterProps> = ({
     <div
       className={cn(
         'group relative flex w-full rounded-xl bg-gradient-to-b p-4 shadow-xl ring-2  transition-opacity from-zinc-900/70 to-zinc-800/60 shadow-zinc-700/10 ring-zinc-700/80 [--spotlight-color:rgb(217_249_157_/_0.04)] md:p-4 lg:w-1/2',
+        className,
       )}
       onMouseMove={handleMouseMove}
     >

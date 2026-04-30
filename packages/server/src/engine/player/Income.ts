@@ -10,6 +10,7 @@ const EMPTY_RESOURCE_BUNDLE: TIncomeBundle = {
   [EResource.ENERGY]: 0,
   [EResource.DATA]: 0,
   [EResource.PUBLICITY]: 0,
+  [EResource.SIGNAL_TOKEN]: 0,
   [EResource.SCORE]: 0,
   [EResource.CARD]: 0,
   [EResource.CARD_ANY]: 0,
@@ -50,6 +51,10 @@ function toResourceBundle(
     [EResource.PUBLICITY]: normalizeResourceAmount(
       EResource.PUBLICITY,
       bundle?.[EResource.PUBLICITY],
+    ),
+    [EResource.SIGNAL_TOKEN]: normalizeResourceAmount(
+      EResource.SIGNAL_TOKEN,
+      bundle?.[EResource.SIGNAL_TOKEN],
     ),
     [EResource.SCORE]: normalizeResourceAmount(
       EResource.SCORE,
@@ -105,6 +110,9 @@ export class Income {
       [EResource.PUBLICITY]:
         this.baseIncomeBundle[EResource.PUBLICITY] +
         this.tuckedCardIncomeBundle[EResource.PUBLICITY],
+      [EResource.SIGNAL_TOKEN]:
+        this.baseIncomeBundle[EResource.SIGNAL_TOKEN] +
+        this.tuckedCardIncomeBundle[EResource.SIGNAL_TOKEN],
       [EResource.SCORE]:
         this.baseIncomeBundle[EResource.SCORE] +
         this.tuckedCardIncomeBundle[EResource.SCORE],

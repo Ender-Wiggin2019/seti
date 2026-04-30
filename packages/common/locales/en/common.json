@@ -368,7 +368,8 @@
         "COMPLETE_MISSION": "Complete Mission",
         "USE_CARD_CORNER": "Use Card",
         "BUY_CARD": "Buy Card (3 PR)",
-        "EXCHANGE_RESOURCES": "Exchange"
+        "EXCHANGE_RESOURCES": "Exchange",
+        "SPEND_SIGNAL_TOKEN": "Spend Signal Token"
       }
     },
     "action_confirm": {

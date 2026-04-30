@@ -1,7 +1,8 @@
+import { EResource } from '@seti/common/types/element';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { FreeActionBar } from '@/features/actions/FreeActionBar';
-import { EFreeAction } from '@/types/re-exports';
+import { EFreeAction, EPhase } from '@/types/re-exports';
 import {
   createMockGameState,
   createMockPlayerState,
@@ -104,5 +105,39 @@ describe('FreeActionBar', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Move Probe (1)' }));
 
     expect(onActionClick).toHaveBeenCalledWith(EFreeAction.MOVEMENT);
+  });
+
+  it('shows spend signal token while a scan pool is active', () => {
+    const onActionClick = vi.fn();
+    const gameState = createMockGameState({
+      phase: EPhase.IN_RESOLUTION,
+      scanActionInProgress: true,
+      cardRow: [{ id: 'row-1' } as never],
+      players: [
+        createMockPlayerState({
+          playerId: 'player-1',
+          resources: {
+            [EResource.CREDIT]: 10,
+            [EResource.ENERGY]: 5,
+            [EResource.DATA]: 0,
+            [EResource.PUBLICITY]: 3,
+            [EResource.SIGNAL_TOKEN]: 1,
+          },
+        }),
+      ],
+    });
+
+    render(
+      <FreeActionBar
+        gameState={gameState}
+        myPlayerId='player-1'
+        isMyTurn
+        onActionClick={onActionClick}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Spend Signal Token' }));
+
+    expect(onActionClick).toHaveBeenCalledWith(EFreeAction.SPEND_SIGNAL_TOKEN);
   });
 });

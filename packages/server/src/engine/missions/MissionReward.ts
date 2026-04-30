@@ -145,6 +145,9 @@ function applyBaseReward(
     case EResource.DATA:
       player.resources.gain({ data: value });
       return onComplete();
+    case EResource.SIGNAL_TOKEN:
+      player.resources.gain({ signalTokens: value });
+      return onComplete();
     case EResource.MOVE:
       player.gainMove(value);
       return onComplete();

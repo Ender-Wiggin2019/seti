@@ -6,6 +6,7 @@ export interface IResourceBundle {
   energy: number;
   publicity: number;
   data: number;
+  signalTokens: number;
 }
 
 export type TPartialResourceBundle = Partial<IResourceBundle>;
@@ -26,6 +27,7 @@ const EMPTY_RESOURCE_BUNDLE: IResourceBundle = {
   energy: 0,
   publicity: 0,
   data: 0,
+  signalTokens: 0,
 };
 
 /** Credits / energy track cap (implementation limit). */
@@ -76,6 +78,8 @@ export class Resources {
 
   private publicityAmount: number;
 
+  private signalTokensAmount: number;
+
   private readonly dataController?: IDataResourceController;
 
   public constructor(
@@ -94,6 +98,10 @@ export class Resources {
       initialBundle.publicity,
     );
     assertMaxResourceAmount('publicity', this.publicityAmount);
+    this.signalTokensAmount = normalizeResourceAmount(
+      'signalTokens',
+      initialBundle.signalTokens,
+    );
     this.dataController = options.dataController;
     const initialData = normalizeResourceAmount('data', initialBundle.data);
     if (initialData > 0) {
@@ -124,6 +132,10 @@ export class Resources {
     return this.dataController?.getState().total ?? 0;
   }
 
+  public get signalTokens(): number {
+    return this.signalTokensAmount;
+  }
+
   public setPublicity(value: number): void {
     const normalizedValue = normalizeResourceAmount('publicity', value);
     assertMaxResourceAmount('publicity', normalizedValue);
@@ -147,6 +159,10 @@ export class Resources {
     this.publicityAmount -= normalizeResourceAmount(
       'publicity',
       bundle.publicity,
+    );
+    this.signalTokensAmount -= normalizeResourceAmount(
+      'signalTokens',
+      bundle.signalTokens,
     );
     const spendDataAmount = normalizeResourceAmount('data', bundle.data);
     if (spendDataAmount > 0) {
@@ -178,6 +194,10 @@ export class Resources {
       PUBLICITY_MAX,
       this.publicityAmount + gainPublicityAmount,
     );
+    this.signalTokensAmount += normalizeResourceAmount(
+      'signalTokens',
+      bundle.signalTokens,
+    );
     const gainDataAmount = normalizeResourceAmount('data', bundle.data);
     if (gainDataAmount > 0) {
       if (!this.dataController) {
@@ -198,6 +218,10 @@ export class Resources {
       'publicity',
       bundle.publicity,
     );
+    const requiredSignalTokens = normalizeResourceAmount(
+      'signalTokens',
+      bundle.signalTokens,
+    );
     const requiredData = normalizeResourceAmount('data', bundle.data);
     const hasData =
       requiredData === 0 || this.dataController?.has(requiredData) === true;
@@ -205,6 +229,7 @@ export class Resources {
       this.creditsAmount >= requiredCredits &&
       this.energyAmount >= requiredEnergy &&
       this.publicityAmount >= requiredPublicity &&
+      this.signalTokensAmount >= requiredSignalTokens &&
       hasData
     );
   }
@@ -219,6 +244,7 @@ export class Resources {
       energy: this.energyAmount,
       publicity: this.publicityAmount,
       data: this.data,
+      signalTokens: this.signalTokensAmount,
     };
   }
 }

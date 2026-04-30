@@ -371,7 +371,8 @@
         "COMPLETE_MISSION": "完成任务",
         "USE_CARD_CORNER": "使用卡角",
         "BUY_CARD": "买卡（3声望）",
-        "EXCHANGE_RESOURCES": "资源交换"
+        "EXCHANGE_RESOURCES": "资源交换",
+        "SPEND_SIGNAL_TOKEN": "使用信号标记"
       }
     },
     "action_confirm": {

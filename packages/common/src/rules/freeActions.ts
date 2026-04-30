@@ -1,5 +1,5 @@
 import { EResource } from '../types/element';
-import { EFreeAction } from '../types/protocol/enums';
+import { EFreeAction, EPhase } from '../types/protocol/enums';
 import type {
   IPublicGameState,
   IPublicPlayerState,
@@ -108,6 +108,18 @@ export function canExchangeResources(player: IPublicPlayerState): boolean {
   return false;
 }
 
+export function canSpendSignalToken(
+  player: IPublicPlayerState,
+  gameState: IPublicGameState,
+): boolean {
+  return (
+    gameState.phase === EPhase.IN_RESOLUTION &&
+    gameState.scanActionInProgress === true &&
+    (player.resources[EResource.SIGNAL_TOKEN] ?? 0) > 0 &&
+    gameState.cardRow.length > 0
+  );
+}
+
 export function getAvailableFreeActions(
   player: IPublicPlayerState,
   gameState: IPublicGameState,
@@ -123,6 +135,8 @@ export function getAvailableFreeActions(
   if (canBuyCard(player)) actions.push(EFreeAction.BUY_CARD);
   if (canExchangeResources(player))
     actions.push(EFreeAction.EXCHANGE_RESOURCES);
+  if (canSpendSignalToken(player, gameState))
+    actions.push(EFreeAction.SPEND_SIGNAL_TOKEN);
 
   return actions;
 }

@@ -39,6 +39,13 @@ const RESOURCE_ITEMS: IResourceItem[] = [
     value: (p) => p.resources[EResource.PUBLICITY],
   },
   {
+    id: 'signal-token',
+    i18nKey: 'client.resource_bar.signal_tokens',
+    fallback: 'Signal Tokens',
+    icon: '/assets/seti/icons/signalToken.png',
+    value: (p) => p.resources[EResource.SIGNAL_TOKEN] ?? 0,
+  },
+  {
     id: 'score',
     i18nKey: 'client.resource_bar.score',
     fallback: 'Score',
@@ -64,7 +71,7 @@ export function ResourceBar({ player }: IResourceBarProps): React.JSX.Element {
   const { t } = useTranslation('common');
   return (
     <section
-      className='instrument-panel grid grid-cols-5 overflow-hidden'
+      className='instrument-panel grid grid-cols-6 overflow-hidden'
       data-testid='resource-bar'
     >
       {RESOURCE_ITEMS.map((item, index) => {

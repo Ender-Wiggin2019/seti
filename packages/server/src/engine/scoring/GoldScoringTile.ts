@@ -47,6 +47,7 @@ function getTuckedIncomeCounts(player: IPlayer): Record<EResource, number> {
     [EResource.ENERGY]: 0,
     [EResource.DATA]: 0,
     [EResource.PUBLICITY]: 0,
+    [EResource.SIGNAL_TOKEN]: 0,
     [EResource.SCORE]: 0,
     [EResource.CARD]: 0,
     [EResource.CARD_ANY]: 0,

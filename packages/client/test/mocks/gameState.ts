@@ -30,6 +30,7 @@ export function createMockPlayerState(
       [EResource.ENERGY]: 5,
       [EResource.DATA]: 0,
       [EResource.PUBLICITY]: 3,
+      [EResource.SIGNAL_TOKEN]: 0,
     },
     traces: {},
     tracesByAlien: {},

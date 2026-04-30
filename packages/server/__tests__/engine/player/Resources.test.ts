@@ -51,24 +51,38 @@ describe('Resources', () => {
   it('gains and spends resource bundles', () => {
     const dataController = createDataController(1);
     const resources = new Resources(
-      { credits: 4, energy: 3, publicity: 2 },
+      { credits: 4, energy: 3, publicity: 2, signalTokens: 1 },
       { dataController },
     );
 
-    resources.gain({ credits: 2, energy: 1, publicity: 3, data: 2 });
+    resources.gain({
+      credits: 2,
+      energy: 1,
+      publicity: 3,
+      data: 2,
+      signalTokens: 4,
+    });
     expect(resources.toObject()).toEqual({
       credits: 6,
       energy: 4,
       publicity: 5,
       data: 3,
+      signalTokens: 5,
     });
 
-    resources.spend({ credits: 5, energy: 2, publicity: 4, data: 1 });
+    resources.spend({
+      credits: 5,
+      energy: 2,
+      publicity: 4,
+      data: 1,
+      signalTokens: 3,
+    });
     expect(resources.toObject()).toEqual({
       credits: 1,
       energy: 2,
       publicity: 1,
       data: 2,
+      signalTokens: 2,
     });
   });
 
@@ -85,8 +99,19 @@ describe('Resources', () => {
     expect(resources.has({ publicity: 7 })).toBe(false);
     expect(resources.has({ data: 2 })).toBe(true);
     expect(resources.has({ data: 3 })).toBe(false);
+    expect(resources.has({ signalTokens: 0 })).toBe(true);
+    expect(resources.has({ signalTokens: 1 })).toBe(false);
     expect(resources.canAfford({ credits: 3, energy: 3 })).toBe(true);
     expect(resources.canAfford({ credits: 4, energy: 4 })).toBe(false);
+  });
+
+  it('does not cap signal tokens', () => {
+    const resources = new Resources({ signalTokens: 999 });
+
+    resources.gain({ signalTokens: 2 });
+
+    expect(resources.signalTokens).toBe(1001);
+    expect(resources.toObject().signalTokens).toBe(1001);
   });
 
   it('throws insufficient resources error when spending over capacity', () => {

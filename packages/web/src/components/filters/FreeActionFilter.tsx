@@ -10,16 +10,19 @@
 import { EResource } from '@seti/common/types/element';
 import React, { useState } from 'react';
 import TagButton from '@/components/buttons/TagButton';
+import { cn } from '@/lib/utils';
 
 type ResourceFilterProps = {
   onFilterChange: (Resources: EResource[]) => void;
   src: EResource[];
   reset: boolean;
+  className?: string;
 };
 export const ResourceFilter: React.FC<ResourceFilterProps> = ({
   onFilterChange,
   src,
   reset,
+  className,
 }) => {
   const [selectedResources, setSelectedResources] = useState<EResource[]>([]);
 
@@ -45,7 +48,12 @@ export const ResourceFilter: React.FC<ResourceFilterProps> = ({
 
   return (
     <>
-      <div className='xl:grid-cols-auto grid grid-cols-4 gap-2 md:grid-cols-6 lg:grid-cols-8'>
+      <div
+        className={cn(
+          'xl:grid-cols-auto grid grid-cols-4 gap-2 md:grid-cols-6 lg:grid-cols-8',
+          className,
+        )}
+      >
         {src.map((resource) => (
           <TagButton
             key={resource}

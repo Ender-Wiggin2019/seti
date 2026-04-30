@@ -12,6 +12,7 @@ import { ExchangeResourcesFreeAction } from './ExchangeResources.js';
 import { FreeActionCornerFreeAction } from './FreeActionCorner.js';
 import { MovementFreeAction } from './Movement.js';
 import { PlaceDataFreeAction } from './PlaceData.js';
+import { SpendSignalTokenFreeAction } from './SpendSignalToken.js';
 
 export function processFreeAction(
   player: IPlayer,
@@ -61,6 +62,9 @@ export function processFreeAction(
         },
       );
       return undefined;
+
+    case EFreeAction.SPEND_SIGNAL_TOKEN:
+      return SpendSignalTokenFreeAction.execute(player, game);
 
     default:
       throw new GameError(

@@ -39,6 +39,9 @@ function gainResourceReward(player: IPlayer, reward: TPlanetReward): number {
     case EResource.DATA:
       player.resources.gain({ data: reward.amount });
       return 0;
+    case EResource.SIGNAL_TOKEN:
+      player.resources.gain({ signalTokens: reward.amount });
+      return 0;
     case EResource.SCORE:
       player.score += reward.amount;
       return reward.amount;

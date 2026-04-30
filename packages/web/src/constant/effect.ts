@@ -63,6 +63,7 @@ const CREDIT = _base(EResource.CREDIT);
 const ENERGY = _base(EResource.ENERGY);
 const PUBLICITY = _base(EResource.PUBLICITY);
 const DATA = _base(EResource.DATA);
+const SIGNAL_TOKEN = _base(EResource.SIGNAL_TOKEN);
 const SIGNAL_ANY = _base(EScanAction.ANY); // NOTE: namespace
 const MOVE = _base(EResource.MOVE);
 const CARD = _base(EResource.CARD);
@@ -90,7 +91,6 @@ const DRAW_ALIEN_CARD = _base(EMiscIcon.DRAW_ALIEN_CARD);
 const CREDIT_INCOME = _base(EMiscIcon.CREDIT_INCOME);
 const ENERGY_INCOME = _base(EMiscIcon.ENERGY_INCOME);
 const CARD_INCOME = _base(EMiscIcon.CARD_INCOME);
-const SIGNAL_TOKEN = _base(EMiscIcon.SIGNAL_TOKEN);
 
 const ADVANCED_15 = _base(EAlienIcon.ADVANCED_15);
 const FULFILL_ADVANCED = _base(EAlienIcon.FULFILL_ADVANCED);
@@ -140,6 +140,7 @@ export const BASE_EFFECTS = {
   ENERGY,
   PUBLICITY,
   DATA,
+  SIGNAL_TOKEN,
   MOVE,
   CARD,
   CARD_ANY,
@@ -164,7 +165,6 @@ export const BASE_EFFECTS = {
   CREDIT_INCOME,
   ENERGY_INCOME,
   CARD_INCOME,
-  SIGNAL_TOKEN,
 };
 
 export const ALIEN_EFFECTS = {

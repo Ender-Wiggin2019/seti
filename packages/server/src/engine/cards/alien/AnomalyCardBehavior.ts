@@ -57,6 +57,9 @@ export function gainResourceByIncome(
     case EResource.PUBLICITY:
       player.resources.gain({ publicity: 1 });
       return;
+    case EResource.SIGNAL_TOKEN:
+      player.resources.gain({ signalTokens: 1 });
+      return;
     case EResource.SCORE:
       player.score += 1;
       return;

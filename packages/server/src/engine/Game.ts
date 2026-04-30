@@ -7,6 +7,7 @@ import type {
 } from '@seti/common/types/protocol/actions';
 import type { EAlienType } from '@seti/common/types/protocol/enums';
 import {
+  EFreeAction,
   EMainAction,
   EPhase,
   EPlanet,
@@ -35,6 +36,7 @@ import { ResolveDiscovery } from './deferred/ResolveDiscovery.js';
 import { ResolveMilestone } from './deferred/ResolveMilestone.js';
 import { ResolveSectorCompletion } from './deferred/ResolveSectorCompletion.js';
 import { SimpleDeferredAction } from './deferred/SimpleDeferredAction.js';
+import { isScanActionPoolInput } from './effects/scan/ScanActionPool.js';
 import { EventLog } from './event/EventLog.js';
 import {
   createActionEvent,
@@ -295,11 +297,11 @@ export class Game implements IGame {
   }
 
   public processFreeAction(playerId: string, action: IFreeActionRequest): void {
-    this.assertCanTakeTurnAction(playerId, [
-      EPhase.AWAIT_MAIN_ACTION,
-      EPhase.AWAIT_END_TURN,
-      EPhase.IN_RESOLUTION,
-    ]);
+    this.assertCanTakeTurnAction(
+      playerId,
+      [EPhase.AWAIT_MAIN_ACTION, EPhase.AWAIT_END_TURN, EPhase.IN_RESOLUTION],
+      action,
+    );
     this.ensureMissionCheckpoint();
 
     const player = this.getPlayer(playerId);
@@ -731,6 +733,7 @@ export class Game implements IGame {
   private assertCanTakeTurnAction(
     playerId: string,
     allowedPhases: readonly EPhase[],
+    freeAction?: IFreeActionRequest,
   ): void {
     // Block turn actions while ANY player still owes setup tucks. This
     // is tracked explicitly on Player (survives persistence/undo) so the
@@ -777,8 +780,18 @@ export class Game implements IGame {
       allowedPhases.includes(EPhase.IN_RESOLUTION) &&
       this.currentMainActionType === EMainAction.SCAN &&
       pendingInput.toModel().type === EPlayerInputType.OPTION;
+    const canInterruptScanPoolWithSignalToken =
+      pendingInput !== undefined &&
+      freeAction?.type === EFreeAction.SPEND_SIGNAL_TOKEN &&
+      this.phase === EPhase.IN_RESOLUTION &&
+      allowedPhases.includes(EPhase.IN_RESOLUTION) &&
+      isScanActionPoolInput(pendingInput);
 
-    if (pendingInput && !canInterruptScanMainActionWithFreeAction) {
+    if (
+      pendingInput &&
+      !canInterruptScanMainActionWithFreeAction &&
+      !canInterruptScanPoolWithSignalToken
+    ) {
       throw new GameError(
         EErrorCode.INVALID_INPUT_RESPONSE,
         `Player ${playerId} must resolve the pending input before taking another action`,

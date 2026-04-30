@@ -118,6 +118,20 @@ describe('BehaviorExecutor — integration', () => {
 
       expect(player.exofossils).toBe(before + 2);
     });
+
+    it('applies signal-token behavior as uncapped signal tokens', () => {
+      const { game, player } = createIntegrationGame('beh-2-9-1-signal-token');
+
+      getBehaviorExecutor().execute(
+        { gainResources: { signalTokens: 3 } },
+        player,
+        game,
+        sampleCard(),
+      );
+      drain(game);
+
+      expect(player.resources.signalTokens).toBe(3);
+    });
   });
 
   describe('2.9.2 action behaviors go through real effect classes', () => {

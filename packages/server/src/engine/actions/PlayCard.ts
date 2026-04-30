@@ -181,6 +181,7 @@ export class PlayCardAction {
     energy?: number;
     publicity?: number;
     data?: number;
+    signalTokens?: number;
   } {
     const priceType = card.priceType ?? EResource.CREDIT;
     if (priceType === EResource.ENERGY) {
@@ -191,6 +192,9 @@ export class PlayCardAction {
     }
     if (priceType === EResource.DATA) {
       return { data: card.price };
+    }
+    if (priceType === EResource.SIGNAL_TOKEN) {
+      return { signalTokens: card.price };
     }
     return { credits: card.price };
   }

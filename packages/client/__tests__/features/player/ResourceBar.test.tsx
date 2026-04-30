@@ -13,6 +13,7 @@ describe('ResourceBar', () => {
         [EResource.ENERGY]: 8,
         [EResource.DATA]: 2,
         [EResource.PUBLICITY]: 6,
+        [EResource.SIGNAL_TOKEN]: 5,
       },
     });
 
@@ -21,6 +22,7 @@ describe('ResourceBar', () => {
     expect(screen.getByText('14')).toBeInTheDocument();
     expect(screen.getByText('8')).toBeInTheDocument();
     expect(screen.getByText('6')).toBeInTheDocument();
+    expect(screen.getByText('5')).toBeInTheDocument();
     expect(screen.getByText('23')).toBeInTheDocument();
   });
 
@@ -37,6 +39,7 @@ describe('ResourceBar', () => {
     expect(screen.getByAltText('Credits')).toBeInTheDocument();
     expect(screen.getByAltText('Energy')).toBeInTheDocument();
     expect(screen.getByAltText('Publicity')).toBeInTheDocument();
+    expect(screen.getByAltText('Signal Tokens')).toBeInTheDocument();
     expect(screen.getByAltText('Score')).toBeInTheDocument();
     expect(screen.getByAltText('Exofossils')).toBeInTheDocument();
   });

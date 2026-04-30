@@ -15,6 +15,7 @@ const RESOURCE_ICON: Record<string, string> = {
   credit: '/assets/seti/icons/money.png',
   energy: '/assets/seti/icons/energy.png',
   publicity: '/assets/seti/icons/pop.png',
+  'signal-token': '/assets/seti/icons/signalToken.png',
   data: '/assets/seti/icons/data.png',
   card: '/assets/seti/icons/progress.png',
   vp: '/assets/seti/icons/vp.png',

@@ -11,7 +11,7 @@
 - applies gainResources and spendResources through deferred actions
 - draws cards from main deck into hand
 - handles composite behavior fields in one execution
-- dispatches any-signal/display-card/signal-token marks via game.mark
+- dispatches any-signal/display-card marks via game.mark and signal-token via resources
 - applies registered DESC handler: desc.card-119
 - applies registered DESC handler: desc.card-55 marks one any-signal
 

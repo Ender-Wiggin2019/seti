@@ -93,6 +93,9 @@ export function gainFreeActionCorner(
       case EResource.DATA:
         player.resources.gain({ data: amount });
         break;
+      case EResource.SIGNAL_TOKEN:
+        player.resources.gain({ signalTokens: amount });
+        break;
       case EResource.MOVE:
         player.gainMove(amount);
         break;
@@ -167,6 +170,9 @@ export function gainIncomeCornerResource(
       break;
     case EResource.PUBLICITY:
       player.resources.gain({ publicity: 1 });
+      break;
+    case EResource.SIGNAL_TOKEN:
+      player.resources.gain({ signalTokens: 1 });
       break;
     case EResource.MOVE:
       player.gainMove(1);

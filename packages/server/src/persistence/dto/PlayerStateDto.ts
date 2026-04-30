@@ -27,6 +27,7 @@ export interface IPlayerStateDto {
     energy: number;
     publicity: number;
     data: number;
+    signalTokens?: number;
   };
   income: {
     base: TIncomeBundle;

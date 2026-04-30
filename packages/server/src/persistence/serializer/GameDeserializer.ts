@@ -1,4 +1,5 @@
 import { DEFAULT_COLUMN_CONFIGS } from '@seti/common/types/computer';
+import { EResource } from '@seti/common/types/element';
 import { type EPlanet } from '@seti/common/types/protocol/enums';
 import { AlienState } from '@/engine/alien/AlienState.js';
 import {
@@ -301,6 +302,10 @@ function deserializePlayers(game: Game, dto: IGameStateDto): void {
         credits: playerDto.resources.credits,
         energy: playerDto.resources.energy,
         publicity: playerDto.resources.publicity,
+        signalTokens:
+          playerDto.resources.signalTokens ??
+          playerDto.resourceByType?.[EResource.SIGNAL_TOKEN] ??
+          0,
         data: 0,
       },
       { dataController: concretePlayer.data },

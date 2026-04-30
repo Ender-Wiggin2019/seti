@@ -22,6 +22,7 @@ describe('Income', () => {
       [EResource.ENERGY]: 1,
       [EResource.DATA]: 2,
       [EResource.PUBLICITY]: 1,
+      [EResource.SIGNAL_TOKEN]: 0,
       [EResource.SCORE]: 0,
       [EResource.CARD]: 1,
       [EResource.CARD_ANY]: 0,

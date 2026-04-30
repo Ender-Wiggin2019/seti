@@ -37,6 +37,7 @@ const INCOME_RESOURCE_MAP: Record<EResource, EResource | undefined> = {
   [EResource.ENERGY]: EResource.ENERGY,
   [EResource.DATA]: EResource.DATA,
   [EResource.PUBLICITY]: undefined,
+  [EResource.SIGNAL_TOKEN]: undefined,
   [EResource.SCORE]: undefined,
   [EResource.CARD]: EResource.CARD,
   [EResource.CARD_ANY]: undefined,
@@ -237,6 +238,7 @@ export class Player implements IPlayer {
       energy: payout[EResource.ENERGY],
       publicity: payout[EResource.PUBLICITY],
       data: payout[EResource.DATA],
+      signalTokens: payout[EResource.SIGNAL_TOKEN],
     });
     this.score += payout[EResource.SCORE];
     this.gainMove(payout[EResource.MOVE]);

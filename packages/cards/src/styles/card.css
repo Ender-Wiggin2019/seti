@@ -1149,6 +1149,7 @@
 .icon-value-move-special,
 .icon-value-data,
 .icon-value-publicity,
+.icon-value-signal-token,
 .icon-value-draw-alien-card,
 .icon-value-danger,
 .icon-value-exofossil,
@@ -1207,6 +1208,9 @@
 }
 .icon-value-publicity {
   --icon-value-shadow-color: #f14927;
+}
+.icon-value-signal-token {
+  --icon-value-shadow-color: #8f68d8;
 }
 .icon-value-draw-alien-card {
   --icon-value-shadow-color: #1b4448;

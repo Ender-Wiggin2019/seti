@@ -22,6 +22,7 @@ export interface IPublicResourceState {
   [EResource.ENERGY]: number;
   [EResource.DATA]: number;
   [EResource.PUBLICITY]: number;
+  [EResource.SIGNAL_TOKEN]?: number;
 }
 
 export interface IPublicComputerColumnState {
@@ -347,6 +348,8 @@ export interface IPublicGameState {
    * when no turn-start checkpoint is available.
    */
   canUndo: boolean;
+  /** True while the active player is at the scan sub-action pool. */
+  scanActionInProgress?: boolean;
   /** Monotonic index of the current turn (server-side). */
   turnIndex: number;
 }

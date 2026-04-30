@@ -13,7 +13,7 @@
 - collects customized effects as custom behavior tokens
 - maps signal effects into scan behavior targets
 - maps income icons
-- maps any-signal/display-card/signal-token effects
+- maps any-signal/display-card effects and signal-token resource effects
 
 ### 2.2 边界场景处理
 - 当前单测以主路径/规则正确性为主，边界由同目录其它单测与集成测试共同兜底。

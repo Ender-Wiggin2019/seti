@@ -49,7 +49,6 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
     case ETrace.YELLOW:
     case EScanAction.DISCARD_CARD:
     case EScanAction.DISPLAY_CARD:
-    case EMiscIcon.SIGNAL_TOKEN:
     case EAlienIcon.ORGANELLE_RED:
     case EAlienIcon.ORGANELLE_BLUE:
     case EAlienIcon.ORGANELLE_YELLOW:
@@ -111,6 +110,7 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
     case EResource.ENERGY:
     case EResource.DATA:
     case EResource.PUBLICITY:
+    case EResource.SIGNAL_TOKEN:
     case EAlienIcon.EXOFOSSIL:
     case EAlienIcon.USE_EXOFOSSIL:
       shape = 'diamond';

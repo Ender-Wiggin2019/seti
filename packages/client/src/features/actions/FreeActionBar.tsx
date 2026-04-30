@@ -17,6 +17,7 @@ const COLLAPSIBLE_ACTIONS: EFreeAction[] = [
   EFreeAction.USE_CARD_CORNER,
   EFreeAction.BUY_CARD,
   EFreeAction.EXCHANGE_RESOURCES,
+  EFreeAction.SPEND_SIGNAL_TOKEN,
 ];
 
 export interface IFreeActionBarProps {

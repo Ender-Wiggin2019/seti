@@ -10,6 +10,7 @@ const RESOURCE_GAIN_MAP = {
   [EResource.ENERGY]: { energy: 1 },
   [EResource.CARD]: {},
   [EResource.DATA]: { data: 1 },
+  [EResource.SIGNAL_TOKEN]: { signalTokens: 1 },
 } as const;
 
 /**

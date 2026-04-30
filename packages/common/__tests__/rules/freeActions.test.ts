@@ -6,6 +6,7 @@ import {
   canExchangeResources,
   canMoveProbe,
   canPlaceData,
+  canSpendSignalToken,
   canUseFreeActionCorner,
   getAvailableFreeActions,
   validateMovementPath,
@@ -51,6 +52,7 @@ function createPlayer(
       [EResource.ENERGY]: 3,
       [EResource.DATA]: 0,
       [EResource.PUBLICITY]: 4,
+      [EResource.SIGNAL_TOKEN]: 0,
     },
     traces: {},
     tracesByAlien: {},
@@ -355,6 +357,62 @@ describe('free action rules', () => {
     });
   });
 
+  describe('canSpendSignalToken', () => {
+    it('returns true only while scan is waiting at the pool, with a token and card row cards', () => {
+      const player = createPlayer({
+        resources: {
+          [EResource.CREDIT]: 4,
+          [EResource.ENERGY]: 3,
+          [EResource.DATA]: 0,
+          [EResource.PUBLICITY]: 4,
+          [EResource.SIGNAL_TOKEN]: 1,
+        },
+      });
+      const gameState = createGameState({
+        phase: EPhase.IN_RESOLUTION,
+        scanActionInProgress: true,
+        cardRow: [{ id: 'row-1' } as never],
+      });
+
+      expect(canSpendSignalToken(player, gameState)).toBe(true);
+    });
+
+    it('returns false outside scan, without a token, or with an empty card row', () => {
+      const withToken = createPlayer({
+        resources: {
+          [EResource.CREDIT]: 4,
+          [EResource.ENERGY]: 3,
+          [EResource.DATA]: 0,
+          [EResource.PUBLICITY]: 4,
+          [EResource.SIGNAL_TOKEN]: 1,
+        },
+      });
+      const withoutToken = createPlayer();
+
+      expect(canSpendSignalToken(withToken, createGameState())).toBe(false);
+      expect(
+        canSpendSignalToken(
+          withoutToken,
+          createGameState({
+            phase: EPhase.IN_RESOLUTION,
+            scanActionInProgress: true,
+            cardRow: [{ id: 'row-1' } as never],
+          }),
+        ),
+      ).toBe(false);
+      expect(
+        canSpendSignalToken(
+          withToken,
+          createGameState({
+            phase: EPhase.IN_RESOLUTION,
+            scanActionInProgress: true,
+            cardRow: [],
+          }),
+        ),
+      ).toBe(false);
+    });
+  });
+
   describe('canExchangeResources', () => {
     it('returns true with 2+ credits', () => {
       expect(canExchangeResources(createPlayer())).toBe(true);
@@ -429,6 +487,28 @@ describe('free action rules', () => {
         createGameState(),
       );
       expect(actions).not.toContain(EFreeAction.COMPLETE_MISSION);
+    });
+
+    it('includes spend signal token only during scan with card row cards', () => {
+      const player = createPlayer({
+        resources: {
+          [EResource.CREDIT]: 4,
+          [EResource.ENERGY]: 3,
+          [EResource.DATA]: 0,
+          [EResource.PUBLICITY]: 4,
+          [EResource.SIGNAL_TOKEN]: 1,
+        },
+      });
+      const actions = getAvailableFreeActions(
+        player,
+        createGameState({
+          phase: EPhase.IN_RESOLUTION,
+          scanActionInProgress: true,
+          cardRow: [{ id: 'row-1' } as never],
+        }),
+      );
+
+      expect(actions).toContain(EFreeAction.SPEND_SIGNAL_TOKEN);
     });
   });
 });

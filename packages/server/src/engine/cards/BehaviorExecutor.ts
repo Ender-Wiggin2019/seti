@@ -131,7 +131,6 @@ export class BehaviorExecutor {
       this.buildMarkTraceAction(behavior, player),
       this.buildMarkAnySignalAction(behavior, player),
       this.buildMarkDisplayCardSignalAction(behavior, player),
-      this.buildMarkSignalTokenAction(behavior, player),
       this.buildRotateAction(behavior, player),
       this.buildGainExofossilsAction(behavior, player),
       ...this.buildCustomActions(behavior, player, card),
@@ -399,17 +398,6 @@ export class BehaviorExecutor {
     if (count <= 0) return undefined;
     return buildCoreEffectAction(player, (game) =>
       game.mark(EMarkSource.CARD_ROW, count, player.id),
-    );
-  }
-
-  private buildMarkSignalTokenAction(
-    behavior: IBehavior,
-    player: IPlayer,
-  ): SimpleDeferredAction | undefined {
-    const count = behavior.markSignalToken ?? 0;
-    if (count <= 0) return undefined;
-    return buildCoreEffectAction(player, (game) =>
-      game.mark(EMarkSource.ANY, count, player.id),
     );
   }
 

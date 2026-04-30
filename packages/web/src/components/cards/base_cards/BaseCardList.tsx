@@ -17,6 +17,7 @@ import { useTranslation } from 'next-i18next';
 import React, { useCallback, useEffect } from 'react';
 import { PreviewBaseCard } from '@/components/cards/base_cards/PreviewBaseCard';
 import CardList from '@/components/cards/shared/CardList';
+import { cn } from '@/lib/utils';
 import { useBaseCardData } from './useBaseCardData';
 
 interface BaseCardListProps {
@@ -32,6 +33,7 @@ interface BaseCardListProps {
   credit?: number[];
   onCardCountChange: ({ base, alien }: { base: number; alien: number }) => void;
   maxNum?: number;
+  compactDesktop?: boolean;
   // ... any other filters
 }
 
@@ -50,6 +52,7 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
   sortOrder = SortOrder.ID_ASC,
   credit = [0],
   maxNum,
+  compactDesktop = false,
 }) => {
   const cardsData = useBaseCardData();
   const { t } = useTranslation('seti');
@@ -179,13 +182,21 @@ export const BaseCardList: React.FC<BaseCardListProps> = ({
   }
 
   return (
-    <CardList>
+    <CardList className={compactDesktop ? 'lg:grid-cols-2 xl:grid-cols-3' : ''}>
       {filteredCards.map((ratedBaseCard: IBaseCard) => (
         <div
           key={ratedBaseCard.id}
-          className='scale-100 sm:mb-1 sm:scale-100 md:mb-4 md:h-64'
+          className={cn(
+            'scale-100 sm:mb-1 sm:scale-100 md:mb-4 md:h-64',
+            compactDesktop && 'lg:h-auto',
+          )}
         >
-          <div className='scale-100 md:scale-125 md:translate-y-8'>
+          <div
+            className={cn(
+              'scale-100 md:scale-125 md:translate-y-8',
+              compactDesktop && 'lg:translate-y-0 lg:scale-100',
+            )}
+          >
             <PreviewBaseCard
               key={ratedBaseCard.id}
               card={ratedBaseCard}

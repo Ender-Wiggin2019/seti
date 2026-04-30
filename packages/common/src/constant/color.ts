@@ -14,6 +14,7 @@ export const EResourceColorMap: Record<EResource, string> = {
   [EResource.SCORE]: '#156853',
   [EResource.DATA]: '#567fd1',
   [EResource.PUBLICITY]: '#f14927',
+  [EResource.SIGNAL_TOKEN]: '#8f68d8',
   [EResource.CARD]: '#414341',
   [EResource.CARD_ANY]: '#414341',
   [EResource.MOVE]: '#182031',

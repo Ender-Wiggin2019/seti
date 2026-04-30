@@ -42,7 +42,6 @@ export interface IBehavior {
   markTrace?: ETrace;
   markAnySignal?: number;
   markDisplayCardSignal?: number;
-  markSignalToken?: number;
   rotateSolarSystem?: boolean;
   gainExofossils?: number;
   custom?: string[];
@@ -128,6 +127,15 @@ function applyBaseEffect(behavior: IBehavior, effect: IBaseEffect): IBehavior {
         gainResources: incrementResource(
           behavior.gainResources,
           'publicity',
+          amount,
+        ),
+      };
+    case EResource.SIGNAL_TOKEN:
+      return {
+        ...behavior,
+        gainResources: incrementResource(
+          behavior.gainResources,
+          'signalTokens',
           amount,
         ),
       };
@@ -228,11 +236,6 @@ function applyBaseEffect(behavior: IBehavior, effect: IBaseEffect): IBehavior {
       return { ...behavior, gainIncome: EResource.ENERGY };
     case EMiscIcon.CARD_INCOME:
       return { ...behavior, gainIncome: EResource.CARD };
-    case EMiscIcon.SIGNAL_TOKEN:
-      return {
-        ...behavior,
-        markSignalToken: (behavior.markSignalToken ?? 0) + amount,
-      };
     case EAlienIcon.EXOFOSSIL:
       return {
         ...behavior,

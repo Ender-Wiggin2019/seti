@@ -72,6 +72,9 @@ export class CleanSpaceInitiativeCard extends ImmediateCard {
         case EResource.PUBLICITY:
           context.player.resources.gain({ publicity: value });
           break;
+        case EResource.SIGNAL_TOKEN:
+          context.player.resources.gain({ signalTokens: value });
+          break;
         case EResource.SCORE:
           context.player.score += value;
           break;

@@ -26,6 +26,7 @@ import {
   isOumuamuaAlienBoard,
   type OumuamuaAlienBoard,
 } from '@/engine/alien/AlienBoard.js';
+import { isScanActionPoolInput } from '@/engine/effects/scan/ScanActionPool.js';
 import type { TGameEvent } from '@/engine/event/GameEvent.js';
 import type { IGame } from '@/engine/IGame.js';
 import {
@@ -315,6 +316,7 @@ function serializePlayer(player: IPlayer): IPlayerStateDto {
       [EResource.ENERGY]: player.resources.energy,
       [EResource.PUBLICITY]: player.resources.publicity,
       [EResource.DATA]: player.resources.data,
+      [EResource.SIGNAL_TOKEN]: player.resources.signalTokens,
     },
   };
 }
@@ -588,6 +590,7 @@ function toPublicPlayerState(
       [EResource.ENERGY]: player.resources.energy,
       [EResource.DATA]: player.resources.data,
       [EResource.PUBLICITY]: player.resources.publicity,
+      [EResource.SIGNAL_TOKEN]: player.resources.signalTokens,
     },
     traces: cloneValue(player.traces),
     tracesByAlien: cloneValue(player.tracesByAlien),
@@ -729,6 +732,7 @@ export function projectGameState(
     startPlayerId: game.startPlayer.id,
     undoAllowed,
     canUndo,
+    scanActionInProgress: isScanActionPoolInput(game.activePlayer.waitingFor),
     turnIndex: game.turnIndex,
     players: game.players.map((player) =>
       toPublicPlayerState(player, viewerId),

@@ -72,6 +72,9 @@ export class FreeActionCornerFreeAction {
         case EResource.PUBLICITY:
           player.resources.gain({ publicity: value });
           break;
+        case EResource.SIGNAL_TOKEN:
+          player.resources.gain({ signalTokens: value });
+          break;
         case EResource.SCORE:
           player.score += value;
           break;

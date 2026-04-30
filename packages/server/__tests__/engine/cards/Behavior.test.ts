@@ -1,10 +1,5 @@
 import { DESC, e } from '@seti/common/constant/effect';
-import {
-  EResource,
-  ESector,
-  ETech,
-  ETrace,
-} from '@seti/common/types/element';
+import { EResource, ESector, ETech, ETrace } from '@seti/common/types/element';
 import { behaviorFromEffects } from '@/engine/cards/Behavior.js';
 
 describe('behaviorFromEffects', () => {
@@ -69,7 +64,7 @@ describe('behaviorFromEffects', () => {
 
     expect(behavior.markAnySignal).toBe(2);
     expect(behavior.markDisplayCardSignal).toBe(3);
-    expect(behavior.markSignalToken).toBe(1);
+    expect(behavior.gainResources?.signalTokens).toBe(1);
   });
 
   it('maps exofossil icon into gainExofossils behavior', () => {

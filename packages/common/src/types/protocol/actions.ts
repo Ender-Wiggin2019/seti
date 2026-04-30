@@ -60,6 +60,10 @@ export interface IExchangeResourcesFreeActionRequest {
   cardId?: string;
 }
 
+export interface ISpendSignalTokenFreeActionRequest {
+  type: EFreeAction.SPEND_SIGNAL_TOKEN;
+}
+
 export type IFreeActionRequest =
   | IMovementFreeActionRequest
   | IConvertEnergyToMovementFreeActionRequest
@@ -67,7 +71,8 @@ export type IFreeActionRequest =
   | ICompleteMissionFreeActionRequest
   | IUseCardCornerFreeActionRequest
   | IBuyCardFreeActionRequest
-  | IExchangeResourcesFreeActionRequest;
+  | IExchangeResourcesFreeActionRequest
+  | ISpendSignalTokenFreeActionRequest;
 
 export interface IOptionInputResponse {
   type: EPlayerInputType.OPTION;

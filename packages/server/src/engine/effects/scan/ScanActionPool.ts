@@ -31,6 +31,31 @@ export enum EScanSubAction {
   DONE = 'done',
 }
 
+export const SCAN_ACTION_POOL_TITLE = 'Scan: choose sub-action';
+
+interface IRefreshableScanActionPoolInput extends IPlayerInput {
+  refreshScanActionPool: () => IPlayerInput | undefined;
+}
+
+export function isScanActionPoolInput(
+  input: IPlayerInput | undefined,
+): boolean {
+  return input?.title === SCAN_ACTION_POOL_TITLE;
+}
+
+export function refreshScanActionPoolInput(
+  input: IPlayerInput,
+): IPlayerInput | undefined {
+  const maybeRefreshable = input as Partial<IRefreshableScanActionPoolInput>;
+  if (
+    isScanActionPoolInput(input) &&
+    typeof maybeRefreshable.refreshScanActionPool === 'function'
+  ) {
+    return maybeRefreshable.refreshScanActionPool();
+  }
+  return input;
+}
+
 // ── Result types ──────────────────────────────────────────────────────────
 
 export interface IScanSubActionRecord {
@@ -137,7 +162,13 @@ export class ScanActionPool {
       });
     }
 
-    return new SelectOption(player, menuOptions, 'Scan: choose sub-action');
+    return Object.assign(
+      new SelectOption(player, menuOptions, SCAN_ACTION_POOL_TITLE),
+      {
+        refreshScanActionPool: () =>
+          this.presentPool(player, game, remaining, result, options),
+      },
+    );
   }
 
   // ── Build sub-action descriptors ──────────────────────────────────────
