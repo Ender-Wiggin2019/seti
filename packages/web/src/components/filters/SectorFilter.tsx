@@ -10,14 +10,17 @@
 import { ESector, ESectorMap } from '@seti/common/types/element';
 import React, { useState } from 'react';
 import TagButton from '@/components/buttons/TagButton';
+import { cn } from '@/lib/utils';
 
 type SectorFilterProps = {
   onFilterChange: (sectors: ESector[]) => void;
   reset: boolean;
+  className?: string;
 };
 export const SectorFilter: React.FC<SectorFilterProps> = ({
   onFilterChange,
   reset,
+  className,
 }) => {
   const [selectedSectors, setSelectedSectors] = useState<ESector[]>([]);
   const toggleSector = (sector: ESector) => {
@@ -42,7 +45,12 @@ export const SectorFilter: React.FC<SectorFilterProps> = ({
 
   return (
     <>
-      <div className='xl:grid-cols-auto grid grid-cols-4 gap-2 md:grid-cols-6 lg:grid-cols-8'>
+      <div
+        className={cn(
+          'xl:grid-cols-auto grid grid-cols-4 gap-2 md:grid-cols-6 lg:grid-cols-8',
+          className,
+        )}
+      >
         {Object.keys(ESectorMap).map((key) => {
           const sector = key as ESector;
           return (

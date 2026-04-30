@@ -1,3 +1,4 @@
+import type { SVGProps } from 'react';
 import {
   PolarAngleAxis,
   PolarGrid,
@@ -7,6 +8,14 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { CorpData } from './CorpCard';
+
+type TRadarTickPayload = { value: string };
+
+type TRadarTickProps = {
+  payload: TRadarTickPayload;
+  x: number;
+  y: number;
+} & Record<string, unknown>;
 
 function normalizeValue(value: number, min: number, max: number): number {
   const clamped = Math.max(min, Math.min(max, value));
@@ -113,14 +122,16 @@ export const RadarChartPanel = ({
             {/* @ts-ignore recharts type compatibility */}
             <PolarAngleAxis
               dataKey='subject'
-              tick={({ payload, x, y, ...props }: any) => {
+              tick={(tickProps: unknown) => {
+                const { payload, x, y, ...props } =
+                  tickProps as TRadarTickProps;
                 const dimension = radarData.find(
                   (d) => d.subject === payload.value,
                 )?.dimension;
                 const isActive = activeDimension === dimension;
                 return (
                   <text
-                    {...props}
+                    {...(props as SVGProps<SVGTextElement>)}
                     x={x}
                     y={y}
                     fill={isActive ? '#9ca3af' : '#a1a1aa'}

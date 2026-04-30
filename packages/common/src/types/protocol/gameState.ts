@@ -1,0 +1,397 @@
+import type { IPlanetMissionConfig } from '@seti/common/constant/boardLayout';
+import type {
+  TMascamitesSamplePools,
+  TMascamitesSampleSourcePlanet,
+  TMascamitesSampleTokenId,
+} from '@seti/common/constant/mascamites';
+import type { TMovementTarget } from '@seti/common/types/protocol/actions';
+import type {
+  EStarName,
+  ISolarSystemSetupConfig,
+  TSectorWinnerBonus,
+} from '@seti/common/constant/sectorSetup';
+import { IBaseCard } from '@seti/common/types/BaseCard';
+import type { IComputerSlotReward } from '@seti/common/types/computer';
+import { EResource, ESector } from '@seti/common/types/element';
+import {
+  EAlienType,
+  EPhase,
+  EPlanet,
+  ETech,
+  ETrace,
+} from '@seti/common/types/protocol/enums';
+import type { TGameEvent } from '@seti/common/types/protocol/events';
+import type { ETechId, ITechBonusToken } from '@seti/common/types/tech';
+
+export interface IPublicResourceState {
+  [EResource.CREDIT]: number;
+  [EResource.ENERGY]: number;
+  [EResource.DATA]: number;
+  [EResource.PUBLICITY]: number;
+  [EResource.SIGNAL_TOKEN]?: number;
+}
+
+export interface IPublicComputerColumnState {
+  topFilled: boolean;
+  topReward: IComputerSlotReward | null;
+  techId: ETechId | null;
+  hasBottomSlot: boolean;
+  bottomFilled: boolean;
+  bottomReward: IComputerSlotReward | null;
+  techSlotAvailable: boolean;
+}
+
+export interface IPublicComputerState {
+  columns: IPublicComputerColumnState[];
+}
+
+export interface IPublicPieceInventory {
+  probes: number;
+  orbiters: number;
+  landers: number;
+  signalMarkers: number;
+}
+
+export interface IPublicPlayerState {
+  playerId: string;
+  playerName: string;
+  seatIndex: number;
+  color: string;
+  score: number;
+  handSize: number;
+  hand?: IBaseCard[];
+  resources: IPublicResourceState;
+  traces: Partial<Record<ETrace, number>>;
+  tracesByAlien: Record<number, Partial<Record<ETrace, number>>>;
+  computer: IPublicComputerState;
+  dataPoolCount: number;
+  dataPoolMax: number;
+  pieces: IPublicPieceInventory;
+  techs: ETechId[];
+  passed: boolean;
+  movementPoints: number;
+  dataStashCount: number;
+  probesInSpace: number;
+  probeSpaceLimit: number;
+  tuckedIncomeCards?: IBaseCard[];
+  playedMissions?: IBaseCard[];
+  completedMissions?: string[];
+  endGameCards?: IBaseCard[];
+  completedMissionCount: number;
+  endGameCardCount: number;
+  creditIncome: number;
+  energyIncome: number;
+  cardIncome: number;
+  /**
+   * Number of setup-tuck inputs this player still owes. `0` means setup
+   * is complete for this player. Broadcast publicly so peers can reflect
+   * "waiting for all players to finish setup" in the UI.
+   */
+  pendingSetupTucks: number;
+  exofossils?: number;
+}
+
+export interface IPublicSolarSystemProbe {
+  playerId: string;
+  spaceId: string;
+  probeId?: string;
+  transitionDelayMs?: number;
+}
+
+export interface IPublicSolarSystemMovablePiece {
+  pieceId: string;
+  pieceType: TMovementTarget['type'];
+  playerId: string;
+  spaceId: string;
+  movementTarget: TMovementTarget;
+}
+
+export type TPublicAnomalyTraceColor = ETrace.RED | ETrace.YELLOW | ETrace.BLUE;
+
+export interface IPublicSolarSystemAlienToken {
+  tokenId: string;
+  alienType: EAlienType;
+  sectorIndex: number;
+  traceColor: TPublicAnomalyTraceColor;
+  rewards: TPublicSlotReward[];
+}
+
+export interface IPublicSolarSystemDiscState {
+  discIndex: number;
+  angle: number;
+}
+
+export interface IPublicSolarSystemSpaceState {
+  spaceId: string;
+  ringIndex: number;
+  indexInRing: number;
+  hasPublicityIcon: boolean;
+  /**
+   * Amount of publicity granted when a probe enters this space via the
+   * publicity icon. Optional; callers that don't emit this field default
+   * to +1 (existing board data) while newer sector configs may specify
+   * any positive integer for extensibility.
+   */
+  publicityIconAmount?: number;
+  elementTypes: string[];
+  elements?: Array<{ type: string; planet?: EPlanet }>;
+  /**
+   * Pre-computed sector index (0..7) this space belongs to. Stable per
+   * spaceId — does not change on rotation (only the element living on
+   * the space does). Emitted by the server projection so clients don't
+   * have to replicate `floor(indexInRing / ringIndex)` logic.
+   */
+  sectorIndex?: number;
+  /** Offset inside the owning sector (0..ringIndex-1). */
+  cellInSector?: number;
+}
+
+export interface IPublicSolarSystemState {
+  spaces: string[];
+  adjacency: Record<string, string[]>;
+  probes: IPublicSolarSystemProbe[];
+  movablePieces?: IPublicSolarSystemMovablePiece[];
+  discs: IPublicSolarSystemDiscState[];
+  /**
+   * Next ring that will rotate when a rotation resolves (rule order 1 -> 2 -> 3).
+   * Produced by the server from runtime rotation counter; client should render only.
+   */
+  nextRotateRing?: 1 | 2 | 3;
+  spaceStates?: Record<string, IPublicSolarSystemSpaceState>;
+  /**
+   * Runtime planet → current spaceId lookup. Reflects the current
+   * rotation state; server rebuilds on every rotation so clients can
+   * highlight planet targets in O(1) without scanning `spaceStates`.
+   */
+  planetSpaceIds?: Partial<Record<EPlanet, string>>;
+  /**
+   * Static sector → ordered spaceIds (ring-1 first) index. Stable for
+   * the whole game. Lets clients render "sector zoom" or sector-scoped
+   * probe badges without deriving the topology.
+   */
+  sectorSpaceIds?: Record<number, string[]>;
+  /** probeId → spaceId. Enables probe-centric views (e.g. "which sector?"). */
+  probeSpaceById?: Record<string, string>;
+  /** Alien components physically located on the solar-system board. */
+  alienTokens: IPublicSolarSystemAlienToken[];
+}
+
+export type IPublicSolarSystem = IPublicSolarSystemState;
+
+export interface IPublicSectorSignal {
+  type: 'data' | 'player';
+  playerId?: string;
+}
+
+export interface IPublicSectorState {
+  sectorId: string;
+  name: EStarName | string;
+  color: ESector;
+  signals: IPublicSectorSignal[];
+  /** Printed/original sector data capacity from setup. */
+  dataCapability: number;
+  /** Current effective number of data slots represented by `signals`. */
+  dataSlotCapacity: number;
+  firstWinnerBonus: TSectorWinnerBonus;
+  otherWinnerBonus: TSectorWinnerBonus;
+  sectorWinners: string[];
+  completed: boolean;
+}
+
+export type IPublicSector = IPublicSectorState;
+
+export interface IPublicPlanetSlotState {
+  playerId: string;
+}
+
+export interface IPublicMoonOccupantState {
+  playerId: string;
+}
+
+export interface IPublicPlanetState {
+  orbitSlots: IPublicPlanetSlotState[];
+  landingSlots: IPublicPlanetSlotState[];
+  firstOrbitClaimed: boolean;
+  firstLandDataBonusTaken: boolean[];
+  moonOccupant: IPublicMoonOccupantState | null;
+}
+
+export interface IPublicPlanetaryBoard {
+  configs?: Partial<Record<EPlanet, IPlanetMissionConfig>>;
+  planets: Partial<Record<EPlanet, IPublicPlanetState>>;
+}
+
+export interface IPublicTechStack {
+  tech: ETech;
+  level: number;
+  remainingTiles: number;
+  firstTakeBonusAvailable: boolean;
+  topTileBonuses?: ITechBonusToken[];
+}
+
+export interface IPublicTechBoard {
+  stacks: IPublicTechStack[];
+}
+
+export type TPublicSlotReward =
+  | { type: 'VP'; amount: number }
+  | { type: 'PUBLICITY'; amount: number }
+  | { type: 'CREDIT'; amount: number }
+  | { type: 'ENERGY'; amount: number }
+  | { type: 'DATA'; amount: number }
+  | { type: 'CARD'; amount: number }
+  | { type: 'CARD_ANY'; amount: number }
+  | { type: 'CUSTOM'; effectId: string };
+
+export interface IPublicTraceOccupant {
+  source: { playerId: string } | 'neutral';
+  traceColor: ETrace;
+}
+
+export interface IPublicTraceSlot {
+  slotId: string;
+  traceColor: ETrace;
+  occupants: IPublicTraceOccupant[];
+  maxOccupants: number;
+  rewards: TPublicSlotReward[];
+  isDiscovery: boolean;
+}
+
+export interface IPublicAlienDiscoveryState {
+  zones: IPublicTraceSlot[];
+  overflowZones: IPublicTraceSlot[];
+}
+
+export interface IPublicAlienCardZone {
+  faceUpCardId: string | null;
+  drawPileSize: number;
+  discardPileSize: number;
+}
+
+export interface IPublicAnomaliesTraceBoard {
+  columns: Record<TPublicAnomalyTraceColor, IPublicTraceSlot>;
+}
+
+export interface IPublicAnomaliesBoard {
+  type: 'anomalies';
+  traceBoard: IPublicAnomaliesTraceBoard;
+}
+
+export interface IPublicOumuamuaTile {
+  spaceId: string;
+  sectorId: string;
+  dataRemaining: number;
+  markerPlayerIds: string[];
+}
+
+export interface IPublicOumuamuaBoard {
+  type: 'oumuamua';
+  tile: IPublicOumuamuaTile | null;
+  traceSlots: IPublicTraceSlot[];
+}
+
+export interface IPublicMascamitesCapsule {
+  capsuleId: string;
+  ownerId: string;
+  sampleTokenId: TMascamitesSampleTokenId;
+  sourcePlanet: TMascamitesSampleSourcePlanet;
+  spaceId: string;
+  missionCardId?: string;
+}
+
+export interface IPublicMascamitesDeliveredSample {
+  sampleTokenId: TMascamitesSampleTokenId;
+  deliveredBy: string;
+  deliveredAtRound: number;
+  slotId: string;
+}
+
+export interface IPublicMascamitesBoard {
+  type: 'mascamites';
+  samplePools: TMascamitesSamplePools;
+  publicSamples: TMascamitesSampleTokenId[];
+  capsules: IPublicMascamitesCapsule[];
+  deliveredSamples: IPublicMascamitesDeliveredSample[];
+  traceSlots: IPublicTraceSlot[];
+}
+
+export interface IPublicGenericAlienBoard {
+  type: 'generic';
+  slots: IPublicTraceSlot[];
+}
+
+export type TPublicAlienBoard =
+  | IPublicAnomaliesBoard
+  | IPublicOumuamuaBoard
+  | IPublicMascamitesBoard
+  | IPublicGenericAlienBoard;
+
+export interface IPublicAlienState {
+  alienIndex: number;
+  alienType: EAlienType | null;
+  discovered: boolean;
+  discovery: IPublicAlienDiscoveryState;
+  cardZone: IPublicAlienCardZone | null;
+  board: TPublicAlienBoard | null;
+}
+
+export interface IPublicMilestoneBucket {
+  threshold: number;
+  resolvedPlayerIds: string[];
+}
+
+export interface IPublicNeutralMilestoneBucket extends IPublicMilestoneBucket {
+  markersRemaining: number;
+}
+
+export interface IPublicMilestoneState {
+  goldMilestones: IPublicMilestoneBucket[];
+  neutralMilestones: IPublicNeutralMilestoneBucket[];
+}
+
+export interface IPublicGoldScoringTileClaim {
+  playerId: string;
+  value: number;
+}
+
+export interface IPublicGoldScoringTile {
+  id: string;
+  side: 'A' | 'B';
+  slotValues: number[];
+  claims: IPublicGoldScoringTileClaim[];
+}
+
+export interface IPublicGameState {
+  gameId: string;
+  round: number;
+  phase: EPhase;
+  currentPlayerId: string;
+  startPlayerId: string;
+  players: IPublicPlayerState[];
+  solarSystem: IPublicSolarSystem;
+  sectors: IPublicSector[];
+  solarSystemSetup?: ISolarSystemSetupConfig;
+  planetaryBoard: IPublicPlanetaryBoard;
+  techBoard: IPublicTechBoard;
+  cardRow: IBaseCard[];
+  endOfRoundStacks?: IBaseCard[][];
+  currentEndOfRoundStackIndex?: number;
+  aliens: IPublicAlienState[];
+  recentEvents: TGameEvent[];
+  milestones: IPublicMilestoneState;
+  goldScoringTiles: IPublicGoldScoringTile[];
+  /** Whether room-level undo is enabled for this game. */
+  undoAllowed: boolean;
+  /**
+   * Whether the current viewer (if they are the active player) is
+   * allowed to press Undo right now. Always false for non-active
+   * players. False once the active player's turn is locked (any card
+   * drawn from the deck / card row refilled / pass-pile revealed) or
+   * when no turn-start checkpoint is available.
+   */
+  canUndo: boolean;
+  /** True while the active player is at the scan sub-action pool. */
+  scanActionInProgress?: boolean;
+  /** Monotonic index of the current turn (server-side). */
+  turnIndex: number;
+}

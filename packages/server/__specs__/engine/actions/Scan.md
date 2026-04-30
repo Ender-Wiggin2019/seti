@@ -1,0 +1,25 @@
+# actions/Scan.ts 规则说明
+
+## 1、文件主要功能
+- 源文件：`packages/server/src/engine/actions/Scan.ts`
+- 对应单测：`packages/server/__tests__/engine/actions/Scan.test.ts`
+- 模块职责：主动作（Main Action）规则入口与动作对象封装
+- 关键导出：IScanActionResult、ScanAction
+
+## 2、单测测试点，以及边界场景处理
+### 2.1 核心测试点
+- returns true with sufficient resources
+- returns false without credits
+- returns false without energy
+- returns false without both credits and energy
+- returns true with exact cost amounts (1 credit, 2 energy)
+- spends credits and energy
+
+### 2.2 边界场景处理
+- returns false without credits
+- returns false without energy
+- returns false without both credits and energy
+- Mark Earth marks sector 0 (fallback) then returns to pool
+
+### 2.3 一一对应关系确认
+- 本文档、源文件、单测文件保持同一路径同名映射（仅后缀不同）。

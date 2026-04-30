@@ -80,6 +80,7 @@ export enum EAlienType {
   OUMUAMUA,
   AMOEBA,
   GLYPHIDS,
+  DUMMY,
 }
 
 export const EAlienMap: Record<EAlienType, string> = {
@@ -90,8 +91,9 @@ export const EAlienMap: Record<EAlienType, string> = {
   [EAlienType.OUMUAMUA]: 'oumuamua',
   [EAlienType.AMOEBA]: 'amoeba',
   [EAlienType.GLYPHIDS]: 'glyphids',
+  [EAlienType.DUMMY]: 'dummy',
 };
 
 export const ALL_ALIENS: EAlienType[] = Object.values(EAlienType).filter(
-  (v): v is EAlienType => typeof v === 'number',
+  (v): v is EAlienType => typeof v === 'number' && v !== EAlienType.DUMMY,
 );

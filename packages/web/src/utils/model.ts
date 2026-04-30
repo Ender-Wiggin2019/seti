@@ -21,6 +21,7 @@ const EFFECT_VALUE_MAP: Record<TIcon, number> = {
   [EResource.ENERGY]: 1,
   [EResource.DATA]: 0.5,
   [EResource.PUBLICITY]: 0.5,
+  [EResource.SIGNAL_TOKEN]: 1,
   [EResource.SCORE]: 0.2,
   [EResource.CARD]: 0.75,
   [EResource.CARD_ANY]: 1,

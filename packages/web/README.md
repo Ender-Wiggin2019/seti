@@ -1,56 +1,45 @@
-# SETI Card List
+# @seti/web
 
-This is an open-source online website of the board game SETI. It is not affiliated with CGE in any way.
+Next.js Web 服务，是当前仓库默认开发入口。
 
-See a [demo](https://seti.ender-wiggin.com/).
+## 运行方式
 
-![og](/public/images/large-og.png)
-
-## Updates
-
-This project will be updated over time.
-Expect frequent improvements.
-
-Next up:
-
-- [x] All aliens
-- [x] Card description translation
-- [x] Card flavor text translation
-- [x] DIY
-- [x] Posts
-- [ ] Alien boards
-- [ ] Expansion (WIP)
-
-## Running Locally
-
-**1. Clone Repo**
+在仓库根目录安装依赖：
 
 ```bash
-git clone git@github.com:Ender-Wiggin2019/seti.git
+pnpm install
 ```
 
-**2. Install Dependencies**
+启动开发环境（会自动执行资源同步脚本）：
 
 ```bash
-pnpm i
+pnpm --filter @seti/web dev
 ```
 
-If you don't hav `pnpm` installed, you can install it with the following command:
+默认端口：`3000`（Next 默认端口）。
+
+## 构建与启动
 
 ```bash
-npm install -g pnpm
+pnpm --filter @seti/web build
+pnpm --filter @seti/web start
 ```
 
-**3. Run App**
+说明：
+
+- `prebuild` / `predev` 会先执行 `scripts/sync-card-assets.sh`
+- `postbuild` 会执行 `next-sitemap` 生成 sitemap
+
+## 测试与质量
 
 ```bash
-pnpm run dev
+pnpm --filter @seti/web test
+pnpm --filter @seti/web test:watch
+pnpm --filter @seti/web lint
+pnpm --filter @seti/web typecheck
 ```
 
-## Help to Translate
+## 常见问题
 
-If you want to provide an additional translation, you can go to the [locales](https://github.com/Ender-Wiggin2019/seti/tree/main/public/locales) folder and follow these steps:
-
-1. Copy all `.json` files in `en` folder, and paste them in a new folder with the name of your language (e.g. `fr` for French).
-2. Translate all the strings in the new files. Please note that you only need to translate the strings on the right side of the `:` character. Also, please do not change anything wrapped in `{}` and `<>`. i.e. `{Money-3}` and `<br>` should remain the same in your translation.
-3. You can send a pull request with the new files, or send them to me by email (see my [GitHub profile](https://github.com/Ender-Wiggin2019)).
+- 如果样式或卡牌资源缺失，先重新执行一次 `pnpm --filter @seti/web dev`，确认预处理脚本已执行。
+- 如果端口冲突，可用 `pnpm --filter @seti/web dev -- --port 3001` 临时切换端口。

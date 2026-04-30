@@ -1,7 +1,7 @@
 import { CardRender } from '@seti/cards';
 import { IBaseCard } from '@seti/common/types/BaseCard';
 import { useTranslation } from 'next-i18next';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef } from 'react';
 import { CardHoverPreview } from './CardHoverPreview';
 import type { CorpData } from './CorpCard';
 import { RadarChartPanel } from './RadarChartPanel';
@@ -44,7 +44,7 @@ export const CorpDetailPanel = ({
   scale,
   isMobile = false,
 }: CorpDetailPanelProps) => {
-  const { t } = useTranslation(['seti', 'flavorText']);
+  useTranslation(['seti', 'flavorText']);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
   const imageBorderRadius = isMobile ? '14px' : '22px';

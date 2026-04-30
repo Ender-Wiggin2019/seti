@@ -1,0 +1,97 @@
+import type { IFreeActionRequest } from '@seti/common/types/protocol/actions';
+import { EFreeAction } from '@seti/common/types/protocol/enums';
+import { EErrorCode } from '@seti/common/types/protocol/errors';
+import { GameError } from '@/shared/errors/GameError.js';
+import type { IGame } from '../IGame.js';
+import type { IPlayerInput } from '../input/PlayerInput.js';
+import type { IPlayer } from '../player/IPlayer.js';
+import { BuyCardFreeAction } from './BuyCard.js';
+import { CompleteMissionFreeAction } from './CompleteMission.js';
+import { ConvertEnergyToMovementFreeAction } from './ConvertEnergyToMovement.js';
+import { DeliverSampleFreeAction } from './DeliverSample.js';
+import { ExchangeResourcesFreeAction } from './ExchangeResources.js';
+import { FreeActionCornerFreeAction } from './FreeActionCorner.js';
+import { MovementFreeAction } from './Movement.js';
+import { PlaceDataFreeAction } from './PlaceData.js';
+import { SpendSignalTokenFreeAction } from './SpendSignalToken.js';
+
+export function processFreeAction(
+  player: IPlayer,
+  game: IGame,
+  action: IFreeActionRequest,
+): IPlayerInput | undefined {
+  switch (action.type) {
+    case EFreeAction.MOVEMENT: {
+      const target =
+        action.target ??
+        (action.capsuleId !== undefined
+          ? ({ type: 'mascamites-capsule', id: action.capsuleId } as const)
+          : undefined);
+      if (target === undefined) {
+        return MovementFreeAction.execute(player, game, action.path)
+          .pendingInput;
+      }
+      return MovementFreeAction.execute(player, game, action.path, {
+        target,
+      }).pendingInput;
+    }
+
+    case EFreeAction.CONVERT_ENERGY_TO_MOVEMENT:
+      ConvertEnergyToMovementFreeAction.execute(player, game, action.amount);
+      return undefined;
+
+    case EFreeAction.PLACE_DATA:
+      return PlaceDataFreeAction.execute(player, game, action.slotIndex)
+        .pendingInput;
+
+    case EFreeAction.COMPLETE_MISSION:
+      return CompleteMissionFreeAction.execute(
+        player,
+        game,
+        action.cardId,
+        action.branchIndex,
+      );
+
+    case EFreeAction.DELIVER_SAMPLE:
+      return DeliverSampleFreeAction.execute(
+        player,
+        game,
+        action.capsuleId,
+        action.cardId,
+        action.branchIndex,
+      );
+
+    case EFreeAction.USE_CARD_CORNER:
+      FreeActionCornerFreeAction.execute(player, game, action.cardId);
+      return undefined;
+
+    case EFreeAction.BUY_CARD:
+      BuyCardFreeAction.execute(player, game, {
+        cardId: action.cardId,
+        fromDeck: action.fromDeck,
+      });
+      return undefined;
+
+    case EFreeAction.EXCHANGE_RESOURCES:
+      ExchangeResourcesFreeAction.execute(
+        player,
+        game,
+        action.from,
+        action.to,
+        {
+          fromDeck: action.fromDeck,
+          cardId: action.cardId,
+        },
+      );
+      return undefined;
+
+    case EFreeAction.SPEND_SIGNAL_TOKEN:
+      return SpendSignalTokenFreeAction.execute(player, game);
+
+    default:
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        `Unknown free action type: ${(action as { type: string }).type}`,
+      );
+  }
+}

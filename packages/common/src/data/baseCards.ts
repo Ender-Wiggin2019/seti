@@ -2,7 +2,7 @@
  * @Author: Ender-Wiggin
  * @Date: 2024-10-22 00:01:17
  * @LastEditors: Ender-Wiggin
- * @LastEditTime: 2026-03-03 18:18:46
+ * @LastEditTime: 2026-03-31 15:24:18
  * @Description:
  */
 /** biome-ignore-all lint/suspicious/noExplicitAny: <> */
@@ -231,9 +231,9 @@ const _baseCards: IBaseCard[] = [
       e.SIGNAL_RED(2),
       DESC("at Barnard's Star."),
       m.END_GAME(
-        '{score-3} for each {fulfill-sector-red}}',
+        '{score-3} for each {fulfill-sector-red}',
         3,
-        e.FULFILL_SECTOR_BLACK(),
+        e.FULFILL_SECTOR_RED(),
         'sm',
       ),
     ],
@@ -949,9 +949,9 @@ const _baseCards: IBaseCard[] = [
       e.SIGNAL_YELLOW(2),
       DESC('at Kepler 22.'),
       m.END_GAME(
-        '{score-3} for each {fulfill-sector-yellow}}',
+        '{score-3} for each {fulfill-sector-yellow}',
         3,
-        e.FULFILL_SECTOR_BLACK(),
+        e.FULFILL_SECTOR_YELLOW(),
         'sm',
       ),
     ],
@@ -1534,9 +1534,9 @@ const _baseCards: IBaseCard[] = [
       e.SIGNAL_BLUE(2),
       DESC('at Procyon.'),
       m.END_GAME(
-        '{score-3} for each {fulfill-sector-blue}}',
+        '{score-3} for each {fulfill-sector-blue}',
         3,
-        e.FULFILL_SECTOR_BLACK(),
+        e.FULFILL_SECTOR_BLUE(),
         'sm',
       ),
     ],

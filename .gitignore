@@ -27,6 +27,10 @@
 .smoke-screenshots/
 .opencode/skills/skill-creator/scripts/
 
+# python artifacts
+**/__pycache__/
+*.py[cod]
+
 # debug
 npm-debug.log*
 yarn-debug.log*
@@ -66,3 +70,16 @@ packages/*/dist/
 **/.eslintcache
 **/.rpt2_cache/
 **/.parcel-cache/
+
+/frontend-reference
+/backend-reference
+/solar-system-reference
+
+# generated card assets for client (synced from packages/cards)
+packages/client/public/seti-assets/
+.omx/
+
+# local agent/runtime folders
+.codex/
+**/.oxc*/
+**/.omc*/

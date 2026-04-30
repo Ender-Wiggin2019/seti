@@ -1,7 +1,5 @@
-import { BaseCard } from '@seti/cards';
 import { ALL_CARDS } from '@seti/common/data/index';
 import { IBaseCard } from '@seti/common/types/BaseCard';
-import { useTranslation } from 'next-i18next';
 import React from 'react';
 
 type RecommendCard = {

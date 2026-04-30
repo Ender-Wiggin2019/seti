@@ -11,13 +11,18 @@ import { DESC, DESC_WITH_TYPE, e, m } from '@seti/common/constant/effect';
 import { FAQ } from '@seti/common/data/faq';
 
 import { EAlienType, IBaseCard } from '@seti/common/types/BaseCard';
-import { EResource, EScanAction, ESector } from '@seti/common/types/element';
+import {
+  EPlanet,
+  EResource,
+  EScanAction,
+  ESector,
+} from '@seti/common/types/element';
 
 export const _alienCards: any[] = [
   {
     id: 'ET.20',
     name: 'Amazing Uncertainty',
-    position: { src: '/images/aliens/anomalies.webp', row: 0, col: 0 },
+    position: { src: '/seti-assets/aliens/anomalies.webp', row: 0, col: 0 },
     freeAction: [{ type: EResource.PUBLICITY, value: 2 }],
     sector: ESector.YELLOW,
     price: 1,
@@ -28,7 +33,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.17',
     name: 'Are we Being Observed?',
-    position: { src: '/images/aliens/anomalies.webp', row: 0, col: 1 },
+    position: { src: '/seti-assets/aliens/anomalies.webp', row: 0, col: 1 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.MOVE, value: 1 },
@@ -57,7 +62,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.12',
     name: 'Close-up View',
-    position: { src: '/images/aliens/anomalies.webp', row: 0, col: 2 },
+    position: { src: '/seti-assets/aliens/anomalies.webp', row: 0, col: 2 },
     freeAction: [{ type: EResource.PUBLICITY, value: 2 }],
     sector: ESector.RED,
     price: 1,
@@ -68,7 +73,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.13',
     name: 'Concerned People',
-    position: { src: '/images/aliens/anomalies.webp', row: 0, col: 3 },
+    position: { src: '/seti-assets/aliens/anomalies.webp', row: 0, col: 3 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.DATA, value: 1 },
@@ -98,7 +103,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.16',
     name: 'Flooding the Media Space',
-    position: { src: '/images/aliens/anomalies.webp', row: 0, col: 4 },
+    position: { src: '/seti-assets/aliens/anomalies.webp', row: 0, col: 4 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.DATA, value: 1 },
@@ -112,7 +117,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.14',
     name: 'Listening Carefully',
-    position: { src: '/images/aliens/anomalies.webp', row: 1, col: 0 },
+    position: { src: '/seti-assets/aliens/anomalies.webp', row: 1, col: 0 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.MOVE, value: 1 },
@@ -126,7 +131,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.18',
     name: 'Message Capsule',
-    position: { src: '/images/aliens/anomalies.webp', row: 1, col: 1 },
+    position: { src: '/seti-assets/aliens/anomalies.webp', row: 1, col: 1 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.DATA, value: 1 },
@@ -140,7 +145,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.19',
     name: 'New Physics',
-    position: { src: '/images/aliens/anomalies.webp', row: 1, col: 2 },
+    position: { src: '/seti-assets/aliens/anomalies.webp', row: 1, col: 2 },
     freeAction: [{ type: EResource.PUBLICITY, value: 2 }],
     sector: ESector.BLACK,
     price: 1,
@@ -151,7 +156,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.15',
     name: 'Part of Everyday Life',
-    position: { src: '/images/aliens/anomalies.webp', row: 1, col: 3 },
+    position: { src: '/seti-assets/aliens/anomalies.webp', row: 1, col: 3 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.MOVE, value: 1 },
@@ -169,7 +174,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.11',
     name: 'Signs of Life',
-    position: { src: '/images/aliens/anomalies.webp', row: 1, col: 4 },
+    position: { src: '/seti-assets/aliens/anomalies.webp', row: 1, col: 4 },
     freeAction: [{ type: EResource.PUBLICITY, value: 2 }],
     sector: ESector.BLUE,
     price: 1,
@@ -181,7 +186,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.34',
     name: 'A Message from Afar',
-    position: { src: '/images/aliens/centaurians.webp', row: 0, col: 0 },
+    position: { src: '/seti-assets/aliens/centaurians.webp', row: 0, col: 0 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.MOVE, value: 1 },
@@ -194,7 +199,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.36',
     name: 'Alien Schematics',
-    position: { src: '/images/aliens/centaurians.webp', row: 0, col: 1 },
+    position: { src: '/seti-assets/aliens/centaurians.webp', row: 0, col: 1 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.DATA, value: 1 },
@@ -207,7 +212,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.32',
     name: 'Exocomputers',
-    position: { src: '/images/aliens/centaurians.webp', row: 0, col: 2 },
+    position: { src: '/seti-assets/aliens/centaurians.webp', row: 0, col: 2 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.MOVE, value: 1 },
@@ -220,7 +225,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.38',
     name: 'Hivemind Concept',
-    position: { src: '/images/aliens/centaurians.webp', row: 0, col: 3 },
+    position: { src: '/seti-assets/aliens/centaurians.webp', row: 0, col: 3 },
     freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
     sector: ESector.BLUE,
     price: 2,
@@ -230,7 +235,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.33',
     name: 'Infocluster',
-    position: { src: '/images/aliens/centaurians.webp', row: 0, col: 4 },
+    position: { src: '/seti-assets/aliens/centaurians.webp', row: 0, col: 4 },
     freeAction: [{ type: EResource.PUBLICITY, value: 2 }],
     sector: ESector.YELLOW,
     price: 1,
@@ -240,7 +245,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.37',
     name: 'Music of the Spheres',
-    position: { src: '/images/aliens/centaurians.webp', row: 1, col: 0 },
+    position: { src: '/seti-assets/aliens/centaurians.webp', row: 1, col: 0 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.DATA, value: 1 },
@@ -253,7 +258,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.35',
     name: 'Synthesis Instructions',
-    position: { src: '/images/aliens/centaurians.webp', row: 1, col: 1 },
+    position: { src: '/seti-assets/aliens/centaurians.webp', row: 1, col: 1 },
     freeAction: [{ type: EResource.PUBLICITY, value: 2 }],
     sector: ESector.YELLOW,
     price: 1,
@@ -263,7 +268,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.39',
     name: 'Telescope Blueprints',
-    position: { src: '/images/aliens/centaurians.webp', row: 1, col: 2 },
+    position: { src: '/seti-assets/aliens/centaurians.webp', row: 1, col: 2 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.MOVE, value: 1 },
@@ -276,7 +281,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.40',
     name: 'Torrent-chain Signal',
-    position: { src: '/images/aliens/centaurians.webp', row: 1, col: 3 },
+    position: { src: '/seti-assets/aliens/centaurians.webp', row: 1, col: 3 },
     freeAction: [{ type: EResource.PUBLICITY, value: 2 }],
     sector: ESector.YELLOW,
     price: 2,
@@ -286,7 +291,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.31',
     name: 'Vessel Designs',
-    position: { src: '/images/aliens/centaurians.webp', row: 1, col: 4 },
+    position: { src: '/seti-assets/aliens/centaurians.webp', row: 1, col: 4 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.DATA, value: 1 },
@@ -300,7 +305,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.7',
     name: 'Breeding Sample',
-    position: { src: '/images/aliens/mascamites.webp', row: 0, col: 0 },
+    position: { src: '/seti-assets/aliens/mascamites.webp', row: 0, col: 0 },
     freeAction: [{ type: EResource.PUBLICITY, value: 2 }],
     sector: ESector.RED,
     price: 1,
@@ -312,13 +317,16 @@ export const _alienCards: any[] = [
     effects: [
       e.LAND(),
       DESC('desc.et-pickup'),
-      m.QUICK_MISSION(DESC('Deliver {sample} to Earth'), DESC('desc.et-7')),
+      m.QUICK_MISSION(
+        m.MASCAMITES_SAMPLE_DELIVERY(EPlanet.EARTH),
+        DESC('desc.et-7'),
+      ),
     ],
   },
   {
     id: 'ET.10',
     name: 'Computer Simulations',
-    position: { src: '/images/aliens/mascamites.webp', row: 0, col: 1 },
+    position: { src: '/seti-assets/aliens/mascamites.webp', row: 0, col: 1 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.DATA, value: 1 },
@@ -341,7 +349,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.5',
     name: 'Ecosystem Study',
-    position: { src: '/images/aliens/mascamites.webp', row: 0, col: 2 },
+    position: { src: '/seti-assets/aliens/mascamites.webp', row: 0, col: 2 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.MOVE, value: 1 },
@@ -355,7 +363,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.1',
     name: 'First Contact',
-    position: { src: '/images/aliens/mascamites.webp', row: 0, col: 3 },
+    position: { src: '/seti-assets/aliens/mascamites.webp', row: 0, col: 3 },
     freeAction: [{ type: EResource.PUBLICITY, value: 2 }],
     sector: ESector.BLUE,
     price: 1,
@@ -366,7 +374,7 @@ export const _alienCards: any[] = [
       e.LAND(1, '', 'xs'),
       DESC('desc.et-pickup', 'half'),
       m.QUICK_MISSION(
-        [DESC('Deliver {sample} to Earth')],
+        [m.MASCAMITES_SAMPLE_DELIVERY(EPlanet.EARTH)],
         [e.FULFILL_SAMPLE(), e.DATA(2)],
       ),
     ],
@@ -374,7 +382,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.8',
     name: 'Hive Sample',
-    position: { src: '/images/aliens/mascamites.webp', row: 0, col: 4 },
+    position: { src: '/seti-assets/aliens/mascamites.webp', row: 0, col: 4 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.MOVE, value: 1 },
@@ -397,7 +405,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.4',
     name: 'Martian Quarantine Lab',
-    position: { src: '/images/aliens/mascamites.webp', row: 1, col: 0 },
+    position: { src: '/seti-assets/aliens/mascamites.webp', row: 1, col: 0 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.DATA, value: 1 },
@@ -410,7 +418,7 @@ export const _alienCards: any[] = [
       e.LAND(),
       DESC('desc.et-pickup', 'half'),
       m.QUICK_MISSION(
-        [DESC('Deliver {sample} to Mars')],
+        [m.MASCAMITES_SAMPLE_DELIVERY(EPlanet.MARS)],
         [e.FULFILL_SAMPLE(), e.SCORE(2), e.CARD_ANY()],
       ),
     ],
@@ -418,7 +426,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.3',
     name: 'Mass Sample Collection',
-    position: { src: '/images/aliens/mascamites.webp', row: 1, col: 1 },
+    position: { src: '/seti-assets/aliens/mascamites.webp', row: 1, col: 1 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.DATA, value: 1 },
@@ -431,7 +439,7 @@ export const _alienCards: any[] = [
       e.ORBIT_OR_LAND(),
       DESC('desc.et-pickup', 'half'),
       m.QUICK_MISSION(
-        [DESC('Deliver {sample} to Earth')],
+        [m.MASCAMITES_SAMPLE_DELIVERY(EPlanet.EARTH)],
         [e.FULFILL_SAMPLE(), e.SCORE(3), e.CREDIT()],
       ),
     ],
@@ -439,7 +447,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.9',
     name: 'Orbital Monitoring',
-    position: { src: '/images/aliens/mascamites.webp', row: 1, col: 2 },
+    position: { src: '/seti-assets/aliens/mascamites.webp', row: 1, col: 2 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.MOVE, value: 1 },
@@ -462,7 +470,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.2',
     name: 'Rover Exploration',
-    position: { src: '/images/aliens/mascamites.webp', row: 1, col: 3 },
+    position: { src: '/seti-assets/aliens/mascamites.webp', row: 1, col: 3 },
     freeAction: [{ type: EResource.PUBLICITY, value: 2 }],
     sector: ESector.BLACK,
     price: 2,
@@ -472,7 +480,7 @@ export const _alienCards: any[] = [
       e.LAND(),
       DESC('desc.et-pickup-moon', 'half'),
       m.QUICK_MISSION(
-        [DESC('Deliver {sample} to Earth')],
+        [m.MASCAMITES_SAMPLE_DELIVERY(EPlanet.EARTH)],
         [e.FULFILL_SAMPLE(), e.SCORE(3), e.DATA(3)],
       ),
     ],
@@ -480,7 +488,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.6',
     name: 'The Queen',
-    position: { src: '/images/aliens/mascamites.webp', row: 1, col: 4 },
+    position: { src: '/seti-assets/aliens/mascamites.webp', row: 1, col: 4 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.MOVE, value: 1 },
@@ -493,7 +501,7 @@ export const _alienCards: any[] = [
       e.LAND(),
       DESC('desc.et-pickup-moon', 'half'),
       m.QUICK_MISSION(
-        [DESC('Deliver {sample} to Earth')],
+        [m.MASCAMITES_SAMPLE_DELIVERY(EPlanet.EARTH)],
         [e.FULFILL_SAMPLE(), e.SCORE(6), e.PUBLICITY(2)],
       ),
     ],
@@ -502,7 +510,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.22',
     name: 'Altered Trajectory',
-    position: { src: '/images/aliens/oumuamua.webp', row: 0, col: 0 },
+    position: { src: '/seti-assets/aliens/oumuamua.webp', row: 0, col: 0 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.MOVE, value: 1 },
@@ -520,7 +528,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.29',
     name: 'Comparative Analysis',
-    position: { src: '/images/aliens/oumuamua.webp', row: 0, col: 1 },
+    position: { src: '/seti-assets/aliens/oumuamua.webp', row: 0, col: 1 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.MOVE, value: 1 },
@@ -541,7 +549,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.23',
     name: 'Exofossil Discovery',
-    position: { src: '/images/aliens/oumuamua.webp', row: 0, col: 2 },
+    position: { src: '/seti-assets/aliens/oumuamua.webp', row: 0, col: 2 },
     freeAction: [{ type: EResource.PUBLICITY, value: 2 }],
     sector: ESector.YELLOW,
     price: 1,
@@ -559,7 +567,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.30',
     name: 'Excavation Rover',
-    position: { src: '/images/aliens/oumuamua.webp', row: 0, col: 3 },
+    position: { src: '/seti-assets/aliens/oumuamua.webp', row: 0, col: 3 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.DATA, value: 1 },
@@ -585,7 +593,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.28',
     name: 'Exofossil Samples',
-    position: { src: '/images/aliens/oumuamua.webp', row: 0, col: 4 },
+    position: { src: '/seti-assets/aliens/oumuamua.webp', row: 0, col: 4 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.MOVE, value: 1 },
@@ -599,7 +607,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.27',
     name: 'Perfect Timing',
-    position: { src: '/images/aliens/oumuamua.webp', row: 1, col: 0 },
+    position: { src: '/seti-assets/aliens/oumuamua.webp', row: 1, col: 0 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.DATA, value: 1 },
@@ -617,7 +625,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.25',
     name: 'Probe Customisation',
-    position: { src: '/images/aliens/oumuamua.webp', row: 1, col: 1 },
+    position: { src: '/seti-assets/aliens/oumuamua.webp', row: 1, col: 1 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.DATA, value: 1 },
@@ -631,7 +639,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.26',
     name: 'Race Against Time',
-    position: { src: '/images/aliens/oumuamua.webp', row: 1, col: 2 },
+    position: { src: '/seti-assets/aliens/oumuamua.webp', row: 1, col: 2 },
     freeAction: [{ type: EResource.PUBLICITY, value: 2 }],
     sector: ESector.RED,
     price: 1,
@@ -642,7 +650,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.24',
     name: 'Terrain Mapping',
-    position: { src: '/images/aliens/oumuamua.webp', row: 1, col: 3 },
+    position: { src: '/seti-assets/aliens/oumuamua.webp', row: 1, col: 3 },
     freeAction: [
       { type: EResource.SCORE, value: 1 },
       { type: EResource.MOVE, value: 1 },
@@ -663,7 +671,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.21',
     name: 'Visitor in the Sky',
-    position: { src: '/images/aliens/oumuamua.webp', row: 1, col: 4 },
+    position: { src: '/seti-assets/aliens/oumuamua.webp', row: 1, col: 4 },
     freeAction: [{ type: EResource.PUBLICITY, value: 2 }],
     sector: ESector.BLUE,
     price: 2,
@@ -679,7 +687,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.52',
     name: 'Automated Lab',
-    position: { src: '/images/aliens/exertians.webp', row: 0, col: 0 },
+    position: { src: '/seti-assets/aliens/exertians.webp', row: 0, col: 0 },
     price: 0,
     alien: EAlienType.EXERTIANS,
     special: {
@@ -689,7 +697,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.50',
     name: 'Casette Deployment',
-    position: { src: '/images/aliens/exertians.webp', row: 0, col: 1 },
+    position: { src: '/seti-assets/aliens/exertians.webp', row: 0, col: 1 },
     price: 0,
     alien: EAlienType.EXERTIANS,
     special: {
@@ -699,7 +707,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.45',
     name: 'Core-breach Exoplanet',
-    position: { src: '/images/aliens/exertians.webp', row: 0, col: 2 },
+    position: { src: '/seti-assets/aliens/exertians.webp', row: 0, col: 2 },
     price: 0,
     alien: EAlienType.EXERTIANS,
     special: {
@@ -709,7 +717,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.42',
     name: 'Deflector',
-    position: { src: '/images/aliens/exertians.webp', row: 0, col: 3 },
+    position: { src: '/seti-assets/aliens/exertians.webp', row: 0, col: 3 },
     price: 0,
     alien: EAlienType.EXERTIANS,
     special: {
@@ -719,7 +727,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.43',
     name: 'Expender Core',
-    position: { src: '/images/aliens/exertians.webp', row: 0, col: 4 },
+    position: { src: '/seti-assets/aliens/exertians.webp', row: 0, col: 4 },
     price: 0,
     alien: EAlienType.EXERTIANS,
     special: {
@@ -729,7 +737,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.51',
     name: 'Extractor',
-    position: { src: '/images/aliens/exertians.webp', row: 1, col: 0 },
+    position: { src: '/seti-assets/aliens/exertians.webp', row: 1, col: 0 },
     price: 0,
     alien: EAlienType.EXERTIANS,
     special: {
@@ -739,7 +747,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.47',
     name: 'Fission-sun Exoplanet',
-    position: { src: '/images/aliens/exertians.webp', row: 1, col: 1 },
+    position: { src: '/seti-assets/aliens/exertians.webp', row: 1, col: 1 },
     price: 0,
     alien: EAlienType.EXERTIANS,
     special: {
@@ -749,7 +757,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.49',
     name: 'Generative Infrastructure',
-    position: { src: '/images/aliens/exertians.webp', row: 1, col: 2 },
+    position: { src: '/seti-assets/aliens/exertians.webp', row: 1, col: 2 },
     price: 0,
     alien: EAlienType.EXERTIANS,
     special: {
@@ -759,7 +767,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.54',
     name: 'Nanowielder Node',
-    position: { src: '/images/aliens/exertians.webp', row: 1, col: 3 },
+    position: { src: '/seti-assets/aliens/exertians.webp', row: 1, col: 3 },
     price: 0,
     alien: EAlienType.EXERTIANS,
     special: {
@@ -769,7 +777,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.53',
     name: 'Neuralab',
-    position: { src: '/images/aliens/exertians.webp', row: 1, col: 4 },
+    position: { src: '/seti-assets/aliens/exertians.webp', row: 1, col: 4 },
     price: 0,
     alien: EAlienType.EXERTIANS,
     special: {
@@ -779,7 +787,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.48',
     name: 'Oscillating Probes',
-    position: { src: '/images/aliens/exertians.webp', row: 2, col: 0 },
+    position: { src: '/seti-assets/aliens/exertians.webp', row: 2, col: 0 },
     price: 0,
     alien: EAlienType.EXERTIANS,
     special: {
@@ -789,7 +797,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.44',
     name: 'pierced Exoplanet',
-    position: { src: '/images/aliens/exertians.webp', row: 2, col: 1 },
+    position: { src: '/seti-assets/aliens/exertians.webp', row: 2, col: 1 },
     price: 0,
     alien: EAlienType.EXERTIANS,
     special: {
@@ -799,7 +807,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.41',
     name: 'Razor-edge Shuttle',
-    position: { src: '/images/aliens/exertians.webp', row: 2, col: 2 },
+    position: { src: '/seti-assets/aliens/exertians.webp', row: 2, col: 2 },
     price: 0,
     alien: EAlienType.EXERTIANS,
     special: {
@@ -809,7 +817,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.55',
     name: 'Stratoelevator',
-    position: { src: '/images/aliens/exertians.webp', row: 2, col: 3 },
+    position: { src: '/seti-assets/aliens/exertians.webp', row: 2, col: 3 },
     price: 0,
     alien: EAlienType.EXERTIANS,
     special: {
@@ -819,7 +827,7 @@ export const _alienCards: any[] = [
   {
     id: 'ET.46',
     name: 'Vortex Exoplanet',
-    position: { src: '/images/aliens/exertians.webp', row: 2, col: 4 },
+    position: { src: '/seti-assets/aliens/exertians.webp', row: 2, col: 4 },
     price: 0,
     alien: EAlienType.EXERTIANS,
     special: {

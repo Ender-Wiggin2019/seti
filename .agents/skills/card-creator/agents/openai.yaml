@@ -1,0 +1,3 @@
+interface:
+  display_name: "Card Creator"
+  short_description: "Implement SETI card classes, tests, and registry migration"

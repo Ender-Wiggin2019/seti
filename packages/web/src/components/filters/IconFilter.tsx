@@ -9,17 +9,20 @@
 import { TIcon } from '@seti/common/types/element';
 import React, { useState } from 'react';
 import TagButton from '@/components/buttons/TagButton';
+import { cn } from '@/lib/utils';
 
 type Props<T> = {
   options: T[];
   onFilterChange: (options: T[]) => void;
   reset: boolean;
+  className?: string;
 };
 
 export const IconFilter = <T extends TIcon>({
   options,
   onFilterChange,
   reset,
+  className,
 }: Props<T>) => {
   const [selectedOptions, setSelectedOptions] = useState<T[]>([]);
 
@@ -42,7 +45,12 @@ export const IconFilter = <T extends TIcon>({
   }, [onFilterChange, selectedOptions]);
 
   return (
-    <div className='xl:grid-cols-auto grid grid-cols-4 gap-2 md:grid-cols-6 lg:grid-cols-8'>
+    <div
+      className={cn(
+        'xl:grid-cols-auto grid grid-cols-4 gap-2 md:grid-cols-6 lg:grid-cols-8',
+        className,
+      )}
+    >
       {options.map((option) => (
         <TagButton
           key={String(option)}

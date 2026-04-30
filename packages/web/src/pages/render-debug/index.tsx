@@ -6,7 +6,6 @@
  * @Description:
  */
 
-import spaceAgencyAliens from '@seti/common/data/spaceAgencyAliens';
 import spaceAgencyCards from '@seti/common/data/spaceAgencyCards';
 import { IBaseCard } from '@seti/common/types/BaseCard';
 import { sortCards } from '@seti/common/utils/sort';

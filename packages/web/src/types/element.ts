@@ -30,6 +30,7 @@ export enum EResource {
   ENERGY = 'energy',
   DATA = 'data',
   PUBLICITY = 'publicity',
+  SIGNAL_TOKEN = 'signal-token',
   SCORE = 'score',
   CARD = 'draw-card', // has question mark
   CARD_ANY = 'any-card',
@@ -71,6 +72,7 @@ export const EResourceMap: Record<EResource, string> = {
   [EResource.ENERGY]: 'energy',
   [EResource.DATA]: 'data',
   [EResource.PUBLICITY]: 'publicity',
+  [EResource.SIGNAL_TOKEN]: 'signal-token',
   [EResource.SCORE]: 'score',
   [EResource.CARD]: 'draw-card',
   [EResource.MOVE]: 'move',
@@ -93,7 +95,6 @@ export enum EMiscIcon {
   CREDIT_INCOME = 'credit-income',
   ENERGY_INCOME = 'energy-income',
   CARD_INCOME = 'card-income',
-  SIGNAL_TOKEN = 'signal-token',
   DRAW_ALIEN_CARD = 'draw-alien-card',
 }
 

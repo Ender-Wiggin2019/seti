@@ -11,7 +11,6 @@ import { IPreludeCard } from '@seti/common/types/prelude';
 import type { GetStaticProps, InferGetStaticPropsType } from 'next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import React from 'react';
 import { PreludeCard } from '@/components/cards/prelude';
 import withDownloadable from '@/components/form/withDownloadable';
 import Layout from '@/components/layout/Layout';

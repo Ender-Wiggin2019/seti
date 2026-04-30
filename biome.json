@@ -11,6 +11,8 @@
       "!./coverage",
       "!**/.next",
       "!./.next/",
+      "!**/.turbo",
+      "!**/.turbo/**",
       "!./out/",
       "!./build",
       "!**/.DS_Store",
@@ -122,6 +124,7 @@
     }
   },
   "javascript": {
+    "parser": { "unsafeParameterDecoratorsEnabled": true },
     "formatter": {
       "jsxQuoteStyle": "single",
       "quoteProperties": "asNeeded",
