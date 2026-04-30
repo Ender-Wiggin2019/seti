@@ -1,11 +1,15 @@
 import { AlienRegistry } from './AlienRegistry.js';
 import { AnomaliesAlienPlugin } from './plugins/AnomaliesAlienPlugin.js';
 import { DummyAlienPlugin } from './plugins/DummyAlienPlugin.js';
+import { MascamitesAlienPlugin } from './plugins/MascamitesAlienPlugin.js';
 import { OumuamuaAlienPlugin } from './plugins/OumuamuaAlienPlugin.js';
 
 export type {
   IAlienBoardInit,
   IAnomaliesAlienBoardInit,
+  IMascamitesAlienBoardInit,
+  IMascamitesCapsuleComponent,
+  IMascamitesDeliveredSampleComponent,
   IOumuamuaAlienBoardInit,
   ITraceOccupant,
   ITraceSlot,
@@ -19,7 +23,9 @@ export {
   AnomaliesAlienBoard,
   createAlienBoard,
   isAnomaliesAlienBoard,
+  isMascamitesAlienBoard,
   isOumuamuaAlienBoard,
+  MascamitesAlienBoard,
   OumuamuaAlienBoard,
 } from './AlienBoard.js';
 export { AlienRegistry } from './AlienRegistry.js';
@@ -29,5 +35,6 @@ export type { IAlienPlugin } from './IAlienPlugin.js';
 // ---- Plugin registration ---------------------------------------------------
 
 AlienRegistry.register(new AnomaliesAlienPlugin());
+AlienRegistry.register(new MascamitesAlienPlugin());
 AlienRegistry.register(new OumuamuaAlienPlugin());
 AlienRegistry.register(new DummyAlienPlugin());

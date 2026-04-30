@@ -14,6 +14,7 @@ const VISIBLE_ACTIONS: EFreeAction[] = [
 const COLLAPSIBLE_ACTIONS: EFreeAction[] = [
   EFreeAction.CONVERT_ENERGY_TO_MOVEMENT,
   EFreeAction.PLACE_DATA,
+  EFreeAction.DELIVER_SAMPLE,
   EFreeAction.USE_CARD_CORNER,
   EFreeAction.BUY_CARD,
   EFreeAction.EXCHANGE_RESOURCES,

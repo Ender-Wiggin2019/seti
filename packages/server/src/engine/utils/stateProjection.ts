@@ -5,6 +5,7 @@ import {
 import type { EPlanet } from '@seti/common/types/protocol/enums';
 import type {
   IPublicSolarSystemAlienToken,
+  IPublicSolarSystemMovablePiece,
   IPublicSolarSystemProbe,
   IPublicSolarSystemSpaceState,
   IPublicSolarSystemState,
@@ -17,6 +18,7 @@ import {
 export function toPublicSolarSystemState(
   ss: SolarSystem,
   alienTokens: IPublicSolarSystemAlienToken[] = [],
+  extraMovablePieces: IPublicSolarSystemMovablePiece[] = [],
 ): IPublicSolarSystemState {
   const adjacencyRecord: Record<string, string[]> = {};
   for (const [spaceId, neighbors] of ss.adjacency.entries()) {
@@ -77,6 +79,7 @@ export function toPublicSolarSystemState(
   }
 
   const probes: IPublicSolarSystemProbe[] = [];
+  const movablePieces: IPublicSolarSystemMovablePiece[] = [];
   const probeSpaceById: Record<string, string> = {};
 
   for (const space of ss.spaces) {
@@ -86,6 +89,13 @@ export function toPublicSolarSystemState(
         spaceId: space.id,
         probeId: probe.id,
       });
+      movablePieces.push({
+        pieceId: probe.id,
+        pieceType: 'probe',
+        playerId: probe.playerId,
+        spaceId: space.id,
+        movementTarget: { type: 'probe', id: probe.id },
+      });
       probeSpaceById[probe.id] = space.id;
     }
   }
@@ -94,6 +104,7 @@ export function toPublicSolarSystemState(
     spaces: ss.spaces.map((s) => s.id),
     adjacency: adjacencyRecord,
     probes,
+    movablePieces: [...movablePieces, ...extraMovablePieces],
     discs: ss.discs.map((disc) => ({
       discIndex: disc.index,
       angle: disc.currentRotation,

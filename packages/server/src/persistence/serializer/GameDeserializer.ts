@@ -452,6 +452,19 @@ export function deserializeGame(dto: IGameStateDto): Game {
             markerPlayerIds: [...a.oumuamuaTile.markerPlayerIds],
           }
         : null,
+      mascamitesSamplePools: a.mascamitesSamplePools
+        ? {
+            jupiter: [...a.mascamitesSamplePools.jupiter],
+            saturn: [...a.mascamitesSamplePools.saturn],
+          }
+        : undefined,
+      mascamitesPublicSamples: [...(a.mascamitesPublicSamples ?? [])],
+      mascamitesCapsules: a.mascamitesCapsules?.map((capsule) => ({
+        ...capsule,
+      })),
+      mascamitesDeliveredSamples: a.mascamitesDeliveredSamples?.map(
+        (sample) => ({ ...sample }),
+      ),
       discoverySlots: a.discoverySlots.map((slot) =>
         deserializeTraceSlotDto(slot),
       ),

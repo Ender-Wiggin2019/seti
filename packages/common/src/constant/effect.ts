@@ -17,6 +17,7 @@ import {
 import {
   EAlienIcon,
   EMiscIcon,
+  EPlanet,
   EResource,
   EScanAction,
   ESpecialAction,
@@ -252,10 +253,22 @@ const END_GAME = (
   size,
 });
 
+const MASCAMITES_SAMPLE_DELIVERY = (
+  destination: EPlanet,
+  width: 'full' | 'half' = 'full',
+): ICustomizedEffect => ({
+  effectType: EEffectType.CUSTOMIZED,
+  desc: `Deliver {sample} to ${formatPlanetName(destination)}`,
+  width,
+  id: uuidv4(),
+  mascamitesSampleDelivery: { destination },
+});
+
 export const m = {
   QUICK_MISSION,
   FULL_MISSION,
   END_GAME,
+  MASCAMITES_SAMPLE_DELIVERY,
 };
 
 export const DESC = (
@@ -287,3 +300,7 @@ export const OR = (...effects: IBaseEffect[]): IOrEffect => ({
   effectType: EEffectType.OR,
   effects,
 });
+
+function formatPlanetName(planet: EPlanet): string {
+  return planet.charAt(0).toUpperCase() + planet.slice(1);
+}

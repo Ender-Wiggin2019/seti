@@ -293,6 +293,54 @@ describe('GameLayout', () => {
       ).not.toBeInTheDocument();
     });
 
+    it('sends a generic movement target for Mascamites capsule movement', async () => {
+      const sendFreeAction = vi.fn();
+      mockContextValue = createMockContext({
+        sendFreeAction,
+        gameState: createMockGameState({
+          players: [
+            createMockPlayerState({
+              playerId: 'player-1',
+              probesInSpace: 0,
+              movementPoints: 1,
+            }),
+          ],
+          solarSystem: {
+            ...createMockGameState().solarSystem,
+            adjacency: {
+              'space-0': ['space-1'],
+            },
+            probes: [],
+            movablePieces: [
+              {
+                pieceId: 'capsule-1',
+                pieceType: 'mascamites-capsule',
+                playerId: 'player-1',
+                spaceId: 'space-0',
+                movementTarget: {
+                  type: 'mascamites-capsule',
+                  id: 'capsule-1',
+                },
+              },
+            ],
+          },
+        }),
+      });
+      await renderLayout();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Move Probe (1)' }));
+      fireEvent.click(screen.getByTestId('solar-space-space-1'));
+
+      expect(sendFreeAction).toHaveBeenCalledWith({
+        type: EFreeAction.MOVEMENT,
+        path: ['space-0', 'space-1'],
+        target: {
+          type: 'mascamites-capsule',
+          id: 'capsule-1',
+        },
+      });
+    });
+
     it('hides free action bar when not my turn', async () => {
       mockContextValue = createMockContext({ isMyTurn: false });
       await renderLayout();

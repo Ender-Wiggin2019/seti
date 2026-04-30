@@ -13,10 +13,18 @@ export interface IMainActionRequest {
   payload?: Record<string, unknown>;
 }
 
+export type TMovementTarget =
+  | { type: 'probe'; id: string }
+  | { type: 'mascamites-capsule'; id: string };
+
 export interface IMovementFreeActionRequest {
   type: EFreeAction.MOVEMENT;
   /** Ordered space IDs: [probeCurrentSpace, step1, step2, ...]. At least 2 elements. */
   path: string[];
+  /** Explicit board piece to move. Omitted keeps the legacy "probe at path[0]" behavior. */
+  target?: TMovementTarget;
+  /** @deprecated Use target: { type: 'mascamites-capsule', id } instead. */
+  capsuleId?: string;
 }
 
 export interface IConvertEnergyToMovementFreeActionRequest {
@@ -31,6 +39,13 @@ export interface IPlaceDataFreeActionRequest {
 
 export interface ICompleteMissionFreeActionRequest {
   type: EFreeAction.COMPLETE_MISSION;
+  cardId: string;
+  branchIndex?: number;
+}
+
+export interface IDeliverSampleFreeActionRequest {
+  type: EFreeAction.DELIVER_SAMPLE;
+  capsuleId: string;
   cardId: string;
   branchIndex?: number;
 }
@@ -69,6 +84,7 @@ export type IFreeActionRequest =
   | IConvertEnergyToMovementFreeActionRequest
   | IPlaceDataFreeActionRequest
   | ICompleteMissionFreeActionRequest
+  | IDeliverSampleFreeActionRequest
   | IUseCardCornerFreeActionRequest
   | IBuyCardFreeActionRequest
   | IExchangeResourcesFreeActionRequest

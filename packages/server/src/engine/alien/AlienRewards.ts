@@ -24,6 +24,7 @@ export function executeSimpleSlotReward(
       player.resources.gain({ data: reward.amount });
       return true;
     case 'CARD':
+    case 'CARD_ANY':
       for (let i = 0; i < reward.amount; i += 1) {
         const drawn = game.mainDeck.drawWithReshuffle(game.random);
         if (drawn === undefined) break;

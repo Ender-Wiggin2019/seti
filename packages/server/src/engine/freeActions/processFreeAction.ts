@@ -8,6 +8,7 @@ import type { IPlayer } from '../player/IPlayer.js';
 import { BuyCardFreeAction } from './BuyCard.js';
 import { CompleteMissionFreeAction } from './CompleteMission.js';
 import { ConvertEnergyToMovementFreeAction } from './ConvertEnergyToMovement.js';
+import { DeliverSampleFreeAction } from './DeliverSample.js';
 import { ExchangeResourcesFreeAction } from './ExchangeResources.js';
 import { FreeActionCornerFreeAction } from './FreeActionCorner.js';
 import { MovementFreeAction } from './Movement.js';
@@ -20,8 +21,20 @@ export function processFreeAction(
   action: IFreeActionRequest,
 ): IPlayerInput | undefined {
   switch (action.type) {
-    case EFreeAction.MOVEMENT:
-      return MovementFreeAction.execute(player, game, action.path).pendingInput;
+    case EFreeAction.MOVEMENT: {
+      const target =
+        action.target ??
+        (action.capsuleId !== undefined
+          ? ({ type: 'mascamites-capsule', id: action.capsuleId } as const)
+          : undefined);
+      if (target === undefined) {
+        return MovementFreeAction.execute(player, game, action.path)
+          .pendingInput;
+      }
+      return MovementFreeAction.execute(player, game, action.path, {
+        target,
+      }).pendingInput;
+    }
 
     case EFreeAction.CONVERT_ENERGY_TO_MOVEMENT:
       ConvertEnergyToMovementFreeAction.execute(player, game, action.amount);
@@ -35,6 +48,15 @@ export function processFreeAction(
       return CompleteMissionFreeAction.execute(
         player,
         game,
+        action.cardId,
+        action.branchIndex,
+      );
+
+    case EFreeAction.DELIVER_SAMPLE:
+      return DeliverSampleFreeAction.execute(
+        player,
+        game,
+        action.capsuleId,
         action.cardId,
         action.branchIndex,
       );

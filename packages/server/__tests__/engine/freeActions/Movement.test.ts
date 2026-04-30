@@ -1,4 +1,5 @@
 import {
+  EAlienType,
   EFreeAction,
   EMainAction,
   EPlanet,
@@ -86,6 +87,30 @@ function createMockGame(
     },
     ...overrides,
   } as unknown as IGame;
+}
+
+function createMockMascamitesCapsuleGame(
+  ss: SolarSystem,
+  capsule: {
+    capsuleId: string;
+    ownerId: string;
+    sampleTokenId: string;
+    sourcePlanet: EPlanet.JUPITER | EPlanet.SATURN;
+    spaceId: string;
+    missionCardId?: string;
+  },
+  overrides: Record<string, unknown> = {},
+): IGame {
+  return createMockGame(ss, {
+    alienState: {
+      getBoardByType: vi.fn((alienType: EAlienType) =>
+        alienType === EAlienType.MASCAMITES
+          ? { capsules: [capsule] }
+          : undefined,
+      ),
+    },
+    ...overrides,
+  });
 }
 
 const TEST_PLAYERS = [
@@ -193,6 +218,7 @@ describe('MovementFreeAction', () => {
       const ss = createLinearSolarSystem();
       const player = createTestPlayer();
       player.gainMove(2);
+      ss.placeProbe(player.id, 's0');
       expect(MovementFreeAction.canExecute(player, createMockGame(ss))).toBe(
         true,
       );
@@ -201,6 +227,7 @@ describe('MovementFreeAction', () => {
     it('returns true when probe in space and has energy (convertible)', () => {
       const ss = createLinearSolarSystem();
       const player = createTestPlayer();
+      ss.placeProbe(player.id, 's0');
       expect(player.resources.energy).toBeGreaterThan(0);
       expect(MovementFreeAction.canExecute(player, createMockGame(ss))).toBe(
         true,
@@ -214,6 +241,51 @@ describe('MovementFreeAction', () => {
       expect(MovementFreeAction.canExecute(player, createMockGame(ss))).toBe(
         false,
       );
+    });
+
+    it('returns true with a Mascamites capsule even when no probes are in space', () => {
+      const ss = createLinearSolarSystem();
+      const player = createTestPlayer({ probesInSpace: 0 });
+      player.gainMove(5);
+      const game = createMockMascamitesCapsuleGame(ss, {
+        capsuleId: 'capsule-1',
+        ownerId: player.id,
+        sampleTokenId: 'mascamites-credit-2',
+        sourcePlanet: EPlanet.JUPITER,
+        spaceId: 's0',
+      });
+
+      expect(MovementFreeAction.canExecute(player, game)).toBe(true);
+      expect(
+        MovementFreeAction.canExecute(player, game, {
+          target: { type: 'mascamites-capsule', id: 'capsule-1' },
+        }),
+      ).toBe(true);
+    });
+
+    it('checks an explicit probe target by probe id and owner', () => {
+      const ss = createLinearSolarSystem();
+      const player = createTestPlayer();
+      player.gainMove(2);
+      const ownedProbe = ss.placeProbe(player.id, 's0');
+      const otherProbe = ss.placeProbe('p2', 's1');
+      const game = createMockGame(ss);
+
+      expect(
+        MovementFreeAction.canExecute(player, game, {
+          target: { type: 'probe', id: ownedProbe.id },
+        }),
+      ).toBe(true);
+      expect(
+        MovementFreeAction.canExecute(player, game, {
+          target: { type: 'probe', id: otherProbe.id },
+        }),
+      ).toBe(false);
+      expect(
+        MovementFreeAction.canExecute(player, game, {
+          target: { type: 'probe', id: 'missing-probe' },
+        }),
+      ).toBe(false);
     });
 
     it('returns false when solar system is null', () => {
@@ -309,6 +381,94 @@ describe('MovementFreeAction', () => {
       expect(recordEvent).toHaveBeenCalledWith({
         type: EMissionEventType.PROBE_VISITED_ASTEROIDS,
       });
+    });
+
+    it('moves a Mascamites capsule with publicity, asteroid leave cost, and visit mission events', () => {
+      const ss = createLinearSolarSystem();
+      ss.spaces.find((space) => space.id === 's3')!.elements = [
+        {
+          type: ESolarSystemElementType.PLANET,
+          amount: 1,
+          planet: EPlanet.MARS,
+        },
+      ];
+      const capsule: Parameters<typeof createMockMascamitesCapsuleGame>[1] = {
+        capsuleId: 'capsule-1',
+        ownerId: 'p1',
+        sampleTokenId: 'mascamites-credit-2',
+        sourcePlanet: EPlanet.SATURN,
+        spaceId: 's0',
+      };
+      const recordEvent = vi.fn();
+      const game = createMockMascamitesCapsuleGame(ss, capsule, {
+        missionTracker: { recordEvent },
+      });
+      const player = createTestPlayer({ probesInSpace: 0 });
+      player.gainMove(4);
+      const publicityBefore = player.resources.publicity;
+
+      const result = MovementFreeAction.execute(
+        player,
+        game,
+        ['s0', 's1', 's2', 's3'],
+        { target: { type: 'mascamites-capsule', id: capsule.capsuleId } },
+      );
+
+      expect(result.capsuleId).toBe(capsule.capsuleId);
+      expect(result.totalCost).toBe(4);
+      expect(result.publicityGained).toBe(1);
+      expect(player.getMoveStash()).toBe(0);
+      expect(player.resources.publicity).toBe(publicityBefore + 1);
+      expect(capsule.spaceId).toBe('s3');
+      expect(ss.getProbesAt('s3')).toHaveLength(0);
+      expect(recordEvent).toHaveBeenCalledWith({
+        type: EMissionEventType.PROBE_VISITED_ASTEROIDS,
+      });
+      expect(recordEvent).toHaveBeenCalledWith({
+        type: EMissionEventType.PROBE_VISITED_PLANET,
+        planet: EPlanet.MARS,
+      });
+    });
+
+    it('moves the explicit probe target instead of another probe at the same space', () => {
+      const ss = createLinearSolarSystem();
+      const player = createTestPlayer({
+        probesInSpace: 2,
+        probeSpaceLimit: 2,
+      });
+      player.gainMove(2);
+      const firstProbe = ss.placeProbe(player.id, 's0');
+      const targetProbe = ss.placeProbe(player.id, 's0');
+
+      const result = MovementFreeAction.execute(
+        player,
+        createMockGame(ss),
+        ['s0', 's1'],
+        { target: { type: 'probe', id: targetProbe.id } },
+      );
+
+      expect(result.probeId).toBe(targetProbe.id);
+      expect(ss.getProbesAt('s0').map((probe) => probe.id)).toEqual([
+        firstProbe.id,
+      ]);
+      expect(ss.getProbesAt('s1').map((probe) => probe.id)).toContain(
+        targetProbe.id,
+      );
+    });
+
+    it('throws when an explicit probe target is not at the path start', () => {
+      const ss = createLinearSolarSystem();
+      const player = createTestPlayer();
+      player.gainMove(2);
+      const probe = ss.placeProbe(player.id, 's0');
+
+      expect(() =>
+        MovementFreeAction.execute(player, createMockGame(ss), ['s1', 's2'], {
+          target: { type: 'probe', id: probe.id },
+        }),
+      ).toThrowError(
+        expect.objectContaining({ code: EErrorCode.INVALID_ACTION }),
+      );
     });
 
     it('costs extra to leave asteroid space', () => {

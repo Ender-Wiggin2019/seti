@@ -62,8 +62,6 @@ export function SectorGrid({
           .filter((sectorId) => emphasizedSectorIdOptions.has(sectorId));
         const clickable =
           selectableColors.length > 0 || selectableSectorIds.length > 0;
-        const firstSelectable = selectableColors[0];
-        const firstSelectableSectorId = selectableSectorIds[0];
 
         return (
           <SectorView
@@ -77,24 +75,6 @@ export function SectorGrid({
             highlighted={clickable}
             onSelectSector={onSelectSector}
             onSelectSectorId={onSelectSectorId}
-            onClick={() => {
-              if (
-                selectableSectorIds.length === 1 &&
-                firstSelectableSectorId != null &&
-                onSelectSectorId
-              ) {
-                onSelectSectorId(firstSelectableSectorId);
-                return;
-              }
-
-              if (
-                selectableSectorIds.length === 0 &&
-                selectableColors.length === 1 &&
-                firstSelectable != null
-              ) {
-                onSelectSector(firstSelectable);
-              }
-            }}
           />
         );
       })}

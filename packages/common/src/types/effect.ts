@@ -6,7 +6,7 @@
  * @Description:
  */
 
-import { IIconItem, TIcon, TSize } from '@seti/common/types/element';
+import { EPlanet, IIconItem, TIcon, TSize } from '@seti/common/types/element';
 
 // effect 是逻辑层，icon是渲染层。原则上 effect 包含所有非渲染相关信息，等价于 model
 export enum EEffectType {
@@ -53,6 +53,9 @@ export interface ICustomizedEffect {
   size?: TSize; // 一般不会赋值，除非是 desc
   width?: 'half' | 'full';
   id: string; // use for unique desc identifier
+  mascamitesSampleDelivery?: {
+    destination: EPlanet;
+  };
 }
 
 export interface IMissionEffect {

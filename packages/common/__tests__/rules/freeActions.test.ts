@@ -3,6 +3,7 @@ import {
   canBuyCard,
   canCompleteMission,
   canConvertEnergyToMovement,
+  canDeliverMascamitesSample,
   canExchangeResources,
   canMoveProbe,
   canPlaceData,
@@ -12,7 +13,13 @@ import {
   validateMovementPath,
 } from '@/rules/freeActions';
 import { EResource } from '@/types/element';
-import { EFreeAction, EPhase } from '@/types/protocol/enums';
+import { EEffectType } from '@/types/effect';
+import {
+  EAlienType,
+  EFreeAction,
+  EPhase,
+  EPlanet,
+} from '@/types/protocol/enums';
 import type {
   IPublicComputerColumnState,
   IPublicGameState,
@@ -233,6 +240,73 @@ describe('free action rules', () => {
       expect(canMoveProbe(player, createGameState())).toBe(false);
     });
 
+    it('returns true when no probes are in space but the player has a Mascamites capsule', () => {
+      const player = createPlayer({
+        probesInSpace: 0,
+        movementPoints: 5,
+      });
+      const gameState = createGameState({
+        solarSystem: {
+          ...createSolarSystem(),
+          probes: [],
+          movablePieces: [
+            {
+              pieceId: 'capsule-1',
+              pieceType: 'mascamites-capsule',
+              playerId: player.playerId,
+              spaceId: 's0',
+              movementTarget: { type: 'mascamites-capsule', id: 'capsule-1' },
+            },
+          ],
+        },
+      });
+
+      expect(canMoveProbe(player, gameState)).toBe(true);
+    });
+
+    it('does not scan the alien board for Mascamites capsules when checking movement', () => {
+      const player = createPlayer({
+        probesInSpace: 0,
+        movementPoints: 5,
+      });
+      const gameState = createGameState({
+        solarSystem: {
+          ...createSolarSystem(),
+          probes: [],
+        },
+        aliens: [
+          {
+            alienIndex: 0,
+            alienType: EAlienType.MASCAMITES,
+            discovered: true,
+            discovery: { zones: [], overflowZones: [] },
+            cardZone: null,
+            board: {
+              type: 'mascamites',
+              samplePools: {
+                [EPlanet.JUPITER]: [],
+                [EPlanet.SATURN]: [],
+              },
+              publicSamples: [],
+              capsules: [
+                {
+                  capsuleId: 'capsule-1',
+                  ownerId: player.playerId,
+                  sampleTokenId: 'mascamites-credit-2',
+                  sourcePlanet: EPlanet.JUPITER,
+                  spaceId: 's0',
+                },
+              ],
+              deliveredSamples: [],
+              traceSlots: [],
+            },
+          },
+        ],
+      });
+
+      expect(canMoveProbe(player, gameState)).toBe(false);
+    });
+
     it('returns false when no movement and no energy', () => {
       const player = createPlayer({
         probesInSpace: 1,
@@ -326,6 +400,139 @@ describe('free action rules', () => {
   describe('canCompleteMission', () => {
     it('always returns false (TODO)', () => {
       expect(canCompleteMission(createPlayer())).toBe(false);
+    });
+  });
+
+  describe('canDeliverMascamitesSample', () => {
+    it('returns true when an owned capsule is at a played mission destination', () => {
+      const player = createPlayer({
+        playedMissions: [
+          {
+            id: 'ET.1',
+            effects: [
+              {
+                effectType: EEffectType.MISSION_QUICK,
+                missions: [
+                  {
+                    req: [
+                      {
+                        effectType: EEffectType.CUSTOMIZED,
+                        id: 'deliver-sample',
+                        desc: 'Deliver {sample} to Earth',
+                        mascamitesSampleDelivery: {
+                          destination: EPlanet.EARTH,
+                        },
+                      },
+                    ],
+                    reward: [],
+                  },
+                ],
+              },
+            ],
+          } as never,
+        ],
+      });
+      const gameState = createGameState({
+        solarSystem: {
+          ...createSolarSystem(),
+          probes: [],
+          planetSpaceIds: { [EPlanet.EARTH]: 's0' },
+        },
+        aliens: [
+          {
+            alienIndex: 0,
+            alienType: EAlienType.MASCAMITES,
+            discovered: true,
+            discovery: { zones: [], overflowZones: [] },
+            cardZone: null,
+            board: {
+              type: 'mascamites',
+              samplePools: {
+                [EPlanet.JUPITER]: [],
+                [EPlanet.SATURN]: [],
+              },
+              publicSamples: [],
+              capsules: [
+                {
+                  capsuleId: 'capsule-1',
+                  ownerId: player.playerId,
+                  sampleTokenId: 'mascamites-credit-2',
+                  sourcePlanet: EPlanet.JUPITER,
+                  spaceId: 's0',
+                },
+              ],
+              deliveredSamples: [],
+              traceSlots: [],
+            },
+          },
+        ],
+      });
+
+      expect(canDeliverMascamitesSample(player, gameState)).toBe(true);
+    });
+
+    it('returns false when the mission only has sample delivery text without structured destination data', () => {
+      const player = createPlayer({
+        playedMissions: [
+          {
+            id: 'ET.legacy',
+            effects: [
+              {
+                effectType: EEffectType.MISSION_QUICK,
+                missions: [
+                  {
+                    req: [
+                      {
+                        effectType: EEffectType.CUSTOMIZED,
+                        id: 'deliver-sample',
+                        desc: 'Deliver {sample} to Earth',
+                      },
+                    ],
+                    reward: [],
+                  },
+                ],
+              },
+            ],
+          } as never,
+        ],
+      });
+      const gameState = createGameState({
+        solarSystem: {
+          ...createSolarSystem(),
+          probes: [],
+          planetSpaceIds: { [EPlanet.EARTH]: 's0' },
+        },
+        aliens: [
+          {
+            alienIndex: 0,
+            alienType: EAlienType.MASCAMITES,
+            discovered: true,
+            discovery: { zones: [], overflowZones: [] },
+            cardZone: null,
+            board: {
+              type: 'mascamites',
+              samplePools: {
+                [EPlanet.JUPITER]: [],
+                [EPlanet.SATURN]: [],
+              },
+              publicSamples: [],
+              capsules: [
+                {
+                  capsuleId: 'capsule-1',
+                  ownerId: player.playerId,
+                  sampleTokenId: 'mascamites-credit-2',
+                  sourcePlanet: EPlanet.JUPITER,
+                  spaceId: 's0',
+                },
+              ],
+              deliveredSamples: [],
+              traceSlots: [],
+            },
+          },
+        ],
+      });
+
+      expect(canDeliverMascamitesSample(player, gameState)).toBe(false);
     });
   });
 
@@ -487,6 +694,76 @@ describe('free action rules', () => {
         createGameState(),
       );
       expect(actions).not.toContain(EFreeAction.COMPLETE_MISSION);
+    });
+
+    it('includes sample delivery when an owned Mascamites capsule is ready', () => {
+      const player = createPlayer({
+        playedMissions: [
+          {
+            id: 'ET.1',
+            effects: [
+              {
+                effectType: EEffectType.MISSION_QUICK,
+                missions: [
+                  {
+                    req: [
+                      {
+                        effectType: EEffectType.CUSTOMIZED,
+                        id: 'deliver-sample',
+                        desc: 'Deliver {sample} to Earth',
+                        mascamitesSampleDelivery: {
+                          destination: EPlanet.EARTH,
+                        },
+                      },
+                    ],
+                    reward: [],
+                  },
+                ],
+              },
+            ],
+          } as never,
+        ],
+      });
+      const actions = getAvailableFreeActions(
+        player,
+        createGameState({
+          solarSystem: {
+            ...createSolarSystem(),
+            probes: [],
+            planetSpaceIds: { [EPlanet.EARTH]: 's0' },
+          },
+          aliens: [
+            {
+              alienIndex: 0,
+              alienType: EAlienType.MASCAMITES,
+              discovered: true,
+              discovery: { zones: [], overflowZones: [] },
+              cardZone: null,
+              board: {
+                type: 'mascamites',
+                samplePools: {
+                  [EPlanet.JUPITER]: [],
+                  [EPlanet.SATURN]: [],
+                },
+                publicSamples: [],
+                capsules: [
+                  {
+                    capsuleId: 'capsule-1',
+                    ownerId: player.playerId,
+                    sampleTokenId: 'mascamites-credit-2',
+                    sourcePlanet: EPlanet.JUPITER,
+                    spaceId: 's0',
+                  },
+                ],
+                deliveredSamples: [],
+                traceSlots: [],
+              },
+            },
+          ],
+        }),
+      );
+
+      expect(actions).toContain(EFreeAction.DELIVER_SAMPLE);
     });
 
     it('includes spend signal token only during scan with card row cards', () => {

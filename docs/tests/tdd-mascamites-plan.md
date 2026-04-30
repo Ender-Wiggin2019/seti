@@ -8,15 +8,15 @@
 
 - 规则来源（优先级）：`docs/arch/rule-faq.md` > Alien PDF > 现有代码。
 - 关键语义：
-  - setup：Jupiter 3 个样本、Saturn 3 个样本，剩余 1 个放到物种板公开位。
+  - setup：Jupiter 3 个样本、Saturn 3 个样本，剩余 1 个放到物种板公开位。token奖励各不相同，分别是 (2 credit, 2 energy, 2 draw card, 3 publicity, 2 data, 3vp+1 any card, 7 vp)
   - 仅当卡牌效果允许时才能取样；可查看该星球所有样本并选 1，其他放回。
   - 就算该星球样本已空，相关行动/卡牌本身仍可执行（只是拿不到样本）。
   - 玩家在样本上叠标记形成 capsule；有多 capsule 合法。
   - 任何“可移动 probe”的机会都可改为移动 capsule。
   - capsule 经过声望图标会得声望，离开小行星格有额外移动代价。
   - capsule 计作 probe 供部分卡/科技引用，但不能 orbit/land，且不计 probe limit。
-  - 到达任务目的地后可自由行动交付：移除 capsule，翻开 token，拿奖励，卡牌作为已完成任务保留。
-  - 被交付的样本 token 放到 Mascamites 板扩展蓝位，之后任何玩家可按普通蓝位标记并拿 token 奖励。
+  - 到达任务目的地后可自由行动交付(和正常任务完成的流程一样)：移除 capsule，翻开 token，拿奖励，卡牌作为已完成任务保留。
+  - 被交付的样本 token 放到 Mascamites 板扩展blue trace位，之后任何玩家可按普通蓝位标记并拿 token 奖励。
 
 ---
 

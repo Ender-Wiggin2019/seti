@@ -25,6 +25,48 @@ describe('processFreeAction', () => {
     expect(spy).toHaveBeenCalledOnce();
   });
 
+  it('passes movement target through movement action', () => {
+    const spy = vi
+      .spyOn(MovementFreeAction, 'execute')
+      .mockReturnValue({} as IMovementResult);
+
+    processFreeAction({} as never, {} as never, {
+      type: EFreeAction.MOVEMENT,
+      path: ['a', 'b'],
+      target: { type: 'mascamites-capsule', id: 'capsule-1' },
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      ['a', 'b'],
+      {
+        target: { type: 'mascamites-capsule', id: 'capsule-1' },
+      },
+    );
+  });
+
+  it('normalizes deprecated movement capsuleId into a movement target', () => {
+    const spy = vi
+      .spyOn(MovementFreeAction, 'execute')
+      .mockReturnValue({} as IMovementResult);
+
+    processFreeAction({} as never, {} as never, {
+      type: EFreeAction.MOVEMENT,
+      path: ['a', 'b'],
+      capsuleId: 'capsule-1',
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      ['a', 'b'],
+      {
+        target: { type: 'mascamites-capsule', id: 'capsule-1' },
+      },
+    );
+  });
+
   it('dispatches buy card action', () => {
     const spy = vi
       .spyOn(BuyCardFreeAction, 'execute')

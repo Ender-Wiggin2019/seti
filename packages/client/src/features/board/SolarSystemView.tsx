@@ -25,6 +25,8 @@ import type {
   IPublicSectorSignal,
   IPublicSolarSystem,
   IPublicSolarSystemAlienToken,
+  IPublicSolarSystemMovablePiece,
+  TMovementTarget,
 } from '@/types/re-exports';
 import { EAlienType, EPlayerInputType, ETrace } from '@/types/re-exports';
 import { ProbeToken } from './ProbeToken';
@@ -77,7 +79,7 @@ interface ISolarSystemViewProps {
   myPlayerId: string;
   movementPoints?: number;
   moveModeActive?: boolean;
-  onMoveProbe: (path: string[]) => void;
+  onMoveProbe: (path: string[], target?: TMovementTarget) => void;
   onRespondInput: (response: IInputResponse) => void;
   showSpaceConfigDebug?: boolean;
   probeInsetPxByRing?: TProbeInsetPxByRing;
@@ -97,9 +99,12 @@ interface ISpacePoint {
   rotationDeg: number;
 }
 
-interface IProbeRenderItem {
+interface IBoardPieceRenderItem {
   key: string;
+  kind: TMovementTarget['type'];
   playerId: string;
+  spaceId: string;
+  movementTarget: TMovementTarget;
   xPercent: number;
   yPercent: number;
   offsetX: number;
@@ -284,6 +289,42 @@ function buildOumuamuaTileSignals(
   return [...markerSignals, ...dataSignals];
 }
 
+function buildMovablePieces(
+  solarSystem: IPublicSolarSystem,
+): IPublicSolarSystemMovablePiece[] {
+  if (solarSystem.movablePieces) {
+    return solarSystem.movablePieces;
+  }
+
+  const playerOccurrence: Record<string, number> = {};
+  return solarSystem.probes.map((probe) => {
+    const occurrence = playerOccurrence[probe.playerId] ?? 0;
+    playerOccurrence[probe.playerId] = occurrence + 1;
+    const pieceId = probe.probeId ?? `${probe.playerId}-${occurrence}`;
+    return {
+      pieceId,
+      pieceType: 'probe',
+      playerId: probe.playerId,
+      spaceId: probe.spaceId,
+      movementTarget: { type: 'probe', id: pieceId },
+    };
+  });
+}
+
+function getPieceTransitionDelay(
+  piece: IPublicSolarSystemMovablePiece,
+  solarSystem: IPublicSolarSystem,
+): number {
+  if (piece.pieceType !== 'probe') {
+    return 0;
+  }
+
+  return (
+    solarSystem.probes.find((probe) => probe.probeId === piece.pieceId)
+      ?.transitionDelayMs ?? 0
+  );
+}
+
 function textModeCellPosition(
   ringIndex: 1 | 2 | 3 | 4,
   visualIndexInRing: number,
@@ -315,7 +356,10 @@ export function SolarSystemView({
   allowMoveAnyProbe = false,
   oumuamuaTile = null,
 }: ISolarSystemViewProps): React.JSX.Element {
-  const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(null);
+  const [selectedMoveTarget, setSelectedMoveTarget] = useState<{
+    spaceId: string;
+    target?: TMovementTarget;
+  } | null>(null);
   const textMode = useTextMode();
 
   const spaceRadiiPercent = useMemo(() => {
@@ -400,11 +444,6 @@ export function SolarSystemView({
         }
       }
 
-      if (textMode) {
-        cellInSector = 0;
-        cellsPerSector = 1;
-      }
-
       const discAngle = isStateBackedPosition ? 0 : discAngleByRing[ringIndex];
       const pos = spacePosition(
         ringIndex,
@@ -429,7 +468,6 @@ export function SolarSystemView({
     solarSystem.spaceStates,
     spaceRadiiPercent,
     discAngleByRing,
-    textMode,
   ]);
 
   const debugLabelsBySpaceId = useMemo(() => {
@@ -506,61 +544,78 @@ export function SolarSystemView({
     return items;
   }, [textMode, setupConfig.wheels, discAngleByRing, spaceRadiiPercent]);
 
-  const probeView = useMemo(() => {
+  const boardPieceView = useMemo(() => {
     const bySpacePlayers: Record<string, string[]> = {};
     const spacePointById = new Map(
       spacePoints.map((point) => [point.spaceId, point]),
     );
-    const playerOccurrence: Record<string, number> = {};
     const grouped: Record<
       string,
-      Array<{ key: string; playerId: string; transitionDelayMs: number }>
+      Array<{
+        key: string;
+        kind: TMovementTarget['type'];
+        playerId: string;
+        movementTarget: TMovementTarget;
+        transitionDelayMs: number;
+      }>
     > = {};
 
-    for (const probe of solarSystem.probes) {
-      if (!bySpacePlayers[probe.spaceId]) {
-        bySpacePlayers[probe.spaceId] = [];
+    const movablePieces = buildMovablePieces(solarSystem);
+    for (const piece of movablePieces) {
+      if (!bySpacePlayers[piece.spaceId]) {
+        bySpacePlayers[piece.spaceId] = [];
       }
-      bySpacePlayers[probe.spaceId].push(probe.playerId);
+      bySpacePlayers[piece.spaceId].push(piece.playerId);
 
-      const occurrence = playerOccurrence[probe.playerId] ?? 0;
-      playerOccurrence[probe.playerId] = occurrence + 1;
-      const key = probe.probeId ?? `${probe.playerId}-${occurrence}`;
-
-      if (!grouped[probe.spaceId]) {
-        grouped[probe.spaceId] = [];
+      if (!grouped[piece.spaceId]) {
+        grouped[piece.spaceId] = [];
       }
-      grouped[probe.spaceId].push({
-        key,
-        playerId: probe.playerId,
-        transitionDelayMs: probe.transitionDelayMs ?? 0,
+      grouped[piece.spaceId].push({
+        key: piece.pieceId,
+        kind: piece.pieceType,
+        playerId: piece.playerId,
+        movementTarget: piece.movementTarget,
+        transitionDelayMs: getPieceTransitionDelay(piece, solarSystem),
       });
     }
 
-    const renderItems: IProbeRenderItem[] = [];
-    for (const [spaceId, probes] of Object.entries(grouped)) {
+    const renderItems: IBoardPieceRenderItem[] = [];
+    const targetsBySpace: Record<
+      string,
+      Array<{ playerId: string; movementTarget: TMovementTarget }>
+    > = {};
+    for (const [spaceId, pieces] of Object.entries(grouped)) {
       const point = spacePointById.get(spaceId);
       if (!point) {
         continue;
       }
 
-      for (let index = 0; index < probes.length; index += 1) {
-        const probe = probes[index];
-        const offset = tokenStackOffset(index, probes.length);
+      for (let index = 0; index < pieces.length; index += 1) {
+        const piece = pieces[index];
+        const offset = tokenStackOffset(index, pieces.length);
         renderItems.push({
-          key: probe.key,
-          playerId: probe.playerId,
+          key: piece.key,
+          kind: piece.kind,
+          playerId: piece.playerId,
+          movementTarget: piece.movementTarget,
+          spaceId,
           xPercent: point.xPercent,
           yPercent: point.yPercent,
           offsetX: offset.x,
           offsetY: offset.y,
-          transitionDelayMs: probe.transitionDelayMs,
+          transitionDelayMs: piece.transitionDelayMs,
         });
+        const targets = targetsBySpace[spaceId] ?? [];
+        targets.push({
+          playerId: piece.playerId,
+          movementTarget: piece.movementTarget,
+        });
+        targetsBySpace[spaceId] = targets;
       }
     }
 
-    return { bySpacePlayers, renderItems };
-  }, [solarSystem.probes, spacePoints]);
+    return { bySpacePlayers, renderItems, targetsBySpace };
+  }, [solarSystem, spacePoints]);
 
   const solarAlienTokenView = useMemo<ISolarAlienTokenRenderItem[]>(() => {
     const groupedBySector = new Map<number, IPublicSolarSystemAlienToken[]>();
@@ -617,30 +672,38 @@ export function SolarSystemView({
   }, [oumuamuaTile, spacePoints]);
 
   const reachablePathBySpaceId = useMemo(() => {
-    if (!selectedSpaceId || movementPoints <= 0) {
+    if (!selectedMoveTarget || movementPoints <= 0) {
       return new Map<string, string[]>();
     }
     return new Map(
-      getReachableSpaces(solarSystem, selectedSpaceId, movementPoints).map(
-        (entry) => [entry.spaceId, entry.path] as const,
-      ),
+      getReachableSpaces(
+        solarSystem,
+        selectedMoveTarget.spaceId,
+        movementPoints,
+      ).map((entry) => [entry.spaceId, entry.path] as const),
     );
-  }, [selectedSpaceId, movementPoints, solarSystem]);
+  }, [selectedMoveTarget, movementPoints, solarSystem]);
 
   const activeMovePathBySpaceId = useMemo(() => {
     if (!moveModeActive || movementPoints <= 0) {
-      return new Map<string, { movementCost: number; path: string[] }>();
+      return new Map<
+        string,
+        { movementCost: number; path: string[]; target: TMovementTarget }
+      >();
     }
 
-    const paths = new Map<string, { movementCost: number; path: string[] }>();
-    for (const probe of solarSystem.probes) {
-      if (!allowMoveAnyProbe && probe.playerId !== myPlayerId) {
+    const paths = new Map<
+      string,
+      { movementCost: number; path: string[]; target: TMovementTarget }
+    >();
+    for (const piece of boardPieceView.renderItems) {
+      if (!allowMoveAnyProbe && piece.playerId !== myPlayerId) {
         continue;
       }
 
       for (const reachableSpace of getReachableSpaces(
         solarSystem,
-        probe.spaceId,
+        piece.spaceId,
         movementPoints,
       )) {
         const known = paths.get(reachableSpace.spaceId);
@@ -650,6 +713,7 @@ export function SolarSystemView({
         paths.set(reachableSpace.spaceId, {
           movementCost: reachableSpace.movementCost,
           path: reachableSpace.path,
+          target: piece.movementTarget,
         });
       }
     }
@@ -657,6 +721,7 @@ export function SolarSystemView({
     return paths;
   }, [
     allowMoveAnyProbe,
+    boardPieceView.renderItems,
     moveModeActive,
     movementPoints,
     myPlayerId,
@@ -664,24 +729,30 @@ export function SolarSystemView({
   ]);
 
   const visibleReachablePathBySpaceId = useMemo(() => {
-    if (selectedSpaceId) {
-      return reachablePathBySpaceId;
+    if (selectedMoveTarget) {
+      return new Map(
+        [...reachablePathBySpaceId.entries()].map(
+          ([spaceId, path]) =>
+            [spaceId, { path, target: selectedMoveTarget.target }] as const,
+        ),
+      );
     }
 
     if (!moveModeActive) {
-      return new Map<string, string[]>();
+      return new Map<string, { path: string[]; target?: TMovementTarget }>();
     }
 
     return new Map(
       [...activeMovePathBySpaceId.entries()].map(
-        ([spaceId, entry]) => [spaceId, entry.path] as const,
+        ([spaceId, entry]) =>
+          [spaceId, { path: entry.path, target: entry.target }] as const,
       ),
     );
   }, [
     activeMovePathBySpaceId,
     moveModeActive,
     reachablePathBySpaceId,
-    selectedSpaceId,
+    selectedMoveTarget,
   ]);
 
   const reachable = useMemo(
@@ -689,30 +760,51 @@ export function SolarSystemView({
     [visibleReachablePathBySpaceId],
   );
 
+  function submitMovePath(path: string[], target?: TMovementTarget): void {
+    onMoveProbe(path, target);
+  }
+
   function handleSpaceClick(spaceId: string): void {
     const activeMovePath = visibleReachablePathBySpaceId.get(spaceId);
     if (activeMovePath) {
-      onMoveProbe(activeMovePath);
-      setSelectedSpaceId(moveModeActive ? null : spaceId);
+      submitMovePath(activeMovePath.path, activeMovePath.target);
+      setSelectedMoveTarget(moveModeActive ? null : { spaceId });
       return;
     }
 
-    const hasMyProbe = (probeView.bySpacePlayers[spaceId] ?? []).includes(
+    const moveTargets = boardPieceView.targetsBySpace[spaceId] ?? [];
+    const ownTarget = moveTargets.find(
+      (target) => target.playerId === myPlayerId,
+    );
+    const anyTarget = moveTargets[0];
+    const selectableTarget =
+      ownTarget ?? (allowMoveAnyProbe ? anyTarget : undefined);
+    const hasMyProbe = (boardPieceView.bySpacePlayers[spaceId] ?? []).includes(
       myPlayerId,
     );
-    const hasAnyProbe = (probeView.bySpacePlayers[spaceId] ?? []).length > 0;
-    if (hasMyProbe || (allowMoveAnyProbe && hasAnyProbe)) {
-      setSelectedSpaceId((prev) => (prev === spaceId ? null : spaceId));
+    const hasAnyProbe =
+      (boardPieceView.bySpacePlayers[spaceId] ?? []).length > 0;
+    if (
+      selectableTarget &&
+      (hasMyProbe || (allowMoveAnyProbe && hasAnyProbe))
+    ) {
+      setSelectedMoveTarget((prev) =>
+        prev?.spaceId === spaceId &&
+        prev.target?.type === selectableTarget.movementTarget.type &&
+        prev.target.id === selectableTarget.movementTarget.id
+          ? null
+          : { spaceId, target: selectableTarget.movementTarget },
+      );
       return;
     }
 
-    if (selectedSpaceId) {
+    if (selectedMoveTarget) {
       const path = visibleReachablePathBySpaceId.get(spaceId);
       if (!path) {
         return;
       }
-      onMoveProbe(path);
-      setSelectedSpaceId(moveModeActive ? null : spaceId);
+      submitMovePath(path.path, path.target);
+      setSelectedMoveTarget(moveModeActive ? null : { spaceId });
     }
   }
 
@@ -804,11 +896,11 @@ export function SolarSystemView({
 
         {spacePoints.map((space) => {
           const probeCount =
-            probeView.bySpacePlayers[space.spaceId]?.length ?? 0;
+            boardPieceView.bySpacePlayers[space.spaceId]?.length ?? 0;
           const hasMyProbe = (
-            probeView.bySpacePlayers[space.spaceId] ?? []
+            boardPieceView.bySpacePlayers[space.spaceId] ?? []
           ).includes(myPlayerId);
-          const isSelected = selectedSpaceId === space.spaceId;
+          const isSelected = selectedMoveTarget?.spaceId === space.spaceId;
           const isReachable = reachable.has(space.spaceId);
 
           return (
@@ -822,7 +914,7 @@ export function SolarSystemView({
                 top: `${space.yPercent}%`,
               }}
               onClick={() => handleSpaceClick(space.spaceId)}
-              title={`${space.spaceId} - probes: ${probeCount}`}
+              title={`${space.spaceId} - pieces: ${probeCount}`}
               aria-label={`Space ${space.spaceId}`}
             >
               {(isSelected || isReachable || hasMyProbe) && (
@@ -910,22 +1002,35 @@ export function SolarSystemView({
           />
         ))}
 
-        {probeView.renderItems.map((probe) => (
+        {boardPieceView.renderItems.map((piece) => (
           <div
-            key={probe.key}
+            key={piece.key}
             className='pointer-events-none absolute z-80 h-6 w-6'
+            data-testid={
+              piece.kind === 'mascamites-capsule'
+                ? `solar-capsule-${piece.key}`
+                : `solar-probe-${piece.key}`
+            }
             style={{
-              left: `${probe.xPercent}%`,
-              top: `${probe.yPercent}%`,
-              transform: `translate(calc(-50% + ${probe.offsetX}px), calc(-50% + ${probe.offsetY}px))`,
+              left: `${piece.xPercent}%`,
+              top: `${piece.yPercent}%`,
+              transform: `translate(calc(-50% + ${piece.offsetX}px), calc(-50% + ${piece.offsetY}px))`,
               transition: `left ${PROBE_TRANSITION_MS}ms ease-out, top ${PROBE_TRANSITION_MS}ms ease-out, transform ${PROBE_TRANSITION_MS}ms ease-out`,
               transitionDelay:
-                probe.transitionDelayMs > 0
-                  ? `${probe.transitionDelayMs}ms`
+                piece.transitionDelayMs > 0
+                  ? `${piece.transitionDelayMs}ms`
                   : undefined,
             }}
           >
-            <ProbeToken playerColor={playerColors[probe.playerId] ?? 'white'} />
+            {piece.kind === 'mascamites-capsule' ? (
+              <CapsuleToken
+                playerColor={playerColors[piece.playerId] ?? 'white'}
+              />
+            ) : (
+              <ProbeToken
+                playerColor={playerColors[piece.playerId] ?? 'white'}
+              />
+            )}
           </div>
         ))}
 
@@ -1039,5 +1144,23 @@ function SolarAlienTokenMarker({
       />
       {label}
     </div>
+  );
+}
+
+function CapsuleToken({
+  playerColor,
+}: {
+  playerColor: string;
+}): React.JSX.Element {
+  return (
+    <span
+      className='flex h-5 w-5 items-center justify-center rounded-full border-2 border-text-100/80 bg-surface-950/85 font-mono text-[9px] font-bold leading-none text-text-100 shadow-[0_0_0_1px_rgba(0,0,0,0.7),0_2px_6px_rgba(0,0,0,0.55)]'
+      style={{
+        boxShadow: `0 0 0 2px ${playerColor}, 0 2px 6px rgba(0,0,0,0.55)`,
+      }}
+      title={`${playerColor} sample capsule`}
+    >
+      S
+    </span>
   );
 }

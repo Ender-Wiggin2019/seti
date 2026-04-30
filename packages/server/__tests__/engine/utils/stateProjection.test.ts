@@ -14,7 +14,7 @@ describe('toPublicSolarSystemState', () => {
           indexInRing: 0,
           hasPublicityIcon: false,
           elements: [{ type: 'EARTH' }],
-          occupants: [{ playerId: 'p1' }],
+          occupants: [{ id: 'probe-1', playerId: 'p1' }],
         },
         {
           id: 's2',
@@ -30,7 +30,18 @@ describe('toPublicSolarSystemState', () => {
 
     const state = toPublicSolarSystemState(solarSystem as never);
     expect(state.spaces).toEqual(['s1', 's2']);
-    expect(state.probes).toEqual([{ playerId: 'p1', spaceId: 's1' }]);
+    expect(state.probes).toEqual([
+      { playerId: 'p1', spaceId: 's1', probeId: 'probe-1' },
+    ]);
+    expect(state.movablePieces).toEqual([
+      {
+        pieceId: 'probe-1',
+        pieceType: 'probe',
+        playerId: 'p1',
+        spaceId: 's1',
+        movementTarget: { type: 'probe', id: 'probe-1' },
+      },
+    ]);
     expect(state.discs[0]).toEqual({ discIndex: 0, angle: 45 });
   });
 });

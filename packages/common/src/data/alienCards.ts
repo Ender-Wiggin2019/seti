@@ -11,7 +11,12 @@ import { DESC, DESC_WITH_TYPE, e, m } from '@seti/common/constant/effect';
 import { FAQ } from '@seti/common/data/faq';
 
 import { EAlienType, IBaseCard } from '@seti/common/types/BaseCard';
-import { EResource, EScanAction, ESector } from '@seti/common/types/element';
+import {
+  EPlanet,
+  EResource,
+  EScanAction,
+  ESector,
+} from '@seti/common/types/element';
 
 export const _alienCards: any[] = [
   {
@@ -312,7 +317,10 @@ export const _alienCards: any[] = [
     effects: [
       e.LAND(),
       DESC('desc.et-pickup'),
-      m.QUICK_MISSION(DESC('Deliver {sample} to Earth'), DESC('desc.et-7')),
+      m.QUICK_MISSION(
+        m.MASCAMITES_SAMPLE_DELIVERY(EPlanet.EARTH),
+        DESC('desc.et-7'),
+      ),
     ],
   },
   {
@@ -366,7 +374,7 @@ export const _alienCards: any[] = [
       e.LAND(1, '', 'xs'),
       DESC('desc.et-pickup', 'half'),
       m.QUICK_MISSION(
-        [DESC('Deliver {sample} to Earth')],
+        [m.MASCAMITES_SAMPLE_DELIVERY(EPlanet.EARTH)],
         [e.FULFILL_SAMPLE(), e.DATA(2)],
       ),
     ],
@@ -410,7 +418,7 @@ export const _alienCards: any[] = [
       e.LAND(),
       DESC('desc.et-pickup', 'half'),
       m.QUICK_MISSION(
-        [DESC('Deliver {sample} to Mars')],
+        [m.MASCAMITES_SAMPLE_DELIVERY(EPlanet.MARS)],
         [e.FULFILL_SAMPLE(), e.SCORE(2), e.CARD_ANY()],
       ),
     ],
@@ -431,7 +439,7 @@ export const _alienCards: any[] = [
       e.ORBIT_OR_LAND(),
       DESC('desc.et-pickup', 'half'),
       m.QUICK_MISSION(
-        [DESC('Deliver {sample} to Earth')],
+        [m.MASCAMITES_SAMPLE_DELIVERY(EPlanet.EARTH)],
         [e.FULFILL_SAMPLE(), e.SCORE(3), e.CREDIT()],
       ),
     ],
@@ -472,7 +480,7 @@ export const _alienCards: any[] = [
       e.LAND(),
       DESC('desc.et-pickup-moon', 'half'),
       m.QUICK_MISSION(
-        [DESC('Deliver {sample} to Earth')],
+        [m.MASCAMITES_SAMPLE_DELIVERY(EPlanet.EARTH)],
         [e.FULFILL_SAMPLE(), e.SCORE(3), e.DATA(3)],
       ),
     ],
@@ -493,7 +501,7 @@ export const _alienCards: any[] = [
       e.LAND(),
       DESC('desc.et-pickup-moon', 'half'),
       m.QUICK_MISSION(
-        [DESC('Deliver {sample} to Earth')],
+        [m.MASCAMITES_SAMPLE_DELIVERY(EPlanet.EARTH)],
         [e.FULFILL_SAMPLE(), e.SCORE(6), e.PUBLICITY(2)],
       ),
     ],

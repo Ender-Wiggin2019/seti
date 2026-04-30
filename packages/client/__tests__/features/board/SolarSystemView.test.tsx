@@ -348,9 +348,7 @@ describe('SolarSystemView', () => {
       oumuamuaTile: tile,
     });
 
-    const anchor = screen.getByTestId(
-      'solar-oumuamua-sector-ring-4-cell-8',
-    );
+    const anchor = screen.getByTestId('solar-oumuamua-sector-ring-4-cell-8');
     const targetCell = screen.getByTestId('solar-space-ring-4-cell-8');
     const dataList = screen.getByTestId('solar-oumuamua-data-list');
     const slots = screen.getAllByTestId(/^solar-oumuamua-data-slot-/);
@@ -399,7 +397,11 @@ describe('SolarSystemView', () => {
     fireEvent.click(screen.getByTestId('solar-space-space-0'));
     fireEvent.click(screen.getByTestId('solar-space-space-1'));
 
-    expect(onMoveProbe).toHaveBeenCalledWith(['space-0', 'space-1']);
+    expect(onMoveProbe.mock.calls[0]?.[0]).toEqual(['space-0', 'space-1']);
+    expect(onMoveProbe.mock.calls[0]?.[1]).toEqual({
+      type: 'probe',
+      id: 'player-1-0',
+    });
   });
 
   it('highlights and submits reachable cells when move mode is active', () => {
@@ -427,7 +429,85 @@ describe('SolarSystemView', () => {
 
     fireEvent.click(reachableSpace);
 
-    expect(onMoveProbe).toHaveBeenCalledWith(['space-0', 'space-1']);
+    expect(onMoveProbe.mock.calls[0]?.[0]).toEqual(['space-0', 'space-1']);
+    expect(onMoveProbe.mock.calls[0]?.[1]).toEqual({
+      type: 'probe',
+      id: 'player-1-0',
+    });
+  });
+
+  it('sends probe movement target when the server provides movable pieces', () => {
+    const onMoveProbe = vi.fn();
+
+    renderSolarSystemView({
+      solarSystem: {
+        ...createSolarSystemMock(),
+        probes: [
+          {
+            playerId: 'player-1',
+            spaceId: 'space-0',
+            probeId: 'probe-1',
+          },
+        ],
+        movablePieces: [
+          {
+            pieceId: 'probe-1',
+            pieceType: 'probe',
+            playerId: 'player-1',
+            spaceId: 'space-0',
+            movementTarget: {
+              type: 'probe',
+              id: 'probe-1',
+            },
+          },
+        ],
+      },
+      movementPoints: 1,
+      moveModeActive: true,
+      onMoveProbe,
+    });
+
+    fireEvent.click(screen.getByTestId('solar-space-space-1'));
+
+    expect(onMoveProbe).toHaveBeenCalledWith(['space-0', 'space-1'], {
+      type: 'probe',
+      id: 'probe-1',
+    });
+  });
+
+  it('sends movement target when moving a Mascamites capsule', () => {
+    const onMoveProbe = vi.fn();
+
+    renderSolarSystemView({
+      solarSystem: {
+        ...createSolarSystemMock(),
+        probes: [],
+        movablePieces: [
+          {
+            pieceId: 'capsule-1',
+            pieceType: 'mascamites-capsule',
+            playerId: 'player-1',
+            spaceId: 'space-0',
+            movementTarget: {
+              type: 'mascamites-capsule',
+              id: 'capsule-1',
+            },
+          },
+        ],
+      },
+      movementPoints: 1,
+      moveModeActive: true,
+      onMoveProbe,
+    });
+
+    expect(screen.getByTestId('solar-capsule-capsule-1')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('solar-space-space-1'));
+
+    expect(onMoveProbe).toHaveBeenCalledWith(['space-0', 'space-1'], {
+      type: 'mascamites-capsule',
+      id: 'capsule-1',
+    });
   });
 
   it('responds to sector input on sector pair click', () => {
@@ -450,7 +530,7 @@ describe('SolarSystemView', () => {
       />,
     );
 
-    fireEvent.click(screen.getByTestId('sector-pair-north'));
+    fireEvent.click(screen.getByTestId('sector-node-north-0'));
     expect(onRespondInput).toHaveBeenCalledWith({
       type: EPlayerInputType.SECTOR,
       sector: ESector.BLUE,
@@ -524,7 +604,7 @@ describe('SolarSystemView', () => {
     expect(parseFloat(neptuneHotspot.style.top)).toBeCloseTo(52.906, 3);
   });
 
-  it('centers expanded cells as a group inside their sector', () => {
+  it('keeps expanded cell hotspots distinct in text mode', () => {
     useDebugStore.setState({ textMode: true });
 
     render(
@@ -594,11 +674,13 @@ describe('SolarSystemView', () => {
     const sectorWrapper = screen.getByTestId('sector-node-east-1').parentElement
       ?.parentElement as HTMLElement | null;
 
-    expect(sectorWrapper).not.toBeNull();
-    expect(getStylePolarAngle(firstCell)).toBeCloseTo(247.5, 1);
+    if (!sectorWrapper) {
+      throw new Error('Expected sector wrapper to render');
+    }
+    expect(getStylePolarAngle(firstCell)).toBeCloseTo(232.5, 1);
     expect(getStylePolarAngle(centerCell)).toBeCloseTo(247.5, 1);
-    expect(getStylePolarAngle(lastCell)).toBeCloseTo(247.5, 1);
-    expect(getStylePolarAngle(sectorWrapper!)).toBeCloseTo(
+    expect(getStylePolarAngle(lastCell)).toBeCloseTo(262.5, 1);
+    expect(getStylePolarAngle(sectorWrapper)).toBeCloseTo(
       getStylePolarAngle(centerCell),
       1,
     );
@@ -775,20 +857,21 @@ describe('SolarSystemView', () => {
     const sector0Cell = screen.getByTestId('solar-space-space-0');
     const sector1Cell = screen.getByTestId('solar-space-space-1');
 
-    expect(sector0Wrapper).not.toBeNull();
-    expect(sector1Wrapper).not.toBeNull();
-    expect(getStylePolarAngle(sector0Wrapper!)).toBeCloseTo(
+    if (!sector0Wrapper || !sector1Wrapper) {
+      throw new Error('Expected sector wrappers to render');
+    }
+    expect(getStylePolarAngle(sector0Wrapper)).toBeCloseTo(
       getStylePolarAngle(sector0Cell),
       1,
     );
-    expect(getStylePolarAngle(sector1Wrapper!)).toBeCloseTo(
+    expect(getStylePolarAngle(sector1Wrapper)).toBeCloseTo(
       getStylePolarAngle(sector1Cell),
       1,
     );
-    expect(getStyleRadius(sector0Wrapper!)).toBeGreaterThan(
+    expect(getStyleRadius(sector0Wrapper)).toBeGreaterThan(
       getStyleRadius(sector0Cell),
     );
-    expect(getStyleRadius(sector1Wrapper!)).toBeGreaterThan(
+    expect(getStyleRadius(sector1Wrapper)).toBeGreaterThan(
       getStyleRadius(sector1Cell),
     );
   });

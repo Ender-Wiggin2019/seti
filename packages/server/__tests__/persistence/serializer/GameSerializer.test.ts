@@ -8,6 +8,7 @@ import {
 import { ETechId } from '@seti/common/types/tech';
 import {
   isAnomaliesAlienBoard,
+  isMascamitesAlienBoard,
   isOumuamuaAlienBoard,
 } from '@/engine/alien/AlienBoard.js';
 import { AlienState } from '@/engine/alien/AlienState.js';
@@ -297,6 +298,34 @@ describe('GameSerializer', () => {
         dataRemaining: 2,
         markerPlayerIds: ['p1'],
       },
+    });
+  });
+
+  it('projects Mascamites capsules as generic solar-system movable pieces', () => {
+    const game = createTestGame();
+    game.hiddenAliens = [EAlienType.MASCAMITES];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.boards[0];
+    if (!isMascamitesAlienBoard(board)) {
+      throw new Error('expected Mascamites board');
+    }
+    board.discovered = true;
+    board.createCapsule({
+      capsuleId: 'capsule-1',
+      ownerId: 'p1',
+      sampleTokenId: 'mascamites-credit-2',
+      sourcePlanet: EPlanet.JUPITER,
+      spaceId: 'ring-2-cell-1',
+    });
+
+    const publicState = projectGameState(game, 'p1');
+
+    expect(publicState.solarSystem.movablePieces).toContainEqual({
+      pieceId: 'capsule-1',
+      pieceType: 'mascamites-capsule',
+      playerId: 'p1',
+      spaceId: 'ring-2-cell-1',
+      movementTarget: { type: 'mascamites-capsule', id: 'capsule-1' },
     });
   });
 });

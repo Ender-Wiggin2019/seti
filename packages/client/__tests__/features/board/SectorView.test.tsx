@@ -72,7 +72,6 @@ describe('SectorView', () => {
         selectableColors={new Set()}
         clickable={false}
         highlighted={false}
-        onClick={vi.fn()}
         onSelectSector={vi.fn()}
       />,
     );
@@ -81,8 +80,8 @@ describe('SectorView', () => {
     expect(button).toHaveAttribute('aria-disabled', 'true');
   });
 
-  it('is clickable when enabled', () => {
-    const onClick = vi.fn();
+  it('does not select through the tile wrapper in image mode', () => {
+    const onSelectSector = vi.fn();
     render(
       <SectorView
         pair={createPair()}
@@ -90,14 +89,13 @@ describe('SectorView', () => {
         selectableColors={new Set([ESector.BLUE])}
         clickable
         highlighted
-        onClick={onClick}
-        onSelectSector={vi.fn()}
+        onSelectSector={onSelectSector}
       />,
     );
 
     const button = screen.getByTestId('sector-pair-north');
     fireEvent.click(button);
-    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(onSelectSector).not.toHaveBeenCalled();
   });
 
   it('supports selecting a specific sector node', () => {
@@ -109,7 +107,6 @@ describe('SectorView', () => {
         selectableColors={new Set([ESector.BLACK])}
         clickable
         highlighted
-        onClick={vi.fn()}
         onSelectSector={onSelectSector}
       />,
     );
@@ -128,15 +125,15 @@ describe('SectorView', () => {
         selectableColors={new Set()}
         clickable={false}
         highlighted={false}
-        onClick={vi.fn()}
         onSelectSector={vi.fn()}
       />,
     );
 
     expect(screen.getByText('procyon')).toBeInTheDocument();
     expect(screen.getByText('blue-signal')).toBeInTheDocument();
-    const firstSectorPanel = screen.getByTestId('sector-node-north-0')
-      .parentElement;
+    const firstSectorPanel = screen.getByTestId(
+      'sector-node-north-0',
+    ).parentElement;
     const firstSectorWrapper = firstSectorPanel?.parentElement;
     expect(firstSectorPanel?.firstElementChild).toHaveTextContent('procyon');
     expect(firstSectorPanel?.firstElementChild).toHaveTextContent('blue');

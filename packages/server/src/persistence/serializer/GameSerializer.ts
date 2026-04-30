@@ -1,18 +1,20 @@
 import { PLANET_MISSION_CONFIG } from '@seti/common/constant/boardLayout';
 import { EResource } from '@seti/common/types/element';
-import { ETrace } from '@seti/common/types/protocol/enums';
+import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
 import type {
   IPublicAlienCardZone,
   IPublicAlienState,
   IPublicAnomaliesBoard,
   IPublicGameState,
   IPublicGoldScoringTile,
+  IPublicMascamitesBoard,
   IPublicMilestoneState,
   IPublicOumuamuaBoard,
   IPublicPlanetaryBoard,
   IPublicPlayerState,
   IPublicSector,
   IPublicSolarSystemAlienToken,
+  IPublicSolarSystemMovablePiece,
   IPublicTechBoard,
   IPublicTraceSlot,
   TPublicAlienBoard,
@@ -23,7 +25,9 @@ import {
   type AnomaliesAlienBoard,
   type ITraceSlot,
   isAnomaliesAlienBoard,
+  isMascamitesAlienBoard,
   isOumuamuaAlienBoard,
+  type MascamitesAlienBoard,
   type OumuamuaAlienBoard,
 } from '@/engine/alien/AlienBoard.js';
 import { isScanActionPoolInput } from '@/engine/effects/scan/ScanActionPool.js';
@@ -181,12 +185,31 @@ function toPublicOumuamuaBoard(
   };
 }
 
+function toPublicMascamitesBoard(
+  board: MascamitesAlienBoard,
+): IPublicMascamitesBoard {
+  return {
+    type: 'mascamites',
+    samplePools: {
+      jupiter: [...board.samplePools.jupiter],
+      saturn: [...board.samplePools.saturn],
+    },
+    publicSamples: [...board.publicSamples],
+    capsules: board.capsules.map((capsule) => ({ ...capsule })),
+    deliveredSamples: board.deliveredSamples.map((sample) => ({ ...sample })),
+    traceSlots: board.speciesTraceSlots.map((slot) => toPublicTraceSlot(slot)),
+  };
+}
+
 function toPublicAlienBoard(board: AlienBoard): TPublicAlienBoard {
   if (isAnomaliesAlienBoard(board)) {
     return toPublicAnomaliesBoard(board);
   }
   if (isOumuamuaAlienBoard(board)) {
     return toPublicOumuamuaBoard(board);
+  }
+  if (isMascamitesAlienBoard(board)) {
+    return toPublicMascamitesBoard(board);
   }
   return {
     type: 'generic',
@@ -241,6 +264,26 @@ function toPublicSolarAlienTokens(game: IGame): IPublicSolarSystemAlienToken[] {
       },
     ];
   });
+}
+
+function toPublicSolarMovablePieces(
+  game: IGame,
+): IPublicSolarSystemMovablePiece[] {
+  const board = game.alienState.getBoardByType(EAlienType.MASCAMITES);
+  if (!isMascamitesAlienBoard(board)) {
+    return [];
+  }
+
+  return board.capsules.map((capsule) => ({
+    pieceId: capsule.capsuleId,
+    pieceType: 'mascamites-capsule' as const,
+    playerId: capsule.ownerId,
+    spaceId: capsule.spaceId,
+    movementTarget: {
+      type: 'mascamites-capsule' as const,
+      id: capsule.capsuleId,
+    },
+  }));
 }
 
 function serializePlayer(player: IPlayer): IPlayerStateDto {
@@ -476,6 +519,19 @@ function serializeAlienState(game: IGame): IAlienStateDto {
       if (isAnomaliesAlienBoard(board)) {
         dto.anomalyColumns = board.anomalyColumns.map((slot) =>
           toTraceSlotDto(slot),
+        );
+      }
+      if (isMascamitesAlienBoard(board)) {
+        dto.mascamitesSamplePools = {
+          jupiter: [...board.samplePools.jupiter],
+          saturn: [...board.samplePools.saturn],
+        };
+        dto.mascamitesPublicSamples = [...board.publicSamples];
+        dto.mascamitesCapsules = board.capsules.map((capsule) => ({
+          ...capsule,
+        }));
+        dto.mascamitesDeliveredSamples = board.deliveredSamples.map(
+          (sample) => ({ ...sample }),
         );
       }
 
@@ -740,6 +796,7 @@ export function projectGameState(
     solarSystem: toPublicSolarSystemState(
       game.solarSystem,
       toPublicSolarAlienTokens(game),
+      toPublicSolarMovablePieces(game),
     ),
     sectors: toPublicSectors(game),
     solarSystemSetup: game.solarSystemSetup ?? undefined,

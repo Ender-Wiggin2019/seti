@@ -14,7 +14,8 @@ export type TAlienSlotResourceRewardType =
   | 'CREDIT'
   | 'ENERGY'
   | 'DATA'
-  | 'CARD';
+  | 'CARD'
+  | 'CARD_ANY';
 
 export interface IAlienSlotRewardDef {
   type: TAlienSlotResourceRewardType;

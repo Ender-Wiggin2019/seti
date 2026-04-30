@@ -1,10 +1,12 @@
 import { EResource } from '../types/element';
-import { EFreeAction, EPhase } from '../types/protocol/enums';
+import { EFreeAction, EPhase, EPlanet } from '../types/protocol/enums';
 import type {
   IPublicGameState,
+  IPublicMascamitesCapsule,
   IPublicPlayerState,
   IPublicSolarSystemState,
 } from '../types/protocol/gameState';
+import { getMascamitesSampleDeliveryDestination } from '../utils/mascamitesSampleDelivery';
 import { getNextSlot } from './computer';
 import { getMoveCost } from './movement';
 
@@ -60,13 +62,38 @@ export function canMoveProbe(
   player: IPublicPlayerState,
   gameState: IPublicGameState,
 ): boolean {
-  if (player.probesInSpace <= 0) {
+  const hasMovementTarget =
+    player.probesInSpace > 0 || hasPlayerMovablePiece(player, gameState);
+
+  if (!hasMovementTarget) {
     return false;
   }
 
   const hasMovement = player.movementPoints > 0;
   const hasEnergy = player.resources[EResource.ENERGY] > 0;
   return hasMovement || hasEnergy;
+}
+
+function hasPlayerMovablePiece(
+  player: IPublicPlayerState,
+  gameState: IPublicGameState,
+): boolean {
+  return (gameState.solarSystem.movablePieces ?? []).some(
+    (piece) => piece.playerId === player.playerId,
+  );
+}
+
+function getPlayerMascamitesCapsules(
+  player: IPublicPlayerState,
+  gameState: IPublicGameState,
+): IPublicMascamitesCapsule[] {
+  return gameState.aliens.flatMap((alien) =>
+    alien.board?.type === 'mascamites'
+      ? alien.board.capsules.filter(
+          (capsule) => capsule.ownerId === player.playerId,
+        )
+      : [],
+  );
 }
 
 export function canConvertEnergyToMovement(
@@ -87,8 +114,57 @@ export function canCompleteMission(_player: IPublicPlayerState): boolean {
   return false;
 }
 
+export function canDeliverMascamitesSample(
+  player: IPublicPlayerState,
+  gameState: IPublicGameState,
+): boolean {
+  const missionCards = player.playedMissions ?? [];
+  if (missionCards.length === 0) {
+    return false;
+  }
+
+  const capsules = getPlayerMascamitesCapsules(player, gameState);
+  if (capsules.length === 0) {
+    return false;
+  }
+
+  return capsules.some((capsule) =>
+    missionCards.some((mission) => {
+      const destination = getMascamitesSampleDeliveryDestination(mission);
+      return (
+        destination !== undefined &&
+        isCapsuleAtPlanet(gameState.solarSystem, capsule, destination)
+      );
+    }),
+  );
+}
+
 export function canUseFreeActionCorner(player: IPublicPlayerState): boolean {
   return player.handSize > 0;
+}
+
+function isCapsuleAtPlanet(
+  solarSystem: IPublicSolarSystemState,
+  capsule: IPublicMascamitesCapsule,
+  planet: EPlanet,
+): boolean {
+  if (solarSystem.planetSpaceIds?.[planet] === capsule.spaceId) {
+    return true;
+  }
+
+  const state = solarSystem.spaceStates?.[capsule.spaceId];
+  if (!state) {
+    return false;
+  }
+
+  return (
+    state.elements?.some(
+      (element) =>
+        element.planet === planet ||
+        (planet === EPlanet.EARTH && element.type === 'EARTH'),
+    ) ??
+    (planet === EPlanet.EARTH && state.elementTypes.includes('EARTH'))
+  );
 }
 
 export function canBuyCard(player: IPublicPlayerState): boolean {
@@ -131,6 +207,8 @@ export function getAvailableFreeActions(
     actions.push(EFreeAction.CONVERT_ENERGY_TO_MOVEMENT);
   if (canPlaceData(player)) actions.push(EFreeAction.PLACE_DATA);
   if (canCompleteMission(player)) actions.push(EFreeAction.COMPLETE_MISSION);
+  if (canDeliverMascamitesSample(player, gameState))
+    actions.push(EFreeAction.DELIVER_SAMPLE);
   if (canUseFreeActionCorner(player)) actions.push(EFreeAction.USE_CARD_CORNER);
   if (canBuyCard(player)) actions.push(EFreeAction.BUY_CARD);
   if (canExchangeResources(player))

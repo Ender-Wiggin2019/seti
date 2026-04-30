@@ -46,6 +46,7 @@ const REWARD_ICON_BY_TYPE: Record<
   ENERGY: EResource.ENERGY,
   DATA: EResource.DATA,
   CARD: EResource.CARD,
+  CARD_ANY: EResource.CARD_ANY,
 };
 
 const CUSTOM_REWARD_PRESENTATION: Record<

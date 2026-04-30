@@ -1,7 +1,8 @@
 import { createDefaultSetupConfig } from '@seti/common/constant/sectorSetup';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
-import { EResource } from '@seti/common/types/element';
+import { EPlanet, EResource } from '@seti/common/types/element';
 import { ALL_TECH_IDS } from '@seti/common/types/tech';
+import { getMascamitesSampleDeliveryDestination } from '@seti/common/utils/mascamitesSampleDelivery';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EventSidebarDrawer } from '@/components/layout/EventSidebarDrawer';
@@ -38,7 +39,9 @@ import type {
   IMainActionRequest,
   IPlayerInputModel,
   IPublicAlienState,
+  IPublicGameState,
   IPublicGoldScoringTile,
+  IPublicMascamitesCapsule,
   IPublicMilestoneState,
   IPublicOumuamuaTile,
   IPublicPlayerState,
@@ -88,6 +91,85 @@ function findOumuamuaTile(
   return oumuamua?.board?.type === 'oumuamua'
     ? (oumuamua.board.tile ?? null)
     : null;
+}
+
+function findMascamitesCapsules(
+  aliens: IPublicAlienState[] | undefined,
+): IPublicMascamitesCapsule[] {
+  return (
+    aliens?.flatMap((alien) =>
+      alien.board?.type === 'mascamites' ? alien.board.capsules : [],
+    ) ?? []
+  );
+}
+
+interface ISampleDeliveryOption {
+  capsuleId: string;
+  cardId: string;
+  label: string;
+}
+
+function buildSampleDeliveryOptions(
+  gameState: IPublicGameState | null,
+  playerId: string,
+): ISampleDeliveryOption[] {
+  if (!gameState) {
+    return [];
+  }
+
+  const player = gameState.players.find(
+    (candidate) => candidate.playerId === playerId,
+  );
+  const missionCards = player?.playedMissions ?? [];
+  if (!player || missionCards.length === 0) {
+    return [];
+  }
+
+  return findMascamitesCapsules(gameState.aliens)
+    .filter((capsule) => capsule.ownerId === playerId)
+    .flatMap((capsule) =>
+      missionCards
+        .filter((mission) =>
+          isCapsuleAtPlanet(
+            gameState,
+            capsule,
+            getMascamitesSampleDeliveryDestination(mission),
+          ),
+        )
+        .map((mission) => ({
+          capsuleId: capsule.capsuleId,
+          cardId: mission.id,
+          label: `${mission.name ?? mission.id} / ${capsule.sampleTokenId}`,
+        })),
+    );
+}
+
+function isCapsuleAtPlanet(
+  gameState: IPublicGameState,
+  capsule: IPublicMascamitesCapsule,
+  planet: EPlanet | undefined,
+): boolean {
+  if (!planet) {
+    return false;
+  }
+  const solarSystem = gameState.solarSystem;
+  if (solarSystem.planetSpaceIds?.[planet] === capsule.spaceId) {
+    return true;
+  }
+
+  const state = solarSystem.spaceStates?.[capsule.spaceId];
+  if (!state) {
+    return false;
+  }
+
+  return (
+    state.elements?.some(
+      (element) =>
+        element.planet === planet ||
+        (planet === EPlanet.EARTH && element.type === 'EARTH'),
+    ) ??
+    (planet === EPlanet.EARTH && state.elementTypes.includes('EARTH'))
+  );
 }
 
 /**
@@ -338,11 +420,16 @@ function useActionController({
   const [exchangeOpen, setExchangeOpen] = useState(false);
   const [placeDataOpen, setPlaceDataOpen] = useState(false);
   const [convertEnergyOpen, setConvertEnergyOpen] = useState(false);
+  const [deliverSampleOpen, setDeliverSampleOpen] = useState(false);
 
   const myPlayer = gameState?.players.find((p) => p.playerId === myPlayerId);
   const missionCards =
     (myPlayer as { playedMissions?: IBaseCard[] } | undefined)
       ?.playedMissions ?? [];
+  const sampleDeliveryOptions = buildSampleDeliveryOptions(
+    gameState,
+    myPlayerId,
+  );
   const placeDataOptions = buildPlaceDataOptions(myPlayer);
   const maxConvertibleEnergy = myPlayer?.resources?.[EResource.ENERGY] ?? 0;
 
@@ -380,6 +467,30 @@ function useActionController({
         toast({
           title: t('client.game_layout.toast.mission_required'),
           description: t('client.game_layout.toast.mission_required_desc'),
+          variant: 'error',
+        });
+        return;
+      case EFreeAction.DELIVER_SAMPLE:
+        setCornerSelectionMode(false);
+        clearMoveMode();
+        if (sampleDeliveryOptions.length === 1) {
+          const option = sampleDeliveryOptions[0];
+          sendFreeAction({
+            type: EFreeAction.DELIVER_SAMPLE,
+            capsuleId: option.capsuleId,
+            cardId: option.cardId,
+          });
+          return;
+        }
+        if (sampleDeliveryOptions.length > 1) {
+          setDeliverSampleOpen(true);
+          return;
+        }
+        toast({
+          title: t('client.game_layout.toast.sample_delivery_required'),
+          description: t(
+            'client.game_layout.toast.sample_delivery_required_desc',
+          ),
           variant: 'error',
         });
         return;
@@ -512,6 +623,20 @@ function useActionController({
         onConfirm={(slotIndex) => {
           sendFreeAction({ type: EFreeAction.PLACE_DATA, slotIndex });
           setPlaceDataOpen(false);
+        }}
+      />
+
+      <SampleDeliveryDialog
+        open={deliverSampleOpen}
+        options={sampleDeliveryOptions}
+        onCancel={() => setDeliverSampleOpen(false)}
+        onConfirm={(option) => {
+          sendFreeAction({
+            type: EFreeAction.DELIVER_SAMPLE,
+            capsuleId: option.capsuleId,
+            cardId: option.cardId,
+          });
+          setDeliverSampleOpen(false);
         }}
       />
 
@@ -955,8 +1080,12 @@ function BoardTabs({
                 myPlayerId={myPlayerId}
                 movementPoints={myPlayer?.movementPoints ?? 0}
                 moveModeActive={movementModeActive}
-                onMoveProbe={(path) => {
-                  sendFreeAction({ type: EFreeAction.MOVEMENT, path });
+                onMoveProbe={(path, target) => {
+                  sendFreeAction(
+                    target
+                      ? { type: EFreeAction.MOVEMENT, path, target }
+                      : { type: EFreeAction.MOVEMENT, path },
+                  );
                 }}
                 onRespondInput={sendInput}
                 showSpaceConfigDebug={showSolarSystemSpaceConfig}
@@ -1529,6 +1658,54 @@ function PlaceDataDialog({
               <span className='font-mono text-[10px] uppercase tracking-[0.14em] text-text-500'>
                 {opt.row === 'top' ? 'A' : 'B'}
                 {opt.slotIndex + 1}
+              </span>
+            </Button>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SampleDeliveryDialog({
+  open,
+  options,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  options: ISampleDeliveryOption[];
+  onCancel: () => void;
+  onConfirm: (option: ISampleDeliveryOption) => void;
+}): React.JSX.Element {
+  const { t } = useTranslation('common');
+  return (
+    <Dialog open={open} onOpenChange={(next) => !next && onCancel()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {t('client.game_layout.deliver_sample_title')}
+          </DialogTitle>
+          <p className='text-sm text-text-300'>
+            {t('client.game_layout.deliver_sample_desc')}
+          </p>
+        </DialogHeader>
+        <div className='grid grid-cols-1 gap-1.5'>
+          {options.map((option) => (
+            <Button
+              key={`${option.capsuleId}-${option.cardId}`}
+              variant='ghost'
+              onClick={() => onConfirm(option)}
+              className='h-10 justify-start gap-2 px-3 text-left text-sm'
+            >
+              <span
+                aria-hidden
+                className='inline-flex h-5 w-5 items-center justify-center rounded-full border border-text-100/60 bg-surface-950 font-mono text-[9px] font-bold text-text-100'
+              >
+                S
+              </span>
+              <span className='flex-1 font-body text-[13px] text-text-100'>
+                {option.label}
               </span>
             </Button>
           ))}

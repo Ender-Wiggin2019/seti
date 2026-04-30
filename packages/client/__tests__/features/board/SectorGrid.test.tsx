@@ -54,8 +54,10 @@ function createSectors(): IPublicSector[] {
       ],
       dataCapability: 3,
       dataSlotCapacity: 3,
-      firstWinnerBonus: SECTOR_STAR_CONFIGS[sectorOnTile.starName].firstWinBonus,
-      otherWinnerBonus: SECTOR_STAR_CONFIGS[sectorOnTile.starName].repeatWinBonus,
+      firstWinnerBonus:
+        SECTOR_STAR_CONFIGS[sectorOnTile.starName].firstWinBonus,
+      otherWinnerBonus:
+        SECTOR_STAR_CONFIGS[sectorOnTile.starName].repeatWinBonus,
       sectorWinners: [] as string[],
       completed: false,
     }));
@@ -77,7 +79,7 @@ describe('SectorGrid', () => {
     expect(screen.getAllByTestId(/sector-pair-/)).toHaveLength(4);
   });
 
-  it('allows selecting only valid sector options', () => {
+  it('allows selecting only valid sector nodes', () => {
     const onSelectSector = vi.fn();
     const pendingInput: IPlayerInputModel = {
       inputId: 'input-sector',
@@ -95,10 +97,10 @@ describe('SectorGrid', () => {
       />,
     );
 
-    fireEvent.click(screen.getByTestId('sector-pair-north'));
+    fireEvent.click(screen.getByTestId('sector-node-north-0'));
     expect(onSelectSector).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByTestId('sector-pair-east'));
+    fireEvent.click(screen.getByTestId('sector-node-east-0'));
     expect(onSelectSector).toHaveBeenCalledWith(ESector.YELLOW);
   });
 

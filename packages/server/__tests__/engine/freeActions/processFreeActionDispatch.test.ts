@@ -32,6 +32,28 @@ describe('processFreeAction — full dispatch coverage', () => {
     ]);
   });
 
+  it('dispatches MOVEMENT with a generic movement target', () => {
+    const spy = vi
+      .spyOn(MovementFreeAction, 'execute')
+      .mockReturnValue({} as never);
+
+    processFreeAction({} as never, {} as never, {
+      type: EFreeAction.MOVEMENT,
+      path: ['a', 'b'],
+      target: { type: 'mascamites-capsule', id: 'capsule-1' },
+    });
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      ['a', 'b'],
+      {
+        target: { type: 'mascamites-capsule', id: 'capsule-1' },
+      },
+    );
+  });
+
   it('dispatches CONVERT_ENERGY_TO_MOVEMENT', () => {
     const spy = vi
       .spyOn(ConvertEnergyToMovementFreeAction, 'execute')

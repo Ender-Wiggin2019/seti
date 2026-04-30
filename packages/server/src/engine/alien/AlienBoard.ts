@@ -1,4 +1,10 @@
 import type { TAlienSlotReward } from '@seti/common/constant/alienBoardConfig';
+import {
+  createEmptyMascamitesSamplePools,
+  type TMascamitesSamplePools,
+  type TMascamitesSampleSourcePlanet,
+  type TMascamitesSampleTokenId,
+} from '@seti/common/constant/mascamites';
 import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
 import type { SeededRandom } from '@/shared/rng/SeededRandom.js';
 
@@ -52,6 +58,22 @@ export interface IOumuamuaTileComponent {
   markerPlayerIds: string[];
 }
 
+export interface IMascamitesCapsuleComponent {
+  capsuleId: string;
+  ownerId: string;
+  sampleTokenId: TMascamitesSampleTokenId;
+  sourcePlanet: TMascamitesSampleSourcePlanet;
+  spaceId: string;
+  missionCardId?: string;
+}
+
+export interface IMascamitesDeliveredSampleComponent {
+  sampleTokenId: TMascamitesSampleTokenId;
+  deliveredBy: string;
+  deliveredAtRound: number;
+  slotId: string;
+}
+
 // ---------------------------------------------------------------------------
 //  Alien Board
 // ---------------------------------------------------------------------------
@@ -78,10 +100,18 @@ export interface IOumuamuaAlienBoardInit extends IAlienBoardInit {
   oumuamuaTile?: IOumuamuaTileComponent | null;
 }
 
+export interface IMascamitesAlienBoardInit extends IAlienBoardInit {
+  mascamitesSamplePools?: TMascamitesSamplePools;
+  mascamitesPublicSamples?: TMascamitesSampleTokenId[];
+  mascamitesCapsules?: IMascamitesCapsuleComponent[];
+  mascamitesDeliveredSamples?: IMascamitesDeliveredSampleComponent[];
+}
+
 export type TAlienBoardInit =
   | IAlienBoardInit
   | IAnomaliesAlienBoardInit
-  | IOumuamuaAlienBoardInit;
+  | IOumuamuaAlienBoardInit
+  | IMascamitesAlienBoardInit;
 
 export class AlienBoard {
   public readonly alienType: EAlienType;
@@ -398,12 +428,90 @@ export class OumuamuaAlienBoard extends AlienBoard {
   }
 }
 
+export class MascamitesAlienBoard extends AlienBoard {
+  public samplePools: TMascamitesSamplePools;
+
+  public publicSamples: TMascamitesSampleTokenId[];
+
+  public capsules: IMascamitesCapsuleComponent[];
+
+  public deliveredSamples: IMascamitesDeliveredSampleComponent[];
+
+  private capsuleCounter: number;
+
+  public constructor(init: IMascamitesAlienBoardInit) {
+    super(init);
+    this.samplePools = cloneMascamitesSamplePools(init.mascamitesSamplePools);
+    this.publicSamples = [...(init.mascamitesPublicSamples ?? [])];
+    this.capsules = (init.mascamitesCapsules ?? []).map((capsule) => ({
+      ...capsule,
+    }));
+    this.deliveredSamples = (init.mascamitesDeliveredSamples ?? []).map(
+      (sample) => ({ ...sample }),
+    );
+    this.capsuleCounter = this.resolveNextCapsuleCounter();
+  }
+
+  public createCapsule(
+    init: Omit<IMascamitesCapsuleComponent, 'capsuleId'> & {
+      capsuleId?: string;
+    },
+  ): IMascamitesCapsuleComponent {
+    const capsule: IMascamitesCapsuleComponent = {
+      capsuleId: init.capsuleId ?? this.nextCapsuleId(),
+      ownerId: init.ownerId,
+      sampleTokenId: init.sampleTokenId,
+      sourcePlanet: init.sourcePlanet,
+      spaceId: init.spaceId,
+      missionCardId: init.missionCardId,
+    };
+    this.capsules.push(capsule);
+    return capsule;
+  }
+
+  public getCapsule(
+    capsuleId: string,
+  ): IMascamitesCapsuleComponent | undefined {
+    return this.capsules.find((capsule) => capsule.capsuleId === capsuleId);
+  }
+
+  public removeCapsule(
+    capsuleId: string,
+  ): IMascamitesCapsuleComponent | undefined {
+    const index = this.capsules.findIndex(
+      (capsule) => capsule.capsuleId === capsuleId,
+    );
+    if (index < 0) return undefined;
+    return this.capsules.splice(index, 1)[0];
+  }
+
+  private nextCapsuleId(): string {
+    const id = `mascamites-capsule-${this.capsuleCounter}`;
+    this.capsuleCounter += 1;
+    return id;
+  }
+
+  private resolveNextCapsuleCounter(): number {
+    let next = 0;
+    for (const capsule of this.capsules) {
+      const suffix = Number(capsule.capsuleId.split('-').at(-1));
+      if (Number.isInteger(suffix) && suffix >= next) {
+        next = suffix + 1;
+      }
+    }
+    return next;
+  }
+}
+
 export function createAlienBoard(init: TAlienBoardInit): AlienBoard {
   if (init.alienType === EAlienType.ANOMALIES) {
     return new AnomaliesAlienBoard(init as IAnomaliesAlienBoardInit);
   }
   if (init.alienType === EAlienType.OUMUAMUA) {
     return new OumuamuaAlienBoard(init as IOumuamuaAlienBoardInit);
+  }
+  if (init.alienType === EAlienType.MASCAMITES) {
+    return new MascamitesAlienBoard(init as IMascamitesAlienBoardInit);
   }
   return new AlienBoard(init);
 }
@@ -418,6 +526,23 @@ export function isOumuamuaAlienBoard(
   board: AlienBoard | null | undefined,
 ): board is OumuamuaAlienBoard {
   return board instanceof OumuamuaAlienBoard;
+}
+
+export function isMascamitesAlienBoard(
+  board: AlienBoard | null | undefined,
+): board is MascamitesAlienBoard {
+  return board instanceof MascamitesAlienBoard;
+}
+
+function cloneMascamitesSamplePools(
+  pools: TMascamitesSamplePools | undefined,
+): TMascamitesSamplePools {
+  const base = createEmptyMascamitesSamplePools();
+  if (!pools) return base;
+  return {
+    jupiter: [...pools.jupiter],
+    saturn: [...pools.saturn],
+  };
 }
 
 function getTracePlayerId(player: TTracePlayerRef): string {

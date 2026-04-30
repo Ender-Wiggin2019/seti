@@ -12,7 +12,6 @@ interface ISectorViewProps {
   emphasizedSectorIds?: Set<string>;
   clickable: boolean;
   highlighted: boolean;
-  onClick: () => void;
   onSelectSector: (sectorColor: IPublicSector['color']) => void;
   onSelectSectorId?: (sectorId: string) => void;
 }
@@ -49,7 +48,6 @@ export function SectorView({
   emphasizedSectorIds = new Set<string>(),
   clickable,
   highlighted,
-  onClick,
   onSelectSector,
   onSelectSectorId,
 }: ISectorViewProps): React.JSX.Element {
@@ -81,36 +79,15 @@ export function SectorView({
       data-testid={`sector-pair-${pair.placement.position}`}
       aria-label={`Sector tile ${pair.placement.tileId} (${starNames})`}
       aria-disabled={!clickable}
-      role='button'
-      tabIndex={clickable ? 0 : -1}
       className={cn(
         'absolute transition-all duration-300',
-        textMode
-          ? 'pointer-events-none cursor-default'
-          : clickable
-            ? 'pointer-events-auto cursor-pointer'
-            : 'pointer-events-none cursor-default',
+        'pointer-events-none cursor-default',
       )}
       style={{
         ...(textMode
           ? { inset: '0', width: '100%', height: '100%' }
           : positionStyle),
         transformOrigin: 'center',
-      }}
-      onClick={() => {
-        if (!clickable || textMode) {
-          return;
-        }
-        onClick();
-      }}
-      onKeyDown={(event) => {
-        if (!clickable || textMode) {
-          return;
-        }
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          onClick();
-        }
       }}
     >
       <div className='relative h-full w-full'>

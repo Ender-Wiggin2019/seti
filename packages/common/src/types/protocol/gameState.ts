@@ -1,5 +1,11 @@
 import type { IPlanetMissionConfig } from '@seti/common/constant/boardLayout';
 import type {
+  TMascamitesSamplePools,
+  TMascamitesSampleSourcePlanet,
+  TMascamitesSampleTokenId,
+} from '@seti/common/constant/mascamites';
+import type { TMovementTarget } from '@seti/common/types/protocol/actions';
+import type {
   EStarName,
   ISolarSystemSetupConfig,
   TSectorWinnerBonus,
@@ -92,6 +98,14 @@ export interface IPublicSolarSystemProbe {
   transitionDelayMs?: number;
 }
 
+export interface IPublicSolarSystemMovablePiece {
+  pieceId: string;
+  pieceType: TMovementTarget['type'];
+  playerId: string;
+  spaceId: string;
+  movementTarget: TMovementTarget;
+}
+
 export type TPublicAnomalyTraceColor = ETrace.RED | ETrace.YELLOW | ETrace.BLUE;
 
 export interface IPublicSolarSystemAlienToken {
@@ -136,6 +150,7 @@ export interface IPublicSolarSystemState {
   spaces: string[];
   adjacency: Record<string, string[]>;
   probes: IPublicSolarSystemProbe[];
+  movablePieces?: IPublicSolarSystemMovablePiece[];
   discs: IPublicSolarSystemDiscState[];
   /**
    * Next ring that will rotate when a rotation resolves (rule order 1 -> 2 -> 3).
@@ -225,6 +240,7 @@ export type TPublicSlotReward =
   | { type: 'ENERGY'; amount: number }
   | { type: 'DATA'; amount: number }
   | { type: 'CARD'; amount: number }
+  | { type: 'CARD_ANY'; amount: number }
   | { type: 'CUSTOM'; effectId: string };
 
 export interface IPublicTraceOccupant {
@@ -274,6 +290,31 @@ export interface IPublicOumuamuaBoard {
   traceSlots: IPublicTraceSlot[];
 }
 
+export interface IPublicMascamitesCapsule {
+  capsuleId: string;
+  ownerId: string;
+  sampleTokenId: TMascamitesSampleTokenId;
+  sourcePlanet: TMascamitesSampleSourcePlanet;
+  spaceId: string;
+  missionCardId?: string;
+}
+
+export interface IPublicMascamitesDeliveredSample {
+  sampleTokenId: TMascamitesSampleTokenId;
+  deliveredBy: string;
+  deliveredAtRound: number;
+  slotId: string;
+}
+
+export interface IPublicMascamitesBoard {
+  type: 'mascamites';
+  samplePools: TMascamitesSamplePools;
+  publicSamples: TMascamitesSampleTokenId[];
+  capsules: IPublicMascamitesCapsule[];
+  deliveredSamples: IPublicMascamitesDeliveredSample[];
+  traceSlots: IPublicTraceSlot[];
+}
+
 export interface IPublicGenericAlienBoard {
   type: 'generic';
   slots: IPublicTraceSlot[];
@@ -282,6 +323,7 @@ export interface IPublicGenericAlienBoard {
 export type TPublicAlienBoard =
   | IPublicAnomaliesBoard
   | IPublicOumuamuaBoard
+  | IPublicMascamitesBoard
   | IPublicGenericAlienBoard;
 
 export interface IPublicAlienState {

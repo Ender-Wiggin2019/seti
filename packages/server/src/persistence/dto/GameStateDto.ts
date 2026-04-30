@@ -10,6 +10,11 @@ import type {
   EPlanet,
 } from '@seti/common/types/protocol/enums';
 import type {
+  TMascamitesSamplePools,
+  TMascamitesSampleSourcePlanet,
+  TMascamitesSampleTokenId,
+} from '@seti/common/constant/mascamites';
+import type {
   ETechId,
   ITechBonusToken,
   TTechCategory,
@@ -132,6 +137,7 @@ export interface ITraceSlotDto {
     | { type: 'ENERGY'; amount: number }
     | { type: 'DATA'; amount: number }
     | { type: 'CARD'; amount: number }
+    | { type: 'CARD_ANY'; amount: number }
     | { type: 'CUSTOM'; effectId: string }
   >;
   isDiscovery: boolean;
@@ -152,6 +158,22 @@ export interface IOumuamuaTileDto {
   markerPlayerIds: string[];
 }
 
+export interface IMascamitesCapsuleDto {
+  capsuleId: string;
+  ownerId: string;
+  sampleTokenId: TMascamitesSampleTokenId;
+  sourcePlanet: TMascamitesSampleSourcePlanet;
+  spaceId: string;
+  missionCardId?: string;
+}
+
+export interface IMascamitesDeliveredSampleDto {
+  sampleTokenId: TMascamitesSampleTokenId;
+  deliveredBy: string;
+  deliveredAtRound: number;
+  slotId: string;
+}
+
 export interface IAlienBoardDto {
   alienType: EAlienType;
   alienIndex: number;
@@ -161,6 +183,10 @@ export interface IAlienBoardDto {
   speciesTraceSlots: ITraceSlotDto[];
   anomalyColumns?: ITraceSlotDto[];
   oumuamuaTile?: IOumuamuaTileDto | null;
+  mascamitesSamplePools?: TMascamitesSamplePools;
+  mascamitesPublicSamples?: TMascamitesSampleTokenId[];
+  mascamitesCapsules?: IMascamitesCapsuleDto[];
+  mascamitesDeliveredSamples?: IMascamitesDeliveredSampleDto[];
   alienDeckDrawPile: string[];
   alienDeckDiscardPile: string[];
   faceUpAlienCardId: string | null;

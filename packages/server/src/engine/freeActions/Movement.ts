@@ -1,5 +1,8 @@
 import { validateMovementPath } from '@seti/common/rules/freeActions';
-import type { IInputResponse } from '@seti/common/types/protocol/actions';
+import type {
+  IInputResponse,
+  TMovementTarget,
+} from '@seti/common/types/protocol/actions';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import type { IPlayerInputModel } from '@seti/common/types/protocol/playerInput';
 import { GameError } from '@/shared/errors/GameError.js';
@@ -15,14 +18,25 @@ import {
   shouldIgnoreAsteroidLeaveCostForTurnEffects,
 } from '../turnEffects/TurnEffects.js';
 import { toPublicSolarSystemState } from '../utils/stateProjection.js';
-import { findProbeAtSpace } from './probeUtils.js';
+import {
+  findLegacyProbeMovementPieceAtSpace,
+  findPlayerMovablePieces,
+  resolveMovementTarget,
+} from './movementTargets.js';
 
 export interface IMovementResult {
   probeId: string;
+  capsuleId?: string;
   path: string[];
   totalCost: number;
   publicityGained: number;
   pendingInput?: IPlayerInput;
+}
+
+export interface IMovementOptions {
+  target?: TMovementTarget;
+  /** @deprecated Use target: { type: 'mascamites-capsule', id } instead. */
+  capsuleId?: string;
 }
 
 interface IPublicityRecord {
@@ -77,9 +91,22 @@ class MovementPendingInput implements IPlayerInput {
 }
 
 export class MovementFreeAction {
-  static canExecute(player: IPlayer, game: IGame): boolean {
+  static canExecute(
+    player: IPlayer,
+    game: IGame,
+    options: IMovementOptions = {},
+  ): boolean {
     if (game.solarSystem === null) return false;
-    if (player.probesInSpace <= 0) return false;
+
+    const target = this.normalizeMovementTarget(options);
+    const hasMovementTarget = target
+      ? resolveMovementTarget(game, player.id, target) !== undefined
+      : findPlayerMovablePieces(game, player.id).length > 0;
+
+    if (!hasMovementTarget) {
+      return false;
+    }
+
     return player.getMoveStash() > 0 || player.resources.energy > 0;
   }
 
@@ -87,6 +114,7 @@ export class MovementFreeAction {
     player: IPlayer,
     game: IGame,
     path: string[],
+    options: IMovementOptions = {},
   ): IMovementResult {
     if (game.solarSystem === null) {
       throw new GameError(
@@ -103,12 +131,27 @@ export class MovementFreeAction {
     }
 
     const startSpaceId = path[0];
-    const probe = findProbeAtSpace(game, player.id, startSpaceId);
-    if (!probe) {
+    const target = this.normalizeMovementTarget(options);
+    const movementPiece =
+      target !== undefined
+        ? resolveMovementTarget(game, player.id, target)
+        : findLegacyProbeMovementPieceAtSpace(game, player.id, startSpaceId);
+    if (!movementPiece) {
       throw new GameError(
         EErrorCode.INVALID_ACTION,
-        `No probe found at space ${startSpaceId}`,
-        { playerId: player.id, spaceId: startSpaceId },
+        `No movable piece found for player ${player.id}`,
+        { playerId: player.id, spaceId: startSpaceId, target },
+      );
+    }
+    if (movementPiece.spaceId !== startSpaceId) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        `Movement target ${movementPiece.target.type}:${movementPiece.target.id} is not at space ${startSpaceId}`,
+        {
+          playerId: player.id,
+          spaceId: startSpaceId,
+          target: movementPiece.target,
+        },
       );
     }
 
@@ -146,7 +189,12 @@ export class MovementFreeAction {
     for (let i = 0; i < path.length - 1; i++) {
       const fromSpace = this.findSpace(game, path[i]);
       const toSpace = this.findSpace(game, path[i + 1]);
-      const result = game.solarSystem.moveProbe(probe.id, path[i], path[i + 1]);
+      const result = movementPiece.moveStep(
+        game,
+        path[i],
+        path[i + 1],
+        toSpace,
+      );
       this.recordVisitEvents(game, path[i + 1]);
 
       let stepPublicity = movementPublicityDisabled
@@ -204,7 +252,8 @@ export class MovementFreeAction {
     const [firstPendingInput, ...remainingPendingInputs] = pendingInputs;
 
     return {
-      probeId: probe.id,
+      probeId: movementPiece.pieceId,
+      capsuleId: movementPiece.legacyResult?.capsuleId,
       path,
       totalCost: effectiveCost,
       publicityGained,
@@ -256,6 +305,18 @@ export class MovementFreeAction {
       (element) =>
         element.type === ESolarSystemElementType.ASTEROID && element.amount > 0,
     );
+  }
+
+  private static normalizeMovementTarget(
+    options: IMovementOptions,
+  ): TMovementTarget | undefined {
+    if (options.target) {
+      return options.target;
+    }
+    if (options.capsuleId !== undefined) {
+      return { type: 'mascamites-capsule', id: options.capsuleId };
+    }
+    return undefined;
   }
 
   private static findSpace(game: IGame, spaceId: string) {
