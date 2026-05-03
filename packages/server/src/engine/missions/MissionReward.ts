@@ -12,6 +12,7 @@ import {
   ETrace,
 } from '@seti/common/types/element';
 import { drawCard } from '../deck/drawCard.js';
+import { createPickupBackInput } from '../cards/alien/MascamitesCardUtils.js';
 import { LaunchProbeEffect } from '../effects/probe/LaunchProbeEffect.js';
 import { MarkSectorSignalEffect } from '../effects/scan/MarkSectorSignalEffect.js';
 import type { IGame } from '../IGame.js';
@@ -32,6 +33,15 @@ export function applyMissionRewards(
     }
 
     if (reward.effectType !== EEffectType.BASE) {
+      if (
+        reward.effectType === EEffectType.CUSTOMIZED &&
+        (reward as ICustomizedEffect).desc === 'desc.et-pickup-back-reward'
+      ) {
+        return createPickupBackInput(player, game, {
+          requireOwnProbe: false,
+          onComplete: () => applyAt(index + 1),
+        });
+      }
       return applyAt(index + 1);
     }
 

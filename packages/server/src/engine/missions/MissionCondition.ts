@@ -16,6 +16,7 @@ import {
 import { EAlienType } from '@seti/common/types/protocol/enums';
 import { getTechDescriptor } from '@seti/common/types/tech';
 import { isOumuamuaAlienBoard } from '../alien/AlienBoard.js';
+import { hasMascamitesTraceCount } from '../cards/alien/MascamitesCardUtils.js';
 import { countSectorFulfills } from '../board/sectorFulfillmentCounts.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
@@ -186,6 +187,15 @@ function checkCustomQuickMissionCondition(
     const board = game.alienState?.getBoardByType(EAlienType.OUMUAMUA);
     if (!isOumuamuaAlienBoard(board)) return false;
     return (board.oumuamuaTile?.markerPlayerIds ?? []).includes(player.id);
+  }
+  if (desc === 'desc.et-8-req') {
+    return hasMascamitesTraceCount(player, game, ETrace.YELLOW, 2);
+  }
+  if (desc === 'desc.et-9-req') {
+    return hasMascamitesTraceCount(player, game, ETrace.RED, 2);
+  }
+  if (desc === 'desc.et-10-req') {
+    return hasMascamitesTraceCount(player, game, ETrace.BLUE, 2);
   }
   return false;
 }

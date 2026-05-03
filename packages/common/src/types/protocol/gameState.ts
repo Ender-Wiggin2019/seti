@@ -4,7 +4,6 @@ import type {
   TMascamitesSampleSourcePlanet,
   TMascamitesSampleTokenId,
 } from '@seti/common/constant/mascamites';
-import type { TMovementTarget } from '@seti/common/types/protocol/actions';
 import type {
   EStarName,
   ISolarSystemSetupConfig,
@@ -13,6 +12,7 @@ import type {
 import { IBaseCard } from '@seti/common/types/BaseCard';
 import type { IComputerSlotReward } from '@seti/common/types/computer';
 import { EResource, ESector } from '@seti/common/types/element';
+import type { TMovementTarget } from '@seti/common/types/protocol/actions';
 import {
   EAlienType,
   EPhase,
@@ -361,6 +361,20 @@ export interface IPublicGoldScoringTile {
   claims: IPublicGoldScoringTileClaim[];
 }
 
+export interface IPublicFinalScoreBreakdown {
+  endGameCards: number;
+  goldTiles: number;
+  alienBonus: number;
+  totalAdded: number;
+  finalScore: number;
+}
+
+export interface IPublicFinalScoringResult {
+  scores: Record<string, number>;
+  breakdown: Record<string, IPublicFinalScoreBreakdown>;
+  winnerIds: string[];
+}
+
 export interface IPublicGameState {
   gameId: string;
   round: number;
@@ -380,6 +394,7 @@ export interface IPublicGameState {
   recentEvents: TGameEvent[];
   milestones: IPublicMilestoneState;
   goldScoringTiles: IPublicGoldScoringTile[];
+  finalScoringResult?: IPublicFinalScoringResult;
   /** Whether room-level undo is enabled for this game. */
   undoAllowed: boolean;
   /**

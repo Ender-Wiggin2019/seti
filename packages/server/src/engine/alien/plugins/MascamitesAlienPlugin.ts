@@ -5,9 +5,11 @@ import {
   type TMascamitesSampleTokenId,
 } from '@seti/common/constant/mascamites';
 import { EAlienType, EPlanet, ETrace } from '@seti/common/types/protocol/enums';
+import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { getMascamitesSampleDeliveryDestination } from '@seti/common/utils/mascamitesSampleDelivery';
 import { loadCardData } from '@/engine/cards/loadCardData.js';
 import { ESolarSystemElementType } from '@/engine/board/SolarSystem.js';
+import { GameError } from '@/shared/errors/GameError.js';
 import type { IGame } from '../../IGame.js';
 import type { PlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
@@ -118,6 +120,7 @@ export class MascamitesAlienPlugin implements IAlienPlugin {
         `Capsule ${capsuleId} is not at mission destination ${destination}`,
       );
     }
+    this.validateDeliveryMission(player, game, cardId, branchIndex);
 
     const removed = board.removeCapsule(capsuleId);
     if (!removed) {
@@ -247,5 +250,43 @@ export class MascamitesAlienPlugin implements IAlienPlugin {
       );
     }
     return destination;
+  }
+
+  private validateDeliveryMission(
+    player: IPlayer,
+    game: IGame,
+    cardId: string,
+    branchIndex: number,
+  ): void {
+    const mission = game.missionTracker.getMissionState(player.id, cardId);
+    if (!mission || !this.hasActiveMissionCard(player, cardId)) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        `Mission card ${cardId} is not registered for player ${player.id}`,
+        { cardId, playerId: player.id },
+      );
+    }
+
+    const branchState = mission.branchStates[branchIndex];
+    if (!branchState) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        `Branch index ${branchIndex} out of range for mission ${cardId}`,
+        { cardId, branchIndex },
+      );
+    }
+    if (branchState.completed) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        `Branch ${branchIndex} of mission ${cardId} is already completed`,
+        { cardId, branchIndex },
+      );
+    }
+  }
+
+  private hasActiveMissionCard(player: IPlayer, cardId: string): boolean {
+    return player.playedMissions.some((mission) =>
+      typeof mission === 'string' ? mission === cardId : mission.id === cardId,
+    );
   }
 }

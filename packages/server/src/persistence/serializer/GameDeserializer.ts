@@ -490,6 +490,9 @@ export function deserializeGame(dto: IGameStateDto): Game {
   deserializeMilestones(game, dto);
   deserializeGoldTiles(game, dto);
   deserializeMissionTracker(game, dto);
+  game.finalScoringResult = dto.finalScoringResult
+    ? cloneValue(dto.finalScoringResult)
+    : undefined;
 
   game.deferredActions = new DeferredActionsQueue();
 

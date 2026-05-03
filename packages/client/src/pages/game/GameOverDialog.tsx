@@ -15,7 +15,11 @@ import {
 } from '@/features/scoring';
 import { cn } from '@/lib/cn';
 import { useGameContext } from '@/pages/game/GameContext';
-import { EPhase, type IPublicMilestoneState } from '@/types/re-exports';
+import {
+  EPhase,
+  type IPublicGoldScoringTile,
+  type IPublicMilestoneState,
+} from '@/types/re-exports';
 
 export function GameOverDialog(): React.JSX.Element | null {
   const { t } = useTranslation('common');
@@ -38,23 +42,31 @@ export function GameOverDialog(): React.JSX.Element | null {
     .slice()
     .sort((left, right) => right.score - left.score)
     .map((player) => {
-      const breakdown = extendedState.scoreBreakdown?.[player.playerId];
+      const serverBreakdown =
+        gameState.finalScoringResult?.breakdown[player.playerId];
+      const legacyBreakdown = extendedState.scoreBreakdown?.[player.playerId];
+      const total =
+        serverBreakdown?.finalScore ?? legacyBreakdown?.total ?? player.score;
+      const totalAdded = serverBreakdown?.totalAdded ?? 0;
       return {
         playerId: player.playerId,
         playerName: player.playerName,
-        total: breakdown?.total ?? player.score,
-        base: breakdown?.base ?? player.score,
-        cards: breakdown?.cards ?? 0,
-        tech: breakdown?.tech ?? 0,
-        milestone: breakdown?.milestone ?? 0,
-        gold: breakdown?.gold ?? 0,
-        alien: breakdown?.alien ?? 0,
+        total,
+        base: serverBreakdown
+          ? total - totalAdded
+          : (legacyBreakdown?.base ?? player.score),
+        cards: serverBreakdown?.endGameCards ?? legacyBreakdown?.cards ?? 0,
+        tech: legacyBreakdown?.tech ?? 0,
+        milestone: legacyBreakdown?.milestone ?? 0,
+        gold: serverBreakdown?.goldTiles ?? legacyBreakdown?.gold ?? 0,
+        alien: serverBreakdown?.alienBonus ?? legacyBreakdown?.alien ?? 0,
       };
     });
 
   const winner = rows[0];
   const milestoneItems = normalizeMilestones(extendedState.milestones);
-  const goldTiles = extendedState.goldTiles ?? [];
+  const goldTiles =
+    extendedState.goldTiles ?? toGoldTileItems(gameState.goldScoringTiles);
 
   return (
     <Dialog open onOpenChange={() => undefined}>
@@ -102,6 +114,14 @@ export function GameOverDialog(): React.JSX.Element | null {
       </DialogContent>
     </Dialog>
   );
+}
+
+function toGoldTileItems(tiles: IPublicGoldScoringTile[]): IGoldTileItem[] {
+  return tiles.map((tile) => ({
+    id: tile.id,
+    label: `${tile.id} ${tile.side}`,
+    remainingSlots: Math.max(0, tile.slotValues.length - tile.claims.length),
+  }));
 }
 
 function WinnerReadout({

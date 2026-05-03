@@ -621,6 +621,9 @@ export function serializeGame(game: IGame, version = 0): IGameStateDto {
 
     milestones: serializeMilestoneState(game),
     goldScoringTiles: serializeGoldTiles(game),
+    finalScoringResult: game.finalScoringResult
+      ? cloneValue(game.finalScoringResult)
+      : undefined,
     missionTracker: serializeMissionTracker(game),
   };
 }
@@ -809,5 +812,8 @@ export function projectGameState(
     recentEvents: game.eventLog.recent(20) as never,
     milestones: toPublicMilestones(game),
     goldScoringTiles: toPublicGoldScoringTiles(game),
+    finalScoringResult: game.finalScoringResult
+      ? cloneValue(game.finalScoringResult)
+      : undefined,
   };
 }

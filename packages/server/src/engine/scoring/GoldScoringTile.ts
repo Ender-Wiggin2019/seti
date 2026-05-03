@@ -9,6 +9,7 @@ import {
   ETrace,
 } from '@seti/common/types/element';
 import { type ETechId, getTechDescriptor } from '@seti/common/types/tech';
+import { EAlienType } from '@seti/common/types/protocol/enums';
 import { ESolarSystemElementType } from '../board/SolarSystem.js';
 import { countSectorFulfills } from '../board/sectorFulfillmentCounts.js';
 import { hasCardData, loadCardData } from '../cards/loadCardData.js';
@@ -333,6 +334,10 @@ export function scoreEndGameCard(
       return scoreSolvayConference(player, game);
     case '127':
       return hasProbeOnAsteroids(player, game) ? 13 : 0;
+    case 'ET.5':
+      return game.alienState.getPlayerTraceCount(player, ETrace.ANY, {
+        alienType: EAlienType.MASCAMITES,
+      });
     default:
       break;
   }

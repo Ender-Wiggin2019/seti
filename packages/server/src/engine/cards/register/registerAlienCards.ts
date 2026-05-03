@@ -2,16 +2,23 @@ import { AlteredTrajectory } from '../alien/AlteredTrajectoryCard.js';
 import { AmazingUncertaintyCard } from '../alien/AmazingUncertaintyCard.js';
 import { AreWeBeingObservedCard } from '../alien/AreWeBeingObservedCard.js';
 import { CloseUpViewCard } from '../alien/CloseUpViewCard.js';
+import { BreedingSample } from '../alien/BreedingSampleCard.js';
+import { EcosystemStudy } from '../alien/EcosystemStudyCard.js';
 import { ExcavationRover } from '../alien/ExcavationRoverCard.js';
 import { ExofossilDiscovery } from '../alien/ExofossilDiscoveryCard.js';
 import { ExofossilSamples } from '../alien/ExofossilSamplesCard.js';
+import { FirstContact } from '../alien/FirstContactCard.js';
 import { FloodingTheMediaSpaceCard } from '../alien/FloodingTheMediaSpaceCard.js';
 import { ListeningCarefullyCard } from '../alien/ListeningCarefullyCard.js';
+import { MartianQuarantineLab } from '../alien/MartianQuarantineLabCard.js';
+import { MassSampleCollection } from '../alien/MassSampleCollectionCard.js';
 import { PartOfEverydayLifeCard } from '../alien/PartOfEverydayLifeCard.js';
 import { PerfectTiming } from '../alien/PerfectTimingCard.js';
 import { ProbeCustomisation } from '../alien/ProbeCustomisationCard.js';
+import { RoverExploration } from '../alien/RoverExplorationCard.js';
 import { SignsOfLifeCard } from '../alien/SignsOfLifeCard.js';
 import { TerrainMapping } from '../alien/TerrainMappingCard.js';
+import { TheQueen } from '../alien/TheQueenCard.js';
 import { VisitorInTheSky } from '../alien/VisitorInTheSkyCard.js';
 import { createGenericCard } from '../base/GenericCards.js';
 import type { CardRegistry } from '../CardRegistry.js';
@@ -30,13 +37,13 @@ export function registerAlienCards(registry: CardRegistry): void {
   // ALIEN — sample/pickup group (land/orbit + pickup alien resource)
   // Cards ET.1-7: land/move + pickup alien sample + mission
   // ============================================================
-  g(registry, 'ET.1'); // First Contact            | MOVE, LAND, DESC(pickup), QM
-  g(registry, 'ET.2'); // Rover Exploration         | LAND, DESC(pickup-moon), QM
-  g(registry, 'ET.3'); // Mass Sample Collection    | ORBIT_OR_LAND, DESC(pickup), QM
-  g(registry, 'ET.4'); // Martian Quarantine Lab    | LAND, DESC(pickup), QM
-  g(registry, 'ET.5'); // Ecosystem Study           | DESC(pickup-back), EG
-  g(registry, 'ET.6'); // The Queen                 | LAND, DESC(pickup-moon), QM
-  g(registry, 'ET.7'); // Breeding Sample           | LAND, DESC(pickup), QM
+  registry.register('ET.1', () => new FirstContact()); // First Contact            | MOVE, LAND, DESC(pickup), QM
+  registry.register('ET.2', () => new RoverExploration()); // Rover Exploration         | LAND, DESC(pickup-moon), QM
+  registry.register('ET.3', () => new MassSampleCollection()); // Mass Sample Collection    | ORBIT_OR_LAND, DESC(pickup), QM
+  registry.register('ET.4', () => new MartianQuarantineLab()); // Martian Quarantine Lab    | LAND, DESC(pickup), QM
+  registry.register('ET.5', () => new EcosystemStudy()); // Ecosystem Study           | DESC(pickup-back), EG
+  registry.register('ET.6', () => new TheQueen()); // The Queen                 | LAND, DESC(pickup-moon), QM
+  registry.register('ET.7', () => new BreedingSample()); // Breeding Sample           | LAND, DESC(pickup), QM
 
   // ============================================================
   // ALIEN — tech + mission (standard tech research + alien mission)

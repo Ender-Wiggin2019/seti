@@ -275,6 +275,35 @@ describe('MascamitesAlienPlugin', () => {
     ).toThrow();
   });
 
+  it('does not mutate sample state when delivery is requested for an unregistered mission', () => {
+    const { game, board, plugin } = createMascamitesGame('mas-d-unregistered');
+    const p1 = getPlayer(game, 'p1');
+    const tokenId = firstSampleAt(board, EPlanet.JUPITER);
+    const capsule = plugin.collectSample(
+      p1,
+      game,
+      EPlanet.JUPITER,
+      tokenId,
+      'ET.1',
+    );
+    const ss = game.solarSystem;
+    if (!ss) throw new Error('expected solar system');
+    capsule.spaceId = ss.getSpacesOnPlanet(EPlanet.EARTH)[0].id;
+    const scoreBefore = p1.score;
+
+    expect(() =>
+      game.processFreeAction(p1.id, {
+        type: EFreeAction.DELIVER_SAMPLE,
+        capsuleId: capsule.capsuleId,
+        cardId: 'ET.1',
+      }),
+    ).toThrow(/not registered/);
+
+    expect(board.capsules).toEqual([capsule]);
+    expect(board.deliveredSamples).toEqual([]);
+    expect(p1.score).toBe(scoreBefore);
+  });
+
   it('MAS-D refuses delivery cards without structured sample destination data', () => {
     const { game, board, plugin } = createMascamitesGame('mas-d-semantic');
     const p1 = getPlayer(game, 'p1');
@@ -325,5 +354,41 @@ describe('MascamitesAlienPlugin', () => {
     expect(
       game.alienState.applyTraceToSlot(p1, game, slot.slotId, ETrace.BLUE),
     ).toBe(false);
+  });
+
+  it('creates a separate blue trace slot for every delivered sample and counts all marked sample slots', () => {
+    const { game, plugin } = createMascamitesGame('mas-d-many-blue-slots');
+    const p1 = getPlayer(game, 'p1');
+    const p2 = getPlayer(game, 'p2');
+    const [firstToken, secondToken] = MASCAMITES_SAMPLE_TOKENS;
+
+    const firstSlot = plugin.addDeliveredSampleBlueSlot(game, {
+      sampleTokenId: firstToken.id,
+      deliveredBy: p1.id,
+      deliveredAtRound: game.round,
+    });
+    const secondSlot = plugin.addDeliveredSampleBlueSlot(game, {
+      sampleTokenId: secondToken.id,
+      deliveredBy: p1.id,
+      deliveredAtRound: game.round,
+    });
+
+    expect(firstSlot.slotId).not.toBe(secondSlot.slotId);
+    expect(
+      game.alienState.applyTraceToSlot(p2, game, firstSlot.slotId, ETrace.BLUE),
+    ).toBe(true);
+    expect(
+      game.alienState.applyTraceToSlot(
+        p2,
+        game,
+        secondSlot.slotId,
+        ETrace.BLUE,
+      ),
+    ).toBe(true);
+    expect(
+      game.alienState.getPlayerTraceCount(p2, ETrace.BLUE, {
+        alienType: EAlienType.MASCAMITES,
+      }),
+    ).toBe(2);
   });
 });

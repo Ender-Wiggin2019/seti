@@ -1,4 +1,9 @@
 import type {
+  TMascamitesSamplePools,
+  TMascamitesSampleSourcePlanet,
+  TMascamitesSampleTokenId,
+} from '@seti/common/constant/mascamites';
+import type {
   EStarName,
   ISolarSystemSetupConfig,
   TSectorWinnerBonus,
@@ -9,11 +14,6 @@ import type {
   EPhase,
   EPlanet,
 } from '@seti/common/types/protocol/enums';
-import type {
-  TMascamitesSamplePools,
-  TMascamitesSampleSourcePlanet,
-  TMascamitesSampleTokenId,
-} from '@seti/common/constant/mascamites';
 import type {
   ETechId,
   ITechBonusToken,
@@ -27,6 +27,7 @@ import type {
   IMissionRuntimeState,
 } from '@/engine/missions/IMission.js';
 import type { TCardItem } from '@/engine/player/IPlayer.js';
+import type { IFinalScoringResult } from '@/engine/scoring/FinalScoring.js';
 import type {
   TGoldScoringTileId,
   TGoldScoringTileSide,
@@ -261,5 +262,6 @@ export interface IGameStateDto {
 
   milestones: IMilestoneStateDto;
   goldScoringTiles: IGoldTileDto[];
+  finalScoringResult?: IFinalScoringResult;
   missionTracker: IMissionTrackerDto;
 }
