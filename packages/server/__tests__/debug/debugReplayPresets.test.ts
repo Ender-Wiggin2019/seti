@@ -9,6 +9,9 @@ import {
   type AlienBoard,
   type AnomaliesAlienBoard,
   isAnomaliesAlienBoard,
+  isCentauriansAlienBoard,
+  isExertiansAlienBoard,
+  isMascamitesAlienBoard,
 } from '@/engine/alien/AlienBoard.js';
 import { OumuamuaAlienPlugin } from '@/engine/alien/plugins/OumuamuaAlienPlugin.js';
 import { buildTestGame, getPlayer } from '../helpers/TestGameBuilder.js';
@@ -57,6 +60,33 @@ describe('debugReplayPresets', () => {
       checkpoints: expect.arrayContaining([
         expect.objectContaining({ id: 'after-tile-signal' }),
         expect.objectContaining({ id: 'trace-columns' }),
+      ]),
+    });
+    expect(
+      presets.find((preset) => preset.id === 'centaurians-debug'),
+    ).toMatchObject({
+      id: 'centaurians-debug',
+      fields: [],
+      checkpoints: expect.arrayContaining([
+        expect.objectContaining({ id: 'after-discovery' }),
+      ]),
+    });
+    expect(
+      presets.find((preset) => preset.id === 'exertians-debug'),
+    ).toMatchObject({
+      id: 'exertians-debug',
+      fields: [],
+      checkpoints: expect.arrayContaining([
+        expect.objectContaining({ id: 'after-discovery' }),
+      ]),
+    });
+    expect(
+      presets.find((preset) => preset.id === 'mascamites-debug'),
+    ).toMatchObject({
+      id: 'mascamites-debug',
+      fields: [],
+      checkpoints: expect.arrayContaining([
+        expect.objectContaining({ id: 'after-discovery' }),
       ]),
     });
   });
@@ -312,5 +342,78 @@ describe('debugReplayPresets', () => {
     expect(traceColumnSlots.some((slot) => slot.slotId.endsWith('|1|4'))).toBe(
       true,
     );
+  });
+
+  it('replays centaurians debug state after discovery with milestones and reward slots', () => {
+    const game = buildTestGame();
+
+    const replay = applyDebugReplayPreset(game, {
+      presetId: 'centaurians-debug',
+      checkpointId: 'after-discovery',
+      fieldValues: {},
+    });
+
+    const board = game.alienState.getBoardByType(EAlienType.CENTAURIANS);
+    expect(isCentauriansAlienBoard(board)).toBe(true);
+    if (!isCentauriansAlienBoard(board)) {
+      throw new Error('Expected Centaurians board');
+    }
+
+    expect(replay.selectedAlienType).toBe(EAlienType.CENTAURIANS);
+    expect(replay.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
+    expect(board.discovered).toBe(true);
+    expect(board.messageMilestones).toHaveLength(game.players.length);
+    expect(Object.keys(board.pendingMessagesByPlayer)).toEqual(
+      expect.arrayContaining(game.players.map((player) => player.id)),
+    );
+    expect(board.rewardSlots.length).toBeGreaterThan(0);
+  });
+
+  it('replays exertians debug state after discovery with danger slots and milestones', () => {
+    const game = buildTestGame();
+
+    const replay = applyDebugReplayPreset(game, {
+      presetId: 'exertians-debug',
+      checkpointId: 'after-discovery',
+      fieldValues: {},
+    });
+
+    const board = game.alienState.getBoardByType(EAlienType.EXERTIANS);
+    expect(isExertiansAlienBoard(board)).toBe(true);
+    if (!isExertiansAlienBoard(board)) {
+      throw new Error('Expected Exertians board');
+    }
+
+    expect(replay.selectedAlienType).toBe(EAlienType.EXERTIANS);
+    expect(replay.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
+    expect(board.discovered).toBe(true);
+    expect(board.milestones).toHaveLength(2);
+    const dangerSlots = board.slots.filter((slot) =>
+      slot.slotId.startsWith('exertians-danger-'),
+    );
+    expect(dangerSlots).toHaveLength(9);
+  });
+
+  it('replays mascamites debug state after discovery with initialized sample pools', () => {
+    const game = buildTestGame();
+
+    const replay = applyDebugReplayPreset(game, {
+      presetId: 'mascamites-debug',
+      checkpointId: 'after-discovery',
+      fieldValues: {},
+    });
+
+    const board = game.alienState.getBoardByType(EAlienType.MASCAMITES);
+    expect(isMascamitesAlienBoard(board)).toBe(true);
+    if (!isMascamitesAlienBoard(board)) {
+      throw new Error('Expected Mascamites board');
+    }
+
+    expect(replay.selectedAlienType).toBe(EAlienType.MASCAMITES);
+    expect(replay.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
+    expect(board.discovered).toBe(true);
+    expect(board.samplePools.jupiter).toHaveLength(3);
+    expect(board.samplePools.saturn).toHaveLength(3);
+    expect(board.publicSamples).toHaveLength(1);
   });
 });

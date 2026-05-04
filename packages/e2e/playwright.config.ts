@@ -3,7 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 const SERVER_URL = process.env.SERVER_URL ?? 'http://localhost:3000';
 const CLIENT_URL = process.env.CLIENT_URL ?? 'http://localhost:5173';
 const SERVER_HEALTHCHECK_URL =
-  process.env.SERVER_HEALTHCHECK_URL ?? `${SERVER_URL}/auth/me`;
+  process.env.SERVER_HEALTHCHECK_URL ?? `${SERVER_URL}/health`;
 
 export default defineConfig({
   testDir: './tests',
@@ -34,17 +34,17 @@ export default defineConfig({
     : [
         {
           command:
-            'pnpm --filter @seti/server db:prepare:e2e && pnpm --filter @seti/server dev',
+            'pnpm --filter @seti/server db:prepare:e2e && pnpm --filter @seti/server exec tsx src/main.ts',
           url: SERVER_HEALTHCHECK_URL,
           reuseExistingServer: true,
-          timeout: 60_000,
+          timeout: 90_000,
           cwd: '../..',
         },
         {
-          command: 'pnpm --filter @seti/client dev',
+          command: 'pnpm --filter @seti/client exec vite --host 127.0.0.1 --strictPort',
           url: CLIENT_URL,
           reuseExistingServer: true,
-          timeout: 60_000,
+          timeout: 90_000,
           cwd: '../..',
         },
       ],

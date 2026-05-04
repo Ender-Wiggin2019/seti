@@ -1,5 +1,9 @@
 import type { TAlienSlotReward } from '@seti/common/constant/alienBoardConfig';
 import {
+  CENTAURIANS_REWARD_SLOT_DEFS,
+  type ICentauriansRewardSlotDef,
+} from '@seti/common/constant/centaurians';
+import {
   createEmptyMascamitesSamplePools,
   type TMascamitesSamplePools,
   type TMascamitesSampleSourcePlanet,
@@ -74,6 +78,36 @@ export interface IMascamitesDeliveredSampleComponent {
   slotId: string;
 }
 
+export type TExertianFaceDownSource =
+  | 'discovery'
+  | 'milestone-20'
+  | 'milestone-40';
+
+export interface IExertianFaceDownCardComponent {
+  ownerId: string;
+  cardId: string;
+  source: TExertianFaceDownSource;
+  revealed: boolean;
+}
+
+export interface IExertiansMilestoneComponent {
+  threshold: number;
+  claimedByPlayerIds: string[];
+  creditCost: number;
+}
+
+export interface ICentauriansMessageMilestoneComponent {
+  playerId: string;
+  threshold: number;
+  sourceCardId: string | null;
+  resolved: boolean;
+}
+
+export interface ICentauriansRewardSlotComponent
+  extends ICentauriansRewardSlotDef {
+  claimedByPlayerId: string | null;
+}
+
 // ---------------------------------------------------------------------------
 //  Alien Board
 // ---------------------------------------------------------------------------
@@ -107,11 +141,24 @@ export interface IMascamitesAlienBoardInit extends IAlienBoardInit {
   mascamitesDeliveredSamples?: IMascamitesDeliveredSampleComponent[];
 }
 
+export interface IExertiansAlienBoardInit extends IAlienBoardInit {
+  exertiansFaceDownCards?: IExertianFaceDownCardComponent[];
+  exertiansMilestones?: IExertiansMilestoneComponent[];
+}
+
+export interface ICentauriansAlienBoardInit extends IAlienBoardInit {
+  centauriansMessageMilestones?: ICentauriansMessageMilestoneComponent[];
+  centauriansPendingMessagesByPlayer?: Record<string, string[]>;
+  centauriansRewardSlots?: ICentauriansRewardSlotComponent[];
+}
+
 export type TAlienBoardInit =
   | IAlienBoardInit
   | IAnomaliesAlienBoardInit
   | IOumuamuaAlienBoardInit
-  | IMascamitesAlienBoardInit;
+  | IMascamitesAlienBoardInit
+  | IExertiansAlienBoardInit
+  | ICentauriansAlienBoardInit;
 
 export class AlienBoard {
   public readonly alienType: EAlienType;
@@ -503,7 +550,116 @@ export class MascamitesAlienBoard extends AlienBoard {
   }
 }
 
+export class ExertiansAlienBoard extends AlienBoard {
+  public faceDownCards: IExertianFaceDownCardComponent[];
+
+  public milestones: IExertiansMilestoneComponent[];
+
+  public constructor(init: IExertiansAlienBoardInit) {
+    super(init);
+    this.faceDownCards = (init.exertiansFaceDownCards ?? []).map((card) => ({
+      ...card,
+    }));
+    this.milestones = (init.exertiansMilestones ?? []).map((milestone) => ({
+      ...milestone,
+      claimedByPlayerIds: [...milestone.claimedByPlayerIds],
+    }));
+  }
+
+  public playFaceDownCard(
+    ownerId: string,
+    cardId: string,
+    source: TExertianFaceDownSource,
+  ): IExertianFaceDownCardComponent {
+    const played: IExertianFaceDownCardComponent = {
+      ownerId,
+      cardId,
+      source,
+      revealed: false,
+    };
+    this.faceDownCards.push(played);
+    return played;
+  }
+}
+
+export class CentauriansAlienBoard extends AlienBoard {
+  public messageMilestones: ICentauriansMessageMilestoneComponent[];
+
+  public pendingMessagesByPlayer: Record<string, string[]>;
+
+  public rewardSlots: ICentauriansRewardSlotComponent[];
+
+  public constructor(init: ICentauriansAlienBoardInit) {
+    super(init);
+    this.messageMilestones = (init.centauriansMessageMilestones ?? []).map(
+      (milestone) => ({
+        ...milestone,
+      }),
+    );
+    this.pendingMessagesByPlayer = Object.fromEntries(
+      Object.entries(init.centauriansPendingMessagesByPlayer ?? {}).map(
+        ([playerId, cardIds]) => [playerId, [...cardIds]],
+      ),
+    );
+    this.rewardSlots = (
+      init.centauriansRewardSlots ?? createDefaultCentauriansRewardSlots()
+    ).map((slot) => ({
+      ...slot,
+      rewards: slot.rewards.map((reward) => ({ ...reward })),
+    }));
+  }
+
+  public sendMessage(
+    playerId: string,
+    cardId: string,
+    currentScore: number,
+  ): ICentauriansMessageMilestoneComponent {
+    this.pendingMessagesByPlayer[playerId] ??= [];
+    this.pendingMessagesByPlayer[playerId].push(cardId);
+    const milestone: ICentauriansMessageMilestoneComponent = {
+      playerId,
+      threshold: currentScore + 15,
+      sourceCardId: cardId,
+      resolved: false,
+    };
+    this.messageMilestones.push(milestone);
+    return milestone;
+  }
+
+  public getAvailableRewardSlots(): ICentauriansRewardSlotComponent[] {
+    return this.rewardSlots.filter(
+      (slot) => slot.repeatable === true || slot.claimedByPlayerId === null,
+    );
+  }
+
+  public claimRewardSlot(
+    slotId: string,
+    playerId: string,
+  ): ICentauriansRewardSlotComponent | undefined {
+    const slot = this.rewardSlots.find((candidate) => candidate.slotId === slotId);
+    if (!slot) {
+      return undefined;
+    }
+    if (slot.claimedByPlayerId !== null && slot.repeatable !== true) {
+      return undefined;
+    }
+    slot.claimedByPlayerId = playerId;
+    return slot;
+  }
+}
+
+function createDefaultCentauriansRewardSlots(): ICentauriansRewardSlotComponent[] {
+  return CENTAURIANS_REWARD_SLOT_DEFS.map((slot) => ({
+    ...slot,
+    rewards: slot.rewards.map((reward) => ({ ...reward })),
+    claimedByPlayerId: null,
+  }));
+}
+
 export function createAlienBoard(init: TAlienBoardInit): AlienBoard {
+  if (init.alienType === EAlienType.CENTAURIANS) {
+    return new CentauriansAlienBoard(init as ICentauriansAlienBoardInit);
+  }
   if (init.alienType === EAlienType.ANOMALIES) {
     return new AnomaliesAlienBoard(init as IAnomaliesAlienBoardInit);
   }
@@ -512,6 +668,9 @@ export function createAlienBoard(init: TAlienBoardInit): AlienBoard {
   }
   if (init.alienType === EAlienType.MASCAMITES) {
     return new MascamitesAlienBoard(init as IMascamitesAlienBoardInit);
+  }
+  if (init.alienType === EAlienType.EXERTIANS) {
+    return new ExertiansAlienBoard(init as IExertiansAlienBoardInit);
   }
   return new AlienBoard(init);
 }
@@ -532,6 +691,18 @@ export function isMascamitesAlienBoard(
   board: AlienBoard | null | undefined,
 ): board is MascamitesAlienBoard {
   return board instanceof MascamitesAlienBoard;
+}
+
+export function isExertiansAlienBoard(
+  board: AlienBoard | null | undefined,
+): board is ExertiansAlienBoard {
+  return board instanceof ExertiansAlienBoard;
+}
+
+export function isCentauriansAlienBoard(
+  board: AlienBoard | null | undefined,
+): board is CentauriansAlienBoard {
+  return board instanceof CentauriansAlienBoard;
 }
 
 function cloneMascamitesSamplePools(

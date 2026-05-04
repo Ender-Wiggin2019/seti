@@ -1,6 +1,11 @@
-import { getAvailableMainActions } from '@seti/common/rules';
+import {
+  getAvailableFreeActions,
+  getAvailableMainActions,
+} from '@seti/common/rules';
+import { ESector } from '@seti/common/types/element';
 import {
   EAlienType,
+  EFreeAction,
   EMainAction,
   EPlanet,
   ETrace,
@@ -8,6 +13,8 @@ import {
 import { ETechId } from '@seti/common/types/tech';
 import {
   isAnomaliesAlienBoard,
+  isCentauriansAlienBoard,
+  isExertiansAlienBoard,
   isMascamitesAlienBoard,
   isOumuamuaAlienBoard,
 } from '@/engine/alien/AlienBoard.js';
@@ -99,6 +106,42 @@ describe('GameSerializer', () => {
     );
 
     expect(publicPlayer?.probeSpaceLimit).toBe(2);
+  });
+
+  it('projects completable quick mission branches only to the owning viewer', () => {
+    const game = createTestGame();
+    const player = game.players[0];
+    player.hand = ['37'];
+
+    game.processMainAction(player.id, {
+      type: EMainAction.PLAY_CARD,
+      payload: { cardIndex: 0 },
+    });
+
+    for (const sector of game.sectors.filter(
+      (sector) => sector.color === ESector.RED,
+    )) {
+      sector.sectorWinners.push(player.id);
+    }
+
+    const selfView = projectGameState(game, player.id);
+    const selfPlayer = selfView.players.find((p) => p.playerId === player.id);
+    if (!selfPlayer) {
+      throw new Error('expected projected self player');
+    }
+
+    expect(selfPlayer.completableMissionBranches).toEqual([
+      { cardId: '37', branchIndex: 0 },
+    ]);
+    expect(getAvailableFreeActions(selfPlayer, selfView)).toContain(
+      EFreeAction.COMPLETE_MISSION,
+    );
+
+    const opponentView = projectGameState(game, game.players[1].id);
+    const hiddenPlayer = opponentView.players.find(
+      (p) => p.playerId === player.id,
+    );
+    expect(hiddenPlayer?.completableMissionBranches).toBeUndefined();
   });
 
   it('does not persist redundant planetSpaceId inside planetary board state', () => {
@@ -327,5 +370,165 @@ describe('GameSerializer', () => {
       spaceId: 'ring-2-cell-1',
       movementTarget: { type: 'mascamites-capsule', id: 'capsule-1' },
     });
+  });
+
+  it('projects Mascamites board sample pools, capsules, delivered samples, and trace slots', () => {
+    const game = createTestGame();
+    game.hiddenAliens = [EAlienType.MASCAMITES];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.boards[0];
+    if (!isMascamitesAlienBoard(board)) {
+      throw new Error('expected Mascamites board');
+    }
+    board.discovered = true;
+    board.samplePools.jupiter = ['mascamites-credit-2', 'mascamites-energy-2'];
+    board.samplePools.saturn = ['mascamites-card-2'];
+    board.publicSamples = ['mascamites-vp-7'];
+    board.capsules = [
+      {
+        capsuleId: 'capsule-1',
+        ownerId: 'p1',
+        sampleTokenId: 'mascamites-credit-2',
+        sourcePlanet: EPlanet.JUPITER,
+        spaceId: 'ring-2-cell-1',
+        missionCardId: 'ET.1',
+      },
+    ];
+    board.deliveredSamples = [
+      {
+        sampleTokenId: 'mascamites-vp-7',
+        deliveredBy: 'p2',
+        deliveredAtRound: 3,
+        slotId: 'alien-0-mascamites-sample-blue-0',
+      },
+    ];
+    board.addTraceSlot({
+      slotId: 'alien-0-mascamites-sample-blue-0',
+      alienIndex: board.alienIndex,
+      traceColor: ETrace.BLUE,
+      maxOccupants: 1,
+      rewards: [{ type: 'VP', amount: 7 }],
+      isDiscovery: false,
+    });
+
+    const publicState = projectGameState(game, 'p1');
+    const publicAlien = publicState.aliens[0];
+
+    if (!publicAlien.board || publicAlien.board.type !== 'mascamites') {
+      throw new Error('expected Mascamites public board');
+    }
+    expect(publicAlien.board.samplePools).toEqual({
+      jupiter: ['mascamites-credit-2', 'mascamites-energy-2'],
+      saturn: ['mascamites-card-2'],
+    });
+    expect(publicAlien.board.publicSamples).toEqual(['mascamites-vp-7']);
+    expect(publicAlien.board.capsules).toEqual([
+      {
+        capsuleId: 'capsule-1',
+        ownerId: 'p1',
+        sampleTokenId: 'mascamites-credit-2',
+        sourcePlanet: EPlanet.JUPITER,
+        spaceId: 'ring-2-cell-1',
+        missionCardId: 'ET.1',
+      },
+    ]);
+    expect(publicAlien.board.deliveredSamples).toEqual([
+      {
+        sampleTokenId: 'mascamites-vp-7',
+        deliveredBy: 'p2',
+        deliveredAtRound: 3,
+        slotId: 'alien-0-mascamites-sample-blue-0',
+      },
+    ]);
+    expect(publicAlien.board.traceSlots).toEqual([
+      expect.objectContaining({
+        slotId: 'alien-0-mascamites-sample-blue-0',
+        traceColor: ETrace.BLUE,
+      }),
+    ]);
+  });
+
+  it('projects Exertians face-down cards without leaking card ids or danger values', () => {
+    const game = createTestGame();
+    game.hiddenAliens = [EAlienType.EXERTIANS];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.boards[0];
+    if (!isExertiansAlienBoard(board)) {
+      throw new Error('expected Exertians board');
+    }
+    board.discovered = true;
+    board.playFaceDownCard('p1', 'ET.52', 'discovery');
+    board.playFaceDownCard('p2', 'ET.53', 'milestone-20');
+
+    const publicState = projectGameState(game, 'p1');
+    const publicAlien = publicState.aliens[0];
+
+    if (!publicAlien.board || publicAlien.board.type !== 'exertians') {
+      throw new Error('expected Exertians public board');
+    }
+    expect(publicAlien.board.faceDownCards).toEqual([
+      { ownerId: 'p1', source: 'discovery', revealed: false },
+      { ownerId: 'p2', source: 'milestone-20', revealed: false },
+    ]);
+    expect(JSON.stringify(publicAlien.board)).not.toContain('ET.52');
+    expect(JSON.stringify(publicAlien.board)).not.toContain('danger');
+  });
+
+  it('projects Centaurians message milestones as public board state', () => {
+    const game = createTestGame();
+    game.hiddenAliens = [EAlienType.CENTAURIANS];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.boards[0];
+    if (!isCentauriansAlienBoard(board)) {
+      throw new Error('expected Centaurians board');
+    }
+    board.discovered = true;
+    board.messageMilestones = [
+      {
+        playerId: 'p1',
+        threshold: 27,
+        sourceCardId: null,
+        resolved: false,
+      },
+      {
+        playerId: 'p2',
+        threshold: 34,
+        sourceCardId: 'ET.31',
+        resolved: false,
+      },
+    ];
+    board.pendingMessagesByPlayer = { p1: [], p2: ['ET.31'] };
+    board.rewardSlots[0]!.claimedByPlayerId = 'p1';
+
+    const publicState = projectGameState(game, 'p1');
+    const publicAlien = publicState.aliens[0];
+
+    if (!publicAlien.board || publicAlien.board.type !== 'centaurians') {
+      throw new Error('expected Centaurians public board');
+    }
+    expect(publicAlien.board.messageMilestones).toEqual([
+      {
+        playerId: 'p1',
+        threshold: 27,
+        sourceCardId: null,
+        resolved: false,
+      },
+      {
+        playerId: 'p2',
+        threshold: 34,
+        sourceCardId: 'ET.31',
+        resolved: false,
+      },
+    ]);
+    expect(publicAlien.board.pendingMessagesByPlayer).toEqual({
+      p1: [],
+      p2: ['ET.31'],
+    });
+    expect(publicAlien.board.rewardSlots[0]).toEqual(
+      expect.objectContaining({
+        slotId: 'any-trace',
+        claimedByPlayerId: 'p1',
+      }),
+    );
   });
 });

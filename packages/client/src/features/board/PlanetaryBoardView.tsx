@@ -4,15 +4,18 @@ import {
   PLANETARY_BOARD_DIMENSIONS,
   PLANETARY_PLANETS,
 } from '@seti/common/constant/boardLayout';
+import { canLandOnPlanet, canOrbitPlanet } from '@seti/common/rules';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 import { useTextMode } from '@/stores/debugStore';
 import type {
+  IInputResponse,
   IPlayerInputModel,
+  IPublicGameState,
   IPublicPlanetaryBoard,
   IPublicPlanetState,
 } from '@/types/re-exports';
-import { EPlanet, EPlayerInputType } from '@/types/re-exports';
+import { EMainAction, EPlanet, EPlayerInputType } from '@/types/re-exports';
 import {
   formatFirstLandData,
   formatFirstOrbitRewardList,
@@ -44,8 +47,13 @@ function getPlanetConfig(
 
 interface IPlanetaryBoardViewProps {
   planetaryBoard: IPublicPlanetaryBoard;
+  gameState?: IPublicGameState | null;
+  myPlayerId?: string;
   pendingInput: IPlayerInputModel | null;
   playerColors: Record<string, string>;
+  mainActionPlanetMode?: EMainAction.ORBIT | EMainAction.LAND | null;
+  onSelectMainActionPlanet?: (planet: EPlanet) => void;
+  onRespondInput?: (response: IInputResponse) => void;
 }
 
 function TokenAtPoint({
@@ -76,8 +84,13 @@ function TokenAtPoint({
 
 export function PlanetaryBoardView({
   planetaryBoard,
+  gameState = null,
+  myPlayerId,
   pendingInput,
   playerColors,
+  mainActionPlanetMode = null,
+  onSelectMainActionPlanet,
+  onRespondInput,
 }: IPlanetaryBoardViewProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const textMode = useTextMode();
@@ -85,6 +98,41 @@ export function PlanetaryBoardView({
     pendingInput?.type === EPlayerInputType.PLANET
       ? new Set(pendingInput.options)
       : new Set<EPlanet>();
+  const mainActionPlayer = gameState?.players.find(
+    (player) => player.playerId === myPlayerId,
+  );
+  const selectableMainActionPlanets = new Set<EPlanet>(
+    mainActionPlanetMode !== null && gameState && mainActionPlayer
+      ? PLANETARY_PLANETS.filter((planet) => {
+          const planetState = planetaryBoard.planets[planet];
+          if (!planetState) return false;
+          if (mainActionPlanetMode === EMainAction.ORBIT) {
+            return canOrbitPlanet(
+              planet,
+              planetState,
+              mainActionPlayer,
+              gameState,
+            );
+          }
+          return canLandOnPlanet(
+            planet,
+            planetState,
+            mainActionPlayer,
+            gameState,
+          );
+        })
+      : [],
+  );
+
+  function handlePlanetSelect(planet: EPlanet): void {
+    if (selectablePlanets.has(planet)) {
+      onRespondInput?.({ type: EPlayerInputType.PLANET, planet });
+      return;
+    }
+    if (selectableMainActionPlanets.has(planet)) {
+      onSelectMainActionPlanet?.(planet);
+    }
+  }
 
   return (
     <section className='w-full rounded-lg border border-surface-700/40 bg-surface-900/40 p-3'>
@@ -144,19 +192,33 @@ export function PlanetaryBoardView({
               const firstMoonSlotIndex = moonSlotIndexes[0];
               return (
                 <div key={`planet-overlay-${planet}`}>
-                  <span
+                  <button
+                    type='button'
+                    data-testid={`planet-target-${planet}`}
+                    disabled={
+                      !selectablePlanets.has(planet) &&
+                      !selectableMainActionPlanets.has(planet)
+                    }
                     className={cn(
                       'absolute -translate-x-1/2 -translate-y-1/2 border border-surface-200/60 bg-surface-900/75 font-bold uppercase text-text-100 shadow-[0_0_8px_rgba(0,0,0,0.4)]',
                       textMode
                         ? 'inline-flex w-[150px] flex-col items-start justify-center gap-0.5 rounded-sm px-2 py-1 text-left font-mono text-[8px] leading-tight'
                         : 'inline-flex h-7 w-7 items-center justify-center rounded-full text-[10px] tracking-wide',
-                      selectablePlanets.has(planet) &&
+                      (selectablePlanets.has(planet) ||
+                        selectableMainActionPlanets.has(planet)) &&
                         'border-accent-500 text-accent-300 ring-1 ring-accent-500/80',
+                      (selectablePlanets.has(planet) ||
+                        selectableMainActionPlanets.has(planet)) &&
+                        'cursor-pointer hover:bg-surface-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400',
+                      !selectablePlanets.has(planet) &&
+                        !selectableMainActionPlanets.has(planet) &&
+                        'cursor-default',
                     )}
                     style={{
                       left: `${marker.anchor.x}%`,
                       top: `${marker.anchor.y}%`,
                     }}
+                    onClick={() => handlePlanetSelect(planet)}
                     title={`${marker.label} | moons: ${marker.moonNames.join(', ') || 'none'}`}
                   >
                     {textMode ? (
@@ -174,7 +236,7 @@ export function PlanetaryBoardView({
                     ) : (
                       marker.label.slice(0, 2)
                     )}
-                  </span>
+                  </button>
 
                   {marker.orbitSlots.map((slot, index) => {
                     const occupied = planetState.orbitSlots[index];
@@ -279,7 +341,11 @@ export function PlanetaryBoardView({
                   createEmptyPlanetState(config)
                 }
                 playerColors={playerColors}
-                isSelectable={selectablePlanets.has(planet)}
+                isSelectable={
+                  selectablePlanets.has(planet) ||
+                  selectableMainActionPlanets.has(planet)
+                }
+                onSelect={() => handlePlanetSelect(planet)}
               />
             );
           })}

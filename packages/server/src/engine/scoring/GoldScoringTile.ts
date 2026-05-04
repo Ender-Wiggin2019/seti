@@ -8,8 +8,8 @@ import {
   ETech,
   ETrace,
 } from '@seti/common/types/element';
-import { type ETechId, getTechDescriptor } from '@seti/common/types/tech';
 import { EAlienType } from '@seti/common/types/protocol/enums';
+import { type ETechId, getTechDescriptor } from '@seti/common/types/tech';
 import { ESolarSystemElementType } from '../board/SolarSystem.js';
 import { countSectorFulfills } from '../board/sectorFulfillmentCounts.js';
 import { hasCardData, loadCardData } from '../cards/loadCardData.js';

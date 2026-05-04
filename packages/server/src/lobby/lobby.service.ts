@@ -18,7 +18,11 @@ import { gamePlayers } from '@/persistence/schema/players.js';
 import { users } from '@/persistence/schema/users.js';
 import {
   applyBehaviorFlowScenario,
+  applyDeliverSampleScenario,
+  applySpendSignalTokenScenario,
   BEHAVIOR_FLOW_SCENARIO_PRESET,
+  DELIVER_SAMPLE_SCENARIO_PRESET,
+  SPEND_SIGNAL_TOKEN_SCENARIO_PRESET,
 } from '@/testing/behaviorFlowScenario.js';
 import type { IRoomPlayer, IRoomResponse } from './dto/RoomResponseDto.js';
 
@@ -270,6 +274,10 @@ export class LobbyService {
 
     if (scenarioPreset === BEHAVIOR_FLOW_SCENARIO_PRESET) {
       applyBehaviorFlowScenario(game);
+    } else if (scenarioPreset === SPEND_SIGNAL_TOKEN_SCENARIO_PRESET) {
+      applySpendSignalTokenScenario(game);
+    } else if (scenarioPreset === DELIVER_SAMPLE_SCENARIO_PRESET) {
+      applyDeliverSampleScenario(game);
     }
 
     await this.gameRepo.startFromLobby(game);

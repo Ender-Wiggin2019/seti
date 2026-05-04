@@ -25,6 +25,7 @@ describe('Player', () => {
       energy: 3,
       publicity: 4,
       data: 0,
+      signalTokens: 0,
     });
     expect(player.income.computeRoundPayout()[EResource.CREDIT]).toBe(0);
     expect(player.income.computeRoundPayout()[EResource.ENERGY]).toBe(0);
@@ -70,6 +71,7 @@ describe('Player', () => {
       energy: 5,
       publicity: 6,
       data: 5,
+      signalTokens: 0,
     });
     expect(player.income.computeRoundPayout()[EResource.CREDIT]).toBe(3);
     expect(player.income.computeRoundPayout()[EResource.ENERGY]).toBe(3);
@@ -155,6 +157,7 @@ describe('Player', () => {
       energy: 3,
       publicity: 4,
       data: 1,
+      signalTokens: 0,
     });
     expect(player.score).toBe(3);
     expect(player.getMoveStash()).toBe(2);
@@ -218,6 +221,26 @@ describe('Player', () => {
     expect(incomeResource).toBe(EResource.CREDIT);
     expect(player.tuckedIncomeCards).toEqual(['93']);
     expect(player.income.tuckedCardIncome[EResource.CREDIT]).toBe(1);
+  });
+
+  it('supports publicity as a tucked income resource', () => {
+    const player = new Player({
+      id: 'p-publicity-income',
+      name: 'Alice',
+      color: 'red',
+      seatIndex: 0,
+    });
+
+    const incomeResource = player.addTuckedIncomeFromCard({
+      id: 'custom-publicity-income',
+      income: EResource.PUBLICITY,
+      price: 0,
+      name: 'Custom Publicity Income',
+      effects: [],
+    });
+
+    expect(incomeResource).toBe(EResource.PUBLICITY);
+    expect(player.income.tuckedCardIncome[EResource.PUBLICITY]).toBe(1);
   });
 
   it('validates numeric initialization constraints', () => {

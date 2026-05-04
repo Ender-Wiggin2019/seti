@@ -1,4 +1,17 @@
-import { EMainAction } from '@seti/common/types/protocol/enums';
+import {
+  EAlienType,
+  EMainAction,
+  EPlanet,
+  ETrace,
+} from '@seti/common/types/protocol/enums';
+import {
+  isCentauriansAlienBoard,
+  isExertiansAlienBoard,
+  isAnomaliesAlienBoard,
+  isMascamitesAlienBoard,
+  isOumuamuaAlienBoard,
+} from '@/engine/alien/AlienBoard.js';
+import { AlienState } from '@/engine/alien/AlienState.js';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { Game } from '@/engine/Game.js';
 import { deserializeGame } from '@/persistence/serializer/GameDeserializer.js';
@@ -36,6 +49,272 @@ describe('GameDeserializer', () => {
     const dto2 = serializeGame(restored, 1);
 
     expect(dto2).toEqual(dto1);
+  });
+
+  it('round-trips Exertians face-down runtime state', () => {
+    const game = createTestGame();
+    resolveSetupTucks(game);
+    game.hiddenAliens = [EAlienType.EXERTIANS];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.getBoardByType(EAlienType.EXERTIANS);
+    if (!isExertiansAlienBoard(board)) {
+      throw new Error('expected Exertians board');
+    }
+    board.discovered = true;
+    board.playFaceDownCard('p1', 'ET.52', 'discovery');
+    board.milestones = [
+      { threshold: 24, claimedByPlayerIds: ['p1'], creditCost: 0 },
+      { threshold: 44, claimedByPlayerIds: [], creditCost: 1 },
+    ];
+
+    const restored = deserializeGame(serializeGame(game, 1));
+    const restoredBoard =
+      restored.alienState.getBoardByType(EAlienType.EXERTIANS);
+
+    if (!isExertiansAlienBoard(restoredBoard)) {
+      throw new Error('expected restored Exertians board');
+    }
+    expect(restoredBoard.faceDownCards).toEqual([
+      {
+        ownerId: 'p1',
+        cardId: 'ET.52',
+        source: 'discovery',
+        revealed: false,
+      },
+    ]);
+    expect(restoredBoard.milestones).toEqual([
+      { threshold: 24, claimedByPlayerIds: ['p1'], creditCost: 0 },
+      { threshold: 44, claimedByPlayerIds: [], creditCost: 1 },
+    ]);
+  });
+
+  it('round-trips Anomalies board columns and solar tokens', () => {
+    const game = createTestGame();
+    resolveSetupTucks(game);
+    game.hiddenAliens = [EAlienType.ANOMALIES];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.getBoardByType(EAlienType.ANOMALIES);
+    if (!isAnomaliesAlienBoard(board)) {
+      throw new Error('expected Anomalies board');
+    }
+    board.discovered = true;
+    board.addAnomalyColumn({
+      slotId: 'alien-0-anomaly-column|red-trace',
+      alienIndex: board.alienIndex,
+      traceColor: ETrace.RED,
+      maxOccupants: -1,
+      rewards: [],
+      isDiscovery: false,
+    });
+    game.solarSystem?.addAlienToken({
+      tokenId: 'alien-0-anomaly-token|3|red-trace',
+      alienType: EAlienType.ANOMALIES,
+      sectorIndex: 3,
+      traceColor: ETrace.RED,
+      rewards: [{ type: 'VP', amount: 4 }],
+    });
+
+    const restored = deserializeGame(serializeGame(game, 1));
+    const restoredBoard =
+      restored.alienState.getBoardByType(EAlienType.ANOMALIES);
+
+    if (!isAnomaliesAlienBoard(restoredBoard)) {
+      throw new Error('expected restored Anomalies board');
+    }
+    expect(restoredBoard.anomalyColumns.map((slot) => slot.slotId)).toEqual([
+      'alien-0-anomaly-column|red-trace',
+    ]);
+    expect(restored.solarSystem?.alienTokens).toEqual([
+      {
+        tokenId: 'alien-0-anomaly-token|3|red-trace',
+        alienType: EAlienType.ANOMALIES,
+        sectorIndex: 3,
+        traceColor: ETrace.RED,
+        rewards: [{ type: 'VP', amount: 4 }],
+      },
+    ]);
+  });
+
+  it('round-trips Oumuamua tile runtime state', () => {
+    const game = createTestGame();
+    resolveSetupTucks(game);
+    game.hiddenAliens = [EAlienType.OUMUAMUA];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.getBoardByType(EAlienType.OUMUAMUA);
+    if (!isOumuamuaAlienBoard(board)) {
+      throw new Error('expected Oumuamua board');
+    }
+    board.discovered = true;
+    board.oumuamuaTile = {
+      spaceId: 'ring-3-cell-5',
+      sectorId: 'sector-2',
+      dataRemaining: 2,
+      markerPlayerIds: ['p1', 'p2'],
+    };
+    board.addTraceSlot({
+      slotId: 'alien-0-oumuamua-trace|blue-trace|1|1',
+      alienIndex: board.alienIndex,
+      traceColor: ETrace.BLUE,
+      maxOccupants: 1,
+      rewards: [{ type: 'DATA', amount: 1 }],
+      isDiscovery: false,
+    });
+
+    const restored = deserializeGame(serializeGame(game, 1));
+    const restoredBoard =
+      restored.alienState.getBoardByType(EAlienType.OUMUAMUA);
+
+    if (!isOumuamuaAlienBoard(restoredBoard)) {
+      throw new Error('expected restored Oumuamua board');
+    }
+    expect(restoredBoard.oumuamuaTile).toEqual({
+      spaceId: 'ring-3-cell-5',
+      sectorId: 'sector-2',
+      dataRemaining: 2,
+      markerPlayerIds: ['p1', 'p2'],
+    });
+    expect(restoredBoard.speciesTraceSlots).toEqual([
+      expect.objectContaining({
+        slotId: 'alien-0-oumuamua-trace|blue-trace|1|1',
+      }),
+    ]);
+  });
+
+  it('round-trips Centaurians message runtime state', () => {
+    const game = createTestGame();
+    resolveSetupTucks(game);
+    game.hiddenAliens = [EAlienType.CENTAURIANS];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.getBoardByType(EAlienType.CENTAURIANS);
+    if (!isCentauriansAlienBoard(board)) {
+      throw new Error('expected Centaurians board');
+    }
+    board.discovered = true;
+    board.messageMilestones = [
+      {
+        playerId: 'p1',
+        threshold: 27,
+        sourceCardId: null,
+        resolved: false,
+      },
+      {
+        playerId: 'p2',
+        threshold: 34,
+        sourceCardId: 'ET.31',
+        resolved: true,
+      },
+    ];
+    board.pendingMessagesByPlayer = { p1: [], p2: ['ET.31'] };
+    board.rewardSlots[0]!.claimedByPlayerId = 'p1';
+
+    const restored = deserializeGame(serializeGame(game, 1));
+    const restoredBoard =
+      restored.alienState.getBoardByType(EAlienType.CENTAURIANS);
+
+    if (!isCentauriansAlienBoard(restoredBoard)) {
+      throw new Error('expected restored Centaurians board');
+    }
+    expect(restoredBoard.messageMilestones).toEqual([
+      {
+        playerId: 'p1',
+        threshold: 27,
+        sourceCardId: null,
+        resolved: false,
+      },
+      {
+        playerId: 'p2',
+        threshold: 34,
+        sourceCardId: 'ET.31',
+        resolved: true,
+      },
+    ]);
+    expect(restoredBoard.pendingMessagesByPlayer).toEqual({
+      p1: [],
+      p2: ['ET.31'],
+    });
+    expect(restoredBoard.rewardSlots[0]).toEqual(
+      expect.objectContaining({
+        slotId: 'any-trace',
+        claimedByPlayerId: 'p1',
+      }),
+    );
+  });
+
+  it('round-trips Mascamites board runtime state', () => {
+    const game = createTestGame();
+    resolveSetupTucks(game);
+    game.hiddenAliens = [EAlienType.MASCAMITES];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.getBoardByType(EAlienType.MASCAMITES);
+    if (!isMascamitesAlienBoard(board)) {
+      throw new Error('expected Mascamites board');
+    }
+    board.discovered = true;
+    board.samplePools.jupiter = ['mascamites-credit-2', 'mascamites-energy-2'];
+    board.samplePools.saturn = ['mascamites-card-2'];
+    board.publicSamples = ['mascamites-vp-7'];
+    board.capsules = [
+      {
+        capsuleId: 'capsule-1',
+        ownerId: 'p1',
+        sampleTokenId: 'mascamites-credit-2',
+        sourcePlanet: EPlanet.JUPITER,
+        spaceId: 'ring-2-cell-1',
+        missionCardId: 'ET.1',
+      },
+    ];
+    board.deliveredSamples = [
+      {
+        sampleTokenId: 'mascamites-vp-7',
+        deliveredBy: 'p2',
+        deliveredAtRound: 3,
+        slotId: 'alien-0-mascamites-sample-blue-0',
+      },
+    ];
+    board.addTraceSlot({
+      slotId: 'alien-0-mascamites-sample-blue-0',
+      alienIndex: board.alienIndex,
+      traceColor: ETrace.BLUE,
+      maxOccupants: 1,
+      rewards: [{ type: 'VP', amount: 7 }],
+      isDiscovery: false,
+    });
+
+    const restored = deserializeGame(serializeGame(game, 1));
+    const restoredBoard =
+      restored.alienState.getBoardByType(EAlienType.MASCAMITES);
+
+    if (!isMascamitesAlienBoard(restoredBoard)) {
+      throw new Error('expected restored Mascamites board');
+    }
+    expect(restoredBoard.samplePools).toEqual({
+      jupiter: ['mascamites-credit-2', 'mascamites-energy-2'],
+      saturn: ['mascamites-card-2'],
+    });
+    expect(restoredBoard.publicSamples).toEqual(['mascamites-vp-7']);
+    expect(restoredBoard.capsules).toEqual([
+      {
+        capsuleId: 'capsule-1',
+        ownerId: 'p1',
+        sampleTokenId: 'mascamites-credit-2',
+        sourcePlanet: EPlanet.JUPITER,
+        spaceId: 'ring-2-cell-1',
+        missionCardId: 'ET.1',
+      },
+    ]);
+    expect(restoredBoard.deliveredSamples).toEqual([
+      {
+        sampleTokenId: 'mascamites-vp-7',
+        deliveredBy: 'p2',
+        deliveredAtRound: 3,
+        slotId: 'alien-0-mascamites-sample-blue-0',
+      },
+    ]);
+    expect(restoredBoard.speciesTraceSlots).toEqual([
+      expect.objectContaining({
+        slotId: 'alien-0-mascamites-sample-blue-0',
+      }),
+    ]);
   });
 
   it('restores RNG sequence and game can continue', () => {

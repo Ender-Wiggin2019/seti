@@ -38,7 +38,7 @@ test('configured room flow e2e: create custom room settings, join, launch, and h
 
     await expect(hostPage.locator('[data-testid="game-setting-value-players"]')).toHaveText('2');
     await expect(
-      hostPage.locator('[data-testid="game-setting-alien-modules"] [role="switch"]'),
+      hostPage.locator('[data-testid="game-setting-alien-modules"] button[role="switch"]'),
     ).toHaveAttribute('aria-checked', 'true');
     await expect(hostPage.locator('[data-testid="game-setting-value-undo"]')).toContainText(/allowed/i);
     await expect(hostPage.locator('[data-testid="game-setting-value-turn-timer"]')).toContainText(/off/i);

@@ -11,8 +11,8 @@ import {
   ESpecialAction,
   ETrace,
 } from '@seti/common/types/element';
-import { drawCard } from '../deck/drawCard.js';
 import { createPickupBackInput } from '../cards/alien/MascamitesCardUtils.js';
+import { drawCard } from '../deck/drawCard.js';
 import { LaunchProbeEffect } from '../effects/probe/LaunchProbeEffect.js';
 import { MarkSectorSignalEffect } from '../effects/scan/MarkSectorSignalEffect.js';
 import type { IGame } from '../IGame.js';

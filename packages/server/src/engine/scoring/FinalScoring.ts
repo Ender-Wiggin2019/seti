@@ -7,6 +7,7 @@ export interface IPlayerFinalScoreBreakdown {
   endGameCards: number;
   goldTiles: number;
   alienBonus: number;
+  alienPenalty: number;
   totalAdded: number;
   finalScore: number;
 }
@@ -29,10 +30,31 @@ function getAlienBonus(player: IPlayer, game: IGame): number {
   return bonus;
 }
 
+function getAlienPenalties(
+  game: IGame,
+  scoresAfterPositiveScoring: Readonly<Record<string, number>>,
+): Record<string, number> {
+  const penalties: Record<string, number> = {};
+  for (const board of game.alienState.boards) {
+    if (!board.discovered) continue;
+    const plugin = AlienRegistry.get(board.alienType);
+    const pluginPenalties = plugin?.onGameEndPenalty?.(
+      game,
+      scoresAfterPositiveScoring,
+    );
+    if (!pluginPenalties) continue;
+    for (const [playerId, penalty] of Object.entries(pluginPenalties)) {
+      penalties[playerId] = (penalties[playerId] ?? 0) + penalty;
+    }
+  }
+  return penalties;
+}
+
 export class FinalScoring {
   public static score(game: IGame): IFinalScoringResult {
     const scores: Record<string, number> = {};
     const breakdown: Record<string, IPlayerFinalScoreBreakdown> = {};
+    const positiveScores: Record<string, number> = {};
 
     for (const player of game.players) {
       const endGameCards = player.endGameCards.reduce(
@@ -47,14 +69,27 @@ export class FinalScoring {
       const totalAdded = endGameCards + scoredGoldTiles + alienBonus;
       const finalScore = player.score + totalAdded;
 
-      scores[player.id] = finalScore;
+      positiveScores[player.id] = finalScore;
       breakdown[player.id] = {
         endGameCards,
         goldTiles: scoredGoldTiles,
         alienBonus,
+        alienPenalty: 0,
         totalAdded,
         finalScore,
       };
+    }
+
+    const alienPenalties = getAlienPenalties(game, positiveScores);
+    for (const player of game.players) {
+      const penalty = alienPenalties[player.id] ?? 0;
+      const playerBreakdown = breakdown[player.id];
+      if (!playerBreakdown) continue;
+
+      playerBreakdown.alienPenalty += penalty;
+      playerBreakdown.totalAdded += penalty;
+      playerBreakdown.finalScore += penalty;
+      scores[player.id] = playerBreakdown.finalScore;
     }
 
     const highestScore = Math.max(...Object.values(scores));

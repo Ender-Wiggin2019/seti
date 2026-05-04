@@ -895,6 +895,10 @@ export function SolarSystemView({
         />
 
         {spacePoints.map((space) => {
+          const spaceState = solarSystem.spaceStates?.[space.spaceId];
+          const planet = spaceState?.elements?.find(
+            (element) => element.planet !== undefined,
+          )?.planet;
           const probeCount =
             boardPieceView.bySpacePlayers[space.spaceId]?.length ?? 0;
           const hasMyProbe = (
@@ -908,6 +912,8 @@ export function SolarSystemView({
               key={space.spaceId}
               type='button'
               data-testid={`solar-space-${space.spaceId}`}
+              data-planet={planet}
+              data-element-types={spaceState?.elementTypes.join(' ')}
               className='absolute z-70 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border border-transparent bg-transparent transition-all hover:border-accent-400/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/60'
               style={{
                 left: `${space.xPercent}%`,
@@ -1011,6 +1017,8 @@ export function SolarSystemView({
                 ? `solar-capsule-${piece.key}`
                 : `solar-probe-${piece.key}`
             }
+            data-player-id={piece.playerId}
+            data-space-id={piece.spaceId}
             style={{
               left: `${piece.xPercent}%`,
               top: `${piece.yPercent}%`,

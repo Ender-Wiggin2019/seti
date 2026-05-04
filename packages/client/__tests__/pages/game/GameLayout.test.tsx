@@ -6,7 +6,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IGameContext } from '@/pages/game/GameContext';
 import {
   EFreeAction,
+  EMainAction,
   EPhase,
+  EPlanet,
   EPlayerInputType,
   ETech,
 } from '@/types/re-exports';
@@ -276,6 +278,31 @@ describe('GameLayout', () => {
       expect(screen.getByTestId('free-action-bar')).toBeInTheDocument();
     });
 
+    it('sends complete mission with projected branch metadata when exactly one branch is completable', async () => {
+      const sendFreeAction = vi.fn();
+      mockContextValue = createMockContext({
+        sendFreeAction,
+        gameState: createMockGameState({
+          players: [
+            createMockPlayerState({
+              playerId: 'player-1',
+              playedMissions: [createCard('37', 'Planetary Geologic Map')],
+              completableMissionBranches: [{ cardId: '37', branchIndex: 0 }],
+            }),
+          ],
+        }),
+      });
+      await renderLayout();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Complete Mission' }));
+
+      expect(sendFreeAction).toHaveBeenCalledWith({
+        type: EFreeAction.COMPLETE_MISSION,
+        cardId: '37',
+        branchIndex: 0,
+      });
+    });
+
     it('arms and ends movement mode from the free action bar', async () => {
       mockContextValue = createMockContext({ isMyTurn: true });
       await renderLayout();
@@ -338,6 +365,59 @@ describe('GameLayout', () => {
           type: 'mascamites-capsule',
           id: 'capsule-1',
         },
+      });
+    });
+
+    it('selects a planet before sending orbit main action payload', async () => {
+      const sendAction = vi.fn();
+      mockContextValue = createMockContext({
+        sendAction,
+        gameState: createMockGameState({
+          players: [
+            createMockPlayerState({
+              playerId: 'player-1',
+              resources: { credit: 10, energy: 5, data: 0, publicity: 3 },
+            }),
+          ],
+          solarSystem: {
+            ...createMockGameState().solarSystem,
+            planetSpaceIds: { [EPlanet.MARS]: 'space-4' },
+            probes: [
+              {
+                playerId: 'player-1',
+                spaceId: 'space-4',
+                probeId: 'probe-1',
+              },
+            ],
+          },
+          planetaryBoard: {
+            planets: {
+              [EPlanet.MARS]: {
+                orbitSlots: [],
+                landingSlots: [],
+                firstOrbitClaimed: false,
+                firstLandDataBonusTaken: [],
+                moonOccupant: null,
+              },
+            },
+          },
+        }),
+      });
+      await renderLayout();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Orbit' }));
+
+      expect(screen.getByRole('tab', { name: 'Planets' })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      );
+      expect(sendAction).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByTestId('planet-target-mars'));
+
+      expect(sendAction).toHaveBeenCalledWith({
+        type: EMainAction.ORBIT,
+        payload: { planet: EPlanet.MARS },
       });
     });
 

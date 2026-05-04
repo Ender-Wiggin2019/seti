@@ -465,6 +465,25 @@ export function deserializeGame(dto: IGameStateDto): Game {
       mascamitesDeliveredSamples: a.mascamitesDeliveredSamples?.map(
         (sample) => ({ ...sample }),
       ),
+      exertiansFaceDownCards: a.exertiansFaceDownCards?.map((card) => ({
+        ...card,
+      })),
+      exertiansMilestones: a.exertiansMilestones?.map((milestone) => ({
+        ...milestone,
+        claimedByPlayerIds: [...milestone.claimedByPlayerIds],
+      })),
+      centauriansMessageMilestones: a.centauriansMessageMilestones?.map(
+        (milestone) => ({ ...milestone }),
+      ),
+      centauriansPendingMessagesByPlayer: Object.fromEntries(
+        Object.entries(a.centauriansPendingMessagesByPlayer ?? {}).map(
+          ([playerId, cardIds]) => [playerId, [...cardIds]],
+        ),
+      ),
+      centauriansRewardSlots: a.centauriansRewardSlots?.map((slot) => ({
+        ...slot,
+        rewards: slot.rewards.map((reward) => ({ ...reward })),
+      })),
       discoverySlots: a.discoverySlots.map((slot) =>
         deserializeTraceSlotDto(slot),
       ),

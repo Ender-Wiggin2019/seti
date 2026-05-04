@@ -12,7 +12,9 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@helpers/*": ["./helpers/*"]
+      "@helpers/*": ["./helpers/*"],
+      "@seti/common/*": ["../common/src/*"],
+      "@ender-seti/common/*": ["../common/src/*"]
     }
   },
   "include": ["**/*.ts"],

@@ -32,10 +32,12 @@
   - Stack pending message cards oldest on top, resolve in sent order.
 - Reaching message milestone:
   - Choose one available reward on species board and cover it (locks it).
-- Paying data costs:
-  - Some spaces require discarding data from data pool, not from computer slots.
-  - If cannot pay, cannot mark.
-  - Topmost spaces can be marked repeatedly, each time paying 1 data.
+  - Reward spaces cannot be occupied more than once.
+  - Available reward spaces:
+    - any trace
+    - 1 energy + 1 alien card from the Centaurians alien deck/row
+    - 3 publicity
+    - 8 VP
 - Solo/rival notes:
   - Rival places one message milestone and may use leftovers via action card.
   - Rival chooses leftmost/rightmost available reward based on decision arrow.
@@ -67,18 +69,25 @@
   - Resolve white effect immediately.
   - Register delayed effect at +15 milestone.
 - Trigger-time phase:
-  - At milestone reach/pass (end of turn), resolve green effect.
+  - At milestone reach/pass, resolve during that turn's end-of-turn milestone window.
+  - First choose and cover one available Centaurians reward space.
+  - Then resolve the pending message card's green effect.
 - Order guarantee:
-  - For multiple pending cards, FIFO by send time.
+  - Multiple pending message cards that reach their threshold in the same end-of-turn window resolve one at a time.
+  - Resolution order is FIFO by send time (oldest pending message first).
 
 ### 3. Board Reward Market
 - Species board acts as shared consumable reward market.
 - Message milestone claim permanently blocks chosen reward space.
+- The four non-repeatable reward spaces are:
+  - any trace
+  - 1 energy + 1 Centaurians alien card
+  - 3 publicity
+  - 8 VP
 
-### 4. Data-Cost Space Rules
-- Payment source is strictly data pool.
-- Computer-placed data is non-spendable for these costs.
-- Repeated top-space claims require per-claim payment.
+### 4. Reward Occupancy
+- Reward spaces are non-repeatable.
+- Once a reward space is covered, no later message milestone can claim it.
 
 ### 5. FAQ-Constrained Clarifications
 - Centaurian cards are never mission objects.

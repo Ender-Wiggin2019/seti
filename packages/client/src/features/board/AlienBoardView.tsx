@@ -21,7 +21,10 @@ import type {
   IPublicAlienCardZone,
   IPublicAlienState,
   IPublicAnomaliesBoard,
+  IPublicCentauriansBoard,
+  IPublicExertiansBoard,
   IPublicGenericAlienBoard,
+  IPublicMascamitesBoard,
   IPublicOumuamuaBoard,
   IPublicPlanetaryBoard,
   IPublicPlanetState,
@@ -86,6 +89,9 @@ type TAlienBoardRenderer = (
 const ALIEN_BOARD_RENDERERS: Partial<Record<EAlienType, TAlienBoardRenderer>> =
   {
     [EAlienType.ANOMALIES]: AnomaliesBoardRenderer,
+    [EAlienType.CENTAURIANS]: CentauriansBoardRenderer,
+    [EAlienType.EXERTIANS]: ExertiansBoardRenderer,
+    [EAlienType.MASCAMITES]: MascamitesBoardRenderer,
     [EAlienType.OUMUAMUA]: OumuamuaBoardRenderer,
   };
 
@@ -380,6 +386,451 @@ function OumuamuaBoardRenderer({
       playerColors={playerColors}
       planetaryBoard={planetaryBoard}
     />
+  );
+}
+
+function ExertiansBoardRenderer({
+  alienIndex,
+  board,
+  playerColors,
+}: IAlienBoardRendererProps): React.JSX.Element {
+  if (board.type !== 'exertians') {
+    return (
+      <GenericAlienBoard
+        alienIndex={alienIndex}
+        board={{ type: 'generic', slots: [] }}
+        playerColors={playerColors}
+      />
+    );
+  }
+
+  return (
+    <ExertiansBoard
+      alienIndex={alienIndex}
+      board={board}
+      playerColors={playerColors}
+    />
+  );
+}
+
+function CentauriansBoardRenderer({
+  alienIndex,
+  board,
+  playerColors,
+}: IAlienBoardRendererProps): React.JSX.Element {
+  if (board.type !== 'centaurians') {
+    return (
+      <GenericAlienBoard
+        alienIndex={alienIndex}
+        board={{ type: 'generic', slots: [] }}
+        playerColors={playerColors}
+      />
+    );
+  }
+
+  return (
+    <CentauriansBoard
+      alienIndex={alienIndex}
+      board={board}
+      playerColors={playerColors}
+    />
+  );
+}
+
+function MascamitesBoardRenderer({
+  alienIndex,
+  board,
+  playerColors,
+}: IAlienBoardRendererProps): React.JSX.Element {
+  if (board.type !== 'mascamites') {
+    return (
+      <GenericAlienBoard
+        alienIndex={alienIndex}
+        board={{ type: 'generic', slots: [] }}
+        playerColors={playerColors}
+      />
+    );
+  }
+
+  return (
+    <MascamitesBoard
+      alienIndex={alienIndex}
+      board={board}
+      playerColors={playerColors}
+    />
+  );
+}
+
+function CentauriansBoard({
+  alienIndex,
+  board,
+  playerColors,
+}: {
+  alienIndex: number;
+  board: IPublicCentauriansBoard;
+  playerColors: Record<string, string>;
+}): React.JSX.Element {
+  return (
+    <section
+      className='min-w-0 rounded border border-surface-700/50 bg-surface-950/30 p-2'
+      data-testid={`alien-${alienIndex}-centaurians-board`}
+    >
+      <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
+        Messages
+      </div>
+      <div className='grid gap-2 sm:grid-cols-2'>
+        {board.messageMilestones.length === 0 ? (
+          <div className='rounded border border-surface-700/50 bg-surface-900/40 px-2 py-3 font-mono text-[10px] text-text-500'>
+            No messages
+          </div>
+        ) : (
+          board.messageMilestones.map((milestone) => {
+            const pendingCount =
+              board.pendingMessagesByPlayer[milestone.playerId]?.length ?? 0;
+            return (
+              <div
+                key={`${milestone.playerId}-${milestone.threshold}`}
+                className='flex items-center justify-between gap-2 rounded border border-surface-700/60 bg-surface-900/50 px-2 py-1.5'
+                data-testid={`alien-${alienIndex}-centaurians-message-${milestone.playerId}`}
+              >
+                <span className='flex min-w-0 items-center gap-1.5'>
+                  <span
+                    className='h-2.5 w-2.5 shrink-0 rounded-full border border-surface-200/30'
+                    style={{
+                      backgroundColor:
+                        playerColors[milestone.playerId] ?? '#cbd5e1',
+                    }}
+                  />
+                  <span className='truncate font-mono text-[10px] text-text-300'>
+                    {milestone.playerId}
+                  </span>
+                </span>
+                <span className='shrink-0 font-mono text-[11px] font-semibold text-text-100'>
+                  {milestone.threshold} VP
+                  {pendingCount > 0 ? ` / ${pendingCount}` : ''}
+                </span>
+              </div>
+            );
+          })
+        )}
+      </div>
+      <div className='mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3'>
+        {board.rewardSlots.map((slot) => (
+          <div
+            key={slot.slotId}
+            className='rounded border border-surface-700/50 bg-surface-900/35 px-2 py-1.5'
+            data-testid={`alien-${alienIndex}-centaurians-reward-${slot.slotId}`}
+          >
+            <div className='flex items-center justify-between gap-2 font-mono text-[10px] text-text-300'>
+              <span>{slot.slotId}</span>
+              <span>
+                {slot.dataCost > 0 ? `${slot.dataCost} data` : 'free'}
+              </span>
+            </div>
+            <div className='mt-1 font-mono text-[10px] text-text-400'>
+              {formatCentauriansRewardLabel(slot.rewards)}
+            </div>
+            <div className='mt-1 font-mono text-[10px] text-text-500'>
+              {slot.claimedByPlayerId ?? 'open'}
+            </div>
+          </div>
+        ))}
+      </div>
+      {board.traceSlots.length > 0 ? (
+        <div className='mt-3'>
+          <TraceColumnGrid
+            alienIndex={alienIndex}
+            area='centaurians-trace'
+            slots={board.traceSlots}
+            playerColors={playerColors}
+          />
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function formatCentauriansRewardLabel(
+  rewards: IPublicCentauriansBoard['rewardSlots'][number]['rewards'],
+): string {
+  return rewards
+    .map((reward) => {
+      if (reward.type !== 'CUSTOM') {
+        return `${reward.amount} ${reward.type}`;
+      }
+      if (reward.effectId === 'CENTAURIANS_ANY_TRACE') {
+        return 'Any trace';
+      }
+      if (reward.effectId === 'CENTAURIANS_DRAW_ALIEN_CARD') {
+        return 'Centaurians card';
+      }
+      return reward.effectId;
+    })
+    .join(', ');
+}
+
+function MascamitesBoard({
+  alienIndex,
+  board,
+  playerColors,
+}: {
+  alienIndex: number;
+  board: IPublicMascamitesBoard;
+  playerColors: Record<string, string>;
+}): React.JSX.Element {
+  return (
+    <section
+      className='min-w-0 rounded border border-surface-700/50 bg-surface-950/30 p-2'
+      data-testid={`alien-${alienIndex}-mascamites-board`}
+    >
+      <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
+        Samples
+      </div>
+
+      <div className='grid gap-2 sm:grid-cols-3'>
+        <MascamitesSamplePoolCard
+          alienIndex={alienIndex}
+          label='Jupiter'
+          testId={`alien-${alienIndex}-mascamites-jupiter`}
+          sampleIds={board.samplePools[EPlanet.JUPITER] ?? []}
+        />
+        <MascamitesSamplePoolCard
+          alienIndex={alienIndex}
+          label='Saturn'
+          testId={`alien-${alienIndex}-mascamites-saturn`}
+          sampleIds={board.samplePools[EPlanet.SATURN] ?? []}
+        />
+        <MascamitesSamplePoolCard
+          alienIndex={alienIndex}
+          label='Public'
+          testId={`alien-${alienIndex}-mascamites-public`}
+          sampleIds={board.publicSamples}
+        />
+      </div>
+
+      <div className='mt-3 grid gap-2 lg:grid-cols-2'>
+        <section className='rounded border border-surface-700/50 bg-surface-900/35 p-2'>
+          <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
+            Capsules
+          </div>
+          <div className='space-y-2'>
+            {board.capsules.length === 0 ? (
+              <div className='rounded border border-dashed border-surface-700/50 px-2 py-3 font-mono text-[10px] text-text-500'>
+                No active capsules
+              </div>
+            ) : (
+              board.capsules.map((capsule) => (
+                <div
+                  key={capsule.capsuleId}
+                  className='rounded border border-surface-700/50 bg-surface-950/40 px-2 py-2'
+                  data-testid={`alien-${alienIndex}-mascamites-capsule-${capsule.capsuleId}`}
+                >
+                  <div className='flex items-center justify-between gap-2'>
+                    <span className='font-mono text-[10px] uppercase tracking-widest text-text-400'>
+                      {capsule.sampleTokenId}
+                    </span>
+                    <span
+                      className='inline-block h-2.5 w-2.5 rounded-full border border-surface-200/30'
+                      style={{
+                        backgroundColor:
+                          playerColors[capsule.ownerId] ?? '#cbd5e1',
+                      }}
+                      title={capsule.ownerId}
+                    />
+                  </div>
+                  <div className='mt-1 grid gap-0.5 font-mono text-[10px] text-text-300'>
+                    <div>From {capsule.sourcePlanet}</div>
+                    <div>At {capsule.spaceId}</div>
+                    {capsule.missionCardId ? (
+                      <div>{capsule.missionCardId}</div>
+                    ) : null}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        <section className='rounded border border-surface-700/50 bg-surface-900/35 p-2'>
+          <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
+            Delivered Samples
+          </div>
+          <div className='space-y-2'>
+            {board.deliveredSamples.length === 0 ? (
+              <div className='rounded border border-dashed border-surface-700/50 px-2 py-3 font-mono text-[10px] text-text-500'>
+                No delivered samples
+              </div>
+            ) : (
+              board.deliveredSamples.map((sample, index) => (
+                <div
+                  key={`${sample.slotId}-${index}`}
+                  className='rounded border border-surface-700/50 bg-surface-950/40 px-2 py-2'
+                  data-testid={`alien-${alienIndex}-mascamites-delivered-${index}`}
+                >
+                  <div className='flex items-center justify-between gap-2'>
+                    <span className='font-mono text-[10px] uppercase tracking-widest text-text-400'>
+                      {sample.sampleTokenId}
+                    </span>
+                    <span
+                      className='inline-block h-2.5 w-2.5 rounded-full border border-surface-200/30'
+                      style={{
+                        backgroundColor:
+                          playerColors[sample.deliveredBy] ?? '#cbd5e1',
+                      }}
+                      title={sample.deliveredBy}
+                    />
+                  </div>
+                  <div className='mt-1 grid gap-0.5 font-mono text-[10px] text-text-300'>
+                    <div>Round {sample.deliveredAtRound}</div>
+                    <div>{sample.slotId}</div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+      </div>
+
+      <div className='mt-3'>
+        <TraceColumnGrid
+          alienIndex={alienIndex}
+          area='mascamites-trace'
+          slots={board.traceSlots}
+          playerColors={playerColors}
+        />
+      </div>
+    </section>
+  );
+}
+
+function MascamitesSamplePoolCard({
+  label,
+  testId,
+  sampleIds,
+}: {
+  alienIndex: number;
+  label: string;
+  testId: string;
+  sampleIds: readonly string[];
+}): React.JSX.Element {
+  const countLabel = `${sampleIds.length} sample${sampleIds.length === 1 ? '' : 's'}`;
+
+  return (
+    <section
+      className='rounded border border-surface-700/50 bg-surface-900/35 p-2'
+      data-testid={testId}
+    >
+      <div className='flex items-center justify-between gap-2'>
+        <span className='font-mono text-[10px] uppercase tracking-widest text-text-500'>
+          {label}
+        </span>
+        <span className='font-mono text-[10px] text-text-300'>
+          {countLabel}
+        </span>
+      </div>
+      <div className='mt-2 flex flex-wrap gap-1'>
+        {sampleIds.length === 0 ? (
+          <span className='rounded border border-dashed border-surface-700/50 px-1.5 py-0.5 font-mono text-[10px] text-text-500'>
+            Empty
+          </span>
+        ) : (
+          sampleIds.map((sampleId) => (
+            <span
+              key={sampleId}
+              className='rounded border border-surface-700/60 bg-surface-950/45 px-1.5 py-0.5 font-mono text-[10px] text-text-200'
+            >
+              {sampleId}
+            </span>
+          ))
+        )}
+      </div>
+    </section>
+  );
+}
+
+function ExertiansBoard({
+  alienIndex,
+  board,
+  playerColors,
+}: {
+  alienIndex: number;
+  board: IPublicExertiansBoard;
+  playerColors: Record<string, string>;
+}): React.JSX.Element {
+  const countsByPlayer = board.faceDownCards.reduce<Record<string, number>>(
+    (counts, card) => {
+      counts[card.ownerId] = (counts[card.ownerId] ?? 0) + 1;
+      return counts;
+    },
+    {},
+  );
+
+  return (
+    <section
+      className='min-w-0 rounded border border-surface-700/50 bg-surface-950/30 p-2'
+      data-testid={`alien-${alienIndex}-exertians-board`}
+    >
+      <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
+        Face-down Exertians
+      </div>
+      <div className='grid gap-2 sm:grid-cols-2'>
+        {Object.entries(countsByPlayer).length === 0 ? (
+          <div className='rounded border border-surface-700/50 bg-surface-900/40 px-2 py-3 font-mono text-[10px] text-text-500'>
+            No hidden cards
+          </div>
+        ) : (
+          Object.entries(countsByPlayer).map(([playerId, count]) => (
+            <div
+              key={playerId}
+              className='flex items-center justify-between gap-2 rounded border border-surface-700/60 bg-surface-900/50 px-2 py-1.5'
+              data-testid={`alien-${alienIndex}-exertians-hidden-${playerId}`}
+            >
+              <span className='flex min-w-0 items-center gap-1.5'>
+                <span
+                  className='h-2.5 w-2.5 shrink-0 rounded-full border border-surface-200/30'
+                  style={{
+                    backgroundColor: playerColors[playerId] ?? '#cbd5e1',
+                  }}
+                />
+                <span className='truncate font-mono text-[10px] text-text-300'>
+                  {playerId}
+                </span>
+              </span>
+              <span className='font-mono text-[11px] font-semibold text-text-100'>
+                {count}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+      {board.milestones.length > 0 ? (
+        <div className='mt-3 grid gap-1 font-mono text-[10px] text-text-400'>
+          {board.milestones.map((milestone, index) => (
+            <div
+              key={`${milestone.threshold}-${index}`}
+              className='flex items-center justify-between gap-2 rounded border border-surface-700/50 bg-surface-900/30 px-2 py-1'
+              data-testid={`alien-${alienIndex}-exertians-milestone-${index}`}
+            >
+              <span>{milestone.threshold} VP</span>
+              <span>
+                Cost {milestone.creditCost}C /{' '}
+                {milestone.claimedByPlayerIds.length} claimed
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {board.traceSlots.length > 0 ? (
+        <div className='mt-3'>
+          <TraceColumnGrid
+            alienIndex={alienIndex}
+            area='exertians-trace'
+            slots={board.traceSlots}
+            playerColors={playerColors}
+          />
+        </div>
+      ) : null}
+    </section>
   );
 }
 

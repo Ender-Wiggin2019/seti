@@ -1,8 +1,9 @@
 import { AlteredTrajectory } from '../alien/AlteredTrajectoryCard.js';
 import { AmazingUncertaintyCard } from '../alien/AmazingUncertaintyCard.js';
 import { AreWeBeingObservedCard } from '../alien/AreWeBeingObservedCard.js';
-import { CloseUpViewCard } from '../alien/CloseUpViewCard.js';
 import { BreedingSample } from '../alien/BreedingSampleCard.js';
+import { CentaurianMessageCard } from '../alien/CentaurianMessageCard.js';
+import { CloseUpViewCard } from '../alien/CloseUpViewCard.js';
 import { EcosystemStudy } from '../alien/EcosystemStudyCard.js';
 import { ExcavationRover } from '../alien/ExcavationRoverCard.js';
 import { ExofossilDiscovery } from '../alien/ExofossilDiscoveryCard.js';
@@ -26,6 +27,10 @@ import { loadCardData } from '../loadCardData.js';
 
 function g(registry: CardRegistry, id: string): void {
   registry.register(id, () => createGenericCard(loadCardData(id)));
+}
+
+function centaurian(registry: CardRegistry, id: string): void {
+  registry.register(id, () => new CentaurianMessageCard(loadCardData(id)));
 }
 
 /**
@@ -96,16 +101,16 @@ export function registerAlienCards(registry: CardRegistry): void {
   // ALIEN — advanced tech cards (no effects data, alien-specific)
   // ET.31-40: advanced alien technology cards
   // ============================================================
-  g(registry, 'ET.31'); // Vessel Designs
-  g(registry, 'ET.32'); // Exocomputers
-  g(registry, 'ET.33'); // Infocluster
-  g(registry, 'ET.34'); // A Message from Afar
-  g(registry, 'ET.35'); // Synthesis Instructions
-  g(registry, 'ET.36'); // Alien Schematics
-  g(registry, 'ET.37'); // Music of the Spheres
-  g(registry, 'ET.38'); // Hivemind Concept
-  g(registry, 'ET.39'); // Telescope Blueprints
-  g(registry, 'ET.40'); // Torrent-chain Signal
+  centaurian(registry, 'ET.31'); // Vessel Designs
+  centaurian(registry, 'ET.32'); // Exocomputers
+  centaurian(registry, 'ET.33'); // Infocluster
+  centaurian(registry, 'ET.34'); // A Message from Afar
+  centaurian(registry, 'ET.35'); // Synthesis Instructions
+  centaurian(registry, 'ET.36'); // Alien Schematics
+  centaurian(registry, 'ET.37'); // Music of the Spheres
+  centaurian(registry, 'ET.38'); // Hivemind Concept
+  centaurian(registry, 'ET.39'); // Telescope Blueprints
+  centaurian(registry, 'ET.40'); // Torrent-chain Signal
 
   // ============================================================
   // ALIEN — advanced exoplanet/tech cards (no effects data)

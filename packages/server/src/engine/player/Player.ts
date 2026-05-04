@@ -36,7 +36,7 @@ const INCOME_RESOURCE_MAP: Record<EResource, EResource | undefined> = {
   [EResource.CREDIT]: EResource.CREDIT,
   [EResource.ENERGY]: EResource.ENERGY,
   [EResource.DATA]: EResource.DATA,
-  [EResource.PUBLICITY]: undefined,
+  [EResource.PUBLICITY]: EResource.PUBLICITY,
   [EResource.SIGNAL_TOKEN]: undefined,
   [EResource.SCORE]: undefined,
   [EResource.CARD]: EResource.CARD,

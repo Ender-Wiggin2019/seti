@@ -7,6 +7,32 @@ export interface IUserCred {
   password: string;
 }
 
+export interface IRoomCreateResult {
+  id: string;
+  options?: {
+    playerCount?: number;
+    alienModulesEnabled?: boolean[];
+    undoAllowed?: boolean;
+    timerPerTurn?: number;
+  };
+}
+
+export enum ECoreAlienType {
+  ANOMALIES = 1,
+  CENTAURIANS = 2,
+  EXERTIANS = 3,
+  MASCAMITES = 4,
+  OUMUAMUA = 5,
+}
+
+const CORE_ALIEN_TYPES = [
+  ECoreAlienType.ANOMALIES,
+  ECoreAlienType.CENTAURIANS,
+  ECoreAlienType.EXERTIANS,
+  ECoreAlienType.MASCAMITES,
+  ECoreAlienType.OUMUAMUA,
+] as const;
+
 function uniqueSuffix(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -111,7 +137,23 @@ export async function createRoomByUi(
   page: Page,
   roomName: string,
   playerCount: 2 | 3 | 4,
+  options: { alienTypes?: readonly ECoreAlienType[] } = {},
 ): Promise<string> {
+  const result = await createRoomByUiWithDetails(
+    page,
+    roomName,
+    playerCount,
+    options,
+  );
+  return result.id;
+}
+
+export async function createRoomByUiWithDetails(
+  page: Page,
+  roomName: string,
+  playerCount: 2 | 3 | 4,
+  options: { alienTypes?: readonly ECoreAlienType[] } = {},
+): Promise<IRoomCreateResult> {
   await page.goto('/lobby');
   await page.getByTestId('lobby-new-mission').click();
   await expect(page.getByTestId('create-room-dialog')).toBeVisible({
@@ -129,6 +171,10 @@ export async function createRoomByUi(
     });
     await expect(playerCountOption).toBeVisible({ timeout: 10_000 });
     await playerCountOption.click();
+  }
+
+  if (options.alienTypes) {
+    await selectAlienPoolByUi(page, options.alienTypes);
   }
 
   const responsePromise = page.waitForResponse(
@@ -151,13 +197,69 @@ export async function createRoomByUi(
   await page.waitForURL(new RegExp(`/room/${body.id as string}$`), {
     timeout: 15_000,
   });
-  return body.id as string;
+  await expect(page.getByTestId('game-setting-value-players')).toBeVisible({
+    timeout: 15_000,
+  });
+  return body as IRoomCreateResult;
+}
+
+async function selectAlienPoolByUi(
+  page: Page,
+  alienTypes: readonly ECoreAlienType[],
+): Promise<void> {
+  const requested = new Set(alienTypes);
+  expect(requested.size).toBeGreaterThanOrEqual(2);
+
+  for (const alienType of CORE_ALIEN_TYPES) {
+    if (!requested.has(alienType)) continue;
+
+    const toggle = page.locator(`#alien-type-${alienType}`);
+    await expect(toggle).toBeVisible({ timeout: 10_000 });
+
+    const checked =
+      (await toggle.getAttribute('aria-checked', { timeout: 10_000 })) ===
+      'true';
+    if (!checked) {
+      await expect(toggle).toBeEnabled({ timeout: 10_000 });
+      await toggle.click();
+      await expect(toggle).toHaveAttribute('aria-checked', 'true');
+    }
+  }
+
+  for (const alienType of CORE_ALIEN_TYPES) {
+    const shouldBeEnabled = requested.has(alienType);
+    if (shouldBeEnabled) continue;
+
+    const toggle = page.locator(`#alien-type-${alienType}`);
+    await expect(toggle).toBeVisible({ timeout: 10_000 });
+
+    const checked =
+      (await toggle.getAttribute('aria-checked', { timeout: 10_000 })) ===
+      'true';
+
+    if (checked) {
+      await expect(toggle).toBeEnabled({ timeout: 10_000 });
+      await toggle.click();
+      await expect(toggle).toHaveAttribute('aria-checked', 'false');
+    }
+  }
 }
 
 export async function joinRoomByUi(page: Page, roomId: string): Promise<void> {
-  await page.goto(`/room/${roomId}`);
-  const joinBtn = page.getByTestId('room-join');
-  await expect(joinBtn).toBeVisible({ timeout: 15_000 });
+  const deadline = Date.now() + 30_000;
+  let joinBtn = page.getByTestId('room-join');
+
+  while (Date.now() < deadline) {
+    await page.goto(`/room/${roomId}`);
+    joinBtn = page.getByTestId('room-join');
+    const isVisible = await joinBtn.isVisible().catch(() => false);
+    if (isVisible) {
+      break;
+    }
+    await page.waitForTimeout(1_000);
+  }
+
+  await expect(joinBtn).toBeVisible({ timeout: 1_000 });
 
   const responsePromise = page.waitForResponse(
     (res) =>
@@ -173,9 +275,20 @@ export async function launchGameByUi(
   page: Page,
   roomId: string,
 ): Promise<string> {
-  await page.goto(`/room/${roomId}`);
-  const launchBtn = page.getByTestId('room-launch-game');
-  await expect(launchBtn).toBeVisible({ timeout: 15_000 });
+  const deadline = Date.now() + 20_000;
+  let launchBtn = page.getByTestId('room-launch-game');
+
+  while (Date.now() < deadline) {
+    await page.goto(`/room/${roomId}`);
+    launchBtn = page.getByTestId('room-launch-game');
+    const isVisible = await launchBtn.isVisible().catch(() => false);
+    if (isVisible) {
+      break;
+    }
+    await page.waitForTimeout(1_000);
+  }
+
+  await expect(launchBtn).toBeVisible({ timeout: 1_000 });
 
   const responsePromise = page.waitForResponse(
     (res) =>
@@ -197,12 +310,37 @@ export async function enterGameByUi(
   page: Page,
   roomId: string,
 ): Promise<string> {
-  await page.goto(`/room/${roomId}`);
-  const enterBtn = page.getByTestId('room-enter-game');
-  await expect(enterBtn).toBeVisible({ timeout: 15_000 });
-  await enterBtn.click();
+  const deadline = Date.now() + 20_000;
 
-  await page.waitForURL(/\/game\/[^/?#]+$/, { timeout: 15_000 });
+  while (Date.now() < deadline) {
+    await page.goto(`/room/${roomId}`);
+
+    const currentUrl = page.url();
+    if (/\/game\/[^/?#]+$/.test(currentUrl)) {
+      const gameId = currentUrl.split('/game/')[1]?.split(/[?#]/)[0];
+      expect(gameId).toBeTruthy();
+      await resolveCardPromptIfVisible(page);
+      return gameId as string;
+    }
+
+    const enterBtn = page.getByTestId('room-enter-game');
+    const isVisible = await enterBtn.isVisible().catch(() => false);
+    if (isVisible) {
+      await enterBtn.click();
+      await page.waitForURL(/\/game\/[^/?#]+$/, { timeout: 15_000 });
+      await resolveCardPromptIfVisible(page);
+      const gameId = page.url().split('/game/')[1]?.split(/[?#]/)[0];
+      expect(gameId).toBeTruthy();
+      return gameId as string;
+    }
+
+    await page.waitForTimeout(1_000);
+  }
+
+  await expect(page.getByTestId('room-enter-game')).toBeVisible({
+    timeout: 1_000,
+  });
+
   await resolveCardPromptIfVisible(page);
   const gameId = page.url().split('/game/')[1]?.split(/[?#]/)[0];
   expect(gameId).toBeTruthy();

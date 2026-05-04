@@ -1,5 +1,5 @@
-import type { TAlienSlotReward } from './alienBoardConfig';
 import { EPlanet } from '../types/element';
+import type { TAlienSlotReward } from './alienBoardConfig';
 
 export type TMascamitesSampleTokenId =
   | 'mascamites-credit-2'

@@ -424,6 +424,26 @@ describe('PassAction — integration closure (2.8.x)', () => {
     expect(game.activePlayer.id).toBe(other.id);
   });
 
+  it('6.2.7 excludes Exertian card ids from the pass hand limit after drawing from the alien deck', () => {
+    const { game, player, other } = createIntegrationGame(
+      'pass-6-2-7-exertian-id-hand-limit',
+    );
+    const exertianCardId = alienCards.find(
+      (card) => card.alien === EAlienType.EXERTIANS,
+    )?.id;
+    if (!exertianCardId) {
+      throw new Error('expected Exertian card data');
+    }
+    player.hand = ['39', '128', '136', '73', exertianCardId];
+
+    game.processMainAction(player.id, { type: EMainAction.PASS });
+    resolveEndOfRoundPick(game, player.id);
+
+    expect(player.hand).toContain(exertianCardId);
+    expect(player.passed).toBe(true);
+    expect(game.activePlayer.id).toBe(other.id);
+  });
+
   it('2.8.4 first pass of round 5 still rotates the solar system even without end-of-round cards', () => {
     const { game, player, other } = createIntegrationGame(
       'pass-2-8-4-final-round-rotation',

@@ -59,7 +59,10 @@ export function GameOverDialog(): React.JSX.Element | null {
         tech: legacyBreakdown?.tech ?? 0,
         milestone: legacyBreakdown?.milestone ?? 0,
         gold: serverBreakdown?.goldTiles ?? legacyBreakdown?.gold ?? 0,
-        alien: serverBreakdown?.alienBonus ?? legacyBreakdown?.alien ?? 0,
+        alien:
+          serverBreakdown !== undefined
+            ? serverBreakdown.alienBonus + serverBreakdown.alienPenalty
+            : (legacyBreakdown?.alien ?? 0),
       };
     });
 

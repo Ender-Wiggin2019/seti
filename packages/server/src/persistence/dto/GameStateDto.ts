@@ -175,6 +175,34 @@ export interface IMascamitesDeliveredSampleDto {
   slotId: string;
 }
 
+export interface IExertianFaceDownCardDto {
+  ownerId: string;
+  cardId: string;
+  source: 'discovery' | 'milestone-20' | 'milestone-40';
+  revealed: boolean;
+}
+
+export interface IExertiansMilestoneDto {
+  threshold: number;
+  claimedByPlayerIds: string[];
+  creditCost: number;
+}
+
+export interface ICentauriansMessageMilestoneDto {
+  playerId: string;
+  threshold: number;
+  sourceCardId: string | null;
+  resolved: boolean;
+}
+
+export interface ICentauriansRewardSlotDto {
+  slotId: string;
+  rewards: ITraceSlotDto['rewards'];
+  dataCost: number;
+  claimedByPlayerId: string | null;
+  repeatable?: boolean;
+}
+
 export interface IAlienBoardDto {
   alienType: EAlienType;
   alienIndex: number;
@@ -188,6 +216,11 @@ export interface IAlienBoardDto {
   mascamitesPublicSamples?: TMascamitesSampleTokenId[];
   mascamitesCapsules?: IMascamitesCapsuleDto[];
   mascamitesDeliveredSamples?: IMascamitesDeliveredSampleDto[];
+  exertiansFaceDownCards?: IExertianFaceDownCardDto[];
+  exertiansMilestones?: IExertiansMilestoneDto[];
+  centauriansMessageMilestones?: ICentauriansMessageMilestoneDto[];
+  centauriansPendingMessagesByPlayer?: Record<string, string[]>;
+  centauriansRewardSlots?: ICentauriansRewardSlotDto[];
   alienDeckDrawPile: string[];
   alienDeckDiscardPile: string[];
   faceUpAlienCardId: string | null;

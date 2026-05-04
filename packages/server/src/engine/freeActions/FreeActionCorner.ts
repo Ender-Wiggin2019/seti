@@ -1,3 +1,4 @@
+import { isDiscardProhibitedCard } from '@seti/common/rules';
 import { EResource } from '@seti/common/types/element';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
@@ -24,14 +25,23 @@ export class FreeActionCornerFreeAction {
       throw new GameError(EErrorCode.INVALID_ACTION, 'No cards in hand');
     }
 
-    const removed = player.removeCardById(cardId);
-    if (removed === undefined) {
+    const cardIndex = player.findCardInHand(cardId);
+    if (cardIndex < 0) {
       throw new GameError(
         EErrorCode.INVALID_ACTION,
         `Card ${cardId} not found in hand`,
         { cardId },
       );
     }
+    const card = player.hand[cardIndex];
+    if (isDiscardProhibitedCard(card)) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        `Card ${cardId} cannot be discarded`,
+        { cardId },
+      );
+    }
+    player.removeCardAt(cardIndex);
 
     game.mainDeck.discard(cardId);
     this.executeCardCornerRewards(player, game, cardId);

@@ -109,9 +109,8 @@ export function canPlaceData(player: IPublicPlayerState): boolean {
   return getNextSlot(player.computer) !== null;
 }
 
-export function canCompleteMission(_player: IPublicPlayerState): boolean {
-  // TODO: implement when mission condition system is available
-  return false;
+export function canCompleteMission(player: IPublicPlayerState): boolean {
+  return (player.completableMissionBranches?.length ?? 0) > 0;
 }
 
 export function canDeliverMascamitesSample(

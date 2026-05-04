@@ -13,6 +13,7 @@ interface IPlanetCardProps {
   state: IPublicPlanetState;
   playerColors: Record<string, string>;
   isSelectable: boolean;
+  onSelect?: () => void;
 }
 
 function TokenDot({
@@ -100,17 +101,35 @@ export function PlanetCard({
   state,
   playerColors,
   isSelectable,
+  onSelect,
 }: IPlanetCardProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const missionConfig = config;
   const firstLandData = formatFirstLandData(missionConfig.land.firstData);
 
+  const interactive = isSelectable && onSelect !== undefined;
+
   return (
     <article
       data-testid={`planet-card-${planet}`}
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      onClick={interactive ? onSelect : undefined}
+      onKeyDown={
+        interactive
+          ? (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onSelect();
+              }
+            }
+          : undefined
+      }
       className={cn(
         'rounded-md border border-surface-700/50 bg-surface-900/60 p-3 transition-colors',
         isSelectable && 'border-accent-500 ring-1 ring-accent-500/70',
+        interactive &&
+          'cursor-pointer hover:bg-surface-800/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400',
       )}
     >
       <header className='mb-2 flex items-center justify-between'>

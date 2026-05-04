@@ -1,3 +1,5 @@
+import { isStandardPlayProhibitedCard } from '@seti/common/rules';
+import { EAlienType } from '@seti/common/types/BaseCard';
 import { EResource } from '@seti/common/types/element';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
@@ -12,7 +14,7 @@ import type { IPlayer } from '../player/IPlayer.js';
 
 export interface IPlayCardResult {
   cardId: string;
-  destination: 'discard' | 'mission' | 'endGame' | 'income';
+  destination: 'discard' | 'mission' | 'endGame' | 'income' | 'alien';
   price: number;
   priceType: string;
   card?: ICard;
@@ -37,6 +39,10 @@ export class PlayCardAction {
     }
 
     const cardId = player.getCardIdAt(cardIndex);
+    const rawCard = player.hand[cardIndex];
+    if (isStandardPlayProhibitedCard(rawCard)) {
+      return false;
+    }
     if (!hasCardData(cardId)) {
       return true;
     }
@@ -66,6 +72,17 @@ export class PlayCardAction {
     }
 
     const cardId = player.getCardIdAt(cardIndex);
+    const rawCard = player.hand[cardIndex];
+    if (isStandardPlayProhibitedCard(rawCard)) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        'Card cannot be played through the standard play-card action',
+        {
+          cardId,
+          playerId: player.id,
+        },
+      );
+    }
 
     if (!hasCardData(cardId)) {
       player.removeCardAt(cardIndex);
@@ -115,6 +132,10 @@ export class PlayCardAction {
 
     if (runtimeCard.movesPlayedCardToIncomeAfterPlay(runtimeContext)) {
       return { cardId, destination: 'income', price, priceType };
+    }
+
+    if (runtimeCard.alien === EAlienType.CENTAURIANS) {
+      return { cardId, destination: 'alien', price, priceType };
     }
 
     this.discardPlayedCard(game, cardId, runtimeCard.alien);

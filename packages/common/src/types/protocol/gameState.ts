@@ -75,6 +75,10 @@ export interface IPublicPlayerState {
   probeSpaceLimit: number;
   tuckedIncomeCards?: IBaseCard[];
   playedMissions?: IBaseCard[];
+  completableMissionBranches?: Array<{
+    cardId: string;
+    branchIndex: number;
+  }>;
   completedMissions?: string[];
   endGameCards?: IBaseCard[];
   completedMissionCount: number;
@@ -315,6 +319,49 @@ export interface IPublicMascamitesBoard {
   traceSlots: IPublicTraceSlot[];
 }
 
+export interface IPublicExertianFaceDownCard {
+  ownerId: string;
+  revealed: boolean;
+  source: 'discovery' | 'milestone-20' | 'milestone-40';
+}
+
+export interface IPublicExertiansMilestone {
+  threshold: number;
+  claimedByPlayerIds: string[];
+  creditCost: number;
+}
+
+export interface IPublicExertiansBoard {
+  type: 'exertians';
+  faceDownCards: IPublicExertianFaceDownCard[];
+  milestones: IPublicExertiansMilestone[];
+  traceSlots: IPublicTraceSlot[];
+}
+
+export interface IPublicCentauriansMessageMilestone {
+  playerId: string;
+  threshold: number;
+  sourceCardId: string | null;
+  resolved: boolean;
+}
+
+export interface IPublicCentauriansRewardSlot {
+  // Public reward-market state for the Centaurians species board.
+  slotId: string;
+  rewards: IPublicTraceSlot['rewards'];
+  dataCost: number;
+  claimedByPlayerId: string | null;
+  repeatable?: boolean;
+}
+
+export interface IPublicCentauriansBoard {
+  type: 'centaurians';
+  messageMilestones: IPublicCentauriansMessageMilestone[];
+  pendingMessagesByPlayer: Record<string, string[]>;
+  rewardSlots: IPublicCentauriansRewardSlot[];
+  traceSlots: IPublicTraceSlot[];
+}
+
 export interface IPublicGenericAlienBoard {
   type: 'generic';
   slots: IPublicTraceSlot[];
@@ -322,6 +369,8 @@ export interface IPublicGenericAlienBoard {
 
 export type TPublicAlienBoard =
   | IPublicAnomaliesBoard
+  | IPublicCentauriansBoard
+  | IPublicExertiansBoard
   | IPublicOumuamuaBoard
   | IPublicMascamitesBoard
   | IPublicGenericAlienBoard;
@@ -365,6 +414,7 @@ export interface IPublicFinalScoreBreakdown {
   endGameCards: number;
   goldTiles: number;
   alienBonus: number;
+  alienPenalty: number;
   totalAdded: number;
   finalScore: number;
 }

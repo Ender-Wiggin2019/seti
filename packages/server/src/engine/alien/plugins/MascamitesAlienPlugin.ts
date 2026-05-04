@@ -7,8 +7,8 @@ import {
 import { EAlienType, EPlanet, ETrace } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { getMascamitesSampleDeliveryDestination } from '@seti/common/utils/mascamitesSampleDelivery';
-import { loadCardData } from '@/engine/cards/loadCardData.js';
 import { ESolarSystemElementType } from '@/engine/board/SolarSystem.js';
+import { loadCardData } from '@/engine/cards/loadCardData.js';
 import { GameError } from '@/shared/errors/GameError.js';
 import type { IGame } from '../../IGame.js';
 import type { PlayerInput } from '../../input/PlayerInput.js';

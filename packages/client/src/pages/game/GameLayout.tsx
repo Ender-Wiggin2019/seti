@@ -213,7 +213,10 @@ export function GameLayout({
   const [armedCardRowBuy, setArmedCardRowBuy] = useState(false);
   const [playCardSelectionMode, setPlayCardSelectionMode] = useState(false);
   const [movementModeActive, setMovementModeActive] = useState(false);
-  const { gameState, isMyTurn, pendingInput, events, myPlayerId } =
+  const [planetActionMode, setPlanetActionMode] = useState<
+    EMainAction.ORBIT | EMainAction.LAND | null
+  >(null);
+  const { gameState, isMyTurn, pendingInput, events, myPlayerId, sendAction } =
     useGameContext();
   const unhandledEffectToastKeysRef = useRef<Set<string>>(new Set());
   const lastGameIdRef = useRef<string | undefined>(undefined);
@@ -267,7 +270,8 @@ export function GameLayout({
     if (
       !isMyTurn ||
       pendingInput !== null ||
-      gameState?.phase !== EPhase.AWAIT_MAIN_ACTION ||
+      (gameState?.phase !== EPhase.AWAIT_MAIN_ACTION &&
+        gameState?.phase !== EPhase.AWAIT_END_TURN) ||
       currentPlayerMovementPoints <= 0
     ) {
       setMovementModeActive(false);
@@ -280,9 +284,29 @@ export function GameLayout({
     pendingInput,
   ]);
 
+  useEffect(() => {
+    if (!planetActionMode) return;
+    if (
+      !isMyTurn ||
+      pendingInput !== null ||
+      gameState?.phase !== EPhase.AWAIT_MAIN_ACTION
+    ) {
+      setPlanetActionMode(null);
+    }
+  }, [gameState?.phase, isMyTurn, pendingInput, planetActionMode]);
+
   const handleInspectCard = (card: IBaseCard): void => {
     setDetailCard(card);
     setDetailOpen(true);
+  };
+
+  const handlePlanetMainActionSelect = (planet: EPlanet): void => {
+    if (!planetActionMode) return;
+    sendAction({
+      type: planetActionMode,
+      payload: { planet },
+    });
+    setPlanetActionMode(null);
   };
 
   const actionController = useActionController({
@@ -320,6 +344,10 @@ export function GameLayout({
           setPlayCardSelectionMode(true);
           setHandExpanded(true);
         }}
+        onRequestPlanetActionSelection={(action) => {
+          setPlanetActionMode(action);
+          setActiveTab('planets');
+        }}
       />
 
       <div className='flex min-h-0 flex-1'>
@@ -334,6 +362,8 @@ export function GameLayout({
             movementModeActive={movementModeActive}
             armedCardRowBuy={armedCardRowBuy}
             setArmedCardRowBuy={setArmedCardRowBuy}
+            planetActionMode={planetActionMode}
+            onSelectMainActionPlanet={handlePlanetMainActionSelect}
           />
 
           <button
@@ -426,6 +456,7 @@ function useActionController({
   const missionCards =
     (myPlayer as { playedMissions?: IBaseCard[] } | undefined)
       ?.playedMissions ?? [];
+  const completableMissionBranches = myPlayer?.completableMissionBranches ?? [];
   const sampleDeliveryOptions = buildSampleDeliveryOptions(
     gameState,
     myPlayerId,
@@ -457,6 +488,15 @@ function useActionController({
       case EFreeAction.COMPLETE_MISSION:
         setCornerSelectionMode(false);
         clearMoveMode();
+        if (completableMissionBranches.length === 1) {
+          const [branch] = completableMissionBranches;
+          sendFreeAction({
+            type: EFreeAction.COMPLETE_MISSION,
+            cardId: branch.cardId,
+            branchIndex: branch.branchIndex,
+          });
+          return;
+        }
         if (missionCards.length === 1) {
           sendFreeAction({
             type: EFreeAction.COMPLETE_MISSION,
@@ -678,12 +718,16 @@ function TopActionBar({
   movementModeActive,
   onEndMovementMode,
   onRequestPlayCardSelection,
+  onRequestPlanetActionSelection,
 }: {
   onFreeActionClick: (action: EFreeAction) => void;
   cornerSelectionHint: boolean;
   movementModeActive: boolean;
   onEndMovementMode: () => void;
   onRequestPlayCardSelection: () => void;
+  onRequestPlanetActionSelection: (
+    action: EMainAction.ORBIT | EMainAction.LAND,
+  ) => void;
 }): React.JSX.Element {
   const { t } = useTranslation('common');
   const {
@@ -713,6 +757,19 @@ function TopActionBar({
     }, {}) ?? {};
 
   const handleMainAction = (action: IMainActionRequest) => {
+    if (action.type === EMainAction.ORBIT || action.type === EMainAction.LAND) {
+      onRequestPlanetActionSelection(action.type);
+      toast({
+        title: t('client.game_layout.toast.planet_required', {
+          defaultValue: 'Select a planet',
+        }),
+        description: t('client.game_layout.toast.planet_required_desc', {
+          defaultValue: 'Choose the target planet from the planetary board.',
+        }),
+      });
+      return;
+    }
+
     if (action.type !== EMainAction.PLAY_CARD) {
       sendAction(action);
       return;
@@ -999,6 +1056,8 @@ function BoardTabs({
   movementModeActive,
   armedCardRowBuy,
   setArmedCardRowBuy,
+  planetActionMode,
+  onSelectMainActionPlanet,
 }: {
   activeTab: TBoardTab;
   onTabChange: (tab: TBoardTab) => void;
@@ -1009,6 +1068,8 @@ function BoardTabs({
   movementModeActive: boolean;
   armedCardRowBuy: boolean;
   setArmedCardRowBuy: (next: boolean | ((prev: boolean) => boolean)) => void;
+  planetActionMode: EMainAction.ORBIT | EMainAction.LAND | null;
+  onSelectMainActionPlanet: (planet: EPlanet) => void;
 }): React.JSX.Element {
   const { t } = useTranslation('common');
   const { gameState, myPlayerId, pendingInput, sendFreeAction, sendInput } =
@@ -1100,9 +1161,14 @@ function BoardTabs({
         <TabsContent value='planets' className='mt-0 h-full'>
           {gameState && (
             <PlanetaryBoardView
+              gameState={gameState}
+              myPlayerId={myPlayerId}
               planetaryBoard={gameState.planetaryBoard}
               pendingInput={pendingInput}
               playerColors={playerColors}
+              mainActionPlanetMode={planetActionMode}
+              onSelectMainActionPlanet={onSelectMainActionPlanet}
+              onRespondInput={sendInput}
             />
           )}
         </TabsContent>

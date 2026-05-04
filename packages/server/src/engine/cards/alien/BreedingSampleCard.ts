@@ -1,8 +1,8 @@
-import { loadCardData } from '../loadCardData.js';
-import { MissionCard } from '../Card.js';
-import type { ICardRuntimeContext } from '../ICard.js';
 import { EPriority } from '@/engine/deferred/Priority.js';
 import { SimpleDeferredAction } from '@/engine/deferred/SimpleDeferredAction.js';
+import { MissionCard } from '../Card.js';
+import type { ICardRuntimeContext } from '../ICard.js';
+import { loadCardData } from '../loadCardData.js';
 import {
   behaviorWithoutMascamitesCustom,
   createLandThenPickupInput,

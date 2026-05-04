@@ -1,4 +1,6 @@
 import { EResource } from '@seti/common/types/element';
+import { alienCards } from '@seti/common/data/alienCards';
+import { EAlienType } from '@seti/common/types/BaseCard';
 import { EFreeAction, EMainAction } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import {
@@ -116,6 +118,27 @@ describe('FreeActionCornerFreeAction', () => {
       ).toThrowError(
         expect.objectContaining({ code: EErrorCode.INVALID_ACTION }),
       );
+    });
+
+    it('rejects discarding Exertian cards from hand-corner free action', () => {
+      const exertianCardId = alienCards.find(
+        (card) => card.alien === EAlienType.EXERTIANS,
+      )?.id;
+      if (!exertianCardId) {
+        throw new Error('expected Exertian card data');
+      }
+
+      const { game, player } = setupCornerGame('fac-exertian-blocked', [
+        exertianCardId,
+      ]);
+
+      expect(() =>
+        FreeActionCornerFreeAction.execute(player, game, exertianCardId),
+      ).toThrowError(
+        expect.objectContaining({ code: EErrorCode.INVALID_ACTION }),
+      );
+      expect(player.hand.map(resolveCardId)).toEqual([exertianCardId]);
+      expect(game.mainDeck.getDiscardPile()).toEqual([]);
     });
 
     it('3.4.1 [集成] MOVE corner — discard grants +1 move (card 39)', () => {

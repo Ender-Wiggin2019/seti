@@ -11,6 +11,9 @@ import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import {
   type AnomaliesAlienBoard,
   isAnomaliesAlienBoard,
+  isCentauriansAlienBoard,
+  isExertiansAlienBoard,
+  isMascamitesAlienBoard,
 } from '@/engine/alien/AlienBoard.js';
 import { AlienState } from '@/engine/alien/index.js';
 import { OumuamuaAlienPlugin } from '@/engine/alien/plugins/OumuamuaAlienPlugin.js';
@@ -24,6 +27,12 @@ const BEFORE_PASS_ROTATION_CHECKPOINT_ID = 'before-pass-rotation';
 const OUMUAMUA_PRESET_ID = 'oumuamua-debug';
 const AFTER_OUMUAMUA_TILE_SIGNAL_CHECKPOINT_ID = 'after-tile-signal';
 const OUMUAMUA_TRACE_COLUMNS_CHECKPOINT_ID = 'trace-columns';
+const CENTAURIANS_PRESET_ID = 'centaurians-debug';
+const CENTAURIANS_AFTER_DISCOVERY_CHECKPOINT_ID = 'after-discovery';
+const EXERTIANS_PRESET_ID = 'exertians-debug';
+const EXERTIANS_AFTER_DISCOVERY_CHECKPOINT_ID = 'after-discovery';
+const MASCAMITES_PRESET_ID = 'mascamites-debug';
+const MASCAMITES_AFTER_DISCOVERY_CHECKPOINT_ID = 'after-discovery';
 
 interface IDebugReplayPreset {
   definition: IDebugReplayPresetDefinition;
@@ -125,6 +134,60 @@ const DEBUG_REPLAY_PRESETS: Readonly<Record<string, IDebugReplayPreset>> = {
       ],
     },
     apply: applyOumuamuaReplay,
+  },
+  [CENTAURIANS_PRESET_ID]: {
+    definition: {
+      id: CENTAURIANS_PRESET_ID,
+      label: 'Centaurians Replay',
+      description:
+        'Prepare a discovered Centaurians board with message milestones and reward slots initialized.',
+      fields: [],
+      checkpoints: [
+        {
+          id: CENTAURIANS_AFTER_DISCOVERY_CHECKPOINT_ID,
+          label: 'After Discovery',
+          description:
+            'Centaurians is discovered and ready for message/milestone debugging.',
+        },
+      ],
+    },
+    apply: applyCentauriansReplay,
+  },
+  [EXERTIANS_PRESET_ID]: {
+    definition: {
+      id: EXERTIANS_PRESET_ID,
+      label: 'Exertians Replay',
+      description:
+        'Prepare a discovered Exertians board with danger tiers and milestone tracks initialized.',
+      fields: [],
+      checkpoints: [
+        {
+          id: EXERTIANS_AFTER_DISCOVERY_CHECKPOINT_ID,
+          label: 'After Discovery',
+          description:
+            'Exertians is discovered and ready for face-down/milestone debugging.',
+        },
+      ],
+    },
+    apply: applyExertiansReplay,
+  },
+  [MASCAMITES_PRESET_ID]: {
+    definition: {
+      id: MASCAMITES_PRESET_ID,
+      label: 'Mascamites Replay',
+      description:
+        'Prepare a discovered Mascamites board with sample pools initialized for collection and delivery debugging.',
+      fields: [],
+      checkpoints: [
+        {
+          id: MASCAMITES_AFTER_DISCOVERY_CHECKPOINT_ID,
+          label: 'After Discovery',
+          description:
+            'Mascamites sample pools are seeded and ready for capsule workflows.',
+        },
+      ],
+    },
+    apply: applyMascamitesReplay,
   },
 };
 
@@ -354,6 +417,112 @@ function applyOumuamuaReplay(
   };
 }
 
+function applyCentauriansReplay(
+  game: Game,
+  request: IDebugReplaySessionRequest,
+): {
+  phase: EPhase;
+  summary: string;
+  alienIndex: number;
+  selectedAlienType: EAlienType;
+  currentPlayerId: string;
+} {
+  if (request.checkpointId !== CENTAURIANS_AFTER_DISCOVERY_CHECKPOINT_ID) {
+    throw new Error(`Unsupported replay checkpoint: ${request.checkpointId}`);
+  }
+
+  const { activePlayer, board } = discoverAlienWithNeutralMarkers(
+    game,
+    EAlienType.CENTAURIANS,
+  );
+  if (!isCentauriansAlienBoard(board)) {
+    throw new Error('Centaurians board not found for replay preset');
+  }
+
+  game.phase = EPhase.AWAIT_MAIN_ACTION;
+  activePlayer.waitingFor = undefined;
+  game.eventLog = new EventLog();
+
+  return {
+    phase: game.phase,
+    summary:
+      'Replay ready: Centaurians milestones and reward slots are initialized.',
+    alienIndex: board.alienIndex,
+    selectedAlienType: EAlienType.CENTAURIANS,
+    currentPlayerId: activePlayer.id,
+  };
+}
+
+function applyExertiansReplay(
+  game: Game,
+  request: IDebugReplaySessionRequest,
+): {
+  phase: EPhase;
+  summary: string;
+  alienIndex: number;
+  selectedAlienType: EAlienType;
+  currentPlayerId: string;
+} {
+  if (request.checkpointId !== EXERTIANS_AFTER_DISCOVERY_CHECKPOINT_ID) {
+    throw new Error(`Unsupported replay checkpoint: ${request.checkpointId}`);
+  }
+
+  const { activePlayer, board } = discoverAlienWithNeutralMarkers(
+    game,
+    EAlienType.EXERTIANS,
+  );
+  if (!isExertiansAlienBoard(board)) {
+    throw new Error('Exertians board not found for replay preset');
+  }
+
+  game.phase = EPhase.AWAIT_MAIN_ACTION;
+  activePlayer.waitingFor = undefined;
+  game.eventLog = new EventLog();
+
+  return {
+    phase: game.phase,
+    summary: 'Replay ready: Exertians danger tiers and milestones are set.',
+    alienIndex: board.alienIndex,
+    selectedAlienType: EAlienType.EXERTIANS,
+    currentPlayerId: activePlayer.id,
+  };
+}
+
+function applyMascamitesReplay(
+  game: Game,
+  request: IDebugReplaySessionRequest,
+): {
+  phase: EPhase;
+  summary: string;
+  alienIndex: number;
+  selectedAlienType: EAlienType;
+  currentPlayerId: string;
+} {
+  if (request.checkpointId !== MASCAMITES_AFTER_DISCOVERY_CHECKPOINT_ID) {
+    throw new Error(`Unsupported replay checkpoint: ${request.checkpointId}`);
+  }
+
+  const { activePlayer, board } = discoverAlienWithNeutralMarkers(
+    game,
+    EAlienType.MASCAMITES,
+  );
+  if (!isMascamitesAlienBoard(board)) {
+    throw new Error('Mascamites board not found for replay preset');
+  }
+
+  game.phase = EPhase.AWAIT_MAIN_ACTION;
+  activePlayer.waitingFor = undefined;
+  game.eventLog = new EventLog();
+
+  return {
+    phase: game.phase,
+    summary: 'Replay ready: Mascamites sample pools are initialized.',
+    alienIndex: board.alienIndex,
+    selectedAlienType: EAlienType.MASCAMITES,
+    currentPlayerId: activePlayer.id,
+  };
+}
+
 function parseAlienType(rawAlienType: string | undefined): EAlienType {
   const alienType = Number(rawAlienType);
   if (!CORE_RANDOM_ALIEN_TYPES.includes(alienType as EAlienType)) {
@@ -414,6 +583,45 @@ function normalizeAnomalyTokensForTriggerReplay(
       rewards: templateRewards.map((reward) => ({ ...reward })),
     });
   }
+}
+
+function discoverAlienWithNeutralMarkers(
+  game: Game,
+  alienType: EAlienType,
+): {
+  activePlayer: Game['players'][number];
+  board: NonNullable<ReturnType<Game['alienState']['getBoardByType']>>;
+} {
+  const companionAlienType = CORE_RANDOM_ALIEN_TYPES.find(
+    (candidate) => candidate !== alienType,
+  );
+  if (companionAlienType === undefined) {
+    throw new Error('Could not resolve companion alien for replay preset');
+  }
+
+  game.hiddenAliens = [alienType, companionAlienType];
+  game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+  resolveSetupTucks(game);
+
+  const activePlayer = game.getActivePlayer();
+  const board = game.alienState.getBoardByType(alienType);
+  if (!board) {
+    throw new Error(`Alien board not found for type ${alienType}`);
+  }
+
+  for (const slot of board.getDiscoverySlots()) {
+    if (slot.occupants.length > 0) {
+      continue;
+    }
+    board.placeTrace(slot, 'neutral', slot.traceColor);
+  }
+
+  const pluginInput = game.alienState.discoverAlien(board, game);
+  if (pluginInput !== undefined) {
+    activePlayer.waitingFor = pluginInput;
+  }
+
+  return { activePlayer, board };
 }
 
 function trimHandForPass(player: Game['players'][number]): void {

@@ -195,6 +195,7 @@ export const _alienCards: any[] = [
     price: 1,
     income: EResource.ENERGY,
     alien: EAlienType.CENTAURIANS,
+    effects: [e.ADVANCED_15(), e.CARD(), e.FULFILL_ADVANCED(), e.TRACE_RED()],
   },
   {
     id: 'ET.36',
@@ -208,6 +209,12 @@ export const _alienCards: any[] = [
     price: 1,
     income: EResource.CREDIT,
     alien: EAlienType.CENTAURIANS,
+    effects: [
+      e.ADVANCED_15(),
+      e.PUBLICITY(2),
+      e.FULFILL_ADVANCED(),
+      e.TRACE_BLUE(),
+    ],
   },
   {
     id: 'ET.32',
@@ -221,16 +228,24 @@ export const _alienCards: any[] = [
     price: 1,
     income: EResource.DATA,
     alien: EAlienType.CENTAURIANS,
+    effects: [e.ADVANCED_15(), e.DATA(2), e.FULFILL_ADVANCED(), e.INCOME()],
   },
   {
     id: 'ET.38',
     name: 'Hivemind Concept',
     position: { src: '/seti-assets/aliens/centaurians.webp', row: 0, col: 3 },
-    freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
+    freeAction: [{ type: EResource.PUBLICITY, value: 2 }],
     sector: ESector.BLUE,
     price: 2,
     income: EResource.DATA,
     alien: EAlienType.CENTAURIANS,
+    effects: [
+      e.ADVANCED_15(),
+      e.ROTATE(),
+      e.TECH_COMPUTER(),
+      e.FULFILL_ADVANCED(),
+      e.INCOME(),
+    ],
   },
   {
     id: 'ET.33',
@@ -241,6 +256,13 @@ export const _alienCards: any[] = [
     price: 1,
     income: EResource.PUBLICITY,
     alien: EAlienType.CENTAURIANS,
+    effects: [
+      e.ADVANCED_15(),
+      e.PUBLICITY(),
+      e.CREDIT(),
+      e.FULFILL_ADVANCED(),
+      e.INCOME(),
+    ],
   },
   {
     id: 'ET.37',
@@ -254,6 +276,13 @@ export const _alienCards: any[] = [
     price: 2,
     income: EResource.ENERGY,
     alien: EAlienType.CENTAURIANS,
+    effects: [
+      e.ADVANCED_15(),
+      e.CARD_ANY(),
+      e.FULFILL_ADVANCED(),
+      e.CREDIT(),
+      e.TRACE_ANY(),
+    ],
   },
   {
     id: 'ET.35',
@@ -264,6 +293,12 @@ export const _alienCards: any[] = [
     price: 1,
     income: EResource.CARD,
     alien: EAlienType.CENTAURIANS,
+    effects: [
+      e.ADVANCED_15(),
+      e.DATA(),
+      e.FULFILL_ADVANCED(),
+      e.TRACE_YELLOW(),
+    ],
   },
   {
     id: 'ET.39',
@@ -277,6 +312,13 @@ export const _alienCards: any[] = [
     price: 2,
     income: EResource.PUBLICITY,
     alien: EAlienType.CENTAURIANS,
+    effects: [
+      e.ADVANCED_15(),
+      e.ROTATE(),
+      e.TECH_SCAN(),
+      e.FULFILL_ADVANCED(),
+      e.INCOME(),
+    ],
   },
   {
     id: 'ET.40',
@@ -287,6 +329,12 @@ export const _alienCards: any[] = [
     price: 2,
     income: EResource.DATA,
     alien: EAlienType.CENTAURIANS,
+    effects: [
+      e.ADVANCED_15(),
+      e.SIGNAL_ANY(2),
+      e.FULFILL_ADVANCED(),
+      e.INCOME(),
+    ],
   },
   {
     id: 'ET.31',
@@ -300,6 +348,7 @@ export const _alienCards: any[] = [
     price: 1,
     income: EResource.PUBLICITY,
     alien: EAlienType.CENTAURIANS,
+    effects: [e.ADVANCED_15(), e.LAUNCH(), e.FULFILL_ADVANCED(), e.INCOME()],
   },
 
   {

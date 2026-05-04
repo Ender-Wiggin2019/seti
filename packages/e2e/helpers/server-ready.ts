@@ -5,10 +5,10 @@ const SERVER_URL = process.env.SERVER_URL ?? 'http://localhost:3000';
 export async function waitForServerReady(
   request: APIRequestContext,
 ): Promise<void> {
-  for (let attempt = 0; attempt < 30; attempt += 1) {
+  for (let attempt = 0; attempt < 120; attempt += 1) {
     try {
-      const res = await request.get(`${SERVER_URL}/auth/me`);
-      if (res.status() === 401) {
+      const res = await request.get(`${SERVER_URL}/health`);
+      if (res.ok()) {
         return;
       }
     } catch {

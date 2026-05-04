@@ -398,8 +398,18 @@ describe('free action rules', () => {
   });
 
   describe('canCompleteMission', () => {
-    it('always returns false (TODO)', () => {
+    it('returns false when no completable mission branches are projected', () => {
       expect(canCompleteMission(createPlayer())).toBe(false);
+    });
+
+    it('returns true when the server projects a completable quick mission branch', () => {
+      expect(
+        canCompleteMission(
+          createPlayer({
+            completableMissionBranches: [{ cardId: '37', branchIndex: 0 }],
+          }),
+        ),
+      ).toBe(true);
     });
   });
 
@@ -688,12 +698,14 @@ describe('free action rules', () => {
       expect(actions).toContain(EFreeAction.BUY_CARD);
     });
 
-    it('does not include complete mission (TODO)', () => {
+    it('includes complete mission when a completable mission branch is projected', () => {
       const actions = getAvailableFreeActions(
-        createPlayer(),
+        createPlayer({
+          completableMissionBranches: [{ cardId: '37', branchIndex: 0 }],
+        }),
         createGameState(),
       );
-      expect(actions).not.toContain(EFreeAction.COMPLETE_MISSION);
+      expect(actions).toContain(EFreeAction.COMPLETE_MISSION);
     });
 
     it('includes sample delivery when an owned Mascamites capsule is ready', () => {

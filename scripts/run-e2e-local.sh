@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SPEC_PATH="${1:-tests/game-flow-behavior.spec.ts}"
+SPEC_PATHS=("$@")
 SERVER_URL="${SERVER_URL:-http://127.0.0.1:3000}"
 CLIENT_URL="${CLIENT_URL:-http://127.0.0.1:5173}"
 WS_URL="${WS_URL:-http://127.0.0.1:3000}"
@@ -30,8 +30,8 @@ CLIENT_PID=""
 
 server_ready() {
   local status
-  status="$(curl -s -o /dev/null -w "%{http_code}" "${SERVER_URL}/auth/me" || true)"
-  [[ "${status}" == "200" || "${status}" == "401" ]]
+  status="$(curl -s -o /dev/null -w "%{http_code}" "${SERVER_URL}/health" || true)"
+  [[ "${status}" == "200" ]]
 }
 
 cleanup() {
@@ -55,7 +55,7 @@ fi
 echo "[e2e:run] starting server on ${SERVER_URL}"
 (
   cd "${ROOT_DIR}/packages/server"
-  exec env PATH="${NODE_DIR}:$PATH" "${NODE_BIN}" --import "${TSX_LOADER}" src/main.ts
+  exec env PATH="${NODE_DIR}:$PATH" SETI_THROTTLE_LIMIT=10000 "${NODE_BIN}" --import "${TSX_LOADER}" src/main.ts
 ) &
 SERVER_PID=$!
 
@@ -83,14 +83,30 @@ if ! curl -fs "${CLIENT_URL}" >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "[e2e:run] running ${SPEC_PATH}"
+if [[ "${#SPEC_PATHS[@]}" -gt 0 ]]; then
+  echo "[e2e:run] running ${SPEC_PATHS[*]}"
+else
+  echo "[e2e:run] running full e2e suite"
+fi
 cd "${ROOT_DIR}/packages/e2e"
+PLAYWRIGHT_CMD=(
+  ./node_modules/.bin/playwright
+  test
+)
+
+if [[ "${#SPEC_PATHS[@]}" -gt 0 ]]; then
+  PLAYWRIGHT_CMD+=("${SPEC_PATHS[@]}")
+fi
+
+PLAYWRIGHT_CMD+=(
+  --project="${PLAYWRIGHT_PROJECT}"
+  --retries="${PLAYWRIGHT_RETRIES}"
+)
+
 env \
   PATH="${NODE_DIR}:$PATH" \
   CI=1 \
   SERVER_URL="${SERVER_URL}" \
   CLIENT_URL="${CLIENT_URL}" \
   WS_URL="${WS_URL}" \
-  ./node_modules/.bin/playwright test "${SPEC_PATH}" \
-  --project="${PLAYWRIGHT_PROJECT}" \
-  --retries="${PLAYWRIGHT_RETRIES}"
+  "${PLAYWRIGHT_CMD[@]}"

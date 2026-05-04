@@ -82,6 +82,7 @@ describe('GameSetup', () => {
       energy: 3,
       publicity: 4,
       data: 0,
+      signalTokens: 0,
     });
     expect(game.players[0].hand).toHaveLength(5);
     expect(game.players[0].tuckedIncomeCards).toHaveLength(0);

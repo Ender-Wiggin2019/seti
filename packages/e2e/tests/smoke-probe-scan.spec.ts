@@ -7,6 +7,7 @@ import {
   enterGameByUi,
   joinRoomByUi,
   launchGameByUi,
+  openEventLog,
   registerByUi,
   resolveScanSubActions,
   waitForActionHandoff,
@@ -100,6 +101,8 @@ test.describe('Smoke: Room → Launch Probe → Scan', () => {
       await attachScreenshot(scanActor, testInfo, '06-scan-actor-ready');
 
       // ── Step 7: Scan ─────────────────────────────────────────
+      await openEventLog(scanActor);
+      await openEventLog(scanOther);
       const scanActorLog = scanActor.locator('[data-testid^="event-entry-"]');
       const scanOtherLog = scanOther.locator('[data-testid^="event-entry-"]');
       const scanActorLogBefore = await scanActorLog.count();

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import { vi } from 'vitest';
 import { AlienBoardView } from '@/features/board/AlienBoardView';
 import { useDebugStore } from '@/stores/debugStore';
 import type {
@@ -340,6 +341,209 @@ describe('AlienBoardView', () => {
 
     expect(onCardInspect).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'ET.11' }),
+    );
+  });
+
+  it('renders Centaurians message milestones as public board state', () => {
+    const alien: IPublicAlienState = {
+      alienIndex: 0,
+      alienType: EAlienType.CENTAURIANS,
+      discovered: true,
+      discovery: {
+        zones: [
+          slot('alien-0-discovery-red-trace', ETrace.RED, {
+            isDiscovery: true,
+          }),
+          slot('alien-0-discovery-yellow-trace', ETrace.YELLOW, {
+            isDiscovery: true,
+          }),
+          slot('alien-0-discovery-blue-trace', ETrace.BLUE, {
+            isDiscovery: true,
+          }),
+        ],
+        overflowZones: [
+          slot('alien-0-overflow-red-trace', ETrace.RED, {
+            maxOccupants: -1,
+          }),
+          slot('alien-0-overflow-yellow-trace', ETrace.YELLOW, {
+            maxOccupants: -1,
+          }),
+          slot('alien-0-overflow-blue-trace', ETrace.BLUE, {
+            maxOccupants: -1,
+          }),
+        ],
+      },
+      cardZone: { faceUpCardId: 'ET.31', drawPileSize: 6, discardPileSize: 1 },
+      board: {
+        type: 'centaurians',
+        messageMilestones: [
+          {
+            playerId: 'p1',
+            threshold: 27,
+            sourceCardId: null,
+            resolved: false,
+          },
+          {
+            playerId: 'p2',
+            threshold: 34,
+            sourceCardId: 'ET.31',
+            resolved: false,
+          },
+        ],
+        pendingMessagesByPlayer: { p1: [], p2: ['ET.31'] },
+        rewardSlots: [
+          {
+            slotId: 'score-8',
+            rewards: [{ type: 'VP', amount: 8 }],
+            dataCost: 0,
+            claimedByPlayerId: 'p1',
+          },
+        ],
+        traceSlots: [],
+      },
+    };
+
+    render(
+      <AlienBoardView
+        aliens={[alien]}
+        playerColors={{ p1: '#f00', p2: '#00f' }}
+      />,
+    );
+
+    expect(screen.getByTestId('alien-0-centaurians-board')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('alien-0-centaurians-message-p1'),
+    ).toHaveTextContent('27 VP');
+    expect(
+      screen.getByTestId('alien-0-centaurians-message-p2'),
+    ).toHaveTextContent('34 VP');
+    expect(
+      screen.getByTestId('alien-0-centaurians-reward-score-8'),
+    ).toHaveTextContent('p1');
+  });
+
+  it('renders Exertians hidden cards, milestones, and trace slots without card ids', () => {
+    const alien: IPublicAlienState = {
+      alienIndex: 0,
+      alienType: EAlienType.EXERTIANS,
+      discovered: true,
+      discovery: { zones: [], overflowZones: [] },
+      cardZone: { faceUpCardId: null, drawPileSize: 0, discardPileSize: 0 },
+      board: {
+        type: 'exertians',
+        faceDownCards: [
+          { ownerId: 'p1', revealed: false, source: 'discovery' },
+          { ownerId: 'p1', revealed: false, source: 'milestone-20' },
+          { ownerId: 'p2', revealed: false, source: 'milestone-40' },
+        ],
+        milestones: [
+          { threshold: 24, claimedByPlayerIds: ['p1'], creditCost: 0 },
+          { threshold: 44, claimedByPlayerIds: [], creditCost: 1 },
+        ],
+        traceSlots: [
+          slot('alien-0-exertians-blue-1', ETrace.BLUE, {
+            rewards: [{ type: 'VP', amount: 3 }],
+          }),
+        ],
+      },
+    };
+
+    render(
+      <AlienBoardView
+        aliens={[alien]}
+        playerColors={{ p1: '#f00', p2: '#00f' }}
+      />,
+    );
+
+    expect(screen.getByTestId('alien-0-exertians-board')).toBeInTheDocument();
+    expect(screen.getByTestId('alien-0-exertians-hidden-p1')).toHaveTextContent(
+      '2',
+    );
+    expect(screen.getByTestId('alien-0-exertians-hidden-p2')).toHaveTextContent(
+      '1',
+    );
+    expect(screen.getByTestId('alien-0-exertians-milestone-0')).toHaveTextContent(
+      '24 VP',
+    );
+    expect(screen.getByTestId('alien-0-exertians-milestone-1')).toHaveTextContent(
+      'Cost 1C / 0 claimed',
+    );
+    expect(
+      screen.getByTestId('alien-0-exertians-trace-column-blue-trace'),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('alien-0-exertians-board')).not.toHaveTextContent(
+      'ET.',
+    );
+  });
+
+  it('renders Mascamites sample pools, capsules, delivered samples, and blue slots', () => {
+    const alien: IPublicAlienState = {
+      alienIndex: 0,
+      alienType: EAlienType.MASCAMITES,
+      discovered: true,
+      discovery: { zones: [], overflowZones: [] },
+      cardZone: { faceUpCardId: 'ET.1', drawPileSize: 5, discardPileSize: 1 },
+      board: {
+        type: 'mascamites',
+        samplePools: {
+          [EPlanet.JUPITER]: ['mascamites-credit-2', 'mascamites-energy-2'],
+          [EPlanet.SATURN]: ['mascamites-card-2'],
+        },
+        publicSamples: ['mascamites-vp-7'],
+        capsules: [
+          {
+            capsuleId: 'cap-1',
+            ownerId: 'p1',
+            sampleTokenId: 'mascamites-credit-2',
+            sourcePlanet: EPlanet.JUPITER,
+            spaceId: 'ring-2-cell-4',
+            missionCardId: 'ET.1',
+          },
+        ],
+        deliveredSamples: [
+          {
+            sampleTokenId: 'mascamites-vp-7',
+            deliveredBy: 'p2',
+            deliveredAtRound: 3,
+            slotId: 'alien-0-mascamites-sample-blue-0',
+          },
+        ],
+        traceSlots: [
+          slot('alien-0-mascamites-sample-blue-0', ETrace.BLUE, {
+            rewards: [{ type: 'VP', amount: 7 }],
+          }),
+        ],
+      },
+    };
+
+    render(
+      <AlienBoardView
+        aliens={[alien]}
+        playerColors={{ p1: '#f00', p2: '#00f' }}
+      />,
+    );
+
+    expect(screen.getByTestId('alien-0-mascamites-board')).toBeInTheDocument();
+    expect(screen.getByTestId('alien-0-mascamites-jupiter')).toHaveTextContent(
+      '2 samples',
+    );
+    expect(screen.getByTestId('alien-0-mascamites-saturn')).toHaveTextContent(
+      '1 sample',
+    );
+    expect(screen.getByTestId('alien-0-mascamites-public')).toHaveTextContent(
+      'mascamites-vp-7',
+    );
+    expect(
+      screen.getByTestId('alien-0-mascamites-capsule-cap-1'),
+    ).toHaveTextContent('ET.1');
+    expect(
+      screen.getByTestId('alien-0-mascamites-delivered-0'),
+    ).toHaveTextContent('Round 3');
+    expect(
+      screen.getByTestId('alien-0-mascamites-trace-column-blue-trace'),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('alien-0-deck-panel')).toHaveTextContent(
+      'Deck 5',
     );
   });
 

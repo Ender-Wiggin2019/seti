@@ -8,7 +8,10 @@ import {
   EPlayerInputType,
   type ISelectEndOfRoundCardInputModel,
 } from '@seti/common/types/protocol/playerInput';
+import { alienCards } from '@seti/common/data/alienCards';
+import { EAlienType } from '@seti/common/types/BaseCard';
 import { Deck } from '@/engine/deck/Deck.js';
+import { AlienState, isCentauriansAlienBoard } from '@/engine/alien/index.js';
 import { Game } from '@/engine/Game.js';
 import { Player } from '@/engine/player/Player.js';
 import { GameError } from '@/shared/errors/GameError.js';
@@ -243,6 +246,36 @@ describe('PlayCardAction — integration', () => {
       expect(player.hand).not.toContain('ET.31');
     });
 
+    it('integration: played Centaurian alien cards become pending messages instead of normal discards', () => {
+      const { game, player } = createIntegrationGame(
+        'play-card-centaurian-pending-message',
+      );
+      game.hiddenAliens = [EAlienType.CENTAURIANS];
+      game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+      const board = game.alienState.getBoardByType(EAlienType.CENTAURIANS);
+      if (!isCentauriansAlienBoard(board)) {
+        throw new Error('expected Centaurians board');
+      }
+      board.discovered = true;
+      player.hand = ['ET.31'];
+      player.score = 8;
+
+      game.processMainAction(player.id, {
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 0 },
+      });
+
+      expect(board.pendingMessagesByPlayer[player.id]).toEqual(['ET.31']);
+      expect(board.messageMilestones).toContainEqual({
+        playerId: player.id,
+        threshold: 23,
+        sourceCardId: 'ET.31',
+        resolved: false,
+      });
+      expect(board.alienDeckDiscardPile).not.toContain('ET.31');
+      expect(game.mainDeck.getDiscardPile()).not.toContain('ET.31');
+    });
+
     it('integration: insufficient resources rejects the play without mutating turn state', () => {
       const { game, player } = createIntegrationGame(
         'play-card-insufficient-resources',
@@ -464,7 +497,7 @@ describe('PlayCardAction — integration', () => {
       expect(controlCenterOptions).toHaveLength(1);
     });
 
-    it('2.6E.1 rejects PLAY_CARD when declared cardId does not match the hand slot (stale client selection)', () => {
+  it('2.6E.1 rejects PLAY_CARD when declared cardId does not match the hand slot (stale client selection)', () => {
       const { game, player } = createIntegrationGame(
         'play-card-2-6e-1-declared-card-mismatch',
       );
@@ -669,5 +702,26 @@ describe('PlayCardAction — integration', () => {
         game.missionTracker.getMissionState(player.id, '106'),
       ).toBeUndefined();
     });
+  });
+
+  it('rejects normal PLAY_CARD for Exertian hidden cards in hand', () => {
+    const { game, player } = createIntegrationGame('play-exertian-hidden-card');
+    const exertianCardId = alienCards.find(
+      (card) => card.alien === EAlienType.EXERTIANS,
+    )?.id;
+    if (!exertianCardId) {
+      throw new Error('expected Exertian card data');
+    }
+    player.hand = [exertianCardId];
+
+    expect(() =>
+      game.processMainAction(player.id, {
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 0, cardId: exertianCardId },
+      }),
+    ).toThrowError(
+      expect.objectContaining({ code: EErrorCode.INVALID_ACTION }),
+    );
+    expect(player.hand).toEqual([exertianCardId]);
   });
 });

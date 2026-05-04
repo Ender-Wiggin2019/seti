@@ -1,20 +1,20 @@
-import { EPlanet, ETrace } from '@seti/common/types/protocol/enums';
+import { getMascamitesSampleToken } from '@seti/common/constant/mascamites';
 import { EAlienType } from '@seti/common/types/BaseCard';
-import { loadCardData } from '../loadCardData.js';
-import { behaviorFromEffects, type IBehavior } from '../Behavior.js';
-import { SelectOption } from '@/engine/input/SelectOption.js';
-import type { PlayerInput } from '@/engine/input/PlayerInput.js';
-import type { IGame } from '@/engine/IGame.js';
-import type { IPlayer } from '@/engine/player/IPlayer.js';
-import type { ICard } from '../ICard.js';
+import { EPlanet, ETrace } from '@seti/common/types/protocol/enums';
+import { isMascamitesAlienBoard } from '@/engine/alien/AlienBoard.js';
 import { AlienRegistry } from '@/engine/alien/AlienRegistry.js';
+import { executeSimpleSlotRewards } from '@/engine/alien/AlienRewards.js';
 import { MascamitesAlienPlugin } from '@/engine/alien/plugins/MascamitesAlienPlugin.js';
 import { LandProbeEffect } from '@/engine/effects/probe/LandProbeEffect.js';
 import { OrbitProbeEffect } from '@/engine/effects/probe/OrbitProbeEffect.js';
+import type { IGame } from '@/engine/IGame.js';
+import type { PlayerInput } from '@/engine/input/PlayerInput.js';
+import { SelectOption } from '@/engine/input/SelectOption.js';
 import { EMissionEventType } from '@/engine/missions/IMission.js';
-import { executeSimpleSlotRewards } from '@/engine/alien/AlienRewards.js';
-import { getMascamitesSampleToken } from '@seti/common/constant/mascamites';
-import { isMascamitesAlienBoard } from '@/engine/alien/AlienBoard.js';
+import type { IPlayer } from '@/engine/player/IPlayer.js';
+import { behaviorFromEffects, type IBehavior } from '../Behavior.js';
+import type { ICard } from '../ICard.js';
+import { loadCardData } from '../loadCardData.js';
 
 const SAMPLE_PLANETS = [EPlanet.JUPITER, EPlanet.SATURN] as const;
 
@@ -72,8 +72,7 @@ function hasOwnProbeAtPlanet(
   const board = game.alienState?.getBoardByType(EAlienType.MASCAMITES);
   if (!isMascamitesAlienBoard(board)) return false;
   return board.capsules.some(
-    (capsule) =>
-      capsule.ownerId === player.id && spaceIds.has(capsule.spaceId),
+    (capsule) => capsule.ownerId === player.id && spaceIds.has(capsule.spaceId),
   );
 }
 
@@ -155,15 +154,22 @@ export function createLandThenPickupInput(
   return new SelectOption(
     player,
     targets.map((target) => ({
-      id: target.isMoon ? `land-${target.planet}-moon` : `land-${target.planet}`,
+      id: target.isMoon
+        ? `land-${target.planet}-moon`
+        : `land-${target.planet}`,
       label: target.isMoon
         ? `Land on ${target.planet} (moon)`
         : `Land on ${target.planet}`,
       onSelect: () => {
-        LandProbeEffect.executeCardContainedAction(player, game, target.planet, {
-          isMoon: target.isMoon,
-          allowMoons: options.allowMoons,
-        });
+        LandProbeEffect.executeCardContainedAction(
+          player,
+          game,
+          target.planet,
+          {
+            isMoon: target.isMoon,
+            allowMoons: options.allowMoons,
+          },
+        );
         return createPickupInputForPlanet(player, game, target.planet, card.id);
       },
     })),
@@ -216,7 +222,9 @@ export function hasMascamitesTraceCount(
   trace: ETrace,
   count: number,
 ): boolean {
-  return game.alienState.getPlayerTraceCount(player, trace, {
-    alienType: EAlienType.MASCAMITES,
-  }) >= count;
+  return (
+    game.alienState.getPlayerTraceCount(player, trace, {
+      alienType: EAlienType.MASCAMITES,
+    }) >= count
+  );
 }

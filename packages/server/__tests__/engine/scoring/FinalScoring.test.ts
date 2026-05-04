@@ -2,8 +2,11 @@ import {
   EAlienType,
   EMainAction,
   EPhase,
+  EPlanet,
   ETrace,
 } from '@seti/common/types/protocol/enums';
+import { ESector } from '@seti/common/types/element';
+import { ETechId } from '@seti/common/types/tech';
 import {
   EPlayerInputType,
   type ISelectEndOfRoundCardInputModel,
@@ -12,6 +15,7 @@ import {
 } from '@seti/common/types/protocol/playerInput';
 import { AlienBoard } from '@/engine/alien/AlienBoard.js';
 import { AlienState } from '@/engine/alien/AlienState.js';
+import { isExertiansAlienBoard } from '@/engine/alien/AlienBoard.js';
 import { getCardRegistry } from '@/engine/cards/CardRegistry.js';
 import { Game } from '@/engine/Game.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
@@ -312,7 +316,7 @@ describe('FinalScoring', () => {
       const result = FinalScoring.score(game);
       const bd = result.breakdown.p1;
       expect(bd.totalAdded).toBe(
-        bd.endGameCards + bd.goldTiles + bd.alienBonus,
+        bd.endGameCards + bd.goldTiles + bd.alienBonus + bd.alienPenalty,
       );
     });
 
@@ -341,6 +345,160 @@ describe('FinalScoring', () => {
       expect(game.finalScoringResult).toBeDefined();
       const end = game.eventLog.recent(20).filter((e) => e.type === 'GAME_END');
       expect(end.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe('Exertians final scoring', () => {
+    it('reveals played Exertian cards, scores fulfilled cards, then applies danger penalty', () => {
+      const game = createTwoPlayerGame('exertians-final-1');
+      game.alienState = AlienState.createFromHiddenAliens([EAlienType.EXERTIANS]);
+      const board = game.alienState.getBoardByType(EAlienType.EXERTIANS);
+      if (!isExertiansAlienBoard(board)) {
+        throw new Error('expected Exertians board');
+      }
+      board.discovered = true;
+      board.playFaceDownCard('p1', 'ET.51', 'discovery');
+      board.playFaceDownCard('p2', 'ET.52', 'discovery');
+
+      const p1 = getPlayer(game, 'p1');
+      const p2 = getPlayer(game, 'p2');
+      p1.score = 100;
+      p2.score = 100;
+      p1.tuckedIncomeCards = Array.from({ length: 8 }, (_, index) => ({
+        id: `tucked-${index}`,
+      }));
+
+      const result = FinalScoring.score(game);
+
+      expect(board.faceDownCards.every((card) => card.revealed)).toBe(true);
+      expect(result.breakdown.p1.alienBonus).toBe(18);
+      expect(result.breakdown.p1.alienPenalty).toBe(-11);
+      expect(result.breakdown.p1.finalScore).toBe(107);
+      expect(result.breakdown.p2.finalScore).toBe(100);
+    });
+
+    it('scores each fulfilled Exertian card condition at most once', () => {
+      const game = createTwoPlayerGame('exertians-final-3');
+      game.alienState = AlienState.createFromHiddenAliens([
+        EAlienType.EXERTIANS,
+        EAlienType.DUMMY,
+      ]);
+      const board = game.alienState.getBoardByType(EAlienType.EXERTIANS);
+      if (!isExertiansAlienBoard(board)) {
+        throw new Error('expected Exertians board');
+      }
+      board.discovered = true;
+      const p1 = getPlayer(game, 'p1');
+      p1.score = 0;
+      getPlayer(game, 'p2').score = 0;
+      for (const cardId of [
+        'ET.52',
+        'ET.50',
+        'ET.45',
+        'ET.42',
+        'ET.43',
+        'ET.51',
+        'ET.47',
+        'ET.49',
+        'ET.54',
+        'ET.53',
+        'ET.48',
+        'ET.44',
+        'ET.41',
+        'ET.55',
+        'ET.46',
+      ]) {
+        board.playFaceDownCard('p1', cardId, 'discovery');
+      }
+      for (let i = 0; i < 8; i += 1) {
+        board.playFaceDownCard('p2', 'ET.53', 'discovery');
+      }
+
+      for (const slot of board.getDiscoverySlots()) {
+        board.placeTrace(slot, { playerId: 'p1' }, slot.traceColor);
+      }
+      for (const slot of board.overflowSlots) {
+        board.placeTrace(slot, { playerId: 'p1' }, slot.traceColor);
+      }
+      const otherBoard = game.alienState.getBoardByType(EAlienType.DUMMY);
+      if (!otherBoard) {
+        throw new Error('expected second alien board');
+      }
+      for (const slot of otherBoard.getDiscoverySlots()) {
+        otherBoard.placeTrace(slot, { playerId: 'p1' }, slot.traceColor);
+      }
+      for (const slot of otherBoard.overflowSlots) {
+        otherBoard.placeTrace(slot, { playerId: 'p1' }, slot.traceColor);
+      }
+      otherBoard.placeTrace(
+        otherBoard.overflowSlots[0]!,
+        { playerId: 'p1' },
+        otherBoard.overflowSlots[0]!.traceColor,
+      );
+
+      game.planetaryBoard?.planets
+        .get(EPlanet.MARS)
+        ?.orbitSlots.push({ playerId: 'p1' }, { playerId: 'p1' });
+      game.planetaryBoard?.planets
+        .get(EPlanet.MARS)
+        ?.landingSlots.push({ playerId: 'p1' }, { playerId: 'p1' });
+      game.sectors
+        .find((sector) => sector.color === ESector.RED)
+        ?.sectorWinners.push('p1', 'p1');
+      game.sectors
+        .find((sector) => sector.color === ESector.YELLOW)
+        ?.sectorWinners.push('p1', 'p1');
+      game.sectors
+        .find((sector) => sector.color === ESector.BLUE)
+        ?.sectorWinners.push('p1', 'p1');
+      game.sectors
+        .find((sector) => sector.color === ESector.BLACK)
+        ?.sectorWinners.push('p1', 'p1', 'p1');
+      p1.techs = [
+        ETechId.PROBE_DOUBLE_PROBE,
+        ETechId.PROBE_ASTEROID,
+        ETechId.PROBE_ROVER_DISCOUNT,
+        ETechId.SCAN_EARTH_LOOK,
+        ETechId.SCAN_POP_SIGNAL,
+        ETechId.SCAN_HAND_SIGNAL,
+        ETechId.COMPUTER_VP_CREDIT,
+        ETechId.COMPUTER_VP_ENERGY,
+        ETechId.COMPUTER_VP_CARD,
+      ];
+      p1.tuckedIncomeCards = Array.from({ length: 8 }, (_, index) => ({
+        id: `income-${index}`,
+      }));
+      p1.completedMissions = ['m1', 'm2', 'm3', 'm4', 'm5'];
+      p1.pieces.deploy(EPieceType.ORBITER);
+      p1.pieces.deploy(EPieceType.ORBITER);
+      p1.pieces.deploy(EPieceType.LANDER);
+      p1.pieces.deploy(EPieceType.LANDER);
+
+      const result = FinalScoring.score(game);
+
+      expect(result.breakdown.p1.alienBonus).toBe(190);
+    });
+
+    it('applies the danger penalty to every player tied for highest danger', () => {
+      const game = createTwoPlayerGame('exertians-final-2');
+      game.alienState = AlienState.createFromHiddenAliens([EAlienType.EXERTIANS]);
+      const board = game.alienState.getBoardByType(EAlienType.EXERTIANS);
+      if (!isExertiansAlienBoard(board)) {
+        throw new Error('expected Exertians board');
+      }
+      board.discovered = true;
+      board.playFaceDownCard('p1', 'ET.50', 'discovery');
+      board.playFaceDownCard('p2', 'ET.50', 'discovery');
+      getPlayer(game, 'p1').score = 100;
+      getPlayer(game, 'p2').score = 100;
+
+      const result = FinalScoring.score(game);
+
+      expect(result.scores).toEqual({ p1: 90, p2: 90 });
+      expect(result.breakdown.p1.alienBonus).toBe(0);
+      expect(result.breakdown.p2.alienBonus).toBe(0);
+      expect(result.breakdown.p1.alienPenalty).toBe(-10);
+      expect(result.breakdown.p2.alienPenalty).toBe(-10);
     });
   });
 });

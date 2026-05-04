@@ -80,6 +80,7 @@ export function ResourceBar({ player }: IResourceBarProps): React.JSX.Element {
           <div
             key={item.id}
             className='relative flex items-center gap-1.5 px-2 py-1.5'
+            data-testid={`resource-${item.id}`}
           >
             {index > 0 ? (
               <span

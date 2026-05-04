@@ -25,6 +25,12 @@ export interface IAlienPlugin {
     isOverflow: boolean,
   ): void;
 
+  onMilestoneCheck?(
+    game: IGame,
+    orderedPlayers: readonly IPlayer[],
+    onComplete: () => PlayerInput | undefined,
+  ): PlayerInput | undefined;
+
   canPlaceTraceOnSlot?(game: IGame, player: IPlayer, slot: ITraceSlot): boolean;
 
   onPlaceTraceOnSlot?(game: IGame, player: IPlayer, slot: ITraceSlot): void;
@@ -34,4 +40,9 @@ export interface IAlienPlugin {
   onSolarSystemRotated?(game: IGame): void;
 
   onGameEndScoring?(game: IGame, player: IPlayer): number;
+
+  onGameEndPenalty?(
+    game: IGame,
+    scoresAfterPositiveScoring: Readonly<Record<string, number>>,
+  ): Record<string, number>;
 }

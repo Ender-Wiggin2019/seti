@@ -5,6 +5,8 @@ import type {
   IPublicAlienCardZone,
   IPublicAlienState,
   IPublicAnomaliesBoard,
+  IPublicCentauriansBoard,
+  IPublicExertiansBoard,
   IPublicGameState,
   IPublicGoldScoringTile,
   IPublicMascamitesBoard,
@@ -23,8 +25,12 @@ import type {
 import {
   type AlienBoard,
   type AnomaliesAlienBoard,
+  type CentauriansAlienBoard,
+  type ExertiansAlienBoard,
   type ITraceSlot,
   isAnomaliesAlienBoard,
+  isCentauriansAlienBoard,
+  isExertiansAlienBoard,
   isMascamitesAlienBoard,
   isOumuamuaAlienBoard,
   type MascamitesAlienBoard,
@@ -201,9 +207,55 @@ function toPublicMascamitesBoard(
   };
 }
 
+function toPublicExertiansBoard(
+  board: ExertiansAlienBoard,
+): IPublicExertiansBoard {
+  return {
+    type: 'exertians',
+    faceDownCards: board.faceDownCards.map((card) => ({
+      ownerId: card.ownerId,
+      source: card.source,
+      revealed: card.revealed,
+    })),
+    milestones: board.milestones.map((milestone) => ({
+      threshold: milestone.threshold,
+      claimedByPlayerIds: [...milestone.claimedByPlayerIds],
+      creditCost: milestone.creditCost,
+    })),
+    traceSlots: board.speciesTraceSlots.map((slot) => toPublicTraceSlot(slot)),
+  };
+}
+
+function toPublicCentauriansBoard(
+  board: CentauriansAlienBoard,
+): IPublicCentauriansBoard {
+  return {
+    type: 'centaurians',
+    messageMilestones: board.messageMilestones.map((milestone) => ({
+      ...milestone,
+    })),
+    pendingMessagesByPlayer: Object.fromEntries(
+      Object.entries(board.pendingMessagesByPlayer).map(
+        ([playerId, cardIds]) => [playerId, [...cardIds]],
+      ),
+    ),
+    rewardSlots: board.rewardSlots.map((slot) => ({
+      ...slot,
+      rewards: slot.rewards.map((reward) => ({ ...reward })),
+    })),
+    traceSlots: board.speciesTraceSlots.map((slot) => toPublicTraceSlot(slot)),
+  };
+}
+
 function toPublicAlienBoard(board: AlienBoard): TPublicAlienBoard {
   if (isAnomaliesAlienBoard(board)) {
     return toPublicAnomaliesBoard(board);
+  }
+  if (isCentauriansAlienBoard(board)) {
+    return toPublicCentauriansBoard(board);
+  }
+  if (isExertiansAlienBoard(board)) {
+    return toPublicExertiansBoard(board);
   }
   if (isOumuamuaAlienBoard(board)) {
     return toPublicOumuamuaBoard(board);
@@ -534,6 +586,29 @@ function serializeAlienState(game: IGame): IAlienStateDto {
           (sample) => ({ ...sample }),
         );
       }
+      if (isExertiansAlienBoard(board)) {
+        dto.exertiansFaceDownCards = board.faceDownCards.map((card) => ({
+          ...card,
+        }));
+        dto.exertiansMilestones = board.milestones.map((milestone) => ({
+          ...milestone,
+          claimedByPlayerIds: [...milestone.claimedByPlayerIds],
+        }));
+      }
+      if (isCentauriansAlienBoard(board)) {
+        dto.centauriansMessageMilestones = board.messageMilestones.map(
+          (milestone) => ({ ...milestone }),
+        );
+        dto.centauriansPendingMessagesByPlayer = Object.fromEntries(
+          Object.entries(board.pendingMessagesByPlayer).map(
+            ([playerId, cardIds]) => [playerId, [...cardIds]],
+          ),
+        );
+        dto.centauriansRewardSlots = board.rewardSlots.map((slot) => ({
+          ...slot,
+          rewards: slot.rewards.map((reward) => ({ ...reward })),
+        }));
+      }
 
       return dto;
     }),
@@ -631,6 +706,7 @@ export function serializeGame(game: IGame, version = 0): IGameStateDto {
 function toPublicPlayerState(
   player: IPlayer,
   viewerId: string,
+  game: IGame,
 ): IPublicPlayerState {
   const isViewer = player.id === viewerId;
   const effectiveProbeSpaceLimit = TechModifierQuery.fromTechIds(
@@ -684,6 +760,14 @@ function toPublicPlayerState(
       : undefined,
     playedMissions: isViewer
       ? cloneValue(player.playedMissions as never)
+      : undefined,
+    completableMissionBranches: isViewer
+      ? game.missionTracker
+          .getCompletableQuickMissions(player, game)
+          .map((mission) => ({
+            cardId: mission.cardId,
+            branchIndex: mission.branchIndex,
+          }))
       : undefined,
     completedMissions: isViewer
       ? (cloneValue(player.completedMissions) as string[])
@@ -794,7 +878,7 @@ export function projectGameState(
     scanActionInProgress: isScanActionPoolInput(game.activePlayer.waitingFor),
     turnIndex: game.turnIndex,
     players: game.players.map((player) =>
-      toPublicPlayerState(player, viewerId),
+      toPublicPlayerState(player, viewerId, game),
     ),
     solarSystem: toPublicSolarSystemState(
       game.solarSystem,

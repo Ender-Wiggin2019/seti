@@ -1,3 +1,4 @@
+import { AlienRegistry } from '../alien/AlienRegistry.js';
 import { createActionEvent } from '../event/GameEvent.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
@@ -106,29 +107,118 @@ export class MilestoneState {
       }
     }
 
-    return this.processClaims(game, goldClaims, neutralClaims, 0);
+    return this.processClaims(
+      game,
+      orderedPlayers,
+      goldClaims,
+      neutralClaims,
+      0,
+    );
   }
 
   private processClaims(
     game: IGame,
+    orderedPlayers: IPlayer[],
     goldClaims: IGoldClaim[],
     neutralClaims: INeutralClaim[],
     index: number,
+    alienMilestonesProcessed = false,
   ): IPlayerInput | undefined {
     if (index < goldClaims.length) {
       const claim = goldClaims[index];
       return this.resolveGoldClaim(game, claim, () =>
-        this.processClaims(game, goldClaims, neutralClaims, index + 1),
+        this.processClaims(
+          game,
+          orderedPlayers,
+          goldClaims,
+          neutralClaims,
+          index + 1,
+          alienMilestonesProcessed,
+        ),
       );
     }
 
     const neutralIndex = index - goldClaims.length;
+    if (neutralIndex === 0 && !alienMilestonesProcessed) {
+      const alienMilestoneInput = this.processAlienMilestones(
+        game,
+        orderedPlayers,
+        () =>
+          this.processClaims(
+            game,
+            orderedPlayers,
+            goldClaims,
+            neutralClaims,
+            index,
+            true,
+          ),
+      );
+      if (alienMilestoneInput !== undefined) {
+        return alienMilestoneInput;
+      }
+    }
+
     if (neutralIndex < neutralClaims.length) {
       this.resolveNeutralClaim(game, neutralClaims[neutralIndex]);
-      return this.processClaims(game, goldClaims, neutralClaims, index + 1);
+      return this.processClaims(
+        game,
+        orderedPlayers,
+        goldClaims,
+        neutralClaims,
+        index + 1,
+        alienMilestonesProcessed,
+      );
     }
 
     return undefined;
+  }
+
+  private processAlienMilestones(
+    game: IGame,
+    orderedPlayers: IPlayer[],
+    onComplete: () => IPlayerInput | undefined,
+  ): IPlayerInput | undefined {
+    return this.processAlienMilestoneBoard(game, orderedPlayers, 0, onComplete);
+  }
+
+  private processAlienMilestoneBoard(
+    game: IGame,
+    orderedPlayers: IPlayer[],
+    boardIndex: number,
+    onComplete: () => IPlayerInput | undefined,
+  ): IPlayerInput | undefined {
+    if (boardIndex >= game.alienState.boards.length) {
+      return onComplete();
+    }
+
+    const board = game.alienState.boards[boardIndex];
+    if (!board.discovered) {
+      return this.processAlienMilestoneBoard(
+        game,
+        orderedPlayers,
+        boardIndex + 1,
+        onComplete,
+      );
+    }
+
+    const plugin = AlienRegistry.get(board.alienType);
+    if (!plugin?.onMilestoneCheck) {
+      return this.processAlienMilestoneBoard(
+        game,
+        orderedPlayers,
+        boardIndex + 1,
+        onComplete,
+      );
+    }
+
+    return plugin.onMilestoneCheck(game, orderedPlayers, () =>
+      this.processAlienMilestoneBoard(
+        game,
+        orderedPlayers,
+        boardIndex + 1,
+        onComplete,
+      ),
+    );
   }
 
   private resolveGoldClaim(

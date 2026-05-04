@@ -16,8 +16,8 @@ import {
 import { EAlienType } from '@seti/common/types/protocol/enums';
 import { getTechDescriptor } from '@seti/common/types/tech';
 import { isOumuamuaAlienBoard } from '../alien/AlienBoard.js';
-import { hasMascamitesTraceCount } from '../cards/alien/MascamitesCardUtils.js';
 import { countSectorFulfills } from '../board/sectorFulfillmentCounts.js';
+import { hasMascamitesTraceCount } from '../cards/alien/MascamitesCardUtils.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
 import {
