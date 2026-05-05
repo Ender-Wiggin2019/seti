@@ -58,9 +58,33 @@ describe('LobbyController', () => {
       2,
       undefined,
       undefined,
-      undefined,
     );
     expect(result.id).toBe('room-1');
+  });
+
+  it('POST /lobby/rooms ignores scenarioPreset payloads from public clients', async () => {
+    const req = { user: { sub: 'host-1', email: 'host@t.com' } };
+
+    await controller.createRoom(req, {
+      name: 'Scenario Room',
+      playerCount: 2,
+      scenarioPreset: 'behavior-flow',
+      options: {
+        playerCount: 2,
+        scenarioPreset: 'deliver-sample',
+      },
+    });
+
+    expect(mockLobbyService.createRoom).toHaveBeenCalledWith(
+      'host-1',
+      'Scenario Room',
+      2,
+      undefined,
+      {
+        playerCount: 2,
+        scenarioPreset: 'deliver-sample',
+      },
+    );
   });
 
   it('GET /lobby/rooms/:id returns room details', async () => {

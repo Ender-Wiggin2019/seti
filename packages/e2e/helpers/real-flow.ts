@@ -46,7 +46,7 @@ export function createUser(prefix: string): IUserCred {
   };
 }
 
-async function resolveCardPromptIfVisible(
+export async function resolveCardPromptIfVisible(
   page: Page,
   timeoutMs = 8_000,
 ): Promise<boolean> {
@@ -86,6 +86,51 @@ async function resolveCardPromptIfVisible(
     const anyActionVisible = await anyAction.isVisible().catch(() => false);
     if (anyActionVisible) {
       return false;
+    }
+
+    await page.waitForTimeout(150);
+  }
+
+  return false;
+}
+
+export async function waitForAndResolveCardPrompt(
+  page: Page,
+  timeoutMs = 10_000,
+): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    const eorCardPrompt = page
+      .locator('[data-testid="bottom-actions"] [data-testid^="input-eor-card-"]')
+      .first();
+    const eorVisible = await eorCardPrompt.isVisible().catch(() => false);
+
+    if (eorVisible) {
+      await eorCardPrompt.click();
+      return true;
+    }
+
+    const cardPrompt = page
+      .locator(
+        '[data-testid="bottom-actions"] [data-testid^="hand-card-"],' +
+          '[data-testid="bottom-actions"] [data-testid^="select-card-"]',
+      )
+      .first();
+    const visible = await cardPrompt.isVisible().catch(() => false);
+
+    if (visible) {
+      await cardPrompt.click();
+      const confirmBtn = page
+        .locator('[data-testid="bottom-actions"]')
+        .getByRole('button', { name: /^confirm$/i });
+      const confirmVisible = await confirmBtn.isVisible().catch(() => false);
+      if (confirmVisible) {
+        await confirmBtn.scrollIntoViewIfNeeded().catch(() => undefined);
+        await expect(confirmBtn).toBeEnabled({ timeout: 5_000 });
+        await confirmBtn.click();
+      }
+      return true;
     }
 
     await page.waitForTimeout(150);
@@ -643,7 +688,7 @@ export async function resolveScanSubActions(
       await actionCard.click();
       const actionConfirm = page
         .locator('[data-testid="bottom-actions"]')
-        .getByRole('button', { name: /confirm/i });
+        .getByRole('button', { name: 'Confirm', exact: true });
       await actionConfirm.scrollIntoViewIfNeeded().catch(() => undefined);
       await expect(actionConfirm).toBeEnabled({ timeout: 5_000 });
       await actionConfirm.click();

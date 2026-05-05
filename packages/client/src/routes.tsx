@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-router';
 import { AppShell } from '@/components/layout/AppShell';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { CLIENT_ENV } from '@/config/env';
 import { AuthPage } from '@/pages/auth/AuthPage';
 import { DebugReplayPage } from '@/pages/game/DebugReplayPage';
 import { GameDebugPage } from '@/pages/game/GameDebugPage';
@@ -97,7 +98,12 @@ const spectateRoute = createRoute({
 const gameDebugRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/debug/game',
-  component: GameDebugPage,
+  component: () =>
+    CLIENT_ENV.VITE_ENABLE_DEBUG_ROUTES ? (
+      <GameDebugPage />
+    ) : (
+      <Navigate to='/' replace />
+    ),
 });
 
 const debugAlienRoute = createRoute({
@@ -109,19 +115,34 @@ const debugAlienRoute = createRoute({
 const debugReplayRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/debug/replay',
-  component: DebugReplayPage,
+  component: () =>
+    CLIENT_ENV.VITE_ENABLE_DEBUG_ROUTES ? (
+      <DebugReplayPage />
+    ) : (
+      <Navigate to='/' replace />
+    ),
 });
 
 const solarDebugRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/debug/solar',
-  component: SolarDebugPage,
+  component: () =>
+    CLIENT_ENV.VITE_ENABLE_DEBUG_ROUTES ? (
+      <SolarDebugPage />
+    ) : (
+      <Navigate to='/' replace />
+    ),
 });
 
 const serverDebugRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/debug/server',
-  component: ServerDebugPage,
+  component: () =>
+    CLIENT_ENV.VITE_ENABLE_DEBUG_ROUTES ? (
+      <ServerDebugPage />
+    ) : (
+      <Navigate to='/' replace />
+    ),
 });
 
 const routeTree = rootRoute.addChildren([

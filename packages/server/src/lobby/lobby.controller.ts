@@ -35,7 +35,6 @@ export class LobbyController {
     @Body() dto: CreateRoomDto,
   ) {
     const playerCount = dto.playerCount ?? dto.options?.playerCount;
-    const scenarioPreset = dto.scenarioPreset ?? dto.options?.scenarioPreset;
     if (typeof playerCount !== 'number' || !Number.isInteger(playerCount)) {
       throw new BadRequestException('playerCount is required');
     }
@@ -45,7 +44,6 @@ export class LobbyController {
       dto.name,
       playerCount,
       dto.seed,
-      scenarioPreset,
       dto.options,
     );
   }

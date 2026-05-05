@@ -16,18 +16,9 @@ import { GameRepository } from '@/persistence/repository/GameRepository.js';
 import { games } from '@/persistence/schema/games.js';
 import { gamePlayers } from '@/persistence/schema/players.js';
 import { users } from '@/persistence/schema/users.js';
-import {
-  applyBehaviorFlowScenario,
-  applyDeliverSampleScenario,
-  applySpendSignalTokenScenario,
-  BEHAVIOR_FLOW_SCENARIO_PRESET,
-  DELIVER_SAMPLE_SCENARIO_PRESET,
-  SPEND_SIGNAL_TOKEN_SCENARIO_PRESET,
-} from '@/testing/behaviorFlowScenario.js';
 import type { IRoomPlayer, IRoomResponse } from './dto/RoomResponseDto.js';
 
 const PLAYER_COLORS = ['red', 'blue', 'green', 'yellow'];
-type TRoomOptions = Partial<IGameOptions> & { scenarioPreset?: string };
 
 @Injectable()
 export class LobbyService {
@@ -42,14 +33,15 @@ export class LobbyService {
     name: string,
     playerCount: number,
     seed?: string,
-    scenarioPreset?: string,
     roomOptionsInput?: Partial<IGameOptions>,
   ): Promise<IRoomResponse> {
     const gameId = randomUUID();
     const roomOptionsAny = (roomOptionsInput ?? {}) as Partial<IGameOptions> & {
+      scenarioPreset?: unknown;
       turnTimerSeconds?: number;
     };
-    const { turnTimerSeconds, ...rawRoomOptions } = roomOptionsAny;
+    const { scenarioPreset: _scenarioPreset, turnTimerSeconds, ...rawRoomOptions } =
+      roomOptionsAny;
     const normalizedTimerPerTurn =
       roomOptionsAny.timerPerTurn ?? turnTimerSeconds;
     const normalizedRoomOptions: Partial<IGameOptions> = {
@@ -67,9 +59,6 @@ export class LobbyService {
     } catch (error) {
       throw new BadRequestException((error as Error).message);
     }
-    const roomOptions: TRoomOptions = scenarioPreset
-      ? { ...options, scenarioPreset }
-      : options;
 
     await this.db.insert(games).values({
       id: gameId,
@@ -79,7 +68,7 @@ export class LobbyService {
       playerCount,
       currentRound: 0,
       seed: seed ?? randomUUID(),
-      options: roomOptions,
+      options,
     });
 
     await this.db.insert(gamePlayers).values({
@@ -261,8 +250,7 @@ export class LobbyService {
       seatIndex: p.seatIndex,
     }));
 
-    const options = room.options as TRoomOptions;
-    const { scenarioPreset, ...gameOptions } = options;
+    const gameOptions = room.options as Partial<IGameOptions>;
     const seed = room.seed;
 
     const game = Game.create(
@@ -271,14 +259,6 @@ export class LobbyService {
       seed,
       gameId,
     );
-
-    if (scenarioPreset === BEHAVIOR_FLOW_SCENARIO_PRESET) {
-      applyBehaviorFlowScenario(game);
-    } else if (scenarioPreset === SPEND_SIGNAL_TOKEN_SCENARIO_PRESET) {
-      applySpendSignalTokenScenario(game);
-    } else if (scenarioPreset === DELIVER_SAMPLE_SCENARIO_PRESET) {
-      applyDeliverSampleScenario(game);
-    }
 
     await this.gameRepo.startFromLobby(game);
 

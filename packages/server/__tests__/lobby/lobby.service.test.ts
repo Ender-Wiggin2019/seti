@@ -115,6 +115,34 @@ describe('LobbyService', () => {
       expect(db.insert).toHaveBeenCalled();
       expect(result).toBeDefined();
     });
+
+    it('does not persist scenarioPreset from public room options', async () => {
+      db.select.mockImplementation(() => ({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([MOCK_GAME]),
+          }),
+          innerJoin: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([MOCK_PLAYER]),
+          }),
+        }),
+      }));
+
+      await service.createRoom('host-user', 'My Room', 2, undefined, {
+        playerCount: 2,
+        scenarioPreset: 'behavior-flow',
+      } as Parameters<typeof service.createRoom>[4] & {
+        scenarioPreset: string;
+      });
+
+      expect(db._insertChain.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          options: expect.not.objectContaining({
+            scenarioPreset: expect.any(String),
+          }),
+        }),
+      );
+    });
   });
 
   describe('listRooms', () => {

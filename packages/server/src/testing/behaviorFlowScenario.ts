@@ -4,6 +4,7 @@ import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { ETechBonusType } from '@seti/common/types/tech';
 import { getMascamitesSampleDeliveryDestination } from '@seti/common/utils/mascamitesSampleDelivery';
 import { AlienRegistry } from '@/engine/alien/AlienRegistry.js';
+import { isMascamitesAlienBoard } from '@/engine/alien/AlienBoard.js';
 import { MascamitesAlienPlugin } from '@/engine/alien/plugins/MascamitesAlienPlugin.js';
 import { ESolarSystemElementType } from '@/engine/board/SolarSystem.js';
 import { loadCardData } from '@/engine/cards/loadCardData.js';
@@ -151,7 +152,7 @@ export function applyDeliverSampleScenario(game: Game): void {
   }
 
   const board = game.alienState.getBoardByType(EAlienType.MASCAMITES);
-  if (!board) {
+  if (!isMascamitesAlienBoard(board)) {
     throw new Error('Mascamites board not found');
   }
 
