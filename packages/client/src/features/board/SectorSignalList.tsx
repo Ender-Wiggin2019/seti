@@ -17,6 +17,7 @@ export function SectorSignalDot({
   testId,
 }: ISectorSignalDotProps): React.JSX.Element {
   const isData = signal?.type === 'data';
+  const isEmpty = signal == null;
   const playerId = signal?.type === 'player' ? signal.playerId : undefined;
   const playerColor = playerId ? playerColors[playerId] : undefined;
 
@@ -43,10 +44,16 @@ export function SectorSignalDot({
                 borderColor: 'rgba(103, 232, 249, 0.8)',
                 backgroundColor: 'rgba(165, 243, 252, 0.9)',
               }
-          : {
-              backgroundColor: playerColor ?? '#888',
-              borderColor: playerColor ?? '#888',
-            }),
+          : isEmpty
+            ? {
+                borderColor: 'transparent',
+                backgroundColor: 'transparent',
+                opacity: 0,
+              }
+            : {
+                backgroundColor: playerColor ?? '#888',
+                borderColor: playerColor ?? '#888',
+              }),
       }}
     />
   );
@@ -58,6 +65,7 @@ interface ISectorSignalListProps {
   playerColors: Record<string, string>;
   textMode: boolean;
   slotTestIdPrefix?: string;
+  showPlayerSignals?: boolean;
 }
 
 export function SectorSignalList({
@@ -66,25 +74,35 @@ export function SectorSignalList({
   playerColors,
   textMode,
   slotTestIdPrefix,
+  showPlayerSignals = true,
 }: ISectorSignalListProps): React.JSX.Element {
+  const slotCount = showPlayerSignals
+    ? Math.max(signals.length, capacity)
+    : capacity;
   const signalIndexes = Array.from(
-    { length: Math.max(signals.length, capacity) },
+    { length: slotCount },
     (_, slotIndex) => slotIndex,
   );
 
   return (
     <>
-      {signalIndexes.map((slotIndex) => (
-        <SectorSignalDot
-          key={slotIndex}
-          signal={signals[slotIndex]}
-          playerColors={playerColors}
-          textMode={textMode}
-          testId={
-            slotTestIdPrefix ? `${slotTestIdPrefix}-${slotIndex}` : undefined
-          }
-        />
-      ))}
+      {signalIndexes.map((slotIndex) => {
+        const signal = signals[slotIndex];
+        const visibleSignal =
+          !showPlayerSignals && signal?.type === 'player' ? undefined : signal;
+
+        return (
+          <SectorSignalDot
+            key={slotIndex}
+            signal={visibleSignal}
+            playerColors={playerColors}
+            textMode={textMode}
+            testId={
+              slotTestIdPrefix ? `${slotTestIdPrefix}-${slotIndex}` : undefined
+            }
+          />
+        );
+      })}
     </>
   );
 }

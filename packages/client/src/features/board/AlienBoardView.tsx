@@ -1134,6 +1134,7 @@ function AnomalyColumn({
         {slot.occupants.map((occ, index) => (
           <OccupantMarker
             key={`${slot.slotId}-${index}`}
+            testId={`trace-slot-${slot.slotId}-occupant-${index}`}
             occupant={occ}
             playerColors={playerColors}
           />
@@ -1252,6 +1253,7 @@ function TraceSlot({
         {slot.occupants.map((occ, index) => (
           <OccupantMarker
             key={`${slot.slotId}-${index}`}
+            testId={`trace-slot-${slot.slotId}-occupant-${index}`}
             occupant={occ}
             playerColors={playerColors}
           />
@@ -1264,13 +1266,16 @@ function TraceSlot({
 function OccupantMarker({
   occupant,
   playerColors,
+  testId,
 }: {
   occupant: IPublicTraceSlot['occupants'][number];
   playerColors: Record<string, string>;
+  testId: string;
 }): React.JSX.Element {
   return (
     <span
       className='inline-block h-2.5 w-2.5 rounded-full border border-surface-200/30'
+      data-testid={testId}
       style={{
         backgroundColor:
           occupant.source === 'neutral'

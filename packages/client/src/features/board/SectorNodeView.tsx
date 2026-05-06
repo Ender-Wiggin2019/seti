@@ -237,7 +237,7 @@ export function SectorNodeView({
   return (
     <div
       key={`${position}-${sector.sectorId}`}
-      className='absolute'
+      className='absolute h-[44px]'
       style={{
         left: xPos,
         top: '50%',
@@ -256,19 +256,12 @@ export function SectorNodeView({
       >
         <SectorSignalList
           signals={sector.signals}
-          capacity={sector.signals.length}
+          capacity={dataCapability}
           playerColors={playerColors}
           textMode={false}
+          showPlayerSignals={false}
+          slotTestIdPrefix={`sector-node-${position}-${index}-slot`}
         />
-      </div>
-
-      <div className='mt-0.5 flex items-center justify-center gap-1'>
-        <span className='font-mono text-[9px] uppercase tracking-wide text-text-100'>
-          {sector.color}
-        </span>
-        <span className='font-mono text-[8px] text-text-300'>
-          {remainingData}/{sector.dataSlotCapacity}
-        </span>
       </div>
 
       <button

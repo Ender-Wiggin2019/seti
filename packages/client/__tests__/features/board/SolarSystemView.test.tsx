@@ -7,7 +7,7 @@ import {
   type TSolarSystemWheels,
 } from '@seti/common/constant/sectorSetup';
 import { ESector } from '@seti/common/types/element';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { ComponentProps, ComponentType } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SolarSystemView } from '@/features/board/SolarSystemView';
@@ -300,7 +300,7 @@ describe('SolarSystemView', () => {
     expect(allSpaces).toHaveLength(32);
   });
 
-  it('renders alien tokens on the solar system board', () => {
+  it('renders anomaly tokens with their reward icon on the solar system board', () => {
     render(
       <SolarSystemView
         solarSystem={{
@@ -311,7 +311,7 @@ describe('SolarSystemView', () => {
               alienType: EAlienType.ANOMALIES,
               sectorIndex: 3,
               traceColor: ETrace.RED,
-              rewards: [{ type: 'VP', amount: 4 }],
+              rewards: [{ type: 'CREDIT', amount: 1 }],
             },
           ],
         }}
@@ -326,10 +326,12 @@ describe('SolarSystemView', () => {
       />,
     );
 
+    const token = screen.getByTestId(
+      `solar-alien-token-${EAlienType.ANOMALIES}-3-${ETrace.RED}`,
+    );
+    expect(token).toBeInTheDocument();
     expect(
-      screen.getByTestId(
-        `solar-alien-token-${EAlienType.ANOMALIES}-3-${ETrace.RED}`,
-      ),
+      within(token).getByTestId('trace-reward-icon-credit-1'),
     ).toBeInTheDocument();
   });
 

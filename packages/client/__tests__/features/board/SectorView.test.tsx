@@ -115,6 +115,47 @@ describe('SectorView', () => {
     expect(onSelectSector).toHaveBeenCalledWith(ESector.BLACK);
   });
 
+  it('hides image-mode counters and player markers while preserving data slots', () => {
+    const pair = createPair();
+    pair.sectors[0] = {
+      ...pair.sectors[0],
+      signals: [
+        { type: 'player', playerId: 'player-1' },
+        { type: 'data' },
+        { type: 'data' },
+      ],
+      dataCapability: 3,
+      dataSlotCapacity: 3,
+    };
+
+    render(
+      <SectorView
+        pair={pair}
+        playerColors={{ 'player-1': 'red' }}
+        selectableColors={new Set()}
+        clickable={false}
+        highlighted={false}
+        onSelectSector={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText('5/6')).not.toBeInTheDocument();
+    expect(screen.queryByText('2/3')).not.toBeInTheDocument();
+    expect(screen.queryByText('blue-signal')).not.toBeInTheDocument();
+    expect(screen.getByTestId('sector-node-north-0-slot-0')).toHaveAttribute(
+      'data-signal-type',
+      'empty',
+    );
+    expect(screen.getByTestId('sector-node-north-0-slot-1')).toHaveAttribute(
+      'data-signal-type',
+      'data',
+    );
+    expect(screen.getByTestId('sector-node-north-0-slot-2')).toHaveAttribute(
+      'data-signal-type',
+      'data',
+    );
+  });
+
   it('renders text-mode sector component with data and winner areas', () => {
     useDebugStore.setState({ textMode: true });
 

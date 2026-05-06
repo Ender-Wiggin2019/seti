@@ -1,3 +1,4 @@
+import { EffectFactory } from '@seti/cards';
 import { OUMUAMUA_TILE_DATA_CAPACITY } from '@seti/common/constant/alienBoardConfig';
 import type {
   ISolarSystemSetupConfig,
@@ -14,6 +15,10 @@ import {
   getReachableSpaces,
   resolveTopVisibleSolarWheelCell,
 } from '@seti/common/rules';
+import {
+  toTraceRewardPresentations,
+  type TTraceRewardPresentation,
+} from '@seti/common/utils/alienTracePresentation';
 import { useMemo, useState } from 'react';
 import { cn } from '@/lib/cn';
 import { useTextMode } from '@/stores/debugStore';
@@ -26,9 +31,10 @@ import type {
   IPublicSolarSystem,
   IPublicSolarSystemAlienToken,
   IPublicSolarSystemMovablePiece,
+  TPublicSlotReward,
   TMovementTarget,
 } from '@/types/re-exports';
-import { EAlienType, EPlayerInputType, ETrace } from '@/types/re-exports';
+import { EPlayerInputType, ETrace } from '@/types/re-exports';
 import { ProbeToken } from './ProbeToken';
 import { SectorGrid } from './SectorGrid';
 import { SectorSignalList } from './SectorSignalList';
@@ -1131,11 +1137,10 @@ function SolarAlienTokenMarker({
   offsetY: number;
 }): React.JSX.Element {
   const color = SOLAR_ALIEN_TOKEN_COLOR[token.traceColor];
-  const label = token.alienType === EAlienType.ANOMALIES ? 'A' : 'ET';
 
   return (
     <div
-      className='pointer-events-none absolute flex h-7 w-7 items-center justify-center rounded-sm border border-surface-100/50 bg-surface-950/85 font-mono text-[10px] font-bold text-text-100 shadow-[0_2px_6px_rgba(0,0,0,0.55)]'
+      className='pointer-events-none absolute flex h-8 w-8 items-center justify-center rounded-sm border border-surface-100/50 bg-surface-950/90 shadow-[0_2px_6px_rgba(0,0,0,0.55)]'
       data-testid={`solar-alien-token-${token.alienType}-${token.sectorIndex}-${token.traceColor}`}
       style={{
         left: `${xPercent}%`,
@@ -1146,12 +1151,61 @@ function SolarAlienTokenMarker({
       }}
       title={token.tokenId}
     >
+      <SolarAlienTokenRewardIcons rewards={token.rewards} />
       <span
         className='absolute bottom-0.5 right-0.5 h-2 w-2 rounded-full border border-surface-100/50'
         style={{ backgroundColor: color }}
       />
-      {label}
     </div>
+  );
+}
+
+function SolarAlienTokenRewardIcons({
+  rewards,
+}: {
+  rewards: readonly TPublicSlotReward[];
+}): React.JSX.Element {
+  const presentations = toTraceRewardPresentations(rewards);
+
+  return (
+    <span className='flex items-center justify-center gap-0.5'>
+      {presentations.map((presentation, index) => (
+        <SolarAlienTokenRewardIcon
+          key={`${presentation.token}-${index}`}
+          presentation={presentation}
+        />
+      ))}
+    </span>
+  );
+}
+
+function SolarAlienTokenRewardIcon({
+  presentation,
+}: {
+  presentation: TTraceRewardPresentation;
+}): React.JSX.Element {
+  const testKey = presentation.token.replace(/[{}]/g, '');
+
+  if (presentation.kind === 'text') {
+    return (
+      <span
+        className='max-w-7 truncate font-mono text-[8px] font-bold uppercase leading-none text-text-100'
+        data-testid={`trace-reward-icon-${testKey}`}
+        title={presentation.label}
+      >
+        {presentation.text}
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className='inline-flex h-5 w-5 items-center justify-center overflow-visible'
+      data-testid={`trace-reward-icon-${testKey}`}
+      title={presentation.label}
+    >
+      <EffectFactory effect={{ ...presentation.effect, size: 'desc-mini' }} />
+    </span>
   );
 }
 
