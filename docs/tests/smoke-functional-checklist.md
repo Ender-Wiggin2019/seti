@@ -128,7 +128,7 @@
    - 状态：已覆盖
 2. 房主创建 3 人房/4 人房
    - 层级：E2E
-   - 状态：本轮补充
+   - 状态：已覆盖
 3. 客户端正确显示房间设置
    - 层级：E2E
    - 状态：已覆盖
@@ -258,15 +258,23 @@
 4. SCAN 子行动池按输入逐步解析后才能结束回合
    - 层级：E2E
    - 状态：已覆盖
-5. 多个待处理输入按顺序串联
+5. 3 人房中 PASS 行动权按玩家顺序逐个轮转
+   - 层级：E2E
+   - 状态：本轮补充
+   - 证据：`packages/e2e/tests/round-rotation.spec.ts` 通过 3 个真实浏览器上下文验证第一位玩家 PASS 并完成轮末选牌后，控制权顺序移交给另外两位玩家，且之前已 PASS 的玩家不再重新获得行动权。
+6. 全体 PASS 后触发轮末选牌并进入下一轮
+   - 层级：E2E
+   - 状态：本轮补充
+   - 证据：`packages/e2e/tests/end-of-round-cycle.spec.ts` 通过 2 个真实浏览器上下文验证双方 PASS、完成 end-of-round card 选择、第二位玩家成为下一轮起始行动者。
+7. 多个待处理输入按顺序串联
    - 层级：Engine
    - 状态：已覆盖
    - 证据：`DeferredActionsQueue.test.ts` 覆盖 input 暂停与恢复；`Pass.test.ts` 覆盖 discard -> end-of-round card selection；`PlayCard.test.ts` 覆盖 mission prompt 串联与完成/跳过分支。
-6. 延迟动作队列在回合末按优先级结算
+8. 延迟动作队列在回合末按优先级结算
    - 层级：Engine
    - 状态：已覆盖
    - 证据：`DeferredActionsQueue.test.ts` 覆盖优先级排序、同优先级 FIFO、drain 期间新插入 action 重新排序；`Priority.test.ts` 锁定 `MILESTONE < DISCOVERY < TURN_HANDOFF` 等优先级关系。
-7. 里程碑、外星人发现、扇区完成在主行动后正确插队/排队
+9. 里程碑、外星人发现、扇区完成在主行动后正确插队/排队
    - 层级：Engine
    - 状态：已覆盖
    - 证据：`Game.ts` 主行动 pipeline 固定插入 `ResolveSectorCompletion`，回合间 pipeline 固定插入 `ResolveMilestone -> ResolveDiscovery -> TURN_HANDOFF`；`Milestone.test.ts` 覆盖 neutral milestone 后再 discovery；`ResolveSectorCompletion.test.ts` 覆盖真实 game queue drain。
@@ -535,6 +543,8 @@
 2. movement / orbit / land / research tech / play card / analyze data 的真实用户路径
 3. 多个常用自由行动串联，包括 `USE_CARD_CORNER -> COMPLETE_MISSION`
 4. 通过正式 scenario preset 覆盖 `SPEND_SIGNAL_TOKEN` 与 `DELIVER_SAMPLE` 的真实 UI 点击与状态变化。
+5. 3 人房中 PASS 行动权逐个轮转。
+6. 轮末 end-of-round 选牌完成后进入下一轮。
 
 当前不再保留明确的真实 UI E2E 行动缺口。仍需注意：`SPEND_SIGNAL_TOKEN` 与 `DELIVER_SAMPLE` 目前走 formal scenario preset 来缩短随机长前置链路，后续可在扩展牌库配置和 Mascamites 自然采样链路更稳定后升级为完整自然路径。
 
@@ -572,6 +582,14 @@
 
 结果：`2 passed (21.8s)`。
 
+补充运行多人 PASS 轮转与轮末进入下一轮：
+
+```bash
+./scripts/run-e2e-local.sh tests/round-rotation.spec.ts tests/end-of-round-cycle.spec.ts
+```
+
+结果：`2 passed (8.2s)`。
+
 该子集覆盖：
 
 1. UI 注册/登录、房间创建、加入、开局、进游戏页。
@@ -580,6 +598,7 @@
 4. `PASS`、`LAUNCH_PROBE`、`SCAN`、`PLAY_CARD`、`RESEARCH_TECH`、`ORBIT`、`LAND`、`ANALYZE_DATA`。
 5. `END_TURN`、`MOVEMENT`、`CONVERT_ENERGY_TO_MOVEMENT`、`PLACE_DATA`、`EXCHANGE_RESOURCES`、`USE_CARD_CORNER`、`BUY_CARD`、`COMPLETE_MISSION`、`SPEND_SIGNAL_TOKEN`、`DELIVER_SAMPLE`。
 6. 主行动后 `AWAIT_END_TURN`、自由行动插入、回合交接、事件同步。
+7. 3 人房 PASS 顺序轮转与 2 人房完整 end-of-round -> next round 链路。
 
 `main-action-analyze-data.spec.ts` 另单独目标运行：`1 passed (6.9s)`。
 
