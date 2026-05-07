@@ -6,6 +6,7 @@ import {
   SCAN_CREDIT_COST,
   SCAN_ENERGY_COST,
 } from '../constant/actionCosts';
+import { PLANET_MISSION_CONFIG } from '../constant/boardLayout';
 import { EResource } from '../types/element';
 import { EMainAction, EPlanet } from '../types/protocol/enums';
 import type {
@@ -15,6 +16,7 @@ import type {
 } from '../types/protocol/gameState';
 import { ETechId, RESEARCH_PUBLICITY_COST } from '../types/tech';
 import { canOrbitPlanet, getLandingCost } from './planet';
+import { findPlanetSpaceId } from './solarSystem';
 import { getAvailableTechs } from './tech';
 
 export function canLaunchProbe(player: IPublicPlayerState): boolean {
@@ -27,9 +29,31 @@ export function canLaunchProbe(player: IPublicPlayerState): boolean {
 function getPlanetEntriesInGame(
   gameState: IPublicGameState,
 ): Array<[EPlanet, IPublicPlanetState]> {
-  return Object.entries(gameState.planetaryBoard.planets).filter(
+  const entries = Object.entries(gameState.planetaryBoard.planets).filter(
     (entry): entry is [EPlanet, IPublicPlanetState] => entry[1] !== undefined,
   );
+
+  if (
+    !gameState.planetaryBoard.planets[EPlanet.OUMUAMUA] &&
+    findPlanetSpaceId(gameState.solarSystem, EPlanet.OUMUAMUA)
+  ) {
+    const config = PLANET_MISSION_CONFIG[EPlanet.OUMUAMUA];
+    entries.push([
+      EPlanet.OUMUAMUA,
+      {
+        orbitSlots: [],
+        landingSlots: [],
+        firstOrbitClaimed: false,
+        firstLandDataBonusTaken: Array.from(
+          { length: config.land.firstData.length },
+          () => false,
+        ),
+        moonOccupant: null,
+      },
+    ]);
+  }
+
+  return entries;
 }
 
 function getLandingCostForPlayer(

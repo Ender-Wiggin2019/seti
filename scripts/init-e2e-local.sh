@@ -21,10 +21,12 @@ find_compatible_node() {
     return
   fi
 
+  local current_node
+  current_node=""
   if command -v node >/dev/null 2>&1; then
-    local current_node
     current_node="$(command -v node)"
-    if version_ge "$("${current_node}" -v)" "${REQUIRED_NODE_VERSION}"; then
+    if version_ge "$("${current_node}" -v)" "${REQUIRED_NODE_VERSION}" &&
+      [[ "${current_node}" != /Applications/Codex.app/* ]]; then
       echo "${current_node}"
       return
     fi
@@ -37,6 +39,12 @@ find_compatible_node() {
         return
       fi
     done < <(find "${HOME}/.nvm/versions/node" -path '*/bin/node' -type f | sort -V -r)
+  fi
+
+  if [[ -n "${current_node}" ]] &&
+    version_ge "$("${current_node}" -v)" "${REQUIRED_NODE_VERSION}"; then
+    echo "${current_node}"
+    return
   fi
 
   echo "No Node.js >= ${REQUIRED_NODE_VERSION} found. Set SETI_E2E_NODE_BIN explicitly." >&2
@@ -54,7 +62,18 @@ find_pnpm_cli() {
   fi
 
   if ! command -v pnpm >/dev/null 2>&1; then
-    echo "pnpm is not installed." >&2
+    local nvm_pnpm_cli
+    nvm_pnpm_cli="$(
+      find "${HOME}/.nvm/versions/node" \
+        -path '*/lib/node_modules/pnpm/bin/pnpm.cjs' \
+        -type f 2>/dev/null | sort -V -r | head -n1 || true
+    )"
+    if [[ -n "${nvm_pnpm_cli}" ]]; then
+      echo "${nvm_pnpm_cli}"
+      return
+    fi
+
+    echo "pnpm is not installed. Set SETI_E2E_PNPM_CLI explicitly." >&2
     exit 1
   fi
 
@@ -82,9 +101,18 @@ find_tsx_loader() {
   fi
 
   local loader
-  loader="$(find "${ROOT_DIR}/node_modules/.pnpm" -path '*/node_modules/tsx/dist/loader.mjs' -type f | sort | head -n1 || true)"
+  loader=""
+  if [[ -f "${ROOT_DIR}/node_modules/tsx/dist/loader.mjs" ]]; then
+    loader="${ROOT_DIR}/node_modules/tsx/dist/loader.mjs"
+  else
+    local pnpm_loaders=("${ROOT_DIR}"/node_modules/.pnpm/tsx@*/node_modules/tsx/dist/loader.mjs)
+    if [[ -f "${pnpm_loaders[0]}" ]]; then
+      loader="${pnpm_loaders[0]}"
+    fi
+  fi
+
   if [[ -z "${loader}" ]]; then
-    echo "Unable to find tsx loader under node_modules/.pnpm." >&2
+    echo "Unable to find tsx loader under node_modules." >&2
     exit 1
   fi
 

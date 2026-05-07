@@ -5,6 +5,7 @@ import {
   PLANET_MISSION_CONFIG,
 } from '@seti/common/constant/boardLayout';
 import { ALL_CARDS } from '@seti/common/data/index';
+import { canLandOnPlanet, canOrbitPlanet } from '@seti/common/rules';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import {
   groupTraceSlotsByColor,
@@ -24,6 +25,7 @@ import type {
   IPublicCentauriansBoard,
   IPublicExertiansBoard,
   IPublicGenericAlienBoard,
+  IPublicGameState,
   IPublicMascamitesBoard,
   IPublicOumuamuaBoard,
   IPublicPlanetaryBoard,
@@ -32,7 +34,7 @@ import type {
   TPublicAlienBoard,
   TPublicSlotReward,
 } from '@/types/re-exports';
-import { EAlienType, EPlanet, ETrace } from '@/types/re-exports';
+import { EAlienType, EMainAction, EPlanet, ETrace } from '@/types/re-exports';
 import {
   formatFirstLandData,
   formatFirstOrbitRewardList,
@@ -72,6 +74,10 @@ interface IAlienBoardViewProps {
   aliens: IPublicAlienState[];
   playerColors: Record<string, string>;
   planetaryBoard?: IPublicPlanetaryBoard;
+  gameState?: IPublicGameState | null;
+  myPlayerId?: string;
+  planetActionMode?: EMainAction.ORBIT | EMainAction.LAND | null;
+  onSelectMainActionPlanet?: (planet: EPlanet) => void;
   onCardInspect?: (card: IBaseCard) => void;
 }
 
@@ -80,6 +86,10 @@ interface IAlienBoardRendererProps {
   playerColors: Record<string, string>;
   alienIndex: number;
   planetaryBoard?: IPublicPlanetaryBoard;
+  gameState?: IPublicGameState | null;
+  myPlayerId?: string;
+  planetActionMode?: EMainAction.ORBIT | EMainAction.LAND | null;
+  onSelectMainActionPlanet?: (planet: EPlanet) => void;
 }
 
 type TAlienBoardRenderer = (
@@ -99,6 +109,10 @@ export function AlienBoardView({
   aliens,
   playerColors,
   planetaryBoard,
+  gameState,
+  myPlayerId,
+  planetActionMode,
+  onSelectMainActionPlanet,
   onCardInspect,
 }: IAlienBoardViewProps): React.JSX.Element {
   const { t } = useTranslation('common');
@@ -120,6 +134,10 @@ export function AlienBoardView({
             alien={alien}
             playerColors={playerColors}
             planetaryBoard={planetaryBoard}
+            gameState={gameState}
+            myPlayerId={myPlayerId}
+            planetActionMode={planetActionMode}
+            onSelectMainActionPlanet={onSelectMainActionPlanet}
             onCardInspect={onCardInspect}
           />
         ))}
@@ -132,11 +150,19 @@ function AlienCard({
   alien,
   playerColors,
   planetaryBoard,
+  gameState,
+  myPlayerId,
+  planetActionMode,
+  onSelectMainActionPlanet,
   onCardInspect,
 }: {
   alien: IPublicAlienState;
   playerColors: Record<string, string>;
   planetaryBoard?: IPublicPlanetaryBoard;
+  gameState?: IPublicGameState | null;
+  myPlayerId?: string;
+  planetActionMode?: EMainAction.ORBIT | EMainAction.LAND | null;
+  onSelectMainActionPlanet?: (planet: EPlanet) => void;
   onCardInspect?: (card: IBaseCard) => void;
 }): React.JSX.Element {
   const { t } = useTranslation('common');
@@ -180,6 +206,10 @@ function AlienCard({
               board={alien.board}
               playerColors={playerColors}
               planetaryBoard={planetaryBoard}
+              gameState={gameState}
+              myPlayerId={myPlayerId}
+              planetActionMode={planetActionMode}
+              onSelectMainActionPlanet={onSelectMainActionPlanet}
             />
           ) : (
             <HiddenBoard alienIndex={alien.alienIndex} />
@@ -282,11 +312,19 @@ function DiscoveredAlienBoard({
   board,
   playerColors,
   planetaryBoard,
+  gameState,
+  myPlayerId,
+  planetActionMode,
+  onSelectMainActionPlanet,
 }: {
   alien: IPublicAlienState;
   board: TPublicAlienBoard;
   playerColors: Record<string, string>;
   planetaryBoard?: IPublicPlanetaryBoard;
+  gameState?: IPublicGameState | null;
+  myPlayerId?: string;
+  planetActionMode?: EMainAction.ORBIT | EMainAction.LAND | null;
+  onSelectMainActionPlanet?: (planet: EPlanet) => void;
 }): React.JSX.Element {
   const Renderer =
     alien.alienType != null ? ALIEN_BOARD_RENDERERS[alien.alienType] : null;
@@ -297,6 +335,10 @@ function DiscoveredAlienBoard({
         board={board}
         playerColors={playerColors}
         planetaryBoard={planetaryBoard}
+        gameState={gameState}
+        myPlayerId={myPlayerId}
+        planetActionMode={planetActionMode}
+        onSelectMainActionPlanet={onSelectMainActionPlanet}
       />
     );
   }
@@ -349,6 +391,10 @@ function OumuamuaBoardRenderer({
   board,
   playerColors,
   planetaryBoard,
+  gameState,
+  myPlayerId,
+  planetActionMode,
+  onSelectMainActionPlanet,
 }: IAlienBoardRendererProps): React.JSX.Element {
   if (board.type !== 'oumuamua') {
     return (
@@ -366,6 +412,10 @@ function OumuamuaBoardRenderer({
       board={board}
       playerColors={playerColors}
       planetaryBoard={planetaryBoard}
+      gameState={gameState}
+      myPlayerId={myPlayerId}
+      planetActionMode={planetActionMode}
+      onSelectMainActionPlanet={onSelectMainActionPlanet}
     />
   );
 }
@@ -847,11 +897,19 @@ function OumuamuaBoard({
   board,
   playerColors,
   planetaryBoard,
+  gameState,
+  myPlayerId,
+  planetActionMode,
+  onSelectMainActionPlanet,
 }: {
   alienIndex: number;
   board: IPublicOumuamuaBoard;
   playerColors: Record<string, string>;
   planetaryBoard?: IPublicPlanetaryBoard;
+  gameState?: IPublicGameState | null;
+  myPlayerId?: string;
+  planetActionMode?: EMainAction.ORBIT | EMainAction.LAND | null;
+  onSelectMainActionPlanet?: (planet: EPlanet) => void;
 }): React.JSX.Element {
   return (
     <section
@@ -866,6 +924,10 @@ function OumuamuaBoard({
           alienIndex={alienIndex}
           planetState={planetaryBoard?.planets[EPlanet.OUMUAMUA]}
           playerColors={playerColors}
+          gameState={gameState}
+          myPlayerId={myPlayerId}
+          planetActionMode={planetActionMode}
+          onSelectMainActionPlanet={onSelectMainActionPlanet}
         />
       </div>
       <div className='mt-3'>
@@ -923,14 +985,37 @@ function OumuamuaLandingArea({
   alienIndex,
   planetState,
   playerColors,
+  gameState,
+  myPlayerId,
+  planetActionMode,
+  onSelectMainActionPlanet,
 }: {
   alienIndex: number;
   planetState?: IPublicPlanetState;
   playerColors: Record<string, string>;
+  gameState?: IPublicGameState | null;
+  myPlayerId?: string;
+  planetActionMode?: EMainAction.ORBIT | EMainAction.LAND | null;
+  onSelectMainActionPlanet?: (planet: EPlanet) => void;
 }): React.JSX.Element {
   const textMode = useTextMode();
   const config = PLANET_MISSION_CONFIG[EPlanet.OUMUAMUA];
   const state = planetState ?? createEmptyPlanetState(config);
+  const mainActionPlayer = gameState?.players.find(
+    (player) => player.playerId === myPlayerId,
+  );
+  const orbitSelectable =
+    planetActionMode === EMainAction.ORBIT &&
+    gameState !== undefined &&
+    gameState !== null &&
+    mainActionPlayer !== undefined &&
+    canOrbitPlanet(EPlanet.OUMUAMUA, state, mainActionPlayer, gameState);
+  const landSelectable =
+    planetActionMode === EMainAction.LAND &&
+    gameState !== undefined &&
+    gameState !== null &&
+    mainActionPlayer !== undefined &&
+    canLandOnPlanet(EPlanet.OUMUAMUA, state, mainActionPlayer, gameState);
   const orbitSummary = [
     formatPlanetRewardList(config.orbit.rewards),
     formatFirstOrbitRewardList(config.orbit.firstRewards),
@@ -992,6 +1077,17 @@ function OumuamuaLandingArea({
                 ))
               )}
             </div>
+            {planetActionMode === EMainAction.ORBIT ? (
+              <button
+                type='button'
+                data-testid='planet-target-oumuamua'
+                disabled={!orbitSelectable}
+                onClick={() => onSelectMainActionPlanet?.(EPlanet.OUMUAMUA)}
+                className='mt-2 w-full rounded border border-accent-500/70 bg-accent-500/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-accent-200 disabled:border-surface-700 disabled:bg-surface-900/60 disabled:text-text-500'
+              >
+                Orbit Oumuamua
+              </button>
+            ) : null}
           </section>
 
           <section
@@ -1017,6 +1113,17 @@ function OumuamuaLandingArea({
                 ))
               )}
             </div>
+            {planetActionMode === EMainAction.LAND ? (
+              <button
+                type='button'
+                data-testid='planet-target-oumuamua'
+                disabled={!landSelectable}
+                onClick={() => onSelectMainActionPlanet?.(EPlanet.OUMUAMUA)}
+                className='mt-2 w-full rounded border border-accent-500/70 bg-accent-500/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-accent-200 disabled:border-surface-700 disabled:bg-surface-900/60 disabled:text-text-500'
+              >
+                Land Oumuamua
+              </button>
+            ) : null}
           </section>
         </div>
 

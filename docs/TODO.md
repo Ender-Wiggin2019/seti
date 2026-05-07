@@ -346,3 +346,31 @@ Review:
 - DB prepare 职责已收敛：wrapper 路径由 `init-e2e-local.sh` 准备 DB 并跳过 Playwright global setup；直接 Playwright 路径仍由 `global-setup.ts` 准备 DB。
 - 新增 `.github/workflows/e2e.yml`，包含 PostgreSQL service、依赖安装、Playwright Chromium 安装、E2E typecheck 和 headless E2E 运行。
 - 验证通过：E2E typecheck、完整 Playwright test list（54 tests / 29 files）、`@smoke` test list（2 tests）、`@api` test list（8 tests）、workflow YAML 解析、`./scripts/run-e2e-local.sh tests/auth.spec.ts tests/game-actions.spec.ts`（12 passed）、兼容 Node runtime 下直接 Playwright API auth（7 passed）。
+
+## 当前任务：Oumuamua 真实冒烟 E2E 覆盖与修复
+
+假设与权衡：
+- 本轮以真实 UI 冒烟闭环为主：注册、建房、开局、可见按钮/输入完成 gameplay；不使用 localStorage 注入、debug endpoint 或 raw websocket 驱动生产路径行为。
+- Oumuamua 完整发现前置很长；如果 scan/orbit/land/card 需要稳定地进入 Oumuamua 状态，优先用可复现 seed 和真实房间设置，不重新引入 public `scenarioPreset`。
+- 覆盖目标不是穷举规则单测，而是证明 Oumuamua 的 tile scan、planet orbit、planet land、alien card 在真实浏览器里能操作并产生可观察状态。
+- 若现有 UI 无法通过真实路径稳定到达某个目标，先暴露失败点并定位根因，再决定是修产品还是调整测试路径。
+
+- [x] 复核 Oumuamua 实现入口和 UI locator
+  - 验证: 明确 scan/orbit/land/card 各自对应的 server/client/common 文件、test id、输入 option id
+- [x] 跑现有相邻 E2E 基线
+  - 验证: `alien-pool-config`、`main-action-orbit-land`、`alien-discovery-real-flow` 或定向 Oumuamua spec 的当前结果被记录
+- [x] 增加 Oumuamua 真实 UI 冒烟覆盖
+  - 验证: 新增/更新 spec 覆盖 Oumuamua tile scan、Oumuamua orbit、Oumuamua land、Oumuamua card 结算
+- [x] 修复发现的问题
+  - 验证: 如涉及 common/server/client，保持两端动作和渲染一致；无关代码不改
+- [x] Subagent 复核覆盖与 shortcut 风险
+  - 验证: 复核结论记录到本段 Review，确认没有用 debug/localStorage/raw WS 替代真实 UI
+- [x] 运行 targeted 验证并记录结果
+  - 验证: E2E typecheck 与 Oumuamua/相邻 Playwright spec 通过，失败则记录具体阻塞原因
+
+Review:
+- 新增 `packages/e2e/tests/oumuamua-real-flow.spec.ts`，通过真实注册、建房、开局、主行动、自由行动和输入面板覆盖 Oumuamua tile scan、orbit、land、alien card 路径；没有使用 localStorage 注入、debug endpoint 或 raw websocket 驱动生产行为。
+- 修复真实路径暴露的问题：Oumuamua 是动态太阳系行星，不在常规 Planets tab 中选择；因此 Aliens tab 的 Oumuamua landing area 需要在 orbit/land 选择模式下暴露真实 planet target，并复用 common 的 `canOrbitPlanet` / `canLandOnPlanet` 判定。
+- 修复主行动可用性问题：common `getAvailableMainActions` 之前只枚举 `planetaryBoard.planets`，导致探测器到达 Oumuamua 后 ORBIT/LAND 仍 disabled；现在当 solar system 已出现 Oumuamua 时纳入动态空行星状态，服务端执行仍走原有真实 action 校验与结算。
+- Subagent 复核结论：Oumuamua 不应从常规 Planets view 选取，orbit/land 目标应在 Aliens board 上通过 `planet-target-oumuamua` 暴露；新增 spec 保持真实 UI/后端路径。
+- 验证通过：`tsc -p packages/e2e/tsconfig.json --noEmit`；`pnpm --filter @seti/client typecheck`；`./scripts/run-e2e-local.sh tests/oumuamua-real-flow.spec.ts`（3 passed）；`./scripts/run-e2e-local.sh tests/main-action-orbit-land.spec.ts tests/oumuamua-real-flow.spec.ts`（5 passed）；`./scripts/run-e2e-local.sh tests/alien-pool-config.spec.ts tests/alien-discovery-real-flow.spec.ts`（4 passed）。

@@ -22,6 +22,11 @@ eval "$("${ROOT_DIR}/scripts/init-e2e-local.sh" | awk '
   }
 ')"
 
+if [[ -z "${NODE_BIN:-}" || -z "${PNPM_CLI:-}" || -z "${TSX_LOADER:-}" ]]; then
+  echo "[e2e:run] failed to initialize E2E runtime" >&2
+  exit 1
+fi
+
 NODE_DIR="$(dirname "${NODE_BIN}")"
 CLIENT_ENV_FILE="${ROOT_DIR}/packages/client/.env"
 CLIENT_ENV_EXAMPLE="${ROOT_DIR}/packages/client/.env.example"

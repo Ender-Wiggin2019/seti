@@ -1272,6 +1272,10 @@ function BoardTabs({
               aliens={gameState.aliens}
               playerColors={playerColors}
               planetaryBoard={gameState.planetaryBoard}
+              gameState={gameState}
+              myPlayerId={myPlayerId}
+              planetActionMode={planetActionMode}
+              onSelectMainActionPlanet={onSelectMainActionPlanet}
               onCardInspect={onInspectCard}
             />
           )}
