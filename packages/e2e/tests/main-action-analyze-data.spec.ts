@@ -4,6 +4,7 @@ import {
   clickInputOptionById,
   clickMainAction,
   clickPassAndWaitForLogSync,
+  createRoomByUi,
   createUser,
   enterGameByUi,
   joinRoomByUi,
@@ -39,56 +40,6 @@ async function handCount(page: Page): Promise<number> {
     .first()
     .textContent();
   return Number(text?.match(/\d+/)?.[0] ?? 0);
-}
-
-async function createRoomByUiWithSeed(
-  page: Page,
-  roomName: string,
-  seed: string,
-): Promise<string> {
-  await page.goto('/lobby');
-  await page.getByTestId('lobby-new-mission').click();
-  await expect(page.getByTestId('create-room-dialog')).toBeVisible({
-    timeout: 10_000,
-  });
-  await page.locator('#room-name').fill(roomName);
-
-  await page.route('**/lobby/rooms', async (route) => {
-    if (route.request().method() !== 'POST') {
-      await route.continue();
-      return;
-    }
-
-    const body = JSON.parse(route.request().postData() ?? '{}') as {
-      seed?: string;
-    };
-    await route.continue({
-      postData: JSON.stringify({ ...body, seed }),
-    });
-  });
-
-  const responsePromise = page.waitForResponse(
-    (res) =>
-      res.url().includes('/lobby/rooms') && res.request().method() === 'POST',
-    { timeout: 15_000 },
-  );
-  const dialog = page.getByTestId('create-room-dialog');
-  await dialog.evaluate((element) => {
-    element.scrollTop = element.scrollHeight;
-  });
-  const submitButton = page.getByTestId('create-room-submit');
-  await submitButton.scrollIntoViewIfNeeded();
-  await submitButton.click();
-  const response = await responsePromise;
-  await page.unroute('**/lobby/rooms');
-  expect(response.ok()).toBe(true);
-
-  const room = (await response.json()) as { id?: string };
-  expect(room.id).toBeTruthy();
-  await page.waitForURL(new RegExp(`/room/${room.id as string}$`), {
-    timeout: 15_000,
-  });
-  return room.id as string;
 }
 
 async function openExpandedFreeActions(page: Page): Promise<void> {
@@ -153,7 +104,7 @@ async function placeDataInNextTopSlot(
   await expect(slot).toBeDisabled({ timeout: 10_000 });
 }
 
-test('analyze data main action e2e: fill computer through real UI, analyze, and place blue trace', async ({
+test('@actions @real-ui analyze data main action e2e: fill computer through real UI, analyze, and place blue trace', async ({
   browser,
   request,
 }) => {
@@ -172,10 +123,11 @@ test('analyze data main action e2e: fill computer through real UI, analyze, and 
     await registerByUi(hostPage, host);
     await registerByUi(guestPage, guest);
 
-    const roomId = await createRoomByUiWithSeed(
+    const roomId = await createRoomByUi(
       hostPage,
       `Analyze Data Room ${Date.now()}`,
-      ANALYZE_DATA_SEED,
+      2,
+      { seed: ANALYZE_DATA_SEED },
     );
     await joinRoomByUi(guestPage, roomId);
 

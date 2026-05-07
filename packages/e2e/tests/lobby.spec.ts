@@ -14,7 +14,7 @@ import { waitForServerReady } from '../helpers/server-ready';
 const SERVER_URL = process.env.SERVER_URL ?? 'http://localhost:3000';
 
 test.describe('Lobby & Room Management', () => {
-  test.describe('API', () => {
+  test.describe('API @api', () => {
     test('host creates room, guest joins, host starts, and list includes room', async ({
       request,
     }) => {
@@ -63,7 +63,7 @@ test.describe('Lobby & Room Management', () => {
     });
   });
 
-  test.describe('Browser (Real Flow)', () => {
+  test.describe('Browser @real-ui', () => {
     test('lobby page renders after real UI registration/login flow', async ({
       page,
       request,

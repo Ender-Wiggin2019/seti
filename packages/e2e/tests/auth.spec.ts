@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type APIRequestContext } from '@playwright/test';
 import { SetiApi } from '../helpers/api';
 import { waitForServerReady } from '../helpers/server-ready';
 
@@ -12,47 +12,66 @@ const SERVER_URL = process.env.SERVER_URL ?? 'http://localhost:3000';
  */
 
 test.describe('Authentication', () => {
-  const uniqueEmail = `auth-e2e-${Date.now()}@test.local`;
-
   test.beforeEach(async ({ request }) => {
     await waitForServerReady(request);
   });
 
   // ── API-level auth tests ───────────────────────────────────
 
-  test('register a new user via API', async ({ request }) => {
+  function uniqueEmail(prefix: string): string {
+    return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@test.local`;
+  }
+
+  async function registerApiUser(
+    request: APIRequestContext,
+    prefix: string,
+  ): Promise<{ api: SetiApi; email: string; accessToken: string }> {
     const api = new SetiApi(request);
-    const result = await api.register('E2E User', uniqueEmail, 'password123');
+    const email = uniqueEmail(prefix);
+    const result = await api.register('E2E User', email, 'password123');
+    return { api, email, accessToken: result.accessToken };
+  }
+
+  test('@api register a new user via API', async ({ request }) => {
+    const api = new SetiApi(request);
+    const email = uniqueEmail('auth-register');
+    const result = await api.register('E2E User', email, 'password123');
 
     expect(result.accessToken).toBeTruthy();
-    expect(result.user.email).toBe(uniqueEmail);
+    expect(result.user.email).toBe(email);
     expect(result.user.name).toBe('E2E User');
     expect(result.user.id).toBeTruthy();
   });
 
-  test('login with registered user via API', async ({ request }) => {
-    const api = new SetiApi(request);
-    const result = await api.login(uniqueEmail, 'password123');
+  test('@api login with registered user via API', async ({ request }) => {
+    const { api, email } = await registerApiUser(request, 'auth-login');
+    const result = await api.login(email, 'password123');
 
     expect(result.accessToken).toBeTruthy();
-    expect(result.user.email).toBe(uniqueEmail);
+    expect(result.user.email).toBe(email);
   });
 
-  test('reject duplicate registration', async ({ request }) => {
+  test('@api reject duplicate registration', async ({ request }) => {
+    const email = uniqueEmail('auth-duplicate');
+    const api = new SetiApi(request);
+    await api.register('Dup', email, 'password123');
+
     const res = await request.post(`${SERVER_URL}/auth/register`, {
-      data: { name: 'Dup', email: uniqueEmail, password: 'password123' },
+      data: { name: 'Dup', email, password: 'password123' },
     });
     expect(res.status()).toBe(409);
   });
 
-  test('reject login with wrong password', async ({ request }) => {
+  test('@api reject login with wrong password', async ({ request }) => {
+    const { email } = await registerApiUser(request, 'auth-wrong-password');
+
     const res = await request.post(`${SERVER_URL}/auth/login`, {
-      data: { email: uniqueEmail, password: 'wrong-password' },
+      data: { email, password: 'wrong-password' },
     });
     expect(res.status()).toBe(401);
   });
 
-  test('reject login with non-existent email', async ({ request }) => {
+  test('@api reject login with non-existent email', async ({ request }) => {
     const res = await request.post(`${SERVER_URL}/auth/login`, {
       data: { email: 'nobody@nowhere.test', password: 'password123' },
     });
@@ -61,34 +80,35 @@ test.describe('Authentication', () => {
 
   // ── Protected route access ─────────────────────────────────
 
-  test('GET /auth/me requires authentication', async ({ request }) => {
+  test('@api GET /auth/me requires authentication', async ({ request }) => {
     const res = await request.get(`${SERVER_URL}/auth/me`);
     expect(res.status()).toBe(401);
   });
 
-  test('GET /auth/me succeeds with valid token', async ({ request }) => {
-    const api = new SetiApi(request);
-    await api.login(uniqueEmail, 'password123');
+  test('@api GET /auth/me succeeds with valid token', async ({ request }) => {
+    const { email, accessToken } = await registerApiUser(request, 'auth-me');
 
     const res = await request.get(`${SERVER_URL}/auth/me`, {
-      headers: { Authorization: `Bearer ${api['token']}` },
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
     expect(res.status()).toBe(200);
 
     const body = await res.json();
-    expect(body.email).toBe(uniqueEmail);
+    expect(body.email).toBe(email);
   });
 
   // ── Browser auth flow ──────────────────────────────────────
 
-  test('unauthenticated user is redirected to /auth', async ({ page }) => {
+  test('@real-ui unauthenticated user is redirected to /auth', async ({
+    page,
+  }) => {
     await page.goto('/lobby');
     // ProtectedRoute should redirect to /auth
     await page.waitForURL('**/auth', { timeout: 5_000 });
     expect(page.url()).toContain('/auth');
   });
 
-  test('auth page renders login form', async ({ page }) => {
+  test('@real-ui auth page renders login form', async ({ page }) => {
     await page.goto('/auth');
     await expect(page.locator('#login-email')).toBeVisible({ timeout: 10_000 });
     await expect(page.locator('#login-password')).toBeVisible({
@@ -99,7 +119,10 @@ test.describe('Authentication', () => {
     });
   });
 
-  test('successful login redirects to lobby', async ({ page, request }) => {
+  test('@real-ui successful login redirects to lobby', async ({
+    page,
+    request,
+  }) => {
     // First register via API
     const email = `browser-auth-${Date.now()}@test.local`;
     const api = new SetiApi(request);

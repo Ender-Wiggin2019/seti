@@ -474,14 +474,18 @@ describe('MilestoneState (Phase 7)', () => {
 
     it('7.3.1 [集成] Exertians milestones resolve after gold milestones and before neutral milestones', () => {
       const game = createGame(2, 'm7-ali-1');
-      game.alienState = AlienState.createFromHiddenAliens([EAlienType.EXERTIANS]);
+      game.alienState = AlienState.createFromHiddenAliens([
+        EAlienType.EXERTIANS,
+      ]);
       const board = game.alienState.getBoardByType(EAlienType.EXERTIANS);
       const p1 = game.players[0];
       if (!board || board.alienType !== EAlienType.EXERTIANS) {
         throw new Error('expected Exertians board');
       }
       game.alienState.discoverAlien(board, game);
-      const exertiansBoard = game.alienState.getBoardByType(EAlienType.EXERTIANS);
+      const exertiansBoard = game.alienState.getBoardByType(
+        EAlienType.EXERTIANS,
+      );
       if (!isExertiansAlienBoard(exertiansBoard)) {
         throw new Error('expected Exertians board');
       }
@@ -493,7 +497,9 @@ describe('MilestoneState (Phase 7)', () => {
       const tileId = (input!.toModel() as ISelectGoldTileInputModel).options[0];
       input = input!.process({ type: EPlayerInputType.GOLD_TILE, tileId });
 
-      const optionModel = input?.toModel() as ISelectOptionInputModel | undefined;
+      const optionModel = input?.toModel() as
+        | ISelectOptionInputModel
+        | undefined;
       expect(optionModel?.type).toBe(EPlayerInputType.OPTION);
       input = input?.process({
         type: EPlayerInputType.OPTION,
@@ -502,8 +508,12 @@ describe('MilestoneState (Phase 7)', () => {
       expect(input).toBeUndefined();
 
       const actions = actionEvents(game).map((event) => event.action);
-      expect(actions.indexOf('MILESTONE_GOLD_RESOLVED')).toBeGreaterThanOrEqual(0);
-      expect(actions.indexOf('MILESTONE_NEUTRAL_RESOLVED')).toBeGreaterThanOrEqual(0);
+      expect(actions.indexOf('MILESTONE_GOLD_RESOLVED')).toBeGreaterThanOrEqual(
+        0,
+      );
+      expect(
+        actions.indexOf('MILESTONE_NEUTRAL_RESOLVED'),
+      ).toBeGreaterThanOrEqual(0);
       expect(actions.indexOf('MILESTONE_GOLD_RESOLVED')).toBeLessThan(
         actions.indexOf('MILESTONE_NEUTRAL_RESOLVED'),
       );
@@ -511,14 +521,18 @@ describe('MilestoneState (Phase 7)', () => {
 
     it('7.3.2 [集成] Exertians +40 milestone that cannot be paid is marked resolved and does not re-trigger', () => {
       const game = createGame(2, 'm7-ali-2');
-      game.alienState = AlienState.createFromHiddenAliens([EAlienType.EXERTIANS]);
+      game.alienState = AlienState.createFromHiddenAliens([
+        EAlienType.EXERTIANS,
+      ]);
       const board = game.alienState.getBoardByType(EAlienType.EXERTIANS);
       const p1 = game.players[0];
       if (!board || board.alienType !== EAlienType.EXERTIANS) {
         throw new Error('expected Exertians board');
       }
       game.alienState.discoverAlien(board, game);
-      const exertiansBoard = game.alienState.getBoardByType(EAlienType.EXERTIANS);
+      const exertiansBoard = game.alienState.getBoardByType(
+        EAlienType.EXERTIANS,
+      );
       if (!isExertiansAlienBoard(exertiansBoard)) {
         throw new Error('expected Exertians board');
       }
@@ -534,7 +548,9 @@ describe('MilestoneState (Phase 7)', () => {
       const second = game.milestoneState.checkAndQueue(game, p1);
       expect(second).toBeUndefined();
       expect(
-        exertiansBoard.milestones[1].claimedByPlayerIds.filter((id) => id === p1.id),
+        exertiansBoard.milestones[1].claimedByPlayerIds.filter(
+          (id) => id === p1.id,
+        ),
       ).toHaveLength(1);
     });
 
@@ -631,7 +647,9 @@ describe('MilestoneState (Phase 7)', () => {
         game.milestoneState.checkAndQueue(game, p1),
         (option) => option.id === 'claim-centaurians:score-8',
       );
-      const optionModel = input?.toModel() as ISelectOptionInputModel | undefined;
+      const optionModel = input?.toModel() as
+        | ISelectOptionInputModel
+        | undefined;
 
       expect(optionModel?.type).toBe(EPlayerInputType.OPTION);
       expect(optionModel?.title).toContain('Place Yellow trace');
@@ -672,7 +690,9 @@ describe('MilestoneState (Phase 7)', () => {
         game.milestoneState.checkAndQueue(game, p1),
         (option) => option.id === 'claim-centaurians:score-8',
       );
-      const optionModel = input?.toModel() as ISelectOptionInputModel | undefined;
+      const optionModel = input?.toModel() as
+        | ISelectOptionInputModel
+        | undefined;
 
       expect(optionModel?.type).toBe(EPlayerInputType.OPTION);
       expect(optionModel?.title).toContain('Place Any trace');

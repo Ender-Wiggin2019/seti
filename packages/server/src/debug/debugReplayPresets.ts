@@ -19,6 +19,10 @@ import { AlienState } from '@/engine/alien/index.js';
 import { OumuamuaAlienPlugin } from '@/engine/alien/plugins/OumuamuaAlienPlugin.js';
 import { EventLog } from '@/engine/event/EventLog.js';
 import type { Game } from '@/engine/Game.js';
+import {
+  applyDeliverSampleScenario,
+  applySpendSignalTokenScenario,
+} from '@/testing/behaviorFlowScenario.js';
 
 const ANOMALY_DISCOVERY_PRESET_ID = 'anomaly-discovery';
 const BEFORE_END_TURN_CHECKPOINT_ID = 'before-end-turn';
@@ -33,6 +37,9 @@ const EXERTIANS_PRESET_ID = 'exertians-debug';
 const EXERTIANS_AFTER_DISCOVERY_CHECKPOINT_ID = 'after-discovery';
 const MASCAMITES_PRESET_ID = 'mascamites-debug';
 const MASCAMITES_AFTER_DISCOVERY_CHECKPOINT_ID = 'after-discovery';
+const FREE_ACTION_PRESET_ID = 'free-action-debug';
+const FREE_ACTION_SPEND_SIGNAL_TOKEN_CHECKPOINT_ID = 'spend-signal-token';
+const FREE_ACTION_DELIVER_SAMPLE_CHECKPOINT_ID = 'deliver-sample';
 
 interface IDebugReplayPreset {
   definition: IDebugReplayPresetDefinition;
@@ -188,6 +195,30 @@ const DEBUG_REPLAY_PRESETS: Readonly<Record<string, IDebugReplayPreset>> = {
       ],
     },
     apply: applyMascamitesReplay,
+  },
+  [FREE_ACTION_PRESET_ID]: {
+    definition: {
+      id: FREE_ACTION_PRESET_ID,
+      label: 'Free Action Replay',
+      description:
+        'Prepare long setup states for special free-action UI coverage without exposing public lobby scenario presets.',
+      fields: [],
+      checkpoints: [
+        {
+          id: FREE_ACTION_SPEND_SIGNAL_TOKEN_CHECKPOINT_ID,
+          label: 'Spend Signal Token',
+          description:
+            'The active player has a signal token and can enter SCAN before spending it through the real UI.',
+        },
+        {
+          id: FREE_ACTION_DELIVER_SAMPLE_CHECKPOINT_ID,
+          label: 'Deliver Sample',
+          description:
+            'Mascamites is discovered and the active player has one deliverable sample capsule.',
+        },
+      ],
+    },
+    apply: applyFreeActionReplay,
   },
 };
 
@@ -517,6 +548,89 @@ function applyMascamitesReplay(
   return {
     phase: game.phase,
     summary: 'Replay ready: Mascamites sample pools are initialized.',
+    alienIndex: board.alienIndex,
+    selectedAlienType: EAlienType.MASCAMITES,
+    currentPlayerId: activePlayer.id,
+  };
+}
+
+function applyFreeActionReplay(
+  game: Game,
+  request: IDebugReplaySessionRequest,
+): {
+  phase: EPhase;
+  summary: string;
+  alienIndex: number;
+  selectedAlienType: EAlienType;
+  currentPlayerId: string;
+} {
+  switch (request.checkpointId) {
+    case FREE_ACTION_SPEND_SIGNAL_TOKEN_CHECKPOINT_ID:
+      return applySpendSignalTokenReplay(game);
+    case FREE_ACTION_DELIVER_SAMPLE_CHECKPOINT_ID:
+      return applyDeliverSampleReplay(game);
+    default:
+      throw new Error(`Unsupported replay checkpoint: ${request.checkpointId}`);
+  }
+}
+
+function applySpendSignalTokenReplay(game: Game): {
+  phase: EPhase;
+  summary: string;
+  alienIndex: number;
+  selectedAlienType: EAlienType;
+  currentPlayerId: string;
+} {
+  applySpendSignalTokenScenario(game);
+  game.phase = EPhase.AWAIT_MAIN_ACTION;
+  game.eventLog = new EventLog();
+
+  const activePlayer = game.getActivePlayer();
+  activePlayer.waitingFor = undefined;
+  const board = game.alienState.getBoard(0);
+
+  return {
+    phase: game.phase,
+    summary:
+      'Replay ready: the active player can start SCAN and spend one signal token through the free-action bar.',
+    alienIndex: board?.alienIndex ?? 0,
+    selectedAlienType: board?.alienType ?? EAlienType.ANOMALIES,
+    currentPlayerId: activePlayer.id,
+  };
+}
+
+function applyDeliverSampleReplay(game: Game): {
+  phase: EPhase;
+  summary: string;
+  alienIndex: number;
+  selectedAlienType: EAlienType;
+  currentPlayerId: string;
+} {
+  const companionAlienType = CORE_RANDOM_ALIEN_TYPES.find(
+    (alienType) => alienType !== EAlienType.MASCAMITES,
+  );
+  if (companionAlienType === undefined) {
+    throw new Error('Could not resolve companion alien for replay preset');
+  }
+
+  game.hiddenAliens = [EAlienType.MASCAMITES, companionAlienType];
+  game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+  resolveSetupTucks(game);
+  applyDeliverSampleScenario(game);
+  game.phase = EPhase.AWAIT_MAIN_ACTION;
+  game.eventLog = new EventLog();
+
+  const activePlayer = game.getActivePlayer();
+  activePlayer.waitingFor = undefined;
+  const board = game.alienState.getBoardByType(EAlienType.MASCAMITES);
+  if (!isMascamitesAlienBoard(board)) {
+    throw new Error('Mascamites board not found for replay preset');
+  }
+
+  return {
+    phase: game.phase,
+    summary:
+      'Replay ready: Mascamites has one deliverable sample capsule for the active player.',
     alienIndex: board.alienIndex,
     selectedAlienType: EAlienType.MASCAMITES,
     currentPlayerId: activePlayer.id,

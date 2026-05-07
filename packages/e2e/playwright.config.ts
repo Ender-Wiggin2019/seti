@@ -33,15 +33,15 @@ export default defineConfig({
     ? undefined
     : [
         {
-          command:
-            'pnpm --filter @seti/server db:prepare:e2e && pnpm --filter @seti/server exec tsx src/main.ts',
+          command: 'pnpm --filter @seti/server exec tsx src/main.ts',
           url: SERVER_HEALTHCHECK_URL,
           reuseExistingServer: true,
           timeout: 90_000,
           cwd: '../..',
         },
         {
-          command: 'pnpm --filter @seti/client exec vite --host 127.0.0.1 --strictPort',
+          command:
+            'pnpm --filter @seti/client exec vite --host 127.0.0.1 --strictPort',
           url: CLIENT_URL,
           reuseExistingServer: true,
           timeout: 90_000,

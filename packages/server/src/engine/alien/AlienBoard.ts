@@ -636,7 +636,9 @@ export class CentauriansAlienBoard extends AlienBoard {
     slotId: string,
     playerId: string,
   ): ICentauriansRewardSlotComponent | undefined {
-    const slot = this.rewardSlots.find((candidate) => candidate.slotId === slotId);
+    const slot = this.rewardSlots.find(
+      (candidate) => candidate.slotId === slotId,
+    );
     if (!slot) {
       return undefined;
     }

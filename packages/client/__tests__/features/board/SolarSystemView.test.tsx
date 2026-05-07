@@ -330,9 +330,18 @@ describe('SolarSystemView', () => {
       `solar-alien-token-${EAlienType.ANOMALIES}-3-${ETrace.RED}`,
     );
     expect(token).toBeInTheDocument();
+    expect(token).toHaveClass('rounded-full');
+    expect(token).not.toHaveClass('rounded-sm');
+    expect(
+      within(token).getByTestId('solar-alien-token-trace-color-left'),
+    ).toHaveStyle({ backgroundColor: '#e93e27' });
+    expect(
+      within(token).getByTestId('solar-alien-token-trace-color-right'),
+    ).toHaveStyle({ backgroundColor: '#e93e27' });
     expect(
       within(token).getByTestId('trace-reward-icon-credit-1'),
     ).toBeInTheDocument();
+    expect(within(token).getByTestId('seti-desc-credit-1')).toBeInTheDocument();
   });
 
   it('anchors the Oumuamua sector data list above its solar-system cell', () => {

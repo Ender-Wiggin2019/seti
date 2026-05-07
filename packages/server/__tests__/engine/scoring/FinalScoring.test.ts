@@ -351,7 +351,9 @@ describe('FinalScoring', () => {
   describe('Exertians final scoring', () => {
     it('reveals played Exertian cards, scores fulfilled cards, then applies danger penalty', () => {
       const game = createTwoPlayerGame('exertians-final-1');
-      game.alienState = AlienState.createFromHiddenAliens([EAlienType.EXERTIANS]);
+      game.alienState = AlienState.createFromHiddenAliens([
+        EAlienType.EXERTIANS,
+      ]);
       const board = game.alienState.getBoardByType(EAlienType.EXERTIANS);
       if (!isExertiansAlienBoard(board)) {
         throw new Error('expected Exertians board');
@@ -481,7 +483,9 @@ describe('FinalScoring', () => {
 
     it('applies the danger penalty to every player tied for highest danger', () => {
       const game = createTwoPlayerGame('exertians-final-2');
-      game.alienState = AlienState.createFromHiddenAliens([EAlienType.EXERTIANS]);
+      game.alienState = AlienState.createFromHiddenAliens([
+        EAlienType.EXERTIANS,
+      ]);
       const board = game.alienState.getBoardByType(EAlienType.EXERTIANS);
       if (!isExertiansAlienBoard(board)) {
         throw new Error('expected Exertians board');

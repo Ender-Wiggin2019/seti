@@ -149,11 +149,13 @@ describe('Mascamites alien cards ET.1-ET.10', () => {
       }),
     ]);
     expect(
-      game.eventLog.toArray().some(
-        (event) =>
-          event.type === 'ACTION' &&
-          event.action === 'CARD_CUSTOM_EFFECT_UNHANDLED',
-      ),
+      game.eventLog
+        .toArray()
+        .some(
+          (event) =>
+            event.type === 'ACTION' &&
+            event.action === 'CARD_CUSTOM_EFFECT_UNHANDLED',
+        ),
     ).toBe(false);
   });
 

@@ -40,8 +40,11 @@ export class LobbyService {
       scenarioPreset?: unknown;
       turnTimerSeconds?: number;
     };
-    const { scenarioPreset: _scenarioPreset, turnTimerSeconds, ...rawRoomOptions } =
-      roomOptionsAny;
+    const {
+      scenarioPreset: _scenarioPreset,
+      turnTimerSeconds,
+      ...rawRoomOptions
+    } = roomOptionsAny;
     const normalizedTimerPerTurn =
       roomOptionsAny.timerPerTurn ?? turnTimerSeconds;
     const normalizedRoomOptions: Partial<IGameOptions> = {

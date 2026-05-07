@@ -46,7 +46,7 @@ describe('AlienBoardView', () => {
     render(<AlienBoardView aliens={aliens} playerColors={{}} />);
 
     expect(screen.getByTestId('alien-board-grid')).toHaveClass(
-      'sm:grid-cols-2',
+      'min-[420px]:grid-cols-2',
     );
     expect(screen.getByTestId('alien-0-card')).toHaveClass('min-w-0');
     expect(screen.getByTestId('alien-1-card')).toHaveClass('min-w-0');
@@ -100,6 +100,9 @@ describe('AlienBoardView', () => {
     render(<AlienBoardView aliens={[alien]} playerColors={{}} />);
 
     const rewardCircle = screen.getByTestId('trace-slot-reward-slot-circle');
+    expect(rewardCircle).toHaveClass('rounded-full');
+    expect(rewardCircle).toHaveClass('min-h-24', 'w-12');
+    expect(rewardCircle).toHaveStyle({ borderColor: '#e93e27' });
     expect(
       within(rewardCircle).getByTestId('trace-reward-icon-score-4'),
     ).toBeInTheDocument();
@@ -121,6 +124,9 @@ describe('AlienBoardView', () => {
     expect(
       within(rewardCircle).getByTestId('trace-reward-icon-draw-alien-card-1'),
     ).toBeInTheDocument();
+    expect(
+      within(rewardCircle).getByTestId('seti-desc-draw-alien-card-1'),
+    ).toBeInTheDocument();
     const redColumn = screen.getByTestId(
       'alien-0-generic-board-column-red-trace',
     );
@@ -134,8 +140,11 @@ describe('AlienBoardView', () => {
       within(redColumn).getByTestId('trace-slot-reward-slot-3-circle'),
     ).toBeInTheDocument();
     expect(
+      within(redColumn).getByTestId('trace-slot-reward-slot-2-circle'),
+    ).toHaveClass('h-12', 'w-12', 'rounded-full');
+    expect(
       screen.getByTestId('alien-0-generic-board-column-red-trace-slots'),
-    ).toHaveClass('flex-col');
+    ).toHaveClass('flex-col-reverse');
     expect(
       screen.queryByTestId('alien-0-generic-board-row-red-trace'),
     ).not.toBeInTheDocument();
@@ -187,6 +196,9 @@ describe('AlienBoardView', () => {
     const discoveryZone = within(card).getByTestId('alien-0-discovery-zone');
     const overflowZone = within(card).getByTestId('alien-0-overflow-zone');
 
+    expect(hiddenBoard).toHaveClass('bg-black/60');
+    expect(hiddenBoard).toHaveClass('min-h-[360px]');
+    expect(hiddenBoard).toHaveAttribute('aria-label', 'Alien Board');
     expect(hiddenBoard.compareDocumentPosition(discoveryZone)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
@@ -194,20 +206,20 @@ describe('AlienBoardView', () => {
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
     expect(
-      screen.getByTestId('alien-0-hidden-board-column-red-trace'),
-    ).toBeInTheDocument();
+      screen.queryByTestId('alien-0-hidden-board-column-red-trace'),
+    ).not.toBeInTheDocument();
     expect(
-      screen.getByTestId('alien-0-hidden-board-column-yellow-trace'),
-    ).toBeInTheDocument();
+      screen.queryByTestId('alien-0-hidden-board-column-yellow-trace'),
+    ).not.toBeInTheDocument();
     expect(
-      screen.getByTestId('alien-0-hidden-board-column-blue-trace'),
-    ).toBeInTheDocument();
+      screen.queryByTestId('alien-0-hidden-board-column-blue-trace'),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByTestId('alien-0-discovery-column-red-trace'),
     ).toBeInTheDocument();
     expect(
       screen.getByTestId('alien-0-discovery-column-red-trace-slots'),
-    ).toHaveClass('flex-col');
+    ).toHaveClass('flex-col-reverse');
     expect(
       screen.getByTestId('alien-0-discovery-column-yellow-trace'),
     ).toBeInTheDocument();
@@ -292,6 +304,12 @@ describe('AlienBoardView', () => {
     expect(screen.getByTestId('alien-0-discovery-zone')).toBeInTheDocument();
     expect(screen.getByTestId('alien-0-overflow-zone')).toBeInTheDocument();
     expect(screen.getByTestId('alien-0-anomalies-board')).toBeInTheDocument();
+    expect(screen.getByTestId('alien-0-anomaly-trace-grid')).toHaveClass(
+      'grid-cols-3',
+    );
+    expect(screen.getByTestId('alien-0-anomaly-trace-grid')).not.toHaveClass(
+      'sm:grid-cols-3',
+    );
     expect(
       screen.getByTestId('alien-0-anomaly-column-red-trace'),
     ).toBeInTheDocument();
@@ -302,6 +320,34 @@ describe('AlienBoardView', () => {
       screen.getByTestId('alien-0-anomaly-column-blue-trace'),
     ).toBeInTheDocument();
     expect(screen.queryByTestId(/^alien-0-anomaly-token-/)).toBeNull();
+    const redRewards = screen.getByTestId(
+      'alien-0-anomaly-column-red-trace-rewards',
+    );
+    expect(redRewards).toHaveClass('flex-col-reverse');
+    expect(within(redRewards).queryByText('1')).not.toBeInTheDocument();
+    expect(
+      within(redRewards).getByTestId(
+        'alien-0-anomaly-column-red-trace-reward-0',
+      ),
+    ).toHaveClass('h-10', 'w-10', 'rounded-full');
+    expect(
+      within(redRewards).getByTestId(
+        'alien-0-anomaly-column-red-trace-reward-0',
+      ),
+    ).toHaveStyle({ borderColor: '#e93e27' });
+    expect(
+      within(redRewards).getByTestId('trace-reward-icon-score-5'),
+    ).toHaveClass('h-5', 'w-5');
+    expect(
+      within(redRewards).getByTestId(
+        'alien-0-anomaly-column-red-trace-reward-4',
+      ),
+    ).toHaveClass('min-h-20', 'w-10', 'rounded-full');
+    expect(
+      within(redRewards).getByTestId(
+        'alien-0-anomaly-column-red-trace-reward-4',
+      ),
+    ).not.toHaveClass('h-10');
     expect(screen.getByTestId('alien-0-deck-panel')).toHaveTextContent(
       'Deck 7',
     );
@@ -462,12 +508,12 @@ describe('AlienBoardView', () => {
     expect(screen.getByTestId('alien-0-exertians-hidden-p2')).toHaveTextContent(
       '1',
     );
-    expect(screen.getByTestId('alien-0-exertians-milestone-0')).toHaveTextContent(
-      '24 VP',
-    );
-    expect(screen.getByTestId('alien-0-exertians-milestone-1')).toHaveTextContent(
-      'Cost 1C / 0 claimed',
-    );
+    expect(
+      screen.getByTestId('alien-0-exertians-milestone-0'),
+    ).toHaveTextContent('24 VP');
+    expect(
+      screen.getByTestId('alien-0-exertians-milestone-1'),
+    ).toHaveTextContent('Cost 1C / 0 claimed');
     expect(
       screen.getByTestId('alien-0-exertians-trace-column-blue-trace'),
     ).toBeInTheDocument();

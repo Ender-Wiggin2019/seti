@@ -676,7 +676,9 @@ describe('MissionTracker', () => {
 
       player1.playedMissions.push('101');
       game.missionTracker.registerMissionFromCard('101', player1.id);
-      game.missionTracker.recordEvent({ type: EMissionEventType.SCAN_PERFORMED });
+      game.missionTracker.recordEvent({
+        type: EMissionEventType.SCAN_PERFORMED,
+      });
 
       const prompt = game.missionTracker.checkAndPromptTriggers(player1, game);
       expect(prompt).toBeDefined();

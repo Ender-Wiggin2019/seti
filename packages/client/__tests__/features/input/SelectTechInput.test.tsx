@@ -17,7 +17,9 @@ describe('SelectTechInput', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Earth \(or adj\.\)/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /Earth \(or adj\.\)/i }),
+    );
     expect(onSubmit).toHaveBeenCalledWith({
       type: EPlayerInputType.TECH,
       tech: ETech.SCAN,

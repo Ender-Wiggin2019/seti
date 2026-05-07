@@ -78,12 +78,7 @@ describe('Mark', () => {
       lockCurrentTurn: () => undefined,
     } as never;
 
-    const first = Mark.execute(
-      realPlayer,
-      game,
-      EMarkSource.CARD_ROW,
-      2,
-    );
+    const first = Mark.execute(realPlayer, game, EMarkSource.CARD_ROW, 2);
 
     expect(first?.toModel().type).toBe(EPlayerInputType.CARD);
     const second = first?.process({

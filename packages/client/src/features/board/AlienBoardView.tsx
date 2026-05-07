@@ -1,4 +1,4 @@
-import { EffectFactory } from '@seti/cards';
+import { DescRender } from '@seti/cards';
 import { ANOMALY_COLUMN_REWARD_LADDER } from '@seti/common/constant/alienBoardConfig';
 import {
   type IPlanetMissionConfig,
@@ -110,7 +110,10 @@ export function AlienBoardView({
         </h2>
       </header>
 
-      <div className='grid gap-3 sm:grid-cols-2' data-testid='alien-board-grid'>
+      <div
+        className='grid gap-2 min-[420px]:grid-cols-2 sm:gap-3'
+        data-testid='alien-board-grid'
+      >
         {aliens.map((alien) => (
           <AlienCard
             key={alien.alienIndex}
@@ -148,7 +151,7 @@ function AlienCard({
 
   return (
     <article
-      className='min-w-0 rounded-md border border-surface-700/50 bg-surface-900/60 p-3'
+      className='min-w-0 rounded-md border border-surface-700/50 bg-surface-900/60 p-2 sm:p-3'
       data-testid={`alien-${alien.alienIndex}-card`}
     >
       <div className='flex items-center justify-between gap-3'>
@@ -169,8 +172,8 @@ function AlienCard({
         </span>
       </div>
 
-      <div className='mt-3 grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_auto]'>
-        <div className='min-w-0 space-y-3'>
+      <div className='mt-2 grid min-w-0 gap-2 lg:mt-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-3'>
+        <div className='min-w-0 space-y-2 lg:space-y-3'>
           {alien.discovered && alien.board ? (
             <DiscoveredAlienBoard
               alien={alien}
@@ -267,32 +270,10 @@ function HiddenBoard({
 }): React.JSX.Element {
   return (
     <section
-      className='min-h-24 min-w-0 rounded border border-surface-700/50 bg-surface-950/30 p-3'
+      className='min-h-[360px] min-w-0 rounded border border-surface-800/70 bg-black/60'
       data-testid={`alien-${alienIndex}-hidden-board`}
-    >
-      <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
-        Alien Board
-      </div>
-      <div className='grid grid-cols-3 gap-2'>
-        {TRACE_COLUMN_COLORS.map((color) => (
-          <div
-            key={color}
-            className='min-w-0 rounded border border-surface-700/50 bg-surface-900/30 p-2'
-            data-testid={`alien-${alienIndex}-hidden-board-column-${color}`}
-          >
-            <TraceColumnLabel color={color} />
-            <div className='flex min-h-14 flex-col items-center justify-start gap-2'>
-              <div
-                className='flex h-10 w-10 items-center justify-center rounded-full border border-dashed border-surface-500/70 bg-surface-800/40 text-[10px] font-semibold text-text-500'
-                aria-label={`${TRACE_LABEL[color]} hidden trace slot`}
-              >
-                ?
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
+      aria-label='Alien Board'
+    />
   );
 }
 
@@ -472,7 +453,7 @@ function CentauriansBoard({
 }): React.JSX.Element {
   return (
     <section
-      className='min-w-0 rounded border border-surface-700/50 bg-surface-950/30 p-2'
+      className='min-w-0 rounded border border-surface-700/50 bg-surface-950/30 p-1.5'
       data-testid={`alien-${alienIndex}-centaurians-board`}
     >
       <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
@@ -1092,7 +1073,10 @@ function AnomaliesBoard({
       <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
         Alien Board
       </div>
-      <div className='grid gap-2 sm:grid-cols-3'>
+      <div
+        className='grid grid-cols-3 gap-1'
+        data-testid={`alien-${alienIndex}-anomaly-trace-grid`}
+      >
         {TRACE_COLUMN_COLORS.map((color) => {
           const column = board.traceBoard.columns[color];
           return (
@@ -1123,14 +1107,14 @@ function AnomalyColumn({
 }): React.JSX.Element {
   return (
     <div
-      className='rounded border border-surface-700/60 bg-surface-900/50 p-2'
+      className='min-w-0 rounded border border-surface-700/60 bg-surface-900/50 p-1'
       data-testid={`alien-${alienIndex}-anomaly-column-${color}`}
     >
       <div
-        className='mb-2 h-1 rounded-full'
+        className='mb-1 h-1 rounded-full'
         style={{ backgroundColor: TRACE_COLOR[color] }}
       />
-      <div className='flex min-h-20 flex-col-reverse items-center justify-start gap-1 rounded bg-surface-950/50 p-2'>
+      <div className='flex min-h-12 flex-col-reverse items-center justify-start gap-1 rounded bg-surface-950/50 p-1'>
         {slot.occupants.map((occ, index) => (
           <OccupantMarker
             key={`${slot.slotId}-${index}`}
@@ -1140,15 +1124,25 @@ function AnomalyColumn({
           />
         ))}
       </div>
-      <div className='mt-2 space-y-1'>
+      <div
+        className='mt-1 flex flex-col-reverse items-center gap-0.5'
+        data-testid={`alien-${alienIndex}-anomaly-column-${color}-rewards`}
+      >
         {ANOMALY_COLUMN_REWARD_LADDER.map((rewards, index) => (
-          <div
+          <TraceRewardFrame
             key={index}
-            className='flex items-center justify-between gap-2 font-mono text-[9px] text-text-500'
+            traceColor={color}
+            compact
+            variant={
+              index === ANOMALY_COLUMN_REWARD_LADDER.length - 1
+                ? 'pill'
+                : 'circle'
+            }
+            testId={`alien-${alienIndex}-anomaly-column-${color}-reward-${index}`}
+            title={`${TRACE_LABEL[color]} anomaly reward`}
           >
-            <span>{index + 1}</span>
-            <TraceRewardIcons rewards={rewards} size='desc-mini' />
-          </div>
+            <TraceRewardIcons rewards={rewards} size='xxs' />
+          </TraceRewardFrame>
         ))}
       </div>
     </div>
@@ -1214,29 +1208,16 @@ function TraceSlot({
   playerColors: Record<string, string>;
 }): React.JSX.Element {
   const isOverflow = slot.maxOccupants === -1;
-  const traceColor = TRACE_COLOR[slot.traceColor];
   const rewards = toTraceRewardPresentations(slot.rewards);
 
   return (
     <div className='flex shrink-0 flex-col items-center gap-1'>
-      <div
-        className={cn(
-          'flex h-12 w-12 items-center justify-center rounded-full',
-          isOverflow
-            ? 'border-2 border-dashed border-surface-500/70 bg-surface-800/50'
-            : 'border-2 border-surface-600/80',
-          slot.isDiscovery && 'ring-1 ring-accent-400/50',
-        )}
-        data-testid={`trace-slot-${slot.slotId}-circle`}
-        style={
-          !isOverflow
-            ? {
-                backgroundColor: `${traceColor}33`,
-                borderColor: `${traceColor}99`,
-              }
-            : undefined
-        }
+      <TraceRewardFrame
+        traceColor={slot.traceColor}
+        variant={isOverflow ? 'pill' : 'circle'}
+        testId={`trace-slot-${slot.slotId}-circle`}
         title={`${TRACE_LABEL[slot.traceColor]} slot${isOverflow ? ' (overflow)' : ''}${slot.isDiscovery ? ' - Discovery' : ''}`}
+        highlighted={slot.isDiscovery}
       >
         {rewards.length > 0 ? (
           <TraceRewardPresentations presentations={rewards} />
@@ -1247,7 +1228,7 @@ function TraceSlot({
         {rewards.length === 0 && isOverflow && (
           <span className='font-mono text-[8px] text-text-500'>∞</span>
         )}
-      </div>
+      </TraceRewardFrame>
 
       <div className='flex min-h-[14px] flex-wrap justify-center gap-0.5'>
         {slot.occupants.map((occ, index) => (
@@ -1259,6 +1240,54 @@ function TraceSlot({
           />
         ))}
       </div>
+    </div>
+  );
+}
+
+type TTraceRewardFrameVariant = 'circle' | 'pill';
+
+function TraceRewardFrame({
+  traceColor,
+  variant,
+  testId,
+  title,
+  highlighted = false,
+  compact = false,
+  children,
+}: {
+  traceColor: ETrace;
+  variant: TTraceRewardFrameVariant;
+  testId: string;
+  title: string;
+  highlighted?: boolean;
+  compact?: boolean;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  const color = TRACE_COLOR[traceColor];
+
+  return (
+    <div
+      className={cn(
+        'flex items-center justify-center border-2 bg-surface-950/70',
+        compact &&
+          variant === 'pill' &&
+          'min-h-20 w-10 rounded-full px-0.5 py-1.5',
+        compact && variant === 'circle' && 'h-10 w-10 rounded-full',
+        !compact &&
+          (variant === 'pill'
+            ? 'min-h-24 w-12 rounded-full px-1 py-2'
+            : 'h-12 w-12 rounded-full'),
+        highlighted && 'ring-1 ring-accent-400/50',
+      )}
+      data-testid={testId}
+      data-trace-color={traceColor}
+      style={{
+        backgroundColor: `${color}1f`,
+        borderColor: color,
+      }}
+      title={title}
+    >
+      {children}
     </div>
   );
 }
@@ -1338,7 +1367,7 @@ function TraceColorColumn({
     >
       <TraceColumnLabel color={color} />
       <div
-        className='flex min-h-14 flex-col items-center gap-2'
+        className='flex min-h-14 flex-col-reverse items-center gap-2'
         data-testid={`alien-${alienIndex}-${area}-column-${color}-slots`}
       >
         {slots.map((slot) => (
@@ -1401,7 +1430,12 @@ function TraceRewardPresentations({
   size?: 'desc-mini' | 'desc' | 'xxs' | 'xs';
 }): React.JSX.Element {
   return (
-    <div className='flex flex-wrap items-center justify-center gap-0.5'>
+    <div
+      className={cn(
+        'flex flex-nowrap items-center justify-center',
+        size === 'xxs' ? 'gap-0' : 'gap-0.5',
+      )}
+    >
       {presentations.map((presentation, index) => (
         <TraceRewardPresentationItem
           key={`${presentation.token}-${index}`}
@@ -1435,16 +1469,14 @@ function TraceRewardPresentationItem({
 
   return (
     <span
-      className='inline-flex h-4 w-4 items-center justify-center overflow-visible'
+      className={cn(
+        'inline-flex items-center justify-center overflow-visible',
+        size === 'xxs' ? 'h-5 w-5' : 'h-4 w-4',
+      )}
       data-testid={`trace-reward-icon-${testKey}`}
       title={presentation.label}
     >
-      <EffectFactory
-        effect={{
-          ...presentation.effect,
-          size,
-        }}
-      />
+      <DescRender desc={presentation.token} size={size} smartSize />
     </span>
   );
 }

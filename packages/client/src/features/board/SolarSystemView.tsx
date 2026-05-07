@@ -1,4 +1,4 @@
-import { EffectFactory } from '@seti/cards';
+import { DescRender } from '@seti/cards';
 import { OUMUAMUA_TILE_DATA_CAPACITY } from '@seti/common/constant/alienBoardConfig';
 import type {
   ISolarSystemSetupConfig,
@@ -16,8 +16,8 @@ import {
   resolveTopVisibleSolarWheelCell,
 } from '@seti/common/rules';
 import {
-  toTraceRewardPresentations,
   type TTraceRewardPresentation,
+  toTraceRewardPresentations,
 } from '@seti/common/utils/alienTracePresentation';
 import { useMemo, useState } from 'react';
 import { cn } from '@/lib/cn';
@@ -31,8 +31,8 @@ import type {
   IPublicSolarSystem,
   IPublicSolarSystemAlienToken,
   IPublicSolarSystemMovablePiece,
-  TPublicSlotReward,
   TMovementTarget,
+  TPublicSlotReward,
 } from '@/types/re-exports';
 import { EPlayerInputType, ETrace } from '@/types/re-exports';
 import { ProbeToken } from './ProbeToken';
@@ -1140,20 +1140,28 @@ function SolarAlienTokenMarker({
 
   return (
     <div
-      className='pointer-events-none absolute flex h-8 w-8 items-center justify-center rounded-sm border border-surface-100/50 bg-surface-950/90 shadow-[0_2px_6px_rgba(0,0,0,0.55)]'
+      className='pointer-events-none absolute inline-flex h-7 min-w-14 items-center overflow-hidden rounded-full border border-surface-100/60 bg-surface-950/95 shadow-[0_2px_6px_rgba(0,0,0,0.55)]'
       data-testid={`solar-alien-token-${token.alienType}-${token.sectorIndex}-${token.traceColor}`}
       style={{
         left: `${xPercent}%`,
         top: `${yPercent}%`,
         transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`,
         zIndex: 78,
-        boxShadow: `0 0 0 2px ${color}66, 0 2px 6px rgba(0,0,0,0.55)`,
+        boxShadow: `0 0 0 1px ${color}, 0 2px 6px rgba(0,0,0,0.55)`,
       }}
       title={token.tokenId}
     >
-      <SolarAlienTokenRewardIcons rewards={token.rewards} />
       <span
-        className='absolute bottom-0.5 right-0.5 h-2 w-2 rounded-full border border-surface-100/50'
+        className='h-full w-2.5 shrink-0'
+        data-testid='solar-alien-token-trace-color-left'
+        style={{ backgroundColor: color }}
+      />
+      <span className='flex min-w-8 items-center justify-center px-1.5'>
+        <SolarAlienTokenRewardIcons rewards={token.rewards} />
+      </span>
+      <span
+        className='h-full w-2.5 shrink-0'
+        data-testid='solar-alien-token-trace-color-right'
         style={{ backgroundColor: color }}
       />
     </div>
@@ -1204,7 +1212,7 @@ function SolarAlienTokenRewardIcon({
       data-testid={`trace-reward-icon-${testKey}`}
       title={presentation.label}
     >
-      <EffectFactory effect={{ ...presentation.effect, size: 'desc-mini' }} />
+      <DescRender desc={presentation.token} size='desc-mini' smartSize />
     </span>
   );
 }

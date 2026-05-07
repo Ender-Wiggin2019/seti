@@ -99,7 +99,7 @@ async function attachDiagnostics(
   });
 }
 
-test('browser smoke: register, room, game load, and first PASS sync', async ({
+test('@smoke @real-ui browser smoke: register, room, game load, and first PASS sync', async ({
   browser,
   request,
 }, testInfo) => {

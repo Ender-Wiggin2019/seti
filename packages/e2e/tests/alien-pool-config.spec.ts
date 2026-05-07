@@ -48,7 +48,7 @@ async function expectTwoHiddenAlienBoards(page: Page): Promise<void> {
   ).toHaveCount(2);
 }
 
-test.describe('Alien pool room config (real flow only)', () => {
+test.describe('Alien pool room config @real-ui', () => {
   for (const alienCase of ALIEN_CASES) {
     test(`real UI room config locks the game to ${alienCase.name}`, async ({
       browser,
@@ -62,8 +62,12 @@ test.describe('Alien pool room config (real flow only)', () => {
       const hostPage = await hostContext.newPage();
       const guestPage = await guestContext.newPage();
 
-      const host = createUser(`alien-host-${alienCase.name.replaceAll(' ', '-')}`);
-      const guest = createUser(`alien-guest-${alienCase.name.replaceAll(' ', '-')}`);
+      const host = createUser(
+        `alien-host-${alienCase.name.replaceAll(' ', '-')}`,
+      );
+      const guest = createUser(
+        `alien-guest-${alienCase.name.replaceAll(' ', '-')}`,
+      );
 
       try {
         await registerByUi(hostPage, host);
@@ -82,7 +86,9 @@ test.describe('Alien pool room config (real flow only)', () => {
           hostPage.locator('[data-testid="game-setting-value-players"]'),
         ).toHaveText('2');
         await expect(
-          hostPage.locator('[data-testid="game-setting-alien-modules"] [role="switch"]'),
+          hostPage.locator(
+            '[data-testid="game-setting-alien-modules"] [role="switch"]',
+          ),
         ).toHaveAttribute('aria-checked', 'true');
 
         await joinRoomByUi(guestPage, roomId);

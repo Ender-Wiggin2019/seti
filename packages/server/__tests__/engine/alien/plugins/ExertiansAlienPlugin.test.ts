@@ -35,7 +35,11 @@ function createExertiansGame(seed: string): { game: Game; board: AlienBoard } {
   return { game, board };
 }
 
-function placeDiscoveryMarker(board: AlienBoard, playerId: string, index: number) {
+function placeDiscoveryMarker(
+  board: AlienBoard,
+  playerId: string,
+  index: number,
+) {
   const slot = board.getDiscoverySlots()[index];
   if (!slot) {
     throw new Error(`missing discovery slot ${index}`);
@@ -44,8 +48,8 @@ function placeDiscoveryMarker(board: AlienBoard, playerId: string, index: number
 }
 
 function exertianCardIdsInHand(game: Game, playerId: string): string[] {
-  return getPlayer(game, playerId).hand
-    .map((card) => (typeof card === 'string' ? card : card.id))
+  return getPlayer(game, playerId)
+    .hand.map((card) => (typeof card === 'string' ? card : card.id))
     .filter((cardId): cardId is string =>
       alienCards.some(
         (card) => card.id === cardId && card.alien === EAlienType.EXERTIANS,
@@ -126,7 +130,9 @@ describe('ExertiansAlienPlugin', () => {
 
     plugin.playFaceDownCard(player, game, cardId, 'discovery');
 
-    expect(player.hand.map((card) => (typeof card === 'string' ? card : card.id))).not.toContain(cardId);
+    expect(
+      player.hand.map((card) => (typeof card === 'string' ? card : card.id)),
+    ).not.toContain(cardId);
     expect(exertiansBoard.faceDownCards).toEqual([
       expect.objectContaining({
         ownerId: 'p1',
@@ -175,9 +181,27 @@ describe('ExertiansAlienPlugin', () => {
     const exertiansBoard = getExertiansBoard(game);
     const speciesSlots = exertiansBoard.speciesTraceSlots;
     expect(speciesSlots).toHaveLength(9);
-    expect(speciesSlots.filter((slot) => slot.rewards.some((reward) => reward.type === 'VP' && reward.amount === 3))).toHaveLength(3);
-    expect(speciesSlots.filter((slot) => slot.rewards.some((reward) => reward.type === 'VP' && reward.amount === 2))).toHaveLength(3);
-    expect(speciesSlots.filter((slot) => slot.rewards.some((reward) => reward.type === 'VP' && reward.amount === 1))).toHaveLength(3);
+    expect(
+      speciesSlots.filter((slot) =>
+        slot.rewards.some(
+          (reward) => reward.type === 'VP' && reward.amount === 3,
+        ),
+      ),
+    ).toHaveLength(3);
+    expect(
+      speciesSlots.filter((slot) =>
+        slot.rewards.some(
+          (reward) => reward.type === 'VP' && reward.amount === 2,
+        ),
+      ),
+    ).toHaveLength(3);
+    expect(
+      speciesSlots.filter((slot) =>
+        slot.rewards.some(
+          (reward) => reward.type === 'VP' && reward.amount === 1,
+        ),
+      ),
+    ).toHaveLength(3);
   });
 
   it('EXE-C2 crossing the +20 Exertian milestone offers one extra face-down play', () => {
@@ -291,12 +315,18 @@ describe('ExertiansAlienPlugin', () => {
     player.score = 100;
 
     const bottomSlot = exertiansBoard.speciesTraceSlots.find((slot) =>
-      slot.rewards.some((reward) => reward.type === 'VP' && reward.amount === 3),
+      slot.rewards.some(
+        (reward) => reward.type === 'VP' && reward.amount === 3,
+      ),
     );
     if (!bottomSlot) {
       throw new Error('expected bottom-tier Exertians slot');
     }
-    exertiansBoard.placeTrace(bottomSlot, { playerId: player.id }, bottomSlot.traceColor);
+    exertiansBoard.placeTrace(
+      bottomSlot,
+      { playerId: player.id },
+      bottomSlot.traceColor,
+    );
 
     const penalty = new ExertiansAlienPlugin().onGameEndPenalty(game, {
       p1: 100,

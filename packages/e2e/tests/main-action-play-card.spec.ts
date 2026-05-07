@@ -67,7 +67,7 @@ async function playableHandCardTestId(page: Page): Promise<string> {
   throw new Error('No affordable base card found in the active player hand');
 }
 
-test('play card main action e2e: active player selects an affordable hand card through real UI', async ({
+test('@actions @real-ui play card main action e2e: active player selects an affordable hand card through real UI', async ({
   browser,
   request,
 }) => {

@@ -497,7 +497,7 @@ describe('PlayCardAction — integration', () => {
       expect(controlCenterOptions).toHaveLength(1);
     });
 
-  it('2.6E.1 rejects PLAY_CARD when declared cardId does not match the hand slot (stale client selection)', () => {
+    it('2.6E.1 rejects PLAY_CARD when declared cardId does not match the hand slot (stale client selection)', () => {
       const { game, player } = createIntegrationGame(
         'play-card-2-6e-1-declared-card-mismatch',
       );

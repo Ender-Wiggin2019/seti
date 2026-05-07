@@ -30,7 +30,7 @@ async function attachScreenshot(
   });
 }
 
-test.describe('Smoke: Room → Launch Probe → Scan', () => {
+test.describe('Smoke @smoke @real-ui: Room → Launch Probe → Scan', () => {
   test('full real-UI flow from room creation through launch probe and scan', async ({
     browser,
     request,

@@ -20,7 +20,7 @@ async function handCount(page: import('@playwright/test').Page) {
   return Number(text?.match(/\d+/)?.[0] ?? 0);
 }
 
-test('card corner free action e2e: active player discards a hand card through real UI', async ({
+test('@actions @real-ui card corner free action e2e: active player discards a hand card through real UI', async ({
   browser,
   request,
 }) => {

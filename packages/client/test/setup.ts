@@ -61,6 +61,10 @@ vi.mock('@seti/cards', () => ({
       'data-testid': `seti-effect-${effect.type ?? 'unknown'}`,
       'data-value': effect.value,
     }),
+  DescRender: ({ desc }: { desc: string }) =>
+    createElement('div', {
+      'data-testid': `seti-desc-${desc.replace(/[{}]/g, '')}`,
+    }),
   TagIcon: ({ type }: { type: string }) =>
     createElement('div', { 'data-testid': `seti-tag-${type}` }),
 }));

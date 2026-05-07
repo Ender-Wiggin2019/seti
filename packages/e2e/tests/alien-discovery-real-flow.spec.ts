@@ -11,6 +11,7 @@ import {
   clickEndTurn,
   clickInputOptionById,
   clickMainAction,
+  createRoomByUi,
   createUser,
   enterGameByUi,
   joinRoomByUi,
@@ -54,56 +55,6 @@ async function attachScreenshot(
     path: screenshotPath,
     contentType: 'image/png',
   });
-}
-
-async function createRoomByUiWithSeed(
-  page: Page,
-  roomName: string,
-  seed: string,
-): Promise<string> {
-  await page.goto('/lobby');
-  await page.getByTestId('lobby-new-mission').click();
-  await expect(page.getByTestId('create-room-dialog')).toBeVisible({
-    timeout: 10_000,
-  });
-  await page.locator('#room-name').fill(roomName);
-
-  await page.route('**/lobby/rooms', async (route) => {
-    if (route.request().method() !== 'POST') {
-      await route.continue();
-      return;
-    }
-
-    const body = JSON.parse(route.request().postData() ?? '{}') as {
-      seed?: string;
-    };
-    await route.continue({
-      postData: JSON.stringify({ ...body, seed }),
-    });
-  });
-
-  const responsePromise = page.waitForResponse(
-    (res) =>
-      res.url().includes('/lobby/rooms') && res.request().method() === 'POST',
-    { timeout: 15_000 },
-  );
-  const dialog = page.getByTestId('create-room-dialog');
-  await dialog.evaluate((element) => {
-    element.scrollTop = element.scrollHeight;
-  });
-  const submitButton = page.getByTestId('create-room-submit');
-  await submitButton.scrollIntoViewIfNeeded();
-  await submitButton.click();
-  const response = await responsePromise;
-  await page.unroute('**/lobby/rooms');
-  expect(response.ok()).toBe(true);
-
-  const room = (await response.json()) as { id?: string };
-  expect(room.id).toBeTruthy();
-  await page.waitForURL(new RegExp(`/room/${room.id as string}$`), {
-    timeout: 15_000,
-  });
-  return room.id as string;
 }
 
 async function openTab(page: Page, name: 'Board' | 'Aliens'): Promise<void> {
@@ -186,11 +137,48 @@ async function playHandCard(page: Page, cardId: string): Promise<void> {
   await card.click();
 }
 
+async function expandedAnomaliesHandCardCount(page: Page): Promise<number> {
+  await expect(page.locator('[data-testid="hand-dock"]')).toHaveAttribute(
+    'data-expanded',
+    'true',
+    { timeout: 10_000 },
+  );
+  return page.locator('[data-testid^="hand-card-ET."]').count();
+}
+
+async function playFloodingTheMediaSpaceAndExpectDraw(
+  page: Page,
+): Promise<void> {
+  await clickMainAction(page, 'PLAY_CARD');
+  const anomalyCardsBefore = await expandedAnomaliesHandCardCount(page);
+  expect(anomalyCardsBefore).toBeGreaterThanOrEqual(1);
+
+  const card = page.locator(sel.handCard('ET.16'));
+  await expect(card).toBeVisible({ timeout: 10_000 });
+  await card.click();
+
+  await expect
+    .poll(() => page.locator('[data-testid^="hand-card-ET."]').count(), {
+      timeout: 15_000,
+    })
+    .toBe(anomalyCardsBefore + 2);
+}
+
 async function dataPoolCount(page: Page): Promise<number> {
   const text = await page
     .locator('[data-testid="data-pool-view"] .readout')
     .textContent();
   return Number(text?.match(/\d+/)?.[0] ?? 0);
+}
+
+async function resourceValue(
+  page: Page,
+  resourceId: 'publicity' | 'score',
+): Promise<number> {
+  const text = await page
+    .locator(`[data-testid="resource-${resourceId}"] .readout`)
+    .textContent();
+  return Number(text?.match(/-?\d+/)?.[0] ?? 0);
 }
 
 async function useDataCardCorner(page: Page, cardId: string): Promise<void> {
@@ -236,14 +224,11 @@ async function passAndResolveEndOfRoundPrompt(page: Page): Promise<void> {
   await waitForAndResolveCardPrompt(page, 15_000);
 }
 
-async function expectTraceOccupant(
-  page: Page,
-  slotId: string,
-): Promise<void> {
+async function expectTraceOccupant(page: Page, slotId: string): Promise<void> {
   await openTab(page, 'Aliens');
-  await expect(
-    page.getByTestId(`trace-slot-${slotId}-occupant-0`),
-  ).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId(`trace-slot-${slotId}-occupant-0`)).toBeVisible(
+    { timeout: 10_000 },
+  );
 }
 
 async function expectAnomaliesDiscovered(page: Page): Promise<void> {
@@ -269,13 +254,12 @@ async function expectAnomaliesDiscovered(page: Page): Promise<void> {
   ).toBeVisible({ timeout: 10_000 });
 
   await openTab(page, 'Board');
-  await expect(page.locator('[data-testid^="solar-alien-token-1-"]')).toHaveCount(
-    3,
-    { timeout: 10_000 },
-  );
+  await expect(
+    page.locator('[data-testid^="solar-alien-token-1-"]'),
+  ).toHaveCount(3, { timeout: 10_000 });
 }
 
-test('alien discovery e2e: real UI marks traces, reveals Anomalies, and applies alien rules', async ({
+test('@slow @real-ui alien discovery e2e: real UI marks traces, reveals Anomalies, and applies alien rules', async ({
   browser,
   request,
 }, testInfo) => {
@@ -294,10 +278,11 @@ test('alien discovery e2e: real UI marks traces, reveals Anomalies, and applies 
     await registerByUi(hostPage, host);
     await registerByUi(guestPage, guest);
 
-    const roomId = await createRoomByUiWithSeed(
+    const roomId = await createRoomByUi(
       hostPage,
       `Alien Discovery Room ${Date.now()}`,
-      DISCOVERY_SEED,
+      2,
+      { seed: DISCOVERY_SEED },
     );
     await joinRoomByUi(guestPage, roomId);
 
@@ -328,15 +313,17 @@ test('alien discovery e2e: real UI marks traces, reveals Anomalies, and applies 
       timeout: 20_000,
     });
     await playHandCard(p2Page, '75');
+    const p2PublicityBeforeRedTrace = await resourceValue(p2Page, 'publicity');
     await clickInputOptionById(p2Page, 'alien-0-discovery-red-trace');
+    await expect
+      .poll(() => resourceValue(p2Page, 'publicity'), { timeout: 15_000 })
+      .toBe(p2PublicityBeforeRedTrace + 1);
     await expectTraceOccupant(p2Page, 'alien-0-discovery-red-trace');
     await attachScreenshot(
       p2Page,
       testInfo,
       '01-red-trace-marked',
-      p2Page.getByTestId(
-        'trace-slot-alien-0-discovery-red-trace-occupant-0',
-      ),
+      p2Page.getByTestId('trace-slot-alien-0-discovery-red-trace-occupant-0'),
     );
     await clickEndTurn(p2Page);
 
@@ -345,7 +332,14 @@ test('alien discovery e2e: real UI marks traces, reveals Anomalies, and applies 
     });
     await playHandCard(p1Page, '12');
     await clickInputOptionById(p1Page, 'land-venus');
+    const p1PublicityBeforeYellowTrace = await resourceValue(
+      p1Page,
+      'publicity',
+    );
     await clickInputOptionById(p1Page, 'alien-0-discovery-yellow-trace');
+    await expect
+      .poll(() => resourceValue(p1Page, 'publicity'), { timeout: 15_000 })
+      .toBe(p1PublicityBeforeYellowTrace + 1);
     await expectTraceOccupant(p1Page, 'alien-0-discovery-yellow-trace');
     await attachScreenshot(
       p1Page,
@@ -389,15 +383,17 @@ test('alien discovery e2e: real UI marks traces, reveals Anomalies, and applies 
       timeout: 20_000,
     });
     await clickMainAction(p1Page, 'ANALYZE_DATA');
+    const p1PublicityBeforeBlueTrace = await resourceValue(p1Page, 'publicity');
     await clickInputOptionById(p1Page, 'alien-0-discovery-blue-trace');
+    await expect
+      .poll(() => resourceValue(p1Page, 'publicity'), { timeout: 15_000 })
+      .toBe(p1PublicityBeforeBlueTrace + 1);
     await expectTraceOccupant(p1Page, 'alien-0-discovery-blue-trace');
     await attachScreenshot(
       p1Page,
       testInfo,
       '04-blue-trace-marked',
-      p1Page.getByTestId(
-        'trace-slot-alien-0-discovery-blue-trace-occupant-0',
-      ),
+      p1Page.getByTestId('trace-slot-alien-0-discovery-blue-trace-occupant-0'),
     );
     await clickEndTurn(p1Page);
 
@@ -422,6 +418,18 @@ test('alien discovery e2e: real UI marks traces, reveals Anomalies, and applies 
       testInfo,
       '07-anomalies-revealed-p2',
       p2Page.getByTestId('alien-0-anomalies-board'),
+    );
+
+    await expect(p1Page.locator(sel.actionMenu('PLAY_CARD'))).toBeEnabled({
+      timeout: 20_000,
+    });
+    await playFloodingTheMediaSpaceAndExpectDraw(p1Page);
+    await openTab(p1Page, 'Aliens');
+    await attachScreenshot(
+      p1Page,
+      testInfo,
+      '08-anomalies-card-settled-p1',
+      p1Page.getByTestId('alien-0-anomalies-board'),
     );
   } finally {
     await hostContext.close().catch(() => undefined);

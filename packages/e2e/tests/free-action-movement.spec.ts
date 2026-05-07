@@ -30,9 +30,12 @@ async function convertOneEnergyToMovement(page: Page): Promise<void> {
   await expect(convert).toBeEnabled({ timeout: 10_000 });
   await convert.click();
   await page.getByRole('button', { name: /^1\s*⚡?\s*→?\s*MOV/i }).click();
-  await expect(page.locator(sel.freeAction('MOVEMENT'))).toContainText(/\(1\)/, {
-    timeout: 10_000,
-  });
+  await expect(page.locator(sel.freeAction('MOVEMENT'))).toContainText(
+    /\(1\)/,
+    {
+      timeout: 10_000,
+    },
+  );
 }
 
 async function firstProbe(page: Page): Promise<Locator> {
@@ -49,7 +52,7 @@ async function firstReachableSpace(page: Page): Promise<Locator> {
   return reachableIndicator.locator('xpath=ancestor::button[1]');
 }
 
-test('free movement e2e: launch probe, convert energy, move via board UI, then end turn', async ({
+test('@actions @real-ui free movement e2e: launch probe, convert energy, move via board UI, then end turn', async ({
   browser,
   request,
 }) => {
@@ -93,9 +96,12 @@ test('free movement e2e: launch probe, convert energy, move via board UI, then e
     );
 
     await clickMainAction(actor, 'LAUNCH_PROBE');
-    await expect(actor.locator('[data-testid^="solar-probe-"]')).toHaveCount(1, {
-      timeout: 10_000,
-    });
+    await expect(actor.locator('[data-testid^="solar-probe-"]')).toHaveCount(
+      1,
+      {
+        timeout: 10_000,
+      },
+    );
 
     const probe = await firstProbe(actor);
     const startSpaceId = await probe.getAttribute('data-space-id');
@@ -106,11 +112,15 @@ test('free movement e2e: launch probe, convert energy, move via board UI, then e
     const move = actor.locator(sel.freeAction('MOVEMENT'));
     await expect(move).toBeEnabled({ timeout: 10_000 });
     await move.click();
-    await expect(actor.locator('[data-testid="movement-mode-hint"]')).toBeVisible({
+    await expect(
+      actor.locator('[data-testid="movement-mode-hint"]'),
+    ).toBeVisible({
       timeout: 10_000,
     });
 
-    const startSpace = actor.locator(`[data-testid="solar-space-${startSpaceId}"]`);
+    const startSpace = actor.locator(
+      `[data-testid="solar-space-${startSpaceId}"]`,
+    );
     await startSpace.click();
     const targetSpace = await firstReachableSpace(actor);
     const targetSpaceTestId = await targetSpace.getAttribute('data-testid');
@@ -122,9 +132,12 @@ test('free movement e2e: launch probe, convert energy, move via board UI, then e
     await targetSpace.click();
 
     await expect
-      .poll(async () => (await firstProbe(actor)).getAttribute('data-space-id'), {
-        timeout: 15_000,
-      })
+      .poll(
+        async () => (await firstProbe(actor)).getAttribute('data-space-id'),
+        {
+          timeout: 15_000,
+        },
+      )
       .toBe(targetSpaceId);
 
     await clickEndTurn(actor);

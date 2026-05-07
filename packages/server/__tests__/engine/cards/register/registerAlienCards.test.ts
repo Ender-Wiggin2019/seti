@@ -57,9 +57,9 @@ describe('registerAlienCards', () => {
       expect(card.effects).toBeDefined();
       expect(card.effects?.length).toBeGreaterThan(0);
     }
-    expect(
-      alienCards.find((card) => card.id === 'ET.38')?.freeAction,
-    ).toEqual([{ type: EResource.PUBLICITY, value: 2 }]);
+    expect(alienCards.find((card) => card.id === 'ET.38')?.freeAction).toEqual([
+      { type: EResource.PUBLICITY, value: 2 },
+    ]);
   });
 
   it('registers executable Centaurian immediate effects by card id', () => {

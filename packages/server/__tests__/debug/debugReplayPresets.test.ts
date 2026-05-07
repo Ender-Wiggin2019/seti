@@ -1,6 +1,12 @@
 import { ANOMALY_TOKEN_REWARD_OPTIONS } from '@seti/common/constant/alienBoardConfig';
 import { ETrace } from '@seti/common/types/element';
-import { EAlienType, EPhase } from '@seti/common/types/protocol/enums';
+import {
+  EAlienType,
+  EFreeAction,
+  EMainAction,
+  EPhase,
+} from '@seti/common/types/protocol/enums';
+import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import {
   applyDebugReplayPreset,
   listDebugReplayPresets,
@@ -87,6 +93,16 @@ describe('debugReplayPresets', () => {
       fields: [],
       checkpoints: expect.arrayContaining([
         expect.objectContaining({ id: 'after-discovery' }),
+      ]),
+    });
+    expect(
+      presets.find((preset) => preset.id === 'free-action-debug'),
+    ).toMatchObject({
+      id: 'free-action-debug',
+      fields: [],
+      checkpoints: expect.arrayContaining([
+        expect.objectContaining({ id: 'spend-signal-token' }),
+        expect.objectContaining({ id: 'deliver-sample' }),
       ]),
     });
   });
@@ -415,5 +431,54 @@ describe('debugReplayPresets', () => {
     expect(board.samplePools.jupiter).toHaveLength(3);
     expect(board.samplePools.saturn).toHaveLength(3);
     expect(board.publicSamples).toHaveLength(1);
+  });
+
+  it('replays spend signal token checkpoint into a real scan free-action state', () => {
+    const game = buildTestGame({ autoResolveSetupTucks: false });
+
+    const replay = applyDebugReplayPreset(game, {
+      presetId: 'free-action-debug',
+      checkpointId: 'spend-signal-token',
+      fieldValues: {},
+    });
+
+    const player = getPlayer(game, replay.currentPlayerId);
+    expect(replay.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
+    expect(player.resources.signalTokens).toBe(1);
+
+    game.processMainAction(player.id, { type: EMainAction.SCAN });
+    game.processFreeAction(player.id, { type: EFreeAction.SPEND_SIGNAL_TOKEN });
+
+    expect(player.resources.signalTokens).toBe(0);
+    expect(player.waitingFor?.toModel().type).toBe(EPlayerInputType.CARD);
+  });
+
+  it('replays deliver sample checkpoint into a real Mascamites delivery state', () => {
+    const game = buildTestGame({ autoResolveSetupTucks: false });
+
+    const replay = applyDebugReplayPreset(game, {
+      presetId: 'free-action-debug',
+      checkpointId: 'deliver-sample',
+      fieldValues: {},
+    });
+
+    const board = game.alienState.getBoardByType(EAlienType.MASCAMITES);
+    const player = getPlayer(game, replay.currentPlayerId);
+    expect(isMascamitesAlienBoard(board)).toBe(true);
+    if (!isMascamitesAlienBoard(board)) {
+      throw new Error('Expected Mascamites board');
+    }
+
+    expect(replay.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
+    expect(board.capsules).toHaveLength(1);
+
+    game.processFreeAction(player.id, {
+      type: EFreeAction.DELIVER_SAMPLE,
+      capsuleId: board.capsules[0].capsuleId,
+      cardId: 'ET.1',
+    });
+
+    expect(board.capsules).toHaveLength(0);
+    expect(board.deliveredSamples).toHaveLength(1);
   });
 });

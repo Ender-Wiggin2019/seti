@@ -374,8 +374,9 @@ describe('SolarSystem', () => {
     const game = createIntegrationGame('solar-card-tech-only-no-rotate');
     const player = game.players[0];
     const otherPlayer = game.players[1];
-    const techResearchedByOtherPlayer =
-      game.techBoard!.getAvailableTechs(player.id)[0];
+    const techResearchedByOtherPlayer = game.techBoard!.getAvailableTechs(
+      player.id,
+    )[0];
     if (!techResearchedByOtherPlayer) {
       throw new Error('expected an available tech');
     }

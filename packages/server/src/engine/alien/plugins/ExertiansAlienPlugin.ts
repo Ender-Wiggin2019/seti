@@ -340,7 +340,10 @@ export class ExertiansAlienPlugin implements IAlienPlugin {
     threshold: number,
     onComplete: () => PlayerInput | undefined,
   ): PlayerInput | undefined {
-    if (creditCost > 0 && !player.resources.canAfford({ credits: creditCost })) {
+    if (
+      creditCost > 0 &&
+      !player.resources.canAfford({ credits: creditCost })
+    ) {
       return onComplete();
     }
 

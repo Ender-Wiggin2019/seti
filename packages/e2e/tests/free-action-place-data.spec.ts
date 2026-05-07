@@ -23,7 +23,7 @@ async function dataPoolCount(page: import('@playwright/test').Page) {
   return Number(text?.match(/\d+/)?.[0] ?? 0);
 }
 
-test('place data free action e2e: scan gains data, place into computer, then end turn', async ({
+test('@actions @real-ui place data free action e2e: scan gains data, place into computer, then end turn', async ({
   browser,
   request,
 }) => {

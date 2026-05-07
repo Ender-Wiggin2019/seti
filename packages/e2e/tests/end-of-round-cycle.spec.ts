@@ -12,7 +12,9 @@ import {
 import { sel } from '../helpers/selectors';
 import { waitForServerReady } from '../helpers/server-ready';
 
-async function getPassState(page: Page): Promise<'enabled' | 'disabled' | 'hidden'> {
+async function getPassState(
+  page: Page,
+): Promise<'enabled' | 'disabled' | 'hidden'> {
   const pass = page.locator(sel.actionMenu('PASS'));
   const visible = await pass.isVisible().catch(() => false);
   if (!visible) return 'hidden';
@@ -21,10 +23,12 @@ async function getPassState(page: Page): Promise<'enabled' | 'disabled' | 'hidde
 }
 
 async function expectPassNotEnabled(page: Page): Promise<void> {
-  await expect.poll(() => getPassState(page), {
-    timeout: 10_000,
-    message: 'Expected PASS to be unavailable for a non-active player',
-  }).not.toBe('enabled');
+  await expect
+    .poll(() => getPassState(page), {
+      timeout: 10_000,
+      message: 'Expected PASS to be unavailable for a non-active player',
+    })
+    .not.toBe('enabled');
 }
 
 async function passWithEndOfRoundSelection(page: Page): Promise<void> {
@@ -36,7 +40,7 @@ async function passWithEndOfRoundSelection(page: Page): Promise<void> {
   expect(resolved).toBe(true);
 }
 
-test('end-of-round e2e: both players pass, pick end-of-round cards, and next round begins', async ({
+test('@real-ui end-of-round e2e: both players pass, pick end-of-round cards, and next round begins', async ({
   browser,
   request,
 }) => {

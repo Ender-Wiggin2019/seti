@@ -535,12 +535,7 @@ describe('OumuamuaAlienPlugin', () => {
 
     const redTraceSlotId = findTraceSlotId(game, ETrace.RED, 5);
     expect(
-      game.alienState.applyTraceToSlot(
-        p1,
-        game,
-        redTraceSlotId,
-        ETrace.RED,
-      ),
+      game.alienState.applyTraceToSlot(p1, game, redTraceSlotId, ETrace.RED),
     ).toBe(true);
 
     expect(

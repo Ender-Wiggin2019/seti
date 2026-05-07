@@ -14,7 +14,7 @@ import {
 import { sel } from '../helpers/selectors';
 import { waitForServerReady } from '../helpers/server-ready';
 
-test('configured room flow e2e: create custom room settings, join, launch, and hand off turn', async ({
+test('@real-ui configured room flow e2e: create custom room settings, join, launch, and hand off turn', async ({
   browser,
   request,
 }) => {
@@ -36,19 +36,35 @@ test('configured room flow e2e: create custom room settings, join, launch, and h
 
     const roomId = await createRoomByUi(hostPage, roomName, 2);
 
-    await expect(hostPage.locator('[data-testid="game-setting-value-players"]')).toHaveText('2');
     await expect(
-      hostPage.locator('[data-testid="game-setting-alien-modules"] button[role="switch"]'),
+      hostPage.locator('[data-testid="game-setting-value-players"]'),
+    ).toHaveText('2');
+    await expect(
+      hostPage.locator(
+        '[data-testid="game-setting-alien-modules"] button[role="switch"]',
+      ),
     ).toHaveAttribute('aria-checked', 'true');
-    await expect(hostPage.locator('[data-testid="game-setting-value-undo"]')).toContainText(/allowed/i);
-    await expect(hostPage.locator('[data-testid="game-setting-value-turn-timer"]')).toContainText(/off/i);
+    await expect(
+      hostPage.locator('[data-testid="game-setting-value-undo"]'),
+    ).toContainText(/allowed/i);
+    await expect(
+      hostPage.locator('[data-testid="game-setting-value-turn-timer"]'),
+    ).toContainText(/off/i);
 
     await joinRoomByUi(guestPage, roomId);
 
-    await expect(guestPage.locator('[data-testid="game-setting-value-players"]')).toHaveText('2');
-    await expect(guestPage.locator('[data-testid="game-setting-value-alien-modules"]')).toContainText(/on/i);
-    await expect(guestPage.locator('[data-testid="game-setting-value-undo"]')).toContainText(/allowed/i);
-    await expect(guestPage.locator('[data-testid="game-setting-value-turn-timer"]')).toContainText(/off/i);
+    await expect(
+      guestPage.locator('[data-testid="game-setting-value-players"]'),
+    ).toHaveText('2');
+    await expect(
+      guestPage.locator('[data-testid="game-setting-value-alien-modules"]'),
+    ).toContainText(/on/i);
+    await expect(
+      guestPage.locator('[data-testid="game-setting-value-undo"]'),
+    ).toContainText(/allowed/i);
+    await expect(
+      guestPage.locator('[data-testid="game-setting-value-turn-timer"]'),
+    ).toContainText(/off/i);
 
     const hostGameId = await launchGameByUi(hostPage, roomId);
     const guestGameId = await enterGameByUi(guestPage, roomId);

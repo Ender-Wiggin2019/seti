@@ -11,14 +11,17 @@ import {
 import { sel } from '../helpers/selectors';
 import { waitForServerReady } from '../helpers/server-ready';
 
-async function resourceValue(page: import('@playwright/test').Page, id: string) {
+async function resourceValue(
+  page: import('@playwright/test').Page,
+  id: string,
+) {
   const text = await page
     .locator(`[data-testid="resource-${id}"] .readout`)
     .textContent();
   return Number(text?.match(/\d+/)?.[0] ?? 0);
 }
 
-test('exchange resources free action e2e: active player exchanges credits into energy through real UI', async ({
+test('@actions @real-ui exchange resources free action e2e: active player exchanges credits into energy through real UI', async ({
   browser,
   request,
 }) => {

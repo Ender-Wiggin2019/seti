@@ -15,7 +15,7 @@ async function attachReplayScreenshot(
   });
 }
 
-test.describe('Debug Replay Page', () => {
+test.describe('Debug Replay Page @debug', () => {
   test('can start the anomaly replay and resolve discovery through the real UI', async ({
     page,
     request,

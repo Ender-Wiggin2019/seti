@@ -11,7 +11,7 @@ import {
 import { sel } from '../helpers/selectors';
 import { waitForServerReady } from '../helpers/server-ready';
 
-test('buy card free action e2e: active player buys from deck through real UI before main action', async ({
+test('@actions @real-ui buy card free action e2e: active player buys from deck through real UI before main action', async ({
   browser,
   request,
 }) => {

@@ -68,8 +68,9 @@ describe('GameDeserializer', () => {
     ];
 
     const restored = deserializeGame(serializeGame(game, 1));
-    const restoredBoard =
-      restored.alienState.getBoardByType(EAlienType.EXERTIANS);
+    const restoredBoard = restored.alienState.getBoardByType(
+      EAlienType.EXERTIANS,
+    );
 
     if (!isExertiansAlienBoard(restoredBoard)) {
       throw new Error('expected restored Exertians board');
@@ -115,8 +116,9 @@ describe('GameDeserializer', () => {
     });
 
     const restored = deserializeGame(serializeGame(game, 1));
-    const restoredBoard =
-      restored.alienState.getBoardByType(EAlienType.ANOMALIES);
+    const restoredBoard = restored.alienState.getBoardByType(
+      EAlienType.ANOMALIES,
+    );
 
     if (!isAnomaliesAlienBoard(restoredBoard)) {
       throw new Error('expected restored Anomalies board');
@@ -161,8 +163,9 @@ describe('GameDeserializer', () => {
     });
 
     const restored = deserializeGame(serializeGame(game, 1));
-    const restoredBoard =
-      restored.alienState.getBoardByType(EAlienType.OUMUAMUA);
+    const restoredBoard = restored.alienState.getBoardByType(
+      EAlienType.OUMUAMUA,
+    );
 
     if (!isOumuamuaAlienBoard(restoredBoard)) {
       throw new Error('expected restored Oumuamua board');
@@ -208,8 +211,9 @@ describe('GameDeserializer', () => {
     board.rewardSlots[0]!.claimedByPlayerId = 'p1';
 
     const restored = deserializeGame(serializeGame(game, 1));
-    const restoredBoard =
-      restored.alienState.getBoardByType(EAlienType.CENTAURIANS);
+    const restoredBoard = restored.alienState.getBoardByType(
+      EAlienType.CENTAURIANS,
+    );
 
     if (!isCentauriansAlienBoard(restoredBoard)) {
       throw new Error('expected restored Centaurians board');
@@ -281,8 +285,9 @@ describe('GameDeserializer', () => {
     });
 
     const restored = deserializeGame(serializeGame(game, 1));
-    const restoredBoard =
-      restored.alienState.getBoardByType(EAlienType.MASCAMITES);
+    const restoredBoard = restored.alienState.getBoardByType(
+      EAlienType.MASCAMITES,
+    );
 
     if (!isMascamitesAlienBoard(restoredBoard)) {
       throw new Error('expected restored Mascamites board');

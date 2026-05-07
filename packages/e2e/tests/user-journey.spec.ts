@@ -41,7 +41,7 @@ async function openUserContext(browser: Browser): Promise<{
   return { context, page };
 }
 
-test.describe('User Journey E2E (Real Flow Only)', () => {
+test.describe('User Journey E2E @real-ui', () => {
   test('register + create room + join game + pass action', async ({
     browser,
     request,

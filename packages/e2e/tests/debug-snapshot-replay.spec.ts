@@ -91,7 +91,7 @@ function buildFirstInputResponse(input: IDebugPendingInput): unknown {
   throw new Error(`Unsupported debug pending input type: ${input.type}`);
 }
 
-test.describe('Debug Snapshot Replay', () => {
+test.describe('Debug Snapshot Replay @debug', () => {
   test('can load a game from DB snapshot and render the game UI', async ({
     page,
     request,

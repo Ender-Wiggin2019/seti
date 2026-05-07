@@ -23,7 +23,10 @@ const TEST_PLAYERS = [
   { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
 ] as const;
 
-function createCentauriansGame(seed: string): { game: Game; board: AlienBoard } {
+function createCentauriansGame(seed: string): {
+  game: Game;
+  board: AlienBoard;
+} {
   const game = Game.create(
     TEST_PLAYERS,
     { playerCount: 2, alienModulesEnabled: [true, true, false, false, false] },
@@ -39,7 +42,11 @@ function createCentauriansGame(seed: string): { game: Game; board: AlienBoard } 
   return { game, board };
 }
 
-function placeDiscoveryMarker(board: AlienBoard, playerId: string, index: number) {
+function placeDiscoveryMarker(
+  board: AlienBoard,
+  playerId: string,
+  index: number,
+) {
   const slot = board.getDiscoverySlots()[index];
   if (!slot) {
     throw new Error(`missing discovery slot ${index}`);
@@ -48,8 +55,8 @@ function placeDiscoveryMarker(board: AlienBoard, playerId: string, index: number
 }
 
 function centaurianCardIdsInHand(game: Game, playerId: string): string[] {
-  return getPlayer(game, playerId).hand
-    .map((card) => (typeof card === 'string' ? card : card.id))
+  return getPlayer(game, playerId)
+    .hand.map((card) => (typeof card === 'string' ? card : card.id))
     .filter((cardId): cardId is string =>
       alienCards.some(
         (card) => card.id === cardId && card.alien === EAlienType.CENTAURIANS,
@@ -140,9 +147,8 @@ describe('CentauriansAlienPlugin', () => {
     const publicityBefore = p1.resources.publicity;
 
     const input = game.milestoneState.checkAndQueue(game, p1);
-    const afterReward = chooseCentauriansReward(
-      input,
-      (option) => option.id.includes('score-8'),
+    const afterReward = chooseCentauriansReward(input, (option) =>
+      option.id.includes('score-8'),
     );
 
     expect(afterReward).toBeUndefined();
@@ -171,12 +177,12 @@ describe('CentauriansAlienPlugin', () => {
     const energyIncomeBefore = p1.income.tuckedCardIncome[EResource.ENERGY];
 
     const input = game.milestoneState.checkAndQueue(game, p1);
-    const afterReward = chooseCentauriansReward(
-      input,
-      (option) => option.id.includes('score-8'),
+    const afterReward = chooseCentauriansReward(input, (option) =>
+      option.id.includes('score-8'),
     );
-    const optionModel = (afterReward as { toModel: () => ISelectOptionInputModel })
-      ?.toModel();
+    const optionModel = (
+      afterReward as { toModel: () => ISelectOptionInputModel }
+    )?.toModel();
 
     expect(optionModel?.type).toBe(EPlayerInputType.OPTION);
     expect(optionModel?.title).toContain('Place Red trace');
@@ -203,18 +209,25 @@ describe('CentauriansAlienPlugin', () => {
     p1.score = 18;
 
     const input = game.milestoneState.checkAndQueue(game, p1);
-    const afterReward = chooseCentauriansReward(
-      input,
-      (option) => option.id.includes('score-8'),
+    const afterReward = chooseCentauriansReward(input, (option) =>
+      option.id.includes('score-8'),
     );
-    const optionModel = (afterReward as { toModel: () => ISelectOptionInputModel })
-      ?.toModel();
+    const optionModel = (
+      afterReward as { toModel: () => ISelectOptionInputModel }
+    )?.toModel();
     const firstOption = optionModel?.options[0];
     if (!firstOption) {
       throw new Error('expected trace option');
     }
 
-    (afterReward as { process: (response: { type: EPlayerInputType.OPTION; optionId: string }) => unknown })?.process({
+    (
+      afterReward as {
+        process: (response: {
+          type: EPlayerInputType.OPTION;
+          optionId: string;
+        }) => unknown;
+      }
+    )?.process({
       type: EPlayerInputType.OPTION,
       optionId: firstOption.id,
     });
@@ -294,12 +307,12 @@ describe('CentauriansAlienPlugin', () => {
     const energyBefore = p1.resources.energy;
 
     const input = game.milestoneState.checkAndQueue(game, p1);
-    const afterReward = chooseCentauriansReward(
-      input,
-      (option) => option.id.includes('energy-and-alien-card'),
+    const afterReward = chooseCentauriansReward(input, (option) =>
+      option.id.includes('energy-and-alien-card'),
     );
-    const model = (afterReward as { toModel: () => ISelectOptionInputModel })
-      .toModel();
+    const model = (
+      afterReward as { toModel: () => ISelectOptionInputModel }
+    ).toModel();
 
     expect(p1.resources.energy).toBe(energyBefore + 1);
     expect(model.title).toContain('Centaurians');
@@ -325,12 +338,12 @@ describe('CentauriansAlienPlugin', () => {
     const creditsBefore = p1.resources.credits;
 
     const input = game.milestoneState.checkAndQueue(game, p1);
-    const afterReward = chooseCentauriansReward(
-      input,
-      (option) => option.id.includes('score-8'),
+    const afterReward = chooseCentauriansReward(input, (option) =>
+      option.id.includes('score-8'),
     );
-    const model = (afterReward as { toModel: () => ISelectOptionInputModel })
-      ?.toModel();
+    const model = (
+      afterReward as { toModel: () => ISelectOptionInputModel }
+    )?.toModel();
 
     expect(p1.resources.credits).toBe(creditsBefore + 1);
     expect(model?.type).toBe(EPlayerInputType.OPTION);
@@ -364,21 +377,18 @@ describe('CentauriansAlienPlugin', () => {
     p1.score = 18;
 
     const firstReward = game.milestoneState.checkAndQueue(game, p1);
-    const secondReward = chooseCentauriansReward(
-      firstReward,
-      (option) => option.id.includes('score-8'),
+    const secondReward = chooseCentauriansReward(firstReward, (option) =>
+      option.id.includes('score-8'),
     );
-    const done = chooseCentauriansReward(
-      secondReward,
-      (option) => option.id.includes('publicity-3'),
+    const done = chooseCentauriansReward(secondReward, (option) =>
+      option.id.includes('publicity-3'),
     );
 
     expect(done).toBeUndefined();
     expect(board.pendingMessagesByPlayer[p1.id]).toEqual([]);
-    expect(board.messageMilestones.map((milestone) => milestone.resolved)).toEqual([
-      true,
-      true,
-    ]);
+    expect(
+      board.messageMilestones.map((milestone) => milestone.resolved),
+    ).toEqual([true, true]);
     expect(p1.tuckedIncomeCards.slice(-2)).toEqual(['ET.31', 'ET.32']);
   });
 });

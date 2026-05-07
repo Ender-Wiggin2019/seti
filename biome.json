@@ -31,6 +31,16 @@
   },
   "formatter": {
     "enabled": true,
+    "includes": [
+      "*.{js,mjs,cjs,ts,tsx,json,jsonc,css,scss,webmanifest}",
+      "docs/**/*.{js,mjs,cjs,ts,tsx,json,jsonc,css,scss,webmanifest}",
+      "packages/**/*.{js,jsx,mjs,cjs,ts,tsx,json,jsonc,css,scss,webmanifest}",
+      "scripts/**/*.{js,mjs,cjs,ts,tsx,json,jsonc,css,scss,webmanifest}",
+      "!packages/**/build/**",
+      "!packages/**/coverage/**",
+      "!packages/**/dist/**",
+      "!packages/**/node_modules/**"
+    ],
     "formatWithErrors": false,
     "indentStyle": "space",
     "indentWidth": 2,

@@ -55,14 +55,14 @@ fi
 echo "[e2e:run] starting server on ${SERVER_URL}"
 (
   cd "${ROOT_DIR}/packages/server"
-  exec env PATH="${NODE_DIR}:$PATH" SETI_THROTTLE_LIMIT=10000 "${NODE_BIN}" --import "${TSX_LOADER}" src/main.ts
+  exec env PATH="${NODE_DIR}:$PATH" SETI_ENABLE_DEBUG_API=true SETI_THROTTLE_LIMIT=10000 "${NODE_BIN}" --import "${TSX_LOADER}" src/main.ts
 ) &
 SERVER_PID=$!
 
 echo "[e2e:run] starting client on ${CLIENT_URL}"
 (
   cd "${ROOT_DIR}/packages/client"
-  exec env PATH="${NODE_DIR}:$PATH" ./node_modules/.bin/vite --host 127.0.0.1 --port 5173
+  exec env PATH="${NODE_DIR}:$PATH" VITE_ENABLE_DEBUG_ROUTES=true ./node_modules/.bin/vite --host 127.0.0.1 --port 5173
 ) &
 CLIENT_PID=$!
 
@@ -109,4 +109,5 @@ env \
   SERVER_URL="${SERVER_URL}" \
   CLIENT_URL="${CLIENT_URL}" \
   WS_URL="${WS_URL}" \
+  SKIP_E2E_DB_PREPARE=1 \
   "${PLAYWRIGHT_CMD[@]}"

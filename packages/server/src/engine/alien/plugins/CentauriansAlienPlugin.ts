@@ -221,7 +221,9 @@ export class CentauriansAlienPlugin implements IAlienPlugin {
         return `${reward.amount} ${reward.type}`;
       })
       .join(', ');
-    return slot.dataCost > 0 ? `${rewards} (cost ${slot.dataCost} data)` : rewards;
+    return slot.dataCost > 0
+      ? `${rewards} (cost ${slot.dataCost} data)`
+      : rewards;
   }
 
   private resolveRewardSlot(
@@ -235,16 +237,12 @@ export class CentauriansAlienPlugin implements IAlienPlugin {
         executeSimpleSlotRewards(player, game, [reward]);
         continue;
       }
-      if (
-        reward.effectId === 'CENTAURIANS_ANY_TRACE'
-      ) {
+      if (reward.effectId === 'CENTAURIANS_ANY_TRACE') {
         return game.alienState.createTraceInput(player, game, ETrace.ANY, {
           onComplete,
         });
       }
-      if (
-        reward.effectId === 'CENTAURIANS_DRAW_ALIEN_CARD'
-      ) {
+      if (reward.effectId === 'CENTAURIANS_DRAW_ALIEN_CARD') {
         return game.alienState.createDrawAlienCardInput(
           player,
           game,

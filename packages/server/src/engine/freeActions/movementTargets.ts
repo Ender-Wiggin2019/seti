@@ -51,11 +51,11 @@ class ProbeMovementPiece implements IMovablePieceRuntime {
     fromSpaceId: string,
     toSpaceId: string,
   ): IMovementStepResult {
-    const result = game.solarSystem!.moveProbe(
-      this.probe.id,
-      fromSpaceId,
-      toSpaceId,
-    );
+    const { solarSystem } = game;
+    if (!solarSystem) {
+      throw new Error('Cannot move probe before solar system is initialized');
+    }
+    const result = solarSystem.moveProbe(this.probe.id, fromSpaceId, toSpaceId);
     this.spaceId = toSpaceId;
     return {
       pieceId: result.probeId,

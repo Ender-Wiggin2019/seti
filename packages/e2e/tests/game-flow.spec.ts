@@ -12,7 +12,7 @@ import {
 import { sel } from '../helpers/selectors';
 import { waitForServerReady } from '../helpers/server-ready';
 
-test.describe('Game Flow E2E (Real UI Path Only)', () => {
+test.describe('Game Flow E2E @real-ui', () => {
   test('host + guest complete real flow to in-game interaction', async ({
     browser,
     request,

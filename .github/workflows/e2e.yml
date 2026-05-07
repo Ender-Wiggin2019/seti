@@ -1,0 +1,63 @@
+name: E2E
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  playwright:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: seti_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d seti_e2e"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/seti_e2e
+      SERVER_URL: http://127.0.0.1:3000
+      CLIENT_URL: http://127.0.0.1:5173
+      WS_URL: http://127.0.0.1:3000
+      PLAYWRIGHT_PROJECT: chromium
+      PLAYWRIGHT_RETRIES: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.0.0 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browser
+        run: pnpm --filter @seti/e2e exec playwright install --with-deps chromium
+
+      - name: Typecheck E2E
+        run: pnpm --filter @seti/e2e exec tsc -p tsconfig.json --noEmit
+
+      - name: Run E2E
+        run: ./scripts/run-e2e-local.sh

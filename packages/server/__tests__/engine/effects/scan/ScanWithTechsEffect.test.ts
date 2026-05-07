@@ -81,16 +81,12 @@ function createOumuamuaGame(seed: string): { game: Game; player: Player } {
 describe('ScanWithTechsEffect', () => {
   describe('oumuamua signal choice', () => {
     it('offers sector/tile choice for a single candidate in the oumuamua sector', () => {
-      const { game, player } = createOumuamuaGame(
-        'scan-tech-single-oumuamua',
-      );
+      const { game, player } = createOumuamuaGame('scan-tech-single-oumuamua');
       const { sectorIndex } = discoverOumuamua(game);
 
-      const input = ScanWithTechsEffect.markSignalWithChoice(
-        player,
-        game,
-        [sectorIndex],
-      );
+      const input = ScanWithTechsEffect.markSignalWithChoice(player, game, [
+        sectorIndex,
+      ]);
 
       const model = input?.toModel() as ISelectOptionInputModel | undefined;
       expect(model?.type).toBe(EPlayerInputType.OPTION);

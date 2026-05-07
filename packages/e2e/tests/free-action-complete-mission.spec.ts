@@ -1,12 +1,8 @@
-import { type Browser, expect, type Page, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 import {
   clickMainAction,
   clickPassAndWaitForLogSync,
-  createUser,
-  enterGameByUi,
-  joinRoomByUi,
-  launchGameByUi,
-  registerByUi,
+  createStartedGameByUi,
   waitForActionOwner,
 } from '../helpers/real-flow';
 import { sel } from '../helpers/selectors';
@@ -89,103 +85,19 @@ async function resolveVisiblePromptBySkippingMissionClaim(
   }
 }
 
-async function createRoomByUiWithSeed(
-  page: Page,
-  roomName: string,
-  seed: string,
-): Promise<string> {
-  await page.goto('/lobby');
-  await page.getByTestId('lobby-new-mission').click();
-  await expect(page.getByTestId('create-room-dialog')).toBeVisible({
-    timeout: 10_000,
-  });
-  await page.locator('#room-name').fill(roomName);
-
-  await page.route('**/lobby/rooms', async (route) => {
-    if (route.request().method() !== 'POST') {
-      await route.continue();
-      return;
-    }
-
-    const body = JSON.parse(route.request().postData() ?? '{}') as {
-      seed?: string;
-    };
-    await route.continue({
-      postData: JSON.stringify({ ...body, seed }),
-    });
-  });
-
-  const responsePromise = page.waitForResponse(
-    (res) =>
-      res.url().includes('/lobby/rooms') && res.request().method() === 'POST',
-    { timeout: 15_000 },
-  );
-  const dialog = page.getByTestId('create-room-dialog');
-  await dialog.evaluate((element) => {
-    element.scrollTop = element.scrollHeight;
-  });
-  const submitButton = page.getByTestId('create-room-submit');
-  await submitButton.scrollIntoViewIfNeeded();
-  await submitButton.click();
-  const response = await responsePromise;
-  await page.unroute('**/lobby/rooms');
-  expect(response.ok()).toBe(true);
-
-  const room = (await response.json()) as { id?: string };
-  expect(room.id).toBeTruthy();
-  await page.waitForURL(new RegExp(`/room/${room.id as string}$`), {
-    timeout: 15_000,
-  });
-  return room.id as string;
-}
-
-async function createStartedTwoPlayerGame(browser: Browser): Promise<{
-  hostContext: Awaited<ReturnType<Browser['newContext']>>;
-  guestContext: Awaited<ReturnType<Browser['newContext']>>;
-  hostPage: Page;
-  guestPage: Page;
-}> {
-  const hostContext = await browser.newContext();
-  const guestContext = await browser.newContext();
-  const hostPage = await hostContext.newPage();
-  const guestPage = await guestContext.newPage();
-
-  const host = createUser('complete-mission-host');
-  const guest = createUser('complete-mission-guest');
-
-  await registerByUi(hostPage, host);
-  await registerByUi(guestPage, guest);
-
-  const roomId = await createRoomByUiWithSeed(
-    hostPage,
-    `Complete Mission Room ${Date.now()}`,
-    SEEDED_NIAC_GAME,
-  );
-  await joinRoomByUi(guestPage, roomId);
-
-  const hostGameId = await launchGameByUi(hostPage, roomId);
-  const guestGameId = await enterGameByUi(guestPage, roomId);
-  expect(guestGameId).toBe(hostGameId);
-
-  await expect(hostPage.locator(sel.bottomDashboard)).toBeVisible({
-    timeout: 15_000,
-  });
-  await expect(guestPage.locator(sel.bottomDashboard)).toBeVisible({
-    timeout: 15_000,
-  });
-
-  return { hostContext, guestContext, hostPage, guestPage };
-}
-
-test('complete mission free action e2e: play NIAC Program, empty hand through real card corners, then complete mission', async ({
+test('@actions @real-ui complete mission free action e2e: play NIAC Program, empty hand through real card corners, then complete mission', async ({
   browser,
   request,
 }) => {
   test.setTimeout(360_000);
   await waitForServerReady(request);
 
-  const { hostContext, guestContext, hostPage, guestPage } =
-    await createStartedTwoPlayerGame(browser);
+  const game = await createStartedGameByUi(browser, {
+    roomName: `Complete Mission Room ${Date.now()}`,
+    userPrefix: 'complete-mission',
+    roomOptions: { seed: SEEDED_NIAC_GAME },
+  });
+  const [hostPage, guestPage] = game.pages;
 
   try {
     let { actor, other } = await waitForActionOwner(
@@ -271,7 +183,6 @@ test('complete mission free action e2e: play NIAC Program, empty hand through re
       timeout: 10_000,
     });
   } finally {
-    await hostContext.close().catch(() => undefined);
-    await guestContext.close().catch(() => undefined);
+    await game.close();
   }
 });

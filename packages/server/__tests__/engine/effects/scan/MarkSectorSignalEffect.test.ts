@@ -90,7 +90,12 @@ const OUMUAMUA_TEST_PLAYERS = [
 ] as const;
 
 function createOumuamuaGame(seed: string): { game: Game; player: Player } {
-  const game = Game.create(OUMUAMUA_TEST_PLAYERS, { playerCount: 2 }, seed, seed);
+  const game = Game.create(
+    OUMUAMUA_TEST_PLAYERS,
+    { playerCount: 2 },
+    seed,
+    seed,
+  );
   resolveSetupTucks(game);
   return { game, player: game.players[0] as Player };
 }
@@ -274,9 +279,7 @@ describe('MarkSectorSignalEffect', () => {
     });
 
     it('still offers the sector/tile choice when the only matching sector contains oumuamua', () => {
-      const { game, player } = createOumuamuaGame(
-        'mark-color-single-oumuamua',
-      );
+      const { game, player } = createOumuamuaGame('mark-color-single-oumuamua');
       const { sector } = discoverOumuamua(game);
       for (const candidate of game.sectors) {
         if (candidate.id !== sector.id && candidate.color === sector.color) {

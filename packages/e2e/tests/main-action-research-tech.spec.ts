@@ -1,14 +1,9 @@
-import { expect, test, type Browser, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { baseCards } from '@seti/common/data/baseCards';
 import { EResource } from '@seti/common/types/element';
 import {
   clickPassAndWaitForLogSync,
-  createRoomByUi,
-  createUser,
-  enterGameByUi,
-  joinRoomByUi,
-  launchGameByUi,
-  registerByUi,
+  createStartedGameByUi,
   waitForActionHandoff,
   waitForActionOwner,
 } from '../helpers/real-flow';
@@ -48,8 +43,7 @@ async function publicityCornerCardTestIds(page: Page): Promise<string[]> {
     const card = BASE_CARD_BY_ID.get(cardId);
     if (
       card?.freeAction?.some(
-        (reward) =>
-          reward.type === EResource.PUBLICITY && reward.value > 0,
+        (reward) => reward.type === EResource.PUBLICITY && reward.value > 0,
       )
     ) {
       testIds.push(testId);
@@ -82,45 +76,7 @@ async function useCardCorner(page: Page, cardTestId: string): Promise<void> {
   await card.click();
 }
 
-async function setupTwoPlayerGame(browser: Browser): Promise<{
-  hostContext: Awaited<ReturnType<Browser['newContext']>>;
-  guestContext: Awaited<ReturnType<Browser['newContext']>>;
-  hostPage: Page;
-  guestPage: Page;
-}> {
-  const hostContext = await browser.newContext();
-  const guestContext = await browser.newContext();
-  const hostPage = await hostContext.newPage();
-  const guestPage = await guestContext.newPage();
-
-  const host = createUser('research-host');
-  const guest = createUser('research-guest');
-
-  await registerByUi(hostPage, host);
-  await registerByUi(guestPage, guest);
-
-  const roomId = await createRoomByUi(
-    hostPage,
-    `Research Tech Room ${Date.now()}`,
-    2,
-  );
-  await joinRoomByUi(guestPage, roomId);
-
-  const hostGameId = await launchGameByUi(hostPage, roomId);
-  const guestGameId = await enterGameByUi(guestPage, roomId);
-  expect(guestGameId).toBe(hostGameId);
-
-  await expect(hostPage.locator(sel.bottomDashboard)).toBeVisible({
-    timeout: 15_000,
-  });
-  await expect(guestPage.locator(sel.bottomDashboard)).toBeVisible({
-    timeout: 15_000,
-  });
-
-  return { hostContext, guestContext, hostPage, guestPage };
-}
-
-test('research tech main action e2e: active player gains publicity via card corners, then researches tech through real UI', async ({
+test('@actions @real-ui research tech main action e2e: active player gains publicity via card corners, then researches tech through real UI', async ({
   browser,
   request,
 }) => {
@@ -128,8 +84,11 @@ test('research tech main action e2e: active player gains publicity via card corn
   await waitForServerReady(request);
 
   for (let attempt = 0; attempt < 6; attempt += 1) {
-    const { hostContext, guestContext, hostPage, guestPage } =
-      await setupTwoPlayerGame(browser);
+    const game = await createStartedGameByUi(browser, {
+      roomName: `Research Tech Room ${Date.now()}`,
+      userPrefix: 'research',
+    });
+    const [hostPage, guestPage] = game.pages;
 
     try {
       let { actor, other } = await waitForActionOwner(
@@ -184,13 +143,14 @@ test('research tech main action e2e: active player gains publicity via card corn
       await expect
         .poll(() => resourceValue(actor, 'publicity'), { timeout: 15_000 })
         .toBeLessThan(initialPublicity + 2);
-      await expect(actor.locator('[data-testid="action-menu-end-turn"]')).toBeEnabled({
+      await expect(
+        actor.locator('[data-testid="action-menu-end-turn"]'),
+      ).toBeEnabled({
         timeout: 10_000,
       });
       return;
     } finally {
-      await hostContext.close().catch(() => undefined);
-      await guestContext.close().catch(() => undefined);
+      await game.close();
     }
   }
 

@@ -1,14 +1,9 @@
-import { type Browser, expect, type Page, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 import {
   clickEndTurn,
   clickMainAction,
   clickPassAndWaitForLogSync,
-  createRoomByUi,
-  createUser,
-  enterGameByUi,
-  joinRoomByUi,
-  launchGameByUi,
-  registerByUi,
+  createStartedGameByUi,
   waitForActionOwner,
 } from '../helpers/real-flow';
 import { sel } from '../helpers/selectors';
@@ -202,34 +197,7 @@ async function resolveInputsUntilEndTurn(page: Page): Promise<void> {
   throw new Error('Timed out resolving post-action inputs until End Turn');
 }
 
-async function createStartedTwoPlayerGame(browser: Browser) {
-  const hostContext = await browser.newContext();
-  const guestContext = await browser.newContext();
-  const hostPage = await hostContext.newPage();
-  const guestPage = await guestContext.newPage();
-  const host = createUser('planet-host');
-  const guest = createUser('planet-guest');
-
-  await registerByUi(hostPage, host);
-  await registerByUi(guestPage, guest);
-
-  const roomId = await createRoomByUi(hostPage, `Planet Room ${Date.now()}`, 2);
-  await joinRoomByUi(guestPage, roomId);
-  const hostGameId = await launchGameByUi(hostPage, roomId);
-  const guestGameId = await enterGameByUi(guestPage, roomId);
-  expect(guestGameId).toBe(hostGameId);
-
-  await expect(hostPage.locator(sel.bottomDashboard)).toBeVisible({
-    timeout: 15_000,
-  });
-  await expect(guestPage.locator(sel.bottomDashboard)).toBeVisible({
-    timeout: 15_000,
-  });
-
-  return { hostContext, guestContext, hostPage, guestPage };
-}
-
-test.describe('Main action planet targeting', () => {
+test.describe('Main action planet targeting @actions @real-ui', () => {
   test('orbit e2e: move a launched probe to a planet and select the planet through UI', async ({
     browser,
     request,
@@ -237,8 +205,11 @@ test.describe('Main action planet targeting', () => {
     test.setTimeout(240_000);
     await waitForServerReady(request);
 
-    const { hostContext, guestContext, hostPage, guestPage } =
-      await createStartedTwoPlayerGame(browser);
+    const game = await createStartedGameByUi(browser, {
+      roomName: `Planet Room ${Date.now()}`,
+      userPrefix: 'planet',
+    });
+    const [hostPage, guestPage] = game.pages;
 
     try {
       const { actor, other } = await waitForActionOwner(
@@ -275,8 +246,7 @@ test.describe('Main action planet targeting', () => {
         timeout: 10_000,
       });
     } finally {
-      await hostContext.close().catch(() => undefined);
-      await guestContext.close().catch(() => undefined);
+      await game.close();
     }
   });
 
@@ -287,8 +257,11 @@ test.describe('Main action planet targeting', () => {
     test.setTimeout(240_000);
     await waitForServerReady(request);
 
-    const { hostContext, guestContext, hostPage, guestPage } =
-      await createStartedTwoPlayerGame(browser);
+    const game = await createStartedGameByUi(browser, {
+      roomName: `Planet Room ${Date.now()}`,
+      userPrefix: 'planet',
+    });
+    const [hostPage, guestPage] = game.pages;
 
     try {
       const { actor, other } = await waitForActionOwner(
@@ -327,8 +300,7 @@ test.describe('Main action planet targeting', () => {
         timeout: 10_000,
       });
     } finally {
-      await hostContext.close().catch(() => undefined);
-      await guestContext.close().catch(() => undefined);
+      await game.close();
     }
   });
 });

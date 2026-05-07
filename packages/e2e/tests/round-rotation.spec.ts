@@ -20,7 +20,9 @@ async function openUserContext(browser: Browser): Promise<{
   return { context, page };
 }
 
-async function getPassState(page: Page): Promise<'enabled' | 'disabled' | 'hidden'> {
+async function getPassState(
+  page: Page,
+): Promise<'enabled' | 'disabled' | 'hidden'> {
   const pass = page.locator(sel.actionMenu('PASS'));
   const visible = await pass.isVisible().catch(() => false);
   if (!visible) return 'hidden';
@@ -29,25 +31,33 @@ async function getPassState(page: Page): Promise<'enabled' | 'disabled' | 'hidde
 }
 
 async function expectPassNotEnabled(page: Page): Promise<void> {
-  await expect.poll(() => getPassState(page), {
-    timeout: 10_000,
-    message: 'Expected PASS to be unavailable for a non-active player',
-  }).not.toBe('enabled');
+  await expect
+    .poll(() => getPassState(page), {
+      timeout: 10_000,
+      message: 'Expected PASS to be unavailable for a non-active player',
+    })
+    .not.toBe('enabled');
 }
 
 async function waitForSinglePassOwner(
   pages: readonly Page[],
   timeout = 15_000,
 ): Promise<number> {
-  await expect.poll(
-    async () => {
-      const states = await Promise.all(pages.map((page) => getPassState(page)));
-      return states.filter((state) => state === 'enabled').length;
-    },
-    { timeout, message: 'Timed out waiting for exactly one PASS owner' },
-  ).toBe(1);
+  await expect
+    .poll(
+      async () => {
+        const states = await Promise.all(
+          pages.map((page) => getPassState(page)),
+        );
+        return states.filter((state) => state === 'enabled').length;
+      },
+      { timeout, message: 'Timed out waiting for exactly one PASS owner' },
+    )
+    .toBe(1);
 
-  const finalStates = await Promise.all(pages.map((page) => getPassState(page)));
+  const finalStates = await Promise.all(
+    pages.map((page) => getPassState(page)),
+  );
   return finalStates.findIndex((state) => state === 'enabled');
 }
 
@@ -60,7 +70,7 @@ async function passWithEndOfRoundSelection(page: Page): Promise<void> {
   expect(resolved).toBe(true);
 }
 
-test('three-player pass rotation e2e: control hands off across three real browsers in order', async ({
+test('@real-ui three-player pass rotation e2e: control hands off across three real browsers in order', async ({
   browser,
   request,
 }) => {
@@ -72,12 +82,16 @@ test('three-player pass rotation e2e: control hands off across three real browse
     createUser('three-guest-a'),
     createUser('three-guest-b'),
   ];
-  const sessions = await Promise.all(users.map(async () => openUserContext(browser)));
+  const sessions = await Promise.all(
+    users.map(async () => openUserContext(browser)),
+  );
   const [host, guestA, guestB] = sessions;
 
   try {
     await Promise.all(
-      sessions.map((session, index) => registerByUi(session.page, users[index])),
+      sessions.map((session, index) =>
+        registerByUi(session.page, users[index]),
+      ),
     );
 
     const roomId = await createRoomByUi(
@@ -98,7 +112,9 @@ test('three-player pass rotation e2e: control hands off across three real browse
     const pages = [host.page, guestA.page, guestB.page];
     await Promise.all(
       pages.map((page) =>
-        expect(page.locator(sel.bottomDashboard)).toBeVisible({ timeout: 15_000 }),
+        expect(page.locator(sel.bottomDashboard)).toBeVisible({
+          timeout: 15_000,
+        }),
       ),
     );
 
@@ -117,9 +133,11 @@ test('three-player pass rotation e2e: control hands off across three real browse
 
     await expectPassNotEnabled(pages[firstOwner]);
     await expectPassNotEnabled(pages[secondOwner]);
-    await expect(pages[thirdOwner].locator(sel.actionMenu('PASS'))).toBeEnabled({
-      timeout: 10_000,
-    });
+    await expect(pages[thirdOwner].locator(sel.actionMenu('PASS'))).toBeEnabled(
+      {
+        timeout: 10_000,
+      },
+    );
   } finally {
     await Promise.all(
       sessions.map((session) => session.context.close().catch(() => undefined)),

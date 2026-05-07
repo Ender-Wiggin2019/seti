@@ -19,7 +19,7 @@ async function openUserContext(browser: Browser): Promise<{
   return { context, page };
 }
 
-test('four-player room e2e: all players join through real UI and enter the same game', async ({
+test('@real-ui four-player room e2e: all players join through real UI and enter the same game', async ({
   browser,
   request,
 }) => {
@@ -39,7 +39,9 @@ test('four-player room e2e: all players join through real UI and enter the same 
 
   try {
     await Promise.all(
-      sessions.map((session, index) => registerByUi(session.page, users[index])),
+      sessions.map((session, index) =>
+        registerByUi(session.page, users[index]),
+      ),
     );
 
     const roomId = await createRoomByUi(
