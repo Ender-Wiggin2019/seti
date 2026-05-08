@@ -44,7 +44,11 @@ import {
   createRoundEndEvent,
 } from './event/GameEvent.js';
 import { processFreeAction } from './freeActions/processFreeAction.js';
-import { createGameOptions, type IGameOptions } from './GameOptions.js';
+import {
+  createGameOptions,
+  type IGameOptions,
+  isSoloMode,
+} from './GameOptions.js';
 import { GameSetup } from './GameSetup.js';
 import type { IGame, IGamePlayerIdentity } from './IGame.js';
 import type { PlayerInput } from './input/PlayerInput.js';
@@ -59,6 +63,9 @@ import {
 } from './scoring/FinalScoring.js';
 import type { GoldScoringTile } from './scoring/GoldScoringTile.js';
 import { MilestoneState } from './scoring/Milestone.js';
+import { RivalObjectiveTracker } from './solo/RivalObjectiveTracker.js';
+import { RivalRoundController } from './solo/RivalRoundController.js';
+import type { RivalState } from './solo/RivalState.js';
 import type { TechBoard } from './tech/TechBoard.js';
 import { clearTurnEffectsForPlayer } from './turnEffects/TurnEffects.js';
 
@@ -98,6 +105,8 @@ export class Game implements IGame {
   public goldScoringTiles: GoldScoringTile[];
 
   public finalScoringResult?: IFinalScoringResult;
+
+  public rivalState?: RivalState;
 
   public mainDeck: Deck<string>;
 
@@ -170,6 +179,7 @@ export class Game implements IGame {
     this.hasRoundFirstPassOccurred = false;
     this.currentMainActionType = null;
     this.finalScoringResult = undefined;
+    this.rivalState = undefined;
     this.turnIndex = 0;
     this.turnLocked = false;
 
@@ -607,6 +617,14 @@ export class Game implements IGame {
       new ResolveDiscovery(player),
       new SimpleDeferredAction(
         player,
+        (game) => {
+          RivalObjectiveTracker.refreshAfterHumanTurn(game as Game, player.id);
+          return undefined;
+        },
+        EPriority.DEFAULT,
+      ),
+      new SimpleDeferredAction(
+        player,
         () => {
           this.handoffTurnFrom(player.id);
           return undefined;
@@ -682,9 +700,17 @@ export class Game implements IGame {
   private resolveEndOfRound(): void {
     this.eventLog.append(createRoundEndEvent(this.round));
 
+    if (isSoloMode(this.options)) {
+      RivalRoundController.applyBetweenRoundObjectivePayment(this);
+    }
+
     for (const player of this.players) {
       player.applyEndOfRoundIncome(this.round);
       player.passed = false;
+    }
+
+    if (isSoloMode(this.options) && this.round < MAX_ROUNDS) {
+      RivalRoundController.resetActionDeckForNextRound(this);
     }
 
     this.startPlayer = this.getNextPlayer(this.startPlayer.id);
@@ -696,6 +722,9 @@ export class Game implements IGame {
     this.hasRoundFirstPassOccurred = false;
 
     if (this.round >= MAX_ROUNDS) {
+      if (isSoloMode(this.options)) {
+        RivalRoundController.applyEndGameObjectiveVp(this);
+      }
       this.transitionTo(EPhase.FINAL_SCORING);
       this.finalScoringResult = FinalScoring.score(this);
       for (const player of this.players) {

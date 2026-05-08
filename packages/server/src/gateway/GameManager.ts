@@ -4,12 +4,16 @@ import type {
   IInputResponse,
   IMainActionRequest,
 } from '@seti/common/types/protocol/actions';
+import { EPhase } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import type { IPublicGameState } from '@seti/common/types/protocol/gameState';
 import type { IPlayerInputModel } from '@seti/common/types/protocol/playerInput';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import type { Game } from '@/engine/Game.js';
+import { isSoloMode } from '@/engine/GameOptions.js';
 import type { IGame } from '@/engine/IGame.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
+import { RivalTurnController } from '@/engine/solo/RivalTurnController.js';
 import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
 import type { IGameStateDto } from '@/persistence/dto/GameStateDto.js';
 import { GameRepository } from '@/persistence/repository/GameRepository.js';
@@ -115,6 +119,7 @@ export class GameManager {
       action,
     });
     await this.afterTurnMaybeChanged(gameId, game, turnIndexBefore);
+    await this.resolveAutomatedRivalTurns(gameId, game);
 
     return this.buildResult(game, gameId);
   }
@@ -134,6 +139,7 @@ export class GameManager {
       lastActorId: playerId,
     });
     await this.afterTurnMaybeChanged(gameId, game, turnIndexBefore);
+    await this.resolveAutomatedRivalTurns(gameId, game);
 
     return this.buildResult(game, gameId);
   }
@@ -154,6 +160,7 @@ export class GameManager {
     // watch for a turn-index change (e.g. via a card effect that
     // forces a handoff) to refresh the checkpoint.
     await this.afterTurnMaybeChanged(gameId, game, turnIndexBefore);
+    await this.resolveAutomatedRivalTurns(gameId, game);
 
     return this.buildResult(game, gameId);
   }
@@ -182,6 +189,7 @@ export class GameManager {
     }
 
     await this.afterTurnMaybeChanged(gameId, game, turnIndexBefore);
+    await this.resolveAutomatedRivalTurns(gameId, game);
 
     return this.buildResult(game, gameId);
   }
@@ -269,6 +277,7 @@ export class GameManager {
     this.cache.set(game.id, game);
     this.versions.set(game.id, 0);
     this.refreshTimer(game.id);
+    this.resolveAutomatedRivalTurnsInMemory(game);
 
     // Take an initial checkpoint for the very first turn so the
     // active player can undo right at game start.
@@ -380,6 +389,57 @@ export class GameManager {
       return;
     }
     await this.captureCurrentTurnCheckpoint(gameId, game);
+  }
+
+  private async resolveAutomatedRivalTurns(
+    gameId: string,
+    game: IGame,
+  ): Promise<void> {
+    let guard = 0;
+    while (this.shouldResolveAutomatedRivalTurn(game)) {
+      guard += 1;
+      if (guard > 20) {
+        throw new Error('Rival automation exceeded turn guard');
+      }
+
+      const turnIndexBefore = game.turnIndex;
+      const result = RivalTurnController.resolveCurrentTurn(game as Game);
+      const version = this.nextVersion(gameId);
+      await this.persistSnapshot(gameId, version, game, {
+        type: 'RIVAL_ACTION',
+        result,
+      });
+      await this.afterTurnMaybeChanged(gameId, game, turnIndexBefore);
+    }
+  }
+
+  private resolveAutomatedRivalTurnsInMemory(game: IGame): void {
+    let guard = 0;
+    while (this.shouldResolveAutomatedRivalTurn(game)) {
+      guard += 1;
+      if (guard > 20) {
+        throw new Error('Rival automation exceeded turn guard');
+      }
+      RivalTurnController.resolveCurrentTurn(game as Game);
+    }
+  }
+
+  private shouldResolveAutomatedRivalTurn(game: IGame): boolean {
+    if (!isSoloMode(game.options) || !game.rivalState) {
+      return false;
+    }
+    if (
+      game.players.some(
+        (player) =>
+          player.id !== game.rivalState?.rivalPlayerId && player.waitingFor,
+      )
+    ) {
+      return false;
+    }
+    return (
+      game.phase === EPhase.AWAIT_MAIN_ACTION &&
+      game.activePlayer.id === game.rivalState.rivalPlayerId
+    );
   }
 
   private async captureCurrentTurnCheckpoint(

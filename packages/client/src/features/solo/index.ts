@@ -1,0 +1,1 @@
+export { RivalPanel } from './RivalPanel';

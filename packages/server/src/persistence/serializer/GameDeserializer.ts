@@ -1,3 +1,4 @@
+import { normalizeRivalBoardConfigId } from '@seti/common/constant/solo';
 import { DEFAULT_COLUMN_CONFIGS } from '@seti/common/types/computer';
 import { EResource } from '@seti/common/types/element';
 import { type EPlanet } from '@seti/common/types/protocol/enums';
@@ -30,6 +31,7 @@ import { Player } from '@/engine/player/Player.js';
 import { Resources } from '@/engine/player/Resources.js';
 import { GoldScoringTile } from '@/engine/scoring/GoldScoringTile.js';
 import { MilestoneState } from '@/engine/scoring/Milestone.js';
+import { RivalState } from '@/engine/solo/RivalState.js';
 import { type ITechStack, TechBoard } from '@/engine/tech/TechBoard.js';
 import { buildTechTileBonuses } from '@/engine/tech/TechBonusConfig.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
@@ -395,6 +397,35 @@ function deserializeMissionTracker(game: Game, dto: IGameStateDto): void {
   missionInternal.eventBuffer = cloneValue(dto.missionTracker.eventBuffer);
 }
 
+function deserializeRivalState(game: Game, dto: IGameStateDto): void {
+  if (!dto.rivalState) {
+    game.rivalState = undefined;
+    return;
+  }
+
+  game.rivalState = new RivalState({
+    rivalPlayerId: dto.rivalState.rivalPlayerId,
+    difficulty: dto.rivalState.difficulty,
+    progress: dto.rivalState.progress,
+    progressSlot: dto.rivalState.progressSlot,
+    boardConfigId: normalizeRivalBoardConfigId(dto.rivalState.boardConfigId),
+    actionDeck: dto.rivalState.actionDeck.drawPile,
+    actionDiscardPile: dto.rivalState.actionDeck.discardPile,
+    advancedReserve: dto.rivalState.advancedReserve,
+    removedActionCardIds: dto.rivalState.removedActionCardIds,
+    usedActionCardIdsThisRound: dto.rivalState.usedActionCardIdsThisRound,
+    computer: {
+      filledSlots: [...dto.rivalState.computer.filledSlots],
+      dataPool: dto.rivalState.computer.dataPool,
+    },
+    objectiveDrawPile: dto.rivalState.objectiveDrawPile,
+    revealedObjectiveIds: dto.rivalState.revealedObjectiveIds,
+    completedObjectiveIds: dto.rivalState.completedObjectiveIds,
+    objectiveTaskMarkers: dto.rivalState.objectiveTaskMarkers,
+    currentActionCardId: dto.rivalState.currentActionCardId,
+  });
+}
+
 export function deserializeGame(dto: IGameStateDto): Game {
   const identities = dto.players.map((player) => ({
     id: player.id,
@@ -509,6 +540,7 @@ export function deserializeGame(dto: IGameStateDto): Game {
   deserializeMilestones(game, dto);
   deserializeGoldTiles(game, dto);
   deserializeMissionTracker(game, dto);
+  deserializeRivalState(game, dto);
   game.finalScoringResult = dto.finalScoringResult
     ? cloneValue(dto.finalScoringResult)
     : undefined;

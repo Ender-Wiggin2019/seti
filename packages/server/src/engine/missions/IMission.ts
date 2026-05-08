@@ -46,10 +46,13 @@ export enum EMissionEventType {
   TECH_RESEARCHED = 'TECH_RESEARCHED',
   PROBE_VISITED_PLANET = 'PROBE_VISITED_PLANET',
   PROBE_VISITED_ASTEROIDS = 'PROBE_VISITED_ASTEROIDS',
+  PROBE_VISITED_COMET = 'PROBE_VISITED_COMET',
   SCAN_PERFORMED = 'SCAN_PERFORMED',
   SIGNAL_PLACED = 'SIGNAL_PLACED',
   TRACE_MARKED = 'TRACE_MARKED',
   CARD_CORNER_USED = 'CARD_CORNER_USED',
+  MISSION_COMPLETED = 'MISSION_COMPLETED',
+  SECTOR_COMPLETED = 'SECTOR_COMPLETED',
 }
 
 export type IMissionEvent =
@@ -78,6 +81,7 @@ export type IMissionEvent =
       readonly planet: EPlanet;
     }
   | { readonly type: EMissionEventType.PROBE_VISITED_ASTEROIDS }
+  | { readonly type: EMissionEventType.PROBE_VISITED_COMET }
   | { readonly type: EMissionEventType.SCAN_PERFORMED }
   | {
       readonly type: EMissionEventType.SIGNAL_PLACED;
@@ -90,6 +94,17 @@ export type IMissionEvent =
   | {
       readonly type: EMissionEventType.CARD_CORNER_USED;
       readonly resourceType: EResource;
+    }
+  | {
+      readonly type: EMissionEventType.MISSION_COMPLETED;
+      readonly cardId: string;
+      readonly branchIndex: number;
+    }
+  | {
+      readonly type: EMissionEventType.SECTOR_COMPLETED;
+      readonly sectorId: string;
+      readonly color: ESector;
+      readonly winnerPlayerId: string;
     };
 
 export interface ICompletableMission {

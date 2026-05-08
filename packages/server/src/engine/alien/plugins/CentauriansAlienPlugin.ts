@@ -1,11 +1,15 @@
 import { alienCards } from '@seti/common/data/alienCards';
 import { EResource, ETrace } from '@seti/common/types/element';
 import { EAlienType } from '@seti/common/types/protocol/enums';
+import type { TPublicSlotReward } from '@seti/common/types/protocol/gameState';
 import { createActionEvent } from '../../event/GameEvent.js';
+import { isSoloMode } from '../../GameOptions.js';
 import type { IGame } from '../../IGame.js';
 import type { PlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
 import type { IPlayer } from '../../player/IPlayer.js';
+import { RivalResourceResolver } from '../../solo/RivalResourceResolver.js';
+import { RivalSetup } from '../../solo/RivalSetup.js';
 import {
   type AlienBoard,
   type ICentauriansRewardSlotComponent,
@@ -182,6 +186,17 @@ export class CentauriansAlienPlugin implements IAlienPlugin {
       return onRewardClaimed();
     }
 
+    if (isSoloMode(game.options) && RivalSetup.isRivalPlayer(player)) {
+      return this.claimRivalRewardSlot(
+        game,
+        player,
+        cardId,
+        threshold,
+        availableSlots,
+        onRewardClaimed,
+      );
+    }
+
     return new SelectOption(
       player,
       availableSlots.map((slot) => ({
@@ -212,6 +227,41 @@ export class CentauriansAlienPlugin implements IAlienPlugin {
       })),
       `Claim Centaurians ${threshold} VP reward`,
     );
+  }
+
+  private claimRivalRewardSlot(
+    game: IGame,
+    player: IPlayer,
+    cardId: string | null,
+    threshold: number,
+    availableSlots: readonly ICentauriansRewardSlotComponent[],
+    onRewardClaimed: () => PlayerInput | undefined,
+  ): PlayerInput | undefined {
+    const board = game.alienState.getBoardByType(EAlienType.CENTAURIANS);
+    if (!isCentauriansAlienBoard(board)) {
+      return onRewardClaimed();
+    }
+
+    const selectedSlot = availableSlots[availableSlots.length - 1];
+    if (!selectedSlot) {
+      return onRewardClaimed();
+    }
+    const claimedSlot = board.claimRewardSlot(selectedSlot.slotId, player.id);
+    if (!claimedSlot) {
+      return onRewardClaimed();
+    }
+    if (claimedSlot.dataCost > 0) {
+      player.resources.spend({ data: claimedSlot.dataCost });
+    }
+    game.eventLog.append(
+      createActionEvent(player.id, 'CENTAURIANS_REWARD_CLAIMED', {
+        threshold,
+        cardId,
+        slotId: claimedSlot.slotId,
+      }),
+    );
+    this.resolveRivalRewardSlot(game, claimedSlot);
+    return onRewardClaimed();
   }
 
   private formatRewardSlotLabel(slot: ICentauriansRewardSlotComponent): string {
@@ -253,6 +303,23 @@ export class CentauriansAlienPlugin implements IAlienPlugin {
     }
 
     return onComplete();
+  }
+
+  private resolveRivalRewardSlot(
+    game: IGame,
+    slot: ICentauriansRewardSlotComponent,
+  ): void {
+    for (const reward of slot.rewards) {
+      if (reward.type !== 'CUSTOM') {
+        RivalResourceResolver.applyRewards(game, [
+          reward,
+        ] as readonly TPublicSlotReward[]);
+        continue;
+      }
+      if (reward.effectId === 'CENTAURIANS_DRAW_ALIEN_CARD') {
+        RivalResourceResolver.gainProgress(game, 1);
+      }
+    }
   }
 
   private discardResolvedMessage(game: IGame, cardId: string): void {

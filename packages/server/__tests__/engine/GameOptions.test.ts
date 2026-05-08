@@ -36,4 +36,33 @@ describe('GameOptions', () => {
       }),
     ).toThrow('alienModulesEnabled must enable at least 2 core aliens');
   });
+
+  it('normalizes solo mode to a 2-seat rules game with default difficulty', () => {
+    const gameOptions = createGameOptions({
+      playerCount: 4,
+      isSoloMode: true,
+    } as Parameters<typeof createGameOptions>[0]);
+
+    expect(gameOptions).toMatchObject({
+      playerCount: 2,
+      isSoloMode: true,
+      soloDifficulty: 1,
+    });
+  });
+
+  it('throws when solo difficulty is out of range', () => {
+    expect(() =>
+      createGameOptions({
+        isSoloMode: true,
+        soloDifficulty: 0,
+      } as unknown as Parameters<typeof createGameOptions>[0]),
+    ).toThrow('soloDifficulty must be an integer between 1 and 5');
+
+    expect(() =>
+      createGameOptions({
+        isSoloMode: true,
+        soloDifficulty: 6,
+      } as unknown as Parameters<typeof createGameOptions>[0]),
+    ).toThrow('soloDifficulty must be an integer between 1 and 5');
+  });
 });

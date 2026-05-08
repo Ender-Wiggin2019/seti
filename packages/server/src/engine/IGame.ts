@@ -23,6 +23,7 @@ import type { IPlayer, TCardItem } from './player/IPlayer.js';
 import type { IFinalScoringResult } from './scoring/FinalScoring.js';
 import type { GoldScoringTile } from './scoring/GoldScoringTile.js';
 import type { MilestoneState } from './scoring/Milestone.js';
+import type { RivalState } from './solo/RivalState.js';
 import type { TechBoard } from './tech/TechBoard.js';
 
 export interface IGamePlayerIdentity {
@@ -53,6 +54,7 @@ export interface IGame {
   milestoneState: MilestoneState;
   goldScoringTiles: GoldScoringTile[];
   finalScoringResult?: IFinalScoringResult;
+  rivalState?: RivalState;
 
   mainDeck: Deck<string>;
   cardRow: TCardItem[];

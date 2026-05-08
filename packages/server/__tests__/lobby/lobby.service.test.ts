@@ -20,11 +20,21 @@ const MOCK_GAME = {
   updatedAt: new Date(),
 };
 
+const MOCK_SOLO_GAME = {
+  ...MOCK_GAME,
+  options: { playerCount: 2, isSoloMode: true, soloDifficulty: 3 },
+};
+
 const MOCK_PLAYER = {
   userId: 'host-user',
   seatIndex: 0,
   color: 'red',
   name: 'Alice',
+};
+
+type TTestLobbyService = {
+  getPlayersForGame: () => Promise<(typeof MOCK_PLAYER)[]>;
+  gameRepo: { startFromLobby: ReturnType<typeof vi.fn> };
 };
 
 function createMockDb() {
@@ -210,6 +220,19 @@ describe('LobbyService', () => {
         BadRequestException,
       );
     });
+
+    it('rejects additional human joins for a solo room', async () => {
+      db._selectChain.limit.mockResolvedValue([MOCK_SOLO_GAME]);
+      vi.spyOn(
+        service as unknown as TTestLobbyService,
+        'getPlayersForGame',
+      ).mockResolvedValue([MOCK_PLAYER]);
+
+      await expect(service.joinRoom('game-1', 'user-2')).rejects.toThrow(
+        'Room is full',
+      );
+      expect(db.insert).not.toHaveBeenCalled();
+    });
   });
 
   describe('startGame', () => {
@@ -243,6 +266,29 @@ describe('LobbyService', () => {
       await expect(service.startGame('game-1', 'host-user')).rejects.toThrow(
         BadRequestException,
       );
+    });
+
+    it('starts a solo room with only the host and a synthetic rival', async () => {
+      db._selectChain.limit.mockResolvedValue([MOCK_SOLO_GAME]);
+      vi.spyOn(
+        service as unknown as TTestLobbyService,
+        'getPlayersForGame',
+      ).mockResolvedValue([MOCK_PLAYER]);
+      const gameRepo = (service as unknown as TTestLobbyService).gameRepo;
+      gameRepo.startFromLobby = vi.fn().mockResolvedValue(undefined);
+
+      await expect(
+        service.startGame('game-1', 'host-user'),
+      ).resolves.toBeDefined();
+
+      const startedGame = gameRepo.startFromLobby.mock.calls[0]?.[0];
+      expect(startedGame.players).toHaveLength(2);
+      expect(startedGame.players[1].id).toBe('rival:game-1');
+      expect(startedGame.options).toMatchObject({
+        isSoloMode: true,
+        soloDifficulty: 3,
+        playerCount: 2,
+      });
     });
   });
 

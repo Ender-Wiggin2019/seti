@@ -18,3 +18,8 @@
 - 给用户截图证明 UI 时，截图必须直接露出用户点名的元素；如果响应式布局导致内容分屏，分别截图可见分段并附 DOM/测试定位证据，不要用看不到目标的截图替代。
 - public `scenarioPreset` 被禁用时，不要直接删除 `SPEND_SIGNAL_TOKEN` / `DELIVER_SAMPLE` 这类长前置覆盖；先核实 common/server/client 是否已有真实实现，再把前置状态迁移到明确的 Debug Replay checkpoint 或补自然 UI 路径。
 - `SPEND_SIGNAL_TOKEN` 是条件 free action，和 movement 一样由 free-action bar 暴露，只在 scan pool、有 signal token 且 card row 非空时可用；`DELIVER_SAMPLE` 是 Mascamites sample mission 的交付分支，不能用普通 move/sample 移动覆盖代替。
+
+## 规则文档抽取
+
+- 源文档缺失完整卡牌图标或 board 数据时，先在项目内 `frontend-reference` asset/config 和已有 `docs/arch/aliens/*` / FAQ 里补足；用户确认过的 open point 要迁移到 Confirmed Decisions，并在同一规则目录记录来源和冲突优先级。
+- `frontend-reference` 只能作为行为/数据参考；写实现规则时必须同时规定 server/client/common 分工，并把 `automa`、`pop`、`fly/look/comp`、`life*` 等 source alias 映射到项目内规范枚举和领域命名。

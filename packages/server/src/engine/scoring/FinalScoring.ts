@@ -1,6 +1,8 @@
 import { AlienRegistry } from '../alien/AlienRegistry.js';
+import { isSoloMode } from '../GameOptions.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
+import { RivalSetup } from '../solo/RivalSetup.js';
 import { scoreEndGameCard } from './GoldScoringTile.js';
 
 export interface IPlayerFinalScoreBreakdown {
@@ -61,10 +63,13 @@ export class FinalScoring {
         (sum: number, card) => sum + scoreEndGameCard(card, player, game),
         0,
       );
-      const scoredGoldTiles = game.goldScoringTiles.reduce(
-        (sum: number, tile) => sum + tile.scorePlayer(player, game),
-        0,
-      );
+      const scoredGoldTiles =
+        isSoloMode(game.options) && RivalSetup.isRivalPlayer(player)
+          ? 0
+          : game.goldScoringTiles.reduce(
+              (sum: number, tile) => sum + tile.scorePlayer(player, game),
+              0,
+            );
       const alienBonus = getAlienBonus(player, game);
       const totalAdded = endGameCards + scoredGoldTiles + alienBonus;
       const finalScore = player.score + totalAdded;
@@ -93,9 +98,18 @@ export class FinalScoring {
     }
 
     const highestScore = Math.max(...Object.values(scores));
-    const winnerIds = Object.entries(scores)
+    let winnerIds = Object.entries(scores)
       .filter(([, score]) => score === highestScore)
       .map(([playerId]) => playerId);
+
+    if (isSoloMode(game.options)) {
+      const rival = game.players.find((player) =>
+        RivalSetup.isRivalPlayer(player),
+      );
+      if (rival && winnerIds.includes(rival.id)) {
+        winnerIds = [rival.id];
+      }
+    }
 
     return { scores, breakdown, winnerIds };
   }

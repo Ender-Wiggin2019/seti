@@ -9,11 +9,13 @@ import { DeferredActionsQueue } from './deferred/DeferredActionsQueue.js';
 import { TuckCardForIncomeEffect } from './effects/income/TuckCardForIncomeEffect.js';
 import { EventLog } from './event/EventLog.js';
 import type { Game } from './Game.js';
+import { isSoloMode } from './GameOptions.js';
 import {
   GoldScoringTile,
   type TGoldScoringTileId,
 } from './scoring/GoldScoringTile.js';
 import { MilestoneState } from './scoring/Milestone.js';
+import { RivalSetup } from './solo/RivalSetup.js';
 import { TechBoard } from './tech/TechBoard.js';
 
 const GOLD_TILE_IDS: readonly TGoldScoringTileId[] = [
@@ -66,8 +68,22 @@ export class GameSetup {
     );
     game.roundRotationReminderIndex = 0;
 
+    const soloRivalPlayer = isSoloMode(game.options)
+      ? RivalSetup.getRivalPlayer(game)
+      : undefined;
+
+    if (soloRivalPlayer) {
+      const startIndex = game.random.nextInt(game.players.length);
+      game.startPlayer = game.players[startIndex];
+      game.activePlayer = game.startPlayer;
+    }
+
     game.players.forEach((player) => {
-      player.score = player.seatIndex + 1;
+      player.score = soloRivalPlayer
+        ? player.id === game.startPlayer.id
+          ? 1
+          : 2
+        : player.seatIndex + 1;
       player.publicity = 4;
       player.passed = false;
       player.playedMissions = [];
@@ -75,6 +91,10 @@ export class GameSetup {
       player.endGameCards = [];
       player.tuckedIncomeCards = [];
       player.hand = [];
+      if (player === soloRivalPlayer) {
+        RivalSetup.initialize(game);
+        return;
+      }
       BaseCorporation.resolve(player, game);
       player.pendingSetupTucks = BaseCorporation.startActions.tuckIncome;
       player.waitingFor = TuckCardForIncomeEffect.executeSetupChain(

@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { EMainAction, EPhase } from '@seti/common/types/protocol/enums';
+import { Deck } from '@/engine/deck/Deck.js';
 import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
 import { GameManager } from '@/gateway/GameManager.js';
@@ -15,6 +16,29 @@ function createTestGame(): IGame {
     { playerCount: 2 },
     'manager-test-seed',
     'game-mgr-test',
+  );
+  resolveSetupTucks(game);
+  return game;
+}
+
+function createSoloTestGame(): Game {
+  const game = Game.create(
+    [
+      { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
+      {
+        id: 'rival:game-mgr-solo',
+        name: 'Rival Institution',
+        color: 'blue',
+        seatIndex: 1,
+      },
+    ],
+    {
+      playerCount: 2,
+      isSoloMode: true,
+      soloDifficulty: 3,
+    } as Parameters<typeof Game.create>[1],
+    'manager-solo-seed',
+    'game-mgr-solo',
   );
   resolveSetupTucks(game);
   return game;
@@ -125,6 +149,33 @@ describe('GameManager', () => {
 
       expect(mockDb.insert).toHaveBeenCalled();
     });
+
+    it('automatically resolves rival turns before returning projected states', async () => {
+      const game = createSoloTestGame();
+      const rivalState = game.rivalState;
+      if (!rivalState) throw new Error('expected rival state');
+      rivalState.actionDeck = new Deck(['S.1']);
+      game.startPlayer = game.players[0];
+      game.activePlayer = game.players[0];
+      game.processMainAction('p1', { type: EMainAction.LAUNCH_PROBE });
+      expect(game.phase).toBe(EPhase.AWAIT_END_TURN);
+
+      (manager as unknown as { cache: Map<string, IGame> }).cache.set(
+        'game-mgr-solo',
+        game,
+      );
+      (manager as unknown as { versions: Map<string, number> }).versions.set(
+        'game-mgr-solo',
+        0,
+      );
+
+      const result = await manager.processEndTurn('game-mgr-solo', 'p1');
+
+      expect(game.activePlayer.id).toBe('p1');
+      expect(result.states.get('p1')?.currentPlayerId).toBe('p1');
+      expect(rivalState.actionDeck.discardSize).toBe(1);
+      expect(game.players[1].probesInSpace).toBe(1);
+    });
   });
 
   describe('processFreeAction', () => {
@@ -161,6 +212,26 @@ describe('GameManager', () => {
       const state = manager.getProjectedState('game-mgr-test', 'p1');
       expect(state).toBeDefined();
       expect(state?.gameId).toBe('game-mgr-test');
+    });
+  });
+
+  describe('registerGame', () => {
+    it('automatically resolves a ready solo rival start turn before projection', () => {
+      const game = createSoloTestGame();
+      const rivalState = game.rivalState;
+      if (!rivalState) throw new Error('expected rival state');
+      rivalState.actionDeck = new Deck(['S.1']);
+      game.startPlayer = game.players[1];
+      game.activePlayer = game.players[1];
+      game.phase = EPhase.AWAIT_MAIN_ACTION;
+
+      manager.registerGame(game);
+
+      expect(game.activePlayer.id).toBe('p1');
+      expect(rivalState.actionDeck.discardSize).toBe(1);
+      expect(manager.getProjectedState('game-mgr-solo', 'p1')?.currentPlayerId).toBe(
+        'p1',
+      );
     });
   });
 

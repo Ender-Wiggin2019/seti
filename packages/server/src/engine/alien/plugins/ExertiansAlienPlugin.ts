@@ -6,11 +6,13 @@ import {
 import type { ESector } from '@seti/common/types/element';
 import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
 import { getTechDescriptor } from '@seti/common/types/tech';
+import { isSoloMode } from '../../GameOptions.js';
 import type { IGame } from '../../IGame.js';
 import type { PlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
 import type { IPlayer } from '../../player/IPlayer.js';
 import { EPieceType } from '../../player/Pieces.js';
+import { RivalSetup } from '../../solo/RivalSetup.js';
 import {
   type AlienBoard,
   type ExertiansAlienBoard,
@@ -122,9 +124,18 @@ export class ExertiansAlienPlugin implements IAlienPlugin {
         continue;
       }
       card.revealed = true;
-      score += this.scoreExertianCard(card.cardId, player, game, board);
+      score += this.shouldScoreRivalExertianCardAsFulfilled(game, player)
+        ? (EXERTIAN_SCORING_RULES[card.cardId]?.score ?? 0)
+        : this.scoreExertianCard(card.cardId, player, game, board);
     }
     return score;
+  }
+
+  private shouldScoreRivalExertianCardAsFulfilled(
+    game: IGame,
+    player: IPlayer,
+  ): boolean {
+    return isSoloMode(game.options) && RivalSetup.isRivalPlayer(player);
   }
 
   public onGameEndPenalty(

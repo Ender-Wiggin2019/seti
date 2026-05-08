@@ -148,6 +148,10 @@ export class MissionTracker {
     return this.turnEventHistory.some(predicate);
   }
 
+  public getTurnEvents(): readonly IMissionEvent[] {
+    return this.turnEventHistory;
+  }
+
   public clearTurnEventHistory(): void {
     this.turnEventHistory.length = 0;
   }
@@ -460,6 +464,12 @@ export class MissionTracker {
     if (mission.branchStates.every((s) => s.completed)) {
       this.markMissionFullyComplete(player, cardId);
     }
+
+    this.recordEvent({
+      type: EMissionEventType.MISSION_COMPLETED,
+      cardId,
+      branchIndex,
+    });
 
     return applyMissionRewards(branch.rewards, player, game, onComplete);
   }

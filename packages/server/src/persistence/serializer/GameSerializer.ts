@@ -22,6 +22,7 @@ import type {
   TPublicAlienBoard,
   TPublicAnomalyTraceColor,
 } from '@seti/common/types/protocol/gameState';
+import type { IPublicRivalState } from '@seti/common/types/protocol/solo';
 import {
   type AlienBoard,
   type AnomaliesAlienBoard,
@@ -45,6 +46,7 @@ import {
 } from '@/engine/missions/IMission.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
 import { EPieceType } from '@/engine/player/Pieces.js';
+import type { RivalState } from '@/engine/solo/RivalState.js';
 import { buildTechTileBonuses } from '@/engine/tech/TechBonusConfig.js';
 import { TechModifierQuery } from '@/engine/tech/TechModifierQuery.js';
 import { toPublicSolarSystemState } from '@/engine/utils/stateProjection.js';
@@ -55,6 +57,7 @@ import type {
   IMilestoneStateDto,
   IMissionTrackerDto,
   IPlanetaryBoardDto,
+  IRivalStateDto,
   ISectorDto,
   ISolarSystemDto,
   ITechBoardDto,
@@ -658,6 +661,38 @@ function serializeMissionTracker(game: IGame): IMissionTrackerDto {
   };
 }
 
+function serializeRivalState(
+  rivalState: RivalState | undefined,
+): IRivalStateDto | undefined {
+  if (!rivalState) {
+    return undefined;
+  }
+
+  return {
+    rivalPlayerId: rivalState.rivalPlayerId,
+    difficulty: rivalState.difficulty,
+    progress: rivalState.progress,
+    progressSlot: rivalState.progressSlot,
+    boardConfigId: rivalState.boardConfigId,
+    actionDeck: {
+      drawPile: [...rivalState.actionDeck.getDrawPile()],
+      discardPile: [...rivalState.actionDeck.getDiscardPile()],
+    },
+    advancedReserve: [...rivalState.advancedReserve.getDrawPile()],
+    removedActionCardIds: [...rivalState.removedActionCardIds],
+    usedActionCardIdsThisRound: [...rivalState.usedActionCardIdsThisRound],
+    computer: {
+      filledSlots: [...rivalState.computer.filledSlots],
+      dataPool: rivalState.computer.dataPool,
+    },
+    objectiveDrawPile: [...rivalState.objectiveDrawPile],
+    revealedObjectiveIds: [...rivalState.revealedObjectiveIds],
+    completedObjectiveIds: [...rivalState.completedObjectiveIds],
+    objectiveTaskMarkers: cloneValue(rivalState.objectiveTaskMarkers),
+    currentActionCardId: rivalState.currentActionCardId,
+  };
+}
+
 export function serializeGame(game: IGame, version = 0): IGameStateDto {
   return {
     gameId: game.id,
@@ -700,6 +735,7 @@ export function serializeGame(game: IGame, version = 0): IGameStateDto {
       ? cloneValue(game.finalScoringResult)
       : undefined,
     missionTracker: serializeMissionTracker(game),
+    rivalState: serializeRivalState(game.rivalState),
   };
 }
 
@@ -841,6 +877,36 @@ function toPublicGoldScoringTiles(game: IGame): IPublicGoldScoringTile[] {
   }));
 }
 
+function toPublicRivalState(
+  rivalState: RivalState | undefined,
+): IPublicRivalState | undefined {
+  if (!rivalState) {
+    return undefined;
+  }
+
+  return {
+    rivalPlayerId: rivalState.rivalPlayerId,
+    difficulty: rivalState.difficulty,
+    progress: rivalState.progress,
+    progressSlot: rivalState.progressSlot,
+    boardConfigId: rivalState.boardConfigId,
+    computer: {
+      filledSlots: [...rivalState.computer.filledSlots],
+      dataPool: rivalState.computer.dataPool,
+    },
+    actionDeck: {
+      drawPileSize: rivalState.actionDeck.drawSize,
+      discardPileSize: rivalState.actionDeck.discardSize,
+      advancedReserveSize: rivalState.advancedReserve.drawSize,
+      removedCardIds: [...rivalState.removedActionCardIds],
+      currentCardId: rivalState.currentActionCardId,
+    },
+    revealedObjectiveIds: [...rivalState.revealedObjectiveIds],
+    completedObjectiveIds: [...rivalState.completedObjectiveIds],
+    objectiveTaskMarkers: cloneValue(rivalState.objectiveTaskMarkers),
+  };
+}
+
 export interface IProjectGameStateOptions {
   /**
    * Whether a turn-start checkpoint exists in memory (or was restored
@@ -869,6 +935,7 @@ export function projectGameState(
 
   return {
     gameId: game.id,
+    isSoloMode: game.options.isSoloMode,
     round: game.round,
     phase: game.phase,
     currentPlayerId: game.activePlayer.id,
@@ -899,5 +966,6 @@ export function projectGameState(
     finalScoringResult: game.finalScoringResult
       ? cloneValue(game.finalScoringResult)
       : undefined,
+    rival: toPublicRivalState(game.rivalState),
   };
 }

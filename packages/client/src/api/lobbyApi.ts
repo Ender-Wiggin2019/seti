@@ -1,3 +1,5 @@
+import { SOLO_DIFFICULTIES } from '@seti/common/constant/solo';
+import type { TSoloDifficulty } from '@seti/common/types/protocol/solo';
 import { httpClient } from '@/api/httpClient';
 import type {
   IAlienTypeOption,
@@ -39,9 +41,16 @@ function normalizeAlienModuleFlags(raw: unknown): boolean[] {
 
 function normalizeOptions(room: IServerRoom): IRoom['options'] {
   const raw = (room.options ?? {}) as Record<string, unknown>;
+  const rawDifficulty = raw.soloDifficulty as TSoloDifficulty | undefined;
   return {
     playerCount:
-      room.playerCount ?? Math.max((room.currentPlayers ?? []).length, 2),
+      (raw.playerCount as number | undefined) ??
+      room.playerCount ??
+      Math.max((room.currentPlayers ?? []).length, 2),
+    isSoloMode: raw.isSoloMode === true,
+    soloDifficulty: SOLO_DIFFICULTIES.includes(rawDifficulty ?? 1)
+      ? (rawDifficulty ?? 1)
+      : 1,
     alienModulesEnabled: normalizeAlienModuleFlags(raw.alienModulesEnabled),
     undoAllowed: (raw.undoAllowed as boolean | undefined) ?? true,
     timerPerTurn:

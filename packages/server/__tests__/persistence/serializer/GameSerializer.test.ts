@@ -40,6 +40,27 @@ function createTestGame(): Game {
   return game;
 }
 
+function createSoloTestGame(): Game {
+  return Game.create(
+    [
+      { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
+      {
+        id: 'rival:game-serializer-solo',
+        name: 'Rival Institution',
+        color: 'blue',
+        seatIndex: 1,
+      },
+    ],
+    {
+      playerCount: 2,
+      isSoloMode: true,
+      soloDifficulty: 4,
+    } as Parameters<typeof Game.create>[1],
+    'serializer-solo-seed',
+    'game-serializer-solo',
+  );
+}
+
 describe('GameSerializer', () => {
   it('serializes core state and RNG snapshot', () => {
     const game = createTestGame();
@@ -53,6 +74,49 @@ describe('GameSerializer', () => {
     expect(dto.mainDeck.drawPile.length + dto.mainDeck.discardPile.length).toBe(
       game.mainDeck.totalSize,
     );
+  });
+
+  it('serializes and projects public solo rival state without deck order', () => {
+    const game = createSoloTestGame();
+    const dto = serializeGame(game, 3) as ReturnType<typeof serializeGame> & {
+      rivalState?: {
+        rivalPlayerId: string;
+        difficulty: number;
+        progress: number;
+        actionDeck: { drawPile: string[] };
+      };
+    };
+
+    expect(dto.rivalState).toMatchObject({
+      rivalPlayerId: 'rival:game-serializer-solo',
+      difficulty: 4,
+      progress: 15,
+    });
+    expect(dto.rivalState?.actionDeck.drawPile).toHaveLength(5);
+
+    const publicState = projectGameState(game, 'p1') as ReturnType<
+      typeof projectGameState
+    > & {
+      isSoloMode?: boolean;
+      rival?: {
+        rivalPlayerId: string;
+        difficulty: number;
+        progress: number;
+        actionDeck: { drawPileSize: number; discardPileSize: number };
+      };
+    };
+
+    expect(publicState.isSoloMode).toBe(true);
+    expect(publicState.rival).toMatchObject({
+      rivalPlayerId: 'rival:game-serializer-solo',
+      difficulty: 4,
+      progress: 15,
+      actionDeck: {
+        drawPileSize: 5,
+        discardPileSize: 0,
+      },
+    });
+    expect(publicState.rival).not.toHaveProperty('actionDeck.drawPile');
   });
 
   it('projects hidden information per viewer', () => {

@@ -15,6 +15,13 @@ import type {
   EPlanet,
 } from '@seti/common/types/protocol/enums';
 import type {
+  TRivalActionCardId,
+  TRivalBoardConfigId,
+  TRivalObjectiveId,
+  TRivalObjectiveTaskMarkers,
+  TSoloDifficulty,
+} from '@seti/common/types/protocol/solo';
+import type {
   ETechId,
   ITechBonusToken,
   TTechCategory,
@@ -263,6 +270,30 @@ export interface IMissionTrackerDto {
   eventBuffer: IMissionEvent[];
 }
 
+export interface IRivalStateDto {
+  rivalPlayerId: string;
+  difficulty: TSoloDifficulty;
+  progress: number;
+  progressSlot: number;
+  boardConfigId: TRivalBoardConfigId;
+  actionDeck: ISerializedDeckDto & {
+    drawPile: TRivalActionCardId[];
+    discardPile: TRivalActionCardId[];
+  };
+  advancedReserve: TRivalActionCardId[];
+  removedActionCardIds: TRivalActionCardId[];
+  usedActionCardIdsThisRound: TRivalActionCardId[];
+  computer: {
+    filledSlots: boolean[];
+    dataPool: number;
+  };
+  objectiveDrawPile: TRivalObjectiveId[];
+  revealedObjectiveIds: TRivalObjectiveId[];
+  completedObjectiveIds: TRivalObjectiveId[];
+  objectiveTaskMarkers?: TRivalObjectiveTaskMarkers;
+  currentActionCardId: TRivalActionCardId | null;
+}
+
 export interface IGameStateDto {
   gameId: string;
   version: number;
@@ -297,4 +328,5 @@ export interface IGameStateDto {
   goldScoringTiles: IGoldTileDto[];
   finalScoringResult?: IFinalScoringResult;
   missionTracker: IMissionTrackerDto;
+  rivalState?: IRivalStateDto;
 }

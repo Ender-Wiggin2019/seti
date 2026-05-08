@@ -1,3 +1,4 @@
+import { ESector } from '@seti/common/types/element';
 import {
   EAlienType,
   EMainAction,
@@ -5,17 +6,18 @@ import {
   EPlanet,
   ETrace,
 } from '@seti/common/types/protocol/enums';
-import { ESector } from '@seti/common/types/element';
-import { ETechId } from '@seti/common/types/tech';
 import {
   EPlayerInputType,
   type ISelectEndOfRoundCardInputModel,
   type ISelectGoldTileInputModel,
   type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
-import { AlienBoard } from '@/engine/alien/AlienBoard.js';
+import { ETechId } from '@seti/common/types/tech';
+import {
+  AlienBoard,
+  isExertiansAlienBoard,
+} from '@/engine/alien/AlienBoard.js';
 import { AlienState } from '@/engine/alien/AlienState.js';
-import { isExertiansAlienBoard } from '@/engine/alien/AlienBoard.js';
 import { getCardRegistry } from '@/engine/cards/CardRegistry.js';
 import { Game } from '@/engine/Game.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
@@ -29,10 +31,31 @@ const TWO_PLAYER_IDENTITIES = [
   { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
 ] as const;
 
+const SOLO_IDENTITIES = [
+  { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
+  {
+    id: 'rival:final-scoring-solo',
+    name: 'Rival Institution',
+    color: 'blue',
+    seatIndex: 1,
+  },
+] as const;
+
 function createTwoPlayerGame(seed: string): Game {
   const game = Game.create(
     TWO_PLAYER_IDENTITIES,
     { playerCount: 2 },
+    seed,
+    `final-scoring-${seed}`,
+  );
+  resolveSetupTucks(game);
+  return game;
+}
+
+function createSoloGame(seed: string): Game {
+  const game = Game.create(
+    SOLO_IDENTITIES,
+    { playerCount: 2, isSoloMode: true, soloDifficulty: 2 },
     seed,
     `final-scoring-${seed}`,
   );
@@ -207,6 +230,37 @@ describe('FinalScoring', () => {
 
       expect(result.breakdown.p1.totalAdded).toBe(0);
       expect(result.scores.p1).toBe(10);
+    });
+
+    it('does not score gold tiles for the solo rival', () => {
+      const game = createSoloGame('fs-solo-rival-gold');
+      const rival = getPlayer(game, 'rival:final-scoring-solo');
+      rival.score = 10;
+      rival.completedMissions = ['m1'];
+
+      const missionTile = replaceGoldTile(game, 'mission', {
+        id: 'mission',
+        side: 'A',
+        slotValues: [5],
+      });
+      missionTile.claim(rival.id);
+
+      const result = FinalScoring.score(game);
+
+      expect(result.breakdown[rival.id].goldTiles).toBe(0);
+      expect(result.scores[rival.id]).toBe(10);
+    });
+
+    it('awards a solo tie to the rival', () => {
+      const game = createSoloGame('fs-solo-tie-rival');
+      const human = getPlayer(game, 'p1');
+      const rival = getPlayer(game, 'rival:final-scoring-solo');
+      human.score = 40;
+      rival.score = 40;
+
+      const result = FinalScoring.score(game);
+
+      expect(result.winnerIds).toEqual([rival.id]);
     });
   });
 
@@ -503,6 +557,24 @@ describe('FinalScoring', () => {
       expect(result.breakdown.p2.alienBonus).toBe(0);
       expect(result.breakdown.p1.alienPenalty).toBe(-10);
       expect(result.breakdown.p2.alienPenalty).toBe(-10);
+    });
+
+    it('scores solo rival face-down Exertian cards as fulfilled', () => {
+      const game = createSoloGame('exertians-final-solo-rival');
+      game.alienState = AlienState.createFromHiddenAliens([
+        EAlienType.EXERTIANS,
+      ]);
+      const board = game.alienState.getBoardByType(EAlienType.EXERTIANS);
+      if (!isExertiansAlienBoard(board)) {
+        throw new Error('expected Exertians board');
+      }
+      board.discovered = true;
+      const rival = getPlayer(game, 'rival:final-scoring-solo');
+      board.playFaceDownCard(rival.id, 'ET.52', 'discovery');
+
+      const result = FinalScoring.score(game);
+
+      expect(result.breakdown[rival.id].alienBonus).toBe(7);
     });
   });
 });

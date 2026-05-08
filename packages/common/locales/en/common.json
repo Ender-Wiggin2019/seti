@@ -272,6 +272,8 @@
       "name": "Mission Name",
       "name_placeholder": "Mars Alpha-7",
       "players": "Operatives",
+      "solo_mode": "Solo Rival",
+      "solo_difficulty": "Rival Difficulty",
       "player_count": {
         "2": "2 Players",
         "3": "3 Players",
@@ -297,6 +299,7 @@
         "finished": "Finished"
       },
       "host": "Host",
+      "solo": "Solo",
       "players": "{{current}}/{{total}} players",
       "aliens": "Aliens",
       "timer": "{{seconds}}s timer"
@@ -310,7 +313,11 @@
     },
     "game_settings": {
       "title": "Mission Parameters",
+      "mode": "Mode",
+      "mode_solo": "Solo",
+      "mode_multiplayer": "Multiplayer",
       "players": "Operatives",
+      "solo_difficulty": "Difficulty",
       "alien_modules": "Alien Modules",
       "undo": "Undo",
       "undo_allowed": "Allowed",
@@ -431,6 +438,15 @@
       "tech_alt": "Tech count",
       "tech": "Tech",
       "card_selection_active": "Card selection active"
+    },
+    "rival_panel": {
+      "title": "Rival Institution",
+      "progress": "Progress",
+      "draw": "Draw",
+      "discard": "Discard",
+      "current_card": "Action",
+      "computer": "Computer",
+      "data_pool": "Pool {{count}}"
     },
     "tech_display": {
       "title": "Tech Slots",
@@ -553,6 +569,7 @@
       "dashboard": "Dashboard",
       "hand_and_missions": "Hand & Missions",
       "personal_board": "Personal Board",
+      "rival_board": "Rival Board",
       "mission_area": "Missions",
       "intel": "Intel",
       "hand": "Hand",

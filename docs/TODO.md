@@ -1,5 +1,169 @@
 # TODO
 
+## 当前任务：Solo / Rival 全流程 E2E 验证
+
+假设与权衡：
+- 本轮只按 `docs/arch/solo/architecture.md` 的 E2E 矩阵验证 solo 全流程，不用 debug endpoint、localStorage 注入或直接 websocket action。
+- 现有 `solo-smoke.spec.ts` 已覆盖 solo room 创建、1 human 启动、Rival panel/objective row、human PASS 后 rival 自动回合；本轮需要补齐 docs 明确列出的 round transition 与 trace/alien discovery E2E 证据。
+- 如果完整打到自然 alien discovery 过长，优先使用真实 UI 操作加稳定 room seed；不把 server 单测当作 E2E 替代。
+
+- [x] 对照 `docs/arch/solo` 审计现有 solo E2E 覆盖
+  - 验证: 明确列出 create/start/auto-turn、round transition、trace discovery 三条 E2E 要求的覆盖状态
+- [x] 补齐 docs 要求的 solo round transition E2E
+  - 验证: 真实 UI 中 human PASS 后处理 EOR，rival 自动 pass/回合切换，round 进入下一轮并回到 human 可操作
+- [x] 补齐 docs 要求的 solo rival trace / alien discovery E2E
+  - 验证: 真实 UI 中观察到 rival 相关 panel/state 变化，并能看到 alien discovery 或 trace contribution 的用户可见结果
+- [x] 运行目标 E2E 套件和类型检查
+  - 验证: e2e 专用 tsc 与 solo 相关 Playwright specs 通过
+- [x] 做完成审计并记录 review
+  - 验证: 本段末尾补充实际命令、覆盖证据和残余风险
+
+Review:
+- 覆盖映射：`solo-smoke.spec.ts` 已覆盖真实 UI 创建 solo room、1 human 启动 game、Rival panel/objective row、human PASS 后 rival 自动行动并回到 human 可操作；新增 `solo-full-flow.spec.ts` 覆盖 docs E2E matrix 中的 round transition 与 rival discovery trace contribution。
+- 新增 E2E：`advances through a solo round transition with only one human player` 使用稳定 seed，在真实 UI 中循环 PASS，断言 round stack 从第 0 轮推进到后续轮次且 PASS 重新可用。
+- 新增 E2E：`lets the rival contribute a discovery trace through server-side automation` 使用稳定 seed，在真实 UI 中观察 Aliens tab 的 discovery trace slot 出现 `title^="rival:"`，验证 synthetic rival 自动流程对 alien discovery 区域产生用户可见 trace contribution；本用例不声明完整 alien reveal。
+- 合规审计：solo specs 静态扫描未发现 debug endpoint、localStorage auth 注入、`WsTestClient` 或直接 WebSocket action 驱动；房间创建仍走 UI flow，seed 只通过现有 `createRoomByUi` request override 稳定配置。
+- 验证通过：`node_modules/.pnpm/node_modules/.bin/tsc -p packages/e2e/tsconfig.json --noEmit`。
+- 验证通过：临时隔离 Postgres 下运行 `NINJA_ENV=production PGHOST=127.0.0.1 PGPORT=55434 PGUSER=$(whoami) PGDATABASE=seti_e2e ./scripts/run-e2e-local.sh tests/solo-smoke.spec.ts tests/solo-full-flow.spec.ts`，3 passed；`NINJA_ENV=production` 仅用于禁用本机 Vite 可执行文件上的 Console Ninja 外部 build hook。
+
+## 当前任务：Solo / Rival 命名统一与继续实现
+
+假设与权衡：
+- 本轮先按 `docs/arch/solo/README.md#123-canonical-naming` 审查实现命名；`frontend-reference` 里的 `automa` / `life*` / `fly` / `look` / `comp` / `rover` / `satellite` 只当来源别名，不进入 domain code。
+- 优先统一会进入 common/server/client 协议或规则判断的命名；截图、源文档、旧参考说明里的原始别名不改。
+- 对已经序列化到旧 snapshot 的字段值做兼容读取，不为了命名统一破坏旧 solo 存档。
+- 命名统一后，再从现有 review 残余风险中选一个边界清楚的 solo 规则切片继续实现，避免一次性铺开 species 全量规则。
+
+- [x] Review 当前 solo 命名实现，定位 source alias 与 common/rule 规范不一致的位置
+  - 验证: 能列出实际代码中的 alias 命中点，并区分文档/资产名与 domain code
+- [x] 写失败测试锁定 canonical naming
+  - 验证: common/server 定向测试先失败，证明测试能捕获旧 `automaBoard*` / `lifeIndex` / objective trigger alias
+- [x] 统一 common/server/client 中的 solo 命名
+  - 验证: public state、serializer/deserializer、rival action data、objective tracker 使用规范命名并兼容旧值
+- [x] 继续实现一个缺失的 solo 规则切片
+  - 验证: 先写失败测试，再实现并跑通过
+- [x] 跑定向验证并补 review
+  - 验证: common/server/client 相关测试、typecheck/lint 覆盖本轮改动
+- [x] 审计补缺：client Rival panel 渲染公开的 objective row
+  - 验证: `RivalPanel.test.tsx` 先失败后通过，能看到 revealed/completed objective 和 task marker 进度
+- [x] 扩展 solo smoke 观察 objective row
+  - 验证: 真实 UI solo game 中 `rival-objectives` 可见，不通过 debug shortcut
+- [x] 复跑补缺验证并更新 review
+  - 验证: client 定向测试、e2e tsc、solo smoke、root typecheck/lint 通过
+
+Review:
+- 命名审查结论：domain code 中实际遗留的 frontend-reference alias 主要是 `automaBoard*` board id、rival action candidate 的 `lifeIndex`、objective trigger 的 `techfly` / `techlook` / `techcomp` / `lifeblue` / `missionrover` 等字符串；文档、源参考说明和兼容映射中的原始 alias 保留。
+- Common: 新增 canonical `TRivalBoardConfigId`、`ERivalObjectiveTrigger`、`TRivalObjectiveTriggerKey`，把 board id 改为 `rival-board-*`，action kind 改为 `launch-probe` / `research-tech` / `scan` / `analyze-data` / `species-replacement-check` 等项目语义名，action data 用 `alienIndex` 取代 `lifeIndex`；species special action cards 已按规则文档使用 printed ID 映射，而不是 frontend-reference Ref ID；Mascamites sample conversion 使用 `collectMascamitesSample` 语义 flag，不沿用 frontend `discardBug` 命名。
+- Server: `RivalObjectiveTracker` 改为匹配 canonical objective trigger；`GameDeserializer` 对旧 snapshot 的 `automaBoard*` 做归一化读取；rival tech preference map 改为 `rival-board-*` key。
+- 继续实现的规则切片：rival Scan tech 会在 scan/telescope 行动中额外从 card row 标记 1 个 signal 并消耗 1 张 Scan tech；Analyze 会消耗 1 张 Computer tech 获得 3 VP + 1 progress；Probe tech 会在 lander placement 中优先 moon landing 并消耗 1 张 Probe tech；rival probe movement 会在多条可达路径中选择移动 publicity 最高的路径，并把经过路径获得的 publicity 加到 rival 资源；rival probe final conversion 先用 Probe tech 抢 moon，之后按 first-orbit / first-land bonus 唯一可用项选择，只有两者同态时才回到卡面 orbiter/lander priority；`S.15` Mascamites special card 在 Saturn/Jupiter lander placement 后会随机消耗该 planet 的 1 个 sample，跳过 sample reward，并把 sample 转成 Mascamites board 上可标记的蓝色 slot；`S.17` Oumuamua special card 的 probe target 可落地 Oumuamua，结算 Oumuamua lander 的 2 exofossil reward，fallback scan 会标记 Oumuamua tile 而不是普通 sector；`S.16` Anomalies special card 会在 rival 未领先下一个 anomaly trace 时标记对应 column、转换 column reward 并额外获得 3 VP，否则落到 free tech；`S.18` Centaurians special card 会在 rival 没有未解决 message milestone 且总数少于 3 时放置新的 +15 milestone，并继续结算 default scan follow-up；solo rival 触发 Centaurians message milestone 时会自动选择右侧可用 reward，避免给 synthetic rival 生成 client 输入；`S.19` Exertians special card 会在 rival Exertian face-down cards + danger traces 少于 5 时盖放一张随机 Exertian card，否则落到 Earth scan，且 solo rival face-down Exertian card 在终局按 fulfilled 计分。
+- E2E: 新增真实 UI `solo-smoke.spec.ts`，通过创建房间弹窗打开 Solo Rival、选择 difficulty，验证 1 个 human 可启动 game、渲染 Rival panel、human 执行 PASS 后 rival 自动行动并更新 action discard/current card；`createRoomByUi` helper 支持通过真实 UI 配置 solo。
+- 审计补缺：`RivalPanel` 现在渲染公开的 objective row，包含 revealed objectives、task marker 进度和 completed objective pile；组件测试先失败于缺少 `rival-objectives`，再通过。`solo-smoke.spec.ts` 增加真实 UI objective row 断言，并把 rival 自动行动断言改为观察 Rival panel 状态变化，避免 round reset 时 discard 从非零归零导致误判。
+- 验证通过：`pnpm --filter @ender-seti/common test -- rivalActionCards.test.ts`、`pnpm --filter @seti/server test -- GameDeserializer.test.ts GameSerializer.test.ts GameSetup.test.ts RivalObjectiveTracker.test.ts RivalTurnController.test.ts FinalScoring.test.ts`、`pnpm --filter @seti/client test -- CreateRoomDialog.test.tsx RoomCard.test.tsx GameSettingsPanel.test.tsx RivalPanel.test.tsx GameLayout.test.tsx`、`pnpm typecheck`、`pnpm lint`；最新补跑 common 数据测试 3 tests、server 定向套件 123 tests、client 定向套件 35 tests 通过。
+- E2E 验证通过：用临时隔离 Postgres 跑 `PGHOST=127.0.0.1 PGPORT=55432 PGUSER=$(whoami) PGDATABASE=seti_e2e ./scripts/run-e2e-local.sh tests/solo-smoke.spec.ts`，1 passed，覆盖 solo room start、objective row、human PASS、rival auto turn 和 Rival panel；e2e 专用 `node_modules/.pnpm/node_modules/.bin/tsc -p packages/e2e/tsconfig.json --noEmit` 已通过。
+
+## 当前任务：实现 Solo / Rival server 和 client 功能
+
+假设与权衡：
+- 按 `docs/arch/solo/README.md` 与 `docs/arch/solo/architecture.md` 实现，不另起 `SoloGame`；solo 是 2-seat rules game：1 个 human + 1 个 synthetic rival。
+- 本轮先交付可运行的 solo 闭环：创建 solo 房间、1 人开局、server 初始化 rival 状态、序列化/投影、client 配置与只读 rival 面板、基础 rival action deck 自动回合。
+- Rival 行为先覆盖 rule/design 明确且可稳定复用现有引擎的基础动作：action card reveal、first possible candidate、pass、progress/resource conversion、launch、paid/free tech、analyze/computer、telescope signal、probe placement 的最小可执行路径。
+- Objectives 与 alien special card 先以 typed config / state / projection 建模并接入 setup；若发现完整结算需要大规模规则补齐，分独立 TDD 切片实现，不在 client 复制 AI。
+- icon 渲染优先复用 `@seti/cards` 的 `DescRender` / `EffectFactory`；`progress` 等 common/card 缺失图标才使用已迁移到 `packages/client/public/assets/seti/icons` 的 frontend-reference 资产。
+
+- [x] 写失败测试：GameOptions / lobby 支持 solo 选项、1 人开局、禁止第 2 个 human 加入
+  - 验证: server lobby 单测先失败，再通过
+- [x] 写失败测试：Game.create solo 会生成/接受 synthetic rival，并初始化 rival state，不给 rival 正常手牌/资源/setup tuck
+  - 验证: server engine solo setup 单测覆盖 public state、progress、deck、computer
+- [x] 写失败测试：serializer/deserializer/projectGameState 保留 optional rival state，旧多人 snapshot 兼容
+  - 验证: persistence 单测覆盖 round-trip 和缺省字段
+- [x] 实现基础 rival action resolver 与 GameManager 自动 rival 回合
+  - 验证: server solo action 单测覆盖 reveal first candidate、empty deck pass、launch/tech/progress/analyze 至少一条闭环
+- [x] 实现 client solo 创建/房间展示/只读 rival 面板
+  - 验证: client 组件测试覆盖 toggle、difficulty、required human count、rival icon 渲染
+- [x] 补齐 rival action card 数据，替换 advanced/species 占位序列
+  - 验证: common 数据测试对齐 `docs/arch/solo/frontend-reference-data.md` 的 basic/advanced/species 表
+- [x] 修正 solo 终局胜负规则：human 必须严格高于 rival，tie 归 rival
+  - 验证: server final scoring 单测覆盖 solo tie
+- [x] 实现 event-backed objective tracker：human end turn 时检查静态条件与本回合 trigger event，并补齐 revealed row
+  - 验证: server 单测覆盖 16 VP / data pool / publicity、tech/trace/probe/planet/mission/sector dominance trigger、单次 event 只标记一个 task
+- [x] 补齐 rival tech 与 analyze 关键规则：按 board priority 选 tech、转换 tech bonus、analyze 放置 blue life trace
+  - 验证: server solo action 单测覆盖 preferred tech、first-take fallback、tech bonus 转换/忽略、blue trace placement
+- [x] 补齐 rival telescope 基础规则：default 结算 2 个 card-row signal + 1 个 Earth signal，Earth mode 结算 1 个 card-row signal + 2 个 Earth signal，同色 sector 按 rival priority 选择
+  - 验证: common 数据测试覆盖 telescope mode；server solo action 单测覆盖 card-row 右侧批量选择、Earth mode 计数、能赢 sector 优先
+- [x] 补齐 solo 随机起始玩家与开局 rival 自动行动 guard
+  - 验证: server setup / GameManager 单测覆盖随机先手、先手分数、注册时 rival active 自动推进、setup input 未完成时不提前自动推进
+- [x] 跑最终验证并补 review
+  - 验证: 定向 server/client 测试、`pnpm typecheck`、必要 lint 通过
+
+Review:
+- Server: `GameOptions` / lobby 支持 solo 选项、1 人开局和 synthetic rival；`GameSetup` 初始化 rival player 与 `RivalState`；serializer/deserializer/projection 保留 optional solo/rival state 并兼容旧多人 snapshot。
+- Server: 新增 `engine/solo/*`，覆盖 rival action deck reveal、first possible candidate、pass、round reset、between-round objective payment、end-game objective VP、progress/resource/data conversion、launch、paid/free tech、按 board priority research tech、tech bonus 转换、analyze blue trace、telescope default/Earth mode 计数、card-row arrow selection、同色 sector priority、基础 probe/orbit/land；`GameManager` 在 human 行动后和注册 checkpoint 后按 guard 自动推进 rival turn。
+- Server: `RivalObjectiveTracker` 已接入 mission turn events，覆盖静态目标、tech/trace/probe/comet/card cost/mission completion/planet mission/sector dominance trigger，并保持 single event 只标记第一个匹配的未完成 task。
+- Common: 新增 typed solo config/protocol 和 `rivalActionCards`，已把 basic/advanced/species action card 数据替换为显式表驱动定义，并用 common 数据测试对齐 `frontend-reference-data.md`。
+- Client: solo 创建/房间展示/设置面板/房间人数判断已接入；游戏布局在 solo state 下渲染只读 `RivalPanel`，奖励/icon 优先走 `DescRender`，缺失 progress icon 使用迁移资产。
+- Final scoring: solo rival 不计 gold tile；human 必须严格高于 rival 才赢，tie 归 rival。
+- 验证通过：`pnpm --filter @ender-seti/common lint`、`pnpm --filter @seti/server lint`、`pnpm typecheck`、`pnpm --filter @ender-seti/common test -- rivalActionCards.test.ts`、`pnpm --filter @seti/server test -- GameOptions.test.ts lobby.service.test.ts GameSetup.test.ts GameSerializer.test.ts GameDeserializer.test.ts RivalObjectiveTracker.test.ts RivalTurnController.test.ts GameManager.test.ts FinalScoring.test.ts MissionTracker.test.ts Movement.test.ts ResolveSectorCompletion.test.ts`、`pnpm --filter @seti/client test -- RivalPanel.test.tsx GameLayout.test.tsx`。
+- 残余规则风险：rival automated input 的更多边界；solo smoke 已通过真实浏览器路径验证。
+
+## 当前任务：Solo / Rival 整体架构设计
+
+假设与权衡：
+- 本次只做架构设计文档，不直接改 common/server/client 实现代码。
+- 设计落点放在 `docs/arch/solo/architecture.md`，与既有 `docs/arch/solo/README.md` 规则说明和 `frontend-reference-data.md` 数据抽取互相引用。
+- 目标是用 `isSoloMode` 作为房间/游戏选项 flag，把 Rival 作为 server 内部非人类 actor 接进现有多人 `Game` 回合、棋盘、得分、序列化和投影链路；不新建平行的 `SoloGame` 引擎。
+- 若规则需要自动选择，本设计优先把自动策略封装在 Rival resolver/service，而不是让 client 或 gateway 猜测规则。
+
+- [x] 复核 solo 规则、前端参考数据和现有多人架构入口
+  - 验证: 设计能引用 setup、turn loop、action pipeline、player state、serialization、projection、lobby/client settings 的实际落点
+- [x] 形成 common/server/client/persistence 的模块拆分方案
+  - 验证: 可复用多人规则的位置明确，solo 特有状态不会污染普通多人协议
+- [x] 明确 Rival 行动解析、回合交接、自动输入和特殊 alien/objective 扩展策略
+  - 验证: 每类 solo action 都有归属模块和可测试的解析边界
+- [x] 补兼容性、扩展性、迁移步骤和测试矩阵
+  - 验证: 设计覆盖旧房间、普通多人、存档反序列化、UI 只读投影和未来 difficulty/species 扩展
+- [x] 记录 review
+  - 验证: 本段末尾补充实际输出和残余风险
+
+Review:
+- 新增 `docs/arch/solo/architecture.md`，确定 solo 以 `isSoloMode` 开启，但运行时仍作为 2-seat rules game：一个 human `Player` 加一个 synthetic rival `Player`，solo 专属进度、action deck、objective、computer 等放入 `Game.rivalState`。
+- 设计明确 common/server/client/persistence 分工：common 放 typed solo config/protocol，server 放 `engine/solo/*` resolver/controller/tracker，client 只做房间配置和只读渲染，不复制 rival AI。
+- 复用策略已按现有代码入口拆分：`Game` phase、`Player` identity、`Deck<T>`、`SolarSystem`、`PlanetaryBoard`、`Sector`、`TechBoard`、`AlienState`、`MilestoneState`、`FinalScoring`、serializer/projection 都列出复用或包装边界。
+- 兼容性方案：`playerCount` 保持 rules seat count，solo 内部为 2；lobby/client 用 required human players 判断 1 人开局；`rivalState` DTO 为 optional，旧多人 snapshot 缺失该字段时按多人加载。
+- 验证：已检查文档存在且非空，关键章节和关键术语覆盖通过；`pnpm exec biome check docs/arch/solo/architecture.md docs/TODO.md` 未处理文件，因为当前 Biome 配置忽略 docs Markdown，故本次不以 Biome 作为文档验证。
+
+## 当前任务：整理 Solo / Rival 规则文档
+
+假设与权衡：
+- 本次只根据 `docs/references/SE_rulebook_EN_36_web.raw.md` 和 `docs/references/Rival_Reminders.pdf` 生成规则说明，不修改游戏实现。
+- 输出放在 `docs/arch/solo/`，优先写成可供实现和测试引用的 Markdown 文档。
+- 若两份资料存在冲突、PDF 图示文字无法可靠提取，或 solo 卡/图标含义无法从资料中确认，先询问用户，不做猜测性规则。
+
+- [x] 提取 rulebook 中 solo/rival 相关章节
+  - 验证: 能定位 setup、rival board/deck、rival turn、actions、objectives、endgame 等完整段落
+- [x] 提取 `Rival_Reminders.pdf` 中的提醒/流程
+  - 验证: 文本或截图能覆盖 PDF 页内所有可读规则点
+- [x] 对照两份资料，整理成 `docs/arch/solo/` 下的清晰规则文档
+  - 验证: 文档按 setup、状态模型、回合流程、行动解析、特殊规则、结算/胜负组织
+- [x] 复核规则疑点并记录来源
+  - 验证: 无法确认的点列入问题；确认的点在 review 中说明来源
+- [x] 根据用户确认修订待确认规则点
+  - 验证: passing、action card 数据、alien special、progress/tech config、round reset 都进入确认决策
+- [x] 从 `frontend-reference` 与 alien notes 补齐实现数据
+  - 验证: `docs/arch/solo/frontend-reference-data.md` 覆盖 action sequences、board config、species FAQ constraints
+- [x] 补充 `frontend-reference` 使用边界与规范命名规则
+  - 验证: 规则明确 server/client/common 分工，且 source alias 到 common enum/domain name 有映射
+- [x] 记录结果
+  - 验证: 在本段末尾补充 Review
+
+Review:
+- 新增 `docs/arch/solo/README.md`，按 setup、rival state、资源转换、tech、回合流程、行动解析、species replacement、passing、objectives、milestones、endgame 和 implementation checklist 整理 solo/rival 规则。
+- 新增 `docs/arch/solo/frontend-reference-data.md`，从 `frontend-reference` 抽取 rival action card 候选序列、species replacement map、difficulty setup、progress 起点、preferred-tech order、computer slot reward，并补充 `docs/arch/aliens/*` / FAQ 的 species special 约束；`automaBoard2-4.jpg` 使用 `components.js` 引用的同源 storage 路径临时拉取并核对。
+- 使用 `pypdf` / `PyMuPDF` 临时虚拟环境抽取并渲染 `Rival_Reminders.pdf`，同时渲染 rulebook 第 22-27 页截图核对 raw markdown 中缺失的图示信息。
+- 已将 `Rival_Reminders.pdf` 补充的优先级规则合入：tech 选择、1 probe in play、orbiter/lander 空位/占位优先级、life trace、telescope、computer 立即填充、gold tile 不计分、passing、objective 结算。
+- 已根据用户确认修订：passing 移除 EOR 栈顶；used/revealed rival action cards 在回合切换时洗回；action card 数据来自 `frontend-reference`；特殊 alien card 结合 existing alien notes / FAQ；progress track 起点和 preferred-tech mapping 以 board asset/config 数据为准。
+- 已补充架构规则：`frontend-reference` 仅作为行为参考，server 负责 rival 结算，client 只渲染公共状态，shared config/type 优先放入 `packages/common`；同时列出 `automa`、`pop`、`fly/look/comp`、`rover/satellite`、`life*`、deck tier 等 source alias 的规范命名映射。
+- 本次只改文档，不改游戏实现；验证方式为源文档抽取、截图核对和文档复读。
+
 ## 当前任务：修复 Biome / lint / tsc 验证链
 
 假设与权衡：

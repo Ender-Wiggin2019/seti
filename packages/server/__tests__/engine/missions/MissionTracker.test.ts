@@ -724,6 +724,14 @@ describe('MissionTracker', () => {
           (event) => event.type === EMissionEventType.PROBE_LAUNCHED,
         ),
       ).toBe(true);
+      expect(
+        game.missionTracker.hasTurnEvent(
+          (event) =>
+            event.type === EMissionEventType.MISSION_COMPLETED &&
+            event.cardId === '117' &&
+            event.branchIndex === 0,
+        ),
+      ).toBe(true);
     });
   });
 });

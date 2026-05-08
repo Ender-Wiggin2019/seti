@@ -31,6 +31,7 @@ import { InputRenderer } from '@/features/input/InputRenderer';
 import { HandDock, PlayedMissions, PlayerDashboard } from '@/features/player';
 import type { IMilestoneItem } from '@/features/scoring';
 import { MilestoneTrack } from '@/features/scoring';
+import { RivalPanel } from '@/features/solo';
 import { cn } from '@/lib/cn';
 import { useGameContext } from '@/pages/game/GameContext';
 import { GameOverDialog } from '@/pages/game/GameOverDialog';
@@ -962,6 +963,21 @@ function PersonalColumn({
           <LoadingLine label={t('client.common.loading')} />
         )}
       </section>
+
+      {gameState?.isSoloMode && gameState.rival ? (
+        <section data-testid='rival-area'>
+          <div className='section-head mb-2'>
+            <span aria-hidden className='section-head__tick' />
+            <p className='micro-label'>
+              {t('client.game_layout.rival_board', {
+                defaultValue: 'Rival Board',
+              })}
+            </p>
+            <div aria-hidden className='section-head__rule' />
+          </div>
+          <RivalPanel rival={gameState.rival} />
+        </section>
+      ) : null}
 
       <section data-testid='mission-area'>
         <div className='section-head mb-2'>

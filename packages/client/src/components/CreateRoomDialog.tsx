@@ -1,5 +1,7 @@
 import { CORE_RANDOM_ALIEN_TYPES } from '@seti/common/constant/alienLobby';
+import { SOLO_DIFFICULTIES } from '@seti/common/constant/solo';
 import { EAlienMap } from '@seti/common/types/BaseCard';
+import type { TSoloDifficulty } from '@seti/common/types/protocol/solo';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
@@ -58,6 +60,8 @@ export function CreateRoomDialog({
   const { t } = useTranslation('common');
   const [name, setName] = useState('');
   const [playerCount, setPlayerCount] = useState(2);
+  const [isSoloMode, setIsSoloMode] = useState(false);
+  const [soloDifficulty, setSoloDifficulty] = useState<TSoloDifficulty>(1);
   const [selectedAlienTypes, setSelectedAlienTypes] = useState<number[]>([]);
   const [undoAllowed, setUndoAllowed] = useState(true);
   const [timerPerTurn, setTimerPerTurn] = useState(0);
@@ -124,9 +128,20 @@ export function CreateRoomDialog({
     });
   };
 
+  const handleSoloModeChange = (nextChecked: boolean): void => {
+    setIsSoloMode(nextChecked);
+    if (nextChecked) {
+      setPlayerCount(2);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const result = createRoomSchema.safeParse({ name, playerCount });
+    const effectivePlayerCount = isSoloMode ? 2 : playerCount;
+    const result = createRoomSchema.safeParse({
+      name,
+      playerCount: effectivePlayerCount,
+    });
     if (!result.success) {
       const nameIssue = result.error.issues.find(
         (issue) => issue.path[0] === 'name',
@@ -153,7 +168,9 @@ export function CreateRoomDialog({
     }
 
     onSubmit(name, {
-      playerCount,
+      playerCount: effectivePlayerCount,
+      isSoloMode,
+      soloDifficulty,
       alienModulesEnabled: CORE_RANDOM_ALIEN_TYPES.map((alienType) =>
         selectedCoreAlienTypes.includes(alienType),
       ),
@@ -207,6 +224,7 @@ export function CreateRoomDialog({
                 <Select
                   value={String(playerCount)}
                   onValueChange={(value) => setPlayerCount(Number(value))}
+                  disabled={isSoloMode}
                 >
                   <SelectTrigger id='player-count'>
                     <SelectValue />
@@ -224,6 +242,47 @@ export function CreateRoomDialog({
                   </SelectContent>
                 </Select>
               </div>
+              <ToggleRow
+                id='solo-mode-toggle'
+                label={t('client.create_room.solo_mode', {
+                  defaultValue: 'Solo Rival',
+                })}
+                checked={isSoloMode}
+                onChange={handleSoloModeChange}
+              />
+              {isSoloMode ? (
+                <div className='space-y-2'>
+                  <Label htmlFor='solo-difficulty' variant='micro'>
+                    {t('client.create_room.solo_difficulty', {
+                      defaultValue: 'Rival Difficulty',
+                    })}
+                  </Label>
+                  <div
+                    id='solo-difficulty'
+                    className='grid grid-cols-5 gap-1.5'
+                    role='group'
+                    aria-label={t('client.create_room.solo_difficulty', {
+                      defaultValue: 'Rival Difficulty',
+                    })}
+                  >
+                    {SOLO_DIFFICULTIES.map((difficulty) => (
+                      <Button
+                        key={difficulty}
+                        type='button'
+                        variant={
+                          soloDifficulty === difficulty ? 'primary' : 'ghost'
+                        }
+                        size='sm'
+                        className='h-8 px-0 font-mono text-xs'
+                        onClick={() => setSoloDifficulty(difficulty)}
+                        aria-pressed={soloDifficulty === difficulty}
+                      >
+                        {difficulty}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </SectionBlock>
 
             <SectionBlock
@@ -375,7 +434,12 @@ function ToggleRow({
       <Label htmlFor={id} className='cursor-pointer'>
         {label}
       </Label>
-      <Switch id={id} checked={checked} onCheckedChange={onChange} />
+      <Switch
+        id={id}
+        checked={checked}
+        onCheckedChange={onChange}
+        aria-label={label}
+      />
     </div>
   );
 }

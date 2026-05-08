@@ -1,3 +1,4 @@
+import { RIVAL_OBJECTIVE_IDS_BY_LEVEL } from '@seti/common/constant/solo';
 import { baseCards } from '@seti/common/data/baseCards';
 import { EResource } from '@seti/common/types/element';
 import { EAlienType, EPhase } from '@seti/common/types/protocol/enums';
@@ -16,6 +17,27 @@ const BASE_PLAYERS = [
   { id: 'p3', name: 'Cathy', color: 'green', seatIndex: 2 },
   { id: 'p4', name: 'Dylan', color: 'yellow', seatIndex: 3 },
 ] as const;
+
+function createSoloGame(soloDifficulty = 2, seed = 'seed-solo-random'): Game {
+  return Game.create(
+    [
+      BASE_PLAYERS[0],
+      {
+        id: `rival:${seed}`,
+        name: 'Rival Institution',
+        color: 'blue',
+        seatIndex: 1,
+      },
+    ],
+    {
+      playerCount: 2,
+      isSoloMode: true,
+      soloDifficulty,
+    } as Parameters<typeof Game.create>[1],
+    seed,
+    seed,
+  );
+}
 
 describe('GameSetup', () => {
   it('builds initial draw pool from base cards only', () => {
@@ -95,6 +117,128 @@ describe('GameSetup', () => {
     expect(game.players[0].waitingFor?.toModel().type).toBe(
       EPlayerInputType.CARD,
     );
+  });
+
+  it('initializes solo rival state without normal human setup resources', () => {
+    const game = Game.create(
+      [
+        BASE_PLAYERS[0],
+        {
+          id: 'rival:solo-game',
+          name: 'Rival Institution',
+          color: 'blue',
+          seatIndex: 1,
+        },
+      ],
+      {
+        playerCount: 2,
+        isSoloMode: true,
+        soloDifficulty: 3,
+      } as Parameters<typeof Game.create>[1],
+      'seed-solo-setup',
+      'solo-game',
+    );
+    const rival = game.players[1];
+    const rivalState = (
+      game as Game & {
+        rivalState?: {
+          rivalPlayerId: string;
+          difficulty: number;
+          progress: number;
+          progressSlot: number;
+          boardConfigId: string;
+          actionDeck: { getDrawPile: () => readonly string[] };
+          computer: { filledSlots: boolean[]; dataPool: number };
+        };
+      }
+    ).rivalState;
+
+    expect(rivalState).toMatchObject({
+      rivalPlayerId: 'rival:solo-game',
+      difficulty: 3,
+      progress: 12,
+      progressSlot: 0,
+      boardConfigId: 'rival-board-2',
+      computer: {
+        filledSlots: [false, false, false, false, false, false],
+        dataPool: 0,
+      },
+    });
+    expect(rivalState?.actionDeck.getDrawPile()).toHaveLength(5);
+    expect(rival.resources.toObject()).toEqual({
+      credits: 0,
+      energy: 0,
+      publicity: 4,
+      data: 0,
+      signalTokens: 0,
+    });
+    expect(rival.hand).toHaveLength(0);
+    expect(rival.pendingSetupTucks).toBe(0);
+    expect(rival.waitingFor).toBeUndefined();
+  });
+
+  it('builds the solo objective stack with level I on top, then level II, then level III', () => {
+    const game = Game.create(
+      [
+        BASE_PLAYERS[0],
+        {
+          id: 'rival:solo-objectives',
+          name: 'Rival Institution',
+          color: 'blue',
+          seatIndex: 1,
+        },
+      ],
+      {
+        playerCount: 2,
+        isSoloMode: true,
+        soloDifficulty: 2,
+      } as Parameters<typeof Game.create>[1],
+      'seed-solo-objectives',
+      'solo-objectives',
+    );
+    const rivalState = game.rivalState;
+    if (!rivalState) throw new Error('expected rival state');
+
+    const level1Ids = new Set(RIVAL_OBJECTIVE_IDS_BY_LEVEL.level1);
+    const level2Ids = new Set(RIVAL_OBJECTIVE_IDS_BY_LEVEL.level2);
+    const level3Ids = new Set(RIVAL_OBJECTIVE_IDS_BY_LEVEL.level3);
+
+    expect(rivalState.revealedObjectiveIds).toHaveLength(3);
+    expect(
+      rivalState.revealedObjectiveIds
+        .slice(0, 2)
+        .every((id) => level1Ids.has(id)),
+    ).toBe(true);
+    expect(level2Ids.has(rivalState.revealedObjectiveIds[2])).toBe(true);
+    expect(
+      rivalState.objectiveDrawPile.slice(0, 2).every((id) => level2Ids.has(id)),
+    ).toBe(true);
+    expect(
+      rivalState.objectiveDrawPile.slice(-5).every((id) => level3Ids.has(id)),
+    ).toBe(true);
+  });
+
+  it('randomizes the solo starting player across seeds', () => {
+    const starters = new Set<string>();
+
+    for (let index = 0; index < 20; index += 1) {
+      const game = createSoloGame(2, `solo-start-${index}`);
+      starters.add(
+        game.startPlayer.id.startsWith('rival:') ? 'rival' : 'human',
+      );
+    }
+
+    expect(starters).toEqual(new Set(['human', 'rival']));
+  });
+
+  it('assigns 1 VP to the solo start player and 2 VP to the other player', () => {
+    const game = createSoloGame(2, 'solo-start-score');
+    const otherPlayer = game.players.find(
+      (player) => player.id !== game.startPlayer.id,
+    );
+
+    expect(game.startPlayer.score).toBe(1);
+    expect(otherPlayer?.score).toBe(2);
   });
 
   describe('shared board details', () => {

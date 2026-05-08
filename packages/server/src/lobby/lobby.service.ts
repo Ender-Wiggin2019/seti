@@ -10,7 +10,13 @@ import { ALIEN_LOBBY_OPTION_MAP } from '@seti/common/constant/alienLobby';
 import { and, desc, eq } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Game } from '@/engine/Game.js';
-import { createGameOptions, type IGameOptions } from '@/engine/GameOptions.js';
+import {
+  createGameOptions,
+  getRequiredHumanPlayers,
+  getRulesPlayerCount,
+  type IGameOptions,
+  isSoloMode,
+} from '@/engine/GameOptions.js';
 import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
 import { GameRepository } from '@/persistence/repository/GameRepository.js';
 import { games } from '@/persistence/schema/games.js';
@@ -19,6 +25,7 @@ import { users } from '@/persistence/schema/users.js';
 import type { IRoomPlayer, IRoomResponse } from './dto/RoomResponseDto.js';
 
 const PLAYER_COLORS = ['red', 'blue', 'green', 'yellow'];
+const RIVAL_DISPLAY_NAME = 'Rival Institution';
 
 @Injectable()
 export class LobbyService {
@@ -68,7 +75,7 @@ export class LobbyService {
       name,
       hostUserId: userId,
       status: 'waiting',
-      playerCount,
+      playerCount: options.playerCount,
       currentRound: 0,
       seed: seed ?? randomUUID(),
       options,
@@ -161,7 +168,11 @@ export class LobbyService {
       throw new BadRequestException('Already in room');
     }
 
-    if (existingPlayers.length >= room.playerCount) {
+    const requiredHumanPlayers = getRequiredHumanPlayers(
+      room.options as Partial<IGameOptions>,
+    );
+
+    if (existingPlayers.length >= requiredHumanPlayers) {
       throw new BadRequestException('Room is full');
     }
 
@@ -240,9 +251,20 @@ export class LobbyService {
 
     const players = await this.getPlayersForGame(gameId);
 
-    if (players.length < 2) {
+    const gameOptions = createGameOptions(
+      room.options as Partial<IGameOptions>,
+    );
+    const requiredHumanPlayers = getRequiredHumanPlayers(gameOptions);
+
+    if (players.length < requiredHumanPlayers) {
       throw new BadRequestException(
-        'Need at least 2 players to start the game',
+        `Need at least ${requiredHumanPlayers} players to start the game`,
+      );
+    }
+
+    if (!isSoloMode(gameOptions) && players.length < gameOptions.playerCount) {
+      throw new BadRequestException(
+        `Need ${gameOptions.playerCount} players to start the game`,
       );
     }
 
@@ -253,12 +275,22 @@ export class LobbyService {
       seatIndex: p.seatIndex,
     }));
 
-    const gameOptions = room.options as Partial<IGameOptions>;
     const seed = room.seed;
+    const gameIdentities = isSoloMode(gameOptions)
+      ? [
+          identities[0],
+          {
+            id: `rival:${gameId}`,
+            name: RIVAL_DISPLAY_NAME,
+            color: PLAYER_COLORS[1],
+            seatIndex: 1,
+          },
+        ]
+      : identities;
 
     const game = Game.create(
-      identities,
-      { ...gameOptions, playerCount: players.length },
+      gameIdentities,
+      { ...gameOptions, playerCount: getRulesPlayerCount(gameOptions) },
       seed,
       gameId,
     );

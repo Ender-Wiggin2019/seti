@@ -4,6 +4,7 @@ import type {
   IDebugServerSessionResponse,
   IDebugSnapshotSessionResponse,
 } from '@seti/common/types/protocol/debug';
+import type { TSoloDifficulty } from '@seti/common/types/protocol/solo';
 
 export interface IAuthUser {
   id: string;
@@ -56,6 +57,8 @@ export interface IRoomPlayer {
 
 export interface IGameOptions {
   playerCount: number;
+  isSoloMode?: boolean;
+  soloDifficulty?: TSoloDifficulty;
   alienModulesEnabled: boolean[];
   undoAllowed: boolean;
   timerPerTurn: number;

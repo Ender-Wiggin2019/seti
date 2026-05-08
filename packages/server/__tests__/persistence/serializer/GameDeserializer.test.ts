@@ -4,15 +4,15 @@ import {
   EPlanet,
   ETrace,
 } from '@seti/common/types/protocol/enums';
+import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import {
+  isAnomaliesAlienBoard,
   isCentauriansAlienBoard,
   isExertiansAlienBoard,
-  isAnomaliesAlienBoard,
   isMascamitesAlienBoard,
   isOumuamuaAlienBoard,
 } from '@/engine/alien/AlienBoard.js';
 import { AlienState } from '@/engine/alien/AlienState.js';
-import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { Game } from '@/engine/Game.js';
 import { deserializeGame } from '@/persistence/serializer/GameDeserializer.js';
 import { serializeGame } from '@/persistence/serializer/GameSerializer.js';
@@ -27,6 +27,27 @@ function createTestGame(): Game {
     { playerCount: 2 },
     'deserializer-seed',
     'game-deserializer-test',
+  );
+}
+
+function createSoloTestGame(): Game {
+  return Game.create(
+    [
+      { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
+      {
+        id: 'rival:game-deserializer-solo',
+        name: 'Rival Institution',
+        color: 'blue',
+        seatIndex: 1,
+      },
+    ],
+    {
+      playerCount: 2,
+      isSoloMode: true,
+      soloDifficulty: 5,
+    } as Parameters<typeof Game.create>[1],
+    'deserializer-solo-seed',
+    'game-deserializer-solo',
   );
 }
 
@@ -49,6 +70,60 @@ describe('GameDeserializer', () => {
     const dto2 = serializeGame(restored, 1);
 
     expect(dto2).toEqual(dto1);
+  });
+
+  it('round-trips solo rival state', () => {
+    const game = createSoloTestGame();
+    const restored = deserializeGame(serializeGame(game, 1)) as Game & {
+      rivalState?: {
+        rivalPlayerId: string;
+        difficulty: number;
+        progress: number;
+        progressSlot: number;
+        boardConfigId: string;
+        actionDeck: { getDrawPile: () => readonly string[] };
+        computer: { filledSlots: boolean[]; dataPool: number };
+      };
+    };
+
+    expect(restored.rivalState).toMatchObject({
+      rivalPlayerId: 'rival:game-deserializer-solo',
+      difficulty: 5,
+      progress: 19,
+      progressSlot: 7,
+      boardConfigId: 'rival-board-4',
+      computer: {
+        filledSlots: [false, false, false, false, false, false],
+        dataPool: 0,
+      },
+    });
+    expect(restored.rivalState?.actionDeck.getDrawPile()).toHaveLength(5);
+  });
+
+  it('normalizes legacy solo rival board ids from older snapshots', () => {
+    const game = createSoloTestGame();
+    const dto = serializeGame(game, 1);
+    if (!dto.rivalState) throw new Error('expected rival state');
+    (dto.rivalState as { boardConfigId: string }).boardConfigId =
+      'automaBoard4';
+
+    const restored = deserializeGame(dto);
+
+    expect(restored.rivalState?.boardConfigId).toBe('rival-board-4');
+  });
+
+  it('loads legacy multiplayer snapshots without rival state', () => {
+    const dto = serializeGame(createTestGame(), 1) as ReturnType<
+      typeof serializeGame
+    > & {
+      rivalState?: unknown;
+    };
+    delete dto.rivalState;
+
+    const restored = deserializeGame(dto) as Game & { rivalState?: unknown };
+
+    expect(restored.options.isSoloMode).toBe(false);
+    expect(restored.rivalState).toBeUndefined();
   });
 
   it('round-trips Exertians face-down runtime state', () => {

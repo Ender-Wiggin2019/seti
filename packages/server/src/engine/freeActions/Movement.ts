@@ -352,6 +352,14 @@ export class MovementFreeAction {
           type: EMissionEventType.PROBE_VISITED_ASTEROIDS,
         });
       }
+      if (
+        element.type === ESolarSystemElementType.COMET &&
+        element.amount > 0
+      ) {
+        game.missionTracker.recordEvent({
+          type: EMissionEventType.PROBE_VISITED_COMET,
+        });
+      }
     }
   }
 }

@@ -348,7 +348,7 @@ describe('MovementFreeAction', () => {
       expect(ss.getProbesAt('s2')).toHaveLength(1);
     });
 
-    it('records planet/asteroid visit mission events while moving', () => {
+    it('records planet/asteroid/comet visit mission events while moving', () => {
       const ss = createLinearSolarSystem();
       ss.spaces.find((space) => space.id === 's1')!.elements = [
         {
@@ -363,16 +363,22 @@ describe('MovementFreeAction', () => {
           amount: 1,
         },
       ];
+      ss.spaces.find((space) => space.id === 's3')!.elements = [
+        {
+          type: ESolarSystemElementType.COMET,
+          amount: 1,
+        },
+      ];
 
       const recordEvent = vi.fn();
       const game = createMockGame(ss, {
         missionTracker: { recordEvent },
       });
       const player = createTestPlayer();
-      player.gainMove(3);
+      player.gainMove(4);
       ss.placeProbe('p1', 's0');
 
-      MovementFreeAction.execute(player, game, ['s0', 's1', 's2']);
+      MovementFreeAction.execute(player, game, ['s0', 's1', 's2', 's3']);
 
       expect(recordEvent).toHaveBeenCalledWith({
         type: EMissionEventType.PROBE_VISITED_PLANET,
@@ -380,6 +386,9 @@ describe('MovementFreeAction', () => {
       });
       expect(recordEvent).toHaveBeenCalledWith({
         type: EMissionEventType.PROBE_VISITED_ASTEROIDS,
+      });
+      expect(recordEvent).toHaveBeenCalledWith({
+        type: EMissionEventType.PROBE_VISITED_COMET,
       });
     });
 

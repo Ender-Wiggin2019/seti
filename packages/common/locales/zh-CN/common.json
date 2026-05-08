@@ -275,6 +275,8 @@
       "name": "任务名称",
       "name_placeholder": "Mars Alpha-7",
       "players": "玩家数",
+      "solo_mode": "单人对抗",
+      "solo_difficulty": "Rival 难度",
       "player_count": {
         "2": "2人",
         "3": "3人",
@@ -300,6 +302,7 @@
         "finished": "已结束"
       },
       "host": "房主",
+      "solo": "单人",
       "players": "{{current}}/{{total}} 人",
       "aliens": "外星模块",
       "timer": "{{seconds}}秒计时"
@@ -313,7 +316,11 @@
     },
     "game_settings": {
       "title": "任务参数",
+      "mode": "模式",
+      "mode_solo": "单人",
+      "mode_multiplayer": "多人",
       "players": "玩家数",
+      "solo_difficulty": "难度",
       "alien_modules": "外星模块",
       "undo": "撤销",
       "undo_allowed": "允许",
@@ -434,6 +441,15 @@
       "tech_alt": "科技数量",
       "tech": "科技",
       "card_selection_active": "卡牌选择中"
+    },
+    "rival_panel": {
+      "title": "Rival 机构",
+      "progress": "进度",
+      "draw": "牌库",
+      "discard": "弃牌",
+      "current_card": "行动",
+      "computer": "计算机",
+      "data_pool": "池 {{count}}"
     },
     "tech_display": {
       "title": "科技槽",
@@ -556,6 +572,7 @@
       "dashboard": "面板",
       "hand_and_missions": "手牌与任务",
       "personal_board": "个人面板",
+      "rival_board": "Rival 面板",
       "mission_area": "任务区",
       "intel": "情报",
       "hand": "手牌",

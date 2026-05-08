@@ -195,6 +195,39 @@ describe('GameLayout', () => {
       expect(screen.getByText('7 cards')).toBeInTheDocument();
     });
 
+    it('renders the rival panel for solo games', async () => {
+      mockContextValue = createMockContext({
+        gameState: createMockGameState({
+          isSoloMode: true,
+          rival: {
+            rivalPlayerId: 'rival:game-test-1',
+            difficulty: 3,
+            progress: 12,
+            progressSlot: 0,
+            boardConfigId: 'rival-board-2',
+            computer: {
+              filledSlots: [false, true, false, false, false, false],
+              dataPool: 1,
+            },
+            actionDeck: {
+              drawPileSize: 4,
+              discardPileSize: 1,
+              advancedReserveSize: 5,
+              removedCardIds: [],
+              currentCardId: 'S.1',
+            },
+            revealedObjectiveIds: ['SOLO.1', 'SOLO.2'],
+            completedObjectiveIds: [],
+            objectiveTaskMarkers: {},
+          },
+        }),
+      });
+      await renderLayout();
+
+      expect(screen.getByTestId('rival-area')).toBeInTheDocument();
+      expect(screen.getByTestId('rival-current-card')).toHaveTextContent('S.1');
+    });
+
     it('shows action menu when it is my turn', async () => {
       mockContextValue = createMockContext({ isMyTurn: true });
       await renderLayout();

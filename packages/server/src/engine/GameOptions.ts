@@ -1,3 +1,5 @@
+import type { TSoloDifficulty } from '@seti/common/types/protocol/solo';
+
 export enum EExpansion {
   BASE = 'BASE',
   ALIEN = 'ALIEN',
@@ -9,6 +11,8 @@ export interface IGameOptions {
   undoAllowed: boolean;
   timerPerTurn: number;
   expansions: EExpansion[];
+  isSoloMode: boolean;
+  soloDifficulty: TSoloDifficulty;
 }
 
 export const DEFAULT_GAME_OPTIONS: Readonly<IGameOptions> = Object.freeze({
@@ -17,6 +21,8 @@ export const DEFAULT_GAME_OPTIONS: Readonly<IGameOptions> = Object.freeze({
   undoAllowed: true,
   timerPerTurn: 0,
   expansions: [EExpansion.BASE],
+  isSoloMode: false,
+  soloDifficulty: 1,
 });
 
 export function validateGameOptions(gameOptions: IGameOptions): void {
@@ -50,6 +56,14 @@ export function validateGameOptions(gameOptions: IGameOptions): void {
   ) {
     throw new Error('timerPerTurn must be a non-negative integer');
   }
+
+  if (
+    !Number.isInteger(gameOptions.soloDifficulty) ||
+    gameOptions.soloDifficulty < 1 ||
+    gameOptions.soloDifficulty > 5
+  ) {
+    throw new Error('soloDifficulty must be an integer between 1 and 5');
+  }
 }
 
 export function createGameOptions(
@@ -58,6 +72,11 @@ export function createGameOptions(
   const mergedOptions: IGameOptions = {
     ...DEFAULT_GAME_OPTIONS,
     ...gameOptions,
+    playerCount: gameOptions.isSoloMode
+      ? 2
+      : (gameOptions.playerCount ?? DEFAULT_GAME_OPTIONS.playerCount),
+    soloDifficulty: (gameOptions.soloDifficulty ??
+      DEFAULT_GAME_OPTIONS.soloDifficulty) as TSoloDifficulty,
     alienModulesEnabled: gameOptions.alienModulesEnabled ?? [
       ...DEFAULT_GAME_OPTIONS.alienModulesEnabled,
     ],
@@ -66,4 +85,18 @@ export function createGameOptions(
 
   validateGameOptions(mergedOptions);
   return Object.freeze(mergedOptions);
+}
+
+export function isSoloMode(options: Partial<IGameOptions>): boolean {
+  return options.isSoloMode === true;
+}
+
+export function getRequiredHumanPlayers(
+  options: Partial<IGameOptions>,
+): number {
+  return isSoloMode(options) ? 1 : (options.playerCount ?? 2);
+}
+
+export function getRulesPlayerCount(options: Partial<IGameOptions>): number {
+  return isSoloMode(options) ? 2 : (options.playerCount ?? 2);
 }

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/components/ui/toast';
+import { getRequiredHumanPlayerCount } from '@/lib/roomOptions';
 import { GameSettingsPanel } from '@/pages/lobby/GameSettingsPanel';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -73,7 +74,8 @@ export function RoomPage(): React.JSX.Element {
 
   const isHost = room.hostId === userId;
   const isInRoom = room.players.some((p) => p.id === userId);
-  const isFull = room.players.length >= room.options.playerCount;
+  const requiredHumanPlayers = getRequiredHumanPlayerCount(room.options);
+  const isFull = room.players.length >= requiredHumanPlayers;
   const canStart = isHost && isFull && room.status === ERoomStatus.WAITING;
   const canEnterGame = isInRoom && room.status === ERoomStatus.PLAYING;
   const canLeave = isInRoom && !isHost && room.status === ERoomStatus.WAITING;
@@ -86,7 +88,7 @@ export function RoomPage(): React.JSX.Element {
         : t('client.room.status.finished');
 
   const emptySlots = Array.from(
-    { length: room.options.playerCount - room.players.length },
+    { length: requiredHumanPlayers - room.players.length },
     (_, i) => room.players.length + i,
   );
 
@@ -141,7 +143,7 @@ export function RoomPage(): React.JSX.Element {
             <div className='flex items-center justify-between'>
               <CardTitle>{t('client.room.crew')}</CardTitle>
               <span className='readout text-xs text-text-500'>
-                {room.players.length}/{room.options.playerCount}
+                {room.players.length}/{requiredHumanPlayers}
               </span>
             </div>
           </CardHeader>

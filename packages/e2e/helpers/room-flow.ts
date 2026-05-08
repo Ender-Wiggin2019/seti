@@ -5,6 +5,8 @@ export interface IRoomCreateResult {
   id: string;
   options?: {
     playerCount?: number;
+    isSoloMode?: boolean;
+    soloDifficulty?: number;
     alienModulesEnabled?: boolean[];
     undoAllowed?: boolean;
     timerPerTurn?: number;
@@ -13,6 +15,8 @@ export interface IRoomCreateResult {
 
 export interface ICreateRoomByUiOptions {
   alienTypes?: readonly ECoreAlienType[];
+  isSoloMode?: boolean;
+  soloDifficulty?: 1 | 2 | 3 | 4 | 5;
   seed?: string;
 }
 
@@ -70,6 +74,27 @@ export async function createRoomByUiWithDetails(
     });
     await expect(playerCountOption).toBeVisible({ timeout: 10_000 });
     await playerCountOption.click();
+  }
+
+  if (options.isSoloMode) {
+    const soloToggle = page.locator('#solo-mode-toggle');
+    await expect(soloToggle).toBeVisible({ timeout: 10_000 });
+    const checked =
+      (await soloToggle.getAttribute('aria-checked', {
+        timeout: 10_000,
+      })) === 'true';
+    if (!checked) {
+      await soloToggle.click();
+      await expect(soloToggle).toHaveAttribute('aria-checked', 'true');
+    }
+
+    const difficulty = options.soloDifficulty ?? 1;
+    const difficultyButton = page
+      .locator('#solo-difficulty')
+      .getByRole('button', { name: String(difficulty), exact: true });
+    await expect(difficultyButton).toBeVisible({ timeout: 10_000 });
+    await difficultyButton.click();
+    await expect(difficultyButton).toHaveAttribute('aria-pressed', 'true');
   }
 
   if (options.alienTypes) {

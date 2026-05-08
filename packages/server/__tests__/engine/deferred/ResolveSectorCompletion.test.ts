@@ -5,6 +5,7 @@ import {
 } from '@seti/common/types/protocol/playerInput';
 import { Sector } from '@/engine/board/Sector.js';
 import { ResolveSectorCompletion } from '@/engine/deferred/ResolveSectorCompletion.js';
+import { EMissionEventType } from '@/engine/missions/IMission.js';
 import { Player } from '@/engine/player/Player.js';
 import { buildTestGame, getPlayer } from '../../helpers/TestGameBuilder.js';
 
@@ -35,10 +36,12 @@ describe('ResolveSectorCompletion', () => {
 
     expect(sector.isFulfilled()).toBe(true);
 
+    const recordEvent = vi.fn();
     const game = {
       players: [p1, p2],
       sectors: [sector],
       eventLog: { append: () => undefined },
+      missionTracker: { recordEvent },
     } as never;
 
     const action = new ResolveSectorCompletion(p1);
@@ -48,6 +51,12 @@ describe('ResolveSectorCompletion', () => {
     expect(sector.sectorWinners[0]).toBe('p1');
     expect(p1.publicity).toBe(5);
     expect(p2.publicity).toBe(5);
+    expect(recordEvent).toHaveBeenCalledWith({
+      type: EMissionEventType.SECTOR_COMPLETED,
+      sectorId: 's1',
+      color: ESector.RED,
+      winnerPlayerId: 'p1',
+    });
   });
 
   // 5.2 Integration smoke — verify ResolveSectorCompletion runs against a

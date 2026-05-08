@@ -4,6 +4,7 @@ import type { IRoom } from '@/api/types';
 import { ERoomStatus } from '@/api/types';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/cn';
+import { getRequiredHumanPlayerCount, isSoloRoom } from '@/lib/roomOptions';
 
 interface IRoomCardProps {
   room: IRoom;
@@ -34,6 +35,8 @@ export function RoomCard({ room }: IRoomCardProps): React.JSX.Element {
 
   const hostName =
     room.players.find((p) => p.isHost)?.name ?? t('client.common.unknown');
+  const requiredHumanPlayers = getRequiredHumanPlayerCount(room.options);
+  const soloMode = isSoloRoom(room.options);
 
   return (
     <button
@@ -70,7 +73,14 @@ export function RoomCard({ room }: IRoomCardProps): React.JSX.Element {
             <span className='text-text-200'>{hostName}</span>
           </p>
         </div>
-        <Badge variant={STATUS_VARIANT[room.status]}>{statusLabel}</Badge>
+        <div className='flex shrink-0 items-center gap-1.5'>
+          {soloMode ? (
+            <Badge variant='default'>
+              {t('client.room_card.solo', { defaultValue: 'Solo' })}
+            </Badge>
+          ) : null}
+          <Badge variant={STATUS_VARIANT[room.status]}>{statusLabel}</Badge>
+        </div>
       </div>
 
       {/* Instrument-tick divider before the readout row. */}
@@ -81,10 +91,19 @@ export function RoomCard({ room }: IRoomCardProps): React.JSX.Element {
           <span className='micro-label opacity-70'>
             {t('client.common.crew', { defaultValue: 'Crew' })}
           </span>
-          <span className='readout text-text-100'>
-            {room.players.length}/{room.options.playerCount}
+          <span
+            className='readout text-text-100'
+            data-testid='room-card-crew-count'
+          >
+            {room.players.length}/{requiredHumanPlayers}
           </span>
         </span>
+
+        {soloMode ? (
+          <span className='readout text-[oklch(0.78_0.11_240)]'>
+            D{room.options.soloDifficulty ?? 1}
+          </span>
+        ) : null}
 
         {room.options.alienModulesEnabled.some((enabled) => enabled) && (
           <span className='flex items-center gap-1'>

@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import type { IGameOptions } from '@/api/types';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/cn';
+import { getRequiredHumanPlayerCount, isSoloRoom } from '@/lib/roomOptions';
 
 interface IGameSettingsPanelProps {
   options: IGameOptions;
@@ -21,6 +22,7 @@ export function GameSettingsPanel({
   readOnly,
 }: IGameSettingsPanelProps): React.JSX.Element {
   const { t } = useTranslation('common');
+  const soloMode = isSoloRoom(options);
   return (
     <div className='space-y-3'>
       <h3 className='micro-label'>{t('client.game_settings.title')}</h3>
@@ -32,10 +34,30 @@ export function GameSettingsPanel({
         )}
       >
         <ReadoutRow
+          label={t('client.game_settings.mode', { defaultValue: 'Mode' })}
+          value={
+            soloMode
+              ? t('client.game_settings.mode_solo', { defaultValue: 'Solo' })
+              : t('client.game_settings.mode_multiplayer', {
+                  defaultValue: 'Multiplayer',
+                })
+          }
+          testId='mode'
+        />
+        <ReadoutRow
           label={t('client.game_settings.players')}
-          value={String(options.playerCount)}
+          value={String(getRequiredHumanPlayerCount(options))}
           testId='players'
         />
+        {soloMode ? (
+          <ReadoutRow
+            label={t('client.game_settings.solo_difficulty', {
+              defaultValue: 'Difficulty',
+            })}
+            value={`D${options.soloDifficulty ?? 1}`}
+            testId='solo-difficulty'
+          />
+        ) : null}
         <ReadoutRow
           label={t('client.game_settings.alien_modules')}
           testId='alien-modules'

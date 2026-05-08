@@ -27,7 +27,10 @@ function traceSlotId(color: 'red' | 'yellow' | 'blue'): string {
   return `alien-${CENTAURIANS_ALIEN_INDEX}-discovery-${color}-trace`;
 }
 
-async function openTab(page: Page, name: 'Board' | 'Aliens'): Promise<void> {
+async function openTab(
+  page: Page,
+  name: 'Board' | 'Cards' | 'Aliens',
+): Promise<void> {
   const tab = page.getByRole('tab', { name });
   await expect(tab).toBeVisible({ timeout: 10_000 });
   await tab.click();

@@ -271,6 +271,8 @@
       "name": "Nome da Missão",
       "name_placeholder": "Mars Alpha-7",
       "players": "Operadores",
+      "solo_mode": "Rival Solo",
+      "solo_difficulty": "Dificuldade do Rival",
       "player_count": {
         "2": "2 Jogadores",
         "3": "3 Jogadores",
@@ -296,6 +298,7 @@
         "finished": "Finalizado"
       },
       "host": "Host",
+      "solo": "Solo",
       "players": "{{current}}/{{total}} jogadores",
       "aliens": "Alienígenas",
       "timer": "timer de {{seconds}}s"
@@ -309,7 +312,11 @@
     },
     "game_settings": {
       "title": "Parâmetros da Missão",
+      "mode": "Modo",
+      "mode_solo": "Solo",
+      "mode_multiplayer": "Multijogador",
       "players": "Operadores",
+      "solo_difficulty": "Dificuldade",
       "alien_modules": "Módulos Alienígenas",
       "undo": "Desfazer",
       "undo_allowed": "Permitido",
@@ -430,6 +437,15 @@
       "tech_alt": "Quantidade de tecnologia",
       "tech": "Tecnologia",
       "card_selection_active": "Seleção de carta ativa"
+    },
+    "rival_panel": {
+      "title": "Instituição Rival",
+      "progress": "Progresso",
+      "draw": "Compra",
+      "discard": "Descarte",
+      "current_card": "Ação",
+      "computer": "Computador",
+      "data_pool": "Reserva {{count}}"
     },
     "tech_display": {
       "title": "Espaços de Tecnologia",
@@ -552,6 +568,7 @@
       "dashboard": "Painel",
       "hand_and_missions": "Mão e Missões",
       "personal_board": "Painel Pessoal",
+      "rival_board": "Painel Rival",
       "mission_area": "Missões",
       "intel": "Intel",
       "hand": "Mão",

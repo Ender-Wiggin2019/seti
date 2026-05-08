@@ -1,5 +1,6 @@
 import { createActionEvent } from '@/engine/event/GameEvent.js';
 import type { IGame, IGamePlayerIdentity } from '@/engine/IGame.js';
+import { EMissionEventType } from '@/engine/missions/IMission.js';
 import { SectorFulfillmentEffect } from '../effects/scan/SectorFulfillmentEffect.js';
 import { DeferredAction, type PlayerInput } from './DeferredAction.js';
 import { EPriority } from './Priority.js';
@@ -23,7 +24,13 @@ export class ResolveSectorCompletion extends DeferredAction {
       (sectorId) => {
         const sector = game.sectors.find((s) => s.id === sectorId);
         const latestWinner = sector?.sectorWinners.at(-1);
-        if (!latestWinner) return;
+        if (!sector || !latestWinner) return;
+        game.missionTracker.recordEvent({
+          type: EMissionEventType.SECTOR_COMPLETED,
+          sectorId,
+          color: sector.color,
+          winnerPlayerId: latestWinner,
+        });
         game.eventLog.append(
           createActionEvent(this.player.id, 'SECTOR_COMPLETION_RESOLVED', {
             sectorId,

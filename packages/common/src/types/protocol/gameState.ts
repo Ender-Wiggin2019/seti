@@ -21,6 +21,7 @@ import {
   ETrace,
 } from '@seti/common/types/protocol/enums';
 import type { TGameEvent } from '@seti/common/types/protocol/events';
+import type { IPublicRivalState } from '@seti/common/types/protocol/solo';
 import type { ETechId, ITechBonusToken } from '@seti/common/types/tech';
 
 export interface IPublicResourceState {
@@ -427,6 +428,7 @@ export interface IPublicFinalScoringResult {
 
 export interface IPublicGameState {
   gameId: string;
+  isSoloMode?: boolean;
   round: number;
   phase: EPhase;
   currentPlayerId: string;
@@ -445,6 +447,7 @@ export interface IPublicGameState {
   milestones: IPublicMilestoneState;
   goldScoringTiles: IPublicGoldScoringTile[];
   finalScoringResult?: IPublicFinalScoringResult;
+  rival?: IPublicRivalState;
   /** Whether room-level undo is enabled for this game. */
   undoAllowed: boolean;
   /**
