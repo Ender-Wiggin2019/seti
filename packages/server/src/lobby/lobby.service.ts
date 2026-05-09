@@ -5,6 +5,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ALIEN_LOBBY_OPTION_MAP } from '@seti/common/constant/alienLobby';
 import { and, desc, eq } from 'drizzle-orm';
@@ -69,6 +70,8 @@ export class LobbyService {
     } catch (error) {
       throw new BadRequestException((error as Error).message);
     }
+
+    await this.ensureUserExists(userId);
 
     await this.db.insert(games).values({
       id: gameId,
@@ -161,6 +164,8 @@ export class LobbyService {
     if (room.status !== 'waiting') {
       throw new BadRequestException('Room is not accepting players');
     }
+
+    await this.ensureUserExists(userId);
 
     const existingPlayers = await this.getPlayersForGame(gameId);
 
@@ -298,6 +303,18 @@ export class LobbyService {
     await this.gameRepo.startFromLobby(game);
 
     return this.getRoomById(gameId);
+  }
+
+  private async ensureUserExists(userId: string): Promise<void> {
+    const [user] = await this.db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user) {
+      throw new UnauthorizedException('User not found. Please sign in again.');
+    }
   }
 
   private async getPlayersForGame(gameId: string): Promise<IRoomPlayer[]> {

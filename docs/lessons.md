@@ -1,5 +1,10 @@
 # Lessons
 
+## Server 边界错误处理
+
+- 受保护 HTTP 接口不能只相信 JWT 签名；如果请求会依赖 `users.id`，guard 或 service 边界必须确认 token `sub` 对应用户仍存在，孤儿 token 应返回明确 401。
+- 数据库外键只能作为最后一道完整性保护，不能替代业务校验；会写 `games.hostUserId` / `game_players.userId` 的 lobby 入口必须在写库前给出可理解的错误。
+
 ## E2E 覆盖关键玩法闭环
 
 - 不要把 login/lobby/game start/launch/scan 烟测当成游戏流程覆盖完成。涉及核心规则时，E2E 至少要覆盖用户真实操作到可观察规则结果的闭环。

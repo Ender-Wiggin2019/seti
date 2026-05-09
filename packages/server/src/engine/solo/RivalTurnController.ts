@@ -7,6 +7,7 @@ import {
   type IRivalActionCardDefinition,
   type TRivalActionCardId,
 } from '@seti/common/types/protocol/solo';
+import { createActionEvent } from '@/engine/event/GameEvent.js';
 import type { Game } from '@/engine/Game.js';
 import { RivalActionResolver } from './RivalActionResolver.js';
 import { RivalResourceResolver } from './RivalResourceResolver.js';
@@ -69,6 +70,17 @@ export class RivalTurnController {
       }
       rivalState.actionDeck.discard(resolved.resolvedCardId);
       rivalState.usedActionCardIdsThisRound.push(resolved.resolvedCardId);
+      if (resolved.actionKind) {
+        game.eventLog.append(
+          createActionEvent(rival.id, 'RIVAL_ACTION', {
+            cardId: resolved.resolvedCardId,
+            actionKind: resolved.actionKind,
+            ...(resolved.removedCardId
+              ? { removedCardId: resolved.removedCardId }
+              : {}),
+          }),
+        );
+      }
       this.finishTurn(game);
       if (resolved.actionKind) {
         return {

@@ -158,6 +158,32 @@ describe('RivalTurnController', () => {
     expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
   });
 
+  it('appends a public event with the revealed rival card id and resolved action kind', () => {
+    const game = createSoloGame();
+    const rival = game.players[1];
+    const rivalState = game.rivalState;
+    if (!rivalState) throw new Error('expected rival state');
+    rivalState.actionDeck = new Deck(['S.4']);
+
+    RivalTurnController.resolveCurrentTurn(game);
+
+    const event = game.eventLog
+      .toArray()
+      .find(
+        (candidate) =>
+          candidate.type === 'ACTION' &&
+          candidate.playerId === rival.id &&
+          candidate.action === 'RIVAL_ACTION',
+      );
+    if (!event || event.type !== 'ACTION') {
+      throw new Error('expected rival action event');
+    }
+    expect(event.details).toMatchObject({
+      cardId: 'S.4',
+      actionKind: ERivalActionKind.RESEARCH_TECH,
+    });
+  });
+
   it('passes when the rival action deck is empty and converts the removed EOR card to progress', () => {
     const game = createSoloGame();
     const rival = game.players[1];

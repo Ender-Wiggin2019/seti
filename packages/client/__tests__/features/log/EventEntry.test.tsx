@@ -37,4 +37,31 @@ describe('EventEntry', () => {
 
     expect(screen.getByText(/Lin \+3 VP/)).toBeInTheDocument();
   });
+
+  it('renders rival action events with card text and the shared rival card hover preview', () => {
+    render(
+      <EventEntry
+        event={{
+          type: EGameEventType.ACTION,
+          playerId: 'rival:solo',
+          action: 'RIVAL_ACTION',
+          details: {
+            cardId: 'S.4',
+            actionKind: 'research-tech',
+          },
+        }}
+        playerNames={{ 'rival:solo': 'Rival Institution' }}
+        index={2}
+      />,
+    );
+
+    expect(
+      screen.getByText(/Rival Institution revealed S\.4/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Research tech/i)).toBeInTheDocument();
+    expect(screen.getByTestId('rival-card-hover-S.4')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('rival-action-card-render-S.4'),
+    ).toBeInTheDocument();
+  });
 });

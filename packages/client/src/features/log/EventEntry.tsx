@@ -1,6 +1,12 @@
 import { useTranslation } from 'react-i18next';
+import { RivalActionCardRender } from '@/features/solo';
+import { formatRivalActionKind } from '@/features/solo/rivalActionCardPresentation';
 import { cn } from '@/lib/cn';
-import { EGameEventType, type TGameEvent } from '@/types/re-exports';
+import {
+  EGameEventType,
+  type TGameEvent,
+  type TRivalActionCardId,
+} from '@/types/re-exports';
 
 interface IEventEntryProps {
   event: TGameEvent;
@@ -132,6 +138,18 @@ function getEventDescription(
 ): string {
   switch (event.type) {
     case EGameEventType.ACTION: {
+      const rivalAction = getRivalActionEventDetails(event);
+      if (rivalAction) {
+        return t('client.event_entry.rival_action', {
+          player: getPlayerName(event.playerId, playerNames),
+          card: rivalAction.cardId,
+          action: rivalAction.actionKind
+            ? formatRivalActionKind(rivalAction.actionKind, t)
+            : t('client.rival_action_card.unknown_action', {
+                defaultValue: 'action',
+              }),
+        });
+      }
       const actionLabel =
         typeof event.action === 'string' ? event.action : event.action.type;
       return t('client.event_entry.action', {
@@ -185,12 +203,30 @@ function getEventDescription(
   }
 }
 
+function getRivalActionEventDetails(
+  event: TGameEvent,
+): { cardId: TRivalActionCardId; actionKind?: string } | null {
+  if (event.type !== EGameEventType.ACTION || event.action !== 'RIVAL_ACTION') {
+    return null;
+  }
+  const details = event.details ?? {};
+  const cardId = details.cardId;
+  if (typeof cardId !== 'string' || !/^S\.\d+$/.test(cardId)) {
+    return null;
+  }
+  const actionKind =
+    typeof details.actionKind === 'string' ? details.actionKind : undefined;
+  return { cardId: cardId as TRivalActionCardId, actionKind };
+}
+
 export function EventEntry({
   event,
   playerNames = {},
   index,
 }: IEventEntryProps): React.JSX.Element {
   const { t } = useTranslation('common');
+  const rivalAction = getRivalActionEventDetails(event);
+
   return (
     <article
       className={cn(
@@ -199,6 +235,7 @@ export function EventEntry({
         'hover:bg-[oklch(0.16_0.025_260/0.6)] transition-colors',
       )}
       data-testid={`event-entry-${index}`}
+      tabIndex={rivalAction ? 0 : undefined}
     >
       <span
         className={cn(
@@ -217,6 +254,14 @@ export function EventEntry({
       <span className='mt-0.5 font-mono text-[10px] tabular-nums text-text-500'>
         {String(index + 1).padStart(3, '0')}
       </span>
+      {rivalAction ? (
+        <div
+          className='pointer-events-none absolute right-1 top-full z-30 mt-1 hidden w-40 group-hover:block group-focus-within:block'
+          data-testid={`rival-card-hover-${rivalAction.cardId}`}
+        >
+          <RivalActionCardRender cardId={rivalAction.cardId} compact />
+        </div>
+      ) : null}
     </article>
   );
 }

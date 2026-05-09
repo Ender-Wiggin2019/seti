@@ -389,6 +389,7 @@
     },
     "event_entry": {
       "action": "{{player}} used {{action}}",
+      "rival_action": "{{player}} revealed {{card}} and resolved {{action}}",
       "free_action": "{{player}} used free {{action}}",
       "input": "{{player}} responded with {{response}}",
       "resource_change": "{{player}} {{direction}} {{amount}} {{resource}}",
@@ -442,11 +443,106 @@
     "rival_panel": {
       "title": "Rival Institution",
       "progress": "Progress",
+      "progress_total": "Total {{count}}",
       "draw": "Draw",
       "discard": "Discard",
       "current_card": "Action",
+      "no_current_card": "No card",
+      "tech_pile": "Tech pile",
+      "tech_probe": "Probe",
+      "tech_scan": "Scan",
+      "tech_computer": "Computer",
+      "rules": "Rival rules",
+      "rules_title": "Rival rules",
+      "rules_progress": "Rival progress advances around a 12-slot cycle; crossing the deck slot adds advanced action cards.",
+      "rules_tech": "The tech pile counts Rival-owned Probe, Scan, and Computer tech.",
+      "rules_objectives": "Rival objectives are public goals; marked tasks move to the completed pile when all tasks are done.",
+      "objectives": "Objectives",
+      "objectives_completed": "Done {{count}}",
+      "no_objectives": "None",
+      "no_completed_objectives": "No completed objectives",
       "computer": "Computer",
       "data_pool": "Pool {{count}}"
+    },
+    "rival_action_card": {
+      "unknown": "Unknown card",
+      "unknown_action": "action",
+      "image_alt": "Rival action card {{card}}",
+      "tiers": {
+        "basic": "Basic",
+        "advanced": "Advanced",
+        "species-special": "Species"
+      },
+      "decisions": {
+        "left": "Left",
+        "right": "Right"
+      },
+      "actions": {
+        "analyze-data": "Analyze data",
+        "launch-probe": "Launch probe",
+        "research-tech": "Research tech",
+        "probe-placement": "Probe placement",
+        "scan": "Scan",
+        "species-replacement-check": "Species check",
+        "mark-trace": "Mark trace",
+        "mark-any-trace": "Mark any trace",
+        "play-danger-card": "Play danger card",
+        "start-countdown": "Start countdown"
+      },
+      "candidate": {
+        "paid": "paid",
+        "free": "free",
+        "movement": "{{count}} movement",
+        "planets": "Targets: {{planets}}",
+        "probe_target": "Target: {{target}}",
+        "alien_index": "Alien {{index}}"
+      },
+      "probe_placements": {
+        "orbiter": "Orbiter",
+        "lander": "Lander"
+      },
+      "probe_targets": {
+        "oumuamua": "Oumuamua"
+      }
+    },
+    "rival_objective": {
+      "unknown": "Unknown objective",
+      "image_alt": "Rival objective {{objective}}",
+      "tasks": {
+        "min_score": "Reach {{amount}} VP",
+        "min_data_pool": "Store {{amount}} data",
+        "min_publicity": "Reach {{amount}} publicity",
+        "unknown": "Objective trigger",
+        "either": "{{items}}",
+        "either_separator": " or "
+      },
+      "triggers": {
+        "probe-launched": "Launch a probe",
+        "scan-performed": "Scan",
+        "tech-probe": "Probe tech",
+        "tech-scan": "Scan tech",
+        "tech-computer": "Computer tech",
+        "tech-any": "Any tech",
+        "trace-blue": "Blue trace",
+        "probe-visited-asteroids": "Visit asteroids",
+        "probe-visited-comet": "Visit a comet",
+        "card-cost-3": "Play a 3-cost card",
+        "mission-completed": "Complete a mission",
+        "probe-landed": "Land a probe",
+        "probe-orbited": "Orbit a probe",
+        "planet-venus": "Venus mission",
+        "planet-mercury": "Mercury mission",
+        "planet-jupiter": "Jupiter mission",
+        "planet-saturn": "Saturn mission",
+        "planet-mars": "Mars mission",
+        "planet-neptune": "Neptune mission",
+        "planet-uranus": "Uranus mission",
+        "sector-dominance": "Win any sector",
+        "sector-dominance-yellow": "Win yellow sector",
+        "sector-dominance-red": "Win red sector",
+        "sector-dominance-blue": "Win blue sector",
+        "sector-dominance-black": "Win black sector"
+      }
     },
     "tech_display": {
       "title": "Tech Slots",

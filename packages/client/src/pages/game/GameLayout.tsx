@@ -928,6 +928,12 @@ function PersonalColumn({
       })
     | undefined;
   const missionCards = extendedPlayer?.playedMissions ?? [];
+  const rivalTechs =
+    gameState?.rival && gameState.players
+      ? (gameState.players.find(
+          (player) => player.playerId === gameState.rival?.rivalPlayerId,
+        )?.techs ?? [])
+      : [];
 
   return (
     <aside
@@ -975,7 +981,7 @@ function PersonalColumn({
             </p>
             <div aria-hidden className='section-head__rule' />
           </div>
-          <RivalPanel rival={gameState.rival} />
+          <RivalPanel rival={gameState.rival} rivalTechs={rivalTechs} />
         </section>
       ) : null}
 

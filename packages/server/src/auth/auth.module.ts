@@ -18,9 +18,12 @@ import { JwtAuthGuard } from './jwt-auth.guard.js';
     AuthService,
     {
       provide: APP_GUARD,
-      inject: [JwtService, Reflector],
-      useFactory: (jwtService: JwtService, reflector: Reflector) =>
-        new JwtAuthGuard(jwtService, reflector),
+      inject: [JwtService, Reflector, AuthService],
+      useFactory: (
+        jwtService: JwtService,
+        reflector: Reflector,
+        authService: AuthService,
+      ) => new JwtAuthGuard(jwtService, reflector, authService),
     },
   ],
   exports: [AuthService],

@@ -1,5 +1,153 @@
 # TODO
 
+## 当前任务：Cloudflare Workers 接入评估
+
+假设与权衡：
+- 本轮只做 server/client 接入 Cloudflare Workers 的可行性评估和方案文档，不改运行代码、不引入 Cloudflare 配置文件。
+- “接入 Cloudflare Workers”按两种目标分别判断：client 静态资源部署到 Cloudflare Pages/Workers Assets；server 运行在 Cloudflare Workers runtime。
+- 如果 server 不能直接接入，需要明确阻塞依赖、必要改造、推荐阶段性路线和验证方式；不在没有确认的情况下启动迁移实现。
+- 评估以当前仓库代码和 package 配置为准，不假设未来会替换框架或数据库。
+
+- [x] 审计 server runtime 依赖
+  - 验证: 定位 Nest/Express、Socket.IO、Postgres/Drizzle、Node API、长连接/内存状态等 Workers 兼容性风险
+- [x] 审计 client 部署与 API/WS 配置
+  - 验证: 明确 Vite build 是否可作为静态资源部署，以及 API/WS endpoint 如何切换到 Cloudflare 域名
+- [x] 形成接入结论与改造路线
+  - 验证: 给出“能/不能直接接入”的结论、推荐架构、改造清单、风险和验证计划
+- [x] 生成方案文档
+  - 验证: 文档落在 `docs/` 下，能作为后续实施计划入口
+- [x] 记录 review
+  - 验证: 本段末尾补充文档路径、结论摘要和未执行项
+
+Review:
+- 已生成方案文档：`docs/cloudflare-workers-assessment.md`。
+- 结论：`packages/client` 可以先接入 Cloudflare Static Assets / Pages；`packages/server` 不能以当前 Nest `app.listen` + Socket.IO gateway + `pg.Pool` + 进程内 `GameManager` cache/timer/checkpoint 的形态原样运行在 Cloudflare Workers runtime。
+- 推荐路线：先把 client 静态部署到 Cloudflare，server 保持 Node origin 并通过 Cloudflare DNS/Tunnel/HTTPS 暴露；后续如需 full Workers 化，新建 Worker API adapter，并把 per-game realtime/game runtime 迁到 Durable Object。
+- 本轮验证：阅读并核对 `packages/server/src/main.ts`、`packages/server/src/gateway/game.gateway.ts`、`packages/server/src/gateway/GameManager.ts`、`packages/server/src/persistence/drizzle.module.ts`、`packages/client/src/config/env.ts`、`packages/client/src/api/httpClient.ts`、`packages/client/src/api/wsClient.ts`；确认现有 `packages/client/dist` 约 170 个文件，最大单文件约 2.3 MiB，适合静态资源托管。
+- 格式验证：尝试运行 `pnpm exec biome check docs/cloudflare-workers-assessment.md docs/TODO.md`，Biome 按当前配置忽略 Markdown，结果为 0 files processed；已人工复读文档和 TODO 顶部段落。
+- 未执行项：没有新增 `wrangler` 配置、没有改 server/client 运行代码、没有跑构建或 E2E；本轮产物是评估方案，真实迁移需另起实施任务并按阶段验证。
+
+## 当前任务：Solo E2E 冒烟完整化
+
+假设与权衡：
+- 本轮按 `$e2e-guide` 执行，E2E 不 mock network/websocket，不注入 auth state，不调用 `/debug/*`，不直接驱动 websocket action。
+- “完整冒烟”不等于覆盖所有规则分支；本轮目标是把 solo 的真实用户主路径补到可验证：UI 注册/登录、创建 solo 房间、启动真实 game、核心面板存在、Rival panel 细节存在、PASS 后 rival 自动状态更新、同一用户第二会话能看到同步状态。
+- “不同 alien 的结算”按可维护的矩阵设计：冒烟层验证 enabled alien 的 board/settlement surface 与已发现后的关键 UI 结果；已经存在的 Anomalies/Centaurians/Oumuamua slow real-ui 流程继续作为深度结算覆盖，本轮优先补齐 solo smoke 的维度和缺口，不用 debug replay 替代。
+- 工作区已有未提交改动；本轮只改 E2E/spec/helper 与 TODO 记录，不回滚既有改动。
+
+- [x] 审计现有 solo/alien E2E 与 helper
+  - 验证: 明确哪些测试是真实 UI、哪些覆盖 UI 存在、哪些覆盖状态更新、哪些覆盖 alien 结算
+- [x] 扩展 solo smoke 的真实用户流程
+  - 验证: UI 注册后用第二 browser context 通过登录进入同一个 solo game，不使用 token 注入
+- [x] 补齐 solo game UI 多维断言
+  - 验证: bottom dashboard/actions/hand、resource bar、event log、board/cards/aliens tabs、rival progress cycle、deck/current card/computer/objectives/tech pile/action card render 都可见且结构合理
+- [x] 补齐状态更新与跨会话同步断言
+  - 验证: human PASS 后 event log 增加，Rival current card 可见，PASS 回到 enabled；第二会话观察到同一 Rival panel snapshot 与 event log 更新
+- [x] 设计并实现 alien 结算矩阵 smoke
+  - 验证: 每个 core alien 的启用组合有明确 expected settlement selectors；冒烟层至少断言对应 board surface，深度 slow real-ui 用例覆盖 Anomalies/Centaurians/Oumuamua 已发现结算，Mascamites/Exertians 若缺真实 UI 深度路径则在 review 中列为残余缺口
+- [x] 运行定向验证
+  - 验证: E2E tsc 通过；目标 Playwright spec 在隔离真实 server/client/db 下通过
+- [x] 记录 review
+  - 验证: 本段末尾补充改动、命令结果、覆盖矩阵和残余风险
+
+Review:
+- Solo smoke：`packages/e2e/tests/solo-smoke.spec.ts` 从单页“能开局 + PASS 后快照变化”扩展为真实双会话流程。Host 通过 UI register/create solo room/start game；observer 通过 UI login 进入同一个 room/game，没有 token 注入、没有 debug endpoint、没有 websocket shortcut。
+- UI 覆盖：host 会话断言 bottom actions/dashboard/hand、resource bar、income/data、main actions、Board/Cards/Aliens tabs、event log；Rival panel 断言 progress cycle 12 slot、active slot、draw/discard/current card、tech pile 三类计数、3 张 objective、completed objective pile、6 个 computer slot、rules dialog。Alien smoke surface 断言两个 alien card、discovery/overflow zone 和 red/yellow/blue trace columns。
+- 状态更新：PASS 后只由 actor 会话处理真实 EOR pending input，避免同用户双会话重复提交；断言 PASS 回到 enabled、event log 增加、Rival current card 可见、event log hover card 存在，并验证 observer 会话最终看到与 host 一致的 Rival panel snapshot 与增加后的 event log。
+- Alien 结算矩阵：新增 `packages/e2e/tests/alien-settlement-real-flow.spec.ts`，补齐之前缺少深度真实 UI 覆盖的 Mascamites 与 Exertians。两个用例都走真实 2-player UI、真实卡牌/行动/输入完成三色 discovery，再断言 Mascamites sample board / trace columns 与 Exertians milestone / trace columns。Anomalies、Centaurians、Oumuamua 继续由现有 `alien-discovery-real-flow.spec.ts`、`centaurians-real-flow.spec.ts`、`oumuamua-real-flow.spec.ts` 覆盖深度结算。
+- 验证通过：`node_modules/.pnpm/node_modules/.bin/tsc -p packages/e2e/tsconfig.json --noEmit`。
+- 验证通过：`NINJA_ENV=production ./scripts/run-e2e-local.sh tests/solo-smoke.spec.ts`，1 passed，17.5s。
+- 验证通过：`NINJA_ENV=production ./scripts/run-e2e-local.sh tests/alien-settlement-real-flow.spec.ts`，2 passed，49.0s。
+- 验证通过：`pnpm exec biome check packages/e2e/tests/solo-smoke.spec.ts packages/e2e/tests/alien-settlement-real-flow.spec.ts docs/TODO.md`。Biome 当前实际检查 2 个 TS spec，docs Markdown 仍按现有配置忽略。
+- 运行说明：首次验证前本机已有同项目 3000/5173 进程，导致 `run-e2e-local.sh` 端口占用且复用环境较慢；已停止这两个同项目进程后用脚本启动干净 server/client 完成最终验证。
+
+## 当前任务：client toast 层级与 Rival progress cycle 优化
+
+假设与权衡：
+- error toast 的“最高层级”指它至少应高于现有 Dialog overlay（当前 `z-[1000]`），使 server error 在弹窗、overlay 或 debug 浮层上方仍可见；本轮只调整 toast portal 容器层级，不引入全局 z-index token 重构。
+- Rival progress 的 cycle 指 12 个 progress slot 视觉上环形排布，而不是当前 `grid-cols-6` 两行；保留 `progressSlot` 当前 slot 高亮、`progress` 总数 readout、image/text mode 的填充差异。
+- 这是 client-only UI 修复，不改 server 规则、common 协议或 rival progress 计数逻辑。
+- 工作区已有未提交改动；本轮只在相关 client 文件和测试上做最小增量，不回滚既有改动。
+
+- [x] 写失败测试：toast portal 层级高于 Dialog
+  - 验证: 当前 `z-[100]` 会让测试失败；修复后 toast root 明确使用高于 `z-[1000]` 的语义层级
+- [x] 写失败测试：Rival progress 使用环形 cycle 排版
+  - 验证: 当前 `grid grid-cols-6` 两行实现会失败；修复后 12 个 slot 仍存在且容器标记为 radial/cycle layout
+- [x] 实现最小 UI 修复
+  - 验证: 只改 `toast.tsx` 的 portal 层级和 `RivalPanel.tsx` 的 progress cycle 排版/样式，不触碰 rival 规则逻辑
+- [x] 运行定向验证
+  - 验证: `pnpm --filter @seti/client test -- RivalPanel.test.tsx toast.test.tsx` 或对应定向测试通过；必要时跑 client typecheck
+- [x] 浏览器视觉检查
+  - 验证: 本地 client 中 error toast 可盖过 dialog；Rival progress 在 desktop/mobile 或窄容器下保持环形、文字不溢出
+- [x] 记录 review
+  - 验证: 本段末尾补充实际改动、命令结果和残余风险
+
+Review:
+- Toast 修复：`Toaster` portal 容器从 `z-[100]` 提升到 `z-[1100]`，高于现有 Dialog overlay 的 `z-[1000]`，server error toast 不会再被 modal/overlay 遮挡。
+- Rival progress 修复：`RivalProgressCycle` 从 `grid grid-cols-6` 两行布局改为 128px 环形轨道，12 个 slot 通过 rotate/translate 排布在同一半径上；保留 `progressSlot` 当前高亮、image mode 填充色和 text mode 边框色。
+- 测试：新增 `Toast.test.tsx` 覆盖 toast z-index 高于 Dialog；扩展 `RivalPanel.test.tsx` 覆盖 `data-layout="radial-cycle"`、不再使用 `grid-cols-6`、12 个 slot 和当前 slot transform。
+- 红灯确认：修复前 `RivalPanel.test.tsx` 失败于缺少 `data-layout="radial-cycle"`；`Toast.test.tsx` 失败于 `expected 100 to be greater than 1000`。
+- 验证通过：`pnpm --filter @seti/client test -- RivalPanel.test.tsx Toast.test.tsx`（11 tests）、`pnpm --filter @seti/client typecheck`、`pnpm exec biome check packages/client/src/components/ui/toast.tsx packages/client/src/features/solo/RivalPanel.tsx packages/client/__tests__/components/Toast.test.tsx packages/client/__tests__/features/solo/RivalPanel.test.tsx`。
+- 浏览器验证：使用 bundled Node 启动 Vite 后通过 Playwright 动态挂载 `RivalPanel` / `Toaster`，确认 cycle 为 `radial-cycle`、slot count 为 12、所有 slot 半径均为 52px、toast computed z-index 为 1100，高于 overlay 1000。默认 Node 18 无法启动 Vite，已改用 Codex bundled Node；Vite 服务验证后已停止。
+
+## 当前任务：修复 lobby 孤儿用户 500
+
+假设与权衡：
+- 当前错误来自有效 JWT 的 `sub` 在 `users` 表中不存在，`LobbyService.createRoom` 直接写 `games.hostUserId` 触发外键失败。
+- 这属于身份边界问题：受保护 HTTP 接口应在 JWT 验签后确认用户仍存在；lobby 对会写用户外键的入口再做一次最小防御校验。
+- 本轮只修 `auth` / `lobby` 的明确错误返回，不引入全局数据库异常映射，不改游戏规则或前端。
+
+- [x] 写失败测试：孤儿 JWT 访问受保护 HTTP 接口返回 401
+  - 验证: `jwt-auth.guard.integration.test.ts` 能在用户不存在时失败于当前 200 行为
+- [x] 写失败测试：lobby 创建/加入时 userId 不存在返回明确 401
+  - 验证: `lobby.service.test.ts` 覆盖写 `games` / `game_players` 前的校验
+- [x] 实现最小修复
+  - 验证: guard 验签后查用户，lobby 写用户外键前校验用户存在
+- [x] 运行定向验证
+  - 验证: auth guard / lobby service 测试通过，必要时 server typecheck 通过
+- [x] 记录 review
+  - 验证: 本段末尾补充实际改动、命令结果和残余风险
+
+Review:
+- Root cause：`JwtAuthGuard` 之前只验 JWT 签名，不确认 `sub` 对应用户仍存在；`LobbyService.createRoom` 随后直接写 `games.hostUserId`，孤儿用户 ID 触发数据库外键错误并冒成 500。
+- Auth 修复：`JwtAuthGuard` 现在验签后调用 `AuthService.getProfile(payload.sub)`，孤儿 JWT 会在进入 controller 前返回 401；无 token / 无效 token 仍保持原有 401。
+- Lobby 修复：`createRoom` 和 `joinRoom` 在写 `games.hostUserId` / `game_players.userId` 前调用 `ensureUserExists`，即使 service 被绕过 guard 直接调用，也返回 `UnauthorizedException('User not found. Please sign in again.')`，不会让 FK 错误承担业务校验。
+- 测试：新增失败优先测试覆盖孤儿 JWT 和 lobby orphan user 写入；红灯分别失败于 200 / resolved room，修复后通过。
+- 验证通过：`pnpm --filter @seti/server test -- jwt-auth.guard.integration.test.ts lobby.service.test.ts`（17 tests）、`pnpm --filter @seti/server typecheck`、`pnpm --filter @seti/server lint`。
+- 残余风险：WebSocket gateway 当前仍只验 JWT 签名，没有同步查 `users`；本次错误来自 HTTP lobby 创建房间，未扩大到 gateway 行为，后续可以单独补同样的身份存在性校验。
+
+## 当前任务：Solo / Rival client UI 完整化
+
+假设与权衡：
+- 本轮按用户列出的 client UI 需求补齐 solo rival board、rival card/objective render 和 event log；server 只补 public event 所需的最小字段，不把 rival AI 放到 client。
+- Image mode 优先使用已存在或可明确映射的图片资源；若某张 rival action/objective 正面图缺失，必须回退到同一个独立 Rival card text renderer，不能临时用无意义图片伪装。
+- Text mode 使用独立 Rival card/objective 组件，不复用普通 SETI card 的 `TextCard` 结构，但奖励/规则图标仍优先复用 `DescRender`。
+- progress cycle 以规则里的 12 格 progress track 为准，使用 `progressSlot` 标记当前位置；image mode 小圆填充颜色，text mode 仅边框颜色。
+- tech pile 从 public player state 中 synthetic rival 的 `techs` 统计三类 tech 数量，不在 client 推断隐藏状态。
+
+- [x] 写失败测试：Rival board 通用渲染
+  - 验证: progress cycle 12 个编号小圆、当前 slot 高亮且 image/text mode 样式不同；tech pile 三类计数可见；rule 按钮打开多语言 dialog
+- [x] 写失败测试：Rival card/objective 独立渲染
+  - 验证: text mode objective 与 action card 使用 desc/文案渲染；image mode 通过 card id/objective id 查图片，缺图时回退文字卡
+- [x] 写失败测试：Rival event log
+  - 验证: server 自动 rival turn 产生 public log event，client 展示具体 card id/action 文案，hover/focus 可看到同一个 Rival card render
+- [x] 实现 common/server 最小协议补齐
+  - 验证: `RivalTurnController` eventLog 包含 card id/action kind；common event type 或 ACTION details 类型覆盖该事件
+- [x] 实现 client UI 组件与 i18n
+  - 验证: en/zh-CN/pt-BR 至少覆盖新增 key；RivalPanel/EventEntry 组件测试通过
+- [x] 运行定向验证与浏览器检查
+  - 验证: common/server/client 定向测试、typecheck，必要时启动本地 app 用 Playwright 检查 solo UI
+- [x] 完成审计并记录 review
+  - 验证: 对照用户每条需求逐项映射到文件/测试/命令结果，缺口不得标记完成
+
+Review:
+- Rival board：`RivalPanel` 现在渲染 12 格 progress cycle，image mode 以背景色填充圆点，text mode 仅保留彩色边框；同时新增三类 tech pile 计数、header 规则按钮和多语言规则 dialog。`GameLayout` 从 synthetic rival public player state 传入 `techs`，不在 client 推断隐藏状态。
+- Rival card/objective render：新增独立 `RivalActionCardRender` 与 `RivalObjectiveCard`，image mode 通过 id 查 `/assets/seti/solo/action-cards/S.*.jpg` 与 `/assets/seti/solo/objective-cards/SOLO.*.png`；text mode 使用独立文字卡，文案从 common action/objective data 生成并走 en/zh-CN/pt-BR i18n。已从 `frontend-reference` 的 `deckData.automaActions` / `deckData.soloGoals` 同步 19 张 rival action 图和 24 张 objective 图到 client public assets。
+- Event log：`RivalTurnController` 在自动 rival action 成功解析后追加 public `ACTION / RIVAL_ACTION` event，details 包含 `cardId`、`actionKind`，species replacement 时包含 `removedCardId`；`EventEntry` 特判该 event，展示具体卡牌和行动文本，并在 hover/focus 区域复用同一个 Rival action card renderer。
+- 验证通过：`pnpm --filter @seti/client test -- RivalPanel.test.tsx EventEntry.test.tsx`（13 tests）、`pnpm --filter @seti/server test -- RivalTurnController.test.ts`（40 tests）、`pnpm typecheck`、`pnpm lint`、针对本轮触达文件的 `pnpm exec biome format ...`。
+- 真实 UI 验证：隔离端口运行 `PORT=3100 SERVER_URL=http://127.0.0.1:3100 WS_URL=http://127.0.0.1:3100 VITE_API_URL=http://127.0.0.1:3100 VITE_WS_URL=http://127.0.0.1:3100 NINJA_ENV=production ./scripts/run-e2e-local.sh tests/solo-smoke.spec.ts`，1 passed；Browser 手动打开本地 solo game，确认可见 Rival panel、12 个 progress slot、tech pile、3 张 objective 图片均加载为 215x215，规则 dialog 可打开并显示中文文案。
+- 验证说明：完整 `pnpm format:check` 会扫描既有 `packages/e2e/playwright-report` 生成物并输出第三方 bundle 格式 diff，本轮未把它作为最终格式门禁；已对本轮触达源码、测试、locale、TODO 文件做定向 Biome format check。
+
 ## 当前任务：Solo / Rival 全流程 E2E 验证
 
 假设与权衡：

@@ -137,7 +137,7 @@ export function Toaster(): React.JSX.Element | null {
   if (!mounted || toasts.length === 0) return null;
 
   return createPortal(
-    <div className='fixed bottom-4 right-4 z-[100] flex flex-col-reverse gap-2 pointer-events-none'>
+    <div className='fixed bottom-4 right-4 z-[1100] flex flex-col-reverse gap-2 pointer-events-none'>
       {toasts.map((t) => (
         <ToastItem key={t.id} toast={t} onDismiss={() => removeToast(t.id)} />
       ))}

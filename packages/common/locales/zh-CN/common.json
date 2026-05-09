@@ -392,6 +392,7 @@
     },
     "event_entry": {
       "action": "{{player}} 使用了 {{action}}",
+      "rival_action": "{{player}} 翻开 {{card}} 并结算 {{action}}",
       "free_action": "{{player}} 使用了免费行动 {{action}}",
       "input": "{{player}} 响应 {{response}}",
       "resource_change": "{{player}} {{direction}} {{amount}} {{resource}}",
@@ -445,11 +446,106 @@
     "rival_panel": {
       "title": "Rival 机构",
       "progress": "进度",
+      "progress_total": "总计 {{count}}",
       "draw": "牌库",
       "discard": "弃牌",
       "current_card": "行动",
+      "no_current_card": "无卡牌",
+      "tech_pile": "科技堆",
+      "tech_probe": "探测",
+      "tech_scan": "扫描",
+      "tech_computer": "计算机",
+      "rules": "Rival 规则",
+      "rules_title": "Rival 规则",
+      "rules_progress": "Rival progress 会沿 12 格循环前进；越过牌库格时加入高级行动牌。",
+      "rules_tech": "科技堆统计 Rival 拥有的探测、扫描、计算机三类科技。",
+      "rules_objectives": "Rival objectives 是公开目标；任务全部标记后移入完成堆。",
+      "objectives": "目标",
+      "objectives_completed": "完成 {{count}}",
+      "no_objectives": "无",
+      "no_completed_objectives": "暂无完成目标",
       "computer": "计算机",
       "data_pool": "池 {{count}}"
+    },
+    "rival_action_card": {
+      "unknown": "未知卡牌",
+      "unknown_action": "行动",
+      "image_alt": "Rival 行动牌 {{card}}",
+      "tiers": {
+        "basic": "基础",
+        "advanced": "高级",
+        "species-special": "物种"
+      },
+      "decisions": {
+        "left": "左",
+        "right": "右"
+      },
+      "actions": {
+        "analyze-data": "分析数据",
+        "launch-probe": "发射探测器",
+        "research-tech": "研究科技",
+        "probe-placement": "探测器放置",
+        "scan": "扫描",
+        "species-replacement-check": "物种检查",
+        "mark-trace": "标记痕迹",
+        "mark-any-trace": "标记任意痕迹",
+        "play-danger-card": "打出危险牌",
+        "start-countdown": "开始倒计时"
+      },
+      "candidate": {
+        "paid": "付费",
+        "free": "免费",
+        "movement": "{{count}} 移动",
+        "planets": "目标：{{planets}}",
+        "probe_target": "目标：{{target}}",
+        "alien_index": "外星人 {{index}}"
+      },
+      "probe_placements": {
+        "orbiter": "轨道",
+        "lander": "着陆"
+      },
+      "probe_targets": {
+        "oumuamua": "奥陌陌"
+      }
+    },
+    "rival_objective": {
+      "unknown": "未知目标",
+      "image_alt": "Rival 目标 {{objective}}",
+      "tasks": {
+        "min_score": "达到 {{amount}} VP",
+        "min_data_pool": "储存 {{amount}} 数据",
+        "min_publicity": "达到 {{amount}} 声望",
+        "unknown": "目标触发",
+        "either": "{{items}}",
+        "either_separator": " 或 "
+      },
+      "triggers": {
+        "probe-launched": "发射探测器",
+        "scan-performed": "扫描",
+        "tech-probe": "探测科技",
+        "tech-scan": "扫描科技",
+        "tech-computer": "计算机科技",
+        "tech-any": "任意科技",
+        "trace-blue": "蓝色痕迹",
+        "probe-visited-asteroids": "访问小行星",
+        "probe-visited-comet": "访问彗星",
+        "card-cost-3": "打出 3 费卡牌",
+        "mission-completed": "完成任务",
+        "probe-landed": "探测器着陆",
+        "probe-orbited": "探测器入轨",
+        "planet-venus": "金星任务",
+        "planet-mercury": "水星任务",
+        "planet-jupiter": "木星任务",
+        "planet-saturn": "土星任务",
+        "planet-mars": "火星任务",
+        "planet-neptune": "海王星任务",
+        "planet-uranus": "天王星任务",
+        "sector-dominance": "赢得任意扇区",
+        "sector-dominance-yellow": "赢得黄色扇区",
+        "sector-dominance-red": "赢得红色扇区",
+        "sector-dominance-blue": "赢得蓝色扇区",
+        "sector-dominance-black": "赢得黑色扇区"
+      }
     },
     "tech_display": {
       "title": "科技槽",

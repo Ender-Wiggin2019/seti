@@ -388,6 +388,7 @@
     },
     "event_entry": {
       "action": "{{player}} usou {{action}}",
+      "rival_action": "{{player}} revelou {{card}} e resolveu {{action}}",
       "free_action": "{{player}} usou ação livre {{action}}",
       "input": "{{player}} respondeu com {{response}}",
       "resource_change": "{{player}} {{direction}} {{amount}} {{resource}}",
@@ -441,11 +442,106 @@
     "rival_panel": {
       "title": "Instituição Rival",
       "progress": "Progresso",
+      "progress_total": "Total {{count}}",
       "draw": "Compra",
       "discard": "Descarte",
       "current_card": "Ação",
+      "no_current_card": "Sem carta",
+      "tech_pile": "Pilha de tecnologia",
+      "tech_probe": "Sonda",
+      "tech_scan": "Escaneamento",
+      "tech_computer": "Computador",
+      "rules": "Regras do Rival",
+      "rules_title": "Regras do Rival",
+      "rules_progress": "O progress do Rival avança em um ciclo de 12 espaços; cruzar o espaço do baralho adiciona cartas avançadas.",
+      "rules_tech": "A pilha de tecnologia conta as tecnologias de Sonda, Escaneamento e Computador do Rival.",
+      "rules_objectives": "Os objectives do Rival são metas públicas; tarefas marcadas vão para a pilha concluída quando todas forem feitas.",
+      "objectives": "Objetivos",
+      "objectives_completed": "Feitos {{count}}",
+      "no_objectives": "Nenhum",
+      "no_completed_objectives": "Sem objetivos concluídos",
       "computer": "Computador",
       "data_pool": "Reserva {{count}}"
+    },
+    "rival_action_card": {
+      "unknown": "Carta desconhecida",
+      "unknown_action": "ação",
+      "image_alt": "Carta de ação do Rival {{card}}",
+      "tiers": {
+        "basic": "Básica",
+        "advanced": "Avançada",
+        "species-special": "Espécie"
+      },
+      "decisions": {
+        "left": "Esquerda",
+        "right": "Direita"
+      },
+      "actions": {
+        "analyze-data": "Analisar dados",
+        "launch-probe": "Lançar sonda",
+        "research-tech": "Pesquisar tecnologia",
+        "probe-placement": "Colocar sonda",
+        "scan": "Escanear",
+        "species-replacement-check": "Checar espécie",
+        "mark-trace": "Marcar traço",
+        "mark-any-trace": "Marcar qualquer traço",
+        "play-danger-card": "Jogar carta de perigo",
+        "start-countdown": "Iniciar contagem"
+      },
+      "candidate": {
+        "paid": "pago",
+        "free": "grátis",
+        "movement": "{{count}} movimento",
+        "planets": "Alvos: {{planets}}",
+        "probe_target": "Alvo: {{target}}",
+        "alien_index": "Alien {{index}}"
+      },
+      "probe_placements": {
+        "orbiter": "Orbitador",
+        "lander": "Pouso"
+      },
+      "probe_targets": {
+        "oumuamua": "Oumuamua"
+      }
+    },
+    "rival_objective": {
+      "unknown": "Objetivo desconhecido",
+      "image_alt": "Objetivo do Rival {{objective}}",
+      "tasks": {
+        "min_score": "Alcance {{amount}} VP",
+        "min_data_pool": "Armazene {{amount}} dados",
+        "min_publicity": "Alcance {{amount}} publicidade",
+        "unknown": "Gatilho de objetivo",
+        "either": "{{items}}",
+        "either_separator": " ou "
+      },
+      "triggers": {
+        "probe-launched": "Lance uma sonda",
+        "scan-performed": "Escaneie",
+        "tech-probe": "Tecnologia de sonda",
+        "tech-scan": "Tecnologia de escaneamento",
+        "tech-computer": "Tecnologia de computador",
+        "tech-any": "Qualquer tecnologia",
+        "trace-blue": "Traço azul",
+        "probe-visited-asteroids": "Visite asteroides",
+        "probe-visited-comet": "Visite um cometa",
+        "card-cost-3": "Jogue uma carta de custo 3",
+        "mission-completed": "Complete uma missão",
+        "probe-landed": "Pouse uma sonda",
+        "probe-orbited": "Orbite uma sonda",
+        "planet-venus": "Missão em Vênus",
+        "planet-mercury": "Missão em Mercúrio",
+        "planet-jupiter": "Missão em Júpiter",
+        "planet-saturn": "Missão em Saturno",
+        "planet-mars": "Missão em Marte",
+        "planet-neptune": "Missão em Netuno",
+        "planet-uranus": "Missão em Urano",
+        "sector-dominance": "Vença qualquer setor",
+        "sector-dominance-yellow": "Vença setor amarelo",
+        "sector-dominance-red": "Vença setor vermelho",
+        "sector-dominance-blue": "Vença setor azul",
+        "sector-dominance-black": "Vença setor preto"
+      }
     },
     "tech_display": {
       "title": "Espaços de Tecnologia",

@@ -1,10 +1,17 @@
-import type { INestApplication } from '@nestjs/common';
-import { Controller, Get, Module } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  type INestApplication,
+  Module,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { APP_GUARD, Reflector } from '@nestjs/core';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import { JwtAuthGuard } from '@/auth/jwt-auth.guard.js';
 import { Public } from '@/auth/public.decorator.js';
+
+const MISSING_USER_ID = 'bf91fbcb-f898-43f6-8aca-0d94e7b908c3';
 
 @Controller('guard-test')
 class GuardTestController {
@@ -20,6 +27,15 @@ class GuardTestController {
   }
 }
 
+const mockAuthService = {
+  getProfile: vi.fn().mockResolvedValue({
+    id: 'user-1',
+    name: 'User One',
+    email: 'u1@test.com',
+    createdAt: new Date(),
+  }),
+};
+
 @Module({
   imports: [JwtModule.register({ secret: 'test-secret' })],
   controllers: [GuardTestController],
@@ -28,7 +44,7 @@ class GuardTestController {
       provide: APP_GUARD,
       inject: [JwtService, Reflector],
       useFactory: (jwtService: JwtService, reflector: Reflector) =>
-        new JwtAuthGuard(jwtService, reflector),
+        new JwtAuthGuard(jwtService, reflector, mockAuthService as never),
     },
   ],
 })
@@ -47,6 +63,14 @@ describe('JwtAuthGuard integration', () => {
   let baseUrl = '';
 
   beforeEach(async () => {
+    vi.clearAllMocks();
+    mockAuthService.getProfile.mockResolvedValue({
+      id: 'user-1',
+      name: 'User One',
+      email: 'u1@test.com',
+      createdAt: new Date(),
+    });
+
     const module = await Test.createTestingModule({
       imports: [GuardTestModule],
     }).compile();
@@ -85,5 +109,24 @@ describe('JwtAuthGuard integration', () => {
 
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toEqual({ ok: true });
+  });
+
+  it('rejects private endpoint when token user no longer exists', async () => {
+    mockAuthService.getProfile.mockRejectedValueOnce(
+      new UnauthorizedException('User not found'),
+    );
+    const jwt = app.get(JwtService);
+    const token = jwt.sign({
+      sub: MISSING_USER_ID,
+      email: 'missing@test.com',
+    });
+
+    const res = await fetch(`${baseUrl}/guard-test/private`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    expect(res.status).toBe(401);
   });
 });

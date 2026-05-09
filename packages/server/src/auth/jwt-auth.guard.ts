@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
+import type { AuthService } from './auth.service.js';
 import { IS_PUBLIC_KEY } from './public.decorator.js';
 
 export interface IJwtPayload {
@@ -18,9 +19,10 @@ export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
     private readonly reflector: Reflector,
+    private readonly authService: AuthService,
   ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -35,12 +37,21 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Missing authorization token');
     }
 
+    let payload: IJwtPayload;
     try {
-      const payload: IJwtPayload = this.jwtService.verify(token);
-      request.user = payload;
+      payload = this.jwtService.verify(token);
+      if (
+        typeof payload.sub !== 'string' ||
+        typeof payload.email !== 'string'
+      ) {
+        throw new Error('Invalid token payload');
+      }
     } catch {
       throw new UnauthorizedException('Invalid or expired token');
     }
+
+    await this.authService.getProfile(payload.sub);
+    request.user = payload;
 
     return true;
   }

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { LobbyService } from '@/lobby/lobby.service.js';
@@ -31,6 +32,7 @@ const MOCK_PLAYER = {
   color: 'red',
   name: 'Alice',
 };
+const MISSING_USER_ID = 'bf91fbcb-f898-43f6-8aca-0d94e7b908c3';
 
 type TTestLobbyService = {
   getPlayersForGame: () => Promise<(typeof MOCK_PLAYER)[]>;
@@ -67,6 +69,39 @@ function createMockDb() {
   };
 }
 
+function mockMissingUserWithRoomQueries(db: ReturnType<typeof createMockDb>) {
+  db.select.mockImplementation((selection?: Record<string, unknown>) => {
+    const selectionKeys = selection ? Object.keys(selection) : [];
+    if (selectionKeys.length === 1 && selectionKeys[0] === 'id') {
+      return {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      };
+    }
+
+    if (!selection) {
+      return {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([MOCK_GAME]),
+          }),
+        }),
+      };
+    }
+
+    return {
+      from: vi.fn().mockReturnValue({
+        innerJoin: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([MOCK_PLAYER]),
+        }),
+      }),
+    };
+  });
+}
+
 describe('LobbyService', () => {
   let service: LobbyService;
   let db: ReturnType<typeof createMockDb>;
@@ -83,6 +118,15 @@ describe('LobbyService', () => {
   });
 
   describe('createRoom', () => {
+    it('rejects creating a room for an authenticated user that no longer exists', async () => {
+      mockMissingUserWithRoomQueries(db);
+
+      await expect(
+        service.createRoom(MISSING_USER_ID, 'My Room', 2),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(db.insert).not.toHaveBeenCalled();
+    });
+
     it('creates a room and auto-joins the host', async () => {
       db._selectChain.limit.mockResolvedValueOnce([
         {
@@ -104,7 +148,7 @@ describe('LobbyService', () => {
       const selectCallIndex = { count: 0 };
       db.select.mockImplementation(() => {
         selectCallIndex.count += 1;
-        if (selectCallIndex.count <= 2) {
+        if (selectCallIndex.count <= 3) {
           return {
             from: vi.fn().mockReturnValue({
               where: vi.fn().mockReturnValue({
@@ -185,6 +229,15 @@ describe('LobbyService', () => {
   });
 
   describe('joinRoom', () => {
+    it('rejects joining a room for an authenticated user that no longer exists', async () => {
+      mockMissingUserWithRoomQueries(db);
+
+      await expect(service.joinRoom('game-1', MISSING_USER_ID)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(db.insert).not.toHaveBeenCalled();
+    });
+
     it('rejects joining non-waiting room', async () => {
       db.select.mockReturnValue({
         from: vi.fn().mockReturnValue({
