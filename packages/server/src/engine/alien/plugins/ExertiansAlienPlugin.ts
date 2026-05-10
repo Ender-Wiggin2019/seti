@@ -10,6 +10,7 @@ import { isSoloMode } from '../../GameOptions.js';
 import type { IGame } from '../../IGame.js';
 import type { PlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
+import { getMoonOccupants } from '../../board/PlanetaryBoard.js';
 import type { IPlayer } from '../../player/IPlayer.js';
 import { EPieceType } from '../../player/Pieces.js';
 import { RivalSetup } from '../../solo/RivalSetup.js';
@@ -503,7 +504,9 @@ export class ExertiansAlienPlugin implements IAlienPlugin {
         const landers = planet.landingSlots.filter(
           (slot) => slot.playerId === player.id,
         ).length;
-        const moon = planet.moonOccupant?.playerId === player.id ? 1 : 0;
+        const moon = getMoonOccupants(planet).filter(
+          (slot) => slot.playerId === player.id,
+        ).length;
         return orbiters + landers + moon;
       }),
     );

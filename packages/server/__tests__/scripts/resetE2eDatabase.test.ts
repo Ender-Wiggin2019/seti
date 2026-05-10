@@ -5,10 +5,11 @@ import {
 } from '../../scripts/lib/resetE2eDatabase';
 
 describe('resetE2eDatabase', () => {
-  it('builds a truncation statement for all persisted e2e state', () => {
+  it('builds a truncation statement for e2e game state without clearing users', () => {
     expect(buildE2eResetSql()).toBe(
-      'TRUNCATE TABLE turn_checkpoints, game_snapshots, game_players, games, users RESTART IDENTITY CASCADE',
+      'TRUNCATE TABLE turn_checkpoints, game_snapshots, game_players, games RESTART IDENTITY CASCADE',
     );
+    expect(buildE2eResetSql()).not.toContain('users');
   });
 
   it('executes the e2e reset statement against the provided client', async () => {

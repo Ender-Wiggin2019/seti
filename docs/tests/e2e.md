@@ -32,6 +32,8 @@
 
 这只影响本地 E2E 启动的 server/client，用于 `debug-replay`、`debug-snapshot` 以及长前置状态的 free-action checkpoint；production 默认仍关闭 debug 前端路由。
 
+E2E DB prepare 会重置游戏持久化状态表（`turn_checkpoints`、`game_snapshots`、`game_players`、`games`），但不会清空 `users`。因此本地 E2E 可以复用开发库，同时保留手动注册账号，避免浏览器中仍保存的 token 因用户记录被删除而在 `/auth/me` 返回 401。
+
 如果你需要手动指定运行时：
 
 ```bash

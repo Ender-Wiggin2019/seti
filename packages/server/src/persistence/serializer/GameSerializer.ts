@@ -485,12 +485,13 @@ function serializePlanetaryBoard(game: IGame): IPlanetaryBoardDto | null {
         planet,
         state: {
           orbitSlots: state.orbitSlots.map((slot) => ({ ...slot })),
-          landingSlots: state.landingSlots.map((slot) => ({ ...slot })),
-          firstOrbitClaimed: state.firstOrbitClaimed,
-          firstLandDataBonusTaken: [...state.firstLandDataBonusTaken],
-          moonOccupant: state.moonOccupant ? { ...state.moonOccupant } : null,
-        },
-      }),
+	          landingSlots: state.landingSlots.map((slot) => ({ ...slot })),
+	          firstOrbitClaimed: state.firstOrbitClaimed,
+	          firstLandDataBonusTaken: [...state.firstLandDataBonusTaken],
+	          moonOccupants: state.moonOccupants.map((slot) => ({ ...slot })),
+	          moonOccupant: state.moonOccupant ? { ...state.moonOccupant } : null,
+	        },
+	      }),
     ),
     probesByPlanet: [...boardInternal.probesByPlanet.entries()].map(
       ([planet, probes]) => ({
@@ -830,12 +831,13 @@ function toPublicPlanetaryBoard(game: IGame): IPublicPlanetaryBoard {
   for (const [planet, state] of game.planetaryBoard.planets.entries()) {
     planets[planet] = {
       orbitSlots: state.orbitSlots.map((slot) => ({ ...slot })),
-      landingSlots: state.landingSlots.map((slot) => ({ ...slot })),
-      firstOrbitClaimed: state.firstOrbitClaimed,
-      firstLandDataBonusTaken: [...state.firstLandDataBonusTaken],
-      moonOccupant: state.moonOccupant ? { ...state.moonOccupant } : null,
-    };
-  }
+	      landingSlots: state.landingSlots.map((slot) => ({ ...slot })),
+	      firstOrbitClaimed: state.firstOrbitClaimed,
+	      firstLandDataBonusTaken: [...state.firstLandDataBonusTaken],
+	      moonOccupants: state.moonOccupants.map((slot) => ({ ...slot })),
+	      moonOccupant: state.moonOccupant ? { ...state.moonOccupant } : null,
+	    };
+	  }
 
   return { configs: { ...PLANET_MISSION_CONFIG }, planets };
 }

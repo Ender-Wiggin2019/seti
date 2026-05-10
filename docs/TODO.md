@@ -1,5 +1,24 @@
 # TODO
 
+## 当前任务：修复 tech draw any card、Rival scan image mode、Player board 任务区
+
+假设与权衡：
+- `tech 的 draw any card` 指研究 tech 获得的 `{any-card}` / CARD_ANY 奖励应允许从牌列或牌库拿牌，而不是被当作普通抽牌或没有结算；本轮先用 server 行为测试锁定具体缺口。
+- `rival 扫描 image mode 没有展示` 指 Rival 当前行动卡在 image mode 下遇到 scan 类行动时应展示本地 action-card 图片；本轮优先修 action card 呈现/资产映射，不改变 text mode 文案。
+- `player board 没有任务区了` 指普通玩家的 played missions/mission area 仍要显示；只有 synthetic rival 不应该显示任务区。本轮只调整当前玩家 personal column 的条件渲染，不重排整体布局。
+- 涉及 server/client 两侧，按 TDD 做最小修复；不顺手重构 UI 样式或 solo 规则结构。
+
+- [ ] 写失败测试锁定 tech CARD_ANY 奖励行为
+  - 验证: 定向 server 测试先失败，证明研究 tech 的 any-card 奖励没有正确提供/结算可选拿牌
+- [ ] 写失败测试锁定 Rival scan action card image mode
+  - 验证: `RivalPanel.test.tsx` 断言 scan action card 在 image mode 渲染图片而不是空/文本 fallback
+- [ ] 写失败测试锁定 player mission area 条件
+  - 验证: `GameLayout.test.tsx` 断言 solo human 仍看到 `mission-area`，synthetic rival 视角不显示任务区
+- [ ] 做最小实现修复
+  - 验证: 只改必要的 server/client 文件，保持 text mode 与非 solo 布局既有行为
+- [ ] 跑定向验证并记录 review
+  - 验证: 相关 server/client 测试通过；必要时补 typecheck/lint 定向检查
+
 ## 当前任务：Cloudflare Workers 接入评估
 
 假设与权衡：
@@ -686,3 +705,25 @@ Review:
 - 修复主行动可用性问题：common `getAvailableMainActions` 之前只枚举 `planetaryBoard.planets`，导致探测器到达 Oumuamua 后 ORBIT/LAND 仍 disabled；现在当 solar system 已出现 Oumuamua 时纳入动态空行星状态，服务端执行仍走原有真实 action 校验与结算。
 - Subagent 复核结论：Oumuamua 不应从常规 Planets view 选取，orbit/land 目标应在 Aliens board 上通过 `planet-target-oumuamua` 暴露；新增 spec 保持真实 UI/后端路径。
 - 验证通过：`tsc -p packages/e2e/tsconfig.json --noEmit`；`pnpm --filter @seti/client typecheck`；`./scripts/run-e2e-local.sh tests/oumuamua-real-flow.spec.ts`（3 passed）；`./scripts/run-e2e-local.sh tests/main-action-orbit-land.spec.ts tests/oumuamua-real-flow.spec.ts`（5 passed）；`./scripts/run-e2e-local.sh tests/alien-pool-config.spec.ts tests/alien-discovery-real-flow.spec.ts`（4 passed）。
+
+## 当前任务：E2E reset 保留 users 表
+
+假设与权衡：
+- E2E 仍可复用同一个开发数据库，但 reset 不能删除手动注册用户，避免浏览器保留 token 后 `/auth/me` 变成 401。
+- 为避免孤儿游戏状态，E2E reset 继续清 `turn_checkpoints`、`game_snapshots`、`game_players`、`games`；这些表通过级联/外键依赖用户，但不需要清用户本身。
+- 不新增复杂的“只清 E2E 用户”机制；当前最小安全改动是保留所有 `users`。
+
+- [x] 用单测锁定 reset 不包含 `users`
+  - 验证: `resetE2eDatabase.test.ts` 先失败，失败点显示 SQL 仍包含 `users`
+- [x] 修改 E2E reset 表列表
+  - 验证: reset SQL 只 truncate 游戏持久化状态表，不 truncate `users`
+- [x] 更新 E2E 文档和 lessons
+  - 验证: 文档说明 E2E 会清游戏状态但保留用户账号
+- [x] 跑 targeted 验证
+  - 验证: server reset 单测通过
+
+Review:
+- 已先让 `resetE2eDatabase.test.ts` 红灯，确认当前 SQL 仍包含 `users`。
+- 已从 E2E reset 表列表移除 `users`，现在只清 `turn_checkpoints`、`game_snapshots`、`game_players`、`games`。
+- 已更新 E2E 运行文档和 lessons，明确同库 E2E 不应清空手动注册账号。
+- 验证通过：`pnpm --filter @seti/server test -- resetE2eDatabase.test.ts`（2 passed）。

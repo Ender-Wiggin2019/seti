@@ -10,6 +10,7 @@ import {
 } from '@seti/common/types/element';
 import { EAlienType } from '@seti/common/types/protocol/enums';
 import { type ETechId, getTechDescriptor } from '@seti/common/types/tech';
+import { getMoonOccupants } from '../board/PlanetaryBoard.js';
 import { ESolarSystemElementType } from '../board/SolarSystem.js';
 import { countSectorFulfills } from '../board/sectorFulfillmentCounts.js';
 import { hasCardData, loadCardData } from '../cards/loadCardData.js';
@@ -124,7 +125,9 @@ function getOrbitOrLandCountAtPlanet(
   const landCount = planetState.landingSlots.filter(
     (slot) => slot.playerId === player.id,
   ).length;
-  const moonCount = planetState.moonOccupant?.playerId === player.id ? 1 : 0;
+  const moonCount = getMoonOccupants(planetState).filter(
+    (slot) => slot.playerId === player.id,
+  ).length;
 
   return orbitCount + landCount + moonCount;
 }

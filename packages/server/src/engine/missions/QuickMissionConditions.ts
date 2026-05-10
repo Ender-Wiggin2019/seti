@@ -1,5 +1,6 @@
 import { ETrace } from '@seti/common/types/element';
 import { EPlanet } from '@seti/common/types/protocol/enums';
+import { getMoonOccupants } from '../board/PlanetaryBoard.js';
 import { ESolarSystemElementType } from '../board/SolarSystem.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
@@ -21,7 +22,9 @@ export function orbitOrLandAt(planet: EPlanet, count = 1): TConditionFn {
     const landCount = state.landingSlots.filter(
       (s) => s.playerId === player.id,
     ).length;
-    const moonCount = state.moonOccupant?.playerId === player.id ? 1 : 0;
+    const moonCount = getMoonOccupants(state).filter(
+      (s) => s.playerId === player.id,
+    ).length;
     return orbitCount + landCount + moonCount >= count;
   };
 }
@@ -41,8 +44,10 @@ export function totalLandings(
       total += state.landingSlots.filter(
         (s) => s.playerId === player.id,
       ).length;
-      if (!excludeMoons && state.moonOccupant?.playerId === player.id) {
-        total += 1;
+      if (!excludeMoons) {
+        total += getMoonOccupants(state).filter(
+          (s) => s.playerId === player.id,
+        ).length;
       }
     }
     return total >= count;
@@ -62,9 +67,9 @@ export function totalOrbitAndLand(count: number): TConditionFn {
       total += state.landingSlots.filter(
         (s) => s.playerId === player.id,
       ).length;
-      if (state.moonOccupant?.playerId === player.id) {
-        total += 1;
-      }
+      total += getMoonOccupants(state).filter(
+        (s) => s.playerId === player.id,
+      ).length;
     }
     return total >= count;
   };
@@ -211,7 +216,7 @@ export function orbitAndLandAtSamePlanet(): TConditionFn {
       const hasOrbit = state.orbitSlots.some((s) => s.playerId === player.id);
       const hasLand =
         state.landingSlots.some((s) => s.playerId === player.id) ||
-        state.moonOccupant?.playerId === player.id;
+        getMoonOccupants(state).some((s) => s.playerId === player.id);
       if (hasOrbit && hasLand) return true;
     }
     return false;

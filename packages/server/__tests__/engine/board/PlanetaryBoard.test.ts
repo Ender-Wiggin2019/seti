@@ -84,7 +84,7 @@ describe('PlanetaryBoard', () => {
     ).toBe(false);
   });
 
-  it('player moon permission enables landing and enforces single occupancy', () => {
+  it('player moon permission enables landing and enforces single occupancy on a one-moon planet', () => {
     const board = new PlanetaryBoard();
     board.setProbeCount(EPlanet.MARS, 'player-a', 1);
     board.setProbeCount(EPlanet.MARS, 'player-b', 1);
@@ -118,6 +118,46 @@ describe('PlanetaryBoard', () => {
         allowMoonLanding: true,
       }),
     ).toThrow();
+  });
+
+  it('allows separate landers on each configured moon slot', () => {
+    const board = new PlanetaryBoard();
+    board.setProbeCount(EPlanet.JUPITER, 'player-a', 1);
+    board.setProbeCount(EPlanet.JUPITER, 'player-b', 1);
+    board.setProbeCount(EPlanet.JUPITER, 'player-c', 1);
+    board.setProbeCount(EPlanet.JUPITER, 'player-d', 1);
+    board.setProbeCount(EPlanet.JUPITER, 'player-e', 1);
+
+    board.land(EPlanet.JUPITER, 'player-a', {
+      isMoon: true,
+      allowMoonLanding: true,
+    });
+    board.land(EPlanet.JUPITER, 'player-b', {
+      isMoon: true,
+      allowMoonLanding: true,
+    });
+    board.land(EPlanet.JUPITER, 'player-c', {
+      isMoon: true,
+      allowMoonLanding: true,
+    });
+    board.land(EPlanet.JUPITER, 'player-d', {
+      isMoon: true,
+      allowMoonLanding: true,
+    });
+
+    expect(board.planets.get(EPlanet.JUPITER)?.moonOccupants).toEqual([
+      { playerId: 'player-a' },
+      { playerId: 'player-b' },
+      { playerId: 'player-c' },
+      { playerId: 'player-d' },
+    ]);
+    expect(
+      board.canLand(EPlanet.JUPITER, 'player-e', {
+        isMoon: true,
+        energy: 3,
+        allowMoonLanding: true,
+      }),
+    ).toBe(false);
   });
 
   it('supports multi-player interleaving of orbit and land actions', () => {

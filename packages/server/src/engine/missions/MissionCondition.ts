@@ -16,6 +16,7 @@ import {
 import { EAlienType } from '@seti/common/types/protocol/enums';
 import { getTechDescriptor } from '@seti/common/types/tech';
 import { isOumuamuaAlienBoard } from '../alien/AlienBoard.js';
+import { getMoonOccupants } from '../board/PlanetaryBoard.js';
 import { countSectorFulfills } from '../board/sectorFulfillmentCounts.js';
 import { hasMascamitesTraceCount } from '../cards/alien/MascamitesCardUtils.js';
 import type { IGame } from '../IGame.js';
@@ -274,7 +275,9 @@ function checkOrbitOrLandAtPlanet(
   const landCount = planetState.landingSlots.filter(
     (s) => s.playerId === player.id,
   ).length;
-  const moonCount = planetState.moonOccupant?.playerId === player.id ? 1 : 0;
+  const moonCount = getMoonOccupants(planetState).filter(
+    (s) => s.playerId === player.id,
+  ).length;
 
   return orbitCount + landCount + moonCount >= requiredCount;
 }
@@ -312,7 +315,9 @@ function checkLandAtPlanet(
   const landCount = planetState.landingSlots.filter(
     (s) => s.playerId === player.id,
   ).length;
-  const moonCount = planetState.moonOccupant?.playerId === player.id ? 1 : 0;
+  const moonCount = getMoonOccupants(planetState).filter(
+    (s) => s.playerId === player.id,
+  ).length;
 
   return landCount + moonCount >= requiredCount;
 }

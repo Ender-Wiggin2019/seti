@@ -2,6 +2,7 @@ import {
   LANDING_COST_DEFAULT,
   LANDING_COST_WITH_ORBITER,
 } from '../constant/actionCosts';
+import { PLANET_MISSION_CONFIG } from '../constant/boardLayout';
 import { EPlanet } from '../types/protocol/enums';
 import type {
   IPublicGameState,
@@ -61,11 +62,16 @@ export function canLandOnPlanet(
 
 /** 检查月球是否可着陆 (玩家有月球科技 + 无占位) */
 export function canLandOnMoon(
+  planetId: EPlanet,
   planet: IPublicPlanetState,
   player: Pick<IPublicPlayerState, 'techs'>,
 ): boolean {
+  const moonSlots = PLANET_MISSION_CONFIG[planetId]?.moonSlots ?? 0;
+  const moonOccupants = planet.moonOccupants ?? (planet.moonOccupant ? [planet.moonOccupant] : []);
   return (
-    player.techs.includes(ETechId.PROBE_MOON) && planet.moonOccupant === null
+    player.techs.includes(ETechId.PROBE_MOON) &&
+    moonSlots > 0 &&
+    moonOccupants.length < moonSlots
   );
 }
 

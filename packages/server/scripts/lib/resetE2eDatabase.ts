@@ -14,7 +14,6 @@ export const E2E_RESET_TABLES = [
   'game_snapshots',
   'game_players',
   'games',
-  'users',
 ] as const;
 
 export function buildE2eResetSql(

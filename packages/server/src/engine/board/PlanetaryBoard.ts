@@ -54,6 +54,8 @@ export interface IPlanetState {
   landingSlots: ILandingSlot[];
   firstOrbitClaimed: boolean;
   firstLandDataBonusTaken: boolean[];
+  moonOccupants: IMoonOccupant[];
+  /** @deprecated Use moonOccupants instead. */
   moonOccupant: IMoonOccupant | null;
 }
 
@@ -118,6 +120,39 @@ function getScoreRewardAmount(rewards: readonly TPlanetReward[]): number {
   }, 0);
 }
 
+function createPlanetState(config: IPlanetMissionConfig): IPlanetState {
+  return {
+    orbitSlots: [],
+    landingSlots: [],
+    firstOrbitClaimed: false,
+    firstLandDataBonusTaken: Array.from(
+      { length: config.land.firstData.length || DEFAULT_FIRST_LAND_DATA_SLOTS },
+      () => false,
+    ),
+    moonOccupants: [],
+    moonOccupant: null,
+  };
+}
+
+function normalizeMoonOccupants(planetState: IPlanetState): IMoonOccupant[] {
+  if (!Array.isArray(planetState.moonOccupants)) {
+    planetState.moonOccupants = planetState.moonOccupant
+      ? [{ ...planetState.moonOccupant }]
+      : [];
+  }
+  planetState.moonOccupant = planetState.moonOccupants[0] ?? null;
+  return planetState.moonOccupants;
+}
+
+export function getMoonOccupants(
+  planetState: Pick<IPlanetState, 'moonOccupants' | 'moonOccupant'>,
+): IMoonOccupant[] {
+  if (planetState.moonOccupants.length > 0) {
+    return planetState.moonOccupants;
+  }
+  return planetState.moonOccupant ? [planetState.moonOccupant] : [];
+}
+
 function getCenterReward(
   rewards: readonly TPlanetReward[],
 ): ILandingCenterReward {
@@ -149,16 +184,7 @@ export class PlanetaryBoard {
 
     for (const planet of PLANETARY_PLANETS) {
       const config = PLANET_MISSION_CONFIG[planet];
-      this.planets.set(planet, {
-        orbitSlots: [],
-        landingSlots: [],
-        firstOrbitClaimed: false,
-        firstLandDataBonusTaken: Array.from(
-          { length: config.land.firstData.length },
-          () => false,
-        ),
-        moonOccupant: null,
-      });
+      this.planets.set(planet, createPlanetState(config));
       this.probesByPlanet.set(planet, new Map());
     }
   }
@@ -223,7 +249,9 @@ export class PlanetaryBoard {
 
     const planetState = this.getPlanetState(planet);
     if (isMoon) {
-      planetState.moonOccupant = { playerId };
+      const moonOccupants = normalizeMoonOccupants(planetState);
+      moonOccupants.push({ playerId });
+      planetState.moonOccupant = moonOccupants[0] ?? null;
     } else {
       planetState.landingSlots.push({ playerId });
     }
@@ -279,7 +307,16 @@ export class PlanetaryBoard {
       if (!allowMoonLanding) {
         return false;
       }
-      if (planetState.moonOccupant !== null) {
+      const config = getPlanetMissionConfig(planet);
+      const moonOccupants = normalizeMoonOccupants(planetState);
+      if (config.moonSlots <= 0 || moonOccupants.length >= config.moonSlots) {
+        return false;
+      }
+      const allowDuplicate = options?.allowDuplicate ?? false;
+      if (
+        !allowDuplicate &&
+        moonOccupants.some((slot) => slot.playerId === playerId)
+      ) {
         return false;
       }
     } else {
@@ -337,22 +374,10 @@ export class PlanetaryBoard {
           planet,
         });
       }
-      planetState = {
-        orbitSlots: [],
-        landingSlots: [],
-        firstOrbitClaimed: false,
-        firstLandDataBonusTaken: Array.from(
-          {
-            length:
-              getPlanetMissionConfig(planet).land.firstData.length ||
-              DEFAULT_FIRST_LAND_DATA_SLOTS,
-          },
-          () => false,
-        ),
-        moonOccupant: null,
-      };
+      planetState = createPlanetState(getPlanetMissionConfig(planet));
       this.planets.set(planet, planetState);
     }
+    normalizeMoonOccupants(planetState);
     return planetState;
   }
 

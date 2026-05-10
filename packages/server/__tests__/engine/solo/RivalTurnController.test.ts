@@ -468,6 +468,32 @@ describe('RivalTurnController', () => {
     expect(jupiterState.orbitSlots).toHaveLength(0);
   });
 
+  it('resolves signal rewards from rival planet orbit rewards', () => {
+    const game = createSoloGame();
+    const rival = game.players[1];
+    const rivalState = game.rivalState;
+    const mercury = game.solarSystem?.getPlanetLocation(EPlanet.MERCURY);
+    if (!rivalState || !mercury) throw new Error('expected solo setup');
+    game.solarSystem?.placeProbe(rival.id, mercury.space.id);
+    rival.probesInSpace = 1;
+    rival.resources.spend({ publicity: rival.resources.publicity });
+    rivalState.actionDeck = new Deck(['S.1']);
+    rivalState.progress = 0;
+    rivalState.progressSlot = 0;
+
+    const result = RivalTurnController.resolveCurrentTurn(game);
+
+    expect(result).toMatchObject({
+      cardId: 'S.1',
+      actionKind: ERivalActionKind.PROBE_PLACEMENT,
+    });
+    expect(game.sectors.some((sector) =>
+      sector.signals.some(
+        (signal) => signal.type === 'player' && signal.playerId === rival.id,
+      ),
+    )).toBe(true);
+  });
+
   it('discards one probe tech to prioritize landing on an available moon', () => {
     const game = createSoloGame();
     const rival = game.players[1];

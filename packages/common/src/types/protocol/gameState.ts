@@ -218,6 +218,7 @@ export interface IPublicPlanetState {
   landingSlots: IPublicPlanetSlotState[];
   firstOrbitClaimed: boolean;
   firstLandDataBonusTaken: boolean[];
+  moonOccupants?: IPublicMoonOccupantState[];
   moonOccupant: IPublicMoonOccupantState | null;
 }
 

@@ -169,7 +169,12 @@ function deserializePlanetaryBoard(dto: IGameStateDto): PlanetaryBoard | null {
   const board = new PlanetaryBoard();
   board.planets.clear();
   for (const entry of dto.planetaryBoard.planets) {
-    board.planets.set(entry.planet, cloneValue(entry.state) as IPlanetState);
+    const state = cloneValue(entry.state) as IPlanetState;
+    if (!Array.isArray(state.moonOccupants)) {
+      state.moonOccupants = state.moonOccupant ? [{ ...state.moonOccupant }] : [];
+    }
+    state.moonOccupant = state.moonOccupants[0] ?? null;
+    board.planets.set(entry.planet, state);
   }
 
   const internal = board as unknown as {
