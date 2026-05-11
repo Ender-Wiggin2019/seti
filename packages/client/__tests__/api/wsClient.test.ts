@@ -1,5 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { IPublicGameState } from '@/types/re-exports';
+import {
+  EErrorCategory,
+  EErrorCode,
+  EErrorDisplay,
+  EErrorSeverity,
+  type IErrorPayload,
+  type IPublicGameState,
+} from '@/types/re-exports';
 
 type THandler = (...args: unknown[]) => void;
 
@@ -95,5 +102,24 @@ describe('wsClient', () => {
     });
 
     expect(handleState).toHaveBeenCalledWith(secondState);
+  });
+
+  it('forwards socket connection failures through the game error channel', async () => {
+    const { wsClient } = await import('@/api/wsClient');
+    const handleError = vi.fn<(error: IErrorPayload) => void>();
+
+    wsClient.onError(handleError);
+    wsClient.connect('token-a');
+
+    emitSocketEvent(createdSockets[0], 'connect_error', new Error('offline'));
+
+    expect(handleError).toHaveBeenCalledWith({
+      category: EErrorCategory.TRANSPORT,
+      code: EErrorCode.CONNECTION_ERROR,
+      display: EErrorDisplay.BLOCKING,
+      message: 'offline',
+      retryable: true,
+      severity: EErrorSeverity.BLOCKING,
+    });
   });
 });

@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { shouldLogoutForUnauthorizedResponse } from '@/api/httpClient';
+import {
+  getHttpErrorMessage,
+  shouldLogoutForUnauthorizedResponse,
+} from '@/api/httpClient';
 
 describe('httpClient unauthorized handling', () => {
   it('logs out for token authentication failures', () => {
@@ -34,5 +37,34 @@ describe('httpClient unauthorized handling', () => {
         responseData: { code: 'UNAUTHORIZED', message: 'Only host can start' },
       }),
     ).toBe(false);
+  });
+});
+
+describe('httpClient error message normalization', () => {
+  it('prefers shared server error payload messages over Axios fallback text', () => {
+    expect(
+      getHttpErrorMessage({
+        message: 'Request failed with status code 400',
+        response: {
+          data: {
+            code: 'VALIDATION_ERROR',
+            message: 'Room is full',
+          },
+        },
+      }),
+    ).toBe('Room is full');
+  });
+
+  it('joins validation message arrays', () => {
+    expect(
+      getHttpErrorMessage({
+        message: 'Request failed with status code 400',
+        response: {
+          data: {
+            message: ['name must not be empty', 'playerCount is required'],
+          },
+        },
+      }),
+    ).toBe('name must not be empty playerCount is required');
   });
 });

@@ -640,7 +640,9 @@
     },
     "game": {
       "toast": {
-        "error": "游戏错误"
+        "blocking": "阻塞错误",
+        "error": "游戏错误",
+        "warning": "游戏提示"
       }
     },
     "game_layout": {

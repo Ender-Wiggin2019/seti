@@ -480,7 +480,7 @@ function useActionController({
           toast({
             title: t('client.game_layout.toast.no_computer_slot'),
             description: t('client.game_layout.toast.no_computer_slot_desc'),
-            variant: 'error',
+            variant: 'warning',
           });
           return;
         }
@@ -508,7 +508,7 @@ function useActionController({
         toast({
           title: t('client.game_layout.toast.mission_required'),
           description: t('client.game_layout.toast.mission_required_desc'),
-          variant: 'error',
+          variant: 'warning',
         });
         return;
       case EFreeAction.DELIVER_SAMPLE:
@@ -532,7 +532,7 @@ function useActionController({
           description: t(
             'client.game_layout.toast.sample_delivery_required_desc',
           ),
-          variant: 'error',
+          variant: 'warning',
         });
         return;
       case EFreeAction.USE_CARD_CORNER:
@@ -576,7 +576,7 @@ function useActionController({
           toast({
             title: t('client.game_layout.toast.not_enough_energy'),
             description: t('client.game_layout.toast.not_enough_energy_desc'),
-            variant: 'error',
+            variant: 'warning',
           });
           return;
         }

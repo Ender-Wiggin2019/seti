@@ -637,7 +637,9 @@
     },
     "game": {
       "toast": {
-        "error": "Game Error"
+        "blocking": "Blocking Error",
+        "error": "Game Error",
+        "warning": "Game Warning"
       }
     },
     "game_layout": {

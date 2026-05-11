@@ -1,5 +1,10 @@
 import { Test } from '@nestjs/testing';
 import { EMainAction, EPhase } from '@seti/common/types/protocol/enums';
+import {
+  EErrorCode,
+  EErrorDisplay,
+  EErrorSeverity,
+} from '@seti/common/types/protocol/errors';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { vi } from 'vitest';
 import { Deck } from '@/engine/deck/Deck.js';
@@ -105,9 +110,12 @@ describe('GameManager', () => {
       };
       mockDb.select.mockReturnValue(selectChain);
 
-      await expect(manager.getGame('nonexistent')).rejects.toThrow(
-        'Game nonexistent not found',
-      );
+      await expect(manager.getGame('nonexistent')).rejects.toMatchObject({
+        code: EErrorCode.GAME_NOT_FOUND,
+        display: EErrorDisplay.BLOCKING,
+        message: 'Game nonexistent not found',
+        severity: EErrorSeverity.BLOCKING,
+      });
     });
   });
 
@@ -221,7 +229,11 @@ describe('GameManager', () => {
           type: EPlayerInputType.OPTION,
           optionId: 'confirm',
         }),
-      ).rejects.toThrow('inputId');
+      ).rejects.toMatchObject({
+        code: EErrorCode.STALE_INPUT_RESPONSE,
+        display: EErrorDisplay.NONE,
+        severity: EErrorSeverity.SILENT,
+      });
 
       expect(player.waitingFor).toBe(prompt);
       expect(
@@ -254,7 +266,11 @@ describe('GameManager', () => {
           type: EPlayerInputType.OPTION,
           optionId: 'confirm',
         }),
-      ).rejects.toThrow('inputId');
+      ).rejects.toMatchObject({
+        code: EErrorCode.STALE_INPUT_RESPONSE,
+        display: EErrorDisplay.NONE,
+        severity: EErrorSeverity.SILENT,
+      });
 
       expect(player.waitingFor).toBe(prompt);
       expect(

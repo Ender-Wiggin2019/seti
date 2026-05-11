@@ -1,13 +1,15 @@
 import { io, type Socket } from 'socket.io-client';
 import { CLIENT_ENV } from '@/config/env';
-import type {
-  IErrorPayload,
-  IFreeActionRequest,
-  IInputResponse,
-  IMainActionRequest,
-  IPlayerInputModel,
-  IPublicGameState,
-  TGameEvent,
+import {
+  EErrorCode,
+  type IErrorPayload,
+  type IFreeActionRequest,
+  type IInputResponse,
+  type IMainActionRequest,
+  type IPlayerInputModel,
+  type IPublicGameState,
+  normalizeErrorPayload,
+  type TGameEvent,
 } from '@/types/re-exports';
 
 type TStateSocketHandler = (data: { gameState: IPublicGameState }) => void;
@@ -48,6 +50,16 @@ class WsClient {
   private readonly eventHandlers = new Set<TEventSocketHandler>();
   private readonly errorHandlers = new Set<TErrorSocketHandler>();
   private readonly undoAppliedHandlers = new Set<TUndoAppliedHandler>();
+  private readonly handleConnectionError = (error?: unknown): void => {
+    this.emitLocalError(
+      error instanceof Error && error.message
+        ? error.message
+        : 'Connection failed',
+    );
+  };
+  private readonly handleReconnectFailed = (): void => {
+    this.emitLocalError('Unable to reconnect to the game server');
+  };
 
   get instance(): Socket | null {
     return this.socket;
@@ -77,6 +89,7 @@ class WsClient {
       reconnectionDelayMax: 10000,
     });
     this.bindRegisteredHandlers(this.socket);
+    this.bindConnectionErrorHandlers(this.socket);
 
     return this.socket;
   }
@@ -149,6 +162,7 @@ class WsClient {
   disconnect(): void {
     if (this.socket) {
       this.unbindRegisteredHandlers(this.socket);
+      this.unbindConnectionErrorHandlers(this.socket);
       this.socket.disconnect();
     }
     this.socket = null;
@@ -181,6 +195,38 @@ class WsClient {
     this.bindHandlers(socket, 'game:event', this.eventHandlers);
     this.bindHandlers(socket, 'game:error', this.errorHandlers);
     this.bindHandlers(socket, 'game:undoApplied', this.undoAppliedHandlers);
+  }
+
+  private emitLocalError(message: string): void {
+    const payload = normalizeErrorPayload({
+      code: EErrorCode.CONNECTION_ERROR,
+      message,
+    });
+    for (const handler of this.errorHandlers) {
+      handler(payload);
+    }
+  }
+
+  private bindConnectionErrorHandlers(socket: Socket): void {
+    this.toUntypedSocket(socket).on(
+      'connect_error',
+      this.handleConnectionError as TUntypedSocketListener,
+    );
+    this.managerSocket(socket)?.on(
+      'reconnect_failed',
+      this.handleReconnectFailed as TUntypedSocketListener,
+    );
+  }
+
+  private unbindConnectionErrorHandlers(socket: Socket): void {
+    this.toUntypedSocket(socket).off(
+      'connect_error',
+      this.handleConnectionError as TUntypedSocketListener,
+    );
+    this.managerSocket(socket)?.off(
+      'reconnect_failed',
+      this.handleReconnectFailed as TUntypedSocketListener,
+    );
   }
 
   private unbindRegisteredHandlers(socket: Socket): void {
@@ -221,6 +267,10 @@ class WsClient {
   private toUntypedSocket(socket: Socket | null): IUntypedSocket | null;
   private toUntypedSocket(socket: Socket | null): IUntypedSocket | null {
     return socket as unknown as IUntypedSocket | null;
+  }
+
+  private managerSocket(socket: Socket): IUntypedSocket | null {
+    return (socket as unknown as { io?: IUntypedSocket }).io ?? null;
   }
 }
 

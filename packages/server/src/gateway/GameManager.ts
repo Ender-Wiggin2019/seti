@@ -88,7 +88,11 @@ export class GameManager {
 
     const game = await this.gameRepo.loadGame(gameId);
     if (!game) {
-      throw new Error(`Game ${gameId} not found`);
+      throw new GameError(
+        EErrorCode.GAME_NOT_FOUND,
+        `Game ${gameId} not found`,
+        { gameId },
+      );
     }
 
     this.cache.set(gameId, game);
@@ -202,17 +206,26 @@ export class GameManager {
     response: IInputResponse,
   ): void {
     const player = game.players.find((item) => item.id === playerId);
+    if (!player) {
+      throw new GameError(
+        EErrorCode.PLAYER_NOT_FOUND,
+        `Unknown player id: ${playerId}`,
+        { playerId },
+      );
+    }
     const pendingInput = player?.waitingFor;
     if (!pendingInput) {
-      return;
+      throw new GameError(
+        EErrorCode.STALE_INPUT_RESPONSE,
+        'No active input prompt',
+        { playerId },
+      );
     }
 
     if (response.inputId !== pendingInput.inputId) {
       throw new GameError(
-        EErrorCode.INVALID_INPUT_RESPONSE,
-        `Input response inputId mismatch: expected ${pendingInput.inputId} but got ${
-          response.inputId ?? 'missing'
-        }`,
+        EErrorCode.STALE_INPUT_RESPONSE,
+        'Input response is no longer active',
         {
           expectedInputId: pendingInput.inputId,
           actualInputId: response.inputId,

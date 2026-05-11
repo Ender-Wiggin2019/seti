@@ -20,6 +20,18 @@ function responseMessage(data: unknown): string {
   return typeof message === 'string' ? message : '';
 }
 
+export function getHttpErrorMessage(error: unknown): string {
+  const responseData =
+    error && typeof error === 'object'
+      ? (error as { response?: { data?: unknown } }).response?.data
+      : undefined;
+  const serverMessage = responseMessage(responseData);
+  if (serverMessage) {
+    return serverMessage;
+  }
+  return error instanceof Error ? error.message : 'Request failed';
+}
+
 export function shouldLogoutForUnauthorizedResponse({
   status,
   requestUrl,
@@ -75,7 +87,10 @@ httpClient.interceptors.response.use(
         useAuthStore.getState().logout();
         window.location.href = '/auth';
       }
+      return Promise.reject(new Error(getHttpErrorMessage(error)));
     }
-    return Promise.reject(error);
+    return Promise.reject(
+      error instanceof Error ? error : new Error(getHttpErrorMessage(error)),
+    );
   },
 );

@@ -636,7 +636,9 @@
     },
     "game": {
       "toast": {
-        "error": "Erro de Jogo"
+        "blocking": "Erro Bloqueante",
+        "error": "Erro de Jogo",
+        "warning": "Aviso do Jogo"
       }
     },
     "game_layout": {

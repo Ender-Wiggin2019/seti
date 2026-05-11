@@ -13,8 +13,8 @@ interface IToast {
   id: string;
   title: string;
   description?: string;
-  variant?: 'default' | 'success' | 'error';
-  duration?: number;
+  variant?: 'default' | 'success' | 'warning' | 'error';
+  duration?: number | null;
 }
 
 interface IToastStore {
@@ -41,12 +41,14 @@ export function toast(opts: Omit<IToast, 'id'>): void {
 const ACCENT_LINE: Record<NonNullable<IToast['variant']>, string> = {
   default: 'oklch(0.68 0.11 240)',
   success: 'oklch(0.75 0.16 160)',
+  warning: 'oklch(0.78 0.16 78)',
   error: 'oklch(0.68 0.18 28)',
 };
 
 const ACCENT_TEXT: Record<NonNullable<IToast['variant']>, string> = {
   default: 'text-text-100',
   success: 'text-[oklch(0.90_0.12_160)]',
+  warning: 'text-[oklch(0.92_0.14_78)]',
   error: 'text-[oklch(0.88_0.14_28)]',
 };
 
@@ -58,6 +60,9 @@ function ToastItem({
   onDismiss: () => void;
 }): React.JSX.Element {
   useEffect(() => {
+    if (t.duration === null) {
+      return;
+    }
     const timer = setTimeout(onDismiss, t.duration ?? 4000);
     return () => clearTimeout(timer);
   }, [t.duration, onDismiss]);

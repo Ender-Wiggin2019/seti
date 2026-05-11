@@ -44,6 +44,28 @@ describe('Toaster', () => {
       expect(toastStatus).toHaveTextContent('Server error');
     });
   });
+
+  it('renders warning toasts and keeps persistent toasts until dismissed', async () => {
+    await act(async () => {
+      render(<Toaster />);
+    });
+
+    await act(async () => {
+      toast({
+        title: 'Game Warning',
+        description: 'Action is no longer available',
+        variant: 'warning',
+        duration: null,
+      });
+    });
+
+    const toastStatus = await screen.findByRole('status');
+    expect(toastStatus).toHaveTextContent('Game Warning');
+    expect(toastStatus).toHaveTextContent('Action is no longer available');
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(screen.getByRole('status')).toHaveTextContent('Game Warning');
+  });
 });
 
 function readArbitraryZIndex(element: Element | null): number {

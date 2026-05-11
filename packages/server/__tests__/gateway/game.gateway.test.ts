@@ -1,10 +1,18 @@
+import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import { EMainAction } from '@seti/common/types/protocol/enums';
-import { EErrorCode } from '@seti/common/types/protocol/errors';
+import {
+  EErrorCategory,
+  EErrorCode,
+  EErrorDisplay,
+  EErrorSeverity,
+} from '@seti/common/types/protocol/errors';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DebugSessionRegistry } from '@/debug/DebugSessionRegistry.js';
 import { GameManager } from '@/gateway/GameManager.js';
 import { GameGateway } from '@/gateway/game.gateway.js';
+import { GameError } from '@/shared/errors/GameError.js';
 
 function createMockSocket(
   overrides: Partial<{
@@ -53,6 +61,7 @@ describe('GameGateway', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
 
     const module = await Test.createTestingModule({
       providers: [
@@ -74,6 +83,10 @@ describe('GameGateway', () => {
     };
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   describe('handleConnection', () => {
     it('authenticates client with valid token', () => {
       const socket = createMockSocket();
@@ -92,10 +105,15 @@ describe('GameGateway', () => {
 
       gateway.handleConnection(socket as never);
 
-      expect(socket.emit).toHaveBeenCalledWith('game:error', {
-        code: EErrorCode.UNAUTHORIZED,
-        message: 'Authentication required',
-      });
+      expect(socket.emit).toHaveBeenCalledWith(
+        'game:error',
+        expect.objectContaining({
+          code: EErrorCode.UNAUTHORIZED,
+          display: EErrorDisplay.BLOCKING,
+          message: 'Authentication required',
+          severity: EErrorSeverity.BLOCKING,
+        }),
+      );
       expect(socket.disconnect).toHaveBeenCalled();
     });
 
@@ -107,10 +125,15 @@ describe('GameGateway', () => {
 
       gateway.handleConnection(socket as never);
 
-      expect(socket.emit).toHaveBeenCalledWith('game:error', {
-        code: EErrorCode.UNAUTHORIZED,
-        message: 'Invalid authentication token',
-      });
+      expect(socket.emit).toHaveBeenCalledWith(
+        'game:error',
+        expect.objectContaining({
+          code: EErrorCode.UNAUTHORIZED,
+          display: EErrorDisplay.BLOCKING,
+          message: 'Invalid authentication token',
+          severity: EErrorSeverity.BLOCKING,
+        }),
+      );
       expect(socket.disconnect).toHaveBeenCalled();
     });
   });
@@ -213,7 +236,57 @@ describe('GameGateway', () => {
 
       expect(socket.emit).toHaveBeenCalledWith('game:error', {
         code: EErrorCode.INTERNAL_SERVER_ERROR,
-        message: 'Not your turn',
+        message: 'Internal server error',
+        category: EErrorCategory.SYSTEM,
+        display: EErrorDisplay.BLOCKING,
+        retryable: true,
+        severity: EErrorSeverity.BLOCKING,
+      });
+    });
+
+    it('emits GameError metadata for business failures', async () => {
+      mockGameManager.processAction.mockRejectedValue(
+        new GameError(EErrorCode.INVALID_ACTION, 'Action is not legal'),
+      );
+
+      const socket = createMockSocket();
+      socket.data.userId = 'user-1';
+
+      await gateway.handleGameAction(socket as never, {
+        gameId: 'g1',
+        action: { type: EMainAction.PASS },
+      });
+
+      expect(socket.emit).toHaveBeenCalledWith('game:error', {
+        code: EErrorCode.INVALID_ACTION,
+        message: 'Action is not legal',
+        category: EErrorCategory.BUSINESS,
+        display: EErrorDisplay.TOAST,
+        retryable: true,
+        severity: EErrorSeverity.WARNING,
+      });
+    });
+
+    it('does not leak unexpected internal error messages', async () => {
+      mockGameManager.processAction.mockRejectedValue(
+        new Error('database password leaked'),
+      );
+
+      const socket = createMockSocket();
+      socket.data.userId = 'user-1';
+
+      await gateway.handleGameAction(socket as never, {
+        gameId: 'g1',
+        action: { type: EMainAction.PASS },
+      });
+
+      expect(socket.emit).toHaveBeenCalledWith('game:error', {
+        code: EErrorCode.INTERNAL_SERVER_ERROR,
+        message: 'Internal server error',
+        category: EErrorCategory.SYSTEM,
+        display: EErrorDisplay.BLOCKING,
+        retryable: true,
+        severity: EErrorSeverity.BLOCKING,
       });
     });
   });

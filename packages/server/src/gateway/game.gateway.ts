@@ -26,7 +26,10 @@ import {
 } from '@seti/common/types/protocol/playerInput';
 import type { Server, Socket } from 'socket.io';
 import { DebugSessionRegistry } from '@/debug/DebugSessionRegistry.js';
-import { GameError } from '@/shared/errors/GameError.js';
+import {
+  createErrorPayload,
+  toErrorPayload,
+} from '@/shared/errors/GameError.js';
 import type { IJwtPayload } from '../auth/jwt-auth.guard.js';
 import type { IActionResult, IUndoResult } from './GameManager.js';
 import { GameManager } from './GameManager.js';
@@ -77,10 +80,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       if (!token) {
         this.logger.warn(`Client ${client.id} rejected: no token`);
-        client.emit('game:error', {
-          code: EErrorCode.UNAUTHORIZED,
-          message: 'Authentication required',
-        });
+        client.emit(
+          'game:error',
+          createErrorPayload(
+            EErrorCode.UNAUTHORIZED,
+            'Authentication required',
+          ),
+        );
         client.disconnect();
         return;
       }
@@ -91,10 +97,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.logger.log(`Client ${client.id} connected as user ${payload.sub}`);
     } catch {
       this.logger.warn(`Client ${client.id} rejected: invalid token`);
-      client.emit('game:error', {
-        code: EErrorCode.UNAUTHORIZED,
-        message: 'Invalid authentication token',
-      });
+      client.emit(
+        'game:error',
+        createErrorPayload(
+          EErrorCode.UNAUTHORIZED,
+          'Invalid authentication token',
+        ),
+      );
       client.disconnect();
     }
   }
@@ -314,20 +323,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   private emitError(client: Socket, err: unknown): void {
-    if (err instanceof GameError) {
-      client.emit('game:error', {
-        code: err.code,
-        message: err.message,
-        details: err.details,
-      });
-    } else {
-      const message =
-        err instanceof Error ? err.message : 'Internal server error';
-      client.emit('game:error', {
-        code: EErrorCode.INTERNAL_SERVER_ERROR,
-        message,
-      });
+    if (!(err instanceof Error && err.name === 'GameError')) {
+      this.logger.error('Unexpected game gateway error', err);
     }
+    client.emit('game:error', toErrorPayload(err));
   }
 
   private roomKey(gameId: string): string {

@@ -1,5 +1,27 @@
 # TODO
 
+## Global error management confidence loop - 2026-05-11
+
+Success criteria:
+- Common protocol carries enough error semantics for server/client to distinguish silent, warning/business, error, and blocking failures.
+- Server WebSocket and HTTP boundaries map known business/auth/not-found/system errors into the shared error payload without leaking unexpected internal messages.
+- Stale or duplicate game input responses are silent at the client boundary and do not mutate/persist state; ordinary illegal game actions are warnings, not error toasts.
+- Client global error handling uses shared semantics: silent errors are ignored, warning/business errors render warning toasts, blocking errors stay visible until dismissed.
+- Focused tests fail on the old behavior and pass after the implementation; final review records any residual risk.
+
+- [x] Add failing common tests for error classification defaults and explicit payload normalization.
+- [x] Add failing server tests for missing game mapping, stale input silence, GameError payload metadata, and sanitized internal websocket errors.
+- [x] Add failing client tests for silent/warning/blocking `game:error` handling and warning toast rendering.
+- [x] Implement shared protocol/error classification and server/client boundary mapping with minimal API changes.
+- [x] Run targeted common/server/client tests and type checks, then re-review loopholes.
+
+Review:
+- 新增 common 错误语义：`EErrorSeverity` / `EErrorCategory` / `EErrorDisplay`、`CONNECTION_ERROR`、`STALE_INPUT_RESPONSE`、`classifyErrorCode`、`normalizeErrorPayload`。默认分类将 stale input 设为 silent，游戏规则拒绝设为 warning/business，transport/auth/not-found/internal 设为 blocking。
+- 修复 server 边界：`GameError` 现在携带 normalized payload；WebSocket auth/handler 错误统一发 shared payload；未知 WS/HTTP 异常脱敏为 `Internal server error`；`GameManager.getGame` 返回 `GAME_NOT_FOUND`；外部 input 无 prompt 或 inputId mismatch 返回 silent `STALE_INPUT_RESPONSE` 且不推进 version/persist。
+- 修复 HTTP 边界：新增 `HttpErrorFilter` 并在 `main.ts` 全局挂载，Nest exceptions / `GameError` / unknown errors 都映射为 shared payload。
+- 修复 client 展示：`useGameError` 按 shared classification 处理 silent/warning/blocking；toast 支持 `warning` 与 persistent `duration: null`；HTTP interceptor 优先展示 server payload message；Socket.IO connect/reconnect failure 映射为 blocking `CONNECTION_ERROR`；`GameLayout` 本地游戏内业务阻断从 error toast 改为 warning toast。
+- 验证通过：common 全量 13 files / 142 tests；server 全量 298 files / 1887 tests；client 全量 62 files / 213 tests；common/server/client typecheck；本轮 touched files Biome check；`git diff --check`。client 全量测试仍输出既有 jsdom `window.scrollTo` warning，但测试通过，且与本轮错误系统无关。
+
 ## Rule FAQ implementation confidence loop - 2026-05-11
 
 Success criteria:
