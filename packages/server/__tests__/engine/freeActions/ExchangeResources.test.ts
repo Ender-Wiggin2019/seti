@@ -138,6 +138,38 @@ describe('ExchangeResourcesFreeAction', () => {
       expect(game.mainDeck.getDiscardPile()).toEqual(['card-c', 'card-b']);
       expect(player.hand).toEqual(['card-a']);
     });
+
+    it('does not count or discard Exertian cards as exchange inputs', () => {
+      const player = createTestPlayer({
+        hand: ['card-a', 'ET.41', 'card-b'],
+      });
+      const game = createMockGame();
+
+      ExchangeResourcesFreeAction.execute(
+        player,
+        game,
+        EResource.CARD,
+        EResource.CREDIT,
+      );
+
+      expect(player.hand).toEqual(['ET.41']);
+      expect(game.mainDeck.getDiscardPile()).toEqual(['card-b', 'card-a']);
+    });
+
+    it('throws when only one discardable card is available beside Exertian cards', () => {
+      const player = createTestPlayer({
+        hand: ['card-a', 'ET.41'],
+      });
+
+      expect(() =>
+        ExchangeResourcesFreeAction.execute(
+          player,
+          createMockGame(),
+          EResource.CARD,
+          EResource.CREDIT,
+        ),
+      ).toThrow('Not enough cards in hand');
+    });
   });
 
   describe('execute — credit to card', () => {

@@ -1,5 +1,6 @@
 import { ETrace } from '@seti/common/types/element';
-import { EPlanet } from '@seti/common/types/protocol/enums';
+import { EAlienType, EPlanet } from '@seti/common/types/protocol/enums';
+import { isMascamitesAlienBoard } from '../alien/AlienBoard.js';
 import { getMoonOccupants } from '../board/PlanetaryBoard.js';
 import { ESolarSystemElementType } from '../board/SolarSystem.js';
 import type { IGame } from '../IGame.js';
@@ -82,11 +83,12 @@ export function totalOrbitAndLand(count: number): TConditionFn {
 export function probeOnComet(): TConditionFn {
   return (player, game) => {
     if (!game.solarSystem) return false;
+    const probeSpaceIds = getPlayerProbeLikeSpaceIds(game, player.id);
     return game.solarSystem.spaces.some(
       (space) =>
         space.elements.some(
           (el) => el.type === ESolarSystemElementType.COMET && el.amount > 0,
-        ) && space.occupants.some((o) => o.playerId === player.id),
+        ) && probeSpaceIds.has(space.id),
     );
   };
 }
@@ -155,11 +157,9 @@ export function probeOnAsteroidAdjacentToEarth(): TConditionFn {
 
     if (earthSpaceIds.size === 0) return false;
 
+    const probeSpaceIds = getPlayerProbeLikeSpaceIds(game, player.id);
     return ss.spaces.some((space) => {
-      const hasPlayerProbe = space.occupants.some(
-        (o) => o.playerId === player.id,
-      );
-      if (!hasPlayerProbe) return false;
+      if (!probeSpaceIds.has(space.id)) return false;
 
       const hasAsteroid = space.elements.some(
         (el) => el.type === ESolarSystemElementType.ASTEROID && el.amount > 0,
@@ -263,13 +263,38 @@ export function probeMinDistanceFromEarth(minDistance: number): TConditionFn {
       }
     }
 
-    for (const space of ss.spaces) {
-      if (!space.occupants.some((o) => o.playerId === player.id)) continue;
-      const d = dist.get(space.id);
+    for (const spaceId of getPlayerProbeLikeSpaceIds(game, player.id)) {
+      const d = dist.get(spaceId);
       if (d !== undefined && d >= minDistance) return true;
     }
     return false;
   };
+}
+
+function getPlayerProbeLikeSpaceIds(
+  game: IGame,
+  playerId: string,
+): Set<string> {
+  const spaceIds = new Set<string>();
+  for (const space of game.solarSystem?.spaces ?? []) {
+    if (space.occupants.some((occupant) => occupant.playerId === playerId)) {
+      spaceIds.add(space.id);
+    }
+  }
+
+  const board =
+    game.alienState?.getBoardByType?.(EAlienType.MASCAMITES) ??
+    game.alienState?.boards?.find(
+      (candidate) => candidate.alienType === EAlienType.MASCAMITES,
+    );
+  if (isMascamitesAlienBoard(board)) {
+    for (const capsule of board.capsules) {
+      if (capsule.ownerId === playerId) {
+        spaceIds.add(capsule.spaceId);
+      }
+    }
+  }
+  return spaceIds;
 }
 
 function getPlayerTraceCount(

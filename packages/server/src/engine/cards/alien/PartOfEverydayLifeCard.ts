@@ -1,3 +1,4 @@
+import { isDiscardProhibitedCard } from '@seti/common/rules';
 import { FreeActionCornerFreeAction } from '@/engine/freeActions/FreeActionCorner.js';
 import type { IGame } from '@/engine/IGame.js';
 import type { IPlayerInput } from '@/engine/input/PlayerInput.js';
@@ -34,10 +35,15 @@ export class PartOfEverydayLifeCard extends ImmediateCard {
   ): IPlayerInput | undefined {
     if (player.hand.length <= 0) return undefined;
 
-    const handCards = player.hand.map((rawCard, idx) => ({
-      id: toCardId(rawCard, `hand-${idx}`),
-      index: idx,
-    }));
+    const handCards = player.hand
+      .map((rawCard, idx) => ({
+        id: toCardId(rawCard, `hand-${idx}`),
+        index: idx,
+        rawCard,
+      }))
+      .filter((card) => !isDiscardProhibitedCard(card.rawCard));
+
+    if (handCards.length === 0) return undefined;
 
     return new SelectCard(
       player,
@@ -68,10 +74,15 @@ export class PartOfEverydayLifeCard extends ImmediateCard {
   ): IPlayerInput | undefined {
     if (player.hand.length <= 0) return undefined;
 
-    const handCards = player.hand.map((rawCard, idx) => ({
-      id: toCardId(rawCard, `hand-2-${idx}`),
-      index: idx,
-    }));
+    const handCards = player.hand
+      .map((rawCard, idx) => ({
+        id: toCardId(rawCard, `hand-2-${idx}`),
+        index: idx,
+        rawCard,
+      }))
+      .filter((card) => !isDiscardProhibitedCard(card.rawCard));
+
+    if (handCards.length === 0) return undefined;
 
     return new SelectCard(
       player,

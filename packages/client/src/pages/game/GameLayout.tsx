@@ -140,7 +140,7 @@ function buildSampleDeliveryOptions(
         .map((mission) => ({
           capsuleId: capsule.capsuleId,
           cardId: mission.id,
-          label: `${mission.name ?? mission.id} / ${capsule.sampleTokenId}`,
+          label: `${mission.name ?? mission.id} / ${capsule.capsuleId}`,
         })),
     );
 }
@@ -928,12 +928,9 @@ function PersonalColumn({
       })
     | undefined;
   const missionCards = extendedPlayer?.playedMissions ?? [];
-  const rivalTechs =
-    gameState?.rival && gameState.players
-      ? (gameState.players.find(
-          (player) => player.playerId === gameState.rival?.rivalPlayerId,
-        )?.techs ?? [])
-      : [];
+  const isSyntheticRivalView =
+    gameState?.rival?.rivalPlayerId !== undefined &&
+    myPlayerId === gameState.rival.rivalPlayerId;
 
   return (
     <aside
@@ -981,18 +978,22 @@ function PersonalColumn({
             </p>
             <div aria-hidden className='section-head__rule' />
           </div>
-          <RivalPanel rival={gameState.rival} rivalTechs={rivalTechs} />
+          <RivalPanel rival={gameState.rival} />
         </section>
       ) : null}
 
-      <section data-testid='mission-area'>
-        <div className='section-head mb-2'>
-          <span aria-hidden className='section-head__tick' />
-          <p className='micro-label'>{t('client.game_layout.mission_area')}</p>
-          <div aria-hidden className='section-head__rule' />
-        </div>
-        <PlayedMissions missions={missionCards} />
-      </section>
+      {!isSyntheticRivalView ? (
+        <section data-testid='mission-area'>
+          <div className='section-head mb-2'>
+            <span aria-hidden className='section-head__tick' />
+            <p className='micro-label'>
+              {t('client.game_layout.mission_area')}
+            </p>
+            <div aria-hidden className='section-head__rule' />
+          </div>
+          <PlayedMissions missions={missionCards} />
+        </section>
+      ) : null}
     </aside>
   );
 }

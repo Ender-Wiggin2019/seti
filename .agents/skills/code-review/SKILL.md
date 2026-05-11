@@ -1,13 +1,34 @@
 ---
 name: code-review
-description: Systematic code review for the SETI board game project. Use when the user asks to "review code", "check implementation", "review task X-Y", "code review", or wants feedback on code quality, logic correctness, task completion, or architecture compliance. Produces structured review reports in docs/review/.
+description: Systematic review-and-fix workflow for the SETI board game project. Use when the user asks to "review code", "check implementation", "review task X-Y", "code review", or wants feedback/fixes for code quality, logic correctness, task completion, or architecture compliance. Reviews findings, applies required fixes, and verifies the result unless the user explicitly requests read-only review.
 ---
 
 # Code Review
 
-Systematic review of SETI project code from a game-architecture perspective. Produce actionable feedback — not just style nits.
+**Key rule**: Do not stop at diagnosis. For every strategy and fix, ask: "Are you 100% confident in this strategy?" If not, find the loopholes, choose proper fixes, implement them, and rerun review plus verification until the confidence is evidence-backed. If factual 100% confidence is impossible because of an external blocker, state the blocker and the exact residual risk.
+
+Systematic review of SETI project code from a game-architecture perspective. Produce working code changes, not just style nits or review documents. A report in `docs/review/` is supporting evidence; it is never the only deliverable unless the user explicitly asks for a read-only review.
 
 ## Workflow
+
+### Step 0 — Determine execution mode and success criteria
+
+Default mode is **review-and-fix**:
+
+- Review the requested scope.
+- Fix critical and warning findings that are in scope.
+- Add or update focused tests when the finding is behavioral, rule-related, or regression-prone.
+- Verify with targeted tests/typecheck/lint appropriate to the touched packages.
+- Re-review the diff and repeat until no known loopholes remain.
+
+Use **read-only review** only when the user explicitly says not to edit code. In read-only mode, produce findings and concrete fix directions, but do not modify files.
+
+Success criteria for review-and-fix:
+
+- All in-scope critical findings are fixed or blocked by a concrete external dependency.
+- Warning findings are fixed unless they are clearly out of scope or would require a separate design decision.
+- Tests or checks prove the user-visible behavior, game rule, or architecture contract that was reviewed.
+- Any remaining risk is named explicitly; do not imply full confidence without evidence.
 
 ### Step 1 — Determine review scope
 
@@ -24,7 +45,9 @@ Read the following project references based on the review scope:
 
 | Context | Path | When |
 |---------|------|------|
-| Game rules | `docs/arch/prd-rule.md` | Always for logic reviews |
+| Simple game rules | `docs/arch/rule-simple.md` | Always for logic reviews |
+| Raw game rules | `docs/arch/rule-raw.md` | When `rule-simple.md` is unclear or conflicts with implementation |
+| FAQ/rulings | `docs/arch/rule-faq.md` | When resolving ambiguous rule edge cases |
 | Tech rules | `docs/arch/rule-tech.md` | When reviewing tech/scan/probe effects |
 | Server architecture | `docs/arch/arch-server.md` | Server code reviews |
 | Client architecture | `docs/arch/arch-client.md` | Client code reviews |
@@ -36,10 +59,10 @@ Only load what's relevant — avoid unnecessary context consumption.
 
 ### Step 3 — Execute review
 
-Run the five review dimensions. See [references/checklist.md](references/checklist.md) for detailed checks per dimension.
+Run the five review dimensions. See [references/checklist.md](references/checklist.md) for detailed checks per dimension. Keep working notes while reviewing; do not write a final report before deciding whether fixes are needed.
 
 **Dimension 1: Logic Correctness**
-- Cross-reference implementation against game rules (`prd-rule.md`)
+- Cross-reference implementation against game rules (`rule-simple.md`, then `rule-raw.md`/FAQ if needed)
 - Verify edge cases: empty hands, zero resources, boundary sectors, null boards
 - Check that effects compose correctly (e.g. scan → card row → signal → refill)
 - Confirm continuation-based flow: `execute()` returns `PlayerInput | undefined` correctly
@@ -71,9 +94,37 @@ Run the five review dimensions. See [references/checklist.md](references/checkli
 - Verify unit tests exist, check coverage of: happy path, error cases, edge cases
 - Check for missing error handling (GameError with proper EErrorCode)
 
-### Step 4 — Write review report
+### Step 4 — Fix findings
 
-Generate the review report following [references/review-template.md](references/review-template.md).
+For review-and-fix mode:
+
+- Fix critical findings first, then warnings. Suggestions are fixed only when low-risk and directly tied to the requested scope.
+- Prefer tests first for bugs and rule behavior: create a failing reproduction, implement the fix, then make it pass.
+- Keep the patch minimal. Do not refactor adjacent code or add flexibility unrelated to the finding.
+- Preserve package boundaries: shared pure rules/types go in `common`, engine behavior in `server`, UI behavior in `client`.
+- If a change touches both client and server behavior, update both sides in the same pass.
+- When UI renders rules, rewards, or desc icons, use existing `DescRender` / `EffectFactory` instead of hand-written placeholders.
+- Delete only imports, variables, helpers, or tests made unused by your own changes.
+
+### Step 5 — Confidence loop and verification
+
+After each fix pass, run the loop:
+
+1. Re-read the changed diff and ask what loopholes remain: rule edge cases, continuation loss, client/server mismatch, serialization gaps, stale tests, or false-positive tests.
+2. Add or adjust tests for any loophole that can regress.
+3. Run the smallest meaningful checks first, then broader checks when the blast radius warrants it.
+4. If checks fail, fix root causes and repeat.
+5. If checks cannot run, record the command attempted, the failure reason, and what confidence is still missing.
+
+Do not claim the strategy is complete until the reviewed behavior is backed by passing checks or a clearly documented blocker.
+
+### Step 6 — Write review report when useful
+
+Write a report only if the user asked for one, the review is non-trivial, or a persistent audit trail is useful. Follow [references/review-template.md](references/review-template.md), but include fix status:
+
+- **Fixed**: issue was corrected in code.
+- **Verified**: checks that passed.
+- **Remaining**: accepted blocker, out-of-scope issue, or explicit follow-up.
 
 Save to: `docs/review/{scope}-{date}.md`
 
@@ -83,9 +134,11 @@ Naming convention:
 - Diff review: `diff-2026-03-27.md`
 - Full review: `full-review-2026-03-27.md`
 
-### Step 5 — Summarize to user
+### Step 7 — Summarize to user
 
 Present a concise summary:
-1. Number of issues by severity (critical / warning / suggestion)
-2. Top 3 most impactful findings
-3. Link to the full report file
+1. What was reviewed and fixed
+2. Files changed
+3. Checks run and their result
+4. Remaining risks or blockers, if any
+5. Link to the report file, if one was created

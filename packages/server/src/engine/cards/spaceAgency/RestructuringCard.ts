@@ -1,3 +1,4 @@
+import { isDiscardProhibitedCard } from '@seti/common/rules';
 import { SelectCard } from '@/engine/input/SelectCard.js';
 import { buildQuickMissionDef } from '@/engine/missions/buildMissionDef.js';
 import type { IMissionDef } from '@/engine/missions/IMission.js';
@@ -35,6 +36,7 @@ export class Restructuring extends MissionCard {
     pushCoreAction(context.player, context.game, (game) => {
       const candidates = context.player.hand
         .map((card, index) => {
+          if (isDiscardProhibitedCard(card)) return null;
           const cardId = cardItemId(card);
           return cardId ? { id: `${cardId}@${index}`, cardId, index } : null;
         })

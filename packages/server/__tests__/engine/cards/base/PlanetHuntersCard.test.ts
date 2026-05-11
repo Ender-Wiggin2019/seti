@@ -66,4 +66,40 @@ describe('PlanetHuntersCard (card 114)', () => {
     expect(sectors[0].state.marks).toBe(1);
     expect(sectors[1].state.marks).toBe(1);
   });
+
+  it('does not offer Exertian cards for optional hand signal discards', () => {
+    const card = new PlanetHuntersCard();
+    const player = new Player({
+      id: 'p1',
+      name: 'Alice',
+      color: 'red',
+      seatIndex: 0,
+      hand: [
+        { id: 'ET.41', sector: ESector.BLUE },
+        { id: 'hand-red', sector: ESector.RED },
+      ],
+    });
+    const game = {
+      sectors: [createSector(ESector.RED), createSector(ESector.BLUE)],
+      mainDeck: new Deck<string>(['drawn-card']),
+      cardRow: [],
+      deferredActions: new DeferredActionsQueue(),
+      missionTracker: { recordEvent: () => undefined },
+      random: { shuffle: (items: string[]) => items },
+      lockCurrentTurn: () => undefined,
+    } as unknown as IGame;
+
+    card.play({ player, game });
+    const input = game.deferredActions.drain(game);
+    const model = input?.toModel();
+
+    expect(model?.type).toBe(EPlayerInputType.CARD);
+    if (model?.type !== EPlayerInputType.CARD) {
+      throw new Error('expected card input');
+    }
+    expect(model.cards.map((candidate) => candidate.id)).toEqual([
+      'hand-red@1',
+      'drawn-card@2',
+    ]);
+  });
 });

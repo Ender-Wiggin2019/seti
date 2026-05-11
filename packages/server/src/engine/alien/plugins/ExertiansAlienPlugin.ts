@@ -6,13 +6,14 @@ import {
 import type { ESector } from '@seti/common/types/element';
 import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
 import { getTechDescriptor } from '@seti/common/types/tech';
+import { getMoonOccupants } from '../../board/PlanetaryBoard.js';
 import { isSoloMode } from '../../GameOptions.js';
 import type { IGame } from '../../IGame.js';
 import type { PlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
-import { getMoonOccupants } from '../../board/PlanetaryBoard.js';
 import type { IPlayer } from '../../player/IPlayer.js';
 import { EPieceType } from '../../player/Pieces.js';
+import { RivalResourceResolver } from '../../solo/RivalResourceResolver.js';
 import { RivalSetup } from '../../solo/RivalSetup.js';
 import {
   type AlienBoard,
@@ -56,8 +57,12 @@ export class ExertiansAlienPlugin implements IAlienPlugin {
       const drawCount = BASE_DISCOVERY_DEAL_COUNT + extraCards;
       const drawn = deck.slice(cursor, cursor + drawCount);
       cursor += drawn.length;
-      player.hand.push(...drawn);
-      if (extraCards > 0) {
+      if (isSoloMode(game.options) && RivalSetup.isRivalPlayer(player)) {
+        RivalResourceResolver.gainProgress(game, extraCards);
+      } else {
+        player.hand.push(...drawn);
+      }
+      if (extraCards > 0 && !RivalSetup.isRivalPlayer(player)) {
         discoveryPlays.push({ player, count: extraCards });
       }
     }
@@ -241,7 +246,7 @@ export class ExertiansAlienPlugin implements IAlienPlugin {
           alienIndex: board.alienIndex,
           traceColor,
           maxOccupants: 1,
-          rewards: [{ type: 'VP', amount: danger }],
+          rewards: [],
           isDiscovery: false,
         });
       }
@@ -249,11 +254,8 @@ export class ExertiansAlienPlugin implements IAlienPlugin {
   }
 
   private getDangerFromBoardSlot(slot: ITraceSlot): number {
-    const reward = slot.rewards.find((candidate) => candidate.type === 'VP');
-    if (!reward || reward.type !== 'VP') {
-      return 0;
-    }
-    return reward.amount;
+    const match = /^exertians-danger-(\d+)-/.exec(slot.slotId);
+    return match ? Number(match[1]) : 0;
   }
 
   private createDiscoveryPlayInput(

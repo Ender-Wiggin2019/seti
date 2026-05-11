@@ -1,13 +1,13 @@
 import { alienCards } from '@seti/common/data/alienCards';
 import { EAlienType } from '@seti/common/types/protocol/enums';
+import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import {
-  isExertiansAlienBoard,
   type AlienBoard,
   type ExertiansAlienBoard,
+  isExertiansAlienBoard,
 } from '@/engine/alien/AlienBoard.js';
 import { AlienState } from '@/engine/alien/AlienState.js';
 import { ExertiansAlienPlugin } from '@/engine/alien/plugins/ExertiansAlienPlugin.js';
-import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { Game } from '@/engine/Game.js';
 import {
   getPlayer,
@@ -23,6 +23,38 @@ function createExertiansGame(seed: string): { game: Game; board: AlienBoard } {
   const game = Game.create(
     TEST_PLAYERS,
     { playerCount: 2, alienModulesEnabled: [true, false, true, false, false] },
+    seed,
+    seed,
+  );
+  resolveSetupTucks(game);
+  game.alienState = AlienState.createFromHiddenAliens([EAlienType.EXERTIANS]);
+  const board = game.alienState.getBoardByType(EAlienType.EXERTIANS);
+  if (!board) {
+    throw new Error('expected Exertians board');
+  }
+  return { game, board };
+}
+
+function createSoloExertiansGame(seed: string): {
+  game: Game;
+  board: AlienBoard;
+} {
+  const game = Game.create(
+    [
+      TEST_PLAYERS[0],
+      {
+        id: `rival:${seed}`,
+        name: 'Rival Institution',
+        color: 'blue',
+        seatIndex: 1,
+      },
+    ],
+    {
+      playerCount: 2,
+      isSoloMode: true,
+      soloDifficulty: 2,
+      alienModulesEnabled: [true, false, true, false, false],
+    } as Parameters<typeof Game.create>[1],
     seed,
     seed,
   );
@@ -85,6 +117,38 @@ describe('ExertiansAlienPlugin', () => {
 
     expect(exertianCardIdsInHand(game, 'p1')).toHaveLength(5);
     expect(exertianCardIdsInHand(game, 'p2')).toHaveLength(4);
+  });
+
+  it('converts solo rival Exertians discovery cards to progress instead of hand cards', () => {
+    const { game, board } = createSoloExertiansGame('exe-solo-discovery');
+    const rival = game.players[1];
+    const rivalState = game.rivalState;
+    if (!rivalState) throw new Error('expected rival state');
+    placeDiscoveryMarker(board, rival.id, 0);
+    const progressBefore = rivalState.progress;
+
+    game.alienState.discoverAlien(board, game);
+
+    expect(exertianCardIdsInHand(game, 'p1')).toHaveLength(3);
+    expect(exertianCardIdsInHand(game, rival.id)).toHaveLength(0);
+    expect(rival.hand).toHaveLength(0);
+    expect(rivalState.progress).toBe(progressBefore + 1);
+  });
+
+  it('does not grant solo rival Exertians progress for the base discovery deal', () => {
+    const { game, board } = createSoloExertiansGame(
+      'exe-solo-discovery-no-marker',
+    );
+    const rival = game.players[1];
+    const rivalState = game.rivalState;
+    if (!rivalState) throw new Error('expected rival state');
+    const progressBefore = rivalState.progress;
+
+    game.alienState.discoverAlien(board, game);
+
+    expect(exertianCardIdsInHand(game, rival.id)).toHaveLength(0);
+    expect(rival.hand).toHaveLength(0);
+    expect(rivalState.progress).toBe(progressBefore);
   });
 
   it('EXE-A3 seals the remaining Exertian deck after discovery distribution', () => {
@@ -182,26 +246,15 @@ describe('ExertiansAlienPlugin', () => {
     const speciesSlots = exertiansBoard.speciesTraceSlots;
     expect(speciesSlots).toHaveLength(9);
     expect(
-      speciesSlots.filter((slot) =>
-        slot.rewards.some(
-          (reward) => reward.type === 'VP' && reward.amount === 3,
-        ),
-      ),
+      speciesSlots.filter((slot) => slot.slotId.startsWith('exertians-danger-3')),
     ).toHaveLength(3);
     expect(
-      speciesSlots.filter((slot) =>
-        slot.rewards.some(
-          (reward) => reward.type === 'VP' && reward.amount === 2,
-        ),
-      ),
+      speciesSlots.filter((slot) => slot.slotId.startsWith('exertians-danger-2')),
     ).toHaveLength(3);
     expect(
-      speciesSlots.filter((slot) =>
-        slot.rewards.some(
-          (reward) => reward.type === 'VP' && reward.amount === 1,
-        ),
-      ),
+      speciesSlots.filter((slot) => slot.slotId.startsWith('exertians-danger-1')),
     ).toHaveLength(3);
+    expect(speciesSlots.every((slot) => slot.rewards.length === 0)).toBe(true);
   });
 
   it('EXE-C2 crossing the +20 Exertian milestone offers one extra face-down play', () => {
@@ -315,18 +368,18 @@ describe('ExertiansAlienPlugin', () => {
     player.score = 100;
 
     const bottomSlot = exertiansBoard.speciesTraceSlots.find((slot) =>
-      slot.rewards.some(
-        (reward) => reward.type === 'VP' && reward.amount === 3,
-      ),
+      slot.slotId.startsWith('exertians-danger-3'),
     );
     if (!bottomSlot) {
       throw new Error('expected bottom-tier Exertians slot');
     }
+    const scoreBeforeTrace = player.score;
     exertiansBoard.placeTrace(
       bottomSlot,
       { playerId: player.id },
       bottomSlot.traceColor,
     );
+    expect(player.score).toBe(scoreBeforeTrace);
 
     const penalty = new ExertiansAlienPlugin().onGameEndPenalty(game, {
       p1: 100,

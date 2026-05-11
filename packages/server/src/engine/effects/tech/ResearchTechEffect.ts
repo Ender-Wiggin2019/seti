@@ -1,6 +1,7 @@
 import { ETech } from '@seti/common/types/element';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import {
+  ETechBonusType,
   type ETechId,
   getTechDescriptor,
   type ITechBonusToken,
@@ -21,6 +22,7 @@ export interface IResearchTechResult {
   vpBonus: number;
   tileBonus?: ITechBonusToken;
   tileBonuses: ITechBonusToken[];
+  pendingInput?: IPlayerInput;
 }
 
 /**
@@ -77,8 +79,10 @@ export class ResearchTechEffect {
     }
 
     if (techs.length === 1) {
-      const result = this.acquireTech(player, game, techs[0]);
-      return this.handlePostAcquire(player, result, options.onComplete);
+      const result = this.takeTech(player, game, techs[0]);
+      return this.resolveTechBonuses(player, game, result, () =>
+        this.handlePostAcquire(player, result, options.onComplete),
+      );
     }
 
     return new SelectOption(
@@ -87,8 +91,10 @@ export class ResearchTechEffect {
         id: techId,
         label: techId,
         onSelect: () => {
-          const result = this.acquireTech(player, game, techId);
-          return this.handlePostAcquire(player, result, options.onComplete);
+          const result = this.takeTech(player, game, techId);
+          return this.resolveTechBonuses(player, game, result, () =>
+            this.handlePostAcquire(player, result, options.onComplete),
+          );
         },
       })),
       'Select a technology to research',
@@ -156,6 +162,21 @@ export class ResearchTechEffect {
     game: IGame,
     techId: ETechId,
   ): IResearchTechResult {
+    const result = this.takeTech(player, game, techId);
+    result.pendingInput = this.resolveTechBonuses(
+      player,
+      game,
+      result,
+      () => undefined,
+    );
+    return result;
+  }
+
+  private static takeTech(
+    player: IPlayer,
+    game: IGame,
+    techId: ETechId,
+  ): IResearchTechResult {
     const techBoard = game.techBoard;
     if (techBoard === null) {
       throw new GameError(
@@ -181,9 +202,6 @@ export class ResearchTechEffect {
     }
 
     const tileBonuses = buildTechTileBonuses(techId, takeResult.tile.bonus);
-    for (const tileBonusToken of tileBonuses) {
-      TechBonusEffect.apply(player, game, tileBonusToken);
-    }
 
     game.missionTracker?.recordEvent({
       type: EMissionEventType.TECH_RESEARCHED,
@@ -196,6 +214,29 @@ export class ResearchTechEffect {
       tileBonus: takeResult.tile.bonus,
       tileBonuses,
     };
+  }
+
+  private static resolveTechBonuses(
+    player: IPlayer,
+    game: IGame,
+    result: IResearchTechResult,
+    onComplete: () => IPlayerInput | undefined,
+    index = 0,
+  ): IPlayerInput | undefined {
+    const bonus = result.tileBonuses[index];
+    if (!bonus) {
+      return onComplete();
+    }
+
+    const next = () =>
+      this.resolveTechBonuses(player, game, result, onComplete, index + 1);
+
+    if (bonus.type === ETechBonusType.CARD) {
+      return TechBonusEffect.createAnyCardChoice(player, game, next);
+    }
+
+    TechBonusEffect.apply(player, game, bonus);
+    return next();
   }
 
   public static getFilteredTechs(

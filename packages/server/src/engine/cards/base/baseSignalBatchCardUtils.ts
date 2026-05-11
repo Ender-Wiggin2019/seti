@@ -1,3 +1,4 @@
+import { isDiscardProhibitedCard } from '@seti/common/rules';
 import type { ESector } from '@seti/common/types/element';
 import { EAlienType, EPlanet } from '@seti/common/types/protocol/enums';
 import { AlienRegistry } from '@/engine/alien/AlienRegistry.js';
@@ -137,15 +138,19 @@ export function createOptionalHandSignalDiscardInput(
 ): PlayerInput | undefined {
   if (player.hand.length === 0 || maxCards <= 0) return undefined;
 
-  const handCards = player.hand.map((card, index) => {
-    const cardId = resolveCardId(card, `hand-card-${index}`);
-    return {
-      optionId: `${cardId}@${index}`,
-      discardCardId: cardId,
-      handIndex: index,
-      rawCard: card,
-    };
-  });
+  const handCards = player.hand
+    .map((card, index) => {
+      const cardId = resolveCardId(card, `hand-card-${index}`);
+      return {
+        optionId: `${cardId}@${index}`,
+        discardCardId: cardId,
+        handIndex: index,
+        rawCard: card,
+      };
+    })
+    .filter((card) => !isDiscardProhibitedCard(card.rawCard));
+
+  if (handCards.length === 0) return undefined;
 
   return new SelectCard(
     player,

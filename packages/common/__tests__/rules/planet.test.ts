@@ -169,10 +169,18 @@ describe('planet rules', () => {
     const player = createPlayerState();
     const withMoonTech = createPlayerState({ techs: [ETechId.PROBE_MOON] });
 
-    expect(canLandOnMoon(createPlanetState(), player)).toBe(false);
-    expect(canLandOnMoon(createPlanetState(), withMoonTech)).toBe(true);
+    expect(canLandOnMoon(EPlanet.MARS, createPlanetState(), player)).toBe(
+      false,
+    );
+    expect(canLandOnMoon(EPlanet.MARS, createPlanetState(), withMoonTech)).toBe(
+      true,
+    );
+    expect(
+      canLandOnMoon(EPlanet.MERCURY, createPlanetState(), withMoonTech),
+    ).toBe(false);
     expect(
       canLandOnMoon(
+        EPlanet.MARS,
         createPlanetState({
           moonOccupant: { playerId: 'player-a' },
         }),

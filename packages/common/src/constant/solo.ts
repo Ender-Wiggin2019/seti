@@ -1,3 +1,4 @@
+import { ETech } from '@seti/common/types/element';
 import { EAlienType } from '@seti/common/types/protocol/enums';
 import type { TPublicSlotReward } from '@seti/common/types/protocol/gameState';
 import {
@@ -8,6 +9,7 @@ import {
   type TRivalObjectiveTriggerKey,
   TSoloDifficulty,
 } from '@seti/common/types/protocol/solo';
+import type { TTechCategory } from '@seti/common/types/tech';
 
 export interface IRivalObjectiveStackComposition {
   level1: number;
@@ -110,6 +112,16 @@ export const RIVAL_BOARD_CONFIGS: Record<TSoloDifficulty, IRivalBoardConfig> = {
   },
 };
 
+export const RIVAL_TECH_CATEGORY_ORDER_BY_BOARD: Record<
+  TRivalBoardConfigId,
+  readonly TTechCategory[]
+> = {
+  'rival-board-1': [ETech.COMPUTER, ETech.SCAN, ETech.PROBE],
+  'rival-board-2': [ETech.SCAN, ETech.PROBE, ETech.COMPUTER],
+  'rival-board-3': [ETech.COMPUTER, ETech.SCAN, ETech.PROBE],
+  'rival-board-4': [ETech.PROBE, ETech.COMPUTER, ETech.SCAN],
+};
+
 export const RIVAL_SPECIES_ACTION_CARD_BY_ALIEN: Partial<
   Record<EAlienType, TRivalActionCardId>
 > = {
@@ -187,7 +199,7 @@ export const RIVAL_OBJECTIVE_DEFINITIONS: readonly IRivalObjectiveDefinition[] =
     {
       id: 'SOLO.4',
       level: 'level1',
-      tasks: [{ kind: ERivalObjectiveTaskKind.MIN_PUBLICITY, amount: 8 }],
+      tasks: [{ kind: ERivalObjectiveTaskKind.MIN_PUBLICITY, amount: 9 }],
     },
     {
       id: 'SOLO.5',

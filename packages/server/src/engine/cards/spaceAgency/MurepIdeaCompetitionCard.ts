@@ -1,3 +1,4 @@
+import { isDiscardProhibitedCard } from '@seti/common/rules';
 import { ImmediateCard } from '../Card.js';
 import type { ICardRuntimeContext } from '../ICard.js';
 import { loadCardData } from '../loadCardData.js';
@@ -13,6 +14,9 @@ export class MurepIdeaCompetition extends ImmediateCard {
   protected override bespokePlay(context: ICardRuntimeContext): undefined {
     pushCoreAction(context.player, context.game, (game) => {
       for (const card of [...context.player.hand]) {
+        if (isDiscardProhibitedCard(card)) {
+          continue;
+        }
         const cardId = typeof card === 'string' ? card : card.id;
         if (cardId) {
           context.player.removeCardById(cardId);

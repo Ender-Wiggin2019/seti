@@ -27,7 +27,7 @@ async function openTab(
 
 async function getRivalPanelSnapshot(page: Page): Promise<string> {
   const [progress, draw, discard, currentCard] = await Promise.all([
-    page.getByTestId('rival-progress').textContent(),
+    page.getByTestId('rival-progress-total').textContent(),
     page.getByTestId('rival-deck-draw').textContent(),
     page.getByTestId('rival-deck-discard').textContent(),
     page.getByTestId('rival-current-card').textContent(),
@@ -59,9 +59,9 @@ async function passAndWaitForSoloReturn(page: Page): Promise<void> {
 async function currentRoundStackIndex(page: Page): Promise<number> {
   await openTab(page, 'Cards');
   for (let index = 0; index < 4; index += 1) {
-    const className = await page.locator(sel.roundStack(index)).getAttribute(
-      'class',
-    );
+    const className = await page
+      .locator(sel.roundStack(index))
+      .getAttribute('class');
     if (className?.includes('border-accent-500')) {
       return index;
     }
@@ -137,11 +137,7 @@ test.describe('Solo full flow @real-ui', () => {
 
     for (let attempt = 0; attempt < 8; attempt += 1) {
       await openTab(page, 'Aliens');
-      if (
-        await rivalDiscoveryTrace
-          .isVisible()
-          .catch(() => false)
-      ) {
+      if (await rivalDiscoveryTrace.isVisible().catch(() => false)) {
         break;
       }
       await openTab(page, 'Board');

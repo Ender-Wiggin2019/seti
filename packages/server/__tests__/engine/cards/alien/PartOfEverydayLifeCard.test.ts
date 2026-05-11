@@ -34,4 +34,27 @@ describe('PartOfEverydayLifeCard', () => {
     expect(player.hand).not.toContain('ET.17');
     expect(player.hand).not.toContain('ET.12');
   });
+
+  it('does not offer Exertian cards for either discard choice', () => {
+    const { game, player } = createAnomaliesGame(
+      'part-of-everyday-life-exertian',
+    );
+    setMainDeck(game, ['ET.41', 'ET.17', 'ET.12']);
+    const seenCardIds: string[][] = [];
+
+    new PartOfEverydayLifeCard().play({ player, game });
+    resolveDeferredInputs(game, (model) => {
+      if (model.type !== EPlayerInputType.CARD) return '';
+      const cards = (model as ISelectCardInputModel).cards.map(
+        (card) => card.id,
+      );
+      seenCardIds.push(cards);
+      return cards[0] ?? '';
+    });
+
+    expect(seenCardIds).toHaveLength(2);
+    expect(seenCardIds[0].some((id) => id.includes('ET.41'))).toBe(false);
+    expect(seenCardIds[1].some((id) => id.includes('ET.41'))).toBe(false);
+    expect(player.hand).toContain('ET.41');
+  });
 });

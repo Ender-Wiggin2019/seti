@@ -156,6 +156,7 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
     player.pieces.deploy(EPieceType.SECTOR_MARKER);
     tile.markerPlayerIds.push(player.id);
     tile.dataRemaining -= 1;
+    player.resources.gain({ data: 1 });
 
     const currentSector = this.getCurrentSector(game);
     if (currentSector) {

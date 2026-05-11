@@ -218,6 +218,26 @@ describe('GameSetup', () => {
     ).toBe(true);
   });
 
+  it('samples solo objectives after shuffling each full level pool', () => {
+    const seenLevel1Ids = new Set<string>();
+
+    for (let index = 0; index < 20; index += 1) {
+      const game = createSoloGame(2, `seed-solo-objective-sample-${index}`);
+      const rivalState = game.rivalState;
+      if (!rivalState) throw new Error('expected rival state');
+      for (const objectiveId of [
+        ...rivalState.revealedObjectiveIds,
+        ...rivalState.objectiveDrawPile,
+      ]) {
+        if (RIVAL_OBJECTIVE_IDS_BY_LEVEL.level1.includes(objectiveId)) {
+          seenLevel1Ids.add(objectiveId);
+        }
+      }
+    }
+
+    expect(seenLevel1Ids).toEqual(new Set(RIVAL_OBJECTIVE_IDS_BY_LEVEL.level1));
+  });
+
   it('randomizes the solo starting player across seeds', () => {
     const starters = new Set<string>();
 

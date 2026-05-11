@@ -1,3 +1,4 @@
+import { isDiscardProhibitedCard } from '@seti/common/rules';
 import { ETech } from '@seti/common/types/element';
 import type { TTechCategory } from '@seti/common/types/tech';
 import { EPriority } from '@/engine/deferred/Priority.js';
@@ -75,12 +76,16 @@ export class YevpatoriaTelescopeCard extends ImmediateCard {
   ): IPlayerInput | undefined {
     if (context.player.hand.length === 0) return undefined;
 
-    const handCards = context.player.hand.map((card, index) => ({
-      optionId: `discard-${toCardId(card, `hand-card-${index}`)}@${index}`,
-      discardCardId: toCardId(card, `hand-card-${index}`),
-      handIndex: index,
-      rawCard: card,
-    }));
+    const handCards = context.player.hand
+      .map((card, index) => ({
+        optionId: `discard-${toCardId(card, `hand-card-${index}`)}@${index}`,
+        discardCardId: toCardId(card, `hand-card-${index}`),
+        handIndex: index,
+        rawCard: card,
+      }))
+      .filter((card) => !isDiscardProhibitedCard(card.rawCard));
+
+    if (handCards.length === 0) return undefined;
 
     return new SelectOption(
       context.player,

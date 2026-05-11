@@ -444,6 +444,21 @@ describe('AlienBoardView', () => {
             dataCost: 0,
             claimedByPlayerId: 'p1',
           },
+          {
+            slotId: 'energy-and-alien-card',
+            rewards: [
+              { type: 'ENERGY', amount: 1 },
+              { type: 'CUSTOM', effectId: 'CENTAURIANS_DRAW_ALIEN_CARD' },
+            ],
+            dataCost: 0,
+            claimedByPlayerId: null,
+          },
+          {
+            slotId: 'any-trace',
+            rewards: [{ type: 'CUSTOM', effectId: 'CENTAURIANS_ANY_TRACE' }],
+            dataCost: 0,
+            claimedByPlayerId: null,
+          },
         ],
         traceSlots: [],
       },
@@ -466,6 +481,21 @@ describe('AlienBoardView', () => {
     expect(
       screen.getByTestId('alien-0-centaurians-reward-score-8'),
     ).toHaveTextContent('p1');
+    expect(
+      within(
+        screen.getByTestId('alien-0-centaurians-reward-energy-and-alien-card'),
+      ).getByTestId('trace-reward-icon-energy-1'),
+    ).toBeInTheDocument();
+    expect(
+      within(
+        screen.getByTestId('alien-0-centaurians-reward-energy-and-alien-card'),
+      ).getByTestId('trace-reward-icon-draw-alien-card-1'),
+    ).toBeInTheDocument();
+    expect(
+      within(
+        screen.getByTestId('alien-0-centaurians-reward-any-trace'),
+      ).getByTestId('trace-reward-icon-any-trace-1'),
+    ).toBeInTheDocument();
   });
 
   it('renders Exertians hidden cards, milestones, and trace slots without card ids', () => {
@@ -532,15 +562,14 @@ describe('AlienBoardView', () => {
       board: {
         type: 'mascamites',
         samplePools: {
-          [EPlanet.JUPITER]: ['mascamites-credit-2', 'mascamites-energy-2'],
-          [EPlanet.SATURN]: ['mascamites-card-2'],
+          [EPlanet.JUPITER]: 2,
+          [EPlanet.SATURN]: 1,
         },
         publicSamples: ['mascamites-vp-7'],
         capsules: [
           {
             capsuleId: 'cap-1',
             ownerId: 'p1',
-            sampleTokenId: 'mascamites-credit-2',
             sourcePlanet: EPlanet.JUPITER,
             spaceId: 'ring-2-cell-4',
             missionCardId: 'ET.1',
@@ -582,6 +611,9 @@ describe('AlienBoardView', () => {
     expect(
       screen.getByTestId('alien-0-mascamites-capsule-cap-1'),
     ).toHaveTextContent('ET.1');
+    expect(
+      screen.getByTestId('alien-0-mascamites-capsule-cap-1'),
+    ).not.toHaveTextContent('mascamites-credit-2');
     expect(
       screen.getByTestId('alien-0-mascamites-delivered-0'),
     ).toHaveTextContent('Round 3');

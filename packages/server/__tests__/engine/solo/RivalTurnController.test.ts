@@ -13,8 +13,8 @@ import {
 import { AlienRegistry } from '@/engine/alien/AlienRegistry.js';
 import { AlienState } from '@/engine/alien/AlienState.js';
 import { getNextTriggeredAnomalyToken } from '@/engine/alien/plugins/AnomaliesResolver.js';
-import { ESolarSystemElementType } from '@/engine/board/SolarSystem.js';
 import type { TSectorSignal } from '@/engine/board/Sector.js';
+import { ESolarSystemElementType } from '@/engine/board/SolarSystem.js';
 import { Deck } from '@/engine/deck/Deck.js';
 import { Game } from '@/engine/Game.js';
 import { RivalResourceResolver } from '@/engine/solo/RivalResourceResolver.js';
@@ -65,6 +65,45 @@ function forceTelescopeFallback(game: Game, cardId: 'S.2' | 'S.5'): void {
   if (!rivalState) throw new Error('expected rival state');
   rivalState.actionDeck = new Deck([cardId]);
   rival.resources.spend({ publicity: rival.resources.publicity });
+}
+
+function linkSolarSpaces(
+  game: Game,
+  leftSpaceId: string,
+  rightSpaceId: string,
+) {
+  const solarSystem = game.solarSystem;
+  if (!solarSystem) throw new Error('expected solar system');
+  const leftNeighbors = solarSystem.adjacency.get(leftSpaceId) ?? [];
+  const rightNeighbors = solarSystem.adjacency.get(rightSpaceId) ?? [];
+  if (!leftNeighbors.includes(rightSpaceId)) {
+    leftNeighbors.push(rightSpaceId);
+  }
+  if (!rightNeighbors.includes(leftSpaceId)) {
+    rightNeighbors.push(leftSpaceId);
+  }
+  solarSystem.adjacency.set(leftSpaceId, leftNeighbors);
+  solarSystem.adjacency.set(rightSpaceId, rightNeighbors);
+}
+
+function placeRivalProbeOnEarthWithDirectPath(
+  game: Game,
+  planet: EPlanet,
+): NonNullable<
+  ReturnType<NonNullable<Game['solarSystem']>['getPlanetLocation']>
+> {
+  const rival = game.players[1];
+  const solarSystem = game.solarSystem;
+  const earth = solarSystem?.getPlanetLocation(EPlanet.EARTH);
+  const target = solarSystem?.getPlanetLocation(planet);
+  if (!solarSystem || !earth || !target) {
+    throw new Error('expected solar setup');
+  }
+
+  solarSystem.placeProbe(rival.id, earth.space.id);
+  rival.probesInSpace = 1;
+  linkSolarSpaces(game, earth.space.id, target.space.id);
+  return target;
 }
 
 const EXERTIAN_CARD_IDS = alienCards
@@ -312,10 +351,8 @@ describe('RivalTurnController', () => {
     const game = createSoloGame();
     const rival = game.players[1];
     const rivalState = game.rivalState;
-    const jupiter = game.solarSystem?.getPlanetLocation(EPlanet.JUPITER);
-    if (!rivalState || !jupiter) throw new Error('expected solo setup');
-    game.solarSystem?.placeProbe(rival.id, jupiter.space.id);
-    rival.probesInSpace = 1;
+    if (!rivalState) throw new Error('expected solo setup');
+    placeRivalProbeOnEarthWithDirectPath(game, EPlanet.JUPITER);
     rivalState.actionDeck = new Deck(['S.4']);
     const techCountBefore = rival.techs.length;
 
@@ -332,6 +369,57 @@ describe('RivalTurnController', () => {
         ?.orbitSlots.some((slot) => slot.playerId === rival.id),
     ).toBe(true);
     expect(rival.probesInSpace).toBe(0);
+  });
+
+  it('requires rival probe placement actions to start from an Earth probe', () => {
+    const game = createSoloGame();
+    const rival = game.players[1];
+    const rivalState = game.rivalState;
+    const jupiter = game.solarSystem?.getPlanetLocation(EPlanet.JUPITER);
+    if (!rivalState || !jupiter) throw new Error('expected solo setup');
+    game.solarSystem?.placeProbe(rival.id, jupiter.space.id);
+    rival.probesInSpace = 1;
+    rivalState.actionDeck = new Deck(['S.4']);
+    const techCountBefore = rival.techs.length;
+
+    const result = RivalTurnController.resolveCurrentTurn(game);
+
+    expect(result).toMatchObject({
+      cardId: 'S.4',
+      actionKind: ERivalActionKind.RESEARCH_TECH,
+    });
+    expect(rival.techs).toHaveLength(techCountBefore + 1);
+    expect(
+      game.planetaryBoard?.planets
+        .get(EPlanet.JUPITER)
+        ?.orbitSlots.some((slot) => slot.playerId === rival.id),
+    ).toBe(false);
+  });
+
+  it('does not let probe tech raise the rival one-probe launch limit', () => {
+    const game = createSoloGame();
+    const rival = game.players[1];
+    const rivalState = game.rivalState;
+    const earth = game.solarSystem?.getPlanetLocation(EPlanet.EARTH);
+    if (!rivalState || !earth) throw new Error('expected solo setup');
+    game.solarSystem?.placeProbe(rival.id, earth.space.id);
+    rival.probesInSpace = 1;
+    rival.gainTech(ETechId.PROBE_DOUBLE_PROBE);
+    rival.resources.spend({ publicity: rival.resources.publicity });
+    rivalState.actionDeck = new Deck(['S.14']);
+
+    const result = RivalTurnController.resolveCurrentTurn(game);
+
+    expect(result).toMatchObject({
+      cardId: 'S.14',
+      actionKind: ERivalActionKind.SCAN,
+    });
+    expect(rival.probesInSpace).toBe(1);
+    expect(
+      game.solarSystem?.spaces
+        .flatMap((space) => space.occupants)
+        .filter((probe) => probe.playerId === rival.id),
+    ).toHaveLength(1);
   });
 
   it('chooses the highest-publicity reachable probe path and gains the movement publicity', () => {
@@ -393,18 +481,69 @@ describe('RivalTurnController', () => {
     expect(rival.resources.publicity).toBe(2);
   });
 
+  it('does not keep movement or publicity when the first reachable probe target cannot be placed', () => {
+    const game = createSoloGame();
+    const rival = game.players[1];
+    const rivalState = game.rivalState;
+    const solarSystem = game.solarSystem;
+    const earth = solarSystem?.getPlanetLocation(EPlanet.EARTH);
+    const uranus = solarSystem?.getPlanetLocation(EPlanet.URANUS);
+    const saturn = solarSystem?.getPlanetLocation(EPlanet.SATURN);
+    const uranusState = game.planetaryBoard?.planets.get(EPlanet.URANUS);
+    if (
+      !rivalState ||
+      !solarSystem ||
+      !earth ||
+      !uranus ||
+      !saturn ||
+      !uranusState
+    ) {
+      throw new Error('expected solo setup');
+    }
+
+    for (const space of solarSystem.spaces) {
+      solarSystem.adjacency.set(space.id, []);
+    }
+    linkSolarSpaces(game, earth.space.id, uranus.space.id);
+    linkSolarSpaces(game, earth.space.id, saturn.space.id);
+    uranus.space.hasPublicityIcon = true;
+    uranus.space.publicityIconAmount = 2;
+    saturn.space.hasPublicityIcon = false;
+    saturn.space.publicityIconAmount = undefined;
+    uranusState.firstOrbitClaimed = true;
+    uranusState.landingSlots.push({ playerId: rival.id });
+    solarSystem.placeProbe(rival.id, earth.space.id);
+    rival.probesInSpace = 1;
+    rival.resources.spend({ publicity: rival.resources.publicity });
+    rivalState.actionDeck = new Deck(['S.7']);
+
+    const result = RivalTurnController.resolveCurrentTurn(game);
+
+    expect(result).toMatchObject({
+      cardId: 'S.7',
+      actionKind: ERivalActionKind.PROBE_PLACEMENT,
+    });
+    expect(solarSystem.getPlayerPublicity(rival.id)).toBe(0);
+    expect(
+      uranus.space.occupants.some((probe) => probe.playerId === rival.id),
+    ).toBe(false);
+    expect(
+      game.planetaryBoard?.planets
+        .get(EPlanet.SATURN)
+        ?.landingSlots.some((slot) => slot.playerId === rival.id),
+    ).toBe(true);
+  });
+
   it('lands when a printed orbiter action has no first-orbit bonus and a first-land bonus is available', () => {
     const game = createSoloGame();
     const rival = game.players[1];
     const rivalState = game.rivalState;
-    const jupiter = game.solarSystem?.getPlanetLocation(EPlanet.JUPITER);
     const jupiterState = game.planetaryBoard?.planets.get(EPlanet.JUPITER);
-    if (!rivalState || !jupiter || !jupiterState) {
+    if (!rivalState || !jupiterState) {
       throw new Error('expected solo setup');
     }
     jupiterState.firstOrbitClaimed = true;
-    game.solarSystem?.placeProbe(rival.id, jupiter.space.id);
-    rival.probesInSpace = 1;
+    placeRivalProbeOnEarthWithDirectPath(game, EPlanet.JUPITER);
     rivalState.actionDeck = new Deck(['S.4']);
 
     const result = RivalTurnController.resolveCurrentTurn(game);
@@ -421,15 +560,13 @@ describe('RivalTurnController', () => {
     const game = createSoloGame();
     const rival = game.players[1];
     const rivalState = game.rivalState;
-    const uranus = game.solarSystem?.getPlanetLocation(EPlanet.URANUS);
     const uranusState = game.planetaryBoard?.planets.get(EPlanet.URANUS);
-    if (!rivalState || !uranus || !uranusState) {
+    if (!rivalState || !uranusState) {
       throw new Error('expected solo setup');
     }
     uranusState.firstLandDataBonusTaken =
       uranusState.firstLandDataBonusTaken.map(() => true);
-    game.solarSystem?.placeProbe(rival.id, uranus.space.id);
-    rival.probesInSpace = 1;
+    placeRivalProbeOnEarthWithDirectPath(game, EPlanet.URANUS);
     rival.resources.spend({ publicity: rival.resources.publicity });
     rivalState.actionDeck = new Deck(['S.7']);
 
@@ -447,13 +584,11 @@ describe('RivalTurnController', () => {
     const game = createSoloGame();
     const rival = game.players[1];
     const rivalState = game.rivalState;
-    const jupiter = game.solarSystem?.getPlanetLocation(EPlanet.JUPITER);
     const jupiterState = game.planetaryBoard?.planets.get(EPlanet.JUPITER);
-    if (!rivalState || !jupiter || !jupiterState) {
+    if (!rivalState || !jupiterState) {
       throw new Error('expected solo setup');
     }
-    game.solarSystem?.placeProbe(rival.id, jupiter.space.id);
-    rival.probesInSpace = 1;
+    placeRivalProbeOnEarthWithDirectPath(game, EPlanet.JUPITER);
     rival.gainTech(ETechId.PROBE_DOUBLE_PROBE);
     rivalState.actionDeck = new Deck(['S.4']);
 
@@ -472,36 +607,44 @@ describe('RivalTurnController', () => {
     const game = createSoloGame();
     const rival = game.players[1];
     const rivalState = game.rivalState;
-    const mercury = game.solarSystem?.getPlanetLocation(EPlanet.MERCURY);
-    if (!rivalState || !mercury) throw new Error('expected solo setup');
-    game.solarSystem?.placeProbe(rival.id, mercury.space.id);
+    const solarSystem = game.solarSystem;
+    const earth = solarSystem?.getPlanetLocation(EPlanet.EARTH);
+    const mars = solarSystem?.getPlanetLocation(EPlanet.MARS);
+    if (!rivalState || !solarSystem || !earth || !mars) {
+      throw new Error('expected solo setup');
+    }
+    for (const space of solarSystem.spaces) {
+      solarSystem.adjacency.set(space.id, []);
+    }
+    linkSolarSpaces(game, earth.space.id, mars.space.id);
+    solarSystem.placeProbe(rival.id, earth.space.id);
     rival.probesInSpace = 1;
     rival.resources.spend({ publicity: rival.resources.publicity });
-    rivalState.actionDeck = new Deck(['S.1']);
+    rivalState.actionDeck = new Deck(['S.4']);
     rivalState.progress = 0;
     rivalState.progressSlot = 0;
 
     const result = RivalTurnController.resolveCurrentTurn(game);
 
     expect(result).toMatchObject({
-      cardId: 'S.1',
+      cardId: 'S.4',
       actionKind: ERivalActionKind.PROBE_PLACEMENT,
     });
-    expect(game.sectors.some((sector) =>
-      sector.signals.some(
-        (signal) => signal.type === 'player' && signal.playerId === rival.id,
+    expect(
+      game.sectors.some((sector) =>
+        sector.signals.some(
+          (signal) => signal.type === 'player' && signal.playerId === rival.id,
+        ),
       ),
-    )).toBe(true);
+    ).toBe(true);
   });
 
   it('discards one probe tech to prioritize landing on an available moon', () => {
     const game = createSoloGame();
     const rival = game.players[1];
     const rivalState = game.rivalState;
-    const uranus = game.solarSystem?.getPlanetLocation(EPlanet.URANUS);
-    if (!rivalState || !uranus) throw new Error('expected solo setup');
-    game.solarSystem?.placeProbe(rival.id, uranus.space.id);
-    rival.probesInSpace = 1;
+    if (!rivalState) throw new Error('expected solo setup');
+    placeRivalProbeOnEarthWithDirectPath(game, EPlanet.URANUS);
     rival.resources.spend({ publicity: rival.resources.publicity });
     rival.gainTech(ETechId.PROBE_DOUBLE_PROBE);
     rivalState.actionDeck = new Deck(['S.7']);
@@ -517,6 +660,39 @@ describe('RivalTurnController', () => {
       game.planetaryBoard?.planets.get(EPlanet.URANUS)?.moonOccupant?.playerId,
     ).toBe(rival.id);
     expect(rival.probesInSpace).toBe(0);
+  });
+
+  it('places life traces earned from rival planet land rewards', () => {
+    const game = createSoloGame();
+    const rival = game.players[1];
+    const rivalState = game.rivalState;
+    if (!rivalState) throw new Error('expected solo setup');
+    placeRivalProbeOnEarthWithDirectPath(game, EPlanet.NEPTUNE);
+    rival.resources.spend({ publicity: rival.resources.publicity });
+    rivalState.actionDeck = new Deck(['S.8']);
+
+    const result = RivalTurnController.resolveCurrentTurn(game);
+
+    expect(result).toMatchObject({
+      cardId: 'S.8',
+      actionKind: ERivalActionKind.PROBE_PLACEMENT,
+    });
+    expect(rival.traces[ETrace.YELLOW]).toBe(1);
+    expect(
+      game.alienState.boards.some((board) =>
+        board
+          .getTraceSlots()
+          .some(
+            (slot) =>
+              slot.traceColor === ETrace.YELLOW &&
+              slot.occupants.some(
+                (occupant) =>
+                  occupant.source !== 'neutral' &&
+                  occupant.source.playerId === rival.id,
+              ),
+          ),
+      ),
+    ).toBe(true);
   });
 
   it('falls through to telescope when paid tech is not affordable', () => {
@@ -720,10 +896,7 @@ describe('RivalTurnController', () => {
     const rivalState = game.rivalState;
     if (!rivalState) throw new Error('expected rival state');
     discoverOumuamua(game);
-    const location = game.solarSystem?.getPlanetLocation(EPlanet.OUMUAMUA);
-    if (!location) throw new Error('expected oumuamua location');
-    game.solarSystem?.placeProbe(rival.id, location.space.id);
-    rival.probesInSpace = 1;
+    placeRivalProbeOnEarthWithDirectPath(game, EPlanet.OUMUAMUA);
     rivalState.actionDeck = new Deck(['S.17']);
 
     const result = RivalTurnController.resolveCurrentTurn(game);
@@ -952,12 +1125,11 @@ describe('RivalTurnController', () => {
     const game = createSoloGame();
     const rival = game.players[1];
     const rivalState = game.rivalState;
-    const saturn = game.solarSystem?.getPlanetLocation(EPlanet.SATURN);
-    if (!rivalState || !saturn) throw new Error('expected solo setup');
+    if (!rivalState) throw new Error('expected solo setup');
     const board = discoverMascamites(game);
     board.samplePools.saturn = ['mascamites-vp-7'];
     board.samplePools.jupiter = [];
-    game.solarSystem?.placeProbe(rival.id, saturn.space.id);
+    placeRivalProbeOnEarthWithDirectPath(game, EPlanet.SATURN);
     rival.probesInSpace = rival.probeSpaceLimit;
     rivalState.actionDeck = new Deck(['S.15']);
 
@@ -1076,6 +1248,43 @@ describe('RivalTurnController', () => {
     expect(rival.techs).not.toContain(ETechId.COMPUTER_VP_CREDIT);
     expect(rival.score).toBeGreaterThanOrEqual(8);
     expect(rivalState.progress).toBeGreaterThanOrEqual(1);
+  });
+
+  it('automatically resolves rival gold milestone tile input after a VP-gaining action', () => {
+    const game = createSoloGame();
+    const rival = game.players[1];
+    const rivalState = game.rivalState;
+    if (!rivalState) throw new Error('expected rival state');
+    rival.score = 24;
+    rivalState.actionDeck = new Deck(['S.5']);
+    rivalState.computer.filledSlots = [true, true, true, true, true, true];
+    const firstGoldTileId = game.goldScoringTiles[0]?.id;
+    if (!firstGoldTileId) throw new Error('expected gold tile');
+
+    const result = RivalTurnController.resolveCurrentTurn(game);
+
+    expect(result).toMatchObject({
+      cardId: 'S.5',
+      actionKind: ERivalActionKind.ANALYZE_DATA,
+    });
+    expect(rival.waitingFor).toBeUndefined();
+    expect(game.activePlayer.id).toBe('p1');
+    expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
+    expect(game.goldScoringTiles[0]?.claims).toContainEqual({
+      playerId: rival.id,
+      value: 5,
+    });
+    expect(
+      game.eventLog
+        .toArray()
+        .some(
+          (event) =>
+            event.type === 'ACTION' &&
+            event.playerId === rival.id &&
+            event.action === 'MILESTONE_GOLD_RESOLVED' &&
+            event.details?.tileId === firstGoldTileId,
+        ),
+    ).toBe(true);
   });
 
   it('adds one advanced action card when progress crosses the deck icon', () => {

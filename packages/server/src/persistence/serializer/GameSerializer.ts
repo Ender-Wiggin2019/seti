@@ -1,4 +1,5 @@
 import { PLANET_MISSION_CONFIG } from '@seti/common/constant/boardLayout';
+import { RIVAL_COMPUTER_SLOT_REWARDS } from '@seti/common/constant/solo';
 import { EResource } from '@seti/common/types/element';
 import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
 import type {
@@ -200,11 +201,17 @@ function toPublicMascamitesBoard(
   return {
     type: 'mascamites',
     samplePools: {
-      jupiter: [...board.samplePools.jupiter],
-      saturn: [...board.samplePools.saturn],
+      jupiter: board.samplePools.jupiter.length,
+      saturn: board.samplePools.saturn.length,
     },
     publicSamples: [...board.publicSamples],
-    capsules: board.capsules.map((capsule) => ({ ...capsule })),
+    capsules: board.capsules.map((capsule) => ({
+      capsuleId: capsule.capsuleId,
+      ownerId: capsule.ownerId,
+      sourcePlanet: capsule.sourcePlanet,
+      spaceId: capsule.spaceId,
+      missionCardId: capsule.missionCardId,
+    })),
     deliveredSamples: board.deliveredSamples.map((sample) => ({ ...sample })),
     traceSlots: board.speciesTraceSlots.map((slot) => toPublicTraceSlot(slot)),
   };
@@ -219,6 +226,7 @@ function toPublicExertiansBoard(
       ownerId: card.ownerId,
       source: card.source,
       revealed: card.revealed,
+      ...(card.revealed ? { cardId: card.cardId } : {}),
     })),
     milestones: board.milestones.map((milestone) => ({
       threshold: milestone.threshold,
@@ -881,10 +889,14 @@ function toPublicGoldScoringTiles(game: IGame): IPublicGoldScoringTile[] {
 
 function toPublicRivalState(
   rivalState: RivalState | undefined,
+  game: IGame,
 ): IPublicRivalState | undefined {
   if (!rivalState) {
     return undefined;
   }
+  const rival = game.players.find(
+    (player) => player.id === rivalState.rivalPlayerId,
+  );
 
   return {
     rivalPlayerId: rivalState.rivalPlayerId,
@@ -892,8 +904,12 @@ function toPublicRivalState(
     progress: rivalState.progress,
     progressSlot: rivalState.progressSlot,
     boardConfigId: rivalState.boardConfigId,
+    techIds: [...(rival?.techs ?? [])],
     computer: {
       filledSlots: [...rivalState.computer.filledSlots],
+      slotRewards: RIVAL_COMPUTER_SLOT_REWARDS.map((reward) =>
+        reward ? cloneValue(reward) : null,
+      ),
       dataPool: rivalState.computer.dataPool,
     },
     actionDeck: {
@@ -968,6 +984,6 @@ export function projectGameState(
     finalScoringResult: game.finalScoringResult
       ? cloneValue(game.finalScoringResult)
       : undefined,
-    rival: toPublicRivalState(game.rivalState),
+    rival: toPublicRivalState(game.rivalState, game),
   };
 }

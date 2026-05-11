@@ -6,6 +6,7 @@ import {
 } from '@seti/common/types/tech';
 import { ResearchTechEffect } from '@/engine/effects/tech/ResearchTechEffect.js';
 import { TechBonusEffect } from '@/engine/effects/tech/TechBonusEffect.js';
+import type { IPlayerInput } from '@/engine/input/PlayerInput.js';
 import { ImmediateCard } from '../Card.js';
 import type { ICardRuntimeContext } from '../ICard.js';
 import { loadCardData } from '../loadCardData.js';
@@ -31,9 +32,13 @@ const ANY_TECH_CATEGORIES: TTechCategory[] = [
 function replayPrintedBonus(
   context: ICardRuntimeContext,
   bonus: ITechBonusToken | undefined,
-): void {
-  if (!bonus || !REPLAYABLE_BONUSES.has(bonus.type)) return;
+): IPlayerInput | undefined {
+  if (!bonus || !REPLAYABLE_BONUSES.has(bonus.type)) return undefined;
+  if (bonus.type === ETechBonusType.CARD) {
+    return TechBonusEffect.createAnyCardChoice(context.player, context.game);
+  }
   TechBonusEffect.apply(context.player, context.game, bonus);
+  return undefined;
 }
 
 export class IterativeEngineering extends ImmediateCard {
@@ -60,8 +65,7 @@ export class IterativeEngineering extends ImmediateCard {
       return ResearchTechEffect.execute(context.player, game, {
         filter,
         onComplete: (result) => {
-          replayPrintedBonus(context, result.tileBonus);
-          return undefined;
+          return replayPrintedBonus(context, result.tileBonus);
         },
       });
     });

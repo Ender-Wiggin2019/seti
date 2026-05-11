@@ -19,6 +19,12 @@ import {
 export interface IOrbitProbeEffectResult {
   planet: EPlanet;
   vpGained: number;
+  pendingInput?: IPlayerInput;
+}
+
+interface IOrbitRewardResolution {
+  vpGained: number;
+  pendingInput?: IPlayerInput;
 }
 
 function gainResourceReward(player: IPlayer, reward: TPlanetReward): number {
@@ -67,27 +73,54 @@ export class OrbitProbeEffect {
     );
   }
 
-  private static applyReward(
+  private static applyRewardChain(
     player: IPlayer,
     game: IGame,
     planet: EPlanet,
-    reward: TPlanetReward,
-  ): number {
+    rewards: readonly TPlanetReward[],
+    index: number,
+    vpGained: number,
+    onComplete?: () => IPlayerInput | undefined,
+  ): IOrbitRewardResolution {
+    const reward = rewards[index];
+    if (reward === undefined) {
+      const pendingInput = onComplete?.();
+      return pendingInput ? { vpGained, pendingInput } : { vpGained };
+    }
+
     switch (reward.type) {
-      case 'resource':
-        return gainResourceReward(player, reward);
+      case 'resource': {
+        const gained = gainResourceReward(player, reward);
+        return this.applyRewardChain(
+          player,
+          game,
+          planet,
+          rewards,
+          index + 1,
+          vpGained + gained,
+          onComplete,
+        );
+      }
       case 'signal':
-        for (let index = 0; index < reward.amount; index += 1) {
-          if (planet === EPlanet.OUMUAMUA) {
-            const plugin = AlienRegistry.get(EAlienType.OUMUAMUA);
-            if (plugin instanceof OumuamuaAlienPlugin) {
-              plugin.markTileSignal(player, game);
-              continue;
-            }
-          }
-          MarkSectorSignalEffect.markByPlanet(player, game, planet);
-        }
-        return 0;
+        return {
+          vpGained,
+          pendingInput: this.applySignalReward(
+            player,
+            game,
+            planet,
+            reward.amount,
+            () =>
+              this.applyRewardChain(
+                player,
+                game,
+                planet,
+                rewards,
+                index + 1,
+                vpGained,
+                onComplete,
+              ).pendingInput,
+          ),
+        };
       case 'card':
         for (let index = 0; index < reward.amount; index += 1) {
           const drawn = game.mainDeck.drawWithReshuffle(game.random);
@@ -97,34 +130,71 @@ export class OrbitProbeEffect {
           player.hand.push(drawn);
           game.lockCurrentTurn();
         }
-        return 0;
+        return this.applyRewardChain(
+          player,
+          game,
+          planet,
+          rewards,
+          index + 1,
+          vpGained,
+          onComplete,
+        );
       case 'tuck':
         game.deferredActions.push(
           new SimpleDeferredAction(player, (g) =>
             this.buildTuckChain(player, g, reward.amount),
           ),
         );
-        return 0;
-      case 'alien-card': {
-        const board = game.alienState.getBoardByType(reward.alienType);
-        if (!board) return 0;
-        for (let index = 0; index < reward.amount; index += 1) {
-          const source = board.faceUpAlienCardId ? 'face-up' : 'deck';
-          const drawn = game.alienState.drawAlienCard(
+        return this.applyRewardChain(
+          player,
+          game,
+          planet,
+          rewards,
+          index + 1,
+          vpGained,
+          onComplete,
+        );
+      case 'alien-card':
+        return {
+          vpGained,
+          pendingInput: this.applyAlienCardReward(
             player,
-            board,
-            source,
             game,
-          );
-          if (!drawn) break;
-        }
-        return 0;
-      }
+            reward.alienType,
+            reward.amount,
+            () =>
+              this.applyRewardChain(
+                player,
+                game,
+                planet,
+                rewards,
+                index + 1,
+                vpGained,
+                onComplete,
+              ).pendingInput,
+          ),
+        };
       case 'exofossil':
         player.gainExofossils(reward.amount);
-        return 0;
+        return this.applyRewardChain(
+          player,
+          game,
+          planet,
+          rewards,
+          index + 1,
+          vpGained,
+          onComplete,
+        );
       case 'trace':
-        return 0;
+        return this.applyRewardChain(
+          player,
+          game,
+          planet,
+          rewards,
+          index + 1,
+          vpGained,
+          onComplete,
+        );
       default: {
         const exhaustive: never = reward;
         return exhaustive;
@@ -132,16 +202,88 @@ export class OrbitProbeEffect {
     }
   }
 
+  private static applySignalReward(
+    player: IPlayer,
+    game: IGame,
+    planet: EPlanet,
+    remaining: number,
+    onComplete: () => IPlayerInput | undefined,
+  ): IPlayerInput | undefined {
+    if (remaining <= 0) {
+      return onComplete();
+    }
+
+    if (planet === EPlanet.OUMUAMUA) {
+      const plugin = AlienRegistry.get(EAlienType.OUMUAMUA);
+      if (plugin instanceof OumuamuaAlienPlugin) {
+        return MarkSectorSignalEffect.markByPlanetWithAlternatives(
+          player,
+          game,
+          planet,
+          () =>
+            this.applySignalReward(
+              player,
+              game,
+              planet,
+              remaining - 1,
+              onComplete,
+            ),
+        );
+      }
+    }
+
+    MarkSectorSignalEffect.markByPlanet(player, game, planet);
+    return this.applySignalReward(
+      player,
+      game,
+      planet,
+      remaining - 1,
+      onComplete,
+    );
+  }
+
+  private static applyAlienCardReward(
+    player: IPlayer,
+    game: IGame,
+    alienType: EAlienType,
+    remaining: number,
+    onComplete: () => IPlayerInput | undefined,
+  ): IPlayerInput | undefined {
+    if (remaining <= 0) {
+      return onComplete();
+    }
+
+    const input = game.alienState.createDrawAlienCardInput(
+      player,
+      game,
+      { alienType },
+      () =>
+        this.applyAlienCardReward(
+          player,
+          game,
+          alienType,
+          remaining - 1,
+          onComplete,
+        ),
+    );
+    return input ?? onComplete();
+  }
+
   private static applyRewards(
     player: IPlayer,
     game: IGame,
     planet: EPlanet,
     rewards: readonly TPlanetReward[],
-  ): number {
-    return rewards.reduce(
-      (vpGained, reward) =>
-        vpGained + this.applyReward(player, game, planet, reward),
+    onComplete?: () => IPlayerInput | undefined,
+  ): IOrbitRewardResolution {
+    return this.applyRewardChain(
+      player,
+      game,
+      planet,
+      rewards,
       0,
+      0,
+      onComplete,
     );
   }
 
@@ -166,6 +308,7 @@ export class OrbitProbeEffect {
     player: IPlayer,
     game: IGame,
     planet: EPlanet,
+    options: { onComplete?: () => IPlayerInput | undefined } = {},
   ): IOrbitProbeEffectResult {
     if (!this.canExecute(player, game, planet)) {
       throw new GameError(
@@ -201,16 +344,18 @@ export class OrbitProbeEffect {
 
     const orbitResult = planetaryBoard.orbit(planet, player.id);
     syncProbeCountsForPlayer(game, player.id);
-    const vpGained = this.applyRewards(
+    const rewardResolution = this.applyRewards(
       player,
       game,
       planet,
       orbitResult.rewards,
+      options.onComplete,
     );
 
     return {
       planet,
-      vpGained,
+      vpGained: rewardResolution.vpGained,
+      pendingInput: rewardResolution.pendingInput,
     };
   }
 }

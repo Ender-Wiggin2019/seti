@@ -10,6 +10,7 @@ import {
 import { createActionEvent } from '@/engine/event/GameEvent.js';
 import type { Game } from '@/engine/Game.js';
 import { RivalActionResolver } from './RivalActionResolver.js';
+import { RivalAutomatedInputResolver } from './RivalAutomatedInputResolver.js';
 import { RivalResourceResolver } from './RivalResourceResolver.js';
 import { RivalSetup } from './RivalSetup.js';
 
@@ -194,5 +195,13 @@ export class RivalTurnController {
       game.transitionTo(EPhase.AWAIT_END_TURN);
     }
     game.processEndTurn(game.activePlayer.id);
+    let automatedInputCount = 0;
+    while (RivalAutomatedInputResolver.resolvePendingInput(game)) {
+      // Continue any deterministic rival prompts raised by between-turn scoring.
+      automatedInputCount += 1;
+      if (automatedInputCount > 20) {
+        throw new Error('Rival automated input resolution did not settle');
+      }
+    }
   }
 }

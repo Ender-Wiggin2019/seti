@@ -19,7 +19,8 @@ export function SelectTraceInput({
   return (
     <div className='space-y-2'>
       <p className='micro-label'>
-        {t('client.input.select_trace', { defaultValue: 'Select trace' })}
+        {model.title ??
+          t('client.input.select_trace', { defaultValue: 'Select trace' })}
       </p>
       <div className='grid gap-1.5 sm:grid-cols-2'>
         {model.options.map((trace) => (

@@ -11,6 +11,7 @@ import {
   EPlanet,
   EPlayerInputType,
   ETech,
+  type IPublicRivalState,
 } from '@/types/re-exports';
 import {
   createMockGameState,
@@ -54,6 +55,39 @@ function createCard(id: string, name = `Card ${id}`): IBaseCard {
     price: 1,
     income: EResource.CREDIT,
     effects: [],
+  };
+}
+
+function createMockRivalState(): IPublicRivalState {
+  return {
+    rivalPlayerId: 'rival:game-test-1',
+    difficulty: 3,
+    progress: 12,
+    progressSlot: 0,
+    boardConfigId: 'rival-board-2',
+    computer: {
+      filledSlots: [false, true, false, false, false, false],
+      dataPool: 1,
+      slotRewards: [
+        null,
+        { type: 'PUBLICITY', amount: 1 },
+        null,
+        { type: 'CUSTOM', effectId: 'RIVAL_PROGRESS_4' },
+        null,
+        null,
+      ],
+    },
+    actionDeck: {
+      drawPileSize: 4,
+      discardPileSize: 1,
+      advancedReserveSize: 5,
+      removedCardIds: [],
+      currentCardId: 'S.1',
+    },
+    revealedObjectiveIds: ['SOLO.1', 'SOLO.2'],
+    completedObjectiveIds: [],
+    objectiveTaskMarkers: {},
+    techIds: [],
   };
 }
 
@@ -208,6 +242,14 @@ describe('GameLayout', () => {
             computer: {
               filledSlots: [false, true, false, false, false, false],
               dataPool: 1,
+              slotRewards: [
+                null,
+                { type: 'PUBLICITY', amount: 1 },
+                null,
+                { type: 'CUSTOM', effectId: 'RIVAL_PROGRESS_4' },
+                null,
+                null,
+              ],
             },
             actionDeck: {
               drawPileSize: 4,
@@ -219,6 +261,7 @@ describe('GameLayout', () => {
             revealedObjectiveIds: ['SOLO.1', 'SOLO.2'],
             completedObjectiveIds: [],
             objectiveTaskMarkers: {},
+            techIds: [],
           },
         }),
       });
@@ -226,6 +269,63 @@ describe('GameLayout', () => {
 
       expect(screen.getByTestId('rival-area')).toBeInTheDocument();
       expect(screen.getByTestId('rival-current-card')).toHaveTextContent('S.1');
+    });
+
+    it('renders rival techs from the public rival state without a rival player row', async () => {
+      mockContextValue = createMockContext({
+        gameState: createMockGameState({
+          isSoloMode: true,
+          players: [createMockPlayerState({ playerId: 'player-1' })],
+          rival: {
+            ...createMockRivalState(),
+            techIds: [ETechId.COMPUTER_VP_CARD],
+          } as IPublicRivalState,
+        }),
+      });
+      await renderLayout();
+
+      expect(screen.getByTestId('rival-area')).toBeInTheDocument();
+      expect(screen.getByTestId('rival-tech-count-computer')).toHaveTextContent(
+        '1',
+      );
+    });
+
+    it('keeps the mission area visible for the solo human player', async () => {
+      mockContextValue = createMockContext({
+        myPlayerId: 'player-1',
+        gameState: createMockGameState({
+          isSoloMode: true,
+          rival: createMockRivalState(),
+        }),
+      });
+      await renderLayout();
+
+      expect(screen.getByTestId('mission-area')).toBeInTheDocument();
+    });
+
+    it('hides the mission area when viewing as the synthetic rival', async () => {
+      mockContextValue = createMockContext({
+        myPlayerId: 'rival:game-test-1',
+        gameState: createMockGameState({
+          isSoloMode: true,
+          rival: createMockRivalState(),
+          players: [
+            createMockPlayerState({
+              playerId: 'player-1',
+              playerName: 'Commander',
+            }),
+            createMockPlayerState({
+              playerId: 'rival:game-test-1',
+              playerName: 'Rival',
+              seatIndex: 1,
+              color: 'gray',
+            }),
+          ],
+        }),
+      });
+      await renderLayout();
+
+      expect(screen.queryByTestId('mission-area')).not.toBeInTheDocument();
     });
 
     it('shows action menu when it is my turn', async () => {

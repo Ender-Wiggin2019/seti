@@ -24,6 +24,15 @@ import { useTextMode } from '@/stores/debugStore';
 import type { IPublicRivalState, TPublicSlotReward } from '@/types/re-exports';
 import { RivalActionCardRender } from './RivalActionCard';
 import { RivalObjectiveCard } from './RivalObjectiveCard';
+import {
+  getRivalBoardImageSrc,
+  getRivalBoardTechCategoryOrder,
+  getRivalBoardTechPoint,
+  getRivalProgressMarkerPoint,
+  getRivalTechTileImage,
+  RIVAL_BOARD_COMPUTER_POINTS,
+  RIVAL_BOARD_DATA_POOL_POINTS,
+} from './rivalBoardPresentation';
 
 interface IRivalPanelProps {
   rival: IPublicRivalState;
@@ -77,10 +86,12 @@ const TECH_CATEGORY_META: Record<
 
 export function RivalPanel({
   rival,
-  rivalTechs = [],
+  rivalTechs,
 }: IRivalPanelProps): React.JSX.Element {
   const { t } = useTranslation('common');
+  const textMode = useTextMode();
   const [rulesOpen, setRulesOpen] = useState(false);
+  const techIds = rivalTechs ?? rival.techIds ?? [];
 
   return (
     <section
@@ -110,6 +121,25 @@ export function RivalPanel({
         </span>
       </div>
 
+      {textMode ? (
+        <RivalTextModeBoard rival={rival} rivalTechs={techIds} />
+      ) : (
+        <RivalImageModeBoard rival={rival} rivalTechs={techIds} />
+      )}
+      <RivalRulesDialog open={rulesOpen} onOpenChange={setRulesOpen} />
+    </section>
+  );
+}
+
+function RivalTextModeBoard({
+  rival,
+  rivalTechs,
+}: IRivalPanelProps): React.JSX.Element {
+  const { t } = useTranslation('common');
+  const techIds = rivalTechs ?? rival.techIds ?? [];
+
+  return (
+    <>
       <div
         className='rounded-[4px] border border-[color:var(--metal-edge-soft)] bg-background-900/55 p-2'
         data-testid='rival-progress'
@@ -128,66 +158,151 @@ export function RivalPanel({
         <RivalProgressCycle progressSlot={rival.progressSlot} />
       </div>
 
-      <div className='grid grid-cols-2 gap-1.5'>
-        <RivalReadout
-          label={t('client.rival_panel.draw', { defaultValue: 'Draw' })}
-          testId='rival-deck-draw'
-        >
-          {rival.actionDeck.drawPileSize}
-        </RivalReadout>
-        <RivalReadout
-          label={t('client.rival_panel.discard', { defaultValue: 'Discard' })}
-          testId='rival-deck-discard'
-        >
-          {rival.actionDeck.discardPileSize}
-        </RivalReadout>
-      </div>
+      <RivalDeckReadouts rival={rival} />
+      <RivalTechPile techIds={techIds} />
+      <RivalCurrentCard rival={rival} />
+      <RivalObjectives rival={rival} />
+      <RivalComputerPanel rival={rival} />
+    </>
+  );
+}
 
-      <RivalTechPile techIds={rivalTechs} />
+function RivalImageModeBoard({
+  rival,
+  rivalTechs,
+}: IRivalPanelProps): React.JSX.Element {
+  const { t } = useTranslation('common');
+  const activeSlot = normalizeProgressSlot(rival.progressSlot);
+  const markerPoint = getRivalProgressMarkerPoint(activeSlot);
+  const boardImageSrc = getRivalBoardImageSrc(rival.boardConfigId);
+  const computerSlots = getRivalComputerSlots(rival);
+  const techIds = rivalTechs ?? rival.techIds ?? [];
 
-      <div className='space-y-1.5 rounded-[4px] border border-[color:var(--metal-edge-soft)] bg-background-900/55 p-2'>
-        <div className='flex items-center justify-between gap-2'>
-          <span className='micro-label text-text-500'>
-            {t('client.rival_panel.current_card', { defaultValue: 'Action' })}
-          </span>
-          <span className='readout text-[10px] text-text-300'>
-            {rival.actionDeck.currentCardId ?? '-'}
+  return (
+    <>
+      <div
+        className='relative overflow-hidden rounded-[4px] border border-[color:var(--metal-edge)] bg-background-950 shadow-hairline-inset'
+        data-board-config-id={rival.boardConfigId}
+        data-reference-layout='automa-board'
+        data-testid='rival-board-image-mode'
+      >
+        <img
+          src={boardImageSrc}
+          alt={t('client.rival_panel.board_alt', {
+            difficulty: rival.difficulty,
+            defaultValue: 'Rival board difficulty {{difficulty}}',
+          })}
+          className='block aspect-[1421/461] w-full object-cover'
+          data-testid='rival-board-image'
+          draggable={false}
+        />
+
+        <div
+          className='absolute left-2 top-2 rounded-[4px] border border-background-950/65 bg-background-950/80 px-2 py-1 shadow-hairline-inset'
+          data-testid='rival-progress'
+        >
+          <p className='micro-label text-[8px] text-text-500'>
+            {t('client.rival_panel.progress', { defaultValue: 'Progress' })}
+          </p>
+          <span
+            className='readout text-xs text-text-100'
+            data-testid='rival-progress-total'
+          >
+            {rival.progress}
           </span>
         </div>
-        <div data-testid='rival-current-card'>
+
+        <div
+          className='absolute z-20 flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center'
+          style={positionStyle(markerPoint)}
+          data-slot={String(activeSlot)}
+          data-reference-x={markerPoint.x.toFixed(2)}
+          data-reference-y={markerPoint.y.toFixed(2)}
+          data-testid='rival-board-progress-marker'
+          title={`Progress ${activeSlot + 1}`}
+        >
+          <img
+            src='/assets/seti/tokens/sky/redSky.png'
+            alt=''
+            aria-hidden
+            className='h-full w-full rounded-full drop-shadow-[0_0_5px_rgba(255,60,45,0.9)]'
+            data-current='true'
+            data-fill-mode='background'
+            data-testid={`rival-progress-slot-${activeSlot}`}
+          />
+        </div>
+
+        <div
+          className='absolute inset-0 z-10'
+          data-testid='rival-computer'
+          aria-label={t('client.rival_panel.computer', {
+            defaultValue: 'Computer',
+          })}
+        >
+          {computerSlots.map(({ filled, reward }, index) => {
+            const point = RIVAL_BOARD_COMPUTER_POINTS[index];
+            return (
+              <div
+                key={`rival-board-computer-${index}`}
+                className='absolute -translate-x-1/2 -translate-y-1/2'
+                style={point ? positionStyle(point) : undefined}
+              >
+                <RivalComputerSlot
+                  filled={filled}
+                  index={index}
+                  reward={reward}
+                  className='h-7 w-7 rounded-full'
+                />
+              </div>
+            );
+          })}
+        </div>
+
+        <RivalBoardDataPool count={rival.computer.dataPool} />
+        <RivalBoardTechTiles
+          boardConfigId={rival.boardConfigId}
+          techIds={techIds}
+        />
+
+        <div
+          className='absolute left-[47%] top-[37%] z-10 w-[13%] min-w-14 -translate-x-1/2 -translate-y-1/2'
+          data-testid='rival-current-card'
+        >
           <span className='sr-only'>
             {rival.actionDeck.currentCardId ?? '-'}
           </span>
-          <RivalActionCardRender cardId={rival.actionDeck.currentCardId} />
+          <RivalActionCardRender
+            cardId={rival.actionDeck.currentCardId}
+            compact
+          />
         </div>
-      </div>
 
-      <RivalObjectives rival={rival} />
-
-      <div className='space-y-1.5'>
-        <div className='flex items-center justify-between'>
-          <span className='micro-label text-text-500'>
-            {t('client.rival_panel.computer', { defaultValue: 'Computer' })}
-          </span>
-          <span className='readout text-[10px] text-text-300'>
-            {t('client.rival_panel.data_pool', {
-              count: rival.computer.dataPool,
-              defaultValue: 'Pool {{count}}',
+        <div
+          className='absolute right-2 top-2 z-10 flex flex-col gap-1'
+          data-testid='rival-board-action-deck'
+        >
+          <RivalBoardDeckReadout
+            label={t('client.rival_panel.draw', { defaultValue: 'Draw' })}
+            testId='rival-deck-draw'
+          >
+            {rival.actionDeck.drawPileSize}
+          </RivalBoardDeckReadout>
+          <RivalBoardDeckReadout
+            label={t('client.rival_panel.discard', {
+              defaultValue: 'Discard',
             })}
-          </span>
-        </div>
-        <div className='grid grid-cols-6 gap-1' data-testid='rival-computer'>
-          {rival.computer.filledSlots.map((filled, index) => (
-            <RivalComputerSlot
-              key={`rival-computer-${index}`}
-              filled={filled}
-              reward={RIVAL_COMPUTER_SLOT_REWARDS[index] ?? null}
-            />
-          ))}
+            testId='rival-deck-discard'
+          >
+            {rival.actionDeck.discardPileSize}
+          </RivalBoardDeckReadout>
         </div>
       </div>
-      <RivalRulesDialog open={rulesOpen} onOpenChange={setRulesOpen} />
-    </section>
+
+      <div className='grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,0.85fr),minmax(0,1.15fr)]'>
+        <RivalTechPile techIds={techIds} />
+        <RivalObjectives rival={rival} />
+      </div>
+    </>
   );
 }
 
@@ -306,6 +421,199 @@ function RivalProgressCycle({
   );
 }
 
+function RivalDeckReadouts({
+  rival,
+}: {
+  rival: IPublicRivalState;
+}): React.JSX.Element {
+  const { t } = useTranslation('common');
+
+  return (
+    <div className='grid grid-cols-2 gap-1.5'>
+      <RivalReadout
+        label={t('client.rival_panel.draw', { defaultValue: 'Draw' })}
+        testId='rival-deck-draw'
+      >
+        {rival.actionDeck.drawPileSize}
+      </RivalReadout>
+      <RivalReadout
+        label={t('client.rival_panel.discard', { defaultValue: 'Discard' })}
+        testId='rival-deck-discard'
+      >
+        {rival.actionDeck.discardPileSize}
+      </RivalReadout>
+    </div>
+  );
+}
+
+function RivalCurrentCard({
+  rival,
+}: {
+  rival: IPublicRivalState;
+}): React.JSX.Element {
+  const { t } = useTranslation('common');
+
+  return (
+    <div className='space-y-1.5 rounded-[4px] border border-[color:var(--metal-edge-soft)] bg-background-900/55 p-2'>
+      <div className='flex items-center justify-between gap-2'>
+        <span className='micro-label text-text-500'>
+          {t('client.rival_panel.current_card', { defaultValue: 'Action' })}
+        </span>
+        <span className='readout text-[10px] text-text-300'>
+          {rival.actionDeck.currentCardId ?? '-'}
+        </span>
+      </div>
+      <div data-testid='rival-current-card'>
+        <span className='sr-only'>{rival.actionDeck.currentCardId ?? '-'}</span>
+        <RivalActionCardRender cardId={rival.actionDeck.currentCardId} />
+      </div>
+    </div>
+  );
+}
+
+function RivalComputerPanel({
+  rival,
+}: {
+  rival: IPublicRivalState;
+}): React.JSX.Element {
+  const { t } = useTranslation('common');
+  const computerSlots = getRivalComputerSlots(rival);
+
+  return (
+    <div className='space-y-1.5'>
+      <div className='flex items-center justify-between'>
+        <span className='micro-label text-text-500'>
+          {t('client.rival_panel.computer', { defaultValue: 'Computer' })}
+        </span>
+        <span
+          className='readout text-[10px] text-text-300'
+          data-count={String(rival.computer.dataPool)}
+          data-testid='rival-computer-data-pool'
+        >
+          {t('client.rival_panel.data_pool', {
+            count: rival.computer.dataPool,
+            defaultValue: 'Pool {{count}}',
+          })}
+        </span>
+      </div>
+      <div className='grid grid-cols-6 gap-1' data-testid='rival-computer'>
+        {computerSlots.map(({ filled, reward }, index) => (
+          <RivalComputerSlot
+            key={`rival-computer-${index}`}
+            filled={filled}
+            index={index}
+            reward={reward}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function RivalBoardDataPool({ count }: { count: number }): React.JSX.Element {
+  const visibleCount = Math.max(
+    0,
+    Math.min(count, RIVAL_BOARD_DATA_POOL_POINTS.length),
+  );
+
+  return (
+    <div
+      className='absolute inset-0 z-10'
+      data-count={String(count)}
+      data-testid='rival-board-data-pool'
+      aria-label={`Rival data pool: ${count}`}
+    >
+      {Array.from({ length: visibleCount }, (_, index) => {
+        const point = RIVAL_BOARD_DATA_POOL_POINTS[index];
+
+        return (
+          <img
+            key={`rival-board-data-${index}`}
+            src='/assets/seti/tokens/data.png'
+            alt=''
+            aria-hidden
+            className='absolute h-5 w-5 -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]'
+            style={positionStyle(point)}
+            data-testid='rival-board-data-token'
+            draggable={false}
+          />
+        );
+      })}
+      <span
+        className='absolute bottom-[10%] right-[15%] rounded-full border border-background-950/70 bg-background-950/85 px-1.5 py-0.5 readout text-[10px] text-text-100 shadow-hairline-inset'
+        data-testid='rival-board-data-pool-count'
+      >
+        {count}
+      </span>
+    </div>
+  );
+}
+
+function RivalBoardTechTiles({
+  boardConfigId,
+  techIds,
+}: {
+  boardConfigId: IPublicRivalState['boardConfigId'];
+  techIds: readonly ETechId[];
+}): React.JSX.Element {
+  const byCategory = groupTechsByCategory(techIds);
+  const categoryOrder = getRivalBoardTechCategoryOrder(boardConfigId);
+
+  return (
+    <div className='absolute inset-0 z-10' aria-label='Rival tech tiles'>
+      {categoryOrder.map((category) => {
+        const techs = byCategory[category];
+        const firstTech = techs[0];
+        const point = getRivalBoardTechPoint(boardConfigId, category);
+        const meta = TECH_CATEGORY_META[category];
+
+        if (!firstTech) {
+          return null;
+        }
+
+        return (
+          <div
+            key={`rival-board-tech-${meta.testKey}`}
+            className='absolute w-[8.5%] min-w-10 -translate-x-1/2 -translate-y-1/2'
+            style={positionStyle(point)}
+            data-testid={`rival-board-tech-${meta.testKey}`}
+          >
+            <img
+              src={getRivalTechTileImage(firstTech)}
+              alt=''
+              aria-hidden
+              className='aspect-[197/276] w-full rounded-[4px] border border-background-950/70 object-cover shadow-[0_3px_8px_rgba(0,0,0,0.45)]'
+              loading='lazy'
+            />
+            <span className='absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border border-background-950 bg-background-950/90 px-1 readout text-[10px] text-text-100'>
+              {techs.length}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function RivalBoardDeckReadout({
+  label,
+  testId,
+  children,
+}: {
+  label: string;
+  testId: string;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <div className='min-w-12 rounded-[4px] border border-background-950/70 bg-background-950/82 px-2 py-1 text-right shadow-hairline-inset'>
+      <p className='micro-label text-[8px] text-text-500'>{label}</p>
+      <div className='readout text-sm text-text-100' data-testid={testId}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function RivalTechPile({
   techIds,
 }: {
@@ -413,6 +721,43 @@ function countTechByCategory(
   return counts;
 }
 
+function groupTechsByCategory(
+  techIds: readonly ETechId[],
+): Record<TTechCategory, ETechId[]> {
+  const grouped: Record<TTechCategory, ETechId[]> = {
+    [ETech.PROBE]: [],
+    [ETech.SCAN]: [],
+    [ETech.COMPUTER]: [],
+  };
+
+  for (const techId of techIds) {
+    grouped[getTechDescriptor(techId).type].push(techId);
+  }
+
+  return grouped;
+}
+
+function getRivalComputerSlots(
+  rival: IPublicRivalState,
+): Array<{ filled: boolean; reward: TPublicSlotReward | null }> {
+  const slotRewards = rival.computer.slotRewards ?? RIVAL_COMPUTER_SLOT_REWARDS;
+  const slotCount = Math.max(
+    slotRewards.length,
+    rival.computer.filledSlots.length,
+  );
+  return Array.from({ length: slotCount }, (_, index) => ({
+    filled: rival.computer.filledSlots[index] ?? false,
+    reward: slotRewards[index] ?? null,
+  }));
+}
+
+function positionStyle(point: { x: number; y: number }): React.CSSProperties {
+  return {
+    left: `${point.x}%`,
+    top: `${point.y}%`,
+  };
+}
+
 function RivalReadout({
   label,
   testId,
@@ -437,10 +782,14 @@ function RivalReadout({
 
 function RivalComputerSlot({
   filled,
+  index,
   reward,
+  className,
 }: {
   filled: boolean;
+  index?: number;
   reward: TPublicSlotReward | null;
+  className?: string;
 }): React.JSX.Element {
   const presentations = reward ? toTraceRewardPresentations([reward]) : [];
 
@@ -451,7 +800,12 @@ function RivalComputerSlot({
         filled
           ? 'border-accent-500/70 bg-accent-500/10'
           : 'border-[color:var(--metal-edge-soft)] bg-background-950/65',
+        className,
       )}
+      data-filled={filled ? 'true' : 'false'}
+      data-testid={
+        index === undefined ? undefined : `rival-computer-slot-${index}`
+      }
     >
       {filled ? (
         <img

@@ -1,10 +1,14 @@
 import { ETrace } from '@seti/common/types/element';
+import { EAlienType, EPlanet } from '@seti/common/types/protocol/enums';
+import { MascamitesAlienBoard } from '@/engine/alien/AlienBoard.js';
 import { ESolarSystemElementType } from '@/engine/board/SolarSystem.js';
 import {
   hasNoCardsInHand,
   hasTrace,
   hasTraceOnAllSpecies,
   playedCardsInSameSector,
+  probeMinDistanceFromEarth,
+  probeOnComet,
   probeOnAsteroidAdjacentToEarth,
 } from '@/engine/missions/QuickMissionConditions.js';
 
@@ -54,6 +58,75 @@ describe('QuickMissionConditions', () => {
     } as never;
 
     expect(probeOnAsteroidAdjacentToEarth()(player, game)).toBe(true);
+  });
+
+  it('treats a Mascamites capsule as a probe for comet checks', () => {
+    const player = { id: 'p1' } as never;
+    const board = new MascamitesAlienBoard({
+      alienIndex: 0,
+      alienType: EAlienType.MASCAMITES,
+      mascamitesCapsules: [
+        {
+          capsuleId: 'capsule-1',
+          ownerId: 'p1',
+          sampleTokenId: 'mascamites-credit-2',
+          sourcePlanet: EPlanet.JUPITER,
+          spaceId: 'comet',
+        },
+      ],
+    } as never);
+    const game = {
+      alienState: { boards: [board] },
+      solarSystem: {
+        spaces: [
+          {
+            id: 'comet',
+            elements: [{ type: ESolarSystemElementType.COMET, amount: 1 }],
+            occupants: [],
+          },
+        ],
+      },
+    } as never;
+
+    expect(probeOnComet()(player, game)).toBe(true);
+  });
+
+  it('treats a Mascamites capsule as a probe for distance-from-Earth checks', () => {
+    const player = { id: 'p1' } as never;
+    const board = new MascamitesAlienBoard({
+      alienIndex: 0,
+      alienType: EAlienType.MASCAMITES,
+      mascamitesCapsules: [
+        {
+          capsuleId: 'capsule-1',
+          ownerId: 'p1',
+          sampleTokenId: 'mascamites-credit-2',
+          sourcePlanet: EPlanet.JUPITER,
+          spaceId: 'far',
+        },
+      ],
+    } as never);
+    const game = {
+      alienState: { boards: [board] },
+      solarSystem: {
+        spaces: [
+          {
+            id: 'earth',
+            elements: [{ type: ESolarSystemElementType.EARTH, amount: 1 }],
+            occupants: [],
+          },
+          { id: 'middle', elements: [], occupants: [] },
+          { id: 'far', elements: [], occupants: [] },
+        ],
+        adjacency: new Map([
+          ['earth', ['middle']],
+          ['middle', ['earth', 'far']],
+          ['far', ['middle']],
+        ]),
+      },
+    } as never;
+
+    expect(probeMinDistanceFromEarth(2)(player, game)).toBe(true);
   });
 
   it('playedCardsInSameSector handles empty hand edge case', () => {

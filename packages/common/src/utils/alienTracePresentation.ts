@@ -61,6 +61,14 @@ const CUSTOM_REWARD_PRESENTATION: Record<
     icon: EAlienIcon.EXOFOSSIL,
     label: 'Gain exofossil',
   },
+  CENTAURIANS_DRAW_ALIEN_CARD: {
+    icon: EMiscIcon.DRAW_ALIEN_CARD,
+    label: 'Draw Centaurians card',
+  },
+  CENTAURIANS_ANY_TRACE: {
+    icon: ETrace.ANY,
+    label: 'Any trace',
+  },
 };
 
 export function getTraceColumnColor(

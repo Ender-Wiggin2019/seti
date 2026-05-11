@@ -558,8 +558,8 @@ function CentauriansBoard({
                 {slot.dataCost > 0 ? `${slot.dataCost} data` : 'free'}
               </span>
             </div>
-            <div className='mt-1 font-mono text-[10px] text-text-400'>
-              {formatCentauriansRewardLabel(slot.rewards)}
+            <div className='mt-1 flex justify-start'>
+              <TraceRewardIcons rewards={slot.rewards} size='xs' />
             </div>
             <div className='mt-1 font-mono text-[10px] text-text-500'>
               {slot.claimedByPlayerId ?? 'open'}
@@ -579,25 +579,6 @@ function CentauriansBoard({
       ) : null}
     </section>
   );
-}
-
-function formatCentauriansRewardLabel(
-  rewards: IPublicCentauriansBoard['rewardSlots'][number]['rewards'],
-): string {
-  return rewards
-    .map((reward) => {
-      if (reward.type !== 'CUSTOM') {
-        return `${reward.amount} ${reward.type}`;
-      }
-      if (reward.effectId === 'CENTAURIANS_ANY_TRACE') {
-        return 'Any trace';
-      }
-      if (reward.effectId === 'CENTAURIANS_DRAW_ALIEN_CARD') {
-        return 'Centaurians card';
-      }
-      return reward.effectId;
-    })
-    .join(', ');
 }
 
 function MascamitesBoard({
@@ -623,13 +604,13 @@ function MascamitesBoard({
           alienIndex={alienIndex}
           label='Jupiter'
           testId={`alien-${alienIndex}-mascamites-jupiter`}
-          sampleIds={board.samplePools[EPlanet.JUPITER] ?? []}
+          sampleCount={board.samplePools[EPlanet.JUPITER] ?? 0}
         />
         <MascamitesSamplePoolCard
           alienIndex={alienIndex}
           label='Saturn'
           testId={`alien-${alienIndex}-mascamites-saturn`}
-          sampleIds={board.samplePools[EPlanet.SATURN] ?? []}
+          sampleCount={board.samplePools[EPlanet.SATURN] ?? 0}
         />
         <MascamitesSamplePoolCard
           alienIndex={alienIndex}
@@ -658,7 +639,7 @@ function MascamitesBoard({
                 >
                   <div className='flex items-center justify-between gap-2'>
                     <span className='font-mono text-[10px] uppercase tracking-widest text-text-400'>
-                      {capsule.sampleTokenId}
+                      {capsule.capsuleId}
                     </span>
                     <span
                       className='inline-block h-2.5 w-2.5 rounded-full border border-surface-200/30'
@@ -737,14 +718,17 @@ function MascamitesBoard({
 function MascamitesSamplePoolCard({
   label,
   testId,
+  sampleCount,
   sampleIds,
 }: {
   alienIndex: number;
   label: string;
   testId: string;
-  sampleIds: readonly string[];
+  sampleCount?: number;
+  sampleIds?: readonly string[];
 }): React.JSX.Element {
-  const countLabel = `${sampleIds.length} sample${sampleIds.length === 1 ? '' : 's'}`;
+  const count = sampleCount ?? sampleIds?.length ?? 0;
+  const countLabel = `${count} sample${count === 1 ? '' : 's'}`;
 
   return (
     <section
@@ -760,11 +744,11 @@ function MascamitesSamplePoolCard({
         </span>
       </div>
       <div className='mt-2 flex flex-wrap gap-1'>
-        {sampleIds.length === 0 ? (
+        {count === 0 ? (
           <span className='rounded border border-dashed border-surface-700/50 px-1.5 py-0.5 font-mono text-[10px] text-text-500'>
             Empty
           </span>
-        ) : (
+        ) : sampleIds !== undefined ? (
           sampleIds.map((sampleId) => (
             <span
               key={sampleId}
@@ -773,6 +757,10 @@ function MascamitesSamplePoolCard({
               {sampleId}
             </span>
           ))
+        ) : (
+          <span className='rounded border border-surface-700/60 bg-surface-950/45 px-1.5 py-0.5 font-mono text-[10px] text-text-200'>
+            Hidden
+          </span>
         )}
       </div>
     </section>

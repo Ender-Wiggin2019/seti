@@ -22,7 +22,11 @@ export function RivalObjectiveCard({
   const definition = getRivalObjectiveDefinition(objectiveId);
   const imageSrc = getRivalObjectiveImageSrc(objectiveId);
   const taskCount = Math.max(definition?.tasks.length ?? 1, 1);
-  const markedCount = Math.min(markedTaskIndexes.length, taskCount);
+  const normalizedMarkedTaskIndexes = normalizeMarkedTaskIndexes(
+    markedTaskIndexes,
+    taskCount,
+  );
+  const markedCount = normalizedMarkedTaskIndexes.length;
 
   return (
     <div
@@ -49,16 +53,59 @@ export function RivalObjectiveCard({
               {markedCount}/{taskCount}
             </span>
           </div>
+          <RivalObjectiveImageMarkers
+            objectiveId={objectiveId}
+            taskCount={taskCount}
+            markedTaskIndexes={normalizedMarkedTaskIndexes}
+          />
         </div>
       ) : (
         <RivalObjectiveTextCard
           objectiveId={objectiveId}
-          markedTaskIndexes={markedTaskIndexes}
+          markedTaskIndexes={normalizedMarkedTaskIndexes}
           markedCount={markedCount}
           taskCount={taskCount}
         />
       )}
     </div>
+  );
+}
+
+function RivalObjectiveImageMarkers({
+  objectiveId,
+  markedTaskIndexes,
+  taskCount,
+}: {
+  objectiveId: TRivalObjectiveId;
+  markedTaskIndexes: number[];
+  taskCount: number;
+}): React.JSX.Element {
+  return (
+    <div className='absolute inset-x-1 top-1 flex gap-1' aria-hidden>
+      {Array.from({ length: taskCount }, (_, index) => {
+        const marked = markedTaskIndexes.includes(index);
+        return (
+          <span
+            key={`${objectiveId}-image-marker-${index}`}
+            className={cn(
+              'h-1.5 flex-1 rounded-full border border-background-950/70',
+              marked ? 'bg-accent-300' : 'bg-background-950/70',
+            )}
+            data-marked={marked ? 'true' : 'false'}
+            data-testid={`rival-objective-marker-${objectiveId}-${index}`}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function normalizeMarkedTaskIndexes(
+  indexes: readonly number[],
+  taskCount: number,
+): number[] {
+  return [...new Set(indexes)].filter(
+    (index) => Number.isInteger(index) && index >= 0 && index < taskCount,
   );
 }
 

@@ -1,3 +1,4 @@
+import { isDiscardProhibitedCard } from '@seti/common/rules';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import type { IGame } from '../../IGame.js';
@@ -172,7 +173,7 @@ interface IResolvedHandCard {
 
 export class ScanHandSignalEffect {
   public static canExecute(player: IPlayer): boolean {
-    return player.hand.length > 0;
+    return this.resolveHandCards(player).length > 0;
   }
 
   public static execute(
@@ -185,6 +186,9 @@ export class ScanHandSignalEffect {
     }
 
     const handCards = this.resolveHandCards(player);
+    if (handCards.length === 0) {
+      return options.onComplete?.(null);
+    }
     return new SelectCard(
       player,
       {
@@ -231,18 +235,21 @@ export class ScanHandSignalEffect {
   }
 
   private static resolveHandCards(player: IPlayer): IResolvedHandCard[] {
-    return player.hand.map((card, index) => {
-      const baseId =
-        typeof card === 'string'
-          ? card
-          : ((card as { id?: string })?.id ?? `hand-card-${index}`);
+    return player.hand
+      .map((card, index) => {
+        const baseId =
+          typeof card === 'string'
+            ? card
+            : ((card as { id?: string })?.id ?? `hand-card-${index}`);
 
-      return {
-        selectionId: `${baseId}@${index}`,
-        discardCardId: baseId,
-        handIndex: index,
-      };
-    });
+        return {
+          selectionId: `${baseId}@${index}`,
+          discardCardId: baseId,
+          handIndex: index,
+          rawCard: card,
+        };
+      })
+      .filter((card) => !isDiscardProhibitedCard(card.rawCard));
   }
 }
 

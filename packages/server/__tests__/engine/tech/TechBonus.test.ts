@@ -1,4 +1,8 @@
 import {
+  EPlayerInputType,
+  type ISelectOptionInputModel,
+} from '@seti/common/types/protocol/playerInput';
+import {
   ETechBonusType,
   ETechId,
   FIRST_TAKE_VP_BONUS,
@@ -6,7 +10,7 @@ import {
 } from '@seti/common/types/tech';
 import { vi } from 'vitest';
 import { ResearchTechAction } from '@/engine/actions/ResearchTech.js';
-import type { Deck } from '@/engine/deck/Deck.js';
+import { Deck } from '@/engine/deck/Deck.js';
 import { ResearchTechEffect } from '@/engine/effects/tech/ResearchTechEffect.js';
 import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
@@ -30,6 +34,7 @@ function createTestPlayer(
 function createMockGame(
   techBoard?: TechBoard | null,
   deckCards: string[] = [],
+  cardRow: string[] = [],
 ): IGame {
   const board =
     techBoard === undefined
@@ -37,15 +42,11 @@ function createMockGame(
       : techBoard;
   return {
     techBoard: board,
-    mainDeck: {
-      drawWithReshuffle(): string | undefined {
-        return deckCards.shift();
-      },
-    } as unknown as Deck<string>,
+    mainDeck: new Deck(deckCards),
     solarSystem: null,
     planetaryBoard: null,
     sectors: [],
-    cardRow: [],
+    cardRow: [...cardRow],
     endOfRoundStacks: [],
     hiddenAliens: [],
     neutralMilestones: [],
@@ -164,6 +165,44 @@ describe('Phase 8.4.1 — integration: printed bonus via ResearchTechEffect.acqu
 
     expect(player.hand.length).toBe(before + 1);
     expect(player.hand).toContain('bonus-card');
+  });
+
+  it('CARD: lets the player take from the card row or the deck when both are available', () => {
+    const board = new TechBoard(new SeededRandom('p841-card-choice'));
+    setNextTileBonus(board, ETechId.SCAN_EARTH_LOOK, {
+      type: ETechBonusType.CARD,
+    });
+    const player = createTestPlayer();
+    const game = createMockGame(
+      board,
+      ['deck-card'],
+      ['row-a', 'row-b', 'row-c'],
+    );
+
+    const result = ResearchTechEffect.acquireTech(
+      player,
+      game,
+      ETechId.SCAN_EARTH_LOOK,
+    );
+
+    const model = result.pendingInput?.toModel() as ISelectOptionInputModel;
+    expect(model.type).toBe(EPlayerInputType.OPTION);
+    expect(model.options.map((option) => option.id)).toEqual([
+      'row:0:row-a',
+      'row:1:row-b',
+      'row:2:row-c',
+      'deck',
+    ]);
+    expect(player.hand).not.toContain('deck-card');
+
+    result.pendingInput?.process({
+      type: EPlayerInputType.OPTION,
+      optionId: 'row:1:row-b',
+    });
+
+    expect(player.hand).toContain('row-b');
+    expect(player.hand).not.toContain('deck-card');
+    expect(game.cardRow).toEqual(['row-a', 'row-c', 'deck-card']);
   });
 
   it('CREDIT: +1 credit', () => {

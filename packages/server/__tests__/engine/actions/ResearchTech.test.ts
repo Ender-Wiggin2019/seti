@@ -4,7 +4,11 @@ import {
   EPlayerInputType,
   type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
-import { ETechId, RESEARCH_PUBLICITY_COST } from '@seti/common/types/tech';
+import {
+  ETechBonusType,
+  ETechId,
+  RESEARCH_PUBLICITY_COST,
+} from '@seti/common/types/tech';
 import { vi } from 'vitest';
 import { ResearchTechAction } from '@/engine/actions/ResearchTech.js';
 import { BoardBuilder } from '@/engine/board/BoardBuilder.js';
@@ -431,7 +435,16 @@ describe('ResearchTechAction — integration (2.7.x closure)', () => {
         optionId: computerTechId,
       });
 
-      const columnPick = getWaitingOptionModel(player);
+      let columnPick = getWaitingOptionModel(player);
+      if (columnPick.title === 'Choose any card') {
+        game.processInput(player.id, {
+          type: EPlayerInputType.OPTION,
+          optionId:
+            columnPick.options.find((option) => option.id === 'deck')?.id ??
+            columnPick.options[0].id,
+        });
+        columnPick = getWaitingOptionModel(player);
+      }
       const chosenColumnId =
         columnPick.options.find((option) => option.id === 'col-0')?.id ??
         columnPick.options[0]?.id;
@@ -519,14 +532,18 @@ describe('ResearchTechAction — integration (2.7.x closure)', () => {
           data: player.resources.data,
           handSize: player.hand.length,
         };
-        const nonScoreChanged =
-          after.credits !== before.credits ||
-          after.energy !== before.energy ||
-          after.publicity !== before.publicity ||
-          after.data !== before.data ||
-          after.handSize !== before.handSize;
-        const extraVp = after.score - before.score > 2;
-        expect(nonScoreChanged || extraVp).toBe(true);
+        if (topTileBonus.type === ETechBonusType.CARD) {
+          expect(result.pendingInput).toBeDefined();
+        } else {
+          const nonScoreChanged =
+            after.credits !== before.credits ||
+            after.energy !== before.energy ||
+            after.publicity !== before.publicity ||
+            after.data !== before.data ||
+            after.handSize !== before.handSize;
+          const extraVp = after.score - before.score > 2;
+          expect(nonScoreChanged || extraVp).toBe(true);
+        }
       } else {
         // No bonus token ⇒ only +2 first-take VP should show up.
         expect(player.score).toBe(before.score + 2);

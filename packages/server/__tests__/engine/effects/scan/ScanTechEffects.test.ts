@@ -133,6 +133,34 @@ describe('Scan tech atomic effects', () => {
     ).toBe(true);
   });
 
+  it('does not offer Exertian cards for hand-discard signal tech', () => {
+    const game = createMockGame();
+    const player = createMockPlayer();
+    player.hand = [
+      { id: 'ET.41', sector: ESector.BLUE },
+      { id: 'hand-red', sector: ESector.RED },
+    ];
+
+    const input = ScanHandSignalEffect.execute(player, game);
+    const model = input?.toModel();
+
+    expect(model?.type).toBe(EPlayerInputType.CARD);
+    if (model?.type !== EPlayerInputType.CARD) {
+      throw new Error('expected card input');
+    }
+    expect(model.cards.map((card) => card.id)).toEqual(['hand-red@1']);
+  });
+
+  it('skips hand-discard signal tech when only Exertian cards are in hand', () => {
+    const game = createMockGame();
+    const player = createMockPlayer();
+    player.hand = [{ id: 'ET.41', sector: ESector.BLUE }];
+
+    expect(ScanHandSignalEffect.execute(player, game)).toBeUndefined();
+    expect(player.hand).toEqual([{ id: 'ET.41', sector: ESector.BLUE }]);
+    expect(game.mainDeck.getDiscardPile()).toEqual([]);
+  });
+
   it('allows choosing move in energy launch effect', () => {
     const game = createMockGame();
     const player = createMockPlayer();

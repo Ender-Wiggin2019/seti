@@ -1,3 +1,4 @@
+import { isDiscardProhibitedCard } from '@seti/common/rules';
 import { EResource } from '@seti/common/types/element';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
@@ -30,7 +31,7 @@ export class ExchangeResourcesFreeAction {
     return (
       player.resources.credits >= EXCHANGE_INPUT_AMOUNT ||
       player.resources.energy >= EXCHANGE_INPUT_AMOUNT ||
-      player.hand.length >= EXCHANGE_INPUT_AMOUNT
+      this.getDiscardableHandCards(player).length >= EXCHANGE_INPUT_AMOUNT
     );
   }
 
@@ -179,25 +180,26 @@ export class ExchangeResourcesFreeAction {
         player.resources.spend({ energy: EXCHANGE_INPUT_AMOUNT });
         break;
 
-      case EResource.CARD:
-        if (player.hand.length < EXCHANGE_INPUT_AMOUNT) {
+      case EResource.CARD: {
+        const discardableCards = this.getDiscardableHandCards(player);
+        if (discardableCards.length < EXCHANGE_INPUT_AMOUNT) {
           throw new GameError(
             EErrorCode.INSUFFICIENT_RESOURCES,
             'Not enough cards in hand',
-            { required: EXCHANGE_INPUT_AMOUNT, available: player.hand.length },
+            {
+              required: EXCHANGE_INPUT_AMOUNT,
+              available: discardableCards.length,
+            },
           );
         }
-        for (let i = 0; i < EXCHANGE_INPUT_AMOUNT; i++) {
-          const removed = player.hand.pop();
-          if (removed !== undefined) {
-            const cardId =
-              typeof removed === 'string'
-                ? removed
-                : ((removed as { id?: string })?.id ?? 'unknown');
-            game.mainDeck.discard(cardId);
-          }
+        for (const card of discardableCards
+          .slice(-EXCHANGE_INPUT_AMOUNT)
+          .sort((left, right) => right.handIndex - left.handIndex)) {
+          player.removeCardAt(card.handIndex);
+          game.mainDeck.discard(card.cardId);
         }
         break;
+      }
 
       default:
         throw new GameError(
@@ -246,5 +248,21 @@ export class ExchangeResourcesFreeAction {
           `Unsupported output resource: ${resource}`,
         );
     }
+  }
+
+  private static getDiscardableHandCards(player: IPlayer): Array<{
+    handIndex: number;
+    cardId: string;
+  }> {
+    return player.hand.flatMap((card, handIndex) => {
+      if (isDiscardProhibitedCard(card)) {
+        return [];
+      }
+      const cardId =
+        typeof card === 'string'
+          ? card
+          : ((card as { id?: string })?.id ?? 'unknown');
+      return [{ handIndex, cardId }];
+    });
   }
 }

@@ -1,3 +1,4 @@
+import { RIVAL_COMPUTER_SLOT_REWARDS } from '@seti/common/constant/solo';
 import {
   getAvailableFreeActions,
   getAvailableMainActions,
@@ -78,6 +79,7 @@ describe('GameSerializer', () => {
 
   it('serializes and projects public solo rival state without deck order', () => {
     const game = createSoloTestGame();
+    game.players[1].gainTech(ETechId.PROBE_DOUBLE_PROBE);
     const dto = serializeGame(game, 3) as ReturnType<typeof serializeGame> & {
       rivalState?: {
         rivalPlayerId: string;
@@ -111,11 +113,15 @@ describe('GameSerializer', () => {
       rivalPlayerId: 'rival:game-serializer-solo',
       difficulty: 4,
       progress: 15,
+      techIds: [ETechId.PROBE_DOUBLE_PROBE],
       actionDeck: {
         drawPileSize: 5,
         discardPileSize: 0,
       },
     });
+    expect(publicState.rival?.computer.slotRewards).toEqual(
+      RIVAL_COMPUTER_SLOT_REWARDS,
+    );
     expect(publicState.rival).not.toHaveProperty('actionDeck.drawPile');
   });
 
@@ -436,7 +442,7 @@ describe('GameSerializer', () => {
     });
   });
 
-  it('projects Mascamites board sample pools, capsules, delivered samples, and trace slots', () => {
+  it('projects Mascamites board without leaking hidden sample identities', () => {
     const game = createTestGame();
     game.hiddenAliens = [EAlienType.MASCAMITES];
     game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
@@ -482,15 +488,14 @@ describe('GameSerializer', () => {
       throw new Error('expected Mascamites public board');
     }
     expect(publicAlien.board.samplePools).toEqual({
-      jupiter: ['mascamites-credit-2', 'mascamites-energy-2'],
-      saturn: ['mascamites-card-2'],
+      jupiter: 2,
+      saturn: 1,
     });
     expect(publicAlien.board.publicSamples).toEqual(['mascamites-vp-7']);
     expect(publicAlien.board.capsules).toEqual([
       {
         capsuleId: 'capsule-1',
         ownerId: 'p1',
-        sampleTokenId: 'mascamites-credit-2',
         sourcePlanet: EPlanet.JUPITER,
         spaceId: 'ring-2-cell-1',
         missionCardId: 'ET.1',
@@ -510,6 +515,15 @@ describe('GameSerializer', () => {
         traceColor: ETrace.BLUE,
       }),
     ]);
+    expect(JSON.stringify(publicAlien.board)).not.toContain(
+      'mascamites-credit-2',
+    );
+    expect(JSON.stringify(publicAlien.board)).not.toContain(
+      'mascamites-energy-2',
+    );
+    expect(JSON.stringify(publicAlien.board)).not.toContain(
+      'mascamites-card-2',
+    );
   });
 
   it('projects Exertians face-down cards without leaking card ids or danger values', () => {
@@ -536,6 +550,34 @@ describe('GameSerializer', () => {
     ]);
     expect(JSON.stringify(publicAlien.board)).not.toContain('ET.52');
     expect(JSON.stringify(publicAlien.board)).not.toContain('danger');
+  });
+
+  it('projects revealed Exertians face-down cards with their card ids', () => {
+    const game = createTestGame();
+    game.hiddenAliens = [EAlienType.EXERTIANS];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.boards[0];
+    if (!isExertiansAlienBoard(board)) {
+      throw new Error('expected Exertians board');
+    }
+    board.discovered = true;
+    const played = board.playFaceDownCard('p1', 'ET.52', 'discovery');
+    played.revealed = true;
+
+    const publicState = projectGameState(game, 'p1');
+    const publicAlien = publicState.aliens[0];
+
+    if (!publicAlien.board || publicAlien.board.type !== 'exertians') {
+      throw new Error('expected Exertians public board');
+    }
+    expect(publicAlien.board.faceDownCards).toEqual([
+      {
+        ownerId: 'p1',
+        source: 'discovery',
+        revealed: true,
+        cardId: 'ET.52',
+      },
+    ]);
   });
 
   it('projects Centaurians message milestones as public board state', () => {

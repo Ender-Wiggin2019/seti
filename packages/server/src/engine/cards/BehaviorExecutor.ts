@@ -267,8 +267,7 @@ export class BehaviorExecutor {
         id: `orbit-${planet}`,
         label: `Orbit ${planet}`,
         onSelect: () => {
-          OrbitProbeEffect.execute(player, game, planet);
-          return undefined;
+          return OrbitProbeEffect.execute(player, game, planet).pendingInput;
         },
       }));
       options.push({

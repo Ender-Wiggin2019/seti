@@ -475,7 +475,11 @@ export class Game implements IGame {
               }
               case EMainAction.ORBIT: {
                 const planet = this.getPlanetPayload(action);
-                OrbitAction.execute(player, game, planet);
+                pendingInput = OrbitAction.execute(
+                  player,
+                  game,
+                  planet,
+                ).pendingInput;
                 game.missionTracker.recordEvent({
                   type: EMissionEventType.PROBE_ORBITED,
                   planet,

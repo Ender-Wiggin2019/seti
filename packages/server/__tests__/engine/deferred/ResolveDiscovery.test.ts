@@ -3,12 +3,16 @@ import {
   EPlayerInputType,
   type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
+import type { IAlienPlugin } from '@/engine/alien/IAlienPlugin.js';
 import { AlienRegistry } from '@/engine/alien/AlienRegistry.js';
 import { AlienState } from '@/engine/alien/AlienState.js';
 import { AnomaliesAlienPlugin } from '@/engine/alien/plugins/AnomaliesAlienPlugin.js';
 import { DummyAlienPlugin } from '@/engine/alien/plugins/DummyAlienPlugin.js';
 import { ResolveDiscovery } from '@/engine/deferred/ResolveDiscovery.js';
 import { Game } from '@/engine/Game.js';
+import type { IGame } from '@/engine/IGame.js';
+import { SelectOption } from '@/engine/input/SelectOption.js';
+import type { IPlayer } from '@/engine/player/IPlayer.js';
 import { placeTraceForTestSetup } from '../../helpers/traceTestUtils.js';
 
 const BASE_PLAYERS = [
@@ -21,6 +25,20 @@ function forceAlienType(
   alienType: EAlienType,
 ): void {
   (board as { alienType: EAlienType }).alienType = alienType;
+}
+
+class InputReturningAlienPlugin implements IAlienPlugin {
+  public readonly alienType = EAlienType.EXERTIANS;
+
+  public onDiscover(_game: IGame, discoverers: IPlayer[]) {
+    const player = discoverers[0];
+    if (!player) return undefined;
+    return new SelectOption(
+      player,
+      [{ id: 'finish-input-alien', label: 'Finish', onSelect: () => undefined }],
+      'Resolve input alien',
+    );
+  }
 }
 
 describe('ResolveDiscovery', () => {
@@ -309,6 +327,45 @@ describe('ResolveDiscovery', () => {
       expect(p2.score).toBe(p2InitialScore + 9 + 3);
 
       // No more discoverable aliens
+      expect(game.alienState.getNewlyDiscoverableAliens()).toHaveLength(0);
+    });
+
+    it('continues discovering later aliens after an earlier discovery input resolves', () => {
+      AlienRegistry.register(new InputReturningAlienPlugin());
+
+      const game = Game.create(
+        BASE_PLAYERS,
+        { playerCount: 2 },
+        'discovery-input-chain',
+      );
+      const p1 = game.players[0];
+      const p2 = game.players[1];
+      const board0 = game.alienState.boards[0];
+      const board1 = game.alienState.boards[1];
+
+      forceAlienType(board0, EAlienType.EXERTIANS);
+      forceAlienType(board1, EAlienType.DUMMY);
+
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.BLUE, 0);
+      placeTraceForTestSetup(game.alienState, p2, game, ETrace.RED, 1);
+      placeTraceForTestSetup(game.alienState, p2, game, ETrace.YELLOW, 1);
+      placeTraceForTestSetup(game.alienState, p2, game, ETrace.BLUE, 1);
+
+      const input = new ResolveDiscovery(p1).execute(game);
+
+      expect(board0.discovered).toBe(true);
+      expect(board1.discovered).toBe(false);
+      expect(input?.toModel().type).toBe(EPlayerInputType.OPTION);
+
+      const next = input?.process({
+        type: EPlayerInputType.OPTION,
+        optionId: 'finish-input-alien',
+      });
+
+      expect(next).toBeUndefined();
+      expect(board1.discovered).toBe(true);
       expect(game.alienState.getNewlyDiscoverableAliens()).toHaveLength(0);
     });
   });

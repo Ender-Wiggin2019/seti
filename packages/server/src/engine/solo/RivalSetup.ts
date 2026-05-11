@@ -90,24 +90,15 @@ export class RivalSetup {
 
   private static buildObjectiveDrawPile(game: Game) {
     const config = RIVAL_BOARD_CONFIGS[game.options.soloDifficulty];
-    const level1 = game.random.shuffle(
-      RIVAL_OBJECTIVE_IDS_BY_LEVEL.level1.slice(
-        0,
-        config.objectiveStack.level1,
-      ),
-    );
-    const level2 = game.random.shuffle(
-      RIVAL_OBJECTIVE_IDS_BY_LEVEL.level2.slice(
-        0,
-        config.objectiveStack.level2,
-      ),
-    );
-    const level3 = game.random.shuffle(
-      RIVAL_OBJECTIVE_IDS_BY_LEVEL.level3.slice(
-        0,
-        config.objectiveStack.level3,
-      ),
-    );
+    const level1 = game.random
+      .shuffle([...RIVAL_OBJECTIVE_IDS_BY_LEVEL.level1])
+      .slice(0, config.objectiveStack.level1);
+    const level2 = game.random
+      .shuffle([...RIVAL_OBJECTIVE_IDS_BY_LEVEL.level2])
+      .slice(0, config.objectiveStack.level2);
+    const level3 = game.random
+      .shuffle([...RIVAL_OBJECTIVE_IDS_BY_LEVEL.level3])
+      .slice(0, config.objectiveStack.level3);
 
     return [...level1, ...level2, ...level3];
   }

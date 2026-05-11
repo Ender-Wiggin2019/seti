@@ -4,6 +4,7 @@ import {
   type TPlanetMissionConfigId,
   type TPlanetReward,
 } from '@seti/common/constant/boardLayout';
+import { RIVAL_TECH_CATEGORY_ORDER_BY_BOARD } from '@seti/common/constant/solo';
 import { alienCards } from '@seti/common/data/alienCards';
 import {
   EPlanet,
@@ -62,16 +63,6 @@ import type { Sector, TSectorSignal } from '../board/Sector.js';
 import { RivalResourceResolver } from './RivalResourceResolver.js';
 import { RivalSetup } from './RivalSetup.js';
 
-const RIVAL_TECH_CATEGORY_ORDER_BY_BOARD: Record<
-  TRivalBoardConfigId,
-  TTechCategory[]
-> = {
-  'rival-board-1': [ETech.COMPUTER, ETech.SCAN, ETech.PROBE],
-  'rival-board-2': [ETech.SCAN, ETech.PROBE, ETech.COMPUTER],
-  'rival-board-3': [ETech.COMPUTER, ETech.SCAN, ETech.PROBE],
-  'rival-board-4': [ETech.PROBE, ETech.COMPUTER, ETech.SCAN],
-};
-
 const EXERTIAN_CARD_IDS = alienCards
   .filter((card) => card.alien === EAlienType.EXERTIANS)
   .map((card) => card.id);
@@ -100,7 +91,7 @@ export class RivalActionResolver {
       case ERivalActionKind.RESEARCH_TECH:
         return this.resolveTech(game, candidate);
       case ERivalActionKind.PROBE_PLACEMENT:
-        return this.resolveProbe(game, candidate);
+        return this.resolveProbe(game, candidate, decisionDirection);
       case ERivalActionKind.SCAN:
         return this.resolveTelescope(game, candidate, decisionDirection);
       case ERivalActionKind.MARK_TRACE:
@@ -158,6 +149,7 @@ export class RivalActionResolver {
   private static resolveProbe(
     game: Game,
     candidate: IRivalActionCandidateDefinition,
+    decisionDirection: ERivalDecisionDirection,
   ): boolean {
     const rival = RivalSetup.getRivalPlayer(game);
     const solarSystem = game.solarSystem;
@@ -187,7 +179,6 @@ export class RivalActionResolver {
         continue;
       }
 
-      this.moveProbeAlongPath(game, probeLocation.probeId, probeLocation.path);
       planetaryBoard.setProbeCount(planet, rival.id, 1);
 
       const placement = this.chooseProbePlacement(
@@ -200,12 +191,19 @@ export class RivalActionResolver {
         continue;
       }
 
+      this.moveProbeAlongPath(game, probeLocation.probeId, probeLocation.path);
       if (placement.placement === ERivalProbePlacement.LANDER) {
-        this.resolveProbeLanding(game, planet, candidate, placement);
+        this.resolveProbeLanding(
+          game,
+          planet,
+          candidate,
+          placement,
+          decisionDirection,
+        );
         return true;
       }
 
-      this.resolveProbeOrbit(game, planet, candidate);
+      this.resolveProbeOrbit(game, planet, candidate, decisionDirection);
       return true;
     }
 
@@ -289,6 +287,7 @@ export class RivalActionResolver {
       TRivalProbePlacementDecision,
       { placement: ERivalProbePlacement.LANDER }
     >,
+    decisionDirection: ERivalDecisionDirection,
   ): void {
     const rival = RivalSetup.getRivalPlayer(game);
     const result = game.planetaryBoard?.land(planet, rival.id, {
@@ -309,7 +308,7 @@ export class RivalActionResolver {
     if (result.firstLandDataGained > 0) {
       RivalResourceResolver.gainData(game, result.firstLandDataGained);
     }
-    this.applyPlanetRewards(game, result.rewards);
+    this.applyPlanetRewards(game, planet, result.rewards, decisionDirection);
     RivalResourceResolver.applyRewards(game, candidate.effects);
     if (candidate.collectMascamitesSample) {
       this.resolveMascamitesSampleConversion(game, planet);
@@ -320,6 +319,7 @@ export class RivalActionResolver {
     game: Game,
     planet: EPlanet,
     candidate: IRivalActionCandidateDefinition,
+    decisionDirection: ERivalDecisionDirection,
   ): void {
     const rival = RivalSetup.getRivalPlayer(game);
     const result = game.planetaryBoard?.orbit(planet, rival.id);
@@ -330,7 +330,7 @@ export class RivalActionResolver {
     game.solarSystem?.consumeProbeByPlanet(rival.id, planet);
     rival.probesInSpace = Math.max(0, rival.probesInSpace - 1);
     game.planetaryBoard?.setProbeCount(planet, rival.id, 0);
-    this.applyPlanetRewards(game, result.rewards);
+    this.applyPlanetRewards(game, planet, result.rewards, decisionDirection);
     RivalResourceResolver.applyRewards(game, candidate.effects);
   }
 
@@ -393,13 +393,26 @@ export class RivalActionResolver {
     candidate: IRivalActionCandidateDefinition,
   ): boolean {
     const rival = RivalSetup.getRivalPlayer(game);
-    if (!LaunchProbeEffect.canExecute(rival, game)) {
+    if (
+      rival.probesInSpace > 0 ||
+      this.hasRivalProbeInSolarSystem(game) ||
+      !LaunchProbeEffect.canExecute(rival, game)
+    ) {
       return false;
     }
 
     LaunchProbeEffect.execute(rival, game);
     RivalResourceResolver.applyRewards(game, candidate.effects);
     return true;
+  }
+
+  private static hasRivalProbeInSolarSystem(game: Game): boolean {
+    const rival = RivalSetup.getRivalPlayer(game);
+    return (
+      game.solarSystem?.spaces.some((space) =>
+        space.occupants.some((probe) => probe.playerId === rival.id),
+      ) ?? false
+    );
   }
 
   private static findReachableRivalProbe(
@@ -413,23 +426,22 @@ export class RivalActionResolver {
       return null;
     }
 
-    for (const space of solarSystem.spaces) {
-      const probe = space.occupants.find(
-        (candidate) => candidate.playerId === rival.id,
-      );
-      if (!probe) {
-        continue;
-      }
+    const earth = solarSystem.getPlanetLocation(EPlanet.EARTH);
+    const probe = earth?.space.occupants.find(
+      (candidate) => candidate.playerId === rival.id,
+    );
+    if (!earth || !probe) {
+      return null;
+    }
 
-      const path = this.findHighestPublicityPath(
-        solarSystem,
-        space.id,
-        targetSpace.id,
-        movement,
-      );
-      if (path.length > 0) {
-        return { probeId: probe.id, path };
-      }
+    const path = this.findHighestPublicityPath(
+      solarSystem,
+      earth.space.id,
+      targetSpace.id,
+      movement,
+    );
+    if (path.length > 0) {
+      return { probeId: probe.id, path };
     }
 
     return null;
@@ -573,7 +585,9 @@ export class RivalActionResolver {
 
   private static applyPlanetRewards(
     game: Game,
+    planet: EPlanet,
     rewards: readonly TPlanetReward[],
+    decisionDirection: ERivalDecisionDirection,
   ): void {
     for (const reward of rewards) {
       switch (reward.type) {
@@ -583,11 +597,21 @@ export class RivalActionResolver {
         case 'card':
           RivalResourceResolver.gainProgress(game, reward.amount);
           break;
+        case 'trace':
+          for (let index = 0; index < reward.amount; index += 1) {
+            this.resolveTrace(game, reward.trace, decisionDirection);
+          }
+          break;
         case 'tuck':
           RivalResourceResolver.gainProgress(game, reward.amount * 4);
           break;
         case 'exofossil':
           RivalSetup.getRivalPlayer(game).gainExofossils(reward.amount);
+          break;
+        case 'signal':
+          for (let index = 0; index < reward.amount; index += 1) {
+            this.markRivalSignalByPlanet(game, planet);
+          }
           break;
         default:
           break;

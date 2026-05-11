@@ -1,0 +1,245 @@
+- generic [ref=e2] [box=0,0,864,940]:
+  - generic [ref=e3] [box=12,12,840,194]:
+    - generic [ref=e4] [box=219,29,36,16]: Debug
+    - button "Text Mode Off" [ref=e5] [box=263,25,96,23]
+    - combobox "Where game state comes from" [ref=e6] [box=367,21,140,32]:
+      - generic [box=380,29,72,16]: "Source: Local"
+      - img [ref=e8] [box=478,29,16,16]
+    - combobox [ref=e246] [box=515,21,150,32]:
+      - generic [box=528,29,43,16]: My Turn
+      - img [ref=e248] [box=636,29,16,16]
+    - combobox [ref=e250] [box=673,21,170,32]:
+      - generic [box=686,29,45,16]: No Input
+      - img [ref=e252] [box=814,29,16,16]
+    - generic [ref=e254] [box=252,61,277,26]:
+      - button "Next Row" [ref=e255] [box=261,61,69,26]
+      - button "Next Hand" [ref=e256] [box=334,61,74,26]
+      - button "Cancel Scan (pool)" [active] [ref=e266] [box=412,61,117,26]
+    - generic [ref=e12] [box=537,61,306,26]:
+      - button "Rotate (R1)" [ref=e13] [box=546,61,75,26]
+      - button "Rotate R1" [ref=e14] [box=625,61,70,26]
+      - button "Rotate R2" [ref=e15] [box=699,61,70,26]
+      - button "Rotate R3" [ref=e16] [box=773,61,70,26]
+    - generic [ref=e17] [box=6,95,837,16]:
+      - generic "Delay for pushed probes when rotating ring 1" [ref=e18] [box=15,95,116,16]:
+        - text: D1
+        - slider "D1 90" [ref=e19] [box=31,95,64,16]: "90"
+        - generic [ref=e20] [box=99,96,32,13]: "90"
+      - generic "Delay for pushed probes when rotating ring 2" [ref=e21] [box=139,95,116,16]:
+        - text: D2
+        - slider "D2 150" [ref=e22] [box=155,95,64,16]: "150"
+        - generic [ref=e23] [box=223,96,32,13]: "150"
+      - generic "Delay for pushed probes when rotating ring 3" [ref=e24] [box=263,95,116,16]:
+        - text: D3
+        - slider "D3 180" [ref=e25] [box=279,95,64,16]: "180"
+        - generic [ref=e26] [box=347,96,32,13]: "180"
+      - generic "Probe inset for wheel 1" [ref=e27] [box=387,95,108,16]:
+        - text: R1
+        - slider "R1 89" [ref=e28] [box=403,95,64,16]: "89"
+        - generic [ref=e29] [box=471,96,24,13]: "89"
+      - generic "Probe inset for wheel 2" [ref=e30] [box=503,95,108,16]:
+        - text: R2
+        - slider "R2 95" [ref=e31] [box=519,95,64,16]: "95"
+        - generic [ref=e32] [box=587,96,24,13]: "95"
+      - generic "Probe inset for wheel 3" [ref=e33] [box=619,95,108,16]:
+        - text: R3
+        - slider "R3 91" [ref=e34] [box=635,95,64,16]: "91"
+        - generic [ref=e35] [box=703,96,24,13]: "91"
+      - generic "Probe inset for wheel 4" [ref=e36] [box=735,95,108,16]:
+        - text: R4
+        - slider "R4 229" [ref=e37] [box=751,95,64,16]: "229"
+        - generic [ref=e38] [box=819,96,24,13]: "229"
+    - generic [ref=e39] [box=21,119,822,49]:
+      - generic [ref=e40] [box=21,128,29,16]: Sig0
+      - generic [ref=e41] [box=58,128,114,16]:
+        - text: Rot
+        - slider "Rot -24" [ref=e42] [box=80,128,56,16]: "-24"
+        - generic [ref=e43] [box=140,129,32,13]: "-24"
+      - generic [ref=e44] [box=180,128,102,16]:
+        - text: X
+        - slider "X -3" [ref=e45] [box=190,128,56,16]: "-3"
+        - generic [ref=e46] [box=250,129,32,13]: "-3"
+      - generic [ref=e47] [box=290,128,102,16]:
+        - text: "Y"
+        - slider "Y 10" [ref=e48] [box=300,128,56,16]: "10"
+        - generic [ref=e49] [box=360,129,32,13]: "10"
+      - generic [ref=e50] [box=404,128,29,16]: Sig1
+      - generic [ref=e51] [box=441,128,114,16]:
+        - text: Rot
+        - slider "Rot 21" [ref=e52] [box=463,128,56,16]: "21"
+        - generic [ref=e53] [box=523,129,32,13]: "21"
+      - generic [ref=e54] [box=563,128,102,16]:
+        - text: X
+        - slider "X -19" [ref=e55] [box=573,128,56,16]: "-19"
+        - generic [ref=e56] [box=633,129,32,13]: "-19"
+      - generic [ref=e57] [box=673,128,102,16]:
+        - text: "Y"
+        - slider "Y -1" [ref=e58] [box=683,128,56,16]: "-1"
+        - generic [ref=e59] [box=743,129,32,13]: "-1"
+      - generic [ref=e60] [box=787,128,22,16]: Dot
+      - generic [ref=e61] [box=21,152,92,16]:
+        - slider "21" [ref=e62] [box=21,152,64,16]
+        - generic [ref=e63] [box=89,153,24,13]: "21"
+    - generic [ref=e64] [box=21,176,822,21]:
+      - generic [ref=e65] [box=21,181,51,16]: Circle0
+      - generic [ref=e66] [box=80,181,102,16]:
+        - text: X
+        - slider "X 0" [ref=e67] [box=90,181,56,16]: "0"
+        - generic [ref=e68] [box=150,182,32,13]: "0"
+      - generic [ref=e69] [box=190,181,102,16]:
+        - text: "Y"
+        - slider "Y -38" [ref=e70] [box=200,181,56,16]: "-38"
+        - generic [ref=e71] [box=260,182,32,13]: "-38"
+      - generic [ref=e72] [box=304,181,51,16]: Circle1
+      - generic [ref=e73] [box=362,181,102,16]:
+        - text: X
+        - slider "X 8" [ref=e74] [box=372,181,56,16]: "8"
+        - generic [ref=e75] [box=432,182,32,13]: "8"
+      - generic [ref=e76] [box=472,181,102,16]:
+        - text: "Y"
+        - slider "Y -33" [ref=e77] [box=482,181,56,16]: "-33"
+        - generic [ref=e78] [box=542,182,32,13]: "-33"
+  - generic [ref=e80] [box=0,0,864,940]:
+    - banner [ref=e81] [box=0,0,864,48]:
+      - generic [ref=e82] [box=16,12,220,23]:
+        - link "退出" [ref=e83] [cursor=pointer] [box=16,15,40,17]:
+          - /url: /lobby
+          - img [ref=e84] [box=16,18,12,12]
+          - text: 退出
+        - generic [ref=e87] [box=89,14,39,20]:
+          - generic [ref=e88] [box=89,15,22,17]: 回合
+          - generic [ref=e89] [box=120,14,8,20]: "3"
+        - generic [ref=e91] [box=161,12,74,23]: 主行动阶段
+      - generic [ref=e92] [box=665,14,183,20]:
+        - generic [ref=e93] [box=665,14,119,20]:
+          - generic [ref=e94] [box=665,15,34,17]: 当前：
+          - generic [ref=e95] [box=709,14,57,20]: 你的回合
+        - generic [ref=e99] [box=800,16,48,15]: debug-my
+    - generic [ref=e100] [box=0,48,864,253]:
+      - generic [ref=e267] [box=16,56,832,195]:
+        - paragraph [ref=e270] [box=53,69,114,17]: Input Required
+        - generic [ref=e273] [box=29,94,806,145]:
+          - paragraph [ref=e274] [box=29,94,806,17]: "Scan: choose sub-action"
+          - generic [ref=e275] [box=29,118,806,120]:
+            - button "Mark Earth" [ref=e276] [box=29,118,400,36]:
+              - generic [ref=e277] [box=40,129,15,13]: "01"
+              - generic [ref=e278] [box=63,128,355,16]: Mark Earth
+            - button "Mark Card Row" [ref=e279] [box=435,118,400,36]:
+              - generic [ref=e280] [box=446,129,15,13]: "02"
+              - generic [ref=e281] [box=469,128,355,16]: Mark Card Row
+            - button "Mark Mercury (1 publicity)" [ref=e282] [box=29,160,400,36]:
+              - generic [ref=e283] [box=40,171,15,13]: "03"
+              - generic [ref=e284] [box=63,170,355,16]: Mark Mercury (1 publicity)
+            - button "Mark Hand Signal" [ref=e285] [box=435,160,400,36]:
+              - generic [ref=e286] [box=446,171,15,13]: "04"
+              - generic [ref=e287] [box=469,170,355,16]: Mark Hand Signal
+            - button "Energy Launch or Move" [ref=e288] [box=29,202,400,36]:
+              - generic [ref=e289] [box=40,213,15,13]: "05"
+              - generic [ref=e290] [box=63,212,355,16]: Energy Launch or Move
+            - button "Done (end scan)" [ref=e291] [box=435,202,400,36]:
+              - generic [ref=e292] [box=446,213,15,13]: "06"
+              - generic [ref=e293] [box=469,212,355,16]: Done (end scan)
+      - generic [ref=e136] [box=16,266,832,28]:
+        - generic [ref=e137] [box=16,272,89,17]:
+          - paragraph [ref=e139] [box=38,272,51,17]: 免费行动
+          - generic [ref=e140] [box=95,273,6,15]: "5"
+        - button "移动探测器 (2)" [ref=e141] [box=111,266,111,28]
+        - button "完成任务" [disabled] [ref=e142] [box=228,266,67,28]
+        - button "展开" [ref=e143] [box=793,266,55,28]: 展开
+    - main [ref=e146] [box=0,301,864,472]:
+      - generic [ref=e147] [box=0,301,864,472]:
+        - tablist [ref=e149] [box=12,309,347,44]:
+          - tab "棋盘" [selected] [ref=e150] [box=17,314,55,34]: 棋盘
+          - tab "行星" [ref=e151] [box=74,314,55,34]
+          - tab "科技" [ref=e152] [box=130,314,55,34]
+          - tab "卡牌" [ref=e153] [box=187,314,55,34]
+          - tab "外星" [ref=e154] [box=243,314,55,34]
+          - tab "计分" [ref=e155] [box=300,314,55,34]
+        - tabpanel [ref=e157] [box=16,377,832,380]:
+          - generic [ref=e159] [box=32,377,800,818]:
+            - heading "Solar System" [level=2] [ref=e161] [box=45,390,111,24]
+            - generic [ref=e162] [box=52,422,760,760]:
+              - generic [box=52,422,760,760]:
+                - img [box=52,422,760,760]
+              - generic [box=196,566,471,471]:
+                - img [box=196,566,471,471]
+              - generic [box=174,544,516,516]:
+                - img [box=174,544,516,516]
+              - generic [box=249,619,365,365]:
+                - img [box=249,619,365,365]
+              - img [box=387,757,91,91]
+              - generic "Sector ring" [box=52,422,760,760]:
+                - generic "Sector tile 1 (procyon / vega)" [box=147,424,570,228]
+                - generic "Sector tile 2 (sirius-a / barnards-star)" [box=55,517,228,570]
+                - generic "Sector tile 3 (kepler-22 / proxima-centauri)" [box=581,517,228,570]
+                - generic "Sector tile 4 (61-virginis / beta-pictoris)" [box=147,952,570,228]
+              - button "Space space-0" [ref=e171] [box=391,722,28,28]
+              - button "Space space-1" [ref=e172] [box=445,722,28,28]
+              - button "Space space-2" [ref=e173] [box=484,761,28,28]
+              - button "Space space-3" [ref=e174] [box=484,815,28,28]
+              - button "Space space-4" [ref=e175] [box=445,854,28,28]
+              - button "Space space-5" [ref=e176] [box=391,854,28,28]
+              - button "Space space-6" [ref=e178] [box=352,815,28,28]
+              - button "Space space-7" [ref=e179] [box=352,761,28,28]
+              - button "Space space-8" [ref=e180] [box=464,898,28,28]
+              - button "Space space-9" [ref=e181] [box=372,898,28,28]
+              - button "Space space-10" [ref=e182] [box=308,834,28,28]
+              - button "Space space-11" [ref=e183] [box=308,742,28,28]
+              - button "Space space-12" [ref=e184] [box=372,678,28,28]
+              - button "Space space-13" [ref=e185] [box=464,678,28,28]
+              - button "Space space-14" [ref=e186] [box=528,742,28,28]
+              - button "Space space-15" [ref=e187] [box=528,834,28,28]
+              - button "Space space-16" [ref=e188] [box=351,949,28,28]
+              - button "Space space-17" [ref=e189] [box=257,855,28,28]
+              - button "Space space-18" [ref=e190] [box=257,721,28,28]
+              - button "Space space-19" [ref=e191] [box=351,627,28,28]
+              - button "Space space-20" [ref=e192] [box=485,627,28,28]
+              - button "Space space-21" [ref=e193] [box=579,721,28,28]
+              - button "Space space-22" [ref=e194] [box=579,855,28,28]
+              - button "Space space-23" [ref=e195] [box=485,949,28,28]
+              - button "Space space-24" [ref=e196] [box=504,580,28,28]
+              - button "Space space-25" [ref=e198] [box=626,702,28,28]
+              - button "Space space-26" [ref=e199] [box=626,874,28,28]
+              - button "Space space-27" [ref=e200] [box=504,996,28,28]
+              - button "Space space-28" [ref=e201] [box=332,996,28,28]
+              - button "Space space-29" [ref=e202] [box=210,874,28,28]
+              - button "Space space-30" [ref=e203] [box=210,702,28,28]
+              - button "Space space-31" [ref=e204] [box=332,580,28,28]
+              - generic [box=393,856,24,24]:
+                - img "red probe" [box=393,856,20,20]
+              - generic [box=581,723,24,24]:
+                - img "green probe" [box=581,723,20,20]
+              - generic [box=506,582,24,24]:
+                - img "red probe" [box=506,582,20,20]
+      - button "切换侧栏" [ref=e205] [box=795,313,57,25]: 信息
+    - generic [ref=e208] [box=0,773,864,167]:
+      - generic [ref=e209] [box=0,774,864,37]:
+        - paragraph [ref=e211] [box=44,784,26,17]: 手牌
+        - generic [ref=e212] [box=82,785,42,15]: 5 cards
+        - button "收起手牌" [expanded] [ref=e213] [box=760,780,88,25]: 收起手牌
+      - generic [ref=e220] [box=16,813,832,119]:
+        - button "1 加拿大氢谱线望远镜 1 在任意扇区。 1 115 该射电望远镜自2017年投入观测以来，持续绘制银河系磁场三维图谱，同步捕获中子星释放的特种射电脉冲。" [ref=e221] [box=16,813,89,119]:
+          - generic [box=21,818,78,109]:
+            - generic [box=21,818,78,109]:
+              - generic [box=21,818,78,109]:
+                - generic [box=21,818,78,109]
+        - button "1 卡纳维拉尔角太空军基地 1 1 1 1 80 未来某日，当异星孩童翻开人类星际征程的篇章，传说起点仍镌刻在卡纳维拉尔角。" [ref=e222] [box=109,813,89,119]:
+          - generic [box=114,818,78,109]:
+            - generic [box=114,818,78,109]:
+              - generic [box=114,818,78,109]:
+                - generic [box=114,818,78,109]
+        - button "1 卡西尼号探测器 3 1 在土星(Saturn)，包括卫星 6 1 8 卡西尼号探测器历时七年飞抵土星及其卫星群，其重大发现彻底革新了人类对该行星大气系统的科学认知。" [ref=e223] [box=202,813,89,119]:
+          - generic [box=207,818,78,109]:
+            - generic [box=207,818,78,109]:
+              - generic [box=207,818,78,109]:
+                - generic [box=207,818,78,109]
+        - button "1 钱德拉空间天文台 2 在你的探测器所在的扇区。 在4个不同的扇区有信号 2 88 X射线或成未知文明通讯媒介。钱德拉天文台依托地球轨道，持续开展此类射线的捕获与特性解析。" [ref=e224] [box=295,813,89,119]:
+          - generic [box=300,818,78,109]:
+            - generic [box=300,818,78,109]:
+              - generic [box=300,818,78,109]:
+                - generic [box=300,818,78,109]
+        - button "1 太空清理计划 1 弃掉卡牌行中的所有3张卡牌以获得它们的自由行动角效果。 73 历史发射活动遗留的太空垃圾严重威胁未来航天任务。为此，欧洲空间局专项计划正实施轨道清洁维护方案。" [ref=e225] [box=388,813,89,119]:
+          - generic [box=393,818,78,109]:
+            - generic [box=393,818,78,109]:
+              - generic [box=393,818,78,109]:
+                - generic [box=393,818,78,109]

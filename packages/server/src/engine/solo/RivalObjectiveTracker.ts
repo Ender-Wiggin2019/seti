@@ -39,6 +39,24 @@ export class RivalObjectiveTracker {
       return;
     }
 
+    this.markStaticConditions(game, player);
+
+    for (const event of game.missionTracker.getTurnEvents()) {
+      this.markFirstMatchingTriggeredTask(game, event, player.id);
+    }
+
+    do {
+      this.refillRevealedRow(game);
+    } while (this.markStaticConditions(game, player));
+  }
+
+  private static markStaticConditions(game: Game, player: IPlayer): boolean {
+    const rivalState = game.rivalState;
+    if (!rivalState) {
+      return false;
+    }
+
+    let changed = false;
     for (const objectiveId of [...rivalState.revealedObjectiveIds]) {
       const definition = OBJECTIVE_BY_ID.get(objectiveId);
       if (!definition) {
@@ -47,16 +65,11 @@ export class RivalObjectiveTracker {
 
       definition.tasks.forEach((task, index) => {
         if (this.isStaticConditionMet(task, player)) {
-          this.markTask(game, definition, index);
+          changed = this.markTask(game, definition, index) || changed;
         }
       });
     }
-
-    for (const event of game.missionTracker.getTurnEvents()) {
-      this.markFirstMatchingTriggeredTask(game, event, player.id);
-    }
-
-    this.refillRevealedRow(game);
+    return changed;
   }
 
   private static isStaticConditionMet(
@@ -233,15 +246,15 @@ export class RivalObjectiveTracker {
     game: Game,
     definition: IRivalObjectiveDefinition,
     taskIndex: number,
-  ): void {
+  ): boolean {
     const rivalState = game.rivalState;
     if (!rivalState) {
-      return;
+      return false;
     }
 
     const markedIndexes = rivalState.objectiveTaskMarkers[definition.id] ?? [];
     if (markedIndexes.includes(taskIndex)) {
-      return;
+      return false;
     }
 
     rivalState.objectiveTaskMarkers[definition.id] = [
@@ -261,6 +274,7 @@ export class RivalObjectiveTracker {
         rivalState.completedObjectiveIds.push(definition.id);
       }
     }
+    return true;
   }
 
   private static refillRevealedRow(game: Game): void {

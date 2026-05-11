@@ -334,7 +334,7 @@ describe('OumuamuaAlienPlugin', () => {
     expect(land.planet).toBe(EPlanet.OUMUAMUA);
   });
 
-  it('orbiting oumuamua grants 10 VP, first-orbit alien card, and marks the oumuamua tile', () => {
+  it('orbiting oumuamua prompts for sector/tile signal and first-orbit alien card source', () => {
     const { game, p1 } = createGame('oumuamua-orbit-reward', {
       initialDiscAngles: [0, 0, 0],
     });
@@ -350,13 +350,38 @@ describe('OumuamuaAlienPlugin', () => {
     game.solarSystem?.placeProbe(p1.id, state.meta.spaceId);
     p1.probesInSpace = 1;
     const scoreBefore = p1.score;
+    const dataBefore = p1.resources.data;
 
     const orbit = OrbitProbeEffect.execute(p1, game, EPlanet.OUMUAMUA);
 
     expect(orbit.vpGained).toBe(10);
+    expect(p1.score).toBe(scoreBefore + 10);
+    expect(orbit.pendingInput?.toModel().type).toBe(EPlayerInputType.OPTION);
+
+    const signalModel =
+      orbit.pendingInput?.toModel() as ISelectOptionInputModel | undefined;
+    expect(signalModel?.options.map((option) => option.id)).toEqual([
+      'oumuamua-sector',
+      'oumuamua-tile',
+    ]);
+
+    const drawInput = orbit.pendingInput?.process({
+      type: EPlayerInputType.OPTION,
+      optionId: 'oumuamua-tile',
+    });
     expect(p1.score).toBe(scoreBefore + 11);
-    expect(p1.hand).toContain('ET.21');
+    expect(p1.resources.data).toBe(dataBefore + 1);
     expect(plugin.getRuntimeState(game)?.tileDataRemaining).toBe(2);
+    expect(drawInput?.toModel().type).toBe(EPlayerInputType.OPTION);
+
+    drawInput?.process({
+      type: EPlayerInputType.OPTION,
+      optionId: 'draw-random',
+    });
+
+    expect(p1.hand).toContain('ET.22');
+    expect(p1.hand).not.toContain('ET.21');
+    expect(board.faceUpAlienCardId).toBe('ET.21');
   });
 
   it('landing on oumuamua grants 9 VP, 2 exofossils, and 3/2/1 first land data', () => {

@@ -23,4 +23,21 @@ describe('SelectTraceInput', () => {
       trace: ETrace.RED,
     });
   });
+
+  it('renders the server-provided title when present', () => {
+    render(
+      <SelectTraceInput
+        model={{
+          inputId: 'input-trace',
+          type: EPlayerInputType.TRACE,
+          title: 'Place Blue trace',
+          options: [ETrace.BLUE],
+        }}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Place Blue trace')).toBeInTheDocument();
+    expect(screen.queryByText('Select trace')).not.toBeInTheDocument();
+  });
 });

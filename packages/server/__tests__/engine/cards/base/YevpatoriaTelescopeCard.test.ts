@@ -110,4 +110,32 @@ describe('YevpatoriaTelescopeCard (card 67)', () => {
     expect(player.techs).toHaveLength(0);
     expect(game.blueSector.state.marks).toBe(0);
   });
+
+  it('does not offer Exertian cards for its optional hand discard', () => {
+    const card = new YevpatoriaTelescopeCard();
+    const player = new Player({
+      id: 'p1',
+      name: 'Alice',
+      color: 'red',
+      seatIndex: 0,
+      hand: [
+        { id: 'ET.41', sector: ESector.BLUE },
+        { id: 'hand-red', sector: ESector.RED },
+      ],
+    });
+    const game = createGame({ availableTechs: [] });
+
+    card.play({ player, game });
+    const input = game.deferredActions.drain(game);
+    const model = input?.toModel();
+
+    expect(model?.type).toBe(EPlayerInputType.OPTION);
+    if (model?.type !== EPlayerInputType.OPTION) {
+      throw new Error('expected option input');
+    }
+    expect(model.options.map((option) => option.id)).toEqual([
+      'skip-hand-signal',
+      'discard-hand-red@1',
+    ]);
+  });
 });

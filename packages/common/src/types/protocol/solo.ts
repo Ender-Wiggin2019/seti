@@ -1,5 +1,6 @@
 import type { EPlanet } from '@seti/common/types/protocol/enums';
 import type { TPublicSlotReward } from '@seti/common/types/protocol/gameState';
+import type { ETechId } from '@seti/common/types/tech';
 
 export type TSoloDifficulty = 1 | 2 | 3 | 4 | 5;
 export type TRivalBoardConfigId =
@@ -106,6 +107,7 @@ export interface IRivalActionCardDefinition {
 
 export interface IPublicRivalComputerState {
   filledSlots: boolean[];
+  slotRewards: Array<TPublicSlotReward | null>;
   dataPool: number;
 }
 
@@ -123,6 +125,7 @@ export interface IPublicRivalState {
   progress: number;
   progressSlot: number;
   boardConfigId: TRivalBoardConfigId;
+  techIds: ETechId[];
   computer: IPublicRivalComputerState;
   actionDeck: IPublicRivalActionDeckState;
   revealedObjectiveIds: TRivalObjectiveId[];

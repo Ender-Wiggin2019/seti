@@ -15,6 +15,23 @@ Implement E2E as a real user journey. Do not simulate server behavior, do not in
 4. Never drive gameplay by sending raw websocket actions from tests when a real UI action exists.
 5. If a step fails, keep the failure visible. Do not replace the step with a shortcut.
 
+## Coverage Discipline
+
+1. Passing related unit tests or broad E2E smoke tests is not proof that a reported behavior is covered.
+2. For every bug fix or regression report, first write or identify an assertion that fails on the old behavior and passes after the fix.
+3. Do not count login/lobby/start-game/panel-visible smoke tests as coverage for specific card semantics, rendering modes, or conditional UI sections.
+4. For UI mode regressions, enumerate the relevant matrix before asserting:
+   - viewer/actor perspective, such as human player vs synthetic rival
+   - rendering mode, such as text mode vs image mode
+   - action/card kind, such as scan, probe, tech, or mission
+   - expected visible outcome
+5. When server/common data drives card, objective, reward, rule, or action rendering, verify both text mode and image mode unless the feature is explicitly single-mode.
+6. In text mode, assert that visible labels/effects are derived from the same server/common ID and definition being displayed. In image mode, assert that the rendered asset path, alt text, or test id is derived from that same server-projected ID.
+7. If a smoke test cannot pin a specific ID without becoming brittle, assert consistency between the visible ID and the rendered text/image output. Put deterministic ID assertions in a focused deterministic spec.
+8. For conditional UI hiding, assert both sides of the condition in the same test or suite: the section that should remain visible and the section that should be hidden.
+9. For rule rewards, assert user-observable semantics, not only that the engine step completed. Example: an any-card reward should expose the allowed sources and the selected result should be visible in hand or the relevant row.
+10. Before marking verification complete, ask: would this test fail if the reported bug still existed? If the answer is no, add a more specific assertion.
+
 ## Allowed Setup
 
 1. Use Playwright `webServer` to start real client/server.
@@ -68,4 +85,3 @@ Implement E2E as a real user journey. Do not simulate server behavior, do not in
    - Multi-context host/guest room/game interactions
 3. Keep failure explicit:
    - If UI cannot complete a step, assert and fail at that exact step.
-

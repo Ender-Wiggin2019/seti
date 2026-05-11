@@ -188,12 +188,18 @@ export function createOrbitOrLandThenPickupInput(
     id: `orbit-${planet}`,
     label: `Orbit ${planet}`,
     onSelect: () => {
-      OrbitProbeEffect.execute(player, game, planet);
+      const result = OrbitProbeEffect.execute(player, game, planet, {
+        onComplete: () =>
+          createPickupInputForPlanet(player, game, planet, card.id),
+      });
       game.missionTracker.recordEvent({
         type: EMissionEventType.PROBE_ORBITED,
         planet,
       });
-      return createPickupInputForPlanet(player, game, planet, card.id);
+      return (
+        result.pendingInput ??
+        createPickupInputForPlanet(player, game, planet, card.id)
+      );
     },
   }));
 

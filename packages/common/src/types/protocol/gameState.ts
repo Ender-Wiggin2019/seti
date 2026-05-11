@@ -1,6 +1,5 @@
 import type { IPlanetMissionConfig } from '@seti/common/constant/boardLayout';
 import type {
-  TMascamitesSamplePools,
   TMascamitesSampleSourcePlanet,
   TMascamitesSampleTokenId,
 } from '@seti/common/constant/mascamites';
@@ -299,11 +298,15 @@ export interface IPublicOumuamuaBoard {
 export interface IPublicMascamitesCapsule {
   capsuleId: string;
   ownerId: string;
-  sampleTokenId: TMascamitesSampleTokenId;
   sourcePlanet: TMascamitesSampleSourcePlanet;
   spaceId: string;
   missionCardId?: string;
 }
+
+export type TPublicMascamitesSamplePools = Record<
+  TMascamitesSampleSourcePlanet,
+  number
+>;
 
 export interface IPublicMascamitesDeliveredSample {
   sampleTokenId: TMascamitesSampleTokenId;
@@ -314,7 +317,7 @@ export interface IPublicMascamitesDeliveredSample {
 
 export interface IPublicMascamitesBoard {
   type: 'mascamites';
-  samplePools: TMascamitesSamplePools;
+  samplePools: TPublicMascamitesSamplePools;
   publicSamples: TMascamitesSampleTokenId[];
   capsules: IPublicMascamitesCapsule[];
   deliveredSamples: IPublicMascamitesDeliveredSample[];
@@ -324,6 +327,7 @@ export interface IPublicMascamitesBoard {
 export interface IPublicExertianFaceDownCard {
   ownerId: string;
   revealed: boolean;
+  cardId?: string;
   source: 'discovery' | 'milestone-20' | 'milestone-40';
 }
 

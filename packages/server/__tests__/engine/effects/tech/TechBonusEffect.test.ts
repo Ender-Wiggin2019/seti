@@ -68,16 +68,18 @@ describe('TechBonusEffect', () => {
     expect(player.resources.gain).toHaveBeenCalledWith({ credits: 1 });
   });
 
-  it('applies CARD via mainDeck', () => {
+  it('rejects CARD in the non-interactive apply path', () => {
     const player = mockPlayer();
     const game = mockGame(['c1']);
 
-    TechBonusEffect.apply(player as never, game as never, {
-      type: ETechBonusType.CARD,
-    });
+    expect(() =>
+      TechBonusEffect.apply(player as never, game as never, {
+        type: ETechBonusType.CARD,
+      }),
+    ).toThrow('requires createAnyCardChoice');
 
-    expect(player.hand).toEqual(['c1']);
-    expect(game.lockCurrentTurn).toHaveBeenCalled();
+    expect(player.hand).toEqual([]);
+    expect(game.lockCurrentTurn).not.toHaveBeenCalled();
   });
 
   it('applies VP_2 and VP_3', () => {

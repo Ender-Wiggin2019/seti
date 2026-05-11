@@ -213,6 +213,30 @@ describe('RivalObjectiveTracker', () => {
     expect(rivalState.objectiveTaskMarkers['SOLO.16']).toEqual([1]);
   });
 
+  it('requires 9 publicity to complete SOLO.4', () => {
+    const game = createSoloGame();
+    const rivalState = game.rivalState;
+    if (!rivalState) throw new Error('expected rival state');
+    rivalState.revealedObjectiveIds = ['SOLO.4'];
+    rivalState.objectiveDrawPile = [];
+    rivalState.completedObjectiveIds = [];
+    game.players[0].publicity = 8;
+
+    endHumanTurn(game);
+
+    expect(rivalState.completedObjectiveIds).toEqual([]);
+    expect(rivalState.revealedObjectiveIds).toEqual(['SOLO.4']);
+
+    game.activePlayer = game.players[0];
+    game.phase = EPhase.AWAIT_END_TURN;
+    game.players[0].publicity = 9;
+
+    endHumanTurn(game);
+
+    expect(rivalState.completedObjectiveIds).toEqual(['SOLO.4']);
+    expect(rivalState.revealedObjectiveIds).toEqual([]);
+  });
+
   it('completes a multi-task objective after launch and publicity are both marked', () => {
     const game = createSoloGame();
     const rivalState = game.rivalState;
@@ -260,6 +284,27 @@ describe('RivalObjectiveTracker', () => {
     expect(rivalState.completedObjectiveIds).toEqual([]);
     expect(rivalState.objectiveTaskMarkers['SOLO.16']).toEqual([0]);
     expect(rivalState.objectiveTaskMarkers['SOLO.22']).toBeUndefined();
+  });
+
+  it('immediately marks static tasks on objectives revealed by the same refresh', () => {
+    const game = createSoloGame();
+    const rivalState = game.rivalState;
+    if (!rivalState) throw new Error('expected rival state');
+    rivalState.revealedObjectiveIds = ['SOLO.2'];
+    rivalState.objectiveDrawPile = ['SOLO.1', 'SOLO.3'];
+    rivalState.completedObjectiveIds = [];
+    game.players[0].score = 16;
+    game.missionTracker.recordEvent({
+      type: EMissionEventType.PROBE_LANDED,
+      planet: EPlanet.MARS,
+      isMoon: false,
+    });
+
+    endHumanTurn(game);
+
+    expect(rivalState.completedObjectiveIds).toEqual(['SOLO.2', 'SOLO.1']);
+    expect(rivalState.revealedObjectiveIds).toEqual(['SOLO.3']);
+    expect(rivalState.objectiveDrawPile).toEqual([]);
   });
 
   it.each(triggerCases)('maps $name objective trigger events', (testCase) => {

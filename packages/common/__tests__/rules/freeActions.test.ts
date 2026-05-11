@@ -12,8 +12,8 @@ import {
   getAvailableFreeActions,
   validateMovementPath,
 } from '@/rules/freeActions';
-import { EResource } from '@/types/element';
 import { EEffectType } from '@/types/effect';
+import { EResource } from '@/types/element';
 import {
   EAlienType,
   EFreeAction,
@@ -284,15 +284,14 @@ describe('free action rules', () => {
             board: {
               type: 'mascamites',
               samplePools: {
-                [EPlanet.JUPITER]: [],
-                [EPlanet.SATURN]: [],
+                [EPlanet.JUPITER]: 0,
+                [EPlanet.SATURN]: 0,
               },
               publicSamples: [],
               capsules: [
                 {
                   capsuleId: 'capsule-1',
                   ownerId: player.playerId,
-                  sampleTokenId: 'mascamites-credit-2',
                   sourcePlanet: EPlanet.JUPITER,
                   spaceId: 's0',
                 },
@@ -458,15 +457,14 @@ describe('free action rules', () => {
             board: {
               type: 'mascamites',
               samplePools: {
-                [EPlanet.JUPITER]: [],
-                [EPlanet.SATURN]: [],
+                [EPlanet.JUPITER]: 0,
+                [EPlanet.SATURN]: 0,
               },
               publicSamples: [],
               capsules: [
                 {
                   capsuleId: 'capsule-1',
                   ownerId: player.playerId,
-                  sampleTokenId: 'mascamites-credit-2',
                   sourcePlanet: EPlanet.JUPITER,
                   spaceId: 's0',
                 },
@@ -522,15 +520,14 @@ describe('free action rules', () => {
             board: {
               type: 'mascamites',
               samplePools: {
-                [EPlanet.JUPITER]: [],
-                [EPlanet.SATURN]: [],
+                [EPlanet.JUPITER]: 0,
+                [EPlanet.SATURN]: 0,
               },
               publicSamples: [],
               capsules: [
                 {
                   capsuleId: 'capsule-1',
                   ownerId: player.playerId,
-                  sampleTokenId: 'mascamites-credit-2',
                   sourcePlanet: EPlanet.JUPITER,
                   spaceId: 's0',
                 },
@@ -754,15 +751,14 @@ describe('free action rules', () => {
               board: {
                 type: 'mascamites',
                 samplePools: {
-                  [EPlanet.JUPITER]: [],
-                  [EPlanet.SATURN]: [],
+                  [EPlanet.JUPITER]: 0,
+                  [EPlanet.SATURN]: 0,
                 },
                 publicSamples: [],
                 capsules: [
                   {
                     capsuleId: 'capsule-1',
                     ownerId: player.playerId,
-                    sampleTokenId: 'mascamites-credit-2',
                     sourcePlanet: EPlanet.JUPITER,
                     spaceId: 's0',
                   },
