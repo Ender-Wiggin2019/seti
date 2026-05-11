@@ -30,6 +30,7 @@ export function SelectPlanetInput({
             className='h-9 justify-start gap-2 px-2.5 text-xs'
             onClick={() =>
               onSubmit({
+                inputId: model.inputId,
                 type: EPlayerInputType.PLANET,
                 planet,
               })

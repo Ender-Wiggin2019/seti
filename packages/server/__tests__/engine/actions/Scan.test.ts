@@ -8,6 +8,7 @@ import {
 import {
   EPlayerInputType,
   type IPlayerInputModel,
+  type ISelectCardInputModel,
   type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
 import { ScanAction } from '@/engine/actions/Scan.js';
@@ -30,6 +31,41 @@ function finishScanWithDone(game: Game, playerId: string): void {
     playerId,
     EPlayerInputType.OPTION,
   ) as ISelectOptionInputModel;
+  if (
+    optionInput.options.some(
+      (option) => option.id === EScanSubAction.MARK_CARD_ROW,
+    )
+  ) {
+    game.processInput(playerId, {
+      type: EPlayerInputType.OPTION,
+      optionId: EScanSubAction.MARK_CARD_ROW,
+    });
+    const cardInput = playerWaitingFor(
+      game,
+      playerId,
+      EPlayerInputType.CARD,
+    ) as ISelectCardInputModel;
+    const cardId = requireValue(
+      cardInput.cards[0]?.id,
+      'expected card-row signal card',
+    );
+    game.processInput(playerId, {
+      type: EPlayerInputType.CARD,
+      cardIds: [cardId],
+    });
+    if (game.players.find((player) => player.id === playerId)?.waitingFor) {
+      const sectorInput = playerWaitingFor(
+        game,
+        playerId,
+        EPlayerInputType.OPTION,
+      ) as ISelectOptionInputModel;
+      game.processInput(playerId, {
+        type: EPlayerInputType.OPTION,
+        optionId: sectorInput.options[0].id,
+      });
+    }
+    return;
+  }
 
   game.processInput(playerId, {
     type: EPlayerInputType.OPTION,
@@ -458,13 +494,124 @@ describe('ScanAction — integration (rewrite)', () => {
       ) as ISelectOptionInputModel;
       expect(
         afterInterrupt.options.some((o) => o.id === EScanSubAction.DONE),
+      ).toBe(false);
+      expect(
+        afterInterrupt.options.some(
+          (o) => o.id === EScanSubAction.MARK_CARD_ROW,
+        ),
       ).toBe(true);
 
       game.processInput(p1.id, {
         type: EPlayerInputType.OPTION,
-        optionId: EScanSubAction.DONE,
+        optionId: EScanSubAction.MARK_CARD_ROW,
       });
+      const cardPick = playerWaitingFor(
+        game,
+        p1.id,
+        EPlayerInputType.CARD,
+      ) as ISelectCardInputModel;
+      const cardId = requireValue(
+        cardPick.cards[0]?.id,
+        'expected card-row signal card',
+      );
+      game.processInput(p1.id, {
+        type: EPlayerInputType.CARD,
+        cardIds: [cardId],
+      });
+      if (p1.waitingFor?.toModel().type === EPlayerInputType.OPTION) {
+        const sectorPick = p1.waitingFor.toModel() as ISelectOptionInputModel;
+        game.processInput(p1.id, {
+          type: EPlayerInputType.OPTION,
+          optionId: sectorPick.options[0].id,
+        });
+      }
       expect(p1.waitingFor).toBeUndefined();
+    });
+
+    it('does not allow a free action to interrupt a nested scan free action prompt', () => {
+      const { game, p1 } = createScanIntegrationGame(
+        'scan-2-4-11-no-nested-free-action',
+      );
+      p1.resources.gain({ signalTokens: 1 });
+
+      game.processMainAction(p1.id, { type: EMainAction.SCAN });
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_EARTH,
+      });
+      game.processFreeAction(p1.id, { type: EFreeAction.SPEND_SIGNAL_TOKEN });
+
+      const cardPick = playerWaitingFor(
+        game,
+        p1.id,
+        EPlayerInputType.CARD,
+      ) as ISelectCardInputModel;
+      const cardId = requireValue(
+        cardPick.cards[0]?.id,
+        'expected card-row signal card',
+      );
+      game.processInput(p1.id, {
+        type: EPlayerInputType.CARD,
+        cardIds: [cardId],
+      });
+
+      if (p1.waitingFor?.toModel().type !== EPlayerInputType.OPTION) {
+        throw new Error('expected nested sector choice option');
+      }
+
+      expect(() =>
+        game.processFreeAction(p1.id, {
+          type: EFreeAction.CONVERT_ENERGY_TO_MOVEMENT,
+          amount: 1,
+        }),
+      ).toThrow();
+    });
+
+    it('resumes the interrupted scan after a free action reward prompt resolves', () => {
+      const { game, p1 } = createScanIntegrationGame(
+        'scan-2-4-11-resume-after-free-action-input',
+      );
+      p1.resources.gain({ data: 3 });
+      for (const slotIndex of [0, 1, 2]) {
+        game.processFreeAction(p1.id, {
+          type: EFreeAction.PLACE_DATA,
+          slotIndex,
+        });
+      }
+
+      game.processMainAction(p1.id, { type: EMainAction.SCAN });
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_EARTH,
+      });
+
+      game.processFreeAction(p1.id, {
+        type: EFreeAction.PLACE_DATA,
+        slotIndex: 3,
+      });
+      const tuckPrompt = playerWaitingFor(
+        game,
+        p1.id,
+        EPlayerInputType.CARD,
+      ) as ISelectCardInputModel;
+      expect(tuckPrompt.minSelections).toBe(0);
+
+      game.processInput(p1.id, {
+        type: EPlayerInputType.CARD,
+        cardIds: [],
+      });
+
+      const resumedScan = playerWaitingFor(
+        game,
+        p1.id,
+        EPlayerInputType.OPTION,
+      ) as ISelectOptionInputModel;
+      expect(
+        resumedScan.options.some((o) => o.id === EScanSubAction.MARK_CARD_ROW),
+      ).toBe(true);
+      expect(
+        resumedScan.options.some((o) => o.id === EScanSubAction.DONE),
+      ).toBe(false);
     });
   });
 
@@ -586,7 +733,7 @@ describe('ScanAction — integration (rewrite)', () => {
       ).toBe(false);
     });
 
-    it('offers DONE after MARK_EARTH is executed', () => {
+    it('does not offer DONE after MARK_EARTH while the card-row signal remains possible', () => {
       const { game, p1 } = createScanIntegrationGame('scan-2-4-8-b');
 
       game.processMainAction(p1.id, { type: EMainAction.SCAN });
@@ -603,6 +750,11 @@ describe('ScanAction — integration (rewrite)', () => {
 
       expect(
         poolAfterMark.options.some((o) => o.id === EScanSubAction.DONE),
+      ).toBe(false);
+      expect(
+        poolAfterMark.options.some(
+          (o) => o.id === EScanSubAction.MARK_CARD_ROW,
+        ),
       ).toBe(true);
     });
   });

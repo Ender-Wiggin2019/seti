@@ -32,6 +32,7 @@ describe('SelectCardInput', () => {
 
     fireEvent.click(submitButton);
     expect(onSubmit).toHaveBeenCalledWith({
+      inputId: 'input-card',
       type: EPlayerInputType.CARD,
       cardIds: ['c-1'],
     });

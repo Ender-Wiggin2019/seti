@@ -126,7 +126,12 @@ export function PlanetaryBoardView({
 
   function handlePlanetSelect(planet: EPlanet): void {
     if (selectablePlanets.has(planet)) {
-      onRespondInput?.({ type: EPlayerInputType.PLANET, planet });
+      if (pendingInput?.type !== EPlayerInputType.PLANET) return;
+      onRespondInput?.({
+        inputId: pendingInput.inputId,
+        type: EPlayerInputType.PLANET,
+        planet,
+      });
       return;
     }
     if (selectableMainActionPlanets.has(planet)) {

@@ -914,6 +914,30 @@ describe('RivalTurnController', () => {
     expect(rival.probesInSpace).toBe(0);
   });
 
+  it('orbits Oumuamua for S.17 when landing is unavailable but orbiting is possible', () => {
+    const game = createSoloGame();
+    const rival = game.players[1];
+    const rivalState = game.rivalState;
+    if (!rivalState) throw new Error('expected rival state');
+    discoverOumuamua(game);
+    game.planetaryBoard?.getLandingCost(EPlanet.OUMUAMUA, rival.id);
+    const oumuamua = game.planetaryBoard?.planets.get(EPlanet.OUMUAMUA);
+    if (!oumuamua) throw new Error('expected Oumuamua planet board');
+    oumuamua.firstOrbitClaimed = true;
+    oumuamua.landingSlots.push({ playerId: rival.id });
+    placeRivalProbeOnEarthWithDirectPath(game, EPlanet.OUMUAMUA);
+    rivalState.actionDeck = new Deck(['S.17']);
+
+    const result = RivalTurnController.resolveCurrentTurn(game);
+
+    expect(result).toMatchObject({
+      cardId: 'S.17',
+      actionKind: ERivalActionKind.PROBE_PLACEMENT,
+    });
+    expect(oumuamua.orbitSlots).toContainEqual({ playerId: rival.id });
+    expect(rival.probesInSpace).toBe(0);
+  });
+
   it('marks the Oumuamua tile for the Oumuamua special scan fallback', () => {
     const game = createSoloGame();
     const rival = game.players[1];
@@ -1020,13 +1044,20 @@ describe('RivalTurnController', () => {
     for (const cardId of EXERTIAN_CARD_IDS.slice(0, 4)) {
       board.playFaceDownCard(rival.id, cardId, 'discovery');
     }
-    const dangerSlot = board.speciesTraceSlots.find((slot) =>
-      slot.rewards.some((reward) => reward.type === 'VP' && reward.amount > 0),
+    const dangerSlots = ['exertians-danger-3-', 'exertians-danger-2-'].map(
+      (prefix) =>
+        board.speciesTraceSlots.find((slot) => slot.slotId.startsWith(prefix)),
     );
-    if (!dangerSlot) {
+    if (dangerSlots.some((slot) => !slot)) {
       throw new Error('expected Exertians danger trace slot');
     }
-    board.placeTrace(dangerSlot, { playerId: rival.id }, dangerSlot.traceColor);
+    for (const dangerSlot of dangerSlots) {
+      board.placeTrace(
+        dangerSlot!,
+        { playerId: rival.id },
+        dangerSlot!.traceColor,
+      );
+    }
     rivalState.actionDeck = new Deck(['S.19']);
 
     const result = RivalTurnController.resolveCurrentTurn(game);
@@ -1285,6 +1316,27 @@ describe('RivalTurnController', () => {
             event.details?.tileId === firstGoldTileId,
         ),
     ).toBe(true);
+  });
+
+  it('does not mark a rival gold tile when all first spaces are already occupied', () => {
+    const game = createSoloGame();
+    const rival = game.players[1];
+    const rivalState = game.rivalState;
+    if (!rivalState) throw new Error('expected rival state');
+    rival.score = 24;
+    rivalState.actionDeck = new Deck(['S.5']);
+    rivalState.computer.filledSlots = [true, true, true, true, true, true];
+    for (const tile of game.goldScoringTiles) {
+      tile.claim('p1');
+    }
+
+    RivalTurnController.resolveCurrentTurn(game);
+
+    expect(
+      game.goldScoringTiles.flatMap((tile) =>
+        tile.claims.filter((claim) => claim.playerId === rival.id),
+      ),
+    ).toEqual([]);
   });
 
   it('adds one advanced action card when progress crosses the deck icon', () => {

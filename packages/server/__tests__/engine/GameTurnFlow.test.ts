@@ -180,11 +180,12 @@ describe('GameTurnFlow (Phase 10.2)', () => {
     expect(game.phase).toBe(EPhase.AWAIT_END_TURN);
     expect(p1.dataPool.count).toBeGreaterThan(0);
 
+    const dataBeforePlace = p1.dataPool.count;
     game.processFreeAction('p1', {
       type: EFreeAction.PLACE_DATA,
       slotIndex: 0,
     });
-    expect(p1.dataPool.count).toBe(0);
+    expect(p1.dataPool.count).toBe(dataBeforePlace - 1);
 
     game.processEndTurn('p1');
     expect(game.activePlayer.id).toBe('p2');
@@ -212,10 +213,7 @@ describe('GameTurnFlow (Phase 10.2)', () => {
 
     // SCAN should remain resumable after the interrupting free action.
     expect(p1.waitingFor?.toModel().type).toBe(EPlayerInputType.OPTION);
-    game.processInput('p1', {
-      type: EPlayerInputType.OPTION,
-      optionId: EScanSubAction.DONE,
-    });
+    resolveAllInputs(game, p1);
 
     expect(game.phase).toBe(EPhase.AWAIT_END_TURN);
     game.processEndTurn('p1');

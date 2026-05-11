@@ -19,6 +19,7 @@ export function SelectCardInput({
       variant='dock'
       onSubmitSelection={(cardIds) =>
         onSubmit({
+          inputId: model.inputId,
           type: EPlayerInputType.CARD,
           cardIds,
         })

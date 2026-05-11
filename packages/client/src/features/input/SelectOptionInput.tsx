@@ -27,6 +27,7 @@ export function SelectOptionInput({
             className='h-9 justify-start gap-2 px-2.5 text-left text-xs'
             onClick={() =>
               onSubmit({
+                inputId: model.inputId,
                 type: EPlayerInputType.OPTION,
                 optionId: option.id,
               })

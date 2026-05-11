@@ -25,6 +25,7 @@ describe('SelectGoldTileInput', () => {
 
     fireEvent.click(confirmButton);
     expect(onSubmit).toHaveBeenCalledWith({
+      inputId: 'input-gold',
       type: EPlayerInputType.GOLD_TILE,
       tileId: 'tile-b',
     });

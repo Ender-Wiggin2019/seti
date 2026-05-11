@@ -21,6 +21,7 @@ describe('SelectResourceInput', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'energy' }));
     expect(onSubmit).toHaveBeenCalledWith({
+      inputId: 'input-resource',
       type: EPlayerInputType.RESOURCE,
       resource: 'energy',
     });

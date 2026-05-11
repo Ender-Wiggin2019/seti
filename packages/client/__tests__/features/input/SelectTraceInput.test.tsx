@@ -19,6 +19,7 @@ describe('SelectTraceInput', () => {
 
     fireEvent.click(screen.getByRole('button', { name: ETrace.RED }));
     expect(onSubmit).toHaveBeenCalledWith({
+      inputId: 'input-trace',
       type: EPlayerInputType.TRACE,
       trace: ETrace.RED,
     });

@@ -185,6 +185,7 @@ export class RivalActionResolver {
         game,
         planet,
         candidate.probePlacement,
+        candidate.probeTarget === ERivalProbeTarget.OUMUAMUA,
       );
       if (!placement) {
         planetaryBoard.setProbeCount(planet, rival.id, 0);
@@ -214,6 +215,7 @@ export class RivalActionResolver {
     game: Game,
     planet: EPlanet,
     printedPlacement: ERivalProbePlacement | undefined,
+    allowOrbitFallback = false,
   ): TRivalProbePlacementDecision | null {
     const rival = RivalSetup.getRivalPlayer(game);
     const planetaryBoard = game.planetaryBoard;
@@ -252,6 +254,13 @@ export class RivalActionResolver {
 
     if (printedPlacement === ERivalProbePlacement.LANDER && canLand) {
       return { placement: ERivalProbePlacement.LANDER, isMoon: false };
+    }
+    if (
+      allowOrbitFallback &&
+      printedPlacement === ERivalProbePlacement.LANDER &&
+      canOrbit
+    ) {
+      return { placement: ERivalProbePlacement.ORBITER };
     }
     if (printedPlacement === ERivalProbePlacement.ORBITER && canOrbit) {
       return { placement: ERivalProbePlacement.ORBITER };
@@ -880,23 +889,17 @@ export class RivalActionResolver {
     const faceDownCount = board.faceDownCards.filter(
       (card) => card.ownerId === rivalPlayerId,
     ).length;
-    const dangerTraceCount = board.speciesTraceSlots
-      .filter((slot) =>
-        slot.rewards.some(
-          (reward) =>
-            reward.type === 'VP' && reward.amount > 0 && !slot.isDiscovery,
-        ),
-      )
-      .reduce(
-        (total, slot) =>
-          total +
-          slot.occupants.filter(
-            (occupant) =>
-              occupant.source !== 'neutral' &&
-              occupant.source.playerId === rivalPlayerId,
-          ).length,
-        0,
-      );
+    const dangerTraceCount = board.speciesTraceSlots.reduce((total, slot) => {
+      const match = /^exertians-danger-(\d+)-/.exec(slot.slotId);
+      if (!match) return total;
+      const danger = Number(match[1]);
+      const ownOccupants = slot.occupants.filter(
+        (occupant) =>
+          occupant.source !== 'neutral' &&
+          occupant.source.playerId === rivalPlayerId,
+      ).length;
+      return total + danger * ownOccupants;
+    }, 0);
     return faceDownCount + dangerTraceCount;
   }
 

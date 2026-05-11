@@ -885,6 +885,7 @@ export function SolarSystemView({
               return;
             }
             onRespondInput({
+              inputId: pendingInput.inputId,
               type: EPlayerInputType.SECTOR,
               sector: sectorColor,
             });
@@ -894,6 +895,7 @@ export function SolarSystemView({
               return;
             }
             onRespondInput({
+              inputId: pendingInput.inputId,
               type: EPlayerInputType.OPTION,
               optionId: sectorId,
             });

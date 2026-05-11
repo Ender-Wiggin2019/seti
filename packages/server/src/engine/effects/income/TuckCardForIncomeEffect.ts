@@ -13,6 +13,11 @@ const RESOURCE_GAIN_MAP = {
   [EResource.SIGNAL_TOKEN]: { signalTokens: 1 },
 } as const;
 
+interface ITuckCardForIncomeOptions {
+  allowSkip?: boolean;
+  onComplete?: () => IPlayerInput | undefined;
+}
+
 /**
  * Tuck a card from hand into the income area.
  * The tucked card's `income` type determines which income is increased.
@@ -42,9 +47,12 @@ export class TuckCardForIncomeEffect {
     game: IGame,
   ): IPlayerInput | undefined {
     if (player.pendingSetupTucks <= 0) return undefined;
-    const input = TuckCardForIncomeEffect.execute(player, game, () => {
-      player.pendingSetupTucks = Math.max(0, player.pendingSetupTucks - 1);
-      return TuckCardForIncomeEffect.executeSetupChain(player, game);
+    const input = TuckCardForIncomeEffect.execute(player, game, {
+      allowSkip: false,
+      onComplete: () => {
+        player.pendingSetupTucks = Math.max(0, player.pendingSetupTucks - 1);
+        return TuckCardForIncomeEffect.executeSetupChain(player, game);
+      },
     });
 
     if (!input) {
@@ -60,9 +68,16 @@ export class TuckCardForIncomeEffect {
   public static execute(
     player: IPlayer,
     game: IGame,
-    onComplete?: () => IPlayerInput | undefined,
+    onCompleteOrOptions?:
+      | (() => IPlayerInput | undefined)
+      | ITuckCardForIncomeOptions,
   ): IPlayerInput | undefined {
     if (!this.canExecute(player)) return undefined;
+    const options =
+      typeof onCompleteOrOptions === 'function'
+        ? { onComplete: onCompleteOrOptions }
+        : (onCompleteOrOptions ?? {});
+    const allowSkip = options.allowSkip ?? true;
 
     const handCards = player.hand.map((_card, idx) => {
       const cardId = player.getCardIdAt(idx);
@@ -78,10 +93,12 @@ export class TuckCardForIncomeEffect {
       player,
       {
         cards: handCards,
-        minSelections: 1,
+        minSelections: allowSkip ? 0 : 1,
         maxSelections: 1,
         onSelect: (selectedCardIds) => {
           const selectedId = selectedCardIds[0];
+          if (selectedId === undefined) return options.onComplete?.();
+
           const removed = player.removeCardById(selectedId);
           if (removed === undefined) return undefined;
 
@@ -105,7 +122,7 @@ export class TuckCardForIncomeEffect {
             }
           }
 
-          return onComplete?.();
+          return options.onComplete?.();
         },
       },
       'Select a card to tuck for income',

@@ -46,6 +46,10 @@ type TCustomBehaviorHandler = (
   card: ICard,
 ) => IPlayerInput | undefined;
 
+interface IBuildActionOptions {
+  preserveEffectOrder?: boolean;
+}
+
 function buildCoreEffectAction(
   player: IPlayer,
   callback: (game: IGame) => IPlayerInput | undefined,
@@ -94,18 +98,6 @@ export class BehaviorExecutor {
     ) {
       return false;
     }
-    if (behavior.launchProbe && !LaunchProbeEffect.canExecute(player, game)) {
-      return false;
-    }
-    if (
-      behavior.researchTech &&
-      !ResearchTechEffect.canExecute(player, game, {
-        mode: 'category',
-        categories: toResearchCategories(behavior.researchTech),
-      })
-    ) {
-      return false;
-    }
     return true;
   }
 
@@ -115,7 +107,119 @@ export class BehaviorExecutor {
     game: IGame,
     card: ICard,
   ): IPlayerInput | undefined {
-    const deferredActions = [
+    const behaviorSequence = this.getBehaviorSequence(behavior);
+    const preserveEffectOrder = behavior.effectSequence !== undefined;
+    const deferredActions = behaviorSequence.flatMap((step) =>
+      this.buildDeferredActions(step, player, card, {
+        preserveEffectOrder,
+      }),
+    );
+
+    game.deferredActions.pushMultiple(deferredActions);
+    return undefined;
+  }
+
+  private getBehaviorSequence(behavior: IBehavior): IBehavior[] {
+    const sequence = behavior.effectSequence;
+    if (!sequence || sequence.length === 0) return [behavior];
+
+    return sequence
+      .map((step) => this.filterSequenceStep(step, behavior))
+      .filter((step) => this.hasExecutableBehavior(step));
+  }
+
+  private filterSequenceStep(step: IBehavior, behavior: IBehavior): IBehavior {
+    const next: IBehavior = {};
+    if (step.spendResources && behavior.spendResources) {
+      next.spendResources = step.spendResources;
+    }
+    if (step.gainResources && behavior.gainResources) {
+      next.gainResources = step.gainResources;
+    }
+    if (step.gainScore !== undefined && behavior.gainScore !== undefined) {
+      next.gainScore = step.gainScore;
+    }
+    if (
+      step.gainMovement !== undefined &&
+      behavior.gainMovement !== undefined
+    ) {
+      next.gainMovement = step.gainMovement;
+    }
+    if (step.gainIncome !== undefined && behavior.gainIncome !== undefined) {
+      next.gainIncome = step.gainIncome;
+    }
+    if (step.drawCards !== undefined && behavior.drawCards !== undefined) {
+      next.drawCards = step.drawCards;
+    }
+    if (step.launchProbe && behavior.launchProbe) {
+      next.launchProbe = true;
+    }
+    if (step.orbit && behavior.orbit) {
+      next.orbit = true;
+    }
+    if (step.land && behavior.land) {
+      next.land = true;
+    }
+    if (step.tuckForIncome && behavior.tuckForIncome) {
+      next.tuckForIncome = true;
+    }
+    if (step.scan && behavior.scan) {
+      next.scan = step.scan;
+    }
+    if (
+      step.researchTech !== undefined &&
+      behavior.researchTech !== undefined
+    ) {
+      next.researchTech = step.researchTech;
+    }
+    if (step.markTrace !== undefined && behavior.markTrace !== undefined) {
+      next.markTrace = step.markTrace;
+    }
+    if (
+      step.markAnySignal !== undefined &&
+      behavior.markAnySignal !== undefined
+    ) {
+      next.markAnySignal = step.markAnySignal;
+    }
+    if (
+      step.markDisplayCardSignal !== undefined &&
+      behavior.markDisplayCardSignal !== undefined
+    ) {
+      next.markDisplayCardSignal = step.markDisplayCardSignal;
+    }
+    if (step.rotateSolarSystem && behavior.rotateSolarSystem) {
+      next.rotateSolarSystem = true;
+    }
+    if (
+      step.gainExofossils !== undefined &&
+      behavior.gainExofossils !== undefined
+    ) {
+      next.gainExofossils = step.gainExofossils;
+    }
+    const allowedCustom = new Set(behavior.custom ?? []);
+    const custom = step.custom?.filter((id) => allowedCustom.has(id));
+    if (custom && custom.length > 0) {
+      next.custom = custom;
+    }
+    return next;
+  }
+
+  private hasExecutableBehavior(behavior: IBehavior): boolean {
+    return Object.entries(behavior).some(
+      ([key, value]) =>
+        key !== 'effectSequence' &&
+        value !== undefined &&
+        (!Array.isArray(value) || value.length > 0),
+    );
+  }
+
+  private buildDeferredActions(
+    behavior: IBehavior,
+    player: IPlayer,
+    card: ICard,
+    options: IBuildActionOptions = {},
+  ): SimpleDeferredAction[] {
+    return [
       this.buildSpendResourcesAction(behavior, player),
       this.buildGainResourcesAction(behavior, player),
       this.buildGainScoreAction(behavior, player),
@@ -131,13 +235,10 @@ export class BehaviorExecutor {
       this.buildMarkTraceAction(behavior, player),
       this.buildMarkAnySignalAction(behavior, player),
       this.buildMarkDisplayCardSignalAction(behavior, player),
-      this.buildRotateAction(behavior, player),
+      this.buildRotateAction(behavior, player, options),
       this.buildGainExofossilsAction(behavior, player),
       ...this.buildCustomActions(behavior, player, card),
     ].filter((action): action is SimpleDeferredAction => action !== undefined);
-
-    game.deferredActions.pushMultiple(deferredActions);
-    return undefined;
   }
 
   private buildSpendResourcesAction(
@@ -247,6 +348,7 @@ export class BehaviorExecutor {
   ): SimpleDeferredAction | undefined {
     if (!behavior.launchProbe) return undefined;
     return buildCoreEffectAction(player, (game) => {
+      if (!LaunchProbeEffect.canExecute(player, game)) return undefined;
       LaunchProbeEffect.execute(player, game);
       return undefined;
     });
@@ -270,11 +372,6 @@ export class BehaviorExecutor {
           return OrbitProbeEffect.execute(player, game, planet).pendingInput;
         },
       }));
-      options.push({
-        id: 'skip-orbit',
-        label: 'Skip orbit',
-        onSelect: () => undefined,
-      });
       return new SelectOption(player, options, 'Select a planet to orbit');
     });
   }
@@ -324,23 +421,20 @@ export class BehaviorExecutor {
   ): SimpleDeferredAction | undefined {
     const researchTech = behavior.researchTech;
     if (!researchTech) return undefined;
-    return buildCoreEffectAction(player, (game) =>
-      ResearchTechAction.execute(
-        player,
-        game,
-        true,
-        {
-          mode: 'category',
-          categories: toResearchCategories(researchTech),
-        },
-        {
-          // Cards with an explicit ROTATE behavior already rotate via
-          // `buildRotateAction`; tech-grant cards without that icon still
-          // rotate here to match the rules.
-          skipRotation: behavior.rotateSolarSystem === true,
-        },
-      ),
-    );
+    return buildCoreEffectAction(player, (game) => {
+      const filter = {
+        mode: 'category' as const,
+        categories: toResearchCategories(researchTech),
+      };
+      if (!ResearchTechEffect.canExecute(player, game, filter)) {
+        return undefined;
+      }
+      return ResearchTechAction.execute(player, game, true, filter, {
+        // Card-granted tech only rotates when the card has an explicit
+        // ROTATE effect. Main RESEARCH_TECH action keeps its own rotation.
+        skipRotation: true,
+      });
+    });
   }
 
   private buildMarkTraceAction(
@@ -366,6 +460,7 @@ export class BehaviorExecutor {
   private buildRotateAction(
     behavior: IBehavior,
     player: IPlayer,
+    options: IBuildActionOptions,
   ): SimpleDeferredAction | undefined {
     if (!behavior.rotateSolarSystem) return undefined;
     return new SimpleDeferredAction(
@@ -374,7 +469,7 @@ export class BehaviorExecutor {
         RotateDiscEffect.execute(game);
         return undefined;
       },
-      EPriority.ROTATION,
+      options.preserveEffectOrder ? EPriority.CORE_EFFECT : EPriority.ROTATION,
     );
   }
 

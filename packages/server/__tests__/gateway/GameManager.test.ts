@@ -1,8 +1,11 @@
 import { Test } from '@nestjs/testing';
 import { EMainAction, EPhase } from '@seti/common/types/protocol/enums';
+import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
+import { vi } from 'vitest';
 import { Deck } from '@/engine/deck/Deck.js';
 import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
+import { SelectOption } from '@/engine/input/SelectOption.js';
 import { GameManager } from '@/gateway/GameManager.js';
 import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
 import { resolveSetupTucks } from '../helpers/TestGameBuilder.js';
@@ -196,6 +199,99 @@ describe('GameManager', () => {
     });
   });
 
+  describe('processInput', () => {
+    it('rejects a response that is missing the current inputId before mutating the prompt', async () => {
+      const game = createTestGame();
+      const player = game.players[0];
+      const prompt = new SelectOption(player, [
+        { id: 'confirm', label: 'Confirm', onSelect: () => undefined },
+      ]);
+      player.waitingFor = prompt;
+      (manager as unknown as { cache: Map<string, IGame> }).cache.set(
+        'game-mgr-test',
+        game,
+      );
+      (manager as unknown as { versions: Map<string, number> }).versions.set(
+        'game-mgr-test',
+        0,
+      );
+
+      await expect(
+        manager.processInput('game-mgr-test', 'p1', {
+          type: EPlayerInputType.OPTION,
+          optionId: 'confirm',
+        }),
+      ).rejects.toThrow('inputId');
+
+      expect(player.waitingFor).toBe(prompt);
+      expect(
+        (manager as unknown as { versions: Map<string, number> }).versions.get(
+          'game-mgr-test',
+        ),
+      ).toBe(0);
+      expect(mockDb.insert).not.toHaveBeenCalled();
+    });
+
+    it('rejects a response for a stale inputId before mutating the prompt', async () => {
+      const game = createTestGame();
+      const player = game.players[0];
+      const prompt = new SelectOption(player, [
+        { id: 'confirm', label: 'Confirm', onSelect: () => undefined },
+      ]);
+      player.waitingFor = prompt;
+      (manager as unknown as { cache: Map<string, IGame> }).cache.set(
+        'game-mgr-test',
+        game,
+      );
+      (manager as unknown as { versions: Map<string, number> }).versions.set(
+        'game-mgr-test',
+        0,
+      );
+
+      await expect(
+        manager.processInput('game-mgr-test', 'p1', {
+          inputId: 'stale-input',
+          type: EPlayerInputType.OPTION,
+          optionId: 'confirm',
+        }),
+      ).rejects.toThrow('inputId');
+
+      expect(player.waitingFor).toBe(prompt);
+      expect(
+        (manager as unknown as { versions: Map<string, number> }).versions.get(
+          'game-mgr-test',
+        ),
+      ).toBe(0);
+      expect(mockDb.insert).not.toHaveBeenCalled();
+    });
+
+    it('accepts a response that matches the current inputId', async () => {
+      const game = createTestGame();
+      const player = game.players[0];
+      const prompt = new SelectOption(player, [
+        { id: 'confirm', label: 'Confirm', onSelect: () => undefined },
+      ]);
+      player.waitingFor = prompt;
+      (manager as unknown as { cache: Map<string, IGame> }).cache.set(
+        'game-mgr-test',
+        game,
+      );
+      (manager as unknown as { versions: Map<string, number> }).versions.set(
+        'game-mgr-test',
+        0,
+      );
+
+      await manager.processInput('game-mgr-test', 'p1', {
+        inputId: prompt.inputId,
+        type: EPlayerInputType.OPTION,
+        optionId: 'confirm',
+      });
+
+      expect(player.waitingFor).toBeUndefined();
+      expect(mockDb.insert).toHaveBeenCalled();
+    });
+  });
+
   describe('getProjectedState', () => {
     it('returns null for unloaded game', () => {
       const state = manager.getProjectedState('nonexistent', 'p1');
@@ -229,9 +325,9 @@ describe('GameManager', () => {
 
       expect(game.activePlayer.id).toBe('p1');
       expect(rivalState.actionDeck.discardSize).toBe(1);
-      expect(manager.getProjectedState('game-mgr-solo', 'p1')?.currentPlayerId).toBe(
-        'p1',
-      );
+      expect(
+        manager.getProjectedState('game-mgr-solo', 'p1')?.currentPlayerId,
+      ).toBe('p1');
     });
   });
 

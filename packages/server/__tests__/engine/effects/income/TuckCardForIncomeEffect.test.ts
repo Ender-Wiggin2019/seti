@@ -39,6 +39,23 @@ describe('TuckCardForIncomeEffect', () => {
     expect(input?.toModel().type).toBe(EPlayerInputType.CARD);
   });
 
+  it('allows income tuck effects to be skipped when the player has cards', () => {
+    const player = createPlayer(['16']);
+    const game = createGame();
+    const input = TuckCardForIncomeEffect.execute(player, game);
+
+    expect(input?.toModel()).toMatchObject({
+      type: EPlayerInputType.CARD,
+      minSelections: 0,
+      maxSelections: 1,
+    });
+
+    input?.process({ type: EPlayerInputType.CARD, cardIds: [] });
+
+    expect(player.hand).toEqual(['16']);
+    expect(player.tuckedIncomeCards).toEqual([]);
+  });
+
   it('tucks selected card and applies immediate income gain', () => {
     const cardId = '16';
     const player = createPlayer([cardId]);

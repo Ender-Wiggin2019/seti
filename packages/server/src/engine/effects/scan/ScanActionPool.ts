@@ -144,12 +144,14 @@ export class ScanActionPool {
       },
     }));
 
-    // Rule: marking the earth sector is mandatory on every Scan — do not
-    // offer Done until MARK_EARTH has been executed.
-    const markEarthPending = remaining.some(
-      (d) => d.id === EScanSubAction.MARK_EARTH,
+    // Base Scan marks are mandatory while they can be resolved.
+    const mandatoryBaseMarkPending = remaining.some(
+      (d) =>
+        (d.id === EScanSubAction.MARK_EARTH ||
+          d.id === EScanSubAction.MARK_CARD_ROW) &&
+        d.canExecute(),
     );
-    if (!markEarthPending) {
+    if (!mandatoryBaseMarkPending) {
       menuOptions.push({
         id: EScanSubAction.DONE,
         label: 'Done (end scan)',

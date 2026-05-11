@@ -27,6 +27,7 @@ export function SelectEndOfRoundCardInput({
             className='group flex flex-col gap-0.5 rounded-[4px] border border-[color:var(--metal-edge-soft)] bg-background-900/75 px-2.5 py-1.5 text-left shadow-hairline-inset transition-[background,border-color] duration-150 hover:border-accent-500/60 hover:bg-accent-500/[0.06] focus-visible:outline-none focus-visible:shadow-focus-ring'
             onClick={() =>
               onSubmit({
+                inputId: model.inputId,
                 type: EPlayerInputType.END_OF_ROUND,
                 cardId: card.id,
               })

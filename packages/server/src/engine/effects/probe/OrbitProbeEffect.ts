@@ -11,6 +11,7 @@ import { GameError } from '@/shared/errors/GameError.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
 import type { IPlayer } from '../../player/IPlayer.js';
+import { EPieceType } from '../../player/Pieces.js';
 import {
   consumeProbeFromPlanet,
   syncProbeCountsForPlayer,
@@ -343,6 +344,9 @@ export class OrbitProbeEffect {
     }
 
     const orbitResult = planetaryBoard.orbit(planet, player.id);
+    if (player.pieces.available(EPieceType.ORBITER) > 0) {
+      player.pieces.deploy(EPieceType.ORBITER);
+    }
     syncProbeCountsForPlayer(game, player.id);
     const rewardResolution = this.applyRewards(
       player,

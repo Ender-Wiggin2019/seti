@@ -1043,7 +1043,12 @@ function HandDockBlock({
         expanded={expanded}
         onToggle={onToggle}
         onSubmitSelection={(cardIds) => {
-          sendInput({ type: EPlayerInputType.CARD, cardIds });
+          if (pendingInput?.type !== EPlayerInputType.CARD) return;
+          sendInput({
+            inputId: pendingInput.inputId,
+            type: EPlayerInputType.CARD,
+            cardIds,
+          });
         }}
         onCardCornerSelect={(cardId) => {
           sendFreeAction({ type: EFreeAction.USE_CARD_CORNER, cardId });
@@ -1115,7 +1120,11 @@ function BoardTabs({
 
   function handleCardRowClick(card: IBaseCard): void {
     if (isSelectingFromCardRow) {
-      sendInput({ type: EPlayerInputType.CARD, cardIds: [card.id] });
+      sendInput({
+        inputId: cardSelectionInput.inputId,
+        type: EPlayerInputType.CARD,
+        cardIds: [card.id],
+      });
       return;
     }
 
@@ -1280,6 +1289,7 @@ function BoardTabs({
                   }
 
                   sendInput({
+                    inputId: pendingInput.inputId,
                     type: EPlayerInputType.END_OF_ROUND,
                     cardId: card.id,
                   });

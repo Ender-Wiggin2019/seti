@@ -7,14 +7,12 @@ import type {
 } from '@seti/common/types/protocol/actions';
 import type { EAlienType } from '@seti/common/types/protocol/enums';
 import {
-  EFreeAction,
   EMainAction,
   EPhase,
   EPlanet,
   ETrace,
 } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
-import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { GameError } from '@/shared/errors/GameError.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
 import { AnalyzeDataAction } from './actions/AnalyzeData.js';
@@ -36,7 +34,10 @@ import { ResolveDiscovery } from './deferred/ResolveDiscovery.js';
 import { ResolveMilestone } from './deferred/ResolveMilestone.js';
 import { ResolveSectorCompletion } from './deferred/ResolveSectorCompletion.js';
 import { SimpleDeferredAction } from './deferred/SimpleDeferredAction.js';
-import { isScanActionPoolInput } from './effects/scan/ScanActionPool.js';
+import {
+  isScanActionPoolInput,
+  refreshScanActionPoolInput,
+} from './effects/scan/ScanActionPool.js';
 import { EventLog } from './event/EventLog.js';
 import {
   createActionEvent,
@@ -70,6 +71,59 @@ import type { TechBoard } from './tech/TechBoard.js';
 import { clearTurnEffectsForPlayer } from './turnEffects/TurnEffects.js';
 
 const MAX_ROUNDS = 5;
+const MISSION_TRIGGER_PROMPT_TITLE = 'Mission triggered! Claim reward?';
+
+class FreeActionInterruptionInput implements PlayerInput {
+  public constructor(
+    private readonly input: PlayerInput,
+    private readonly returnToInput: PlayerInput,
+  ) {}
+
+  public get inputId(): string {
+    return this.input.inputId;
+  }
+
+  public get type(): PlayerInput['type'] {
+    return this.input.type;
+  }
+
+  public get player(): PlayerInput['player'] {
+    return this.input.player;
+  }
+
+  public get title(): string | undefined {
+    return this.input.title;
+  }
+
+  public toModel(): ReturnType<PlayerInput['toModel']> {
+    return this.input.toModel();
+  }
+
+  public process(response: IInputResponse): PlayerInput | undefined {
+    const nextInput = this.input.process(response);
+    if (nextInput !== undefined) {
+      if (
+        isScanActionPoolInput(nextInput) &&
+        isScanActionPoolInput(this.returnToInput)
+      ) {
+        return refreshScanActionPoolInput(this.returnToInput);
+      }
+      return new FreeActionInterruptionInput(nextInput, this.returnToInput);
+    }
+
+    return refreshInterruptedInput(this.returnToInput);
+  }
+}
+
+function isFreeActionInterruptionInput(
+  input: PlayerInput | undefined,
+): input is FreeActionInterruptionInput {
+  return input instanceof FreeActionInterruptionInput;
+}
+
+function refreshInterruptedInput(input: PlayerInput): PlayerInput | undefined {
+  return refreshScanActionPoolInput(input);
+}
 
 export class Game implements IGame {
   public readonly id: string;
@@ -315,12 +369,17 @@ export class Game implements IGame {
     this.ensureMissionCheckpoint();
 
     const player = this.getPlayer(playerId);
+    const interruptedInput = player.waitingFor;
     const pendingInput = this.missionTracker.runInCheckpoint(() =>
       processFreeAction(player, this, action),
     );
 
     if (pendingInput) {
-      player.waitingFor = pendingInput;
+      player.waitingFor = interruptedInput
+        ? new FreeActionInterruptionInput(pendingInput, interruptedInput)
+        : pendingInput;
+    } else if (interruptedInput) {
+      player.waitingFor = refreshInterruptedInput(interruptedInput);
     }
 
     if (!player.waitingFor) {
@@ -807,24 +866,16 @@ export class Game implements IGame {
     }
 
     const pendingInput = this.activePlayer.waitingFor;
-    const canInterruptScanMainActionWithFreeAction =
+    const canInterruptMainActionWithFreeAction =
+      freeAction !== undefined &&
       pendingInput !== undefined &&
       this.phase === EPhase.IN_RESOLUTION &&
       allowedPhases.includes(EPhase.IN_RESOLUTION) &&
-      this.currentMainActionType === EMainAction.SCAN &&
-      pendingInput.toModel().type === EPlayerInputType.OPTION;
-    const canInterruptScanPoolWithSignalToken =
-      pendingInput !== undefined &&
-      freeAction?.type === EFreeAction.SPEND_SIGNAL_TOKEN &&
-      this.phase === EPhase.IN_RESOLUTION &&
-      allowedPhases.includes(EPhase.IN_RESOLUTION) &&
-      isScanActionPoolInput(pendingInput);
+      this.currentMainActionType !== null &&
+      !isFreeActionInterruptionInput(pendingInput) &&
+      pendingInput.title !== MISSION_TRIGGER_PROMPT_TITLE;
 
-    if (
-      pendingInput &&
-      !canInterruptScanMainActionWithFreeAction &&
-      !canInterruptScanPoolWithSignalToken
-    ) {
+    if (pendingInput && !canInterruptMainActionWithFreeAction) {
       throw new GameError(
         EErrorCode.INVALID_INPUT_RESPONSE,
         `Player ${playerId} must resolve the pending input before taking another action`,

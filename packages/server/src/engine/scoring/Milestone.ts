@@ -1,9 +1,11 @@
 import { AlienRegistry } from '../alien/AlienRegistry.js';
 import { createActionEvent } from '../event/GameEvent.js';
+import { isSoloMode } from '../GameOptions.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
 import { SelectGoldTile } from '../input/SelectGoldTile.js';
 import type { IPlayer } from '../player/IPlayer.js';
+import { RivalSetup } from '../solo/RivalSetup.js';
 
 const GOLD_THRESHOLDS = [25, 50, 70];
 
@@ -233,8 +235,11 @@ export class MilestoneState {
       return onDone();
     }
 
+    const isRivalGoldClaim =
+      isSoloMode(game.options ?? {}) && RivalSetup.isRivalPlayer(claim.player);
     const availableTileIds = game.goldScoringTiles
       .filter((tile) => tile.canClaim(claim.player.id))
+      .filter((tile) => !isRivalGoldClaim || tile.claims.length === 0)
       .map((tile) => tile.id);
 
     if (availableTileIds.length === 0) {

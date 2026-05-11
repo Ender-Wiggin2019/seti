@@ -20,6 +20,7 @@ describe('SelectSectorInput', () => {
 
     fireEvent.click(screen.getByRole('button', { name: ESector.YELLOW }));
     expect(onSubmit).toHaveBeenCalledWith({
+      inputId: 'input-sector',
       type: EPlayerInputType.SECTOR,
       sector: ESector.YELLOW,
     });

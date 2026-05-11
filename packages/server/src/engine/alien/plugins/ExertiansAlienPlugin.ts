@@ -452,7 +452,7 @@ export class ExertiansAlienPlugin implements IAlienPlugin {
       case 'MIN_TUCKED_INCOME_CARDS':
         return player.tuckedIncomeCards.length >= rule.count;
       case 'MIN_ORBIT_OR_LAND_TOTAL':
-        return this.countOrbitersAndLanders(player) >= rule.count;
+        return this.countOrbitersAndLanders(player, game) >= rule.count;
       case 'MIN_COMPLETED_MISSIONS':
         return player.completedMissions.length >= rule.count;
     }
@@ -530,7 +530,25 @@ export class ExertiansAlienPlugin implements IAlienPlugin {
     }, 0);
   }
 
-  private countOrbitersAndLanders(player: IPlayer): number {
+  private countOrbitersAndLanders(player: IPlayer, game: IGame): number {
+    const planetaryBoard = game.planetaryBoard;
+    const boardCount = planetaryBoard
+      ? [...planetaryBoard.planets.values()].reduce((total, planet) => {
+          const orbiters = planet.orbitSlots.filter(
+            (slot) => slot.playerId === player.id,
+          ).length;
+          const landers = planet.landingSlots.filter(
+            (slot) => slot.playerId === player.id,
+          ).length;
+          const moon = getMoonOccupants(planet).filter(
+            (slot) => slot.playerId === player.id,
+          ).length;
+          return total + orbiters + landers + moon;
+        }, 0)
+      : 0;
+    if (boardCount > 0) {
+      return boardCount;
+    }
     return (
       player.pieces.deployed(EPieceType.ORBITER) +
       player.pieces.deployed(EPieceType.LANDER)

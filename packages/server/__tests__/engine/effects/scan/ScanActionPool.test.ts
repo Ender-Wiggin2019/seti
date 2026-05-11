@@ -200,7 +200,7 @@ describe('ScanActionPool', () => {
       expect(afterSectorPick!.type).toBe(EPlayerInputType.OPTION);
     });
 
-    it('Done ends scan after mandatory MARK_EARTH is executed', () => {
+    it('does not offer Done until both base scan signals are executed', () => {
       const game = createMockGame();
       const player = createPlayer();
       let completedResult: IScanActionPoolResult | null = null;
@@ -217,16 +217,12 @@ describe('ScanActionPool', () => {
         optionId: EScanSubAction.MARK_EARTH,
       });
 
-      afterEarth!.process({
-        type: EPlayerInputType.OPTION,
-        optionId: EScanSubAction.DONE,
-      });
-
-      expect(completedResult).not.toBeNull();
-      expect(completedResult!.subActions).toHaveLength(2);
-      const executed = completedResult!.subActions.filter((a) => a.executed);
-      expect(executed).toHaveLength(1);
-      expect(executed[0].id).toBe(EScanSubAction.MARK_EARTH);
+      const optionIds = (
+        afterEarth!.toModel() as { options: Array<{ id: string }> }
+      ).options.map((option) => option.id);
+      expect(optionIds).toContain(EScanSubAction.MARK_CARD_ROW);
+      expect(optionIds).not.toContain(EScanSubAction.DONE);
+      expect(completedResult).toBeNull();
     });
 
     it('completes when all sub-actions are executed', () => {
@@ -655,14 +651,37 @@ describe('ScanActionPool', () => {
         },
       });
 
-      // Execute only Mark Earth
+      // Execute the two mandatory base scan marks.
       const pool2 = pool1!.process({
         type: EPlayerInputType.OPTION,
         optionId: EScanSubAction.MARK_EARTH,
       });
+      const cardPick = pool2!.process({
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_CARD_ROW,
+      });
+      const cardId = (cardPick!.toModel() as { cards: Array<{ id: string }> })
+        .cards[0].id;
+      let pool3 = cardPick!.process({
+        type: EPlayerInputType.CARD,
+        cardIds: [cardId],
+      });
+      if (
+        (pool3!.toModel() as { options: Array<{ id: string }> }).options.every(
+          (option) => option.id.startsWith('sector-'),
+        )
+      ) {
+        const sectorId = (
+          pool3!.toModel() as { options: Array<{ id: string }> }
+        ).options[0].id;
+        pool3 = pool3!.process({
+          type: EPlayerInputType.OPTION,
+          optionId: sectorId,
+        });
+      }
 
-      // Then done
-      pool2!.process({
+      // Then done, skipping optional tech sub-actions.
+      pool3!.process({
         type: EPlayerInputType.OPTION,
         optionId: EScanSubAction.DONE,
       });
@@ -670,8 +689,10 @@ describe('ScanActionPool', () => {
       expect(completedResult).not.toBeNull();
       const executed = completedResult!.subActions.filter((a) => a.executed);
       const skipped = completedResult!.subActions.filter((a) => !a.executed);
-      expect(executed).toHaveLength(1);
-      expect(executed[0].id).toBe(EScanSubAction.MARK_EARTH);
+      expect(executed.map((action) => action.id)).toEqual([
+        EScanSubAction.MARK_EARTH,
+        EScanSubAction.MARK_CARD_ROW,
+      ]);
       expect(skipped.length).toBeGreaterThanOrEqual(1);
     });
   });

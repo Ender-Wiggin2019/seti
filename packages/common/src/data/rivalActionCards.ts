@@ -252,8 +252,14 @@ export const rivalActionCards: readonly IRivalActionCardDefinition[] = [
     candidates: [
       launch([PUBLICITY_1]),
       probe({
+        movement: 4,
+        planets: [EPlanet.SATURN],
+        probePlacement: ERivalProbePlacement.LANDER,
+        collectMascamitesSample: true,
+      }),
+      probe({
         movement: 5,
-        planets: [EPlanet.SATURN, EPlanet.JUPITER],
+        planets: [EPlanet.JUPITER],
         probePlacement: ERivalProbePlacement.LANDER,
         collectMascamitesSample: true,
       }),

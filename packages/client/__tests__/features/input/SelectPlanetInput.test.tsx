@@ -19,6 +19,7 @@ describe('SelectPlanetInput', () => {
 
     fireEvent.click(screen.getByRole('button', { name: EPlanet.JUPITER }));
     expect(onSubmit).toHaveBeenCalledWith({
+      inputId: 'input-planet',
       type: EPlayerInputType.PLANET,
       planet: EPlanet.JUPITER,
     });

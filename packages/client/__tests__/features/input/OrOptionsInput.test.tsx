@@ -34,9 +34,11 @@ describe('OrOptionsInput', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Beta' }));
 
     expect(onSubmit).toHaveBeenCalledWith({
+      inputId: 'input-or',
       type: EPlayerInputType.OR,
       index: 1,
       response: {
+        inputId: 'child-2',
         type: EPlayerInputType.OPTION,
         optionId: 'b-1',
       },

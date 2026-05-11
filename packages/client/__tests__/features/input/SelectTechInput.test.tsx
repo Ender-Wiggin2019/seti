@@ -21,6 +21,7 @@ describe('SelectTechInput', () => {
       screen.getByRole('button', { name: /Earth \(or adj\.\)/i }),
     );
     expect(onSubmit).toHaveBeenCalledWith({
+      inputId: 'input-tech',
       type: EPlayerInputType.TECH,
       tech: ETech.SCAN,
     });

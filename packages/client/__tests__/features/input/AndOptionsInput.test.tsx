@@ -41,10 +41,19 @@ describe('AndOptionsInput', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Second Choice' }));
 
     expect(onSubmit).toHaveBeenCalledWith({
+      inputId: 'input-and',
       type: EPlayerInputType.AND,
       responses: [
-        { type: EPlayerInputType.OPTION, optionId: 'opt-1' },
-        { type: EPlayerInputType.OPTION, optionId: 'opt-2' },
+        {
+          inputId: 'step-1',
+          type: EPlayerInputType.OPTION,
+          optionId: 'opt-1',
+        },
+        {
+          inputId: 'step-2',
+          type: EPlayerInputType.OPTION,
+          optionId: 'opt-2',
+        },
       ],
     });
   });

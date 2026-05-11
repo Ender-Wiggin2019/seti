@@ -34,7 +34,9 @@ export class SampleReturnCard extends ImmediateCard {
           if (targets.length === 0) return undefined;
           const chooseTarget = (target: ILanderTarget) => {
             target.remove();
-            context.player.pieces.return(EPieceType.LANDER);
+            if (context.player.pieces.deployed(EPieceType.LANDER) > 0) {
+              context.player.pieces.return(EPieceType.LANDER);
+            }
             return game.markTrace(ETrace.YELLOW, context.player.id);
           };
 
@@ -75,15 +77,17 @@ export class SampleReturnCard extends ImmediateCard {
         });
       });
 
-      if (state.moonOccupant?.playerId === context.player.id) {
+      state.moonOccupants.forEach((slot, index) => {
+        if (slot.playerId !== context.player.id) return;
         targets.push({
-          id: `${planet}-moon-lander`,
+          id: `${planet}-moon-lander-${index}`,
           label: `${planet} moon lander`,
           remove: () => {
-            state.moonOccupant = null;
+            state.moonOccupants.splice(index, 1);
+            state.moonOccupant = state.moonOccupants[0] ?? null;
           },
         });
-      }
+      });
     }
 
     return targets;

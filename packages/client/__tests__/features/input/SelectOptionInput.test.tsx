@@ -22,6 +22,7 @@ describe('SelectOptionInput', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Option B' }));
     expect(onSubmit).toHaveBeenCalledWith({
+      inputId: 'input-option',
       type: EPlayerInputType.OPTION,
       optionId: 'opt-b',
     });

@@ -185,10 +185,27 @@ function resolveScanUntilMissionPrompt(game: Game, player: Player): void {
       type: EPlayerInputType;
       title?: string;
       options?: Array<{ id: string }>;
+      cards?: Array<{ id: string }>;
+      minSelections?: number;
     };
 
     if (model.title === 'Mission triggered! Claim reward?') {
       return;
+    }
+
+    if (model.type === EPlayerInputType.CARD) {
+      const pickCount = Math.max(1, model.minSelections ?? 1);
+      const cardIds = (model.cards ?? [])
+        .slice(0, pickCount)
+        .map((card) => card.id);
+      if (cardIds.length < pickCount) {
+        throw new Error('expected scan card input to contain enough cards');
+      }
+      game.processInput(player.id, {
+        type: EPlayerInputType.CARD,
+        cardIds,
+      });
+      continue;
     }
 
     if (model.type !== EPlayerInputType.OPTION) {
@@ -457,6 +474,54 @@ describe('MissionTracker', () => {
       (b) => b.completed,
     ).length;
     expect(completedCount).toBe(2);
+  });
+
+  it('skipping one triggered mission checkpoint still allows a later trigger to claim one branch', () => {
+    const tracker = new MissionTracker();
+    const card = getCardRegistry().create('128');
+    const player = new Player({
+      id: 'p1',
+      name: 'Alice',
+      color: 'red',
+      seatIndex: 0,
+      playedMissions: ['128'],
+    });
+    const game = createGame();
+
+    tracker.registerMission(card.getMissionDef?.()!, player.id);
+    tracker.recordEvent({
+      type: EMissionEventType.PROBE_VISITED_PLANET,
+      planet: EPlanet.MARS,
+    });
+    tracker.recordEvent({
+      type: EMissionEventType.PROBE_VISITED_PLANET,
+      planet: EPlanet.JUPITER,
+    });
+
+    const prompt1 = tracker.checkAndPromptTriggers(player, game);
+    const prompt2 = prompt1?.process({
+      type: EPlayerInputType.OPTION,
+      optionId: 'skip-missions',
+    });
+    expect(prompt2).toBeDefined();
+
+    const model2 = prompt2!.toModel() as ISelectOptionInputModel;
+    const claimOption = model2.options.find((o) =>
+      o.id.startsWith('complete-128-'),
+    );
+    if (!claimOption) {
+      throw new Error('expected second checkpoint to offer a mission branch');
+    }
+    const prompt3 = prompt2!.process({
+      type: EPlayerInputType.OPTION,
+      optionId: claimOption.id,
+    });
+
+    expect(prompt3).toBeUndefined();
+    const state = tracker.getMissionState(player.id, '128');
+    expect(
+      state!.branchStates.filter((branch) => branch.completed),
+    ).toHaveLength(1);
   });
 
   it.each([

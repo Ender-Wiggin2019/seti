@@ -45,6 +45,7 @@ export interface IBehavior {
   rotateSolarSystem?: boolean;
   gainExofossils?: number;
   custom?: string[];
+  effectSequence?: IBehavior[];
 }
 
 const EMPTY_BEHAVIOR: IBehavior = {};
@@ -249,6 +250,7 @@ function applyBaseEffect(behavior: IBehavior, effect: IBaseEffect): IBehavior {
 export function behaviorFromEffects(effects: Effect[]): IBehavior {
   const flatEffects = flattenEffects(effects);
   let behavior: IBehavior = { ...EMPTY_BEHAVIOR };
+  const effectSequence: IBehavior[] = [];
   for (let i = 0; i < flatEffects.length; i += 1) {
     const effect = flatEffects[i];
 
@@ -266,17 +268,25 @@ export function behaviorFromEffects(effects: Effect[]): IBehavior {
         }
       }
 
+      effectSequence.push(applyBaseEffect({ ...EMPTY_BEHAVIOR }, effect));
       behavior = applyBaseEffect(behavior, effect);
       continue;
     }
 
     if (effect.effectType === EEffectType.CUSTOMIZED) {
+      effectSequence.push({
+        ...EMPTY_BEHAVIOR,
+        custom: appendCustom(undefined, effect),
+      });
       behavior = {
         ...behavior,
         custom: appendCustom(behavior.custom, effect),
       };
       continue;
     }
+  }
+  if (effectSequence.length > 0) {
+    behavior.effectSequence = effectSequence;
   }
   return behavior;
 }

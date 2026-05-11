@@ -79,6 +79,7 @@ export function TechBoardView({
       selectableOptionTechIds.has(techId)
     ) {
       return {
+        inputId: pendingInput.inputId,
         type: EPlayerInputType.OPTION,
         optionId: techId,
       };
@@ -89,6 +90,7 @@ export function TechBoardView({
       selectableTechTypes.has(techType)
     ) {
       return {
+        inputId: pendingInput.inputId,
         type: EPlayerInputType.TECH,
         tech: techType,
       };

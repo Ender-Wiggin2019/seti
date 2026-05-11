@@ -6,6 +6,10 @@ import {
   ETrace,
 } from '@seti/common/types/element';
 import { EMainAction, EPhase } from '@seti/common/types/protocol/enums';
+import {
+  EPlayerInputType,
+  type ISelectOptionInputModel,
+} from '@seti/common/types/protocol/playerInput';
 import type { TRivalObjectiveId } from '@seti/common/types/protocol/solo';
 import { Game } from '@/engine/Game.js';
 import {
@@ -284,6 +288,43 @@ describe('RivalObjectiveTracker', () => {
     expect(rivalState.completedObjectiveIds).toEqual([]);
     expect(rivalState.objectiveTaskMarkers['SOLO.16']).toEqual([0]);
     expect(rivalState.objectiveTaskMarkers['SOLO.22']).toBeUndefined();
+  });
+
+  it('allows one tech event to claim a triggerable mission and mark a solo objective', () => {
+    const game = createSoloGame();
+    const player = game.players[0];
+    const rivalState = game.rivalState;
+    if (!rivalState) throw new Error('expected rival state');
+    rivalState.revealedObjectiveIds = ['SOLO.14'];
+    rivalState.objectiveDrawPile = [];
+    rivalState.completedObjectiveIds = [];
+    player.playedMissions.push('76');
+    game.missionTracker.registerMissionFromCard('76', player.id);
+    game.missionTracker.recordEvent({
+      type: EMissionEventType.TECH_RESEARCHED,
+      techCategory: ETech.SCAN,
+    });
+
+    const missionPrompt = game.missionTracker.checkAndPromptTriggers(
+      player,
+      game,
+    );
+    const promptModel = missionPrompt?.toModel() as
+      | ISelectOptionInputModel
+      | undefined;
+    expect(promptModel?.type).toBe(EPlayerInputType.OPTION);
+    expect(promptModel?.options.map((option) => option.id)).toContain(
+      'complete-76-1',
+    );
+    missionPrompt?.process({
+      type: EPlayerInputType.OPTION,
+      optionId: 'complete-76-1',
+    });
+
+    endHumanTurn(game);
+
+    expect(rivalState.completedObjectiveIds).toEqual(['SOLO.14']);
+    expect(rivalState.objectiveTaskMarkers['SOLO.14']).toBeUndefined();
   });
 
   it('immediately marks static tasks on objectives revealed by the same refresh', () => {

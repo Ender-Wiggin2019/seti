@@ -399,6 +399,7 @@ describe('GameLayout', () => {
       fireEvent.click(within(actions).getByTestId('tech-stack-scan-tech-0'));
 
       expect(sendInput).toHaveBeenCalledWith({
+        inputId: 'input-tech',
         type: EPlayerInputType.OPTION,
         optionId: ETechId.SCAN_EARTH_LOOK,
       });

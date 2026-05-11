@@ -24,10 +24,15 @@ export function usePlayerInput(): IUsePlayerInputReturn {
     return wsClient.onWaiting(handler);
   }, []);
 
+  useEffect(() => {
+    return wsClient.onState(() => {
+      setPendingInput(null);
+      setWaitingPlayerId(null);
+    });
+  }, []);
+
   const respond = useCallback((gameId: string, response: IInputResponse) => {
     wsClient.sendInput(gameId, response);
-    setPendingInput(null);
-    setWaitingPlayerId(null);
   }, []);
 
   return { pendingInput, waitingPlayerId, respond };

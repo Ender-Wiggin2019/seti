@@ -157,6 +157,21 @@ describe('GoldScoringTile', () => {
       expect(tile.scorePlayer(p1, game)).toBe(10);
     });
 
+    it('9.2.7 FAQ: other A counts actual planetary-board orbiters, landers, and moons', () => {
+      const game = createTestGame('g92-other-a-real-board');
+      const p1 = game.players[0];
+      game.sectors[0].sectorWinners.push('p1', 'p1', 'p1');
+      const mars = game.planetaryBoard?.planets.get(EPlanet.MARS);
+      if (!mars) throw new Error('expected Mars board');
+      mars.orbitSlots.push({ playerId: p1.id });
+      mars.landingSlots.push({ playerId: p1.id });
+      mars.moonOccupants.push({ playerId: p1.id });
+
+      const tile = tileClaimed('other', 'A', 'p1', 5);
+
+      expect(tile.scorePlayer(p1, game)).toBe(15);
+    });
+
     it('scores end-game cards per fulfilled sector color', () => {
       const game = createTestGame('g92-endgame-sector-fulfills');
       const p1 = game.players[0];

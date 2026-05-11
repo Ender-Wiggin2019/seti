@@ -182,6 +182,7 @@ describe('TechBoardView', () => {
     fireEvent.click(screen.getByTestId('tech-stack-scan-tech-0'));
 
     expect(onSubmit).toHaveBeenCalledWith({
+      inputId: 'input-1',
       type: EPlayerInputType.OPTION,
       optionId: ETechId.SCAN_EARTH_LOOK,
     });

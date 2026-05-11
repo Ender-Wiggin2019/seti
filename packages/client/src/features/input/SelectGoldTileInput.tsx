@@ -86,6 +86,7 @@ export function SelectGoldTileInput({
         className='w-full'
         onClick={() =>
           onSubmit({
+            inputId: model.inputId,
             type: EPlayerInputType.GOLD_TILE,
             tileId: selectedTileId ?? '',
           })

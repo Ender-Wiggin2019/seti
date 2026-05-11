@@ -618,7 +618,11 @@ export class DebugService {
         }
         const option = this.pickRandom(model.options);
         return option
-          ? { type: EPlayerInputType.OPTION, optionId: option.id }
+          ? {
+              inputId: model.inputId,
+              type: EPlayerInputType.OPTION,
+              optionId: option.id,
+            }
           : null;
       }
       case EPlayerInputType.CARD: {
@@ -626,36 +630,60 @@ export class DebugService {
         if (!card) {
           return null;
         }
-        return { type: EPlayerInputType.CARD, cardIds: [card.id] };
+        return {
+          inputId: model.inputId,
+          type: EPlayerInputType.CARD,
+          cardIds: [card.id],
+        };
       }
       case EPlayerInputType.SECTOR: {
         const sector = this.pickRandom(model.options);
-        return sector ? { type: EPlayerInputType.SECTOR, sector } : null;
+        return sector
+          ? { inputId: model.inputId, type: EPlayerInputType.SECTOR, sector }
+          : null;
       }
       case EPlayerInputType.PLANET: {
         const planet = this.pickRandom(model.options);
-        return planet ? { type: EPlayerInputType.PLANET, planet } : null;
+        return planet
+          ? { inputId: model.inputId, type: EPlayerInputType.PLANET, planet }
+          : null;
       }
       case EPlayerInputType.TECH: {
         const tech = this.pickRandom(model.options);
-        return tech ? { type: EPlayerInputType.TECH, tech } : null;
+        return tech
+          ? { inputId: model.inputId, type: EPlayerInputType.TECH, tech }
+          : null;
       }
       case EPlayerInputType.GOLD_TILE: {
         const tileId = this.pickRandom(model.options);
-        return tileId ? { type: EPlayerInputType.GOLD_TILE, tileId } : null;
+        return tileId
+          ? { inputId: model.inputId, type: EPlayerInputType.GOLD_TILE, tileId }
+          : null;
       }
       case EPlayerInputType.RESOURCE: {
         const resource = this.pickRandom(model.options);
-        return resource ? { type: EPlayerInputType.RESOURCE, resource } : null;
+        return resource
+          ? {
+              inputId: model.inputId,
+              type: EPlayerInputType.RESOURCE,
+              resource,
+            }
+          : null;
       }
       case EPlayerInputType.TRACE: {
         const trace = this.pickRandom(model.options);
-        return trace ? { type: EPlayerInputType.TRACE, trace } : null;
+        return trace
+          ? { inputId: model.inputId, type: EPlayerInputType.TRACE, trace }
+          : null;
       }
       case EPlayerInputType.END_OF_ROUND: {
         const card = this.pickRandom(model.cards);
         return card
-          ? { type: EPlayerInputType.END_OF_ROUND, cardId: card.id }
+          ? {
+              inputId: model.inputId,
+              type: EPlayerInputType.END_OF_ROUND,
+              cardId: card.id,
+            }
           : null;
       }
       case EPlayerInputType.OR: {
@@ -667,7 +695,12 @@ export class DebugService {
         if (!response) {
           return null;
         }
-        return { type: EPlayerInputType.OR, index, response };
+        return {
+          inputId: model.inputId,
+          type: EPlayerInputType.OR,
+          index,
+          response,
+        };
       }
       case EPlayerInputType.AND: {
         const responses = model.options
@@ -676,7 +709,11 @@ export class DebugService {
         if (responses.length !== model.options.length) {
           return null;
         }
-        return { type: EPlayerInputType.AND, responses };
+        return {
+          inputId: model.inputId,
+          type: EPlayerInputType.AND,
+          responses,
+        };
       }
       default:
         return null;

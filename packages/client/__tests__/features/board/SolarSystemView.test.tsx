@@ -543,6 +543,7 @@ describe('SolarSystemView', () => {
 
     fireEvent.click(screen.getByTestId('sector-node-north-0'));
     expect(onRespondInput).toHaveBeenCalledWith({
+      inputId: 'select-sector',
       type: EPlayerInputType.SECTOR,
       sector: ESector.BLUE,
     });

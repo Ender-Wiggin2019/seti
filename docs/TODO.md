@@ -1,5 +1,84 @@
 # TODO
 
+## Rule FAQ implementation confidence loop - 2026-05-11
+
+Success criteria:
+- Every ruling in `docs/arch/rule-faq.md` is mapped to concrete implementation and/or test evidence, or explicitly marked not implemented/out of scope with reason.
+- Every confirmed mismatch has a minimal proposed fix and a focused regression test/check that would fail on the old behavior.
+- The fix plan is recorded before production changes; any skipped confirmation gate is explicitly noted.
+- After confirmed fixes, targeted tests/type checks prove the FAQ behavior; any residual risk is explicitly recorded.
+
+- [x] Read `docs/arch/rule-faq.md` line-by-line and convert it into a checklist by rules domain.
+- [x] Compare Actions/Land/Scan/Analyze/Probe/Tech FAQ rulings with server/common/client implementation and tests.
+- [x] Compare Missions/Milestones/Gold scoring/Cards FAQ rulings with implementation and tests.
+- [x] Compare Alien species/Solo FAQ rulings with implementation and tests.
+- [x] Aggregate all loopholes, separate confirmed bugs from unimplemented/out-of-scope features, and propose minimal fixes/tests.
+- [x] Record the implementation plan before production code; explicit confirmation was superseded by the active-goal continuation instruction.
+- [x] Implement confirmed fixes only, with focused regression coverage.
+- [x] Run targeted verification, repeat the review loop, and record final confidence/review result.
+
+Pre-implementation review:
+- 当前实现还不能 100% 确认符合 `rule-faq.md`。已确认的行为差异包括：income/tuck 有手牌时被强制执行；card orbit effect 提供 `skip-orbit`；card launch/tech 不可执行时会让整张多效果卡不可打，而不是只跳过该 effect；generic card effect 以固定 priority/字段顺序解析，并且 tech-without-ROTATE 会旋转，和 project note 不一致。
+- Scan 存在两个确认漏洞：基础 Scan 在执行 `MARK_EARTH` 后就提供 `DONE`，可跳过 card-row signal；Scan interruption 用任意 OPTION prompt 放行 free action，可能在一个 free action 或子交互未完成时再次插入 free action。
+- Orbiter/lander 的真实状态在 `planetaryBoard`，但若干计分/卡牌路径使用 `player.pieces.deployed(ORBITER/LANDER)`；真实 orbit/land effect 没有同步 deploy。影响 gold `other/A`、通用 end-game per-orbit/land 计分，以及依赖 piece inventory 的 return-card 类路径。
+- Solo gold milestone 没有限制 Rival 只能占 gold tile 第一格；当所有第一格已被占时，当前筛选仍可让 Rival 占第二格。S.17 Oumuamua 只配置/跟随 lander placement，在 landing 不可用但 orbit 可用的场景可能错误 fallback 到 scan。
+- 需要补强但未必是生产逻辑错误的风险：S.15 Saturn/Jupiter movement 配置都为 5，FAQ 写 Saturn up to 4/Jupiter up to 5；S.15 empty sample pool / no reward isolation、S.16 既有人类 marker 的 leading 判定、solo objective 与 triggerable mission 同动作双标记、full mission skip 后再触发、Computer tech arbitrary column 的既有测试稳定性，都需要 focused regression 覆盖。
+
+Proposed minimal fix plan:
+- 修正 card effect 执行语义：card `canPlay` 不因 launch/tech 当前不可执行而拒绝整张卡；单个 launch/tech/land/orbit effect 在不可执行时跳过并继续；orbit 有可选目标时不提供 skip；tuck-for-income 在 card effect 场景允许 0 张跳过，但 setup tuck 仍保持强制。
+- 修正 card effect 顺序/旋转：至少让 generic card-granted tech 使用 `skipRotation: true`，只由显式 ROTATE effect 旋转；为当前数据中的 rotate+tech、tech-without-rotate、launch-impossible-plus-resource 等路径加回归测试。若左到右顺序需要彻底保证，再把 generic behavior 从聚合字段改为保留 effect sequence 的队列。
+- 修正 Scan：`DONE` 只有在 `MARK_EARTH` 和可执行的 `MARK_CARD_ROW` 都完成后才出现；free action interruption 只允许在 Scan action-pool menu 上发生，不能在 SpendSignalToken / MarkSectorSignal / PlaceData 等嵌套输入中再次插入。
+- 修正 orbiter/lander 计数来源：以 `planetaryBoard` 作为计分权威来源，替换 gold `other/A` 与 end-game per orbit/land/per orbit-or-land 计数；同时修复 return-card 对真实 board lander/orbiter 的处理，避免依赖未同步的 piece deployed 计数。
+- 修正 Solo：Rival gold options 只包含 `claims.length === 0` 的 tile；S.17 对 Oumuamua 使用 land-or-orbit 选择，landing 不可用但 orbit 可用时执行 orbit；为 S.15/S.16/solo objective-mission 并行触发补回归测试。
+- 验证：先写能在旧实现失败的 targeted tests，再跑相关 server/common 测试集与 TypeScript check；根据失败继续下一轮 review，直到每个 FAQ 条目都有代码或测试证据。
+
+Review:
+- 修复 Actions/Card 语义：income tuck 可选择 0 张跳过，setup tuck 仍强制；card `canPlay` 不再因单个 launch/tech 不可执行而拒绝整张卡；不可执行的 launch/tech effect 执行时跳过并继续；orbit effect 可执行时不再提供 skip；通用 `behaviorFromEffects` 保留 left-to-right effect sequence；card-granted tech 只在显式 ROTATE effect 存在时旋转。
+- 修复自由行动时机：主行动解析中的 pending input 可被 free action 中断，并在 free action 自身输入完成后恢复原主行动输入；free action interruption wrapper 防止 free action 嵌套 free action；Scan pool 保持 card-row/base mark mandatory，不允许在 MARK_EARTH 后提前 DONE。
+- 修复 probe/orbiter/lander 权威状态：orbit/land effect 同步 deployed piece；gold `other/A`、通用 final scoring、Exertians 条件计数以 `planetaryBoard` 为权威并包含 moon occupants；Sample Return 支持真实 board lander/moon occupant。
+- 修复 Solo/alien FAQ：Rival gold 只占 gold tile 第一格；S.15 拆为 Saturn 4/Jupiter 5 并保持 sample pool 为空时跳过、样本奖励不发给 Rival；S.16 以最近非 neutral occupant 判断 Rival 是否 leading；S.17 在 Oumuamua landing 不可用但 orbit 可用时执行 orbit；S.19 danger 计数只统计真实 danger slots + face-down cards。
+- 补强 mission/objective 证据：triggerable mission 一个 checkpoint 只能 claim 一个 branch；skip 当前 trigger 后必须靠后续 trigger 再 claim；solo objective 与 triggerable mission 可由同一动作同时标记；mission 在卡牌主效果完全解析后才在 played mission 区生效的既有测试保持通过。
+- 验证通过：server 全量 297 files / 1882 tests 通过；`pnpm --filter @seti/server typecheck` 通过；common 全量 12 files / 138 tests 通过；`pnpm --filter @ender-seti/common typecheck` 通过；本轮 touched 25 个 TS/TSX 文件 Biome check 通过；`git diff --check` 对本轮 touched 文件通过。
+- 残余说明：本轮未改动已有 client/transport dirty files、`bk.config.yml`、`.playwright-mcp/` 等前序工作区改动；未发现剩余可复现的 `rule-faq.md` mismatch。
+
+## Data-driven view/interaction confidence loop - 2026-05-11
+
+Success criteria:
+- Server owns canonical game state and projects all client-visible board/player/alien/solo data per viewer, without leaking hidden information.
+- Server pending interactions are serialized as `IPlayerInputModel`; client submits only typed `IInputResponse` / action payloads and does not invent rule state outside `common` helpers.
+- Client text mode and image mode differ only in presentation assets/layout. Both modes must consume the same projected state and preserve the same click/submit semantics.
+- Every confirmed loophole has a focused failing test or observable assertion before production changes.
+- Targeted type/tests/lint prove the reviewed contract; any residual risk is explicitly recorded.
+
+- [x] Review server projection and websocket/input lifecycle for stale prompts, hidden data leaks, and missing public fields.
+- [x] Review common protocol/types/helpers used by both client and server for duplicated or divergent rule logic.
+- [x] Review client board/player/card/solo renderers for data-driven state consumption and text/image mode parity.
+- [x] Review existing unit/E2E coverage and identify assertions that would fail if the strategy regressed.
+- [x] Confirm the fix plan before changing production code.
+- [x] Implement only confirmed minimal fixes, with regression tests.
+- [x] Run targeted checks, re-review loopholes, and write the final review result.
+
+Pre-implementation review:
+- 当前策略还不能 100% 确认。最大漏洞是 transport response 没有关联 `inputId`：server pending input model 有 `inputId`，但 client 提交的 `IInputResponse` 没有带 id，server 也只校验 response type。过期点击、重复点击或迟到响应只要类型和 payload 符合新 prompt，就可能被当作当前交互处理。
+- client `usePlayerInput.respond` 在发送后立即清空 pending input。如果 server 拒绝、网络失败或 stale input 被拦截，客户端会丢掉可重试的 prompt，掩盖真实状态。
+- debug server 模式没有复用 websocket 路径的 card normalization。live server state 中部分 card 仍可能是 id string；debug REST 获取后直接 set state/input，可能让数据驱动视图收到未归一化 card。
+- text mode / image mode 本轮未发现确认的规则分叉：主要分支集中在 presentation assets/layout，点击与提交语义仍来自同一份 server projection 和 pending input。修复重点应放在交互契约和 debug 数据入口。
+
+Proposed minimal fix:
+- 在 common `IInputResponse` 契约中加入 optional `inputId`，client 所有 input renderer 与 board shortcut 提交时带上当前 `model.inputId` / `pendingInput.inputId`；嵌套 AND/OR response 同时携带 root 与 nested input id。
+- 在 `GameManager.processInput` 这个外部 transport 边界校验 `response.inputId === player.waitingFor.inputId`，缺失或不匹配时在进入 engine 前拒绝，避免 stale response 改变 game state 或清掉 server prompt。
+- 调整 `usePlayerInput`：提交时只发送，不乐观清空；收到 authoritative `game:state` 后清空 pending，后续 `game:waiting` 再设置新 prompt。
+- 在 `useServerDebugSession` 中复用 `normalizeGameStateCards` / `normalizePlayerInputCards`，让 debug REST 和 websocket 路径一致。
+- 为上述每个漏洞补 focused regression tests，再跑 targeted client/server/common checks。
+
+Review:
+- 修复 transport input 关联：`IInputResponse` 增加 `inputId`，所有 client input renderer、board shortcut、debug bot/random input response 都带当前 server-projected input id；`GameManager.processInput` 在进入 engine 和递增 snapshot version 之前拒绝 missing/stale `inputId`。
+- 修复 pending input 生命周期：`usePlayerInput.respond` 不再乐观清空 prompt，改为在收到 authoritative `game:state` 后清空，后续 `game:waiting` 继续由 server 设置。
+- 修复 debug server 数据入口：`useServerDebugSession` 对 REST state 和 pending input 复用 card normalization，debug server mode 与 websocket mode 不再分叉。
+- text mode / image mode 复核：本轮没有发现规则或交互语义分叉；相关 board/layout 测试覆盖了 text/image presentation 下的同一 pending input 语义。
+- 验证通过：新增红灯覆盖 missing/stale `inputId`、pending prompt retry、debug REST card normalization、root/nested renderer response id；client input/board/layout 目标集 19 files / 91 tests 通过；client text-mode 目标集 5 files / 35 tests 通过；server gateway/debug 目标集 3 files / 27 tests 通过，额外 `GameManager` 16 tests 通过；common/client/server TypeScript checks 全部通过；本轮 touched TS/TSX 文件 Biome check 通过。
+- 残余说明：`Game.processInput` 仍允许无 `inputId` 的内部调用，保留给 engine unit tests、Rival 自动解析和测试 fixture；外部 websocket/debug REST transport 统一由 `GameManager` 强制校验。`bk.config.yml` 与 `.playwright-mcp/` 是本轮开始前已有改动，未纳入本次修复。
+
 ## Alien implementation confidence loop - 2026-05-11
 
 Success criteria:

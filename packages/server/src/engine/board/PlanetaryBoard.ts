@@ -147,7 +147,7 @@ function normalizeMoonOccupants(planetState: IPlanetState): IMoonOccupant[] {
 export function getMoonOccupants(
   planetState: Pick<IPlanetState, 'moonOccupants' | 'moonOccupant'>,
 ): IMoonOccupant[] {
-  if (planetState.moonOccupants.length > 0) {
+  if (planetState.moonOccupants?.length > 0) {
     return planetState.moonOccupants;
   }
   return planetState.moonOccupant ? [planetState.moonOccupant] : [];

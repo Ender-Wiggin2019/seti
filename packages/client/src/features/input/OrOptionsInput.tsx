@@ -63,6 +63,7 @@ export function OrOptionsInput({
             model={option}
             onSubmit={(response) =>
               onSubmit({
+                inputId: model.inputId,
                 type: EPlayerInputType.OR,
                 index,
                 response,

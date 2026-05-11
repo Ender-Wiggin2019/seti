@@ -99,6 +99,63 @@ function getWaitingOptionModel(player: Player): ISelectOptionInputModel {
   return player.waitingFor.toModel() as ISelectOptionInputModel;
 }
 
+function resolveUntilComputerColumnPick(
+  game: Game,
+  player: Player,
+): ISelectOptionInputModel {
+  let guard = 0;
+  while (player.waitingFor) {
+    guard += 1;
+    if (guard > 10) {
+      throw new Error('failed to reach computer column selection');
+    }
+
+    const model = player.waitingFor.toModel() as {
+      type: EPlayerInputType;
+      title?: string;
+      options?: Array<{ id: string }>;
+      cards?: Array<{ id: string }>;
+      minSelections?: number;
+    };
+
+    if (
+      model.type === EPlayerInputType.OPTION &&
+      model.options?.some((option) => option.id.startsWith('col-'))
+    ) {
+      return model as ISelectOptionInputModel;
+    }
+
+    if (model.type === EPlayerInputType.OPTION) {
+      const optionId = model.options?.[0]?.id;
+      if (!optionId) throw new Error('expected option to resolve');
+      game.processInput(player.id, {
+        type: EPlayerInputType.OPTION,
+        optionId,
+      });
+      continue;
+    }
+
+    if (model.type === EPlayerInputType.CARD) {
+      const pickCount = Math.max(1, model.minSelections ?? 1);
+      const cardIds = (model.cards ?? [])
+        .slice(0, pickCount)
+        .map((card) => card.id);
+      if (cardIds.length < pickCount) {
+        throw new Error('expected card options to resolve');
+      }
+      game.processInput(player.id, {
+        type: EPlayerInputType.CARD,
+        cardIds,
+      });
+      continue;
+    }
+
+    throw new Error(`unexpected tech bonus input type: ${model.type}`);
+  }
+
+  throw new Error('expected player to be waiting for computer column input');
+}
+
 describe('Phase 8.3: Blue Computer tech — integration (real Game + Place Data)', () => {
   it('8.3.0 [integration] num=0: place data top → +2 VP; bottom → +1 credit', () => {
     const { game, player } = createIntegrationGame('phase-8-3-0-comp-credit');
@@ -290,7 +347,7 @@ describe('Phase 8.3: Blue Computer tech — integration (real Game + Place Data)
       optionId: computerOption.id,
     });
 
-    const columnPick = getWaitingOptionModel(player);
+    const columnPick = resolveUntilComputerColumnPick(game, player);
     const columnIds = columnPick.options.map((o) => o.id);
     expect(columnIds.some((id) => id.startsWith('col-'))).toBe(true);
     expect(columnIds).toContain('col-4');

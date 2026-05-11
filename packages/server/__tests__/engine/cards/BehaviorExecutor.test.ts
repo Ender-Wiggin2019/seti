@@ -1,3 +1,4 @@
+import { e } from '@seti/common/constant/effect';
 import { EResource, ESector, ETech, ETrace } from '@seti/common/types/element';
 import { EPlanet } from '@seti/common/types/protocol/enums';
 import {
@@ -5,7 +6,11 @@ import {
   type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
 import { ETechId } from '@seti/common/types/tech';
-import type { IBehavior } from '@/engine/cards/Behavior.js';
+import { vi } from 'vitest';
+import {
+  behaviorFromEffects,
+  type IBehavior,
+} from '@/engine/cards/Behavior.js';
 import {
   BehaviorExecutor,
   getBehaviorExecutor,
@@ -208,6 +213,30 @@ describe('BehaviorExecutor — integration', () => {
       expect(
         game.planetaryBoard?.planets.get(EPlanet.MARS)?.orbitSlots,
       ).toEqual([{ playerId: player.id }]);
+    });
+
+    it('does not offer a skip option when an orbit card effect can resolve', () => {
+      const { game, player } = createIntegrationGame('beh-faq-orbit-required');
+      const marsSpace = game.solarSystem?.getSpacesOnPlanet(EPlanet.MARS)[0];
+      if (!marsSpace) {
+        throw new Error('expected a Mars space for the orbit integration test');
+      }
+      game.solarSystem?.placeProbe(player.id, marsSpace.id);
+      player.probesInSpace = 1;
+
+      const pending = drainReturningInput(game, () => {
+        getBehaviorExecutor().execute(
+          { orbit: true },
+          player,
+          game,
+          sampleCard(),
+        );
+      });
+      const model = pending?.toModel() as ISelectOptionInputModel;
+
+      expect(model.options.map((option) => option.id)).not.toContain(
+        'skip-orbit',
+      );
     });
 
     it('drawCards pulls from the real mainDeck and refills the card row', () => {
@@ -513,7 +542,7 @@ describe('BehaviorExecutor — integration', () => {
       );
     });
 
-    it('canExecute returns false for researchTech when the board has no matching tech', () => {
+    it('canExecute allows an unavailable researchTech card effect so only that effect is skipped', () => {
       const { game, player } = createIntegrationGame('beh-2-9-8-tech');
       // Drain every PROBE tech by giving them to p1.
       const probeTechs =
@@ -531,20 +560,81 @@ describe('BehaviorExecutor — integration', () => {
           player,
           game,
         ),
-      ).toBe(false);
+      ).toBe(true);
     });
 
-    it('canExecute returns false for launchProbe when probe slots are exhausted', () => {
+    it('canExecute allows an exhausted launchProbe card effect so only that effect is skipped', () => {
       const { game, player } = createIntegrationGame('beh-2-9-8-limit');
       player.probesInSpace = player.probeSpaceLimit;
 
       expect(
         new BehaviorExecutor().canExecute({ launchProbe: true }, player, game),
-      ).toBe(false);
+      ).toBe(true);
+    });
+
+    it('skips an impossible launch effect but still resolves later effects', () => {
+      const { game, player } = createIntegrationGame('beh-faq-skip-launch');
+      player.probesInSpace = player.probeSpaceLimit;
+      const energyBefore = player.resources.energy;
+
+      getBehaviorExecutor().execute(
+        { launchProbe: true, gainResources: { energy: 1 } },
+        player,
+        game,
+        sampleCard(),
+      );
+      drain(game);
+
+      expect(player.probesInSpace).toBe(player.probeSpaceLimit);
+      expect(player.resources.energy).toBe(energyBefore + 1);
+    });
+
+    it('does not rotate for a card-granted tech effect without explicit ROTATE', () => {
+      const { game, player } = createIntegrationGame('beh-faq-tech-no-rotate');
+      const solarSystem = requireSolarSystem(game);
+      const rotationBefore = solarSystem.rotationCounter;
+
+      const pending = drainReturningInput(game, () => {
+        getBehaviorExecutor().execute(
+          { researchTech: ETech.PROBE },
+          player,
+          game,
+          sampleCard(),
+        );
+      });
+
+      expect(pending?.toModel().type).toBe(EPlayerInputType.OPTION);
+      expect(solarSystem.rotationCounter).toBe(rotationBefore);
     });
   });
 
   describe('2.9.9 composite behavior runs all steps in order', () => {
+    it('preserves printed effect order for generated card behaviors', () => {
+      const { game, player } = createIntegrationGame('beh-faq-effect-order');
+      const solarSystem = requireSolarSystem(game);
+      const rotationBefore = solarSystem.rotationCounter;
+      game.mainDeck = new Deck(['ordered-draw'], []);
+      let rotationWhenDrawing: number | undefined;
+      const draw = game.mainDeck.drawWithReshuffle.bind(game.mainDeck);
+      vi.spyOn(game.mainDeck, 'drawWithReshuffle').mockImplementation(
+        (random) => {
+          rotationWhenDrawing = solarSystem.rotationCounter;
+          return draw(random);
+        },
+      );
+
+      getBehaviorExecutor().execute(
+        behaviorFromEffects([e.CARD(), e.ROTATE()]),
+        player,
+        game,
+        sampleCard(),
+      );
+      drain(game);
+
+      expect(rotationWhenDrawing).toBe(rotationBefore);
+      expect(solarSystem.rotationCounter).toBe(rotationBefore + 1);
+    });
+
     it('combines spend + gain + score + movement + tuck income + rotate in one execute', () => {
       const { game, player } = createIntegrationGame('beh-2-9-9-composite');
       const solarSystem = requireSolarSystem(game);

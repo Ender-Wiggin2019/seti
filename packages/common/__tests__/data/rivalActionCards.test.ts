@@ -138,8 +138,15 @@ describe('rivalActionCards data', () => {
         { kind: ERivalActionKind.LAUNCH_PROBE, effects: [PUBLICITY_1] },
         {
           kind: ERivalActionKind.PROBE_PLACEMENT,
+          movement: 4,
+          planets: [EPlanet.SATURN],
+          probePlacement: ERivalProbePlacement.LANDER,
+          collectMascamitesSample: true,
+        },
+        {
+          kind: ERivalActionKind.PROBE_PLACEMENT,
           movement: 5,
-          planets: [EPlanet.SATURN, EPlanet.JUPITER],
+          planets: [EPlanet.JUPITER],
           probePlacement: ERivalProbePlacement.LANDER,
           collectMascamitesSample: true,
         },

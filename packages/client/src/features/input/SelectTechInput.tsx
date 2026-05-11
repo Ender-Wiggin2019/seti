@@ -66,6 +66,7 @@ export function SelectTechInput({
             className='h-auto min-h-9 justify-start gap-2 px-2.5 py-2 text-left font-mono text-[11px] tracking-[0.04em]'
             onClick={() =>
               onSubmit({
+                inputId: model.inputId,
                 type: EPlayerInputType.TECH,
                 tech,
               })

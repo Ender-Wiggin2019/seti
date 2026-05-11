@@ -22,6 +22,7 @@ describe('SelectEndOfRoundCardInput', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Beta/ }));
     expect(onSubmit).toHaveBeenCalledWith({
+      inputId: 'input-eor',
       type: EPlayerInputType.END_OF_ROUND,
       cardId: 'card-b',
     });

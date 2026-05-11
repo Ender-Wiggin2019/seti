@@ -90,58 +90,62 @@ export type IFreeActionRequest =
   | IExchangeResourcesFreeActionRequest
   | ISpendSignalTokenFreeActionRequest;
 
-export interface IOptionInputResponse {
+export interface IInputResponseBase {
+  inputId?: string;
+}
+
+export interface IOptionInputResponse extends IInputResponseBase {
   type: EPlayerInputType.OPTION;
   optionId: string;
 }
 
-export interface ICardInputResponse {
+export interface ICardInputResponse extends IInputResponseBase {
   type: EPlayerInputType.CARD;
   cardIds: string[];
 }
 
-export interface ISectorInputResponse {
+export interface ISectorInputResponse extends IInputResponseBase {
   type: EPlayerInputType.SECTOR;
   sector: ESector;
 }
 
-export interface IPlanetInputResponse {
+export interface IPlanetInputResponse extends IInputResponseBase {
   type: EPlayerInputType.PLANET;
   planet: EPlanet;
 }
 
-export interface ITechInputResponse {
+export interface ITechInputResponse extends IInputResponseBase {
   type: EPlayerInputType.TECH;
   tech: ETech;
 }
 
-export interface IGoldTileInputResponse {
+export interface IGoldTileInputResponse extends IInputResponseBase {
   type: EPlayerInputType.GOLD_TILE;
   tileId: string;
 }
 
-export interface IResourceInputResponse {
+export interface IResourceInputResponse extends IInputResponseBase {
   type: EPlayerInputType.RESOURCE;
   resource: EResource;
 }
 
-export interface ITraceInputResponse {
+export interface ITraceInputResponse extends IInputResponseBase {
   type: EPlayerInputType.TRACE;
   trace: ETrace;
 }
 
-export interface IEndOfRoundInputResponse {
+export interface IEndOfRoundInputResponse extends IInputResponseBase {
   type: EPlayerInputType.END_OF_ROUND;
   cardId: string;
 }
 
-export interface IOrInputResponse {
+export interface IOrInputResponse extends IInputResponseBase {
   type: EPlayerInputType.OR;
   index: number;
   response: IInputResponse;
 }
 
-export interface IAndInputResponse {
+export interface IAndInputResponse extends IInputResponseBase {
   type: EPlayerInputType.AND;
   responses: IInputResponse[];
 }

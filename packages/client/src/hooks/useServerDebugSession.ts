@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { debugApi } from '@/api/debugApi';
 import type { IDebugServerSessionResponse } from '@/api/types';
+import {
+  normalizeGameStateCards,
+  normalizePlayerInputCards,
+} from '@/lib/cardNormalization';
 import type {
   IFreeActionRequest,
   IInputResponse,
@@ -59,8 +63,8 @@ export function useServerDebugSession(
         debugApi.getPendingInput(session.gameId, session.user.id),
       ]);
       if (cancelledRef.current) return;
-      setGameState(state);
-      setPendingInput(input);
+      setGameState(normalizeGameStateCards(state));
+      setPendingInput(input ? normalizePlayerInputCards(input) : null);
       setErrorMessage(null);
     } catch (error) {
       if (cancelledRef.current) return;
@@ -73,7 +77,7 @@ export function useServerDebugSession(
   const applyState = useCallback(
     (state: IPublicGameState) => {
       if (cancelledRef.current) return;
-      setGameState(state);
+      setGameState(normalizeGameStateCards(state));
       void refresh();
     },
     [refresh],
@@ -91,8 +95,8 @@ export function useServerDebugSession(
         debugApi.getPendingInput(next.gameId, next.user.id),
       ]);
       if (cancelledRef.current) return null;
-      setGameState(state);
-      setPendingInput(input);
+      setGameState(normalizeGameStateCards(state));
+      setPendingInput(input ? normalizePlayerInputCards(input) : null);
       return next;
     } catch (error) {
       if (cancelledRef.current) return null;

@@ -31,6 +31,7 @@ export function SelectSectorInput({
             className='h-9 justify-start gap-2 px-2.5 font-mono text-[12px] uppercase tracking-[0.08em]'
             onClick={() =>
               onSubmit({
+                inputId: model.inputId,
                 type: EPlayerInputType.SECTOR,
                 sector,
               })

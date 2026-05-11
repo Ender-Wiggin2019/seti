@@ -172,8 +172,10 @@ export class GameManager {
   ): Promise<IActionResult> {
     const game = await this.getGame(gameId);
     const turnIndexBefore = game.turnIndex;
-    const version = this.nextVersion(gameId);
 
+    this.validateInputResponseEnvelope(game, playerId, response);
+
+    const version = this.nextVersion(gameId);
     game.processInput(playerId, response);
 
     await this.persistSnapshot(gameId, version, game, {
@@ -192,6 +194,32 @@ export class GameManager {
     await this.resolveAutomatedRivalTurns(gameId, game);
 
     return this.buildResult(game, gameId);
+  }
+
+  private validateInputResponseEnvelope(
+    game: IGame,
+    playerId: string,
+    response: IInputResponse,
+  ): void {
+    const player = game.players.find((item) => item.id === playerId);
+    const pendingInput = player?.waitingFor;
+    if (!pendingInput) {
+      return;
+    }
+
+    if (response.inputId !== pendingInput.inputId) {
+      throw new GameError(
+        EErrorCode.INVALID_INPUT_RESPONSE,
+        `Input response inputId mismatch: expected ${pendingInput.inputId} but got ${
+          response.inputId ?? 'missing'
+        }`,
+        {
+          expectedInputId: pendingInput.inputId,
+          actualInputId: response.inputId,
+          playerId,
+        },
+      );
+    }
   }
 
   /**

@@ -51,6 +51,7 @@ export function AndOptionsInput({
       (item): item is IInputResponse => Boolean(item),
     );
     onSubmit({
+      inputId: model.inputId,
       type: EPlayerInputType.AND,
       responses: completedResponses,
     });

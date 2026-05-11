@@ -6,6 +6,7 @@ import { EMissionEventType } from '@/engine/missions/IMission.js';
 import { GameError } from '@/shared/errors/GameError.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayer } from '../../player/IPlayer.js';
+import { EPieceType } from '../../player/Pieces.js';
 import { TechModifierQuery } from '../../tech/TechModifierQuery.js';
 import {
   consumeProbeFromPlanet,
@@ -148,6 +149,9 @@ export class LandProbeEffect {
       allowMoonLanding: this.resolveMoonFlag(player, options),
       allowDuplicate: options.allowDuplicate,
     });
+    if (player.pieces.available(EPieceType.LANDER) > 0) {
+      player.pieces.deploy(EPieceType.LANDER);
+    }
     syncProbeCountsForPlayer(game, player.id);
     player.score += landingResult.centerReward.vpGained;
     if (landingResult.firstLandDataGained > 0) {
