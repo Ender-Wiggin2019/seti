@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
-import path from 'node:path';
 import { createRequire } from 'node:module';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
@@ -64,10 +64,10 @@ for (const packageName of singletonPackages) {
 }
 
 if (failures.length > 0) {
-  console.error(failures.join('\n\n'));
+  process.stderr.write(`${failures.join('\n\n')}\n`);
   process.exit(1);
 }
 
-console.log(
-  `React singleton dependency check passed for ${packageDirs.join(', ')}.`,
+process.stdout.write(
+  `React singleton dependency check passed for ${packageDirs.join(', ')}.\n`,
 );

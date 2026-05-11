@@ -287,4 +287,3 @@ Full Worker POC：
 - DO cold start / hibernation 后能恢复 game state。
 - Postgres/Hyperdrive 或 DO storage 写入通过集成测试。
 - 现有 server/client/e2e 关键流程通过。
-
