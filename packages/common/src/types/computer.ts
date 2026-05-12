@@ -8,6 +8,7 @@ export interface IComputerSlotReward {
   energy?: number;
   publicity?: number;
   drawCard?: number;
+  anyCard?: number;
   tuckIncome?: number;
 }
 

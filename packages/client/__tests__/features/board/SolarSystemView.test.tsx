@@ -12,6 +12,7 @@ import type { ComponentProps, ComponentType } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SolarSystemView } from '@/features/board/SolarSystemView';
 import { useDebugStore } from '@/stores/debugStore';
+import { useGameViewStore } from '@/stores/gameViewStore';
 import type {
   IPublicOumuamuaTile,
   IPublicSector,
@@ -279,6 +280,11 @@ describe('SolarSystemView', () => {
   beforeEach(() => {
     window.localStorage.clear();
     useDebugStore.setState({ textMode: false });
+    useGameViewStore.setState({
+      activeTab: 'board',
+      zoom: 0.9,
+      hoveredPieceId: null,
+    });
   });
 
   it('renders all 32 space hotspots', () => {
@@ -298,6 +304,60 @@ describe('SolarSystemView', () => {
 
     const allSpaces = screen.getAllByRole('button', { name: /Space space-/ });
     expect(allSpaces).toHaveLength(32);
+  });
+
+  it('defaults the solar board smaller and exposes zoom controls', () => {
+    renderSolarSystemView();
+
+    const panel = screen.getByTestId('solar-board-panel');
+    const frame = screen.getByTestId('solar-board-frame');
+    expect(panel).toHaveStyle({ width: '708px' });
+    expect(frame).toHaveStyle({ width: '684px' });
+    expect(panel.style.maxWidth).toBe('');
+    expect(frame.style.maxWidth).toBe('');
+    expect(screen.getByTestId('solar-board-zoom-value')).toHaveTextContent(
+      '90%',
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Zoom solar board in' }),
+    );
+    expect(panel).toHaveStyle({ width: '754px' });
+    expect(frame).toHaveStyle({ width: '730px' });
+    expect(screen.getByTestId('solar-board-zoom-value')).toHaveTextContent(
+      '96%',
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Zoom solar board out' }),
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Zoom solar board out' }),
+    );
+    expect(panel).toHaveStyle({ width: '662px' });
+    expect(frame).toHaveStyle({ width: '638px' });
+    expect(screen.getByTestId('solar-board-zoom-value')).toHaveTextContent(
+      '84%',
+    );
+  });
+
+  it('uses the same zoom controls in text mode', () => {
+    useDebugStore.setState({ textMode: true });
+
+    renderSolarSystemView();
+
+    expect(screen.getByTestId('solar-board-panel')).toHaveStyle({
+      width: '708px',
+    });
+    expect(screen.getByTestId('solar-board-frame')).toHaveStyle({
+      width: '684px',
+    });
+    expect(
+      screen.getByRole('button', { name: 'Zoom solar board out' }),
+    ).toBeEnabled();
+    expect(
+      screen.getByRole('button', { name: 'Zoom solar board in' }),
+    ).toBeEnabled();
   });
 
   it('renders anomaly tokens with their reward icon on the solar system board', () => {
@@ -445,6 +505,20 @@ describe('SolarSystemView', () => {
       type: 'probe',
       id: 'player-1-0',
     });
+  });
+
+  it('keeps move selection hotspots above text-mode solar cell labels', () => {
+    useDebugStore.setState({ textMode: true });
+    renderSolarSystemView({ moveModeActive: true });
+
+    const reachableHotspot = screen.getByTestId('solar-space-space-1');
+    const textLabelZIndexes = screen
+      .getAllByTestId(/^solar-text-cell-/)
+      .map((label) => Number(label.style.zIndex));
+
+    expect(Number(reachableHotspot.style.zIndex)).toBeGreaterThan(
+      Math.max(...textLabelZIndexes),
+    );
   });
 
   it('sends probe movement target when the server provides movable pieces', () => {

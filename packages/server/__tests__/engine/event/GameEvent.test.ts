@@ -9,6 +9,7 @@ describe('GameEvent helpers', () => {
     const event = createActionEvent('p1', 'SCAN', { sector: 'RED' });
 
     expect(event.type).toBe('ACTION');
+    expect(event.id).toEqual(expect.any(String));
     expect(typeof event.at).toBe('number');
     if (event.type === 'ACTION') {
       expect(event.playerId).toBe('p1');

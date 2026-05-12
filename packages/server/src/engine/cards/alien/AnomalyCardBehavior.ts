@@ -1,6 +1,7 @@
 import { EResource } from '@seti/common/types/element';
 import { EPriority } from '@/engine/deferred/Priority.js';
 import { SimpleDeferredAction } from '@/engine/deferred/SimpleDeferredAction.js';
+import { AnyCardChoiceEffect } from '@/engine/effects/card/AnyCardChoiceEffect.js';
 import type { IGame } from '@/engine/IGame.js';
 import type { IPlayerInput } from '@/engine/input/PlayerInput.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
@@ -43,40 +44,41 @@ export function gainResourceByIncome(
   player: IPlayer,
   game: IGame,
   income: EResource,
-): void {
+): IPlayerInput | undefined {
   switch (income) {
     case EResource.CREDIT:
       player.resources.gain({ credits: 1 });
-      return;
+      return undefined;
     case EResource.ENERGY:
       player.resources.gain({ energy: 1 });
-      return;
+      return undefined;
     case EResource.DATA:
       player.resources.gain({ data: 1 });
-      return;
+      return undefined;
     case EResource.PUBLICITY:
       player.resources.gain({ publicity: 1 });
-      return;
+      return undefined;
     case EResource.SIGNAL_TOKEN:
       player.resources.gain({ signalTokens: 1 });
-      return;
+      return undefined;
     case EResource.SCORE:
       player.score += 1;
-      return;
+      return undefined;
     case EResource.MOVE:
       player.gainMove(1);
-      return;
-    case EResource.CARD:
-    case EResource.CARD_ANY: {
+      return undefined;
+    case EResource.CARD: {
       const drawn = game.mainDeck.drawWithReshuffle(game.random);
       if (drawn !== undefined) {
         player.hand.push(drawn);
         game.lockCurrentTurn();
       }
-      return;
+      return undefined;
     }
+    case EResource.CARD_ANY:
+      return AnyCardChoiceEffect.execute(player, game);
     default:
-      return;
+      return undefined;
   }
 }
 

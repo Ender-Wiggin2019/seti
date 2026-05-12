@@ -259,7 +259,6 @@ export function SectorNodeView({
           capacity={dataCapability}
           playerColors={playerColors}
           textMode={false}
-          showPlayerSignals={false}
           slotTestIdPrefix={`sector-node-${position}-${index}-slot`}
         />
       </div>

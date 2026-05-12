@@ -30,7 +30,11 @@ function createTestPlayer(overrides?: Record<string, unknown>): Player {
 
 function createMockGame(deckCards: string[] = []): IGame {
   return {
+    cardRow: [],
     mainDeck: {
+      draw(): string | undefined {
+        return deckCards.shift();
+      },
       drawWithReshuffle(): string | undefined {
         return deckCards.shift();
       },
@@ -171,6 +175,65 @@ describe('PlaceDataFreeAction', () => {
       expect(result.index).toBe(2);
     });
 
+    it('allows a tech bottom slot before the whole top row is full', () => {
+      const player = createTestPlayer({
+        dataPoolCount: 6,
+        computerColumnConfigs: SIMPLE_3_COL,
+      });
+      player.computer.placeTech(0, {
+        techId: ETechId.COMPUTER_VP_CREDIT,
+        bottomReward: { credits: 1 },
+      });
+
+      PlaceDataFreeAction.execute(player, createMockGame());
+      PlaceDataFreeAction.execute(player, createMockGame());
+
+      const result = PlaceDataFreeAction.execute(player, createMockGame(), 0);
+
+      expect(result.row).toBe('bottom');
+      expect(result.index).toBe(0);
+      expect(player.computer.getTopSlots()).toEqual([true, true, false]);
+      expect(player.computer.getBottomSlotStates()[0]).toBe(true);
+    });
+
+    it('keeps omitted slotIndex on the next top slot when bottom is also available', () => {
+      const player = createTestPlayer({
+        dataPoolCount: 6,
+        computerColumnConfigs: SIMPLE_3_COL,
+      });
+      player.computer.placeTech(0, {
+        techId: ETechId.COMPUTER_VP_CREDIT,
+        bottomReward: { credits: 1 },
+      });
+
+      PlaceDataFreeAction.execute(player, createMockGame());
+
+      const result = PlaceDataFreeAction.execute(player, createMockGame());
+
+      expect(result.row).toBe('top');
+      expect(result.index).toBe(1);
+      expect(player.computer.getBottomSlotStates()[0]).toBe(false);
+    });
+
+    it('accepts an explicit next top slot when a bottom slot is also available', () => {
+      const player = createTestPlayer({
+        dataPoolCount: 6,
+        computerColumnConfigs: SIMPLE_3_COL,
+      });
+      player.computer.placeTech(0, {
+        techId: ETechId.COMPUTER_VP_CREDIT,
+        bottomReward: { credits: 1 },
+      });
+
+      PlaceDataFreeAction.execute(player, createMockGame());
+
+      const result = PlaceDataFreeAction.execute(player, createMockGame(), 1);
+
+      expect(result.row).toBe('top');
+      expect(result.index).toBe(1);
+      expect(player.computer.getBottomSlotStates()[0]).toBe(false);
+    });
+
     it('throws when top full and no bottom slots available', () => {
       const player = createTestPlayer({
         dataPoolCount: 5,
@@ -299,6 +362,42 @@ describe('PlaceDataFreeAction', () => {
       expect(result.reward).toEqual({ drawCard: 1 });
       expect(player.hand.length).toBe(handBefore + 1);
       expect(player.hand).toContain('reward-card');
+    });
+
+    it('prompts for any-card bottom reward instead of drawing only from deck', () => {
+      const player = createTestPlayer({
+        dataPoolCount: 5,
+        computerColumnConfigs: SIMPLE_3_COL,
+      });
+      player.computer.placeTech(2, {
+        techId: ETechId.COMPUTER_VP_CARD,
+        bottomReward: { anyCard: 1 } as never,
+      });
+      PlaceDataFreeAction.execute(player, createMockGame());
+      PlaceDataFreeAction.execute(player, createMockGame());
+      PlaceDataFreeAction.execute(player, createMockGame());
+
+      const game = createMockGame(['deck-card']);
+      game.cardRow = [{ id: 'row-card' } as never];
+      const result = PlaceDataFreeAction.execute(player, game);
+
+      expect(result.row).toBe('bottom');
+      expect(result.index).toBe(2);
+      expect(result.reward).toEqual({ anyCard: 1 });
+      expect(result.pendingInput?.toModel()).toMatchObject({
+        type: EPlayerInputType.OPTION,
+        title: 'Choose any card',
+      });
+      expect(
+        (result.pendingInput?.toModel() as { options?: Array<{ id: string }> })
+          .options,
+      ).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: 'row:0:row-card' }),
+          expect.objectContaining({ id: 'deck' }),
+        ]),
+      );
+      expect(player.hand).not.toContain('deck-card');
     });
 
     it('grants publicity for bottom slot of publicity tech', () => {
@@ -552,13 +651,13 @@ describe('PlaceDataFreeAction', () => {
         expect(player.resources.energy).toBe(energyBefore + 1);
       });
 
-      it('3.2.8 [integration] comp-2 (card tech) grants 2VP top + draws 1 card bottom', () => {
+      it('3.2.8 [integration] comp-2 (card tech) grants 2VP top + prompts for any card bottom', () => {
         const game = createIntegrationGame('comp-card-tech');
         const player = game.players[0];
 
         player.computer.placeTech(4, {
           techId: ETechId.COMPUTER_VP_CARD,
-          bottomReward: { drawCard: 1 },
+          bottomReward: { anyCard: 1 },
         });
 
         const scoreBefore = player.score;
@@ -577,14 +676,16 @@ describe('PlaceDataFreeAction', () => {
         player.dataPool.add(2);
         PlaceDataFreeAction.execute(player, game);
 
-        const handBefore = player.hand.length;
-        const deckBefore = game.mainDeck.drawSize;
+        game.cardRow = [{ id: 'row-card' } as never];
+        game.mainDeck.addToTop('deck-card');
         const resultBottom = PlaceDataFreeAction.execute(player, game, 4);
         expect(resultBottom.row).toBe('bottom');
         expect(resultBottom.index).toBe(4);
-        expect(resultBottom.reward).toEqual({ drawCard: 1 });
-        expect(player.hand.length).toBe(handBefore + 1);
-        expect(game.mainDeck.drawSize).toBe(deckBefore - 1);
+        expect(resultBottom.reward).toEqual({ anyCard: 1 });
+        expect(resultBottom.pendingInput?.toModel()).toMatchObject({
+          type: EPlayerInputType.OPTION,
+          title: 'Choose any card',
+        });
       });
 
       it('3.2.9 [integration] comp-3 (publicity tech) grants 2VP top + 2 publicity bottom', () => {

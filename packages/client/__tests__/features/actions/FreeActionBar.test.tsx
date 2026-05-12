@@ -2,7 +2,7 @@ import { EResource } from '@seti/common/types/element';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { FreeActionBar } from '@/features/actions/FreeActionBar';
-import { EFreeAction, EPhase } from '@/types/re-exports';
+import { EFreeAction, EPhase, EPlayerInputType } from '@/types/re-exports';
 import {
   createMockGameState,
   createMockPlayerState,
@@ -107,6 +107,27 @@ describe('FreeActionBar', () => {
     expect(onActionClick).toHaveBeenCalledWith(EFreeAction.MOVEMENT);
   });
 
+  it('hides while a pending input must be resolved', () => {
+    render(
+      <FreeActionBar
+        gameState={createMockGameState()}
+        myPlayerId='player-1'
+        isMyTurn
+        pendingInput={{
+          inputId: 'input-card',
+          type: EPlayerInputType.CARD,
+          title: 'Select a card to tuck for income',
+          cards: [],
+          minSelections: 0,
+          maxSelections: 1,
+        }}
+        onActionClick={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByTestId('free-action-bar')).not.toBeInTheDocument();
+  });
+
   it('shows spend signal token while a scan pool is active', () => {
     const onActionClick = vi.fn();
     const gameState = createMockGameState({
@@ -136,6 +157,51 @@ describe('FreeActionBar', () => {
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Spend Signal Token' }));
+
+    expect(onActionClick).toHaveBeenCalledWith(EFreeAction.SPEND_SIGNAL_TOKEN);
+  });
+
+  it('keeps spend signal token available during scan pending input', () => {
+    const onActionClick = vi.fn();
+    const gameState = createMockGameState({
+      phase: EPhase.IN_RESOLUTION,
+      scanActionInProgress: true,
+      cardRow: [{ id: 'row-1' } as never],
+      players: [
+        createMockPlayerState({
+          playerId: 'player-1',
+          resources: {
+            [EResource.CREDIT]: 10,
+            [EResource.ENERGY]: 5,
+            [EResource.DATA]: 0,
+            [EResource.PUBLICITY]: 3,
+            [EResource.SIGNAL_TOKEN]: 1,
+          },
+        }),
+      ],
+    });
+
+    render(
+      <FreeActionBar
+        gameState={gameState}
+        myPlayerId='player-1'
+        isMyTurn
+        pendingInput={{
+          inputId: 'input-card-row',
+          type: EPlayerInputType.CARD,
+          title: 'Select a card from row',
+          cards: [{ id: 'row-1' } as never],
+          minSelections: 1,
+          maxSelections: 1,
+        }}
+        onActionClick={onActionClick}
+      />,
+    );
+
+    expect(
+      screen.queryByRole('button', { name: 'Expand' }),
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Spend Signal Token' }));
 
     expect(onActionClick).toHaveBeenCalledWith(EFreeAction.SPEND_SIGNAL_TOKEN);

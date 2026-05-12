@@ -81,5 +81,6 @@ packages/client/public/seti-assets/
 
 # local agent/runtime folders
 .codex/
+.playwright-mcp/
 **/.oxc*/
 **/.omc*/

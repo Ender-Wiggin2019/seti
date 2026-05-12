@@ -49,4 +49,23 @@ describe('ComputerRow', () => {
       expect(icons[0]).toHaveAttribute('data-value', '2');
     }
   });
+
+  it('renders any-card rewards with the any-card icon', () => {
+    render(
+      <ComputerRow
+        computer={makeComputer([
+          emptyCol({
+            hasBottomSlot: true,
+            topFilled: true,
+            bottomReward: { anyCard: 1 },
+          }),
+        ])}
+        dataPoolCount={1}
+        dataPoolMax={6}
+      />,
+    );
+
+    const slot = screen.getByTestId('computer-slot-bottom-0');
+    expect(within(slot).getByTestId('seti-icon-any-card')).toBeInTheDocument();
+  });
 });

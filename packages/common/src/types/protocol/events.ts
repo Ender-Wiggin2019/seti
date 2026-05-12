@@ -12,66 +12,124 @@ export enum EGameEventType {
   ACTION = 'ACTION',
   FREE_ACTION = 'FREE_ACTION',
   INPUT = 'INPUT',
+  UNDO = 'UNDO',
   RESOURCE_CHANGE = 'RESOURCE_CHANGE',
   SCORE_CHANGE = 'SCORE_CHANGE',
   SECTOR_COMPLETED = 'SECTOR_COMPLETED',
+  TRACE_MARKED = 'TRACE_MARKED',
   ALIEN_DISCOVERED = 'ALIEN_DISCOVERED',
   ROTATION = 'ROTATION',
   ROUND_END = 'ROUND_END',
   GAME_END = 'GAME_END',
 }
 
+export type TGameEventLevel = 'debug' | 'info';
+
 export type TGameEvent =
   | {
+      id?: string;
       type: EGameEventType.ACTION;
       playerId: string;
       /** Main-action requests use `IMainActionRequest`; the engine may log string keys (e.g. `CARD_CUSTOM_EFFECT_UNHANDLED`). */
       action: IMainActionRequest | string;
       details?: Record<string, unknown>;
+      level?: TGameEventLevel;
       at?: number;
     }
   | {
+      id?: string;
       type: EGameEventType.FREE_ACTION;
       playerId: string;
       action: IFreeActionRequest;
+      details?: Record<string, unknown>;
+      level?: TGameEventLevel;
+      at?: number;
     }
   | {
+      id?: string;
       type: EGameEventType.INPUT;
       playerId: string;
       response: IInputResponse;
+      details?: Record<string, unknown>;
+      level?: TGameEventLevel;
+      at?: number;
     }
   | {
+      id?: string;
+      type: EGameEventType.UNDO;
+      playerId: string;
+      turnIndex: number;
+      affectedPlayerIds: string[];
+      level?: TGameEventLevel;
+      at?: number;
+    }
+  | {
+      id?: string;
       type: EGameEventType.RESOURCE_CHANGE;
       playerId: string;
       resource: string;
       delta: number;
+      level?: TGameEventLevel;
+      at?: number;
     }
   | {
+      id?: string;
       type: EGameEventType.SCORE_CHANGE;
       playerId: string;
       delta: number;
       source: string;
+      level?: TGameEventLevel;
+      at?: number;
     }
   | {
+      id?: string;
       type: EGameEventType.SECTOR_COMPLETED;
       sectorId: string;
       winnerId: string;
+      details?: Record<string, unknown>;
+      level?: TGameEventLevel;
+      at?: number;
     }
   | {
+      id?: string;
+      type: EGameEventType.TRACE_MARKED;
+      playerId: string;
+      traceColor: string;
+      alienIndex: number;
+      isOverflow: boolean;
+      details?: Record<string, unknown>;
+      level?: TGameEventLevel;
+      at?: number;
+    }
+  | {
+      id?: string;
       type: EGameEventType.ALIEN_DISCOVERED;
       alienType: EAlienType;
+      alienIndex?: number;
+      details?: Record<string, unknown>;
+      level?: TGameEventLevel;
+      at?: number;
     }
   | {
+      id?: string;
       type: EGameEventType.ROTATION;
       discIndex: number;
+      level?: TGameEventLevel;
+      at?: number;
     }
   | {
+      id?: string;
       type: EGameEventType.ROUND_END;
       round: number;
+      level?: TGameEventLevel;
+      at?: number;
     }
   | {
+      id?: string;
       type: EGameEventType.GAME_END;
       finalScores: Record<string, number>;
+      level?: TGameEventLevel;
+      at?: number;
     };
 
 export interface IGameWsEventPayloadMap {

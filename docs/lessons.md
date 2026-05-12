@@ -17,12 +17,16 @@
 - 生产路径 E2E 不使用 debug endpoint、localStorage 注入、raw websocket action 或 mock network；debug replay/checkpoint 只能作为明确标注的长前置补充。
 - Helper 必须处理真实 pending input（如 tuck-for-income），不能越过 UI 继续点击后续动作。
 - 截图证据必须直接露出用户点名元素；响应式布局导致分屏时，分别截图并附 DOM/test locator 证据。
+- 涉及 game 页 UI 的验收不能只停在 app shell 或 debug route；必须至少通过 UI 新建一个真实 game 并进入 `/game/{gameId}`，再断言目标区域。
 
 ## UI 语义渲染
 
 - 规则、奖励、desc 图标统一走 `DescRender` / `EffectFactory`；不要用颜色块、字母或临时图片替代。
 - Token/board 视觉要表达规则语义：solar anomaly token 是奖励 pill（trace 色辅助、desc icon 居中），alien trace slot 用同色 border 容器，hidden board 不泄露真实 trace。
 - Anomalies board 保持 red/yellow/blue 三列横排；单列内部按规则读法让低 index 在底部，压缩布局优先减 padding/slot 宽度，不牺牲 desc icon 可读性。
+- UI 缩放控件不能只改 `max-width`；如果用户预期布局变小，必须改实际 reserved `width`/`height`，并在浏览器里检查 `getBoundingClientRect()`，不只看 style attribute。
+- Text mode card 的价格应是左上角紧凑 readout，例如 `3 C` / `3 E`；数字更大更粗，资源字母更小，不要再用右上角 `#id + full priceType` 堆叠。
+- Text mode desc 不能直接输出翻译字符串；应先用通用 desc parser 安全拆分 `<br>` 和 `{token}`，换行渲染成真实 DOM，token 渲染成可读文本。
 
 ## Solo / Alien 规则覆盖
 

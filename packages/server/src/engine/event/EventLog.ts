@@ -1,4 +1,4 @@
-import type { TGameEvent } from './GameEvent.js';
+import { createEventId, type TGameEvent } from './GameEvent.js';
 
 const DEFAULT_EVENT_LOG_CAPACITY = 500;
 
@@ -12,7 +12,7 @@ export class EventLog {
   }
 
   public append(event: TGameEvent): void {
-    this.events.push(event);
+    this.events.push(event.id ? event : { ...event, id: createEventId() });
     if (this.events.length > this.capacity) {
       this.events.splice(0, this.events.length - this.capacity);
     }

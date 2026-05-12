@@ -4,8 +4,10 @@ import { ETechBonusType, ETechId } from '@seti/common/types/tech';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IGameContext } from '@/pages/game/GameContext';
+import { useGameViewStore } from '@/stores/gameViewStore';
 import {
   EFreeAction,
+  EGameEventType,
   EMainAction,
   EPhase,
   EPlanet,
@@ -94,6 +96,11 @@ function createMockRivalState(): IPublicRivalState {
 describe('GameLayout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useGameViewStore.setState({
+      activeTab: 'board',
+      hoveredPieceId: null,
+      zoom: 0.9,
+    });
     mockContextValue = createMockContext();
   });
 
@@ -185,6 +192,18 @@ describe('GameLayout', () => {
       expect(screen.getByTestId('solar-space-space-0')).toBeInTheDocument();
     });
 
+    it('keeps the solar board column compact so zoom frees right-side space', async () => {
+      await renderLayout();
+
+      const solarColumn = screen.getByTestId('board-tab-solar-column');
+      expect(solarColumn).toHaveClass('w-fit');
+      expect(solarColumn).toHaveClass('max-w-full');
+      expect(solarColumn).not.toHaveClass('mx-auto');
+      expect(screen.getByTestId('solar-board-panel')).toHaveStyle({
+        width: '708px',
+      });
+    });
+
     it('switches tab content on click', async () => {
       await renderLayout();
 
@@ -227,6 +246,39 @@ describe('GameLayout', () => {
       await renderLayout();
 
       expect(screen.getByText('7 cards')).toBeInTheDocument();
+    });
+
+    it('lets a playable hand card be played from its detail dialog', async () => {
+      const sendAction = vi.fn();
+      mockContextValue = createMockContext({
+        sendAction,
+        gameState: createMockGameState({
+          players: [
+            createMockPlayerState({
+              playerId: 'player-1',
+              handSize: 2,
+              hand: [createCard('play-1'), createCard('play-2')],
+            }),
+            createMockPlayerState({
+              playerId: 'player-2',
+              playerName: 'Pilot',
+              seatIndex: 1,
+              color: 'blue',
+            }),
+          ],
+        }),
+      });
+
+      await renderLayout();
+
+      fireEvent.click(screen.getByTestId('hand-card-play-2'));
+      const dialog = screen.getByRole('dialog');
+      fireEvent.click(within(dialog).getByTestId('card-detail-play-card'));
+
+      expect(sendAction).toHaveBeenCalledWith({
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: 1 },
+      });
     });
 
     it('renders the rival panel for solo games', async () => {
@@ -410,6 +462,97 @@ describe('GameLayout', () => {
       await renderLayout();
 
       expect(screen.getByTestId('free-action-bar')).toBeInTheDocument();
+    });
+
+    it('offers blue-tech bottom data slots before the top row is full', async () => {
+      const sendFreeAction = vi.fn();
+      mockContextValue = createMockContext({
+        sendFreeAction,
+        gameState: createMockGameState({
+          players: [
+            createMockPlayerState({
+              playerId: 'player-1',
+              dataPoolCount: 2,
+              computer: {
+                columns: [
+                  {
+                    topFilled: true,
+                    topReward: { vp: 2 },
+                    techId: ETechId.COMPUTER_VP_CREDIT,
+                    hasBottomSlot: true,
+                    bottomFilled: false,
+                    bottomReward: { credits: 1 },
+                    techSlotAvailable: true,
+                  },
+                  {
+                    topFilled: true,
+                    topReward: null,
+                    techId: null,
+                    hasBottomSlot: false,
+                    bottomFilled: false,
+                    bottomReward: null,
+                    techSlotAvailable: true,
+                  },
+                  {
+                    topFilled: true,
+                    topReward: null,
+                    techId: null,
+                    hasBottomSlot: false,
+                    bottomFilled: false,
+                    bottomReward: null,
+                    techSlotAvailable: true,
+                  },
+                  {
+                    topFilled: true,
+                    topReward: null,
+                    techId: null,
+                    hasBottomSlot: false,
+                    bottomFilled: false,
+                    bottomReward: null,
+                    techSlotAvailable: true,
+                  },
+                  {
+                    topFilled: false,
+                    topReward: null,
+                    techId: null,
+                    hasBottomSlot: false,
+                    bottomFilled: false,
+                    bottomReward: null,
+                    techSlotAvailable: true,
+                  },
+                  {
+                    topFilled: false,
+                    topReward: null,
+                    techId: null,
+                    hasBottomSlot: false,
+                    bottomFilled: false,
+                    bottomReward: null,
+                    techSlotAvailable: true,
+                  },
+                ],
+              },
+            }),
+          ],
+        }),
+      });
+      await renderLayout();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+      fireEvent.click(screen.getByTestId('free-action-PLACE_DATA'));
+
+      const dialog = screen.getByRole('dialog');
+      expect(
+        within(dialog).getByRole('button', { name: /Top slot C5/i }),
+      ).toBeInTheDocument();
+
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: /Bottom slot C1/i }),
+      );
+
+      expect(sendFreeAction).toHaveBeenCalledWith({
+        type: EFreeAction.PLACE_DATA,
+        slotIndex: 0,
+      });
     });
 
     it('sends complete mission with projected branch metadata when exactly one branch is completable', async () => {
@@ -701,6 +844,56 @@ describe('GameLayout', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Event Log' }));
 
       expect(screen.getByText('Event Log')).toBeInTheDocument();
+    });
+
+    it('keeps a compact event log in the board area across tab changes', async () => {
+      mockContextValue = createMockContext({
+        events: [
+          {
+            type: EGameEventType.ACTION,
+            level: 'info',
+            playerId: 'player-1',
+            action: EMainAction.SCAN,
+          } as never,
+        ],
+      });
+
+      await renderLayout();
+
+      expect(screen.getByTestId('event-log-compact')).toHaveTextContent(
+        'Commander used Scan',
+      );
+
+      fireEvent.click(screen.getByRole('tab', { name: 'Tech' }));
+
+      expect(screen.getByTestId('event-log-compact')).toHaveTextContent(
+        'Commander used Scan',
+      );
+    });
+
+    it('opens a scrollable full log dialog from the compact board log', async () => {
+      mockContextValue = createMockContext({
+        events: [
+          {
+            type: EGameEventType.ACTION,
+            level: 'info',
+            playerId: 'player-1',
+            action: EMainAction.SCAN,
+          } as never,
+        ],
+      });
+
+      await renderLayout();
+
+      fireEvent.click(screen.getByTestId('event-log-compact'));
+
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(
+        within(screen.getByRole('dialog')).getByText('Event Log'),
+      ).toBeInTheDocument();
+      expect(
+        within(screen.getByRole('dialog')).getByText('Commander used Scan'),
+      ).toBeInTheDocument();
     });
   });
 

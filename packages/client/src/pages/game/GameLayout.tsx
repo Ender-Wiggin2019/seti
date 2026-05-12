@@ -1,4 +1,5 @@
 import { createDefaultSetupConfig } from '@seti/common/constant/sectorSetup';
+import { getAvailableMainActions } from '@seti/common/rules';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EPlanet, EResource } from '@seti/common/types/element';
 import { ALL_TECH_IDS } from '@seti/common/types/tech';
@@ -28,6 +29,7 @@ import { CardDetail } from '@/features/cards/CardDetail';
 import { CardRowView } from '@/features/cards/CardRowView';
 import { EndOfRoundStacks } from '@/features/cards/EndOfRoundStacks';
 import { InputRenderer } from '@/features/input/InputRenderer';
+import { EventLog } from '@/features/log';
 import { HandDock, PlayedMissions, PlayerDashboard } from '@/features/player';
 import type { IMilestoneItem } from '@/features/scoring';
 import { MilestoneTrack } from '@/features/scoring';
@@ -301,6 +303,31 @@ export function GameLayout({
     setDetailOpen(true);
   };
 
+  const detailCardHandIndex =
+    detailCard && myPlayer?.hand
+      ? myPlayer.hand.findIndex((card) => card.id === detailCard.id)
+      : -1;
+  const canPlayDetailCard =
+    detailCardHandIndex >= 0 &&
+    isMyTurn &&
+    pendingInput === null &&
+    gameState?.phase === EPhase.AWAIT_MAIN_ACTION &&
+    myPlayer !== undefined &&
+    getAvailableMainActions(myPlayer, gameState).includes(
+      EMainAction.PLAY_CARD,
+    );
+
+  const handlePlayDetailCard = (): void => {
+    if (!canPlayDetailCard) return;
+
+    sendAction({
+      type: EMainAction.PLAY_CARD,
+      payload: { cardIndex: detailCardHandIndex },
+    });
+    setDetailOpen(false);
+    setDetailCard(null);
+  };
+
   const handlePlanetMainActionSelect = (planet: EPlanet): void => {
     if (!planetActionMode) return;
     sendAction({
@@ -409,6 +436,8 @@ export function GameLayout({
         card={detailCard}
         open={detailOpen}
         onOpenChange={setDetailOpen}
+        canPlayCard={canPlayDetailCard}
+        onPlayCard={handlePlayDetailCard}
       />
 
       <GameOverDialog />
@@ -853,6 +882,7 @@ function TopActionBar({
         gameState={gameState}
         myPlayerId={myPlayerId}
         isMyTurn={isMyTurn}
+        pendingInput={pendingInput}
         onActionClick={onFreeActionClick}
       />
 
@@ -1100,8 +1130,14 @@ function BoardTabs({
   onSelectMainActionPlanet: (planet: EPlanet) => void;
 }): React.JSX.Element {
   const { t } = useTranslation('common');
-  const { gameState, myPlayerId, pendingInput, sendFreeAction, sendInput } =
-    useGameContext();
+  const {
+    gameState,
+    myPlayerId,
+    pendingInput,
+    events,
+    sendFreeAction,
+    sendInput,
+  } = useGameContext();
   const playerColors =
     gameState?.players.reduce<Record<string, string>>((acc, p) => {
       acc[p.playerId] = p.color;
@@ -1160,7 +1196,10 @@ function BoardTabs({
 
       <div className='min-h-0 flex-1 overflow-auto p-4'>
         <TabsContent value='board' className='mt-0 h-full'>
-          <div className='mx-auto w-full max-w-[800px] space-y-3'>
+          <div
+            data-testid='board-tab-solar-column'
+            className='w-fit max-w-full space-y-3'
+          >
             {gameState && (
               <SolarSystemView
                 solarSystem={gameState.solarSystem}
@@ -1344,6 +1383,13 @@ function BoardTabs({
           )}
         </TabsContent>
       </div>
+
+      <EventLog
+        compact
+        className='lg:hidden'
+        events={events}
+        players={gameState?.players ?? []}
+      />
     </Tabs>
   );
 }
@@ -1696,22 +1742,28 @@ function buildPlaceDataOptions(
   if (!columns.length) return [];
 
   const topIndex = columns.findIndex((col) => !col.topFilled);
+  const options: IPlaceDataOption[] = [];
+
   if (topIndex >= 0) {
-    return [
-      {
-        slotIndex: topIndex,
-        row: 'top',
-      },
-    ];
+    options.push({
+      slotIndex: topIndex,
+      row: 'top',
+    });
   }
 
-  return columns
-    .map((col, index) => ({ col, index }))
-    .filter(({ col }) => col.hasBottomSlot && !col.bottomFilled)
-    .map(({ index }) => ({
-      slotIndex: index,
-      row: 'bottom' as const,
-    }));
+  options.push(
+    ...columns
+      .map((col, index) => ({ col, index }))
+      .filter(
+        ({ col }) => col.hasBottomSlot && col.topFilled && !col.bottomFilled,
+      )
+      .map(({ index }) => ({
+        slotIndex: index,
+        row: 'bottom' as const,
+      })),
+  );
+
+  return options;
 }
 
 function PlaceDataDialog({

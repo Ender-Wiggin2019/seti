@@ -10,6 +10,7 @@ describe('behaviorFromEffects', () => {
       e.SCORE(3),
       e.MOVE(1),
       e.CARD(2),
+      e.CARD_ANY(1),
     ]);
 
     expect(behavior.gainResources).toEqual({
@@ -19,6 +20,7 @@ describe('behaviorFromEffects', () => {
     expect(behavior.gainScore).toBe(3);
     expect(behavior.gainMovement).toBe(1);
     expect(behavior.drawCards).toBe(2);
+    expect(behavior.drawAnyCards).toBe(1);
   });
 
   it('maps action-like icons and trace/tech icons', () => {

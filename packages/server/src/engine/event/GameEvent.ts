@@ -1,69 +1,96 @@
+import type {
+  IFreeActionRequest,
+  IInputResponse,
+  IMainActionRequest,
+} from '@seti/common/types/protocol/actions';
 import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
+import {
+  EGameEventType,
+  type TGameEvent,
+  type TGameEventLevel,
+} from '@seti/common/types/protocol/events';
 
-export type TGameEvent =
-  | {
-      type: 'ACTION';
-      playerId: string;
-      action: string;
-      details?: Record<string, unknown>;
-      at: number;
-    }
-  | {
-      type: 'RESOURCE_CHANGE';
-      playerId: string;
-      resource: string;
-      delta: number;
-      at: number;
-    }
-  | {
-      type: 'SCORE_CHANGE';
-      playerId: string;
-      delta: number;
-      source: string;
-      at: number;
-    }
-  | {
-      type: 'SECTOR_COMPLETED';
-      sectorId: string;
-      winnerId: string;
-      at: number;
-    }
-  | {
-      type: 'TRACE_MARKED';
-      playerId: string;
-      traceColor: ETrace;
-      alienIndex: number;
-      isOverflow: boolean;
-      at: number;
-    }
-  | {
-      type: 'ALIEN_DISCOVERED';
-      alienType: EAlienType;
-      alienIndex: number;
-      at: number;
-    }
-  | {
-      type: 'ROTATION';
-      discIndex: number;
-      at: number;
-    }
-  | {
-      type: 'ROUND_END';
-      round: number;
-      at: number;
-    }
-  | {
-      type: 'GAME_END';
-      finalScores: Record<string, number>;
-      at: number;
-    };
+export type { TGameEvent } from '@seti/common/types/protocol/events';
+
+let eventSequence = 0;
+
+export function createEventId(at: number = Date.now()): string {
+  eventSequence += 1;
+  if (eventSequence > Number.MAX_SAFE_INTEGER - 1) {
+    eventSequence = 1;
+  }
+  return `${at.toString(36)}-${eventSequence.toString(36)}`;
+}
+
+function eventTime(): number {
+  return Date.now();
+}
+
+function eventMeta(level: TGameEventLevel): {
+  id: string;
+  level: TGameEventLevel;
+  at: number;
+} {
+  const at = eventTime();
+  return { id: createEventId(at), level, at };
+}
 
 export function createActionEvent(
   playerId: string,
-  action: string,
+  action: IMainActionRequest | string,
+  details?: Record<string, unknown>,
+  level: TGameEventLevel = 'info',
+): TGameEvent {
+  return {
+    ...eventMeta(level),
+    type: EGameEventType.ACTION,
+    playerId,
+    action,
+    details,
+  };
+}
+
+export function createFreeActionEvent(
+  playerId: string,
+  action: IFreeActionRequest,
+  details?: Record<string, unknown>,
+  level: TGameEventLevel = 'info',
+): TGameEvent {
+  return {
+    ...eventMeta(level),
+    type: EGameEventType.FREE_ACTION,
+    playerId,
+    action,
+    details,
+  };
+}
+
+export function createInputEvent(
+  playerId: string,
+  response: IInputResponse,
   details?: Record<string, unknown>,
 ): TGameEvent {
-  return { type: 'ACTION', playerId, action, details, at: Date.now() };
+  return {
+    ...eventMeta('debug'),
+    type: EGameEventType.INPUT,
+    playerId,
+    response,
+    details,
+  };
+}
+
+export function createUndoEvent(
+  playerId: string,
+  turnIndex: number,
+  affectedPlayerIds: string[] = [],
+): TGameEvent {
+  return {
+    ...eventMeta('info'),
+    type: EGameEventType.UNDO,
+    playerId,
+    turnIndex,
+    affectedPlayerIds,
+  };
 }
 
 export function createTraceMarkedEvent(
@@ -73,12 +100,12 @@ export function createTraceMarkedEvent(
   isOverflow: boolean,
 ): TGameEvent {
   return {
-    type: 'TRACE_MARKED',
+    ...eventMeta('debug'),
+    type: EGameEventType.TRACE_MARKED,
     playerId,
     traceColor,
     alienIndex,
     isOverflow,
-    at: Date.now(),
   };
 }
 
@@ -87,19 +114,27 @@ export function createAlienDiscoveredEvent(
   alienIndex: number,
 ): TGameEvent {
   return {
-    type: 'ALIEN_DISCOVERED',
+    ...eventMeta('info'),
+    type: EGameEventType.ALIEN_DISCOVERED,
     alienType,
     alienIndex,
-    at: Date.now(),
   };
 }
 
 export function createRoundEndEvent(round: number): TGameEvent {
-  return { type: 'ROUND_END', round, at: Date.now() };
+  return {
+    ...eventMeta('info'),
+    type: EGameEventType.ROUND_END,
+    round,
+  };
 }
 
 export function createGameEndEvent(
   finalScores: Record<string, number>,
 ): TGameEvent {
-  return { type: 'GAME_END', finalScores, at: Date.now() };
+  return {
+    ...eventMeta('info'),
+    type: EGameEventType.GAME_END,
+    finalScores,
+  };
 }

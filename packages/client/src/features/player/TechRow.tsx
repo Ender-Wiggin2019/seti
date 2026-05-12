@@ -1,9 +1,9 @@
-import { ETech } from '@seti/common/types/element';
 import { ETechId, getTechDescriptor } from '@seti/common/types/tech';
 import { getTechPresentation } from '@seti/common/types/techPresentation';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 import { useTextMode } from '@/stores/debugStore';
+import { getTechTileImageById } from '../tech/techTileImages';
 
 interface ITechRowProps {
   techs: ETechId[];
@@ -85,22 +85,6 @@ const SCAN_SLOTS: ITechSlotConfig[] = [
   },
 ];
 
-function getTechTileImage(techId: ETechId): string {
-  const descriptor = getTechDescriptor(techId);
-  const { type, level } = descriptor;
-  if (type === ETech.PROBE) {
-    if (level === 0) return '/assets/seti/tech/tiles/techFly1_SE.0.0.3.webp';
-    if (level === 2) return '/assets/seti/tech/tiles/techFly3_SE0.2.jpg';
-    return `/assets/seti/tech/tiles/techFly${level + 1}.webp`;
-  }
-  if (type === ETech.SCAN) {
-    if (level === 2) return '/assets/seti/tech/tiles/techLook3_SE0.1.webp';
-    if (level === 3) return '/assets/seti/tech/tiles/techLook4_SE0.4.jpg';
-    return `/assets/seti/tech/tiles/techLook${level + 1}.webp`;
-  }
-  return `/assets/seti/tech/tiles/techComp${level + 1}.webp`;
-}
-
 interface ITechSlotProps {
   slot: ITechSlotConfig;
   acquired: boolean;
@@ -122,7 +106,7 @@ function TechSlot({
         defaultValue: slot.baseFallback ?? slot.fallback,
       });
   const imagePath = acquiredTech
-    ? getTechTileImage(slot.techId as ETechId)
+    ? getTechTileImageById(slot.techId as ETechId)
     : (slot.preTechImage ?? slot.baseImage ?? null);
 
   return (

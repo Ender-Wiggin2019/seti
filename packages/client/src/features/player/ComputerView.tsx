@@ -34,6 +34,7 @@ function getRewardLabel(
     energy?: number;
     publicity?: number;
     drawCard?: number;
+    anyCard?: number;
     tuckIncome?: number;
   } | null,
 ): string | null {
@@ -43,6 +44,7 @@ function getRewardLabel(
   if (reward.energy) return `${reward.energy}⚡`;
   if (reward.publicity) return `${reward.publicity}★`;
   if (reward.drawCard) return `${reward.drawCard}🃏`;
+  if (reward.anyCard) return `${reward.anyCard}Any`;
   if (reward.tuckIncome) return 'Tuck';
   return null;
 }

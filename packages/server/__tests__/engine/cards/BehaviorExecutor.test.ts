@@ -21,6 +21,7 @@ import { Deck } from '@/engine/deck/Deck.js';
 import { DeferredActionsQueue } from '@/engine/deferred/DeferredActionsQueue.js';
 import { EScanSubAction } from '@/engine/effects/scan/ScanActionPool.js';
 import { getSectorIndexByPlanet } from '@/engine/effects/scan/ScanEffectUtils.js';
+import { EventLog } from '@/engine/event/EventLog.js';
 import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
@@ -258,6 +259,32 @@ describe('BehaviorExecutor — integration', () => {
       expect(game.cardRow.length).toBe(3);
       expect(game.cardRow[2]).toBe('d3');
     });
+
+    it('drawAnyCards prompts for card-row-or-deck choice', () => {
+      const { game, player } = createIntegrationGame('beh-2-9-2-any-draw');
+      game.mainDeck = new Deck(['deck-card', 'refill-card'], []);
+      game.cardRow = ['row-card'];
+
+      const pending = drainReturningInput(game, () => {
+        getBehaviorExecutor().execute(
+          { drawAnyCards: 1 },
+          player,
+          game,
+          sampleCard(),
+        );
+      });
+
+      expect(pending?.toModel()).toMatchObject({
+        type: EPlayerInputType.OPTION,
+        title: 'Choose any card',
+      });
+      expect((pending?.toModel() as ISelectOptionInputModel).options).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: 'row:0:row-card' }),
+          expect.objectContaining({ id: 'deck' }),
+        ]),
+      );
+    });
   });
 
   describe('2.9.3 research tech runs against the real TechBoard', () => {
@@ -391,6 +418,7 @@ describe('BehaviorExecutor — integration', () => {
         cardRow: [{ id: 'row-yellow', sector: ESector.YELLOW }],
         mainDeck: new Deck<string>(['refill-a', 'refill-b', 'refill-c']),
         deferredActions: new DeferredActionsQueue(),
+        eventLog: new EventLog(),
         missionTracker: { recordEvent: () => undefined },
         solarSystem: {
           getSectorIndexOfPlanet: (planet: EPlanet) => {

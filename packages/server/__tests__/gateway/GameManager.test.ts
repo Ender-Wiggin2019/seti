@@ -207,6 +207,37 @@ describe('GameManager', () => {
     });
   });
 
+  describe('undoToTurnStart', () => {
+    it('returns and persists an undo log event after rollback', async () => {
+      const game = createTestGame();
+      manager.registerGame(game);
+      game.turnLocked = false;
+
+      const result = await manager.undoToTurnStart('game-mgr-test', 'p1');
+      const events = (result as { events?: unknown[] }).events;
+
+      expect(events).toEqual([
+        expect.objectContaining({
+          type: 'UNDO',
+          level: 'info',
+          playerId: 'p1',
+          turnIndex: expect.any(Number),
+        }),
+      ]);
+
+      const restored = await manager.getGame('game-mgr-test');
+      expect(restored.eventLog.toArray()).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: 'UNDO',
+            level: 'info',
+            playerId: 'p1',
+          }),
+        ]),
+      );
+    });
+  });
+
   describe('processInput', () => {
     it('rejects a response that is missing the current inputId before mutating the prompt', async () => {
       const game = createTestGame();

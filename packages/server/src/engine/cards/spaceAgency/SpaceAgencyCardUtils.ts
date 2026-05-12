@@ -4,7 +4,9 @@ import { getTechDescriptor } from '@seti/common/types/tech';
 import type { Sector } from '@/engine/board/Sector.js';
 import { EPriority } from '@/engine/deferred/Priority.js';
 import { SimpleDeferredAction } from '@/engine/deferred/SimpleDeferredAction.js';
+import { AnyCardChoiceEffect } from '@/engine/effects/card/AnyCardChoiceEffect.js';
 import type { IGame } from '@/engine/IGame.js';
+import type { IPlayerInput } from '@/engine/input/PlayerInput.js';
 import {
   EMissionEventType,
   type IMissionRuntimeState,
@@ -72,44 +74,56 @@ export function gainFreeActionCorner(
   game: IGame,
   cardId: string,
   multiplier: number,
-): void {
-  if (!hasCardData(cardId)) return;
+  onComplete?: () => IPlayerInput | undefined,
+): IPlayerInput | undefined {
+  if (!hasCardData(cardId)) return onComplete?.();
 
   const cardData = loadCardData(cardId);
-  for (const reward of cardData.freeAction ?? []) {
+  const rewards = cardData.freeAction ?? [];
+  const applyAt = (index: number): IPlayerInput | undefined => {
+    const reward = rewards[index];
+    if (reward === undefined) {
+      return onComplete?.();
+    }
+
     const amount = reward.value * multiplier;
-    if (amount <= 0) continue;
+    if (amount <= 0) return applyAt(index + 1);
 
     switch (reward.type) {
       case EResource.CREDIT:
         player.resources.gain({ credits: amount });
-        break;
+        return applyAt(index + 1);
       case EResource.ENERGY:
         player.resources.gain({ energy: amount });
-        break;
+        return applyAt(index + 1);
       case EResource.PUBLICITY:
         player.resources.gain({ publicity: amount });
-        break;
+        return applyAt(index + 1);
       case EResource.DATA:
         player.resources.gain({ data: amount });
-        break;
+        return applyAt(index + 1);
       case EResource.SIGNAL_TOKEN:
         player.resources.gain({ signalTokens: amount });
-        break;
+        return applyAt(index + 1);
       case EResource.MOVE:
         player.gainMove(amount);
-        break;
+        return applyAt(index + 1);
       case EResource.SCORE:
         player.score += amount;
-        break;
+        return applyAt(index + 1);
       case EResource.CARD:
-      case EResource.CARD_ANY:
         drawCards(player, game, amount);
-        break;
+        return applyAt(index + 1);
+      case EResource.CARD_ANY:
+        return AnyCardChoiceEffect.execute(player, game, amount, () =>
+          applyAt(index + 1),
+        );
       default:
-        break;
+        return applyAt(index + 1);
     }
-  }
+  };
+
+  return applyAt(0);
 }
 
 export function drawCards(player: IPlayer, game: IGame, count: number): void {
@@ -150,38 +164,40 @@ export function gainIncomeCornerResource(
   player: IPlayer,
   game: IGame,
   cardId: string,
-): void {
-  if (!hasCardData(cardId)) return;
+  onComplete?: () => IPlayerInput | undefined,
+): IPlayerInput | undefined {
+  if (!hasCardData(cardId)) return onComplete?.();
 
   const income = loadCardData(cardId).income;
   switch (income) {
     case EResource.CREDIT:
       player.resources.gain({ credits: 1 });
-      break;
+      return onComplete?.();
     case EResource.ENERGY:
       player.resources.gain({ energy: 1 });
-      break;
+      return onComplete?.();
     case EResource.CARD:
-    case EResource.CARD_ANY:
       drawCards(player, game, 1);
-      break;
+      return onComplete?.();
+    case EResource.CARD_ANY:
+      return AnyCardChoiceEffect.execute(player, game, 1, onComplete);
     case EResource.DATA:
       player.resources.gain({ data: 1 });
-      break;
+      return onComplete?.();
     case EResource.PUBLICITY:
       player.resources.gain({ publicity: 1 });
-      break;
+      return onComplete?.();
     case EResource.SIGNAL_TOKEN:
       player.resources.gain({ signalTokens: 1 });
-      break;
+      return onComplete?.();
     case EResource.MOVE:
       player.gainMove(1);
-      break;
+      return onComplete?.();
     case EResource.SCORE:
       player.score += 1;
-      break;
+      return onComplete?.();
     default:
-      break;
+      return onComplete?.();
   }
 }
 

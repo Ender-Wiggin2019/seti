@@ -115,7 +115,7 @@ describe('SectorView', () => {
     expect(onSelectSector).toHaveBeenCalledWith(ESector.BLACK);
   });
 
-  it('hides image-mode counters and player markers while preserving data slots', () => {
+  it('hides image-mode counters while showing player markers that replaced data', () => {
     const pair = createPair();
     pair.sectors[0] = {
       ...pair.sectors[0],
@@ -144,7 +144,11 @@ describe('SectorView', () => {
     expect(screen.queryByText('blue-signal')).not.toBeInTheDocument();
     expect(screen.getByTestId('sector-node-north-0-slot-0')).toHaveAttribute(
       'data-signal-type',
-      'empty',
+      'player',
+    );
+    expect(screen.getByTestId('sector-node-north-0-slot-0')).toHaveAttribute(
+      'data-player-id',
+      'player-1',
     );
     expect(screen.getByTestId('sector-node-north-0-slot-1')).toHaveAttribute(
       'data-signal-type',

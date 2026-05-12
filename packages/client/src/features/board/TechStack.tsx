@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 import type { IPublicTechStack } from '@/types/re-exports';
 import { ETech } from '@/types/re-exports';
+import { getTechTileImageByCategory } from '../tech/techTileImages';
 
 const TECH_TYPE_I18N_KEY: Record<ETech, string> = {
   [ETech.ANY]: 'any',
@@ -10,20 +11,6 @@ const TECH_TYPE_I18N_KEY: Record<ETech, string> = {
   [ETech.SCAN]: 'scan',
   [ETech.COMPUTER]: 'computer',
 };
-
-function getTechTileImage(tech: ETech, level: number): string {
-  if (tech === ETech.PROBE) {
-    if (level === 0) return '/assets/seti/tech/tiles/techFly1_SE.0.0.3.webp';
-    if (level === 2) return '/assets/seti/tech/tiles/techFly3_SE0.2.jpg';
-    return `/assets/seti/tech/tiles/techFly${level + 1}.webp`;
-  }
-  if (tech === ETech.SCAN) {
-    if (level === 2) return '/assets/seti/tech/tiles/techLook3_SE0.1.webp';
-    if (level === 3) return '/assets/seti/tech/tiles/techLook4_SE0.4.jpg';
-    return `/assets/seti/tech/tiles/techLook${level + 1}.webp`;
-  }
-  return `/assets/seti/tech/tiles/techComp${level + 1}.webp`;
-}
 
 const TECH_BONUS_META: Partial<
   Record<ETechBonusType, { src?: string; label: string; shortLabel: string }>
@@ -140,7 +127,7 @@ export function TechStack({
 
       <div className='mt-2 grid grid-cols-[minmax(3.25rem,4.5rem),1fr] gap-2'>
         <img
-          src={getTechTileImage(stack.tech, stack.level)}
+          src={getTechTileImageByCategory(stack.tech, stack.level)}
           alt={t('client.tech_stack.tile_alt', {
             tech: techName,
             level: stack.level + 1,

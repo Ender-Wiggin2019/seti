@@ -2,6 +2,7 @@ import type { IComputerSlotReward } from '@seti/common/types/computer';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import { drawCard } from '../deck/drawCard.js';
+import { AnyCardChoiceEffect } from '../effects/card/AnyCardChoiceEffect.js';
 import { TuckCardForIncomeEffect } from '../effects/income/TuckCardForIncomeEffect.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
@@ -44,6 +45,23 @@ export class PlaceDataFreeAction {
     const computer = player.computer;
 
     const nextTopIndex = computer.getNextTopIndex();
+    const availableBottom = computer.getAvailableBottomIndices();
+    if (slotIndex !== undefined && availableBottom.includes(slotIndex)) {
+      const reward = player.data.placeFromPoolToComputer({
+        row: EComputerRow.BOTTOM,
+        index: slotIndex,
+      });
+      const pendingInput = reward
+        ? this.applyReward(player, game, reward)
+        : undefined;
+      return {
+        row: 'bottom',
+        index: slotIndex,
+        reward: reward ?? undefined,
+        pendingInput,
+      };
+    }
+
     if (nextTopIndex >= 0) {
       if (slotIndex !== undefined && slotIndex !== nextTopIndex) {
         throw new GameError(
@@ -67,7 +85,6 @@ export class PlaceDataFreeAction {
       };
     }
 
-    const availableBottom = computer.getAvailableBottomIndices();
     if (availableBottom.length > 0) {
       const nextBottomIndex =
         slotIndex !== undefined ? slotIndex : availableBottom[0];
@@ -119,8 +136,25 @@ export class PlaceDataFreeAction {
     if (reward.drawCard && reward.drawCard > 0) {
       drawCard(player, game, { source: 'base', count: reward.drawCard });
     }
+
+    const applyTuck = (): IPlayerInput | undefined => {
+      if (reward.tuckIncome && reward.tuckIncome > 0) {
+        return TuckCardForIncomeEffect.execute(player, game);
+      }
+      return undefined;
+    };
+
+    if (reward.anyCard && reward.anyCard > 0) {
+      return AnyCardChoiceEffect.execute(
+        player,
+        game,
+        reward.anyCard,
+        applyTuck,
+      );
+    }
+
     if (reward.tuckIncome && reward.tuckIncome > 0) {
-      return TuckCardForIncomeEffect.execute(player, game);
+      return applyTuck();
     }
     return undefined;
   }

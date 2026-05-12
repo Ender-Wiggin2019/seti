@@ -43,14 +43,14 @@ describe('Computer tech slot rewards (class-level)', () => {
     expect(tech.getComputerSlotReward(2)).toBeUndefined();
   });
 
-  it('comp-2: top slot +2VP, bottom slot draw 1 card', () => {
+  it('comp-2: top slot +2VP, bottom slot pick any card', () => {
     const tech = new ComputerVpCardTech();
     expect(tech.id).toBe(ETechId.COMPUTER_VP_CARD);
     expect(tech.getComputerSlotReward(0)).toEqual<IComputerSlotReward>({
       vp: 2,
     });
     expect(tech.getComputerSlotReward(1)).toEqual<IComputerSlotReward>({
-      drawCard: 1,
+      anyCard: 1,
     });
     expect(tech.getComputerSlotReward(2)).toBeUndefined();
   });
@@ -220,11 +220,11 @@ describe('Phase 8.3: Blue Computer tech — integration (real Game + Place Data)
     expect(player.resources.energy).toBe(energyBefore + 1);
   });
 
-  it('8.3.2 [integration] num=2: top → +2 VP; bottom → draw 1 card', () => {
+  it('8.3.2 [integration] num=2: top → +2 VP; bottom → pick any card', () => {
     const { game, player } = createIntegrationGame('phase-8-3-2-comp-card');
     player.computer.placeTech(4, {
       techId: ETechId.COMPUTER_VP_CARD,
-      bottomReward: { drawCard: 1 },
+      bottomReward: { anyCard: 1 },
     });
 
     const scoreBefore = player.score;
@@ -243,15 +243,17 @@ describe('Phase 8.3: Blue Computer tech — integration (real Game + Place Data)
     player.dataPool.add(2);
     PlaceDataFreeAction.execute(player, game);
 
-    const handBefore = player.hand.length;
-    const deckBefore = game.mainDeck.drawSize;
+    game.cardRow = [{ id: 'row-card' } as never];
+    game.mainDeck.addToTop('deck-card');
 
     const resultBottom = PlaceDataFreeAction.execute(player, game, 4);
     expect(resultBottom.row).toBe('bottom');
     expect(resultBottom.index).toBe(4);
-    expect(resultBottom.reward).toEqual<IComputerSlotReward>({ drawCard: 1 });
-    expect(player.hand.length).toBe(handBefore + 1);
-    expect(game.mainDeck.drawSize).toBe(deckBefore - 1);
+    expect(resultBottom.reward).toEqual<IComputerSlotReward>({ anyCard: 1 });
+    expect(resultBottom.pendingInput?.toModel()).toMatchObject({
+      type: EPlayerInputType.OPTION,
+      title: 'Choose any card',
+    });
   });
 
   it('8.3.3 [integration] num=3: top → +2 VP; bottom → +2 publicity', () => {

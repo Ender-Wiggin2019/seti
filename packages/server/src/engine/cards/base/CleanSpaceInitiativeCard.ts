@@ -1,6 +1,7 @@
 import { EResource } from '@seti/common/types/element';
 import { EPriority } from '@/engine/deferred/Priority.js';
 import { SimpleDeferredAction } from '@/engine/deferred/SimpleDeferredAction.js';
+import { AnyCardChoiceEffect } from '@/engine/effects/card/AnyCardChoiceEffect.js';
 import { RefillCardRowEffect } from '@/engine/effects/index.js';
 import type { IPlayerInput } from '@/engine/input/PlayerInput.js';
 import { EMissionEventType } from '@/engine/missions/IMission.js';
@@ -31,13 +32,14 @@ export class CleanSpaceInitiativeCard extends ImmediateCard {
         context.player,
         (game) => {
           const discarded = game.cardRow.splice(0, 3);
-          for (let index = 0; index < discarded.length; index += 1) {
-            const cardId = toCardId(discarded[index], `row-card-${index}`);
+          const discardedIds = discarded.map((card, index) =>
+            toCardId(card, `row-card-${index}`),
+          );
+          for (const cardId of discardedIds) {
             game.mainDeck.discard(cardId);
-            this.applyCornerReward(context, cardId);
           }
           RefillCardRowEffect.execute(game);
-          return undefined;
+          return this.applyCornerRewards(context, discardedIds);
         },
         EPriority.CORE_EFFECT,
       ),
@@ -45,15 +47,35 @@ export class CleanSpaceInitiativeCard extends ImmediateCard {
     return undefined;
   }
 
+  private applyCornerRewards(
+    context: ICardRuntimeContext,
+    cardIds: readonly string[],
+  ): IPlayerInput | undefined {
+    const applyCardAt = (index: number): IPlayerInput | undefined => {
+      const cardId = cardIds[index];
+      if (cardId === undefined) return undefined;
+      return this.applyCornerReward(context, cardId, () =>
+        applyCardAt(index + 1),
+      );
+    };
+
+    return applyCardAt(0);
+  }
+
   private applyCornerReward(
     context: ICardRuntimeContext,
     cardId: string,
-  ): void {
-    if (!hasCardData(cardId)) return;
+    onComplete?: () => IPlayerInput | undefined,
+  ): IPlayerInput | undefined {
+    if (!hasCardData(cardId)) return onComplete?.();
     const cardData = loadCardData(cardId);
-    for (const cornerReward of cardData.freeAction ?? []) {
+    const rewards = cardData.freeAction ?? [];
+    const applyAt = (index: number): IPlayerInput | undefined => {
+      const cornerReward = rewards[index];
+      if (cornerReward === undefined) return onComplete?.();
+
       const value = cornerReward.value;
-      if (value <= 0) continue;
+      if (value <= 0) return applyAt(index + 1);
       context.game.missionTracker.recordEvent({
         type: EMissionEventType.CARD_CORNER_USED,
         resourceType: cornerReward.type,
@@ -62,37 +84,45 @@ export class CleanSpaceInitiativeCard extends ImmediateCard {
       switch (cornerReward.type) {
         case EResource.CREDIT:
           context.player.resources.gain({ credits: value });
-          break;
+          return applyAt(index + 1);
         case EResource.ENERGY:
           context.player.resources.gain({ energy: value });
-          break;
+          return applyAt(index + 1);
         case EResource.DATA:
           context.player.resources.gain({ data: value });
-          break;
+          return applyAt(index + 1);
         case EResource.PUBLICITY:
           context.player.resources.gain({ publicity: value });
-          break;
+          return applyAt(index + 1);
         case EResource.SIGNAL_TOKEN:
           context.player.resources.gain({ signalTokens: value });
-          break;
+          return applyAt(index + 1);
         case EResource.SCORE:
           context.player.score += value;
-          break;
+          return applyAt(index + 1);
         case EResource.MOVE:
           context.player.gainMove(value);
-          break;
+          return applyAt(index + 1);
         case EResource.CARD:
-        case EResource.CARD_ANY:
-          for (let index = 0; index < value; index += 1) {
+          for (let drawIndex = 0; drawIndex < value; drawIndex += 1) {
             const drawn = context.game.mainDeck.draw();
             if (drawn === undefined) break;
             context.player.hand.push(drawn);
             context.game.lockCurrentTurn();
           }
-          break;
+          return applyAt(index + 1);
+        case EResource.CARD_ANY:
+          return AnyCardChoiceEffect.execute(
+            context.player,
+            context.game,
+            value,
+            () => applyAt(index + 1),
+          );
         default:
-          break;
+          return applyAt(index + 1);
       }
-    }
+    };
+
+    return applyAt(0);
   }
 }

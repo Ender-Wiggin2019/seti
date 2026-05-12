@@ -17,8 +17,9 @@ describe('EventEntry', () => {
       />,
     );
 
-    expect(screen.getByText(/Ada used SCAN/)).toBeInTheDocument();
-    expect(screen.getByText('ACTION')).toBeInTheDocument();
+    expect(screen.getByText(/Ada used Scan/)).toBeInTheDocument();
+    expect(screen.getByText('Info')).toBeInTheDocument();
+    expect(screen.queryByText('ACTION')).not.toBeInTheDocument();
   });
 
   it('renders score change event', () => {

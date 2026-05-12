@@ -87,11 +87,58 @@ describe('Orbit action', () => {
     ]);
     expect(player.score).toBe(4);
     expect(player.resources.data).toBe(1);
-    expect(player.hand).toHaveLength(handBefore + 1);
-    expect(player.waitingFor?.toModel().type).toBe(EPlayerInputType.CARD);
+    expect(player.hand).toHaveLength(handBefore);
+    expect(player.waitingFor?.toModel()).toMatchObject({
+      type: EPlayerInputType.OPTION,
+      title: 'Choose any card',
+    });
 
     resolveAllInputsDefault(game, player);
     expect(player.tuckedIncomeCards).toHaveLength(1);
+  });
+
+  it('offers the chosen Mars orbit any-card reward in the following tuck prompt', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'orbit-mars-any-card-before-tuck',
+    );
+    skipSetupTucks(game);
+    const player = game.players[0];
+    const selectedCardId = 'mars-row-choice';
+    placeProbeOnPlanet(game, player.id, EPlanet.MARS, 1);
+    player.probesInSpace = 1;
+    game.cardRow = [selectedCardId];
+    game.mainDeck.addToTop('mars-row-replacement');
+
+    game.processMainAction(player.id, {
+      type: EMainAction.ORBIT,
+      payload: { planet: EPlanet.MARS },
+    });
+
+    const optionModel = player.waitingFor?.toModel();
+    expect(optionModel?.type).toBe(EPlayerInputType.OPTION);
+    const rowOption =
+      optionModel?.type === EPlayerInputType.OPTION
+        ? optionModel.options.find((option) =>
+            option.id.startsWith(`row:0:${selectedCardId}`),
+          )
+        : undefined;
+    expect(rowOption).toBeDefined();
+    if (!rowOption) throw new Error('Expected row option for Mars reward');
+
+    game.processInput(player.id, {
+      type: EPlayerInputType.OPTION,
+      optionId: rowOption.id,
+    });
+
+    const tuckModel = player.waitingFor?.toModel();
+    expect(tuckModel?.type).toBe(EPlayerInputType.CARD);
+    const tuckCardIds =
+      tuckModel?.type === EPlayerInputType.CARD
+        ? tuckModel.cards.map((card) => card.id)
+        : [];
+    expect(tuckCardIds).toContain(selectedCardId);
   });
 
   it('only grants +3 VP for the first orbiter on a planet', () => {
@@ -216,8 +263,16 @@ describe('Orbit action', () => {
       expect(player.score).toBe(scoreBefore + scoreDelta);
       expect(player.resources.publicity).toBe(publicityBefore);
       expect(player.resources.data).toBe(dataBefore + dataDelta);
-      expect(player.hand).toHaveLength(handBefore + cardDraws);
-      expect(player.waitingFor?.toModel().type).toBe(EPlayerInputType.CARD);
+      if (planet === EPlanet.MARS) {
+        expect(player.hand).toHaveLength(handBefore);
+        expect(player.waitingFor?.toModel()).toMatchObject({
+          type: EPlayerInputType.OPTION,
+          title: 'Choose any card',
+        });
+      } else {
+        expect(player.hand).toHaveLength(handBefore + cardDraws);
+        expect(player.waitingFor?.toModel().type).toBe(EPlayerInputType.CARD);
+      }
 
       resolveAllInputsDefault(game, player);
       expect(player.tuckedIncomeCards).toHaveLength(tuckedCardsBefore + 1);

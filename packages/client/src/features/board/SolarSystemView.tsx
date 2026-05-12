@@ -19,9 +19,10 @@ import {
   type TTraceRewardPresentation,
   toTraceRewardPresentations,
 } from '@seti/common/utils/alienTracePresentation';
-import { useMemo, useState } from 'react';
+import { type CSSProperties, useMemo, useState } from 'react';
 import { cn } from '@/lib/cn';
 import { useTextMode } from '@/stores/debugStore';
+import { useGameViewStore } from '@/stores/gameViewStore';
 import type {
   IInputResponse,
   IPlayerInputModel,
@@ -42,6 +43,11 @@ import { WheelLayer } from './WheelLayer';
 
 const WHEEL_RENDER_SIZE_PERCENT = [34, 48, 62, 100] as const;
 const WHEEL_IMAGE_SIZE_PX = [397, 548, 702, 1125] as const;
+const SOLAR_BOARD_BASE_SIZE_PX = 760;
+const SOLAR_BOARD_PANEL_HORIZONTAL_PADDING_PX = 24;
+const SOLAR_BOARD_ZOOM_STEP = 0.06;
+const SOLAR_BOARD_MIN_ZOOM = 0.72;
+const SOLAR_BOARD_MAX_ZOOM = 1.08;
 const DEFAULT_PROBE_INSET_PX_BY_RING: Readonly<Record<1 | 2 | 3 | 4, number>> =
   {
     1: 89,
@@ -191,6 +197,14 @@ function normalizeRingIndex(ringIndex: number): 1 | 2 | 3 | 4 | null {
 
 function normalizeAngleDeg(angleDeg: number): number {
   return ((angleDeg % 360) + 360) % 360;
+}
+
+function clampSolarBoardZoom(zoom: number): number {
+  return Math.min(SOLAR_BOARD_MAX_ZOOM, Math.max(SOLAR_BOARD_MIN_ZOOM, zoom));
+}
+
+function formatZoomPercent(zoom: number): string {
+  return `${Math.round(zoom * 100)}%`;
 }
 
 function spacePosition(
@@ -367,6 +381,27 @@ export function SolarSystemView({
     target?: TMovementTarget;
   } | null>(null);
   const textMode = useTextMode();
+  const solarBoardZoom = useGameViewStore((state) => state.zoom);
+  const setSolarBoardZoom = useGameViewStore((state) => state.setZoom);
+  const normalizedSolarBoardZoom = clampSolarBoardZoom(solarBoardZoom);
+  const solarBoardWidthPx = Math.round(
+    SOLAR_BOARD_BASE_SIZE_PX * normalizedSolarBoardZoom,
+  );
+  const solarBoardPanelWidthPx =
+    solarBoardWidthPx + SOLAR_BOARD_PANEL_HORIZONTAL_PADDING_PX;
+  const panelStyle: CSSProperties = {
+    width: `${solarBoardPanelWidthPx}px`,
+  };
+  const boardStyle: CSSProperties = {
+    width: `${solarBoardWidthPx}px`,
+    ...(textMode
+      ? { backgroundColor: 'rgba(8, 13, 25, 0.6)' }
+      : {
+          backgroundImage: 'url(/assets/seti/boards/background.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }),
+  };
 
   const spaceRadiiPercent = useMemo(() => {
     const insets = probeInsetPxByRing ?? DEFAULT_PROBE_INSET_PX_BY_RING;
@@ -770,6 +805,10 @@ export function SolarSystemView({
     onMoveProbe(path, target);
   }
 
+  function changeSolarBoardZoom(delta: number): void {
+    setSolarBoardZoom(clampSolarBoardZoom(normalizedSolarBoardZoom + delta));
+  }
+
   function handleSpaceClick(spaceId: string): void {
     const activeMovePath = visibleReachablePathBySpaceId.get(spaceId);
     if (activeMovePath) {
@@ -815,34 +854,70 @@ export function SolarSystemView({
   }
 
   return (
-    <section className='w-full rounded-lg border border-surface-700/40 bg-surface-900/30 p-3'>
-      <header className='mb-2 flex items-center justify-between gap-3'>
+    <section
+      data-testid='solar-board-panel'
+      className='shrink-0 rounded-lg border border-surface-700/40 bg-surface-900/30 p-3 transition-[width]'
+      style={panelStyle}
+    >
+      <header className='mb-2 flex flex-wrap items-center justify-between gap-2'>
         <h2 className='font-display text-base font-bold uppercase tracking-wider text-text-100'>
           Solar System
         </h2>
-        {solarSystem.nextRotateRing ? (
-          <div className='flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-text-400'>
-            <span>Next Rotate:</span>
-            <img
-              src={`/assets/seti/tech/bonuses/techRotation${solarSystem.nextRotateRing}.png`}
-              alt='Next rotate ring'
-              className='h-6 w-6'
-            />
+        <div className='flex items-center gap-2'>
+          <div
+            className='inline-flex h-7 items-center gap-1 rounded-sm border border-surface-700/70 bg-surface-950/60 px-1 font-mono text-[10px] text-text-300'
+            aria-label='Solar board zoom controls'
+          >
+            <span className='px-1 text-[11px] leading-none text-text-400'>
+              ⌕
+            </span>
+            <button
+              type='button'
+              aria-label='Zoom solar board out'
+              className='grid h-5 w-5 place-items-center rounded-sm border border-surface-700 bg-surface-900 text-text-100 transition-colors hover:bg-surface-800 disabled:cursor-not-allowed disabled:opacity-40'
+              disabled={
+                normalizedSolarBoardZoom <= SOLAR_BOARD_MIN_ZOOM + 0.001
+              }
+              onClick={() => changeSolarBoardZoom(-SOLAR_BOARD_ZOOM_STEP)}
+            >
+              -
+            </button>
+            <span
+              data-testid='solar-board-zoom-value'
+              className='w-8 text-center tabular-nums text-text-200'
+            >
+              {formatZoomPercent(normalizedSolarBoardZoom)}
+            </span>
+            <button
+              type='button'
+              aria-label='Zoom solar board in'
+              className='grid h-5 w-5 place-items-center rounded-sm border border-surface-700 bg-surface-900 text-text-100 transition-colors hover:bg-surface-800 disabled:cursor-not-allowed disabled:opacity-40'
+              disabled={
+                normalizedSolarBoardZoom >= SOLAR_BOARD_MAX_ZOOM - 0.001
+              }
+              onClick={() => changeSolarBoardZoom(SOLAR_BOARD_ZOOM_STEP)}
+            >
+              +
+            </button>
           </div>
-        ) : null}
+
+          {solarSystem.nextRotateRing ? (
+            <div className='flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-text-400'>
+              <span>Next Rotate:</span>
+              <img
+                src={`/assets/seti/tech/bonuses/techRotation${solarSystem.nextRotateRing}.png`}
+                alt='Next rotate ring'
+                className='h-6 w-6'
+              />
+            </div>
+          ) : null}
+        </div>
       </header>
 
       <div
-        className='relative mx-auto aspect-square w-full max-w-[760px] overflow-hidden rounded-md'
-        style={
-          textMode
-            ? { backgroundColor: 'rgba(8, 13, 25, 0.6)' }
-            : {
-                backgroundImage: 'url(/assets/seti/boards/background.jpg)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }
-        }
+        data-testid='solar-board-frame'
+        className='relative mx-auto aspect-square overflow-hidden rounded-md transition-[width]'
+        style={boardStyle}
       >
         <WheelLayer ring={4} angle={0} className='z-10' showImage={!textMode} />
         <WheelLayer
@@ -914,6 +989,8 @@ export function SolarSystemView({
           ).includes(myPlayerId);
           const isSelected = selectedMoveTarget?.spaceId === space.spaceId;
           const isReachable = reachable.has(space.spaceId);
+          const isMoveOverlayVisible =
+            isSelected || isReachable || (moveModeActive && hasMyProbe);
 
           return (
             <button
@@ -926,6 +1003,7 @@ export function SolarSystemView({
               style={{
                 left: `${space.xPercent}%`,
                 top: `${space.yPercent}%`,
+                zIndex: isMoveOverlayVisible ? 90 : undefined,
               }}
               onClick={() => handleSpaceClick(space.spaceId)}
               title={`${space.spaceId} - pieces: ${probeCount}`}

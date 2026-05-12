@@ -4,7 +4,7 @@ import { EAlienType, EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { AlienRegistry } from '@/engine/alien/AlienRegistry.js';
 import { OumuamuaAlienPlugin } from '@/engine/alien/plugins/OumuamuaAlienPlugin.js';
-import { SimpleDeferredAction } from '@/engine/deferred/SimpleDeferredAction.js';
+import { AnyCardChoiceEffect } from '@/engine/effects/card/AnyCardChoiceEffect.js';
 import { TuckCardForIncomeEffect } from '@/engine/effects/income/TuckCardForIncomeEffect.js';
 import { MarkSectorSignalEffect } from '@/engine/effects/scan/MarkSectorSignalEffect.js';
 import { GameError } from '@/shared/errors/GameError.js';
@@ -65,12 +65,13 @@ export class OrbitProbeEffect {
     player: IPlayer,
     game: IGame,
     remaining: number,
+    onComplete?: () => IPlayerInput | undefined,
   ): IPlayerInput | undefined {
     if (remaining <= 0) {
-      return undefined;
+      return onComplete?.();
     }
     return TuckCardForIncomeEffect.execute(player, game, () =>
-      this.buildTuckChain(player, game, remaining - 1),
+      this.buildTuckChain(player, game, remaining - 1, onComplete),
     );
   }
 
@@ -123,6 +124,55 @@ export class OrbitProbeEffect {
           ),
         };
       case 'card':
+        if (reward.source === 'any') {
+          const nextReward = rewards[index + 1];
+          if (nextReward?.type === 'tuck') {
+            const next = this.applyRewardChain(
+              player,
+              game,
+              planet,
+              rewards,
+              index + 2,
+              vpGained,
+              onComplete,
+            );
+            return {
+              vpGained: next.vpGained,
+              pendingInput: AnyCardChoiceEffect.execute(
+                player,
+                game,
+                reward.amount,
+                () =>
+                  this.buildTuckChain(
+                    player,
+                    game,
+                    nextReward.amount,
+                    () => next.pendingInput,
+                  ),
+              ),
+            };
+          }
+
+          return {
+            vpGained,
+            pendingInput: AnyCardChoiceEffect.execute(
+              player,
+              game,
+              reward.amount,
+              () =>
+                this.applyRewardChain(
+                  player,
+                  game,
+                  planet,
+                  rewards,
+                  index + 1,
+                  vpGained,
+                  onComplete,
+                ).pendingInput,
+            ),
+          };
+        }
+
         for (let index = 0; index < reward.amount; index += 1) {
           const drawn = game.mainDeck.drawWithReshuffle(game.random);
           if (drawn === undefined) {
@@ -140,13 +190,8 @@ export class OrbitProbeEffect {
           vpGained,
           onComplete,
         );
-      case 'tuck':
-        game.deferredActions.push(
-          new SimpleDeferredAction(player, (g) =>
-            this.buildTuckChain(player, g, reward.amount),
-          ),
-        );
-        return this.applyRewardChain(
+      case 'tuck': {
+        const next = this.applyRewardChain(
           player,
           game,
           planet,
@@ -155,6 +200,16 @@ export class OrbitProbeEffect {
           vpGained,
           onComplete,
         );
+        return {
+          vpGained: next.vpGained,
+          pendingInput: this.buildTuckChain(
+            player,
+            game,
+            reward.amount,
+            () => next.pendingInput,
+          ),
+        };
+      }
       case 'alien-card':
         return {
           vpGained,

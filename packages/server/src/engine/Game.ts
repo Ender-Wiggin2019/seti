@@ -41,7 +41,9 @@ import {
 import { EventLog } from './event/EventLog.js';
 import {
   createActionEvent,
+  createFreeActionEvent,
   createGameEndEvent,
+  createInputEvent,
   createRoundEndEvent,
 } from './event/GameEvent.js';
 import { processFreeAction } from './freeActions/processFreeAction.js';
@@ -294,6 +296,10 @@ export class Game implements IGame {
     return this.activePlayer;
   }
 
+  public get currentMainAction(): EMainAction | null {
+    return this.currentMainActionType;
+  }
+
   public get rotationCounter(): number {
     return this.solarSystem?.rotationCounter ?? this.rotationCounterValue;
   }
@@ -393,11 +399,7 @@ export class Game implements IGame {
     }
     this.closeMissionCheckpointIfSettled();
 
-    this.eventLog.append(
-      createActionEvent(playerId, `FREE_ACTION:${action.type}`, {
-        type: action.type,
-      }),
-    );
+    this.eventLog.append(createFreeActionEvent(playerId, action));
   }
 
   public processInput(playerId: string, response: IInputResponse): void {
@@ -415,6 +417,7 @@ export class Game implements IGame {
 
     try {
       const nextInput = player.waitingFor.process(response);
+      this.eventLog.append(createInputEvent(playerId, response));
       if (nextInput !== undefined) {
         player.waitingFor = nextInput;
         return;
@@ -510,9 +513,14 @@ export class Game implements IGame {
         player,
         (game) => {
           game.eventLog.append(
-            createActionEvent(player.id, `${action.type}:COST`, {
-              action: action.type,
-            }),
+            createActionEvent(
+              player.id,
+              'ACTION_COST',
+              {
+                sourceAction: action.type,
+              },
+              'debug',
+            ),
           );
           return undefined;
         },
@@ -522,6 +530,8 @@ export class Game implements IGame {
         player,
         (game) => {
           let pendingInput: PlayerInput | undefined;
+          let actionDetails: Record<string, unknown> | undefined;
+          let actionEventLogged = false;
 
           game.missionTracker.runInCheckpoint(() => {
             switch (action.type) {
@@ -534,6 +544,7 @@ export class Game implements IGame {
               }
               case EMainAction.ORBIT: {
                 const planet = this.getPlanetPayload(action);
+                actionDetails = { planet };
                 pendingInput = OrbitAction.execute(
                   player,
                   game,
@@ -548,6 +559,7 @@ export class Game implements IGame {
               case EMainAction.LAND: {
                 const planet = this.getPlanetPayload(action);
                 const isMoon = this.getMoonPayload(action);
+                actionDetails = { planet, isMoon };
                 player.land(planet, { isMoon });
                 game.missionTracker.recordEvent({
                   type: EMissionEventType.PROBE_LANDED,
@@ -557,6 +569,8 @@ export class Game implements IGame {
                 break;
               }
               case EMainAction.SCAN: {
+                game.eventLog.append(createActionEvent(player.id, action.type));
+                actionEventLogged = true;
                 pendingInput = ScanAction.execute(player, game);
                 game.missionTracker.recordEvent({
                   type: EMissionEventType.SCAN_PERFORMED,
@@ -596,6 +610,13 @@ export class Game implements IGame {
                   costType: result.priceType,
                   cardId: result.cardId,
                 });
+                actionDetails = {
+                  cardId: result.cardId,
+                  cardName: result.card?.name ?? result.cardId,
+                  destination: result.destination,
+                  price: result.price,
+                  priceType: result.priceType,
+                };
                 if (result.destination === 'mission') {
                   if (missionType === EMissionType.QUICK) {
                     registerMission();
@@ -625,7 +646,11 @@ export class Game implements IGame {
             }
           });
 
-          game.eventLog.append(createActionEvent(player.id, action.type));
+          if (!actionEventLogged) {
+            game.eventLog.append(
+              createActionEvent(player.id, action.type, actionDetails),
+            );
+          }
           return pendingInput;
         },
         EPriority.CORE_EFFECT,
@@ -634,9 +659,14 @@ export class Game implements IGame {
         player,
         (game) => {
           game.eventLog.append(
-            createActionEvent(player.id, `${action.type}:REWARD`, {
-              action: action.type,
-            }),
+            createActionEvent(
+              player.id,
+              'ACTION_REWARD',
+              {
+                sourceAction: action.type,
+              },
+              'debug',
+            ),
           );
           return undefined;
         },

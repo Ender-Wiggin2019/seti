@@ -105,7 +105,7 @@ export class PartOfEverydayLifeCard extends ImmediateCard {
 
           const income = incomeForCard(picked.id);
           if (income !== undefined) {
-            gainResourceByIncome(player, game, income);
+            return gainResourceByIncome(player, game, income);
           }
           return undefined;
         },

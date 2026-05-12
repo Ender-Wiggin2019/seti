@@ -53,6 +53,7 @@ function rewardToIcons(
     energy?: number;
     publicity?: number;
     drawCard?: number;
+    anyCard?: number;
     tuckIncome?: number;
   } | null,
 ): IIconItem[] {
@@ -66,6 +67,8 @@ function rewardToIcons(
     items.push(makeIconItem(EResource.PUBLICITY, reward.publicity));
   if (reward.drawCard)
     items.push(makeIconItem(EResource.CARD, reward.drawCard));
+  if (reward.anyCard)
+    items.push(makeIconItem(EResource.CARD_ANY, reward.anyCard));
   return items;
 }
 

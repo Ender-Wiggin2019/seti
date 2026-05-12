@@ -1,8 +1,16 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { RivalActionCardRender } from '@/features/solo';
 import { formatRivalActionKind } from '@/features/solo/rivalActionCardPresentation';
 import { cn } from '@/lib/cn';
 import {
+  EAlienType,
   EGameEventType,
   type TGameEvent,
   type TRivalActionCardId,
@@ -50,6 +58,13 @@ function EventGlyph({ type }: { type: EGameEventType }): React.JSX.Element {
           <path d='M2 5.5l2 2 4-4.5' />
         </svg>
       );
+    case EGameEventType.UNDO:
+      return (
+        <svg {...commonProps} className='h-2.5 w-2.5'>
+          <path d='M6.8 3H3.5a2.5 2.5 0 102 4' />
+          <path d='M4 1.8L2.8 3 4 4.2' />
+        </svg>
+      );
     case EGameEventType.RESOURCE_CHANGE:
       return (
         <svg {...commonProps} className='h-2.5 w-2.5'>
@@ -68,6 +83,14 @@ function EventGlyph({ type }: { type: EGameEventType }): React.JSX.Element {
         <svg {...commonProps} className='h-2.5 w-2.5'>
           <circle cx='5' cy='5' r='3.5' />
           <path d='M5 1.5v7M1.5 5h7' />
+        </svg>
+      );
+    case EGameEventType.TRACE_MARKED:
+      return (
+        <svg {...commonProps} className='h-2.5 w-2.5'>
+          <path d='M5 1.5v7' />
+          <path d='M2.5 4l2.5-2.5L7.5 4' />
+          <path d='M2.5 6l2.5 2.5L7.5 6' />
         </svg>
       );
     case EGameEventType.ALIEN_DISCOVERED:
@@ -115,9 +138,11 @@ const EVENT_TINT: Record<EGameEventType, string> = {
   [EGameEventType.ACTION]: 'text-[oklch(0.82_0.10_240)]',
   [EGameEventType.FREE_ACTION]: 'text-text-300',
   [EGameEventType.INPUT]: 'text-[oklch(0.82_0.10_150)]',
+  [EGameEventType.UNDO]: 'text-[oklch(0.82_0.12_75)]',
   [EGameEventType.RESOURCE_CHANGE]: 'text-text-300',
   [EGameEventType.SCORE_CHANGE]: 'text-[oklch(0.82_0.12_75)]',
   [EGameEventType.SECTOR_COMPLETED]: 'text-[oklch(0.82_0.10_240)]',
+  [EGameEventType.TRACE_MARKED]: 'text-[oklch(0.72_0.13_300)]',
   [EGameEventType.ALIEN_DISCOVERED]: 'text-[oklch(0.72_0.13_300)]',
   [EGameEventType.ROTATION]: 'text-text-500',
   [EGameEventType.ROUND_END]: 'text-text-400',
@@ -135,7 +160,7 @@ function getEventDescription(
   event: TGameEvent,
   playerNames: Record<string, string>,
   t: (key: string, options?: Record<string, unknown>) => string,
-): string {
+): React.ReactNode {
   switch (event.type) {
     case EGameEventType.ACTION: {
       const rivalAction = getRivalActionEventDetails(event);
@@ -150,8 +175,24 @@ function getEventDescription(
               }),
         });
       }
-      const actionLabel =
+      const actionName =
         typeof event.action === 'string' ? event.action : event.action.type;
+      const actionLabel = formatMainActionName(actionName, t);
+      const cardDetails = getCardDetails(event);
+      if (cardDetails) {
+        return (
+          <>
+            {t('client.event_entry.action', {
+              player: getPlayerName(event.playerId, playerNames),
+              action: actionLabel,
+            })}{' '}
+            <CardReference
+              cardId={cardDetails.cardId}
+              cardName={cardDetails.cardName}
+            />
+          </>
+        );
+      }
       return t('client.event_entry.action', {
         player: getPlayerName(event.playerId, playerNames),
         action: actionLabel,
@@ -160,12 +201,18 @@ function getEventDescription(
     case EGameEventType.FREE_ACTION:
       return t('client.event_entry.free_action', {
         player: getPlayerName(event.playerId, playerNames),
-        action: event.action.type,
+        action: formatFreeActionName(event.action.type, t),
       });
     case EGameEventType.INPUT:
       return t('client.event_entry.input', {
         player: getPlayerName(event.playerId, playerNames),
-        response: event.response.type,
+        response: prettifyToken(event.response.type),
+      });
+    case EGameEventType.UNDO:
+      return t('client.event_entry.undo', {
+        defaultValue: '{{player}} undid turn {{turn}}',
+        player: getPlayerName(event.playerId, playerNames),
+        turn: event.turnIndex,
       });
     case EGameEventType.RESOURCE_CHANGE:
       return t('client.event_entry.resource_change', {
@@ -175,22 +222,28 @@ function getEventDescription(
             ? t('client.event_entry.gained')
             : t('client.event_entry.lost'),
         amount: Math.abs(event.delta),
-        resource: event.resource,
+        resource: prettifyToken(event.resource),
       });
     case EGameEventType.SCORE_CHANGE:
       return t('client.event_entry.score_change', {
         player: getPlayerName(event.playerId, playerNames),
         delta: `${event.delta >= 0 ? '+' : ''}${event.delta}`,
-        source: event.source,
+        source: prettifyToken(event.source),
       });
     case EGameEventType.SECTOR_COMPLETED:
       return t('client.event_entry.sector_completed', {
         sector: event.sectorId,
         winner: getPlayerName(event.winnerId, playerNames),
       });
+    case EGameEventType.TRACE_MARKED:
+      return t('client.event_entry.trace_marked', {
+        defaultValue: '{{player}} marked {{trace}} trace',
+        player: getPlayerName(event.playerId, playerNames),
+        trace: prettifyToken(event.traceColor),
+      });
     case EGameEventType.ALIEN_DISCOVERED:
       return t('client.event_entry.alien_discovered', {
-        alien: event.alienType,
+        alien: formatAlienTypeName(event.alienType),
       });
     case EGameEventType.ROTATION:
       return t('client.event_entry.rotation', { disc: event.discIndex + 1 });
@@ -201,6 +254,129 @@ function getEventDescription(
     default:
       return t('client.event_entry.unknown');
   }
+}
+
+function formatMainActionName(
+  action: string,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string {
+  const internalLabels: Record<string, string> = {
+    ACTION_COST: t('client.event_entry.action_cost', {
+      defaultValue: 'Action Cost',
+    }),
+    ACTION_REWARD: t('client.event_entry.action_reward', {
+      defaultValue: 'Action Reward',
+    }),
+    CARD_CUSTOM_EFFECT_UNHANDLED: t('client.event_entry.card_unhandled', {
+      defaultValue: 'Unhandled Card Effect',
+    }),
+    CARD_MARK_TRACE: t('client.event_entry.card_mark_trace', {
+      defaultValue: 'Card Trace',
+    }),
+    SECTOR_MARKED: t('client.event_entry.sector_marked_action', {
+      defaultValue: 'Marked Sector',
+    }),
+    MILESTONE_CHECK: t('client.event_entry.milestone_check', {
+      defaultValue: 'Milestone Check',
+    }),
+    MILESTONE_GOLD_RESOLVED: t('client.event_entry.gold_resolved', {
+      defaultValue: 'Gold Milestone',
+    }),
+    MILESTONE_NEUTRAL_RESOLVED: t('client.event_entry.neutral_resolved', {
+      defaultValue: 'Neutral Milestone',
+    }),
+    RIVAL_ACTION: t('client.event_entry.rival_action_name', {
+      defaultValue: 'Rival Action',
+    }),
+    END_TURN: t('client.event_entry.end_turn', {
+      defaultValue: 'End Turn',
+    }),
+  };
+
+  if (internalLabels[action]) {
+    return internalLabels[action];
+  }
+
+  return t(`client.action_menu.actions.${action}`, {
+    defaultValue: prettifyToken(action),
+  });
+}
+
+function formatFreeActionName(
+  action: string,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string {
+  return t(`client.free_action_bar.actions.${action}`, {
+    defaultValue: prettifyToken(action),
+  });
+}
+
+function prettifyToken(token: string): string {
+  const parts = token.split(':');
+  const normalized = token.includes(':') ? (parts.at(-1) ?? token) : token;
+  return normalized
+    .split(/[_-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function formatAlienTypeName(alienType: EAlienType): string {
+  return prettifyToken(EAlienType[alienType] ?? String(alienType));
+}
+
+function getCardDetails(
+  event: TGameEvent,
+): { cardId: string; cardName: string } | null {
+  if (!('details' in event) || !event.details) {
+    return null;
+  }
+
+  const cardId = event.details.cardId;
+  if (typeof cardId !== 'string' || cardId.length === 0) {
+    return null;
+  }
+
+  const cardName =
+    typeof event.details.cardName === 'string' &&
+    event.details.cardName.length > 0
+      ? event.details.cardName
+      : cardId;
+
+  return { cardId, cardName };
+}
+
+function CardReference({
+  cardId,
+  cardName,
+}: {
+  cardId: string;
+  cardName: string;
+}): React.JSX.Element {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        type='button'
+        className='rounded-[3px] px-1 font-semibold text-accent-300 underline-offset-2 hover:text-accent-200 hover:underline'
+        onClick={(event) => {
+          event.stopPropagation();
+          setOpen(true);
+        }}
+      >
+        {cardName}
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className='max-w-sm'>
+          <DialogHeader>
+            <DialogTitle>{cardName}</DialogTitle>
+          </DialogHeader>
+          <p className='micro-label'>{cardId}</p>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 }
 
 function getRivalActionEventDetails(
@@ -249,7 +425,11 @@ export function EventEntry({
         <p className='text-xs leading-snug text-text-200'>
           {getEventDescription(event, playerNames, t)}
         </p>
-        <p className='micro-label mt-0.5 opacity-60'>{event.type}</p>
+        <p className='micro-label mt-0.5 opacity-60'>
+          {event.level === 'debug'
+            ? t('client.event_entry.debug', { defaultValue: 'Debug' })
+            : t('client.event_entry.info', { defaultValue: 'Info' })}
+        </p>
       </div>
       <span className='mt-0.5 font-mono text-[10px] tabular-nums text-text-500'>
         {String(index + 1).padStart(3, '0')}

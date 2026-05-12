@@ -173,6 +173,34 @@ function resolveUntilMissionPrompt(game: Game, player: Player): void {
   }
 }
 
+function resolveAnyCardChoiceIfAny(game: Game, player: Player): void {
+  const model = player.waitingFor?.toModel() as
+    | {
+        type: EPlayerInputType;
+        title?: string;
+        options?: Array<{ id: string }>;
+      }
+    | undefined;
+  if (
+    !model ||
+    model.type !== EPlayerInputType.OPTION ||
+    model.title !== 'Choose any card'
+  ) {
+    return;
+  }
+
+  const optionId =
+    model.options?.find((option) => option.id === 'deck')?.id ??
+    model.options?.[0]?.id;
+  if (!optionId) {
+    throw new Error('expected any-card input to have at least one option');
+  }
+  game.processInput(player.id, {
+    type: EPlayerInputType.OPTION,
+    optionId,
+  });
+}
+
 describe('PlayCardAction — integration', () => {
   describe('execute', () => {
     it('integration: ordinary immediate cards pay their own cost, apply their effect, and go to discard', () => {
@@ -353,6 +381,7 @@ describe('PlayCardAction — integration', () => {
         type: EPlayerInputType.OPTION,
         optionId: 'complete-51-0',
       });
+      resolveAnyCardChoiceIfAny(game, player);
 
       expect(player.playedMissions.map(resolveCardId)).not.toContain('51');
       expect(player.completedMissions.map(resolveCardId)).toContain('51');
@@ -406,6 +435,7 @@ describe('PlayCardAction — integration', () => {
         type: EFreeAction.COMPLETE_MISSION,
         cardId: '51',
       });
+      resolveAnyCardChoiceIfAny(game, player);
 
       expect(player.playedMissions.map(resolveCardId)).not.toContain('51');
       expect(player.completedMissions.map(resolveCardId)).toContain('51');
@@ -675,6 +705,7 @@ describe('PlayCardAction — integration', () => {
           type: EPlayerInputType.OPTION,
           optionId: expectedOptionId,
         });
+        resolveAnyCardChoiceIfAny(game, player);
         game.processEndTurn(player.id);
       };
 

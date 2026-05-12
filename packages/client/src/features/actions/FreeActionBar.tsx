@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
-import type { IPublicGameState } from '@/types/re-exports';
+import type { IPlayerInputModel, IPublicGameState } from '@/types/re-exports';
 import { EFreeAction } from '@/types/re-exports';
 
 const VISIBLE_ACTIONS: EFreeAction[] = [
@@ -25,6 +25,7 @@ export interface IFreeActionBarProps {
   gameState: IPublicGameState | null;
   myPlayerId: string;
   isMyTurn: boolean;
+  pendingInput?: IPlayerInputModel | null;
   onActionClick: (action: EFreeAction) => void;
 }
 
@@ -38,6 +39,7 @@ export function FreeActionBar({
   gameState,
   myPlayerId,
   isMyTurn,
+  pendingInput = null,
   onActionClick,
 }: IFreeActionBarProps): React.JSX.Element | null {
   const { t } = useTranslation('common');
@@ -56,8 +58,15 @@ export function FreeActionBar({
   }
 
   const available = new Set(getAvailableFreeActions(myPlayer, gameState));
+  const visibleActions =
+    pendingInput === null ? VISIBLE_ACTIONS : [EFreeAction.SPEND_SIGNAL_TOKEN];
+  const collapsibleActions = pendingInput === null ? COLLAPSIBLE_ACTIONS : [];
 
-  const availableCount = [...VISIBLE_ACTIONS, ...COLLAPSIBLE_ACTIONS].filter(
+  if (pendingInput !== null && !available.has(EFreeAction.SPEND_SIGNAL_TOKEN)) {
+    return null;
+  }
+
+  const availableCount = [...visibleActions, ...collapsibleActions].filter(
     (a) => available.has(a),
   ).length;
 
@@ -80,7 +89,7 @@ export function FreeActionBar({
           </span>
         </div>
 
-        {VISIBLE_ACTIONS.map((action) => (
+        {visibleActions.map((action) => (
           <FreeActionButton
             key={action}
             action={action}
@@ -95,7 +104,7 @@ export function FreeActionBar({
         ))}
 
         {expanded
-          ? COLLAPSIBLE_ACTIONS.map((action) => (
+          ? collapsibleActions.map((action) => (
               <FreeActionButton
                 key={action}
                 action={action}
@@ -110,26 +119,28 @@ export function FreeActionBar({
             ))
           : null}
 
-        <Button
-          variant='ghost'
-          size='sm'
-          className='ml-auto h-7 gap-1.5 px-2 font-mono text-[10px] uppercase tracking-[0.14em]'
-          onClick={() => setExpanded((prev) => !prev)}
-          data-testid='free-action-toggle'
-        >
-          {expanded
-            ? t('client.free_action_bar.collapse')
-            : t('client.free_action_bar.expand')}
-          <span
-            aria-hidden
-            className={cn(
-              'inline-block h-0 w-0 border-x-[4px] border-x-transparent transition-transform',
-              expanded
-                ? 'border-b-[5px] border-b-current'
-                : 'border-t-[5px] border-t-current',
-            )}
-          />
-        </Button>
+        {collapsibleActions.length > 0 ? (
+          <Button
+            variant='ghost'
+            size='sm'
+            className='ml-auto h-7 gap-1.5 px-2 font-mono text-[10px] uppercase tracking-[0.14em]'
+            onClick={() => setExpanded((prev) => !prev)}
+            data-testid='free-action-toggle'
+          >
+            {expanded
+              ? t('client.free_action_bar.collapse')
+              : t('client.free_action_bar.expand')}
+            <span
+              aria-hidden
+              className={cn(
+                'inline-block h-0 w-0 border-x-[4px] border-x-transparent transition-transform',
+                expanded
+                  ? 'border-b-[5px] border-b-current'
+                  : 'border-t-[5px] border-t-current',
+              )}
+            />
+          </Button>
+        ) : null}
       </div>
     </div>
   );

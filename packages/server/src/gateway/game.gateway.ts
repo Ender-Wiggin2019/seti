@@ -298,6 +298,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       turnIndex: result.turnIndex,
       affectedPlayerIds: result.interactedPlayerIds,
     });
+
+    for (const event of result.events) {
+      this.server.to(roomKey).emit('game:event', { event });
+    }
   }
 
   private getPlayerSockets(gameId: string, playerId: string): Socket[] {

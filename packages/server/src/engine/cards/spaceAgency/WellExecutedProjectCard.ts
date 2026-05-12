@@ -38,8 +38,7 @@ export class WellExecutedProject extends ImmediateCard {
           onSelect: ([selectedId]) => {
             context.player.removeCardById(selectedId);
             game.mainDeck.discard(selectedId);
-            gainFreeActionCorner(context.player, game, selectedId, 3);
-            return undefined;
+            return gainFreeActionCorner(context.player, game, selectedId, 3);
           },
         },
         'Discard a non-alien card',

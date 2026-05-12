@@ -34,7 +34,7 @@ export class ComputerVpEnergyTech extends Tech {
   }
 }
 
-/** Computer tech level 2: Top slot +2 VP, bottom slot draw 1 card. */
+/** Computer tech level 2: Top slot +2 VP, bottom slot pick any card. */
 export class ComputerVpCardTech extends Tech {
   public constructor() {
     super(ETechId.COMPUTER_VP_CARD, 'VP + Card');
@@ -44,7 +44,7 @@ export class ComputerVpCardTech extends Tech {
     slotIndex: number,
   ): IComputerSlotReward | undefined {
     if (slotIndex === 0) return TOP_SLOT_REWARD;
-    if (slotIndex === 1) return { drawCard: 1 };
+    if (slotIndex === 1) return { anyCard: 1 };
     return undefined;
   }
 }

@@ -41,6 +41,7 @@ const mockGameManager = {
   processAction: vi.fn(),
   processFreeAction: vi.fn(),
   processInput: vi.fn(),
+  undoToTurnStart: vi.fn(),
   getProjectedState: vi.fn(),
 };
 
@@ -288,6 +289,39 @@ describe('GameGateway', () => {
         retryable: true,
         severity: EErrorSeverity.BLOCKING,
       });
+    });
+  });
+
+  describe('handleGameUndo', () => {
+    it('broadcasts undo log events with the undo result', async () => {
+      const states = new Map([
+        ['user-1', { gameId: 'g1', round: 1 }],
+        ['user-2', { gameId: 'g1', round: 1 }],
+      ]);
+      const undoEvent = {
+        type: 'UNDO',
+        level: 'info',
+        playerId: 'user-1',
+        turnIndex: 3,
+        at: 100,
+      };
+      mockGameManager.undoToTurnStart.mockResolvedValue({
+        states,
+        undoneByPlayerId: 'user-1',
+        turnIndex: 3,
+        interactedPlayerIds: [],
+        events: [undoEvent],
+      });
+      const emit = vi.fn();
+      (gateway as unknown as { server: { to: unknown } }).server.to = vi
+        .fn()
+        .mockReturnValue({ emit });
+      const socket = createMockSocket();
+      socket.data.userId = 'user-1';
+
+      await gateway.handleGameUndo(socket as never, { gameId: 'g1' });
+
+      expect(emit).toHaveBeenCalledWith('game:event', { event: undoEvent });
     });
   });
 

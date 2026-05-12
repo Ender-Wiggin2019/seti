@@ -26,7 +26,7 @@ describe('PlanetHuntersCard (card 114)', () => {
 
     expect(card.id).toBe('114');
     expect(card.behavior.custom).toBeUndefined();
-    expect(card.behavior.drawCards).toBe(1);
+    expect(card.behavior.drawAnyCards).toBe(1);
   });
 
   it('draws a card, then optionally discards up to three hand cards for matching signals', () => {

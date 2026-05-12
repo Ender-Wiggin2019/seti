@@ -73,7 +73,7 @@ export function GameContextProvider({
     sendEndTurn: rawSendEndTurn,
     requestUndo: rawRequestUndo,
   } = useGameActions();
-  const events = useGameEvents();
+  const events = useGameEvents(gameState?.recentEvents ?? []);
   useGameError();
   useReconnection(gameId);
 

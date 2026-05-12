@@ -14,7 +14,7 @@ describe('ComputerTechs', () => {
       energy: 1,
     });
     expect(new ComputerVpCardTech().getComputerSlotReward(1)).toEqual({
-      drawCard: 1,
+      anyCard: 1,
     });
     expect(new ComputerVpPublicityTech().getComputerSlotReward(1)).toEqual({
       publicity: 2,

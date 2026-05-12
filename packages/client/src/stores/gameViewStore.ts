@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+export const DEFAULT_BOARD_ZOOM = 0.9;
+
 export type TBoardTab =
   | 'board'
   | 'planets'
@@ -19,7 +21,7 @@ interface IGameViewStoreState {
 
 export const useGameViewStore = create<IGameViewStoreState>((set) => ({
   activeTab: 'board',
-  zoom: 1,
+  zoom: DEFAULT_BOARD_ZOOM,
   hoveredPieceId: null,
   setActiveTab: (activeTab) => set({ activeTab }),
   setZoom: (zoom) => set({ zoom }),

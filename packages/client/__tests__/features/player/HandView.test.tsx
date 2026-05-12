@@ -1,8 +1,9 @@
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EResource } from '@seti/common/types/element';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { HandView } from '@/features/player';
+import { useDebugStore } from '@/stores/debugStore';
 import { EPlayerInputType } from '@/types/re-exports';
 
 function createCard(id: string, name: string): IBaseCard {
@@ -16,6 +17,10 @@ function createCard(id: string, name: string): IBaseCard {
 }
 
 describe('HandView', () => {
+  beforeEach(() => {
+    useDebugStore.setState({ textMode: false });
+  });
+
   it('renders card previews from hand', () => {
     render(
       <HandView
@@ -70,5 +75,40 @@ describe('HandView', () => {
     fireEvent.click(screen.getByTestId('hand-card-card-a'));
 
     expect(onCardPlaySelect).toHaveBeenCalledWith('card-a');
+  });
+
+  it('uses larger dock card previews in image and text mode', () => {
+    const cards = [createCard('card-a', 'Alpha')];
+    const { unmount } = render(
+      <HandView
+        cards={cards}
+        handSize={1}
+        pendingInput={null}
+        variant='dock'
+      />,
+    );
+
+    expect(screen.getByTestId('hand-card-preview-card-a')).toHaveStyle({
+      width: '158px',
+      height: '220px',
+    });
+
+    unmount();
+    useDebugStore.setState({ textMode: true });
+
+    render(
+      <HandView
+        cards={cards}
+        handSize={1}
+        pendingInput={null}
+        variant='dock'
+      />,
+    );
+
+    expect(screen.getByTestId('hand-card-preview-card-a')).toHaveStyle({
+      width: '158px',
+      height: '220px',
+    });
+    expect(screen.getByTestId('text-card-card-a')).toBeInTheDocument();
   });
 });

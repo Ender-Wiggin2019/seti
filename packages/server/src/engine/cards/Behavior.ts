@@ -33,6 +33,7 @@ export interface IBehavior {
   gainMovement?: number;
   gainIncome?: EResource;
   drawCards?: number;
+  drawAnyCards?: number;
   launchProbe?: boolean;
   orbit?: boolean;
   land?: boolean;
@@ -160,10 +161,14 @@ function applyBaseEffect(behavior: IBehavior, effect: IBaseEffect): IBehavior {
         gainMovement: (behavior.gainMovement ?? 0) + amount,
       };
     case EResource.CARD:
-    case EResource.CARD_ANY:
       return {
         ...behavior,
         drawCards: (behavior.drawCards ?? 0) + amount,
+      };
+    case EResource.CARD_ANY:
+      return {
+        ...behavior,
+        drawAnyCards: (behavior.drawAnyCards ?? 0) + amount,
       };
     case ESpecialAction.LAUNCH:
       return { ...behavior, launchProbe: true };

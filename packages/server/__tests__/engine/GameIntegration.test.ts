@@ -852,4 +852,127 @@ describe('Game Integration: Turn Lifecycle', () => {
       .filter((e) => e.type === 'ACTION');
     expect(actionEvents.length).toBeGreaterThan(0);
   });
+
+  it('event log separates main and free action entries with readable levels', () => {
+    const game = createGame('event-log-main-free');
+    const p1 = getPlayer(game, 'p1');
+
+    game.processMainAction('p1', { type: EMainAction.LAUNCH_PROBE });
+    resolveAllInputs(game, p1);
+    game.processFreeAction('p1', {
+      type: EFreeAction.CONVERT_ENERGY_TO_MOVEMENT,
+      amount: 1,
+    });
+
+    expect(game.eventLog.toArray()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'ACTION',
+          level: 'info',
+          playerId: 'p1',
+          action: EMainAction.LAUNCH_PROBE,
+        }),
+        expect.objectContaining({
+          type: 'FREE_ACTION',
+          level: 'info',
+          playerId: 'p1',
+          action: expect.objectContaining({
+            type: EFreeAction.CONVERT_ENERGY_TO_MOVEMENT,
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it('event log records played card id and name on play-card action', () => {
+    const game = createGame('event-log-play-card');
+    const p1 = getPlayer(game, 'p1');
+    p1.hand = ['test-card-1'];
+
+    game.processMainAction('p1', {
+      type: EMainAction.PLAY_CARD,
+      payload: { cardIndex: 0 },
+    });
+    resolveAllInputs(game, p1);
+
+    expect(game.eventLog.toArray()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'ACTION',
+          level: 'info',
+          playerId: 'p1',
+          action: EMainAction.PLAY_CARD,
+          details: expect.objectContaining({
+            cardId: 'test-card-1',
+            cardName: expect.any(String),
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it('event log records scan sector marks as debug sub entries', () => {
+    const game = createGame('event-log-scan-sub-entries');
+    const p1 = getPlayer(game, 'p1');
+
+    game.processMainAction('p1', { type: EMainAction.SCAN });
+    resolveAllInputs(game, p1);
+
+    expect(game.eventLog.toArray()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'ACTION',
+          level: 'debug',
+          playerId: 'p1',
+          action: 'SECTOR_MARKED',
+          details: expect.objectContaining({
+            sectorId: expect.any(String),
+            sourceAction: EMainAction.SCAN,
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it('event log places scan main action before scan debug sub entries', () => {
+    const game = createGame('event-log-scan-order');
+    const p1 = getPlayer(game, 'p1');
+
+    game.processMainAction('p1', { type: EMainAction.SCAN });
+    resolveAllInputs(game, p1);
+
+    const actionEvents = game.eventLog
+      .toArray()
+      .filter((event) => event.type === 'ACTION');
+    const scanIndex = actionEvents.findIndex(
+      (event) => event.action === EMainAction.SCAN,
+    );
+    const markedIndex = actionEvents.findIndex(
+      (event) => event.action === 'SECTOR_MARKED',
+    );
+
+    expect(scanIndex).toBeGreaterThanOrEqual(0);
+    expect(markedIndex).toBeGreaterThan(scanIndex);
+  });
+
+  it('event log records resolved input responses as debug entries', () => {
+    const game = createGame('event-log-input');
+    const p1 = getPlayer(game, 'p1');
+
+    game.processMainAction('p1', { type: EMainAction.SCAN });
+    resolveAllInputs(game, p1);
+
+    expect(game.eventLog.toArray()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'INPUT',
+          level: 'debug',
+          playerId: 'p1',
+          response: expect.objectContaining({
+            type: expect.any(String),
+          }),
+        }),
+      ]),
+    );
+  });
 });

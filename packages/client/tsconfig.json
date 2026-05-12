@@ -21,9 +21,11 @@
   },
   "include": [
     "__tests__",
+    ".storybook",
     "src",
     "test",
     "vite.config.ts",
+    "vitest.storybook.config.ts",
     "vitest.config.ts",
     "tailwind.config.ts"
   ],

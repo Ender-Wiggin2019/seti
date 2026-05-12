@@ -348,8 +348,8 @@ export const TECH_STACK_LAYOUT: readonly ITechStackLayout[] = [
   { tech: ETech.SCAN, level: 3, x: 30, y: 30 },
   { tech: ETech.SCAN, level: 1, x: 50, y: 30 },
   { tech: ETech.SCAN, level: 2, x: 70, y: 30 },
-  { tech: ETech.COMPUTER, level: 2, x: 10, y: 50 },
-  { tech: ETech.COMPUTER, level: 3, x: 30, y: 50 },
-  { tech: ETech.COMPUTER, level: 1, x: 50, y: 50 },
-  { tech: ETech.COMPUTER, level: 0, x: 70, y: 50 },
+  { tech: ETech.COMPUTER, level: 0, x: 10, y: 50 },
+  { tech: ETech.COMPUTER, level: 1, x: 30, y: 50 },
+  { tech: ETech.COMPUTER, level: 2, x: 50, y: 50 },
+  { tech: ETech.COMPUTER, level: 3, x: 70, y: 50 },
 ] as const;

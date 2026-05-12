@@ -1,4 +1,5 @@
 import type { IBaseCard } from '@seti/common/types/BaseCard';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,13 +15,18 @@ interface ICardDetailProps {
   card: IBaseCard | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  canPlayCard?: boolean;
+  onPlayCard?: () => void;
 }
 
 export function CardDetail({
   card,
   open,
   onOpenChange,
+  canPlayCard = false,
+  onPlayCard,
 }: ICardDetailProps): React.JSX.Element | null {
+  const { t } = useTranslation('common');
   const textMode = useTextMode();
   if (!card) return null;
 
@@ -46,6 +52,19 @@ export function CardDetail({
         </div>
 
         <DialogFooter>
+          {canPlayCard && onPlayCard ? (
+            <Button
+              variant='primary'
+              size='lg'
+              className='h-12 min-w-[180px] font-mono text-[12px] uppercase tracking-[0.16em]'
+              data-testid='card-detail-play-card'
+              onClick={onPlayCard}
+            >
+              {t('client.action_menu.actions.PLAY_CARD', {
+                defaultValue: 'Play Card',
+              })}
+            </Button>
+          ) : null}
           <Button variant='ghost' size='sm' onClick={() => onOpenChange(false)}>
             Close
           </Button>

@@ -37,4 +37,32 @@ describe('SelectCardInput', () => {
       cardIds: ['c-1'],
     });
   });
+
+  it('shows the prompt title and a skip action when zero cards may be selected', () => {
+    const onSubmit = vi.fn();
+    render(
+      <SelectCardInput
+        model={{
+          inputId: 'input-card',
+          type: EPlayerInputType.CARD,
+          title: 'Select a card to tuck for income',
+          cards: mockCards,
+          minSelections: 0,
+          maxSelections: 1,
+        }}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    expect(screen.getByText('Select a card to tuck for income')).toBeVisible();
+    const skipButton = screen.getByRole('button', { name: 'Skip' });
+    expect(skipButton).not.toBeDisabled();
+
+    fireEvent.click(skipButton);
+    expect(onSubmit).toHaveBeenCalledWith({
+      inputId: 'input-card',
+      type: EPlayerInputType.CARD,
+      cardIds: [],
+    });
+  });
 });

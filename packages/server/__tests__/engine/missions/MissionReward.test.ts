@@ -29,8 +29,10 @@ function createGame(draws: string[] = []): IGame {
     ...stubTurnLockFields(),
     random: { next: () => 0.5 },
     sectors: [],
+    cardRow: [],
     missionTracker: new MissionTracker(),
     mainDeck: {
+      draw: () => draws.shift(),
       drawWithReshuffle: () => draws.shift(),
     },
   } as unknown as IGame;
@@ -65,6 +67,32 @@ describe('applyMissionRewards', () => {
     );
 
     expect(player.hand).toEqual(['c1']);
+  });
+
+  it('prompts for row-or-deck choice for CARD_ANY rewards', () => {
+    const player = createPlayer();
+    const game = createGame(['deck-card']);
+    game.cardRow = [{ id: 'row-card' } as never];
+
+    const input = applyMissionRewards(
+      [{ effectType: EEffectType.BASE, type: EResource.CARD_ANY, value: 1 }],
+      player,
+      game,
+    );
+
+    expect(input?.toModel()).toMatchObject({
+      type: EPlayerInputType.OPTION,
+      title: 'Choose any card',
+    });
+    expect(
+      (input?.toModel() as { options?: Array<{ id: string }> }).options,
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'row:0:row-card' }),
+        expect.objectContaining({ id: 'deck' }),
+      ]),
+    );
+    expect(player.hand).toEqual([]);
   });
 
   it('handles exofossil gain and spend rewards', () => {

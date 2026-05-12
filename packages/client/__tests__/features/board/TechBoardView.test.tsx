@@ -187,4 +187,43 @@ describe('TechBoardView', () => {
       optionId: ETechId.SCAN_EARTH_LOOK,
     });
   });
+
+  it('maps visible computer tech slots to the canonical blue tech rewards', () => {
+    const onSubmit = vi.fn();
+    render(
+      <TechBoardView
+        techBoard={createTechBoardMock()}
+        players={[]}
+        pendingInput={{
+          inputId: 'input-1',
+          type: EPlayerInputType.OPTION,
+          options: [
+            ETechId.COMPUTER_VP_CREDIT,
+            ETechId.COMPUTER_VP_ENERGY,
+            ETechId.COMPUTER_VP_CARD,
+            ETechId.COMPUTER_VP_PUBLICITY,
+          ].map((id) => ({ id, label: id })),
+        }}
+        playerColors={{}}
+        myPlayerId='player-1'
+        onSubmit={onSubmit}
+      />,
+    );
+
+    const computerStacks = screen.getAllByTestId(/^tech-stack-computer-tech-/);
+
+    fireEvent.click(computerStacks[0]);
+    expect(onSubmit).toHaveBeenLastCalledWith({
+      inputId: 'input-1',
+      type: EPlayerInputType.OPTION,
+      optionId: ETechId.COMPUTER_VP_CREDIT,
+    });
+
+    fireEvent.click(computerStacks[2]);
+    expect(onSubmit).toHaveBeenLastCalledWith({
+      inputId: 'input-1',
+      type: EPlayerInputType.OPTION,
+      optionId: ETechId.COMPUTER_VP_CARD,
+    });
+  });
 });

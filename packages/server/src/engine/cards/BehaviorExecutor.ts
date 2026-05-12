@@ -9,6 +9,7 @@ import type { TTechCategory } from '@seti/common/types/tech';
 import { ResearchTechAction } from '../actions/ResearchTech.js';
 import { EPriority } from '../deferred/Priority.js';
 import { SimpleDeferredAction } from '../deferred/SimpleDeferredAction.js';
+import { AnyCardChoiceEffect } from '../effects/card/AnyCardChoiceEffect.js';
 import { TuckCardForIncomeEffect } from '../effects/income/TuckCardForIncomeEffect.js';
 import {
   buildLandPlanetSelection,
@@ -151,6 +152,12 @@ export class BehaviorExecutor {
     if (step.drawCards !== undefined && behavior.drawCards !== undefined) {
       next.drawCards = step.drawCards;
     }
+    if (
+      step.drawAnyCards !== undefined &&
+      behavior.drawAnyCards !== undefined
+    ) {
+      next.drawAnyCards = step.drawAnyCards;
+    }
     if (step.launchProbe && behavior.launchProbe) {
       next.launchProbe = true;
     }
@@ -227,6 +234,7 @@ export class BehaviorExecutor {
       this.buildGainIncomeAction(behavior, player),
       this.buildTuckForIncomeAction(behavior, player),
       this.buildDrawCardsAction(behavior, player),
+      this.buildDrawAnyCardsAction(behavior, player),
       this.buildLaunchProbeAction(behavior, player),
       this.buildOrbitAction(behavior, player),
       this.buildLandAction(behavior, player, card),
@@ -340,6 +348,17 @@ export class BehaviorExecutor {
       RefillCardRowEffect.execute(game);
       return undefined;
     });
+  }
+
+  private buildDrawAnyCardsAction(
+    behavior: IBehavior,
+    player: IPlayer,
+  ): SimpleDeferredAction | undefined {
+    const drawAnyCards = behavior.drawAnyCards;
+    if (!drawAnyCards || drawAnyCards <= 0) return undefined;
+    return buildCoreEffectAction(player, (game) =>
+      AnyCardChoiceEffect.execute(player, game, drawAnyCards),
+    );
   }
 
   private buildLaunchProbeAction(

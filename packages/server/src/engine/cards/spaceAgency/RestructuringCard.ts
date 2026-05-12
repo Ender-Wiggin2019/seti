@@ -1,4 +1,5 @@
 import { isDiscardProhibitedCard } from '@seti/common/rules';
+import type { IPlayerInput } from '@/engine/input/PlayerInput.js';
 import { SelectCard } from '@/engine/input/SelectCard.js';
 import { buildQuickMissionDef } from '@/engine/missions/buildMissionDef.js';
 import type { IMissionDef } from '@/engine/missions/IMission.js';
@@ -61,16 +62,24 @@ export class Restructuring extends MissionCard {
               .filter((candidate) => selected.has(candidate.id))
               .sort((left, right) => right.index - left.index);
 
-            for (const candidate of selectedCards) {
+            const applyAt = (index: number): IPlayerInput | undefined => {
+              const candidate = selectedCards[index];
+              if (candidate === undefined) return undefined;
               const [removed] = context.player.hand.splice(candidate.index, 1);
               const removedId = removed
                 ? cardItemId(removed)
                 : candidate.cardId;
-              if (!removedId) continue;
+              if (!removedId) return applyAt(index + 1);
               game.mainDeck.discard(removedId);
-              gainIncomeCornerResource(context.player, game, removedId);
-            }
-            return undefined;
+              return gainIncomeCornerResource(
+                context.player,
+                game,
+                removedId,
+                () => applyAt(index + 1),
+              );
+            };
+
+            return applyAt(0);
           },
         },
         'Discard cards for income corners',

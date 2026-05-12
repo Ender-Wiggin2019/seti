@@ -10,6 +10,16 @@ import type {
 } from '@/types/re-exports';
 import { EPlayerInputType } from '@/types/re-exports';
 
+const CARD_RENDER_WIDTH_PX = 150;
+const CARD_RENDER_HEIGHT_PX = 209;
+const HAND_DOCK_CARD_SCALE = 1.05;
+const HAND_DOCK_CARD_PREVIEW_WIDTH_PX = Math.ceil(
+  CARD_RENDER_WIDTH_PX * HAND_DOCK_CARD_SCALE,
+);
+const HAND_DOCK_CARD_PREVIEW_HEIGHT_PX = Math.ceil(
+  CARD_RENDER_HEIGHT_PX * HAND_DOCK_CARD_SCALE,
+);
+
 interface IHandViewProps {
   cards?: IBaseCard[];
   handSize: number;
@@ -112,10 +122,10 @@ export function HandView({
     ) : (
       <div
         className={cn(
-          'grid overflow-auto',
+          'overflow-auto',
           isDock
-            ? 'grid-cols-[repeat(auto-fill,minmax(88px,1fr))] gap-1'
-            : 'max-h-[150px] grid-cols-2 gap-1.5 lg:grid-cols-3',
+            ? 'flex gap-2 pb-1'
+            : 'grid max-h-[150px] grid-cols-2 gap-1.5 lg:grid-cols-3',
         )}
       >
         {handCards.map((card) => {
@@ -140,16 +150,20 @@ export function HandView({
               onClick={() => handleCardClick(card)}
             >
               {isDock ? (
-                // CardRender is intrinsically 150×209. In dock mode we
-                // show a scaled-down preview, but `transform: scale` does
-                // not affect layout size — without an outer sized box
-                // the button would keep its natural 150px width and
-                // leave a big empty region. Constrain layout to the
-                // post-scale dimensions (78×109) so the button hugs the
-                // visible card, and apply the transform on the inner
-                // full-size card.
-                <div className='pointer-events-none relative h-[109px] w-[78px]'>
-                  <div className='absolute top-0 left-0 origin-top-left scale-[0.52]'>
+                <div
+                  data-testid={`hand-card-preview-${card.id}`}
+                  className='pointer-events-none relative shrink-0'
+                  style={{
+                    width: `${HAND_DOCK_CARD_PREVIEW_WIDTH_PX}px`,
+                    height: `${HAND_DOCK_CARD_PREVIEW_HEIGHT_PX}px`,
+                  }}
+                >
+                  <div
+                    className='absolute top-0 left-0 origin-top-left'
+                    style={{
+                      transform: `scale(${HAND_DOCK_CARD_SCALE})`,
+                    }}
+                  >
                     <CardRender card={card} />
                   </div>
                 </div>
@@ -187,7 +201,9 @@ export function HandView({
         disabled={selectedCardIds.length < selectCardInput.minSelections}
         onClick={() => onSubmitSelection?.(selectedCardIds)}
       >
-        {t('client.common.confirm')}
+        {selectCardInput.minSelections === 0 && selectedCardIds.length === 0
+          ? t('client.common.skip', { defaultValue: 'Skip' })
+          : t('client.common.confirm')}
       </Button>
     </div>
   ) : null;

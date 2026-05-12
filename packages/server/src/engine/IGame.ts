@@ -5,7 +5,10 @@ import type {
   IInputResponse,
   IMainActionRequest,
 } from '@seti/common/types/protocol/actions';
-import type { EAlienType } from '@seti/common/types/protocol/enums';
+import type {
+  EAlienType,
+  EMainAction,
+} from '@seti/common/types/protocol/enums';
 import { EPhase } from '@seti/common/types/protocol/enums';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
 import type { AlienState } from './alien/AlienState.js';
@@ -86,6 +89,7 @@ export interface IGame {
    * to `false` at the start of every new turn.
    */
   turnLocked: boolean;
+  readonly currentMainAction?: EMainAction | null;
 
   /**
    * Mark the current turn as locked. No-op if undo is disabled for this

@@ -3,6 +3,7 @@ import type { ESector } from '@seti/common/types/element';
 import { EAlienType, EPlanet } from '@seti/common/types/protocol/enums';
 import { AlienRegistry } from '../../alien/AlienRegistry.js';
 import { OumuamuaAlienPlugin } from '../../alien/plugins/OumuamuaAlienPlugin.js';
+import { createActionEvent } from '../../event/GameEvent.js';
 import type { IGame } from '../../IGame.js';
 import type { PlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
@@ -69,6 +70,21 @@ export class MarkSectorSignalEffect {
     if (sector.completed) {
       emitSectorCompletedTurnEvent(game, player, sector.id);
     }
+    game.eventLog?.append(
+      createActionEvent(
+        player.id,
+        'SECTOR_MARKED',
+        {
+          sectorId: sector.id,
+          sectorColor: sector.color,
+          sourceAction: game.currentMainAction ?? undefined,
+          dataGained: signalResult.dataGained,
+          vpAwarded: signalResult.vpAwarded,
+          completed: sector.completed,
+        },
+        'debug',
+      ),
+    );
 
     return {
       sectorId: sector.id,

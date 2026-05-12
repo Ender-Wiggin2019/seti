@@ -29,4 +29,40 @@ describe('CardDetail', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
+
+  it('shows a prominent play-card action when a hand card is playable', () => {
+    const onPlayCard = vi.fn();
+    render(
+      <CardDetail
+        card={createCard()}
+        open
+        onOpenChange={vi.fn()}
+        canPlayCard
+        onPlayCard={onPlayCard}
+      />,
+    );
+
+    const playButton = screen.getByTestId('card-detail-play-card');
+    expect(playButton).toHaveTextContent('Play Card');
+    expect(playButton).toHaveClass('h-12');
+
+    fireEvent.click(playButton);
+    expect(onPlayCard).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not show play-card action for non-playable card details', () => {
+    render(
+      <CardDetail
+        card={createCard()}
+        open
+        onOpenChange={vi.fn()}
+        canPlayCard={false}
+        onPlayCard={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByTestId('card-detail-play-card'),
+    ).not.toBeInTheDocument();
+  });
 });

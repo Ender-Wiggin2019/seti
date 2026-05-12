@@ -62,8 +62,8 @@ export function processFreeAction(
       );
 
     case EFreeAction.USE_CARD_CORNER:
-      FreeActionCornerFreeAction.execute(player, game, action.cardId);
-      return undefined;
+      return FreeActionCornerFreeAction.execute(player, game, action.cardId)
+        .pendingInput;
 
     case EFreeAction.BUY_CARD:
       BuyCardFreeAction.execute(player, game, {

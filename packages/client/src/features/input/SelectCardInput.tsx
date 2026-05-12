@@ -12,18 +12,21 @@ export function SelectCardInput({
   onSubmit,
 }: ISelectCardInputProps): React.JSX.Element {
   return (
-    <HandView
-      cards={model.cards}
-      handSize={model.cards.length}
-      pendingInput={model}
-      variant='dock'
-      onSubmitSelection={(cardIds) =>
-        onSubmit({
-          inputId: model.inputId,
-          type: EPlayerInputType.CARD,
-          cardIds,
-        })
-      }
-    />
+    <div className='flex flex-col gap-2'>
+      {model.title ? <p className='micro-label'>{model.title}</p> : null}
+      <HandView
+        cards={model.cards}
+        handSize={model.cards.length}
+        pendingInput={model}
+        variant='dock'
+        onSubmitSelection={(cardIds) =>
+          onSubmit({
+            inputId: model.inputId,
+            type: EPlayerInputType.CARD,
+            cardIds,
+          })
+        }
+      />
+    </div>
   );
 }

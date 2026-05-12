@@ -13,6 +13,7 @@ import {
 } from '@seti/common/types/element';
 import { createPickupBackInput } from '../cards/alien/MascamitesCardUtils.js';
 import { drawCard } from '../deck/drawCard.js';
+import { AnyCardChoiceEffect } from '../effects/card/AnyCardChoiceEffect.js';
 import { LaunchProbeEffect } from '../effects/probe/LaunchProbeEffect.js';
 import { MarkSectorSignalEffect } from '../effects/scan/MarkSectorSignalEffect.js';
 import type { IGame } from '../IGame.js';
@@ -161,11 +162,12 @@ function applyBaseReward(
     case EResource.MOVE:
       player.gainMove(value);
       return onComplete();
-    case EResource.CARD:
-    case EResource.CARD_ANY: {
+    case EResource.CARD: {
       drawCard(player, game, { source: 'base', count: value });
       return onComplete();
     }
+    case EResource.CARD_ANY:
+      return AnyCardChoiceEffect.execute(player, game, value, onComplete);
     case ETrace.RED:
     case ETrace.YELLOW:
     case ETrace.BLUE:

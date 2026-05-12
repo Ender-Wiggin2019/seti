@@ -6,9 +6,11 @@ import type {
 } from '@seti/common/types/protocol/actions';
 import { EPhase } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
+import type { TGameEvent } from '@seti/common/types/protocol/events';
 import type { IPublicGameState } from '@seti/common/types/protocol/gameState';
 import type { IPlayerInputModel } from '@seti/common/types/protocol/playerInput';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { createUndoEvent } from '@/engine/event/GameEvent.js';
 import type { Game } from '@/engine/Game.js';
 import { isSoloMode } from '@/engine/GameOptions.js';
 import type { IGame } from '@/engine/IGame.js';
@@ -41,7 +43,7 @@ export interface IPendingInput {
 export interface IActionResult {
   states: Map<string, IPublicGameState>;
   pendingInputs: IPendingInput[];
-  events: unknown[];
+  events: TGameEvent[];
 }
 
 export interface IUndoResult {
@@ -49,6 +51,7 @@ export interface IUndoResult {
   undoneByPlayerId: string;
   turnIndex: number;
   interactedPlayerIds: string[];
+  events: TGameEvent[];
 }
 
 interface ITurnCheckpointInMemory {
@@ -280,6 +283,13 @@ export class GameManager {
     const interactedPlayerIds = [...checkpoint.interactedPlayerIds].filter(
       (id) => id !== playerId,
     );
+    const undoEvent = createUndoEvent(
+      playerId,
+      restored.turnIndex,
+      interactedPlayerIds,
+    );
+    restored.eventLog.append(undoEvent);
+
     // After restore the turn-start checkpoint is still valid — reset
     // interactions (the rollback invalidated any mid-turn work).
     checkpoint.interactedPlayerIds = new Set();
@@ -297,6 +307,7 @@ export class GameManager {
       undoneByPlayerId: playerId,
       turnIndex: restored.turnIndex,
       interactedPlayerIds,
+      events: [undoEvent],
     };
   }
 

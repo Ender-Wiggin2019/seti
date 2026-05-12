@@ -3,12 +3,15 @@ import { EResource } from '@seti/common/types/element';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import { hasCardData, loadCardData } from '../cards/loadCardData.js';
+import { AnyCardChoiceEffect } from '../effects/card/AnyCardChoiceEffect.js';
 import type { IGame } from '../IGame.js';
+import type { IPlayerInput } from '../input/PlayerInput.js';
 import { EMissionEventType } from '../missions/IMission.js';
 import type { IPlayer } from '../player/IPlayer.js';
 
 export interface IFreeActionCornerResult {
   discardedCardId: string;
+  pendingInput?: IPlayerInput;
 }
 
 export class FreeActionCornerFreeAction {
@@ -44,25 +47,31 @@ export class FreeActionCornerFreeAction {
     player.removeCardAt(cardIndex);
 
     game.mainDeck.discard(cardId);
-    this.executeCardCornerRewards(player, game, cardId);
+    const pendingInput = this.executeCardCornerRewards(player, game, cardId);
 
-    return { discardedCardId: cardId };
+    return { discardedCardId: cardId, pendingInput };
   }
 
   private static executeCardCornerRewards(
     player: IPlayer,
     game: IGame,
     cardId: string,
-  ): void {
+  ): IPlayerInput | undefined {
     if (!hasCardData(cardId)) {
-      return;
+      return undefined;
     }
 
     const cardData = loadCardData(cardId);
-    for (const cornerReward of cardData.freeAction ?? []) {
+    const rewards = cardData.freeAction ?? [];
+    const applyAt = (index: number): IPlayerInput | undefined => {
+      const cornerReward = rewards[index];
+      if (cornerReward === undefined) {
+        return undefined;
+      }
+
       const value = cornerReward.value;
       if (value <= 0) {
-        continue;
+        return applyAt(index + 1);
       }
       game.missionTracker.recordEvent({
         type: EMissionEventType.CARD_CORNER_USED,
@@ -72,28 +81,27 @@ export class FreeActionCornerFreeAction {
       switch (cornerReward.type) {
         case EResource.CREDIT:
           player.resources.gain({ credits: value });
-          break;
+          return applyAt(index + 1);
         case EResource.ENERGY:
           player.resources.gain({ energy: value });
-          break;
+          return applyAt(index + 1);
         case EResource.DATA:
           player.resources.gain({ data: value });
-          break;
+          return applyAt(index + 1);
         case EResource.PUBLICITY:
           player.resources.gain({ publicity: value });
-          break;
+          return applyAt(index + 1);
         case EResource.SIGNAL_TOKEN:
           player.resources.gain({ signalTokens: value });
-          break;
+          return applyAt(index + 1);
         case EResource.SCORE:
           player.score += value;
-          break;
+          return applyAt(index + 1);
         case EResource.MOVE:
           player.gainMove(value);
-          break;
+          return applyAt(index + 1);
         case EResource.CARD:
-        case EResource.CARD_ANY:
-          for (let index = 0; index < value; index += 1) {
+          for (let drawIndex = 0; drawIndex < value; drawIndex += 1) {
             const drawnCardId = game.mainDeck.draw();
             if (drawnCardId === undefined) {
               break;
@@ -101,10 +109,16 @@ export class FreeActionCornerFreeAction {
             player.hand.push(drawnCardId);
             game.lockCurrentTurn();
           }
-          break;
+          return applyAt(index + 1);
+        case EResource.CARD_ANY:
+          return AnyCardChoiceEffect.execute(player, game, value, () =>
+            applyAt(index + 1),
+          );
         default:
-          break;
+          return applyAt(index + 1);
       }
-    }
+    };
+
+    return applyAt(0);
   }
 }
