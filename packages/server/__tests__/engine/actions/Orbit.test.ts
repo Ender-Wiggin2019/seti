@@ -1,4 +1,4 @@
-import { PLANET_MISSION_CONFIG } from '@seti/common/constant/boardLayout';
+import { PLANETARY_BOARD_CONFIG } from '@seti/common/constant/boardLayout';
 import { EMainAction, EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
@@ -306,8 +306,8 @@ describe('Orbit action', () => {
 
     expect(player.score).toBe(
       1 +
-        PLANET_MISSION_CONFIG[EPlanet.VENUS].orbit.rewards[0].amount +
-        PLANET_MISSION_CONFIG[EPlanet.VENUS].orbit.firstRewards[0].amount,
+        PLANETARY_BOARD_CONFIG[EPlanet.VENUS].orbit.rewards[0].amount +
+        PLANETARY_BOARD_CONFIG[EPlanet.VENUS].orbit.firstRewards[0].amount,
     );
     expect(player.waitingFor?.toModel().type).toBe(EPlayerInputType.CARD);
 

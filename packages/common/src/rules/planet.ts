@@ -3,8 +3,8 @@ import {
   LANDING_COST_WITH_ORBITER,
 } from '../constant/actionCosts';
 import {
-  PLANET_MISSION_CONFIG,
-  type TPlanetMissionConfigId,
+  PLANETARY_BOARD_CONFIG,
+  type TPlanetaryBoardConfigId,
 } from '../constant/boardLayout';
 import { EPlanet } from '../types/protocol/enums';
 import type {
@@ -70,7 +70,7 @@ export function canLandOnMoon(
   player: Pick<IPublicPlayerState, 'techs'>,
 ): boolean {
   const moonSlots =
-    PLANET_MISSION_CONFIG[planetId as TPlanetMissionConfigId]?.moonSlots ?? 0;
+    PLANETARY_BOARD_CONFIG[planetId as TPlanetaryBoardConfigId]?.moonSlots ?? 0;
   const moonOccupants =
     planet.moonOccupants ?? (planet.moonOccupant ? [planet.moonOccupant] : []);
   return (

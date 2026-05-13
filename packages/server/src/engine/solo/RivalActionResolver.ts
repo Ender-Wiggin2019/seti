@@ -1,7 +1,7 @@
 import { getAnomalyColumnRewardsForPlacement } from '@seti/common/constant/alienBoardConfig';
 import {
-  PLANET_MISSION_CONFIG,
-  type TPlanetMissionConfigId,
+  PLANETARY_BOARD_CONFIG,
+  type TPlanetaryBoardConfigId,
   type TPlanetReward,
 } from '@seti/common/constant/boardLayout';
 import { RIVAL_TECH_CATEGORY_ORDER_BY_BOARD } from '@seti/common/constant/solo';
@@ -345,7 +345,7 @@ export class RivalActionResolver {
 
   private static hasMoonSlot(planet: EPlanet): boolean {
     return (
-      (PLANET_MISSION_CONFIG[planet as TPlanetMissionConfigId]?.moonSlots ??
+      (PLANETARY_BOARD_CONFIG[planet as TPlanetaryBoardConfigId]?.moonSlots ??
         0) > 0
     );
   }

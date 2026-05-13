@@ -1,4 +1,4 @@
-import { PLANET_MISSION_CONFIG } from '@seti/common/constant/boardLayout';
+import { PLANETARY_BOARD_CONFIG } from '@seti/common/constant/boardLayout';
 import { EResource, ETrace } from '@seti/common/types/element';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
@@ -9,7 +9,7 @@ import { PlanetaryBoardView } from './PlanetaryBoardView';
 const planetaryBoard: IPublicPlanetaryBoard = {
   configs: {
     [EPlanet.MARS]: {
-      ...PLANET_MISSION_CONFIG[EPlanet.MARS],
+      ...PLANETARY_BOARD_CONFIG[EPlanet.MARS],
       orbit: {
         rewards: [
           { type: 'signal', target: 'planet-sector', amount: 1 },
@@ -70,17 +70,17 @@ export const TextModePlanetSummary: Story = {
     const canvas = within(canvasElement);
 
     await expect(
-      canvas.getByTestId('planetary-board-text-mode'),
+      canvas.getByTestId('planetary-board-text-cards'),
     ).toBeInTheDocument();
-    await expect(canvas.getByText('mars')).toBeVisible();
     await expect(
-      canvas.getByText(
-        'O: 1 signal @ planet sector + 1 any card + 1 tuck + first 3 VP',
-      ),
-    ).toBeVisible();
+      canvas.queryByTestId('planetary-board-text-mode'),
+    ).not.toBeInTheDocument();
+    const marsCard = within(canvas.getByTestId(`planet-card-${EPlanet.MARS}`));
     await expect(
-      canvas.getByText('L: 6 VP + 1 yellow trace + first data 2 / 1'),
+      marsCard.getByText('1 signal @ planet sector + 1 any card + 1 tuck'),
     ).toBeVisible();
+    await expect(marsCard.getByText('First land data:')).toBeVisible();
+    await expect(marsCard.getByText('2 / 1')).toBeVisible();
   },
 };
 
@@ -94,6 +94,10 @@ export const ImageModePlanetInput: Story = {
     await expect(
       canvas.queryByTestId('planetary-board-text-mode'),
     ).not.toBeInTheDocument();
+    await expect(
+      canvas.getByTestId('planetary-board-image-mode'),
+    ).toBeInTheDocument();
+    await expect(canvas.queryAllByTestId(/^planet-card-/)).toHaveLength(0);
     await userEvent.click(canvas.getByTestId(`planet-target-${EPlanet.MARS}`));
     await expect(args.onRespondInput).toHaveBeenCalledWith({
       inputId: 'select-planet-story',

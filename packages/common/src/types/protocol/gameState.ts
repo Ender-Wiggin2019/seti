@@ -1,4 +1,4 @@
-import type { IPlanetMissionConfig } from '@seti/common/constant/boardLayout';
+import type { IPlanetaryBoardConfig } from '@seti/common/constant/boardLayout';
 import type {
   TMascamitesSampleSourcePlanet,
   TMascamitesSampleTokenId,
@@ -222,7 +222,7 @@ export interface IPublicPlanetState {
 }
 
 export interface IPublicPlanetaryBoard {
-  configs?: Partial<Record<EPlanet, IPlanetMissionConfig>>;
+  configs?: Partial<Record<EPlanet, IPlanetaryBoardConfig>>;
   planets: Partial<Record<EPlanet, IPublicPlanetState>>;
 }
 

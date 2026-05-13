@@ -1,5 +1,36 @@
 # TODO
 
+## Planet board UI/reference alignment - 2026-05-13
+
+Assumptions:
+- `frontend-reference` is only a visual/coordinate reference. Its `Satellite` / `Rover` / `planetMissions` names are legacy UI names and should not leak into this codebase's rule naming.
+- The current project rule terminology is `planetary board`, `orbit`, `land/landing`, `orbiter`, `lander`, and `moon`; shared config names should follow that terminology.
+- Image mode should prioritize the printed board image and invisible/selection-only clickable hotspots. Text summaries, empty slot labels, and planet cards belong to text mode.
+- Text mode should use the data-driven `PlanetCard` list as the accessible board representation and should not render a separate image-board placeholder above those cards.
+- Active goal continuation is treated as confirmation to implement after recording this plan.
+
+Success criteria:
+- Shared board layout config uses canonical planetary-board naming while preserving compatibility for any older imports if needed.
+- Image mode renders the planet board artwork with data-driven occupied tokens and clickable hotspots from shared coordinates, but does not render the text-mode planet-card grid or text/empty-slot labels.
+- Text mode renders the planet-card grid directly, with projected rewards/occupants and selectable-card behavior, and does not render the image-board placeholder above it.
+- Clicking a selectable planet in either mode still submits the same typed `IInputResponse` / main-action planet payload; the client does not invent rule state.
+- Focused tests fail on the old UI split and pass after the component change.
+- Verification covers focused client tests, client/common/server type checks as affected, touched-file static checks, browser or Storybook smoke, and `git diff --check`.
+
+Plan:
+- [x] Add focused failing tests for image/text mode separation and click payloads.
+- [x] Rename current shared planet-board config symbols from planet-mission wording to planetary-board wording.
+- [x] Refactor `PlanetaryBoardView` so image mode uses reference-style board hotspots and text mode uses only `PlanetCard`.
+- [x] Run focused tests/type/static checks and record review evidence.
+
+Review:
+- `frontend-reference` review confirmed the relevant board is a 500x700 `planetBoard` image with `planetMissions` coordinates; its `Satellite` / `Rover` names were treated as legacy reference names only. The project now uses `PLANETARY_BOARD_CONFIG`, `IPlanetaryBoardConfig`, and `TPlanetaryBoardConfigId` in common/client/server board config paths.
+- `PlanetaryBoardView` now splits presentation by mode: image mode renders only the board artwork, occupied projected tokens, and selectable hotspots derived from shared orbit/landing coordinates; text mode renders only the projected `PlanetCard` grid.
+- The click contract stays data-driven: image and text mode selection still submit typed `EPlayerInputType.PLANET` responses or main-action planet payloads with `EPlanet`, without sending reference slot strings.
+- Red/green evidence: the focused client test first failed on the old UI because `planetary-board-image-mode` did not exist and `planetary-board-text-mode` still rendered above cards; after the refactor it passed 6 tests.
+- Verification passed: `PlanetaryBoardView.test.tsx` 6 tests, Storybook core stories 5 tests, common planet board rewards 2 tests, server `PlanetaryBoard`/`Orbit` 17 tests, common/client/server typechecks, touched-file Biome check, and `git diff --check`.
+- Browser smoke passed at `http://[::1]:5175/debug/game` with debug routes enabled: image mode had `planetary-board-image-mode=true`, `planet-card` count `0`, no text placeholder, board rect about `518x725`; text mode had `planet-card` count `7`, no image board, and no text placeholder. The only console error was the existing missing `/favicon.ico`.
+
 ## Blue tech place-data downward slot bug - 2026-05-12
 
 Assumptions:

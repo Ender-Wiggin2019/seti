@@ -1,5 +1,5 @@
 import type {
-  IPlanetMissionConfig,
+  IPlanetaryBoardConfig,
   TPlanetReward,
 } from '@seti/common/constant/boardLayout';
 import { EResource, ETrace } from '@seti/common/types/element';
@@ -9,7 +9,7 @@ import type { IPublicPlanetState } from '@/types/re-exports';
 
 interface IPlanetCardProps {
   planet: string;
-  config: IPlanetMissionConfig;
+  config: IPlanetaryBoardConfig;
   state: IPublicPlanetState;
   playerColors: Record<string, string>;
   isSelectable: boolean;
@@ -104,8 +104,8 @@ export function PlanetCard({
   onSelect,
 }: IPlanetCardProps): React.JSX.Element {
   const { t } = useTranslation('common');
-  const missionConfig = config;
-  const firstLandData = formatFirstLandData(missionConfig.land.firstData);
+  const planetConfig = config;
+  const firstLandData = formatFirstLandData(planetConfig.land.firstData);
 
   const interactive = isSelectable && onSelect !== undefined;
 
@@ -134,7 +134,7 @@ export function PlanetCard({
     >
       <header className='mb-2 flex items-center justify-between'>
         <h3 className='font-display text-sm font-semibold uppercase tracking-wide text-text-100'>
-          {missionConfig.label}
+          {planetConfig.label}
         </h3>
         <div className='flex items-center gap-1'>
           <span
@@ -156,7 +156,7 @@ export function PlanetCard({
             {t('client.planet_card.orbit_reward')}:{' '}
           </span>
           <span className='text-text-100'>
-            {formatPlanetRewardList(missionConfig.orbit.rewards)}
+            {formatPlanetRewardList(planetConfig.orbit.rewards)}
           </span>
         </p>
         <p>
@@ -164,7 +164,7 @@ export function PlanetCard({
             {t('client.planet_card.first_orbit')}:{' '}
           </span>
           <span className='text-text-100'>
-            {formatPlanetRewardList(missionConfig.orbit.firstRewards)}
+            {formatPlanetRewardList(planetConfig.orbit.firstRewards)}
           </span>
         </p>
         <p>
@@ -172,7 +172,7 @@ export function PlanetCard({
             {t('client.planet_card.land_reward')}:{' '}
           </span>
           <span className='text-text-100'>
-            {formatPlanetRewardList(missionConfig.land.rewards)}
+            {formatPlanetRewardList(planetConfig.land.rewards)}
           </span>
         </p>
         {firstLandData.length > 0 && (
@@ -253,20 +253,20 @@ export function PlanetCard({
               : 'border-surface-600 text-text-500',
           )}
         >
-          {t('client.planet_card.moons', { count: missionConfig.moonSlots })}:{' '}
+          {t('client.planet_card.moons', { count: planetConfig.moonSlots })}:{' '}
           {state.moonOccupant
             ? t('client.planet_card.occupied', {
                 player: state.moonOccupant.playerId,
               })
-            : missionConfig.moonSlots === 0
+            : planetConfig.moonSlots === 0
               ? t('client.common.na')
               : t('client.planet_card.unoccupied')}
         </span>
       </div>
 
-      {missionConfig.moonNames.length > 0 && (
+      {planetConfig.moonNames.length > 0 && (
         <p className='mt-1 text-[10px] text-text-500'>
-          {missionConfig.moonNames.join(', ')}
+          {planetConfig.moonNames.join(', ')}
         </p>
       )}
     </article>

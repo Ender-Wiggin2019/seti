@@ -1,8 +1,8 @@
 import {
-  type IPlanetMissionConfig,
-  PLANET_MISSION_CONFIG,
+  type IPlanetaryBoardConfig,
+  PLANETARY_BOARD_CONFIG,
   PLANETARY_PLANETS,
-  type TPlanetMissionConfigId,
+  type TPlanetaryBoardConfigId,
   type TPlanetReward,
 } from '@seti/common/constant/boardLayout';
 import { EResource, ETrace } from '@seti/common/types/element';
@@ -12,7 +12,7 @@ import { GameError } from '@/shared/errors/GameError.js';
 
 const LANDING_COST_DEFAULT = 3;
 const LANDING_COST_WITH_ORBITER = 2;
-const DEFAULT_DYNAMIC_PLANET_CONFIG: IPlanetMissionConfig = {
+const DEFAULT_DYNAMIC_PLANET_CONFIG: IPlanetaryBoardConfig = {
   label: 'Other Planet',
   anchor: { x: 50, y: 50 },
   orbitSlots: [],
@@ -100,9 +100,9 @@ function assertPlayerId(playerId: string): void {
   }
 }
 
-function getPlanetMissionConfig(planet: EPlanet): IPlanetMissionConfig {
+function getPlanetaryBoardConfig(planet: EPlanet): IPlanetaryBoardConfig {
   return (
-    PLANET_MISSION_CONFIG[planet as TPlanetMissionConfigId] ??
+    PLANETARY_BOARD_CONFIG[planet as TPlanetaryBoardConfigId] ??
     DEFAULT_DYNAMIC_PLANET_CONFIG
   );
 }
@@ -120,7 +120,7 @@ function getScoreRewardAmount(rewards: readonly TPlanetReward[]): number {
   }, 0);
 }
 
-function createPlanetState(config: IPlanetMissionConfig): IPlanetState {
+function createPlanetState(config: IPlanetaryBoardConfig): IPlanetState {
   return {
     orbitSlots: [],
     landingSlots: [],
@@ -183,7 +183,7 @@ export class PlanetaryBoard {
     this.probesByPlanet = new Map();
 
     for (const planet of PLANETARY_PLANETS) {
-      const config = PLANET_MISSION_CONFIG[planet];
+      const config = PLANETARY_BOARD_CONFIG[planet];
       this.planets.set(planet, createPlanetState(config));
       this.probesByPlanet.set(planet, new Map());
     }
@@ -205,7 +205,7 @@ export class PlanetaryBoard {
     const planetState = this.getPlanetState(planet);
     planetState.orbitSlots.push({ playerId });
 
-    const config = getPlanetMissionConfig(planet);
+    const config = getPlanetaryBoardConfig(planet);
     const rewards = cloneRewards(config.orbit.rewards);
 
     if (!planetState.firstOrbitClaimed) {
@@ -256,7 +256,7 @@ export class PlanetaryBoard {
       planetState.landingSlots.push({ playerId });
     }
 
-    const config = getPlanetMissionConfig(planet);
+    const config = getPlanetaryBoardConfig(planet);
     const firstLandDataGained = this.takeFirstLandDataBonus(
       planetState,
       config,
@@ -307,7 +307,7 @@ export class PlanetaryBoard {
       if (!allowMoonLanding) {
         return false;
       }
-      const config = getPlanetMissionConfig(planet);
+      const config = getPlanetaryBoardConfig(planet);
       const moonOccupants = normalizeMoonOccupants(planetState);
       if (config.moonSlots <= 0 || moonOccupants.length >= config.moonSlots) {
         return false;
@@ -374,7 +374,7 @@ export class PlanetaryBoard {
           planet,
         });
       }
-      planetState = createPlanetState(getPlanetMissionConfig(planet));
+      planetState = createPlanetState(getPlanetaryBoardConfig(planet));
       this.planets.set(planet, planetState);
     }
     normalizeMoonOccupants(planetState);
@@ -402,7 +402,7 @@ export class PlanetaryBoard {
 
   private takeFirstLandDataBonus(
     planetState: IPlanetState,
-    config: IPlanetMissionConfig,
+    config: IPlanetaryBoardConfig,
   ): number {
     const openIndex = planetState.firstLandDataBonusTaken.findIndex(
       (taken) => !taken,

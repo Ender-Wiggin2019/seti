@@ -6,7 +6,7 @@ import {
   SCAN_CREDIT_COST,
   SCAN_ENERGY_COST,
 } from '../constant/actionCosts';
-import { PLANET_MISSION_CONFIG } from '../constant/boardLayout';
+import { PLANETARY_BOARD_CONFIG } from '../constant/boardLayout';
 import { EResource } from '../types/element';
 import { EMainAction, EPlanet } from '../types/protocol/enums';
 import type {
@@ -37,7 +37,7 @@ function getPlanetEntriesInGame(
     !gameState.planetaryBoard.planets[EPlanet.OUMUAMUA] &&
     findPlanetSpaceId(gameState.solarSystem, EPlanet.OUMUAMUA)
   ) {
-    const config = PLANET_MISSION_CONFIG[EPlanet.OUMUAMUA];
+    const config = PLANETARY_BOARD_CONFIG[EPlanet.OUMUAMUA];
     entries.push([
       EPlanet.OUMUAMUA,
       {

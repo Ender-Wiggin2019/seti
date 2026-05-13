@@ -1,8 +1,8 @@
 import { DescRender } from '@seti/cards';
 import { ANOMALY_COLUMN_REWARD_LADDER } from '@seti/common/constant/alienBoardConfig';
 import {
-  type IPlanetMissionConfig,
-  PLANET_MISSION_CONFIG,
+  type IPlanetaryBoardConfig,
+  PLANETARY_BOARD_CONFIG,
 } from '@seti/common/constant/boardLayout';
 import { ALL_CARDS } from '@seti/common/data/index';
 import { canLandOnPlanet, canOrbitPlanet } from '@seti/common/rules';
@@ -931,7 +931,7 @@ function OumuamuaBoard({
 }
 
 function createEmptyPlanetState(
-  config: IPlanetMissionConfig,
+  config: IPlanetaryBoardConfig,
 ): IPublicPlanetState {
   return {
     orbitSlots: [],
@@ -987,7 +987,7 @@ function OumuamuaLandingArea({
   onSelectMainActionPlanet?: (planet: EPlanet) => void;
 }): React.JSX.Element {
   const textMode = useTextMode();
-  const config = PLANET_MISSION_CONFIG[EPlanet.OUMUAMUA];
+  const config = PLANETARY_BOARD_CONFIG[EPlanet.OUMUAMUA];
   const state = planetState ?? createEmptyPlanetState(config);
   const mainActionPlayer = gameState?.players.find(
     (player) => player.playerId === myPlayerId,

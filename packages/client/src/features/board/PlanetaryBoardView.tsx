@@ -1,6 +1,6 @@
 import {
-  type IPlanetMissionConfig,
-  PLANET_MISSION_CONFIG,
+  type IPlanetaryBoardConfig,
+  PLANETARY_BOARD_CONFIG,
   PLANETARY_BOARD_DIMENSIONS,
   PLANETARY_PLANETS,
 } from '@seti/common/constant/boardLayout';
@@ -12,19 +12,15 @@ import type {
   IInputResponse,
   IPlayerInputModel,
   IPublicGameState,
+  IPublicMoonOccupantState,
   IPublicPlanetaryBoard,
   IPublicPlanetState,
 } from '@/types/re-exports';
 import { EMainAction, EPlanet, EPlayerInputType } from '@/types/re-exports';
-import {
-  formatFirstLandData,
-  formatFirstOrbitRewardList,
-  formatPlanetRewardList,
-  PlanetCard,
-} from './PlanetCard';
+import { PlanetCard } from './PlanetCard';
 
 function createEmptyPlanetState(
-  config: IPlanetMissionConfig,
+  config: IPlanetaryBoardConfig,
 ): IPublicPlanetState {
   return {
     orbitSlots: [],
@@ -41,8 +37,8 @@ function createEmptyPlanetState(
 function getPlanetConfig(
   planetaryBoard: IPublicPlanetaryBoard,
   planet: (typeof PLANETARY_PLANETS)[number],
-): IPlanetMissionConfig {
-  return planetaryBoard.configs?.[planet] ?? PLANET_MISSION_CONFIG[planet];
+): IPlanetaryBoardConfig {
+  return planetaryBoard.configs?.[planet] ?? PLANETARY_BOARD_CONFIG[planet];
 }
 
 interface IPlanetaryBoardViewProps {
@@ -78,8 +74,66 @@ function TokenAtPoint({
         backgroundColor: playerColors[playerId] ?? '#cbd5e1',
       }}
       title={title}
+      aria-label={`planet-board-token-${playerId}`}
     />
   );
+}
+
+type TPlanetHotspotKind = 'orbit' | 'landing';
+
+interface IPlanetHotspot {
+  kind: TPlanetHotspotKind;
+  index: number;
+  x: number;
+  y: number;
+}
+
+function getMoonOccupants(
+  state: IPublicPlanetState,
+): IPublicMoonOccupantState[] {
+  if (state.moonOccupants && state.moonOccupants.length > 0) {
+    return state.moonOccupants;
+  }
+  return state.moonOccupant ? [state.moonOccupant] : [];
+}
+
+function getPlanetHotspots(
+  config: IPlanetaryBoardConfig,
+  mode: EMainAction.ORBIT | EMainAction.LAND | null,
+): IPlanetHotspot[] {
+  const includeOrbit = mode !== EMainAction.LAND;
+  const includeLanding = mode !== EMainAction.ORBIT;
+  const hotspots: IPlanetHotspot[] = [];
+
+  if (includeOrbit) {
+    hotspots.push(
+      ...config.orbitSlots.map((slot, index) => ({
+        kind: 'orbit' as const,
+        index,
+        x: slot.x,
+        y: slot.y,
+      })),
+    );
+  }
+
+  if (includeLanding) {
+    hotspots.push(
+      ...config.landingSlots.map((slot, index) => ({
+        kind: 'landing' as const,
+        index,
+        x: slot.x,
+        y: slot.y,
+      })),
+    );
+  }
+
+  if (hotspots.length > 0) {
+    return hotspots;
+  }
+
+  return [
+    { kind: 'landing', index: 0, x: config.anchor.x, y: config.anchor.y },
+  ];
 }
 
 export function PlanetaryBoardView({
@@ -147,193 +201,11 @@ export function PlanetaryBoardView({
         </h2>
       </header>
 
-      <div className='rounded-md border border-surface-700/50 bg-surface-950/40 p-3'>
-        <div className='relative mx-auto mb-3 w-full max-w-[760px] overflow-hidden rounded-md border border-surface-700/50'>
-          <div
-            data-testid={textMode ? 'planetary-board-text-mode' : undefined}
-            className={cn(
-              'relative w-full',
-              textMode ? 'bg-surface-950/70' : 'bg-cover bg-center',
-            )}
-            style={{
-              aspectRatio: `${PLANETARY_BOARD_DIMENSIONS.width} / ${PLANETARY_BOARD_DIMENSIONS.height}`,
-              ...(textMode
-                ? {
-                    backgroundImage:
-                      'linear-gradient(rgba(38,48,80,0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(38,48,80,0.35) 1px, transparent 1px)',
-                    backgroundSize: '32px 32px',
-                  }
-                : {
-                    backgroundImage:
-                      'linear-gradient(rgba(8, 13, 25, 0.2), rgba(8, 13, 25, 0.35)), url(/assets/seti/boards/planetBoard.jpg)',
-                    backgroundSize: '100% 100%',
-                  }),
-            }}
-          >
-            {PLANETARY_PLANETS.map((planet) => {
-              const marker = getPlanetConfig(planetaryBoard, planet);
-              const planetState =
-                planetaryBoard.planets[planet] ??
-                createEmptyPlanetState(marker);
-              const orbitSummary = [
-                formatPlanetRewardList(marker.orbit.rewards),
-                formatFirstOrbitRewardList(marker.orbit.firstRewards),
-              ]
-                .filter(Boolean)
-                .join(' + ');
-              const landSummary = [
-                formatPlanetRewardList(marker.land.rewards),
-                marker.land.firstData.length > 0
-                  ? `first data ${formatFirstLandData(marker.land.firstData)}`
-                  : '',
-              ]
-                .filter(Boolean)
-                .join(' + ');
-
-              const moonSlotIndexes = marker.landingSlotKinds
-                .map((kind, index) => ({ kind, index }))
-                .filter((slot) => slot.kind === 'moon')
-                .map((slot) => slot.index);
-              const firstMoonSlotIndex = moonSlotIndexes[0];
-              return (
-                <div key={`planet-overlay-${planet}`}>
-                  <button
-                    type='button'
-                    data-testid={`planet-target-${planet}`}
-                    disabled={
-                      !selectablePlanets.has(planet) &&
-                      !selectableMainActionPlanets.has(planet)
-                    }
-                    className={cn(
-                      'absolute -translate-x-1/2 -translate-y-1/2 border border-surface-200/60 bg-surface-900/75 font-bold uppercase text-text-100 shadow-[0_0_8px_rgba(0,0,0,0.4)]',
-                      textMode
-                        ? 'inline-flex w-[150px] flex-col items-start justify-center gap-0.5 rounded-sm px-2 py-1 text-left font-mono text-[8px] leading-tight'
-                        : 'inline-flex h-7 w-7 items-center justify-center rounded-full text-[10px] tracking-wide',
-                      (selectablePlanets.has(planet) ||
-                        selectableMainActionPlanets.has(planet)) &&
-                        'border-accent-500 text-accent-300 ring-1 ring-accent-500/80',
-                      (selectablePlanets.has(planet) ||
-                        selectableMainActionPlanets.has(planet)) &&
-                        'cursor-pointer hover:bg-surface-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400',
-                      !selectablePlanets.has(planet) &&
-                        !selectableMainActionPlanets.has(planet) &&
-                        'cursor-default',
-                    )}
-                    style={{
-                      left: `${marker.anchor.x}%`,
-                      top: `${marker.anchor.y}%`,
-                    }}
-                    onClick={() => handlePlanetSelect(planet)}
-                    title={`${marker.label} | moons: ${marker.moonNames.join(', ') || 'none'}`}
-                  >
-                    {textMode ? (
-                      <>
-                        <span className='text-[10px] text-text-100'>
-                          {marker.label.toLowerCase()}
-                        </span>
-                        <span className='font-normal normal-case text-text-300'>
-                          O: {orbitSummary}
-                        </span>
-                        <span className='font-normal normal-case text-text-300'>
-                          L: {landSummary}
-                        </span>
-                      </>
-                    ) : (
-                      marker.label.slice(0, 2)
-                    )}
-                  </button>
-
-                  {marker.orbitSlots.map((slot, index) => {
-                    const occupied = planetState.orbitSlots[index];
-                    if (!occupied) {
-                      return (
-                        <span
-                          key={`${planet}-orbit-slot-${index}`}
-                          className={cn(
-                            'absolute -translate-x-1/2 -translate-y-1/2 border border-cyan-300/70 bg-surface-950/60',
-                            textMode
-                              ? 'inline-flex h-4 min-w-6 items-center justify-center rounded-sm px-1 font-mono text-[8px] text-cyan-200'
-                              : 'h-3.5 w-3.5 rounded-full',
-                          )}
-                          style={{ left: `${slot.x}%`, top: `${slot.y}%` }}
-                          title={`${marker.label} orbit slot ${index + 1}`}
-                        >
-                          {textMode ? `O${index + 1}` : null}
-                        </span>
-                      );
-                    }
-                    return (
-                      <TokenAtPoint
-                        key={`${planet}-orbit-token-${index}`}
-                        x={slot.x}
-                        y={slot.y}
-                        playerId={occupied.playerId}
-                        playerColors={playerColors}
-                        title={`${marker.label} orbit (${occupied.playerId})`}
-                      />
-                    );
-                  })}
-
-                  {marker.landingSlots.map((slot, index) => {
-                    const slotKind = marker.landingSlotKinds[index] ?? 'planet';
-                    const planetSlotOrdinal =
-                      marker.landingSlotKinds
-                        .slice(0, index + 1)
-                        .filter((kind) => kind === 'planet').length - 1;
-                    const planetLandingToken =
-                      slotKind === 'planet'
-                        ? planetState.landingSlots[planetSlotOrdinal]
-                        : null;
-                    const moonToken =
-                      slotKind === 'moon' && firstMoonSlotIndex === index
-                        ? planetState.moonOccupant
-                        : null;
-                    const tokenPlayerId =
-                      planetLandingToken?.playerId ??
-                      moonToken?.playerId ??
-                      null;
-
-                    if (tokenPlayerId) {
-                      return (
-                        <TokenAtPoint
-                          key={`${planet}-landing-token-${index}`}
-                          x={slot.x}
-                          y={slot.y}
-                          playerId={tokenPlayerId}
-                          playerColors={playerColors}
-                          title={`${marker.label} ${slotKind} (${tokenPlayerId})`}
-                        />
-                      );
-                    }
-
-                    return (
-                      <span
-                        key={`${planet}-landing-slot-${index}`}
-                        className={cn(
-                          'absolute -translate-x-1/2 -translate-y-1/2 border bg-surface-950/60',
-                          textMode
-                            ? 'inline-flex h-4 min-w-6 items-center justify-center rounded-sm px-1 font-mono text-[8px]'
-                            : 'h-3.5 w-3.5 rounded-full',
-                          slotKind === 'moon'
-                            ? 'border-surface-500/70 text-text-300'
-                            : 'border-amber-300/70 text-amber-200',
-                        )}
-                        style={{ left: `${slot.x}%`, top: `${slot.y}%` }}
-                        title={`${marker.label} ${slotKind} slot ${index + 1}`}
-                      >
-                        {textMode
-                          ? `${slotKind === 'moon' ? 'M' : 'L'}${index + 1}`
-                          : null}
-                      </span>
-                    );
-                  })}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-3'>
+      {textMode ? (
+        <div
+          data-testid='planetary-board-text-cards'
+          className='grid gap-2 sm:grid-cols-2 xl:grid-cols-3'
+        >
           {PLANETARY_PLANETS.map((planet) => {
             const config = getPlanetConfig(planetaryBoard, planet);
             return (
@@ -355,7 +227,106 @@ export function PlanetaryBoardView({
             );
           })}
         </div>
-      </div>
+      ) : (
+        <div className='rounded-md border border-surface-700/50 bg-surface-950/40 p-3'>
+          <div className='relative mx-auto w-full max-w-[520px] overflow-hidden rounded-md border border-surface-700/50'>
+            <div
+              data-testid='planetary-board-image-mode'
+              className='relative w-full bg-cover bg-center'
+              style={{
+                aspectRatio: `${PLANETARY_BOARD_DIMENSIONS.width} / ${PLANETARY_BOARD_DIMENSIONS.height}`,
+                backgroundImage: 'url(/assets/seti/boards/planetBoard.jpg)',
+                backgroundSize: '100% 100%',
+              }}
+            >
+              {PLANETARY_PLANETS.map((planet) => {
+                const config = getPlanetConfig(planetaryBoard, planet);
+                const planetState =
+                  planetaryBoard.planets[planet] ??
+                  createEmptyPlanetState(config);
+                const isSelectable =
+                  selectablePlanets.has(planet) ||
+                  selectableMainActionPlanets.has(planet);
+                const moonOccupants = getMoonOccupants(planetState);
+
+                return (
+                  <div key={`planet-overlay-${planet}`}>
+                    {isSelectable &&
+                      getPlanetHotspots(config, mainActionPlanetMode).map(
+                        (hotspot, index) => (
+                          <button
+                            key={`${planet}-target-${hotspot.kind}-${hotspot.index}`}
+                            type='button'
+                            data-testid={
+                              index === 0
+                                ? `planet-target-${planet}`
+                                : `planet-target-${planet}-${hotspot.kind}-${hotspot.index}`
+                            }
+                            className={cn(
+                              'absolute h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent-400/80 bg-accent-500/10 ring-1 ring-accent-400/70',
+                              'hover:bg-accent-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300',
+                            )}
+                            style={{
+                              left: `${hotspot.x}%`,
+                              top: `${hotspot.y}%`,
+                            }}
+                            onClick={() => handlePlanetSelect(planet)}
+                            aria-label={`${config.label} ${hotspot.kind} target`}
+                            title={`${config.label} ${hotspot.kind}`}
+                          />
+                        ),
+                      )}
+
+                    {config.orbitSlots.map((slot, index) => {
+                      const occupied = planetState.orbitSlots[index];
+                      if (!occupied) return null;
+                      return (
+                        <TokenAtPoint
+                          key={`${planet}-orbit-token-${index}`}
+                          x={slot.x}
+                          y={slot.y}
+                          playerId={occupied.playerId}
+                          playerColors={playerColors}
+                          title={`${config.label} orbit (${occupied.playerId})`}
+                        />
+                      );
+                    })}
+
+                    {config.landingSlots.map((slot, index) => {
+                      const slotKind =
+                        config.landingSlotKinds[index] ?? 'planet';
+                      const planetSlotOrdinal =
+                        config.landingSlotKinds
+                          .slice(0, index + 1)
+                          .filter((kind) => kind === 'planet').length - 1;
+                      const moonSlotOrdinal =
+                        config.landingSlotKinds
+                          .slice(0, index + 1)
+                          .filter((kind) => kind === 'moon').length - 1;
+                      const token =
+                        slotKind === 'planet'
+                          ? planetState.landingSlots[planetSlotOrdinal]
+                          : moonOccupants[moonSlotOrdinal];
+
+                      if (!token) return null;
+                      return (
+                        <TokenAtPoint
+                          key={`${planet}-landing-token-${index}`}
+                          x={slot.x}
+                          y={slot.y}
+                          playerId={token.playerId}
+                          playerColors={playerColors}
+                          title={`${config.label} ${slotKind} (${token.playerId})`}
+                        />
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

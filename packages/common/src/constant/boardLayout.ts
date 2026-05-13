@@ -51,7 +51,7 @@ export interface IPlanetLandRewardConfig {
   firstData: readonly number[];
 }
 
-export interface IPlanetMissionConfig {
+export interface IPlanetaryBoardConfig {
   label: string;
   anchor: IBoardPosition;
   orbitSlots: readonly IBoardPosition[];
@@ -96,12 +96,12 @@ export const SOLAR_SYSTEM_PLANETS = [
   ...PLANETARY_PLANETS,
 ] as const;
 
-export type TPlanetMissionConfigId =
+export type TPlanetaryBoardConfigId =
   | (typeof PLANETARY_PLANETS)[number]
   | EPlanet.OUMUAMUA;
 
-export const PLANET_MISSION_CONFIG: Readonly<
-  Record<TPlanetMissionConfigId, IPlanetMissionConfig>
+export const PLANETARY_BOARD_CONFIG: Readonly<
+  Record<TPlanetaryBoardConfigId, IPlanetaryBoardConfig>
 > = {
   [EPlanet.MERCURY]: {
     label: 'Mercury',

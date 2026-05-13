@@ -1,7 +1,7 @@
-import { PLANET_MISSION_CONFIG } from '@seti/common/constant/boardLayout';
+import { PLANETARY_BOARD_CONFIG } from '@seti/common/constant/boardLayout';
 import { EResource, ETrace } from '@seti/common/types/element';
-import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PlanetaryBoardView } from '@/features/board/PlanetaryBoardView';
 import { useDebugStore } from '@/stores/debugStore';
 import type { IPublicPlanetaryBoard } from '@/types/re-exports';
@@ -11,7 +11,7 @@ function createPlanetaryBoardMock(): IPublicPlanetaryBoard {
   return {
     configs: {
       [EPlanet.MARS]: {
-        ...PLANET_MISSION_CONFIG[EPlanet.MARS],
+        ...PLANETARY_BOARD_CONFIG[EPlanet.MARS],
         orbit: {
           rewards: [
             { type: 'signal', target: 'planet-sector', amount: 1 },
@@ -49,7 +49,7 @@ describe('PlanetaryBoardView', () => {
     useDebugStore.setState({ textMode: false });
   });
 
-  it('renders all planet cards', () => {
+  it('keeps image mode focused on the board image and board tokens', () => {
     render(
       <PlanetaryBoardView
         planetaryBoard={createPlanetaryBoardMock()}
@@ -58,10 +58,22 @@ describe('PlanetaryBoardView', () => {
       />,
     );
 
-    expect(screen.getAllByTestId(/^planet-card-/)).toHaveLength(7);
+    expect(
+      screen.getByTestId('planetary-board-image-mode'),
+    ).toBeInTheDocument();
+    expect(screen.queryAllByTestId(/^planet-card-/)).toHaveLength(0);
+    expect(screen.queryByText('Orbit reward')).not.toBeInTheDocument();
+    expect(
+      screen.getByLabelText('planet-board-token-player-1'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText('planet-board-token-player-2'),
+    ).toBeInTheDocument();
   });
 
-  it('renders orbit and landing tokens from player colors', () => {
+  it('renders text-mode planet cards from projected board state', () => {
+    useDebugStore.setState({ textMode: true });
+
     render(
       <PlanetaryBoardView
         planetaryBoard={createPlanetaryBoardMock()}
@@ -70,13 +82,19 @@ describe('PlanetaryBoardView', () => {
       />,
     );
 
+    expect(
+      screen.queryByTestId('planetary-board-text-mode'),
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByTestId(/^planet-card-/)).toHaveLength(7);
     const marsCard = screen.getByTestId(`planet-card-${EPlanet.MARS}`);
     expect(marsCard).toHaveTextContent('Mars');
     expect(screen.getByLabelText('token-player-1')).toBeInTheDocument();
     expect(screen.getByLabelText('token-player-2')).toBeInTheDocument();
   });
 
-  it('highlights selectable planets for select-planet input', () => {
+  it('keeps image-mode planet hotspots clickable with the server input payload', () => {
+    const onRespondInput = vi.fn();
+
     render(
       <PlanetaryBoardView
         planetaryBoard={createPlanetaryBoardMock()}
@@ -86,15 +104,25 @@ describe('PlanetaryBoardView', () => {
           options: [EPlanet.MARS],
         }}
         playerColors={{}}
+        onRespondInput={onRespondInput}
       />,
     );
 
-    expect(
-      screen.getByTestId(`planet-card-${EPlanet.MARS}`).className,
-    ).toContain('ring-1');
+    const marsTarget = screen.getByTestId(`planet-target-${EPlanet.MARS}`);
+    expect(marsTarget.className).toContain('ring-1');
+
+    fireEvent.click(marsTarget);
+
+    expect(onRespondInput).toHaveBeenCalledWith({
+      inputId: 'input-1',
+      type: EPlayerInputType.PLANET,
+      planet: EPlanet.MARS,
+    });
   });
 
   it('uses neutral moon availability copy instead of open state', () => {
+    useDebugStore.setState({ textMode: true });
+
     render(
       <PlanetaryBoardView
         planetaryBoard={createPlanetaryBoardMock()}
@@ -104,12 +132,14 @@ describe('PlanetaryBoardView', () => {
     );
 
     const marsCard = screen.getByTestId(`planet-card-${EPlanet.MARS}`);
-    const moonCount = PLANET_MISSION_CONFIG[EPlanet.MARS].moonSlots;
+    const moonCount = PLANETARY_BOARD_CONFIG[EPlanet.MARS].moonSlots;
     expect(marsCard).toHaveTextContent(`Moons ${moonCount}: unoccupied`);
     expect(marsCard).not.toHaveTextContent(`Moons ${moonCount}: open`);
   });
 
   it('renders planet reward text from projected board config', () => {
+    useDebugStore.setState({ textMode: true });
+
     render(
       <PlanetaryBoardView
         planetaryBoard={createPlanetaryBoardMock()}
@@ -129,26 +159,23 @@ describe('PlanetaryBoardView', () => {
     expect(marsCard).toHaveTextContent('First land data: 2 / 1');
   });
 
-  it('shows text-mode planet labels without relying on the board image', () => {
+  it('highlights selectable text-mode planet cards', () => {
     useDebugStore.setState({ textMode: true });
 
     render(
       <PlanetaryBoardView
         planetaryBoard={createPlanetaryBoardMock()}
-        pendingInput={null}
+        pendingInput={{
+          inputId: 'input-1',
+          type: EPlayerInputType.PLANET,
+          options: [EPlanet.MARS],
+        }}
         playerColors={{}}
       />,
     );
 
-    expect(screen.getByTestId('planetary-board-text-mode')).toBeInTheDocument();
-    expect(screen.getByText('mars')).toBeInTheDocument();
     expect(
-      screen.getByText(
-        'O: 1 signal @ planet sector + 1 any card + 1 tuck + first 3 VP',
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('L: 6 VP + 1 yellow trace + first data 2 / 1'),
-    ).toBeInTheDocument();
+      screen.getByTestId(`planet-card-${EPlanet.MARS}`).className,
+    ).toContain('ring-1');
   });
 });
