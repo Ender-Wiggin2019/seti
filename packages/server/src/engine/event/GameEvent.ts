@@ -12,27 +12,14 @@ import {
 
 export type { TGameEvent } from '@seti/common/types/protocol/events';
 
-let eventSequence = 0;
-
-export function createEventId(at: number = Date.now()): string {
-  eventSequence += 1;
-  if (eventSequence > Number.MAX_SAFE_INTEGER - 1) {
-    eventSequence = 1;
-  }
-  return `${at.toString(36)}-${eventSequence.toString(36)}`;
-}
-
-function eventTime(): number {
-  return Date.now();
+export function createEventId(sequence: number): string {
+  return `event-${sequence.toString(36)}`;
 }
 
 function eventMeta(level: TGameEventLevel): {
-  id: string;
   level: TGameEventLevel;
-  at: number;
 } {
-  const at = eventTime();
-  return { id: createEventId(at), level, at };
+  return { level };
 }
 
 export function createActionEvent(
@@ -106,6 +93,34 @@ export function createTraceMarkedEvent(
     traceColor,
     alienIndex,
     isOverflow,
+  };
+}
+
+export function createResourceChangeEvent(
+  playerId: string,
+  resource: string,
+  delta: number,
+): TGameEvent {
+  return {
+    ...eventMeta('debug'),
+    type: EGameEventType.RESOURCE_CHANGE,
+    playerId,
+    resource,
+    delta,
+  };
+}
+
+export function createScoreChangeEvent(
+  playerId: string,
+  delta: number,
+  source = 'score',
+): TGameEvent {
+  return {
+    ...eventMeta('debug'),
+    type: EGameEventType.SCORE_CHANGE,
+    playerId,
+    delta,
+    source,
   };
 }
 

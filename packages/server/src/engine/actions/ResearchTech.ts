@@ -58,13 +58,9 @@ export class ResearchTechAction {
       game,
       filter,
     );
-    const shouldIgnoreDuplicateSpecificCardEffect =
-      isCardEffect &&
-      filter?.mode === 'specific' &&
-      filter.techIds.length > 0 &&
-      !hasAvailableTech;
+    const shouldSkipUnavailableCardEffect = isCardEffect && !hasAvailableTech;
 
-    if (shouldIgnoreDuplicateSpecificCardEffect) {
+    if (shouldSkipUnavailableCardEffect) {
       if (shouldRotate) {
         RotateDiscEffect.execute(game);
       }
@@ -79,12 +75,12 @@ export class ResearchTechAction {
       );
     }
 
-    if (!isCardEffect) {
-      player.resources.spend({ publicity: RESEARCH_PUBLICITY_COST });
-    }
-
     if (shouldRotate) {
       RotateDiscEffect.execute(game);
+    }
+
+    if (!isCardEffect) {
+      player.resources.spend({ publicity: RESEARCH_PUBLICITY_COST });
     }
 
     return ResearchTechEffect.execute(player, game, {

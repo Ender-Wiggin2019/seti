@@ -497,7 +497,6 @@ function serializePlanetaryBoard(game: IGame): IPlanetaryBoardDto | null {
           firstOrbitClaimed: state.firstOrbitClaimed,
           firstLandDataBonusTaken: [...state.firstLandDataBonusTaken],
           moonOccupants: state.moonOccupants.map((slot) => ({ ...slot })),
-          moonOccupant: state.moonOccupant ? { ...state.moonOccupant } : null,
         },
       }),
     ),
@@ -843,7 +842,6 @@ function toPublicPlanetaryBoard(game: IGame): IPublicPlanetaryBoard {
       firstOrbitClaimed: state.firstOrbitClaimed,
       firstLandDataBonusTaken: [...state.firstLandDataBonusTaken],
       moonOccupants: state.moonOccupants.map((slot) => ({ ...slot })),
-      moonOccupant: state.moonOccupant ? { ...state.moonOccupant } : null,
     };
   }
 
@@ -975,7 +973,6 @@ export function projectGameState(
     planetaryBoard: toPublicPlanetaryBoard(game),
     techBoard: toPublicTechBoard(game),
     cardRow: cloneValue(game.cardRow as never),
-    endOfRoundStacks: cloneValue(game.endOfRoundStacks as never),
     currentEndOfRoundStackIndex: game.roundRotationReminderIndex,
     aliens: game.alienState.boards.map((board) => toPublicAlienState(board)),
     recentEvents: game.eventLog.recent(20) as never,

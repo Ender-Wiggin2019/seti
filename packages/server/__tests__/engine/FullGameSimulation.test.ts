@@ -132,14 +132,9 @@ function attachPhaseSpy(game: Game): EPhase[] {
   return seen;
 }
 
-/** Matches `Player.applyEndOfRoundIncome(round)` payout shape (round 1 = base only). */
-function expectedEndOfRoundIncomeBundle(
-  player: IPlayer,
-  round: number,
-): TIncomeBundle {
-  return round === 1
-    ? { ...player.income.baseIncome }
-    : player.income.computeRoundPayout();
+/** Matches `Player.applyEndOfRoundIncome()` payout shape. */
+function expectedEndOfRoundIncomeBundle(player: IPlayer): TIncomeBundle {
+  return player.income.computeRoundPayout();
 }
 
 describe('FullGameSimulation (Phase 10.3)', () => {
@@ -271,9 +266,8 @@ describe('FullGameSimulation (Phase 10.3)', () => {
       const perRoundCredits: number[] = [];
 
       for (let r = 1; r <= 5; r += 1) {
-        const eorRound = game.round;
         const payouts = game.players.map((p) =>
-          expectedEndOfRoundIncomeBundle(p, eorRound),
+          expectedEndOfRoundIncomeBundle(p),
         );
         const before = game.players.map((p) => ({
           credits: p.resources.credits,

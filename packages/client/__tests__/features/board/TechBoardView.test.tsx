@@ -188,6 +188,74 @@ describe('TechBoardView', () => {
     });
   });
 
+  it('maps visible probe and scan stack positions to canonical tech ids', () => {
+    const onSubmit = vi.fn();
+    render(
+      <TechBoardView
+        techBoard={createTechBoardMock()}
+        players={[]}
+        pendingInput={{
+          inputId: 'input-1',
+          type: EPlayerInputType.OPTION,
+          options: [
+            ETechId.PROBE_DOUBLE_PROBE,
+            ETechId.PROBE_ASTEROID,
+            ETechId.SCAN_EARTH_LOOK,
+            ETechId.SCAN_POP_SIGNAL,
+          ].map((id) => ({ id, label: id })),
+        }}
+        playerColors={{}}
+        myPlayerId='player-1'
+        onSubmit={onSubmit}
+      />,
+    );
+
+    const probeStacks = screen.getAllByTestId(/^tech-stack-probe-tech-/);
+    fireEvent.click(probeStacks[0]);
+    expect(onSubmit).toHaveBeenLastCalledWith({
+      inputId: 'input-1',
+      type: EPlayerInputType.OPTION,
+      optionId: ETechId.PROBE_DOUBLE_PROBE,
+    });
+
+    const scanStacks = screen.getAllByTestId(/^tech-stack-scan-tech-/);
+    fireEvent.click(scanStacks[1]);
+    expect(onSubmit).toHaveBeenLastCalledWith({
+      inputId: 'input-1',
+      type: EPlayerInputType.OPTION,
+      optionId: ETechId.SCAN_POP_SIGNAL,
+    });
+  });
+
+  it('renders canonical tech ids with matching reference tile images', () => {
+    render(
+      <TechBoardView
+        techBoard={createTechBoardMock()}
+        players={[]}
+        pendingInput={null}
+        playerColors={{}}
+        myPlayerId='player-1'
+      />,
+    );
+
+    expect(screen.getByAltText(/probe level 1/i)).toHaveAttribute(
+      'src',
+      '/assets/seti/tech/tiles/techFly2.webp',
+    );
+    expect(screen.getByAltText(/probe level 2/i)).toHaveAttribute(
+      'src',
+      '/assets/seti/tech/tiles/techFly1_SE.0.0.3.webp',
+    );
+    expect(screen.getByAltText(/scan level 2/i)).toHaveAttribute(
+      'src',
+      '/assets/seti/tech/tiles/techLook4_SE0.4.jpg',
+    );
+    expect(screen.getByAltText(/scan level 4/i)).toHaveAttribute(
+      'src',
+      '/assets/seti/tech/tiles/techLook3_SE0.1.webp',
+    );
+  });
+
   it('maps visible computer tech slots to the canonical blue tech rewards', () => {
     const onSubmit = vi.fn();
     render(

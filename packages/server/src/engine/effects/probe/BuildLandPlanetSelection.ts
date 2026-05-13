@@ -1,3 +1,7 @@
+import {
+  PLANETARY_BOARD_CONFIG,
+  type TPlanetaryBoardConfigId,
+} from '@seti/common/constant/boardLayout';
 import { EPlanet } from '@seti/common/types/protocol/enums';
 import type { IPlayerInput } from '@/engine/input/PlayerInput.js';
 import { SelectOption } from '@/engine/input/SelectOption.js';
@@ -31,6 +35,8 @@ const ALL_LANDABLE_PLANETS: readonly EPlanet[] = [
 interface ILandTarget {
   planet: EPlanet;
   isMoon: boolean;
+  moonId?: string;
+  moonName?: string;
 }
 
 function collectLandTargets(
@@ -59,10 +65,27 @@ function collectLandTargets(
     ) {
       targets.push({ planet, isMoon: false });
     }
-    if (
-      canLandTarget(player, game, planet, { ...options, isMoon: true }, payCost)
-    ) {
-      targets.push({ planet, isMoon: true });
+    const config = PLANETARY_BOARD_CONFIG[planet as TPlanetaryBoardConfigId];
+    const candidateMoonIds =
+      options.moonId !== undefined ? [options.moonId] : (config?.moonIds ?? []);
+    for (const moonId of candidateMoonIds) {
+      if (
+        canLandTarget(
+          player,
+          game,
+          planet,
+          { ...options, isMoon: true, moonId },
+          payCost,
+        )
+      ) {
+        const moonOrdinal = config?.moonIds.indexOf(moonId) ?? -1;
+        targets.push({
+          planet,
+          isMoon: true,
+          moonId,
+          moonName: config?.moonNames[moonOrdinal],
+        });
+      }
     }
   }
 
@@ -100,15 +123,18 @@ export function buildLandPlanetSelection(
   if (targets.length === 0) return undefined;
 
   const optionItems = targets.map((target) => ({
-    id: target.isMoon ? `land-${target.planet}-moon` : `land-${target.planet}`,
+    id: target.isMoon
+      ? `land-${target.planet}-moon-${target.moonId}`
+      : `land-${target.planet}`,
     label: target.isMoon
-      ? `Land on ${target.planet} (moon)`
+      ? `Land on ${target.planet} (${target.moonName ?? 'moon'})`
       : `Land on ${target.planet}`,
     onSelect: () => {
       const result = payCost
         ? player.land(target.planet, {
             ...landOptions,
             isMoon: target.isMoon,
+            moonId: target.moonId,
           })
         : LandProbeEffect.executeCardContainedAction(
             player,
@@ -117,10 +143,11 @@ export function buildLandPlanetSelection(
             {
               ...landOptions,
               isMoon: target.isMoon,
+              moonId: target.moonId,
             },
           );
       onLanded?.(result);
-      return undefined;
+      return result?.pendingInput;
     },
   }));
 

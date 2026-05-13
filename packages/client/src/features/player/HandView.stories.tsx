@@ -77,7 +77,10 @@ export const ImageModeInspect: Story = {
     await expect(
       canvas.queryByTestId('text-card-HAND.1'),
     ).not.toBeInTheDocument();
-    await expect(canvas.getByText('HAND.1')).toBeVisible();
+    await expect(canvas.getByTestId('card-render-HAND.1')).toBeInTheDocument();
+    await expect(canvas.getByTestId('seti-card-HAND.1')).toHaveTextContent(
+      'Alpha Survey',
+    );
     await userEvent.click(canvas.getByTestId('hand-card-HAND.1'));
     await expect(args.onCardInspect).toHaveBeenCalledWith(handCards[0]);
   },

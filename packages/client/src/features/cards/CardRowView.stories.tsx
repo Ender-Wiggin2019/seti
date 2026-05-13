@@ -70,7 +70,10 @@ export const ImageModeSelectedRow: Story = {
     await expect(
       canvas.queryByTestId('text-card-ROW.2'),
     ).not.toBeInTheDocument();
-    await expect(canvas.getByText('ROW.2')).toBeVisible();
+    await expect(canvas.getByTestId('card-render-ROW.2')).toBeInTheDocument();
+    await expect(canvas.getByTestId('seti-card-ROW.2')).toHaveTextContent(
+      'Deep Array',
+    );
     await expect(canvas.getByTestId('card-row-ROW.2')).toHaveClass('ring-1');
     await userEvent.dblClick(canvas.getByTestId('card-row-ROW.2'));
     await expect(args.onCardInspect).toHaveBeenCalledWith(rowCards[1]);

@@ -1,5 +1,309 @@
 # TODO
 
+## Space Agencies alien aid conversion - 2026-05-13
+
+Assumptions:
+- The source is `docs/arch/spaceAgency/SE2 aliens aid EN 14.pdf`.
+- The PDF contains three alien species to add under `docs/arch/aliens`: Arkhos, Glyphids, and Amoeba.
+- Existing `docs/arch/aliens/<alien>/rule.md` files define the target documentation shape: Raw Layer, Detailed Layer, and implementation notes.
+- The existing repository uses `docs/TODO.md`; this entry is recorded there instead of creating a duplicate lowercase `docs/todo.md`.
+- Active direct task request is treated as approval to execute this scoped documentation/assets task after recording the plan.
+
+Success criteria:
+- `docs/arch/aliens/arkhos`, `docs/arch/aliens/glyphids`, and `docs/arch/aliens/amoeba` exist with `rule.md` and `assets/`.
+- Each `rule.md` captures the PDF rules for setup, card flow, species-specific mechanics, solo/rival notes, and implementation-oriented contracts.
+- Each `assets/` folder contains stable, descriptive PNG crops for the species board, card back or equivalent card example, and key species components/examples.
+- Verification includes PDF page coverage, file-structure audit, image-dimension audit, and `git diff --check` for touched documentation paths.
+
+Plan:
+- [x] Extract the 6-page alien aid PDF and map page pairs to species.
+- [x] Create rule documents matching the existing alien documentation structure.
+- [x] Crop species assets from the rendered PDF pages into the matching alien folders.
+- [x] Verify structure, image dimensions, rule coverage, and diff whitespace.
+
+Review:
+- Converted `SE2 aliens aid EN 14.pdf` into three new alien folders: `docs/arch/aliens/arkhos`, `docs/arch/aliens/glyphids`, and `docs/arch/aliens/amoeba`.
+- Added `rule.md` for each species using the existing Raw Layer / Detailed Layer structure, including PDF-derived rules, relevant FAQ clarifications, and current code-state notes.
+- Added 18 PNG assets cropped from the rendered PDF pages: 6 each for Arkhos, Glyphids, and Amoeba.
+- Noted implementation status differences: Arkhos has no canonical `EAlienType` or card data yet; Glyphids and Amoeba have Space Agencies card metadata/registration but no dedicated alien plugins yet.
+- Verification passed: 6-page PDF page-pair mapping, rule coverage scan, file-structure audit, PNG dimension audit for all 18 new assets, visual contact-sheet review, and `git diff --check -- docs/TODO.md docs/arch/aliens/arkhos docs/arch/aliens/glyphids docs/arch/aliens/amoeba`.
+
+## Alien rule sheets asset extraction - 2026-05-13
+
+Assumptions:
+- The source is `docs/references/SETI_Alien_rule_sheets_(EN).pdf`.
+- The five in-scope aliens are the five existing rule notes under `docs/arch/aliens`: Mascamites, Anomalies, Oumuamua, Centaurians, and Exertians.
+- The existing repository uses `docs/TODO.md`; this entry is recorded there instead of creating a duplicate lowercase `docs/todo.md`.
+- Active goal continuation is treated as confirmation to execute this scoped documentation/assets task after recording the plan.
+
+Success criteria:
+- `docs/arch/aliens` is organized as one folder per alien, each with `rule.md` and `assets/`.
+- Each `rule.md` preserves the existing rule content for that alien.
+- Each `assets/` folder contains identified and named assets for the alien board, components, and card back where the PDF page provides them.
+- Asset names are stable, descriptive, lowercase, and scoped to the alien folder.
+- Verification includes a PDF page/image audit, file-structure audit, image-dimension audit, and `git diff --check` for the touched documentation paths.
+
+Plan:
+- [x] Inspect PDF pages/images and map each alien page pair to its alien name.
+- [x] Extract candidate images from the PDF and identify board, component, and card-back assets.
+- [x] Restructure `docs/arch/aliens` into per-alien folders with `rule.md` plus categorized `assets/`.
+- [x] Verify asset presence, image dimensions, and Markdown/file structure; append review evidence here.
+
+Review:
+- Mapped the 10-page PDF into five page pairs: Mascamites 1-2, Anomalies 3-4, Oumuamua 5-6, Centaurians 7-8, and Exertians 9-10.
+- Moved the five existing alien notes into `docs/arch/aliens/<alien>/rule.md` and verified each file matches the previous `HEAD:docs/arch/aliens/<alien>.md` content byte-for-byte.
+- Added native-resolution page-composite PNG crops for each alien, including `alien-board.png`, `card-back.png`, and species-specific components/examples such as sample tokens, anomaly tokens, Oumuamua tile/exofossils, Centaurian message tiles, and Exertian milestone/danger images.
+- Updated direct documentation references from the old `docs/arch/aliens/<alien>.md` paths to `docs/arch/aliens/<alien>/rule.md`.
+- Verification passed: PDF page/image audit via PyMuPDF native-density render contact sheet, file-structure audit, image-dimension audit for all 28 PNG assets, old-path reference scan, and `git diff --check` on touched documentation paths.
+
+## Space Agencies expansion rulebook markdown - 2026-05-13
+
+Assumptions:
+- The output should be an English Markdown rule document at `docs/arch/spaceAgency/rulebook.md`, next to the source PDF and expansion FAQ.
+- The PDF is the primary source. `docs/arch/spaceAgency/faq.md` may add clarifications, but any supplement must be labeled as clarification rather than silently replacing the PDF text.
+- `docs/arch/rule-simple.md` is used only to explain how these expansion rules increment the base game; base-game rules should not be duplicated unless needed for context.
+- The existing repository uses `docs/TODO.md`; this entry is recorded there instead of creating a duplicate lowercase `docs/todo.md`.
+- Active goal continuation is treated as approval to execute this scoped documentation task after recording the plan.
+
+Success criteria:
+- Every rules-bearing PDF section is represented in Markdown: cover premise, components, using this expansion, organizations setup, quick start cards, organizations card anatomy, 1-2 player adjustment, solo setup, long-term objectives, advanced action card fallback, signal tokens, printed FAQ, and credits/source metadata.
+- Image-only icon meanings that affect rules are transcribed in text, including scan action, signal token, rival advancement, advanced action card, star difficulty, and Futurespan token references.
+- Key FAQ logic from `docs/arch/spaceAgency/faq.md` is summarized in a separate clarification section, especially organizations, 4-round balance, quick start cards without organizations, starting income replacement, signal-token use, and trigger-like organization abilities.
+- The document clearly states that Space Agencies is an optional expansion module and which components are always added when using the expansion.
+- Verification includes PDF page-by-page visual/text audit, FAQ coverage audit, base-rule increment audit, markdown lint-style structural scan, and `git diff --check`.
+
+Plan:
+- [x] Extract PDF text and render page images for audit.
+- [x] Write `docs/arch/spaceAgency/rulebook.md` with PDF-derived rules and explicitly labeled FAQ clarifications.
+- [x] Compare the Markdown against all 5 PDF pages and targeted `faq.md`/`rule-simple.md` references.
+- [x] Run final structural checks and append review evidence here.
+
+Review:
+- Created `docs/arch/spaceAgency/rulebook.md` as the Markdown rule document for the Space Agencies expansion option.
+- Converted all rules-bearing PDF sections: component inventory, always-added expansion components, organization setup, quick start cards, organization anatomy, 1-2 player neutral setup, solo organization setup, long-term objectives, advanced-action-card fallback, signal tokens, printed FAQ, and source credits.
+- Added an option-boundary section clarifying that disabling Space Agencies keeps base-game rules/components only, while enabling it adds the expansion cards/aliens/signal tokens and optionally the organizations + quick start module.
+- Added explicitly labeled FAQ clarifications from `docs/arch/spaceAgency/faq.md`, covering all 50 FAQ headings/card IDs by audit: general questions, all 11 organizations, main-deck card clarifications, alien card clarifications, and promo card clarification.
+- Verification passed: rendered all 5 PDF pages to `/tmp/demo-a2ui-spaceagency-pages` for visual audit; PyMuPDF text extraction confirmed 5 PDF pages; PDF/option checklist script passed 13 groups; FAQ heading/id coverage script passed 50 headings; Markdown structural scan passed; placeholder scan on `rulebook.md` found no matches; `git diff --check -- docs/TODO.md docs/arch/spaceAgency/rulebook.md` passed.
+
+## Current diff code review - 2026-05-13
+
+Assumptions:
+- Scope is the current working tree relative to `HEAD`, with priority on planetary board moon landing changes and any cross-package inconsistencies they introduce.
+- The explicit `$code-review` request and the provided review-and-fix skill are treated as approval to fix confirmed in-scope issues after this plan is recorded.
+- `moonIndex` should not be used as a persisted/protocol identity. A moon slot needs a stable id; numeric ordering may remain only as an internal derived position for arrays/rendering.
+- Existing user changes are not reverted; fixes must be minimal and directly tied to review findings.
+
+Success criteria:
+- Moon identity is stable across common config, server state/DTO/public projection, client action payloads, and tests.
+- Multi-moon target selection lets users choose the exact moon slot/reward in both main action and card-driven land flows.
+- Legacy snapshots using old moon fields remain readable at deserialization boundaries only.
+- Focused common/server/client regression tests cover invalid moon targets, occupied moon targets, clicked moon payloads, and card-driven moon choices.
+- Verification covers focused tests, relevant typechecks/static checks, and `git diff --check`.
+
+Plan:
+- [x] Review current diff and rule references for moon landing, protocol, serializer, and UI target paths.
+- [x] Confirm findings that require code changes, starting with `moonIndex` as identity and card-driven moon selection.
+- [x] Add failing focused tests for confirmed behavioral/API gaps.
+- [x] Implement minimal shared moon-id model and update server/client consumers.
+- [x] Run focused tests/type/static checks, re-review the diff, and record final evidence here.
+
+Review:
+- Fixed moon identity leak: runtime/server DTO/public state and client main-action payloads now use stable `moonId`; `moonIndex` is rejected at the action boundary and only remains as legacy snapshot input in deserialization.
+- Added shared stable ids for configured moon slots and alignment tests proving ids, names, rewards, moon slot count, and landing-slot moon count stay in sync.
+- Fixed card-driven moon selection (`buildLandPlanetSelection` and Mascamites land-then-pickup) so multi-moon planets expose one option per available moon id instead of one ambiguous per-planet moon option.
+- Preserved legacy snapshot compatibility for both old `moonOccupant` and `moonOccupants[].moonIndex`, normalizing them to stable ids at deserialization only.
+- Verification passed: common focused tests 9; server focused tests 102; client focused tests 10; common/server/client typecheck; Biome error-level check on 29 touched TS/TSX files; `git diff --check`.
+- Review report: `docs/review/diff-2026-05-13-moon-id.md`.
+
+### Follow-up server review pass
+
+Assumptions:
+- Subagent server review findings are external review feedback: verify against project rules before implementing.
+- `docs/arch/rule-faq.md` project note is authoritative for card-granted tech rotation: generic card tech effects do not rotate unless the behavior also has an explicit rotate effect.
+- Mascamites land-then-pickup must preserve all land reward continuations before sample pickup.
+- LAND payloads should reject moon-only fields when `isMoon` is not true.
+- Event log `at` values must remain monotonic after appending persisted legacy timestamped events.
+
+Success criteria:
+- BehaviorExecutor tech effect without explicit rotate does not rotate; tech + explicit rotate still rotates once.
+- Mascamites moon land-then-pickup resolves moon reward pending input, then prompts sample pickup.
+- Non-moon LAND payload with `moonId` is rejected before mutating board state.
+- EventLog appends new events after legacy timestamped events with monotonic `at`.
+- Focused server tests fail before fixes, pass after fixes, and targeted static/type checks are rerun.
+
+Plan:
+- [x] Add failing server regressions for the four confirmed loopholes.
+- [x] Implement the smallest server fixes in BehaviorExecutor, Land/Mascamites flow, Game payload validation, and EventLog sequencing.
+- [x] Run focused server tests plus type/static checks and update this review section.
+
+Review:
+- Confirmed and fixed generic card-granted tech rotation: `BehaviorExecutor` now calls `ResearchTechAction` with `skipRotation`, while explicit `ROTATE + TECH` still rotates exactly once.
+- Confirmed and fixed Mascamites land-then-pickup continuation loss: moon land rewards now resolve before sample pickup by passing an `onComplete` continuation through `LandProbeEffect`.
+- Confirmed and fixed non-moon LAND payload validation: `moonId` is rejected when `isMoon` is not true before board mutation.
+- Confirmed and fixed legacy event ordering: `EventLog` advances its sequence from persisted `at` values so later events remain monotonic.
+- Focused server regressions passed after fixes: `BehaviorExecutor`, `Land`, `MascamitesCards`, `EventLog`, plus updated `SolarSystem` and `CardEffectsIntegration` expectations for the FAQ rotation rule.
+
+### Follow-up client/common review pass
+
+Assumptions:
+- Server is authoritative for LAND legality; common/client availability must mirror rover-discount landing cost.
+- Unit tests that assert mocked `DescRender` test ids are insufficient for real reward icon parsing.
+
+Success criteria:
+- Common `canLandOnPlanet` and client planet target selection allow `PROBE_ROVER_DISCOUNT` landings at the discounted energy cost.
+- Reward desc strings emitted by `PlanetCard` parse through the real common desc parser into known effects, so invalid token names are caught without relying on the global `@seti/cards` mock.
+
+Plan:
+- [x] Add failing common/client regressions for rover-discount LAND availability.
+- [x] Add a parser-level reward desc regression that is independent of mocked `DescRender`.
+- [x] Implement the smallest common/client fix and rerun focused checks.
+
+Review:
+- Confirmed and fixed client/common LAND availability drift: `canLandOnPlanet` now applies `PROBE_ROVER_DISCOUNT`, matching the server landing-cost modifier.
+- Added a client board regression proving a two-energy discounted LAND target is clickable when the player has rover tech.
+- Added parser-level reward desc coverage for `PlanetCard` output, independent of the global mocked `@seti/cards` `DescRender`.
+- Focused common/client regressions passed after fixes.
+
+### Follow-up E2E review pass
+
+Assumptions:
+- E2E should run against isolated server/client ports and matching runtime env, not whatever local dev server happens to occupy `5173`.
+- Real UI planet-board assertions must work in both image mode and text mode.
+- Full e2e failures outside the reviewed moon/landing/tech paths are recorded as residual review risks unless reproduced and fixed in this pass.
+
+Success criteria:
+- The local E2E harness starts server/client on the requested `SERVER_URL` / `CLIENT_URL`, passes matching API/WS env into Vite, uses strict Vite port binding, and avoids unsupported Node 22.11 for Vite.
+- The focused orbit/land real-ui E2E passes on isolated ports after updating stale text-mode-only assertions.
+- Remaining full-suite E2E failures are grouped and explicitly reported instead of hidden.
+
+Plan:
+- [x] Fix `scripts/run-e2e-local.sh` to honor requested ports/env and strict client port binding.
+- [x] Fix `scripts/init-e2e-local.sh` to choose a Vite-compatible Node version: 20.19+, 22.12+, or 23+.
+- [x] Update `main-action-orbit-land.spec.ts` so token assertions work for image-mode overlays as well as text-mode `PlanetCard`.
+- [x] Rerun the focused real-ui orbit/land E2E on isolated ports and record residual full-suite E2E risk.
+
+Review:
+- The first full `pnpm test` exposed 13 E2E failures after all common/web/client/server unit and integration suites passed. Review found one harness issue: a pre-existing user Vite dev server occupied `5173`, while the E2E harness used non-strict `--port 5173` and did not pass `VITE_API_URL` / `VITE_WS_URL` for the isolated server.
+- Fixed the harness so `SERVER_URL=http://127.0.0.1:3100 CLIENT_URL=http://127.0.0.1:5174 WS_URL=http://127.0.0.1:3100 scripts/run-e2e-local.sh ...` starts matching isolated services. `init-e2e-local.sh` now selects Node v23.3.0 on this machine instead of unsupported v22.11.
+- Fixed stale image/text mode E2E selector assumptions in `main-action-orbit-land.spec.ts`; focused real-ui orbit/land E2E now passes 2/2 on isolated ports.
+- Final verification after the E2E harness/spec fixes passed: `pnpm typecheck`, touched-file Biome error-level check, `bash -n scripts/init-e2e-local.sh scripts/run-e2e-local.sh`, `git diff --check`, and the isolated focused E2E command above for `tests/main-action-orbit-land.spec.ts` (2 passed).
+- Residual full-suite E2E risk remains outside this focused pass: the prior full run ended with 51 passed / 13 failed, clustered around stale helper assumptions for setup/pending inputs, image-mode selectors, debug snapshot contracts, and long-flow deterministic card/sector expectations. These are documented in the final review summary and should be handled as a separate E2E stabilization pass.
+
+### Completion audit and full E2E stabilization pass
+
+Assumptions:
+- The active goal is not complete until the current uncommitted implementation has no known reproducible failure in the reviewed scope, or any remaining failure is blocked by a concrete external dependency.
+- The previous full E2E failure list is stale after harness and selector fixes; rerun the current suite before choosing fixes.
+- Fixes should target root causes in product code or test helpers/contracts, not paper over failures with arbitrary waits.
+
+Success criteria:
+- Prompt-to-artifact checklist maps every explicit review requirement to concrete evidence.
+- Current full E2E run is green, or every remaining failing test is reduced to a named external blocker with exact evidence.
+- Any E2E helper or product change has a focused reproduction before the fix and a passing focused/full verification after.
+- Final audit includes static/type checks, unit/integration coverage already run, full E2E evidence, and a residual-risk decision.
+
+Plan:
+- [ ] Build the prompt-to-artifact completion checklist from the active objective and repo instructions.
+- [ ] Rerun the current full E2E suite on isolated ports to get the actual remaining failure list.
+- [ ] Group failures by root cause and fix the smallest confirmed set.
+- [ ] Rerun focused E2E tests for each fixed group, then rerun the full E2E suite.
+- [ ] Rerun static/type checks and update this section with the final audit result.
+
+## PRD/rule-tech implementation audit - 2026-05-13
+
+Assumptions:
+- `docs/arch/prd-rule.md` and `docs/arch/rule-tech.md` are the in-scope specs for this pass; `frontend-reference` is used only to disambiguate physical tech board asset/position mappings referenced by `rule-tech.md`.
+- Existing project tech ids remain the canonical implementation ids; if reference `options.num` differs, the code must map reference assets/positions onto the canonical ids explicitly instead of changing persisted ids.
+- Active goal continuation is treated as confirmation to implement after recording this plan.
+
+Success criteria:
+- Every explicit `rule-tech.md` tech id, board position, image, and effect mapping has focused regression evidence or a documented residual risk.
+- Confirmed tech position/order mismatches are fixed with the smallest shared config/client change.
+- The broader `prd-rule.md` audit is converted into a checklist by domain and compared against current implementation evidence, not just existing broad tests.
+- Every confirmed loophole gets a failing regression test first, a minimal fix, and a fresh passing verification run.
+- Final review records evidence, residual risk, and any uncovered/out-of-scope item.
+
+Plan:
+- [x] Add failing tests for canonical tech board position and image mappings.
+- [x] Fix the tech layout/image mapping without changing persisted tech ids or rule semantics.
+- [x] Run focused tech tests and type/static checks for touched files.
+- [x] Continue the `prd-rule.md` checklist audit by domain, starting with setup/research/scan/analyze where current evidence is weakest.
+- [x] Repeat red/green/audit loops for any additional confirmed mismatch.
+- [x] Record final review evidence and residual risk here.
+
+Review:
+- Fixed canonical tech board order and image mapping without changing persisted tech ids. Regression coverage now asserts the shared `TECH_STACK_LAYOUT` order and client image sources for probe/scan/computer stacks.
+- Fixed first end-of-round income so round 1 income applies the full base + tucked-card payout, matching setup/pass timing.
+- Fixed Research Tech order and card-granted research semantics: main research rotates before spending publicity, card-granted tech rotates even when the tech take is unavailable, and rotation publicity gained during card effects is credited back to the player.
+- Fixed tech bonus `LAUNCH_IGNORE_LIMIT` by allowing that bonus path to bypass the normal probe-in-space cap.
+- Fixed Land legality and UI selection so repeated same-player ordinary-planet landings are allowed, moon duplicate restrictions remain, and card-driven land selection propagates pending input correctly.
+- Fixed hidden-information leakage by removing future `endOfRoundStacks` from public game-state projection while preserving persistence DTO state.
+- Fixed 2-cards-for-resource exchange protocol by requiring explicit `spentCardIds` for card exchanges on server/common/client paths.
+- Fixed alien `onRoundEnd` extensibility by dispatching discovered species plugin round-end hooks during `Game.resolveEndOfRound`.
+- Fixed Play Card availability so both server and client evaluate specific revealed hand cards, rather than enabling the action when any abstract hand size/resource condition looks true.
+- Fixed event-log determinism and scalar mutation auditability: event factories no longer stamp wall-clock IDs/timestamps; `EventLog` assigns deterministic sequence ids and `at` values per log instance; generic player resource and score mutations now emit `RESOURCE_CHANGE` / `SCORE_CHANGE`.
+- Completion audit report: `docs/review/prd-rule-tech-completion-audit-2026-05-13.md`.
+- Verification passed after final formatting and event-log mutation fix: common full tests 14 files / 150 tests; server full tests 298 files / 1921 tests; client full tests 66 files / 265 tests; common/server/client typecheck; Biome error-level check on all changed TS/TSX files; `git diff --check`.
+- Browser smoke passed at `http://127.0.0.1:5175/debug/game`: debug page rendered, image-mode planet board exposed `planetary-board-image-mode`, image mode did not render text planet cards, tech tab exposed all 12 tech stacks, all 12 inspected tech tile images loaded with nonzero natural dimensions, and current console had no errors/warnings.
+
+## Planet board moon land bonus - 2026-05-13
+
+Findings:
+- This is a system issue, not only a text-mode rendering issue.
+- Common currently exposes one shared `land.rewards` / `land.firstData` block per planet and has no moon-specific land reward config.
+- Server `PlanetaryBoard.land()` stores moon occupants, then uses the same `config.land.rewards` and first-land data path for moon and planet landings.
+- Public game state returns `configs: PLANETARY_BOARD_CONFIG`, so the client cannot display moon rewards unless common config grows that data.
+- `frontend-reference` confirms moon rewards are per rover/moon slot and first-land data applies only to non-moon landings.
+
+Reference moon rewards:
+- Mars moon: `8 VP + 2 unlock production`
+- Jupiter moons: `12 VP + 5 publicity`, `7 VP + 2 yellow trace`, `10 VP + 4 energy`, `13 VP + 4 data`
+- Saturn moons: `12 VP + red/yellow/blue signal`, `7 VP + 2 any trace`
+- Uranus moon: `25 VP`
+- Neptune moon: `26 VP`
+
+Assumptions:
+- `frontend-reference` reward data is authoritative for the missing moon land rewards.
+- Existing project naming should stay `land`, `moon`, and `landingSlotKinds`; legacy reference names like `Rover` should not leak into protocol or common naming.
+- The minimal correct model is to add moon-specific reward arrays to common config, keyed by moon slot order, and let server/client consume that shared config.
+- First-land data remains planet-only, matching `frontend-reference`; moon landing should not consume `firstLandDataBonusTaken`.
+- Text mode must render planet and moon rewards through `DescRender` / `EffectFactory`, not plain text reward strings.
+- Runtime/public planet state should use one canonical moon occupant field: `moonOccupants`. Legacy `moonOccupant` may only be accepted at deserialization boundaries for old snapshots.
+- Moon target selection must include a stable `moonId`; otherwise clicking a specific moon block can still resolve on the server as the next open moon and award the wrong slot reward.
+
+Success criteria:
+- Common config contains moon land rewards for all configured moon slots and tests assert the reference values.
+- Server moon landing returns/applies the moon slot's configured rewards, does not consume planet first-land data, and keeps existing planet landing behavior unchanged.
+- Public game state exposes the updated shared config through the existing `configs` path without adding duplicate ad hoc state.
+- Text-mode `PlanetCard` displays orbit/land/moon rewards with desc icons from projected config. Each moon is its own block with centered reward icons and the moon name below.
+- Image mode exposes moon landing hotspots from `landingSlotKinds`; clicking a moon target sends the same main-action flow with `payload.isMoon === true`.
+- Text mode moon blocks are selectable in land mode and send the same `payload.isMoon === true` plus `payload.moonId` action path.
+- Focused tests fail on the current implementation and pass after the minimal fix.
+- Verification covers focused common/server/client tests, relevant type checks, touched-file static checks, and `git diff --check`.
+
+Plan:
+- [x] Add failing common config tests for per-moon reward values from `frontend-reference`.
+- [x] Add failing server tests proving moon landing uses moon reward, does not take planet first-land data, and applies resources/VP/traces consistently.
+- [x] Add/update failing client tests proving image-mode moon hotspots and text-mode moon blocks send `isMoon: true` and the clicked `moonId`.
+- [x] Add/update failing server tests proving a direct `moonId` landing uses the clicked moon slot reward, not merely the next open moon.
+- [x] Add/update failing client tests proving planet orbit/land and moon rewards render through `DescRender` icon descs, not plain text.
+- [x] Remove duplicated current-state `moonOccupant` from common/server/client projections while keeping legacy deserializer support; add `moonId` to `moonOccupants`.
+- [x] Add failing client text-mode tests proving moon rewards render and multi-moon occupancy uses `moonOccupants`.
+- [x] Implement the smallest shared config/model change in `packages/common/src/constant/boardLayout.ts`.
+- [x] Update server reward selection/application to branch on moon slot order while preserving existing planet landing logic.
+- [x] Update `PlanetCard` text-mode rendering to show planet and moon reward blocks using `DescRender` and current occupants.
+- [x] Update `PlanetaryBoardView` / `GameLayout` target selection so moon hotspots and text-mode moon blocks dispatch data-driven main action payloads.
+- [x] Run focused tests, type/static checks, browser verification, and append review evidence here.
+
+Review:
+- Root cause confirmed: common had no moon-specific land reward config, server moon landings reused planet `land.rewards` and first-land data, and client text mode had no moon reward blocks.
+- Added `land.moonRewards` in shared config, keyed by moon slot order, and aligned moon names/order to `frontend-reference`.
+- Removed current-state `moonOccupant`; runtime/public state now uses `moonOccupants: [{ playerId, moonId }]`. Legacy `moonOccupant` is only read in `GameDeserializer`.
+- Server LAND now accepts `moonId`, applies that slot's moon rewards, leaves first-land data untouched for moon landings, and supports resource/tuck/colored-signal/trace reward chains.
+- Text mode uses `DescRender` for orbit, first-orbit, land, first-data, and per-moon rewards. Each moon renders as its own block with centered reward icons and the moon name below.
+- Image mode and text-mode moon blocks dispatch the same main action path with `payload.isMoon === true` and the clicked `payload.moonId`.
+- Verification passed: common focused tests 31; server focused tests 37; client focused tests 53; common/server/client typecheck; touched-file Biome check; browser smoke at `http://127.0.0.1:5175/debug/game` with text mode showing `planet-reward-icons-*` and `moon-block-*` DescRender icon containers; `git diff --check`.
+
 ## Planet board UI/reference alignment - 2026-05-13
 
 Assumptions:
@@ -444,7 +748,7 @@ Review:
 ## Alien implementation confidence loop - 2026-05-11
 
 Success criteria:
-- Every implemented alien species and shared alien mechanism is mapped to `docs/arch/aliens/*.md`, `docs/arch/rule-simple.md`, and FAQ constraints where relevant.
+- Every implemented alien species and shared alien mechanism is mapped to `docs/arch/aliens/*/rule.md`, `docs/arch/rule-simple.md`, and FAQ constraints where relevant.
 - Every confirmed alien bug has a failing unit/E2E check or equivalent observable assertion before production changes.
 - Server/common/client alien behavior stays consistent for hidden information, public projection, card economy, discovery, and species-specific resources.
 - The final state is backed by targeted tests/type checks, and any residual risk is explicitly recorded.

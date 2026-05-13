@@ -11,6 +11,10 @@ import {
   EPlanet,
   ETrace,
 } from '@seti/common/types/protocol/enums';
+import {
+  EPlayerInputType,
+  type ISelectEndOfRoundCardInputModel,
+} from '@seti/common/types/protocol/playerInput';
 import { ETechId } from '@seti/common/types/tech';
 import {
   isAnomaliesAlienBoard,
@@ -138,6 +142,28 @@ describe('GameSerializer', () => {
     const p2Self = p2View.players.find((player) => player.playerId === 'p2');
     expect(Array.isArray(p2Self?.hand)).toBe(true);
     expect(p2View.solarSystem.spaces.length).toBeGreaterThan(0);
+  });
+
+  it('does not project hidden end-of-round stack contents', () => {
+    const game = createTestGame();
+    expect(game.endOfRoundStacks[game.roundRotationReminderIndex].length).toBe(
+      3,
+    );
+
+    const publicState = projectGameState(game, 'p1');
+
+    expect(publicState.endOfRoundStacks).toBeUndefined();
+    expect(publicState.currentEndOfRoundStackIndex).toBe(
+      game.roundRotationReminderIndex,
+    );
+
+    game.processMainAction(game.activePlayer.id, { type: EMainAction.PASS });
+    const model =
+      game.players[0].waitingFor?.toModel() as ISelectEndOfRoundCardInputModel;
+
+    expect(model.type).toBe(EPlayerInputType.END_OF_ROUND);
+    expect(model.cards).toHaveLength(3);
+    expect(projectGameState(game, 'p2').endOfRoundStacks).toBeUndefined();
   });
 
   it('projects orbit and land as available when a probe is on a planet', () => {

@@ -15,6 +15,8 @@
 ## E2E 真实路径
 
 - 生产路径 E2E 不使用 debug endpoint、localStorage 注入、raw websocket action 或 mock network；debug replay/checkpoint 只能作为明确标注的长前置补充。
+- 本地 E2E harness 必须隔离端口并强制端口绑定；如果已有 dev server 占用默认端口，不能让 Vite 自动换端口或让测试混用旧 client。
+- E2E runtime 版本要匹配 Vite/Playwright 的真实要求；Node 22.11 虽然大于 20.19，但仍不满足 Vite 的 22.12+ 要求。
 - Helper 必须处理真实 pending input（如 tuck-for-income），不能越过 UI 继续点击后续动作。
 - 截图证据必须直接露出用户点名元素；响应式布局导致分屏时，分别截图并附 DOM/test locator 证据。
 - 涉及 game 页 UI 的验收不能只停在 app shell 或 debug route；必须至少通过 UI 新建一个真实 game 并进入 `/game/{gameId}`，再断言目标区域。
@@ -22,6 +24,9 @@
 ## UI 语义渲染
 
 - 规则、奖励、desc 图标统一走 `DescRender` / `EffectFactory`；不要用颜色块、字母或临时图片替代。
+- 修 board 状态时不要用“新数组 + deprecated 单值”长期并存来兼容；除非明确有外部协议约束，否则当前 public/runtime state 只能保留一个规范字段，旧快照兼容放在 deserializer 边界。
+- Planet board 的 text/image 两种模式都要覆盖交互语义；如果 image mode 能点 moon，text mode 的 moon block 也要能通过相同 main-action payload 发 `isMoon`。
+- Planet board E2E 不要只断言 text-mode `planet-card-*`；image mode 默认渲染 `planet-target-*` 和 token overlay，测试应显式切 text mode 或同时支持 image-mode selectors。
 - Token/board 视觉要表达规则语义：solar anomaly token 是奖励 pill（trace 色辅助、desc icon 居中），alien trace slot 用同色 border 容器，hidden board 不泄露真实 trace。
 - Anomalies board 保持 red/yellow/blue 三列横排；单列内部按规则读法让低 index 在底部，压缩布局优先减 padding/slot 宽度，不牺牲 desc icon 可读性。
 - UI 缩放控件不能只改 `max-width`；如果用户预期布局变小，必须改实际 reserved `width`/`height`，并在浏览器里检查 `getBoundingClientRect()`，不只看 style attribute。
@@ -36,5 +41,6 @@
 
 ## 规则文档与参考数据
 
+- PDF 资产提取优先保存原始嵌入图片或 native-pixel crop；不要把页面高倍率渲染裁切冒充原始素材，交付前用原图尺寸和清晰度审计说明来源限制。
 - 源资料缺图或数据时，优先从 `frontend-reference`、`docs/arch/aliens/*`、FAQ 补足；用户确认点迁入 Confirmed Decisions，并记录来源与冲突优先级。
 - `frontend-reference` 只作为行为/数据参考；实现规格必须写清 common/server/client 分工，并把 source alias 映射到项目规范命名。

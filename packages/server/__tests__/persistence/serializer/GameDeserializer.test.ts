@@ -72,6 +72,43 @@ describe('GameDeserializer', () => {
     expect(dto2).toEqual(dto1);
   });
 
+  it('normalizes legacy moon occupant snapshots to stable moon ids', () => {
+    const game = createTestGame();
+    const dto = serializeGame(game, 1);
+    const marsState = dto.planetaryBoard?.planets.find(
+      (entry) => entry.planet === EPlanet.MARS,
+    )?.state as
+      | (NonNullable<typeof dto.planetaryBoard>['planets'][number]['state'] & {
+          moonOccupant?: { playerId: string } | null;
+          moonOccupants?: unknown;
+        })
+      | undefined;
+    const jupiterState = dto.planetaryBoard?.planets.find(
+      (entry) => entry.planet === EPlanet.JUPITER,
+    )?.state;
+
+    if (!marsState || !jupiterState) {
+      throw new Error('expected planetary board state');
+    }
+
+    const legacyMarsState = marsState as {
+      moonOccupants?: unknown;
+      moonOccupant?: { playerId: string } | null;
+    };
+    delete legacyMarsState.moonOccupants;
+    legacyMarsState.moonOccupant = { playerId: 'p1' };
+    jupiterState.moonOccupants = [{ playerId: 'p2', moonIndex: 3 }];
+
+    const restored = deserializeGame(dto);
+
+    expect(
+      restored.planetaryBoard?.planets.get(EPlanet.MARS)?.moonOccupants,
+    ).toEqual([{ playerId: 'p1', moonId: 'mars-phobos-deimos' }]);
+    expect(
+      restored.planetaryBoard?.planets.get(EPlanet.JUPITER)?.moonOccupants,
+    ).toEqual([{ playerId: 'p2', moonId: 'jupiter-io' }]);
+  });
+
   it('round-trips solo rival state', () => {
     const game = createSoloTestGame();
     const restored = deserializeGame(serializeGame(game, 1)) as Game & {

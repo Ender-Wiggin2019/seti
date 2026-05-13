@@ -210,6 +210,7 @@ export interface IPublicPlanetSlotState {
 
 export interface IPublicMoonOccupantState {
   playerId: string;
+  moonId: string;
 }
 
 export interface IPublicPlanetState {
@@ -217,8 +218,7 @@ export interface IPublicPlanetState {
   landingSlots: IPublicPlanetSlotState[];
   firstOrbitClaimed: boolean;
   firstLandDataBonusTaken: boolean[];
-  moonOccupants?: IPublicMoonOccupantState[];
-  moonOccupant: IPublicMoonOccupantState | null;
+  moonOccupants: IPublicMoonOccupantState[];
 }
 
 export interface IPublicPlanetaryBoard {

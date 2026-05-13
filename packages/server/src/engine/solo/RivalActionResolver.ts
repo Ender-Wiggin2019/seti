@@ -345,8 +345,8 @@ export class RivalActionResolver {
 
   private static hasMoonSlot(planet: EPlanet): boolean {
     return (
-      (PLANETARY_BOARD_CONFIG[planet as TPlanetaryBoardConfigId]?.moonSlots ??
-        0) > 0
+      (PLANETARY_BOARD_CONFIG[planet as TPlanetaryBoardConfigId]?.moonIds
+        .length ?? 0) > 0
     );
   }
 
@@ -619,7 +619,11 @@ export class RivalActionResolver {
           break;
         case 'signal':
           for (let index = 0; index < reward.amount; index += 1) {
-            this.markRivalSignalByPlanet(game, planet);
+            if ('sector' in reward) {
+              this.markRivalSignalByColor(game, reward.sector);
+            } else {
+              this.markRivalSignalByPlanet(game, planet);
+            }
           }
           break;
         default:

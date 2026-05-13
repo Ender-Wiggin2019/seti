@@ -4,7 +4,11 @@ import {
   PLANETARY_BOARD_DIMENSIONS,
   PLANETARY_PLANETS,
 } from '@seti/common/constant/boardLayout';
-import { canLandOnPlanet, canOrbitPlanet } from '@seti/common/rules';
+import {
+  canLandOnMoon,
+  canLandOnPlanet,
+  canOrbitPlanet,
+} from '@seti/common/rules';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 import { useTextMode } from '@/stores/debugStore';
@@ -30,15 +34,18 @@ function createEmptyPlanetState(
       { length: config.land.firstData.length },
       () => false,
     ),
-    moonOccupant: null,
+    moonOccupants: [],
   };
 }
 
 function getPlanetConfig(
   planetaryBoard: IPublicPlanetaryBoard,
-  planet: (typeof PLANETARY_PLANETS)[number],
+  planet: EPlanet,
 ): IPlanetaryBoardConfig {
-  return planetaryBoard.configs?.[planet] ?? PLANETARY_BOARD_CONFIG[planet];
+  return (
+    planetaryBoard.configs?.[planet] ??
+    PLANETARY_BOARD_CONFIG[planet as keyof typeof PLANETARY_BOARD_CONFIG]
+  );
 }
 
 interface IPlanetaryBoardViewProps {
@@ -48,7 +55,10 @@ interface IPlanetaryBoardViewProps {
   pendingInput: IPlayerInputModel | null;
   playerColors: Record<string, string>;
   mainActionPlanetMode?: EMainAction.ORBIT | EMainAction.LAND | null;
-  onSelectMainActionPlanet?: (planet: EPlanet) => void;
+  onSelectMainActionPlanet?: (
+    planet: EPlanet,
+    options?: { isMoon?: boolean; moonId?: string },
+  ) => void;
   onRespondInput?: (response: IInputResponse) => void;
 }
 
@@ -79,11 +89,13 @@ function TokenAtPoint({
   );
 }
 
-type TPlanetHotspotKind = 'orbit' | 'landing';
+type TPlanetHotspotKind = 'orbit' | 'planet-land' | 'moon-land';
 
 interface IPlanetHotspot {
   kind: TPlanetHotspotKind;
   index: number;
+  moonId?: string;
+  moonName?: string;
   x: number;
   y: number;
 }
@@ -91,10 +103,7 @@ interface IPlanetHotspot {
 function getMoonOccupants(
   state: IPublicPlanetState,
 ): IPublicMoonOccupantState[] {
-  if (state.moonOccupants && state.moonOccupants.length > 0) {
-    return state.moonOccupants;
-  }
-  return state.moonOccupant ? [state.moonOccupant] : [];
+  return state.moonOccupants;
 }
 
 function getPlanetHotspots(
@@ -117,13 +126,24 @@ function getPlanetHotspots(
   }
 
   if (includeLanding) {
+    let moonOrdinal = 0;
     hotspots.push(
-      ...config.landingSlots.map((slot, index) => ({
-        kind: 'landing' as const,
-        index,
-        x: slot.x,
-        y: slot.y,
-      })),
+      ...config.landingSlots.map((slot, index) => {
+        const isMoon = config.landingSlotKinds[index] === 'moon';
+        const moonId = isMoon ? config.moonIds[moonOrdinal] : undefined;
+        const hotspot = {
+          kind: isMoon ? ('moon-land' as const) : ('planet-land' as const),
+          index,
+          moonId,
+          moonName: isMoon ? config.moonNames[moonOrdinal] : undefined,
+          x: slot.x,
+          y: slot.y,
+        };
+        if (isMoon) {
+          moonOrdinal += 1;
+        }
+        return hotspot;
+      }),
     );
   }
 
@@ -132,8 +152,38 @@ function getPlanetHotspots(
   }
 
   return [
-    { kind: 'landing', index: 0, x: config.anchor.x, y: config.anchor.y },
+    { kind: 'planet-land', index: 0, x: config.anchor.x, y: config.anchor.y },
   ];
+}
+
+function canSelectMainActionTarget(
+  mode: EMainAction.ORBIT | EMainAction.LAND | null,
+  planet: EPlanet,
+  planetState: IPublicPlanetState,
+  player: IPublicGameState['players'][number] | undefined,
+  gameState: IPublicGameState | null,
+  options: { isMoon?: boolean; moonId?: string } = {},
+): boolean {
+  if (!mode || !player || !gameState) return false;
+
+  if (mode === EMainAction.ORBIT) {
+    return canOrbitPlanet(planet, planetState, player, gameState);
+  }
+
+  if (!canLandOnPlanet(planet, planetState, player, gameState)) {
+    return false;
+  }
+
+  if (options.isMoon) {
+    return (
+      canLandOnMoon(planet, planetState, player, options.moonId) &&
+      !planetState.moonOccupants.some(
+        (occupant) => occupant.playerId === player.playerId,
+      )
+    );
+  }
+
+  return true;
 }
 
 export function PlanetaryBoardView({
@@ -155,30 +205,11 @@ export function PlanetaryBoardView({
   const mainActionPlayer = gameState?.players.find(
     (player) => player.playerId === myPlayerId,
   );
-  const selectableMainActionPlanets = new Set<EPlanet>(
-    mainActionPlanetMode !== null && gameState && mainActionPlayer
-      ? PLANETARY_PLANETS.filter((planet) => {
-          const planetState = planetaryBoard.planets[planet];
-          if (!planetState) return false;
-          if (mainActionPlanetMode === EMainAction.ORBIT) {
-            return canOrbitPlanet(
-              planet,
-              planetState,
-              mainActionPlayer,
-              gameState,
-            );
-          }
-          return canLandOnPlanet(
-            planet,
-            planetState,
-            mainActionPlayer,
-            gameState,
-          );
-        })
-      : [],
-  );
 
-  function handlePlanetSelect(planet: EPlanet): void {
+  function handlePlanetSelect(
+    planet: EPlanet,
+    options?: { isMoon?: boolean; moonId?: string },
+  ): void {
     if (selectablePlanets.has(planet)) {
       if (pendingInput?.type !== EPlayerInputType.PLANET) return;
       onRespondInput?.({
@@ -188,8 +219,20 @@ export function PlanetaryBoardView({
       });
       return;
     }
-    if (selectableMainActionPlanets.has(planet)) {
-      onSelectMainActionPlanet?.(planet);
+    const planetState =
+      planetaryBoard.planets[planet] ??
+      createEmptyPlanetState(getPlanetConfig(planetaryBoard, planet));
+    if (
+      canSelectMainActionTarget(
+        mainActionPlanetMode,
+        planet,
+        planetState,
+        mainActionPlayer,
+        gameState,
+        options,
+      )
+    ) {
+      onSelectMainActionPlanet?.(planet, options);
     }
   }
 
@@ -208,21 +251,51 @@ export function PlanetaryBoardView({
         >
           {PLANETARY_PLANETS.map((planet) => {
             const config = getPlanetConfig(planetaryBoard, planet);
+            const planetState =
+              planetaryBoard.planets[planet] ?? createEmptyPlanetState(config);
+            const planetTargetSelectable =
+              selectablePlanets.has(planet) ||
+              canSelectMainActionTarget(
+                mainActionPlanetMode,
+                planet,
+                planetState,
+                mainActionPlayer,
+                gameState,
+              );
+            const selectableMoonIds =
+              mainActionPlanetMode === EMainAction.LAND
+                ? new Set(
+                    config.moonIds.filter((moonId) =>
+                      canSelectMainActionTarget(
+                        mainActionPlanetMode,
+                        planet,
+                        planetState,
+                        mainActionPlayer,
+                        gameState,
+                        { isMoon: true, moonId },
+                      ),
+                    ),
+                  )
+                : new Set<string>();
             return (
               <PlanetCard
                 key={planet}
                 planet={planet}
                 config={config}
-                state={
-                  planetaryBoard.planets[planet] ??
-                  createEmptyPlanetState(config)
-                }
+                state={planetState}
                 playerColors={playerColors}
                 isSelectable={
-                  selectablePlanets.has(planet) ||
-                  selectableMainActionPlanets.has(planet)
+                  planetTargetSelectable || selectableMoonIds.size > 0
                 }
-                onSelect={() => handlePlanetSelect(planet)}
+                onSelect={
+                  planetTargetSelectable
+                    ? () => handlePlanetSelect(planet)
+                    : undefined
+                }
+                selectableMoonIds={selectableMoonIds}
+                onSelectMoon={(moonId) =>
+                  handlePlanetSelect(planet, { isMoon: true, moonId })
+                }
               />
             );
           })}
@@ -244,38 +317,70 @@ export function PlanetaryBoardView({
                 const planetState =
                   planetaryBoard.planets[planet] ??
                   createEmptyPlanetState(config);
-                const isSelectable =
-                  selectablePlanets.has(planet) ||
-                  selectableMainActionPlanets.has(planet);
                 const moonOccupants = getMoonOccupants(planetState);
+                const hotspots = getPlanetHotspots(
+                  config,
+                  mainActionPlanetMode,
+                ).filter((hotspot) => {
+                  if (selectablePlanets.has(planet)) {
+                    return true;
+                  }
+                  return canSelectMainActionTarget(
+                    mainActionPlanetMode,
+                    planet,
+                    planetState,
+                    mainActionPlayer,
+                    gameState,
+                    hotspot.kind === 'moon-land'
+                      ? { isMoon: true, moonId: hotspot.moonId }
+                      : {},
+                  );
+                });
 
                 return (
                   <div key={`planet-overlay-${planet}`}>
-                    {isSelectable &&
-                      getPlanetHotspots(config, mainActionPlanetMode).map(
-                        (hotspot, index) => (
-                          <button
-                            key={`${planet}-target-${hotspot.kind}-${hotspot.index}`}
-                            type='button'
-                            data-testid={
-                              index === 0
+                    {hotspots.map((hotspot, index) => {
+                      const isMoonTarget = hotspot.kind === 'moon-land';
+                      const moonLabel =
+                        hotspot.moonName ?? hotspot.moonId ?? 'moon';
+                      const targetLabel = isMoonTarget
+                        ? `${config.label} ${moonLabel}`
+                        : `${config.label} ${hotspot.kind}`;
+                      return (
+                        <button
+                          key={`${planet}-target-${hotspot.kind}-${hotspot.index}`}
+                          type='button'
+                          data-testid={
+                            isMoonTarget
+                              ? `planet-target-${planet}-moon-${hotspot.moonId}`
+                              : index === 0
                                 ? `planet-target-${planet}`
                                 : `planet-target-${planet}-${hotspot.kind}-${hotspot.index}`
-                            }
-                            className={cn(
-                              'absolute h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent-400/80 bg-accent-500/10 ring-1 ring-accent-400/70',
-                              'hover:bg-accent-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300',
-                            )}
-                            style={{
-                              left: `${hotspot.x}%`,
-                              top: `${hotspot.y}%`,
-                            }}
-                            onClick={() => handlePlanetSelect(planet)}
-                            aria-label={`${config.label} ${hotspot.kind} target`}
-                            title={`${config.label} ${hotspot.kind}`}
-                          />
-                        ),
-                      )}
+                          }
+                          className={cn(
+                            'absolute h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent-400/80 bg-accent-500/10 ring-1 ring-accent-400/70',
+                            'hover:bg-accent-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300',
+                          )}
+                          style={{
+                            left: `${hotspot.x}%`,
+                            top: `${hotspot.y}%`,
+                          }}
+                          onClick={() =>
+                            handlePlanetSelect(
+                              planet,
+                              isMoonTarget
+                                ? {
+                                    isMoon: true,
+                                    moonId: hotspot.moonId,
+                                  }
+                                : undefined,
+                            )
+                          }
+                          aria-label={`${targetLabel} target`}
+                          title={targetLabel}
+                        />
+                      );
+                    })}
 
                     {config.orbitSlots.map((slot, index) => {
                       const occupied = planetState.orbitSlots[index];
@@ -303,10 +408,13 @@ export function PlanetaryBoardView({
                         config.landingSlotKinds
                           .slice(0, index + 1)
                           .filter((kind) => kind === 'moon').length - 1;
+                      const moonId = config.moonIds[moonSlotOrdinal];
                       const token =
                         slotKind === 'planet'
                           ? planetState.landingSlots[planetSlotOrdinal]
-                          : moonOccupants[moonSlotOrdinal];
+                          : moonOccupants.find(
+                              (occupant) => occupant.moonId === moonId,
+                            );
 
                       if (!token) return null;
                       return (

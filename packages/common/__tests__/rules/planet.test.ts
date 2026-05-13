@@ -74,7 +74,7 @@ function createPlanetState(
     landingSlots: [],
     firstOrbitClaimed: false,
     firstLandDataBonusTaken: [false],
-    moonOccupant: null,
+    moonOccupants: [],
     ...overrides,
   };
 }
@@ -165,6 +165,27 @@ describe('planet rules', () => {
     );
   });
 
+  it('canLandOnPlanet applies rover discount tech to the public landing cost', () => {
+    const player = createPlayerState({
+      techs: [ETechId.PROBE_ROVER_DISCOUNT],
+      resources: {
+        [EResource.CREDIT]: 0,
+        [EResource.ENERGY]: 2,
+        [EResource.DATA]: 0,
+        [EResource.PUBLICITY]: 0,
+      },
+    });
+    const planet = createPlanetState();
+    const gameState = createGameState(player.playerId, 'planet-space-1');
+    gameState.solarSystem.planetSpaceIds = {
+      [EPlanet.MERCURY]: 'planet-space-1',
+    };
+
+    expect(canLandOnPlanet(EPlanet.MERCURY, planet, player, gameState)).toBe(
+      true,
+    );
+  });
+
   it('canLandOnMoon requires player moon tech and empty occupancy', () => {
     const player = createPlayerState();
     const withMoonTech = createPlayerState({ techs: [ETechId.PROBE_MOON] });
@@ -176,13 +197,31 @@ describe('planet rules', () => {
       true,
     );
     expect(
+      canLandOnMoon(
+        EPlanet.MARS,
+        createPlanetState(),
+        withMoonTech,
+        'mars-phobos-deimos',
+      ),
+    ).toBe(true);
+    expect(
+      canLandOnMoon(
+        EPlanet.MARS,
+        createPlanetState(),
+        withMoonTech,
+        'mars-missing',
+      ),
+    ).toBe(false);
+    expect(
       canLandOnMoon(EPlanet.MERCURY, createPlanetState(), withMoonTech),
     ).toBe(false);
     expect(
       canLandOnMoon(
         EPlanet.MARS,
         createPlanetState({
-          moonOccupant: { playerId: 'player-a' },
+          moonOccupants: [
+            { playerId: 'player-a', moonId: 'mars-phobos-deimos' },
+          ],
         }),
         withMoonTech,
       ),

@@ -347,11 +347,9 @@ describe('SolarSystem', () => {
     expect(game.solarSystem!.rotationCounter).toBe(before + 1);
   });
 
-  it('rotates the solar system exactly once when a played card has both ROTATE and TECH', () => {
+  it('rotates the solar system once for explicit ROTATE when a played card also grants TECH', () => {
     // Card 59 "Ion Propulsion System" prints ENERGY + ROTATE + TECH_PROBE.
-    // The card should still rotate exactly once overall: the printed ROTATE
-    // covers the research rotation, so the embedded tech-grant must not add
-    // a second rotation on top.
+    // Project FAQ: card-granted tech does not rotate unless ROTATE is printed.
     const game = createIntegrationGame('solar-card-rotate-plus-tech');
     const player = game.players[0];
     player.hand = ['59'];
@@ -465,7 +463,7 @@ describe('SolarSystem', () => {
           .some((p) => p.id === probe.id),
       ).toBe(true);
 
-      // Play card with ROTATE
+      // Play card with ROTATE + TECH; only the explicit ROTATE rotates.
       game.processMainAction(player.id, {
         type: EMainAction.PLAY_CARD,
         payload: { cardIndex: 0 },

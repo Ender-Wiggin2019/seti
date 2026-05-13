@@ -10,10 +10,22 @@ export interface ILaunchProbeEffectResult {
   spaceId: string;
 }
 
+interface ILaunchProbeEffectOptions {
+  ignoreLimit?: boolean;
+}
+
 export class LaunchProbeEffect {
-  public static canExecute(player: IPlayer, game: IGame): boolean {
+  public static canExecute(
+    player: IPlayer,
+    game: IGame,
+    options: ILaunchProbeEffectOptions = {},
+  ): boolean {
     if (game.solarSystem === null) {
       return false;
+    }
+
+    if (options.ignoreLimit === true) {
+      return true;
     }
 
     const effectiveLimit = TechModifierQuery.fromTechIds(
@@ -25,8 +37,9 @@ export class LaunchProbeEffect {
   public static execute(
     player: IPlayer,
     game: IGame,
+    options: ILaunchProbeEffectOptions = {},
   ): ILaunchProbeEffectResult {
-    if (!this.canExecute(player, game)) {
+    if (!this.canExecute(player, game, options)) {
       throw new GameError(
         EErrorCode.INVALID_ACTION,
         'LaunchProbe effect is not currently legal',

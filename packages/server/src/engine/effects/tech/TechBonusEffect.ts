@@ -62,10 +62,12 @@ export class TechBonusEffect {
         break;
 
       case ETechBonusType.LAUNCH_IGNORE_LIMIT:
-        if (!LaunchProbeEffect.canExecute(player, game)) {
+        if (
+          !LaunchProbeEffect.canExecute(player, game, { ignoreLimit: true })
+        ) {
           return { bonus, applied: false };
         }
-        LaunchProbeEffect.execute(player, game);
+        LaunchProbeEffect.execute(player, game, { ignoreLimit: true });
         break;
     }
     return { bonus, applied: true };

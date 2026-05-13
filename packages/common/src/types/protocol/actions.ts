@@ -73,6 +73,8 @@ export interface IExchangeResourcesFreeActionRequest {
   fromDeck?: boolean;
   /** When taking from the card row, optional specific card id. */
   cardId?: string;
+  /** Required when `from` is CARD: exactly two hand card ids to spend. */
+  spentCardIds?: string[];
 }
 
 export interface ISpendSignalTokenFreeActionRequest {

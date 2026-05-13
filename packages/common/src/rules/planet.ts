@@ -27,6 +27,16 @@ export function getLandingCost(
     : LANDING_COST_DEFAULT;
 }
 
+function getEffectiveLandingCost(
+  planet: IPublicPlanetState,
+  player: IPublicPlayerState,
+): number {
+  const baseCost = getLandingCost(planet, player.playerId);
+  return player.techs.includes(ETechId.PROBE_ROVER_DISCOUNT)
+    ? Math.max(1, baseCost - 1)
+    : baseCost;
+}
+
 /** 检查某玩家是否可以在该行星入轨 (有探针在该行星空间) */
 export function canOrbitPlanet(
   planetId: EPlanet,
@@ -60,23 +70,27 @@ export function canLandOnPlanet(
     (player.resources as unknown as Record<string, number>)[
       ENERGY_RESOURCE_KEY
     ] ?? 0;
-  return energy >= getLandingCost(planet, player.playerId);
+  return energy >= getEffectiveLandingCost(planet, player);
 }
 
-/** 检查月球是否可着陆 (玩家有月球科技 + 无占位) */
+/** 检查月球是否可着陆 (玩家有月球科技 + 有空月球槽位) */
 export function canLandOnMoon(
   planetId: EPlanet,
   planet: IPublicPlanetState,
   player: Pick<IPublicPlayerState, 'techs'>,
+  moonId?: string,
 ): boolean {
-  const moonSlots =
-    PLANETARY_BOARD_CONFIG[planetId as TPlanetaryBoardConfigId]?.moonSlots ?? 0;
-  const moonOccupants =
-    planet.moonOccupants ?? (planet.moonOccupant ? [planet.moonOccupant] : []);
+  const config = PLANETARY_BOARD_CONFIG[planetId as TPlanetaryBoardConfigId];
+  const moonSlots = config?.moonSlots ?? 0;
+  const moonSlotAvailable =
+    moonId === undefined
+      ? planet.moonOccupants.length < moonSlots
+      : (config?.moonIds.includes(moonId) ?? false) &&
+        !planet.moonOccupants.some((occupant) => occupant.moonId === moonId);
   return (
     player.techs.includes(ETechId.PROBE_MOON) &&
     moonSlots > 0 &&
-    moonOccupants.length < moonSlots
+    moonSlotAvailable
   );
 }
 

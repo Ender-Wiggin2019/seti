@@ -449,6 +449,14 @@ export class AlienState {
     }
   }
 
+  public onRoundEnd(game: IGame): void {
+    for (const board of this.boards) {
+      if (!board.discovered) continue;
+      const plugin = AlienRegistry.get(board.alienType);
+      plugin?.onRoundEnd?.(game);
+    }
+  }
+
   // ---- Private: input builders ---------------------------------------------
 
   private createSlotSelectionInput(

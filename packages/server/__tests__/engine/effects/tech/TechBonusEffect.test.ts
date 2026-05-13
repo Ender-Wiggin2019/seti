@@ -117,6 +117,26 @@ describe('TechBonusEffect', () => {
     expect(solarSystem.placeProbe).toHaveBeenCalledWith('p1', 'earth-space');
   });
 
+  it('applies LAUNCH_IGNORE_LIMIT even when the player is already at the effective probe limit', () => {
+    const player = mockPlayer();
+    player.techs = [ETechId.PROBE_DOUBLE_PROBE];
+    player.probesInSpace = 2;
+    const game = mockGame();
+    const solarSystem = {
+      getSpacesOnPlanet: vi.fn(() => [{ id: 'earth-space' }]),
+      placeProbe: vi.fn(() => ({ id: 'probe-1' })),
+    };
+    game.solarSystem = solarSystem as never;
+
+    const result = TechBonusEffect.apply(player as never, game as never, {
+      type: ETechBonusType.LAUNCH_IGNORE_LIMIT,
+    });
+
+    expect(result.applied).toBe(true);
+    expect(player.probesInSpace).toBe(3);
+    expect(solarSystem.placeProbe).toHaveBeenCalledWith('p1', 'earth-space');
+  });
+
   it('skips LAUNCH_IGNORE_LIMIT when a launch cannot be resolved', () => {
     const player = mockPlayer();
     const game = mockGame();

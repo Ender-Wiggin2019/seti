@@ -773,6 +773,10 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
       type: EFreeAction.EXCHANGE_RESOURCES,
       from: EResource.CARD,
       to: EResource.CREDIT,
+      spentCardIds: p1.hand
+        .slice(0, 2)
+        .map((card) => (typeof card === 'string' ? card : card.id))
+        .filter((id): id is string => typeof id === 'string'),
     });
 
     expect(p1.resources.credits).toBe(creditsBefore + 1);

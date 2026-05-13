@@ -379,7 +379,7 @@ describe('Card 16 — Dragonfly (LAND from card effect)', () => {
             {
               orbitSlots: [{ playerId: 'p1' }],
               landingSlots: [],
-              moonOccupant: null,
+              moonOccupants: [],
               firstOrbitClaimed: true,
             },
           ],

@@ -559,8 +559,12 @@ export class Game implements IGame {
               case EMainAction.LAND: {
                 const planet = this.getPlanetPayload(action);
                 const isMoon = this.getMoonPayload(action);
-                actionDetails = { planet, isMoon };
-                player.land(planet, { isMoon });
+                const moonId = this.getMoonIdPayload(action);
+                actionDetails = { planet, isMoon, moonId };
+                pendingInput = player.land(planet, {
+                  isMoon,
+                  moonId,
+                }).pendingInput;
                 game.missionTracker.recordEvent({
                   type: EMissionEventType.PROBE_LANDED,
                   planet,
@@ -798,9 +802,11 @@ export class Game implements IGame {
     }
 
     for (const player of this.players) {
-      player.applyEndOfRoundIncome(this.round);
+      player.applyEndOfRoundIncome();
       player.passed = false;
     }
+
+    this.alienState.onRoundEnd(this);
 
     if (isSoloMode(this.options) && this.round < MAX_ROUNDS) {
       RivalRoundController.resetActionDeckForNextRound(this);
@@ -962,7 +968,18 @@ export class Game implements IGame {
       case EMainAction.LAND: {
         const planet = this.getPlanetPayload(action);
         const isMoon = this.getMoonPayload(action);
-        if (!player.canLand(planet, { isMoon })) {
+        const moonId = this.getMoonIdPayload(action);
+        if (!isMoon && moonId !== undefined) {
+          throw new GameError(
+            EErrorCode.INVALID_ACTION,
+            'Action payload.moonId requires isMoon true',
+            {
+              actionType: action.type,
+              payload: action.payload,
+            },
+          );
+        }
+        if (!player.canLand(planet, { isMoon, moonId })) {
           throw new GameError(
             EErrorCode.INVALID_ACTION,
             'Land requirements are not met',
@@ -970,6 +987,7 @@ export class Game implements IGame {
               playerId: player.id,
               planet,
               isMoon,
+              moonId,
             },
           );
         }
@@ -1095,6 +1113,35 @@ export class Game implements IGame {
 
   private getMoonPayload(action: IMainActionRequest): boolean {
     return action.payload?.isMoon === true;
+  }
+
+  private getMoonIdPayload(action: IMainActionRequest): string | undefined {
+    if (action.payload?.moonIndex !== undefined) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        'Action payload.moonIndex is not supported; use moonId',
+        {
+          actionType: action.type,
+          payload: action.payload,
+        },
+      );
+    }
+
+    const moonId = action.payload?.moonId;
+    if (moonId === undefined) {
+      return undefined;
+    }
+    if (typeof moonId !== 'string' || moonId.trim().length === 0) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        'Action payload.moonId must be a non-empty string',
+        {
+          actionType: action.type,
+          payload: action.payload,
+        },
+      );
+    }
+    return moonId;
   }
 
   private getCardIndexPayload(action: IMainActionRequest): number {

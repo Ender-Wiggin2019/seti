@@ -1,3 +1,5 @@
+import { alienCards } from '@seti/common/data/alienCards';
+import { EAlienType } from '@seti/common/types/BaseCard';
 import {
   EFreeAction,
   EMainAction,
@@ -8,10 +10,9 @@ import {
   EPlayerInputType,
   type ISelectEndOfRoundCardInputModel,
 } from '@seti/common/types/protocol/playerInput';
-import { alienCards } from '@seti/common/data/alienCards';
-import { EAlienType } from '@seti/common/types/BaseCard';
-import { Deck } from '@/engine/deck/Deck.js';
+import { PlayCardAction } from '@/engine/actions/PlayCard.js';
 import { AlienState, isCentauriansAlienBoard } from '@/engine/alien/index.js';
+import { Deck } from '@/engine/deck/Deck.js';
 import { Game } from '@/engine/Game.js';
 import { Player } from '@/engine/player/Player.js';
 import { GameError } from '@/shared/errors/GameError.js';
@@ -202,6 +203,27 @@ function resolveAnyCardChoiceIfAny(game: Game, player: Player): void {
 }
 
 describe('PlayCardAction — integration', () => {
+  describe('canExecute', () => {
+    it('returns false when every hand card is currently unplayable', () => {
+      const { game, player } = createIntegrationGame(
+        'play-card-no-playable-cards',
+      );
+      player.hand = ['110'];
+      player.resources.spend({
+        credits: player.resources.credits,
+      });
+
+      expect(PlayCardAction.canExecute(player, game)).toBe(false);
+      expect(PlayCardAction.canExecuteCardAtIndex(player, game, 0)).toBe(false);
+      expect(() =>
+        game.processMainAction(player.id, {
+          type: EMainAction.PLAY_CARD,
+          payload: { cardIndex: 0 },
+        }),
+      ).toThrow(GameError);
+    });
+  });
+
   describe('execute', () => {
     it('integration: ordinary immediate cards pay their own cost, apply their effect, and go to discard', () => {
       const { game, player } = createIntegrationGame(

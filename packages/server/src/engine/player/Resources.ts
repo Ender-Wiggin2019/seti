@@ -11,6 +11,11 @@ export interface IResourceBundle {
 
 export type TPartialResourceBundle = Partial<IResourceBundle>;
 
+export type TResourceChangeObserver = (
+  resource: keyof IResourceBundle,
+  delta: number,
+) => void;
+
 export interface IDataResourceController {
   has(amount: number): boolean;
   gain(amount: number): number;
@@ -82,9 +87,14 @@ export class Resources {
 
   private readonly dataController?: IDataResourceController;
 
+  private onChange?: TResourceChangeObserver;
+
   public constructor(
     initialBundle: TPartialResourceBundle = EMPTY_RESOURCE_BUNDLE,
-    options: { dataController?: IDataResourceController } = {},
+    options: {
+      dataController?: IDataResourceController;
+      onChange?: TResourceChangeObserver;
+    } = {},
   ) {
     this.creditsAmount = normalizeResourceAmount(
       'credits',
@@ -103,6 +113,7 @@ export class Resources {
       initialBundle.signalTokens,
     );
     this.dataController = options.dataController;
+    this.onChange = options.onChange;
     const initialData = normalizeResourceAmount('data', initialBundle.data);
     if (initialData > 0) {
       if (!this.dataController) {
@@ -136,10 +147,16 @@ export class Resources {
     return this.signalTokensAmount;
   }
 
+  public setChangeObserver(onChange?: TResourceChangeObserver): void {
+    this.onChange = onChange;
+  }
+
   public setPublicity(value: number): void {
     const normalizedValue = normalizeResourceAmount('publicity', value);
     assertMaxResourceAmount('publicity', normalizedValue);
+    const before = this.publicityAmount;
     this.publicityAmount = normalizedValue;
+    this.emitChange('publicity', before, this.publicityAmount);
   }
 
   public spend(bundle: TPartialResourceBundle): void {
@@ -154,15 +171,30 @@ export class Resources {
       );
     }
 
+    const creditsBefore = this.creditsAmount;
     this.creditsAmount -= normalizeResourceAmount('credits', bundle.credits);
+    this.emitChange('credits', creditsBefore, this.creditsAmount);
+
+    const energyBefore = this.energyAmount;
     this.energyAmount -= normalizeResourceAmount('energy', bundle.energy);
+    this.emitChange('energy', energyBefore, this.energyAmount);
+
+    const publicityBefore = this.publicityAmount;
     this.publicityAmount -= normalizeResourceAmount(
       'publicity',
       bundle.publicity,
     );
+    this.emitChange('publicity', publicityBefore, this.publicityAmount);
+
+    const signalTokensBefore = this.signalTokensAmount;
     this.signalTokensAmount -= normalizeResourceAmount(
       'signalTokens',
       bundle.signalTokens,
+    );
+    this.emitChange(
+      'signalTokens',
+      signalTokensBefore,
+      this.signalTokensAmount,
     );
     const spendDataAmount = normalizeResourceAmount('data', bundle.data);
     if (spendDataAmount > 0) {
@@ -173,31 +205,49 @@ export class Resources {
           { spendDataAmount },
         );
       }
+      const dataBefore = this.data;
       this.dataController.spend(spendDataAmount);
+      this.emitChange('data', dataBefore, this.data);
     }
   }
 
   public gain(bundle: TPartialResourceBundle): void {
+    const creditsBefore = this.creditsAmount;
     this.creditsAmount = Math.min(
       CREDIT_ENERGY_MAX,
       this.creditsAmount + normalizeResourceAmount('credits', bundle.credits),
     );
+    this.emitChange('credits', creditsBefore, this.creditsAmount);
+
+    const energyBefore = this.energyAmount;
     this.energyAmount = Math.min(
       CREDIT_ENERGY_MAX,
       this.energyAmount + normalizeResourceAmount('energy', bundle.energy),
     );
+    this.emitChange('energy', energyBefore, this.energyAmount);
+
     const gainPublicityAmount = normalizeResourceAmount(
       'publicity',
       bundle.publicity,
     );
+    const publicityBefore = this.publicityAmount;
     this.publicityAmount = Math.min(
       PUBLICITY_MAX,
       this.publicityAmount + gainPublicityAmount,
     );
+    this.emitChange('publicity', publicityBefore, this.publicityAmount);
+
+    const signalTokensBefore = this.signalTokensAmount;
     this.signalTokensAmount += normalizeResourceAmount(
       'signalTokens',
       bundle.signalTokens,
     );
+    this.emitChange(
+      'signalTokens',
+      signalTokensBefore,
+      this.signalTokensAmount,
+    );
+
     const gainDataAmount = normalizeResourceAmount('data', bundle.data);
     if (gainDataAmount > 0) {
       if (!this.dataController) {
@@ -207,7 +257,9 @@ export class Resources {
           { gainDataAmount },
         );
       }
+      const dataBefore = this.data;
       this.dataController.gain(gainDataAmount);
+      this.emitChange('data', dataBefore, this.data);
     }
   }
 
@@ -246,5 +298,16 @@ export class Resources {
       data: this.data,
       signalTokens: this.signalTokensAmount,
     };
+  }
+
+  private emitChange(
+    resource: keyof IResourceBundle,
+    before: number,
+    after: number,
+  ): void {
+    const delta = after - before;
+    if (delta !== 0) {
+      this.onChange?.(resource, delta);
+    }
   }
 }

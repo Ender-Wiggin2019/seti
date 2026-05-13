@@ -4,6 +4,8 @@ import {
   EPlayerInputType,
   type ISelectEndOfRoundCardInputModel,
 } from '@seti/common/types/protocol/playerInput';
+import { vi } from 'vitest';
+import { AlienRegistry, type IAlienPlugin } from '@/engine/alien/index.js';
 import { Game } from '@/engine/Game.js';
 import type { IGamePlayerIdentity } from '@/engine/IGame.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
@@ -107,7 +109,7 @@ function passUntilRoundAdvances(game: Game, fromRound: number): void {
 }
 
 describe('GameRoundTransition (Phase 10.1)', () => {
-  it('10.1.1 [集成] end of round: round 1 pays base only; round 2+ matches computeRoundPayout', () => {
+  it('10.1.1 [集成] end of round income always matches computeRoundPayout', () => {
     const game = createGame2p('10-1-1-income');
     const p1 = getPlayer(game, 'p1');
     const p2 = getPlayer(game, 'p2');
@@ -116,17 +118,15 @@ describe('GameRoundTransition (Phase 10.1)', () => {
 
     const before1 = { c: p1.resources.credits, e: p1.resources.energy };
     const before2 = { c: p2.resources.credits, e: p2.resources.energy };
-    const base1 = p1.income.baseIncome[EResource.CREDIT];
-    const base2 = p2.income.baseIncome[EResource.CREDIT];
-    const baseE1 = p1.income.baseIncome[EResource.ENERGY];
-    const baseE2 = p2.income.baseIncome[EResource.ENERGY];
+    const round1p1 = p1.income.computeRoundPayout();
+    const round1p2 = p2.income.computeRoundPayout();
 
     passUntilRoundAdvances(game, 1);
 
-    expect(p1.resources.credits - before1.c).toBe(base1);
-    expect(p1.resources.energy - before1.e).toBe(baseE1);
-    expect(p2.resources.credits - before2.c).toBe(base2);
-    expect(p2.resources.energy - before2.e).toBe(baseE2);
+    expect(p1.resources.credits - before1.c).toBe(round1p1[EResource.CREDIT]);
+    expect(p1.resources.energy - before1.e).toBe(round1p1[EResource.ENERGY]);
+    expect(p2.resources.credits - before2.c).toBe(round1p2[EResource.CREDIT]);
+    expect(p2.resources.energy - before2.e).toBe(round1p2[EResource.ENERGY]);
 
     const mid1 = { c: p1.resources.credits, e: p1.resources.energy };
     const mid2 = { c: p2.resources.credits, e: p2.resources.energy };
@@ -176,5 +176,32 @@ describe('GameRoundTransition (Phase 10.1)', () => {
     expect(getPlayer(game, 'p2').passed).toBe(false);
     expect(game.round).toBe(2);
     expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
+  });
+
+  it('10.1.5 [集成] discovered alien plugins receive end-of-round hooks', () => {
+    const game = createGame2p('10-1-5-alien-round-end');
+    const board = game.alienState.boards[0];
+    const originalPlugin = AlienRegistry.get(board.alienType);
+    const onRoundEnd = vi.fn();
+
+    const testPlugin: IAlienPlugin = {
+      ...(originalPlugin ?? {}),
+      alienType: board.alienType,
+      onDiscover: () => undefined,
+      onRoundEnd,
+    };
+
+    AlienRegistry.register(testPlugin);
+    board.discovered = true;
+
+    try {
+      passUntilRoundAdvances(game, 1);
+      expect(onRoundEnd).toHaveBeenCalledTimes(1);
+      expect(onRoundEnd).toHaveBeenCalledWith(game);
+    } finally {
+      if (originalPlugin) {
+        AlienRegistry.register(originalPlugin);
+      }
+    }
   });
 });

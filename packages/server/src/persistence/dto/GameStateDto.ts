@@ -81,13 +81,19 @@ export interface IPlanetaryBoardDto {
     planet: EPlanet;
     state: {
       orbitSlots: Array<{ playerId: string }>;
-	      landingSlots: Array<{ playerId: string }>;
-	      firstOrbitClaimed: boolean;
-	      firstLandDataBonusTaken: boolean[];
-	      moonOccupants?: Array<{ playerId: string }>;
-	      moonOccupant: { playerId: string } | null;
-	    };
-	  }>;
+      landingSlots: Array<{ playerId: string }>;
+      firstOrbitClaimed: boolean;
+      firstLandDataBonusTaken: boolean[];
+      moonOccupants: Array<{
+        playerId: string;
+        moonId?: string;
+        /** Legacy snapshots only. Current serializers do not emit this field. */
+        moonIndex?: number;
+      }>;
+      /** Legacy snapshots only. Current serializers do not emit this field. */
+      moonOccupant?: { playerId: string } | null;
+    };
+  }>;
   probesByPlanet: Array<{
     planet: EPlanet;
     probes: Record<string, number>;

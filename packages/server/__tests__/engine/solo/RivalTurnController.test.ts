@@ -481,7 +481,7 @@ describe('RivalTurnController', () => {
     expect(rival.resources.publicity).toBe(2);
   });
 
-  it('does not keep movement or publicity when the first reachable probe target cannot be placed', () => {
+  it('keeps movement publicity when the first priority duplicate planet landing is legal', () => {
     const game = createSoloGame();
     const rival = game.players[1];
     const rivalState = game.rivalState;
@@ -523,15 +523,20 @@ describe('RivalTurnController', () => {
       cardId: 'S.7',
       actionKind: ERivalActionKind.PROBE_PLACEMENT,
     });
-    expect(solarSystem.getPlayerPublicity(rival.id)).toBe(0);
+    expect(solarSystem.getPlayerPublicity(rival.id)).toBe(2);
     expect(
       uranus.space.occupants.some((probe) => probe.playerId === rival.id),
     ).toBe(false);
     expect(
       game.planetaryBoard?.planets
-        .get(EPlanet.SATURN)
+        .get(EPlanet.URANUS)
         ?.landingSlots.some((slot) => slot.playerId === rival.id),
     ).toBe(true);
+    expect(
+      game.planetaryBoard?.planets
+        .get(EPlanet.SATURN)
+        ?.landingSlots.some((slot) => slot.playerId === rival.id),
+    ).toBe(false);
   });
 
   it('lands when a printed orbiter action has no first-orbit bonus and a first-land bonus is available', () => {
@@ -599,7 +604,9 @@ describe('RivalTurnController', () => {
       actionKind: ERivalActionKind.PROBE_PLACEMENT,
     });
     expect(rival.techs).not.toContain(ETechId.PROBE_DOUBLE_PROBE);
-    expect(jupiterState.moonOccupant?.playerId).toBe(rival.id);
+    expect(jupiterState.moonOccupants).toEqual([
+      { playerId: rival.id, moonId: 'jupiter-ganymede' },
+    ]);
     expect(jupiterState.orbitSlots).toHaveLength(0);
   });
 
@@ -657,8 +664,8 @@ describe('RivalTurnController', () => {
     });
     expect(rival.techs).not.toContain(ETechId.PROBE_DOUBLE_PROBE);
     expect(
-      game.planetaryBoard?.planets.get(EPlanet.URANUS)?.moonOccupant?.playerId,
-    ).toBe(rival.id);
+      game.planetaryBoard?.planets.get(EPlanet.URANUS)?.moonOccupants,
+    ).toEqual([{ playerId: rival.id, moonId: 'uranus-titania' }]);
     expect(rival.probesInSpace).toBe(0);
   });
 
@@ -914,7 +921,7 @@ describe('RivalTurnController', () => {
     expect(rival.probesInSpace).toBe(0);
   });
 
-  it('orbits Oumuamua for S.17 when landing is unavailable but orbiting is possible', () => {
+  it('lands Oumuamua for S.17 even when the rival already has a landing there', () => {
     const game = createSoloGame();
     const rival = game.players[1];
     const rivalState = game.rivalState;
@@ -934,7 +941,10 @@ describe('RivalTurnController', () => {
       cardId: 'S.17',
       actionKind: ERivalActionKind.PROBE_PLACEMENT,
     });
-    expect(oumuamua.orbitSlots).toContainEqual({ playerId: rival.id });
+    expect(oumuamua.orbitSlots).toEqual([]);
+    expect(
+      oumuamua.landingSlots.filter((slot) => slot.playerId === rival.id),
+    ).toHaveLength(2);
     expect(rival.probesInSpace).toBe(0);
   });
 

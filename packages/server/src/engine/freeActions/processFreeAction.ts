@@ -81,6 +81,7 @@ export function processFreeAction(
         {
           fromDeck: action.fromDeck,
           cardId: action.cardId,
+          spentCardIds: action.spentCardIds,
         },
       );
       return undefined;

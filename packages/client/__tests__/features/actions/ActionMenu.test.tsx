@@ -161,7 +161,7 @@ describe('ActionMenu', () => {
             landingSlots: [],
             firstOrbitClaimed: false,
             firstLandDataBonusTaken: [false, false],
-            moonOccupant: null,
+            moonOccupants: [],
           },
         },
       },

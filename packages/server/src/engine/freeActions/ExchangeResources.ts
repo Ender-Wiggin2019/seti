@@ -26,6 +26,12 @@ export interface IExchangeResult {
   outputAmount: number;
 }
 
+interface IExchangeOptions {
+  fromDeck?: boolean;
+  cardId?: string;
+  spentCardIds?: readonly string[];
+}
+
 export class ExchangeResourcesFreeAction {
   static canExecute(player: IPlayer, _game: IGame): boolean {
     return (
@@ -40,7 +46,7 @@ export class ExchangeResourcesFreeAction {
     game: IGame,
     from: EResource,
     to: EResource,
-    gainCardOptions?: { fromDeck?: boolean; cardId?: string },
+    exchangeOptions?: IExchangeOptions,
   ): IExchangeResult {
     if (
       !VALID_EXCHANGE_RESOURCES.includes(from as TExchangeableResource) ||
@@ -62,11 +68,16 @@ export class ExchangeResourcesFreeAction {
     }
 
     if (to === EResource.CARD) {
-      this.assertCanGainExchangedCard(game, gainCardOptions);
+      this.assertCanGainExchangedCard(game, exchangeOptions);
     }
 
-    this.spendInput(player, game, from as TExchangeableResource);
-    this.gainOutput(player, game, to as TExchangeableResource, gainCardOptions);
+    this.spendInput(
+      player,
+      game,
+      from as TExchangeableResource,
+      exchangeOptions,
+    );
+    this.gainOutput(player, game, to as TExchangeableResource, exchangeOptions);
 
     return {
       from: from as TExchangeableResource,
@@ -78,7 +89,7 @@ export class ExchangeResourcesFreeAction {
 
   private static assertCanGainExchangedCard(
     game: IGame,
-    options?: { fromDeck?: boolean; cardId?: string },
+    options?: IExchangeOptions,
   ): void {
     const insistDeck = options?.fromDeck === true;
     if (!insistDeck && game.cardRow.length > 0) {
@@ -150,6 +161,7 @@ export class ExchangeResourcesFreeAction {
     player: IPlayer,
     game: IGame,
     resource: TExchangeableResource,
+    options?: IExchangeOptions,
   ): void {
     switch (resource) {
       case EResource.CREDIT:
@@ -192,9 +204,38 @@ export class ExchangeResourcesFreeAction {
             },
           );
         }
-        for (const card of discardableCards
-          .slice(-EXCHANGE_INPUT_AMOUNT)
-          .sort((left, right) => right.handIndex - left.handIndex)) {
+        const selectedCardIds = options?.spentCardIds;
+        if (selectedCardIds?.length !== EXCHANGE_INPUT_AMOUNT) {
+          throw new GameError(
+            EErrorCode.INVALID_ACTION,
+            'Exactly two spent card ids are required for card exchange',
+            { selectedCardIds },
+          );
+        }
+        if (new Set(selectedCardIds).size !== EXCHANGE_INPUT_AMOUNT) {
+          throw new GameError(
+            EErrorCode.INVALID_ACTION,
+            'Spent card ids must be distinct',
+            { selectedCardIds },
+          );
+        }
+        const selectedCards = selectedCardIds.map((cardId) =>
+          discardableCards.find((card) => card.cardId === cardId),
+        );
+        if (selectedCards.some((card) => card === undefined)) {
+          throw new GameError(
+            EErrorCode.INVALID_ACTION,
+            'Selected spent cards must be discardable hand cards',
+            { selectedCardIds },
+          );
+        }
+        const cardsToDiscard = selectedCards.filter(
+          (card): card is { handIndex: number; cardId: string } =>
+            card !== undefined,
+        );
+        for (const card of cardsToDiscard.sort(
+          (left, right) => right.handIndex - left.handIndex,
+        )) {
           player.removeCardAt(card.handIndex);
           game.mainDeck.discard(card.cardId);
         }
@@ -213,7 +254,7 @@ export class ExchangeResourcesFreeAction {
     player: IPlayer,
     game: IGame,
     resource: TExchangeableResource,
-    gainCardOptions?: { fromDeck?: boolean; cardId?: string },
+    gainCardOptions?: IExchangeOptions,
   ): void {
     switch (resource) {
       case EResource.CREDIT:
@@ -259,9 +300,10 @@ export class ExchangeResourcesFreeAction {
         return [];
       }
       const cardId =
-        typeof card === 'string'
-          ? card
-          : ((card as { id?: string })?.id ?? 'unknown');
+        typeof card === 'string' ? card : (card as { id?: string })?.id;
+      if (cardId === undefined) {
+        return [];
+      }
       return [{ handIndex, cardId }];
     });
   }

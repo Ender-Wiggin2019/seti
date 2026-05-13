@@ -2,6 +2,7 @@ import { vi } from 'vitest';
 import { BoardBuilder } from '@/engine/board/BoardBuilder.js';
 import { ESolarSystemElementType } from '@/engine/board/SolarSystem.js';
 import { RotateDiscEffect } from '@/engine/effects/solar/RotateDiscEffect.js';
+import { Player } from '@/engine/player/Player.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
 
 describe('RotateDiscEffect', () => {
@@ -179,6 +180,58 @@ describe('RotateDiscEffect', () => {
       solarSystem.getProbesAt(ring2cell15.id).some((p) => p.id === probe.id),
     ).toBe(true);
     expect(solarSystem.getPlayerPublicity('player-1')).toBe(1);
+  });
+
+  it('[4.1.6b] pushed publicity is applied to the player resource track', () => {
+    const solarSystem = BoardBuilder.buildSolarSystemFromRandom(
+      new SeededRandom('probe-push-publicity-resource-test'),
+    );
+    const player = new Player({
+      id: 'player-1',
+      name: 'Alice',
+      color: 'red',
+      seatIndex: 0,
+      resources: { publicity: 0 },
+    });
+    const game = { solarSystem, players: [player] };
+
+    const ring1cell0 = solarSystem.spaces.find(
+      (space) => space.id === 'ring-1-cell-0',
+    );
+    const ring1cell1 = solarSystem.spaces.find(
+      (space) => space.id === 'ring-1-cell-1',
+    );
+    const ring1cell7 = solarSystem.spaces.find(
+      (space) => space.id === 'ring-1-cell-7',
+    );
+    const ring2cell0 = solarSystem.spaces.find(
+      (space) => space.id === 'ring-2-cell-0',
+    );
+    const ring2cell15 = solarSystem.spaces.find(
+      (space) => space.id === 'ring-2-cell-15',
+    );
+
+    if (
+      !ring1cell0 ||
+      !ring1cell1 ||
+      !ring1cell7 ||
+      !ring2cell0 ||
+      !ring2cell15
+    ) {
+      throw new Error('expected ring cells to exist');
+    }
+
+    ring1cell0.elements = [{ type: ESolarSystemElementType.NULL, amount: 1 }];
+    ring1cell1.elements = [{ type: ESolarSystemElementType.EMPTY, amount: 1 }];
+    ring1cell7.elements = [{ type: ESolarSystemElementType.EMPTY, amount: 1 }];
+    ring2cell15.hasPublicityIcon = true;
+
+    solarSystem.placeProbe(player.id, ring2cell0.id);
+
+    RotateDiscEffect.execute(game as never);
+
+    expect(solarSystem.getPlayerPublicity(player.id)).toBe(1);
+    expect(player.resources.publicity).toBe(1);
   });
 
   it('[4.1.7] alienState.onSolarSystemRotated is called with game', () => {

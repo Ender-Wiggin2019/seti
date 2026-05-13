@@ -1,5 +1,6 @@
 import { EGameEventType } from '@seti/common/types/protocol/events';
 import { EventLog } from '@/engine/event/EventLog.js';
+import { createActionEvent } from '@/engine/event/GameEvent.js';
 
 describe('EventLog', () => {
   it('appends events and returns recent entries', () => {
@@ -45,5 +46,36 @@ describe('EventLog', () => {
         id: expect.any(String),
       }),
     ]);
+  });
+
+  it('assigns deterministic metadata per log instance', () => {
+    const first = new EventLog();
+    const second = new EventLog();
+
+    first.append(createActionEvent('p1', 'PASS'));
+    second.append(createActionEvent('p1', 'PASS'));
+
+    expect(first.toArray()).toEqual(second.toArray());
+    expect(first.toArray()[0]).toMatchObject({
+      id: 'event-1',
+      at: 1,
+    });
+  });
+
+  it('keeps appended event timestamps monotonic after legacy persisted events', () => {
+    const log = new EventLog();
+    log.append({
+      id: 'legacy-event',
+      type: EGameEventType.ROUND_END,
+      round: 1,
+      at: 1_000_000,
+    });
+
+    log.append(createActionEvent('p1', 'PASS'));
+
+    expect(log.toArray()[1]).toMatchObject({
+      id: 'event-lflt',
+      at: 1_000_001,
+    });
   });
 });

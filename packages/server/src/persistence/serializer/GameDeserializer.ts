@@ -1,3 +1,7 @@
+import {
+  PLANETARY_BOARD_CONFIG,
+  type TPlanetaryBoardConfigId,
+} from '@seti/common/constant/boardLayout';
 import { normalizeRivalBoardConfigId } from '@seti/common/constant/solo';
 import { DEFAULT_COLUMN_CONFIGS } from '@seti/common/types/computer';
 import { EResource } from '@seti/common/types/element';
@@ -169,12 +173,37 @@ function deserializePlanetaryBoard(dto: IGameStateDto): PlanetaryBoard | null {
   const board = new PlanetaryBoard();
   board.planets.clear();
   for (const entry of dto.planetaryBoard.planets) {
-    const state = cloneValue(entry.state) as IPlanetState;
-    if (!Array.isArray(state.moonOccupants)) {
-      state.moonOccupants = state.moonOccupant ? [{ ...state.moonOccupant }] : [];
-    }
-    state.moonOccupant = state.moonOccupants[0] ?? null;
-    board.planets.set(entry.planet, state);
+    const config =
+      PLANETARY_BOARD_CONFIG[entry.planet as TPlanetaryBoardConfigId];
+    const state = cloneValue(entry.state) as Omit<
+      IPlanetState,
+      'moonOccupants'
+    > & {
+      moonOccupant?: { playerId: string } | null;
+      moonOccupants?: Array<{
+        playerId: string;
+        moonId?: string;
+        moonIndex?: number;
+      }>;
+    };
+    const storedMoonOccupants = Array.isArray(state.moonOccupants)
+      ? state.moonOccupants
+      : state.moonOccupant
+        ? [{ ...state.moonOccupant, moonId: config?.moonIds[0] }]
+        : [];
+    const moonOccupants = storedMoonOccupants.map((slot, index) => ({
+      playerId: slot.playerId,
+      moonId:
+        typeof slot.moonId === 'string' && slot.moonId.length > 0
+          ? slot.moonId
+          : (config?.moonIds[
+              Number.isInteger(slot.moonIndex)
+                ? (slot.moonIndex as number)
+                : index
+            ] ?? `legacy-moon-${index}`),
+    }));
+    delete state.moonOccupant;
+    board.planets.set(entry.planet, { ...state, moonOccupants });
   }
 
   const internal = board as unknown as {

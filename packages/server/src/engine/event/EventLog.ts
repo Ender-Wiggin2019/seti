@@ -7,12 +7,22 @@ export class EventLog {
 
   private readonly capacity: number;
 
+  private nextSequence = 1;
+
   public constructor(capacity: number = DEFAULT_EVENT_LOG_CAPACITY) {
     this.capacity = capacity;
   }
 
   public append(event: TGameEvent): void {
-    this.events.push(event.id ? event : { ...event, id: createEventId() });
+    const sequence = this.nextSequence;
+    const at = event.at ?? sequence;
+
+    this.events.push({
+      ...event,
+      id: event.id ?? createEventId(at),
+      at,
+    });
+    this.nextSequence = Math.max(sequence + 1, at + 1);
     if (this.events.length > this.capacity) {
       this.events.splice(0, this.events.length - this.capacity);
     }

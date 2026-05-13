@@ -1,5 +1,11 @@
 import { EAlienType } from '@seti/common/types/BaseCard';
-import { EPlanet, EResource, ETech, ETrace } from '@seti/common/types/element';
+import {
+  EPlanet,
+  EResource,
+  ESector,
+  ETech,
+  ETrace,
+} from '@seti/common/types/element';
 
 export interface IBoardPosition {
   x: number;
@@ -20,6 +26,11 @@ export type TPlanetReward =
   | {
       type: 'signal';
       target: 'planet-sector';
+      amount: number;
+    }
+  | {
+      type: 'signal';
+      sector: ESector;
       amount: number;
     }
   | {
@@ -49,6 +60,7 @@ export interface IPlanetOrbitRewardConfig {
 export interface IPlanetLandRewardConfig {
   rewards: readonly TPlanetReward[];
   firstData: readonly number[];
+  moonRewards: readonly (readonly TPlanetReward[])[];
 }
 
 export interface IPlanetaryBoardConfig {
@@ -61,6 +73,7 @@ export interface IPlanetaryBoardConfig {
   land: IPlanetLandRewardConfig;
   firstLandDataBonusSlots: number;
   moonSlots: number;
+  moonIds: readonly string[];
   moonNames: readonly string[];
 }
 
@@ -125,9 +138,11 @@ export const PLANETARY_BOARD_CONFIG: Readonly<
         { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
       ],
       firstData: [3],
+      moonRewards: [],
     },
     firstLandDataBonusSlots: 1,
     moonSlots: 0,
+    moonIds: [],
     moonNames: [],
   },
   [EPlanet.VENUS]: {
@@ -151,9 +166,11 @@ export const PLANETARY_BOARD_CONFIG: Readonly<
         { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
       ],
       firstData: [2],
+      moonRewards: [],
     },
     firstLandDataBonusSlots: 1,
     moonSlots: 0,
+    moonIds: [],
     moonNames: [],
   },
   [EPlanet.MARS]: {
@@ -182,10 +199,17 @@ export const PLANETARY_BOARD_CONFIG: Readonly<
         { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
       ],
       firstData: [2, 1],
+      moonRewards: [
+        [
+          { type: 'resource', resource: EResource.SCORE, amount: 8 },
+          { type: 'tuck', amount: 2 },
+        ],
+      ],
     },
     firstLandDataBonusSlots: 2,
     moonSlots: 1,
-    moonNames: ['Phobos/Deimos'],
+    moonIds: ['mars-phobos-deimos'],
+    moonNames: ['Phobos & Deimos'],
   },
   [EPlanet.JUPITER]: {
     label: 'Jupiter',
@@ -214,10 +238,34 @@ export const PLANETARY_BOARD_CONFIG: Readonly<
         { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
       ],
       firstData: [2],
+      moonRewards: [
+        [
+          { type: 'resource', resource: EResource.SCORE, amount: 12 },
+          { type: 'resource', resource: EResource.PUBLICITY, amount: 5 },
+        ],
+        [
+          { type: 'resource', resource: EResource.SCORE, amount: 7 },
+          { type: 'trace', trace: ETrace.YELLOW, amount: 2 },
+        ],
+        [
+          { type: 'resource', resource: EResource.SCORE, amount: 10 },
+          { type: 'resource', resource: EResource.ENERGY, amount: 4 },
+        ],
+        [
+          { type: 'resource', resource: EResource.SCORE, amount: 13 },
+          { type: 'resource', resource: EResource.DATA, amount: 4 },
+        ],
+      ],
     },
     firstLandDataBonusSlots: 1,
     moonSlots: 4,
-    moonNames: ['Europa', 'Ganymede', 'Callisto', 'Io'],
+    moonIds: [
+      'jupiter-ganymede',
+      'jupiter-europa',
+      'jupiter-callisto',
+      'jupiter-io',
+    ],
+    moonNames: ['Ganymede', 'Europa', 'Callisto', 'Io'],
   },
   [EPlanet.SATURN]: {
     label: 'Saturn',
@@ -244,10 +292,23 @@ export const PLANETARY_BOARD_CONFIG: Readonly<
         { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
       ],
       firstData: [2],
+      moonRewards: [
+        [
+          { type: 'resource', resource: EResource.SCORE, amount: 12 },
+          { type: 'signal', sector: ESector.RED, amount: 1 },
+          { type: 'signal', sector: ESector.YELLOW, amount: 1 },
+          { type: 'signal', sector: ESector.BLUE, amount: 1 },
+        ],
+        [
+          { type: 'resource', resource: EResource.SCORE, amount: 7 },
+          { type: 'trace', trace: ETrace.ANY, amount: 2 },
+        ],
+      ],
     },
     firstLandDataBonusSlots: 1,
     moonSlots: 2,
-    moonNames: ['Titan', 'Enceladus'],
+    moonIds: ['saturn-enceladus', 'saturn-titan'],
+    moonNames: ['Enceladus', 'Titan'],
   },
   [EPlanet.URANUS]: {
     label: 'Uranus',
@@ -273,10 +334,14 @@ export const PLANETARY_BOARD_CONFIG: Readonly<
         { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
       ],
       firstData: [2],
+      moonRewards: [
+        [{ type: 'resource', resource: EResource.SCORE, amount: 25 }],
+      ],
     },
     firstLandDataBonusSlots: 1,
     moonSlots: 1,
-    moonNames: ['Miranda'],
+    moonIds: ['uranus-titania'],
+    moonNames: ['Titania'],
   },
   [EPlanet.NEPTUNE]: {
     label: 'Neptune',
@@ -302,9 +367,13 @@ export const PLANETARY_BOARD_CONFIG: Readonly<
         { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
       ],
       firstData: [2],
+      moonRewards: [
+        [{ type: 'resource', resource: EResource.SCORE, amount: 26 }],
+      ],
     },
     firstLandDataBonusSlots: 1,
     moonSlots: 1,
+    moonIds: ['neptune-triton'],
     moonNames: ['Triton'],
   },
   [EPlanet.OUMUAMUA]: {
@@ -332,22 +401,24 @@ export const PLANETARY_BOARD_CONFIG: Readonly<
         { type: 'exofossil', amount: 2 },
       ],
       firstData: [3, 2, 1],
+      moonRewards: [],
     },
     firstLandDataBonusSlots: 3,
     moonSlots: 0,
+    moonIds: [],
     moonNames: [],
   },
 };
 
 export const TECH_STACK_LAYOUT: readonly ITechStackLayout[] = [
-  { tech: ETech.PROBE, level: 1, x: 10, y: 10 },
-  { tech: ETech.PROBE, level: 0, x: 30, y: 10 },
+  { tech: ETech.PROBE, level: 0, x: 10, y: 10 },
+  { tech: ETech.PROBE, level: 1, x: 30, y: 10 },
   { tech: ETech.PROBE, level: 2, x: 50, y: 10 },
   { tech: ETech.PROBE, level: 3, x: 70, y: 10 },
   { tech: ETech.SCAN, level: 0, x: 10, y: 30 },
-  { tech: ETech.SCAN, level: 3, x: 30, y: 30 },
-  { tech: ETech.SCAN, level: 1, x: 50, y: 30 },
-  { tech: ETech.SCAN, level: 2, x: 70, y: 30 },
+  { tech: ETech.SCAN, level: 1, x: 30, y: 30 },
+  { tech: ETech.SCAN, level: 2, x: 50, y: 30 },
+  { tech: ETech.SCAN, level: 3, x: 70, y: 30 },
   { tech: ETech.COMPUTER, level: 0, x: 10, y: 50 },
   { tech: ETech.COMPUTER, level: 1, x: 30, y: 50 },
   { tech: ETech.COMPUTER, level: 2, x: 50, y: 50 },

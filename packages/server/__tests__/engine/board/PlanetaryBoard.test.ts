@@ -101,9 +101,9 @@ describe('PlanetaryBoard', () => {
       allowMoonLanding: true,
     });
     expect(firstMoonLanding.isMoon).toBe(true);
-    expect(board.planets.get(EPlanet.MARS)?.moonOccupant?.playerId).toBe(
-      'player-a',
-    );
+    expect(board.planets.get(EPlanet.MARS)?.moonOccupants).toEqual([
+      { playerId: 'player-a', moonId: 'mars-phobos-deimos' },
+    ]);
 
     expect(
       board.canLand(EPlanet.MARS, 'player-b', {
@@ -118,6 +118,29 @@ describe('PlanetaryBoard', () => {
         allowMoonLanding: true,
       }),
     ).toThrow();
+  });
+
+  it('moon landings return moon-slot rewards without taking first-land data', () => {
+    const board = new PlanetaryBoard();
+    board.setProbeCount(EPlanet.MARS, 'player-a', 1);
+
+    const firstMoonLanding = board.land(EPlanet.MARS, 'player-a', {
+      isMoon: true,
+      allowMoonLanding: true,
+    });
+
+    expect(firstMoonLanding.isMoon).toBe(true);
+    expect(firstMoonLanding.centerReward.vpGained).toBe(8);
+    expect(firstMoonLanding.centerReward.traceRewards).toEqual([]);
+    expect(firstMoonLanding.firstLandDataGained).toBe(0);
+    expect(firstMoonLanding.rewards).toEqual([
+      { type: 'resource', resource: EResource.SCORE, amount: 8 },
+      { type: 'tuck', amount: 2 },
+    ]);
+    expect(board.planets.get(EPlanet.MARS)?.firstLandDataBonusTaken).toEqual([
+      false,
+      false,
+    ]);
   });
 
   it('allows separate landers on each configured moon slot', () => {
@@ -146,14 +169,60 @@ describe('PlanetaryBoard', () => {
     });
 
     expect(board.planets.get(EPlanet.JUPITER)?.moonOccupants).toEqual([
-      { playerId: 'player-a' },
-      { playerId: 'player-b' },
-      { playerId: 'player-c' },
-      { playerId: 'player-d' },
+      { playerId: 'player-a', moonId: 'jupiter-ganymede' },
+      { playerId: 'player-b', moonId: 'jupiter-europa' },
+      { playerId: 'player-c', moonId: 'jupiter-callisto' },
+      { playerId: 'player-d', moonId: 'jupiter-io' },
     ]);
     expect(
       board.canLand(EPlanet.JUPITER, 'player-e', {
         isMoon: true,
+        energy: 3,
+        allowMoonLanding: true,
+      }),
+    ).toBe(false);
+  });
+
+  it('uses the requested moon slot reward when a moon id is provided', () => {
+    const board = new PlanetaryBoard();
+    board.setProbeCount(EPlanet.JUPITER, 'player-a', 1);
+    board.setProbeCount(EPlanet.JUPITER, 'player-b', 1);
+
+    const result = board.land(EPlanet.JUPITER, 'player-a', {
+      isMoon: true,
+      moonId: 'jupiter-io',
+      allowMoonLanding: true,
+    });
+
+    expect(result.centerReward.vpGained).toBe(13);
+    expect(result.firstLandDataGained).toBe(0);
+    expect(result.rewards).toEqual([
+      { type: 'resource', resource: EResource.SCORE, amount: 13 },
+      { type: 'resource', resource: EResource.DATA, amount: 4 },
+    ]);
+    expect(board.planets.get(EPlanet.JUPITER)?.moonOccupants).toEqual([
+      { playerId: 'player-a', moonId: 'jupiter-io' },
+    ]);
+    expect(
+      board.canLand(EPlanet.JUPITER, 'player-b', {
+        isMoon: true,
+        moonId: 'jupiter-io',
+        energy: 3,
+        allowMoonLanding: true,
+      }),
+    ).toBe(false);
+    expect(
+      board.canLand(EPlanet.JUPITER, 'player-b', {
+        isMoon: true,
+        moonId: 'jupiter-ganymede',
+        energy: 3,
+        allowMoonLanding: true,
+      }),
+    ).toBe(true);
+    expect(
+      board.canLand(EPlanet.JUPITER, 'player-b', {
+        isMoon: true,
+        moonId: 'jupiter-missing',
         energy: 3,
         allowMoonLanding: true,
       }),

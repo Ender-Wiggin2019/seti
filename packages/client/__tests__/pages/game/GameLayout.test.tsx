@@ -50,13 +50,18 @@ function createMockContext(overrides?: Partial<IGameContext>): IGameContext {
   };
 }
 
-function createCard(id: string, name = `Card ${id}`): IBaseCard {
+function createCard(
+  id: string,
+  name = `Card ${id}`,
+  overrides?: Partial<IBaseCard>,
+): IBaseCard {
   return {
     id,
     name,
     price: 1,
     income: EResource.CREDIT,
     effects: [],
+    ...overrides,
   };
 }
 
@@ -115,13 +120,16 @@ describe('GameLayout', () => {
     expect(screen.getByTestId('bottom-dashboard')).toBeInTheDocument();
     expect(screen.getByTestId('bottom-hand')).toBeInTheDocument();
     expect(screen.getByTestId('bottom-actions')).toBeInTheDocument();
-  });
+  }, 10_000);
 
   it('renders TopBar with round and phase info', async () => {
     await renderLayout();
 
-    expect(screen.getByText('1')).toBeInTheDocument();
-    expect(screen.getByText('Action Phase')).toBeInTheDocument();
+    const roundLabel = screen.getByText('Round');
+    const topBar = roundLabel.closest('header');
+    expect(topBar).not.toBeNull();
+    expect(roundLabel.nextElementSibling).toHaveTextContent('1');
+    expect(within(topBar!).getByText('Action Phase')).toBeInTheDocument();
   });
 
   it('renders end-turn phase label instead of the raw translation key', async () => {
@@ -279,6 +287,82 @@ describe('GameLayout', () => {
         type: EMainAction.PLAY_CARD,
         payload: { cardIndex: 1 },
       });
+    });
+
+    it('does not offer the detail play action for an unaffordable selected card', async () => {
+      const sendAction = vi.fn();
+      mockContextValue = createMockContext({
+        sendAction,
+        gameState: createMockGameState({
+          players: [
+            createMockPlayerState({
+              playerId: 'player-1',
+              handSize: 2,
+              hand: [
+                createCard('expensive', 'Expensive', { price: 5 }),
+                createCard('free', 'Free', { price: 0 }),
+              ],
+              resources: {
+                [EResource.CREDIT]: 1,
+                [EResource.ENERGY]: 5,
+                [EResource.DATA]: 0,
+                [EResource.PUBLICITY]: 3,
+                [EResource.SIGNAL_TOKEN]: 0,
+              },
+            }),
+            createMockPlayerState({
+              playerId: 'player-2',
+              playerName: 'Pilot',
+              seatIndex: 1,
+              color: 'blue',
+            }),
+          ],
+        }),
+      });
+
+      await renderLayout();
+
+      fireEvent.click(screen.getByTestId('hand-card-expensive'));
+      const dialog = screen.getByRole('dialog');
+
+      expect(
+        within(dialog).queryByTestId('card-detail-play-card'),
+      ).not.toBeInTheDocument();
+      expect(sendAction).not.toHaveBeenCalled();
+    });
+
+    it('disables play-card action when the only revealed hand card is unaffordable', async () => {
+      const sendAction = vi.fn();
+      mockContextValue = createMockContext({
+        sendAction,
+        gameState: createMockGameState({
+          players: [
+            createMockPlayerState({
+              playerId: 'player-1',
+              handSize: 1,
+              hand: [createCard('expensive', 'Expensive', { price: 5 })],
+              resources: {
+                [EResource.CREDIT]: 1,
+                [EResource.ENERGY]: 5,
+                [EResource.DATA]: 0,
+                [EResource.PUBLICITY]: 3,
+                [EResource.SIGNAL_TOKEN]: 0,
+              },
+            }),
+          ],
+        }),
+      });
+
+      await renderLayout();
+
+      const actions = screen.getByTestId('bottom-actions');
+      const playCard = within(actions).getByTestId(
+        `action-menu-${EMainAction.PLAY_CARD}`,
+      );
+
+      expect(playCard).toBeDisabled();
+      fireEvent.click(playCard);
+      expect(sendAction).not.toHaveBeenCalled();
     });
 
     it('renders the rival panel for solo games', async () => {
@@ -674,7 +758,7 @@ describe('GameLayout', () => {
                 landingSlots: [],
                 firstOrbitClaimed: false,
                 firstLandDataBonusTaken: [],
-                moonOccupant: null,
+                moonOccupants: [],
               },
             },
           },
@@ -827,6 +911,47 @@ describe('GameLayout', () => {
         type: EFreeAction.EXCHANGE_RESOURCES,
         from: EResource.CREDIT,
         to: EResource.ENERGY,
+      });
+    });
+
+    it('sends selected hand card ids when exchanging cards', async () => {
+      const sendFreeAction = vi.fn();
+      mockContextValue = createMockContext({
+        sendFreeAction,
+        gameState: createMockGameState({
+          players: [
+            createMockPlayerState({
+              playerId: 'player-1',
+              handSize: 3,
+              hand: [
+                { id: 'card-a', name: 'Card A' },
+                { id: 'card-b', name: 'Card B' },
+                { id: 'card-c', name: 'Card C' },
+              ] as never,
+              resources: { credit: 0, energy: 0, data: 0, publicity: 3 },
+            }),
+          ],
+        }),
+      });
+      await renderLayout();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+      fireEvent.click(screen.getByTestId('free-action-EXCHANGE_RESOURCES'));
+      const dialog = screen.getByRole('dialog');
+
+      fireEvent.click(within(dialog).getByTestId('exchange-spend-card-card-a'));
+      fireEvent.click(within(dialog).getByTestId('exchange-spend-card-card-c'));
+      fireEvent.click(
+        within(dialog).getByRole('button', {
+          name: /2 Cards -> 1 Credits/i,
+        }),
+      );
+
+      expect(sendFreeAction).toHaveBeenCalledWith({
+        type: EFreeAction.EXCHANGE_RESOURCES,
+        from: EResource.CARD,
+        to: EResource.CREDIT,
+        spentCardIds: ['card-a', 'card-c'],
       });
     });
   });

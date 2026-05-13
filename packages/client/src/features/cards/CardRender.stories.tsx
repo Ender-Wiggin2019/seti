@@ -111,7 +111,8 @@ export const ImageModeCard: Story = {
       canvas.queryByTestId('text-card-C.42'),
     ).not.toBeInTheDocument();
     await expect(canvas.getByTestId('card-render-C.42')).toBeInTheDocument();
-    await expect(canvas.getByText('C.42')).toBeVisible();
-    await expect(canvasElement.querySelector('.card-wrapper')).not.toBeNull();
+    await expect(canvas.getByTestId('seti-card-C.42')).toHaveTextContent(
+      'Signal Analysis',
+    );
   },
 };

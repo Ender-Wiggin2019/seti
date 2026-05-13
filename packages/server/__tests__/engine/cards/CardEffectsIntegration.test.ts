@@ -251,8 +251,8 @@ describe('CardEffectsIntegration — representative cards through processMainAct
       });
 
       expect(player.resources.energy).toBe(energyBefore + 1);
-      // Printed ROTATE + card-granted tech should still add only one total
-      // rotation for the card resolution.
+      // Printed ROTATE resolves; card-granted tech does not add an implicit
+      // research rotation.
       expect(solarSystem.rotationCounter).toBe(rotationBefore + 1);
 
       // All options offered should be COMPUTER-tier techs.

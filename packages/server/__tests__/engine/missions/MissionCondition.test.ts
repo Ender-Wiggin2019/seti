@@ -178,7 +178,7 @@ describe('checkQuickMissionCondition', () => {
               {
                 orbitSlots: [],
                 landingSlots: [{ playerId: 'p1' }],
-                moonOccupant: null,
+                moonOccupants: [],
               },
             ],
           ]),
@@ -251,7 +251,7 @@ describe('checkQuickMissionCondition', () => {
             {
               landingSlots: [{ playerId: 'p1' }],
               orbitSlots: [],
-              moonOccupant: null,
+              moonOccupants: [],
             },
           ],
         ]),

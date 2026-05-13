@@ -7,15 +7,18 @@ import {
   SCAN_ENERGY_COST,
 } from '../constant/actionCosts';
 import { PLANETARY_BOARD_CONFIG } from '../constant/boardLayout';
+import { EAlienType, type IBaseCard } from '../types/BaseCard';
 import { EResource } from '../types/element';
 import { EMainAction, EPlanet } from '../types/protocol/enums';
 import type {
   IPublicGameState,
   IPublicPlanetState,
   IPublicPlayerState,
+  IPublicResourceState,
 } from '../types/protocol/gameState';
-import { ETechId, RESEARCH_PUBLICITY_COST } from '../types/tech';
-import { canOrbitPlanet, getLandingCost } from './planet';
+import { RESEARCH_PUBLICITY_COST } from '../types/tech';
+import { isStandardPlayProhibitedCard } from './handLimit';
+import { canLandOnPlanet, canOrbitPlanet } from './planet';
 import { findPlanetSpaceId } from './solarSystem';
 import { getAvailableTechs } from './tech';
 
@@ -48,23 +51,12 @@ function getPlanetEntriesInGame(
           { length: config.land.firstData.length },
           () => false,
         ),
-        moonOccupant: null,
+        moonOccupants: [],
       },
     ]);
   }
 
   return entries;
-}
-
-function getLandingCostForPlayer(
-  player: IPublicPlayerState,
-  planet: IPublicPlanetState,
-): number {
-  const baseLandingCost = getLandingCost(planet, player.playerId);
-  if (player.techs.includes(ETechId.PROBE_ROVER_DISCOUNT)) {
-    return Math.max(1, baseLandingCost - 1);
-  }
-  return baseLandingCost;
 }
 
 export function canOrbit(
@@ -87,13 +79,7 @@ export function canLand(
   gameState: IPublicGameState,
 ): boolean {
   return getPlanetEntriesInGame(gameState).some(([planetId, planet]) => {
-    if (!canOrbitPlanet(planetId, planet, player, gameState)) {
-      return false;
-    }
-    return (
-      player.resources[EResource.ENERGY] >=
-      getLandingCostForPlayer(player, planet)
-    );
+    return canLandOnPlanet(planetId, planet, player, gameState);
   });
 }
 
@@ -111,7 +97,51 @@ export function canAnalyzeData(player: IPublicPlayerState): boolean {
   return player.computer.columns.every((col) => col.topFilled);
 }
 
+function getCardPriceType(card: IBaseCard): EResource {
+  return (
+    card.priceType ??
+    (card.alien === EAlienType.CENTAURIANS
+      ? EResource.ENERGY
+      : EResource.CREDIT)
+  );
+}
+
+function getResourceAmount(
+  resources: IPublicResourceState,
+  resource: EResource,
+): number {
+  switch (resource) {
+    case EResource.CREDIT:
+      return resources[EResource.CREDIT];
+    case EResource.ENERGY:
+      return resources[EResource.ENERGY];
+    case EResource.DATA:
+      return resources[EResource.DATA];
+    case EResource.PUBLICITY:
+      return resources[EResource.PUBLICITY];
+    case EResource.SIGNAL_TOKEN:
+      return resources[EResource.SIGNAL_TOKEN] ?? 0;
+    default:
+      return 0;
+  }
+}
+
+export function canPlaySpecificCard(
+  player: IPublicPlayerState,
+  card: IBaseCard,
+): boolean {
+  if (isStandardPlayProhibitedCard(card)) {
+    return false;
+  }
+
+  const priceType = getCardPriceType(card);
+  return getResourceAmount(player.resources, priceType) >= card.price;
+}
+
 export function canPlayCard(player: IPublicPlayerState): boolean {
+  if (player.hand !== undefined) {
+    return player.hand.some((card) => canPlaySpecificCard(player, card));
+  }
   return player.handSize > 0;
 }
 

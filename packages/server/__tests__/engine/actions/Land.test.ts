@@ -148,6 +148,28 @@ describe('Land action', () => {
     expect(player.score).toBe(7);
   });
 
+  it('allows the same player to land multiple probes on the same planet', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'land-same-player-duplicate-planet',
+    );
+    resolveSetupTucks(game);
+    const player = game.players[0];
+    placeProbeOnPlanet(game, player.id, EPlanet.MARS, 2);
+    player.probesInSpace = 2;
+
+    LandAction.execute(player, EPlanet.MARS);
+    player.resources.gain({ energy: 3 });
+
+    expect(player.canLand(EPlanet.MARS)).toBe(true);
+    LandAction.execute(player, EPlanet.MARS);
+
+    expect(
+      game.planetaryBoard?.planets.get(EPlanet.MARS)?.landingSlots,
+    ).toEqual([{ playerId: player.id }, { playerId: player.id }]);
+  });
+
   it('uses reduced landing cost when any orbiter is already present', () => {
     const game = Game.create(
       TEST_PLAYERS,
@@ -255,12 +277,12 @@ describe('Land action', () => {
       type: EMainAction.LAND,
       payload: { planet: EPlanet.MARS, isMoon: true },
     });
-    resolveAllInputs(game, p1);
+    resolveAllInputsDefault(game, p1);
     game.processEndTurn(p1.id);
 
     expect(
-      game.planetaryBoard?.planets.get(EPlanet.MARS)?.moonOccupant?.playerId,
-    ).toBe(p1.id);
+      game.planetaryBoard?.planets.get(EPlanet.MARS)?.moonOccupants,
+    ).toEqual([{ playerId: p1.id, moonId: 'mars-phobos-deimos' }]);
     p2.gainTech(ETechId.PROBE_MOON);
     expect(() =>
       game.processMainAction(p2.id, {
@@ -272,6 +294,160 @@ describe('Land action', () => {
         code: EErrorCode.INVALID_ACTION,
       }),
     );
+  });
+
+  it('applies immediate moon rewards through the Land action', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'land-jupiter-moon-reward',
+    );
+    resolveSetupTucks(game);
+    const player = game.players[0];
+    player.gainTech(ETechId.PROBE_MOON);
+    placeProbeOnPlanet(game, player.id, EPlanet.JUPITER, 1);
+    player.probesInSpace = 1;
+
+    game.processMainAction(player.id, {
+      type: EMainAction.LAND,
+      payload: { planet: EPlanet.JUPITER, isMoon: true },
+    });
+
+    expect(player.score).toBe(13);
+    expect(player.resources.publicity).toBe(9);
+    expect(player.resources.data).toBe(0);
+    expect(player.waitingFor).toBeUndefined();
+    expect(
+      game.planetaryBoard?.planets.get(EPlanet.JUPITER)
+        ?.firstLandDataBonusTaken,
+    ).toEqual([false]);
+    expect(
+      game.planetaryBoard?.planets.get(EPlanet.JUPITER)?.moonOccupants,
+    ).toEqual([{ playerId: player.id, moonId: 'jupiter-ganymede' }]);
+  });
+
+  it('applies the clicked moon slot reward through the Land action', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'land-jupiter-specific-moon-reward',
+    );
+    resolveSetupTucks(game);
+    const player = game.players[0];
+    player.gainTech(ETechId.PROBE_MOON);
+    placeProbeOnPlanet(game, player.id, EPlanet.JUPITER, 1);
+    player.probesInSpace = 1;
+
+    game.processMainAction(player.id, {
+      type: EMainAction.LAND,
+      payload: { planet: EPlanet.JUPITER, isMoon: true, moonId: 'jupiter-io' },
+    });
+
+    expect(player.score).toBe(14);
+    expect(player.resources.data).toBe(4);
+    expect(player.resources.publicity).toBe(4);
+    expect(
+      game.planetaryBoard?.planets.get(EPlanet.JUPITER)?.moonOccupants,
+    ).toEqual([{ playerId: player.id, moonId: 'jupiter-io' }]);
+  });
+
+  it('rejects legacy moon index payloads instead of silently choosing another moon', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'land-jupiter-legacy-moon-index-rejected',
+    );
+    resolveSetupTucks(game);
+    const player = game.players[0];
+    player.gainTech(ETechId.PROBE_MOON);
+    placeProbeOnPlanet(game, player.id, EPlanet.JUPITER, 1);
+    player.probesInSpace = 1;
+
+    expect(() =>
+      game.processMainAction(player.id, {
+        type: EMainAction.LAND,
+        payload: { planet: EPlanet.JUPITER, isMoon: true, moonIndex: 3 },
+      }),
+    ).toThrow('payload.moonIndex is not supported');
+    expect(
+      game.planetaryBoard?.planets.get(EPlanet.JUPITER)?.moonOccupants,
+    ).toEqual([]);
+  });
+
+  it('rejects moonId payloads on non-moon landings before mutating board state', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'land-non-moon-moon-id',
+    );
+    resolveSetupTucks(game);
+    const player = game.players[0];
+    placeProbeOnPlanet(game, player.id, EPlanet.JUPITER, 1);
+    player.probesInSpace = 1;
+
+    expect(() =>
+      game.processMainAction(player.id, {
+        type: EMainAction.LAND,
+        payload: {
+          planet: EPlanet.JUPITER,
+          isMoon: false,
+          moonId: 'jupiter-io',
+        },
+      }),
+    ).toThrow('Action payload.moonId requires isMoon true');
+    expect(
+      game.planetaryBoard?.planets.get(EPlanet.JUPITER)?.landingSlots,
+    ).toEqual([]);
+  });
+
+  it('chains colored signal moon rewards through the Land action', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'land-saturn-moon-signal-reward',
+    );
+    resolveSetupTucks(game);
+    const player = game.players[0];
+    player.gainTech(ETechId.PROBE_MOON);
+    placeProbeOnPlanet(game, player.id, EPlanet.SATURN, 1);
+    player.probesInSpace = 1;
+
+    game.processMainAction(player.id, {
+      type: EMainAction.LAND,
+      payload: { planet: EPlanet.SATURN, isMoon: true },
+    });
+
+    expect(player.score).toBe(13);
+    expect(player.waitingFor?.toModel().type).toBe(EPlayerInputType.OPTION);
+    expect(resolveAllInputsDefault(game, player)).toBeGreaterThanOrEqual(3);
+  });
+
+  it('chains moon tuck rewards through the Land action', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'land-mars-moon-tuck-reward',
+    );
+    resolveSetupTucks(game);
+    const player = game.players[0];
+    const tuckedBefore = player.tuckedIncomeCards.length;
+    player.gainTech(ETechId.PROBE_MOON);
+    placeProbeOnPlanet(game, player.id, EPlanet.MARS, 1);
+    player.probesInSpace = 1;
+
+    game.processMainAction(player.id, {
+      type: EMainAction.LAND,
+      payload: { planet: EPlanet.MARS, isMoon: true },
+    });
+
+    expect(player.score).toBe(9);
+    expect(player.resources.data).toBe(0);
+    expect(player.waitingFor?.toModel().type).toBe(EPlayerInputType.CARD);
+    resolveAllInputsDefault(game, player);
+    expect(player.tuckedIncomeCards).toHaveLength(tuckedBefore + 2);
+    expect(
+      game.planetaryBoard?.planets.get(EPlanet.MARS)?.firstLandDataBonusTaken,
+    ).toEqual([false, false]);
   });
 
   it('applies rover discount tech to reduce landing energy cost by 1', () => {
@@ -322,12 +498,12 @@ describe('Land action', () => {
       type: EMainAction.LAND,
       payload: { planet: EPlanet.MARS, isMoon: true },
     });
-    resolveAllInputs(game, p1);
 
     expect(p1.resources.energy).toBe(2);
+    resolveAllInputsDefault(game, p1);
     expect(
-      game.planetaryBoard?.planets.get(EPlanet.MARS)?.moonOccupant?.playerId,
-    ).toBe(p1.id);
+      game.planetaryBoard?.planets.get(EPlanet.MARS)?.moonOccupants,
+    ).toEqual([{ playerId: p1.id, moonId: 'mars-phobos-deimos' }]);
   });
 
   it('allows landing on moon with probe moon tech even when moon is locked', () => {
@@ -348,8 +524,8 @@ describe('Land action', () => {
     });
 
     expect(
-      game.planetaryBoard?.planets.get(EPlanet.MARS)?.moonOccupant?.playerId,
-    ).toBe(player.id);
+      game.planetaryBoard?.planets.get(EPlanet.MARS)?.moonOccupants,
+    ).toEqual([{ playerId: player.id, moonId: 'mars-phobos-deimos' }]);
   });
 
   it('does not let an existing orbiter land later on the same planet', () => {

@@ -107,7 +107,7 @@ describe('ExchangeResourcesFreeAction', () => {
   });
 
   describe('execute — cards to credit', () => {
-    it('discards 2 cards and gains 1 credit', () => {
+    it('discards selected 2 cards and gains 1 credit', () => {
       const player = createTestPlayer();
       const game = createMockGame();
       const initialCredits = player.resources.credits;
@@ -118,9 +118,11 @@ describe('ExchangeResourcesFreeAction', () => {
         game,
         EResource.CARD,
         EResource.CREDIT,
+        { spentCardIds: ['card-a', 'card-c'] } as never,
       );
 
       expect(player.hand.length).toBe(initialHandSize - 2);
+      expect(player.hand).toEqual(['card-b']);
       expect(player.resources.credits).toBe(initialCredits + 1);
     });
 
@@ -133,6 +135,7 @@ describe('ExchangeResourcesFreeAction', () => {
         game,
         EResource.CARD,
         EResource.CREDIT,
+        { spentCardIds: ['card-b', 'card-c'] } as never,
       );
 
       expect(game.mainDeck.getDiscardPile()).toEqual(['card-c', 'card-b']);
@@ -150,10 +153,52 @@ describe('ExchangeResourcesFreeAction', () => {
         game,
         EResource.CARD,
         EResource.CREDIT,
+        { spentCardIds: ['card-a', 'card-b'] } as never,
       );
 
       expect(player.hand).toEqual(['ET.41']);
       expect(game.mainDeck.getDiscardPile()).toEqual(['card-b', 'card-a']);
+    });
+
+    it('throws when card input omits the selected spent card ids', () => {
+      const player = createTestPlayer();
+
+      expect(() =>
+        ExchangeResourcesFreeAction.execute(
+          player,
+          createMockGame(),
+          EResource.CARD,
+          EResource.CREDIT,
+        ),
+      ).toThrowError(
+        expect.objectContaining({ code: EErrorCode.INVALID_ACTION }),
+      );
+    });
+
+    it('throws when selected spent card ids are duplicated or not discardable', () => {
+      expect(() =>
+        ExchangeResourcesFreeAction.execute(
+          createTestPlayer(),
+          createMockGame(),
+          EResource.CARD,
+          EResource.CREDIT,
+          { spentCardIds: ['card-a', 'card-a'] } as never,
+        ),
+      ).toThrowError(
+        expect.objectContaining({ code: EErrorCode.INVALID_ACTION }),
+      );
+
+      expect(() =>
+        ExchangeResourcesFreeAction.execute(
+          createTestPlayer({ hand: ['card-a', 'ET.41', 'card-b'] }),
+          createMockGame(),
+          EResource.CARD,
+          EResource.CREDIT,
+          { spentCardIds: ['card-a', 'ET.41'] } as never,
+        ),
+      ).toThrowError(
+        expect.objectContaining({ code: EErrorCode.INVALID_ACTION }),
+      );
     });
 
     it('throws when only one discardable card is available beside Exertian cards', () => {
@@ -167,6 +212,7 @@ describe('ExchangeResourcesFreeAction', () => {
           createMockGame(),
           EResource.CARD,
           EResource.CREDIT,
+          { spentCardIds: ['card-a', 'ET.41'] } as never,
         ),
       ).toThrow('Not enough cards in hand');
     });
@@ -376,6 +422,7 @@ describe('ExchangeResourcesFreeAction', () => {
         type: EFreeAction.EXCHANGE_RESOURCES,
         from: EResource.CARD,
         to: EResource.CREDIT,
+        spentCardIds: ['h1', 'h3'],
       });
       expect(p1.hand.length).toBe(handSize - 2);
 

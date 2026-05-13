@@ -11,6 +11,7 @@ import {
   type ISelectGoldTileInputModel,
   type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
+import { RESEARCH_PUBLICITY_COST } from '@seti/common/types/tech';
 import { vi } from 'vitest';
 import { Game } from '@/engine/Game.js';
 import { EMissionEventType } from '@/engine/missions/IMission.js';
@@ -971,6 +972,34 @@ describe('Game Integration: Turn Lifecycle', () => {
           response: expect.objectContaining({
             type: expect.any(String),
           }),
+        }),
+      ]),
+    );
+  });
+
+  it('event log records resource and score mutations from rule resolution', () => {
+    const game = createGame('event-log-state-mutations');
+    const p1 = getPlayer(game, 'p1');
+    p1.resources.gain({ publicity: 6 });
+
+    game.processMainAction('p1', { type: EMainAction.RESEARCH_TECH });
+    resolveAllInputs(game, p1);
+
+    expect(game.eventLog.toArray()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'RESOURCE_CHANGE',
+          level: 'debug',
+          playerId: 'p1',
+          resource: 'publicity',
+          delta: -RESEARCH_PUBLICITY_COST,
+        }),
+        expect.objectContaining({
+          type: 'SCORE_CHANGE',
+          level: 'debug',
+          playerId: 'p1',
+          delta: 2,
+          source: 'score',
         }),
       ]),
     );

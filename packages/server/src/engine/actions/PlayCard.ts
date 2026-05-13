@@ -21,8 +21,10 @@ export interface IPlayCardResult {
 }
 
 export class PlayCardAction {
-  public static canExecute(player: IPlayer, _game: IGame): boolean {
-    return player.hand.length > 0;
+  public static canExecute(player: IPlayer, game: IGame): boolean {
+    return player.hand.some((_, index) =>
+      this.canExecuteCardAtIndex(player, game, index),
+    );
   }
 
   public static canExecuteCardAtIndex(
@@ -30,10 +32,6 @@ export class PlayCardAction {
     game: IGame,
     cardIndex: number,
   ): boolean {
-    if (!this.canExecute(player, game)) {
-      return false;
-    }
-
     if (cardIndex < 0 || cardIndex >= player.hand.length) {
       return false;
     }

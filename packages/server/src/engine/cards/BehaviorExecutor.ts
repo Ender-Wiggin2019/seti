@@ -445,12 +445,7 @@ export class BehaviorExecutor {
         mode: 'category' as const,
         categories: toResearchCategories(researchTech),
       };
-      if (!ResearchTechEffect.canExecute(player, game, filter)) {
-        return undefined;
-      }
       return ResearchTechAction.execute(player, game, true, filter, {
-        // Card-granted tech only rotates when the card has an explicit
-        // ROTATE effect. Main RESEARCH_TECH action keeps its own rotation.
         skipRotation: true,
       });
     });

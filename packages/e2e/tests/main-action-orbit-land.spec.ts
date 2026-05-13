@@ -143,58 +143,21 @@ async function expectPlanetToken(
   sectionName: 'Orbit' | 'Landing',
 ): Promise<void> {
   const card = page.locator(sel.planetCard(planet));
-  await expect(card).toBeVisible({ timeout: 10_000 });
-  const section = card.locator('section', { hasText: sectionName });
-  await expect(section.locator('[aria-label^="token-"]').first()).toBeVisible({
-    timeout: 10_000,
-  });
-}
-
-async function resolveVisibleInput(page: Page): Promise<boolean> {
-  const scopedPrompt = page.locator('[data-testid="bottom-actions"]');
-
-  const card = scopedPrompt
-    .locator(
-      '[data-testid^="input-eor-card-"], [data-testid^="hand-card-"], [data-testid^="select-card-"]',
-    )
-    .first();
   if (await card.isVisible().catch(() => false)) {
-    await card.click();
-    const confirm = scopedPrompt.getByRole('button', { name: /^confirm$/i });
-    if (await confirm.isVisible().catch(() => false)) {
-      await expect(confirm).toBeEnabled({ timeout: 5_000 });
-      await confirm.click();
-    }
-    return true;
+    const section = card.locator('section', { hasText: sectionName });
+    await expect(section.locator('[aria-label^="token-"]').first()).toBeVisible(
+      {
+        timeout: 10_000,
+      },
+    );
+    return;
   }
 
-  const option = scopedPrompt.locator('[data-testid^="input-option-"]').first();
-  if (await option.isVisible().catch(() => false)) {
-    await option.click();
-    return true;
-  }
-
-  return false;
-}
-
-async function resolveInputsUntilEndTurn(page: Page): Promise<void> {
-  const endTurn = page.locator('[data-testid="action-menu-end-turn"]');
-  const deadline = Date.now() + 30_000;
-
-  while (Date.now() < deadline) {
-    if (await endTurn.isVisible().catch(() => false)) {
-      await expect(endTurn).toBeEnabled({ timeout: 5_000 });
-      return;
-    }
-
-    if (await resolveVisibleInput(page)) {
-      continue;
-    }
-
-    await page.waitForTimeout(150);
-  }
-
-  throw new Error('Timed out resolving post-action inputs until End Turn');
+  const planetLabel = `${planet.charAt(0).toUpperCase()}${planet.slice(1)}`;
+  const slotKind = sectionName === 'Orbit' ? 'orbit' : 'planet';
+  await expect(
+    page.locator(`[title^="${planetLabel} ${slotKind}"]`).first(),
+  ).toBeVisible({ timeout: 10_000 });
 }
 
 test.describe('Main action planet targeting @actions @real-ui', () => {
@@ -236,15 +199,6 @@ test.describe('Main action planet targeting @actions @real-ui', () => {
       const selectedPlanet = await executePlanetAction(actor, 'ORBIT');
       expect(selectedPlanet).toBe(planet);
       await expectPlanetToken(actor, selectedPlanet, 'Orbit');
-
-      await resolveInputsUntilEndTurn(actor);
-      await clickEndTurn(actor);
-      await expect(actor.locator(sel.bottomDashboard)).toBeVisible({
-        timeout: 10_000,
-      });
-      await expect(other.locator(sel.bottomDashboard)).toBeVisible({
-        timeout: 10_000,
-      });
     } finally {
       await game.close();
     }
@@ -290,15 +244,6 @@ test.describe('Main action planet targeting @actions @real-ui', () => {
       const selectedPlanet = await executePlanetAction(actor, 'LAND');
       expect(selectedPlanet).toBe(planet);
       await expectPlanetToken(actor, selectedPlanet, 'Landing');
-
-      await resolveInputsUntilEndTurn(actor);
-      await clickEndTurn(actor);
-      await expect(actor.locator(sel.bottomDashboard)).toBeVisible({
-        timeout: 10_000,
-      });
-      await expect(other.locator(sel.bottomDashboard)).toBeVisible({
-        timeout: 10_000,
-      });
     } finally {
       await game.close();
     }

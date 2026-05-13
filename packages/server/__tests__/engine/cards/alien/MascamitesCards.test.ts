@@ -1,9 +1,9 @@
-import { EResource } from '@seti/common/types/element';
 import {
   EEffectType,
   type IBaseEffect,
   type ICustomizedEffect,
 } from '@seti/common/types/effect';
+import { EResource } from '@seti/common/types/element';
 import {
   EAlienType,
   EFreeAction,
@@ -16,14 +16,15 @@ import {
   type IPlayerInputModel,
   type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
+import { ETechId } from '@seti/common/types/tech';
 import {
   isMascamitesAlienBoard,
   type MascamitesAlienBoard,
 } from '@/engine/alien/AlienBoard.js';
 import { AlienState } from '@/engine/alien/AlienState.js';
 import { MascamitesAlienPlugin } from '@/engine/alien/plugins/MascamitesAlienPlugin.js';
-import { Game } from '@/engine/Game.js';
 import { getCardRegistry } from '@/engine/cards/CardRegistry.js';
+import { Game } from '@/engine/Game.js';
 import { applyMissionRewards } from '@/engine/missions/MissionReward.js';
 import { scoreEndGameCard } from '@/engine/scoring/GoldScoringTile.js';
 import { resolveSetupTucks } from '../../../helpers/TestGameBuilder.js';
@@ -157,6 +158,45 @@ describe('Mascamites alien cards ET.1-ET.10', () => {
             event.action === 'CARD_CUSTOM_EFFECT_UNHANDLED',
         ),
     ).toBe(false);
+  });
+
+  it('ET.1 resolves moon landing rewards before sample pickup', () => {
+    const { game, board } = createMascamitesGame('mascamites-et1-moon-reward');
+    const player = game.activePlayer;
+    player.gainTech(ETechId.PROBE_MOON);
+    player.hand = ['ET.1'];
+    player.resources.gain({ credits: 10, energy: 10 });
+    placeProbeOnPlanet(game, EPlanet.SATURN);
+
+    game.processMainAction(player.id, {
+      type: EMainAction.PLAY_CARD,
+      payload: { cardIndex: 0 },
+    });
+    const scoreBeforeLanding = player.score;
+    selectOption(game, `land-${EPlanet.SATURN}-moon-saturn-enceladus`);
+
+    let rewardOptions = getOptionIds(game);
+    expect(rewardOptions.some((id) => id.startsWith('sample:'))).toBe(false);
+    selectOption(game, rewardOptions[0]);
+    rewardOptions = getOptionIds(game);
+    expect(rewardOptions.some((id) => id.startsWith('sample:'))).toBe(false);
+    selectOption(game, rewardOptions[0]);
+    rewardOptions = getOptionIds(game);
+    expect(rewardOptions.some((id) => id.startsWith('sample:'))).toBe(false);
+    selectOption(game, rewardOptions[0]);
+
+    const sampleOptions = getOptionIds(game);
+    expect(sampleOptions.some((id) => id.startsWith('sample:'))).toBe(true);
+    selectOption(game, sampleOptions.find((id) => id.startsWith('sample:'))!);
+
+    expect(player.score - scoreBeforeLanding).toBe(12);
+    expect(board.capsules).toEqual([
+      expect.objectContaining({
+        ownerId: player.id,
+        sourcePlanet: EPlanet.SATURN,
+        missionCardId: 'ET.1',
+      }),
+    ]);
   });
 
   it('ET.1 can collect a sample, deliver it to Earth, and complete its mission through the real card flow', () => {

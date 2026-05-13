@@ -165,7 +165,10 @@ describe('GoldScoringTile', () => {
       if (!mars) throw new Error('expected Mars board');
       mars.orbitSlots.push({ playerId: p1.id });
       mars.landingSlots.push({ playerId: p1.id });
-      mars.moonOccupants.push({ playerId: p1.id });
+      mars.moonOccupants.push({
+        playerId: p1.id,
+        moonId: 'mars-phobos-deimos',
+      });
 
       const tile = tileClaimed('other', 'A', 'p1', 5);
 
@@ -297,7 +300,10 @@ describe('GoldScoringTile', () => {
 
       jupiter.orbitSlots.push({ playerId: 'p1' }, { playerId: 'p2' });
       jupiter.landingSlots.push({ playerId: 'p1' });
-      jupiter.moonOccupant = { playerId: 'p1' };
+      jupiter.moonOccupants.push({
+        playerId: 'p1',
+        moonId: 'jupiter-ganymede',
+      });
       mars.orbitSlots.push({ playerId: 'p1' });
 
       expect(scoreEndGameCard('12', p1, game)).toBe(9);
@@ -314,7 +320,10 @@ describe('GoldScoringTile', () => {
 
       mars.orbitSlots.push({ playerId: 'p1' });
       mars.landingSlots.push({ playerId: 'p1' }, { playerId: 'p2' });
-      mars.moonOccupant = { playerId: 'p1' };
+      mars.moonOccupants.push({
+        playerId: 'p1',
+        moonId: 'mars-phobos-deimos',
+      });
       jupiter.orbitSlots.push({ playerId: 'p1' });
 
       expect(scoreEndGameCard('14', p1, game)).toBe(12);

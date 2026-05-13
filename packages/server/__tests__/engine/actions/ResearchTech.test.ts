@@ -183,6 +183,28 @@ describe('ResearchTechAction', () => {
       expect(getRotationCounter(game)).toBe(before + 1);
     });
 
+    it('rotates before spending publicity', () => {
+      const rng = new SeededRandom('test');
+      const techBoard = new TechBoard(rng);
+      const game = createMockGame(techBoard);
+      const player = createPlayer();
+      const solarSystem = game.solarSystem;
+      if (!solarSystem) {
+        throw new Error('expected solar system to be initialized');
+      }
+      const publicityAtRotate: number[] = [];
+      const rotate = solarSystem.rotateNextDisc.bind(solarSystem);
+      vi.spyOn(solarSystem, 'rotateNextDisc').mockImplementation(() => {
+        publicityAtRotate.push(player.resources.publicity);
+        return rotate();
+      });
+
+      ResearchTechAction.execute(player, game, false);
+
+      expect(publicityAtRotate).toEqual([10]);
+      expect(player.resources.publicity).toBe(10 - RESEARCH_PUBLICITY_COST);
+    });
+
     it('returns a PlayerInput when multiple techs are available', () => {
       const rng = new SeededRandom('test');
       const techBoard = new TechBoard(rng);

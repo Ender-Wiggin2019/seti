@@ -1,5 +1,8 @@
 import { createDefaultSetupConfig } from '@seti/common/constant/sectorSetup';
-import { getAvailableMainActions } from '@seti/common/rules';
+import {
+  canPlaySpecificCard,
+  getAvailableMainActions,
+} from '@seti/common/rules';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EPlanet, EResource } from '@seti/common/types/element';
 import { ALL_TECH_IDS } from '@seti/common/types/tech';
@@ -308,6 +311,7 @@ export function GameLayout({
       ? myPlayer.hand.findIndex((card) => card.id === detailCard.id)
       : -1;
   const canPlayDetailCard =
+    detailCard !== null &&
     detailCardHandIndex >= 0 &&
     isMyTurn &&
     pendingInput === null &&
@@ -315,7 +319,8 @@ export function GameLayout({
     myPlayer !== undefined &&
     getAvailableMainActions(myPlayer, gameState).includes(
       EMainAction.PLAY_CARD,
-    );
+    ) &&
+    canPlaySpecificCard(myPlayer, detailCard);
 
   const handlePlayDetailCard = (): void => {
     if (!canPlayDetailCard) return;
@@ -328,11 +333,18 @@ export function GameLayout({
     setDetailCard(null);
   };
 
-  const handlePlanetMainActionSelect = (planet: EPlanet): void => {
+  const handlePlanetMainActionSelect = (
+    planet: EPlanet,
+    options?: { isMoon?: boolean; moonId?: string },
+  ): void => {
     if (!planetActionMode) return;
     sendAction({
       type: planetActionMode,
-      payload: { planet },
+      payload: {
+        planet,
+        ...(options?.isMoon ? { isMoon: true } : {}),
+        ...(options?.moonId !== undefined ? { moonId: options.moonId } : {}),
+      },
     });
     setPlanetActionMode(null);
   };
@@ -678,6 +690,9 @@ function useActionController({
             type: EFreeAction.EXCHANGE_RESOURCES,
             from,
             to,
+            ...(from === EResource.CARD && cardPick?.spentCardIds
+              ? { spentCardIds: cardPick.spentCardIds }
+              : {}),
             ...(to === EResource.CARD && cardPick
               ? { fromDeck: cardPick.fromDeck }
               : {}),
@@ -810,8 +825,23 @@ function TopActionBar({
       return;
     }
 
-    if (hand.length === 1) {
-      sendAction({ type: EMainAction.PLAY_CARD, payload: { cardIndex: 0 } });
+    const playableIndexes =
+      myPlayer === undefined
+        ? []
+        : hand
+            .map((card, index) => ({ card, index }))
+            .filter(({ card }) => canPlaySpecificCard(myPlayer, card))
+            .map(({ index }) => index);
+
+    if (playableIndexes.length === 1) {
+      sendAction({
+        type: EMainAction.PLAY_CARD,
+        payload: { cardIndex: playableIndexes[0] },
+      });
+      return;
+    }
+
+    if (playableIndexes.length === 0) {
       return;
     }
 
@@ -1091,6 +1121,10 @@ function HandDockBlock({
             clearPlayCardSelectionMode();
             return;
           }
+          const card = hand[cardIndex];
+          if (!myPlayer || !canPlaySpecificCard(myPlayer, card)) {
+            return;
+          }
 
           sendAction({
             type: EMainAction.PLAY_CARD,
@@ -1127,7 +1161,10 @@ function BoardTabs({
   armedCardRowBuy: boolean;
   setArmedCardRowBuy: (next: boolean | ((prev: boolean) => boolean)) => void;
   planetActionMode: EMainAction.ORBIT | EMainAction.LAND | null;
-  onSelectMainActionPlanet: (planet: EPlanet) => void;
+  onSelectMainActionPlanet: (
+    planet: EPlanet,
+    options?: { isMoon?: boolean; moonId?: string },
+  ) => void;
 }): React.JSX.Element {
   const { t } = useTranslation('common');
   const {
@@ -1658,13 +1695,33 @@ function ExchangeResourcesDialog({
   onConfirm: (
     from: EResource,
     to: EResource,
-    cardPick?: { fromDeck: boolean },
+    cardPick?: { fromDeck?: boolean; spentCardIds?: string[] },
   ) => void;
 }): React.JSX.Element {
   const { t } = useTranslation('common');
+  const [spentCardIds, setSpentCardIds] = useState<string[]>([]);
+  useEffect(() => {
+    if (!open) {
+      setSpentCardIds([]);
+    }
+  }, [open]);
+  const handCards = player?.hand ?? [];
+  const toggleSpentCard = (cardId: string): void => {
+    setSpentCardIds((current) => {
+      if (current.includes(cardId)) {
+        return current.filter((id) => id !== cardId);
+      }
+      if (current.length >= 2) {
+        return current;
+      }
+      return [...current, cardId];
+    });
+  };
   const canAfford = (from: EResource): boolean => {
     if (!player) return false;
-    if (from === EResource.CARD) return (player.handSize ?? 0) >= 2;
+    if (from === EResource.CARD) {
+      return handCards.length >= 2 && spentCardIds.length === 2;
+    }
     if (from === EResource.CREDIT)
       return (player.resources[EResource.CREDIT] ?? 0) >= 2;
     if (from === EResource.ENERGY)
@@ -1681,6 +1738,31 @@ function ExchangeResourcesDialog({
             {t('client.game_layout.exchange_desc')}
           </p>
         </DialogHeader>
+        {handCards.length > 0 ? (
+          <div className='rounded-md border border-surface-700/50 p-2'>
+            <p className='mb-2 text-xs font-semibold uppercase tracking-wider text-text-300'>
+              Select 2 cards to spend
+            </p>
+            <div className='grid grid-cols-1 gap-1.5'>
+              {handCards.map((card) => {
+                const isSelected = spentCardIds.includes(card.id);
+                return (
+                  <Button
+                    key={card.id}
+                    type='button'
+                    variant={isSelected ? 'primary' : 'ghost'}
+                    data-testid={`exchange-spend-card-${card.id}`}
+                    aria-pressed={isSelected}
+                    onClick={() => toggleSpentCard(card.id)}
+                    className='h-9 justify-start px-3 text-left text-xs'
+                  >
+                    {card.name ?? card.id}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
         <div className='grid grid-cols-1 gap-1.5'>
           {EXCHANGE_OPTIONS.map((opt) => {
             const key =
@@ -1705,13 +1787,19 @@ function ExchangeResourcesDialog({
                 key={key}
                 variant='ghost'
                 disabled={!canAfford(opt.from)}
-                onClick={() =>
-                  opt.to === EResource.CARD && opt.cardSource
-                    ? onConfirm(opt.from, opt.to, {
-                        fromDeck: opt.cardSource === 'deck',
-                      })
-                    : onConfirm(opt.from, opt.to)
-                }
+                onClick={() => {
+                  const cardPick = {
+                    ...(opt.from === EResource.CARD ? { spentCardIds } : {}),
+                    ...(opt.to === EResource.CARD && opt.cardSource
+                      ? { fromDeck: opt.cardSource === 'deck' }
+                      : {}),
+                  };
+                  onConfirm(
+                    opt.from,
+                    opt.to,
+                    Object.keys(cardPick).length > 0 ? cardPick : undefined,
+                  );
+                }}
                 className='h-10 justify-start gap-2 px-3 text-left text-sm'
               >
                 <span

@@ -240,6 +240,39 @@ describe('BehaviorExecutor — integration', () => {
       );
     });
 
+    it('preserves pending moon reward input from a card-contained land effect', () => {
+      const { game, player } = createIntegrationGame(
+        'beh-land-moon-pending-input',
+      );
+      const marsSpace = game.solarSystem?.getSpacesOnPlanet(EPlanet.MARS)[0];
+      if (!marsSpace) {
+        throw new Error('expected a Mars space for the land integration test');
+      }
+      player.gainTech(ETechId.PROBE_MOON);
+      game.solarSystem?.placeProbe(player.id, marsSpace.id);
+      player.probesInSpace = 1;
+
+      const pending = drainReturningInput(game, () => {
+        getBehaviorExecutor().execute(
+          { land: true },
+          player,
+          game,
+          sampleCard(),
+        );
+      });
+      const model = pending?.toModel() as ISelectOptionInputModel;
+      expect(model.options.map((option) => option.id)).toContain(
+        `land-${EPlanet.MARS}-moon-mars-phobos-deimos`,
+      );
+
+      const rewardInput = pending?.process({
+        type: EPlayerInputType.OPTION,
+        optionId: `land-${EPlanet.MARS}-moon-mars-phobos-deimos`,
+      });
+
+      expect(rewardInput?.toModel().type).toBe(EPlayerInputType.CARD);
+    });
+
     it('drawCards pulls from the real mainDeck and refills the card row', () => {
       const { game, player } = createIntegrationGame('beh-2-9-2-draw');
       game.mainDeck = new Deck(['d1', 'd2', 'd3', 'refill-1', 'refill-2'], []);
@@ -618,7 +651,7 @@ describe('BehaviorExecutor — integration', () => {
     });
 
     it('does not rotate for a card-granted tech effect without explicit ROTATE', () => {
-      const { game, player } = createIntegrationGame('beh-faq-tech-no-rotate');
+      const { game, player } = createIntegrationGame('beh-faq-tech-rotate');
       const solarSystem = requireSolarSystem(game);
       const rotationBefore = solarSystem.rotationCounter;
 
@@ -633,6 +666,54 @@ describe('BehaviorExecutor — integration', () => {
 
       expect(pending?.toModel().type).toBe(EPlayerInputType.OPTION);
       expect(solarSystem.rotationCounter).toBe(rotationBefore);
+    });
+
+    it('does not rotate when a card-granted tech type has no available tile and no explicit ROTATE', () => {
+      const { game, player } = createIntegrationGame(
+        'beh-faq-tech-unavailable-rotate',
+      );
+      const solarSystem = requireSolarSystem(game);
+      const rotationBefore = solarSystem.rotationCounter;
+      const probeTechs =
+        game.techBoard
+          ?.getAvailableTechs(player.id)
+          .filter((id) => id.startsWith('probe-')) ?? [];
+      for (const techId of probeTechs) {
+        game.techBoard?.take(player.id, techId);
+        player.gainTech(techId);
+      }
+
+      const pending = drainReturningInput(game, () => {
+        getBehaviorExecutor().execute(
+          { researchTech: ETech.PROBE },
+          player,
+          game,
+          sampleCard(),
+        );
+      });
+
+      expect(pending).toBeUndefined();
+      expect(solarSystem.rotationCounter).toBe(rotationBefore);
+    });
+
+    it('rotates once when card-granted tech has an explicit ROTATE effect', () => {
+      const { game, player } = createIntegrationGame(
+        'beh-faq-tech-explicit-rotate',
+      );
+      const solarSystem = requireSolarSystem(game);
+      const rotationBefore = solarSystem.rotationCounter;
+
+      const pending = drainReturningInput(game, () => {
+        getBehaviorExecutor().execute(
+          behaviorFromEffects([e.ROTATE(), e.TECH_PROBE()]),
+          player,
+          game,
+          sampleCard(),
+        );
+      });
+
+      expect(pending?.toModel().type).toBe(EPlayerInputType.OPTION);
+      expect(solarSystem.rotationCounter).toBe(rotationBefore + 1);
     });
   });
 

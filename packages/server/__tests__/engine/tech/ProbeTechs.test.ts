@@ -347,8 +347,8 @@ describe('Phase 8.1 — orange Probe tech (integration)', () => {
     resolveAllInputs(game, player.id);
 
     expect(
-      game.planetaryBoard?.planets.get(EPlanet.MARS)?.moonOccupant?.playerId,
-    ).toBe(player.id);
+      game.planetaryBoard?.planets.get(EPlanet.MARS)?.moonOccupants,
+    ).toEqual([{ playerId: player.id, moonId: 'mars-phobos-deimos' }]);
   });
 
   it('8.1.4 rejects moon landing without probe moon tech when the moon is locked', () => {

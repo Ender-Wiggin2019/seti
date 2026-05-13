@@ -29,11 +29,11 @@ describe('EuropaClipperCard (card 12)', () => {
     const input = game.deferredActions.drain(game);
     input?.process({
       type: EPlayerInputType.OPTION,
-      optionId: 'land-jupiter-moon',
+      optionId: 'land-jupiter-moon-jupiter-ganymede',
     });
 
     expect(
-      game.planetaryBoard?.planets.get(EPlanet.JUPITER)?.moonOccupant,
-    ).toEqual({ playerId: player.id });
+      game.planetaryBoard?.planets.get(EPlanet.JUPITER)?.moonOccupants,
+    ).toEqual([{ playerId: player.id, moonId: 'jupiter-ganymede' }]);
   });
 });

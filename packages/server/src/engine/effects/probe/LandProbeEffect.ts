@@ -1,10 +1,14 @@
-import type { ETrace } from '@seti/common/types/element';
+import type { TPlanetReward } from '@seti/common/constant/boardLayout';
+import { EResource, type ETrace } from '@seti/common/types/element';
 import { EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { SimpleDeferredAction } from '@/engine/deferred/SimpleDeferredAction.js';
+import { TuckCardForIncomeEffect } from '@/engine/effects/income/TuckCardForIncomeEffect.js';
+import { MarkSectorSignalEffect } from '@/engine/effects/scan/MarkSectorSignalEffect.js';
 import { EMissionEventType } from '@/engine/missions/IMission.js';
 import { GameError } from '@/shared/errors/GameError.js';
 import type { IGame } from '../../IGame.js';
+import type { IPlayerInput } from '../../input/PlayerInput.js';
 import type { IPlayer } from '../../player/IPlayer.js';
 import { EPieceType } from '../../player/Pieces.js';
 import { TechModifierQuery } from '../../tech/TechModifierQuery.js';
@@ -15,8 +19,10 @@ import {
 
 export interface ILandOptions {
   isMoon?: boolean;
+  moonId?: string;
   allowMoons?: boolean;
   allowDuplicate?: boolean;
+  onComplete?: () => IPlayerInput | undefined;
 }
 
 export interface ILandResult {
@@ -28,6 +34,11 @@ export interface ILandResult {
   exofossilsGained: number;
   lifeTraceGained: number;
   traceRewards: Array<{ trace: ETrace; amount: number }>;
+  pendingInput?: IPlayerInput;
+}
+
+interface ILandRewardResolution {
+  pendingInput?: IPlayerInput;
 }
 
 /** @deprecated Use ILandOptions instead */
@@ -36,6 +47,209 @@ export type ILandProbeEffectOptions = ILandOptions;
 export type ILandProbeEffectResult = ILandResult;
 
 export class LandProbeEffect {
+  private static buildTuckChain(
+    player: IPlayer,
+    game: IGame,
+    remaining: number,
+    onComplete?: () => IPlayerInput | undefined,
+  ): IPlayerInput | undefined {
+    if (remaining <= 0) {
+      return onComplete?.();
+    }
+    return TuckCardForIncomeEffect.execute(player, game, () =>
+      this.buildTuckChain(player, game, remaining - 1, onComplete),
+    );
+  }
+
+  private static gainMoonResourceReward(
+    player: IPlayer,
+    reward: Extract<TPlanetReward, { type: 'resource' }>,
+  ): void {
+    switch (reward.resource) {
+      case EResource.CREDIT:
+        player.resources.gain({ credits: reward.amount });
+        break;
+      case EResource.ENERGY:
+        player.resources.gain({ energy: reward.amount });
+        break;
+      case EResource.PUBLICITY:
+        player.resources.gain({ publicity: reward.amount });
+        break;
+      case EResource.DATA:
+        player.resources.gain({ data: reward.amount });
+        break;
+      case EResource.SIGNAL_TOKEN:
+        player.resources.gain({ signalTokens: reward.amount });
+        break;
+      case EResource.MOVE:
+        player.gainMove(reward.amount);
+        break;
+      case EResource.SCORE:
+      case EResource.CARD:
+      case EResource.CARD_ANY:
+        break;
+      default: {
+        const exhaustive: never = reward.resource;
+        return exhaustive;
+      }
+    }
+  }
+
+  private static applyColoredSignalReward(
+    player: IPlayer,
+    game: IGame,
+    reward: Extract<TPlanetReward, { type: 'signal'; sector: unknown }>,
+    remaining: number,
+    onComplete: () => IPlayerInput | undefined,
+  ): IPlayerInput | undefined {
+    if (remaining <= 0) {
+      return onComplete();
+    }
+    return MarkSectorSignalEffect.markByColor(player, game, reward.sector, () =>
+      this.applyColoredSignalReward(
+        player,
+        game,
+        reward,
+        remaining - 1,
+        onComplete,
+      ),
+    );
+  }
+
+  private static applyPlanetSignalReward(
+    player: IPlayer,
+    game: IGame,
+    planet: EPlanet,
+    remaining: number,
+    onComplete: () => IPlayerInput | undefined,
+  ): IPlayerInput | undefined {
+    if (remaining <= 0) {
+      return onComplete();
+    }
+    MarkSectorSignalEffect.markByPlanet(player, game, planet);
+    return this.applyPlanetSignalReward(
+      player,
+      game,
+      planet,
+      remaining - 1,
+      onComplete,
+    );
+  }
+
+  private static applyMoonRewardChain(
+    player: IPlayer,
+    game: IGame,
+    planet: EPlanet,
+    rewards: readonly TPlanetReward[],
+    index: number,
+    onComplete?: () => IPlayerInput | undefined,
+  ): ILandRewardResolution {
+    const reward = rewards[index];
+    if (reward === undefined) {
+      const pendingInput = onComplete?.();
+      return pendingInput ? { pendingInput } : {};
+    }
+
+    switch (reward.type) {
+      case 'resource':
+        this.gainMoonResourceReward(player, reward);
+        return this.applyMoonRewardChain(
+          player,
+          game,
+          planet,
+          rewards,
+          index + 1,
+          onComplete,
+        );
+      case 'signal':
+        return {
+          pendingInput:
+            'sector' in reward
+              ? this.applyColoredSignalReward(
+                  player,
+                  game,
+                  reward,
+                  reward.amount,
+                  () =>
+                    this.applyMoonRewardChain(
+                      player,
+                      game,
+                      planet,
+                      rewards,
+                      index + 1,
+                      onComplete,
+                    ).pendingInput,
+                )
+              : this.applyPlanetSignalReward(
+                  player,
+                  game,
+                  planet,
+                  reward.amount,
+                  () =>
+                    this.applyMoonRewardChain(
+                      player,
+                      game,
+                      planet,
+                      rewards,
+                      index + 1,
+                      onComplete,
+                    ).pendingInput,
+                ),
+        };
+      case 'tuck': {
+        return {
+          pendingInput: this.buildTuckChain(
+            player,
+            game,
+            reward.amount,
+            () =>
+              this.applyMoonRewardChain(
+                player,
+                game,
+                planet,
+                rewards,
+                index + 1,
+                onComplete,
+              ).pendingInput,
+          ),
+        };
+      }
+      case 'card':
+      case 'alien-card':
+      case 'trace':
+      case 'exofossil':
+        return this.applyMoonRewardChain(
+          player,
+          game,
+          planet,
+          rewards,
+          index + 1,
+          onComplete,
+        );
+      default: {
+        const exhaustive: never = reward;
+        return exhaustive;
+      }
+    }
+  }
+
+  private static applyMoonRewards(
+    player: IPlayer,
+    game: IGame,
+    planet: EPlanet,
+    rewards: readonly TPlanetReward[],
+    onComplete?: () => IPlayerInput | undefined,
+  ): ILandRewardResolution {
+    return this.applyMoonRewardChain(
+      player,
+      game,
+      planet,
+      rewards,
+      0,
+      onComplete,
+    );
+  }
+
   private static resolveMoonFlag(
     player: IPlayer,
     options: ILandOptions,
@@ -63,6 +277,7 @@ export class LandProbeEffect {
     syncProbeCountsForPlayer(game, player.id);
     return game.planetaryBoard.canLand(planet, player.id, {
       isMoon: options.isMoon,
+      moonId: options.moonId,
       allowMoonLanding: this.resolveMoonFlag(player, options),
       allowDuplicate: options.allowDuplicate,
     });
@@ -82,6 +297,7 @@ export class LandProbeEffect {
           playerId: player.id,
           planet,
           isMoon: options.isMoon ?? false,
+          moonId: options.moonId,
         },
       );
     }
@@ -112,6 +328,7 @@ export class LandProbeEffect {
           playerId: player.id,
           planet,
           isMoon: options.isMoon ?? false,
+          moonId: options.moonId,
         },
       );
     }
@@ -146,6 +363,7 @@ export class LandProbeEffect {
 
     const landingResult = planetaryBoard.land(planet, player.id, {
       isMoon: options.isMoon,
+      moonId: options.moonId,
       allowMoonLanding: this.resolveMoonFlag(player, options),
       allowDuplicate: options.allowDuplicate,
     });
@@ -164,6 +382,15 @@ export class LandProbeEffect {
       player.gainExofossils(reward.amount);
       return total + reward.amount;
     }, 0);
+    const rewardResolution = landingResult.isMoon
+      ? this.applyMoonRewards(
+          player,
+          game,
+          planet,
+          landingResult.rewards,
+          options.onComplete,
+        )
+      : {};
 
     return {
       planet,
@@ -174,6 +401,7 @@ export class LandProbeEffect {
       exofossilsGained,
       lifeTraceGained: landingResult.centerReward.lifeTraceGained,
       traceRewards: landingResult.centerReward.traceRewards,
+      pendingInput: rewardResolution.pendingInput,
     };
   }
 

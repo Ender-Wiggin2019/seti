@@ -664,7 +664,7 @@ describe('AlienBoardView', () => {
           landingSlots: [{ playerId: 'p1' }],
           firstOrbitClaimed: true,
           firstLandDataBonusTaken: [true, false, false],
-          moonOccupant: null,
+          moonOccupants: [],
         },
       },
     };

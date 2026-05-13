@@ -10,6 +10,10 @@ import type {
   ILandResult,
 } from '../effects/probe/LandProbeEffect.js';
 import { LandProbeEffect } from '../effects/probe/LandProbeEffect.js';
+import {
+  createResourceChangeEvent,
+  createScoreChangeEvent,
+} from '../event/GameEvent.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
 import { EMissionEventType } from '../missions/IMission.js';
@@ -68,9 +72,9 @@ export class Player implements IPlayer {
 
   public readonly seatIndex: number;
 
-  public score: number;
+  private scoreAmount: number;
 
-  public resources: Resources;
+  private resourcesValue!: Resources;
 
   public income: Income;
 
@@ -123,8 +127,8 @@ export class Player implements IPlayer {
     this.seatIndex = init.seatIndex;
     assertValidInteger('seatIndex', this.seatIndex);
 
-    this.score = init.score ?? this.seatIndex + 1;
-    assertValidInteger('score', this.score);
+    this.scoreAmount = init.score ?? this.seatIndex + 1;
+    assertValidInteger('score', this.scoreAmount);
 
     this.data = new Data({
       poolCount: init.dataPoolCount,
@@ -208,6 +212,30 @@ export class Player implements IPlayer {
     return this.data.computer;
   }
 
+  public get score(): number {
+    return this.scoreAmount;
+  }
+
+  public set score(value: number) {
+    assertValidInteger('score', value);
+    const delta = value - this.scoreAmount;
+    this.scoreAmount = value;
+    if (delta !== 0) {
+      this.recordScoreChange(delta);
+    }
+  }
+
+  public get resources(): Resources {
+    return this.resourcesValue;
+  }
+
+  public set resources(resources: Resources) {
+    this.resourcesValue = resources;
+    this.resourcesValue.setChangeObserver((resource, delta) => {
+      this.recordResourceChange(resource, delta);
+    });
+  }
+
   public get dataPool(): DataPool {
     return this.data.dataPool;
   }
@@ -216,20 +244,40 @@ export class Player implements IPlayer {
     this.game = game;
   }
 
+  private recordResourceChange(
+    resource: keyof IResourceBundle,
+    delta: number,
+  ): void {
+    this.game?.eventLog.append(
+      createResourceChangeEvent(this.id, this.toEventResource(resource), delta),
+    );
+  }
+
+  private recordScoreChange(delta: number): void {
+    this.game?.eventLog.append(createScoreChangeEvent(this.id, delta));
+  }
+
+  private toEventResource(resource: keyof IResourceBundle): EResource {
+    switch (resource) {
+      case 'credits':
+        return EResource.CREDIT;
+      case 'energy':
+        return EResource.ENERGY;
+      case 'publicity':
+        return EResource.PUBLICITY;
+      case 'data':
+        return EResource.DATA;
+      case 'signalTokens':
+        return EResource.SIGNAL_TOKEN;
+    }
+  }
+
   public applyRoundIncome(): TIncomeBundle {
     return this.applyIncomePayout(this.income.computeRoundPayout());
   }
 
-  /**
-   * End-of-round income: round 1 pays base corporation income only (setup tuck
-   * does not recur yet). From round 2 onward, base + tucked stacks per Income.
-   */
-  public applyEndOfRoundIncome(round: number): TIncomeBundle {
-    const payout =
-      round === 1
-        ? { ...this.income.baseIncome }
-        : this.income.computeRoundPayout();
-    return this.applyIncomePayout(payout);
+  public applyEndOfRoundIncome(): TIncomeBundle {
+    return this.applyIncomePayout(this.income.computeRoundPayout());
   }
 
   private applyIncomePayout(payout: TIncomeBundle): TIncomeBundle {
@@ -363,7 +411,12 @@ export class Player implements IPlayer {
       throw new GameError(
         EErrorCode.INVALID_ACTION,
         'Land action is not currently legal',
-        { playerId: this.id, planet, isMoon: options.isMoon ?? false },
+        {
+          playerId: this.id,
+          planet,
+          isMoon: options.isMoon ?? false,
+          moonId: options.moonId,
+        },
       );
     }
 

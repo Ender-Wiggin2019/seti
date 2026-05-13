@@ -1,3 +1,7 @@
+import {
+  PLANETARY_BOARD_CONFIG,
+  type TPlanetaryBoardConfigId,
+} from '@seti/common/constant/boardLayout';
 import { getMascamitesSampleToken } from '@seti/common/constant/mascamites';
 import { EAlienType } from '@seti/common/types/BaseCard';
 import { EPlanet, ETrace } from '@seti/common/types/protocol/enums';
@@ -28,6 +32,13 @@ const LANDABLE_PLANETS = [
   EPlanet.NEPTUNE,
   EPlanet.OUMUAMUA,
 ] as const;
+
+type TLandPickupTarget = {
+  planet: (typeof LANDABLE_PLANETS)[number];
+  isMoon: boolean;
+  moonId?: string;
+  moonName?: string;
+};
 
 export function behaviorWithoutMascamitesCustom(
   cardId: string,
@@ -135,18 +146,40 @@ export function createLandThenPickupInput(
   options: { allowMoons?: boolean } = {},
 ): PlayerInput | undefined {
   const targets = LANDABLE_PLANETS.flatMap((planet) => {
-    const planetTarget = LandProbeEffect.canExecute(player, game, planet, {
-      isMoon: false,
-      allowMoons: options.allowMoons,
-    })
+    const planetTarget: TLandPickupTarget[] = LandProbeEffect.canExecute(
+      player,
+      game,
+      planet,
+      {
+        isMoon: false,
+        allowMoons: options.allowMoons,
+      },
+    )
       ? [{ planet, isMoon: false }]
       : [];
-    const moonTarget = LandProbeEffect.canExecute(player, game, planet, {
-      isMoon: true,
-      allowMoons: options.allowMoons,
-    })
-      ? [{ planet, isMoon: true }]
-      : [];
+    const config = PLANETARY_BOARD_CONFIG[planet as TPlanetaryBoardConfigId];
+    const moonTarget: TLandPickupTarget[] = (config?.moonIds ?? []).flatMap(
+      (moonId) => {
+        if (
+          !LandProbeEffect.canExecute(player, game, planet, {
+            isMoon: true,
+            moonId,
+            allowMoons: options.allowMoons,
+          })
+        ) {
+          return [];
+        }
+        const moonOrdinal = config.moonIds.indexOf(moonId);
+        return [
+          {
+            planet,
+            isMoon: true,
+            moonId,
+            moonName: config.moonNames[moonOrdinal],
+          },
+        ];
+      },
+    );
     return [...planetTarget, ...moonTarget];
   });
 
@@ -155,22 +188,26 @@ export function createLandThenPickupInput(
     player,
     targets.map((target) => ({
       id: target.isMoon
-        ? `land-${target.planet}-moon`
+        ? `land-${target.planet}-moon-${target.moonId}`
         : `land-${target.planet}`,
       label: target.isMoon
-        ? `Land on ${target.planet} (moon)`
+        ? `Land on ${target.planet} (${target.moonName ?? 'moon'})`
         : `Land on ${target.planet}`,
       onSelect: () => {
-        LandProbeEffect.executeCardContainedAction(
+        const createPickupInput = () =>
+          createPickupInputForPlanet(player, game, target.planet, card.id);
+        const result = LandProbeEffect.executeCardContainedAction(
           player,
           game,
           target.planet,
           {
             isMoon: target.isMoon,
+            moonId: target.moonId,
             allowMoons: options.allowMoons,
+            onComplete: createPickupInput,
           },
         );
-        return createPickupInputForPlanet(player, game, target.planet, card.id);
+        return result.pendingInput ?? createPickupInput();
       },
     })),
     'Select a planet to land on',

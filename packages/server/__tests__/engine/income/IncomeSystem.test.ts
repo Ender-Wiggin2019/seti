@@ -103,15 +103,16 @@ function passUntilRoundAdvances(game: Game, fromRound: number): void {
 }
 
 describe('IncomeSystem (Phase 10.4)', () => {
-  it('10.4.1 [集成] round 1 end pays base income only (setup tuck not recurring yet)', () => {
-    const game = createGame2p('10-4-1-base-only');
+  it('10.4.1 [集成] first end-of-round pays base + tucked income', () => {
+    const game = createGame2p('10-4-1-first-full-income');
     const p1 = getPlayer(game, 'p1');
 
     expect(p1.tuckedIncomeCards.length).toBeGreaterThanOrEqual(1);
-    const baseCredit = p1.income.baseIncome[EResource.CREDIT];
+    p1.income.addTuckedIncome(EResource.CREDIT);
+    const fullCredit = p1.income.computeRoundPayout()[EResource.CREDIT];
     const before = p1.resources.credits;
     passUntilRoundAdvances(game, 1);
-    expect(p1.resources.credits - before).toBe(baseCredit);
+    expect(p1.resources.credits - before).toBe(fullCredit);
   });
 
   it('10.4.2 [集成] round 2 end pays base + tucked stacked', () => {
@@ -125,26 +126,25 @@ describe('IncomeSystem (Phase 10.4)', () => {
     expect(p1.resources.credits - mid).toBe(full[EResource.CREDIT]);
   });
 
-  it('10.4.3 [集成] tucked credit card adds +1 credit per round (from round 2)', () => {
+  it('10.4.3 [集成] tucked credit card adds +1 credit from the first income window', () => {
     const game = createGame2p('10-4-3-credit-tuck');
     const p1 = getPlayer(game, 'p1');
     const tuckedBefore = p1.income.tuckedCardIncome[EResource.CREDIT];
     p1.income.addTuckedIncome(EResource.CREDIT);
     expect(p1.income.tuckedCardIncome[EResource.CREDIT]).toBe(tuckedBefore + 1);
 
-    const base = p1.income.baseIncome[EResource.CREDIT];
     const full = p1.income.computeRoundPayout()[EResource.CREDIT];
 
     const c0 = p1.resources.credits;
     passUntilRoundAdvances(game, 1);
-    expect(p1.resources.credits - c0).toBe(base);
+    expect(p1.resources.credits - c0).toBe(full);
 
     const c1 = p1.resources.credits;
     passUntilRoundAdvances(game, 2);
     expect(p1.resources.credits - c1).toBe(full);
   });
 
-  it('10.4.4 [集成] tucked energy card adds +1 energy per round (from round 2)', () => {
+  it('10.4.4 [集成] tucked energy card adds +1 energy from the first income window', () => {
     const game = createGame2p('10-4-4-energy-tuck');
     const p1 = getPlayer(game, 'p1');
     const tuckedEBefore = p1.income.tuckedCardIncome[EResource.ENERGY];
@@ -153,36 +153,30 @@ describe('IncomeSystem (Phase 10.4)', () => {
       tuckedEBefore + 1,
     );
 
-    const baseE = p1.income.baseIncome[EResource.ENERGY];
     const fullE = p1.income.computeRoundPayout()[EResource.ENERGY];
 
     const e0 = p1.resources.energy;
     passUntilRoundAdvances(game, 1);
-    expect(p1.resources.energy - e0).toBe(baseE);
+    expect(p1.resources.energy - e0).toBe(fullE);
 
     const e1 = p1.resources.energy;
     passUntilRoundAdvances(game, 2);
     expect(p1.resources.energy - e1).toBe(fullE);
   });
 
-  it('10.4.5 [集成] tucked draw-card income adds +1 card draw per round (from round 2)', () => {
+  it('10.4.5 [集成] tucked draw-card income adds +1 card draw from the first income window', () => {
     const game = createGame2p('10-4-5-card-tuck');
     const p1 = getPlayer(game, 'p1') as Player;
     p1.income.addTuckedIncome(EResource.CARD);
+    const fullCards = p1.income.computeRoundPayout()[EResource.CARD];
 
     passUntilRoundAdvances(game, 1);
-    expect(p1.getPendingCardDrawCount()).toBe(
-      p1.income.baseIncome[EResource.CARD],
-    );
+    expect(p1.getPendingCardDrawCount()).toBe(fullCards);
 
     const beforePending = p1.getPendingCardDrawCount();
     passUntilRoundAdvances(game, 2);
-    expect(p1.getPendingCardDrawCount() - beforePending).toBe(
-      p1.income.computeRoundPayout()[EResource.CARD],
-    );
-    expect(p1.income.computeRoundPayout()[EResource.CARD]).toBe(
-      p1.income.baseIncome[EResource.CARD] + 1,
-    );
+    expect(p1.getPendingCardDrawCount() - beforePending).toBe(fullCards);
+    expect(fullCards).toBe(p1.income.baseIncome[EResource.CARD] + 1);
   });
 
   it('10.4.6 [集成] tucked income from PlaceData tuckIncome reward accumulates for later round-end payout', () => {
@@ -214,10 +208,9 @@ describe('IncomeSystem (Phase 10.4)', () => {
       p1.income.baseIncome[EResource.CREDIT],
     );
 
-    const baseCredit = p1.income.baseIncome[EResource.CREDIT];
     const c0 = p1.resources.credits;
     passUntilRoundAdvances(game, 1);
-    expect(p1.resources.credits - c0).toBe(baseCredit);
+    expect(p1.resources.credits - c0).toBe(payoutAfterTuck);
 
     const c1 = p1.resources.credits;
     passUntilRoundAdvances(game, 2);
@@ -235,7 +228,11 @@ describe('IncomeSystem (Phase 10.4)', () => {
       p1.income.baseIncome[EResource.CREDIT] + extra,
     );
 
+    const c0 = p1.resources.credits;
     passUntilRoundAdvances(game, 1);
+    expect(p1.resources.credits - c0).toBe(
+      p1.income.baseIncome[EResource.CREDIT] + extra,
+    );
     const mid = p1.resources.credits;
     passUntilRoundAdvances(game, 2);
     expect(p1.resources.credits - mid).toBe(

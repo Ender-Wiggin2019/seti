@@ -80,11 +80,10 @@ export class SampleReturnCard extends ImmediateCard {
       state.moonOccupants.forEach((slot, index) => {
         if (slot.playerId !== context.player.id) return;
         targets.push({
-          id: `${planet}-moon-lander-${index}`,
+          id: `${planet}-moon-lander-${slot.moonId}`,
           label: `${planet} moon lander`,
           remove: () => {
             state.moonOccupants.splice(index, 1);
-            state.moonOccupant = state.moonOccupants[0] ?? null;
           },
         });
       });

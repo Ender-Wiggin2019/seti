@@ -1,11 +1,15 @@
+import { DescRender } from '@seti/cards';
 import type {
   IPlanetaryBoardConfig,
   TPlanetReward,
 } from '@seti/common/constant/boardLayout';
-import { EResource, ETrace } from '@seti/common/types/element';
+import { EResource, ESector, ETrace } from '@seti/common/types/element';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
-import type { IPublicPlanetState } from '@/types/re-exports';
+import type {
+  IPublicMoonOccupantState,
+  IPublicPlanetState,
+} from '@/types/re-exports';
 
 interface IPlanetCardProps {
   planet: string;
@@ -14,6 +18,8 @@ interface IPlanetCardProps {
   playerColors: Record<string, string>;
   isSelectable: boolean;
   onSelect?: () => void;
+  selectableMoonIds?: ReadonlySet<string>;
+  onSelectMoon?: (moonId: string) => void;
 }
 
 function TokenDot({
@@ -48,6 +54,27 @@ function traceLabel(trace: ETrace): string {
   }
 }
 
+function signalLabel(sector: ESector): string {
+  switch (sector) {
+    case ESector.RED:
+      return 'red';
+    case ESector.YELLOW:
+      return 'yellow';
+    case ESector.BLUE:
+      return 'blue';
+    case ESector.BLACK:
+      return 'black';
+    default:
+      return String(sector);
+  }
+}
+
+function getMoonOccupants(
+  state: IPublicPlanetState,
+): IPublicMoonOccupantState[] {
+  return state.moonOccupants;
+}
+
 export function formatPlanetReward(reward: TPlanetReward): string {
   switch (reward.type) {
     case 'resource':
@@ -61,6 +88,9 @@ export function formatPlanetReward(reward: TPlanetReward): string {
     case 'trace':
       return `${reward.amount} ${traceLabel(reward.trace)} trace`;
     case 'signal':
+      if ('sector' in reward) {
+        return `${reward.amount} ${signalLabel(reward.sector)} signal`;
+      }
       return `${reward.amount} signal @ planet sector`;
     case 'card':
       return `${reward.amount} ${reward.source} card`;
@@ -83,6 +113,40 @@ export function formatPlanetRewardList(
   return rewards.map(formatPlanetReward).join(' + ');
 }
 
+export function planetRewardToDesc(reward: TPlanetReward): string {
+  switch (reward.type) {
+    case 'resource':
+      return `{${reward.resource}-${reward.amount}}`;
+    case 'trace':
+      return `{${reward.trace}-${reward.amount}}`;
+    case 'signal':
+      if ('sector' in reward) {
+        return `{${reward.sector}-${reward.amount}}`;
+      }
+      return `{any-signal-${reward.amount}} @ planet`;
+    case 'card':
+      return reward.source === 'any'
+        ? `{any-card-${reward.amount}}`
+        : `{draw-card-${reward.amount}}`;
+    case 'alien-card':
+      return `{draw-alien-card-${reward.amount}}`;
+    case 'exofossil':
+      return `{exofossil-${reward.amount}}`;
+    case 'tuck':
+      return `{income-${reward.amount}}`;
+    default: {
+      const exhaustive: never = reward;
+      return exhaustive;
+    }
+  }
+}
+
+export function planetRewardListToDesc(
+  rewards: readonly TPlanetReward[],
+): string {
+  return rewards.map(planetRewardToDesc).join(' + ');
+}
+
 export function formatFirstOrbitRewardList(
   rewards: readonly TPlanetReward[],
 ): string {
@@ -95,6 +159,49 @@ export function formatFirstLandData(firstData: readonly number[]): string {
   return firstData.join(' / ');
 }
 
+function RewardIcons({
+  rewards,
+  testId,
+}: {
+  rewards: readonly TPlanetReward[];
+  testId: string;
+}): React.JSX.Element {
+  return (
+    <div
+      data-testid={testId}
+      aria-label={formatPlanetRewardList(rewards)}
+      className='flex min-h-8 items-center justify-center'
+    >
+      <DescRender
+        desc={planetRewardListToDesc(rewards)}
+        size='desc-mini'
+        smartSize
+      />
+    </div>
+  );
+}
+
+function FirstDataIcons({
+  firstData,
+  testId,
+}: {
+  firstData: readonly number[];
+  testId: string;
+}): React.JSX.Element {
+  const desc = firstData
+    .map((amount) => `{${EResource.DATA}-${amount}}`)
+    .join(' / ');
+  return (
+    <div
+      data-testid={testId}
+      aria-label={formatFirstLandData(firstData)}
+      className='flex min-h-8 items-center justify-center'
+    >
+      <DescRender desc={desc} size='desc-mini' smartSize />
+    </div>
+  );
+}
+
 export function PlanetCard({
   planet,
   config,
@@ -102,10 +209,14 @@ export function PlanetCard({
   playerColors,
   isSelectable,
   onSelect,
+  selectableMoonIds = new Set<string>(),
+  onSelectMoon,
 }: IPlanetCardProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const planetConfig = config;
   const firstLandData = formatFirstLandData(planetConfig.land.firstData);
+  const moonOccupants = getMoonOccupants(state);
+  const primaryMoonOccupant = moonOccupants[0] ?? null;
 
   const interactive = isSelectable && onSelect !== undefined;
 
@@ -150,38 +261,108 @@ export function PlanetCard({
         </div>
       </header>
 
-      <div className='mb-2 grid gap-1.5 rounded border border-surface-700/50 bg-surface-950/40 p-2 font-mono text-[10px] leading-snug text-text-300'>
-        <p>
-          <span className='uppercase tracking-[0.12em] text-text-500'>
-            {t('client.planet_card.orbit_reward')}:{' '}
-          </span>
-          <span className='text-text-100'>
-            {formatPlanetRewardList(planetConfig.orbit.rewards)}
-          </span>
-        </p>
-        <p>
-          <span className='uppercase tracking-[0.12em] text-text-500'>
-            {t('client.planet_card.first_orbit')}:{' '}
-          </span>
-          <span className='text-text-100'>
-            {formatPlanetRewardList(planetConfig.orbit.firstRewards)}
-          </span>
-        </p>
-        <p>
-          <span className='uppercase tracking-[0.12em] text-text-500'>
-            {t('client.planet_card.land_reward')}:{' '}
-          </span>
-          <span className='text-text-100'>
-            {formatPlanetRewardList(planetConfig.land.rewards)}
-          </span>
-        </p>
-        {firstLandData.length > 0 && (
-          <p>
-            <span className='uppercase tracking-[0.12em] text-text-500'>
-              {t('client.planet_card.first_land_data')}:{' '}
-            </span>
-            <span className='text-text-100'>{firstLandData}</span>
+      <div className='mb-2 grid gap-2 rounded border border-surface-700/50 bg-surface-950/40 p-2 font-mono text-[10px] leading-snug text-text-300'>
+        <section>
+          <p className='mb-1 uppercase tracking-[0.12em] text-text-500'>
+            {t('client.planet_card.orbit_reward')}
           </p>
+          <RewardIcons
+            rewards={planetConfig.orbit.rewards}
+            testId={`planet-reward-icons-${planet}-orbit`}
+          />
+        </section>
+        <section>
+          <p className='mb-1 uppercase tracking-[0.12em] text-text-500'>
+            {t('client.planet_card.first_orbit')}
+          </p>
+          <RewardIcons
+            rewards={planetConfig.orbit.firstRewards}
+            testId={`planet-reward-icons-${planet}-first-orbit`}
+          />
+        </section>
+        <section>
+          <p className='mb-1 uppercase tracking-[0.12em] text-text-500'>
+            {t('client.planet_card.land_reward')}
+          </p>
+          <RewardIcons
+            rewards={planetConfig.land.rewards}
+            testId={`planet-reward-icons-${planet}-land`}
+          />
+        </section>
+        {firstLandData.length > 0 && (
+          <section>
+            <p className='mb-1 uppercase tracking-[0.12em] text-text-500'>
+              {t('client.planet_card.first_land_data')}
+            </p>
+            <FirstDataIcons
+              firstData={planetConfig.land.firstData}
+              testId={`planet-reward-icons-${planet}-first-land-data`}
+            />
+          </section>
+        )}
+        {planetConfig.land.moonRewards.length > 0 && (
+          <div
+            data-testid={`moon-rewards-${planet}`}
+            className='mt-1 grid gap-1.5'
+          >
+            {planetConfig.land.moonRewards.map((rewards, index) => {
+              const moonId = planetConfig.moonIds[index] ?? `moon-${index}`;
+              const moonName =
+                planetConfig.moonNames[index] ?? `Moon ${index + 1}`;
+              const occupant = moonOccupants.find(
+                (candidate) => candidate.moonId === moonId,
+              );
+              const blockClassName = cn(
+                'relative rounded border border-surface-700/60 bg-surface-800/45 px-2 pb-1.5 pt-2 text-center',
+                selectableMoonIds.has(moonId) &&
+                  'border-accent-500/80 bg-accent-500/10 ring-1 ring-accent-500/60',
+              );
+              const content = (
+                <>
+                  {occupant && (
+                    <span className='absolute right-1.5 top-1.5'>
+                      <TokenDot
+                        playerId={occupant.playerId}
+                        playerColors={playerColors}
+                      />
+                    </span>
+                  )}
+                  <RewardIcons
+                    rewards={rewards}
+                    testId={`moon-reward-icons-${planet}-${moonId}`}
+                  />
+                  <p className='mt-1 text-[10px] uppercase tracking-[0.08em] text-text-500'>
+                    {moonName}
+                  </p>
+                </>
+              );
+              return selectableMoonIds.has(moonId) && onSelectMoon ? (
+                <button
+                  key={`${planet}-moon-reward-${moonId}`}
+                  type='button'
+                  data-testid={`moon-block-${planet}-${moonId}`}
+                  className={cn(
+                    blockClassName,
+                    'transition-colors hover:bg-accent-500/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300',
+                  )}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onSelectMoon(moonId);
+                  }}
+                >
+                  {content}
+                </button>
+              ) : (
+                <div
+                  key={`${planet}-moon-reward-${moonId}`}
+                  data-testid={`moon-block-${planet}-${moonId}`}
+                  className={blockClassName}
+                >
+                  {content}
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
 
@@ -248,15 +429,15 @@ export function PlanetCard({
         <span
           className={cn(
             'rounded border px-1.5 py-0.5 font-mono text-[10px]',
-            state.moonOccupant
+            primaryMoonOccupant
               ? 'border-info-500/70 text-info-300'
               : 'border-surface-600 text-text-500',
           )}
         >
           {t('client.planet_card.moons', { count: planetConfig.moonSlots })}:{' '}
-          {state.moonOccupant
+          {primaryMoonOccupant
             ? t('client.planet_card.occupied', {
-                player: state.moonOccupant.playerId,
+                player: primaryMoonOccupant.playerId,
               })
             : planetConfig.moonSlots === 0
               ? t('client.common.na')
@@ -264,11 +445,12 @@ export function PlanetCard({
         </span>
       </div>
 
-      {planetConfig.moonNames.length > 0 && (
-        <p className='mt-1 text-[10px] text-text-500'>
-          {planetConfig.moonNames.join(', ')}
-        </p>
-      )}
+      {planetConfig.moonNames.length > 0 &&
+        planetConfig.land.moonRewards.length === 0 && (
+          <p className='mt-1 text-[10px] text-text-500'>
+            {planetConfig.moonNames.join(', ')}
+          </p>
+        )}
     </article>
   );
 }

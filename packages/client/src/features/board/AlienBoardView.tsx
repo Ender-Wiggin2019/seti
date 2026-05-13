@@ -77,7 +77,10 @@ interface IAlienBoardViewProps {
   gameState?: IPublicGameState | null;
   myPlayerId?: string;
   planetActionMode?: EMainAction.ORBIT | EMainAction.LAND | null;
-  onSelectMainActionPlanet?: (planet: EPlanet) => void;
+  onSelectMainActionPlanet?: (
+    planet: EPlanet,
+    options?: { isMoon?: boolean; moonId?: string },
+  ) => void;
   onCardInspect?: (card: IBaseCard) => void;
 }
 
@@ -89,7 +92,10 @@ interface IAlienBoardRendererProps {
   gameState?: IPublicGameState | null;
   myPlayerId?: string;
   planetActionMode?: EMainAction.ORBIT | EMainAction.LAND | null;
-  onSelectMainActionPlanet?: (planet: EPlanet) => void;
+  onSelectMainActionPlanet?: (
+    planet: EPlanet,
+    options?: { isMoon?: boolean; moonId?: string },
+  ) => void;
 }
 
 type TAlienBoardRenderer = (
@@ -162,7 +168,10 @@ function AlienCard({
   gameState?: IPublicGameState | null;
   myPlayerId?: string;
   planetActionMode?: EMainAction.ORBIT | EMainAction.LAND | null;
-  onSelectMainActionPlanet?: (planet: EPlanet) => void;
+  onSelectMainActionPlanet?: (
+    planet: EPlanet,
+    options?: { isMoon?: boolean; moonId?: string },
+  ) => void;
   onCardInspect?: (card: IBaseCard) => void;
 }): React.JSX.Element {
   const { t } = useTranslation('common');
@@ -324,7 +333,10 @@ function DiscoveredAlienBoard({
   gameState?: IPublicGameState | null;
   myPlayerId?: string;
   planetActionMode?: EMainAction.ORBIT | EMainAction.LAND | null;
-  onSelectMainActionPlanet?: (planet: EPlanet) => void;
+  onSelectMainActionPlanet?: (
+    planet: EPlanet,
+    options?: { isMoon?: boolean; moonId?: string },
+  ) => void;
 }): React.JSX.Element {
   const Renderer =
     alien.alienType != null ? ALIEN_BOARD_RENDERERS[alien.alienType] : null;
@@ -897,7 +909,10 @@ function OumuamuaBoard({
   gameState?: IPublicGameState | null;
   myPlayerId?: string;
   planetActionMode?: EMainAction.ORBIT | EMainAction.LAND | null;
-  onSelectMainActionPlanet?: (planet: EPlanet) => void;
+  onSelectMainActionPlanet?: (
+    planet: EPlanet,
+    options?: { isMoon?: boolean; moonId?: string },
+  ) => void;
 }): React.JSX.Element {
   return (
     <section
@@ -941,7 +956,7 @@ function createEmptyPlanetState(
       { length: config.land.firstData.length },
       () => false,
     ),
-    moonOccupant: null,
+    moonOccupants: [],
   };
 }
 
@@ -984,7 +999,10 @@ function OumuamuaLandingArea({
   gameState?: IPublicGameState | null;
   myPlayerId?: string;
   planetActionMode?: EMainAction.ORBIT | EMainAction.LAND | null;
-  onSelectMainActionPlanet?: (planet: EPlanet) => void;
+  onSelectMainActionPlanet?: (
+    planet: EPlanet,
+    options?: { isMoon?: boolean; moonId?: string },
+  ) => void;
 }): React.JSX.Element {
   const textMode = useTextMode();
   const config = PLANETARY_BOARD_CONFIG[EPlanet.OUMUAMUA];

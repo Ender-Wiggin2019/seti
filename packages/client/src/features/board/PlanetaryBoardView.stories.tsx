@@ -26,6 +26,12 @@ const planetaryBoard: IPublicPlanetaryBoard = {
           { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
         ],
         firstData: [2, 1],
+        moonRewards: [
+          [
+            { type: 'resource', resource: EResource.SCORE, amount: 8 },
+            { type: 'tuck', amount: 2 },
+          ],
+        ],
       },
     },
   },
@@ -35,7 +41,7 @@ const planetaryBoard: IPublicPlanetaryBoard = {
       landingSlots: [{ playerId: 'player-2' }],
       firstOrbitClaimed: true,
       firstLandDataBonusTaken: [true, false],
-      moonOccupant: null,
+      moonOccupants: [],
     },
   },
 };
@@ -77,10 +83,15 @@ export const TextModePlanetSummary: Story = {
     ).not.toBeInTheDocument();
     const marsCard = within(canvas.getByTestId(`planet-card-${EPlanet.MARS}`));
     await expect(
-      marsCard.getByText('1 signal @ planet sector + 1 any card + 1 tuck'),
-    ).toBeVisible();
-    await expect(marsCard.getByText('First land data:')).toBeVisible();
-    await expect(marsCard.getByText('2 / 1')).toBeVisible();
+      marsCard.getByTestId('planet-reward-icons-mars-orbit'),
+    ).toHaveAttribute(
+      'aria-label',
+      '1 signal @ planet sector + 1 any card + 1 tuck',
+    );
+    await expect(marsCard.getByText('First land data')).toBeVisible();
+    await expect(
+      marsCard.getByTestId('planet-reward-icons-mars-first-land-data'),
+    ).toHaveAttribute('aria-label', '2 / 1');
   },
 };
 

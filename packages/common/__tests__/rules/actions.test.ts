@@ -5,10 +5,12 @@ import {
   canLaunchProbe,
   canOrbit,
   canPlayCard,
+  canPlaySpecificCard,
   canResearchTechAction,
   canScan,
   getAvailableMainActions,
 } from '@/rules/actions';
+import { EAlienType, type IBaseCard } from '@/types/BaseCard';
 import { EResource, ETech } from '@/types/element';
 import { EMainAction, EPhase, EPlanet } from '@/types/protocol/enums';
 import type {
@@ -85,6 +87,17 @@ function createPlayer(
   };
 }
 
+function createCard(overrides?: Partial<IBaseCard>): IBaseCard {
+  return {
+    id: 'card-1',
+    name: 'Card 1',
+    price: 1,
+    income: EResource.CREDIT,
+    effects: [],
+    ...overrides,
+  };
+}
+
 function createTechBoard(): IPublicTechBoard {
   const stacks = [];
   for (const cat of [ETech.PROBE, ETech.SCAN, ETech.COMPUTER] as const) {
@@ -128,7 +141,7 @@ function createGameState(
           landingSlots: [],
           firstOrbitClaimed: false,
           firstLandDataBonusTaken: [false],
-          moonOccupant: null,
+          moonOccupants: [],
         },
       },
     },
@@ -195,7 +208,7 @@ describe('action rules', () => {
               landingSlots: [],
               firstOrbitClaimed: false,
               firstLandDataBonusTaken: [false],
-              moonOccupant: null,
+              moonOccupants: [],
             },
           },
         },
@@ -256,7 +269,26 @@ describe('action rules', () => {
               landingSlots: [],
               firstOrbitClaimed: false,
               firstLandDataBonusTaken: [false],
-              moonOccupant: null,
+              moonOccupants: [],
+            },
+          },
+        },
+      });
+
+      expect(canLand(player, gameState)).toBe(true);
+    });
+
+    it('returns true when the player already has a lander on the planet and another probe can land there', () => {
+      const player = createPlayer();
+      const gameState = createGameState({
+        planetaryBoard: {
+          planets: {
+            [EPlanet.MERCURY]: {
+              orbitSlots: [],
+              landingSlots: [{ playerId: player.playerId }],
+              firstOrbitClaimed: false,
+              firstLandDataBonusTaken: [true],
+              moonOccupants: [],
             },
           },
         },
@@ -428,12 +460,67 @@ describe('action rules', () => {
   });
 
   describe('canPlayCard', () => {
-    it('returns true when player has cards in hand', () => {
+    it('returns true when only hidden hand size is known and player has cards in hand', () => {
       expect(canPlayCard(createPlayer())).toBe(true);
     });
 
     it('returns false when hand is empty', () => {
       expect(canPlayCard(createPlayer({ handSize: 0 }))).toBe(false);
+    });
+
+    it('returns false when revealed hand cards are all unaffordable', () => {
+      const player = createPlayer({
+        handSize: 1,
+        hand: [createCard({ price: 5 })],
+        resources: {
+          [EResource.CREDIT]: 4,
+          [EResource.ENERGY]: 3,
+          [EResource.DATA]: 0,
+          [EResource.PUBLICITY]: 6,
+        },
+      });
+
+      expect(canPlayCard(player)).toBe(false);
+    });
+
+    it('returns true when at least one revealed hand card is affordable', () => {
+      const player = createPlayer({
+        handSize: 2,
+        hand: [createCard({ id: 'expensive', price: 5 }), createCard()],
+        resources: {
+          [EResource.CREDIT]: 1,
+          [EResource.ENERGY]: 3,
+          [EResource.DATA]: 0,
+          [EResource.PUBLICITY]: 6,
+        },
+      });
+
+      expect(canPlayCard(player)).toBe(true);
+    });
+
+    it('returns false for Exertian cards that cannot use normal play-card action', () => {
+      const player = createPlayer({
+        handSize: 1,
+        hand: [createCard({ alien: EAlienType.EXERTIANS })],
+      });
+
+      expect(canPlayCard(player)).toBe(false);
+    });
+
+    it('checks the selected card instead of any card in hand', () => {
+      const expensiveCard = createCard({ id: 'expensive', price: 5 });
+      const player = createPlayer({
+        handSize: 2,
+        hand: [expensiveCard, createCard()],
+        resources: {
+          [EResource.CREDIT]: 1,
+          [EResource.ENERGY]: 3,
+          [EResource.DATA]: 0,
+          [EResource.PUBLICITY]: 6,
+        },
+      });
+
+      expect(canPlaySpecificCard(player, expensiveCard)).toBe(false);
     });
   });
 

@@ -1,6 +1,6 @@
 # ANOMALIES TDD 子计划
 
-> 目标：把 `docs/arch/aliens/anomalies.md` 的规则落成可回归的集成测试，优先补齐“旋转触发异常奖励”和“异常列竞争”的真实链路。
+> 目标：把 `docs/arch/aliens/anomalies/rule.md` 的规则落成可回归的集成测试，优先补齐“旋转触发异常奖励”和“异常列竞争”的真实链路。
 
 ---
 
@@ -31,7 +31,7 @@
 
 ## 异常体卡牌补齐清单（ET.11 - ET.20）
 
-> 来源：`docs/arch/aliens/anomalies.md` + `packages/common/src/data/alienCards.ts` + `packages/common/locales/zh-CN/seti.json` 的翻译描述。
+> 来源：`docs/arch/aliens/anomalies/rule.md` + `packages/common/src/data/alienCards.ts` + `packages/common/locales/zh-CN/seti.json` 的翻译描述。
 
 - `ET.11 Signs of Life / 生命迹象`
   - 预期：`LAUNCH` 后，若该探测器位于存在 anomaly 的扇区，额外获得 `MOVE +1`（`desc.et-11`）。

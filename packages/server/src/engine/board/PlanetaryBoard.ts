@@ -31,9 +31,11 @@ const DEFAULT_DYNAMIC_PLANET_CONFIG: IPlanetaryBoardConfig = {
       { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
     ],
     firstData: [2],
+    moonRewards: [],
   },
   firstLandDataBonusSlots: 1,
   moonSlots: 0,
+  moonIds: [],
   moonNames: [],
 };
 
@@ -47,6 +49,7 @@ export interface ILandingSlot {
 
 export interface IMoonOccupant {
   playerId: string;
+  moonId: string;
 }
 
 export interface IPlanetState {
@@ -55,8 +58,6 @@ export interface IPlanetState {
   firstOrbitClaimed: boolean;
   firstLandDataBonusTaken: boolean[];
   moonOccupants: IMoonOccupant[];
-  /** @deprecated Use moonOccupants instead. */
-  moonOccupant: IMoonOccupant | null;
 }
 
 export interface IOrbitResult {
@@ -130,27 +131,63 @@ function createPlanetState(config: IPlanetaryBoardConfig): IPlanetState {
       () => false,
     ),
     moonOccupants: [],
-    moonOccupant: null,
   };
 }
 
-function normalizeMoonOccupants(planetState: IPlanetState): IMoonOccupant[] {
-  if (!Array.isArray(planetState.moonOccupants)) {
-    planetState.moonOccupants = planetState.moonOccupant
-      ? [{ ...planetState.moonOccupant }]
-      : [];
+type TStoredMoonOccupant = {
+  playerId: string;
+  moonId?: string;
+  moonIndex?: number;
+};
+
+function resolveStoredMoonId(
+  config: IPlanetaryBoardConfig,
+  slot: TStoredMoonOccupant,
+  fallbackIndex: number,
+): string {
+  if (typeof slot.moonId === 'string' && slot.moonId.length > 0) {
+    return slot.moonId;
   }
-  planetState.moonOccupant = planetState.moonOccupants[0] ?? null;
+  const legacyIndex = Number.isInteger(slot.moonIndex)
+    ? (slot.moonIndex as number)
+    : fallbackIndex;
+  return config.moonIds[legacyIndex] ?? `legacy-moon-${legacyIndex}`;
+}
+
+function getMoonSortIndex(
+  config: IPlanetaryBoardConfig,
+  moonId: string,
+): number {
+  const index = config.moonIds.indexOf(moonId);
+  return index >= 0 ? index : Number.MAX_SAFE_INTEGER;
+}
+
+function normalizeMoonOccupants(
+  planetState: IPlanetState,
+  config: IPlanetaryBoardConfig,
+): IMoonOccupant[] {
+  if (!Array.isArray(planetState.moonOccupants)) {
+    planetState.moonOccupants = [];
+  }
+  planetState.moonOccupants = planetState.moonOccupants.map((slot, index) => {
+    const storedSlot = slot as TStoredMoonOccupant;
+    return {
+      playerId: storedSlot.playerId,
+      moonId: resolveStoredMoonId(config, storedSlot, index),
+    };
+  });
+  planetState.moonOccupants.sort(
+    (left, right) =>
+      getMoonSortIndex(config, left.moonId) -
+      getMoonSortIndex(config, right.moonId),
+  );
   return planetState.moonOccupants;
 }
 
 export function getMoonOccupants(
-  planetState: Pick<IPlanetState, 'moonOccupants' | 'moonOccupant'>,
+  planetState: Pick<IPlanetState, 'moonOccupants'>,
 ): IMoonOccupant[] {
-  if (planetState.moonOccupants?.length > 0) {
-    return planetState.moonOccupants;
-  }
-  return planetState.moonOccupant ? [planetState.moonOccupant] : [];
+  return planetState.moonOccupants;
 }
 
 function getCenterReward(
@@ -223,6 +260,7 @@ export class PlanetaryBoard {
     playerId: string,
     options?: {
       isMoon?: boolean;
+      moonId?: string;
       allowMoonLanding?: boolean;
       allowDuplicate?: boolean;
     },
@@ -232,6 +270,7 @@ export class PlanetaryBoard {
     if (
       !this.canLand(planet, playerId, {
         isMoon,
+        moonId: options?.moonId,
         allowMoonLanding: options?.allowMoonLanding,
         allowDuplicate: options?.allowDuplicate,
       })
@@ -248,20 +287,27 @@ export class PlanetaryBoard {
     }
 
     const planetState = this.getPlanetState(planet);
+    const config = getPlanetaryBoardConfig(planet);
+    let firstLandDataGained = 0;
+    let baseRewards: readonly TPlanetReward[];
     if (isMoon) {
-      const moonOccupants = normalizeMoonOccupants(planetState);
-      moonOccupants.push({ playerId });
-      planetState.moonOccupant = moonOccupants[0] ?? null;
+      const moonOccupants = normalizeMoonOccupants(planetState, config);
+      const moonId = this.resolveMoonId(config, moonOccupants, options?.moonId);
+      moonOccupants.push({ playerId, moonId });
+      moonOccupants.sort(
+        (left, right) =>
+          getMoonSortIndex(config, left.moonId) -
+          getMoonSortIndex(config, right.moonId),
+      );
+      const moonSlotIndex = config.moonIds.indexOf(moonId);
+      baseRewards = config.land.moonRewards[moonSlotIndex] ?? [];
     } else {
       planetState.landingSlots.push({ playerId });
+      firstLandDataGained = this.takeFirstLandDataBonus(planetState, config);
+      baseRewards = config.land.rewards;
     }
 
-    const config = getPlanetaryBoardConfig(planet);
-    const firstLandDataGained = this.takeFirstLandDataBonus(
-      planetState,
-      config,
-    );
-    const rewards = cloneRewards(config.land.rewards);
+    const rewards = cloneRewards(baseRewards);
     if (firstLandDataGained > 0) {
       rewards.push({
         type: 'resource',
@@ -269,7 +315,7 @@ export class PlanetaryBoard {
         amount: firstLandDataGained,
       });
     }
-    const centerReward = getCenterReward(config.land.rewards);
+    const centerReward = getCenterReward(baseRewards);
 
     return {
       landingCost: this.getLandingCost(planet, playerId),
@@ -290,6 +336,7 @@ export class PlanetaryBoard {
     playerId: string,
     options?: {
       isMoon?: boolean;
+      moonId?: string;
       energy?: number;
       allowMoonLanding?: boolean;
       allowDuplicate?: boolean;
@@ -308,22 +355,22 @@ export class PlanetaryBoard {
         return false;
       }
       const config = getPlanetaryBoardConfig(planet);
-      const moonOccupants = normalizeMoonOccupants(planetState);
+      const moonOccupants = normalizeMoonOccupants(planetState, config);
       if (config.moonSlots <= 0 || moonOccupants.length >= config.moonSlots) {
+        return false;
+      }
+      const moonId = options?.moonId;
+      if (
+        moonId !== undefined &&
+        (!config.moonIds.includes(moonId) ||
+          moonOccupants.some((slot) => slot.moonId === moonId))
+      ) {
         return false;
       }
       const allowDuplicate = options?.allowDuplicate ?? false;
       if (
         !allowDuplicate &&
         moonOccupants.some((slot) => slot.playerId === playerId)
-      ) {
-        return false;
-      }
-    } else {
-      const allowDuplicate = options?.allowDuplicate ?? false;
-      if (
-        !allowDuplicate &&
-        planetState.landingSlots.some((slot) => slot.playerId === playerId)
       ) {
         return false;
       }
@@ -341,6 +388,24 @@ export class PlanetaryBoard {
     return planetState.orbitSlots.length > 0
       ? LANDING_COST_WITH_ORBITER
       : LANDING_COST_DEFAULT;
+  }
+
+  private resolveMoonId(
+    config: IPlanetaryBoardConfig,
+    moonOccupants: readonly IMoonOccupant[],
+    requestedMoonId?: string,
+  ): string {
+    if (requestedMoonId !== undefined) {
+      return requestedMoonId;
+    }
+
+    for (const moonId of config.moonIds) {
+      if (!moonOccupants.some((slot) => slot.moonId === moonId)) {
+        return moonId;
+      }
+    }
+
+    return `legacy-moon-${moonOccupants.length}`;
   }
 
   public setProbeCount(planet: EPlanet, playerId: string, count: number): void {
@@ -377,7 +442,7 @@ export class PlanetaryBoard {
       planetState = createPlanetState(getPlanetaryBoardConfig(planet));
       this.planets.set(planet, planetState);
     }
-    normalizeMoonOccupants(planetState);
+    normalizeMoonOccupants(planetState, getPlanetaryBoardConfig(planet));
     return planetState;
   }
 

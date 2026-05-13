@@ -4,7 +4,7 @@
 > - `frontend-reference/czech-gaming-online.herokuapp.com/api/table-open/1J!N6iXP5.html`
 > - `frontend-reference/czech-gaming-online.herokuapp.com/src/projects/seti/setup.js`
 > - `frontend-reference/czech-gaming-online.herokuapp.com/src/projects/seti/automa.js`
-> - `docs/arch/aliens/*.md`
+> - `docs/arch/aliens/*/rule.md`
 > - `docs/arch/rule-faq.md`
 >
 > Use this as implementation reference data, not as a replacement for the
@@ -270,7 +270,7 @@ Use these constraints when implementing the species cards above.
 
 ### 6.1 Mascamites
 
-Sources: `docs/arch/aliens/mascamites.md`, `docs/arch/rule-faq.md`.
+Sources: `docs/arch/aliens/mascamites/rule.md`, `docs/arch/rule-faq.md`.
 
 - The second action is always resolvable: either Saturn is within 4 moves from
   Earth or Jupiter is within 5 moves from Earth.
@@ -284,7 +284,7 @@ Sources: `docs/arch/aliens/mascamites.md`, `docs/arch/rule-faq.md`.
 
 ### 6.2 Anomalies
 
-Sources: `docs/arch/aliens/anomalies.md`, `docs/arch/rule-faq.md`.
+Sources: `docs/arch/aliens/anomalies/rule.md`, `docs/arch/rule-faq.md`.
 
 - Determine the next anomaly color: the anomaly closest counter-clockwise from
   Earth.
@@ -298,7 +298,7 @@ Sources: `docs/arch/aliens/anomalies.md`, `docs/arch/rule-faq.md`.
 
 ### 6.3 Oumuamua
 
-Sources: `docs/arch/aliens/oumuamua.md`, `docs/arch/rule-faq.md`.
+Sources: `docs/arch/aliens/oumuamua/rule.md`, `docs/arch/rule-faq.md`.
 
 - First action: the rival tries to move to the Oumuamua tile and place a lander
   or orbiter there.
@@ -314,7 +314,7 @@ Sources: `docs/arch/aliens/oumuamua.md`, `docs/arch/rule-faq.md`.
 
 ### 6.4 Centaurians
 
-Sources: `docs/arch/aliens/centaurians.md`, `docs/arch/rule-faq.md`.
+Sources: `docs/arch/aliens/centaurians/rule.md`, `docs/arch/rule-faq.md`.
 
 - When Centaurians are discovered, each player places a message tile milestone.
 - The rival takes the two remaining message tiles of unused colors and treats
@@ -330,7 +330,7 @@ Sources: `docs/arch/aliens/centaurians.md`, `docs/arch/rule-faq.md`.
 
 ### 6.5 Exertians
 
-Sources: `docs/arch/aliens/exertians.md`, `docs/arch/rule-faq.md`.
+Sources: `docs/arch/aliens/exertians/rule.md`, `docs/arch/rule-faq.md`.
 
 - The species action card is the only way the rival can play Exertian cards.
 - The rival never takes Exertian cards into hand, including from discovery.
