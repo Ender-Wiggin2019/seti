@@ -1,8 +1,16 @@
 import { SOLO_DIFFICULTIES } from '@seti/common/constant/solo';
+import {
+  DEFAULT_ALIEN_MODULES_ENABLED,
+  DEFAULT_GAME_OPTIONS,
+  type IGameOptions,
+  type IGameOptionsPatch,
+  type TAlienModulesEnabled,
+} from '@seti/common/types/protocol/options';
 import type { TSoloDifficulty } from '@seti/common/types/protocol/solo';
 import { httpClient } from '@/api/httpClient';
 import type {
   IAlienTypeOption,
+  IGameOptions as IApiGameOptions,
   ICreateRoomRequest,
   IRoom,
   IRoomListFilter,
@@ -22,24 +30,22 @@ interface IServerRoom {
   hostUserId: string | null;
   playerCount?: number;
   currentPlayers?: IServerRoomPlayer[];
-  options?: IRoom['options'];
+  options?: IGameOptions;
   createdAt?: string | Date;
 }
 
-function normalizeAlienModuleFlags(raw: unknown): boolean[] {
-  if (Array.isArray(raw)) {
-    return raw
-      .map((value) => value !== false)
-      .concat([true, true, true, true, true])
-      .slice(0, 5);
+function normalizeAlienModuleFlags(raw: unknown): TAlienModulesEnabled {
+  if (typeof raw === 'object' && raw !== null && !Array.isArray(raw)) {
+    return {
+      ...DEFAULT_ALIEN_MODULES_ENABLED,
+      ...(raw as Partial<TAlienModulesEnabled>),
+    };
   }
-  if (typeof raw === 'boolean') {
-    return [raw, raw, raw, raw, raw];
-  }
-  return [true, true, true, true, true];
+
+  return { ...DEFAULT_ALIEN_MODULES_ENABLED };
 }
 
-function normalizeOptions(room: IServerRoom): IRoom['options'] {
+function normalizeOptions(room: IServerRoom): IApiGameOptions {
   const raw = (room.options ?? {}) as Record<string, unknown>;
   const rawDifficulty = raw.soloDifficulty as TSoloDifficulty | undefined;
   return {
@@ -57,6 +63,12 @@ function normalizeOptions(room: IServerRoom): IRoom['options'] {
       (raw.timerPerTurn as number | undefined) ??
       (raw.turnTimerSeconds as number | undefined) ??
       0,
+    expansions:
+      (raw.expansions as IGameOptions['expansions'] | undefined) ??
+      DEFAULT_GAME_OPTIONS.expansions,
+    spaceAgencyOptions: raw.spaceAgencyOptions as
+      | IGameOptions['spaceAgencyOptions']
+      | undefined,
   };
 }
 
@@ -99,6 +111,17 @@ export const lobbyApi = {
 
   createRoom: async (data: ICreateRoomRequest): Promise<IRoom> => {
     const res = await httpClient.post<IServerRoom>('/lobby/rooms', data);
+    return normalizeRoom(res.data);
+  },
+
+  updateRoomOptions: async (
+    id: string,
+    patch: IGameOptionsPatch,
+  ): Promise<IRoom> => {
+    const res = await httpClient.patch<IServerRoom>(
+      `/lobby/rooms/${id}/options`,
+      patch,
+    );
     return normalizeRoom(res.data);
   },
 

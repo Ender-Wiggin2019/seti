@@ -1,10 +1,13 @@
 import type { IInputResponse } from '@seti/common/types/protocol/actions';
-import { EMainAction, EPhase } from '@seti/common/types/protocol/enums';
+import { EMainAction, EPhase, ETrace } from '@seti/common/types/protocol/enums';
 import {
   EPlayerInputType,
   type IPlayerInputModel,
+  type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
+import { EMarkSource } from '@/engine/cards/utils/Mark.js';
 import { SimpleDeferredAction } from '@/engine/deferred/SimpleDeferredAction.js';
+import { EGameRuntimeEvent } from '@/engine/events/GameEventBus.js';
 import { Game } from '@/engine/Game.js';
 import type { PlayerInput } from '@/engine/input/PlayerInput.js';
 import {
@@ -52,11 +55,88 @@ describe('Game', () => {
     expect(game.id).toBe('test-game-id');
     expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
     expect(game.round).toBe(1);
+    expect(game.roundIndex).toBe(1);
+    expect(game.maxRounds).toBe(5);
     expect(game.activePlayer.id).toBe('p1');
     expect(game.startPlayer.id).toBe('p1');
     expect(game.rotationCounter).toBe(0);
     expect(game.hasRoundFirstPassOccurred).toBe(false);
     expect(game.cardRow).toHaveLength(3);
+  });
+
+  it('exposes a no-op runtime event bus on new games', () => {
+    const game = createGame();
+
+    expect(game.eventBus.emit({ type: 'test:event' }).type).toBe('test:event');
+  });
+
+  it('emits signal placement events only after a sector is actually marked', () => {
+    const game = createGame();
+    resolveSetupTucks(game);
+    const player = game.players[0];
+    const events: Array<Record<string, unknown>> = [];
+
+    game.eventBus.subscribe(EGameRuntimeEvent.MARK_PLACED, (context) => {
+      events.push({ ...context });
+    });
+
+    let input = game.mark(EMarkSource.ANY, 1, player.id);
+
+    expect(input).toBeDefined();
+    expect(events).toHaveLength(0);
+
+    while (input && events.length === 0) {
+      const model = input.toModel();
+      if (model.type !== EPlayerInputType.OPTION) {
+        throw new Error(`Expected OPTION input, got ${model.type}`);
+      }
+      const optionModel = model as ISelectOptionInputModel;
+      input = input.process({
+        type: EPlayerInputType.OPTION,
+        optionId: optionModel.options[0].id,
+      });
+    }
+
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      type: EGameRuntimeEvent.MARK_PLACED,
+      player,
+    });
+    expect(events[0].sectorId).toEqual(expect.any(String));
+  });
+
+  it('emits trace placement events only after a trace slot is actually filled', () => {
+    const game = createGame();
+    resolveSetupTucks(game);
+    const player = game.players[0];
+    const events: Array<Record<string, unknown>> = [];
+
+    game.eventBus.subscribe(EGameRuntimeEvent.TRACE_PLACED, (context) => {
+      events.push({ ...context });
+    });
+
+    const input = game.markTrace(ETrace.RED, player.id);
+
+    expect(input).toBeDefined();
+    expect(events).toHaveLength(0);
+
+    const model = input?.toModel();
+    if (model?.type !== EPlayerInputType.OPTION) {
+      throw new Error(`Expected OPTION input, got ${model?.type}`);
+    }
+    const optionModel = model as ISelectOptionInputModel;
+    input?.process({
+      type: EPlayerInputType.OPTION,
+      optionId: optionModel.options[0].id,
+    });
+
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      type: EGameRuntimeEvent.TRACE_PLACED,
+      player,
+      traceColor: ETrace.RED,
+    });
+    expect(events[0].slotId).toEqual(expect.any(String));
   });
 
   it('transitions through valid phases', () => {

@@ -1,4 +1,4 @@
-import type { IGameOptions } from '@/api/types';
+import type { IGameOptions } from '@seti/common/types/protocol/options';
 
 export function isSoloRoom(options: Pick<IGameOptions, 'isSoloMode'>): boolean {
   return options.isSoloMode === true;

@@ -1,7 +1,5 @@
 import { Type } from 'class-transformer';
 import {
-  ArrayMaxSize,
-  ArrayMinSize,
   IsBoolean,
   IsIn,
   IsInt,
@@ -13,8 +11,9 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+import type { TAlienModulesEnabled } from '@/engine/GameOptions.js';
 
-class CreateRoomOptionsDto {
+export class CreateRoomOptionsDto {
   @IsInt()
   @Min(2)
   @Max(4)
@@ -25,10 +24,8 @@ class CreateRoomOptionsDto {
   scenarioPreset?: string;
 
   @IsOptional()
-  @ArrayMinSize(5)
-  @ArrayMaxSize(7)
-  @IsBoolean({ each: true })
-  alienModulesEnabled?: boolean[];
+  @IsObject()
+  alienModulesEnabled?: Partial<TAlienModulesEnabled>;
 
   @IsOptional()
   @IsBoolean()
@@ -68,4 +65,25 @@ export class CreateRoomDto {
   @ValidateNested()
   @Type(() => CreateRoomOptionsDto)
   options?: CreateRoomOptionsDto;
+}
+
+export class UpdateRoomOptionsDto {
+  @IsOptional()
+  @IsInt()
+  @Min(2)
+  @Max(4)
+  playerCount?: number;
+
+  @IsOptional()
+  @IsObject()
+  alienModulesEnabled?: Partial<TAlienModulesEnabled>;
+
+  @IsOptional()
+  @IsBoolean()
+  undoAllowed?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  timerPerTurn?: number;
 }

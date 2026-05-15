@@ -1,17 +1,18 @@
 import { alienCards } from '@seti/common/data/alienCards';
 import { EResource } from '@seti/common/types/element';
 import { EAlienType } from '@seti/common/types/protocol/enums';
+import { DEFAULT_ALIEN_MODULES_ENABLED } from '@seti/common/types/protocol/options';
 import {
   EPlayerInputType,
   type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
-import { AlienRegistry } from '@/engine/alien/AlienRegistry.js';
-import { AlienState } from '@/engine/alien/AlienState.js';
 import {
   type AlienBoard,
   type CentauriansAlienBoard,
   isCentauriansAlienBoard,
 } from '@/engine/alien/AlienBoard.js';
+import { AlienRegistry } from '@/engine/alien/AlienRegistry.js';
+import { AlienState } from '@/engine/alien/AlienState.js';
 import { Game } from '@/engine/Game.js';
 import {
   getPlayer,
@@ -29,7 +30,15 @@ function createCentauriansGame(seed: string): {
 } {
   const game = Game.create(
     TEST_PLAYERS,
-    { playerCount: 2, alienModulesEnabled: [true, true, false, false, false] },
+    {
+      playerCount: 2,
+      alienModulesEnabled: {
+        ...DEFAULT_ALIEN_MODULES_ENABLED,
+        [EAlienType.EXERTIANS]: false,
+        [EAlienType.MASCAMITES]: false,
+        [EAlienType.OUMUAMUA]: false,
+      },
+    },
     seed,
     seed,
   );

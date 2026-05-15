@@ -72,6 +72,22 @@ describe('GameDeserializer', () => {
     expect(dto2).toEqual(dto1);
   });
 
+  it('restores missing legacy round counters from round defaults', () => {
+    const dto = serializeGame(createTestGame(), 1) as ReturnType<
+      typeof serializeGame
+    > & {
+      roundIndex?: number;
+      maxRounds?: number;
+    };
+    delete dto.roundIndex;
+    delete dto.maxRounds;
+
+    const restored = deserializeGame(dto);
+
+    expect(restored.roundIndex).toBe(restored.round);
+    expect(restored.maxRounds).toBe(5);
+  });
+
   it('normalizes legacy moon occupant snapshots to stable moon ids', () => {
     const game = createTestGame();
     const dto = serializeGame(game, 1);

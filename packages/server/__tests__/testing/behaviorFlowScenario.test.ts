@@ -3,6 +3,7 @@ import {
   EMainAction,
   EPhase,
 } from '@seti/common/types/protocol/enums';
+import { DEFAULT_ALIEN_MODULES_ENABLED } from '@seti/common/types/protocol/options';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { isMascamitesAlienBoard } from '@/engine/alien/AlienBoard.js';
 import {
@@ -38,7 +39,12 @@ describe('formal lobby scenario presets', () => {
     const game = buildTestGame({
       autoResolveSetupTucks: false,
       options: {
-        alienModulesEnabled: [false, false, false, true, true],
+        alienModulesEnabled: {
+          ...DEFAULT_ALIEN_MODULES_ENABLED,
+          1: false,
+          2: false,
+          3: false,
+        },
       },
       seed: 'scenario-deliver-sample',
     });

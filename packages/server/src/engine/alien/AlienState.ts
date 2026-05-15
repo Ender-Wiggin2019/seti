@@ -5,6 +5,7 @@ import {
   createActionEvent,
   createTraceMarkedEvent,
 } from '../event/GameEvent.js';
+import { EGameRuntimeEvent } from '../events/GameEventBus.js';
 import type { IGame } from '../IGame.js';
 import type { PlayerInput } from '../input/PlayerInput.js';
 import { SelectOption } from '../input/SelectOption.js';
@@ -333,6 +334,17 @@ export class AlienState {
         !slot.isDiscovery,
       ),
     );
+
+    game.eventBus?.emit({
+      type: EGameRuntimeEvent.TRACE_PLACED,
+      game,
+      player,
+      traceColor: resolvedColor,
+      alienIndex: board.alienIndex,
+      alienType: board.alienType,
+      slotId: slot.slotId,
+      isOverflow: !slot.isDiscovery,
+    });
 
     plugin?.onTraceMark?.(game, player, resolvedColor, !slot.isDiscovery);
 

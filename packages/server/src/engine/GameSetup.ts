@@ -9,7 +9,7 @@ import { DeferredActionsQueue } from './deferred/DeferredActionsQueue.js';
 import { TuckCardForIncomeEffect } from './effects/income/TuckCardForIncomeEffect.js';
 import { EventLog } from './event/EventLog.js';
 import type { Game } from './Game.js';
-import { isSoloMode } from './GameOptions.js';
+import { isAlienEnabled, isSoloMode } from './GameOptions.js';
 import {
   GoldScoringTile,
   type TGoldScoringTileId,
@@ -120,9 +120,8 @@ export class GameSetup {
   }
 
   private static getSelectableAliens(game: Game): EAlienType[] {
-    const enabledFlags = game.options.alienModulesEnabled;
-    return CORE_RANDOM_ALIENS.filter(
-      (_, index) => enabledFlags[index] !== false,
+    return CORE_RANDOM_ALIENS.filter((alienType) =>
+      isAlienEnabled(game.options, alienType),
     );
   }
 }

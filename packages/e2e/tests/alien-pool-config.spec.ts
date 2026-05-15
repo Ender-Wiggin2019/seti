@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 import {
   createRoomByUiWithDetails,
   createUser,
@@ -15,17 +15,44 @@ const ALIEN_CASES = [
   {
     name: 'anomalies + centaurians',
     enabled: [ECoreAlienType.ANOMALIES, ECoreAlienType.CENTAURIANS] as const,
-    flags: [true, true, false, false, false],
+    flags: {
+      [ECoreAlienType.ANOMALIES]: true,
+      [ECoreAlienType.CENTAURIANS]: true,
+      [ECoreAlienType.EXERTIANS]: false,
+      [ECoreAlienType.MASCAMITES]: false,
+      [ECoreAlienType.OUMUAMUA]: false,
+      [ECoreAlienType.AMOEBA]: false,
+      [ECoreAlienType.GLYPHIDS]: false,
+      [ECoreAlienType.DUMMY]: false,
+    },
   },
   {
     name: 'exertians + mascamites',
     enabled: [ECoreAlienType.EXERTIANS, ECoreAlienType.MASCAMITES] as const,
-    flags: [false, false, true, true, false],
+    flags: {
+      [ECoreAlienType.ANOMALIES]: false,
+      [ECoreAlienType.CENTAURIANS]: false,
+      [ECoreAlienType.EXERTIANS]: true,
+      [ECoreAlienType.MASCAMITES]: true,
+      [ECoreAlienType.OUMUAMUA]: false,
+      [ECoreAlienType.AMOEBA]: false,
+      [ECoreAlienType.GLYPHIDS]: false,
+      [ECoreAlienType.DUMMY]: false,
+    },
   },
   {
     name: 'oumuamua + anomalies',
     enabled: [ECoreAlienType.OUMUAMUA, ECoreAlienType.ANOMALIES] as const,
-    flags: [true, false, false, false, true],
+    flags: {
+      [ECoreAlienType.ANOMALIES]: true,
+      [ECoreAlienType.CENTAURIANS]: false,
+      [ECoreAlienType.EXERTIANS]: false,
+      [ECoreAlienType.MASCAMITES]: false,
+      [ECoreAlienType.OUMUAMUA]: true,
+      [ECoreAlienType.AMOEBA]: false,
+      [ECoreAlienType.GLYPHIDS]: false,
+      [ECoreAlienType.DUMMY]: false,
+    },
   },
 ] as const;
 
@@ -85,11 +112,11 @@ test.describe('Alien pool room config @real-ui', () => {
         await expect(
           hostPage.locator('[data-testid="game-setting-value-players"]'),
         ).toHaveText('2');
-        await expect(
-          hostPage.locator(
-            '[data-testid="game-setting-alien-modules"] [role="switch"]',
-          ),
-        ).toHaveAttribute('aria-checked', 'true');
+        for (const alienType of alienCase.enabled) {
+          await expect(
+            hostPage.locator(`#game-setting-alien-${alienType}`),
+          ).toHaveAttribute('aria-checked', 'true');
+        }
 
         await joinRoomByUi(guestPage, roomId);
         await expect(

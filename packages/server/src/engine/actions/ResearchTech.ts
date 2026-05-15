@@ -7,6 +7,10 @@ import {
   ResearchTechEffect,
   type TResearchTechFilter,
 } from '../effects/tech/ResearchTechEffect.js';
+import {
+  EGameRuntimeEvent,
+  type IGameRuntimeEventContext,
+} from '../events/GameEventBus.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
 import type { IPlayer } from '../player/IPlayer.js';
@@ -16,6 +20,15 @@ export interface IResearchTechActionResult extends IResearchTechResult {
 }
 
 export interface IResearchTechActionOptions {
+  skipRotation?: boolean;
+}
+
+interface IResearchTechRuntimeEventContext extends IGameRuntimeEventContext {
+  type: EGameRuntimeEvent.RESEARCH_TECH;
+  game: IGame;
+  player: IPlayer;
+  isCardEffect: boolean;
+  filter?: TResearchTechFilter;
   skipRotation?: boolean;
 }
 
@@ -52,11 +65,21 @@ export class ResearchTechAction {
     filter?: TResearchTechFilter,
     options: IResearchTechActionOptions = {},
   ): IPlayerInput | undefined {
-    const shouldRotate = !options.skipRotation;
+    const eventContext = game.eventBus?.emit<IResearchTechRuntimeEventContext>({
+      type: EGameRuntimeEvent.RESEARCH_TECH,
+      game,
+      player,
+      isCardEffect,
+      filter,
+      skipRotation: options.skipRotation === true,
+    });
+    const effectiveFilter = eventContext?.filter ?? filter;
+    const shouldRotate =
+      (eventContext?.skipRotation ?? options.skipRotation) !== true;
     const hasAvailableTech = ResearchTechEffect.canExecute(
       player,
       game,
-      filter,
+      effectiveFilter,
     );
     const shouldSkipUnavailableCardEffect = isCardEffect && !hasAvailableTech;
 
@@ -67,7 +90,7 @@ export class ResearchTechAction {
       return undefined;
     }
 
-    if (!this.canExecute(player, game, isCardEffect, filter)) {
+    if (!this.canExecute(player, game, isCardEffect, effectiveFilter)) {
       throw new GameError(
         EErrorCode.INVALID_ACTION,
         'ResearchTech action is not currently legal',
@@ -84,7 +107,7 @@ export class ResearchTechAction {
     }
 
     return ResearchTechEffect.execute(player, game, {
-      filter,
+      filter: effectiveFilter,
       onComplete: (_result) => {
         return undefined;
       },

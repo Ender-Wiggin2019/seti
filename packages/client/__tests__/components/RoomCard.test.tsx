@@ -1,3 +1,4 @@
+import { DEFAULT_ALIEN_MODULES_ENABLED } from '@seti/common/types/protocol/options';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ERoomStatus, type IRoom } from '@/api/types';
@@ -36,9 +37,10 @@ function createRoom(): IRoom {
       playerCount: 2,
       isSoloMode: true,
       soloDifficulty: 3,
-      alienModulesEnabled: [true, true, false, false, false],
+      alienModulesEnabled: DEFAULT_ALIEN_MODULES_ENABLED,
       undoAllowed: true,
       timerPerTurn: 0,
+      expansions: [],
     },
     gameId: null,
     createdAt: '2026-05-08T00:00:00.000Z',

@@ -19,6 +19,7 @@ import type { EMarkSource } from './cards/utils/Mark.js';
 import type { Deck } from './deck/Deck.js';
 import type { DeferredActionsQueue } from './deferred/DeferredActionsQueue.js';
 import type { EventLog } from './event/EventLog.js';
+import type { GameEventBus } from './events/GameEventBus.js';
 import type { IGameOptions } from './GameOptions.js';
 import type { IPlayerInput } from './input/PlayerInput.js';
 import type { MissionTracker } from './missions/MissionTracker.js';
@@ -44,6 +45,8 @@ export interface IGame {
 
   phase: EPhase;
   round: number;
+  roundIndex: number;
+  maxRounds: number;
   activePlayer: IPlayer;
   startPlayer: IPlayer;
 
@@ -69,6 +72,7 @@ export interface IGame {
   deferredActions: DeferredActionsQueue;
   missionTracker: MissionTracker;
   eventLog: EventLog;
+  eventBus: GameEventBus;
   random: SeededRandom;
 
   rotationCounter: number;

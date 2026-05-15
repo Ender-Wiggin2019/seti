@@ -2,6 +2,7 @@ import { RIVAL_OBJECTIVE_IDS_BY_LEVEL } from '@seti/common/constant/solo';
 import { baseCards } from '@seti/common/data/baseCards';
 import { EResource } from '@seti/common/types/element';
 import { EAlienType, EPhase } from '@seti/common/types/protocol/enums';
+import { DEFAULT_ALIEN_MODULES_ENABLED } from '@seti/common/types/protocol/options';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import {
   FIRST_TAKE_VP_BONUS,
@@ -9,7 +10,9 @@ import {
   TECH_LEVELS,
   TILES_PER_STACK,
 } from '@seti/common/types/tech';
+import { BaseCorporation } from '@/engine/corporation/BaseCorporation.js';
 import { Game } from '@/engine/Game.js';
+import type { ISetupRole } from '@/engine/setup/ISetupRole.js';
 
 const BASE_PLAYERS = [
   { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
@@ -117,6 +120,19 @@ describe('GameSetup', () => {
     expect(game.players[0].waitingFor?.toModel().type).toBe(
       EPlayerInputType.CARD,
     );
+  });
+
+  it('treats base corporation as a setup role without changing BASE output', () => {
+    const setupRole: ISetupRole = BaseCorporation;
+    const game = Game.create(
+      BASE_PLAYERS.slice(0, 2),
+      { playerCount: 2 },
+      'seed-setup-role',
+    );
+
+    expect(setupRole.id).toBe('base-corporation');
+    expect(game.players[0].publicity).toBe(4);
+    expect(game.endOfRoundStacks).toHaveLength(4);
   });
 
   it('initializes solo rival state without normal human setup resources', () => {
@@ -296,7 +312,12 @@ describe('GameSetup', () => {
         BASE_PLAYERS.slice(0, 2),
         {
           playerCount: 2,
-          alienModulesEnabled: [true, false, true, false, false],
+          alienModulesEnabled: {
+            ...DEFAULT_ALIEN_MODULES_ENABLED,
+            [EAlienType.CENTAURIANS]: false,
+            [EAlienType.MASCAMITES]: false,
+            [EAlienType.OUMUAMUA]: false,
+          },
         },
         'seed-aliens-enabled-pool',
       );

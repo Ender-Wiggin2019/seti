@@ -1,3 +1,7 @@
+import {
+  DEFAULT_ALIEN_MODULES_ENABLED,
+  DEFAULT_GAME_OPTIONS,
+} from '@seti/common/types/protocol/options';
 import { HttpResponse, http } from 'msw';
 import type {
   IAlienTypeOption,
@@ -36,10 +40,11 @@ const mockRooms: IRoom[] = [
       },
     ],
     options: {
+      ...DEFAULT_GAME_OPTIONS,
       playerCount: 2,
-      alienModulesEnabled: [true, true, true, true, true],
-      undoAllowed: true,
+      alienModulesEnabled: DEFAULT_ALIEN_MODULES_ENABLED,
       timerPerTurn: 0,
+      expansions: [],
     },
     gameId: null,
     createdAt: '2026-03-25T10:00:00Z',
@@ -61,10 +66,11 @@ const mockRooms: IRoom[] = [
       },
     ],
     options: {
+      ...DEFAULT_GAME_OPTIONS,
       playerCount: 2,
-      alienModulesEnabled: [true, true, true, true, true],
-      undoAllowed: true,
+      alienModulesEnabled: DEFAULT_ALIEN_MODULES_ENABLED,
       timerPerTurn: 120,
+      expansions: [],
     },
     gameId: 'game-1',
     createdAt: '2026-03-25T09:00:00Z',
@@ -137,10 +143,11 @@ export const handlers = [
         },
       ],
       options: {
+        ...DEFAULT_GAME_OPTIONS,
         playerCount: 2,
-        alienModulesEnabled: [true, true, true, true, true],
-        undoAllowed: true,
+        alienModulesEnabled: DEFAULT_ALIEN_MODULES_ENABLED,
         timerPerTurn: 0,
+        expansions: [],
       },
       gameId: null,
       createdAt: new Date().toISOString(),

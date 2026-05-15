@@ -1,12 +1,18 @@
+import {
+  CORE_ALIEN_TYPES,
+  type IGameOptions,
+  type IGameOptionsPatch,
+  isAlienEnabled,
+} from '@seti/common/types/protocol/options';
 import { useTranslation } from 'react-i18next';
-import type { IGameOptions } from '@/api/types';
-import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/cn';
 import { getRequiredHumanPlayerCount, isSoloRoom } from '@/lib/roomOptions';
+import { CoreAlienModulesSection } from '@/pages/lobby/CoreAlienModulesSection';
 
 interface IGameSettingsPanelProps {
   options: IGameOptions;
   readOnly: boolean;
+  onChange?: (patch: IGameOptionsPatch) => void;
 }
 
 /**
@@ -20,6 +26,7 @@ interface IGameSettingsPanelProps {
 export function GameSettingsPanel({
   options,
   readOnly,
+  onChange,
 }: IGameSettingsPanelProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const soloMode = isSoloRoom(options);
@@ -64,15 +71,18 @@ export function GameSettingsPanel({
         >
           {readOnly ? (
             <StatusValue
-              active={options.alienModulesEnabled.some((enabled) => enabled)}
+              active={CORE_ALIEN_TYPES.some((alienType) =>
+                isAlienEnabled(options, alienType),
+              )}
               on={t('client.common.on')}
               off={t('client.common.off')}
               testId='alien-modules'
             />
           ) : (
-            <Switch
-              checked={options.alienModulesEnabled.some((enabled) => enabled)}
-              onCheckedChange={() => undefined}
+            <CoreAlienModulesSection
+              options={options}
+              disabled={false}
+              onChange={onChange}
             />
           )}
         </ReadoutRow>

@@ -5,6 +5,9 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { EAlienType } from '@seti/common/types/BaseCard';
+import { DEFAULT_ALIEN_MODULES_ENABLED } from '@seti/common/types/protocol/options';
+import { vi } from 'vitest';
 import { LobbyService } from '@/lobby/lobby.service.js';
 import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
 
@@ -16,14 +19,26 @@ const MOCK_GAME = {
   playerCount: 2,
   currentRound: 0,
   seed: 'seed-1',
-  options: { playerCount: 2 },
+  options: {
+    playerCount: 2,
+    alienModulesEnabled: DEFAULT_ALIEN_MODULES_ENABLED,
+    undoAllowed: true,
+    timerPerTurn: 0,
+    expansions: [],
+    isSoloMode: false,
+    soloDifficulty: 1,
+  },
   createdAt: new Date(),
   updatedAt: new Date(),
 };
 
 const MOCK_SOLO_GAME = {
   ...MOCK_GAME,
-  options: { playerCount: 2, isSoloMode: true, soloDifficulty: 3 },
+  options: {
+    ...MOCK_GAME.options,
+    isSoloMode: true,
+    soloDifficulty: 3,
+  },
 };
 
 const MOCK_PLAYER = {
@@ -66,6 +81,7 @@ function createMockDb() {
     delete: vi.fn().mockReturnValue(mockDeleteChain),
     _selectChain: mockSelectChain,
     _insertChain: mockInsertChain,
+    _updateChain: mockUpdateChain,
   };
 }
 
@@ -285,6 +301,83 @@ describe('LobbyService', () => {
         'Room is full',
       );
       expect(db.insert).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateRoomOptions', () => {
+    it('updates waiting-room options for the host and merges alien module patches', async () => {
+      db.select.mockImplementation(() => ({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([MOCK_GAME]),
+          }),
+          innerJoin: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([MOCK_PLAYER]),
+          }),
+        }),
+      }));
+
+      await service.updateRoomOptions('game-1', 'host-user', {
+        alienModulesEnabled: {
+          [EAlienType.ANOMALIES]: false,
+        },
+      });
+
+      expect(db.update).toHaveBeenCalled();
+      expect(db._updateChain.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          options: expect.objectContaining({
+            alienModulesEnabled: expect.objectContaining({
+              [EAlienType.ANOMALIES]: false,
+              [EAlienType.CENTAURIANS]: true,
+            }),
+          }),
+        }),
+      );
+    });
+
+    it('rejects non-host option updates', async () => {
+      db.select.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([MOCK_GAME]),
+          }),
+        }),
+      });
+
+      await expect(
+        service.updateRoomOptions('game-1', 'not-host', {
+          timerPerTurn: 120,
+        }),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('rejects shrinking the room below the current player count', async () => {
+      db.select.mockImplementation(() => ({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([MOCK_GAME]),
+          }),
+          innerJoin: vi.fn().mockReturnValue({
+            where: vi
+              .fn()
+              .mockResolvedValue([
+                MOCK_PLAYER,
+                { ...MOCK_PLAYER, userId: 'user-2', seatIndex: 1 },
+                { ...MOCK_PLAYER, userId: 'user-3', seatIndex: 2 },
+              ]),
+          }),
+        }),
+      }));
+
+      await expect(
+        service.updateRoomOptions('game-1', 'host-user', {
+          playerCount: 2,
+        }),
+      ).rejects.toThrow(
+        'Cannot reduce player count below the current number of players',
+      );
+      expect(db.update).not.toHaveBeenCalled();
     });
   });
 

@@ -308,6 +308,8 @@ export interface IGameStateDto {
   rngState: number;
   options: IGameOptions;
   round: number;
+  roundIndex?: number;
+  maxRounds?: number;
   phase: EPhase;
   currentPlayerId: string;
   startPlayerId: string;

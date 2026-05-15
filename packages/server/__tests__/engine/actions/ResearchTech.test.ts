@@ -14,6 +14,7 @@ import { ResearchTechAction } from '@/engine/actions/ResearchTech.js';
 import { BoardBuilder } from '@/engine/board/BoardBuilder.js';
 import type { Deck } from '@/engine/deck/Deck.js';
 import { ResearchTechEffect } from '@/engine/effects/tech/ResearchTechEffect.js';
+import { EGameRuntimeEvent } from '@/engine/events/GameEventBus.js';
 import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
@@ -337,6 +338,26 @@ describe('ResearchTechAction — integration (2.7.x closure)', () => {
         true,
       );
     });
+  });
+
+  it('applies research-tech runtime event patches before selecting available techs', () => {
+    const { game, player } = createIntegrationGame(
+      'research-runtime-event-patch',
+    );
+    player.resources.gain({ publicity: RESEARCH_PUBLICITY_COST });
+    const forcedTechId = findNonComputerTechId(game);
+
+    game.eventBus.subscribe(EGameRuntimeEvent.RESEARCH_TECH, () => ({
+      filter: {
+        mode: 'specific',
+        techIds: [forcedTechId],
+      },
+    }));
+
+    game.processMainAction(player.id, { type: EMainAction.RESEARCH_TECH });
+
+    expect(player.techs).toContain(forcedTechId);
+    expect(game.techBoard?.playerOwns(player.id, forcedTechId)).toBe(true);
   });
 
   describe('2.7.4 first-taker collects the 2VP tile bonus on top of the pile', () => {

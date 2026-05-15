@@ -74,11 +74,21 @@ describe('GameSerializer', () => {
     expect(dto.gameId).toBe(game.id);
     expect(dto.version).toBe(7);
     expect(dto.seed).toBe(game.seed);
+    expect(dto.roundIndex).toBe(game.roundIndex);
+    expect(dto.maxRounds).toBe(game.maxRounds);
     expect(typeof dto.rngState).toBe('number');
     expect(dto.players).toHaveLength(2);
     expect(dto.mainDeck.drawPile.length + dto.mainDeck.discardPile.length).toBe(
       game.mainDeck.totalSize,
     );
+  });
+
+  it('projects round counters for clients', () => {
+    const game = createTestGame();
+    const publicState = projectGameState(game, 'p1');
+
+    expect(publicState.roundIndex).toBe(1);
+    expect(publicState.maxRounds).toBe(5);
   });
 
   it('serializes and projects public solo rival state without deck order', () => {

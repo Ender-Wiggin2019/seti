@@ -3,6 +3,7 @@ import type { IMissionDef } from '../missions/IMission.js';
 import { Income, type TPartialIncomeBundle } from '../player/Income.js';
 import type { IPlayer } from '../player/IPlayer.js';
 import { Resources } from '../player/Resources.js';
+import type { ISetupRole } from '../setup/ISetupRole.js';
 
 interface ICorporationStartResources {
   credits: number;
@@ -27,7 +28,7 @@ export interface ICorporationCardConfig {
  *
  * Mission support is intentionally reserved for future extension.
  */
-export class CorporationCard {
+export class CorporationCard implements ISetupRole {
   public readonly id: string;
 
   public readonly name: string;

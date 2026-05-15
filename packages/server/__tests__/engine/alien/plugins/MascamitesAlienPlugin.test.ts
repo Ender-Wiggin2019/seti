@@ -3,13 +3,15 @@ import {
   type TMascamitesSampleTokenId,
 } from '@seti/common/constant/mascamites';
 import {
-  EFreeAction,
   EAlienType,
+  EFreeAction,
   EMainAction,
   EPlanet,
   ETrace,
 } from '@seti/common/types/protocol/enums';
+import { DEFAULT_ALIEN_MODULES_ENABLED } from '@seti/common/types/protocol/options';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
+import { LandAction } from '@/engine/actions/Land.js';
 import { OrbitAction } from '@/engine/actions/Orbit.js';
 import {
   isMascamitesAlienBoard,
@@ -17,7 +19,6 @@ import {
 } from '@/engine/alien/AlienBoard.js';
 import { AlienState } from '@/engine/alien/AlienState.js';
 import { MascamitesAlienPlugin } from '@/engine/alien/plugins/MascamitesAlienPlugin.js';
-import { LandAction } from '@/engine/actions/Land.js';
 import { ESolarSystemElementType } from '@/engine/board/SolarSystem.js';
 import { Deck } from '@/engine/deck/Deck.js';
 import { MovementFreeAction } from '@/engine/freeActions/Movement.js';
@@ -40,7 +41,15 @@ function createMascamitesGame(seed: string): {
 } {
   const game = Game.create(
     TEST_PLAYERS,
-    { playerCount: 2, alienModulesEnabled: [false, false, false, true, true] },
+    {
+      playerCount: 2,
+      alienModulesEnabled: {
+        ...DEFAULT_ALIEN_MODULES_ENABLED,
+        [EAlienType.ANOMALIES]: false,
+        [EAlienType.CENTAURIANS]: false,
+        [EAlienType.EXERTIANS]: false,
+      },
+    },
     seed,
     seed,
   );

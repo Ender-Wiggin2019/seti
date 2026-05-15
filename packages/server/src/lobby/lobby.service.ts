@@ -16,6 +16,7 @@ import {
   getRequiredHumanPlayers,
   getRulesPlayerCount,
   type IGameOptions,
+  type IGameOptionsPatch,
   isSoloMode,
 } from '@/engine/GameOptions.js';
 import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
@@ -41,7 +42,7 @@ export class LobbyService {
     name: string,
     playerCount: number,
     seed?: string,
-    roomOptionsInput?: Partial<IGameOptions>,
+    roomOptionsInput?: IGameOptionsPatch,
   ): Promise<IRoomResponse> {
     const gameId = randomUUID();
     const roomOptionsAny = (roomOptionsInput ?? {}) as Partial<IGameOptions> & {
@@ -148,6 +149,63 @@ export class LobbyService {
       options: row.options as IGameOptions,
       createdAt: row.createdAt,
     };
+  }
+
+  async updateRoomOptions(
+    gameId: string,
+    userId: string,
+    roomOptionsPatch: IGameOptionsPatch,
+  ): Promise<IRoomResponse> {
+    const [room] = await this.db
+      .select()
+      .from(games)
+      .where(eq(games.id, gameId))
+      .limit(1);
+
+    if (!room) {
+      throw new NotFoundException('Room not found');
+    }
+
+    if (room.hostUserId !== userId) {
+      throw new ForbiddenException('Only the host can update room options');
+    }
+
+    if (room.status !== 'waiting') {
+      throw new BadRequestException('Cannot update a room that has started');
+    }
+
+    const currentPlayers = await this.getPlayersForGame(gameId);
+
+    let options: Readonly<IGameOptions>;
+    try {
+      options = createGameOptions({
+        ...(room.options as Partial<IGameOptions>),
+        ...roomOptionsPatch,
+        alienModulesEnabled: {
+          ...((room.options as Partial<IGameOptions>).alienModulesEnabled ??
+            {}),
+          ...(roomOptionsPatch.alienModulesEnabled ?? {}),
+        },
+      });
+    } catch (error) {
+      throw new BadRequestException((error as Error).message);
+    }
+
+    if (currentPlayers.length > getRequiredHumanPlayers(options)) {
+      throw new BadRequestException(
+        'Cannot reduce player count below the current number of players',
+      );
+    }
+
+    await this.db
+      .update(games)
+      .set({
+        options,
+        playerCount: options.playerCount,
+      })
+      .where(eq(games.id, gameId));
+
+    return this.getRoomById(gameId);
   }
 
   async joinRoom(gameId: string, userId: string): Promise<IRoomResponse> {

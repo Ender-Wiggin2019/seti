@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { vi } from 'vitest';
 import { LobbyController } from '@/lobby/lobby.controller.js';
 import { LobbyService } from '@/lobby/lobby.service.js';
 
@@ -22,6 +23,7 @@ const mockLobbyService = {
   joinRoom: vi.fn().mockResolvedValue(MOCK_ROOM),
   leaveRoom: vi.fn().mockResolvedValue(MOCK_ROOM),
   startGame: vi.fn().mockResolvedValue(MOCK_ROOM),
+  updateRoomOptions: vi.fn().mockResolvedValue(MOCK_ROOM),
 };
 
 describe('LobbyController', () => {
@@ -115,6 +117,25 @@ describe('LobbyController', () => {
     const result = await controller.startGame(req, 'room-1');
 
     expect(mockLobbyService.startGame).toHaveBeenCalledWith('room-1', 'host-1');
+    expect(result).toBeDefined();
+  });
+
+  it('PATCH /lobby/rooms/:id/options updates room options', async () => {
+    const req = { user: { sub: 'host-1', email: 'host@t.com' } };
+    const patch = {
+      alienModulesEnabled: {
+        1: false,
+        2: true,
+      },
+    };
+
+    const result = await controller.updateRoomOptions(req, 'room-1', patch);
+
+    expect(mockLobbyService.updateRoomOptions).toHaveBeenCalledWith(
+      'room-1',
+      'host-1',
+      patch,
+    );
     expect(result).toBeDefined();
   });
 });

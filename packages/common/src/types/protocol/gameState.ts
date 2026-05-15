@@ -435,6 +435,8 @@ export interface IPublicGameState {
   gameId: string;
   isSoloMode?: boolean;
   round: number;
+  roundIndex?: number;
+  maxRounds?: number;
   phase: EPhase;
   currentPlayerId: string;
   startPlayerId: string;

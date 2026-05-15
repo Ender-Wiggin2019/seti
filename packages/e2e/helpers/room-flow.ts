@@ -7,7 +7,7 @@ export interface IRoomCreateResult {
     playerCount?: number;
     isSoloMode?: boolean;
     soloDifficulty?: number;
-    alienModulesEnabled?: boolean[];
+    alienModulesEnabled?: Record<ECoreAlienType, boolean>;
     undoAllowed?: boolean;
     timerPerTurn?: number;
   };
@@ -26,6 +26,9 @@ export enum ECoreAlienType {
   EXERTIANS = 3,
   MASCAMITES = 4,
   OUMUAMUA = 5,
+  AMOEBA = 6,
+  GLYPHIDS = 7,
+  DUMMY = 8,
 }
 
 const CORE_ALIEN_TYPES = [
@@ -34,6 +37,9 @@ const CORE_ALIEN_TYPES = [
   ECoreAlienType.EXERTIANS,
   ECoreAlienType.MASCAMITES,
   ECoreAlienType.OUMUAMUA,
+  ECoreAlienType.AMOEBA,
+  ECoreAlienType.GLYPHIDS,
+  ECoreAlienType.DUMMY,
 ] as const;
 
 export async function createRoomByUi(

@@ -5,12 +5,13 @@ import {
   Get,
   Inject,
   Param,
+  Patch,
   Post,
   Query,
   Req,
 } from '@nestjs/common';
 import type { IJwtPayload } from '@/auth/jwt-auth.guard.js';
-import { CreateRoomDto } from './dto/CreateRoomDto.js';
+import { CreateRoomDto, UpdateRoomOptionsDto } from './dto/CreateRoomDto.js';
 import { LobbyService } from './lobby.service.js';
 
 @Controller('lobby')
@@ -51,6 +52,15 @@ export class LobbyController {
   @Get('rooms/:id')
   async getRoom(@Param('id') id: string) {
     return this.lobbyService.getRoomById(id);
+  }
+
+  @Patch('rooms/:id/options')
+  async updateRoomOptions(
+    @Req() req: { user: IJwtPayload },
+    @Param('id') id: string,
+    @Body() patch: UpdateRoomOptionsDto,
+  ) {
+    return this.lobbyService.updateRoomOptions(id, req.user.sub, patch);
   }
 
   @Post('rooms/:id/join')

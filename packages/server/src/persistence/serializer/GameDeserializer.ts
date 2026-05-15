@@ -472,6 +472,8 @@ export function deserializeGame(dto: IGameStateDto): Game {
   game.random.setState(dto.rngState);
 
   game.round = dto.round;
+  game.roundIndex = dto.roundIndex ?? dto.round;
+  game.maxRounds = dto.maxRounds ?? 5;
   game.phase = dto.phase;
   game.roundRotationReminderIndex = dto.roundRotationReminderIndex;
   game.hasRoundFirstPassOccurred = dto.hasRoundFirstPassOccurred;

@@ -1,6 +1,10 @@
 import { CORE_RANDOM_ALIEN_TYPES } from '@seti/common/constant/alienLobby';
 import { SOLO_DIFFICULTIES } from '@seti/common/constant/solo';
 import { EAlienMap } from '@seti/common/types/BaseCard';
+import {
+  DEFAULT_ALIEN_MODULES_ENABLED,
+  DEFAULT_GAME_OPTIONS,
+} from '@seti/common/types/protocol/options';
 import type { TSoloDifficulty } from '@seti/common/types/protocol/solo';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -168,11 +172,16 @@ export function CreateRoomDialog({
     }
 
     onSubmit(name, {
+      ...DEFAULT_GAME_OPTIONS,
       playerCount: effectivePlayerCount,
       isSoloMode,
       soloDifficulty,
-      alienModulesEnabled: CORE_RANDOM_ALIEN_TYPES.map((alienType) =>
-        selectedCoreAlienTypes.includes(alienType),
+      alienModulesEnabled: CORE_RANDOM_ALIEN_TYPES.reduce(
+        (enabled, alienType) => ({
+          ...enabled,
+          [alienType]: selectedCoreAlienTypes.includes(alienType),
+        }),
+        { ...DEFAULT_ALIEN_MODULES_ENABLED },
       ),
       undoAllowed,
       timerPerTurn,

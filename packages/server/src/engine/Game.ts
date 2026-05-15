@@ -46,6 +46,7 @@ import {
   createInputEvent,
   createRoundEndEvent,
 } from './event/GameEvent.js';
+import { EGameRuntimeEvent, GameEventBus } from './events/GameEventBus.js';
 import { processFreeAction } from './freeActions/processFreeAction.js';
 import {
   createGameOptions,
@@ -140,6 +141,8 @@ export class Game implements IGame {
 
   public round: number;
 
+  public maxRounds: number;
+
   public activePlayer: IPlayer;
 
   public startPlayer: IPlayer;
@@ -182,6 +185,8 @@ export class Game implements IGame {
 
   public eventLog: EventLog;
 
+  public eventBus: GameEventBus;
+
   public random: SeededRandom;
 
   private rotationCounterValue: number;
@@ -209,6 +214,7 @@ export class Game implements IGame {
 
     this.phase = EPhase.SETUP;
     this.round = 1;
+    this.maxRounds = MAX_ROUNDS;
     this.startPlayer = this.players[0];
     this.activePlayer = this.startPlayer;
 
@@ -229,6 +235,7 @@ export class Game implements IGame {
     this.deferredActions = new DeferredActionsQueue();
     this.missionTracker = new MissionTracker();
     this.eventLog = new EventLog();
+    this.eventBus = new GameEventBus();
 
     this.random = new SeededRandom(seed);
     this.rotationCounterValue = 0;
@@ -294,6 +301,14 @@ export class Game implements IGame {
 
   public getActivePlayer(): IPlayer {
     return this.activePlayer;
+  }
+
+  public get roundIndex(): number {
+    return this.round;
+  }
+
+  public set roundIndex(value: number) {
+    this.round = value;
   }
 
   public get currentMainAction(): EMainAction | null {
@@ -400,6 +415,12 @@ export class Game implements IGame {
     this.closeMissionCheckpointIfSettled();
 
     this.eventLog.append(createFreeActionEvent(playerId, action));
+    this.eventBus.emit({
+      type: EGameRuntimeEvent.FREE_ACTION_RESOLVED,
+      game: this,
+      player,
+      action,
+    });
   }
 
   public processInput(playerId: string, response: IInputResponse): void {
@@ -426,6 +447,12 @@ export class Game implements IGame {
       player.waitingFor = undefined;
       this.runResolutionPipeline();
       this.closeMissionCheckpointIfSettled();
+      this.eventBus.emit({
+        type: EGameRuntimeEvent.INPUT_RESOLVED,
+        game: this,
+        player,
+        response,
+      });
     } catch (error) {
       if (
         hadResolutionContext ||
@@ -655,6 +682,13 @@ export class Game implements IGame {
               createActionEvent(player.id, action.type, actionDetails),
             );
           }
+          game.eventBus.emit({
+            type: EGameRuntimeEvent.MAIN_ACTION_RESOLVED,
+            game,
+            player,
+            action,
+            actionDetails,
+          });
           return pendingInput;
         },
         EPriority.CORE_EFFECT,
@@ -734,6 +768,12 @@ export class Game implements IGame {
   private handoffTurnFrom(playerId: string): void {
     clearTurnEffectsForPlayer(this, playerId);
     this.missionTracker.clearTurnEventHistory();
+    this.eventBus.emit({
+      type: EGameRuntimeEvent.TURN_END,
+      game: this,
+      playerId,
+      roundIndex: this.roundIndex,
+    });
     if (this.players.every((player) => player.passed)) {
       this.transitionTo(EPhase.END_OF_ROUND);
       this.resolveEndOfRound();
@@ -749,6 +789,12 @@ export class Game implements IGame {
 
     this.activePlayer = nextPlayer;
     this.transitionTo(EPhase.AWAIT_MAIN_ACTION);
+    this.eventBus.emit({
+      type: EGameRuntimeEvent.TURN_START,
+      game: this,
+      player: nextPlayer,
+      roundIndex: this.roundIndex,
+    });
   }
 
   private getMissionTriggerPlayers(triggeringPlayerId: string): IPlayer[] {
@@ -796,6 +842,11 @@ export class Game implements IGame {
 
   private resolveEndOfRound(): void {
     this.eventLog.append(createRoundEndEvent(this.round));
+    this.eventBus.emit({
+      type: EGameRuntimeEvent.ROUND_END,
+      game: this,
+      roundIndex: this.roundIndex,
+    });
 
     if (isSoloMode(this.options)) {
       RivalRoundController.applyBetweenRoundObjectivePayment(this);
@@ -808,7 +859,7 @@ export class Game implements IGame {
 
     this.alienState.onRoundEnd(this);
 
-    if (isSoloMode(this.options) && this.round < MAX_ROUNDS) {
+    if (isSoloMode(this.options) && this.round < this.maxRounds) {
       RivalRoundController.resetActionDeckForNextRound(this);
     }
 
@@ -820,7 +871,7 @@ export class Game implements IGame {
     );
     this.hasRoundFirstPassOccurred = false;
 
-    if (this.round >= MAX_ROUNDS) {
+    if (this.round >= this.maxRounds) {
       if (isSoloMode(this.options)) {
         RivalRoundController.applyEndGameObjectiveVp(this);
       }
@@ -837,6 +888,11 @@ export class Game implements IGame {
 
     this.round += 1;
     this.transitionTo(EPhase.AWAIT_MAIN_ACTION);
+    this.eventBus.emit({
+      type: EGameRuntimeEvent.ROUND_START,
+      game: this,
+      roundIndex: this.roundIndex,
+    });
   }
 
   private findNextActivePlayer(fromPlayerId: string): IPlayer | undefined {

@@ -1,5 +1,6 @@
 import { alienCards } from '@seti/common/data/alienCards';
 import { EAlienType } from '@seti/common/types/protocol/enums';
+import { DEFAULT_ALIEN_MODULES_ENABLED } from '@seti/common/types/protocol/options';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import {
   type AlienBoard,
@@ -22,7 +23,15 @@ const TEST_PLAYERS = [
 function createExertiansGame(seed: string): { game: Game; board: AlienBoard } {
   const game = Game.create(
     TEST_PLAYERS,
-    { playerCount: 2, alienModulesEnabled: [true, false, true, false, false] },
+    {
+      playerCount: 2,
+      alienModulesEnabled: {
+        ...DEFAULT_ALIEN_MODULES_ENABLED,
+        [EAlienType.CENTAURIANS]: false,
+        [EAlienType.MASCAMITES]: false,
+        [EAlienType.OUMUAMUA]: false,
+      },
+    },
     seed,
     seed,
   );
@@ -53,7 +62,12 @@ function createSoloExertiansGame(seed: string): {
       playerCount: 2,
       isSoloMode: true,
       soloDifficulty: 2,
-      alienModulesEnabled: [true, false, true, false, false],
+      alienModulesEnabled: {
+        ...DEFAULT_ALIEN_MODULES_ENABLED,
+        [EAlienType.CENTAURIANS]: false,
+        [EAlienType.MASCAMITES]: false,
+        [EAlienType.OUMUAMUA]: false,
+      },
     } as Parameters<typeof Game.create>[1],
     seed,
     seed,
@@ -246,13 +260,19 @@ describe('ExertiansAlienPlugin', () => {
     const speciesSlots = exertiansBoard.speciesTraceSlots;
     expect(speciesSlots).toHaveLength(9);
     expect(
-      speciesSlots.filter((slot) => slot.slotId.startsWith('exertians-danger-3')),
+      speciesSlots.filter((slot) =>
+        slot.slotId.startsWith('exertians-danger-3'),
+      ),
     ).toHaveLength(3);
     expect(
-      speciesSlots.filter((slot) => slot.slotId.startsWith('exertians-danger-2')),
+      speciesSlots.filter((slot) =>
+        slot.slotId.startsWith('exertians-danger-2'),
+      ),
     ).toHaveLength(3);
     expect(
-      speciesSlots.filter((slot) => slot.slotId.startsWith('exertians-danger-1')),
+      speciesSlots.filter((slot) =>
+        slot.slotId.startsWith('exertians-danger-1'),
+      ),
     ).toHaveLength(3);
     expect(speciesSlots.every((slot) => slot.rewards.length === 0)).toBe(true);
   });

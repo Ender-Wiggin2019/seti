@@ -1,3 +1,7 @@
+import {
+  CORE_ALIEN_TYPES,
+  isAlienEnabled,
+} from '@seti/common/types/protocol/options';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import type { IRoom } from '@/api/types';
@@ -105,7 +109,9 @@ export function RoomCard({ room }: IRoomCardProps): React.JSX.Element {
           </span>
         ) : null}
 
-        {room.options.alienModulesEnabled.some((enabled) => enabled) && (
+        {CORE_ALIEN_TYPES.some((alienType) =>
+          isAlienEnabled(room.options, alienType),
+        ) && (
           <span className='flex items-center gap-1'>
             <span className='h-1 w-1 rounded-full bg-[oklch(0.70_0.13_300)]' />
             <span className='font-mono text-[0.6875rem] uppercase tracking-microlabel text-[oklch(0.78_0.11_300)]'>

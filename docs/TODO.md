@@ -1,5 +1,137 @@
 # TODO
 
+## Current diff review fixes - 2026-05-15
+
+Assumptions:
+- Scope is limited to the three review findings from the current uncommitted diff: runtime event timing, research-tech event patch consumption, and Biome diagnostics.
+- Existing staged/unstaged work remains intact; fixes are minimal and directly tied to those findings.
+
+Success criteria:
+- Signal and trace runtime events fire only after the actual sector/trace placement has succeeded.
+- Research-tech runtime event patches are consumed before the tech decision is executed.
+- Focused tests, typechecks, Biome check for touched files, and `git diff --check` pass.
+
+Plan:
+- [x] Add failing tests for event timing and research-tech patch consumption.
+- [x] Move placement events to the atomic placement points and consume research-tech patches before execution.
+- [x] Run formatter/lint fixes only for touched files.
+- [x] Verify focused tests, typechecks, Biome, and diff whitespace.
+
+Review:
+- Added regression tests proving `MARK_PLACED` and `TRACE_PLACED` do not fire while the engine is only creating/selecting pending input, then do fire after the actual sector/trace placement succeeds.
+- Added a research-tech regression proving `EGameRuntimeEvent.RESEARCH_TECH` patches the filter before tech selection, so a listener can force a specific tech decision.
+- Moved signal placement events into `MarkSectorSignalEffect.markOnSector` and trace placement events into `AlienState.applyTraceToSlotInternal`, with concrete sector/slot context.
+- Added `EGameRuntimeEvent.RESEARCH_TECH` consumption in `ResearchTechAction.execute` before availability checks and execution.
+- Fixed Biome diagnostics in the touched client/server/e2e files, including missing `vi` imports in lobby tests and E2E formatting/import order.
+- Verification passed: focused red runs failed before implementation; `pnpm --filter @ender-seti/common exec vitest run __tests__/types/protocol/options.test.ts`; `pnpm --filter @ender-seti/common typecheck`; `pnpm --filter @seti/server exec vitest run __tests__/engine/events/GameEventBus.test.ts __tests__/engine/Game.test.ts __tests__/engine/actions/ResearchTech.test.ts __tests__/engine/GameOptions.test.ts __tests__/engine/GameSetup.test.ts __tests__/engine/GameRoundTransition.test.ts __tests__/persistence/serializer/GameSerializer.test.ts __tests__/persistence/serializer/GameDeserializer.test.ts __tests__/lobby/lobby.controller.test.ts __tests__/lobby/lobby.service.test.ts`; `pnpm --filter @seti/server typecheck`; `pnpm --filter @seti/client exec vitest run __tests__/api/lobbyApi.test.ts __tests__/pages/lobby/GameSettingsPanel.editable.test.tsx __tests__/pages/lobby/GameSettingsPanel.test.tsx __tests__/components/CreateRoomDialog.test.tsx __tests__/components/RoomCard.test.tsx`; `pnpm --filter @seti/client typecheck`; `pnpm exec biome check --diagnostic-level=error` on the 40 touched TS/TSX files; `git diff --check`.
+- Playwright E2E was not run in this pass.
+
+## Space Agency implementation plan - 2026-05-14
+
+Assumptions:
+- The requested work is planning only; implementation starts after user confirmation.
+- The source architecture is `docs/plan/space-agency-cosmic-hellman.md`.
+- The detailed plan is maintained in `docs/plan/space-agency-implementation-plan.md` and this file records the planning review.
+- Tasks should execute serially, while each task may run multiple subagents in parallel on disjoint scopes.
+- `frontend-reference` is available and was used as a front-end implementation reference; no dedicated `backend-reference` folder exists, so current corporation/setup code paths were used as the server reference baseline.
+
+Success criteria:
+- The plan decomposes Space Agency work into serial, independently verifiable tasks.
+- Each task lists scope, dependencies, parallel subagent lanes, verification, and exit criteria.
+- The plan preserves BASE zero-regression as an explicit gate.
+- No production code is changed during planning.
+
+Plan:
+- [x] Read current lessons and Space Agency architecture plan.
+- [x] Inspect current common/server/client/alien entry points enough to avoid an abstract plan.
+- [x] Refine `docs/plan/space-agency-implementation-plan.md` into serial independent tasks with per-task parallel subagent lanes.
+- [ ] Confirm this plan with the user before implementation begins.
+
+Review:
+- Refined the serial implementation plan into tasks `SA-0` through `SA-10`, each with an explicit independent deliverable, bounded scope, dependency gate, and internal parallel subagent split.
+- Incorporated code-exploration findings: lobby update should use `PATCH /lobby/rooms/:id/options`, setup choice should reuse the existing pending-input surface, scan should extend the existing `SPEND_SIGNAL_TOKEN` rail, `AMOEBA`/`GLYPHIDS` already exist while `ARKHOS` does not, and `GameEventBus` must be separate from `EventLog`.
+- Incorporated `frontend-reference` findings: setup/state references come mainly from `states.js` and `setup.js`, and visual/assets references come from `frontend-reference/storage.googleapis.com/cgo-projects/seti/assets`.
+- Recorded that no dedicated `backend-reference` directory exists, so current server corporation/setup files are the authoritative implementation reference for the server-side plan.
+- Kept Glyphids/Amoeba and Arkhos as separate serial tasks because Arkhos has a materially larger data/runtime/projection gap.
+- Recorded that glyph/organelle token rendering should stay on the existing `DescRender` / `EffectFactory` chain.
+- No business code was changed.
+- Verification passed: `git diff --check -- docs/todo.md docs/plan/space-agency-implementation-plan.md`.
+- Awaiting user confirmation before any implementation task starts.
+
+## Space Agency SA-1 option foundation - 2026-05-14
+
+Assumptions:
+- This slice implements only `SA-1`: shared option contract, record-based alien toggles, and editable lobby room options.
+- No Space Agency gameplay flow is enabled yet; this is option/lobby groundwork only.
+
+Success criteria:
+- `IGameOptions` moves to common as the single source of truth.
+- `alienModulesEnabled` uses `Record<EAlienType, boolean>` across common/server/client.
+- Lobby create-room and room settings flows both use the shared contract.
+- Host can patch room options through `PATCH /lobby/rooms/:id/options`.
+
+Plan:
+- [x] Add shared common options module and migrate server re-export.
+- [x] Update client/server option consumers from array toggles to record toggles.
+- [x] Add lobby room option patch endpoint and client API.
+- [x] Add focused regression tests and package typechecks.
+
+Review:
+- Added `packages/common/src/types/protocol/options.ts` as the shared source for `IGameOptions`, `EExpansion`, default alien toggle records, validation, and option helpers.
+- Replaced server-local `GameOptions` definitions with re-exports from common and migrated `GameSetup` to read alien enablement by alien id instead of array index.
+- Reworked client lobby normalization and form submission to use record-shaped alien toggles, and added editable host controls through `CoreAlienModulesSection` plus `lobbyApi.updateRoomOptions`.
+- Added `PATCH /lobby/rooms/:id/options` on the server and merged nested alien-toggle patches safely before validation/persistence.
+- Added focused regression coverage in common/client/server for shared options, lobby API normalization/patching, editable settings UI, controller routing, and service merge behavior.
+- Verification passed: `pnpm test -- __tests__/types/protocol/options.test.ts` in `packages/common`; `pnpm typecheck` in `packages/common`; `pnpm test -- __tests__/api/lobbyApi.test.ts __tests__/pages/lobby/GameSettingsPanel.editable.test.tsx __tests__/pages/lobby/GameSettingsPanel.test.tsx __tests__/components/CreateRoomDialog.test.tsx __tests__/components/RoomCard.test.tsx` in `packages/client`; `pnpm typecheck` in `packages/client`; `pnpm test -- __tests__/engine/GameOptions.test.ts __tests__/lobby/lobby.controller.test.ts __tests__/lobby/lobby.service.test.ts` in `packages/server`; `pnpm typecheck` in `packages/server`; `git diff --check -- packages/common packages/client packages/server docs/todo.md`.
+
+### SA-1 follow-up review pass - 2026-05-15
+
+Assumptions:
+- Scope is limited to the two confirmed SA-1 follow-up findings in the current diff: invalid `alienModulesEnabled` payload acceptance and room-size shrink updates that later crash `startGame`.
+- Existing in-flight user changes remain untouched unless directly required by these fixes.
+
+Success criteria:
+- `createGameOptions` rejects unknown alien keys and non-boolean alien toggle values before merge/persist.
+- Waiting-room option updates reject reducing the room below the number of already joined human players.
+- Focused common/server tests and relevant typechecks pass after the fixes.
+
+Plan:
+- [x] Tighten shared alien toggle validation in common options.
+- [x] Block invalid waiting-room downsizing in lobby service.
+- [x] Add focused regression tests for both follow-up findings.
+- [x] Run focused tests and typechecks.
+
+Review:
+- Tightened `packages/common/src/types/protocol/options.ts` validation so alien toggle payloads must be record-shaped, use only known `EAlienType` keys, and contain only boolean values; complete option objects must define all alien types.
+- Updated `packages/server/src/lobby/lobby.service.ts` so host room-option updates now compare the proposed room size against already joined players and reject impossible downsizes with a `BadRequestException` instead of deferring to a later 500 in `Game.create()`.
+- Added regression coverage in `packages/common/__tests__/types/protocol/options.test.ts` for unknown alien keys and non-boolean toggle values, plus `packages/server/__tests__/lobby/lobby.service.test.ts` for room shrink rejection.
+- Verification passed: `pnpm exec vitest run __tests__/types/protocol/options.test.ts` in `packages/common`; `pnpm typecheck` in `packages/common`; `pnpm --filter @seti/server exec vitest run __tests__/lobby/lobby.service.test.ts __tests__/engine/GameOptions.test.ts`; `pnpm --filter @seti/server typecheck`.
+
+## Space Agency SA-2 server extension foundation - 2026-05-15
+
+Assumptions:
+- This slice implements only `SA-2`: server runtime hooks and persisted counters with BASE no-op behavior.
+- Space Agency setup-choice, organizations, and gameplay remain inactive until later tasks.
+
+Success criteria:
+- Games expose `roundIndex`, `maxRounds`, and a runtime `eventBus` without changing BASE round flow.
+- Base corporation is usable through the new `ISetupRole` contract without changing setup output.
+- Serialization, deserialization, and public projection include the new round counters with safe legacy defaults.
+- Event bus listeners can be ordered, owner-cleaned, and can merge context patches deterministically.
+
+Plan:
+- [x] Add failing server tests for round counters, setup role, event bus, and projection/persistence.
+- [x] Add `GameEventBus` and `ISetupRole`, then initialize `eventBus` on `Game`.
+- [x] Wire no-op runtime emit points for main/free/input/mark/trace/turn/round boundaries.
+- [x] Add DTO/public-state round counter fields and legacy deserialization defaults.
+
+Review:
+- Added `packages/server/src/engine/events/GameEventBus.ts` with ordered subscriptions, owner cleanup, and merged context patches; it is separate from `EventLog`.
+- Added `packages/server/src/engine/setup/ISetupRole.ts` and made `CorporationCard` implement it so `BaseCorporation` remains the BASE setup role.
+- Added `roundIndex` and `maxRounds` on `Game`/`IGame`, serialized them, projected them to public state, and restored missing legacy snapshot values from current `round` and default `5`.
+- Added no-op runtime event emissions around main action resolution, free actions, input resolution, mark/trace placement, turn handoff, and round boundaries.
+- Verification passed: focused red test run failed on missing `roundIndex`, `eventBus`, projection fields, and `GameEventBus`; focused green test run passed with `pnpm --filter @seti/server exec vitest run __tests__/engine/events/GameEventBus.test.ts __tests__/engine/Game.test.ts __tests__/engine/GameSetup.test.ts __tests__/engine/GameRoundTransition.test.ts __tests__/persistence/serializer/GameSerializer.test.ts __tests__/persistence/serializer/GameDeserializer.test.ts`; `pnpm --filter @seti/server typecheck`; `pnpm --filter @ender-seti/common typecheck`; `git diff --check`.
+
 ## Space Agencies alien aid conversion - 2026-05-13
 
 Assumptions:

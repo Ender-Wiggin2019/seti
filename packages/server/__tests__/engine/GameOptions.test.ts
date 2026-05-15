@@ -1,5 +1,7 @@
+import { EAlienType } from '@seti/common/types/BaseCard';
 import {
   createGameOptions,
+  DEFAULT_ALIEN_MODULES_ENABLED,
   DEFAULT_GAME_OPTIONS,
   EExpansion,
 } from '@/engine/GameOptions.js';
@@ -21,18 +23,24 @@ describe('GameOptions', () => {
     );
   });
 
-  it('throws when alienModulesEnabled has fewer than 5 toggles', () => {
+  it('throws when alienModulesEnabled is not a record', () => {
     expect(() =>
       createGameOptions({
-        alienModulesEnabled: [true, true, true, true],
+        alienModulesEnabled: [] as never,
       }),
-    ).toThrow('alienModulesEnabled must define at least 5 alien toggles');
+    ).toThrow('alienModulesEnabled must be a record');
   });
 
   it('throws when fewer than 2 core aliens are enabled', () => {
     expect(() =>
       createGameOptions({
-        alienModulesEnabled: [true, false, false, false, false],
+        alienModulesEnabled: {
+          ...DEFAULT_ALIEN_MODULES_ENABLED,
+          [EAlienType.CENTAURIANS]: false,
+          [EAlienType.EXERTIANS]: false,
+          [EAlienType.MASCAMITES]: false,
+          [EAlienType.OUMUAMUA]: false,
+        },
       }),
     ).toThrow('alienModulesEnabled must enable at least 2 core aliens');
   });

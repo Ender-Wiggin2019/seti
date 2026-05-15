@@ -155,11 +155,30 @@ describe('GameRoundTransition (Phase 10.1)', () => {
   it('10.1.3 [集成] rotation reminder advances to the next end-of-round stack', () => {
     const game = createGame2p('10-1-3-rotation-reminder');
     expect(game.roundRotationReminderIndex).toBe(0);
+    expect(game.roundIndex).toBe(1);
 
     passUntilRoundAdvances(game, 1);
 
     expect(game.roundRotationReminderIndex).toBe(1);
     expect(game.round).toBe(2);
+    expect(game.roundIndex).toBe(2);
+  });
+
+  it('emits runtime round boundary events without changing BASE round flow', () => {
+    const game = createGame2p('runtime-round-boundaries');
+    const events: string[] = [];
+    game.eventBus.subscribe('round:end', (context) => {
+      events.push(`${context.type}:${context.roundIndex}`);
+    });
+    game.eventBus.subscribe('round:start', (context) => {
+      events.push(`${context.type}:${context.roundIndex}`);
+    });
+
+    passUntilRoundAdvances(game, 1);
+
+    expect(events).toEqual(['round:end:1', 'round:start:2']);
+    expect(game.round).toBe(2);
+    expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
   });
 
   it('10.1.4 [集成] pass flags clear and the next round begins clean', () => {

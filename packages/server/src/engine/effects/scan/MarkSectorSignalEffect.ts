@@ -4,6 +4,7 @@ import { EAlienType, EPlanet } from '@seti/common/types/protocol/enums';
 import { AlienRegistry } from '../../alien/AlienRegistry.js';
 import { OumuamuaAlienPlugin } from '../../alien/plugins/OumuamuaAlienPlugin.js';
 import { createActionEvent } from '../../event/GameEvent.js';
+import { EGameRuntimeEvent } from '../../events/GameEventBus.js';
 import type { IGame } from '../../IGame.js';
 import type { PlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
@@ -85,6 +86,17 @@ export class MarkSectorSignalEffect {
         'debug',
       ),
     );
+
+    game.eventBus?.emit({
+      type: EGameRuntimeEvent.MARK_PLACED,
+      game,
+      player,
+      sectorId: sector.id,
+      sectorColor: sector.color,
+      dataGained: signalResult.dataGained,
+      vpAwarded: signalResult.vpAwarded,
+      completed: sector.completed,
+    });
 
     return {
       sectorId: sector.id,

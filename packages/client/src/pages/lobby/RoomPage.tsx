@@ -1,3 +1,4 @@
+import type { IGameOptionsPatch } from '@seti/common/types/protocol/options';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
@@ -59,6 +60,23 @@ export function RoomPage(): React.JSX.Element {
     onError: (err) =>
       toast({
         title: t('client.room.toast.start_failed'),
+        description: err.message,
+        variant: 'error',
+      }),
+  });
+
+  const updateOptionsMutation = useMutation({
+    mutationFn: (patch: IGameOptionsPatch) =>
+      lobbyApi.updateRoomOptions(roomId, patch),
+    onSuccess: (nextRoom) => {
+      queryClient.setQueryData(['room', roomId], nextRoom);
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+    },
+    onError: (err) =>
+      toast({
+        title: t('client.room.toast.update_failed', {
+          defaultValue: 'Failed to update room settings',
+        }),
         description: err.message,
         variant: 'error',
       }),
@@ -171,7 +189,15 @@ export function RoomPage(): React.JSX.Element {
         <div className='space-y-4'>
           <Card>
             <CardContent className='py-5'>
-              <GameSettingsPanel options={room.options} readOnly={!isHost} />
+              <GameSettingsPanel
+                options={room.options}
+                readOnly={!isHost}
+                onChange={
+                  isHost
+                    ? (patch) => updateOptionsMutation.mutate(patch)
+                    : undefined
+                }
+              />
             </CardContent>
           </Card>
 

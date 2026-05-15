@@ -34,6 +34,7 @@ export * from '@seti/common/types/element';
 export * from '@seti/common/types/Icon';
 export * from '@seti/common/types/Order';
 export * from '@seti/common/types/prelude';
+export * from '@seti/common/types/protocol/options';
 export * from '@seti/common/types/protocol/solo';
 export * from '@seti/common/types/tech';
 export * from '@seti/common/utils/card';
