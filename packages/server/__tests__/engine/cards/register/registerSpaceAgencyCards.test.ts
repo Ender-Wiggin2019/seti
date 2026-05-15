@@ -1,3 +1,4 @@
+import { spaceAgencyCards } from '@seti/common/data/spaceAgencyCards';
 import { CardRegistry } from '@/engine/cards/CardRegistry.js';
 import { registerSpaceAgencyCards } from '@/engine/cards/register/registerSpaceAgencyCards.js';
 
@@ -10,6 +11,18 @@ describe('registerSpaceAgencyCards', () => {
     expect(registry.has('SA.1')).toBe(true);
     expect(registry.has('SA.42')).toBe(true);
     expect(registry.create('SA.7').id).toBe('SA.7');
+  });
+
+  it('registers every Space Agency main-deck card from common data', () => {
+    const registry = new CardRegistry();
+
+    registerSpaceAgencyCards(registry);
+
+    expect(registry.size).toBe(spaceAgencyCards.length);
+    for (const card of spaceAgencyCards) {
+      expect(registry.has(card.id), card.id).toBe(true);
+      expect(registry.create(card.id).id).toBe(card.id);
+    }
   });
 
   it('registers migrated custom space agency cards without unhandled custom tokens', () => {

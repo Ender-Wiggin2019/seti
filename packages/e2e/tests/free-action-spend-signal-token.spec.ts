@@ -29,7 +29,9 @@ test('@actions @debug spend signal token free action e2e: replay enters real sca
   });
 
   await clickMainAction(page, 'SCAN');
-  await page.locator(sel.freeActionToggle).click();
+  await expect(page.locator(sel.inputOption('mark-earth'))).toBeVisible({
+    timeout: 15_000,
+  });
   await expect(page.locator(sel.freeAction('SPEND_SIGNAL_TOKEN'))).toBeEnabled({
     timeout: 15_000,
   });
@@ -65,7 +67,8 @@ test('@actions @debug spend signal token free action e2e: replay enters real sca
   await expect
     .poll(() => eventEntries.count(), { timeout: 15_000 })
     .toBeGreaterThan(logBefore);
-  await expect(page.locator(sel.freeAction('SPEND_SIGNAL_TOKEN'))).toBeDisabled(
+  await expect(page.locator(sel.freeAction('SPEND_SIGNAL_TOKEN'))).toHaveCount(
+    0,
     {
       timeout: 15_000,
     },

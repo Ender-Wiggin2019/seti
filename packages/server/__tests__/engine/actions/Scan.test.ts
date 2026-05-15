@@ -5,6 +5,7 @@ import {
   EMainAction,
   EPlanet,
 } from '@seti/common/types/protocol/enums';
+import { EExpansion } from '@seti/common/types/protocol/options';
 import {
   EPlayerInputType,
   type IPlayerInputModel,
@@ -118,6 +119,39 @@ function createScanIntegrationGame(seed: string): {
   const game = Game.create(
     INTEGRATION_TEST_PLAYERS,
     { playerCount: 2 },
+    seed,
+    seed,
+  );
+  resolveSetupTucks(game);
+  const p1 = requireValue(
+    game.players.find((candidate) => candidate.id === 'p1'),
+    'p1 missing',
+  ) as Player;
+  const p2 = requireValue(
+    game.players.find((candidate) => candidate.id === 'p2'),
+    'p2 missing',
+  ) as Player;
+  return { game, p1, p2 };
+}
+
+function createSignalTokenScanIntegrationGame(seed: string): {
+  game: Game;
+  p1: Player;
+  p2: Player;
+} {
+  const game = Game.create(
+    INTEGRATION_TEST_PLAYERS,
+    {
+      playerCount: 2,
+      expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+      spaceAgencyOptions: {
+        enabled: true,
+        agencies: false,
+        startResourceCards: false,
+        newDeck: true,
+        newAlienSpecies: false,
+      },
+    },
     seed,
     seed,
   );
@@ -529,7 +563,7 @@ describe('ScanAction — integration (rewrite)', () => {
     });
 
     it('does not allow a free action to interrupt a nested scan free action prompt', () => {
-      const { game, p1 } = createScanIntegrationGame(
+      const { game, p1 } = createSignalTokenScanIntegrationGame(
         'scan-2-4-11-no-nested-free-action',
       );
       p1.resources.gain({ signalTokens: 1 });

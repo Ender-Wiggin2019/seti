@@ -1,5 +1,10 @@
 import { ESector } from '@seti/common/types/element';
 import { EFreeAction } from '@seti/common/types/protocol/enums';
+import {
+  createGameOptions,
+  EExpansion,
+  type IGameOptions,
+} from '@seti/common/types/protocol/options';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { Sector } from '@/engine/board/Sector.js';
 import { Deck } from '@/engine/deck/Deck.js';
@@ -12,8 +17,33 @@ import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
 import { GameError } from '@/shared/errors/GameError.js';
 
-function createMockGame(): IGame {
+const BASE_OPTIONS = createGameOptions();
+const SPACE_AGENCY_OPTIONS = createGameOptions({
+  expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+  spaceAgencyOptions: {
+    enabled: true,
+    agencies: false,
+    startResourceCards: false,
+    newDeck: true,
+    newAlienSpecies: false,
+  },
+});
+const SPACE_AGENCY_WITHOUT_NEW_DECK_OPTIONS = createGameOptions({
+  expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+  spaceAgencyOptions: {
+    enabled: true,
+    agencies: false,
+    startResourceCards: false,
+    newDeck: false,
+    newAlienSpecies: false,
+  },
+});
+
+function createMockGame(
+  options: Readonly<IGameOptions> = SPACE_AGENCY_OPTIONS,
+): IGame {
   return {
+    options,
     sectors: [
       new Sector({ id: 'sector-0', color: ESector.RED, dataSlotCapacity: 3 }),
       new Sector({
@@ -175,6 +205,30 @@ describe('SpendSignalToken free action', () => {
     ).toThrow(GameError);
   });
 
+  it('rejects when newDeck is disabled', () => {
+    const game = createMockGame(SPACE_AGENCY_WITHOUT_NEW_DECK_OPTIONS);
+    const player = createPlayer(1);
+    player.waitingFor = ScanActionPool.execute(player, game);
+
+    expect(() =>
+      processFreeAction(player, game, {
+        type: EFreeAction.SPEND_SIGNAL_TOKEN,
+      }),
+    ).toThrow(GameError);
+  });
+
+  it('rejects when Space Agency is not enabled', () => {
+    const game = createMockGame(BASE_OPTIONS);
+    const player = createPlayer(1);
+    player.waitingFor = ScanActionPool.execute(player, game);
+
+    expect(() =>
+      processFreeAction(player, game, {
+        type: EFreeAction.SPEND_SIGNAL_TOKEN,
+      }),
+    ).toThrow(GameError);
+  });
+
   it('rejects when the player has no signal tokens', () => {
     const game = createMockGame();
     const player = createPlayer(0);
@@ -193,6 +247,60 @@ describe('SpendSignalToken free action', () => {
     const player = createPlayer(1);
     player.waitingFor = ScanActionPool.execute(player, game);
 
+    expect(() =>
+      processFreeAction(player, game, {
+        type: EFreeAction.SPEND_SIGNAL_TOKEN,
+      }),
+    ).toThrow(GameError);
+  });
+
+  it('allows at most two signal tokens during one scan', () => {
+    const game = createMockGame();
+    const player = createPlayer(3);
+    player.waitingFor = ScanActionPool.execute(player, game);
+
+    let cardInput = processFreeAction(player, game, {
+      type: EFreeAction.SPEND_SIGNAL_TOKEN,
+    });
+    if (!cardInput) {
+      throw new Error('Expected first signal token spend to request a card');
+    }
+    let sectorChoice = cardInput.process({
+      type: EPlayerInputType.CARD,
+      cardIds: ['card-row-1'],
+    });
+    if (!sectorChoice) {
+      throw new Error('Expected first signal token spend to request a sector');
+    }
+    const firstReturnedInput = sectorChoice.process({
+      type: EPlayerInputType.OPTION,
+      optionId: 'sector-2',
+    });
+
+    player.waitingFor = firstReturnedInput;
+    cardInput = processFreeAction(player, game, {
+      type: EFreeAction.SPEND_SIGNAL_TOKEN,
+    });
+    if (!cardInput) {
+      throw new Error('Expected second signal token spend to request a card');
+    }
+    sectorChoice = cardInput.process({
+      type: EPlayerInputType.CARD,
+      cardIds: ['card-row-2'],
+    });
+    if (!sectorChoice) {
+      throw new Error('Expected second signal token spend to request a sector');
+    }
+    player.waitingFor = sectorChoice.process({
+      type: EPlayerInputType.OPTION,
+      optionId: 'sector-4',
+    });
+
+    expect(player.resources.signalTokens).toBe(1);
+    expect(game.mainDeck.getDiscardPile()).toEqual([
+      'card-row-1',
+      'card-row-2',
+    ]);
     expect(() =>
       processFreeAction(player, game, {
         type: EFreeAction.SPEND_SIGNAL_TOKEN,

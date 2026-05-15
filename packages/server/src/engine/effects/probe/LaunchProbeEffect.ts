@@ -1,7 +1,9 @@
 import { EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
+import { EGameRuntimeEvent } from '../../events/GameEventBus.js';
 import type { IGame } from '../../IGame.js';
+import { OrganizationRegistry } from '../../organization/OrganizationRegistry.js';
 import type { IPlayer } from '../../player/IPlayer.js';
 import { TechModifierQuery } from '../../tech/TechModifierQuery.js';
 
@@ -29,7 +31,7 @@ export class LaunchProbeEffect {
     }
 
     const effectiveLimit = TechModifierQuery.fromTechIds(
-      player.techs,
+      OrganizationRegistry.getEffectiveTechIds(player, game),
     ).getProbeSpaceLimit(player.probeSpaceLimit);
     return player.probesInSpace < effectiveLimit;
   }
@@ -65,6 +67,14 @@ export class LaunchProbeEffect {
 
     const probe = solarSystem.placeProbe(player.id, earthSpaceId);
     player.probesInSpace += 1;
+
+    game.eventBus?.emit({
+      type: EGameRuntimeEvent.PROBE_LAUNCHED,
+      game,
+      player,
+      probeId: probe.id,
+      spaceId: earthSpaceId,
+    });
 
     return { probeId: probe.id, spaceId: earthSpaceId };
   }

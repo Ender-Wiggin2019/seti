@@ -360,7 +360,16 @@
         "ANALYZE_DATA": "Analisar Dados",
         "PLAY_CARD": "Jogar Carta",
         "RESEARCH_TECH": "Pesquisar Tecnologia",
+        "USE_ORGANIZATION_ACTION": "Ação da Organização",
         "PASS": "Passar"
+      },
+      "organization_actions": {
+        "futurespan": "Carta Futurespan",
+        "xenolab": {
+          "launch": "Lançamento Xenolab",
+          "scan": "Varredura Xenolab",
+          "research": "Pesquisa Xenolab"
+        }
       }
     },
     "free_action_bar": {
@@ -376,8 +385,14 @@
         "USE_CARD_CORNER": "Usar Carta",
         "BUY_CARD": "Comprar Carta (3 PR)",
         "EXCHANGE_RESOURCES": "Trocar",
-        "SPEND_SIGNAL_TOKEN": "Gastar Token de Sinal"
+        "SPEND_SIGNAL_TOKEN": "Gastar Token de Sinal",
+        "USE_ORGANIZATION_POWER": "Poder da Organização"
       }
+    },
+    "quick_start_card": {
+      "short_label": "Início Rápido",
+      "screen_reader_label": "Carta de Início Rápido {{id}}: {{summary}}",
+      "no_setup_mark": "sem marcador de preparação"
     },
     "action_confirm": {
       "cost": "Custo"

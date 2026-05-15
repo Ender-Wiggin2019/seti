@@ -3,7 +3,8 @@ import {
   getAvailableFreeActions,
   getAvailableMainActions,
 } from '@seti/common/rules';
-import { ESector } from '@seti/common/types/element';
+import { EResource, ESector } from '@seti/common/types/element';
+import { EOrganizationId } from '@seti/common/types/organization';
 import {
   EAlienType,
   EFreeAction,
@@ -11,8 +12,10 @@ import {
   EPlanet,
   ETrace,
 } from '@seti/common/types/protocol/enums';
+import { EExpansion } from '@seti/common/types/protocol/options';
 import {
   EPlayerInputType,
+  ESetupChoiceStepKind,
   type ISelectEndOfRoundCardInputModel,
 } from '@seti/common/types/protocol/playerInput';
 import { ETechId } from '@seti/common/types/tech';
@@ -24,6 +27,10 @@ import {
   isOumuamuaAlienBoard,
 } from '@/engine/alien/AlienBoard.js';
 import { AlienState } from '@/engine/alien/AlienState.js';
+import {
+  recordScanSignalTokenSpend,
+  ScanActionPool,
+} from '@/engine/effects/scan/ScanActionPool.js';
 import { Game } from '@/engine/Game.js';
 import {
   projectGameState,
@@ -89,6 +96,189 @@ describe('GameSerializer', () => {
 
     expect(publicState.roundIndex).toBe(1);
     expect(publicState.maxRounds).toBe(5);
+  });
+
+  it('projects main deck sizes for free-action availability checks', () => {
+    const game = createTestGame();
+    game.mainDeck.drawN(2);
+    game.mainDeck.discard('discarded-card');
+
+    const publicState = projectGameState(game, 'p1');
+
+    expect(publicState.mainDeck).toEqual({
+      drawPileSize: game.mainDeck.drawSize,
+      discardPileSize: game.mainDeck.discardSize,
+    });
+  });
+
+  it('projects signal-token scan availability and spent count', () => {
+    const game = Game.create(
+      [
+        { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
+        { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
+      ],
+      {
+        playerCount: 2,
+        expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+        spaceAgencyOptions: {
+          enabled: true,
+          agencies: false,
+          startResourceCards: false,
+          newDeck: true,
+          newAlienSpecies: false,
+        },
+      },
+      'serializer-signal-token-scan',
+      'serializer-signal-token-scan',
+    );
+    resolveSetupTucks(game);
+    const player = game.players[0];
+    player.resources.gain({ signalTokens: 3 });
+    player.waitingFor = ScanActionPool.execute(player, game);
+    recordScanSignalTokenSpend(player.waitingFor);
+    recordScanSignalTokenSpend(player.waitingFor);
+
+    const publicState = projectGameState(game, player.id);
+
+    expect(publicState.spaceAgencyOptions?.newDeck).toBe(true);
+    expect(publicState.scanActionInProgress).toBe(true);
+    expect(publicState.scanSignalTokensSpent).toBe(2);
+    expect(
+      getAvailableFreeActions(publicState.players[0], publicState),
+    ).not.toContain(EFreeAction.SPEND_SIGNAL_TOKEN);
+  });
+
+  it('serializes and projects setup-choice player fields only to the owning viewer', () => {
+    const game = createTestGame();
+    const player = game.players[0] as (typeof game.players)[number] & {
+      setupChoiceContext: unknown;
+      quickStartCardIds: string[];
+    };
+    player.quickStartCardIds = ['QS.1', 'QS.2'];
+    player.setupChoiceContext = {
+      currentStepIndex: 0,
+      completed: false,
+      steps: [
+        {
+          kind: ESetupChoiceStepKind.ORGANIZATION,
+          title: 'Choose organization',
+          minSelections: 1,
+          maxSelections: 1,
+          selectedIds: [],
+          completed: false,
+          candidates: [{ id: 'org-a', label: 'Org A', canChoose: true }],
+        },
+      ],
+    };
+
+    const dto = serializeGame(game, 2);
+    const ownView = projectGameState(game, 'p1');
+    const otherView = projectGameState(game, 'p2');
+
+    expect(dto.players[0].quickStartCardIds).toEqual(['QS.1', 'QS.2']);
+    expect(dto.players[0].setupChoiceContext).toMatchObject({
+      currentStepIndex: 0,
+      completed: false,
+    });
+    expect(ownView.players[0].quickStartCardIds).toEqual(['QS.1', 'QS.2']);
+    expect(ownView.players[0].setupChoiceContext).toMatchObject({
+      steps: [{ kind: ESetupChoiceStepKind.ORGANIZATION }],
+    });
+    expect(otherView.players[0].quickStartCardIds).toBeUndefined();
+    expect(otherView.players[0].setupChoiceContext).toBeUndefined();
+  });
+
+  it('serializes and projects organization player fields safely', () => {
+    const game = createTestGame();
+    game.players[0].organizationIds = [EOrganizationId.ORBITAL_DYNAMICS];
+    game.players[0].organizationState = {
+      [EOrganizationId.ORBITAL_DYNAMICS]: { localOnly: true },
+    };
+    game.players[0].oncePerRoundUsed = {
+      [EOrganizationId.ORBITAL_DYNAMICS]: false,
+    };
+
+    const dto = serializeGame(game, 2);
+    const ownView = projectGameState(game, 'p1');
+    const otherView = projectGameState(game, 'p2');
+
+    expect(dto.players[0].organizationIds).toEqual([
+      EOrganizationId.ORBITAL_DYNAMICS,
+    ]);
+    expect(dto.players[0].organizationState).toEqual({
+      [EOrganizationId.ORBITAL_DYNAMICS]: { localOnly: true },
+    });
+    expect(ownView.players[0].organizationIds).toEqual([
+      EOrganizationId.ORBITAL_DYNAMICS,
+    ]);
+    expect(ownView.players[0].organizationState).toEqual({
+      [EOrganizationId.ORBITAL_DYNAMICS]: { localOnly: true },
+    });
+    expect(ownView.players[0].oncePerRoundUsed).toEqual({
+      [EOrganizationId.ORBITAL_DYNAMICS]: false,
+    });
+    expect(ownView.players[0].actionCosts).toEqual({
+      analyzeDataEnergy: 1,
+      researchTechPublicity: 6,
+    });
+    expect(otherView.players[0].organizationIds).toEqual([
+      EOrganizationId.ORBITAL_DYNAMICS,
+    ]);
+    expect(otherView.players[0].organizationState).toBeUndefined();
+    expect(otherView.players[0].oncePerRoundUsed).toBeUndefined();
+  });
+
+  it('projects usable organization power ids only to the owning viewer', () => {
+    const game = createTestGame();
+    game.players[0].organizationIds = [EOrganizationId.STRATUS_CORE];
+    game.players[0].oncePerRoundUsed = {
+      [EOrganizationId.STRATUS_CORE]: false,
+    };
+    game.cardRow = [
+      {
+        id: '128',
+        freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
+      } as never,
+    ];
+
+    const ownView = projectGameState(game, 'p1');
+    const otherView = projectGameState(game, 'p2');
+
+    expect(ownView.players[0].usableOrganizationPowerIds).toEqual([
+      EOrganizationId.STRATUS_CORE,
+    ]);
+    expect(otherView.players[0].usableOrganizationPowerIds).toBeUndefined();
+  });
+
+  it('projects usable organization main-action ids only to the owning viewer', () => {
+    const game = createTestGame();
+    const player = game.players[0];
+    player.organizationIds = [
+      EOrganizationId.FUTURESPAN_INSTITUTE,
+      EOrganizationId.XENOLAB,
+    ];
+    player.organizationState = {
+      [EOrganizationId.FUTURESPAN_INSTITUTE]: {
+        preparedCard: '130',
+        preparedCardId: '130',
+        unlockScore: 0,
+      },
+      [EOrganizationId.XENOLAB]: {
+        tiles: { launch: false, scan: true, research: false },
+      },
+    };
+    player.resources.gain({ energy: 2 });
+
+    const ownView = projectGameState(game, 'p1');
+    const otherView = projectGameState(game, 'p2');
+
+    expect(ownView.players[0].usableOrganizationMainActionIds).toEqual([
+      EOrganizationId.FUTURESPAN_INSTITUTE,
+      EOrganizationId.XENOLAB,
+    ]);
+    expect(
+      otherView.players[0].usableOrganizationMainActionIds,
+    ).toBeUndefined();
   });
 
   it('serializes and projects public solo rival state without deck order', () => {
@@ -640,7 +830,11 @@ describe('GameSerializer', () => {
       },
     ];
     board.pendingMessagesByPlayer = { p1: [], p2: ['ET.31'] };
-    board.rewardSlots[0]!.claimedByPlayerId = 'p1';
+    const firstRewardSlot = board.rewardSlots[0];
+    if (!firstRewardSlot) {
+      throw new Error('expected Centaurians reward slot');
+    }
+    firstRewardSlot.claimedByPlayerId = 'p1';
 
     const publicState = projectGameState(game, 'p1');
     const publicAlien = publicState.aliens[0];

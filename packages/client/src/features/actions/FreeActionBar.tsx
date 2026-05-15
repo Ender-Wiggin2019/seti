@@ -1,4 +1,6 @@
+import { ORGANIZATIONS_BY_ID } from '@seti/common/data/organizations';
 import { getAvailableFreeActions } from '@seti/common/rules';
+import { EOrganizationId } from '@seti/common/types/organization';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -26,7 +28,10 @@ export interface IFreeActionBarProps {
   myPlayerId: string;
   isMyTurn: boolean;
   pendingInput?: IPlayerInputModel | null;
-  onActionClick: (action: EFreeAction) => void;
+  onActionClick: (
+    action: EFreeAction,
+    organizationId?: EOrganizationId,
+  ) => void;
 }
 
 /**
@@ -61,6 +66,8 @@ export function FreeActionBar({
   const visibleActions =
     pendingInput === null ? VISIBLE_ACTIONS : [EFreeAction.SPEND_SIGNAL_TOKEN];
   const collapsibleActions = pendingInput === null ? COLLAPSIBLE_ACTIONS : [];
+  const organizationIds =
+    pendingInput === null ? (myPlayer.organizationIds ?? []) : [];
 
   if (pendingInput !== null && !available.has(EFreeAction.SPEND_SIGNAL_TOKEN)) {
     return null;
@@ -68,6 +75,10 @@ export function FreeActionBar({
 
   const availableCount = [...visibleActions, ...collapsibleActions].filter(
     (a) => available.has(a),
+  ).length;
+  const availableOrganizationPowerCount = organizationIds.filter(
+    (organizationId) =>
+      isOrganizationPowerAvailable(myPlayer, organizationId, gameState),
   ).length;
 
   return (
@@ -85,7 +96,7 @@ export function FreeActionBar({
           <span aria-hidden className='section-head__tick' />
           <p className='micro-label'>{t('client.free_action_bar.title')}</p>
           <span className='font-mono text-[10px] text-text-500'>
-            {availableCount}
+            {availableCount + availableOrganizationPowerCount}
           </span>
         </div>
 
@@ -119,6 +130,26 @@ export function FreeActionBar({
             ))
           : null}
 
+        {expanded
+          ? organizationIds.map((organizationId) => (
+              <OrganizationPowerButton
+                key={organizationId}
+                organizationId={organizationId}
+                label={t(
+                  `client.free_action_bar.actions.${EFreeAction.USE_ORGANIZATION_POWER}`,
+                )}
+                disabled={
+                  !isOrganizationPowerAvailable(
+                    myPlayer,
+                    organizationId,
+                    gameState,
+                  )
+                }
+                onClick={onActionClick}
+              />
+            ))
+          : null}
+
         {collapsibleActions.length > 0 ? (
           <Button
             variant='ghost'
@@ -144,6 +175,42 @@ export function FreeActionBar({
       </div>
     </div>
   );
+}
+
+function OrganizationPowerButton({
+  organizationId,
+  label,
+  disabled,
+  onClick,
+}: {
+  organizationId: EOrganizationId;
+  label: string;
+  disabled: boolean;
+  onClick: (action: EFreeAction, organizationId?: EOrganizationId) => void;
+}): React.JSX.Element {
+  return (
+    <Button
+      variant='ghost'
+      size='sm'
+      disabled={disabled}
+      aria-label={`${ORGANIZATIONS_BY_ID[organizationId].name} ${label}`}
+      onClick={() =>
+        onClick(EFreeAction.USE_ORGANIZATION_POWER, organizationId)
+      }
+      data-testid={`organization-power-${organizationId}`}
+      className='h-7 px-2 font-mono text-[11px] uppercase tracking-[0.1em]'
+    >
+      {label}
+    </Button>
+  );
+}
+
+function isOrganizationPowerAvailable(
+  player: IPublicGameState['players'][number],
+  organizationId: EOrganizationId,
+  _gameState: IPublicGameState,
+): boolean {
+  return player.usableOrganizationPowerIds?.includes(organizationId) === true;
 }
 
 function getFreeActionLabel(

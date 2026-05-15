@@ -1,4 +1,5 @@
 import type { IComputerColumnConfig } from '@seti/common/types/computer';
+import { EOrganizationId } from '@seti/common/types/organization';
 import {
   EAlienType,
   EMainAction,
@@ -127,6 +128,41 @@ describe('AnalyzeDataAction', () => {
       const before = player.resources.energy;
       AnalyzeDataAction.execute(player, game);
       expect(player.resources.energy).toBe(before - 1);
+    });
+
+    it('costs 0 energy for Deep Sky Survey', () => {
+      const game = createMockGame();
+      const player = createPlayer({
+        resources: { credits: 4, energy: 0, publicity: 4 },
+      });
+      player.organizationIds = [EOrganizationId.DEEP_SKY_SURVEY];
+      player.actionCosts = {
+        analyzeDataEnergy: 0,
+        researchTechPublicity: 6,
+      };
+      fillTopComputer(player);
+
+      AnalyzeDataAction.execute(player, game);
+
+      expect(player.resources.energy).toBe(0);
+      expect(player.computer.getPlacedCount()).toBe(0);
+    });
+
+    it('uses the player action cost config instead of organization ids', () => {
+      const game = createMockGame();
+      const player = createPlayer({
+        resources: { credits: 4, energy: 0, publicity: 4 },
+      });
+      player.actionCosts = {
+        analyzeDataEnergy: 0,
+        researchTechPublicity: 6,
+      };
+      fillTopComputer(player);
+
+      AnalyzeDataAction.execute(player, game);
+
+      expect(player.resources.energy).toBe(0);
+      expect(player.computer.getPlacedCount()).toBe(0);
     });
 
     it('clears computer data', () => {

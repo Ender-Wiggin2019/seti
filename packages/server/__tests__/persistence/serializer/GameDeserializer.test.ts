@@ -1,10 +1,17 @@
+import { EOrganizationId } from '@seti/common/types/organization';
 import {
   EAlienType,
   EMainAction,
+  EPhase,
   EPlanet,
   ETrace,
 } from '@seti/common/types/protocol/enums';
-import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
+import { EExpansion } from '@seti/common/types/protocol/options';
+import {
+  EPlayerInputType,
+  ESetupChoiceStepKind,
+  type ISelectOptionInputModel,
+} from '@seti/common/types/protocol/playerInput';
 import {
   isAnomaliesAlienBoard,
   isCentauriansAlienBoard,
@@ -59,6 +66,28 @@ function getPlayer(game: Game, playerId: string) {
   return player;
 }
 
+function getSetupOrganizationOptions(
+  player: Game['players'][number],
+): EOrganizationId[] {
+  const model = player.waitingFor?.toModel() as
+    | ISelectOptionInputModel
+    | undefined;
+  return (model?.options ?? []).map((option) => option.id as EOrganizationId);
+}
+
+function chooseFirstOrganization(
+  game: Game,
+  playerId: string,
+): EOrganizationId {
+  const player = getPlayer(game, playerId);
+  const organizationId = getSetupOrganizationOptions(player)[0];
+  game.processInput(playerId, {
+    type: EPlayerInputType.OPTION,
+    optionId: organizationId,
+  });
+  return organizationId;
+}
+
 describe('GameDeserializer', () => {
   it('supports round-trip serialization', () => {
     const game = createTestGame();
@@ -86,6 +115,134 @@ describe('GameDeserializer', () => {
 
     expect(restored.roundIndex).toBe(restored.round);
     expect(restored.maxRounds).toBe(5);
+  });
+
+  it('restores setup-choice player fields with legacy defaults', () => {
+    const dto = serializeGame(createTestGame(), 1);
+    const setupChoiceContext = {
+      currentStepIndex: 0,
+      completed: false,
+      steps: [
+        {
+          kind: ESetupChoiceStepKind.ORGANIZATION,
+          title: 'Choose organization',
+          minSelections: 1,
+          maxSelections: 1,
+          selectedIds: [],
+          completed: false,
+          candidates: [{ id: 'org-a', label: 'Org A', canChoose: true }],
+        },
+      ],
+    };
+    dto.players[0].quickStartCardIds = ['QS.1'];
+    dto.players[0].setupChoiceContext = setupChoiceContext;
+    delete dto.players[1].quickStartCardIds;
+    delete dto.players[1].setupChoiceContext;
+
+    const restored = deserializeGame(dto);
+
+    expect(restored.players[0].quickStartCardIds).toEqual(['QS.1']);
+    expect(restored.players[0].setupChoiceContext).toEqual(setupChoiceContext);
+    expect(restored.players[1].quickStartCardIds).toEqual([]);
+    expect(restored.players[1].setupChoiceContext).toBeUndefined();
+  });
+
+  it('restores organization player fields with legacy defaults', () => {
+    const dto = serializeGame(createTestGame(), 1);
+    dto.players[0].organizationIds = [EOrganizationId.ORBITAL_DYNAMICS];
+    dto.players[0].organizationState = {
+      [EOrganizationId.ORBITAL_DYNAMICS]: { selected: true },
+    };
+    dto.players[0].oncePerRoundUsed = {
+      [EOrganizationId.ORBITAL_DYNAMICS]: false,
+    };
+    delete dto.players[1].organizationIds;
+    delete dto.players[1].organizationState;
+    delete dto.players[1].oncePerRoundUsed;
+
+    const restored = deserializeGame(dto);
+
+    expect(restored.players[0].organizationIds).toEqual([
+      EOrganizationId.ORBITAL_DYNAMICS,
+    ]);
+    expect(restored.players[0].organizationState).toEqual({
+      [EOrganizationId.ORBITAL_DYNAMICS]: { selected: true },
+    });
+    expect(restored.players[0].oncePerRoundUsed).toEqual({
+      [EOrganizationId.ORBITAL_DYNAMICS]: false,
+    });
+    expect(restored.players[1].organizationIds).toEqual([]);
+    expect(restored.players[1].organizationState).toEqual({});
+    expect(restored.players[1].oncePerRoundUsed).toEqual({});
+  });
+
+  it('rehydrates setup-choice completion with the organization resolution callback', () => {
+    const game = Game.create(
+      [
+        { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
+        { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
+      ],
+      {
+        playerCount: 2,
+        expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+        spaceAgencyOptions: {
+          enabled: true,
+          agencies: true,
+          startResourceCards: false,
+          newDeck: false,
+          newAlienSpecies: false,
+        },
+      } as Parameters<typeof Game.create>[1],
+      'deserialize-agencies-choice',
+      'deserialize-agencies-choice',
+    );
+    const p1OrganizationId = chooseFirstOrganization(game, 'p1');
+
+    const restored = deserializeGame(serializeGame(game, 1));
+    const p2OrganizationId = chooseFirstOrganization(restored, 'p2');
+
+    expect(restored.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
+    expect(getPlayer(restored, 'p1').organizationIds).toEqual([
+      p1OrganizationId,
+    ]);
+    expect(getPlayer(restored, 'p2').organizationIds).toEqual([
+      p2OrganizationId,
+    ]);
+  });
+
+  it('rehydrates solo setup-choice with only participating players in the barrier', () => {
+    const game = Game.create(
+      [
+        { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
+        {
+          id: 'rival:deserialize-agencies-solo-choice',
+          name: 'Rival Institution',
+          color: 'blue',
+          seatIndex: 1,
+        },
+      ],
+      {
+        playerCount: 2,
+        isSoloMode: true,
+        soloDifficulty: 2,
+        expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+        spaceAgencyOptions: {
+          enabled: true,
+          agencies: true,
+          startResourceCards: false,
+          newDeck: false,
+          newAlienSpecies: false,
+        },
+      } as Parameters<typeof Game.create>[1],
+      'deserialize-agencies-solo-choice',
+      'deserialize-agencies-solo-choice',
+    );
+
+    const restored = deserializeGame(serializeGame(game, 1));
+    const organizationId = chooseFirstOrganization(restored, 'p1');
+
+    expect(restored.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
+    expect(getPlayer(restored, 'p1').organizationIds).toEqual([organizationId]);
   });
 
   it('normalizes legacy moon occupant snapshots to stable moon ids', () => {

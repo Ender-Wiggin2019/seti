@@ -8,6 +8,7 @@ import {
   type TTechCategory,
 } from '@seti/common/types/tech';
 import { GameError } from '@/shared/errors/GameError.js';
+import { EGameRuntimeEvent } from '../../events/GameEventBus.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
@@ -206,6 +207,15 @@ export class ResearchTechEffect {
     game.missionTracker?.recordEvent({
       type: EMissionEventType.TECH_RESEARCHED,
       techCategory: takeResult.tile.tech.type,
+    });
+
+    game.eventBus?.emit({
+      type: EGameRuntimeEvent.TECH_ACQUIRED,
+      game,
+      player,
+      techId,
+      techCategory: takeResult.tile.tech.type,
+      techLevel: getTechDescriptor(techId).level,
     });
 
     return {

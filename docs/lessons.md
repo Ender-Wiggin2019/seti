@@ -44,3 +44,4 @@
 - PDF 资产提取优先保存原始嵌入图片或 native-pixel crop；不要把页面高倍率渲染裁切冒充原始素材，交付前用原图尺寸和清晰度审计说明来源限制。
 - 源资料缺图或数据时，优先从 `frontend-reference`、`docs/arch/aliens/*`、FAQ 补足；用户确认点迁入 Confirmed Decisions，并记录来源与冲突优先级。
 - `frontend-reference` 只作为行为/数据参考；实现规格必须写清 common/server/client 分工，并把 source alias 映射到项目规范命名。
+- 用户确认某机制只需现有选项控制时，不要新增语义相近的 helper 或 public boolean；server/common/client 应读取同一个 options 字段，避免出现第二套开关语义。

@@ -2,6 +2,7 @@ import { EPlanet } from '@seti/common/types/protocol/enums';
 import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
+import { OrganizationRegistry } from '../../organization/OrganizationRegistry.js';
 import type { IPlayer } from '../../player/IPlayer.js';
 import type { IScanTechEffect } from '../../tech/ITech.js';
 import { TechModifierQuery } from '../../tech/TechModifierQuery.js';
@@ -35,6 +36,8 @@ export const SCAN_ACTION_POOL_TITLE = 'Scan: choose sub-action';
 
 interface IRefreshableScanActionPoolInput extends IPlayerInput {
   refreshScanActionPool: () => IPlayerInput | undefined;
+  getSignalTokenSpendCount: () => number;
+  recordSignalTokenSpend: () => void;
 }
 
 export function isScanActionPoolInput(
@@ -56,6 +59,35 @@ export function refreshScanActionPoolInput(
   return input;
 }
 
+export function getScanSignalTokenSpendCount(
+  input: IPlayerInput | undefined,
+): number {
+  const maybeRefreshable = input as
+    | Partial<IRefreshableScanActionPoolInput>
+    | undefined;
+  if (
+    isScanActionPoolInput(input) &&
+    typeof maybeRefreshable?.getSignalTokenSpendCount === 'function'
+  ) {
+    return maybeRefreshable.getSignalTokenSpendCount();
+  }
+  return 0;
+}
+
+export function recordScanSignalTokenSpend(
+  input: IPlayerInput | undefined,
+): void {
+  const maybeRefreshable = input as
+    | Partial<IRefreshableScanActionPoolInput>
+    | undefined;
+  if (
+    isScanActionPoolInput(input) &&
+    typeof maybeRefreshable?.recordSignalTokenSpend === 'function'
+  ) {
+    maybeRefreshable.recordSignalTokenSpend();
+  }
+}
+
 // ── Result types ──────────────────────────────────────────────────────────
 
 export interface IScanSubActionRecord {
@@ -65,6 +97,7 @@ export interface IScanSubActionRecord {
 
 export interface IScanActionPoolResult {
   subActions: IScanSubActionRecord[];
+  signalTokensSpent: number;
 }
 
 export interface IScanActionPoolOptions {
@@ -110,7 +143,10 @@ export class ScanActionPool {
     options: IScanActionPoolOptions = {},
   ): IPlayerInput | undefined {
     const descriptors = this.buildSubActions(player, game, options);
-    const result: IScanActionPoolResult = { subActions: [] };
+    const result: IScanActionPoolResult = {
+      subActions: [],
+      signalTokensSpent: 0,
+    };
     return this.presentPool(player, game, descriptors, result, options);
   }
 
@@ -169,6 +205,10 @@ export class ScanActionPool {
       {
         refreshScanActionPool: () =>
           this.presentPool(player, game, remaining, result, options),
+        getSignalTokenSpendCount: () => result.signalTokensSpent,
+        recordSignalTokenSpend: () => {
+          result.signalTokensSpent += 1;
+        },
       },
     );
   }
@@ -181,7 +221,7 @@ export class ScanActionPool {
     options: IScanActionPoolOptions,
   ): IScanSubActionDescriptor[] {
     const scanModifiers = TechModifierQuery.fromTechIds(
-      player.techs,
+      OrganizationRegistry.getEffectiveTechIds(player, game),
     ).getScanModifiers();
 
     const hasEarthNeighbor = scanModifiers.some(

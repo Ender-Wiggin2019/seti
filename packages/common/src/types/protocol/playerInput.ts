@@ -16,11 +16,49 @@ export enum EPlayerInputType {
   AND = 'and',
 }
 
+export enum ESetupChoiceStepKind {
+  ORGANIZATION = 'organization',
+  QUICK_START_CARDS = 'quickStartCards',
+  MAIN_DECK_PREVIEW = 'mainDeckPreview',
+}
+
+export interface ISetupChoiceCandidate {
+  id: string;
+  label: string;
+  canChoose: boolean;
+  disabledReason?: string;
+}
+
+export interface ISetupChoiceStepContext {
+  kind: ESetupChoiceStepKind;
+  title: string;
+  minSelections: number;
+  maxSelections: number;
+  candidates: ISetupChoiceCandidate[];
+  selectedIds: string[];
+  completed: boolean;
+}
+
+export interface ISetupChoiceContext {
+  currentStepIndex: number;
+  steps: ISetupChoiceStepContext[];
+  completed: boolean;
+}
+
+export interface ISetupChoiceInputMetadata {
+  kind: ESetupChoiceStepKind;
+  stepIndex: number;
+  totalSteps: number;
+  minSelections: number;
+  maxSelections: number;
+}
+
 export interface IPlayerInputModelBase {
   inputId: string;
   type: EPlayerInputType;
   title?: string;
   description?: string;
+  setupChoice?: ISetupChoiceInputMetadata;
 }
 
 export interface ISelectOptionInputModel extends IPlayerInputModelBase {

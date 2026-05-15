@@ -361,7 +361,16 @@
         "ANALYZE_DATA": "Analyze Data",
         "PLAY_CARD": "Play Card",
         "RESEARCH_TECH": "Research Tech",
+        "USE_ORGANIZATION_ACTION": "Organization Action",
         "PASS": "Pass"
+      },
+      "organization_actions": {
+        "futurespan": "Futurespan Card",
+        "xenolab": {
+          "launch": "Xenolab Launch",
+          "scan": "Xenolab Scan",
+          "research": "Xenolab Research"
+        }
       }
     },
     "free_action_bar": {
@@ -377,8 +386,14 @@
         "USE_CARD_CORNER": "Use Card",
         "BUY_CARD": "Buy Card (3 PR)",
         "EXCHANGE_RESOURCES": "Exchange",
-        "SPEND_SIGNAL_TOKEN": "Spend Signal Token"
+        "SPEND_SIGNAL_TOKEN": "Spend Signal Token",
+        "USE_ORGANIZATION_POWER": "Organization Power"
       }
+    },
+    "quick_start_card": {
+      "short_label": "Quick Start",
+      "screen_reader_label": "Quick Start Card {{id}}: {{summary}}",
+      "no_setup_mark": "no setup mark"
     },
     "action_confirm": {
       "cost": "Cost"

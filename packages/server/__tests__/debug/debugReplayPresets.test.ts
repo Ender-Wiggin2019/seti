@@ -6,6 +6,7 @@ import {
   EMainAction,
   EPhase,
 } from '@seti/common/types/protocol/enums';
+import { EExpansion } from '@seti/common/types/protocol/options';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import {
   applyDebugReplayPreset,
@@ -434,7 +435,19 @@ describe('debugReplayPresets', () => {
   });
 
   it('replays spend signal token checkpoint into a real scan free-action state', () => {
-    const game = buildTestGame({ autoResolveSetupTucks: false });
+    const game = buildTestGame({
+      autoResolveSetupTucks: false,
+      options: {
+        expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+        spaceAgencyOptions: {
+          enabled: true,
+          agencies: false,
+          startResourceCards: false,
+          newDeck: true,
+          newAlienSpecies: false,
+        },
+      },
+    });
 
     const replay = applyDebugReplayPreset(game, {
       presetId: 'free-action-debug',

@@ -1,7 +1,7 @@
 # Space Agency Implementation Plan
 
 Source: `docs/plan/space-agency-cosmic-hellman.md`
-Status: draft, awaiting user confirmation before implementation
+Status: in progress
 Date: 2026-05-14
 
 ## Assumptions
@@ -37,7 +37,8 @@ Every implementation task must finish with:
 - Arkhos has the largest data/runtime gap: no enum, common card data, server registry, plugin, board state, projection, or client board.
 - Glyph/organelle icon tokens and sprites already exist through `DescRender` / `EffectFactory` / `IconFactory`; new UI should assert those paths instead of drawing replacement icons.
 - Existing `engine/event/EventLog` and common protocol events are audit/log output, not a runtime mutation bus. `GameEventBus` should be a new runtime mechanism.
-- There is no dedicated `backend-reference` folder in the workspace. The closest in-repo backend reference for corporation-like setup behavior is the current server path around `packages/server/src/engine/corporation/BaseCorporation.ts`, `packages/server/src/engine/corporation/CorporationCard.ts`, and `packages/server/src/engine/GameSetup.ts`.
+- `backend-reference` is available and its corporation implementation is the architecture reference for organization extensibility: corporation behavior lives in concrete classes, classes are exposed through manifests/factories, setup and active actions are owned by the class, and card/corporation event responses are called through generic hooks instead of id-specific `Game` logic.
+- The current `packages/server/src/engine/organization` implementation does not meet that bar yet. It wraps all common data in one `Organization` class, hardcodes implemented powers in `hasImplementedPower`, hardcodes Mission Relay setup in the base class, hardcodes Stratus/Fenwick/Sentinel in `UseOrganizationPowerFreeAction`, hardcodes Sentinel hooks in `Game`, and duplicates Deep Sky/Fenwick action-cost checks in server/common rules. SA-5 must refactor this before adding more organization behavior.
 
 ## Task Template
 
@@ -55,10 +56,11 @@ Every serial task below is intended to be a standalone implementation unit.
 | [x] | SA-0 | Planning baseline | Current behavior and test matrix documented. |
 | [x] | SA-1 | Option foundation | `IGameOptions` moves to common; lobby options become editable. |
 | [x] | SA-2 | Server extension foundation | Round counter, setup role, and event bus land with BASE no-op behavior. |
-| [ ] | SA-3 | Setup-choice protocol | `spaceAgencyOptions` and `SETUP_CHOICE` contracts exist, still minimally wired. |
-| [ ] | SA-4 | Organization core | Agencies-only SA setup works with simple organizations. |
-| [ ] | SA-5 | Complex organizations + Quick Start | All 11 organizations and SR quick start cards resolve. |
-| [ ] | SA-6 | New Deck + Signal Token | SA cards are option-gated; signal-token scan branch works. |
+| [x] | SA-3 | Setup-choice protocol | `spaceAgencyOptions` and `SETUP_CHOICE` contracts exist, still minimally wired. |
+| [x] | SA-4 | Organization core | Agencies-only SA setup works with simple organizations. |
+| [x] | SA-5R | Organization architecture refactor | Organization runtime matches corporation-style class/registry extensibility before more powers are added. |
+| [x] | SA-5 | Complex organizations + Quick Start | All 11 organizations and SR quick start cards resolve. |
+| [x] | SA-6 | New Deck + Signal Token | SA cards are option-gated; signal-token scan branch works. |
 | [ ] | SA-7 | Glyphids + Amoeba | Existing SA alien cards become option-gated species plugins. |
 | [ ] | SA-8 | Arkhos | Arkhos data, cards, board, and plugin are added. |
 | [ ] | SA-9 | Client integration | Full SA game UI is data-driven and localized. |
@@ -237,7 +239,7 @@ Scope:
 - Add `EOrganizationId`, `IOrganizationData`, and `ORGANIZATIONS` static metadata in common.
 - Add `Organization` class, `OrganizationRegistry`, and registration entrypoint.
 - Add player runtime fields: `organizations`, `organizationState`, `oncePerRoundUsed`.
-- Wire `GameSetup` agencies path: publicity 0, `roundIndex=1`, three end-of-round stacks, setup-choice candidates, resolve selected organization, then enter `AWAIT_MAIN_ACTION`.
+- Wire `GameSetup` agencies path: publicity 0, `roundIndex=2`, three end-of-round stacks, setup-choice candidates, resolve selected organization, then enter `AWAIT_MAIN_ACTION`.
 - Implement simple config-driven organizations first.
 - Add `EFreeAction.USE_ORGANIZATION_POWER`, dispatcher, and once-per-round reset.
 - Add minimal client rendering: setup choice modal for organization step, organization badges, and organization power button shell.
@@ -263,11 +265,54 @@ Exit criteria:
 
 ---
 
+## SA-5R: Organization Architecture Refactor
+
+Goal: Refactor the existing organization runtime to the same extensibility model as `backend-reference` corporations before adding additional organization behavior.
+
+Dependencies: SA-4 and the existing first SA-5 slice.
+
+Progress note (2026-05-15): the first SA-5 slice landed Quick Start setup and the implemented organization seams for Deep Sky, Fenwick, and Stratus. The all-11 organization exit criteria remain blocked on this refactor.
+
+Independent deliverable:
+
+- After this task, the current implemented organization behavior still works, but adding another organization should mean adding a class and registering it, not modifying `Game`, action classes, or free-action switch statements.
+
+Scope:
+
+- Add player runtime action-cost/config fields with defaults such as research tech = 6 publicity and analyze data = 1 energy.
+- Persist and project those player config fields so server and common/client rule checks read the same values.
+- Split `Organization` into a reusable base class and one concrete class per `EOrganizationId`.
+- Change `OrganizationRegistry` from data wrapper creation to explicit id-to-factory registration.
+- Move setup overrides, player config mutation, organization free-action behavior, and runtime event subscriptions into organization classes.
+- Make `UseOrganizationPowerFreeAction` a generic dispatcher that delegates to the selected organization instance.
+- Replace `Game`'s Sentinel-specific after-play and turn-end calls with generic `GameEventBus` organization listeners.
+- Remove Deep Sky/Fenwick organization-id checks from `ResearchTechAction`, `AnalyzeDataAction`, `common/src/rules/actions.ts`, and `common/src/rules/freeActions.ts`.
+
+Verification:
+
+- Server tests first fail, then pass, proving Fenwick modifies the player's research cost config to 5 during organization resolve/restore and Deep Sky modifies analyze-data cost to 0.
+- Registry tests prove every `EOrganizationId` maps to a concrete class and unknown ids are rejected.
+- Free-action tests prove Stratus, Fenwick, and Sentinel resolve through generic dispatch with no id switch in `UseOrganizationPowerFreeAction`.
+- Event-bus tests prove Sentinel's armed response and turn-end cleanup happen through organization-owned listeners, and BASE no-listener behavior is unchanged.
+- Common/client tests prove action availability reads projected player config and projected usable organization power ids.
+- `pnpm --filter @ender-seti/common test -- actions freeActions`
+- `pnpm --filter @seti/server test -- organization ResearchTech AnalyzeData GameSetup GameSerializer GameDeserializer`
+- `pnpm --filter @seti/client test -- FreeActionBar GameLayout PlayerDashboard`
+- Touched package typechecks, Biome on touched files, and `git diff --check`.
+
+Exit criteria:
+
+- No organization-specific `EOrganizationId.X` branches remain in `Game`, `UseOrganizationPowerFreeAction`, `ResearchTechAction`, `AnalyzeDataAction`, or common action/free-action rule helpers.
+- Existing Quick Start, Deep Sky, Fenwick, Mission Relay, Stratus, and Sentinel tests remain green.
+- `docs/TODO.md` records the verification evidence and any residual risk.
+
+---
+
 ## SA-5: Complex Organizations And Quick Start Cards
 
 Goal: Complete all organization behavior and add SR quick start card setup.
 
-Dependencies: SA-4.
+Dependencies: SA-5R.
 
 Independent deliverable:
 
@@ -315,15 +360,15 @@ Dependencies: SA-3; execute serially after SA-5 to keep one active feature branc
 
 Independent deliverable:
 
-- After this task, SA cards can be mixed into the main deck behind `newDeck`, and scan can spend signal tokens when the mechanic is enabled, without depending on new alien species.
+- After this task, SA cards can be mixed into the main deck behind `newDeck`, and scan can spend signal tokens when `newDeck` is enabled, without depending on new alien species.
 
 Scope:
 
 - Gate `spaceAgencyCards` into the main deck only when `spaceAgencyOptions.newDeck` is true.
 - Confirm existing SA card registrations are complete and only become reachable through deck setup when enabled.
-- Gate the existing `SPEND_SIGNAL_TOKEN` scan branch behind `isSignalTokenMechanicEnabled`.
+- Gate the existing `SPEND_SIGNAL_TOKEN` scan branch behind `spaceAgencyOptions.newDeck`.
 - Implement scan option to spend signal tokens for one extra revealed card, max two tokens per scan.
-- Ensure `isSignalTokenMechanicEnabled` is the single helper used by server and client.
+- Use the same `spaceAgencyOptions.newDeck` option in server validation, public projection, and common/client availability.
 - Add client scan UI in the existing bottom input/free-action rail; do not add a separate scan modal unless the surrounding scan flow is refactored as a separate task.
 
 Parallel subagents:

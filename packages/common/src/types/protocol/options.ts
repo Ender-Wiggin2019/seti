@@ -54,6 +54,15 @@ export const DEFAULT_ALIEN_MODULES_ENABLED: Readonly<TAlienModulesEnabled> =
     [EAlienType.DUMMY]: false,
   });
 
+export const DEFAULT_SPACE_AGENCY_OPTIONS: Readonly<ISpaceAgencyOptions> =
+  Object.freeze({
+    enabled: false,
+    agencies: false,
+    startResourceCards: false,
+    newDeck: false,
+    newAlienSpecies: false,
+  });
+
 export const DEFAULT_GAME_OPTIONS: Readonly<IGameOptions> = Object.freeze({
   playerCount: 2,
   alienModulesEnabled: DEFAULT_ALIEN_MODULES_ENABLED,
@@ -67,6 +76,14 @@ export const DEFAULT_GAME_OPTIONS: Readonly<IGameOptions> = Object.freeze({
 const ALL_ALIEN_TYPES: readonly EAlienType[] = Object.values(EAlienType).filter(
   (value): value is EAlienType => typeof value === 'number',
 );
+
+const SPACE_AGENCY_OPTION_KEYS: readonly (keyof ISpaceAgencyOptions)[] = [
+  'enabled',
+  'agencies',
+  'startResourceCards',
+  'newDeck',
+  'newAlienSpecies',
+];
 
 function isAlienModulesRecord(
   value: unknown,
@@ -99,6 +116,96 @@ function validateAlienModulesEnabled(
         throw new Error('alienModulesEnabled must define all alien types');
       }
     }
+  }
+}
+
+function hasEnabledSpaceAgencyAliens(gameOptions: IGameOptions): boolean {
+  return (
+    gameOptions.alienModulesEnabled[EAlienType.GLYPHIDS] ||
+    gameOptions.alienModulesEnabled[EAlienType.AMOEBA]
+  );
+}
+
+function validateSpaceAgencyOptions(gameOptions: IGameOptions): void {
+  const spaceAgencyOptions = gameOptions.spaceAgencyOptions;
+  const hasSpaceAgencyExpansion = gameOptions.expansions.includes(
+    EExpansion.SPACE_AGENCY,
+  );
+
+  if (spaceAgencyOptions === undefined) {
+    if (hasSpaceAgencyExpansion) {
+      throw new Error(
+        'SPACE_AGENCY expansion requires enabled spaceAgencyOptions',
+      );
+    }
+    if (hasEnabledSpaceAgencyAliens(gameOptions)) {
+      throw new Error(
+        'newAlienSpecies is required to enable Space Agency aliens',
+      );
+    }
+    return;
+  }
+
+  if (spaceAgencyOptions === null || typeof spaceAgencyOptions !== 'object') {
+    throw new Error('spaceAgencyOptions must be an object');
+  }
+
+  for (const optionKey of Object.keys(spaceAgencyOptions)) {
+    if (
+      !SPACE_AGENCY_OPTION_KEYS.includes(optionKey as keyof ISpaceAgencyOptions)
+    ) {
+      throw new Error('spaceAgencyOptions must only use known module flags');
+    }
+  }
+
+  for (const optionKey of SPACE_AGENCY_OPTION_KEYS) {
+    const value = spaceAgencyOptions[optionKey];
+    if (typeof value !== 'boolean') {
+      throw new Error('spaceAgencyOptions must define all module flags');
+    }
+  }
+
+  if (!spaceAgencyOptions.enabled) {
+    if (
+      spaceAgencyOptions.agencies ||
+      spaceAgencyOptions.startResourceCards ||
+      spaceAgencyOptions.newDeck ||
+      spaceAgencyOptions.newAlienSpecies
+    ) {
+      throw new Error(
+        'disabled spaceAgencyOptions cannot enable child modules',
+      );
+    }
+    if (hasSpaceAgencyExpansion) {
+      throw new Error(
+        'SPACE_AGENCY expansion requires enabled spaceAgencyOptions',
+      );
+    }
+    if (hasEnabledSpaceAgencyAliens(gameOptions)) {
+      throw new Error(
+        'newAlienSpecies is required to enable Space Agency aliens',
+      );
+    }
+    return;
+  }
+
+  if (!hasSpaceAgencyExpansion) {
+    throw new Error(
+      'spaceAgencyOptions.enabled requires SPACE_AGENCY expansion',
+    );
+  }
+
+  if (spaceAgencyOptions.startResourceCards && !spaceAgencyOptions.agencies) {
+    throw new Error('startResourceCards requires agencies');
+  }
+
+  if (
+    !spaceAgencyOptions.newAlienSpecies &&
+    hasEnabledSpaceAgencyAliens(gameOptions)
+  ) {
+    throw new Error(
+      'newAlienSpecies is required to enable Space Agency aliens',
+    );
   }
 }
 
@@ -135,6 +242,8 @@ export function validateGameOptions(gameOptions: IGameOptions): void {
   ) {
     throw new Error('soloDifficulty must be an integer between 1 and 5');
   }
+
+  validateSpaceAgencyOptions(gameOptions);
 }
 
 export function createGameOptions(
@@ -157,7 +266,16 @@ export function createGameOptions(
       ...(gameOptions.alienModulesEnabled ?? {}),
     },
     expansions: gameOptions.expansions ?? [...DEFAULT_GAME_OPTIONS.expansions],
+    spaceAgencyOptions:
+      gameOptions.spaceAgencyOptions !== undefined
+        ? gameOptions.spaceAgencyOptions === null
+          ? (null as never)
+          : { ...gameOptions.spaceAgencyOptions }
+        : undefined,
   };
+  if (mergedOptions.spaceAgencyOptions === undefined) {
+    delete mergedOptions.spaceAgencyOptions;
+  }
 
   validateGameOptions(mergedOptions);
   return Object.freeze(mergedOptions);

@@ -364,7 +364,16 @@
         "ANALYZE_DATA": "分析数据",
         "PLAY_CARD": "打出卡牌",
         "RESEARCH_TECH": "研究科技",
+        "USE_ORGANIZATION_ACTION": "组织主行动",
         "PASS": "跳过"
+      },
+      "organization_actions": {
+        "futurespan": "未来跨度卡牌",
+        "xenolab": {
+          "launch": "异星实验室发射",
+          "scan": "异星实验室扫描",
+          "research": "异星实验室研究"
+        }
       }
     },
     "free_action_bar": {
@@ -380,8 +389,14 @@
         "USE_CARD_CORNER": "使用卡角",
         "BUY_CARD": "买卡（3声望）",
         "EXCHANGE_RESOURCES": "资源交换",
-        "SPEND_SIGNAL_TOKEN": "使用信号标记"
+        "SPEND_SIGNAL_TOKEN": "使用信号标记",
+        "USE_ORGANIZATION_POWER": "组织能力"
       }
+    },
+    "quick_start_card": {
+      "short_label": "快速起步",
+      "screen_reader_label": "快速起步卡 {{id}}：{{summary}}",
+      "no_setup_mark": "无设置标记"
     },
     "action_confirm": {
       "cost": "花费"

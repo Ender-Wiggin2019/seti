@@ -1,3 +1,5 @@
+import { EResource } from '@seti/common/types/element';
+import { EOrganizationId } from '@seti/common/types/organization';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ActionMenu } from '@/features/actions/ActionMenu';
@@ -128,6 +130,132 @@ describe('ActionMenu', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Pass' }));
 
     expect(onSendAction).toHaveBeenCalledWith({ type: EMainAction.PASS });
+  });
+
+  it('sends organization main actions with the required payload', () => {
+    const onSendAction = vi.fn();
+    const gameState = createMockGameState({
+      players: [
+        createMockPlayerState({
+          playerId: 'player-1',
+          organizationIds: [EOrganizationId.FUTURESPAN_INSTITUTE],
+          usableOrganizationMainActionIds: [
+            EOrganizationId.FUTURESPAN_INSTITUTE,
+          ],
+        }),
+      ],
+    });
+
+    render(
+      <ActionMenu
+        gameState={gameState}
+        myPlayerId='player-1'
+        isMyTurn
+        pendingInput={null}
+        canUndo={false}
+        onSendAction={onSendAction}
+        onRequestUndo={vi.fn()}
+        onSendEndTurn={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Futurespan Card' }));
+
+    expect(onSendAction).toHaveBeenCalledWith({
+      type: EMainAction.USE_ORGANIZATION_ACTION,
+      payload: { organizationId: EOrganizationId.FUTURESPAN_INSTITUTE },
+    });
+  });
+
+  it('disables organization main actions when pending input limits server actions', () => {
+    const pendingInput: IPlayerInputModel = {
+      inputId: 'input-or',
+      type: EPlayerInputType.OR,
+      options: [
+        {
+          inputId: 'option-1',
+          type: EPlayerInputType.OPTION,
+          title: 'Pass',
+          options: [{ id: 'pass', label: 'Pass' }],
+        },
+      ],
+    };
+    const gameState = createMockGameState({
+      players: [
+        createMockPlayerState({
+          playerId: 'player-1',
+          organizationIds: [EOrganizationId.FUTURESPAN_INSTITUTE],
+          usableOrganizationMainActionIds: [
+            EOrganizationId.FUTURESPAN_INSTITUTE,
+          ],
+        }),
+      ],
+    });
+
+    render(
+      <ActionMenu
+        gameState={gameState}
+        myPlayerId='player-1'
+        isMyTurn
+        pendingInput={pendingInput}
+        canUndo={false}
+        onSendAction={vi.fn()}
+        onRequestUndo={vi.fn()}
+        onSendEndTurn={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Futurespan Card' }),
+    ).toBeDisabled();
+  });
+
+  it('renders Xenolab tile main actions from organization state', () => {
+    const onSendAction = vi.fn();
+    const gameState = createMockGameState({
+      players: [
+        createMockPlayerState({
+          playerId: 'player-1',
+          organizationIds: [EOrganizationId.XENOLAB],
+          usableOrganizationMainActionIds: [EOrganizationId.XENOLAB],
+          organizationState: {
+            [EOrganizationId.XENOLAB]: {
+              tiles: { launch: false, scan: true, research: true },
+            },
+          },
+          resources: {
+            [EResource.CREDIT]: 1,
+            [EResource.ENERGY]: 2,
+            [EResource.DATA]: 0,
+            [EResource.PUBLICITY]: 4,
+            [EResource.SIGNAL_TOKEN]: 0,
+          },
+        }),
+      ],
+    });
+
+    render(
+      <ActionMenu
+        gameState={gameState}
+        myPlayerId='player-1'
+        isMyTurn
+        pendingInput={null}
+        canUndo={false}
+        onSendAction={onSendAction}
+        onRequestUndo={vi.fn()}
+        onSendEndTurn={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Xenolab Launch' }),
+    ).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Xenolab Scan' }));
+
+    expect(onSendAction).toHaveBeenCalledWith({
+      type: EMainAction.USE_ORGANIZATION_ACTION,
+      payload: { organizationId: EOrganizationId.XENOLAB, actionId: 'scan' },
+    });
   });
 
   it('enables orbit and land when solarSystem indexes show my probe on a planet', () => {

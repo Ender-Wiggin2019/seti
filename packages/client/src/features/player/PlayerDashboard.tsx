@@ -10,6 +10,8 @@ import type {
 import { EFreeAction, EPlayerInputType } from '@/types/re-exports';
 import { ComputerRow } from './ComputerRow';
 import { IncomeTracker } from './IncomeTracker';
+import { OrganizationBadge } from './OrganizationBadge';
+import { QuickStartCardsThumbnail } from './QuickStartCardsThumbnail';
 import { ResourceBar } from './ResourceBar';
 import { TechRow } from './TechRow';
 
@@ -54,10 +56,28 @@ export function PlayerDashboard({
   const missionCount = playedMissions?.length ?? 0;
   const techCount = playerTechs.length;
   const cardInputActive = pendingInput?.type === EPlayerInputType.CARD;
+  const organizationIds = player.organizationIds ?? [];
+  const quickStartCardIds = player.quickStartCardIds ?? [];
 
   return (
     <section className='space-y-1.5' data-testid='player-dashboard'>
       <ResourceBar player={player} />
+      {organizationIds.length > 0 ? (
+        <div
+          className='flex flex-wrap items-center gap-1'
+          data-testid='player-organizations'
+        >
+          {organizationIds.map((organizationId) => (
+            <OrganizationBadge
+              key={organizationId}
+              organizationId={organizationId}
+            />
+          ))}
+        </div>
+      ) : null}
+      {quickStartCardIds.length > 0 ? (
+        <QuickStartCardsThumbnail cardIds={quickStartCardIds} />
+      ) : null}
 
       <div className='instrument-panel relative overflow-hidden p-1.5'>
         {!textMode && (

@@ -5,7 +5,8 @@ import { GameError } from '@/shared/errors/GameError.js';
 const VALID_PHASE_TRANSITIONS_SOURCE: ReadonlyArray<
   readonly [EPhase, readonly EPhase[]]
 > = [
-  [EPhase.SETUP, [EPhase.AWAIT_MAIN_ACTION]],
+  [EPhase.SETUP, [EPhase.SETUP_CHOICE, EPhase.AWAIT_MAIN_ACTION]],
+  [EPhase.SETUP_CHOICE, [EPhase.AWAIT_MAIN_ACTION]],
   [EPhase.AWAIT_MAIN_ACTION, [EPhase.IN_RESOLUTION]],
   [EPhase.IN_RESOLUTION, [EPhase.AWAIT_END_TURN, EPhase.BETWEEN_TURNS]],
   [EPhase.AWAIT_END_TURN, [EPhase.BETWEEN_TURNS]],

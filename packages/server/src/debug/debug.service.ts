@@ -28,7 +28,7 @@ import {
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { IJwtPayload } from '@/auth/jwt-auth.guard.js';
 import { Game } from '@/engine/Game.js';
-import { createGameOptions } from '@/engine/GameOptions.js';
+import { createGameOptions, EExpansion } from '@/engine/GameOptions.js';
 import type { IGamePlayerIdentity } from '@/engine/IGame.js';
 import { GameManager } from '@/gateway/GameManager.js';
 import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
@@ -221,7 +221,9 @@ export class DebugService {
       }),
     );
 
-    const gameOptions = createGameOptions({ playerCount });
+    const gameOptions = createGameOptions(
+      this.getReplaySessionGameOptions(request, playerCount),
+    );
     const game = Game.create(players, gameOptions, seed, gameId);
     const replay = this.applyReplayPreset(game, request);
 
@@ -343,6 +345,30 @@ export class DebugService {
           : 'Invalid replay preset request',
       );
     }
+  }
+
+  private getReplaySessionGameOptions(
+    request: IDebugReplaySessionRequest,
+    playerCount: number,
+  ): Parameters<typeof createGameOptions>[0] {
+    if (
+      request.presetId === 'free-action-debug' &&
+      request.checkpointId === 'spend-signal-token'
+    ) {
+      return {
+        playerCount,
+        expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+        spaceAgencyOptions: {
+          enabled: true,
+          agencies: false,
+          startResourceCards: false,
+          newDeck: true,
+          newAlienSpecies: false,
+        },
+      };
+    }
+
+    return { playerCount };
   }
 
   private assertSnapshotReplayAllowed(): void {

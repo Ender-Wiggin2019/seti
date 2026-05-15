@@ -8,6 +8,7 @@ import { getBehaviorExecutor } from './BehaviorExecutor.js';
 import {
   EServerCardKind,
   type ICard,
+  type ICardPlayOptions,
   type ICardRuntimeContext,
 } from './ICard.js';
 import { type ICardRequirements, Requirements } from './Requirements.js';
@@ -136,12 +137,19 @@ export abstract class Card implements ICard {
     };
   }
 
-  public canPlay(context: ICardRuntimeContext): boolean {
+  public canPlay(
+    context: ICardRuntimeContext,
+    options: ICardPlayOptions = {},
+  ): boolean {
+    const requirements =
+      options.ignoreResourceCost === true
+        ? { ...this.requirements, resources: undefined }
+        : this.requirements;
     if (
       !Requirements.checkRequirements(
         context.player,
         context.game,
-        this.requirements,
+        requirements,
       )
     ) {
       return false;

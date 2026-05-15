@@ -1,3 +1,4 @@
+import { DEFAULT_PLAYER_ACTION_COSTS } from '@seti/common/types/organization';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import {
@@ -9,11 +10,16 @@ import type { IPlayer } from '../player/IPlayer.js';
 
 export type { IAnalyzeDataResult };
 
-const ANALYZE_ENERGY_COST = 1;
+export function getAnalyzeDataEnergyCost(player: IPlayer): number {
+  return (
+    player.actionCosts?.analyzeDataEnergy ??
+    DEFAULT_PLAYER_ACTION_COSTS.analyzeDataEnergy
+  );
+}
 
 export class AnalyzeDataAction {
   public static canExecute(player: IPlayer, _game: IGame): boolean {
-    if (!player.resources.has({ energy: ANALYZE_ENERGY_COST })) {
+    if (!player.resources.has({ energy: getAnalyzeDataEnergyCost(player) })) {
       return false;
     }
     return AnalyzeDataEffect.canExecute(player);
@@ -28,7 +34,7 @@ export class AnalyzeDataAction {
       );
     }
 
-    player.resources.spend({ energy: ANALYZE_ENERGY_COST });
+    player.resources.spend({ energy: getAnalyzeDataEnergyCost(player) });
     return AnalyzeDataEffect.execute(player);
   }
 }

@@ -1,4 +1,6 @@
 import { EResource } from '@seti/common/types/element';
+import { EOrganizationId } from '@seti/common/types/organization';
+import type { ISpaceAgencyOptions } from '@seti/common/types/protocol/options';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { FreeActionBar } from '@/features/actions/FreeActionBar';
@@ -7,6 +9,19 @@ import {
   createMockGameState,
   createMockPlayerState,
 } from '../../../test/mocks/gameState';
+
+const SPACE_AGENCY_NEW_DECK_OPTIONS: ISpaceAgencyOptions = {
+  enabled: true,
+  agencies: false,
+  startResourceCards: false,
+  newDeck: true,
+  newAlienSpecies: false,
+};
+
+const SPACE_AGENCY_WITHOUT_NEW_DECK_OPTIONS: ISpaceAgencyOptions = {
+  ...SPACE_AGENCY_NEW_DECK_OPTIONS,
+  newDeck: false,
+};
 
 describe('FreeActionBar', () => {
   it('shows only move and mission by default', () => {
@@ -133,6 +148,7 @@ describe('FreeActionBar', () => {
     const gameState = createMockGameState({
       phase: EPhase.IN_RESOLUTION,
       scanActionInProgress: true,
+      spaceAgencyOptions: SPACE_AGENCY_NEW_DECK_OPTIONS,
       cardRow: [{ id: 'row-1' } as never],
       players: [
         createMockPlayerState({
@@ -162,11 +178,83 @@ describe('FreeActionBar', () => {
     expect(onActionClick).toHaveBeenCalledWith(EFreeAction.SPEND_SIGNAL_TOKEN);
   });
 
-  it('keeps spend signal token available during scan pending input', () => {
+  it('does not show spend signal token when newDeck is disabled', () => {
+    const gameState = createMockGameState({
+      phase: EPhase.IN_RESOLUTION,
+      scanActionInProgress: true,
+      spaceAgencyOptions: SPACE_AGENCY_WITHOUT_NEW_DECK_OPTIONS,
+      cardRow: [{ id: 'row-1' } as never],
+      players: [
+        createMockPlayerState({
+          playerId: 'player-1',
+          resources: {
+            [EResource.CREDIT]: 10,
+            [EResource.ENERGY]: 5,
+            [EResource.DATA]: 0,
+            [EResource.PUBLICITY]: 3,
+            [EResource.SIGNAL_TOKEN]: 1,
+          },
+        }),
+      ],
+    });
+
+    render(
+      <FreeActionBar
+        gameState={gameState}
+        myPlayerId='player-1'
+        isMyTurn
+        onActionClick={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+    expect(
+      screen.getByRole('button', { name: 'Spend Signal Token' }),
+    ).toBeDisabled();
+  });
+
+  it('disables spend signal token after two spends in the current scan', () => {
+    const gameState = createMockGameState({
+      phase: EPhase.IN_RESOLUTION,
+      scanActionInProgress: true,
+      spaceAgencyOptions: SPACE_AGENCY_NEW_DECK_OPTIONS,
+      scanSignalTokensSpent: 2,
+      cardRow: [{ id: 'row-1' } as never],
+      players: [
+        createMockPlayerState({
+          playerId: 'player-1',
+          resources: {
+            [EResource.CREDIT]: 10,
+            [EResource.ENERGY]: 5,
+            [EResource.DATA]: 0,
+            [EResource.PUBLICITY]: 3,
+            [EResource.SIGNAL_TOKEN]: 1,
+          },
+        }),
+      ],
+    });
+
+    render(
+      <FreeActionBar
+        gameState={gameState}
+        myPlayerId='player-1'
+        isMyTurn
+        onActionClick={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+    expect(
+      screen.getByRole('button', { name: 'Spend Signal Token' }),
+    ).toBeDisabled();
+  });
+
+  it('keeps spend signal token available during the scan pool input', () => {
     const onActionClick = vi.fn();
     const gameState = createMockGameState({
       phase: EPhase.IN_RESOLUTION,
       scanActionInProgress: true,
+      spaceAgencyOptions: SPACE_AGENCY_NEW_DECK_OPTIONS,
       cardRow: [{ id: 'row-1' } as never],
       players: [
         createMockPlayerState({
@@ -188,12 +276,10 @@ describe('FreeActionBar', () => {
         myPlayerId='player-1'
         isMyTurn
         pendingInput={{
-          inputId: 'input-card-row',
-          type: EPlayerInputType.CARD,
-          title: 'Select a card from row',
-          cards: [{ id: 'row-1' } as never],
-          minSelections: 1,
-          maxSelections: 1,
+          inputId: 'input-scan-pool',
+          type: EPlayerInputType.OPTION,
+          title: 'Scan: choose sub-action',
+          options: [{ id: 'mark-earth', label: 'Mark Earth' }],
         }}
         onActionClick={onActionClick}
       />,
@@ -205,5 +291,250 @@ describe('FreeActionBar', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Spend Signal Token' }));
 
     expect(onActionClick).toHaveBeenCalledWith(EFreeAction.SPEND_SIGNAL_TOKEN);
+  });
+
+  it('does not render organization buttons while resolving pending input', () => {
+    const baseGameState = createMockGameState({
+      players: [
+        createMockPlayerState({
+          playerId: 'player-1',
+          organizationIds: [EOrganizationId.SENTINEL_PROBE_NETWORK],
+          oncePerRoundUsed: {
+            [EOrganizationId.SENTINEL_PROBE_NETWORK]: false,
+          },
+        }),
+      ],
+    });
+
+    const { rerender } = render(
+      <FreeActionBar
+        gameState={baseGameState}
+        myPlayerId='player-1'
+        isMyTurn
+        onActionClick={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+    expect(
+      screen.getByTestId(
+        `organization-power-${EOrganizationId.SENTINEL_PROBE_NETWORK}`,
+      ),
+    ).toBeInTheDocument();
+
+    rerender(
+      <FreeActionBar
+        gameState={{
+          ...baseGameState,
+          phase: EPhase.IN_RESOLUTION,
+          scanActionInProgress: true,
+          cardRow: [{ id: 'row-1' } as never],
+          players: [
+            createMockPlayerState({
+              playerId: 'player-1',
+              organizationIds: [EOrganizationId.SENTINEL_PROBE_NETWORK],
+              oncePerRoundUsed: {
+                [EOrganizationId.SENTINEL_PROBE_NETWORK]: false,
+              },
+              resources: {
+                [EResource.CREDIT]: 10,
+                [EResource.ENERGY]: 5,
+                [EResource.DATA]: 0,
+                [EResource.PUBLICITY]: 3,
+                [EResource.SIGNAL_TOKEN]: 1,
+              },
+            }),
+          ],
+        }}
+        myPlayerId='player-1'
+        isMyTurn
+        pendingInput={{
+          inputId: 'input-card',
+          type: EPlayerInputType.CARD,
+          title: 'Select a card',
+          cards: [],
+          minSelections: 0,
+          maxSelections: 1,
+        }}
+        onActionClick={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByTestId(
+        `organization-power-${EOrganizationId.SENTINEL_PROBE_NETWORK}`,
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  it('renders setup-only organization power shells disabled', () => {
+    const onActionClick = vi.fn();
+    const gameState = createMockGameState({
+      players: [
+        createMockPlayerState({
+          playerId: 'player-1',
+          organizationIds: [EOrganizationId.ORBITAL_DYNAMICS],
+        }),
+      ],
+    });
+
+    render(
+      <FreeActionBar
+        gameState={gameState}
+        myPlayerId='player-1'
+        isMyTurn
+        onActionClick={onActionClick}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+
+    const powerButton = screen.getByTestId(
+      `organization-power-${EOrganizationId.ORBITAL_DYNAMICS}`,
+    );
+    expect(powerButton).toHaveTextContent('Organization Power');
+    expect(powerButton).toBeDisabled();
+    fireEvent.click(powerButton);
+    expect(onActionClick).not.toHaveBeenCalledWith(
+      EFreeAction.USE_ORGANIZATION_POWER,
+    );
+  });
+
+  it('enables implemented unused organization powers', () => {
+    const onActionClick = vi.fn();
+    const gameState = createMockGameState({
+      cardRow: [
+        {
+          id: '128',
+          freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
+        } as never,
+      ],
+      players: [
+        createMockPlayerState({
+          playerId: 'player-1',
+          organizationIds: [EOrganizationId.STRATUS_CORE],
+          usableOrganizationPowerIds: [EOrganizationId.STRATUS_CORE],
+          oncePerRoundUsed: { [EOrganizationId.STRATUS_CORE]: false },
+        }),
+      ],
+    });
+
+    render(
+      <FreeActionBar
+        gameState={gameState}
+        myPlayerId='player-1'
+        isMyTurn
+        onActionClick={onActionClick}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+    const powerButton = screen.getByTestId(
+      `organization-power-${EOrganizationId.STRATUS_CORE}`,
+    );
+    expect(powerButton).toBeEnabled();
+    fireEvent.click(powerButton);
+    expect(onActionClick).toHaveBeenCalledWith(
+      EFreeAction.USE_ORGANIZATION_POWER,
+      EOrganizationId.STRATUS_CORE,
+    );
+  });
+
+  it('enables Fenwick and Sentinel organization powers with organization-specific payloads', () => {
+    const onActionClick = vi.fn();
+    const gameState = createMockGameState({
+      players: [
+        createMockPlayerState({
+          playerId: 'player-1',
+          organizationIds: [
+            EOrganizationId.FENWICK_RESEARCH_CENTER,
+            EOrganizationId.SENTINEL_PROBE_NETWORK,
+          ],
+          usableOrganizationPowerIds: [
+            EOrganizationId.FENWICK_RESEARCH_CENTER,
+            EOrganizationId.SENTINEL_PROBE_NETWORK,
+          ],
+          oncePerRoundUsed: {
+            [EOrganizationId.FENWICK_RESEARCH_CENTER]: false,
+            [EOrganizationId.SENTINEL_PROBE_NETWORK]: false,
+          },
+          resources: {
+            [EResource.CREDIT]: 10,
+            [EResource.ENERGY]: 5,
+            [EResource.DATA]: 0,
+            [EResource.PUBLICITY]: 1,
+            [EResource.SIGNAL_TOKEN]: 0,
+          },
+        }),
+      ],
+    });
+
+    render(
+      <FreeActionBar
+        gameState={gameState}
+        myPlayerId='player-1'
+        isMyTurn
+        onActionClick={onActionClick}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+    const fenwickButton = screen.getByTestId(
+      `organization-power-${EOrganizationId.FENWICK_RESEARCH_CENTER}`,
+    );
+    const sentinelButton = screen.getByTestId(
+      `organization-power-${EOrganizationId.SENTINEL_PROBE_NETWORK}`,
+    );
+
+    expect(fenwickButton).toBeEnabled();
+    expect(sentinelButton).toBeEnabled();
+    expect(fenwickButton).toHaveAccessibleName(
+      'Fenwick Research Center Organization Power',
+    );
+    expect(sentinelButton).toHaveAccessibleName(
+      'Sentinel Probe Network Organization Power',
+    );
+    fireEvent.click(fenwickButton);
+    fireEvent.click(sentinelButton);
+
+    expect(onActionClick).toHaveBeenCalledWith(
+      EFreeAction.USE_ORGANIZATION_POWER,
+      EOrganizationId.FENWICK_RESEARCH_CENTER,
+    );
+    expect(onActionClick).toHaveBeenCalledWith(
+      EFreeAction.USE_ORGANIZATION_POWER,
+      EOrganizationId.SENTINEL_PROBE_NETWORK,
+    );
+  });
+
+  it('disables Stratus Core when the row has unsupported input corners', () => {
+    const gameState = createMockGameState({
+      cardRow: [
+        {
+          id: 'card-any-row',
+          freeAction: [{ type: EResource.CARD_ANY, value: 1 }],
+        } as never,
+      ],
+      players: [
+        createMockPlayerState({
+          playerId: 'player-1',
+          organizationIds: [EOrganizationId.STRATUS_CORE],
+          oncePerRoundUsed: { [EOrganizationId.STRATUS_CORE]: false },
+        }),
+      ],
+    });
+
+    render(
+      <FreeActionBar
+        gameState={gameState}
+        myPlayerId='player-1'
+        isMyTurn
+        onActionClick={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+    expect(
+      screen.getByTestId(`organization-power-${EOrganizationId.STRATUS_CORE}`),
+    ).toBeDisabled();
   });
 });

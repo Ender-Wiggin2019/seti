@@ -2,6 +2,8 @@ import {
   getAvailableMainActions,
   isAnySetupTuckPending,
 } from '@seti/common/rules';
+import { EResource } from '@seti/common/types/element';
+import { EOrganizationId } from '@seti/common/types/organization';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { UndoButton } from '@/features/actions/UndoButton';
@@ -32,6 +34,7 @@ const ACTION_GLYPHS: Record<EMainAction, string> = {
   [EMainAction.ANALYZE_DATA]: '05',
   [EMainAction.PLAY_CARD]: '06',
   [EMainAction.RESEARCH_TECH]: '07',
+  [EMainAction.USE_ORGANIZATION_ACTION]: '09',
   [EMainAction.PASS]: '08',
 };
 
@@ -43,8 +46,20 @@ const ACTION_KEYWORDS: Record<EMainAction, string[]> = {
   [EMainAction.ANALYZE_DATA]: ['analyze data', 'analyze', 'clearcomputer'],
   [EMainAction.PLAY_CARD]: ['play card', 'card'],
   [EMainAction.RESEARCH_TECH]: ['research tech', 'research', 'techpop'],
+  [EMainAction.USE_ORGANIZATION_ACTION]: ['organization'],
   [EMainAction.PASS]: ['pass'],
 };
+
+interface IOrganizationMainActionButton {
+  key: string;
+  labelKey: string;
+  defaultLabel: string;
+  payload: {
+    organizationId: EOrganizationId;
+    actionId?: string;
+  };
+  enabled: boolean;
+}
 
 export type TActionMenuOrientation = 'vertical' | 'horizontal';
 
@@ -294,6 +309,15 @@ export function ActionMenu({
   const serverAvailable = getServerAvailableActions(pendingInput);
   const ruleAvailable = new Set(getAvailableMainActions(myPlayer, gameState));
   const available = serverAvailable.size > 0 ? serverAvailable : ruleAvailable;
+  const organizationMainActions = buildOrganizationMainActionButtons(
+    myPlayer,
+  ).map((action) => ({
+    ...action,
+    enabled:
+      action.enabled &&
+      (serverAvailable.size === 0 ||
+        available.has(EMainAction.USE_ORGANIZATION_ACTION)),
+  }));
 
   return (
     <MenuFrame
@@ -351,9 +375,126 @@ export function ActionMenu({
             </Button>
           );
         })}
+        {organizationMainActions.map((action) => (
+          <Button
+            key={action.key}
+            variant='ghost'
+            size='sm'
+            disabled={!action.enabled}
+            onClick={() =>
+              onSendAction({
+                type: EMainAction.USE_ORGANIZATION_ACTION,
+                payload: action.payload,
+              })
+            }
+            data-testid={`action-menu-${action.key}`}
+            className={cn(
+              'gap-1.5 text-left text-xs',
+              orientation === 'horizontal'
+                ? 'h-8 justify-center px-2.5'
+                : 'h-9 justify-start px-2',
+              action.enabled &&
+                'hover:border-accent-500/60 hover:text-text-100',
+            )}
+          >
+            <span
+              aria-hidden
+              className={cn(
+                'font-mono text-[10px] tracking-[0.14em]',
+                action.enabled ? 'text-accent-400' : 'text-text-500',
+              )}
+            >
+              {ACTION_GLYPHS[EMainAction.USE_ORGANIZATION_ACTION]}
+            </span>
+            <span
+              className={cn(
+                orientation === 'horizontal'
+                  ? 'whitespace-nowrap'
+                  : 'flex-1 truncate',
+              )}
+            >
+              {t(action.labelKey, { defaultValue: action.defaultLabel })}
+            </span>
+          </Button>
+        ))}
       </div>
     </MenuFrame>
   );
+}
+
+function buildOrganizationMainActionButtons(
+  player: NonNullable<IPublicGameState['players'][number]>,
+): IOrganizationMainActionButton[] {
+  const usable = new Set(player.usableOrganizationMainActionIds ?? []);
+  const buttons: IOrganizationMainActionButton[] = [];
+
+  if (usable.has(EOrganizationId.FUTURESPAN_INSTITUTE)) {
+    buttons.push({
+      key: `${EOrganizationId.FUTURESPAN_INSTITUTE}-play`,
+      labelKey: 'client.action_menu.organization_actions.futurespan',
+      defaultLabel: 'Futurespan Card',
+      payload: {
+        organizationId: EOrganizationId.FUTURESPAN_INSTITUTE,
+      },
+      enabled: true,
+    });
+  }
+
+  if (usable.has(EOrganizationId.XENOLAB)) {
+    buttons.push(
+      buildXenolabButton(player, 'launch', 'Launch', () =>
+        hasResource(player, EResource.CREDIT, 1),
+      ),
+      buildXenolabButton(player, 'scan', 'Scan', () =>
+        hasResource(player, EResource.ENERGY, 2),
+      ),
+      buildXenolabButton(player, 'research', 'Research', () =>
+        hasResource(player, EResource.PUBLICITY, 4),
+      ),
+    );
+  }
+
+  return buttons;
+}
+
+function buildXenolabButton(
+  player: NonNullable<IPublicGameState['players'][number]>,
+  actionId: 'launch' | 'scan' | 'research',
+  label: string,
+  hasCost: () => boolean,
+): IOrganizationMainActionButton {
+  const tiles = getXenolabTiles(player);
+  const active = tiles[actionId] !== false;
+  const capacityAvailable =
+    actionId !== 'launch' || player.probesInSpace < player.probeSpaceLimit;
+
+  return {
+    key: `${EOrganizationId.XENOLAB}-${actionId}`,
+    labelKey: `client.action_menu.organization_actions.xenolab.${actionId}`,
+    defaultLabel: `Xenolab ${label}`,
+    payload: {
+      organizationId: EOrganizationId.XENOLAB,
+      actionId,
+    },
+    enabled: active && capacityAvailable && hasCost(),
+  };
+}
+
+function getXenolabTiles(
+  player: NonNullable<IPublicGameState['players'][number]>,
+): Partial<Record<'launch' | 'scan' | 'research', boolean>> {
+  const state = player.organizationState?.[EOrganizationId.XENOLAB] as
+    | { tiles?: Record<'launch' | 'scan' | 'research', boolean> }
+    | undefined;
+  return state?.tiles ?? {};
+}
+
+function hasResource(
+  player: NonNullable<IPublicGameState['players'][number]>,
+  resource: EResource.CREDIT | EResource.ENERGY | EResource.PUBLICITY,
+  amount: number,
+): boolean {
+  return (player.resources[resource] ?? 0) >= amount;
 }
 
 function getServerAvailableActions(

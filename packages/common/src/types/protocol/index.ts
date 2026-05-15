@@ -1,3 +1,4 @@
+export * from '@seti/common/types/organization';
 export * from '@seti/common/types/protocol/actions';
 export * from '@seti/common/types/protocol/debug';
 export * from '@seti/common/types/protocol/enums';

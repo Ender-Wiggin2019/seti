@@ -3,7 +3,10 @@ import {
   EMainAction,
   EPhase,
 } from '@seti/common/types/protocol/enums';
-import { DEFAULT_ALIEN_MODULES_ENABLED } from '@seti/common/types/protocol/options';
+import {
+  DEFAULT_ALIEN_MODULES_ENABLED,
+  EExpansion,
+} from '@seti/common/types/protocol/options';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { isMascamitesAlienBoard } from '@/engine/alien/AlienBoard.js';
 import {
@@ -16,6 +19,16 @@ describe('formal lobby scenario presets', () => {
   it('prepares a real scan pool where spend signal token can be clicked', () => {
     const game = buildTestGame({
       autoResolveSetupTucks: false,
+      options: {
+        expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+        spaceAgencyOptions: {
+          enabled: true,
+          agencies: false,
+          startResourceCards: false,
+          newDeck: true,
+          newAlienSpecies: false,
+        },
+      },
       seed: 'scenario-spend-signal-token',
     });
     const player = game.activePlayer;

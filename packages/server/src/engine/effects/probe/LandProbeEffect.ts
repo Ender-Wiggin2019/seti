@@ -9,6 +9,7 @@ import { EMissionEventType } from '@/engine/missions/IMission.js';
 import { GameError } from '@/shared/errors/GameError.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
+import { OrganizationRegistry } from '../../organization/OrganizationRegistry.js';
 import type { IPlayer } from '../../player/IPlayer.js';
 import { EPieceType } from '../../player/Pieces.js';
 import { TechModifierQuery } from '../../tech/TechModifierQuery.js';
@@ -252,11 +253,14 @@ export class LandProbeEffect {
 
   private static resolveMoonFlag(
     player: IPlayer,
+    game: IGame,
     options: ILandOptions,
   ): boolean {
     return (
       options.allowMoons ??
-      TechModifierQuery.fromTechIds(player.techs).canLandOnMoon()
+      TechModifierQuery.fromTechIds(
+        OrganizationRegistry.getEffectiveTechIds(player, game),
+      ).canLandOnMoon()
     );
   }
 
@@ -278,7 +282,7 @@ export class LandProbeEffect {
     return game.planetaryBoard.canLand(planet, player.id, {
       isMoon: options.isMoon,
       moonId: options.moonId,
-      allowMoonLanding: this.resolveMoonFlag(player, options),
+      allowMoonLanding: this.resolveMoonFlag(player, game, options),
       allowDuplicate: options.allowDuplicate,
     });
   }
@@ -311,7 +315,9 @@ export class LandProbeEffect {
     }
 
     const baseCost = planetaryBoard.getLandingCost(planet, player.id);
-    return TechModifierQuery.fromTechIds(player.techs).getLandingCost(baseCost);
+    return TechModifierQuery.fromTechIds(
+      OrganizationRegistry.getEffectiveTechIds(player, game),
+    ).getLandingCost(baseCost);
   }
 
   public static execute(
@@ -364,7 +370,7 @@ export class LandProbeEffect {
     const landingResult = planetaryBoard.land(planet, player.id, {
       isMoon: options.isMoon,
       moonId: options.moonId,
-      allowMoonLanding: this.resolveMoonFlag(player, options),
+      allowMoonLanding: this.resolveMoonFlag(player, game, options),
       allowDuplicate: options.allowDuplicate,
     });
     if (player.pieces.available(EPieceType.LANDER) > 0) {

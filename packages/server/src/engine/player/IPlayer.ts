@@ -1,6 +1,13 @@
 import type { IComputerColumnConfig } from '@seti/common/types/computer';
 import { EResource, ETrace } from '@seti/common/types/element';
+import type {
+  EOrganizationId,
+  IPlayerActionCostConfig,
+  TOrganizationRoundUsage,
+  TOrganizationState,
+} from '@seti/common/types/organization';
 import type { EPlanet } from '@seti/common/types/protocol/enums';
+import type { ISetupChoiceContext } from '@seti/common/types/protocol/playerInput';
 import type { ETechId } from '@seti/common/types/tech';
 import type { ICard } from '../cards/ICard.js';
 import type {
@@ -68,6 +75,12 @@ export interface IPlayerInit extends IPlayerIdentity {
    * chain progress is preserved mid-setup.
    */
   pendingSetupTucks?: number;
+  setupChoiceContext?: ISetupChoiceContext;
+  quickStartCardIds?: string[];
+  organizationIds?: EOrganizationId[];
+  organizationState?: TOrganizationState;
+  oncePerRoundUsed?: TOrganizationRoundUsage;
+  actionCosts?: IPlayerActionCostConfig;
 }
 
 export interface IPlayer extends IPlayerIdentity {
@@ -101,6 +114,12 @@ export interface IPlayer extends IPlayerIdentity {
    * and rebuild outstanding setup prompts.
    */
   pendingSetupTucks: number;
+  setupChoiceContext?: ISetupChoiceContext;
+  quickStartCardIds: string[];
+  organizationIds: EOrganizationId[];
+  organizationState: TOrganizationState;
+  oncePerRoundUsed: TOrganizationRoundUsage;
+  actionCosts: IPlayerActionCostConfig;
 
   game: IGame | null;
   waitingFor?: IPlayerInput;

@@ -321,9 +321,37 @@ export class GoldScoringTile {
     if (!this.canClaim(playerId)) {
       return 0;
     }
-    const value = this.slotValues[this.claims.length] ?? 0;
+    const value =
+      this.slotValues.find((_, index) => !this.isSlotClaimed(index)) ?? 0;
     this.claims.push({ playerId, value });
     return value;
+  }
+
+  public claimLowest(playerId: string): number {
+    if (!this.canClaim(playerId)) {
+      return 0;
+    }
+    const value =
+      this.slotValues
+        .map((value, index) => ({
+          index,
+          value,
+        }))
+        .reverse()
+        .find((slot) => !this.isSlotClaimed(slot.index))?.value ?? 0;
+    this.claims.push({ playerId, value });
+    return value;
+  }
+
+  private isSlotClaimed(index: number): boolean {
+    const value = this.slotValues[index];
+    const occurrenceIndex = this.slotValues
+      .slice(0, index + 1)
+      .filter((slotValue) => slotValue === value).length;
+    const claimedOccurrences = this.claims.filter(
+      (claim) => claim.value === value,
+    ).length;
+    return claimedOccurrences >= occurrenceIndex;
   }
 
   public scorePlayer(player: IPlayer, game: IGame): number {

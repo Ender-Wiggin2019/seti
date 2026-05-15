@@ -255,6 +255,13 @@ export class PlanetaryBoard {
     return { vpGained: 0, rewards };
   }
 
+  public placeSetupOrbiter(planet: EPlanet, playerId: string): void {
+    assertPlayerId(playerId);
+    const planetState = this.getPlanetState(planet);
+    planetState.orbitSlots.push({ playerId });
+    planetState.firstOrbitClaimed = true;
+  }
+
   public land(
     planet: EPlanet,
     playerId: string,

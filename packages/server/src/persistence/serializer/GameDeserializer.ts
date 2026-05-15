@@ -5,6 +5,7 @@ import {
 import { normalizeRivalBoardConfigId } from '@seti/common/constant/solo';
 import { DEFAULT_COLUMN_CONFIGS } from '@seti/common/types/computer';
 import { EResource } from '@seti/common/types/element';
+import { DEFAULT_PLAYER_ACTION_COSTS } from '@seti/common/types/organization';
 import { type EPlanet } from '@seti/common/types/protocol/enums';
 import { AlienState } from '@/engine/alien/AlienState.js';
 import {
@@ -21,11 +22,13 @@ import { DeferredActionsQueue } from '@/engine/deferred/DeferredActionsQueue.js'
 import { TuckCardForIncomeEffect } from '@/engine/effects/income/TuckCardForIncomeEffect.js';
 import { EventLog } from '@/engine/event/EventLog.js';
 import { Game } from '@/engine/Game.js';
+import { GameSetup } from '@/engine/GameSetup.js';
 import type {
   IMissionEvent,
   IMissionRuntimeState,
 } from '@/engine/missions/IMission.js';
 import { MissionTracker } from '@/engine/missions/MissionTracker.js';
+import { OrganizationRegistry } from '@/engine/organization/OrganizationRegistry.js';
 import { Computer } from '@/engine/player/Computer.js';
 import type { ComputerColumn } from '@/engine/player/ComputerColumn.js';
 import { DataPool } from '@/engine/player/DataPool.js';
@@ -35,6 +38,7 @@ import { Player } from '@/engine/player/Player.js';
 import { Resources } from '@/engine/player/Resources.js';
 import { GoldScoringTile } from '@/engine/scoring/GoldScoringTile.js';
 import { MilestoneState } from '@/engine/scoring/Milestone.js';
+import { SetupChoiceCoordinator } from '@/engine/setup/SetupChoiceCoordinator.js';
 import { RivalState } from '@/engine/solo/RivalState.js';
 import { type ITechStack, TechBoard } from '@/engine/tech/TechBoard.js';
 import { buildTechTileBonuses } from '@/engine/tech/TechBonusConfig.js';
@@ -304,6 +308,17 @@ function deserializePlayers(game: Game, dto: IGameStateDto): void {
     player.probeSpaceLimit = playerDto.probeSpaceLimit;
     player.handLimitAfterPass = playerDto.handLimitAfterPass;
     player.pendingSetupTucks = Math.max(0, playerDto.pendingSetupTucks);
+    player.setupChoiceContext = playerDto.setupChoiceContext
+      ? cloneValue(playerDto.setupChoiceContext)
+      : undefined;
+    player.quickStartCardIds = [...(playerDto.quickStartCardIds ?? [])];
+    player.organizationIds = [...(playerDto.organizationIds ?? [])];
+    player.organizationState = cloneValue(playerDto.organizationState ?? {});
+    player.oncePerRoundUsed = cloneValue(playerDto.oncePerRoundUsed ?? {});
+    player.actionCosts = {
+      ...DEFAULT_PLAYER_ACTION_COSTS,
+      ...(playerDto.actionCosts ?? {}),
+    };
     player.exofossils = Math.max(0, playerDto.exofossils ?? 0);
 
     const concretePlayer = player as Player;
@@ -567,6 +582,7 @@ export function deserializeGame(dto: IGameStateDto): Game {
   });
 
   deserializePlayers(game, dto);
+  OrganizationRegistry.restorePlayerOrganizations(game);
 
   game.eventLog = new EventLog();
   for (const event of dto.eventLog) {
@@ -601,6 +617,10 @@ export function deserializeGame(dto: IGameStateDto): Game {
  * they are introduced.
  */
 function rehydratePendingInputs(game: Game): void {
+  const setupChoicePlayers = game.players.filter(
+    (player) => player.setupChoiceContext !== undefined,
+  );
+
   for (const player of game.players) {
     if (player.waitingFor) continue;
     if (player.pendingSetupTucks > 0) {
@@ -608,6 +628,15 @@ function rehydratePendingInputs(game: Game): void {
         player,
         game,
       );
+      continue;
+    }
+    const setupChoiceInput = SetupChoiceCoordinator.rehydratePendingInput(
+      player,
+      setupChoicePlayers,
+      () => GameSetup.resolveSetupChoiceSelections(game),
+    );
+    if (setupChoiceInput) {
+      player.waitingFor = setupChoiceInput;
     }
   }
 }

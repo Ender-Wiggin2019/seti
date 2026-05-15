@@ -12,6 +12,7 @@ import {
 } from '@/rules/actions';
 import { EAlienType, type IBaseCard } from '@/types/BaseCard';
 import { EResource, ETech } from '@/types/element';
+import { EOrganizationId } from '@/types/organization';
 import { EMainAction, EPhase, EPlanet } from '@/types/protocol/enums';
 import type {
   IPublicGameState,
@@ -113,6 +114,40 @@ function createTechBoard(): IPublicTechBoard {
   return { stacks };
 }
 
+function createFullComputer(): IPublicPlayerState['computer'] {
+  return {
+    columns: [
+      {
+        topFilled: true,
+        topReward: null,
+        techId: null,
+        hasBottomSlot: false,
+        bottomFilled: false,
+        bottomReward: null,
+        techSlotAvailable: true,
+      },
+      {
+        topFilled: true,
+        topReward: null,
+        techId: null,
+        hasBottomSlot: false,
+        bottomFilled: false,
+        bottomReward: null,
+        techSlotAvailable: true,
+      },
+      {
+        topFilled: true,
+        topReward: null,
+        techId: null,
+        hasBottomSlot: false,
+        bottomFilled: false,
+        bottomReward: null,
+        techSlotAvailable: true,
+      },
+    ],
+  };
+}
+
 function createGameState(
   overrides?: Partial<IPublicGameState>,
 ): IPublicGameState {
@@ -146,6 +181,7 @@ function createGameState(
       },
     },
     techBoard: createTechBoard(),
+    mainDeck: { drawPileSize: 20, discardPileSize: 0 },
     cardRow: [],
     aliens: [],
     recentEvents: [],
@@ -457,6 +493,43 @@ describe('action rules', () => {
       });
       expect(canAnalyzeData(player)).toBe(false);
     });
+
+    it('returns true without energy for Deep Sky Survey', () => {
+      const player = createPlayer({
+        organizationIds: [EOrganizationId.DEEP_SKY_SURVEY],
+        actionCosts: {
+          analyzeDataEnergy: 0,
+          researchTechPublicity: 6,
+        },
+        resources: {
+          [EResource.CREDIT]: 4,
+          [EResource.ENERGY]: 0,
+          [EResource.DATA]: 0,
+          [EResource.PUBLICITY]: 6,
+        },
+        computer: createFullComputer(),
+      });
+
+      expect(canAnalyzeData(player)).toBe(true);
+    });
+
+    it('uses projected player action costs instead of organization ids', () => {
+      const player = createPlayer({
+        resources: {
+          [EResource.CREDIT]: 4,
+          [EResource.ENERGY]: 0,
+          [EResource.DATA]: 0,
+          [EResource.PUBLICITY]: 6,
+        },
+        actionCosts: {
+          analyzeDataEnergy: 0,
+          researchTechPublicity: 6,
+        },
+        computer: createFullComputer(),
+      } as Partial<IPublicPlayerState>);
+
+      expect(canAnalyzeData(player)).toBe(true);
+    });
   });
 
   describe('canPlayCard', () => {
@@ -541,6 +614,41 @@ describe('action rules', () => {
         },
       });
       expect(canResearchTechAction(player, createGameState())).toBe(false);
+    });
+
+    it('uses a 5-publicity research cost for Fenwick Research Center', () => {
+      const player = createPlayer({
+        organizationIds: [EOrganizationId.FENWICK_RESEARCH_CENTER],
+        actionCosts: {
+          analyzeDataEnergy: 1,
+          researchTechPublicity: 5,
+        },
+        resources: {
+          [EResource.CREDIT]: 4,
+          [EResource.ENERGY]: 3,
+          [EResource.DATA]: 0,
+          [EResource.PUBLICITY]: 5,
+        },
+      });
+
+      expect(canResearchTechAction(player, createGameState())).toBe(true);
+    });
+
+    it('uses projected research publicity cost instead of organization ids', () => {
+      const player = createPlayer({
+        resources: {
+          [EResource.CREDIT]: 4,
+          [EResource.ENERGY]: 3,
+          [EResource.DATA]: 0,
+          [EResource.PUBLICITY]: 5,
+        },
+        actionCosts: {
+          analyzeDataEnergy: 1,
+          researchTechPublicity: 5,
+        },
+      } as Partial<IPublicPlayerState>);
+
+      expect(canResearchTechAction(player, createGameState())).toBe(true);
     });
 
     it('returns false when no techs available', () => {
@@ -634,6 +742,16 @@ describe('action rules', () => {
       expect(actions).not.toContain(EMainAction.PLAY_CARD);
       expect(actions).not.toContain(EMainAction.RESEARCH_TECH);
       expect(actions).toContain(EMainAction.PASS);
+    });
+
+    it('includes organization action when the server projects usable organization main actions', () => {
+      const player = createPlayer({
+        usableOrganizationMainActionIds: [EOrganizationId.XENOLAB],
+      });
+
+      const actions = getAvailableMainActions(player, createGameState());
+
+      expect(actions).toContain(EMainAction.USE_ORGANIZATION_ACTION);
     });
   });
 });

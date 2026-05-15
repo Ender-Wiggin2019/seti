@@ -1,4 +1,11 @@
 import { EResource, ETrace } from '@seti/common/types/element';
+import {
+  DEFAULT_PLAYER_ACTION_COSTS,
+  type EOrganizationId,
+  type IPlayerActionCostConfig,
+  type TOrganizationRoundUsage,
+  type TOrganizationState,
+} from '@seti/common/types/organization';
 import { EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import type { ETechId } from '@seti/common/types/tech';
@@ -110,6 +117,18 @@ export class Player implements IPlayer {
 
   public pendingSetupTucks: number;
 
+  public setupChoiceContext?: IPlayer['setupChoiceContext'];
+
+  public quickStartCardIds: string[];
+
+  public organizationIds: EOrganizationId[];
+
+  public organizationState: TOrganizationState;
+
+  public oncePerRoundUsed: TOrganizationRoundUsage;
+
+  public actionCosts: IPlayerActionCostConfig;
+
   public game: IGame | null;
 
   public waitingFor?: IPlayerInput;
@@ -192,6 +211,19 @@ export class Player implements IPlayer {
 
     this.pendingSetupTucks = init.pendingSetupTucks ?? 0;
     assertValidInteger('pendingSetupTucks', this.pendingSetupTucks, 0);
+    this.setupChoiceContext = init.setupChoiceContext
+      ? JSON.parse(JSON.stringify(init.setupChoiceContext))
+      : undefined;
+    this.quickStartCardIds = [...(init.quickStartCardIds ?? [])];
+    this.organizationIds = [...(init.organizationIds ?? [])];
+    this.organizationState = init.organizationState
+      ? JSON.parse(JSON.stringify(init.organizationState))
+      : {};
+    this.oncePerRoundUsed = { ...(init.oncePerRoundUsed ?? {}) };
+    this.actionCosts = {
+      ...DEFAULT_PLAYER_ACTION_COSTS,
+      ...(init.actionCosts ?? {}),
+    };
 
     this.moveStashCount = 0;
     this.pendingCardDrawCount = 0;

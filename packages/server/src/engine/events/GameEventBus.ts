@@ -1,9 +1,11 @@
 export enum EGameRuntimeEvent {
   RESEARCH_TECH = 'researchTech:before',
+  TECH_ACQUIRED = 'tech:acquired',
   MAIN_ACTION_RESOLVED = 'mainAction:resolved',
   FREE_ACTION_RESOLVED = 'freeAction:resolved',
   INPUT_RESOLVED = 'input:resolved',
   MARK_PLACED = 'mark:placed',
+  PROBE_LAUNCHED = 'probe:launched',
   TRACE_PLACED = 'trace:placed',
   TURN_END = 'turn:end',
   TURN_START = 'turn:start',

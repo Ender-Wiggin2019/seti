@@ -1,5 +1,12 @@
 import type { IComputerSlotReward } from '@seti/common/types/computer';
 import type { EResource, ETrace } from '@seti/common/types/element';
+import type {
+  EOrganizationId,
+  IPlayerActionCostConfig,
+  TOrganizationRoundUsage,
+  TOrganizationState,
+} from '@seti/common/types/organization';
+import type { ISetupChoiceContext } from '@seti/common/types/protocol/playerInput';
 import type { ETechId } from '@seti/common/types/tech';
 import type { TIncomeBundle } from '@/engine/player/Income.js';
 import type { TCardItem } from '@/engine/player/IPlayer.js';
@@ -21,6 +28,12 @@ export interface IPlayerStateDto {
   probeSpaceLimit: number;
   handLimitAfterPass: number;
   pendingSetupTucks: number;
+  setupChoiceContext?: ISetupChoiceContext;
+  quickStartCardIds?: string[];
+  organizationIds?: EOrganizationId[];
+  organizationState?: TOrganizationState;
+  oncePerRoundUsed?: TOrganizationRoundUsage;
+  actionCosts?: IPlayerActionCostConfig;
   exofossils?: number;
   resources: {
     credits: number;

@@ -1,6 +1,8 @@
 import { Type } from 'class-transformer';
 import {
+  IsArray,
   IsBoolean,
+  IsEnum,
   IsIn,
   IsInt,
   IsNotEmpty,
@@ -11,7 +13,28 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import type { TAlienModulesEnabled } from '@/engine/GameOptions.js';
+import {
+  EExpansion,
+  type ISpaceAgencyOptions,
+  type TAlienModulesEnabled,
+} from '@/engine/GameOptions.js';
+
+export class SpaceAgencyOptionsDto implements ISpaceAgencyOptions {
+  @IsBoolean()
+  enabled!: boolean;
+
+  @IsBoolean()
+  agencies!: boolean;
+
+  @IsBoolean()
+  startResourceCards!: boolean;
+
+  @IsBoolean()
+  newDeck!: boolean;
+
+  @IsBoolean()
+  newAlienSpecies!: boolean;
+}
 
 export class CreateRoomOptionsDto {
   @IsInt()
@@ -39,6 +62,17 @@ export class CreateRoomOptionsDto {
   @IsOptional()
   @IsIn([0, 120, 240, 300, 600])
   turnTimerSeconds?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsEnum(EExpansion, { each: true })
+  expansions?: EExpansion[];
+
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => SpaceAgencyOptionsDto)
+  spaceAgencyOptions?: SpaceAgencyOptionsDto;
 }
 
 export class CreateRoomDto {
@@ -86,4 +120,15 @@ export class UpdateRoomOptionsDto {
   @IsInt()
   @Min(0)
   timerPerTurn?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsEnum(EExpansion, { each: true })
+  expansions?: EExpansion[];
+
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => SpaceAgencyOptionsDto)
+  spaceAgencyOptions?: SpaceAgencyOptionsDto;
 }

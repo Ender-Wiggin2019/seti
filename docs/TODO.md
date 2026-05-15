@@ -1,5 +1,244 @@
 # TODO
 
+## Space Agency SA-6 New Deck and Signal Token - 2026-05-15
+
+Assumptions:
+- Active goal to continue `docs/plan/space-agency-implementation-plan.md` is approval to execute this scoped SA-6 slice.
+- `spaceAgencyOptions.newDeck=true` controls the 42 Space Agency main-deck cards only; new alien species remain deferred to SA-7+.
+- Signal-token scan is enabled by `spaceAgencyOptions.newDeck=true` and remains available only while resolving a real scan action.
+- Client scan UI continues to use the existing free-action rail; no new scan modal is introduced in this slice.
+
+Success criteria:
+- BASE and Space Agency games with `newDeck=false` build the main deck without `spaceAgencyCards`; Space Agency games with `newDeck=true` include them.
+- `newDeck=true` is no longer rejected by setup, while `newAlienSpecies=true` remains rejected until SA-7.
+- `SPEND_SIGNAL_TOKEN` is unavailable when `spaceAgencyOptions.newDeck=false`, available during scan when `newDeck=true`, and capped at two spends per scan.
+- Server/client tests prove option gating, 0/1/2 spend behavior, overspend rejection, and existing scan UI rendering through the free-action rail.
+
+Plan:
+- [x] Add failing common/server/client tests for `newDeck` composition, signal-token `newDeck` gating, max two spends, and client free-action visibility.
+- [x] Implement Space Agency option projection and deck composition gate.
+- [x] Gate server/common/client `SPEND_SIGNAL_TOKEN` availability through `spaceAgencyOptions.newDeck` and track per-scan spend count.
+- [x] Run focused common/server/client tests, typechecks, Biome on touched files, and `git diff --check`.
+- [x] Record review evidence and residual risk in this section.
+
+Review:
+- Projected `spaceAgencyOptions` plus `scanSignalTokensSpent` to public game state so common/client availability reads the same `newDeck` option as the server.
+- Enabled `spaceAgencyOptions.newDeck=true` as a non-organization Space Agency path: setup now builds the main deck from `baseCards` plus `spaceAgencyCards` only when `newDeck` is enabled, while `newAlienSpecies` stays blocked for SA-7.
+- Added full Space Agency main-deck registry coverage: all 42 `spaceAgencyCards` data ids are registered and creatable.
+- Gated `SPEND_SIGNAL_TOKEN` through `spaceAgencyOptions.newDeck` and capped each scan at two signal-token spends; server/common/client tests cover `newDeck=false`, 0/1/2 spend behavior, and third-spend rejection/hidden UI.
+- Updated debug replay/session setup so the spend-signal-token checkpoint creates an SA-enabled game, and aligned the Playwright spec with scan pending-input mode.
+- Follow-up correction removed the separate signal-token helper/public boolean; server/common/client now read `spaceAgencyOptions.newDeck` directly.
+- Verification passed after the correction: common focused tests 64, server focused tests 32, client focused tests 59, common/server/client typechecks, Biome check on touched files, `git diff --check`, and `pnpm --filter @seti/e2e test tests/free-action-spend-signal-token.spec.ts`.
+- Residual scope intentionally remains for SA-7+: Glyphids/Amoeba/Arkhos species plugins and alien-deck option gating are not implemented in SA-6.
+
+## Space Agency full organization implementation - 2026-05-15
+
+Assumptions:
+- Active user goal is approval to continue implementation after recording this plan.
+- `frontend-reference` corporation names are source aliases; current repo names and ids remain authoritative for code and docs.
+- `extraData` in `frontend-reference` is excluded because the reference marks it disabled and the current repo has 11 confirmed organizations.
+- Organization behavior belongs in organization classes or generic organization registry hooks. Shared engine extension points may be added when needed, but concrete organization-id branches should not be added to `Game` or action classes.
+- Client work is limited to protocol/projection changes needed for existing controls; new organization-specific UI affordances are not added unless server behavior cannot be exercised otherwise.
+
+Success criteria:
+- `docs/arch/spaceAgency/corporations/` maps every current organization id/name to the matching reference alias and contains a non-TODO ability summary.
+- Every `EOrganizationId` has a concrete server implementation for its documented passive, main-action, or once-per-round ability, with private state under `player.organizationState[organizationId]` when needed.
+- Generic hooks cover passive reactions such as played-card signal rewards, launch-probe signals, researched-tech rewards, temporary tech modifiers, disabled tech modifiers, and prepared-card play without hardcoding organization behavior in normal actions.
+- Focused tests prove each organization's key behavior, serialization/projection-sensitive state, and once-per-round reset or turn-end cleanup where applicable.
+- A fresh implementation subagent, code-review subagent, and test-review subagent are used; confirmed findings are fixed.
+- Focused common/server/client checks, package typechecks where touched, Biome on touched files, and `git diff --check` pass or any blocker is recorded with exact command output.
+
+Plan:
+- [x] Verify source alias mapping from `frontend-reference` and update corporation Markdown files with ids and ability summaries.
+- [x] Add failing tests for the currently missing or incorrect organization behaviors before implementation.
+- [x] Add generic organization/runtime extension points needed by the tests.
+- [x] Implement all organization classes with minimal state and no unrelated refactors.
+- [x] Update projection/common/client protocol only where server behavior needs surfaced state or availability.
+- [x] Run focused verification and fix failures.
+- [x] Run independent subagent code review and test/E2E review, then fix confirmed findings.
+- [x] Record review evidence and residual risk in this section.
+
+Progress:
+- Added focused runtime-event tests proving `TECH_ACQUIRED` and `PROBE_LAUNCHED` are emitted only after concrete effect resolution.
+- Added generic organization main-action and effective-tech hooks, plus viewer projection for usable organization main actions.
+
+Review:
+- Mapped all 11 current organizations to `frontend-reference` corporation aliases under `docs/arch/spaceAgency/corporations/`; the disabled `extraData` reference entry is intentionally excluded, and Deep Sky keeps the repo's existing configured values rather than the reference's mismatched numeric values.
+- Implemented the remaining organization behavior in concrete organization classes, including card-row/deck powers, probe and tech passives, prepared-card play, Xenolab tile actions, effective disabled/temporary tech hooks, and launch/tech runtime event reactions.
+- Added generic main-action dispatch and viewer-only `usableOrganizationMainActionIds` projection so Futurespan and Xenolab can be used without organization-specific branches in normal actions.
+- Independent subagents completed mapping/architecture exploration, three implementation slices, code review, and test review; confirmed findings were fixed, including organization main-action availability, Sentinel launch signals, Futurespan edge cases, Cosmos black-sector choice, and Helion optional marking.
+- Verification passed: server focused suite 15 files/213 tests, common action rules 33 tests, client action menu 7 tests, common/server/client typechecks, Biome check on 42 touched files, locale JSON parsing, and `git diff --check`.
+
+## Space Agency organization architecture refactor - 2026-05-15
+
+Assumptions:
+- Scope is an architecture refactor of the existing SA-4/SA-5 organization implementation before adding more organization behavior.
+- The current behavior for Quick Start, Deep Sky, Fenwick, Mission Relay, Stratus, and Sentinel should remain the same unless a test proves the existing behavior is wrong.
+- Use the existing project todo file `docs/TODO.md` rather than creating a new lowercase `docs/todo.md`.
+- `backend-reference` corporation cards are the architectural reference: one runtime class per corporation/organization, registered by a manifest/registry, with setup/action/event behavior owned by that class.
+
+Success criteria:
+- Every `EOrganizationId` has a concrete server class registered through `OrganizationRegistry`; no organization behavior is selected by switch/if chains outside organization classes.
+- Player action costs are runtime configuration on the player, with defaults such as research tech = 6 publicity and analyze data = 1 energy. Fenwick/Deep Sky update that player config when the organization is resolved or restored.
+- `UseOrganizationPowerFreeAction` becomes a generic dispatcher: validate ownership/phase/once-per-round, then delegate `canUsePower` and `usePower` to the organization instance.
+- Organization event responses are registered through `GameEventBus` or a generic organization hook owner, so `Game` no longer imports/calls Sentinel/Fenwick/Stratus-specific methods.
+- Common/client action availability uses projected player runtime config and projected usable organization powers, not hardcoded organization ids.
+- Serialization/deserialization restores player runtime config and re-registers organization event listeners deterministically.
+
+Plan:
+- [x] Add failing tests for the desired seams: player-configured research/analyze costs without organization id checks, registry class coverage for every organization id, generic free-action dispatch, Sentinel event response through the runtime bus, and public projection of usable organization power ids.
+- [x] Add player runtime config types/defaults in common/server, persist/project them, and update server/common action-cost helpers to read the config.
+- [x] Split `packages/server/src/engine/organization/Organization.ts` into a base/configured organization plus one concrete class per organization under `packages/server/src/engine/organization/organizations/`.
+- [x] Replace `OrganizationRegistry.create` data wrapping with explicit factory registration and add helper methods for resolving, restoring, registering event listeners, and computing usable organization powers.
+- [x] Move Mission Relay setup, Fenwick/Deep Sky action-cost modifiers, Stratus/Fenwick/Sentinel powers, and Sentinel armed-card response into their owning organization classes.
+- [x] Remove organization-id hardcodes from `Game`, `UseOrganizationPowerFreeAction`, `ResearchTechAction`, `AnalyzeDataAction`, `common/src/rules/actions.ts`, and `common/src/rules/freeActions.ts`.
+- [x] Run focused common/server/client tests, package typechecks, Biome on touched files, `git diff --check`, and then record review evidence here.
+
+Review:
+- Refactored server organizations to match the backend-reference corporation shape: every `EOrganizationId` now has a concrete organization class and `OrganizationRegistry` owns factory registration, restore hooks, and usable-power projection.
+- Moved organization behavior out of generic game/action code: Deep Sky and Fenwick modify `player.actionCosts`, Mission Relay owns setup gold-tile marking, Stratus/Fenwick/Sentinel own their free-action behavior, and Sentinel registers its runtime event listeners through the event bus.
+- Added persisted/projected player runtime action costs and viewer-only `usableOrganizationPowerIds`; common/client action availability now reads those projected fields instead of rechecking organization ids.
+- Replaced organization-specific branches in `UseOrganizationPowerFreeAction` with ownership/phase/once-per-round validation plus `canUsePower`/`usePower` delegation to the organization instance.
+- Removed direct Sentinel handling from `Game` and removed Deep Sky/Fenwick id checks from analyze/research actions and common action helpers.
+- Verification passed: common focused tests 81, server focused tests 110, client focused tests 59, common/server/client typechecks, Biome check on the touched files, and `git diff --check`.
+
+## Space Agency SA-5 remaining organization powers slice 2 - 2026-05-15
+
+Assumptions:
+- Active goal to complete the full Space Agency plan is treated as approval to continue this scoped SA-5 sub-slice after recording it here.
+- Rules come from `docs/arch/spaceAgency/rulebook.md`, `docs/arch/spaceAgency/faq.md`, and the organization card images under `packages/web/public/corps/`.
+- This slice implements the next seam-validation set only: Fenwick Research Center once-per-round, Sentinel Probe Network once-per-round, and Mission Relay setup gold-tile premark.
+- Mission Relay's shown tile maps to the existing `mission` gold scoring tile; this slice marks that tile's current lowest slot value instead of changing the broader gold-tile score model.
+- Fenwick and Sentinel may apply only card corners that the existing `FreeActionCornerFreeAction` can resolve; broader chained `CARD_ANY` support remains a later SA-5 task.
+
+Success criteria:
+- `canUseOrganizationPower` and the server dispatcher expose Fenwick and Sentinel only when owned, unused this round, and immediately resolvable by the current engine.
+- Fenwick can spend 1 publicity to gain a selected card-row card or a random deck card, then resolves that card's free-action corner without discarding the gained card.
+- Sentinel can be armed once per round and, after the next non-alien card played as a main action is fully resolved, applies that card's free-action corner; alien cards do not trigger it.
+- Mission Relay organization setup premarks the lowest slot of the `mission` gold scoring tile, prevents that player from claiming that tile again, and makes Solvay Conference treat it as already marked.
+- Serialization/projection keeps organization state and once-per-round usage safe; existing Deep Sky/Fenwick passive and Stratus behavior do not regress.
+
+Plan:
+- [x] Add failing common/server tests for Fenwick/Sentinel availability, Fenwick row/deck execution, Sentinel armed trigger, Mission Relay setup premark, and Solvay interaction.
+- [x] Implement the minimal server/common changes for those three behaviors using existing input/card-corner/gold-tile helpers.
+- [x] Add or adjust focused client coverage if the newly enabled powers change visible free-action controls.
+- [x] Run focused common/server/client tests and typechecks, Biome on touched files, and `git diff --check`.
+- [ ] Run a fresh independent code-review subagent for this slice and fix confirmed findings.
+- [ ] Run a fresh independent test/E2E review subagent for this slice and fix confirmed findings.
+
+## Space Agency SA-5 complex organizations + Quick Start - 2026-05-15
+
+Assumptions:
+- Active goal to complete the full Space Agency plan is treated as approval to execute this scoped SA-5 plan after recording it here.
+- SA-5 enables `spaceAgencyOptions.startResourceCards=true` only when agencies are enabled; `newDeck`, signal-token scan, and new alien species remain deferred to SA-6+.
+- Quick Start cards reuse existing `preludeCards` data internally; only UI copy says "Quick Start Card".
+- Organization ability rules come from `docs/arch/spaceAgency/rulebook.md`, `docs/arch/spaceAgency/faq.md`, and the existing organization card images under `packages/web/public/corps/`.
+- Where a full interactive card-specific power would require broad new UX not needed for SA-5's first playable path, implement the smallest faithful server contract and keep unsupported branches explicitly rejected rather than silently ignored.
+- SA-5 organization runtime support in this slice covers the implemented engine seams only: Fenwick passive research cost, Deep Sky passive analyze-data cost, and Stratus Core once-per-round card-row corner copying when no copied corner needs an extra choice.
+
+Success criteria:
+- Agencies setup with `startResourceCards=true` deals each setup player 3 Quick Start candidates, lets them pick exactly 2, resolves selected lower effects before upper setup marks, stores selected ids, then proceeds through organization resources/tucks into `AWAIT_MAIN_ACTION`.
+- Quick Start upper signal/trace/orbiter setup marks are silent: they do not grant setup benefits, trigger missions, or fire alien/runtime mark hooks.
+- 1-2 player games with Quick Start prepare neutral upper markers from revealed neutral Quick Start cards without granting rewards.
+- Organization free-action dispatcher can execute implemented once-per-round powers, marks `oncePerRoundUsed`, rejects unavailable/used/unsupported powers, and resets usage at round end.
+- Mandatory passive powers that have clear existing engine seams are enforced server-side, including Fenwick 5-publicity research and Deep Sky zero-energy analyze data.
+- Player quick-start ids and organization private state serialize, deserialize, and project safely; client displays Quick Start choices/thumbnails and organization powers without hand-written rule icons.
+
+Plan:
+- [x] Add failing common/server tests for Quick Start metadata, selection/runtime, silent marks, and supported option gating.
+- [x] Add remaining tests for organization powers/passives, persistence/projection, and client rendering.
+- [x] Implement Quick Start candidate dealing, setup-choice step, `PreludeRegistry`/runtime, selected-card storage, and neutral setup markers.
+- [x] Add setup-only silent trace/signal/orbiter paths for Quick Start marks.
+- [x] Implement supported organization once-per-round dispatcher paths and guarded unsupported branches; no event subscriptions are needed for the included Fenwick/Deep Sky/Stratus slice.
+- [x] Implement clear mandatory passives and guarded unsupported branches without weakening BASE behavior.
+- [x] Implement client Quick Start selection cards/thumbnails and enabled organization power controls using existing `DescRender`/card renderers.
+- [x] Run focused tests/typechecks, Biome, `git diff --check`, and real UI E2E for agencies + Quick Start.
+- [x] Run an independent SA-5 code review subagent and fix confirmed findings.
+- [x] Run an independent SA-5 test/E2E review subagent and fix confirmed findings.
+
+Review:
+- Added Quick Start metadata/runtime using existing `preludeCards`: candidates are dealt per player, players choose exactly two, lower rewards resolve before upper setup marks, selected ids are stored/projected, and 1-2 player neutral upper markers resolve without lower rewards.
+- Added silent setup paths for signal, trace, and orbiter marks so Quick Start upper marks do not trigger mission events, alien trace hooks, runtime mark hooks, or setup rewards.
+- Added the implemented SA-5 organization runtime seams: Deep Sky analyze data costs 0 energy, Fenwick research tech costs 5 publicity, and Stratus Core can copy card-row free-action corners once per round when the copied corners need no follow-up choice.
+- Kept unsupported organization branches explicit: metadata now distinguishes implemented passive/once-per-round behavior from setup-only organizations, and the server rejects unowned, used, or unsupported organization powers.
+- Fixed confirmed review findings: setup-choice deserialization now rebuilds the all-done barrier from participating players only, setup completion resolves all players' Quick Start cards before any organization setup, and client/common Stratus availability matches the server's unsupported `CARD_ANY` guard.
+- Added client Quick Start choice previews/thumbnails and localized Quick Start labels, plus organization power buttons that pass the organization id through the game layout free-action path.
+- Added real-flow E2E coverage for agencies + Quick Start setup and hardened the Quick Start option picker to wait for selected options to leave the pending-input list.
+- Independent code review found no critical issues after the fix pass; independent test/E2E review findings were implemented, including neutral marker coverage, silent event negatives, invalid Quick Start selection coverage, and GameLayout organization-power coverage.
+- Verification passed: common focused tests 82, server focused tests 128, client focused tests 60, common/server/client typechecks, Biome check on 56 changed TS/TSX/JSON files, `git diff --check`, and Playwright specs `space-agency-agencies-setup.spec.ts` plus `space-agency-options.spec.ts`.
+- Residual scope intentionally remains in the main implementation plan: full all-11 organization custom powers/state machines, New Deck, signal-token scan gameplay, and new alien species modules are not complete in this slice.
+
+## Space Agency SA-4 organization core - 2026-05-15
+
+Assumptions:
+- This slice implements only `SA-4`: agencies-only Space Agency setup, simple organization metadata/runtime, and minimal client shell.
+- "Simple organizations" means organizations that can be resolved from static setup resources/income without custom private state machines; complex/passive/once-per-round behavior beyond a safe shell remains for SA-5 unless already expressible with existing effect helpers.
+- Quick Start cards, New Deck, signal-token scan, and new alien species remain deferred.
+- BASE setup, setup tuck, and normal lobby/game start must remain unchanged.
+
+Success criteria:
+- Common exports `EOrganizationId`, `IOrganizationData`, and a deterministic `ORGANIZATIONS` pool for the SA-4 simple organizations.
+- A game with `spaceAgencyOptions.enabled=true` and `agencies=true` enters `SETUP_CHOICE`, lets each player select one organization, resolves the selected organization, then enters `AWAIT_MAIN_ACTION`.
+- Agencies setup starts players at publicity 0, `roundIndex=2`, and three end-of-round stacks; BASE still starts at publicity 4, `roundIndex=1`, and four stacks.
+- Player organization ids/state/once-per-round usage serialize, deserialize, and project to the owning/public game state safely.
+- Client displays organization candidates through the existing setup-choice input path, shows selected organization badges, and exposes a disabled/guarded organization power shell without enabling unfinished powers.
+
+Plan:
+- [x] Add failing common/server/client tests for organization metadata, registry/runtime setup, SA setup-choice production flow, persistence/projection, and dashboard rendering.
+- [x] Implement common organization types/data and use them as setup-choice candidates.
+- [x] Implement server `Organization`, `OrganizationRegistry`, player fields, persistence/projection, and agencies setup wiring.
+- [x] Add guarded `USE_ORGANIZATION_POWER` protocol/server/client shell without complex powers.
+- [x] Implement client organization selection/badge/free-action shell using existing UI patterns.
+- [x] Run focused tests/typechecks, Biome, `git diff --check`, and a real UI E2E for agencies setup.
+- [x] Run an independent SA-4 code review subagent and fix confirmed findings.
+- [x] Run an independent SA-4 test/E2E review subagent and fix confirmed findings.
+
+Review:
+- Added shared organization ids/data/setup metadata and exported them through common for server/client reuse.
+- Wired agencies setup to deal two seeded organization candidates per non-rival player, reject selections outside that player's candidates, resolve selected setup resources/income/tucks/probes, and start the game after all setup choices finish.
+- Added player organization state, once-per-round usage, serializer/deserializer DTO fields, and public projection so private organization runtime state is only visible to the owning viewer.
+- Added guarded `USE_ORGANIZATION_POWER` protocol/server/client shell; setup-only organization powers are not exposed as available free actions and malicious unowned/setup-only requests are rejected server-side.
+- Added client organization selection cards using `DescRender` icons plus accessible setup summaries, selected organization badges for player/opponents, and disabled organization power buttons.
+- Added explicit SA-4 server guard for unsupported Space Agency submodules so Quick Start, New Deck, new alien species, or SA-without-agencies configurations cannot silently start with ignored options.
+- Independent code review found and confirmed fixes for Deep Sky data pool handling, per-player two-candidate dealing, unsupported option rejection, and organization setup-card icon rendering/accessibility. Final re-review reported no P0/P1/P2/P3 findings.
+- Independent test/E2E verification passed: common focused tests 58, server focused tests 109, client focused tests 63, common/server/client typechecks, Biome on 61 changed TS/TSX/JSON files, `git diff --check`, and both Playwright specs `space-agency-agencies-setup.spec.ts` and `space-agency-options.spec.ts`.
+- Residual scope intentionally deferred to SA-5+: complex organization powers/state machines, Quick Start card setup, Space Agency deck/signal-token gameplay, and new alien species modules.
+
+## Space Agency SA-3 setup-choice protocol - 2026-05-15
+
+Assumptions:
+- This slice implements only `SA-3`: Space Agency option validation, `SETUP_CHOICE` protocol/state surface, a generic setup-choice coordinator, and minimal lobby/game UI shells.
+- Real organization metadata, quick start card resolution, Space Agency deck injection, and new alien species behavior remain for SA-4+.
+- Existing BASE setup and setup tuck behavior must remain unchanged.
+
+Success criteria:
+- `spaceAgencyOptions` is defaulted/validated consistently in common/server/client, including dependency toggles.
+- `EPhase.SETUP_CHOICE` is legal in the phase machine without enabling real organization content yet.
+- `SetupChoiceCoordinator` is unit-tested independently for selectable candidates, disabled steps, auto-choice, invalid picks, and all-players-done barrier.
+- Player setup-choice context and `quickStartCardIds` are serializable, deserializable with legacy defaults, and projected to public state.
+- Lobby UI exposes Space Agency toggles with dependency behavior, and game UI can show a generic setup-choice shell around existing pending input.
+
+Plan:
+- [x] Add failing common/server/client tests for SA option validation, phase transitions, setup-choice coordinator, projection/persistence, and lobby UI dependencies.
+- [x] Implement common protocol types/defaults/validation and `SETUP_CHOICE` phase support.
+- [x] Implement server player state fields, DTO/projection persistence, and the generic setup-choice coordinator.
+- [x] Implement minimal client `SpaceAgencyOptionsSection` and setup-choice pending-input shell.
+- [x] Run focused tests/typechecks and `git diff --check`.
+- [x] Run an independent SA-3 code review subagent and fix confirmed findings.
+- [x] Run an independent SA-3 test/E2E review subagent and fix confirmed findings.
+
+Review:
+- Added shared Space Agency option defaults/validation, including dependencies between `enabled`, `agencies`, `startResourceCards`, `newAlienSpecies`, and the existing Glyphids/Amoeba alien module flags.
+- Added `EPhase.SETUP_CHOICE`, setup-choice protocol metadata, per-player setup-choice context, and `quickStartCardIds` projection/persistence fields with legacy deserialization defaults.
+- Added `SetupChoiceCoordinator` with fixture-backed candidates, disabled-step skipping, single-candidate auto-choice, optional skip/done paths, invalid-pick validation, reserved-id protection, and all-players-done barrier tests.
+- Added room DTO support for `expansions` and `spaceAgencyOptions`, plus a DTO regression so the host room settings UI can PATCH Space Agency options through the real server validation pipe.
+- Added `SpaceAgencyOptionsSection` to the lobby room settings panel and a generic setup-choice shell around the existing `InputRenderer` for future SA setup prompts.
+- Added real UI E2E coverage in `packages/e2e/tests/space-agency-options.spec.ts`: host registers, creates a room, toggles Space Agency dependencies through the room UI, guest joins, and guest sees read-only Space Agency status. No network mocks, auth storage injection, debug endpoints, or raw websocket driving are used.
+- Independent SA-3 code review subagent passed after fixes for missing absent-options validation, optional setup skip/done behavior, and reserved candidate-id collision.
+- Independent SA-3 test/E2E subagent passed: common options test (13), server focused tests (70), client focused tests (47), and the Space Agency Playwright spec (1).
+- Main-thread verification passed: common/server/client typechecks, Biome check on 32 touched files, focused DTO/lobby/server tests, Space Agency Playwright spec, and `git diff --check`.
+- Residual risk: real organization candidates, quick start card resolution, Space Agency deck injection, and new alien species gameplay are intentionally still deferred to SA-4+.
+
 ## Current diff review fixes - 2026-05-15
 
 Assumptions:
@@ -959,3 +1198,42 @@ Review:
 - Fixed the place-data/orbit pending-input visibility class: card-selection prompts render their title, zero-card selections show `Skip`, and free actions are hidden while any pending input must be resolved.
 - Fixed the image-mode scan rendering bug by allowing player/rival signal markers to render in image-mode sector slots.
 - Verification passed: client focused vitest suite, server focused vitest suite, orbit/research/scan/play-card regression suite, related card regression suite, and `tsc --noEmit` for common/server/client.
+
+## Space Agency corporation markdown import - 2026-05-15
+
+Assumptions:
+- Source workbook is `/Users/oushuohuang/Downloads/公司模型计算.xlsx`.
+- Use `Sheet1` as the source of truth.
+- Create one Markdown file for each of the 11 non-`基础白板` corporation rows.
+- Fill absent numeric resources as `0` rather than leaving ambiguous blanks.
+- Keep `Ability` as exactly `Mark as TODO`.
+- Map spreadsheet shorthand names to existing formal names where the repo already has them:
+  - `赞助公司` -> Futurespan Institute / 未来跨度研究所
+  - `垃圾桶` -> Xenolab / 异星实验室
+  - `深空调查` -> Deep Sky Survey / 深空探测
+  - `删科技` -> Helion Assembly / 赫利昂联合体
+  - `打牌公司` -> Cosmos Strategy Group / 宇宙战略集团
+  - `5宣传` -> Fenwick Research Center / 芬威克研究中心
+  - `白嫖科技公司` -> Turing Systems / 图灵系统
+  - `任务公司` -> Mission Relay / 任务中继站
+  - `双发` -> Orbital Dynamics / 寰宇动力
+  - `哨兵` -> Sentinel Probe Network / 哨兵探测网络
+  - `三免费行动` -> Stratus Core / 层云核心
+
+Success criteria:
+- `docs/arch/spaceAgency/corporations/` contains one Markdown file per confirmed corporation row.
+- Each file uses the requested `Metadata`, `Start Resource`, `Income`, and `Ability` sections.
+- Start resources and income values match `Sheet1` for credit, energy, card, publicity, data, tuck income, probe, and signal token.
+- Existing unrelated worktree changes are left untouched.
+
+Plan:
+- [x] Confirm inclusion and name mapping with the user before generation.
+- [x] Generate/update corporation Markdown files from `Sheet1` with minimal field normalization.
+- [x] Verify row count, resource values, file names, section structure, and `git diff --check`.
+
+Review:
+- Generated 11 Markdown files in `docs/arch/spaceAgency/corporations/` from `Sheet1`, excluding `基础白板`.
+- Reused the existing empty `fenwick.md` and added the other 10 corporation files.
+- Filled blank workbook cells as `0` for all resource fields.
+- Kept each `Ability` section as `Mark as TODO`.
+- Verification passed: file set count is 11, values match `Sheet1`, section structure is present in every file, `基础白板` and `Vitor` are absent, and `git diff --check -- docs/todo.md docs/arch/spaceAgency/corporations` passed.

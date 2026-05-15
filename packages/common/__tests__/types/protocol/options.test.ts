@@ -3,6 +3,7 @@ import {
   createGameOptions,
   DEFAULT_ALIEN_MODULES_ENABLED,
   DEFAULT_GAME_OPTIONS,
+  EExpansion,
   type TAlienModulesEnabled,
 } from '@seti/common/types/protocol/options';
 import { describe, expect, it } from 'vitest';
@@ -25,7 +26,7 @@ describe('protocol options', () => {
     const options = createGameOptions({
       alienModulesEnabled: {
         ...DEFAULT_ALIEN_MODULES_ENABLED,
-        [EAlienType.AMOEBA]: true,
+        [EAlienType.MASCAMITES]: false,
       },
     });
 
@@ -33,7 +34,7 @@ describe('protocol options', () => {
       ...DEFAULT_GAME_OPTIONS,
       alienModulesEnabled: {
         ...DEFAULT_ALIEN_MODULES_ENABLED,
-        [EAlienType.AMOEBA]: true,
+        [EAlienType.MASCAMITES]: false,
       },
     });
   });
@@ -70,5 +71,153 @@ describe('protocol options', () => {
         } as unknown as Partial<TAlienModulesEnabled>,
       }),
     ).toThrow('alienModulesEnabled values must be boolean');
+  });
+
+  it('requires the Space Agency expansion flag when Space Agency options are enabled', () => {
+    expect(() =>
+      createGameOptions({
+        expansions: [EExpansion.BASE],
+        spaceAgencyOptions: {
+          enabled: true,
+          agencies: false,
+          startResourceCards: false,
+          newDeck: false,
+          newAlienSpecies: false,
+        },
+      }),
+    ).toThrow('spaceAgencyOptions.enabled requires SPACE_AGENCY expansion');
+  });
+
+  it('rejects incomplete Space Agency option objects', () => {
+    expect(() =>
+      createGameOptions({
+        expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+        spaceAgencyOptions: {
+          enabled: true,
+        } as never,
+      }),
+    ).toThrow('spaceAgencyOptions must define all module flags');
+  });
+
+  it('rejects null Space Agency option objects with a validation error', () => {
+    expect(() =>
+      createGameOptions({
+        expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+        spaceAgencyOptions: null as never,
+      }),
+    ).toThrow('spaceAgencyOptions must be an object');
+  });
+
+  it('rejects unknown Space Agency option keys', () => {
+    expect(() =>
+      createGameOptions({
+        expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+        spaceAgencyOptions: {
+          enabled: true,
+          agencies: false,
+          startResourceCards: false,
+          newDeck: false,
+          newAlienSpecies: false,
+          extraModule: true,
+        } as never,
+      }),
+    ).toThrow('spaceAgencyOptions must only use known module flags');
+  });
+
+  it('rejects enabled Space Agency child options when the parent option is disabled', () => {
+    expect(() =>
+      createGameOptions({
+        spaceAgencyOptions: {
+          enabled: false,
+          agencies: true,
+          startResourceCards: false,
+          newDeck: false,
+          newAlienSpecies: false,
+        },
+      }),
+    ).toThrow('disabled spaceAgencyOptions cannot enable child modules');
+  });
+
+  it('requires agencies when quick start cards are enabled', () => {
+    expect(() =>
+      createGameOptions({
+        expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+        spaceAgencyOptions: {
+          enabled: true,
+          agencies: false,
+          startResourceCards: true,
+          newDeck: false,
+          newAlienSpecies: false,
+        },
+      }),
+    ).toThrow('startResourceCards requires agencies');
+  });
+
+  it('rejects new alien module flags when the Space Agency new-alien option is off', () => {
+    expect(() =>
+      createGameOptions({
+        expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+        alienModulesEnabled: {
+          ...DEFAULT_ALIEN_MODULES_ENABLED,
+          [EAlienType.GLYPHIDS]: true,
+        },
+        spaceAgencyOptions: {
+          enabled: true,
+          agencies: false,
+          startResourceCards: false,
+          newDeck: false,
+          newAlienSpecies: false,
+        },
+      }),
+    ).toThrow('newAlienSpecies is required to enable Space Agency aliens');
+  });
+
+  it('rejects Space Agency alien module flags when Space Agency options are absent', () => {
+    expect(() =>
+      createGameOptions({
+        expansions: [EExpansion.BASE],
+        alienModulesEnabled: {
+          ...DEFAULT_ALIEN_MODULES_ENABLED,
+          [EAlienType.AMOEBA]: true,
+        },
+      }),
+    ).toThrow('newAlienSpecies is required to enable Space Agency aliens');
+  });
+
+  it('accepts a consistent Space Agency option set', () => {
+    const options = createGameOptions({
+      expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+      spaceAgencyOptions: {
+        enabled: true,
+        agencies: true,
+        startResourceCards: true,
+        newDeck: true,
+        newAlienSpecies: false,
+      },
+    });
+
+    expect(options.spaceAgencyOptions).toEqual({
+      enabled: true,
+      agencies: true,
+      startResourceCards: true,
+      newDeck: true,
+      newAlienSpecies: false,
+    });
+  });
+
+  it('accepts the Space Agency new deck without agencies', () => {
+    const options = createGameOptions({
+      expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+      spaceAgencyOptions: {
+        enabled: true,
+        agencies: false,
+        startResourceCards: false,
+        newDeck: true,
+        newAlienSpecies: false,
+      },
+    });
+
+    expect(options.spaceAgencyOptions?.newDeck).toBe(true);
+    expect(options.spaceAgencyOptions?.agencies).toBe(false);
   });
 });

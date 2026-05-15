@@ -895,6 +895,7 @@ function createDebugGameState(
         })),
       ),
     },
+    mainDeck: { drawPileSize: 40, discardPileSize: 0 },
     cardRow,
     endOfRoundStacks: roundStacks,
     currentEndOfRoundStackIndex: 1,

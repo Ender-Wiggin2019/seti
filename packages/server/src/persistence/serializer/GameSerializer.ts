@@ -38,13 +38,17 @@ import {
   type MascamitesAlienBoard,
   type OumuamuaAlienBoard,
 } from '@/engine/alien/AlienBoard.js';
-import { isScanActionPoolInput } from '@/engine/effects/scan/ScanActionPool.js';
+import {
+  getScanSignalTokenSpendCount,
+  isScanActionPoolInput,
+} from '@/engine/effects/scan/ScanActionPool.js';
 import type { TGameEvent } from '@/engine/event/GameEvent.js';
 import type { IGame } from '@/engine/IGame.js';
 import {
   type IMissionEvent,
   type IMissionRuntimeState,
 } from '@/engine/missions/IMission.js';
+import { OrganizationRegistry } from '@/engine/organization/OrganizationRegistry.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
 import { EPieceType } from '@/engine/player/Pieces.js';
 import type { RivalState } from '@/engine/solo/RivalState.js';
@@ -364,6 +368,14 @@ function serializePlayer(player: IPlayer): IPlayerStateDto {
     probeSpaceLimit: player.probeSpaceLimit,
     handLimitAfterPass: player.handLimitAfterPass,
     pendingSetupTucks: player.pendingSetupTucks,
+    setupChoiceContext: player.setupChoiceContext
+      ? cloneValue(player.setupChoiceContext)
+      : undefined,
+    quickStartCardIds: [...player.quickStartCardIds],
+    organizationIds: [...player.organizationIds],
+    organizationState: cloneValue(player.organizationState),
+    oncePerRoundUsed: cloneValue(player.oncePerRoundUsed),
+    actionCosts: cloneValue(player.actionCosts),
     exofossils: player.exofossils,
     resources: player.resources.toObject(),
     income: {
@@ -756,7 +768,7 @@ function toPublicPlayerState(
 ): IPublicPlayerState {
   const isViewer = player.id === viewerId;
   const effectiveProbeSpaceLimit = TechModifierQuery.fromTechIds(
-    player.techs,
+    OrganizationRegistry.getEffectiveTechIds(player, game),
   ).getProbeSpaceLimit(player.probeSpaceLimit);
   return {
     playerId: player.id,
@@ -827,6 +839,25 @@ function toPublicPlayerState(
     energyIncome: player.income.computeRoundPayout()[EResource.ENERGY],
     cardIncome: player.income.computeRoundPayout()[EResource.CARD],
     pendingSetupTucks: player.pendingSetupTucks,
+    setupChoiceContext:
+      isViewer && player.setupChoiceContext
+        ? cloneValue(player.setupChoiceContext)
+        : undefined,
+    quickStartCardIds: isViewer ? [...player.quickStartCardIds] : undefined,
+    organizationIds: [...player.organizationIds],
+    organizationState: isViewer
+      ? cloneValue(player.organizationState)
+      : undefined,
+    oncePerRoundUsed: isViewer
+      ? cloneValue(player.oncePerRoundUsed)
+      : undefined,
+    actionCosts: cloneValue(player.actionCosts),
+    usableOrganizationPowerIds: isViewer
+      ? OrganizationRegistry.getUsablePowerIds(player, game)
+      : undefined,
+    usableOrganizationMainActionIds: isViewer
+      ? OrganizationRegistry.getUsableMainActionIds(player, game)
+      : undefined,
     exofossils: player.exofossils,
   } as IPublicPlayerState;
 }
@@ -962,7 +993,13 @@ export function projectGameState(
     startPlayerId: game.startPlayer.id,
     undoAllowed,
     canUndo,
+    ...(game.options.spaceAgencyOptions !== undefined
+      ? { spaceAgencyOptions: { ...game.options.spaceAgencyOptions } }
+      : {}),
     scanActionInProgress: isScanActionPoolInput(game.activePlayer.waitingFor),
+    scanSignalTokensSpent: getScanSignalTokenSpendCount(
+      game.activePlayer.waitingFor,
+    ),
     turnIndex: game.turnIndex,
     players: game.players.map((player) =>
       toPublicPlayerState(player, viewerId, game),
@@ -976,6 +1013,10 @@ export function projectGameState(
     solarSystemSetup: game.solarSystemSetup ?? undefined,
     planetaryBoard: toPublicPlanetaryBoard(game),
     techBoard: toPublicTechBoard(game),
+    mainDeck: {
+      drawPileSize: game.mainDeck.drawSize,
+      discardPileSize: game.mainDeck.discardSize,
+    },
     cardRow: cloneValue(game.cardRow as never),
     currentEndOfRoundStackIndex: game.roundRotationReminderIndex,
     aliens: game.alienState.boards.map((board) => toPublicAlienState(board)),

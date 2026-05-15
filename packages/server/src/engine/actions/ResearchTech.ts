@@ -1,5 +1,5 @@
+import { DEFAULT_PLAYER_ACTION_COSTS } from '@seti/common/types/organization';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
-import { RESEARCH_PUBLICITY_COST } from '@seti/common/types/tech';
 import { GameError } from '@/shared/errors/GameError.js';
 import { RotateDiscEffect } from '../effects/solar/RotateDiscEffect.js';
 import {
@@ -23,6 +23,19 @@ export interface IResearchTechActionOptions {
   skipRotation?: boolean;
 }
 
+export function getResearchTechPublicityCost(
+  player: IPlayer,
+  isCardEffect = false,
+): number {
+  if (isCardEffect) {
+    return 0;
+  }
+  return (
+    player.actionCosts?.researchTechPublicity ??
+    DEFAULT_PLAYER_ACTION_COSTS.researchTechPublicity
+  );
+}
+
 interface IResearchTechRuntimeEventContext extends IGameRuntimeEventContext {
   type: EGameRuntimeEvent.RESEARCH_TECH;
   game: IGame;
@@ -44,7 +57,9 @@ export class ResearchTechAction {
   ): boolean {
     if (
       !isCardEffect &&
-      !player.resources.has({ publicity: RESEARCH_PUBLICITY_COST })
+      !player.resources.has({
+        publicity: getResearchTechPublicityCost(player, isCardEffect),
+      })
     ) {
       return false;
     }
@@ -103,7 +118,9 @@ export class ResearchTechAction {
     }
 
     if (!isCardEffect) {
-      player.resources.spend({ publicity: RESEARCH_PUBLICITY_COST });
+      player.resources.spend({
+        publicity: getResearchTechPublicityCost(player),
+      });
     }
 
     return ResearchTechEffect.execute(player, game, {

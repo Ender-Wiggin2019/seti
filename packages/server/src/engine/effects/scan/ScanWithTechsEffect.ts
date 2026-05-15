@@ -2,6 +2,7 @@ import type { ETechId } from '@seti/common/types/tech';
 import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
+import { OrganizationRegistry } from '../../organization/OrganizationRegistry.js';
 import type { IPlayer } from '../../player/IPlayer.js';
 import type { IScanTechEffect } from '../../tech/ITech.js';
 import { TechModifierQuery } from '../../tech/TechModifierQuery.js';
@@ -53,7 +54,7 @@ export class ScanWithTechsEffect {
     options: IScanWithTechsOptions = {},
   ): IPlayerInput | undefined {
     const scanModifiers = TechModifierQuery.fromTechIds(
-      player.techs,
+      OrganizationRegistry.getEffectiveTechIds(player, game),
     ).getScanModifiers();
 
     const result: IScanWithTechsResult = {

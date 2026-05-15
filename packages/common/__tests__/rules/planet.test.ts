@@ -97,6 +97,7 @@ function createGameState(playerId: string, spaceId: string): IPublicGameState {
     sectors: [],
     planetaryBoard: { planets: {} },
     techBoard: { stacks: [] },
+    mainDeck: { drawPileSize: 20, discardPileSize: 0 },
     cardRow: [],
     aliens: [],
     recentEvents: [],

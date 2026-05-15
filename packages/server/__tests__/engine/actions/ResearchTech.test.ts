@@ -1,3 +1,4 @@
+import { EOrganizationId } from '@seti/common/types/organization';
 import { EMainAction, EPlanet } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import {
@@ -172,6 +173,41 @@ describe('ResearchTechAction', () => {
       const before = player.resources.publicity;
       ResearchTechAction.execute(player, game, false);
       expect(player.resources.publicity).toBe(before - RESEARCH_PUBLICITY_COST);
+    });
+
+    it('spends 5 publicity for Fenwick Research Center', () => {
+      const rng = new SeededRandom('test');
+      const techBoard = new TechBoard(rng);
+      const game = createMockGame(techBoard);
+      const player = createPlayer({
+        resources: { credits: 10, energy: 10, publicity: 5 },
+      });
+      player.organizationIds = [EOrganizationId.FENWICK_RESEARCH_CENTER];
+      player.actionCosts = {
+        analyzeDataEnergy: 1,
+        researchTechPublicity: 5,
+      };
+
+      ResearchTechAction.execute(player, game, false);
+
+      expect(player.resources.publicity).toBe(0);
+    });
+
+    it('uses the player action cost config instead of organization ids', () => {
+      const rng = new SeededRandom('test');
+      const techBoard = new TechBoard(rng);
+      const game = createMockGame(techBoard);
+      const player = createPlayer({
+        resources: { credits: 10, energy: 10, publicity: 5 },
+      });
+      player.actionCosts = {
+        analyzeDataEnergy: 1,
+        researchTechPublicity: 5,
+      };
+
+      ResearchTechAction.execute(player, game, false);
+
+      expect(player.resources.publicity).toBe(0);
     });
 
     it('rotates the solar system disc', () => {

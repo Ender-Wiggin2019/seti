@@ -36,6 +36,32 @@ function tileClaimed(
 }
 
 describe('GoldScoringTile', () => {
+  it('claims duplicate slot values by slot position', () => {
+    const tile = new GoldScoringTile({
+      id: 'mission',
+      side: 'A',
+      slotValues: [8, 6, 4, 4],
+    });
+
+    expect(tile.claim('p1')).toBe(8);
+    expect(tile.claim('p2')).toBe(6);
+    expect(tile.claim('p3')).toBe(4);
+    expect(tile.claim('p4')).toBe(4);
+  });
+
+  it('claims duplicate lowest slot values by slot position', () => {
+    const tile = new GoldScoringTile({
+      id: 'mission',
+      side: 'A',
+      slotValues: [8, 6, 4, 4],
+    });
+
+    expect(tile.claimLowest('p1')).toBe(4);
+    expect(tile.claimLowest('p2')).toBe(4);
+    expect(tile.claimLowest('p3')).toBe(6);
+    expect(tile.claimLowest('p4')).toBe(8);
+  });
+
   describe('Phase 9.2: formulas (Game.create + real IGame / IPlayer)', () => {
     it('9.2.1 [集成] 科技 A：min(probe, scan, computer)', () => {
       const game = createTestGame('g92-tech-a');

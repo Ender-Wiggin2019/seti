@@ -1,5 +1,6 @@
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EResource } from '@seti/common/types/element';
+import { EOrganizationId } from '@seti/common/types/organization';
 import { ETechBonusType, ETechId } from '@seti/common/types/tech';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -498,6 +499,40 @@ describe('GameLayout', () => {
       ).toBeInTheDocument();
     });
 
+    it('wraps setup-choice pending input in the setup-choice shell', async () => {
+      const sendInput = vi.fn();
+      mockContextValue = createMockContext({
+        sendInput,
+        gameState: createMockGameState({
+          phase: 'SETUP_CHOICE' as EPhase,
+        }),
+        pendingInput: {
+          inputId: 'setup-choice-1',
+          type: EPlayerInputType.OPTION,
+          title: 'Choose organization',
+          setupChoice: {
+            kind: 'organization',
+            stepIndex: 0,
+            totalSteps: 1,
+            minSelections: 1,
+            maxSelections: 1,
+          },
+          options: [{ id: 'org-a', label: 'Org A' }],
+        } as unknown as IGameContext['pendingInput'],
+      });
+
+      await renderLayout();
+
+      expect(screen.getByTestId('setup-choice-shell')).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Org A' }));
+
+      expect(sendInput).toHaveBeenCalledWith({
+        inputId: 'setup-choice-1',
+        type: EPlayerInputType.OPTION,
+        optionId: 'org-a',
+      });
+    });
+
     it('reuses the tech board for tech option input and submits the clicked stack', async () => {
       const sendInput = vi.fn();
       mockContextValue = createMockContext({
@@ -546,6 +581,51 @@ describe('GameLayout', () => {
       await renderLayout();
 
       expect(screen.getByTestId('free-action-bar')).toBeInTheDocument();
+    });
+
+    it('sends spend signal token from the scan free-action rail', async () => {
+      const sendFreeAction = vi.fn();
+      mockContextValue = createMockContext({
+        sendFreeAction,
+        gameState: createMockGameState({
+          phase: EPhase.IN_RESOLUTION,
+          scanActionInProgress: true,
+          spaceAgencyOptions: {
+            enabled: true,
+            agencies: false,
+            startResourceCards: false,
+            newDeck: true,
+            newAlienSpecies: false,
+          },
+          cardRow: [createCard('row-1')],
+          players: [
+            createMockPlayerState({
+              playerId: 'player-1',
+              resources: {
+                [EResource.CREDIT]: 10,
+                [EResource.ENERGY]: 5,
+                [EResource.DATA]: 0,
+                [EResource.PUBLICITY]: 3,
+                [EResource.SIGNAL_TOKEN]: 1,
+              },
+            }),
+          ],
+        }),
+        pendingInput: {
+          inputId: 'input-scan-pool',
+          type: EPlayerInputType.OPTION,
+          title: 'Scan: choose sub-action',
+          options: [{ id: 'mark-earth', label: 'Mark Earth' }],
+        } as unknown as IGameContext['pendingInput'],
+      });
+
+      await renderLayout();
+
+      fireEvent.click(screen.getByTestId('free-action-SPEND_SIGNAL_TOKEN'));
+
+      expect(sendFreeAction).toHaveBeenCalledWith({
+        type: EFreeAction.SPEND_SIGNAL_TOKEN,
+      });
     });
 
     it('offers blue-tech bottom data slots before the top row is full', async () => {
@@ -726,6 +806,36 @@ describe('GameLayout', () => {
           type: 'mascamites-capsule',
           id: 'capsule-1',
         },
+      });
+    });
+
+    it('sends organization id when using organization power', async () => {
+      const sendFreeAction = vi.fn();
+      mockContextValue = createMockContext({
+        sendFreeAction,
+        gameState: createMockGameState({
+          players: [
+            createMockPlayerState({
+              playerId: 'player-1',
+              organizationIds: [EOrganizationId.STRATUS_CORE],
+              usableOrganizationPowerIds: [EOrganizationId.STRATUS_CORE],
+              oncePerRoundUsed: { [EOrganizationId.STRATUS_CORE]: false },
+            }),
+          ],
+        }),
+      });
+      await renderLayout();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+      fireEvent.click(
+        screen.getByTestId(
+          `organization-power-${EOrganizationId.STRATUS_CORE}`,
+        ),
+      );
+
+      expect(sendFreeAction).toHaveBeenCalledWith({
+        type: EFreeAction.USE_ORGANIZATION_POWER,
+        organizationId: EOrganizationId.STRATUS_CORE,
       });
     });
 

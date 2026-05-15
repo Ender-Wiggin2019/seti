@@ -73,4 +73,19 @@ describe('GameOptions', () => {
       } as unknown as Parameters<typeof createGameOptions>[0]),
     ).toThrow('soloDifficulty must be an integer between 1 and 5');
   });
+
+  it('validates Space Agency option dependencies through the server re-export', () => {
+    expect(() =>
+      createGameOptions({
+        expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+        spaceAgencyOptions: {
+          enabled: true,
+          agencies: false,
+          startResourceCards: true,
+          newDeck: false,
+          newAlienSpecies: false,
+        },
+      }),
+    ).toThrow('startResourceCards requires agencies');
+  });
 });

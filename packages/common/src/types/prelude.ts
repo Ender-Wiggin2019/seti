@@ -6,8 +6,25 @@
  * @Description:
  */
 
-import { Effect } from '@seti/common/types/effect';
-import { EResource } from '@seti/common/types/element';
+import type { EStarName } from '@seti/common/constant/sectorSetup';
+import type { Effect } from '@seti/common/types/effect';
+import { EPlanet, EResource, ETrace } from '@seti/common/types/element';
+
+export type TPreludeSetupMark =
+  | {
+      kind: 'signal';
+      starName: EStarName;
+      count: number;
+    }
+  | {
+      kind: 'trace';
+      trace: ETrace;
+      alienIndex: number;
+    }
+  | {
+      kind: 'orbiter';
+      planet: EPlanet;
+    };
 
 export interface IPreludeCard {
   id: string;
@@ -15,6 +32,7 @@ export interface IPreludeCard {
   upperText: string;
   middleText: string;
   lowerEffects: Effect[];
+  setupMarks: TPreludeSetupMark[];
   lowerText?: string;
   watermark?: boolean;
   income?: EResource;

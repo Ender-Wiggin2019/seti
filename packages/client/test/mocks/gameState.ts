@@ -25,6 +25,7 @@ export function createMockPlayerState(
     score: 0,
     handSize: 5,
     pendingSetupTucks: 0,
+    organizationIds: [],
     resources: {
       [EResource.CREDIT]: 10,
       [EResource.ENERGY]: 5,
@@ -145,6 +146,7 @@ export function createMockGameState(
     sectors: createMockSectors(),
     planetaryBoard: createMockPlanetaryBoard(),
     techBoard: createMockTechBoard(),
+    mainDeck: { drawPileSize: 20, discardPileSize: 0 },
     cardRow: [],
     endOfRoundStacks: [[], [], [], []],
     currentEndOfRoundStackIndex: 0,

@@ -1,9 +1,25 @@
 import { RIVAL_OBJECTIVE_IDS_BY_LEVEL } from '@seti/common/constant/solo';
 import { baseCards } from '@seti/common/data/baseCards';
+import { ORGANIZATIONS_BY_ID } from '@seti/common/data/organizations';
+import { preludeCards } from '@seti/common/data/preludeCards';
+import { spaceAgencyCards } from '@seti/common/data/spaceAgencyCards';
+import { EEffectType, type Effect } from '@seti/common/types/effect';
 import { EResource } from '@seti/common/types/element';
-import { EAlienType, EPhase } from '@seti/common/types/protocol/enums';
-import { DEFAULT_ALIEN_MODULES_ENABLED } from '@seti/common/types/protocol/options';
-import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
+import { EOrganizationId } from '@seti/common/types/organization';
+import {
+  EAlienType,
+  EMainAction,
+  EPhase,
+} from '@seti/common/types/protocol/enums';
+import {
+  DEFAULT_ALIEN_MODULES_ENABLED,
+  EExpansion,
+} from '@seti/common/types/protocol/options';
+import {
+  EPlayerInputType,
+  ESetupChoiceStepKind,
+  type ISelectOptionInputModel,
+} from '@seti/common/types/protocol/playerInput';
 import {
   FIRST_TAKE_VP_BONUS,
   TECH_CATEGORIES,
@@ -12,6 +28,7 @@ import {
 } from '@seti/common/types/tech';
 import { BaseCorporation } from '@/engine/corporation/BaseCorporation.js';
 import { Game } from '@/engine/Game.js';
+import type { TCardItem } from '@/engine/player/IPlayer.js';
 import type { ISetupRole } from '@/engine/setup/ISetupRole.js';
 
 const BASE_PLAYERS = [
@@ -20,6 +37,180 @@ const BASE_PLAYERS = [
   { id: 'p3', name: 'Cathy', color: 'green', seatIndex: 2 },
   { id: 'p4', name: 'Dylan', color: 'yellow', seatIndex: 3 },
 ] as const;
+
+function createBaseSpaceAgencyOptions(
+  overrides: Partial<{
+    enabled: boolean;
+    agencies: boolean;
+    startResourceCards: boolean;
+    newDeck: boolean;
+    newAlienSpecies: boolean;
+  }> = {},
+) {
+  return {
+    enabled: true,
+    agencies: true,
+    startResourceCards: false,
+    newDeck: false,
+    newAlienSpecies: false,
+    ...overrides,
+  };
+}
+
+function createAgenciesOptions(
+  playerCount = 2,
+  overrides: Partial<ReturnType<typeof createBaseSpaceAgencyOptions>> = {},
+) {
+  return {
+    playerCount,
+    expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+    spaceAgencyOptions: createBaseSpaceAgencyOptions(overrides),
+  } as Parameters<typeof Game.create>[1];
+}
+
+function createSpaceAgencyOptions(
+  playerCount = 2,
+  overrides: Partial<ReturnType<typeof createBaseSpaceAgencyOptions>> = {},
+) {
+  return {
+    playerCount,
+    expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+    spaceAgencyOptions: createBaseSpaceAgencyOptions(overrides),
+  } as Parameters<typeof Game.create>[1];
+}
+
+function collectInitialMainDeckCardIds(game: Game): string[] {
+  return [
+    ...game.mainDeck.getDrawPile(),
+    ...game.cardRow.map(getCardItemId),
+    ...game.endOfRoundStacks.flat().map(getCardItemId),
+    ...game.players.flatMap((player) => [
+      ...player.hand.map(getCardItemId),
+      ...player.tuckedIncomeCards.map(getCardItemId),
+    ]),
+  ];
+}
+
+function getCardItemId(card: TCardItem): string {
+  if (typeof card === 'string') {
+    return card;
+  }
+  if (typeof card.id === 'string') {
+    return card.id;
+  }
+  throw new Error('Expected setup card item to have an id');
+}
+
+function getSetupOrganizationOptions(
+  player: Game['players'][number],
+): EOrganizationId[] {
+  const model = player.waitingFor?.toModel() as
+    | ISelectOptionInputModel
+    | undefined;
+  return (model?.options ?? []).map((option) => option.id as EOrganizationId);
+}
+
+function chooseFirstOrganization(
+  game: Game,
+  playerId: string,
+): EOrganizationId {
+  const player = game.players.find((candidate) => candidate.id === playerId);
+  if (!player) {
+    throw new Error(`expected player ${playerId}`);
+  }
+  const organizationId = getSetupOrganizationOptions(player)[0];
+  game.processInput(playerId, {
+    type: EPlayerInputType.OPTION,
+    optionId: organizationId,
+  });
+  return organizationId;
+}
+
+function getCurrentSetupOptionIds(player: Game['players'][number]): string[] {
+  const model = player.waitingFor?.toModel() as
+    | ISelectOptionInputModel
+    | undefined;
+  return (model?.options ?? []).map((option) => option.id);
+}
+
+function chooseFirstQuickStartCards(
+  game: Game,
+  playerId: string,
+  count = 2,
+): string[] {
+  const selected: string[] = [];
+  for (let index = 0; index < count; index += 1) {
+    const player = game.players.find((candidate) => candidate.id === playerId);
+    if (!player) {
+      throw new Error(`expected player ${playerId}`);
+    }
+    const optionId = getCurrentSetupOptionIds(player)[0];
+    selected.push(optionId);
+    game.processInput(playerId, {
+      type: EPlayerInputType.OPTION,
+      optionId,
+    });
+  }
+  return selected;
+}
+
+function sumLowerResource(
+  cardIds: readonly string[],
+  resource: EResource,
+): number {
+  return cardIds.reduce((total, cardId) => {
+    const card = preludeCards.find((candidate) => candidate.id === cardId);
+    return (
+      total +
+      (card?.lowerEffects ?? []).reduce((effectTotal, effect: Effect) => {
+        if (
+          effect.effectType !== EEffectType.BASE ||
+          effect.type !== resource
+        ) {
+          return effectTotal;
+        }
+        return effectTotal + (effect.value ?? 1);
+      }, 0)
+    );
+  }, 0);
+}
+
+function countNeutralSignals(game: Game): number {
+  return game.sectors.reduce(
+    (total, sector) =>
+      total +
+      sector.signals.filter(
+        (signal) => signal.type === 'player' && signal.playerId === 'neutral',
+      ).length,
+    0,
+  );
+}
+
+function countNeutralOrbiters(game: Game): number {
+  return Array.from(game.planetaryBoard?.planets.values() ?? []).reduce(
+    (total, planet) =>
+      total +
+      planet.orbitSlots.filter((slot) => slot.playerId === 'neutral').length,
+    0,
+  );
+}
+
+function countNeutralTraces(game: Game): number {
+  return game.alienState.boards.reduce(
+    (total, board) =>
+      total +
+      board
+        .getTraceSlots()
+        .reduce(
+          (slotTotal, slot) =>
+            slotTotal +
+            slot.occupants.filter((occupant) => occupant.source === 'neutral')
+              .length,
+          0,
+        ),
+    0,
+  );
+}
 
 function createSoloGame(soloDifficulty = 2, seed = 'seed-solo-random'): Game {
   return Game.create(
@@ -43,6 +234,19 @@ function createSoloGame(soloDifficulty = 2, seed = 'seed-solo-random'): Game {
 }
 
 describe('GameSetup', () => {
+  it('allows Space Agency games with agencies disabled', () => {
+    const game = Game.create(
+      BASE_PLAYERS.slice(0, 2),
+      createSpaceAgencyOptions(2, { agencies: false }),
+      'space-agency-no-agencies',
+    );
+
+    expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
+    expect(game.roundIndex).toBe(1);
+    expect(game.endOfRoundStacks).toHaveLength(4);
+    expect(game.players[0].publicity).toBe(4);
+  });
+
   it('builds initial draw pool from base cards only', () => {
     const game = Game.create(
       BASE_PLAYERS.slice(0, 2),
@@ -50,19 +254,33 @@ describe('GameSetup', () => {
       'seed-base-only',
     );
 
-    const baseCardIdSet = new Set(baseCards.map((card) => card.id));
-    const dealtCardIds = [
-      ...game.cardRow,
-      ...game.endOfRoundStacks.flat(),
-      ...game.players.flatMap((player) => [
-        ...player.hand,
-        ...player.tuckedIncomeCards,
-      ]),
-    ];
+    expect([...collectInitialMainDeckCardIds(game)].sort()).toEqual(
+      baseCards.map((card) => card.id).sort(),
+    );
+  });
 
-    for (const cardId of dealtCardIds) {
-      expect(baseCardIdSet.has(cardId as string)).toBe(true);
-    }
+  it('mixes Space Agency cards into the main deck only when newDeck is enabled', () => {
+    const baseCardIds = baseCards.map((card) => card.id);
+    const spaceAgencyCardIds = spaceAgencyCards.map((card) => card.id);
+
+    const disabledGame = Game.create(
+      BASE_PLAYERS.slice(0, 2),
+      createSpaceAgencyOptions(2, { agencies: false, newDeck: false }),
+      'seed-sa-new-deck-disabled',
+    );
+    expect([...collectInitialMainDeckCardIds(disabledGame)].sort()).toEqual(
+      [...baseCardIds].sort(),
+    );
+
+    const enabledGame = Game.create(
+      BASE_PLAYERS.slice(0, 2),
+      createSpaceAgencyOptions(2, { agencies: false, newDeck: true }),
+      'seed-sa-new-deck-enabled',
+    );
+    expect([...collectInitialMainDeckCardIds(enabledGame)].sort()).toEqual(
+      [...baseCardIds, ...spaceAgencyCardIds].sort(),
+    );
+    expect(enabledGame.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
   });
 
   it('initializes 2-player setup values', () => {
@@ -133,6 +351,217 @@ describe('GameSetup', () => {
     expect(setupRole.id).toBe('base-corporation');
     expect(game.players[0].publicity).toBe(4);
     expect(game.endOfRoundStacks).toHaveLength(4);
+  });
+
+  it('starts agencies games in setup choice with SA round and setup defaults', () => {
+    const game = Game.create(
+      BASE_PLAYERS.slice(0, 2),
+      createAgenciesOptions(2),
+      'seed-agencies-setup-choice',
+    );
+
+    expect(game.phase).toBe(EPhase.SETUP_CHOICE);
+    expect(game.roundIndex).toBe(2);
+    expect(game.endOfRoundStacks).toHaveLength(3);
+    expect(game.players[0].publicity).toBe(0);
+    expect(game.players[0].pendingSetupTucks).toBe(0);
+    expect(game.players[0].organizationIds).toEqual([]);
+    expect(game.players[0].hand).toHaveLength(4);
+    expect(game.players[0].waitingFor?.toModel()).toMatchObject({
+      type: EPlayerInputType.OPTION,
+      title: 'Choose organization',
+    });
+    expect(getSetupOrganizationOptions(game.players[0])).toHaveLength(2);
+  });
+
+  it('deals two deterministic organization candidates per agencies player', () => {
+    const gameA = Game.create(
+      BASE_PLAYERS.slice(0, 4),
+      createAgenciesOptions(4),
+      'seed-agencies-deterministic-deal',
+    );
+    const gameB = Game.create(
+      BASE_PLAYERS.slice(0, 4),
+      createAgenciesOptions(4),
+      'seed-agencies-deterministic-deal',
+    );
+
+    const dealtA = gameA.players.map((player) =>
+      getSetupOrganizationOptions(player),
+    );
+    const dealtB = gameB.players.map((player) =>
+      getSetupOrganizationOptions(player),
+    );
+
+    expect(dealtA).toEqual(dealtB);
+    expect(dealtA.every((candidates) => candidates.length === 2)).toBe(true);
+    expect(new Set(dealtA.flat()).size).toBe(8);
+  });
+
+  it('rejects organization selections outside the player dealt candidates', () => {
+    const game = Game.create(
+      BASE_PLAYERS.slice(0, 2),
+      createAgenciesOptions(2),
+      'seed-agencies-invalid-org',
+    );
+    const candidates = new Set(getSetupOrganizationOptions(game.players[0]));
+    const missingOrganization = Object.values(EOrganizationId).find(
+      (organizationId) => !candidates.has(organizationId),
+    );
+    if (!missingOrganization) {
+      throw new Error('expected an organization outside the dealt candidates');
+    }
+
+    expect(() =>
+      game.processInput('p1', {
+        type: EPlayerInputType.OPTION,
+        optionId: missingOrganization,
+      }),
+    ).toThrow('Unknown option id');
+    expect(game.players[0].organizationIds).toEqual([]);
+  });
+
+  it('rejects Space Agency new alien species until SA-7', () => {
+    for (const overrides of [{ newAlienSpecies: true }]) {
+      expect(() =>
+        Game.create(
+          BASE_PLAYERS.slice(0, 2),
+          createAgenciesOptions(2, overrides),
+          `seed-agencies-unsupported-${Object.keys(overrides)[0]}`,
+        ),
+      ).toThrow('Unsupported Space Agency option(s) for SA-6');
+    }
+  });
+
+  it('deals three quick start candidates and resolves two before organization setup', () => {
+    const game = Game.create(
+      BASE_PLAYERS.slice(0, 2),
+      createAgenciesOptions(2, { startResourceCards: true }),
+      'seed-agencies-quick-start',
+    );
+
+    const p1OrganizationId = chooseFirstOrganization(game, 'p1');
+    const p1QuickStartOptions = getCurrentSetupOptionIds(game.players[0]);
+    expect(game.players[0].waitingFor?.toModel()).toMatchObject({
+      type: EPlayerInputType.OPTION,
+      title: 'Choose Quick Start Cards',
+      setupChoice: {
+        kind: ESetupChoiceStepKind.QUICK_START_CARDS,
+        minSelections: 2,
+        maxSelections: 2,
+      },
+    });
+    expect(p1QuickStartOptions).toHaveLength(3);
+
+    const p1QuickStartIds = chooseFirstQuickStartCards(game, 'p1');
+    chooseFirstOrganization(game, 'p2');
+    chooseFirstQuickStartCards(game, 'p2');
+
+    const p1Organization = ORGANIZATIONS_BY_ID[p1OrganizationId];
+    expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
+    expect(game.players[0].quickStartCardIds).toEqual(p1QuickStartIds);
+    expect(game.players[0].score).toBe(
+      1 + sumLowerResource(p1QuickStartIds, EResource.SCORE),
+    );
+    expect(game.players[0].resources.toObject()).toMatchObject({
+      credits:
+        p1Organization.resources.credit +
+        sumLowerResource(p1QuickStartIds, EResource.CREDIT),
+      energy:
+        p1Organization.resources.energy +
+        sumLowerResource(p1QuickStartIds, EResource.ENERGY),
+      publicity:
+        p1Organization.resources.publicity +
+        sumLowerResource(p1QuickStartIds, EResource.PUBLICITY),
+      data:
+        p1Organization.resources.data +
+        sumLowerResource(p1QuickStartIds, EResource.DATA),
+      signalTokens: sumLowerResource(p1QuickStartIds, EResource.SIGNAL_TOKEN),
+    });
+  });
+
+  it('rejects quick start selections outside the player dealt candidates', () => {
+    const game = Game.create(
+      BASE_PLAYERS.slice(0, 2),
+      createAgenciesOptions(2, { startResourceCards: true }),
+      'seed-agencies-invalid-quick-start',
+    );
+    chooseFirstOrganization(game, 'p1');
+    const candidates = new Set(getCurrentSetupOptionIds(game.players[0]));
+    const missingCard = preludeCards.find((card) => !candidates.has(card.id));
+    if (!missingCard) {
+      throw new Error('expected a Quick Start card outside dealt candidates');
+    }
+
+    expect(() =>
+      game.processInput('p1', {
+        type: EPlayerInputType.OPTION,
+        optionId: missingCard.id,
+      }),
+    ).toThrow('Unknown option id');
+    expect(game.players[0].quickStartCardIds).toEqual([]);
+  });
+
+  it('applies 1-2 player neutral Quick Start upper marks without lower rewards', () => {
+    const game = Game.create(
+      BASE_PLAYERS.slice(0, 2),
+      createAgenciesOptions(2, { startResourceCards: true }),
+      'neutral-0',
+    );
+
+    expect(
+      countNeutralSignals(game) +
+        countNeutralOrbiters(game) +
+        countNeutralTraces(game),
+    ).toBe(5);
+    expect(game.players[0].score).toBe(1);
+    expect(game.players[1].score).toBe(2);
+    expect(game.players[0].resources.toObject()).toEqual({
+      credits: 0,
+      energy: 0,
+      publicity: 0,
+      data: 0,
+      signalTokens: 0,
+    });
+    expect(game.players[0].quickStartCardIds).toEqual([]);
+  });
+
+  it('resolves selected organizations after all players finish setup choice', () => {
+    const game = Game.create(
+      BASE_PLAYERS.slice(0, 2),
+      createAgenciesOptions(2),
+      'seed-agencies-resolve',
+    );
+
+    expect(() =>
+      game.processMainAction(game.activePlayer.id, {
+        type: EMainAction.PASS,
+      }),
+    ).toThrow(`Action not allowed during phase ${EPhase.SETUP_CHOICE}`);
+
+    const p1OrganizationId = chooseFirstOrganization(game, 'p1');
+    expect(game.phase).toBe(EPhase.SETUP_CHOICE);
+
+    const p2OrganizationId = chooseFirstOrganization(game, 'p2');
+
+    expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
+    expect(game.players[0].organizationIds).toEqual([p1OrganizationId]);
+    const p1Organization = ORGANIZATIONS_BY_ID[p1OrganizationId];
+    expect(game.players[0].resources.toObject()).toMatchObject({
+      credits: p1Organization.resources.credit,
+      energy: p1Organization.resources.energy,
+      publicity: p1Organization.resources.publicity,
+    });
+    expect(game.players[0].pendingSetupTucks).toBe(p1Organization.tuckIncome);
+    if (p1Organization.tuckIncome > 0) {
+      expect(game.players[0].waitingFor?.toModel().type).toBe(
+        EPlayerInputType.CARD,
+      );
+    }
+    expect(game.players[1].organizationIds).toEqual([p2OrganizationId]);
+    expect(game.players[1].pendingSetupTucks).toBe(
+      ORGANIZATIONS_BY_ID[p2OrganizationId].tuckIncome,
+    );
   });
 
   it('initializes solo rival state without normal human setup resources', () => {

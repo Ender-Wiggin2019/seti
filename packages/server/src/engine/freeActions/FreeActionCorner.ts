@@ -52,7 +52,7 @@ export class FreeActionCornerFreeAction {
     return { discardedCardId: cardId, pendingInput };
   }
 
-  private static executeCardCornerRewards(
+  public static executeCardCornerRewards(
     player: IPlayer,
     game: IGame,
     cardId: string,

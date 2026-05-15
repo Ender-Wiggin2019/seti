@@ -1,4 +1,5 @@
 import { EResource, ESector } from '@seti/common/types/element';
+import type { EOrganizationId } from '@seti/common/types/organization';
 import {
   EFreeAction,
   EMainAction,
@@ -11,6 +12,12 @@ import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 export interface IMainActionRequest {
   type: EMainAction;
   payload?: Record<string, unknown>;
+}
+
+export interface IUseOrganizationMainActionPayload
+  extends Record<string, unknown> {
+  organizationId: EOrganizationId;
+  actionId?: string;
 }
 
 export type TMovementTarget =
@@ -81,6 +88,11 @@ export interface ISpendSignalTokenFreeActionRequest {
   type: EFreeAction.SPEND_SIGNAL_TOKEN;
 }
 
+export interface IUseOrganizationPowerFreeActionRequest {
+  type: EFreeAction.USE_ORGANIZATION_POWER;
+  organizationId: EOrganizationId;
+}
+
 export type IFreeActionRequest =
   | IMovementFreeActionRequest
   | IConvertEnergyToMovementFreeActionRequest
@@ -90,7 +102,8 @@ export type IFreeActionRequest =
   | IUseCardCornerFreeActionRequest
   | IBuyCardFreeActionRequest
   | IExchangeResourcesFreeActionRequest
-  | ISpendSignalTokenFreeActionRequest;
+  | ISpendSignalTokenFreeActionRequest
+  | IUseOrganizationPowerFreeActionRequest;
 
 export interface IInputResponseBase {
   inputId?: string;

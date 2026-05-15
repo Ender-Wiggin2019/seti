@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 import { getRequiredHumanPlayerCount, isSoloRoom } from '@/lib/roomOptions';
 import { CoreAlienModulesSection } from '@/pages/lobby/CoreAlienModulesSection';
+import { SpaceAgencyOptionsSection } from '@/pages/lobby/SpaceAgencyOptionsSection';
 
 interface IGameSettingsPanelProps {
   options: IGameOptions;
@@ -80,6 +81,27 @@ export function GameSettingsPanel({
             />
           ) : (
             <CoreAlienModulesSection
+              options={options}
+              disabled={false}
+              onChange={onChange}
+            />
+          )}
+        </ReadoutRow>
+        <ReadoutRow
+          label={t('client.game_settings.space_agency', {
+            defaultValue: 'Space Agency',
+          })}
+          testId='space-agency'
+        >
+          {readOnly ? (
+            <StatusValue
+              active={options.spaceAgencyOptions?.enabled === true}
+              on={t('client.common.on')}
+              off={t('client.common.off')}
+              testId='space-agency'
+            />
+          ) : (
+            <SpaceAgencyOptionsSection
               options={options}
               disabled={false}
               onChange={onChange}

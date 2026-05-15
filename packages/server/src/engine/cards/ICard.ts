@@ -21,12 +21,16 @@ export interface ICardRuntimeContext {
   playedCard?: TCardItem;
 }
 
+export interface ICardPlayOptions {
+  ignoreResourceCost?: boolean;
+}
+
 export interface ICard extends IBaseCard {
   readonly kind: EServerCardKind;
   readonly behavior: IBehavior;
   readonly requirements: ICardRequirements;
 
-  canPlay(context: ICardRuntimeContext): boolean;
+  canPlay(context: ICardRuntimeContext, options?: ICardPlayOptions): boolean;
   play(context: ICardRuntimeContext): IPlayerInput | undefined;
   movesPlayedCardToIncomeAfterPlay(context: ICardRuntimeContext): boolean;
   canReturnToHandAfterPlay(context: ICardRuntimeContext): boolean;

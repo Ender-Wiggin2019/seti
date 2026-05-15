@@ -6,6 +6,7 @@ import { EErrorCode } from '@seti/common/types/protocol/errors';
 import {
   EPlayerInputType,
   type ISelectOptionInputModel,
+  type ISetupChoiceInputMetadata,
 } from '@seti/common/types/protocol/playerInput';
 import { GameError } from '@/shared/errors/GameError.js';
 import type { IPlayer } from '../player/IPlayer.js';
@@ -30,6 +31,7 @@ export class SelectOption extends BasePlayerInput {
     player: IPlayer,
     options: ReadonlyArray<ISelectOptionEntry>,
     title?: string,
+    private readonly setupChoice?: ISetupChoiceInputMetadata,
   ) {
     super(player, EPlayerInputType.OPTION, title);
     if (options.length === 0) {
@@ -51,6 +53,7 @@ export class SelectOption extends BasePlayerInput {
       inputId: this.inputId,
       type: EPlayerInputType.OPTION,
       title: this.title,
+      setupChoice: this.setupChoice,
       options: this.options.map((option) => ({
         id: option.id,
         label: option.label,

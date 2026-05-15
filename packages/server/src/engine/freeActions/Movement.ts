@@ -11,6 +11,7 @@ import { ESolarSystemElementType } from '../board/SolarSystem.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
 import { EMissionEventType } from '../missions/IMission.js';
+import { OrganizationRegistry } from '../organization/OrganizationRegistry.js';
 import type { IPlayer } from '../player/IPlayer.js';
 import { TechModifierQuery } from '../tech/TechModifierQuery.js';
 import {
@@ -179,7 +180,9 @@ export class MovementFreeAction {
       );
     }
 
-    const techQuery = TechModifierQuery.fromTechIds(player.techs);
+    const techQuery = TechModifierQuery.fromTechIds(
+      OrganizationRegistry.getEffectiveTechIds(player, game),
+    );
     const publicityRecords: IPublicityRecord[] = [];
     const pendingInputs: IPlayerInput[] = [];
     const movementPublicityDisabled = isMovementPublicityDisabledForCurrentTurn(
@@ -278,7 +281,9 @@ export class MovementFreeAction {
       player.id,
     )
       ? 0
-      : TechModifierQuery.fromTechIds(player.techs).getAsteroidLeaveCost(1);
+      : TechModifierQuery.fromTechIds(
+          OrganizationRegistry.getEffectiveTechIds(player, game),
+        ).getAsteroidLeaveCost(1);
 
     let totalCost = 0;
     for (let i = 0; i < path.length - 1; i++) {

@@ -78,7 +78,7 @@ export const DEFAULT_ALIEN_MODULES_ENABLED: TAlienModulesEnabled = {
    - `newAlienSpecies=false` 时 Glyphids/Amoeba/Arkhos 三项必须为 false。
 3. 否则 Glyphids/Amoeba/Arkhos 三项强制 false。
 
-helpers（同文件）：`isSpaceAgencyEnabled(o)`、`getEnabledSubModules(o)`、`isSignalTokenMechanicEnabled(o)`、`isAlienEnabled(o, alien)`。
+helpers（同文件）：保留通用选项 helper（如 `isSoloMode(o)`、`isAlienEnabled(o, alien)`）；不要新增 signal-token 专用门控，scan 直接读取 `spaceAgencyOptions.newDeck`。
 
 > server `GameOptions.ts` 退化为 re-export，让既有 import path 不大动。
 
@@ -544,7 +544,7 @@ SetupChoiceCoordinator.begin(game, config);
 
 现状：`Resources.signalTokens` 字段已存在；`EFreeAction.SPEND_SIGNAL_TOKEN` 已存在。
 
-新需求：**扫描时弃 signal token 多翻 1 张并标记 signal**。改造 `packages/server/src/engine/effects/scan/ScanActionPool.ts`：进入 sub-action 选择前插入"是否花费 signal token 多翻 1 张"的 SelectOption。可见条件 `player.signalTokens > 0 && isSignalTokenMechanicEnabled(game.options)`。同一次扫描最多花 2 个（卡行只有 3 张，规则约束）。
+新需求：**扫描时弃 signal token 多翻 1 张并标记 signal**。改造 `packages/server/src/engine/effects/scan/ScanActionPool.ts`：进入 sub-action 选择前插入"是否花费 signal token 多翻 1 张"的 SelectOption。可见条件 `player.signalTokens > 0 && game.options.spaceAgencyOptions?.newDeck === true`。同一次扫描最多花 2 个（卡行只有 3 张，规则约束）。
 
 ### 2.7 New Alien Species
 
@@ -584,7 +584,7 @@ setupChoiceContext?: ISetupChoiceContext;
 - `features/setup/SetupChoiceModal.tsx`：当 `game.phase === SETUP_CHOICE` 且本地玩家有未完成的 PlayerInput 时弹出，三步 Stepper（机构→quick start→手牌确认）。
 - `features/player/OrganizationBadge.tsx` + `QuickStartCardsThumbnail.tsx`：嵌入 `PlayerDashboard.tsx` 顶部。
 - `features/freeActions/OrganizationPowerButton.tsx`：注册到 free action bar，`disabled = oncePerRoundUsed`。
-- `features/actions/ScanModal.tsx`：增加"花 signal token 多翻 1 张"选项（仅 `isSignalTokenMechanicEnabled` 返回 true 时显示）。
+- `features/actions/ScanModal.tsx`：增加"花 signal token 多翻 1 张"选项（仅 `spaceAgencyOptions.newDeck` 为 true 时显示）。
 - `features/alien/{GlyphidBoard,AmoebaBoard,ArkhosBoard}.tsx`：复用现有 5 个外星棋盘组件结构。
 
 ### 3.3 数据驱动一致性

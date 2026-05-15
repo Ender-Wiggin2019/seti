@@ -6,6 +6,7 @@ import { EErrorCode } from '@seti/common/types/protocol/errors';
 import {
   EPlayerInputType,
   type ISelectCardInputModel,
+  type ISetupChoiceInputMetadata,
 } from '@seti/common/types/protocol/playerInput';
 import { GameError } from '@/shared/errors/GameError.js';
 import type { IPlayer } from '../player/IPlayer.js';
@@ -33,6 +34,7 @@ export class SelectCard extends BasePlayerInput {
     player: IPlayer,
     config: ISelectCardConfig,
     title?: string,
+    private readonly setupChoice?: ISetupChoiceInputMetadata,
   ) {
     super(player, EPlayerInputType.CARD, title);
     this.cards = config.cards;
@@ -46,6 +48,7 @@ export class SelectCard extends BasePlayerInput {
       inputId: this.inputId,
       type: EPlayerInputType.CARD,
       title: this.title,
+      setupChoice: this.setupChoice,
       cards: this.cards as unknown as ISelectCardInputModel['cards'],
       minSelections: this.minSelections,
       maxSelections: this.maxSelections,

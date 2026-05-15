@@ -1,5 +1,4 @@
 import {
-  ANALYZE_ENERGY_COST,
   LAUNCH_PROBE_CREDIT_COST,
   ORBIT_CREDIT_COST,
   ORBIT_ENERGY_COST,
@@ -9,6 +8,7 @@ import {
 import { PLANETARY_BOARD_CONFIG } from '../constant/boardLayout';
 import { EAlienType, type IBaseCard } from '../types/BaseCard';
 import { EResource } from '../types/element';
+import { DEFAULT_PLAYER_ACTION_COSTS } from '../types/organization';
 import { EMainAction, EPlanet } from '../types/protocol/enums';
 import type {
   IPublicGameState,
@@ -16,7 +16,6 @@ import type {
   IPublicPlayerState,
   IPublicResourceState,
 } from '../types/protocol/gameState';
-import { RESEARCH_PUBLICITY_COST } from '../types/tech';
 import { isStandardPlayProhibitedCard } from './handLimit';
 import { canLandOnPlanet, canOrbitPlanet } from './planet';
 import { findPlanetSpaceId } from './solarSystem';
@@ -90,8 +89,15 @@ export function canScan(player: IPublicPlayerState): boolean {
   );
 }
 
+export function getAnalyzeDataEnergyCost(player: IPublicPlayerState): number {
+  return (
+    player.actionCosts?.analyzeDataEnergy ??
+    DEFAULT_PLAYER_ACTION_COSTS.analyzeDataEnergy
+  );
+}
+
 export function canAnalyzeData(player: IPublicPlayerState): boolean {
-  if (player.resources[EResource.ENERGY] < ANALYZE_ENERGY_COST) {
+  if (player.resources[EResource.ENERGY] < getAnalyzeDataEnergyCost(player)) {
     return false;
   }
   return player.computer.columns.every((col) => col.topFilled);
@@ -149,10 +155,21 @@ export function canResearchTechAction(
   player: IPublicPlayerState,
   gameState: IPublicGameState,
 ): boolean {
-  if (player.resources[EResource.PUBLICITY] < RESEARCH_PUBLICITY_COST) {
+  if (
+    player.resources[EResource.PUBLICITY] < getResearchTechPublicityCost(player)
+  ) {
     return false;
   }
   return getAvailableTechs(player, gameState.techBoard).length > 0;
+}
+
+export function getResearchTechPublicityCost(
+  player: IPublicPlayerState,
+): number {
+  return (
+    player.actionCosts?.researchTechPublicity ??
+    DEFAULT_PLAYER_ACTION_COSTS.researchTechPublicity
+  );
 }
 
 export function getAvailableMainActions(
@@ -173,6 +190,9 @@ export function getAvailableMainActions(
   if (canPlayCard(player)) actions.push(EMainAction.PLAY_CARD);
   if (canResearchTechAction(player, gameState))
     actions.push(EMainAction.RESEARCH_TECH);
+  if ((player.usableOrganizationMainActionIds?.length ?? 0) > 0) {
+    actions.push(EMainAction.USE_ORGANIZATION_ACTION);
+  }
   actions.push(EMainAction.PASS);
 
   return actions;

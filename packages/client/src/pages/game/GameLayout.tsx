@@ -5,6 +5,7 @@ import {
 } from '@seti/common/rules';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EPlanet, EResource } from '@seti/common/types/element';
+import type { EOrganizationId } from '@seti/common/types/organization';
 import { ALL_TECH_IDS } from '@seti/common/types/tech';
 import { getMascamitesSampleDeliveryDestination } from '@seti/common/utils/mascamitesSampleDelivery';
 import { useEffect, useRef, useState } from 'react';
@@ -36,6 +37,7 @@ import { EventLog } from '@/features/log';
 import { HandDock, PlayedMissions, PlayerDashboard } from '@/features/player';
 import type { IMilestoneItem } from '@/features/scoring';
 import { MilestoneTrack } from '@/features/scoring';
+import { SetupChoiceModal } from '@/features/setup/SetupChoiceModal';
 import { RivalPanel } from '@/features/solo';
 import { cn } from '@/lib/cn';
 import { useGameContext } from '@/pages/game/GameContext';
@@ -480,7 +482,10 @@ function useActionController({
   armMoveMode: () => void;
   clearMoveMode: () => void;
 }): {
-  handleFreeActionClick: (action: EFreeAction) => void;
+  handleFreeActionClick: (
+    action: EFreeAction,
+    organizationId?: EOrganizationId,
+  ) => void;
   cornerSelectionMode: boolean;
   setCornerSelectionMode: (next: boolean) => void;
   dialogs: React.JSX.Element;
@@ -506,7 +511,10 @@ function useActionController({
   const placeDataOptions = buildPlaceDataOptions(myPlayer);
   const maxConvertibleEnergy = myPlayer?.resources?.[EResource.ENERGY] ?? 0;
 
-  const handleFreeActionClick = (action: EFreeAction) => {
+  const handleFreeActionClick = (
+    action: EFreeAction,
+    organizationId?: EOrganizationId,
+  ) => {
     switch (action) {
       case EFreeAction.BUY_CARD:
         setCornerSelectionMode(false);
@@ -628,6 +636,18 @@ function useActionController({
         clearMoveMode();
         clearCardRowBuy();
         sendFreeAction({ type: EFreeAction.SPEND_SIGNAL_TOKEN });
+        return;
+      case EFreeAction.USE_ORGANIZATION_POWER:
+        setCornerSelectionMode(false);
+        clearMoveMode();
+        clearCardRowBuy();
+        if (!organizationId) {
+          return;
+        }
+        sendFreeAction({
+          type: EFreeAction.USE_ORGANIZATION_POWER,
+          organizationId,
+        });
         return;
       default:
         return;
@@ -765,7 +785,10 @@ function TopActionBar({
   onRequestPlayCardSelection,
   onRequestPlanetActionSelection,
 }: {
-  onFreeActionClick: (action: EFreeAction) => void;
+  onFreeActionClick: (
+    action: EFreeAction,
+    organizationId?: EOrganizationId,
+  ) => void;
   cornerSelectionHint: boolean;
   movementModeActive: boolean;
   onEndMovementMode: () => void;
@@ -789,6 +812,8 @@ function TopActionBar({
   const canUndo = gameState?.canUndo ?? false;
   const showInputRenderer =
     pendingInput !== null && pendingInput.type !== EPlayerInputType.OR;
+  const showSetupChoiceInput =
+    gameState?.phase === EPhase.SETUP_CHOICE && pendingInput !== null;
   const showTechBoardInput =
     gameState != null && isTechBoardInput(pendingInput);
   const myPlayer = gameState?.players.find(
@@ -887,6 +912,8 @@ function TopActionBar({
                 myPlayerId={myPlayerId}
                 onSubmit={sendInput}
               />
+            ) : showSetupChoiceInput ? (
+              <SetupChoiceModal model={pendingInput} onSubmit={sendInput} />
             ) : (
               <InputRenderer model={pendingInput} onSubmit={sendInput} />
             )}

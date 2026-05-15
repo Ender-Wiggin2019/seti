@@ -11,6 +11,15 @@ describe('Phase transitions', () => {
     expect(isValidPhaseTransition(EPhase.SETUP, EPhase.AWAIT_MAIN_ACTION)).toBe(
       true,
     );
+    expect(isValidPhaseTransition(EPhase.SETUP, 'SETUP_CHOICE' as EPhase)).toBe(
+      true,
+    );
+    expect(
+      isValidPhaseTransition(
+        'SETUP_CHOICE' as EPhase,
+        EPhase.AWAIT_MAIN_ACTION,
+      ),
+    ).toBe(true);
     expect(
       isValidPhaseTransition(EPhase.AWAIT_MAIN_ACTION, EPhase.IN_RESOLUTION),
     ).toBe(true);

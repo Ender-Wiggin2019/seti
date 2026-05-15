@@ -9,11 +9,13 @@ import {
   canPlaceData,
   canSpendSignalToken,
   canUseFreeActionCorner,
+  canUseOrganizationPower,
   getAvailableFreeActions,
   validateMovementPath,
 } from '@/rules/freeActions';
 import { EEffectType } from '@/types/effect';
 import { EResource } from '@/types/element';
+import { EOrganizationId } from '@/types/organization';
 import {
   EAlienType,
   EFreeAction,
@@ -26,7 +28,21 @@ import type {
   IPublicPlayerState,
   IPublicSolarSystemState,
 } from '@/types/protocol/gameState';
+import type { ISpaceAgencyOptions } from '@/types/protocol/options';
 import { ETechId } from '@/types/tech';
+
+const SPACE_AGENCY_NEW_DECK_OPTIONS: ISpaceAgencyOptions = {
+  enabled: true,
+  agencies: false,
+  startResourceCards: false,
+  newDeck: true,
+  newAlienSpecies: false,
+};
+
+const SPACE_AGENCY_WITHOUT_NEW_DECK_OPTIONS: ISpaceAgencyOptions = {
+  ...SPACE_AGENCY_NEW_DECK_OPTIONS,
+  newDeck: false,
+};
 
 function emptyCol(
   overrides?: Partial<IPublicComputerColumnState>,
@@ -102,6 +118,7 @@ function createGameState(
     sectors: [],
     planetaryBoard: { planets: {} },
     techBoard: { stacks: [] },
+    mainDeck: { drawPileSize: 20, discardPileSize: 0 },
     cardRow: [],
     aliens: [],
     recentEvents: [],
@@ -585,13 +602,14 @@ describe('free action rules', () => {
       const gameState = createGameState({
         phase: EPhase.IN_RESOLUTION,
         scanActionInProgress: true,
+        spaceAgencyOptions: SPACE_AGENCY_NEW_DECK_OPTIONS,
         cardRow: [{ id: 'row-1' } as never],
       });
 
       expect(canSpendSignalToken(player, gameState)).toBe(true);
     });
 
-    it('returns false outside scan, without a token, or with an empty card row', () => {
+    it('returns false outside scan, without the mechanic, without a token, or with an empty card row', () => {
       const withToken = createPlayer({
         resources: {
           [EResource.CREDIT]: 4,
@@ -606,10 +624,22 @@ describe('free action rules', () => {
       expect(canSpendSignalToken(withToken, createGameState())).toBe(false);
       expect(
         canSpendSignalToken(
+          withToken,
+          createGameState({
+            phase: EPhase.IN_RESOLUTION,
+            scanActionInProgress: true,
+            spaceAgencyOptions: SPACE_AGENCY_WITHOUT_NEW_DECK_OPTIONS,
+            cardRow: [{ id: 'row-1' } as never],
+          }),
+        ),
+      ).toBe(false);
+      expect(
+        canSpendSignalToken(
           withoutToken,
           createGameState({
             phase: EPhase.IN_RESOLUTION,
             scanActionInProgress: true,
+            spaceAgencyOptions: SPACE_AGENCY_NEW_DECK_OPTIONS,
             cardRow: [{ id: 'row-1' } as never],
           }),
         ),
@@ -620,6 +650,19 @@ describe('free action rules', () => {
           createGameState({
             phase: EPhase.IN_RESOLUTION,
             scanActionInProgress: true,
+            spaceAgencyOptions: SPACE_AGENCY_NEW_DECK_OPTIONS,
+            scanSignalTokensSpent: 2,
+            cardRow: [{ id: 'row-1' } as never],
+          }),
+        ),
+      ).toBe(false);
+      expect(
+        canSpendSignalToken(
+          withToken,
+          createGameState({
+            phase: EPhase.IN_RESOLUTION,
+            scanActionInProgress: true,
+            spaceAgencyOptions: SPACE_AGENCY_NEW_DECK_OPTIONS,
             cardRow: [],
           }),
         ),
@@ -789,11 +832,216 @@ describe('free action rules', () => {
         createGameState({
           phase: EPhase.IN_RESOLUTION,
           scanActionInProgress: true,
+          spaceAgencyOptions: SPACE_AGENCY_NEW_DECK_OPTIONS,
           cardRow: [{ id: 'row-1' } as never],
         }),
       );
 
       expect(actions).toContain(EFreeAction.SPEND_SIGNAL_TOKEN);
+    });
+
+    it('does not enable organization powers while SA-4 only has setup-only organizations', () => {
+      const actions = getAvailableFreeActions(
+        createPlayer({
+          organizationIds: [EOrganizationId.ORBITAL_DYNAMICS],
+          oncePerRoundUsed: {
+            [EOrganizationId.ORBITAL_DYNAMICS]: false,
+          },
+        }),
+        createGameState(),
+      );
+
+      expect(actions).not.toContain(EFreeAction.USE_ORGANIZATION_POWER);
+    });
+
+    it('includes implemented unused organization powers', () => {
+      const actions = getAvailableFreeActions(
+        createPlayer({
+          organizationIds: [EOrganizationId.STRATUS_CORE],
+          usableOrganizationPowerIds: [EOrganizationId.STRATUS_CORE],
+          oncePerRoundUsed: {
+            [EOrganizationId.STRATUS_CORE]: false,
+          },
+        }),
+        createGameState({
+          cardRow: [
+            {
+              id: '128',
+              freeAction: [{ type: EResource.PUBLICITY, value: 1 }],
+            } as never,
+          ],
+        }),
+      );
+
+      expect(actions).toContain(EFreeAction.USE_ORGANIZATION_POWER);
+    });
+
+    it('uses projected usable organization power ids instead of local id rules', () => {
+      const player = createPlayer({
+        organizationIds: [EOrganizationId.STRATUS_CORE],
+        usableOrganizationPowerIds: [EOrganizationId.STRATUS_CORE],
+      } as Partial<IPublicPlayerState>);
+      const gameState = createGameState({ cardRow: [] });
+
+      expect(canUseOrganizationPower(player, gameState)).toBe(true);
+      expect(getAvailableFreeActions(player, gameState)).toContain(
+        EFreeAction.USE_ORGANIZATION_POWER,
+      );
+    });
+
+    it('includes newly implemented Fenwick and Sentinel organization powers', () => {
+      const actions = getAvailableFreeActions(
+        createPlayer({
+          organizationIds: [
+            EOrganizationId.FENWICK_RESEARCH_CENTER,
+            EOrganizationId.SENTINEL_PROBE_NETWORK,
+          ],
+          usableOrganizationPowerIds: [
+            EOrganizationId.FENWICK_RESEARCH_CENTER,
+            EOrganizationId.SENTINEL_PROBE_NETWORK,
+          ],
+          oncePerRoundUsed: {
+            [EOrganizationId.FENWICK_RESEARCH_CENTER]: false,
+            [EOrganizationId.SENTINEL_PROBE_NETWORK]: false,
+          },
+          resources: {
+            [EResource.CREDIT]: 4,
+            [EResource.ENERGY]: 3,
+            [EResource.DATA]: 0,
+            [EResource.PUBLICITY]: 1,
+            [EResource.SIGNAL_TOKEN]: 0,
+          },
+        }),
+        createGameState(),
+      );
+
+      expect(actions).toContain(EFreeAction.USE_ORGANIZATION_POWER);
+    });
+
+    it('omits Fenwick when the server projection does not include it for cost', () => {
+      const actions = getAvailableFreeActions(
+        createPlayer({
+          organizationIds: [EOrganizationId.FENWICK_RESEARCH_CENTER],
+          oncePerRoundUsed: {
+            [EOrganizationId.FENWICK_RESEARCH_CENTER]: false,
+          },
+          resources: {
+            [EResource.CREDIT]: 4,
+            [EResource.ENERGY]: 3,
+            [EResource.DATA]: 0,
+            [EResource.PUBLICITY]: 0,
+            [EResource.SIGNAL_TOKEN]: 0,
+          },
+        }),
+        createGameState(),
+      );
+
+      expect(actions).not.toContain(EFreeAction.USE_ORGANIZATION_POWER);
+    });
+
+    it('omits organization powers when the server projection does not include them during resolution', () => {
+      const actions = getAvailableFreeActions(
+        createPlayer({
+          organizationIds: [EOrganizationId.FENWICK_RESEARCH_CENTER],
+          oncePerRoundUsed: {
+            [EOrganizationId.FENWICK_RESEARCH_CENTER]: false,
+          },
+          resources: {
+            [EResource.CREDIT]: 4,
+            [EResource.ENERGY]: 3,
+            [EResource.DATA]: 0,
+            [EResource.PUBLICITY]: 1,
+            [EResource.SIGNAL_TOKEN]: 0,
+          },
+        }),
+        createGameState({ phase: EPhase.IN_RESOLUTION }),
+      );
+
+      expect(actions).not.toContain(EFreeAction.USE_ORGANIZATION_POWER);
+    });
+
+    it('omits Fenwick when the server projection does not include it for card source', () => {
+      const actions = getAvailableFreeActions(
+        createPlayer({
+          organizationIds: [EOrganizationId.FENWICK_RESEARCH_CENTER],
+          oncePerRoundUsed: {
+            [EOrganizationId.FENWICK_RESEARCH_CENTER]: false,
+          },
+          resources: {
+            [EResource.CREDIT]: 4,
+            [EResource.ENERGY]: 3,
+            [EResource.DATA]: 0,
+            [EResource.PUBLICITY]: 1,
+            [EResource.SIGNAL_TOKEN]: 0,
+          },
+        }),
+        createGameState({
+          cardRow: [],
+          mainDeck: { drawPileSize: 0, discardPileSize: 0 },
+        }),
+      );
+
+      expect(actions).not.toContain(EFreeAction.USE_ORGANIZATION_POWER);
+    });
+
+    it('includes Fenwick when the row is empty but the deck has cards', () => {
+      const actions = getAvailableFreeActions(
+        createPlayer({
+          organizationIds: [EOrganizationId.FENWICK_RESEARCH_CENTER],
+          usableOrganizationPowerIds: [EOrganizationId.FENWICK_RESEARCH_CENTER],
+          oncePerRoundUsed: {
+            [EOrganizationId.FENWICK_RESEARCH_CENTER]: false,
+          },
+          resources: {
+            [EResource.CREDIT]: 4,
+            [EResource.ENERGY]: 3,
+            [EResource.DATA]: 0,
+            [EResource.PUBLICITY]: 1,
+            [EResource.SIGNAL_TOKEN]: 0,
+          },
+        }),
+        createGameState({
+          cardRow: [],
+          mainDeck: { drawPileSize: 1, discardPileSize: 0 },
+        }),
+      );
+
+      expect(actions).toContain(EFreeAction.USE_ORGANIZATION_POWER);
+    });
+
+    it('omits Stratus Core when the server projection does not include it for an empty row', () => {
+      const actions = getAvailableFreeActions(
+        createPlayer({
+          organizationIds: [EOrganizationId.STRATUS_CORE],
+          oncePerRoundUsed: {
+            [EOrganizationId.STRATUS_CORE]: false,
+          },
+        }),
+        createGameState({ cardRow: [] }),
+      );
+
+      expect(actions).not.toContain(EFreeAction.USE_ORGANIZATION_POWER);
+    });
+
+    it('omits Stratus Core when the server projection does not include it for unsupported corners', () => {
+      const actions = getAvailableFreeActions(
+        createPlayer({
+          organizationIds: [EOrganizationId.STRATUS_CORE],
+          oncePerRoundUsed: {
+            [EOrganizationId.STRATUS_CORE]: false,
+          },
+        }),
+        createGameState({
+          cardRow: [
+            {
+              id: 'card-any-row',
+              freeAction: [{ type: EResource.CARD_ANY, value: 1 }],
+            } as never,
+          ],
+        }),
+      );
+
+      expect(actions).not.toContain(EFreeAction.USE_ORGANIZATION_POWER);
     });
   });
 });

@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import type { IPublicPlayerState } from '@/types/re-exports';
+import { OrganizationBadge } from './OrganizationBadge';
 
 interface IOpponentSummaryProps {
   opponents: IPublicPlayerState[];
@@ -76,6 +77,19 @@ export function OpponentSummary({
                 />
               </span>
             </summary>
+            {(player.organizationIds ?? []).length > 0 ? (
+              <div
+                className='mt-2 flex flex-wrap items-center gap-1 border-t border-[color:var(--metal-edge-soft)] pt-2'
+                data-testid={`opponent-organizations-${player.playerId}`}
+              >
+                {(player.organizationIds ?? []).map((organizationId) => (
+                  <OrganizationBadge
+                    key={organizationId}
+                    organizationId={organizationId}
+                  />
+                ))}
+              </div>
+            ) : null}
             <div className='mt-2 grid grid-cols-2 gap-x-3 gap-y-1 border-t border-[color:var(--metal-edge-soft)] pt-2'>
               <OpponentStat
                 labelKey='client.opponent_summary.hand'

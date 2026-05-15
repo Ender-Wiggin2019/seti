@@ -11,6 +11,12 @@ import type {
 import { IBaseCard } from '@seti/common/types/BaseCard';
 import type { IComputerSlotReward } from '@seti/common/types/computer';
 import { EResource, ESector } from '@seti/common/types/element';
+import type {
+  EOrganizationId,
+  IPlayerActionCostConfig,
+  TOrganizationRoundUsage,
+  TOrganizationState,
+} from '@seti/common/types/organization';
 import type { TMovementTarget } from '@seti/common/types/protocol/actions';
 import {
   EAlienType,
@@ -20,6 +26,8 @@ import {
   ETrace,
 } from '@seti/common/types/protocol/enums';
 import type { TGameEvent } from '@seti/common/types/protocol/events';
+import type { ISpaceAgencyOptions } from '@seti/common/types/protocol/options';
+import type { ISetupChoiceContext } from '@seti/common/types/protocol/playerInput';
 import type { IPublicRivalState } from '@seti/common/types/protocol/solo';
 import type { ETechId, ITechBonusToken } from '@seti/common/types/tech';
 
@@ -92,6 +100,14 @@ export interface IPublicPlayerState {
    * "waiting for all players to finish setup" in the UI.
    */
   pendingSetupTucks: number;
+  setupChoiceContext?: ISetupChoiceContext;
+  quickStartCardIds?: string[];
+  organizationIds?: EOrganizationId[];
+  organizationState?: TOrganizationState;
+  oncePerRoundUsed?: TOrganizationRoundUsage;
+  actionCosts?: IPlayerActionCostConfig;
+  usableOrganizationPowerIds?: EOrganizationId[];
+  usableOrganizationMainActionIds?: EOrganizationId[];
   exofossils?: number;
 }
 
@@ -416,6 +432,11 @@ export interface IPublicGoldScoringTile {
   claims: IPublicGoldScoringTileClaim[];
 }
 
+export interface IPublicMainDeckState {
+  drawPileSize: number;
+  discardPileSize: number;
+}
+
 export interface IPublicFinalScoreBreakdown {
   endGameCards: number;
   goldTiles: number;
@@ -446,6 +467,7 @@ export interface IPublicGameState {
   solarSystemSetup?: ISolarSystemSetupConfig;
   planetaryBoard: IPublicPlanetaryBoard;
   techBoard: IPublicTechBoard;
+  mainDeck: IPublicMainDeckState;
   cardRow: IBaseCard[];
   endOfRoundStacks?: IBaseCard[][];
   currentEndOfRoundStackIndex?: number;
@@ -465,8 +487,12 @@ export interface IPublicGameState {
    * when no turn-start checkpoint is available.
    */
   canUndo: boolean;
+  /** Space Agency module options selected for this game. */
+  spaceAgencyOptions?: ISpaceAgencyOptions;
   /** True while the active player is at the scan sub-action pool. */
   scanActionInProgress?: boolean;
+  /** Number of signal tokens already spent during the current scan action. */
+  scanSignalTokensSpent?: number;
   /** Monotonic index of the current turn (server-side). */
   turnIndex: number;
 }

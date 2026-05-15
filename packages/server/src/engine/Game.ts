@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { ISolarSystemSetupConfig } from '@seti/common/constant/sectorSetup';
+import { EOrganizationId } from '@seti/common/types/organization';
 import type {
   IFreeActionRequest,
   IInputResponse,
@@ -58,6 +59,7 @@ import type { IGame, IGamePlayerIdentity } from './IGame.js';
 import type { PlayerInput } from './input/PlayerInput.js';
 import { EMissionEventType, EMissionType } from './missions/IMission.js';
 import { MissionTracker } from './missions/MissionTracker.js';
+import { OrganizationRegistry } from './organization/OrganizationRegistry.js';
 import { assertValidPhaseTransition } from './Phase.js';
 import type { IPlayer, TCardItem } from './player/IPlayer.js';
 import { Player } from './player/Player.js';
@@ -290,7 +292,12 @@ export class Game implements IGame {
    * `processMainAction`) is NOT a new turn.
    */
   private static readonly TURN_START_ENTRY_PHASES: ReadonlySet<EPhase> =
-    new Set<EPhase>([EPhase.SETUP, EPhase.BETWEEN_TURNS, EPhase.END_OF_ROUND]);
+    new Set<EPhase>([
+      EPhase.SETUP,
+      EPhase.SETUP_CHOICE,
+      EPhase.BETWEEN_TURNS,
+      EPhase.END_OF_ROUND,
+    ]);
 
   public lockCurrentTurn(): void {
     if (!this.options.undoAllowed) {
@@ -437,14 +444,17 @@ export class Game implements IGame {
       this.phase === EPhase.IN_RESOLUTION;
 
     try {
-      const nextInput = player.waitingFor.process(response);
+      const currentInput = player.waitingFor;
+      const nextInput = currentInput.process(response);
       this.eventLog.append(createInputEvent(playerId, response));
       if (nextInput !== undefined) {
         player.waitingFor = nextInput;
         return;
       }
 
-      player.waitingFor = undefined;
+      if (player.waitingFor === currentInput) {
+        player.waitingFor = undefined;
+      }
       this.runResolutionPipeline();
       this.closeMissionCheckpointIfSettled();
       this.eventBus.emit({
@@ -670,6 +680,21 @@ export class Game implements IGame {
                 pendingInput = ResearchTechAction.execute(player, game);
                 break;
               }
+              case EMainAction.USE_ORGANIZATION_ACTION: {
+                const organizationId = this.getOrganizationIdPayload(action);
+                const actionId =
+                  typeof action.payload?.actionId === 'string'
+                    ? action.payload.actionId
+                    : undefined;
+                actionDetails = { organizationId, actionId };
+                pendingInput = OrganizationRegistry.useMainAction(
+                  player,
+                  game,
+                  organizationId,
+                  action.payload ?? {},
+                );
+                break;
+              }
               case EMainAction.PASS: {
                 pendingInput = PassAction.execute(player, game);
                 break;
@@ -855,6 +880,9 @@ export class Game implements IGame {
     for (const player of this.players) {
       player.applyEndOfRoundIncome();
       player.passed = false;
+      player.oncePerRoundUsed = Object.fromEntries(
+        player.organizationIds.map((organizationId) => [organizationId, false]),
+      );
     }
 
     this.alienState.onRoundEnd(this);
@@ -1130,6 +1158,21 @@ export class Game implements IGame {
         }
         return;
       }
+      case EMainAction.USE_ORGANIZATION_ACTION: {
+        const organizationId = this.getOrganizationIdPayload(action);
+        if (
+          !OrganizationRegistry.getUsableMainActionIds(player, this).includes(
+            organizationId,
+          )
+        ) {
+          throw new GameError(
+            EErrorCode.INVALID_ACTION,
+            'Organization main action requirements are not met',
+            { playerId: player.id, organizationId },
+          );
+        }
+        return;
+      }
       case EMainAction.PASS: {
         if (!PassAction.canExecute(player, this)) {
           throw new GameError(
@@ -1213,5 +1256,24 @@ export class Game implements IGame {
       );
     }
     return cardIndex as number;
+  }
+
+  private getOrganizationIdPayload(
+    action: IMainActionRequest,
+  ): EOrganizationId {
+    const candidate = action.payload?.organizationId;
+    if (
+      !Object.values(EOrganizationId).includes(candidate as EOrganizationId)
+    ) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        'Action payload.organizationId must be a valid EOrganizationId',
+        {
+          actionType: action.type,
+          payload: action.payload,
+        },
+      );
+    }
+    return candidate as EOrganizationId;
   }
 }

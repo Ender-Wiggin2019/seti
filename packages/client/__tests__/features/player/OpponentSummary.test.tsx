@@ -1,3 +1,4 @@
+import { EOrganizationId } from '@seti/common/types/organization';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { OpponentSummary } from '@/features/player';
@@ -36,5 +37,26 @@ describe('OpponentSummary', () => {
 
     expect(screen.getByText(/Hand: 6/)).toBeInTheDocument();
     expect(screen.getByText(/Tech:/)).toBeInTheDocument();
+  });
+
+  it('renders public opponent organization badges', () => {
+    render(
+      <OpponentSummary
+        opponents={[
+          createMockPlayerState({
+            playerId: 'p2',
+            playerName: 'Pilot Lin',
+            organizationIds: [EOrganizationId.FENWICK_RESEARCH_CENTER],
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByTestId('opponent-organizations-p2')).toBeInTheDocument();
+    expect(
+      screen.getByTestId(
+        `organization-badge-${EOrganizationId.FENWICK_RESEARCH_CENTER}`,
+      ),
+    ).toHaveTextContent('Fenwick Research Center');
   });
 });

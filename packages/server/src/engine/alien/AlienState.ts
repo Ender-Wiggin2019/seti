@@ -217,6 +217,30 @@ export class AlienState {
     return result !== false;
   }
 
+  public placeSetupTrace(
+    player: IPlayer,
+    traceColor: ETrace,
+    alienIndex: number,
+  ): boolean {
+    const board = this.getBoard(alienIndex);
+    const slot = board?.getAvailableSlots(traceColor)[0];
+    if (!board || !slot) return false;
+    const placed = board.placeTrace(slot, { playerId: player.id }, traceColor);
+    if (!placed) return false;
+    this.incrementPlayerTrace(player, traceColor, board.alienIndex);
+    return true;
+  }
+
+  public placeNeutralSetupTrace(
+    traceColor: ETrace,
+    alienIndex: number,
+  ): boolean {
+    const board = this.getBoard(alienIndex);
+    const slot = board?.getAvailableSlots(traceColor)[0];
+    if (!board || !slot) return false;
+    return board.placeTrace(slot, 'neutral', traceColor);
+  }
+
   public createDrawAlienCardInput(
     player: IPlayer,
     game: IGame,

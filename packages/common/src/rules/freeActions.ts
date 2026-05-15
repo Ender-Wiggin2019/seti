@@ -188,11 +188,20 @@ export function canSpendSignalToken(
   gameState: IPublicGameState,
 ): boolean {
   return (
+    gameState.spaceAgencyOptions?.newDeck === true &&
     gameState.phase === EPhase.IN_RESOLUTION &&
     gameState.scanActionInProgress === true &&
+    (gameState.scanSignalTokensSpent ?? 0) < 2 &&
     (player.resources[EResource.SIGNAL_TOKEN] ?? 0) > 0 &&
     gameState.cardRow.length > 0
   );
+}
+
+export function canUseOrganizationPower(
+  player: IPublicPlayerState,
+  _gameState?: IPublicGameState,
+): boolean {
+  return (player.usableOrganizationPowerIds?.length ?? 0) > 0;
 }
 
 export function getAvailableFreeActions(
@@ -214,6 +223,8 @@ export function getAvailableFreeActions(
     actions.push(EFreeAction.EXCHANGE_RESOURCES);
   if (canSpendSignalToken(player, gameState))
     actions.push(EFreeAction.SPEND_SIGNAL_TOKEN);
+  if (canUseOrganizationPower(player, gameState))
+    actions.push(EFreeAction.USE_ORGANIZATION_POWER);
 
   return actions;
 }

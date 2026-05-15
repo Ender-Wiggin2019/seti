@@ -14,6 +14,7 @@ import { FreeActionCornerFreeAction } from './FreeActionCorner.js';
 import { MovementFreeAction } from './Movement.js';
 import { PlaceDataFreeAction } from './PlaceData.js';
 import { SpendSignalTokenFreeAction } from './SpendSignalToken.js';
+import { UseOrganizationPowerFreeAction } from './UseOrganizationPower.js';
 
 export function processFreeAction(
   player: IPlayer,
@@ -88,6 +89,13 @@ export function processFreeAction(
 
     case EFreeAction.SPEND_SIGNAL_TOKEN:
       return SpendSignalTokenFreeAction.execute(player, game);
+
+    case EFreeAction.USE_ORGANIZATION_POWER:
+      return UseOrganizationPowerFreeAction.execute(
+        player,
+        game,
+        action.organizationId,
+      );
 
     default:
       throw new GameError(

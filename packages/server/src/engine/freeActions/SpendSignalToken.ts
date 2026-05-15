@@ -6,7 +6,9 @@ import {
 } from '../effects/cardRow/SelectCardFromCardRowEffect.js';
 import { MarkSectorSignalEffect } from '../effects/scan/MarkSectorSignalEffect.js';
 import {
+  getScanSignalTokenSpendCount,
   isScanActionPoolInput,
+  recordScanSignalTokenSpend,
   refreshScanActionPoolInput,
 } from '../effects/scan/ScanActionPool.js';
 import { extractSectorColorFromCardItem } from '../effects/scan/ScanEffectUtils.js';
@@ -15,9 +17,14 @@ import type { IPlayerInput } from '../input/PlayerInput.js';
 import type { IPlayer } from '../player/IPlayer.js';
 
 export class SpendSignalTokenFreeAction {
+  private static readonly MAX_SPENDS_PER_SCAN = 2;
+
   public static canExecute(player: IPlayer, game: IGame): boolean {
     return (
+      game.options.spaceAgencyOptions?.newDeck === true &&
       isScanActionPoolInput(player.waitingFor) &&
+      getScanSignalTokenSpendCount(player.waitingFor) <
+        SpendSignalTokenFreeAction.MAX_SPENDS_PER_SCAN &&
       player.resources.signalTokens > 0 &&
       game.cardRow.length > 0
     );
@@ -36,11 +43,13 @@ export class SpendSignalTokenFreeAction {
           inScanPool: isScanActionPoolInput(player.waitingFor),
           signalTokens: player.resources.signalTokens,
           cardRowCount: game.cardRow.length,
+          signalTokensSpent: getScanSignalTokenSpendCount(player.waitingFor),
         },
       );
     }
 
     player.resources.spend({ signalTokens: 1 });
+    recordScanSignalTokenSpend(returnToScanPool);
 
     return SelectCardFromCardRowEffect.execute(player, game, {
       destination: 'discard',

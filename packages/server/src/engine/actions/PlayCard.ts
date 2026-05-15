@@ -20,6 +20,10 @@ export interface IPlayCardResult {
   card?: ICard;
 }
 
+export interface IPlayCardActionOptions {
+  free?: boolean;
+}
+
 export class PlayCardAction {
   public static canExecute(player: IPlayer, game: IGame): boolean {
     return player.hand.some((_, index) =>
@@ -31,6 +35,7 @@ export class PlayCardAction {
     player: IPlayer,
     game: IGame,
     cardIndex: number,
+    options: IPlayCardActionOptions = {},
   ): boolean {
     if (cardIndex < 0 || cardIndex >= player.hand.length) {
       return false;
@@ -45,15 +50,27 @@ export class PlayCardAction {
       return true;
     }
 
-    return getCardRegistry().create(cardId).canPlay({ player, game });
+    return getCardRegistry()
+      .create(cardId)
+      .canPlay(
+        { player, game },
+        {
+          ignoreResourceCost: options.free === true,
+        },
+      );
   }
 
   public static execute(
     player: IPlayer,
     game: IGame,
     cardIndex: number,
+    options: IPlayCardActionOptions = {},
   ): IPlayCardResult {
-    if (!this.canExecute(player, game)) {
+    if (
+      options.free === true
+        ? !this.canExecuteCardAtIndex(player, game, cardIndex, options)
+        : !this.canExecute(player, game)
+    ) {
       throw new GameError(
         EErrorCode.INVALID_ACTION,
         'PlayCard action is not currently legal',
@@ -94,7 +111,7 @@ export class PlayCardAction {
     }
 
     const runtimeCard = getCardRegistry().create(cardId);
-    if (!this.canExecuteCardAtIndex(player, game, cardIndex)) {
+    if (!this.canExecuteCardAtIndex(player, game, cardIndex, options)) {
       throw new GameError(
         EErrorCode.INVALID_ACTION,
         'Card cannot be played now',
@@ -108,7 +125,9 @@ export class PlayCardAction {
     const price = runtimeCard.price;
     const priceType = runtimeCard.priceType ?? EResource.CREDIT;
 
-    player.resources.spend(this.getPriceResourceBundle(runtimeCard));
+    if (options.free !== true) {
+      player.resources.spend(this.getPriceResourceBundle(runtimeCard));
+    }
     const playedCard = player.removeCardAt(cardIndex);
     const runtimeContext = { player, game, playedCard };
     runtimeCard.play(runtimeContext);
