@@ -338,12 +338,31 @@ function HiddenBoard({
 }: {
   alienIndex: number;
 }): React.JSX.Element {
+  const textMode = useTextMode();
+  if (textMode) {
+    return (
+      <section
+        className='min-h-[360px] min-w-0 rounded border border-surface-800/70 bg-black/60'
+        data-testid={`alien-${alienIndex}-hidden-board`}
+        aria-label='Alien Board'
+      />
+    );
+  }
   return (
     <section
-      className='min-h-[360px] min-w-0 rounded border border-surface-800/70 bg-black/60'
+      className='min-w-0'
       data-testid={`alien-${alienIndex}-hidden-board`}
-      aria-label='Alien Board'
-    />
+      aria-label='Alien Board (face-down)'
+    >
+      <div className='relative mx-auto aspect-[777/1415] w-full max-w-[500px] overflow-hidden rounded-[14%/8%]'>
+        <img
+          src='/assets/seti/aliens/back.webp'
+          alt='Face-down alien board'
+          className='absolute inset-0 h-full w-full object-cover'
+          loading='lazy'
+        />
+      </div>
+    </section>
   );
 }
 
