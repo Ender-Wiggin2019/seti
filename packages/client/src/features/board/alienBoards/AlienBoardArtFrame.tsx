@@ -33,7 +33,7 @@ export function AlienBoardArtFrame({
   return (
     <div
       className={cn(
-        'relative mx-auto aspect-[777/1415] w-full max-w-[500px] overflow-hidden rounded-[14%/8%]',
+        'relative mx-auto aspect-[777/1415] w-full overflow-hidden rounded-[14%/8%]',
         className,
       )}
       data-testid={testId}

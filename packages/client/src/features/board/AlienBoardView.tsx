@@ -365,7 +365,7 @@ function HiddenBoard({
       data-testid={`alien-${alienIndex}-hidden-board`}
       aria-label='Alien Board (face-down)'
     >
-      <div className='relative mx-auto aspect-[777/1415] w-full max-w-[500px] overflow-hidden rounded-[14%/8%]'>
+      <div className='relative mx-auto aspect-[777/1415] w-full overflow-hidden rounded-[14%/8%]'>
         <img
           src='/assets/seti/aliens/back.webp'
           alt='Face-down alien board'
@@ -1883,8 +1883,8 @@ function AnomalyColumn({
  * Vertical rail rendered between the two alien-card columns.
  *
  * Top half = alien index 0's deck, bottom half = alien index 1's deck.
- * When neither alien has a deck (no discoveries yet), the rail collapses
- * so it doesn't take horizontal space.
+ * The rail always renders (even when neither alien has a deck yet) so the
+ * outer two columns keep the same width before/after discovery.
  */
 function AlienDeckRail({
   aliens,
@@ -1892,10 +1892,7 @@ function AlienDeckRail({
 }: {
   aliens: IPublicAlienState[];
   onCardInspect?: (card: IBaseCard) => void;
-}): React.JSX.Element | null {
-  const hasAnyDeck = aliens.some((alien) => alien.cardZone !== null);
-  if (!hasAnyDeck) return null;
-
+}): React.JSX.Element {
   return (
     <div
       className='flex min-w-0 flex-col gap-2 self-start sm:gap-3'
@@ -1905,6 +1902,9 @@ function AlienDeckRail({
         <AlienDeckSlot
           key={alien.alienIndex}
           alien={alien}
+          // Alien 0 sits in the LEFT column, so its rail slot points left;
+          // alien 1 sits on the RIGHT, so its slot points right.
+          arrowDirection={alien.alienIndex === 0 ? 'left' : 'right'}
           onCardInspect={onCardInspect}
         />
       ))}
@@ -1914,27 +1914,58 @@ function AlienDeckRail({
 
 function AlienDeckSlot({
   alien,
+  arrowDirection,
   onCardInspect,
 }: {
   alien: IPublicAlienState;
+  arrowDirection: 'left' | 'right';
   onCardInspect?: (card: IBaseCard) => void;
 }): React.JSX.Element {
   const { t } = useTranslation('common');
-  const label = t('client.alien_board.alien_index', {
+  const indexLabel = t('client.alien_board.alien_index', {
     index: alien.alienIndex + 1,
   });
+  const discoveredKey =
+    alien.alienType != null ? ALIEN_TYPE_I18N_KEY[alien.alienType] : null;
+  const alienName =
+    alien.discovered && discoveredKey
+      ? t(`client.alien_board.types.${discoveredKey}`)
+      : null;
+  const arrow = arrowDirection === 'left' ? '←' : '→';
+  // For the LEFT alien (arrow ←) we render "← NAME"; for the RIGHT alien
+  // (arrow →) we render "NAME →" so the arrow is always closest to the
+  // alien-board column it points at.
+  const headerNodes =
+    arrowDirection === 'left' ? (
+      <>
+        <span aria-hidden className='text-text-200'>
+          {arrow}
+        </span>
+        {alienName ? <span>{alienName}</span> : <span>{indexLabel}</span>}
+      </>
+    ) : (
+      <>
+        {alienName ? <span>{alienName}</span> : <span>{indexLabel}</span>}
+        <span aria-hidden className='text-text-200'>
+          {arrow}
+        </span>
+      </>
+    );
 
   if (!alien.cardZone) {
-    // Reserve the same horizontal footprint so the layout doesn't reflow when
-    // this alien gets discovered later.
     return (
       <aside
-        className='flex w-full flex-col items-center justify-center rounded border border-dashed border-surface-700/50 bg-surface-950/30 p-2 font-mono text-[10px] uppercase tracking-widest text-text-600 lg:w-24'
+        className='flex w-full flex-col items-center justify-center rounded border border-dashed border-surface-700/50 bg-surface-950/30 p-2 font-mono text-[10px] uppercase tracking-widest text-text-500 lg:w-44'
         data-testid={`alien-${alien.alienIndex}-deck-empty`}
       >
-        <span className='text-[9px] tracking-[0.2em] text-text-500'>
-          {label}
-        </span>
+        <div
+          className={cn(
+            'flex w-full items-center gap-1 text-[10px] tracking-[0.2em]',
+            arrowDirection === 'left' ? 'justify-start' : 'justify-end',
+          )}
+        >
+          {headerNodes}
+        </div>
         <span className='mt-1 text-[10px] text-text-600'>
           {t('client.alien_board.card_zone.empty')}
         </span>
@@ -1945,7 +1976,8 @@ function AlienDeckSlot({
   return (
     <AlienDeckPanel
       alienIndex={alien.alienIndex}
-      label={label}
+      headerNodes={headerNodes}
+      arrowDirection={arrowDirection}
       cardZone={alien.cardZone}
       onCardInspect={onCardInspect}
     />
@@ -1954,12 +1986,14 @@ function AlienDeckSlot({
 
 function AlienDeckPanel({
   alienIndex,
-  label,
+  headerNodes,
+  arrowDirection,
   cardZone,
   onCardInspect,
 }: {
   alienIndex: number;
-  label: string;
+  headerNodes: React.ReactNode;
+  arrowDirection: 'left' | 'right';
   cardZone: IPublicAlienCardZone;
   onCardInspect?: (card: IBaseCard) => void;
 }): React.JSX.Element {
@@ -1970,20 +2004,23 @@ function AlienDeckPanel({
 
   return (
     <aside
-      className='flex w-full flex-col items-center gap-1.5 rounded border border-surface-700/50 bg-surface-950/40 p-2 lg:w-24'
+      className='flex w-full flex-col items-center gap-2 rounded border border-surface-700/50 bg-surface-950/40 p-2 lg:w-44'
       data-testid={`alien-${alienIndex}-deck-panel`}
     >
       <div
-        className='font-mono text-[9px] uppercase tracking-[0.2em] text-text-400'
+        className={cn(
+          'flex w-full items-center gap-1 font-mono text-[10px] uppercase tracking-[0.2em] text-text-300',
+          arrowDirection === 'left' ? 'justify-start' : 'justify-end',
+        )}
         data-testid={`alien-${alienIndex}-deck-label`}
       >
-        {label}
+        {headerNodes}
       </div>
       {faceUpCard ? (
         <button
           type='button'
           className={cn(
-            'relative h-[92px] w-[66px] overflow-hidden rounded-[3px] border border-surface-700/60 transition-[border-color,box-shadow,transform] duration-150 focus-visible:outline-none focus-visible:shadow-focus-ring',
+            'relative h-[184px] w-[132px] overflow-hidden rounded-[3px] border border-surface-700/60 transition-[border-color,box-shadow,transform] duration-150 focus-visible:outline-none focus-visible:shadow-focus-ring',
             onCardInspect
               ? 'cursor-pointer hover:-translate-y-0.5 hover:border-accent-500/70'
               : 'cursor-default',
@@ -1994,7 +2031,7 @@ function AlienDeckPanel({
           })}
           onClick={() => onCardInspect?.(faceUpCard)}
         >
-          <div className='pointer-events-none absolute left-0 top-0 origin-top-left scale-[0.44]'>
+          <div className='pointer-events-none absolute left-0 top-0 origin-top-left scale-[0.88]'>
             <CardRender card={faceUpCard} />
           </div>
         </button>
@@ -2003,12 +2040,12 @@ function AlienDeckPanel({
           {cardZone.faceUpCardId}
         </div>
       ) : (
-        <div className='flex h-[92px] w-[66px] items-center justify-center rounded-[3px] border border-dashed border-surface-700/50 font-mono text-[9px] text-text-600'>
+        <div className='flex h-[184px] w-[132px] items-center justify-center rounded-[3px] border border-dashed border-surface-700/50 font-mono text-[10px] text-text-600'>
           {t('client.alien_board.card_zone.empty')}
         </div>
       )}
       <div
-        className='flex w-full justify-between gap-1 font-mono text-[9px] text-text-400'
+        className='flex w-full justify-between gap-1 font-mono text-[10px] text-text-400'
         data-testid={`alien-${alienIndex}-deck-counts`}
       >
         <span title={t('client.alien_board.card_zone.deck_count', { count: cardZone.drawPileSize })}>
