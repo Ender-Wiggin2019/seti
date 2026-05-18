@@ -659,7 +659,8 @@
         "title": "Alien Deck",
         "deck_count": "Deck {{count}}",
         "discard_count": "Discard {{count}}",
-        "preview_aria": "Preview {{card}}"
+        "preview_aria": "Preview {{card}}",
+        "empty": "Empty"
       },
       "glyphids": {
         "bank_count": "Bank {{count}}",

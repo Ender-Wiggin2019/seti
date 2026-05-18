@@ -162,22 +162,45 @@ export function AlienBoardView({
       </header>
 
       <div
-        className='grid gap-2 min-[420px]:grid-cols-2 sm:gap-3'
+        className={cn(
+          'grid gap-2 sm:gap-3',
+          // Below 420px: single column, decks interleave between cards.
+          // 420px+: three columns (board | deck rail | board) so cards stay
+          // the same size regardless of discovery state.
+          'min-[420px]:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]',
+        )}
         data-testid='alien-board-grid'
       >
-        {aliens.map((alien) => (
+        {aliens[0] ? (
           <AlienCard
-            key={alien.alienIndex}
-            alien={alien}
+            key={aliens[0].alienIndex}
+            alien={aliens[0]}
             playerColors={playerColors}
             planetaryBoard={planetaryBoard}
             gameState={gameState}
             myPlayerId={myPlayerId}
             planetActionMode={planetActionMode}
             onSelectMainActionPlanet={onSelectMainActionPlanet}
-            onCardInspect={onCardInspect}
           />
-        ))}
+        ) : null}
+
+        <AlienDeckRail
+          aliens={aliens}
+          onCardInspect={onCardInspect}
+        />
+
+        {aliens[1] ? (
+          <AlienCard
+            key={aliens[1].alienIndex}
+            alien={aliens[1]}
+            playerColors={playerColors}
+            planetaryBoard={planetaryBoard}
+            gameState={gameState}
+            myPlayerId={myPlayerId}
+            planetActionMode={planetActionMode}
+            onSelectMainActionPlanet={onSelectMainActionPlanet}
+          />
+        ) : null}
       </div>
     </section>
   );
@@ -191,7 +214,6 @@ function AlienCard({
   myPlayerId,
   planetActionMode,
   onSelectMainActionPlanet,
-  onCardInspect,
 }: {
   alien: IPublicAlienState;
   playerColors: Record<string, string>;
@@ -203,7 +225,6 @@ function AlienCard({
     planet: EPlanet,
     options?: { isMoon?: boolean; moonId?: string },
   ) => void;
-  onCardInspect?: (card: IBaseCard) => void;
 }): React.JSX.Element {
   const { t } = useTranslation('common');
   const discoveredName =
@@ -238,42 +259,32 @@ function AlienCard({
         </span>
       </div>
 
-      <div className='mt-2 grid min-w-0 gap-2 lg:mt-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-3'>
-        <div className='min-w-0 space-y-2 lg:space-y-3'>
-          {alien.discovered && alien.board ? (
-            <DiscoveredAlienBoard
-              alien={alien}
-              board={alien.board}
-              playerColors={playerColors}
-              planetaryBoard={planetaryBoard}
-              gameState={gameState}
-              myPlayerId={myPlayerId}
-              planetActionMode={planetActionMode}
-              onSelectMainActionPlanet={onSelectMainActionPlanet}
-            />
-          ) : (
-            <HiddenBoard alienIndex={alien.alienIndex} />
-          )}
-
-          <DiscoveryZone
-            alienIndex={alien.alienIndex}
-            slots={alien.discovery.zones}
+      <div className='mt-2 min-w-0 space-y-2 lg:mt-3 lg:space-y-3'>
+        {alien.discovered && alien.board ? (
+          <DiscoveredAlienBoard
+            alien={alien}
+            board={alien.board}
             playerColors={playerColors}
+            planetaryBoard={planetaryBoard}
+            gameState={gameState}
+            myPlayerId={myPlayerId}
+            planetActionMode={planetActionMode}
+            onSelectMainActionPlanet={onSelectMainActionPlanet}
           />
-          <OverflowZone
-            alienIndex={alien.alienIndex}
-            slots={alien.discovery.overflowZones}
-            playerColors={playerColors}
-          />
-        </div>
+        ) : (
+          <HiddenBoard alienIndex={alien.alienIndex} />
+        )}
 
-        {alien.cardZone ? (
-          <AlienDeckPanel
-            alienIndex={alien.alienIndex}
-            cardZone={alien.cardZone}
-            onCardInspect={onCardInspect}
-          />
-        ) : null}
+        <DiscoveryZone
+          alienIndex={alien.alienIndex}
+          slots={alien.discovery.zones}
+          playerColors={playerColors}
+        />
+        <OverflowZone
+          alienIndex={alien.alienIndex}
+          slots={alien.discovery.overflowZones}
+          playerColors={playerColors}
+        />
       </div>
     </article>
   );
@@ -1868,12 +1879,87 @@ function AnomalyColumn({
   );
 }
 
+/**
+ * Vertical rail rendered between the two alien-card columns.
+ *
+ * Top half = alien index 0's deck, bottom half = alien index 1's deck.
+ * When neither alien has a deck (no discoveries yet), the rail collapses
+ * so it doesn't take horizontal space.
+ */
+function AlienDeckRail({
+  aliens,
+  onCardInspect,
+}: {
+  aliens: IPublicAlienState[];
+  onCardInspect?: (card: IBaseCard) => void;
+}): React.JSX.Element | null {
+  const hasAnyDeck = aliens.some((alien) => alien.cardZone !== null);
+  if (!hasAnyDeck) return null;
+
+  return (
+    <div
+      className='flex min-w-0 flex-col gap-2 self-start sm:gap-3'
+      data-testid='alien-deck-rail'
+    >
+      {aliens.map((alien) => (
+        <AlienDeckSlot
+          key={alien.alienIndex}
+          alien={alien}
+          onCardInspect={onCardInspect}
+        />
+      ))}
+    </div>
+  );
+}
+
+function AlienDeckSlot({
+  alien,
+  onCardInspect,
+}: {
+  alien: IPublicAlienState;
+  onCardInspect?: (card: IBaseCard) => void;
+}): React.JSX.Element {
+  const { t } = useTranslation('common');
+  const label = t('client.alien_board.alien_index', {
+    index: alien.alienIndex + 1,
+  });
+
+  if (!alien.cardZone) {
+    // Reserve the same horizontal footprint so the layout doesn't reflow when
+    // this alien gets discovered later.
+    return (
+      <aside
+        className='flex w-full flex-col items-center justify-center rounded border border-dashed border-surface-700/50 bg-surface-950/30 p-2 font-mono text-[10px] uppercase tracking-widest text-text-600 lg:w-24'
+        data-testid={`alien-${alien.alienIndex}-deck-empty`}
+      >
+        <span className='text-[9px] tracking-[0.2em] text-text-500'>
+          {label}
+        </span>
+        <span className='mt-1 text-[10px] text-text-600'>
+          {t('client.alien_board.card_zone.empty')}
+        </span>
+      </aside>
+    );
+  }
+
+  return (
+    <AlienDeckPanel
+      alienIndex={alien.alienIndex}
+      label={label}
+      cardZone={alien.cardZone}
+      onCardInspect={onCardInspect}
+    />
+  );
+}
+
 function AlienDeckPanel({
   alienIndex,
+  label,
   cardZone,
   onCardInspect,
 }: {
   alienIndex: number;
+  label: string;
   cardZone: IPublicAlienCardZone;
   onCardInspect?: (card: IBaseCard) => void;
 }): React.JSX.Element {
@@ -1884,29 +1970,20 @@ function AlienDeckPanel({
 
   return (
     <aside
-      className='w-full rounded border border-surface-700/50 bg-surface-950/40 p-2 lg:w-28'
+      className='flex w-full flex-col items-center gap-1.5 rounded border border-surface-700/50 bg-surface-950/40 p-2 lg:w-24'
       data-testid={`alien-${alienIndex}-deck-panel`}
     >
-      <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
-        {t('client.alien_board.card_zone.title')}
-      </div>
-      <div className='space-y-1 font-mono text-[10px] text-text-300'>
-        <div>
-          {t('client.alien_board.card_zone.deck_count', {
-            count: cardZone.drawPileSize,
-          })}
-        </div>
-        <div>
-          {t('client.alien_board.card_zone.discard_count', {
-            count: cardZone.discardPileSize,
-          })}
-        </div>
+      <div
+        className='font-mono text-[9px] uppercase tracking-[0.2em] text-text-400'
+        data-testid={`alien-${alienIndex}-deck-label`}
+      >
+        {label}
       </div>
       {faceUpCard ? (
         <button
           type='button'
           className={cn(
-            'relative mt-2 h-[92px] w-[66px] overflow-hidden rounded-[3px] border border-surface-700/60 transition-[border-color,box-shadow,transform] duration-150 focus-visible:outline-none focus-visible:shadow-focus-ring',
+            'relative h-[92px] w-[66px] overflow-hidden rounded-[3px] border border-surface-700/60 transition-[border-color,box-shadow,transform] duration-150 focus-visible:outline-none focus-visible:shadow-focus-ring',
             onCardInspect
               ? 'cursor-pointer hover:-translate-y-0.5 hover:border-accent-500/70'
               : 'cursor-default',
@@ -1922,10 +1999,25 @@ function AlienDeckPanel({
           </div>
         </button>
       ) : cardZone.faceUpCardId ? (
-        <div className='mt-2 rounded border border-surface-700/60 px-2 py-3 text-center font-mono text-[10px] text-text-400'>
+        <div className='rounded border border-surface-700/60 px-2 py-3 text-center font-mono text-[10px] text-text-400'>
           {cardZone.faceUpCardId}
         </div>
-      ) : null}
+      ) : (
+        <div className='flex h-[92px] w-[66px] items-center justify-center rounded-[3px] border border-dashed border-surface-700/50 font-mono text-[9px] text-text-600'>
+          {t('client.alien_board.card_zone.empty')}
+        </div>
+      )}
+      <div
+        className='flex w-full justify-between gap-1 font-mono text-[9px] text-text-400'
+        data-testid={`alien-${alienIndex}-deck-counts`}
+      >
+        <span title={t('client.alien_board.card_zone.deck_count', { count: cardZone.drawPileSize })}>
+          ▲ {cardZone.drawPileSize}
+        </span>
+        <span title={t('client.alien_board.card_zone.discard_count', { count: cardZone.discardPileSize })}>
+          ▼ {cardZone.discardPileSize}
+        </span>
+      </div>
     </aside>
   );
 }

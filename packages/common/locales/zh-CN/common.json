@@ -662,7 +662,8 @@
         "title": "外星牌库",
         "deck_count": "牌库 {{count}}",
         "discard_count": "弃牌 {{count}}",
-        "preview_aria": "预览 {{card}}"
+        "preview_aria": "预览 {{card}}",
+        "empty": "空"
       },
       "glyphids": {
         "bank_count": "库存 {{count}}",

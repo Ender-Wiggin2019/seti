@@ -658,7 +658,8 @@
         "title": "Deck Alienígena",
         "deck_count": "Deck {{count}}",
         "discard_count": "Descarte {{count}}",
-        "preview_aria": "Pré-visualizar {{card}}"
+        "preview_aria": "Pré-visualizar {{card}}",
+        "empty": "Vazio"
       },
       "glyphids": {
         "bank_count": "Banco {{count}}",
