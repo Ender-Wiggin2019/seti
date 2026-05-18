@@ -1808,13 +1808,13 @@ function AnomaliesBoard({
         data-testid={`alien-${alienIndex}-anomaly-trace-grid`}
       >
         {TRACE_COLUMN_COLORS.map((color) => {
-          const column = board.traceBoard.columns[color];
+          const tierSlots = board.traceBoard.columns[color] ?? [];
           return (
             <AnomalyColumn
               key={color}
               alienIndex={alienIndex}
               color={color}
-              slot={column}
+              tierSlots={tierSlots}
               playerColors={playerColors}
             />
           );
@@ -1827,14 +1827,17 @@ function AnomaliesBoard({
 function AnomalyColumn({
   alienIndex,
   color,
-  slot,
+  tierSlots,
   playerColors,
 }: {
   alienIndex: number;
   color: ETrace.RED | ETrace.YELLOW | ETrace.BLUE;
-  slot: IPublicTraceSlot;
+  tierSlots: IPublicTraceSlot[];
   playerColors: Record<string, string>;
 }): React.JSX.Element {
+  // Render tiers from top→bottom so the visual order matches the printed
+  // alien board (overflow at top, single-cap circles below).
+  const tiersTopToBottom = [...tierSlots].reverse();
   return (
     <div
       className='min-w-0 rounded border border-surface-700/60 bg-surface-900/50 p-1'
@@ -1844,36 +1847,89 @@ function AnomalyColumn({
         className='mb-1 h-1 rounded-full'
         style={{ backgroundColor: TRACE_COLOR[color] }}
       />
-      <div className='flex min-h-12 flex-col-reverse items-center justify-start gap-1 rounded bg-surface-950/50 p-1'>
-        {slot.occupants.map((occ, index) => (
-          <OccupantMarker
-            key={`${slot.slotId}-${index}`}
-            testId={`trace-slot-${slot.slotId}-occupant-${index}`}
-            occupant={occ}
+      <div
+        className='flex flex-col items-center gap-0.5'
+        data-testid={`alien-${alienIndex}-anomaly-column-${color}-rewards`}
+      >
+        {tiersTopToBottom.map((slot) => (
+          <AnomalyTierBubble
+            key={slot.slotId}
+            slot={slot}
+            color={color}
             playerColors={playerColors}
           />
         ))}
       </div>
-      <div
-        className='mt-1 flex flex-col-reverse items-center gap-0.5'
-        data-testid={`alien-${alienIndex}-anomaly-column-${color}-rewards`}
+    </div>
+  );
+}
+
+function AnomalyTierBubble({
+  slot,
+  color,
+  playerColors,
+}: {
+  slot: IPublicTraceSlot;
+  color: ETrace.RED | ETrace.YELLOW | ETrace.BLUE;
+  playerColors: Record<string, string>;
+}): React.JSX.Element {
+  const isOverflow = slot.maxOccupants === -1;
+  return (
+    <div className='relative flex flex-col items-center'>
+      <TraceRewardFrame
+        traceColor={color}
+        variant={isOverflow ? 'pill' : 'circle'}
+        testId={`trace-slot-${slot.slotId}-circle`}
+        title={`${TRACE_LABEL[color]} anomaly tier`}
       >
-        {ANOMALY_COLUMN_REWARD_LADDER.map((rewards, index) => (
-          <TraceRewardFrame
-            key={index}
-            traceColor={color}
-            compact
-            variant={
-              index === ANOMALY_COLUMN_REWARD_LADDER.length - 1
-                ? 'pill'
-                : 'circle'
-            }
-            testId={`alien-${alienIndex}-anomaly-column-${color}-reward-${index}`}
-            title={`${TRACE_LABEL[color]} anomaly reward`}
-          >
-            <TraceRewardIcons rewards={rewards} size='xxs' />
-          </TraceRewardFrame>
-        ))}
+        <TraceRewardIcons rewards={slot.rewards} size='sm' />
+      </TraceRewardFrame>
+      <SlotOccupantOverlay
+        slot={slot}
+        ringColor={TRACE_COLOR[color]}
+        playerColors={playerColors}
+      />
+    </div>
+  );
+}
+
+function SlotOccupantOverlay({
+  slot,
+  ringColor,
+  playerColors,
+}: {
+  slot: IPublicTraceSlot;
+  ringColor: string;
+  playerColors: Record<string, string>;
+}): React.JSX.Element | null {
+  if (slot.occupants.length === 0) return null;
+  const isOverflow = slot.maxOccupants === -1;
+  const strideRem = isOverflow ? 0.7 : 0.45;
+  return (
+    <div className='pointer-events-none absolute inset-0 flex items-center justify-center'>
+      <div className='relative h-full w-full'>
+        {slot.occupants.map((occ, index) => {
+          const fill =
+            occ.source === 'neutral'
+              ? '#9ca3af'
+              : (playerColors[occ.source.playerId] ?? '#cbd5e1');
+          const offsetRem = -(index * strideRem);
+          return (
+            <span
+              key={`${slot.slotId}-${index}`}
+              className='absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 shadow-[0_0_4px_rgba(0,0,0,0.6)]'
+              data-testid={`trace-slot-${slot.slotId}-occupant-${index}`}
+              style={{
+                marginTop: `${offsetRem}rem`,
+                backgroundColor: fill,
+                borderColor: ringColor,
+              }}
+              title={
+                occ.source === 'neutral' ? 'Neutral' : occ.source.playerId
+              }
+            />
+          );
+        })}
       </div>
     </div>
   );
@@ -2128,14 +2184,13 @@ function TraceRewardFrame({
     <div
       className={cn(
         'flex items-center justify-center border-2 bg-surface-950/70',
-        compact &&
-          variant === 'pill' &&
-          'min-h-20 w-10 rounded-full px-0.5 py-1.5',
-        compact && variant === 'circle' && 'h-10 w-10 rounded-full',
-        !compact &&
-          (variant === 'pill'
-            ? 'min-h-24 w-12 rounded-full px-1 py-2'
-            : 'h-12 w-12 rounded-full'),
+        // `compact` previously made these smaller (10/20 vs 12/24); now both
+        // compact and full match the Discovery/Overflow zone size (16/32) so
+        // the text-mode column bonuses, discovery zone, and overflow zone
+        // all share one visual size.
+        variant === 'pill'
+          ? 'min-h-32 w-16 rounded-full px-1 py-2'
+          : 'h-16 w-16 rounded-full',
         highlighted && 'ring-1 ring-accent-400/50',
       )}
       data-testid={testId}
@@ -2266,12 +2321,14 @@ function TraceColumnLabel({
   );
 }
 
+type TTraceRewardIconSize = 'desc-mini' | 'desc' | 'xxs' | 'xs' | 'sm';
+
 function TraceRewardIcons({
   rewards,
-  size = 'desc-mini',
+  size = 'sm',
 }: {
   rewards: readonly TPublicSlotReward[];
-  size?: 'desc-mini' | 'desc' | 'xxs' | 'xs';
+  size?: TTraceRewardIconSize;
 }): React.JSX.Element {
   return (
     <TraceRewardPresentations
@@ -2283,10 +2340,10 @@ function TraceRewardIcons({
 
 function TraceRewardPresentations({
   presentations,
-  size = 'desc-mini',
+  size = 'sm',
 }: {
   presentations: TTraceRewardPresentation[];
-  size?: 'desc-mini' | 'desc' | 'xxs' | 'xs';
+  size?: TTraceRewardIconSize;
 }): React.JSX.Element {
   return (
     <div
@@ -2311,13 +2368,13 @@ function TraceRewardPresentationItem({
   size,
 }: {
   presentation: TTraceRewardPresentation;
-  size: 'desc-mini' | 'desc' | 'xxs' | 'xs';
+  size: TTraceRewardIconSize;
 }): React.JSX.Element {
   const testKey = presentation.token.replace(/[{}]/g, '');
   if (presentation.kind === 'text') {
     return (
       <span
-        className='max-w-10 truncate font-mono text-[8px] text-text-300'
+        className='max-w-12 truncate font-mono text-[10px] text-text-300'
         data-testid={`trace-reward-icon-${testKey}`}
         title={presentation.label}
       >
@@ -2325,12 +2382,13 @@ function TraceRewardPresentationItem({
       </span>
     );
   }
-
+  const iconSizeClass =
+    size === 'sm' ? 'h-6 w-6' : size === 'xxs' ? 'h-5 w-5' : 'h-4 w-4';
   return (
     <span
       className={cn(
         'inline-flex items-center justify-center overflow-visible',
-        size === 'xxs' ? 'h-5 w-5' : 'h-4 w-4',
+        iconSizeClass,
       )}
       data-testid={`trace-reward-icon-${testKey}`}
       title={presentation.label}

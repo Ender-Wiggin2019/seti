@@ -92,8 +92,13 @@ export function AnomaliesBoardArt({
           <CalibrationOverlay alienIndex={alienIndex} />
         ) : (
           TRACE_COLUMN_COLORS.map((color) => {
-            const slot = board.traceBoard.columns[color];
-            const liveOccupants = slot?.occupants ?? [];
+            const tierSlots = board.traceBoard.columns[color] ?? [];
+            // Build a (tierIndex, occupant) list. Tiers 0..3 are single-cap
+            // circles; tier 4 is the overflow circle (any number of tokens).
+            const liveOccupants: ITieredOccupant[] = tierSlots.flatMap(
+              (slot, tierIndex) =>
+                slot.occupants.map((occ) => ({ occ, tierIndex })),
+            );
             const occupants =
               previewOverflow > 0
                 ? buildPreviewOccupants(liveOccupants, previewOverflow)
@@ -115,29 +120,47 @@ export function AnomaliesBoardArt({
   );
 }
 
+interface ITieredOccupant {
+  occ: TTraceOccupant;
+  /** 0..3 = single-cap tier (bottom→top); 4 = overflow tier. */
+  tierIndex: number;
+}
+
 const PREVIEW_PLAYER_IDS = ['preview-A', 'preview-B', 'preview-C', 'preview-D'];
 
 /**
- * Build a synthesized occupant array for the `?previewOverflow=N` debug flag:
- *   - 4 single-cap occupants to fully fill the printed circles
- *   - N additional overflow occupants stacked on top
+ * Build a synthesized occupant list for the `?previewOverflow=N` debug flag:
+ *   - 4 single-cap occupants spread across tiers 0..3 (one per tier)
+ *   - N additional overflow occupants on tier 4
  * Live occupants always take priority; only the gap up to 4 + N is filled.
  */
 function buildPreviewOccupants(
-  live: ReadonlyArray<TTraceOccupant>,
+  live: ReadonlyArray<ITieredOccupant>,
   overflowCount: number,
-): TTraceOccupant[] {
-  const out: TTraceOccupant[] = [...live];
-  const target = 4 + overflowCount;
-  let i = 0;
-  while (out.length < target) {
+): ITieredOccupant[] {
+  const out: ITieredOccupant[] = [...live];
+  // Track which single-cap tiers are filled so we don't double up.
+  const filledTiers = new Set(
+    live.filter((entry) => entry.tierIndex < 4).map((entry) => entry.tierIndex),
+  );
+  let preview = 0;
+  for (let tier = 0; tier < 4; tier += 1) {
+    if (filledTiers.has(tier)) continue;
     const playerId =
-      PREVIEW_PLAYER_IDS[i % PREVIEW_PLAYER_IDS.length] ?? 'preview';
+      PREVIEW_PLAYER_IDS[preview % PREVIEW_PLAYER_IDS.length] ?? 'preview';
     out.push({
-      source: { playerId },
-      traceColor: out[0]?.traceColor ?? ETrace.RED,
+      occ: { source: { playerId }, traceColor: ETrace.RED },
+      tierIndex: tier,
     });
-    i += 1;
+    preview += 1;
+  }
+  for (let i = 0; i < overflowCount; i += 1) {
+    const playerId =
+      PREVIEW_PLAYER_IDS[(preview + i) % PREVIEW_PLAYER_IDS.length] ?? 'preview';
+    out.push({
+      occ: { source: { playerId }, traceColor: ETrace.RED },
+      tierIndex: 4,
+    });
   }
   return out;
 }
@@ -150,26 +173,34 @@ function ColumnMarkers({
 }: {
   alienIndex: number;
   color: TTraceColumnColor;
-  occupants: ReadonlyArray<TTraceOccupant>;
+  occupants: ReadonlyArray<ITieredOccupant>;
   playerColors: Record<string, string>;
 }): React.JSX.Element {
   const layout = ANOMALIES_LAYOUTS[color];
   const ringColor = TRACE_RING_COLOR[color];
-  const singleCapCount = layout.singleCapYPctBottomToTop.length;
+  // Track how many overflow markers we've already placed so additional ones
+  // stack upward inside the overflow circle.
+  let overflowOrder = 0;
   return (
     <div
       data-testid={`alien-${alienIndex}-anomalies-column-${color}`}
       data-trace-color={color}
     >
-      {occupants.map((occ, index) => {
-        const inOverflow = index >= singleCapCount;
-        const overflowIndex = index - singleCapCount;
+      {occupants.map(({ occ, tierIndex }, index) => {
+        const inOverflow = tierIndex >= 4;
         const xPct = layout.xPct;
-        // Overflow tokens stack upward inside the printed overflow circle:
-        // the first one sits centered, the next ones fan above it.
-        const yPct = inOverflow
-          ? layout.overflowYPct - overflowIndex * layout.overflowStridePct
-          : layout.singleCapYPctBottomToTop[index];
+        let yPct: number;
+        if (inOverflow) {
+          // First overflow token at centre, subsequent ones fan upward.
+          yPct = layout.overflowYPct - overflowOrder * layout.overflowStridePct;
+          overflowOrder += 1;
+        } else {
+          yPct =
+            layout.singleCapYPctBottomToTop[tierIndex] ??
+            layout.singleCapYPctBottomToTop[
+              layout.singleCapYPctBottomToTop.length - 1
+            ];
+        }
         return (
           <SlotMarker
             key={`${color}-${index}`}

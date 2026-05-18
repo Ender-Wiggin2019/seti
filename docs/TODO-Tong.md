@@ -210,6 +210,99 @@ See "Done → Hi-res alien art + face-down back" below.)_
 
 ## Done
 
+### Anomalies trace placement: per-tier slots, friendlier labels, auto-tab - 2026-05-18
+
+Assumptions:
+- Anomalies columns must let the player choose **any available tier**, not
+  auto-fill bottom-up — only the top "overflow" space stacks tokens.
+  Re-reading `docs/arch/aliens/anomalies/rule.md` confirmed: "later markers
+  stack above earlier markers on top space" applies to the overflow only.
+- Universally (across aliens), placement should target whichever printed
+  circles still have capacity; this slice ships the Anomalies version, the
+  same principle applies as we calibrate the other aliens.
+- Discovery and overflow zone bonus circles, plus text-mode column bubbles,
+  should share one visual size to read as the same kind of slot.
+
+Success criteria:
+- The Anomalies column exposes 5 distinct trace slots per color (4 single-cap
+  tiers + 1 top overflow, matching the printed art).
+- The trace input prompt lists each tier as its own option with a friendly
+  label including the alien name (when discovered) and the slot's reward
+  summary, so the player can read the option list and pick a tier.
+- Discovery / overflow zones and the text-mode column bubble all use the
+  same 64px circle / 128px pill, with player tokens overlaid on the bubble
+  (like the AnomaliesBoardArt pattern) instead of in a row beneath.
+- When a trace input arrives, the active tab auto-jumps to "Aliens" so the
+  player sees the alien board where the choice has to be made.
+- Test suite ≥ pre-slice baseline (no new pre-existing failures).
+
+Plan:
+- [x] Replace the single-slot-per-color Anomalies model with 5 per-tier
+  slots (`AnomaliesAlienPlugin.onDiscover`); each slot carries the matching
+  ladder rewards as static data.
+- [x] Drop the dynamic `getAnomalyColumnRewardsForPlacement` projection
+  from the plugin's `onPlaceTraceOnSlot` (no longer needed; framework
+  delivers rewards).
+- [x] Update `getColumnLeaderPlayerId` to walk tiers top→bottom and pick
+  the highest non-neutral occupant (overflow latest-placed wins).
+- [x] Widen `IPublicAnomaliesTraceBoard.columns` from
+  `Record<color, IPublicTraceSlot>` to `Record<color, IPublicTraceSlot[]>`
+  (bottom→top); update serializer.
+- [x] Refit `AnomaliesBoardArt` (real-mode) and `AnomalyColumn` (text-mode)
+  to consume the per-tier shape; render each tier as its own bubble with
+  occupants overlaid.
+- [x] Bump trace-grid bonus circles to `h-16 w-16` (pill `min-h-32 w-16`)
+  and reward icons to `sm` so discovery zone, overflow zone, and text-mode
+  columns share one visual.
+- [x] Remove the pre-existing `compact` mode from the local
+  `TraceRewardFrame`; collapse to one variant.
+- [x] Update slot-label generator: alien name when discovered, plus
+  inline reward summary (`4 VP + alien card`, `2 VP + 1 publicity`, etc).
+- [x] Add `isAlienBoardInput` helper + `useEffect` in `GameLayout` to
+  auto-jump to the Aliens tab on the first render of an alien-targeting
+  pending input.
+- [x] Add `Trace Placement Replay` debug preset and `place-trace` REST
+  endpoint for fast UX testing without a full Scan/Analyze setup.
+
+Review:
+- The slot-label change made the previously broken option text
+  ("Alien 1 — alien-0-anomaly-column|blue-trace") become
+  "Anomalies — Blue tier 1 — 4 VP + alien card", which is exactly what
+  the option list needs to be useful.
+- The auto-tab effect is gated on a per-input id ref so the player can
+  flip back to Board / Cards / Tech mid-prompt without us re-stomping
+  their choice; only the first render of a *new* alien input triggers
+  the switch.
+- The `compact` removal touched layout only, no game-state
+  consequences; existing `<TraceRewardFrame />` callsites work without
+  the prop.
+- Preserved API compatibility for the `applyTraceToSlot` callers from
+  the prior slice — the wider `PlayerInput | boolean` return shape was
+  already in place.
+- Verification:
+  - `pnpm --filter @seti/server typecheck`
+  - `pnpm --filter @seti/client typecheck`
+  - `pnpm --filter @ender-seti/common typecheck`
+  - `pnpm --filter @seti/server test` — `2088 passed, 1 failed`. The
+    single failure is the audit-tracked SA Amoeba test, unrelated to
+    this slice.
+  - `pnpm --filter @seti/client test -- AlienBoardView GameLayout` —
+    `301 passed`.
+  - Live REST probe of the trace input: option labels render as
+    "Anomalies — Red tier 1 — 4 VP + alien card", "Anomalies — Red
+    tier 3 — 2 VP + 1 publicity", "Anomalies — Red Overflow — 2 VP",
+    "Alien 2 — Discovery (Red) — 3 VP + 1 publicity".
+
+Residual:
+- Other aliens (Centaurians/Exertians/Mascamites/Oumuamua) still use
+  the old per-color shape and have not been calibrated against their
+  hi-res art — tracked under "Open → P2 Calibrate base alien art
+  coordinates".
+- The `executeRewards` short-circuit and the Anomalies token-trigger
+  CUSTOM-drop footguns (P0) are still in place: this slice only changed
+  the slot model + labels, not the reward delivery path. The cross-check
+  P0 still applies.
+
 ### Hi-res alien art + face-down back - 2026-05-18
 
 Assumptions:

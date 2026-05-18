@@ -6,6 +6,7 @@ import {
   normalizePlayerInputCards,
 } from '@/lib/cardNormalization';
 import type {
+  ETrace,
   IFreeActionRequest,
   IInputResponse,
   IMainActionRequest,
@@ -25,6 +26,7 @@ export interface IServerDebugSession {
   solarRotate: (discIndex: number) => Promise<void>;
   placeProbeOn: (spaceId: string) => Promise<void>;
   moveProbeTo: (probeId: string, toSpaceId: string) => Promise<void>;
+  placeTraceOf: (traceColor: ETrace) => Promise<void>;
   sendMainAction: (action: IMainActionRequest) => Promise<void>;
   sendFreeAction: (action: IFreeActionRequest) => Promise<void>;
   sendEndTurn: () => Promise<void>;
@@ -178,6 +180,26 @@ export function useServerDebugSession(
     [session, applyState],
   );
 
+  const placeTraceOf = useCallback(
+    async (traceColor: ETrace) => {
+      if (!session) return;
+      try {
+        const next = await debugApi.placeTrace(
+          session.gameId,
+          session.user.id,
+          traceColor,
+          session.user.id,
+        );
+        applyState(next);
+      } catch (error) {
+        setErrorMessage(
+          error instanceof Error ? error.message : 'Place trace failed',
+        );
+      }
+    },
+    [session, applyState],
+  );
+
   const sendMainAction = useCallback(
     async (action: IMainActionRequest) => {
       if (!session) return;
@@ -268,6 +290,7 @@ export function useServerDebugSession(
     solarRotate,
     placeProbeOn,
     moveProbeTo,
+    placeTraceOf,
     sendMainAction,
     sendFreeAction,
     sendEndTurn,

@@ -391,7 +391,8 @@ describe('ResolveDiscovery', () => {
       new ResolveDiscovery(p1).execute(game);
 
       expect(board.discovered).toBe(true);
-      const redColumnSlotId = `alien-${board.alienIndex}-anomaly-column|${ETrace.RED}`;
+      // Tier 1 = bottom single-cap slot; awards 4 VP + 1 alien card.
+      const redColumnSlotId = `alien-${board.alienIndex}-anomaly-column|${ETrace.RED}|1`;
       const redColumnSlot = board.getSlot(redColumnSlotId);
       expect(redColumnSlot).toBeDefined();
       expect(redColumnSlot?.occupants).toHaveLength(0);

@@ -12,6 +12,7 @@ import type {
   IPlayerInputModel,
   IPublicGameState,
 } from '@/types/re-exports';
+import type { ETrace } from '@/types/re-exports';
 
 export const debugApi = {
   getReplayPresets: async (): Promise<IDebugReplayPresetDefinition[]> => {
@@ -159,6 +160,25 @@ export const debugApi = {
     const response = await httpClient.post<IPublicGameState>(
       `/debug/server/game/${gameId}/move-probe`,
       { probeId, toSpaceId, viewerId },
+    );
+    return response.data;
+  },
+
+  /**
+   * Direct trace placement — bypasses the action pipeline so the caller
+   * doesn't have to set up Scan/Analyze/PlayCard. Routes through
+   * `Game.markTrace`, so plugin hooks (column rewards, mission events)
+   * still fire identically to a real placement.
+   */
+  placeTrace: async (
+    gameId: string,
+    playerId: string,
+    traceColor: ETrace,
+    viewerId?: string,
+  ): Promise<IPublicGameState> => {
+    const response = await httpClient.post<IPublicGameState>(
+      `/debug/server/game/${gameId}/place-trace`,
+      { playerId, traceColor, viewerId },
     );
     return response.data;
   },

@@ -1,4 +1,5 @@
 import { EAlienType, EPlanet, ETrace } from '@seti/common/types/protocol/enums';
+import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import {
   isAnomaliesAlienBoard,
   type TSlotReward,
@@ -103,6 +104,18 @@ function getColumnSlots(board: ReturnType<typeof createGame>['board']) {
   return board.slots.filter((slot) => slot.slotId.includes('anomaly-column'));
 }
 
+function getColumnSlotByTier(
+  board: ReturnType<typeof createGame>['board'],
+  color: ETrace,
+  tier: number,
+) {
+  return board.slots.find(
+    (slot) =>
+      slot.slotId === `alien-${board.alienIndex}-anomaly-column|${color}|${tier}`,
+  );
+}
+
+
 function getTokenBySector(
   game: ReturnType<typeof createGame>['game'],
   sectorIndex: number,
@@ -138,7 +151,9 @@ describe('AnomaliesAlienPlugin', () => {
     const columnSlots = getColumnSlots(board);
     const tokenSlots = getTokenSlots(game);
 
-    expect(columnSlots).toHaveLength(3);
+    // Each color exposes 5 tiers (4 single-cap + 1 overflow), so 3 colors
+    // produce 15 total column slots.
+    expect(columnSlots).toHaveLength(15);
     expect(tokenSlots).toHaveLength(3);
 
     const sectors = tokenSlots.map((token) => token.sectorIndex).sort();
@@ -188,7 +203,7 @@ describe('AnomaliesAlienPlugin', () => {
     setEarthSector(4);
     plugin.onDiscover(game, []);
 
-    expect(getColumnSlots(board)).toHaveLength(3);
+    expect(getColumnSlots(board)).toHaveLength(15);
     expect(getTokenSlots(game)).toHaveLength(3);
   });
 
@@ -205,9 +220,7 @@ describe('AnomaliesAlienPlugin', () => {
     tokenAtEarth!.rewards = [{ type: 'VP', amount: 2 }];
 
     const triggeredColor = tokenAtEarth!.traceColor;
-    const columnSlot = board.getSlot(
-      `alien-${board.alienIndex}-anomaly-column|${triggeredColor}`,
-    );
+    const columnSlot = getColumnSlotByTier(board, triggeredColor, 1);
     expect(columnSlot).toBeDefined();
     board.placeTrace(columnSlot!, { playerId: p1.id }, triggeredColor);
 
@@ -248,9 +261,7 @@ describe('AnomaliesAlienPlugin', () => {
     const tokenAtEarth = getTokenBySector(game, 0);
     const color = tokenAtEarth!.traceColor;
     tokenAtEarth!.rewards = [{ type: 'VP', amount: 2 }];
-    const columnSlot = board.getSlot(
-      `alien-${board.alienIndex}-anomaly-column|${color}`,
-    );
+    const columnSlot = getColumnSlotByTier(board, color, 1);
     expect(columnSlot).toBeDefined();
     board.placeTrace(columnSlot!, 'neutral', color);
 
@@ -273,14 +284,17 @@ describe('AnomaliesAlienPlugin', () => {
     const tokenAtEarth = getTokenBySector(game, 0);
     const color = tokenAtEarth!.traceColor;
     tokenAtEarth!.rewards = [{ type: 'VP', amount: 2 }];
-    const columnSlot = board.getSlot(
-      `alien-${board.alienIndex}-anomaly-column|${color}`,
-    );
-    expect(columnSlot).toBeDefined();
 
-    board.placeTrace(columnSlot!, { playerId: p2.id }, color);
-    board.placeTrace(columnSlot!, 'neutral', color);
-    board.placeTrace(columnSlot!, { playerId: p1.id }, color);
+    // Highest-tier marker wins. Place p2 at the bottom tier and a neutral
+    // above them; p1 takes a higher tier and should claim the reward.
+    const tier1 = getColumnSlotByTier(board, color, 1);
+    const tier2 = getColumnSlotByTier(board, color, 2);
+    const tier3 = getColumnSlotByTier(board, color, 3);
+    expect(tier1 && tier2 && tier3).toBeDefined();
+
+    board.placeTrace(tier1!, { playerId: p2.id }, color);
+    board.placeTrace(tier2!, 'neutral', color);
+    board.placeTrace(tier3!, { playerId: p1.id }, color);
 
     const p1Before = p1.score;
     const p2Before = p2.score;
@@ -334,12 +348,8 @@ describe('AnomaliesAlienPlugin', () => {
     tokenAt3!.rewards = [{ type: 'VP', amount: 2 }];
     expect(colorAt0).not.toBe(colorAt3);
 
-    const column0 = board.getSlot(
-      `alien-${board.alienIndex}-anomaly-column|${colorAt0}`,
-    );
-    const column3 = board.getSlot(
-      `alien-${board.alienIndex}-anomaly-column|${colorAt3}`,
-    );
+    const column0 = getColumnSlotByTier(board, colorAt0, 1);
+    const column3 = getColumnSlotByTier(board, colorAt3, 1);
 
     board.placeTrace(column0!, { playerId: p1.id }, colorAt0);
     board.placeTrace(column3!, { playerId: p2.id }, colorAt3);
@@ -409,9 +419,7 @@ describe('AnomaliesAlienPlugin', () => {
     ];
 
     const triggeredColor = tokenAtEarth!.traceColor;
-    const columnSlot = board.getSlot(
-      `alien-${board.alienIndex}-anomaly-column|${triggeredColor}`,
-    );
+    const columnSlot = getColumnSlotByTier(board, triggeredColor, 1);
     expect(columnSlot).toBeDefined();
 
     board.placeTrace(columnSlot!, { playerId: p1.id }, triggeredColor);
@@ -454,9 +462,7 @@ describe('AnomaliesAlienPlugin', () => {
     ];
 
     const triggeredColor = tokenAtEarth!.traceColor;
-    const columnSlot = board.getSlot(
-      `alien-${board.alienIndex}-anomaly-column|${triggeredColor}`,
-    );
+    const columnSlot = getColumnSlotByTier(board, triggeredColor, 1);
     expect(columnSlot).toBeDefined();
 
     board.placeTrace(columnSlot!, { playerId: p1.id }, triggeredColor);
@@ -479,7 +485,7 @@ describe('AnomaliesAlienPlugin', () => {
     expect(p1.hand).toHaveLength(before.handSize + 1);
   });
 
-  it('awards anomaly column trace spaces from bottom to repeatable top', () => {
+  it('per-tier slots in an anomaly column carry the matching ladder rewards', () => {
     const plugin = new AnomaliesAlienPlugin();
     AlienRegistry.register(plugin);
     const p1 = createPlayer('p1', 0);
@@ -493,38 +499,68 @@ describe('AnomaliesAlienPlugin', () => {
     board.initializeAlienDeck(['ANOM.1', 'ANOM.2', 'ANOM.3', 'ANOM.4']);
     board.revealNextFaceUpAlienCard(game.random);
 
-    const columnSlot = board.getSlot(
-      `alien-${board.alienIndex}-anomaly-column|${ETrace.RED}`,
-    );
-    expect(columnSlot).toBeDefined();
+    // Each of the 5 tiers per color carries the matching ladder rewards.
+    // Players choose any tier — the engine no longer auto-fills bottom-up.
+    const tier1 = getColumnSlotByTier(board, ETrace.RED, 1);
+    const tier2 = getColumnSlotByTier(board, ETrace.RED, 2);
+    const tier3 = getColumnSlotByTier(board, ETrace.RED, 3);
+    const tier4 = getColumnSlotByTier(board, ETrace.RED, 4);
+    const overflow = getColumnSlotByTier(board, ETrace.RED, 5);
+    expect(tier1?.maxOccupants).toBe(1);
+    expect(tier4?.maxOccupants).toBe(1);
+    expect(overflow?.maxOccupants).toBe(-1);
+    expect(tier1?.rewards).toEqual([
+      { type: 'VP', amount: 4 },
+      { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
+    ]);
+    expect(tier3?.rewards).toEqual([
+      { type: 'VP', amount: 2 },
+      { type: 'PUBLICITY', amount: 1 },
+    ]);
+    expect(overflow?.rewards).toEqual([{ type: 'VP', amount: 2 }]);
 
     const scoreBefore = p1.score;
     const publicityBefore = p1.resources.publicity;
-
-    // First two placements grant an alien-card draw (returns a PlayerInput
-    // for face-up vs deck choice); resolve each by picking the deck source so
-    // the loop completes without leaving the player in a waiting state.
     let alienCardChoiceCount = 0;
-    for (let i = 0; i < 6; i += 1) {
+    const placeAt = (slotId: string): void => {
       const result = game.alienState.applyTraceToSlot(
         p1,
         game,
-        columnSlot!.slotId,
+        slotId,
         ETrace.RED,
       );
       if (result !== false && result !== true && result !== undefined) {
-        // Resolve the draw-source selection (face-up | deck) by picking deck.
-        const deckOption = result.options?.find(
-          (option: { id: string }) => option.id === 'draw-random',
-        );
-        deckOption?.onSelect();
-        alienCardChoiceCount += 1;
+        const model = result.toModel();
+        if (model.type === EPlayerInputType.OPTION) {
+          (
+            result as unknown as {
+              process: (response: {
+                type: EPlayerInputType.OPTION;
+                optionId: string;
+              }) => unknown;
+            }
+          ).process({
+            type: EPlayerInputType.OPTION,
+            optionId: 'draw-random',
+          });
+          alienCardChoiceCount += 1;
+        }
       }
-    }
+    };
+
+    // Place one trace at each single-cap tier, then two more in the overflow.
+    placeAt(tier1!.slotId);
+    placeAt(tier2!.slotId);
+    placeAt(tier3!.slotId);
+    placeAt(tier4!.slotId);
+    placeAt(overflow!.slotId);
+    placeAt(overflow!.slotId);
 
     expect(p1.score).toBe(scoreBefore + 4 + 2 + 2 + 3 + 2 + 2);
     expect(p1.resources.publicity).toBe(publicityBefore + 1);
     expect(alienCardChoiceCount).toBe(2);
-    expect(columnSlot!.occupants).toHaveLength(6);
+    expect(tier1!.occupants).toHaveLength(1);
+    expect(tier4!.occupants).toHaveLength(1);
+    expect(overflow!.occupants).toHaveLength(2);
   });
 });

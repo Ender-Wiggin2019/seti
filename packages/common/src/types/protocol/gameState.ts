@@ -299,7 +299,12 @@ export interface IPublicAlienCardZone {
 }
 
 export interface IPublicAnomaliesTraceBoard {
-  columns: Record<TPublicAnomalyTraceColor, IPublicTraceSlot>;
+  /**
+   * Per-color column slots, ordered bottom→top:
+   *   index 0..3 = single-capacity tier slots (bottom up)
+   *   index 4    = top overflow slot (`maxOccupants === -1`)
+   */
+  columns: Record<TPublicAnomalyTraceColor, IPublicTraceSlot[]>;
 }
 
 export interface IPublicAnomaliesBoard {

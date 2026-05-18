@@ -191,7 +191,8 @@ describe('debugReplayPresets', () => {
       const columnSlots = board.slots.filter((s) =>
         s.slotId.includes('anomaly-column'),
       );
-      expect(columnSlots).toHaveLength(3);
+      // 3 colors × 5 tiers (4 single-cap + 1 overflow) = 15 column slots.
+      expect(columnSlots).toHaveLength(15);
       const columnColors = new Set(columnSlots.map((s) => s.traceColor));
       expect(columnColors).toEqual(
         new Set([ETrace.RED, ETrace.YELLOW, ETrace.BLUE]),
@@ -245,7 +246,7 @@ describe('debugReplayPresets', () => {
       }
     });
 
-    it('column slots are unlimited capacity with no rewards', () => {
+    it('per-tier column slots have ladder rewards; only the top tier is overflow', () => {
       const { game, replay, board } = applyAnomalyDiscovery();
 
       game.processEndTurn(replay.currentPlayerId);
@@ -253,9 +254,14 @@ describe('debugReplayPresets', () => {
       const columnSlots = board.slots.filter((s) =>
         s.slotId.includes('anomaly-column'),
       );
+      const overflow = columnSlots.filter((s) => s.maxOccupants === -1);
+      const singleCap = columnSlots.filter((s) => s.maxOccupants === 1);
+      // One overflow per color (3) + four single-cap per color (12) = 15.
+      expect(overflow).toHaveLength(3);
+      expect(singleCap).toHaveLength(12);
+      // Every column slot now carries the matching ladder reward.
       for (const slot of columnSlots) {
-        expect(slot.maxOccupants).toBe(-1);
-        expect(slot.rewards).toHaveLength(0);
+        expect(slot.rewards.length).toBeGreaterThan(0);
       }
     });
   });

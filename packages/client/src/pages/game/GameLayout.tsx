@@ -92,6 +92,22 @@ function isTechBoardInput(model: IPlayerInputModel | null): boolean {
   return model.options.some((option) => ALL_TECH_ID_SET.has(option.id));
 }
 
+/**
+ * True when the pending input is something that lands on an alien board:
+ * either picking a trace color (TRACE) or picking a specific trace slot via a
+ * SelectOption whose options reference alien slot ids.
+ */
+function isAlienBoardInput(model: IPlayerInputModel | null): boolean {
+  if (!model) return false;
+  if (model.type === EPlayerInputType.TRACE) return true;
+  if (model.type !== EPlayerInputType.OPTION) return false;
+  return model.options.some((option) =>
+    /^alien-\d+-(?:discovery|overflow|anomaly-column|oumuamua-trace|mascamites|centaurians|exertians|glyphids|amoeba|arkhos)/.test(
+      option.id,
+    ),
+  );
+}
+
 function findOumuamuaTile(
   aliens: IPublicAlienState[] | undefined,
 ): IPublicOumuamuaTile | null {
@@ -302,6 +318,22 @@ export function GameLayout({
       setPlanetActionMode(null);
     }
   }, [gameState?.phase, isMyTurn, pendingInput, planetActionMode]);
+
+  // Auto-jump to the Aliens tab when the player is asked to place a trace
+  // (or otherwise act on an alien-board slot). Track the input by id so we
+  // only switch on the *first* render of a new alien input — the player can
+  // freely flip back to other tabs afterward without us re-stomping them.
+  const lastAlienInputIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isAlienBoardInput(pendingInput)) {
+      lastAlienInputIdRef.current = null;
+      return;
+    }
+    const inputId = pendingInput?.inputId ?? null;
+    if (inputId === lastAlienInputIdRef.current) return;
+    lastAlienInputIdRef.current = inputId;
+    setActiveTab('aliens');
+  }, [pendingInput, setActiveTab]);
 
   const handleInspectCard = (card: IBaseCard): void => {
     setDetailCard(card);

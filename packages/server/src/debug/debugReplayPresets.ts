@@ -40,6 +40,8 @@ const MASCAMITES_AFTER_DISCOVERY_CHECKPOINT_ID = 'after-discovery';
 const FREE_ACTION_PRESET_ID = 'free-action-debug';
 const FREE_ACTION_SPEND_SIGNAL_TOKEN_CHECKPOINT_ID = 'spend-signal-token';
 const FREE_ACTION_DELIVER_SAMPLE_CHECKPOINT_ID = 'deliver-sample';
+const TRACE_PLACEMENT_PRESET_ID = 'trace-placement-debug';
+const TRACE_PLACEMENT_AFTER_DISCOVERY_CHECKPOINT_ID = 'after-discovery';
 
 interface IDebugReplayPreset {
   definition: IDebugReplayPresetDefinition;
@@ -195,6 +197,35 @@ const DEBUG_REPLAY_PRESETS: Readonly<Record<string, IDebugReplayPreset>> = {
       ],
     },
     apply: applyMascamitesReplay,
+  },
+  [TRACE_PLACEMENT_PRESET_ID]: {
+    definition: {
+      id: TRACE_PLACEMENT_PRESET_ID,
+      label: 'Trace Placement Replay',
+      description:
+        'Discover the chosen alien and stop in AWAIT_MAIN_ACTION so you can mark RED/YELLOW/BLUE traces (via the production action path or the debug place-trace endpoint) and inspect how they render.',
+      fields: [
+        {
+          id: 'alienType',
+          label: 'Alien',
+          kind: 'select',
+          required: true,
+          options: CORE_RANDOM_ALIEN_TYPES.map((alienType) => ({
+            value: String(alienType),
+            label: toTitleCase(EAlienMap[alienType] ?? String(alienType)),
+          })),
+        },
+      ],
+      checkpoints: [
+        {
+          id: TRACE_PLACEMENT_AFTER_DISCOVERY_CHECKPOINT_ID,
+          label: 'After Discovery',
+          description:
+            'The chosen alien is discovered, the active player has plenty of resources, and the game is waiting for the next main action.',
+        },
+      ],
+    },
+    apply: applyTracePlacementReplay,
   },
   [FREE_ACTION_PRESET_ID]: {
     definition: {
@@ -362,11 +393,13 @@ function applyAnomalyTriggerReplay(
 
   normalizeAnomalyTokensForTriggerReplay(game, board);
 
+  // Place a marker in tier 1 of the RED column so the upcoming PASS
+  // rotation finds a non-neutral leader to reward.
   const columnSlot = board.getSlot(
-    buildAnomalyColumnSlotId(board.alienIndex, ETrace.RED),
+    buildAnomalyColumnSlotId(board.alienIndex, ETrace.RED, 1),
   );
   if (!columnSlot) {
-    throw new Error('Anomaly column slot missing for RED');
+    throw new Error('Anomaly column slot missing for RED tier 1');
   }
   board.placeTrace(columnSlot, { playerId: activePlayer.id }, ETrace.RED);
 
@@ -554,6 +587,49 @@ function applyMascamitesReplay(
   };
 }
 
+function applyTracePlacementReplay(
+  game: Game,
+  request: IDebugReplaySessionRequest,
+): {
+  phase: EPhase;
+  summary: string;
+  alienIndex: number;
+  selectedAlienType: EAlienType;
+  currentPlayerId: string;
+} {
+  if (request.checkpointId !== TRACE_PLACEMENT_AFTER_DISCOVERY_CHECKPOINT_ID) {
+    throw new Error(`Unsupported replay checkpoint: ${request.checkpointId}`);
+  }
+
+  const selectedAlienType = parseAlienType(request.fieldValues.alienType);
+  const { activePlayer, board } = discoverAlienWithNeutralMarkers(
+    game,
+    selectedAlienType,
+  );
+
+  // Give the active player enough resources to drive every trace-marking
+  // action (scan/play card/analyze) without being blocked by costs.
+  activePlayer.resources.gain({
+    credits: 20,
+    energy: 20,
+    publicity: 20,
+    data: 6,
+  });
+
+  game.phase = EPhase.AWAIT_MAIN_ACTION;
+  activePlayer.waitingFor = undefined;
+  game.eventLog = new EventLog();
+
+  return {
+    phase: game.phase,
+    summary:
+      'Replay ready: the chosen alien is discovered. Mark RED/YELLOW/BLUE traces via the normal actions, or POST to /debug/server/game/:gameId/place-trace to inject placements directly.',
+    alienIndex: board.alienIndex,
+    selectedAlienType,
+    currentPlayerId: activePlayer.id,
+  };
+}
+
 function applyFreeActionReplay(
   game: Game,
   request: IDebugReplaySessionRequest,
@@ -663,8 +739,12 @@ function resolveSetupTucks(game: Game): void {
   }
 }
 
-function buildAnomalyColumnSlotId(alienIndex: number, color: string): string {
-  return `alien-${alienIndex}-anomaly-column|${color}`;
+function buildAnomalyColumnSlotId(
+  alienIndex: number,
+  color: string,
+  tier: number,
+): string {
+  return `alien-${alienIndex}-anomaly-column|${color}|${tier}`;
 }
 
 function normalizeAnomalyTokensForTriggerReplay(

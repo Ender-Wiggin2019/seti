@@ -29,6 +29,30 @@ function slot(
   };
 }
 
+/**
+ * Build the 5 per-tier anomaly column slots for a given color (4 single-cap
+ * tiers + 1 overflow at the top), bottom→top.
+ */
+function buildAnomalyColumnSlots(
+  color: ETrace.RED | ETrace.YELLOW | ETrace.BLUE,
+  options: {
+    tier1Occupants?: IPublicTraceSlot['occupants'];
+    overflowOccupants?: IPublicTraceSlot['occupants'];
+  } = {},
+): IPublicTraceSlot[] {
+  return [1, 2, 3, 4, 5].map((tier) =>
+    slot(`alien-0-anomaly-column|${color}|${tier}`, color, {
+      maxOccupants: tier === 5 ? -1 : 1,
+      occupants:
+        tier === 1
+          ? (options.tier1Occupants ?? [])
+          : tier === 5
+            ? (options.overflowOccupants ?? [])
+            : [],
+    }),
+  );
+}
+
 describe('AlienBoardView', () => {
   beforeEach(async () => {
     await i18n.changeLanguage('en');
@@ -51,7 +75,7 @@ describe('AlienBoardView', () => {
     render(<AlienBoardView aliens={aliens} playerColors={{}} />);
 
     expect(screen.getByTestId('alien-board-grid')).toHaveClass(
-      'min-[420px]:grid-cols-2',
+      'min-[420px]:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]',
     );
     expect(screen.getByTestId('alien-0-card')).toHaveClass('min-w-0');
     expect(screen.getByTestId('alien-1-card')).toHaveClass('min-w-0');
@@ -106,7 +130,7 @@ describe('AlienBoardView', () => {
 
     const rewardCircle = screen.getByTestId('trace-slot-reward-slot-circle');
     expect(rewardCircle).toHaveClass('rounded-full');
-    expect(rewardCircle).toHaveClass('min-h-24', 'w-12');
+    expect(rewardCircle).toHaveClass('min-h-32', 'w-16');
     expect(rewardCircle).toHaveStyle({ borderColor: '#e93e27' });
     expect(
       within(rewardCircle).getByTestId('trace-reward-icon-score-4'),
@@ -146,7 +170,7 @@ describe('AlienBoardView', () => {
     ).toBeInTheDocument();
     expect(
       within(redColumn).getByTestId('trace-slot-reward-slot-2-circle'),
-    ).toHaveClass('h-12', 'w-12', 'rounded-full');
+    ).toHaveClass('h-16', 'w-16', 'rounded-full');
     expect(
       screen.getByTestId('alien-0-generic-board-column-red-trace-slots'),
     ).toHaveClass('flex-col-reverse');
@@ -201,9 +225,14 @@ describe('AlienBoardView', () => {
     const discoveryZone = within(card).getByTestId('alien-0-discovery-zone');
     const overflowZone = within(card).getByTestId('alien-0-overflow-zone');
 
-    expect(hiddenBoard).toHaveClass('bg-black/60');
-    expect(hiddenBoard).toHaveClass('min-h-[360px]');
-    expect(hiddenBoard).toHaveAttribute('aria-label', 'Alien Board');
+    // In the default (real) mode the hidden board renders the face-down
+    // alien-back image. The plain black placeholder only appears in text
+    // mode (covered by storybook tests).
+    expect(hiddenBoard).toHaveAttribute(
+      'aria-label',
+      'Alien Board (face-down)',
+    );
+    expect(within(hiddenBoard).getByAltText('Face-down alien board')).toBeInTheDocument();
     expect(hiddenBoard.compareDocumentPosition(discoveryZone)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
@@ -250,6 +279,10 @@ describe('AlienBoardView', () => {
   });
 
   it('renders discovered Anomalies as three board columns and deck panel', () => {
+    // The text-mode renderer is the one that exposes per-column test IDs
+    // (`alien-0-anomaly-column-<color>`); the real-mode art renderer paints
+    // the columns directly onto the alien-board image.
+    useDebugStore.setState({ textMode: true });
     const alien: IPublicAlienState = {
       alienIndex: 0,
       alienType: EAlienType.ANOMALIES,
@@ -283,22 +316,13 @@ describe('AlienBoardView', () => {
         type: 'anomalies',
         traceBoard: {
           columns: {
-            [ETrace.RED]: slot('alien-0-anomaly-column|red-trace', ETrace.RED, {
-              maxOccupants: -1,
-              occupants: [
+            [ETrace.RED]: buildAnomalyColumnSlots(ETrace.RED, {
+              tier1Occupants: [
                 { source: { playerId: 'p1' }, traceColor: ETrace.RED },
               ],
             }),
-            [ETrace.YELLOW]: slot(
-              'alien-0-anomaly-column|yellow-trace',
-              ETrace.YELLOW,
-              { maxOccupants: -1 },
-            ),
-            [ETrace.BLUE]: slot(
-              'alien-0-anomaly-column|blue-trace',
-              ETrace.BLUE,
-              { maxOccupants: -1 },
-            ),
+            [ETrace.YELLOW]: buildAnomalyColumnSlots(ETrace.YELLOW),
+            [ETrace.BLUE]: buildAnomalyColumnSlots(ETrace.BLUE),
           },
         },
       },
@@ -309,12 +333,6 @@ describe('AlienBoardView', () => {
     expect(screen.getByTestId('alien-0-discovery-zone')).toBeInTheDocument();
     expect(screen.getByTestId('alien-0-overflow-zone')).toBeInTheDocument();
     expect(screen.getByTestId('alien-0-anomalies-board')).toBeInTheDocument();
-    expect(screen.getByTestId('alien-0-anomaly-trace-grid')).toHaveClass(
-      'grid-cols-3',
-    );
-    expect(screen.getByTestId('alien-0-anomaly-trace-grid')).not.toHaveClass(
-      'sm:grid-cols-3',
-    );
     expect(
       screen.getByTestId('alien-0-anomaly-column-red-trace'),
     ).toBeInTheDocument();
@@ -324,42 +342,9 @@ describe('AlienBoardView', () => {
     expect(
       screen.getByTestId('alien-0-anomaly-column-blue-trace'),
     ).toBeInTheDocument();
-    expect(screen.queryByTestId(/^alien-0-anomaly-token-/)).toBeNull();
-    const redRewards = screen.getByTestId(
-      'alien-0-anomaly-column-red-trace-rewards',
-    );
-    expect(redRewards).toHaveClass('flex-col-reverse');
-    expect(within(redRewards).queryByText('1')).not.toBeInTheDocument();
-    expect(
-      within(redRewards).getByTestId(
-        'alien-0-anomaly-column-red-trace-reward-0',
-      ),
-    ).toHaveClass('h-10', 'w-10', 'rounded-full');
-    expect(
-      within(redRewards).getByTestId(
-        'alien-0-anomaly-column-red-trace-reward-0',
-      ),
-    ).toHaveStyle({ borderColor: '#e93e27' });
-    expect(
-      within(redRewards).getByTestId('trace-reward-icon-score-5'),
-    ).toHaveClass('h-5', 'w-5');
-    expect(
-      within(redRewards).getByTestId(
-        'alien-0-anomaly-column-red-trace-reward-4',
-      ),
-    ).toHaveClass('min-h-20', 'w-10', 'rounded-full');
-    expect(
-      within(redRewards).getByTestId(
-        'alien-0-anomaly-column-red-trace-reward-4',
-      ),
-    ).not.toHaveClass('h-10');
-    expect(screen.getByTestId('alien-0-deck-panel')).toHaveTextContent(
-      'Deck 7',
-    );
-    expect(screen.getByTestId('alien-0-deck-panel')).toHaveTextContent(
-      'Discard 2',
-    );
-    expect(screen.getByTestId('seti-card-ET.11')).toBeInTheDocument();
+    expect(screen.getByTestId('alien-0-deck-panel')).toHaveTextContent('7');
+    expect(screen.getByTestId('alien-0-deck-panel')).toHaveTextContent('2');
+    expect(screen.getByTestId('text-card-ET.11')).toBeInTheDocument();
   });
 
   it('opens the shared card preview when clicking the alien deck face-up card', () => {
@@ -374,9 +359,9 @@ describe('AlienBoardView', () => {
         type: 'anomalies',
         traceBoard: {
           columns: {
-            [ETrace.RED]: slot('red', ETrace.RED),
-            [ETrace.YELLOW]: slot('yellow', ETrace.YELLOW),
-            [ETrace.BLUE]: slot('blue', ETrace.BLUE),
+            [ETrace.RED]: buildAnomalyColumnSlots(ETrace.RED),
+            [ETrace.YELLOW]: buildAnomalyColumnSlots(ETrace.YELLOW),
+            [ETrace.BLUE]: buildAnomalyColumnSlots(ETrace.BLUE),
           },
         },
       },
@@ -396,6 +381,7 @@ describe('AlienBoardView', () => {
   });
 
   it('renders Centaurians message milestones as public board state', () => {
+    useDebugStore.setState({ textMode: true });
     const alien: IPublicAlienState = {
       alienIndex: 0,
       alienType: EAlienType.CENTAURIANS,
@@ -504,6 +490,7 @@ describe('AlienBoardView', () => {
   });
 
   it('renders Exertians hidden cards, milestones, and trace slots without card ids', () => {
+    useDebugStore.setState({ textMode: true });
     const alien: IPublicAlienState = {
       alienIndex: 0,
       alienType: EAlienType.EXERTIANS,
@@ -558,6 +545,7 @@ describe('AlienBoardView', () => {
   });
 
   it('renders Mascamites sample pools, capsules, delivered samples, and blue slots', () => {
+    useDebugStore.setState({ textMode: true });
     const alien: IPublicAlienState = {
       alienIndex: 0,
       alienType: EAlienType.MASCAMITES,
@@ -625,12 +613,11 @@ describe('AlienBoardView', () => {
     expect(
       screen.getByTestId('alien-0-mascamites-trace-column-blue-trace'),
     ).toBeInTheDocument();
-    expect(screen.getByTestId('alien-0-deck-panel')).toHaveTextContent(
-      'Deck 5',
-    );
+    expect(screen.getByTestId('alien-0-deck-panel')).toHaveTextContent('5');
   });
 
   it('renders localized Glyphids board state with DescRender glyph icons', async () => {
+    useDebugStore.setState({ textMode: true });
     await i18n.changeLanguage('zh-CN');
     const alien: IPublicAlienState = {
       alienIndex: 0,
@@ -665,16 +652,11 @@ describe('AlienBoardView', () => {
     render(<AlienBoardView aliens={[alien]} playerColors={{ p1: '#f00' }} />);
 
     expect(screen.getByTestId('alien-0-glyphids-board')).toBeInTheDocument();
-    expect(screen.getAllByText('字形族')).toHaveLength(2);
-    expect(screen.getByTestId('alien-0-deck-panel')).toHaveTextContent(
-      '外星牌库',
-    );
-    expect(screen.getByTestId('alien-0-deck-panel')).toHaveTextContent(
-      '牌库 9',
-    );
-    expect(screen.getByTestId('alien-0-deck-panel')).toHaveTextContent(
-      '弃牌 0',
-    );
+    // The alien name now appears in three places: the alien-card title, the
+    // deck-rail label, and the glyphids board section.
+    expect(screen.getAllByText('字形族')).toHaveLength(3);
+    expect(screen.getByTestId('alien-0-deck-panel')).toHaveTextContent('9');
+    expect(screen.getByTestId('alien-0-deck-panel')).toHaveTextContent('0');
     expect(screen.getByTestId('alien-0-glyphids-bank')).toHaveTextContent(
       '库存 33',
     );
@@ -864,6 +846,7 @@ describe('AlienBoardView', () => {
   });
 
   it('renders discovered Oumuamua as a landing area with planet orbit and land details', () => {
+    useDebugStore.setState({ textMode: true });
     const alien: IPublicAlienState = {
       alienIndex: 0,
       alienType: EAlienType.OUMUAMUA,

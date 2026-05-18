@@ -12,6 +12,7 @@ import type {
   IInputResponse,
   IMainActionRequest,
 } from '@seti/common/types/protocol/actions';
+import { ETrace } from '@seti/common/types/element';
 import type {
   IDebugReplayPresetDefinition,
   IDebugReplaySessionRequest,
@@ -204,6 +205,25 @@ export class DebugController {
       body.probeId,
       body.toSpaceId,
       body.viewerId ?? '',
+    );
+  }
+
+  @Public()
+  @Post('server/game/:gameId/place-trace')
+  async placeTraceDirect(
+    @Param('gameId') gameId: string,
+    @Body()
+    body: {
+      playerId: string;
+      traceColor: ETrace;
+      viewerId?: string;
+    },
+  ): Promise<IPublicGameState> {
+    return this.debugService.placeTraceDirect(
+      gameId,
+      body.playerId,
+      body.traceColor,
+      body.viewerId ?? body.playerId,
     );
   }
 }

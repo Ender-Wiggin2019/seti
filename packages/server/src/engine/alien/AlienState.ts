@@ -1,4 +1,7 @@
-import { getAlienRewardsForIndex } from '@seti/common/constant/alienBoardConfig';
+import {
+  getAlienRewardsForIndex,
+  OUMUAMUA_TRACE_SLOT_PREFIX,
+} from '@seti/common/constant/alienBoardConfig';
 import { alienCards } from '@seti/common/data/alienCards';
 import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
 import {
@@ -673,15 +676,38 @@ export class AlienState {
     slot: ITraceSlot,
     traceColor: ETrace,
   ): string {
-    const alienLabel = `Alien ${board.alienIndex + 1}`;
+    // Once an alien is discovered, refer to it by its species name; before
+    // discovery fall back to the index so the player can still tell the two
+    // boards apart.
+    const alienLabel = board.discovered
+      ? formatAlienType(board.alienType)
+      : `Alien ${board.alienIndex + 1}`;
+    const colorLabel = formatTraceColor(traceColor);
+    const rewardSummary = formatSlotRewards(slot.rewards);
+    const rewardSuffix = rewardSummary ? ` — ${rewardSummary}` : '';
+
     if (slot.isDiscovery) {
-      return `${alienLabel} — Discovery (${formatTraceColor(traceColor)})`;
+      return `${alienLabel} — Discovery (${colorLabel})${rewardSuffix}`;
     }
-    const vpReward = slot.rewards.find((r) => r.type === 'VP');
-    if (vpReward && 'amount' in vpReward) {
-      return `${alienLabel} — Overflow (${formatTraceColor(traceColor)}, +${vpReward.amount} VP)`;
+    if (slot.slotId.includes('anomaly-column')) {
+      const tier = parseSlotIdTier(slot.slotId);
+      const isOverflow = slot.maxOccupants === -1;
+      const tierLabel = isOverflow
+        ? 'Overflow'
+        : tier !== null
+          ? `tier ${tier}`
+          : 'tier';
+      return `${alienLabel} — ${colorLabel} ${tierLabel}${rewardSuffix}`;
     }
-    return `${alienLabel} — ${slot.slotId}`;
+    if (slot.slotId.includes(OUMUAMUA_TRACE_SLOT_PREFIX)) {
+      const tier = parseSlotIdTier(slot.slotId);
+      const tierLabel = tier !== null ? `tier ${tier}` : 'tier';
+      return `${alienLabel} — ${colorLabel} ${tierLabel}${rewardSuffix}`;
+    }
+    if (slot.maxOccupants === -1) {
+      return `${alienLabel} — Overflow (${colorLabel})${rewardSuffix}`;
+    }
+    return `${alienLabel} — ${colorLabel} slot${rewardSuffix}`;
   }
 
   private incrementPlayerTrace(
@@ -792,10 +818,70 @@ function formatAlienType(alienType: EAlienType): string {
       return 'Amoeba';
     case EAlienType.GLYPHIDS:
       return 'Glyphids';
+    case EAlienType.ARKHOS:
+      return 'Arkhos';
     case EAlienType.DUMMY:
       return 'Dummy';
     default:
       return String(alienType);
+  }
+}
+
+/**
+ * Render a slot's reward list as a short, human-readable summary that fits in
+ * an option label, e.g. `4 VP + alien card` or `2 VP + 1 publicity`.
+ */
+function formatSlotRewards(rewards: readonly TSlotReward[]): string {
+  if (rewards.length === 0) return '';
+  const parts: string[] = [];
+  for (const reward of rewards) {
+    if (reward.type === 'CUSTOM') {
+      parts.push(formatCustomRewardLabel(reward.effectId));
+      continue;
+    }
+    if (!('amount' in reward)) continue;
+    const amount = reward.amount;
+    switch (reward.type) {
+      case 'VP':
+        parts.push(`${amount} VP`);
+        break;
+      case 'PUBLICITY':
+        parts.push(`${amount} publicity`);
+        break;
+      case 'CREDIT':
+        parts.push(`${amount} credit${amount === 1 ? '' : 's'}`);
+        break;
+      case 'ENERGY':
+        parts.push(`${amount} energy`);
+        break;
+      case 'DATA':
+        parts.push(`${amount} data`);
+        break;
+      case 'CARD':
+        parts.push(`${amount} card${amount === 1 ? '' : 's'}`);
+        break;
+      case 'CARD_ANY':
+        parts.push(`${amount} any card`);
+        break;
+      default:
+        break;
+    }
+  }
+  return parts.join(' + ');
+}
+
+function formatCustomRewardLabel(effectId: string): string {
+  switch (effectId) {
+    case 'DRAW_ALIEN_CARD':
+      return 'alien card';
+    case 'GAIN_EXOFOSSIL':
+      return 'exofossil';
+    case 'CENTAURIANS_DRAW_ALIEN_CARD':
+      return 'Centaurians card';
+    case 'CENTAURIANS_ANY_TRACE':
+      return 'any trace';
+    default:
+      return effectId.toLowerCase().replace(/_/g, ' ');
   }
 }
 
@@ -816,4 +902,20 @@ function isAlienTraceScopeList(
   alien: TAlienTraceScope,
 ): alien is readonly TSingleAlienTraceScope[] {
   return Array.isArray(alien);
+}
+
+/**
+ * Parse the tier number out of a slotId like
+ * `alien-0-oumuamua-trace|red-trace|3|0`. Returns null if the tier segment is
+ * absent or non-numeric — used purely for human-readable labels.
+ */
+function parseSlotIdTier(slotId: string): number | null {
+  const parts = slotId.split('|');
+  for (const part of parts) {
+    const value = Number.parseInt(part, 10);
+    if (!Number.isNaN(value) && String(value) === part) {
+      return value;
+    }
+  }
+  return null;
 }

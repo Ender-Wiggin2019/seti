@@ -178,19 +178,36 @@ function toPublicAnomaliesBoard(
   board: AnomaliesAlienBoard,
 ): IPublicAnomaliesBoard {
   const columns = Object.fromEntries(
-    ANOMALY_TRACE_COLORS.map((color) => [
-      color,
-      toPublicTraceSlot(
-        board.anomalyColumns.find((slot) => slot.traceColor === color) ??
-          createEmptyAnomalyColumn(board.alienIndex, color),
-      ),
-    ]),
-  ) as Record<TPublicAnomalyTraceColor, IPublicTraceSlot>;
+    ANOMALY_TRACE_COLORS.map((color) => {
+      const colorSlots = board.anomalyColumns
+        .filter((slot) => slot.traceColor === color)
+        .map((slot) => ({ slot, tier: parseAnomalyTier(slot.slotId) }))
+        .filter(
+          (entry): entry is { slot: ITraceSlot; tier: number } =>
+            entry.tier !== null,
+        )
+        .sort((a, b) => a.tier - b.tier)
+        .map((entry) => toPublicTraceSlot(entry.slot));
+      return [color, colorSlots];
+    }),
+  ) as Record<TPublicAnomalyTraceColor, IPublicTraceSlot[]>;
 
   return {
     type: 'anomalies',
     traceBoard: { columns },
   };
+}
+
+/**
+ * Pull the trailing `|<tier>` segment off an anomaly column slotId.
+ * Format: `alien-<idx>-anomaly-column|<color>|<tier>`
+ */
+function parseAnomalyTier(slotId: string): number | null {
+  const parts = slotId.split('|');
+  const last = parts[parts.length - 1];
+  if (last === undefined) return null;
+  const tier = Number.parseInt(last, 10);
+  return Number.isFinite(tier) ? tier : null;
 }
 
 function toPublicOumuamuaBoard(
@@ -356,21 +373,6 @@ function toPublicAlienState(board: AlienBoard): IPublicAlienState {
     },
     cardZone: board.discovered ? toPublicAlienCardZone(board) : null,
     board: board.discovered ? toPublicAlienBoard(board) : null,
-  };
-}
-
-function createEmptyAnomalyColumn(
-  alienIndex: number,
-  traceColor: TPublicAnomalyTraceColor,
-): ITraceSlot {
-  return {
-    slotId: `alien-${alienIndex}-anomaly-column|${traceColor}`,
-    alienIndex,
-    traceColor,
-    occupants: [],
-    maxOccupants: -1,
-    rewards: [],
-    isDiscovery: false,
   };
 }
 

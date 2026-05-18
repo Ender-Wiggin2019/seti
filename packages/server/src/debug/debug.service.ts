@@ -14,6 +14,7 @@ import type {
   IDebugSnapshotSessionRequest,
   IDebugSnapshotSessionResponse,
 } from '@seti/common/types/protocol/debug';
+import { ETrace } from '@seti/common/types/element';
 import {
   EFreeAction,
   EMainAction,
@@ -537,6 +538,34 @@ export class DebugService {
       );
     }
     solarSystem.moveProbe(probeId, probe.space.id, toSpaceId);
+    return this.getProjectedState(gameId, viewerId);
+  }
+
+  /**
+   * Direct debug trace placement that bypasses the action pipeline. Useful for
+   * testing alien-board UX without setting up the full Scan/Analyze/PlayCard
+   * flow needed to actually mark a trace in production. Routes through
+   * `Game.markTrace` so plugin hooks (column rewards, neutral propagation,
+   * mission events) still fire just like a real placement.
+   */
+  async placeTraceDirect(
+    gameId: string,
+    playerId: string,
+    traceColor: ETrace,
+    viewerId: string,
+  ): Promise<IPublicGameState> {
+    const game = await this.gameManager.getGame(gameId);
+    const player = game.players.find((candidate) => candidate.id === playerId);
+    if (!player) {
+      throw new GameError(
+        EErrorCode.VALIDATION_ERROR,
+        `Player ${playerId} not found`,
+      );
+    }
+    const input = game.markTrace(traceColor, playerId);
+    if (input !== undefined) {
+      player.waitingFor = input;
+    }
     return this.getProjectedState(gameId, viewerId);
   }
 
