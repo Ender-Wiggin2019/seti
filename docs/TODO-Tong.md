@@ -21,7 +21,107 @@ _(none — most recent slice just landed)_
 
 ## Open
 
-### Calibrate base alien art coordinates
+> Items are roughly ordered by priority within each P-tier. P0 = act first,
+> P1 = important once P0 lands, P2 = quality polish.
+
+### P0 — WS auto-reconnect listener attached to wrong emitter
+
+- `packages/client/src/hooks/useReconnection.ts:19` registers
+  `socket.on('reconnect', handleReconnect)`. In socket.io v4 the `reconnect`
+  event fires on the **manager** (`socket.io`), not the socket. After an
+  auto-reconnect, the client never re-sends `room:join`, so the player sees a
+  perpetual loading spinner.
+- Fix: switch to `socket.io.on('reconnect', …)` and `socket.io.off('reconnect', …)`,
+  matching the pattern `wsClient.ts` already uses for `reconnect_failed`.
+- Add a regression covering "reconnect → state push" through the existing WS
+  mocks rather than a real network test.
+
+### P0 — Anomalies plugin token-trigger and `executeRewards` short-circuit footguns
+
+- Two related fragility issues in the alien reward delivery path. Each is safe
+  given today's data, but both will break silently the moment data shifts —
+  and they will be hit by the planned reward-ladder cross-check below.
+  - `packages/server/src/engine/alien/AlienState.ts:587-611` —
+    `executeRewards` returns immediately when it encounters a `CUSTOM`
+    reward, dropping any later entries in the same `rewards` array. Today's
+    Anomaly ladder lists VP first then `DRAW_ALIEN_CARD`, so we are safe; any
+    future slot that lists CUSTOM before VP would silently lose VP. Fix:
+    apply all simple rewards in one pass, then return the first CUSTOM input.
+  - `packages/server/src/engine/alien/plugins/AnomaliesAlienPlugin.ts:135` —
+    `onSolarSystemRotated` pays the column leader via
+    `executeSimpleSlotRewards`, which silently skips `CUSTOM` rewards. Fix:
+    route through `AlienState.executeRewards` and surface any returned
+    PlayerInput (mirroring the pattern used in `applyTraceToSlotInternal`).
+- Both fixes belong in the same slice as the cross-check below; pair them.
+
+### P0 — Cross-check the rest of the alien reward ladders for similar bugs
+
+- `ANOMALY_TOKEN_REWARD_OPTIONS`, `LEFT_ALIEN_REWARDS`, `RIGHT_ALIEN_REWARDS`,
+  and `OUMUAMUA_TRACE_SLOT_DEFS` should all be cross-checked against the rule
+  book the same way `ANOMALY_COLUMN_REWARD_LADDER` was.
+- If any alien-card reward is encoded as `CARD` (regular deck) but the rule
+  says it should be alien-deck, they need the same treatment as the Anomalies
+  fix: switch to `CUSTOM:DRAW_ALIEN_CARD` and ensure the path delivers through
+  `executeRewards` (not `executeSimpleSlotRewards`).
+- Pair with the executeRewards short-circuit fix above so the cross-check
+  doesn't trip the latent footgun on landing.
+
+### P0 — `JwtAuthGuard` does a DB roundtrip on every authenticated request
+
+- `packages/server/src/auth/jwt-auth.guard.ts:53` calls
+  `this.authService.getProfile(payload.sub)` after JWT verification. This
+  adds one synchronous `SELECT * FROM users` to every authenticated HTTP
+  request and every WS message that passes through the guard.
+- The token is already cryptographically signed; user-existence revalidation
+  belongs only on sensitive operations (profile update, account deletion),
+  not on every single request. Drop the `getProfile` call from the guard.
+- Note: `lessons.md` says the engine should still 401 if `sub` no longer
+  resolves to a real user; honour that by keeping the existence check on
+  the user-write paths (`PUT /auth/me`) where the FK matters.
+
+### P1 — Lobby `startGame` has no transaction; double-start race
+
+- `packages/server/src/lobby/lobby.service.ts:296-363` reads `room.status`,
+  validates it is `'waiting'`, then calls `Game.create`, then writes
+  `status='playing'`, all in separate un-transacted DB calls. Concurrent
+  `POST /lobby/rooms/:id/start` (double-click, retry) can both pass the
+  guard, creating two diverging game instances for the same `gameId`.
+- Fix: wrap the entire method in `db.transaction()` with `SELECT ... FOR
+  UPDATE` on the games row. Add a regression that fires two starts in
+  parallel and asserts exactly one succeeds.
+
+### P1 — `AndOptionsInput` Back button preserves stale response
+
+- `packages/client/src/features/input/AndOptionsInput.tsx:111` —
+  `setCurrentStepIndex(prev - 1)` decrements without clearing
+  `responses[currentStepIndex]`. If the player goes Back and Next without
+  re-answering, the old response is silently re-submitted as part of the AND
+  payload.
+- Fix: clear `responses[currentStepIndex]` (set to `undefined`) before
+  decrementing.
+
+### P1 — `AlienBoardInit` accepts both `overflowSlot?` and `overflowSlots?`
+
+- `packages/server/src/engine/alien/AlienBoard.ts:414-418` —
+  `hydrateTraceSlots` pushes `init.overflowSlot` and then every entry in
+  `init.overflowSlots`. No current caller sets both, but if a future
+  migration or fixture does, the slot is duplicated, doubling capacity and
+  corrupting occupant counts on reload.
+- Fix: drop the singular `overflowSlot?` path from the init shape; require
+  callers to use `overflowSlots: [slot]`. The read-only `get overflowSlot()`
+  getter can stay.
+
+### P1 — `gameSnapshots` table grows unbounded
+
+- `packages/server/src/persistence/repository/GameRepository.ts:57-68` —
+  every `processAction` / `processEndTurn` / `processInput` / `unloadGame`
+  inserts a snapshot row, with no prune. `turnCheckpoints` already has a
+  `pruneBefore` step; snapshots do not. A long game (or an idle long-lived
+  room) accumulates hundreds of rows.
+- Fix: add a prune step in `unloadGame`, or on the game-completion path,
+  keeping only the last N snapshots (configurable, default ~50).
+
+### P2 — Calibrate base alien art coordinates
 
 - 5 base aliens have art frames + overlays + placeholder coordinates.
   - Anomalies coordinates are calibrated.
@@ -32,28 +132,85 @@ _(none — most recent slice just landed)_
 - Once art mode is solid, evaluate whether to extract a shared
   `<TraceOnlyAlienBoardArt>` for the four trace-only renderers.
 
-### Drop in higher-resolution alien-board PNGs
+### P2 — Drop in higher-resolution alien-board PNGs
 
 - Source PNGs in `packages/client/public/assets/seti/aliens/<alien>/board.webp`
   are ~250 px wide rule-book crops; they upscale soft.
 - Replace each with a higher-res version (same filename) when available; the
   art frame already letterboxes by aspect ratio, so no layout change required.
 
-### Cross-check the rest of the alien reward ladders for similar bugs
-
-- `ANOMALY_TOKEN_REWARD_OPTIONS`, `LEFT_ALIEN_REWARDS`, `RIGHT_ALIEN_REWARDS`,
-  and `OUMUAMUA_TRACE_SLOT_DEFS` should all be cross-checked against the rule
-  book the same way `ANOMALY_COLUMN_REWARD_LADDER` was.
-- If any alien card reward is encoded as `CARD` (regular deck) but the rule
-  says it should be alien-deck, they need the same treatment as the Anomalies
-  fix: switch to `CUSTOM:DRAW_ALIEN_CARD` and ensure the path delivers through
-  `executeRewards` (not `executeSimpleSlotRewards`).
-
-### Polish overflow rendering for other aliens
+### P2 — Polish overflow rendering for other aliens
 
 - Anomalies overflow stacks tokens vertically with a 1.5 % stride. When other
   aliens get art-mode renderers (Oumuamua tier 6 is `maxOccupants: -1`), apply
   the same pattern via the shared `TraceMarkerOverlay`.
+
+### P2 — `sync-card-assets.sh` runs twice on build and is destructive
+
+- `scripts/sync-card-assets.sh` does an unconditional
+  `rm -rf` of `packages/{web,client}/public/seti-assets`, then re-copies.
+  `packages/client/package.json` runs it as `prebuild` AND inlines it inside
+  the `build` script body, so it runs **twice** per turbo build. It also
+  exits non-zero if `packages/cards/assets/images` is missing (CI without a
+  prior cards build).
+- Fix: drop the inline call from the `build` script body; add a "missing
+  source" guard that warns and exits 0 instead of failing.
+
+### P2 — `useGameEvents` re-runs seed-merge effect on every state push
+
+- `packages/client/src/hooks/useGameEvents.ts:21-32` keys the seed-merge
+  `useEffect` on `seedEvents`, which is `gameState?.recentEvents ?? []` from
+  `GameContext.tsx:76`. `recentEvents` is a fresh array reference on every
+  `game:state` push, so the effect re-runs continually. The internal
+  `next === prev` guard prevents redundant `setEvents`, but the merge work
+  still runs and dedupes by an event-key that includes `JSON.stringify(details)`
+  — events without an `id` and without `details` collapse to a degenerate
+  key and can collide.
+- Fix: stabilise `recentEvents` with `useMemo` in the caller, or compute a
+  stable identity (e.g. last-event id) and key the effect on that.
+
+### P2 — `ScoreBreakdown` injects 👑 emoji into a tabular-nums readout
+
+- `packages/client/src/features/scoring/ScoreBreakdown.tsx:120` renders
+  `${row.total} 👑` in a monospace cell. Across players the emoji glyph
+  width disrupts the score column alignment and conflicts with
+  `.impeccable.md` "instrumentation, not decoration" / "data readouts are
+  white phosphor on dark, never dressed up as marketing stat tiles."
+- Fix: replace the emoji with a small inline SVG indicator or a row-level
+  highlight (border/background tint) so the data column stays uniform.
+
+### P2 — `isHandLimitExemptCard` redundantly checks the same condition
+
+- `packages/common/src/rules/handLimit.ts:18-23` ORs `isExertianCard(card)`
+  and `EXERTIAN_CARD_IDS.has(cardId)`. Any card with `alien === EXERTIANS`
+  is already in `EXERTIAN_CARD_IDS` (the set is built from the same data).
+  Harmless today; diverges silently if a future card sets one and not the
+  other.
+- Fix: prefer the id-based check, fall back to the alien-field check only
+  when no id is available (partial objects).
+
+### P3 — Root `pnpm dev` starts the Next.js card-browser, not the game
+
+- `package.json` `"dev": "pnpm --filter @seti/web dev"` is documented in
+  `README.md` as the "重点入口" (primary entry). New contributors running
+  `pnpm dev` at the root get the card-browser app, not the game; the actual
+  game lives in `pnpm dev:client-server`.
+- This is documented as intentional, but `@seti/web` and `@seti/client`
+  have drifted onto different React/Tailwind/Radix major versions, which
+  is a maintenance hazard regardless of which is the "default" entry.
+- Fix options (pick one once the team confirms the intent):
+  (a) keep `web` as default, but document the split in README and align
+      shared dependency majors so the two apps don't drift further apart;
+  (b) flip root `dev` to `dev:client-server`, marking `web` as a
+      separate utility entry.
+
+### P3 — `tsconfig.base.json` `moduleResolution` is dead config
+
+- `tsconfig.base.json:12` sets `"moduleResolution": "node"` (legacy), but
+  every package overrides this (server → `NodeNext`, client → `Bundler`,
+  e2e → `bundler`). The base value is misleading and never wins.
+- Fix: drop the field from the base. Same for `incremental: true` which is
+  flipped to `false` in most packages.
 
 ## Done
 
