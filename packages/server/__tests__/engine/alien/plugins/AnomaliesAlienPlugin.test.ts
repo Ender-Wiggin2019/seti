@@ -487,6 +487,11 @@ describe('AnomaliesAlienPlugin', () => {
     board.discovered = true;
 
     plugin.onDiscover(game, []);
+    // The DRAW_ALIEN_CARD reward path produces a face-up vs deck choice only
+    // when both sources are populated. Mirror what `discoverAlien` does in
+    // production: seed the deck and reveal a face-up card.
+    board.initializeAlienDeck(['ANOM.1', 'ANOM.2', 'ANOM.3', 'ANOM.4']);
+    board.revealNextFaceUpAlienCard(game.random);
 
     const columnSlot = board.getSlot(
       `alien-${board.alienIndex}-anomaly-column|${ETrace.RED}`,
@@ -495,20 +500,31 @@ describe('AnomaliesAlienPlugin', () => {
 
     const scoreBefore = p1.score;
     const publicityBefore = p1.resources.publicity;
-    const handBefore = p1.hand.length;
 
+    // First two placements grant an alien-card draw (returns a PlayerInput
+    // for face-up vs deck choice); resolve each by picking the deck source so
+    // the loop completes without leaving the player in a waiting state.
+    let alienCardChoiceCount = 0;
     for (let i = 0; i < 6; i += 1) {
-      game.alienState.applyTraceToSlot(
+      const result = game.alienState.applyTraceToSlot(
         p1,
         game,
         columnSlot!.slotId,
         ETrace.RED,
       );
+      if (result !== false && result !== true && result !== undefined) {
+        // Resolve the draw-source selection (face-up | deck) by picking deck.
+        const deckOption = result.options?.find(
+          (option: { id: string }) => option.id === 'draw-random',
+        );
+        deckOption?.onSelect();
+        alienCardChoiceCount += 1;
+      }
     }
 
-    expect(p1.score).toBe(scoreBefore + 5 + 3 + 2 + 3 + 2 + 2);
+    expect(p1.score).toBe(scoreBefore + 4 + 2 + 2 + 3 + 2 + 2);
     expect(p1.resources.publicity).toBe(publicityBefore + 1);
-    expect(p1.hand).toHaveLength(handBefore + 2);
+    expect(alienCardChoiceCount).toBe(2);
     expect(columnSlot!.occupants).toHaveLength(6);
   });
 });

@@ -1038,7 +1038,9 @@ describe('RivalTurnController', () => {
     expect(column.occupants).toEqual([
       { source: { playerId: rival.id }, traceColor: token.color },
     ]);
-    expect(rival.score).toBe(8);
+    // First anomaly column token awards 4 VP (rule fix); the rival's S.16
+    // card adds 3 VP on top, totalling 7.
+    expect(rival.score).toBe(7);
     expect(rivalState.progress).toBe(1);
     expect(rival.hand).toHaveLength(0);
     expect(rival.tracesByAlien[board.alienIndex]?.[token.color]).toBe(1);

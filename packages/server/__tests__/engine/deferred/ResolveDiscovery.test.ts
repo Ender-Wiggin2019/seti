@@ -415,11 +415,24 @@ describe('ResolveDiscovery', () => {
         optionId: redColumnSlotId,
       });
 
+      // The 1st token in an anomaly column awards 4 VP + 1 alien card; the
+      // alien-card draw produces a follow-up source selection (face-up vs
+      // deck). Resolve the choice so the player isn't left waiting.
+      expect(p1.waitingFor).toBeDefined();
+      const followUpModel = p1.waitingFor!.toModel() as ISelectOptionInputModel;
+      expect(followUpModel.options.map((option) => option.id)).toContain(
+        'draw-random',
+      );
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: 'draw-random',
+      });
+
       expect(p1.waitingFor).toBeUndefined();
       expect(redColumnSlot?.occupants).toEqual([
         { source: { playerId: p1.id }, traceColor: ETrace.RED },
       ]);
-      expect(p1.score).toBe(scoreBeforeExtraTrace + 5);
+      expect(p1.score).toBe(scoreBeforeExtraTrace + 4);
       expect(p1.hand).toHaveLength(handSizeBeforeExtraTrace + 1);
     });
   });

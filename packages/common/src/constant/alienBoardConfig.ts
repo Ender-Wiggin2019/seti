@@ -72,19 +72,24 @@ export const ANOMALY_TOKEN_REWARD_OPTIONS: Readonly<
 
 export const ANOMALY_COLUMN_REWARD_LADDER: readonly (readonly TAlienSlotReward[])[] =
   [
+    // 1st token (bottom circle): 4 VP + 1 alien card
     [
-      { type: 'VP', amount: 5 },
-      { type: 'CARD', amount: 1 },
+      { type: 'VP', amount: 4 },
+      { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
     ],
+    // 2nd token: 2 VP + 1 alien card
     [
-      { type: 'VP', amount: 3 },
-      { type: 'CARD', amount: 1 },
+      { type: 'VP', amount: 2 },
+      { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
     ],
+    // 3rd token: 2 VP + 1 publicity
     [
       { type: 'VP', amount: 2 },
       { type: 'PUBLICITY', amount: 1 },
     ],
+    // 4th token: 3 VP
     [{ type: 'VP', amount: 3 }],
+    // 5th+ tokens (overflow): 2 VP each
     [{ type: 'VP', amount: 2 }],
   ];
 

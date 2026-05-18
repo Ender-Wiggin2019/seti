@@ -95,13 +95,18 @@ export class AnomaliesAlienPlugin implements IAlienPlugin {
   }
 
   public onPlaceTraceOnSlot(
-    game: IGame,
-    player: IPlayer,
+    _game: IGame,
+    _player: IPlayer,
     slot: ITraceSlot,
   ): void {
     if (!this.isAnomalyColumnSlot(slot.slotId)) return;
-    const rewards = getAnomalyColumnRewardsForPlacement(slot.occupants.length);
-    executeSimpleSlotRewards(player, game, rewards);
+    // Anomaly columns deliver a different reward per token placement (4 VP +
+    // alien card for the 1st, etc). The slot itself is created with empty
+    // `rewards`, so we project the ladder entry for this token count onto
+    // `slot.rewards` and let `AlienState.executeRewards` deliver them — this
+    // path supports CUSTOM rewards (e.g. DRAW_ALIEN_CARD) that need a
+    // follow-up PlayerInput, which the simple sync executor cannot handle.
+    slot.rewards = getAnomalyColumnRewardsForPlacement(slot.occupants.length);
   }
 
   public onSolarSystemRotated(game: IGame): void {

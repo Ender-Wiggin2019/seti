@@ -200,21 +200,34 @@ export class AlienState {
   // ---- Programmatic placement ----------------------------------------------
 
   /**
-   * Places a trace on a specific slot. Returns false if slot is full.
+   * Places a trace on a specific slot.
+   *
+   * Returns `false` if the placement was rejected (slot full, illegal color,
+   * etc). Returns a `PlayerInput` when the placement triggered a follow-up
+   * choice (e.g. a CUSTOM `DRAW_ALIEN_CARD` reward needs the player to pick
+   * face-up vs deck). Returns `true` for a placement that completed without
+   * any pending input.
+   *
+   * Production callers (gateway, debug controller) should hand the returned
+   * input to `player.waitingFor` so the choice round-trips to the client.
+   * Tests that only care about the "did it land" outcome can keep using a
+   * truthy check (`!== false`).
    */
   public applyTraceToSlot(
     player: IPlayer,
     game: IGame,
     slotId: string,
     traceColor: ETrace,
-  ): boolean {
+  ): PlayerInput | boolean {
     const result = this.applyTraceToSlotInternal(
       player,
       game,
       slotId,
       traceColor,
     );
-    return result !== false;
+    if (result === false) return false;
+    if (result === undefined) return true;
+    return result;
   }
 
   public placeSetupTrace(

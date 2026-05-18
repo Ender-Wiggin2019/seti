@@ -121,6 +121,12 @@ export class RivalResourceResolver {
     const match = effectId.match(/^RIVAL_PROGRESS_(\d+)$/);
     if (match) {
       this.gainProgress(game, Number(match[1]));
+      return;
+    }
+    // The rival cannot meaningfully draw alien cards; mirror the existing
+    // CARD-style conversion (each card = +1 progress).
+    if (effectId === 'DRAW_ALIEN_CARD') {
+      this.gainProgress(game, 1);
     }
   }
 }
