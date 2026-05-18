@@ -1,3 +1,4 @@
+import { EAlienIcon } from '@seti/common/types/element';
 import { EOrganizationId } from '@seti/common/types/organization';
 import {
   EAlienType,
@@ -13,9 +14,12 @@ import {
   type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
 import {
+  isAmoebaAlienBoard,
   isAnomaliesAlienBoard,
+  isArkhosAlienBoard,
   isCentauriansAlienBoard,
   isExertiansAlienBoard,
+  isGlyphidsAlienBoard,
   isMascamitesAlienBoard,
   isOumuamuaAlienBoard,
 } from '@/engine/alien/AlienBoard.js';
@@ -468,6 +472,163 @@ describe('GameDeserializer', () => {
     ]);
   });
 
+  it('round-trips Glyphids runtime state', () => {
+    const game = createTestGame();
+    resolveSetupTucks(game);
+    game.hiddenAliens = [EAlienType.GLYPHIDS];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.getBoardByType(EAlienType.GLYPHIDS);
+    if (!isGlyphidsAlienBoard(board)) {
+      throw new Error('expected Glyphids board');
+    }
+    board.discovered = true;
+    board.glyphRows = {
+      p1: [[EAlienIcon.GLYPH_RED, EAlienIcon.GLYPH_BLUE]],
+    };
+    board.glyphTokenBank = [EAlienIcon.GLYPH_GREEN, EAlienIcon.GLYPH_GREEN];
+    board.boardTokens = [
+      { position: 0, glyph: EAlienIcon.GLYPH_RED },
+      { position: 3, glyph: EAlienIcon.GLYPH_BLUE },
+    ];
+    board.translationRows = [
+      {
+        rowId: 'glyphids-translation-level-1',
+        level: 1,
+        glyphs: [EAlienIcon.GLYPH_RED, null, null, null],
+        side: 1,
+      },
+    ];
+
+    const restored = deserializeGame(serializeGame(game, 1));
+    const restoredBoard = restored.alienState.getBoardByType(
+      EAlienType.GLYPHIDS,
+    );
+
+    if (!isGlyphidsAlienBoard(restoredBoard)) {
+      throw new Error('expected restored Glyphids board');
+    }
+    expect(restoredBoard.glyphRows).toEqual({
+      p1: [[EAlienIcon.GLYPH_RED, EAlienIcon.GLYPH_BLUE]],
+    });
+    expect(restoredBoard.glyphTokenBank).toEqual([
+      EAlienIcon.GLYPH_GREEN,
+      EAlienIcon.GLYPH_GREEN,
+    ]);
+    expect(restoredBoard.boardTokens).toEqual([
+      { position: 0, glyph: EAlienIcon.GLYPH_RED },
+      { position: 3, glyph: EAlienIcon.GLYPH_BLUE },
+    ]);
+    expect(restoredBoard.translationRows).toEqual([
+      {
+        rowId: 'glyphids-translation-level-1',
+        level: 1,
+        glyphs: [EAlienIcon.GLYPH_RED, null, null, null],
+        side: 1,
+      },
+    ]);
+  });
+
+  it('round-trips Amoeba runtime state', () => {
+    const game = createTestGame();
+    resolveSetupTucks(game);
+    game.hiddenAliens = [EAlienType.AMOEBA];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.getBoardByType(EAlienType.AMOEBA);
+    if (!isAmoebaAlienBoard(board)) {
+      throw new Error('expected Amoeba board');
+    }
+    board.discovered = true;
+    board.organelles = [
+      {
+        tokenId: 'amoeba-organelle-0',
+        color: EAlienIcon.ORGANELLE_RED,
+        position: 8,
+      },
+    ];
+    board.addTraceSlot({
+      slotId: 'alien-0-amoeba-red-0',
+      alienIndex: board.alienIndex,
+      traceColor: ETrace.RED,
+      maxOccupants: 1,
+      rewards: [{ type: 'VP', amount: 3 }],
+      isDiscovery: false,
+    });
+
+    const restored = deserializeGame(serializeGame(game, 1));
+    const restoredBoard = restored.alienState.getBoardByType(EAlienType.AMOEBA);
+
+    if (!isAmoebaAlienBoard(restoredBoard)) {
+      throw new Error('expected restored Amoeba board');
+    }
+    expect(restoredBoard.organelles).toEqual([
+      {
+        tokenId: 'amoeba-organelle-0',
+        color: EAlienIcon.ORGANELLE_RED,
+        position: 8,
+      },
+    ]);
+    expect(restoredBoard.speciesTraceSlots).toEqual([
+      expect.objectContaining({ slotId: 'alien-0-amoeba-red-0' }),
+    ]);
+  });
+
+  it('round-trips Arkhos runtime state', () => {
+    const game = createTestGame();
+    resolveSetupTucks(game);
+    game.hiddenAliens = [EAlienType.ARKHOS];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.getBoardByType(EAlienType.ARKHOS);
+    if (!isArkhosAlienBoard(board)) {
+      throw new Error('expected Arkhos board');
+    }
+    board.discovered = true;
+    board.explorationDrawPile = ['ARKHOS.EXPLORATION.1'];
+    board.explorationReservePile = ['ARKHOS.EXPLORATION.2'];
+    board.explorationDiscardPile = ['ARKHOS.EXPLORATION.3'];
+    board.securityCardsByPlayer = {
+      p1: [{ cardId: 'AIcard01', traceColor: ETrace.RED, zone: 'hand' }],
+    };
+    board.accessByPlayer = {
+      p1: { breachedCount: 1, accessLevel: 1 },
+    };
+    board.resolvedExplorationRewards = [
+      {
+        playerId: 'p1',
+        cardId: 'ARKHOS.EXPLORATION.3',
+        size: 'minor',
+        effectId: 'ARKHOS_EXPLORATION_03_MINOR_UNMAPPED',
+      },
+    ];
+
+    const restored = deserializeGame(serializeGame(game, 1));
+    const restoredBoard = restored.alienState.getBoardByType(EAlienType.ARKHOS);
+
+    if (!isArkhosAlienBoard(restoredBoard)) {
+      throw new Error('expected restored Arkhos board');
+    }
+    expect(restoredBoard.explorationDrawPile).toEqual(['ARKHOS.EXPLORATION.1']);
+    expect(restoredBoard.explorationReservePile).toEqual([
+      'ARKHOS.EXPLORATION.2',
+    ]);
+    expect(restoredBoard.explorationDiscardPile).toEqual([
+      'ARKHOS.EXPLORATION.3',
+    ]);
+    expect(restoredBoard.securityCardsByPlayer).toEqual({
+      p1: [{ cardId: 'AIcard01', traceColor: ETrace.RED, zone: 'hand' }],
+    });
+    expect(restoredBoard.accessByPlayer).toEqual({
+      p1: { breachedCount: 1, accessLevel: 1 },
+    });
+    expect(restoredBoard.resolvedExplorationRewards).toEqual([
+      {
+        playerId: 'p1',
+        cardId: 'ARKHOS.EXPLORATION.3',
+        size: 'minor',
+        effectId: 'ARKHOS_EXPLORATION_03_MINOR_UNMAPPED',
+      },
+    ]);
+  });
+
   it('round-trips Centaurians message runtime state', () => {
     const game = createTestGame();
     resolveSetupTucks(game);
@@ -493,7 +654,11 @@ describe('GameDeserializer', () => {
       },
     ];
     board.pendingMessagesByPlayer = { p1: [], p2: ['ET.31'] };
-    board.rewardSlots[0]!.claimedByPlayerId = 'p1';
+    const firstRewardSlot = board.rewardSlots[0];
+    if (!firstRewardSlot) {
+      throw new Error('expected Centaurians reward slot');
+    }
+    firstRewardSlot.claimedByPlayerId = 'p1';
 
     const restored = deserializeGame(serializeGame(game, 1));
     const restoredBoard = restored.alienState.getBoardByType(

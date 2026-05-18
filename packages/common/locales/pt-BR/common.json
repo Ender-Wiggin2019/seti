@@ -318,6 +318,7 @@
       "players": "Operadores",
       "solo_difficulty": "Dificuldade",
       "alien_modules": "Módulos Alienígenas",
+      "space_agency": "Agência Espacial",
       "undo": "Desfazer",
       "undo_allowed": "Permitido",
       "undo_disabled": "Desativado",
@@ -389,6 +390,32 @@
         "USE_ORGANIZATION_POWER": "Poder da Organização"
       }
     },
+    "space_agency_options": {
+      "organizations": "Organizações",
+      "quick_start_cards": "Cartas de Início Rápido",
+      "new_deck": "Novo Baralho",
+      "new_alien_species": "Novas Espécies Alienígenas"
+    },
+    "setup_choice": {
+      "title": "Escolha de Preparação"
+    },
+    "organizations": {
+      "setup_badge": "Inicial",
+      "setup_summary": "Preparação: {{credit}} crédito, {{energy}} energia, {{card}} carta, {{publicity}} publicidade, {{data}} dado, {{tuckIncome}} carta de renda",
+      "names": {
+        "cosmos-strategy-group": "Grupo de Estratégia Cosmos",
+        "deep-sky-survey": "Pesquisa do Céu Profundo",
+        "fenwick-research-center": "Centro de Pesquisa Fenwick",
+        "futurespan-institute": "Instituto Futurespan",
+        "helion-assembly": "Assembleia Helion",
+        "mission-relay": "Retransmissão de Missão",
+        "orbital-dynamics": "Dinâmica Orbital",
+        "sentinel-probe-network": "Rede de Sondas Sentinel",
+        "stratus-core": "Núcleo Stratus",
+        "turing-systems": "Sistemas Turing",
+        "xenolab": "Xenolab"
+      }
+    },
     "quick_start_card": {
       "short_label": "Início Rápido",
       "screen_reader_label": "Carta de Início Rápido {{id}}: {{summary}}",
@@ -404,6 +431,9 @@
     "event_entry": {
       "action": "{{player}} usou {{action}}",
       "rival_action": "{{player}} revelou {{card}} e resolveu {{action}}",
+      "arkhos_exploration_reward": "{{player}} revelou exploração Arkhos {{size}} {{card}}",
+      "arkhos_security_card_used": "{{player}} usou {{card}} para uma recompensa Arkhos {{size}}",
+      "arkhos_security_breached": "{{player}} violou segurança Arkhos {{trace}} {{card}} (acesso {{access}})",
       "free_action": "{{player}} usou ação livre {{action}}",
       "input": "{{player}} respondeu com {{response}}",
       "resource_change": "{{player}} {{direction}} {{amount}} {{resource}}",
@@ -501,7 +531,8 @@
         "mark-trace": "Marcar traço",
         "mark-any-trace": "Marcar qualquer traço",
         "play-danger-card": "Jogar carta de perigo",
-        "start-countdown": "Iniciar contagem"
+        "start-countdown": "Iniciar contagem",
+        "unlock-arkhos-security": "Desbloquear segurança Arkhos"
       },
       "candidate": {
         "paid": "pago",
@@ -620,7 +651,49 @@
         "oumuamua": "Oumuamua",
         "amoeba": "Ameba",
         "glyphids": "Glyphids",
+        "arkhos": "Arkhos",
         "dummy": "Dummy"
+      },
+      "card_zone": {
+        "title": "Deck Alienígena",
+        "deck_count": "Deck {{count}}",
+        "discard_count": "Descarte {{count}}",
+        "preview_aria": "Pré-visualizar {{card}}"
+      },
+      "glyphids": {
+        "bank_count": "Banco {{count}}",
+        "player_rows": "Linhas dos jogadores",
+        "no_glyph_rows": "Sem linhas de glifos",
+        "board_tokens": "Marcadores do tabuleiro",
+        "translation": "Tradução",
+        "side": "Lado {{side}}"
+      },
+      "amoeba": {
+        "organelles": "Organelas de Ameba"
+      },
+      "arkhos": {
+        "exploration_counts": "Deck {{deck}} / Reserva {{reserve}} / Descarte {{discard}}",
+        "security": "Segurança",
+        "access": "Acesso",
+        "no_security_cards": "Sem cartas de segurança",
+        "no_access_records": "Sem registros de acesso",
+        "access_record": "N{{level}} / {{breached}}",
+        "resolved_rewards": "Recompensas resolvidas",
+        "reward_image_alt": "Recompensa {{size}} de exploração Arkhos {{card}} para {{player}}",
+        "reward_size": {
+          "minor": "menor",
+          "major": "maior"
+        },
+        "zone": {
+          "front": "frente",
+          "hand": "mão",
+          "used": "usada"
+        },
+        "trace": {
+          "red-trace": "vermelho",
+          "yellow-trace": "amarelo",
+          "blue-trace": "azul"
+        }
       }
     },
     "planet_card": {

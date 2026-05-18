@@ -8,6 +8,16 @@ import type {
   ISolarSystemSetupConfig,
   TSectorWinnerBonus,
 } from '@seti/common/constant/sectorSetup';
+import type {
+  IAmoebaOrganelleToken,
+  IArkhosAccessState,
+  IArkhosExplorationRewardRecord,
+  IArkhosSecurityCardState,
+  IGlyphidsBoardToken,
+  IGlyphidsTranslationRow,
+  TGlyphidsGlyph,
+  TGlyphidsRowsByPlayer,
+} from '@seti/common/constant/spaceAgencyAliens';
 import type { ESector, ETrace } from '@seti/common/types/element';
 import type {
   EAlienType,
@@ -235,6 +245,17 @@ export interface IAlienBoardDto {
   centauriansMessageMilestones?: ICentauriansMessageMilestoneDto[];
   centauriansPendingMessagesByPlayer?: Record<string, string[]>;
   centauriansRewardSlots?: ICentauriansRewardSlotDto[];
+  glyphidsGlyphTokenBank?: TGlyphidsGlyph[];
+  glyphidsGlyphRows?: TGlyphidsRowsByPlayer;
+  glyphidsBoardTokens?: IGlyphidsBoardToken[];
+  glyphidsTranslationRows?: IGlyphidsTranslationRow[];
+  amoebaOrganelles?: IAmoebaOrganelleToken[];
+  arkhosExplorationDrawPile?: string[];
+  arkhosExplorationReservePile?: string[];
+  arkhosExplorationDiscardPile?: string[];
+  arkhosSecurityCardsByPlayer?: Record<string, IArkhosSecurityCardState[]>;
+  arkhosAccessByPlayer?: Record<string, IArkhosAccessState>;
+  arkhosResolvedExplorationRewards?: IArkhosExplorationRewardRecord[];
   alienDeckDrawPile: string[];
   alienDeckDiscardPile: string[];
   faceUpAlienCardId: string | null;

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   buildE2eResetSql,
   resetE2eDatabase,
-} from '../../scripts/lib/resetE2eDatabase';
+} from '../../scripts/lib/resetE2eDatabase.js';
 
 describe('resetE2eDatabase', () => {
   it('builds a truncation statement for e2e game state without clearing users', () => {

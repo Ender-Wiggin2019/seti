@@ -1,6 +1,10 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { EAlienIcon } from '@seti/common/types/element';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { vi } from 'vitest';
 import { AlienBoardView } from '@/features/board/AlienBoardView';
+import i18n from '@/i18n';
 import { useDebugStore } from '@/stores/debugStore';
 import type {
   IPublicAlienState,
@@ -26,7 +30,8 @@ function slot(
 }
 
 describe('AlienBoardView', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('en');
     useDebugStore.setState({ textMode: false });
   });
 
@@ -625,6 +630,239 @@ describe('AlienBoardView', () => {
     );
   });
 
+  it('renders localized Glyphids board state with DescRender glyph icons', async () => {
+    await i18n.changeLanguage('zh-CN');
+    const alien: IPublicAlienState = {
+      alienIndex: 0,
+      alienType: EAlienType.GLYPHIDS,
+      discovered: true,
+      discovery: { zones: [], overflowZones: [] },
+      cardZone: {
+        faceUpCardId: 'SA.ET.1',
+        drawPileSize: 9,
+        discardPileSize: 0,
+      },
+      board: {
+        type: 'glyphids',
+        glyphTokenBankSize: 33,
+        glyphRows: { p1: [[EAlienIcon.GLYPH_RED, EAlienIcon.GLYPH_BLUE]] },
+        boardTokens: [
+          { position: 0, glyph: EAlienIcon.GLYPH_YELLOW },
+          { position: 3, glyph: EAlienIcon.GLYPH_PURPLE },
+        ],
+        translationRows: [
+          {
+            rowId: 'glyphids-translation-level-1',
+            level: 1,
+            glyphs: [EAlienIcon.GLYPH_GREEN, null, null, null],
+            side: 1,
+          },
+        ],
+        traceSlots: [slot('alien-0-glyphids-red-0', ETrace.RED)],
+      },
+    };
+
+    render(<AlienBoardView aliens={[alien]} playerColors={{ p1: '#f00' }} />);
+
+    expect(screen.getByTestId('alien-0-glyphids-board')).toBeInTheDocument();
+    expect(screen.getAllByText('字形族')).toHaveLength(2);
+    expect(screen.getByTestId('alien-0-deck-panel')).toHaveTextContent(
+      '外星牌库',
+    );
+    expect(screen.getByTestId('alien-0-deck-panel')).toHaveTextContent(
+      '牌库 9',
+    );
+    expect(screen.getByTestId('alien-0-deck-panel')).toHaveTextContent(
+      '弃牌 0',
+    );
+    expect(screen.getByTestId('alien-0-glyphids-bank')).toHaveTextContent(
+      '库存 33',
+    );
+    expect(screen.getByText('玩家行')).toBeInTheDocument();
+    expect(screen.getByText('板块标记')).toBeInTheDocument();
+    expect(screen.getByText('翻译')).toBeInTheDocument();
+    expect(screen.getByText('面 1')).toBeInTheDocument();
+    expect(screen.getByTestId('alien-0-glyphids-row-p1-0')).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('alien-0-glyphids-row-p1-0')).getByTestId(
+        'seti-desc-glyph-red-1',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(
+        screen.getByTestId(
+          'alien-0-glyphids-translation-glyphids-translation-level-1',
+        ),
+      ).getByTestId('seti-desc-glyph-green-1'),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('alien-0-glyphids-board-token-0')).getByTestId(
+        'seti-desc-glyph-yellow-1',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('alien-0-glyphids-trace-column-red-trace'),
+    ).toBeInTheDocument();
+  });
+
+  it('renders localized Amoeba board state with DescRender organelle icons', async () => {
+    await i18n.changeLanguage('zh-CN');
+    const alien: IPublicAlienState = {
+      alienIndex: 0,
+      alienType: EAlienType.AMOEBA,
+      discovered: true,
+      discovery: { zones: [], overflowZones: [] },
+      cardZone: {
+        faceUpCardId: 'SA.ET.11',
+        drawPileSize: 9,
+        discardPileSize: 0,
+      },
+      board: {
+        type: 'amoeba',
+        organelles: [
+          {
+            tokenId: 'amoeba-organelle-0',
+            color: EAlienIcon.ORGANELLE_RED,
+            position: 8,
+          },
+          {
+            tokenId: 'amoeba-organelle-1',
+            color: EAlienIcon.ORGANELLE_YELLOW,
+            position: 4,
+          },
+        ],
+        traceSlots: [slot('alien-0-amoeba-red-0', ETrace.RED)],
+      },
+    };
+
+    render(<AlienBoardView aliens={[alien]} playerColors={{}} />);
+
+    expect(screen.getByTestId('alien-0-amoeba-board')).toBeInTheDocument();
+    expect(screen.getByText('变形虫细胞器')).toBeInTheDocument();
+    expect(screen.getByTestId('alien-0-amoeba-cell-8')).toHaveAttribute(
+      'data-trace-color',
+      ETrace.BLUE,
+    );
+    expect(screen.getByTestId('alien-0-amoeba-cell-4')).toHaveAttribute(
+      'data-trace-color',
+      ETrace.YELLOW,
+    );
+    expect(screen.getByTestId('alien-0-amoeba-cell-2')).toHaveAttribute(
+      'data-trace-color',
+      ETrace.RED,
+    );
+    expect(
+      within(screen.getByTestId('alien-0-amoeba-organelle-8')).getByTestId(
+        'seti-desc-organelle-red-1',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('alien-0-amoeba-organelle-4')).getByTestId(
+        'seti-desc-organelle-yellow-1',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('alien-0-amoeba-trace-column-red-trace'),
+    ).toBeInTheDocument();
+  });
+
+  it('renders localized Arkhos exploration, security, access, and trace state', async () => {
+    await i18n.changeLanguage('zh-CN');
+    const alien: IPublicAlienState = {
+      alienIndex: 0,
+      alienType: EAlienType.ARKHOS,
+      discovered: true,
+      discovery: { zones: [], overflowZones: [] },
+      cardZone: {
+        faceUpCardId: null,
+        drawPileSize: 0,
+        discardPileSize: 0,
+      },
+      board: {
+        type: 'arkhos',
+        explorationDeckSize: 5,
+        explorationReserveSize: 4,
+        explorationDiscardSize: 0,
+        securityCardsByPlayer: {
+          p1: [
+            {
+              cardId: 'AIcard01',
+              traceColor: ETrace.RED,
+              zone: 'front',
+            },
+            {
+              cardId: 'AIcard05',
+              traceColor: ETrace.YELLOW,
+              zone: 'hand',
+            },
+            {
+              cardId: 'AIcard09',
+              traceColor: ETrace.BLUE,
+              zone: 'used',
+            },
+          ],
+        },
+        accessByPlayer: {
+          p1: {
+            breachedCount: 2,
+            accessLevel: 2,
+          },
+        },
+        resolvedExplorationRewards: [
+          {
+            playerId: 'p1',
+            cardId: 'ARKHOS.EXPLORATION.2',
+            size: 'major',
+            effectId: 'ARKHOS_EXPLORATION_02_MAJOR_UNMAPPED',
+          },
+        ],
+        traceSlots: [slot('alien-0-arkhos-level-0-0-red-trace', ETrace.RED)],
+      },
+    };
+
+    render(<AlienBoardView aliens={[alien]} playerColors={{ p1: '#f00' }} />);
+
+    expect(screen.getByTestId('alien-0-arkhos-board')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('alien-0-arkhos-exploration-counts'),
+    ).toHaveTextContent('牌库 5 / 储备 4 / 弃牌 0');
+    expect(screen.getByText('安保')).toBeInTheDocument();
+    expect(screen.getByText('访问')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('alien-0-arkhos-security-p1'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('alien-0-arkhos-security-card-AIcard01'),
+    ).toHaveTextContent('正面');
+    expect(screen.getByTestId('alien-0-arkhos-access-p1')).toHaveTextContent(
+      '等级 2 / 2',
+    );
+    expect(
+      screen.getByTestId('alien-0-arkhos-trace-column-red-trace'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('已揭示奖励')).toBeInTheDocument();
+    expect(screen.getByTestId('alien-0-arkhos-reward-0')).toHaveAttribute(
+      'title',
+      'ARKHOS_EXPLORATION_02_MAJOR_UNMAPPED',
+    );
+    expect(
+      screen.getByRole('img', {
+        name: 'p1 的 Arkhos 探索 ARKHOS.EXPLORATION.2 大奖励',
+      }),
+    ).toHaveAttribute(
+      'src',
+      '/assets/seti/aliens/arkhos/exploration/AI_02.jpg',
+    );
+  });
+
+  it('keeps one-to-one local assets for Arkhos exploration reward tiles', () => {
+    for (let index = 1; index <= 9; index += 1) {
+      const assetNumber = index.toString().padStart(2, '0');
+      const src = `/assets/seti/aliens/arkhos/exploration/AI_${assetNumber}.jpg`;
+      expect(existsSync(resolvePublicAsset(src)), src).toBe(true);
+    }
+  });
+
   it('renders discovered Oumuamua as a landing area with planet orbit and land details', () => {
     const alien: IPublicAlienState = {
       alienIndex: 0,
@@ -733,3 +971,10 @@ describe('AlienBoardView', () => {
     expect(cell).toHaveTextContent('L: 9 VP');
   });
 });
+
+function resolvePublicAsset(src: string): string {
+  const root = existsSync(join(process.cwd(), 'packages/client/public'))
+    ? join(process.cwd(), 'packages/client/public')
+    : join(process.cwd(), 'public');
+  return join(root, src.replace(/^\//, ''));
+}

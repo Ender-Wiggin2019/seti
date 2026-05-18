@@ -434,6 +434,7 @@ describe('RivalPanel', () => {
     expect(RIVAL_ACTION_CARD_IMAGE_SRC_BY_ID['S.4']).toBe(
       '/assets/seti/solo/action-cards/S.4.jpg',
     );
+    expect(RIVAL_ACTION_CARD_IMAGE_SRC_BY_ID['S.21']).toBeUndefined();
     expect(RIVAL_OBJECTIVE_IMAGE_SRC_BY_ID['SOLO.5']).toBe(
       '/assets/seti/solo/objective-cards/SOLO.5.png',
     );

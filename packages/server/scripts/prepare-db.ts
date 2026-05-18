@@ -1,5 +1,5 @@
-import { ensureDatabaseExists, getTargetDatabaseName } from './lib/dbAdmin';
-import { runMigrations } from './lib/migrateDatabase';
+import { ensureDatabaseExists, getTargetDatabaseName } from './lib/dbAdmin.js';
+import { runMigrations } from './lib/migrateDatabase.js';
 
 async function main(): Promise<void> {
   const targetDatabase = getTargetDatabaseName();

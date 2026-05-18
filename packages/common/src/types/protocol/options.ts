@@ -51,6 +51,7 @@ export const DEFAULT_ALIEN_MODULES_ENABLED: Readonly<TAlienModulesEnabled> =
     [EAlienType.OUMUAMUA]: true,
     [EAlienType.GLYPHIDS]: false,
     [EAlienType.AMOEBA]: false,
+    [EAlienType.ARKHOS]: false,
     [EAlienType.DUMMY]: false,
   });
 
@@ -122,7 +123,8 @@ function validateAlienModulesEnabled(
 function hasEnabledSpaceAgencyAliens(gameOptions: IGameOptions): boolean {
   return (
     gameOptions.alienModulesEnabled[EAlienType.GLYPHIDS] ||
-    gameOptions.alienModulesEnabled[EAlienType.AMOEBA]
+    gameOptions.alienModulesEnabled[EAlienType.AMOEBA] ||
+    gameOptions.alienModulesEnabled[EAlienType.ARKHOS]
   );
 }
 

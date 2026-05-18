@@ -1,8 +1,10 @@
 import { EAlienType, type IBaseCard } from '@seti/common/types/BaseCard';
 import { EEffectType } from '@seti/common/types/effect';
 import { EResource } from '@seti/common/types/element';
+import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
 import { EMissionType, type IMissionDef } from '../missions/IMission.js';
+import type { IPlayer } from '../player/IPlayer.js';
 import { behaviorFromEffects, type IBehavior } from './Behavior.js';
 import { getBehaviorExecutor } from './BehaviorExecutor.js';
 import {
@@ -186,6 +188,10 @@ export abstract class Card implements ICard {
     return missionEffect.effectType === EEffectType.MISSION_FULL
       ? EMissionType.FULL
       : EMissionType.QUICK;
+  }
+
+  public scoreEndGame(_player: IPlayer, _game: IGame): number | undefined {
+    return undefined;
   }
 
   public canReturnToHandAfterPlay(_context: ICardRuntimeContext): boolean {

@@ -41,9 +41,9 @@ test('@real-ui configured room flow e2e: create custom room settings, join, laun
     ).toHaveText('2');
     await expect(
       hostPage.locator(
-        '[data-testid="game-setting-alien-modules"] button[role="switch"]',
+        '[data-testid="game-setting-alien-modules"] button[role="switch"][aria-checked="true"]',
       ),
-    ).toHaveAttribute('aria-checked', 'true');
+    ).toHaveCount(2);
     await expect(
       hostPage.locator('[data-testid="game-setting-value-undo"]'),
     ).toContainText(/allowed/i);

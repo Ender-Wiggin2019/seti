@@ -33,6 +33,26 @@ async function clickRoomOptionSwitch(
   );
 }
 
+async function expectSpaceAgencyAlienTogglesVisible(
+  page: Page,
+  visible: boolean,
+): Promise<void> {
+  const toggles = [
+    page.locator('#space-agency-alien-7'),
+    page.locator('#space-agency-alien-6'),
+    page.locator('#space-agency-alien-8'),
+  ];
+
+  for (const toggle of toggles) {
+    if (visible) {
+      await expect(toggle).toBeVisible({ timeout: 10_000 });
+      await expect(toggle).toBeEnabled({ timeout: 10_000 });
+    } else {
+      await expect(toggle).toHaveCount(0);
+    }
+  }
+}
+
 test('@real-ui Space Agency room options update through host UI and render read-only for guests', async ({
   browser,
   request,
@@ -67,6 +87,7 @@ test('@real-ui Space Agency room options update through host UI and render read-
     await expect(hostPage.locator('#space-agency-agencies')).toBeEnabled();
     await expect(hostPage.locator('#space-agency-new-deck')).toBeEnabled();
     await expect(hostPage.locator('#space-agency-new-aliens')).toBeEnabled();
+    await expectSpaceAgencyAlienTogglesVisible(hostPage, false);
 
     await clickRoomOptionSwitch(
       hostPage,
@@ -100,12 +121,14 @@ test('@real-ui Space Agency room options update through host UI and render read-
       'space-agency-new-aliens',
       true,
     );
+    await expectSpaceAgencyAlienTogglesVisible(hostPage, true);
     await clickRoomOptionSwitch(
       hostPage,
       roomId,
       'space-agency-new-aliens',
       false,
     );
+    await expectSpaceAgencyAlienTogglesVisible(hostPage, false);
 
     await registerByUi(guestPage, guest);
     await joinRoomByUi(guestPage, roomId);

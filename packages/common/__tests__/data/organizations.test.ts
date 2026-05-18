@@ -187,21 +187,30 @@ describe('Space Agency organization metadata', () => {
   });
 
   it('marks implemented SA-5 organization behavior with non setup-only complexity', () => {
-    expect(
-      ORGANIZATIONS_BY_ID[EOrganizationId.DEEP_SKY_SURVEY].complexity,
-    ).toBe('passive');
-    expect(
-      ORGANIZATIONS_BY_ID[EOrganizationId.FENWICK_RESEARCH_CENTER].complexity,
-    ).toBe('once-per-round');
-    expect(
-      ORGANIZATIONS_BY_ID[EOrganizationId.SENTINEL_PROBE_NETWORK].complexity,
-    ).toBe('once-per-round');
-    expect(ORGANIZATIONS_BY_ID[EOrganizationId.STRATUS_CORE].complexity).toBe(
-      'once-per-round',
-    );
-    expect(
-      ORGANIZATIONS_BY_ID[EOrganizationId.ORBITAL_DYNAMICS].complexity,
-    ).toBe('setup-only');
+    const expectedComplexity: Record<
+      EOrganizationId,
+      (typeof ORGANIZATIONS)[number]['complexity']
+    > = {
+      [EOrganizationId.COSMOS_STRATEGY_GROUP]: 'complex',
+      [EOrganizationId.DEEP_SKY_SURVEY]: 'passive',
+      [EOrganizationId.FENWICK_RESEARCH_CENTER]: 'once-per-round',
+      [EOrganizationId.FUTURESPAN_INSTITUTE]: 'complex',
+      [EOrganizationId.HELION_ASSEMBLY]: 'complex',
+      [EOrganizationId.MISSION_RELAY]: 'complex',
+      [EOrganizationId.ORBITAL_DYNAMICS]: 'once-per-round',
+      [EOrganizationId.SENTINEL_PROBE_NETWORK]: 'once-per-round',
+      [EOrganizationId.STRATUS_CORE]: 'once-per-round',
+      [EOrganizationId.TURING_SYSTEMS]: 'complex',
+      [EOrganizationId.XENOLAB]: 'complex',
+    };
+
+    for (const [organizationId, complexity] of Object.entries(
+      expectedComplexity,
+    )) {
+      expect(
+        ORGANIZATIONS_BY_ID[organizationId as EOrganizationId].complexity,
+      ).toBe(complexity);
+    }
   });
 
   it('keeps tuck income separate from starting resources and income', () => {

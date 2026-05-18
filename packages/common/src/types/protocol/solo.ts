@@ -31,6 +31,7 @@ export enum ERivalActionKind {
   MARK_ANY_TRACE = 'mark-any-trace',
   PLAY_DANGER_CARD = 'play-danger-card',
   START_COUNTDOWN = 'start-countdown',
+  UNLOCK_ARKHOS_SECURITY = 'unlock-arkhos-security',
 }
 
 export enum ERivalProbePlacement {

@@ -36,6 +36,7 @@ export interface ICard extends IBaseCard {
   canReturnToHandAfterPlay(context: ICardRuntimeContext): boolean;
   getMissionDef?(): IMissionDef | undefined;
   getMissionType(): EMissionType | undefined;
+  scoreEndGame?(player: IPlayer, game: IGame): number | undefined;
 }
 
 export interface IBaseGameCard extends ICard {

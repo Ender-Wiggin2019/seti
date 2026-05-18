@@ -6,8 +6,10 @@ import type {
   EOrganizationId,
   IOrganizationData,
 } from '@seti/common/types/organization';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { QuickStartCardPreview } from '@/features/setup/QuickStartCardPreview';
+import { getOrganizationDisplayName } from '@/lib/organizationText';
 import type {
   IInputResponse,
   ISelectOptionInputModel,
@@ -142,22 +144,21 @@ function plural(amount: number, singular: string, pluralName = `${singular}s`) {
 }
 
 function organizationSetupSummary(organization: IOrganizationData): string {
-  const resources = organization.resources;
-  const parts = [
-    plural(resources.credit, 'credit'),
-    plural(resources.energy, 'energy', 'energy'),
-    plural(resources.card, 'card'),
-    `${resources.publicity} publicity`,
-    `${resources.data} data`,
+  return [
+    plural(organization.resources.credit, 'credit'),
+    plural(organization.resources.energy, 'energy', 'energy'),
+    plural(organization.resources.card, 'card'),
+    `${organization.resources.publicity} publicity`,
+    `${organization.resources.data} data`,
     plural(organization.tuckIncome, 'tuck income card'),
-  ];
-  return `Setup: ${parts.join(', ')}`;
+  ].join(', ');
 }
 
 function OrganizationOptionInput({
   model,
   onSubmit,
 }: ISelectOptionInputProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <div className='space-y-2'>
       {model.title ? <p className='micro-label'>{model.title}</p> : null}
@@ -165,6 +166,9 @@ function OrganizationOptionInput({
         {model.options.map((option) => {
           const organization =
             ORGANIZATIONS_BY_ID[option.id as EOrganizationId];
+          const organizationName = organization
+            ? getOrganizationDisplayName(t, organization.id)
+            : option.label;
           return (
             <Button
               key={option.id}
@@ -183,13 +187,13 @@ function OrganizationOptionInput({
               <span className='flex w-full flex-col gap-1.5'>
                 <span className='flex items-center justify-between gap-2'>
                   <span className='truncate font-body text-sm font-semibold text-text-100'>
-                    {option.label}
+                    {organizationName}
                   </span>
                   <span
                     aria-hidden
                     className='chip shrink-0 font-mono text-[9px] tracking-[0.14em]'
                   >
-                    Start
+                    {t('client.organizations.setup_badge')}
                   </span>
                 </span>
                 {organization ? (
@@ -206,7 +210,17 @@ function OrganizationOptionInput({
                       />
                     </div>
                     <span className='sr-only'>
-                      {organizationSetupSummary(organization)}
+                      {t('client.organizations.setup_summary', {
+                        credit: organization.resources.credit,
+                        energy: organization.resources.energy,
+                        card: organization.resources.card,
+                        publicity: organization.resources.publicity,
+                        data: organization.resources.data,
+                        tuckIncome: organization.tuckIncome,
+                        defaultValue: `Setup: ${organizationSetupSummary(
+                          organization,
+                        )}`,
+                      })}
                     </span>
                   </>
                 ) : null}

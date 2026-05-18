@@ -319,6 +319,7 @@
       "players": "Operatives",
       "solo_difficulty": "Difficulty",
       "alien_modules": "Alien Modules",
+      "space_agency": "Space Agency",
       "undo": "Undo",
       "undo_allowed": "Allowed",
       "undo_disabled": "Disabled",
@@ -390,6 +391,32 @@
         "USE_ORGANIZATION_POWER": "Organization Power"
       }
     },
+    "space_agency_options": {
+      "organizations": "Organizations",
+      "quick_start_cards": "Quick Start Cards",
+      "new_deck": "New Deck",
+      "new_alien_species": "New Alien Species"
+    },
+    "setup_choice": {
+      "title": "Setup Choice"
+    },
+    "organizations": {
+      "setup_badge": "Start",
+      "setup_summary": "Setup: {{credit}} credits, {{energy}} energy, {{card}} cards, {{publicity}} publicity, {{data}} data, {{tuckIncome}} tuck income cards",
+      "names": {
+        "cosmos-strategy-group": "Cosmos Strategy Group",
+        "deep-sky-survey": "Deep Sky Survey",
+        "fenwick-research-center": "Fenwick Research Center",
+        "futurespan-institute": "Futurespan Institute",
+        "helion-assembly": "Helion Assembly",
+        "mission-relay": "Mission Relay",
+        "orbital-dynamics": "Orbital Dynamics",
+        "sentinel-probe-network": "Sentinel Probe Network",
+        "stratus-core": "Stratus Core",
+        "turing-systems": "Turing Systems",
+        "xenolab": "Xenolab"
+      }
+    },
     "quick_start_card": {
       "short_label": "Quick Start",
       "screen_reader_label": "Quick Start Card {{id}}: {{summary}}",
@@ -405,6 +432,9 @@
     "event_entry": {
       "action": "{{player}} used {{action}}",
       "rival_action": "{{player}} revealed {{card}} and resolved {{action}}",
+      "arkhos_exploration_reward": "{{player}} revealed {{size}} Arkhos exploration {{card}}",
+      "arkhos_security_card_used": "{{player}} used {{card}} for a {{size}} Arkhos reward",
+      "arkhos_security_breached": "{{player}} breached {{trace}} Arkhos security {{card}} (access {{access}})",
       "free_action": "{{player}} used free {{action}}",
       "input": "{{player}} responded with {{response}}",
       "resource_change": "{{player}} {{direction}} {{amount}} {{resource}}",
@@ -502,7 +532,8 @@
         "mark-trace": "Mark trace",
         "mark-any-trace": "Mark any trace",
         "play-danger-card": "Play danger card",
-        "start-countdown": "Start countdown"
+        "start-countdown": "Start countdown",
+        "unlock-arkhos-security": "Unlock Arkhos security"
       },
       "candidate": {
         "paid": "paid",
@@ -621,7 +652,49 @@
         "oumuamua": "Oumuamua",
         "amoeba": "Amoeba",
         "glyphids": "Glyphids",
+        "arkhos": "Arkhos",
         "dummy": "Dummy"
+      },
+      "card_zone": {
+        "title": "Alien Deck",
+        "deck_count": "Deck {{count}}",
+        "discard_count": "Discard {{count}}",
+        "preview_aria": "Preview {{card}}"
+      },
+      "glyphids": {
+        "bank_count": "Bank {{count}}",
+        "player_rows": "Player Rows",
+        "no_glyph_rows": "No glyph rows",
+        "board_tokens": "Board Tokens",
+        "translation": "Translation",
+        "side": "Side {{side}}"
+      },
+      "amoeba": {
+        "organelles": "Amoeba Organelles"
+      },
+      "arkhos": {
+        "exploration_counts": "Deck {{deck}} / Reserve {{reserve}} / Discard {{discard}}",
+        "security": "Security",
+        "access": "Access",
+        "no_security_cards": "No security cards",
+        "no_access_records": "No access records",
+        "access_record": "L{{level}} / {{breached}}",
+        "resolved_rewards": "Resolved Rewards",
+        "reward_image_alt": "Arkhos exploration {{card}} {{size}} reward for {{player}}",
+        "reward_size": {
+          "minor": "minor",
+          "major": "major"
+        },
+        "zone": {
+          "front": "front",
+          "hand": "hand",
+          "used": "used"
+        },
+        "trace": {
+          "red-trace": "red",
+          "yellow-trace": "yellow",
+          "blue-trace": "blue"
+        }
       }
     },
     "planet_card": {

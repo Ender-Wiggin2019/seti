@@ -1,5 +1,9 @@
+import { ETrace } from '@seti/common/types/element';
+import { EAlienType } from '@seti/common/types/protocol/enums';
+import type { IGame } from '@/engine/IGame.js';
 import { EPriority } from '@/engine/deferred/Priority.js';
 import { SimpleDeferredAction } from '@/engine/deferred/SimpleDeferredAction.js';
+import type { IPlayer } from '@/engine/player/IPlayer.js';
 import { EndGameScoringCard } from '../Card.js';
 import type { ICardRuntimeContext } from '../ICard.js';
 import { loadCardData } from '../loadCardData.js';
@@ -29,5 +33,11 @@ export class EcosystemStudy extends EndGameScoringCard {
       ),
     );
     return undefined;
+  }
+
+  public override scoreEndGame(player: IPlayer, game: IGame): number {
+    return game.alienState.getPlayerTraceCount(player, ETrace.ANY, {
+      alienType: EAlienType.MASCAMITES,
+    });
   }
 }

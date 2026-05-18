@@ -122,8 +122,13 @@ export const RIVAL_TECH_CATEGORY_ORDER_BY_BOARD: Record<
   'rival-board-4': [ETech.PROBE, ETech.COMPUTER, ETech.SCAN],
 };
 
-export const RIVAL_SPECIES_ACTION_CARD_BY_ALIEN: Partial<
-  Record<EAlienType, TRivalActionCardId>
+export const RIVAL_SPECIES_ACTION_CARD_BY_ALIEN: Record<
+  | EAlienType.MASCAMITES
+  | EAlienType.ANOMALIES
+  | EAlienType.OUMUAMUA
+  | EAlienType.CENTAURIANS
+  | EAlienType.EXERTIANS,
+  TRivalActionCardId
 > = {
   [EAlienType.MASCAMITES]: 'S.15',
   [EAlienType.ANOMALIES]: 'S.16',

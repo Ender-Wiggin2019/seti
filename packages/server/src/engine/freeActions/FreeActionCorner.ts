@@ -2,6 +2,7 @@ import { isDiscardProhibitedCard } from '@seti/common/rules';
 import { EResource } from '@seti/common/types/element';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
+import { AlienRegistry } from '../alien/AlienRegistry.js';
 import { hasCardData, loadCardData } from '../cards/loadCardData.js';
 import { AnyCardChoiceEffect } from '../effects/card/AnyCardChoiceEffect.js';
 import type { IGame } from '../IGame.js';
@@ -46,10 +47,40 @@ export class FreeActionCornerFreeAction {
     }
     player.removeCardAt(cardIndex);
 
-    game.mainDeck.discard(cardId);
-    const pendingInput = this.executeCardCornerRewards(player, game, cardId);
+    const handledByAlien = this.handleAlienCardDiscardedForFreeAction(
+      player,
+      game,
+      cardId,
+    );
+    if (!handledByAlien) {
+      game.mainDeck.discard(cardId);
+    }
+    const pendingInput = handledByAlien
+      ? undefined
+      : this.executeCardCornerRewards(player, game, cardId);
 
     return { discardedCardId: cardId, pendingInput };
+  }
+
+  private static handleAlienCardDiscardedForFreeAction(
+    player: IPlayer,
+    game: IGame,
+    cardId: string,
+  ): boolean {
+    if (!hasCardData(cardId)) {
+      return false;
+    }
+    const alienType = loadCardData(cardId).alien;
+    if (alienType === undefined) {
+      return false;
+    }
+    return (
+      AlienRegistry.get(alienType)?.onAlienCardDiscardedForFreeAction?.(
+        game,
+        player,
+        cardId,
+      ) === true
+    );
   }
 
   public static executeCardCornerRewards(

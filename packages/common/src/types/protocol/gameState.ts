@@ -8,6 +8,15 @@ import type {
   ISolarSystemSetupConfig,
   TSectorWinnerBonus,
 } from '@seti/common/constant/sectorSetup';
+import type {
+  IAmoebaOrganelleToken,
+  IArkhosAccessState,
+  IArkhosExplorationRewardRecord,
+  IArkhosSecurityCardState,
+  IGlyphidsBoardToken,
+  IGlyphidsTranslationRow,
+  TGlyphidsRowsByPlayer,
+} from '@seti/common/constant/spaceAgencyAliens';
 import { IBaseCard } from '@seti/common/types/BaseCard';
 import type { IComputerSlotReward } from '@seti/common/types/computer';
 import { EResource, ESector } from '@seti/common/types/element';
@@ -384,6 +393,32 @@ export interface IPublicCentauriansBoard {
   traceSlots: IPublicTraceSlot[];
 }
 
+export interface IPublicGlyphidsBoard {
+  type: 'glyphids';
+  glyphTokenBankSize: number;
+  glyphRows: TGlyphidsRowsByPlayer;
+  boardTokens: IGlyphidsBoardToken[];
+  translationRows: IGlyphidsTranslationRow[];
+  traceSlots: IPublicTraceSlot[];
+}
+
+export interface IPublicAmoebaBoard {
+  type: 'amoeba';
+  organelles: IAmoebaOrganelleToken[];
+  traceSlots: IPublicTraceSlot[];
+}
+
+export interface IPublicArkhosBoard {
+  type: 'arkhos';
+  explorationDeckSize: number;
+  explorationReserveSize: number;
+  explorationDiscardSize: number;
+  securityCardsByPlayer: Record<string, IArkhosSecurityCardState[]>;
+  accessByPlayer: Record<string, IArkhosAccessState>;
+  resolvedExplorationRewards: IArkhosExplorationRewardRecord[];
+  traceSlots: IPublicTraceSlot[];
+}
+
 export interface IPublicGenericAlienBoard {
   type: 'generic';
   slots: IPublicTraceSlot[];
@@ -395,6 +430,9 @@ export type TPublicAlienBoard =
   | IPublicExertiansBoard
   | IPublicOumuamuaBoard
   | IPublicMascamitesBoard
+  | IPublicGlyphidsBoard
+  | IPublicAmoebaBoard
+  | IPublicArkhosBoard
   | IPublicGenericAlienBoard;
 
 export interface IPublicAlienState {
@@ -470,6 +508,7 @@ export interface IPublicGameState {
   mainDeck: IPublicMainDeckState;
   cardRow: IBaseCard[];
   endOfRoundStacks?: IBaseCard[][];
+  endOfRoundStackCounts?: number[];
   currentEndOfRoundStackIndex?: number;
   aliens: IPublicAlienState[];
   recentEvents: TGameEvent[];

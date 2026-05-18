@@ -48,6 +48,12 @@ const CORE_RANDOM_ALIENS: readonly EAlienType[] = [
   EAlienType.OUMUAMUA,
 ];
 
+const SPACE_AGENCY_RANDOM_ALIENS: readonly EAlienType[] = [
+  EAlienType.GLYPHIDS,
+  EAlienType.AMOEBA,
+  EAlienType.ARKHOS,
+];
+
 export class GameSetup {
   public static initialize(game: Game): void {
     GameSetup.assertSupportedSpaceAgencyOptions(game);
@@ -342,16 +348,7 @@ export class GameSetup {
       return;
     }
 
-    const unsupportedOptions: string[] = [];
-    if (options.newAlienSpecies) {
-      unsupportedOptions.push('newAlienSpecies');
-    }
-
-    if (unsupportedOptions.length > 0) {
-      throw new Error(
-        `Unsupported Space Agency option(s) for SA-6: ${unsupportedOptions.join(', ')}`,
-      );
-    }
+    return;
   }
 
   private static createMainDeckCardIds(game: Game): string[] {
@@ -373,7 +370,14 @@ export class GameSetup {
   }
 
   private static getSelectableAliens(game: Game): EAlienType[] {
-    return CORE_RANDOM_ALIENS.filter((alienType) =>
+    const candidates = [...CORE_RANDOM_ALIENS];
+    if (
+      game.options.spaceAgencyOptions?.enabled === true &&
+      game.options.spaceAgencyOptions.newAlienSpecies === true
+    ) {
+      candidates.push(...SPACE_AGENCY_RANDOM_ALIENS);
+    }
+    return candidates.filter((alienType) =>
       isAlienEnabled(game.options, alienType),
     );
   }

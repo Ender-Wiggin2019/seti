@@ -7,6 +7,7 @@ export type TEndOfRoundMode = 'idle' | 'select';
 
 interface IEndOfRoundStacksProps {
   stacks: IBaseCard[][];
+  stackCounts?: number[];
   currentRoundIndex: number;
   mode?: TEndOfRoundMode;
   onSelectCard?: (card: IBaseCard) => void;
@@ -14,12 +15,14 @@ interface IEndOfRoundStacksProps {
 
 export function EndOfRoundStacks({
   stacks,
+  stackCounts,
   currentRoundIndex,
   mode = 'idle',
   onSelectCard,
 }: IEndOfRoundStacksProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const currentStack = stacks[currentRoundIndex] ?? [];
+  const visibleStackCount = stackCounts?.length ?? stacks.length;
 
   return (
     <section className='w-full rounded-lg border border-surface-700/40 bg-surface-900/40 p-3'>
@@ -30,8 +33,9 @@ export function EndOfRoundStacks({
       </header>
 
       <div className='grid grid-cols-2 gap-2 sm:grid-cols-4'>
-        {Array.from({ length: 4 }, (_, index) => {
+        {Array.from({ length: visibleStackCount }, (_, index) => {
           const stackCards = stacks[index] ?? [];
+          const stackCardCount = stackCounts?.[index] ?? stackCards.length;
           const isCurrent = index === currentRoundIndex;
           return (
             <div
@@ -47,7 +51,7 @@ export function EndOfRoundStacks({
               </p>
               <div className='mt-1 h-16 rounded border border-surface-700/50 bg-[url(/assets/seti/cards/back_base.jpg)] bg-cover bg-center' />
               <p className='mt-1 font-mono text-[10px] text-text-300'>
-                {t('client.end_of_round.cards', { count: stackCards.length })}
+                {t('client.end_of_round.cards', { count: stackCardCount })}
               </p>
             </div>
           );

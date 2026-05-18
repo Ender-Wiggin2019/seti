@@ -322,6 +322,7 @@
       "players": "玩家数",
       "solo_difficulty": "难度",
       "alien_modules": "外星模块",
+      "space_agency": "太空机构",
       "undo": "撤销",
       "undo_allowed": "允许",
       "undo_disabled": "禁用",
@@ -393,6 +394,32 @@
         "USE_ORGANIZATION_POWER": "组织能力"
       }
     },
+    "space_agency_options": {
+      "organizations": "组织",
+      "quick_start_cards": "快速起步卡",
+      "new_deck": "新牌库",
+      "new_alien_species": "新外星物种"
+    },
+    "setup_choice": {
+      "title": "设置选择"
+    },
+    "organizations": {
+      "setup_badge": "初始",
+      "setup_summary": "设置：{{credit}} 金钱，{{energy}} 能量，{{card}} 卡牌，{{publicity}} 声望，{{data}} 数据，{{tuckIncome}} 张收入塞牌",
+      "names": {
+        "cosmos-strategy-group": "宇宙战略小组",
+        "deep-sky-survey": "深空巡测",
+        "fenwick-research-center": "芬威克研究中心",
+        "futurespan-institute": "未来跨度研究所",
+        "helion-assembly": "赫利昂议会",
+        "mission-relay": "任务中继",
+        "orbital-dynamics": "轨道动力",
+        "sentinel-probe-network": "哨兵探测网络",
+        "stratus-core": "层云核心",
+        "turing-systems": "图灵系统",
+        "xenolab": "异星实验室"
+      }
+    },
     "quick_start_card": {
       "short_label": "快速起步",
       "screen_reader_label": "快速起步卡 {{id}}：{{summary}}",
@@ -408,6 +435,9 @@
     "event_entry": {
       "action": "{{player}} 使用了 {{action}}",
       "rival_action": "{{player}} 翻开 {{card}} 并结算 {{action}}",
+      "arkhos_exploration_reward": "{{player}} 揭示 {{size}} Arkhos 探索 {{card}}",
+      "arkhos_security_card_used": "{{player}} 使用 {{card}} 结算 {{size}} Arkhos 奖励",
+      "arkhos_security_breached": "{{player}} 破解 {{trace}} Arkhos 安保 {{card}}（访问 {{access}}）",
       "free_action": "{{player}} 使用了免费行动 {{action}}",
       "input": "{{player}} 响应 {{response}}",
       "resource_change": "{{player}} {{direction}} {{amount}} {{resource}}",
@@ -505,7 +535,8 @@
         "mark-trace": "标记痕迹",
         "mark-any-trace": "标记任意痕迹",
         "play-danger-card": "打出危险牌",
-        "start-countdown": "开始倒计时"
+        "start-countdown": "开始倒计时",
+        "unlock-arkhos-security": "解锁 Arkhos 安保"
       },
       "candidate": {
         "paid": "付费",
@@ -624,7 +655,49 @@
         "oumuamua": "奥陌陌",
         "amoeba": "变形虫",
         "glyphids": "字形族",
+        "arkhos": "阿尔霍斯",
         "dummy": "占位体"
+      },
+      "card_zone": {
+        "title": "外星牌库",
+        "deck_count": "牌库 {{count}}",
+        "discard_count": "弃牌 {{count}}",
+        "preview_aria": "预览 {{card}}"
+      },
+      "glyphids": {
+        "bank_count": "库存 {{count}}",
+        "player_rows": "玩家行",
+        "no_glyph_rows": "无字形行",
+        "board_tokens": "板块标记",
+        "translation": "翻译",
+        "side": "面 {{side}}"
+      },
+      "amoeba": {
+        "organelles": "变形虫细胞器"
+      },
+      "arkhos": {
+        "exploration_counts": "牌库 {{deck}} / 储备 {{reserve}} / 弃牌 {{discard}}",
+        "security": "安保",
+        "access": "访问",
+        "no_security_cards": "无安保卡",
+        "no_access_records": "无访问记录",
+        "access_record": "等级 {{level}} / {{breached}}",
+        "resolved_rewards": "已揭示奖励",
+        "reward_image_alt": "{{player}} 的 Arkhos 探索 {{card}} {{size}}奖励",
+        "reward_size": {
+          "minor": "小",
+          "major": "大"
+        },
+        "zone": {
+          "front": "正面",
+          "hand": "手牌",
+          "used": "已用"
+        },
+        "trace": {
+          "red-trace": "红色",
+          "yellow-trace": "黄色",
+          "blue-trace": "蓝色"
+        }
       }
     },
     "planet_card": {

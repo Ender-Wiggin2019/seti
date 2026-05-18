@@ -23,6 +23,19 @@ describe('EndOfRoundStacks', () => {
     expect(screen.getAllByTestId(/^round-stack-/)).toHaveLength(4);
   });
 
+  it('renders redacted stack counts from public state', () => {
+    render(
+      <EndOfRoundStacks
+        stacks={[[], [], []]}
+        stackCounts={[3, 3, 3]}
+        currentRoundIndex={0}
+      />,
+    );
+
+    expect(screen.getAllByTestId(/^round-stack-/)).toHaveLength(3);
+    expect(screen.getByTestId('round-stack-0')).toHaveTextContent('3 cards');
+  });
+
   it('highlights current stack', () => {
     render(
       <EndOfRoundStacks stacks={[[], [], [], []]} currentRoundIndex={2} />,

@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { getTargetConnectionConfig, getTargetDatabaseName } from './dbAdmin';
+import { getTargetConnectionConfig, getTargetDatabaseName } from './dbAdmin.js';
 
 export interface IDatabaseClient {
   query(sql: string): Promise<unknown>;

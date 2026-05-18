@@ -35,12 +35,14 @@ import {
   type CentauriansAlienBoard,
   type ExertiansAlienBoard,
   type ITraceSlot,
+  isArkhosAlienBoard,
   isCentauriansAlienBoard,
   isExertiansAlienBoard,
   isMascamitesAlienBoard,
   isOumuamuaAlienBoard,
 } from '@/engine/alien/AlienBoard.js';
 import { AlienRegistry } from '@/engine/alien/AlienRegistry.js';
+import { ArkhosAlienPlugin } from '@/engine/alien/plugins/ArkhosAlienPlugin.js';
 import { MascamitesAlienPlugin } from '@/engine/alien/plugins/MascamitesAlienPlugin.js';
 import {
   ESolarSystemElementType,
@@ -100,6 +102,8 @@ export class RivalActionResolver {
         return this.resolveExertiansPlayDangerCard(game);
       case ERivalActionKind.START_COUNTDOWN:
         return this.resolveCentauriansStartCountdown(game, decisionDirection);
+      case ERivalActionKind.UNLOCK_ARKHOS_SECURITY:
+        return this.resolveArkhosUnlockSecurity(game);
       default:
         return false;
     }
@@ -952,6 +956,54 @@ export class RivalActionResolver {
     );
   }
 
+  private static resolveArkhosUnlockSecurity(game: Game): boolean {
+    const board = game.alienState.getBoardByType(EAlienType.ARKHOS);
+    if (!isArkhosAlienBoard(board) || !board.discovered) {
+      return false;
+    }
+    const rival = RivalSetup.getRivalPlayer(game);
+    const securityCard = board.securityCardsByPlayer[rival.id]?.find(
+      (card) => card.zone === 'front',
+    );
+    if (!securityCard) {
+      return false;
+    }
+    const overflowSlot = board.overflowSlots.find(
+      (slot) => slot.traceColor === securityCard.traceColor,
+    );
+    const plugin = AlienRegistry.get(EAlienType.ARKHOS);
+    if (!overflowSlot || !(plugin instanceof ArkhosAlienPlugin)) {
+      return false;
+    }
+
+    const traceColor = plugin.unlockRivalSecurityCard(game, rival);
+    if (!traceColor) {
+      return false;
+    }
+    const placed = board.placeTrace(
+      overflowSlot,
+      { playerId: rival.id },
+      traceColor,
+    );
+    if (!placed) {
+      return false;
+    }
+
+    RivalResourceResolver.applyRewards(
+      game,
+      overflowSlot.rewards as readonly TPublicSlotReward[],
+    );
+    this.incrementRivalTrace(rival, board.alienIndex, traceColor);
+    game.missionTracker.recordEvent({
+      type: EMissionEventType.TRACE_MARKED,
+      traceColor,
+    });
+    game.eventLog.append(
+      createTraceMarkedEvent(rival.id, traceColor, board.alienIndex, true),
+    );
+    return true;
+  }
+
   private static getTraceCandidates(
     game: Game,
     traceColor: ETrace,
@@ -984,7 +1036,59 @@ export class RivalActionResolver {
       }
     }
 
-    return candidates;
+    return this.applyArkhosTraceTieBreak(game, candidates);
+  }
+
+  private static applyArkhosTraceTieBreak(
+    game: Game,
+    candidates: Array<{
+      board: AlienBoard;
+      slot: ITraceSlot;
+      traceColor: ETrace;
+    }>,
+  ): Array<{ board: AlienBoard; slot: ITraceSlot; traceColor: ETrace }> {
+    const firstNonOverflow = candidates.find(
+      (candidate) => !candidate.slot.slotId.includes('overflow'),
+    );
+    if (!firstNonOverflow) {
+      return candidates;
+    }
+
+    const firstRank = this.getTraceCandidateRank(game, firstNonOverflow);
+    const arkhosTieIndex = candidates.findIndex(
+      (candidate) =>
+        candidate.board.alienType === EAlienType.ARKHOS &&
+        !candidate.slot.slotId.includes('overflow') &&
+        this.getTraceCandidateRank(game, candidate) === firstRank,
+    );
+    if (arkhosTieIndex <= 0) {
+      return candidates;
+    }
+
+    return [
+      candidates[arkhosTieIndex],
+      ...candidates.slice(0, arkhosTieIndex),
+      ...candidates.slice(arkhosTieIndex + 1),
+    ];
+  }
+
+  private static getTraceCandidateRank(
+    game: Game,
+    candidate: { board: AlienBoard; slot: ITraceSlot; traceColor: ETrace },
+  ): number {
+    const rival = RivalSetup.getRivalPlayer(game);
+    const plugin = AlienRegistry.get(candidate.board.alienType);
+    const availableNonOverflow = candidate.board
+      .getAvailableSlots(candidate.traceColor)
+      .filter(
+        (slot) =>
+          !slot.slotId.includes('overflow') &&
+          plugin?.canPlaceTraceOnSlot?.(game, rival, slot) !== false,
+      );
+    const rank = availableNonOverflow.findIndex(
+      (slot) => slot.slotId === candidate.slot.slotId,
+    );
+    return rank >= 0 ? rank : Number.POSITIVE_INFINITY;
   }
 
   private static incrementRivalTrace(

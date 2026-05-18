@@ -18,6 +18,7 @@ describe('protocol options', () => {
       [EAlienType.OUMUAMUA]: true,
       [EAlienType.GLYPHIDS]: false,
       [EAlienType.AMOEBA]: false,
+      [EAlienType.ARKHOS]: false,
       [EAlienType.DUMMY]: false,
     });
   });
@@ -219,5 +220,28 @@ describe('protocol options', () => {
 
     expect(options.spaceAgencyOptions?.newDeck).toBe(true);
     expect(options.spaceAgencyOptions?.agencies).toBe(false);
+  });
+
+  it('accepts Glyphids, Amoeba, and Arkhos only when the Space Agency new-alien module is enabled', () => {
+    const options = createGameOptions({
+      expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+      alienModulesEnabled: {
+        ...DEFAULT_ALIEN_MODULES_ENABLED,
+        [EAlienType.GLYPHIDS]: true,
+        [EAlienType.AMOEBA]: true,
+        [EAlienType.ARKHOS]: true,
+      },
+      spaceAgencyOptions: {
+        enabled: true,
+        agencies: false,
+        startResourceCards: false,
+        newDeck: false,
+        newAlienSpecies: true,
+      },
+    });
+
+    expect(options.alienModulesEnabled[EAlienType.GLYPHIDS]).toBe(true);
+    expect(options.alienModulesEnabled[EAlienType.AMOEBA]).toBe(true);
+    expect(options.alienModulesEnabled[EAlienType.ARKHOS]).toBe(true);
   });
 });

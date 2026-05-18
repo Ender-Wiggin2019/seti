@@ -1,6 +1,6 @@
 import { RIVAL_SPECIES_ACTION_CARD_BY_ALIEN } from '@seti/common/constant/solo';
 import { rivalActionCards } from '@seti/common/data/rivalActionCards';
-import { EPhase } from '@seti/common/types/protocol/enums';
+import { EAlienType, EPhase } from '@seti/common/types/protocol/enums';
 import {
   ERivalActionKind,
   type IRivalActionCandidateDefinition,
@@ -18,6 +18,9 @@ const RIVAL_ACTION_CARD_BY_ID = new Map<
   TRivalActionCardId,
   IRivalActionCardDefinition
 >(rivalActionCards.map((card) => [card.id, card]));
+const RIVAL_SPECIES_ACTION_ALIENS = new Set<EAlienType>(
+  Object.keys(RIVAL_SPECIES_ACTION_CARD_BY_ALIEN).map(Number) as EAlienType[],
+);
 
 export type TRivalTurnResult =
   | {
@@ -143,11 +146,13 @@ export class RivalTurnController {
       return null;
     }
 
-    const replacementCardId =
-      RIVAL_SPECIES_ACTION_CARD_BY_ALIEN[board.alienType];
-    if (!replacementCardId) {
+    if (!RIVAL_SPECIES_ACTION_ALIENS.has(board.alienType)) {
       return null;
     }
+    const replacementCardId =
+      RIVAL_SPECIES_ACTION_CARD_BY_ALIEN[
+        board.alienType as keyof typeof RIVAL_SPECIES_ACTION_CARD_BY_ALIEN
+      ];
 
     const replacementCard = RIVAL_ACTION_CARD_BY_ID.get(replacementCardId);
     if (!replacementCard) {

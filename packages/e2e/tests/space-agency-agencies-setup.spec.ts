@@ -1,4 +1,4 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Page, type TestInfo, test } from '@playwright/test';
 import {
   createRoomByUi,
   createUser,
@@ -34,6 +34,19 @@ async function clickRoomOptionSwitch(
     checked ? 'true' : 'false',
     { timeout: 10_000 },
   );
+}
+
+async function attachScreenshot(
+  page: Page,
+  testInfo: TestInfo,
+  name: string,
+): Promise<void> {
+  const screenshotPath = testInfo.outputPath(`${name}.png`);
+  await page.screenshot({ path: screenshotPath, fullPage: true });
+  await testInfo.attach(name, {
+    path: screenshotPath,
+    contentType: 'image/png',
+  });
 }
 
 async function chooseFirstOrganization(page: Page): Promise<string> {
@@ -73,7 +86,7 @@ async function chooseFirstQuickStartCards(
 test('@real-ui Space Agency agencies + Quick Start setup enters game', async ({
   browser,
   request,
-}) => {
+}, testInfo) => {
   test.setTimeout(240_000);
   await waitForServerReady(request);
 
@@ -106,6 +119,11 @@ test('@real-ui Space Agency agencies + Quick Start setup enters game', async ({
       'space-agency-quick-start',
       true,
     );
+    await attachScreenshot(
+      hostPage,
+      testInfo,
+      'space-agency-agencies-01-room-options',
+    );
 
     await registerByUi(guestPage, guest);
     await joinRoomByUi(guestPage, roomId);
@@ -120,6 +138,16 @@ test('@real-ui Space Agency agencies + Quick Start setup enters game', async ({
     await expect(guestPage.getByTestId('setup-choice-shell')).toBeVisible({
       timeout: 15_000,
     });
+    await attachScreenshot(
+      hostPage,
+      testInfo,
+      'space-agency-agencies-02-host-setup-choice',
+    );
+    await attachScreenshot(
+      guestPage,
+      testInfo,
+      'space-agency-agencies-02-guest-setup-choice',
+    );
 
     const hostOrganizationId = await chooseFirstOrganization(hostPage);
     const hostQuickStartIds = await chooseFirstQuickStartCards(hostPage);
@@ -138,6 +166,16 @@ test('@real-ui Space Agency agencies + Quick Start setup enters game', async ({
     await expect(
       guestPage.getByTestId(`organization-badge-${guestOrganizationId}`),
     ).toBeVisible({ timeout: 15_000 });
+    await attachScreenshot(
+      hostPage,
+      testInfo,
+      'space-agency-agencies-03-host-organization-surface',
+    );
+    await attachScreenshot(
+      guestPage,
+      testInfo,
+      'space-agency-agencies-03-guest-organization-surface',
+    );
     for (const cardId of hostQuickStartIds) {
       await expect(
         hostPage.getByTestId(`quick-start-card-thumbnail-${cardId}`),

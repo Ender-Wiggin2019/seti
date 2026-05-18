@@ -28,7 +28,8 @@ export enum ECoreAlienType {
   OUMUAMUA = 5,
   AMOEBA = 6,
   GLYPHIDS = 7,
-  DUMMY = 8,
+  ARKHOS = 8,
+  DUMMY = 9,
 }
 
 const CORE_ALIEN_TYPES = [
@@ -39,6 +40,7 @@ const CORE_ALIEN_TYPES = [
   ECoreAlienType.OUMUAMUA,
   ECoreAlienType.AMOEBA,
   ECoreAlienType.GLYPHIDS,
+  ECoreAlienType.ARKHOS,
   ECoreAlienType.DUMMY,
 ] as const;
 
@@ -107,14 +109,16 @@ export async function createRoomByUiWithDetails(
     await selectAlienPoolByUi(page, options.alienTypes);
   }
 
-  const routePattern = '**/lobby/rooms';
+  const routePattern = '**/lobby/rooms**';
   const needsRoomCreateOverride = options.seed !== undefined;
+  let roomCreateRouteHit = false;
   const roomCreateRoute = async (route: Route) => {
     if (route.request().method() !== 'POST') {
       await route.continue();
       return;
     }
 
+    roomCreateRouteHit = true;
     const body = JSON.parse(route.request().postData() ?? '{}') as {
       seed?: string;
     };
@@ -127,7 +131,7 @@ export async function createRoomByUiWithDetails(
   };
 
   if (needsRoomCreateOverride) {
-    await page.route(routePattern, roomCreateRoute);
+    await page.context().route(routePattern, roomCreateRoute);
   }
 
   const response = await (async (): Promise<Response> => {
@@ -148,11 +152,14 @@ export async function createRoomByUiWithDetails(
       return await responsePromise;
     } finally {
       if (needsRoomCreateOverride) {
-        await page.unroute(routePattern, roomCreateRoute);
+        await page.context().unroute(routePattern, roomCreateRoute);
       }
     }
   })();
   expect(response.ok()).toBe(true);
+  if (needsRoomCreateOverride) {
+    expect(roomCreateRouteHit).toBe(true);
+  }
 
   const body = (await response.json()) as { id?: string };
   expect(body.id).toBeTruthy();

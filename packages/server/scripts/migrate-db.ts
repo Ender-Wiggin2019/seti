@@ -1,4 +1,4 @@
-import { runMigrations } from './lib/migrateDatabase';
+import { runMigrations } from './lib/migrateDatabase.js';
 
 async function main(): Promise<void> {
   const targetDatabase = await runMigrations();

@@ -1,10 +1,16 @@
 import { EOrganizationId } from '@seti/common/types/organization';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SelectOptionInput } from '@/features/input/SelectOptionInput';
+import i18n from '@/i18n';
 import { EPlayerInputType, ESetupChoiceStepKind } from '@/types/re-exports';
 
 describe('SelectOptionInput', () => {
+  afterEach(async () => {
+    cleanup();
+    await i18n.changeLanguage('en');
+  });
+
   it('renders options and submits selected option id', () => {
     const onSubmit = vi.fn();
     render(
@@ -70,6 +76,42 @@ describe('SelectOptionInput', () => {
       type: EPlayerInputType.OPTION,
       optionId: EOrganizationId.ORBITAL_DYNAMICS,
     });
+  });
+
+  it('localizes organization setup choice names and status copy', async () => {
+    await i18n.changeLanguage('zh-CN');
+
+    render(
+      <SelectOptionInput
+        model={{
+          inputId: 'organization-choice',
+          type: EPlayerInputType.OPTION,
+          title: 'Choose organization',
+          setupChoice: {
+            kind: ESetupChoiceStepKind.ORGANIZATION,
+            stepIndex: 0,
+            totalSteps: 2,
+            minSelections: 1,
+            maxSelections: 1,
+          },
+          options: [
+            {
+              id: EOrganizationId.ORBITAL_DYNAMICS,
+              label: 'Orbital Dynamics',
+            },
+          ],
+        }}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('轨道动力')).toBeInTheDocument();
+    expect(screen.getByText('初始')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /设置：2 金钱，2 能量，0 卡牌，3 声望，0 数据，2 张收入塞牌/,
+      ),
+    ).toBeInTheDocument();
   });
 
   it('renders Quick Start setup choices with card effects and same OPTION response', () => {

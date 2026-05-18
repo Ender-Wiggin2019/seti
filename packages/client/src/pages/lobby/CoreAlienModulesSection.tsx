@@ -1,11 +1,13 @@
 import { CORE_RANDOM_ALIEN_TYPES } from '@seti/common/constant/alienLobby';
-import { EAlienMap, type EAlienType } from '@seti/common/types/BaseCard';
+import type { EAlienType } from '@seti/common/types/BaseCard';
 import type {
   IGameOptions,
   IGameOptionsPatch,
 } from '@seti/common/types/protocol/options';
+import { useTranslation } from 'react-i18next';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { formatAlienLabel, getAlienTypeKey } from '@/lib/alien';
 
 interface ICoreAlienModulesSectionProps {
   options: IGameOptions;
@@ -18,6 +20,7 @@ export function CoreAlienModulesSection({
   disabled,
   onChange,
 }: ICoreAlienModulesSectionProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const selectedCoreCount = CORE_RANDOM_ALIEN_TYPES.filter(
     (alienType) => options.alienModulesEnabled[alienType] !== false,
   ).length;
@@ -36,7 +39,10 @@ export function CoreAlienModulesSection({
       {CORE_RANDOM_ALIEN_TYPES.map((alienType) => {
         const checked = options.alienModulesEnabled[alienType] !== false;
         const locked = checked && selectedCoreCount <= 2;
-        const label = EAlienMap[alienType];
+        const fallbackLabel = formatAlienLabel(alienType);
+        const label = t(`client.alien_board.types.${getAlienTypeKey(alienType)}`, {
+          defaultValue: fallbackLabel,
+        });
 
         return (
           <div
@@ -51,7 +57,7 @@ export function CoreAlienModulesSection({
             </Label>
             <Switch
               id={`game-setting-alien-${alienType}`}
-              aria-label={label[0].toUpperCase() + label.slice(1)}
+              aria-label={label}
               checked={checked}
               disabled={disabled || locked}
               onCheckedChange={(nextChecked) =>

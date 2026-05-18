@@ -61,8 +61,8 @@ Every serial task below is intended to be a standalone implementation unit.
 | [x] | SA-5R | Organization architecture refactor | Organization runtime matches corporation-style class/registry extensibility before more powers are added. |
 | [x] | SA-5 | Complex organizations + Quick Start | All 11 organizations and SR quick start cards resolve. |
 | [x] | SA-6 | New Deck + Signal Token | SA cards are option-gated; signal-token scan branch works. |
-| [ ] | SA-7 | Glyphids + Amoeba | Existing SA alien cards become option-gated species plugins. |
-| [ ] | SA-8 | Arkhos | Arkhos data, cards, board, and plugin are added. |
+| [x] | SA-7 | Glyphids + Amoeba | Existing SA alien cards become option-gated species plugins. |
+| [ ] | SA-8 | Arkhos | Arkhos data, cards, board, and plugin are added; exact exploration reward execution still needs the source reward table. |
 | [ ] | SA-9 | Client integration | Full SA game UI is data-driven and localized. |
 | [ ] | SA-10 | E2E/release audit | Real flows, docs, and full regression evidence are complete. |
 
@@ -475,6 +475,18 @@ Exit criteria:
 - Arkhos cards, board state, projection, and client board are all wired.
 - Glyphids/Amoeba behavior from SA-7 remains green.
 
+Audit note 2026-05-17:
+
+- Arkhos option gating, board state, security-card lifecycle, serialization, projection, and client rendering are implemented and focused tests pass.
+- Exact Arkhos exploration reward payloads are not complete: current server state records revealed exploration cards with opaque unmapped `effectId`s, but does not execute the concrete minor/major rewards.
+- `docs/arch/spaceAgency/SE2 aliens aid EN 14.pdf` documents the deck/reveal/reset mechanics but does not enumerate all nine reward payloads in text.
+- Local `frontend-reference` code includes `small_AI`/`big_AI` execution and parses `effectSmall`/`effectBig`, but the checked-in source does not include the deck data table. Public assets at `https://storage.googleapis.com/cgo-deck-assets/dummy/prod/46417/assets/AI_01.jpg` through `AI_09.jpg` expose all nine card faces, but several icon semantics are still ambiguous without the structured `effectSmall`/`effectBig` table. Do not mark SA-8 complete until those payloads are mapped to executable effects and covered by failing-then-passing tests.
+- Additional source recovery on 2026-05-17 found no structured payload table: the saved reference table HTML is only the SPA shell, CGO table/project/deck API endpoints return 403 `No token provided!`, and GCS under `dummy/prod/46417/` exposes only the nine `assets/AI_*.jpg` files; common metadata filenames return 404.
+- Follow-up on 2026-05-17 added Arkhos solo/rival coverage for the rule notes in `docs/arch/aliens/arkhos/rule.md`: rival Arkhos discovery/security-card setup, Arkhos reward-to-progress conversion, Arkhos alien action card breach behavior via `S.21`, generic rival overflow non-breach, inaccessible Arkhos space filtering, and Arkhos trace-choice priority. Focused common/server tests cover these branches.
+- A later 2026-05-17 recheck inspected the recovered `AI_01.jpg` through `AI_09.jpg` and `sheet.jpg` assets directly. The card faces are visible, and simple resource icons match existing project icon assets, but several executable semantics remain ambiguous without the structured `effectSmall`/`effectBig` table or an official payload legend: card-selection/unknown-card icons, multi-icon option groups, and launch-with-ignored-probe-limit payloads cannot be converted to server effects with 100% factual confidence from the images alone. Exact exploration reward execution must remain open rather than being implemented from image-based guesses.
+- The rendered reference table capture in `docs/frontend-demo.html` also does not contain the structured deck data: it has rendered `__card-aiTile` nodes and event log text, but no `deckData`, `effectSmall`, or `effectBig` fields. The known table id `bDbebSnUY` is still inaccessible through `/api/table-open/bDbebSnUY` without a token.
+- Official CGE press assets were rechecked through `https://www.cge.as/se2-forpress` on 2026-05-17. The downloaded `seti-space-agencies-artworks.zip` contains only PNG artwork/rulebook renders and no structured Arkhos deck/effect payload file, so it does not unblock human exploration reward execution.
+
 ---
 
 ## SA-9: Client Integration, I18n, And UX Completion
@@ -515,6 +527,12 @@ Exit criteria:
 
 - A user can configure SA in lobby and complete setup through real UI.
 - UI state is derived from server/public game state.
+
+Audit note 2026-05-17:
+
+- Organization/alien-facing SA-9 client integration is implemented for the current server surface: lobby SA options, core alien module toggles, setup-choice shell, organization setup-choice names/status/summary, organization badges/powers, Glyphids/Amoeba/Arkhos board renderers, Arkhos resolved exploration reward history, and Arkhos structured event-log descriptions are localized through common/i18n and covered by focused client tests.
+- Arkhos exploration reward history uses the official `AI_01.jpg` through `AI_09.jpg` CGO/GCS card-face assets and server-projected `resolvedExplorationRewards`; it does not infer or execute the missing human reward payloads.
+- Residual SA-9 scope remains for unrelated main-deck preview/confirm polish and a full release audit. Exact Arkhos human exploration reward execution remains blocked under SA-8 until a structured `effectSmall`/`effectBig` source is available.
 
 ---
 

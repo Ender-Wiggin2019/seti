@@ -1,6 +1,12 @@
 import { createGenericCard } from '../base/GenericCards.js';
 import type { CardRegistry } from '../CardRegistry.js';
 import { loadCardData } from '../loadCardData.js';
+import { SaEt1GlyphidsCard } from '../spaceAgency/SaEt1GlyphidsCard.js';
+import { SaEt9GlyphidsCard } from '../spaceAgency/SaEt9GlyphidsCard.js';
+import { SaEt11BiosignatureScreeningCard } from '../spaceAgency/SaEt11BiosignatureScreeningCard.js';
+import { SaEt12PhysicalCharacterizationCard } from '../spaceAgency/SaEt12PhysicalCharacterizationCard.js';
+import { SaEt13GenomeCharacterizationCard } from '../spaceAgency/SaEt13GenomeCharacterizationCard.js';
+import { SaEt14BreakthroughTheoryCard } from '../spaceAgency/SaEt14BreakthroughTheoryCard.js';
 
 function g(registry: CardRegistry, id: string): void {
   registry.register(id, () => createGenericCard(loadCardData(id)));
@@ -17,10 +23,8 @@ export function registerSpaceAgencyAliens(registry: CardRegistry): void {
   // SA.ET.1-10: glyphid alien species mechanic
   // ============================================================
 
-  // Glyph immediate + endgame. Glyph resource accounting is deferred until
-  // Glyphids are enabled in the game setup flow.
-  g(registry, 'SA.ET.1'); // Glyphids               | glyph-yellow, glyph-green OR glyph-blue, glyph-purple, EG
-  g(registry, 'SA.ET.9'); // Glyphids               | glyph-yellow, glyph-purple OR glyph-blue, glyph-orange, EG
+  registry.register('SA.ET.1', () => new SaEt1GlyphidsCard());
+  registry.register('SA.ET.9', () => new SaEt9GlyphidsCard());
 
   // Glyph pattern matching (pure DESC)
   g(registry, 'SA.ET.2'); // Glyphids               | DESC(glyph patterns)
@@ -42,14 +46,11 @@ export function registerSpaceAgencyAliens(registry: CardRegistry): void {
   // SA.ET.11-20: amoeba alien species mechanic
   // ============================================================
 
-  // Organelle + endgame. Organelle resource accounting is deferred until
-  // Amoeba is enabled in the game setup flow.
-  g(registry, 'SA.ET.11'); // Biosignature Screening | CARD_ANY, organelle-red, EG
-  g(registry, 'SA.ET.12'); // Physical Characterize  | CARD_ANY, organelle-yellow, EG
-  g(registry, 'SA.ET.13'); // Genome Characterize    | CARD_ANY, organelle-blue, EG
+  registry.register('SA.ET.11', () => new SaEt11BiosignatureScreeningCard());
+  registry.register('SA.ET.12', () => new SaEt12PhysicalCharacterizationCard());
+  registry.register('SA.ET.13', () => new SaEt13GenomeCharacterizationCard());
 
-  // Organelle quick mission
-  g(registry, 'SA.ET.14'); // Breakthrough Theory    | PUBLICITY(3), QM
+  registry.register('SA.ET.14', () => new SaEt14BreakthroughTheoryCard());
 
   // Organelle full missions. Organelle resource accounting is deferred until
   // Amoeba is enabled in the game setup flow.

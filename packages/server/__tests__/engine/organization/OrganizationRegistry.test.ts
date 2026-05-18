@@ -1,3 +1,4 @@
+import { ORGANIZATIONS_BY_ID } from '@seti/common/data/organizations';
 import { EOrganizationId } from '@seti/common/types/organization';
 import { OrganizationRegistry } from '@/engine/organization/OrganizationRegistry.js';
 
@@ -34,6 +35,21 @@ describe('OrganizationRegistry', () => {
       expect(OrganizationRegistry.create(organizationId).constructor.name).toBe(
         expectedClassNames[organizationId],
       );
+    }
+  });
+
+  it('keeps common complexity metadata aligned with implemented runtime behavior', () => {
+    for (const organizationId of Object.values(EOrganizationId)) {
+      const organization = OrganizationRegistry.create(organizationId);
+      const hasRuntimeBehavior =
+        organization.hasImplementedPower() ||
+        organization.hasImplementedMainAction();
+
+      if (hasRuntimeBehavior) {
+        expect(ORGANIZATIONS_BY_ID[organizationId].complexity).not.toBe(
+          'setup-only',
+        );
+      }
     }
   });
 

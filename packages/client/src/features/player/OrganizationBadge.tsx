@@ -1,6 +1,7 @@
-import { ORGANIZATIONS_BY_ID } from '@seti/common/data/organizations';
 import type { EOrganizationId } from '@seti/common/types/organization';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
+import { getOrganizationDisplayName } from '@/lib/organizationText';
 
 interface IOrganizationBadgeProps {
   organizationId: EOrganizationId;
@@ -11,7 +12,7 @@ export function OrganizationBadge({
   organizationId,
   className,
 }: IOrganizationBadgeProps): React.JSX.Element {
-  const organization = ORGANIZATIONS_BY_ID[organizationId];
+  const { t } = useTranslation('common');
   return (
     <span
       className={cn(
@@ -20,7 +21,7 @@ export function OrganizationBadge({
       )}
       data-testid={`organization-badge-${organizationId}`}
     >
-      {organization?.name ?? organizationId}
+      {getOrganizationDisplayName(t, organizationId)}
     </span>
   );
 }

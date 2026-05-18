@@ -3,7 +3,7 @@ import {
   getAvailableFreeActions,
   getAvailableMainActions,
 } from '@seti/common/rules';
-import { EResource, ESector } from '@seti/common/types/element';
+import { EAlienIcon, EResource, ESector } from '@seti/common/types/element';
 import { EOrganizationId } from '@seti/common/types/organization';
 import {
   EAlienType,
@@ -12,7 +12,10 @@ import {
   EPlanet,
   ETrace,
 } from '@seti/common/types/protocol/enums';
-import { EExpansion } from '@seti/common/types/protocol/options';
+import {
+  createGameOptions,
+  EExpansion,
+} from '@seti/common/types/protocol/options';
 import {
   EPlayerInputType,
   ESetupChoiceStepKind,
@@ -20,9 +23,12 @@ import {
 } from '@seti/common/types/protocol/playerInput';
 import { ETechId } from '@seti/common/types/tech';
 import {
+  isAmoebaAlienBoard,
   isAnomaliesAlienBoard,
+  isArkhosAlienBoard,
   isCentauriansAlienBoard,
   isExertiansAlienBoard,
+  isGlyphidsAlienBoard,
   isMascamitesAlienBoard,
   isOumuamuaAlienBoard,
 } from '@/engine/alien/AlienBoard.js';
@@ -353,6 +359,7 @@ describe('GameSerializer', () => {
     const publicState = projectGameState(game, 'p1');
 
     expect(publicState.endOfRoundStacks).toBeUndefined();
+    expect(publicState.endOfRoundStackCounts).toEqual([3, 3, 3, 3]);
     expect(publicState.currentEndOfRoundStackIndex).toBe(
       game.roundRotationReminderIndex,
     );
@@ -364,6 +371,34 @@ describe('GameSerializer', () => {
     expect(model.type).toBe(EPlayerInputType.END_OF_ROUND);
     expect(model.cards).toHaveLength(3);
     expect(projectGameState(game, 'p2').endOfRoundStacks).toBeUndefined();
+  });
+
+  it('projects Space Agency end-of-round stack counts without contents', () => {
+    const game = Game.create(
+      [
+        { id: 'p1', name: 'Alice', color: 'red', seatIndex: 0 },
+        { id: 'p2', name: 'Bob', color: 'blue', seatIndex: 1 },
+      ],
+      createGameOptions({
+        playerCount: 2,
+        expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+        spaceAgencyOptions: {
+          enabled: true,
+          agencies: true,
+          startResourceCards: true,
+          newDeck: false,
+          newAlienSpecies: false,
+        },
+      }),
+      'serializer-space-agency-stacks',
+      'game-serializer-space-agency-stacks',
+    );
+
+    const publicState = projectGameState(game, 'p1');
+
+    expect(game.endOfRoundStacks).toHaveLength(3);
+    expect(publicState.endOfRoundStacks).toBeUndefined();
+    expect(publicState.endOfRoundStackCounts).toEqual([3, 3, 3]);
   });
 
   it('projects orbit and land as available when a probe is on a planet', () => {
@@ -638,6 +673,186 @@ describe('GameSerializer', () => {
         markerPlayerIds: ['p1'],
       },
     });
+  });
+
+  it('serializes and projects discovered Glyphids board state', () => {
+    const game = createTestGame();
+    game.hiddenAliens = [EAlienType.GLYPHIDS];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.boards[0];
+    if (!isGlyphidsAlienBoard(board)) {
+      throw new Error('expected Glyphids board');
+    }
+    board.discovered = true;
+    board.glyphRows = {
+      p1: [[EAlienIcon.GLYPH_RED, EAlienIcon.GLYPH_BLUE]],
+    };
+    board.glyphTokenBank = [EAlienIcon.GLYPH_GREEN, EAlienIcon.GLYPH_GREEN];
+    board.boardTokens = [
+      { position: 0, glyph: EAlienIcon.GLYPH_RED },
+      { position: 3, glyph: EAlienIcon.GLYPH_BLUE },
+    ];
+    board.translationRows = [
+      {
+        rowId: 'glyphids-translation-level-1',
+        level: 1,
+        glyphs: [EAlienIcon.GLYPH_RED, null, null, null],
+        side: 1,
+      },
+    ];
+
+    const dto = serializeGame(game, 7);
+    const publicState = projectGameState(game, 'p1');
+    const publicAlien = publicState.aliens[0];
+
+    expect(dto.alienState.aliens[0].glyphidsGlyphRows).toEqual({
+      p1: [[EAlienIcon.GLYPH_RED, EAlienIcon.GLYPH_BLUE]],
+    });
+    expect(dto.alienState.aliens[0].glyphidsBoardTokens).toEqual([
+      { position: 0, glyph: EAlienIcon.GLYPH_RED },
+      { position: 3, glyph: EAlienIcon.GLYPH_BLUE },
+    ]);
+    if (!publicAlien.board || publicAlien.board.type !== 'glyphids') {
+      throw new Error('expected Glyphids public board');
+    }
+    expect(publicAlien.board.glyphRows).toEqual({
+      p1: [[EAlienIcon.GLYPH_RED, EAlienIcon.GLYPH_BLUE]],
+    });
+    expect(publicAlien.board.glyphTokenBankSize).toBe(2);
+    expect(publicAlien.board.boardTokens).toEqual([
+      { position: 0, glyph: EAlienIcon.GLYPH_RED },
+      { position: 3, glyph: EAlienIcon.GLYPH_BLUE },
+    ]);
+    expect(publicAlien.board.translationRows).toEqual([
+      {
+        rowId: 'glyphids-translation-level-1',
+        level: 1,
+        glyphs: [EAlienIcon.GLYPH_RED, null, null, null],
+        side: 1,
+      },
+    ]);
+  });
+
+  it('serializes and projects discovered Amoeba board state', () => {
+    const game = createTestGame();
+    game.hiddenAliens = [EAlienType.AMOEBA];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.boards[0];
+    if (!isAmoebaAlienBoard(board)) {
+      throw new Error('expected Amoeba board');
+    }
+    board.discovered = true;
+    board.organelles = [
+      {
+        tokenId: 'amoeba-organelle-0',
+        color: EAlienIcon.ORGANELLE_RED,
+        position: 8,
+      },
+    ];
+    board.addTraceSlot({
+      slotId: 'alien-0-amoeba-red-0',
+      alienIndex: board.alienIndex,
+      traceColor: ETrace.RED,
+      maxOccupants: 1,
+      rewards: [{ type: 'VP', amount: 3 }],
+      isDiscovery: false,
+    });
+
+    const dto = serializeGame(game, 7);
+    const publicState = projectGameState(game, 'p1');
+    const publicAlien = publicState.aliens[0];
+
+    expect(dto.alienState.aliens[0].amoebaOrganelles).toEqual([
+      {
+        tokenId: 'amoeba-organelle-0',
+        color: EAlienIcon.ORGANELLE_RED,
+        position: 8,
+      },
+    ]);
+    if (!publicAlien.board || publicAlien.board.type !== 'amoeba') {
+      throw new Error('expected Amoeba public board');
+    }
+    expect(publicAlien.board.organelles).toEqual([
+      {
+        tokenId: 'amoeba-organelle-0',
+        color: EAlienIcon.ORGANELLE_RED,
+        position: 8,
+      },
+    ]);
+    expect(publicAlien.board.traceSlots).toEqual([
+      expect.objectContaining({ slotId: 'alien-0-amoeba-red-0' }),
+    ]);
+  });
+
+  it('serializes and projects discovered Arkhos board state', () => {
+    const game = createTestGame();
+    game.hiddenAliens = [EAlienType.ARKHOS];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.boards[0];
+    if (!isArkhosAlienBoard(board)) {
+      throw new Error('expected Arkhos board');
+    }
+    board.discovered = true;
+    board.explorationDrawPile = ['ARKHOS.EXPLORATION.1'];
+    board.explorationReservePile = ['ARKHOS.EXPLORATION.2'];
+    board.explorationDiscardPile = ['ARKHOS.EXPLORATION.3'];
+    board.securityCardsByPlayer = {
+      p1: [{ cardId: 'AIcard01', traceColor: ETrace.RED, zone: 'hand' }],
+    };
+    board.accessByPlayer = {
+      p1: { breachedCount: 1, accessLevel: 1 },
+    };
+    board.resolvedExplorationRewards = [
+      {
+        playerId: 'p1',
+        cardId: 'ARKHOS.EXPLORATION.3',
+        size: 'minor',
+        effectId: 'ARKHOS_EXPLORATION_03_MINOR_UNMAPPED',
+      },
+    ];
+    board.addTraceSlot({
+      slotId: 'alien-0-arkhos-level-1-0-red-trace',
+      alienIndex: board.alienIndex,
+      traceColor: ETrace.RED,
+      maxOccupants: 1,
+      rewards: [{ type: 'CUSTOM', effectId: 'ARKHOS_LEVEL_1_EXPLORATION' }],
+      isDiscovery: false,
+    });
+
+    const dto = serializeGame(game, 7);
+    const publicState = projectGameState(game, 'p1');
+    const publicAlien = publicState.aliens[0];
+
+    expect(dto.alienState.aliens[0].arkhosExplorationDrawPile).toEqual([
+      'ARKHOS.EXPLORATION.1',
+    ]);
+    if (!publicAlien.board || publicAlien.board.type !== 'arkhos') {
+      throw new Error('expected Arkhos public board');
+    }
+    expect(publicAlien.board).toMatchObject({
+      explorationDeckSize: 1,
+      explorationReserveSize: 1,
+      explorationDiscardSize: 1,
+      securityCardsByPlayer: {
+        p1: [{ cardId: 'AIcard01', traceColor: ETrace.RED, zone: 'hand' }],
+      },
+      accessByPlayer: {
+        p1: { breachedCount: 1, accessLevel: 1 },
+      },
+      resolvedExplorationRewards: [
+        {
+          playerId: 'p1',
+          cardId: 'ARKHOS.EXPLORATION.3',
+          size: 'minor',
+          effectId: 'ARKHOS_EXPLORATION_03_MINOR_UNMAPPED',
+        },
+      ],
+    });
+    expect(publicAlien.board.traceSlots).toEqual([
+      expect.objectContaining({
+        slotId: 'alien-0-arkhos-level-1-0-red-trace',
+      }),
+    ]);
   });
 
   it('projects Mascamites capsules as generic solar-system movable pieces', () => {

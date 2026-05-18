@@ -22,6 +22,9 @@ interface IEventEntryProps {
   index: number;
 }
 
+type TTranslate = (key: string, options?: Record<string, unknown>) => string;
+type TActionEvent = Extract<TGameEvent, { type: EGameEventType.ACTION }>;
+
 /**
  * Small glyph component per event type. These are drawn, not emoji:
  * keeps the log reading like an instrument trace instead of chat.
@@ -159,7 +162,7 @@ function getPlayerName(
 function getEventDescription(
   event: TGameEvent,
   playerNames: Record<string, string>,
-  t: (key: string, options?: Record<string, unknown>) => string,
+  t: TTranslate,
 ): React.ReactNode {
   switch (event.type) {
     case EGameEventType.ACTION: {
@@ -177,6 +180,28 @@ function getEventDescription(
       }
       const actionName =
         typeof event.action === 'string' ? event.action : event.action.type;
+      switch (actionName) {
+        case 'ARKHOS_EXPLORATION_REWARD_REVEALED':
+          return getArkhosExplorationRewardEventDescription(
+            event,
+            playerNames,
+            t,
+          );
+        case 'ARKHOS_SECURITY_CARD_USED':
+          return getArkhosSecurityCardUsedEventDescription(
+            event,
+            playerNames,
+            t,
+          );
+        case 'ARKHOS_SECURITY_BREACHED':
+          return getArkhosSecurityBreachedEventDescription(
+            event,
+            playerNames,
+            t,
+          );
+        default:
+          break;
+      }
       const actionLabel = formatMainActionName(actionName, t);
       const cardDetails = getCardDetails(event);
       if (cardDetails) {
@@ -254,6 +279,72 @@ function getEventDescription(
     default:
       return t('client.event_entry.unknown');
   }
+}
+
+function getArkhosExplorationRewardEventDescription(
+  event: TActionEvent,
+  playerNames: Record<string, string>,
+  t: TTranslate,
+): string {
+  const details = event.details ?? {};
+  const cardId = typeof details.cardId === 'string' ? details.cardId : '?';
+  const player = getPlayerName(event.playerId, playerNames);
+  const size = typeof details.size === 'string' ? details.size : 'minor';
+  return t('client.event_entry.arkhos_exploration_reward', {
+    player,
+    card: cardId,
+    size: formatArkhosRewardSize(size, t),
+  });
+}
+
+function getArkhosSecurityCardUsedEventDescription(
+  event: TActionEvent,
+  playerNames: Record<string, string>,
+  t: TTranslate,
+): string {
+  const details = event.details ?? {};
+  const cardId = typeof details.cardId === 'string' ? details.cardId : '?';
+  const player = getPlayerName(event.playerId, playerNames);
+  const size =
+    typeof details.rewardSize === 'string' ? details.rewardSize : 'minor';
+  return t('client.event_entry.arkhos_security_card_used', {
+    player,
+    card: cardId,
+    size: formatArkhosRewardSize(size, t),
+  });
+}
+
+function getArkhosSecurityBreachedEventDescription(
+  event: TActionEvent,
+  playerNames: Record<string, string>,
+  t: TTranslate,
+): string {
+  const details = event.details ?? {};
+  const cardId = typeof details.cardId === 'string' ? details.cardId : '?';
+  const player = getPlayerName(event.playerId, playerNames);
+  const trace =
+    typeof details.traceColor === 'string'
+      ? t(`client.alien_board.arkhos.trace.${details.traceColor}`, {
+          defaultValue: prettifyToken(details.traceColor),
+        })
+      : '?';
+  const access =
+    typeof details.accessLevel === 'number' ? details.accessLevel : '?';
+  return t('client.event_entry.arkhos_security_breached', {
+    player,
+    card: cardId,
+    trace,
+    access,
+  });
+}
+
+function formatArkhosRewardSize(
+  size: string,
+  t: TTranslate,
+): string {
+  return t(`client.alien_board.arkhos.reward_size.${size}`, {
+    defaultValue: prettifyToken(size),
+  });
 }
 
 function formatMainActionName(

@@ -35,6 +35,14 @@ export interface IAlienPlugin {
 
   onPlaceTraceOnSlot?(game: IGame, player: IPlayer, slot: ITraceSlot): void;
 
+  onAlienCardPlayed?(game: IGame, player: IPlayer, cardId: string): boolean;
+
+  onAlienCardDiscardedForFreeAction?(
+    game: IGame,
+    player: IPlayer,
+    cardId: string,
+  ): boolean;
+
   onRoundEnd?(game: IGame): void;
 
   onSolarSystemRotated?(game: IGame): void;

@@ -29,6 +29,7 @@ describe('ScanEffect', () => {
       id: 'p1',
       score: 0,
       techs: [],
+      organizationIds: [],
       hand: [],
       resources: { gain: vi.fn() },
       pieces: { deploy: vi.fn(), return: vi.fn(), deployed: vi.fn(() => 0) },

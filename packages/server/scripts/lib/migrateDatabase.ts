@@ -4,7 +4,7 @@ import { readMigrationFiles } from 'drizzle-orm/migrator';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Pool } from 'pg';
-import { getTargetConnectionConfig, getTargetDatabaseName } from './dbAdmin';
+import { getTargetConnectionConfig, getTargetDatabaseName } from './dbAdmin.js';
 
 function resolveMigrationsFolder(): string {
   const currentDir = dirname(fileURLToPath(import.meta.url));

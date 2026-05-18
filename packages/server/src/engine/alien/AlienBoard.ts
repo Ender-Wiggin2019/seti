@@ -9,8 +9,28 @@ import {
   type TMascamitesSampleSourcePlanet,
   type TMascamitesSampleTokenId,
 } from '@seti/common/constant/mascamites';
+import {
+  AMOEBA_TRACE_SLOTS,
+  createDefaultAmoebaOrganelles,
+  createDefaultGlyphidsTokenBank,
+  createDefaultGlyphidsTranslationRows,
+  GLYPHIDS_BOARD_TOKEN_POSITIONS,
+  type IAmoebaOrganelleToken,
+  type IArkhosAccessState,
+  type IArkhosExplorationRewardRecord,
+  type IArkhosSecurityCardState,
+  type IGlyphidsBoardToken,
+  type IGlyphidsTranslationPlacement,
+  type IGlyphidsTranslationRow,
+  type TGlyphidsGlyph,
+  type TGlyphidsRowsByPlayer,
+} from '@seti/common/constant/spaceAgencyAliens';
 import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
 import type { SeededRandom } from '@/shared/rng/SeededRandom.js';
+import {
+  getTranslatedGlyph,
+  placeGlyphOnTranslationTable,
+} from './glyphids/GlyphidsTranslationRules.js';
 
 // ---------------------------------------------------------------------------
 //  Slot reward types (declarative, executable by AlienState)
@@ -152,13 +172,36 @@ export interface ICentauriansAlienBoardInit extends IAlienBoardInit {
   centauriansRewardSlots?: ICentauriansRewardSlotComponent[];
 }
 
+export interface IGlyphidsAlienBoardInit extends IAlienBoardInit {
+  glyphidsGlyphTokenBank?: TGlyphidsGlyph[];
+  glyphidsGlyphRows?: TGlyphidsRowsByPlayer;
+  glyphidsBoardTokens?: IGlyphidsBoardToken[];
+  glyphidsTranslationRows?: IGlyphidsTranslationRow[];
+}
+
+export interface IAmoebaAlienBoardInit extends IAlienBoardInit {
+  amoebaOrganelles?: IAmoebaOrganelleToken[];
+}
+
+export interface IArkhosAlienBoardInit extends IAlienBoardInit {
+  arkhosExplorationDrawPile?: string[];
+  arkhosExplorationReservePile?: string[];
+  arkhosExplorationDiscardPile?: string[];
+  arkhosSecurityCardsByPlayer?: Record<string, IArkhosSecurityCardState[]>;
+  arkhosAccessByPlayer?: Record<string, IArkhosAccessState>;
+  arkhosResolvedExplorationRewards?: IArkhosExplorationRewardRecord[];
+}
+
 export type TAlienBoardInit =
   | IAlienBoardInit
   | IAnomaliesAlienBoardInit
   | IOumuamuaAlienBoardInit
   | IMascamitesAlienBoardInit
   | IExertiansAlienBoardInit
-  | ICentauriansAlienBoardInit;
+  | ICentauriansAlienBoardInit
+  | IGlyphidsAlienBoardInit
+  | IAmoebaAlienBoardInit
+  | IArkhosAlienBoardInit;
 
 export class AlienBoard {
   public readonly alienType: EAlienType;
@@ -650,6 +693,313 @@ export class CentauriansAlienBoard extends AlienBoard {
   }
 }
 
+export class GlyphidsAlienBoard extends AlienBoard {
+  public glyphTokenBank: TGlyphidsGlyph[];
+
+  public glyphRows: TGlyphidsRowsByPlayer;
+
+  public boardTokens: IGlyphidsBoardToken[];
+
+  public translationRows: IGlyphidsTranslationRow[];
+
+  public constructor(init: IGlyphidsAlienBoardInit) {
+    super(init);
+    this.glyphTokenBank = [
+      ...(init.glyphidsGlyphTokenBank ?? createDefaultGlyphidsTokenBank()),
+    ];
+    this.glyphRows = cloneGlyphRows(init.glyphidsGlyphRows ?? {});
+    this.boardTokens = cloneGlyphidsBoardTokens(init.glyphidsBoardTokens ?? []);
+    this.translationRows = cloneGlyphidsTranslationRows(
+      init.glyphidsTranslationRows,
+    );
+  }
+
+  public dealBoardTokensFromBank(): void {
+    this.boardTokens = GLYPHIDS_BOARD_TOKEN_POSITIONS.map((position) => {
+      const glyph = this.glyphTokenBank.shift();
+      if (glyph === undefined) {
+        throw new Error('Glyphids token bank has too few tokens for setup');
+      }
+      return { position, glyph };
+    });
+  }
+
+  public resetTranslationRows(sides: readonly [1 | 2, 1 | 2]): void {
+    this.translationRows = createDefaultGlyphidsTranslationRows(sides);
+  }
+
+  public getTranslatedGlyph(
+    glyph: TGlyphidsGlyph,
+  ): IGlyphidsTranslationPlacement | undefined {
+    return getTranslatedGlyph(this.translationRows, glyph);
+  }
+
+  public placeGlyphOnTranslationTable(
+    level: 1 | 2,
+    position: number,
+    glyph: TGlyphidsGlyph,
+  ): boolean {
+    return placeGlyphOnTranslationTable(
+      this.translationRows,
+      level,
+      position,
+      glyph,
+    );
+  }
+
+  public collectGlyphToken(playerId: string, glyph: TGlyphidsGlyph): number {
+    const rows = (this.glyphRows[playerId] ??= []);
+    for (let rowIndex = 0; rowIndex < 5; rowIndex += 1) {
+      const row = (rows[rowIndex] ??= []);
+      if (!row.includes(glyph)) {
+        row.push(glyph);
+        return rowIndex;
+      }
+    }
+    return -1;
+  }
+
+  public claimBoardToken(
+    playerId: string,
+    position: number,
+    options: { rivalDirection?: 'left' | 'right' } = {},
+  ): TGlyphidsGlyph | undefined {
+    const tokenIndex = this.boardTokens.findIndex((token) => {
+      return token.position === position;
+    });
+    if (tokenIndex < 0) {
+      return undefined;
+    }
+
+    const [token] = this.boardTokens.splice(tokenIndex, 1);
+    if (!token) {
+      return undefined;
+    }
+
+    if (options.rivalDirection) {
+      this.gainRivalGlyphToken(playerId, token.glyph, options.rivalDirection);
+    } else {
+      this.collectGlyphToken(playerId, token.glyph);
+    }
+    return token.glyph;
+  }
+
+  public gainRivalGlyphToken(
+    playerId: string,
+    glyph: TGlyphidsGlyph,
+    direction: 'left' | 'right',
+  ): 'translated' | 'collected' {
+    if (this.placeRivalGlyphOnTranslationTable(glyph, direction)) {
+      return 'translated';
+    }
+    this.collectGlyphToken(playerId, glyph);
+    return 'collected';
+  }
+
+  public placeRivalGlyphOnTranslationTable(
+    glyph: TGlyphidsGlyph,
+    direction: 'left' | 'right',
+  ): boolean {
+    const positions = direction === 'right' ? [3, 2, 1, 0] : [0, 1, 2, 3];
+
+    for (const level of [2, 1] as const) {
+      for (const position of positions) {
+        if (this.placeGlyphOnTranslationTable(level, position, glyph)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+}
+
+export class AmoebaAlienBoard extends AlienBoard {
+  public organelles: IAmoebaOrganelleToken[];
+
+  public constructor(init: IAmoebaAlienBoardInit) {
+    super(init);
+    this.organelles = (
+      init.amoebaOrganelles ?? createDefaultAmoebaOrganelles()
+    ).map((token) => ({ ...token }));
+  }
+
+  public getOrganellesInSection(traceColor: ETrace): IAmoebaOrganelleToken[] {
+    return this.organelles
+      .filter((organelle) => {
+        return (
+          this.traceColorForOrganellePosition(organelle.position) === traceColor
+        );
+      })
+      .sort((left, right) => right.position - left.position);
+  }
+
+  public countOrganellesInSection(traceColor: ETrace): number {
+    return this.getOrganellesInSection(traceColor).length;
+  }
+
+  public traceColorForOrganellePosition(position: number): ETrace | undefined {
+    return AMOEBA_TRACE_SLOTS.find((slot) => slot.position === position)
+      ?.traceColor;
+  }
+
+  public moveOrganelleToken(tokenId: string): boolean {
+    const organelle = this.organelles.find(
+      (token) => token.tokenId === tokenId,
+    );
+    if (!organelle) {
+      return false;
+    }
+
+    organelle.position = this.nextAvailableOrganellePosition(
+      organelle.position,
+    );
+    return true;
+  }
+
+  public moveOrganellesInSection(traceColor: ETrace): void {
+    for (const organelle of this.getOrganellesInSection(traceColor)) {
+      this.moveOrganelleToken(organelle.tokenId);
+    }
+  }
+
+  public getRemovableMarkerSlots(playerId: string): ITraceSlot[] {
+    return [
+      ...this.speciesTraceSlots,
+      ...this.discoverySlots,
+      ...this.overflowSlots,
+    ].filter((slot) =>
+      slot.occupants.some((occupant) => {
+        return (
+          occupant.source !== 'neutral' && occupant.source.playerId === playerId
+        );
+      }),
+    );
+  }
+
+  public removePlayerMarkerFromSlot(
+    slotId: string,
+    playerId: string,
+  ): ETrace | undefined {
+    const slot = this.getRemovableMarkerSlots(playerId).find(
+      (candidate) => candidate.slotId === slotId,
+    );
+    if (!slot) {
+      return undefined;
+    }
+
+    const occupantIndex = slot.occupants.findIndex((occupant) => {
+      return (
+        occupant.source !== 'neutral' && occupant.source.playerId === playerId
+      );
+    });
+    if (occupantIndex < 0) {
+      return undefined;
+    }
+
+    slot.occupants.splice(occupantIndex, 1);
+    return slot.traceColor;
+  }
+
+  private nextAvailableOrganellePosition(currentPosition: number): number {
+    const occupiedPositions = new Set(
+      this.organelles.map((organelle) => organelle.position),
+    );
+    occupiedPositions.delete(currentPosition);
+
+    let nextPosition = this.nextOrganellePosition(currentPosition);
+    while (occupiedPositions.has(nextPosition)) {
+      nextPosition = this.nextOrganellePosition(nextPosition);
+    }
+    return nextPosition;
+  }
+
+  private nextOrganellePosition(position: number): number {
+    if (position < 6) {
+      return (position + 1) % 6;
+    }
+    return 6 + ((position + 1) % 3);
+  }
+}
+
+export class ArkhosAlienBoard extends AlienBoard {
+  public explorationDrawPile: string[];
+
+  public explorationReservePile: string[];
+
+  public explorationDiscardPile: string[];
+
+  public securityCardsByPlayer: Record<string, IArkhosSecurityCardState[]>;
+
+  public accessByPlayer: Record<string, IArkhosAccessState>;
+
+  public resolvedExplorationRewards: IArkhosExplorationRewardRecord[];
+
+  public constructor(init: IArkhosAlienBoardInit) {
+    super(init);
+    this.explorationDrawPile = [...(init.arkhosExplorationDrawPile ?? [])];
+    this.explorationReservePile = [
+      ...(init.arkhosExplorationReservePile ?? []),
+    ];
+    this.explorationDiscardPile = [
+      ...(init.arkhosExplorationDiscardPile ?? []),
+    ];
+    this.securityCardsByPlayer = cloneArkhosSecurityCardsByPlayer(
+      init.arkhosSecurityCardsByPlayer ?? {},
+    );
+    this.accessByPlayer = cloneArkhosAccessByPlayer(
+      init.arkhosAccessByPlayer ?? {},
+    );
+    this.resolvedExplorationRewards = (
+      init.arkhosResolvedExplorationRewards ?? []
+    ).map((reward) => ({ ...reward }));
+  }
+
+  public initializeExplorationCards(cardIds: readonly string[]): void {
+    this.explorationDrawPile = cardIds.slice(0, 5);
+    this.explorationReservePile = cardIds.slice(5);
+    this.explorationDiscardPile = [];
+  }
+
+  public revealExplorationCard(rng?: SeededRandom): string | undefined {
+    if (
+      this.explorationDrawPile.length === 0 &&
+      (this.explorationDiscardPile.length > 0 ||
+        this.explorationReservePile.length > 0)
+    ) {
+      this.initializeExplorationCards(
+        rng
+          ? rng.shuffle([
+              ...this.explorationDiscardPile,
+              ...this.explorationReservePile,
+            ])
+          : [...this.explorationDiscardPile, ...this.explorationReservePile],
+      );
+    }
+    const cardId = this.explorationDrawPile.shift();
+    if (cardId) {
+      this.explorationDiscardPile.push(cardId);
+    }
+    return cardId;
+  }
+
+  public ensurePlayerAccess(playerId: string): IArkhosAccessState {
+    this.accessByPlayer[playerId] ??= {
+      breachedCount: 0,
+      accessLevel: 0,
+    };
+    return this.accessByPlayer[playerId];
+  }
+
+  public setPlayerSecurityCards(
+    playerId: string,
+    cards: readonly IArkhosSecurityCardState[],
+  ): void {
+    this.securityCardsByPlayer[playerId] = cards.map((card) => ({ ...card }));
+    this.ensurePlayerAccess(playerId);
+  }
+}
+
 function createDefaultCentauriansRewardSlots(): ICentauriansRewardSlotComponent[] {
   return CENTAURIANS_REWARD_SLOT_DEFS.map((slot) => ({
     ...slot,
@@ -673,6 +1023,15 @@ export function createAlienBoard(init: TAlienBoardInit): AlienBoard {
   }
   if (init.alienType === EAlienType.EXERTIANS) {
     return new ExertiansAlienBoard(init as IExertiansAlienBoardInit);
+  }
+  if (init.alienType === EAlienType.GLYPHIDS) {
+    return new GlyphidsAlienBoard(init as IGlyphidsAlienBoardInit);
+  }
+  if (init.alienType === EAlienType.AMOEBA) {
+    return new AmoebaAlienBoard(init as IAmoebaAlienBoardInit);
+  }
+  if (init.alienType === EAlienType.ARKHOS) {
+    return new ArkhosAlienBoard(init as IArkhosAlienBoardInit);
   }
   return new AlienBoard(init);
 }
@@ -707,6 +1066,24 @@ export function isCentauriansAlienBoard(
   return board instanceof CentauriansAlienBoard;
 }
 
+export function isGlyphidsAlienBoard(
+  board: AlienBoard | null | undefined,
+): board is GlyphidsAlienBoard {
+  return board instanceof GlyphidsAlienBoard;
+}
+
+export function isAmoebaAlienBoard(
+  board: AlienBoard | null | undefined,
+): board is AmoebaAlienBoard {
+  return board instanceof AmoebaAlienBoard;
+}
+
+export function isArkhosAlienBoard(
+  board: AlienBoard | null | undefined,
+): board is ArkhosAlienBoard {
+  return board instanceof ArkhosAlienBoard;
+}
+
 function cloneMascamitesSamplePools(
   pools: TMascamitesSamplePools | undefined,
 ): TMascamitesSamplePools {
@@ -720,6 +1097,74 @@ function cloneMascamitesSamplePools(
 
 function getTracePlayerId(player: TTracePlayerRef): string {
   return typeof player === 'string' ? player : player.id;
+}
+
+function cloneGlyphRows(rows: TGlyphidsRowsByPlayer): TGlyphidsRowsByPlayer {
+  return Object.fromEntries(
+    Object.entries(rows).map(([playerId, glyphRows]) => [
+      playerId,
+      glyphRows.map((row) => [...row]),
+    ]),
+  );
+}
+
+function cloneGlyphidsBoardTokens(
+  tokens: readonly IGlyphidsBoardToken[],
+): IGlyphidsBoardToken[] {
+  return tokens.map((token) => ({ ...token }));
+}
+
+function cloneGlyphidsTranslationRows(
+  rows: IGlyphidsTranslationRow[] | undefined,
+): IGlyphidsTranslationRow[] {
+  if (!rows) return createDefaultGlyphidsTranslationRows();
+
+  return rows.map((row, index) => {
+    const rawRow = row as Partial<IGlyphidsTranslationRow>;
+    const rawLevel = rawRow.level;
+    const level = rawLevel ?? ((index === 0 ? 1 : 2) as 1 | 2);
+    const side = rawRow.side === 2 ? 2 : 1;
+    if (rawLevel !== 1 && rawLevel !== 2) {
+      const fallbackRows = createDefaultGlyphidsTranslationRows([
+        level === 1 ? side : 1,
+        level === 2 ? side : 1,
+      ]);
+      return (
+        fallbackRows[level - 1] ?? createDefaultGlyphidsTranslationRows()[0]
+      );
+    }
+    const slotCount = level === 2 ? 3 : 4;
+    const glyphs = Array.from({ length: slotCount }, (_, index) => {
+      return row.glyphs[index] ?? null;
+    });
+    return {
+      ...row,
+      level,
+      glyphs,
+    };
+  });
+}
+
+function cloneArkhosSecurityCardsByPlayer(
+  cardsByPlayer: Record<string, IArkhosSecurityCardState[]>,
+): Record<string, IArkhosSecurityCardState[]> {
+  return Object.fromEntries(
+    Object.entries(cardsByPlayer).map(([playerId, cards]) => [
+      playerId,
+      cards.map((card) => ({ ...card })),
+    ]),
+  );
+}
+
+function cloneArkhosAccessByPlayer(
+  accessByPlayer: Record<string, IArkhosAccessState>,
+): Record<string, IArkhosAccessState> {
+  return Object.fromEntries(
+    Object.entries(accessByPlayer).map(([playerId, access]) => [
+      playerId,
+      { ...access },
+    ]),
+  );
 }
 
 function traceColorMatches(placedColor: ETrace, filterColor: ETrace): boolean {

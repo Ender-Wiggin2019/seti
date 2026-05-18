@@ -6,6 +6,10 @@ import {
 } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import {
+  createGameOptions,
+  EExpansion,
+} from '@seti/common/types/protocol/options';
+import {
   EPlayerInputType,
   type ISelectEndOfRoundCardInputModel,
   type ISelectGoldTileInputModel,
@@ -27,6 +31,27 @@ const TEST_PLAYERS = [
 
 function createGame(seed = 'integration-test'): Game {
   const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, 'test-game');
+  resolveSetupTucks(game);
+  return game;
+}
+
+function createSpaceAgencyNewDeckGame(seed = 'integration-test'): Game {
+  const game = Game.create(
+    TEST_PLAYERS,
+    createGameOptions({
+      playerCount: 2,
+      expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+      spaceAgencyOptions: {
+        enabled: true,
+        agencies: false,
+        startResourceCards: false,
+        newDeck: true,
+        newAlienSpecies: false,
+      },
+    }),
+    seed,
+    'test-game',
+  );
   resolveSetupTucks(game);
   return game;
 }
@@ -412,7 +437,7 @@ describe('Game Integration: Main Action Legality', () => {
     });
 
     it('allows spending a signal token while resolving a scan from a played card', () => {
-      const game = createGame('play-card-signal-token');
+      const game = createSpaceAgencyNewDeckGame('play-card-signal-token');
       const p1 = getPlayer(game, 'p1');
       p1.hand = ['55'];
       p1.resources.gain({ signalTokens: 1 });

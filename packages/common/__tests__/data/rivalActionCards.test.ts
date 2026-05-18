@@ -203,7 +203,8 @@ describe('rivalActionCards data', () => {
       ],
     });
 
-    expect(RIVAL_SPECIES_ACTION_CARD_BY_ALIEN).toMatchObject({
+    expect(cardById.has('S.21')).toBe(false);
+    expect(RIVAL_SPECIES_ACTION_CARD_BY_ALIEN).toEqual({
       [EAlienType.MASCAMITES]: 'S.15',
       [EAlienType.ANOMALIES]: 'S.16',
       [EAlienType.OUMUAMUA]: 'S.17',

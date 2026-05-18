@@ -80,6 +80,7 @@ export enum EAlienType {
   OUMUAMUA,
   AMOEBA,
   GLYPHIDS,
+  ARKHOS,
   DUMMY,
 }
 
@@ -91,6 +92,7 @@ export const EAlienMap: Record<EAlienType, string> = {
   [EAlienType.OUMUAMUA]: 'oumuamua',
   [EAlienType.AMOEBA]: 'amoeba',
   [EAlienType.GLYPHIDS]: 'glyphids',
+  [EAlienType.ARKHOS]: 'arkhos',
   [EAlienType.DUMMY]: 'dummy',
 };
 

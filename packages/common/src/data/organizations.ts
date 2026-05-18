@@ -33,6 +33,7 @@ export const ORGANIZATIONS: readonly IOrganizationData[] = [
   defineOrganization({
     id: EOrganizationId.COSMOS_STRATEGY_GROUP,
     name: 'Cosmos Strategy Group',
+    complexity: 'complex',
     resources: { credit: 4, energy: 2, card: 1, publicity: 1, data: 0 },
     tuckIncome: 2,
     probes: 0,
@@ -80,6 +81,7 @@ export const ORGANIZATIONS: readonly IOrganizationData[] = [
   defineOrganization({
     id: EOrganizationId.FUTURESPAN_INSTITUTE,
     name: 'Futurespan Institute',
+    complexity: 'complex',
     resources: { credit: 3, energy: 3, card: 1, publicity: 3, data: 0 },
     tuckIncome: 2,
     probes: 0,
@@ -95,6 +97,7 @@ export const ORGANIZATIONS: readonly IOrganizationData[] = [
   defineOrganization({
     id: EOrganizationId.HELION_ASSEMBLY,
     name: 'Helion Assembly',
+    complexity: 'complex',
     resources: { credit: 3, energy: 2, card: 0, publicity: 7, data: 0 },
     tuckIncome: 0,
     probes: 0,
@@ -110,7 +113,7 @@ export const ORGANIZATIONS: readonly IOrganizationData[] = [
   defineOrganization({
     id: EOrganizationId.MISSION_RELAY,
     name: 'Mission Relay',
-    complexity: 'passive',
+    complexity: 'complex',
     resources: { credit: 3, energy: 2, card: 2, publicity: 2, data: 0 },
     tuckIncome: 3,
     probes: 0,
@@ -126,6 +129,7 @@ export const ORGANIZATIONS: readonly IOrganizationData[] = [
   defineOrganization({
     id: EOrganizationId.ORBITAL_DYNAMICS,
     name: 'Orbital Dynamics',
+    complexity: 'once-per-round',
     resources: { credit: 2, energy: 2, card: 0, publicity: 3, data: 0 },
     tuckIncome: 2,
     probes: 2,
@@ -173,6 +177,7 @@ export const ORGANIZATIONS: readonly IOrganizationData[] = [
   defineOrganization({
     id: EOrganizationId.TURING_SYSTEMS,
     name: 'Turing Systems',
+    complexity: 'complex',
     resources: { credit: 4, energy: 2, card: 1, publicity: 2, data: 0 },
     tuckIncome: 2,
     probes: 0,
@@ -188,6 +193,7 @@ export const ORGANIZATIONS: readonly IOrganizationData[] = [
   defineOrganization({
     id: EOrganizationId.XENOLAB,
     name: 'Xenolab',
+    complexity: 'complex',
     resources: { credit: 2, energy: 2, card: 1, publicity: 1, data: 0 },
     tuckIncome: 3,
     probes: 0,

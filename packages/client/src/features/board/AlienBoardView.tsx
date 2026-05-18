@@ -4,6 +4,8 @@ import {
   type IPlanetaryBoardConfig,
   PLANETARY_BOARD_CONFIG,
 } from '@seti/common/constant/boardLayout';
+import { AMOEBA_TRACE_SLOTS } from '@seti/common/constant/spaceAgencyAliens';
+import { ARKHOS_EXPLORATION_CARD_IDS } from '@seti/common/data/arkhosCards';
 import { ALL_CARDS } from '@seti/common/data/index';
 import { canLandOnPlanet, canOrbitPlanet } from '@seti/common/rules';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
@@ -18,14 +20,20 @@ import { useTranslation } from 'react-i18next';
 import { CardRender } from '@/features/cards/CardRender';
 import { cn } from '@/lib/cn';
 import { useTextMode } from '@/stores/debugStore';
+import { AmoebaBoard } from './alienBoards/AmoebaBoard';
+import { ArkhosBoard } from './alienBoards/ArkhosBoard';
+import { GlyphidsBoard } from './alienBoards/GlyphidsBoard';
 import type {
   IPublicAlienCardZone,
   IPublicAlienState,
+  IPublicAmoebaBoard,
   IPublicAnomaliesBoard,
+  IPublicArkhosBoard,
   IPublicCentauriansBoard,
   IPublicExertiansBoard,
   IPublicGameState,
   IPublicGenericAlienBoard,
+  IPublicGlyphidsBoard,
   IPublicMascamitesBoard,
   IPublicOumuamuaBoard,
   IPublicPlanetaryBoard,
@@ -49,6 +57,7 @@ const ALIEN_TYPE_I18N_KEY: Partial<Record<EAlienType, string>> = {
   [EAlienType.OUMUAMUA]: 'oumuamua',
   [EAlienType.AMOEBA]: 'amoeba',
   [EAlienType.GLYPHIDS]: 'glyphids',
+  [EAlienType.ARKHOS]: 'arkhos',
   [EAlienType.DUMMY]: 'dummy',
 };
 
@@ -68,6 +77,20 @@ const TRACE_LABEL: Record<ETrace, string> = {
 
 const CARD_BY_ID = new Map<string, IBaseCard>(
   ALL_CARDS.map((card) => [card.id, card]),
+);
+
+const AMOEBA_TRACE_COLOR_BY_POSITION = new Map(
+  AMOEBA_TRACE_SLOTS.map((slot) => [slot.position, slot.traceColor]),
+);
+
+const ARKHOS_EXPLORATION_IMAGE_SRC_BY_ID = new Map<string, string>(
+  ARKHOS_EXPLORATION_CARD_IDS.map((cardId, index) => {
+    const assetNumber = (index + 1).toString().padStart(2, '0');
+    return [
+      cardId,
+      `/assets/seti/aliens/arkhos/exploration/AI_${assetNumber}.jpg`,
+    ];
+  }),
 );
 
 interface IAlienBoardViewProps {
@@ -109,6 +132,9 @@ const ALIEN_BOARD_RENDERERS: Partial<Record<EAlienType, TAlienBoardRenderer>> =
     [EAlienType.EXERTIANS]: ExertiansBoardRenderer,
     [EAlienType.MASCAMITES]: MascamitesBoardRenderer,
     [EAlienType.OUMUAMUA]: OumuamuaBoardRenderer,
+    [EAlienType.GLYPHIDS]: GlyphidsBoardRenderer,
+    [EAlienType.AMOEBA]: AmoebaBoardRenderer,
+    [EAlienType.ARKHOS]: ArkhosBoardRenderer,
   };
 
 export function AlienBoardView({
@@ -504,6 +530,78 @@ function MascamitesBoardRenderer({
   );
 }
 
+function GlyphidsBoardRenderer({
+  alienIndex,
+  board,
+  playerColors,
+}: IAlienBoardRendererProps): React.JSX.Element {
+  if (board.type !== 'glyphids') {
+    return (
+      <GenericAlienBoard
+        alienIndex={alienIndex}
+        board={{ type: 'generic', slots: [] }}
+        playerColors={playerColors}
+      />
+    );
+  }
+
+  return (
+    <GlyphidsBoard
+      alienIndex={alienIndex}
+      board={board}
+      playerColors={playerColors}
+    />
+  );
+}
+
+function AmoebaBoardRenderer({
+  alienIndex,
+  board,
+  playerColors,
+}: IAlienBoardRendererProps): React.JSX.Element {
+  if (board.type !== 'amoeba') {
+    return (
+      <GenericAlienBoard
+        alienIndex={alienIndex}
+        board={{ type: 'generic', slots: [] }}
+        playerColors={playerColors}
+      />
+    );
+  }
+
+  return (
+    <AmoebaBoard
+      alienIndex={alienIndex}
+      board={board}
+      playerColors={playerColors}
+    />
+  );
+}
+
+function ArkhosBoardRenderer({
+  alienIndex,
+  board,
+  playerColors,
+}: IAlienBoardRendererProps): React.JSX.Element {
+  if (board.type !== 'arkhos') {
+    return (
+      <GenericAlienBoard
+        alienIndex={alienIndex}
+        board={{ type: 'generic', slots: [] }}
+        playerColors={playerColors}
+      />
+    );
+  }
+
+  return (
+    <ArkhosBoard
+      alienIndex={alienIndex}
+      board={board}
+      playerColors={playerColors}
+    />
+  );
+}
+
 function CentauriansBoard({
   alienIndex,
   board,
@@ -892,6 +990,435 @@ function GenericAlienBoard({
   );
 }
 
+export function GlyphidsBoardLegacy({
+  alienIndex,
+  board,
+  playerColors,
+}: {
+  alienIndex: number;
+  board: IPublicGlyphidsBoard;
+  playerColors: Record<string, string>;
+}): React.JSX.Element {
+  const { t } = useTranslation('common');
+  return (
+    <section
+      className='min-w-0 rounded border border-surface-700/50 bg-surface-950/30 p-2'
+      data-testid={`alien-${alienIndex}-glyphids-board`}
+    >
+      <div className='mb-2 flex items-center justify-between gap-2'>
+        <span className='font-mono text-[10px] uppercase tracking-widest text-text-500'>
+          {t('client.alien_board.types.glyphids')}
+        </span>
+        <span
+          className='rounded border border-surface-700/60 bg-surface-900/40 px-2 py-0.5 font-mono text-[10px] text-text-300'
+          data-testid={`alien-${alienIndex}-glyphids-bank`}
+        >
+          {t('client.alien_board.glyphids.bank_count', {
+            count: board.glyphTokenBankSize,
+          })}
+        </span>
+      </div>
+
+      <div className='grid gap-2 md:grid-cols-3'>
+        <section className='rounded border border-surface-700/50 bg-surface-900/35 p-2'>
+          <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
+            {t('client.alien_board.glyphids.player_rows')}
+          </div>
+          <div className='space-y-2'>
+            {Object.entries(board.glyphRows).length === 0 ? (
+              <div className='rounded border border-dashed border-surface-700/50 px-2 py-3 font-mono text-[10px] text-text-500'>
+                {t('client.alien_board.glyphids.no_glyph_rows')}
+              </div>
+            ) : (
+              Object.entries(board.glyphRows).flatMap(([playerId, rows]) =>
+                rows.map((row, rowIndex) => (
+                  <div
+                    key={`${playerId}-${rowIndex}`}
+                    className='flex items-center justify-between gap-2 rounded border border-surface-700/50 bg-surface-950/40 px-2 py-1.5'
+                    data-testid={`alien-${alienIndex}-glyphids-row-${playerId}-${rowIndex}`}
+                  >
+                    <span className='flex min-w-0 items-center gap-1.5'>
+                      <span
+                        className='h-2.5 w-2.5 shrink-0 rounded-full border border-surface-200/30'
+                        style={{
+                          backgroundColor: playerColors[playerId] ?? '#cbd5e1',
+                        }}
+                      />
+                      <span className='truncate font-mono text-[10px] text-text-300'>
+                        {playerId}
+                      </span>
+                    </span>
+                    <GlyphIconRow glyphs={row} />
+                  </div>
+                )),
+              )
+            )}
+          </div>
+        </section>
+
+        <section className='rounded border border-surface-700/50 bg-surface-900/35 p-2'>
+          <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
+            {t('client.alien_board.glyphids.board_tokens')}
+          </div>
+          <div className='grid grid-cols-2 gap-2'>
+            {board.boardTokens.map((token) => (
+              <div
+                key={`${token.position}-${token.glyph}`}
+                className='flex items-center justify-between gap-2 rounded border border-surface-700/50 bg-surface-950/40 px-2 py-1.5'
+                data-testid={`alien-${alienIndex}-glyphids-board-token-${token.position}`}
+              >
+                <span className='font-mono text-[10px] text-text-400'>
+                  {token.position}
+                </span>
+                <GlyphIconRow glyphs={[token.glyph]} />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className='rounded border border-surface-700/50 bg-surface-900/35 p-2'>
+          <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
+            {t('client.alien_board.glyphids.translation')}
+          </div>
+          <div className='space-y-2'>
+            {board.translationRows.map((row) => (
+              <div
+                key={row.rowId}
+                className='flex items-center justify-between gap-2 rounded border border-surface-700/50 bg-surface-950/40 px-2 py-1.5'
+                data-testid={`alien-${alienIndex}-glyphids-translation-${row.rowId}`}
+              >
+                <span className='font-mono text-[10px] text-text-400'>
+                  {t('client.alien_board.glyphids.side', {
+                    side: row.side,
+                  })}
+                </span>
+                <GlyphIconRow glyphs={row.glyphs} />
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      {board.traceSlots.length > 0 ? (
+        <div className='mt-3'>
+          <TraceColumnGrid
+            alienIndex={alienIndex}
+            area='glyphids-trace'
+            slots={board.traceSlots}
+            playerColors={playerColors}
+          />
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+export function AmoebaBoardLegacy({
+  alienIndex,
+  board,
+  playerColors,
+}: {
+  alienIndex: number;
+  board: IPublicAmoebaBoard;
+  playerColors: Record<string, string>;
+}): React.JSX.Element {
+  const { t } = useTranslation('common');
+  return (
+    <section
+      className='min-w-0 rounded border border-surface-700/50 bg-surface-950/30 p-2'
+      data-testid={`alien-${alienIndex}-amoeba-board`}
+    >
+      <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
+        {t('client.alien_board.amoeba.organelles')}
+      </div>
+      <div className='grid grid-cols-3 gap-1.5'>
+        {Array.from({ length: 9 }, (_, position) => {
+          const organelle = board.organelles.find(
+            (token) => token.position === position,
+          );
+          const traceColor = AMOEBA_TRACE_COLOR_BY_POSITION.get(position);
+          const color = traceColor ? TRACE_COLOR[traceColor] : undefined;
+          return (
+            <div
+              key={position}
+              className='flex min-h-12 items-center justify-center rounded border border-surface-700/50 bg-surface-900/35'
+              data-trace-color={traceColor}
+              data-testid={`alien-${alienIndex}-amoeba-cell-${position}`}
+              style={
+                color
+                  ? {
+                      backgroundColor: `${color}14`,
+                      borderColor: `${color}88`,
+                    }
+                  : undefined
+              }
+            >
+              {organelle ? (
+                <span
+                  className='inline-flex h-8 w-8 items-center justify-center rounded-full border border-surface-500/60 bg-surface-950/70'
+                  data-testid={`alien-${alienIndex}-amoeba-organelle-${position}`}
+                  title={organelle.tokenId}
+                >
+                  <DescRender
+                    desc={`{${organelle.color}-1}`}
+                    size='xs'
+                    smartSize
+                  />
+                </span>
+              ) : (
+                <span className='font-mono text-[10px] text-text-600'>
+                  {position}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {board.traceSlots.length > 0 ? (
+        <div className='mt-3'>
+          <TraceColumnGrid
+            alienIndex={alienIndex}
+            area='amoeba-trace'
+            slots={board.traceSlots}
+            playerColors={playerColors}
+          />
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+export function ArkhosBoardLegacy({
+  alienIndex,
+  board,
+  playerColors,
+}: {
+  alienIndex: number;
+  board: IPublicArkhosBoard;
+  playerColors: Record<string, string>;
+}): React.JSX.Element {
+  const { t } = useTranslation('common');
+  return (
+    <section
+      className='min-w-0 rounded border border-surface-700/50 bg-surface-950/30 p-2'
+      data-testid={`alien-${alienIndex}-arkhos-board`}
+    >
+      <div className='mb-2 flex items-center justify-between gap-2'>
+        <span className='font-mono text-[10px] uppercase tracking-widest text-text-500'>
+          {t('client.alien_board.types.arkhos')}
+        </span>
+        <span
+          className='rounded border border-cyan-400/40 bg-cyan-950/30 px-2 py-0.5 font-mono text-[10px] text-cyan-100'
+          data-testid={`alien-${alienIndex}-arkhos-exploration-counts`}
+        >
+          {t('client.alien_board.arkhos.exploration_counts', {
+            deck: board.explorationDeckSize,
+            reserve: board.explorationReserveSize,
+            discard: board.explorationDiscardSize,
+          })}
+        </span>
+      </div>
+
+      <div className='grid gap-2 md:grid-cols-2'>
+        <section className='rounded border border-surface-700/50 bg-surface-900/35 p-2'>
+          <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
+            {t('client.alien_board.arkhos.security')}
+          </div>
+          <div className='space-y-2'>
+            {Object.entries(board.securityCardsByPlayer).length === 0 ? (
+              <div className='rounded border border-dashed border-surface-700/50 px-2 py-3 font-mono text-[10px] text-text-500'>
+                {t('client.alien_board.arkhos.no_security_cards')}
+              </div>
+            ) : (
+              Object.entries(board.securityCardsByPlayer).map(
+                ([playerId, cards]) => (
+                  <div
+                    key={playerId}
+                    className='rounded border border-surface-700/50 bg-surface-950/40 px-2 py-1.5'
+                    data-testid={`alien-${alienIndex}-arkhos-security-${playerId}`}
+                  >
+                    <div className='mb-1 flex items-center gap-1.5'>
+                      <span
+                        className='h-2.5 w-2.5 shrink-0 rounded-full border border-surface-200/30'
+                        style={{
+                          backgroundColor: playerColors[playerId] ?? '#cbd5e1',
+                        }}
+                      />
+                      <span className='truncate font-mono text-[10px] text-text-300'>
+                        {playerId}
+                      </span>
+                    </div>
+                    <div className='grid grid-cols-3 gap-1'>
+                      {cards.map((card) => (
+                        <span
+                          key={card.cardId}
+                          className='rounded border border-surface-700/60 bg-surface-900/60 px-1.5 py-1 text-center font-mono text-[9px] text-text-300'
+                          data-testid={`alien-${alienIndex}-arkhos-security-card-${card.cardId}`}
+                          title={`${t(`client.alien_board.arkhos.trace.${card.traceColor}`)} ${t(`client.alien_board.arkhos.zone.${card.zone}`)}`}
+                        >
+                          {card.cardId}
+                          <span className='block uppercase text-text-500'>
+                            {t(`client.alien_board.arkhos.zone.${card.zone}`)}
+                          </span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ),
+              )
+            )}
+          </div>
+        </section>
+
+        <section className='rounded border border-surface-700/50 bg-surface-900/35 p-2'>
+          <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
+            {t('client.alien_board.arkhos.access')}
+          </div>
+          <div className='space-y-1.5'>
+            {Object.entries(board.accessByPlayer).length === 0 ? (
+              <div className='rounded border border-dashed border-surface-700/50 px-2 py-3 font-mono text-[10px] text-text-500'>
+                {t('client.alien_board.arkhos.no_access_records')}
+              </div>
+            ) : (
+              Object.entries(board.accessByPlayer).map(([playerId, access]) => (
+                <div
+                  key={playerId}
+                  className='flex items-center justify-between gap-2 rounded border border-surface-700/50 bg-surface-950/40 px-2 py-1.5'
+                  data-testid={`alien-${alienIndex}-arkhos-access-${playerId}`}
+                >
+                  <span className='flex min-w-0 items-center gap-1.5'>
+                    <span
+                      className='h-2.5 w-2.5 shrink-0 rounded-full border border-surface-200/30'
+                      style={{
+                        backgroundColor: playerColors[playerId] ?? '#cbd5e1',
+                      }}
+                    />
+                    <span className='truncate font-mono text-[10px] text-text-300'>
+                      {playerId}
+                    </span>
+                  </span>
+                  <span className='font-mono text-[10px] text-text-300'>
+                    {t('client.alien_board.arkhos.access_record', {
+                      level: access.accessLevel,
+                      breached: access.breachedCount,
+                    })}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+      </div>
+
+      {board.traceSlots.length > 0 ? (
+        <div className='mt-3'>
+          <TraceColumnGrid
+            alienIndex={alienIndex}
+            area='arkhos-trace'
+            slots={board.traceSlots}
+            playerColors={playerColors}
+          />
+        </div>
+      ) : null}
+
+      {board.resolvedExplorationRewards.length > 0 ? (
+        <ArkhosResolvedRewards
+          alienIndex={alienIndex}
+          rewards={board.resolvedExplorationRewards}
+        />
+      ) : null}
+    </section>
+  );
+}
+
+function ArkhosResolvedRewards({
+  alienIndex,
+  rewards,
+}: {
+  alienIndex: number;
+  rewards: IPublicArkhosBoard['resolvedExplorationRewards'];
+}): React.JSX.Element {
+  const { t } = useTranslation('common');
+
+  return (
+    <section
+      className='mt-3 rounded border border-surface-700/50 bg-surface-900/35 p-2'
+      data-testid={`alien-${alienIndex}-arkhos-resolved-rewards`}
+    >
+      <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
+        {t('client.alien_board.arkhos.resolved_rewards')}
+      </div>
+      <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-3'>
+        {rewards.map((reward, index) => {
+          const imageSrc = ARKHOS_EXPLORATION_IMAGE_SRC_BY_ID.get(
+            reward.cardId,
+          );
+          const sizeLabel = t(
+            `client.alien_board.arkhos.reward_size.${reward.size}`,
+          );
+          return (
+            <figure
+              key={`${reward.cardId}-${reward.size}-${reward.playerId}-${index}`}
+              className='overflow-hidden rounded border border-surface-700/60 bg-surface-950/45'
+              data-testid={`alien-${alienIndex}-arkhos-reward-${index}`}
+              title={reward.effectId}
+            >
+              {imageSrc ? (
+                <img
+                  src={imageSrc}
+                  alt={t('client.alien_board.arkhos.reward_image_alt', {
+                    card: reward.cardId,
+                    size: sizeLabel,
+                    player: reward.playerId,
+                  })}
+                  className='aspect-[490/348] w-full bg-surface-950 object-cover'
+                  loading='lazy'
+                />
+              ) : null}
+              <figcaption className='flex items-center justify-between gap-2 px-2 py-1 font-mono text-[10px] text-text-300'>
+                <span className='truncate'>{reward.playerId}</span>
+                <span className='shrink-0 uppercase text-text-500'>
+                  {sizeLabel}
+                </span>
+              </figcaption>
+            </figure>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+export function GlyphIconRow({
+  glyphs,
+}: {
+  glyphs: readonly (string | null)[];
+}): React.JSX.Element {
+  return (
+    <span className='flex shrink-0 items-center gap-1'>
+      {glyphs.map((glyph, index) => {
+        if (glyph === null) {
+          return (
+            <span
+              key={`empty-${index}`}
+              className='inline-flex h-5 w-5 items-center justify-center rounded border border-dashed border-surface-700/60'
+            />
+          );
+        }
+        return (
+          <span
+            key={`${glyph}-${index}`}
+            className='inline-flex h-5 w-5 items-center justify-center'
+          >
+            <DescRender desc={`{${glyph}-1}`} size='xs' smartSize />
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
 function OumuamuaBoard({
   alienIndex,
   board,
@@ -1271,6 +1798,7 @@ function AlienDeckPanel({
   cardZone: IPublicAlienCardZone;
   onCardInspect?: (card: IBaseCard) => void;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   const faceUpCard = cardZone.faceUpCardId
     ? CARD_BY_ID.get(cardZone.faceUpCardId)
     : undefined;
@@ -1281,11 +1809,19 @@ function AlienDeckPanel({
       data-testid={`alien-${alienIndex}-deck-panel`}
     >
       <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
-        Alien Deck
+        {t('client.alien_board.card_zone.title')}
       </div>
       <div className='space-y-1 font-mono text-[10px] text-text-300'>
-        <div>Deck {cardZone.drawPileSize}</div>
-        <div>Discard {cardZone.discardPileSize}</div>
+        <div>
+          {t('client.alien_board.card_zone.deck_count', {
+            count: cardZone.drawPileSize,
+          })}
+        </div>
+        <div>
+          {t('client.alien_board.card_zone.discard_count', {
+            count: cardZone.discardPileSize,
+          })}
+        </div>
       </div>
       {faceUpCard ? (
         <button
@@ -1297,7 +1833,9 @@ function AlienDeckPanel({
               : 'cursor-default',
           )}
           data-testid={`alien-${alienIndex}-deck-face-up-card`}
-          aria-label={`Preview ${faceUpCard.name}`}
+          aria-label={t('client.alien_board.card_zone.preview_aria', {
+            card: faceUpCard.name,
+          })}
           onClick={() => onCardInspect?.(faceUpCard)}
         >
           <div className='pointer-events-none absolute left-0 top-0 origin-top-left scale-[0.44]'>
@@ -1431,7 +1969,7 @@ function OccupantMarker({
   );
 }
 
-function TraceColumnGrid({
+export function TraceColumnGrid({
   alienIndex,
   area,
   slots,

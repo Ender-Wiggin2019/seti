@@ -11,6 +11,8 @@ import {
   ESpecialAction,
   ETrace,
 } from '@seti/common/types/element';
+import { EAlienType } from '@seti/common/types/protocol/enums';
+import { isAmoebaAlienBoard } from '../alien/AlienBoard.js';
 import { createPickupBackInput } from '../cards/alien/MascamitesCardUtils.js';
 import { drawCard } from '../deck/drawCard.js';
 import { AnyCardChoiceEffect } from '../effects/card/AnyCardChoiceEffect.js';
@@ -36,6 +38,14 @@ export function applyMissionRewards(
     if (reward.effectType !== EEffectType.BASE) {
       if (
         reward.effectType === EEffectType.CUSTOMIZED &&
+        (reward as ICustomizedEffect).desc === 'sa.desc.card_et_14_reward'
+      ) {
+        return applyAmoebaEmptySpaceReward(player, game, () =>
+          applyAt(index + 1),
+        );
+      }
+      if (
+        reward.effectType === EEffectType.CUSTOMIZED &&
         (reward as ICustomizedEffect).desc === 'desc.et-pickup-back-reward'
       ) {
         return createPickupBackInput(player, game, {
@@ -52,6 +62,19 @@ export function applyMissionRewards(
   };
 
   return applyAt(0);
+}
+
+function applyAmoebaEmptySpaceReward(
+  player: IPlayer,
+  game: IGame,
+  onComplete: () => PlayerInput | undefined,
+): PlayerInput | undefined {
+  const board = game.alienState.getBoardByType(EAlienType.AMOEBA);
+  if (!isAmoebaAlienBoard(board)) return onComplete();
+  player.score += board.speciesTraceSlots.filter(
+    (slot) => slot.occupants.length === 0,
+  ).length;
+  return onComplete();
 }
 
 function gainFallbackTrace(

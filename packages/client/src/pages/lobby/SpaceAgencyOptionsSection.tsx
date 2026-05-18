@@ -6,8 +6,10 @@ import {
   type IGameOptionsPatch,
   type ISpaceAgencyOptions,
 } from '@seti/common/types/protocol/options';
+import { useTranslation } from 'react-i18next';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { formatAlienLabel, getAlienTypeKey } from '@/lib/alien';
 
 interface ISpaceAgencyOptionsSectionProps {
   options: IGameOptions;
@@ -15,13 +17,18 @@ interface ISpaceAgencyOptionsSectionProps {
   onChange?: (patch: IGameOptionsPatch) => void;
 }
 
-const SPACE_AGENCY_ALIENS = [EAlienType.GLYPHIDS, EAlienType.AMOEBA] as const;
+const SPACE_AGENCY_ALIENS = [
+  EAlienType.GLYPHIDS,
+  EAlienType.AMOEBA,
+  EAlienType.ARKHOS,
+] as const;
 
 export function SpaceAgencyOptionsSection({
   options,
   disabled,
   onChange,
 }: ISpaceAgencyOptionsSectionProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const spaceAgencyOptions =
     options.spaceAgencyOptions ?? DEFAULT_SPACE_AGENCY_OPTIONS;
 
@@ -54,6 +61,7 @@ export function SpaceAgencyOptionsSection({
               alienModulesEnabled: {
                 [EAlienType.GLYPHIDS]: false,
                 [EAlienType.AMOEBA]: false,
+                [EAlienType.ARKHOS]: false,
               },
             }),
       },
@@ -83,11 +91,23 @@ export function SpaceAgencyOptionsSection({
     emitSpaceAgencyPatch(nextOptions, extraPatch);
   };
 
+  const handleAlienChange = (
+    alienType: (typeof SPACE_AGENCY_ALIENS)[number],
+    checked: boolean,
+  ): void => {
+    onChange?.({
+      alienModulesEnabled: {
+        ...options.alienModulesEnabled,
+        [alienType]: checked,
+      },
+    });
+  };
+
   return (
     <div className='space-y-2' data-testid='space-agency-options'>
       <ToggleRow
         id='space-agency-enabled'
-        label='Space Agency'
+        label={t('client.game_settings.space_agency')}
         checked={spaceAgencyOptions.enabled}
         disabled={disabled}
         onChange={handleEnabledChange}
@@ -95,14 +115,14 @@ export function SpaceAgencyOptionsSection({
       <div className='space-y-2 border-l border-[color:var(--metal-edge-soft)] pl-3'>
         <ToggleRow
           id='space-agency-agencies'
-          label='Organizations'
+          label={t('client.space_agency_options.organizations')}
           checked={spaceAgencyOptions.agencies}
           disabled={disabled || !spaceAgencyOptions.enabled}
           onChange={(checked) => handleOptionChange('agencies', checked)}
         />
         <ToggleRow
           id='space-agency-quick-start'
-          label='Quick Start Cards'
+          label={t('client.space_agency_options.quick_start_cards')}
           checked={spaceAgencyOptions.startResourceCards}
           disabled={
             disabled ||
@@ -115,18 +135,40 @@ export function SpaceAgencyOptionsSection({
         />
         <ToggleRow
           id='space-agency-new-deck'
-          label='New Deck'
+          label={t('client.space_agency_options.new_deck')}
           checked={spaceAgencyOptions.newDeck}
           disabled={disabled || !spaceAgencyOptions.enabled}
           onChange={(checked) => handleOptionChange('newDeck', checked)}
         />
         <ToggleRow
           id='space-agency-new-aliens'
-          label='New Alien Species'
+          label={t('client.space_agency_options.new_alien_species')}
           checked={spaceAgencyOptions.newAlienSpecies}
           disabled={disabled || !spaceAgencyOptions.enabled}
           onChange={(checked) => handleOptionChange('newAlienSpecies', checked)}
         />
+        {spaceAgencyOptions.enabled && spaceAgencyOptions.newAlienSpecies ? (
+          <div className='space-y-2 border-l border-[color:var(--metal-edge-soft)] pl-3'>
+            {SPACE_AGENCY_ALIENS.map((alienType) => {
+              const label = t(
+                `client.alien_board.types.${getAlienTypeKey(alienType)}`,
+                {
+                  defaultValue: formatAlienLabel(alienType),
+                },
+              );
+              return (
+                <ToggleRow
+                  key={alienType}
+                  id={`space-agency-alien-${alienType}`}
+                  label={label}
+                  checked={options.alienModulesEnabled[alienType] === true}
+                  disabled={disabled}
+                  onChange={(checked) => handleAlienChange(alienType, checked)}
+                />
+              );
+            })}
+          </div>
+        ) : null}
       </div>
     </div>
   );

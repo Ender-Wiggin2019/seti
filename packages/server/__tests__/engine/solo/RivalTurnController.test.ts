@@ -4,7 +4,9 @@ import { EAlienType, EPhase, EPlanet } from '@seti/common/types/protocol/enums';
 import { ERivalActionKind } from '@seti/common/types/protocol/solo';
 import { ETechBonusType, ETechId } from '@seti/common/types/tech';
 import {
+  isAmoebaAlienBoard,
   isAnomaliesAlienBoard,
+  isArkhosAlienBoard,
   isCentauriansAlienBoard,
   isExertiansAlienBoard,
   isMascamitesAlienBoard,
@@ -146,6 +148,36 @@ function discoverExertians(game: Game) {
   return board;
 }
 
+function discoverArkhos(game: Game) {
+  game.alienState = AlienState.createFromHiddenAliens([EAlienType.ARKHOS]);
+  const board = game.alienState.getBoardByType(EAlienType.ARKHOS);
+  if (!isArkhosAlienBoard(board)) {
+    throw new Error('expected arkhos board');
+  }
+
+  fillDiscoverySlotsWithNeutral(board);
+  game.alienState.discoverAlien(board, game);
+  return board;
+}
+
+function discoverAmoebaAndExertians(game: Game) {
+  game.alienState = AlienState.createFromHiddenAliens([
+    EAlienType.AMOEBA,
+    EAlienType.EXERTIANS,
+  ]);
+  const amoeba = game.alienState.getBoardByType(EAlienType.AMOEBA);
+  const exertians = game.alienState.getBoardByType(EAlienType.EXERTIANS);
+  if (!isAmoebaAlienBoard(amoeba) || !isExertiansAlienBoard(exertians)) {
+    throw new Error('expected Amoeba and Exertians boards');
+  }
+
+  fillDiscoverySlotsWithNeutral(amoeba);
+  fillDiscoverySlotsWithNeutral(exertians);
+  game.alienState.discoverAlien(amoeba, game);
+  game.alienState.discoverAlien(exertians, game);
+  return { amoeba, exertians };
+}
+
 function discoverCentaurians(game: Game) {
   game.alienState = AlienState.createFromHiddenAliens([EAlienType.CENTAURIANS]);
   const board = game.alienState.getBoardByType(EAlienType.CENTAURIANS);
@@ -168,6 +200,19 @@ function discoverMascamites(game: Game) {
   board.discovered = true;
   AlienRegistry.get(EAlienType.MASCAMITES)?.onDiscover?.(game, []);
   return board;
+}
+
+function fillDiscoverySlotsWithNeutral(
+  board: ReturnType<AlienState['getBoard']>,
+) {
+  if (!board) {
+    throw new Error('expected alien board');
+  }
+  for (const slot of board.getDiscoverySlots()) {
+    if (slot.occupants.length === 0) {
+      board.placeTrace(slot, 'neutral', slot.traceColor);
+    }
+  }
 }
 
 describe('RivalTurnController', () => {
@@ -1058,14 +1103,14 @@ describe('RivalTurnController', () => {
       (prefix) =>
         board.speciesTraceSlots.find((slot) => slot.slotId.startsWith(prefix)),
     );
-    if (dangerSlots.some((slot) => !slot)) {
-      throw new Error('expected Exertians danger trace slot');
-    }
     for (const dangerSlot of dangerSlots) {
+      if (!dangerSlot) {
+        throw new Error('expected Exertians danger trace slot');
+      }
       board.placeTrace(
-        dangerSlot!,
+        dangerSlot,
         { playerId: rival.id },
-        dangerSlot!.traceColor,
+        dangerSlot.traceColor,
       );
     }
     rivalState.actionDeck = new Deck(['S.19']);
@@ -1160,6 +1205,231 @@ describe('RivalTurnController', () => {
       actionKind: ERivalActionKind.SCAN,
     });
     expect(board.messageMilestones).toHaveLength(3);
+  });
+
+  it('does not replace a discovered Arkhos species life check without a solo special card', () => {
+    const game = createSoloGame();
+    const rival = game.players[1];
+    const rivalState = game.rivalState;
+    if (!rivalState) throw new Error('expected rival state');
+    const board = discoverArkhos(game);
+    rivalState.actionDeck = new Deck(['S.3']);
+    rivalState.progress = 0;
+    rivalState.progressSlot = 0;
+    rival.score = 0;
+
+    const result = RivalTurnController.resolveCurrentTurn(game);
+
+    expect(result).toMatchObject({ cardId: 'S.3' });
+    expect(rivalState.removedActionCardIds).not.toContain('S.3');
+    expect(rivalState.currentActionCardId).toBe('S.3');
+    expect(rivalState.actionDeck.getDiscardPile()).toEqual(['S.3']);
+    expect(rivalState.progress).toBe(0);
+    expect(
+      board.securityCardsByPlayer[rival.id]?.filter(
+        (card) => card.zone === 'used',
+      ),
+    ).toHaveLength(0);
+    expect(board.accessByPlayer[rival.id]).toEqual({
+      breachedCount: 0,
+      accessLevel: 0,
+    });
+    expect(
+      board.overflowSlots.some((slot) =>
+        slot.occupants.some(
+          (occupant) =>
+            occupant.source !== 'neutral' &&
+            occupant.source.playerId === rival.id,
+        ),
+      ),
+    ).toBe(false);
+  });
+
+  it('does not breach Arkhos security when the rival marks generic Arkhos overflow', () => {
+    const game = createSoloGame();
+    const rival = game.players[1];
+    const board = discoverArkhos(game);
+    const redSecurity = board.securityCardsByPlayer[rival.id]?.find(
+      (card) => card.traceColor === ETrace.RED,
+    );
+    if (!redSecurity) throw new Error('expected rival red security card');
+
+    const placed = game.alienState.applyTraceToSlot(
+      rival,
+      game,
+      'alien-0-overflow-red-trace',
+      ETrace.RED,
+    );
+
+    expect(placed).toBe(true);
+    expect(redSecurity.zone).toBe('front');
+    expect(rival.hand).not.toContain(redSecurity.cardId);
+    expect(board.accessByPlayer[rival.id]).toEqual({
+      breachedCount: 0,
+      accessLevel: 0,
+    });
+  });
+
+  it('converts rival Arkhos discovery exploration rewards to progress', () => {
+    const game = createSoloGame();
+    const rival = game.players[1];
+    const rivalState = game.rivalState;
+    if (!rivalState) throw new Error('expected rival state');
+    game.alienState = AlienState.createFromHiddenAliens([EAlienType.ARKHOS]);
+    const board = game.alienState.getBoardByType(EAlienType.ARKHOS);
+    if (!isArkhosAlienBoard(board)) throw new Error('expected arkhos board');
+    const [rivalSlot, ...remainingSlots] = board.getDiscoverySlots();
+    if (!rivalSlot) throw new Error('expected discovery slot');
+    board.placeTrace(rivalSlot, { playerId: rival.id }, rivalSlot.traceColor);
+    for (const slot of remainingSlots) {
+      board.placeTrace(slot, 'neutral', slot.traceColor);
+    }
+    rivalState.progress = 0;
+    rivalState.progressSlot = 0;
+
+    game.alienState.discoverAlien(board, game);
+
+    expect(rivalState.progress).toBe(1);
+    expect(board.resolvedExplorationRewards.at(-1)).toMatchObject({
+      playerId: rival.id,
+      size: 'minor',
+    });
+  });
+
+  it('prefers Arkhos when rival trace candidates have equally low available spaces', () => {
+    const game = createSoloGame();
+    const rival = game.players[1];
+    const rivalState = game.rivalState;
+    if (!rivalState) throw new Error('expected rival state');
+    game.alienState = AlienState.createFromHiddenAliens([
+      EAlienType.EXERTIANS,
+      EAlienType.ARKHOS,
+    ]);
+    const exertians = game.alienState.getBoardByType(EAlienType.EXERTIANS);
+    const arkhos = game.alienState.getBoardByType(EAlienType.ARKHOS);
+    if (!isExertiansAlienBoard(exertians) || !isArkhosAlienBoard(arkhos)) {
+      throw new Error('expected exertians and arkhos boards');
+    }
+    fillDiscoverySlotsWithNeutral(exertians);
+    fillDiscoverySlotsWithNeutral(arkhos);
+    game.alienState.discoverAlien(exertians, game);
+    game.alienState.discoverAlien(arkhos, game);
+    rivalState.actionDeck = new Deck(['S.1']);
+    rivalState.computer.filledSlots = [true, true, true, true, true, true];
+
+    RivalTurnController.resolveCurrentTurn(game);
+
+    expect(
+      arkhos.speciesTraceSlots.some(
+        (slot) =>
+          slot.traceColor === ETrace.BLUE &&
+          slot.occupants.some(
+            (occupant) =>
+              occupant.source !== 'neutral' &&
+              occupant.source.playerId === rival.id,
+          ),
+      ),
+    ).toBe(true);
+    expect(
+      exertians.speciesTraceSlots.some(
+        (slot) =>
+          slot.traceColor === ETrace.BLUE &&
+          slot.occupants.some(
+            (occupant) =>
+              occupant.source !== 'neutral' &&
+              occupant.source.playerId === rival.id,
+          ),
+      ),
+    ).toBe(false);
+  });
+
+  it('ignores Arkhos trace spaces above the rival access level', () => {
+    const game = createSoloGame();
+    const rival = game.players[1];
+    const rivalState = game.rivalState;
+    if (!rivalState) throw new Error('expected rival state');
+    game.alienState = AlienState.createFromHiddenAliens([
+      EAlienType.ARKHOS,
+      EAlienType.EXERTIANS,
+    ]);
+    const arkhos = game.alienState.getBoardByType(EAlienType.ARKHOS);
+    const exertians = game.alienState.getBoardByType(EAlienType.EXERTIANS);
+    if (!isArkhosAlienBoard(arkhos) || !isExertiansAlienBoard(exertians)) {
+      throw new Error('expected arkhos and exertians boards');
+    }
+    fillDiscoverySlotsWithNeutral(arkhos);
+    fillDiscoverySlotsWithNeutral(exertians);
+    game.alienState.discoverAlien(arkhos, game);
+    game.alienState.discoverAlien(exertians, game);
+    for (const slot of arkhos.speciesTraceSlots.filter(
+      (slot) =>
+        slot.traceColor === ETrace.BLUE &&
+        slot.slotId.includes('arkhos-level-0'),
+    )) {
+      arkhos.placeTrace(slot, { playerId: 'p1' }, ETrace.BLUE);
+    }
+    rivalState.actionDeck = new Deck(['S.1']);
+    rivalState.computer.filledSlots = [true, true, true, true, true, true];
+
+    RivalTurnController.resolveCurrentTurn(game);
+
+    expect(
+      exertians.speciesTraceSlots.some(
+        (slot) =>
+          slot.traceColor === ETrace.BLUE &&
+          slot.occupants.some(
+            (occupant) =>
+              occupant.source !== 'neutral' &&
+              occupant.source.playerId === rival.id,
+          ),
+      ),
+    ).toBe(true);
+    expect(
+      arkhos.speciesTraceSlots.some(
+        (slot) =>
+          slot.slotId.includes('arkhos-level-1') &&
+          slot.occupants.some(
+            (occupant) =>
+              occupant.source !== 'neutral' &&
+              occupant.source.playerId === rival.id,
+          ),
+      ),
+    ).toBe(false);
+  });
+
+  it('ignores Amoeba board spaces with one or zero organelle bonuses when choosing rival traces', () => {
+    const game = createSoloGame();
+    const rival = game.players[1];
+    const rivalState = game.rivalState;
+    if (!rivalState) throw new Error('expected rival state');
+    const { amoeba, exertians } = discoverAmoebaAndExertians(game);
+    rivalState.actionDeck = new Deck(['S.1']);
+    rivalState.computer.filledSlots = [true, true, true, true, true, true];
+
+    RivalTurnController.resolveCurrentTurn(game);
+
+    expect(
+      amoeba.speciesTraceSlots.some(
+        (slot) =>
+          slot.traceColor === ETrace.BLUE &&
+          slot.occupants.some(
+            (occupant) =>
+              occupant.source !== 'neutral' &&
+              occupant.source.playerId === rival.id,
+          ),
+      ),
+    ).toBe(false);
+    expect(
+      exertians.speciesTraceSlots.some(
+        (slot) =>
+          slot.traceColor === ETrace.BLUE &&
+          slot.occupants.some(
+            (occupant) =>
+              occupant.source !== 'neutral' &&
+              occupant.source.playerId === rival.id,
+          ),
+      ),
+    ).toBe(true);
   });
 
   it('converts one Mascamites sample into a blue board slot after the special lander placement', () => {

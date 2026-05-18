@@ -1,5 +1,16 @@
 import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
-import { AlienBoard, AnomaliesAlienBoard } from '@/engine/alien/AlienBoard.js';
+import {
+  AlienBoard,
+  AmoebaAlienBoard,
+  AnomaliesAlienBoard,
+  ArkhosAlienBoard,
+  createAlienBoard,
+  GlyphidsAlienBoard,
+  isAmoebaAlienBoard,
+  isArkhosAlienBoard,
+  isGlyphidsAlienBoard,
+} from '@/engine/alien/AlienBoard.js';
+import { SeededRandom } from '@/shared/rng/SeededRandom.js';
 
 describe('AlienBoard', () => {
   it('keeps species-specific component state out of the generic board', () => {
@@ -20,6 +31,54 @@ describe('AlienBoard', () => {
 
     expect('anomalyColumns' in board).toBe(true);
     expect('anomalyTokens' in board).toBe(false);
+  });
+
+  it('creates dedicated Glyphids and Amoeba board classes with species state', () => {
+    const glyphids = createAlienBoard({
+      alienType: EAlienType.GLYPHIDS,
+      alienIndex: 0,
+    });
+    const amoeba = createAlienBoard({
+      alienType: EAlienType.AMOEBA,
+      alienIndex: 1,
+    });
+
+    expect(glyphids).toBeInstanceOf(GlyphidsAlienBoard);
+    expect(isGlyphidsAlienBoard(glyphids)).toBe(true);
+    expect((glyphids as GlyphidsAlienBoard).glyphTokenBank).toHaveLength(35);
+    expect((glyphids as GlyphidsAlienBoard).glyphRows).toEqual({});
+    expect(amoeba).toBeInstanceOf(AmoebaAlienBoard);
+    expect(isAmoebaAlienBoard(amoeba)).toBe(true);
+    expect((amoeba as AmoebaAlienBoard).organelles).toHaveLength(5);
+    expect(
+      (amoeba as AmoebaAlienBoard).organelles.map((token) => token.position),
+    ).toEqual([8, 4, 5, 2, 3]);
+  });
+
+  it('creates a dedicated Arkhos board class and refreshes exploration cards after five reveals', () => {
+    const board = createAlienBoard({
+      alienType: EAlienType.ARKHOS,
+      alienIndex: 0,
+    });
+    if (!isArkhosAlienBoard(board)) {
+      throw new Error('expected Arkhos board');
+    }
+
+    expect(board).toBeInstanceOf(ArkhosAlienBoard);
+    board.initializeExplorationCards(
+      Array.from({ length: 9 }, (_, index) => `exploration-${index + 1}`),
+    );
+
+    const rng = new SeededRandom('arkhos-refresh');
+    const revealed = Array.from({ length: 6 }, () =>
+      board.revealExplorationCard(rng),
+    );
+
+    expect(revealed).toHaveLength(6);
+    expect(revealed.every(Boolean)).toBe(true);
+    expect(board.explorationDrawPile).toHaveLength(4);
+    expect(board.explorationReservePile).toHaveLength(4);
+    expect(board.explorationDiscardPile).toHaveLength(1);
   });
 
   it('initializes slots with defaults and queries discovery state', () => {

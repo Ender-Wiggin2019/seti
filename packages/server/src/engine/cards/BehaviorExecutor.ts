@@ -17,7 +17,6 @@ import {
   MarkSectorSignalEffect,
   OrbitProbeEffect,
   RefillCardRowEffect,
-  ResearchTechEffect,
   RotateDiscEffect,
   ScanEffect,
 } from '../effects/index.js';

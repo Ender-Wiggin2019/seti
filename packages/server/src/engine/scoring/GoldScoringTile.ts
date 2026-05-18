@@ -8,11 +8,11 @@ import {
   ETech,
   ETrace,
 } from '@seti/common/types/element';
-import { EAlienType } from '@seti/common/types/protocol/enums';
 import { type ETechId, getTechDescriptor } from '@seti/common/types/tech';
 import { getMoonOccupants } from '../board/PlanetaryBoard.js';
 import { ESolarSystemElementType } from '../board/SolarSystem.js';
 import { countSectorFulfills } from '../board/sectorFulfillmentCounts.js';
+import { getCardRegistry } from '../cards/CardRegistry.js';
 import { hasCardData, loadCardData } from '../cards/loadCardData.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
@@ -398,6 +398,15 @@ export function scoreEndGameCard(
   }
 
   switch (cardId) {
+    case 'ET.5':
+    case 'SA.ET.1':
+    case 'SA.ET.9':
+    case 'SA.ET.11':
+    case 'SA.ET.12':
+    case 'SA.ET.13': {
+      const score = getCardRegistry().create(cardId).scoreEndGame?.(player, game);
+      return score ?? 0;
+    }
     case '12':
       return 3 * getOrbitOrLandCountAtPlanet(player, game, EPlanet.JUPITER);
     case '14':
@@ -408,10 +417,6 @@ export function scoreEndGameCard(
       return scoreSolvayConference(player, game);
     case '127':
       return hasProbeOnAsteroids(player, game) ? 13 : 0;
-    case 'ET.5':
-      return game.alienState.getPlayerTraceCount(player, ETrace.ANY, {
-        alienType: EAlienType.MASCAMITES,
-      });
     default:
       break;
   }

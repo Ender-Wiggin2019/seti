@@ -1,6 +1,6 @@
-import { ensureDatabaseExists, getTargetDatabaseName } from './lib/dbAdmin';
-import { runMigrations } from './lib/migrateDatabase';
-import { resetTargetE2eDatabase } from './lib/resetE2eDatabase';
+import { ensureDatabaseExists, getTargetDatabaseName } from './lib/dbAdmin.js';
+import { runMigrations } from './lib/migrateDatabase.js';
+import { resetTargetE2eDatabase } from './lib/resetE2eDatabase.js';
 
 async function main(): Promise<void> {
   const targetDatabase = getTargetDatabaseName();

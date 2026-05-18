@@ -14,12 +14,13 @@ const allImplementedAliens = [
   EAlienType.EXERTIANS,
   EAlienType.MASCAMITES,
   EAlienType.OUMUAMUA,
+  EAlienType.ARKHOS,
   EAlienType.AMOEBA,
   EAlienType.GLYPHIDS,
 ];
 
 describe('AlienFilter', () => {
-  it('renders alien image buttons in banner order with an Ark placeholder', () => {
+  it('renders alien image buttons in banner order', () => {
     render(
       <AlienFilter
         alienTypes={allImplementedAliens}
@@ -45,9 +46,6 @@ describe('AlienFilter', () => {
       screen.getByRole('button', { name: 'centaurians' }).className,
     ).toContain('alien-filter__image--centaurians');
     expect(screen.getByRole('button', { name: 'ark' }).className).toContain(
-      'alien-filter__button--placeholder',
-    );
-    expect(screen.getByRole('button', { name: 'ark' }).className).toContain(
       'alien-filter__image--ark',
     );
     expect(screen.queryByText('BETA')).toBeNull();
@@ -71,13 +69,16 @@ describe('AlienFilter', () => {
     expect(centaurians.className).not.toContain(
       'alien-filter__button--selected',
     );
-    expect((ark as HTMLButtonElement).disabled).toBe(true);
+    expect((ark as HTMLButtonElement).disabled).toBe(false);
 
     fireEvent.click(ark);
-    expect(onFilterChange).toHaveBeenCalledTimes(1);
+    expect(onFilterChange).toHaveBeenLastCalledWith([EAlienType.ARKHOS]);
 
     fireEvent.click(centaurians);
-    expect(onFilterChange).toHaveBeenLastCalledWith([EAlienType.CENTAURIANS]);
+    expect(onFilterChange).toHaveBeenLastCalledWith([
+      EAlienType.ARKHOS,
+      EAlienType.CENTAURIANS,
+    ]);
     expect(centaurians.getAttribute('aria-pressed')).toBe('true');
     expect(centaurians.className).toContain('alien-filter__button--selected');
   });

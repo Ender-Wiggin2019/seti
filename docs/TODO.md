@@ -1,5 +1,1072 @@
 # TODO
 
+## Uncommitted Space Agency diff review - 2026-05-18
+
+Assumptions:
+- Scope is the current staged diff on `feature/server`, centered on the Space
+  Agency expansion slice plus its supporting documentation/build fixes.
+- The review is `review-and-fix`, not read-only: in-scope critical/warning
+  findings should be corrected with focused regression coverage.
+- “100% confidence” means no known in-scope loopholes remain after rule review,
+  diff re-review, and passing checks that exercise the reviewed contracts; if
+  any blocker prevents factual certainty, it must be named precisely.
+
+Success criteria:
+- Common/server/client/e2e changes agree on the Space Agency public contract,
+  including enabled aliens, public state, serialization, action routing, and UI
+  rendering.
+- New alien/card/organization behavior matches the rule documents or an explicit
+  source-backed design note, with edge-case tests for any discovered gap.
+- The confidence loop includes a second-pass diff review after fixes plus
+  targeted checks for every touched package and broader checks when the blast
+  radius requires them.
+- Any residual risk is explicit instead of hidden behind a confidence claim.
+
+Plan:
+- [x] Review the staged diff against rules, architecture, and the existing
+  completion audit; identify concrete loopholes before editing behavior.
+- [x] Add failing regression coverage for each confirmed behavioral gap, then
+  implement the smallest in-scope fixes.
+- [x] Re-review the updated diff for client/server mismatch, serialization loss,
+  stale tests, and false-positive tests; close any remaining holes.
+- [x] Run focused checks for touched packages, then the smallest broader checks
+  needed to support factual confidence.
+- [x] Record review evidence and remaining risk, if any.
+
+Review:
+- Confirmed one Space Agency rules bug during the first pass:
+  `AmoebaAlienPlugin.onDiscover()` dealt one extra card per discoverer after
+  generic discovery-slot resolution had already dealt one card per marker.
+  Added a red regression in
+  `packages/server/__tests__/engine/alien/plugins/SpaceAgencyAlienPlugins.test.ts`
+  (`expected ... to have a length of 2 but got 3` before the fix), then removed
+  the duplicate draw loop from
+  `packages/server/src/engine/alien/plugins/AmoebaAlienPlugin.ts`.
+- The second pass found one staged-diff stale-test gap:
+  `room-configured-flow.spec.ts` still treated the lobby alien-module row as one
+  switch after the new core-module UI rendered five switches. Updated the
+  assertion to verify the two enabled core switches instead of relying on a
+  singular locator. Its focused rerun now gets past that strict-locator failure
+  and later times out in the pre-existing end-of-round prompt resolver path.
+- Second-pass review after the fixes did not find another confirmed in-scope
+  Space Agency behavioral gap across common/server/client/e2e contracts,
+  serializer/deserializer projection, action routing, or rendered SA surfaces.
+- Success-criterion audit:
+  - Common/server/client/e2e contract agreement was rechecked through the
+    staged diff plus focused common/server/client/e2e suites below.
+  - The only newly confirmed rule mismatch was the Amoeba double deal; it now
+    has a rule-backed red/green regression.
+  - The confidence loop included a second-pass diff review, focused package
+    checks, targeted Space Agency E2E, and a clean sequential repo-level
+    `corepack pnpm test` attempt after clearing stale harness processes.
+  - Residual risk remains explicit below instead of being hidden behind a
+    completion claim.
+- Verification passed:
+  `pnpm --filter @seti/server test --
+  __tests__/engine/alien/plugins/SpaceAgencyAlienPlugins.test.ts`;
+  `pnpm exec biome check
+  packages/server/src/engine/alien/plugins/AmoebaAlienPlugin.ts
+  packages/server/__tests__/engine/alien/plugins/SpaceAgencyAlienPlugins.test.ts`;
+  `pnpm --filter @seti/server typecheck`; focused server verification for
+  `SpaceAgencyAlienPlugins`, `GameSetup`, `GameSerializer`,
+  `GameDeserializer`, and `RivalTurnController` (160 tests); focused common
+  verification for Space Agency organization/options/alien/rival data (28
+  tests); focused client verification for the touched Space Agency UI surfaces
+  (52 tests); `pnpm --filter @seti/e2e typecheck`; focused Space Agency E2E
+  bundle for options/setup/agencies/organization-power/new-aliens/event-bus (6
+  passed); `corepack pnpm typecheck`; `corepack pnpm build`; `git diff --check`;
+  `pnpm exec biome check packages/e2e/tests/room-configured-flow.spec.ts`.
+- Broader verification attempted:
+  after clearing stale prior E2E harnesses, clean sequential `corepack pnpm
+  test` reached the full E2E suite and failed with `62 passed, 8 failed`.
+  Failures were:
+  `centaurians-real-flow.spec.ts`,
+  `debug-replay.spec.ts`,
+  two cases in `debug-snapshot-replay.spec.ts`,
+  `free-action-complete-mission.spec.ts`,
+  `oumuamua-real-flow.spec.ts`,
+  `room-configured-flow.spec.ts`, and `room-multiplayer.spec.ts`.
+  A focused rerun of `room-configured-flow.spec.ts` after the stale-locator fix
+  failed later in `helpers/prompt-resolvers.ts` while resolving an end-of-round
+  card prompt.
+- Residual risk:
+  - Whole-branch release confidence is not factual while the eight broader E2E
+    failures above remain open.
+  - Existing source blockers still prevent claiming Space Agency feature
+    completion: Glyphids reward payload/refill data, Amoeba organelle reward
+    payloads and full `SA.ET.19` payout, Arkhos human exploration effect data,
+    and broader SA-10 browser/release evidence.
+
+## Space Agency organization event-bus E2E coverage - 2026-05-17
+
+Assumptions:
+- This slice adds SA-10 real-flow evidence for one organization runtime event
+  subscription through production UI.
+- Sentinel Probe Network is the narrowest source-backed event-bus target:
+  `PROBE_LAUNCHED` should mark a signal in the launched probe's sector.
+- The test may use a deterministic room seed through the normal room-create
+  request and a bounded retry fallback, but must not use debug endpoints, mocked
+  server behavior, raw websocket driving, or hidden state inspection.
+
+Success criteria:
+- A real-flow E2E selects Sentinel Probe Network from the normal setup-choice UI.
+- The owning player launches a probe through the normal action menu.
+- The sector signal marker appears in the production board renderer for both
+  players after the launch.
+- Focused E2E, E2E typecheck, Biome on touched E2E files, and `git diff
+  --check` pass or any blocker is recorded.
+
+Plan:
+- [x] Add this implementation checklist.
+- [x] Add the real-flow Playwright spec.
+- [x] Run focused E2E and E2E typecheck/format checks.
+- [x] Record review evidence.
+
+Review:
+- Added `packages/e2e/tests/space-agency-event-bus.spec.ts`.
+- The spec uses UI registration, UI room creation, host Space Agency option
+  switches, UI room join/start, setup-choice organization selection, a normal
+  `LAUNCH_PROBE` main action, and production sector signal rendering to prove
+  Sentinel Probe Network's `PROBE_LAUNCHED` event path.
+- Tightened seeded room creation in `packages/e2e/helpers/room-flow.ts` by
+  routing at browser-context scope and asserting the seed rewrite was actually
+  applied. The event-bus seed was searched against the create-room UI's real
+  default two-core-alien pool, not the all-core-alien setup used by the Amoeba
+  reveal spec.
+- Verification passed: `pnpm exec biome check packages/e2e/helpers/room-flow.ts
+  packages/e2e/tests/space-agency-event-bus.spec.ts`; `pnpm --filter @seti/e2e
+  typecheck`; `pnpm --filter @seti/e2e test --
+  tests/space-agency-event-bus.spec.ts`; `pnpm --filter @seti/e2e test --
+  tests/space-agency-options.spec.ts tests/space-agency-agencies-setup.spec.ts
+  tests/space-agency-organization-power.spec.ts
+  tests/space-agency-new-aliens.spec.ts
+  tests/space-agency-event-bus.spec.ts`.
+
+## Space Agency new alien board E2E coverage - 2026-05-17
+
+Assumptions:
+- This slice adds SA-10 real-flow evidence that a Space Agency alien selected by
+  game setup can be revealed and rendered through the production game UI.
+- The spec can use a deterministic room seed only by rewriting the normal UI
+  room-create request; it must not use debug endpoints, mocked server behavior,
+  raw websocket driving, or hidden state inspection.
+- The test should prove a specific new alien renderer is visible after real
+  card plays and trace-choice prompts, not just prove lobby toggles exist.
+
+Success criteria:
+- A real-flow E2E enables Space Agency new alien species through room settings.
+- The game starts from the normal lobby/room UI and reveals Amoeba by playing
+  real red/yellow/blue trace cards from real dealt hands.
+- The Amoeba board renderer becomes visible for both players after discovery.
+- Focused E2E, E2E typecheck, Biome on touched E2E files, and `git diff
+  --check` pass or any blocker is recorded.
+
+Plan:
+- [x] Add this implementation checklist.
+- [x] Add the real-flow Playwright spec.
+- [x] Run focused E2E and E2E typecheck/format checks.
+- [x] Record review evidence.
+
+Review:
+- Added `packages/e2e/tests/space-agency-new-aliens.spec.ts`.
+- The spec uses UI registration, UI room creation with all core aliens enabled, host Space Agency new-alien option switches, UI room join/start, real card plays, real trace-choice prompts, and normal turn flow to reveal Amoeba through the production alien board renderer.
+- Initial attempts exposed two useful boundaries: cards `98`/`99`/`100` only duplicate existing same-color traces, so they cannot start discovery; and the create-room dialog defaults to only two core aliens enabled, so the deterministic seed had to explicitly select all five core aliens through the real create-room UI before enabling the Space Agency species.
+- Verification passed: `pnpm exec biome check packages/e2e/tests/space-agency-new-aliens.spec.ts`; `pnpm --filter @seti/e2e typecheck`; `pnpm --filter @seti/e2e test -- tests/space-agency-new-aliens.spec.ts`; `pnpm --filter @seti/e2e test -- tests/space-agency-options.spec.ts tests/space-agency-agencies-setup.spec.ts tests/space-agency-organization-power.spec.ts tests/space-agency-new-aliens.spec.ts`.
+
+## Space Agency organization power E2E coverage - 2026-05-17
+
+Assumptions:
+- This slice adds SA-10 real-flow evidence for one implemented organization
+  power through the production setup and game UI.
+- The spec should choose an immediately usable organization power from the real
+  setup candidates instead of depending on debug state or raw websocket control.
+- The spec must use real UI registration, room setup, setup-choice selection,
+  free-action click, and main-action click. It must not use debug endpoints,
+  mocked network, or raw websocket driving.
+
+Success criteria:
+- A real-flow E2E chooses an immediately usable organization power during
+  Space Agency setup.
+- The owning player can click the selected organization power through the
+  free-action bar and sees it become unavailable for the round.
+- The game remains usable after the organization power with normal main-action
+  availability still visible through the same real UI flow.
+- Focused E2E, E2E typecheck, Biome on touched E2E files, and `git diff
+  --check` pass or any blocker is recorded.
+
+Plan:
+- [x] Add this implementation checklist.
+- [x] Add the real-flow Playwright spec.
+- [x] Run focused E2E and E2E typecheck/format checks.
+- [x] Record review evidence.
+
+Review:
+- Added `packages/e2e/tests/space-agency-organization-power.spec.ts`.
+- The spec uses UI registration, UI room creation, host Space Agency option switches, UI room join/start, setup-choice organization selection, real setup card-prompt resolution, free-action organization power click, and a normal main-action follow-up.
+- Initial attempts exposed two E2E design issues: seed rewriting through Playwright routing did not reliably affect the server setup candidates, and setup can produce card-tuck prompts before main actions become available. The final spec avoids seed dependence by retrying real setup attempts until either player is dealt an immediately usable organization power, and it drains real card prompts on both pages before asserting action availability.
+- A later combined run exposed a flake from assuming `LAUNCH_PROBE` is always enabled after setup. The spec now synchronizes on an active `PASS` turn for the organization-power owner and asserts normal main-action availability after the power is used.
+- Verification passed: `pnpm exec biome check packages/e2e/tests/space-agency-organization-power.spec.ts`; `pnpm --filter @seti/e2e typecheck`; `pnpm --filter @seti/e2e test -- tests/space-agency-organization-power.spec.ts`; `pnpm --filter @seti/e2e test -- tests/space-agency-options.spec.ts tests/space-agency-agencies-setup.spec.ts tests/space-agency-organization-power.spec.ts`; `pnpm --filter @seti/e2e test -- tests/space-agency-options.spec.ts tests/space-agency-agencies-setup.spec.ts tests/space-agency-organization-power.spec.ts tests/space-agency-new-aliens.spec.ts`.
+
+## Space Agency completion audit evidence refresh - 2026-05-17
+
+Assumptions:
+- This slice updates documentation only; it does not mark SA-10 complete.
+- Repo-level `typecheck` and `build` evidence should be recorded now that both
+  gates have passed after the latest fixes.
+- Full `pnpm test`, full E2E, and browser smoke evidence remain separate
+  release gates.
+
+Success criteria:
+- The completion audit no longer says full typecheck/build evidence is missing.
+- The audit still calls out missing full tests, full E2E, browser smoke, and
+  source-blocked alien reward payloads.
+- Documentation whitespace and `git diff --check` pass.
+
+Plan:
+- [x] Add this audit-refresh checklist.
+- [x] Update the completion audit evidence and blocker wording.
+- [x] Run documentation whitespace and diff checks.
+- [x] Record review evidence.
+
+Review:
+- Updated `docs/review/space-agency-organization-aliens-completion-audit-2026-05-17.md` to record the now-passing repo-level `corepack pnpm typecheck` and `corepack pnpm build` gates, plus focused Space Agency E2E/typecheck evidence.
+- Kept the audit status as not complete: full `pnpm test`, full E2E, browser smoke, and source-blocked Glyphids/Amoeba/Arkhos reward payload execution remain open.
+- Verification passed: documentation trailing-whitespace check found no matches; `git diff --check` passed.
+
+## Space Agency server build test import fix - 2026-05-17
+
+Assumptions:
+- This slice fixes the next repo-level build failure after the asset sync race
+  was removed.
+- Server build currently compiles tests, so test imports must also be valid
+  under the server build's NodeNext resolution.
+- The fix should not change card registry or database reset behavior.
+
+Success criteria:
+- `corepack pnpm build` fails before the fix on server test imports.
+- Server test imports resolve under `tsc -p tsconfig.json`.
+- Focused server build and repo-level build pass, or any remaining failure is
+  recorded exactly.
+- Biome on touched tests and `git diff --check` pass.
+
+Plan:
+- [x] Capture the server build import failures.
+- [x] Fix the two build-unsafe test imports.
+- [x] Run focused server build and repo-level build.
+- [x] Record review evidence.
+
+Review:
+- `corepack pnpm build` progressed past the asset sync race and then failed on server NodeNext import resolution in server tests/scripts.
+- Updated server test imports to use build-safe package/export paths and `.js` extensions where required by NodeNext: `CardRegistry.test.ts`, `resetE2eDatabase.test.ts`, and the server database script imports under `packages/server/scripts`.
+- Verification passed: `corepack pnpm --filter @seti/server build`; `corepack pnpm build` across all build tasks. The repo-level build emitted only existing large bundle/page-data warnings.
+
+## Space Agency build asset sync race fix - 2026-05-17
+
+Assumptions:
+- This slice fixes the repo-level build failure exposed by parallel Turbo
+  builds; it does not change card assets or generated build output.
+- Both `@seti/client` and `@seti/web` run the same sync script, so the script
+  must be safe when invoked concurrently.
+- A simple repo-local directory lock is sufficient for local/CI shell builds.
+
+Success criteria:
+- `corepack pnpm build` fails before the fix with `rm: ... seti-assets:
+  Directory not empty` from concurrent asset sync.
+- `scripts/sync-card-assets.sh` serializes concurrent sync runs.
+- `corepack pnpm build` passes after the fix, or any remaining failure is
+  recorded exactly.
+- Shell script syntax check and `git diff --check` pass.
+
+Plan:
+- [x] Capture the repo-level build failure.
+- [x] Add a minimal lock around asset syncing.
+- [x] Run shell syntax check and repo-level build.
+- [x] Record review evidence.
+
+Review:
+- `corepack pnpm build` failed before the fix when parallel client/web builds invoked `scripts/sync-card-assets.sh` at the same time and one sync observed `rm: ... seti-assets: Directory not empty`.
+- Added a repo-local directory lock around the existing asset sync loop so concurrent Turbo tasks serialize the destructive copy step without changing source or target asset contents.
+- Verification passed: `bash -n scripts/sync-card-assets.sh`; `corepack pnpm build` across all build tasks. The repo-level build emitted only existing large bundle/page-data warnings.
+
+## Space Agency web Arkhos color typecheck fix - 2026-05-17
+
+Assumptions:
+- This slice fixes the repo-level typecheck failure exposed after adding Arkhos
+  to the common alien enum.
+- `packages/web` should use the same Arkhos alien color as common unless a
+  separate web design requirement exists.
+- No runtime behavior beyond completing the color map is changed.
+
+Success criteria:
+- `corepack pnpm typecheck` fails before the fix with missing
+  `[EAlienType.ARKHOS]` in `packages/web/src/constant/color.ts`.
+- The web alien color map includes Arkhos.
+- Focused web typecheck and repo-level typecheck pass, or any remaining
+  failure is recorded with exact evidence.
+- Biome on the touched web file and `git diff --check` pass.
+
+Plan:
+- [x] Capture the repo-level typecheck failure.
+- [x] Add the missing Arkhos color mapping.
+- [x] Run focused and repo-level typechecks plus formatting/diff checks.
+- [x] Record review evidence.
+
+Review:
+- `corepack pnpm typecheck` failed before the fix because `packages/web/src/constant/color.ts` was missing `[EAlienType.ARKHOS]` in `EAlienColor`.
+- Added the Arkhos color mapping using the same value as common: `#02adc4`.
+- Verification passed: `corepack pnpm --filter @seti/web typecheck`; `pnpm exec biome check packages/web/src/constant/color.ts`; `corepack pnpm typecheck` across all 6 packages; final whitespace and `git diff --check`.
+
+## Space Agency E2E typecheck coverage - 2026-05-17
+
+Assumptions:
+- This slice improves verification only; it does not change runtime behavior.
+- The E2E package already has `tsconfig.json`, so the smallest fix is a
+  package-local `typecheck` script and local TypeScript dev dependency.
+- Root `pnpm typecheck` should include E2E once the package exposes a
+  `typecheck` script through Turbo.
+
+Success criteria:
+- Before the fix, `pnpm --filter @seti/e2e typecheck` does not typecheck the
+  package.
+- After the fix, `pnpm --filter @seti/e2e typecheck` runs `tsc` against
+  `packages/e2e/tsconfig.json`.
+- Lockfile/package metadata remains consistent.
+- Focused E2E typecheck, Biome on touched package metadata if applicable, and
+  `git diff --check` pass.
+
+Plan:
+- [x] Confirm the E2E package currently has no effective typecheck script.
+- [x] Add the minimal E2E typecheck script and TypeScript dev dependency.
+- [x] Run focused E2E typecheck and metadata/diff checks.
+- [x] Record review evidence.
+
+Review:
+- Confirmed the pre-fix command `pnpm --filter @seti/e2e typecheck` printed `None of the selected packages has a "typecheck" script`, so it did not verify the E2E TypeScript sources.
+- Added `typecheck: "tsc -p tsconfig.json --noEmit"` and a local `typescript` dev dependency to `packages/e2e/package.json`; added the matching scoped importer entry in `pnpm-lock.yaml`.
+- Regenerated workspace links with `corepack pnpm install --filter @seti/e2e --ignore-scripts`. An initial pnpm 9 lockfile update produced unrelated churn, so only that generated lockfile diff was reverted and replaced with the minimal E2E importer entry.
+- Verification passed: `pnpm --filter @seti/e2e typecheck`; `corepack pnpm exec turbo run typecheck --filter=@seti/e2e`; `pnpm exec biome check packages/e2e/package.json pnpm-lock.yaml` processed package metadata successfully; `git diff --check` passed after final whitespace checks.
+
+## Space Agency E2E alien enum consistency - 2026-05-17
+
+Assumptions:
+- This slice fixes E2E expectations only; common/server enum values are already
+  authoritative.
+- The failure should remain a real configured-room flow, not a mocked unit test.
+- `ARKHOS` must be represented as alien type `8` and `DUMMY` as `9` in E2E
+  helpers/expected room option flags.
+
+Success criteria:
+- The existing configured alien pool E2E fails before the helper fix for the
+  stale enum expectation.
+- E2E helper enum and expected option flags match the current common alien enum.
+- The focused configured alien pool E2E passes after the fix.
+- Biome on touched E2E files, whitespace checks, and `git diff --check` pass.
+
+Plan:
+- [x] Run the existing configured alien pool E2E and capture the stale enum
+  failure.
+- [x] Fix the E2E helper enum and expected flags for Arkhos/Dummy.
+- [x] Re-run focused configured alien pool E2E and formatting checks.
+- [x] Record review evidence.
+
+Review:
+- The red run of `pnpm --filter @seti/e2e test -- tests/alien-pool-config.spec.ts` failed in all three configured alien pool cases because expected `alienModulesEnabled` flags omitted key `9`, the current `DUMMY` id.
+- Updated `packages/e2e/helpers/room-flow.ts` so the E2E helper enum matches common: `AMOEBA = 6`, `GLYPHIDS = 7`, `ARKHOS = 8`, `DUMMY = 9`.
+- Updated `packages/e2e/tests/alien-pool-config.spec.ts` expected flags to include both Arkhos and Dummy as disabled for core-only configured-room cases.
+- Verification passed: `pnpm --filter @seti/e2e test -- tests/alien-pool-config.spec.ts`; `pnpm exec biome check packages/e2e/helpers/room-flow.ts packages/e2e/tests/alien-pool-config.spec.ts`; no trailing whitespace in touched files; `git diff --check`.
+
+## Space Agency new-alien option E2E coverage - 2026-05-17
+
+Assumptions:
+- This slice adds E2E coverage for already implemented lobby/room option
+  behavior; it does not change gameplay rules or server state shape.
+- The test should use the existing real UI room flow and PATCH responses, not
+  debug endpoints or direct websocket actions.
+- Board-rendering E2E remains a separate slice because deterministic new-alien
+  selection/discovery requires more setup than the option visibility boundary.
+
+Success criteria:
+- The Space Agency options E2E asserts Glyphids, Amoeba, and Arkhos child
+  toggles are hidden until `newAlienSpecies` is enabled.
+- The same E2E asserts the child toggles are visible/enabled when
+  `newAlienSpecies` is enabled and are hidden again after it is disabled.
+- Focused E2E, E2E typecheck if available, Biome on touched E2E files, and
+  `git diff --check` pass or any blocker is recorded.
+
+Plan:
+- [x] Extend the existing Space Agency options real-UI spec with child-toggle
+  visibility assertions.
+- [x] Run focused E2E verification and formatting checks.
+- [x] Record review evidence.
+
+Review:
+- Extended `packages/e2e/tests/space-agency-options.spec.ts` so the real UI room-options flow now asserts Glyphids, Amoeba, and Arkhos child switches are absent while `newAlienSpecies` is off, become visible/enabled when the option is turned on, and disappear again when it is turned off.
+- The spec continues to use UI registration, room creation, room option PATCH responses, and guest read-only room rendering. It does not use debug endpoints, raw websocket actions, or mocked network behavior.
+- Verification passed: `pnpm --filter @seti/e2e test -- tests/space-agency-options.spec.ts`; `pnpm exec biome check packages/e2e/tests/space-agency-options.spec.ts`.
+- E2E package-local typecheck was attempted with `pnpm --filter @seti/e2e exec tsc -p tsconfig.json --noEmit`, and root invocation was attempted with `pnpm exec tsc -p packages/e2e/tsconfig.json --noEmit`; both failed because `tsc` is not installed in the available package/root execution context.
+- Final whitespace and `git diff --check` pass recorded after this note.
+
+## Space Agency blocked alien reward payload manifest - 2026-05-17
+
+Assumptions:
+- This slice does not implement reward execution. It prevents source-blocked
+  rewards from being silently treated as implemented.
+- The manifest belongs in common because server and client need the same
+  source-status vocabulary.
+- Arkhos exploration effect ids should remain opaque `*_UNMAPPED` ids until a
+  structured `effectSmall`/`effectBig` source is recovered.
+
+Success criteria:
+- A common test fails before the manifest exists and passes after the minimal
+  implementation.
+- The manifest names Glyphids translated rewards, Amoeba organelle rewards, and
+  Arkhos exploration rewards as blocked by missing structured payload sources.
+- Existing Arkhos exploration card data still uses opaque unmapped effect ids.
+- Focused common tests, common typecheck, Biome on touched files, and
+  `git diff --check` pass or any tool limitation is recorded.
+
+Plan:
+- [x] Add a red common test for the blocked alien reward payload manifest.
+- [x] Add the smallest shared manifest in common Space Agency alien constants.
+- [x] Run focused common verification and whitespace checks.
+- [x] Record review evidence.
+
+Review:
+- Added a red common test in `packages/common/__tests__/constant/spaceAgencyAliens.test.ts` for a shared blocked alien reward payload manifest. The red run failed because `SPACE_AGENCY_BLOCKED_ALIEN_REWARD_PAYLOADS` was `undefined`.
+- Added `SPACE_AGENCY_BLOCKED_ALIEN_REWARD_PAYLOADS` to `packages/common/src/constant/spaceAgencyAliens.ts`, naming Glyphids translated rewards, Amoeba organelle rewards, and Arkhos exploration rewards as blocked by missing structured payload sources.
+- The test also asserts every Arkhos exploration minor/major effect id remains an opaque `_UNMAPPED` id, preserving the source-backed blocker instead of implying executable reward behavior.
+- Verification passed: `pnpm --filter @ender-seti/common test -- spaceAgencyAliens`; `pnpm --filter @ender-seti/common typecheck`; `pnpm exec biome check packages/common/src/constant/spaceAgencyAliens.ts packages/common/__tests__/constant/spaceAgencyAliens.test.ts`; no trailing whitespace in touched files; `git diff --check`.
+
+## Space Agency completion audit follow-up - 2026-05-17
+
+Assumptions:
+- This slice does not mark the active goal complete; it creates a fact-based audit of the current organization and alien implementation state.
+- The audit must map the original objective to concrete files/tests and separate proven work from unresolved or source-blocked behavior.
+- Known missing reward payload tables must remain explicit blockers rather than inferred behavior.
+
+Success criteria:
+- A review document restates the objective as concrete deliverables and maps each deliverable to implementation/test evidence.
+- The audit identifies missing, incomplete, weakly verified, or blocked requirements.
+- The audit explains why the goal is not yet complete and which next implementation slices are safe.
+- Documentation checks and `git diff --check` pass.
+
+Plan:
+- [x] Inspect the implementation plan, TODO blockers, and representative common/server/client/e2e evidence.
+- [x] Create a completion-audit report under `docs/review`.
+- [x] Run doc formatting/whitespace checks.
+- [x] Record review evidence in this TODO section.
+
+Review:
+- Created `docs/review/space-agency-organization-aliens-completion-audit-2026-05-17.md` to map Space Agency organization and alien requirements to current files, tests, E2E evidence, and unresolved blockers.
+- Conclusion: the active goal is not complete. Organization/runtime surfaces are mostly implemented for the current server behavior, but Glyphids translated rewards, Amoeba organelle rewards and `SA.ET.19` payout, Arkhos human exploration reward payloads, and SA-10 release/E2E evidence remain incomplete.
+- Verification: `pnpm exec biome check docs/TODO.md docs/review/space-agency-organization-aliens-completion-audit-2026-05-17.md` was attempted, but repo Biome config ignores Markdown and processed zero files. Manual doc whitespace checks passed: `rg -n "[ \t]+$" docs/TODO.md docs/review/space-agency-organization-aliens-completion-audit-2026-05-17.md` found no trailing whitespace, and both files end with newline.
+- Final `git diff --check` passed after this review note.
+
+## Space Agency organization complexity metadata follow-up - 2026-05-17
+
+Assumptions:
+- This slice fixes common/server consistency only; it does not change organization runtime behavior.
+- If a server organization class exposes a power or main action, common metadata should not describe it as `setup-only`.
+- Exact player-facing wording for complexity is out of scope because the current client does not render `complexity`.
+
+Success criteria:
+- A server registry test fails when runtime-implemented organizations are marked `setup-only` in common metadata.
+- Common organization metadata marks every runtime-implemented organization as non-`setup-only`.
+- Existing common organization metadata tests are updated to match the implemented runtime surface.
+- Focused common/server tests, typechecks, Biome, and `git diff --check` pass.
+
+Plan:
+- [x] Add a red server registry test for organization runtime/metadata complexity consistency.
+- [x] Update common organization complexity metadata and common expectations.
+- [x] Run focused common/server tests, typechecks, Biome, and `git diff --check`.
+- [x] Record review evidence.
+
+Review:
+- Added a red `OrganizationRegistry` test that compares server runtime capabilities to common organization metadata. The red run failed because at least one runtime-implemented organization was still marked `setup-only`.
+- Updated common `complexity` metadata so every organization with an implemented server power or main action is non-`setup-only`; updated common metadata expectations accordingly.
+- Verification passed: `pnpm --filter @ender-seti/common test -- organizations`; `pnpm --filter @seti/server test -- __tests__/engine/organization/OrganizationRegistry.test.ts`; `pnpm --filter @ender-seti/common typecheck`; `pnpm --filter @seti/server typecheck`; Biome check on touched files after formatting; `git diff --check`.
+- Runtime behavior was not changed in this slice.
+
+## Space Agency Amoeba client section-color follow-up - 2026-05-17
+
+Assumptions:
+- This slice implements only client rendering of source-backed Amoeba board section colors using shared `AMOEBA_TRACE_SLOTS`.
+- It does not introduce new layout data or hand-drawn organelle icons; organelles still render through `DescRender`.
+- The change is visual/semantic only and does not add new game actions.
+
+Success criteria:
+- Amoeba board cells expose their shared trace color via DOM data attributes.
+- Cell borders use the existing trace-color palette to make the section color visible.
+- Focused client tests fail before production edits and pass after the minimal implementation; type/format/whitespace checks remain green.
+
+Plan:
+- [x] Add a red client test for Amoeba cell section colors.
+- [x] Update `AlienBoardView` to derive cell trace colors from `AMOEBA_TRACE_SLOTS`.
+- [x] Run focused client tests, common/client typechecks, Biome, and `git diff --check`.
+- [x] Record review evidence and remaining Amoeba blockers.
+
+Review:
+- Added a red `AlienBoardView` test asserting Amoeba cell positions expose the shared section colors: position `8` blue, `4` yellow, and `2` red. The red run failed because cells did not yet include `data-trace-color`.
+- Updated `AlienBoardView` to derive Amoeba cell trace colors from shared `AMOEBA_TRACE_SLOTS`, expose them via `data-trace-color`, and apply the existing trace-color palette to cell borders/backgrounds. Organelle icons still render through `DescRender`.
+- Verification passed: `pnpm --filter @seti/client test -- AlienBoardView`; `pnpm --filter @ender-seti/common typecheck`; `pnpm --filter @seti/client typecheck`; Biome check on touched files; `git diff --check`.
+- Remaining blocker: this is a client semantic/visual consistency slice only. Amoeba reward execution and `SA.ET.19` full card flow remain blocked by source-backed organelle reward payload mapping.
+
+## Space Agency Amoeba single-organelle mutation helper follow-up - 2026-05-17
+
+Assumptions:
+- This slice implements only source-backed Amoeba mutation movement for one organelle token, based on `frontend-reference` `amoebaLife.js` `moveAmoeba`.
+- It is groundwork for single-organelle card choices; it does not grant the selected organelle's reward.
+- Movement skips occupied positions and uses the existing loops: positions `0-5` and positions `6-8`.
+
+Success criteria:
+- Amoeba board code can move one organelle token by id.
+- The helper returns `false` for an unknown token id.
+- Occupied target positions are skipped without moving unrelated organelles.
+- The existing board-space mutation path reuses the board helper and remains green.
+
+Plan:
+- [x] Add a red test for single-organelle movement.
+- [x] Add the smallest `AmoebaAlienBoard` movement helper and reuse it from the plugin.
+- [x] Run focused server tests, common/server typechecks, Biome, and `git diff --check`.
+- [x] Record review evidence and remaining Amoeba reward blocker.
+
+Review:
+- Added a red plugin test for moving a single Amoeba organelle by token id. The red run failed as expected with `board.moveOrganelleToken is not a function`.
+- Added `AmoebaAlienBoard.moveOrganelleToken`, `moveOrganellesInSection`, and the shared occupied-position skip logic. `AmoebaAlienPlugin` now delegates board-space mutation movement to the board helper.
+- Verification passed: `SpaceAgencyAlienPlugins.test.ts` passed 21 tests; `pnpm --filter @ender-seti/common typecheck` passed; `pnpm --filter @seti/server typecheck` passed after restoring the `AmoebaAlienBoard` type import; Biome check on touched files passed after formatting; `git diff --check` passed.
+- Remaining blocker: this supports future single-organelle card choices but still does not grant organelle rewards because the source-backed token reward mapping is not implemented.
+
+## Space Agency Amoeba ET.19 marker-removal helper follow-up - 2026-05-17
+
+Assumptions:
+- This slice implements only the source-backed marker-removal target scope for `SA.ET.19` from `docs/arch/aliens/amoeba/rule.md` and the Space Agency FAQ.
+- Valid targets are the player's own markers on Amoeba species-board spaces, Amoeba discovery spaces, or Amoeba overflow spaces.
+- Organelle reward execution after removal remains out of scope because organelle reward payloads are still not represented.
+
+Success criteria:
+- Amoeba board code can list the current player's removable `SA.ET.19` marker slots across board, discovery, and overflow.
+- Removing a valid marker removes only that player's occupant and returns the removed space color for later organelle-section resolution.
+- Unknown slots and slots without the player's marker are no-ops.
+- Focused tests fail before production edits and pass after the minimal implementation; type/format/whitespace checks remain green.
+
+Plan:
+- [x] Add a red test for Amoeba `SA.ET.19` marker target listing and removal.
+- [x] Add the smallest `AmoebaAlienBoard` helper for removable marker slots and marker removal.
+- [x] Run focused server tests, common/server typechecks, Biome, and `git diff --check`.
+- [x] Record review evidence and remaining Amoeba reward blocker.
+
+Review:
+- Added a red plugin test for `SA.ET.19` marker targets. The red run failed as expected with `board.getRemovableMarkerSlots is not a function`.
+- Added `AmoebaAlienBoard.getRemovableMarkerSlots` and `removePlayerMarkerFromSlot`; the target scope is species-board slots first, then discovery slots, then overflow slots, and removal returns the removed slot color.
+- Verification passed: `SpaceAgencyAlienPlugins.test.ts` passed 20 tests; `pnpm --filter @ender-seti/common typecheck` passed; `pnpm --filter @seti/server typecheck` passed; Biome check on touched files passed after formatting; `git diff --check` passed.
+- Remaining blocker: this does not yet implement the `SA.ET.19` card flow or organelle reward payout because the organelle token reward payloads still need a source-backed executable mapping.
+
+## Space Agency Amoeba organelle section helper follow-up - 2026-05-17
+
+Assumptions:
+- This slice implements only source-backed Amoeba section lookup/count/order behavior from checked-in `frontend-reference` `amoebaLife.js`.
+- Organelles in an activated color section are ordered by descending board position, matching `activateAllAmoebaColor`.
+- Reward payload execution remains out of scope because organelle effect payloads are not represented in shared data.
+
+Success criteria:
+- Amoeba board code can report which organelles are in a trace-color section.
+- The reported order is descending by position for future activation.
+- The count helper uses the same section mapping.
+- Existing mutation movement behavior remains unchanged; focused tests fail before production edits and pass after the minimal implementation.
+
+Plan:
+- [x] Add a red test for Amoeba organelle section order and count.
+- [x] Add the smallest `AmoebaAlienBoard` helper and reuse it from the plugin.
+- [x] Run focused server tests, common/server typechecks, Biome, and `git diff --check`.
+- [x] Record review evidence and remaining Amoeba blockers.
+
+Review:
+- Added a red plugin test for Amoeba section lookup. The red run failed as expected with `board.getOrganellesInSection is not a function`.
+- Added `AmoebaAlienBoard.getOrganellesInSection`, `countOrganellesInSection`, and `traceColorForOrganellePosition` using the existing trace-slot section mapping, with activation order sorted by descending position.
+- Updated `AmoebaAlienPlugin` to reuse the board helper for rival placement checks and mutation movement ordering.
+- Verification passed: `SpaceAgencyAlienPlugins.test.ts` passed 19 tests; `pnpm --filter @ender-seti/common typecheck` passed; `pnpm --filter @seti/server typecheck` passed; Biome check on touched files passed after formatting; `git diff --check` passed.
+- Remaining blocker: this still does not execute Amoeba organelle rewards because the organelle effect payloads and `SA.ET.19` reward execution remain incomplete.
+
+## Space Agency Glyphids translation reward-coordinate follow-up - 2026-05-17
+
+Assumptions:
+- This slice implements only the source-backed coordinate math from checked-in `frontend-reference` `alphabetLife.js` `getAlphabetEffect`.
+- Reward payload execution remains out of scope because `dataSheet.alphabetTable` values are still unrecovered.
+- Coordinates are zero-based row indexes into `alphabetTable`, while columns follow the reference's `position + 1` lookup because column 0 is not a glyph slot payload.
+
+Success criteria:
+- A translated level 1 glyph reports reward row `(level - 1) * 2 + (side - 1)` and reward column `position + 1`.
+- A translated level 2 glyph reports the same source-backed coordinate math.
+- Untranslated glyph lookup still returns `undefined`.
+- Focused tests fail before production edits and pass after the minimal implementation; type/format/whitespace checks remain green.
+
+Plan:
+- [x] Add a red test for Glyphids translation reward table coordinates.
+- [x] Extend the shared translated-glyph placement shape and board lookup with source-backed coordinates.
+- [x] Run focused server tests, common/server typechecks, Biome, and `git diff --check`.
+- [x] Record review evidence and remaining blockers.
+
+Review:
+- Extended the translated-glyph plugin test with reward table coordinate assertions. The red run failed because `getTranslatedGlyph` did not yet return `rewardRowIndex` or `rewardColumnIndex`.
+- Added `rewardRowIndex` and `rewardColumnIndex` to `IGlyphidsTranslationPlacement` and implemented the checked-in reference formula: row `(level - 1) * 2 + (side - 1)`, column `position + 1`.
+- Verification passed: `SpaceAgencyAlienPlugins.test.ts` passed 18 tests; `pnpm --filter @ender-seti/common typecheck` passed; `pnpm --filter @seti/server typecheck` passed; Biome check on touched TS files passed; `git diff --check` passed.
+- Remaining blocker: this still only identifies the reward table cell. Executing translated rewards remains blocked until the actual `dataSheet.alphabetTable` payload table is recovered from a structured source.
+
+## Space Agency Glyphids translated-glyph lookup follow-up - 2026-05-17
+
+Assumptions:
+- This slice implements only the source-backed lookup behavior from checked-in `frontend-reference` `alphabetLife.js` `getPlacedToken`.
+- It returns where a glyph is translated: level, position, side, and glyph.
+- It does not execute translated rewards because `dataSheet.alphabetTable` payloads are still unrecovered.
+- It does not place sky, planet, or tech-stack glyph tokens because the project does not yet have all equivalent token containers and partial placement would make bank order misleading.
+
+Success criteria:
+- Looking up an unplaced Glyphids glyph returns `undefined`.
+- Looking up a translated glyph returns its table level, position, side, and glyph.
+- Duplicate placement constraints remain unchanged.
+- Focused tests fail before production edits and pass after the minimal implementation; type/format/whitespace checks remain green.
+
+Plan:
+- [x] Add a red test for translated-glyph lookup.
+- [x] Add the smallest shared placement type and `GlyphidsAlienBoard` query helper.
+- [x] Run focused server tests, common/server typechecks, Biome, and `git diff --check`.
+- [x] Record review evidence and remaining Glyphids blockers.
+
+Review:
+- Added a red plugin test for Glyphids translated-glyph lookup. The red run failed as expected with `board.getTranslatedGlyph is not a function`.
+- Added shared `IGlyphidsTranslationPlacement` and implemented `GlyphidsAlienBoard.getTranslatedGlyph`, derived from existing `translationRows` state without adding new persisted fields.
+- Verification passed: `SpaceAgencyAlienPlugins.test.ts` passed 18 tests; `pnpm --filter @ender-seti/common typecheck` passed; `pnpm --filter @seti/server typecheck` passed; Biome check on touched TS files passed; `git diff --check` passed.
+- Remaining Glyphids blockers: translated reward execution still lacks the structured `dataSheet.alphabetTable` reward table; sky/planet/tech glyph token setup remains blocked because implementing only a subset would make token-bank ordering misleading; board-token trace/refill wiring still lacks source-backed trace colors/rewards/refill positions.
+
+## Space Agency Glyphids board-token claim helper follow-up - 2026-05-17
+
+Assumptions:
+- This slice implements only the source-backed one-time claim/removal behavior for a Glyphids token already placed on the Glyphids board.
+- It does not wire token claiming to trace placement yet, because Glyphids species-board trace colors/rewards and top-three refill positions are still not recovered as structured data.
+- It does not implement refill; future callers must keep refill-specific spaces blocked until the exact refill positions are sourced.
+
+Success criteria:
+- Claiming a Glyphids board token by position removes that token from board-token state.
+- Human claims add the glyph to the first scoring row without the same glyph.
+- Rival claims use the existing rival translation placement helper before falling back to scoring rows.
+- Claiming an empty/unknown board position is a no-op.
+- Focused tests fail before production edits and pass after the minimal implementation; type/format/whitespace checks remain green.
+
+Plan:
+- [x] Add red tests for human claim, rival translated claim, and empty-position no-op.
+- [x] Implement the smallest `GlyphidsAlienBoard.claimBoardToken` helper.
+- [x] Run focused server tests, typecheck, Biome, and `git diff --check`.
+- [x] Record review evidence and remaining Glyphids blockers.
+
+Review:
+- Added red plugin tests for claiming Glyphids board tokens: human claims remove the token and collect it into scoring rows, rival claims route through translation placement first, and empty positions are no-ops. The red run failed on missing `claimBoardToken`.
+- Implemented `GlyphidsAlienBoard.claimBoardToken` as a single-token removal/claim helper; it delegates to `gainRivalGlyphToken` when a rival direction is supplied, otherwise it uses `collectGlyphToken`.
+- Verification passed: server plugin/serializer/deserializer suite passed 3 files / 67 tests; `pnpm --filter @seti/server typecheck` passed; Biome check on touched files passed; `git diff --check` passed.
+- Remaining Glyphids blockers: this helper is not wired to trace/planet/sector/tech triggers; top-three board-token refill remains blocked until exact refill positions/effects are sourced; translation reward execution remains blocked by the unrecovered `dataSheet.alphabetTable` payload table.
+
+## Space Agency Glyphids rival translation placement follow-up - 2026-05-17
+
+Assumptions:
+- This slice implements only the source-backed structural placement behavior from checked-in `frontend-reference` `alphabetLife.js`.
+- Rival translation reward execution remains out of scope because the structured `dataSheet.alphabetTable` payload table is still unrecovered.
+- Token-source triggers remain out of scope; this adds the board helper that future token acquisition paths can call.
+
+Success criteria:
+- Rival glyph placement tries level 2 before level 1.
+- Direction `left` checks positions from low to high; direction `right` checks positions from high to low.
+- Existing translation constraints still apply: no duplicate deciphered glyphs and level 2 requires both lower support slots.
+- If a rival glyph cannot be placed, it can still be collected into scoring rows through the existing row grouping helper.
+- Focused tests fail before production edits and pass after the minimal implementation; type/format/whitespace checks remain green.
+
+Plan:
+- [x] Add red tests for rival translation placement priority/direction and fallback collection behavior.
+- [x] Implement the smallest `GlyphidsAlienBoard` helper for rival translation placement.
+- [x] Run focused server tests, typecheck, Biome, and `git diff --check`.
+- [x] Record review evidence and remaining Glyphids blockers.
+
+Review:
+- Added red plugin tests for rival Glyphids translation placement: level 2 is attempted before level 1, direction controls scan order, duplicate deciphered glyphs fall back to scoring rows, and translated glyphs are not also collected.
+- Implemented `GlyphidsAlienBoard.gainRivalGlyphToken` and `placeRivalGlyphOnTranslationTable` using the checked-in `frontend-reference` `alphabetLife.js` behavior: table 2 first, then table 1, with `[0,1,2,3]` or `[3,2,1,0]` position order.
+- Verification passed: server plugin/serializer/deserializer suite passed 3 files / 64 tests; `pnpm --filter @seti/server typecheck` passed; Biome check on touched files passed; `git diff --check` passed.
+- Remaining Glyphids blockers: no token-source trigger currently calls this helper; translated reward execution is still blocked by the unrecovered `dataSheet.alphabetTable` payload table; planet/sector/tech token acquisition and board-token refill are still incomplete.
+
+## Space Agency Glyphids board-token setup follow-up - 2026-05-17
+
+Assumptions:
+- This slice implements only the source-backed setup placement of Glyphids tokens onto the six designated Glyphids board positions from checked-in `frontend-reference` `life.js`.
+- The six source-backed positions are `[0, 3, 4, 7, 8, 11]`.
+- This slice does not implement claiming/replenishing those board tokens, because the exact top-three refill positions are not represented in recovered structured data.
+- Planet, sector, and tech-stack Glyphids token placement remain out of scope for this slice.
+
+Success criteria:
+- Glyphids discovery deals six shuffled glyph tokens to public Glyphids board-token state and removes those tokens from the remaining bank.
+- Serializer/deserializer and public projection preserve the board-token state.
+- Client Glyphids board renders the board tokens using `DescRender`.
+- Focused tests fail before production edits and pass after the minimal implementation; type/format/whitespace checks remain green.
+
+Plan:
+- [x] Add red tests for Glyphids board-token setup, serializer/deserializer projection, and client rendering.
+- [x] Add common/server state for Glyphids board tokens and deal six tokens from the shuffled bank on discovery.
+- [x] Render projected board tokens in the Glyphids client board with existing desc icon rendering.
+- [x] Run focused server/client tests, common/server/client typechecks, Biome, and `git diff --check`.
+- [x] Record review evidence and remaining Glyphids blockers.
+
+Review:
+- Added red tests proving Glyphids discovery should deal six shuffled tokens to the species-board positions `[0, 3, 4, 7, 8, 11]`, preserve those tokens through serializer/deserializer/public projection, and render them in the client with `DescRender`. The red run failed on missing `boardTokens` server state/projection and missing client board-token UI.
+- Added `IGlyphidsBoardToken` and `GLYPHIDS_BOARD_TOKEN_POSITIONS` in common, plus `GlyphidsAlienBoard.boardTokens` and `dealBoardTokensFromBank`.
+- Updated `GlyphidsAlienPlugin.onDiscover` to shuffle the bank, deal six board tokens from the shuffled bank, and leave the remaining tokens in `glyphTokenBank`.
+- Updated public projection, DTO serialization/deserialization, localized board-token labels, and the Glyphids client board renderer.
+- Verification passed: server plugin/serializer/deserializer suite passed 3 files / 62 tests; client `AlienBoardView` passed 14 tests; common/server/client typechecks passed; locale JSON parsing passed; Biome check on touched files passed; `git diff --check` passed.
+- Remaining Glyphids blockers: claiming and replenishing Glyphids board tokens is not implemented because the exact top-three refill positions/effects are not recovered as structured data; planet, sector, and tech-stack token placement/acquisition and translation reward execution also remain incomplete.
+
+## Space Agency Glyphids translation structure follow-up - 2026-05-17
+
+Assumptions:
+- This slice implements only source-backed Glyphids structure from checked-in `frontend-reference` `alphabetLife.js` and setup in `life.js`.
+- The structured `dataSheet.alphabetTable` reward payload table has not been recovered, so translation reward execution remains out of scope.
+- Token placement on sky sectors, planets, tech stacks, and printed Glyphids board spaces remains out of scope for this slice.
+
+Success criteria:
+- Glyphids translation state has a 4-position level 1 table and a 3-position level 2 table with random side `1` or `2` on discovery.
+- A glyph may be placed on the translation table only once; level 2 positions require both supporting level 1 positions to be occupied.
+- Human glyph collection stores tokens in the first row that does not already contain that glyph, matching the reference's five-row grouping behavior.
+- Focused tests fail before production edits and pass after the minimal implementation; serializer/deserializer/type/format checks remain green.
+
+Plan:
+- [x] Add red tests for translation-table setup sides, placement constraints, and human glyph row grouping.
+- [x] Implement the smallest Glyphids board/plugin helpers for those source-backed structural rules.
+- [x] Update serializer/deserializer/public projection tests for the refined translation state.
+- [x] Run focused plugin/serializer tests, server typecheck, Biome on touched files, and `git diff --check`.
+- [x] Record review evidence and remaining Glyphids blockers.
+
+Review:
+- Added red plugin tests for Glyphids translation setup sides, translation placement constraints, and human glyph row grouping. The red run showed the old placeholder translation rows and missing board helpers.
+- Updated Glyphids shared state to model a level 1 translation table with 4 slots and a level 2 table with 3 slots, with `null` empty slots and randomized sides on discovery.
+- Added `GlyphidsAlienBoard.placeGlyphOnTranslationTable` and `collectGlyphToken`: translation glyphs cannot duplicate, level 2 placement requires both lower supports, occupied slots reject placement, and human collection uses the first row without that glyph.
+- Updated serializer/deserializer/public projection tests and client board rendering so empty translation slots render as empty cells while actual glyphs still use `DescRender`.
+- Verification passed: server plugin/serializer/deserializer suite passed 3 files / 62 tests; client `AlienBoardView` passed 14 tests; common/server/client typechecks passed; Biome check on touched files passed; `git diff --check` passed.
+- Remaining Glyphids blockers: the structured `dataSheet.alphabetTable` reward payload table is still unrecovered, so translated reward execution and card glyph icon payout behavior remain blocked; token placement/acquisition from sky sectors, planets, tech stacks, and Glyphids board spaces is still not modeled.
+
+## Space Agency Amoeba mutation movement follow-up - 2026-05-17
+
+Assumptions:
+- This slice implements only the source-backed organelle movement that follows marking an Amoeba board space.
+- It does not execute organelle reward payloads; reward payload data is still not represented in shared state.
+- Movement follows checked-in `frontend-reference` `amoebaLife.js`: positions `0-5` advance around one loop, positions `6-8` advance around the inner loop, and occupied target positions are skipped.
+
+Success criteria:
+- Marking an Amoeba species-board trace moves organelles in the matching color section.
+- Occupied target positions are skipped to the next available position.
+- Discovery, serializer/deserializer, type, format, and whitespace checks remain green.
+
+Plan:
+- [x] Add a red plugin test that marks an Amoeba board space and observes mutation movement.
+- [x] Implement movement in `AmoebaAlienPlugin.onPlaceTraceOnSlot`.
+- [x] Run focused plugin/serializer/type/format checks and `git diff --check`.
+- [x] Record review evidence and remaining Amoeba blockers.
+
+Review:
+- Added a plugin test that marks a yellow Amoeba board space through `AlienState.applyTraceToSlot` and expects the matching organelle to mutate from position `5` to `1`, skipping occupied position `0`. Red run showed the organelle stayed at `5`.
+- Implemented `AmoebaAlienPlugin.onPlaceTraceOnSlot` so Amoeba species-board trace placement moves organelles in the matching section using the checked-in `frontend-reference` position loops: `0-5` and `6-8`, skipping occupied positions.
+- Verification passed: targeted mutation test; plugin plus serializer/deserializer suite passed 3 files / 59 tests; `pnpm --filter @seti/server typecheck` passed; Biome check on the touched plugin/test files passed; `git diff --check` passed.
+- Remaining Amoeba blockers: organelle reward payloads are still not represented, so this movement currently updates board state after relevant trace placement but does not grant the printed organelle rewards; card organelle icons and `SA.ET.19` reward execution remain incomplete.
+
+## Space Agency Glyphids token bank setup shuffle follow-up - 2026-05-17
+
+Assumptions:
+- This slice only implements the source-backed setup rule that Glyphids glyph tokens are shuffled during discovery.
+- Existing state still models the not-yet-placed tokens as `glyphTokenBank`; placement on planets, sectors, tech stacks, and Glyphids board spaces remains out of scope.
+- Translation-board strip orientation and reward payload execution remain unchanged because the current shared state does not yet encode the full slot/reward model.
+
+Success criteria:
+- Glyphids discovery uses `game.random.shuffle` to randomize the glyph token bank.
+- Existing Glyphids card draw and serializer/deserializer behavior remains green.
+- Focused tests fail before production edits and pass after the minimal plugin implementation.
+
+Plan:
+- [x] Add a red plugin discovery test that controls `game.random.shuffle` for the Glyphids token bank.
+- [x] Implement token-bank shuffling in `GlyphidsAlienPlugin.onDiscover`.
+- [x] Run focused plugin/serializer/type/format checks and `git diff --check`.
+- [x] Record review evidence and remaining Glyphids blockers.
+
+Review:
+- Added a discovery test that overrides `game.random.shuffle` to reverse the Glyphids token bank. Red run showed the old implementation kept the deterministic default glyph order.
+- Implemented `GlyphidsAlienPlugin.onDiscover` to shuffle the existing `glyphTokenBank` through `game.random.shuffle` during discovery setup.
+- Verification passed: targeted Glyphids shuffle test; plugin plus serializer/deserializer suite passed 3 files / 58 tests; `pnpm --filter @seti/server typecheck` passed; Biome check on the touched plugin/test files passed; `git diff --check` passed.
+- Remaining Glyphids blockers: token placement/acquisition across planets, sectors, tech stacks, and Glyphids board spaces is still not modeled; translation-board occupancy/reward payload execution remains incomplete, so card glyph icons cannot yet grant translated resources.
+
+## Space Agency Amoeba organelle setup shuffle follow-up - 2026-05-17
+
+Assumptions:
+- This slice only implements the source-backed setup rule that Amoeba organelle tokens are shuffled onto the marked board spaces on discovery.
+- The marked positions remain the existing `AMOEBA_ORGANELLE_START` positions; only token identity/color assignment is randomized.
+- Serializer/deserializer remain authoritative after discovery and should preserve whatever shuffled order exists.
+
+Success criteria:
+- Amoeba discovery uses `game.random.shuffle` to randomize organelle token assignment.
+- The five marked positions remain occupied after discovery.
+- Focused tests fail before production edits and pass after the minimal plugin implementation.
+
+Plan:
+- [x] Add a red plugin discovery test that controls `game.random.shuffle`.
+- [x] Implement organelle shuffling in `AmoebaAlienPlugin.onDiscover`.
+- [x] Run focused plugin/serializer/type/format checks and `git diff --check`.
+- [x] Record review evidence and remaining Amoeba blockers.
+
+Review:
+- Added a discovery test that overrides `game.random.shuffle` to reverse Amoeba organelle token assignment. Red run showed the old implementation kept the deterministic organelle colors instead of using the shuffled assignment.
+- Implemented `AmoebaAlienPlugin.shuffleOrganelles` during first discovery setup: marked Amoeba positions remain fixed, while `{ tokenId, color }` assignments are shuffled through `game.random.shuffle`.
+- Verification passed: targeted shuffle test; plugin plus serializer/deserializer suite passed 3 files / 57 tests; `pnpm --filter @seti/server typecheck` passed; Biome check on the touched plugin/test files passed; `git diff --check` passed.
+- Remaining Amoeba blockers: organelle reward payloads are still not represented, so card organelle icons, board-space organelle payouts, mutation movement after payouts, and `SA.ET.19` reward execution remain incomplete.
+
+## Space Agency Amoeba rival trace targeting follow-up - 2026-05-17
+
+Assumptions:
+- This slice implements only the source-backed solo rule that the rival ignores Amoeba board spaces with 1 or 0 organelle bonuses.
+- Human trace placement is unchanged; discovery and overflow spaces are not Amoeba board spaces for this filter.
+- The existing `AmoebaAlienBoard.organelles` positions and `AMOEBA_TRACE_SLOTS` section colors are sufficient to count organelle bonuses per trace-color section.
+
+Success criteria:
+- When the rival resolves a trace and the matching Amoeba section has only one organelle, Amoeba species-board slots are skipped.
+- The same rival trace can still resolve on another valid alien board.
+- Focused solo/plugin tests fail before production edits and pass after the minimal plugin filter.
+
+Plan:
+- [x] Add a red solo rival trace-selection test with Amoeba first and a fallback alien second.
+- [x] Implement `AmoebaAlienPlugin.canPlaceTraceOnSlot` for solo rival species-board slots.
+- [x] Run focused solo/plugin tests, server typecheck, Biome on touched files, and `git diff --check`.
+- [x] Record review evidence and remaining Amoeba blockers.
+
+Review:
+- Added a solo rival test where Amoeba is the first alien and Exertians is the fallback. Red run showed the rival incorrectly placed the blue trace on Amoeba even though the blue Amoeba section had only one organelle.
+- Implemented `AmoebaAlienPlugin.canPlaceTraceOnSlot` so solo rival trace selection skips Amoeba species-board slots whose matching section has 1 or 0 organelles. Human placement, discovery slots, and overflow slots are unchanged.
+- Verification passed: targeted red/green test; full `RivalTurnController.test.ts` plus `SpaceAgencyAlienPlugins.test.ts` passed 2 files / 60 tests; `pnpm --filter @seti/server typecheck` passed; Biome check on the touched plugin/test files passed; `git diff --check` passed.
+- Remaining Amoeba blockers: organelle reward payloads are still not represented, so card organelle icons, board-space organelle payouts, mutation movement after payouts, and `SA.ET.19` reward execution remain incomplete.
+
+## Space Agency Glyphids final scoring follow-up - 2026-05-17
+
+Assumptions:
+- This slice is limited to the source-backed Glyphids species end-game scoring from `docs/arch/aliens/glyphids/rule.md`.
+- Existing `GlyphidsAlienBoard.glyphRows` represents collected unplaced glyph tokens grouped into scoring sets; translated/placed glyphs are not in this state and are therefore not scored here.
+- Rival scoring uses the documented solo rule: 3 VP per glyph token regardless of type.
+
+Success criteria:
+- Human players score every unplaced Glyphids set using the documented 1 / 3 / 5 / 8 / 11 / 15 / 20 VP scale for set sizes 1-7.
+- Solo rival scores 3 VP per collected Glyphids token, ignoring type and set composition.
+- `FinalScoring.score` includes the Glyphids plugin bonus for discovered Glyphids boards.
+- Focused tests fail before production edits and pass after the minimal plugin implementation.
+
+Plan:
+- [x] Add red final-scoring tests for human Glyphids set scoring and rival flat glyph scoring.
+- [x] Implement `GlyphidsAlienPlugin.onGameEndScoring` with small local helpers.
+- [x] Run focused final-scoring/plugin tests, server typecheck, Biome on touched files, and `git diff --check`.
+- [x] Record review evidence and remaining Glyphids blockers.
+
+Review:
+- Added `GlyphidsFinalScoring.test.ts` through the actual `FinalScoring.score` path. Red run showed both human and rival Glyphids `alienBonus` values were `0`.
+- Implemented `GlyphidsAlienPlugin.onGameEndScoring`: human players score collected unplaced glyph rows with the 1/3/5/8/11/15/20 set scale; solo rival scores 3 VP per collected glyph token.
+- Verification passed: `pnpm --filter @seti/server test -- __tests__/engine/scoring/GlyphidsFinalScoring.test.ts __tests__/engine/scoring/FinalScoring.test.ts __tests__/engine/alien/plugins/SpaceAgencyAlienPlugins.test.ts` passed 3 files / 25 tests; `pnpm --filter @seti/server typecheck` passed; Biome check on the touched plugin/test files passed; `git diff --check` passed.
+- Remaining Glyphids blockers: token acquisition/placement across planets, sectors, tech stacks, and Glyphids board spaces is still not modeled; translation-board occupancy/reward payloads are still insufficient for card glyph icons to grant translated resources.
+
+## Space Agency alien card logic follow-up - 2026-05-17
+
+Assumptions:
+- This slice only implements source-backed Glyphids/Amoeba card behavior that can be proven from `docs/arch/aliens/*/rule.md`, `docs/arch/spaceAgency/faq.md`, and existing common card data.
+- Arkhos exploration payloads remain blocked and must not be guessed from images.
+- Amoeba organelle payout execution remains blocked until organelle reward payloads are represented in shared data; do not infer rewards from token art.
+
+Success criteria:
+- `SA.ET.1` scores 3 VP per token of the Glyphids glyph type the player has the most of, using collected unplaced glyph rows.
+- `SA.ET.9` scores 1 VP per glyph in the player's largest Glyphids set.
+- `SA.ET.11`, `SA.ET.12`, and `SA.ET.13` score 2 VP per matching red/yellow/blue trace marked for Amoeba, including overflow spaces.
+- Focused tests fail before production edits and pass after the minimal scoring implementation.
+
+Plan:
+- [x] Add red tests for the five source-backed end-game cards.
+- [x] Implement the smallest scoring helpers in the existing end-game scoring path.
+- [x] Register handled Space Agency alien cards through dedicated classes instead of silent generic registration where touched.
+- [x] Add source-backed `SA.ET.14` quick-mission condition/reward coverage and implementation.
+- [x] Run focused card/scoring/registry tests plus `git diff --check`.
+- [x] Record review evidence and remaining blocked alien-card behavior.
+
+Review:
+- Added dedicated server card classes for `SA.ET.1`, `SA.ET.9`, `SA.ET.11`, `SA.ET.12`, `SA.ET.13`, and `SA.ET.14`; the Space Agency alien registry now dispatches these handled cards instead of generic classes.
+- Implemented source-backed end-game scoring: `SA.ET.1` scores 3 VP per most-common collected Glyphids token type, `SA.ET.9` scores the largest collected Glyphids set, and `SA.ET.11`/`12`/`13` score 2 VP per matching Amoeba trace including overflow.
+- Implemented `SA.ET.14` as a quick mission: red/yellow/blue Amoeba traces must be outside discovery spaces, overflow counts, and the reward grants 1 VP per empty Amoeba board space.
+- Red tests were observed before production changes: the five scoring tests initially returned `0`, and `SA.ET.14` initially registered as `GenericMissionCard` with no mission branch.
+- Verification passed: focused server card/registry/mission/scoring suite passed 10 files / 59 tests; `pnpm --filter @seti/server typecheck` passed; Biome check on 17 touched server files passed; `git diff --check` passed.
+- Remaining blocked behavior: Glyphids card glyph icons still need real translation-board slot/reward state before they can grant translated resources; Amoeba organelle card icons and `SA.ET.19` still need organelle reward payload data; Arkhos exploration reward payloads remain unmapped.
+
+## Space Agency organization/alien completion audit - 2026-05-17
+
+Objective restated:
+- Complete the organization and alien portions of `docs/plan/space-agency-implementation-plan.md` across common/server/client, using `frontend-reference` as a behavior/data reference where reliable, with tests proving logic correctness and server/client consistency.
+- Do not claim 100% confidence from proxy signals; each explicit organization/alien deliverable must map to concrete source, code, and test evidence.
+
+Prompt-to-artifact checklist:
+- [x] Organization core and architecture: 11 concrete server organization classes, registry dispatch, action-cost projection, event-bus listeners, setup-choice flow, once-per-round reset, dashboard/opponent badges, and organization power UI all have code and focused test coverage.
+- [x] Glyphids and Amoeba: option gating, dedicated plugins/boards, deck injection, serializer/deserializer/public projection, and client board renderers are present with common/server/client tests.
+- [ ] Arkhos: option gating, security-card lifecycle, board state, serializer/deserializer/public projection, and client renderer are present, but exact exploration reward payload execution is not implemented because the structured `effectSmall`/`effectBig` table has not been recovered.
+- [x] Arkhos solo/rival rules: `docs/arch/aliens/arkhos/rule.md` requires rival discovery/security-card setup, Arkhos reward-to-progress conversion, Arkhos action-card breach behavior, and Arkhos trace-choice priority; these now have common/server implementation and focused test evidence.
+- [x] Client organization/alien UI: Space Agency lobby controls, setup-choice shell, organization badges/powers, and alien boards are localized/data-driven from public server state for the implemented surface.
+
+Verification run in this audit:
+- `pnpm --filter @ender-seti/common test -- options organizations arkhosCards alienCards` passed: 4 files, 26 tests.
+- `pnpm --filter @seti/server test -- __tests__/engine/organization __tests__/engine/alien/plugins/SpaceAgencyAlienPlugins.test.ts __tests__/engine/cards/register/registerSpaceAgencyAliens.test.ts __tests__/engine/GameSetup.test.ts` passed: 9 files, 89 tests.
+- `pnpm --filter @seti/client test -- AlienBoardView SetupChoiceModal SelectOptionInput PlayerDashboard OpponentSummary FreeActionBar GameSettingsPanel.editable` passed: 7 files, 44 tests.
+- `git diff --check` passed.
+- Continuation verification on 2026-05-17 passed: `pnpm --filter @ender-seti/common test -- options organizations arkhosCards alienCards rivalActionCards` passed 5 files / 29 tests; `pnpm --filter @seti/server test -- __tests__/engine/organization __tests__/engine/alien/plugins/SpaceAgencyAlienPlugins.test.ts __tests__/engine/cards/register/registerSpaceAgencyAliens.test.ts __tests__/engine/GameSetup.test.ts __tests__/engine/solo/RivalTurnController.test.ts __tests__/persistence/serializer/GameSerializer.test.ts __tests__/persistence/serializer/GameDeserializer.test.ts` passed 12 files / 192 tests; `pnpm --filter @seti/client test -- AlienBoardView SetupChoiceModal SelectOptionInput PlayerDashboard OpponentSummary FreeActionBar GameSettingsPanel.editable RivalPanel` passed 8 files / 62 tests; common/server/client typechecks passed; Biome check on 55 touched TS/TSX/JSON files passed; `pnpm --filter @seti/e2e test tests/space-agency-options.spec.ts tests/space-agency-agencies-setup.spec.ts tests/free-action-spend-signal-token.spec.ts` passed 3 specs; `git diff --check` passed.
+
+Audit result:
+- The organization portion and Glyphids/Amoeba implementation are strongly covered by current tests.
+- The overall organization/aliens objective is not complete with factual 100% confidence because SA-8 still has one uncovered Arkhos gap: exact exploration reward payload execution.
+
+## Space Agency SA-8 Arkhos solo/rival follow-up - 2026-05-17
+
+Assumptions:
+- This follow-up only covers Arkhos solo/rival rules that can be implemented from `docs/arch/aliens/arkhos/rule.md` plus checked-in `frontend-reference`; it does not guess the missing exploration card effect payload table.
+- `frontend-reference` maps Arkhos/life10 to rival action card id 21 and implements the special action as `unlockSecurity`: discard a security card, mark matching Arkhos overflow, then resolve two small exploration rewards.
+- For the rival, Arkhos exploration reward icons convert to progress instead of executing the unknown exploration card payloads.
+
+Success criteria:
+- Arkhos discovered in a solo game gives the rival three front security cards and converts any rival Arkhos exploration reward icon into 1 progress.
+- A discovered Arkhos species replacement check resolves to the Arkhos special rival card, and that card unlocks one front rival security card without relying on generic overflow breach behavior.
+- Generic rival overflow trace placement on Arkhos does not breach security; the Arkhos special action is the only rival breach path.
+- Rival trace selection ignores Arkhos spaces above the rival's access level and prefers Arkhos over the other species when available-space height is tied.
+- Focused common/server tests and `git diff --check` pass.
+
+Plan:
+- [x] Add failing tests for Arkhos rival replacement, special-card security unlock, overflow non-breach, exploration-icon-to-progress conversion, access filtering, and Arkhos tie-break priority.
+- [x] Implement the smallest common data/protocol additions for the Arkhos rival action card and action kind.
+- [x] Implement the Arkhos rival action resolver path and solo-specific Arkhos plugin behavior.
+- [x] Run focused common/server verification and update this review.
+
+Review:
+- Added `ERivalActionKind.UNLOCK_ARKHOS_SECURITY`, Arkhos species replacement mapping to `S.21`, and the `S.21` species-special rival action card, matching `frontend-reference` life10/action-card id 21.
+- Added the local `S.21` action-card image from the checked-in `frontend-reference` asset so Arkhos species-special rival cards render in client image mode; `RivalPanel` tests cover the asset mapping.
+- Implemented Arkhos rival security unlock in `RivalActionResolver`: one front rival security card is marked used, the matching Arkhos overflow trace is placed, normal overflow rewards resolve, access level advances, and two minor Arkhos exploration rewards convert to rival progress.
+- Updated `ArkhosAlienPlugin` so solo rival generic overflow placement does not breach security; the Arkhos special rival action is the breach path.
+- Arkhos exploration reward records are still recorded for the rival, but each Arkhos reward icon now also grants 1 rival progress rather than attempting to execute unknown exploration-card payloads.
+- Rival trace selection now ignores inaccessible Arkhos spaces and applies the Arkhos tie-breaker when the first available non-overflow space rank is tied with another species.
+- Verification passed: `pnpm --filter @ender-seti/common test -- rivalActionCards`, `pnpm --filter @seti/server test -- __tests__/engine/alien/plugins/SpaceAgencyAlienPlugins.test.ts __tests__/engine/solo/RivalTurnController.test.ts`, common/server/client typechecks, Biome on touched files, and `git diff --check`.
+- Follow-up verification for the `S.21` client asset passed: `pnpm --filter @seti/client test -- RivalPanel`, `pnpm --filter @seti/client test -- AlienBoardView`, `pnpm --filter @seti/client typecheck`, Biome on touched client files, and `git diff --check`.
+- Residual scope: exact Arkhos exploration card minor/major payload execution remains blocked on the unrecovered `effectSmall`/`effectBig` source table.
+
+Additional Arkhos exploration reward source check:
+- Rechecked `docs/arch/spaceAgency/SE2 aliens aid EN 14.pdf` and `docs/arch/spaceAgency/SE2_rulebook_EN_13_lowres.pdf` with `pdftotext -layout`; the PDFs document Arkhos exploration deck, reward reveal/reset mechanics, security-card lifecycle, and solo/rival conversion, but do not enumerate the 9 exploration cards' minor/major payload table.
+- Rechecked local recovered assets `/tmp/seti-arkhos-ai/AI_01.jpg` through `AI_09.jpg` and `/tmp/seti-arkhos-ai/sheet.jpg`; the card faces expose visible icons, but several icon meanings and choice/action semantics are not unambiguous enough to implement as executable server effects with factual 100% confidence.
+- Rechecked `frontend-reference` source and built assets for `effectSmall`, `effectBig`, `small_AI`, `big_AI`, and `aiTile`; checked-in code contains the reveal/effect execution path but not the structured deck data table. The table HTML remains only a SPA shell and `/tmp/gcs-46417.json` only lists image assets.
+- Final cleanup changed Arkhos exploration `effectId`s from guessed resource names to opaque `ARKHOS_EXPLORATION_##_{MINOR|MAJOR}_UNMAPPED` ids, so persisted reveal records do not imply a factual payload mapping that has not been sourced.
+- Follow-up visual inspection of `/tmp/seti-arkhos-ai/sheet.jpg` confirms simple icons such as score, energy, data, publicity, credits, launch, movement, and trace colors are recognizable against existing project icons. The blocker remains the exact executable semantics for non-trivial icons and compositions, such as card-selection/unknown-card icons, multi-icon option groups, and "ignore the limit of probes in space for this launch" payloads; these need the structured `effectSmall`/`effectBig` strings or an explicit confirmed mapping before server effects can be written.
+- Rechecked the rendered reference table artifacts: `docs/frontend-demo.html` includes visible `__card-aiTile` DOM and event log entries such as "Exploration tile is revealed", but not `deckData`, `effectSmall`, or `effectBig`; the known reference table id `bDbebSnUY` still returns `403 {"message":"No token provided!"}` from `/api/table-open/bDbebSnUY`.
+- Rechecked the official CGE Space Agencies press download from `https://www.cge.as/se2-forpress` on 2026-05-17. The downloadable `seti-space-agencies-artworks.zip` contains box images, component/rulebook render PNGs, banner artwork, and logo PNGs only; `unzip -l` found no JSON, CSV, XLSX, TXT, PDF, Arkhos, `aiTile`, `effectSmall`, or `effectBig` payload file.
+- Continuation audit on 2026-05-17 rechecked the actual current code paths: `packages/common/src/data/arkhosCards.ts` still intentionally stores `ARKHOS_EXPLORATION_##_{MINOR|MAJOR}_UNMAPPED`; `frontend-reference` `doEffect.js` and `states.js` only reveal an `aiTile` and parse `data.effectSmall` / `data.effectBig`; local source/build/html searches and current web searches did not recover the missing structured payload table.
+- API/source recovery was rechecked again on 2026-05-17: `frontend-reference` `gameTableLogic.ts` loads table data from `/api/table-open/{tableId}` and then reads `data.deckData`, but direct probes to `/api/table-open/bDbebSnUY`, `/api/projects/get-project-detail/seti?status=none`, and `/api/deck/46417` still return `403 {"message":"No token provided!"}`. Public GCS listing for `dummy/prod/46417/` exposes only `assets/AI_01.jpg` through `assets/AI_09.jpg`; common metadata filenames `data.json`, `deck.json`, `cards.json`, `metadata.json`, `manifest.json`, `info.json`, and `export.json` all return 404.
+- Continuation source recovery on 2026-05-17 repeated the CGO/GCS checks with `sessionId` query variants and the component endpoints: `/api/table-open/bDbebSnUY?sessionId=arkhosrecheck`, `/api/projects/get-project-detail/seti?status=none&sessionId=arkhosrecheck`, `/api/projects/seti/components`, `/api/projects/seti/components?development=true`, and `/api/deck/46417` all still return `403`; the public `dummy/prod/46417/` GCS listing still contains only the nine `AI_*.jpg` assets; additional metadata guesses `table.json`, `components.json`, `project.json`, and `aiTile.json` are also 404. GitHub code search for `effectSmall`/`aiTile`, `deck-aiTile`, and `AIcard01` requires authentication, and the saved rendered replay exposes only Arkhos card art/log snippets rather than the structured `effectSmall`/`effectBig` payload table.
+- Archive recovery on 2026-05-17 also did not recover the table: Wayback CDX requests for the CGO table API, project-detail API, and `dummy/prod/46417/` GCS prefix returned `503`; Common Crawl recent indexes checked for `czech-gaming-online.herokuapp.com/api/table-open/bDbebSnUY*` and `storage.googleapis.com/cgo-deck-assets/dummy/prod/46417/*` returned no captures.
+- Decision: keep exact human Arkhos exploration payload execution open until a structured source table, official icon legend plus card list, or user-provided confirmation is available. Do not replace this with image-based guesses.
+
+## Space Agency SA-9 organization/alien client integration polish - 2026-05-17
+
+Assumptions:
+- This slice completes the organization and alien-facing part of SA-9 without claiming the unrelated main-deck preview/release-audit work.
+- Server remains authoritative for setup-choice candidates and availability; client localization may translate labels from server-provided ids but must not recompute selectable choices.
+- Existing `DescRender` / `EffectFactory` icon paths remain mandatory for rule/reward icons.
+
+Success criteria:
+- Space Agency lobby controls, setup-choice shell text, organization setup choices, organization badges, organization power aria labels, and Arkhos alien labels use common/i18n text.
+- Organization and alien UI continues to render from public server state, including multi-organization arrays, usable organization power ids, Quick Start thumbnails, and typed alien boards.
+- Focused common/server/client tests, package typechecks, Biome on touched files, `git diff --check`, and real browser Space Agency flows pass.
+
+Plan:
+- [x] Add failing client i18n tests for Space Agency lobby controls, setup-choice shell fallback text, and organization setup-choice names/status/summary copy.
+- [x] Add shared client organization display text helper and common locale keys for EN/ZH/PT-BR.
+- [x] Wire lobby, setup-choice, organization badge, and organization power UI to common/i18n while preserving server-provided option ids.
+- [x] Re-run focused common/server/client tests plus E2E Space Agency flows.
+- [x] Record review evidence and residual scope.
+
+Review:
+- Added `client.space_agency_options`, `client.setup_choice`, `client.organizations`, and Arkhos alien label keys to common locale files for `en`, `zh-CN`, and `pt-BR`.
+- Updated `SpaceAgencyOptionsSection`, `CoreAlienModulesSection`, `SetupChoiceModal`, `SelectOptionInput`, `OrganizationBadge`, and `FreeActionBar` to read localized Space Agency/organization/alien text through `useTranslation('common')`.
+- Added `packages/client/src/lib/organizationText.ts` so organization names are translated consistently from the server-provided organization id, with common data names as fallback.
+- Client tests now prove Chinese Space Agency option labels, setup-choice fallback dialog labels, and localized organization setup choice text.
+- Follow-up audit fixed remaining hardcoded labels in the Space Agency alien board renderers: the shared alien deck panel, Glyphids bank/player-row/translation labels, Amoeba organelle label, and Arkhos exploration/security/access labels now read from common/i18n. `AlienBoardView` tests assert the Chinese labels while still verifying existing `DescRender` glyph/organelle icon paths.
+- Follow-up asset parity added the official Arkhos exploration tile images from public CGO/GCS assets to the client and renders server-projected `resolvedExplorationRewards` as a revealed reward history on the Arkhos board. This shows the actual card face and recorded minor/major/player metadata without guessing or executing the still-unmapped payload.
+- Follow-up event-log parity added localized client descriptions for the Arkhos structured server events `ARKHOS_EXPLORATION_REWARD_REVEALED`, `ARKHOS_SECURITY_CARD_USED`, and `ARKHOS_SECURITY_BREACHED`, preserving the server-provided card/reward/access details.
+- Verification passed: common focused tests 26, server focused tests 178, client focused tests 45 plus i18n regression tests 11 after formatting, common/server/client typechecks, Biome check on 47 touched TS/TSX/JSON files, `git diff --check`, and Playwright specs `space-agency-options`, `space-agency-agencies-setup`, and `free-action-spend-signal-token`.
+- Follow-up verification passed: `pnpm --filter @seti/client test -- AlienBoardView` now covers 14 tests including Arkhos exploration asset existence, `pnpm --filter @seti/client typecheck`, `pnpm --filter @ender-seti/common typecheck`, locale JSON parsing for `en`/`zh-CN`/`pt-BR`, Biome on touched client/locale files, and `git diff --check`.
+- Event-log follow-up verification passed: `pnpm --filter @seti/client test -- EventEntry` now covers 5 tests including Chinese Arkhos event localization, `pnpm --filter @seti/client typecheck`, locale JSON parsing for `en`/`zh-CN`/`pt-BR`, Biome on touched event-log/locale files, and `git diff --check`.
+- Combined client follow-up verification passed: `pnpm --filter @seti/client test -- AlienBoardView EventEntry RivalPanel` passed 3 files / 37 tests, covering Arkhos board reward images, Arkhos event-log localization, and Arkhos `S.21` rival action-card art together.
+- Latest focused cross-package verification passed on 2026-05-17: common Space Agency focused tests passed 5 files / 29 tests; server organization/alien/solo/serializer focused tests passed 12 files / 192 tests; client Space Agency focused tests passed 9 files / 68 tests.
+- Residual scope: SA-9's unrelated main-deck preview/confirm and SA-10 full release audit remain open in `docs/plan/space-agency-implementation-plan.md`.
+
+## Space Agency SA-8 Arkhos species - 2026-05-17
+
+Assumptions:
+- Active goal to continue `docs/plan/space-agency-implementation-plan.md` is approval to execute this scoped SA-8 slice.
+- Arkhos card/setup behavior is sourced from `docs/arch/spaceAgency/SE2 aliens aid EN 14.pdf` and `frontend-reference` `life10`/`aiTile` behavior.
+- The reference implementation exposes Arkhos setup/deck flow but not a complete plain-text card effect table in the checked-in source; unverified card rewards must stay data-marked rather than silently becoming executable gameplay.
+- This slice implements the smallest end-to-end Arkhos surface: option-gated selection, typed board/plugin state, exploration/security card pools, discovery setup, persistence/projection, and client rendering.
+
+Success criteria:
+- `EAlienType.ARKHOS` is a known Space Agency alien and can only be enabled/selected when Space Agency `newAlienSpecies` is enabled.
+- Arkhos plugin is registered, initializes a 5-card exploration deck plus 4-card reserve from 9 exploration cards, deals one security card from each of the three 4-card sets to every player, and grants discovery markers minor exploration rewards as recorded events/state.
+- Arkhos board state serializes/deserializes and projects typed public state consistently, hiding species-specific details while undiscovered.
+- Client `AlienBoardView` renders Arkhos exploration deck/discard/reserve counts, per-player security cards, access levels, and trace slots using the existing board patterns.
+- Focused common/server/client tests, package typechecks where touched, Biome on touched files, and `git diff --check` pass or any blocker is recorded with exact command output.
+
+Plan:
+- [x] Add common/server/client tests for Arkhos option gating, setup selection, plugin discovery setup, projection/serialization, and client rendering.
+- [x] Add Arkhos shared constants/data and public protocol board types.
+- [x] Implement server board class, plugin, registration, setup option gate, serializer/deserializer/projection support.
+- [x] Implement client Arkhos board renderer with existing styling/rendering patterns.
+- [x] Run focused verification and fix failures.
+- [x] Record review evidence and any remaining card-effect data gap in this section.
+
+Review:
+- Added `EAlienType.ARKHOS` to shared alien options/defaults, lobby color/filter metadata, and Space Agency alien module UI so Arkhos can be enabled through the same `alienModulesEnabled` contract as Glyphids/Amoeba.
+- Added common Arkhos data in `packages/common/src/data/arkhosCards.ts`: 9 exploration cards, 12 security cards split into 4 red / 4 yellow / 4 blue, opaque unmapped exploration effect ids, and server CardRegistry registration for all security cards.
+- Added `ArkhosAlienBoard` runtime state for exploration draw/reserve/discard piles, per-player security card zones, access levels, resolved exploration reward records, and trace slots; exploration rewards now rebuild a 5-card deck plus 4-card reserve after the active deck is exhausted.
+- Implemented `ArkhosAlienPlugin` discovery setup: 5-card exploration deck + 4 reserve, one security card per trace color per player, one minor exploration reward per discovery marker, no generic alien deck placeholder, security breach from matching overflow into hand, and access-level gating for deeper Arkhos spaces.
+- Wired Arkhos security-card lifecycle through generic alien-card hooks: discarding a breached security card for its free-action corner marks it `used` and resolves a minor exploration reward, while playing it for 2 credits marks it `used` and resolves a major exploration reward without putting it in the main deck discard pile.
+- Wired serializer/deserializer DTOs and public projection for Arkhos board state, hiding species-specific state while undiscovered through the existing public alien projection behavior.
+- Added client `AlienBoardView` Arkhos renderer for exploration counts, security cards, access state, and trace columns; Space Agency lobby settings now expose Glyphids/Amoeba/Arkhos child toggles when `newAlienSpecies` is enabled.
+- Verification passed: common focused tests 100, server focused tests 226 plus focused PlayCard/FreeActionCorner regression tests 38 after formatting, client focused tests 82, common/server/client typechecks, Biome check on 35 touched TS/TSX/JSON files, and `git diff --check`.
+- Residual scope: individual Arkhos exploration card reward payloads remain effect-id records rather than fully expanded reward execution. Follow-up audit on 2026-05-17 confirmed `SE2 aliens aid EN 14.pdf` documents reveal/reshuffle mechanics but not all 9 card reward payloads, checked-in `frontend-reference` code has the `aiTile` effect execution path but not the complete `effectSmall`/`effectBig` data table, and public `frontend-reference` asset URLs expose `AI_01.jpg` through `AI_09.jpg` card faces without the structured effect table needed to map several icons with 100% confidence. The local saved table HTML is only the SPA shell, archived CGO API probes for table/project/deck detail return 403 `No token provided!`, and GCS probes under `dummy/prod/46417/` list only image assets while common metadata names such as `data.json`, `deck.json`, `cards.json`, and `metadata.json` return 404. SA-8 is intentionally reopened in `docs/plan/space-agency-implementation-plan.md`; do not claim 100% Arkhos reward correctness until those payloads are mapped to executable effects and covered by failing-then-passing tests.
+
+## Space Agency SA-7 Glyphids and Amoeba species - 2026-05-17
+
+Assumptions:
+- Active goal to continue `docs/plan/space-agency-implementation-plan.md` is approval to execute the next serial slice after completed organization and SA-6 work.
+- SA-7 scope is Glyphids and Amoeba only; Arkhos remains deferred to SA-8 and no Arkhos placeholder behavior should be introduced.
+- `frontend-reference` is used as behavioral/data reference, with aliases `alphabet*` mapped to Glyphids and `amoebaEffect` mapped to Amoeba.
+- The first implementation should be the smallest end-to-end, test-covered shape: option-gated species selection, dedicated board/plugin state, SA alien card deck injection, projection/serialization, and client board rendering through existing icon renderers.
+
+Success criteria:
+- `newAlienSpecies=true` is no longer rejected for supported Glyphids/Amoeba configurations, while enabling those aliens still requires the Space Agency expansion and `spaceAgencyOptions.newAlienSpecies=true`.
+- Game setup can select Glyphids and Amoeba only when their module flags are enabled; core alien selection remains unchanged when the submodule is off.
+- Glyphids and Amoeba have registered plugins, dedicated board classes/state, and `getAlienDeckCardIds` returns `SA.ET.1`-`SA.ET.10` and `SA.ET.11`-`SA.ET.20` respectively.
+- Discovery initializes species-specific runtime state, serializes/deserializes it, and projects typed public board state to the client.
+- Client `AlienBoardView` renders Glyphids and Amoeba typed boards using existing `DescRender` / effect icon paths for glyph/organelle tokens.
+- Focused common/server/client tests, package typechecks where touched, Biome on touched files, and `git diff --check` pass or any blocker is recorded with exact command output.
+
+Plan:
+- [x] Add failing common/server/client tests for option gating, setup selection, plugin/deck injection, typed board projection/serialization, and client rendering.
+- [x] Add shared Glyphids/Amoeba constants and public protocol board types.
+- [x] Implement server board classes, plugins, registration, setup option gate, serializer/deserializer/projection support.
+- [x] Implement client board renderers using existing icon renderer chain.
+- [x] Run focused verification and fix failures.
+- [x] Record review evidence and residual risk in this section.
+
+Review:
+- Added shared Space Agency alien constants for Glyphids and Amoeba card-id ranges, default Glyphids token/translation state, and default Amoeba organelle/slot state.
+- Enabled supported `newAlienSpecies=true` configurations: common validation still requires the Space Agency expansion and `spaceAgencyOptions.newAlienSpecies=true` before Glyphids/Amoeba flags can be enabled, while setup now includes those aliens only through that gate.
+- Added dedicated `GlyphidsAlienBoard` and `AmoebaAlienBoard` classes, registered `GlyphidsAlienPlugin` and `AmoebaAlienPlugin`, and wired their alien decks to `SA.ET.1`-`SA.ET.10` and `SA.ET.11`-`SA.ET.20`.
+- Added serializer/deserializer DTO fields plus public typed board projections for Glyphids and Amoeba; undiscovered aliens still hide species-specific board/card state.
+- Added `AlienBoardView` renderers for Glyphids and Amoeba using `DescRender` for `{glyph-*}` and `{organelle-*}` tokens instead of hand-drawn icon substitutes.
+- Verification passed: common options tests 16, server focused suite 5 files/89 tests, client AlienBoardView tests 12, common/server/client typechecks, Biome check on 18 touched files, and `git diff --check`.
+- Residual scope intentionally remains for SA-8/SA-9: Arkhos is not implemented, and deeper Glyphids/Amoeba card-specific resource accounting/endgame scoring beyond the dedicated board/plugin/deck/projection surface is not completed in this slice.
+
 ## Space Agency SA-6 New Deck and Signal Token - 2026-05-15
 
 Assumptions:
@@ -1237,3 +2304,87 @@ Review:
 - Filled blank workbook cells as `0` for all resource fields.
 - Kept each `Ability` section as `Mark as TODO`.
 - Verification passed: file set count is 11, values match `Sheet1`, section structure is present in every file, `基础白板` and `Vitor` are absent, and `git diff --check -- docs/todo.md docs/arch/spaceAgency/corporations` passed.
+
+## Space Agency browser smoke evidence - 2026-05-17
+
+Assumptions:
+- This is a verification slice only; do not infer or implement missing Glyphids, Amoeba, or Arkhos reward payloads from UI images.
+- Use real Playwright/browser flows, not debug endpoints, localStorage auth injection, raw websocket action driving, or mocked network behavior.
+- Capture evidence for surfaces already implemented by common/server/client and existing focused E2E specs.
+- Keep browser smoke checks narrow enough to avoid duplicating full release E2E.
+
+Success criteria:
+- Lobby Space Agency options are visibly reachable and can create a real room/game through the production UI.
+- Setup choice UI visibly offers and selects a Space Agency organization.
+- In-game Space Agency organization badge/power surface is visible for a real player.
+- Representative new alien board renderers are visible through real UI/game state paths already covered by focused specs.
+- Verification commands and browser evidence are recorded in the completion audit without marking the active goal complete.
+
+Plan:
+- [x] Confirm this smoke-evidence slice before changing E2E/test code. Note: active-goal continuation instruction superseded waiting for a separate confirmation response.
+- [x] Inventory existing Space Agency E2E helpers/specs to reuse real-flow setup without adding shortcuts.
+- [x] Add or run a narrow browser smoke spec/check that captures lobby options, setup choice, organization surface, and representative alien board surfaces.
+- [x] Run focused browser smoke verification plus touched-file Biome/typecheck gates.
+- [x] Update the completion audit and this review with exact evidence, preserving known source/data blockers.
+
+Review:
+- Added Playwright screenshot attachments to existing real-flow Space Agency specs instead of adding a duplicate scenario:
+  - `packages/e2e/tests/space-agency-agencies-setup.spec.ts` now captures room Space Agency options, host/guest setup-choice UI, and host/guest organization surfaces.
+  - `packages/e2e/tests/space-agency-new-aliens.spec.ts` now captures Space Agency new-alien room options, hidden alien board, and revealed Amoeba board surfaces for both players.
+- Browser evidence produced by the focused run:
+  - `packages/e2e/test-results/space-agency-agencies-setu-1b672-ick-Start-setup-enters-game-chromium/space-agency-agencies-01-room-options.png`
+  - `packages/e2e/test-results/space-agency-agencies-setu-1b672-ick-Start-setup-enters-game-chromium/space-agency-agencies-02-host-setup-choice.png`
+  - `packages/e2e/test-results/space-agency-agencies-setu-1b672-ick-Start-setup-enters-game-chromium/space-agency-agencies-02-guest-setup-choice.png`
+  - `packages/e2e/test-results/space-agency-agencies-setu-1b672-ick-Start-setup-enters-game-chromium/space-agency-agencies-03-host-organization-surface.png`
+  - `packages/e2e/test-results/space-agency-agencies-setu-1b672-ick-Start-setup-enters-game-chromium/space-agency-agencies-03-guest-organization-surface.png`
+  - `packages/e2e/test-results/space-agency-new-aliens--r-445a6-can-reveal-the-Amoeba-board-chromium/space-agency-new-aliens-01-room-options.png`
+  - `packages/e2e/test-results/space-agency-new-aliens--r-445a6-can-reveal-the-Amoeba-board-chromium/space-agency-new-aliens-02-hidden-board.png`
+  - `packages/e2e/test-results/space-agency-new-aliens--r-445a6-can-reveal-the-Amoeba-board-chromium/space-agency-new-aliens-03-amoeba-board-actor.png`
+  - `packages/e2e/test-results/space-agency-new-aliens--r-445a6-can-reveal-the-Amoeba-board-chromium/space-agency-new-aliens-03-amoeba-board-other.png`
+- Verification passed: `pnpm exec biome check packages/e2e/tests/space-agency-agencies-setup.spec.ts packages/e2e/tests/space-agency-new-aliens.spec.ts`; `pnpm --filter @seti/e2e typecheck`; `pnpm --filter @seti/e2e test -- tests/space-agency-agencies-setup.spec.ts tests/space-agency-new-aliens.spec.ts`; scoped `git diff --check`.
+- Residual blockers remain unchanged except for the now-planned named setup spec: full `pnpm test`, full E2E, and source-backed Glyphids/Amoeba/Arkhos reward payload execution are still open.
+
+## Space Agency named setup E2E coverage - 2026-05-17
+
+Assumptions:
+- This slice closes the SA-10 named-artifact gap for `space-agency-setup.spec.ts`.
+- It should reuse the real UI flow and overlap only as much as needed with the existing `space-agency-agencies-setup.spec.ts`.
+- Assertions should focus on setup invariants visible through production UI: option-gated room setup, setup-choice prompts, organization resolution, Quick Start thumbnails, and Space Agency end-of-round stack shape.
+- No debug endpoints, localStorage injection, raw websocket action driving, or mocked network behavior.
+
+Success criteria:
+- `packages/e2e/tests/space-agency-setup.spec.ts` exists and runs through lobby -> room -> setup-choice -> game using real UI.
+- The spec proves Space Agency agencies + Quick Start setup resolves for both players and renders selected organization/Quick Start artifacts in game.
+- The spec asserts Space Agency end-of-round stack shape from the production Cards tab.
+- Focused E2E, E2E typecheck, Biome on touched E2E files, and `git diff --check` pass or any blocker is recorded.
+
+Plan:
+- [x] Add the named real-flow setup spec.
+- [x] Run focused E2E/typecheck/format checks.
+- [x] Update the completion audit and this review with exact evidence.
+
+Review:
+- Added `packages/e2e/tests/space-agency-setup.spec.ts`, a real-flow Playwright spec covering lobby Space Agency agencies + Quick Start options, room join/start, setup-choice organization selection, Quick Start card picks, organization badges, Quick Start thumbnails, and the Space Agency three-stack end-of-round surface in the production Cards tab.
+- The red E2E exposed a real server/client projection gap: server built 3 Space Agency end-of-round stacks, but public state did not expose redacted stack counts, so the client rendered 4 empty placeholders. Fixed this by adding `IPublicGameState.endOfRoundStackCounts`, projecting counts only from server, and rendering `EndOfRoundStacks` from those counts without exposing hidden card identities.
+- Focused coverage added/updated:
+  - `packages/server/__tests__/persistence/serializer/GameSerializer.test.ts` now proves stack contents remain hidden while base projects `[3, 3, 3, 3]` counts and Space Agency projects `[3, 3, 3]`.
+  - `packages/client/__tests__/features/cards/EndOfRoundStacks.test.tsx` now proves redacted counts render the correct number of stacks.
+- Verification passed: `pnpm exec biome check` on touched common/server/client/e2e files; `pnpm --filter @ender-seti/common typecheck`; `pnpm --filter @seti/server typecheck`; `pnpm --filter @seti/client typecheck`; `pnpm --filter @seti/e2e typecheck`; `pnpm --filter @seti/server test -- __tests__/persistence/serializer/GameSerializer.test.ts`; `pnpm --filter @seti/client test -- EndOfRoundStacks`; `pnpm --filter @seti/e2e test -- tests/space-agency-setup.spec.ts`; combined Space Agency E2E `pnpm --filter @seti/e2e test -- tests/space-agency-options.spec.ts tests/space-agency-setup.spec.ts tests/space-agency-agencies-setup.spec.ts tests/space-agency-organization-power.spec.ts tests/space-agency-new-aliens.spec.ts tests/space-agency-event-bus.spec.ts` passed 6 specs in 2.4m.
+- Residual blockers remain: full `pnpm test`, full `pnpm --filter @seti/e2e test`, BASE/SA long regression flows, and source-backed Glyphids/Amoeba/Arkhos reward payload execution.
+
+## Space Agency SA-10 full test gate evidence - 2026-05-17
+
+Assumptions:
+- This slice records broad release-gate evidence only; do not change behavior unless the full test command exposes a concrete failure related to the active goal.
+- If failures are unrelated to Space Agency organization/alien work or pre-existing dirty worktree state, record them precisely instead of hiding or broadening the fix.
+- Full E2E and long BASE/SA regression remain separate gates after this command.
+
+Success criteria:
+- `pnpm test` is run from the repo root.
+- Passing output or exact failure evidence is recorded in this review and the completion audit.
+- If a related failure is found, fix it with focused tests and rerun the affected command.
+
+Plan:
+- [ ] Run root `pnpm test`.
+- [ ] Classify any failures as related, unrelated, or environment/pre-existing.
+- [ ] Update the completion audit and this review with exact evidence.

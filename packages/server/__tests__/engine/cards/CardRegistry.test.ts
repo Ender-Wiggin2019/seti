@@ -1,4 +1,4 @@
-import { ALL_CARDS } from '@seti/common/data';
+import { ALL_CARDS } from '@seti/common/data/index';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EResource } from '@seti/common/types/element';
 import { ImmediateCard } from '@/engine/cards/Card.js';

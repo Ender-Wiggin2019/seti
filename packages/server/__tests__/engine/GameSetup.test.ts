@@ -421,16 +421,54 @@ describe('GameSetup', () => {
     expect(game.players[0].organizationIds).toEqual([]);
   });
 
-  it('rejects Space Agency new alien species until SA-7', () => {
-    for (const overrides of [{ newAlienSpecies: true }]) {
-      expect(() =>
-        Game.create(
-          BASE_PLAYERS.slice(0, 2),
-          createAgenciesOptions(2, overrides),
-          `seed-agencies-unsupported-${Object.keys(overrides)[0]}`,
-        ),
-      ).toThrow('Unsupported Space Agency option(s) for SA-6');
+  it('allows the supported Space Agency new alien species module', () => {
+    expect(() =>
+      Game.create(
+        BASE_PLAYERS.slice(0, 2),
+        {
+          ...createAgenciesOptions(2, { newAlienSpecies: true }),
+          alienModulesEnabled: {
+            ...DEFAULT_ALIEN_MODULES_ENABLED,
+            [EAlienType.GLYPHIDS]: true,
+          },
+        } as Parameters<typeof Game.create>[1],
+        'seed-agencies-supported-new-aliens',
+      ),
+    ).not.toThrow();
+  });
+
+  it('can select Glyphids, Amoeba, and Arkhos when the Space Agency new-alien module is enabled', () => {
+    const options = {
+      ...createSpaceAgencyOptions(2, {
+        agencies: false,
+        newAlienSpecies: true,
+      }),
+      alienModulesEnabled: {
+        ...DEFAULT_ALIEN_MODULES_ENABLED,
+        [EAlienType.ANOMALIES]: false,
+        [EAlienType.CENTAURIANS]: false,
+        [EAlienType.EXERTIANS]: false,
+        [EAlienType.GLYPHIDS]: true,
+        [EAlienType.AMOEBA]: true,
+        [EAlienType.ARKHOS]: true,
+      },
+    } as Parameters<typeof Game.create>[1];
+    const observed = new Set<EAlienType>();
+
+    for (let index = 0; index < 24; index += 1) {
+      const game = Game.create(
+        BASE_PLAYERS.slice(0, 2),
+        options,
+        `space-agency-new-aliens-selected-${index}`,
+      );
+      for (const alienType of game.hiddenAliens) {
+        observed.add(alienType);
+      }
     }
+
+    expect(observed).toContain(EAlienType.GLYPHIDS);
+    expect(observed).toContain(EAlienType.AMOEBA);
+    expect(observed).toContain(EAlienType.ARKHOS);
   });
 
   it('deals three quick start candidates and resolves two before organization setup', () => {

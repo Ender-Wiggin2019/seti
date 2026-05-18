@@ -3,7 +3,7 @@ import { EResource } from '@seti/common/types/element';
 import { EOrganizationId } from '@seti/common/types/organization';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
-import { PlayCardAction } from '../../actions/PlayCard.js';
+import { getPlayCardAction } from '../../actions/PlayCardActionProvider.js';
 import { hasCardData, loadCardData } from '../../cards/loadCardData.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
@@ -126,7 +126,7 @@ export class FuturespanInstitute extends Organization {
     player.hand.push(preparedCard);
     const cardIndex = player.hand.length - 1;
     try {
-      PlayCardAction.execute(player, game, cardIndex, { free: true });
+      getPlayCardAction().execute(player, game, cardIndex, { free: true });
     } catch (error) {
       if (player.hand[cardIndex] === preparedCard) {
         player.removeCardAt(cardIndex);
@@ -198,9 +198,14 @@ export class FuturespanInstitute extends Organization {
     const cardIndex = player.hand.length;
     player.hand.push(preparedCard);
     try {
-      return PlayCardAction.canExecuteCardAtIndex(player, game, cardIndex, {
-        free: true,
-      });
+      return getPlayCardAction().canExecuteCardAtIndex(
+        player,
+        game,
+        cardIndex,
+        {
+          free: true,
+        },
+      );
     } finally {
       player.removeCardAt(cardIndex);
     }

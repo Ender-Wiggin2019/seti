@@ -20,12 +20,14 @@ const RIVAL_ACTION_CARD_BY_ID = new Map<
 
 export const RIVAL_ACTION_CARD_IMAGE_SRC_BY_ID: Partial<
   Record<TRivalActionCardId, string>
-> = Object.fromEntries(
-  Array.from({ length: 19 }, (_, index) => {
-    const id = `S.${index + 1}` as TRivalActionCardId;
-    return [id, `/assets/seti/solo/action-cards/${id}.jpg`];
-  }),
-);
+> = {
+  ...Object.fromEntries(
+    Array.from({ length: 19 }, (_, index) => {
+      const id = `S.${index + 1}` as TRivalActionCardId;
+      return [id, `/assets/seti/solo/action-cards/${id}.jpg`];
+    }),
+  ),
+};
 
 const ACTION_KIND_DEFAULT_LABEL: Record<ERivalActionKind, string> = {
   [ERivalActionKind.ANALYZE_DATA]: 'Analyze data',
@@ -38,6 +40,7 @@ const ACTION_KIND_DEFAULT_LABEL: Record<ERivalActionKind, string> = {
   [ERivalActionKind.MARK_ANY_TRACE]: 'Mark any trace',
   [ERivalActionKind.PLAY_DANGER_CARD]: 'Play danger card',
   [ERivalActionKind.START_COUNTDOWN]: 'Start countdown',
+  [ERivalActionKind.UNLOCK_ARKHOS_SECURITY]: 'Unlock Arkhos security',
 };
 
 const ACTION_TIER_DEFAULT_LABEL: Record<ERivalActionCardTier, string> = {

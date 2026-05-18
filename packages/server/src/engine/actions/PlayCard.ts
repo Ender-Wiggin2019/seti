@@ -3,6 +3,7 @@ import { EAlienType } from '@seti/common/types/BaseCard';
 import { EResource } from '@seti/common/types/element';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
+import { AlienRegistry } from '../alien/AlienRegistry.js';
 import { getCardRegistry } from '../cards/CardRegistry.js';
 import type { ICard } from '../cards/ICard.js';
 import { EServerCardKind } from '../cards/ICard.js';
@@ -11,6 +12,7 @@ import { EPriority } from '../deferred/Priority.js';
 import { SimpleDeferredAction } from '../deferred/SimpleDeferredAction.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayer } from '../player/IPlayer.js';
+import { setPlayCardAction } from './PlayCardActionProvider.js';
 
 export interface IPlayCardResult {
   cardId: string;
@@ -155,6 +157,10 @@ export class PlayCardAction {
       return { cardId, destination: 'alien', price, priceType };
     }
 
+    if (this.handleAlienCardPlayed(game, player, cardId, runtimeCard)) {
+      return { cardId, destination: 'alien', price, priceType };
+    }
+
     this.discardPlayedCard(game, cardId, runtimeCard.alien);
     this.enqueueReturnToHandHook(player, game, cardId, runtimeCard);
     return { cardId, destination: 'discard', price, priceType };
@@ -174,6 +180,24 @@ export class PlayCardAction {
     }
 
     game.mainDeck.discard(cardId);
+  }
+
+  private static handleAlienCardPlayed(
+    game: IGame,
+    player: IPlayer,
+    cardId: string,
+    runtimeCard: ICard,
+  ): boolean {
+    if (runtimeCard.alien === undefined) {
+      return false;
+    }
+    return (
+      AlienRegistry.get(runtimeCard.alien)?.onAlienCardPlayed?.(
+        game,
+        player,
+        cardId,
+      ) === true
+    );
   }
 
   private static enqueueReturnToHandHook(
@@ -237,3 +261,5 @@ export class PlayCardAction {
     return { credits: card.price };
   }
 }
+
+setPlayCardAction(PlayCardAction);

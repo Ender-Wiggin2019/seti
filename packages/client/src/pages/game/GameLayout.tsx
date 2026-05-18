@@ -1378,7 +1378,16 @@ function BoardTabs({
                 onCardInspect={onInspectCard}
               />
               <EndOfRoundStacks
-                stacks={gameState.endOfRoundStacks ?? [[], [], [], []]}
+                stacks={
+                  gameState.endOfRoundStacks ??
+                  gameState.endOfRoundStackCounts?.map(() => []) ?? [
+                    [],
+                    [],
+                    [],
+                    [],
+                  ]
+                }
+                stackCounts={gameState.endOfRoundStackCounts}
                 currentRoundIndex={gameState.currentEndOfRoundStackIndex ?? 0}
                 mode={
                   pendingInput?.type === EPlayerInputType.END_OF_ROUND

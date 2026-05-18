@@ -1,10 +1,10 @@
-import { ORGANIZATIONS_BY_ID } from '@seti/common/data/organizations';
 import { getAvailableFreeActions } from '@seti/common/rules';
 import { EOrganizationId } from '@seti/common/types/organization';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
+import { getOrganizationDisplayName } from '@/lib/organizationText';
 import type { IPlayerInputModel, IPublicGameState } from '@/types/re-exports';
 import { EFreeAction } from '@/types/re-exports';
 
@@ -188,12 +188,14 @@ function OrganizationPowerButton({
   disabled: boolean;
   onClick: (action: EFreeAction, organizationId?: EOrganizationId) => void;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
+  const organizationName = getOrganizationDisplayName(t, organizationId);
   return (
     <Button
       variant='ghost'
       size='sm'
       disabled={disabled}
-      aria-label={`${ORGANIZATIONS_BY_ID[organizationId].name} ${label}`}
+      aria-label={`${organizationName} ${label}`}
       onClick={() =>
         onClick(EFreeAction.USE_ORGANIZATION_POWER, organizationId)
       }

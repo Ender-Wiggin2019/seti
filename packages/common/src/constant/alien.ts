@@ -59,12 +59,12 @@ export const ALIEN_BUTTON_GROUP: {
     bg: 'bg-exertians-background',
   },
   {
+    type: EAlienType.ARKHOS,
     labelKey: 'ark',
     imageClassName: 'alien-filter__image--ark',
     text: 'text-primary-200',
     ring: 'ring-primary-500',
     bg: 'bg-zinc-900/40',
-    placeholder: true,
   },
   {
     type: EAlienType.AMOEBA,

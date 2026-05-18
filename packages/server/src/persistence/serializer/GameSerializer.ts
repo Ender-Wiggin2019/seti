@@ -5,10 +5,13 @@ import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
 import type {
   IPublicAlienCardZone,
   IPublicAlienState,
+  IPublicAmoebaBoard,
   IPublicAnomaliesBoard,
+  IPublicArkhosBoard,
   IPublicCentauriansBoard,
   IPublicExertiansBoard,
   IPublicGameState,
+  IPublicGlyphidsBoard,
   IPublicGoldScoringTile,
   IPublicMascamitesBoard,
   IPublicMilestoneState,
@@ -26,13 +29,19 @@ import type {
 import type { IPublicRivalState } from '@seti/common/types/protocol/solo';
 import {
   type AlienBoard,
+  type AmoebaAlienBoard,
   type AnomaliesAlienBoard,
+  type ArkhosAlienBoard,
   type CentauriansAlienBoard,
   type ExertiansAlienBoard,
+  type GlyphidsAlienBoard,
   type ITraceSlot,
+  isAmoebaAlienBoard,
   isAnomaliesAlienBoard,
+  isArkhosAlienBoard,
   isCentauriansAlienBoard,
   isExertiansAlienBoard,
+  isGlyphidsAlienBoard,
   isMascamitesAlienBoard,
   isOumuamuaAlienBoard,
   type MascamitesAlienBoard,
@@ -262,6 +271,45 @@ function toPublicCentauriansBoard(
   };
 }
 
+function toPublicGlyphidsBoard(
+  board: GlyphidsAlienBoard,
+): IPublicGlyphidsBoard {
+  return {
+    type: 'glyphids',
+    glyphTokenBankSize: board.glyphTokenBank.length,
+    glyphRows: cloneValue(board.glyphRows),
+    boardTokens: board.boardTokens.map((token) => ({ ...token })),
+    translationRows: board.translationRows.map((row) => ({
+      ...row,
+      glyphs: [...row.glyphs],
+    })),
+    traceSlots: board.speciesTraceSlots.map((slot) => toPublicTraceSlot(slot)),
+  };
+}
+
+function toPublicAmoebaBoard(board: AmoebaAlienBoard): IPublicAmoebaBoard {
+  return {
+    type: 'amoeba',
+    organelles: board.organelles.map((token) => ({ ...token })),
+    traceSlots: board.speciesTraceSlots.map((slot) => toPublicTraceSlot(slot)),
+  };
+}
+
+function toPublicArkhosBoard(board: ArkhosAlienBoard): IPublicArkhosBoard {
+  return {
+    type: 'arkhos',
+    explorationDeckSize: board.explorationDrawPile.length,
+    explorationReserveSize: board.explorationReservePile.length,
+    explorationDiscardSize: board.explorationDiscardPile.length,
+    securityCardsByPlayer: cloneValue(board.securityCardsByPlayer),
+    accessByPlayer: cloneValue(board.accessByPlayer),
+    resolvedExplorationRewards: board.resolvedExplorationRewards.map(
+      (reward) => ({ ...reward }),
+    ),
+    traceSlots: board.speciesTraceSlots.map((slot) => toPublicTraceSlot(slot)),
+  };
+}
+
 function toPublicAlienBoard(board: AlienBoard): TPublicAlienBoard {
   if (isAnomaliesAlienBoard(board)) {
     return toPublicAnomaliesBoard(board);
@@ -277,6 +325,15 @@ function toPublicAlienBoard(board: AlienBoard): TPublicAlienBoard {
   }
   if (isMascamitesAlienBoard(board)) {
     return toPublicMascamitesBoard(board);
+  }
+  if (isGlyphidsAlienBoard(board)) {
+    return toPublicGlyphidsBoard(board);
+  }
+  if (isAmoebaAlienBoard(board)) {
+    return toPublicAmoebaBoard(board);
+  }
+  if (isArkhosAlienBoard(board)) {
+    return toPublicArkhosBoard(board);
   }
   return {
     type: 'generic',
@@ -631,6 +688,33 @@ function serializeAlienState(game: IGame): IAlienStateDto {
           ...slot,
           rewards: slot.rewards.map((reward) => ({ ...reward })),
         }));
+      }
+      if (isGlyphidsAlienBoard(board)) {
+        dto.glyphidsGlyphTokenBank = [...board.glyphTokenBank];
+        dto.glyphidsGlyphRows = cloneValue(board.glyphRows);
+        dto.glyphidsBoardTokens = board.boardTokens.map((token) => ({
+          ...token,
+        }));
+        dto.glyphidsTranslationRows = board.translationRows.map((row) => ({
+          ...row,
+          glyphs: [...row.glyphs],
+        }));
+      }
+      if (isAmoebaAlienBoard(board)) {
+        dto.amoebaOrganelles = board.organelles.map((token) => ({
+          ...token,
+        }));
+      }
+      if (isArkhosAlienBoard(board)) {
+        dto.arkhosExplorationDrawPile = [...board.explorationDrawPile];
+        dto.arkhosExplorationReservePile = [...board.explorationReservePile];
+        dto.arkhosExplorationDiscardPile = [...board.explorationDiscardPile];
+        dto.arkhosSecurityCardsByPlayer = cloneValue(
+          board.securityCardsByPlayer,
+        );
+        dto.arkhosAccessByPlayer = cloneValue(board.accessByPlayer);
+        dto.arkhosResolvedExplorationRewards =
+          board.resolvedExplorationRewards.map((reward) => ({ ...reward }));
       }
 
       return dto;
@@ -1018,6 +1102,7 @@ export function projectGameState(
       discardPileSize: game.mainDeck.discardSize,
     },
     cardRow: cloneValue(game.cardRow as never),
+    endOfRoundStackCounts: game.endOfRoundStacks.map((stack) => stack.length),
     currentEndOfRoundStackIndex: game.roundRotationReminderIndex,
     aliens: game.alienState.boards.map((board) => toPublicAlienState(board)),
     recentEvents: game.eventLog.recent(20) as never,

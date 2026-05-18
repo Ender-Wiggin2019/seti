@@ -1,5 +1,6 @@
 import type { ICard } from './ICard.js';
 import { registerAlienCards } from './register/registerAlienCards.js';
+import { registerArkhosCards } from './register/registerArkhosCards.js';
 import { registerBaseCards } from './register/registerBaseCards.js';
 import { registerSpaceAgencyAliens } from './register/registerSpaceAgencyAliens.js';
 import { registerSpaceAgencyCards } from './register/registerSpaceAgencyCards.js';
@@ -40,6 +41,7 @@ registerBaseCards(defaultCardRegistry);
 registerAlienCards(defaultCardRegistry);
 registerSpaceAgencyCards(defaultCardRegistry);
 registerSpaceAgencyAliens(defaultCardRegistry);
+registerArkhosCards(defaultCardRegistry);
 registerDescHandlers();
 
 export function getCardRegistry(): CardRegistry {

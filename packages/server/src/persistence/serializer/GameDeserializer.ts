@@ -566,6 +566,26 @@ export function deserializeGame(dto: IGameStateDto): Game {
         ...slot,
         rewards: slot.rewards.map((reward) => ({ ...reward })),
       })),
+      glyphidsGlyphTokenBank: [...(a.glyphidsGlyphTokenBank ?? [])],
+      glyphidsGlyphRows: cloneValue(a.glyphidsGlyphRows ?? {}),
+      glyphidsBoardTokens: a.glyphidsBoardTokens?.map((token) => ({
+        ...token,
+      })),
+      glyphidsTranslationRows: a.glyphidsTranslationRows?.map((row) => ({
+        ...row,
+        glyphs: [...row.glyphs],
+      })),
+      amoebaOrganelles: a.amoebaOrganelles?.map((token) => ({ ...token })),
+      arkhosExplorationDrawPile: [...(a.arkhosExplorationDrawPile ?? [])],
+      arkhosExplorationReservePile: [...(a.arkhosExplorationReservePile ?? [])],
+      arkhosExplorationDiscardPile: [...(a.arkhosExplorationDiscardPile ?? [])],
+      arkhosSecurityCardsByPlayer: cloneValue(
+        a.arkhosSecurityCardsByPlayer ?? {},
+      ),
+      arkhosAccessByPlayer: cloneValue(a.arkhosAccessByPlayer ?? {}),
+      arkhosResolvedExplorationRewards: (
+        a.arkhosResolvedExplorationRewards ?? []
+      ).map((reward) => ({ ...reward })),
       discoverySlots: a.discoverySlots.map((slot) =>
         deserializeTraceSlotDto(slot),
       ),

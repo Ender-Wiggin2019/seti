@@ -1,4 +1,4 @@
-import { ensureDatabaseExists, getTargetDatabaseName } from './lib/dbAdmin';
+import { ensureDatabaseExists, getTargetDatabaseName } from './lib/dbAdmin.js';
 
 async function initDatabase(): Promise<void> {
   const targetDatabase = getTargetDatabaseName();
