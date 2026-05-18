@@ -132,12 +132,8 @@ _(none — most recent slice just landed)_
 - Once art mode is solid, evaluate whether to extract a shared
   `<TraceOnlyAlienBoardArt>` for the four trace-only renderers.
 
-### P2 — Drop in higher-resolution alien-board PNGs
-
-- Source PNGs in `packages/client/public/assets/seti/aliens/<alien>/board.webp`
-  are ~250 px wide rule-book crops; they upscale soft.
-- Replace each with a higher-res version (same filename) when available; the
-  art frame already letterboxes by aspect ratio, so no layout change required.
+_(Done: hi-res replacements landed for the 5 base aliens + face-down back.
+See "Done → Hi-res alien art + face-down back" below.)_
 
 ### P2 — Polish overflow rendering for other aliens
 
@@ -213,6 +209,50 @@ _(none — most recent slice just landed)_
   flipped to `false` in most packages.
 
 ## Done
+
+### Hi-res alien art + face-down back - 2026-05-18
+
+Assumptions:
+- The 5 base aliens (Anomalies, Centaurians, Exertians, Mascamites,
+  Oumuamua) have stable art that won't be re-skinned by the original author.
+- `HiddenBoard` should match the printed board's aspect/frame so the
+  discovery transition is purely a face flip, not a size jump.
+- The new images are the same artwork at higher resolution, so the calibrated
+  Anomalies coordinates (xPct/yPctBottomToTop) remain valid.
+
+Success criteria:
+- Each base alien shows its hi-res board in real mode while text-mode is
+  byte-for-byte unchanged.
+- The not-yet-discovered alien slot shows a face-down "back" image, not
+  an empty black placeholder.
+- Anomalies marker calibration still passes (rings sit on printed circles).
+
+Plan:
+- [x] Convert the 5 hi-res steam PNGs (777x1415) to webp, drop into
+  `packages/client/public/assets/seti/aliens/<alien>/board.webp`.
+- [x] Add `packages/client/public/assets/seti/aliens/back.webp` for the
+  face-down state.
+- [x] Update `AlienBoardArtFrame` aspect ratio to `777/1415` so the source
+  PNG fits without distortion.
+- [x] Branch `HiddenBoard` on `useTextMode()`: real mode renders the back
+  image at the same frame; text mode keeps the original empty placeholder.
+- [x] Verify calibration overlay rings still align on the new image.
+
+Review:
+- The aspect-ratio bump is small (0.5565 → 0.5491, ~1% delta). Anomalies
+  marker positions remained correct without re-tuning.
+- Image file sizes ~285-432 KB each at q=92 webp (~2.5 MB total for the
+  5 boards + back).
+- `HiddenBoard` previously rendered as a black box with `min-h-[360px]`;
+  the new face-down rendering uses the same fixed-aspect frame as a
+  discovered board, so both alien slots size identically before/after
+  discovery (no layout shift on reveal).
+- Verification:
+  - `pnpm --filter @seti/client typecheck`
+  - Headless screenshots of all 5 base aliens in real mode + text mode
+    confirmed art renders and text-mode unchanged.
+  - DOM probe confirmed `?calibrate=1` produces 15 rings + 1 badge on the
+    new image, same as before.
 
 ### Anomalies art renderer + ladder reward fix - 2026-05-18
 
