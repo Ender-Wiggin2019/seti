@@ -21,8 +21,13 @@ import { CardRender } from '@/features/cards/CardRender';
 import { cn } from '@/lib/cn';
 import { useTextMode } from '@/stores/debugStore';
 import { AmoebaBoard } from './alienBoards/AmoebaBoard';
+import { AnomaliesBoardArt } from './alienBoards/AnomaliesBoardArt';
 import { ArkhosBoard } from './alienBoards/ArkhosBoard';
+import { CentauriansBoardArt } from './alienBoards/CentauriansBoardArt';
+import { ExertiansBoardArt } from './alienBoards/ExertiansBoardArt';
 import { GlyphidsBoard } from './alienBoards/GlyphidsBoard';
+import { MascamitesBoardArt } from './alienBoards/MascamitesBoardArt';
+import { OumuamuaBoardArt } from './alienBoards/OumuamuaBoardArt';
 import type {
   IPublicAlienCardZone,
   IPublicAlienState,
@@ -405,6 +410,7 @@ function AnomaliesBoardRenderer({
   board,
   playerColors,
 }: IAlienBoardRendererProps): React.JSX.Element {
+  const textMode = useTextMode();
   if (board.type !== 'anomalies') {
     return (
       <GenericAlienBoard
@@ -415,8 +421,18 @@ function AnomaliesBoardRenderer({
     );
   }
 
+  if (textMode) {
+    return (
+      <AnomaliesBoard
+        alienIndex={alienIndex}
+        board={board}
+        playerColors={playerColors}
+      />
+    );
+  }
+
   return (
-    <AnomaliesBoard
+    <AnomaliesBoardArt
       alienIndex={alienIndex}
       board={board}
       playerColors={playerColors}
@@ -434,6 +450,7 @@ function OumuamuaBoardRenderer({
   planetActionMode,
   onSelectMainActionPlanet,
 }: IAlienBoardRendererProps): React.JSX.Element {
+  const textMode = useTextMode();
   if (board.type !== 'oumuamua') {
     return (
       <GenericAlienBoard
@@ -444,16 +461,26 @@ function OumuamuaBoardRenderer({
     );
   }
 
+  if (textMode) {
+    return (
+      <OumuamuaBoard
+        alienIndex={alienIndex}
+        board={board}
+        playerColors={playerColors}
+        planetaryBoard={planetaryBoard}
+        gameState={gameState}
+        myPlayerId={myPlayerId}
+        planetActionMode={planetActionMode}
+        onSelectMainActionPlanet={onSelectMainActionPlanet}
+      />
+    );
+  }
+
   return (
-    <OumuamuaBoard
+    <OumuamuaBoardArt
       alienIndex={alienIndex}
       board={board}
       playerColors={playerColors}
-      planetaryBoard={planetaryBoard}
-      gameState={gameState}
-      myPlayerId={myPlayerId}
-      planetActionMode={planetActionMode}
-      onSelectMainActionPlanet={onSelectMainActionPlanet}
     />
   );
 }
@@ -463,6 +490,7 @@ function ExertiansBoardRenderer({
   board,
   playerColors,
 }: IAlienBoardRendererProps): React.JSX.Element {
+  const textMode = useTextMode();
   if (board.type !== 'exertians') {
     return (
       <GenericAlienBoard
@@ -473,8 +501,18 @@ function ExertiansBoardRenderer({
     );
   }
 
+  if (textMode) {
+    return (
+      <ExertiansBoard
+        alienIndex={alienIndex}
+        board={board}
+        playerColors={playerColors}
+      />
+    );
+  }
+
   return (
-    <ExertiansBoard
+    <ExertiansBoardArt
       alienIndex={alienIndex}
       board={board}
       playerColors={playerColors}
@@ -487,6 +525,7 @@ function CentauriansBoardRenderer({
   board,
   playerColors,
 }: IAlienBoardRendererProps): React.JSX.Element {
+  const textMode = useTextMode();
   if (board.type !== 'centaurians') {
     return (
       <GenericAlienBoard
@@ -497,8 +536,18 @@ function CentauriansBoardRenderer({
     );
   }
 
+  if (textMode) {
+    return (
+      <CentauriansBoard
+        alienIndex={alienIndex}
+        board={board}
+        playerColors={playerColors}
+      />
+    );
+  }
+
   return (
-    <CentauriansBoard
+    <CentauriansBoardArt
       alienIndex={alienIndex}
       board={board}
       playerColors={playerColors}
@@ -511,6 +560,7 @@ function MascamitesBoardRenderer({
   board,
   playerColors,
 }: IAlienBoardRendererProps): React.JSX.Element {
+  const textMode = useTextMode();
   if (board.type !== 'mascamites') {
     return (
       <GenericAlienBoard
@@ -521,8 +571,18 @@ function MascamitesBoardRenderer({
     );
   }
 
+  if (textMode) {
+    return (
+      <MascamitesBoard
+        alienIndex={alienIndex}
+        board={board}
+        playerColors={playerColors}
+      />
+    );
+  }
+
   return (
-    <MascamitesBoard
+    <MascamitesBoardArt
       alienIndex={alienIndex}
       board={board}
       playerColors={playerColors}
