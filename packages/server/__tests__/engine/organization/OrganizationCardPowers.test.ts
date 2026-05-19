@@ -95,6 +95,35 @@ describe('organization card powers', () => {
     expect(player.oncePerRoundUsed[EOrganizationId.DEEP_SKY_SURVEY]).toBe(true);
   });
 
+  it('Deep Sky Survey does not spend the power before both swap choices are made', () => {
+    const game = createCleanGame();
+    const player = game.players[0];
+    resetPlayer(player);
+    restoreOrganization(player, game, EOrganizationId.DEEP_SKY_SURVEY);
+    player.hand = ['136'];
+    game.cardRow = ['128'];
+
+    const handInput = UseOrganizationPowerFreeAction.execute(
+      player,
+      game,
+      EOrganizationId.DEEP_SKY_SURVEY,
+    );
+    const rowInput = handInput?.process({
+      type: EPlayerInputType.CARD,
+      cardIds: ['136@0'],
+    });
+
+    expect(rowInput?.toModel()).toMatchObject({
+      type: EPlayerInputType.CARD,
+      cards: [{ id: '128@0' }],
+    });
+    expect(player.hand).toEqual(['136']);
+    expect(game.cardRow).toEqual(['128']);
+    expect(player.oncePerRoundUsed[EOrganizationId.DEEP_SKY_SURVEY]).toBe(
+      false,
+    );
+  });
+
   it('Mission Relay gains publicity for mission cards and resolves selected row card income with refill', () => {
     const game = createCleanGame();
     const player = game.players[0];
@@ -142,6 +171,30 @@ describe('organization card powers', () => {
     expect(player.hand).toContain('136');
     expect(game.cardRow).toEqual(['128', '39']);
     expect(player.oncePerRoundUsed[EOrganizationId.MISSION_RELAY]).toBe(true);
+  });
+
+  it('Mission Relay ignores non-mission played cards for its publicity trigger', () => {
+    const game = createCleanGame();
+    const player = game.players[0];
+    resetPlayer(player);
+    restoreOrganization(player, game, EOrganizationId.MISSION_RELAY);
+
+    game.eventBus.emit({
+      type: EGameRuntimeEvent.MAIN_ACTION_RESOLVED,
+      game,
+      player,
+      action: { type: EMainAction.PLAY_CARD },
+      actionDetails: { cardId: '136' },
+    });
+    game.eventBus.emit({
+      type: EGameRuntimeEvent.MAIN_ACTION_RESOLVED,
+      game,
+      player: game.players[1],
+      action: { type: EMainAction.PLAY_CARD },
+      actionDetails: { cardId: '128', destination: 'mission' },
+    });
+
+    expect(player.resources.publicity).toBe(0);
   });
 
   it('Stratus Core chains CARD_ANY card-row corners in row order without discarding row cards', () => {
@@ -237,6 +290,7 @@ describe('organization card powers', () => {
       },
     });
 
+    game.cardRow = [];
     game.mainDeck = new Deck(['39']);
     const nextInput = UseOrganizationPowerFreeAction.execute(
       player,
@@ -252,6 +306,51 @@ describe('organization card powers', () => {
     expect(player.oncePerRoundUsed[EOrganizationId.COSMOS_STRATEGY_GROUP]).toBe(
       true,
     );
+  });
+
+  it('Cosmos Strategy Group can mark the same sector reward again after its free action clears marks', () => {
+    const game = createCleanGame();
+    const player = game.players[0];
+    resetPlayer(player);
+    restoreOrganization(player, game, EOrganizationId.COSMOS_STRATEGY_GROUP);
+
+    game.eventBus.emit({
+      type: EGameRuntimeEvent.MAIN_ACTION_RESOLVED,
+      game,
+      player,
+      action: { type: EMainAction.PLAY_CARD },
+      actionDetails: { cardId: '136' },
+    });
+    expect(player.resources.publicity).toBe(1);
+
+    game.mainDeck = new Deck(['39']);
+    const clearInput = UseOrganizationPowerFreeAction.execute(
+      player,
+      game,
+      EOrganizationId.COSMOS_STRATEGY_GROUP,
+    );
+    clearInput?.process({
+      type: EPlayerInputType.OPTION,
+      optionId: 'deck',
+    });
+    expect(
+      player.organizationState[EOrganizationId.COSMOS_STRATEGY_GROUP],
+    ).toMatchObject({ markedRewards: {} });
+
+    game.eventBus.emit({
+      type: EGameRuntimeEvent.MAIN_ACTION_RESOLVED,
+      game,
+      player,
+      action: { type: EMainAction.PLAY_CARD },
+      actionDetails: { cardId: '136' },
+    });
+
+    expect(player.resources.publicity).toBe(2);
+    expect(
+      player.organizationState[EOrganizationId.COSMOS_STRATEGY_GROUP],
+    ).toMatchObject({
+      markedRewards: { [EResource.PUBLICITY]: true },
+    });
   });
 
   it('Cosmos Strategy Group lets black-sector cards choose the reward mark', () => {

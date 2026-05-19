@@ -44,6 +44,12 @@ export interface IOrganizationSetupData {
   probes: number;
 }
 
+export interface IOrganizationFrontendReference {
+  type: string;
+  displayName: string;
+  image: string;
+}
+
 export type TOrganizationState = Partial<
   Record<EOrganizationId, Record<string, unknown>>
 >;
@@ -63,6 +69,8 @@ export const DEFAULT_PLAYER_ACTION_COSTS: IPlayerActionCostConfig = {
 export interface IOrganizationData {
   id: EOrganizationId;
   name: string;
+  localizedName: string;
+  frontendReference: IOrganizationFrontendReference;
   complexity: TOrganizationComplexity;
   resources: IOrganizationStartResources;
   tuckIncome: number;

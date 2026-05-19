@@ -1547,8 +1547,17 @@ All assets are in `frontend-reference/storage.googleapis.com/cgo-projects/seti/a
 
 | File | Purpose |
 |---|---|
-| `corporations/cards.jpg` | Corporation reference sheet |
-| `corporations/probes.jpg` | Probe reference art |
+| `corporations/Cosmos Strategy Group.jpg` | Cosmos Strategy Group corporation art |
+| `corporations/Deep Sky Survey.jpg` | Deep Sky Survey corporation art |
+| `corporations/Fenwick Research Center.jpg` | Fenwick Research Center corporation art |
+| `corporations/Futurespan Institute.jpg` | Futurespan Institute corporation art |
+| `corporations/Helion Assembly.jpg` | Helion Assembly corporation art |
+| `corporations/Mission Relay.jpg` | Mission Relay corporation art |
+| `corporations/Orbital Dynamics.jpg` | Orbital Dynamics corporation art |
+| `corporations/Sentinel Probe Network.jpg` | Sentinel Probe Network corporation art |
+| `corporations/Stratus Core.jpg` | Stratus Core corporation art |
+| `corporations/Turing Systems.jpg` | Turing Systems corporation art |
+| `corporations/Xenolab.jpg` | Xenolab corporation art |
 
 ### 17.7 Asset Integration Plan
 

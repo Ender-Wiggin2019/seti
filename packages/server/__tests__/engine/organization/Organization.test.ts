@@ -338,7 +338,50 @@ describe('Organization', () => {
     ).toThrow('Organization powers cannot interrupt pending resolution');
   });
 
-  it('arms Sentinel Probe Network and applies the next non-alien main-action card corner after play', () => {
+  it('lets Cosmos Strategy Group gain a card from the card row and clear marked rewards', () => {
+    const game = createCleanGame();
+    const player = game.players[0];
+    resetPlayerForOrganizationSetup(player);
+    player.organizationIds = [EOrganizationId.COSMOS_STRATEGY_GROUP];
+    player.oncePerRoundUsed = {
+      [EOrganizationId.COSMOS_STRATEGY_GROUP]: false,
+    };
+    player.organizationState[EOrganizationId.COSMOS_STRATEGY_GROUP] = {
+      markedRewards: { [EResource.CREDIT]: true },
+    };
+    game.cardRow = ['128', '136'];
+    game.mainDeck = new Deck(['39']);
+
+    const input = UseOrganizationPowerFreeAction.execute(
+      player,
+      game,
+      EOrganizationId.COSMOS_STRATEGY_GROUP,
+    );
+    expect(input?.toModel()).toMatchObject({
+      type: EPlayerInputType.OPTION,
+      options: expect.arrayContaining([
+        expect.objectContaining({ id: 'row:0:128' }),
+        expect.objectContaining({ id: 'deck' }),
+      ]),
+    });
+
+    const done = input?.process({
+      type: EPlayerInputType.OPTION,
+      optionId: 'row:0:128',
+    });
+
+    expect(done).toBeUndefined();
+    expect(player.hand).toContain('128');
+    expect(game.cardRow).toEqual(['136', '39']);
+    expect(
+      player.organizationState[EOrganizationId.COSMOS_STRATEGY_GROUP],
+    ).toEqual({ markedRewards: {} });
+    expect(player.oncePerRoundUsed[EOrganizationId.COSMOS_STRATEGY_GROUP]).toBe(
+      true,
+    );
+  });
+
+  it('stores a resolved non-alien card corner for Sentinel Probe Network and replays it on power use', () => {
     const game = createCleanGame();
     const player = game.players[0];
     resetPlayerForOrganizationSetup(player);
@@ -347,7 +390,21 @@ describe('Organization', () => {
     player.oncePerRoundUsed = {
       [EOrganizationId.SENTINEL_PROBE_NETWORK]: false,
     };
+    OrganizationRegistry.create(EOrganizationId.SENTINEL_PROBE_NETWORK).restore(
+      player,
+      game,
+    );
     player.resources.gain({ credits: 10 });
+
+    game.processMainAction(player.id, {
+      type: EMainAction.PLAY_CARD,
+      payload: { cardIndex: 0 },
+    });
+
+    expect(player.resources.publicity).toBe(0);
+    expect(
+      player.organizationState[EOrganizationId.SENTINEL_PROBE_NETWORK],
+    ).toMatchObject({ lastCardCornerCardId: '128' });
 
     const pendingInput = UseOrganizationPowerFreeAction.execute(
       player,
@@ -355,19 +412,89 @@ describe('Organization', () => {
       EOrganizationId.SENTINEL_PROBE_NETWORK,
     );
     expect(pendingInput).toBeUndefined();
-    expect(
-      player.organizationState[EOrganizationId.SENTINEL_PROBE_NETWORK],
-    ).toMatchObject({ armed: true });
-
-    game.processMainAction(player.id, {
-      type: EMainAction.PLAY_CARD,
-      payload: { cardIndex: 0 },
-    });
-
     expect(player.resources.publicity).toBe(1);
     expect(
       player.organizationState[EOrganizationId.SENTINEL_PROBE_NETWORK],
-    ).toMatchObject({ armed: false });
+    ).toEqual({});
+    expect(
+      player.oncePerRoundUsed[EOrganizationId.SENTINEL_PROBE_NETWORK],
+    ).toBe(true);
+  });
+
+  it('stores only the latest Sentinel Probe Network card corner and consumes it once', () => {
+    const game = createCleanGame();
+    const player = game.players[0];
+    resetPlayerForOrganizationSetup(player);
+    player.organizationIds = [EOrganizationId.SENTINEL_PROBE_NETWORK];
+    player.oncePerRoundUsed = {
+      [EOrganizationId.SENTINEL_PROBE_NETWORK]: false,
+    };
+    OrganizationRegistry.create(EOrganizationId.SENTINEL_PROBE_NETWORK).restore(
+      player,
+      game,
+    );
+
+    game.eventBus.emit({
+      type: EGameRuntimeEvent.MAIN_ACTION_RESOLVED,
+      game,
+      player,
+      action: { type: EMainAction.PLAY_CARD },
+      actionDetails: { cardId: '136' },
+    });
+    game.eventBus.emit({
+      type: EGameRuntimeEvent.MAIN_ACTION_RESOLVED,
+      game,
+      player,
+      action: { type: EMainAction.PLAY_CARD },
+      actionDetails: { cardId: '128' },
+    });
+
+    UseOrganizationPowerFreeAction.execute(
+      player,
+      game,
+      EOrganizationId.SENTINEL_PROBE_NETWORK,
+    );
+
+    expect(player.resources.data).toBe(0);
+    expect(player.resources.publicity).toBe(1);
+    expect(
+      player.organizationState[EOrganizationId.SENTINEL_PROBE_NETWORK],
+    ).toEqual({});
+    expect(() =>
+      UseOrganizationPowerFreeAction.execute(
+        player,
+        game,
+        EOrganizationId.SENTINEL_PROBE_NETWORK,
+      ),
+    ).toThrow('Organization power already used this round');
+  });
+
+  it('does not let Sentinel Probe Network interrupt pending card resolution', () => {
+    const game = createCleanGame();
+    const player = game.players[0];
+    resetPlayerForOrganizationSetup(player);
+    player.organizationIds = [EOrganizationId.SENTINEL_PROBE_NETWORK];
+    player.oncePerRoundUsed = {
+      [EOrganizationId.SENTINEL_PROBE_NETWORK]: false,
+    };
+    player.organizationState[EOrganizationId.SENTINEL_PROBE_NETWORK] = {
+      lastCardCornerCardId: '128',
+    };
+    player.waitingFor = {} as IPlayer['waitingFor'];
+
+    expect(() =>
+      UseOrganizationPowerFreeAction.execute(
+        player,
+        game,
+        EOrganizationId.SENTINEL_PROBE_NETWORK,
+      ),
+    ).toThrow('Organization powers cannot interrupt pending resolution');
+    expect(
+      player.organizationState[EOrganizationId.SENTINEL_PROBE_NETWORK],
+    ).toMatchObject({ lastCardCornerCardId: '128' });
+    expect(
+      player.oncePerRoundUsed[EOrganizationId.SENTINEL_PROBE_NETWORK],
+    ).toBe(false);
   });
 
   it('does not spend Sentinel Probe Network on alien cards', () => {
@@ -379,13 +506,11 @@ describe('Organization', () => {
     player.oncePerRoundUsed = {
       [EOrganizationId.SENTINEL_PROBE_NETWORK]: false,
     };
-    player.resources.gain({ credits: 10 });
-    UseOrganizationPowerFreeAction.execute(
+    OrganizationRegistry.create(EOrganizationId.SENTINEL_PROBE_NETWORK).restore(
       player,
       game,
-      EOrganizationId.SENTINEL_PROBE_NETWORK,
     );
-
+    player.resources.gain({ credits: 10 });
     game.processMainAction(player.id, {
       type: EMainAction.PLAY_CARD,
       payload: { cardIndex: 0 },
@@ -395,7 +520,48 @@ describe('Organization', () => {
     expect(player.getMoveStash()).toBe(0);
     expect(
       player.organizationState[EOrganizationId.SENTINEL_PROBE_NETWORK],
-    ).toMatchObject({ armed: true });
+    ).toEqual({});
+    expect(() =>
+      UseOrganizationPowerFreeAction.execute(
+        player,
+        game,
+        EOrganizationId.SENTINEL_PROBE_NETWORK,
+      ),
+    ).toThrow('Organization power is not currently available');
+  });
+
+  it('does not store other players resolved card corners for Sentinel Probe Network', () => {
+    const game = createCleanGame();
+    const player = game.players[0];
+    const otherPlayer = game.players[1];
+    resetPlayerForOrganizationSetup(player);
+    player.organizationIds = [EOrganizationId.SENTINEL_PROBE_NETWORK];
+    player.oncePerRoundUsed = {
+      [EOrganizationId.SENTINEL_PROBE_NETWORK]: false,
+    };
+    OrganizationRegistry.create(EOrganizationId.SENTINEL_PROBE_NETWORK).restore(
+      player,
+      game,
+    );
+
+    game.eventBus.emit({
+      type: EGameRuntimeEvent.MAIN_ACTION_RESOLVED,
+      game,
+      player: otherPlayer,
+      action: { type: EMainAction.PLAY_CARD },
+      actionDetails: { cardId: '128' },
+    });
+
+    expect(
+      player.organizationState[EOrganizationId.SENTINEL_PROBE_NETWORK],
+    ).toEqual({});
+    expect(() =>
+      UseOrganizationPowerFreeAction.execute(
+        player,
+        game,
+        EOrganizationId.SENTINEL_PROBE_NETWORK,
+      ),
+    ).toThrow('Organization power is not currently available');
   });
 
   it('marks a signal in the launched probe sector for Sentinel Probe Network', () => {
@@ -430,7 +596,7 @@ describe('Organization', () => {
     ).toHaveLength(before + 1);
   });
 
-  it('clears Sentinel Probe Network armed state at turn end', () => {
+  it('clears Sentinel Probe Network stored corner state at turn end', () => {
     const game = createCleanGame();
     const player = game.players[0];
     resetPlayerForOrganizationSetup(player);
@@ -438,18 +604,20 @@ describe('Organization', () => {
     player.oncePerRoundUsed = {
       [EOrganizationId.SENTINEL_PROBE_NETWORK]: false,
     };
-    UseOrganizationPowerFreeAction.execute(
+    OrganizationRegistry.create(EOrganizationId.SENTINEL_PROBE_NETWORK).restore(
       player,
       game,
-      EOrganizationId.SENTINEL_PROBE_NETWORK,
     );
+    player.organizationState[EOrganizationId.SENTINEL_PROBE_NETWORK] = {
+      lastCardCornerCardId: '128',
+    };
 
     game.processMainAction(player.id, { type: EMainAction.PASS });
     resolveAllInputsDefault(game, player);
 
     expect(
       player.organizationState[EOrganizationId.SENTINEL_PROBE_NETWORK],
-    ).toMatchObject({ armed: false });
+    ).toEqual({});
   });
 
   it('resets once-per-round organization power usage at round end', () => {
@@ -513,11 +681,9 @@ describe('Organization', () => {
     resetPlayerForOrganizationSetup(player);
     player.organizationIds = [EOrganizationId.SENTINEL_PROBE_NETWORK];
     player.oncePerRoundUsed = {
-      [EOrganizationId.SENTINEL_PROBE_NETWORK]: true,
+      [EOrganizationId.SENTINEL_PROBE_NETWORK]: false,
     };
-    player.organizationState[EOrganizationId.SENTINEL_PROBE_NETWORK] = {
-      armed: true,
-    };
+    player.organizationState[EOrganizationId.SENTINEL_PROBE_NETWORK] = {};
 
     (
       OrganizationRegistry as unknown as {
@@ -532,12 +698,19 @@ describe('Organization', () => {
       action: { type: EMainAction.PLAY_CARD },
       actionDetails: { cardId: '128' },
     });
-    game.deferredActions.drain(game);
+    expect(
+      player.organizationState[EOrganizationId.SENTINEL_PROBE_NETWORK],
+    ).toMatchObject({ lastCardCornerCardId: '128' });
 
+    UseOrganizationPowerFreeAction.execute(
+      player,
+      game,
+      EOrganizationId.SENTINEL_PROBE_NETWORK,
+    );
     expect(player.resources.publicity).toBe(1);
     expect(
       player.organizationState[EOrganizationId.SENTINEL_PROBE_NETWORK],
-    ).toMatchObject({ armed: false });
+    ).toEqual({});
   });
 
   it('marks Mission Relay mission gold tile lowest slot during setup', () => {

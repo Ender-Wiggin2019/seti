@@ -37,6 +37,10 @@ describe('PlayerDashboard', () => {
         `organization-badge-${EOrganizationId.ORBITAL_DYNAMICS}`,
       ),
     ).toHaveTextContent('Orbital Dynamics');
+    expect(screen.getByAltText('Orbital Dynamics')).toHaveAttribute(
+      'src',
+      '/assets/seti/corporations/Orbital Dynamics.jpg',
+    );
   });
 
   it('renders selected Quick Start card thumbnails', () => {

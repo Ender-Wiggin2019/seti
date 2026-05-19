@@ -9,6 +9,12 @@ import { EOrganizationId } from '@/types/organization';
 const EXPECTED_SETUP = {
   [EOrganizationId.COSMOS_STRATEGY_GROUP]: {
     name: 'Cosmos Strategy Group',
+    localizedName: '宇宙战略集团',
+    frontendReference: {
+      type: 'cards',
+      displayName: 'Cosmos Strategy Group',
+      image: 'corporations/Cosmos Strategy Group.jpg',
+    },
     resources: { credit: 4, energy: 2, card: 1, publicity: 1, data: 0 },
     tuckIncome: 2,
     probes: 0,
@@ -23,7 +29,13 @@ const EXPECTED_SETUP = {
   },
   [EOrganizationId.DEEP_SKY_SURVEY]: {
     name: 'Deep Sky Survey',
-    resources: { credit: 3, energy: 2, card: 1, publicity: 4, data: 1 },
+    localizedName: '深空探测',
+    frontendReference: {
+      type: 'look',
+      displayName: 'Deep Sky Survey',
+      image: 'corporations/Deep Sky Survey.jpg',
+    },
+    resources: { credit: 3, energy: 2, card: 0, publicity: 3, data: 1 },
     tuckIncome: 2,
     probes: 0,
     income: {
@@ -37,6 +49,12 @@ const EXPECTED_SETUP = {
   },
   [EOrganizationId.FENWICK_RESEARCH_CENTER]: {
     name: 'Fenwick Research Center',
+    localizedName: '芬威克研究中心',
+    frontendReference: {
+      type: 'publ',
+      displayName: 'NovaTek Industries',
+      image: 'corporations/Fenwick Research Center.jpg',
+    },
     resources: { credit: 3, energy: 1, card: 0, publicity: 4, data: 0 },
     tuckIncome: 3,
     probes: 0,
@@ -51,6 +69,12 @@ const EXPECTED_SETUP = {
   },
   [EOrganizationId.FUTURESPAN_INSTITUTE]: {
     name: 'Futurespan Institute',
+    localizedName: '未来跨度研究所',
+    frontendReference: {
+      type: 'sponsoring',
+      displayName: 'FutureSpan Institute',
+      image: 'corporations/Futurespan Institute.jpg',
+    },
     resources: { credit: 3, energy: 3, card: 1, publicity: 3, data: 0 },
     tuckIncome: 2,
     probes: 0,
@@ -65,6 +89,12 @@ const EXPECTED_SETUP = {
   },
   [EOrganizationId.HELION_ASSEMBLY]: {
     name: 'Helion Assembly',
+    localizedName: '赫利昂联合体',
+    frontendReference: {
+      type: 'techSeller',
+      displayName: 'Virelon Technologies',
+      image: 'corporations/Helion Assembly.jpg',
+    },
     resources: { credit: 3, energy: 2, card: 0, publicity: 7, data: 0 },
     tuckIncome: 0,
     probes: 0,
@@ -79,6 +109,12 @@ const EXPECTED_SETUP = {
   },
   [EOrganizationId.MISSION_RELAY]: {
     name: 'Mission Relay',
+    localizedName: '任务中继站',
+    frontendReference: {
+      type: 'missions',
+      displayName: 'Mission Broadcast',
+      image: 'corporations/Mission Relay.jpg',
+    },
     resources: { credit: 3, energy: 2, card: 2, publicity: 2, data: 0 },
     tuckIncome: 3,
     probes: 0,
@@ -93,6 +129,12 @@ const EXPECTED_SETUP = {
   },
   [EOrganizationId.ORBITAL_DYNAMICS]: {
     name: 'Orbital Dynamics',
+    localizedName: '寰宇动力',
+    frontendReference: {
+      type: 'probes',
+      displayName: 'Orbital Dynamics',
+      image: 'corporations/Orbital Dynamics.jpg',
+    },
     resources: { credit: 2, energy: 2, card: 0, publicity: 3, data: 0 },
     tuckIncome: 2,
     probes: 2,
@@ -107,6 +149,12 @@ const EXPECTED_SETUP = {
   },
   [EOrganizationId.SENTINEL_PROBE_NETWORK]: {
     name: 'Sentinel Probe Network',
+    localizedName: '哨兵探测网络',
+    frontendReference: {
+      type: 'probeSignal',
+      displayName: 'Sentinel Probe Network',
+      image: 'corporations/Sentinel Probe Network.jpg',
+    },
     resources: { credit: 4, energy: 2, card: 0, publicity: 3, data: 0 },
     tuckIncome: 1,
     probes: 0,
@@ -121,6 +169,12 @@ const EXPECTED_SETUP = {
   },
   [EOrganizationId.STRATUS_CORE]: {
     name: 'Stratus Core',
+    localizedName: '层云核心',
+    frontendReference: {
+      type: 'offerEffects',
+      displayName: 'Stratus Core',
+      image: 'corporations/Stratus Core.jpg',
+    },
     resources: { credit: 3, energy: 2, card: 1, publicity: 3, data: 0 },
     tuckIncome: 3,
     probes: 0,
@@ -135,6 +189,12 @@ const EXPECTED_SETUP = {
   },
   [EOrganizationId.TURING_SYSTEMS]: {
     name: 'Turing Systems',
+    localizedName: '图灵系统',
+    frontendReference: {
+      type: 'testTech',
+      displayName: 'Axion Intelligence',
+      image: 'corporations/Turing Systems.jpg',
+    },
     resources: { credit: 4, energy: 2, card: 1, publicity: 2, data: 0 },
     tuckIncome: 2,
     probes: 0,
@@ -149,6 +209,12 @@ const EXPECTED_SETUP = {
   },
   [EOrganizationId.XENOLAB]: {
     name: 'Xenolab',
+    localizedName: '异星实验室',
+    frontendReference: {
+      type: 'traces',
+      displayName: 'XenoLab',
+      image: 'corporations/Xenolab.jpg',
+    },
     resources: { credit: 2, energy: 2, card: 1, publicity: 1, data: 0 },
     tuckIncome: 3,
     probes: 0,
@@ -183,6 +249,15 @@ describe('Space Agency organization metadata', () => {
   it('matches the documented setup resources and income values', () => {
     for (const organization of ORGANIZATIONS) {
       expect(organization).toMatchObject(EXPECTED_SETUP[organization.id]);
+    }
+  });
+
+  it('matches documented localized names and frontend references', () => {
+    for (const organization of ORGANIZATIONS) {
+      expect(organization).toMatchObject({
+        localizedName: EXPECTED_SETUP[organization.id].localizedName,
+        frontendReference: EXPECTED_SETUP[organization.id].frontendReference,
+      });
     }
   });
 

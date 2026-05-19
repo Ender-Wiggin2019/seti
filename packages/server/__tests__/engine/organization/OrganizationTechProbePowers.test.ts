@@ -211,6 +211,59 @@ describe('technology and probe oriented organization powers', () => {
     });
   });
 
+  it('Helion Assembly can mark a tech category again after its power clears marks', () => {
+    const game = createCleanGame();
+    const player = game.players[0];
+    const organization = new HelionAssembly();
+    player.organizationIds = [EOrganizationId.HELION_ASSEMBLY];
+    player.oncePerRoundUsed = { [EOrganizationId.HELION_ASSEMBLY]: false };
+    player.techs = [ETechId.PROBE_DOUBLE_PROBE];
+    player.hand = ['128'];
+    const startEnergy = player.resources.energy;
+
+    organization.restore(player, game);
+    game.eventBus.emit({
+      type: EGameRuntimeEvent.TECH_ACQUIRED,
+      game,
+      player,
+      techId: ETechId.PROBE_DOUBLE_PROBE,
+      techCategory: ETech.PROBE,
+    });
+    chooseNextDeferredOption(game, 'mark');
+    expect(player.resources.energy).toBe(startEnergy + 1);
+
+    const tuckInput = UseOrganizationPowerFreeAction.execute(
+      player,
+      game,
+      EOrganizationId.HELION_ASSEMBLY,
+    );
+    tuckInput?.process({
+      type: EPlayerInputType.CARD,
+      cardIds: ['128'],
+    });
+    expect(player.organizationState[EOrganizationId.HELION_ASSEMBLY]).toEqual({
+      disabledTechIds: [ETechId.PROBE_DOUBLE_PROBE],
+      markedCategories: [],
+      pendingCategories: [],
+    });
+
+    game.eventBus.emit({
+      type: EGameRuntimeEvent.TECH_ACQUIRED,
+      game,
+      player,
+      techId: ETechId.PROBE_ASTEROID,
+      techCategory: ETech.PROBE,
+    });
+    chooseNextDeferredOption(game, 'mark');
+
+    expect(player.resources.energy).toBe(startEnergy + 2);
+    expect(player.organizationState[EOrganizationId.HELION_ASSEMBLY]).toEqual({
+      disabledTechIds: [ETechId.PROBE_DOUBLE_PROBE],
+      markedCategories: [ETech.PROBE],
+      pendingCategories: [],
+    });
+  });
+
   it('Turing Systems grants publicity for computer tech acquisitions', () => {
     const game = createCleanGame();
     const player = game.players[0];
@@ -278,6 +331,45 @@ describe('technology and probe oriented organization powers', () => {
     expect(
       organization.getEffectiveTechIds(player, game, player.techs),
     ).toEqual([]);
+  });
+
+  it('Turing Systems temporary tech selection does not count as researching a tech', () => {
+    const game = createCleanGame();
+    const player = game.players[0];
+    const turing = new TuringSystems();
+    const helion = new HelionAssembly();
+    player.organizationIds = [
+      EOrganizationId.TURING_SYSTEMS,
+      EOrganizationId.HELION_ASSEMBLY,
+    ];
+    player.oncePerRoundUsed = { [EOrganizationId.TURING_SYSTEMS]: false };
+    player.organizationState = {
+      [EOrganizationId.TURING_SYSTEMS]: {},
+      [EOrganizationId.HELION_ASSEMBLY]: {},
+    };
+    const startPublicity = player.resources.publicity;
+    const startSignalTokens = player.resources.signalTokens;
+
+    turing.restore(player, game);
+    helion.restore(player, game);
+    const input = UseOrganizationPowerFreeAction.execute(
+      player,
+      game,
+      EOrganizationId.TURING_SYSTEMS,
+    );
+    const done = input?.process({
+      type: EPlayerInputType.OPTION,
+      optionId: ETechId.SCAN_EARTH_LOOK,
+    });
+
+    expect(done).toBeUndefined();
+    expect(player.techs).toEqual([]);
+    expect(player.resources.publicity).toBe(startPublicity);
+    expect(player.resources.signalTokens).toBe(startSignalTokens);
+    expect(game.deferredActions.drain(game)).toBeUndefined();
+    expect(player.organizationState[EOrganizationId.HELION_ASSEMBLY]).toEqual(
+      {},
+    );
   });
 
   it('composes Helion and Turing event listeners and effective tech modifiers without duplicate restore rewards', () => {

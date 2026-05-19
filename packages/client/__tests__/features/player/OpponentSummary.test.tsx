@@ -58,5 +58,9 @@ describe('OpponentSummary', () => {
         `organization-badge-${EOrganizationId.FENWICK_RESEARCH_CENTER}`,
       ),
     ).toHaveTextContent('Fenwick Research Center');
+    expect(screen.getByAltText('NovaTek Industries')).toHaveAttribute(
+      'src',
+      '/assets/seti/corporations/Fenwick Research Center.jpg',
+    );
   });
 });

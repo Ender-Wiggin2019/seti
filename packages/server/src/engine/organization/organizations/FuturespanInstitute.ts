@@ -5,6 +5,7 @@ import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import { getPlayCardAction } from '../../actions/PlayCardActionProvider.js';
 import { hasCardData, loadCardData } from '../../cards/loadCardData.js';
+import { AnyCardChoiceEffect } from '../../effects/card/AnyCardChoiceEffect.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
 import { SelectCard } from '../../input/SelectCard.js';
@@ -42,7 +43,10 @@ export class FuturespanInstitute extends Organization {
     if (!state.preparedCardId) {
       return this.hasPrepariableCard(player, game);
     }
-    return this.isPreparedCardLocked(player);
+    return (
+      this.isPreparedCardLocked(player) &&
+      (game.cardRow.length > 0 || game.mainDeck.totalSize > 0)
+    );
   }
 
   public override canUsePowerAfterOncePerRoundUsed(
@@ -193,7 +197,8 @@ export class FuturespanInstitute extends Organization {
   private canPlayPreparedCard(player: IPlayer, game: IGame): boolean {
     const state = this.getState(player);
     const preparedCard = state.preparedCard ?? state.preparedCardId;
-    if (!preparedCard) return false;
+    if (!preparedCard || !state.preparedCardId) return false;
+    if (!this.canPrepareCard(state.preparedCardId)) return false;
 
     const cardIndex = player.hand.length;
     player.hand.push(preparedCard);
@@ -223,21 +228,23 @@ export class FuturespanInstitute extends Organization {
       );
     }
 
-    const state = this.getState(player);
-    this.setState(player, {
-      ...state,
-      unlockScore: Math.max(
-        player.score,
-        (state.unlockScore ?? player.score) - 3,
-      ),
-    });
-    const drawn = game.mainDeck.drawWithReshuffle(game.random);
-    if (drawn !== undefined) {
-      player.hand.push(drawn);
-      game.lockCurrentTurn();
+    if (game.cardRow.length === 0 && game.mainDeck.totalSize === 0) {
+      throw new GameError(
+        EErrorCode.INVALID_FREE_ACTION,
+        'No cards available in deck or discard pile',
+        { playerId: player.id },
+      );
     }
-    player.oncePerRoundUsed[this.id] = true;
-    return undefined;
+
+    return AnyCardChoiceEffect.execute(player, game, 1, () => {
+      const state = this.getState(player);
+      this.setState(player, {
+        ...state,
+        unlockScore: (state.unlockScore ?? player.score) + 3,
+      });
+      player.oncePerRoundUsed[this.id] = true;
+      return undefined;
+    });
   }
 
   private getState(player: IPlayer): IFuturespanState {

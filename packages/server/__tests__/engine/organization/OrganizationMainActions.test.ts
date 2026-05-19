@@ -36,7 +36,7 @@ function setResources(
 }
 
 describe('Organization main actions', () => {
-  it('Futurespan Institute prepares, advances, then plays the prepared card for free', () => {
+  it('Futurespan Institute prepares, delays, then plays the prepared card for free', () => {
     const game = createCleanGame('futurespan-main-action');
     const player = game.players[0];
     player.hand = ['130'];
@@ -51,6 +51,7 @@ describe('Organization main actions', () => {
     player.organizationIds = [EOrganizationId.FUTURESPAN_INSTITUTE];
     player.organizationState[EOrganizationId.FUTURESPAN_INSTITUTE] = {};
     player.oncePerRoundUsed[EOrganizationId.FUTURESPAN_INSTITUTE] = false;
+    game.cardRow = [];
     game.mainDeck = new Deck(['drawn-card']);
 
     const prepareInput = game.processFreeAction(player.id, {
@@ -88,14 +89,14 @@ describe('Organization main actions', () => {
       player.organizationState[EOrganizationId.FUTURESPAN_INSTITUTE],
     ).toMatchObject({
       preparedCardId: '130',
-      unlockScore: 22,
+      unlockScore: 28,
     });
     expect(player.hand).toEqual(['drawn-card']);
     expect(player.oncePerRoundUsed[EOrganizationId.FUTURESPAN_INSTITUTE]).toBe(
       true,
     );
 
-    player.score = 22;
+    player.score = 28;
     game.processMainAction(player.id, {
       type: EMainAction.USE_ORGANIZATION_ACTION,
       payload: { organizationId: EOrganizationId.FUTURESPAN_INSTITUTE },
@@ -145,6 +146,118 @@ describe('Organization main actions', () => {
       type: EPlayerInputType.CARD,
       cards: [{ id: '130@1', cardId: '130' }],
     });
+  });
+
+  it('does not allow Futurespan Institute to play a prepared energy-cost card', () => {
+    const game = createCleanGame('futurespan-energy-card-main-action');
+    const player = game.players[0];
+    player.organizationIds = [EOrganizationId.FUTURESPAN_INSTITUTE];
+    player.organizationState[EOrganizationId.FUTURESPAN_INSTITUTE] = {
+      preparedCard: 'ET.34',
+      preparedCardId: 'ET.34',
+      unlockScore: player.score,
+    };
+    setResources(player, {
+      credits: 0,
+      energy: 10,
+      publicity: 0,
+      data: 0,
+      signalTokens: 0,
+    });
+    OrganizationRegistry.create(EOrganizationId.FUTURESPAN_INSTITUTE).restore(
+      player,
+      game,
+    );
+
+    expect(OrganizationRegistry.getUsableMainActionIds(player, game)).toEqual(
+      [],
+    );
+    expect(() =>
+      game.processMainAction(player.id, {
+        type: EMainAction.USE_ORGANIZATION_ACTION,
+        payload: { organizationId: EOrganizationId.FUTURESPAN_INSTITUTE },
+      }),
+    ).toThrow('Organization main action requirements are not met');
+    expect(player.hand).not.toContain('ET.34');
+    expect(
+      player.organizationState[EOrganizationId.FUTURESPAN_INSTITUTE],
+    ).toMatchObject({ preparedCardId: 'ET.34' });
+  });
+
+  it('does not spend Futurespan Institute when trying to delay an unlocked prepared card', () => {
+    const game = createCleanGame('futurespan-unlocked-delay');
+    const player = game.players[0];
+    player.organizationIds = [EOrganizationId.FUTURESPAN_INSTITUTE];
+    player.organizationState[EOrganizationId.FUTURESPAN_INSTITUTE] = {
+      preparedCard: '130',
+      preparedCardId: '130',
+      unlockScore: player.score,
+    };
+    player.oncePerRoundUsed[EOrganizationId.FUTURESPAN_INSTITUTE] = false;
+    game.cardRow = ['128'];
+    OrganizationRegistry.create(EOrganizationId.FUTURESPAN_INSTITUTE).restore(
+      player,
+      game,
+    );
+
+    expect(() =>
+      game.processFreeAction(player.id, {
+        type: EFreeAction.USE_ORGANIZATION_POWER,
+        organizationId: EOrganizationId.FUTURESPAN_INSTITUTE,
+      }),
+    ).toThrow('Organization power is not currently available');
+    expect(player.oncePerRoundUsed[EOrganizationId.FUTURESPAN_INSTITUTE]).toBe(
+      false,
+    );
+    expect(player.hand).not.toContain('128');
+    expect(
+      player.organizationState[EOrganizationId.FUTURESPAN_INSTITUTE],
+    ).toMatchObject({ unlockScore: player.score });
+  });
+
+  it('lets Futurespan Institute delay by gaining a card from the card row', () => {
+    const game = createCleanGame('futurespan-delay-card-row');
+    const player = game.players[0];
+    player.organizationIds = [EOrganizationId.FUTURESPAN_INSTITUTE];
+    player.organizationState[EOrganizationId.FUTURESPAN_INSTITUTE] = {
+      preparedCard: '130',
+      preparedCardId: '130',
+      unlockScore: player.score + 5,
+    };
+    player.oncePerRoundUsed[EOrganizationId.FUTURESPAN_INSTITUTE] = false;
+    game.cardRow = ['128', '136'];
+    game.mainDeck = new Deck(['39']);
+    OrganizationRegistry.create(EOrganizationId.FUTURESPAN_INSTITUTE).restore(
+      player,
+      game,
+    );
+
+    const input = game.processFreeAction(player.id, {
+      type: EFreeAction.USE_ORGANIZATION_POWER,
+      organizationId: EOrganizationId.FUTURESPAN_INSTITUTE,
+    });
+    expect(input).toBeUndefined();
+    expect(player.waitingFor?.toModel()).toMatchObject({
+      type: EPlayerInputType.OPTION,
+      options: expect.arrayContaining([
+        expect.objectContaining({ id: 'row:0:128' }),
+        expect.objectContaining({ id: 'deck' }),
+      ]),
+    });
+
+    game.processInput(player.id, {
+      type: EPlayerInputType.OPTION,
+      optionId: 'row:0:128',
+    });
+
+    expect(player.hand).toContain('128');
+    expect(game.cardRow).toEqual(['136', '39']);
+    expect(
+      player.organizationState[EOrganizationId.FUTURESPAN_INSTITUTE],
+    ).toMatchObject({ preparedCardId: '130', unlockScore: player.score + 8 });
+    expect(player.oncePerRoundUsed[EOrganizationId.FUTURESPAN_INSTITUTE]).toBe(
+      true,
+    );
   });
 
   it('keeps locked Futurespan cards unavailable as organization main actions', () => {
@@ -326,6 +439,34 @@ describe('Organization main actions', () => {
 
     expect(player.organizationState[EOrganizationId.XENOLAB]).toMatchObject({
       tiles: { launch: true, scan: true, research: true },
+    });
+  });
+
+  it('Xenolab ignores matching traces for other players and already active tiles', () => {
+    const game = createCleanGame('xenolab-trace-owner');
+    const player = game.players[0];
+    const otherPlayer = game.players[1];
+    player.organizationIds = [EOrganizationId.XENOLAB];
+    player.organizationState[EOrganizationId.XENOLAB] = {
+      tiles: { launch: false, scan: true, research: false },
+    };
+    OrganizationRegistry.create(EOrganizationId.XENOLAB).restore(player, game);
+
+    game.eventBus.emit({
+      type: EGameRuntimeEvent.TRACE_PLACED,
+      game,
+      player: otherPlayer,
+      traceColor: ETrace.BLUE,
+    });
+    game.eventBus.emit({
+      type: EGameRuntimeEvent.TRACE_PLACED,
+      game,
+      player,
+      traceColor: ETrace.YELLOW,
+    });
+
+    expect(player.organizationState[EOrganizationId.XENOLAB]).toMatchObject({
+      tiles: { launch: false, scan: true, research: false },
     });
   });
 

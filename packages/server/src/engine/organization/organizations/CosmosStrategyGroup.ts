@@ -6,13 +6,13 @@ import { GameError } from '@/shared/errors/GameError.js';
 import { hasCardData, loadCardData } from '../../cards/loadCardData.js';
 import { EPriority } from '../../deferred/Priority.js';
 import { SimpleDeferredAction } from '../../deferred/SimpleDeferredAction.js';
+import { AnyCardChoiceEffect } from '../../effects/card/AnyCardChoiceEffect.js';
 import { EGameRuntimeEvent } from '../../events/GameEventBus.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
 import type { IPlayer } from '../../player/IPlayer.js';
 import { Organization } from '../Organization.js';
-import { drawCardFromMainDeck } from '../OrganizationCardUtils.js';
 
 interface ICosmosStrategyGroupState {
   markedRewards?: Partial<Record<EResource, boolean>>;
@@ -34,15 +34,14 @@ export class CosmosStrategyGroup extends Organization {
   }
 
   public override canUsePower(_player: IPlayer, game: IGame): boolean {
-    return game.mainDeck.totalSize > 0;
+    return game.cardRow.length > 0 || game.mainDeck.totalSize > 0;
   }
 
   public override usePower(
     player: IPlayer,
     game: IGame,
   ): IPlayerInput | undefined {
-    const cardId = drawCardFromMainDeck(player, game);
-    if (cardId === undefined) {
+    if (game.cardRow.length === 0 && game.mainDeck.totalSize === 0) {
       throw new GameError(
         EErrorCode.INVALID_FREE_ACTION,
         'No cards available in deck or discard pile',
@@ -50,9 +49,11 @@ export class CosmosStrategyGroup extends Organization {
       );
     }
 
-    this.setState(player, { ...this.getState(player), markedRewards: {} });
-    player.oncePerRoundUsed[this.id] = true;
-    return undefined;
+    return AnyCardChoiceEffect.execute(player, game, 1, () => {
+      this.setState(player, { ...this.getState(player), markedRewards: {} });
+      player.oncePerRoundUsed[this.id] = true;
+      return undefined;
+    });
   }
 
   protected override registerEvents(player: IPlayer, game: IGame): void {

@@ -1,10 +1,8 @@
 import { EOrganizationId } from '@seti/common/types/organization';
-import { EMainAction, EPhase } from '@seti/common/types/protocol/enums';
+import { EMainAction } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import { hasCardData, loadCardData } from '../../cards/loadCardData.js';
-import { EPriority } from '../../deferred/Priority.js';
-import { SimpleDeferredAction } from '../../deferred/SimpleDeferredAction.js';
 import { MarkSectorSignalEffect } from '../../effects/scan/MarkSectorSignalEffect.js';
 import { EGameRuntimeEvent } from '../../events/GameEventBus.js';
 import { FreeActionCornerFreeAction } from '../../freeActions/FreeActionCorner.js';
@@ -14,7 +12,7 @@ import type { IPlayer } from '../../player/IPlayer.js';
 import { Organization } from '../Organization.js';
 
 interface ISentinelState {
-  armed?: boolean;
+  lastCardCornerCardId?: string;
 }
 
 export class SentinelProbeNetwork extends Organization {
@@ -26,24 +24,31 @@ export class SentinelProbeNetwork extends Organization {
     return true;
   }
 
-  public override canUsePower(_player: IPlayer, game: IGame): boolean {
-    return game.phase === EPhase.AWAIT_MAIN_ACTION;
+  public override canUsePower(player: IPlayer, _game: IGame): boolean {
+    const cardId = this.getState(player).lastCardCornerCardId;
+    return cardId !== undefined && this.hasFreeActionCorner(cardId);
   }
 
   public override usePower(
     player: IPlayer,
     game: IGame,
   ): IPlayerInput | undefined {
-    if (game.phase !== EPhase.AWAIT_MAIN_ACTION) {
+    const cardId = this.getState(player).lastCardCornerCardId;
+    if (cardId === undefined) {
       throw new GameError(
         EErrorCode.INVALID_FREE_ACTION,
-        'Sentinel Probe Network can only be armed before a main action',
+        'Sentinel Probe Network has no stored card corner effect',
         { playerId: player.id },
       );
     }
-    this.setState(player, { ...this.getState(player), armed: true });
+    const pendingInput = FreeActionCornerFreeAction.executeCardCornerRewards(
+      player,
+      game,
+      cardId,
+    );
+    this.setState(player, {});
     player.oncePerRoundUsed[this.id] = true;
-    return undefined;
+    return pendingInput;
   }
 
   protected override registerEvents(player: IPlayer, game: IGame): void {
@@ -71,8 +76,11 @@ export class SentinelProbeNetwork extends Organization {
     game.eventBus.subscribe(
       EGameRuntimeEvent.MAIN_ACTION_RESOLVED,
       (context) => {
+        if ((context.player as IPlayer | undefined)?.id !== player.id) {
+          return undefined;
+        }
         const action = context.action as { type?: EMainAction } | undefined;
-        if (action?.type !== EMainAction.PLAY_CARD || !this.isArmed(player)) {
+        if (action?.type !== EMainAction.PLAY_CARD) {
           return undefined;
         }
 
@@ -86,20 +94,11 @@ export class SentinelProbeNetwork extends Organization {
         if (loadCardData(cardId).alien !== undefined) {
           return undefined;
         }
+        if (!this.hasFreeActionCorner(cardId)) {
+          return undefined;
+        }
 
-        this.setState(player, { ...this.getState(player), armed: false });
-        game.deferredActions.push(
-          new SimpleDeferredAction(
-            player,
-            (currentGame) =>
-              FreeActionCornerFreeAction.executeCardCornerRewards(
-                player,
-                currentGame,
-                cardId,
-              ),
-            EPriority.DEFAULT,
-          ),
-        );
+        this.setState(player, { lastCardCornerCardId: cardId });
         return undefined;
       },
       { owner },
@@ -108,7 +107,7 @@ export class SentinelProbeNetwork extends Organization {
       EGameRuntimeEvent.TURN_END,
       (context) => {
         if (context.playerId === player.id) {
-          this.setState(player, { ...this.getState(player), armed: false });
+          this.setState(player, {});
         }
         return undefined;
       },
@@ -124,10 +123,9 @@ export class SentinelProbeNetwork extends Organization {
     player.organizationState[this.id] = state as Record<string, unknown>;
   }
 
-  private isArmed(player: IPlayer): boolean {
+  private hasFreeActionCorner(cardId: string): boolean {
     return (
-      player.organizationIds.includes(this.id) &&
-      this.getState(player).armed === true
+      hasCardData(cardId) && (loadCardData(cardId).freeAction?.length ?? 0) > 0
     );
   }
 }
