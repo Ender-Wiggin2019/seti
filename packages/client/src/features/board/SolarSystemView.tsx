@@ -1203,6 +1203,48 @@ function OumuamuaSectorDataList({
   );
 }
 
+/**
+ * Map (trace color, headline reward type) to the printed token art file.
+ * The printed Anomalies tokens come in 6 fixed combos: pink+credit/VP,
+ * yellow+card/publicity, blue+data/energy. Returns null if the rewards
+ * don't fit any of those combos (in which case we fall back to the
+ * earlier pill UI rendering).
+ */
+function resolveAnomalyTokenArtSrc(
+  token: IPublicSolarSystemAlienToken,
+): string | null {
+  // Pull the headline reward — for Anomalies tokens this is the first
+  // entry in the rewards array (the others, if any, are the bonus track).
+  const headline = token.rewards.find(
+    (r) =>
+      r.type === 'CREDIT' ||
+      r.type === 'VP' ||
+      r.type === 'CARD' ||
+      r.type === 'PUBLICITY' ||
+      r.type === 'DATA' ||
+      r.type === 'ENERGY',
+  );
+  if (!headline) return null;
+
+  const base = '/assets/seti/aliens/anomalies/tokens';
+  if (token.traceColor === ETrace.PINK) {
+    if (headline.type === 'CREDIT') return `${base}/pink-credit.png`;
+    if (headline.type === 'VP') return `${base}/pink-vp.png`;
+  } else if (token.traceColor === ETrace.YELLOW) {
+    if (headline.type === 'CARD') return `${base}/yellow-card.png`;
+    if (headline.type === 'PUBLICITY') return `${base}/yellow-publicity.png`;
+  } else if (token.traceColor === ETrace.BLUE) {
+    if (headline.type === 'DATA') return `${base}/blue-data.png`;
+    if (headline.type === 'ENERGY') return `${base}/blue-energy.png`;
+  }
+  return null;
+}
+
+// Slide the token tangentially along its orbital arc (same radius from the
+// sun) so it doesn't sit on top of any planet/comet painted at the sector
+// centre. Stacking offsets via `offsetX`/`offsetY` still apply on top.
+const ALIEN_TOKEN_TANGENTIAL_OFFSET_PX = 35;
+
 function SolarAlienTokenMarker({
   token,
   xPercent,
@@ -1217,6 +1259,43 @@ function SolarAlienTokenMarker({
   offsetY: number;
 }): React.JSX.Element {
   const color = SOLAR_ALIEN_TOKEN_COLOR[token.traceColor];
+  const artSrc = resolveAnomalyTokenArtSrc(token);
+
+  // Slide each token along the orbit (perpendicular to the radius from
+  // the sun at 50%/50%) so the planet/comet painted in the middle of
+  // the sector stays visible. Same orbital radius — only tangential.
+  const dx = xPercent - 50;
+  const dy = yPercent - 50;
+  const len = Math.hypot(dx, dy) || 1;
+  // Rotate (dx, dy) by 90° to get the tangent. Choosing (-dy, dx) keeps
+  // tokens going counter-clockwise around the sun, which matches the
+  // direction the printed art's end-cap faces.
+  const tangentX = (-dy / len) * ALIEN_TOKEN_TANGENTIAL_OFFSET_PX;
+  const tangentY = (dx / len) * ALIEN_TOKEN_TANGENTIAL_OFFSET_PX;
+
+  if (artSrc) {
+    return (
+      <div
+        className='pointer-events-none absolute'
+        data-testid={`solar-alien-token-${token.alienType}-${token.sectorIndex}-${token.traceColor}`}
+        style={{
+          left: `${xPercent}%`,
+          top: `${yPercent}%`,
+          transform: `translate(calc(-50% + ${offsetX + tangentX}px), calc(-50% + ${offsetY + tangentY}px))`,
+          zIndex: 78,
+        }}
+        title={token.tokenId}
+      >
+        <img
+          src={artSrc}
+          alt=''
+          aria-hidden
+          className='block h-9 w-auto select-none drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]'
+          draggable={false}
+        />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -1225,7 +1304,7 @@ function SolarAlienTokenMarker({
       style={{
         left: `${xPercent}%`,
         top: `${yPercent}%`,
-        transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`,
+        transform: `translate(calc(-50% + ${offsetX + tangentX}px), calc(-50% + ${offsetY + tangentY}px))`,
         zIndex: 78,
         boxShadow: `0 0 0 1px ${color}, 0 2px 6px rgba(0,0,0,0.55)`,
       }}
