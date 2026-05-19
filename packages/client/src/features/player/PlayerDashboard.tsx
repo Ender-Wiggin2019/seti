@@ -1,6 +1,17 @@
+import { PRELUDE_CARDS_BY_ID } from '@seti/common/data/preludeCards';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import type { ETechId } from '@seti/common/types/tech';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { CardRender } from '@/features/cards/CardRender';
+import { QuickStartCardPreview } from '@/features/setup/QuickStartCardPreview';
 import { useTextMode } from '@/stores/debugStore';
 import type {
   IFreeActionRequest,
@@ -10,8 +21,7 @@ import type {
 import { EFreeAction, EPlayerInputType } from '@/types/re-exports';
 import { ComputerRow } from './ComputerRow';
 import { IncomeTracker } from './IncomeTracker';
-import { OrganizationBadge } from './OrganizationBadge';
-import { QuickStartCardsThumbnail } from './QuickStartCardsThumbnail';
+import { OrganizationCard } from './OrganizationCard';
 import { ResourceBar } from './ResourceBar';
 import { TechRow } from './TechRow';
 
@@ -58,25 +68,43 @@ export function PlayerDashboard({
   const cardInputActive = pendingInput?.type === EPlayerInputType.CARD;
   const organizationIds = player.organizationIds ?? [];
   const quickStartCardIds = player.quickStartCardIds ?? [];
+  const playedCards = player.playedCards ?? playedMissions ?? [];
+  const playedCardCount = quickStartCardIds.length + playedCards.length;
 
   return (
     <section className='space-y-1.5' data-testid='player-dashboard'>
       <ResourceBar player={player} />
       {organizationIds.length > 0 ? (
         <div
-          className='flex flex-wrap items-center gap-1'
+          className='flex items-start gap-2 overflow-x-auto'
           data-testid='player-organizations'
         >
-          {organizationIds.map((organizationId) => (
-            <OrganizationBadge
-              key={organizationId}
-              organizationId={organizationId}
-            />
-          ))}
+          <div className='flex min-w-0 flex-1 items-start gap-2 overflow-x-auto'>
+            {organizationIds.map((organizationId) => (
+              <OrganizationCard
+                key={organizationId}
+                organizationId={organizationId}
+                available={
+                  player.usableOrganizationPowerIds?.includes(
+                    organizationId,
+                  ) === true
+                }
+                used={player.oncePerRoundUsed?.[organizationId] === true}
+                onUse={(id) =>
+                  onFreeAction({
+                    type: EFreeAction.USE_ORGANIZATION_POWER,
+                    organizationId: id,
+                  })
+                }
+              />
+            ))}
+          </div>
+          <PlayedCardsDialog
+            quickStartCardIds={quickStartCardIds}
+            playedCards={playedCards}
+            count={playedCardCount}
+          />
         </div>
-      ) : null}
-      {quickStartCardIds.length > 0 ? (
-        <QuickStartCardsThumbnail cardIds={quickStartCardIds} />
       ) : null}
 
       <div className='instrument-panel relative overflow-hidden p-1.5'>
@@ -171,5 +199,89 @@ export function PlayerDashboard({
         </div>
       </div>
     </section>
+  );
+}
+
+function PlayedCardsDialog({
+  quickStartCardIds,
+  playedCards,
+  count,
+}: {
+  quickStartCardIds: string[];
+  playedCards: IBaseCard[];
+  count: number;
+}): React.JSX.Element {
+  const { t } = useTranslation('common');
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        variant='ghost'
+        size='sm'
+        onClick={() => setOpen(true)}
+        className='h-auto min-w-[128px] shrink-0 flex-col items-start gap-0.5 px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em]'
+        data-testid='show-all-played-cards'
+      >
+        <span>{t('client.played_cards.show_all')}</span>
+        <span className='text-text-500'>
+          {t('client.played_cards.count', { count })}
+        </span>
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className='max-w-4xl'>
+          <DialogHeader>
+            <DialogTitle>{t('client.played_cards.title')}</DialogTitle>
+          </DialogHeader>
+          {count === 0 ? (
+            <div className='rounded-[4px] border border-dashed border-[color:var(--metal-edge-soft)] bg-background-950/50 px-3 py-8 text-center font-mono text-[10px] uppercase tracking-[0.14em] text-text-500'>
+              {t('client.played_cards.empty')}
+            </div>
+          ) : (
+            <div className='max-h-[70vh] space-y-4 overflow-y-auto pr-1'>
+              {quickStartCardIds.length > 0 ? (
+                <section>
+                  <p className='micro-label mb-2'>
+                    {t('client.quick_start_card.short_label')}
+                  </p>
+                  <div className='grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2'>
+                    {quickStartCardIds.map((cardId) => {
+                      const card = PRELUDE_CARDS_BY_ID[cardId];
+                      return card ? (
+                        <QuickStartCardPreview key={cardId} card={card} />
+                      ) : (
+                        <span
+                          key={cardId}
+                          className='chip font-mono text-[10px]'
+                        >
+                          {cardId}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </section>
+              ) : null}
+              {playedCards.length > 0 ? (
+                <section>
+                  <p className='micro-label mb-2'>
+                    {t('client.played_cards.cards')}
+                  </p>
+                  <div className='grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3'>
+                    {playedCards.map((card, index) => (
+                      <div
+                        key={`${card.id}-${index}`}
+                        className='flex justify-center'
+                      >
+                        <CardRender card={card} />
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

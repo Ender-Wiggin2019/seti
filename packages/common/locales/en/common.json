@@ -403,6 +403,9 @@
     "organizations": {
       "setup_badge": "Start",
       "setup_summary": "Setup: {{credit}} credits, {{energy}} energy, {{card}} cards, {{publicity}} publicity, {{data}} data, {{tuckIncome}} tuck income cards",
+      "effect_label": "Effect",
+      "passive_label": "Passive",
+      "power_used": "Used",
       "names": {
         "cosmos-strategy-group": "Cosmos Strategy Group",
         "deep-sky-survey": "Deep Sky Survey",
@@ -416,6 +419,13 @@
         "turing-systems": "Turing Systems",
         "xenolab": "Xenolab"
       }
+    },
+    "played_cards": {
+      "show_all": "Show all played cards",
+      "count": "{{count}} cards",
+      "title": "All Played Cards",
+      "empty": "No played cards",
+      "cards": "Cards"
     },
     "quick_start_card": {
       "short_label": "Quick Start",

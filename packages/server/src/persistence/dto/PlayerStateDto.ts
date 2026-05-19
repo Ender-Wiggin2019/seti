@@ -51,6 +51,7 @@ export interface IPlayerStateDto {
   techs: ETechId[];
   hand: TCardItem[];
   playedMissions: TCardItem[];
+  playedCards?: TCardItem[];
   completedMissions: TCardItem[];
   endGameCards: TCardItem[];
   tuckedIncomeCards: TCardItem[];

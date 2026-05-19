@@ -116,6 +116,7 @@ export class GameSetup {
       player.publicity = agenciesEnabled ? 0 : 4;
       player.passed = false;
       player.playedMissions = [];
+      player.playedCards = [];
       player.completedMissions = [];
       player.endGameCards = [];
       player.tuckedIncomeCards = [];

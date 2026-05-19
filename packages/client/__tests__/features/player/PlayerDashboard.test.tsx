@@ -1,5 +1,5 @@
 import { EOrganizationId } from '@seti/common/types/organization';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { PlayerDashboard } from '@/features/player';
 import { createMockPlayerState } from '../../../test/mocks/gameState';
@@ -20,7 +20,7 @@ describe('PlayerDashboard', () => {
     expect(screen.getByText('Tech Slots')).toBeInTheDocument();
   });
 
-  it('renders selected Space Agency organization badges', () => {
+  it('renders selected Space Agency organization cards', () => {
     render(
       <PlayerDashboard
         player={createMockPlayerState({
@@ -34,7 +34,7 @@ describe('PlayerDashboard', () => {
     expect(screen.getByTestId('player-organizations')).toBeInTheDocument();
     expect(
       screen.getByTestId(
-        `organization-badge-${EOrganizationId.ORBITAL_DYNAMICS}`,
+        `organization-card-${EOrganizationId.ORBITAL_DYNAMICS}`,
       ),
     ).toHaveTextContent('Orbital Dynamics');
     expect(screen.getByAltText('Orbital Dynamics')).toHaveAttribute(
@@ -43,10 +43,11 @@ describe('PlayerDashboard', () => {
     );
   });
 
-  it('renders selected Quick Start card thumbnails', () => {
+  it('hides Quick Start cards until the played cards dialog opens', () => {
     render(
       <PlayerDashboard
         player={createMockPlayerState({
+          organizationIds: [EOrganizationId.ORBITAL_DYNAMICS],
           quickStartCardIds: ['SR.1', 'SR.3'],
         })}
         pendingInput={null}
@@ -54,12 +55,17 @@ describe('PlayerDashboard', () => {
       />,
     );
 
-    expect(screen.getByTestId('player-quick-start-cards')).toBeInTheDocument();
     expect(
-      screen.getByTestId('quick-start-card-thumbnail-SR.1'),
+      screen.queryByTestId('quick-start-card-preview-SR.1'),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('show-all-played-cards'));
+
+    expect(
+      screen.getByTestId('quick-start-card-preview-SR.1'),
     ).toHaveTextContent('SR.1');
     expect(
-      screen.getByTestId('quick-start-card-thumbnail-SR.3'),
+      screen.getByTestId('quick-start-card-preview-SR.3'),
     ).toHaveTextContent('SR.3');
   });
 });

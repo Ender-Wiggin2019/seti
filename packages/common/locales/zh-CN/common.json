@@ -406,6 +406,9 @@
     "organizations": {
       "setup_badge": "初始",
       "setup_summary": "设置：{{credit}} 金钱，{{energy}} 能量，{{card}} 卡牌，{{publicity}} 声望，{{data}} 数据，{{tuckIncome}} 张收入塞牌",
+      "effect_label": "效果",
+      "passive_label": "被动",
+      "power_used": "已使用",
       "names": {
         "cosmos-strategy-group": "宇宙战略小组",
         "deep-sky-survey": "深空巡测",
@@ -419,6 +422,13 @@
         "turing-systems": "图灵系统",
         "xenolab": "异星实验室"
       }
+    },
+    "played_cards": {
+      "show_all": "显示所有已打出卡牌",
+      "count": "{{count}} 张卡",
+      "title": "所有已打出卡牌",
+      "empty": "暂无已打出卡牌",
+      "cards": "卡牌"
     },
     "quick_start_card": {
       "short_label": "快速起步",

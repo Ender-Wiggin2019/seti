@@ -133,6 +133,7 @@ export class PlayCardAction {
     const playedCard = player.removeCardAt(cardIndex);
     const runtimeContext = { player, game, playedCard };
     runtimeCard.play(runtimeContext);
+    player.playedCards.push(runtimeCard);
 
     if (runtimeCard.kind === EServerCardKind.MISSION) {
       player.playedMissions.push(runtimeCard);

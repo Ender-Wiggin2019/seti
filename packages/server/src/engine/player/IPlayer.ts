@@ -57,6 +57,7 @@ export interface IPlayerInit extends IPlayerIdentity {
   pieceInventory?: Partial<IPieceInventory>;
   hand?: TCardItem[];
   playedMissions?: TCardItem[];
+  playedCards?: TCardItem[];
   completedMissions?: TCardItem[];
   endGameCards?: TCardItem[];
   tuckedIncomeCards?: TCardItem[];
@@ -96,6 +97,7 @@ export interface IPlayer extends IPlayerIdentity {
 
   hand: TCardItem[];
   playedMissions: TCardItem[];
+  playedCards: TCardItem[];
   completedMissions: TCardItem[];
   endGameCards: TCardItem[];
   tuckedIncomeCards: TCardItem[];

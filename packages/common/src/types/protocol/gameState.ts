@@ -92,6 +92,7 @@ export interface IPublicPlayerState {
   probeSpaceLimit: number;
   tuckedIncomeCards?: IBaseCard[];
   playedMissions?: IBaseCard[];
+  playedCards?: IBaseCard[];
   completableMissionBranches?: Array<{
     cardId: string;
     branchIndex: number;
@@ -135,7 +136,10 @@ export interface IPublicSolarSystemMovablePiece {
   movementTarget: TMovementTarget;
 }
 
-export type TPublicAnomalyTraceColor = ETrace.PINK | ETrace.YELLOW | ETrace.BLUE;
+export type TPublicAnomalyTraceColor =
+  | ETrace.PINK
+  | ETrace.YELLOW
+  | ETrace.BLUE;
 
 export interface IPublicSolarSystemAlienToken {
   tokenId: string;

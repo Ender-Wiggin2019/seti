@@ -376,6 +376,7 @@ function deserializePlayers(game: Game, dto: IGameStateDto): void {
 
     concretePlayer.hand = cloneValue(playerDto.hand);
     concretePlayer.playedMissions = cloneValue(playerDto.playedMissions);
+    concretePlayer.playedCards = cloneValue(playerDto.playedCards ?? []);
     concretePlayer.completedMissions = cloneValue(playerDto.completedMissions);
     concretePlayer.endGameCards = cloneValue(playerDto.endGameCards);
     concretePlayer.tuckedIncomeCards = cloneValue(playerDto.tuckedIncomeCards);

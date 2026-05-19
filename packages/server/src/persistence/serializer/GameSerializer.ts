@@ -446,6 +446,7 @@ function serializePlayer(player: IPlayer): IPlayerStateDto {
     techs: [...player.techs],
     hand: cloneValue(player.hand),
     playedMissions: cloneValue(player.playedMissions),
+    playedCards: cloneValue(player.playedCards),
     completedMissions: cloneValue(player.completedMissions),
     endGameCards: cloneValue(player.endGameCards),
     tuckedIncomeCards: cloneValue(player.tuckedIncomeCards),
@@ -905,6 +906,7 @@ function toPublicPlayerState(
     playedMissions: isViewer
       ? cloneValue(player.playedMissions as never)
       : undefined,
+    playedCards: isViewer ? cloneValue(player.playedCards as never) : undefined,
     completableMissionBranches: isViewer
       ? game.missionTracker
           .getCompletableQuickMissions(player, game)

@@ -97,6 +97,9 @@ export function normalizeGameStateCards(
             `player-${playerIndex}-mission`,
           )
         : undefined,
+      playedCards: player.playedCards
+        ? normalizeCardArray(player.playedCards, `player-${playerIndex}-played`)
+        : undefined,
       endGameCards: player.endGameCards
         ? normalizeCardArray(
             player.endGameCards,

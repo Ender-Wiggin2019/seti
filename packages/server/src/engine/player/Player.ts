@@ -95,6 +95,8 @@ export class Player implements IPlayer {
 
   public playedMissions: TCardItem[];
 
+  public playedCards: TCardItem[];
+
   public completedMissions: TCardItem[];
 
   public endGameCards: TCardItem[];
@@ -178,6 +180,7 @@ export class Player implements IPlayer {
 
     this.hand = [...(init.hand ?? [])];
     this.playedMissions = [...(init.playedMissions ?? [])];
+    this.playedCards = [...(init.playedCards ?? [])];
     this.completedMissions = [...(init.completedMissions ?? [])];
     this.endGameCards = [...(init.endGameCards ?? [])];
     this.tuckedIncomeCards = [...(init.tuckedIncomeCards ?? [])];

@@ -81,6 +81,7 @@ export class RivalSetup {
     player.income = new Income();
     player.hand = [];
     player.playedMissions = [];
+    player.playedCards = [];
     player.completedMissions = [];
     player.endGameCards = [];
     player.tuckedIncomeCards = [];

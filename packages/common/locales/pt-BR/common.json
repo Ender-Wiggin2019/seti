@@ -402,6 +402,9 @@
     "organizations": {
       "setup_badge": "Inicial",
       "setup_summary": "Preparação: {{credit}} crédito, {{energy}} energia, {{card}} carta, {{publicity}} publicidade, {{data}} dado, {{tuckIncome}} carta de renda",
+      "effect_label": "Efeito",
+      "passive_label": "Passivo",
+      "power_used": "Usado",
       "names": {
         "cosmos-strategy-group": "Grupo de Estratégia Cosmos",
         "deep-sky-survey": "Pesquisa do Céu Profundo",
@@ -415,6 +418,13 @@
         "turing-systems": "Sistemas Turing",
         "xenolab": "Xenolab"
       }
+    },
+    "played_cards": {
+      "show_all": "Mostrar todas as cartas jogadas",
+      "count": "{{count}} cartas",
+      "title": "Todas as Cartas Jogadas",
+      "empty": "Nenhuma carta jogada",
+      "cards": "Cartas"
     },
     "quick_start_card": {
       "short_label": "Início Rápido",
