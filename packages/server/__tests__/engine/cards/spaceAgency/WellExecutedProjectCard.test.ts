@@ -9,7 +9,7 @@ describe('WellExecutedProject', () => {
   it('discards a non-alien card and gains its free-action corner three times', () => {
     const game = buildTestGame({ seed: 'sa-20' });
     const player = getPlayer(game, 'p1');
-    player.hand = ['SA.10', 'ET.11'];
+    player.hand = ['SA.10', 'ET.11', 'SA.ET.11'];
     const initialMove = player.getMoveStash();
     const card = new WellExecutedProject();
 
@@ -26,7 +26,7 @@ describe('WellExecutedProject', () => {
       cardIds: ['SA.10'],
     });
 
-    expect(player.hand).toEqual(['ET.11']);
+    expect(player.hand).toEqual(['ET.11', 'SA.ET.11']);
     expect(player.getMoveStash()).toBe(initialMove + 3);
   });
 });

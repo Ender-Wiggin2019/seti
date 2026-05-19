@@ -1,10 +1,14 @@
-import { EResource, ETech } from '@seti/common/types/element';
+import { EResource, ESector, ETech } from '@seti/common/types/element';
+import { EPlanet } from '@seti/common/types/protocol/enums';
 import type { ETechId } from '@seti/common/types/tech';
 import { getTechDescriptor } from '@seti/common/types/tech';
 import type { Sector } from '@/engine/board/Sector.js';
+import { ESolarSystemElementType } from '@/engine/board/SolarSystem.js';
 import { EPriority } from '@/engine/deferred/Priority.js';
 import { SimpleDeferredAction } from '@/engine/deferred/SimpleDeferredAction.js';
 import { AnyCardChoiceEffect } from '@/engine/effects/card/AnyCardChoiceEffect.js';
+import { createActionEvent } from '@/engine/event/GameEvent.js';
+import { EGameRuntimeEvent } from '@/engine/events/GameEventBus.js';
 import type { IGame } from '@/engine/IGame.js';
 import type { IPlayerInput } from '@/engine/input/PlayerInput.js';
 import {
@@ -13,6 +17,7 @@ import {
 } from '@/engine/missions/IMission.js';
 import type { IPlayer, TCardItem } from '@/engine/player/IPlayer.js';
 import { EPieceType } from '@/engine/player/Pieces.js';
+import { emitSectorCompletedTurnEvent } from '@/engine/turnEffects/TurnEffects.js';
 import { behaviorFromEffects, type IBehavior } from '../Behavior.js';
 import { hasCardData, loadCardData } from '../loadCardData.js';
 
@@ -54,9 +59,13 @@ export function pushCoreAction(
   );
 }
 
-export function returnCardToHand(player: IPlayer, cardId: string): void {
+export function returnCardToHand(
+  player: IPlayer,
+  cardId: string,
+  game?: IGame,
+): void {
   if (player.findCardInHand(cardId) < 0) {
-    player.hand.push(cardId);
+    player.hand.push(game?.mainDeck.removeFromDiscard(cardId) ?? cardId);
   }
 }
 
@@ -66,7 +75,10 @@ export function cardItemId(card: TCardItem): string | undefined {
 }
 
 export function isAlienCardId(cardId: string): boolean {
-  return cardId.startsWith('ET.');
+  if (cardId.startsWith('ET.') || cardId.startsWith('SA.ET.')) {
+    return true;
+  }
+  return hasCardData(cardId) && loadCardData(cardId).alien !== undefined;
 }
 
 export function gainFreeActionCorner(
@@ -158,6 +170,144 @@ export function markSectorSignalWithoutData(
   if (result.vpAwarded > 0) {
     player.score += result.vpAwarded;
   }
+  if (sector.completed) {
+    emitSectorCompletedTurnEvent(game, player, sector.id);
+  }
+  game.eventLog?.append(
+    createActionEvent(
+      player.id,
+      'SECTOR_MARKED',
+      {
+        sectorId: sector.id,
+        sectorColor: sector.color,
+        sourceAction: game.currentMainAction ?? undefined,
+        dataGained: false,
+        vpAwarded: result.vpAwarded,
+        completed: sector.completed,
+      },
+      'debug',
+    ),
+  );
+  game.eventBus?.emit({
+    type: EGameRuntimeEvent.MARK_PLACED,
+    game,
+    player,
+    sectorId: sector.id,
+    sectorColor: sector.color,
+    dataGained: false,
+    vpAwarded: result.vpAwarded,
+    completed: sector.completed,
+  });
+}
+
+export function hasProbeOnAsteroids(player: IPlayer, game: IGame): boolean {
+  return (
+    game.solarSystem?.spaces.some(
+      (space) =>
+        space.occupants.some((probe) => probe.playerId === player.id) &&
+        space.elements.some(
+          (element) => element.type === ESolarSystemElementType.ASTEROID,
+        ),
+    ) ?? false
+  );
+}
+
+export function hasProbesAtTwoDifferentNonEarthPlanets(
+  player: IPlayer,
+  game: IGame,
+): boolean {
+  const planets = new Set<EPlanet>();
+  for (const space of game.solarSystem?.spaces ?? []) {
+    if (!space.occupants.some((probe) => probe.playerId === player.id)) {
+      continue;
+    }
+    for (const element of space.elements) {
+      if (
+        element.type === ESolarSystemElementType.PLANET &&
+        element.planet !== undefined &&
+        element.planet !== EPlanet.EARTH
+      ) {
+        planets.add(element.planet);
+      }
+    }
+  }
+  return planets.size >= 2;
+}
+
+export function hasProbeAdjacentToEarth(player: IPlayer, game: IGame): boolean {
+  const solarSystem = game.solarSystem;
+  const earthSpace = solarSystem?.getPlanetLocation(EPlanet.EARTH)?.space;
+  if (!solarSystem || !earthSpace) return false;
+  const adjacentIds = new Set(
+    solarSystem.getAdjacentSpaces(earthSpace.id).map((space) => space.id),
+  );
+  return solarSystem.spaces.some(
+    (space) =>
+      adjacentIds.has(space.id) &&
+      space.occupants.some((probe) => probe.playerId === player.id),
+  );
+}
+
+export function countDataInPoolAndComputer(player: IPlayer): number {
+  return player.dataPool.count + player.computer.getPlacedCount();
+}
+
+export function hasSignalsInEverySectorColor(
+  player: IPlayer,
+  game: IGame,
+): boolean {
+  const coveredColors = new Set<ESector>();
+  for (const sector of game.sectors) {
+    if (countPlayerSignalsInSector(sector, player.id) > 0) {
+      coveredColors.add(sector.color);
+    }
+  }
+  return [ESector.RED, ESector.YELLOW, ESector.BLUE, ESector.BLACK].every(
+    (color) => coveredColors.has(color),
+  );
+}
+
+export function hasSignalOrFulfillmentInEverySector(
+  player: IPlayer,
+  game: IGame,
+): boolean {
+  return game.sectors.every(
+    (sector) =>
+      countPlayerSignalsInSector(sector, player.id) > 0 ||
+      sector.sectorWinners.includes(player.id),
+  );
+}
+
+export function countNonMoonPlanetsWithTwoLanders(
+  player: IPlayer,
+  game: IGame,
+): number {
+  let count = 0;
+  for (const state of game.planetaryBoard?.planets.values() ?? []) {
+    if (
+      state.landingSlots.filter((slot) => slot.playerId === player.id).length >=
+      2
+    ) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+export function countNonMoonPlanetsWithOrbiterOrLander(
+  player: IPlayer,
+  game: IGame,
+): number {
+  let count = 0;
+  for (const state of game.planetaryBoard?.planets.values() ?? []) {
+    if (
+      state.orbitSlots.some((slot) => slot.playerId === player.id) ||
+      state.landingSlots.some((slot) => slot.playerId === player.id)
+    ) {
+      count += 1;
+    }
+  }
+  return count;
 }
 
 export function gainIncomeCornerResource(

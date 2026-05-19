@@ -24,7 +24,7 @@ export class ReusableRocket extends ImmediateCard {
       const hasOtherProbe = earth?.occupants.some(
         (probe) => probe.playerId !== context.player.id,
       );
-      if (hasOtherProbe) returnCardToHand(context.player, CARD_ID);
+      if (hasOtherProbe) returnCardToHand(context.player, CARD_ID, game);
       return undefined;
     });
     return undefined;

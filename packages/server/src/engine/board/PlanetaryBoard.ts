@@ -240,18 +240,19 @@ export class PlanetaryBoard {
     }
 
     const planetState = this.getPlanetState(planet);
-    planetState.orbitSlots.push({ playerId });
 
     const config = getPlanetaryBoardConfig(planet);
     const rewards = cloneRewards(config.orbit.rewards);
 
     if (!planetState.firstOrbitClaimed) {
+      planetState.orbitSlots.unshift({ playerId });
       planetState.firstOrbitClaimed = true;
       const firstRewards = cloneRewards(config.orbit.firstRewards);
       rewards.push(...firstRewards);
       return { vpGained: getScoreRewardAmount(firstRewards), rewards };
     }
 
+    planetState.orbitSlots.push({ playerId });
     return { vpGained: 0, rewards };
   }
 

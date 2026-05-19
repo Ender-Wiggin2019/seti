@@ -3,22 +3,36 @@ import type { CardRegistry } from '../CardRegistry.js';
 import { loadCardData } from '../loadCardData.js';
 import { AbandonedMission } from '../spaceAgency/AbandonedMissionCard.js';
 import { AkatsukuOrbiter } from '../spaceAgency/AkatsukuOrbiterCard.js';
+import { AstronautTrainingExperience } from '../spaceAgency/AstronautTrainingExperienceCard.js';
 import { BetterSolarPanels } from '../spaceAgency/BetterSolarPanelsCard.js';
 import { ContractedResearch } from '../spaceAgency/ContractedResearchCard.js';
+import { DelayedLaunch } from '../spaceAgency/DelayedLaunchCard.js';
+import { ExoplanetSurvey } from '../spaceAgency/ExoplanetSurveyCard.js';
+import { FirstHumanInSpace } from '../spaceAgency/FirstHumanInSpaceCard.js';
+import { GrandTourProgram } from '../spaceAgency/GrandTourProgramCard.js';
+import { IngenuityHelicopter } from '../spaceAgency/IngenuityHelicopterCard.js';
 import { IterativeEngineering } from '../spaceAgency/IterativeEngineeringCard.js';
 import { JamesClerkMaxwellTelescope } from '../spaceAgency/JamesClerkMaxwellTelescopeCard.js';
 import { LiveLandingBroadcast } from '../spaceAgency/LiveLandingBroadcastCard.js';
+import { LofarArray } from '../spaceAgency/LofarArrayCard.js';
 import { MurepIdeaCompetition } from '../spaceAgency/MurepIdeaCompetitionCard.js';
+import { NasaExoplanetArchive } from '../spaceAgency/NasaExoplanetArchiveCard.js';
+import { NeutralBuoyancyTraining } from '../spaceAgency/NeutralBuoyancyTrainingCard.js';
 import { NewAssignment } from '../spaceAgency/NewAssignmentCard.js';
+import { OrbitalRefueling } from '../spaceAgency/OrbitalRefuelingCard.js';
 import { PaidMediaCoverage } from '../spaceAgency/PaidMediaCoverageCard.js';
 import { PandoraSatellite } from '../spaceAgency/PandoraSatelliteCard.js';
 import { PrivateSectorInvestment } from '../spaceAgency/PrivateSectorInvestmentCard.js';
+import { PsycheProbe } from '../spaceAgency/PsycheProbeCard.js';
+import { QuantumDataStorage } from '../spaceAgency/QuantumDataStorageCard.js';
 import { Restructuring } from '../spaceAgency/RestructuringCard.js';
 import { ReusableLander } from '../spaceAgency/ReusableLanderCard.js';
 import { ReusableRocket } from '../spaceAgency/ReusableRocketCard.js';
+import { ServicingMission } from '../spaceAgency/ServicingMissionCard.js';
 import { SpaceRendezvous } from '../spaceAgency/SpaceRendezvousCard.js';
 import { TessSatellite } from '../spaceAgency/TessSatelliteCard.js';
 import { TrackingAndDataRelaySatellite } from '../spaceAgency/TrackingAndDataRelaySatelliteCard.js';
+import { TwinProbes } from '../spaceAgency/TwinProbesCard.js';
 import { TwoPlanetFlyby } from '../spaceAgency/TwoPlanetFlybyCard.js';
 import { WellExecutedProject } from '../spaceAgency/WellExecutedProjectCard.js';
 
@@ -44,7 +58,7 @@ export function registerSpaceAgencyCards(registry: CardRegistry): void {
   // ============================================================
   // IMMEDIATE + DESC — movement + special
   // ============================================================
-  g(registry, 'SA.5'); // Servicing Mission         | DATA, MOVE, DESC
+  registry.register('SA.5', () => new ServicingMission()); // Servicing Mission         | DATA, MOVE, DESC
   registry.register('SA.12', () => new TwoPlanetFlyby()); // Two-planet Flyby          | MOVE(2), DESC
   registry.register('SA.38', () => new SpaceRendezvous()); // Space Rendezvous          | PUBLICITY, MOVE, DESC
 
@@ -87,38 +101,38 @@ export function registerSpaceAgencyCards(registry: CardRegistry): void {
   // ============================================================
   // QUICK MISSION — tech + mission
   // ============================================================
-  g(registry, 'SA.7'); // Twin Probes               | ROTATE, TECH_PROBE, QM
+  registry.register('SA.7', () => new TwinProbes()); // Twin Probes               | ROTATE, TECH_PROBE, QM
   g(registry, 'SA.9'); // Lunar Crater Radio Tel    | ROTATE, TECH_SCAN, QM
 
   // QUICK MISSION — launch + mission
-  g(registry, 'SA.11'); // Psyche Probe              | LAUNCH, PUBLICITY, QM
+  registry.register('SA.11', () => new PsycheProbe()); // Psyche Probe              | LAUNCH, PUBLICITY, QM
 
   // QUICK MISSION — resource + mission
-  g(registry, 'SA.16'); // Astronaut Training Exp    | PUBLICITY(4), QM
-  g(registry, 'SA.42'); // LOFAR Array               | SCAN, QM
+  registry.register('SA.16', () => new AstronautTrainingExperience()); // Astronaut Training Exp    | PUBLICITY(4), QM
+  registry.register('SA.42', () => new LofarArray()); // LOFAR Array               | SCAN, QM
 
   // QUICK MISSION + DESC
   registry.register('SA.28', () => new Restructuring()); // Restructuring             | DESC, QM
 
   // QUICK MISSION + signal-token
-  g(registry, 'SA.35'); // NASA Exoplanet Archive    | SIGNAL_TOKEN, QM
-  g(registry, 'SA.41'); // Exoplanet Survey          | SIGNAL_TOKEN, PUBLICITY, CARD_ANY, QM
+  registry.register('SA.35', () => new NasaExoplanetArchive()); // NASA Exoplanet Archive    | SIGNAL_TOKEN, QM
+  registry.register('SA.41', () => new ExoplanetSurvey()); // Exoplanet Survey          | SIGNAL_TOKEN, PUBLICITY, CARD_ANY, QM
 
   // ============================================================
   // FULL MISSION
   // ============================================================
-  g(registry, 'SA.21'); // Orbital Refueling         | FM
-  g(registry, 'SA.23'); // Neutral Buoyancy Training | PUBLICITY, FM
+  registry.register('SA.21', () => new OrbitalRefueling()); // Orbital Refueling         | FM
+  registry.register('SA.23', () => new NeutralBuoyancyTraining()); // Neutral Buoyancy Training | PUBLICITY, FM
   g(registry, 'SA.24'); // Space Elevator            | FM
   g(registry, 'SA.25'); // LIGO                      | FM
   g(registry, 'SA.26'); // New AI Models             | FM
-  g(registry, 'SA.33'); // Delayed Launch            | PUBLICITY, FM
+  registry.register('SA.33', () => new DelayedLaunch()); // Delayed Launch            | PUBLICITY, FM
 
   // ============================================================
   // END GAME
   // ============================================================
-  g(registry, 'SA.8'); // Quantum Data Storage      | ROTATE, TECH_COMPUTER, EG
-  g(registry, 'SA.10'); // First Human in Space      | PUBLICITY(10), EG
-  g(registry, 'SA.31'); // Ingenuity Helicopter      | LAND, EG
-  g(registry, 'SA.39'); // Grand Tour Program        | MOVE(2), EG
+  registry.register('SA.8', () => new QuantumDataStorage()); // Quantum Data Storage      | ROTATE, TECH_COMPUTER, EG
+  registry.register('SA.10', () => new FirstHumanInSpace()); // First Human in Space      | PUBLICITY(10), EG
+  registry.register('SA.31', () => new IngenuityHelicopter()); // Ingenuity Helicopter      | LAND, EG
+  registry.register('SA.39', () => new GrandTourProgram()); // Grand Tour Program        | MOVE(2), EG
 }

@@ -213,6 +213,19 @@ describe('GameLayout', () => {
       });
     });
 
+    it('places the mobile player board below the solar board instead of behind an info overlay', async () => {
+      await renderLayout();
+
+      const solarColumn = screen.getByTestId('board-tab-solar-column');
+      const mobileDashboard = screen.getByTestId('mobile-bottom-dashboard');
+
+      expect(solarColumn).toContainElement(mobileDashboard);
+      expect(mobileDashboard.closest('aside')).toHaveClass('lg:hidden');
+      expect(
+        screen.queryByRole('button', { name: /toggle sidebar/i }),
+      ).not.toBeInTheDocument();
+    });
+
     it('switches tab content on click', async () => {
       await renderLayout();
 
@@ -404,8 +417,11 @@ describe('GameLayout', () => {
       });
       await renderLayout();
 
-      expect(screen.getByTestId('rival-area')).toBeInTheDocument();
-      expect(screen.getByTestId('rival-current-card')).toHaveTextContent('S.1');
+      const rivalArea = screen.getByTestId('rival-area');
+      expect(rivalArea).toBeInTheDocument();
+      expect(
+        within(rivalArea).getByTestId('rival-current-card'),
+      ).toHaveTextContent('S.1');
     });
 
     it('renders rival techs from the public rival state without a rival player row', async () => {
@@ -421,10 +437,11 @@ describe('GameLayout', () => {
       });
       await renderLayout();
 
-      expect(screen.getByTestId('rival-area')).toBeInTheDocument();
-      expect(screen.getByTestId('rival-tech-count-computer')).toHaveTextContent(
-        '1',
-      );
+      const rivalArea = screen.getByTestId('rival-area');
+      expect(rivalArea).toBeInTheDocument();
+      expect(
+        within(rivalArea).getByTestId('rival-tech-count-computer'),
+      ).toHaveTextContent('1');
     });
 
     it('keeps the mission area visible for the solo human player', async () => {

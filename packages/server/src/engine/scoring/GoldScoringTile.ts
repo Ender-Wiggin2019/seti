@@ -399,12 +399,18 @@ export function scoreEndGameCard(
 
   switch (cardId) {
     case 'ET.5':
+    case 'SA.8':
+    case 'SA.10':
+    case 'SA.31':
+    case 'SA.39':
     case 'SA.ET.1':
     case 'SA.ET.9':
     case 'SA.ET.11':
     case 'SA.ET.12':
     case 'SA.ET.13': {
-      const score = getCardRegistry().create(cardId).scoreEndGame?.(player, game);
+      const score = getCardRegistry()
+        .create(cardId)
+        .scoreEndGame?.(player, game);
       return score ?? 0;
     }
     case '12':

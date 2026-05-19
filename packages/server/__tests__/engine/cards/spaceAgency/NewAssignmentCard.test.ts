@@ -41,4 +41,40 @@ describe('NewAssignment', () => {
     ).toBe(true);
     expect(player.probesInSpace).toBe(player.probeSpaceLimit + 1);
   });
+
+  it('reopens the first orbit slot so the next orbiter receives first-orbit rewards', () => {
+    const game = buildTestGame({ seed: 'sa-19-first-slot' });
+    const player = getPlayer(game, 'p1');
+    const other = getPlayer(game, 'p2');
+    const board = game.planetaryBoard;
+    const planetState = board?.planets.get(EPlanet.MARS);
+    const marsSpace = game.solarSystem?.getPlanetLocation(EPlanet.MARS)?.space;
+    if (!board || !planetState || !marsSpace) {
+      throw new Error('missing Mars setup');
+    }
+    planetState.orbitSlots.push(
+      { playerId: player.id },
+      { playerId: other.id },
+    );
+    planetState.firstOrbitClaimed = true;
+    const card = new NewAssignment();
+
+    card.play({ player, game });
+    const input = game.deferredActions.drain(game);
+    const model = input?.toModel() as ISelectOptionInputModel | undefined;
+    const marsOption = model?.options.find((option) =>
+      String(option.id).includes(EPlanet.MARS),
+    );
+    input?.process({
+      type: EPlayerInputType.OPTION,
+      optionId: String(marsOption?.id),
+    });
+
+    board.setProbeCount(EPlanet.MARS, player.id, 1);
+    const result = board.orbit(EPlanet.MARS, player.id);
+
+    expect(result.vpGained).toBeGreaterThan(0);
+    expect(planetState.orbitSlots[0]?.playerId).toBe(player.id);
+    expect(planetState.orbitSlots[1]?.playerId).toBe(other.id);
+  });
 });

@@ -34,7 +34,7 @@ export class ReusableLander extends ImmediateCard {
         const playerLandedOnThisPlanet =
           state.landingSlots.length > landingCountBefore && ownLander;
         if (playerLandedOnThisPlanet && landingCountBefore >= 1) {
-          returnCardToHand(context.player, CARD_ID);
+          returnCardToHand(context.player, CARD_ID, game);
           break;
         }
       }

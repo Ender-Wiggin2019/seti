@@ -9,7 +9,11 @@ import {
 } from './IMission.js';
 
 type TConditionFn = (player: IPlayer, game: IGame) => boolean;
-type TEventMatchFn = (event: IMissionEvent) => boolean;
+type TEventMatchFn = (
+  event: IMissionEvent,
+  player: IPlayer,
+  game: IGame,
+) => boolean;
 
 /**
  * Build a QUICK_MISSION def from card data, overriding condition

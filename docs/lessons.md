@@ -46,3 +46,8 @@
 - `frontend-reference` 只作为行为/数据参考；实现规格必须写清 common/server/client 分工，并把 source alias 映射到项目规范命名。
 - 用户确认某机制只需现有选项控制时，不要新增语义相近的 helper 或 public boolean；server/common/client 应读取同一个 options 字段，避免出现第二套开关语义。
 - 当出现 Gain Card, Draw Card 等相关文字时，需要明确是 Draw Any Card 还是直接 Draw from Deck。必须明确这个语义。
+
+## 卡牌实现结构
+
+- SETI 卡牌有 gameplay-specific custom logic 时，必须一张卡一个 `*Card.ts` class 文件；不要为了批量实现把多个 card class 聚合到一个大文件里，即使逻辑相近也只抽共享 helper。
+- 新增专用卡测试也优先一张卡一个 `*Card.test.ts`；只有确认保留泛型注册的卡，才使用小范围 generic regression 测试文件。

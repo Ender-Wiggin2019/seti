@@ -225,7 +225,7 @@ export class MissionTracker {
 
     for (let index = playerIndex; index < players.length; index++) {
       const player = players[index];
-      const triggered = this.collectTriggeredBranches(player, checkpoint);
+      const triggered = this.collectTriggeredBranches(player, game, checkpoint);
 
       if (triggered.length === 0) {
         continue;
@@ -264,6 +264,7 @@ export class MissionTracker {
 
   private collectTriggeredBranches(
     player: IPlayer,
+    game: IGame,
     events: ReadonlyArray<IMissionEvent>,
   ): ICompletableMission[] {
     const missions = this.getOrCreatePlayerMissions(player.id);
@@ -280,7 +281,7 @@ export class MissionTracker {
         const branch = mission.def.branches[i];
         const isTriggered = events.some((event) =>
           branch.matchEvent
-            ? branch.matchEvent(event)
+            ? branch.matchEvent(event, player, game)
             : matchesFullMissionTrigger(branch, event),
         );
 

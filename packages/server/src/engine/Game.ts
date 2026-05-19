@@ -696,6 +696,9 @@ export class Game implements IGame {
                 break;
               }
               case EMainAction.PASS: {
+                game.missionTracker.recordEvent({
+                  type: EMissionEventType.PASS,
+                });
                 pendingInput = PassAction.execute(player, game);
                 break;
               }

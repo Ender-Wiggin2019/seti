@@ -230,7 +230,6 @@ export function GameLayout({
   const { t } = useTranslation('common');
   const activeTab = useGameViewStore((s) => s.activeTab);
   const setActiveTab = useGameViewStore((s) => s.setActiveTab);
-  const [personalColumnOpen, setPersonalColumnOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailCard, setDetailCard] = useState<IBaseCard | null>(null);
   const [handExpanded, setHandExpanded] = useState(true);
@@ -439,27 +438,6 @@ export function GameLayout({
             planetActionMode={planetActionMode}
             onSelectMainActionPlanet={handlePlanetMainActionSelect}
           />
-
-          <button
-            type='button'
-            onClick={() => setPersonalColumnOpen((v) => !v)}
-            className='absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-[4px] border border-[color:var(--metal-edge-soft)] bg-background-900/80 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-text-300 shadow-hairline-inset backdrop-blur-sm transition-[background,border-color] hover:border-[oklch(0.40_0.04_240)] hover:bg-background-800/80 lg:hidden'
-            aria-label={t('client.game_layout.toggle_sidebar')}
-          >
-            <span
-              aria-hidden
-              className='h-1.5 w-1.5 rounded-full bg-accent-500/80'
-            />
-            {personalColumnOpen
-              ? t('client.game_layout.board')
-              : t('client.game_layout.info')}
-          </button>
-
-          {personalColumnOpen && (
-            <div className='absolute inset-0 z-20 lg:hidden'>
-              <PersonalColumn className='h-full' />
-            </div>
-          )}
         </main>
 
         <PersonalColumn className='hidden w-[440px] shrink-0 xl:w-[520px] lg:flex' />
@@ -1018,6 +996,9 @@ function TopActionBar({
 
 interface IPersonalColumnProps {
   className?: string;
+  dashboardTestId?: string;
+  missionAreaTestId?: string;
+  rivalAreaTestId?: string;
 }
 
 /**
@@ -1032,6 +1013,9 @@ interface IPersonalColumnProps {
  */
 function PersonalColumn({
   className,
+  dashboardTestId = 'bottom-dashboard',
+  missionAreaTestId = 'mission-area',
+  rivalAreaTestId = 'rival-area',
 }: IPersonalColumnProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const { gameState, myPlayerId, pendingInput, sendFreeAction } =
@@ -1061,7 +1045,7 @@ function PersonalColumn({
       )}
       aria-label={t('client.game_layout.personal_board')}
     >
-      <section data-testid='bottom-dashboard'>
+      <section data-testid={dashboardTestId}>
         <div className='section-head mb-2'>
           <span aria-hidden className='section-head__tick' />
           <p className='micro-label'>
@@ -1087,7 +1071,7 @@ function PersonalColumn({
       </section>
 
       {gameState?.isSoloMode && gameState.rival ? (
-        <section data-testid='rival-area'>
+        <section data-testid={rivalAreaTestId}>
           <div className='section-head mb-2'>
             <span aria-hidden className='section-head__tick' />
             <p className='micro-label'>
@@ -1102,7 +1086,7 @@ function PersonalColumn({
       ) : null}
 
       {!isSyntheticRivalView ? (
-        <section data-testid='mission-area'>
+        <section data-testid={missionAreaTestId}>
           <div className='section-head mb-2'>
             <span aria-hidden className='section-head__tick' />
             <p className='micro-label'>
@@ -1322,6 +1306,12 @@ function BoardTabs({
                 oumuamuaTile={oumuamuaTile}
               />
             )}
+            <PersonalColumn
+              className='mt-3 flex max-w-full border-l-0 border-t lg:hidden'
+              dashboardTestId='mobile-bottom-dashboard'
+              missionAreaTestId='mobile-mission-area'
+              rivalAreaTestId='mobile-rival-area'
+            />
           </div>
         </TabsContent>
 

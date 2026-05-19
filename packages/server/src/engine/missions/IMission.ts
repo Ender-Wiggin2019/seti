@@ -17,7 +17,11 @@ export interface IMissionBranchDef {
   readonly req: ReadonlyArray<IBaseEffect | ICustomizedEffect>;
   readonly rewards: ReadonlyArray<IBaseEffect | ICustomizedEffect>;
   readonly checkCondition?: (player: IPlayer, game: IGame) => boolean;
-  readonly matchEvent?: (event: IMissionEvent) => boolean;
+  readonly matchEvent?: (
+    event: IMissionEvent,
+    player: IPlayer,
+    game: IGame,
+  ) => boolean;
 }
 
 export interface IMissionDef {
@@ -51,6 +55,7 @@ export enum EMissionEventType {
   SIGNAL_PLACED = 'SIGNAL_PLACED',
   TRACE_MARKED = 'TRACE_MARKED',
   CARD_CORNER_USED = 'CARD_CORNER_USED',
+  PASS = 'PASS',
   MISSION_COMPLETED = 'MISSION_COMPLETED',
   SECTOR_COMPLETED = 'SECTOR_COMPLETED',
 }
@@ -95,6 +100,7 @@ export type IMissionEvent =
       readonly type: EMissionEventType.CARD_CORNER_USED;
       readonly resourceType: EResource;
     }
+  | { readonly type: EMissionEventType.PASS }
   | {
       readonly type: EMissionEventType.MISSION_COMPLETED;
       readonly cardId: string;

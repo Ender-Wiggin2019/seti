@@ -1,3 +1,4 @@
+import { enqueueTurnEffectRegistration } from '@/engine/turnEffects/TurnEffects.js';
 import { ImmediateCard } from '../Card.js';
 import type { ICardRuntimeContext } from '../ICard.js';
 import { loadCardData } from '../loadCardData.js';
@@ -17,7 +18,9 @@ export class SpaceRendezvous extends ImmediateCard {
   }
 
   protected override bespokePlay(context: ICardRuntimeContext): undefined {
-    pushCoreAction(context.player, context.game, (game) => {
+    let scored = false;
+    const scoreIfRendezvous = (game: typeof context.game): void => {
+      if (scored) return;
       const hasRendezvous = game.solarSystem?.spaces.some(
         (space) =>
           space.occupants.some(
@@ -26,8 +29,20 @@ export class SpaceRendezvous extends ImmediateCard {
       );
       if (hasRendezvous) {
         context.player.score += 3;
+        scored = true;
       }
+    };
+
+    pushCoreAction(context.player, context.game, (game) => {
+      scoreIfRendezvous(game);
       return undefined;
+    });
+    enqueueTurnEffectRegistration(context.player, context.game, {
+      id: `${CARD_ID}:space-rendezvous`,
+      onMovementStep: ({ game }) => {
+        scoreIfRendezvous(game);
+        return undefined;
+      },
     });
     return undefined;
   }
