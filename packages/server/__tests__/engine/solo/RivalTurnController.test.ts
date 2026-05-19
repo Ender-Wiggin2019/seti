@@ -1252,7 +1252,7 @@ describe('RivalTurnController', () => {
     const rival = game.players[1];
     const board = discoverArkhos(game);
     const redSecurity = board.securityCardsByPlayer[rival.id]?.find(
-      (card) => card.traceColor === ETrace.RED,
+      (card) => card.traceColor === ETrace.PINK,
     );
     if (!redSecurity) throw new Error('expected rival red security card');
 
@@ -1260,7 +1260,7 @@ describe('RivalTurnController', () => {
       rival,
       game,
       'alien-0-overflow-red-trace',
-      ETrace.RED,
+      ETrace.PINK,
     );
 
     expect(placed).toBe(true);

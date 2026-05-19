@@ -189,7 +189,7 @@ describe('FullGameSimulation (Phase 10.3)', () => {
       const board = game.alienState.boards[0];
       Object.assign(board, { alienType: EAlienType.DUMMY });
 
-      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.PINK, 0);
       placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
       p1.score = 22;
 

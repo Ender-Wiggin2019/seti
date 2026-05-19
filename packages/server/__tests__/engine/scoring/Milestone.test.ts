@@ -246,16 +246,16 @@ describe('MilestoneState (Phase 7)', () => {
         (e) => e.action === 'MILESTONE_NEUTRAL_RESOLVED',
       );
       expect(neutral?.details?.alienIndex).toBe(0);
-      expect(neutral?.details?.traceColor).toBe(ETrace.RED);
+      expect(neutral?.details?.traceColor).toBe(ETrace.PINK);
     });
 
     it('7.2.3 [集成] neutral placement can complete an alien and allow discovery resolution', () => {
       const game = createGame(2, 'm7-neu-3');
       const p1 = game.players[0];
 
-      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.PINK, 0);
       placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
-      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 1);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.PINK, 1);
       placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 1);
 
       p1.score = 22;
@@ -270,10 +270,10 @@ describe('MilestoneState (Phase 7)', () => {
       const game = createGame(2, 'm7-neu-4');
       const p1 = game.players[0];
 
-      for (const color of [ETrace.RED, ETrace.YELLOW, ETrace.BLUE]) {
+      for (const color of [ETrace.PINK, ETrace.YELLOW, ETrace.BLUE]) {
         placeTraceForTestSetup(game.alienState, p1, game, color, 0);
       }
-      for (const color of [ETrace.RED, ETrace.YELLOW, ETrace.BLUE]) {
+      for (const color of [ETrace.PINK, ETrace.YELLOW, ETrace.BLUE]) {
         placeTraceForTestSetup(game.alienState, p1, game, color, 1);
       }
 
@@ -334,7 +334,7 @@ describe('MilestoneState (Phase 7)', () => {
         (e) => e.action === 'MILESTONE_NEUTRAL_RESOLVED',
       );
       expect(neutral?.details?.alienIndex).toBe(0);
-      expect(neutral?.details?.traceColor).toBe(ETrace.RED);
+      expect(neutral?.details?.traceColor).toBe(ETrace.PINK);
     });
   });
 
@@ -441,9 +441,9 @@ describe('MilestoneState (Phase 7)', () => {
       const game = createGame(2, 'm7-ord-4');
       const p1 = game.players[0];
 
-      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.PINK, 0);
       placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
-      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 1);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.PINK, 1);
       placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 1);
 
       p1.score = 24;

@@ -131,7 +131,13 @@ function getSectorIdByPlanet(
     if (!hasPlanet) {
       continue;
     }
-    const idx = ((space.indexInRing % 8) + 8) % 8;
+    // Each ring has SECTOR_COUNT * ringIndex cells, and sector S owns the
+    // consecutive cells [S * ringIndex, (S + 1) * ringIndex). The previous
+    // `% 8` shortcut only works for ring 1 — for any planet on a higher
+    // ring it could resolve to the wrong sector after rotation. Match the
+    // server: floor(indexInRing / ringIndex).
+    const ringIndex = Math.max(space.ringIndex, 1);
+    const idx = Math.floor(space.indexInRing / ringIndex);
     return `sector-${idx}`;
   }
   return null;

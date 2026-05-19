@@ -1,9 +1,9 @@
-import { ETrace } from '@/types/re-exports';
 import type { IPublicOumuamuaBoard } from '@/types/re-exports';
+import { ETrace } from '@/types/re-exports';
 import { AlienBoardArtFrame } from './AlienBoardArtFrame';
 import {
-  type TTraceColumnLayouts,
   TraceMarkerOverlay,
+  type TTraceColumnLayouts,
 } from './TraceMarkerOverlay';
 
 // Oumuamua reference art shows, per column from bottom to top:
@@ -17,7 +17,7 @@ import {
 // Server emits all six as trace slots in this order (bottom→top), so
 // `yPctBottomToTop[i]` is the i-th slot from the bottom.
 const OUMUAMUA_LAYOUTS: TTraceColumnLayouts = {
-  [ETrace.RED]: {
+  [ETrace.PINK]: {
     xPct: 19,
     yPctBottomToTop: [86, 75, 65, 56, 47, 35],
     overflowStridePct: 4,

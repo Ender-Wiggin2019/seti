@@ -3,6 +3,7 @@ import type {
   TSectorWinnerBonusItem,
 } from '@seti/common/constant/sectorSetup';
 import { ETrace } from '@seti/common/types/element';
+import { formatSectorOptionLabel } from '../../board/SectorLabel.js';
 import type { ISectorCompletionResult, Sector } from '../../board/Sector.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
@@ -91,7 +92,7 @@ export class SectorFulfillmentEffect {
       turnOwner,
       sectors.map((sector) => ({
         id: `resolve-sector-${sector.id}`,
-        label: `Resolve sector ${sector.id}`,
+        label: formatSectorOptionLabel(sector),
         onSelect: () => {
           const remaining = sectors.filter((s) => s !== sector);
           return this.resolveSector(

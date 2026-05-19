@@ -35,7 +35,7 @@ describe('arkhosCards', () => {
       }),
     );
     expect(
-      ARKHOS_SECURITY_CARDS.filter((card) => card.traceColor === ETrace.RED),
+      ARKHOS_SECURITY_CARDS.filter((card) => card.traceColor === ETrace.PINK),
     ).toHaveLength(4);
     expect(
       ARKHOS_SECURITY_CARDS.filter((card) => card.traceColor === ETrace.YELLOW),

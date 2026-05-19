@@ -1011,7 +1011,7 @@ export class RivalActionResolver {
   ): Array<{ board: AlienBoard; slot: ITraceSlot; traceColor: ETrace }> {
     const traceColors =
       traceColor === ETrace.ANY
-        ? [ETrace.RED, ETrace.YELLOW, ETrace.BLUE]
+        ? [ETrace.PINK, ETrace.YELLOW, ETrace.BLUE]
         : [traceColor];
     const boards =
       decisionDirection === ERivalDecisionDirection.RIGHT

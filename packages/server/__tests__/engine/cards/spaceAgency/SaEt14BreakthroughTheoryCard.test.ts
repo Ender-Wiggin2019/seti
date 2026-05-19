@@ -28,18 +28,18 @@ describe('SA.ET.14 Breakthrough Theory', () => {
     }
 
     const discoveryRed = board.discoverySlots.find(
-      (slot) => slot.traceColor === ETrace.RED,
+      (slot) => slot.traceColor === ETrace.PINK,
     );
     if (!discoveryRed) {
       throw new Error('expected red discovery slot');
     }
-    board.placeTrace(discoveryRed, { playerId: player.id }, ETrace.RED);
+    board.placeTrace(discoveryRed, { playerId: player.id }, ETrace.PINK);
     markAmoebaTrace(board, player.id, ETrace.YELLOW);
     markAmoebaTrace(board, player.id, ETrace.BLUE, { overflow: true });
 
     expect(branch.checkCondition(player, game)).toBe(false);
 
-    markAmoebaTrace(board, player.id, ETrace.RED);
+    markAmoebaTrace(board, player.id, ETrace.PINK);
 
     expect(branch.checkCondition(player, game)).toBe(true);
   });
@@ -52,7 +52,7 @@ describe('SA.ET.14 Breakthrough Theory', () => {
     if (!branch) {
       throw new Error('expected SA.ET.14 quick mission branch');
     }
-    markAmoebaTrace(board, player.id, ETrace.RED);
+    markAmoebaTrace(board, player.id, ETrace.PINK);
     markAmoebaTrace(board, player.id, ETrace.YELLOW);
     const scoreBefore = player.score;
 

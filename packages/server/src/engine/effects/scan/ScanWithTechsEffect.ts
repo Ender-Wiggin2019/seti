@@ -1,4 +1,5 @@
 import type { ETechId } from '@seti/common/types/tech';
+import { formatSectorOptionLabel } from '../../board/SectorLabel.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
@@ -8,6 +9,7 @@ import type { IScanTechEffect } from '../../tech/ITech.js';
 import { TechModifierQuery } from '../../tech/TechModifierQuery.js';
 import type { IMarkSectorSignalResult } from './MarkSectorSignalEffect.js';
 import { MarkSectorSignalEffect } from './MarkSectorSignalEffect.js';
+import { getSectorAt } from './ScanEffectUtils.js';
 import type { IScanEffectResult } from './ScanEffect.js';
 import { ScanEffect } from './ScanEffect.js';
 import {
@@ -140,7 +142,7 @@ export class ScanWithTechsEffect {
       player,
       candidateIndexes.map((idx) => ({
         id: `sector-${idx}`,
-        label: `Sector ${idx}`,
+        label: formatSectorIndexLabel(game, idx),
         onSelect: () =>
           MarkSectorSignalEffect.markByIndexWithAlternatives(
             player,
@@ -178,8 +180,8 @@ export class ScanWithTechsEffect {
         id: `sector-${idx}`,
         label:
           idx === earthIdx
-            ? `Earth sector (${idx})`
-            : `Adjacent sector (${idx})`,
+            ? `Earth — ${formatSectorIndexLabel(game, idx)}`
+            : `Adjacent — ${formatSectorIndexLabel(game, idx)}`,
         onSelect: () =>
           this.executeBaseScanThenTechs(
             player,
@@ -384,4 +386,14 @@ export class ScanWithTechsEffect {
       ? `${mod.description} (cost: ${parts.join(', ')})`
       : mod.description;
   }
+}
+
+/**
+ * Resolve a sector index (0..7) to the canonical "Red Barnard's Star
+ * (sector-3)" label. Falls back to "sector-N" if the sector is missing.
+ */
+function formatSectorIndexLabel(game: IGame, sectorIndex: number): string {
+  const sector = getSectorAt(game, sectorIndex);
+  if (!sector) return `sector-${sectorIndex}`;
+  return formatSectorOptionLabel(sector);
 }

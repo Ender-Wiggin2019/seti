@@ -34,7 +34,7 @@ function createBaseSlotGroups(alienIndex: number): {
   discoverySlots: ITraceSlotInit[];
   overflowSlots: ITraceSlotInit[];
 } {
-  const discoveryColors: ETrace[] = [ETrace.RED, ETrace.YELLOW, ETrace.BLUE];
+  const discoveryColors: ETrace[] = [ETrace.PINK, ETrace.YELLOW, ETrace.BLUE];
   const rewardConfig = getAlienRewardsForIndex(alienIndex);
 
   const discovery: ITraceSlotInit[] = discoveryColors.map((color) => ({
@@ -145,7 +145,7 @@ export class AlienState {
     alien: TAlienTraceScope = 'both',
   ): ITraceTarget[] {
     if (traceColor === ETrace.ANY) {
-      return [ETrace.RED, ETrace.YELLOW, ETrace.BLUE].flatMap((color) =>
+      return [ETrace.PINK, ETrace.YELLOW, ETrace.BLUE].flatMap((color) =>
         this.getAvailableTargets(color, alien),
       );
     }
@@ -887,8 +887,8 @@ function formatCustomRewardLabel(effectId: string): string {
 
 function formatTraceColor(traceColor: ETrace): string {
   switch (traceColor) {
-    case ETrace.RED:
-      return 'Red';
+    case ETrace.PINK:
+      return 'Pink';
     case ETrace.YELLOW:
       return 'Yellow';
     case ETrace.BLUE:

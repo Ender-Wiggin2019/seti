@@ -45,7 +45,7 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
     case ETech.COMPUTER:
     case ETrace.ANY:
     case ETrace.BLUE:
-    case ETrace.RED:
+    case ETrace.PINK:
     case ETrace.YELLOW:
     case EScanAction.DISCARD_CARD:
     case EScanAction.DISPLAY_CARD:

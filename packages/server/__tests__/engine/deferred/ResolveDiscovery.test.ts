@@ -60,7 +60,7 @@ describe('ResolveDiscovery', () => {
       expect(board.discovered).toBe(false);
       expect(game.alienState.getNewlyDiscoverableAliens()).toHaveLength(0);
 
-      placeTraceForTestSetup(game.alienState, player, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, player, game, ETrace.PINK, 0);
       expect(game.alienState.getNewlyDiscoverableAliens()).toHaveLength(0);
 
       placeTraceForTestSetup(game.alienState, player, game, ETrace.YELLOW, 0);
@@ -86,7 +86,7 @@ describe('ResolveDiscovery', () => {
       const p1HandBefore = p1.hand.length;
       const p2HandBefore = p2.hand.length;
 
-      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.PINK, 0);
       placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
       placeTraceForTestSetup(game.alienState, p2, game, ETrace.BLUE, 0);
 
@@ -130,7 +130,7 @@ describe('ResolveDiscovery', () => {
       const p2InitialScore = p2.score;
 
       // Fill all 3 discovery slots: p1 fills RED and YELLOW, p2 fills BLUE
-      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.PINK, 0);
       placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
       placeTraceForTestSetup(game.alienState, p2, game, ETrace.BLUE, 0);
 
@@ -172,7 +172,7 @@ describe('ResolveDiscovery', () => {
       forceAlienType(board, EAlienType.DUMMY);
 
       // Place 2 player traces
-      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.PINK, 0);
       placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
 
       expect(game.alienState.getNewlyDiscoverableAliens()).toHaveLength(0);
@@ -210,18 +210,18 @@ describe('ResolveDiscovery', () => {
       const p2InitialScore = p2.score;
 
       // p1 fills all 3 discovery slots
-      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.PINK, 0);
       placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
       placeTraceForTestSetup(game.alienState, p1, game, ETrace.BLUE, 0);
 
       // p2 places overflow marker (should not make them a discoverer)
-      placeTraceForTestSetup(game.alienState, p2, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p2, game, ETrace.PINK, 0);
 
       const overflowSlot = board.slots.find(
         (s) =>
           !s.isDiscovery &&
           s.slotId.includes('overflow') &&
-          s.traceColor === ETrace.RED,
+          s.traceColor === ETrace.PINK,
       );
       expect(overflowSlot!.occupants).toHaveLength(1);
       expect(overflowSlot!.occupants[0].source).toEqual({ playerId: p2.id });
@@ -298,12 +298,12 @@ describe('ResolveDiscovery', () => {
 
       // Fill all discovery slots on both aliens
       // Alien 0: p1 fills all 3
-      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.PINK, 0);
       placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
       placeTraceForTestSetup(game.alienState, p1, game, ETrace.BLUE, 0);
 
       // Alien 1: p2 fills all 3
-      placeTraceForTestSetup(game.alienState, p2, game, ETrace.RED, 1);
+      placeTraceForTestSetup(game.alienState, p2, game, ETrace.PINK, 1);
       placeTraceForTestSetup(game.alienState, p2, game, ETrace.YELLOW, 1);
       placeTraceForTestSetup(game.alienState, p2, game, ETrace.BLUE, 1);
 
@@ -346,10 +346,10 @@ describe('ResolveDiscovery', () => {
       forceAlienType(board0, EAlienType.EXERTIANS);
       forceAlienType(board1, EAlienType.DUMMY);
 
-      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.PINK, 0);
       placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
       placeTraceForTestSetup(game.alienState, p1, game, ETrace.BLUE, 0);
-      placeTraceForTestSetup(game.alienState, p2, game, ETrace.RED, 1);
+      placeTraceForTestSetup(game.alienState, p2, game, ETrace.PINK, 1);
       placeTraceForTestSetup(game.alienState, p2, game, ETrace.YELLOW, 1);
       placeTraceForTestSetup(game.alienState, p2, game, ETrace.BLUE, 1);
 
@@ -384,7 +384,7 @@ describe('ResolveDiscovery', () => {
       const p1 = game.players[0];
       const board = game.alienState.boards[0];
 
-      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.PINK, 0);
       placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
       placeTraceForTestSetup(game.alienState, p1, game, ETrace.BLUE, 0);
 
@@ -392,14 +392,14 @@ describe('ResolveDiscovery', () => {
 
       expect(board.discovered).toBe(true);
       // Tier 1 = bottom single-cap slot; awards 4 VP + 1 alien card.
-      const redColumnSlotId = `alien-${board.alienIndex}-anomaly-column|${ETrace.RED}|1`;
+      const redColumnSlotId = `alien-${board.alienIndex}-anomaly-column|${ETrace.PINK}|1`;
       const redColumnSlot = board.getSlot(redColumnSlotId);
       expect(redColumnSlot).toBeDefined();
       expect(redColumnSlot?.occupants).toHaveLength(0);
 
       const scoreBeforeExtraTrace = p1.score;
       const handSizeBeforeExtraTrace = p1.hand.length;
-      const input = game.alienState.createTraceInput(p1, game, ETrace.RED);
+      const input = game.alienState.createTraceInput(p1, game, ETrace.PINK);
       expect(input?.toModel().type).toBe(EPlayerInputType.OPTION);
       if (!input) {
         throw new Error('expected trace input for anomaly extra slot');
@@ -431,7 +431,7 @@ describe('ResolveDiscovery', () => {
 
       expect(p1.waitingFor).toBeUndefined();
       expect(redColumnSlot?.occupants).toEqual([
-        { source: { playerId: p1.id }, traceColor: ETrace.RED },
+        { source: { playerId: p1.id }, traceColor: ETrace.PINK },
       ]);
       expect(p1.score).toBe(scoreBeforeExtraTrace + 4);
       expect(p1.hand).toHaveLength(handSizeBeforeExtraTrace + 1);

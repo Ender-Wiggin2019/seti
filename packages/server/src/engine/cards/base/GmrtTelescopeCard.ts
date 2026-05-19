@@ -15,6 +15,6 @@ export class GmrtTelescope extends MissionCard {
   }
 
   public override getMissionDef(): IMissionDef {
-    return buildQuickMissionDef('66', hasTraceOnAllSpecies(ETrace.RED));
+    return buildQuickMissionDef('66', hasTraceOnAllSpecies(ETrace.PINK));
   }
 }

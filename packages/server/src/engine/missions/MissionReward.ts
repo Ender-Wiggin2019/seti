@@ -191,7 +191,7 @@ function applyBaseReward(
     }
     case EResource.CARD_ANY:
       return AnyCardChoiceEffect.execute(player, game, value, onComplete);
-    case ETrace.RED:
+    case ETrace.PINK:
     case ETrace.YELLOW:
     case ETrace.BLUE:
     case ETrace.ANY:

@@ -34,7 +34,7 @@ function slot(
  * tiers + 1 overflow at the top), bottom→top.
  */
 function buildAnomalyColumnSlots(
-  color: ETrace.RED | ETrace.YELLOW | ETrace.BLUE,
+  color: ETrace.PINK | ETrace.YELLOW | ETrace.BLUE,
   options: {
     tier1Occupants?: IPublicTraceSlot['occupants'];
     overflowOccupants?: IPublicTraceSlot['occupants'];
@@ -89,7 +89,7 @@ describe('AlienBoardView', () => {
       discovery: {
         zones: [],
         overflowZones: [
-          slot('alien-0-overflow-red-trace', ETrace.RED, {
+          slot('alien-0-overflow-red-trace', ETrace.PINK, {
             maxOccupants: -1,
           }),
           slot('alien-0-overflow-yellow-trace', ETrace.YELLOW, {
@@ -106,7 +106,7 @@ describe('AlienBoardView', () => {
         slots: [
           {
             slotId: 'reward-slot',
-            traceColor: ETrace.RED,
+            traceColor: ETrace.PINK,
             occupants: [],
             maxOccupants: -1,
             rewards: [
@@ -120,8 +120,8 @@ describe('AlienBoardView', () => {
             ],
             isDiscovery: false,
           },
-          slot('reward-slot-2', ETrace.RED),
-          slot('reward-slot-3', ETrace.RED),
+          slot('reward-slot-2', ETrace.PINK),
+          slot('reward-slot-3', ETrace.PINK),
         ],
       },
     };
@@ -130,8 +130,8 @@ describe('AlienBoardView', () => {
 
     const rewardCircle = screen.getByTestId('trace-slot-reward-slot-circle');
     expect(rewardCircle).toHaveClass('rounded-full');
-    expect(rewardCircle).toHaveClass('min-h-32', 'w-16');
-    expect(rewardCircle).toHaveStyle({ borderColor: '#e93e27' });
+    expect(rewardCircle).toHaveClass('aspect-[1/2]', 'w-full');
+    expect(rewardCircle).toHaveStyle({ borderColor: '#d63384' });
     expect(
       within(rewardCircle).getByTestId('trace-reward-icon-score-4'),
     ).toBeInTheDocument();
@@ -170,7 +170,7 @@ describe('AlienBoardView', () => {
     ).toBeInTheDocument();
     expect(
       within(redColumn).getByTestId('trace-slot-reward-slot-2-circle'),
-    ).toHaveClass('h-16', 'w-16', 'rounded-full');
+    ).toHaveClass('aspect-square', 'w-full', 'rounded-full');
     expect(
       screen.getByTestId('alien-0-generic-board-column-red-trace-slots'),
     ).toHaveClass('flex-col-reverse');
@@ -192,7 +192,7 @@ describe('AlienBoardView', () => {
       discovered: false,
       discovery: {
         zones: [
-          slot('alien-0-discovery-red-trace', ETrace.RED, {
+          slot('alien-0-discovery-red-trace', ETrace.PINK, {
             isDiscovery: true,
           }),
           slot('alien-0-discovery-yellow-trace', ETrace.YELLOW, {
@@ -203,7 +203,7 @@ describe('AlienBoardView', () => {
           }),
         ],
         overflowZones: [
-          slot('alien-0-overflow-red-trace', ETrace.RED, {
+          slot('alien-0-overflow-red-trace', ETrace.PINK, {
             maxOccupants: -1,
           }),
           slot('alien-0-overflow-yellow-trace', ETrace.YELLOW, {
@@ -289,7 +289,7 @@ describe('AlienBoardView', () => {
       discovered: true,
       discovery: {
         zones: [
-          slot('alien-0-discovery-red-trace', ETrace.RED, {
+          slot('alien-0-discovery-red-trace', ETrace.PINK, {
             isDiscovery: true,
           }),
           slot('alien-0-discovery-yellow-trace', ETrace.YELLOW, {
@@ -300,7 +300,7 @@ describe('AlienBoardView', () => {
           }),
         ],
         overflowZones: [
-          slot('alien-0-overflow-red-trace', ETrace.RED, {
+          slot('alien-0-overflow-red-trace', ETrace.PINK, {
             maxOccupants: -1,
           }),
           slot('alien-0-overflow-yellow-trace', ETrace.YELLOW, {
@@ -316,9 +316,9 @@ describe('AlienBoardView', () => {
         type: 'anomalies',
         traceBoard: {
           columns: {
-            [ETrace.RED]: buildAnomalyColumnSlots(ETrace.RED, {
+            [ETrace.PINK]: buildAnomalyColumnSlots(ETrace.PINK, {
               tier1Occupants: [
-                { source: { playerId: 'p1' }, traceColor: ETrace.RED },
+                { source: { playerId: 'p1' }, traceColor: ETrace.PINK },
               ],
             }),
             [ETrace.YELLOW]: buildAnomalyColumnSlots(ETrace.YELLOW),
@@ -359,7 +359,7 @@ describe('AlienBoardView', () => {
         type: 'anomalies',
         traceBoard: {
           columns: {
-            [ETrace.RED]: buildAnomalyColumnSlots(ETrace.RED),
+            [ETrace.PINK]: buildAnomalyColumnSlots(ETrace.PINK),
             [ETrace.YELLOW]: buildAnomalyColumnSlots(ETrace.YELLOW),
             [ETrace.BLUE]: buildAnomalyColumnSlots(ETrace.BLUE),
           },
@@ -388,7 +388,7 @@ describe('AlienBoardView', () => {
       discovered: true,
       discovery: {
         zones: [
-          slot('alien-0-discovery-red-trace', ETrace.RED, {
+          slot('alien-0-discovery-red-trace', ETrace.PINK, {
             isDiscovery: true,
           }),
           slot('alien-0-discovery-yellow-trace', ETrace.YELLOW, {
@@ -399,7 +399,7 @@ describe('AlienBoardView', () => {
           }),
         ],
         overflowZones: [
-          slot('alien-0-overflow-red-trace', ETrace.RED, {
+          slot('alien-0-overflow-red-trace', ETrace.PINK, {
             maxOccupants: -1,
           }),
           slot('alien-0-overflow-yellow-trace', ETrace.YELLOW, {
@@ -645,7 +645,7 @@ describe('AlienBoardView', () => {
             side: 1,
           },
         ],
-        traceSlots: [slot('alien-0-glyphids-red-0', ETrace.RED)],
+        traceSlots: [slot('alien-0-glyphids-red-0', ETrace.PINK)],
       },
     };
 
@@ -713,7 +713,7 @@ describe('AlienBoardView', () => {
             position: 4,
           },
         ],
-        traceSlots: [slot('alien-0-amoeba-red-0', ETrace.RED)],
+        traceSlots: [slot('alien-0-amoeba-red-0', ETrace.PINK)],
       },
     };
 
@@ -731,7 +731,7 @@ describe('AlienBoardView', () => {
     );
     expect(screen.getByTestId('alien-0-amoeba-cell-2')).toHaveAttribute(
       'data-trace-color',
-      ETrace.RED,
+      ETrace.PINK,
     );
     expect(
       within(screen.getByTestId('alien-0-amoeba-organelle-8')).getByTestId(
@@ -769,7 +769,7 @@ describe('AlienBoardView', () => {
           p1: [
             {
               cardId: 'AIcard01',
-              traceColor: ETrace.RED,
+              traceColor: ETrace.PINK,
               zone: 'front',
             },
             {
@@ -798,7 +798,7 @@ describe('AlienBoardView', () => {
             effectId: 'ARKHOS_EXPLORATION_02_MAJOR_UNMAPPED',
           },
         ],
-        traceSlots: [slot('alien-0-arkhos-level-0-0-red-trace', ETrace.RED)],
+        traceSlots: [slot('alien-0-arkhos-level-0-0-red-trace', ETrace.PINK)],
       },
     };
 
@@ -854,7 +854,7 @@ describe('AlienBoardView', () => {
       discovery: {
         zones: [],
         overflowZones: [
-          slot('alien-0-overflow-red-trace', ETrace.RED, {
+          slot('alien-0-overflow-red-trace', ETrace.PINK, {
             maxOccupants: -1,
           }),
           slot('alien-0-overflow-yellow-trace', ETrace.YELLOW, {

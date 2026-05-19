@@ -11,6 +11,6 @@ export class SaEt11BiosignatureScreeningCard extends EndGameScoringCard {
   }
 
   public override scoreEndGame(player: IPlayer, game: IGame): number {
-    return scoreAmoebaTraceEndGameCard(player, game, ETrace.RED);
+    return scoreAmoebaTraceEndGameCard(player, game, ETrace.PINK);
   }
 }

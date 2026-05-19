@@ -54,7 +54,7 @@ export function getEarthSectorIndex(game: Game): number {
 export function addAnomalyToken(
   game: Game,
   sectorIndex: number,
-  color: TSolarSystemAnomalyTraceColor = ETrace.RED,
+  color: TSolarSystemAnomalyTraceColor = ETrace.PINK,
   rewards: TSlotReward[] = [{ type: 'VP', amount: 2 }],
 ): void {
   const board = game.alienState.getBoardByType(EAlienType.ANOMALIES);

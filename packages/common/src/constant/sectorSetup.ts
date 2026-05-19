@@ -530,7 +530,7 @@ export interface ISectorStarConfig {
   repeatWinBonus: TSectorWinnerBonus;
 }
 
-const TRACE_RED: TSectorWinnerBonusItem = { type: 'trace', trace: ETrace.RED };
+const TRACE_RED: TSectorWinnerBonusItem = { type: 'trace', trace: ETrace.PINK };
 const VP3: TSectorWinnerBonusItem = { type: 'vp', amount: 3 };
 
 export const SECTOR_STAR_CONFIGS: Readonly<

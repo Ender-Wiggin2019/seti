@@ -1,13 +1,13 @@
-import { ETrace } from '@/types/re-exports';
 import type { IPublicExertiansBoard } from '@/types/re-exports';
+import { ETrace } from '@/types/re-exports';
 import { AlienBoardArtFrame } from './AlienBoardArtFrame';
 import {
-  type TTraceColumnLayouts,
   TraceMarkerOverlay,
+  type TTraceColumnLayouts,
 } from './TraceMarkerOverlay';
 
 const EXERTIANS_LAYOUTS: TTraceColumnLayouts = {
-  [ETrace.RED]: { xPct: 18, yPctBottomToTop: [90, 78, 66, 53, 40, 27] },
+  [ETrace.PINK]: { xPct: 18, yPctBottomToTop: [90, 78, 66, 53, 40, 27] },
   [ETrace.YELLOW]: { xPct: 50, yPctBottomToTop: [90, 78, 66, 53, 40, 27] },
   [ETrace.BLUE]: { xPct: 82, yPctBottomToTop: [90, 78, 66, 53, 40, 27] },
 };

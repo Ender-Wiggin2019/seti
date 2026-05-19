@@ -116,16 +116,16 @@ export const ARKHOS_TRACE_SLOTS: readonly {
   position: number;
   traceColor: TArkhosSecurityTrace;
 }[] = Object.freeze([
-  { level: 0, position: 0, traceColor: ETrace.RED },
+  { level: 0, position: 0, traceColor: ETrace.PINK },
   { level: 0, position: 1, traceColor: ETrace.YELLOW },
   { level: 0, position: 2, traceColor: ETrace.BLUE },
-  { level: 1, position: 0, traceColor: ETrace.RED },
+  { level: 1, position: 0, traceColor: ETrace.PINK },
   { level: 1, position: 1, traceColor: ETrace.YELLOW },
   { level: 1, position: 2, traceColor: ETrace.BLUE },
-  { level: 2, position: 0, traceColor: ETrace.RED },
+  { level: 2, position: 0, traceColor: ETrace.PINK },
   { level: 2, position: 1, traceColor: ETrace.YELLOW },
   { level: 2, position: 2, traceColor: ETrace.BLUE },
-  { level: 3, position: 0, traceColor: ETrace.RED },
+  { level: 3, position: 0, traceColor: ETrace.PINK },
   { level: 3, position: 1, traceColor: ETrace.YELLOW },
   { level: 3, position: 2, traceColor: ETrace.BLUE },
 ]);
@@ -197,12 +197,12 @@ export const AMOEBA_TRACE_SLOTS: readonly {
 }[] = Object.freeze([
   { position: 0, traceColor: ETrace.BLUE },
   { position: 1, traceColor: ETrace.BLUE },
-  { position: 2, traceColor: ETrace.RED },
-  { position: 3, traceColor: ETrace.RED },
+  { position: 2, traceColor: ETrace.PINK },
+  { position: 3, traceColor: ETrace.PINK },
   { position: 4, traceColor: ETrace.YELLOW },
   { position: 5, traceColor: ETrace.YELLOW },
   { position: 6, traceColor: ETrace.YELLOW },
-  { position: 7, traceColor: ETrace.RED },
+  { position: 7, traceColor: ETrace.PINK },
   { position: 8, traceColor: ETrace.BLUE },
 ]);
 

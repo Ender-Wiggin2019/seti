@@ -7,7 +7,7 @@ import type { ICardRuntimeContext } from '../ICard.js';
 import { loadCardData } from '../loadCardData.js';
 
 const CONCRETE_TRACES: readonly ETrace[] = [
-  ETrace.RED,
+  ETrace.PINK,
   ETrace.YELLOW,
   ETrace.BLUE,
 ];

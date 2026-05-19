@@ -216,14 +216,14 @@ describe('SectorFulfillmentEffect', () => {
         id: 's1',
         color: ESector.RED,
         dataSlotCapacity: 1,
-        firstWinBonus: [{ type: 'trace', trace: ETrace.RED }],
+        firstWinBonus: [{ type: 'trace', trace: ETrace.PINK }],
       });
       sector.markSignal('p1');
 
       const game = createMockGame([p1], [sector]);
       SectorFulfillmentEffect.checkAll(game);
 
-      expect(p1.traces[ETrace.RED]).toBe(1);
+      expect(p1.traces[ETrace.PINK]).toBe(1);
     });
 
     it('routes trace bonus through alien trace placement when alien state is available', () => {
@@ -238,7 +238,7 @@ describe('SectorFulfillmentEffect', () => {
         id: 's1',
         color: ESector.RED,
         dataSlotCapacity: 1,
-        firstWinBonus: [{ type: 'trace', trace: ETrace.RED }],
+        firstWinBonus: [{ type: 'trace', trace: ETrace.PINK }],
       });
       sector.markSignal('p1');
 
@@ -254,14 +254,14 @@ describe('SectorFulfillmentEffect', () => {
         throw new Error('Expected trace placement input');
       }
       expect(input.toModel().type).toBe(EPlayerInputType.OPTION);
-      expect(p1.traces[ETrace.RED]).toBe(0);
+      expect(p1.traces[ETrace.PINK]).toBe(0);
       expect(didComplete).toBe(false);
 
       const model = input.toModel() as {
         options: { id: string; label: string }[];
       };
       const redDiscoveryOption = model.options.find(
-        (option) => option.id === `alien-0-discovery-${ETrace.RED}`,
+        (option) => option.id === `alien-0-discovery-${ETrace.PINK}`,
       );
       expect(redDiscoveryOption).toBeDefined();
       if (!redDiscoveryOption) {
@@ -279,9 +279,9 @@ describe('SectorFulfillmentEffect', () => {
       expect(done).toBeUndefined();
       expect(didComplete).toBe(true);
       expect(redDiscoverySlot?.occupants).toEqual([
-        { source: { playerId: p1.id }, traceColor: ETrace.RED },
+        { source: { playerId: p1.id }, traceColor: ETrace.PINK },
       ]);
-      expect(p1.traces[ETrace.RED]).toBe(1);
+      expect(p1.traces[ETrace.PINK]).toBe(1);
       expect(p1.score).toBe(scoreBefore + 5);
     });
 
@@ -419,6 +419,12 @@ describe('SectorFulfillmentEffect', () => {
         'resolve-sector-s2',
         'resolve-sector-s3',
       ]);
+      // Each option label includes the sector color (so the player can
+      // pick a meaningful resolution order, not raw "sector s1" ids).
+      const labelById = new Map(firstModel.options.map((o) => [o.id, o.label]));
+      expect(labelById.get('resolve-sector-s1')).toMatch(/Red/);
+      expect(labelById.get('resolve-sector-s2')).toMatch(/Blue/);
+      expect(labelById.get('resolve-sector-s3')).toMatch(/Yellow/);
 
       // Turn owner picks s2 first — the engine resolves s2 and re-prompts.
       const secondPrompt = firstPrompt!.process({

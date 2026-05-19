@@ -126,7 +126,7 @@ function cloneValue<TValue>(value: TValue): TValue {
 }
 
 const ANOMALY_TRACE_COLORS: readonly TPublicAnomalyTraceColor[] = [
-  ETrace.RED,
+  ETrace.PINK,
   ETrace.YELLOW,
   ETrace.BLUE,
 ];

@@ -54,9 +54,9 @@ export function getAlienRewardsForIndex(
 }
 
 export const ANOMALY_TOKEN_REWARD_OPTIONS: Readonly<
-  Record<ETrace.RED | ETrace.YELLOW | ETrace.BLUE, readonly TAlienSlotReward[]>
+  Record<ETrace.PINK | ETrace.YELLOW | ETrace.BLUE, readonly TAlienSlotReward[]>
 > = {
-  [ETrace.RED]: [
+  [ETrace.PINK]: [
     { type: 'CREDIT', amount: 1 },
     { type: 'VP', amount: 4 },
   ],
@@ -107,7 +107,7 @@ export function getAnomalyColumnRewardsForPlacement(
 export const OUMUAMUA_TRACE_SLOT_PREFIX = 'oumuamua-trace';
 export const OUMUAMUA_TILE_DATA_CAPACITY = 3;
 export const OUMUAMUA_TRACE_COLORS: readonly ETrace[] = [
-  ETrace.RED,
+  ETrace.PINK,
   ETrace.YELLOW,
   ETrace.BLUE,
 ];

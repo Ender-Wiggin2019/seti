@@ -28,7 +28,7 @@ export const preludeCards: IPreludeCard[] = [
     upperText: 'prelude.mark',
     middleText: 'in the discovery space of the right species',
     lowerEffects: [e.SCORE(3), e.PUBLICITY()],
-    setupMarks: [{ kind: 'trace', trace: ETrace.RED, alienIndex: 1 }],
+    setupMarks: [{ kind: 'trace', trace: ETrace.PINK, alienIndex: 1 }],
     watermark: true,
   },
   {

@@ -27,7 +27,7 @@ describe('Phase 6.1: Life Trace Marking', () => {
       const board = game.alienState.boards[0];
 
       const redDiscoverySlot = board.slots.find(
-        (s) => s.isDiscovery && s.traceColor === ETrace.RED,
+        (s) => s.isDiscovery && s.traceColor === ETrace.PINK,
       );
       expect(redDiscoverySlot).toBeDefined();
       expect(redDiscoverySlot!.occupants).toHaveLength(0);
@@ -36,14 +36,14 @@ describe('Phase 6.1: Life Trace Marking', () => {
         game.alienState,
         player,
         game,
-        ETrace.RED,
+        ETrace.PINK,
         redDiscoverySlot!.slotId,
       );
 
       expect(redDiscoverySlot!.occupants).toHaveLength(1);
       expect(redDiscoverySlot!.occupants[0]).toMatchObject({
         source: { playerId: player.id },
-        traceColor: ETrace.RED,
+        traceColor: ETrace.PINK,
       });
     });
 
@@ -115,16 +115,16 @@ describe('Phase 6.1: Life Trace Marking', () => {
       const board = game.alienState.boards[0];
 
       // Fill red discovery slot
-      placeTraceForTestSetup(game.alienState, player, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, player, game, ETrace.PINK, 0);
 
       const redDiscoverySlot = board.slots.find(
-        (s) => s.isDiscovery && s.traceColor === ETrace.RED,
+        (s) => s.isDiscovery && s.traceColor === ETrace.PINK,
       );
       const overflowSlot = board.slots.find(
         (s) =>
           !s.isDiscovery &&
           s.slotId.includes('overflow') &&
-          s.traceColor === ETrace.RED,
+          s.traceColor === ETrace.PINK,
       );
 
       expect(redDiscoverySlot!.occupants).toHaveLength(1);
@@ -135,7 +135,7 @@ describe('Phase 6.1: Life Trace Marking', () => {
         game.alienState,
         player,
         game,
-        ETrace.RED,
+        ETrace.PINK,
         overflowSlot!.slotId,
       );
 
@@ -144,7 +144,7 @@ describe('Phase 6.1: Life Trace Marking', () => {
       expect(overflowSlot!.occupants).toHaveLength(1);
       expect(overflowSlot!.occupants[0]).toMatchObject({
         source: { playerId: player.id },
-        traceColor: ETrace.RED,
+        traceColor: ETrace.PINK,
       });
     });
 
@@ -203,8 +203,8 @@ describe('Phase 6.1: Life Trace Marking', () => {
         game.alienState,
         player,
         game,
-        ETrace.RED,
-        `alien-0-discovery-${ETrace.RED}`,
+        ETrace.PINK,
+        `alien-0-discovery-${ETrace.PINK}`,
       );
 
       expect(player.score).toBe(initialScore + 5);
@@ -225,8 +225,8 @@ describe('Phase 6.1: Life Trace Marking', () => {
         game.alienState,
         player,
         game,
-        ETrace.RED,
-        `alien-0-discovery-${ETrace.RED}`,
+        ETrace.PINK,
+        `alien-0-discovery-${ETrace.PINK}`,
       );
       chooseTraceSlotViaInput(
         game.alienState,
@@ -254,7 +254,7 @@ describe('Phase 6.1: Life Trace Marking', () => {
       const player = game.players[0];
 
       // Fill red discovery slot
-      placeTraceForTestSetup(game.alienState, player, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, player, game, ETrace.PINK, 0);
 
       const scoreBeforeOverflow = player.score;
 
@@ -262,8 +262,8 @@ describe('Phase 6.1: Life Trace Marking', () => {
         game.alienState,
         player,
         game,
-        ETrace.RED,
-        `alien-0-overflow-${ETrace.RED}`,
+        ETrace.PINK,
+        `alien-0-overflow-${ETrace.PINK}`,
       );
 
       expect(player.score).toBe(scoreBeforeOverflow + 3);
@@ -278,7 +278,7 @@ describe('Phase 6.1: Life Trace Marking', () => {
       const player = game.players[0];
 
       // Fill all discovery slots
-      placeTraceForTestSetup(game.alienState, player, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, player, game, ETrace.PINK, 0);
       placeTraceForTestSetup(game.alienState, player, game, ETrace.YELLOW, 0);
       placeTraceForTestSetup(game.alienState, player, game, ETrace.BLUE, 0);
 
@@ -289,8 +289,8 @@ describe('Phase 6.1: Life Trace Marking', () => {
         game.alienState,
         player,
         game,
-        ETrace.RED,
-        `alien-0-overflow-${ETrace.RED}`,
+        ETrace.PINK,
+        `alien-0-overflow-${ETrace.PINK}`,
       );
       chooseTraceSlotViaInput(
         game.alienState,
@@ -322,7 +322,7 @@ describe('Phase 6.1: Life Trace Marking', () => {
 
       const traceModel = input?.toModel() as ISelectOptionInputModel;
       expect(traceModel.options.map((option) => option.id)).toContain(
-        `alien-0-discovery-${ETrace.RED}`,
+        `alien-0-discovery-${ETrace.PINK}`,
       );
       expect(traceModel.options.map((option) => option.id)).toContain(
         `alien-0-discovery-${ETrace.YELLOW}`,
@@ -331,7 +331,7 @@ describe('Phase 6.1: Life Trace Marking', () => {
         `alien-0-discovery-${ETrace.BLUE}`,
       );
       expect(traceModel.options.map((option) => option.id)).toContain(
-        `alien-0-overflow-${ETrace.RED}`,
+        `alien-0-overflow-${ETrace.PINK}`,
       );
       expect(traceModel.options.map((option) => option.id)).toContain(
         `alien-0-overflow-${ETrace.YELLOW}`,
@@ -354,7 +354,7 @@ describe('Phase 6.1: Life Trace Marking', () => {
       const board = game.alienState.boards[0];
 
       const redDiscoverySlot = board.slots.find(
-        (s) => s.isDiscovery && s.traceColor === ETrace.RED,
+        (s) => s.isDiscovery && s.traceColor === ETrace.PINK,
       );
 
       expect(redDiscoverySlot!.occupants).toHaveLength(0);
@@ -372,7 +372,7 @@ describe('Phase 6.1: Life Trace Marking', () => {
 
       const slotModel = slotInput.toModel() as ISelectOptionInputModel;
       const redTarget = slotModel.options.find(
-        (option) => option.id === `alien-0-discovery-${ETrace.RED}`,
+        (option) => option.id === `alien-0-discovery-${ETrace.PINK}`,
       );
       expect(redTarget).toBeDefined();
       if (!redTarget) {
@@ -385,7 +385,7 @@ describe('Phase 6.1: Life Trace Marking', () => {
       });
 
       expect(redDiscoverySlot!.occupants).toHaveLength(1);
-      expect(redDiscoverySlot!.occupants[0].traceColor).toBe(ETrace.RED);
+      expect(redDiscoverySlot!.occupants[0].traceColor).toBe(ETrace.PINK);
     });
 
     it('rejects direct ANY trace placement because color must be selected first', () => {
@@ -397,7 +397,7 @@ describe('Phase 6.1: Life Trace Marking', () => {
       const player = game.players[0];
       const board = game.alienState.boards[0];
       const redDiscoverySlot = board.slots.find(
-        (s) => s.isDiscovery && s.traceColor === ETrace.RED,
+        (s) => s.isDiscovery && s.traceColor === ETrace.PINK,
       );
       if (!redDiscoverySlot) {
         throw new Error('Expected red discovery slot');
@@ -412,7 +412,7 @@ describe('Phase 6.1: Life Trace Marking', () => {
 
       expect(placed).toBe(false);
       expect(redDiscoverySlot.occupants).toHaveLength(0);
-      expect(player.traces[ETrace.RED]).toBe(0);
+      expect(player.traces[ETrace.PINK]).toBe(0);
     });
   });
 
@@ -426,12 +426,12 @@ describe('Phase 6.1: Life Trace Marking', () => {
       const player = game.players[0];
 
       // Place red in discovery
-      placeTraceForTestSetup(game.alienState, player, game, ETrace.RED, 0);
-      expect(player.traces[ETrace.RED]).toBe(1);
+      placeTraceForTestSetup(game.alienState, player, game, ETrace.PINK, 0);
+      expect(player.traces[ETrace.PINK]).toBe(1);
 
       // Place red in overflow
-      placeTraceForTestSetup(game.alienState, player, game, ETrace.RED, 0);
-      expect(player.traces[ETrace.RED]).toBe(2);
+      placeTraceForTestSetup(game.alienState, player, game, ETrace.PINK, 0);
+      expect(player.traces[ETrace.PINK]).toBe(2);
     });
 
     it('overflow traces count toward alien-specific trace checks', () => {
@@ -444,11 +444,11 @@ describe('Phase 6.1: Life Trace Marking', () => {
       const board = game.alienState.boards[0];
 
       // Place traces in discovery
-      placeTraceForTestSetup(game.alienState, player, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, player, game, ETrace.PINK, 0);
       expect(board.getPlayerTraceCount(player.id)).toBe(1);
 
       // Place trace in overflow
-      placeTraceForTestSetup(game.alienState, player, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, player, game, ETrace.PINK, 0);
       expect(board.getPlayerTraceCount(player.id)).toBe(2);
 
       // Place another color in overflow
@@ -465,11 +465,11 @@ describe('Phase 6.1: Life Trace Marking', () => {
       );
       const player = game.players[0];
 
-      placeTraceForTestSetup(game.alienState, player, game, ETrace.RED, 0);
-      expect(player.tracesByAlien[0]?.[ETrace.RED]).toBe(1);
+      placeTraceForTestSetup(game.alienState, player, game, ETrace.PINK, 0);
+      expect(player.tracesByAlien[0]?.[ETrace.PINK]).toBe(1);
 
-      placeTraceForTestSetup(game.alienState, player, game, ETrace.RED, 0);
-      expect(player.tracesByAlien[0]?.[ETrace.RED]).toBe(2);
+      placeTraceForTestSetup(game.alienState, player, game, ETrace.PINK, 0);
+      expect(player.tracesByAlien[0]?.[ETrace.PINK]).toBe(2);
     });
   });
 
@@ -484,7 +484,7 @@ describe('Phase 6.1: Life Trace Marking', () => {
       const extraSlot1 = board.addTraceSlot({
         slotId: 'extra-red-1',
         alienIndex: 0,
-        traceColor: ETrace.RED,
+        traceColor: ETrace.PINK,
         maxOccupants: 1,
         rewards: [{ type: 'VP', amount: 2 }],
         isDiscovery: false,
@@ -493,7 +493,7 @@ describe('Phase 6.1: Life Trace Marking', () => {
       const extraSlot2 = board.addTraceSlot({
         slotId: 'extra-red-2',
         alienIndex: 0,
-        traceColor: ETrace.RED,
+        traceColor: ETrace.PINK,
         maxOccupants: 1,
         rewards: [{ type: 'VP', amount: 2 }],
         isDiscovery: false,
@@ -504,7 +504,7 @@ describe('Phase 6.1: Life Trace Marking', () => {
         player,
         game,
         extraSlot1.slotId,
-        ETrace.RED,
+        ETrace.PINK,
       );
       expect(extraSlot1.occupants).toHaveLength(1);
       expect(extraSlot2.occupants).toHaveLength(0);
@@ -515,7 +515,7 @@ describe('Phase 6.1: Life Trace Marking', () => {
         player2,
         game,
         extraSlot2.slotId,
-        ETrace.RED,
+        ETrace.PINK,
       );
       expect(extraSlot2.occupants).toHaveLength(1);
     });
@@ -534,7 +534,7 @@ describe('Phase 6.1: Life Trace Marking', () => {
       const boardSlot = board.addTraceSlot({
         slotId: 'revealed-red-board-slot',
         alienIndex: 0,
-        traceColor: ETrace.RED,
+        traceColor: ETrace.PINK,
         maxOccupants: 1,
         rewards: [{ type: 'VP', amount: 2 }],
         isDiscovery: false,
@@ -544,17 +544,17 @@ describe('Phase 6.1: Life Trace Marking', () => {
         game.alienState,
         player,
         game,
-        ETrace.RED,
+        ETrace.PINK,
         boardSlot.slotId,
         { alien: 0 },
       );
 
       expect(boardSlot.occupants).toHaveLength(1);
       expect(
-        board.getSlot(`alien-0-discovery-${ETrace.RED}`)!.occupants,
+        board.getSlot(`alien-0-discovery-${ETrace.PINK}`)!.occupants,
       ).toHaveLength(0);
       expect(
-        board.getSlot(`alien-0-overflow-${ETrace.RED}`)!.occupants,
+        board.getSlot(`alien-0-overflow-${ETrace.PINK}`)!.occupants,
       ).toHaveLength(0);
     });
 
@@ -617,7 +617,7 @@ describe('Phase 6.1: Life Trace Marking', () => {
       );
       const player = game.players[0];
 
-      const targets = game.alienState.getAvailableTargets(ETrace.RED);
+      const targets = game.alienState.getAvailableTargets(ETrace.PINK);
 
       // Should have at least discovery + overflow available
       const discoveryTargets = targets.filter((t) =>
@@ -636,7 +636,7 @@ describe('Phase 6.1: Life Trace Marking', () => {
       const player = game.players[0];
 
       // Both aliens should have red discovery slots
-      const targets = game.alienState.getAvailableTargets(ETrace.RED);
+      const targets = game.alienState.getAvailableTargets(ETrace.PINK);
       const alien0Targets = targets.filter((t) => t.alienIndex === 0);
       const alien1Targets = targets.filter((t) => t.alienIndex === 1);
 
@@ -653,7 +653,7 @@ describe('Phase 6.1: Life Trace Marking', () => {
         player,
         game,
         alien0Target!.slotId,
-        ETrace.RED,
+        ETrace.PINK,
       );
 
       const board0 = game.alienState.boards[0];
@@ -672,9 +672,9 @@ describe('Phase 6.1: Life Trace Marking', () => {
       const player = game.players[0];
 
       // Fill red discovery slot on alien 0
-      placeTraceForTestSetup(game.alienState, player, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, player, game, ETrace.PINK, 0);
 
-      const targets = game.alienState.getAvailableTargets(ETrace.RED);
+      const targets = game.alienState.getAvailableTargets(ETrace.PINK);
       const alien0Discovery = targets.find(
         (t) =>
           t.alienIndex === 0 &&

@@ -2,10 +2,12 @@ import { EPlanet } from '@seti/common/types/protocol/enums';
 import { EPriority } from '@/engine/deferred/Priority.js';
 import { SimpleDeferredAction } from '@/engine/deferred/SimpleDeferredAction.js';
 import { MarkSectorSignalEffect } from '@/engine/effects/scan/MarkSectorSignalEffect.js';
+import { getSectorAt } from '@/engine/effects/scan/ScanEffectUtils.js';
 import type { IGame } from '@/engine/IGame.js';
 import type { PlayerInput } from '@/engine/input/PlayerInput.js';
 import { SelectOption } from '@/engine/input/SelectOption.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
+import { formatSectorOptionLabel } from '../../board/SectorLabel.js';
 import { ESolarSystemElementType } from '../../board/SolarSystem.js';
 import { behaviorFromEffects, type IBehavior } from '../Behavior.js';
 import type { ICardRuntimeContext } from '../ICard.js';
@@ -52,7 +54,7 @@ export function createProbeSectorSignalInput(
     player,
     sectorIndexes.map((sectorIndex) => ({
       id: `probe-sector-${sectorIndex}`,
-      label: `Sector ${sectorIndex + 1}`,
+      label: formatSectorIndexLabel(game, sectorIndex),
       onSelect: () =>
         markSectorRepeatedly(player, game, sectorIndex, markCount),
     })),
@@ -74,11 +76,21 @@ export function createProbeAndNeighborSectorSignalInput(
     player,
     sectorIndexes.map((sectorIndex) => ({
       id: `probe-sector-${sectorIndex}`,
-      label: `Sector ${sectorIndex + 1}`,
+      label: formatSectorIndexLabel(game, sectorIndex),
       onSelect: () => markSectorAndNeighbors(player, game, sectorIndex),
     })),
     'Choose sector with your probe',
   );
+}
+
+/**
+ * Resolve a sector index (0..7) to the canonical "Red Barnard's Star
+ * (sector-3)" label. Falls back to "Sector N+1" if the sector is missing.
+ */
+function formatSectorIndexLabel(game: IGame, sectorIndex: number): string {
+  const sector = getSectorAt(game, sectorIndex);
+  if (!sector) return `Sector ${sectorIndex + 1}`;
+  return formatSectorOptionLabel(sector);
 }
 
 export function countOtherPlanetsAndCometsInEarthSector(game: IGame): number {

@@ -7,8 +7,12 @@ import { EScanAction, ESector } from '@seti/common/types/element';
 import type { EPlanet } from '@seti/common/types/protocol/enums';
 import { EPriority } from '@/engine/deferred/Priority.js';
 import { SimpleDeferredAction } from '@/engine/deferred/SimpleDeferredAction.js';
+import { formatSectorOptionLabel } from '@/engine/board/SectorLabel.js';
 import { MarkSectorSignalEffect } from '@/engine/effects/scan/MarkSectorSignalEffect.js';
-import { getSectorIdsWithPlayerProbes } from '@/engine/effects/scan/ScanEffectUtils.js';
+import {
+  findSectorById,
+  getSectorIdsWithPlayerProbes,
+} from '@/engine/effects/scan/ScanEffectUtils.js';
 import type { IGame } from '@/engine/IGame.js';
 import type { IPlayerInput } from '@/engine/input/PlayerInput.js';
 import { SelectOption } from '@/engine/input/SelectOption.js';
@@ -185,12 +189,20 @@ export class AnySignalQuickMissionCard extends MissionCard {
 
     return new SelectOption(
       player,
-      sectorIds.map((sectorId) => ({
-        id: `probe-sector-${sectorId}`,
-        label: `Sector ${sectorId}`,
-        onSelect: () =>
-          this.markBySectorIdRepeatedly(player, game, sectorId, remainingCount),
-      })),
+      sectorIds.map((sectorId) => {
+        const sector = findSectorById(game, sectorId);
+        return {
+          id: `probe-sector-${sectorId}`,
+          label: sector ? formatSectorOptionLabel(sector) : `Sector ${sectorId}`,
+          onSelect: () =>
+            this.markBySectorIdRepeatedly(
+              player,
+              game,
+              sectorId,
+              remainingCount,
+            ),
+        };
+      }),
       'Choose sector with your probe',
     );
   }

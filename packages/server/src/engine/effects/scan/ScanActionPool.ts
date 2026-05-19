@@ -8,9 +8,11 @@ import type { IScanTechEffect } from '../../tech/ITech.js';
 import { TechModifierQuery } from '../../tech/TechModifierQuery.js';
 import type { ICardRowCardInfo } from '../cardRow/SelectCardFromCardRowEffect.js';
 import { SelectCardFromCardRowEffect } from '../cardRow/SelectCardFromCardRowEffect.js';
+import { formatSectorOptionLabel } from '../../board/SectorLabel.js';
 import { MarkSectorSignalEffect } from './MarkSectorSignalEffect.js';
 import {
   extractSectorColorFromCardItem,
+  getSectorAt,
   getSectorIndexByPlanet,
 } from './ScanEffectUtils.js';
 import {
@@ -442,8 +444,8 @@ export class ScanActionPool {
         id: `sector-${idx}`,
         label:
           idx === earthIndex
-            ? `Earth sector (${idx})`
-            : `Adjacent sector (${idx})`,
+            ? `Earth — ${formatSectorIndexLabel(game, idx)}`
+            : `Adjacent — ${formatSectorIndexLabel(game, idx)}`,
         onSelect: () => {
           return MarkSectorSignalEffect.markByIndexWithAlternatives(
             player,
@@ -456,4 +458,14 @@ export class ScanActionPool {
       'Earth Look: choose sector for earth signal',
     );
   }
+}
+
+/**
+ * Resolve a sector index (0..7) to the canonical "Red Barnard's Star
+ * (sector-3)" label. Falls back to "sector-N" if the sector is missing.
+ */
+function formatSectorIndexLabel(game: IGame, sectorIndex: number): string {
+  const sector = getSectorAt(game, sectorIndex);
+  if (!sector) return `sector-${sectorIndex}`;
+  return formatSectorOptionLabel(sector);
 }

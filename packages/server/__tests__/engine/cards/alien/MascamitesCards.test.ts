@@ -282,7 +282,7 @@ describe('Mascamites alien cards ET.1-ET.10', () => {
 
   it.each([
     ['ET.8', ETrace.YELLOW],
-    ['ET.9', ETrace.RED],
+    ['ET.9', ETrace.PINK],
     ['ET.10', ETrace.BLUE],
   ] as const)(
     '%s completes from two matching Mascamites traces and resolves pickup-back reward',
@@ -323,7 +323,7 @@ describe('Mascamites alien cards ET.1-ET.10', () => {
 
   it('ET.5 scores one point per Mascamites trace at end game', () => {
     const { game, board } = createMascamitesGame('mascamites-et5-endgame');
-    addMascamitesTrace(game, board, ETrace.RED);
+    addMascamitesTrace(game, board, ETrace.PINK);
     addMascamitesTrace(game, board, ETrace.BLUE);
     const card = getCardRegistry().create('ET.5');
 

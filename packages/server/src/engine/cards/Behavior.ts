@@ -189,7 +189,7 @@ function applyBaseEffect(behavior: IBehavior, effect: IBaseEffect): IBehavior {
     case ETech.COMPUTER:
     case ETech.ANY:
       return { ...behavior, researchTech: effect.type };
-    case ETrace.RED:
+    case ETrace.PINK:
     case ETrace.YELLOW:
     case ETrace.BLUE:
     case ETrace.ANY:

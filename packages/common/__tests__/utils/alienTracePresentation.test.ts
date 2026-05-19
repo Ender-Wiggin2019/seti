@@ -75,16 +75,16 @@ describe('alien trace presentation', () => {
   it('groups trace slots into stable red, yellow, and blue columns', () => {
     const grouped = groupTraceSlotsByColor([
       slot('blue-a', ETrace.BLUE),
-      slot('red-a', ETrace.RED),
-      slot('red-b', ETrace.RED),
+      slot('red-a', ETrace.PINK),
+      slot('red-b', ETrace.PINK),
     ]);
 
     expect(TRACE_COLUMN_COLORS).toEqual([
-      ETrace.RED,
+      ETrace.PINK,
       ETrace.YELLOW,
       ETrace.BLUE,
     ]);
-    expect(grouped[ETrace.RED].map((s) => s.slotId)).toEqual([
+    expect(grouped[ETrace.PINK].map((s) => s.slotId)).toEqual([
       'red-a',
       'red-b',
     ]);

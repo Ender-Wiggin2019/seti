@@ -95,11 +95,11 @@ describe('InputRenderer', () => {
     const model: IPlayerInputModel = {
       inputId: 'input-trace',
       type: EPlayerInputType.TRACE,
-      options: [ETrace.RED],
+      options: [ETrace.PINK],
     };
     render(<InputRenderer model={model} onSubmit={vi.fn()} />);
     expect(
-      screen.getByRole('button', { name: ETrace.RED }),
+      screen.getByRole('button', { name: ETrace.PINK }),
     ).toBeInTheDocument();
   });
 

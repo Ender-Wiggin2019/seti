@@ -46,7 +46,7 @@ export interface ISectorCompletionResult {
 // ── Default bonuses (simple single-item arrays) ─────────────────────────
 
 export const DEFAULT_FIRST_WIN_BONUS: TSectorWinnerBonus = [
-  { type: 'trace', trace: ETrace.RED },
+  { type: 'trace', trace: ETrace.PINK },
 ];
 
 export const DEFAULT_REPEAT_WIN_BONUS: TSectorWinnerBonus = [

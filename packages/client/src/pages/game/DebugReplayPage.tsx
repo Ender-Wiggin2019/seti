@@ -274,23 +274,12 @@ export function DebugReplayPage(): React.JSX.Element {
   if (snapshotSession) {
     return (
       <>
-        <div className='fixed right-3 top-3 z-50 flex items-center gap-2 rounded border border-surface-700/70 bg-surface-900/90 p-2 text-xs backdrop-blur'>
-          <span className='font-mono text-text-500'>Snapshot</span>
-          <span className='font-mono text-text-300'>
-            R{snapshotSession.round} · {snapshotSession.phase}
-          </span>
-          <span className='font-mono text-[10px] text-text-500'>
-            src: {snapshotSession.sourceGameId.slice(0, 8)}
-          </span>
-          <Button
-            size='sm'
-            variant='ghost'
-            onClick={() => setSnapshotSession(null)}
-            className='h-7'
-          >
-            New Replay
-          </Button>
-        </div>
+        <ReplayBanner
+          kind='Snapshot'
+          primaryLabel={`R${snapshotSession.round} · ${snapshotSession.phase}`}
+          secondaryLabel={`src: ${snapshotSession.sourceGameId.slice(0, 8)}`}
+          onDismiss={() => setSnapshotSession(null)}
+        />
         <GameContextProvider
           key={snapshotSession.gameId}
           gameId={snapshotSession.gameId}
@@ -304,23 +293,12 @@ export function DebugReplayPage(): React.JSX.Element {
   if (session) {
     return (
       <>
-        <div className='fixed right-3 top-3 z-50 flex items-center gap-2 rounded border border-surface-700/70 bg-surface-900/90 p-2 text-xs backdrop-blur'>
-          <span className='font-mono text-text-500'>Replay</span>
-          <span className='font-mono text-text-300'>
-            {session.replay.presetId}
-          </span>
-          <span className='font-mono text-text-300'>
-            {session.replay.checkpointId}
-          </span>
-          <Button
-            size='sm'
-            variant='ghost'
-            onClick={() => setSession(null)}
-            className='h-7'
-          >
-            New Replay
-          </Button>
-        </div>
+        <ReplayBanner
+          kind='Replay'
+          primaryLabel={session.replay.presetId}
+          secondaryLabel={session.replay.checkpointId}
+          onDismiss={() => setSession(null)}
+        />
         <GameContextProvider key={session.gameId} gameId={session.gameId}>
           <DebugReplayGameContent />
         </GameContextProvider>
@@ -513,6 +491,74 @@ export function DebugReplayPage(): React.JSX.Element {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+interface IReplayBannerProps {
+  kind: 'Replay' | 'Snapshot';
+  primaryLabel: string;
+  secondaryLabel: string;
+  onDismiss: () => void;
+}
+
+/**
+ * Floating debug-session banner. Sits below the in-game TopBar so it never
+ * occludes the language / text-mode controls. Collapses to a small kind-tag
+ * pill when the player wants the corner reclaimed; click again to expand.
+ */
+function ReplayBanner({
+  kind,
+  primaryLabel,
+  secondaryLabel,
+  onDismiss,
+}: IReplayBannerProps): React.JSX.Element {
+  const [collapsed, setCollapsed] = useState(false);
+
+  if (collapsed) {
+    return (
+      <button
+        type='button'
+        onClick={() => setCollapsed(false)}
+        className='fixed right-3 top-14 z-40 inline-flex items-center gap-1 rounded border border-surface-700/70 bg-surface-900/90 px-2 py-1 font-mono text-[10px] uppercase tracking-microlabel text-text-300 backdrop-blur transition-colors hover:text-text-100'
+        aria-label={`Expand ${kind.toLowerCase()} banner`}
+        data-testid='replay-banner-collapsed'
+      >
+        {kind}
+        <span aria-hidden className='text-text-500'>
+          ›
+        </span>
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className='fixed right-3 top-14 z-40 flex items-center gap-2 rounded border border-surface-700/70 bg-surface-900/90 p-2 text-xs backdrop-blur'
+      data-testid='replay-banner'
+    >
+      <span className='font-mono text-text-500'>{kind}</span>
+      <span className='font-mono text-text-300'>{primaryLabel}</span>
+      <span className='font-mono text-[10px] text-text-500'>
+        {secondaryLabel}
+      </span>
+      <Button
+        size='sm'
+        variant='ghost'
+        onClick={() => setCollapsed(true)}
+        className='h-7 px-1.5'
+        aria-label='Collapse banner'
+      >
+        <span aria-hidden>‹</span>
+      </Button>
+      <Button
+        size='sm'
+        variant='ghost'
+        onClick={onDismiss}
+        className='h-7'
+      >
+        New Replay
+      </Button>
     </div>
   );
 }

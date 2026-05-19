@@ -40,7 +40,7 @@ function createGame(options?: {
     tokenId: string;
     alienType: EAlienType;
     sectorIndex: number;
-    traceColor: ETrace.RED | ETrace.YELLOW | ETrace.BLUE;
+    traceColor: ETrace.PINK | ETrace.YELLOW | ETrace.BLUE;
     rewards: TSlotReward[];
   }> = [];
 
@@ -63,7 +63,7 @@ function createGame(options?: {
               tokenId: string;
               alienType: EAlienType;
               sectorIndex: number;
-              traceColor: ETrace.RED | ETrace.YELLOW | ETrace.BLUE;
+              traceColor: ETrace.PINK | ETrace.YELLOW | ETrace.BLUE;
               rewards?: TSlotReward[];
             }) => {
               const token = {
@@ -169,7 +169,7 @@ describe('AnomaliesAlienPlugin', () => {
 
     const tokenColors = getTokenSlots(game).map((token) => token.traceColor);
     expect(new Set(tokenColors)).toEqual(
-      new Set([ETrace.RED, ETrace.YELLOW, ETrace.BLUE]),
+      new Set([ETrace.PINK, ETrace.YELLOW, ETrace.BLUE]),
     );
   });
 
@@ -180,7 +180,7 @@ describe('AnomaliesAlienPlugin', () => {
 
     plugin.onDiscover(game, []);
 
-    expectRewardInOptions(getTokenByColor(game, ETrace.RED)!.rewards, [
+    expectRewardInOptions(getTokenByColor(game, ETrace.PINK)!.rewards, [
       [{ type: 'CREDIT', amount: 1 }],
       [{ type: 'VP', amount: 4 }],
     ]);
@@ -501,11 +501,11 @@ describe('AnomaliesAlienPlugin', () => {
 
     // Each of the 5 tiers per color carries the matching ladder rewards.
     // Players choose any tier — the engine no longer auto-fills bottom-up.
-    const tier1 = getColumnSlotByTier(board, ETrace.RED, 1);
-    const tier2 = getColumnSlotByTier(board, ETrace.RED, 2);
-    const tier3 = getColumnSlotByTier(board, ETrace.RED, 3);
-    const tier4 = getColumnSlotByTier(board, ETrace.RED, 4);
-    const overflow = getColumnSlotByTier(board, ETrace.RED, 5);
+    const tier1 = getColumnSlotByTier(board, ETrace.PINK, 1);
+    const tier2 = getColumnSlotByTier(board, ETrace.PINK, 2);
+    const tier3 = getColumnSlotByTier(board, ETrace.PINK, 3);
+    const tier4 = getColumnSlotByTier(board, ETrace.PINK, 4);
+    const overflow = getColumnSlotByTier(board, ETrace.PINK, 5);
     expect(tier1?.maxOccupants).toBe(1);
     expect(tier4?.maxOccupants).toBe(1);
     expect(overflow?.maxOccupants).toBe(-1);
@@ -527,7 +527,7 @@ describe('AnomaliesAlienPlugin', () => {
         p1,
         game,
         slotId,
-        ETrace.RED,
+        ETrace.PINK,
       );
       if (result !== false && result !== true && result !== undefined) {
         const model = result.toModel();

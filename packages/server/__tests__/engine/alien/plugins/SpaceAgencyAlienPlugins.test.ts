@@ -513,7 +513,7 @@ describe('Space Agency alien plugins', () => {
     game.alienState.discoverAlien(board, game);
 
     const boardRed = board.speciesTraceSlots.find(
-      (slot) => slot.traceColor === ETrace.RED,
+      (slot) => slot.traceColor === ETrace.PINK,
     );
     const discoveryYellow = board.discoverySlots.find(
       (slot) => slot.traceColor === ETrace.YELLOW,
@@ -527,7 +527,7 @@ describe('Space Agency alien plugins', () => {
     if (!boardRed || !discoveryYellow || !overflowBlue || !otherYellow) {
       throw new Error('expected Amoeba removable marker slots');
     }
-    board.placeTrace(boardRed, { playerId: player.id }, ETrace.RED);
+    board.placeTrace(boardRed, { playerId: player.id }, ETrace.PINK);
     board.placeTrace(discoveryYellow, { playerId: player.id }, ETrace.YELLOW);
     board.placeTrace(overflowBlue, { playerId: player.id }, ETrace.BLUE);
     board.placeTrace(otherYellow, { playerId: otherPlayer.id }, ETrace.YELLOW);
@@ -683,7 +683,7 @@ describe('Space Agency alien plugins', () => {
         player,
         game,
         'alien-0-overflow-red-trace',
-        ETrace.RED,
+        ETrace.PINK,
       ),
     ).toBe(true);
 
@@ -768,7 +768,7 @@ function breachArkhosSecurityCard(seed: string): {
   game.alienState.discoverAlien(board, game);
 
   const securityCard = board.securityCardsByPlayer[player.id]?.find(
-    (card) => card.traceColor === ETrace.RED,
+    (card) => card.traceColor === ETrace.PINK,
   );
   if (!securityCard) {
     throw new Error('expected red Arkhos security card');
@@ -777,7 +777,7 @@ function breachArkhosSecurityCard(seed: string): {
     player,
     game,
     'alien-0-overflow-red-trace',
-    ETrace.RED,
+    ETrace.PINK,
   );
   return { game, board, player, securityCard };
 }

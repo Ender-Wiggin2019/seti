@@ -17,7 +17,7 @@ describe('AreWeBeingObservedCard', () => {
     addAnomalyToken(game, counterClockwise, ETrace.BLUE, [
       { type: 'PUBLICITY', amount: 2 },
     ]);
-    addAnomalyToken(game, clockwise, ETrace.RED, [{ type: 'VP', amount: 5 }]);
+    addAnomalyToken(game, clockwise, ETrace.PINK, [{ type: 'VP', amount: 5 }]);
     const publicityBefore = player.resources.publicity;
     const scoreBefore = player.score;
 

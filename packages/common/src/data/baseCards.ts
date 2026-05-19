@@ -434,7 +434,7 @@ const _baseCards: IBaseCard[] = [
     sector: ESector.RED,
     price: 1,
     income: EResource.ENERGY,
-    effects: [DESC_WITH_TYPE(ETrace.RED, 'desc.card-98')],
+    effects: [DESC_WITH_TYPE(ETrace.PINK, 'desc.card-98')],
   },
   {
     id: '53',
@@ -1724,7 +1724,7 @@ const _baseCards: IBaseCard[] = [
     price: 1,
     income: EResource.CREDIT,
     description: '',
-    effects: [DESC_WITH_TYPE(ETrace.RED, 'desc.card-108')],
+    effects: [DESC_WITH_TYPE(ETrace.PINK, 'desc.card-108')],
   },
   {
     id: '63',

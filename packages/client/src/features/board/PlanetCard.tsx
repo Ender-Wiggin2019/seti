@@ -41,7 +41,7 @@ function TokenDot({
 
 function traceLabel(trace: ETrace): string {
   switch (trace) {
-    case ETrace.RED:
+    case ETrace.PINK:
       return 'red';
     case ETrace.YELLOW:
       return 'yellow';

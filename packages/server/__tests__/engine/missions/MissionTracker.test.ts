@@ -525,7 +525,7 @@ describe('MissionTracker', () => {
   });
 
   it.each([
-    { cardId: '77', trace: ETrace.RED, optionId: 'complete-77-0' },
+    { cardId: '77', trace: ETrace.PINK, optionId: 'complete-77-0' },
     { cardId: '107', trace: ETrace.BLUE, optionId: 'complete-107-0' },
   ])(
     'triggers Card $cardId after the player marks the matching trace',

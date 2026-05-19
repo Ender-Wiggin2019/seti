@@ -1,13 +1,13 @@
-import { ETrace } from '@/types/re-exports';
 import type { IPublicCentauriansBoard } from '@/types/re-exports';
+import { ETrace } from '@/types/re-exports';
 import { AlienBoardArtFrame } from './AlienBoardArtFrame';
 import {
-  type TTraceColumnLayouts,
   TraceMarkerOverlay,
+  type TTraceColumnLayouts,
 } from './TraceMarkerOverlay';
 
 const CENTAURIANS_LAYOUTS: TTraceColumnLayouts = {
-  [ETrace.RED]: { xPct: 18, yPctBottomToTop: [88, 76, 64, 52, 38, 25] },
+  [ETrace.PINK]: { xPct: 18, yPctBottomToTop: [88, 76, 64, 52, 38, 25] },
   [ETrace.YELLOW]: { xPct: 50, yPctBottomToTop: [88, 76, 64, 52, 38, 25] },
   [ETrace.BLUE]: { xPct: 82, yPctBottomToTop: [88, 76, 64, 52, 38, 25] },
 };

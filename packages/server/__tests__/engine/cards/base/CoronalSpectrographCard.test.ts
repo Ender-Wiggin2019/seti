@@ -29,13 +29,13 @@ describe('CoronalSpectrographCard (card 98)', () => {
     const card = new CoronalSpectrographCard();
     const player = createPlayer();
     const game = createGame();
-    placeTraceForTestSetup(game.alienState, player, game, ETrace.RED, 0);
+    placeTraceForTestSetup(game.alienState, player, game, ETrace.PINK, 0);
 
     card.play({ player, game });
     game.deferredActions.drain(game);
 
-    expect(game.alienState.getPlayerTraceCount(player, ETrace.RED, 0)).toBe(2);
-    expect(game.alienState.getPlayerTraceCount(player, ETrace.RED, 1)).toBe(0);
+    expect(game.alienState.getPlayerTraceCount(player, ETrace.PINK, 0)).toBe(2);
+    expect(game.alienState.getPlayerTraceCount(player, ETrace.PINK, 1)).toBe(0);
     expect(card.behavior.custom).toBeUndefined();
   });
 });

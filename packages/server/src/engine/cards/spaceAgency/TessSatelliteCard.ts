@@ -1,3 +1,4 @@
+import { formatSectorOptionLabel } from '@/engine/board/SectorLabel.js';
 import { SelectOption } from '@/engine/input/SelectOption.js';
 import { ImmediateCard } from '../Card.js';
 import type { ICardRuntimeContext } from '../ICard.js';
@@ -34,7 +35,7 @@ export class TessSatellite extends ImmediateCard {
         context.player,
         eligibleSectors.map((sector) => ({
           id: sector.id,
-          label: `Sector ${sector.id}`,
+          label: formatSectorOptionLabel(sector),
           onSelect: () => {
             markSectorSignalWithoutData(context.player, game, sector);
             markSectorSignalWithoutData(context.player, game, sector);

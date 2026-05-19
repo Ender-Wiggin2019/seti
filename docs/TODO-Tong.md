@@ -17,12 +17,49 @@
 
 ## In progress
 
-_(none — most recent slice just landed)_
+### Earth-scan-marks-wrong-sector — pending dedicated slice
+
+Tracked as the next P0 below. Will be picked up after the
+"Trace UX + sector labels + pink rename" slice (just landed) ships.
 
 ## Open
 
 > Items are roughly ordered by priority within each P-tier. P0 = act first,
 > P1 = important once P0 lands, P2 = quality polish.
+
+### P0 — Sector-tile cardinal placement vs. wheel-cell angles disagree
+
+- Repro: Trace Placement Replay → Scan → "Mark Earth". The marker fulfills a
+  sector visually opposite to where Earth sits on the wheel. Confirmed with
+  user observation: Earth at 7 o'clock pointing at red 5-signal sector;
+  the yellow 6-signal sector at 2 o'clock got marked instead.
+- Root cause: two coordinate systems disagree on which sector index sits at
+  which visual angle:
+  - Wheel cells: `spacePosition()` in `SolarSystemView.tsx` places a cell
+    at `(sectorIndex * cellsPerSector + cellInSector + 0.5) * 45deg / cellsPerSector`,
+    i.e. sector-0 ≈ 22.5°, sector-1 ≈ 67.5°, …, sector-4 ≈ 202.5° (≈7 o'clock).
+  - Sector tiles: `sectorVisualConfig.ts` `POSITION_STYLES` uses fixed
+    cardinal positions: NORTH (12 o'clock), WEST (9 o'clock), EAST (3 o'clock),
+    SOUTH (6 o'clock); the default `randomizeTilePlacementsImpl` pins
+    sector-0,1 → NORTH, sector-2,3 → WEST, sector-4,5 → EAST,
+    sector-6,7 → SOUTH (in `common/src/constant/sectorSetup.ts`).
+  - Server is correct (`getSectorIndexOfPlanet` resolves Earth to its true
+    sector-N), but the **tile holding sector-N** is rendered at a cardinal
+    position that has nothing to do with sector-N's wheel angle.
+- Fix shape (pick one once we settle the layout):
+  (a) Change `ALL_SECTOR_POSITIONS` ordering or `POSITION_STYLES` so the
+      cardinal positions follow the wheel angle convention (NE/SE/SW/NW
+      instead of N/W/E/S, or rotate the cardinal pairing to match
+      sector-0,1 → NE etc.). Lowest-risk: only `POSITION_STYLES` changes.
+  (b) Make `randomizeTilePlacementsImpl` derive `position` from the actual
+      sector indices it assigns, rather than walking
+      `ALL_SECTOR_POSITIONS` in fixed order.
+  (c) Stop pinning tile placement to compass labels; render tiles at the
+      same wheel-angle the cells use, then drop `ESectorPosition` entirely.
+- Add a regression: simulate a fresh game, find Earth's space, mark via
+  `MarkSectorSignalEffect.markByPlanet(EARTH)`, assert the resulting
+  marker lands in the **same tile** that contains Earth visually
+  (i.e. cardinal-angle matches wheel-angle).
 
 ### P0 — WS auto-reconnect listener attached to wrong emitter
 
@@ -209,6 +246,95 @@ See "Done → Hi-res alien art + face-down back" below.)_
   flipped to `false` in most packages.
 
 ## Done
+
+### Trace UX + sector labels + pink rename - 2026-05-18
+
+Assumptions:
+- The trace-of-life icon printed on components is magenta/pink (heart-shaped
+  symbol on sector tiles), not red. The internal enum was named `ETrace.RED`
+  for historical reasons; renaming the TypeScript identifier to `PINK` while
+  keeping the persisted string value `'red-trace'` preserves DB / save-game
+  compatibility.
+- Sector RED (the **sector colour** on tiles like Procyon / Barnard's Star)
+  is genuinely red on the printed components — that stays unchanged.
+- Discovery + Overflow trace circles should read as the same kind of slot,
+  with player tokens overlaid at the same size in both variants.
+- Free-action sector resolution should read like the rulebook
+  ("Red Barnard's Star"), not raw sector ids.
+
+Success criteria:
+- All trace-of-life UI uses magenta hex (#d63384) and the label "Pink".
+- `ETrace.RED` is gone from TypeScript code; the enum value stays
+  `'red-trace'` so saved games keep loading.
+- Discovery vs Overflow tokens are the same size (55% of slot width); no
+  trace-color ring on player markers — only player colour with a thin dark
+  border.
+- Trace Placement Replay starts the active player with 6 data on the
+  computer, 6 data in the pool, a probe on Mars, and every sector
+  pre-marked down to one signal — so any sector mark fulfils, the active
+  player wins, and the pink trace-of-life prompt fires.
+- Sector resolution and "Mark Earth" / "Mark sector by colour" / probe
+  pickers all show "Red Barnard's Star (sector-3)" labels instead of raw
+  sector ids.
+- Test suite ≥ pre-slice baseline (no new pre-existing failures).
+
+Plan:
+- [x] Discovery / Overflow / AnomalyTier shared `SlotOccupantOverlay`
+  re-tuned: tokens centre-stack inside overflow pills (matching the
+  Anomalies overflow ladder, but symmetric instead of bottom-up).
+- [x] Drop the trace-color ring from `SlotOccupantOverlay`,
+  `AnomaliesBoardArt.SlotMarker`, `TraceMarkerOverlay.SlotMarker` —
+  player tokens are pure player colour with `border-black/50`.
+- [x] Resize Discovery / Overflow circles + AnomalyTier bubble to
+  `w-[78%] max-w-16` so they read as the same size as the printed
+  alien-board markers (and shrink/grow with column width).
+- [x] Mass rename `ETrace.RED` → `ETrace.PINK` across all 96 source
+  files (server, client, common, web, tests). String value stays
+  `'red-trace'`.
+- [x] Recolor `[ETrace.PINK]: '#e93e27'` → `'#d63384'` (magenta) in 6
+  client renderers; sector RED hex stays red.
+- [x] Update display labels: TRACE_LABEL `'Red'` → `'Pink'`,
+  `formatTraceColor` `'Red'` → `'Pink'`, Centaurians plugin test
+  assertion `'Place Red trace'` → `'Place Pink trace'`.
+- [x] Replay preset bug fix: pre-mark sectors with the active player's
+  id (was a fake "neutral debug" id, which would win the sector and
+  rob the player of the trace prompt). Two-step data gain (gain 6 →
+  place 6 → gain 6) works around the `DATA_POOL_MAX = 6` cap.
+- [x] Add `SectorLabel.ts` (single source of truth for sector option
+  labels) and reuse `formatSectorOptionLabel` across 9 callsites:
+  `SectorFulfillmentEffect`, `MarkSectorSignalEffect.markByColor`,
+  `markByColorWithoutData`, `ScanActionPool` Earth-Look picker,
+  `ScanWithTechsEffect` candidate + earth picker, probe-sector card
+  utils, `AnySignalQuickMissionCard`, `OrbitingLagrangePointCard`,
+  `TessSatelliteCard`.
+- [x] Add E2E test: `ResolveSectorCompletion.test.ts` "marking the
+  last data signal in a pre-marked sector prompts the active player
+  to place a pink trace" — exercises the full
+  MarkSectorSignalEffect → deferred queue → trace input flow.
+- [x] Defensive fix in client `getSectorIdByPlanet`: replaced
+  `indexInRing % 8` with `floor(indexInRing / ringIndex)` so the
+  helper agrees with server math on rings > 1.
+
+Review:
+- The bulk rename ran in two passes — BSD `sed -E '... \b'` doesn't
+  treat `\b` as a word boundary, so the first sweep was a no-op.
+  Second pass with `(ETrace\.RED)([^A-Za-z0-9_])` + `(ETrace\.RED)$`
+  caught all 96 files cleanly.
+- The replay-preset bug was a subtle ranking issue: 4 fake "neutral
+  debug" markers + 1 real marker meant the fake player won the
+  sector and the trace bonus never fired for the real player. Fixed
+  by pre-marking with the active player's id.
+- Earth-scan-marks-wrong-sector turned out to be a *different* bug
+  (cardinal-position vs. wheel-angle disagreement). Documented as
+  the next P0 with three candidate fix shapes.
+- Verification:
+  - `pnpm -r typecheck` — all 6 packages clean.
+  - `pnpm --filter @seti/client test -- --run` — 301/301.
+  - `pnpm --filter @seti/server test -- --run` — 2089/2090
+    (pre-existing Amoeba flake unrelated to this slice).
+- Residual:
+  - Earth-scan-marks-wrong-sector layout fix tracked as P0
+    "Sector-tile cardinal placement vs. wheel-cell angles disagree".
 
 ### Anomalies trace placement: per-tier slots, friendlier labels, auto-tab - 2026-05-18
 

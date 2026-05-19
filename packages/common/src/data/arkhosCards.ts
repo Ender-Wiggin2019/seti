@@ -3,7 +3,7 @@ import { EAlienType, type IBaseCard } from '@seti/common/types/BaseCard';
 import { CardSource } from '@seti/common/types/CardSource';
 import { EResource, ETrace } from '@seti/common/types/element';
 
-export type TArkhosSecurityTrace = ETrace.RED | ETrace.YELLOW | ETrace.BLUE;
+export type TArkhosSecurityTrace = ETrace.PINK | ETrace.YELLOW | ETrace.BLUE;
 
 export type TArkhosSecurityCardZone = 'front' | 'hand' | 'used';
 
@@ -61,7 +61,7 @@ export const ARKHOS_SECURITY_CARD_IDS: readonly string[] = Object.freeze(
 );
 
 const ARKHOS_SECURITY_TRACE_GROUPS: readonly TArkhosSecurityTrace[] =
-  Object.freeze([ETrace.RED, ETrace.YELLOW, ETrace.BLUE]);
+  Object.freeze([ETrace.PINK, ETrace.YELLOW, ETrace.BLUE]);
 
 export const ARKHOS_EXPLORATION_CARDS: readonly IArkhosExplorationCardData[] =
   Object.freeze(

@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { HeaderControls } from '@/components/layout/HeaderControls';
 import { cn } from '@/lib/cn';
 import { useGameContext } from '@/pages/game/GameContext';
 import { EPhase } from '@/types/re-exports';
@@ -109,6 +110,10 @@ export function TopBar(): React.JSX.Element {
             {gameState.gameId.slice(0, 8)}
           </span>
         )}
+
+        <Divider />
+
+        <HeaderControls variant='compact' />
       </div>
     </header>
   );

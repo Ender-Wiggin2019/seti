@@ -4,19 +4,19 @@ import {
   type TTraceColumnColor,
 } from '@seti/common/utils/alienTracePresentation';
 import { useCalibrationMode } from '@/hooks/useCalibrationMode';
-import { ETrace } from '@/types/re-exports';
 import type { IPublicTraceSlot } from '@/types/re-exports';
+import { ETrace } from '@/types/re-exports';
 
 type TTraceOccupant = IPublicTraceSlot['occupants'][number];
 
 const TRACE_COLOR: Record<TTraceColumnColor, string> = {
-  [ETrace.RED]: '#e93e27',
+  [ETrace.PINK]: '#d63384',
   [ETrace.YELLOW]: '#f5c242',
   [ETrace.BLUE]: '#3478d8',
 };
 
 const TRACE_LETTER: Record<TTraceColumnColor, string> = {
-  [ETrace.RED]: 'R',
+  [ETrace.PINK]: 'R',
   [ETrace.YELLOW]: 'Y',
   [ETrace.BLUE]: 'B',
 };
@@ -81,7 +81,6 @@ export function TraceMarkerOverlay({
         const layout = layouts[color];
         const slots = slotsByColor[color] ?? [];
         if (!layout || slots.length === 0) return null;
-        const ringColor = TRACE_COLOR[color];
         const stride = layout.overflowStridePct ?? 4.5;
         return (
           <div
@@ -105,7 +104,6 @@ export function TraceMarkerOverlay({
                     yPct={occYPct}
                     occupant={occ}
                     playerColors={playerColors}
-                    ringColor={ringColor}
                     testId={`alien-${alienIndex}-${alienKey}-marker-${color}-${slotIndex}-${occIndex}`}
                   />
                 );
@@ -183,30 +181,26 @@ function SlotMarker({
   yPct,
   occupant,
   playerColors,
-  ringColor,
   testId,
 }: {
   xPct: number;
   yPct: number;
   occupant: TTraceOccupant;
   playerColors: Record<string, string>;
-  ringColor: string;
+  ringColor?: string;
   testId: string;
 }): React.JSX.Element {
   const playerId =
     occupant.source === 'neutral' ? null : occupant.source.playerId;
   const fill =
-    playerId === null
-      ? '#9ca3af'
-      : (playerColors[playerId] ?? '#cbd5e1');
+    playerId === null ? '#9ca3af' : (playerColors[playerId] ?? '#cbd5e1');
   return (
     <span
-      className='absolute aspect-square w-[8%] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 shadow-[0_0_4px_rgba(0,0,0,0.6)]'
+      className='absolute aspect-square w-[8%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-black/50 shadow-[0_0_4px_rgba(0,0,0,0.6)]'
       style={{
         left: `${xPct}%`,
         top: `${yPct}%`,
         backgroundColor: fill,
-        borderColor: ringColor,
       }}
       title={playerId ?? 'neutral'}
       data-testid={testId}

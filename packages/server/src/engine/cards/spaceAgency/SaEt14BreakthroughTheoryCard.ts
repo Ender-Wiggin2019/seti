@@ -30,7 +30,7 @@ function hasAllAmoebaTraceColorsOutsideDiscovery(
   game: IGame,
 ): boolean {
   return (
-    hasAmoebaTraceOutsideDiscovery(player, game, ETrace.RED) &&
+    hasAmoebaTraceOutsideDiscovery(player, game, ETrace.PINK) &&
     hasAmoebaTraceOutsideDiscovery(player, game, ETrace.YELLOW) &&
     hasAmoebaTraceOutsideDiscovery(player, game, ETrace.BLUE)
   );

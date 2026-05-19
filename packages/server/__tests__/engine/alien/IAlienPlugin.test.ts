@@ -18,7 +18,7 @@ describe('IAlienPlugin contract', () => {
     expect(
       plugin.onGameEndScoring?.(
         { alienState: {} } as never,
-        { id: 'p1', traces: { [ETrace.RED]: 1 } } as never,
+        { id: 'p1', traces: { [ETrace.PINK]: 1 } } as never,
       ),
     ).toBe(0);
   });

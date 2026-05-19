@@ -184,7 +184,7 @@ export class Xenolab extends Organization {
     if (traceColor === ETrace.YELLOW) {
       return 'scan';
     }
-    if (traceColor === ETrace.RED || String(traceColor).includes('purple')) {
+    if (traceColor === ETrace.PINK || String(traceColor).includes('purple')) {
       return 'research';
     }
     return undefined;

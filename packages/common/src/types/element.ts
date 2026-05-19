@@ -39,7 +39,10 @@ export enum EResource {
 
 export enum ETrace {
   ANY = 'any-trace',
-  RED = 'red-trace',
+  // Trace-of-life icon printed on components is magenta/pink (heart-shaped
+  // symbol). The enum string value stays 'red-trace' for DB / persistence
+  // compatibility — only the TypeScript identifier is renamed.
+  PINK = 'red-trace',
   YELLOW = 'yellow-trace',
   BLUE = 'blue-trace',
 }

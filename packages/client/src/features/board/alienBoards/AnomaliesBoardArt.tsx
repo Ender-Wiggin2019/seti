@@ -6,20 +6,23 @@ import {
   useCalibrationMode,
   usePreviewOverflowCount,
 } from '@/hooks/useCalibrationMode';
+import type {
+  IPublicAnomaliesBoard,
+  IPublicTraceSlot,
+} from '@/types/re-exports';
 import { ETrace } from '@/types/re-exports';
-import type { IPublicAnomaliesBoard, IPublicTraceSlot } from '@/types/re-exports';
 import { AlienBoardArtFrame } from './AlienBoardArtFrame';
 
 type TTraceOccupant = IPublicTraceSlot['occupants'][number];
 
 const TRACE_RING_COLOR: Record<TTraceColumnColor, string> = {
-  [ETrace.RED]: '#e93e27',
+  [ETrace.PINK]: '#d63384',
   [ETrace.YELLOW]: '#f5c242',
   [ETrace.BLUE]: '#3478d8',
 };
 
 const TRACE_LETTER: Record<TTraceColumnColor, string> = {
-  [ETrace.RED]: 'R',
+  [ETrace.PINK]: 'R',
   [ETrace.YELLOW]: 'Y',
   [ETrace.BLUE]: 'B',
 };
@@ -45,7 +48,7 @@ interface IAnomaliesColumnLayout {
 // downward by ~3% per row (the printed circles in the middle column sit
 // about a third of a row lower than the outer columns).
 const ANOMALIES_LAYOUTS: Record<TTraceColumnColor, IAnomaliesColumnLayout> = {
-  [ETrace.RED]: {
+  [ETrace.PINK]: {
     xPct: 24,
     singleCapYPctBottomToTop: [81, 71, 61, 51],
     overflowYPct: 39,
@@ -149,16 +152,17 @@ function buildPreviewOccupants(
     const playerId =
       PREVIEW_PLAYER_IDS[preview % PREVIEW_PLAYER_IDS.length] ?? 'preview';
     out.push({
-      occ: { source: { playerId }, traceColor: ETrace.RED },
+      occ: { source: { playerId }, traceColor: ETrace.PINK },
       tierIndex: tier,
     });
     preview += 1;
   }
   for (let i = 0; i < overflowCount; i += 1) {
     const playerId =
-      PREVIEW_PLAYER_IDS[(preview + i) % PREVIEW_PLAYER_IDS.length] ?? 'preview';
+      PREVIEW_PLAYER_IDS[(preview + i) % PREVIEW_PLAYER_IDS.length] ??
+      'preview';
     out.push({
-      occ: { source: { playerId }, traceColor: ETrace.RED },
+      occ: { source: { playerId }, traceColor: ETrace.PINK },
       tierIndex: 4,
     });
   }
@@ -177,7 +181,6 @@ function ColumnMarkers({
   playerColors: Record<string, string>;
 }): React.JSX.Element {
   const layout = ANOMALIES_LAYOUTS[color];
-  const ringColor = TRACE_RING_COLOR[color];
   // Track how many overflow markers we've already placed so additional ones
   // stack upward inside the overflow circle.
   let overflowOrder = 0;
@@ -208,7 +211,6 @@ function ColumnMarkers({
             yPct={yPct}
             occupant={occ}
             playerColors={playerColors}
-            ringColor={ringColor}
             testId={`alien-${alienIndex}-anomalies-marker-${color}-${index}`}
           />
         );
@@ -222,30 +224,26 @@ function SlotMarker({
   yPct,
   occupant,
   playerColors,
-  ringColor,
   testId,
 }: {
   xPct: number;
   yPct: number;
   occupant: TTraceOccupant;
   playerColors: Record<string, string>;
-  ringColor: string;
+  ringColor?: string;
   testId: string;
 }): React.JSX.Element {
   const playerId =
     occupant.source === 'neutral' ? null : occupant.source.playerId;
   const fill =
-    playerId === null
-      ? '#9ca3af'
-      : (playerColors[playerId] ?? '#cbd5e1');
+    playerId === null ? '#9ca3af' : (playerColors[playerId] ?? '#cbd5e1');
   return (
     <span
-      className='absolute aspect-square w-[8%] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 shadow-[0_0_4px_rgba(0,0,0,0.6)]'
+      className='absolute aspect-square w-[8%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-black/50 shadow-[0_0_4px_rgba(0,0,0,0.6)]'
       style={{
         left: `${xPct}%`,
         top: `${yPct}%`,
         backgroundColor: fill,
-        borderColor: ringColor,
       }}
       title={playerId ?? 'neutral'}
       data-testid={testId}

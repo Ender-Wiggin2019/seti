@@ -23,7 +23,7 @@ import { isArkhosAlienBoard } from '../AlienBoard.js';
 import type { IAlienPlugin } from '../IAlienPlugin.js';
 
 const ARKHOS_SECURITY_TRACES = [
-  ETrace.RED,
+  ETrace.PINK,
   ETrace.YELLOW,
   ETrace.BLUE,
 ] as const;

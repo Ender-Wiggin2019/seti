@@ -23,7 +23,7 @@ export class SetiAtHome extends ImmediateCard {
         context.player,
         (game) => {
           if (context.player.resources.publicity < 8) return undefined;
-          return game.markTrace(ETrace.RED, context.player.id);
+          return game.markTrace(ETrace.PINK, context.player.id);
         },
         EPriority.CORE_EFFECT,
       ),

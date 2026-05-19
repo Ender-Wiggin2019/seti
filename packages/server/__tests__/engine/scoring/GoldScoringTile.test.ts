@@ -138,11 +138,11 @@ describe('GoldScoringTile', () => {
       const game = createTestGame('g92-income-b-overflow');
       const p1 = game.players[0];
       // Red: discovery + overflow → 2；Y/B：各 1（discovery）
-      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
-      placeTraceForTestSetup(game.alienState, p1, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.PINK, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.PINK, 0);
       placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
       placeTraceForTestSetup(game.alienState, p1, game, ETrace.BLUE, 0);
-      expect(p1.traces[ETrace.RED]).toBe(2);
+      expect(p1.traces[ETrace.PINK]).toBe(2);
       expect(p1.traces[ETrace.YELLOW]).toBe(1);
       expect(p1.traces[ETrace.BLUE]).toBe(1);
 
@@ -155,13 +155,13 @@ describe('GoldScoringTile', () => {
       const p1 = game.players[0];
       const board = game.alienState.boards[0];
 
-      for (const color of [ETrace.RED, ETrace.YELLOW, ETrace.BLUE]) {
+      for (const color of [ETrace.PINK, ETrace.YELLOW, ETrace.BLUE]) {
         const slot = board.getSlot(`alien-0-discovery-${color}`);
         if (!slot) throw new Error(`missing discovery slot: ${color}`);
         board.placeTrace(slot, { playerId: p1.id }, color);
       }
       p1.traces = {
-        [ETrace.RED]: 0,
+        [ETrace.PINK]: 0,
         [ETrace.YELLOW]: 0,
         [ETrace.BLUE]: 0,
         [ETrace.ANY]: 0,
@@ -273,7 +273,7 @@ describe('GoldScoringTile', () => {
       {
         cardId: '62',
         name: 'Onsala Telescope Construction',
-        targetTrace: ETrace.RED,
+        targetTrace: ETrace.PINK,
         ignoredTrace: ETrace.YELLOW,
       },
       {
@@ -286,7 +286,7 @@ describe('GoldScoringTile', () => {
         cardId: '68',
         name: 'DUNE',
         targetTrace: ETrace.BLUE,
-        ignoredTrace: ETrace.RED,
+        ignoredTrace: ETrace.PINK,
       },
     ])(
       'scores Base $cardId $name from its printed trace color',

@@ -11,7 +11,7 @@ describe('SA.ET.13 Genome Characterization end-game scoring', () => {
     const [player] = game.players;
     markAmoebaTrace(board, player.id, ETrace.BLUE);
     markAmoebaTrace(board, player.id, ETrace.BLUE, { overflow: true });
-    markAmoebaTrace(board, player.id, ETrace.RED);
+    markAmoebaTrace(board, player.id, ETrace.PINK);
 
     expect(scoreEndGameCard('SA.ET.13', player, game)).toBe(4);
   });

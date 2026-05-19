@@ -194,7 +194,7 @@ describe('CentauriansAlienPlugin', () => {
     )?.toModel();
 
     expect(optionModel?.type).toBe(EPlayerInputType.OPTION);
-    expect(optionModel?.title).toContain('Place Red trace');
+    expect(optionModel?.title).toContain('Place Pink trace');
     expect(p1.tuckedIncomeCards).toEqual(tuckedBefore);
     expect(p1.income.tuckedCardIncome[EResource.ENERGY]).toBe(
       energyIncomeBefore,

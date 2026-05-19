@@ -336,7 +336,7 @@ describe('AnalyzeDataAction', () => {
       game.hiddenAliens = [EAlienType.ANOMALIES, EAlienType.CENTAURIANS];
       game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
 
-      placeTraceForTestSetup(game.alienState, player, game, ETrace.RED, 0);
+      placeTraceForTestSetup(game.alienState, player, game, ETrace.PINK, 0);
       placeTraceForTestSetup(game.alienState, player, game, ETrace.YELLOW, 0);
       fillTopComputer(player);
 

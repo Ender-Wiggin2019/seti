@@ -34,7 +34,7 @@ describe('DummyAlienPlugin', () => {
       {
         alienState: { getBoardByType: () => undefined },
       } as never,
-      { id: 'p1', traces: { [ETrace.RED]: 1 } } as never,
+      { id: 'p1', traces: { [ETrace.PINK]: 1 } } as never,
     );
 
     expect(score).toBe(0);

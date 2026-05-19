@@ -89,7 +89,7 @@ describe('AlienBoard', () => {
         {
           slotId: 'd1',
           alienIndex: 0,
-          traceColor: ETrace.RED,
+          traceColor: ETrace.PINK,
           isDiscovery: true,
         },
       ],
@@ -109,14 +109,14 @@ describe('AlienBoard', () => {
         {
           slotId: 'full',
           alienIndex: 1,
-          traceColor: ETrace.RED,
+          traceColor: ETrace.PINK,
           maxOccupants: 1,
-          occupants: [{ source: { playerId: 'p1' }, traceColor: ETrace.RED }],
+          occupants: [{ source: { playerId: 'p1' }, traceColor: ETrace.PINK }],
         },
         {
           slotId: 'open',
           alienIndex: 1,
-          traceColor: ETrace.RED,
+          traceColor: ETrace.PINK,
           maxOccupants: 2,
         },
         {
@@ -128,7 +128,7 @@ describe('AlienBoard', () => {
     });
 
     const ids = board
-      .getAvailableSlots(ETrace.RED)
+      .getAvailableSlots(ETrace.PINK)
       .map((slot) => slot.slotId)
       .sort();
 

@@ -3,6 +3,10 @@ import type { ESector } from '@seti/common/types/element';
 import { EAlienType, EPlanet } from '@seti/common/types/protocol/enums';
 import { AlienRegistry } from '@/engine/alien/AlienRegistry.js';
 import { OumuamuaAlienPlugin } from '@/engine/alien/plugins/OumuamuaAlienPlugin.js';
+import {
+  formatSectorColorLabel,
+  formatSectorOptionLabel,
+} from '@/engine/board/SectorLabel.js';
 import { EPriority } from '@/engine/deferred/Priority.js';
 import { SimpleDeferredAction } from '@/engine/deferred/SimpleDeferredAction.js';
 import {
@@ -123,7 +127,7 @@ export function createProbeSectorNoDataSignalInput(
     player,
     sectors.map((sector) => ({
       id: `probe-sector-${sector.id}`,
-      label: `Sector ${sector.id}`,
+      label: formatSectorOptionLabel(sector),
       onSelect: () =>
         markSectorWithoutDataRepeatedly(player, game, sector, markCount),
     })),
@@ -239,7 +243,7 @@ function markByColorWithoutData(
     player,
     sectors.map((sector) => ({
       id: sector.id,
-      label: `Sector ${sector.id}`,
+      label: formatSectorOptionLabel(sector),
       onSelect: () =>
         markSectorWithOumuamuaChoiceWithoutData(
           player,
@@ -248,7 +252,7 @@ function markByColorWithoutData(
           onComplete,
         ),
     })),
-    `Choose ${color} sector to mark signal`,
+    `Choose ${formatSectorColorLabel(color) || color} sector to mark signal`,
   );
 }
 

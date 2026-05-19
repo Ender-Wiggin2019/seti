@@ -51,7 +51,7 @@ const COMPUTER = _base(ESpecialAction.COMPUTER);
 const ORBIT_OR_LAND = _base(ESpecialAction.ORBIT_OR_LAND);
 
 const TRACE_ANY = _base(ETrace.ANY);
-const TRACE_RED = _base(ETrace.RED);
+const TRACE_RED = _base(ETrace.PINK);
 const TRACE_YELLOW = _base(ETrace.YELLOW);
 const TRACE_BLUE = _base(ETrace.BLUE);
 

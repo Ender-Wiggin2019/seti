@@ -13,7 +13,7 @@ import {
 describe('AmazingUncertaintyCard', () => {
   it('keeps any-signal choice and scores one point per own signal in anomaly sectors', () => {
     const { game, player } = createAnomaliesGame('amazing-uncertainty');
-    addAnomalyToken(game, 0, ETrace.RED);
+    addAnomalyToken(game, 0, ETrace.PINK);
     addAnomalyToken(game, 2, ETrace.YELLOW);
     game.sectors[0].markSignal(player.id);
     game.sectors[0].markSignal(player.id);

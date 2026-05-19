@@ -17,10 +17,10 @@ import { executeSimpleSlotRewards } from '../AlienRewards.js';
 import type { IAlienPlugin } from '../IAlienPlugin.js';
 
 export const ANOMALY_COLUMN_PREFIX = 'anomaly-column';
-type TAnomalyTraceColor = ETrace.RED | ETrace.YELLOW | ETrace.BLUE;
+type TAnomalyTraceColor = ETrace.PINK | ETrace.YELLOW | ETrace.BLUE;
 
 const TRACE_COLORS: TAnomalyTraceColor[] = [
-  ETrace.RED,
+  ETrace.PINK,
   ETrace.YELLOW,
   ETrace.BLUE,
 ];

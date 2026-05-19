@@ -391,7 +391,7 @@ describe('GameDeserializer', () => {
     board.addAnomalyColumn({
       slotId: 'alien-0-anomaly-column|red-trace',
       alienIndex: board.alienIndex,
-      traceColor: ETrace.RED,
+      traceColor: ETrace.PINK,
       maxOccupants: -1,
       rewards: [],
       isDiscovery: false,
@@ -400,7 +400,7 @@ describe('GameDeserializer', () => {
       tokenId: 'alien-0-anomaly-token|3|red-trace',
       alienType: EAlienType.ANOMALIES,
       sectorIndex: 3,
-      traceColor: ETrace.RED,
+      traceColor: ETrace.PINK,
       rewards: [{ type: 'VP', amount: 4 }],
     });
 
@@ -420,7 +420,7 @@ describe('GameDeserializer', () => {
         tokenId: 'alien-0-anomaly-token|3|red-trace',
         alienType: EAlienType.ANOMALIES,
         sectorIndex: 3,
-        traceColor: ETrace.RED,
+        traceColor: ETrace.PINK,
         rewards: [{ type: 'VP', amount: 4 }],
       },
     ]);
@@ -548,7 +548,7 @@ describe('GameDeserializer', () => {
     board.addTraceSlot({
       slotId: 'alien-0-amoeba-red-0',
       alienIndex: board.alienIndex,
-      traceColor: ETrace.RED,
+      traceColor: ETrace.PINK,
       maxOccupants: 1,
       rewards: [{ type: 'VP', amount: 3 }],
       isDiscovery: false,
@@ -586,7 +586,7 @@ describe('GameDeserializer', () => {
     board.explorationReservePile = ['ARKHOS.EXPLORATION.2'];
     board.explorationDiscardPile = ['ARKHOS.EXPLORATION.3'];
     board.securityCardsByPlayer = {
-      p1: [{ cardId: 'AIcard01', traceColor: ETrace.RED, zone: 'hand' }],
+      p1: [{ cardId: 'AIcard01', traceColor: ETrace.PINK, zone: 'hand' }],
     };
     board.accessByPlayer = {
       p1: { breachedCount: 1, accessLevel: 1 },
@@ -614,7 +614,7 @@ describe('GameDeserializer', () => {
       'ARKHOS.EXPLORATION.3',
     ]);
     expect(restoredBoard.securityCardsByPlayer).toEqual({
-      p1: [{ cardId: 'AIcard01', traceColor: ETrace.RED, zone: 'hand' }],
+      p1: [{ cardId: 'AIcard01', traceColor: ETrace.PINK, zone: 'hand' }],
     });
     expect(restoredBoard.accessByPlayer).toEqual({
       p1: { breachedCount: 1, accessLevel: 1 },

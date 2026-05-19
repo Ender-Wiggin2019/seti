@@ -52,7 +52,7 @@ describe('ExtremophilesStudy (card 75)', () => {
       optionId: 'alien-0-discovery-red-trace',
     });
 
-    expect(game.alienState.getPlayerTraceCount(player, ETrace.RED)).toBe(1);
+    expect(game.alienState.getPlayerTraceCount(player, ETrace.PINK)).toBe(1);
     expect(player.score).toBe(6);
   });
 });

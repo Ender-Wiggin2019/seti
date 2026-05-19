@@ -97,9 +97,9 @@ describe('Card 64 — ALICE: checkCondition requires blue trace on all species',
 
   it('false when player has traces of other colors but no blue', () => {
     const player = createPlayer({
-      traces: { [ETrace.RED]: 2, [ETrace.YELLOW]: 1 },
+      traces: { [ETrace.PINK]: 2, [ETrace.YELLOW]: 1 },
       tracesByAlien: {
-        0: { [ETrace.RED]: 2 },
+        0: { [ETrace.PINK]: 2 },
         1: { [ETrace.YELLOW]: 1 },
       },
     });
@@ -151,9 +151,9 @@ describe('Card 64 — ALICE: checkCondition requires blue trace on all species',
 
   it('true when mixed colors but blue present on all species', () => {
     const player = createPlayer({
-      traces: { [ETrace.BLUE]: 2, [ETrace.RED]: 1 },
+      traces: { [ETrace.BLUE]: 2, [ETrace.PINK]: 1 },
       tracesByAlien: {
-        0: { [ETrace.BLUE]: 1, [ETrace.RED]: 1 },
+        0: { [ETrace.BLUE]: 1, [ETrace.PINK]: 1 },
         1: { [ETrace.BLUE]: 1 },
       },
     });
@@ -431,8 +431,8 @@ describe('Card 64 — ALICE: integration with AlienState', () => {
     tracker.registerMission(def, player.id);
     activateMission(player, '64');
 
-    placeTraceForTestSetup(alienState, player, game, ETrace.RED, 0);
-    placeTraceForTestSetup(alienState, player, game, ETrace.RED, 1);
+    placeTraceForTestSetup(alienState, player, game, ETrace.PINK, 0);
+    placeTraceForTestSetup(alienState, player, game, ETrace.PINK, 1);
 
     expect(tracker.hasCompletableQuickMissions(player, game)).toBe(false);
   });
@@ -451,7 +451,7 @@ describe('Card 64 — ALICE: integration with AlienState', () => {
     activateMission(player, '64');
 
     placeTraceForTestSetup(alienState, player, game, ETrace.BLUE, 0);
-    placeTraceForTestSetup(alienState, player, game, ETrace.RED, 1);
+    placeTraceForTestSetup(alienState, player, game, ETrace.PINK, 1);
 
     expect(tracker.hasCompletableQuickMissions(player, game)).toBe(false);
 

@@ -130,7 +130,7 @@ describe('registerAlienCards', () => {
     const printedTraceTypes = alienCards
       .find((card) => card.id === 'ET.34')
       ?.effects?.map((effect) => ('type' in effect ? effect.type : undefined));
-    expect(printedTraceTypes).toContain(ETrace.RED);
+    expect(printedTraceTypes).toContain(ETrace.PINK);
     expect(
       alienCards
         .find((card) => card.id === 'ET.40')

@@ -57,7 +57,7 @@ export interface IProbeLocation {
 }
 
 export type TSolarSystemAnomalyTraceColor =
-  | ETrace.RED
+  | ETrace.PINK
   | ETrace.YELLOW
   | ETrace.BLUE;
 

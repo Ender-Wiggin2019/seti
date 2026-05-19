@@ -29,7 +29,7 @@ const CENTAURIAN_MESSAGE_EFFECTS: Record<
   },
   'ET.34': {
     immediate: { drawCards: 1 },
-    delayed: { type: 'trace', trace: ETrace.RED },
+    delayed: { type: 'trace', trace: ETrace.PINK },
   },
   'ET.35': {
     immediate: { gainResources: { data: 1 } },

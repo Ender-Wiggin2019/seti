@@ -25,7 +25,7 @@ import {
 import type { IAlienPlugin } from '../IAlienPlugin.js';
 
 const BASE_DISCOVERY_DEAL_COUNT = 3;
-const EXERTIAN_TRACE_COLORS = [ETrace.RED, ETrace.YELLOW, ETrace.BLUE] as const;
+const EXERTIAN_TRACE_COLORS = [ETrace.PINK, ETrace.YELLOW, ETrace.BLUE] as const;
 const EXERTIAN_BOARD_DANGER_TIERS = [3, 2, 1] as const;
 const EXERTIAN_CARD_IDS = alienCards
   .filter((card) => card.alien === EAlienType.EXERTIANS)

@@ -11,10 +11,10 @@ import type {
   TPublicSlotReward,
 } from '@seti/common/types/protocol/gameState';
 
-export type TTraceColumnColor = ETrace.RED | ETrace.YELLOW | ETrace.BLUE;
+export type TTraceColumnColor = ETrace.PINK | ETrace.YELLOW | ETrace.BLUE;
 
 export const TRACE_COLUMN_COLORS: readonly TTraceColumnColor[] = [
-  ETrace.RED,
+  ETrace.PINK,
   ETrace.YELLOW,
   ETrace.BLUE,
 ];
@@ -149,7 +149,7 @@ function createEmptyTraceColumnRecord<TSlot>(): Record<
   TSlot[]
 > {
   return {
-    [ETrace.RED]: [],
+    [ETrace.PINK]: [],
     [ETrace.YELLOW]: [],
     [ETrace.BLUE]: [],
   };

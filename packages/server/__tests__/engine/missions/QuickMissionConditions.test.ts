@@ -14,9 +14,9 @@ import {
 
 describe('QuickMissionConditions', () => {
   it('hasTrace checks required color count', () => {
-    const player = { traces: { [ETrace.RED]: 2 } } as never;
-    expect(hasTrace(ETrace.RED, 2)(player, {} as never)).toBe(true);
-    expect(hasTrace(ETrace.RED, 3)(player, {} as never)).toBe(false);
+    const player = { traces: { [ETrace.PINK]: 2 } } as never;
+    expect(hasTrace(ETrace.PINK, 2)(player, {} as never)).toBe(true);
+    expect(hasTrace(ETrace.PINK, 3)(player, {} as never)).toBe(false);
   });
 
   it('hasTraceOnAllSpecies validates every discovered alien board', () => {
@@ -31,7 +31,7 @@ describe('QuickMissionConditions', () => {
     } as never;
 
     expect(hasTraceOnAllSpecies(ETrace.BLUE)(player, game)).toBe(true);
-    expect(hasTraceOnAllSpecies(ETrace.RED)(player, game)).toBe(false);
+    expect(hasTraceOnAllSpecies(ETrace.PINK)(player, game)).toBe(false);
   });
 
   it('probeOnAsteroidAdjacentToEarth validates adjacency relation', () => {

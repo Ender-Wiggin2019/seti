@@ -321,7 +321,7 @@ describe('Organization main actions', () => {
       type: EGameRuntimeEvent.TRACE_PLACED,
       game,
       player,
-      traceColor: ETrace.RED,
+      traceColor: ETrace.PINK,
     });
 
     expect(player.organizationState[EOrganizationId.XENOLAB]).toMatchObject({

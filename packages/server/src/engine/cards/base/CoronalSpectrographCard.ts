@@ -22,13 +22,13 @@ export class CoronalSpectrographCard extends ImmediateCard {
       new SimpleDeferredAction(
         context.player,
         (game) =>
-          game.alienState.createTraceInput(context.player, game, ETrace.RED, {
+          game.alienState.createTraceInput(context.player, game, ETrace.PINK, {
             alien: game.alienState.boards
               .filter(
                 (board) =>
                   game.alienState.getPlayerTraceCount(
                     context.player,
-                    ETrace.RED,
+                    ETrace.PINK,
                     board.alienIndex,
                   ) > 0,
               )

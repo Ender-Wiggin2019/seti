@@ -97,7 +97,7 @@ function getTraceCount(player: IPlayer, game: IGame, trace: ETrace): number {
 
   if (trace === ETrace.ANY) {
     return (
-      (player.traces[ETrace.RED] ?? 0) +
+      (player.traces[ETrace.PINK] ?? 0) +
       (player.traces[ETrace.YELLOW] ?? 0) +
       (player.traces[ETrace.BLUE] ?? 0)
     );
@@ -249,7 +249,7 @@ function getFormula(
   if (id === 'income' && side === 'B') {
     return (player, game) =>
       Math.min(
-        getTraceCount(player, game, ETrace.RED),
+        getTraceCount(player, game, ETrace.PINK),
         getTraceCount(player, game, ETrace.YELLOW),
         getTraceCount(player, game, ETrace.BLUE),
       );
@@ -443,7 +443,7 @@ export function scoreEndGameCard(
     }
 
     if (
-      effect.per.type === ETrace.RED ||
+      effect.per.type === ETrace.PINK ||
       effect.per.type === ETrace.YELLOW ||
       effect.per.type === ETrace.BLUE ||
       effect.per.type === ETrace.ANY

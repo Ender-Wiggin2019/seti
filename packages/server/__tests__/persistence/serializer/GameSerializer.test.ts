@@ -498,7 +498,7 @@ describe('GameSerializer', () => {
     board.addAnomalyColumn({
       slotId: 'alien-0-anomaly-column|red-trace',
       alienIndex: 0,
-      traceColor: ETrace.RED,
+      traceColor: ETrace.PINK,
       maxOccupants: -1,
       rewards: [],
       isDiscovery: false,
@@ -507,7 +507,7 @@ describe('GameSerializer', () => {
       tokenId: 'alien-0-anomaly-token|0|red-trace',
       alienType: EAlienType.ANOMALIES,
       sectorIndex: 0,
-      traceColor: ETrace.RED,
+      traceColor: ETrace.PINK,
       rewards: [{ type: 'VP', amount: 4 }],
     });
 
@@ -527,7 +527,7 @@ describe('GameSerializer', () => {
         tokenId: 'alien-0-anomaly-token|0|red-trace',
         alienType: EAlienType.ANOMALIES,
         sectorIndex: 0,
-        traceColor: ETrace.RED,
+        traceColor: ETrace.PINK,
         rewards: [{ type: 'VP', amount: 4 }],
       },
     ]);
@@ -544,7 +544,7 @@ describe('GameSerializer', () => {
     board.addAnomalyColumn({
       slotId: 'alien-0-anomaly-column|red-trace',
       alienIndex: 0,
-      traceColor: ETrace.RED,
+      traceColor: ETrace.PINK,
       maxOccupants: -1,
       rewards: [],
       isDiscovery: false,
@@ -553,7 +553,7 @@ describe('GameSerializer', () => {
       tokenId: 'alien-0-anomaly-token|0|red-trace',
       alienType: EAlienType.ANOMALIES,
       sectorIndex: 0,
-      traceColor: ETrace.RED,
+      traceColor: ETrace.PINK,
       rewards: [{ type: 'VP', amount: 4 }],
     });
 
@@ -597,7 +597,7 @@ describe('GameSerializer', () => {
     board.alienDeckDiscardPile = ['ET.14'];
     board.faceUpAlienCardId = 'ET.11';
 
-    for (const color of [ETrace.RED, ETrace.YELLOW, ETrace.BLUE]) {
+    for (const color of [ETrace.PINK, ETrace.YELLOW, ETrace.BLUE]) {
       board.addAnomalyColumn({
         slotId: `alien-0-anomaly-column|${color}`,
         alienIndex: 0,
@@ -611,7 +611,7 @@ describe('GameSerializer', () => {
       tokenId: 'alien-0-anomaly-token|3|red-trace',
       alienType: EAlienType.ANOMALIES,
       sectorIndex: 3,
-      traceColor: ETrace.RED,
+      traceColor: ETrace.PINK,
       rewards: [{ type: 'VP', amount: 4 }],
     });
 
@@ -630,7 +630,7 @@ describe('GameSerializer', () => {
     }
     expect(publicAlien.board.type).toBe('anomalies');
     expect(Object.keys(publicAlien.board.traceBoard.columns)).toEqual([
-      ETrace.RED,
+      ETrace.PINK,
       ETrace.YELLOW,
       ETrace.BLUE,
     ]);
@@ -639,7 +639,7 @@ describe('GameSerializer', () => {
         tokenId: 'alien-0-anomaly-token|3|red-trace',
         alienType: EAlienType.ANOMALIES,
         sectorIndex: 3,
-        traceColor: ETrace.RED,
+        traceColor: ETrace.PINK,
         rewards: [{ type: 'VP', amount: 4 }],
       },
     ]);
@@ -752,7 +752,7 @@ describe('GameSerializer', () => {
     board.addTraceSlot({
       slotId: 'alien-0-amoeba-red-0',
       alienIndex: board.alienIndex,
-      traceColor: ETrace.RED,
+      traceColor: ETrace.PINK,
       maxOccupants: 1,
       rewards: [{ type: 'VP', amount: 3 }],
       isDiscovery: false,
@@ -797,7 +797,7 @@ describe('GameSerializer', () => {
     board.explorationReservePile = ['ARKHOS.EXPLORATION.2'];
     board.explorationDiscardPile = ['ARKHOS.EXPLORATION.3'];
     board.securityCardsByPlayer = {
-      p1: [{ cardId: 'AIcard01', traceColor: ETrace.RED, zone: 'hand' }],
+      p1: [{ cardId: 'AIcard01', traceColor: ETrace.PINK, zone: 'hand' }],
     };
     board.accessByPlayer = {
       p1: { breachedCount: 1, accessLevel: 1 },
@@ -813,7 +813,7 @@ describe('GameSerializer', () => {
     board.addTraceSlot({
       slotId: 'alien-0-arkhos-level-1-0-red-trace',
       alienIndex: board.alienIndex,
-      traceColor: ETrace.RED,
+      traceColor: ETrace.PINK,
       maxOccupants: 1,
       rewards: [{ type: 'CUSTOM', effectId: 'ARKHOS_LEVEL_1_EXPLORATION' }],
       isDiscovery: false,
@@ -834,7 +834,7 @@ describe('GameSerializer', () => {
       explorationReserveSize: 1,
       explorationDiscardSize: 1,
       securityCardsByPlayer: {
-        p1: [{ cardId: 'AIcard01', traceColor: ETrace.RED, zone: 'hand' }],
+        p1: [{ cardId: 'AIcard01', traceColor: ETrace.PINK, zone: 'hand' }],
       },
       accessByPlayer: {
         p1: { breachedCount: 1, accessLevel: 1 },

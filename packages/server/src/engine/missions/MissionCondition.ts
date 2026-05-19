@@ -105,7 +105,7 @@ function matchesSingleEventReq(
         event.color === ESector.BLUE
       );
 
-    case ETrace.RED:
+    case ETrace.PINK:
     case ETrace.YELLOW:
     case ETrace.BLUE:
       return (
@@ -193,7 +193,7 @@ function checkCustomQuickMissionCondition(
     return hasMascamitesTraceCount(player, game, ETrace.YELLOW, 2);
   }
   if (desc === 'desc.et-9-req') {
-    return hasMascamitesTraceCount(player, game, ETrace.RED, 2);
+    return hasMascamitesTraceCount(player, game, ETrace.PINK, 2);
   }
   if (desc === 'desc.et-10-req') {
     return hasMascamitesTraceCount(player, game, ETrace.BLUE, 2);

@@ -245,7 +245,7 @@ describe.each([
   {
     cardId: '105',
     name: 'Green Bank Telescope',
-    trace: ETrace.RED,
+    trace: ETrace.PINK,
     count: 3,
   },
 ])(
@@ -566,7 +566,7 @@ describe('Card 102 — Linguistic Analysis: red + yellow + blue on one species',
   it('condition false when traces are split across species', () => {
     const player = createPlayer({
       tracesByAlien: {
-        0: { [ETrace.RED]: 1, [ETrace.YELLOW]: 1 },
+        0: { [ETrace.PINK]: 1, [ETrace.YELLOW]: 1 },
         1: { [ETrace.BLUE]: 1 },
       },
     });
@@ -579,7 +579,7 @@ describe('Card 102 — Linguistic Analysis: red + yellow + blue on one species',
   it('condition true when one species has red + yellow + blue', () => {
     const player = createPlayer({
       tracesByAlien: {
-        0: { [ETrace.RED]: 1, [ETrace.YELLOW]: 1, [ETrace.BLUE]: 1 },
+        0: { [ETrace.PINK]: 1, [ETrace.YELLOW]: 1, [ETrace.BLUE]: 1 },
       },
     });
     const game = createGame({ alienState: createAlienState() });
@@ -591,7 +591,7 @@ describe('Card 102 — Linguistic Analysis: red + yellow + blue on one species',
 
 describe.each([
   { cardId: '64', name: 'ALICE', trace: ETrace.BLUE },
-  { cardId: '66', name: 'GMRT Telescope', trace: ETrace.RED },
+  { cardId: '66', name: 'GMRT Telescope', trace: ETrace.PINK },
   { cardId: '97', name: 'Apollo 11 Mission', trace: ETrace.YELLOW },
 ])('Card $cardId ($name): $trace on each species', ({ cardId, trace }) => {
   it('is registered as MISSION card kind', () => {

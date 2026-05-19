@@ -1,3 +1,4 @@
+import { formatSectorOptionLabel } from '@/engine/board/SectorLabel.js';
 import { EPriority } from '@/engine/deferred/Priority.js';
 import { SimpleDeferredAction } from '@/engine/deferred/SimpleDeferredAction.js';
 import { MarkSectorSignalEffect } from '@/engine/effects/scan/MarkSectorSignalEffect.js';
@@ -63,7 +64,7 @@ export class OrbitingLagrangePointCard extends ImmediateCard {
       player,
       sectors.map((sector) => ({
         id: sector.id,
-        label: `Sector ${sector.id}`,
+        label: formatSectorOptionLabel(sector),
         onSelect: () => this.markSelectedSector(player, game, sector.id),
       })),
       'Choose sector with your probe',

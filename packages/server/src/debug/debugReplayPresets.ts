@@ -6,7 +6,7 @@ import type {
   IDebugReplaySessionMetadata,
   IDebugReplaySessionRequest,
 } from '@seti/common/types/protocol/debug';
-import { EAlienType, EPhase } from '@seti/common/types/protocol/enums';
+import { EAlienType, EPhase, EPlanet } from '@seti/common/types/protocol/enums';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import {
   type AnomaliesAlienBoard,
@@ -19,6 +19,7 @@ import { AlienState } from '@/engine/alien/index.js';
 import { OumuamuaAlienPlugin } from '@/engine/alien/plugins/OumuamuaAlienPlugin.js';
 import { EventLog } from '@/engine/event/EventLog.js';
 import type { Game } from '@/engine/Game.js';
+import { EComputerRow } from '@/engine/player/Computer.js';
 import {
   applyDeliverSampleScenario,
   applySpendSignalTokenScenario,
@@ -203,7 +204,7 @@ const DEBUG_REPLAY_PRESETS: Readonly<Record<string, IDebugReplayPreset>> = {
       id: TRACE_PLACEMENT_PRESET_ID,
       label: 'Trace Placement Replay',
       description:
-        'Discover the chosen alien and stop in AWAIT_MAIN_ACTION so you can mark RED/YELLOW/BLUE traces (via the production action path or the debug place-trace endpoint) and inspect how they render.',
+        'Discover the chosen alien with 6 data on the computer + 6 in the pool, a probe parked on Mars, and every sector pre-marked down to one signal slot — ready for full multi-trace placement testing.',
       fields: [
         {
           id: 'alienType',
@@ -396,12 +397,12 @@ function applyAnomalyTriggerReplay(
   // Place a marker in tier 1 of the RED column so the upcoming PASS
   // rotation finds a non-neutral leader to reward.
   const columnSlot = board.getSlot(
-    buildAnomalyColumnSlotId(board.alienIndex, ETrace.RED, 1),
+    buildAnomalyColumnSlotId(board.alienIndex, ETrace.PINK, 1),
   );
   if (!columnSlot) {
     throw new Error('Anomaly column slot missing for RED tier 1');
   }
-  board.placeTrace(columnSlot, { playerId: activePlayer.id }, ETrace.RED);
+  board.placeTrace(columnSlot, { playerId: activePlayer.id }, ETrace.PINK);
 
   game.phase = EPhase.AWAIT_MAIN_ACTION;
   game.hasRoundFirstPassOccurred = false;
@@ -613,8 +614,45 @@ function applyTracePlacementReplay(
     credits: 20,
     energy: 20,
     publicity: 20,
-    data: 6,
   });
+
+  // Pre-fill the player's computer with 6 data tokens (top row), then refill
+  // the pool to its max — yielding 6 placed on the computer + 6 in the pool.
+  // The DataPool caps at DATA_POOL_MAX (=6), so we must drain before refilling.
+  // Rewards are discarded: trace-placement testing doesn't care about derived
+  // computer-slot rewards.
+  activePlayer.resources.gain({ data: 6 });
+  for (let i = 0; i < 6; i += 1) {
+    const nextIndex = activePlayer.data.computer.getNextTopIndex();
+    if (nextIndex < 0) break;
+    activePlayer.data.placeFromPoolToComputer({
+      row: EComputerRow.TOP,
+      index: nextIndex,
+    });
+  }
+  activePlayer.resources.gain({ data: 6 });
+
+  // Drop a probe on Mars so probe-driven actions (mark sector, signal
+  // batch, etc.) have a starting position next to a relevant planet.
+  if (game.solarSystem) {
+    const marsSpace = game.solarSystem.getSpacesOnPlanet(EPlanet.MARS)[0];
+    if (marsSpace) {
+      game.solarSystem.placeProbe(activePlayer.id, marsSpace.id);
+    }
+  }
+
+  // Pre-mark every sector so each has exactly one data signal remaining — the
+  // next marker placed in any sector fulfills it AND the active player wins
+  // (they own all the existing markers), which fires the sector-completion
+  // pipeline → first-win bonus → "mark a pink trace of life" prompt. This is
+  // the whole point of the trace-placement replay. Pre-marking with the
+  // active player's own ID does pollute the per-player marker tracker, but
+  // only for this debug scenario.
+  for (const sector of game.sectors) {
+    while (sector.signals.filter((s) => s.type === 'data').length > 1) {
+      sector.markSignal(activePlayer.id);
+    }
+  }
 
   game.phase = EPhase.AWAIT_MAIN_ACTION;
   activePlayer.waitingFor = undefined;
@@ -623,7 +661,7 @@ function applyTracePlacementReplay(
   return {
     phase: game.phase,
     summary:
-      'Replay ready: the chosen alien is discovered. Mark RED/YELLOW/BLUE traces via the normal actions, or POST to /debug/server/game/:gameId/place-trace to inject placements directly.',
+      'Replay ready: alien discovered, 6 data on computer + 6 in pool, probe on Mars, every sector has one signal slot left. Mark RED/YELLOW/BLUE traces via normal actions or the place-trace endpoint.',
     alienIndex: board.alienIndex,
     selectedAlienType,
     currentPlayerId: activePlayer.id,
@@ -770,10 +808,10 @@ function normalizeAnomalyTokensForTriggerReplay(
 
   for (let sectorIndex = 0; sectorIndex < 8; sectorIndex += 1) {
     game.solarSystem.addAlienToken({
-      tokenId: `alien-${board.alienIndex}-anomaly-token|${sectorIndex}|${ETrace.RED}`,
+      tokenId: `alien-${board.alienIndex}-anomaly-token|${sectorIndex}|${ETrace.PINK}`,
       alienType: EAlienType.ANOMALIES,
       sectorIndex,
-      traceColor: ETrace.RED,
+      traceColor: ETrace.PINK,
       rewards: templateRewards.map((reward) => ({ ...reward })),
     });
   }

@@ -15,6 +15,6 @@ export class GreenBankTelescope extends MissionCard {
   }
 
   public override getMissionDef(): IMissionDef {
-    return buildQuickMissionDef('105', hasTrace(ETrace.RED, 3));
+    return buildQuickMissionDef('105', hasTrace(ETrace.PINK, 3));
   }
 }

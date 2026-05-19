@@ -86,7 +86,7 @@ export const isEffectsIncludeIcons = (
       const isAnyTrace = [
         ETrace.ANY,
         ETrace.BLUE,
-        ETrace.RED,
+        ETrace.PINK,
         ETrace.YELLOW,
       ].includes(effect.type as ETrace);
 

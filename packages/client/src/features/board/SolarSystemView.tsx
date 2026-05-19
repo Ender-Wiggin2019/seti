@@ -65,10 +65,10 @@ const IMAGE_ALIGNMENT_OFFSET_CW_BY_RING: Readonly<
 };
 const PROBE_TRANSITION_MS = 900;
 const SOLAR_ALIEN_TOKEN_COLOR: Record<
-  ETrace.RED | ETrace.YELLOW | ETrace.BLUE,
+  ETrace.PINK | ETrace.YELLOW | ETrace.BLUE,
   string
 > = {
-  [ETrace.RED]: '#e93e27',
+  [ETrace.PINK]: '#d63384',
   [ETrace.YELLOW]: '#f5c242',
   [ETrace.BLUE]: '#3478d8',
 };

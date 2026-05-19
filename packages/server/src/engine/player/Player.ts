@@ -183,7 +183,7 @@ export class Player implements IPlayer {
     this.tuckedIncomeCards = [...(init.tuckedIncomeCards ?? [])];
     this.techs = [...(init.techs ?? [])];
     this.traces = {
-      [ETrace.RED]: init.traces?.[ETrace.RED] ?? 0,
+      [ETrace.PINK]: init.traces?.[ETrace.PINK] ?? 0,
       [ETrace.YELLOW]: init.traces?.[ETrace.YELLOW] ?? 0,
       [ETrace.BLUE]: init.traces?.[ETrace.BLUE] ?? 0,
       [ETrace.ANY]: init.traces?.[ETrace.ANY] ?? 0,

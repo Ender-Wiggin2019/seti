@@ -115,7 +115,7 @@ describe('Game', () => {
       events.push({ ...context });
     });
 
-    const input = game.markTrace(ETrace.RED, player.id);
+    const input = game.markTrace(ETrace.PINK, player.id);
 
     expect(input).toBeDefined();
     expect(events).toHaveLength(0);
@@ -134,7 +134,7 @@ describe('Game', () => {
     expect(events[0]).toMatchObject({
       type: EGameRuntimeEvent.TRACE_PLACED,
       player,
-      traceColor: ETrace.RED,
+      traceColor: ETrace.PINK,
     });
     expect(events[0].slotId).toEqual(expect.any(String));
   });

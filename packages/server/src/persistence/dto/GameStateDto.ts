@@ -172,7 +172,7 @@ export interface ISolarSystemAlienTokenDto {
   tokenId: string;
   alienType: EAlienType;
   sectorIndex: number;
-  traceColor: ETrace.RED | ETrace.YELLOW | ETrace.BLUE;
+  traceColor: ETrace.PINK | ETrace.YELLOW | ETrace.BLUE;
   rewards: ITraceSlotDto['rewards'];
 }
 

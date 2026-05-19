@@ -10,7 +10,7 @@ import {
 describe('SignsOfLifeCard', () => {
   it('gains one movement after launching when Earth sector has an anomaly token', () => {
     const { game, player } = createAnomaliesGame('signs-of-life-anomaly');
-    addAnomalyToken(game, getEarthSectorIndex(game), ETrace.RED);
+    addAnomalyToken(game, getEarthSectorIndex(game), ETrace.PINK);
 
     new SignsOfLifeCard().play({ player, game });
     resolveDeferredInputs(game);

@@ -183,7 +183,7 @@ export function hasAllPrimaryTracesOnSingleSpecies(): TConditionFn {
 
     return boards.some(
       (board) =>
-        getPlayerTraceCount(player, game, ETrace.RED, board.alienIndex) >= 1 &&
+        getPlayerTraceCount(player, game, ETrace.PINK, board.alienIndex) >= 1 &&
         getPlayerTraceCount(player, game, ETrace.YELLOW, board.alienIndex) >=
           1 &&
         getPlayerTraceCount(player, game, ETrace.BLUE, board.alienIndex) >= 1,
@@ -333,7 +333,7 @@ function getCachedTraceCount(
   if (!traces) return 0;
   if (color === ETrace.ANY) {
     return (
-      (traces[ETrace.RED] ?? 0) +
+      (traces[ETrace.PINK] ?? 0) +
       (traces[ETrace.YELLOW] ?? 0) +
       (traces[ETrace.BLUE] ?? 0)
     );

@@ -51,7 +51,7 @@ describe('SetiAtHome', () => {
     card.play({ player, game });
     game.deferredActions.drain(game);
 
-    expect(player.traces[ETrace.RED]).toBe(1);
+    expect(player.traces[ETrace.PINK]).toBe(1);
   });
 
   it('does not mark a red trace below eight publicity', () => {
@@ -62,6 +62,6 @@ describe('SetiAtHome', () => {
     card.play({ player, game });
     game.deferredActions.drain(game);
 
-    expect(player.traces[ETrace.RED]).toBe(0);
+    expect(player.traces[ETrace.PINK]).toBe(0);
   });
 });

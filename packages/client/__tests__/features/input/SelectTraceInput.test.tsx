@@ -11,17 +11,17 @@ describe('SelectTraceInput', () => {
         model={{
           inputId: 'input-trace',
           type: EPlayerInputType.TRACE,
-          options: [ETrace.BLUE, ETrace.RED],
+          options: [ETrace.BLUE, ETrace.PINK],
         }}
         onSubmit={onSubmit}
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: ETrace.RED }));
+    fireEvent.click(screen.getByRole('button', { name: ETrace.PINK }));
     expect(onSubmit).toHaveBeenCalledWith({
       inputId: 'input-trace',
       type: EPlayerInputType.TRACE,
-      trace: ETrace.RED,
+      trace: ETrace.PINK,
     });
   });
 

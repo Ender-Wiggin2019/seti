@@ -1,15 +1,15 @@
-import { ETrace } from '@/types/re-exports';
 import type { IPublicMascamitesBoard } from '@/types/re-exports';
+import { ETrace } from '@/types/re-exports';
 import { AlienBoardArtFrame } from './AlienBoardArtFrame';
 import {
-  type TTraceColumnLayouts,
   TraceMarkerOverlay,
+  type TTraceColumnLayouts,
 } from './TraceMarkerOverlay';
 
 // Mascamites reference art has 3 trace columns at the bottom; the top half
 // shows sample-capsule slots (rendered separately on top of the printed art).
 const MASCAMITES_LAYOUTS: TTraceColumnLayouts = {
-  [ETrace.RED]: { xPct: 17, yPctBottomToTop: [92, 83, 74, 65, 55] },
+  [ETrace.PINK]: { xPct: 17, yPctBottomToTop: [92, 83, 74, 65, 55] },
   [ETrace.YELLOW]: { xPct: 50, yPctBottomToTop: [92, 83, 74, 65, 55] },
   [ETrace.BLUE]: { xPct: 83, yPctBottomToTop: [92, 83, 74, 65, 55] },
 };

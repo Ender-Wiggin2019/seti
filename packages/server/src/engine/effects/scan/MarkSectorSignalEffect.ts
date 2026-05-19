@@ -3,6 +3,10 @@ import type { ESector } from '@seti/common/types/element';
 import { EAlienType, EPlanet } from '@seti/common/types/protocol/enums';
 import { AlienRegistry } from '../../alien/AlienRegistry.js';
 import { OumuamuaAlienPlugin } from '../../alien/plugins/OumuamuaAlienPlugin.js';
+import {
+  formatSectorColorLabel,
+  formatSectorOptionLabel,
+} from '../../board/SectorLabel.js';
 import { createActionEvent } from '../../event/GameEvent.js';
 import { EGameRuntimeEvent } from '../../events/GameEventBus.js';
 import type { IGame } from '../../IGame.js';
@@ -297,11 +301,11 @@ export class MarkSectorSignalEffect {
       player,
       sectors.map((sector) => ({
         id: sector.id,
-        label: `Sector ${sector.id}`,
+        label: formatSectorOptionLabel(sector),
         onSelect: () =>
           this.markSectorWithOumuamuaChoice(player, game, sector, onComplete),
       })),
-      `Choose ${color} sector to mark signal`,
+      `Choose ${formatSectorColorLabel(color) || color} sector to mark signal`,
     );
   }
 

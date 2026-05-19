@@ -91,7 +91,7 @@ describe('drawCard', () => {
             {
               slotId: 'disc-red',
               alienIndex: 0,
-              traceColor: ETrace.RED,
+              traceColor: ETrace.PINK,
               isDiscovery: true,
             },
           ],

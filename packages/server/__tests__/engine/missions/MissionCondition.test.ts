@@ -65,14 +65,14 @@ describe('matchesFullMissionTrigger', () => {
 
   it('matches trace requirements against TRACE_MARKED events', () => {
     const branch: IMissionBranchDef = {
-      req: [{ effectType: EEffectType.BASE, type: ETrace.RED, value: 1 }],
+      req: [{ effectType: EEffectType.BASE, type: ETrace.PINK, value: 1 }],
       rewards: [],
     };
 
     expect(
       matchesFullMissionTrigger(branch, {
         type: EMissionEventType.TRACE_MARKED,
-        traceColor: ETrace.RED,
+        traceColor: ETrace.PINK,
       }),
     ).toBe(true);
     expect(

@@ -370,7 +370,7 @@ describe('SolarSystemView', () => {
               tokenId: 'alien-0-anomaly-token|3|red-trace',
               alienType: EAlienType.ANOMALIES,
               sectorIndex: 3,
-              traceColor: ETrace.RED,
+              traceColor: ETrace.PINK,
               rewards: [{ type: 'CREDIT', amount: 1 }],
             },
           ],
@@ -387,17 +387,17 @@ describe('SolarSystemView', () => {
     );
 
     const token = screen.getByTestId(
-      `solar-alien-token-${EAlienType.ANOMALIES}-3-${ETrace.RED}`,
+      `solar-alien-token-${EAlienType.ANOMALIES}-3-${ETrace.PINK}`,
     );
     expect(token).toBeInTheDocument();
     expect(token).toHaveClass('rounded-full');
     expect(token).not.toHaveClass('rounded-sm');
     expect(
       within(token).getByTestId('solar-alien-token-trace-color-left'),
-    ).toHaveStyle({ backgroundColor: '#e93e27' });
+    ).toHaveStyle({ backgroundColor: '#d63384' });
     expect(
       within(token).getByTestId('solar-alien-token-trace-color-right'),
-    ).toHaveStyle({ backgroundColor: '#e93e27' });
+    ).toHaveStyle({ backgroundColor: '#d63384' });
     expect(
       within(token).getByTestId('trace-reward-icon-credit-1'),
     ).toBeInTheDocument();

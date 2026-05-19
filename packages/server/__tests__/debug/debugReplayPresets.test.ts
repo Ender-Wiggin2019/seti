@@ -195,7 +195,7 @@ describe('debugReplayPresets', () => {
       expect(columnSlots).toHaveLength(15);
       const columnColors = new Set(columnSlots.map((s) => s.traceColor));
       expect(columnColors).toEqual(
-        new Set([ETrace.RED, ETrace.YELLOW, ETrace.BLUE]),
+        new Set([ETrace.PINK, ETrace.YELLOW, ETrace.BLUE]),
       );
 
       expect(

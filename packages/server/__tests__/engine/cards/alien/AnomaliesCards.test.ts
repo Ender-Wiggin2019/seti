@@ -71,7 +71,7 @@ function getSpaceIdForSector(game: Game, sectorIndex: number): string {
 function addAnomalyToken(
   game: Game,
   sectorIndex: number,
-  color: ETrace.RED | ETrace.YELLOW | ETrace.BLUE,
+  color: ETrace.PINK | ETrace.YELLOW | ETrace.BLUE,
   rewards: TSlotReward[] = [{ type: 'VP', amount: 2 }],
 ): void {
   const board = game.alienState.getBoardByType(EAlienType.ANOMALIES);
@@ -171,7 +171,7 @@ describe('Anomalies alien cards ET.11-ET.20', () => {
   it('ET.11 gains +1 move only when launched probe sector has an anomaly token', () => {
     const withAnomaly = createGame('et-11-with-anomaly');
     const withEarthSector = getEarthSectorIndex(withAnomaly.game);
-    addAnomalyToken(withAnomaly.game, withEarthSector, ETrace.RED);
+    addAnomalyToken(withAnomaly.game, withEarthSector, ETrace.PINK);
     withAnomaly.player.hand = ['ET.11'];
 
     playCard(withAnomaly.game, withAnomaly.player, 'ET.11');
@@ -315,7 +315,7 @@ describe('Anomalies alien cards ET.11-ET.20', () => {
     addAnomalyToken(game, counterClockwise, ETrace.BLUE, [
       { type: 'PUBLICITY', amount: 2 },
     ]);
-    addAnomalyToken(game, clockwise, ETrace.RED, [{ type: 'VP', amount: 5 }]);
+    addAnomalyToken(game, clockwise, ETrace.PINK, [{ type: 'VP', amount: 5 }]);
 
     player.hand = ['ET.17'];
     const publicityBefore = player.resources.publicity;
@@ -334,7 +334,7 @@ describe('Anomalies alien cards ET.11-ET.20', () => {
 
   it('ET.20 keeps any-signal choice and scores per own signals in anomaly sectors only', () => {
     const { game, player } = createGame('et-20-any-signal-and-score');
-    addAnomalyToken(game, 0, ETrace.RED);
+    addAnomalyToken(game, 0, ETrace.PINK);
     addAnomalyToken(game, 2, ETrace.YELLOW);
 
     game.sectors[0].markSignal(player.id);
@@ -388,13 +388,13 @@ describe('Anomalies alien cards ET.11-ET.20', () => {
     game.setActivePlayer(player.id);
 
     const traceBefore =
-      (player.traces[ETrace.RED] ?? 0) +
+      (player.traces[ETrace.PINK] ?? 0) +
       (player.traces[ETrace.YELLOW] ?? 0) +
       (player.traces[ETrace.BLUE] ?? 0);
     playCard(game, player, 'ET.19');
     resolveInputs(game, player);
     const traceAfter =
-      (player.traces[ETrace.RED] ?? 0) +
+      (player.traces[ETrace.PINK] ?? 0) +
       (player.traces[ETrace.YELLOW] ?? 0) +
       (player.traces[ETrace.BLUE] ?? 0);
     expect(traceAfter).toBeGreaterThan(traceBefore);

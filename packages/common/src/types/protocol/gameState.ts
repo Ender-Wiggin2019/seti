@@ -135,7 +135,7 @@ export interface IPublicSolarSystemMovablePiece {
   movementTarget: TMovementTarget;
 }
 
-export type TPublicAnomalyTraceColor = ETrace.RED | ETrace.YELLOW | ETrace.BLUE;
+export type TPublicAnomalyTraceColor = ETrace.PINK | ETrace.YELLOW | ETrace.BLUE;
 
 export interface IPublicSolarSystemAlienToken {
   tokenId: string;

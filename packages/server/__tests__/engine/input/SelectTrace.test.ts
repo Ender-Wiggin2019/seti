@@ -8,7 +8,7 @@ describe('SelectTrace', () => {
     const onSelect = vi.fn(() => undefined);
     const input = new SelectTrace(
       { id: 'p1' } as never,
-      [ETrace.RED, ETrace.BLUE],
+      [ETrace.PINK, ETrace.BLUE],
       onSelect,
     );
 
@@ -19,7 +19,7 @@ describe('SelectTrace', () => {
   it('throws for invalid trace option', () => {
     const input = new SelectTrace(
       { id: 'p1' } as never,
-      [ETrace.RED],
+      [ETrace.PINK],
       () => undefined,
     );
 

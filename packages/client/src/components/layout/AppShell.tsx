@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { HeaderControls } from '@/components/layout/HeaderControls';
 import { APP_NAME } from '@/config/constants';
 import { cn } from '@/lib/cn';
 import { useAuthStore } from '@/stores/authStore';
@@ -49,25 +50,28 @@ export function AppShell(props: IAppShellProps): React.JSX.Element {
             </span>
           </Link>
 
-          <nav className='flex items-center gap-1'>
-            {isAuthenticated ? (
-              <>
-                <NavLink to='/lobby'>{t('client.app_shell.lobby')}</NavLink>
-                <NavLink
-                  to='/profile'
-                  leading={
-                    <span className='flex h-5 w-5 items-center justify-center rounded-full bg-[oklch(0.20_0.03_260)] border border-[color:var(--metal-edge-soft)] font-mono text-[10px] font-semibold text-text-100'>
-                      {userName?.charAt(0).toUpperCase() ?? '?'}
-                    </span>
-                  }
-                >
-                  {userName ?? t('client.app_shell.profile')}
-                </NavLink>
-              </>
-            ) : (
-              <NavLink to='/auth'>{t('client.app_shell.login')}</NavLink>
-            )}
-          </nav>
+          <div className='flex items-center gap-4'>
+            <HeaderControls variant='shell' />
+            <nav className='flex items-center gap-1'>
+              {isAuthenticated ? (
+                <>
+                  <NavLink to='/lobby'>{t('client.app_shell.lobby')}</NavLink>
+                  <NavLink
+                    to='/profile'
+                    leading={
+                      <span className='flex h-5 w-5 items-center justify-center rounded-full bg-[oklch(0.20_0.03_260)] border border-[color:var(--metal-edge-soft)] font-mono text-[10px] font-semibold text-text-100'>
+                        {userName?.charAt(0).toUpperCase() ?? '?'}
+                      </span>
+                    }
+                  >
+                    {userName ?? t('client.app_shell.profile')}
+                  </NavLink>
+                </>
+              ) : (
+                <NavLink to='/auth'>{t('client.app_shell.login')}</NavLink>
+              )}
+            </nav>
+          </div>
         </div>
       </header>
 
