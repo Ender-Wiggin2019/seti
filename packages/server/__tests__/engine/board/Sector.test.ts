@@ -185,6 +185,36 @@ describe('Sector', () => {
       expect(sector.sectorWinners).toEqual(['player-a']);
     });
 
+    // Per the rulebook ("excess signals you mark in the sector count
+    // towards winning"), markers placed AFTER all data is gone — i.e.,
+    // the overflow markers — still participate in the majority count
+    // when the sector is later resolved. Sector completion only happens
+    // at the end of the active player's main action, so within a single
+    // turn a player can keep marking and pile up extra markers.
+    it('counts overflow markers (placed after data is exhausted) toward majority', () => {
+      const sector = new Sector({
+        id: 'sector-overflow-majority',
+        color: ESector.RED,
+        dataSlotCapacity: 2,
+      });
+
+      // p1 fills both data slots, then keeps marking three more times
+      // (overflow) before resolution. p2 has only one slot.
+      sector.markSignal('p1'); // [p1, data]
+      sector.markSignal('p1'); // [p1, p1] — fulfilled, no more data
+      sector.markSignal('p2'); // overflow append → [p1, p1, p2]
+      sector.markSignal('p1'); // overflow append → [p1, p1, p2, p1]
+      sector.markSignal('p1'); // overflow append → [p1, p1, p2, p1, p1]
+
+      expect(sector.signals).toHaveLength(5);
+      expect(sector.isFulfilled()).toBe(true);
+
+      const result = sector.resolveCompletion();
+      // p1 has 4 markers (incl. overflow), p2 has 1. p1 must win.
+      expect(result.winnerPlayerId).toBe('p1');
+      expect(result.secondPlacePlayerId).toBe('p2');
+    });
+
     it('breaks ties by rightmost position (later-placed wins)', () => {
       const sector = new Sector({
         id: 'sector-tie',

@@ -12,6 +12,7 @@ interface ISectorViewProps {
   emphasizedSectorIds?: Set<string>;
   clickable: boolean;
   highlighted: boolean;
+  boardScale?: number;
   onSelectSector: (sectorColor: IPublicSector['color']) => void;
   onSelectSectorId?: (sectorId: string) => void;
 }
@@ -49,6 +50,7 @@ export function SectorView({
   emphasizedSectorIds = new Set<string>(),
   clickable,
   highlighted,
+  boardScale = 1,
   onSelectSector,
   onSelectSectorId,
 }: ISectorViewProps): React.JSX.Element {
@@ -108,12 +110,14 @@ export function SectorView({
                   )
                 }
                 position={pair.placement.position}
+                tileId={pair.placement.tileId}
                 sectorName={String(sectorName)}
                 playerColors={playerColors}
                 textMode={textMode}
                 isSelectable={isSelectable}
                 isEmphasized={isEmphasized}
                 canPickBySectorId={canPickBySectorId}
+                boardScale={boardScale}
                 onSelectSector={onSelectSector}
                 onSelectSectorId={onSelectSectorId}
               />

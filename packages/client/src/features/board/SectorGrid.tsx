@@ -10,6 +10,13 @@ interface ISectorGridProps {
   setupConfig: ISolarSystemSetupConfig;
   playerColors: Record<string, string>;
   pendingInput: IPlayerInputModel | null;
+  /**
+   * Current solar-board zoom factor (1 = design baseline). Sector
+   * data-slot dot sizes/positions are expressed in px against the
+   * baseline, so the renderer multiplies them by this factor to keep
+   * proportions correct as the user zooms in/out.
+   */
+  boardScale?: number;
   onSelectSector: (sectorColor: IPublicSector['color']) => void;
   onSelectSectorId?: (sectorId: string) => void;
 }
@@ -19,6 +26,7 @@ export function SectorGrid({
   setupConfig,
   playerColors,
   pendingInput,
+  boardScale = 1,
   onSelectSector,
   onSelectSectorId,
 }: ISectorGridProps): React.JSX.Element {
@@ -73,6 +81,7 @@ export function SectorGrid({
             emphasizedSectorIds={new Set(emphasizedSectorIds)}
             clickable={clickable}
             highlighted={clickable}
+            boardScale={boardScale}
             onSelectSector={onSelectSector}
             onSelectSectorId={onSelectSectorId}
           />

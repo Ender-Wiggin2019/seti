@@ -394,6 +394,10 @@ export function SolarSystemView({
   };
   const boardStyle: CSSProperties = {
     width: `${solarBoardWidthPx}px`,
+    // Expose the current zoom scale so descendants (sector data slots,
+    // alien tokens, etc.) can scale fixed-px layouts proportionally
+    // instead of staying frozen as the board shrinks/grows.
+    ['--solar-board-scale' as string]: `${normalizedSolarBoardZoom}`,
     ...(textMode
       ? { backgroundColor: 'rgba(8, 13, 25, 0.6)' }
       : {
@@ -955,6 +959,7 @@ export function SolarSystemView({
           setupConfig={setupConfig}
           playerColors={playerColors}
           pendingInput={pendingInput}
+          boardScale={normalizedSolarBoardZoom}
           onSelectSector={(sectorColor) => {
             if (pendingInput?.type !== EPlayerInputType.SECTOR) {
               return;

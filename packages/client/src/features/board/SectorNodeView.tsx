@@ -1,4 +1,5 @@
 import type React from 'react';
+import { ESectorTileId } from '@seti/common/constant/sectorSetup';
 import { cn } from '@/lib/cn';
 import type { IPublicSector } from '@/types/re-exports';
 import {
@@ -7,11 +8,103 @@ import {
 } from './SectorSignalList';
 
 const DEFAULT_SECTOR_SIGNAL_STYLE = {
-  0: { sigX: -3, sigY: 10, sigRot: -24, circleX: 0, circleY: -38 },
-  1: { sigX: -19, sigY: -1, sigRot: 21, circleX: 8, circleY: -33 },
+  // Default fallback. Real per-tile/per-half offsets live in
+  // `PER_TILE_SIGNAL_LAYOUT` below — those are the ones that line the
+  // dot arc up with each printed slot oval.
+  0: { sigX: 10, sigY: 14, sigRot: 0, circleX: 0, circleY: -38 },
+  1: { sigX: -10, sigY: 14, sigRot: 0, circleX: 8, circleY: -33 },
   dataSize: DEFAULT_SECTOR_DATA_SIZE_PX,
   circleSize: 24,
 } as const;
+
+interface ISectorSignalLayout {
+  /** Pixel nudge of the arc wrapper from the sector half's centre. */
+  sigX: number;
+  sigY: number;
+  /** Local rotation applied to the dot arc. */
+  sigRot: number;
+  /**
+   * Polar-arc layout for the dots. Adjacent dots are placed tangent
+   * (touching, no gap) along an arc of radius `arcRadiusPx`, with each
+   * dot a `dotDiameterPx` circle. Total arc span scales with slot
+   * count, so a 6-data sector spans wider than a 4-data sector but
+   * every pair of neighbouring dots still touches.
+   */
+  arcRadiusPx: number;
+  dotDiameterPx: number;
+}
+
+// Per-(tileId, half-index) printed-slot anchor. The data slot is part of
+// each tile's printed art, so its position is fixed relative to the tile
+// — independent of which cardinal the tile gets randomized to. Tile half
+// 0 is the inner sector of the tile, half 1 is the outer.
+const SHARED_TILE_LAYOUT: Readonly<{
+  0: ISectorSignalLayout;
+  1: ISectorSignalLayout;
+}> = {
+  0: {
+    sigX: 2,
+    sigY: 2,
+    sigRot: -23,
+    arcRadiusPx: 300,
+    dotDiameterPx: 20.5,
+  },
+  1: {
+    sigX: -14,
+    sigY: -3,
+    sigRot: 21,
+    arcRadiusPx: 300,
+    dotDiameterPx: 20.5,
+  },
+};
+
+// Per-tile overrides. Each tile has its own copy of the layout so its
+// data-slot anchors can be tuned independently. Defaults are the same
+// as `SHARED_TILE_LAYOUT`; tweak each tile to match its printed slot.
+//
+//   TILE_1: Procyon (blue)        + Vega (black)
+//   TILE_2: Sirius A (blue)       + Barnard's Star (red)
+//   TILE_3: Kepler 22 (yellow)    + Proxima Centauri (red)
+//   TILE_4: 61 Virginis (yellow)  + Beta Pictoris (black)
+//
+// Half 0 = inner sector of the tile (the one printed on its left when
+// the tile is unrotated); half 1 = outer (right when unrotated).
+const PER_TILE_SIGNAL_LAYOUT: Record<
+  ESectorTileId,
+  Readonly<{ 0: ISectorSignalLayout; 1: ISectorSignalLayout }>
+> = {
+  [ESectorTileId.TILE_1]: {
+    0: { sigX: 2, sigY: 3, sigRot: -23, arcRadiusPx: 300, dotDiameterPx: 22.8 },
+    1: { sigX: -15.6, sigY: -3, sigRot: 21, arcRadiusPx: 300, dotDiameterPx: 22.8 },
+  },
+  [ESectorTileId.TILE_2]: {
+    0: { sigX: 1, sigY: 0.5, sigRot: -23, arcRadiusPx: 300, dotDiameterPx: 22.8 },
+    1: { sigX: -17, sigY: -6.5, sigRot: 20, arcRadiusPx: 300, dotDiameterPx: 22.8 },
+  },
+  [ESectorTileId.TILE_3]: {
+    0: { sigX: 1, sigY: 2, sigRot: -23, arcRadiusPx: 300, dotDiameterPx: 22.8 },
+    1: { sigX: -18, sigY: -6, sigRot: 20, arcRadiusPx: 300, dotDiameterPx: 22.8 },
+  },
+  [ESectorTileId.TILE_4]: {
+    0: { sigX: -1, sigY: 1.7, sigRot: -23, arcRadiusPx: 300, dotDiameterPx: 22.8 },
+    1: { sigX: -19, sigY: -5, sigRot: 20, arcRadiusPx: 300, dotDiameterPx: 22.8 },
+  },
+};
+
+function getSectorSignalLayout(
+  tileId: ESectorTileId | undefined,
+  index: 0 | 1,
+): ISectorSignalLayout {
+  if (tileId !== undefined && PER_TILE_SIGNAL_LAYOUT[tileId]) {
+    return PER_TILE_SIGNAL_LAYOUT[tileId][index];
+  }
+  return {
+    ...DEFAULT_SECTOR_SIGNAL_STYLE[index],
+    arcRadiusPx: 220,
+    dotDiameterPx: 16,
+  };
+}
+
 const TEXT_MODE_SECTOR_RADIUS_PERCENT = 42;
 
 interface ISectorNodeViewProps {
@@ -19,12 +112,24 @@ interface ISectorNodeViewProps {
   index: 0 | 1;
   sectorIndex: number;
   position: string;
+  /**
+   * The printed sector tile this node belongs to. The data-slot anchor
+   * is part of each tile's art and stays fixed regardless of where the
+   * tile is randomly placed on the board, so layout tunes by tileId.
+   */
+  tileId?: ESectorTileId;
   sectorName: string;
   playerColors: Record<string, string>;
   textMode: boolean;
   isSelectable: boolean;
   isEmphasized: boolean;
   canPickBySectorId: boolean;
+  /**
+   * Solar-board zoom factor (1 = design baseline). All px-based values
+   * in `ISectorSignalLayout` are multiplied by this so the data slot
+   * scales proportionally as the user zooms in/out.
+   */
+  boardScale?: number;
   onSelectSector: (sectorColor: IPublicSector['color']) => void;
   onSelectSectorId?: (sectorId: string) => void;
 }
@@ -112,16 +217,29 @@ export function SectorNodeView({
   index,
   sectorIndex,
   position,
+  tileId,
   sectorName,
   playerColors,
   textMode,
   isSelectable,
   isEmphasized,
   canPickBySectorId,
+  boardScale = 1,
   onSelectSector,
   onSelectSectorId,
 }: ISectorNodeViewProps): React.JSX.Element {
   const style = DEFAULT_SECTOR_SIGNAL_STYLE[index];
+  const baseLayout = getSectorSignalLayout(tileId, index);
+  // Multiply every px-based knob by the current board zoom so the data
+  // slot stays aligned with the printed art at any zoom level. sigRot
+  // is angular, leave it alone.
+  const layout = {
+    ...baseLayout,
+    sigX: baseLayout.sigX * boardScale,
+    sigY: baseLayout.sigY * boardScale,
+    arcRadiusPx: baseLayout.arcRadiusPx * boardScale,
+    dotDiameterPx: baseLayout.dotDiameterPx * boardScale,
+  };
   const remainingData = sector.signals.filter(
     (sig) => sig.type === 'data',
   ).length;
@@ -245,11 +363,14 @@ export function SectorNodeView({
       }}
     >
       <div
-        className='flex items-center gap-[2px]'
+        className='absolute h-[44px] w-[120px]'
         style={{
+          left: '50%',
+          top: '50%',
           transform: [
-            `translate(var(--sector-sig-x-${index}, ${style.sigX}px), var(--sector-sig-y-${index}, ${style.sigY}px))`,
-            `rotate(var(--sector-sig-rot-${index}, ${style.sigRot}deg))`,
+            'translate(-50%, -50%)',
+            `translate(var(--sector-sig-x-${index}, ${layout.sigX}px), var(--sector-sig-y-${index}, ${layout.sigY}px))`,
+            `rotate(var(--sector-sig-rot-${index}, ${layout.sigRot}deg))`,
           ].join(' '),
           transformOrigin: 'center',
         }}
@@ -260,6 +381,10 @@ export function SectorNodeView({
           playerColors={playerColors}
           textMode={false}
           slotTestIdPrefix={`sector-node-${position}-${index}-slot`}
+          arc={{
+            radiusPx: layout.arcRadiusPx,
+            dotDiameterPx: layout.dotDiameterPx,
+          }}
         />
       </div>
 
