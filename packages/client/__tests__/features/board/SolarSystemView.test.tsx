@@ -360,7 +360,7 @@ describe('SolarSystemView', () => {
     ).toBeEnabled();
   });
 
-  it('renders anomaly tokens with their reward icon on the solar system board', () => {
+  it('renders anomaly tokens with their printed art on the solar system board', () => {
     render(
       <SolarSystemView
         solarSystem={{
@@ -390,18 +390,48 @@ describe('SolarSystemView', () => {
       `solar-alien-token-${EAlienType.ANOMALIES}-3-${ETrace.PINK}`,
     );
     expect(token).toBeInTheDocument();
+    // Pink + CREDIT should render the printed pink-credit art with no
+    // pill/border decoration around it (the artwork already carries the
+    // colored end-cap and reward icon).
+    const img = token.querySelector('img');
+    expect(img).not.toBeNull();
+    expect(img?.getAttribute('src')).toContain('anomalies/tokens/pink-credit');
+  });
+
+  it('falls back to the pill UI when an anomaly token has no matching printed art', () => {
+    render(
+      <SolarSystemView
+        solarSystem={{
+          ...createSolarSystemMock(),
+          alienTokens: [
+            {
+              tokenId: 'alien-0-anomaly-token|3|red-trace',
+              alienType: EAlienType.ANOMALIES,
+              sectorIndex: 3,
+              traceColor: ETrace.PINK,
+              // PUBLICITY isn't a printed pink combo — fallback path
+              rewards: [{ type: 'PUBLICITY', amount: 1 }],
+            },
+          ],
+        }}
+        sectors={createSectorsMock()}
+        setupConfig={defaultSetup}
+        pendingInput={null}
+        playerColors={{ 'player-1': 'red' }}
+        myPlayerId='player-1'
+        movementPoints={1}
+        onMoveProbe={vi.fn()}
+        onRespondInput={vi.fn()}
+      />,
+    );
+
+    const token = screen.getByTestId(
+      `solar-alien-token-${EAlienType.ANOMALIES}-3-${ETrace.PINK}`,
+    );
     expect(token).toHaveClass('rounded-full');
-    expect(token).not.toHaveClass('rounded-sm');
     expect(
       within(token).getByTestId('solar-alien-token-trace-color-left'),
     ).toHaveStyle({ backgroundColor: '#d63384' });
-    expect(
-      within(token).getByTestId('solar-alien-token-trace-color-right'),
-    ).toHaveStyle({ backgroundColor: '#d63384' });
-    expect(
-      within(token).getByTestId('trace-reward-icon-credit-1'),
-    ).toBeInTheDocument();
-    expect(within(token).getByTestId('seti-desc-credit-1')).toBeInTheDocument();
   });
 
   it('anchors the Oumuamua sector data list above its solar-system cell', () => {

@@ -43,27 +43,28 @@ interface IAnomaliesColumnLayout {
   overflowStridePct: number;
 }
 
-// Anchor coordinates measured against a 5%-grid overlay on the source PNG.
-// Outer columns (R/B) print at the same Y; the middle (Y) column is offset
-// downward by ~3% per row (the printed circles in the middle column sit
-// about a third of a row lower than the outer columns).
+// Anchor coordinates calibrated against the hi-res Anomalies board art
+// (777x1415). Outer columns (Pink/Blue) print at the same Y; the middle
+// (Yellow) column is staggered downward by ~5% (its circles sit just under
+// where the outer-column circles do). Use `?calibrate=1` on the game
+// page + the `/tmp/try-layout.mjs` overlay tool when tuning.
 const ANOMALIES_LAYOUTS: Record<TTraceColumnColor, IAnomaliesColumnLayout> = {
   [ETrace.PINK]: {
-    xPct: 24,
-    singleCapYPctBottomToTop: [81, 71, 61, 51],
-    overflowYPct: 39,
+    xPct: 18.3,
+    singleCapYPctBottomToTop: [84.2, 73.1, 62, 50.9],
+    overflowYPct: 38,
     overflowStridePct: 1.5,
   },
   [ETrace.YELLOW]: {
-    xPct: 51.8,
-    singleCapYPctBottomToTop: [85.6, 75.6, 65.6, 55.6],
-    overflowYPct: 43.6,
+    xPct: 49.45,
+    singleCapYPctBottomToTop: [89.2, 78.1, 67, 55.9],
+    overflowYPct: 43,
     overflowStridePct: 1.5,
   },
   [ETrace.BLUE]: {
-    xPct: 80,
-    singleCapYPctBottomToTop: [81, 71, 61, 51],
-    overflowYPct: 39,
+    xPct: 80.6,
+    singleCapYPctBottomToTop: [84.2, 73.1, 62, 50.9],
+    overflowYPct: 38,
     overflowStridePct: 1.5,
   },
 };
