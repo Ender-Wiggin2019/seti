@@ -31,9 +31,14 @@ _(none — most recent slice just landed)_
 >   expand the server but do not close any item below; they may add new
 >   surface that wants its own polish slice — not picked up here without
 >   explicit handover.
-> - Test baseline now: server 2122/2123 (only the pre-existing
+> - Test baseline now: server 2127/2128 (only the pre-existing
 >   `SpaceAgencyAlienPlugins > deals Amoeba discovery cards…` flake);
 >   client 303/303; `pnpm -r typecheck` clean.
+> - 2026-05-19 update: backend-only P0/P1 slice landed — see Done
+>   entries below for `executeRewards` + `onSolarSystemRotated` CUSTOM
+>   footguns, JwtAuthGuard DB roundtrip removal, lobby `startGame`
+>   transaction with row lock, AlienBoardInit overflow plurals
+>   cleanup, and gameSnapshots prune.
 
 ## Open
 
@@ -54,26 +59,6 @@ _(none — most recent slice just landed)_
 - _Audit (2026-05-19): still broken — `socket.on('reconnect', …)` is
   unchanged at line 19._
 
-### P0 — Anomalies plugin token-trigger and `executeRewards` short-circuit footguns
-
-- Two related fragility issues in the alien reward delivery path. Each is safe
-  given today's data, but both will break silently the moment data shifts —
-  and they will be hit by the planned reward-ladder cross-check below.
-  - `packages/server/src/engine/alien/AlienState.ts:583-614` —
-    `executeRewards` short-circuits with `return` the first time it
-    encounters a `CUSTOM:DRAW_ALIEN_CARD` reward, dropping any later
-    entries in the same `rewards` array. Today's Anomaly ladder lists VP
-    first then `DRAW_ALIEN_CARD`, so we're safe; any slot that lists
-    CUSTOM before VP would silently lose VP. Fix: apply all simple
-    rewards in one pass, then return the first CUSTOM input at the end.
-  - `packages/server/src/engine/alien/plugins/AnomaliesAlienPlugin.ts:137` —
-    `onSolarSystemRotated` pays the column leader via
-    `executeSimpleSlotRewards`, which silently skips `CUSTOM` rewards. Fix:
-    route through `AlienState.executeRewards` and surface any returned
-    PlayerInput (mirroring the pattern used in `applyTraceToSlotInternal`).
-- Both fixes belong in the same slice as the cross-check below; pair them.
-- _Audit (2026-05-19): both still present at the cited lines._
-
 ### P0 — Cross-check the rest of the alien reward ladders for similar bugs
 
 - `ANOMALY_TOKEN_REWARD_OPTIONS`, `LEFT_ALIEN_REWARDS`, `RIGHT_ALIEN_REWARDS`,
@@ -86,30 +71,6 @@ _(none — most recent slice just landed)_
 - Pair with the executeRewards short-circuit fix above so the cross-check
   doesn't trip the latent footgun on landing.
 
-### P0 — `JwtAuthGuard` does a DB roundtrip on every authenticated request
-
-- `packages/server/src/auth/jwt-auth.guard.ts:53` calls
-  `this.authService.getProfile(payload.sub)` after JWT verification. This
-  adds one synchronous `SELECT * FROM users` to every authenticated HTTP
-  request and every WS message that passes through the guard.
-- The token is already cryptographically signed; user-existence revalidation
-  belongs only on sensitive operations (profile update, account deletion),
-  not on every single request. Drop the `getProfile` call from the guard.
-- Note: `lessons.md` says the engine should still 401 if `sub` no longer
-  resolves to a real user; honour that by keeping the existence check on
-  the user-write paths (`PUT /auth/me`) where the FK matters.
-
-### P1 — Lobby `startGame` has no transaction; double-start race
-
-- `packages/server/src/lobby/lobby.service.ts:296-363` reads `room.status`,
-  validates it is `'waiting'`, then calls `Game.create`, then writes
-  `status='playing'`, all in separate un-transacted DB calls. Concurrent
-  `POST /lobby/rooms/:id/start` (double-click, retry) can both pass the
-  guard, creating two diverging game instances for the same `gameId`.
-- Fix: wrap the entire method in `db.transaction()` with `SELECT ... FOR
-  UPDATE` on the games row. Add a regression that fires two starts in
-  parallel and asserts exactly one succeeds.
-
 ### P1 — `AndOptionsInput` Back button preserves stale response
 
 - `packages/client/src/features/input/AndOptionsInput.tsx:111` —
@@ -119,27 +80,6 @@ _(none — most recent slice just landed)_
   payload.
 - Fix: clear `responses[currentStepIndex]` (set to `undefined`) before
   decrementing.
-
-### P1 — `AlienBoardInit` accepts both `overflowSlot?` and `overflowSlots?`
-
-- `packages/server/src/engine/alien/AlienBoard.ts:414-418` —
-  `hydrateTraceSlots` pushes `init.overflowSlot` and then every entry in
-  `init.overflowSlots`. No current caller sets both, but if a future
-  migration or fixture does, the slot is duplicated, doubling capacity and
-  corrupting occupant counts on reload.
-- Fix: drop the singular `overflowSlot?` path from the init shape; require
-  callers to use `overflowSlots: [slot]`. The read-only `get overflowSlot()`
-  getter can stay.
-
-### P1 — `gameSnapshots` table grows unbounded
-
-- `packages/server/src/persistence/repository/GameRepository.ts:57-68` —
-  every `processAction` / `processEndTurn` / `processInput` / `unloadGame`
-  inserts a snapshot row, with no prune. `turnCheckpoints` already has a
-  `pruneBefore` step; snapshots do not. A long game (or an idle long-lived
-  room) accumulates hundreds of rows.
-- Fix: add a prune step in `unloadGame`, or on the game-completion path,
-  keeping only the last N snapshots (configurable, default ~50).
 
 ### P1 — Calibrate Centaurians / Exertians / Mascamites / Oumuamua art
 
@@ -246,6 +186,118 @@ _(none — most recent slice just landed)_
   flipped to `false` in most packages.
 
 ## Done
+
+### Backend P0/P1 backlog: alien reward delivery + auth guard + lobby + persistence - 2026-05-19
+
+Single sweep through four backend-only items the user picked from the open
+backlog. Two commits on `feature/server`: `c0c66cf` (P0 footguns) and
+`2b52b85` (P1 backlog).
+
+Plan:
+- [x] **P0 — `executeRewards` short-circuit + `onSolarSystemRotated` CUSTOM-skip.**
+  Make `AlienState.executeRewards` apply all simple rewards inline first,
+  then build at most one `CUSTOM:DRAW_ALIEN_CARD` PlayerInput at the end
+  (boolean `hasPendingDrawAlienCard` flag — a typed accumulator was
+  rejected because it couldn't be narrowed without an unsafe cast).
+  Make it `public`. In `AnomaliesAlienPlugin.onSolarSystemRotated`, swap
+  `executeSimpleSlotRewards` for `executeRewards` and push any returned
+  PlayerInput onto `game.deferredActions` with
+  `EPriority.IMMEDIATE_REWARD`, mirroring the existing trace-slot path.
+  Two regressions added — "applies simple rewards listed AFTER a
+  CUSTOM:DRAW_ALIEN_CARD" and "routes CUSTOM token rewards through the
+  deferred queue (no silent drop)".
+- [x] **P0 — `JwtAuthGuard` per-request DB roundtrip.** Drop the
+  `authService.getProfile(payload.sub)` call from the guard; trust the
+  signed JWT for read paths, keep the existence check on user-write
+  paths (`PUT /auth/me` etc.) where the FK matters. Removed the
+  `AuthService` injection from the guard's constructor and the
+  `auth.module.ts` `APP_GUARD` factory. Replaced the
+  "rejects … no-longer-exists" integration test with a positive
+  assertion that the guard does NOT round-trip authService for a
+  missing user.
+- [x] **P1 — Lobby `startGame` transaction with row lock.** Wrapped
+  the whole method in `this.db.transaction(async tx => …)` and used
+  `.limit(1).for('update')` on the games row so two concurrent
+  `POST /lobby/rooms/:id/start` requests serialize. The second call
+  sees `status='playing'` after the first commits and rejects with
+  `BadRequestException`. `getPlayersForGame` now takes an optional
+  `db` parameter (defaults to `this.db`) so the inner transactional
+  call reuses the locked tx. Mock-db chain in the lobby test extended
+  with a `transaction(callback)` impl that runs inline against the
+  same db, plus `.for()` as the awaitable terminator after `.limit()`;
+  added a "rejects a second concurrent start once the first one
+  settles" regression that drives the lock via two `.for()` results.
+- [x] **P1 — `AlienBoardInit` overflow plurals.** Dropped the singular
+  `overflowSlot?` from `IAlienBoardInit` and the matching path in
+  `hydrateTraceSlots` so the init shape can no longer specify both
+  fields and accidentally duplicate the slot. The read-only
+  `get overflowSlot()` accessor stays — it's a safe convenience.
+- [x] **P1 — `gameSnapshots` prune on unload.** Added
+  `GameRepository.pruneSnapshots(gameId, keep = 50)` that selects the
+  most recent `keep` versions descending and deletes anything older
+  than `oldestKept`, while preserving version 0 unconditionally
+  (GAME_CREATED seed; sole loader entry-point for cold cache).
+  `GameManager.unloadGame` now calls it inside try/catch; failures
+  log a warning but don't fail the unload itself. Two regressions
+  added — "prunes old snapshots when unloading" and "unloads cleanly
+  even when prune throws".
+
+Review:
+- The `executeRewards` rewrite was the highest-risk change. The first
+  attempt used a typed accumulator
+  (`{ reward: TSlotReward & { type: 'CUSTOM'; effectId: 'DRAW_ALIEN_CARD' } }`)
+  that TypeScript couldn't narrow from a generic CUSTOM reward
+  assignment; replaced with a boolean flag, which is also semantically
+  correct (we only ever build a single DRAW_ALIEN_CARD prompt per
+  call). All existing call-sites pass without change.
+- The two new Anomalies plugin tests both initially failed with
+  `expected true to be false` / `expected boolean to be object`; the
+  root cause was that the auto-draw fallback returns
+  `onComplete?.()` (undefined) when there's only one drawable card.
+  Seeding both `board.faceUpAlienCardId = 'ET.3'` AND
+  `board.alienDeckDrawPile = ['ET.1', 'ET.2']` forces the
+  SelectOption branch, which is what the regression actually wants
+  to exercise.
+- The lobby transaction test ran into two mock-chain quirks:
+  (1) the row-lock select chains `.limit(1).for('update')`, so
+  `.limit` can't be a terminal `.mockResolvedValue` — it needs to
+  return a chainable object that exposes `.for`. Fixed by promoting
+  the chain to `vi.fn().mockReturnThis()` and terminating on
+  `.for()`. (2) The transaction-wrapped service builds a fresh
+  `new GameRepository(tx)` inside the tx, which bypasses the
+  field-replaced `service.gameRepo.startFromLobby` stub. Fixed by
+  spying on `GameRepository.prototype.startFromLobby` instead.
+- `JwtAuthGuard` change: the `lessons.md` constraint ("engine should
+  still 401 if sub no longer resolves to a real user") is now honoured
+  exclusively at user-write paths via `authService.updateProfile`,
+  not on every guarded request. The integration test was rewritten
+  to lock that intent in: a token whose `sub` doesn't exist in `users`
+  still gets 200 from a generic GET endpoint.
+- Snapshot prune is `keep = 50` (configurable) and runs only at
+  unload. The keep-window naturally covers the undo subsystem's
+  N-version peek, and version 0 stays regardless so cold-cache load
+  always succeeds. Errors don't block unload — losing a few stale
+  rows is preferable to leaving the game in memory.
+
+Verification:
+- `pnpm --filter @seti/server typecheck` — clean.
+- `pnpm --filter @seti/server test -- --run` — 2127/2128 (the only
+  failure is the pre-existing
+  `SpaceAgencyAlienPlugins > deals Amoeba discovery cards…` flake,
+  audit-tracked since 2026-05-17).
+- All 4 new regressions pass: 2 in
+  `AnomaliesAlienPlugin.test.ts`, 1 in `lobby.service.test.ts`
+  (concurrent-start), 2 in `GameManager.test.ts` (prune happy +
+  prune-throws). The rewritten JwtAuthGuard integration test passes.
+
+Residual:
+- "P0 — Cross-check the rest of the alien reward ladders" still
+  open. The `executeRewards` short-circuit was the prerequisite; the
+  cross-check itself wasn't part of this slice.
+- All remaining "client/UI verification needed" P0/P1 items
+  (WS reconnect, `AndOptionsInput` Back-clear, alien art
+  calibration) are still open — not picked up because the user
+  flagged UI testing as inconvenient.
 
 ### Sector data dot arc + zoom-aware sizing + overflow bin - 2026-05-19
 
