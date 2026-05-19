@@ -17,49 +17,12 @@
 
 ## In progress
 
-### Earth-scan-marks-wrong-sector — pending dedicated slice
-
-Tracked as the next P0 below. Will be picked up after the
-"Trace UX + sector labels + pink rename" slice (just landed) ships.
+_(none — most recent slice just landed)_
 
 ## Open
 
 > Items are roughly ordered by priority within each P-tier. P0 = act first,
 > P1 = important once P0 lands, P2 = quality polish.
-
-### P0 — Sector-tile cardinal placement vs. wheel-cell angles disagree
-
-- Repro: Trace Placement Replay → Scan → "Mark Earth". The marker fulfills a
-  sector visually opposite to where Earth sits on the wheel. Confirmed with
-  user observation: Earth at 7 o'clock pointing at red 5-signal sector;
-  the yellow 6-signal sector at 2 o'clock got marked instead.
-- Root cause: two coordinate systems disagree on which sector index sits at
-  which visual angle:
-  - Wheel cells: `spacePosition()` in `SolarSystemView.tsx` places a cell
-    at `(sectorIndex * cellsPerSector + cellInSector + 0.5) * 45deg / cellsPerSector`,
-    i.e. sector-0 ≈ 22.5°, sector-1 ≈ 67.5°, …, sector-4 ≈ 202.5° (≈7 o'clock).
-  - Sector tiles: `sectorVisualConfig.ts` `POSITION_STYLES` uses fixed
-    cardinal positions: NORTH (12 o'clock), WEST (9 o'clock), EAST (3 o'clock),
-    SOUTH (6 o'clock); the default `randomizeTilePlacementsImpl` pins
-    sector-0,1 → NORTH, sector-2,3 → WEST, sector-4,5 → EAST,
-    sector-6,7 → SOUTH (in `common/src/constant/sectorSetup.ts`).
-  - Server is correct (`getSectorIndexOfPlanet` resolves Earth to its true
-    sector-N), but the **tile holding sector-N** is rendered at a cardinal
-    position that has nothing to do with sector-N's wheel angle.
-- Fix shape (pick one once we settle the layout):
-  (a) Change `ALL_SECTOR_POSITIONS` ordering or `POSITION_STYLES` so the
-      cardinal positions follow the wheel angle convention (NE/SE/SW/NW
-      instead of N/W/E/S, or rotate the cardinal pairing to match
-      sector-0,1 → NE etc.). Lowest-risk: only `POSITION_STYLES` changes.
-  (b) Make `randomizeTilePlacementsImpl` derive `position` from the actual
-      sector indices it assigns, rather than walking
-      `ALL_SECTOR_POSITIONS` in fixed order.
-  (c) Stop pinning tile placement to compass labels; render tiles at the
-      same wheel-angle the cells use, then drop `ESectorPosition` entirely.
-- Add a regression: simulate a fresh game, find Earth's space, mark via
-  `MarkSectorSignalEffect.markByPlanet(EARTH)`, assert the resulting
-  marker lands in the **same tile** that contains Earth visually
-  (i.e. cardinal-angle matches wheel-angle).
 
 ### P0 — WS auto-reconnect listener attached to wrong emitter
 
@@ -246,6 +209,44 @@ See "Done → Hi-res alien art + face-down back" below.)_
   flipped to `false` in most packages.
 
 ## Done
+
+### Earth-scan-marks-wrong-sector - 2026-05-18
+
+The actual bug:
+- `getSectorAt(game, wedgeIndex)` did `game.sectors[wedgeIndex]`, but the
+  `game.sectors` array was ordered by tile-placement (NORTH first, then
+  EAST/SOUTH/WEST), NOT by wedge index. So the server's "Earth's wedge
+  index = 5" lookup grabbed `sectors[5]` which was sector-4 — the next
+  sector in placement order — and the marker landed on the wrong tile.
+- Investigation went down a wrong path first (cardinal-position-vs-
+  wheel-angle theory). The cardinal-walk and sector-pair changes are
+  still correct rendering-side fixes, but they didn't address the actual
+  bug — the wedge-index → array-index mismatch did.
+
+Fix:
+- [x] Sort `game.sectors` by the numeric suffix of `sector-${N}` in
+  `buildSectorsFromPlacements` so `game.sectors[N]` is always sector-N.
+  Restores the invariant `getSectorAt`/`getSectorIndexByPlanet` were
+  written against.
+- [x] `ALL_SECTOR_POSITIONS = [NORTH, EAST, SOUTH, WEST]` — walks tiles
+  clockwise so sector-N's cardinal tile sits on the same arc as cell-N.
+- [x] Sector pairing: NORTH→(7,0), EAST→(1,2), SOUTH→(3,4), WEST→(5,6),
+  so the two sectors of each tile straddle the cardinal anchor.
+- [x] Client `getFallbackSectorIndex` mirrors the server pairing.
+
+Verification:
+- Live: 8/8 fresh replays mark the same sector that contains Earth
+  (wedge index match, cardinal-tile match).
+- `pnpm -r typecheck` clean.
+- `pnpm --filter @seti/server test -- --run` — 2089/2090 (pre-existing
+  Amoeba flake unrelated).
+- `pnpm --filter @seti/client test -- --run` — 301/301.
+
+Lessons:
+- When a server already exposes the correct value (`getSectorIndexOfPlanet`
+  returned 5 correctly for cell-5), trust it and trace ONE level — check
+  what the consumer does with that value. Going up to "the layout must be
+  fundamentally wrong" was premature.
 
 ### Trace UX + sector labels + pink rename - 2026-05-18
 

@@ -757,8 +757,12 @@ describe('SolarSystemView', () => {
     const firstCell = screen.getByTestId('solar-space-ring-3-cell-15');
     const centerCell = screen.getByTestId('solar-space-ring-3-cell-16');
     const lastCell = screen.getByTestId('solar-space-ring-3-cell-17');
-    const sectorWrapper = screen.getByTestId('sector-node-east-1').parentElement
-      ?.parentElement as HTMLElement | null;
+    // Cell ring-3-cell-16 is in sector-5 (floor(16/3) = 5). With sector
+    // pairs straddling each cardinal anchor, sector-5 sits at WEST as the
+    // first of its two sectors (west-0; sector-5 is cell-pair angle
+    // 247.5°, west cardinal is 270°).
+    const sectorWrapper = screen.getByTestId('sector-node-west-0')
+      .parentElement?.parentElement as HTMLElement | null;
 
     if (!sectorWrapper) {
       throw new Error('Expected sector wrapper to render');
@@ -936,29 +940,35 @@ describe('SolarSystemView', () => {
       />,
     );
 
-    const sector0Wrapper = screen.getByTestId('sector-node-north-0')
+    // NORTH tile holds sector-7 (left/CCW of top) and sector-0 (right/CW
+    // of top), in that visual order — so north-0 lines up with cell-7 at
+    // 337.5° and north-1 lines up with cell-0 at 22.5°. Pairing each
+    // cardinal tile with its straddling sectors (rather than sequential
+    // pairs) is what keeps the cardinal tile under the wheel cells it
+    // visually covers.
+    const sector7Wrapper = screen.getByTestId('sector-node-north-0')
       .parentElement?.parentElement as HTMLElement | null;
-    const sector1Wrapper = screen.getByTestId('sector-node-north-1')
+    const sector0Wrapper = screen.getByTestId('sector-node-north-1')
       .parentElement?.parentElement as HTMLElement | null;
+    const sector7Cell = screen.getByTestId('solar-space-space-7');
     const sector0Cell = screen.getByTestId('solar-space-space-0');
-    const sector1Cell = screen.getByTestId('solar-space-space-1');
 
-    if (!sector0Wrapper || !sector1Wrapper) {
+    if (!sector7Wrapper || !sector0Wrapper) {
       throw new Error('Expected sector wrappers to render');
     }
+    expect(getStylePolarAngle(sector7Wrapper)).toBeCloseTo(
+      getStylePolarAngle(sector7Cell),
+      1,
+    );
     expect(getStylePolarAngle(sector0Wrapper)).toBeCloseTo(
       getStylePolarAngle(sector0Cell),
       1,
     );
-    expect(getStylePolarAngle(sector1Wrapper)).toBeCloseTo(
-      getStylePolarAngle(sector1Cell),
-      1,
+    expect(getStyleRadius(sector7Wrapper)).toBeGreaterThan(
+      getStyleRadius(sector7Cell),
     );
     expect(getStyleRadius(sector0Wrapper)).toBeGreaterThan(
       getStyleRadius(sector0Cell),
-    );
-    expect(getStyleRadius(sector1Wrapper)).toBeGreaterThan(
-      getStyleRadius(sector1Cell),
     );
   });
 });

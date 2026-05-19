@@ -27,10 +27,18 @@ function getSectorIndexFromId(sectorId: string): number | null {
 }
 
 function getFallbackSectorIndex(position: string, index: 0 | 1): number {
-  if (position === 'north') return index;
-  if (position === 'west') return index + 2;
-  if (position === 'east') return index + 4;
-  return index + 6;
+  // Each cardinal tile spans 90° centred on its direction, so its two
+  // sectors are the cell-pair whose angles bracket the cardinal anchor:
+  //   NORTH → sector-7, sector-0
+  //   EAST  → sector-1, sector-2
+  //   SOUTH → sector-3, sector-4
+  //   WEST  → sector-5, sector-6
+  // Mirrors `randomizeTilePlacementsImpl`/`createDefaultSetupConfig` in
+  // common; keep all three in sync.
+  if (position === 'north') return index === 0 ? 7 : 0;
+  if (position === 'east') return index + 1;
+  if (position === 'south') return index + 3;
+  return index + 5;
 }
 
 export function SectorView({

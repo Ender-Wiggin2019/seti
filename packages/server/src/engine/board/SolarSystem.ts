@@ -3,7 +3,7 @@ import {
   ALL_SECTOR_POSITIONS,
   ALL_SECTOR_TILE_IDS,
   createDefaultSolarSystemWheels,
-  type ESectorPosition,
+  ESectorPosition,
   type ESectorTileId,
   type EStarName,
   type ISectorTilePlacement,
@@ -916,6 +916,18 @@ function buildSectorsFromPlacements(
       );
     }
   }
+  // Sort by the numeric suffix of `sector-${N}` so `game.sectors[wedgeIndex]`
+  // always returns the sector at that wedge (0..7 clockwise from 12 o'clock).
+  // Without this, the array order follows tile-placement order (NORTH first,
+  // then EAST/SOUTH/WEST), which means scan→Mark Earth and many other paths
+  // that index by the wedge index returned from `getSectorIndexOfPlanet`
+  // pick the wrong sector.
+  sectors.sort((a, b) => {
+    const ai = Number(a.id.replace(/^sector-/, ''));
+    const bi = Number(b.id.replace(/^sector-/, ''));
+    if (Number.isInteger(ai) && Number.isInteger(bi)) return ai - bi;
+    return a.id.localeCompare(b.id);
+  });
   return sectors;
 }
 
@@ -927,15 +939,33 @@ function randomizeTilePlacementsImpl(
   ]) as ESectorTileId[];
   const positions = [...ALL_SECTOR_POSITIONS] as ESectorPosition[];
 
-  let sectorCounter = 0;
+  // Each cardinal tile spans 90° centred on its cardinal direction. Sector-N
+  // is the wheel cell at angle (N + 0.5) * 45° clockwise from 12 o'clock,
+  // so the tile straddles the boundary between sector pairs:
+  //   NORTH (0°)   → sectors at -22.5° / +22.5° → sector-7, sector-0
+  //   EAST  (90°)  → sectors at  67.5° / 112.5° → sector-1, sector-2
+  //   SOUTH (180°) → sectors at 157.5° / 202.5° → sector-3, sector-4
+  //   WEST  (270°) → sectors at 247.5° / 292.5° → sector-5, sector-6
+  // Without this pairing, the second sector of each tile sits 67.5° away
+  // from its cardinal anchor — past the next tile's edge — which is the
+  // bug that made "Mark Earth" feel like it picked the wrong sector.
+  const SECTOR_PAIRS_BY_POSITION: Record<
+    ESectorPosition,
+    [number, number]
+  > = {
+    [ESectorPosition.NORTH]: [7, 0],
+    [ESectorPosition.EAST]: [1, 2],
+    [ESectorPosition.SOUTH]: [3, 4],
+    [ESectorPosition.WEST]: [5, 6],
+  };
+
   return shuffledTileIds.map((tileId, idx) => {
-    const sectorId0 = `sector-${sectorCounter}`;
-    const sectorId1 = `sector-${sectorCounter + 1}`;
-    sectorCounter += 2;
+    const position = positions[idx];
+    const [a, b] = SECTOR_PAIRS_BY_POSITION[position];
     return {
       tileId,
-      position: positions[idx],
-      sectorIds: [sectorId0, sectorId1] as [string, string],
+      position,
+      sectorIds: [`sector-${a}`, `sector-${b}`] as [string, string],
     };
   });
 }

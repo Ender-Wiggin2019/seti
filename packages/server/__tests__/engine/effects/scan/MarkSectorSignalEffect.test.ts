@@ -213,14 +213,16 @@ describe('MarkSectorSignalEffect', () => {
   describe('markByStarName', () => {
     it('resolves star name to sector and marks it', () => {
       const player = createMockPlayer();
-      const sector5 = createMockSector('sector-5', ESector.RED);
+      // Default setup pairs sectors around the cardinal anchors, so
+      // Proxima_Centauri (TILE_3 SOUTH, second sector) lives at sector-4.
+      const sector4 = createMockSector('sector-4', ESector.RED);
       const game = createMockGame([
         createMockSector('sector-0', ESector.BLUE),
         createMockSector('sector-1', ESector.BLACK),
         createMockSector('sector-2', ESector.BLUE),
         createMockSector('sector-3', ESector.RED),
-        createMockSector('sector-4', ESector.YELLOW),
-        sector5,
+        sector4,
+        createMockSector('sector-5', ESector.YELLOW),
         createMockSector('sector-6', ESector.YELLOW),
         createMockSector('sector-7', ESector.BLACK),
       ]);
@@ -232,8 +234,8 @@ describe('MarkSectorSignalEffect', () => {
       );
 
       const markedSector = requireValue(result, 'expected marked sector');
-      expect(markedSector.sectorId).toBe('sector-5');
-      expect(hasPlayerMarker(sector5, 'p1')).toBe(true);
+      expect(markedSector.sectorId).toBe('sector-4');
+      expect(hasPlayerMarker(sector4, 'p1')).toBe(true);
     });
 
     it('returns null when setup is missing', () => {

@@ -507,11 +507,21 @@ export const ALL_SECTOR_TILE_IDS = [
   ESectorTileId.TILE_4,
 ] as const;
 
+// Cardinal positions are walked clockwise from the top so that sector
+// indices map to the cell angles the wheel uses. Sector-N's cells live at
+// angle ((N + 0.5) * 45deg) measured clockwise from 12 o'clock, so:
+//   sector-0,1 → top         (cells 0,1 at  22.5° /  67.5°)
+//   sector-2,3 → right (east) (cells 2,3 at 112.5° / 157.5°)
+//   sector-4,5 → bottom        (cells 4,5 at 202.5° / 247.5°)
+//   sector-6,7 → left (west)   (cells 6,7 at 292.5° / 337.5°)
+// A non-clockwise ordering caused "Mark Earth" / sector-by-color pickers
+// to apparently mark the wrong sector tile because the cardinal placement
+// disagreed with the wheel angle.
 export const ALL_SECTOR_POSITIONS = [
   ESectorPosition.NORTH,
-  ESectorPosition.WEST,
   ESectorPosition.EAST,
   ESectorPosition.SOUTH,
+  ESectorPosition.WEST,
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -617,29 +627,36 @@ export function resolveSetupConfig(
   }));
 }
 
-/** Create the canonical (non-randomized) default setup */
+/** Create the canonical (non-randomized) default setup. Each cardinal tile
+ *  spans 90° centred on its direction, so its two sectors are the cell-pair
+ *  whose angles bracket the cardinal anchor:
+ *    NORTH (0°)   → sector-7 (-22.5°), sector-0 (+22.5°)
+ *    EAST  (90°)  → sector-1, sector-2
+ *    SOUTH (180°) → sector-3, sector-4
+ *    WEST  (270°) → sector-5, sector-6
+ */
 export function createDefaultSetupConfig(): ISolarSystemSetupConfig {
   return {
     tilePlacements: [
       {
         tileId: ESectorTileId.TILE_1,
         position: ESectorPosition.NORTH,
-        sectorIds: ['sector-0', 'sector-1'],
+        sectorIds: ['sector-7', 'sector-0'],
       },
       {
         tileId: ESectorTileId.TILE_2,
-        position: ESectorPosition.WEST,
-        sectorIds: ['sector-2', 'sector-3'],
+        position: ESectorPosition.EAST,
+        sectorIds: ['sector-1', 'sector-2'],
       },
       {
         tileId: ESectorTileId.TILE_3,
-        position: ESectorPosition.EAST,
-        sectorIds: ['sector-4', 'sector-5'],
+        position: ESectorPosition.SOUTH,
+        sectorIds: ['sector-3', 'sector-4'],
       },
       {
         tileId: ESectorTileId.TILE_4,
-        position: ESectorPosition.SOUTH,
-        sectorIds: ['sector-6', 'sector-7'],
+        position: ESectorPosition.WEST,
+        sectorIds: ['sector-5', 'sector-6'],
       },
     ],
     initialDiscAngles: [0, 0, 0],

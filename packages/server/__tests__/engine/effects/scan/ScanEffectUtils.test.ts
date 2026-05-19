@@ -85,10 +85,13 @@ describe('ScanEffectUtils', () => {
     it('resolves star name to sector ID from default setup', () => {
       const setup = createDefaultSetupConfig();
 
-      expect(findSectorIdByStarName(setup, EStarName.PROCYON)).toBe('sector-0');
-      expect(findSectorIdByStarName(setup, EStarName.VEGA)).toBe('sector-1');
+      // Default setup pairs sectors around each cardinal anchor:
+      //   NORTH (TILE_1: Procyon/Vega) → sector-7, sector-0
+      //   SOUTH (TILE_3: Kepler_22/Proxima) → sector-3, sector-4
+      expect(findSectorIdByStarName(setup, EStarName.PROCYON)).toBe('sector-7');
+      expect(findSectorIdByStarName(setup, EStarName.VEGA)).toBe('sector-0');
       expect(findSectorIdByStarName(setup, EStarName.PROXIMA_CENTAURI)).toBe(
-        'sector-5',
+        'sector-4',
       );
     });
 
