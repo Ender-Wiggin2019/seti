@@ -137,8 +137,16 @@ export interface IAlienBoardInit {
   alienIndex: number;
   discovered?: boolean;
   discoverySlots?: ITraceSlotInit[];
+  /**
+   * Overflow trace slots. The earlier shape also accepted a singular
+   * `overflowSlot?` alongside this array; if a fixture or migration
+   * accidentally set BOTH, `hydrateTraceSlots` happily appended the
+   * single one *and* the array, doubling capacity. Singular field
+   * removed — callers now use `overflowSlots: [slot]`. The read-only
+   * `get overflowSlot()` accessor stays for ergonomic call-sites that
+   * just want the first overflow slot.
+   */
   overflowSlots?: ITraceSlotInit[];
-  overflowSlot?: ITraceSlotInit;
   speciesTraceSlots?: ITraceSlotInit[];
   slots?: ITraceSlotInit[];
   alienDeckDrawPile?: string[];
@@ -410,9 +418,6 @@ export class AlienBoard {
   protected hydrateTraceSlots(init: IAlienBoardInit): void {
     for (const slot of init.discoverySlots ?? []) {
       this.discoverySlots.push(this.createTraceSlot(slot));
-    }
-    if (init.overflowSlot) {
-      this.overflowSlots.push(this.createTraceSlot(init.overflowSlot));
     }
     for (const slot of init.overflowSlots ?? []) {
       this.overflowSlots.push(this.createTraceSlot(slot));

@@ -294,71 +294,85 @@ export class LobbyService {
   }
 
   async startGame(gameId: string, userId: string): Promise<IRoomResponse> {
-    const [room] = await this.db
-      .select()
-      .from(games)
-      .where(eq(games.id, gameId))
-      .limit(1);
+    // Validate + acquire a row-level write lock on the games row, then
+    // build the Game and write the snapshot — all inside a single
+    // transaction so concurrent `POST /lobby/rooms/:id/start` calls
+    // (double-click, retry from a stale tab) can't both pass the
+    // status='waiting' guard and create two diverging Game instances
+    // for the same gameId.
+    await this.db.transaction(async (tx) => {
+      const [room] = await tx
+        .select()
+        .from(games)
+        .where(eq(games.id, gameId))
+        .limit(1)
+        .for('update');
 
-    if (!room) {
-      throw new NotFoundException('Room not found');
-    }
+      if (!room) {
+        throw new NotFoundException('Room not found');
+      }
 
-    if (room.status !== 'waiting') {
-      throw new BadRequestException('Game already started or finished');
-    }
+      if (room.status !== 'waiting') {
+        throw new BadRequestException('Game already started or finished');
+      }
 
-    if (room.hostUserId !== userId) {
-      throw new ForbiddenException('Only the host can start the game');
-    }
+      if (room.hostUserId !== userId) {
+        throw new ForbiddenException('Only the host can start the game');
+      }
 
-    const players = await this.getPlayersForGame(gameId);
+      const players = await this.getPlayersForGame(gameId, tx);
 
-    const gameOptions = createGameOptions(
-      room.options as Partial<IGameOptions>,
-    );
-    const requiredHumanPlayers = getRequiredHumanPlayers(gameOptions);
-
-    if (players.length < requiredHumanPlayers) {
-      throw new BadRequestException(
-        `Need at least ${requiredHumanPlayers} players to start the game`,
+      const gameOptions = createGameOptions(
+        room.options as Partial<IGameOptions>,
       );
-    }
+      const requiredHumanPlayers = getRequiredHumanPlayers(gameOptions);
 
-    if (!isSoloMode(gameOptions) && players.length < gameOptions.playerCount) {
-      throw new BadRequestException(
-        `Need ${gameOptions.playerCount} players to start the game`,
+      if (players.length < requiredHumanPlayers) {
+        throw new BadRequestException(
+          `Need at least ${requiredHumanPlayers} players to start the game`,
+        );
+      }
+
+      if (
+        !isSoloMode(gameOptions) &&
+        players.length < gameOptions.playerCount
+      ) {
+        throw new BadRequestException(
+          `Need ${gameOptions.playerCount} players to start the game`,
+        );
+      }
+
+      const identities = players.map((p) => ({
+        id: p.userId,
+        name: p.name,
+        color: p.color,
+        seatIndex: p.seatIndex,
+      }));
+
+      const seed = room.seed;
+      const gameIdentities = isSoloMode(gameOptions)
+        ? [
+            identities[0],
+            {
+              id: `rival:${gameId}`,
+              name: RIVAL_DISPLAY_NAME,
+              color: PLAYER_COLORS[1],
+              seatIndex: 1,
+            },
+          ]
+        : identities;
+
+      const game = Game.create(
+        gameIdentities,
+        { ...gameOptions, playerCount: getRulesPlayerCount(gameOptions) },
+        seed,
+        gameId,
       );
-    }
 
-    const identities = players.map((p) => ({
-      id: p.userId,
-      name: p.name,
-      color: p.color,
-      seatIndex: p.seatIndex,
-    }));
-
-    const seed = room.seed;
-    const gameIdentities = isSoloMode(gameOptions)
-      ? [
-          identities[0],
-          {
-            id: `rival:${gameId}`,
-            name: RIVAL_DISPLAY_NAME,
-            color: PLAYER_COLORS[1],
-            seatIndex: 1,
-          },
-        ]
-      : identities;
-
-    const game = Game.create(
-      gameIdentities,
-      { ...gameOptions, playerCount: getRulesPlayerCount(gameOptions) },
-      seed,
-      gameId,
-    );
-
-    await this.gameRepo.startFromLobby(game);
+      await new GameRepository(
+        tx as unknown as NodePgDatabase,
+      ).startFromLobby(game);
+    });
 
     return this.getRoomById(gameId);
   }
@@ -375,8 +389,11 @@ export class LobbyService {
     }
   }
 
-  private async getPlayersForGame(gameId: string): Promise<IRoomPlayer[]> {
-    const rows = await this.db
+  private async getPlayersForGame(
+    gameId: string,
+    db: NodePgDatabase = this.db,
+  ): Promise<IRoomPlayer[]> {
+    const rows = await db
       .select({
         userId: gamePlayers.userId,
         seatIndex: gamePlayers.seatIndex,

@@ -1,5 +1,5 @@
 import { EPhase } from '@seti/common/types/protocol/enums';
-import { and, desc, eq, gt } from 'drizzle-orm';
+import { and, desc, eq, gt, lt } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { IGame } from '@/engine/IGame.js';
 import type { IGameStateDto } from '../dto/GameStateDto.js';
@@ -79,6 +79,56 @@ export class GameRepository {
       .limit(1);
 
     return (row?.state as IGameStateDto | undefined) ?? null;
+  }
+
+  /**
+   * Cap the snapshot history for a game by deleting all rows whose
+   * version is below the keep-window. The window keeps the latest
+   * `keep` snapshots so undo (which needs the previous N versions) and
+   * the GAME_CREATED checkpoint (version 0) keep working — version 0
+   * is preserved unconditionally because it's the only seed for a full
+   * load when the cache is cold.
+   *
+   * Called from `GameManager.unloadGame` so an idle long-running room
+   * doesn't accumulate hundreds of snapshot rows. `turnCheckpoints` is
+   * already pruned via its own `pruneBefore` step; this brings
+   * snapshots in line.
+   */
+  public async pruneSnapshots(
+    gameId: string,
+    keep = 50,
+  ): Promise<number> {
+    const recent = await this.db
+      .select({ version: gameSnapshots.version })
+      .from(gameSnapshots)
+      .where(eq(gameSnapshots.gameId, gameId))
+      .orderBy(desc(gameSnapshots.version))
+      .limit(keep);
+    if (recent.length < keep) {
+      return 0;
+    }
+    const oldestKept = recent[recent.length - 1].version;
+    if (oldestKept <= 0) {
+      // Already inside the keep window with version 0 in scope; nothing
+      // to delete (zero is preserved unconditionally below in any case).
+      return 0;
+    }
+    const result = await this.db
+      .delete(gameSnapshots)
+      .where(
+        and(
+          eq(gameSnapshots.gameId, gameId),
+          // Keep version 0 (GAME_CREATED seed) regardless of the window.
+          gt(gameSnapshots.version, 0),
+          // Delete anything older than the window's tail.
+          // `< oldestKept` because rows at `oldestKept` itself stay.
+          // drizzle's `lt` mirrors `<`.
+          lt(gameSnapshots.version, oldestKept),
+        ),
+      );
+    // Drizzle returns NodePg's QueryResult; rowCount is sometimes
+    // null. Coerce so callers see a number.
+    return (result as { rowCount?: number | null }).rowCount ?? 0;
   }
 
   public async loadSnapshot(

@@ -428,5 +428,44 @@ describe('GameManager', () => {
         { type: 'UNLOAD' },
       );
     });
+
+    // Regression: long-running games used to accumulate hundreds of
+    // gameSnapshots rows because unload only ever inserted, never
+    // pruned. The repo now exposes `pruneSnapshots` and the manager
+    // calls it during unload.
+    it('prunes old snapshots when unloading', async () => {
+      const game = createTestGame();
+      const cache = (manager as unknown as { cache: Map<string, IGame> }).cache;
+      cache.set('game-mgr-test', game);
+
+      const pruneSnapshotsMock = vi.fn().mockResolvedValue(0);
+      (
+        manager as unknown as {
+          gameRepo: { pruneSnapshots: typeof pruneSnapshotsMock };
+        }
+      ).gameRepo.pruneSnapshots = pruneSnapshotsMock;
+
+      await manager.unloadGame('game-mgr-test');
+
+      expect(pruneSnapshotsMock).toHaveBeenCalledWith('game-mgr-test');
+    });
+
+    // The unload itself must succeed even if pruning fails — losing a
+    // few stale rows is preferable to leaving the game in memory.
+    it('unloads cleanly even when prune throws', async () => {
+      const game = createTestGame();
+      const cache = (manager as unknown as { cache: Map<string, IGame> }).cache;
+      cache.set('game-mgr-test', game);
+
+      const pruneSnapshotsMock = vi.fn().mockRejectedValue(new Error('boom'));
+      (
+        manager as unknown as {
+          gameRepo: { pruneSnapshots: typeof pruneSnapshotsMock };
+        }
+      ).gameRepo.pruneSnapshots = pruneSnapshotsMock;
+
+      await expect(manager.unloadGame('game-mgr-test')).resolves.toBeUndefined();
+      expect(cache.has('game-mgr-test')).toBe(false);
+    });
   });
 });

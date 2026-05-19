@@ -349,6 +349,26 @@ export class GameManager {
       type: 'UNLOAD',
     });
 
+    // Trim the snapshot history before letting go of the game. Version
+    // 0 (GAME_CREATED) and the most recent N entries are kept; older
+    // intermediate snapshots are dropped so an idle long-running room
+    // doesn't grow the snapshots table without bound. Errors are
+    // logged but not fatal — the unload itself must still succeed.
+    try {
+      const removed = await this.gameRepo.pruneSnapshots(gameId);
+      if (removed > 0) {
+        this.logger.log(
+          `Pruned ${removed} old snapshot(s) for game ${gameId} on unload`,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Failed to prune snapshots for ${gameId} during unload: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+
     this.cache.delete(gameId);
     this.versions.delete(gameId);
     this.turnCheckpoints.delete(gameId);

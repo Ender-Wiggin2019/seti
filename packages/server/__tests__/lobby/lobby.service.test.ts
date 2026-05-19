@@ -63,8 +63,18 @@ function createMockDb() {
     from: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
     orderBy: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockResolvedValue([MOCK_GAME]),
+    // `limit` is awaitable in the legacy code paths AND returns
+    // something `.for('update')` can be chained on inside `startGame`'s
+    // transaction. Drizzle's real query builder is awaitable AND
+    // chainable on the same object, so a plain `mockReturnThis` is
+    // sufficient — vitest only awaits the resolved value.
+    limit: vi.fn().mockReturnThis(),
     innerJoin: vi.fn().mockReturnThis(),
+    for: vi.fn().mockResolvedValue([MOCK_GAME]),
+    // Tests await `select().limit()` directly — make the chain object
+    // thenable so legacy `await db.select()...limit(1)` paths still
+    // resolve to `[MOCK_GAME]`.
+    then: (resolve: (value: unknown) => unknown) => resolve([MOCK_GAME]),
   };
   const mockUpdateChain = {
     set: vi.fn().mockReturnThis(),
@@ -74,15 +84,23 @@ function createMockDb() {
     where: vi.fn().mockResolvedValue(undefined),
   };
 
-  return {
+  const db = {
     select: vi.fn().mockReturnValue(mockSelectChain),
     insert: vi.fn().mockReturnValue(mockInsertChain),
     update: vi.fn().mockReturnValue(mockUpdateChain),
     delete: vi.fn().mockReturnValue(mockDeleteChain),
+    // The new `startGame` wraps its work in `db.transaction(async tx
+    // => …)`; the mock just runs the callback inline against the same
+    // mock db so existing chain-stub fixtures are reused.
+    transaction: vi.fn(),
     _selectChain: mockSelectChain,
     _insertChain: mockInsertChain,
     _updateChain: mockUpdateChain,
   };
+  db.transaction.mockImplementation(
+    async (callback: (tx: typeof db) => Promise<unknown>) => callback(db),
+  );
+  return db;
 }
 
 function mockMissingUserWithRoomQueries(db: ReturnType<typeof createMockDb>) {
@@ -383,10 +401,14 @@ describe('LobbyService', () => {
 
   describe('startGame', () => {
     it('rejects non-host starting', async () => {
+      // The new `startGame` uses `tx.select()...limit(1).for('update')`
+      // for the row lock; mock `.for()` as the awaitable terminator.
       db.select.mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([MOCK_GAME]),
+            limit: vi.fn().mockReturnValue({
+              for: vi.fn().mockResolvedValue([MOCK_GAME]),
+            }),
           }),
         }),
       });
@@ -400,7 +422,9 @@ describe('LobbyService', () => {
       const selectImpl = () => ({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([MOCK_GAME]),
+            limit: vi.fn().mockReturnValue({
+              for: vi.fn().mockResolvedValue([MOCK_GAME]),
+            }),
           }),
           innerJoin: vi.fn().mockReturnValue({
             where: vi.fn().mockResolvedValue([]),
@@ -415,19 +439,37 @@ describe('LobbyService', () => {
     });
 
     it('starts a solo room with only the host and a synthetic rival', async () => {
-      db._selectChain.limit.mockResolvedValue([MOCK_SOLO_GAME]);
+      // startGame's row-lock select resolves through `.for('update')`,
+      // which the mock chain handles via `_selectChain.for`. We only
+      // override `.for` so the test feeds the solo fixture into the
+      // transactional path.
+      db._selectChain.for.mockResolvedValue([MOCK_SOLO_GAME]);
       vi.spyOn(
         service as unknown as TTestLobbyService,
         'getPlayersForGame',
       ).mockResolvedValue([MOCK_PLAYER]);
+      // The transaction-wrapped startGame builds a fresh `GameRepository`
+      // around the tx; capture `startFromLobby` calls by stubbing
+      // GameRepository's prototype.
+      const startFromLobby = vi.fn().mockResolvedValue(undefined);
       const gameRepo = (service as unknown as TTestLobbyService).gameRepo;
-      gameRepo.startFromLobby = vi.fn().mockResolvedValue(undefined);
+      gameRepo.startFromLobby = startFromLobby;
+      const { GameRepository: TestGameRepository } = await import(
+        '@/persistence/repository/GameRepository.js'
+      );
+      const protoSpy = vi
+        .spyOn(TestGameRepository.prototype, 'startFromLobby')
+        .mockImplementation(startFromLobby);
 
       await expect(
         service.startGame('game-1', 'host-user'),
       ).resolves.toBeDefined();
 
-      const startedGame = gameRepo.startFromLobby.mock.calls[0]?.[0];
+      // The transaction-wrapped path constructs a fresh GameRepository
+      // bound to the tx, so the call lands on the prototype spy rather
+      // than the field-replaced stub on the original gameRepo.
+      const startedGame = startFromLobby.mock.calls[0]?.[0];
+      expect(startedGame).toBeDefined();
       expect(startedGame.players).toHaveLength(2);
       expect(startedGame.players[1].id).toBe('rival:game-1');
       expect(startedGame.options).toMatchObject({
@@ -435,6 +477,49 @@ describe('LobbyService', () => {
         soloDifficulty: 3,
         playerCount: 2,
       });
+      protoSpy.mockRestore();
+    });
+
+    // Regression for the double-start race: two concurrent
+    // POST /lobby/rooms/:id/start (double-click, retry from a stale
+    // tab) used to both pass the `status === 'waiting'` guard and
+    // create two diverging Game instances for the same gameId. With
+    // the row-locking transaction, the second call sees status
+    // already flipped to 'playing' and rejects.
+    it('rejects a second concurrent start once the first one settles', async () => {
+      // Simulate the lock + atomic flip: the FIRST `.for('update')`
+      // returns the waiting room; the SECOND returns it with status
+      // already advanced to 'playing' (because the first transaction
+      // committed first).
+      db._selectChain.for
+        .mockResolvedValueOnce([MOCK_SOLO_GAME])
+        .mockResolvedValueOnce([
+          { ...MOCK_SOLO_GAME, status: 'playing' as const },
+        ]);
+
+      vi.spyOn(
+        service as unknown as TTestLobbyService,
+        'getPlayersForGame',
+      ).mockResolvedValue([MOCK_PLAYER]);
+
+      const startFromLobby = vi.fn().mockResolvedValue(undefined);
+      const { GameRepository: TestGameRepository } = await import(
+        '@/persistence/repository/GameRepository.js'
+      );
+      const protoSpy = vi
+        .spyOn(TestGameRepository.prototype, 'startFromLobby')
+        .mockImplementation(startFromLobby);
+
+      await expect(
+        service.startGame('game-1', 'host-user'),
+      ).resolves.toBeDefined();
+      await expect(service.startGame('game-1', 'host-user')).rejects.toThrow(
+        BadRequestException,
+      );
+
+      // Only the first start should have actually persisted a game.
+      expect(startFromLobby).toHaveBeenCalledTimes(1);
+      protoSpy.mockRestore();
     });
   });
 
