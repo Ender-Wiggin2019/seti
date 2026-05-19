@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
-import type { AuthService } from './auth.service.js';
 import { IS_PUBLIC_KEY } from './public.decorator.js';
 
 export interface IJwtPayload {
@@ -19,7 +18,6 @@ export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
     private readonly reflector: Reflector,
-    private readonly authService: AuthService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -50,7 +48,12 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Invalid or expired token');
     }
 
-    await this.authService.getProfile(payload.sub);
+    // The JWT is cryptographically signed and short-lived; trust its
+    // claims for the duration of the request and skip the per-request
+    // `SELECT * FROM users` round-trip the guard previously did. User
+    // existence is re-verified on the user-write paths (`PUT /auth/me`
+    // and similar) where the FK actually matters; an authenticated read
+    // doesn't need to re-prove the user exists on every request.
     request.user = payload;
 
     return true;

@@ -580,13 +580,36 @@ export class AlienState {
     return { board: undefined, slot: undefined };
   }
 
-  private executeRewards(
+  /**
+   * Apply a slot's rewards to a player. Simple rewards (VP, credits, etc.)
+   * settle inline; the first `CUSTOM:DRAW_ALIEN_CARD` becomes a deferred
+   * `PlayerInput` that the caller can either return up the call stack
+   * (for action-pipeline contexts) or push onto the deferred queue (for
+   * lifecycle-hook contexts like `onSolarSystemRotated`).
+   *
+   * Public so plugin lifecycle hooks (`onSolarSystemRotated`,
+   * `onPassRotation`, etc.) can route their reward delivery through the
+   * same code path as `applyTraceToSlotInternal` instead of the
+   * fire-and-forget `executeSimpleSlotRewards` helper that silently
+   * skips CUSTOM rewards.
+   */
+  public executeRewards(
     player: IPlayer,
     game: IGame,
     board: AlienBoard,
     rewards: TSlotReward[],
     onComplete?: () => PlayerInput | undefined,
   ): PlayerInput | undefined {
+    // Two passes:
+    //   1) apply every synchronous reward (simple effects + synchronous
+    //      CUSTOMs like GAIN_EXOFOSSIL) so order-of-rewards in the slot
+    //      data doesn't determine whether VPs survive.
+    //   2) at most one async CUSTOM (DRAW_ALIEN_CARD) becomes the
+    //      returned PlayerInput. Earlier this method returned on the
+    //      first such reward, silently dropping any reward listed after
+    //      it — a footgun if future ladder data lists the draw before
+    //      a VP entry.
+    let hasPendingDrawAlienCard = false;
     for (const reward of rewards) {
       if (executeSimpleSlotReward(player, game, reward)) {
         continue;
@@ -595,20 +618,27 @@ export class AlienState {
       switch (reward.type) {
         case 'CUSTOM':
           if (reward.effectId === 'DRAW_ALIEN_CARD') {
-            return this.createDrawAlienCardInput(
-              player,
-              game,
-              {
-                alienType: board.alienType,
-              },
-              onComplete,
-            );
+            // Defer the prompt so any later simple rewards in the same
+            // array still get applied. Only the first such entry is
+            // honoured (a slot with two draws is treated as one prompt).
+            hasPendingDrawAlienCard = true;
+            break;
           }
           if (reward.effectId === 'GAIN_EXOFOSSIL') {
             player.gainExofossils(1);
           }
           break;
       }
+    }
+    if (hasPendingDrawAlienCard) {
+      return this.createDrawAlienCardInput(
+        player,
+        game,
+        {
+          alienType: board.alienType,
+        },
+        onComplete,
+      );
     }
     return undefined;
   }

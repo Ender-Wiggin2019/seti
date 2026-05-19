@@ -19,6 +19,22 @@
 
 _(none — most recent slice just landed)_
 
+> **Audit notes (2026-05-19):**
+> - Re-scanned the backlog after a batch of slices landed (pink trace UX,
+>   Earth-scan-marks-wrong-sector, Anomalies token art, sector data arc +
+>   overflow bin). Still-open items below have been re-verified against
+>   the current `feature/server` HEAD; closed items moved to "Done".
+> - Two upstream commits from Ender-Wiggin landed since the last audit:
+>   `856413d feat(server): implement Space Agency cards` and `ed20411
+>   feat(client): improve corporation card interactions` (+ `7ee9ec4
+>   feat(organization): add corporation assets and powers`). These
+>   expand the server but do not close any item below; they may add new
+>   surface that wants its own polish slice — not picked up here without
+>   explicit handover.
+> - Test baseline now: server 2122/2123 (only the pre-existing
+>   `SpaceAgencyAlienPlugins > deals Amoeba discovery cards…` flake);
+>   client 303/303; `pnpm -r typecheck` clean.
+
 ## Open
 
 > Items are roughly ordered by priority within each P-tier. P0 = act first,
@@ -35,24 +51,28 @@ _(none — most recent slice just landed)_
   matching the pattern `wsClient.ts` already uses for `reconnect_failed`.
 - Add a regression covering "reconnect → state push" through the existing WS
   mocks rather than a real network test.
+- _Audit (2026-05-19): still broken — `socket.on('reconnect', …)` is
+  unchanged at line 19._
 
 ### P0 — Anomalies plugin token-trigger and `executeRewards` short-circuit footguns
 
 - Two related fragility issues in the alien reward delivery path. Each is safe
   given today's data, but both will break silently the moment data shifts —
   and they will be hit by the planned reward-ladder cross-check below.
-  - `packages/server/src/engine/alien/AlienState.ts:587-611` —
-    `executeRewards` returns immediately when it encounters a `CUSTOM`
-    reward, dropping any later entries in the same `rewards` array. Today's
-    Anomaly ladder lists VP first then `DRAW_ALIEN_CARD`, so we are safe; any
-    future slot that lists CUSTOM before VP would silently lose VP. Fix:
-    apply all simple rewards in one pass, then return the first CUSTOM input.
-  - `packages/server/src/engine/alien/plugins/AnomaliesAlienPlugin.ts:135` —
+  - `packages/server/src/engine/alien/AlienState.ts:583-614` —
+    `executeRewards` short-circuits with `return` the first time it
+    encounters a `CUSTOM:DRAW_ALIEN_CARD` reward, dropping any later
+    entries in the same `rewards` array. Today's Anomaly ladder lists VP
+    first then `DRAW_ALIEN_CARD`, so we're safe; any slot that lists
+    CUSTOM before VP would silently lose VP. Fix: apply all simple
+    rewards in one pass, then return the first CUSTOM input at the end.
+  - `packages/server/src/engine/alien/plugins/AnomaliesAlienPlugin.ts:137` —
     `onSolarSystemRotated` pays the column leader via
     `executeSimpleSlotRewards`, which silently skips `CUSTOM` rewards. Fix:
     route through `AlienState.executeRewards` and surface any returned
     PlayerInput (mirroring the pattern used in `applyTraceToSlotInternal`).
 - Both fixes belong in the same slice as the cross-check below; pair them.
+- _Audit (2026-05-19): both still present at the cited lines._
 
 ### P0 — Cross-check the rest of the alien reward ladders for similar bugs
 
@@ -121,25 +141,42 @@ _(none — most recent slice just landed)_
 - Fix: add a prune step in `unloadGame`, or on the game-completion path,
   keeping only the last N snapshots (configurable, default ~50).
 
-### P2 — Calibrate base alien art coordinates
+### P1 — Calibrate Centaurians / Exertians / Mascamites / Oumuamua art
 
-- 5 base aliens have art frames + overlays + placeholder coordinates.
-  - Anomalies coordinates are calibrated.
-  - Centaurians / Exertians / Mascamites / Oumuamua use rough placeholder
-    coordinates that need pixel measurement.
-- Use `?calibrate=1` overlay to read deltas; update each renderer's layout
-  constants until rings sit on printed circles.
-- Once art mode is solid, evaluate whether to extract a shared
-  `<TraceOnlyAlienBoardArt>` for the four trace-only renderers.
+- Anomalies coordinates were re-tuned (`AnomaliesBoardArt`'s
+  `ANOMALIES_LAYOUTS`) and the four other aliens still use rough
+  placeholder coordinates from the original art-mode landing.
+- Use `?calibrate=1` + `?previewOverflow=N` overlay (already wired) plus
+  `/tmp/try-layout.mjs` (the iteration script used for Anomalies) to
+  read deltas and update each renderer's layout constants until rings
+  sit on printed circles.
+- Once all five are calibrated, evaluate whether to extract a shared
+  `<TraceOnlyAlienBoardArt>` for the four non-Anomalies renderers.
+- Bumped from P2 → P1 because the user-visible misalignment is the next
+  obvious blocker after Anomalies looked right.
 
-_(Done: hi-res replacements landed for the 5 base aliens + face-down back.
-See "Done → Hi-res alien art + face-down back" below.)_
+### P2 — Apply tile-half overflow stacking to non-Anomalies aliens
 
-### P2 — Polish overflow rendering for other aliens
+- The shared `SlotOccupantOverlay` now centre-stacks tokens inside
+  overflow pills (per the pink-trace UX slice). When the other four
+  aliens get their art-mode coordinates calibrated above, double-check
+  the overflow rendering on Oumuamua tier 6 (`maxOccupants: -1`) and
+  any other `maxOccupants: -1` slot — the existing `TraceMarkerOverlay`
+  already supports this, but it hasn't been visually verified for the
+  hi-res art.
 
-- Anomalies overflow stacks tokens vertically with a 1.5 % stride. When other
-  aliens get art-mode renderers (Oumuamua tier 6 is `maxOccupants: -1`), apply
-  the same pattern via the shared `TraceMarkerOverlay`.
+### P2 — Tune per-tile sector data-slot layouts
+
+- `SectorNodeView.tsx` `PER_TILE_SIGNAL_LAYOUT` currently holds the
+  same default layout for all four tiles (TILE_1..TILE_4). The plumbing
+  is there for per-tile overrides — each tile's printed data-slot oval
+  has slightly different positioning, so this is where remaining
+  pixel-level tuning lives.
+- Tune visually using a fresh game (each tile gets randomly placed at a
+  cardinal each game). Five knobs per half: `sigX`, `sigY`, `sigRot`,
+  `arcRadiusPx`, `dotDiameterPx`. `dotDiameterPx`/`arcRadiusPx` already
+  scale automatically with `boardScale`; `sigRot` is angular — leave
+  alone.
 
 ### P2 — `sync-card-assets.sh` runs twice on build and is destructive
 
@@ -209,6 +246,79 @@ See "Done → Hi-res alien art + face-down back" below.)_
   flipped to `false` in most packages.
 
 ## Done
+
+### Sector data dot arc + zoom-aware sizing + overflow bin - 2026-05-19
+
+Assumptions:
+- Printed sector data slots are curved ovals along each tile's arc, not
+  straight horizontal rows. Dots should match the curvature.
+- Adjacent dots in the same slot should touch (no gaps) regardless of
+  capacity (4/5/6) — a 6-data slot spans wider than a 4-data slot but
+  the dot density is identical.
+- Zooming the solar board must scale the data slot proportionally; the
+  data row was previously frozen in CSS px and broke at non-default zoom.
+- Per the rulebook, "any excess signals you mark in the sector count
+  towards winning" — sector resolution only happens at the end of the
+  active player's main action, so a player can pile up overflow markers
+  within one turn.
+
+Plan:
+- [x] `SectorSignalList`: add an `arc` mode that places dots tangent to
+  each other along an arc (`step = 2·asin(d / 2r)`). Concave side faces
+  the sun (board centre).
+- [x] `SectorNodeView`: per-(tileId, half-index) layout table
+  (`PER_TILE_SIGNAL_LAYOUT`) with `sigX/sigY/sigRot/arcRadiusPx/dotDiameterPx`.
+  Each tile has its own copy so they tune independently.
+- [x] `SolarSystemView` → `SectorGrid` → `SectorView` → `SectorNodeView`:
+  thread `boardScale` (= current zoom factor) and multiply px-based
+  layout values by it so the slot stays aligned at any zoom.
+- [x] When `signals.length > capacity`, render the extras as a
+  horizontal stack flush to the right end of the arc — the temporary
+  holding area for overflow markers.
+- [x] Add a `Sector` regression test asserting overflow markers count
+  toward majority (4-vs-1 with 3 overflow markers, p1 wins).
+
+Review:
+- The arc formula picks `step = 2·asin(d/(2r))` (chord-angle) so adjacent
+  dots are exactly tangent; the slot's total angular span scales with
+  count, which is what the user expected.
+- `boardScale` is `normalizedSolarBoardZoom` (clamped 0.72…1.08), exposed
+  via prop chain — no React context, no CSS-var-readback hacks.
+- Server-side overflow logic was already correct (`Sector.markSignal`
+  appends past capacity, `computeRanking` iterates all signals); the
+  test locks that semantic in place.
+
+Verification:
+- `pnpm -r typecheck` clean.
+- `pnpm --filter @seti/client test -- --run` — 303/303.
+- `pnpm --filter @seti/server test -- --run` — 2122/2123 (only the
+  pre-existing Amoeba flake; new `Sector` overflow-majority test passes).
+
+Residual:
+- Per-tile fine-tuning of `PER_TILE_SIGNAL_LAYOUT` is open under
+  "P2 — Tune per-tile sector data-slot layouts". Today all four tile
+  entries point at the same default layout.
+
+### Anomalies token art + recalibrated anchors - 2026-05-19
+
+Plan:
+- [x] Drop 6 hi-res anomaly token PNGs (pink+credit/VP, yellow+card/publicity,
+  blue+data/energy) into `packages/client/public/assets/seti/aliens/anomalies/tokens/`.
+  Verified alpha channel (corners `a=0`, no white-bg leak).
+- [x] `SolarAlienTokenMarker`: render `<img>` with the matching art when
+  `(traceColor, headlineReward)` maps to a printed combo; fall back to
+  the pre-existing pill UI for any unmapped combo.
+- [x] Slide each token tangentially along its orbit
+  (`ALIEN_TOKEN_TANGENTIAL_OFFSET_PX = 35`) so it sits next to the
+  sector's planet/comet rather than on top of it.
+- [x] Recalibrate Anomalies trace-slot anchors against the hi-res
+  board art (`ANOMALIES_LAYOUTS`).
+
+Verification:
+- `pnpm --filter @seti/client typecheck` clean.
+- `pnpm --filter @seti/client test -- --run SolarSystemView` — 302/302.
+- Live board screenshot: 8 anomaly tokens render with their printed art
+  on a fresh `anomaly-trigger-resolution` replay.
 
 ### Earth-scan-marks-wrong-sector - 2026-05-18
 

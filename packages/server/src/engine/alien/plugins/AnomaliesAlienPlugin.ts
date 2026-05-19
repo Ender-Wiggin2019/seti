@@ -3,6 +3,8 @@ import {
   ANOMALY_TOKEN_REWARD_OPTIONS,
 } from '@seti/common/constant/alienBoardConfig';
 import { EAlienType, EPlanet, ETrace } from '@seti/common/types/protocol/enums';
+import { EPriority } from '../../deferred/Priority.js';
+import { SimpleDeferredAction } from '../../deferred/SimpleDeferredAction.js';
 import { getSectorIndexByPlanet } from '../../effects/scan/ScanEffectUtils.js';
 import { createActionEvent } from '../../event/GameEvent.js';
 import type { IGame } from '../../IGame.js';
@@ -13,7 +15,6 @@ import {
   type ITraceSlot,
   isAnomaliesAlienBoard,
 } from '../AlienBoard.js';
-import { executeSimpleSlotRewards } from '../AlienRewards.js';
 import type { IAlienPlugin } from '../IAlienPlugin.js';
 
 export const ANOMALY_COLUMN_PREFIX = 'anomaly-column';
@@ -134,7 +135,32 @@ export class AnomaliesAlienPlugin implements IAlienPlugin {
     );
     if (!player) return;
 
-    executeSimpleSlotRewards(player, game, triggeredToken.rewards);
+    // Route through `AlienState.executeRewards` so any future
+    // CUSTOM rewards (e.g. DRAW_ALIEN_CARD) on an anomaly token get
+    // delivered as a real PlayerInput. Today's
+    // `ANOMALY_TOKEN_REWARD_OPTIONS` is all simple rewards, but the
+    // earlier `executeSimpleSlotRewards` call would have silently
+    // dropped any CUSTOM if the data evolved.
+    //
+    // The hook itself returns `void`, so any returned PlayerInput is
+    // pushed onto the deferred action queue with priority IMMEDIATE_REWARD
+    // — the same slot the regular trace-placement pipeline uses for
+    // alien-card prompts that emerge mid-action.
+    const rewardInput = game.alienState.executeRewards(
+      player,
+      game,
+      board,
+      triggeredToken.rewards,
+    );
+    if (rewardInput !== undefined) {
+      game.deferredActions.push(
+        new SimpleDeferredAction(
+          player,
+          () => rewardInput,
+          EPriority.IMMEDIATE_REWARD,
+        ),
+      );
+    }
 
     game.eventLog.append(
       createActionEvent(player.id, 'ANOMALY_TRIGGERED', {

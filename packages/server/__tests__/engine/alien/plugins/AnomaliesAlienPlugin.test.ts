@@ -8,6 +8,7 @@ import { AlienRegistry } from '@/engine/alien/AlienRegistry.js';
 import { AlienState } from '@/engine/alien/AlienState.js';
 import { AnomaliesAlienPlugin } from '@/engine/alien/plugins/AnomaliesAlienPlugin.js';
 import { Deck } from '@/engine/deck/Deck.js';
+import { DeferredActionsQueue } from '@/engine/deferred/DeferredActionsQueue.js';
 import { EventLog } from '@/engine/event/EventLog.js';
 import type { IGame } from '@/engine/IGame.js';
 import { Player } from '@/engine/player/Player.js';
@@ -50,6 +51,7 @@ function createGame(options?: {
     eventLog: new EventLog(),
     random: new SeededRandom(options?.seed ?? 'anomalies-seed'),
     mainDeck: new Deck<string>(['55', '56', '57', '58'], []),
+    deferredActions: new DeferredActionsQueue(),
     lockCurrentTurn: () => undefined,
     sectors: Array.from({ length: options?.sectorsCount ?? 8 }, (_, i) => ({
       id: `s${i}`,
@@ -562,5 +564,93 @@ describe('AnomaliesAlienPlugin', () => {
     expect(tier1!.occupants).toHaveLength(1);
     expect(tier4!.occupants).toHaveLength(1);
     expect(overflow!.occupants).toHaveLength(2);
+  });
+
+  // Regression: `AlienState.executeRewards` previously short-circuited
+  // with `return` on the first CUSTOM:DRAW_ALIEN_CARD, dropping any
+  // simple rewards listed AFTER it. Today's ladder lists VP first and
+  // the draw second so the data was safe; a future re-order would
+  // silently lose VP without this test.
+  it('applies simple rewards listed AFTER a CUSTOM:DRAW_ALIEN_CARD', () => {
+    const plugin = new AnomaliesAlienPlugin();
+    AlienRegistry.register(plugin);
+    const p1 = createPlayer('p1', 0);
+    const { game, board } = createGame({ players: [p1] });
+    board.discovered = true;
+    plugin.onDiscover(game, []);
+
+    // Seed the alien deck so the DRAW_ALIEN_CARD path produces a real
+    // face-up vs deck PlayerInput (both options must be available for
+    // the CUSTOM to materialize as a SelectOption).
+    board.alienDeckDrawPile = ['ET.1', 'ET.2'];
+    board.faceUpAlienCardId = 'ET.3';
+
+    // Pick any column slot and rewrite its rewards in a deliberately-
+    // hostile order: CUSTOM:DRAW_ALIEN_CARD FIRST, with simple
+    // rewards (VP, publicity) AFTER.
+    const slot = getColumnSlotByTier(board, ETrace.PINK, 1);
+    expect(slot).toBeDefined();
+    slot!.rewards = [
+      { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
+      { type: 'VP', amount: 5 },
+      { type: 'PUBLICITY', amount: 2 },
+    ];
+
+    const scoreBefore = p1.score;
+    const publicityBefore = p1.resources.publicity;
+
+    const placedInput = game.alienState.applyTraceToSlot(
+      p1,
+      game,
+      slot!.slotId,
+      slot!.traceColor,
+    );
+
+    // Simple rewards still applied even though the CUSTOM was listed
+    // first; the CUSTOM became a PlayerInput (the alien-card prompt),
+    // not the boolean `true` that `applyTraceToSlot` returns when
+    // there's no follow-up input.
+    expect(p1.score).toBe(scoreBefore + 5);
+    expect(p1.resources.publicity).toBe(publicityBefore + 2);
+    expect(typeof placedInput).toBe('object');
+  });
+
+  // Regression: `onSolarSystemRotated` previously paid the column
+  // leader via `executeSimpleSlotRewards`, which silently skipped
+  // CUSTOM rewards. Today's `ANOMALY_TOKEN_REWARD_OPTIONS` is all
+  // simple, but if a future option grows a CUSTOM reward we want it to
+  // surface as a PlayerInput on the deferred queue rather than vanish.
+  it('routes CUSTOM token rewards through the deferred queue (no silent drop)', () => {
+    const plugin = new AnomaliesAlienPlugin();
+    AlienRegistry.register(plugin);
+    const p1 = createPlayer('p1', 0);
+    const { game, board } = createGame({ players: [p1] });
+    board.discovered = true;
+    plugin.onDiscover(game, []);
+
+    // Seed both the deck and a face-up card so DRAW_ALIEN_CARD produces
+    // a face-up vs deck SelectOption (a real PlayerInput).
+    board.alienDeckDrawPile = ['ET.1', 'ET.2'];
+    board.faceUpAlienCardId = 'ET.3';
+
+    const tokenAtEarth = getTokenBySector(game, 0);
+    expect(tokenAtEarth).toBeDefined();
+    tokenAtEarth!.rewards = [
+      { type: 'VP', amount: 1 },
+      { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
+    ];
+
+    const triggeredColor = tokenAtEarth!.traceColor;
+    const columnSlot = getColumnSlotByTier(board, triggeredColor, 1);
+    board.placeTrace(columnSlot!, { playerId: p1.id }, triggeredColor);
+
+    expect(game.deferredActions.isEmpty()).toBe(true);
+    const scoreBefore = p1.score;
+    plugin.onSolarSystemRotated(game);
+
+    // Simple VP applied inline; the draw-alien-card prompt was pushed
+    // onto the deferred queue (not dropped).
+    expect(p1.score).toBe(scoreBefore + 1);
+    expect(game.deferredActions.isEmpty()).toBe(false);
   });
 });

@@ -3,15 +3,12 @@ import {
   Get,
   type INestApplication,
   Module,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { APP_GUARD, Reflector } from '@nestjs/core';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import { JwtAuthGuard } from '@/auth/jwt-auth.guard.js';
 import { Public } from '@/auth/public.decorator.js';
-
-const MISSING_USER_ID = 'bf91fbcb-f898-43f6-8aca-0d94e7b908c3';
 
 @Controller('guard-test')
 class GuardTestController {
@@ -27,15 +24,6 @@ class GuardTestController {
   }
 }
 
-const mockAuthService = {
-  getProfile: vi.fn().mockResolvedValue({
-    id: 'user-1',
-    name: 'User One',
-    email: 'u1@test.com',
-    createdAt: new Date(),
-  }),
-};
-
 @Module({
   imports: [JwtModule.register({ secret: 'test-secret' })],
   controllers: [GuardTestController],
@@ -44,7 +32,7 @@ const mockAuthService = {
       provide: APP_GUARD,
       inject: [JwtService, Reflector],
       useFactory: (jwtService: JwtService, reflector: Reflector) =>
-        new JwtAuthGuard(jwtService, reflector, mockAuthService as never),
+        new JwtAuthGuard(jwtService, reflector),
     },
   ],
 })
@@ -63,14 +51,6 @@ describe('JwtAuthGuard integration', () => {
   let baseUrl = '';
 
   beforeEach(async () => {
-    vi.clearAllMocks();
-    mockAuthService.getProfile.mockResolvedValue({
-      id: 'user-1',
-      name: 'User One',
-      email: 'u1@test.com',
-      createdAt: new Date(),
-    });
-
     const module = await Test.createTestingModule({
       imports: [GuardTestModule],
     }).compile();
@@ -111,13 +91,16 @@ describe('JwtAuthGuard integration', () => {
     await expect(res.json()).resolves.toEqual({ ok: true });
   });
 
-  it('rejects private endpoint when token user no longer exists', async () => {
-    mockAuthService.getProfile.mockRejectedValueOnce(
-      new UnauthorizedException('User not found'),
-    );
+  // Per the design notes (`docs/lessons.md`): the guard no longer
+  // round-trips to the DB on every authenticated request. A signed
+  // JWT is trusted for read paths; user-existence is re-verified on
+  // user-write paths (`PUT /auth/me`) via `authService.updateProfile`,
+  // not in the guard. So a token with a stale `sub` still passes the
+  // guard — it'll only 401 if the controller actually needs the user.
+  it('does not round-trip to authService on every authenticated request', async () => {
     const jwt = app.get(JwtService);
     const token = jwt.sign({
-      sub: MISSING_USER_ID,
+      sub: 'bf91fbcb-f898-43f6-8aca-0d94e7b908c3',
       email: 'missing@test.com',
     });
 
@@ -127,6 +110,10 @@ describe('JwtAuthGuard integration', () => {
       },
     });
 
-    expect(res.status).toBe(401);
+    // The controller doesn't dereference req.user.sub, so the request
+    // succeeds. (In production the user-write controllers re-verify
+    // existence themselves; the integration suite for those lives next
+    // to the auth.controller, not here.)
+    expect(res.status).toBe(200);
   });
 });
