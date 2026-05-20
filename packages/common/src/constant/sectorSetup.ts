@@ -324,8 +324,10 @@ export function createDefaultSolarSystemWheels(): TSolarSystemWheels {
 export const OUMUAMUA_SOLAR_SYSTEM_WHEEL_POSITION = {
   ringIndex: 3,
   sourceBandIndex: 2,
-  // createWheelRow stores rulebook slot 1 at internal index 1.
-  sourceSlotIndex: 1,
+  // 2 sectors clockwise of Jupiter on the same band: Jupiter is at
+  // rulebook slot 3 of band-2, so Oumuamua sits at rulebook slot 5.
+  // createWheelRow stores rulebook slot N (for N=1..7) at internal index N.
+  sourceSlotIndex: 5,
 } as const;
 
 export function createSolarSystemWheelsWithOumuamua(

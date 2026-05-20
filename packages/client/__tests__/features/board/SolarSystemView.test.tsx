@@ -434,7 +434,7 @@ describe('SolarSystemView', () => {
     ).toHaveStyle({ backgroundColor: '#d63384' });
   });
 
-  it('anchors the Oumuamua sector data list above its solar-system cell', () => {
+  it('anchors the Oumuamua sector data list at its solar-system cell', () => {
     const solarSystem = createExpandedOuterRingMock();
     const tile: IPublicOumuamuaTile = {
       spaceId: 'ring-4-cell-8',
@@ -456,8 +456,10 @@ describe('SolarSystemView', () => {
 
     expect(anchor.style.left).toBe(targetCell.style.left);
     expect(anchor.style.top).toBe(targetCell.style.top);
-    expect(anchor.style.transform).toContain('rotate(95.625deg)');
-    expect(dataList.style.transform).toContain('calc(-100%');
+    // The arc layout positions each dot via absolute children of the
+    // data-list wrapper, so the wrapper itself sits at the tile and a
+    // `translate(...) rotate(...)` carries it to the calibrated offset.
+    expect(dataList.style.transform).toContain('translate(');
     expect(slots).toHaveLength(3);
     expect(dataList).toHaveAttribute('data-sector-id', 'sector-1');
     expect(screen.getByTestId('solar-oumuamua-data-slot-0')).toHaveAttribute(

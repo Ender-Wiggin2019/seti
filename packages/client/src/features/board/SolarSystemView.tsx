@@ -21,6 +21,10 @@ import {
 } from '@seti/common/utils/alienTracePresentation';
 import { type CSSProperties, useMemo, useState } from 'react';
 import { cn } from '@/lib/cn';
+import {
+  useOumuamuaCalibration,
+  useOumuamuaDataPillCalibration,
+} from '@/hooks/useCalibrationMode';
 import { useTextMode } from '@/stores/debugStore';
 import { useGameViewStore } from '@/stores/gameViewStore';
 import type {
@@ -1079,13 +1083,21 @@ export function SolarSystemView({
           })}
 
         {oumuamuaSectorData ? (
-          <OumuamuaSectorDataList
-            point={oumuamuaSectorData.point}
-            tile={oumuamuaSectorData.tile}
-            signals={oumuamuaSectorData.signals}
-            playerColors={playerColors}
-            textMode={textMode}
-          />
+          <>
+            <OumuamuaPlanetArt
+              point={oumuamuaSectorData.point}
+              boardWidthPx={solarBoardWidthPx}
+              textMode={textMode}
+            />
+            <OumuamuaSectorDataList
+              point={oumuamuaSectorData.point}
+              tile={oumuamuaSectorData.tile}
+              signals={oumuamuaSectorData.signals}
+              playerColors={playerColors}
+              textMode={textMode}
+              boardScale={normalizedSolarBoardZoom}
+            />
+          </>
         ) : null}
 
         {solarAlienTokenView.map((item) => (
@@ -1159,19 +1171,180 @@ export function SolarSystemView({
   );
 }
 
+/**
+ * Width of the printed Oumuamua planet image as a fraction of the solar
+ * board width. Calibrated against the printed wheel art so the tile's
+ * notch wraps the adjacent ring-3 feature; iterate via `?oumScale=…`
+ * before locking in.
+ */
+const OUMUAMUA_PLANET_BASE_WIDTH_FRACTION = 0.195;
+const OUMUAMUA_PLANET_ASPECT_RATIO = 594 / 365;
+
+/**
+ * Image-local rotation applied so the printed "OUMUAMUA" text and the 1/2/3
+ * data circles end up facing the centre of the wheel after the tile-angle
+ * rotation is added on. Placeholder of 0° — calibrate live with `?oumRot=…`.
+ */
+const OUMUAMUA_PLANET_BASE_ROTATION_DEG = 217;
+
+/**
+ * Pixel offset of the planet image from the tile's space-centre, in the
+ * tile's local frame:
+ *   - `tangentialPx`: positive = clockwise around the sun.
+ *   - `radialPx`:     positive = away from the sun.
+ * Calibration knobs (`?oumT=`/`?oumR=`) are added on top so you can
+ * iterate live, then bake the final numbers in here.
+ */
+const OUMUAMUA_PLANET_BASE_OFFSET = {
+  tangentialPx: -35,
+  radialPx: -14,
+} as const;
+
+function OumuamuaPlanetArt({
+  point,
+  boardWidthPx,
+  textMode,
+}: {
+  point: ISpacePoint;
+  boardWidthPx: number;
+  textMode: boolean;
+}): React.JSX.Element | null {
+  const calibration = useOumuamuaCalibration();
+  // Skip the planet PNG in text mode — text mode is a debug aid that
+  // intentionally hides image-mode art.
+  if (textMode) {
+    return null;
+  }
+
+  const widthPx = Math.round(
+    boardWidthPx * OUMUAMUA_PLANET_BASE_WIDTH_FRACTION * calibration.scale,
+  );
+  const heightPx = Math.round(widthPx / OUMUAMUA_PLANET_ASPECT_RATIO);
+
+  // Convert tangential / radial pixel offsets (calibration knobs) to x/y
+  // pixel offsets in the un-rotated image-local frame. The image is
+  // rotated by `point.rotationDeg + base + offset` around its centre, so
+  // applying offsets BEFORE the rotation keeps "T" tangential and "R"
+  // radial regardless of which sector the tile sits in.
+  const angleRad =
+    ((point.rotationDeg + OUMUAMUA_PLANET_BASE_ROTATION_DEG) * Math.PI) / 180;
+  const tangentialPx =
+    OUMUAMUA_PLANET_BASE_OFFSET.tangentialPx + calibration.offsetT;
+  const radialPx = OUMUAMUA_PLANET_BASE_OFFSET.radialPx + calibration.offsetR;
+  const tangentX = Math.cos(angleRad) * tangentialPx;
+  const tangentY = Math.sin(angleRad) * tangentialPx;
+  const radialX = Math.sin(angleRad) * radialPx;
+  const radialY = -Math.cos(angleRad) * radialPx;
+  const offsetX = tangentX + radialX;
+  const offsetY = tangentY + radialY;
+
+  return (
+    <div
+      className='pointer-events-none absolute'
+      data-testid={`solar-oumuamua-planet-${point.spaceId}`}
+      style={{
+        left: `${point.xPercent}%`,
+        top: `${point.yPercent}%`,
+        width: `${widthPx}px`,
+        height: `${heightPx}px`,
+        transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px)) rotate(${
+          point.rotationDeg +
+          OUMUAMUA_PLANET_BASE_ROTATION_DEG +
+          calibration.rotationOffset
+        }deg)`,
+        transformOrigin: 'center',
+        zIndex: 84,
+      }}
+    >
+      <img
+        src='/assets/seti/aliens/oumuamua/planet.webp'
+        alt='Oumuamua'
+        className='h-full w-full select-none'
+        draggable={false}
+        style={{
+          imageRendering: 'auto',
+          filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.55))',
+        }}
+      />
+    </div>
+  );
+}
+
+/**
+ * Where the 3-data pill sits relative to the tile centre.
+ *
+ * - text mode: placed straight up from the tile (legacy debug behaviour),
+ *   clear of any other markers so it's easy to verify capacity at a glance.
+ * - image mode: overlaid roughly on the printed 1/2/3 circles. Iterate
+ *   visually with `?oumT=…&oumR=…` URL params (shared with the planet
+ *   art's calibration knobs) before locking in.
+ */
+const OUMUAMUA_DATA_PILL_BASE_OFFSET = {
+  textMode: { tangentialPx: 44, radialPx: -18, rotationDeg: 14 },
+  imageMode: { tangentialPx: 25, radialPx: -1, rotationDeg: 5 },
+} as const;
+
+/**
+ * Arc geometry for the 3 data dots in image mode. Mirrors the per-tile
+ * sector data slots in `SectorNodeView` so dot size/curvature match the
+ * rest of the board. Both fields are *base* px values — the renderer
+ * multiplies them by `boardScale` so the arc shrinks/grows with zoom.
+ */
+const OUMUAMUA_DATA_ARC_DEFAULT = {
+  /** Distance from the dot wrapper to the arc's centre of curvature, in px. */
+  radiusPx: 300,
+  /** Diameter of each dot in px. Adjacent dots touch (no gap). */
+  dotDiameterPx: 22.8,
+} as const;
+
 function OumuamuaSectorDataList({
   point,
   tile,
   signals,
   playerColors,
   textMode,
+  boardScale = 1,
 }: {
   point: ISpacePoint;
   tile: IPublicOumuamuaTile;
   signals: IPublicSectorSignal[];
   playerColors: Record<string, string>;
   textMode: boolean;
+  boardScale?: number;
 }): React.JSX.Element {
+  const calibration = useOumuamuaDataPillCalibration();
+  const baseOffset = textMode
+    ? OUMUAMUA_DATA_PILL_BASE_OFFSET.textMode
+    : OUMUAMUA_DATA_PILL_BASE_OFFSET.imageMode;
+
+  // Tangential = perpendicular to the radial axis at the tile (positive =
+  // clockwise around the sun). Radial = away from the sun (positive).
+  // Convert pixel offsets to viewport x/y deltas using the tile's
+  // angular position so the pill follows the tile around the wheel.
+  // Multiply by `boardScale` so the group's offset shrinks/grows with
+  // zoom in lockstep with the planet art (which is already px-scaled
+  // via boardWidthPx).
+  const angleRad = (point.rotationDeg * Math.PI) / 180;
+  const tangentialPx =
+    (baseOffset.tangentialPx + calibration.offsetT) * boardScale;
+  const radialPx = (baseOffset.radialPx + calibration.offsetR) * boardScale;
+  const tangentX = Math.cos(angleRad) * tangentialPx;
+  const tangentY = Math.sin(angleRad) * tangentialPx;
+  const radialX = Math.sin(angleRad) * radialPx;
+  const radialY = -Math.cos(angleRad) * radialPx;
+  const offsetX = tangentX + radialX;
+  const offsetY = tangentY + radialY;
+  const pillRotation =
+    point.rotationDeg + baseOffset.rotationDeg + calibration.rotation;
+
+  // Scale the arc geometry by zoom so dots stay the same visual size as
+  // the regular per-tile sector data dots (which apply the same scale
+  // in `SectorNodeView`).
+  const scaledArc = {
+    radiusPx: OUMUAMUA_DATA_ARC_DEFAULT.radiusPx * boardScale,
+    dotDiameterPx: OUMUAMUA_DATA_ARC_DEFAULT.dotDiameterPx * boardScale,
+  };
+
   return (
     <div
       className='pointer-events-none absolute h-0 w-0'
@@ -1179,20 +1352,24 @@ function OumuamuaSectorDataList({
       style={{
         left: `${point.xPercent}%`,
         top: `${point.yPercent}%`,
-        transform: `rotate(${point.rotationDeg}deg)`,
-        transformOrigin: 'center',
         zIndex: 86,
       }}
       title={`Oumuamua sector ${tile.sectorId}`}
     >
       <div
         className={cn(
-          'absolute left-1/2 top-0 flex items-center gap-[2px] rounded-full border bg-surface-950/90 shadow-[0_2px_8px_rgba(0,0,0,0.55)]',
+          'absolute left-0 top-0',
           textMode
-            ? 'border-white/75 px-1 py-0.5'
-            : 'border-cyan-100/75 px-1.5 py-1',
+            ? 'flex items-center gap-[2px] rounded-full border border-white/75 bg-surface-950/90 px-1 py-0.5 shadow-[0_2px_8px_rgba(0,0,0,0.55)]'
+            : 'pointer-events-none',
         )}
-        style={{ transform: 'translate(-50%, calc(-100% - 10px))' }}
+        style={{
+          transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px)) rotate(${pillRotation}deg)`,
+          transformOrigin: 'center',
+          // Arc-mode children position absolutely; give them a frame so the
+          // outer translate above stays the anchor point.
+          ...(textMode ? {} : { width: 0, height: 0, position: 'relative' }),
+        }}
         data-testid='solar-oumuamua-data-list'
         data-sector-id={tile.sectorId}
       >
@@ -1202,6 +1379,7 @@ function OumuamuaSectorDataList({
           playerColors={playerColors}
           textMode={textMode}
           slotTestIdPrefix='solar-oumuamua-data-slot'
+          arc={textMode ? undefined : scaledArc}
         />
       </div>
     </div>

@@ -102,13 +102,17 @@ describe('OumuamuaAlienPlugin', () => {
     plugin.onDiscover(game, []);
     const state = plugin.getRuntimeState(game);
 
-    expect(state?.meta?.spaceId).toBe('ring-3-cell-3');
+    // Oumuamua sits 2 sectors clockwise of Jupiter on ring-3 band-2.
+    // Jupiter is at rulebook slot 3, so Oumuamua is at rulebook slot 5,
+    // internal index 5; cells-per-sector for ring 3 is 3, so the fixed
+    // expanded space-id is `ring-3-cell-15`.
+    expect(state?.meta?.spaceId).toBe('ring-3-cell-15');
     const location = game.solarSystem?.getPlanetLocation(EPlanet.OUMUAMUA);
-    expect(location?.space.id).toBe('ring-3-cell-3');
+    expect(location?.space.id).toBe('ring-3-cell-15');
     expect(
       location?.space.elements.some((element) => element.type === 'NULL'),
     ).toBe(false);
-    expect(game.solarSystemSetup?.wheels[3][2][1].cell).toEqual({
+    expect(game.solarSystemSetup?.wheels[3][2][5].cell).toEqual({
       type: 'PLANET',
       hasPublicityIcon: true,
       planet: EPlanet.OUMUAMUA,
