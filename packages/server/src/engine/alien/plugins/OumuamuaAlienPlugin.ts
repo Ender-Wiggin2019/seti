@@ -60,11 +60,42 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
       this.addTraceColumn(board, color);
     }
 
-    const playerIdsOnSpace =
-      game.solarSystem
-        ?.getProbesAt(placement.spaceId)
-        .map((probe) => probe.playerId) ?? [];
-    for (const playerId of new Set(playerIdsOnSpace)) {
+    // Per rulebook setup: any probe sitting on the disc-3 wedge where
+    // the Oumuamua tile is being placed is lifted onto the new tile
+    // and that player gains 1 publicity.
+    //
+    // The ring-3 slot at Oumuamua's position is NULL pre-discovery (a
+    // transparent cutout — see `getTopSpaceInSector`), so probes
+    // already sitting there are physically on the ring-4 cell
+    // underneath. After we add the PLANET element to the ring-3 cell
+    // it becomes the new top space; we lift the ring-4 occupants up.
+    //
+    // The ring-3 cell itself is normally untraversable while NULL, so
+    // it shouldn't carry occupants pre-discovery — but we still scan
+    // it defensively in case a debug path or future feature ever puts
+    // one there.
+    const oumuamuaSpace = game.solarSystem?.spaces.find(
+      (space) => space.id === placement.spaceId,
+    );
+    const liftedPlayerIds = new Set<string>();
+    for (const probe of oumuamuaSpace?.occupants ?? []) {
+      liftedPlayerIds.add(probe.playerId);
+    }
+    if (oumuamuaSpace) {
+      const coveredLowerSpaces =
+        game.solarSystem?.getLowerSpacesCoveredBy(oumuamuaSpace, 4) ?? [];
+      for (const lowerSpace of coveredLowerSpaces) {
+        if (lowerSpace.occupants.length === 0) continue;
+        for (const probe of lowerSpace.occupants) {
+          liftedPlayerIds.add(probe.playerId);
+        }
+        game.solarSystem?.relocateProbesBetweenSpaces(
+          lowerSpace,
+          oumuamuaSpace,
+        );
+      }
+    }
+    for (const playerId of liftedPlayerIds) {
       const player = game.players.find(
         (candidate) => candidate.id === playerId,
       );

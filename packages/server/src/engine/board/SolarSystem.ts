@@ -780,6 +780,47 @@ export class SolarSystem {
     return upperRingSpaces[Math.min(mappedIndex, upperRingSpaces.length - 1)];
   }
 
+  /**
+   * Inverse of `resolveUpperSpaceForLower`: given a cell on an upper
+   * ring (e.g. ring 3), return the lower-ring (e.g. ring 4) cells it
+   * covers. Used at Oumuamua discovery to lift any ring-4 probe whose
+   * cell is now under the freshly placed tile.
+   */
+  public getLowerSpacesCoveredBy(
+    upperSpace: ISolarSystemSpace,
+    lowerRingIndex: number,
+  ): ISolarSystemSpace[] {
+    const lowerRingSpaces = this.spaces
+      .filter((space) => space.ringIndex === lowerRingIndex)
+      .sort((left, right) => left.indexInRing - right.indexInRing);
+    return lowerRingSpaces.filter(
+      (lower) =>
+        this.resolveUpperSpaceForLower(upperSpace.ringIndex, lower).id ===
+        upperSpace.id,
+    );
+  }
+
+  /**
+   * Relocate every probe currently sitting on `fromSpace` onto
+   * `toSpace`, in occupant order. Used for one-shot displacements like
+   * Oumuamua-discovery lifting probes from a now-covered ring-4 cell
+   * onto the new ring-3 tile. Skips the adjacency check that
+   * `moveProbe` enforces, because this isn't a movement action.
+   */
+  public relocateProbesBetweenSpaces(
+    fromSpace: ISolarSystemSpace,
+    toSpace: ISolarSystemSpace,
+  ): ISolarProbe[] {
+    if (fromSpace.id === toSpace.id) return [];
+    const lifted = [...fromSpace.occupants];
+    fromSpace.occupants = [];
+    for (const probe of lifted) {
+      toSpace.occupants.push(probe);
+      this.probeLocationById.set(probe.id, toSpace);
+    }
+    return lifted;
+  }
+
   private getRingCellCount(ringIndex: number): number {
     const ringOffset = ringIndex - 1;
     return SHARED_RING_CELL_COUNTS[ringOffset];

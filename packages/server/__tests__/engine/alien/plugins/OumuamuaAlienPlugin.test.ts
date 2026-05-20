@@ -119,7 +119,11 @@ describe('OumuamuaAlienPlugin', () => {
     });
   });
 
-  it('grants +1 publicity if a probe is already on the oumuamua space at discover', () => {
+  // Pre-discovery the ring-3 NULL cutout cell isn't a real playable
+  // space, but `placeProbe` doesn't enforce that — debug paths and
+  // future features may end up putting a probe there. Defensively
+  // check that those probes still trigger the +1 publicity grant.
+  it('grants +1 publicity if a probe is already on the ring-3 oumuamua cell at discover', () => {
     const { game, p1 } = createGame('oumuamua-a2');
     const plugin = new OumuamuaAlienPlugin();
     const spaceId = findExpectedOumuamuaSpaceId(game);
@@ -128,6 +132,40 @@ describe('OumuamuaAlienPlugin', () => {
     game.solarSystem?.placeProbe(p1.id, spaceId);
     plugin.onDiscover(game, []);
 
+    expect(p1.resources.publicity).toBe(publicityBefore + 1);
+  });
+
+  // Pre-discovery, Oumuamua's ring-3 slot is NULL (a transparent
+  // cutout), so probes "already there" are physically sitting on the
+  // ring-4 cell underneath. At discovery the ring-3 cell becomes a
+  // PLANET; ring-4 occupants should be lifted onto the new tile and
+  // gain +1 publicity per the rulebook setup line.
+  it('lifts probes from the ring-4 cell beneath onto the new oumuamua tile and grants +1 publicity', () => {
+    const { game, p1 } = createGame('oumuamua-cover-lift', {
+      initialDiscAngles: [0, 0, 0],
+    });
+    const plugin = new OumuamuaAlienPlugin();
+    const oumuamuaSpaceId = findExpectedOumuamuaSpaceId(game);
+    const oumuamuaSpace = game.solarSystem?.spaces.find(
+      (space) => space.id === oumuamuaSpaceId,
+    );
+    if (!oumuamuaSpace) throw new Error('expected oumuamua ring-3 space');
+    const lowerSpaces = game.solarSystem?.getLowerSpacesCoveredBy(
+      oumuamuaSpace,
+      4,
+    );
+    if (!lowerSpaces || lowerSpaces.length === 0) {
+      throw new Error('expected ring-4 spaces beneath oumuamua');
+    }
+    const ring4Space = lowerSpaces[0];
+    const probe = game.solarSystem?.placeProbe(p1.id, ring4Space.id);
+    if (!probe) throw new Error('expected probe placement to succeed');
+    const publicityBefore = p1.resources.publicity;
+
+    plugin.onDiscover(game, []);
+
+    expect(ring4Space.occupants).toEqual([]);
+    expect(oumuamuaSpace.occupants.map((p) => p.id)).toContain(probe.id);
     expect(p1.resources.publicity).toBe(publicityBefore + 1);
   });
 
