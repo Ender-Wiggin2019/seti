@@ -550,10 +550,23 @@ describe('GameLayout', () => {
       });
     });
 
-    it('reuses the tech board for tech option input and submits the clicked stack', async () => {
+    it('renders compact tech-id option input in the action dock and submits the selected tech id', async () => {
       const sendInput = vi.fn();
       mockContextValue = createMockContext({
         sendInput,
+        gameState: createMockGameState({
+          techBoard: {
+            stacks: [
+              {
+                tech: ETech.SCAN,
+                level: 0,
+                remainingTiles: 2,
+                firstTakeBonusAvailable: true,
+                topTileBonuses: [{ type: ETechBonusType.DATA_2 }],
+              },
+            ],
+          },
+        }),
         pendingInput: {
           inputId: 'input-tech',
           type: EPlayerInputType.OPTION,
@@ -564,32 +577,61 @@ describe('GameLayout', () => {
             },
           ],
         } as unknown as IGameContext['pendingInput'],
-        gameState: createMockGameState({
-          techBoard: {
-            stacks: [
-              {
-                tech: ETech.SCAN,
-                level: 0,
-                remainingTiles: 4,
-                firstTakeBonusAvailable: true,
-                topTileBonuses: [{ type: ETechBonusType.DATA_2 }],
-              },
-            ],
-          },
-        }),
       });
 
       await renderLayout();
 
       const actions = screen.getByTestId('bottom-actions');
-      expect(within(actions).getByText('Tech Board')).toBeInTheDocument();
+      expect(within(actions).queryByText('Tech Board')).not.toBeInTheDocument();
+      expect(
+        within(actions).getByTestId(
+          `input-tech-tile-${ETechId.SCAN_EARTH_LOOK}`,
+        ),
+      ).toBeInTheDocument();
+      expect(
+        within(actions).getByTestId(
+          `input-tech-first-bonus-${ETechId.SCAN_EARTH_LOOK}`,
+        ),
+      ).toHaveTextContent('2VP available');
+      expect(
+        within(actions).getByLabelText('2 data bonus'),
+      ).toBeInTheDocument();
 
-      fireEvent.click(within(actions).getByTestId('tech-stack-scan-tech-0'));
+      fireEvent.click(
+        within(actions).getByTestId(`input-option-${ETechId.SCAN_EARTH_LOOK}`),
+      );
 
       expect(sendInput).toHaveBeenCalledWith({
         inputId: 'input-tech',
         type: EPlayerInputType.OPTION,
         optionId: ETechId.SCAN_EARTH_LOOK,
+      });
+    });
+
+    it('renders compact tech-category input in the action dock', async () => {
+      const sendInput = vi.fn();
+      mockContextValue = createMockContext({
+        sendInput,
+        pendingInput: {
+          inputId: 'input-tech-category',
+          type: EPlayerInputType.TECH,
+          options: [ETech.SCAN],
+        } as unknown as IGameContext['pendingInput'],
+      });
+
+      await renderLayout();
+
+      const actions = screen.getByTestId('bottom-actions');
+      expect(within(actions).queryByText('Tech Board')).not.toBeInTheDocument();
+
+      fireEvent.click(
+        within(actions).getByRole('button', { name: /Earth \(or adj\.\)/i }),
+      );
+
+      expect(sendInput).toHaveBeenCalledWith({
+        inputId: 'input-tech-category',
+        type: EPlayerInputType.TECH,
+        tech: ETech.SCAN,
       });
     });
 

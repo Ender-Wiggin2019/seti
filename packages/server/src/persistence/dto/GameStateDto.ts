@@ -44,6 +44,7 @@ import type {
   IMissionRuntimeState,
 } from '@/engine/missions/IMission.js';
 import type { TCardItem } from '@/engine/player/IPlayer.js';
+import type { IPendingResolutionJournal } from '@/engine/resolution/PendingResolutionJournal.js';
 import type { IFinalScoringResult } from '@/engine/scoring/FinalScoring.js';
 import type {
   TGoldScoringTileId,
@@ -359,4 +360,5 @@ export interface IGameStateDto {
   finalScoringResult?: IFinalScoringResult;
   missionTracker: IMissionTrackerDto;
   rivalState?: IRivalStateDto;
+  pendingResolution?: IPendingResolutionJournal<IGameStateDto>;
 }

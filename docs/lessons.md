@@ -10,6 +10,7 @@
 - 每个 bug 或需求都要先有旧实现失败、新实现通过的可观察断言；跑过“相关测试”不等于覆盖了用户报告点。
 - Smoke 只证明路径可达；核心规则要覆盖真实用户操作到可观察规则结果，长流程用固定样例或显式 deterministic setup，并说明它不是 mock/debug/WS shortcut。
 - UI/规则回归先列矩阵再断言：actor/view、text/image、action/card 类型、条件显示正反面、server/common 投影到 DOM/图片/alt/test id 的一致性。
+- checklist 按实体列出时，测试也要按实体可追踪：例如 11 个 corporation 不能只用一个循环测试覆盖，至少要用 per-corporation 命名的 `it.each`/单测，让失败能直接指向具体 corporation。
 - 验证结束前反问：如果原 bug 仍存在，这个测试会失败吗；不会就补更具体断言。
 
 ## E2E 真实路径
@@ -30,6 +31,10 @@
 - Token/board 视觉要表达规则语义：solar anomaly token 是奖励 pill（trace 色辅助、desc icon 居中），alien trace slot 用同色 border 容器，hidden board 不泄露真实 trace。
 - Anomalies board 保持 red/yellow/blue 三列横排；单列内部按规则读法让低 index 在底部，压缩布局优先减 padding/slot 宽度，不牺牲 desc icon 可读性。
 - UI 缩放控件不能只改 `max-width`；如果用户预期布局变小，必须改实际 reserved `width`/`height`，并在浏览器里检查 `getBoundingClientRect()`，不只看 style attribute。
+- Player input 是动作提示区域，不应直接塞完整 board 级组件；tech/card 等输入要用紧凑选择控件，并把完整 board 保留在对应 board tab。
+- Player input 的 compact tech 不能只显示 tile/name；若 public tech board 提供 stack 状态，必须显示 first 2VP 状态和 printed/back bonus，并复用 `TechStack` 的 bonus 语义。
+- Player input 中所有真实卡牌展示都应走统一 client `CardRender` 包装；tuck income 的 `HandView -> CardRender` 路径是参考实现，quick-start/prelude 等卡牌预览也要复用同一入口。
+- 接入 prelude card 时不要重写正常图片版组件；image mode 继续用维护中的 `@seti/cards/PreludeCard`，只在 client `CardRender` 的 text mode 分支补对应文本渲染。
 - Text mode card 的价格应是左上角紧凑 readout，例如 `3 C` / `3 E`；数字更大更粗，资源字母更小，不要再用右上角 `#id + full priceType` 堆叠。
 - Text mode desc 不能直接输出翻译字符串；应先用通用 desc parser 安全拆分 `<br>` 和 `{token}`，换行渲染成真实 DOM，token 渲染成可读文本。
 

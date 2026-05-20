@@ -27,6 +27,7 @@ import {
   TILES_PER_STACK,
 } from '@seti/common/types/tech';
 import { BaseCorporation } from '@/engine/corporation/BaseCorporation.js';
+import { Deck } from '@/engine/deck/Deck.js';
 import { Game } from '@/engine/Game.js';
 import type { TCardItem } from '@/engine/player/IPlayer.js';
 import type { ISetupRole } from '@/engine/setup/ISetupRole.js';
@@ -126,6 +127,17 @@ function chooseFirstOrganization(
   return organizationId;
 }
 
+function chooseOrganization(
+  game: Game,
+  playerId: string,
+  organizationId: EOrganizationId,
+): void {
+  game.processInput(playerId, {
+    type: EPlayerInputType.OPTION,
+    optionId: organizationId,
+  });
+}
+
 function getCurrentSetupOptionIds(player: Game['players'][number]): string[] {
   const model = player.waitingFor?.toModel() as
     | ISelectOptionInputModel
@@ -152,6 +164,19 @@ function chooseFirstQuickStartCards(
     });
   }
   return selected;
+}
+
+function chooseQuickStartCards(
+  game: Game,
+  playerId: string,
+  cardIds: readonly string[],
+): void {
+  for (const cardId of cardIds) {
+    game.processInput(playerId, {
+      type: EPlayerInputType.OPTION,
+      optionId: cardId,
+    });
+  }
 }
 
 function sumLowerResource(
@@ -516,6 +541,90 @@ describe('GameSetup', () => {
         sumLowerResource(p1QuickStartIds, EResource.DATA),
       signalTokens: sumLowerResource(p1QuickStartIds, EResource.SIGNAL_TOKEN),
     });
+  });
+
+  it('offers cards gained by quick start cards and organization setup in the following setup tuck prompt', () => {
+    const knownDraws = [
+      '39',
+      '90',
+      '91',
+      '92',
+      '93',
+      '122',
+      '128',
+      '136',
+      '37',
+      '43',
+    ];
+
+    for (let seedIndex = 0; seedIndex < 200; seedIndex += 1) {
+      const game = Game.create(
+        BASE_PLAYERS.slice(0, 2),
+        createAgenciesOptions(2, { startResourceCards: true }),
+        `seed-agencies-setup-tuck-order-${seedIndex}`,
+      );
+      const p1 = game.players[0];
+      const p2 = game.players[1];
+      const p1OrganizationId = getSetupOrganizationOptions(p1).find((id) => {
+        const organization = ORGANIZATIONS_BY_ID[id];
+        return organization.resources.card > 0 && organization.tuckIncome > 0;
+      });
+      if (!p1OrganizationId) continue;
+
+      chooseOrganization(game, 'p1', p1OrganizationId);
+      const p1QuickStartOptions = getCurrentSetupOptionIds(p1);
+      const cardDrawingQuickStartId = p1QuickStartOptions.find(
+        (cardId) => sumLowerResource([cardId], EResource.CARD) > 0,
+      );
+      if (!cardDrawingQuickStartId) continue;
+      const p1QuickStartIds = [
+        cardDrawingQuickStartId,
+        ...p1QuickStartOptions.filter(
+          (cardId) => cardId !== cardDrawingQuickStartId,
+        ),
+      ].slice(0, 2);
+
+      chooseQuickStartCards(game, 'p1', p1QuickStartIds);
+      chooseFirstOrganization(game, 'p2');
+      const p2QuickStartIds = getCurrentSetupOptionIds(p2).slice(0, 2);
+      const p1QuickStartDrawCount = sumLowerResource(
+        p1QuickStartIds,
+        EResource.CARD,
+      );
+      const p2QuickStartDrawCount = sumLowerResource(
+        p2QuickStartIds,
+        EResource.CARD,
+      );
+      const p1OrganizationDrawCount =
+        ORGANIZATIONS_BY_ID[p1OrganizationId].resources.card;
+      game.mainDeck = new Deck(knownDraws);
+
+      chooseQuickStartCards(game, 'p2', p2QuickStartIds);
+
+      const p1TuckInput = p1.waitingFor?.toModel();
+      const p1TuckCardIds =
+        p1TuckInput?.type === EPlayerInputType.CARD
+          ? p1TuckInput.cards.map((card) => card.id)
+          : [];
+      const expectedQuickStartDraws = knownDraws.slice(
+        0,
+        p1QuickStartDrawCount,
+      );
+      const expectedOrganizationDraws = knownDraws.slice(
+        p1QuickStartDrawCount + p2QuickStartDrawCount,
+        p1QuickStartDrawCount + p2QuickStartDrawCount + p1OrganizationDrawCount,
+      );
+
+      expect(p1TuckCardIds).toEqual(
+        expect.arrayContaining([
+          ...expectedQuickStartDraws,
+          ...expectedOrganizationDraws,
+        ]),
+      );
+      return;
+    }
+
+    throw new Error('Expected to find a setup seed with card-gaining choices');
   });
 
   it('rejects quick start selections outside the player dealt candidates', () => {

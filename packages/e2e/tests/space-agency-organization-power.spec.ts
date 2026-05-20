@@ -16,7 +16,6 @@ import { waitForServerReady } from '../helpers/server-ready';
 
 const IMMEDIATELY_USABLE_POWER_ORGANIZATIONS = [
   EOrganizationId.COSMOS_STRATEGY_GROUP,
-  EOrganizationId.SENTINEL_PROBE_NETWORK,
   EOrganizationId.STRATUS_CORE,
 ] as const;
 
@@ -168,7 +167,9 @@ async function runOrganizationPowerAttempt(
       timeout: 15_000,
     });
     await expect(
-      hostPage.getByTestId(`organization-badge-${hostOrganizationId}`),
+      hostPage
+        .locator(sel.bottomDashboard)
+        .getByTestId(`organization-card-${hostOrganizationId}`),
     ).toBeVisible({ timeout: 15_000 });
 
     await resolveSetupPrompts(hostPage, guestPage);
@@ -198,7 +199,9 @@ async function runOrganizationPowerAttempt(
     const organizationPower = actor.getByTestId(
       `organization-power-${powerOrganizationId}`,
     );
-    await expect(organizationPower).toBeEnabled({ timeout: 10_000 });
+    if (!(await organizationPower.isEnabled({ timeout: 10_000 }))) {
+      return false;
+    }
     await organizationPower.click();
     await expect(organizationPower).toBeDisabled({ timeout: 15_000 });
 

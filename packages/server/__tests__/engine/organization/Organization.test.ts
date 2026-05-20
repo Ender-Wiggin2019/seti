@@ -57,6 +57,25 @@ function resetPlayerForOrganizationSetup(player: IPlayer): void {
   };
 }
 
+const ONCE_PER_ROUND_ORGANIZATIONS = [
+  EOrganizationId.COSMOS_STRATEGY_GROUP,
+  EOrganizationId.DEEP_SKY_SURVEY,
+  EOrganizationId.FENWICK_RESEARCH_CENTER,
+  EOrganizationId.FUTURESPAN_INSTITUTE,
+  EOrganizationId.HELION_ASSEMBLY,
+  EOrganizationId.MISSION_RELAY,
+  EOrganizationId.ORBITAL_DYNAMICS,
+  EOrganizationId.SENTINEL_PROBE_NETWORK,
+  EOrganizationId.STRATUS_CORE,
+  EOrganizationId.TURING_SYSTEMS,
+] as const;
+
+function passActivePlayer(game: Game): void {
+  const player = game.activePlayer;
+  game.processMainAction(player.id, { type: EMainAction.PASS });
+  resolveAllInputsDefault(game, player);
+}
+
 describe('Organization', () => {
   it('applies documented setup resources, income, tuck count, and starting probes', () => {
     const game = createCleanGame();
@@ -381,6 +400,35 @@ describe('Organization', () => {
     );
   });
 
+  it('rejects Cosmos Strategy Group when no cards are available without clearing marks', () => {
+    const game = createCleanGame();
+    const player = game.players[0];
+    resetPlayerForOrganizationSetup(player);
+    player.organizationIds = [EOrganizationId.COSMOS_STRATEGY_GROUP];
+    player.oncePerRoundUsed = {
+      [EOrganizationId.COSMOS_STRATEGY_GROUP]: false,
+    };
+    player.organizationState[EOrganizationId.COSMOS_STRATEGY_GROUP] = {
+      markedRewards: { [EResource.CREDIT]: true },
+    };
+    game.cardRow = [];
+    game.mainDeck = new Deck([]);
+
+    expect(() =>
+      UseOrganizationPowerFreeAction.execute(
+        player,
+        game,
+        EOrganizationId.COSMOS_STRATEGY_GROUP,
+      ),
+    ).toThrow('Organization power is not currently available');
+    expect(
+      player.organizationState[EOrganizationId.COSMOS_STRATEGY_GROUP],
+    ).toEqual({ markedRewards: { [EResource.CREDIT]: true } });
+    expect(player.oncePerRoundUsed[EOrganizationId.COSMOS_STRATEGY_GROUP]).toBe(
+      false,
+    );
+  });
+
   it('stores a resolved non-alien card corner for Sentinel Probe Network and replays it on power use', () => {
     const game = createCleanGame();
     const player = game.players[0];
@@ -620,21 +668,20 @@ describe('Organization', () => {
     ).toEqual({});
   });
 
-  it('resets once-per-round organization power usage at round end', () => {
-    const game = createCleanGame();
-    const player = game.players[0];
-    player.organizationIds = [EOrganizationId.STRATUS_CORE];
-    player.oncePerRoundUsed = { [EOrganizationId.STRATUS_CORE]: true };
+  it.each(ONCE_PER_ROUND_ORGANIZATIONS)(
+    'resets once-per-round organization power usage at round end for %s',
+    (organizationId) => {
+      const game = createCleanGame();
+      const player = game.players[0];
+      player.organizationIds = [organizationId];
+      player.oncePerRoundUsed = { [organizationId]: true };
 
-    const first = game.activePlayer;
-    game.processMainAction(first.id, { type: EMainAction.PASS });
-    resolveAllInputsDefault(game, first);
-    const second = game.activePlayer;
-    game.processMainAction(second.id, { type: EMainAction.PASS });
-    resolveAllInputsDefault(game, second);
+      passActivePlayer(game);
+      passActivePlayer(game);
 
-    expect(player.oncePerRoundUsed[EOrganizationId.STRATUS_CORE]).toBe(false);
-  });
+      expect(player.oncePerRoundUsed[organizationId]).toBe(false);
+    },
+  );
 
   it('puts organization starting data into the data pool, not the turn stash', () => {
     const game = createCleanGame();

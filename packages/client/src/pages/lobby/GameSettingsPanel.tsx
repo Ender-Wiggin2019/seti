@@ -7,8 +7,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 import { getRequiredHumanPlayerCount, isSoloRoom } from '@/lib/roomOptions';
-import { CoreAlienModulesSection } from '@/pages/lobby/CoreAlienModulesSection';
-import { SpaceAgencyOptionsSection } from '@/pages/lobby/SpaceAgencyOptionsSection';
+import { GameOptionsEditor } from '@/pages/lobby/GameOptionsEditor';
 
 interface IGameSettingsPanelProps {
   options: IGameOptions;
@@ -66,67 +65,63 @@ export function GameSettingsPanel({
             testId='solo-difficulty'
           />
         ) : null}
-        <ReadoutRow
-          label={t('client.game_settings.alien_modules')}
-          testId='alien-modules'
-        >
-          {readOnly ? (
-            <StatusValue
-              active={CORE_ALIEN_TYPES.some((alienType) =>
-                isAlienEnabled(options, alienType),
-              )}
-              on={t('client.common.on')}
-              off={t('client.common.off')}
+        {readOnly ? (
+          <>
+            <ReadoutRow
+              label={t('client.game_settings.alien_modules')}
               testId='alien-modules'
-            />
-          ) : (
-            <CoreAlienModulesSection
-              options={options}
-              disabled={false}
-              onChange={onChange}
-            />
-          )}
-        </ReadoutRow>
-        <ReadoutRow
-          label={t('client.game_settings.space_agency', {
-            defaultValue: 'Space Agency',
-          })}
-          testId='space-agency'
-        >
-          {readOnly ? (
-            <StatusValue
-              active={options.spaceAgencyOptions?.enabled === true}
-              on={t('client.common.on')}
-              off={t('client.common.off')}
+            >
+              <StatusValue
+                active={CORE_ALIEN_TYPES.some((alienType) =>
+                  isAlienEnabled(options, alienType),
+                )}
+                on={t('client.common.on')}
+                off={t('client.common.off')}
+                testId='alien-modules'
+              />
+            </ReadoutRow>
+            <ReadoutRow
+              label={t('client.game_settings.space_agency', {
+                defaultValue: 'Space Agency',
+              })}
               testId='space-agency'
+            >
+              <StatusValue
+                active={options.spaceAgencyOptions?.enabled === true}
+                on={t('client.common.on')}
+                off={t('client.common.off')}
+                testId='space-agency'
+              />
+            </ReadoutRow>
+            <ReadoutRow label={t('client.game_settings.undo')}>
+              <StatusValue
+                active={options.undoAllowed}
+                on={t('client.game_settings.undo_allowed')}
+                off={t('client.game_settings.undo_disabled')}
+                testId='undo'
+              />
+            </ReadoutRow>
+            <ReadoutRow
+              label={t('client.game_settings.turn_timer')}
+              value={
+                options.timerPerTurn > 0
+                  ? t('client.common.seconds_short', {
+                      count: options.timerPerTurn,
+                    })
+                  : t('client.common.off')
+              }
+              testId='turn-timer'
             />
-          ) : (
-            <SpaceAgencyOptionsSection
+          </>
+        ) : (
+          <div className='px-3 py-2.5'>
+            <GameOptionsEditor
               options={options}
               disabled={false}
               onChange={onChange}
             />
-          )}
-        </ReadoutRow>
-        <ReadoutRow label={t('client.game_settings.undo')}>
-          <StatusValue
-            active={options.undoAllowed}
-            on={t('client.game_settings.undo_allowed')}
-            off={t('client.game_settings.undo_disabled')}
-            testId='undo'
-          />
-        </ReadoutRow>
-        <ReadoutRow
-          label={t('client.game_settings.turn_timer')}
-          value={
-            options.timerPerTurn > 0
-              ? t('client.common.seconds_short', {
-                  count: options.timerPerTurn,
-                })
-              : t('client.common.off')
-          }
-          testId='turn-timer'
-        />
+          </div>
+        )}
       </dl>
     </div>
   );

@@ -13,6 +13,7 @@ import {
   ESetupChoiceStepKind,
   type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
+import { ETechId } from '@seti/common/types/tech';
 import {
   isAmoebaAlienBoard,
   isAnomaliesAlienBoard,
@@ -91,6 +92,83 @@ function chooseFirstOrganization(
   });
   return organizationId;
 }
+
+const ORGANIZATION_STATE_CASES = [
+  {
+    organizationId: EOrganizationId.COSMOS_STRATEGY_GROUP,
+    label: 'Cosmos Strategy Group',
+    state: { markedRewards: { credit: true } },
+    oncePerRoundUsed: true,
+  },
+  {
+    organizationId: EOrganizationId.DEEP_SKY_SURVEY,
+    label: 'Deep Sky Survey',
+    state: { swapPending: true },
+    oncePerRoundUsed: false,
+  },
+  {
+    organizationId: EOrganizationId.FENWICK_RESEARCH_CENTER,
+    label: 'Fenwick Research Center',
+    state: { selectedSource: 'deck' },
+    oncePerRoundUsed: false,
+  },
+  {
+    organizationId: EOrganizationId.FUTURESPAN_INSTITUTE,
+    label: 'Futurespan Institute',
+    state: {
+      preparedCard: '130',
+      preparedCardId: '130',
+      unlockScore: 25,
+    },
+    oncePerRoundUsed: true,
+  },
+  {
+    organizationId: EOrganizationId.HELION_ASSEMBLY,
+    label: 'Helion Assembly',
+    state: {
+      markedCategories: ['probe'],
+      pendingCategories: [],
+      disabledTechIds: [ETechId.PROBE_DOUBLE_PROBE],
+    },
+    oncePerRoundUsed: false,
+  },
+  {
+    organizationId: EOrganizationId.MISSION_RELAY,
+    label: 'Mission Relay',
+    state: { lastSource: 'main-deck' },
+    oncePerRoundUsed: false,
+  },
+  {
+    organizationId: EOrganizationId.ORBITAL_DYNAMICS,
+    label: 'Orbital Dynamics',
+    state: { movedProbeIds: ['probe-1'] },
+    oncePerRoundUsed: false,
+  },
+  {
+    organizationId: EOrganizationId.SENTINEL_PROBE_NETWORK,
+    label: 'Sentinel Probe Network',
+    state: { lastCardCornerCardId: '128' },
+    oncePerRoundUsed: false,
+  },
+  {
+    organizationId: EOrganizationId.STRATUS_CORE,
+    label: 'Stratus Core',
+    state: { queuedCorners: ['128'] },
+    oncePerRoundUsed: false,
+  },
+  {
+    organizationId: EOrganizationId.TURING_SYSTEMS,
+    label: 'Turing Systems',
+    state: { temporaryTechId: ETechId.SCAN_EARTH_LOOK },
+    oncePerRoundUsed: false,
+  },
+  {
+    organizationId: EOrganizationId.XENOLAB,
+    label: 'Xenolab',
+    state: { tiles: { launch: false, scan: true, research: true } },
+    oncePerRoundUsed: false,
+  },
+] as const;
 
 describe('GameDeserializer', () => {
   it('supports round-trip serialization', () => {
@@ -179,6 +257,26 @@ describe('GameDeserializer', () => {
     expect(restored.players[1].organizationState).toEqual({});
     expect(restored.players[1].oncePerRoundUsed).toEqual({});
   });
+
+  it.each(ORGANIZATION_STATE_CASES)(
+    'preserves $label organization state across a snapshot boundary',
+    ({ organizationId, state, oncePerRoundUsed }) => {
+      const dto = serializeGame(createTestGame(), 1);
+      dto.players[0].organizationIds = [organizationId];
+      dto.players[0].organizationState = { [organizationId]: state };
+      dto.players[0].oncePerRoundUsed = { [organizationId]: oncePerRoundUsed };
+
+      const restored = deserializeGame(dto);
+
+      expect(restored.players[0].organizationIds).toEqual([organizationId]);
+      expect(restored.players[0].organizationState).toEqual({
+        [organizationId]: state,
+      });
+      expect(restored.players[0].oncePerRoundUsed).toEqual({
+        [organizationId]: oncePerRoundUsed,
+      });
+    },
+  );
 
   it('rehydrates setup-choice completion with the organization resolution callback', () => {
     const game = Game.create(
@@ -785,6 +883,62 @@ describe('GameDeserializer', () => {
         type: EMainAction.PASS,
       });
     }).not.toThrow();
+  });
+
+  describe('rehydratePendingInputs — resolution journal', () => {
+    it('rebuilds a pending research-tech prompt after serialize/deserialize', () => {
+      const game = createTestGame();
+      resolveSetupTucks(game);
+      const player = getPlayer(game, 'p1');
+
+      player.resources.gain({ publicity: 20 });
+      const baseState = serializeGame(game, 1);
+      game.processMainAction(player.id, { type: EMainAction.RESEARCH_TECH });
+      (
+        game as unknown as {
+          pendingResolutionJournal?: unknown;
+        }
+      ).pendingResolutionJournal = {
+        version: 1,
+        baseState,
+        steps: [
+          {
+            type: 'MAIN_ACTION',
+            playerId: player.id,
+            action: { type: EMainAction.RESEARCH_TECH },
+          },
+        ],
+      };
+
+      const pendingModel = player.waitingFor?.toModel() as
+        | ISelectOptionInputModel
+        | undefined;
+      expect(game.phase).toBe(EPhase.IN_RESOLUTION);
+      expect(pendingModel?.type).toBe(EPlayerInputType.OPTION);
+
+      const restored = deserializeGame(serializeGame(game, 1));
+      const restoredPlayer = getPlayer(restored, 'p1');
+      const restoredModel = restoredPlayer.waitingFor?.toModel() as
+        | ISelectOptionInputModel
+        | undefined;
+
+      expect(restored.phase).toBe(EPhase.IN_RESOLUTION);
+      expect(restoredModel).toMatchObject({
+        type: EPlayerInputType.OPTION,
+        title: 'Select a technology to research',
+        options: pendingModel?.options,
+      });
+
+      const firstOption = restoredModel?.options[0];
+      expect(firstOption).toBeDefined();
+      restored.processInput(restoredPlayer.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: firstOption?.id ?? '',
+      });
+
+      expect(restoredPlayer.waitingFor).toBeUndefined();
+      expect(restored.phase).toBe(EPhase.AWAIT_END_TURN);
+    });
   });
 
   describe('rehydratePendingInputs — setup tuck chain', () => {

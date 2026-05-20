@@ -51,6 +51,28 @@ function createMemoryStorage(): Storage {
 vi.mock('@seti/cards', () => ({
   CardRender: ({ card }: { card: { id: string; name: string } }) =>
     createElement('div', { 'data-testid': `seti-card-${card.id}` }, card.name),
+  PreludeCard: ({
+    card,
+  }: {
+    card: {
+      id: string;
+      upperEffects?: Array<{ type?: string; value?: number }>;
+      lowerEffects?: Array<{ type?: string; value?: number }>;
+    };
+  }) =>
+    createElement(
+      'div',
+      { 'data-testid': `seti-prelude-card-${card.id}` },
+      card.id,
+      [...(card.upperEffects ?? []), ...(card.lowerEffects ?? [])].map(
+        (effect, index) =>
+          createElement('div', {
+            key: `${card.id}-${index}`,
+            'data-testid': `seti-effect-${effect.type ?? 'unknown'}`,
+            'data-value': effect.value,
+          }),
+      ),
+    ),
   IconFactory: ({ iconItem }: { iconItem: { type: string; value?: number } }) =>
     createElement('div', {
       'data-testid': `seti-icon-${iconItem.type}`,

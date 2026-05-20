@@ -140,6 +140,7 @@ describe('SelectOptionInput', () => {
     expect(
       screen.getByTestId('quick-start-card-preview-SR.3'),
     ).toBeInTheDocument();
+    expect(screen.getByTestId('card-render-SR.3')).toBeInTheDocument();
     expect(screen.getByTestId('seti-effect-red-signal')).toBeInTheDocument();
     expect(screen.getByTestId('seti-effect-score')).toBeInTheDocument();
     fireEvent.click(option);

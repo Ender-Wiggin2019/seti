@@ -90,6 +90,7 @@ export function PlayerDashboard({
                   ) === true
                 }
                 used={player.oncePerRoundUsed?.[organizationId] === true}
+                state={player.organizationState?.[organizationId]}
                 onUse={(id) =>
                   onFreeAction({
                     type: EFreeAction.USE_ORGANIZATION_POWER,

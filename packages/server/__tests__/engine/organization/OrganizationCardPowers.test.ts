@@ -124,6 +124,36 @@ describe('organization card powers', () => {
     );
   });
 
+  it('rejects Deep Sky Survey when a hand card or card-row card is missing', () => {
+    const game = createCleanGame();
+    const player = game.players[0];
+    resetPlayer(player);
+    restoreOrganization(player, game, EOrganizationId.DEEP_SKY_SURVEY);
+    player.hand = [];
+    game.cardRow = ['128'];
+
+    expect(() =>
+      UseOrganizationPowerFreeAction.execute(
+        player,
+        game,
+        EOrganizationId.DEEP_SKY_SURVEY,
+      ),
+    ).toThrow('Organization power is not currently available');
+
+    player.hand = ['136'];
+    game.cardRow = [];
+    expect(() =>
+      UseOrganizationPowerFreeAction.execute(
+        player,
+        game,
+        EOrganizationId.DEEP_SKY_SURVEY,
+      ),
+    ).toThrow('Organization power is not currently available');
+    expect(player.oncePerRoundUsed[EOrganizationId.DEEP_SKY_SURVEY]).toBe(
+      false,
+    );
+  });
+
   it('Mission Relay gains publicity for mission cards and resolves selected row card income with refill', () => {
     const game = createCleanGame();
     const player = game.players[0];
@@ -195,6 +225,57 @@ describe('organization card powers', () => {
     });
 
     expect(player.resources.publicity).toBe(0);
+  });
+
+  it('Mission Relay can draw from the deck and resolves that card income corner', () => {
+    const game = createCleanGame();
+    const player = game.players[0];
+    resetPlayer(player);
+    restoreOrganization(player, game, EOrganizationId.MISSION_RELAY);
+    player.resources.gain({ publicity: 2 });
+    game.cardRow = [];
+    game.mainDeck = new Deck(['136']);
+
+    const nextInput = UseOrganizationPowerFreeAction.execute(
+      player,
+      game,
+      EOrganizationId.MISSION_RELAY,
+    );
+
+    expect(nextInput).toBeUndefined();
+    expect(player.hand).toContain('136');
+    expect(player.resources.publicity).toBe(0);
+    expect(player.resources.energy).toBe(1);
+    expect(player.oncePerRoundUsed[EOrganizationId.MISSION_RELAY]).toBe(true);
+  });
+
+  it('rejects Mission Relay without enough publicity or available cards', () => {
+    const game = createCleanGame();
+    const player = game.players[0];
+    resetPlayer(player);
+    restoreOrganization(player, game, EOrganizationId.MISSION_RELAY);
+    player.resources.gain({ publicity: 1 });
+    game.cardRow = ['136'];
+
+    expect(() =>
+      UseOrganizationPowerFreeAction.execute(
+        player,
+        game,
+        EOrganizationId.MISSION_RELAY,
+      ),
+    ).toThrow('Organization power is not currently available');
+
+    player.resources.gain({ publicity: 1 });
+    game.cardRow = [];
+    game.mainDeck = new Deck([]);
+    expect(() =>
+      UseOrganizationPowerFreeAction.execute(
+        player,
+        game,
+        EOrganizationId.MISSION_RELAY,
+      ),
+    ).toThrow('Organization power is not currently available');
+    expect(player.oncePerRoundUsed[EOrganizationId.MISSION_RELAY]).toBe(false);
   });
 
   it('Stratus Core chains CARD_ANY card-row corners in row order without discarding row cards', () => {
@@ -306,6 +387,32 @@ describe('organization card powers', () => {
     expect(player.oncePerRoundUsed[EOrganizationId.COSMOS_STRATEGY_GROUP]).toBe(
       true,
     );
+  });
+
+  it('Cosmos Strategy Group only exposes its free action after a reward mark exists', () => {
+    const game = createCleanGame();
+    const player = game.players[0];
+    resetPlayer(player);
+    restoreOrganization(player, game, EOrganizationId.COSMOS_STRATEGY_GROUP);
+    player.completedMissions = [];
+    game.mainDeck = new Deck(['39']);
+
+    expect(OrganizationRegistry.getUsablePowerIds(player, game)).not.toContain(
+      EOrganizationId.COSMOS_STRATEGY_GROUP,
+    );
+
+    game.eventBus.emit({
+      type: EGameRuntimeEvent.MAIN_ACTION_RESOLVED,
+      game,
+      player,
+      action: { type: EMainAction.PLAY_CARD },
+      actionDetails: { cardId: '136' },
+    });
+
+    expect(OrganizationRegistry.getUsablePowerIds(player, game)).toContain(
+      EOrganizationId.COSMOS_STRATEGY_GROUP,
+    );
+    expect(player.completedMissions).toHaveLength(0);
   });
 
   it('Cosmos Strategy Group can mark the same sector reward again after its free action clears marks', () => {

@@ -4,6 +4,7 @@ import type {
   IInputResponse,
   IOrOptionsInputModel,
   IPlayerInputModel,
+  IPublicTechBoard,
 } from '@/types/re-exports';
 import { EPlayerInputType } from '@/types/re-exports';
 import { InputRenderer } from './InputRenderer';
@@ -11,6 +12,7 @@ import { InputRenderer } from './InputRenderer';
 export interface IOrOptionsInputProps {
   model: IOrOptionsInputModel;
   onSubmit: (response: IInputResponse) => void;
+  techBoard?: IPublicTechBoard;
 }
 
 function optionLabel(
@@ -24,6 +26,7 @@ function optionLabel(
 export function OrOptionsInput({
   model,
   onSubmit,
+  techBoard,
 }: IOrOptionsInputProps): React.JSX.Element {
   const { t } = useTranslation('common');
   if (model.options.length === 0) {
@@ -61,6 +64,7 @@ export function OrOptionsInput({
         >
           <InputRenderer
             model={option}
+            techBoard={techBoard}
             onSubmit={(response) =>
               onSubmit({
                 inputId: model.inputId,

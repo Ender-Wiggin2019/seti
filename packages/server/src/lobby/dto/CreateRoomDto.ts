@@ -1,3 +1,4 @@
+import type { TSoloDifficulty } from '@seti/common/types/protocol/solo';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -69,6 +70,16 @@ export class CreateRoomOptionsDto {
   expansions?: EExpansion[];
 
   @IsOptional()
+  @IsBoolean()
+  isSoloMode?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  soloDifficulty?: TSoloDifficulty;
+
+  @IsOptional()
   @IsObject()
   @ValidateNested()
   @Type(() => SpaceAgencyOptionsDto)
@@ -125,6 +136,16 @@ export class UpdateRoomOptionsDto {
   @IsArray()
   @IsEnum(EExpansion, { each: true })
   expansions?: EExpansion[];
+
+  @IsOptional()
+  @IsBoolean()
+  isSoloMode?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  soloDifficulty?: TSoloDifficulty;
 
   @IsOptional()
   @IsObject()

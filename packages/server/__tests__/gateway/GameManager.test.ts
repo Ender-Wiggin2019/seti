@@ -5,7 +5,10 @@ import {
   EErrorDisplay,
   EErrorSeverity,
 } from '@seti/common/types/protocol/errors';
-import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
+import {
+  EPlayerInputType,
+  type ISelectOptionInputModel,
+} from '@seti/common/types/protocol/playerInput';
 import { vi } from 'vitest';
 import { Deck } from '@/engine/deck/Deck.js';
 import { Game } from '@/engine/Game.js';
@@ -13,6 +16,8 @@ import type { IGame } from '@/engine/IGame.js';
 import { SelectOption } from '@/engine/input/SelectOption.js';
 import { GameManager } from '@/gateway/GameManager.js';
 import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
+import { deserializeGame } from '@/persistence/serializer/GameDeserializer.js';
+import { serializeGame } from '@/persistence/serializer/GameSerializer.js';
 import { resolveSetupTucks } from '../helpers/TestGameBuilder.js';
 
 function createTestGame(): IGame {
@@ -159,6 +164,92 @@ describe('GameManager', () => {
       });
 
       expect(mockDb.insert).toHaveBeenCalled();
+    });
+
+    it('records a durable journal when an action pauses for player input', async () => {
+      const game = createTestGame();
+      const player = game.players[0];
+      player.resources.gain({ publicity: 20 });
+      (manager as unknown as { cache: Map<string, IGame> }).cache.set(
+        'game-mgr-test',
+        game,
+      );
+      (manager as unknown as { versions: Map<string, number> }).versions.set(
+        'game-mgr-test',
+        0,
+      );
+
+      await manager.processAction('game-mgr-test', 'p1', {
+        type: EMainAction.RESEARCH_TECH,
+      });
+
+      expect(game.pendingResolutionJournal).toMatchObject({
+        version: 1,
+        steps: [
+          {
+            type: 'MAIN_ACTION',
+            playerId: 'p1',
+            action: { type: EMainAction.RESEARCH_TECH },
+          },
+        ],
+      });
+
+      const restored = deserializeGame(serializeGame(game, 1));
+      const restoredPlayer = restored.players[0];
+      const restoredModel = restoredPlayer.waitingFor?.toModel() as
+        | ISelectOptionInputModel
+        | undefined;
+
+      expect(restoredModel?.title).toBe('Select a technology to research');
+      expect(restoredModel?.inputId).toBeDefined();
+
+      await manager.processInput('game-mgr-test', 'p1', {
+        inputId: game.players[0].waitingFor?.inputId,
+        type: EPlayerInputType.OPTION,
+        optionId: restoredModel?.options[0]?.id ?? '',
+      });
+    });
+
+    it('appends input responses while a resolution remains paused', async () => {
+      const game = createTestGame();
+      const player = game.players[0];
+      player.resources.gain({ publicity: 20 });
+      (manager as unknown as { cache: Map<string, IGame> }).cache.set(
+        'game-mgr-test',
+        game,
+      );
+      (manager as unknown as { versions: Map<string, number> }).versions.set(
+        'game-mgr-test',
+        0,
+      );
+
+      await manager.processAction('game-mgr-test', 'p1', {
+        type: EMainAction.RESEARCH_TECH,
+      });
+
+      const techModel = player.waitingFor?.toModel() as ISelectOptionInputModel;
+      const computerTech = techModel.options.find((option) =>
+        option.id.startsWith('comp-'),
+      );
+      expect(computerTech).toBeDefined();
+
+      await manager.processInput('game-mgr-test', 'p1', {
+        inputId: techModel.inputId,
+        type: EPlayerInputType.OPTION,
+        optionId: computerTech?.id ?? '',
+      });
+
+      expect(game.pendingResolutionJournal?.steps).toHaveLength(2);
+      const liveModel = player.waitingFor?.toModel() as
+        | ISelectOptionInputModel
+        | undefined;
+
+      const restored = deserializeGame(serializeGame(game, 1));
+      const restoredModel = restored.players[0].waitingFor?.toModel() as
+        | ISelectOptionInputModel
+        | undefined;
+      expect(restoredModel?.title).toBe(liveModel?.title);
+      expect(restoredModel?.type).toBe(liveModel?.type);
     });
 
     it('automatically resolves rival turns before returning projected states', async () => {
@@ -464,7 +555,9 @@ describe('GameManager', () => {
         }
       ).gameRepo.pruneSnapshots = pruneSnapshotsMock;
 
-      await expect(manager.unloadGame('game-mgr-test')).resolves.toBeUndefined();
+      await expect(
+        manager.unloadGame('game-mgr-test'),
+      ).resolves.toBeUndefined();
       expect(cache.has('game-mgr-test')).toBe(false);
     });
   });

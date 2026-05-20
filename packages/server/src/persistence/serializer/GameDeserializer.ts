@@ -100,6 +100,43 @@ function cloneValue<TValue>(value: TValue): TValue {
   return JSON.parse(JSON.stringify(value)) as TValue;
 }
 
+function replayPendingResolution(dto: IGameStateDto): Game | undefined {
+  const journal = dto.pendingResolution;
+  if (!journal) {
+    return undefined;
+  }
+  if (journal.version !== 1) {
+    throw new Error(
+      `Unsupported pending resolution journal ${journal.version}`,
+    );
+  }
+
+  const baseState = cloneValue(journal.baseState);
+  delete baseState.pendingResolution;
+  const game = deserializeGame(baseState);
+
+  for (const step of journal.steps) {
+    switch (step.type) {
+      case 'MAIN_ACTION':
+        game.processMainAction(step.playerId, step.action);
+        break;
+      case 'FREE_ACTION':
+        game.processFreeAction(step.playerId, step.action);
+        break;
+      case 'INPUT_RESPONSE':
+        game.processInput(step.playerId, step.response);
+        break;
+      default: {
+        const exhaustive: never = step;
+        return exhaustive;
+      }
+    }
+  }
+
+  game.pendingResolutionJournal = cloneValue(journal);
+  return game;
+}
+
 function deserializeTraceSlotDto(slot: ITraceSlotDto): {
   slotId: string;
   alienIndex: number;
@@ -477,6 +514,11 @@ function deserializeRivalState(game: Game, dto: IGameStateDto): void {
 }
 
 export function deserializeGame(dto: IGameStateDto): Game {
+  const replayed = replayPendingResolution(dto);
+  if (replayed) {
+    return replayed;
+  }
+
   const identities = dto.players.map((player) => ({
     id: player.id,
     name: player.name,

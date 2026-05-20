@@ -6,7 +6,6 @@ import {
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EPlanet, EResource } from '@seti/common/types/element';
 import type { EOrganizationId } from '@seti/common/types/organization';
-import { ALL_TECH_IDS } from '@seti/common/types/tech';
 import { getMascamitesSampleDeliveryDestination } from '@seti/common/utils/mascamitesSampleDelivery';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -64,7 +63,6 @@ import {
 } from '@/types/re-exports';
 
 const CARD_CUSTOM_EFFECT_UNHANDLED = 'CARD_CUSTOM_EFFECT_UNHANDLED';
-const ALL_TECH_ID_SET = new Set<string>(ALL_TECH_IDS);
 
 function actionEventName(event: TGameEvent): string | null {
   if (event.type !== EGameEventType.ACTION) return null;
@@ -84,13 +82,6 @@ const BOARD_TABS: TBoardTab[] = [
   'aliens',
   'scoring',
 ];
-
-function isTechBoardInput(model: IPlayerInputModel | null): boolean {
-  if (!model) return false;
-  if (model.type === EPlayerInputType.TECH) return true;
-  if (model.type !== EPlayerInputType.OPTION) return false;
-  return model.options.some((option) => ALL_TECH_ID_SET.has(option.id));
-}
 
 /**
  * True when the pending input is something that lands on an alien board:
@@ -824,18 +815,10 @@ function TopActionBar({
     pendingInput !== null && pendingInput.type !== EPlayerInputType.OR;
   const showSetupChoiceInput =
     gameState?.phase === EPhase.SETUP_CHOICE && pendingInput !== null;
-  const showTechBoardInput =
-    gameState != null && isTechBoardInput(pendingInput);
   const myPlayer = gameState?.players.find(
     (player) => player.playerId === myPlayerId,
   );
   const movementPoints = myPlayer?.movementPoints ?? 0;
-  const playerColors =
-    gameState?.players.reduce<Record<string, string>>((acc, player) => {
-      acc[player.playerId] = player.color;
-      return acc;
-    }, {}) ?? {};
-
   const handleMainAction = (action: IMainActionRequest) => {
     if (action.type === EMainAction.ORBIT || action.type === EMainAction.LAND) {
       onRequestPlanetActionSelection(action.type);
@@ -913,19 +896,14 @@ function TopActionBar({
                 className='h-1.5 w-1.5 rounded-full bg-accent-500 shadow-[0_0_6px_oklch(0.68_0.11_240/0.8)] motion-safe:animate-pulse'
               />
             </div>
-            {showTechBoardInput && gameState ? (
-              <TechBoardView
-                techBoard={gameState.techBoard}
-                players={gameState.players}
-                pendingInput={pendingInput}
-                playerColors={playerColors}
-                myPlayerId={myPlayerId}
-                onSubmit={sendInput}
-              />
-            ) : showSetupChoiceInput ? (
+            {showSetupChoiceInput ? (
               <SetupChoiceModal model={pendingInput} onSubmit={sendInput} />
             ) : (
-              <InputRenderer model={pendingInput} onSubmit={sendInput} />
+              <InputRenderer
+                model={pendingInput}
+                onSubmit={sendInput}
+                techBoard={gameState?.techBoard}
+              />
             )}
           </div>
         </div>

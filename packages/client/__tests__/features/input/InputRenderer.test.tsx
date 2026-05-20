@@ -1,5 +1,6 @@
 import { ESector } from '@seti/common/types/element';
-import { render, screen } from '@testing-library/react';
+import { ETechBonusType, ETechId } from '@seti/common/types/tech';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { InputRenderer } from '@/features/input/InputRenderer';
 import type { IPlayerInputModel } from '@/types/re-exports';
@@ -21,6 +22,70 @@ describe('InputRenderer', () => {
     expect(
       screen.getByRole('button', { name: 'Do Action' }),
     ).toBeInTheDocument();
+  });
+
+  it('routes tech-id option input to compact tech option controls', () => {
+    const onSubmit = vi.fn();
+    const model: IPlayerInputModel = {
+      inputId: 'input-tech-option',
+      type: EPlayerInputType.OPTION,
+      options: [
+        {
+          id: ETechId.SCAN_EARTH_LOOK,
+          label: ETechId.SCAN_EARTH_LOOK,
+        },
+      ],
+    };
+    render(<InputRenderer model={model} onSubmit={onSubmit} />);
+
+    expect(
+      screen.getByTestId(`input-tech-tile-${ETechId.SCAN_EARTH_LOOK}`),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByTestId(`input-option-${ETechId.SCAN_EARTH_LOOK}`),
+    );
+
+    expect(onSubmit).toHaveBeenCalledWith({
+      inputId: 'input-tech-option',
+      type: EPlayerInputType.OPTION,
+      optionId: ETechId.SCAN_EARTH_LOOK,
+    });
+  });
+
+  it('renders tech-id option first-take and back bonuses from the tech board', () => {
+    const model: IPlayerInputModel = {
+      inputId: 'input-tech-option',
+      type: EPlayerInputType.OPTION,
+      options: [
+        {
+          id: ETechId.SCAN_EARTH_LOOK,
+          label: ETechId.SCAN_EARTH_LOOK,
+        },
+      ],
+    };
+    render(
+      <InputRenderer
+        model={model}
+        onSubmit={vi.fn()}
+        techBoard={{
+          stacks: [
+            {
+              tech: ETech.SCAN,
+              level: 0,
+              remainingTiles: 2,
+              firstTakeBonusAvailable: true,
+              topTileBonuses: [{ type: ETechBonusType.DATA_2 }],
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByTestId('input-tech-first-bonus-scan-0'),
+    ).toHaveTextContent('2VP available');
+    expect(screen.getByLabelText('2 data bonus')).toBeInTheDocument();
   });
 
   it('routes card input to SelectCardInput', () => {

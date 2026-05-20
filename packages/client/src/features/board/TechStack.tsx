@@ -1,8 +1,8 @@
-import { ETechBonusType, type ITechBonusToken } from '@seti/common/types/tech';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 import type { IPublicTechStack } from '@/types/re-exports';
 import { ETech } from '@/types/re-exports';
+import { getTechBonusPresentation } from '../tech/techBonusPresentation';
 import { getTechTileImageByCategory } from '../tech/techTileImages';
 
 const TECH_TYPE_I18N_KEY: Record<ETech, string> = {
@@ -11,67 +11,6 @@ const TECH_TYPE_I18N_KEY: Record<ETech, string> = {
   [ETech.SCAN]: 'scan',
   [ETech.COMPUTER]: 'computer',
 };
-
-const TECH_BONUS_META: Partial<
-  Record<ETechBonusType, { src?: string; label: string; shortLabel: string }>
-> = {
-  [ETechBonusType.ENERGY]: {
-    src: '/assets/seti/tech/bonuses/tech1.png',
-    label: 'Energy bonus',
-    shortLabel: '+E',
-  },
-  [ETechBonusType.DATA]: {
-    src: '/assets/seti/tech/bonuses/data.png',
-    label: 'Data bonus',
-    shortLabel: '+D',
-  },
-  [ETechBonusType.PUBLICITY]: {
-    src: '/assets/seti/tech/bonuses/tech3.png',
-    label: 'Publicity bonus',
-    shortLabel: '+P',
-  },
-  [ETechBonusType.CARD]: {
-    src: '/assets/seti/tech/bonuses/tech4.png',
-    label: 'Card bonus',
-    shortLabel: '+C',
-  },
-  [ETechBonusType.VP_3]: {
-    src: '/assets/seti/tech/bonuses/tech6.png',
-    label: '3 VP bonus',
-    shortLabel: '+3',
-  },
-  [ETechBonusType.LAUNCH_IGNORE_LIMIT]: {
-    src: '/assets/seti/tech/bonuses/launch.png',
-    label: 'Launch action bonus',
-    shortLabel: 'L',
-  },
-  [ETechBonusType.DATA_2]: {
-    src: '/assets/seti/tech/bonuses/data.png',
-    label: '2 data bonus',
-    shortLabel: '+2D',
-  },
-  [ETechBonusType.CREDIT]: {
-    label: 'Credit bonus',
-    shortLabel: '+$',
-  },
-  [ETechBonusType.VP_2]: {
-    label: '2 VP bonus',
-    shortLabel: '+2',
-  },
-};
-
-function getTechBonusMeta(bonus: ITechBonusToken): {
-  src?: string;
-  label: string;
-  shortLabel: string;
-} {
-  return (
-    TECH_BONUS_META[bonus.type] ?? {
-      label: `${bonus.type} bonus`,
-      shortLabel: bonus.type,
-    }
-  );
-}
 
 interface ITechStackProps {
   stack: IPublicTechStack;
@@ -151,7 +90,7 @@ export function TechStack({
           </span>
           <div className='flex min-h-7 flex-wrap items-center gap-1'>
             {(stack.topTileBonuses ?? []).map((bonus, index) => {
-              const meta = getTechBonusMeta(bonus);
+              const meta = getTechBonusPresentation(bonus);
               return (
                 <span
                   key={`${stack.tech}-${stack.level}-bonus-${bonus.type}-${index}`}

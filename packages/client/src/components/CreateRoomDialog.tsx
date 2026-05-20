@@ -1,11 +1,14 @@
-import { CORE_RANDOM_ALIEN_TYPES } from '@seti/common/constant/alienLobby';
-import { SOLO_DIFFICULTIES } from '@seti/common/constant/solo';
-import { EAlienMap } from '@seti/common/types/BaseCard';
 import {
+  CORE_RANDOM_ALIEN_TYPES,
+  type IAlienLobbyOption,
+} from '@seti/common/constant/alienLobby';
+import { SOLO_DIFFICULTIES } from '@seti/common/constant/solo';
+import { EAlienMap, type EAlienType } from '@seti/common/types/BaseCard';
+import {
+  createGameOptions,
   DEFAULT_ALIEN_MODULES_ENABLED,
-  DEFAULT_GAME_OPTIONS,
+  type IGameOptionsPatch,
 } from '@seti/common/types/protocol/options';
-import type { TSoloDifficulty } from '@seti/common/types/protocol/solo';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
@@ -30,7 +33,8 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/components/ui/toast';
-import { cn } from '@/lib/cn';
+import { applyGameOptionsPatch } from '@/lib/gameOptions';
+import { GameOptionsEditor } from '@/pages/lobby/GameOptionsEditor';
 
 interface ICreateRoomDialogProps {
   open: boolean;
@@ -45,11 +49,23 @@ const createRoomSchema = z.object({
   playerCount: z.number().min(2).max(4),
 });
 
+function createDefaultCreateRoomOptions(): IGameOptions {
+  const alienModulesEnabled = CORE_RANDOM_ALIEN_TYPES.reduce(
+    (enabled, alienType, index) => ({
+      ...enabled,
+      [alienType]: index < 2,
+    }),
+    { ...DEFAULT_ALIEN_MODULES_ENABLED },
+  );
+
+  return createGameOptions({ alienModulesEnabled }) as IGameOptions;
+}
+
 /**
  * CreateRoomDialog — the mission brief form.
  *
  * Grouped by instrument section: Identification (name + crew size),
- * Rules (alien modules + undo policy), Tempo (turn timer). Each
+ * Rules (alien modules, expansions, undo policy, and timer). Each
  * section is separated by a hairline — no inner cards — and every
  * label is a micro-label cap so the whole form reads as a control
  * desk rather than a settings list.
@@ -63,17 +79,19 @@ export function CreateRoomDialog({
 }: ICreateRoomDialogProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const [name, setName] = useState('');
-  const [playerCount, setPlayerCount] = useState(2);
-  const [isSoloMode, setIsSoloMode] = useState(false);
-  const [soloDifficulty, setSoloDifficulty] = useState<TSoloDifficulty>(1);
-  const [selectedAlienTypes, setSelectedAlienTypes] = useState<number[]>([]);
-  const [undoAllowed, setUndoAllowed] = useState(true);
-  const [timerPerTurn, setTimerPerTurn] = useState(0);
+  const [options, setOptions] = useState<IGameOptions>(
+    createDefaultCreateRoomOptions,
+  );
 
-  const alienTypeOptions = useMemo(() => {
+  const alienTypeOptions = useMemo<IAlienLobbyOption[]>(() => {
     const values = Object.values(alienTypeMap ?? {});
     if (values.length > 0) {
-      return values.sort((a, b) => a.alienType - b.alienType);
+      return values
+        .map((option) => ({
+          ...option,
+          alienType: option.alienType as EAlienType,
+        }))
+        .sort((a, b) => a.alienType - b.alienType);
     }
 
     return CORE_RANDOM_ALIEN_TYPES.map((alienType) => ({
@@ -88,60 +106,67 @@ export function CreateRoomDialog({
     [alienTypeOptions],
   );
 
-  const selectedCoreCount = useMemo(
-    () =>
-      CORE_RANDOM_ALIEN_TYPES.filter((alienType) =>
-        selectedAlienTypes.includes(alienType),
-      ).length,
-    [selectedAlienTypes],
-  );
-
   useEffect(() => {
-    setSelectedAlienTypes((previous) => {
+    setOptions((previous) => {
       const enabledTypeSet = new Set(
         enabledAlienTypes.map((type) => type.alienType),
       );
-      const filtered = previous.filter((type) => enabledTypeSet.has(type));
-
-      if (filtered.length >= 2) {
-        return filtered;
-      }
+      const previousSelected = CORE_RANDOM_ALIEN_TYPES.filter(
+        (type) => previous.alienModulesEnabled[type] !== false,
+      );
+      const filtered = previousSelected.filter(
+        (type) =>
+          previous.alienModulesEnabled[type] !== false &&
+          enabledTypeSet.has(type),
+      );
 
       const missing = enabledAlienTypes
         .map((type) => type.alienType)
-        .filter((type) => !filtered.includes(type));
+        .filter(
+          (type) =>
+            CORE_RANDOM_ALIEN_TYPES.includes(type) && !filtered.includes(type),
+        );
 
-      return [...filtered, ...missing].slice(0, 2);
+      const selectedAlienTypes =
+        filtered.length >= 2 ? filtered : [...filtered, ...missing].slice(0, 2);
+      const isUnchanged = CORE_RANDOM_ALIEN_TYPES.every(
+        (alienType) =>
+          previous.alienModulesEnabled[alienType] ===
+          selectedAlienTypes.includes(alienType),
+      );
+
+      if (isUnchanged) {
+        return previous;
+      }
+
+      return applyGameOptionsPatch(previous, {
+        alienModulesEnabled: CORE_RANDOM_ALIEN_TYPES.reduce(
+          (enabled, alienType) => ({
+            ...enabled,
+            [alienType]: selectedAlienTypes.includes(alienType),
+          }),
+          { ...previous.alienModulesEnabled },
+        ),
+      });
     });
   }, [enabledAlienTypes]);
 
-  const handleAlienTypeToggle = (alienType: number, nextChecked: boolean) => {
-    setSelectedAlienTypes((previous) => {
-      if (nextChecked) {
-        return previous.includes(alienType)
-          ? previous
-          : [...previous, alienType];
-      }
-      if (!previous.includes(alienType)) {
-        return previous;
-      }
-      if (previous.length <= 2) {
-        return previous;
-      }
-      return previous.filter((type) => type !== alienType);
-    });
+  const handleOptionsChange = (patch: IGameOptionsPatch): void => {
+    setOptions((previous) => applyGameOptionsPatch(previous, patch));
   };
 
   const handleSoloModeChange = (nextChecked: boolean): void => {
-    setIsSoloMode(nextChecked);
-    if (nextChecked) {
-      setPlayerCount(2);
-    }
+    setOptions((previous) =>
+      applyGameOptionsPatch(previous, {
+        isSoloMode: nextChecked,
+        playerCount: nextChecked ? 2 : previous.playerCount,
+      }),
+    );
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const effectivePlayerCount = isSoloMode ? 2 : playerCount;
+    const effectivePlayerCount = options.isSoloMode ? 2 : options.playerCount;
     const result = createRoomSchema.safeParse({
       name,
       playerCount: effectivePlayerCount,
@@ -159,11 +184,13 @@ export function CreateRoomDialog({
       return;
     }
 
-    const selectedCoreAlienTypes = CORE_RANDOM_ALIEN_TYPES.filter((alienType) =>
-      selectedAlienTypes.includes(alienType),
-    );
-
-    if (selectedCoreAlienTypes.length < 2) {
+    let finalOptions: IGameOptions;
+    try {
+      finalOptions = createGameOptions({
+        ...options,
+        playerCount: effectivePlayerCount,
+      }) as IGameOptions;
+    } catch {
       toast({
         title: t('client.create_room.validation.invalid_options'),
         variant: 'error',
@@ -171,21 +198,7 @@ export function CreateRoomDialog({
       return;
     }
 
-    onSubmit(name, {
-      ...DEFAULT_GAME_OPTIONS,
-      playerCount: effectivePlayerCount,
-      isSoloMode,
-      soloDifficulty,
-      alienModulesEnabled: CORE_RANDOM_ALIEN_TYPES.reduce(
-        (enabled, alienType) => ({
-          ...enabled,
-          [alienType]: selectedCoreAlienTypes.includes(alienType),
-        }),
-        { ...DEFAULT_ALIEN_MODULES_ENABLED },
-      ),
-      undoAllowed,
-      timerPerTurn,
-    });
+    onSubmit(name, finalOptions);
   };
 
   return (
@@ -231,9 +244,11 @@ export function CreateRoomDialog({
                   {t('client.create_room.players')}
                 </Label>
                 <Select
-                  value={String(playerCount)}
-                  onValueChange={(value) => setPlayerCount(Number(value))}
-                  disabled={isSoloMode}
+                  value={String(options.playerCount)}
+                  onValueChange={(value) =>
+                    handleOptionsChange({ playerCount: Number(value) })
+                  }
+                  disabled={options.isSoloMode}
                 >
                   <SelectTrigger id='player-count'>
                     <SelectValue />
@@ -256,10 +271,10 @@ export function CreateRoomDialog({
                 label={t('client.create_room.solo_mode', {
                   defaultValue: 'Solo Rival',
                 })}
-                checked={isSoloMode}
+                checked={options.isSoloMode}
                 onChange={handleSoloModeChange}
               />
-              {isSoloMode ? (
+              {options.isSoloMode ? (
                 <div className='space-y-2'>
                   <Label htmlFor='solo-difficulty' variant='micro'>
                     {t('client.create_room.solo_difficulty', {
@@ -279,12 +294,16 @@ export function CreateRoomDialog({
                         key={difficulty}
                         type='button'
                         variant={
-                          soloDifficulty === difficulty ? 'primary' : 'ghost'
+                          options.soloDifficulty === difficulty
+                            ? 'primary'
+                            : 'ghost'
                         }
                         size='sm'
                         className='h-8 px-0 font-mono text-xs'
-                        onClick={() => setSoloDifficulty(difficulty)}
-                        aria-pressed={soloDifficulty === difficulty}
+                        onClick={() =>
+                          handleOptionsChange({ soloDifficulty: difficulty })
+                        }
+                        aria-pressed={options.soloDifficulty === difficulty}
                       >
                         {difficulty}
                       </Button>
@@ -299,90 +318,15 @@ export function CreateRoomDialog({
                 defaultValue: 'Rules',
               })}
             >
-              <div className='space-y-1.5'>
-                <Label htmlFor='alien-pool' variant='micro'>
-                  {t('client.create_room.alien_pool', {
-                    defaultValue: 'Alien random pool',
-                  })}
-                </Label>
-                <div id='alien-pool' className='space-y-2'>
-                  {alienTypeOptions.map((option) => {
-                    const isChecked = selectedAlienTypes.includes(
-                      option.alienType,
-                    );
-                    const lockMinimumCount =
-                      isChecked &&
-                      selectedCoreCount <= 2 &&
-                      CORE_RANDOM_ALIEN_TYPES.includes(option.alienType);
-                    const isDisabled = option.disabled || lockMinimumCount;
-
-                    return (
-                      <div
-                        key={option.alienType}
-                        className='flex items-center justify-between'
-                      >
-                        <Label
-                          htmlFor={`alien-type-${option.alienType}`}
-                          className={cn(
-                            'cursor-pointer',
-                            isDisabled && 'cursor-not-allowed opacity-60',
-                          )}
-                        >
-                          {t(`client.alien_board.types.${option.alienName}`, {
-                            defaultValue: option.alienName,
-                          })}
-                          {option.disabled
-                            ? t('client.create_room.alien_pool_disabled', {
-                                defaultValue: ' (disabled)',
-                              })
-                            : ''}
-                        </Label>
-                        <Switch
-                          id={`alien-type-${option.alienType}`}
-                          checked={isChecked}
-                          onCheckedChange={(next) =>
-                            handleAlienTypeToggle(option.alienType, next)
-                          }
-                          disabled={isDisabled}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              <ToggleRow
-                id='undo-toggle'
-                label={t('client.create_room.undo')}
-                checked={undoAllowed}
-                onChange={setUndoAllowed}
+              <GameOptionsEditor
+                options={options}
+                disabled={false}
+                onChange={handleOptionsChange}
+                alienTypeOptions={alienTypeOptions}
+                alienSwitchIdPrefix='alien-type'
+                undoSwitchId='undo-toggle'
+                timerInputId='timer'
               />
-            </SectionBlock>
-
-            <SectionBlock
-              title={t('client.create_room.section.tempo', {
-                defaultValue: 'Tempo',
-              })}
-            >
-              <div className='space-y-1.5'>
-                <Label htmlFor='timer' variant='micro'>
-                  {t('client.create_room.turn_timer')}
-                </Label>
-                <div className='flex items-center gap-2'>
-                  <Input
-                    id='timer'
-                    type='number'
-                    min={0}
-                    max={600}
-                    value={timerPerTurn}
-                    mono
-                    onChange={(e) => setTimerPerTurn(Number(e.target.value))}
-                    className='max-w-[120px]'
-                  />
-                  <span className='font-mono text-[0.6875rem] uppercase tracking-microlabel text-text-500'>
-                    {t('client.common.seconds_unit', { defaultValue: 'SEC' })}
-                  </span>
-                </div>
-              </div>
             </SectionBlock>
           </div>
 
@@ -419,7 +363,7 @@ function SectionBlock({
 }): React.JSX.Element {
   return (
     <section className='space-y-4 px-6 py-5'>
-      <h4 className={cn('micro-label text-text-500')}>{title}</h4>
+      <h4 className='micro-label text-text-500'>{title}</h4>
       {children}
     </section>
   );

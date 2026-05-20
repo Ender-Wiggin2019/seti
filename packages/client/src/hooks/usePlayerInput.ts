@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { wsClient } from '@/api/wsClient';
 import { normalizePlayerInputCards } from '@/lib/cardNormalization';
 import type { IInputResponse, IPlayerInputModel } from '@/types/re-exports';
+import { EPhase } from '@/types/re-exports';
 
 interface IUsePlayerInputReturn {
   pendingInput: IPlayerInputModel | null;
@@ -25,7 +26,14 @@ export function usePlayerInput(): IUsePlayerInputReturn {
   }, []);
 
   useEffect(() => {
-    return wsClient.onState(() => {
+    return wsClient.onState((state) => {
+      if (
+        state.phase === EPhase.IN_RESOLUTION ||
+        state.phase === EPhase.SETUP ||
+        state.phase === EPhase.SETUP_CHOICE
+      ) {
+        return;
+      }
       setPendingInput(null);
       setWaitingPlayerId(null);
     });

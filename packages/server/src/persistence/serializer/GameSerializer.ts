@@ -125,6 +125,23 @@ function cloneValue<TValue>(value: TValue): TValue {
   return JSON.parse(JSON.stringify(value)) as TValue;
 }
 
+function serializePendingResolution(
+  game: IGame,
+): IGameStateDto['pendingResolution'] {
+  if (!game.pendingResolutionJournal) {
+    return undefined;
+  }
+
+  const journal = cloneValue(game.pendingResolutionJournal) as
+    | IGameStateDto['pendingResolution']
+    | undefined;
+  if (!journal) {
+    return undefined;
+  }
+  delete journal.baseState.pendingResolution;
+  return journal;
+}
+
 const ANOMALY_TRACE_COLORS: readonly TPublicAnomalyTraceColor[] = [
   ETrace.PINK,
   ETrace.YELLOW,
@@ -845,6 +862,7 @@ export function serializeGame(game: IGame, version = 0): IGameStateDto {
       : undefined,
     missionTracker: serializeMissionTracker(game),
     rivalState: serializeRivalState(game.rivalState),
+    pendingResolution: serializePendingResolution(game),
   };
 }
 

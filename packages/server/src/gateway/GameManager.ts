@@ -15,6 +15,10 @@ import type { Game } from '@/engine/Game.js';
 import { isSoloMode } from '@/engine/GameOptions.js';
 import type { IGame } from '@/engine/IGame.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
+import type {
+  IPendingResolutionJournal,
+  TPendingResolutionStep,
+} from '@/engine/resolution/PendingResolutionJournal.js';
 import { RivalTurnController } from '@/engine/solo/RivalTurnController.js';
 import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
 import type { IGameStateDto } from '@/persistence/dto/GameStateDto.js';
@@ -117,8 +121,14 @@ export class GameManager {
     const game = await this.getGame(gameId);
     const turnIndexBefore = game.turnIndex;
     const version = this.nextVersion(gameId);
+    const resolutionBase = this.captureResolutionBase(game);
 
     game.processMainAction(playerId, action);
+    this.recordResolutionStep(game, resolutionBase, {
+      type: 'MAIN_ACTION',
+      playerId,
+      action,
+    });
 
     await this.persistSnapshot(gameId, version, game, {
       type: 'MAIN_ACTION',
@@ -158,8 +168,14 @@ export class GameManager {
   ): Promise<IActionResult> {
     const game = await this.getGame(gameId);
     const turnIndexBefore = game.turnIndex;
+    const resolutionBase = this.captureResolutionBase(game);
 
     game.processFreeAction(playerId, action);
+    this.recordResolutionStep(game, resolutionBase, {
+      type: 'FREE_ACTION',
+      playerId,
+      action,
+    });
 
     // Free actions intentionally don't get their own gameSnapshots
     // row — the undo subsystem rolls back to the turn-start
@@ -184,6 +200,11 @@ export class GameManager {
 
     const version = this.nextVersion(gameId);
     game.processInput(playerId, response);
+    this.recordResolutionStep(game, undefined, {
+      type: 'INPUT_RESPONSE',
+      playerId,
+      response,
+    });
 
     await this.persistSnapshot(gameId, version, game, {
       type: 'INPUT_RESPONSE',
@@ -428,6 +449,43 @@ export class GameManager {
     const next = current + 1;
     this.versions.set(gameId, next);
     return next;
+  }
+
+  private captureResolutionBase(game: IGame): IGameStateDto {
+    const state = serializeGame(game, 0);
+    delete state.pendingResolution;
+    return state;
+  }
+
+  private recordResolutionStep(
+    game: IGame,
+    baseState: IGameStateDto | undefined,
+    step: TPendingResolutionStep,
+  ): void {
+    if (!this.hasPendingInput(game)) {
+      if (game.phase !== EPhase.IN_RESOLUTION) {
+        game.pendingResolutionJournal = undefined;
+      }
+      return;
+    }
+
+    const previous = game.pendingResolutionJournal as
+      | IPendingResolutionJournal<IGameStateDto>
+      | undefined;
+    const nextBaseState = previous?.baseState ?? baseState;
+    if (!nextBaseState) {
+      throw new Error('Cannot persist pending input without a resume base');
+    }
+
+    game.pendingResolutionJournal = {
+      version: 1,
+      baseState: nextBaseState,
+      steps: [...(previous?.steps ?? []), step],
+    };
+  }
+
+  private hasPendingInput(game: IGame): boolean {
+    return game.players.some((player) => player.waitingFor !== undefined);
   }
 
   private refreshTimer(gameId: string): void {

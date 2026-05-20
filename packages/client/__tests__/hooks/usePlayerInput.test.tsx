@@ -2,7 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePlayerInput } from '@/hooks/usePlayerInput';
 import type { IPublicGameState } from '@/types/re-exports';
-import { EPlayerInputType } from '@/types/re-exports';
+import { EPhase, EPlayerInputType } from '@/types/re-exports';
 
 const wsMock = vi.hoisted(() => ({
   sendInput: vi.fn(),
@@ -84,5 +84,30 @@ describe('usePlayerInput', () => {
 
     expect(result.current.pendingInput).toBeNull();
     expect(result.current.waitingPlayerId).toBeNull();
+  });
+
+  it('does not clear a pending prompt from an in-resolution state update', () => {
+    const { result } = renderHook(() => usePlayerInput());
+
+    act(() => {
+      emitWaiting({
+        playerId: 'p1',
+        input: {
+          inputId: 'input-1',
+          type: EPlayerInputType.OPTION,
+          options: [{ id: 'confirm', label: 'Confirm' }],
+        },
+      });
+    });
+
+    act(() => {
+      emitState({
+        gameId: 'game-1',
+        phase: EPhase.IN_RESOLUTION,
+      } as IPublicGameState);
+    });
+
+    expect(result.current.pendingInput?.inputId).toBe('input-1');
+    expect(result.current.waitingPlayerId).toBe('p1');
   });
 });

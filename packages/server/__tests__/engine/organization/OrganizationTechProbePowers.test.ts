@@ -102,6 +102,60 @@ describe('technology and probe oriented organization powers', () => {
     );
   });
 
+  it('Orbital Dynamics allows stopping after one probe move and rejects no-move boards', () => {
+    const game = createCleanGame();
+    const player = game.players[0];
+    const organization = new OrbitalDynamics();
+
+    organization.resolve(player, game);
+    organization.restore(player, game);
+
+    const firstInput = UseOrganizationPowerFreeAction.execute(
+      player,
+      game,
+      EOrganizationId.ORBITAL_DYNAMICS,
+    );
+    const firstModel = firstInput?.toModel() as
+      | ISelectOptionInputModel
+      | undefined;
+    const firstOption = firstModel?.options[0];
+    const secondInput = firstInput?.process({
+      type: EPlayerInputType.OPTION,
+      optionId: firstOption?.id ?? '',
+    });
+    const secondModel = secondInput?.toModel() as
+      | ISelectOptionInputModel
+      | undefined;
+
+    expect(secondModel?.options).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'done' })]),
+    );
+    expect(
+      secondInput?.process({
+        type: EPlayerInputType.OPTION,
+        optionId: 'done',
+      }),
+    ).toBeUndefined();
+    expect(player.oncePerRoundUsed[EOrganizationId.ORBITAL_DYNAMICS]).toBe(
+      true,
+    );
+
+    const stuckGame = createCleanGame();
+    const stuckPlayer = stuckGame.players[0];
+    stuckPlayer.organizationIds = [EOrganizationId.ORBITAL_DYNAMICS];
+    stuckPlayer.oncePerRoundUsed = {
+      [EOrganizationId.ORBITAL_DYNAMICS]: false,
+    };
+    stuckGame.solarSystem = null;
+    expect(() =>
+      UseOrganizationPowerFreeAction.execute(
+        stuckPlayer,
+        stuckGame,
+        EOrganizationId.ORBITAL_DYNAMICS,
+      ),
+    ).toThrow('Organization power is not currently available');
+  });
+
   it('Helion Assembly rewards first acquired tech category marks once', () => {
     const game = createCleanGame();
     const player = game.players[0];
@@ -149,6 +203,36 @@ describe('technology and probe oriented organization powers', () => {
     expect(player.resources.energy).toBe(startEnergy + 1);
     expect(player.resources.signalTokens).toBe(startSignalTokens + 1);
     expect(player.resources.data).toBe(startData + 1);
+  });
+
+  it('Helion Assembly only exposes its free action after a tech reward mark exists', () => {
+    const game = createCleanGame();
+    const player = game.players[0];
+    const organization = new HelionAssembly();
+    player.organizationIds = [EOrganizationId.HELION_ASSEMBLY];
+    player.oncePerRoundUsed = { [EOrganizationId.HELION_ASSEMBLY]: false };
+    player.techs = [ETechId.PROBE_DOUBLE_PROBE];
+    player.hand = ['128'];
+    player.completedMissions = [];
+
+    organization.restore(player, game);
+    expect(OrganizationRegistry.getUsablePowerIds(player, game)).not.toContain(
+      EOrganizationId.HELION_ASSEMBLY,
+    );
+
+    game.eventBus.emit({
+      type: EGameRuntimeEvent.TECH_ACQUIRED,
+      game,
+      player,
+      techId: ETechId.PROBE_DOUBLE_PROBE,
+      techCategory: ETech.PROBE,
+    });
+    chooseNextDeferredOption(game, 'mark');
+
+    expect(OrganizationRegistry.getUsablePowerIds(player, game)).toContain(
+      EOrganizationId.HELION_ASSEMBLY,
+    );
+    expect(player.completedMissions).toHaveLength(0);
   });
 
   it('Helion Assembly disables a selected probe or scan tech until removed from effective modifiers', () => {
@@ -209,6 +293,38 @@ describe('technology and probe oriented organization powers', () => {
       markedCategories: [],
       pendingCategories: [],
     });
+  });
+
+  it('Helion Assembly rejects computer-only techs and empty hands without spending the power', () => {
+    const game = createCleanGame();
+    const player = game.players[0];
+    const organization = new HelionAssembly();
+    player.organizationIds = [EOrganizationId.HELION_ASSEMBLY];
+    player.oncePerRoundUsed = { [EOrganizationId.HELION_ASSEMBLY]: false };
+    player.techs = [ETechId.COMPUTER_VP_CREDIT];
+    player.hand = ['128'];
+
+    organization.restore(player, game);
+    expect(() =>
+      UseOrganizationPowerFreeAction.execute(
+        player,
+        game,
+        EOrganizationId.HELION_ASSEMBLY,
+      ),
+    ).toThrow('Organization power is not currently available');
+
+    player.techs = [ETechId.PROBE_DOUBLE_PROBE];
+    player.hand = [];
+    expect(() =>
+      UseOrganizationPowerFreeAction.execute(
+        player,
+        game,
+        EOrganizationId.HELION_ASSEMBLY,
+      ),
+    ).toThrow('Organization power is not currently available');
+    expect(player.oncePerRoundUsed[EOrganizationId.HELION_ASSEMBLY]).toBe(
+      false,
+    );
   });
 
   it('Helion Assembly can mark a tech category again after its power clears marks', () => {
@@ -370,6 +486,33 @@ describe('technology and probe oriented organization powers', () => {
     expect(player.organizationState[EOrganizationId.HELION_ASSEMBLY]).toEqual(
       {},
     );
+  });
+
+  it('Turing Systems cannot be used twice in the same round', () => {
+    const game = createCleanGame();
+    const player = game.players[0];
+    const organization = new TuringSystems();
+    player.organizationIds = [EOrganizationId.TURING_SYSTEMS];
+    player.oncePerRoundUsed = { [EOrganizationId.TURING_SYSTEMS]: false };
+
+    organization.restore(player, game);
+    const input = UseOrganizationPowerFreeAction.execute(
+      player,
+      game,
+      EOrganizationId.TURING_SYSTEMS,
+    );
+    input?.process({
+      type: EPlayerInputType.OPTION,
+      optionId: ETechId.SCAN_EARTH_LOOK,
+    });
+
+    expect(() =>
+      UseOrganizationPowerFreeAction.execute(
+        player,
+        game,
+        EOrganizationId.TURING_SYSTEMS,
+      ),
+    ).toThrow('Organization power already used this round');
   });
 
   it('composes Helion and Turing event listeners and effective tech modifiers without duplicate restore rewards', () => {

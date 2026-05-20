@@ -1,11 +1,14 @@
-import { EffectFactory } from '@seti/cards';
 import type { IPreludeCard } from '@seti/common/types/prelude';
 import { useTranslation } from 'react-i18next';
+import { CardRender } from '@/features/cards/CardRender';
 
 interface IQuickStartCardPreviewProps {
   card: IPreludeCard;
   compact?: boolean;
 }
+
+const PRELUDE_CARD_WIDTH_PX = 150;
+const PRELUDE_CARD_HEIGHT_PX = 209;
 
 function effectSummary(card: IPreludeCard, emptyLabel: string): string {
   const effects = [...card.upperEffects, ...card.lowerEffects]
@@ -19,47 +22,23 @@ export function QuickStartCardPreview({
   card,
   compact = false,
 }: IQuickStartCardPreviewProps): React.JSX.Element {
-  const { t: tSeti } = useTranslation('seti');
   const { t: tCommon } = useTranslation('common');
-  const upperText = [
-    card.upperText ? tSeti(card.upperText) : '',
-    card.middleText,
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const scale = compact ? 0.46 : 0.72;
 
   return (
     <div
-      className={[
-        'grid min-w-0 rounded border border-surface-200/45 bg-surface-950/55 text-left',
-        compact ? 'w-24 gap-1 p-1' : 'min-h-24 gap-1.5 p-2',
-      ].join(' ')}
+      className='shrink-0 overflow-hidden rounded-[4px]'
       data-testid={`quick-start-card-preview-${card.id}`}
+      style={{
+        width: `${Math.ceil(PRELUDE_CARD_WIDTH_PX * scale)}px`,
+        height: `${Math.ceil(PRELUDE_CARD_HEIGHT_PX * scale)}px`,
+      }}
     >
-      <div className='flex items-center justify-between gap-2'>
-        <span className='font-mono text-[10px] uppercase tracking-[0.14em] text-accent-400'>
-          {card.id}
-        </span>
-        <span className='font-mono text-[9px] uppercase tracking-[0.12em] text-text-500'>
-          {tCommon('client.quick_start_card.short_label')}
-        </span>
-      </div>
-      {card.upperEffects.length > 0 ? (
-        <div className='flex min-h-6 flex-wrap items-center gap-1' aria-hidden>
-          {card.upperEffects.map((effect, index) => (
-            <EffectFactory key={`${card.id}-upper-${index}`} effect={effect} />
-          ))}
-        </div>
-      ) : null}
-      {!compact && upperText ? (
-        <p className='line-clamp-2 text-[10px] leading-snug text-text-400'>
-          {upperText}
-        </p>
-      ) : null}
-      <div className='flex min-h-6 flex-wrap items-center gap-1' aria-hidden>
-        {card.lowerEffects.map((effect, index) => (
-          <EffectFactory key={`${card.id}-lower-${index}`} effect={effect} />
-        ))}
+      <div
+        className='pointer-events-none origin-top-left'
+        style={{ transform: `scale(${scale})` }}
+      >
+        <CardRender card={card} />
       </div>
       <span className='sr-only'>
         {tCommon('client.quick_start_card.screen_reader_label', {

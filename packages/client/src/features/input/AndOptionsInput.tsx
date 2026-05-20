@@ -2,18 +2,24 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
-import type { IAndOptionsInputModel, IInputResponse } from '@/types/re-exports';
+import type {
+  IAndOptionsInputModel,
+  IInputResponse,
+  IPublicTechBoard,
+} from '@/types/re-exports';
 import { EPlayerInputType } from '@/types/re-exports';
 import { InputRenderer } from './InputRenderer';
 
 export interface IAndOptionsInputProps {
   model: IAndOptionsInputModel;
   onSubmit: (response: IInputResponse) => void;
+  techBoard?: IPublicTechBoard;
 }
 
 export function AndOptionsInput({
   model,
   onSubmit,
+  techBoard,
 }: IAndOptionsInputProps): React.JSX.Element {
   const { t } = useTranslation('common');
 
@@ -101,7 +107,11 @@ export function AndOptionsInput({
         })}
       </div>
 
-      <InputRenderer model={currentStep} onSubmit={handleStepSubmit} />
+      <InputRenderer
+        model={currentStep}
+        onSubmit={handleStepSubmit}
+        techBoard={techBoard}
+      />
 
       <div className='flex items-center justify-between'>
         <Button

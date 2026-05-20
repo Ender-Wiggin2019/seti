@@ -63,6 +63,7 @@ import { OrganizationRegistry } from './organization/OrganizationRegistry.js';
 import { assertValidPhaseTransition } from './Phase.js';
 import type { IPlayer, TCardItem } from './player/IPlayer.js';
 import { Player } from './player/Player.js';
+import type { IPendingResolutionJournal } from './resolution/PendingResolutionJournal.js';
 import {
   FinalScoring,
   type IFinalScoringResult,
@@ -189,6 +190,8 @@ export class Game implements IGame {
 
   public eventBus: GameEventBus;
 
+  public pendingResolutionJournal?: IPendingResolutionJournal;
+
   public random: SeededRandom;
 
   private rotationCounterValue: number;
@@ -238,6 +241,7 @@ export class Game implements IGame {
     this.missionTracker = new MissionTracker();
     this.eventLog = new EventLog();
     this.eventBus = new GameEventBus();
+    this.pendingResolutionJournal = undefined;
 
     this.random = new SeededRandom(seed);
     this.rotationCounterValue = 0;

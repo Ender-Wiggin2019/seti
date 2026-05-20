@@ -50,6 +50,13 @@ export interface IOrganizationFrontendReference {
   image: string;
 }
 
+export interface IOrganizationAbilityText {
+  setup?: string;
+  passive?: string;
+  freeAction?: string;
+  mainAction?: string;
+}
+
 export type TOrganizationState = Partial<
   Record<EOrganizationId, Record<string, unknown>>
 >;
@@ -71,6 +78,8 @@ export interface IOrganizationData {
   name: string;
   localizedName: string;
   frontendReference: IOrganizationFrontendReference;
+  abilityText: IOrganizationAbilityText;
+  referenceLogicSummary: string;
   complexity: TOrganizationComplexity;
   resources: IOrganizationStartResources;
   tuckIncome: number;

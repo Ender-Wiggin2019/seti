@@ -24,6 +24,7 @@ import type { IGameOptions } from './GameOptions.js';
 import type { IPlayerInput } from './input/PlayerInput.js';
 import type { MissionTracker } from './missions/MissionTracker.js';
 import type { IPlayer, TCardItem } from './player/IPlayer.js';
+import type { IPendingResolutionJournal } from './resolution/PendingResolutionJournal.js';
 import type { IFinalScoringResult } from './scoring/FinalScoring.js';
 import type { GoldScoringTile } from './scoring/GoldScoringTile.js';
 import type { MilestoneState } from './scoring/Milestone.js';
@@ -73,6 +74,7 @@ export interface IGame {
   missionTracker: MissionTracker;
   eventLog: EventLog;
   eventBus: GameEventBus;
+  pendingResolutionJournal?: IPendingResolutionJournal;
   random: SeededRandom;
 
   rotationCounter: number;

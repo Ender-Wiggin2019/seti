@@ -1,6 +1,6 @@
 import { getAvailableFreeActions } from '@seti/common/rules';
 import { EOrganizationId } from '@seti/common/types/organization';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
@@ -22,6 +22,10 @@ const COLLAPSIBLE_ACTIONS: EFreeAction[] = [
   EFreeAction.EXCHANGE_RESOURCES,
   EFreeAction.SPEND_SIGNAL_TOKEN,
 ];
+
+type TFreeActionKey =
+  | `action:${EFreeAction}`
+  | `organization:${EOrganizationId}`;
 
 export interface IFreeActionBarProps {
   gameState: IPublicGameState | null;
@@ -49,25 +53,32 @@ export function FreeActionBar({
 }: IFreeActionBarProps): React.JSX.Element | null {
   const { t } = useTranslation('common');
   const [expanded, setExpanded] = useState(false);
-
-  if (!isMyTurn || !gameState) {
-    return null;
-  }
-
-  const myPlayer = gameState.players.find(
-    (player) => player.playerId === myPlayerId,
+  const myPlayer =
+    isMyTurn && gameState
+      ? gameState.players.find((player) => player.playerId === myPlayerId)
+      : undefined;
+  const available = new Set(
+    myPlayer && gameState ? getAvailableFreeActions(myPlayer, gameState) : [],
   );
-
-  if (!myPlayer) {
-    return null;
-  }
-
-  const available = new Set(getAvailableFreeActions(myPlayer, gameState));
   const visibleActions =
     pendingInput === null ? VISIBLE_ACTIONS : [EFreeAction.SPEND_SIGNAL_TOKEN];
   const collapsibleActions = pendingInput === null ? COLLAPSIBLE_ACTIONS : [];
-  const organizationIds =
-    pendingInput === null ? (myPlayer.organizationIds ?? []) : [];
+  const organizationIds = myPlayer ? (myPlayer.organizationIds ?? []) : [];
+  const renderedOrganizationIds = pendingInput === null ? organizationIds : [];
+  const availableActionSignature = getAvailableActionKeys(
+    available,
+    organizationIds,
+    myPlayer,
+    gameState,
+  ).join('|');
+  const highlightedKeys = useNewlyAvailableActionKeys(
+    gameState?.turnIndex ?? -1,
+    availableActionSignature,
+  );
+
+  if (!isMyTurn || !gameState || !myPlayer) {
+    return null;
+  }
 
   if (pendingInput !== null && !available.has(EFreeAction.SPEND_SIGNAL_TOKEN)) {
     return null;
@@ -76,7 +87,7 @@ export function FreeActionBar({
   const availableCount = [...visibleActions, ...collapsibleActions].filter(
     (a) => available.has(a),
   ).length;
-  const availableOrganizationPowerCount = organizationIds.filter(
+  const availableOrganizationPowerCount = renderedOrganizationIds.filter(
     (organizationId) =>
       isOrganizationPowerAvailable(myPlayer, organizationId, gameState),
   ).length;
@@ -110,6 +121,7 @@ export function FreeActionBar({
               myPlayer.movementPoints,
             )}
             disabled={!available.has(action)}
+            newlyAvailable={highlightedKeys.has(getFreeActionKey(action))}
             onClick={onActionClick}
           />
         ))}
@@ -125,13 +137,14 @@ export function FreeActionBar({
                   myPlayer.movementPoints,
                 )}
                 disabled={!available.has(action)}
+                newlyAvailable={highlightedKeys.has(getFreeActionKey(action))}
                 onClick={onActionClick}
               />
             ))
           : null}
 
         {expanded
-          ? organizationIds.map((organizationId) => (
+          ? renderedOrganizationIds.map((organizationId) => (
               <OrganizationPowerButton
                 key={organizationId}
                 organizationId={organizationId}
@@ -145,6 +158,9 @@ export function FreeActionBar({
                     gameState,
                   )
                 }
+                newlyAvailable={highlightedKeys.has(
+                  getOrganizationActionKey(organizationId),
+                )}
                 onClick={onActionClick}
               />
             ))
@@ -181,11 +197,13 @@ function OrganizationPowerButton({
   organizationId,
   label,
   disabled,
+  newlyAvailable,
   onClick,
 }: {
   organizationId: EOrganizationId;
   label: string;
   disabled: boolean;
+  newlyAvailable: boolean;
   onClick: (action: EFreeAction, organizationId?: EOrganizationId) => void;
 }): React.JSX.Element {
   const { t } = useTranslation('common');
@@ -199,8 +217,13 @@ function OrganizationPowerButton({
       onClick={() =>
         onClick(EFreeAction.USE_ORGANIZATION_POWER, organizationId)
       }
+      data-newly-available={newlyAvailable ? 'true' : undefined}
       data-testid={`organization-power-${organizationId}`}
-      className='h-7 px-2 font-mono text-[11px] uppercase tracking-[0.1em]'
+      className={cn(
+        'h-7 px-2 font-mono text-[11px] uppercase tracking-[0.1em]',
+        newlyAvailable &&
+          'border-accent-300 bg-accent-500/15 text-accent-100 ring-1 ring-accent-300/80',
+      )}
     >
       {label}
     </Button>
@@ -231,11 +254,13 @@ function FreeActionButton({
   action,
   label,
   disabled,
+  newlyAvailable,
   onClick,
 }: {
   action: EFreeAction;
   label: string;
   disabled: boolean;
+  newlyAvailable: boolean;
   onClick: (action: EFreeAction) => void;
 }): React.JSX.Element {
   return (
@@ -244,10 +269,85 @@ function FreeActionButton({
       size='sm'
       disabled={disabled}
       onClick={() => onClick(action)}
+      data-newly-available={newlyAvailable ? 'true' : undefined}
       data-testid={`free-action-${action}`}
-      className='h-7 px-2 font-mono text-[11px] uppercase tracking-[0.1em]'
+      className={cn(
+        'h-7 px-2 font-mono text-[11px] uppercase tracking-[0.1em]',
+        newlyAvailable &&
+          'border-accent-300 bg-accent-500/15 text-accent-100 ring-1 ring-accent-300/80',
+      )}
     >
       {label}
     </Button>
   );
+}
+
+function getAvailableActionKeys(
+  freeActions: Set<EFreeAction>,
+  organizationIds: EOrganizationId[],
+  player: IPublicGameState['players'][number] | undefined,
+  gameState: IPublicGameState | null,
+): TFreeActionKey[] {
+  const keys: TFreeActionKey[] = [...freeActions].map(getFreeActionKey);
+  if (player && gameState) {
+    for (const organizationId of organizationIds) {
+      if (isOrganizationPowerAvailable(player, organizationId, gameState)) {
+        keys.push(getOrganizationActionKey(organizationId));
+      }
+    }
+  }
+  return keys.sort();
+}
+
+function useNewlyAvailableActionKeys(
+  turnIndex: number,
+  availableActionSignature: string,
+): Set<TFreeActionKey> {
+  const previousRef = useRef<{
+    turnIndex: number;
+    keys: Set<TFreeActionKey>;
+  } | null>(null);
+  const [highlightedKeys, setHighlightedKeys] = useState<Set<TFreeActionKey>>(
+    () => new Set(),
+  );
+
+  useEffect(() => {
+    const availableKeys =
+      availableActionSignature.length > 0
+        ? (availableActionSignature.split('|') as TFreeActionKey[])
+        : [];
+    const currentKeys = new Set(availableKeys);
+    const previous = previousRef.current;
+    if (previous && previous.turnIndex === turnIndex) {
+      setHighlightedKeys((current) => {
+        const next = new Set<TFreeActionKey>();
+        for (const key of current) {
+          if (currentKeys.has(key)) {
+            next.add(key);
+          }
+        }
+        for (const key of currentKeys) {
+          if (!previous.keys.has(key)) {
+            next.add(key);
+          }
+        }
+        return next;
+      });
+    } else {
+      setHighlightedKeys(new Set());
+    }
+    previousRef.current = { turnIndex, keys: currentKeys };
+  }, [availableActionSignature, turnIndex]);
+
+  return highlightedKeys;
+}
+
+function getFreeActionKey(action: EFreeAction): TFreeActionKey {
+  return `action:${action}`;
+}
+
+function getOrganizationActionKey(
+  organizationId: EOrganizationId,
+): TFreeActionKey {
+  return `organization:${organizationId}`;
 }
