@@ -418,8 +418,17 @@ export class SolarSystem {
         (element) => !(element.planet === planet && element.amount > 0),
       );
     }
+    // Strip any underlying NULL/ASTEROID/COMET so probes visiting the
+    // dynamically placed planet (e.g. post-discovery Oumuamua) don't
+    // also trigger asteroid/comet effects from the base-wheel cell
+    // beneath. Today's Oumuamua slot is NULL on the template, but the
+    // wheel rotates and future map changes could land it on top of
+    // something else — defend in depth.
     targetSpace.elements = targetSpace.elements.filter(
-      (element) => element.type !== ESolarSystemElementType.NULL,
+      (element) =>
+        element.type !== ESolarSystemElementType.NULL &&
+        element.type !== ESolarSystemElementType.ASTEROID &&
+        element.type !== ESolarSystemElementType.COMET,
     );
 
     targetSpace.elements.push({

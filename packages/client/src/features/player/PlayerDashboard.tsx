@@ -38,6 +38,12 @@ interface IPlayerDashboardProps {
   income?: IPlayerIncomeInfo;
   playedMissions?: IBaseCard[];
   techs?: ETechId[];
+  /**
+   * Whether to render the per-player exofossil cell. Forwarded straight
+   * to ResourceBar — only true when an Oumuamua alien board is
+   * discovered in the current game.
+   */
+  showExofossils?: boolean;
 }
 
 /**
@@ -59,6 +65,7 @@ export function PlayerDashboard({
   income,
   playedMissions,
   techs,
+  showExofossils = false,
 }: IPlayerDashboardProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const textMode = useTextMode();
@@ -73,7 +80,7 @@ export function PlayerDashboard({
 
   return (
     <section className='space-y-1.5' data-testid='player-dashboard'>
-      <ResourceBar player={player} />
+      <ResourceBar player={player} showExofossils={showExofossils} />
       {organizationIds.length > 0 ? (
         <div
           className='flex items-start gap-2 overflow-x-auto'

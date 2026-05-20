@@ -75,6 +75,13 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
   }
 
   public onSolarSystemRotated(game: IGame): void {
+    // After a ring rotation the wheel snapshot already carries the
+    // planet element and publicity icon to their new wheel slot — see
+    // `SolarSystem.rotateRing`. We only refresh the tile's cached
+    // `spaceId` / `sectorId` so dual-routing, projection, and rival
+    // logic resolve to the post-rotation cell. Don't call
+    // `setDynamicPlanetAtSpace` here — that would detach the publicity
+    // icon from the planet because we'd reset `grantVisitPublicity`.
     const board = game.alienState?.getBoardByType(EAlienType.OUMUAMUA);
     if (!isOumuamuaAlienBoard(board)) return;
     const tile = board.oumuamuaTile;
@@ -92,9 +99,6 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
     const nextSector = game.sectors[sectorIndex];
     if (!nextSector) return;
 
-    game.solarSystem?.setDynamicPlanetAtSpace(EPlanet.OUMUAMUA, nextSpaceId, {
-      grantVisitPublicity: false,
-    });
     tile.spaceId = nextSpaceId;
     tile.sectorId = nextSector.id;
   }

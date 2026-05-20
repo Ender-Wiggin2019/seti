@@ -1009,6 +1009,9 @@ function PersonalColumn({
       })
     | undefined;
   const missionCards = extendedPlayer?.playedMissions ?? [];
+  // Tile only exists post-discovery; gates the per-player exofossil
+  // readout in the dashboard (kept hidden for non-Oumuamua games).
+  const personalOumuamuaTile = findOumuamuaTile(gameState?.aliens);
   const isSyntheticRivalView =
     gameState?.rival?.rivalPlayerId !== undefined &&
     myPlayerId === gameState.rival.rivalPlayerId;
@@ -1042,6 +1045,7 @@ function PersonalColumn({
               card: extendedPlayer?.cardIncome ?? 0,
             }}
             playedMissions={missionCards}
+            showExofossils={personalOumuamuaTile !== null}
           />
         ) : (
           <LoadingLine label={t('client.common.loading')} />

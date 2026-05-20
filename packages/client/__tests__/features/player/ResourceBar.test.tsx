@@ -26,15 +26,27 @@ describe('ResourceBar', () => {
     expect(screen.getByText('23')).toBeInTheDocument();
   });
 
-  it('renders oumuamua exofossils when present on public player state', () => {
-    render(<ResourceBar player={createMockPlayerState({ exofossils: 4 })} />);
+  it('renders oumuamua exofossils when showExofossils is enabled', () => {
+    render(
+      <ResourceBar
+        player={createMockPlayerState({ exofossils: 4 })}
+        showExofossils
+      />,
+    );
 
     expect(screen.getByText('Exofossils')).toBeInTheDocument();
     expect(screen.getByText('4')).toBeInTheDocument();
   });
 
+  it('hides oumuamua exofossils by default (no Oumuamua in game)', () => {
+    render(<ResourceBar player={createMockPlayerState({ exofossils: 4 })} />);
+
+    expect(screen.queryByText('Exofossils')).not.toBeInTheDocument();
+    expect(screen.queryByAltText('Exofossils')).not.toBeInTheDocument();
+  });
+
   it('renders resource icons', () => {
-    render(<ResourceBar player={createMockPlayerState()} />);
+    render(<ResourceBar player={createMockPlayerState()} showExofossils />);
 
     expect(screen.getByAltText('Credits')).toBeInTheDocument();
     expect(screen.getByAltText('Energy')).toBeInTheDocument();

@@ -19,26 +19,23 @@
 
 _(none — most recent slice just landed)_
 
-> **Audit notes (2026-05-19):**
-> - Re-scanned the backlog after a batch of slices landed (pink trace UX,
->   Earth-scan-marks-wrong-sector, Anomalies token art, sector data arc +
->   overflow bin). Still-open items below have been re-verified against
->   the current `feature/server` HEAD; closed items moved to "Done".
-> - Two upstream commits from Ender-Wiggin landed since the last audit:
->   `856413d feat(server): implement Space Agency cards` and `ed20411
->   feat(client): improve corporation card interactions` (+ `7ee9ec4
->   feat(organization): add corporation assets and powers`). These
->   expand the server but do not close any item below; they may add new
->   surface that wants its own polish slice — not picked up here without
->   explicit handover.
-> - Test baseline now: server 2127/2128 (only the pre-existing
->   `SpaceAgencyAlienPlugins > deals Amoeba discovery cards…` flake);
->   client 303/303; `pnpm -r typecheck` clean.
-> - 2026-05-19 update: backend-only P0/P1 slice landed — see Done
->   entries below for `executeRewards` + `onSolarSystemRotated` CUSTOM
->   footguns, JwtAuthGuard DB roundtrip removal, lobby `startGame`
->   transaction with row lock, AlienBoardInit overflow plurals
->   cleanup, and gameSnapshots prune.
+> **Audit notes (2026-05-20):**
+> - Re-scanned the backlog after the Oumuamua art + plugin audit pass.
+>   Still-open items below have been re-verified against the current
+>   `feature/server` HEAD; closed items moved to "Done".
+> - Test baseline now: server 2159/2162 (3 pre-existing failures, none
+>   Tong-owned: `OrganizationCardPowers > Cosmos Strategy Group …`,
+>   `OrganizationTechProbePowers > Helion Assembly …`,
+>   `SpaceAgencyAlienPlugins > deals Amoeba discovery cards …`); client
+>   316/316; `pnpm -r typecheck` clean.
+> - Pulled upstream merge `225745f` adding more org/expansion content
+>   on top of `f560f47 feat: update unit test`. The two new
+>   organization-power test failures came in with that merge — flagged
+>   to the original author, not picked up here.
+> - 2026-05-19/20 update: backend-only P0/P1 slice landed (see Done) +
+>   Oumuamua planet art on solar wheel + Oumuamua rule-coverage audit
+>   sweep (see Done). Anomalies P0 cross-check and WS reconnect P0 are
+>   still open below.
 
 ## Open
 
@@ -186,6 +183,108 @@ _(none — most recent slice just landed)_
   flipped to `false` in most packages.
 
 ## Done
+
+### Oumuamua rule-coverage audit + planet-visit hardening + exofossil cell visibility - 2026-05-20
+
+Single audit pass through `docs/arch/aliens/oumuamua/rule.md` against
+the live code. Most of the rulebook was already implemented; one
+real bug fixed and two defence-in-depth tweaks landed.
+
+Plan:
+- [x] **Audit:** Walk through every rule-line — setup, exofossils,
+  signal routing, tile completion, planet semantics, solo/rival,
+  FAQ — and locate the corresponding implementation.
+- [x] **Fix the rotation-hook publicity-icon regression.** My earlier
+  `OumuamuaAlienPlugin.onSolarSystemRotated` slice called
+  `setDynamicPlanetAtSpace(... grantVisitPublicity: false)`, which
+  would have stripped the visit-publicity icon from Oumuamua's space
+  after the first wheel rotation. Replaced with a metadata-only
+  update — `SolarSystem.rotateRing` already moves the planet element
+  + publicity icon together via the wheel snapshot, so the hook just
+  refreshes the cached `tile.spaceId` / `tile.sectorId` for
+  dual-routing, projection, and rival logic.
+- [x] **Defence-in-depth: `setDynamicPlanetAtSpace` now also strips
+  ASTEROID + COMET** from the target space when placing a dynamic
+  planet, not just NULL. Today's Oumuamua slot is template-NULL so
+  this is a no-op in practice, but it removes the latent footgun if
+  a future map change lands the slot on top of an asteroid/comet —
+  probes visiting Oumuamua would otherwise also fire
+  `emitAsteroidsVisitedTurnEvent` / `emitCometVisitedTurnEvent`.
+- [x] **Per-player exofossil cell hidden when Oumuamua absent.**
+  `ResourceBar` now takes a `showExofossils` prop (default `false`).
+  `PlayerDashboard` forwards it; `GameLayout`'s `PersonalColumn`
+  computes `findOumuamuaTile(gameState?.aliens) !== null` and feeds
+  the result. The tile is set in the plugin's `onDiscover`, so the
+  cell appears post-discovery and stays hidden in non-Oumuamua
+  games. Grid switches between 5 and 6 columns to keep cell widths
+  uniform.
+
+Review:
+- The audit covered all 24 rule-lines across the raw + detailed
+  rule.md layers. Coverage was already broad — VP at marker 1/0/2,
+  tile completion exofossil-per-contributor + refill + no winner +
+  no publicity, dual-routing wired through `MarkSectorSignalEffect`
+  + `OrbitProbeEffect`, rival's "always marks tile" short-circuit,
+  rival's "treat as occupied" via `canPlaceTraceOnSlot`, exofossil
+  exclusion from `TExchangeableResource`, no end-game VP scoring on
+  exofossils, Oumuamua present in `ORBITABLE_PLANETS`, and the
+  alien-board's Orbit/Land surface in `AlienBoardView`.
+- Top-tier (`maxOccupants: -1`) "marked any number of times, each
+  spends 1 exofossil" already works because `parseTraceSlotCost`
+  reads cost from the slotId on every placement and
+  `onPlaceTraceOnSlot` always spends it once per mark.
+
+Verification:
+- `pnpm -r typecheck` clean.
+- `pnpm --filter @seti/server test -- --run` — 2159/2162 (3
+  pre-existing failures unrelated: two upstream organization-power
+  tests from the `225745f` merge, plus the long-standing
+  `SpaceAgencyAlienPlugins > deals Amoeba discovery cards…` flake).
+- `pnpm --filter @seti/client test -- --run` — 316/316. Updated
+  `ResourceBar.test.tsx` to assert both the visible (with
+  `showExofossils`) and hidden (default-off) cell paths.
+
+Residual:
+- The audit also confirmed the dual-routing and rival paths are
+  correct against the rulebook. No follow-ups needed.
+
+### Oumuamua planet art on the solar wheel - 2026-05-19
+
+Plan:
+- [x] **Pin Oumuamua 2 sectors clockwise of Jupiter on ring 3.**
+  `OUMUAMUA_SOLAR_SYSTEM_WHEEL_POSITION.sourceSlotIndex: 1 → 5`.
+  Same band as Jupiter so the tile rotates in lockstep — no
+  computation needed beyond the existing `getOumuamuaSolarSystemSpaceId`.
+- [x] **Add `onSolarSystemRotated` hook** to `OumuamuaAlienPlugin`
+  so the plugin's cached `tile.spaceId` / `tile.sectorId` follow
+  the wheel after each rotation. (Later refined — see audit slice
+  above — to *only* update metadata, since the wheel snapshot
+  already moves the planet element + publicity icon together.)
+- [x] **Render the printed Oumuamua planet PNG on the solar
+  board.** Drop `planet.webp` into
+  `packages/client/public/assets/seti/aliens/oumuamua/`. Add an
+  `OumuamuaPlanetArt` component in `SolarSystemView.tsx` that
+  positions the image at the tile's space-centre with calibrated
+  rotation/scale/offset constants. URL params
+  `?oumRot=…&oumScale=…&oumT=…&oumR=…` allow live tuning before
+  baking values in.
+- [x] **Switch the 3-data marker pill to arc layout.** Reuses
+  `SectorSignalList`'s `arc` mode (same as the per-tile sector
+  data slots in `PER_TILE_SIGNAL_LAYOUT`). Arc geometry and the
+  group offset both scale with the solar-board zoom factor
+  (`normalizedSolarBoardZoom`) so dots stay visually consistent
+  with the rest of the board at any zoom. The dark pill chrome
+  is dropped in image mode so dots overlay the planet art
+  directly; text mode keeps the pill for debug readability.
+
+Verification:
+- `pnpm -r typecheck` clean.
+- `pnpm --filter @seti/server test -- --run OumuamuaAlienPlugin`
+  passes after updating the `places oumuamua on the fixed ring-3
+  wheel slot` assertion to expect `ring-3-cell-15` (slot 5 of
+  band-2 expanded by `cellsPerSector: 3`).
+- `pnpm --filter @seti/client test -- --run` — 303/303.
+- Live tuning in `/debug/replay` with the Oumuamua preset.
 
 ### Backend P0/P1 backlog: alien reward delivery + auth guard + lobby + persistence - 2026-05-19
 

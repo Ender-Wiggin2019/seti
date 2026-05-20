@@ -4,6 +4,13 @@ import type { IPublicPlayerState } from '@/types/re-exports';
 
 interface IResourceBarProps {
   player: IPublicPlayerState;
+  /**
+   * Whether the per-player exofossil cell should be rendered. Hidden
+   * unless an Oumuamua alien board is discovered in the current game —
+   * exofossils are a species-specific currency and the cell is
+   * meaningless when Oumuamua is absent.
+   */
+  showExofossils?: boolean;
 }
 
 interface IResourceItem {
@@ -16,7 +23,7 @@ interface IResourceItem {
   emphasize?: boolean;
 }
 
-const RESOURCE_ITEMS: IResourceItem[] = [
+const BASE_RESOURCE_ITEMS: IResourceItem[] = [
   {
     id: 'credit',
     i18nKey: 'client.resource_bar.credit',
@@ -53,28 +60,37 @@ const RESOURCE_ITEMS: IResourceItem[] = [
     value: (p) => p.score,
     emphasize: true,
   },
-  {
-    id: 'exofossils',
-    i18nKey: 'client.resource_bar.exofossils',
-    fallback: 'Exofossils',
-    icon: '/seti-assets/aliens/oumuamua.webp',
-    value: (p) => p.exofossils ?? 0,
-  },
 ];
+
+const EXOFOSSIL_ITEM: IResourceItem = {
+  id: 'exofossils',
+  i18nKey: 'client.resource_bar.exofossils',
+  fallback: 'Exofossils',
+  icon: '/seti-assets/aliens/oumuamua.webp',
+  value: (p) => p.exofossils ?? 0,
+};
 
 /**
  * ResourceBar — four instrument cells separated by tick-rule columns.
  * Icon + micro-label + mono readout. Score cell gets a faint accent wash
  * because victory is the point of every readout on this panel.
  */
-export function ResourceBar({ player }: IResourceBarProps): React.JSX.Element {
+export function ResourceBar({
+  player,
+  showExofossils = false,
+}: IResourceBarProps): React.JSX.Element {
   const { t } = useTranslation('common');
+  const items = showExofossils
+    ? [...BASE_RESOURCE_ITEMS, EXOFOSSIL_ITEM]
+    : BASE_RESOURCE_ITEMS;
   return (
     <section
-      className='instrument-panel grid grid-cols-6 overflow-hidden'
+      className={`instrument-panel grid overflow-hidden ${
+        showExofossils ? 'grid-cols-6' : 'grid-cols-5'
+      }`}
       data-testid='resource-bar'
     >
-      {RESOURCE_ITEMS.map((item, index) => {
+      {items.map((item, index) => {
         const label = t(item.i18nKey, { defaultValue: item.fallback });
         return (
           <div
