@@ -174,34 +174,6 @@ _(none — most recent slice just landed)_
   (b) flip root `dev` to `dev:client-server`, marking `web` as a
       separate utility entry.
 
-### P1 — Base-board terrain layer not modeled (Oumuamua-cover semantics)
-
-- The printed game board has a static base layer underneath disc 3
-  with asteroid / comet markers that show through disc-3 NULL slots
-  as the disc rotates. Today's data model has only one terrain layer
-  per cell (the visible disc-band element), so when Oumuamua's tile
-  sits on top of a base-board asteroid or comet, there's no
-  underlying record to suppress.
-- Tong has observed asteroid / comet effects firing through disc 3
-  in the live game, so the gap is real and applies generally — not
-  just to Oumuamua. The Oumuamua case adds the extra wrinkle that
-  the rulebook says the tile "covers" the underlying terrain while
-  it sits there, but uncovers it again if/when the disc rotates the
-  Oumuamua tile away from that physical base-board cell.
-- Fix shape (sketch — needs investigation first):
-  1. Confirm how the existing code surfaces base-board markers today
-     (rendering or visit-event paths) — there may already be a
-     hidden code path; if not, this whole layer is missing.
-  2. Add a per-cell `baseBoardElements` slot or equivalent so the
-     stationary terrain stays attached to the physical wedge rather
-     than the rotating disc cells.
-  3. When iterating elements at a cell (visit events, leave-cost,
-     card scans), skip the base-board layer when a planet element
-     covers it.
-- Pair with the Oumuamua audit slice's `isCoveredByPlanet` helper
-  hook, which was reverted from this round because there's nothing
-  for it to cover until the base layer is modeled.
-
 ### P3 — `tsconfig.base.json` `moduleResolution` is dead config
 
 - `tsconfig.base.json:12` sets `"moduleResolution": "node"` (legacy), but
@@ -234,12 +206,18 @@ Plan:
 - [x] **Investigated underlying-terrain coverage and reverted the
   initial fix.** First pass had `setDynamicPlanetAtSpace` strip
   ASTEROID/COMET so probes visiting Oumuamua wouldn't fire those
-  events. Reverted on review: that layer of terrain belongs to the
-  static base-board *under* disc 3, not to disc 3 itself, and
-  destructively dropping it means the marker would never re-emerge
-  when the disc rotates Oumuamua away. Today's data model only has
-  one terrain layer per cell, so there's nothing to "cover" yet —
-  filed as a separate P1 ("Base-board terrain layer not modeled").
+  events. Reverted on review: deeper investigation showed the data
+  model has no "base-board layer beneath disc 3". Ring 4 is the
+  static outermost ring and is where all asteroid/comet markers
+  live (`wheels[4][3]`); disc 3's visible band (`wheels[3][2]`)
+  has Jupiter/Saturn/NULL/EMPTY only — no asteroid/comet anywhere
+  on disc 3. Disc 3 partially overlaps ring 4 (handled by the
+  existing `pushCoveredProbes` cover-state mechanic for probe
+  displacement), but Oumuamua's space is on ring 3, never on top
+  of a ring-4 terrain cell. Result: a probe visiting Oumuamua sees
+  only the Oumuamua planet element — there's no underlying
+  asteroid/comet to fire. The strip was solving a non-existent
+  problem.
 - [x] **Per-player exofossil cell hidden when Oumuamua absent.**
   `ResourceBar` now takes a `showExofossils` prop (default `false`).
   `PlayerDashboard` forwards it; `GameLayout`'s `PersonalColumn`
