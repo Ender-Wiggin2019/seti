@@ -74,6 +74,31 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
     return undefined;
   }
 
+  public onSolarSystemRotated(game: IGame): void {
+    const board = game.alienState?.getBoardByType(EAlienType.OUMUAMUA);
+    if (!isOumuamuaAlienBoard(board)) return;
+    const tile = board.oumuamuaTile;
+    if (!tile) return;
+
+    const ringRotation =
+      game.solarSystem?.discs[2]?.currentRotation ??
+      game.solarSystemSetup?.initialDiscAngles[2] ??
+      0;
+    const nextSpaceId = getOumuamuaSolarSystemSpaceId(ringRotation);
+    if (nextSpaceId === tile.spaceId) return;
+
+    const sectorIndex = game.solarSystem?.getSectorIndexOfSpace(nextSpaceId);
+    if (sectorIndex === null || sectorIndex === undefined) return;
+    const nextSector = game.sectors[sectorIndex];
+    if (!nextSector) return;
+
+    game.solarSystem?.setDynamicPlanetAtSpace(EPlanet.OUMUAMUA, nextSpaceId, {
+      grantVisitPublicity: false,
+    });
+    tile.spaceId = nextSpaceId;
+    tile.sectorId = nextSector.id;
+  }
+
   public canPlaceTraceOnSlot(
     _game: IGame,
     player: IPlayer,
