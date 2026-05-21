@@ -49,18 +49,6 @@ _(none — most recent slice just landed)_
 - _Audit (2026-05-19): still broken — `socket.on('reconnect', …)` is
   unchanged at line 19._
 
-### P0 — Cross-check the rest of the alien reward ladders for similar bugs
-
-- `ANOMALY_TOKEN_REWARD_OPTIONS`, `LEFT_ALIEN_REWARDS`, `RIGHT_ALIEN_REWARDS`,
-  and `OUMUAMUA_TRACE_SLOT_DEFS` should all be cross-checked against the rule
-  book the same way `ANOMALY_COLUMN_REWARD_LADDER` was.
-- If any alien-card reward is encoded as `CARD` (regular deck) but the rule
-  says it should be alien-deck, they need the same treatment as the Anomalies
-  fix: switch to `CUSTOM:DRAW_ALIEN_CARD` and ensure the path delivers through
-  `executeRewards` (not `executeSimpleSlotRewards`).
-- Pair with the executeRewards short-circuit fix above so the cross-check
-  doesn't trip the latent footgun on landing.
-
 ### P1 — Land main action on Oumuamua not supported
 
 - `LAND` main action targets a printed planet's landing slot and grants
@@ -273,6 +261,65 @@ _(none — most recent slice just landed)_
   flipped to `false` in most packages.
 
 ## Done
+
+### Cross-check alien reward ladders against rulebook - 2026-05-21
+
+P0 audit pass over every reward ladder and slot-reward config in
+`packages/common/src/constant/alienBoardConfig.ts` plus the
+per-alien data files. One real bug found and fixed; everything
+else lined up with the rulebook.
+
+Plan:
+- [x] **Cross-check `ANOMALY_TOKEN_REWARD_OPTIONS`** against the
+  Anomalies rule doc + printed art. Found that
+  `YELLOW: { type: 'CARD', amount: 1 }` was the same bug pattern we
+  already fixed for Oumuamua tier 2/3 — `CARD` rewards are routed
+  through `executeSimpleSlotReward` which draws from
+  `game.mainDeck` (the regular deck), but the printed yellow
+  anomaly token's "card" side is meant to draw from the Anomalies
+  alien deck. Switched to `{ type: 'CUSTOM', effectId:
+  'DRAW_ALIEN_CARD' }` so it routes through the
+  `executeRewards` two-pass flow that already supports
+  alien-deck draws (and surfaces the face-up vs deck SelectOption
+  prompt).
+- [x] **Verify `ANOMALY_COLUMN_REWARD_LADDER`** — already correct.
+  Tier 1/2 use `CUSTOM:DRAW_ALIEN_CARD`, tier 3 = 2 VP + 1
+  publicity, tier 4 = 3 VP, tier 5 (overflow) = 2 VP. Matches the
+  printed alien board exactly.
+- [x] **Verify `LEFT_ALIEN_REWARDS` / `RIGHT_ALIEN_REWARDS`** —
+  rulebook (rule-raw.md:94, 236) confirms left = 5 VP + 1
+  publicity, overflow = 3 VP. Right alien's 3 VP discovery is per
+  the printed board art (smaller-tier discovery slots).
+- [x] **Verify `OUMUAMUA_TRACE_SLOT_DEFS`** — already correct
+  after the recent rewrite (5 tiers: 25 VP cost 4 / 3 VP + alien
+  card + fossil / 3 VP + alien card / 2 VP + fossil / overflow 6
+  VP cost 1).
+- [x] **Verify `CENTAURIANS_REWARD_SLOT_DEFS`** — 4 reward spaces
+  (any trace, energy + alien card, 3 publicity, 8 VP), all
+  `dataCost: 0`. Matches rulebook (rule.md:36-40 + 82-86). The
+  rival "data-cost spaces" mention is a separate solo-only
+  mechanic, not the regular market.
+- [x] **Verify `MASCAMITES_SAMPLE_TOKENS`** — 7 sample tokens
+  (2 credit / 2 energy / 2 card / 3 publicity / 2 data / 3 VP +
+  any-card / 7 VP). Standard Mascamites sample distribution per
+  the printed game.
+- [x] **Verify Exertians** — scoring rules (`EXERTIAN_SCORING_RULES`)
+  are per-card end-game scoring objectives, not slot rewards.
+  Out of scope for this audit (different mechanism).
+- [x] **Test updates** — the existing
+  `assigns one color-specific bonus side to each anomaly token`
+  test asserted `YELLOW: [CARD, PUBLICITY]`; updated to expect the
+  new `CUSTOM:DRAW_ALIEN_CARD` encoding. The
+  `routes CUSTOM token rewards through the deferred queue`
+  regression already exercises the underlying behaviour.
+
+Verification:
+- `pnpm -r typecheck` clean.
+- `pnpm --filter @seti/server test -- --run` — 2171/2172 (only
+  the pre-existing Amoeba flake).
+
+Residual:
+- None. All listed ladders align with the rulebook now.
 
 ### Defer Oumuamua tile completion to SECTOR_COMPLETION priority - 2026-05-21
 

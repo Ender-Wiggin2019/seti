@@ -61,7 +61,13 @@ export const ANOMALY_TOKEN_REWARD_OPTIONS: Readonly<
     { type: 'VP', amount: 4 },
   ],
   [ETrace.YELLOW]: [
-    { type: 'CARD', amount: 1 },
+    // Per rulebook: yellow anomaly token's "card" side draws from the
+    // Anomalies alien deck, not the regular main deck. Encoding it as
+    // a plain `CARD` reward routed through `executeSimpleSlotReward`
+    // would draw from the main deck — the same Oumuamua-tier bug
+    // pattern. Use the CUSTOM:DRAW_ALIEN_CARD path which the
+    // `executeRewards` two-pass flow already supports.
+    { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
     { type: 'PUBLICITY', amount: 2 },
   ],
   [ETrace.BLUE]: [
