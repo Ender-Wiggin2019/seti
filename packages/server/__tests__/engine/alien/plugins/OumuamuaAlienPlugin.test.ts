@@ -119,20 +119,17 @@ describe('OumuamuaAlienPlugin', () => {
     });
   });
 
-  // Pre-discovery the ring-3 NULL cutout cell isn't a real playable
-  // space, but `placeProbe` doesn't enforce that — debug paths and
-  // future features may end up putting a probe there. Defensively
-  // check that those probes still trigger the +1 publicity grant.
-  it('grants +1 publicity if a probe is already on the ring-3 oumuamua cell at discover', () => {
+  // Pre-discovery the ring-3 NULL cutout cell is now untraversable
+  // (`assertTraversable` rejects the unplaced Oumuamua space, see
+  // upstream `7bc4436`). `placeProbe` therefore throws if a caller
+  // tries to seed a probe there. Lock that contract in.
+  it('rejects placeProbe on the pre-discovery Oumuamua ring-3 cell', () => {
     const { game, p1 } = createGame('oumuamua-a2');
-    const plugin = new OumuamuaAlienPlugin();
     const spaceId = findExpectedOumuamuaSpaceId(game);
-    const publicityBefore = p1.resources.publicity;
 
-    game.solarSystem?.placeProbe(p1.id, spaceId);
-    plugin.onDiscover(game, []);
-
-    expect(p1.resources.publicity).toBe(publicityBefore + 1);
+    expect(() => game.solarSystem?.placeProbe(p1.id, spaceId)).toThrow(
+      /not traversable/,
+    );
   });
 
   // Pre-discovery, Oumuamua's ring-3 slot is NULL (a transparent
@@ -298,6 +295,12 @@ describe('OumuamuaAlienPlugin', () => {
     plugin.markTileSignal(p2, game);
     plugin.markTileSignal(p1, game);
 
+    // Tile completion is now deferred to `EPriority.SECTOR_COMPLETION`
+    // (mirroring normal sectors). Drain the queue to fire the
+    // completion side effects (exofossil grants, marker return,
+    // tile refill) before asserting end-state.
+    game.deferredActions.drain(game);
+
     const state = plugin.getRuntimeState(game);
     expect(p1.exofossils).toBe(p1Before + 1);
     expect(p2.exofossils).toBe(p2Before + 1);
@@ -306,6 +309,41 @@ describe('OumuamuaAlienPlugin', () => {
     expect(p1.pieces.deployed(EPieceType.SECTOR_MARKER)).toBe(0);
     expect(p2.pieces.deployed(EPieceType.SECTOR_MARKER)).toBe(0);
     expect(sector.sectorWinners).toEqual([]);
+  });
+
+  // Regression: tile completion used to fire inline on the third
+  // marker, refilling the tile and granting fossils before the
+  // active player's main action settled. Now it's deferred to
+  // `EPriority.SECTOR_COMPLETION` (mirroring normal sectors), so the
+  // completion side effects only land once the deferred queue runs.
+  it('defers tile completion side effects until the deferred queue runs', () => {
+    const { game, p1, p2 } = createGame('oumuamua-defer');
+    const plugin = new OumuamuaAlienPlugin();
+    plugin.onDiscover(game, []);
+    const p1Before = p1.exofossils;
+    const p2Before = p2.exofossils;
+
+    plugin.markTileSignal(p1, game);
+    plugin.markTileSignal(p2, game);
+    plugin.markTileSignal(p1, game);
+
+    // Pre-drain: per-mark rewards (data, VP at marker 1/3) have
+    // landed but the completion side effects have not — tile is
+    // empty, fossils not granted yet.
+    const midState = plugin.getRuntimeState(game);
+    expect(midState?.tileDataRemaining).toBe(0);
+    expect(midState?.tileMarkerPlayerIds).toHaveLength(3);
+    expect(p1.exofossils).toBe(p1Before);
+    expect(p2.exofossils).toBe(p2Before);
+
+    game.deferredActions.drain(game);
+
+    // Post-drain: completion has fired.
+    const finalState = plugin.getRuntimeState(game);
+    expect(finalState?.tileDataRemaining).toBe(3);
+    expect(finalState?.tileMarkerPlayerIds).toEqual([]);
+    expect(p1.exofossils).toBe(p1Before + 1);
+    expect(p2.exofossils).toBe(p2Before + 1);
   });
 
   it('second marker grants no score and third marker grants +2 score', () => {
@@ -329,9 +367,18 @@ describe('OumuamuaAlienPlugin', () => {
     const plugin = new OumuamuaAlienPlugin();
     plugin.onDiscover(game, []);
 
-    for (let i = 0; i < 6; i += 1) {
+    // First completion (3 marks): drain so the tile refills, then mark
+    // 3 more for the second completion. `markTileSignal` early-returns
+    // when `dataRemaining <= 0`, so the queue must drain between
+    // completion cycles.
+    for (let i = 0; i < 3; i += 1) {
       plugin.markTileSignal(p1, game);
     }
+    game.deferredActions.drain(game);
+    for (let i = 0; i < 3; i += 1) {
+      plugin.markTileSignal(p1, game);
+    }
+    game.deferredActions.drain(game);
 
     const after = plugin.getRuntimeState(game);
     expect(p1.exofossils).toBe(2);
@@ -584,6 +631,9 @@ describe('OumuamuaAlienPlugin', () => {
     plugin.markTileSignal(p1, game);
     plugin.markTileSignal(p1, game);
     plugin.markTileSignal(p1, game);
+    // Drain the deferred SECTOR_COMPLETION so the +1 fossil from
+    // tile completion lands before we spend.
+    game.deferredActions.drain(game);
     expect(p1.exofossils).toBe(1);
 
     expect(

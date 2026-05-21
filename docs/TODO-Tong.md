@@ -158,29 +158,6 @@ _(none — most recent slice just landed)_
   committed a multi-hop path.
 - _Audit (2026-05-21): observed during Oumuamua replay test._
 
-### P1 — Sector resolution should fire at end-of-turn, not immediately
-
-- Tong observed the Oumuamua sector resolves the moment its last
-  data marker is placed (the trace-prompt fires inline). Per
-  rulebook, sector completion is checked at end-of-turn so a player
-  can keep marking signals within the same turn before resolution.
-- Need to verify whether normal (non-Oumuamua) sectors have the
-  same eager-resolution bug or only the Oumuamua tile path
-  (`OumuamuaAlienPlugin.markTileSignal` → `resolveTileCompletion`
-  is called inline after data hits 0). The standard
-  `MarkSectorSignalEffect` may correctly defer to end-of-turn via
-  `emitSectorCompletedTurnEvent` — needs an audit pass.
-- Fix shape:
-  1. Trace `markTileSignal` → `resolveTileCompletion` and the
-     equivalent normal-sector path; confirm both use the deferred
-     resolution journal.
-  2. If Oumuamua resolves inline, queue the completion via
-     `SimpleDeferredAction` with `EPriority.IMMEDIATE_REWARD` and
-     gate it on end-of-turn so trace-prompts surface only after the
-     active player ends their main action.
-- _Audit (2026-05-21): Tong observed Oumuamua resolves immediately;
-  normal sectors uncertain — verify before fixing._
-
 ### P1 — `AndOptionsInput` Back button preserves stale response
 
 - `packages/client/src/features/input/AndOptionsInput.tsx:111` —
@@ -296,6 +273,47 @@ _(none — most recent slice just landed)_
   flipped to `false` in most packages.
 
 ## Done
+
+### Defer Oumuamua tile completion to SECTOR_COMPLETION priority - 2026-05-21
+
+User-observed bug: Oumuamua's tile resolved inline as soon as the
+third data marker was placed — the trace prompt and tile refill
+fired before the active player's main-action chain settled. Normal
+sectors correctly defer through `ResolveSectorCompletion` at
+`EPriority.SECTOR_COMPLETION`, but `OumuamuaAlienPlugin.markTileSignal`
+called `resolveTileCompletion` synchronously when `dataRemaining
+<= 0`.
+
+Plan:
+- [x] **Trace both paths.** Normal sector: `markSignal` flips
+  `completed`, `MarkSectorSignalEffect.markOnSector` emits
+  `SECTOR_COMPLETED` turn event but doesn't resolve;
+  `Game.processMainAction` enqueues `ResolveSectorCompletion` at
+  `EPriority.SECTOR_COMPLETION` so completion runs after CORE_EFFECT
+  / IMMEDIATE_REWARD / CARD_TRIGGER. Oumuamua's path bypassed the
+  queue.
+- [x] **Defer Oumuamua's tile completion** via a
+  `SimpleDeferredAction` at `EPriority.SECTOR_COMPLETION`. Per-mark
+  rewards (data, VP at marker 1/3) stay inline — same as normal
+  sectors' per-signal rewards.
+- [x] **Test updates** — three existing Oumuamua tests called
+  `markTileSignal` directly and asserted on completion side
+  effects without driving the deferred queue. Added
+  `game.deferredActions.drain(game)` calls before the relevant
+  assertions. Added a new regression test that asserts the tile
+  stays in the mid-completion state until the queue drains.
+- [x] **Pre-discovery placeProbe contract** — upstream `7bc4436`
+  made the unplaced Oumuamua space untraversable; updated the
+  affected test to assert `placeProbe` throws `not traversable`
+  instead of seeding a probe defensively.
+
+Verification:
+- `pnpm --filter @seti/server typecheck` clean.
+- `pnpm --filter @seti/server test -- --run` — 2171/2172 (only the
+  pre-existing Amoeba flake; the two upstream-fixed organisation
+  tests are now green thanks to `7bc4436`).
+- New regression test (`defers tile completion side effects until
+  the deferred queue runs`) locks in the new behaviour.
 
 ### Solar-system multi-cell movement-cost fix + sector-centre rendering - 2026-05-21
 

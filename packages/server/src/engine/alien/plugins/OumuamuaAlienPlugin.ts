@@ -11,6 +11,8 @@ import {
 import type { ESector } from '@seti/common/types/element';
 import { EAlienType, EPlanet, ETrace } from '@seti/common/types/protocol/enums';
 import type { IMarkSectorSignalResult } from '@/engine/effects/scan/MarkSectorSignalEffect.js';
+import { EPriority } from '../../deferred/Priority.js';
+import { SimpleDeferredAction } from '../../deferred/SimpleDeferredAction.js';
 import type { IGame } from '../../IGame.js';
 import type { PlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
@@ -234,7 +236,30 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
     }
 
     if (tile.dataRemaining <= 0) {
-      this.resolveTileCompletion(game, board);
+      // Defer the tile-completion side effects (refill, return markers,
+      // +1 exofossil per contributor) to the same priority bucket
+      // that normal sectors use. Without this the trace-prompt and
+      // refill fired immediately on the active player's mark, instead
+      // of waiting for the rest of the action chain to settle. The
+      // per-mark rewards above (data, VP at marker 1/3) stay inline —
+      // those mirror the normal sector's per-signal rewards.
+      game.deferredActions.push(
+        new SimpleDeferredAction(
+          player,
+          (currentGame) => {
+            const liveBoard =
+              currentGame.alienState?.getBoardByType(EAlienType.OUMUAMUA);
+            if (!isOumuamuaAlienBoard(liveBoard)) return undefined;
+            const liveTile = liveBoard.oumuamuaTile;
+            // Guard: another player or path may have already drained
+            // and refilled the tile in the meantime.
+            if (!liveTile || liveTile.dataRemaining > 0) return undefined;
+            this.resolveTileCompletion(currentGame, liveBoard);
+            return undefined;
+          },
+          EPriority.SECTOR_COMPLETION,
+        ),
+      );
     }
   }
 
