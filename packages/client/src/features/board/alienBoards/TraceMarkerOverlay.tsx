@@ -3,9 +3,13 @@ import {
   TRACE_COLUMN_COLORS,
   type TTraceColumnColor,
 } from '@seti/common/utils/alienTracePresentation';
-import { useCalibrationMode } from '@/hooks/useCalibrationMode';
+import {
+  useCalibrationMode,
+  usePreviewOverflowCount,
+} from '@/hooks/useCalibrationMode';
 import type { IPublicTraceSlot } from '@/types/re-exports';
 import { ETrace } from '@/types/re-exports';
+import { decorateSlotWithPreviewOccupants } from './AlienBoardTraceGrid';
 
 type TTraceOccupant = IPublicTraceSlot['occupants'][number];
 
@@ -21,6 +25,18 @@ const TRACE_LETTER: Record<TTraceColumnColor, string> = {
   [ETrace.BLUE]: 'B',
 };
 
+/**
+ * Distinct fallback colours for `?previewOverflow=N` synth occupants
+ * whose `playerId` isn't in the live `playerColors` map. Mirrors the
+ * 4-player palette so previews look like a real game in progress.
+ */
+const PREVIEW_PLAYER_FALLBACK_COLORS: Record<string, string> = {
+  'preview-A': '#ef4444',
+  'preview-B': '#3b82f6',
+  'preview-C': '#22c55e',
+  'preview-D': '#eab308',
+};
+
 export interface ITraceColumnLayout {
   /** Horizontal centre, in % of board width. */
   xPct: number;
@@ -34,7 +50,10 @@ export interface ITraceColumnLayout {
   /**
    * Vertical stride (in % of board height) used to stack multiple occupants
    * inside an overflow slot (`maxOccupants === -1`). Each subsequent occupant
-   * shifts upward by this amount. Defaults to 4.5%.
+   * shifts upward by this amount. Defaults to 1.5% — matches the
+   * Anomalies image-mode overflow ladder, which reads as the visually
+   * correct token density. Earlier the default was 4.5% which left
+   * gaps between stacked tokens.
    */
   overflowStridePct?: number;
 }
@@ -75,13 +94,20 @@ export function TraceMarkerOverlay({
     );
   }
   const slotsByColor = groupTraceSlotsByColor(traceSlots);
+  const previewOverflow = usePreviewOverflowCount();
   return (
     <>
       {TRACE_COLUMN_COLORS.map((color) => {
         const layout = layouts[color];
-        const slots = slotsByColor[color] ?? [];
-        if (!layout || slots.length === 0) return null;
-        const stride = layout.overflowStridePct ?? 4.5;
+        const liveSlots = slotsByColor[color] ?? [];
+        if (!layout || liveSlots.length === 0) return null;
+        const slots =
+          previewOverflow > 0
+            ? liveSlots.map((slot) =>
+                decorateSlotWithPreviewOccupants(slot, color, previewOverflow),
+              )
+            : liveSlots;
+        const stride = layout.overflowStridePct ?? 1.5;
         return (
           <div
             key={color}
@@ -192,8 +218,15 @@ function SlotMarker({
 }): React.JSX.Element {
   const playerId =
     occupant.source === 'neutral' ? null : occupant.source.playerId;
+  // Fall back to the preview-palette colour when the live `playerColors`
+  // map doesn't know this player — happens for `?previewOverflow=N`
+  // synth occupants whose ids are `preview-A/B/C/D`.
   const fill =
-    playerId === null ? '#9ca3af' : (playerColors[playerId] ?? '#cbd5e1');
+    playerId === null
+      ? '#9ca3af'
+      : (playerColors[playerId] ??
+        PREVIEW_PLAYER_FALLBACK_COLORS[playerId] ??
+        '#cbd5e1');
   return (
     <span
       className='absolute aspect-square w-[8%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-black/50 shadow-[0_0_4px_rgba(0,0,0,0.6)]'

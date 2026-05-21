@@ -21,6 +21,10 @@ interface IResourceItem {
   value: (player: IPublicPlayerState) => number;
   /** "primary" resources live in the main cell row; score gets extra emphasis */
   emphasize?: boolean;
+  /** Image-local rotation in degrees, applied to the icon only. */
+  iconRotationDeg?: number;
+  /** Scale factor on the icon, defaults to 1.0. */
+  iconScale?: number;
 }
 
 const BASE_RESOURCE_ITEMS: IResourceItem[] = [
@@ -66,8 +70,14 @@ const EXOFOSSIL_ITEM: IResourceItem = {
   id: 'exofossils',
   i18nKey: 'client.resource_bar.exofossils',
   fallback: 'Exofossils',
-  icon: '/seti-assets/aliens/oumuamua.webp',
+  icon: '/assets/seti/aliens/oumuamua/exofossil.webp',
   value: (p) => p.exofossils ?? 0,
+  // The printed token sits at a slight tilt on the species board;
+  // rotate +45° clockwise so the fossil glyph reads upright in the
+  // resource cell. Scale to 90% so it sits inside the cell without
+  // the rotated bounding box crowding the label.
+  iconRotationDeg: 45,
+  iconScale: 0.8,
 };
 
 /**
@@ -114,6 +124,18 @@ export function ResourceBar({
               src={item.icon}
               alt={label}
               className='relative h-4 w-4 shrink-0 opacity-95'
+              style={(() => {
+                const transforms: string[] = [];
+                if (item.iconRotationDeg) {
+                  transforms.push(`rotate(${item.iconRotationDeg}deg)`);
+                }
+                if (item.iconScale !== undefined && item.iconScale !== 1) {
+                  transforms.push(`scale(${item.iconScale})`);
+                }
+                return transforms.length > 0
+                  ? { transform: transforms.join(' ') }
+                  : undefined;
+              })()}
             />
             <div className='relative min-w-0 flex-1'>
               <p className='micro-label truncate leading-none'>{label}</p>

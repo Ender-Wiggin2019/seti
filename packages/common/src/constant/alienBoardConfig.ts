@@ -133,6 +133,7 @@ export const OUMUAMUA_TRACE_SLOT_DEFS: readonly IOumuamuaTraceSlotDef[] = [
     rewards: [
       { type: 'VP', amount: 3 },
       { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
+      { type: 'CUSTOM', effectId: 'GAIN_EXOFOSSIL' },
     ],
   },
   {
@@ -140,7 +141,7 @@ export const OUMUAMUA_TRACE_SLOT_DEFS: readonly IOumuamuaTraceSlotDef[] = [
     maxOccupants: 1,
     exofossilCost: 0,
     rewards: [
-      { type: 'VP', amount: 2 },
+      { type: 'VP', amount: 3 },
       { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
     ],
   },
@@ -149,22 +150,12 @@ export const OUMUAMUA_TRACE_SLOT_DEFS: readonly IOumuamuaTraceSlotDef[] = [
     maxOccupants: 1,
     exofossilCost: 0,
     rewards: [
-      { type: 'VP', amount: 3 },
-      { type: 'CUSTOM', effectId: 'GAIN_EXOFOSSIL' },
-      { type: 'PUBLICITY', amount: 1 },
-    ],
-  },
-  {
-    tierFromBottom: 5,
-    maxOccupants: 1,
-    exofossilCost: 0,
-    rewards: [
       { type: 'VP', amount: 2 },
       { type: 'CUSTOM', effectId: 'GAIN_EXOFOSSIL' },
     ],
   },
   {
-    tierFromBottom: 6,
+    tierFromBottom: 5,
     maxOccupants: -1,
     exofossilCost: 1,
     rewards: [{ type: 'VP', amount: 6 }],

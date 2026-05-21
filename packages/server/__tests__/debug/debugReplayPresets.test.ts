@@ -361,7 +361,7 @@ describe('debugReplayPresets', () => {
     expect(runtime?.tileDataRemaining).toBe(2);
     expect(runtime?.tileMarkerPlayerIds).toContain(player.id);
     expect(player.exofossils).toBeGreaterThanOrEqual(4);
-    expect(traceColumnSlots).toHaveLength(18);
+    expect(traceColumnSlots).toHaveLength(15);
     expect(traceColumnSlots.some((slot) => slot.slotId.endsWith('|1|4'))).toBe(
       true,
     );

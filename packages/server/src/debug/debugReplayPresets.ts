@@ -1,3 +1,4 @@
+import type { TAlienSlotReward } from '@seti/common/constant/alienBoardConfig';
 import { CORE_RANDOM_ALIEN_TYPES } from '@seti/common/constant/alienLobby';
 import { EAlienMap } from '@seti/common/types/BaseCard';
 import { ETrace } from '@seti/common/types/element';
@@ -17,6 +18,7 @@ import {
 } from '@/engine/alien/AlienBoard.js';
 import { AlienState } from '@/engine/alien/index.js';
 import { OumuamuaAlienPlugin } from '@/engine/alien/plugins/OumuamuaAlienPlugin.js';
+import type { TSolarSystemAnomalyTraceColor } from '@/engine/board/SolarSystem.js';
 import { EventLog } from '@/engine/event/EventLog.js';
 import type { Game } from '@/engine/Game.js';
 import { EComputerRow } from '@/engine/player/Computer.js';
@@ -793,12 +795,28 @@ function normalizeAnomalyTokensForTriggerReplay(
     throw new Error('Solar system not found for anomaly replay preset');
   }
 
-  const existingTokens = game.solarSystem.getAlienTokensByType(
-    EAlienType.ANOMALIES,
-  );
-  const templateRewards = existingTokens[0]?.rewards.map((reward) => ({
-    ...reward,
-  })) ?? [{ type: 'VP' as const, amount: 2 }];
+  // Replace whatever Anomalies tokens are on the board with PINK
+  // tokens that alternate between CREDIT and VP headline rewards.
+  // Both colors-on-token must stay PINK so the test's pre-marked
+  // PINK column leader is guaranteed to match whichever sector
+  // Earth lands on after the next disc rotation. Alternating the
+  // headline reward type lets `resolveAnomalyTokenArtSrc` pick both
+  // `pink-credit.png` and `pink-vp.png`, restoring visual variety
+  // across the 8 sectors that the previous single-template version
+  // had collapsed.
+  const TRIGGER_REPLAY_TOKEN_TEMPLATES: ReadonlyArray<{
+    traceColor: TSolarSystemAnomalyTraceColor;
+    rewards: TAlienSlotReward[];
+  }> = [
+    { traceColor: ETrace.PINK, rewards: [{ type: 'CREDIT', amount: 3 }] },
+    { traceColor: ETrace.PINK, rewards: [{ type: 'VP', amount: 2 }] },
+    { traceColor: ETrace.PINK, rewards: [{ type: 'CREDIT', amount: 3 }] },
+    { traceColor: ETrace.PINK, rewards: [{ type: 'VP', amount: 2 }] },
+    { traceColor: ETrace.PINK, rewards: [{ type: 'CREDIT', amount: 3 }] },
+    { traceColor: ETrace.PINK, rewards: [{ type: 'VP', amount: 2 }] },
+    { traceColor: ETrace.PINK, rewards: [{ type: 'CREDIT', amount: 3 }] },
+    { traceColor: ETrace.PINK, rewards: [{ type: 'VP', amount: 2 }] },
+  ];
 
   for (let i = game.solarSystem.alienTokens.length - 1; i >= 0; i -= 1) {
     if (game.solarSystem.alienTokens[i].alienType === EAlienType.ANOMALIES) {
@@ -807,12 +825,13 @@ function normalizeAnomalyTokensForTriggerReplay(
   }
 
   for (let sectorIndex = 0; sectorIndex < 8; sectorIndex += 1) {
+    const template = TRIGGER_REPLAY_TOKEN_TEMPLATES[sectorIndex];
     game.solarSystem.addAlienToken({
-      tokenId: `alien-${board.alienIndex}-anomaly-token|${sectorIndex}|${ETrace.PINK}`,
+      tokenId: `alien-${board.alienIndex}-anomaly-token|${sectorIndex}|${template.traceColor}`,
       alienType: EAlienType.ANOMALIES,
       sectorIndex,
-      traceColor: ETrace.PINK,
-      rewards: templateRewards.map((reward) => ({ ...reward })),
+      traceColor: template.traceColor,
+      rewards: template.rewards.map((reward) => ({ ...reward })),
     });
   }
 }

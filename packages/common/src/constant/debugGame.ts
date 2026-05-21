@@ -11,13 +11,24 @@ export const GAME_DEBUG_DEFAULTS = {
     4: 229,
   } as const,
   sectorSignal: {
-    sigRot0: -24,
-    sigX0: -3,
-    sigY0: 10,
+    // These mirror `PER_TILE_SIGNAL_LAYOUT[TILE_1]` in
+    // `SectorNodeView.tsx` so /debug/game opens with the same sector
+    // data-dot positioning as a normal game / /debug/replay. Sliders
+    // can still tune from here; reset returns to TILE_1's values.
+    //
+    // Caveat: the debug page sets these via global CSS variables, so
+    // when sliders move they override every tile uniformly — TILE_2/
+    // TILE_3/TILE_4 will visually drift slightly because their baked
+    // per-tile offsets differ from TILE_1's by a few px.
+    sigRot0: -23,
+    sigX0: 2,
+    sigY0: 3,
     sigRot1: 21,
-    sigX1: -19,
-    sigY1: -1,
-    sectorDataSize: 21,
+    // Sliders use step:1, so non-integer offsets (e.g. TILE_1's
+    // sigX1: -15.6) round to the nearest int. Visual diff is sub-px.
+    sigX1: -16,
+    sigY1: -3,
+    sectorDataSize: 23,
     circleX0: 0,
     circleY0: -38,
     circleX1: 8,

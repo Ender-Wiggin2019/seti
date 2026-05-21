@@ -20,10 +20,7 @@
 _(none — most recent slice just landed)_
 
 > **Audit notes (2026-05-20):**
-> - Re-scanned the backlog after the Oumuamua art + plugin audit pass.
->   Still-open items below have been re-verified against the current
->   `feature/server` HEAD; closed items moved to "Done".
-> - Test baseline now: server 2159/2162 (3 pre-existing failures, none
+> - Test baseline now: server 2160/2163 (3 pre-existing failures, none
 >   Tong-owned: `OrganizationCardPowers > Cosmos Strategy Group …`,
 >   `OrganizationTechProbePowers > Helion Assembly …`,
 >   `SpaceAgencyAlienPlugins > deals Amoeba discovery cards …`); client
@@ -34,13 +31,58 @@ _(none — most recent slice just landed)_
 >   to the original author, not picked up here.
 > - 2026-05-19/20 update: backend-only P0/P1 slice landed (see Done) +
 >   Oumuamua planet art on solar wheel + Oumuamua rule-coverage audit
->   sweep (see Done). Anomalies P0 cross-check and WS reconnect P0 are
->   still open below.
+>   sweep + Oumuamua trace-ladder rewrite + UI polish slice (see Done).
+>   Anomalies P0 cross-check and WS reconnect P0 are still open below.
+> - 2026-05-20 surface: while testing movement in `/debug/replay` and
+>   `/debug/game`, found a fundamental issue with the solar-system
+>   data model — see new P0 below.
 
 ## Open
 
 > Items are roughly ordered by priority within each P-tier. P0 = act first,
 > P1 = important once P0 lands, P2 = quality polish.
+
+### P0 — Solar-system multi-cell ring expansion breaks movement cost
+
+- The shared coordinate model defines `RING_CELL_COUNTS = [8, 16, 24, 32]`
+  with `CELLS_PER_SECTOR_BY_RING = { 1:1, 2:2, 3:3, 4:4 }` (see
+  `packages/common/src/constant/solarCoordinate.ts:16`). Each ring-N
+  sector is split into N "cells"; the cell at `cellInSector === 0`
+  inherits the printed terrain (planet/asteroid/comet/null), the rest
+  are filled with `EMPTY` (see `sectorSetup.ts:387`).
+- Server treats every cell as a real position. `Movement.execute` charges
+  `path.length - 1` moves (`packages/server/src/engine/freeActions/Movement.ts:170`,
+  `getEffectiveMovementCost:274`); `SolarSystem.moveProbe` adds
+  `BASE_MOVE_COST + ASTEROID_EXTRA_COST` per step
+  (`packages/server/src/engine/board/SolarSystem.ts:483`). Result:
+  traversing one ring-4 sector costs 4 moves, not 1.
+- The printed SETI board has 8 spaces per ring. The multi-cell
+  expansion looks like it was added for visual fidelity (rotation step
+  size — `cellsPerVisualStep = ringIndex` in `rotateRingByOneStep`,
+  see `packages/server/src/engine/board/SolarSystem.ts:691`), but it
+  also leaks into movement and into the move-target picker UI which
+  shows N circles per sector for ring N.
+- User-visible symptoms:
+  - "Move (0)" badge in the free-action bar even when probes are on
+    the board — there's no movement to begin with in many replay
+    presets (no preset seeds `gainMove`).
+  - Each probe move hop costs 1 even when the probe stays inside the
+    same sector wedge.
+  - Move-target picker shows duplicate circles for one wedge.
+- Possible directions:
+  1. **Quick fix (UI + cost)**: charge 1 per (ring,sector) change
+     (0 for intra-sector cell shuffles); hide intra-sector cells from
+     the move-target picker so probes appear to move sector-to-sector.
+     Doesn't touch the data model. Some weirdness in test/debug paths
+     where probes can still be "at" an intra-sector cell.
+  2. **Proper fix (collapse to 8 spaces per ring)**: change
+     `RING_CELL_COUNTS` to `[8, 8, 8, 8]`, drop `cellsPerSector`
+     everywhere, rewrite spaceId formats and a chunk of tests
+     (~20 files including the recent Oumuamua tests). Right
+     long-term, but disruptive — needs to be a dedicated slice.
+- _Audit (2026-05-20): identified during Oumuamua replay testing.
+  Investigation paused; queued as a separate slice from the Oumuamua
+  polish that just landed._
 
 ### P0 — WS auto-reconnect listener attached to wrong emitter
 
@@ -183,6 +225,91 @@ _(none — most recent slice just landed)_
   flipped to `false` in most packages.
 
 ## Done
+
+### Oumuamua trace ladder + cost badges + UI polish slice - 2026-05-20
+
+Mixed slice covering Oumuamua trace-ladder data, supporting UI polish,
+and a couple of unrelated debug fixes that surfaced along the way.
+
+Plan:
+- [x] **Rewrite Oumuamua trace ladder to match the printed alien
+  board** — 5 tiers per column instead of 6:
+    1. 25 VP (cost 4 fossils)
+    2. 3 VP + alien card + 1 fossil (free)
+    3. 3 VP + alien card (free)
+    4. 2 VP + 1 fossil (free)
+    5. 6 VP (top, unlimited, cost 1 fossil per mark)
+  Updated `OUMUAMUA_TRACE_SLOT_DEFS` in `alienBoardConfig.ts` and the
+  matching tests in `OumuamuaAlienPlugin.test.ts` +
+  `debugReplayPresets.test.ts` (slot count 18 → 15, tier-6 → tier-5).
+- [x] **Replace exofossil cell icon** with the printed token glyph
+  from the Oumuamua reference art (`exofossil.webp` 7 KB), rotated
+  +45° clockwise and scaled to 80% so it reads upright in the
+  resource cell.
+- [x] **Add `× N 🦴` cost badge** to Oumuamua trace slots that have
+  a positive `exofossilCost`. Parses the cost client-side from the
+  slotId (server already encodes it), renders a small red ✕ + count +
+  fossil glyph pinned to the bottom-right of the bonus circle. High-
+  value VP icons (e.g. `score-25`) get a `translateX(8px)` nudge to
+  recover their visual centre — the underlying icon CSS positions
+  the value text at `left: -27px` for 50px-wide icons, which sits
+  off-centre in our 24px wrapper.
+- [x] **Wrap trace-slot bonuses onto two rows** when a slot has 3+
+  rewards (only tier 2 today: 3 VP + alien card + fossil). Headline
+  on row 1, secondary rewards on row 2 — fits inside the bonus
+  circle instead of overflowing horizontally.
+- [x] **Make `?previewOverflow=N` work for every alien**. Added
+  `decorateSlotWithPreviewOccupants` in `AlienBoardTraceGrid.tsx` and
+  wired it into `TraceColorColumn` (text-mode all aliens),
+  `TraceMarkerOverlay` (image-mode Oumuamua/Centaurians/Exertians/
+  Mascamites), and `AnomalyColumn` (text-mode Anomalies). Added a
+  4-color preview-player palette (red/blue/green/yellow) so synth
+  occupants get distinct colors when they aren't in the live
+  `playerColors` map.
+- [x] **Tighten the overflow stack stride** so all aliens match the
+  Anomalies image-mode density. Lowered text-mode stride from 14% to
+  9% in `SlotOccupantOverlay`; lowered `TraceMarkerOverlay`'s
+  default `overflowStridePct` from 4.5% to 1.5%; updated
+  `OumuamuaBoardArt`'s explicit per-column 4 → 1.5.
+- [x] **Vary anomaly trigger replay token art**. The trigger preset
+  used to write the same `templateRewards` to all 8 sectors with
+  forced PINK trace-color, collapsing visual variety to one PNG.
+  Now alternates between PINK+CREDIT and PINK+VP so both
+  `pink-credit.png` and `pink-vp.png` show up. Kept all PINK so the
+  pre-marked PINK column leader still triggers regardless of which
+  sector Earth lands on.
+- [x] **Sync `/debug/game` sector-data sliders to production
+  baseline.** `GAME_DEBUG_DEFAULTS.sectorSignal` had drifted to
+  stale calibration values; updated to mirror
+  `PER_TILE_SIGNAL_LAYOUT[TILE_1]` so `/debug/game` opens with the
+  same sector data-dot positions as a normal game. Slider tunings
+  still override; reset returns to the synced baseline.
+- [x] **Fix `processInput` resolution-base error**. Setup-time
+  inputs (corp tuck-income chain) hit
+  `Cannot persist pending input without a resume base` because
+  `recordResolutionStep` always passed `undefined` baseState
+  expecting an in-flight journal that doesn't exist for
+  setup-triggered prompts. Capture a fresh base when no journal
+  exists, mirroring `processAction` / `processFreeAction`.
+- [x] **Lift ring-4 probes onto the new Oumuamua tile at discovery**.
+  Pre-discovery the ring-3 slot is NULL (transparent cutout), so
+  probes "already there" sit on the ring-4 cell beneath. Added
+  `SolarSystem.getLowerSpacesCoveredBy` + `relocateProbesBetweenSpaces`
+  helpers; `OumuamuaAlienPlugin.onDiscover` now lifts those probes
+  onto the new tile and grants +1 publicity per the rulebook.
+
+Verification:
+- `pnpm -r typecheck` clean.
+- `pnpm --filter @seti/server test -- --run` — 2160/2163 (3
+  pre-existing failures unrelated).
+- `pnpm --filter @seti/client test -- --run` — 316/316.
+
+Residual:
+- Movement-cost issue surfaced during testing but not addressed here
+  — see new "P0 — Solar-system multi-cell ring expansion breaks
+  movement cost" in Open. Needs a dedicated slice.
+- Oumuamua text-mode column comment block (`OumuamuaBoardArt.tsx:9-18`)
+  is stale (still references 6 tiers). Cosmetic; left for a doc pass.
 
 ### Oumuamua rule-coverage audit + planet-visit hardening + exofossil cell visibility - 2026-05-20
 

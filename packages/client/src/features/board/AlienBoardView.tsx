@@ -33,11 +33,13 @@ import type {
 } from '@/types/re-exports';
 import { EAlienType, EMainAction, EPlanet, ETrace } from '@/types/re-exports';
 import {
+  decorateSlotWithPreviewOccupants,
   SlotOccupantOverlay,
   TraceColumnGrid,
   TraceRewardFrame,
   TraceRewardIcons,
 } from './alienBoards/AlienBoardTraceGrid';
+import { usePreviewOverflowCount } from '@/hooks/useCalibrationMode';
 import { AmoebaBoard } from './alienBoards/AmoebaBoard';
 import { AnomaliesBoardArt } from './alienBoards/AnomaliesBoardArt';
 import { ArkhosBoard } from './alienBoards/ArkhosBoard';
@@ -1830,9 +1832,16 @@ function AnomalyColumn({
   tierSlots: IPublicTraceSlot[];
   playerColors: Record<string, string>;
 }): React.JSX.Element {
+  const previewOverflow = usePreviewOverflowCount();
+  const decoratedTierSlots =
+    previewOverflow > 0
+      ? tierSlots.map((slot) =>
+          decorateSlotWithPreviewOccupants(slot, color, previewOverflow),
+        )
+      : tierSlots;
   // Render tiers from top→bottom so the visual order matches the printed
   // alien board (overflow at top, single-cap circles below).
-  const tiersTopToBottom = [...tierSlots].reverse();
+  const tiersTopToBottom = [...decoratedTierSlots].reverse();
   return (
     <div
       className='min-w-0 rounded border border-surface-700/60 bg-surface-900/50 p-1'

@@ -18,19 +18,19 @@ import {
 // `yPctBottomToTop[i]` is the i-th slot from the bottom.
 const OUMUAMUA_LAYOUTS: TTraceColumnLayouts = {
   [ETrace.PINK]: {
-    xPct: 19,
-    yPctBottomToTop: [86, 75, 65, 56, 47, 35],
-    overflowStridePct: 4,
+    xPct: 18.6,
+    yPctBottomToTop: [83.9, 74, 64.2, 54.5, 43.5],
+    overflowStridePct: 1.5,
   },
   [ETrace.YELLOW]: {
-    xPct: 50,
-    yPctBottomToTop: [86, 75, 65, 56, 47, 35],
-    overflowStridePct: 4,
+    xPct: 49.7,
+    yPctBottomToTop: [88.8, 78.9, 69.2, 59.5, 48.5],
+    overflowStridePct: 1.5,
   },
   [ETrace.BLUE]: {
     xPct: 81,
-    yPctBottomToTop: [86, 75, 65, 56, 47, 35],
-    overflowStridePct: 4,
+    yPctBottomToTop: [83.9, 74, 64.2, 54.5, 43.5],
+    overflowStridePct: 1.5,
   },
 };
 
