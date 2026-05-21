@@ -15,6 +15,7 @@ import {
 } from '@seti/common/constant/sectorSetup';
 import {
   buildCoordinate,
+  cellInSectorOf,
   type ISolarCoordinate,
   SECTOR_COUNT,
   RING_CELL_COUNTS as SHARED_RING_CELL_COUNTS,
@@ -593,18 +594,30 @@ export class SolarSystem {
       undirectedEdgeSet.set(space.id, new Set());
     }
 
+    // Each ring-N sector is internally split into N sub-cells for visual
+    // scaffolding (terrain icons, rotation snapshots), but only the cell
+    // at `cellInSector === 0` is a real playable position. Restrict the
+    // adjacency graph to those cells so probes hop sector-to-sector
+    // (1 move per sector) instead of cell-to-cell (1 move per sub-cell,
+    // which made ring-4 traversal cost 4× a ring-1 traversal). The
+    // intra-sector cells stay in `solarSystem.spaces` for rendering /
+    // serialization but have no edges; nothing can move into them.
     const spacesByRing = this.groupSpacesByRing();
+    const isCellZero = (space: ISolarSystemSpace): boolean =>
+      cellInSectorOf(space.ringIndex, space.indexInRing) === 0;
+
     for (const ringSpaces of spacesByRing.values()) {
-      const orderedRingSpaces = [...ringSpaces].sort(
-        (left, right) => left.indexInRing - right.indexInRing,
-      );
-      if (orderedRingSpaces.length === 0) {
+      const orderedSectorSpaces = [...ringSpaces]
+        .filter(isCellZero)
+        .sort((left, right) => left.indexInRing - right.indexInRing);
+      if (orderedSectorSpaces.length === 0) {
         continue;
       }
 
-      for (let index = 0; index < orderedRingSpaces.length; index += 1) {
-        const current = orderedRingSpaces[index];
-        const next = orderedRingSpaces[(index + 1) % orderedRingSpaces.length];
+      for (let index = 0; index < orderedSectorSpaces.length; index += 1) {
+        const current = orderedSectorSpaces[index];
+        const next =
+          orderedSectorSpaces[(index + 1) % orderedSectorSpaces.length];
         this.linkUndirected(undirectedEdgeSet, current.id, next.id);
       }
     }
@@ -616,19 +629,27 @@ export class SolarSystem {
         continue;
       }
 
-      const innerCount = innerRing.length;
-      const outerCount = outerRing.length;
+      // Sector-aligned radial linking: ring-N sector S only connects to
+      // ring-(N+1) sector S, both at cell-0. The fractional-overlap
+      // walk that handled the per-cell case is no longer needed because
+      // sectors line up 1:1 across rings.
+      const innerByPosition = new Map<number, ISolarSystemSpace>();
       for (const innerSpace of innerRing) {
-        const innerStart = innerSpace.indexInRing / innerCount;
-        const innerEnd = (innerSpace.indexInRing + 1) / innerCount;
-        for (const outerSpace of outerRing) {
-          const outerStart = outerSpace.indexInRing / outerCount;
-          const outerEnd = (outerSpace.indexInRing + 1) / outerCount;
-          if (!this.rangesOverlap(innerStart, innerEnd, outerStart, outerEnd)) {
-            continue;
-          }
-          this.linkUndirected(undirectedEdgeSet, innerSpace.id, outerSpace.id);
-        }
+        if (!isCellZero(innerSpace)) continue;
+        innerByPosition.set(
+          sectorIndexOf(innerSpace.ringIndex, innerSpace.indexInRing),
+          innerSpace,
+        );
+      }
+      for (const outerSpace of outerRing) {
+        if (!isCellZero(outerSpace)) continue;
+        const sectorId = sectorIndexOf(
+          outerSpace.ringIndex,
+          outerSpace.indexInRing,
+        );
+        const innerSpace = innerByPosition.get(sectorId);
+        if (!innerSpace) continue;
+        this.linkUndirected(undirectedEdgeSet, innerSpace.id, outerSpace.id);
       }
     }
 
@@ -838,15 +859,6 @@ export class SolarSystem {
     }
     firstNeighbors.add(second);
     secondNeighbors.add(first);
-  }
-
-  private rangesOverlap(
-    startA: number,
-    endA: number,
-    startB: number,
-    endB: number,
-  ): boolean {
-    return startA < endB && startB < endA;
   }
 
   private getSpace(spaceId: string): ISolarSystemSpace {

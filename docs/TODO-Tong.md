@@ -19,70 +19,21 @@
 
 _(none — most recent slice just landed)_
 
-> **Audit notes (2026-05-20):**
+> **Audit notes (2026-05-21):**
 > - Test baseline now: server 2160/2163 (3 pre-existing failures, none
 >   Tong-owned: `OrganizationCardPowers > Cosmos Strategy Group …`,
 >   `OrganizationTechProbePowers > Helion Assembly …`,
 >   `SpaceAgencyAlienPlugins > deals Amoeba discovery cards …`); client
 >   316/316; `pnpm -r typecheck` clean.
-> - Pulled upstream merge `225745f` adding more org/expansion content
->   on top of `f560f47 feat: update unit test`. The two new
->   organization-power test failures came in with that merge — flagged
->   to the original author, not picked up here.
-> - 2026-05-19/20 update: backend-only P0/P1 slice landed (see Done) +
->   Oumuamua planet art on solar wheel + Oumuamua rule-coverage audit
->   sweep + Oumuamua trace-ladder rewrite + UI polish slice (see Done).
->   Anomalies P0 cross-check and WS reconnect P0 are still open below.
-> - 2026-05-20 surface: while testing movement in `/debug/replay` and
->   `/debug/game`, found a fundamental issue with the solar-system
->   data model — see new P0 below.
+> - 2026-05-21 update: solar-system multi-cell movement-cost fix
+>   landed (option C — adjacency-only, see Done). Surfaced several
+>   movement / planet / terrain gaps along the way; documented as new
+>   P1/P2 items below.
 
 ## Open
 
 > Items are roughly ordered by priority within each P-tier. P0 = act first,
 > P1 = important once P0 lands, P2 = quality polish.
-
-### P0 — Solar-system multi-cell ring expansion breaks movement cost
-
-- The shared coordinate model defines `RING_CELL_COUNTS = [8, 16, 24, 32]`
-  with `CELLS_PER_SECTOR_BY_RING = { 1:1, 2:2, 3:3, 4:4 }` (see
-  `packages/common/src/constant/solarCoordinate.ts:16`). Each ring-N
-  sector is split into N "cells"; the cell at `cellInSector === 0`
-  inherits the printed terrain (planet/asteroid/comet/null), the rest
-  are filled with `EMPTY` (see `sectorSetup.ts:387`).
-- Server treats every cell as a real position. `Movement.execute` charges
-  `path.length - 1` moves (`packages/server/src/engine/freeActions/Movement.ts:170`,
-  `getEffectiveMovementCost:274`); `SolarSystem.moveProbe` adds
-  `BASE_MOVE_COST + ASTEROID_EXTRA_COST` per step
-  (`packages/server/src/engine/board/SolarSystem.ts:483`). Result:
-  traversing one ring-4 sector costs 4 moves, not 1.
-- The printed SETI board has 8 spaces per ring. The multi-cell
-  expansion looks like it was added for visual fidelity (rotation step
-  size — `cellsPerVisualStep = ringIndex` in `rotateRingByOneStep`,
-  see `packages/server/src/engine/board/SolarSystem.ts:691`), but it
-  also leaks into movement and into the move-target picker UI which
-  shows N circles per sector for ring N.
-- User-visible symptoms:
-  - "Move (0)" badge in the free-action bar even when probes are on
-    the board — there's no movement to begin with in many replay
-    presets (no preset seeds `gainMove`).
-  - Each probe move hop costs 1 even when the probe stays inside the
-    same sector wedge.
-  - Move-target picker shows duplicate circles for one wedge.
-- Possible directions:
-  1. **Quick fix (UI + cost)**: charge 1 per (ring,sector) change
-     (0 for intra-sector cell shuffles); hide intra-sector cells from
-     the move-target picker so probes appear to move sector-to-sector.
-     Doesn't touch the data model. Some weirdness in test/debug paths
-     where probes can still be "at" an intra-sector cell.
-  2. **Proper fix (collapse to 8 spaces per ring)**: change
-     `RING_CELL_COUNTS` to `[8, 8, 8, 8]`, drop `cellsPerSector`
-     everywhere, rewrite spaceId formats and a chunk of tests
-     (~20 files including the recent Oumuamua tests). Right
-     long-term, but disruptive — needs to be a dedicated slice.
-- _Audit (2026-05-20): identified during Oumuamua replay testing.
-  Investigation paused; queued as a separate slice from the Oumuamua
-  polish that just landed._
 
 ### P0 — WS auto-reconnect listener attached to wrong emitter
 
@@ -109,6 +60,126 @@ _(none — most recent slice just landed)_
   `executeRewards` (not `executeSimpleSlotRewards`).
 - Pair with the executeRewards short-circuit fix above so the cross-check
   doesn't trip the latent footgun on landing.
+
+### P1 — Land main action on Oumuamua not supported
+
+- `LAND` main action targets a printed planet's landing slot and grants
+  the planet's land rewards. Oumuamua has a `PLANETARY_BOARD_CONFIG`
+  entry (see `packages/common/src/constant/boardLayout.ts:379`) with
+  `landingSlots`, but the LAND flow doesn't accept Oumuamua as a
+  target — `canLandOnPlanet` likely rejects, or no UI option is
+  exposed in `AlienBoardView`'s Oumuamua landing surface.
+- Rulebook: "Players may place lander/orbiter on it as with other
+  planets" (`docs/arch/aliens/oumuamua/rule.md`). Orbit already works
+  (`OrbitProbeEffect` handles Oumuamua specially via the dual-routing
+  signal input), so LAND should mirror that.
+- Fix shape:
+  1. Audit `LandProbeEffect` for any planet-allowlist check; ensure
+     `EPlanet.OUMUAMUA` is in scope (the `ORBITABLE_PLANETS` list
+     already includes it; check the LAND equivalent).
+  2. Wire the "Land Oumuamua" UI button in `AlienBoardView`'s
+     `OumuamuaBoardRenderer` (already has the orbit/land surface
+     scaffolding).
+  3. Verify the per-Oumuamua land rewards land via the standard
+     reward pipeline; signals from "Land bonus" should also route
+     through `createSectorOrTileSignalInput` for the Oumuamua
+     sector-vs-tile choice.
+- _Audit (2026-05-21): observed in the live replay — Oumuamua's
+  landing surface renders but clicking the LAND button is a no-op._
+
+### P1 — Comet visit effect not implemented
+
+- Probes that move onto a comet space should fire the printed comet
+  effect (typically +1 publicity per visit and a card-row reward, see
+  rulebook). Today `emitCometVisitedTurnEvent` (in
+  `packages/server/src/engine/turnEffects/TurnEffects.ts:159`) fires
+  the event but no listener consumes it for the base game's universal
+  comet effect — only individual cards register `onCometVisited`
+  handlers.
+- The printed solar-system board has comet markers on rings 3 and 4
+  (see `wheels[3][0/1]` `cometSlotWithPublicity()` plus `wheels[4][3]`
+  Neptune/Uranus row). Visiting any of these should trigger the same
+  per-comet bonus regardless of card support.
+- Fix shape: add a default comet-visit handler that grants the
+  printed reward (publicity + card-row bonus) and fires per-visit so
+  cards' onCometVisited still chain correctly. Wire through the same
+  resolution-step queue used for other turn events.
+- _Audit (2026-05-21): probe lands on comet space, no event log
+  entry for visit, no resource gain._
+
+### P1 — Asteroid visit effect not implemented
+
+- Same gap as comets: `emitAsteroidsVisitedTurnEvent`
+  (`TurnEffects.ts:154`) fires but no default reward consumer. The
+  printed asteroid spaces grant +1 data per visit per the rulebook;
+  today this is purely card-driven (e.g. Hayabusa-style cards).
+- Fix shape: add a default asteroid-visit handler that grants the
+  printed +1 data; ensure card listeners (`onAsteroidsVisited`)
+  still fire on top.
+- _Audit (2026-05-21): probe lands on asteroid space, no resource
+  gain. Pair with the comet fix — same pattern._
+
+### P1 — Asteroid leave-cost not implemented
+
+- Per rulebook, leaving an asteroid space costs +1 movement on top
+  of the base move cost. The code in
+  `packages/server/src/engine/freeActions/Movement.ts:285-298`
+  computes `asteroidLeaveCost = TechModifierQuery.getAsteroidLeaveCost(1)`
+  but it depends on a tech modifier — the default value path needs
+  verification, plus `SolarSystem.moveProbe` adds
+  `ASTEROID_EXTRA_COST` only when `containsElement(fromSpace,
+  ASTEROID)` holds.
+- Cross-check: does the test scenario with a probe leaving an
+  asteroid actually charge +1? The existing
+  `SolarSystem.test.ts > charges extra movement cost when leaving
+  asteroid` test passes today (now using sector-2-cell-0 → sector-3-
+  cell-0 after the centring fix). But Tong observed this not
+  working in actual gameplay; might be a UI / pathing issue rather
+  than the cost calc itself.
+- _Audit (2026-05-21): observation surfaced during sector hop
+  testing; needs reproduction in `/debug/replay` to confirm
+  whether it's a cost calc bug or a UI/path display issue._
+
+### P1 — Move-target picker should show only 1-distance hops
+
+- Today the move picker highlights every cell reachable within the
+  player's full move budget. Useful when the probe can fly straight
+  to the target, but breaks down when intermediate spaces have
+  meaningful effects (asteroid leave-cost, comet visit reward,
+  Oumuamua tile pickup). Players should pick the next single hop
+  and resolve its effects, then pick the next.
+- Fix shape: in `SolarSystemView`'s `getReachableSpaces` consumer,
+  cap distance to 1 hop (or to the next "interesting" space — the
+  next asteroid/comet/planet boundary). After the player commits
+  one hop, server resolves visit/leave events, then the next
+  picker round opens.
+- Pair with the comet/asteroid visit-effect fixes above — players
+  need to *see* per-hop effects before they fire, not after they've
+  committed a multi-hop path.
+- _Audit (2026-05-21): observed during Oumuamua replay test._
+
+### P1 — Sector resolution should fire at end-of-turn, not immediately
+
+- Tong observed the Oumuamua sector resolves the moment its last
+  data marker is placed (the trace-prompt fires inline). Per
+  rulebook, sector completion is checked at end-of-turn so a player
+  can keep marking signals within the same turn before resolution.
+- Need to verify whether normal (non-Oumuamua) sectors have the
+  same eager-resolution bug or only the Oumuamua tile path
+  (`OumuamuaAlienPlugin.markTileSignal` → `resolveTileCompletion`
+  is called inline after data hits 0). The standard
+  `MarkSectorSignalEffect` may correctly defer to end-of-turn via
+  `emitSectorCompletedTurnEvent` — needs an audit pass.
+- Fix shape:
+  1. Trace `markTileSignal` → `resolveTileCompletion` and the
+     equivalent normal-sector path; confirm both use the deferred
+     resolution journal.
+  2. If Oumuamua resolves inline, queue the completion via
+     `SimpleDeferredAction` with `EPriority.IMMEDIATE_REWARD` and
+     gate it on end-of-turn so trace-prompts surface only after the
+     active player ends their main action.
+- _Audit (2026-05-21): Tong observed Oumuamua resolves immediately;
+  normal sectors uncertain — verify before fixing._
 
 ### P1 — `AndOptionsInput` Back button preserves stale response
 
@@ -225,6 +296,75 @@ _(none — most recent slice just landed)_
   flipped to `false` in most packages.
 
 ## Done
+
+### Solar-system multi-cell movement-cost fix + sector-centre rendering - 2026-05-21
+
+Fixed the long-standing issue where ring-N sectors were treated as N
+separate cells for movement, making ring-4 traversal cost 4× ring-1.
+Picked option (C) from the investigation — adjacency-only — so the
+data model stays the same but probes can only hop sector-to-sector.
+
+Plan:
+- [x] **Investigation** — confirmed the multi-cell expansion is purely
+  visual scaffolding (planets/asteroids/comets only ever live at
+  `cellInSector === 0`; cells 1+ are always EMPTY). Wheel rotation
+  moves cells in lockstep so they're a single logical sector. Probes
+  always launch / land at cell-0 (Earth's spaceId via
+  `LaunchProbeEffect`). No tests asserted on intra-sector cell hops.
+- [x] **Server adjacency** — `SolarSystem.buildAdjacency` now only
+  links cells with `cellInSector === 0`. Tangential walk skips
+  intra-sector edges; radial walk uses the natural sector-to-sector
+  1:1 mapping (replacing the fractional-overlap ranges). Dropped the
+  unused `rangesOverlap` helper. Probes physically can't enter
+  intra-sector cells now because there are no edges into them.
+- [x] **Client `spacePosition`** — switched to centring on each
+  sector's geometric centre (`(sectorIndex + 0.5) × 45°`) regardless
+  of `cellInSector`. Probe + hotspot positions follow.
+- [x] **Hotspot loop** — `solar-space-*` buttons filter to
+  `cellInSector === 0` so users see one click target per (ring,
+  sector). The decorative wheel art (multi-segment terrain visuals
+  on ring 4) still renders via the wheel-image PNG; only the
+  hotspot count drops from 80 → 25 (~8 per ring × 4 rings, plus the
+  Earth + sun).
+- [x] **Oumuamua tile exception** — added
+  `legacyCellSpacePosition` and routed `oumuamuaTile.spaceId`
+  through it so the planet image, 3-data dot pill, and probes
+  parked on the tile stay at their printed wheel position relative
+  to Jupiter (invariant by construction; no offset re-tuning).
+- [x] **Oumuamua probe-landing nudge** — added
+  `OUMUAMUA_PROBE_LANDING_OFFSET` (tangentialPx + radialPx) so probes
+  parked on Oumuamua and the hotspot click target both shift in
+  sync to land on the printed planet glyph instead of the cell
+  anchor. Tweakable; defaults to (0, 0) until you tune.
+- [x] **Z-index** — Oumuamua planet image lowered to z-78 (under the
+  z-80 probe layer) so probes parked on the tile remain visible.
+  Data pill stays at z-86 for readability.
+- [x] **Test updates** — three SolarSystemView client tests asserted
+  on the old leading-edge anchor positions; updated to the
+  sector-centre coordinates. Two SolarSystem server tests used
+  `ring-2-cell-1` (intra-sector) for a hop; updated to
+  `ring-2-cell-2` (sector 1 cell 0). Movement.test 3.1E.4 used
+  `ring2[2]` as a "diagonal" target — that's now the legal
+  sector-1 hop, switched to `ring2[4]` (sector 2, two sectors
+  away, genuinely non-adjacent).
+
+Verification:
+- `pnpm -r typecheck` clean.
+- `pnpm --filter @seti/server test -- --run` — 2160/2163 (3
+  pre-existing failures unrelated).
+- `pnpm --filter @seti/client test -- --run` — 316/316.
+- Live verification in `/debug/replay`: probes hop sector-to-sector
+  at 1 move per hop; only 8 hotspots per ring; Oumuamua tile sits
+  at its original printed-art position.
+
+Residual:
+- Several gameplay-mechanic gaps surfaced during testing — see new
+  P1 entries above (LAND on Oumuamua, comet/asteroid visit effects,
+  asteroid leave-cost verify, 1-hop move picker, sector
+  end-of-turn resolution).
+- `OUMUAMUA_PROBE_LANDING_OFFSET` defaults to (0, 0); needs visual
+  tuning so probes land on the printed planet glyph rather than
+  the cell anchor.
 
 ### Oumuamua trace ladder + cost badges + UI polish slice - 2026-05-20
 
