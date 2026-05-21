@@ -61,7 +61,7 @@ export const ANOMALY_TOKEN_REWARD_OPTIONS: Readonly<
     { type: 'VP', amount: 4 },
   ],
   [ETrace.YELLOW]: [
-    { type: 'CARD', amount: 1 },
+    { type: 'CARD_ANY', amount: 1 },
     { type: 'PUBLICITY', amount: 2 },
   ],
   [ETrace.BLUE]: [

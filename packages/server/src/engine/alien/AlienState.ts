@@ -23,6 +23,7 @@ import {
   type TSlotReward,
   type TTracePlayerRef,
 } from './AlienBoard.js';
+import { AnyCardChoiceEffect } from '../effects/card/AnyCardChoiceEffect.js';
 import { AlienRegistry } from './AlienRegistry.js';
 import { executeSimpleSlotReward } from './AlienRewards.js';
 
@@ -610,7 +611,16 @@ export class AlienState {
     //      it — a footgun if future ladder data lists the draw before
     //      a VP entry.
     let hasPendingDrawAlienCard = false;
+    let pendingCardAnyCount = 0;
     for (const reward of rewards) {
+      // CARD_ANY surfaces a row-or-deck SelectOption via
+      // AnyCardChoiceEffect. Intercept here so it doesn't fall through
+      // to executeSimpleSlotReward's deck-only draw.
+      if (reward.type === 'CARD_ANY') {
+        pendingCardAnyCount += reward.amount;
+        continue;
+      }
+
       if (executeSimpleSlotReward(player, game, reward)) {
         continue;
       }
@@ -630,16 +640,37 @@ export class AlienState {
           break;
       }
     }
-    if (hasPendingDrawAlienCard) {
-      return this.createDrawAlienCardInput(
+
+    // Chain async prompts: CARD_ANY choices first, then alien-card draw,
+    // then the caller's onComplete. Each step returns its successor as
+    // its onComplete so the action pipeline resumes once the player
+    // finishes choosing.
+    const drawAlienCardStep =
+      onComplete ??
+      ((): PlayerInput | undefined => undefined);
+    const alienCardThenComplete = hasPendingDrawAlienCard
+      ? () =>
+          this.createDrawAlienCardInput(
+            player,
+            game,
+            { alienType: board.alienType },
+            drawAlienCardStep,
+          )
+      : drawAlienCardStep;
+
+    if (pendingCardAnyCount > 0) {
+      return AnyCardChoiceEffect.execute(
         player,
         game,
-        {
-          alienType: board.alienType,
-        },
-        onComplete,
+        pendingCardAnyCount,
+        alienCardThenComplete,
       );
     }
+
+    if (hasPendingDrawAlienCard) {
+      return alienCardThenComplete();
+    }
+
     return undefined;
   }
 

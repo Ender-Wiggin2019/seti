@@ -588,6 +588,98 @@ describe('AlienState', () => {
       expect(didContinue).toBe(true);
     });
   });
+
+  describe('executeRewards CARD_ANY', () => {
+    function createGameWithCards(deckTop: string[], cardRow: string[]): IGame {
+      return {
+        players: [],
+        eventLog: new EventLog(),
+        lockCurrentTurn: () => undefined,
+        random: { next: () => 0 },
+        cardRow: cardRow.slice(),
+        mainDeck: {
+          draw: () => deckTop.shift(),
+          drawWithReshuffle: () => deckTop.shift(),
+          totalSize: deckTop.length,
+        },
+      } as unknown as IGame;
+    }
+
+    it('returns a row-or-deck SelectOption for a CARD_ANY slot reward', () => {
+      const state = AlienState.createFromHiddenAliens([EAlienType.ANOMALIES]);
+      const board = state.boards[0];
+      const player = createPlayer();
+      const game = createGameWithCards(['deck-card'], ['row-card']);
+
+      const input = state.executeRewards(player, game, board, [
+        { type: 'CARD_ANY', amount: 1 },
+      ]);
+
+      expect(input).toBeDefined();
+      const model = input!.toModel();
+      expect(model.type).toBe(EPlayerInputType.OPTION);
+      if (model.type !== EPlayerInputType.OPTION) {
+        throw new Error('Expected option input model');
+      }
+      expect(model.options.map((o) => o.id)).toEqual(
+        expect.arrayContaining(['row:0:row-card', 'deck']),
+      );
+    });
+
+    it('takes the row card and refills when the player picks a row option', () => {
+      const state = AlienState.createFromHiddenAliens([EAlienType.ANOMALIES]);
+      const board = state.boards[0];
+      const player = createPlayer();
+      const game = createGameWithCards(['refill-card'], ['row-card']);
+
+      const input = state.executeRewards(player, game, board, [
+        { type: 'CARD_ANY', amount: 1 },
+      ]);
+      input!.process({
+        type: EPlayerInputType.OPTION,
+        optionId: 'row:0:row-card',
+      });
+
+      expect(player.hand).toContain('row-card');
+      // Row was refilled from the deck top.
+      expect(game.cardRow).toEqual(['refill-card']);
+    });
+
+    it('draws from deck when the player picks the deck option', () => {
+      const state = AlienState.createFromHiddenAliens([EAlienType.ANOMALIES]);
+      const board = state.boards[0];
+      const player = createPlayer();
+      const game = createGameWithCards(['deck-card'], ['row-card']);
+
+      const input = state.executeRewards(player, game, board, [
+        { type: 'CARD_ANY', amount: 1 },
+      ]);
+      input!.process({
+        type: EPlayerInputType.OPTION,
+        optionId: 'deck',
+      });
+
+      expect(player.hand).toContain('deck-card');
+      expect(game.cardRow).toEqual(['row-card']);
+    });
+
+    it('still applies simple rewards (PUBLICITY) before surfacing the CARD_ANY prompt', () => {
+      const state = AlienState.createFromHiddenAliens([EAlienType.ANOMALIES]);
+      const board = state.boards[0];
+      const player = createPlayer();
+      const game = createGameWithCards(['deck-card'], ['row-card']);
+
+      const beforePublicity = player.resources.publicity;
+      const input = state.executeRewards(player, game, board, [
+        { type: 'CARD_ANY', amount: 1 },
+        { type: 'PUBLICITY', amount: 2 },
+      ]);
+
+      expect(player.resources.publicity).toBe(beforePublicity + 2);
+      expect(input).toBeDefined();
+      expect(input!.toModel().type).toBe(EPlayerInputType.OPTION);
+    });
+  });
 });
 
 describe('AlienBoard', () => {

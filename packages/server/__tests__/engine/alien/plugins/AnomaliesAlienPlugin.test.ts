@@ -187,7 +187,7 @@ describe('AnomaliesAlienPlugin', () => {
       [{ type: 'VP', amount: 4 }],
     ]);
     expectRewardInOptions(getTokenByColor(game, ETrace.YELLOW)!.rewards, [
-      [{ type: 'CARD', amount: 1 }],
+      [{ type: 'CARD_ANY', amount: 1 }],
       [{ type: 'PUBLICITY', amount: 2 }],
     ]);
     expectRewardInOptions(getTokenByColor(game, ETrace.BLUE)!.rewards, [

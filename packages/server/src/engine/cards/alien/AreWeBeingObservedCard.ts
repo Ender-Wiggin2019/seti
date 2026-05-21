@@ -1,4 +1,3 @@
-import { executeSimpleSlotRewards } from '@/engine/alien/AlienRewards.js';
 import { getNextTriggeredAnomalyToken } from '@/engine/alien/plugins/AnomaliesResolver.js';
 import type { IPlayerInput } from '@/engine/input/PlayerInput.js';
 import { MissionCard } from '../Card.js';
@@ -20,8 +19,17 @@ export class AreWeBeingObservedCard extends MissionCard {
     enqueueAnomalyCardEffect(context, (player, game) => {
       const token = getNextTriggeredAnomalyToken(game);
       if (!token) return undefined;
-      executeSimpleSlotRewards(player, game, token.rewards);
-      return undefined;
+      // Route through executeRewards so CARD_ANY (or future CUSTOM)
+      // rewards on an anomaly token surface as a real PlayerInput.
+      // The deferred-action callback already supports IPlayerInput |
+      // undefined returns, so the prompt resumes the action pipeline
+      // when the player finishes choosing.
+      return game.alienState.executeRewards(
+        player,
+        game,
+        token.board,
+        token.rewards,
+      );
     });
     return undefined;
   }
