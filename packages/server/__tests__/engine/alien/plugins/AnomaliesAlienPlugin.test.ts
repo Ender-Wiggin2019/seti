@@ -187,10 +187,7 @@ describe('AnomaliesAlienPlugin', () => {
       [{ type: 'VP', amount: 4 }],
     ]);
     expectRewardInOptions(getTokenByColor(game, ETrace.YELLOW)!.rewards, [
-      // YELLOW's "card" side draws from the Anomalies alien deck, so
-      // it's encoded as `CUSTOM:DRAW_ALIEN_CARD` (not a plain `CARD`
-      // reward, which would draw from the main deck).
-      [{ type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' }],
+      [{ type: 'CARD', amount: 1 }],
       [{ type: 'PUBLICITY', amount: 2 }],
     ]);
     expectRewardInOptions(getTokenByColor(game, ETrace.BLUE)!.rewards, [
