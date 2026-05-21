@@ -256,6 +256,25 @@ describe('GameSerializer', () => {
     expect(otherView.players[0].usableOrganizationPowerIds).toBeUndefined();
   });
 
+  it('projects Futurespan preparation as usable after the round power was spent', () => {
+    const game = createTestGame();
+    const player = game.players[0];
+    player.organizationIds = [EOrganizationId.FUTURESPAN_INSTITUTE];
+    player.organizationState = {
+      [EOrganizationId.FUTURESPAN_INSTITUTE]: {},
+    };
+    player.oncePerRoundUsed = {
+      [EOrganizationId.FUTURESPAN_INSTITUTE]: true,
+    };
+    player.hand = ['130'];
+
+    const ownView = projectGameState(game, 'p1');
+
+    expect(ownView.players[0].usableOrganizationPowerIds).toContain(
+      EOrganizationId.FUTURESPAN_INSTITUTE,
+    );
+  });
+
   it('projects usable organization main-action ids only to the owning viewer', () => {
     const game = createTestGame();
     const player = game.players[0];

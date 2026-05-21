@@ -64,6 +64,7 @@ export interface ISolarSystemDto {
     indexInRing: number;
     discIndex: number | null;
     hasPublicityIcon: boolean;
+    publicityIconAmount?: number;
     elements: Array<{
       type: string;
       amount: number;

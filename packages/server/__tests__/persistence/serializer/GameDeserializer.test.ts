@@ -183,6 +183,29 @@ describe('GameDeserializer', () => {
     expect(dto2).toEqual(dto1);
   });
 
+  it('round-trips solar-system publicity icon amounts', () => {
+    const game = createTestGame();
+    const space = game.solarSystem?.spaces.find(
+      (candidate) => candidate.id === 'ring-2-cell-4',
+    );
+    if (!space) {
+      throw new Error('expected solar-system space');
+    }
+    space.hasPublicityIcon = true;
+    space.publicityIconAmount = 2;
+
+    const dto = serializeGame(game, 1);
+    const restored = deserializeGame(dto);
+    const restoredSpace = restored.solarSystem?.spaces.find(
+      (candidate) => candidate.id === space.id,
+    );
+
+    expect(
+      dto.solarSystem?.spaces.find((candidate) => candidate.id === space.id),
+    ).toMatchObject({ hasPublicityIcon: true, publicityIconAmount: 2 });
+    expect(restoredSpace?.publicityIconAmount).toBe(2);
+  });
+
   it('restores missing legacy round counters from round defaults', () => {
     const dto = serializeGame(createTestGame(), 1) as ReturnType<
       typeof serializeGame

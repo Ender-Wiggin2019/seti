@@ -2,6 +2,7 @@ import {
   countCardsTowardHandLimit,
   isHandLimitExemptCard,
 } from '@seti/common/rules';
+import { RotateDiscEffect } from '../effects/solar/RotateDiscEffect.js';
 import type { IGame } from '../IGame.js';
 import type { PlayerInput } from '../input/PlayerInput.js';
 import { SelectCard } from '../input/SelectCard.js';
@@ -66,8 +67,7 @@ export class PassAction {
     if (!game.hasRoundFirstPassOccurred) {
       game.hasRoundFirstPassOccurred = true;
       if (game.solarSystem !== null) {
-        game.solarSystem.rotateNextDisc();
-        game.alienState?.onSolarSystemRotated(game);
+        RotateDiscEffect.execute(game);
       }
     }
 

@@ -296,6 +296,42 @@ describe('GameManager', () => {
 
       expect(result.states.size).toBe(2);
     });
+
+    it('persists a free-action snapshot when the free action leaves pending input', async () => {
+      const game = createTestGame();
+      const player = game.players[0];
+      const prompt = new SelectOption(player, [
+        { id: 'confirm', label: 'Confirm', onSelect: () => undefined },
+      ]);
+      vi.spyOn(game, 'processFreeAction').mockImplementation(() => {
+        player.waitingFor = prompt;
+      });
+      (manager as unknown as { cache: Map<string, IGame> }).cache.set(
+        'game-mgr-test',
+        game,
+      );
+      (manager as unknown as { versions: Map<string, number> }).versions.set(
+        'game-mgr-test',
+        0,
+      );
+
+      await manager.processFreeAction('game-mgr-test', 'p1', {
+        type: 'EXCHANGE_RESOURCES' as never,
+        from: 'credit' as never,
+        to: 'energy' as never,
+      });
+
+      expect(game.pendingResolutionJournal).toMatchObject({
+        version: 1,
+        steps: [
+          {
+            type: 'FREE_ACTION',
+            playerId: 'p1',
+          },
+        ],
+      });
+      expect(mockDb.insert).toHaveBeenCalled();
+    });
   });
 
   describe('undoToTurnStart', () => {
@@ -426,6 +462,51 @@ describe('GameManager', () => {
       });
 
       expect(player.waitingFor).toBeUndefined();
+      expect(mockDb.insert).toHaveBeenCalled();
+    });
+
+    it('records a base state when a non-resolution input leaves another prompt pending', async () => {
+      const game = createTestGame();
+      const player = game.players[0];
+      const secondPrompt = new SelectOption(
+        player,
+        [{ id: 'second', label: 'Second', onSelect: () => undefined }],
+        'Second prompt',
+      );
+      const firstPrompt = new SelectOption(
+        player,
+        [{ id: 'first', label: 'First', onSelect: () => secondPrompt }],
+        'First prompt',
+      );
+      player.waitingFor = firstPrompt;
+      (manager as unknown as { cache: Map<string, IGame> }).cache.set(
+        'game-mgr-test',
+        game,
+      );
+      (manager as unknown as { versions: Map<string, number> }).versions.set(
+        'game-mgr-test',
+        0,
+      );
+
+      await manager.processInput('game-mgr-test', 'p1', {
+        inputId: firstPrompt.inputId,
+        type: EPlayerInputType.OPTION,
+        optionId: 'first',
+      });
+
+      expect(player.waitingFor?.toModel()).toMatchObject({
+        type: EPlayerInputType.OPTION,
+        title: 'Second prompt',
+      });
+      expect(game.pendingResolutionJournal).toMatchObject({
+        version: 1,
+        steps: [
+          {
+            type: 'INPUT_RESPONSE',
+            playerId: 'p1',
+          },
+        ],
+      });
       expect(mockDb.insert).toHaveBeenCalled();
     });
   });

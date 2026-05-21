@@ -288,6 +288,53 @@ describe('RivalTurnController', () => {
     expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
   });
 
+  it('applies pushed-probe publicity to rival resources on first pass rotation', () => {
+    const game = createSoloGame();
+    const rival = game.players[1];
+    const rivalState = game.rivalState;
+    const solarSystem = game.solarSystem;
+    if (!rivalState || !solarSystem) throw new Error('expected solo setup');
+    rivalState.actionDeck = new Deck([]);
+
+    const ring1cell0 = solarSystem.spaces.find(
+      (space) => space.id === 'ring-1-cell-0',
+    );
+    const ring1cell1 = solarSystem.spaces.find(
+      (space) => space.id === 'ring-1-cell-1',
+    );
+    const ring1cell7 = solarSystem.spaces.find(
+      (space) => space.id === 'ring-1-cell-7',
+    );
+    const ring2cell0 = solarSystem.spaces.find(
+      (space) => space.id === 'ring-2-cell-0',
+    );
+    const ring2cell15 = solarSystem.spaces.find(
+      (space) => space.id === 'ring-2-cell-15',
+    );
+    if (
+      !ring1cell0 ||
+      !ring1cell1 ||
+      !ring1cell7 ||
+      !ring2cell0 ||
+      !ring2cell15
+    ) {
+      throw new Error('expected ring cells to exist');
+    }
+
+    ring1cell0.elements = [{ type: ESolarSystemElementType.NULL, amount: 1 }];
+    ring1cell1.elements = [{ type: ESolarSystemElementType.EMPTY, amount: 1 }];
+    ring1cell7.elements = [{ type: ESolarSystemElementType.EMPTY, amount: 1 }];
+    ring2cell0.elements = [{ type: ESolarSystemElementType.EMPTY, amount: 1 }];
+    ring2cell15.hasPublicityIcon = true;
+    solarSystem.placeProbe(rival.id, ring2cell0.id);
+    rival.resources.spend({ publicity: rival.resources.publicity });
+
+    RivalTurnController.resolveCurrentTurn(game);
+
+    expect(solarSystem.getPlayerPublicity(rival.id)).toBe(1);
+    expect(rival.resources.publicity).toBe(1);
+  });
+
   it('resolves a free tech candidate and applies progress rewards', () => {
     const game = createSoloGame();
     const rival = game.players[1];

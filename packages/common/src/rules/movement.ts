@@ -1,8 +1,10 @@
+import { getOumuamuaSolarSystemSpaceId } from '../constant/sectorSetup';
 import type { IPublicSolarSystemState } from '../types/protocol/gameState';
 
 const BASE_MOVE_COST = 1;
 const ASTEROID_EXTRA_COST = 1;
 const SOLAR_ELEMENT_ASTEROID = 'ASTEROID';
+const SOLAR_ELEMENT_NULL = 'NULL';
 const SOLAR_ELEMENT_SUN = 'SUN';
 
 export interface IReachableSpace {
@@ -32,7 +34,9 @@ export function getMoveCost(
   const toSpace = solarSystem.spaceStates?.[toSpaceId];
   if (
     toSpace?.elementTypes.includes(SOLAR_ELEMENT_SUN) ||
-    fromSpace?.elementTypes.includes(SOLAR_ELEMENT_SUN)
+    fromSpace?.elementTypes.includes(SOLAR_ELEMENT_SUN) ||
+    isUnplacedOumuamuaSpace(solarSystem, toSpaceId, toSpace) ||
+    isUnplacedOumuamuaSpace(solarSystem, fromSpaceId, fromSpace)
   ) {
     return Number.POSITIVE_INFINITY;
   }
@@ -43,6 +47,33 @@ export function getMoveCost(
     ? ASTEROID_EXTRA_COST
     : 0;
   return BASE_MOVE_COST + asteroidExtraCost;
+}
+
+function isNullOnlySpace(
+  space:
+    | NonNullable<IPublicSolarSystemState['spaceStates']>[string]
+    | undefined,
+): boolean {
+  return (
+    space !== undefined &&
+    space.elementTypes.length > 0 &&
+    space.elementTypes.every((type) => type === SOLAR_ELEMENT_NULL)
+  );
+}
+
+function isUnplacedOumuamuaSpace(
+  solarSystem: IPublicSolarSystemState,
+  spaceId: string,
+  space:
+    | NonNullable<IPublicSolarSystemState['spaceStates']>[string]
+    | undefined,
+): boolean {
+  const bottomDiscAngle =
+    solarSystem.discs.find((disc) => disc.discIndex === 2)?.angle ?? 0;
+  return (
+    isNullOnlySpace(space) &&
+    spaceId === getOumuamuaSolarSystemSpaceId(bottomDiscAngle)
+  );
 }
 
 export function getMovePath(

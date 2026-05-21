@@ -1,6 +1,8 @@
 import { ETech } from '@seti/common/types/element';
 import { EOrganizationId } from '@seti/common/types/organization';
+import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { ETechId, getTechDescriptor } from '@seti/common/types/tech';
+import { GameError } from '@/shared/errors/GameError.js';
 import { EPriority } from '../../deferred/Priority.js';
 import { SimpleDeferredAction } from '../../deferred/SimpleDeferredAction.js';
 import { TuckCardForIncomeEffect } from '../../effects/income/TuckCardForIncomeEffect.js';
@@ -36,7 +38,9 @@ export class HelionAssembly extends Organization {
 
   public override canUsePower(player: IPlayer, _game: IGame): boolean {
     return (
-      player.hand.length > 0 && this.getDisableableTechIds(player).length > 0
+      this.hasMarkedCategory(player) &&
+      player.hand.length > 0 &&
+      this.getDisableableTechIds(player).length > 0
     );
   }
 
@@ -44,6 +48,14 @@ export class HelionAssembly extends Organization {
     player: IPlayer,
     game: IGame,
   ): IPlayerInput | undefined {
+    if (!this.hasMarkedCategory(player)) {
+      throw new GameError(
+        EErrorCode.INVALID_FREE_ACTION,
+        'Helion Assembly requires a marked tech category',
+        { playerId: player.id },
+      );
+    }
+
     const techIds = this.getDisableableTechIds(player);
     if (techIds.length === 1) {
       return this.disableTechAndTuck(player, game, techIds[0]);
@@ -189,6 +201,10 @@ export class HelionAssembly extends Organization {
       const category = getTechDescriptor(techId).type;
       return category === ETech.PROBE || category === ETech.SCAN;
     });
+  }
+
+  private hasMarkedCategory(player: IPlayer): boolean {
+    return (this.getState(player).markedCategories ?? []).length > 0;
   }
 
   private getState(player: IPlayer): IHelionState {

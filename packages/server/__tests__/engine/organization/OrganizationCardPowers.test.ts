@@ -400,6 +400,13 @@ describe('organization card powers', () => {
     expect(OrganizationRegistry.getUsablePowerIds(player, game)).not.toContain(
       EOrganizationId.COSMOS_STRATEGY_GROUP,
     );
+    expect(() =>
+      UseOrganizationPowerFreeAction.execute(
+        player,
+        game,
+        EOrganizationId.COSMOS_STRATEGY_GROUP,
+      ),
+    ).toThrow('Organization power is not currently available');
 
     game.eventBus.emit({
       type: EGameRuntimeEvent.MAIN_ACTION_RESOLVED,

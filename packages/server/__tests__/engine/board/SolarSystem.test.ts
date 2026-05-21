@@ -1,3 +1,4 @@
+import { getOumuamuaSolarSystemSpaceId } from '@seti/common/constant/sectorSetup';
 import { EMainAction, EPlanet } from '@seti/common/types/protocol/enums';
 import {
   EPlayerInputType,
@@ -291,6 +292,31 @@ describe('SolarSystem', () => {
     expect(board.getPlayerPublicity('p2')).toBe(1);
   });
 
+  it('rotates publicity icon amounts with their wheel cell', () => {
+    const board = SolarSystem.init(
+      new SeededRandom('publicity-amount-rotate'),
+      {
+        initialDiscAngles: [0, 0, 0],
+      },
+    ).solarSystem;
+    const source = board.spaces.find((space) => space.id === 'ring-2-cell-4');
+    const target = board.spaces.find((space) => space.id === 'ring-2-cell-2');
+    if (!source || !target) {
+      throw new Error('Expected ring-2 cells to exist');
+    }
+
+    source.hasPublicityIcon = true;
+    source.publicityIconAmount = 2;
+    target.hasPublicityIcon = false;
+    target.publicityIconAmount = undefined;
+
+    board.rotate(1);
+
+    expect(target.hasPublicityIcon).toBe(true);
+    expect(target.publicityIconAmount).toBe(2);
+    expect(source.publicityIconAmount).toBeUndefined();
+  });
+
   it('does not allow traversing sun', () => {
     const board = BoardBuilder.buildSolarSystemFromRandom(
       new SeededRandom('sun'),
@@ -315,6 +341,33 @@ describe('SolarSystem', () => {
     expect(() =>
       board.moveProbe(probe.id, 'ring-1-cell-0', 'sun-center'),
     ).toThrow();
+  });
+
+  it('does not allow placing or moving probes onto the undiscovered Oumuamua cutout', () => {
+    const board = SolarSystem.init(new SeededRandom('oumuamua-cutout'), {
+      initialDiscAngles: [0, 0, 0],
+    }).solarSystem;
+    const cutoutId = getOumuamuaSolarSystemSpaceId(0);
+    const cutout = board.spaces.find((space) => space.id === cutoutId);
+    if (!cutout) {
+      throw new Error('Expected null cutout space to exist');
+    }
+    cutout.elements = [{ type: ESolarSystemElementType.NULL, amount: 1 }];
+
+    expect(() => board.placeProbe('p1', cutoutId)).toThrow(
+      `Space ${cutoutId} is not traversable`,
+    );
+
+    const adjacent = board.getAdjacentSpaces(cutoutId)[0];
+    if (!adjacent) {
+      throw new Error('Expected null cutout to have an adjacent space');
+    }
+    adjacent.elements = [{ type: ESolarSystemElementType.EMPTY, amount: 1 }];
+    const probe = board.placeProbe('p1', adjacent.id);
+
+    expect(() => board.moveProbe(probe.id, adjacent.id, cutoutId)).toThrow(
+      `Space ${cutoutId} is not traversable`,
+    );
   });
 
   it('charges extra movement cost when leaving asteroid', () => {

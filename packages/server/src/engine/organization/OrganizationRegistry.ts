@@ -67,10 +67,13 @@ export class OrganizationRegistry {
     game: IGame,
   ): EOrganizationId[] {
     return player.organizationIds.filter((organizationId) => {
-      if (player.oncePerRoundUsed[organizationId] === true) {
+      const organization = this.create(organizationId);
+      if (
+        player.oncePerRoundUsed[organizationId] === true &&
+        !organization.canUsePowerAfterOncePerRoundUsed(player, game)
+      ) {
         return false;
       }
-      const organization = this.create(organizationId);
       return (
         organization.hasImplementedPower() &&
         organization.canUsePower(player, game)

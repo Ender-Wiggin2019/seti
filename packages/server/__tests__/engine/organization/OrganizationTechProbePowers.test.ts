@@ -219,6 +219,13 @@ describe('technology and probe oriented organization powers', () => {
     expect(OrganizationRegistry.getUsablePowerIds(player, game)).not.toContain(
       EOrganizationId.HELION_ASSEMBLY,
     );
+    expect(() =>
+      UseOrganizationPowerFreeAction.execute(
+        player,
+        game,
+        EOrganizationId.HELION_ASSEMBLY,
+      ),
+    ).toThrow('Organization power is not currently available');
 
     game.eventBus.emit({
       type: EGameRuntimeEvent.TECH_ACQUIRED,

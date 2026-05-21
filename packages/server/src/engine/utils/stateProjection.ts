@@ -47,6 +47,9 @@ export function toPublicSolarSystemState(
       ringIndex: space.ringIndex,
       indexInRing: space.indexInRing,
       hasPublicityIcon: space.hasPublicityIcon,
+      ...(space.publicityIconAmount !== undefined
+        ? { publicityIconAmount: space.publicityIconAmount }
+        : {}),
       elementTypes: space.elements.map((e) => e.type),
       elements: space.elements.map((e) => ({ type: e.type, planet: e.planet })),
       sectorIndex,

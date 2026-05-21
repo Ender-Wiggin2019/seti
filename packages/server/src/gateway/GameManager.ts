@@ -180,7 +180,19 @@ export class GameManager {
     // Free actions intentionally don't get their own gameSnapshots
     // row — the undo subsystem rolls back to the turn-start
     // checkpoint, which covers free actions automatically. We still
-    // watch for a turn-index change (e.g. via a card effect that
+    // persist if a free action leaves a prompt pending; otherwise a
+    // cold load would restore the previous snapshot with no way to
+    // replay or answer that prompt.
+    if (this.hasPendingInput(game)) {
+      const version = this.nextVersion(gameId);
+      await this.persistSnapshot(gameId, version, game, {
+        type: 'FREE_ACTION',
+        lastActorId: playerId,
+        action,
+      });
+    }
+
+    // Watch for a turn-index change (e.g. via a card effect that
     // forces a handoff) to refresh the checkpoint.
     await this.afterTurnMaybeChanged(gameId, game, turnIndexBefore);
     await this.resolveAutomatedRivalTurns(gameId, game);
@@ -199,8 +211,11 @@ export class GameManager {
     this.validateInputResponseEnvelope(game, playerId, response);
 
     const version = this.nextVersion(gameId);
+    const resolutionBase = this.hasPendingInput(game)
+      ? this.captureResolutionBase(game)
+      : undefined;
     game.processInput(playerId, response);
-    this.recordResolutionStep(game, undefined, {
+    this.recordResolutionStep(game, resolutionBase, {
       type: 'INPUT_RESPONSE',
       playerId,
       response,

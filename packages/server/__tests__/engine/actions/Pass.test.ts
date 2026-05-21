@@ -8,6 +8,7 @@ import {
 import { vi } from 'vitest';
 import { PassAction } from '@/engine/actions/Pass.js';
 import { BoardBuilder } from '@/engine/board/BoardBuilder.js';
+import { ESolarSystemElementType } from '@/engine/board/SolarSystem.js';
 import { Deck } from '@/engine/deck/Deck.js';
 import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
@@ -185,6 +186,65 @@ describe('PassAction', () => {
 
       expect(onSolarSystemRotated).toHaveBeenCalledTimes(1);
       expect(onSolarSystemRotated).toHaveBeenCalledWith(game);
+    });
+
+    it('awards pushed-probe publicity on the first pass rotation', () => {
+      const solarSystem = BoardBuilder.buildSolarSystemFromRandom(
+        new SeededRandom('pass-push-publicity'),
+      );
+      const ring1cell0 = solarSystem.spaces.find(
+        (space) => space.id === 'ring-1-cell-0',
+      );
+      const ring1cell1 = solarSystem.spaces.find(
+        (space) => space.id === 'ring-1-cell-1',
+      );
+      const ring1cell7 = solarSystem.spaces.find(
+        (space) => space.id === 'ring-1-cell-7',
+      );
+      const ring2cell0 = solarSystem.spaces.find(
+        (space) => space.id === 'ring-2-cell-0',
+      );
+      const ring2cell15 = solarSystem.spaces.find(
+        (space) => space.id === 'ring-2-cell-15',
+      );
+
+      if (
+        !ring1cell0 ||
+        !ring1cell1 ||
+        !ring1cell7 ||
+        !ring2cell0 ||
+        !ring2cell15
+      ) {
+        throw new Error('expected ring cells to exist');
+      }
+
+      ring1cell0.elements = [{ type: ESolarSystemElementType.NULL, amount: 1 }];
+      ring1cell1.elements = [
+        { type: ESolarSystemElementType.EMPTY, amount: 1 },
+      ];
+      ring1cell7.elements = [
+        { type: ESolarSystemElementType.EMPTY, amount: 1 },
+      ];
+      ring2cell0.elements = [
+        { type: ESolarSystemElementType.EMPTY, amount: 1 },
+      ];
+      ring2cell15.hasPublicityIcon = true;
+
+      const player = createPlayer({
+        hand: [],
+        resources: { credits: 0, energy: 0, publicity: 0 },
+      });
+      solarSystem.placeProbe(player.id, ring2cell0.id);
+      const game = createMockGame({
+        solarSystem,
+        players: [player],
+        endOfRoundStacks: [[]],
+      });
+
+      PassAction.execute(player, game);
+
+      expect(solarSystem.getPlayerPublicity(player.id)).toBe(1);
+      expect(player.resources.publicity).toBe(1);
     });
 
     it('does not dispatch the alien rotation hook on the second pass of the same round', () => {

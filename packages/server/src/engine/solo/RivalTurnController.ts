@@ -7,6 +7,7 @@ import {
   type IRivalActionCardDefinition,
   type TRivalActionCardId,
 } from '@seti/common/types/protocol/solo';
+import { RotateDiscEffect } from '@/engine/effects/solar/RotateDiscEffect.js';
 import { createActionEvent } from '@/engine/event/GameEvent.js';
 import type { Game } from '@/engine/Game.js';
 import { RivalActionResolver } from './RivalActionResolver.js';
@@ -186,8 +187,7 @@ export class RivalTurnController {
 
     if (!game.hasRoundFirstPassOccurred) {
       game.hasRoundFirstPassOccurred = true;
-      game.solarSystem?.rotateNextDisc();
-      game.alienState?.onSolarSystemRotated(game);
+      RotateDiscEffect.execute(game);
     }
 
     rival.passed = true;

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { getOumuamuaSolarSystemSpaceId } from '@/constant/sectorSetup';
 import {
   getAdjacentSpaceIds,
   getMoveCost,
@@ -59,6 +60,24 @@ describe('getMoveCost', () => {
     const ss = createSolarSystem();
     (ss as any).spaceStates!['B'] = { elementTypes: ['SUN'] };
     expect(getMoveCost(ss, 'A', 'B')).toBe(Number.POSITIVE_INFINITY);
+  });
+
+  it('returns Infinity for the undiscovered Oumuamua cutout', () => {
+    const ss = createSolarSystem();
+    const oumuamuaSpaceId = getOumuamuaSolarSystemSpaceId(0);
+    ss.adjacency = {
+      A: [oumuamuaSpaceId],
+      [oumuamuaSpaceId]: ['A'],
+    };
+    ss.discs = [{ discIndex: 2, angle: 0 }];
+    (ss as any).spaceStates = {
+      A: { elementTypes: [] },
+      [oumuamuaSpaceId]: { elementTypes: ['NULL'] },
+    };
+    expect(getMoveCost(ss, 'A', oumuamuaSpaceId)).toBe(
+      Number.POSITIVE_INFINITY,
+    );
+    expect(getMovePath(ss, 'A', oumuamuaSpaceId)).toEqual([]);
   });
 });
 

@@ -535,6 +535,9 @@ function serializeSolarSystem(game: IGame): ISolarSystemDto | null {
       indexInRing: space.indexInRing,
       discIndex: space.discIndex,
       hasPublicityIcon: space.hasPublicityIcon,
+      ...(space.publicityIconAmount !== undefined
+        ? { publicityIconAmount: space.publicityIconAmount }
+        : {}),
       elements: space.elements.map((element) => ({
         type: element.type,
         amount: element.amount,

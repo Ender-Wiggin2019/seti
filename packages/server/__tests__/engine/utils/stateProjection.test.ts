@@ -21,6 +21,7 @@ describe('toPublicSolarSystemState', () => {
           ringIndex: 1,
           indexInRing: 1,
           hasPublicityIcon: true,
+          publicityIconAmount: 2,
           elements: [{ type: 'ASTEROID' }],
           occupants: [],
         },
@@ -43,5 +44,6 @@ describe('toPublicSolarSystemState', () => {
       },
     ]);
     expect(state.discs[0]).toEqual({ discIndex: 0, angle: 45 });
+    expect(state.spaceStates?.s2?.publicityIconAmount).toBe(2);
   });
 });

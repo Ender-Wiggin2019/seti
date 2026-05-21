@@ -34,13 +34,24 @@ export class CosmosStrategyGroup extends Organization {
   }
 
   public override canUsePower(_player: IPlayer, game: IGame): boolean {
-    return game.cardRow.length > 0 || game.mainDeck.totalSize > 0;
+    return (
+      this.hasMarkedReward(_player) &&
+      (game.cardRow.length > 0 || game.mainDeck.totalSize > 0)
+    );
   }
 
   public override usePower(
     player: IPlayer,
     game: IGame,
   ): IPlayerInput | undefined {
+    if (!this.hasMarkedReward(player)) {
+      throw new GameError(
+        EErrorCode.INVALID_FREE_ACTION,
+        'Cosmos Strategy Group requires a marked reward',
+        { playerId: player.id },
+      );
+    }
+
     if (game.cardRow.length === 0 && game.mainDeck.totalSize === 0) {
       throw new GameError(
         EErrorCode.INVALID_FREE_ACTION,
@@ -179,6 +190,12 @@ export class CosmosStrategyGroup extends Organization {
 
   private isRewardMarked(player: IPlayer, reward: EResource): boolean {
     return this.getState(player).markedRewards?.[reward] === true;
+  }
+
+  private hasMarkedReward(player: IPlayer): boolean {
+    return Object.values(this.getState(player).markedRewards ?? {}).some(
+      Boolean,
+    );
   }
 
   private markReward(player: IPlayer, reward: EResource): void {

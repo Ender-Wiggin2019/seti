@@ -6,6 +6,7 @@ import {
   ESectorPosition,
   type ESectorTileId,
   type EStarName,
+  getOumuamuaSolarSystemSpaceId,
   type ISectorTilePlacement,
   type ISolarSystemSetupConfig,
   normalizeDiscAngle,
@@ -674,6 +675,9 @@ export class SolarSystem {
     const publicitySnapshots = ringSpaces.map(
       (space) => space.hasPublicityIcon,
     );
+    const publicityAmountSnapshots = ringSpaces.map(
+      (space) => space.publicityIconAmount,
+    );
     const occupantSnapshots = ringSpaces.map((space) => [...space.occupants]);
     const cellsPerVisualStep = Math.max(1, ringIndex);
 
@@ -685,6 +689,7 @@ export class SolarSystem {
       const targetSpace = ringSpaces[targetIndex];
       targetSpace.elements = elementSnapshots[sourceIndex];
       targetSpace.hasPublicityIcon = publicitySnapshots[sourceIndex];
+      targetSpace.publicityIconAmount = publicityAmountSnapshots[sourceIndex];
       targetSpace.occupants = occupantSnapshots[sourceIndex];
     }
   }
@@ -861,7 +866,8 @@ export class SolarSystem {
     if (
       space.elements.some(
         (element) => element.type === ESolarSystemElementType.SUN,
-      )
+      ) ||
+      this.isUnplacedOumuamuaSpace(space)
     ) {
       throw new Error(`Space ${space.id} is not traversable`);
     }
@@ -880,6 +886,24 @@ export class SolarSystem {
     return space.elements.some(
       (element) =>
         element.type !== ESolarSystemElementType.NULL && element.amount > 0,
+    );
+  }
+
+  private isNullOnlySpace(space: ISolarSystemSpace): boolean {
+    return (
+      space.elements.length > 0 &&
+      space.elements.every(
+        (element) =>
+          element.type === ESolarSystemElementType.NULL || element.amount <= 0,
+      )
+    );
+  }
+
+  private isUnplacedOumuamuaSpace(space: ISolarSystemSpace): boolean {
+    return (
+      this.isNullOnlySpace(space) &&
+      space.id ===
+        getOumuamuaSolarSystemSpaceId(this.discs[2]?.currentRotation ?? 0)
     );
   }
 
@@ -990,10 +1014,7 @@ function randomizeTilePlacementsImpl(
   // Without this pairing, the second sector of each tile sits 67.5° away
   // from its cardinal anchor — past the next tile's edge — which is the
   // bug that made "Mark Earth" feel like it picked the wrong sector.
-  const SECTOR_PAIRS_BY_POSITION: Record<
-    ESectorPosition,
-    [number, number]
-  > = {
+  const SECTOR_PAIRS_BY_POSITION: Record<ESectorPosition, [number, number]> = {
     [ESectorPosition.NORTH]: [7, 0],
     [ESectorPosition.EAST]: [1, 2],
     [ESectorPosition.SOUTH]: [3, 4],

@@ -171,6 +171,7 @@ function deserializeSolarSystem(dto: IGameStateDto): SolarSystem | null {
     indexInRing: space.indexInRing,
     discIndex: space.discIndex,
     hasPublicityIcon: space.hasPublicityIcon,
+    publicityIconAmount: space.publicityIconAmount,
     elements: space.elements.map((element) => ({
       ...element,
       type: element.type as never,
