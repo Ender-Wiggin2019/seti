@@ -27,6 +27,18 @@ const TRACE_LETTER: Record<TTraceColumnColor, string> = {
   [ETrace.BLUE]: 'B',
 };
 
+/**
+ * Distinct fallback colours for `?previewOverflow=N` synth occupants
+ * whose `playerId` isn't in the live `playerColors` map. Mirrors the
+ * 4-player palette so previews look like a real game in progress.
+ */
+const PREVIEW_PLAYER_FALLBACK_COLORS: Record<string, string> = {
+  'preview-A': '#ef4444',
+  'preview-B': '#3b82f6',
+  'preview-C': '#22c55e',
+  'preview-D': '#eab308',
+};
+
 interface IAnomaliesColumnLayout {
   xPct: number;
   /**
@@ -236,8 +248,15 @@ function SlotMarker({
 }): React.JSX.Element {
   const playerId =
     occupant.source === 'neutral' ? null : occupant.source.playerId;
+  // Fall back to the preview-palette colour when the live `playerColors`
+  // map doesn't know this player — happens for `?previewOverflow=N`
+  // synth occupants whose ids are `preview-A/B/C/D`.
   const fill =
-    playerId === null ? '#9ca3af' : (playerColors[playerId] ?? '#cbd5e1');
+    playerId === null
+      ? '#9ca3af'
+      : (playerColors[playerId] ??
+        PREVIEW_PLAYER_FALLBACK_COLORS[playerId] ??
+        '#cbd5e1');
   return (
     <span
       className='absolute aspect-square w-[8%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-black/50 shadow-[0_0_4px_rgba(0,0,0,0.6)]'

@@ -997,11 +997,14 @@ describe('MovementFreeAction', () => {
       const ss = requireSolarSystem(game);
       game.processMainAction(p1.id, { type: EMainAction.LAUNCH_PROBE });
 
+      // Ring-2 cell-0 of sector 0 is adjacent to sector 1 (ring-2-cell-2)
+      // and sector 7 (ring-2-cell-14). A jump to sector 2 (ring-2-cell-4)
+      // skips sector 1 — not a single legal hop.
       const ring2 = ss.spaces
         .filter((s) => s.ringIndex === 2)
         .sort((a, b) => a.indexInRing - b.indexInRing);
       const from = ring2[0]!;
-      const diagonal = ring2[2]!;
+      const diagonal = ring2[4]!;
       expect(
         ss.getAdjacentSpaces(from.id).some((n) => n.id === diagonal.id),
       ).toBe(false);

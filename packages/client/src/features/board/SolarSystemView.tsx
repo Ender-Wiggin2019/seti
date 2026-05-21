@@ -20,11 +20,11 @@ import {
   toTraceRewardPresentations,
 } from '@seti/common/utils/alienTracePresentation';
 import { type CSSProperties, useMemo, useState } from 'react';
-import { cn } from '@/lib/cn';
 import {
   useOumuamuaCalibration,
   useOumuamuaDataPillCalibration,
 } from '@/hooks/useCalibrationMode';
+import { cn } from '@/lib/cn';
 import { useTextMode } from '@/stores/debugStore';
 import { useGameViewStore } from '@/stores/gameViewStore';
 import type {
@@ -214,6 +214,45 @@ function formatZoomPercent(zoom: number): string {
 function spacePosition(
   ringIndex: 1 | 2 | 3 | 4,
   sectorIndex: number,
+  // Each ring-N sector resolves to a single playable point at the
+  // sector's geometric centre — multi-cell expansion is purely visual
+  // scaffolding for the wheel art. Cells with `cellInSector > 0`
+  // aren't rendered as independent hotspots (filtered upstream).
+  // Kept in the signature for API compatibility with text-mode label
+  // and calibration callers.
+  _cellInSector: number,
+  _cellsPerSector: number,
+  spaceRadiiPercent: readonly number[],
+  discAngle: number,
+): { xPercent: number; yPercent: number; rotationDeg: number } {
+  const normalizedSectorIndex =
+    ((sectorIndex % SECTOR_COUNT) + SECTOR_COUNT) % SECTOR_COUNT;
+  const sectorCenterAngleDeg = (normalizedSectorIndex + 0.5) * 45;
+  const imageOffset = IMAGE_ALIGNMENT_OFFSET_CW_BY_RING[ringIndex] ?? 0;
+  // WheelLayer renders disc angle N as rotate(-N * 45deg), so hotspots
+  // must apply the same visual rotation direction as the wheel image.
+  const rotationDeg = normalizeAngleDeg(
+    sectorCenterAngleDeg + imageOffset * 45 - discAngle * 45,
+  );
+  const radius = spaceRadiiPercent[ringIndex - 1] ?? spaceRadiiPercent[0] ?? 0;
+  const angle = (rotationDeg * Math.PI) / 180;
+  return {
+    xPercent: 50 + Math.sin(angle) * radius,
+    yPercent: 50 - Math.cos(angle) * radius,
+    rotationDeg,
+  };
+}
+
+/**
+ * Legacy cell-anchored position used for the Oumuamua tile so it
+ * keeps rendering at the printed wheel position relative to Jupiter,
+ * even after the rest of the board switched to sector-centre anchors.
+ * Exempting the Oumuamua space from the centring change is invariant
+ * by construction — no offset re-tuning needed.
+ */
+function legacyCellSpacePosition(
+  ringIndex: 1 | 2 | 3 | 4,
+  sectorIndex: number,
   cellInSector: number,
   cellsPerSector: number,
   spaceRadiiPercent: readonly number[],
@@ -227,8 +266,6 @@ function spacePosition(
     safeCellsPerSector;
   const cellAngleDeg = 45 / safeCellsPerSector;
   const imageOffset = IMAGE_ALIGNMENT_OFFSET_CW_BY_RING[ringIndex] ?? 0;
-  // WheelLayer renders disc angle N as rotate(-N * 45deg), so hotspots must
-  // apply the same visual rotation direction as the wheel image.
   const rotationDeg = normalizeAngleDeg(
     (normalizedSectorIndex * safeCellsPerSector +
       normalizedCellInSector +
@@ -494,14 +531,29 @@ export function SolarSystemView({
       }
 
       const discAngle = isStateBackedPosition ? 0 : discAngleByRing[ringIndex];
-      const pos = spacePosition(
-        ringIndex,
-        sectorIndex,
-        cellInSector,
-        cellsPerSector,
-        spaceRadiiPercent,
-        discAngle,
-      );
+      // Oumuamua's tile keeps the legacy cell-anchored angle so its
+      // printed planet image (and the 3-data dot pill) stay at their
+      // calibrated positions relative to the wheel art. The rest of
+      // the board uses the new sector-centre anchor.
+      const isOumuamuaTile =
+        oumuamuaTile?.spaceId !== undefined && spaceId === oumuamuaTile.spaceId;
+      const pos = isOumuamuaTile
+        ? legacyCellSpacePosition(
+            ringIndex,
+            sectorIndex,
+            cellInSector,
+            cellsPerSector,
+            spaceRadiiPercent,
+            discAngle,
+          )
+        : spacePosition(
+            ringIndex,
+            sectorIndex,
+            cellInSector,
+            cellsPerSector,
+            spaceRadiiPercent,
+            discAngle,
+          );
       return {
         spaceId,
         ringIndex,
@@ -513,6 +565,7 @@ export function SolarSystemView({
       };
     });
   }, [
+    oumuamuaTile?.spaceId,
     solarSystem.spaces,
     solarSystem.spaceStates,
     spaceRadiiPercent,
@@ -639,6 +692,23 @@ export function SolarSystemView({
         continue;
       }
 
+      // Per-cell extra offset for probes on the Oumuamua tile, so they
+      // land on the printed planet glyph instead of the cell's
+      // geometric anchor. Tangential / radial → screen x/y using the
+      // tile's `point.rotationDeg`.
+      const oumuamuaProbeNudge =
+        oumuamuaTile?.spaceId !== undefined && spaceId === oumuamuaTile.spaceId
+          ? (() => {
+              const angleRad = (point.rotationDeg * Math.PI) / 180;
+              const t = OUMUAMUA_PROBE_LANDING_OFFSET.tangentialPx;
+              const r = OUMUAMUA_PROBE_LANDING_OFFSET.radialPx;
+              return {
+                x: Math.cos(angleRad) * t + Math.sin(angleRad) * r,
+                y: Math.sin(angleRad) * t + -Math.cos(angleRad) * r,
+              };
+            })()
+          : { x: 0, y: 0 };
+
       for (let index = 0; index < pieces.length; index += 1) {
         const piece = pieces[index];
         const offset = tokenStackOffset(index, pieces.length);
@@ -650,8 +720,8 @@ export function SolarSystemView({
           spaceId,
           xPercent: point.xPercent,
           yPercent: point.yPercent,
-          offsetX: offset.x,
-          offsetY: offset.y,
+          offsetX: offset.x + oumuamuaProbeNudge.x,
+          offsetY: offset.y + oumuamuaProbeNudge.y,
           transitionDelayMs: piece.transitionDelayMs,
         });
         const targets = targetsBySpace[spaceId] ?? [];
@@ -664,7 +734,7 @@ export function SolarSystemView({
     }
 
     return { bySpacePlayers, renderItems, targetsBySpace };
-  }, [solarSystem, spacePoints]);
+  }, [oumuamuaTile?.spaceId, solarSystem, spacePoints]);
 
   const solarAlienTokenView = useMemo<ISolarAlienTokenRenderItem[]>(() => {
     const groupedBySector = new Map<number, IPublicSolarSystemAlienToken[]>();
@@ -986,54 +1056,76 @@ export function SolarSystemView({
           }}
         />
 
-        {spacePoints.map((space) => {
-          const spaceState = solarSystem.spaceStates?.[space.spaceId];
-          const planet = spaceState?.elements?.find(
-            (element) => element.planet !== undefined,
-          )?.planet;
-          const probeCount =
-            boardPieceView.bySpacePlayers[space.spaceId]?.length ?? 0;
-          const hasMyProbe = (
-            boardPieceView.bySpacePlayers[space.spaceId] ?? []
-          ).includes(myPlayerId);
-          const isSelected = selectedMoveTarget?.spaceId === space.spaceId;
-          const isReachable = reachable.has(space.spaceId);
-          const isMoveOverlayVisible =
-            isSelected || isReachable || (moveModeActive && hasMyProbe);
+        {spacePoints
+          .filter((space) => space.cellInSector === 0)
+          .map((space) => {
+            const spaceState = solarSystem.spaceStates?.[space.spaceId];
+            const planet = spaceState?.elements?.find(
+              (element) => element.planet !== undefined,
+            )?.planet;
+            const probeCount =
+              boardPieceView.bySpacePlayers[space.spaceId]?.length ?? 0;
+            const hasMyProbe = (
+              boardPieceView.bySpacePlayers[space.spaceId] ?? []
+            ).includes(myPlayerId);
+            const isSelected = selectedMoveTarget?.spaceId === space.spaceId;
+            const isReachable = reachable.has(space.spaceId);
+            const isMoveOverlayVisible =
+              isSelected || isReachable || (moveModeActive && hasMyProbe);
 
-          return (
-            <button
-              key={space.spaceId}
-              type='button'
-              data-testid={`solar-space-${space.spaceId}`}
-              data-planet={planet}
-              data-element-types={spaceState?.elementTypes.join(' ')}
-              className='absolute z-70 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border border-transparent bg-transparent transition-all hover:border-accent-400/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/60'
-              style={{
-                left: `${space.xPercent}%`,
-                top: `${space.yPercent}%`,
-                zIndex: isMoveOverlayVisible ? 90 : undefined,
-              }}
-              onClick={() => handleSpaceClick(space.spaceId)}
-              title={`${space.spaceId} - pieces: ${probeCount}`}
-              aria-label={`Space ${space.spaceId}`}
-            >
-              {(isSelected || isReachable || hasMyProbe) && (
-                <span
-                  data-reachable-indicator={isReachable ? 'true' : undefined}
-                  className={[
-                    'absolute inset-0 rounded-full',
-                    isSelected
-                      ? 'border border-accent-400 bg-accent-500/20'
-                      : isReachable
-                        ? 'animate-pulse border border-accent-500/80 bg-accent-500/10'
-                        : 'border border-surface-400/60 bg-surface-300/10',
-                  ].join(' ')}
-                />
-              )}
-            </button>
-          );
-        })}
+            // Mirror the Oumuamua probe-landing nudge on the hotspot
+            // button so the click target stays under the printed planet
+            // glyph (and the probe stack). Tangential / radial → screen
+            // x/y using the tile's `space.rotationDeg`.
+            const isOumuamuaHotspot =
+              oumuamuaTile?.spaceId !== undefined &&
+              space.spaceId === oumuamuaTile.spaceId;
+            const hotspotNudge = isOumuamuaHotspot
+              ? (() => {
+                  const angleRad = (space.rotationDeg * Math.PI) / 180;
+                  const t = OUMUAMUA_PROBE_LANDING_OFFSET.tangentialPx;
+                  const r = OUMUAMUA_PROBE_LANDING_OFFSET.radialPx;
+                  return {
+                    x: Math.cos(angleRad) * t + Math.sin(angleRad) * r,
+                    y: Math.sin(angleRad) * t + -Math.cos(angleRad) * r,
+                  };
+                })()
+              : { x: 0, y: 0 };
+
+            return (
+              <button
+                key={space.spaceId}
+                type='button'
+                data-testid={`solar-space-${space.spaceId}`}
+                data-planet={planet}
+                data-element-types={spaceState?.elementTypes.join(' ')}
+                className='absolute z-70 h-7 w-7 rounded-full border border-transparent bg-transparent transition-all hover:border-accent-400/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/60'
+                style={{
+                  left: `${space.xPercent}%`,
+                  top: `${space.yPercent}%`,
+                  transform: `translate(calc(-50% + ${hotspotNudge.x}px), calc(-50% + ${hotspotNudge.y}px))`,
+                  zIndex: isMoveOverlayVisible ? 90 : undefined,
+                }}
+                onClick={() => handleSpaceClick(space.spaceId)}
+                title={`${space.spaceId} - pieces: ${probeCount}`}
+                aria-label={`Space ${space.spaceId}`}
+              >
+                {(isSelected || isReachable || hasMyProbe) && (
+                  <span
+                    data-reachable-indicator={isReachable ? 'true' : undefined}
+                    className={[
+                      'absolute inset-0 rounded-full',
+                      isSelected
+                        ? 'border border-accent-400 bg-accent-500/20'
+                        : isReachable
+                          ? 'animate-pulse border border-accent-500/80 bg-accent-500/10'
+                          : 'border border-surface-400/60 bg-surface-300/10',
+                    ].join(' ')}
+                  />
+                )}
+              </button>
+            );
+          })}
 
         {textMode &&
           textModeLabelItems.map((item) => {
@@ -1200,6 +1292,20 @@ const OUMUAMUA_PLANET_BASE_OFFSET = {
   radialPx: -14,
 } as const;
 
+/**
+ * Per-cell pixel nudge applied to probe pieces parked on the Oumuamua
+ * tile, in the tile's local frame:
+ *   - `tangentialPx`: positive = clockwise around the sun.
+ *   - `radialPx`:     positive = away from the sun.
+ * Tweak so probes land on the printed Oumuamua tile glyph rather than
+ * the cell's geometric anchor (which sits off-image because the
+ * printed planet isn't centred in the wheel cell).
+ */
+const OUMUAMUA_PROBE_LANDING_OFFSET = {
+  tangentialPx: 75,
+  radialPx: -15,
+} as const;
+
 function OumuamuaPlanetArt({
   point,
   boardWidthPx,
@@ -1253,7 +1359,10 @@ function OumuamuaPlanetArt({
           calibration.rotationOffset
         }deg)`,
         transformOrigin: 'center',
-        zIndex: 84,
+        // Sit just below the probe layer (z-80) so probes parked on
+        // Oumuamua remain visible. The 3-data dot pill stays above
+        // probes (zIndex: 86) so the markers are still readable.
+        zIndex: 78,
       }}
     >
       <img

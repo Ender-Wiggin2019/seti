@@ -211,9 +211,17 @@ export class GameManager {
     this.validateInputResponseEnvelope(game, playerId, response);
 
     const version = this.nextVersion(gameId);
-    const resolutionBase = this.hasPendingInput(game)
-      ? this.captureResolutionBase(game)
-      : undefined;
+    // Inputs that arrive without an in-flight resolution journal need
+    // a fresh base — e.g. setup-time tuck-income chains, where the
+    // first prompt is fired by `GameSetup` rather than by a player
+    // action, so `pendingResolutionJournal` is undefined when the
+    // first response arrives. Capture the pre-mutation state as the
+    // base so `recordResolutionStep` doesn't throw "Cannot persist
+    // pending input without a resume base".
+    const resolutionBase =
+      game.pendingResolutionJournal === undefined
+        ? this.captureResolutionBase(game)
+        : undefined;
     game.processInput(playerId, response);
     this.recordResolutionStep(game, resolutionBase, {
       type: 'INPUT_RESPONSE',

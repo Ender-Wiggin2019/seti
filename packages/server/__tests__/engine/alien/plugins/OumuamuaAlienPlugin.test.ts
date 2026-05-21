@@ -400,8 +400,9 @@ describe('OumuamuaAlienPlugin', () => {
     expect(p1.score).toBe(scoreBefore + 10);
     expect(orbit.pendingInput?.toModel().type).toBe(EPlayerInputType.OPTION);
 
-    const signalModel =
-      orbit.pendingInput?.toModel() as ISelectOptionInputModel | undefined;
+    const signalModel = orbit.pendingInput?.toModel() as
+      | ISelectOptionInputModel
+      | undefined;
     expect(signalModel?.options.map((option) => option.id)).toEqual([
       'oumuamua-sector',
       'oumuamua-tile',
@@ -465,7 +466,7 @@ describe('OumuamuaAlienPlugin', () => {
     ).toEqual([3, 2, 1]);
   });
 
-  it('creates 3 columns x 6 slots with expected repeatable top tier', () => {
+  it('creates 3 columns x 5 slots with expected repeatable top tier', () => {
     const { game } = createGame('oumuamua-d1-layout');
     const plugin = new OumuamuaAlienPlugin();
     plugin.onDiscover(game, []);
@@ -475,10 +476,10 @@ describe('OumuamuaAlienPlugin', () => {
     const traceSlots = board.slots.filter((slot) =>
       slot.slotId.includes('oumuamua-trace|'),
     );
-    expect(traceSlots).toHaveLength(18);
+    expect(traceSlots).toHaveLength(15);
     for (const color of [ETrace.PINK, ETrace.YELLOW, ETrace.BLUE]) {
       const top = board.slots.find((slot) =>
-        slot.slotId.includes(`oumuamua-trace|${color}|6|1`),
+        slot.slotId.includes(`oumuamua-trace|${color}|5|1`),
       );
       expect(top?.maxOccupants).toBe(-1);
     }
@@ -508,7 +509,12 @@ describe('OumuamuaAlienPlugin', () => {
     plugin.onDiscover(game, []);
     const slotId = findTraceSlotId(game, ETrace.PINK, 1);
 
-    const fail = game.alienState.applyTraceToSlot(p1, game, slotId, ETrace.PINK);
+    const fail = game.alienState.applyTraceToSlot(
+      p1,
+      game,
+      slotId,
+      ETrace.PINK,
+    );
     expect(fail).toBe(false);
 
     p1.gainExofossils(4);
@@ -520,46 +526,46 @@ describe('OumuamuaAlienPlugin', () => {
     expect(p1.exofossils).toBe(exoBefore - 4);
   });
 
-  it('tier-4 and tier-5 slots grant exofossil/publicity bonuses', () => {
-    const { game, p1 } = createGame('oumuamua-d1-tier4-tier5');
+  it('tier-2 and tier-4 slots grant exofossil bonuses', () => {
+    const { game, p1 } = createGame('oumuamua-d1-tier2-tier4');
     const plugin = new OumuamuaAlienPlugin();
     plugin.onDiscover(game, []);
 
-    const tier4 = findTraceSlotId(game, ETrace.YELLOW, 4);
-    const tier5 = findTraceSlotId(game, ETrace.BLUE, 5);
+    // Tier 2: 3 VP + DRAW_ALIEN_CARD + GAIN_EXOFOSSIL
+    const tier2 = findTraceSlotId(game, ETrace.YELLOW, 2);
+    // Tier 4: 2 VP + GAIN_EXOFOSSIL
+    const tier4 = findTraceSlotId(game, ETrace.BLUE, 4);
     const scoreBefore = p1.score;
     const exoBefore = p1.exofossils;
-    const publicityBefore = p1.resources.publicity;
 
     expect(
-      game.alienState.applyTraceToSlot(p1, game, tier4, ETrace.YELLOW),
+      game.alienState.applyTraceToSlot(p1, game, tier2, ETrace.YELLOW),
     ).toBe(true);
-    expect(game.alienState.applyTraceToSlot(p1, game, tier5, ETrace.BLUE)).toBe(
+    expect(game.alienState.applyTraceToSlot(p1, game, tier4, ETrace.BLUE)).toBe(
       true,
     );
 
     expect(p1.score).toBe(scoreBefore + 3 + 2);
     expect(p1.exofossils).toBe(exoBefore + 2);
-    expect(p1.resources.publicity).toBe(publicityBefore + 1);
   });
 
-  it('tier-6 slot is repeatable and each mark costs 1 exofossil for 6 vp', () => {
-    const { game, p1 } = createGame('oumuamua-d3-tier6');
+  it('top tier (5) is repeatable and each mark costs 1 exofossil for 6 vp', () => {
+    const { game, p1 } = createGame('oumuamua-d3-tier5');
     const plugin = new OumuamuaAlienPlugin();
     plugin.onDiscover(game, []);
-    const slotId = findTraceSlotId(game, ETrace.PINK, 6);
+    const slotId = findTraceSlotId(game, ETrace.PINK, 5);
     p1.gainExofossils(2);
 
     const scoreBefore = p1.score;
-    expect(game.alienState.applyTraceToSlot(p1, game, slotId, ETrace.PINK)).toBe(
-      true,
-    );
-    expect(game.alienState.applyTraceToSlot(p1, game, slotId, ETrace.PINK)).toBe(
-      true,
-    );
-    expect(game.alienState.applyTraceToSlot(p1, game, slotId, ETrace.PINK)).toBe(
-      false,
-    );
+    expect(
+      game.alienState.applyTraceToSlot(p1, game, slotId, ETrace.PINK),
+    ).toBe(true);
+    expect(
+      game.alienState.applyTraceToSlot(p1, game, slotId, ETrace.PINK),
+    ).toBe(true);
+    expect(
+      game.alienState.applyTraceToSlot(p1, game, slotId, ETrace.PINK),
+    ).toBe(false);
 
     const board = game.alienState.getBoardByType(EAlienType.OUMUAMUA);
     if (!board) throw new Error('expected oumuamua board');
@@ -573,16 +579,16 @@ describe('OumuamuaAlienPlugin', () => {
     const { game, p1 } = createGame('oumuamua-exofossil-spend');
     const plugin = new OumuamuaAlienPlugin();
     plugin.onDiscover(game, []);
-    const slotId = findTraceSlotId(game, ETrace.PINK, 6);
+    const slotId = findTraceSlotId(game, ETrace.PINK, 5);
 
     plugin.markTileSignal(p1, game);
     plugin.markTileSignal(p1, game);
     plugin.markTileSignal(p1, game);
     expect(p1.exofossils).toBe(1);
 
-    expect(game.alienState.applyTraceToSlot(p1, game, slotId, ETrace.PINK)).toBe(
-      true,
-    );
+    expect(
+      game.alienState.applyTraceToSlot(p1, game, slotId, ETrace.PINK),
+    ).toBe(true);
 
     expect(p1.exofossils).toBe(0);
   });
@@ -600,7 +606,9 @@ describe('OumuamuaAlienPlugin', () => {
       }),
     ).toBe(0);
 
-    const redTraceSlotId = findTraceSlotId(game, ETrace.PINK, 5);
+    // Use tier 4 (free) so the test doesn't need to top up exofossils;
+    // the slot count is what's being asserted, not the cost.
+    const redTraceSlotId = findTraceSlotId(game, ETrace.PINK, 4);
     expect(
       game.alienState.applyTraceToSlot(p1, game, redTraceSlotId, ETrace.PINK),
     ).toBe(true);

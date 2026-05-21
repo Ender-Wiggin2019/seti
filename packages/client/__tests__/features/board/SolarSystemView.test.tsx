@@ -702,7 +702,7 @@ describe('SolarSystemView', () => {
     expect(parseFloat(earthHotspot.style.top)).toBeCloseTo(58.664, 3);
   });
 
-  it('projects expanded server ring cells by sector on outer rings', () => {
+  it('projects expanded server ring cells at the sector centre on outer rings', () => {
     render(
       <SolarSystemView
         solarSystem={createExpandedOuterRingMock()}
@@ -717,12 +717,15 @@ describe('SolarSystemView', () => {
       />,
     );
 
+    // Each ring-N sector resolves to a single playable point at the
+    // sector centre. ring-4-cell-8 = sector 2 cell 0, so the centre
+    // angle is (2 + 0.5) × 45 = 112.5°.
     const neptuneHotspot = screen.getByTestId('solar-space-ring-4-cell-8');
-    expect(parseFloat(neptuneHotspot.style.left)).toBeCloseTo(79.502, 3);
-    expect(parseFloat(neptuneHotspot.style.top)).toBeCloseTo(52.906, 3);
+    expect(parseFloat(neptuneHotspot.style.left)).toBeCloseTo(77.388, 3);
+    expect(parseFloat(neptuneHotspot.style.top)).toBeCloseTo(61.344, 3);
   });
 
-  it('keeps expanded cell hotspots distinct in text mode', () => {
+  it('hides intra-sector cells in text mode (only cell-0 of each sector is a hotspot)', () => {
     useDebugStore.setState({ textMode: true });
 
     render(
@@ -786,27 +789,25 @@ describe('SolarSystemView', () => {
       />,
     );
 
-    const firstCell = screen.getByTestId('solar-space-ring-3-cell-15');
-    const centerCell = screen.getByTestId('solar-space-ring-3-cell-16');
-    const lastCell = screen.getByTestId('solar-space-ring-3-cell-17');
-    // Cell ring-3-cell-16 is in sector-5 (floor(16/3) = 5). With sector
-    // pairs straddling each cardinal anchor, sector-5 sits at WEST as the
-    // first of its two sectors (west-0; sector-5 is cell-pair angle
-    // 247.5°, west cardinal is 270°).
-    const sectorWrapper = screen.getByTestId('sector-node-west-0')
-      .parentElement?.parentElement as HTMLElement | null;
+    // Only the sector-anchor cell (cellInSector === 0) is rendered as
+    // a clickable hotspot. The other cells in the same sector
+    // (cell-16, cell-17 here) are visual scaffolding — no hotspot.
+    const sectorAnchor = screen.getByTestId('solar-space-ring-3-cell-15');
+    expect(screen.queryByTestId('solar-space-ring-3-cell-16')).toBeNull();
+    expect(screen.queryByTestId('solar-space-ring-3-cell-17')).toBeNull();
 
+    // Sector-5 cell-0 sits at the centre of the sector wedge: angle =
+    // (5 + 0.5) × 45 = 247.5° from disc origin.
+    const sectorWrapper = screen.getByTestId('sector-node-west-0').parentElement
+      ?.parentElement as HTMLElement | null;
     if (!sectorWrapper) {
       throw new Error('Expected sector wrapper to render');
     }
-    expect(getStylePolarAngle(firstCell)).toBeCloseTo(232.5, 1);
-    expect(getStylePolarAngle(centerCell)).toBeCloseTo(247.5, 1);
-    expect(getStylePolarAngle(lastCell)).toBeCloseTo(262.5, 1);
+    expect(getStylePolarAngle(sectorAnchor)).toBeCloseTo(247.5, 1);
     expect(getStylePolarAngle(sectorWrapper)).toBeCloseTo(
-      getStylePolarAngle(centerCell),
+      getStylePolarAngle(sectorAnchor),
       1,
     );
-    expect(screen.queryByTestId('solar-text-cell-ring-3-cell-17')).toBeNull();
   });
 
   it('uses the same visual slot origin as solar debug wheel labels', () => {
@@ -842,8 +843,9 @@ describe('SolarSystemView', () => {
     );
 
     const neptuneHotspot = screen.getByTestId('solar-space-ring-4-cell-12');
-    expect(parseFloat(neptuneHotspot.style.left)).toBeCloseTo(68.806, 3);
-    expect(parseFloat(neptuneHotspot.style.top)).toBeCloseTo(72.915, 3);
+    // ring-4-cell-12 = sector 3 cell 0 → centred at (3+0.5) × 45 = 157.5°.
+    expect(parseFloat(neptuneHotspot.style.left)).toBeCloseTo(61.344, 3);
+    expect(parseFloat(neptuneHotspot.style.top)).toBeCloseTo(77.388, 3);
   });
 
   it('renders text mode cells from setup wheel layers and skips null cells', () => {

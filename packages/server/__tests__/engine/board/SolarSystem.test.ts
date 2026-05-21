@@ -271,8 +271,10 @@ describe('SolarSystem', () => {
     const board = BoardBuilder.buildSolarSystemFromRandom(
       new SeededRandom('publicity-enter'),
     );
+    // Each ring-N sector is one playable space at cell-0; sector 0 →
+    // sector 1 on ring 2 means ring-2-cell-0 → ring-2-cell-2.
     const from = board.spaces.find((space) => space.id === 'ring-2-cell-0');
-    const to = board.spaces.find((space) => space.id === 'ring-2-cell-1');
+    const to = board.spaces.find((space) => space.id === 'ring-2-cell-2');
     if (!from || !to) {
       throw new Error('Expected spaces for move test');
     }
@@ -374,8 +376,10 @@ describe('SolarSystem', () => {
     const board = BoardBuilder.buildSolarSystemFromRandom(
       new SeededRandom('asteroid-cost'),
     );
+    // ring-2-cell-2 is sector-1 cell-0 — the next playable sector
+    // adjacent to ring-2-cell-0 (sector-0 cell-0).
     const from = board.spaces.find((space) => space.id === 'ring-2-cell-0');
-    const to = board.spaces.find((space) => space.id === 'ring-2-cell-1');
+    const to = board.spaces.find((space) => space.id === 'ring-2-cell-2');
     if (!from || !to) {
       throw new Error('Expected spaces for asteroid move');
     }

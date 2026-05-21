@@ -11,6 +11,7 @@ import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { TRACE_COLUMN_COLORS } from '@seti/common/utils/alienTracePresentation';
 import { useTranslation } from 'react-i18next';
 import { CardRender } from '@/features/cards/CardRender';
+import { usePreviewOverflowCount } from '@/hooks/useCalibrationMode';
 import { cn } from '@/lib/cn';
 import { useTextMode } from '@/stores/debugStore';
 import type {
@@ -33,6 +34,7 @@ import type {
 } from '@/types/re-exports';
 import { EAlienType, EMainAction, EPlanet, ETrace } from '@/types/re-exports';
 import {
+  decorateSlotWithPreviewOccupants,
   SlotOccupantOverlay,
   TraceColumnGrid,
   TraceRewardFrame,
@@ -1830,9 +1832,16 @@ function AnomalyColumn({
   tierSlots: IPublicTraceSlot[];
   playerColors: Record<string, string>;
 }): React.JSX.Element {
+  const previewOverflow = usePreviewOverflowCount();
+  const decoratedTierSlots =
+    previewOverflow > 0
+      ? tierSlots.map((slot) =>
+          decorateSlotWithPreviewOccupants(slot, color, previewOverflow),
+        )
+      : tierSlots;
   // Render tiers from top→bottom so the visual order matches the printed
   // alien board (overflow at top, single-cap circles below).
-  const tiersTopToBottom = [...tierSlots].reverse();
+  const tiersTopToBottom = [...decoratedTierSlots].reverse();
   return (
     <div
       className='min-w-0 rounded border border-surface-700/60 bg-surface-900/50 p-1'
