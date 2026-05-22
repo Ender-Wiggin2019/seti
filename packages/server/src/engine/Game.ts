@@ -799,6 +799,14 @@ export class Game implements IGame {
 
   private handoffTurnFrom(playerId: string): void {
     clearTurnEffectsForPlayer(this, playerId);
+    // Movement points are spent-or-lost per the rulebook. Flush the
+    // ending player's transient stashes (move + data-stash → data pool)
+    // so unspent movement doesn't leak into their next turn. The flush
+    // helper exists on `IPlayer` but was never wired into the turn
+    // lifecycle — see the now-passing "discards move stash automatically
+    // at turn end" Player test which exercised the helper in isolation.
+    const endingPlayer = this.players.find((p) => p.id === playerId);
+    endingPlayer?.flushTurnStashAtTurnEnd();
     this.missionTracker.clearTurnEventHistory();
     this.eventBus.emit({
       type: EGameRuntimeEvent.TURN_END,

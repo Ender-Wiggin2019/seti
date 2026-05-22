@@ -401,20 +401,33 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
     game.processEndTurn('p1');
   });
 
-  it('9b. branch 0 completed — p1 has 1 movement point', () => {
+  it('9b. branch 0 completed — turn end discards the move grant', () => {
     const missionState = game.missionTracker.getMissionState('p1', '80');
     expect(missionState).toBeDefined();
     expect(missionState!.branchStates[0].completed).toBe(true);
     expect(missionState!.branchStates[1].completed).toBe(false);
     expect(missionState!.branchStates[2].completed).toBe(false);
 
-    expect(p1.getMoveStash()).toBe(1);
+    // The mission grants +1 movement during the turn it completes,
+    // but per rulebook movement is spent-or-lost — flushTurnStashAtTurnEnd
+    // zeros the stash on turn handoff. p2 already passed, so p1
+    // immediately starts a back-to-back turn with no leftover movement.
+    expect(p1.getMoveStash()).toBe(0);
     expect(game.activePlayer.id).toBe('p1');
     expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
   });
 
   // ── 10. Move probe from Earth to asteroid (counterclockwise) ────────
   it('10. p1 moves probe Earth→Asteroid — costs 1 movement point', () => {
+    // The +1 movement granted when p1 completed mission 80 branch 0
+    // in step 9 was correctly discarded at turn end (rulebook says
+    // movement is spent-or-lost). Re-grant it inline to model a
+    // hypothetical fresh source (e.g. a card that grants 1 movement
+    // at start of turn) so the rest of the scenario plays out as
+    // originally written. The granular grant mechanics are exercised
+    // by dedicated tests (Movement.test, ProbeTechs); this scenario
+    // focuses on the action-list contract.
+    p1.gainMove(1);
     const moveBefore = p1.getMoveStash();
 
     game.processFreeAction('p1', {

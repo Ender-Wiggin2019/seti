@@ -1524,6 +1524,7 @@ function resolveAnomalyTokenArtSrc(
       r.type === 'CREDIT' ||
       r.type === 'VP' ||
       r.type === 'CARD' ||
+      r.type === 'CARD_ANY' ||
       r.type === 'PUBLICITY' ||
       r.type === 'DATA' ||
       r.type === 'ENERGY',
@@ -1535,7 +1536,12 @@ function resolveAnomalyTokenArtSrc(
     if (headline.type === 'CREDIT') return `${base}/pink-credit.png`;
     if (headline.type === 'VP') return `${base}/pink-vp.png`;
   } else if (token.traceColor === ETrace.YELLOW) {
-    if (headline.type === 'CARD') return `${base}/yellow-card.png`;
+    // YELLOW's printed "card" face is row-or-deck choice (CARD_ANY).
+    // Treat the legacy CARD value the same way so older saves and
+    // tests still resolve to the correct art.
+    if (headline.type === 'CARD' || headline.type === 'CARD_ANY') {
+      return `${base}/yellow-card.png`;
+    }
     if (headline.type === 'PUBLICITY') return `${base}/yellow-publicity.png`;
   } else if (token.traceColor === ETrace.BLUE) {
     if (headline.type === 'DATA') return `${base}/blue-data.png`;

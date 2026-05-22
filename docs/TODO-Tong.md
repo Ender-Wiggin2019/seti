@@ -218,6 +218,36 @@ _(none — most recent slice just landed)_
 
 ## Done
 
+### Flush per-turn move stash + restore YELLOW anomaly token art - 2026-05-21
+
+Two related fixes from a single user-reported playtest:
+
+1. **Movement leak across turns.** `Player.flushTurnStashAtTurnEnd()`
+   existed and was unit-tested in isolation, but `Game.handoffTurnFrom`
+   never called it — so unspent movement (and unstashed data) leaked
+   into the next turn. Wired the helper into the turn handoff so the
+   ending player's stash zeros out at turn end (rulebook: movement is
+   spent-or-lost). `GameFlowBehavior` test 9b now correctly asserts
+   `getMoveStash() === 0` after handoff; test 10 re-grants 1 movement
+   inline (modelling a card that grants movement at start of turn) so
+   the rest of the scenario plays unchanged.
+
+2. **YELLOW anomaly token rendered with publicity art on its
+   card-side.** When `461aca4` flipped the YELLOW token's headline
+   reward from `CARD` to `CARD_ANY`, the client's
+   `resolveAnomalyTokenArtSrc` mapping in `SolarSystemView.tsx` wasn't
+   updated — `CARD_ANY` wasn't in the headline filter, so `find()`
+   skipped past it to the secondary `PUBLICITY` reward and resolved
+   to `yellow-publicity.png` for both faces of YELLOW. Added
+   `CARD_ANY` to the filter and mapped both `CARD` and `CARD_ANY`
+   to `yellow-card.png` (back-compat with saved games).
+
+Verification:
+- `pnpm --filter @seti/server test` — 1987/1988 (only the long-standing
+  Amoeba flake; unrelated).
+- `pnpm --filter @seti/client test` — 317/317.
+- `pnpm -r typecheck` clean.
+
 ### Cap solar move picker to 1-hop neighbors - 2026-05-21
 
 The move picker used to highlight every cell reachable within the
