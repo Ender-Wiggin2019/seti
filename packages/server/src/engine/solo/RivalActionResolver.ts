@@ -335,7 +335,11 @@ export class RivalActionResolver {
     decisionDirection: ERivalDecisionDirection,
   ): void {
     const rival = RivalSetup.getRivalPlayer(game);
-    const result = game.planetaryBoard?.orbit(planet, rival.id);
+    // Rival has no UI prompt to opt out of the first-orbit slot — take
+    // the bonus rewards whenever they're available.
+    const result = game.planetaryBoard?.orbit(planet, rival.id, {
+      claimFirstSlot: true,
+    });
     if (!result) {
       return;
     }

@@ -898,7 +898,11 @@ describe('GameLayout', () => {
       });
     });
 
-    it('selects a planet before sending orbit main action payload', async () => {
+    it('sends orbit main action with no payload — server returns the planet picker', async () => {
+      // The picker-driven flow: clicking Orbit dispatches the action
+      // immediately. The server responds with a SelectOption listing
+      // every eligible planet (with cost-aware labels), and the
+      // existing pendingInput pipeline drives the rest of the UX.
       const sendAction = vi.fn();
       mockContextValue = createMockContext({
         sendAction,
@@ -937,17 +941,8 @@ describe('GameLayout', () => {
 
       fireEvent.click(screen.getByRole('button', { name: 'Orbit' }));
 
-      expect(screen.getByRole('tab', { name: 'Planets' })).toHaveAttribute(
-        'aria-selected',
-        'true',
-      );
-      expect(sendAction).not.toHaveBeenCalled();
-
-      fireEvent.click(screen.getByTestId('planet-target-mars'));
-
       expect(sendAction).toHaveBeenCalledWith({
         type: EMainAction.ORBIT,
-        payload: { planet: EPlanet.MARS },
       });
     });
 

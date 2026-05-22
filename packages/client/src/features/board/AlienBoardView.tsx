@@ -53,6 +53,7 @@ import {
   formatFirstOrbitRewardList,
   formatPlanetRewardList,
 } from './PlanetCard';
+import { ProbeToken } from './ProbeToken';
 
 const ALIEN_TYPE_I18N_KEY: Partial<Record<EAlienType, string>> = {
   [EAlienType.ANOMALIES]: 'anomalies',
@@ -1587,14 +1588,32 @@ function OumuamuaTokenDot({
   playerColors: Record<string, string>;
   index: number;
 }): React.JSX.Element {
+  // Image mode renders the probe asset (visual continuity with the
+  // solar-system pawn that gets consumed). Text mode keeps a flat
+  // colored dot to match the rest of the text-mode aesthetic and
+  // stay PNG-free.
+  const textMode = useTextMode();
+  if (textMode) {
+    return (
+      <span
+        className='inline-flex h-3.5 w-3.5 rounded-full border border-surface-200/40 shadow-[0_1px_3px_rgba(0,0,0,0.45)]'
+        data-testid={`alien-${alienIndex}-oumuamua-${kind}-token-${playerId}-${index}`}
+        style={{ backgroundColor: playerColors[playerId] ?? '#cbd5e1' }}
+        title={playerId}
+        aria-label={`oumuamua-${kind}-${playerId}`}
+      />
+    );
+  }
+  const playerColor = playerColors[playerId] ?? 'white';
   return (
     <span
-      className='inline-flex h-3.5 w-3.5 rounded-full border border-surface-200/40 shadow-[0_1px_3px_rgba(0,0,0,0.45)]'
+      className='inline-flex h-4 w-4 items-center justify-center'
       data-testid={`alien-${alienIndex}-oumuamua-${kind}-token-${playerId}-${index}`}
-      style={{ backgroundColor: playerColors[playerId] ?? '#cbd5e1' }}
       title={playerId}
       aria-label={`oumuamua-${kind}-${playerId}`}
-    />
+    >
+      <ProbeToken playerColor={playerColor} className='h-4 w-4' />
+    </span>
   );
 }
 
@@ -1624,13 +1643,18 @@ function OumuamuaLandingArea({
   const mainActionPlayer = gameState?.players.find(
     (player) => player.playerId === myPlayerId,
   );
+  // Text-mode disables the parallel-click anchors for the ORBIT/LAND
+  // slot picker — text-mode players resolve through the input panel
+  // only (consistent with the planetary board's text-mode behaviour).
   const orbitSelectable =
+    !textMode &&
     planetActionMode === EMainAction.ORBIT &&
     gameState !== undefined &&
     gameState !== null &&
     mainActionPlayer !== undefined &&
     canOrbitPlanet(EPlanet.OUMUAMUA, state, mainActionPlayer, gameState);
   const landSelectable =
+    !textMode &&
     planetActionMode === EMainAction.LAND &&
     gameState !== undefined &&
     gameState !== null &&
@@ -1697,7 +1721,7 @@ function OumuamuaLandingArea({
                 ))
               )}
             </div>
-            {planetActionMode === EMainAction.ORBIT ? (
+            {!textMode && planetActionMode === EMainAction.ORBIT ? (
               <button
                 type='button'
                 data-testid='planet-target-oumuamua'
@@ -1733,7 +1757,7 @@ function OumuamuaLandingArea({
                 ))
               )}
             </div>
-            {planetActionMode === EMainAction.LAND ? (
+            {!textMode && planetActionMode === EMainAction.LAND ? (
               <button
                 type='button'
                 data-testid='planet-target-oumuamua'

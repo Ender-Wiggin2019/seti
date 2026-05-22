@@ -71,7 +71,13 @@ describe('NewAssignment', () => {
     });
 
     board.setProbeCount(EPlanet.MARS, player.id, 1);
-    const result = board.orbit(EPlanet.MARS, player.id);
+    // The card explicitly reopens the first-orbit slot — re-orbiting now
+    // should claim it. Pass claimFirstSlot:true to match the test's
+    // intent (the prod card path goes through `OrbitProbeEffect` which
+    // defaults claimFirstSlot to true for legacy card behaviour).
+    const result = board.orbit(EPlanet.MARS, player.id, {
+      claimFirstSlot: true,
+    });
 
     expect(result.vpGained).toBeGreaterThan(0);
     expect(planetState.orbitSlots[0]?.playerId).toBe(player.id);

@@ -61,6 +61,40 @@ _(none — most recent slice just landed)_
 - Pair with the executeRewards short-circuit fix above so the cross-check
   doesn't trip the latent footgun on landing.
 
+### P1 — Cross-check land + moon rewards against the printed board
+
+- The orbit-bonus pass (2026-05-21) updated every native planet's
+  printed orbit rewards in `boardLayout.ts:PLANETARY_BOARD_CONFIG` to
+  match the rulebook (Mercury 1 deck card + 2 sector signals + 1
+  income; Jupiter 1 data + sector signal + income; Saturn 2 publicity
+  + sector signal + income; Uranus 3 deck cards + black-sector signal
+  + 8 VP; Neptune 4 data + black-sector signal + 7 VP; Oumuamua 10 VP
+  + 1 exofossil + sector signal). The corresponding **land rewards
+  and moon rewards have not been re-verified** against the printed
+  board.
+- Today's land payload per planet: ${planet}_VP + 1 yellow trace,
+  with `firstData: [N]` for first-land bonuses. Some printed boards
+  add additional rewards (publicity, signals, traces) — needs a
+  pass with the rulebook PDF in hand.
+- Moon rewards were last touched when adding Probe Tech 3 support
+  and likely hold but should be re-verified the same way.
+- Pair with the slot-keyed reward model TODO so each landing anchor
+  can carry its own reward set instead of a flat list.
+
+### P1 — Anchor planet hotspots to the printed image-mode board
+
+- `PlanetaryBoardView`'s image mode renders one anchor button per
+  printed planet, but the (`x`, `y`) coordinates in
+  `PLANETARY_BOARD_CONFIG[planet]` (anchor / orbitSlots / landingSlots)
+  are still the rough first-pass values from the initial layout. The
+  ORBIT/LAND picker now relies on those positions for the parallel-
+  click affordance — visual misalignment of the hotspot vs. the
+  printed slot makes it look like the hotspot is "off".
+- Calibrate per planet using the same `?calibrate=1` overlay
+  approach as the alien boards (`AnomaliesBoardArt` precedent);
+  also tune the moon hotspots which currently sit roughly on the
+  printed moon glyphs but not exactly.
+
 ### P1 — Land main action on Oumuamua not supported
 
 - `LAND` main action targets a printed planet's landing slot and grants
@@ -217,6 +251,66 @@ _(none — most recent slice just landed)_
   flipped to `false` in most packages.
 
 ## Done
+
+### Picker-driven ORBIT/LAND main action + opt-in first-orbit + per-planet orbit rewards - 2026-05-21
+
+Replaces the click-to-arm `planetActionMode` flow with a server-driven
+SelectOption pipeline: ORBIT/LAND with no `planet` payload returns a
+planet picker; selecting a planet returns a slot picker (first-orbit
+vs regular for ORBIT; planet-surface vs moon for LAND). Existing
+auto-tab-jump logic routes Oumuamua picks to the Aliens tab, other
+planets to the Planets tab.
+
+Plan:
+- [x] **`PlanetaryBoard.orbit` opt-in `claimFirstSlot`.** Default
+  `false`; bonus rewards now resolve **before** regular orbit
+  rewards (the picker label and the on-board chain both lead with
+  the bonus). Audited prod call sites: `OrbitProbeEffect.execute`
+  passes through the explicit choice, `RivalActionResolver` always
+  passes `true` (rival has no UI prompt). Test sites updated.
+- [x] **Server `OrbitLandPickers.ts`** new helper builds the planet +
+  slot pickers with cost-aware labels (ORBIT shows `1 ⚡ + 1 💰`;
+  LAND shows the per-planet `LandProbeEffect.getLandingCost`).
+  Reward summaries use rulebook wording: `1 deck card`, `1 snap
+  card`, `1 income` (tuck), `1 signal on Mars sector`, etc.
+- [x] **Game.ts:** ORBIT/LAND with no payload → return picker; with
+  payload → legacy direct path (back-compat for replays/debug).
+- [x] **Per-planet orbit rewards updated** to match the printed
+  planetary board. Confirmed by user; locked into
+  `planetBoardRewards.test.ts`.
+- [x] **Client SelectOptionInput renders inline icons.** Server emits
+  emoji shorthand (`⚡`, `💰`); the renderer replaces them with the
+  same `/assets/seti/icons/` PNGs the personal board uses
+  (energy.png / money.png). Astral-plane emoji require the regex
+  `u` flag.
+- [x] **`isAlienBoardInput` / `isPlanetaryBoardInput` regexes use
+  case-insensitive matching** so Oumuamua's lowercase wire id
+  (`'oumuamua'`) routes to the Aliens tab. 7-test regression suite
+  in `GameLayoutRouting.test.tsx`.
+- [x] **Probe-shaped player marker** on orbit / landing slots in
+  non-text mode (via `ProbeToken`). Text mode keeps the flat dot.
+  Sized at h-7/w-7 on the planetary image-mode board.
+- [x] **1-hop move picker.** `getReachableSpaces` consumer in
+  `SolarSystemView` capped to direct neighbors so the player sees
+  per-hop visit/leave effects instead of bundling a multi-hop path
+  in one click.
+
+Verification:
+- `pnpm -r typecheck` clean across all 6 packages.
+- `pnpm --filter @seti/server test` — 2183/2184 (only the
+  pre-existing Amoeba flake; unrelated).
+- `pnpm --filter @ender-seti/common test` — 251/251.
+- `pnpm --filter @seti/client test` — 324/324 (added 7 new
+  GameLayoutRouting tests).
+
+Residual:
+- Land + moon rewards not yet cross-checked against the printed
+  board; tracked under Open → P1.
+- Image-mode planet hotspot anchors still on first-pass
+  coordinates; tracked under Open → P1.
+- Slot-keyed reward model deferred (each landing anchor today
+  shares the planet's `land.rewards`; printed board has different
+  payouts per anchor). Tracked separately for a future slice.
 
 ### Flush per-turn move stash + restore YELLOW anomaly token art - 2026-05-21
 

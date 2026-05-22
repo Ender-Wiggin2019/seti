@@ -22,6 +22,7 @@ import type {
 } from '@/types/re-exports';
 import { EMainAction, EPlanet, EPlayerInputType } from '@/types/re-exports';
 import { PlanetCard } from './PlanetCard';
+import { ProbeToken } from './ProbeToken';
 
 function createEmptyPlanetState(
   config: IPlanetaryBoardConfig,
@@ -75,17 +76,25 @@ function TokenAtPoint({
   playerColors: Record<string, string>;
   title: string;
 }): React.JSX.Element {
+  // Image-mode planetary board uses the printed probe asset for
+  // orbit / landing markers — visual continuity with the solar
+  // system pawn that gets consumed when the player clicks ORBIT or
+  // LAND. The `aria-label` and the colored-circle border around the
+  // probe sprite stay so existing tests (`planet-board-token-*`)
+  // still locate the marker.
+  const playerColor = playerColors[playerId] ?? 'white';
   return (
     <span
-      className='absolute h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-surface-200/80 shadow-[0_0_8px_rgba(0,0,0,0.45)]'
+      className='absolute inline-flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center'
       style={{
         left: `${x}%`,
         top: `${y}%`,
-        backgroundColor: playerColors[playerId] ?? '#cbd5e1',
       }}
       title={title}
       aria-label={`planet-board-token-${playerId}`}
-    />
+    >
+      <ProbeToken playerColor={playerColor} className='h-7 w-7' />
+    </span>
   );
 }
 
@@ -253,30 +262,15 @@ export function PlanetaryBoardView({
             const config = getPlanetConfig(planetaryBoard, planet);
             const planetState =
               planetaryBoard.planets[planet] ?? createEmptyPlanetState(config);
-            const planetTargetSelectable =
-              selectablePlanets.has(planet) ||
-              canSelectMainActionTarget(
-                mainActionPlanetMode,
-                planet,
-                planetState,
-                mainActionPlayer,
-                gameState,
-              );
-            const selectableMoonIds =
-              mainActionPlanetMode === EMainAction.LAND
-                ? new Set(
-                    config.moonIds.filter((moonId) =>
-                      canSelectMainActionTarget(
-                        mainActionPlanetMode,
-                        planet,
-                        planetState,
-                        mainActionPlayer,
-                        gameState,
-                        { isMoon: true, moonId },
-                      ),
-                    ),
-                  )
-                : new Set<string>();
+            // Text-mode disables the parallel-click affordance for the
+            // ORBIT/LAND slot picker — players resolve via the input
+            // panel only. Card-driven PLANET-typed inputs (e.g. "pick
+            // a planet for this card effect") still light up the
+            // selectable cards.
+            const planetTargetSelectable = selectablePlanets.has(planet);
+            // Same rationale as above: text-mode skips the slot-picker
+            // moon parallel-click. Players use the input panel.
+            const selectableMoonIds = new Set<string>();
             return (
               <PlanetCard
                 key={planet}

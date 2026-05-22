@@ -6,10 +6,12 @@ import type {
 import { EResource, ESector, ETrace } from '@seti/common/types/element';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
+import { useTextMode } from '@/stores/debugStore';
 import type {
   IPublicMoonOccupantState,
   IPublicPlanetState,
 } from '@/types/re-exports';
+import { ProbeToken } from './ProbeToken';
 
 interface IPlanetCardProps {
   planet: string;
@@ -36,6 +38,41 @@ function TokenDot({
       title={playerId}
       aria-label={`token-${playerId}`}
     />
+  );
+}
+
+/**
+ * Probe-shaped player marker for orbit / landing slots in non-text
+ * (image) mode — visual continuity with the solar-system pawn that
+ * gets consumed when the player commits ORBIT or LAND. Falls back to
+ * a colored probe asset (white) when the player's color isn't one of
+ * the three printed variants. Text mode keeps the legacy TokenDot
+ * (a flat colored circle) so the cells stay compact and don't depend
+ * on PNG assets.
+ *
+ * The aria-label stays `token-${playerId}` to match the legacy
+ * TokenDot contract that downstream tests / a11y queries depend on.
+ */
+function PlayerProbeMarker({
+  playerId,
+  playerColors,
+}: {
+  playerId: string;
+  playerColors: Record<string, string>;
+}): React.JSX.Element {
+  const textMode = useTextMode();
+  if (textMode) {
+    return <TokenDot playerId={playerId} playerColors={playerColors} />;
+  }
+  const playerColor = playerColors[playerId] ?? 'white';
+  return (
+    <span
+      className='inline-flex h-4 w-4 items-center justify-center'
+      title={playerId}
+      aria-label={`token-${playerId}`}
+    >
+      <ProbeToken playerColor={playerColor} className='h-4 w-4' />
+    </span>
   );
 }
 
@@ -378,7 +415,7 @@ export function PlanetCard({
               </span>
             ) : (
               state.orbitSlots.map((slot, index) => (
-                <TokenDot
+                <PlayerProbeMarker
                   key={`${slot.playerId}-orbit-${index}`}
                   playerId={slot.playerId}
                   playerColors={playerColors}
@@ -399,7 +436,7 @@ export function PlanetCard({
               </span>
             ) : (
               state.landingSlots.map((slot, index) => (
-                <TokenDot
+                <PlayerProbeMarker
                   key={`${slot.playerId}-landing-${index}`}
                   playerId={slot.playerId}
                   playerColors={playerColors}

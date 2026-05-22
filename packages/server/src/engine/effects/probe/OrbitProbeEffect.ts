@@ -364,7 +364,18 @@ export class OrbitProbeEffect {
     player: IPlayer,
     game: IGame,
     planet: EPlanet,
-    options: { onComplete?: () => IPlayerInput | undefined } = {},
+    options: {
+      onComplete?: () => IPlayerInput | undefined;
+      /**
+       * Whether to claim the first-orbit slot's bonus rewards if it's
+       * still available. Defaults to `true` for legacy card-driven
+       * orbits (e.g. Hayabusa, Mascamites flow) — those traditionally
+       * auto-claimed the bonus and there's no UX prompt to opt out.
+       * The main-action ORBIT path passes the player's explicit
+       * picker choice instead.
+       */
+      claimFirstSlot?: boolean;
+    } = {},
   ): IOrbitProbeEffectResult {
     if (!this.canExecute(player, game, planet)) {
       throw new GameError(
@@ -398,7 +409,10 @@ export class OrbitProbeEffect {
       );
     }
 
-    const orbitResult = planetaryBoard.orbit(planet, player.id);
+    const claimFirstSlot = options.claimFirstSlot ?? true;
+    const orbitResult = planetaryBoard.orbit(planet, player.id, {
+      claimFirstSlot,
+    });
     if (player.pieces.available(EPieceType.ORBITER) > 0) {
       player.pieces.deploy(EPieceType.ORBITER);
     }

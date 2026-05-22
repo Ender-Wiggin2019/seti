@@ -423,7 +423,12 @@ describe('OumuamuaAlienPlugin', () => {
     expect(land.planet).toBe(EPlanet.OUMUAMUA);
   });
 
-  it('orbiting oumuamua prompts for sector/tile signal and first-orbit alien card source', () => {
+  it('orbiting oumuamua prompts for first-orbit alien card source then sector/tile signal', () => {
+    // First-orbit rewards now resolve BEFORE the regular orbit
+    // rewards (rulebook: bonus is granted the moment the slot is
+    // claimed). For Oumuamua that means the alien-card draw
+    // prompt fires first, then the sector/tile signal prompt
+    // chains after.
     const { game, p1 } = createGame('oumuamua-orbit-reward', {
       initialDiscAngles: [0, 0, 0],
     });
@@ -439,15 +444,37 @@ describe('OumuamuaAlienPlugin', () => {
     game.solarSystem?.placeProbe(p1.id, state.meta.spaceId);
     p1.probesInSpace = 1;
     const scoreBefore = p1.score;
+    const exoBefore = p1.exofossils;
     const dataBefore = p1.resources.data;
 
     const orbit = OrbitProbeEffect.execute(p1, game, EPlanet.OUMUAMUA);
 
-    expect(orbit.vpGained).toBe(10);
-    expect(p1.score).toBe(scoreBefore + 10);
+    // Bonus rewards resolve first. Oumuamua's first-orbit bonus is
+    // a single alien-card draw — it surfaces a SelectOption prompt
+    // immediately, so no synchronous VP at this checkpoint.
+    expect(orbit.vpGained).toBe(0);
+    expect(p1.score).toBe(scoreBefore);
     expect(orbit.pendingInput?.toModel().type).toBe(EPlayerInputType.OPTION);
 
-    const signalModel = orbit.pendingInput?.toModel() as
+    // First prompt is the alien-card draw (Oumuamua's first-orbit
+    // bonus). Resolving it cascades the chain into the regular
+    // orbit rewards: +10 VP + 1 exofossil + sector/tile signal
+    // prompt. The signal pendingInput bubbles up as the return of
+    // process().
+    const signalInput = orbit.pendingInput?.process({
+      type: EPlayerInputType.OPTION,
+      optionId: 'draw-random',
+    });
+
+    // Alien card joined hand; regular rewards (VP, exofossil) applied.
+    expect(p1.hand).toContain('ET.22');
+    expect(p1.hand).not.toContain('ET.21');
+    expect(board.faceUpAlienCardId).toBe('ET.21');
+    expect(p1.score).toBe(scoreBefore + 10);
+    expect(p1.exofossils).toBe(exoBefore + 1);
+
+    // Signal prompt is what's left.
+    const signalModel = signalInput?.toModel() as
       | ISelectOptionInputModel
       | undefined;
     expect(signalModel?.options.map((option) => option.id)).toEqual([
@@ -455,23 +482,13 @@ describe('OumuamuaAlienPlugin', () => {
       'oumuamua-tile',
     ]);
 
-    const drawInput = orbit.pendingInput?.process({
+    signalInput?.process({
       type: EPlayerInputType.OPTION,
       optionId: 'oumuamua-tile',
     });
     expect(p1.score).toBe(scoreBefore + 11);
     expect(p1.resources.data).toBe(dataBefore + 1);
     expect(plugin.getRuntimeState(game)?.tileDataRemaining).toBe(2);
-    expect(drawInput?.toModel().type).toBe(EPlayerInputType.OPTION);
-
-    drawInput?.process({
-      type: EPlayerInputType.OPTION,
-      optionId: 'draw-random',
-    });
-
-    expect(p1.hand).toContain('ET.22');
-    expect(p1.hand).not.toContain('ET.21');
-    expect(board.faceUpAlienCardId).toBe('ET.21');
   });
 
   it('landing on oumuamua grants 9 VP, 2 exofossils, and 3/2/1 first land data', () => {

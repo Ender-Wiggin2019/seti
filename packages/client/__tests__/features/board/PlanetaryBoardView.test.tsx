@@ -388,7 +388,11 @@ describe('PlanetaryBoardView', () => {
     );
   });
 
-  it('clicks text-mode moon blocks with the selected moon id payload', () => {
+  it('does not light up text-mode moon blocks for the main-action LAND picker', () => {
+    // Text-mode disables planet-card / moon-block parallel-click for
+    // ORBIT/LAND — players resolve via the input panel only. Card-
+    // driven PLANET-typed inputs (with `pendingInput.options`) still
+    // light up the cards; that path is exercised separately.
     useDebugStore.setState({ textMode: true });
     const { gameState, planetaryBoard } = createMoonLandingState();
     const onSelectMainActionPlanet = vi.fn();
@@ -405,14 +409,14 @@ describe('PlanetaryBoardView', () => {
       />,
     );
 
-    fireEvent.click(
-      screen.getByTestId(`moon-block-${EPlanet.JUPITER}-jupiter-io`),
+    // The block still renders (it's a read-only summary in text-mode)
+    // but is a div, not a button, so clicks don't fire the handler.
+    const moonBlock = screen.getByTestId(
+      `moon-block-${EPlanet.JUPITER}-jupiter-io`,
     );
-
-    expect(onSelectMainActionPlanet).toHaveBeenCalledWith(EPlanet.JUPITER, {
-      isMoon: true,
-      moonId: 'jupiter-io',
-    });
+    expect(moonBlock.tagName).toBe('DIV');
+    fireEvent.click(moonBlock);
+    expect(onSelectMainActionPlanet).not.toHaveBeenCalled();
   });
 
   it('highlights selectable text-mode planet cards', () => {

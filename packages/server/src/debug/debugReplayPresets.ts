@@ -636,10 +636,14 @@ function applyTracePlacementReplay(
 
   // Drop a probe on Mars so probe-driven actions (mark sector, signal
   // batch, etc.) have a starting position next to a relevant planet.
+  // Mirror the production launch path: place + increment probesInSpace
+  // so LaunchProbeEffect.canExecute sees the probe count and gates a
+  // second launch behind the probe-space limit.
   if (game.solarSystem) {
     const marsSpace = game.solarSystem.getSpacesOnPlanet(EPlanet.MARS)[0];
     if (marsSpace) {
       game.solarSystem.placeProbe(activePlayer.id, marsSpace.id);
+      activePlayer.probesInSpace += 1;
     }
   }
 

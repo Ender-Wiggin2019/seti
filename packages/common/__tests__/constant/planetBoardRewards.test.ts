@@ -31,10 +31,11 @@ describe('planet board reward config', () => {
     }
   });
 
-  it('configures Mercury, Venus, Mars, and mock outer-planet rewards', () => {
+  it('configures per-planet orbit rewards matching the printed board', () => {
+    // Mercury: 1 deck card + 2 sector signals + 1 income.
     expect(PLANETARY_BOARD_CONFIG[EPlanet.MERCURY].orbit.rewards).toEqual([
-      { type: 'signal', target: 'planet-sector', amount: 2 },
       { type: 'card', source: 'random', amount: 1 },
+      { type: 'signal', target: 'planet-sector', amount: 2 },
       { type: 'tuck', amount: 1 },
     ]);
     expect(PLANETARY_BOARD_CONFIG[EPlanet.MERCURY].land.rewards).toEqual([
@@ -43,24 +44,52 @@ describe('planet board reward config', () => {
     ]);
     expect(PLANETARY_BOARD_CONFIG[EPlanet.MERCURY].land.firstData).toEqual([3]);
 
+    // Venus: 6 VP + 1 income (unchanged).
     expect(PLANETARY_BOARD_CONFIG[EPlanet.VENUS].orbit.rewards).toEqual([
       { type: 'resource', resource: EResource.SCORE, amount: 6 },
       { type: 'tuck', amount: 1 },
     ]);
     expect(PLANETARY_BOARD_CONFIG[EPlanet.VENUS].land.firstData).toEqual([2]);
 
+    // Mars: 1 snap card + 1 sector signal + 1 income.
     expect(PLANETARY_BOARD_CONFIG[EPlanet.MARS].orbit.rewards).toEqual([
-      { type: 'signal', target: 'planet-sector', amount: 1 },
       { type: 'card', source: 'any', amount: 1 },
+      { type: 'signal', target: 'planet-sector', amount: 1 },
       { type: 'tuck', amount: 1 },
     ]);
     expect(PLANETARY_BOARD_CONFIG[EPlanet.MARS].land.firstData).toEqual([2, 1]);
 
+    // Jupiter: 1 data + 1 sector signal + 1 income.
+    expect(PLANETARY_BOARD_CONFIG[EPlanet.JUPITER].orbit.rewards).toEqual([
+      { type: 'resource', resource: EResource.DATA, amount: 1 },
+      { type: 'signal', target: 'planet-sector', amount: 1 },
+      { type: 'tuck', amount: 1 },
+    ]);
+
+    // Saturn: 2 publicity + 1 sector signal + 1 income.
+    expect(PLANETARY_BOARD_CONFIG[EPlanet.SATURN].orbit.rewards).toEqual([
+      { type: 'resource', resource: EResource.PUBLICITY, amount: 2 },
+      { type: 'signal', target: 'planet-sector', amount: 1 },
+      { type: 'tuck', amount: 1 },
+    ]);
+
+    // Uranus: 3 deck cards + 1 black-sector signal + 8 VP. No tuck.
+    expect(PLANETARY_BOARD_CONFIG[EPlanet.URANUS].orbit.rewards).toEqual([
+      { type: 'card', source: 'random', amount: 3 },
+      { type: 'signal', sector: ESector.BLACK, amount: 1 },
+      { type: 'resource', resource: EResource.SCORE, amount: 8 },
+    ]);
+
+    // Neptune: 4 data + 1 black-sector signal + 7 VP. No tuck.
+    expect(PLANETARY_BOARD_CONFIG[EPlanet.NEPTUNE].orbit.rewards).toEqual([
+      { type: 'resource', resource: EResource.DATA, amount: 4 },
+      { type: 'signal', sector: ESector.BLACK, amount: 1 },
+      { type: 'resource', resource: EResource.SCORE, amount: 7 },
+    ]);
+
+    // Land rewards / first-data on the four outer planets stay
+    // unchanged from the prior snapshot — only orbit rewards moved.
     for (const planet of MOCK_OUTER_PLANETS) {
-      expect(PLANETARY_BOARD_CONFIG[planet].orbit.rewards).toEqual([
-        { type: 'resource', resource: EResource.SCORE, amount: 6 },
-        { type: 'tuck', amount: 1 },
-      ]);
       expect(PLANETARY_BOARD_CONFIG[planet].land.rewards).toEqual([
         { type: 'resource', resource: EResource.SCORE, amount: 5 },
         { type: 'trace', trace: ETrace.YELLOW, amount: 1 },

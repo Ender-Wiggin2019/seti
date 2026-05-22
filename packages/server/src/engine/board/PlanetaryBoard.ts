@@ -226,7 +226,21 @@ export class PlanetaryBoard {
     }
   }
 
-  public orbit(planet: EPlanet, playerId: string): IOrbitResult {
+  /**
+   * Place an orbiter on `planet` for `playerId`. The first-orbit slot
+   * (which carries the bonus rewards on top of the standard orbit
+   * payout) is opt-in: callers must pass `claimFirstSlot: true` to
+   * take it. The previous "auto-claim if available" behaviour was
+   * convenient for cards that just want to orbit, but it broke the
+   * rulebook contract for the main-action ORBIT flow where the
+   * player can choose to skip the bonus slot (e.g. saving it for
+   * a teammate or a future card trigger).
+   */
+  public orbit(
+    planet: EPlanet,
+    playerId: string,
+    options: { claimFirstSlot?: boolean } = {},
+  ): IOrbitResult {
     assertPlayerId(playerId);
     if (!this.canOrbit(planet, playerId)) {
       throw new GameError(
@@ -240,20 +254,33 @@ export class PlanetaryBoard {
     }
 
     const planetState = this.getPlanetState(planet);
-
     const config = getPlanetaryBoardConfig(planet);
-    const rewards = cloneRewards(config.orbit.rewards);
 
-    if (!planetState.firstOrbitClaimed) {
+    const claimFirst =
+      options.claimFirstSlot === true && !planetState.firstOrbitClaimed;
+    if (claimFirst) {
       planetState.orbitSlots.unshift({ playerId });
       planetState.firstOrbitClaimed = true;
       const firstRewards = cloneRewards(config.orbit.firstRewards);
-      rewards.push(...firstRewards);
+      // First-orbit bonus rewards resolve BEFORE the regular orbit
+      // rewards — the picker label and the on-board surface both
+      // present the bonus first ("Take first-orbit slot (3 VP, …)"),
+      // and the rulebook order has the player gain the bonus the
+      // moment the slot is claimed.
+      const rewards = [...firstRewards, ...cloneRewards(config.orbit.rewards)];
       return { vpGained: getScoreRewardAmount(firstRewards), rewards };
     }
 
     planetState.orbitSlots.push({ playerId });
-    return { vpGained: 0, rewards };
+    return { vpGained: 0, rewards: cloneRewards(config.orbit.rewards) };
+  }
+
+  /** Whether the first-orbit slot is still unclaimed. */
+  public canClaimFirstOrbit(planet: EPlanet): boolean {
+    if (!this.planets.has(planet) && planet === EPlanet.EARTH) {
+      return false;
+    }
+    return !this.getPlanetState(planet).firstOrbitClaimed;
   }
 
   public placeSetupOrbiter(planet: EPlanet, playerId: string): void {

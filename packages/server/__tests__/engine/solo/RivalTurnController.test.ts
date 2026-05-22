@@ -569,8 +569,16 @@ describe('RivalTurnController', () => {
       cardId: 'S.4',
       actionKind: ERivalActionKind.PROBE_PLACEMENT,
     });
+    // Movement publicity comes from the scenic-space publicity icon
+    // (+2). The rival's subsequent orbit on Jupiter then applies
+    // the planet's printed orbit rewards (`1 data + 1 sector signal
+    // + 1 income`). The +1 data fills the rival's second computer
+    // slot (the first is already filled by setup), which triggers
+    // the slot's printed +1 publicity bonus per
+    // RIVAL_COMPUTER_SLOT_REWARDS. Total: 2 (movement) + 1 (slot
+    // bonus) = 3.
     expect(solarSystem.getPlayerPublicity(rival.id)).toBe(2);
-    expect(rival.resources.publicity).toBe(2);
+    expect(rival.resources.publicity).toBe(3);
   });
 
   it('keeps movement publicity when the first priority duplicate planet landing is legal', () => {

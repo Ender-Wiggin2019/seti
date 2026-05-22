@@ -43,6 +43,7 @@ export class OrbitAction {
     player: IPlayer,
     game: IGame,
     planet: EPlanet,
+    options: { claimFirstSlot?: boolean } = {},
   ): IOrbitExecutionResult {
     if (!this.canExecute(player, game, planet)) {
       throw new GameError(
@@ -59,6 +60,8 @@ export class OrbitAction {
       credits: ORBIT_CREDIT_COST,
       energy: ORBIT_ENERGY_COST,
     });
-    return OrbitProbeEffect.execute(player, game, planet);
+    return OrbitProbeEffect.execute(player, game, planet, {
+      claimFirstSlot: options.claimFirstSlot,
+    });
   }
 }

@@ -124,8 +124,8 @@ export const PLANETARY_BOARD_CONFIG: Readonly<
     landingSlotKinds: ['planet'],
     orbit: {
       rewards: [
-        { type: 'signal', target: 'planet-sector', amount: 2 },
         { type: 'card', source: 'random', amount: 1 },
+        { type: 'signal', target: 'planet-sector', amount: 2 },
         { type: 'tuck', amount: 1 },
       ],
       firstRewards: [
@@ -185,8 +185,8 @@ export const PLANETARY_BOARD_CONFIG: Readonly<
     landingSlotKinds: ['planet', 'planet', 'moon'],
     orbit: {
       rewards: [
-        { type: 'signal', target: 'planet-sector', amount: 1 },
         { type: 'card', source: 'any', amount: 1 },
+        { type: 'signal', target: 'planet-sector', amount: 1 },
         { type: 'tuck', amount: 1 },
       ],
       firstRewards: [
@@ -225,7 +225,8 @@ export const PLANETARY_BOARD_CONFIG: Readonly<
     landingSlotKinds: ['planet', 'moon', 'moon', 'moon', 'moon'],
     orbit: {
       rewards: [
-        { type: 'resource', resource: EResource.SCORE, amount: 6 },
+        { type: 'resource', resource: EResource.DATA, amount: 1 },
+        { type: 'signal', target: 'planet-sector', amount: 1 },
         { type: 'tuck', amount: 1 },
       ],
       firstRewards: [
@@ -279,7 +280,8 @@ export const PLANETARY_BOARD_CONFIG: Readonly<
     landingSlotKinds: ['planet', 'moon', 'moon'],
     orbit: {
       rewards: [
-        { type: 'resource', resource: EResource.SCORE, amount: 6 },
+        { type: 'resource', resource: EResource.PUBLICITY, amount: 2 },
+        { type: 'signal', target: 'planet-sector', amount: 1 },
         { type: 'tuck', amount: 1 },
       ],
       firstRewards: [
@@ -321,8 +323,9 @@ export const PLANETARY_BOARD_CONFIG: Readonly<
     landingSlotKinds: ['planet', 'moon'],
     orbit: {
       rewards: [
-        { type: 'resource', resource: EResource.SCORE, amount: 6 },
-        { type: 'tuck', amount: 1 },
+        { type: 'card', source: 'random', amount: 3 },
+        { type: 'signal', sector: ESector.BLACK, amount: 1 },
+        { type: 'resource', resource: EResource.SCORE, amount: 8 },
       ],
       firstRewards: [
         { type: 'resource', resource: EResource.SCORE, amount: 3 },
@@ -354,8 +357,9 @@ export const PLANETARY_BOARD_CONFIG: Readonly<
     landingSlotKinds: ['planet', 'moon'],
     orbit: {
       rewards: [
-        { type: 'resource', resource: EResource.SCORE, amount: 6 },
-        { type: 'tuck', amount: 1 },
+        { type: 'resource', resource: EResource.DATA, amount: 4 },
+        { type: 'signal', sector: ESector.BLACK, amount: 1 },
+        { type: 'resource', resource: EResource.SCORE, amount: 7 },
       ],
       firstRewards: [
         { type: 'resource', resource: EResource.SCORE, amount: 3 },
@@ -389,6 +393,7 @@ export const PLANETARY_BOARD_CONFIG: Readonly<
     orbit: {
       rewards: [
         { type: 'resource', resource: EResource.SCORE, amount: 10 },
+        { type: 'exofossil', amount: 1 },
         { type: 'signal', target: 'planet-sector', amount: 1 },
       ],
       firstRewards: [

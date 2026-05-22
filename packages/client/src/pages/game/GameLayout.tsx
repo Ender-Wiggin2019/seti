@@ -87,16 +87,115 @@ const BOARD_TABS: TBoardTab[] = [
  * True when the pending input is something that lands on an alien board:
  * either picking a trace color (TRACE) or picking a specific trace slot via a
  * SelectOption whose options reference alien slot ids.
+ *
+ * Also matches the main-action ORBIT/LAND slot picker when the planet is
+ * Oumuamua — those land on the Aliens tab so the player sees the
+ * Oumuamua tile's landing surface (mirrors the planetary board for
+ * other planets).
  */
-function isAlienBoardInput(model: IPlayerInputModel | null): boolean {
+export function isAlienBoardInput(model: IPlayerInputModel | null): boolean {
   if (!model) return false;
   if (model.type === EPlayerInputType.TRACE) return true;
   if (model.type !== EPlayerInputType.OPTION) return false;
+  return model.options.some(
+    (option) =>
+      /^alien-\d+-(?:discovery|overflow|anomaly-column|oumuamua-trace|mascamites|centaurians|exertians|glyphids|amoeba|arkhos)/.test(
+        option.id,
+      ) ||
+      // EPlanet.OUMUAMUA serializes as the lowercase 'oumuamua'
+      // string — match case-insensitively so this regex tracks the
+      // enum's wire value rather than the TypeScript identifier.
+      /^main-action-(?:land|orbit)-slot-oumuamua-/i.test(option.id),
+  );
+}
+
+/**
+ * True when the pending input lands on the planetary board: today this
+ * is the main-action LAND/ORBIT planet picker (Step 1) and the slot
+ * picker (Step 2) for any non-Oumuamua planet.
+ */
+export function isPlanetaryBoardInput(model: IPlayerInputModel | null): boolean {
+  if (!model) return false;
+  if (model.type !== EPlayerInputType.OPTION) return false;
   return model.options.some((option) =>
-    /^alien-\d+-(?:discovery|overflow|anomaly-column|oumuamua-trace|mascamites|centaurians|exertians|glyphids|amoeba|arkhos)/.test(
+    // Match planet/slot pickers for any planet *except* the
+    // lowercase Oumuamua wire id; those route to the Aliens tab
+    // via `isAlienBoardInput` instead.
+    /^main-action-(?:land|orbit)-(?:planet-(?!oumuamua\b)|slot-(?!oumuamua-))/i.test(
       option.id,
     ),
   );
+}
+
+/**
+ * Derive the effective planet-action mode from a pending input. The
+ * planetary board lights up its hotspots based on whether ORBIT or
+ * LAND is active. Returns null when the input isn't a slot picker
+ * (the planet picker, Step 1, doesn't need anchors yet — the player
+ * just sees the option list).
+ */
+function getSlotPickerMode(
+  model: IPlayerInputModel | null,
+): EMainAction.ORBIT | EMainAction.LAND | null {
+  if (!model || model.type !== EPlayerInputType.OPTION) return null;
+  const sample = model.options[0]?.id ?? '';
+  if (/^main-action-orbit-slot-/.test(sample)) return EMainAction.ORBIT;
+  if (/^main-action-land-slot-/.test(sample)) return EMainAction.LAND;
+  return null;
+}
+
+/**
+ * Match a clicked planet hotspot against the active slot-picker's
+ * options. Returns the option id when the click is a valid resolution,
+ * or null when there's no matching option. The picker labels options
+ * by planet + (isMoon, moonId) — so a click on Mars's planet hotspot
+ * resolves `main-action-land-slot-MARS-planet`, while a click on
+ * Saturn / Triton resolves `main-action-land-slot-SATURN-moon-saturn-titan`.
+ */
+function resolveSlotPickerOptionId(
+  model: IPlayerInputModel | null,
+  planet: EPlanet,
+  options?: { isMoon?: boolean; moonId?: string },
+): string | null {
+  if (!model || model.type !== EPlayerInputType.OPTION) return null;
+  const isMoon = options?.isMoon === true;
+  const moonId = options?.moonId;
+  for (const option of model.options) {
+    // LAND slots: …-slot-PLANET-planet OR …-slot-PLANET-moon-MOONID
+    const landMatch = option.id.match(
+      /^main-action-land-slot-([^-]+)-(planet|moon-(.+))$/,
+    );
+    if (landMatch) {
+      const [, optionPlanet, kind, optionMoonId] = landMatch;
+      if (optionPlanet !== planet) continue;
+      if (!isMoon && kind === 'planet') return option.id;
+      if (isMoon && optionMoonId !== undefined && optionMoonId === moonId) {
+        return option.id;
+      }
+      continue;
+    }
+    // ORBIT slots: …-slot-PLANET-first OR …-slot-PLANET-regular. The
+    // anchor click can't distinguish first vs regular — there's only
+    // one orbit slot per planet on the board today. If both options
+    // exist we default to first-orbit (matches the typical "take the
+    // bonus" intent); the player can still pick "regular" via the
+    // input panel.
+    const orbitMatch = option.id.match(
+      /^main-action-orbit-slot-([^-]+)-(first|regular)$/,
+    );
+    if (orbitMatch) {
+      const [, optionPlanet, kind] = orbitMatch;
+      if (optionPlanet !== planet) continue;
+      if (kind === 'first') return option.id;
+    }
+  }
+  // Fallback: if only "regular" exists (first already claimed), pick it.
+  for (const option of model.options) {
+    if (option.id === `main-action-orbit-slot-${planet}-regular`) {
+      return option.id;
+    }
+  }
+  return null;
 }
 
 function findOumuamuaTile(
@@ -230,8 +329,22 @@ export function GameLayout({
   const [planetActionMode, setPlanetActionMode] = useState<
     EMainAction.ORBIT | EMainAction.LAND | null
   >(null);
-  const { gameState, isMyTurn, pendingInput, events, myPlayerId, sendAction } =
-    useGameContext();
+  const {
+    gameState,
+    isMyTurn,
+    pendingInput,
+    events,
+    myPlayerId,
+    sendAction,
+    sendInput,
+  } = useGameContext();
+  // Effective ORBIT/LAND mode for the planetary board hotspots: prefer
+  // the legacy `planetActionMode` (kept for back-compat with debug
+  // presets / replays) and fall back to the active slot-picker
+  // pendingInput. With the new server-driven flow, the picker drives
+  // anchor visibility on its own without any client-side arming.
+  const effectivePlanetActionMode =
+    planetActionMode ?? getSlotPickerMode(pendingInput);
   const unhandledEffectToastKeysRef = useRef<Set<string>>(new Set());
   const lastGameIdRef = useRef<string | undefined>(undefined);
   const myPlayer = gameState?.players.find((p) => p.playerId === myPlayerId);
@@ -325,6 +438,22 @@ export function GameLayout({
     setActiveTab('aliens');
   }, [pendingInput, setActiveTab]);
 
+  // Mirror of the alien-tab effect above for the planetary board: the
+  // main-action ORBIT/LAND picker chain (planet selector + non-Oumuamua
+  // slot picker) auto-jumps to the Planets tab so the planet cards are
+  // in front of the player.
+  const lastPlanetaryInputIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isPlanetaryBoardInput(pendingInput)) {
+      lastPlanetaryInputIdRef.current = null;
+      return;
+    }
+    const inputId = pendingInput?.inputId ?? null;
+    if (inputId === lastPlanetaryInputIdRef.current) return;
+    lastPlanetaryInputIdRef.current = inputId;
+    setActiveTab('planets');
+  }, [pendingInput, setActiveTab]);
+
   const handleInspectCard = (card: IBaseCard): void => {
     setDetailCard(card);
     setDetailOpen(true);
@@ -361,6 +490,28 @@ export function GameLayout({
     planet: EPlanet,
     options?: { isMoon?: boolean; moonId?: string },
   ): void => {
+    // New flow: an anchor click on a planet card resolves the active
+    // slot-picker pendingInput by matching the option id. This lets
+    // non-text-mode players click directly on the board instead of
+    // (or in parallel with) the input panel.
+    const slotOptionId = resolveSlotPickerOptionId(
+      pendingInput,
+      planet,
+      options,
+    );
+    if (slotOptionId !== null && pendingInput?.inputId !== undefined) {
+      sendInput({
+        inputId: pendingInput.inputId,
+        type: EPlayerInputType.OPTION,
+        optionId: slotOptionId,
+      });
+      return;
+    }
+
+    // Legacy path (kept for back-compat with debug presets / replays
+    // that arm planetActionMode directly). New player-driven flows
+    // never reach here because `planetActionMode` is only set when a
+    // pendingInput is active.
     if (!planetActionMode) return;
     sendAction({
       type: planetActionMode,
@@ -426,7 +577,7 @@ export function GameLayout({
             movementModeActive={movementModeActive}
             armedCardRowBuy={armedCardRowBuy}
             setArmedCardRowBuy={setArmedCardRowBuy}
-            planetActionMode={planetActionMode}
+            planetActionMode={effectivePlanetActionMode}
             onSelectMainActionPlanet={handlePlanetMainActionSelect}
           />
         </main>
@@ -820,20 +971,12 @@ function TopActionBar({
   );
   const movementPoints = myPlayer?.movementPoints ?? 0;
   const handleMainAction = (action: IMainActionRequest) => {
-    if (action.type === EMainAction.ORBIT || action.type === EMainAction.LAND) {
-      onRequestPlanetActionSelection(action.type);
-      toast({
-        title: t('client.game_layout.toast.planet_required', {
-          defaultValue: 'Select a planet',
-        }),
-        description: t('client.game_layout.toast.planet_required_desc', {
-          defaultValue: 'Choose the target planet from the planetary board.',
-        }),
-      });
-      return;
-    }
-
     if (action.type !== EMainAction.PLAY_CARD) {
+      // ORBIT and LAND used to arm a client-side selection mode and
+      // wait for the user to click a planet card. The server now
+      // returns a SelectOption picker when the action arrives without
+      // a planet payload — the existing pendingInput pipeline (with
+      // its tab-jump behaviour) handles the rest.
       sendAction(action);
       return;
     }

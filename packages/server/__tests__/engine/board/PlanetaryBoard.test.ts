@@ -8,14 +8,19 @@ describe('PlanetaryBoard', () => {
     board.setProbeCount(EPlanet.VENUS, 'player-a', 1);
     board.setProbeCount(EPlanet.VENUS, 'player-b', 1);
 
-    const firstOrbit = board.orbit(EPlanet.VENUS, 'player-a');
+    const firstOrbit = board.orbit(EPlanet.VENUS, 'player-a', {
+      claimFirstSlot: true,
+    });
     const secondOrbit = board.orbit(EPlanet.VENUS, 'player-b');
 
     expect(firstOrbit.vpGained).toBe(3);
+    // First-orbit rewards prepend the regular orbit rewards so the
+    // bonus resolves first (matches the picker label which lists
+    // the bonus first too).
     expect(firstOrbit.rewards).toEqual([
+      { type: 'resource', resource: EResource.SCORE, amount: 3 },
       { type: 'resource', resource: EResource.SCORE, amount: 6 },
       { type: 'tuck', amount: 1 },
-      { type: 'resource', resource: EResource.SCORE, amount: 3 },
     ]);
     expect(secondOrbit.vpGained).toBe(0);
     expect(secondOrbit.rewards).toEqual([

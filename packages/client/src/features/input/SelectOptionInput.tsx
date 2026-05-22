@@ -58,12 +58,62 @@ export function SelectOptionInput({
               {String(index + 1).padStart(2, '0')}
             </span>
             <span className='flex-1 truncate font-body text-text-100'>
-              {option.label}
+              {renderOptionLabel(option.label)}
             </span>
           </Button>
         ))}
       </div>
     </div>
+  );
+}
+
+/**
+ * Personal-board resource icons used in inline option labels (cost
+ * suffixes, reward summaries). Server-side option builders emit
+ * emoji shorthand (⚡, 💰, etc.) so the picker stays text-friendly
+ * for tests and accessibility; the renderer here swaps them for the
+ * same icon files the player dashboard uses, matching the rest of
+ * the UI's resource readouts.
+ */
+const INLINE_ICON_MAP: ReadonlyArray<{ token: string; src: string; alt: string }> = [
+  { token: '⚡', src: '/assets/seti/icons/energy.png', alt: 'energy' },
+  { token: '💰', src: '/assets/seti/icons/money.png', alt: 'credits' },
+];
+
+function renderOptionLabel(label: string): React.ReactNode {
+  // Build a regex that captures any of the known emoji tokens so we
+  // can splice them out and render an <img> in their place. Anything
+  // not matching a known token (planet names, rewards copy) renders
+  // as plain text.
+  //
+  // The `u` flag is required: 💰 (U+1F4B0) and other astral-plane
+  // emoji are surrogate pairs in JS strings, and without `u` a
+  // character class `[💰⚡]` would treat the surrogate halves as
+  // independent code units instead of one codepoint per emoji.
+  // That left "💰" rendering as the raw emoji glyph because the
+  // splitter never matched it as a whole token.
+  if (INLINE_ICON_MAP.length === 0) return label;
+  const tokens = INLINE_ICON_MAP.map(({ token }) => token).join('');
+  const splitter = new RegExp(`([${tokens}])`, 'gu');
+  const parts = label.split(splitter);
+  return (
+    <>
+      {parts.map((part, index) => {
+        const icon = INLINE_ICON_MAP.find(({ token }) => token === part);
+        if (icon) {
+          return (
+            <img
+              key={`icon-${index}`}
+              src={icon.src}
+              alt={icon.alt}
+              className='inline-block h-3.5 w-3.5 align-text-bottom'
+              aria-hidden
+            />
+          );
+        }
+        return <span key={`text-${index}`}>{part}</span>;
+      })}
+    </>
   );
 }
 
