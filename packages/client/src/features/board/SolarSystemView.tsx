@@ -2,20 +2,10 @@ import { DescRender } from '@seti/cards';
 import { OUMUAMUA_TILE_DATA_CAPACITY } from '@seti/common/constant/alienBoardConfig';
 import type {
   ISolarSystemSetupConfig,
-  ISolarSystemWheelMapCell,
   TSolarSystemWheelIndex,
 } from '@seti/common/constant/sectorSetup';
-import {
-  cellInSectorOf,
-  coordinateFromSpaceId,
-  SECTOR_COUNT,
-  sectorIndexOf,
-} from '@seti/common/constant/solarCoordinate';
-import {
-  getAdjacentSpaceIds,
-  getMoveCost,
-  resolveTopVisibleSolarWheelCell,
-} from '@seti/common/rules';
+import { SECTOR_COUNT } from '@seti/common/constant/solarCoordinate';
+import { getAdjacentSpaceIds, getMoveCost } from '@seti/common/rules';
 import {
   type TTraceRewardPresentation,
   toTraceRewardPresentations,
@@ -37,6 +27,8 @@ import type {
   IPublicSolarSystem,
   IPublicSolarSystemAlienToken,
   IPublicSolarSystemMovablePiece,
+  IPublicSolarSystemSpaceState,
+  ISelectOptionInputModel,
   TMovementTarget,
   TPublicSlotReward,
 } from '@/types/re-exports';
@@ -85,7 +77,17 @@ const TEXT_MODE_LABEL_Z_INDEX_BY_WHEEL: Readonly<
   3: 73,
   4: 72,
 };
+const ORBITAL_DYNAMICS_MOVE_INPUT_TITLE = 'Choose an Orbital Dynamics move';
 export type TProbeInsetPxByRing = Readonly<Record<1 | 2 | 3 | 4, number>>;
+
+export function isOrbitalDynamicsMoveInputModel(
+  model: IPlayerInputModel | null,
+): model is ISelectOptionInputModel {
+  return (
+    model?.type === EPlayerInputType.OPTION &&
+    model.title === ORBITAL_DYNAMICS_MOVE_INPUT_TITLE
+  );
+}
 
 interface ISolarSystemViewProps {
   solarSystem: IPublicSolarSystem;
@@ -127,6 +129,21 @@ interface IBoardPieceRenderItem {
   offsetX: number;
   offsetY: number;
   transitionDelayMs: number;
+}
+
+interface IOrbitalDynamicsMovePath {
+  optionId: string;
+  probeId: string;
+  fromSpaceId: string;
+  toSpaceId: string;
+  path: string[];
+  target: TMovementTarget;
+}
+
+interface IVisibleMovePath {
+  path: string[];
+  target?: TMovementTarget;
+  optionId?: string;
 }
 
 interface ISolarAlienTokenRenderItem {
@@ -219,8 +236,6 @@ function spacePosition(
   // sector's geometric centre — multi-cell expansion is purely visual
   // scaffolding for the wheel art. Cells with `cellInSector > 0`
   // aren't rendered as independent hotspots (filtered upstream).
-  // Kept in the signature for API compatibility with text-mode label
-  // and calibration callers.
   _cellInSector: number,
   _cellsPerSector: number,
   spaceRadiiPercent: readonly number[],
@@ -245,13 +260,11 @@ function spacePosition(
 }
 
 /**
- * Legacy cell-anchored position used for the Oumuamua tile so it
- * keeps rendering at the printed wheel position relative to Jupiter,
- * even after the rest of the board switched to sector-centre anchors.
- * Exempting the Oumuamua space from the centring change is invariant
- * by construction — no offset re-tuning needed.
+ * Cell-anchored position used for the Oumuamua tile so its printed
+ * planet image stays at the calibrated wheel-art position relative to
+ * Jupiter. Other playable spaces use the sector-centre anchor above.
  */
-function legacyCellSpacePosition(
+function cellAnchoredSpacePosition(
   ringIndex: 1 | 2 | 3 | 4,
   sectorIndex: number,
   cellInSector: number,
@@ -292,45 +305,44 @@ function getDiscAngle(
   return disc?.angle ?? 0;
 }
 
-function isExpandedServerRingIndex(
-  state: { ringIndex: number; indexInRing: number },
-  usesZeroBasedRingIndex: boolean,
-): boolean {
-  const rawRingIndex = usesZeroBasedRingIndex
-    ? state.ringIndex + 1
-    : state.ringIndex;
-  const ringIndex = normalizeRingIndex(rawRingIndex);
-  return Boolean(ringIndex && ringIndex > 1 && state.indexInRing >= 8);
-}
-
-function getTextModeCellLabel(
-  cell: ISolarSystemWheelMapCell,
+function getTextModeSpaceStateLabel(
+  state: IPublicSolarSystemSpaceState,
 ): ITextModeSpaceLabel | null {
-  if (cell.type === 'NULL') {
+  const fallbackElementType =
+    state.elementTypes.find((type) => type !== 'NULL') ?? state.elementTypes[0];
+  const element =
+    state.elements.find((item) => item.type !== 'NULL') ??
+    state.elements[0] ??
+    (fallbackElementType ? { type: fallbackElementType } : null);
+
+  if (!element || element.type === 'NULL') {
     return null;
   }
 
-  if (cell.type === 'EMPTY') {
+  if (element.type === 'EMPTY') {
     return { label: '', kind: 'empty' };
   }
 
-  if (cell.type === 'EARTH') {
+  if (element.type === 'EARTH') {
     return { label: 'earth', kind: 'earth' };
   }
 
-  if (cell.type === 'PLANET' && cell.planet) {
-    return { label: cell.planet.toLowerCase(), kind: 'planet' };
+  if (element.type === 'PLANET') {
+    return {
+      label: element.planet?.toLowerCase() ?? 'planet',
+      kind: 'planet',
+    };
   }
 
-  if (cell.type === 'ASTEROID') {
+  if (element.type === 'ASTEROID') {
     return { label: 'asteroid', kind: 'asteroid' };
   }
 
-  if (cell.type === 'COMET') {
+  if (element.type === 'COMET') {
     return { label: 'comet', kind: 'comet' };
   }
 
-  return { label: cell.type.toLowerCase(), kind: 'other' };
+  return { label: element.type.toLowerCase(), kind: 'other' };
 }
 
 function buildOumuamuaTileSignals(
@@ -384,21 +396,6 @@ function getPieceTransitionDelay(
   return (
     solarSystem.probes.find((probe) => probe.probeId === piece.pieceId)
       ?.transitionDelayMs ?? 0
-  );
-}
-
-function textModeCellPosition(
-  ringIndex: 1 | 2 | 3 | 4,
-  visualIndexInRing: number,
-  spaceRadiiPercent: readonly number[],
-): { xPercent: number; yPercent: number; rotationDeg: number } {
-  return spacePosition(
-    ringIndex,
-    visualIndexInRing,
-    0,
-    1,
-    spaceRadiiPercent,
-    0,
   );
 }
 
@@ -462,90 +459,45 @@ export function SolarSystemView({
     }) as [number, number, number, number];
   }, [probeInsetPxByRing]);
 
-  const discAngleByRing = useMemo<Record<1 | 2 | 3 | 4, number>>(() => {
-    const byDisc = new Map(
-      solarSystem.discs.map((d) => [d.discIndex, d.angle]),
-    );
-    return {
-      1: byDisc.get(0) ?? 0,
-      2: byDisc.get(1) ?? 0,
-      3: byDisc.get(2) ?? 0,
-      4: 0,
-    };
-  }, [solarSystem.discs]);
-
   const spacePoints = useMemo<ISpacePoint[]>(() => {
     const states = solarSystem.spaceStates;
-    const usesZeroBasedRingIndex = Boolean(
-      states && Object.values(states).some((state) => state.ringIndex === 0),
-    );
-    const usesExpandedRingIndexes = Boolean(
-      states &&
-        Object.values(states).some((state) =>
-          isExpandedServerRingIndex(state, usesZeroBasedRingIndex),
-        ),
-    );
+    if (!states) {
+      return [];
+    }
 
-    return solarSystem.spaces.map((spaceId, idx) => {
-      const state = states?.[spaceId];
-      const fallbackRing = (Math.floor(idx / 8) + 1) as 1 | 2 | 3 | 4;
-      const fallbackIndexInRing = idx % 8;
-
-      let ringIndex = fallbackRing;
-      let indexInRing = fallbackIndexInRing;
-      let sectorIndex = fallbackIndexInRing;
-      let cellInSector = 0;
-      let cellsPerSector = 1;
-      let isStateBackedPosition = false;
-
-      if (state) {
-        const rawRingIndex = usesZeroBasedRingIndex
-          ? state.ringIndex + 1
-          : state.ringIndex;
-        const normalizedRingIndex = normalizeRingIndex(rawRingIndex);
-        if (normalizedRingIndex) {
-          ringIndex = normalizedRingIndex;
-          indexInRing = state.indexInRing;
-          if (usesExpandedRingIndexes) {
-            sectorIndex =
-              state.sectorIndex ??
-              sectorIndexOf(normalizedRingIndex, state.indexInRing);
-            cellInSector =
-              state.cellInSector ??
-              cellInSectorOf(normalizedRingIndex, state.indexInRing);
-            cellsPerSector = normalizedRingIndex;
-          } else {
-            sectorIndex = ((state.indexInRing % 8) + 8) % 8;
-          }
-          isStateBackedPosition = true;
-        }
-      } else {
-        const coord = coordinateFromSpaceId(spaceId);
-        if (coord) {
-          ringIndex = coord.ringIndex;
-          indexInRing = coord.indexInRing;
-          sectorIndex = coord.sectorIndex;
-          cellInSector = coord.cellInSector;
-          cellsPerSector = coord.ringIndex;
-          isStateBackedPosition = true;
-        }
+    return solarSystem.spaces.flatMap((spaceId): ISpacePoint[] => {
+      const state = states[spaceId];
+      if (
+        !state ||
+        state.sectorIndex === undefined ||
+        state.cellInSector === undefined
+      ) {
+        return [];
       }
 
-      const discAngle = isStateBackedPosition ? 0 : discAngleByRing[ringIndex];
-      // Oumuamua's tile keeps the legacy cell-anchored angle so its
+      const ringIndex = normalizeRingIndex(state.ringIndex);
+      if (!ringIndex) {
+        return [];
+      }
+
+      const indexInRing = state.indexInRing;
+      const sectorIndex = state.sectorIndex;
+      const cellInSector = state.cellInSector;
+      const cellsPerSector = ringIndex;
+      // Oumuamua's tile keeps the cell-anchored angle so its
       // printed planet image (and the 3-data dot pill) stay at their
       // calibrated positions relative to the wheel art. The rest of
       // the board uses the new sector-centre anchor.
       const isOumuamuaTile =
         oumuamuaTile?.spaceId !== undefined && spaceId === oumuamuaTile.spaceId;
       const pos = isOumuamuaTile
-        ? legacyCellSpacePosition(
+        ? cellAnchoredSpacePosition(
             ringIndex,
             sectorIndex,
             cellInSector,
             cellsPerSector,
             spaceRadiiPercent,
-            discAngle,
+            0,
           )
         : spacePosition(
             ringIndex,
@@ -553,24 +505,25 @@ export function SolarSystemView({
             cellInSector,
             cellsPerSector,
             spaceRadiiPercent,
-            discAngle,
+            0,
           );
-      return {
-        spaceId,
-        ringIndex,
-        indexInRing,
-        sectorIndex,
-        cellInSector,
-        visualIndexInRing: sectorIndex * cellsPerSector + cellInSector,
-        ...pos,
-      };
+      return [
+        {
+          spaceId,
+          ringIndex,
+          indexInRing,
+          sectorIndex,
+          cellInSector,
+          visualIndexInRing: sectorIndex * cellsPerSector + cellInSector,
+          ...pos,
+        },
+      ];
     });
   }, [
     oumuamuaTile?.spaceId,
     solarSystem.spaces,
     solarSystem.spaceStates,
     spaceRadiiPercent,
-    discAngleByRing,
   ]);
 
   const debugLabelsBySpaceId = useMemo(() => {
@@ -580,7 +533,7 @@ export function SolarSystemView({
 
     const labels: Record<string, string> = {};
     for (const space of spacePoints) {
-      const state = solarSystem.spaceStates?.[space.spaceId];
+      const state = solarSystem.spaceStates[space.spaceId];
       const slotPrefix = `${space.indexInRing}:`;
       if (!state) {
         labels[space.spaceId] = slotPrefix;
@@ -605,47 +558,33 @@ export function SolarSystemView({
       return [];
     }
 
-    const discAngles = [
-      discAngleByRing[1],
-      discAngleByRing[2],
-      discAngleByRing[3],
-    ];
-    const items: ITextModeLabelItem[] = [];
-
-    for (let bandIndex = 0; bandIndex < 4; bandIndex += 1) {
-      const boardRing = (bandIndex + 1) as 1 | 2 | 3 | 4;
-      for (let boardIndex = 0; boardIndex < 8; boardIndex += 1) {
-        const visible = resolveTopVisibleSolarWheelCell(
-          setupConfig.wheels,
-          bandIndex,
-          boardIndex,
-          discAngles,
-        );
-        if (!visible) {
-          continue;
-        }
-
-        const label = getTextModeCellLabel(visible.cell.cell);
-        if (!label) {
-          continue;
-        }
-
-        const labelPosition = textModeCellPosition(
-          boardRing,
-          boardIndex,
-          spaceRadiiPercent,
-        );
-        items.push({
-          key: `${visible.wheel}:${bandIndex}:${boardIndex}`,
-          label,
-          styleLayer: visible.wheel,
-          ...labelPosition,
-        });
+    return spacePoints.flatMap((point): ITextModeLabelItem[] => {
+      if (point.cellInSector !== 0) {
+        return [];
       }
-    }
 
-    return items;
-  }, [textMode, setupConfig.wheels, discAngleByRing, spaceRadiiPercent]);
+      const state = solarSystem.spaceStates[point.spaceId];
+      if (!state) {
+        return [];
+      }
+
+      const label = getTextModeSpaceStateLabel(state);
+      if (!label) {
+        return [];
+      }
+
+      return [
+        {
+          key: `state:${point.spaceId}`,
+          label,
+          styleLayer: point.ringIndex,
+          xPercent: point.xPercent,
+          yPercent: point.yPercent,
+          rotationDeg: point.rotationDeg,
+        },
+      ];
+    });
+  }, [textMode, solarSystem.spaceStates, spacePoints]);
 
   const boardPieceView = useMemo(() => {
     const bySpacePlayers: Record<string, string[]> = {};
@@ -736,6 +675,89 @@ export function SolarSystemView({
 
     return { bySpacePlayers, renderItems, targetsBySpace };
   }, [oumuamuaTile?.spaceId, solarSystem, spacePoints]);
+
+  const isOrbitalDynamicsMoveInput =
+    isOrbitalDynamicsMoveInputModel(pendingInput);
+
+  const orbitalDynamicsMovePaths = useMemo<IOrbitalDynamicsMovePath[]>(() => {
+    if (!isOrbitalDynamicsMoveInput) {
+      return [];
+    }
+
+    const pieceByProbeId = new Map(
+      boardPieceView.renderItems
+        .filter((piece) => piece.kind === 'probe')
+        .map((piece) => [piece.movementTarget.id, piece]),
+    );
+
+    return (pendingInput as ISelectOptionInputModel).options.flatMap(
+      (option): IOrbitalDynamicsMovePath[] => {
+        const [probeId, toSpaceId, extra] = option.id.split(':');
+        if (!probeId || !toSpaceId || extra !== undefined) {
+          return [];
+        }
+
+        const piece = pieceByProbeId.get(probeId);
+        if (!piece || piece.playerId !== myPlayerId) {
+          return [];
+        }
+
+        if (
+          !getAdjacentSpaceIds(solarSystem, piece.spaceId).includes(toSpaceId)
+        ) {
+          return [];
+        }
+
+        return [
+          {
+            optionId: option.id,
+            probeId,
+            fromSpaceId: piece.spaceId,
+            toSpaceId,
+            path: [piece.spaceId, toSpaceId],
+            target: piece.movementTarget,
+          },
+        ];
+      },
+    );
+  }, [
+    boardPieceView.renderItems,
+    isOrbitalDynamicsMoveInput,
+    myPlayerId,
+    pendingInput,
+    solarSystem,
+  ]);
+
+  const orbitalDynamicsMovableProbeIds = useMemo(
+    () => new Set(orbitalDynamicsMovePaths.map((move) => move.probeId)),
+    [orbitalDynamicsMovePaths],
+  );
+
+  const orbitalDynamicsPathBySpaceId = useMemo<
+    Map<string, IVisibleMovePath>
+  >(() => {
+    const selectedProbeId =
+      selectedMoveTarget?.target?.type === 'probe'
+        ? selectedMoveTarget.target.id
+        : null;
+    const paths = new Map<string, IVisibleMovePath>();
+
+    for (const move of orbitalDynamicsMovePaths) {
+      if (selectedProbeId && move.probeId !== selectedProbeId) {
+        continue;
+      }
+      if (paths.has(move.toSpaceId)) {
+        continue;
+      }
+      paths.set(move.toSpaceId, {
+        path: move.path,
+        target: move.target,
+        optionId: move.optionId,
+      });
+    }
+
+    return paths;
+  }, [orbitalDynamicsMovePaths, selectedMoveTarget]);
 
   const solarAlienTokenView = useMemo<ISolarAlienTokenRenderItem[]>(() => {
     const groupedBySector = new Map<number, IPublicSolarSystemAlienToken[]>();
@@ -832,7 +854,10 @@ export function SolarSystemView({
       if (!allowMoveAnyProbe && piece.playerId !== myPlayerId) {
         continue;
       }
-      for (const neighborId of getAdjacentSpaceIds(solarSystem, piece.spaceId)) {
+      for (const neighborId of getAdjacentSpaceIds(
+        solarSystem,
+        piece.spaceId,
+      )) {
         const cost = getMoveCost(solarSystem, piece.spaceId, neighborId);
         if (!Number.isFinite(cost) || cost > movementPoints) {
           continue;
@@ -859,9 +884,15 @@ export function SolarSystemView({
     solarSystem,
   ]);
 
-  const visibleReachablePathBySpaceId = useMemo(() => {
+  const visibleReachablePathBySpaceId = useMemo<
+    Map<string, IVisibleMovePath>
+  >(() => {
+    if (isOrbitalDynamicsMoveInput) {
+      return orbitalDynamicsPathBySpaceId;
+    }
+
     if (selectedMoveTarget) {
-      return new Map(
+      return new Map<string, IVisibleMovePath>(
         [...reachablePathBySpaceId.entries()].map(
           ([spaceId, path]) =>
             [spaceId, { path, target: selectedMoveTarget.target }] as const,
@@ -870,10 +901,10 @@ export function SolarSystemView({
     }
 
     if (!moveModeActive) {
-      return new Map<string, { path: string[]; target?: TMovementTarget }>();
+      return new Map<string, IVisibleMovePath>();
     }
 
-    return new Map(
+    return new Map<string, IVisibleMovePath>(
       [...activeMovePathBySpaceId.entries()].map(
         ([spaceId, entry]) =>
           [spaceId, { path: entry.path, target: entry.target }] as const,
@@ -881,7 +912,9 @@ export function SolarSystemView({
     );
   }, [
     activeMovePathBySpaceId,
+    isOrbitalDynamicsMoveInput,
     moveModeActive,
+    orbitalDynamicsPathBySpaceId,
     reachablePathBySpaceId,
     selectedMoveTarget,
   ]);
@@ -902,6 +935,18 @@ export function SolarSystemView({
   function handleSpaceClick(spaceId: string): void {
     const activeMovePath = visibleReachablePathBySpaceId.get(spaceId);
     if (activeMovePath) {
+      if (
+        activeMovePath.optionId &&
+        pendingInput?.type === EPlayerInputType.OPTION
+      ) {
+        onRespondInput({
+          inputId: pendingInput.inputId,
+          type: EPlayerInputType.OPTION,
+          optionId: activeMovePath.optionId,
+        });
+        setSelectedMoveTarget(null);
+        return;
+      }
       submitMovePath(activeMovePath.path, activeMovePath.target);
       setSelectedMoveTarget(moveModeActive ? null : { spaceId });
       return;
@@ -919,9 +964,14 @@ export function SolarSystemView({
     );
     const hasAnyProbe =
       (boardPieceView.bySpacePlayers[spaceId] ?? []).length > 0;
+    const canSelectOrbitalDynamicsProbe =
+      selectableTarget?.movementTarget.type === 'probe' &&
+      orbitalDynamicsMovableProbeIds.has(selectableTarget.movementTarget.id);
     if (
       selectableTarget &&
-      (hasMyProbe || (allowMoveAnyProbe && hasAnyProbe))
+      (canSelectOrbitalDynamicsProbe ||
+        (!isOrbitalDynamicsMoveInput &&
+          (hasMyProbe || (allowMoveAnyProbe && hasAnyProbe))))
     ) {
       setSelectedMoveTarget((prev) =>
         prev?.spaceId === spaceId &&
@@ -1071,7 +1121,7 @@ export function SolarSystemView({
         {spacePoints
           .filter((space) => space.cellInSector === 0)
           .map((space) => {
-            const spaceState = solarSystem.spaceStates?.[space.spaceId];
+            const spaceState = solarSystem.spaceStates[space.spaceId];
             const planet = spaceState?.elements?.find(
               (element) => element.planet !== undefined,
             )?.planet;
@@ -1082,8 +1132,14 @@ export function SolarSystemView({
             ).includes(myPlayerId);
             const isSelected = selectedMoveTarget?.spaceId === space.spaceId;
             const isReachable = reachable.has(space.spaceId);
+            const isOrbitalDynamicsMoveSource = orbitalDynamicsMovePaths.some(
+              (move) => move.fromSpaceId === space.spaceId,
+            );
             const isMoveOverlayVisible =
-              isSelected || isReachable || (moveModeActive && hasMyProbe);
+              isSelected ||
+              isReachable ||
+              isOrbitalDynamicsMoveSource ||
+              (moveModeActive && hasMyProbe);
 
             // Mirror the Oumuamua probe-landing nudge on the hotspot
             // button so the click target stays under the printed planet
@@ -1122,7 +1178,10 @@ export function SolarSystemView({
                 title={`${space.spaceId} - pieces: ${probeCount}`}
                 aria-label={`Space ${space.spaceId}`}
               >
-                {(isSelected || isReachable || hasMyProbe) && (
+                {(isSelected ||
+                  isReachable ||
+                  isOrbitalDynamicsMoveSource ||
+                  hasMyProbe) && (
                   <span
                     data-reachable-indicator={isReachable ? 'true' : undefined}
                     className={[

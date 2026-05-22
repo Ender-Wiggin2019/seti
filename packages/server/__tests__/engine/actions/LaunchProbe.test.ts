@@ -246,6 +246,29 @@ describe('LaunchProbeAction — integration', () => {
       );
     });
 
+    it('places probe on the current Earth space after initial disc rotation', () => {
+      const game = Game.create(
+        TEST_PLAYERS,
+        { playerCount: 2 },
+        'launch-probe-rotated-earth',
+      );
+      setSolarSystemInitialDiscAngles(game, [2, 0, 0]);
+      resolveSetupTucks(game);
+      const player = game.players[0];
+      const solarSystem = requireSolarSystem(game);
+      const earthSpaceId = solarSystem.getPlanetLocation(EPlanet.EARTH)?.space
+        .id;
+
+      expect(earthSpaceId).toBeDefined();
+
+      const result = LaunchProbeAction.execute(player, game);
+      const publicSolar = toPublicSolarSystemState(solarSystem);
+
+      expect(result.spaceId).toBe(earthSpaceId);
+      expect(publicSolar.planetSpaceIds?.[EPlanet.EARTH]).toBe(earthSpaceId);
+      expect(publicSolar.probeSpaceById?.[result.probeId]).toBe(earthSpaceId);
+    });
+
     it('2.1.4 throws GameError when credits are below 2', () => {
       const game = Game.create(
         TEST_PLAYERS,

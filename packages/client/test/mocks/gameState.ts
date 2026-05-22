@@ -11,6 +11,7 @@ import type {
   IPublicPlayerState,
   IPublicSector,
   IPublicSolarSystem,
+  IPublicSolarSystemSpaceState,
   IPublicTechBoard,
 } from '@seti/common/types/protocol/gameState';
 
@@ -65,9 +66,42 @@ export function createMockPlayerState(
   };
 }
 
-export function createMockSolarSystem(): IPublicSolarSystem {
+function createMockSolarSystemSpaceState(
+  spaceId: string,
+  index: number,
+): IPublicSolarSystemSpaceState {
+  const ringIndex = (Math.floor(index / 8) + 1) as 1 | 2 | 3 | 4;
+  const sectorIndex = index % 8;
+  const cellInSector = 0;
+
   return {
-    spaces: Array.from({ length: 32 }, (_, i) => `space-${i}`),
+    spaceId,
+    ringIndex,
+    indexInRing: sectorIndex * ringIndex + cellInSector,
+    sectorIndex,
+    cellInSector,
+    hasPublicityIcon: false,
+    elementTypes: ['EMPTY'],
+    elements: [{ type: 'EMPTY' }],
+  };
+}
+
+function createMockSolarSystemSpaceStates(
+  spaces: string[],
+): Record<string, IPublicSolarSystemSpaceState> {
+  return Object.fromEntries(
+    spaces.map((spaceId, index) => [
+      spaceId,
+      createMockSolarSystemSpaceState(spaceId, index),
+    ]),
+  );
+}
+
+export function createMockSolarSystem(): IPublicSolarSystem {
+  const spaces = Array.from({ length: 32 }, (_, i) => `space-${i}`);
+
+  return {
+    spaces,
     adjacency: {},
     probes: [],
     discs: [
@@ -77,6 +111,7 @@ export function createMockSolarSystem(): IPublicSolarSystem {
       { discIndex: 3, angle: 0 },
     ],
     alienTokens: [],
+    spaceStates: createMockSolarSystemSpaceStates(spaces),
   };
 }
 

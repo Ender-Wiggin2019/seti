@@ -1,10 +1,7 @@
 import {
   createDefaultSetupConfig,
-  type ISolarSystemSetupConfig,
-  type ISolarSystemWheelCell,
   SECTOR_STAR_CONFIGS,
   SECTOR_TILE_DEFINITIONS,
-  type TSolarSystemWheels,
 } from '@seti/common/constant/sectorSetup';
 import { ESector } from '@seti/common/types/element';
 import { fireEvent, render, screen, within } from '@testing-library/react';
@@ -17,6 +14,7 @@ import type {
   IPublicOumuamuaTile,
   IPublicSector,
   IPublicSolarSystem,
+  IPublicSolarSystemSpaceState,
 } from '@/types/re-exports';
 import {
   EAlienType,
@@ -27,9 +25,42 @@ import {
 
 const defaultSetup = createDefaultSetupConfig();
 
-function createSolarSystemMock(): IPublicSolarSystem {
+function createMockSpaceState(
+  spaceId: string,
+  index: number,
+): IPublicSolarSystemSpaceState {
+  const ringIndex = (Math.floor(index / 8) + 1) as 1 | 2 | 3 | 4;
+  const sectorIndex = index % 8;
+  const cellInSector = 0;
+
   return {
-    spaces: Array.from({ length: 32 }, (_, i) => `space-${i}`),
+    spaceId,
+    ringIndex,
+    indexInRing: sectorIndex * ringIndex + cellInSector,
+    sectorIndex,
+    cellInSector,
+    hasPublicityIcon: false,
+    elementTypes: ['EMPTY'],
+    elements: [{ type: 'EMPTY' }],
+  };
+}
+
+function createMockSpaceStates(
+  spaces: string[],
+): Record<string, IPublicSolarSystemSpaceState> {
+  return Object.fromEntries(
+    spaces.map((spaceId, index) => [
+      spaceId,
+      createMockSpaceState(spaceId, index),
+    ]),
+  );
+}
+
+function createSolarSystemMock(): IPublicSolarSystem {
+  const spaces = Array.from({ length: 32 }, (_, i) => `space-${i}`);
+
+  return {
+    spaces,
     adjacency: {
       'space-0': ['space-1'],
     },
@@ -42,6 +73,7 @@ function createSolarSystemMock(): IPublicSolarSystem {
     ],
     alienTokens: [],
     nextRotateRing: 2,
+    spaceStates: createMockSpaceStates(spaces),
   };
 }
 
@@ -51,7 +83,13 @@ function createRotatedRingOneMock(): IPublicSolarSystem {
     adjacency: {
       'ring-1-cell-3': [],
     },
-    probes: [],
+    probes: [
+      {
+        playerId: 'player-1',
+        spaceId: 'ring-1-cell-3',
+        probeId: 'probe-earth',
+      },
+    ],
     discs: [
       { discIndex: 0, angle: 5 },
       { discIndex: 1, angle: 0 },
@@ -64,6 +102,8 @@ function createRotatedRingOneMock(): IPublicSolarSystem {
         spaceId: 'ring-1-cell-3',
         ringIndex: 1,
         indexInRing: 3,
+        sectorIndex: 3,
+        cellInSector: 0,
         hasPublicityIcon: false,
         elementTypes: ['EARTH'],
         elements: [{ type: 'EARTH' }],
@@ -105,6 +145,8 @@ function createExpandedOuterRingMock(
         spaceId: 'ring-4-cell-8',
         ringIndex: 4,
         indexInRing: 8,
+        sectorIndex: 2,
+        cellInSector: 0,
         hasPublicityIcon: true,
         elementTypes: ['PLANET'],
         elements: [{ type: 'PLANET', planet: EPlanet.NEPTUNE }],
@@ -113,6 +155,8 @@ function createExpandedOuterRingMock(
         spaceId: 'ring-4-cell-9',
         ringIndex: 4,
         indexInRing: 9,
+        sectorIndex: 2,
+        cellInSector: 1,
         hasPublicityIcon: false,
         elementTypes: ['EMPTY'],
         elements: [{ type: 'EMPTY' }],
@@ -121,6 +165,7 @@ function createExpandedOuterRingMock(
         spaceId: 'ring-4-cell-10',
         ringIndex: 4,
         indexInRing: 10,
+        sectorIndex: 2,
         cellInSector: 2,
         hasPublicityIcon: false,
         elementTypes: ['ASTEROID'],
@@ -130,6 +175,7 @@ function createExpandedOuterRingMock(
         spaceId: 'ring-4-cell-12',
         ringIndex: 4,
         indexInRing: 12,
+        sectorIndex: 3,
         cellInSector: 0,
         hasPublicityIcon: false,
         elementTypes: ['ASTEROID'],
@@ -139,6 +185,8 @@ function createExpandedOuterRingMock(
         spaceId: 'ring-4-cell-15',
         ringIndex: 4,
         indexInRing: 15,
+        sectorIndex: 3,
+        cellInSector: 3,
         hasPublicityIcon: false,
         elementTypes: ['EMPTY'],
         elements: [{ type: 'EMPTY' }],
@@ -147,6 +195,7 @@ function createExpandedOuterRingMock(
         spaceId: 'ring-4-cell-16',
         ringIndex: 4,
         indexInRing: 16,
+        sectorIndex: 4,
         cellInSector: 0,
         hasPublicityIcon: false,
         elementTypes: ['EMPTY'],
@@ -223,44 +272,6 @@ function createSectorsMock(): IPublicSector[] {
       }),
     );
   });
-}
-
-function createNullWheelCell(): ISolarSystemWheelCell {
-  return {
-    cell: { type: 'NULL', hasPublicityIcon: false },
-    elements: [],
-  };
-}
-
-function createTextModeLayerSetup(): ISolarSystemSetupConfig {
-  const setup = createDefaultSetupConfig();
-  const makeGrid = (wheel: keyof TSolarSystemWheels) =>
-    setup.wheels[wheel].map((row) => row.map(() => createNullWheelCell()));
-  const wheels = {
-    1: makeGrid(1),
-    2: makeGrid(2),
-    3: makeGrid(3),
-    4: makeGrid(4),
-  } as TSolarSystemWheels;
-
-  wheels[2][0][1] = {
-    cell: { type: 'ASTEROID', hasPublicityIcon: false },
-    elements: [],
-  };
-  wheels[4][0][1] = {
-    cell: { type: 'COMET', hasPublicityIcon: true },
-    elements: [],
-  };
-  wheels[4][1][0] = {
-    cell: { type: 'COMET', hasPublicityIcon: true },
-    elements: [],
-  };
-  wheels[3][0][2] = {
-    cell: { type: 'EMPTY', hasPublicityIcon: false },
-    elements: [],
-  };
-
-  return { ...setup, wheels };
 }
 
 function getStylePolarAngle(element: HTMLElement): number {
@@ -669,6 +680,128 @@ describe('SolarSystemView', () => {
     });
   });
 
+  it('responds to Orbital Dynamics move input from a legal map target', () => {
+    const onMoveProbe = vi.fn();
+    const onRespondInput = vi.fn();
+
+    renderSolarSystemView({
+      solarSystem: {
+        ...createSolarSystemMock(),
+        probes: [
+          {
+            playerId: 'player-1',
+            spaceId: 'space-0',
+            probeId: 'probe-1',
+          },
+        ],
+        movablePieces: [
+          {
+            pieceId: 'probe-1',
+            pieceType: 'probe',
+            playerId: 'player-1',
+            spaceId: 'space-0',
+            movementTarget: {
+              type: 'probe',
+              id: 'probe-1',
+            },
+          },
+        ],
+      },
+      movementPoints: 0,
+      pendingInput: {
+        inputId: 'orbital-dynamics-move',
+        type: EPlayerInputType.OPTION,
+        title: 'Choose an Orbital Dynamics move',
+        options: [
+          { id: 'probe-1:space-1', label: 'probe-1 to space-1' },
+          { id: 'done', label: 'Done' },
+        ],
+      },
+      onMoveProbe,
+      onRespondInput,
+    });
+
+    expect(
+      screen
+        .getByTestId('solar-space-space-1')
+        .querySelector('[data-reachable-indicator="true"]'),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('solar-space-space-1'));
+
+    expect(onRespondInput).toHaveBeenCalledWith({
+      inputId: 'orbital-dynamics-move',
+      type: EPlayerInputType.OPTION,
+      optionId: 'probe-1:space-1',
+    });
+    expect(onMoveProbe).not.toHaveBeenCalled();
+  });
+
+  it('ignores illegal map targets during Orbital Dynamics move input', () => {
+    const onRespondInput = vi.fn();
+
+    renderSolarSystemView({
+      solarSystem: {
+        ...createSolarSystemMock(),
+        adjacency: {
+          'space-0': ['space-1'],
+          'space-1': ['space-0'],
+          'space-2': [],
+        },
+        probes: [
+          {
+            playerId: 'player-1',
+            spaceId: 'space-0',
+            probeId: 'probe-1',
+          },
+        ],
+        movablePieces: [
+          {
+            pieceId: 'probe-1',
+            pieceType: 'probe',
+            playerId: 'player-1',
+            spaceId: 'space-0',
+            movementTarget: {
+              type: 'probe',
+              id: 'probe-1',
+            },
+          },
+        ],
+      },
+      pendingInput: {
+        inputId: 'orbital-dynamics-move',
+        type: EPlayerInputType.OPTION,
+        title: 'Choose an Orbital Dynamics move',
+        options: [{ id: 'probe-1:space-1', label: 'probe-1 to space-1' }],
+      },
+      onRespondInput,
+    });
+
+    fireEvent.click(screen.getByTestId('solar-space-space-2'));
+
+    expect(onRespondInput).not.toHaveBeenCalled();
+  });
+
+  it('does not fall back to normal movement while Orbital Dynamics input is pending', () => {
+    const onMoveProbe = vi.fn();
+
+    renderSolarSystemView({
+      movementPoints: 1,
+      pendingInput: {
+        inputId: 'orbital-dynamics-move',
+        type: EPlayerInputType.OPTION,
+        title: 'Choose an Orbital Dynamics move',
+        options: [{ id: 'done', label: 'Done' }],
+      },
+      onMoveProbe,
+    });
+
+    fireEvent.click(screen.getByTestId('solar-space-space-0'));
+    fireEvent.click(screen.getByTestId('solar-space-space-1'));
+
+    expect(onMoveProbe).not.toHaveBeenCalled();
+  });
+
   it('responds to sector input on sector pair click', () => {
     const onRespondInput = vi.fn();
     render(
@@ -742,6 +875,47 @@ describe('SolarSystemView', () => {
     const earthHotspot = screen.getByTestId('solar-space-ring-1-cell-3');
     expect(parseFloat(earthHotspot.style.left)).toBeCloseTo(53.589, 3);
     expect(parseFloat(earthHotspot.style.top)).toBeCloseTo(58.664, 3);
+  });
+
+  it('aligns text-mode Earth label, launched probe, and Earth sector from state-backed positions', () => {
+    useDebugStore.setState({ textMode: true });
+
+    render(
+      <SolarSystemView
+        solarSystem={createRotatedRingOneMock()}
+        sectors={createSectorsMock()}
+        setupConfig={defaultSetup}
+        pendingInput={null}
+        playerColors={{ 'player-1': 'red' }}
+        myPlayerId='player-1'
+        movementPoints={1}
+        onMoveProbe={vi.fn()}
+        onRespondInput={vi.fn()}
+      />,
+    );
+
+    const earthHotspot = screen.getByTestId('solar-space-ring-1-cell-3');
+    const earthLabel = screen.getByText('earth').parentElement;
+    const launchedProbe = screen.getByTestId('solar-probe-probe-earth');
+    const earthSector = screen.getByTestId('sector-node-south-0').parentElement
+      ?.parentElement as HTMLElement | null;
+
+    if (!earthLabel || !earthSector) {
+      throw new Error('Expected Earth label and sector panel to render');
+    }
+
+    expect(getStylePolarAngle(earthLabel)).toBeCloseTo(
+      getStylePolarAngle(earthHotspot),
+      1,
+    );
+    expect(getStylePolarAngle(launchedProbe)).toBeCloseTo(
+      getStylePolarAngle(earthHotspot),
+      1,
+    );
+    expect(getStylePolarAngle(earthSector)).toBeCloseTo(
+      getStylePolarAngle(earthHotspot),
+      1,
+    );
   });
 
   it('projects expanded server ring cells at the sector centre on outer rings', () => {
@@ -864,6 +1038,8 @@ describe('SolarSystemView', () => {
               spaceId: 'ring-4-cell-12',
               ringIndex: 4,
               indexInRing: 12,
+              sectorIndex: 3,
+              cellInSector: 0,
               hasPublicityIcon: true,
               elementTypes: ['NULL', 'PLANET'],
               elements: [
@@ -890,23 +1066,89 @@ describe('SolarSystemView', () => {
     expect(parseFloat(neptuneHotspot.style.top)).toBeCloseTo(77.388, 3);
   });
 
-  it('renders text mode cells from setup wheel layers and skips null cells', () => {
+  it('renders text mode cells from public space states and skips null cells', () => {
     useDebugStore.setState({ textMode: true });
-    const layeredSetup = createTextModeLayerSetup();
 
     render(
       <SolarSystemView
         solarSystem={{
           ...createSolarSystemMock(),
+          spaces: [
+            'state-asteroid',
+            'state-comet',
+            'state-empty',
+            'state-null',
+            'state-hidden-comet',
+          ],
+          adjacency: {
+            'state-asteroid': [],
+            'state-comet': [],
+            'state-empty': [],
+            'state-null': [],
+            'state-hidden-comet': [],
+          },
+          probes: [],
           discs: [
             { discIndex: 0, angle: 0 },
             { discIndex: 1, angle: 0 },
             { discIndex: 2, angle: 0 },
             { discIndex: 3, angle: 0 },
           ],
+          spaceStates: {
+            'state-asteroid': {
+              spaceId: 'state-asteroid',
+              ringIndex: 2,
+              indexInRing: 2,
+              sectorIndex: 1,
+              cellInSector: 0,
+              hasPublicityIcon: false,
+              elementTypes: ['ASTEROID'],
+              elements: [{ type: 'ASTEROID' }],
+            },
+            'state-comet': {
+              spaceId: 'state-comet',
+              ringIndex: 4,
+              indexInRing: 4,
+              sectorIndex: 1,
+              cellInSector: 0,
+              hasPublicityIcon: true,
+              elementTypes: ['COMET'],
+              elements: [{ type: 'COMET' }],
+            },
+            'state-empty': {
+              spaceId: 'state-empty',
+              ringIndex: 3,
+              indexInRing: 6,
+              sectorIndex: 2,
+              cellInSector: 0,
+              hasPublicityIcon: false,
+              elementTypes: ['EMPTY'],
+              elements: [{ type: 'EMPTY' }],
+            },
+            'state-null': {
+              spaceId: 'state-null',
+              ringIndex: 4,
+              indexInRing: 8,
+              sectorIndex: 2,
+              cellInSector: 0,
+              hasPublicityIcon: false,
+              elementTypes: ['NULL'],
+              elements: [{ type: 'NULL' }],
+            },
+            'state-hidden-comet': {
+              spaceId: 'state-hidden-comet',
+              ringIndex: 4,
+              indexInRing: 5,
+              sectorIndex: 1,
+              cellInSector: 1,
+              hasPublicityIcon: true,
+              elementTypes: ['COMET'],
+              elements: [{ type: 'COMET' }],
+            },
+          },
         }}
         sectors={createSectorsMock()}
-        setupConfig={layeredSetup}
+        setupConfig={defaultSetup}
         pendingInput={null}
         playerColors={{}}
         myPlayerId='player-1'
@@ -920,7 +1162,7 @@ describe('SolarSystemView', () => {
     const comet = screen.getByText('comet');
     const asteroidAnchor = asteroid.parentElement;
     const cometAnchor = comet.parentElement;
-    const emptyCell = screen.getByTestId('solar-text-cell-3:0:2')
+    const emptyCell = screen.getByTestId('solar-text-cell-state:state-empty')
       .firstElementChild as HTMLElement | null;
     expect(asteroidAnchor).not.toBeNull();
     expect(cometAnchor).not.toBeNull();
@@ -931,12 +1173,14 @@ describe('SolarSystemView', () => {
     expect(screen.queryByText('null')).not.toBeInTheDocument();
     expect(screen.queryByText('empty')).not.toBeInTheDocument();
     expect(
-      screen.queryByTestId('solar-text-cell-4:0:1'),
+      screen.queryByTestId('solar-text-cell-state:state-hidden-comet'),
     ).not.toBeInTheDocument();
-    expect(screen.getByTestId('solar-text-cell-4:1:0')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('solar-text-cell-state:state-comet'),
+    ).toBeInTheDocument();
     expect(asteroidAnchor?.style.left).not.toBe(cometAnchor?.style.left);
     expect(asteroidAnchor?.style.top).not.toBe(cometAnchor?.style.top);
-    const matchingHotspot = screen.getByTestId('solar-space-space-1');
+    const matchingHotspot = screen.getByTestId('solar-space-state-asteroid');
     expect(parseFloat(asteroidAnchor?.style.left ?? '')).toBeCloseTo(
       parseFloat(matchingHotspot.style.left),
       3,
@@ -945,6 +1189,21 @@ describe('SolarSystemView', () => {
       parseFloat(matchingHotspot.style.top),
       3,
     );
+  });
+
+  it('does not synthesize text-mode cells when public space states are missing', () => {
+    useDebugStore.setState({ textMode: true });
+    const solarSystemWithoutStates = {
+      ...createSolarSystemMock(),
+      spaceStates: undefined,
+    } as unknown as IPublicSolarSystem;
+
+    renderSolarSystemView({
+      solarSystem: solarSystemWithoutStates,
+    });
+
+    expect(screen.queryByTestId('solar-space-space-0')).not.toBeInTheDocument();
+    expect(screen.queryAllByTestId(/^solar-text-cell-/)).toHaveLength(0);
   });
 
   it('places text labels on the same wheel geometry as solar debug labels', () => {
@@ -961,6 +1220,8 @@ describe('SolarSystemView', () => {
               spaceId: 'ring-4-cell-12',
               ringIndex: 4,
               indexInRing: 12,
+              sectorIndex: 3,
+              cellInSector: 0,
               hasPublicityIcon: true,
               elementTypes: ['PLANET'],
               elements: [{ type: 'PLANET', planet: EPlanet.NEPTUNE }],

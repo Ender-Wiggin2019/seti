@@ -578,11 +578,10 @@ function createDebugSpaceStates(
   for (let band = 0; band < 4; band += 1) {
     for (let boardIndex = 0; boardIndex < 8; boardIndex += 1) {
       // boardIndex is the visual position (0-7 on screen).
-      // physicalIndex is the fixed indexInRing used by SolarSystemView for positioning.
       const ring = (band + 1) as TSolarSystemWheelIndex;
-      const physicalIndex = normalizeSlotIndex(
-        boardIndex + getWheelAngle(ring, discAngles),
-      );
+      const sectorIndex = boardIndex;
+      const cellInSector = 0;
+      const indexInRing = sectorIndex * ring + cellInSector;
       const spaceId = `space-${band * 8 + boardIndex}`;
       // resolveTopVisibleCell expects a boardIndex
       const top = resolveTopVisibleCell(wheels, band, boardIndex, discAngles);
@@ -590,8 +589,10 @@ function createDebugSpaceStates(
 
       states[spaceId] = {
         spaceId,
-        ringIndex: band + 1,
-        indexInRing: physicalIndex,
+        ringIndex: ring,
+        indexInRing,
+        sectorIndex,
+        cellInSector,
         hasPublicityIcon: mapCell?.hasPublicityIcon ?? false,
         elementTypes: [mapCell?.type ?? 'NULL'],
         elements: [

@@ -516,6 +516,106 @@ describe('GameLayout', () => {
       ).toBeInTheDocument();
     });
 
+    it('does not render Orbital Dynamics move options in the action dock', async () => {
+      mockContextValue = createMockContext({
+        pendingInput: {
+          inputId: 'orbital-dynamics-move',
+          type: EPlayerInputType.OPTION,
+          title: 'Choose an Orbital Dynamics move',
+          options: [
+            { id: 'probe-1:ring-1-cell-1', label: 'probe-1 to ring-1-cell-1' },
+          ],
+        } as unknown as IGameContext['pendingInput'],
+      });
+      await renderLayout();
+
+      const actions = screen.getByTestId('bottom-actions');
+      expect(
+        within(actions).queryByText('Choose an Orbital Dynamics move'),
+      ).not.toBeInTheDocument();
+      expect(
+        within(actions).queryByRole('button', {
+          name: /probe-1 to ring-1-cell-1/i,
+        }),
+      ).not.toBeInTheDocument();
+      expect(
+        within(actions).getByText('Select a highlighted space on the board.'),
+      ).toBeInTheDocument();
+    });
+
+    it('keeps Orbital Dynamics done response available in the action dock', async () => {
+      const sendInput = vi.fn();
+      mockContextValue = createMockContext({
+        sendInput,
+        pendingInput: {
+          inputId: 'orbital-dynamics-move',
+          type: EPlayerInputType.OPTION,
+          title: 'Choose an Orbital Dynamics move',
+          options: [
+            { id: 'done', label: 'Done' },
+            { id: 'probe-2:ring-1-cell-2', label: 'probe-2 to ring-1-cell-2' },
+          ],
+        } as unknown as IGameContext['pendingInput'],
+      });
+      await renderLayout();
+
+      const actions = screen.getByTestId('bottom-actions');
+      fireEvent.click(within(actions).getByRole('button', { name: 'Done' }));
+
+      expect(sendInput).toHaveBeenCalledWith({
+        inputId: 'orbital-dynamics-move',
+        type: EPlayerInputType.OPTION,
+        optionId: 'done',
+      });
+    });
+
+    it('submits Orbital Dynamics map target clicks through the game context', async () => {
+      const sendInput = vi.fn();
+      mockContextValue = createMockContext({
+        sendInput,
+        gameState: createMockGameState({
+          solarSystem: {
+            ...createMockGameState().solarSystem,
+            adjacency: {
+              'space-0': ['space-1'],
+              'space-1': ['space-0'],
+            },
+            probes: [
+              {
+                playerId: 'player-1',
+                spaceId: 'space-0',
+                probeId: 'probe-1',
+              },
+            ],
+            movablePieces: [
+              {
+                pieceId: 'probe-1',
+                pieceType: 'probe',
+                playerId: 'player-1',
+                spaceId: 'space-0',
+                movementTarget: { type: 'probe', id: 'probe-1' },
+              },
+            ],
+          },
+        }),
+        pendingInput: {
+          inputId: 'orbital-dynamics-move',
+          type: EPlayerInputType.OPTION,
+          title: 'Choose an Orbital Dynamics move',
+          options: [{ id: 'probe-1:space-1', label: 'probe-1 to space-1' }],
+        } as unknown as IGameContext['pendingInput'],
+      });
+      await renderLayout();
+
+      fireEvent.click(screen.getByTestId('solar-space-space-1'));
+
+      expect(sendInput).toHaveBeenCalledWith({
+        inputId: 'orbital-dynamics-move',
+        type: EPlayerInputType.OPTION,
+        optionId: 'probe-1:space-1',
+      });
+    });
+
     it('wraps setup-choice pending input in the setup-choice shell', async () => {
       const sendInput = vi.fn();
       mockContextValue = createMockContext({
@@ -895,6 +995,38 @@ describe('GameLayout', () => {
       expect(sendFreeAction).toHaveBeenCalledWith({
         type: EFreeAction.USE_ORGANIZATION_POWER,
         organizationId: EOrganizationId.STRATUS_CORE,
+      });
+    });
+
+    it('opens the board tab when using Orbital Dynamics power', async () => {
+      const sendFreeAction = vi.fn();
+      useGameViewStore.setState({ activeTab: 'cards' });
+      mockContextValue = createMockContext({
+        sendFreeAction,
+        gameState: createMockGameState({
+          players: [
+            createMockPlayerState({
+              playerId: 'player-1',
+              organizationIds: [EOrganizationId.ORBITAL_DYNAMICS],
+              usableOrganizationPowerIds: [EOrganizationId.ORBITAL_DYNAMICS],
+              oncePerRoundUsed: { [EOrganizationId.ORBITAL_DYNAMICS]: false },
+            }),
+          ],
+        }),
+      });
+      await renderLayout();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+      fireEvent.click(
+        screen.getByTestId(
+          `organization-power-${EOrganizationId.ORBITAL_DYNAMICS}`,
+        ),
+      );
+
+      expect(useGameViewStore.getState().activeTab).toBe('board');
+      expect(sendFreeAction).toHaveBeenCalledWith({
+        type: EFreeAction.USE_ORGANIZATION_POWER,
+        organizationId: EOrganizationId.ORBITAL_DYNAMICS,
       });
     });
 

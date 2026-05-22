@@ -35,12 +35,13 @@ export function toPublicSolarSystemState(
 
   for (const space of ss.spaces) {
     const hasCoord = space.ringIndex >= 1 && space.ringIndex <= 4;
-    const sectorIndex = hasCoord
-      ? sectorIndexOf(space.ringIndex, space.indexInRing)
-      : undefined;
-    const cellInSector = hasCoord
-      ? space.indexInRing % space.ringIndex
-      : undefined;
+    if (!hasCoord) {
+      throw new Error(
+        `Cannot project solar-system space without a public ring coordinate: ${space.id}`,
+      );
+    }
+    const sectorIndex = sectorIndexOf(space.ringIndex, space.indexInRing);
+    const cellInSector = space.indexInRing % space.ringIndex;
 
     spaceStates[space.id] = {
       spaceId: space.id,
@@ -56,9 +57,7 @@ export function toPublicSolarSystemState(
       cellInSector,
     };
 
-    if (sectorIndex !== undefined) {
-      sectorSpaceIds[sectorIndex].push(space.id);
-    }
+    sectorSpaceIds[sectorIndex].push(space.id);
 
     for (const element of space.elements) {
       if (

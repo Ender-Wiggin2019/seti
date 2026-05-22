@@ -167,16 +167,16 @@ export interface IPublicSolarSystemSpaceState {
    */
   publicityIconAmount?: number;
   elementTypes: string[];
-  elements?: Array<{ type: string; planet?: EPlanet }>;
+  elements: Array<{ type: string; planet?: EPlanet }>;
   /**
    * Pre-computed sector index (0..7) this space belongs to. Stable per
    * spaceId — does not change on rotation (only the element living on
    * the space does). Emitted by the server projection so clients don't
    * have to replicate `floor(indexInRing / ringIndex)` logic.
    */
-  sectorIndex?: number;
+  sectorIndex: number;
   /** Offset inside the owning sector (0..ringIndex-1). */
-  cellInSector?: number;
+  cellInSector: number;
 }
 
 export interface IPublicSolarSystemState {
@@ -190,7 +190,7 @@ export interface IPublicSolarSystemState {
    * Produced by the server from runtime rotation counter; client should render only.
    */
   nextRotateRing?: 1 | 2 | 3;
-  spaceStates?: Record<string, IPublicSolarSystemSpaceState>;
+  spaceStates: Record<string, IPublicSolarSystemSpaceState>;
   /**
    * Runtime planet → current spaceId lookup. Reflects the current
    * rotation state; server rebuilds on every rotation so clients can

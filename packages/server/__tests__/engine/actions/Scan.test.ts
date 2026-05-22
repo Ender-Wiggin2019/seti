@@ -24,7 +24,10 @@ import {
 import { Game } from '@/engine/Game.js';
 import { EMissionEventType } from '@/engine/missions/IMission.js';
 import { Player } from '@/engine/player/Player.js';
-import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
+import {
+  resolveSetupTucks,
+  setSolarSystemInitialDiscAngles,
+} from '../../helpers/TestGameBuilder.js';
 
 function finishScanWithDone(game: Game, playerId: string): void {
   const optionInput = playerWaitingFor(
@@ -942,6 +945,42 @@ describe('ScanAction — integration (rewrite)', () => {
       );
       expect(p1.resources.data).toBe(totalDataBefore + 1);
       expect(p1.dataPool.count).toBe(dataPoolBefore + 1);
+    });
+
+    it('marks the current Earth sector after initial disc rotation', () => {
+      const { game, p1 } = createScanIntegrationGame('scan-mark-rotated-earth');
+      setSolarSystemInitialDiscAngles(game, [2, 0, 0]);
+      const solarSystem = requireValue(
+        game.solarSystem,
+        'expected solar system',
+      );
+      const earthIdx = requireValue(
+        getSectorIndexByPlanet(solarSystem, EPlanet.EARTH),
+        'expected earth sector index',
+      );
+      const earthSpaceId = solarSystem.getPlanetLocation(EPlanet.EARTH)?.space
+        .id;
+      const earthSector = game.sectors[earthIdx] as Sector;
+      const nextSector = game.sectors[(earthIdx + 1) % game.sectors.length] as
+        | Sector
+        | undefined;
+      const earthMarkersBefore = earthSector.getPlayerMarkerCount(p1.id);
+      const nextMarkersBefore = nextSector?.getPlayerMarkerCount(p1.id) ?? 0;
+
+      expect(earthSpaceId).toBe(`ring-1-cell-${earthIdx}`);
+
+      game.processMainAction(p1.id, { type: EMainAction.SCAN });
+      game.processInput(p1.id, {
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_EARTH,
+      });
+
+      expect(earthSector.getPlayerMarkerCount(p1.id)).toBe(
+        earthMarkersBefore + 1,
+      );
+      expect(nextSector?.getPlayerMarkerCount(p1.id) ?? 0).toBe(
+        nextMarkersBefore,
+      );
     });
   });
 });

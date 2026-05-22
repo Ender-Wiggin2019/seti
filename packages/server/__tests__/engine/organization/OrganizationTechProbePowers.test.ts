@@ -81,6 +81,11 @@ describe('technology and probe oriented organization powers', () => {
     const secondModel = secondInput?.toModel() as
       | ISelectOptionInputModel
       | undefined;
+    expect(
+      secondModel?.options.some((option) =>
+        option.id.startsWith(`${firstProbeId}:`),
+      ),
+    ).toBe(false);
     const secondOption = secondModel?.options.find(
       (option) => option.id !== 'done',
     );
@@ -100,6 +105,28 @@ describe('technology and probe oriented organization powers', () => {
     expect(player.oncePerRoundUsed[EOrganizationId.ORBITAL_DYNAMICS]).toBe(
       true,
     );
+  });
+
+  it('Orbital Dynamics rejects forged move option ids', () => {
+    const game = createCleanGame();
+    const player = game.players[0];
+    const organization = new OrbitalDynamics();
+
+    organization.resolve(player, game);
+    organization.restore(player, game);
+
+    const input = UseOrganizationPowerFreeAction.execute(
+      player,
+      game,
+      EOrganizationId.ORBITAL_DYNAMICS,
+    );
+
+    expect(() =>
+      input?.process({
+        type: EPlayerInputType.OPTION,
+        optionId: 'probe-0:not-adjacent',
+      }),
+    ).toThrow('Unknown option id: probe-0:not-adjacent');
   });
 
   it('Orbital Dynamics allows stopping after one probe move and rejects no-move boards', () => {

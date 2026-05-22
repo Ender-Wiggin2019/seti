@@ -5,7 +5,7 @@ import {
 } from '@seti/common/rules';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EPlanet, EResource } from '@seti/common/types/element';
-import type { EOrganizationId } from '@seti/common/types/organization';
+import { EOrganizationId } from '@seti/common/types/organization';
 import { getMascamitesSampleDeliveryDestination } from '@seti/common/utils/mascamitesSampleDelivery';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -25,8 +25,11 @@ import { ActionMenu } from '@/features/actions/ActionMenu';
 import { FreeActionBar } from '@/features/actions/FreeActionBar';
 import { AlienBoardView } from '@/features/board/AlienBoardView';
 import { PlanetaryBoardView } from '@/features/board/PlanetaryBoardView';
-import type { TProbeInsetPxByRing } from '@/features/board/SolarSystemView';
-import { SolarSystemView } from '@/features/board/SolarSystemView';
+import {
+  isOrbitalDynamicsMoveInputModel,
+  SolarSystemView,
+  type TProbeInsetPxByRing,
+} from '@/features/board/SolarSystemView';
 import { TechBoardView } from '@/features/board/TechBoardView';
 import { CardDetail } from '@/features/cards/CardDetail';
 import { CardRowView } from '@/features/cards/CardRowView';
@@ -114,7 +117,9 @@ export function isAlienBoardInput(model: IPlayerInputModel | null): boolean {
  * is the main-action LAND/ORBIT planet picker (Step 1) and the slot
  * picker (Step 2) for any non-Oumuamua planet.
  */
-export function isPlanetaryBoardInput(model: IPlayerInputModel | null): boolean {
+export function isPlanetaryBoardInput(
+  model: IPlayerInputModel | null,
+): boolean {
   if (!model) return false;
   if (model.type !== EPlayerInputType.OPTION) return false;
   return model.options.some((option) =>
@@ -539,6 +544,7 @@ export function GameLayout({
     clearMoveMode: () => {
       setMovementModeActive(false);
     },
+    openBoardTab: () => setActiveTab('board'),
   });
 
   return (
@@ -628,11 +634,13 @@ function useActionController({
   clearCardRowBuy,
   armMoveMode,
   clearMoveMode,
+  openBoardTab,
 }: {
   armCardRowBuy: () => void;
   clearCardRowBuy: () => void;
   armMoveMode: () => void;
   clearMoveMode: () => void;
+  openBoardTab: () => void;
 }): {
   handleFreeActionClick: (
     action: EFreeAction,
@@ -795,6 +803,9 @@ function useActionController({
         clearCardRowBuy();
         if (!organizationId) {
           return;
+        }
+        if (organizationId === EOrganizationId.ORBITAL_DYNAMICS) {
+          openBoardTab();
         }
         sendFreeAction({
           type: EFreeAction.USE_ORGANIZATION_POWER,
@@ -962,8 +973,17 @@ function TopActionBar({
   } = useGameContext();
 
   const canUndo = gameState?.canUndo ?? false;
+  const orbitalDynamicsInput = isOrbitalDynamicsMoveInputModel(pendingInput)
+    ? pendingInput
+    : null;
+  const orbitalDynamicsDoneOption =
+    orbitalDynamicsInput?.options.find((option) => option.id === 'done') ??
+    null;
+  const showBoardInputHint = orbitalDynamicsInput !== null;
   const showInputRenderer =
-    pendingInput !== null && pendingInput.type !== EPlayerInputType.OR;
+    pendingInput !== null &&
+    pendingInput.type !== EPlayerInputType.OR &&
+    !showBoardInputHint;
   const showSetupChoiceInput =
     gameState?.phase === EPhase.SETUP_CHOICE && pendingInput !== null;
   const myPlayer = gameState?.players.find(
@@ -1048,6 +1068,42 @@ function TopActionBar({
                 techBoard={gameState?.techBoard}
               />
             )}
+          </div>
+        </div>
+      ) : showBoardInputHint ? (
+        <div className='px-4 py-2'>
+          <div className='instrument-panel p-3'>
+            <div className='section-head mb-2'>
+              <span aria-hidden className='section-head__tick' />
+              <p className='font-mono text-[11px] uppercase tracking-[0.14em] text-accent-400'>
+                {t('client.game_layout.awaiting_input', {
+                  defaultValue: 'Input Required',
+                })}
+              </p>
+              <div aria-hidden className='section-head__rule' />
+            </div>
+            <p className='font-mono text-[11px] uppercase tracking-[0.14em] text-text-300'>
+              Orbital Dynamics
+            </p>
+            <p className='mt-1 text-sm text-text-100'>
+              Select a highlighted space on the board.
+            </p>
+            {orbitalDynamicsDoneOption ? (
+              <Button
+                variant='ghost'
+                size='sm'
+                className='mt-3 h-7 px-2.5 font-mono text-[10px] uppercase tracking-[0.14em]'
+                onClick={() =>
+                  sendInput({
+                    inputId: orbitalDynamicsInput.inputId,
+                    type: EPlayerInputType.OPTION,
+                    optionId: orbitalDynamicsDoneOption.id,
+                  })
+                }
+              >
+                {orbitalDynamicsDoneOption.label}
+              </Button>
+            ) : null}
           </div>
         </div>
       ) : (

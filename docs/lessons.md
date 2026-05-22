@@ -26,12 +26,15 @@
 
 - 规则、奖励、desc 图标统一走 `DescRender` / `EffectFactory`；不要用颜色块、字母或临时图片替代。
 - 修 board 状态时不要用“新数组 + deprecated 单值”长期并存来兼容；除非明确有外部协议约束，否则当前 public/runtime state 只能保留一个规范字段，旧快照兼容放在 deserializer 边界。
+- 新项目不要为旧 snapshot/debug 数据保留并行兼容路径；board/text-mode 位置类视图应以 server public state 为唯一数据源，测试也要提供新协议数据，而不是依赖组件内推导兜底。
 - Planet board 的 text/image 两种模式都要覆盖交互语义；如果 image mode 能点 moon，text mode 的 moon block 也要能通过相同 main-action payload 发 `isMoon`。
 - Planet board E2E 不要只断言 text-mode `planet-card-*`；image mode 默认渲染 `planet-target-*` 和 token overlay，测试应显式切 text mode 或同时支持 image-mode selectors。
 - Token/board 视觉要表达规则语义：solar anomaly token 是奖励 pill（trace 色辅助、desc icon 居中），alien trace slot 用同色 border 容器，hidden board 不泄露真实 trace。
 - Anomalies board 保持 red/yellow/blue 三列横排；单列内部按规则读法让低 index 在底部，压缩布局优先减 padding/slot 宽度，不牺牲 desc icon 可读性。
 - UI 缩放控件不能只改 `max-width`；如果用户预期布局变小，必须改实际 reserved `width`/`height`，并在浏览器里检查 `getBoundingClientRect()`，不只看 style attribute。
 - Player input 是动作提示区域，不应直接塞完整 board 级组件；tech/card 等输入要用紧凑选择控件，并把完整 board 保留在对应 board tab。
+- 当把某个 pending input 改成 board/map 交互时，不能只接 board click；还必须让 action dock 停止渲染原始 `SelectOption` 列表，并用专门的轻量提示覆盖截图中可见的用户路径。
+- 对 board/map 接管的 `SelectOption`，不要把非地图响应一并藏掉；例如 `done`/`skip` 这类结束选项仍要在提示区保留明确按钮，否则用户完成一次地图操作后会被困在没有响应控件的 pending input。
 - Player input 的 compact tech 不能只显示 tile/name；若 public tech board 提供 stack 状态，必须显示 first 2VP 状态和 printed/back bonus，并复用 `TechStack` 的 bonus 语义。
 - Player input 中所有真实卡牌展示都应走统一 client `CardRender` 包装；tuck income 的 `HandView -> CardRender` 路径是参考实现，quick-start/prelude 等卡牌预览也要复用同一入口。
 - 接入 prelude card 时不要重写正常图片版组件；image mode 继续用维护中的 `@seti/cards/PreludeCard`，只在 client `CardRender` 的 text mode 分支补对应文本渲染。

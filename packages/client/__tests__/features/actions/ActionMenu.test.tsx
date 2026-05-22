@@ -278,6 +278,18 @@ describe('ActionMenu', () => {
         ],
         discs: [],
         alienTokens: [],
+        spaceStates: {
+          'ring-2-cell-0': {
+            spaceId: 'ring-2-cell-0',
+            ringIndex: 2,
+            indexInRing: 0,
+            sectorIndex: 0,
+            cellInSector: 0,
+            hasPublicityIcon: false,
+            elementTypes: ['PLANET'],
+            elements: [{ type: 'PLANET', planet: EPlanet.MARS }],
+          },
+        },
         planetSpaceIds: {
           [EPlanet.MARS]: 'ring-2-cell-0',
         },
