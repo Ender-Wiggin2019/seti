@@ -154,9 +154,15 @@ export class SolarSystem {
     for (let i = 0; i < 3; i += 1) {
       this.discs[i].currentRotation = normalizeDiscAngle(initialDiscAngles[i]);
     }
+    // Apply each disc's initial rotation independently. `rotateDiscLayer`
+    // shifts only that disc's layer across every ring it prints terrain
+    // on (e.g. disc 2 rotates rings 1+2 of disc 2's contributions).
+    // Lower-disc layers stay put — this preserves the layered model
+    // throughout the initial state.
     for (let i = 0; i < 3; i += 1) {
+      const discNumber = i + 1; // 1..3
       for (let step = 0; step < this.discs[i].currentRotation; step += 1) {
-        this.rotateRingByOneStep(i + 1);
+        this.rotateDiscLayerByOneStep(discNumber);
       }
     }
     this.adjacency = this.buildAdjacency();
@@ -237,10 +243,15 @@ export class SolarSystem {
       throw new Error(`Invalid discIndex: ${discIndex}`);
     }
 
-    const movingRingIndexes = DISC_TO_MOVING_RINGS[discIndex];
+    // Per the rulebook, rotating disc D rotates disc D and every smaller
+    // disc above it in lockstep — i.e. disc 1 alone, disc 1+2 together,
+    // or disc 1+2+3 together. `DISC_TO_MOVING_RINGS[discIndex]` lists the
+    // rings touched (legacy mapping); the disc count is one less than
+    // the largest ring touched.
+    const movingDiscNumbers = DISC_TO_MOVING_RINGS[discIndex];
     const coverStatesByRing = new Map<number, Map<string, IRingCoverState>>();
 
-    for (const movingRingIndex of movingRingIndexes) {
+    for (const movingRingIndex of movingDiscNumbers) {
       if (movingRingIndex >= 4) {
         continue;
       }
@@ -251,8 +262,11 @@ export class SolarSystem {
       );
     }
 
-    for (const movingRingIndex of movingRingIndexes) {
-      this.rotateRingByOneStep(movingRingIndex);
+    // Rotate each disc's layers independently. `rotateDiscLayerByOneStep`
+    // shifts disc D's contribution across every ring D prints terrain
+    // on (rings 1..D), leaving deeper discs' layers untouched.
+    for (const movingDiscNumber of movingDiscNumbers) {
+      this.rotateDiscLayerByOneStep(movingDiscNumber);
     }
 
     for (
@@ -415,27 +429,73 @@ export class SolarSystem {
         ? ESolarSystemElementType.EARTH
         : ESolarSystemElementType.PLANET;
 
+    // Clear any prior placement of the same planet from every space's
+    // layer stack — a dynamic planet (e.g. Oumuamua) lives on whatever
+    // layer it was last written to; reset NULL fallback before re-writing.
     for (const space of this.spaces) {
-      space.elements = space.elements.filter(
-        (element) => !(element.planet === planet && element.amount > 0),
-      );
+      for (const layer of space.layers ?? []) {
+        if (layer.element.planet === planet && layer.element.amount > 0) {
+          // Restore the original NULL — dynamic placement only ever
+          // overrides layers that were originally NULL (Oumuamua's slot
+          // is NULL on disc 3's wheel).
+          layer.element = {
+            type: ESolarSystemElementType.NULL,
+            amount: 1,
+          };
+          layer.hasPublicityIcon = false;
+          layer.publicityIconAmount = undefined;
+        }
+      }
+      this.refreshDerivedFields(space);
     }
-    targetSpace.elements = targetSpace.elements.filter(
-      (element) => element.type !== ESolarSystemElementType.NULL,
-    );
 
-    targetSpace.elements.push({
-      type: planetElementType,
-      amount: 1,
-      planet,
-    });
-    if (options?.grantVisitPublicity) {
-      targetSpace.hasPublicityIcon = true;
-      if (
-        !targetSpace.publicityIconAmount ||
-        targetSpace.publicityIconAmount < 1
-      ) {
-        targetSpace.publicityIconAmount = 1;
+    // Write the planet into the topmost layer of the target space —
+    // Oumuamua sits on disc 3's wheel (the disc that physically prints
+    // terrain on the slot the tile lands on), so layers[0] is the right
+    // disc for ring-3 placements. For other dynamic planets in the
+    // future this still works because the topmost disc is the visible
+    // one anyway.
+    const targetLayers = targetSpace.layers ?? [];
+    if (targetLayers.length > 0) {
+      const topLayer = [...targetLayers].sort(
+        (a, b) => a.discIndex - b.discIndex,
+      )[0];
+      topLayer.element = {
+        type: planetElementType,
+        amount: 1,
+        planet,
+      };
+      if (options?.grantVisitPublicity) {
+        topLayer.hasPublicityIcon = true;
+        if (
+          !topLayer.publicityIconAmount ||
+          topLayer.publicityIconAmount < 1
+        ) {
+          topLayer.publicityIconAmount = 1;
+        }
+      }
+      this.refreshDerivedFields(targetSpace);
+    } else {
+      // Legacy spaces without layers — preserve old behaviour: filter
+      // NULL out and push the planet element directly onto the elements
+      // array. Used by deserialized snapshots that pre-date the layered
+      // model and by hand-crafted test fixtures.
+      targetSpace.elements = targetSpace.elements.filter(
+        (element) => element.type !== ESolarSystemElementType.NULL,
+      );
+      targetSpace.elements.push({
+        type: planetElementType,
+        amount: 1,
+        planet,
+      });
+      if (options?.grantVisitPublicity) {
+        targetSpace.hasPublicityIcon = true;
+        if (
+          !targetSpace.publicityIconAmount ||
+          targetSpace.publicityIconAmount < 1
+        ) {
+          targetSpace.publicityIconAmount = 1;
+        }
       }
     }
 
@@ -681,38 +741,130 @@ export class SolarSystem {
     return spacesByRing;
   }
 
-  private rotateRingByOneStep(ringIndex: number): void {
+  /**
+   * Rotate one disc's printed contribution one wheel step counterclockwise.
+   *
+   * Each disc D physically prints terrain at every (ring R, sector S, cell-0)
+   * for R in 1..D — these cells live in `space.layers` keyed by `discIndex`.
+   * When disc D rotates, **only those D-owned layers shift** — lower discs
+   * (D+1..4) stay where they are, so e.g. a base-board comet on (ring 1,
+   * sector 5) doesn't move when disc 1 rotates above it.
+   *
+   * Occupants travel with the disc-D layer at the disc's *outermost* ring
+   * (the original semantics: probes parked on the rotating wheel get
+   * carried along). For the per-disc inner rings, occupants stay put —
+   * a probe at (ring 1, sector 5) doesn't move when disc 3 rotates,
+   * because the disc-3 layer at ring 1 is sub-surface from the probe's
+   * perspective.
+   */
+  private rotateDiscLayerByOneStep(discIndex: number): void {
+    for (let ringIndex = 1; ringIndex <= discIndex; ringIndex += 1) {
+      this.rotateDiscLayerForRingByOneStep(discIndex, ringIndex);
+    }
+  }
+
+  private rotateDiscLayerForRingByOneStep(
+    discIndex: number,
+    ringIndex: number,
+  ): void {
     const ringSpaces = this.spaces
-      .filter((space) => space.ringIndex === ringIndex)
+      .filter(
+        (space) =>
+          space.ringIndex === ringIndex &&
+          cellInSectorOf(space.ringIndex, space.indexInRing) === 0,
+      )
       .sort((left, right) => left.indexInRing - right.indexInRing);
     const count = ringSpaces.length;
     if (count === 0) {
       return;
     }
 
-    const elementSnapshots = ringSpaces.map((space) =>
-      space.elements.map((element) => ({ ...element })),
-    );
-    const publicitySnapshots = ringSpaces.map(
-      (space) => space.hasPublicityIcon,
-    );
-    const publicityAmountSnapshots = ringSpaces.map(
-      (space) => space.publicityIconAmount,
-    );
-    const occupantSnapshots = ringSpaces.map((space) => [...space.occupants]);
-    const cellsPerVisualStep = Math.max(1, ringIndex);
+    // Snapshot each space's disc-D layer + occupants (occupants only ride
+    // along when the disc owns this space's outer ring — i.e. disc index
+    // equals the ring index, which is the printed visible disc here).
+    const isOutermostRingOfDisc = discIndex === ringIndex;
+    const layerSnapshots = ringSpaces.map((space) => {
+      const layer = (space.layers ?? []).find(
+        (l) => l.discIndex === discIndex,
+      );
+      if (!layer) return null;
+      return {
+        element: { ...layer.element },
+        hasPublicityIcon: layer.hasPublicityIcon,
+        publicityIconAmount: layer.publicityIconAmount,
+      };
+    });
+    const occupantSnapshots = isOutermostRingOfDisc
+      ? ringSpaces.map((space) => [...space.occupants])
+      : null;
 
     for (let sourceIndex = 0; sourceIndex < count; sourceIndex += 1) {
-      // Counterclockwise rotation: one wheel step is 45deg. Expanded rings have
-      // `ringIndex` cells per visual sector, so preserve each cell's offset
-      // inside the sector while moving the whole wheel one visible slot.
-      const targetIndex = (sourceIndex + count - cellsPerVisualStep) % count;
+      // Counterclockwise: one step shifts one sector backwards.
+      const targetIndex = (sourceIndex + count - 1) % count;
       const targetSpace = ringSpaces[targetIndex];
-      targetSpace.elements = elementSnapshots[sourceIndex];
-      targetSpace.hasPublicityIcon = publicitySnapshots[sourceIndex];
-      targetSpace.publicityIconAmount = publicityAmountSnapshots[sourceIndex];
-      targetSpace.occupants = occupantSnapshots[sourceIndex];
+
+      const snapshot = layerSnapshots[sourceIndex];
+      if (snapshot !== null) {
+        const targetLayer = (targetSpace.layers ?? []).find(
+          (l) => l.discIndex === discIndex,
+        );
+        if (targetLayer) {
+          targetLayer.element = snapshot.element;
+          targetLayer.hasPublicityIcon = snapshot.hasPublicityIcon;
+          targetLayer.publicityIconAmount = snapshot.publicityIconAmount;
+        }
+      }
+
+      if (occupantSnapshots !== null) {
+        targetSpace.occupants = occupantSnapshots[sourceIndex];
+      }
     }
+
+    for (const space of ringSpaces) {
+      this.refreshDerivedFields(space);
+    }
+  }
+
+  /**
+   * Recompute `space.elements` / `space.hasPublicityIcon` /
+   * `space.publicityIconAmount` from the layered disc stack — the visible
+   * element is the topmost (smallest discIndex) layer whose element is
+   * non-NULL. Disc 4 (the base board) has no NULL slots, so the walk
+   * always resolves.
+   */
+  private refreshDerivedFields(space: ISolarSystemSpace): void {
+    const layers = space.layers ?? [];
+    if (layers.length === 0) {
+      // Legacy spaces (pre-layer model, e.g. test fixtures) carry their
+      // visible element directly on `space.elements` — leave it alone.
+      return;
+    }
+    const sortedTopDown = [...layers].sort(
+      (a, b) => a.discIndex - b.discIndex,
+    );
+    const visible = sortedTopDown.find(
+      (layer) => layer.element.type !== ESolarSystemElementType.NULL,
+    );
+    if (visible !== undefined) {
+      space.elements = [{ ...visible.element }];
+      space.hasPublicityIcon = visible.hasPublicityIcon;
+      space.publicityIconAmount = visible.publicityIconAmount;
+    } else {
+      // Fall back to the topmost layer (NULL) — preserves "transparent
+      // cutout" semantics for spaces that genuinely should be NULL on
+      // every disc (e.g. Oumuamua's pre-discovery slot).
+      space.elements = [{ ...sortedTopDown[0].element }];
+      space.hasPublicityIcon = sortedTopDown[0].hasPublicityIcon;
+      space.publicityIconAmount = sortedTopDown[0].publicityIconAmount;
+    }
+  }
+
+  /** @deprecated Kept for back-compat; routes to the per-disc rotation. */
+  private rotateRingByOneStep(ringIndex: number): void {
+    // Pre-layer model assumed each (ring R) cell carried a single
+    // element that rotated en bloc. Map that to "rotate disc R's layer
+    // at ring R" — which is what the legacy semantics meant.
+    this.rotateDiscLayerForRingByOneStep(ringIndex, ringIndex);
   }
 
   private captureCoverStates(
@@ -912,11 +1064,27 @@ export class SolarSystem {
   }
 
   private isUnplacedOumuamuaSpace(space: ISolarSystemSpace): boolean {
-    return (
-      this.isNullOnlySpace(space) &&
-      space.id ===
-        getOumuamuaSolarSystemSpaceId(this.discs[2]?.currentRotation ?? 0)
-    );
+    if (
+      space.id !==
+      getOumuamuaSolarSystemSpaceId(this.discs[2]?.currentRotation ?? 0)
+    ) {
+      return false;
+    }
+    // Pre-discovery, disc 3's contribution at this position is NULL
+    // (the printed cutout where the Oumuamua tile will land). The
+    // base-board contribution underneath (disc 4 ring-3 row) may be
+    // anything — for the rulebook's "transparent / untraversable"
+    // semantics we still want the cutout treated as untraversable.
+    const layers = space.layers ?? [];
+    const disc3Layer = layers.find((layer) => layer.discIndex === 3);
+    if (disc3Layer === undefined) {
+      // Legacy path (no layers populated): fall back to the visible
+      // element check — the pre-layer model only stored the topmost
+      // disc's contribution, so a NULL visible element implied an
+      // unplaced cutout.
+      return this.isNullOnlySpace(space);
+    }
+    return disc3Layer.element.type === ESolarSystemElementType.NULL;
   }
 
   private grantPublicityOnEnter(
@@ -964,6 +1132,12 @@ function buildSolarSystemFromConfig(
     discIndex: cell.discIndex,
     hasPublicityIcon: cell.hasPublicityIcon,
     publicityIconAmount: cell.publicityIconAmount,
+    layers: cell.layers.map((layer) => ({
+      discIndex: layer.discIndex,
+      element: { ...layer.element },
+      hasPublicityIcon: layer.hasPublicityIcon,
+      publicityIconAmount: layer.publicityIconAmount,
+    })),
     elements: cell.elements.map((element) => ({ ...element })),
     occupants: [],
   }));

@@ -7,6 +7,7 @@ import { EPlanet } from '@seti/common/types/protocol/enums';
 import {
   ESolarSystemElementType,
   type ISolarSystemElement,
+  type ISolarSystemSpaceLayer,
 } from './SolarSystemTypes.js';
 
 const RING_DISC_INDEXES: ReadonlyArray<number | null> = [0, 1, 2, null];
@@ -27,6 +28,14 @@ export interface ISolarSystemCellConfig {
   ringIndex: number;
   indexInRing: number;
   discIndex: number | null;
+  /**
+   * Top-down stack of every disc that prints terrain at this cell.
+   * `layers[0]` is disc R (topmost), `layers[end]` is disc 4 (base board).
+   * The visible element at construction time is the first non-NULL layer
+   * walking top-down — that determines the initial `elements` /
+   * `hasPublicityIcon` derived fields.
+   */
+  layers: ISolarSystemSpaceLayer[];
   elements: ISolarSystemElement[];
   hasPublicityIcon: boolean;
   /**
@@ -59,11 +68,29 @@ function buildRealConfig(): IBuildResult {
   const planetSpaceIdsMutable: Partial<Record<EPlanet, string>> = {};
 
   for (const expandedCell of createDefaultSolarSystemExpandedMapCells()) {
-    const mapCell = expandedCell.cell;
-    const elements = [toElement(mapCell)];
-    const hasPublicityIcon =
-      mapCell.hasPublicityIcon && mapCell.type !== 'EARTH';
+    // Build the layer stack. Each layer's hasPublicityIcon is suppressed
+    // for EARTH (the rulebook explicitly carves out Earth from the
+    // visit-publicity rule).
+    const layers: ISolarSystemSpaceLayer[] = expandedCell.layers.map(
+      (layer) => ({
+        discIndex: layer.discIndex,
+        element: toElement(layer.cell),
+        hasPublicityIcon:
+          layer.cell.hasPublicityIcon && layer.cell.type !== 'EARTH',
+      }),
+    );
 
+    // Derive the visible-layer fields that the runtime reads.
+    const visible = layers.find(
+      (layer) => layer.element.type !== ESolarSystemElementType.NULL,
+    );
+    const visibleElement = visible?.element ?? toElement(expandedCell.cell);
+    const elements = [visibleElement];
+    const hasPublicityIcon = visible?.hasPublicityIcon ?? false;
+
+    // Cutout / publicity / planet indexes still index by the legacy
+    // top-cell shape — these are static lookups, not per-layer.
+    const mapCell = expandedCell.cell;
     if (mapCell.type === 'NULL') {
       cutoutSpaceIds.push(expandedCell.id);
     }
@@ -72,8 +99,8 @@ function buildRealConfig(): IBuildResult {
       publicitySpaceIds.push(expandedCell.id);
     }
 
-    if (mapCell.planet !== undefined) {
-      planetSpaceIdsMutable[mapCell.planet] = expandedCell.id;
+    if (visibleElement.planet !== undefined) {
+      planetSpaceIdsMutable[visibleElement.planet] = expandedCell.id;
     }
 
     cells.push({
@@ -81,6 +108,7 @@ function buildRealConfig(): IBuildResult {
       ringIndex: expandedCell.ringIndex,
       indexInRing: expandedCell.indexInRing,
       discIndex: RING_DISC_INDEXES[expandedCell.ringIndex - 1],
+      layers,
       elements,
       hasPublicityIcon,
     });

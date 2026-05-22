@@ -47,6 +47,19 @@ export type TSolarSystemWheels = Record<
   TSolarSystemWheelGrid
 >;
 
+/**
+ * One disc's static printed contribution at a (ring R, sector S, cellInSector C)
+ * position. Multiple discs print terrain at the same physical (ring, sector) —
+ * disc 1 at ring 1, disc 2 at rings 1-2, disc 3 at rings 1-3, disc 4 at all
+ * four rings. The visible element walks `discIndex 1 → 4` and stops at the
+ * first non-NULL contribution.
+ */
+export interface ISolarSystemExpandedMapLayer {
+  /** 1..4. Disc 1 = topmost (smallest disc); disc 4 = base board. */
+  discIndex: TSolarSystemWheelIndex;
+  cell: ISolarSystemWheelMapCell;
+}
+
 export interface ISolarSystemExpandedMapCell {
   id: string;
   ringIndex: TSolarSystemWheelIndex;
@@ -55,7 +68,19 @@ export interface ISolarSystemExpandedMapCell {
   cellInSector: number;
   sourceBandIndex: number;
   sourceSlotIndex: number;
+  /**
+   * Topmost disc's printed contribution. Equivalent to `layers[0].cell`
+   * pre-rotation — kept for back-compat with callers that pre-date the
+   * layered model.
+   */
   cell: ISolarSystemWheelMapCell;
+  /**
+   * Top-down stack of every disc that prints terrain at this (ring, sector,
+   * cellInSector) — disc R..disc 4 for ring R cell-0; intra-sector cells
+   * (cellInSector > 0) only carry the topmost disc's scaffolding so they
+   * stay visually consistent and never participate in adjacency.
+   */
+  layers: ISolarSystemExpandedMapLayer[];
 }
 
 interface IWheelSlotDefinition {
@@ -383,10 +408,42 @@ export function createDefaultSolarSystemExpandedMapCells(
         cellInSector += 1
       ) {
         const indexInRing = sectorIndex * cellsPerSector + cellInSector;
+        const isCellZero = cellInSector === 0;
         const cell: ISolarSystemWheelMapCell =
-          sourceCell.type === 'NULL' || cellInSector === 0
+          sourceCell.type === 'NULL' || isCellZero
             ? cloneWheelMapCell(sourceCell)
             : { type: 'EMPTY', hasPublicityIcon: false };
+
+        // Layer stack: disc R contributes wheels[R][R-1][sector] (the
+        // current top), disc R+1 contributes wheels[R+1][R-1][sector]
+        // (the next-larger disc's contribution at this ring band), …
+        // down to disc 4 (the base board). Walk discs R..4 so the
+        // resulting array is ordered top-down.
+        //
+        // Intra-sector cells (cellInSector > 0) carry the topmost
+        // disc's scaffolding only — they're visual-only, never reached
+        // by movement, so deeper layers don't matter.
+        const layers: ISolarSystemExpandedMapLayer[] = [];
+        if (isCellZero) {
+          for (
+            let discIndex = ringIndex;
+            discIndex <= 4;
+            discIndex += 1
+          ) {
+            const discTyped = discIndex as TSolarSystemWheelIndex;
+            const layerSourceCell =
+              wheels[discTyped][sourceBandIndex][sectorIndex].cell;
+            layers.push({
+              discIndex: discTyped,
+              cell: cloneWheelMapCell(layerSourceCell),
+            });
+          }
+        } else {
+          layers.push({
+            discIndex: ringIndex,
+            cell: cloneWheelMapCell(cell),
+          });
+        }
 
         cells.push({
           id: formatSpaceId(ringIndex, indexInRing),
@@ -397,6 +454,7 @@ export function createDefaultSolarSystemExpandedMapCells(
           sourceBandIndex,
           sourceSlotIndex: sectorIndex,
           cell,
+          layers,
         });
       }
     }

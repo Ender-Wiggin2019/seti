@@ -87,75 +87,31 @@ _(none — most recent slice just landed)_
 - _Audit (2026-05-21): observed in the live replay — Oumuamua's
   landing surface renders but clicking the LAND button is a no-op._
 
-### P1 — Comet visit effect not implemented
+### P2 — Client `getReachableSpaces` ignores Probe Tech 1 asteroid-leave discount
 
-- Probes that move onto a comet space should fire the printed comet
-  effect (typically +1 publicity per visit and a card-row reward, see
-  rulebook). Today `emitCometVisitedTurnEvent` (in
-  `packages/server/src/engine/turnEffects/TurnEffects.ts:159`) fires
-  the event but no listener consumes it for the base game's universal
-  comet effect — only individual cards register `onCometVisited`
-  handlers.
-- The printed solar-system board has comet markers on rings 3 and 4
-  (see `wheels[3][0/1]` `cometSlotWithPublicity()` plus `wheels[4][3]`
-  Neptune/Uranus row). Visiting any of these should trigger the same
-  per-comet bonus regardless of card support.
-- Fix shape: add a default comet-visit handler that grants the
-  printed reward (publicity + card-row bonus) and fires per-visit so
-  cards' onCometVisited still chain correctly. Wire through the same
-  resolution-step queue used for other turn events.
-- _Audit (2026-05-21): probe lands on comet space, no event log
-  entry for visit, no resource gain._
-
-### P1 — Asteroid visit effect not implemented
-
-- Same gap as comets: `emitAsteroidsVisitedTurnEvent`
-  (`TurnEffects.ts:154`) fires but no default reward consumer. The
-  printed asteroid spaces grant +1 data per visit per the rulebook;
-  today this is purely card-driven (e.g. Hayabusa-style cards).
-- Fix shape: add a default asteroid-visit handler that grants the
-  printed +1 data; ensure card listeners (`onAsteroidsVisited`)
-  still fire on top.
-- _Audit (2026-05-21): probe lands on asteroid space, no resource
-  gain. Pair with the comet fix — same pattern._
-
-### P1 — Asteroid leave-cost not implemented
-
-- Per rulebook, leaving an asteroid space costs +1 movement on top
-  of the base move cost. The code in
-  `packages/server/src/engine/freeActions/Movement.ts:285-298`
-  computes `asteroidLeaveCost = TechModifierQuery.getAsteroidLeaveCost(1)`
-  but it depends on a tech modifier — the default value path needs
-  verification, plus `SolarSystem.moveProbe` adds
-  `ASTEROID_EXTRA_COST` only when `containsElement(fromSpace,
-  ASTEROID)` holds.
-- Cross-check: does the test scenario with a probe leaving an
-  asteroid actually charge +1? The existing
-  `SolarSystem.test.ts > charges extra movement cost when leaving
-  asteroid` test passes today (now using sector-2-cell-0 → sector-3-
-  cell-0 after the centring fix). But Tong observed this not
-  working in actual gameplay; might be a UI / pathing issue rather
-  than the cost calc itself.
-- _Audit (2026-05-21): observation surfaced during sector hop
-  testing; needs reproduction in `/debug/replay` to confirm
-  whether it's a cost calc bug or a UI/path display issue._
+- The common `getMoveCost` (`packages/common/src/rules/movement.ts:44`)
+  always adds `ASTEROID_EXTRA_COST = 1` when `fromSpace` has ASTEROID
+  element. The server's `Movement.getEffectiveMovementCost` applies
+  `TechModifierQuery.getAsteroidLeaveCost(1)` which reduces to 0 with
+  Probe Tech 1 — but the client never applies this discount.
+- Result: a player with Probe Tech 1 sees fewer highlighted
+  destinations than the server would accept. Not a gameplay bug (server
+  still allows the move), but a misleading UX.
+- Fix shape: thread the player's effective asteroid-leave-cost (0 or 1)
+  into the client's `getReachableSpaces` call as an optional parameter.
+  The `IPublicPlayerState` already carries `techs: ETechId[]` — derive
+  the discount client-side.
 
 ### P1 — Move-target picker should show only 1-distance hops
 
 - Today the move picker highlights every cell reachable within the
-  player's full move budget. Useful when the probe can fly straight
-  to the target, but breaks down when intermediate spaces have
-  meaningful effects (asteroid leave-cost, comet visit reward,
-  Oumuamua tile pickup). Players should pick the next single hop
-  and resolve its effects, then pick the next.
+  player's full move budget. This works fine for cost calculation
+  (asteroid leave-cost is already factored in by `getMoveCost`), but
+  the player commits a multi-hop path in one click without seeing
+  intermediate visit effects (planet publicity, Oumuamua tile pickup).
 - Fix shape: in `SolarSystemView`'s `getReachableSpaces` consumer,
-  cap distance to 1 hop (or to the next "interesting" space — the
-  next asteroid/comet/planet boundary). After the player commits
-  one hop, server resolves visit/leave events, then the next
-  picker round opens.
-- Pair with the comet/asteroid visit-effect fixes above — players
-  need to *see* per-hop effects before they fire, not after they've
-  committed a multi-hop path.
+  cap distance to 1 hop. After the player commits one hop, server
+  resolves visit/leave events, then the next picker round opens.
 - _Audit (2026-05-21): observed during Oumuamua replay test._
 
 ### P1 — `AndOptionsInput` Back button preserves stale response
@@ -273,6 +229,84 @@ _(none — most recent slice just landed)_
   flipped to `false` in most packages.
 
 ## Done
+
+### Layered disc model — base-board terrain visible after rotation - 2026-05-21
+
+User-observed bug: outermost ring (ring 4) comets/asteroids fired
+visit events correctly, but inner-ring spaces exposed by upper-disc
+NULL cutouts after rotation didn't grant publicity or charge
+asteroid leave-cost. The probe visited what looked like a comet
+on screen, but server logged no event.
+
+Root cause: the data model only loaded `wheels[R][R-1]` for each
+ring R — the disc's own outer band. The base disc 4's contributions
+at rings 1/2/3 (`wheels[4][0..2]`, full of comets and asteroids
+printed on the base board) were defined in the wheel data but
+**never read into runtime**. So when disc 1's NULL cutout exposed
+disc 4's ring-1 asteroid, the data model still saw NULL (or
+whatever the topmost loaded disc had); visit-events read the wrong
+elements.
+
+Plan:
+- [x] **Layered space model.** `ISolarSystemSpace` now carries a
+  `layers: ISolarSystemSpaceLayer[]` stack — disc R..disc 4 for
+  ring R cell-0, sorted top-down. The visible element is the
+  topmost non-NULL layer. Disc 4 has no NULL slots, so the walk
+  always resolves.
+- [x] **Construct full layer stack at setup.**
+  `createDefaultSolarSystemExpandedMapCells` now reads
+  `wheels[D][R-1]` for every (D, R) where D ≥ R, populating the
+  per-cell stack. The base disc's printed terrain is now visible
+  to runtime code.
+- [x] **Per-disc rotation.** New `rotateDiscLayerByOneStep(D)`
+  shifts only disc D's contributions across every ring it covers
+  (1..D). Lower-disc layers stay put. `rotate(discIndex)` now
+  iterates `DISC_TO_MOVING_RINGS[discIndex]` interpreting each
+  entry as a disc number rather than a ring number — preserves
+  the rulebook semantics ("disc 2 rotation moves disc 1+2
+  together"). Initial-rotation loop in the constructor switched
+  to the same per-disc helper.
+- [x] **Derived `elements`/`hasPublicityIcon`/`publicityIconAmount`.**
+  `refreshDerivedFields(space)` recomputes these from the topmost
+  non-NULL layer. Called by every layer mutation — rotation,
+  `setDynamicPlanetAtSpace`, etc. Existing call sites that read
+  `space.elements` or `space.hasPublicityIcon` work unchanged;
+  they now see the correctly resolved visible element.
+- [x] **Oumuamua placement uses the disc-3 layer.**
+  `setDynamicPlanetAtSpace` writes the topmost disc layer of the
+  target space (instead of mutating `elements` directly) so the
+  placement follows rotation naturally. Pre-discovery
+  `isUnplacedOumuamuaSpace` checks the disc-3 layer's NULL
+  contribution explicitly — the resolved visible element may be
+  the base disc's terrain underneath after my refactor, which
+  would otherwise pass the old `isNullOnlySpace` predicate.
+- [x] **Tests.** Added `layered disc model — base-board terrain
+  visibility` block in `SolarSystem.test.ts`: visible-element
+  resolution, leave-cost on exposed asteroids, publicity grant on
+  exposed comets. Updated `rotates publicity icon amounts` to
+  mutate the disc-2 layer (matching runtime). Updated two
+  scenario-patch helpers (`GameFlowBehavior`, `ProbeTechs`) to
+  also mirror onto the topmost layer so subsequent
+  `setDynamicPlanetAtSpace` calls don't refresh-clobber the patch.
+
+Verification:
+- `pnpm -r typecheck` — all 6 packages clean.
+- `pnpm --filter @seti/server test` — 1987/1988 (only the
+  long-standing pre-existing Amoeba flake; unrelated).
+- `pnpm --filter @ender-seti/common test` — 251/251.
+- `pnpm --filter @seti/client test` — 316/316.
+- Live verification by Tong: probes now correctly receive
+  publicity / asteroid leave-cost when entering inner-ring
+  base-disc terrain exposed by upper-disc rotation.
+
+Residual:
+- Earlier "Close comet/asteroid visit effects" entry from this
+  session was based on incomplete analysis; the actual root cause
+  was the missing base-disc layers. Superseded by this entry.
+- P2 follow-up still open: client's `getReachableSpaces` doesn't
+  apply Probe Tech 1's asteroid-leave-cost discount, so a tech-1
+  player sees fewer reachable spaces than the server allows.
+  Tracked under Open → P2.
 
 ### Defer Oumuamua tile completion to SECTOR_COMPLETION priority - 2026-05-21
 

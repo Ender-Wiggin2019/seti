@@ -111,6 +111,9 @@ function passPlayer(game: Game, playerId: string): void {
 function patchSolarSystemForScenario(game: Game): void {
   setSolarSystemInitialDiscAngles(game, [0, 0, 0]);
   const ss = game.solarSystem!;
+  // Mutate the topmost disc layer (matching the runtime layered model)
+  // so subsequent setDynamicPlanetAtSpace calls don't refresh-clobber
+  // these patches when they reproject from the layer stack.
   const setSpace = (
     id: string,
     elements: Array<{ type: ESolarSystemElementType; amount: number }>,
@@ -120,6 +123,18 @@ function patchSolarSystemForScenario(game: Game): void {
     if (!space) throw new Error(`${id} not found`);
     space.elements = elements;
     space.hasPublicityIcon = hasPublicityIcon;
+    if (space.layers && space.layers.length > 0) {
+      const top = [...space.layers].sort(
+        (a, b) => a.discIndex - b.discIndex,
+      )[0];
+      // The first element in the test fixtures is always the visible
+      // intent; copy it onto the topmost layer so refreshDerivedFields
+      // reproduces the same elements/hasPublicityIcon downstream.
+      if (elements.length > 0) {
+        top.element = { ...elements[0] };
+      }
+      top.hasPublicityIcon = hasPublicityIcon;
+    }
   };
 
   setSpace('ring-1-cell-1', [

@@ -98,6 +98,17 @@ function patchSolarSystemForMeteoriteScenario(game: Game): void {
     }
     space.elements = elements;
     space.hasPublicityIcon = hasPublicityIcon;
+    // Mirror onto the topmost layer so refreshDerivedFields (called by
+    // setDynamicPlanetAtSpace etc.) preserves the patch.
+    if (space.layers && space.layers.length > 0) {
+      const top = [...space.layers].sort(
+        (a, b) => a.discIndex - b.discIndex,
+      )[0];
+      if (elements.length > 0) {
+        top.element = { ...elements[0] };
+      }
+      top.hasPublicityIcon = hasPublicityIcon;
+    }
   };
 
   setSpace('ring-1-cell-1', [
