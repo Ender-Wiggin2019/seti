@@ -12,7 +12,8 @@ import {
   sectorIndexOf,
 } from '@seti/common/constant/solarCoordinate';
 import {
-  getReachableSpaces,
+  getAdjacentSpaceIds,
+  getMoveCost,
   resolveTopVisibleSolarWheelCell,
 } from '@seti/common/rules';
 import {
@@ -790,17 +791,29 @@ export function SolarSystemView({
     };
   }, [oumuamuaTile, spacePoints]);
 
+  // 1-hop adjacency reachability: only direct neighbors of the source
+  // space whose `getMoveCost` fits in the player's remaining movement.
+  // Multi-hop paths bundled visit/leave events into a single click,
+  // so a probe entering an asteroid then leaving never showed the +1
+  // leave cost in the picker, and a probe drifting past a comet didn't
+  // get a chance to halt before triggering Oumuamua-tile pickup. The
+  // server resolves each hop independently, so re-render after each
+  // committed hop lets the player decide the next step with the
+  // correct picture.
   const reachablePathBySpaceId = useMemo(() => {
     if (!selectedMoveTarget || movementPoints <= 0) {
       return new Map<string, string[]>();
     }
-    return new Map(
-      getReachableSpaces(
-        solarSystem,
-        selectedMoveTarget.spaceId,
-        movementPoints,
-      ).map((entry) => [entry.spaceId, entry.path] as const),
-    );
+    const fromSpaceId = selectedMoveTarget.spaceId;
+    const paths = new Map<string, string[]>();
+    for (const neighborId of getAdjacentSpaceIds(solarSystem, fromSpaceId)) {
+      const cost = getMoveCost(solarSystem, fromSpaceId, neighborId);
+      if (!Number.isFinite(cost) || cost > movementPoints) {
+        continue;
+      }
+      paths.set(neighborId, [fromSpaceId, neighborId]);
+    }
+    return paths;
   }, [selectedMoveTarget, movementPoints, solarSystem]);
 
   const activeMovePathBySpaceId = useMemo(() => {
@@ -819,19 +832,18 @@ export function SolarSystemView({
       if (!allowMoveAnyProbe && piece.playerId !== myPlayerId) {
         continue;
       }
-
-      for (const reachableSpace of getReachableSpaces(
-        solarSystem,
-        piece.spaceId,
-        movementPoints,
-      )) {
-        const known = paths.get(reachableSpace.spaceId);
-        if (known && known.movementCost <= reachableSpace.movementCost) {
+      for (const neighborId of getAdjacentSpaceIds(solarSystem, piece.spaceId)) {
+        const cost = getMoveCost(solarSystem, piece.spaceId, neighborId);
+        if (!Number.isFinite(cost) || cost > movementPoints) {
           continue;
         }
-        paths.set(reachableSpace.spaceId, {
-          movementCost: reachableSpace.movementCost,
-          path: reachableSpace.path,
+        const known = paths.get(neighborId);
+        if (known && known.movementCost <= cost) {
+          continue;
+        }
+        paths.set(neighborId, {
+          movementCost: cost,
+          path: [piece.spaceId, neighborId],
           target: piece.movementTarget,
         });
       }

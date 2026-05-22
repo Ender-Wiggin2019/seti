@@ -507,6 +507,48 @@ describe('SolarSystemView', () => {
     });
   });
 
+  it('highlights only 1-hop neighbors even when movement budget exceeds the hop count', () => {
+    // 3-space chain: space-0 -> space-1 -> space-2. With movementPoints=3,
+    // the picker used to highlight every reachable cell within budget
+    // (both space-1 AND space-2). Now only the direct neighbor (space-1)
+    // should light up — the player must commit one hop, then re-pick.
+    const chainMock: IPublicSolarSystem = {
+      ...createSolarSystemMock(),
+      adjacency: {
+        'space-0': ['space-1'],
+        'space-1': ['space-0', 'space-2'],
+        'space-2': ['space-1'],
+      },
+    };
+    const onMoveProbe = vi.fn();
+
+    render(
+      <SolarSystemView
+        solarSystem={chainMock}
+        sectors={createSectorsMock()}
+        setupConfig={defaultSetup}
+        pendingInput={null}
+        playerColors={{ 'player-1': 'red' }}
+        myPlayerId='player-1'
+        movementPoints={3}
+        moveModeActive
+        onMoveProbe={onMoveProbe}
+        onRespondInput={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen
+        .getByTestId('solar-space-space-1')
+        .querySelector('[data-reachable-indicator="true"]'),
+    ).toBeInTheDocument();
+    expect(
+      screen
+        .getByTestId('solar-space-space-2')
+        .querySelector('[data-reachable-indicator="true"]'),
+    ).not.toBeInTheDocument();
+  });
+
   it('highlights and submits reachable cells when move mode is active', () => {
     const onMoveProbe = vi.fn();
 

@@ -102,18 +102,6 @@ _(none — most recent slice just landed)_
   The `IPublicPlayerState` already carries `techs: ETechId[]` — derive
   the discount client-side.
 
-### P1 — Move-target picker should show only 1-distance hops
-
-- Today the move picker highlights every cell reachable within the
-  player's full move budget. This works fine for cost calculation
-  (asteroid leave-cost is already factored in by `getMoveCost`), but
-  the player commits a multi-hop path in one click without seeing
-  intermediate visit effects (planet publicity, Oumuamua tile pickup).
-- Fix shape: in `SolarSystemView`'s `getReachableSpaces` consumer,
-  cap distance to 1 hop. After the player commits one hop, server
-  resolves visit/leave events, then the next picker round opens.
-- _Audit (2026-05-21): observed during Oumuamua replay test._
-
 ### P1 — `AndOptionsInput` Back button preserves stale response
 
 - `packages/client/src/features/input/AndOptionsInput.tsx:111` —
@@ -229,6 +217,49 @@ _(none — most recent slice just landed)_
   flipped to `false` in most packages.
 
 ## Done
+
+### Cap solar move picker to 1-hop neighbors - 2026-05-21
+
+The move picker used to highlight every cell reachable within the
+player's full movement budget and then submit the entire multi-hop
+path in one click. That bundled per-hop visit/leave effects into a
+single server transaction, so the player never saw intermediate
+hop costs (asteroid leave +1, comet publicity, Oumuamua tile
+pickup prompt) until the chain had already committed.
+
+Plan:
+- [x] **Single-hop reachability.** Replaced `getReachableSpaces` calls
+  in `SolarSystemView`'s `reachablePathBySpaceId` and
+  `activeMovePathBySpaceId` memos with `getAdjacentSpaceIds` +
+  `getMoveCost` — only direct neighbors that fit in the current
+  movement budget are highlighted. Path is always
+  `[fromSpaceId, toSpaceId]`.
+- [x] **State refresh between hops.** After each free-action
+  movement, the server pushes updated `gameState` (probe location,
+  reduced `movementPoints`). The existing prop chain
+  (`myPlayer.movementPoints` → `SolarSystemView`) plus the memo's
+  `[selectedMoveTarget, movementPoints, solarSystem]` deps make the
+  picker re-render automatically with the post-hop options.
+- [x] **Regression test.** Added `highlights only 1-hop neighbors
+  even when movement budget exceeds the hop count` to
+  `SolarSystemView.test.tsx`: 3-space chain `space-0 → space-1 →
+  space-2` with `movementPoints=3` confirms only `space-1` lights
+  up, not `space-2`.
+
+Verification:
+- `pnpm --filter @seti/client typecheck` clean.
+- `pnpm --filter @seti/client test` — 317/317 (one new test).
+- Server-side cost validation untouched: existing `Movement.execute`
+  path validates each hop and charges the actual cost via
+  `getEffectiveMovementCost`, which already accounts for asteroid
+  leave-cost + Probe Tech 1 discount.
+
+Residual:
+- The "client `getReachableSpaces` ignores Probe Tech 1 discount"
+  P2 entry now applies to the new helper too — a tech-1 player
+  on an asteroid sees no reachable spaces (cost is 2 with no
+  tech awareness on the client side, but server would let them
+  leave for 1). Tracked separately under Open → P2.
 
 ### Layered disc model — base-board terrain visible after rotation - 2026-05-21
 
