@@ -235,7 +235,7 @@ export const PLANETARY_BOARD_CONFIG: Readonly<
     },
     land: {
       rewards: [
-        { type: 'resource', resource: EResource.SCORE, amount: 5 },
+        { type: 'resource', resource: EResource.SCORE, amount: 7 },
         { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
       ],
       firstData: [2],
@@ -290,7 +290,7 @@ export const PLANETARY_BOARD_CONFIG: Readonly<
     },
     land: {
       rewards: [
-        { type: 'resource', resource: EResource.SCORE, amount: 5 },
+        { type: 'resource', resource: EResource.SCORE, amount: 8 },
         { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
       ],
       firstData: [2],
@@ -333,10 +333,10 @@ export const PLANETARY_BOARD_CONFIG: Readonly<
     },
     land: {
       rewards: [
-        { type: 'resource', resource: EResource.SCORE, amount: 5 },
+        { type: 'resource', resource: EResource.SCORE, amount: 9 },
         { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
       ],
-      firstData: [2],
+      firstData: [3],
       moonRewards: [
         [{ type: 'resource', resource: EResource.SCORE, amount: 25 }],
       ],
@@ -367,10 +367,10 @@ export const PLANETARY_BOARD_CONFIG: Readonly<
     },
     land: {
       rewards: [
-        { type: 'resource', resource: EResource.SCORE, amount: 5 },
+        { type: 'resource', resource: EResource.SCORE, amount: 10 },
         { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
       ],
-      firstData: [2],
+      firstData: [3],
       moonRewards: [
         [{ type: 'resource', resource: EResource.SCORE, amount: 26 }],
       ],

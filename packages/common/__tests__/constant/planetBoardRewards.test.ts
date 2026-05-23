@@ -15,13 +15,6 @@ const CONFIGURED_PLANETS: TConfiguredPlanet[] = [
   EPlanet.NEPTUNE,
 ];
 
-const MOCK_OUTER_PLANETS: TConfiguredPlanet[] = [
-  EPlanet.JUPITER,
-  EPlanet.SATURN,
-  EPlanet.URANUS,
-  EPlanet.NEPTUNE,
-];
-
 describe('planet board reward config', () => {
   it('keeps first-orbit VP as an explicit per-planet reward', () => {
     for (const planet of CONFIGURED_PLANETS) {
@@ -87,15 +80,33 @@ describe('planet board reward config', () => {
       { type: 'resource', resource: EResource.SCORE, amount: 7 },
     ]);
 
-    // Land rewards / first-data on the four outer planets stay
-    // unchanged from the prior snapshot — only orbit rewards moved.
-    for (const planet of MOCK_OUTER_PLANETS) {
-      expect(PLANETARY_BOARD_CONFIG[planet].land.rewards).toEqual([
-        { type: 'resource', resource: EResource.SCORE, amount: 5 },
-        { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
-      ]);
-      expect(PLANETARY_BOARD_CONFIG[planet].land.firstData).toEqual([2]);
-    }
+    // Per-planet land rewards — listed explicitly per the lessons
+    // ("per-corporation 命名"测试 over single-loop coverage). Each
+    // planet's land payload is the printed surface bonus before the
+    // first-land data tier.
+    expect(PLANETARY_BOARD_CONFIG[EPlanet.JUPITER].land.rewards).toEqual([
+      { type: 'resource', resource: EResource.SCORE, amount: 7 },
+      { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
+    ]);
+    expect(PLANETARY_BOARD_CONFIG[EPlanet.JUPITER].land.firstData).toEqual([2]);
+
+    expect(PLANETARY_BOARD_CONFIG[EPlanet.SATURN].land.rewards).toEqual([
+      { type: 'resource', resource: EResource.SCORE, amount: 8 },
+      { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
+    ]);
+    expect(PLANETARY_BOARD_CONFIG[EPlanet.SATURN].land.firstData).toEqual([2]);
+
+    expect(PLANETARY_BOARD_CONFIG[EPlanet.URANUS].land.rewards).toEqual([
+      { type: 'resource', resource: EResource.SCORE, amount: 9 },
+      { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
+    ]);
+    expect(PLANETARY_BOARD_CONFIG[EPlanet.URANUS].land.firstData).toEqual([3]);
+
+    expect(PLANETARY_BOARD_CONFIG[EPlanet.NEPTUNE].land.rewards).toEqual([
+      { type: 'resource', resource: EResource.SCORE, amount: 10 },
+      { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
+    ]);
+    expect(PLANETARY_BOARD_CONFIG[EPlanet.NEPTUNE].land.firstData).toEqual([3]);
   });
 
   it('configures stable moon ids, names, and land bonuses in landing-slot order', () => {
