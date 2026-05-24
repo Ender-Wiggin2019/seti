@@ -548,7 +548,7 @@ export function GameLayout({
   });
 
   return (
-    <div className='flex h-screen flex-col overflow-hidden bg-background-950 text-text-100'>
+    <div className='flex h-screen flex-col overflow-hidden bg-[var(--surface-void)] text-text-100'>
       <div
         className='pointer-events-none fixed inset-0 -z-10 bg-[image:var(--bg-atmosphere)]'
         aria-hidden
@@ -1035,7 +1035,7 @@ function TopActionBar({
 
   return (
     <section
-      className='relative shrink-0 border-b border-[color:var(--metal-edge-soft)] bg-background-950/85 backdrop-blur-sm'
+      className='relative shrink-0 border-b border-[color:var(--metal-edge-soft)] bg-[var(--surface-deep)]/85 backdrop-blur-sm'
       data-testid='bottom-actions'
     >
       <div
@@ -1220,7 +1220,7 @@ function PersonalColumn({
       className={cn(
         'flex-col gap-3 overflow-y-auto p-3',
         'border-l border-[color:var(--metal-edge-soft)]',
-        'bg-[oklch(0.13_0.022_260/0.5)] backdrop-blur-sm',
+        'bg-[var(--surface-deep)]/70 backdrop-blur-sm',
         className,
       )}
       aria-label={t('client.game_layout.personal_board')}
@@ -1441,7 +1441,7 @@ function BoardTabs({
       onValueChange={(v) => onTabChange(v as TBoardTab)}
       className='flex min-h-0 flex-1 flex-col'
     >
-      <div className='relative shrink-0 overflow-x-auto bg-background-950/60 px-3 py-2'>
+      <div className='relative shrink-0 overflow-x-auto bg-[var(--surface-deep)]/60 px-3 py-2'>
         <TabsList className='w-max'>
           {BOARD_TABS.map((tab) => (
             <TabsTrigger key={tab} value={tab}>

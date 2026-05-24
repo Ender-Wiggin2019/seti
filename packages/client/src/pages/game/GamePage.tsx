@@ -10,22 +10,36 @@ function GameContent(): React.JSX.Element {
 
   if (!isConnected) {
     return (
-      <div className='flex h-screen flex-col items-center justify-center gap-4 bg-background-950'>
-        <LoadingSpinner />
-        <p className='text-sm text-text-500'>
-          {t('client.game_page.connecting')}
-        </p>
+      <div className='relative flex h-screen flex-col items-center justify-center gap-4 bg-[var(--surface-void)]'>
+        <div
+          className='pointer-events-none fixed inset-0 -z-10 bg-[image:var(--bg-atmosphere)]'
+          aria-hidden
+        />
+        <LoadingSpinner
+          variant='scanline'
+          label={t('client.game_page.connecting', {
+            defaultValue: 'Establishing uplink…',
+          })}
+          className='max-w-md'
+        />
       </div>
     );
   }
 
   if (!gameState) {
     return (
-      <div className='flex h-screen flex-col items-center justify-center gap-4 bg-background-950'>
-        <LoadingSpinner />
-        <p className='text-sm text-text-500'>
-          {t('client.game_page.awaiting')}
-        </p>
+      <div className='relative flex h-screen flex-col items-center justify-center gap-4 bg-[var(--surface-void)]'>
+        <div
+          className='pointer-events-none fixed inset-0 -z-10 bg-[image:var(--bg-atmosphere)]'
+          aria-hidden
+        />
+        <LoadingSpinner
+          variant='scanline'
+          label={t('client.game_page.awaiting', {
+            defaultValue: 'Acquiring telemetry…',
+          })}
+          className='max-w-md'
+        />
       </div>
     );
   }

@@ -75,13 +75,13 @@ export function GameOverDialog(): React.JSX.Element | null {
     <Dialog open onOpenChange={() => undefined}>
       <DialogContent className='max-w-4xl p-0'>
         <DialogHeader className='px-6 pt-6'>
-          <span className='micro-label inline-flex items-center gap-2 text-[oklch(0.74_0.10_240)]'>
-            <span className='h-px w-6 bg-[oklch(0.68_0.11_240)]' />
+          <span className='micro-label inline-flex items-center gap-2 text-[oklch(0.78_0.10_240)]'>
+            <span className='h-px w-6 bg-[var(--signal-blue)]' />
             {t('client.game_over.kicker', {
               defaultValue: 'Mission Concluded',
             })}
           </span>
-          <DialogTitle className='text-2xl tracking-[0.08em]'>
+          <DialogTitle className='font-display text-2xl tracking-[0.08em]'>
             {t('client.game_over.title')}
           </DialogTitle>
           <WinnerReadout
@@ -148,7 +148,7 @@ function WinnerReadout({
         </span>
       </p>
       {typeof score === 'number' && (
-        <span className='readout text-sm text-[oklch(0.82_0.10_240)]'>
+        <span className='readout text-sm text-[var(--signal-blue-hi)]'>
           {score} pts
         </span>
       )}

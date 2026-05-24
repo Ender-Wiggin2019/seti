@@ -27,7 +27,7 @@ export function Sidebar({ className }: ISidebarProps): React.JSX.Element {
       className={cn(
         'flex flex-col gap-4 overflow-y-auto p-4',
         'border-l border-[color:var(--metal-edge-soft)]',
-        'bg-[oklch(0.13_0.022_260/0.5)] backdrop-blur-sm',
+        'bg-[var(--surface-deep)]/70 backdrop-blur-sm',
         className,
       )}
       aria-label={t('client.sidebar.opponents')}

@@ -1,5 +1,46 @@
 # TODO
 
+## Impeccable UI language and atmosphere pass
+
+- [x] Scope and copy inventory -> Verify: inspect current staged UI/design changes plus first-viewport user-facing strings for generic or unclear terms such as terminal, lobby, login, player, room, turn, and settings.
+- [x] Public shell and mission-staging copy -> Verify: home/auth/lobby/room/profile labels move away from generic terminal language while preserving clear game actions.
+- [x] In-game chrome copy -> Verify: top bar, sidebar, loading states, and common controls read as mission UI without hiding core SETI rule concepts.
+- [x] Implementation consistency -> Verify: en/zh-CN/pt-BR locale keys stay in sync, no fallback-only strings remain in touched first-viewport components, and existing UI components keep their rule-icon rendering paths.
+- [x] Verification -> Verify: run targeted client typecheck/locale checks, formatting checks, and inspect the rendered pages for obvious layout or comprehension regressions.
+
+### Assumptions
+
+- The target audience is tabletop SETI players using the app for focused online sessions; copy can lean into a mission-control tone but should not obscure board-game concepts that players need for rules decisions.
+- "Terminal" and similar terms should disappear from primary user paths, but debug/developer-only route names and comments can remain unless they leak into normal gameplay.
+- This pass should be systemic for visible chrome and staging flows, not a rewrite of every card/rule string in the common locale file.
+
+### Review
+
+- Added the SETI design context and first-pass client surface vocabulary; this was later corrected toward Space Agencies organization/mission language instead of observatory or archive metaphors.
+- Reworked first-viewport copy across home, auth, lobby, room, profile, top bar, sidebar, score/game-over labels, loading states, and create-room mission setup while keeping core rule action names readable.
+- Kept en/zh-CN/pt-BR locale key coverage in sync for touched keys; `zh-CN` still has a few pre-existing extra article/post keys not present in English.
+- Fixed mobile header wrapping after screenshot review so language, text view, and mission navigation no longer clip at 390px width.
+- Verification passed: locale JSON parse and key comparison, `pnpm --filter @seti/client typecheck`, touched-file `biome check`, `git diff --check`, and Playwright visual smoke checks for home/auth/lobby at desktop and mobile widths.
+
+## Space Agencies flavor correction
+
+- [x] Rulebook vocabulary correction -> Verify: derive copy from `docs/arch/spaceAgency/rulebook.md` cover premise and organization setup language, not generic observatory/terminal metaphors.
+- [x] Public shell and staging copy -> Verify: visible home/auth/lobby/room/profile labels use Space Agency, organization, first contact, mission, member/player terminology while staying clear to normal users.
+- [x] Game chrome copy -> Verify: top bar/sidebar/game-over/common status labels avoid prior "observatory / dossier / channel / watch" language unless it matches the expansion flavor.
+- [x] Verification -> Verify: locale key parity, targeted typecheck/format checks, generic-term scan, and desktop/mobile rendered copy checks pass.
+
+### Assumptions
+
+- "太空机构 flavor text" means the expansion premise: powerful public/private/fringe organizations competing to shape the search and make first contact.
+- The UI should still use plain interaction terms when clearer; do not force opaque flavor words into required controls.
+
+### Review
+
+- Re-centered the UI lexicon on Space Agencies: organizations, missions, quick starts, alien species, signal tokens, and first contact.
+- Replaced visible first-path wording such as SETI Client, observatory, briefing room, dossier/archive, open channel, watch, operator, and calibration with clearer SETI / Mission Hub / Create Mission / Players / Profile / Sign In language.
+- Updated `.impeccable.md`, code comments, and `docs/lessons.md` so future work does not reuse the rejected observatory/archive metaphor.
+- Verification passed: locale JSON parse and key comparison, `pnpm --filter @seti/client typecheck`, touched-file `biome check`, `git diff --check`, stale-term scan, and Playwright rendered-copy checks for English/Chinese desktop and mobile flows.
+
 ## Durable player input recovery
 
 - [x] Root cause and input inventory -> Verify: enumerate all `PlayerInput` classes and resolution-time construction sites, separating model shape from continuation behavior.

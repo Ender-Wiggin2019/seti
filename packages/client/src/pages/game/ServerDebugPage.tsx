@@ -25,20 +25,24 @@ function ServerDebugGameContent(): React.JSX.Element {
 
   if (!isConnected) {
     return (
-      <div className='flex h-screen flex-col items-center justify-center gap-4 bg-background-950'>
-        <LoadingSpinner />
-        <p className='text-sm text-text-500'>Connecting to debug gateway...</p>
+      <div className='flex h-screen flex-col items-center justify-center gap-4 bg-[var(--surface-void)]'>
+        <LoadingSpinner
+          variant='scanline'
+          label='Establishing uplink to debug gateway…'
+          className='max-w-md'
+        />
       </div>
     );
   }
 
   if (!gameState) {
     return (
-      <div className='flex h-screen flex-col items-center justify-center gap-4 bg-background-950'>
-        <LoadingSpinner />
-        <p className='text-sm text-text-500'>
-          Waiting for server game state...
-        </p>
+      <div className='flex h-screen flex-col items-center justify-center gap-4 bg-[var(--surface-void)]'>
+        <LoadingSpinner
+          variant='scanline'
+          label='Acquiring server telemetry…'
+          className='max-w-md'
+        />
       </div>
     );
   }
@@ -107,23 +111,27 @@ export function ServerDebugPage(): React.JSX.Element {
 
   if (isCreating && !session) {
     return (
-      <div className='flex h-screen flex-col items-center justify-center gap-4 bg-background-950'>
-        <LoadingSpinner />
-        <p className='text-sm text-text-500'>
-          Creating server debug session...
-        </p>
+      <div className='flex h-screen flex-col items-center justify-center gap-4 bg-[var(--surface-void)]'>
+        <LoadingSpinner
+          variant='scanline'
+          label='Establishing server debug session…'
+          className='max-w-md'
+        />
       </div>
     );
   }
 
   if (!session) {
     return (
-      <div className='flex h-screen flex-col items-center justify-center gap-4 bg-background-950 px-6 text-center'>
-        <p className='text-base text-rose-300'>
+      <div className='flex h-screen flex-col items-center justify-center gap-4 bg-[var(--surface-void)] px-6 text-center'>
+        <span className='micro-label text-[var(--signal-red-hi)]'>
+          Anomaly detected
+        </span>
+        <p className='text-base text-[var(--signal-red-hi)]'>
           {errorMessage ?? 'Could not initialize server debug session.'}
         </p>
         <Button onClick={() => void createSession()} disabled={isCreating}>
-          Retry Create Session
+          Re-acquire session
         </Button>
       </div>
     );
@@ -131,8 +139,8 @@ export function ServerDebugPage(): React.JSX.Element {
 
   return (
     <>
-      <div className='fixed right-3 top-3 z-50 flex items-center gap-2 rounded border border-surface-700/70 bg-surface-900/90 p-2 text-xs backdrop-blur'>
-        <span className='font-mono text-text-500'>Server Debug</span>
+      <div className='fixed right-3 top-3 z-50 flex items-center gap-2 rounded-[5px] border border-[color:var(--metal-edge)] bg-[var(--surface-raised)]/95 p-2 text-xs backdrop-blur'>
+        <span className='micro-label'>Server Debug</span>
         <span className='font-mono text-text-300'>Game {session.gameId}</span>
         <Button
           size='sm'

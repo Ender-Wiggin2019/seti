@@ -75,7 +75,7 @@ export function RoomPage(): React.JSX.Element {
     onError: (err) =>
       toast({
         title: t('client.room.toast.update_failed', {
-          defaultValue: 'Failed to update room settings',
+          defaultValue: 'Could not update mission settings',
         }),
         description: err.message,
         variant: 'error',
@@ -136,9 +136,12 @@ export function RoomPage(): React.JSX.Element {
 
         <div className='flex flex-wrap items-end justify-between gap-3'>
           <div className='space-y-1.5'>
-            <span className='micro-label text-[oklch(0.74_0.10_240)]'>
+            <span className='micro-label inline-flex items-center gap-2 text-[oklch(0.78_0.10_240)]'>
+              <span className='h-px w-6 bg-[var(--signal-blue)]' />
               {t('client.common.mission', { defaultValue: 'Mission' })} ·{' '}
-              <span className='text-text-500'>{room.id.slice(0, 8)}</span>
+              <span className='font-mono tracking-readout text-text-500'>
+                {room.id.slice(0, 8)}
+              </span>
             </span>
             <h1 className='font-display text-3xl font-semibold tracking-[0.08em] text-text-100'>
               {room.name}

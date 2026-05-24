@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/toast';
 import { useLogin, useRegister } from '@/hooks/useAuth';
@@ -38,7 +39,7 @@ function FieldError({
 }): React.JSX.Element | null {
   if (!message) return null;
   return (
-    <p className='font-mono text-[0.6875rem] uppercase tracking-microlabel text-[oklch(0.65_0.16_28)]'>
+    <p className='font-mono text-[0.6875rem] uppercase tracking-microlabel text-[var(--signal-red-hi)]'>
       {message}
     </p>
   );
@@ -115,6 +116,12 @@ function LoginForm(): React.JSX.Element {
         />
         <FieldError message={errors.password} />
       </div>
+      {loginMutation.isPending && (
+        <LoadingSpinner
+          variant='scanline'
+          label={t('client.auth.actions.authenticating')}
+        />
+      )}
       <Button
         type='submit'
         size='lg'
@@ -222,6 +229,12 @@ function RegisterForm(): React.JSX.Element {
         />
         <FieldError message={errors.password} />
       </div>
+      {registerMutation.isPending && (
+        <LoadingSpinner
+          variant='scanline'
+          label={t('client.auth.actions.initializing')}
+        />
+      )}
       <Button
         type='submit'
         size='lg'
@@ -245,21 +258,20 @@ export function AuthPage(): React.JSX.Element {
         'relative flex min-h-[calc(100vh-4rem)] items-center justify-center overflow-hidden px-4 py-10',
       )}
     >
-      {/* Deep-space instrument-light pool — pure blue radial on void.
-          Replaces the previous orange/cyan orb stack. */}
+      {/* Layered instrument-light pool — pure blue/violet on void. */}
       <div
-        className='pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(1100px_620px_at_50%_-10%,oklch(0.22_0.06_240/0.20),transparent_60%),radial-gradient(900px_700px_at_50%_120%,oklch(0.16_0.05_280/0.18),transparent_55%)]'
+        className='pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(1100px_620px_at_50%_-10%,oklch(0.22_0.06_240/0.20),transparent_60%),radial-gradient(900px_700px_at_50%_120%,oklch(0.16_0.05_300/0.16),transparent_55%)]'
         aria-hidden
       />
 
       <Card variant='instrument' className='w-full max-w-md'>
         <CardHeader className='text-center'>
-          <span className='micro-label mx-auto inline-flex items-center justify-center gap-2 text-[oklch(0.74_0.10_240)]'>
-            <span className='h-px w-4 bg-[oklch(0.68_0.11_240)]' />
+          <span className='micro-label mx-auto inline-flex items-center justify-center gap-2 text-[oklch(0.78_0.10_240)]'>
+            <span className='h-px w-4 bg-[var(--signal-blue)]' />
             {t('client.auth.hero.badge')}
-            <span className='h-px w-4 bg-[oklch(0.68_0.11_240)]' />
+            <span className='h-px w-4 bg-[var(--signal-blue)]' />
           </span>
-          <CardTitle className='mt-2 text-2xl tracking-[0.08em]'>
+          <CardTitle className='mt-2 font-display text-2xl tracking-[0.08em]'>
             {t('client.auth.hero.title')}
           </CardTitle>
           <CardDescription className='mx-auto mt-1 max-w-sm'>

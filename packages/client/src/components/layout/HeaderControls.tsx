@@ -61,7 +61,9 @@ export function HeaderControls({
     >
       <Select value={language} onValueChange={handleLanguageChange}>
         <SelectTrigger
-          className={cn(isCompact ? 'h-7 w-[110px] text-xs' : 'h-8 w-[130px]')}
+          className={cn(
+            isCompact ? 'h-7 w-[110px] text-xs' : 'h-8 w-[118px] sm:w-[130px]',
+          )}
           aria-label={t('home.language')}
           data-testid='header-language-select'
         >
@@ -77,16 +79,15 @@ export function HeaderControls({
       <label
         className={cn(
           'flex items-center gap-1.5 font-mono uppercase tracking-microlabel text-text-500',
+          'whitespace-nowrap',
           isCompact ? 'text-[10px]' : 'text-[11px]',
         )}
       >
-        <span>
-          {t('home.text_mode', { defaultValue: 'Text' })}
-        </span>
+        <span>{t('home.text_mode', { defaultValue: 'Text view' })}</span>
         <Switch
           checked={textMode}
           onCheckedChange={setTextMode}
-          aria-label={t('home.text_mode', { defaultValue: 'Text Mode (debug)' })}
+          aria-label={t('home.text_mode', { defaultValue: 'Text view' })}
           data-testid='header-text-mode-switch'
         />
       </label>

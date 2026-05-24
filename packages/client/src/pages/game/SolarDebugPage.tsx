@@ -32,13 +32,21 @@ export function SolarDebugPage(): React.JSX.Element {
   });
 
   return (
-    <main className='min-h-screen bg-background-950 p-6 text-text-100'>
-      <header className='mb-6'>
-        <h1 className='font-display text-xl font-bold uppercase tracking-wider'>
+    <main className='relative min-h-screen bg-[var(--surface-void)] p-6 text-text-100'>
+      <div
+        className='pointer-events-none fixed inset-0 -z-10 bg-[image:var(--bg-atmosphere)]'
+        aria-hidden
+      />
+      <header className='mb-6 space-y-1.5'>
+        <span className='micro-label inline-flex items-center gap-2 text-[oklch(0.78_0.10_240)]'>
+          <span className='h-px w-6 bg-[var(--signal-blue)]' />
+          Calibration · Solar Wheels
+        </span>
+        <h1 className='font-display text-xl font-semibold tracking-[0.08em] uppercase'>
           Solar Wheel Debug
         </h1>
-        <p className='mt-1 text-xs text-text-400'>
-          Each wheel is a 4x8 matrix. Labels use
+        <p className='mt-1 text-xs text-text-500'>
+          Each wheel is a 4×8 matrix. Labels use
           <span className='mx-1 font-mono text-text-300'>index:type</span>
           and <span className='mx-1 font-mono text-text-300'>*</span>
           marks publicity icons.
@@ -57,7 +65,7 @@ export function SolarDebugPage(): React.JSX.Element {
           return (
             <article
               key={`solar-debug-wheel-${wheel}`}
-              className='rounded-lg border border-surface-700/50 bg-surface-900/35 p-4'
+              className='rounded-[6px] border border-[color:var(--metal-edge-soft)] bg-[var(--surface-panel)]/70 p-4 shadow-hairline-inset'
             >
               <h2 className='mb-3 font-mono text-sm uppercase tracking-wide text-text-200'>
                 Wheel {wheel}

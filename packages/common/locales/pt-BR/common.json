@@ -45,7 +45,8 @@
     "maps": "Mapas",
     "endgames": "Pontuação Final",
     "random_quiz": "Quiz Aleatório",
-    "daily_quiz": "Quiz Diário"
+    "daily_quiz": "Quiz Diário",
+    "prelude": "Prelúdio"
   },
   "comment": {
     "login_to_comment": "faça login para comentar",
@@ -145,26 +146,31 @@
   "Promo": "Promocional",
   "Card Source": "Fonte da Carta",
   "home": {
-    "title": "Controle da Missão",
-    "subtitle_authenticated": "Bem-vindo de volta, {{name}}. Continue sua missão no lobby.",
-    "subtitle_guest": "Entre para criar salas, participar de missões e jogar em tempo real.",
+    "title": "SETI: Agências Espaciais",
+    "subtitle_authenticated": "{{name}}, continue a busca em nome da sua organização. Quem fará o primeiro contato?",
+    "subtitle_guest": "Junte-se a uma organização, crie ou entre em uma missão e procure vida alienígena.",
     "language": "Idioma",
-    "open_lobby": "Abrir Lobby",
+    "text_mode": "Vista em texto",
+    "open_lobby": "Central de Missões",
     "profile": "Perfil",
     "sign_in": "Entrar",
     "create_account": "Criar Conta"
   },
   "client": {
     "app_shell": {
-      "lobby": "Lobby",
+      "lobby": "Central de Missões",
       "login": "Entrar",
       "profile": "Perfil"
     },
     "home": {
-      "default_name": "Comandante"
+      "default_name": "Jogador",
+      "hero_kicker": "Agências Espaciais",
+      "station_nominal": "Conectado",
+      "station_offline": "Entre para jogar",
+      "commander": "Jogador"
     },
     "common": {
-      "loading": "Carregando...",
+      "loading": "Carregando…",
       "empty_value": "—",
       "empty": "Vazio",
       "unknown": "Desconhecido",
@@ -180,21 +186,25 @@
       "open": "Aberto",
       "locked": "Bloqueado",
       "na": "N/A",
-      "seconds_short": "{{count}}s"
+      "seconds_short": "{{count}}s",
+      "seconds_unit": "S",
+      "close": "Recolher",
+      "mission": "Missão",
+      "crew": "Equipe"
     },
     "auth": {
       "hero": {
-        "badge": "Controle da Missão",
-        "title": "Acesso ao Terminal SETI",
-        "subtitle": "Autentique-se para acessar a interface de comando"
+        "badge": "Verificação de Identidade",
+        "title": "Entrar em Agências Espaciais",
+        "subtitle": "Entre para criar missões, escolher organizações e competir pelo primeiro contato."
       },
       "tabs": {
         "login": "Entrar",
-        "register": "Registrar"
+        "register": "Criar Conta"
       },
       "fields": {
-        "email": "E-mail",
-        "password": "Senha",
+        "email": "E-mail de comunicação",
+        "password": "Código de acesso",
         "callsign": "Codinome",
         "access_code": "Código de Acesso"
       },
@@ -203,63 +213,78 @@
         "callsign": "Commander Shepard"
       },
       "actions": {
-        "authenticating": "Autenticando...",
-        "access_terminal": "Acessar Terminal",
-        "initializing": "Inicializando...",
-        "register": "Registrar Novo Operador"
+        "authenticating": "Verificando identidade…",
+        "access_terminal": "Entrar",
+        "initializing": "Criando conta…",
+        "register": "Criar Conta"
       },
       "toast": {
-        "login_failed": "Falha no login",
-        "registration_failed": "Falha no cadastro"
+        "login_failed": "Falha ao entrar",
+        "registration_failed": "Falha ao criar conta"
       },
       "validation": {
-        "invalid_email": "E-mail inválido",
-        "password_min": "A senha deve ter pelo menos 8 caracteres",
-        "name_min": "O nome deve ter pelo menos 2 caracteres",
+        "invalid_email": "Informe um e-mail de comunicação válido",
+        "password_min": "O código de acesso deve ter pelo menos 8 caracteres",
+        "name_min": "O codinome deve ter pelo menos 2 caracteres",
         "invalid_field": "Campo inválido"
       }
     },
     "lobby": {
-      "title": "Lobby de Missões",
-      "new_mission": "+ Nova Missão",
+      "title": "Central de Missões",
+      "new_mission": "Criar Missão",
+      "kicker": "Missões Disponíveis",
+      "loading": "Carregando missões…",
       "filters": {
-        "all": "Todas",
+        "all": "Todos",
         "waiting": "Aguardando",
         "in_progress": "Em andamento"
       },
-      "empty": "Nenhuma missão encontrada. Crie uma para começar.",
+      "empty": "Nenhuma missão disponível. Crie uma, escolha uma organização e comece a busca.",
       "toast": {
         "created": "Missão criada",
-        "create_failed": "Falha ao criar sala"
+        "create_failed": "Falha ao criar missão"
+      },
+      "telemetry": {
+        "open": "Missões abertas",
+        "open_sub": "aguardando jogadores",
+        "in_orbit": "Em andamento",
+        "in_orbit_sub": "missões ativas",
+        "operators": "Jogadores",
+        "operators_sub": "em missões"
       }
     },
     "room": {
-      "back": "Voltar",
-      "crew": "Equipe",
+      "back": "Central de Missões",
+      "crew": "Jogadores",
       "status": {
         "waiting": "Aguardando",
         "playing": "Em andamento",
         "finished": "Finalizado"
       },
       "actions": {
-        "joining": "Entrando...",
+        "joining": "Entrando na missão…",
         "join": "Entrar na Missão",
         "leave": "Sair da Missão",
-        "enter_game": "Entrar no Jogo",
-        "launching": "Iniciando...",
-        "launch": "Iniciar Jogo"
+        "enter_game": "Entrar na Missão",
+        "launching": "Iniciando missão…",
+        "launch": "Iniciar Missão"
       },
       "toast": {
         "join_failed": "Falha ao entrar",
         "leave_failed": "Falha ao sair",
-        "start_failed": "Falha ao iniciar"
+        "start_failed": "Falha ao iniciar missão",
+        "update_failed": "Falha ao atualizar configurações da missão"
       }
     },
     "profile": {
-      "title": "Perfil do Operador",
-      "identity": "Identidade",
+      "title": "Perfil",
+      "kicker": "Informações do Membro",
+      "identity": "Conta",
       "callsign": "Codinome",
-      "disconnect": "Desconectar Terminal",
+      "on_station": "Conectado",
+      "disconnect": "Sair",
+      "danger_zone": "Sessão da Conta",
+      "disconnect_hint": "Saia desta conta. Entre novamente para retomar missões ativas.",
       "toast": {
         "invalid_name": "O nome deve ter pelo menos 2 caracteres",
         "updated": "Perfil atualizado",
@@ -267,10 +292,16 @@
       }
     },
     "create_room": {
-      "title": "Criar Nova Missão",
-      "name": "Nome da Missão",
+      "kicker": "Nova Missão",
+      "title": "Criar Missão",
+      "subtitle": "Escolha jogadores, módulos e timer de turno. Organizações e cartas de início rápido são escolhidas antes da partida.",
+      "section": {
+        "identification": "Identificação",
+        "rules": "Regras"
+      },
+      "name": "Codinome da Missão",
       "name_placeholder": "Mars Alpha-7",
-      "players": "Operadores",
+      "players": "Jogadores",
       "solo_mode": "Rival Solo",
       "solo_difficulty": "Dificuldade do Rival",
       "player_count": {
@@ -283,12 +314,12 @@
       "turn_timer": "Timer do turno (segundos, 0 = desligado)",
       "alien_pool_disabled": " (desativado)",
       "actions": {
-        "launching": "Iniciando...",
-        "launch": "Iniciar Missão"
+        "launching": "Criando missão…",
+        "launch": "Criar Missão"
       },
       "validation": {
-        "name_required": "Nome da sala é obrigatório",
-        "invalid_options": "Opções da sala inválidas"
+        "name_required": "O codinome da missão é obrigatório",
+        "invalid_options": "Parâmetros da missão inválidos"
       }
     },
     "room_card": {
@@ -297,7 +328,7 @@
         "playing": "Em andamento",
         "finished": "Finalizado"
       },
-      "host": "Host",
+      "host": "Líder",
       "solo": "Solo",
       "players": "{{current}}/{{total}} jogadores",
       "aliens": "Alienígenas",
@@ -306,16 +337,16 @@
     "player_slot": {
       "empty": "Assento {{index}} - Vazio",
       "you": "Você",
-      "host": "Host",
+      "host": "Líder",
       "ready": "Pronto",
       "not_ready": "Não pronto"
     },
     "game_settings": {
-      "title": "Parâmetros da Missão",
+      "title": "Configurações da Missão",
       "mode": "Modo",
       "mode_solo": "Solo",
       "mode_multiplayer": "Multijogador",
-      "players": "Operadores",
+      "players": "Jogadores",
       "solo_difficulty": "Dificuldade",
       "alien_modules": "Módulos Alienígenas",
       "space_agency": "Agência Espacial",
@@ -325,30 +356,30 @@
       "turn_timer": "Timer do Turno"
     },
     "top_bar": {
-      "exit": "Sair",
+      "exit": "Sair da Missão",
       "round": "Rodada",
       "current": "Atual:",
       "your_turn": "Sua vez",
       "spectating": "Espectando",
       "phases": {
         "SETUP": "Configuração",
-        "AWAIT_MAIN_ACTION": "Fase de Ação",
-        "AWAIT_END_TURN": "Fase de Fim de Turno",
+        "AWAIT_MAIN_ACTION": "Aguardando ação",
+        "AWAIT_END_TURN": "Aguardando fim do turno",
         "IN_RESOLUTION": "Resolvendo",
-        "BETWEEN_TURNS": "Entre Turnos",
-        "END_OF_ROUND": "Fim da Rodada",
-        "FINAL_SCORING": "Pontuação Final",
-        "GAME_OVER": "Fim de Jogo"
+        "BETWEEN_TURNS": "Entre turnos",
+        "END_OF_ROUND": "Fim da rodada",
+        "FINAL_SCORING": "Avaliação final",
+        "GAME_OVER": "Missão concluída"
       }
     },
     "sidebar": {
-      "opponents": "Oponentes",
-      "no_opponents": "Sem oponentes.",
+      "opponents": "Outros Jogadores",
+      "no_opponents": "Sem outros jogadores.",
       "alien_boards": "Tabuleiros Alienígenas",
       "alien_boards_hint": "Os tabuleiros alienígenas aparecerão aqui após a descoberta."
     },
     "action_menu": {
-      "loading_actions": "Carregando ações...",
+      "loading_actions": "Carregando ações…",
       "waiting_for": "Aguardando {{player}}...",
       "another_player": "outro jogador",
       "player_unavailable": "Dados do jogador indisponíveis.",
@@ -814,7 +845,7 @@
       "card": "Cartas"
     },
     "game_over": {
-      "title": "Fim de Jogo",
+      "title": "Missão Concluída",
       "winner": "Vencedor",
       "breakdown_hint": "A análise detalhada da pontuação por origem é exibida acima.",
       "scoring_reminder_alt": "Lembrete de pontuação"

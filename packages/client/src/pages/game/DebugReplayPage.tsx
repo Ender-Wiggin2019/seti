@@ -71,7 +71,7 @@ function DebugReplayGameContent(): React.JSX.Element {
 
   if (!isConnected || !gameState) {
     return (
-      <div className='flex h-screen flex-col items-center justify-center gap-4 bg-background-950'>
+      <div className='flex h-screen flex-col items-center justify-center gap-4 bg-[var(--surface-void)]'>
         <LoadingSpinner />
         <p className='text-sm text-text-500'>Connecting to replay session...</p>
       </div>
@@ -307,23 +307,28 @@ export function DebugReplayPage(): React.JSX.Element {
   }
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-background-950 px-6 py-10'>
-      <div className='w-full max-w-xl rounded-xl border border-surface-700/70 bg-surface-900/90 p-6 shadow-2xl shadow-black/40'>
+    <div className='relative flex min-h-screen items-center justify-center bg-[var(--surface-void)] px-6 py-10'>
+      <div
+        className='pointer-events-none fixed inset-0 -z-10 bg-[image:var(--bg-atmosphere)]'
+        aria-hidden
+      />
+      <div className='w-full max-w-xl rounded-[6px] border border-[color:var(--metal-edge)] bg-[var(--surface-panel)]/95 p-6 shadow-instrument'>
         <div className='mb-6 space-y-2'>
-          <p className='font-mono text-xs uppercase tracking-[0.18em] text-text-500'>
-            Debug Replay
-          </p>
-          <h1 className='font-display text-2xl text-text-100'>
+          <span className='micro-label inline-flex items-center gap-2 text-[oklch(0.78_0.10_240)]'>
+            <span className='h-px w-6 bg-[var(--signal-blue)]' />
+            Calibration · Replay
+          </span>
+          <h1 className='font-display text-2xl font-semibold tracking-[0.06em] text-text-100'>
             Replay presets with checkpoint resume
           </h1>
-          <p className='text-sm text-text-400'>
-            Create a real debug session from a reusable preset, then continue
-            through the live game UI.
+          <p className='text-sm text-text-500'>
+            Stage a real debug session from a reusable preset, then re-engage
+            through the live mission console.
           </p>
         </div>
 
         {isLoadingPresets ? (
-          <div className='flex items-center gap-3 rounded-lg border border-surface-700/60 bg-surface-950/60 px-4 py-5'>
+          <div className='flex items-center gap-3 rounded-[5px] border border-[color:var(--metal-edge-soft)] bg-[var(--surface-instrument)]/70 px-4 py-5'>
             <LoadingSpinner />
             <p className='text-sm text-text-400'>Loading replay presets...</p>
           </div>
@@ -420,7 +425,14 @@ export function DebugReplayPage(): React.JSX.Element {
             ))}
 
             {errorMessage ? (
-              <div className='rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200'>
+              <div className='relative rounded-[5px] border border-[color:var(--metal-edge-soft)] bg-[var(--surface-instrument)]/80 px-3 py-2 text-sm text-[var(--signal-red-hi)]'>
+                <span
+                  aria-hidden
+                  className='pointer-events-none absolute inset-x-0 bottom-0 h-px bg-[var(--signal-red)] opacity-60'
+                />
+                <span className='micro-label mr-2 text-[var(--signal-red-hi)]'>
+                  Anomaly
+                </span>
                 {errorMessage}
               </div>
             ) : null}
@@ -439,18 +451,19 @@ export function DebugReplayPage(): React.JSX.Element {
             </div>
           </div>
         ) : (
-          <div className='rounded-lg border border-surface-700/60 bg-surface-950/60 px-4 py-5 text-sm text-text-400'>
+          <div className='rounded-[5px] border border-[color:var(--metal-edge-soft)] bg-[var(--surface-instrument)]/70 px-4 py-5 text-sm text-text-500'>
             No replay presets available.
           </div>
         )}
 
-        <div className='mt-6 border-t border-surface-700/50 pt-6'>
+        <div className='mt-6 border-t border-[color:var(--metal-edge-soft)] pt-6'>
           <div className='mb-4 space-y-2'>
-            <p className='font-mono text-xs uppercase tracking-[0.18em] text-text-500'>
-              Load from Snapshot
-            </p>
-            <p className='text-sm text-text-400'>
-              Resume a game from a database snapshot by entering its game ID.
+            <span className='micro-label inline-flex items-center gap-2 text-[oklch(0.78_0.10_240)]'>
+              <span className='h-px w-5 bg-[var(--signal-blue)]' />
+              Snapshot · Resume
+            </span>
+            <p className='text-sm text-text-500'>
+              Re-engage from a stored snapshot by entering its game ID.
             </p>
           </div>
 
@@ -520,7 +533,7 @@ function ReplayBanner({
       <button
         type='button'
         onClick={() => setCollapsed(false)}
-        className='fixed right-3 top-14 z-40 inline-flex items-center gap-1 rounded border border-surface-700/70 bg-surface-900/90 px-2 py-1 font-mono text-[10px] uppercase tracking-microlabel text-text-300 backdrop-blur transition-colors hover:text-text-100'
+        className='fixed right-3 top-14 z-40 inline-flex items-center gap-1 rounded-[4px] border border-[color:var(--metal-edge)] bg-[var(--surface-raised)]/95 px-2 py-1 font-mono text-[10px] uppercase tracking-microlabel text-text-300 backdrop-blur transition-colors hover:text-text-100'
         aria-label={`Expand ${kind.toLowerCase()} banner`}
         data-testid='replay-banner-collapsed'
       >
@@ -534,7 +547,7 @@ function ReplayBanner({
 
   return (
     <div
-      className='fixed right-3 top-14 z-40 flex items-center gap-2 rounded border border-surface-700/70 bg-surface-900/90 p-2 text-xs backdrop-blur'
+      className='fixed right-3 top-14 z-40 flex items-center gap-2 rounded-[5px] border border-[color:var(--metal-edge)] bg-[var(--surface-raised)]/95 p-2 text-xs backdrop-blur'
       data-testid='replay-banner'
     >
       <span className='font-mono text-text-500'>{kind}</span>

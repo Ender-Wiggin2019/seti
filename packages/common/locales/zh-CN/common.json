@@ -115,6 +115,9 @@
     "export": "说明",
     "export-desc": "点击“确认”按钮后，将下载一个 .seti 文件。这个文件记录了这张卡牌的编辑状态，导出后可以通过“导入”按钮恢复当前编辑状态。如果你希望未来依然可以编辑这张卡牌，建议导出该文件。"
   },
+  "article": {
+    "enlarge": "点击卡牌查看大图"
+  },
   "Aliens?": "外...外星人?",
   "Placeholder": "Placeholder",
   "Free Action": "免费行动",
@@ -149,26 +152,31 @@
   "Promo": "推广",
   "Card Source": "卡牌来源",
   "home": {
-    "title": "任务控制中心",
-    "subtitle_authenticated": "欢迎回来，{{name}}。从大厅继续你的任务。",
-    "subtitle_guest": "登录后可创建房间、加入任务并进行实时对局。",
+    "title": "SETI：太空机构",
+    "subtitle_authenticated": "{{name}}，代表你的组织继续搜寻。谁会率先建立首次接触？",
+    "subtitle_guest": "加入一家组织，创建或加入任务，展开对外星生命的搜寻。",
     "language": "语言",
-    "open_lobby": "进入大厅",
+    "text_mode": "文本视图",
+    "open_lobby": "进入任务中心",
     "profile": "个人资料",
     "sign_in": "登录",
     "create_account": "创建账号"
   },
   "client": {
     "app_shell": {
-      "lobby": "大厅",
+      "lobby": "任务中心",
       "login": "登录",
       "profile": "资料"
     },
     "home": {
-      "default_name": "指挥官"
+      "default_name": "玩家",
+      "hero_kicker": "太空机构",
+      "station_nominal": "已登录",
+      "station_offline": "登录后开始",
+      "commander": "玩家"
     },
     "common": {
-      "loading": "加载中...",
+      "loading": "加载中…",
       "empty_value": "—",
       "empty": "空",
       "unknown": "未知",
@@ -184,21 +192,25 @@
       "open": "开放",
       "locked": "锁定",
       "na": "不适用",
-      "seconds_short": "{{count}}秒"
+      "seconds_short": "{{count}}秒",
+      "seconds_unit": "秒",
+      "close": "收起",
+      "mission": "任务",
+      "crew": "玩家"
     },
     "auth": {
       "hero": {
-        "badge": "任务控制中心",
-        "title": "SETI 终端访问",
-        "subtitle": "登录以访问指挥终端"
+        "badge": "身份核验",
+        "title": "登录太空机构",
+        "subtitle": "登录后即可创建任务、选择组织，并参与首次接触的竞争。"
       },
       "tabs": {
         "login": "登录",
-        "register": "注册"
+        "register": "创建账号"
       },
       "fields": {
-        "email": "邮箱",
-        "password": "密码",
+        "email": "通讯邮箱",
+        "password": "访问码",
         "callsign": "代号",
         "access_code": "访问码"
       },
@@ -207,63 +219,78 @@
         "callsign": "Commander Shepard"
       },
       "actions": {
-        "authenticating": "认证中...",
-        "access_terminal": "进入终端",
-        "initializing": "初始化中...",
-        "register": "注册新成员"
+        "authenticating": "正在核验身份…",
+        "access_terminal": "登录",
+        "initializing": "正在创建账号…",
+        "register": "创建账号"
       },
       "toast": {
         "login_failed": "登录失败",
-        "registration_failed": "注册失败"
+        "registration_failed": "创建账号失败"
       },
       "validation": {
-        "invalid_email": "邮箱格式不正确",
-        "password_min": "密码至少 8 位",
-        "name_min": "名称至少 2 位",
+        "invalid_email": "通讯邮箱格式不正确",
+        "password_min": "访问码至少 8 位",
+        "name_min": "代号至少 2 位",
         "invalid_field": "输入不合法"
       }
     },
     "lobby": {
-      "title": "任务大厅",
-      "new_mission": "+ 新建任务",
+      "title": "任务中心",
+      "new_mission": "创建任务",
+      "kicker": "可加入任务",
+      "loading": "正在加载任务列表…",
       "filters": {
         "all": "全部",
-        "waiting": "等待中",
+        "waiting": "等待玩家",
         "in_progress": "进行中"
       },
-      "empty": "暂无任务，创建一个开始。",
+      "empty": "暂无可加入任务。创建一个任务，选择组织并开始搜寻。",
       "toast": {
         "created": "任务已创建",
-        "create_failed": "创建房间失败"
+        "create_failed": "创建任务失败"
+      },
+      "telemetry": {
+        "open": "等待玩家",
+        "open_sub": "可加入任务",
+        "in_orbit": "进行中",
+        "in_orbit_sub": "已开始任务",
+        "operators": "参与玩家",
+        "operators_sub": "当前任务中"
       }
     },
     "room": {
-      "back": "返回",
-      "crew": "成员",
+      "back": "返回任务中心",
+      "crew": "玩家列表",
       "status": {
-        "waiting": "等待中",
+        "waiting": "等待玩家",
         "playing": "进行中",
         "finished": "已结束"
       },
       "actions": {
-        "joining": "加入中...",
+        "joining": "正在加入任务…",
         "join": "加入任务",
         "leave": "离开任务",
-        "enter_game": "进入对局",
-        "launching": "启动中...",
-        "launch": "开始对局"
+        "enter_game": "进入任务",
+        "launching": "正在启动任务…",
+        "launch": "开始任务"
       },
       "toast": {
         "join_failed": "加入失败",
         "leave_failed": "离开失败",
-        "start_failed": "开始失败"
+        "start_failed": "任务启动失败",
+        "update_failed": "任务设置更新失败"
       }
     },
     "profile": {
       "title": "个人资料",
-      "identity": "身份信息",
+      "kicker": "成员信息",
+      "identity": "账号信息",
       "callsign": "代号",
-      "disconnect": "断开终端",
+      "on_station": "已登录",
+      "disconnect": "退出登录",
+      "danger_zone": "账号会话",
+      "disconnect_hint": "退出当前账号。再次登录后才能继续未完成的任务。",
       "toast": {
         "invalid_name": "名称至少 2 位",
         "updated": "资料已更新",
@@ -271,55 +298,61 @@
       }
     },
     "create_room": {
-      "title": "创建新任务",
-      "name": "任务名称",
+      "kicker": "新任务",
+      "title": "创建任务",
+      "subtitle": "选择玩家人数、扩展模块与回合计时。组织与快速起步会在任务开始前决定。",
+      "section": {
+        "identification": "任务识别",
+        "rules": "任务规则"
+      },
+      "name": "任务代号",
       "name_placeholder": "Mars Alpha-7",
-      "players": "玩家数",
+      "players": "玩家",
       "solo_mode": "单人对抗",
       "solo_difficulty": "Rival 难度",
       "player_count": {
-        "2": "2人",
-        "3": "3人",
-        "4": "4人"
+        "2": "2 名玩家",
+        "3": "3 名玩家",
+        "4": "4 名玩家"
       },
       "alien_modules": "外星模块",
       "undo": "允许撤销",
-      "turn_timer": "回合计时（秒，0为关闭）",
+      "turn_timer": "回合计时（秒，0 为关闭）",
       "alien_pool_disabled": "（不可用）",
       "actions": {
-        "launching": "启动中...",
-        "launch": "启动任务"
+        "launching": "正在创建任务…",
+        "launch": "创建任务"
       },
       "validation": {
-        "name_required": "房间名不能为空",
-        "invalid_options": "房间配置无效"
+        "name_required": "请输入任务代号",
+        "invalid_options": "任务参数无效"
       }
     },
     "room_card": {
       "status": {
-        "waiting": "等待中",
+        "waiting": "等待玩家",
         "playing": "进行中",
         "finished": "已结束"
       },
-      "host": "房主",
+      "host": "主持",
       "solo": "单人",
-      "players": "{{current}}/{{total}} 人",
+      "players": "{{current}}/{{total}} 名玩家",
       "aliens": "外星模块",
       "timer": "{{seconds}}秒计时"
     },
     "player_slot": {
-      "empty": "座位 {{index}} - 空",
+      "empty": "席位 {{index}} - 空",
       "you": "你",
-      "host": "房主",
+      "host": "主持",
       "ready": "已准备",
       "not_ready": "未准备"
     },
     "game_settings": {
-      "title": "任务参数",
+      "title": "任务设置",
       "mode": "模式",
       "mode_solo": "单人",
       "mode_multiplayer": "多人",
-      "players": "玩家数",
+      "players": "玩家",
       "solo_difficulty": "难度",
       "alien_modules": "外星模块",
       "space_agency": "太空机构",
@@ -329,31 +362,31 @@
       "turn_timer": "回合计时"
     },
     "top_bar": {
-      "exit": "退出",
+      "exit": "离开任务",
       "round": "回合",
       "current": "当前：",
-      "your_turn": "你的回合",
-      "spectating": "观战中",
+      "your_turn": "轮到你行动",
+      "spectating": "旁观中",
       "phases": {
-        "SETUP": "设置阶段",
-        "AWAIT_MAIN_ACTION": "主行动阶段",
-        "AWAIT_END_TURN": "结束回合阶段",
+        "SETUP": "准备阶段",
+        "AWAIT_MAIN_ACTION": "主行动待命",
+        "AWAIT_END_TURN": "待结束行动",
         "IN_RESOLUTION": "结算中",
         "BETWEEN_TURNS": "回合间",
         "END_OF_ROUND": "回合结束",
-        "FINAL_SCORING": "最终计分",
-        "GAME_OVER": "对局结束"
+        "FINAL_SCORING": "最终评估",
+        "GAME_OVER": "任务结束"
       }
     },
     "sidebar": {
-      "opponents": "对手",
-      "no_opponents": "暂无对手。",
+      "opponents": "其他玩家",
+      "no_opponents": "暂无其他玩家。",
       "alien_boards": "外星板块",
       "alien_boards_hint": "发现外星人后会显示在这里。"
     },
     "action_menu": {
-      "loading_actions": "加载行动中...",
-      "waiting_for": "等待 {{player}} 行动...",
+      "loading_actions": "正在加载可用行动…",
+      "waiting_for": "等待 {{player}} 行动…",
       "another_player": "其他玩家",
       "player_unavailable": "玩家数据不可用。",
       "title": "主行动",
@@ -818,9 +851,9 @@
       "card": "卡牌"
     },
     "game_over": {
-      "title": "对局结束",
+      "title": "任务结束",
       "winner": "胜者",
-      "breakdown_hint": "上方展示了按来源拆分的详细计分。",
+      "breakdown_hint": "上方展示按来源拆分的详细计分。",
       "scoring_reminder_alt": "计分提醒"
     }
   }

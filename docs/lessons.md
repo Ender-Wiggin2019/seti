@@ -24,6 +24,7 @@
 
 ## UI 语义渲染
 
+- 做 SETI 客户端整体文案时，不能把“太空科幻”泛化成终端、观测台、档案室或任务控制台；若用户点名 Space Agency/太空机构，应先读取 `docs/arch/spaceAgency/rulebook.md`，围绕“强大组织、各自愿景/方法/动机、首次接触竞争、组织能力/快速起步”来命名。
 - 规则、奖励、desc 图标统一走 `DescRender` / `EffectFactory`；不要用颜色块、字母或临时图片替代。
 - 修 board 状态时不要用“新数组 + deprecated 单值”长期并存来兼容；除非明确有外部协议约束，否则当前 public/runtime state 只能保留一个规范字段，旧快照兼容放在 deserializer 边界。
 - 新项目不要为旧 snapshot/debug 数据保留并行兼容路径；board/text-mode 位置类视图应以 server public state 为唯一数据源，测试也要提供新协议数据，而不是依赖组件内推导兜底。

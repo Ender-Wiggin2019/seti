@@ -146,26 +146,31 @@
   "Promo": "Promo",
   "Card Source": "Card Source",
   "home": {
-    "title": "Mission Control",
-    "subtitle_authenticated": "Welcome back, {{name}}. Continue your mission from the lobby.",
-    "subtitle_guest": "Sign in to create rooms, join missions, and play real-time games.",
+    "title": "SETI: Space Agencies",
+    "subtitle_authenticated": "{{name}}, continue the search on behalf of your organization. Who will make first contact?",
+    "subtitle_guest": "Join an organization, create or join a mission, and search for alien life.",
     "language": "Language",
-    "open_lobby": "Open Lobby",
+    "text_mode": "Text view",
+    "open_lobby": "Mission Hub",
     "profile": "Profile",
     "sign_in": "Sign In",
     "create_account": "Create Account"
   },
   "client": {
     "app_shell": {
-      "lobby": "Lobby",
-      "login": "Login",
+      "lobby": "Mission Hub",
+      "login": "Sign In",
       "profile": "Profile"
     },
     "home": {
-      "default_name": "Commander"
+      "default_name": "Player",
+      "hero_kicker": "Space Agencies",
+      "station_nominal": "Signed in",
+      "station_offline": "Sign in to play",
+      "commander": "Player"
     },
     "common": {
-      "loading": "Loading...",
+      "loading": "Loading…",
       "empty_value": "—",
       "empty": "Empty",
       "unknown": "Unknown",
@@ -181,17 +186,21 @@
       "open": "Open",
       "locked": "Locked",
       "na": "N/A",
-      "seconds_short": "{{count}}s"
+      "seconds_short": "{{count}}s",
+      "seconds_unit": "SEC",
+      "close": "Stow",
+      "mission": "Mission",
+      "crew": "Crew"
     },
     "auth": {
       "hero": {
-        "badge": "Mission Control",
-        "title": "SETI Terminal Access",
-        "subtitle": "Authenticate to access the command interface"
+        "badge": "Identity Verification",
+        "title": "Sign in to Space Agencies",
+        "subtitle": "Sign in to create missions, choose organizations, and compete for first contact."
       },
       "tabs": {
-        "login": "Login",
-        "register": "Register"
+        "login": "Sign In",
+        "register": "Create Account"
       },
       "fields": {
         "email": "Email",
@@ -204,63 +213,78 @@
         "callsign": "Commander Shepard"
       },
       "actions": {
-        "authenticating": "Authenticating...",
-        "access_terminal": "Access Terminal",
-        "initializing": "Initializing...",
-        "register": "Register New Operative"
+        "authenticating": "Verifying identity…",
+        "access_terminal": "Sign In",
+        "initializing": "Creating account…",
+        "register": "Create Account"
       },
       "toast": {
-        "login_failed": "Login failed",
-        "registration_failed": "Registration failed"
+        "login_failed": "Sign in failed",
+        "registration_failed": "Account creation failed"
       },
       "validation": {
-        "invalid_email": "Invalid email address",
-        "password_min": "Password must be at least 8 characters",
-        "name_min": "Name must be at least 2 characters",
+        "invalid_email": "Enter a valid comms email",
+        "password_min": "Access code must be at least 8 characters",
+        "name_min": "Callsign must be at least 2 characters",
         "invalid_field": "Invalid field"
       }
     },
     "lobby": {
-      "title": "Mission Lobby",
-      "new_mission": "+ New Mission",
+      "title": "Mission Hub",
+      "new_mission": "Create Mission",
+      "kicker": "Available Missions",
+      "loading": "Loading missions…",
       "filters": {
         "all": "All",
         "waiting": "Waiting",
         "in_progress": "In Progress"
       },
-      "empty": "No missions found. Create one to begin.",
+      "empty": "No missions are available. Create one, choose an organization, and begin the search.",
       "toast": {
         "created": "Mission created",
-        "create_failed": "Failed to create room"
+        "create_failed": "Failed to create mission"
+      },
+      "telemetry": {
+        "open": "Open missions",
+        "open_sub": "awaiting players",
+        "in_orbit": "In progress",
+        "in_orbit_sub": "missions active",
+        "operators": "Players",
+        "operators_sub": "in missions"
       }
     },
     "room": {
-      "back": "Back",
-      "crew": "Crew",
+      "back": "Mission Hub",
+      "crew": "Players",
       "status": {
         "waiting": "Waiting",
         "playing": "In Progress",
         "finished": "Finished"
       },
       "actions": {
-        "joining": "Joining...",
+        "joining": "Joining mission…",
         "join": "Join Mission",
         "leave": "Leave Mission",
-        "enter_game": "Enter Game",
-        "launching": "Launching...",
-        "launch": "Launch Game"
+        "enter_game": "Enter Mission",
+        "launching": "Starting mission…",
+        "launch": "Start Mission"
       },
       "toast": {
         "join_failed": "Join failed",
         "leave_failed": "Leave failed",
-        "start_failed": "Start failed"
+        "start_failed": "Mission start failed",
+        "update_failed": "Could not update mission settings"
       }
     },
     "profile": {
-      "title": "Operative Profile",
-      "identity": "Identity",
+      "title": "Profile",
+      "kicker": "Member Info",
+      "identity": "Account",
       "callsign": "Callsign",
-      "disconnect": "Disconnect Terminal",
+      "on_station": "Signed in",
+      "disconnect": "Sign Out",
+      "danger_zone": "Account Session",
+      "disconnect_hint": "Sign out of this account. Sign in again to resume active missions.",
       "toast": {
         "invalid_name": "Name must be at least 2 characters",
         "updated": "Profile updated",
@@ -268,10 +292,16 @@
       }
     },
     "create_room": {
-      "title": "Create New Mission",
-      "name": "Mission Name",
+      "kicker": "New Mission",
+      "title": "Create Mission",
+      "subtitle": "Choose players, modules, and turn settings. Organizations and quick start cards are chosen before play begins.",
+      "section": {
+        "identification": "Identification",
+        "rules": "Rules"
+      },
+      "name": "Mission Callsign",
       "name_placeholder": "Mars Alpha-7",
-      "players": "Operatives",
+      "players": "Players",
       "solo_mode": "Solo Rival",
       "solo_difficulty": "Rival Difficulty",
       "player_count": {
@@ -284,12 +314,12 @@
       "turn_timer": "Turn Timer (seconds, 0 = off)",
       "alien_pool_disabled": " (disabled)",
       "actions": {
-        "launching": "Launching...",
-        "launch": "Launch Mission"
+        "launching": "Creating mission…",
+        "launch": "Create Mission"
       },
       "validation": {
-        "name_required": "Room name is required",
-        "invalid_options": "Invalid room options"
+        "name_required": "Mission callsign is required",
+        "invalid_options": "Mission parameters are invalid"
       }
     },
     "room_card": {
@@ -298,7 +328,7 @@
         "playing": "In Progress",
         "finished": "Finished"
       },
-      "host": "Host",
+      "host": "Lead",
       "solo": "Solo",
       "players": "{{current}}/{{total}} players",
       "aliens": "Aliens",
@@ -307,16 +337,16 @@
     "player_slot": {
       "empty": "Seat {{index}} - Empty",
       "you": "You",
-      "host": "Host",
+      "host": "Lead",
       "ready": "Ready",
       "not_ready": "Not ready"
     },
     "game_settings": {
-      "title": "Mission Parameters",
+      "title": "Mission Settings",
       "mode": "Mode",
       "mode_solo": "Solo",
       "mode_multiplayer": "Multiplayer",
-      "players": "Operatives",
+      "players": "Players",
       "solo_difficulty": "Difficulty",
       "alien_modules": "Alien Modules",
       "space_agency": "Space Agency",
@@ -326,30 +356,30 @@
       "turn_timer": "Turn Timer"
     },
     "top_bar": {
-      "exit": "Exit",
+      "exit": "Leave Mission",
       "round": "Round",
       "current": "Current:",
       "your_turn": "Your Turn",
       "spectating": "Spectating",
       "phases": {
         "SETUP": "Setup",
-        "AWAIT_MAIN_ACTION": "Action Phase",
-        "AWAIT_END_TURN": "End Turn Phase",
+        "AWAIT_MAIN_ACTION": "Awaiting Action",
+        "AWAIT_END_TURN": "Awaiting Turn End",
         "IN_RESOLUTION": "Resolving",
         "BETWEEN_TURNS": "Between Turns",
         "END_OF_ROUND": "End of Round",
-        "FINAL_SCORING": "Final Scoring",
-        "GAME_OVER": "Game Over"
+        "FINAL_SCORING": "Final Assessment",
+        "GAME_OVER": "Mission Complete"
       }
     },
     "sidebar": {
-      "opponents": "Opponents",
-      "no_opponents": "No opponents.",
+      "opponents": "Other Players",
+      "no_opponents": "No other players.",
       "alien_boards": "Alien Boards",
       "alien_boards_hint": "Alien boards will appear here after discovery."
     },
     "action_menu": {
-      "loading_actions": "Loading actions...",
+      "loading_actions": "Loading actions…",
       "waiting_for": "Waiting for {{player}}...",
       "another_player": "another player",
       "player_unavailable": "Player data unavailable.",
@@ -815,7 +845,7 @@
       "card": "Cards"
     },
     "game_over": {
-      "title": "Game Over",
+      "title": "Mission Complete",
       "winner": "Winner",
       "breakdown_hint": "Detailed scoring breakdown by source is shown above.",
       "scoring_reminder_alt": "Scoring reminder"

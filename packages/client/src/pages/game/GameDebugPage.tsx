@@ -1558,8 +1558,8 @@ export function GameDebugPage(): React.JSX.Element {
 
   return (
     <GameContextValueProvider value={contextValue}>
-      <div className='fixed right-3 top-3 z-50 flex max-w-[calc(100vw-1.5rem)] flex-wrap items-center justify-end gap-2 rounded border border-surface-700/70 bg-surface-900/90 p-2 text-xs backdrop-blur'>
-        <span className='font-mono text-text-500'>Debug</span>
+      <div className='fixed right-3 top-3 z-50 flex max-w-[calc(100vw-1.5rem)] flex-wrap items-center justify-end gap-2 rounded-[5px] border border-[color:var(--metal-edge)] bg-[var(--surface-raised)]/95 p-2 text-xs backdrop-blur shadow-instrument'>
+        <span className='micro-label'>Calibration</span>
         <button
           type='button'
           aria-pressed={textMode}

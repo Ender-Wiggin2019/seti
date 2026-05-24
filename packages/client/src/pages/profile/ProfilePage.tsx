@@ -5,19 +5,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SignalIndicator } from '@/components/ui/telemetry';
 import { toast } from '@/components/ui/toast';
 import { useCurrentUser, useLogout, useUpdateProfile } from '@/hooks/useAuth';
 import { cn } from '@/lib/cn';
 import { useAuthStore } from '@/stores/authStore';
 
 /**
- * ProfilePage — the operator identity card.
+ * ProfilePage — the signed-in player's account surface.
  *
- * A single instrument panel with three readout rows: ID, callsign,
- * email. Only the callsign is mutable — it becomes an inline editor
- * when activated. The disconnect control is isolated to the far
- * edge as a danger button, emphasizing that sign-out is
- * intentional, not incidental.
+ * A single instrument panel of identity readouts (ID, callsign, email),
+ * with the callsign editable inline. The sign-out control is isolated
+ * in a danger band to emphasize that signing out is intentional.
  */
 export function ProfilePage(): React.JSX.Element {
   const { t } = useTranslation('common');
@@ -69,17 +68,29 @@ export function ProfilePage(): React.JSX.Element {
   return (
     <div className='space-y-8'>
       <header className='space-y-2'>
-        <span className='micro-label text-[oklch(0.74_0.10_240)]'>
-          {t('client.profile.kicker', { defaultValue: 'Operator Record' })}
+        <span className='micro-label inline-flex items-center gap-2 text-[oklch(0.78_0.10_240)]'>
+          <span className='h-px w-6 bg-[var(--signal-blue)]' />
+          {t('client.profile.kicker', { defaultValue: 'Member Info' })}
         </span>
-        <h1 className='font-display text-3xl font-semibold tracking-[0.08em] text-text-100'>
-          {t('client.profile.title')}
-        </h1>
+        <div className='flex flex-wrap items-end justify-between gap-3'>
+          <h1 className='font-display text-3xl font-semibold tracking-[0.08em] text-text-100'>
+            {t('client.profile.title')}
+          </h1>
+          <SignalIndicator
+            signal='green'
+            active
+            label={t('client.profile.on_station', {
+              defaultValue: 'Signed in',
+            })}
+          />
+        </div>
       </header>
 
       <Card variant='instrument'>
         <CardHeader>
-          <CardTitle>{t('client.profile.identity')}</CardTitle>
+          <CardTitle className='font-display tracking-tight'>
+            {t('client.profile.identity')}
+          </CardTitle>
         </CardHeader>
         <CardContent className='p-0'>
           <dl className='divide-y divide-[color:var(--metal-edge-soft)]'>
@@ -146,21 +157,26 @@ export function ProfilePage(): React.JSX.Element {
 
       <div
         className={cn(
-          'flex items-center justify-between gap-4 rounded-[4px]',
+          'relative flex items-center justify-between gap-4 overflow-hidden rounded-[6px]',
           'border border-[color:var(--metal-edge-soft)]',
-          'bg-[oklch(0.10_0.02_260/0.5)] px-5 py-4',
+          'bg-[var(--surface-instrument)]/70 px-5 py-4',
         )}
       >
+        {/* Bottom hairline plasma-red — instrument underline, not a left stripe. */}
+        <span
+          aria-hidden
+          className='pointer-events-none absolute inset-x-0 bottom-0 h-px bg-[var(--signal-red)] opacity-60'
+        />
         <div className='space-y-1'>
-          <p className='micro-label text-[oklch(0.75_0.12_28)]'>
+          <p className='micro-label text-[var(--signal-red-hi)]'>
             {t('client.profile.danger_zone', {
-              defaultValue: 'Danger Zone',
+              defaultValue: 'Account Session',
             })}
           </p>
           <p className='text-xs text-text-500'>
             {t('client.profile.disconnect_hint', {
               defaultValue:
-                'End the session. You will need to sign in again to resume any active missions.',
+                'Sign out of this account. Sign in again to resume active missions.',
             })}
           </p>
         </div>

@@ -29,7 +29,7 @@ export function TopBar(): React.JSX.Element {
       className={cn(
         'flex h-12 shrink-0 items-center justify-between px-4',
         'border-b border-[color:var(--metal-edge-soft)]',
-        'bg-background-950/80 backdrop-blur-md',
+        'bg-[var(--surface-deep)]/85 backdrop-blur-md',
       )}
     >
       <div className='flex items-center gap-4'>

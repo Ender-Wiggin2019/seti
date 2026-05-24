@@ -62,9 +62,9 @@ function createDefaultCreateRoomOptions(): IGameOptions {
 }
 
 /**
- * CreateRoomDialog — the mission brief form.
+ * CreateRoomDialog — the mission setup form.
  *
- * Grouped by instrument section: Identification (name + crew size),
+ * Grouped by instrument section: Identification (name + player count),
  * Rules (alien modules, expansions, undo policy, and timer). Each
  * section is separated by a hairline — no inner cards — and every
  * label is a micro-label cap so the whole form reads as a control
@@ -210,13 +210,14 @@ export function CreateRoomDialog({
         <DialogHeader className='px-6 pt-6'>
           <span className='micro-label text-[oklch(0.74_0.10_240)]'>
             {t('client.create_room.kicker', {
-              defaultValue: 'New Mission Brief',
+              defaultValue: 'New Mission',
             })}
           </span>
           <DialogTitle>{t('client.create_room.title')}</DialogTitle>
           <DialogDescription>
             {t('client.create_room.subtitle', {
-              defaultValue: 'Configure crew, rules, and tempo before launch.',
+              defaultValue:
+                'Choose players, modules, and turn settings before the game begins.',
             })}
           </DialogDescription>
         </DialogHeader>

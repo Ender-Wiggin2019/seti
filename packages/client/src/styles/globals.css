@@ -1,6 +1,6 @@
 /* ============================================================
-   SETI client — global stylesheet
-   Design system: research-spacecraft observation deck (see .impeccable.md)
+   SETI — global stylesheet
+   Design system: Space Agencies mission interface (see .impeccable.md)
    ============================================================ */
 
 @import url("https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;500;600;700&family=Hanken+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
@@ -11,86 +11,117 @@
    Kept in sync with src/config/theme.ts by convention.
    ------------------------------------------------------------ */
 :root {
-  /* Base void surfaces */
+  /* Five-level surface system */
+  --surface-void: oklch(0.10 0.02 260);
+  --surface-deep: oklch(0.15 0.028 262);
+  --surface-panel: oklch(0.19 0.032 262);
+  --surface-raised: oklch(0.24 0.036 262);
+  --surface-instrument: oklch(0.13 0.025 258);
+
+  /* Legacy aliases — kept for the dozens of components still using them. */
   --bg-950: oklch(0.08 0.018 260);
   --bg-900: oklch(0.11 0.02 260);
   --bg-800: oklch(0.14 0.022 260);
   --surface-900: oklch(0.17 0.025 260);
-  --surface-800: oklch(0.2 0.028 260);
+  --surface-800: oklch(0.20 0.028 260);
   --surface-700: oklch(0.28 0.035 260);
 
   /* Text */
   --text-100: oklch(0.96 0.008 260);
   --text-300: oklch(0.72 0.015 260);
   --text-500: oklch(0.52 0.02 260);
+  --text-700: oklch(0.38 0.018 260);
 
-  /* Anodized blue — the single chrome accent */
-  --accent-400: oklch(0.74 0.1 240);
+  /* Signal palette — meaning-bound accents */
+  --signal-blue: oklch(0.68 0.11 240);
+  --signal-blue-hi: oklch(0.78 0.10 240);
+  --signal-blue-lo: oklch(0.50 0.09 240);
+  --signal-violet: oklch(0.62 0.14 305);
+  --signal-violet-hi: oklch(0.74 0.13 305);
+  --signal-violet-lo: oklch(0.48 0.12 305);
+  --signal-green: oklch(0.78 0.13 155);
+  --signal-green-hi: oklch(0.86 0.12 155);
+  --signal-green-lo: oklch(0.58 0.12 155);
+  --signal-amber: oklch(0.78 0.13 75);
+  --signal-amber-hi: oklch(0.86 0.13 75);
+  --signal-amber-lo: oklch(0.58 0.12 75);
+  --signal-red: oklch(0.65 0.18 25);
+  --signal-red-hi: oklch(0.74 0.18 25);
+  --signal-red-lo: oklch(0.50 0.16 25);
+  --signal-white: oklch(0.96 0.008 260);
+
+  /* Anodized blue — chrome accent (alias of signal-blue) */
+  --accent-400: oklch(0.74 0.10 240);
   --accent-500: oklch(0.68 0.11 240);
-  --accent-600: oklch(0.58 0.1 240);
+  --accent-600: oklch(0.58 0.10 240);
 
   /* Metal bevel palette */
   --metal-highlight: oklch(0.78 0.07 240);
-  --metal-face-top: oklch(0.58 0.1 240);
-  --metal-face-mid: oklch(0.5 0.09 240);
+  --metal-face-top: oklch(0.58 0.10 240);
+  --metal-face-mid: oklch(0.50 0.09 240);
   --metal-face-bot: oklch(0.44 0.08 240);
   --metal-shadow: oklch(0.28 0.06 240);
   --metal-edge: oklch(0.34 0.035 240);
   --metal-edge-soft: oklch(0.28 0.035 260);
 
-  /* Danger */
-  --danger-500: oklch(0.65 0.16 28);
+  /* Danger (alias of signal-red) */
+  --danger-500: oklch(0.65 0.18 25);
 
-  /* Motion */
+  /* Motion timing */
   --ease-exit: cubic-bezier(0.4, 0, 1, 1);
   --ease-enter: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-expo-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   /*
-   * Ambient background atmosphere for the app shell.
-   * Two faint instrument-light pools + a subtle star/noise field.
-   * No orange. No neon. The void is the canvas.
+   * Cosmic atmosphere — perceptibly layered, not a flat black wall.
+   * Painted back to front:
+   *   1. Void gradient — indigo glow centred upper-left, drifting to cold edges.
+   *   2. Distant nebula — wide violet wash at lower-right, ~10% lightness lift.
+   *   3. Dust lane — warm diagonal smear suggesting a galactic plane.
+   *   4. Starfield — sparse luminous pinpoints.
+   * The combined lift at the focal point is intentionally visible: dark, but
+   * never flat.
    */
   --bg-atmosphere:
-    radial-gradient(
-      1400px 700px at 15% -10%,
-      oklch(0.22 0.05 240 / 0.22),
-      transparent 55%
-    ),
-    radial-gradient(
-      1200px 800px at 90% 110%,
-      oklch(0.18 0.06 280 / 0.18),
-      transparent 55%
-    ), /* static starfield: tiny luminous dots, very sparse, no animation */
-    radial-gradient(
-      1px 1px at 23% 17%,
-      oklch(0.96 0.008 260 / 0.55),
-      transparent 100%
-    ),
-    radial-gradient(
-      1px 1px at 61% 42%,
-      oklch(0.96 0.008 260 / 0.38),
-      transparent 100%
-    ),
-    radial-gradient(
-      1px 1px at 79% 83%,
-      oklch(0.96 0.008 260 / 0.45),
-      transparent 100%
-    ),
-    radial-gradient(
-      1px 1px at 14% 76%,
-      oklch(0.96 0.008 260 / 0.3),
-      transparent 100%
-    ),
-    radial-gradient(
-      1px 1px at 88% 22%,
-      oklch(0.96 0.008 260 / 0.35),
-      transparent 100%
-    ),
-    radial-gradient(
-      1px 1px at 41% 89%,
-      oklch(0.96 0.008 260 / 0.28),
-      transparent 100%
-    );
+    /* Starfield — sparse pinpoints */
+    radial-gradient(1px 1px at 23% 17%, oklch(0.96 0.008 260 / 0.65), transparent 100%),
+    radial-gradient(1px 1px at 61% 42%, oklch(0.96 0.008 260 / 0.45), transparent 100%),
+    radial-gradient(1px 1px at 79% 83%, oklch(0.96 0.008 260 / 0.50), transparent 100%),
+    radial-gradient(1px 1px at 14% 76%, oklch(0.96 0.008 260 / 0.36), transparent 100%),
+    radial-gradient(1px 1px at 88% 22%, oklch(0.96 0.008 260 / 0.42), transparent 100%),
+    radial-gradient(1px 1px at 41% 89%, oklch(0.96 0.008 260 / 0.32), transparent 100%),
+    radial-gradient(1px 1px at 6% 33%,  oklch(0.96 0.008 260 / 0.38), transparent 100%),
+    radial-gradient(1.3px 1.3px at 52% 8%, oklch(0.94 0.05 240 / 0.65), transparent 100%),
+    radial-gradient(0.9px 0.9px at 33% 58%, oklch(0.96 0.008 260 / 0.36), transparent 100%),
+    radial-gradient(1px 1px at 71% 25%, oklch(0.96 0.008 260 / 0.32), transparent 100%),
+    radial-gradient(0.9px 0.9px at 95% 60%, oklch(0.96 0.008 260 / 0.36), transparent 100%),
+    radial-gradient(1.6px 1.6px at 18% 50%, oklch(0.92 0.06 305 / 0.55), transparent 100%),
+    radial-gradient(1px 1px at 47% 67%, oklch(0.96 0.008 260 / 0.30), transparent 100%),
+    radial-gradient(1.2px 1.2px at 82% 11%, oklch(0.94 0.04 240 / 0.45), transparent 100%),
+    /* Dust lane — warm diagonal smear, wider and ~2× the previous opacity */
+    linear-gradient(112deg,
+      transparent 0%,
+      transparent 30%,
+      oklch(0.34 0.06 30 / 0.07) 42%,
+      oklch(0.34 0.06 30 / 0.10) 50%,
+      oklch(0.34 0.06 30 / 0.07) 58%,
+      transparent 70%,
+      transparent 100%),
+    /* Distant nebula — violet wash, lower-right */
+    radial-gradient(900px 600px at 85% 90%,
+      oklch(0.28 0.10 305 / 0.40) 0%,
+      oklch(0.22 0.07 290 / 0.18) 45%,
+      transparent 75%),
+    /* Instrument-light pool — anodized blue, upper-left focal point */
+    radial-gradient(1100px 700px at 22% 18%,
+      oklch(0.32 0.10 240 / 0.45) 0%,
+      oklch(0.24 0.07 250 / 0.22) 40%,
+      transparent 75%),
+    /* Void gradient (the canvas) — base lightness lifted from 0.08 → 0.10 */
+    radial-gradient(ellipse 130% 90% at 35% 25%,
+      oklch(0.20 0.045 275) 0%,
+      oklch(0.15 0.030 265) 45%,
+      oklch(0.10 0.020 255) 100%);
 }
 
 /* ------------------------------------------------------------
@@ -112,30 +143,29 @@ body {
   font-family: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
   font-weight: 400;
   font-feature-settings: "ss01", "ss02", "cv11";
-  background-color: var(--bg-950);
+  /*
+   * Body itself carries the cosmic atmosphere, so even routes that don't
+   * mount AppShell (game pages, debug pages) sit on layered space —
+   * never flat #000. Components paint their own surfaces on top.
+   */
+  background-color: var(--surface-void);
+  background-image: var(--bg-atmosphere);
+  background-attachment: fixed;
   color: var(--text-100);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-/* Typography defaults — display font only on semantic headings;
-   page-level titles opt in explicitly with `font-display`. */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+/* Display font is opt-in via .font-display — keep semantic headings neutral. */
+h1, h2, h3, h4, h5, h6 {
   font-family: "Hanken Grotesk", ui-sans-serif, sans-serif;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 
-code,
-kbd,
-samp,
-pre {
+code, kbd, samp, pre {
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-feature-settings: "tnum", "zero";
 }
 
 ::selection {
@@ -143,27 +173,22 @@ pre {
   color: var(--text-100);
 }
 
-/* Focus: a visible accent ring that doesn't steal color from data. */
+/* Focus ring — anodized blue at 50% opacity; tight, never feathered. */
 :focus-visible {
   outline: none;
   box-shadow:
-    0 0 0 2px var(--bg-950),
-    0 0 0 4px oklch(0.68 0.11 240 / 0.9);
+    0 0 0 2px var(--surface-void),
+    0 0 0 4px oklch(0.68 0.11 240 / 0.5);
   border-radius: inherit;
 }
 
-/* Scrollbar styling — thin, dark, blends into the void. */
+/* Scrollbar — thin, dark, blends into the void. */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--surface-700) transparent;
 }
-*::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-*::-webkit-scrollbar-track {
-  background: transparent;
-}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
 *::-webkit-scrollbar-thumb {
   background: var(--surface-700);
   border-radius: 999px;
@@ -175,43 +200,28 @@ pre {
   background-clip: padding-box;
 }
 
-/* Reduced motion: disable all non-essential motion. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  .scanline-sweep,
+  .signal-pulse {
+    animation: none !important;
+    opacity: 1 !important;
   }
 }
 
 /* ============================================================
    Reusable metal surface utilities
-   ------------------------------------------------------------
-   Controlled skeuomorphism. Use sparingly: borders, primary
-   buttons, active indicators, slider handles, switch tracks.
-   Never a panel fill — panels are dark surface, metal is only
-   the frame.
    ============================================================ */
-
-/**
- * .metal-hairline — workhorse 1px metal border with a top-edge
- * light catch. Use for panels, inputs, dividers, ghost buttons.
- *
- * Two variants because `border-image` cannot coexist with a
- * border-radius gracefully; use the rounded variant for pill /
- * rounded shapes, and the flat variant for square-edged chrome.
- */
 .metal-hairline {
   border: 1px solid transparent;
-  border-image: linear-gradient(
-      to bottom,
-      oklch(0.55 0.04 240) 0%,
-      oklch(0.32 0.03 240) 50%,
-      oklch(0.22 0.025 240) 100%
-    )
-    1;
+  border-image: linear-gradient(to bottom,
+    oklch(0.55 0.04 240) 0%,
+    oklch(0.32 0.03 240) 50%,
+    oklch(0.22 0.025 240) 100%) 1;
   box-shadow: inset 0 1px 0 oklch(0.78 0.04 240 / 0.25);
 }
 
@@ -219,49 +229,39 @@ pre {
   border: 1px solid var(--metal-edge);
   box-shadow:
     inset 0 1px 0 oklch(0.78 0.04 240 / 0.22),
-    inset 0 -1px 0 oklch(0.1 0.02 260 / 0.5);
+    inset 0 -1px 0 oklch(0.10 0.02 260 / 0.5);
 }
 
-/**
- * .metal-face — primary CTA / active-turn indicator surface.
- * Anodized-blue gradient, bevel highlight, contact shadow.
- */
 .metal-face {
-  background: linear-gradient(
-    to bottom,
+  background: linear-gradient(to bottom,
     var(--metal-face-top) 0%,
     var(--metal-face-mid) 50%,
-    var(--metal-face-bot) 100%
-  );
-  border: 1px solid oklch(0.3 0.06 240);
+    var(--metal-face-bot) 100%);
+  border: 1px solid oklch(0.30 0.06 240);
   box-shadow:
     inset 0 1px 0 oklch(0.78 0.07 240 / 0.5),
     inset 0 -1px 0 oklch(0.22 0.05 240 / 0.6),
     0 1px 0 oklch(0.08 0.018 260 / 0.8),
-    0 0 0 1px oklch(0.2 0.04 240 / 0.4);
+    0 0 0 1px oklch(0.20 0.04 240 / 0.4);
   color: oklch(0.98 0.01 240);
 }
 
 .metal-face:hover {
-  background: linear-gradient(
-    to bottom,
-    oklch(0.62 0.1 240) 0%,
+  background: linear-gradient(to bottom,
+    oklch(0.62 0.10 240) 0%,
     oklch(0.54 0.09 240) 50%,
-    oklch(0.48 0.08 240) 100%
-  );
+    oklch(0.48 0.08 240) 100%);
 }
 
 .metal-face:active,
 .metal-face[data-pressed="true"] {
-  background: linear-gradient(
-    to bottom,
+  background: linear-gradient(to bottom,
     var(--metal-face-bot) 0%,
     var(--metal-face-mid) 55%,
-    var(--metal-face-top) 100%
-  );
+    var(--metal-face-top) 100%);
   box-shadow:
     inset 0 1px 2px oklch(0.12 0.04 240 / 0.7),
-    inset 0 -1px 0 oklch(0.6 0.08 240 / 0.4),
+    inset 0 -1px 0 oklch(0.60 0.08 240 / 0.4),
     0 0 0 1px oklch(0.18 0.04 240 / 0.5);
 }
 
@@ -272,73 +272,57 @@ pre {
   cursor: not-allowed;
 }
 
-/**
- * Instrument tick — a single thin white line, used as a subtle
- * section divider. Pairs well with mono micro-labels.
- */
+/* ============================================================
+   Instrumentation primitives
+   ============================================================ */
+
+/* Section-divider tick — single thin white line, soft fade. */
 .instrument-tick {
   height: 1px;
-  background: linear-gradient(
-    to right,
+  background: linear-gradient(to right,
     transparent 0%,
     var(--surface-700) 20%,
     var(--surface-700) 80%,
-    transparent 100%
-  );
+    transparent 100%);
 }
 
-/**
- * .readout — monospaced numeric/data rendering.
- * White phosphor on dark; no secondary color.
- */
+/* Mono readout — tabular, slashed-zero. */
 .readout {
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums slashed-zero;
+  font-feature-settings: "tnum", "zero";
   letter-spacing: 0.02em;
   color: var(--text-100);
 }
 
-/**
- * .micro-label — the instrumentation label style: mono, small,
- * uppercase-ish via letter-spacing. Used for readout captions.
- */
+/* Mission-log label — Hanken Grotesk, uppercase, 0.12em tracking. */
 .micro-label {
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-family: "Hanken Grotesk", ui-sans-serif, sans-serif;
   font-size: 0.6875rem;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--text-500);
+  letter-spacing: 0.12em;
+  color: oklch(0.62 0.02 260);
 }
 
-/**
- * .instrument-panel — the shared dark-surface frame used across
- * every game-interior read-only panel (resource cells, inventory,
- * milestone track, scoring tiles, etc.). A single consistent frame
- * across the whole observation deck; metal is ONLY the hairline.
- */
+/* Instrument panel — recessed dark surface inside another container. */
 .instrument-panel {
   position: relative;
   border-radius: 6px;
-  background: oklch(0.11 0.02 260 / 0.82);
+  background: var(--surface-instrument);
   border: 1px solid var(--metal-edge-soft);
   box-shadow:
-    inset 0 1px 0 oklch(0.78 0.04 240 / 0.14),
+    inset 0 1px 0 oklch(0.78 0.04 240 / 0.10),
     inset 0 -1px 0 oklch(0.08 0.018 260 / 0.6);
 }
 
-/**
- * .section-head — paired with an optional leading accent tick.
- * Use as:
- *   <div class="section-head"><span class="section-head__tick" /><p class="micro-label">LABEL</p><span class="section-head__rule" /></div>
- */
+/* Section head — micro-label + flanking rule. */
 .section-head {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
 }
-
 .section-head__tick {
   display: block;
   height: 2px;
@@ -347,7 +331,6 @@ pre {
   background: oklch(0.68 0.11 240 / 0.8);
   flex-shrink: 0;
 }
-
 .section-head__rule {
   flex: 1 1 auto;
   height: 1px;
@@ -355,11 +338,122 @@ pre {
   opacity: 0.5;
 }
 
-/**
- * .chip — the instrumentation chip. A hairline rounded rectangle
- * carrying a small readout value. Use for milestones, tech levels,
- * gold-tile slot values, resource tallies in opponent summaries.
- */
+/* ============================================================
+   Telemetry tile — recessed mono readout on a panel.
+   Use clusters of 2-6 in a CSS grid; never standalone.
+   ============================================================ */
+.telemetry-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  border-radius: 6px;
+  background: var(--surface-instrument);
+  border: 1px solid var(--metal-edge-soft);
+  box-shadow:
+    inset 0 1px 0 oklch(0.78 0.04 240 / 0.10),
+    inset 0 -1px 0 oklch(0.06 0.015 260 / 0.7);
+  overflow: hidden;
+}
+
+.telemetry-tile__label {
+  font-family: "Hanken Grotesk", ui-sans-serif, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: oklch(0.62 0.02 260);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.telemetry-tile__value {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums slashed-zero;
+  font-feature-settings: "tnum", "zero";
+  font-size: 1.875rem;
+  font-weight: 500;
+  color: var(--signal-white);
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.telemetry-tile__sub {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.6875rem;
+  color: var(--text-500);
+  letter-spacing: 0.04em;
+}
+
+/* Telemetry tile signal accent: applied via [data-signal="blue|violet|..."] */
+.telemetry-tile[data-signal="blue"] .telemetry-tile__value { color: var(--signal-blue-hi); }
+.telemetry-tile[data-signal="violet"] .telemetry-tile__value { color: var(--signal-violet-hi); }
+.telemetry-tile[data-signal="green"] .telemetry-tile__value { color: var(--signal-green-hi); }
+.telemetry-tile[data-signal="amber"] .telemetry-tile__value { color: var(--signal-amber-hi); }
+.telemetry-tile[data-signal="red"] .telemetry-tile__value { color: var(--signal-red-hi); }
+
+/* ============================================================
+   Signal indicator — 8px dot with matched glow.
+   Pulses slowly when active.
+   ============================================================ */
+.signal-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.signal-dot[data-signal="blue"]   { background: var(--signal-blue);   box-shadow: 0 0 8px oklch(0.68 0.11 240 / 0.6),  0 0 24px oklch(0.68 0.11 240 / 0.18); }
+.signal-dot[data-signal="violet"] { background: var(--signal-violet); box-shadow: 0 0 8px oklch(0.62 0.14 305 / 0.6),  0 0 24px oklch(0.62 0.14 305 / 0.22); }
+.signal-dot[data-signal="green"]  { background: var(--signal-green);  box-shadow: 0 0 6px oklch(0.78 0.13 155 / 0.55), 0 0 18px oklch(0.78 0.13 155 / 0.18); }
+.signal-dot[data-signal="amber"]  { background: var(--signal-amber);  box-shadow: 0 0 6px oklch(0.78 0.13 75 / 0.55),  0 0 18px oklch(0.78 0.13 75 / 0.18); }
+.signal-dot[data-signal="red"]    { background: var(--signal-red);    box-shadow: 0 0 8px oklch(0.65 0.18 25 / 0.65),  0 0 22px oklch(0.65 0.18 25 / 0.22); }
+.signal-dot[data-signal="off"]    { background: oklch(0.32 0.02 260); box-shadow: none; }
+
+.signal-dot[data-active="true"] { animation: signal-pulse 2.4s ease-in-out infinite; }
+
+@keyframes signal-pulse {
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 1; }
+}
+
+.signal-pulse { animation: signal-pulse 2.4s ease-in-out infinite; }
+
+/* ============================================================
+   Scanline — 1px sweep used ONLY for loading state.
+   Pair with a mission-log status text ("Establishing uplink…").
+   ============================================================ */
+.scanline {
+  position: relative;
+  overflow: hidden;
+}
+.scanline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(to right,
+    transparent 0%,
+    oklch(0.68 0.11 240 / 0.9) 50%,
+    transparent 100%);
+  animation: scanline-sweep 1.6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes scanline-sweep {
+  0%   { top: 0%; opacity: 0.3; }
+  10%  { opacity: 0.8; }
+  90%  { opacity: 0.8; }
+  100% { top: 100%; opacity: 0.3; }
+}
+
+/* ============================================================
+   Chip — instrumentation chip carrying a small readout value.
+   ============================================================ */
 .chip {
   display: inline-flex;
   align-items: center;
@@ -370,7 +464,7 @@ pre {
   border: 1px solid var(--metal-edge-soft);
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 0.6875rem;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums slashed-zero;
   color: var(--text-300);
 }
 
@@ -382,11 +476,9 @@ pre {
     inset 0 1px 0 oklch(0.78 0.04 240 / 0.25);
 }
 
-/**
- * .meter — a thin instrument-style linear meter. Thin white phosphor
- * on dark rail. Used for data-pool fill, hand meters, etc.
- * Full state uses the accent color (data pool full = actionable moment).
- */
+/* ============================================================
+   Meter — thin horizontal phosphor meter.
+   ============================================================ */
 .meter {
   position: relative;
   height: 3px;
@@ -396,32 +488,22 @@ pre {
   background: oklch(0.08 0.018 260 / 0.9);
   box-shadow: inset 0 0 0 1px oklch(0.22 0.025 260 / 0.8);
 }
-
 .meter__fill {
   height: 100%;
-  background: linear-gradient(
-    to right,
+  background: linear-gradient(to right,
     oklch(0.82 0.01 260) 0%,
-    oklch(0.96 0.008 260) 100%
-  );
+    oklch(0.96 0.008 260) 100%);
   box-shadow: 0 0 6px oklch(0.96 0.008 260 / 0.3);
   transition: width 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-
 .meter[data-full="true"] .meter__fill {
-  background: linear-gradient(
-    to right,
+  background: linear-gradient(to right,
     oklch(0.62 0.12 240) 0%,
-    oklch(0.78 0.08 240) 100%
-  );
+    oklch(0.78 0.08 240) 100%);
   box-shadow: 0 0 6px oklch(0.68 0.11 240 / 0.45);
 }
 
-/**
- * .tick-row — a row of small vertical ticks, used as spacer under
- * meters and between instrument segments. Purely decorative cue
- * that says "this is an instrument, not a stat tile".
- */
+/* Tick row — repeating instrumentation marks. */
 .tick-row {
   display: flex;
   align-items: flex-end;
@@ -429,20 +511,30 @@ pre {
   height: 6px;
   opacity: 0.55;
 }
-
 .tick-row::before,
 .tick-row::after {
   content: "";
   display: block;
   flex: 1 1 0;
   height: 100%;
-  background-image: repeating-linear-gradient(
-    to right,
+  background-image: repeating-linear-gradient(to right,
     var(--surface-700) 0,
     var(--surface-700) 1px,
     transparent 1px,
-    transparent 6px
-  );
+    transparent 6px);
+}
+
+/* ============================================================
+   Waveform divider — a single thin line with faint amplitude.
+   Use as occasional section break (≤ 1-2 per screen).
+   ============================================================ */
+.waveform-rule {
+  height: 12px;
+  width: 100%;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 12' preserveAspectRatio='none'><path d='M0 6 Q 5 6 10 4 T 20 6 T 30 8 T 40 5 T 50 6 T 60 3 T 70 6 T 80 6 T 90 6 T 100 7 T 110 5 T 120 6 T 130 6 T 140 6 T 150 4 T 160 6 T 170 6 T 180 8 T 190 5 T 200 6' stroke='oklch(0.34 0.035 240)' stroke-width='0.7' fill='none'/></svg>");
+  background-size: 200px 12px;
+  background-repeat: repeat-x;
+  opacity: 0.6;
 }
 
 /* ============================================================
@@ -470,9 +562,7 @@ pre {
 
 .seti-sector-grid .cgo-card-layer,
 .seti-sector-grid .cgo-card-image {
-  font-family:
-    Trebuchet MS,
-    sans-serif;
+  font-family: Trebuchet MS, sans-serif;
   position: absolute;
   display: flex;
   justify-content: space-around;
@@ -560,25 +650,11 @@ pre {
 }
 
 @keyframes sector-slice-fadein {
-  from {
-    opacity: 0;
-    transform: scale(0.92);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 @keyframes sector-name-fadein {
-  from {
-    transform: translateY(-110%) scale(1.35);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
+  from { transform: translateY(-110%) scale(1.35); opacity: 0; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
 }

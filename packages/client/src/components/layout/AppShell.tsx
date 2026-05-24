@@ -12,9 +12,10 @@ interface IAppShellProps {
 /**
  * AppShell — the global chrome outside of a live game.
  *
- * A thin hairline-bordered header sits on the void, with an
- * ambient instrument-light background softly glowing behind it.
- * No logo images — the wordmark is the display font itself.
+ * The page sits in three depth planes:
+ *   1. Cosmic atmosphere fixed behind everything (--bg-atmosphere).
+ *   2. Surface-deep top bar (the first lift off the void).
+ *   3. Surface-panel content cards within the main column.
  */
 export function AppShell(props: IAppShellProps): React.JSX.Element {
   const { t } = useTranslation('common');
@@ -22,8 +23,8 @@ export function AppShell(props: IAppShellProps): React.JSX.Element {
   const userName = useAuthStore((s) => s.user?.name);
 
   return (
-    <div className='relative min-h-screen bg-background-950 text-text-100'>
-      {/* Ambient atmosphere layer — sits behind all content. */}
+    <div className='relative min-h-screen text-text-100'>
+      {/* Cosmic atmosphere — fixed behind all content, three-layer composition. */}
       <div
         className='pointer-events-none fixed inset-0 -z-10 bg-[image:var(--bg-atmosphere)]'
         aria-hidden
@@ -33,33 +34,33 @@ export function AppShell(props: IAppShellProps): React.JSX.Element {
         className={cn(
           'sticky top-0 z-20',
           'border-b border-[color:var(--metal-edge-soft)]',
-          'bg-background-950/75 backdrop-blur-md',
+          'bg-[var(--surface-deep)]/82 backdrop-blur-md',
         )}
       >
-        <div className='mx-auto flex max-w-6xl items-center justify-between px-5 py-3'>
+        <div className='mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-3'>
           <Link
             to='/'
             className={cn(
-              'group flex items-center gap-3 text-text-100',
+              'group flex shrink-0 items-center gap-3 text-text-100 max-sm:w-full',
               'transition-colors',
             )}
           >
             <WordmarkMark />
-            <span className='font-display text-sm font-medium tracking-[0.18em] uppercase'>
+            <span className='font-display text-sm font-medium tracking-wordmark uppercase'>
               {APP_NAME}
             </span>
           </Link>
 
-          <div className='flex items-center gap-4'>
+          <div className='flex min-w-0 flex-1 items-center justify-end gap-4 max-sm:w-full max-sm:flex-none max-sm:justify-between max-sm:gap-2'>
             <HeaderControls variant='shell' />
-            <nav className='flex items-center gap-1'>
+            <nav className='flex shrink-0 items-center gap-1'>
               {isAuthenticated ? (
                 <>
                   <NavLink to='/lobby'>{t('client.app_shell.lobby')}</NavLink>
                   <NavLink
                     to='/profile'
                     leading={
-                      <span className='flex h-5 w-5 items-center justify-center rounded-full bg-[oklch(0.20_0.03_260)] border border-[color:var(--metal-edge-soft)] font-mono text-[10px] font-semibold text-text-100'>
+                      <span className='flex h-5 w-5 items-center justify-center rounded-full bg-[var(--surface-instrument)] border border-[color:var(--metal-edge-soft)] font-mono text-[10px] font-semibold text-text-100'>
                         {userName?.charAt(0).toUpperCase() ?? '?'}
                       </span>
                     }
@@ -81,9 +82,8 @@ export function AppShell(props: IAppShellProps): React.JSX.Element {
 }
 
 /**
- * A small instrument-diamond mark: the wordmark's visual companion.
- * Two concentric rhombi stacked, subtly anodized-blue. Not a logo
- * in the branded sense — a hairline-drawn instrument symbol.
+ * A small instrument-diamond mark — wordmark companion.
+ * Two concentric rhombi stacked, hairline-drawn anodized blue.
  */
 function WordmarkMark(): React.JSX.Element {
   return (
@@ -91,9 +91,9 @@ function WordmarkMark(): React.JSX.Element {
       aria-hidden
       className='relative inline-flex h-6 w-6 shrink-0 items-center justify-center'
     >
-      <span className='absolute inset-0.5 rotate-45 border border-[color:var(--metal-edge)] bg-[oklch(0.14_0.025_240)]' />
+      <span className='absolute inset-0.5 rotate-45 border border-[color:var(--metal-edge)] bg-[var(--surface-instrument)]' />
       <span className='absolute inset-[6px] rotate-45 border border-[oklch(0.48_0.10_240)] bg-[oklch(0.32_0.08_240)]' />
-      <span className='absolute inset-[9px] rotate-45 bg-[oklch(0.82_0.10_240)]' />
+      <span className='absolute inset-[9px] rotate-45 bg-[var(--signal-blue-hi)]' />
     </span>
   );
 }
@@ -112,19 +112,18 @@ function NavLink({ to, children, leading }: INavLinkProps): React.JSX.Element {
         'group relative flex items-center gap-2 rounded-[4px] px-3 py-1.5',
         'text-sm text-text-300',
         'transition-colors duration-150',
-        'hover:text-text-100 hover:bg-[oklch(0.18_0.025_260)]',
+        'hover:text-text-100 hover:bg-[var(--surface-panel)]/60',
       )}
       activeProps={{
         className:
-          'text-text-100 bg-[oklch(0.18_0.025_260)] [&>.nav-active-tick]:opacity-100',
+          'text-text-100 bg-[var(--surface-panel)]/70 [&>.nav-active-tick]:opacity-100',
       }}
     >
       {leading}
       <span>{children}</span>
-      {/* Active-state anodized-blue tick underline */}
       <span
         aria-hidden
-        className='nav-active-tick pointer-events-none absolute bottom-[-9px] left-1/2 h-[2px] w-5 -translate-x-1/2 rounded-full bg-[oklch(0.68_0.11_240)] opacity-0 transition-opacity'
+        className='nav-active-tick pointer-events-none absolute bottom-[-9px] left-1/2 h-[2px] w-5 -translate-x-1/2 rounded-full bg-[var(--signal-blue)] opacity-0 transition-opacity'
       />
     </Link>
   );
