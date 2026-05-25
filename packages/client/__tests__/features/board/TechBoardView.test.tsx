@@ -1,9 +1,10 @@
+import { EAlienIcon } from '@seti/common/types/element';
 import { ETechBonusType, ETechId } from '@seti/common/types/tech';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { TechBoardView } from '@/features/board/TechBoardView';
 import type { IPublicPlayerState, IPublicTechBoard } from '@/types/re-exports';
-import { EPlayerInputType, ETech } from '@/types/re-exports';
+import { EAlienType, EPlayerInputType, ETech } from '@/types/re-exports';
 import { createMockPlayerState } from '../../../test/mocks/gameState';
 
 function createTechBoardMock(): IPublicTechBoard {
@@ -68,6 +69,37 @@ describe('TechBoardView', () => {
 
     expect(screen.getByAltText('Launch action bonus')).toBeInTheDocument();
     expect(screen.getAllByAltText('Energy bonus').length).toBeGreaterThan(0);
+  });
+
+  it('renders Glyphids tech-stack tokens from projected stack state', () => {
+    const techBoard = createTechBoardMock();
+    const scanStack = techBoard.stacks.find(
+      (stack) => stack.tech === ETech.SCAN && stack.level === 0,
+    );
+    if (!scanStack) throw new Error('scan stack missing');
+    scanStack.alienTokens = [
+      {
+        tokenId: 'glyphids-token|tech|scan-earth-look',
+        alienType: EAlienType.GLYPHIDS,
+        glyph: EAlienIcon.GLYPH_BLUE,
+      },
+    ];
+
+    render(
+      <TechBoardView
+        techBoard={techBoard}
+        players={[]}
+        pendingInput={null}
+        playerColors={{}}
+        myPlayerId='player-1'
+      />,
+    );
+
+    expect(
+      screen.getByTestId(
+        'tech-stack-alien-token-glyphids-token|tech|scan-earth-look',
+      ),
+    ).toBeInTheDocument();
   });
 
   it('renders tech tile images without cropping', () => {

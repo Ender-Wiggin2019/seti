@@ -16,11 +16,11 @@ describe('processFreeAction', () => {
       .spyOn(MovementFreeAction, 'execute')
       .mockReturnValue({} as IMovementResult);
 
-    processFreeAction(
-      {} as never,
-      {} as never,
-      { type: EFreeAction.MOVEMENT, path: ['a', 'b'] } as never,
-    );
+    processFreeAction({} as never, {} as never, {
+      type: EFreeAction.MOVEMENT,
+      path: ['a', 'b'],
+      target: { type: 'probe', id: 'probe-1' },
+    });
 
     expect(spy).toHaveBeenCalledOnce();
   });
@@ -46,25 +46,41 @@ describe('processFreeAction', () => {
     );
   });
 
-  it('normalizes deprecated movement capsuleId into a movement target', () => {
+  it('rejects deprecated movement capsuleId payloads', () => {
     const spy = vi
       .spyOn(MovementFreeAction, 'execute')
       .mockReturnValue({} as IMovementResult);
 
-    processFreeAction({} as never, {} as never, {
-      type: EFreeAction.MOVEMENT,
-      path: ['a', 'b'],
-      capsuleId: 'capsule-1',
-    });
+    expect(() =>
+      processFreeAction(
+        {} as never,
+        {} as never,
+        {
+          type: EFreeAction.MOVEMENT,
+          path: ['a', 'b'],
+          capsuleId: 'capsule-1',
+        } as never,
+      ),
+    ).toThrow('Movement target is required');
+    expect(spy).not.toHaveBeenCalled();
+  });
 
-    expect(spy).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.anything(),
-      ['a', 'b'],
-      {
-        target: { type: 'mascamites-capsule', id: 'capsule-1' },
-      },
-    );
+  it('rejects movement actions without an explicit target', () => {
+    const spy = vi
+      .spyOn(MovementFreeAction, 'execute')
+      .mockReturnValue({} as IMovementResult);
+
+    expect(() =>
+      processFreeAction(
+        {} as never,
+        {} as never,
+        {
+          type: EFreeAction.MOVEMENT,
+          path: ['a', 'b'],
+        } as never,
+      ),
+    ).toThrow('Movement target is required');
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it('dispatches buy card action', () => {

@@ -51,16 +51,18 @@ describe('ThroughAsteroidBeltCard', () => {
     const target = requireSpace(solarSystem, 'ring-1-cell-2');
     setSpace(asteroid, ESolarSystemElementType.ASTEROID);
     setSpace(target, ESolarSystemElementType.EMPTY);
-    solarSystem.placeProbe(player.id, asteroid.id);
+    const probe = solarSystem.placeProbe(player.id, asteroid.id);
     player.gainMove(2);
 
     card.play({ player, game });
     game.deferredActions.drain(game);
     const moveBefore = player.getMoveStash();
-    const result = MovementFreeAction.execute(player, game, [
-      asteroid.id,
-      target.id,
-    ]);
+    const result = MovementFreeAction.execute(
+      player,
+      game,
+      [asteroid.id, target.id],
+      { target: { type: 'probe', id: probe.id } },
+    );
 
     expect(card.id).toBe('26');
     expect(card.behavior.custom).toBeUndefined();

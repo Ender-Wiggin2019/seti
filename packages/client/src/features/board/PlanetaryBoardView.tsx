@@ -1,3 +1,4 @@
+import { DescRender } from '@seti/cards';
 import {
   type IPlanetaryBoardConfig,
   PLANETARY_BOARD_CONFIG,
@@ -17,6 +18,7 @@ import type {
   IPlayerInputModel,
   IPublicGameState,
   IPublicMoonOccupantState,
+  IPublicPlanetAlienToken,
   IPublicPlanetaryBoard,
   IPublicPlanetState,
 } from '@/types/re-exports';
@@ -94,6 +96,31 @@ function TokenAtPoint({
       aria-label={`planet-board-token-${playerId}`}
     >
       <ProbeToken playerColor={playerColor} className='h-7 w-7' />
+    </span>
+  );
+}
+
+function GlyphTokenAtPoint({
+  x,
+  y,
+  token,
+}: {
+  x: number;
+  y: number;
+  token: IPublicPlanetAlienToken;
+}): React.JSX.Element {
+  return (
+    <span
+      data-testid={`planet-board-alien-token-${token.tokenId}`}
+      className='absolute inline-flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-lime-300/80 bg-surface-950/80 shadow-[0_0_12px_rgba(190,242,100,0.35)]'
+      style={{
+        left: `${x}%`,
+        top: `${y}%`,
+      }}
+      aria-label={`${token.glyph} glyph token`}
+      title={`${token.glyph} glyph token`}
+    >
+      <DescRender desc={`{${token.glyph}[sm]}`} size='desc-mini' smartSize />
     </span>
   );
 }
@@ -422,6 +449,15 @@ export function PlanetaryBoardView({
                         />
                       );
                     })}
+
+                    {(planetState.alienTokens ?? []).map((token, index) => (
+                      <GlyphTokenAtPoint
+                        key={`${planet}-alien-token-${token.tokenId}`}
+                        x={Math.min(config.anchor.x + index * 4, 98)}
+                        y={config.anchor.y}
+                        token={token}
+                      />
+                    ))}
                   </div>
                 );
               })}

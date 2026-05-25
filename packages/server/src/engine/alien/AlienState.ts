@@ -3,7 +3,13 @@ import {
   OUMUAMUA_TRACE_SLOT_PREFIX,
 } from '@seti/common/constant/alienBoardConfig';
 import { alienCards } from '@seti/common/data/alienCards';
-import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
+import {
+  EAlienType,
+  type EPlanet,
+  ETrace,
+} from '@seti/common/types/protocol/enums';
+import type { ETechId } from '@seti/common/types/tech';
+import { AnyCardChoiceEffect } from '../effects/card/AnyCardChoiceEffect.js';
 import {
   createActionEvent,
   createTraceMarkedEvent,
@@ -23,7 +29,6 @@ import {
   type TSlotReward,
   type TTracePlayerRef,
 } from './AlienBoard.js';
-import { AnyCardChoiceEffect } from '../effects/card/AnyCardChoiceEffect.js';
 import { AlienRegistry } from './AlienRegistry.js';
 import { executeSimpleSlotReward } from './AlienRewards.js';
 
@@ -510,6 +515,30 @@ export class AlienState {
     }
   }
 
+  public onPlanetVisited(game: IGame, player: IPlayer, planet: EPlanet): void {
+    for (const board of this.boards) {
+      if (!board.discovered) continue;
+      const plugin = AlienRegistry.get(board.alienType);
+      plugin?.onPlanetVisited?.(game, player, planet);
+    }
+  }
+
+  public onSectorWon(game: IGame, player: IPlayer, sectorId: string): void {
+    for (const board of this.boards) {
+      if (!board.discovered) continue;
+      const plugin = AlienRegistry.get(board.alienType);
+      plugin?.onSectorWon?.(game, player, sectorId);
+    }
+  }
+
+  public onTechAcquired(game: IGame, player: IPlayer, techId: ETechId): void {
+    for (const board of this.boards) {
+      if (!board.discovered) continue;
+      const plugin = AlienRegistry.get(board.alienType);
+      plugin?.onTechAcquired?.(game, player, techId);
+    }
+  }
+
   // ---- Private: input builders ---------------------------------------------
 
   private createSlotSelectionInput(
@@ -646,8 +675,7 @@ export class AlienState {
     // its onComplete so the action pipeline resumes once the player
     // finishes choosing.
     const drawAlienCardStep =
-      onComplete ??
-      ((): PlayerInput | undefined => undefined);
+      onComplete ?? ((): PlayerInput | undefined => undefined);
     const alienCardThenComplete = hasPendingDrawAlienCard
       ? () =>
           this.createDrawAlienCardInput(

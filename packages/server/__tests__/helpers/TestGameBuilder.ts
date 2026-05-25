@@ -1,5 +1,5 @@
 import type { ETrace } from '@seti/common/types/element';
-import type { EPlanet } from '@seti/common/types/protocol/enums';
+import { EMainAction, type EPlanet } from '@seti/common/types/protocol/enums';
 import {
   EPlayerInputType,
   type IPlayerInputModel,
@@ -287,6 +287,51 @@ export function expectOptionInput(player: IPlayer): ISelectOptionInputModel {
     throw new Error(`Expected OPTION input, got ${model.type}`);
   }
   return model as ISelectOptionInputModel;
+}
+
+export function chooseOrbitMainActionPlanet(
+  game: Game,
+  player: IPlayer,
+  planet: EPlanet,
+  slot: 'first' | 'regular' = 'first',
+): void {
+  game.processMainAction(player.id, { type: EMainAction.ORBIT });
+  game.processInput(player.id, {
+    type: EPlayerInputType.OPTION,
+    optionId: `main-action-orbit-planet-${planet}`,
+  });
+  const slotOptions = expectOptionInput(player).options.map(
+    (option) => option.id,
+  );
+  const preferredSlotId = `main-action-orbit-slot-${planet}-${slot}`;
+  const slotId = slotOptions.includes(preferredSlotId)
+    ? preferredSlotId
+    : `main-action-orbit-slot-${planet}-regular`;
+  game.processInput(player.id, {
+    type: EPlayerInputType.OPTION,
+    optionId: slotId,
+  });
+}
+
+export function chooseLandMainActionPlanet(
+  game: Game,
+  player: IPlayer,
+  planet: EPlanet,
+  slot: 'planet' | { moonId: string } = 'planet',
+): void {
+  game.processMainAction(player.id, { type: EMainAction.LAND });
+  game.processInput(player.id, {
+    type: EPlayerInputType.OPTION,
+    optionId: `main-action-land-planet-${planet}`,
+  });
+  const slotId =
+    slot === 'planet'
+      ? `main-action-land-slot-${planet}-planet`
+      : `main-action-land-slot-${planet}-moon-${slot.moonId}`;
+  game.processInput(player.id, {
+    type: EPlayerInputType.OPTION,
+    optionId: slotId,
+  });
 }
 
 /** Assert the player is waiting for a TRACE input and return its model. */

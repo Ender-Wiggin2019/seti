@@ -23,13 +23,16 @@ describe('processFreeAction — full dispatch coverage', () => {
     processFreeAction({} as never, {} as never, {
       type: EFreeAction.MOVEMENT,
       path: ['a', 'b'],
+      target: { type: 'probe', id: 'probe-1' },
     });
 
     expect(spy).toHaveBeenCalledOnce();
-    expect(spy).toHaveBeenCalledWith(expect.anything(), expect.anything(), [
-      'a',
-      'b',
-    ]);
+    expect(spy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      ['a', 'b'],
+      { target: { type: 'probe', id: 'probe-1' } },
+    );
   });
 
   it('dispatches MOVEMENT with a generic movement target', () => {

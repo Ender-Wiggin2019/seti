@@ -391,7 +391,7 @@ describe('Card 16 — Dragonfly (LAND from card effect)', () => {
         getLandingCost: () => 1,
         land: () => ({
           landingCost: 1,
-          centerReward: { vpGained: 2, traceRewards: [], lifeTraceGained: 0 },
+          centerReward: { vpGained: 2, traceRewards: [] },
           firstLandDataGained: 1,
           isMoon: false,
           rewards: [],
@@ -463,7 +463,7 @@ describe('Card 16 — Dragonfly (LAND from card effect)', () => {
           landCalled = true;
           return {
             landingCost: 1,
-            centerReward: { vpGained: 2, traceRewards: [], lifeTraceGained: 0 },
+            centerReward: { vpGained: 2, traceRewards: [] },
             firstLandDataGained: 0,
             isMoon: false,
             rewards: [],

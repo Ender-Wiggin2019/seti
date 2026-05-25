@@ -1,6 +1,7 @@
 import type { TArkhosSecurityTrace } from '@seti/common/data/arkhosCards';
 import { EAlienType } from '@seti/common/types/BaseCard';
-import { EAlienIcon, ETrace } from '@seti/common/types/element';
+import { EAlienIcon, EPlanet, ETrace } from '@seti/common/types/element';
+import type { ETechId } from '@seti/common/types/tech';
 
 export type {
   IArkhosAccessState,
@@ -52,6 +53,17 @@ export interface IGlyphidsTranslationPlacement {
 export interface IGlyphidsBoardToken {
   position: number;
   glyph: TGlyphidsGlyph;
+}
+
+export type TGlyphidsPlacedTokenLocation =
+  | { type: 'planet'; planet: EPlanet }
+  | { type: 'sector'; sectorId: string; sectorIndex: number }
+  | { type: 'tech'; techId: ETechId };
+
+export interface IGlyphidsPlacedToken {
+  tokenId: string;
+  glyph: TGlyphidsGlyph;
+  location: TGlyphidsPlacedTokenLocation;
 }
 
 export type TGlyphidsRowsByPlayer = Record<string, TGlyphidsGlyph[][]>;

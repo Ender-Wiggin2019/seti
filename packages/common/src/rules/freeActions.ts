@@ -147,23 +147,7 @@ function isCapsuleAtPlanet(
   capsule: IPublicMascamitesCapsule,
   planet: EPlanet,
 ): boolean {
-  if (solarSystem.planetSpaceIds?.[planet] === capsule.spaceId) {
-    return true;
-  }
-
-  const state = solarSystem.spaceStates?.[capsule.spaceId];
-  if (!state) {
-    return false;
-  }
-
-  return (
-    state.elements?.some(
-      (element) =>
-        element.planet === planet ||
-        (planet === EPlanet.EARTH && element.type === 'EARTH'),
-    ) ??
-    (planet === EPlanet.EARTH && state.elementTypes.includes('EARTH'))
-  );
+  return solarSystem.planetSpaceIds[planet] === capsule.spaceId;
 }
 
 export function canBuyCard(player: IPublicPlayerState): boolean {

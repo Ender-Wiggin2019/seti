@@ -6,7 +6,6 @@
 
 - 页面：
   - `/debug/replay`
-  - `/debug/alien`
 - 接口：
   - `GET /debug/replay-presets`
   - `POST /debug/server/replay-session`

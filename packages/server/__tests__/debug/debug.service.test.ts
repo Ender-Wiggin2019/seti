@@ -1,12 +1,21 @@
-import { EMainAction, EPhase } from '@seti/common/types/protocol/enums';
+import {
+  EAlienType,
+  EMainAction,
+  EPhase,
+} from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import type { IPublicGameState } from '@seti/common/types/protocol/gameState';
+import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { vi } from 'vitest';
 import type { DebugSessionRegistry } from '@/debug/DebugSessionRegistry.js';
 import { DebugService } from '@/debug/debug.service.js';
+import type { IGame } from '@/engine/IGame.js';
 import type { GameManager } from '@/gateway/GameManager.js';
 import type { GameRepository } from '@/persistence/repository/GameRepository.js';
-import { serializeGame } from '@/persistence/serializer/GameSerializer.js';
+import {
+  projectGameState,
+  serializeGame,
+} from '@/persistence/serializer/GameSerializer.js';
 import { buildTestGame } from '../helpers/TestGameBuilder.js';
 
 type TMockRepository = Pick<
@@ -15,16 +24,23 @@ type TMockRepository = Pick<
 >;
 
 interface IGameManagerMock
-  extends Pick<GameManager, 'registerGame' | 'getGame' | 'getProjectedState'> {
+  extends Pick<
+    GameManager,
+    'registerGame' | 'getGame' | 'getProjectedState' | 'processInput'
+  > {
   registerGame: ReturnType<typeof vi.fn>;
   getGame: ReturnType<typeof vi.fn>;
   getProjectedState: ReturnType<typeof vi.fn>;
+  processInput: ReturnType<typeof vi.fn>;
 }
 
 function createService(repo: TMockRepository): {
   service: DebugService;
   gameManager: IGameManagerMock;
-  registry: Pick<DebugSessionRegistry, 'register'>;
+  registry: Pick<
+    DebugSessionRegistry,
+    'register' | 'isDebugGame' | 'isBotPlayer'
+  >;
 } {
   const jwtService = {
     sign: vi.fn(() => 'debug-token'),
@@ -33,9 +49,23 @@ function createService(repo: TMockRepository): {
     registerGame: vi.fn(),
     getGame: vi.fn(),
     getProjectedState: vi.fn(),
+    processInput: vi.fn(),
   } as IGameManagerMock;
   const registry = {
     register: vi.fn(),
+    isDebugGame: vi.fn((gameId: string) => {
+      const call = registry.register.mock.calls.find(
+        ([registeredGameId]) => registeredGameId === gameId,
+      );
+      return call !== undefined;
+    }),
+    isBotPlayer: vi.fn((gameId: string, playerId: string) => {
+      const call = registry.register.mock.calls.find(
+        ([registeredGameId]) => registeredGameId === gameId,
+      );
+      const botIds = call?.[2] ?? [];
+      return botIds.includes(playerId);
+    }),
   };
 
   const service = new DebugService(
@@ -155,5 +185,76 @@ describe('DebugService snapshot replay', () => {
       'viewer-1',
     );
     expect(result).toBe(state);
+  });
+
+  it('reveals a selected alien through the real discovery path', async () => {
+    const repo: TMockRepository = {
+      loadLatestSnapshot: vi.fn(),
+      loadSnapshot: vi.fn(),
+      create: vi.fn(),
+    } as TMockRepository;
+    const { service, gameManager } = createService(repo);
+    const game = buildTestGame();
+    game.hiddenAliens = [];
+    gameManager.getGame.mockResolvedValue(game);
+    gameManager.getProjectedState.mockImplementation((_gameId, viewerId) =>
+      projectGameState(game, viewerId),
+    );
+
+    const result = await service.revealAlien(
+      game.id,
+      EAlienType.GLYPHIDS,
+      'p1',
+    );
+
+    expect(result.aliens[0].board?.type).toBe('glyphids');
+    expect(result.solarSystem.glyphidsSectorTokens).toHaveLength(8);
+    expect(
+      Object.values(result.planetaryBoard.planets).filter(
+        (planet) => (planet.alienTokens ?? []).length > 0,
+      ),
+    ).toHaveLength(7);
+    expect(
+      result.techBoard.stacks.filter(
+        (stack) => (stack.alienTokens ?? []).length > 0,
+      ),
+    ).toHaveLength(12);
+  });
+});
+
+describe('DebugService server session setup', () => {
+  it('resolves bot setup tuck inputs so only the debug viewer has to answer setup', async () => {
+    const repo: TMockRepository = {
+      loadLatestSnapshot: vi.fn(),
+      loadSnapshot: vi.fn(),
+      create: vi.fn().mockResolvedValue(undefined),
+    } as TMockRepository;
+    const { service, gameManager, registry } = createService(repo);
+    let registeredGame: IGame | null = null;
+    gameManager.registerGame.mockImplementation((game) => {
+      registeredGame = game;
+      gameManager.getGame.mockResolvedValue(game);
+    });
+
+    const response = await service.createServerSession();
+
+    expect(gameManager.processInput).not.toHaveBeenCalled();
+    expect(registry.register).toHaveBeenCalledWith(
+      response.gameId,
+      response.user.id,
+      [expect.any(String)],
+    );
+    const game = registeredGame as IGame | null;
+    if (!game) {
+      throw new Error('Expected debug game to be registered');
+    }
+    const human = game.players.find((player) => player.id === response.user.id);
+    const bots = game.players.filter(
+      (player) => player.id !== response.user.id,
+    );
+    expect(human?.waitingFor?.toModel().type).toBe(EPlayerInputType.CARD);
+    expect(human?.pendingSetupTucks).toBeGreaterThan(0);
+    expect(bots.every((bot) => bot.waitingFor === undefined)).toBe(true);
+    expect(bots.every((bot) => bot.pendingSetupTucks === 0)).toBe(true);
   });
 });

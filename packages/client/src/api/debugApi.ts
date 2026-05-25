@@ -6,6 +6,7 @@ import type {
   IDebugSnapshotSessionResponse,
 } from '@/api/types';
 import type {
+  EAlienType,
   ETrace,
   IFreeActionRequest,
   IInputResponse,
@@ -190,6 +191,18 @@ export const debugApi = {
     const response = await httpClient.post<IPublicGameState>(
       `/debug/server/game/${gameId}/place-trace`,
       { playerId, traceColor, viewerId },
+    );
+    return response.data;
+  },
+
+  revealAlien: async (
+    gameId: string,
+    alienType: EAlienType,
+    viewerId?: string,
+  ): Promise<IPublicGameState> => {
+    const response = await httpClient.post<IPublicGameState>(
+      `/debug/server/game/${gameId}/reveal-alien`,
+      { alienType, viewerId },
     );
     return response.data;
   },

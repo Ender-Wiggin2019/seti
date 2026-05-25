@@ -1,6 +1,12 @@
+import { PLANETARY_PLANETS } from '@seti/common/constant/boardLayout';
 import { AMOEBA_ALIEN_CARD_IDS } from '@seti/common/constant/spaceAgencyAliens';
 import { EAlienIcon, ETrace } from '@seti/common/types/element';
-import { EAlienType } from '@seti/common/types/protocol/enums';
+import { EAlienType, EPlanet } from '@seti/common/types/protocol/enums';
+import {
+  ALL_TECH_IDS,
+  type ETechId,
+  TECH_STACKS_COUNT,
+} from '@seti/common/types/tech';
 import { PlayCardAction } from '@/engine/actions/PlayCard.js';
 import {
   isAmoebaAlienBoard,
@@ -9,6 +15,9 @@ import {
 } from '@/engine/alien/AlienBoard.js';
 import { AlienRegistry } from '@/engine/alien/AlienRegistry.js';
 import { AlienState } from '@/engine/alien/AlienState.js';
+import { LandProbeEffect } from '@/engine/effects/probe/LandProbeEffect.js';
+import { SectorFulfillmentEffect } from '@/engine/effects/scan/SectorFulfillmentEffect.js';
+import { ResearchTechEffect } from '@/engine/effects/tech/ResearchTechEffect.js';
 import { FreeActionCornerFreeAction } from '@/engine/freeActions/FreeActionCorner.js';
 import { Game } from '@/engine/Game.js';
 import { resolveSetupTucks } from '../../../helpers/TestGameBuilder.js';
@@ -22,6 +31,48 @@ function createGame(seed: string): Game {
   const game = Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
   resolveSetupTucks(game);
   return game;
+}
+
+type TGlyphidsPlacedTokenForTest = {
+  tokenId: string;
+  glyph: EAlienIcon;
+  location:
+    | { type: 'planet'; planet: EPlanet }
+    | { type: 'sector'; sectorId: string; sectorIndex: number }
+    | { type: 'tech'; techId: ETechId };
+};
+
+type TGlyphidsPlanetTokenForTest = TGlyphidsPlacedTokenForTest & {
+  location: { type: 'planet'; planet: EPlanet };
+};
+
+type TGlyphidsSectorTokenForTest = TGlyphidsPlacedTokenForTest & {
+  location: { type: 'sector'; sectorId: string; sectorIndex: number };
+};
+
+type TGlyphidsTechTokenForTest = TGlyphidsPlacedTokenForTest & {
+  location: { type: 'tech'; techId: ETechId };
+};
+
+function getGlyphidsPlacedTokensForTest(
+  board: unknown,
+): TGlyphidsPlacedTokenForTest[] {
+  return (
+    (board as { placedTokens?: TGlyphidsPlacedTokenForTest[] }).placedTokens ??
+    []
+  );
+}
+
+function placeProbeOnPlanet(
+  game: Game,
+  playerId: string,
+  planet: EPlanet,
+): void {
+  const space = game.solarSystem?.getSpacesOnPlanet(planet)[0];
+  if (!space) {
+    throw new Error(`expected solar space for ${planet}`);
+  }
+  game.solarSystem?.placeProbe(playerId, space.id);
 }
 
 describe('Space Agency alien plugins', () => {
@@ -80,20 +131,147 @@ describe('Space Agency alien plugins', () => {
       { position: 8, glyph: EAlienIcon.GLYPH_PURPLE },
       { position: 11, glyph: EAlienIcon.GLYPH_BLUE },
     ]);
-    expect(board.glyphTokenBank).toHaveLength(29);
-    expect(board.glyphTokenBank.slice(0, 4)).toEqual([
-      EAlienIcon.GLYPH_BLUE,
-      EAlienIcon.GLYPH_BLUE,
-      EAlienIcon.GLYPH_BLUE,
-      EAlienIcon.GLYPH_BLUE,
-    ]);
-    expect(board.glyphTokenBank.slice(-5)).toEqual([
-      EAlienIcon.GLYPH_GRAY,
-      EAlienIcon.GLYPH_GRAY,
-      EAlienIcon.GLYPH_GRAY,
+    expect(board.glyphTokenBank).toEqual([
       EAlienIcon.GLYPH_GRAY,
       EAlienIcon.GLYPH_GRAY,
     ]);
+  });
+
+  it('places Glyphids tokens on board spaces, planet groups, sectors, and eligible tech stacks on discovery', () => {
+    const game = createGame('sa-glyphids-full-token-setup');
+    game.alienState = AlienState.createFromHiddenAliens([EAlienType.GLYPHIDS]);
+    const board = game.alienState.getBoardByType(EAlienType.GLYPHIDS);
+    if (!isGlyphidsAlienBoard(board)) {
+      throw new Error('expected Glyphids board');
+    }
+    game.random.shuffle = <TItem>(items: readonly TItem[]): TItem[] => [
+      ...items,
+    ];
+
+    game.alienState.discoverAlien(board, game);
+
+    const placedTokens = getGlyphidsPlacedTokensForTest(board);
+    const planetTokens = placedTokens.filter(
+      (token): token is TGlyphidsPlanetTokenForTest =>
+        token.location.type === 'planet',
+    );
+    const sectorTokens = placedTokens.filter(
+      (token): token is TGlyphidsSectorTokenForTest =>
+        token.location.type === 'sector',
+    );
+    const techTokens = placedTokens.filter(
+      (token): token is TGlyphidsTechTokenForTest =>
+        token.location.type === 'tech',
+    );
+
+    expect(board.boardTokens).toHaveLength(6);
+    expect(planetTokens).toHaveLength(PLANETARY_PLANETS.length);
+    expect(new Set(planetTokens.map((token) => token.location.planet))).toEqual(
+      new Set(PLANETARY_PLANETS),
+    );
+    expect(sectorTokens).toHaveLength(game.sectors.length);
+    expect(
+      new Set(sectorTokens.map((token) => token.location.sectorIndex)),
+    ).toEqual(new Set(game.sectors.map((_, index) => index)));
+    expect(techTokens).toHaveLength(TECH_STACKS_COUNT);
+    expect(new Set(techTokens.map((token) => token.location.techId))).toEqual(
+      new Set(ALL_TECH_IDS),
+    );
+    expect(board.glyphTokenBank).toHaveLength(2);
+  });
+
+  it('lets any orbit or moon landing take the shared Glyphids planet-group token once', () => {
+    const game = createGame('sa-glyphids-planet-group-pickup');
+    game.alienState = AlienState.createFromHiddenAliens([EAlienType.GLYPHIDS]);
+    const board = game.alienState.getBoardByType(EAlienType.GLYPHIDS);
+    if (!isGlyphidsAlienBoard(board)) {
+      throw new Error('expected Glyphids board');
+    }
+    game.random.shuffle = <TItem>(items: readonly TItem[]): TItem[] => [
+      ...items,
+    ];
+    game.alienState.discoverAlien(board, game);
+    const player = game.players[0];
+    const otherPlayer = game.players[1];
+    placeProbeOnPlanet(game, player.id, EPlanet.JUPITER);
+    placeProbeOnPlanet(game, otherPlayer.id, EPlanet.JUPITER);
+
+    LandProbeEffect.execute(player, game, EPlanet.JUPITER, {
+      isMoon: true,
+      moonId: 'jupiter-europa',
+      allowMoons: true,
+    });
+
+    const playerRows = board.glyphRows[player.id] ?? [];
+    expect(playerRows.flat()).toHaveLength(1);
+    expect(
+      getGlyphidsPlacedTokensForTest(board).some(
+        (token) =>
+          token.location.type === 'planet' &&
+          token.location.planet === EPlanet.JUPITER,
+      ),
+    ).toBe(false);
+
+    LandProbeEffect.execute(otherPlayer, game, EPlanet.JUPITER, {
+      isMoon: true,
+      moonId: 'jupiter-ganymede',
+      allowMoons: true,
+    });
+
+    expect(board.glyphRows[otherPlayer.id] ?? []).toEqual([]);
+  });
+
+  it('lets sector winners and tech researchers take their placed Glyphids tokens', () => {
+    const game = createGame('sa-glyphids-sector-tech-pickup');
+    game.alienState = AlienState.createFromHiddenAliens([EAlienType.GLYPHIDS]);
+    const board = game.alienState.getBoardByType(EAlienType.GLYPHIDS);
+    if (!isGlyphidsAlienBoard(board)) {
+      throw new Error('expected Glyphids board');
+    }
+    game.random.shuffle = <TItem>(items: readonly TItem[]): TItem[] => [
+      ...items,
+    ];
+    game.alienState.discoverAlien(board, game);
+    const player = game.players[0];
+    const sectorToken = getGlyphidsPlacedTokensForTest(board).find(
+      (token) => token.location.type === 'sector',
+    );
+    if (!sectorToken || sectorToken.location.type !== 'sector') {
+      throw new Error('expected sector token');
+    }
+    const sector = game.sectors[sectorToken.location.sectorIndex];
+    for (let index = 0; index < sector.dataSlotCapacity; index += 1) {
+      sector.markSignal(player.id);
+    }
+
+    SectorFulfillmentEffect.checkAll(game);
+
+    expect((board.glyphRows[player.id] ?? []).flat()).toContain(
+      sectorToken.glyph,
+    );
+    expect(
+      getGlyphidsPlacedTokensForTest(board).some(
+        (token) => token.tokenId === sectorToken.tokenId,
+      ),
+    ).toBe(false);
+
+    const techToken = getGlyphidsPlacedTokensForTest(board).find(
+      (token) => token.location.type === 'tech',
+    );
+    if (!techToken || techToken.location.type !== 'tech') {
+      throw new Error('expected tech token');
+    }
+
+    ResearchTechEffect.acquireTech(player, game, techToken.location.techId);
+
+    expect((board.glyphRows[player.id] ?? []).flat()).toContain(
+      techToken.glyph,
+    );
+    expect(
+      getGlyphidsPlacedTokensForTest(board).some(
+        (token) => token.tokenId === techToken.tokenId,
+      ),
+    ).toBe(false);
   });
 
   it('initializes Glyphids translation tables with randomized sides on discovery', () => {
@@ -378,6 +556,14 @@ describe('Space Agency alien plugins', () => {
     }
 
     const discoverySlots = board.getDiscoverySlots();
+    const firstPlayerStartingAmoebaCards = firstPlayer.hand.filter(
+      (cardId): cardId is string =>
+        typeof cardId === 'string' && AMOEBA_ALIEN_CARD_IDS.includes(cardId),
+    ).length;
+    const secondPlayerStartingAmoebaCards = secondPlayer.hand.filter(
+      (cardId): cardId is string =>
+        typeof cardId === 'string' && AMOEBA_ALIEN_CARD_IDS.includes(cardId),
+    ).length;
     board.placeTrace(
       discoverySlots[0],
       { playerId: firstPlayer.id },
@@ -400,14 +586,14 @@ describe('Space Agency alien plugins', () => {
       firstPlayer.hand.filter(
         (cardId): cardId is string =>
           typeof cardId === 'string' && AMOEBA_ALIEN_CARD_IDS.includes(cardId),
-      ),
-    ).toHaveLength(2);
+      ).length - firstPlayerStartingAmoebaCards,
+    ).toBe(2);
     expect(
       secondPlayer.hand.filter(
         (cardId): cardId is string =>
           typeof cardId === 'string' && AMOEBA_ALIEN_CARD_IDS.includes(cardId),
-      ),
-    ).toHaveLength(1);
+      ).length - secondPlayerStartingAmoebaCards,
+    ).toBe(1);
   });
 
   it('reports Amoeba organelles in activation order for a trace-color section', () => {

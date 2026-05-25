@@ -201,6 +201,7 @@ export class ResearchTechEffect {
     if (takeResult.tile.tech.onAcquire) {
       takeResult.tile.tech.onAcquire(player);
     }
+    game.alienState?.onTechAcquired(game, player, techId);
 
     const tileBonuses = buildTechTileBonuses(techId, takeResult.tile.bonus);
 

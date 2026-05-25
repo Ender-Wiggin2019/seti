@@ -397,12 +397,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return null;
     }
 
-    const botProbeSpaces = state.solarSystem.probes
-      .filter((probe) => probe.playerId === botPlayerId)
-      .map((probe) => probe.spaceId);
-    const shuffledSpaces = this.shuffle(botProbeSpaces);
+    const botProbes = state.solarSystem.probes.filter(
+      (probe) => probe.playerId === botPlayerId && probe.probeId,
+    );
+    const shuffledProbes = this.shuffle(botProbes);
 
-    for (const fromSpaceId of shuffledSpaces) {
+    for (const probe of shuffledProbes) {
+      const fromSpaceId = probe.spaceId;
       const neighbors = this.shuffle(
         state.solarSystem.adjacency[fromSpaceId] ?? [],
       );
@@ -411,6 +412,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           return await this.gameManager.processFreeAction(gameId, botPlayerId, {
             type: EFreeAction.MOVEMENT,
             path: [fromSpaceId, toSpaceId],
+            target: { type: 'probe', id: probe.probeId as string },
           });
         } catch {
           // Try another random path.

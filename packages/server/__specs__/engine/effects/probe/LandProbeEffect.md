@@ -4,7 +4,7 @@
 - 源文件：`packages/server/src/engine/effects/probe/LandProbeEffect.ts`
 - 对应单测：`packages/server/__tests__/engine/effects/probe/LandProbeEffect.test.ts`
 - 模块职责：规则效果执行器（探测器、扫描、科技、收入等）
-- 关键导出：ILandOptions、ILandResult、ILandProbeEffectOptions、ILandProbeEffectResult、LandProbeEffect
+- 关键导出：ILandOptions、ILandResult、LandProbeEffect
 
 ## 2、单测测试点，以及边界场景处理
 ### 2.1 核心测试点

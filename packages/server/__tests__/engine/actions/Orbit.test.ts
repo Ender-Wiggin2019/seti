@@ -5,6 +5,7 @@ import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { OrbitAction } from '@/engine/actions/Orbit.js';
 import { Game } from '@/engine/Game.js';
 import {
+  chooseOrbitMainActionPlanet,
   resolveAllInputsDefault,
   resolveSetupTucks,
   skipSetupTucks,
@@ -48,10 +49,7 @@ describe('Orbit action', () => {
     expect(OrbitAction.canExecute(player, game, EPlanet.EARTH)).toBe(false);
     expect(OrbitAction.canExecute(player, game, EPlanet.MARS)).toBe(false);
     expect(() =>
-      game.processMainAction(player.id, {
-        type: EMainAction.ORBIT,
-        payload: { planet: EPlanet.EARTH },
-      }),
+      game.processMainAction(player.id, { type: EMainAction.ORBIT }),
     ).toThrowError(
       expect.objectContaining({
         code: EErrorCode.INVALID_ACTION,
@@ -77,10 +75,7 @@ describe('Orbit action', () => {
     const creditsBefore = player.resources.credits;
     const energyBefore = player.resources.energy;
 
-    game.processMainAction(player.id, {
-      type: EMainAction.ORBIT,
-      payload: { planet: EPlanet.MARS },
-    });
+    chooseOrbitMainActionPlanet(game, player, EPlanet.MARS);
 
     // Action cost paid (1 credit + 1 energy).
     expect(player.resources.credits).toBe(creditsBefore - 1);
@@ -123,16 +118,13 @@ describe('Orbit action', () => {
     );
     skipSetupTucks(game);
     const player = game.players[0];
-    const selectedCardId = 'mars-row-choice';
+    const selectedCardId = '128';
     placeProbeOnPlanet(game, player.id, EPlanet.MARS, 1);
     player.probesInSpace = 1;
     game.cardRow = [selectedCardId];
-    game.mainDeck.addToTop('mars-row-replacement');
+    game.mainDeck.addToTop('136');
 
-    game.processMainAction(player.id, {
-      type: EMainAction.ORBIT,
-      payload: { planet: EPlanet.MARS },
-    });
+    chooseOrbitMainActionPlanet(game, player, EPlanet.MARS);
 
     const optionModel = player.waitingFor?.toModel();
     expect(optionModel?.type).toBe(EPlayerInputType.OPTION);
@@ -173,17 +165,11 @@ describe('Orbit action', () => {
     p1.probesInSpace = 1;
     p2.probesInSpace = 1;
 
-    game.processMainAction(p1.id, {
-      type: EMainAction.ORBIT,
-      payload: { planet: EPlanet.VENUS },
-    });
+    chooseOrbitMainActionPlanet(game, p1, EPlanet.VENUS);
     resolveAllInputsDefault(game, p1);
     game.processEndTurn(p1.id);
 
-    game.processMainAction(p2.id, {
-      type: EMainAction.ORBIT,
-      payload: { planet: EPlanet.VENUS },
-    });
+    chooseOrbitMainActionPlanet(game, p2, EPlanet.VENUS);
     resolveAllInputsDefault(game, p2);
     game.processEndTurn(p2.id);
 
@@ -200,10 +186,7 @@ describe('Orbit action', () => {
     const player = game.players[0];
 
     expect(() =>
-      game.processMainAction(player.id, {
-        type: EMainAction.ORBIT,
-        payload: { planet: EPlanet.JUPITER },
-      }),
+      game.processMainAction(player.id, { type: EMainAction.ORBIT }),
     ).toThrowError(
       expect.objectContaining({
         code: EErrorCode.INVALID_ACTION,
@@ -224,10 +207,7 @@ describe('Orbit action', () => {
 
     expect(OrbitAction.canExecute(player, game, EPlanet.MARS)).toBe(true);
     expect(() =>
-      game.processMainAction(player.id, {
-        type: EMainAction.ORBIT,
-        payload: { planet: EPlanet.MARS },
-      }),
+      game.processMainAction(player.id, { type: EMainAction.ORBIT }),
     ).toThrowError(
       expect.objectContaining({
         code: EErrorCode.NOT_YOUR_TURN,
@@ -279,10 +259,7 @@ describe('Orbit action', () => {
       const energyBefore = player.resources.energy;
       const tuckedCardsBefore = player.tuckedIncomeCards.length;
 
-      game.processMainAction(player.id, {
-        type: EMainAction.ORBIT,
-        payload: { planet },
-      });
+      chooseOrbitMainActionPlanet(game, player, planet);
 
       // Action cost paid up-front (before any reward applies).
       expect(player.resources.credits).toBe(creditsBefore - 1);
@@ -324,10 +301,7 @@ describe('Orbit action', () => {
     const tuckedCardsBefore = player.tuckedIncomeCards.length;
     const handBefore = player.hand.length;
 
-    game.processMainAction(player.id, {
-      type: EMainAction.ORBIT,
-      payload: { planet: EPlanet.VENUS },
-    });
+    chooseOrbitMainActionPlanet(game, player, EPlanet.VENUS);
 
     expect(player.score).toBe(
       1 +
@@ -362,6 +336,28 @@ describe('Orbit action', () => {
   });
 
   describe('picker-driven main-action flow', () => {
+    it('rejects direct planet payloads instead of executing legacy orbit', () => {
+      const game = Game.create(
+        TEST_PLAYERS,
+        { playerCount: 2 },
+        'orbit-direct-planet-payload-rejected',
+      );
+      skipSetupTucks(game);
+      const player = game.players[0];
+      placeProbeOnPlanet(game, player.id, EPlanet.MARS, 1);
+      player.probesInSpace = 1;
+
+      expect(() =>
+        game.processMainAction(player.id, {
+          type: EMainAction.ORBIT,
+          payload: { planet: EPlanet.MARS },
+        }),
+      ).toThrow('Action payload.planet is not supported for ORBIT');
+      expect(
+        game.planetaryBoard?.planets.get(EPlanet.MARS)?.orbitSlots,
+      ).toEqual([]);
+    });
+
     it('returns a planet picker SelectOption when no planet payload is provided', () => {
       const game = Game.create(
         TEST_PLAYERS,

@@ -130,5 +130,23 @@ describe('ScanEffectUtils', () => {
       ss.rotate(0);
       expect(getSectorIndexByPlanet(ss, EPlanet.EARTH)).toBe(4);
     });
+
+    it('uses the current sector index API without scanning planet spaces', () => {
+      const calls: EPlanet[] = [];
+      const solarSystem = {
+        getSectorIndexOfPlanet: (planet: EPlanet) => {
+          calls.push(planet);
+          return 6;
+        },
+        getSpacesOnPlanet: () => {
+          throw new Error('legacy planet-space scan should not run');
+        },
+      };
+
+      expect(getSectorIndexByPlanet(solarSystem as never, EPlanet.MARS)).toBe(
+        6,
+      );
+      expect(calls).toEqual([EPlanet.MARS]);
+    });
   });
 });

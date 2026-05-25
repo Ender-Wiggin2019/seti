@@ -13,7 +13,6 @@ export interface IMovablePieceRuntime {
   playerId: string;
   spaceId: string;
   target: TMovementTarget;
-  legacyResult?: { capsuleId?: string };
   moveStep(
     game: IGame,
     fromSpaceId: string,
@@ -68,7 +67,6 @@ class MascamitesCapsuleMovementPiece implements IMovablePieceRuntime {
   public readonly pieceId: string;
   public readonly playerId: string;
   public readonly target: TMovementTarget;
-  public readonly legacyResult: { capsuleId: string };
 
   public constructor(
     private readonly capsule: IMascamitesCapsuleLike,
@@ -77,7 +75,6 @@ class MascamitesCapsuleMovementPiece implements IMovablePieceRuntime {
     this.pieceId = capsule.capsuleId;
     this.playerId = capsule.ownerId;
     this.target = { type: 'mascamites-capsule', id: capsule.capsuleId };
-    this.legacyResult = { capsuleId: capsule.capsuleId };
   }
 
   public moveStep(

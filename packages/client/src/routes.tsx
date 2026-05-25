@@ -107,12 +107,6 @@ const gameDebugRoute = createRoute({
     ),
 });
 
-const debugAlienRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/debug/alien',
-  component: () => <Navigate to='/debug/replay' replace />,
-});
-
 const debugReplayRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/debug/replay',
@@ -168,7 +162,6 @@ const routeTree = rootRoute.addChildren([
   gameRoute,
   spectateRoute,
   gameDebugRoute,
-  debugAlienRoute,
   debugReplayRoute,
   solarDebugRoute,
   solarSystemCompareDebugRoute,

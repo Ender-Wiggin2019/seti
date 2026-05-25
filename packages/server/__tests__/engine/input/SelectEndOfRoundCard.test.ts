@@ -3,6 +3,21 @@ import { vi } from 'vitest';
 import { SelectEndOfRoundCard } from '@/engine/input/SelectEndOfRoundCard.js';
 
 describe('SelectEndOfRoundCard', () => {
+  it('projects string card options to full card models', () => {
+    const input = new SelectEndOfRoundCard(
+      { id: 'p1' } as never,
+      ['128'],
+      () => undefined,
+    );
+
+    expect(input.toModel().cards[0]).toMatchObject({
+      id: '128',
+      name: expect.any(String),
+      price: expect.any(Number),
+      effects: expect.any(Array),
+    });
+  });
+
   it('calls onSelect with selected card id', () => {
     const onSelect = vi.fn(() => undefined);
     const input = new SelectEndOfRoundCard(

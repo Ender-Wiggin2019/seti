@@ -1,3 +1,4 @@
+import { DescRender } from '@seti/cards';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 import type { IPublicTechStack } from '@/types/re-exports';
@@ -88,6 +89,25 @@ export function TechStack({
                 : t('client.tech_stack.taken'),
             })}
           </span>
+          {stack.alienTokens && stack.alienTokens.length > 0 ? (
+            <div className='flex flex-wrap gap-1'>
+              {stack.alienTokens.map((token) => (
+                <span
+                  key={token.tokenId}
+                  data-testid={`tech-stack-alien-token-${token.tokenId}`}
+                  className='inline-flex h-6 w-6 items-center justify-center rounded-full border border-lime-300/80 bg-surface-950/70'
+                  aria-label={`${token.glyph} glyph token`}
+                  title={`${token.glyph} glyph token`}
+                >
+                  <DescRender
+                    desc={`{${token.glyph}[sm]}`}
+                    size='desc-mini'
+                    smartSize
+                  />
+                </span>
+              ))}
+            </div>
+          ) : null}
           <div className='flex min-h-7 flex-wrap items-center gap-1'>
             {(stack.topTileBonuses ?? []).map((bonus, index) => {
               const meta = getTechBonusPresentation(bonus);

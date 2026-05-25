@@ -21,6 +21,7 @@ import type {
   IDebugSnapshotSessionRequest,
   IDebugSnapshotSessionResponse,
 } from '@seti/common/types/protocol/debug';
+import { EAlienType } from '@seti/common/types/protocol/enums';
 import type { IPublicGameState } from '@seti/common/types/protocol/gameState';
 import type { IPlayerInputModel } from '@seti/common/types/protocol/playerInput';
 import { Public } from '@/auth/public.decorator.js';
@@ -233,6 +234,23 @@ export class DebugController {
       body.playerId,
       body.traceColor,
       body.viewerId ?? body.playerId,
+    );
+  }
+
+  @Public()
+  @Post('server/game/:gameId/reveal-alien')
+  async revealAlien(
+    @Param('gameId') gameId: string,
+    @Body()
+    body: {
+      alienType: EAlienType | string | number;
+      viewerId?: string;
+    },
+  ): Promise<IPublicGameState> {
+    return this.debugService.revealAlien(
+      gameId,
+      body.alienType,
+      body.viewerId ?? '',
     );
   }
 }

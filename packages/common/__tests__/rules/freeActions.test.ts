@@ -115,6 +115,9 @@ function createGameState(
       discs: [],
       alienTokens: [],
       spaceStates: {},
+      planetSpaceIds: {},
+      sectorSpaceIds: {},
+      probeSpaceById: {},
     },
     sectors: [],
     planetaryBoard: { planets: {} },
@@ -126,6 +129,8 @@ function createGameState(
     milestones: { goldMilestones: [], neutralMilestones: [] },
     goldScoringTiles: [],
     ...overrides,
+    roundIndex: overrides?.roundIndex ?? 1,
+    maxRounds: overrides?.maxRounds ?? 5,
     undoAllowed: overrides?.undoAllowed ?? false,
     canUndo: overrides?.canUndo ?? false,
     turnIndex: overrides?.turnIndex ?? 0,
@@ -186,6 +191,9 @@ function createSolarSystem(): IPublicSolarSystemState {
         cellInSector: 0,
       },
     },
+    planetSpaceIds: {},
+    sectorSpaceIds: { 0: ['s0'], 1: ['s1'], 2: ['s2'], 3: ['s3'] },
+    probeSpaceById: {},
   };
 }
 

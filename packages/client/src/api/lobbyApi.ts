@@ -1,7 +1,6 @@
 import { SOLO_DIFFICULTIES } from '@seti/common/constant/solo';
 import {
   DEFAULT_ALIEN_MODULES_ENABLED,
-  DEFAULT_GAME_OPTIONS,
   type IGameOptions,
   type IGameOptionsPatch,
   type TAlienModulesEnabled,
@@ -28,10 +27,10 @@ interface IServerRoom {
   name: string;
   status: IRoom['status'];
   hostUserId: string | null;
-  playerCount?: number;
-  currentPlayers?: IServerRoomPlayer[];
-  options?: IGameOptions;
-  createdAt?: string | Date;
+  playerCount: number;
+  currentPlayers: IServerRoomPlayer[];
+  options: IGameOptions;
+  createdAt: string | Date;
 }
 
 function normalizeAlienModuleFlags(raw: unknown): TAlienModulesEnabled {
@@ -46,29 +45,19 @@ function normalizeAlienModuleFlags(raw: unknown): TAlienModulesEnabled {
 }
 
 function normalizeOptions(room: IServerRoom): IApiGameOptions {
-  const raw = (room.options ?? {}) as Record<string, unknown>;
+  const raw = room.options;
   const rawDifficulty = raw.soloDifficulty as TSoloDifficulty | undefined;
   return {
-    playerCount:
-      (raw.playerCount as number | undefined) ??
-      room.playerCount ??
-      Math.max((room.currentPlayers ?? []).length, 2),
+    playerCount: raw.playerCount,
     isSoloMode: raw.isSoloMode === true,
     soloDifficulty: SOLO_DIFFICULTIES.includes(rawDifficulty ?? 1)
       ? (rawDifficulty ?? 1)
       : 1,
     alienModulesEnabled: normalizeAlienModuleFlags(raw.alienModulesEnabled),
-    undoAllowed: (raw.undoAllowed as boolean | undefined) ?? true,
-    timerPerTurn:
-      (raw.timerPerTurn as number | undefined) ??
-      (raw.turnTimerSeconds as number | undefined) ??
-      0,
-    expansions:
-      (raw.expansions as IGameOptions['expansions'] | undefined) ??
-      DEFAULT_GAME_OPTIONS.expansions,
-    spaceAgencyOptions: raw.spaceAgencyOptions as
-      | IGameOptions['spaceAgencyOptions']
-      | undefined,
+    undoAllowed: raw.undoAllowed,
+    timerPerTurn: raw.timerPerTurn,
+    expansions: raw.expansions,
+    spaceAgencyOptions: raw.spaceAgencyOptions,
   };
 }
 
@@ -80,7 +69,7 @@ function toIsoString(value: string | Date | undefined): string {
 }
 
 function normalizeRoom(room: IServerRoom): IRoom {
-  const players = (room.currentPlayers ?? []).map((player) => ({
+  const players = room.currentPlayers.map((player) => ({
     id: player.userId,
     name: player.name,
     seatIndex: player.seatIndex,

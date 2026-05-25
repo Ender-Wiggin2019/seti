@@ -17,7 +17,7 @@ describe('GameOverDialog', () => {
     });
     render(<GameOverDialog />);
 
-    expect(screen.queryByText('Game Over')).not.toBeInTheDocument();
+    expect(screen.queryByText('Mission Complete')).not.toBeInTheDocument();
   });
 
   it('renders scoring panel in game over phase', () => {
@@ -26,7 +26,7 @@ describe('GameOverDialog', () => {
     });
     render(<GameOverDialog />);
 
-    expect(screen.getByText('Game Over')).toBeInTheDocument();
+    expect(screen.getByText('Mission Complete')).toBeInTheDocument();
     expect(screen.getByText(/Winner:/)).toBeInTheDocument();
     expect(screen.getByText(/Detailed scoring breakdown/)).toBeInTheDocument();
   });
@@ -88,5 +88,68 @@ describe('GameOverDialog', () => {
       'mission A',
     );
     expect(screen.getByTestId('gold-tile-mission')).toHaveTextContent('3');
+  });
+
+  it('ignores legacy scoring fields when current scoring fields are present', () => {
+    const gameState = createMockGameState({
+      phase: EPhase.GAME_OVER,
+      players: [
+        createMockGameState().players[0],
+        createMockGameState().players[1],
+      ].map((player) =>
+        player.playerId === 'player-1'
+          ? { ...player, score: 12 }
+          : { ...player, score: 8 },
+      ),
+      finalScoringResult: {
+        scores: { 'player-1': 12, 'player-2': 8 },
+        breakdown: {
+          'player-1': {
+            endGameCards: 1,
+            goldTiles: 0,
+            alienBonus: 0,
+            alienPenalty: 0,
+            totalAdded: 1,
+            finalScore: 12,
+          },
+          'player-2': {
+            endGameCards: 0,
+            goldTiles: 0,
+            alienBonus: 0,
+            alienPenalty: 0,
+            totalAdded: 0,
+            finalScore: 8,
+          },
+        },
+        winnerIds: ['player-1'],
+      },
+      goldScoringTiles: [
+        {
+          id: 'current',
+          side: 'B',
+          slotValues: [5, 4],
+          claims: [],
+        },
+      ],
+    }) as ReturnType<typeof createMockGameState> & {
+      scoreBreakdown: Record<string, { total: number; cards: number }>;
+      goldTiles: Array<{ id: string; label: string; remainingSlots: number }>;
+    };
+    gameState.scoreBreakdown = {
+      'player-1': { total: 99, cards: 88 },
+    };
+    gameState.goldTiles = [
+      { id: 'legacy', label: 'legacy A', remainingSlots: 9 },
+    ];
+    mockUseGameContext.mockReturnValue({ gameState });
+
+    render(<GameOverDialog />);
+
+    expect(screen.getByText('12 pts')).toBeInTheDocument();
+    expect(screen.queryByText('99 pts')).not.toBeInTheDocument();
+    expect(screen.getByTestId('gold-tile-current')).toHaveTextContent(
+      'current B',
+    );
+    expect(screen.queryByTestId('gold-tile-legacy')).not.toBeInTheDocument();
   });
 });

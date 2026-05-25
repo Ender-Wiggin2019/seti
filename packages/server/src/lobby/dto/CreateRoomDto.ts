@@ -4,7 +4,6 @@ import {
   IsArray,
   IsBoolean,
   IsEnum,
-  IsIn,
   IsInt,
   IsNotEmpty,
   IsObject,
@@ -44,10 +43,6 @@ export class CreateRoomOptionsDto {
   playerCount!: number;
 
   @IsOptional()
-  @IsString()
-  scenarioPreset?: string;
-
-  @IsOptional()
   @IsObject()
   alienModulesEnabled?: Partial<TAlienModulesEnabled>;
 
@@ -59,10 +54,6 @@ export class CreateRoomOptionsDto {
   @IsInt()
   @Min(0)
   timerPerTurn?: number;
-
-  @IsOptional()
-  @IsIn([0, 120, 240, 300, 600])
-  turnTimerSeconds?: number;
 
   @IsOptional()
   @IsArray()
@@ -100,10 +91,6 @@ export class CreateRoomDto {
   @IsOptional()
   @IsString()
   seed?: string;
-
-  @IsOptional()
-  @IsString()
-  scenarioPreset?: string;
 
   @IsOptional()
   @IsObject()

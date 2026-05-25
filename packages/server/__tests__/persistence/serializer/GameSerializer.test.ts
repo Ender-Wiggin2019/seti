@@ -3,7 +3,12 @@ import {
   getAvailableFreeActions,
   getAvailableMainActions,
 } from '@seti/common/rules';
-import { EAlienIcon, EResource, ESector } from '@seti/common/types/element';
+import {
+  EAlienIcon,
+  EResource,
+  ESector,
+  ETech,
+} from '@seti/common/types/element';
 import { EOrganizationId } from '@seti/common/types/organization';
 import {
   EAlienType,
@@ -94,6 +99,28 @@ describe('GameSerializer', () => {
     expect(dto.mainDeck.drawPile.length + dto.mainDeck.discardPile.length).toBe(
       game.mainDeck.totalSize,
     );
+  });
+
+  it('serializes tech tiles with canonical bonuses only', () => {
+    const game = createTestGame();
+    const dto = serializeGame(game, 7);
+    const tile = dto.techBoard?.stacks[0]?.tiles[0];
+
+    expect(tile?.bonuses).toEqual(expect.any(Array));
+    expect('bonus' in (tile ?? {})).toBe(false);
+  });
+
+  it('serializes signal tokens only in the canonical resources shape', () => {
+    const game = createTestGame();
+    const dto = serializeGame(game, 7);
+    const playerDto = dto.players[0] as (typeof dto.players)[number] & {
+      resourceByType?: unknown;
+    };
+
+    expect(playerDto.resources.signalTokens).toBe(
+      game.players[0].resources.signalTokens,
+    );
+    expect('resourceByType' in playerDto).toBe(false);
   });
 
   it('projects round counters for clients', () => {
@@ -367,6 +394,35 @@ describe('GameSerializer', () => {
     const p2Self = p2View.players.find((player) => player.playerId === 'p2');
     expect(Array.isArray(p2Self?.hand)).toBe(true);
     expect(p2View.solarSystem.spaces.length).toBeGreaterThan(0);
+  });
+
+  it('projects public card zones as full card objects instead of id-only shapes', () => {
+    const game = createTestGame();
+    const player = game.players[0];
+    game.cardRow = ['128'];
+    player.hand = ['128'];
+    player.tuckedIncomeCards = ['128'];
+    player.playedMissions = ['128'];
+    player.playedCards = ['128'];
+    player.endGameCards = ['128'];
+
+    const ownView = projectGameState(game, player.id);
+    const ownPlayer = ownView.players.find(
+      (candidate) => candidate.playerId === player.id,
+    );
+
+    expect(ownView.cardRow[0]).toMatchObject({
+      id: '128',
+      name: expect.any(String),
+      price: expect.any(Number),
+      income: expect.any(String),
+      effects: expect.any(Array),
+    });
+    expect(ownPlayer?.hand?.[0]).toMatchObject(ownView.cardRow[0]);
+    expect(ownPlayer?.tuckedIncomeCards?.[0]).toMatchObject(ownView.cardRow[0]);
+    expect(ownPlayer?.playedMissions?.[0]).toMatchObject(ownView.cardRow[0]);
+    expect(ownPlayer?.playedCards?.[0]).toMatchObject(ownView.cardRow[0]);
+    expect(ownPlayer?.endGameCards?.[0]).toMatchObject(ownView.cardRow[0]);
   });
 
   it('does not project hidden end-of-round stack contents', () => {
@@ -711,6 +767,23 @@ describe('GameSerializer', () => {
       { position: 0, glyph: EAlienIcon.GLYPH_RED },
       { position: 3, glyph: EAlienIcon.GLYPH_BLUE },
     ];
+    board.placedTokens = [
+      {
+        tokenId: 'glyphids-token|planet|mars',
+        glyph: EAlienIcon.GLYPH_GREEN,
+        location: { type: 'planet', planet: EPlanet.MARS },
+      },
+      {
+        tokenId: 'glyphids-token|sector|sector-2',
+        glyph: EAlienIcon.GLYPH_YELLOW,
+        location: { type: 'sector', sectorId: 'sector-2', sectorIndex: 2 },
+      },
+      {
+        tokenId: 'glyphids-token|tech|scan-0',
+        glyph: EAlienIcon.GLYPH_PURPLE,
+        location: { type: 'tech', techId: ETechId.SCAN_EARTH_LOOK },
+      },
+    ];
     board.translationRows = [
       {
         rowId: 'glyphids-translation-level-1',
@@ -731,6 +804,9 @@ describe('GameSerializer', () => {
       { position: 0, glyph: EAlienIcon.GLYPH_RED },
       { position: 3, glyph: EAlienIcon.GLYPH_BLUE },
     ]);
+    expect(dto.alienState.aliens[0].glyphidsPlacedTokens).toEqual(
+      board.placedTokens,
+    );
     if (!publicAlien.board || publicAlien.board.type !== 'glyphids') {
       throw new Error('expected Glyphids public board');
     }
@@ -741,6 +817,37 @@ describe('GameSerializer', () => {
     expect(publicAlien.board.boardTokens).toEqual([
       { position: 0, glyph: EAlienIcon.GLYPH_RED },
       { position: 3, glyph: EAlienIcon.GLYPH_BLUE },
+    ]);
+    expect(publicAlien.board.placedTokens).toEqual(board.placedTokens);
+    expect(publicState.solarSystem.alienTokens).toEqual([]);
+    expect(publicState.solarSystem.glyphidsSectorTokens).toEqual([
+      {
+        tokenId: 'glyphids-token|sector|sector-2',
+        alienType: EAlienType.GLYPHIDS,
+        sectorId: 'sector-2',
+        sectorIndex: 2,
+        glyph: EAlienIcon.GLYPH_YELLOW,
+      },
+    ]);
+    expect(
+      publicState.planetaryBoard.planets[EPlanet.MARS]?.alienTokens,
+    ).toEqual([
+      {
+        tokenId: 'glyphids-token|planet|mars',
+        alienType: EAlienType.GLYPHIDS,
+        glyph: EAlienIcon.GLYPH_GREEN,
+      },
+    ]);
+    expect(
+      publicState.techBoard.stacks.find(
+        (stack) => stack.tech === ETech.SCAN && stack.level === 0,
+      )?.alienTokens,
+    ).toEqual([
+      {
+        tokenId: 'glyphids-token|tech|scan-0',
+        alienType: EAlienType.GLYPHIDS,
+        glyph: EAlienIcon.GLYPH_PURPLE,
+      },
     ]);
     expect(publicAlien.board.translationRows).toEqual([
       {

@@ -33,6 +33,24 @@ function getPlayer(game: Game, id: string): IPlayer {
   return game.players.find((p) => p.id === id)!;
 }
 
+function movementRequest(game: Game, playerId: string, path: string[]) {
+  const solar = game.solarSystem;
+  if (!solar) {
+    throw new Error('Expected solar system');
+  }
+  const probe = solar
+    .getProbesAt(path[0])
+    .find((candidate) => candidate.playerId === playerId);
+  if (!probe) {
+    throw new Error(`expected ${playerId} probe at ${path[0]}`);
+  }
+  return {
+    type: EFreeAction.MOVEMENT as EFreeAction.MOVEMENT,
+    path,
+    target: { type: 'probe' as const, id: probe.id },
+  };
+}
+
 /**
  * Resolve all pending inputs by auto-picking the first valid option.
  * Used for actions where we don't care about the choice (e.g., p2's pass).
@@ -430,10 +448,10 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
     p1.gainMove(1);
     const moveBefore = p1.getMoveStash();
 
-    game.processFreeAction('p1', {
-      type: EFreeAction.MOVEMENT,
-      path: ['ring-1-cell-2', 'ring-1-cell-1'],
-    });
+    game.processFreeAction(
+      'p1',
+      movementRequest(game, 'p1', ['ring-1-cell-2', 'ring-1-cell-1']),
+    );
 
     expect(p1.getMoveStash()).toBe(moveBefore - 1);
 
@@ -460,10 +478,10 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
     const moveBefore = p1.getMoveStash();
     const publicityBefore = p1.resources.publicity;
 
-    game.processFreeAction('p1', {
-      type: EFreeAction.MOVEMENT,
-      path: ['ring-1-cell-1', 'ring-1-cell-0'],
-    });
+    game.processFreeAction(
+      'p1',
+      movementRequest(game, 'p1', ['ring-1-cell-1', 'ring-1-cell-0']),
+    );
 
     expect(p1.getMoveStash()).toBe(moveBefore - 2);
     expect(p1.resources.publicity).toBe(publicityBefore + 1);

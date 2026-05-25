@@ -122,6 +122,24 @@ function createIntegrationGame(seed: string): Game {
   return Game.create(TEST_PLAYERS, { playerCount: 2 }, seed, seed);
 }
 
+function movementRequest(
+  solarSystem: SolarSystem,
+  playerId: string,
+  path: string[],
+) {
+  const probe = solarSystem
+    .getProbesAt(path[0])
+    .find((candidate) => candidate.playerId === playerId);
+  if (!probe) {
+    throw new Error(`expected ${playerId} probe at ${path[0]}`);
+  }
+  return {
+    type: EFreeAction.MOVEMENT as EFreeAction.MOVEMENT,
+    path,
+    target: { type: 'probe' as const, id: probe.id },
+  };
+}
+
 function resolvePassEndOfRoundPick(game: Game, playerId: string): void {
   const player = game.players.find((candidate) => candidate.id === playerId);
   if (!player?.waitingFor) {
@@ -304,12 +322,14 @@ describe('MovementFreeAction', () => {
       const ss = createLinearSolarSystem();
       const player = createTestPlayer();
       player.gainMove(3);
-      ss.placeProbe('p1', 's0');
+      const probe = ss.placeProbe('p1', 's0');
 
-      const result = MovementFreeAction.execute(player, createMockGame(ss), [
-        's0',
-        's1',
-      ]);
+      const result = MovementFreeAction.execute(
+        player,
+        createMockGame(ss),
+        ['s0', 's1'],
+        { target: { type: 'probe', id: probe.id } },
+      );
 
       expect(result.totalCost).toBe(1);
       expect(result.path).toEqual(['s0', 's1']);
@@ -322,12 +342,14 @@ describe('MovementFreeAction', () => {
       const ss = createLinearSolarSystem();
       const player = createTestPlayer();
       player.gainMove(3);
-      ss.placeProbe('p1', 's0');
+      const probe = ss.placeProbe('p1', 's0');
 
-      const result = MovementFreeAction.execute(player, createMockGame(ss), [
-        's0',
-        's1',
-      ]);
+      const result = MovementFreeAction.execute(
+        player,
+        createMockGame(ss),
+        ['s0', 's1'],
+        { target: { type: 'probe', id: probe.id } },
+      );
 
       expect(result.publicityGained).toBe(1);
     });
@@ -336,13 +358,14 @@ describe('MovementFreeAction', () => {
       const ss = createLinearSolarSystem();
       const player = createTestPlayer();
       player.gainMove(5);
-      ss.placeProbe('p1', 's0');
+      const probe = ss.placeProbe('p1', 's0');
 
-      const result = MovementFreeAction.execute(player, createMockGame(ss), [
-        's0',
-        's1',
-        's2',
-      ]);
+      const result = MovementFreeAction.execute(
+        player,
+        createMockGame(ss),
+        ['s0', 's1', 's2'],
+        { target: { type: 'probe', id: probe.id } },
+      );
 
       expect(result.totalCost).toBe(2);
       expect(ss.getProbesAt('s2')).toHaveLength(1);
@@ -376,9 +399,11 @@ describe('MovementFreeAction', () => {
       });
       const player = createTestPlayer();
       player.gainMove(4);
-      ss.placeProbe('p1', 's0');
+      const probe = ss.placeProbe('p1', 's0');
 
-      MovementFreeAction.execute(player, game, ['s0', 's1', 's2', 's3']);
+      MovementFreeAction.execute(player, game, ['s0', 's1', 's2', 's3'], {
+        target: { type: 'probe', id: probe.id },
+      });
 
       expect(recordEvent).toHaveBeenCalledWith({
         type: EMissionEventType.PROBE_VISITED_PLANET,
@@ -423,7 +448,8 @@ describe('MovementFreeAction', () => {
         { target: { type: 'mascamites-capsule', id: capsule.capsuleId } },
       );
 
-      expect(result.capsuleId).toBe(capsule.capsuleId);
+      expect(result.probeId).toBe(capsule.capsuleId);
+      expect('capsuleId' in result).toBe(false);
       expect(result.totalCost).toBe(4);
       expect(result.publicityGained).toBe(1);
       expect(player.getMoveStash()).toBe(0);
@@ -484,12 +510,14 @@ describe('MovementFreeAction', () => {
       const ss = createLinearSolarSystem();
       const player = createTestPlayer();
       player.gainMove(5);
-      ss.placeProbe('p1', 's2');
+      const probe = ss.placeProbe('p1', 's2');
 
-      const result = MovementFreeAction.execute(player, createMockGame(ss), [
-        's2',
-        's3',
-      ]);
+      const result = MovementFreeAction.execute(
+        player,
+        createMockGame(ss),
+        ['s2', 's3'],
+        { target: { type: 'probe', id: probe.id } },
+      );
 
       expect(result.totalCost).toBe(2);
     });
@@ -498,12 +526,14 @@ describe('MovementFreeAction', () => {
       const ss = createLinearSolarSystem();
       const player = createTestPlayer({ techs: [ETechId.PROBE_ASTEROID] });
       player.gainMove(5);
-      ss.placeProbe('p1', 's2');
+      const probe = ss.placeProbe('p1', 's2');
 
-      const result = MovementFreeAction.execute(player, createMockGame(ss), [
-        's2',
-        's3',
-      ]);
+      const result = MovementFreeAction.execute(
+        player,
+        createMockGame(ss),
+        ['s2', 's3'],
+        { target: { type: 'probe', id: probe.id } },
+      );
 
       expect(result.totalCost).toBe(1);
     });
@@ -512,12 +542,14 @@ describe('MovementFreeAction', () => {
       const ss = createLinearSolarSystem();
       const player = createTestPlayer({ techs: [ETechId.PROBE_ASTEROID] });
       player.gainMove(3);
-      ss.placeProbe('p1', 's1');
+      const probe = ss.placeProbe('p1', 's1');
 
-      const result = MovementFreeAction.execute(player, createMockGame(ss), [
-        's1',
-        's2',
-      ]);
+      const result = MovementFreeAction.execute(
+        player,
+        createMockGame(ss),
+        ['s1', 's2'],
+        { target: { type: 'probe', id: probe.id } },
+      );
 
       expect(result.publicityGained).toBe(1);
     });
@@ -526,12 +558,26 @@ describe('MovementFreeAction', () => {
       const ss = createLinearSolarSystem();
       const player = createTestPlayer();
       player.gainMove(5);
+      const probe = ss.placeProbe('p1', 's0');
 
       expect(() =>
-        MovementFreeAction.execute(player, createMockGame(ss), ['s0']),
+        MovementFreeAction.execute(player, createMockGame(ss), ['s0'], {
+          target: { type: 'probe', id: probe.id },
+        }),
       ).toThrowError(
         expect.objectContaining({ code: EErrorCode.INVALID_ACTION }),
       );
+    });
+
+    it('throws when movement target is omitted', () => {
+      const ss = createLinearSolarSystem();
+      const player = createTestPlayer();
+      player.gainMove(5);
+      ss.placeProbe('p1', 's0');
+
+      expect(() =>
+        MovementFreeAction.execute(player, createMockGame(ss), ['s0', 's1']),
+      ).toThrow('Movement target is required');
     });
 
     it('throws when no probe at start space', () => {
@@ -540,7 +586,9 @@ describe('MovementFreeAction', () => {
       player.gainMove(5);
 
       expect(() =>
-        MovementFreeAction.execute(player, createMockGame(ss), ['s0', 's1']),
+        MovementFreeAction.execute(player, createMockGame(ss), ['s0', 's1'], {
+          target: { type: 'probe', id: 'missing-probe' },
+        }),
       ).toThrowError(
         expect.objectContaining({ code: EErrorCode.INVALID_ACTION }),
       );
@@ -550,15 +598,15 @@ describe('MovementFreeAction', () => {
       const ss = createLinearSolarSystem();
       const player = createTestPlayer();
       player.gainMove(1);
-      ss.placeProbe('p1', 's0');
+      const probe = ss.placeProbe('p1', 's0');
 
       expect(() =>
-        MovementFreeAction.execute(player, createMockGame(ss), [
-          's0',
-          's1',
-          's2',
-          's3',
-        ]),
+        MovementFreeAction.execute(
+          player,
+          createMockGame(ss),
+          ['s0', 's1', 's2', 's3'],
+          { target: { type: 'probe', id: probe.id } },
+        ),
       ).toThrowError(
         expect.objectContaining({ code: EErrorCode.INSUFFICIENT_RESOURCES }),
       );
@@ -590,10 +638,10 @@ describe('MovementFreeAction', () => {
       const neighbor = ss.getAdjacentSpaces(start.id)[0]!;
 
       p1.gainMove(1);
-      game.processFreeAction(p1.id, {
-        type: EFreeAction.MOVEMENT,
-        path: [start.id, neighbor.id],
-      });
+      game.processFreeAction(
+        p1.id,
+        movementRequest(ss, p1.id, [start.id, neighbor.id]),
+      );
       expect(
         ss.getProbesAt(neighbor.id).some((pr) => pr.playerId === p1.id),
       ).toBe(true);
@@ -607,10 +655,10 @@ describe('MovementFreeAction', () => {
 
       p1.gainMove(1);
       expect(() =>
-        game.processFreeAction(p1.id, {
-          type: EFreeAction.MOVEMENT,
-          path: [neighbor.id, illegalHop!.id],
-        }),
+        game.processFreeAction(
+          p1.id,
+          movementRequest(ss, p1.id, [neighbor.id, illegalHop!.id]),
+        ),
       ).toThrow(GameError);
     });
 
@@ -635,15 +683,15 @@ describe('MovementFreeAction', () => {
       expect(pathToAsteroid).not.toBeNull();
 
       p1.gainMove(12);
-      game.processFreeAction(p1.id, {
-        type: EFreeAction.MOVEMENT,
-        path: pathToAsteroid!,
-      });
+      game.processFreeAction(
+        p1.id,
+        movementRequest(ss, p1.id, pathToAsteroid!),
+      );
       const moveAfterArrive = p1.getMoveStash();
-      game.processFreeAction(p1.id, {
-        type: EFreeAction.MOVEMENT,
-        path: [asteroidSpace.id, dest!.id],
-      });
+      game.processFreeAction(
+        p1.id,
+        movementRequest(ss, p1.id, [asteroidSpace.id, dest!.id]),
+      );
       expect(moveAfterArrive - p1.getMoveStash()).toBe(2);
     });
 
@@ -667,15 +715,15 @@ describe('MovementFreeAction', () => {
       const pathToAsteroid = shortestPathBetween(ss, earthId, asteroidSpace.id);
       expect(pathToAsteroid).not.toBeNull();
       p1.gainMove(12);
-      game.processFreeAction(p1.id, {
-        type: EFreeAction.MOVEMENT,
-        path: pathToAsteroid!,
-      });
+      game.processFreeAction(
+        p1.id,
+        movementRequest(ss, p1.id, pathToAsteroid!),
+      );
       const moveAfterArrive = p1.getMoveStash();
-      game.processFreeAction(p1.id, {
-        type: EFreeAction.MOVEMENT,
-        path: [asteroidSpace.id, dest!.id],
-      });
+      game.processFreeAction(
+        p1.id,
+        movementRequest(ss, p1.id, [asteroidSpace.id, dest!.id]),
+      );
       expect(moveAfterArrive - p1.getMoveStash()).toBe(1);
     });
 
@@ -718,16 +766,13 @@ describe('MovementFreeAction', () => {
       const path1 = shortestPathBetween(ss, earthId, prev.id);
       expect(path1).not.toBeNull();
       p1.gainMove(20);
-      game.processFreeAction(p1.id, {
-        type: EFreeAction.MOVEMENT,
-        path: path1!,
-      });
+      game.processFreeAction(p1.id, movementRequest(ss, p1.id, path1!));
 
       const pubBefore = p1.resources.publicity;
-      game.processFreeAction(p1.id, {
-        type: EFreeAction.MOVEMENT,
-        path: [prev.id, iconSpace.id, next.id],
-      });
+      game.processFreeAction(
+        p1.id,
+        movementRequest(ss, p1.id, [prev.id, iconSpace.id, next.id]),
+      );
       expect(p1.resources.publicity).toBeGreaterThan(pubBefore);
     });
 
@@ -752,16 +797,16 @@ describe('MovementFreeAction', () => {
       const pathToNeighbor = shortestPathBetween(ss, earthId, neighbor!.id);
       expect(pathToNeighbor).not.toBeNull();
       p1.gainMove(20);
-      game.processFreeAction(p1.id, {
-        type: EFreeAction.MOVEMENT,
-        path: pathToNeighbor!,
-      });
+      game.processFreeAction(
+        p1.id,
+        movementRequest(ss, p1.id, pathToNeighbor!),
+      );
 
       expect(() =>
-        game.processFreeAction(p1.id, {
-          type: EFreeAction.MOVEMENT,
-          path: [neighbor!.id, victim!.id],
-        }),
+        game.processFreeAction(
+          p1.id,
+          movementRequest(ss, p1.id, [neighbor!.id, victim!.id]),
+        ),
       ).toThrow(GameError);
     });
 
@@ -780,10 +825,10 @@ describe('MovementFreeAction', () => {
       const earthId = ss.getSpacesOnPlanet(EPlanet.EARTH)[0]!.id;
       const away = ss.getAdjacentSpaces(earthId)[0]!;
       p1.gainMove(1);
-      game.processFreeAction(p1.id, {
-        type: EFreeAction.MOVEMENT,
-        path: [earthId, away.id],
-      });
+      game.processFreeAction(
+        p1.id,
+        movementRequest(ss, p1.id, [earthId, away.id]),
+      );
       game.processEndTurn(p1.id);
 
       // Avoid solar rotation on p2's pass so the first probe stays on `away`.
@@ -801,14 +846,14 @@ describe('MovementFreeAction', () => {
         ss.getAdjacentSpaces(away.id).find((c) => c.id !== earthId) ??
         ss.getAdjacentSpaces(away.id)[0]!;
       p1.gainMove(2);
-      game.processFreeAction(p1.id, {
-        type: EFreeAction.MOVEMENT,
-        path: [earthId, stepEarth.id],
-      });
-      game.processFreeAction(p1.id, {
-        type: EFreeAction.MOVEMENT,
-        path: [away.id, stepAway.id],
-      });
+      game.processFreeAction(
+        p1.id,
+        movementRequest(ss, p1.id, [earthId, stepEarth.id]),
+      );
+      game.processFreeAction(
+        p1.id,
+        movementRequest(ss, p1.id, [away.id, stepAway.id]),
+      );
       expect(p1.getMoveStash()).toBe(0);
     });
 
@@ -832,22 +877,19 @@ describe('MovementFreeAction', () => {
       const toIcon = shortestPathBetween(ss, earthId, iconSpace!.id);
       expect(toIcon).not.toBeNull();
       p1.gainMove(20);
-      game.processFreeAction(p1.id, {
-        type: EFreeAction.MOVEMENT,
-        path: toIcon!,
-      });
+      game.processFreeAction(p1.id, movementRequest(ss, p1.id, toIcon!));
 
       const pub0 = p1.resources.publicity;
-      game.processFreeAction(p1.id, {
-        type: EFreeAction.MOVEMENT,
-        path: [
+      game.processFreeAction(
+        p1.id,
+        movementRequest(ss, p1.id, [
           iconSpace!.id,
           other!.id,
           iconSpace!.id,
           other!.id,
           iconSpace!.id,
-        ],
-      });
+        ]),
+      );
       expect(p1.resources.publicity - pub0).toBeGreaterThanOrEqual(2);
     });
 
@@ -869,10 +911,10 @@ describe('MovementFreeAction', () => {
 
       const pubBefore = p1.resources.publicity;
       p1.gainMove(12);
-      game.processFreeAction(p1.id, {
-        type: EFreeAction.MOVEMENT,
-        path: pathToAsteroid!,
-      });
+      game.processFreeAction(
+        p1.id,
+        movementRequest(ss, p1.id, pathToAsteroid!),
+      );
       expect(p1.resources.publicity).toBe(pubBefore + 1);
     });
 
@@ -903,10 +945,7 @@ describe('MovementFreeAction', () => {
       expect(pathToMars).not.toBeNull();
 
       p1.gainMove(30);
-      game.processFreeAction(p1.id, {
-        type: EFreeAction.MOVEMENT,
-        path: pathToMars!,
-      });
+      game.processFreeAction(p1.id, movementRequest(ss, p1.id, pathToMars!));
 
       expect(p1.waitingFor).toBeDefined();
       const model = p1.waitingFor!.toModel() as ISelectOptionInputModel;
@@ -927,10 +966,10 @@ describe('MovementFreeAction', () => {
       const earthId = ss.getSpacesOnPlanet(EPlanet.EARTH)[0]!.id;
       const dest = ss.getAdjacentSpaces(earthId)[0]!;
       expect(() =>
-        game.processFreeAction(p1.id, {
-          type: EFreeAction.MOVEMENT,
-          path: [earthId, dest.id],
-        }),
+        game.processFreeAction(
+          p1.id,
+          movementRequest(ss, p1.id, [earthId, dest.id]),
+        ),
       ).toThrow(
         expect.objectContaining({ code: EErrorCode.INSUFFICIENT_RESOURCES }),
       );
@@ -953,16 +992,10 @@ describe('MovementFreeAction', () => {
       const path = shortestPathBetween(ss, earthId, a.id);
       expect(path).not.toBeNull();
       p1.gainMove(15);
-      game.processFreeAction(p1.id, {
-        type: EFreeAction.MOVEMENT,
-        path: path!,
-      });
+      game.processFreeAction(p1.id, movementRequest(ss, p1.id, path!));
 
       expect(() =>
-        game.processFreeAction(p1.id, {
-          type: EFreeAction.MOVEMENT,
-          path: [a.id, b.id],
-        }),
+        game.processFreeAction(p1.id, movementRequest(ss, p1.id, [a.id, b.id])),
       ).toThrow(expect.objectContaining({ code: EErrorCode.INVALID_ACTION }));
     });
 
@@ -978,16 +1011,13 @@ describe('MovementFreeAction', () => {
       const path = shortestPathBetween(ss, earthId, neighbor.id);
       expect(path).not.toBeNull();
       p1.gainMove(20);
-      game.processFreeAction(p1.id, {
-        type: EFreeAction.MOVEMENT,
-        path: path!,
-      });
+      game.processFreeAction(p1.id, movementRequest(ss, p1.id, path!));
 
       expect(() =>
-        game.processFreeAction(p1.id, {
-          type: EFreeAction.MOVEMENT,
-          path: [neighbor.id, victim.id],
-        }),
+        game.processFreeAction(
+          p1.id,
+          movementRequest(ss, p1.id, [neighbor.id, victim.id]),
+        ),
       ).toThrow(GameError);
     });
 
@@ -1013,16 +1043,13 @@ describe('MovementFreeAction', () => {
       const path = shortestPathBetween(ss, earthId, from.id);
       expect(path).not.toBeNull();
       p1.gainMove(25);
-      game.processFreeAction(p1.id, {
-        type: EFreeAction.MOVEMENT,
-        path: path!,
-      });
+      game.processFreeAction(p1.id, movementRequest(ss, p1.id, path!));
 
       expect(() =>
-        game.processFreeAction(p1.id, {
-          type: EFreeAction.MOVEMENT,
-          path: [from.id, diagonal.id],
-        }),
+        game.processFreeAction(
+          p1.id,
+          movementRequest(ss, p1.id, [from.id, diagonal.id]),
+        ),
       ).toThrow(expect.objectContaining({ code: EErrorCode.INVALID_ACTION }));
     });
   });

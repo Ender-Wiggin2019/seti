@@ -27,49 +27,33 @@ export function GameOverDialog(): React.JSX.Element | null {
 
   if (gameState?.phase !== EPhase.GAME_OVER) return null;
 
-  const extendedState = gameState as typeof gameState & {
-    scoreBreakdown?: Record<
-      string,
-      Partial<Omit<IScoreBreakdownRow, 'playerId' | 'playerName' | 'total'>> & {
-        total?: number;
-      }
-    >;
-    milestones?: IMilestoneItem[] | IPublicMilestoneState;
-    goldTiles?: IGoldTileItem[];
-  };
-
   const rows: IScoreBreakdownRow[] = gameState.players
     .slice()
     .sort((left, right) => right.score - left.score)
     .map((player) => {
       const serverBreakdown =
         gameState.finalScoringResult?.breakdown[player.playerId];
-      const legacyBreakdown = extendedState.scoreBreakdown?.[player.playerId];
-      const total =
-        serverBreakdown?.finalScore ?? legacyBreakdown?.total ?? player.score;
+      const total = serverBreakdown?.finalScore ?? player.score;
       const totalAdded = serverBreakdown?.totalAdded ?? 0;
       return {
         playerId: player.playerId,
         playerName: player.playerName,
         total,
-        base: serverBreakdown
-          ? total - totalAdded
-          : (legacyBreakdown?.base ?? player.score),
-        cards: serverBreakdown?.endGameCards ?? legacyBreakdown?.cards ?? 0,
-        tech: legacyBreakdown?.tech ?? 0,
-        milestone: legacyBreakdown?.milestone ?? 0,
-        gold: serverBreakdown?.goldTiles ?? legacyBreakdown?.gold ?? 0,
+        base: serverBreakdown ? total - totalAdded : player.score,
+        cards: serverBreakdown?.endGameCards ?? 0,
+        tech: 0,
+        milestone: 0,
+        gold: serverBreakdown?.goldTiles ?? 0,
         alien:
           serverBreakdown !== undefined
             ? serverBreakdown.alienBonus + serverBreakdown.alienPenalty
-            : (legacyBreakdown?.alien ?? 0),
+            : 0,
       };
     });
 
   const winner = rows[0];
-  const milestoneItems = normalizeMilestones(extendedState.milestones);
-  const goldTiles =
-    extendedState.goldTiles ?? toGoldTileItems(gameState.goldScoringTiles);
+  const milestoneItems = normalizeMilestones(gameState.milestones);
+  const goldTiles = toGoldTileItems(gameState.goldScoringTiles);
 
   return (
     <Dialog open onOpenChange={() => undefined}>
@@ -156,12 +140,7 @@ function WinnerReadout({
   );
 }
 
-function normalizeMilestones(
-  raw: IMilestoneItem[] | IPublicMilestoneState | undefined,
-): IMilestoneItem[] {
-  if (!raw) return [];
-  if (Array.isArray(raw)) return raw;
-
+function normalizeMilestones(raw: IPublicMilestoneState): IMilestoneItem[] {
   const items: IMilestoneItem[] = [];
 
   for (const bucket of raw.goldMilestones) {

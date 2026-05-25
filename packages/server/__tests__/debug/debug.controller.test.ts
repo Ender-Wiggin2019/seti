@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { EAlienType } from '@seti/common/types/protocol/enums';
 import type { IPublicGameState } from '@seti/common/types/protocol/gameState';
 import { vi } from 'vitest';
 import { DebugController } from '@/debug/debug.controller.js';
@@ -38,6 +39,7 @@ const mockDebugService = {
   solarRotate: vi.fn().mockResolvedValue(MOCK_STATE),
   solarRotateNext: vi.fn().mockResolvedValue(MOCK_STATE),
   placeProbeDirect: vi.fn().mockResolvedValue(MOCK_STATE),
+  revealAlien: vi.fn().mockResolvedValue(MOCK_STATE),
 };
 
 describe('DebugController', () => {
@@ -113,6 +115,20 @@ describe('DebugController', () => {
       'game-1',
       'player-1',
       'space-4',
+      'player-1',
+    );
+    expect(result).toBe(MOCK_STATE);
+  });
+
+  it('POST /debug/server/game/:gameId/reveal-alien forwards selected alien', async () => {
+    const result = await controller.revealAlien('game-1', {
+      alienType: EAlienType.GLYPHIDS,
+      viewerId: 'player-1',
+    });
+
+    expect(mockDebugService.revealAlien).toHaveBeenCalledWith(
+      'game-1',
+      EAlienType.GLYPHIDS,
       'player-1',
     );
     expect(result).toBe(MOCK_STATE);

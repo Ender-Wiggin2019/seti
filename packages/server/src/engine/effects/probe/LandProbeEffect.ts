@@ -33,7 +33,6 @@ export interface ILandResult {
   vpGained: number;
   firstLandDataGained: number;
   exofossilsGained: number;
-  lifeTraceGained: number;
   traceRewards: Array<{ trace: ETrace; amount: number }>;
   pendingInput?: IPlayerInput;
 }
@@ -41,11 +40,6 @@ export interface ILandResult {
 interface ILandRewardResolution {
   pendingInput?: IPlayerInput;
 }
-
-/** @deprecated Use ILandOptions instead */
-export type ILandProbeEffectOptions = ILandOptions;
-/** @deprecated Use ILandResult instead */
-export type ILandProbeEffectResult = ILandResult;
 
 export class LandProbeEffect {
   private static buildTuckChain(
@@ -381,6 +375,7 @@ export class LandProbeEffect {
     if (landingResult.firstLandDataGained > 0) {
       player.resources.gain({ data: landingResult.firstLandDataGained });
     }
+    game.alienState?.onPlanetVisited(game, player, planet);
     const exofossilsGained = landingResult.rewards.reduce((total, reward) => {
       if (reward.type !== 'exofossil') {
         return total;
@@ -405,7 +400,6 @@ export class LandProbeEffect {
       vpGained: landingResult.centerReward.vpGained,
       firstLandDataGained: landingResult.firstLandDataGained,
       exofossilsGained,
-      lifeTraceGained: landingResult.centerReward.lifeTraceGained,
       traceRewards: landingResult.centerReward.traceRewards,
       pendingInput: rewardResolution.pendingInput,
     };

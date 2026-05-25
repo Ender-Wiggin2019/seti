@@ -15,6 +15,12 @@ export interface IUndoOptions {
   depth?: number;
 }
 
+export function getSnapshotEventLastActorId(
+  event: unknown,
+): string | undefined {
+  return (event as { lastActorId?: string } | null | undefined)?.lastActorId;
+}
+
 export class GameRepository {
   public constructor(private readonly db: NodePgDatabase) {}
 
@@ -94,10 +100,7 @@ export class GameRepository {
    * already pruned via its own `pruneBefore` step; this brings
    * snapshots in line.
    */
-  public async pruneSnapshots(
-    gameId: string,
-    keep = 50,
-  ): Promise<number> {
+  public async pruneSnapshots(gameId: string, keep = 50): Promise<number> {
     const recent = await this.db
       .select({ version: gameSnapshots.version })
       .from(gameSnapshots)
@@ -113,19 +116,17 @@ export class GameRepository {
       // to delete (zero is preserved unconditionally below in any case).
       return 0;
     }
-    const result = await this.db
-      .delete(gameSnapshots)
-      .where(
-        and(
-          eq(gameSnapshots.gameId, gameId),
-          // Keep version 0 (GAME_CREATED seed) regardless of the window.
-          gt(gameSnapshots.version, 0),
-          // Delete anything older than the window's tail.
-          // `< oldestKept` because rows at `oldestKept` itself stay.
-          // drizzle's `lt` mirrors `<`.
-          lt(gameSnapshots.version, oldestKept),
-        ),
-      );
+    const result = await this.db.delete(gameSnapshots).where(
+      and(
+        eq(gameSnapshots.gameId, gameId),
+        // Keep version 0 (GAME_CREATED seed) regardless of the window.
+        gt(gameSnapshots.version, 0),
+        // Delete anything older than the window's tail.
+        // `< oldestKept` because rows at `oldestKept` itself stay.
+        // drizzle's `lt` mirrors `<`.
+        lt(gameSnapshots.version, oldestKept),
+      ),
+    );
     // Drizzle returns NodePg's QueryResult; rowCount is sometimes
     // null. Coerce so callers see a number.
     return (result as { rowCount?: number | null }).rowCount ?? 0;
@@ -178,10 +179,7 @@ export class GameRepository {
       const target = snapshots[depth];
 
       if (options.actorId) {
-        const latestActorId =
-          (latest.event as { actorId?: string } | null | undefined)?.actorId ??
-          (latest.event as { lastActorId?: string } | null | undefined)
-            ?.lastActorId;
+        const latestActorId = getSnapshotEventLastActorId(latest.event);
         if (latestActorId !== options.actorId) {
           throw new Error('Undo rejected: only last acting player may undo');
         }

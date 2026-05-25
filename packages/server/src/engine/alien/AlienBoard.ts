@@ -20,9 +20,11 @@ import {
   type IArkhosExplorationRewardRecord,
   type IArkhosSecurityCardState,
   type IGlyphidsBoardToken,
+  type IGlyphidsPlacedToken,
   type IGlyphidsTranslationPlacement,
   type IGlyphidsTranslationRow,
   type TGlyphidsGlyph,
+  type TGlyphidsPlacedTokenLocation,
   type TGlyphidsRowsByPlayer,
 } from '@seti/common/constant/spaceAgencyAliens';
 import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
@@ -184,6 +186,7 @@ export interface IGlyphidsAlienBoardInit extends IAlienBoardInit {
   glyphidsGlyphTokenBank?: TGlyphidsGlyph[];
   glyphidsGlyphRows?: TGlyphidsRowsByPlayer;
   glyphidsBoardTokens?: IGlyphidsBoardToken[];
+  glyphidsPlacedTokens?: IGlyphidsPlacedToken[];
   glyphidsTranslationRows?: IGlyphidsTranslationRow[];
 }
 
@@ -705,6 +708,8 @@ export class GlyphidsAlienBoard extends AlienBoard {
 
   public boardTokens: IGlyphidsBoardToken[];
 
+  public placedTokens: IGlyphidsPlacedToken[];
+
   public translationRows: IGlyphidsTranslationRow[];
 
   public constructor(init: IGlyphidsAlienBoardInit) {
@@ -714,6 +719,9 @@ export class GlyphidsAlienBoard extends AlienBoard {
     ];
     this.glyphRows = cloneGlyphRows(init.glyphidsGlyphRows ?? {});
     this.boardTokens = cloneGlyphidsBoardTokens(init.glyphidsBoardTokens ?? []);
+    this.placedTokens = cloneGlyphidsPlacedTokens(
+      init.glyphidsPlacedTokens ?? [],
+    );
     this.translationRows = cloneGlyphidsTranslationRows(
       init.glyphidsTranslationRows,
     );
@@ -727,6 +735,38 @@ export class GlyphidsAlienBoard extends AlienBoard {
       }
       return { position, glyph };
     });
+  }
+
+  public dealPlacedTokenFromBank(
+    location: TGlyphidsPlacedTokenLocation,
+  ): IGlyphidsPlacedToken {
+    const glyph = this.glyphTokenBank.shift();
+    if (glyph === undefined) {
+      throw new Error('Glyphids token bank has too few tokens for setup');
+    }
+    const token = {
+      tokenId: this.buildPlacedTokenId(location),
+      glyph,
+      location,
+    };
+    this.placedTokens.push(token);
+    return token;
+  }
+
+  public claimPlacedToken(
+    playerId: string,
+    predicate: (token: IGlyphidsPlacedToken) => boolean,
+  ): TGlyphidsGlyph | undefined {
+    const tokenIndex = this.placedTokens.findIndex(predicate);
+    if (tokenIndex < 0) {
+      return undefined;
+    }
+    const [token] = this.placedTokens.splice(tokenIndex, 1);
+    if (!token) {
+      return undefined;
+    }
+    this.collectGlyphToken(playerId, token.glyph);
+    return token.glyph;
   }
 
   public resetTranslationRows(sides: readonly [1 | 2, 1 | 2]): void {
@@ -817,6 +857,16 @@ export class GlyphidsAlienBoard extends AlienBoard {
     return false;
   }
 
+  private buildPlacedTokenId(location: TGlyphidsPlacedTokenLocation): string {
+    switch (location.type) {
+      case 'planet':
+        return `glyphids-token|planet|${location.planet}`;
+      case 'sector':
+        return `glyphids-token|sector|${location.sectorId}`;
+      case 'tech':
+        return `glyphids-token|tech|${location.techId}`;
+    }
+  }
 }
 
 export class AmoebaAlienBoard extends AlienBoard {
@@ -1117,6 +1167,16 @@ function cloneGlyphidsBoardTokens(
   tokens: readonly IGlyphidsBoardToken[],
 ): IGlyphidsBoardToken[] {
   return tokens.map((token) => ({ ...token }));
+}
+
+function cloneGlyphidsPlacedTokens(
+  tokens: readonly IGlyphidsPlacedToken[],
+): IGlyphidsPlacedToken[] {
+  return tokens.map((token) => ({
+    tokenId: token.tokenId,
+    glyph: token.glyph,
+    location: { ...token.location },
+  }));
 }
 
 function cloneGlyphidsTranslationRows(

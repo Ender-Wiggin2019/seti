@@ -14,6 +14,8 @@ import { LandAction } from '@/engine/actions/Land.js';
 import { Game } from '@/engine/Game.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
 import {
+  chooseLandMainActionPlanet,
+  chooseOrbitMainActionPlanet,
   resolveAllInputsDefault,
   resolveSetupTucks,
   skipSetupTucks,
@@ -75,6 +77,28 @@ function expectOptionInput(player: IPlayer): ISelectOptionInputModel {
 }
 
 describe('Land action', () => {
+  it('rejects direct planet payloads instead of executing legacy land', () => {
+    const game = Game.create(
+      TEST_PLAYERS,
+      { playerCount: 2 },
+      'land-direct-planet-payload-rejected',
+    );
+    resolveSetupTucks(game);
+    const player = game.players[0];
+    placeProbeOnPlanet(game, player.id, EPlanet.MARS, 1);
+    player.probesInSpace = 1;
+
+    expect(() =>
+      game.processMainAction(player.id, {
+        type: EMainAction.LAND,
+        payload: { planet: EPlanet.MARS },
+      }),
+    ).toThrow('Action payload.planet is not supported for LAND');
+    expect(
+      game.planetaryBoard?.planets.get(EPlanet.MARS)?.landingSlots,
+    ).toEqual([]);
+  });
+
   it('lets the player place a landing yellow trace onto the selected discovery slot', () => {
     const game = Game.create(
       TEST_PLAYERS,
@@ -86,10 +110,7 @@ describe('Land action', () => {
     placeProbeOnPlanet(game, player.id, EPlanet.VENUS, 1);
     player.probesInSpace = 1;
 
-    game.processMainAction(player.id, {
-      type: EMainAction.LAND,
-      payload: { planet: EPlanet.VENUS },
-    });
+    chooseLandMainActionPlanet(game, player, EPlanet.VENUS);
 
     const optionInput = expectOptionInput(player);
     expect(optionInput.options.length).toBeGreaterThan(1);
@@ -134,10 +155,7 @@ describe('Land action', () => {
     placeProbeOnPlanet(game, player.id, EPlanet.MARS, 1);
     player.probesInSpace = 1;
 
-    game.processMainAction(player.id, {
-      type: EMainAction.LAND,
-      payload: { planet: EPlanet.MARS },
-    });
+    chooseLandMainActionPlanet(game, player, EPlanet.MARS);
 
     expect(player.resources.energy).toBe(0);
     expect(player.resources.data).toBe(2);
@@ -184,16 +202,10 @@ describe('Land action', () => {
     p1.probesInSpace = 1;
     p2.probesInSpace = 1;
 
-    game.processMainAction(p1.id, {
-      type: EMainAction.ORBIT,
-      payload: { planet: EPlanet.SATURN },
-    });
+    chooseOrbitMainActionPlanet(game, p1, EPlanet.SATURN);
     resolveAllInputsDefault(game, p1);
     game.processEndTurn(p1.id);
-    game.processMainAction(p2.id, {
-      type: EMainAction.LAND,
-      payload: { planet: EPlanet.SATURN },
-    });
+    chooseLandMainActionPlanet(game, p2, EPlanet.SATURN);
 
     expect(p2.resources.energy).toBe(1);
   });
@@ -217,24 +229,15 @@ describe('Land action', () => {
     p2.probesInSpace = 1;
     p3.probesInSpace = 1;
 
-    threePlayerGame.processMainAction(p1.id, {
-      type: EMainAction.LAND,
-      payload: { planet: EPlanet.MARS },
-    });
+    chooseLandMainActionPlanet(threePlayerGame, p1, EPlanet.MARS);
     resolveAllInputs(threePlayerGame, p1);
     threePlayerGame.processEndTurn(p1.id);
 
-    threePlayerGame.processMainAction(p2.id, {
-      type: EMainAction.LAND,
-      payload: { planet: EPlanet.MARS },
-    });
+    chooseLandMainActionPlanet(threePlayerGame, p2, EPlanet.MARS);
     resolveAllInputs(threePlayerGame, p2);
     threePlayerGame.processEndTurn(p2.id);
 
-    threePlayerGame.processMainAction(p3.id, {
-      type: EMainAction.LAND,
-      payload: { planet: EPlanet.MARS },
-    });
+    chooseLandMainActionPlanet(threePlayerGame, p3, EPlanet.MARS);
     resolveAllInputs(threePlayerGame, p3);
     threePlayerGame.processEndTurn(p3.id);
 
@@ -261,21 +264,16 @@ describe('Land action', () => {
     p1.probesInSpace = 1;
     p2.probesInSpace = 1;
 
-    expect(() =>
-      game.processMainAction(p1.id, {
-        type: EMainAction.LAND,
-        payload: { planet: EPlanet.MARS, isMoon: true },
+    expect(
+      LandAction.canExecute(p1, EPlanet.MARS, {
+        isMoon: true,
+        moonId: 'mars-phobos-deimos',
       }),
-    ).toThrowError(
-      expect.objectContaining({
-        code: EErrorCode.INVALID_ACTION,
-      }),
-    );
+    ).toBe(false);
 
     p1.gainTech(ETechId.PROBE_MOON);
-    game.processMainAction(p1.id, {
-      type: EMainAction.LAND,
-      payload: { planet: EPlanet.MARS, isMoon: true },
+    chooseLandMainActionPlanet(game, p1, EPlanet.MARS, {
+      moonId: 'mars-phobos-deimos',
     });
     resolveAllInputsDefault(game, p1);
     game.processEndTurn(p1.id);
@@ -284,16 +282,12 @@ describe('Land action', () => {
       game.planetaryBoard?.planets.get(EPlanet.MARS)?.moonOccupants,
     ).toEqual([{ playerId: p1.id, moonId: 'mars-phobos-deimos' }]);
     p2.gainTech(ETechId.PROBE_MOON);
-    expect(() =>
-      game.processMainAction(p2.id, {
-        type: EMainAction.LAND,
-        payload: { planet: EPlanet.MARS, isMoon: true },
+    expect(
+      LandAction.canExecute(p2, EPlanet.MARS, {
+        isMoon: true,
+        moonId: 'mars-phobos-deimos',
       }),
-    ).toThrowError(
-      expect.objectContaining({
-        code: EErrorCode.INVALID_ACTION,
-      }),
-    );
+    ).toBe(false);
   });
 
   it('applies immediate moon rewards through the Land action', () => {
@@ -308,9 +302,8 @@ describe('Land action', () => {
     placeProbeOnPlanet(game, player.id, EPlanet.JUPITER, 1);
     player.probesInSpace = 1;
 
-    game.processMainAction(player.id, {
-      type: EMainAction.LAND,
-      payload: { planet: EPlanet.JUPITER, isMoon: true },
+    chooseLandMainActionPlanet(game, player, EPlanet.JUPITER, {
+      moonId: 'jupiter-ganymede',
     });
 
     expect(player.score).toBe(13);
@@ -338,9 +331,8 @@ describe('Land action', () => {
     placeProbeOnPlanet(game, player.id, EPlanet.JUPITER, 1);
     player.probesInSpace = 1;
 
-    game.processMainAction(player.id, {
-      type: EMainAction.LAND,
-      payload: { planet: EPlanet.JUPITER, isMoon: true, moonId: 'jupiter-io' },
+    chooseLandMainActionPlanet(game, player, EPlanet.JUPITER, {
+      moonId: 'jupiter-io',
     });
 
     expect(player.score).toBe(14);
@@ -351,7 +343,7 @@ describe('Land action', () => {
     ).toEqual([{ playerId: player.id, moonId: 'jupiter-io' }]);
   });
 
-  it('rejects legacy moon index payloads instead of silently choosing another moon', () => {
+  it('rejects direct moon index payloads instead of silently choosing another moon', () => {
     const game = Game.create(
       TEST_PLAYERS,
       { playerCount: 2 },
@@ -368,7 +360,7 @@ describe('Land action', () => {
         type: EMainAction.LAND,
         payload: { planet: EPlanet.JUPITER, isMoon: true, moonIndex: 3 },
       }),
-    ).toThrow('payload.moonIndex is not supported');
+    ).toThrow('Action payload.planet is not supported for LAND');
     expect(
       game.planetaryBoard?.planets.get(EPlanet.JUPITER)?.moonOccupants,
     ).toEqual([]);
@@ -394,7 +386,7 @@ describe('Land action', () => {
           moonId: 'jupiter-io',
         },
       }),
-    ).toThrow('Action payload.moonId requires isMoon true');
+    ).toThrow('Action payload.planet is not supported for LAND');
     expect(
       game.planetaryBoard?.planets.get(EPlanet.JUPITER)?.landingSlots,
     ).toEqual([]);
@@ -412,9 +404,8 @@ describe('Land action', () => {
     placeProbeOnPlanet(game, player.id, EPlanet.SATURN, 1);
     player.probesInSpace = 1;
 
-    game.processMainAction(player.id, {
-      type: EMainAction.LAND,
-      payload: { planet: EPlanet.SATURN, isMoon: true },
+    chooseLandMainActionPlanet(game, player, EPlanet.SATURN, {
+      moonId: 'saturn-enceladus',
     });
 
     expect(player.score).toBe(13);
@@ -435,9 +426,8 @@ describe('Land action', () => {
     placeProbeOnPlanet(game, player.id, EPlanet.MARS, 1);
     player.probesInSpace = 1;
 
-    game.processMainAction(player.id, {
-      type: EMainAction.LAND,
-      payload: { planet: EPlanet.MARS, isMoon: true },
+    chooseLandMainActionPlanet(game, player, EPlanet.MARS, {
+      moonId: 'mars-phobos-deimos',
     });
 
     expect(player.score).toBe(9);
@@ -462,10 +452,7 @@ describe('Land action', () => {
     placeProbeOnPlanet(game, player.id, EPlanet.MERCURY, 1);
     player.probesInSpace = 1;
 
-    game.processMainAction(player.id, {
-      type: EMainAction.LAND,
-      payload: { planet: EPlanet.MERCURY },
-    });
+    chooseLandMainActionPlanet(game, player, EPlanet.MERCURY);
 
     expect(player.resources.energy).toBe(1);
   });
@@ -488,15 +475,11 @@ describe('Land action', () => {
     p2.probesInSpace = 1;
 
     game.setActivePlayer(p2.id);
-    game.processMainAction(p2.id, {
-      type: EMainAction.ORBIT,
-      payload: { planet: EPlanet.MARS },
-    });
+    chooseOrbitMainActionPlanet(game, p2, EPlanet.MARS);
     resolveAllInputsDefault(game, p2);
     game.processEndTurn(p2.id);
-    game.processMainAction(p1.id, {
-      type: EMainAction.LAND,
-      payload: { planet: EPlanet.MARS, isMoon: true },
+    chooseLandMainActionPlanet(game, p1, EPlanet.MARS, {
+      moonId: 'mars-phobos-deimos',
     });
 
     expect(p1.resources.energy).toBe(2);
@@ -518,9 +501,8 @@ describe('Land action', () => {
     placeProbeOnPlanet(game, player.id, EPlanet.MARS, 1);
     player.probesInSpace = 1;
 
-    game.processMainAction(player.id, {
-      type: EMainAction.LAND,
-      payload: { planet: EPlanet.MARS, isMoon: true },
+    chooseLandMainActionPlanet(game, player, EPlanet.MARS, {
+      moonId: 'mars-phobos-deimos',
     });
 
     expect(
@@ -539,20 +521,14 @@ describe('Land action', () => {
     placeProbeOnPlanet(game, player.id, EPlanet.VENUS, 1);
     player.probesInSpace = 1;
 
-    game.processMainAction(player.id, {
-      type: EMainAction.ORBIT,
-      payload: { planet: EPlanet.VENUS },
-    });
+    chooseOrbitMainActionPlanet(game, player, EPlanet.VENUS);
     resolveAllInputsDefault(game, player);
     game.processEndTurn(player.id);
 
     game.setActivePlayer(player.id);
 
     expect(() =>
-      game.processMainAction(player.id, {
-        type: EMainAction.LAND,
-        payload: { planet: EPlanet.VENUS },
-      }),
+      game.processMainAction(player.id, { type: EMainAction.LAND }),
     ).toThrowError(
       expect.objectContaining({
         code: EErrorCode.INVALID_ACTION,
@@ -596,10 +572,7 @@ describe('Land action', () => {
     placeProbeOnPlanet(game, p2.id, EPlanet.MARS, 1);
     p2.probesInSpace = 1;
     game.setActivePlayer(p2.id);
-    game.processMainAction(p2.id, {
-      type: EMainAction.ORBIT,
-      payload: { planet: EPlanet.MARS },
-    });
+    chooseOrbitMainActionPlanet(game, p2, EPlanet.MARS);
 
     expect(LandAction.canExecute(p1, EPlanet.MARS)).toBe(true);
     p1.resources.spend({ energy: 2 });

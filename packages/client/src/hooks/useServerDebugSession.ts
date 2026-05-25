@@ -1,11 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { debugApi } from '@/api/debugApi';
 import type { IDebugServerSessionResponse } from '@/api/types';
-import {
-  normalizeGameStateCards,
-  normalizePlayerInputCards,
-} from '@/lib/cardNormalization';
 import type {
+  EAlienType,
   ETrace,
   IFreeActionRequest,
   IInputResponse,
@@ -28,6 +25,7 @@ export interface IServerDebugSession {
   placeProbeOn: (spaceId: string) => Promise<void>;
   moveProbeTo: (probeId: string, toSpaceId: string) => Promise<void>;
   placeTraceOf: (traceColor: ETrace) => Promise<void>;
+  revealAlien: (alienType: EAlienType) => Promise<void>;
   sendMainAction: (action: IMainActionRequest) => Promise<void>;
   sendFreeAction: (action: IFreeActionRequest) => Promise<void>;
   sendEndTurn: () => Promise<void>;
@@ -66,8 +64,8 @@ export function useServerDebugSession(
         debugApi.getPendingInput(session.gameId, session.user.id),
       ]);
       if (cancelledRef.current) return;
-      setGameState(normalizeGameStateCards(state));
-      setPendingInput(input ? normalizePlayerInputCards(input) : null);
+      setGameState(state);
+      setPendingInput(input);
       setErrorMessage(null);
     } catch (error) {
       if (cancelledRef.current) return;
@@ -80,7 +78,7 @@ export function useServerDebugSession(
   const applyState = useCallback(
     (state: IPublicGameState) => {
       if (cancelledRef.current) return;
-      setGameState(normalizeGameStateCards(state));
+      setGameState(state);
       void refresh();
     },
     [refresh],
@@ -98,8 +96,8 @@ export function useServerDebugSession(
         debugApi.getPendingInput(next.gameId, next.user.id),
       ]);
       if (cancelledRef.current) return null;
-      setGameState(normalizeGameStateCards(state));
-      setPendingInput(input ? normalizePlayerInputCards(input) : null);
+      setGameState(state);
+      setPendingInput(input);
       return next;
     } catch (error) {
       if (cancelledRef.current) return null;
@@ -214,6 +212,25 @@ export function useServerDebugSession(
     [session, applyState],
   );
 
+  const revealAlien = useCallback(
+    async (alienType: EAlienType) => {
+      if (!session) return;
+      try {
+        const next = await debugApi.revealAlien(
+          session.gameId,
+          alienType,
+          session.user.id,
+        );
+        applyState(next);
+      } catch (error) {
+        setErrorMessage(
+          error instanceof Error ? error.message : 'Reveal alien failed',
+        );
+      }
+    },
+    [session, applyState],
+  );
+
   const sendMainAction = useCallback(
     async (action: IMainActionRequest) => {
       if (!session) return;
@@ -306,6 +323,7 @@ export function useServerDebugSession(
     placeProbeOn,
     moveProbeTo,
     placeTraceOf,
+    revealAlien,
     sendMainAction,
     sendFreeAction,
     sendEndTurn,

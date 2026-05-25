@@ -657,6 +657,48 @@ function createAdjacencyMap(): Record<string, string[]> {
   return adjacencyMap;
 }
 
+function createSolarSectorSpaceIds(
+  spaceStates: Record<string, IPublicSolarSystemSpaceState>,
+): Record<number, string[]> {
+  return Object.values(spaceStates).reduce<Record<number, string[]>>(
+    (acc, state) => {
+      acc[state.sectorIndex] = [
+        ...(acc[state.sectorIndex] ?? []),
+        state.spaceId,
+      ];
+      return acc;
+    },
+    {},
+  );
+}
+
+function createSolarPlanetSpaceIds(
+  spaceStates: Record<string, IPublicSolarSystemSpaceState>,
+): Partial<Record<EPlanet, string>> {
+  const planetSpaceIds: Partial<Record<EPlanet, string>> = {};
+  for (const state of Object.values(spaceStates)) {
+    const planet = state.elements.find(
+      (element) =>
+        element.planet !== undefined &&
+        (element.type === 'PLANET' || element.type === 'EARTH'),
+    )?.planet;
+    if (planet !== undefined) {
+      planetSpaceIds[planet] = state.spaceId;
+    }
+  }
+  return planetSpaceIds;
+}
+
+function createSolarProbeSpaceById(
+  probes: IPublicGameState['solarSystem']['probes'],
+): Record<string, string> {
+  return Object.fromEntries(
+    probes
+      .filter((probe) => probe.probeId !== undefined)
+      .map((probe) => [probe.probeId as string, probe.spaceId]),
+  );
+}
+
 function createDebugSetupConfig(
   discAngles: TDiscAngles,
   wheels: TSolarSystemWheels,
@@ -759,6 +801,8 @@ function createDebugGameState(
   return {
     gameId: `debug-${scenario}`,
     round: 3,
+    roundIndex: 3,
+    maxRounds: 5,
     phase:
       scenario === 'game-over' ? EPhase.GAME_OVER : EPhase.AWAIT_MAIN_ACTION,
     currentPlayerId: scenario === 'opponent-turn' ? 'player-2' : 'player-1',
@@ -883,6 +927,9 @@ function createDebugGameState(
       probes,
       discs,
       spaceStates,
+      planetSpaceIds: createSolarPlanetSpaceIds(spaceStates),
+      sectorSpaceIds: createSolarSectorSpaceIds(spaceStates),
+      probeSpaceById: createSolarProbeSpaceById(probes),
       alienTokens: [],
     },
     sectors: sectorOverrides ?? createSectorsFromSetup(setupConfig),

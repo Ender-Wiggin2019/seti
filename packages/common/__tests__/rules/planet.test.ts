@@ -83,6 +83,8 @@ function createGameState(playerId: string, spaceId: string): IPublicGameState {
   return {
     gameId: 'game-1',
     round: 1,
+    roundIndex: 1,
+    maxRounds: 5,
     phase: EPhase.AWAIT_MAIN_ACTION,
     currentPlayerId: playerId,
     startPlayerId: playerId,
@@ -105,6 +107,9 @@ function createGameState(playerId: string, spaceId: string): IPublicGameState {
           cellInSector: 0,
         },
       },
+      planetSpaceIds: {},
+      sectorSpaceIds: { 0: [spaceId] },
+      probeSpaceById: {},
     },
     sectors: [],
     planetaryBoard: { planets: {} },

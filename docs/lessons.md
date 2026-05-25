@@ -31,6 +31,7 @@
 - Planet board 的 text/image 两种模式都要覆盖交互语义；如果 image mode 能点 moon，text mode 的 moon block 也要能通过相同 main-action payload 发 `isMoon`。
 - Planet board E2E 不要只断言 text-mode `planet-card-*`；image mode 默认渲染 `planet-target-*` 和 token overlay，测试应显式切 text mode 或同时支持 image-mode selectors。
 - Token/board 视觉要表达规则语义：solar anomaly token 是奖励 pill（trace 色辅助、desc icon 居中），alien trace slot 用同色 border 容器，hidden board 不泄露真实 trace。
+- 不要把 Anomalies 的 solar sector token 协议扩成通用 alien token；新 alien 的 board token 应独立建 public state/组件，并按规则只投影到实际所在 board（如 Glyphids planet token 在 planet board，不在 solar board）。
 - Anomalies board 保持 red/yellow/blue 三列横排；单列内部按规则读法让低 index 在底部，压缩布局优先减 padding/slot 宽度，不牺牲 desc icon 可读性。
 - UI 缩放控件不能只改 `max-width`；如果用户预期布局变小，必须改实际 reserved `width`/`height`，并在浏览器里检查 `getBoundingClientRect()`，不只看 style attribute。
 - Player input 是动作提示区域，不应直接塞完整 board 级组件；tech/card 等输入要用紧凑选择控件，并把完整 board 保留在对应 board tab。

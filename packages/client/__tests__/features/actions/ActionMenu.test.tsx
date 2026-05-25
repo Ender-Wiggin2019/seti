@@ -293,6 +293,8 @@ describe('ActionMenu', () => {
         planetSpaceIds: {
           [EPlanet.MARS]: 'ring-2-cell-0',
         },
+        sectorSpaceIds: { 0: ['ring-2-cell-0'] },
+        probeSpaceById: { 'probe-1': 'ring-2-cell-0' },
       },
       planetaryBoard: {
         planets: {

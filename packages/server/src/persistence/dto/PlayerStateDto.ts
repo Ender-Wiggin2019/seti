@@ -1,5 +1,5 @@
 import type { IComputerSlotReward } from '@seti/common/types/computer';
-import type { EResource, ETrace } from '@seti/common/types/element';
+import type { ETrace } from '@seti/common/types/element';
 import type {
   EOrganizationId,
   IPlayerActionCostConfig,
@@ -29,18 +29,18 @@ export interface IPlayerStateDto {
   handLimitAfterPass: number;
   pendingSetupTucks: number;
   setupChoiceContext?: ISetupChoiceContext;
-  quickStartCardIds?: string[];
-  organizationIds?: EOrganizationId[];
-  organizationState?: TOrganizationState;
-  oncePerRoundUsed?: TOrganizationRoundUsage;
-  actionCosts?: IPlayerActionCostConfig;
-  exofossils?: number;
+  quickStartCardIds: string[];
+  organizationIds: EOrganizationId[];
+  organizationState: TOrganizationState;
+  oncePerRoundUsed: TOrganizationRoundUsage;
+  actionCosts: IPlayerActionCostConfig;
+  exofossils: number;
   resources: {
     credits: number;
     energy: number;
     publicity: number;
     data: number;
-    signalTokens?: number;
+    signalTokens: number;
   };
   income: {
     base: TIncomeBundle;
@@ -51,7 +51,7 @@ export interface IPlayerStateDto {
   techs: ETechId[];
   hand: TCardItem[];
   playedMissions: TCardItem[];
-  playedCards?: TCardItem[];
+  playedCards: TCardItem[];
   completedMissions: TCardItem[];
   endGameCards: TCardItem[];
   tuckedIncomeCards: TCardItem[];
@@ -71,5 +71,4 @@ export interface IPlayerStateDto {
   };
   pieces: IPlayerPiecesStateDto;
   waitingFor: null;
-  resourceByType: Partial<Record<EResource, number>>;
 }

@@ -23,17 +23,15 @@ export function processFreeAction(
 ): IPlayerInput | undefined {
   switch (action.type) {
     case EFreeAction.MOVEMENT: {
-      const target =
-        action.target ??
-        (action.capsuleId !== undefined
-          ? ({ type: 'mascamites-capsule', id: action.capsuleId } as const)
-          : undefined);
-      if (target === undefined) {
-        return MovementFreeAction.execute(player, game, action.path)
-          .pendingInput;
+      if (action.target === undefined) {
+        throw new GameError(
+          EErrorCode.INVALID_ACTION,
+          'Movement target is required',
+          { path: action.path },
+        );
       }
       return MovementFreeAction.execute(player, game, action.path, {
-        target,
+        target: action.target,
       }).pendingInput;
     }
 

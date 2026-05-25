@@ -223,7 +223,7 @@ describe('Game Integration: Main Action Legality', () => {
   });
 
   describe('ORBIT', () => {
-    it('rejects without planet payload', () => {
+    it('rejects when no planet is eligible for the picker flow', () => {
       const game = createGame();
 
       assertThrowsGameError(
@@ -232,7 +232,7 @@ describe('Game Integration: Main Action Legality', () => {
       );
     });
 
-    it('rejects Earth as orbit target', () => {
+    it('rejects direct orbit planet payloads', () => {
       const game = createGame();
 
       assertThrowsGameError(
@@ -251,18 +251,14 @@ describe('Game Integration: Main Action Legality', () => {
       expect(p1.probesInSpace).toBe(0);
 
       assertThrowsGameError(
-        () =>
-          game.processMainAction('p1', {
-            type: EMainAction.ORBIT,
-            payload: { planet: EPlanet.MARS },
-          }),
+        () => game.processMainAction('p1', { type: EMainAction.ORBIT }),
         EErrorCode.INVALID_ACTION,
       );
     });
   });
 
   describe('LAND', () => {
-    it('rejects Earth as landing target', () => {
+    it('rejects direct land planet payloads', () => {
       const game = createGame();
 
       assertThrowsGameError(
@@ -275,7 +271,7 @@ describe('Game Integration: Main Action Legality', () => {
       );
     });
 
-    it('rejects without planet payload', () => {
+    it('rejects when no planet is eligible for the picker flow', () => {
       const game = createGame();
 
       assertThrowsGameError(

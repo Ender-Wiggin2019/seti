@@ -417,6 +417,7 @@ export class OrbitProbeEffect {
       player.pieces.deploy(EPieceType.ORBITER);
     }
     syncProbeCountsForPlayer(game, player.id);
+    game.alienState?.onPlanetVisited(game, player, planet);
     const rewardResolution = this.applyRewards(
       player,
       game,

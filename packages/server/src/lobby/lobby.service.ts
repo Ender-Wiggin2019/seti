@@ -45,27 +45,10 @@ export class LobbyService {
     roomOptionsInput?: IGameOptionsPatch,
   ): Promise<IRoomResponse> {
     const gameId = randomUUID();
-    const roomOptionsAny = (roomOptionsInput ?? {}) as Partial<IGameOptions> & {
-      scenarioPreset?: unknown;
-      turnTimerSeconds?: number;
-    };
-    const {
-      scenarioPreset: _scenarioPreset,
-      turnTimerSeconds,
-      ...rawRoomOptions
-    } = roomOptionsAny;
-    const normalizedTimerPerTurn =
-      roomOptionsAny.timerPerTurn ?? turnTimerSeconds;
-    const normalizedRoomOptions: Partial<IGameOptions> = {
-      ...rawRoomOptions,
-      ...(normalizedTimerPerTurn === undefined
-        ? {}
-        : { timerPerTurn: normalizedTimerPerTurn }),
-    };
     let options: Readonly<IGameOptions>;
     try {
       options = createGameOptions({
-        ...normalizedRoomOptions,
+        ...(roomOptionsInput ?? {}),
         playerCount,
       });
     } catch (error) {
@@ -369,9 +352,9 @@ export class LobbyService {
         gameId,
       );
 
-      await new GameRepository(
-        tx as unknown as NodePgDatabase,
-      ).startFromLobby(game);
+      await new GameRepository(tx as unknown as NodePgDatabase).startFromLobby(
+        game,
+      );
     });
 
     return this.getRoomById(gameId);

@@ -44,6 +44,7 @@ describe('PlanetaryBoard', () => {
     expect(result.centerReward.traceRewards).toEqual([
       { trace: ETrace.YELLOW, amount: 1 },
     ]);
+    expect('lifeTraceGained' in result.centerReward).toBe(false);
     expect(result.firstLandDataGained).toBe(3);
     expect(result.rewards).toEqual([
       { type: 'resource', resource: EResource.SCORE, amount: 12 },

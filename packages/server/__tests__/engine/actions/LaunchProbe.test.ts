@@ -20,6 +20,8 @@ import type { IGame } from '@/engine/IGame.js';
 import { toPublicSolarSystemState } from '@/engine/utils/stateProjection.js';
 import { GameError } from '@/shared/errors/GameError.js';
 import {
+  chooseLandMainActionPlanet,
+  chooseOrbitMainActionPlanet,
   resolveAllInputsDefault,
   resolveSetupTucks,
   setSolarSystemInitialDiscAngles,
@@ -169,6 +171,21 @@ function shortestMovePathForPlayerToPlanet(
   }
 
   return best;
+}
+
+function movementRequest(game: Game, playerId: string, path: string[]) {
+  const solar = requireSolarSystem(game);
+  const probe = solar
+    .getProbesAt(path[0])
+    .find((candidate) => candidate.playerId === playerId);
+  if (!probe) {
+    throw new Error(`expected ${playerId} probe at ${path[0]}`);
+  }
+  return {
+    type: EFreeAction.MOVEMENT as EFreeAction.MOVEMENT,
+    path,
+    target: { type: 'probe' as const, id: probe.id },
+  };
 }
 
 /** Advance turns until `playerId` may take a main action (handles round rollovers). */
@@ -345,16 +362,13 @@ describe('LaunchProbeAction — integration', () => {
         EPlanet.VENUS,
       );
       player.gainMove(10);
-      game.processFreeAction(player.id, {
-        type: EFreeAction.MOVEMENT,
-        path: pathToVenus,
-      });
+      game.processFreeAction(
+        player.id,
+        movementRequest(game, player.id, pathToVenus),
+      );
       expect(player.probesInSpace).toBe(2);
 
-      game.processMainAction(player.id, {
-        type: EMainAction.ORBIT,
-        payload: { planet: EPlanet.VENUS },
-      });
+      chooseOrbitMainActionPlanet(game, player, EPlanet.VENUS);
       expect(player.probesInSpace).toBe(1);
       expect(
         game.planetaryBoard?.planets.get(EPlanet.VENUS)?.orbitSlots,
@@ -412,15 +426,12 @@ describe('LaunchProbeAction — integration', () => {
         EPlanet.VENUS,
       );
       player.gainMove(10);
-      game.processFreeAction(player.id, {
-        type: EFreeAction.MOVEMENT,
-        path: pathToVenusLand,
-      });
+      game.processFreeAction(
+        player.id,
+        movementRequest(game, player.id, pathToVenusLand),
+      );
 
-      game.processMainAction(player.id, {
-        type: EMainAction.LAND,
-        payload: { planet: EPlanet.VENUS },
-      });
+      chooseLandMainActionPlanet(game, player, EPlanet.VENUS);
       resolveLandFollowUpInputs(game, player.id);
 
       expect(player.probesInSpace).toBe(1);

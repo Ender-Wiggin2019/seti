@@ -1,7 +1,19 @@
-import { useMemo } from 'react';
+import { findPlanetSpaceId } from '@seti/common/rules/solarSystem';
+import { useMemo, useState } from 'react';
 import { SolarSystemView } from '@/features/board/SolarSystemView';
+import { InputRenderer } from '@/features/input/InputRenderer';
 import { useServerDebugSession } from '@/hooks/useServerDebugSession';
-import type { IPublicGameState } from '@/types/re-exports';
+import {
+  EAlienType,
+  EFreeAction,
+  EMainAction,
+  EPlanet,
+  type IFreeActionRequest,
+  type IInputResponse,
+  type IPublicGameState,
+  type IPublicOumuamuaTile,
+  type TMovementTarget,
+} from '@/types/re-exports';
 
 function buildPlayerColors(
   players: IPublicGameState['players'],
@@ -11,14 +23,44 @@ function buildPlayerColors(
   );
 }
 
-function noop(): void {
-  return undefined;
+function findOumuamuaTile(
+  aliens: IPublicGameState['aliens'] | undefined,
+): IPublicOumuamuaTile | null {
+  const oumuamua = aliens?.find((alien) => alien.board?.type === 'oumuamua');
+  return oumuamua?.board?.type === 'oumuamua'
+    ? (oumuamua.board.tile ?? null)
+    : null;
+}
+
+function findMascamitesSamplePools(
+  aliens: IPublicGameState['aliens'] | undefined,
+): { jupiter: number; saturn: number } | null {
+  const mascamites = aliens?.find(
+    (alien) => alien.board?.type === 'mascamites',
+  );
+  if (mascamites?.board?.type !== 'mascamites') return null;
+  return {
+    jupiter: mascamites.board.samplePools[EPlanet.JUPITER] ?? 0,
+    saturn: mascamites.board.samplePools[EPlanet.SATURN] ?? 0,
+  };
 }
 
 export function SolarSystemCompareDebugPage(): React.JSX.Element {
   const session = useServerDebugSession(true);
+  const [moveModeActive, setMoveModeActive] = useState(false);
+  const [selectedAlienType, setSelectedAlienType] = useState<EAlienType>(
+    EAlienType.OUMUAMUA,
+  );
   const gameState = session?.gameState ?? null;
   const setupConfig = gameState?.solarSystemSetup;
+  const oumuamuaTile = useMemo(
+    () => findOumuamuaTile(gameState?.aliens),
+    [gameState?.aliens],
+  );
+  const mascamitesSamplePools = useMemo(
+    () => findMascamitesSamplePools(gameState?.aliens),
+    [gameState?.aliens],
+  );
   const playerColors = useMemo(
     () => buildPlayerColors(gameState?.players ?? []),
     [gameState?.players],
@@ -26,6 +68,58 @@ export function SolarSystemCompareDebugPage(): React.JSX.Element {
   const myPlayerId =
     session?.viewerId || gameState?.players[0]?.playerId || 'debug-player';
   const canRotate = Boolean(gameState && setupConfig && session);
+  const canUseBoardAction = Boolean(gameState && session);
+  const myPlayer = gameState?.players.find(
+    (player) => player.playerId === myPlayerId,
+  );
+  const debugMovementPoints = moveModeActive
+    ? Math.max(myPlayer?.movementPoints ?? 0, 1)
+    : 0;
+
+  function launchProbe(): void {
+    if (!gameState || !session) return;
+    const earthSpaceId = findPlanetSpaceId(
+      gameState.solarSystem,
+      EPlanet.EARTH,
+    );
+    if (!earthSpaceId) return;
+    void session.placeProbeOn(earthSpaceId);
+  }
+
+  function startScan(): void {
+    if (!session) return;
+    void session.sendMainAction({ type: EMainAction.SCAN });
+  }
+
+  function revealAlien(): void {
+    if (!session) return;
+    void session.revealAlien(selectedAlienType);
+  }
+
+  function moveProbe(path: string[], target?: TMovementTarget): void {
+    if (!session || path.length < 2) return;
+    if (target?.type === 'probe') {
+      void (async () => {
+        for (const toSpaceId of path.slice(1)) {
+          await session.moveProbeTo(target.id, toSpaceId);
+        }
+      })();
+      return;
+    }
+    if (!target) return;
+
+    const request: IFreeActionRequest = {
+      type: EFreeAction.MOVEMENT,
+      path,
+      target,
+    };
+    void session.sendFreeAction(request);
+  }
+
+  function respondInput(response: IInputResponse): void {
+    if (!session) return;
+    void session.sendInput(response);
+  }
 
   return (
     <main className='min-h-screen bg-surface-950 px-4 py-4 text-text-100'>
@@ -40,7 +134,7 @@ export function SolarSystemCompareDebugPage(): React.JSX.Element {
               : 'Server game pending'}
           </p>
         </div>
-        <div className='flex items-center gap-2'>
+        <div className='flex flex-wrap items-center gap-2'>
           <button
             type='button'
             onClick={() => void session?.createSession()}
@@ -57,6 +151,58 @@ export function SolarSystemCompareDebugPage(): React.JSX.Element {
           >
             Rotate
           </button>
+          <button
+            type='button'
+            onClick={launchProbe}
+            disabled={!canUseBoardAction}
+            className='rounded border border-emerald-500/60 bg-emerald-500/15 px-3 py-1.5 text-sm font-semibold text-emerald-100 transition-colors hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50'
+          >
+            Launch
+          </button>
+          <button
+            type='button'
+            onClick={startScan}
+            disabled={!canUseBoardAction || session?.pendingInput !== null}
+            className='rounded border border-sky-500/60 bg-sky-500/15 px-3 py-1.5 text-sm font-semibold text-sky-100 transition-colors hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-50'
+          >
+            Scan
+          </button>
+          <button
+            type='button'
+            aria-pressed={moveModeActive}
+            onClick={() => setMoveModeActive((current) => !current)}
+            disabled={!canUseBoardAction}
+            className='rounded border border-surface-700 bg-surface-800 px-3 py-1.5 text-sm font-semibold text-text-100 transition-colors hover:bg-surface-700 disabled:cursor-not-allowed disabled:opacity-50'
+          >
+            Move Mode {moveModeActive ? 'On' : 'Off'}
+          </button>
+          <label className='flex items-center gap-1 rounded border border-surface-700 bg-surface-800 px-2 py-1.5 text-sm font-semibold text-text-100'>
+            Reveal
+            <select
+              aria-label='Reveal alien type'
+              value={selectedAlienType}
+              onChange={(event) =>
+                setSelectedAlienType(
+                  Number(event.currentTarget.value) as EAlienType,
+                )
+              }
+              disabled={!canUseBoardAction}
+              className='rounded border border-surface-700 bg-surface-950 px-2 py-1 text-sm text-text-100 disabled:cursor-not-allowed disabled:opacity-50'
+            >
+              <option value={EAlienType.OUMUAMUA}>Oumuamua</option>
+              <option value={EAlienType.ANOMALIES}>Anomalies</option>
+              <option value={EAlienType.MASCAMITES}>Mascamites</option>
+              <option value={EAlienType.GLYPHIDS}>Glyphids</option>
+            </select>
+          </label>
+          <button
+            type='button'
+            onClick={revealAlien}
+            disabled={!canUseBoardAction}
+            className='rounded border border-violet-500/60 bg-violet-500/15 px-3 py-1.5 text-sm font-semibold text-violet-100 transition-colors hover:bg-violet-500/25 disabled:cursor-not-allowed disabled:opacity-50'
+          >
+            Reveal Alien
+          </button>
         </div>
       </header>
 
@@ -64,6 +210,29 @@ export function SolarSystemCompareDebugPage(): React.JSX.Element {
         <div className='mb-4 rounded-md border border-rose-500/40 bg-rose-950/40 px-3 py-2 text-sm text-rose-200'>
           {session.errorMessage}
         </div>
+      ) : null}
+
+      {session?.pendingInput ? (
+        <section
+          aria-label='Pending debug input'
+          className='mb-4 rounded-md border border-surface-800 bg-surface-900/70 px-3 py-3'
+        >
+          <InputRenderer
+            model={session.pendingInput}
+            onSubmit={respondInput}
+            techBoard={gameState?.techBoard}
+          />
+        </section>
+      ) : null}
+
+      {mascamitesSamplePools ? (
+        <section
+          data-testid='debug-mascamites-sample-pools'
+          className='mb-4 rounded-md border border-surface-800 bg-surface-900/70 px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-text-300'
+        >
+          Mascamites samples: Jupiter {mascamitesSamplePools.jupiter} / Saturn{' '}
+          {mascamitesSamplePools.saturn}
+        </section>
       ) : null}
 
       {!gameState || !setupConfig ? (
@@ -80,12 +249,15 @@ export function SolarSystemCompareDebugPage(): React.JSX.Element {
               solarSystem={gameState.solarSystem}
               sectors={gameState.sectors}
               setupConfig={setupConfig}
-              pendingInput={null}
+              pendingInput={session?.pendingInput ?? null}
               playerColors={playerColors}
               myPlayerId={myPlayerId}
-              movementPoints={0}
-              onMoveProbe={noop}
-              onRespondInput={noop}
+              movementPoints={debugMovementPoints}
+              moveModeActive={moveModeActive}
+              onMoveProbe={moveProbe}
+              onRespondInput={respondInput}
+              allowMoveAnyProbe
+              oumuamuaTile={oumuamuaTile}
               textModeOverride={false}
             />
           </section>
@@ -98,12 +270,15 @@ export function SolarSystemCompareDebugPage(): React.JSX.Element {
               solarSystem={gameState.solarSystem}
               sectors={gameState.sectors}
               setupConfig={setupConfig}
-              pendingInput={null}
+              pendingInput={session?.pendingInput ?? null}
               playerColors={playerColors}
               myPlayerId={myPlayerId}
-              movementPoints={0}
-              onMoveProbe={noop}
-              onRespondInput={noop}
+              movementPoints={debugMovementPoints}
+              moveModeActive={moveModeActive}
+              onMoveProbe={moveProbe}
+              onRespondInput={respondInput}
+              allowMoveAnyProbe
+              oumuamuaTile={oumuamuaTile}
               textModeOverride={true}
             />
           </section>

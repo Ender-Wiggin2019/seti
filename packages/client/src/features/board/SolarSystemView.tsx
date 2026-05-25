@@ -12,6 +12,7 @@ import {
 } from '@seti/common/utils/alienTracePresentation';
 import { type CSSProperties, useMemo, useState } from 'react';
 import {
+  type IOumuamuaDataPillCalibration,
   useOumuamuaCalibration,
   useOumuamuaDataPillCalibration,
 } from '@/hooks/useCalibrationMode';
@@ -26,6 +27,7 @@ import type {
   IPublicSectorSignal,
   IPublicSolarSystem,
   IPublicSolarSystemAlienToken,
+  IPublicSolarSystemGlyphidsSectorToken,
   IPublicSolarSystemMovablePiece,
   IPublicSolarSystemSpaceState,
   ISelectOptionInputModel,
@@ -140,6 +142,15 @@ interface ISolarAlienTokenRenderItem {
   offsetY: number;
 }
 
+interface ISolarGlyphidsSectorTokenRenderItem {
+  key: string;
+  token: IPublicSolarSystemGlyphidsSectorToken;
+  xPercent: number;
+  yPercent: number;
+  offsetX: number;
+  offsetY: number;
+}
+
 type TTextModeSpaceLabelKind =
   | 'empty'
   | 'planet'
@@ -160,6 +171,8 @@ interface ITextModeLabelItem {
   xPercent: number;
   yPercent: number;
   rotationDeg: number;
+  offsetX: number;
+  offsetY: number;
 }
 
 const TEXT_MODE_SPACE_STYLE_BY_RING: Readonly<
@@ -400,6 +413,7 @@ export function SolarSystemView({
   const solarBoardZoom = useGameViewStore((state) => state.zoom);
   const setSolarBoardZoom = useGameViewStore((state) => state.setZoom);
   const normalizedSolarBoardZoom = clampSolarBoardZoom(solarBoardZoom);
+  const oumuamuaDataPillCalibration = useOumuamuaDataPillCalibration();
   const solarBoardWidthPx = Math.round(
     SOLAR_BOARD_BASE_SIZE_PX * normalizedSolarBoardZoom,
   );
@@ -431,11 +445,7 @@ export function SolarSystemView({
 
     return solarSystem.spaces.flatMap((spaceId): ISpacePoint[] => {
       const state = states[spaceId];
-      if (
-        !state ||
-        state.sectorIndex === undefined ||
-        state.cellInSector === undefined
-      ) {
+      if (!state) {
         return [];
       }
 
@@ -522,6 +532,15 @@ export function SolarSystemView({
       if (!label) {
         return [];
       }
+      const labelOffset =
+        oumuamuaTile?.spaceId !== undefined &&
+        point.spaceId === oumuamuaTile.spaceId
+          ? getOumuamuaTextCellOffset(
+              point.rotationDeg,
+              normalizedSolarBoardZoom,
+              oumuamuaDataPillCalibration,
+            )
+          : { x: 0, y: 0 };
 
       return [
         {
@@ -531,10 +550,19 @@ export function SolarSystemView({
           xPercent: point.xPercent,
           yPercent: point.yPercent,
           rotationDeg: point.rotationDeg,
+          offsetX: labelOffset.x,
+          offsetY: labelOffset.y,
         },
       ];
     });
-  }, [textMode, solarSystem.spaceStates, spacePoints]);
+  }, [
+    textMode,
+    solarSystem.spaceStates,
+    spacePoints,
+    oumuamuaTile?.spaceId,
+    normalizedSolarBoardZoom,
+    oumuamuaDataPillCalibration,
+  ]);
 
   const boardPieceView = useMemo(() => {
     const bySpacePlayers: Record<string, string[]> = {};
@@ -582,21 +610,25 @@ export function SolarSystemView({
         continue;
       }
 
-      // Per-cell extra offset for probes on the Oumuamua tile, so they
-      // land on the printed planet glyph instead of the cell's
-      // geometric anchor. Tangential / radial → screen x/y using the
-      // tile's `point.rotationDeg`.
+      // Image mode parks probes on the printed Oumuamua glyph. Text mode
+      // keeps them on the shifted debug cell instead.
       const oumuamuaProbeNudge =
         oumuamuaTile?.spaceId !== undefined && spaceId === oumuamuaTile.spaceId
-          ? (() => {
-              const angleRad = (point.rotationDeg * Math.PI) / 180;
-              const t = OUMUAMUA_PROBE_LANDING_OFFSET.tangentialPx;
-              const r = OUMUAMUA_PROBE_LANDING_OFFSET.radialPx;
-              return {
-                x: Math.cos(angleRad) * t + Math.sin(angleRad) * r,
-                y: Math.sin(angleRad) * t + -Math.cos(angleRad) * r,
-              };
-            })()
+          ? textMode
+            ? getOumuamuaTextCellOffset(
+                point.rotationDeg,
+                normalizedSolarBoardZoom,
+                oumuamuaDataPillCalibration,
+              )
+            : (() => {
+                const angleRad = (point.rotationDeg * Math.PI) / 180;
+                const t = OUMUAMUA_PROBE_LANDING_OFFSET.tangentialPx;
+                const r = OUMUAMUA_PROBE_LANDING_OFFSET.radialPx;
+                return {
+                  x: Math.cos(angleRad) * t + Math.sin(angleRad) * r,
+                  y: Math.sin(angleRad) * t + -Math.cos(angleRad) * r,
+                };
+              })()
           : { x: 0, y: 0 };
 
       for (let index = 0; index < pieces.length; index += 1) {
@@ -624,7 +656,14 @@ export function SolarSystemView({
     }
 
     return { bySpacePlayers, renderItems, targetsBySpace };
-  }, [oumuamuaTile?.spaceId, solarSystem, spacePoints]);
+  }, [
+    oumuamuaTile?.spaceId,
+    solarSystem,
+    spacePoints,
+    textMode,
+    normalizedSolarBoardZoom,
+    oumuamuaDataPillCalibration,
+  ]);
 
   const isOrbitalDynamicsMoveInput =
     isOrbitalDynamicsMoveInputModel(pendingInput);
@@ -710,16 +749,25 @@ export function SolarSystemView({
   }, [orbitalDynamicsMovePaths, selectedMoveTarget]);
 
   const solarAlienTokenView = useMemo<ISolarAlienTokenRenderItem[]>(() => {
-    const groupedBySector = new Map<number, IPublicSolarSystemAlienToken[]>();
+    const groupedByAnchor = new Map<
+      string,
+      {
+        position: { xPercent: number; yPercent: number };
+        tokens: IPublicSolarSystemAlienToken[];
+      }
+    >();
     for (const token of solarSystem.alienTokens) {
-      const tokens = groupedBySector.get(token.sectorIndex) ?? [];
-      tokens.push(token);
-      groupedBySector.set(token.sectorIndex, tokens);
+      const key = `sector:${token.sectorIndex}`;
+      const group = groupedByAnchor.get(key) ?? {
+        position: spacePosition(4, token.sectorIndex, 0, 1),
+        tokens: [],
+      };
+      group.tokens.push(token);
+      groupedByAnchor.set(key, group);
     }
 
     const items: ISolarAlienTokenRenderItem[] = [];
-    for (const [sectorIndex, tokens] of groupedBySector.entries()) {
-      const position = spacePosition(4, sectorIndex, 0, 1);
+    for (const { position, tokens } of groupedByAnchor.values()) {
       for (let index = 0; index < tokens.length; index += 1) {
         const token = tokens[index];
         const offset = tokenStackOffset(index, tokens.length);
@@ -736,6 +784,45 @@ export function SolarSystemView({
 
     return items;
   }, [solarSystem.alienTokens]);
+
+  const solarGlyphidsSectorTokenView = useMemo<
+    ISolarGlyphidsSectorTokenRenderItem[]
+  >(() => {
+    const groupedByAnchor = new Map<
+      number,
+      {
+        position: { xPercent: number; yPercent: number };
+        tokens: IPublicSolarSystemGlyphidsSectorToken[];
+      }
+    >();
+
+    for (const token of solarSystem.glyphidsSectorTokens ?? []) {
+      const group = groupedByAnchor.get(token.sectorIndex) ?? {
+        position: spacePosition(4, token.sectorIndex, 0, 1),
+        tokens: [],
+      };
+      group.tokens.push(token);
+      groupedByAnchor.set(token.sectorIndex, group);
+    }
+
+    const items: ISolarGlyphidsSectorTokenRenderItem[] = [];
+    for (const { position, tokens } of groupedByAnchor.values()) {
+      for (let index = 0; index < tokens.length; index += 1) {
+        const token = tokens[index];
+        const offset = tokenStackOffset(index, tokens.length);
+        items.push({
+          key: token.tokenId,
+          token,
+          xPercent: position.xPercent,
+          yPercent: position.yPercent,
+          offsetX: offset.x,
+          offsetY: offset.y,
+        });
+      }
+    }
+
+    return items;
+  }, [solarSystem.glyphidsSectorTokens]);
 
   const oumuamuaSectorData = useMemo(() => {
     if (!oumuamuaTile) {
@@ -1085,23 +1172,27 @@ export function SolarSystemView({
               isOrbitalDynamicsMoveSource ||
               (moveModeActive && hasMyProbe);
 
-            // Mirror the Oumuamua probe-landing nudge on the hotspot
-            // button so the click target stays under the printed planet
-            // glyph (and the probe stack). Tangential / radial → screen
-            // x/y using the tile's `space.rotationDeg`.
+            // Match the hotspot to whichever Oumuamua cell is visible in
+            // the current mode.
             const isOumuamuaHotspot =
               oumuamuaTile?.spaceId !== undefined &&
               space.spaceId === oumuamuaTile.spaceId;
             const hotspotNudge = isOumuamuaHotspot
-              ? (() => {
-                  const angleRad = (space.rotationDeg * Math.PI) / 180;
-                  const t = OUMUAMUA_PROBE_LANDING_OFFSET.tangentialPx;
-                  const r = OUMUAMUA_PROBE_LANDING_OFFSET.radialPx;
-                  return {
-                    x: Math.cos(angleRad) * t + Math.sin(angleRad) * r,
-                    y: Math.sin(angleRad) * t + -Math.cos(angleRad) * r,
-                  };
-                })()
+              ? textMode
+                ? getOumuamuaTextCellOffset(
+                    space.rotationDeg,
+                    normalizedSolarBoardZoom,
+                    oumuamuaDataPillCalibration,
+                  )
+                : (() => {
+                    const angleRad = (space.rotationDeg * Math.PI) / 180;
+                    const t = OUMUAMUA_PROBE_LANDING_OFFSET.tangentialPx;
+                    const r = OUMUAMUA_PROBE_LANDING_OFFSET.radialPx;
+                    return {
+                      x: Math.cos(angleRad) * t + Math.sin(angleRad) * r,
+                      y: Math.sin(angleRad) * t + -Math.cos(angleRad) * r,
+                    };
+                  })()
               : { x: 0, y: 0 };
 
             return (
@@ -1155,7 +1246,10 @@ export function SolarSystemView({
                 style={{
                   left: `${item.xPercent}%`,
                   top: `${item.yPercent}%`,
-                  transform: 'translate(-50%, -50%)',
+                  transform:
+                    item.offsetX === 0 && item.offsetY === 0
+                      ? 'translate(-50%, -50%)'
+                      : `translate(calc(-50% + ${item.offsetX}px), calc(-50% + ${item.offsetY}px))`,
                   zIndex: TEXT_MODE_LABEL_Z_INDEX_BY_WHEEL[item.styleLayer],
                 }}
               >
@@ -1203,12 +1297,24 @@ export function SolarSystemView({
               playerColors={playerColors}
               textMode={textMode}
               boardScale={normalizedSolarBoardZoom}
+              calibration={oumuamuaDataPillCalibration}
             />
           </>
         ) : null}
 
         {solarAlienTokenView.map((item) => (
           <SolarAlienTokenMarker
+            key={item.key}
+            token={item.token}
+            xPercent={item.xPercent}
+            yPercent={item.yPercent}
+            offsetX={item.offsetX}
+            offsetY={item.offsetY}
+          />
+        ))}
+
+        {solarGlyphidsSectorTokenView.map((item) => (
+          <SolarGlyphidsSectorTokenMarker
             key={item.key}
             token={item.token}
             xPercent={item.xPercent}
@@ -1408,6 +1514,54 @@ const OUMUAMUA_DATA_PILL_BASE_OFFSET = {
   imageMode: { tangentialPx: 25, radialPx: -1, rotationDeg: 5 },
 } as const;
 
+function getOumuamuaDataPillPlacement({
+  rotationDeg,
+  textMode,
+  boardScale,
+  calibration,
+}: {
+  rotationDeg: number;
+  textMode: boolean;
+  boardScale: number;
+  calibration: IOumuamuaDataPillCalibration;
+}): { offsetX: number; offsetY: number; rotationDeg: number } {
+  // Tangential = perpendicular to the radial axis at the tile (positive =
+  // clockwise around the sun). Radial = away from the sun (positive).
+  // Convert pixel offsets to viewport x/y deltas using the tile angle.
+  const baseOffset = textMode
+    ? OUMUAMUA_DATA_PILL_BASE_OFFSET.textMode
+    : OUMUAMUA_DATA_PILL_BASE_OFFSET.imageMode;
+  const angleRad = (rotationDeg * Math.PI) / 180;
+  const tangentialPx =
+    (baseOffset.tangentialPx + calibration.offsetT) * boardScale;
+  const radialPx = (baseOffset.radialPx + calibration.offsetR) * boardScale;
+  const tangentX = Math.cos(angleRad) * tangentialPx;
+  const tangentY = Math.sin(angleRad) * tangentialPx;
+  const radialX = Math.sin(angleRad) * radialPx;
+  const radialY = -Math.cos(angleRad) * radialPx;
+
+  return {
+    offsetX: tangentX + radialX,
+    offsetY: tangentY + radialY,
+    rotationDeg: rotationDeg + baseOffset.rotationDeg + calibration.rotation,
+  };
+}
+
+function getOumuamuaTextCellOffset(
+  rotationDeg: number,
+  boardScale: number,
+  calibration: IOumuamuaDataPillCalibration,
+): { x: number; y: number } {
+  const dataPillPlacement = getOumuamuaDataPillPlacement({
+    rotationDeg,
+    textMode: true,
+    boardScale,
+    calibration,
+  });
+
+  return { x: dataPillPlacement.offsetX, y: 0 };
+}
+
 /**
  * Arc geometry for the 3 data dots in image mode. Mirrors the per-tile
  * sector data slots in `SectorNodeView` so dot size/curvature match the
@@ -1428,6 +1582,7 @@ function OumuamuaSectorDataList({
   playerColors,
   textMode,
   boardScale = 1,
+  calibration,
 }: {
   point: ISpacePoint;
   tile: IPublicOumuamuaTile;
@@ -1435,31 +1590,18 @@ function OumuamuaSectorDataList({
   playerColors: Record<string, string>;
   textMode: boolean;
   boardScale?: number;
+  calibration: IOumuamuaDataPillCalibration;
 }): React.JSX.Element {
-  const calibration = useOumuamuaDataPillCalibration();
-  const baseOffset = textMode
-    ? OUMUAMUA_DATA_PILL_BASE_OFFSET.textMode
-    : OUMUAMUA_DATA_PILL_BASE_OFFSET.imageMode;
-
-  // Tangential = perpendicular to the radial axis at the tile (positive =
-  // clockwise around the sun). Radial = away from the sun (positive).
-  // Convert pixel offsets to viewport x/y deltas using the tile's
-  // angular position so the pill follows the tile around the wheel.
-  // Multiply by `boardScale` so the group's offset shrinks/grows with
-  // zoom in lockstep with the planet art (which is already px-scaled
-  // via boardWidthPx).
-  const angleRad = (point.rotationDeg * Math.PI) / 180;
-  const tangentialPx =
-    (baseOffset.tangentialPx + calibration.offsetT) * boardScale;
-  const radialPx = (baseOffset.radialPx + calibration.offsetR) * boardScale;
-  const tangentX = Math.cos(angleRad) * tangentialPx;
-  const tangentY = Math.sin(angleRad) * tangentialPx;
-  const radialX = Math.sin(angleRad) * radialPx;
-  const radialY = -Math.cos(angleRad) * radialPx;
-  const offsetX = tangentX + radialX;
-  const offsetY = tangentY + radialY;
-  const pillRotation =
-    point.rotationDeg + baseOffset.rotationDeg + calibration.rotation;
+  const {
+    offsetX,
+    offsetY,
+    rotationDeg: pillRotation,
+  } = getOumuamuaDataPillPlacement({
+    rotationDeg: point.rotationDeg,
+    textMode,
+    boardScale,
+    calibration,
+  });
 
   // Scale the arc geometry by zoom so dots stay the same visual size as
   // the regular per-tile sector data dots (which apply the same scale
@@ -1636,6 +1778,36 @@ function SolarAlienTokenMarker({
         data-testid='solar-alien-token-trace-color-right'
         style={{ backgroundColor: color }}
       />
+    </div>
+  );
+}
+
+function SolarGlyphidsSectorTokenMarker({
+  token,
+  xPercent,
+  yPercent,
+  offsetX,
+  offsetY,
+}: {
+  token: IPublicSolarSystemGlyphidsSectorToken;
+  xPercent: number;
+  yPercent: number;
+  offsetX: number;
+  offsetY: number;
+}): React.JSX.Element {
+  return (
+    <div
+      className='pointer-events-none absolute inline-flex h-7 w-7 items-center justify-center rounded-full border border-lime-200/70 bg-surface-950/95 shadow-[0_2px_6px_rgba(0,0,0,0.55)]'
+      data-testid={`solar-glyphids-sector-token-${token.tokenId}`}
+      style={{
+        left: `${xPercent}%`,
+        top: `${yPercent}%`,
+        transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`,
+        zIndex: 79,
+      }}
+      title={token.tokenId}
+    >
+      <DescRender desc={`{${token.glyph}[sm]}`} size='desc-mini' smartSize />
     </div>
   );
 }

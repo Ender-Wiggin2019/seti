@@ -14,6 +14,7 @@ import type {
   IArkhosExplorationRewardRecord,
   IArkhosSecurityCardState,
   IGlyphidsBoardToken,
+  IGlyphidsPlacedToken,
   IGlyphidsTranslationRow,
   TGlyphidsGlyph,
   TGlyphidsRowsByPlayer,
@@ -98,12 +99,8 @@ export interface IPlanetaryBoardDto {
       firstLandDataBonusTaken: boolean[];
       moonOccupants: Array<{
         playerId: string;
-        moonId?: string;
-        /** Legacy snapshots only. Current serializers do not emit this field. */
-        moonIndex?: number;
+        moonId: string;
       }>;
-      /** Legacy snapshots only. Current serializers do not emit this field. */
-      moonOccupant?: { playerId: string } | null;
     };
   }>;
   probesByPlanet: Array<{
@@ -118,8 +115,7 @@ export interface ITechBoardDto {
     category: TTechCategory;
     level: TTechLevel;
     tiles: Array<{
-      bonus?: ITechBonusToken;
-      bonuses?: ITechBonusToken[];
+      bonuses: ITechBonusToken[];
     }>;
     firstTakeBonusAvailable: boolean;
   }>;
@@ -250,6 +246,7 @@ export interface IAlienBoardDto {
   glyphidsGlyphTokenBank?: TGlyphidsGlyph[];
   glyphidsGlyphRows?: TGlyphidsRowsByPlayer;
   glyphidsBoardTokens?: IGlyphidsBoardToken[];
+  glyphidsPlacedTokens?: IGlyphidsPlacedToken[];
   glyphidsTranslationRows?: IGlyphidsTranslationRow[];
   amoebaOrganelles?: IAmoebaOrganelleToken[];
   arkhosExplorationDrawPile?: string[];
@@ -331,8 +328,8 @@ export interface IGameStateDto {
   rngState: number;
   options: IGameOptions;
   round: number;
-  roundIndex?: number;
-  maxRounds?: number;
+  roundIndex: number;
+  maxRounds: number;
   phase: EPhase;
   currentPlayerId: string;
   startPlayerId: string;

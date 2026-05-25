@@ -232,7 +232,9 @@ describe('AlienBoardView', () => {
       'aria-label',
       'Alien Board (face-down)',
     );
-    expect(within(hiddenBoard).getByAltText('Face-down alien board')).toBeInTheDocument();
+    expect(
+      within(hiddenBoard).getByAltText('Face-down alien board'),
+    ).toBeInTheDocument();
     expect(hiddenBoard.compareDocumentPosition(discoveryZone)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
@@ -637,6 +639,7 @@ describe('AlienBoardView', () => {
           { position: 0, glyph: EAlienIcon.GLYPH_YELLOW },
           { position: 3, glyph: EAlienIcon.GLYPH_PURPLE },
         ],
+        placedTokens: [],
         translationRows: [
           {
             rowId: 'glyphids-translation-level-1',

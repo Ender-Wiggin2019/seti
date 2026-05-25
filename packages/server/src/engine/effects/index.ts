@@ -24,8 +24,6 @@ export {
 } from './probe/BuildLandPlanetSelection.js';
 export {
   type ILandOptions,
-  type ILandProbeEffectOptions,
-  type ILandProbeEffectResult,
   type ILandResult,
   LandProbeEffect,
 } from './probe/LandProbeEffect.js';

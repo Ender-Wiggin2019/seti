@@ -20,6 +20,7 @@ import type {
   IPublicPlayerState,
   IPublicSector,
   IPublicSolarSystemAlienToken,
+  IPublicSolarSystemGlyphidsSectorToken,
   IPublicSolarSystemMovablePiece,
   IPublicTechBoard,
   IPublicTraceSlot,
@@ -47,6 +48,7 @@ import {
   type MascamitesAlienBoard,
   type OumuamuaAlienBoard,
 } from '@/engine/alien/AlienBoard.js';
+import { projectCardItems } from '@/engine/cards/projectCardItem.js';
 import {
   getScanSignalTokenSpendCount,
   isScanActionPoolInput,
@@ -58,10 +60,9 @@ import {
   type IMissionRuntimeState,
 } from '@/engine/missions/IMission.js';
 import { OrganizationRegistry } from '@/engine/organization/OrganizationRegistry.js';
-import type { IPlayer } from '@/engine/player/IPlayer.js';
+import type { IPlayer, TCardItem } from '@/engine/player/IPlayer.js';
 import { EPieceType } from '@/engine/player/Pieces.js';
 import type { RivalState } from '@/engine/solo/RivalState.js';
-import { buildTechTileBonuses } from '@/engine/tech/TechBonusConfig.js';
 import { TechModifierQuery } from '@/engine/tech/TechModifierQuery.js';
 import { toPublicSolarSystemState } from '@/engine/utils/stateProjection.js';
 import type {
@@ -313,6 +314,11 @@ function toPublicGlyphidsBoard(
     glyphTokenBankSize: board.glyphTokenBank.length,
     glyphRows: cloneValue(board.glyphRows),
     boardTokens: board.boardTokens.map((token) => ({ ...token })),
+    placedTokens: board.placedTokens.map((token) => ({
+      tokenId: token.tokenId,
+      glyph: token.glyph,
+      location: { ...token.location },
+    })),
     translationRows: board.translationRows.map((row) => ({
       ...row,
       glyphs: [...row.glyphs],
@@ -395,18 +401,48 @@ function toPublicAlienState(board: AlienBoard): IPublicAlienState {
 
 function toPublicSolarAlienTokens(game: IGame): IPublicSolarSystemAlienToken[] {
   return (game.solarSystem?.alienTokens ?? []).flatMap((token) => {
+    if (token.alienType !== EAlienType.ANOMALIES) return [];
     const board = game.alienState.getBoardByType(token.alienType);
     if (!board?.discovered) return [];
     return [
       {
         tokenId: token.tokenId,
-        alienType: token.alienType,
+        alienType: EAlienType.ANOMALIES as const,
         sectorIndex: token.sectorIndex,
         traceColor: token.traceColor,
         rewards: token.rewards.map((reward) => ({ ...reward })),
       },
     ];
   });
+}
+
+function toPublicSolarGlyphidsSectorTokens(
+  game: IGame,
+): IPublicSolarSystemGlyphidsSectorToken[] {
+  const glyphidsBoard = getDiscoveredGlyphidsBoard(game);
+  if (!glyphidsBoard) return [];
+
+  return glyphidsBoard.placedTokens.flatMap((token) =>
+    token.location.type === 'sector'
+      ? [
+          {
+            tokenId: token.tokenId,
+            alienType: EAlienType.GLYPHIDS as const,
+            sectorId: token.location.sectorId,
+            sectorIndex: token.location.sectorIndex,
+            glyph: token.glyph,
+          },
+        ]
+      : [],
+  );
+}
+
+function getDiscoveredGlyphidsBoard(game: IGame): GlyphidsAlienBoard | null {
+  const board = game.alienState.getBoardByType(EAlienType.GLYPHIDS);
+  if (!isGlyphidsAlienBoard(board) || !board.discovered) {
+    return null;
+  }
+  return board;
 }
 
 function toPublicSolarMovablePieces(
@@ -506,13 +542,6 @@ function serializePlayer(player: IPlayer): IPlayerStateDto {
       },
     },
     waitingFor: null,
-    resourceByType: {
-      [EResource.CREDIT]: player.resources.credits,
-      [EResource.ENERGY]: player.resources.energy,
-      [EResource.PUBLICITY]: player.resources.publicity,
-      [EResource.DATA]: player.resources.data,
-      [EResource.SIGNAL_TOKEN]: player.resources.signalTokens,
-    },
   };
 }
 
@@ -613,8 +642,7 @@ function serializeTechBoard(game: IGame): ITechBoardDto | null {
       category: stack.category,
       level: stack.level,
       tiles: stack.tiles.map((tile) => ({
-        bonus: tile.bonus,
-        bonuses: buildTechTileBonuses(stack.techId, tile.bonus),
+        bonuses: [...tile.bonuses],
       })),
       firstTakeBonusAvailable: stack.firstTakeBonusAvailable,
     })),
@@ -717,6 +745,11 @@ function serializeAlienState(game: IGame): IAlienStateDto {
         dto.glyphidsGlyphRows = cloneValue(board.glyphRows);
         dto.glyphidsBoardTokens = board.boardTokens.map((token) => ({
           ...token,
+        }));
+        dto.glyphidsPlacedTokens = board.placedTokens.map((token) => ({
+          tokenId: token.tokenId,
+          glyph: token.glyph,
+          location: { ...token.location },
         }));
         dto.glyphidsTranslationRows = board.translationRows.map((row) => ({
           ...row,
@@ -885,7 +918,7 @@ function toPublicPlayerState(
     color: player.color,
     score: player.score,
     handSize: player.hand.length,
-    hand: isViewer ? cloneValue(player.hand as never) : undefined,
+    hand: isViewer ? projectCardItems(player.hand) : undefined,
     resources: {
       [EResource.CREDIT]: player.resources.credits,
       [EResource.ENERGY]: player.resources.energy,
@@ -922,12 +955,12 @@ function toPublicPlayerState(
     probesInSpace: player.probesInSpace,
     probeSpaceLimit: effectiveProbeSpaceLimit,
     tuckedIncomeCards: isViewer
-      ? cloneValue(player.tuckedIncomeCards as never)
+      ? projectCardItems(player.tuckedIncomeCards)
       : undefined,
     playedMissions: isViewer
-      ? cloneValue(player.playedMissions as never)
+      ? projectCardItems(player.playedMissions)
       : undefined,
-    playedCards: isViewer ? cloneValue(player.playedCards as never) : undefined,
+    playedCards: isViewer ? projectCardItems(player.playedCards) : undefined,
     completableMissionBranches: isViewer
       ? game.missionTracker
           .getCompletableQuickMissions(player, game)
@@ -940,9 +973,7 @@ function toPublicPlayerState(
       ? (cloneValue(player.completedMissions) as string[])
       : undefined,
     completedMissionCount: player.completedMissions.length,
-    endGameCards: isViewer
-      ? cloneValue(player.endGameCards as never)
-      : undefined,
+    endGameCards: isViewer ? projectCardItems(player.endGameCards) : undefined,
     endGameCardCount: player.endGameCards.length,
     creditIncome: player.income.computeRoundPayout()[EResource.CREDIT],
     energyIncome: player.income.computeRoundPayout()[EResource.ENERGY],
@@ -972,18 +1003,30 @@ function toPublicPlayerState(
 }
 
 function toPublicPlanetaryBoard(game: IGame): IPublicPlanetaryBoard {
+  const glyphidsBoard = getDiscoveredGlyphidsBoard(game);
   if (!game.planetaryBoard) {
     return { configs: { ...PLANETARY_BOARD_CONFIG }, planets: {} };
   }
 
   const planets: IPublicPlanetaryBoard['planets'] = {};
   for (const [planet, state] of game.planetaryBoard.planets.entries()) {
+    const alienTokens = glyphidsBoard?.placedTokens
+      .filter(
+        (token) =>
+          token.location.type === 'planet' && token.location.planet === planet,
+      )
+      .map((token) => ({
+        tokenId: token.tokenId,
+        alienType: EAlienType.GLYPHIDS as const,
+        glyph: token.glyph,
+      }));
     planets[planet] = {
       orbitSlots: state.orbitSlots.map((slot) => ({ ...slot })),
       landingSlots: state.landingSlots.map((slot) => ({ ...slot })),
       firstOrbitClaimed: state.firstOrbitClaimed,
       firstLandDataBonusTaken: [...state.firstLandDataBonusTaken],
       moonOccupants: state.moonOccupants.map((slot) => ({ ...slot })),
+      ...(alienTokens && alienTokens.length > 0 ? { alienTokens } : {}),
     };
   }
 
@@ -999,7 +1042,36 @@ function toPublicTechBoard(game: IGame): IPublicTechBoard {
     return { stacks: [] };
   }
 
-  return game.techBoard.toPublicState();
+  const publicBoard = game.techBoard.toPublicState();
+  const glyphidsBoard = getDiscoveredGlyphidsBoard(game);
+  if (!glyphidsBoard) {
+    return publicBoard;
+  }
+
+  return {
+    stacks: publicBoard.stacks.map((stack) => {
+      const token = glyphidsBoard.placedTokens.find((candidate) => {
+        if (candidate.location.type !== 'tech') return false;
+        const techStack = game.techBoard?.getStack(candidate.location.techId);
+        return (
+          techStack?.category === stack.tech && techStack.level === stack.level
+        );
+      });
+      if (!token) {
+        return stack;
+      }
+      return {
+        ...stack,
+        alienTokens: [
+          {
+            tokenId: token.tokenId,
+            alienType: EAlienType.GLYPHIDS as const,
+            glyph: token.glyph,
+          },
+        ],
+      };
+    }),
+  };
 }
 
 function toPublicMilestones(game: IGame): IPublicMilestoneState {
@@ -1117,6 +1189,7 @@ export function projectGameState(
       game.solarSystem,
       toPublicSolarAlienTokens(game),
       toPublicSolarMovablePieces(game),
+      toPublicSolarGlyphidsSectorTokens(game),
     ),
     sectors: toPublicSectors(game),
     solarSystemSetup: game.solarSystemSetup ?? undefined,
@@ -1126,7 +1199,7 @@ export function projectGameState(
       drawPileSize: game.mainDeck.drawSize,
       discardPileSize: game.mainDeck.discardSize,
     },
-    cardRow: cloneValue(game.cardRow as never),
+    cardRow: projectCardItems(game.cardRow as TCardItem[]),
     endOfRoundStackCounts: game.endOfRoundStacks.map((stack) => stack.length),
     currentEndOfRoundStackIndex: game.roundRotationReminderIndex,
     aliens: game.alienState.boards.map((board) => toPublicAlienState(board)),

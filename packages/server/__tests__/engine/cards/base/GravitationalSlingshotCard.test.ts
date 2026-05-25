@@ -62,7 +62,7 @@ describe('GravitationalSlingshotCard', () => {
     solarSystem.setDynamicPlanetAtSpace(EPlanet.MERCURY, 'ring-1-cell-1', {
       grantVisitPublicity: true,
     });
-    solarSystem.placeProbe(player.id, start.id);
+    const probe = solarSystem.placeProbe(player.id, start.id);
 
     card.play({ player, game });
     game.deferredActions.drain(game);
@@ -72,6 +72,7 @@ describe('GravitationalSlingshotCard', () => {
     game.processFreeAction(player.id, {
       type: EFreeAction.MOVEMENT,
       path: [start.id, 'ring-1-cell-1'],
+      target: { type: 'probe', id: probe.id },
     });
 
     const prompt = player.waitingFor?.toModel() as
@@ -105,7 +106,7 @@ describe('GravitationalSlingshotCard', () => {
     solarSystem.setDynamicPlanetAtSpace(EPlanet.MERCURY, 'ring-1-cell-1', {
       grantVisitPublicity: true,
     });
-    solarSystem.placeProbe(player.id, start.id);
+    const probe = solarSystem.placeProbe(player.id, start.id);
 
     card.play({ player, game });
     game.deferredActions.drain(game);
@@ -115,6 +116,7 @@ describe('GravitationalSlingshotCard', () => {
     game.processFreeAction(player.id, {
       type: EFreeAction.MOVEMENT,
       path: [start.id, 'ring-1-cell-1'],
+      target: { type: 'probe', id: probe.id },
     });
 
     const prompt = player.waitingFor?.toModel() as
@@ -141,7 +143,7 @@ describe('GravitationalSlingshotCard', () => {
     const destination = requireSpace(solarSystem, 'ring-1-cell-1');
     setEmpty(start);
     setEmpty(destination);
-    solarSystem.placeProbe(player.id, start.id);
+    const probe = solarSystem.placeProbe(player.id, start.id);
 
     card.play({ player, game });
     game.deferredActions.drain(game);
@@ -151,6 +153,7 @@ describe('GravitationalSlingshotCard', () => {
     game.processFreeAction(player.id, {
       type: EFreeAction.MOVEMENT,
       path: [start.id, destination.id],
+      target: { type: 'probe', id: probe.id },
     });
 
     expect(player.waitingFor).toBeUndefined();

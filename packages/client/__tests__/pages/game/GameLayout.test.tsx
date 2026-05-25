@@ -130,7 +130,7 @@ describe('GameLayout', () => {
     const topBar = roundLabel.closest('header');
     expect(topBar).not.toBeNull();
     expect(roundLabel.nextElementSibling).toHaveTextContent('1');
-    expect(within(topBar!).getByText('Action Phase')).toBeInTheDocument();
+    expect(within(topBar!).getByText('Awaiting Action')).toBeInTheDocument();
   });
 
   it('renders end-turn phase label instead of the raw translation key', async () => {
@@ -140,7 +140,7 @@ describe('GameLayout', () => {
 
     await renderLayout();
 
-    expect(screen.getByText('End Turn Phase')).toBeInTheDocument();
+    expect(screen.getByText('Awaiting Turn End')).toBeInTheDocument();
     expect(
       screen.queryByText('client.top_bar.phases.AWAIT_END_TURN'),
     ).not.toBeInTheDocument();
@@ -1078,6 +1078,111 @@ describe('GameLayout', () => {
       });
     });
 
+    it('sends land main action with no payload — server returns the planet picker', async () => {
+      const sendAction = vi.fn();
+      mockContextValue = createMockContext({
+        sendAction,
+        gameState: createMockGameState({
+          players: [
+            createMockPlayerState({
+              playerId: 'player-1',
+              resources: { credit: 10, energy: 5, data: 0, publicity: 3 },
+            }),
+          ],
+          solarSystem: {
+            ...createMockGameState().solarSystem,
+            planetSpaceIds: { [EPlanet.MARS]: 'space-4' },
+            probes: [
+              {
+                playerId: 'player-1',
+                spaceId: 'space-4',
+                probeId: 'probe-1',
+              },
+            ],
+          },
+          planetaryBoard: {
+            planets: {
+              [EPlanet.MARS]: {
+                orbitSlots: [],
+                landingSlots: [],
+                firstOrbitClaimed: false,
+                firstLandDataBonusTaken: [false, false],
+                moonOccupants: [],
+              },
+            },
+          },
+        }),
+      });
+      await renderLayout();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Land' }));
+
+      expect(sendAction).toHaveBeenCalledWith({
+        type: EMainAction.LAND,
+      });
+    });
+
+    it('resolves orbit slot picker clicks through input instead of direct planet actions', async () => {
+      useGameViewStore.setState({ activeTab: 'planets' });
+      const sendAction = vi.fn();
+      const sendInput = vi.fn();
+      mockContextValue = createMockContext({
+        sendAction,
+        sendInput,
+        gameState: createMockGameState({
+          players: [
+            createMockPlayerState({
+              playerId: 'player-1',
+              resources: { credit: 10, energy: 5, data: 0, publicity: 3 },
+            }),
+          ],
+          solarSystem: {
+            ...createMockGameState().solarSystem,
+            planetSpaceIds: { [EPlanet.MARS]: 'space-4' },
+            probes: [
+              {
+                playerId: 'player-1',
+                spaceId: 'space-4',
+                probeId: 'probe-1',
+              },
+            ],
+          },
+          planetaryBoard: {
+            planets: {
+              [EPlanet.MARS]: {
+                orbitSlots: [],
+                landingSlots: [],
+                firstOrbitClaimed: false,
+                firstLandDataBonusTaken: [],
+                moonOccupants: [],
+              },
+            },
+          },
+        }),
+        pendingInput: {
+          inputId: 'orbit-slot',
+          type: EPlayerInputType.OPTION,
+          title: 'Choose orbit slot',
+          options: [
+            {
+              id: `main-action-orbit-slot-${EPlanet.MARS}-first`,
+              label: 'Take first-orbit slot',
+            },
+          ],
+        } as unknown as IGameContext['pendingInput'],
+      });
+      await renderLayout();
+
+      fireEvent.click(screen.getByTestId(`planet-target-${EPlanet.MARS}`));
+
+      expect(sendInput).toHaveBeenCalledWith({
+        inputId: 'orbit-slot',
+        type: EPlayerInputType.OPTION,
+        optionId: `main-action-orbit-slot-${EPlanet.MARS}-first`,
+      });
+      expect(sendAction).not.toHaveBeenCalled();
+    });
+
     it('hides free action bar when not my turn', async () => {
       mockContextValue = createMockContext({ isMyTurn: false });
       await renderLayout();
@@ -1322,7 +1427,7 @@ describe('GameLayout', () => {
     it('does not render when game is not over', async () => {
       await renderLayout();
 
-      expect(screen.queryByText('Game Over')).not.toBeInTheDocument();
+      expect(screen.queryByText('Mission Complete')).not.toBeInTheDocument();
     });
 
     it('renders when phase is GAME_OVER', async () => {
@@ -1331,7 +1436,9 @@ describe('GameLayout', () => {
       });
       await renderLayout();
 
-      expect(screen.getAllByText('Game Over').length).toBeGreaterThanOrEqual(1);
+      expect(
+        screen.getAllByText('Mission Complete').length,
+      ).toBeGreaterThanOrEqual(1);
       expect(
         screen.getByText(/Detailed scoring breakdown/),
       ).toBeInTheDocument();

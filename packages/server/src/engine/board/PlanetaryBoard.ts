@@ -63,8 +63,6 @@ export interface IPlanetState {
 export interface IOrbitResult {
   vpGained: number;
   rewards: TPlanetReward[];
-  /** @deprecated Use rewards instead. */
-  incomeResource?: EResource;
 }
 
 export interface ITraceReward {
@@ -75,8 +73,6 @@ export interface ITraceReward {
 export interface ILandingCenterReward {
   vpGained: number;
   traceRewards: ITraceReward[];
-  /** @deprecated Use traceRewards instead. */
-  lifeTraceGained: number;
 }
 
 export interface ILandingResult {
@@ -134,26 +130,6 @@ function createPlanetState(config: IPlanetaryBoardConfig): IPlanetState {
   };
 }
 
-type TStoredMoonOccupant = {
-  playerId: string;
-  moonId?: string;
-  moonIndex?: number;
-};
-
-function resolveStoredMoonId(
-  config: IPlanetaryBoardConfig,
-  slot: TStoredMoonOccupant,
-  fallbackIndex: number,
-): string {
-  if (typeof slot.moonId === 'string' && slot.moonId.length > 0) {
-    return slot.moonId;
-  }
-  const legacyIndex = Number.isInteger(slot.moonIndex)
-    ? (slot.moonIndex as number)
-    : fallbackIndex;
-  return config.moonIds[legacyIndex] ?? `legacy-moon-${legacyIndex}`;
-}
-
 function getMoonSortIndex(
   config: IPlanetaryBoardConfig,
   moonId: string,
@@ -166,16 +142,6 @@ function normalizeMoonOccupants(
   planetState: IPlanetState,
   config: IPlanetaryBoardConfig,
 ): IMoonOccupant[] {
-  if (!Array.isArray(planetState.moonOccupants)) {
-    planetState.moonOccupants = [];
-  }
-  planetState.moonOccupants = planetState.moonOccupants.map((slot, index) => {
-    const storedSlot = slot as TStoredMoonOccupant;
-    return {
-      playerId: storedSlot.playerId,
-      moonId: resolveStoredMoonId(config, storedSlot, index),
-    };
-  });
   planetState.moonOccupants.sort(
     (left, right) =>
       getMoonSortIndex(config, left.moonId) -
@@ -203,10 +169,6 @@ function getCenterReward(
   return {
     vpGained: getScoreRewardAmount(rewards),
     traceRewards,
-    lifeTraceGained: traceRewards.reduce(
-      (total, reward) => total + reward.amount,
-      0,
-    ),
   };
 }
 
@@ -440,7 +402,14 @@ export class PlanetaryBoard {
       }
     }
 
-    return `legacy-moon-${moonOccupants.length}`;
+    throw new GameError(
+      EErrorCode.INTERNAL_SERVER_ERROR,
+      'No available moon slot',
+      {
+        moonIds: config.moonIds,
+        occupiedMoonIds: moonOccupants.map((slot) => slot.moonId),
+      },
+    );
   }
 
   public setProbeCount(planet: EPlanet, playerId: string, count: number): void {

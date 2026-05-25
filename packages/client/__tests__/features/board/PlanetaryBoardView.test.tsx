@@ -1,12 +1,17 @@
 import { PLANETARY_BOARD_CONFIG } from '@seti/common/constant/boardLayout';
-import { EResource, ETrace } from '@seti/common/types/element';
+import { EAlienIcon, EResource, ETrace } from '@seti/common/types/element';
 import { ETechId } from '@seti/common/types/tech';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PlanetaryBoardView } from '@/features/board/PlanetaryBoardView';
 import { useDebugStore } from '@/stores/debugStore';
 import type { IPublicPlanetaryBoard } from '@/types/re-exports';
-import { EMainAction, EPlanet, EPlayerInputType } from '@/types/re-exports';
+import {
+  EAlienType,
+  EMainAction,
+  EPlanet,
+  EPlayerInputType,
+} from '@/types/re-exports';
 import { createMockGameState } from '../../../test/mocks/gameState';
 
 function createPlanetaryBoardMock(): IPublicPlanetaryBoard {
@@ -134,6 +139,48 @@ describe('PlanetaryBoardView', () => {
     expect(marsCard).toHaveTextContent('Mars');
     expect(screen.getByLabelText('token-player-1')).toBeInTheDocument();
     expect(screen.getByLabelText('token-player-2')).toBeInTheDocument();
+  });
+
+  it('renders Glyphids planet-group tokens in image and text mode', () => {
+    const planetaryBoard = createPlanetaryBoardMock();
+    const marsState = planetaryBoard.planets[EPlanet.MARS];
+    if (!marsState) throw new Error('Mars state missing');
+    planetaryBoard.planets[EPlanet.MARS] = {
+      ...marsState,
+      alienTokens: [
+        {
+          tokenId: 'glyphids-token|planet|mars',
+          alienType: EAlienType.GLYPHIDS,
+          glyph: EAlienIcon.GLYPH_GREEN,
+        },
+      ],
+    };
+
+    const { unmount } = render(
+      <PlanetaryBoardView
+        planetaryBoard={planetaryBoard}
+        pendingInput={null}
+        playerColors={{}}
+      />,
+    );
+
+    expect(
+      screen.getByTestId('planet-board-alien-token-glyphids-token|planet|mars'),
+    ).toBeInTheDocument();
+
+    unmount();
+    useDebugStore.setState({ textMode: true });
+    render(
+      <PlanetaryBoardView
+        planetaryBoard={planetaryBoard}
+        pendingInput={null}
+        playerColors={{}}
+      />,
+    );
+
+    expect(
+      screen.getByTestId('planet-card-alien-token-glyphids-token|planet|mars'),
+    ).toBeInTheDocument();
   });
 
   it('keeps image-mode planet hotspots clickable with the server input payload', () => {

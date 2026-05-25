@@ -1,11 +1,5 @@
-import {
-  PLANETARY_BOARD_CONFIG,
-  type TPlanetaryBoardConfigId,
-} from '@seti/common/constant/boardLayout';
 import { normalizeRivalBoardConfigId } from '@seti/common/constant/solo';
 import { DEFAULT_COLUMN_CONFIGS } from '@seti/common/types/computer';
-import { EResource } from '@seti/common/types/element';
-import { DEFAULT_PLAYER_ACTION_COSTS } from '@seti/common/types/organization';
 import { type EPlanet } from '@seti/common/types/protocol/enums';
 import { AlienState } from '@/engine/alien/AlienState.js';
 import {
@@ -41,7 +35,6 @@ import { MilestoneState } from '@/engine/scoring/Milestone.js';
 import { SetupChoiceCoordinator } from '@/engine/setup/SetupChoiceCoordinator.js';
 import { RivalState } from '@/engine/solo/RivalState.js';
 import { type ITechStack, TechBoard } from '@/engine/tech/TechBoard.js';
-import { buildTechTileBonuses } from '@/engine/tech/TechBonusConfig.js';
 import { SeededRandom } from '@/shared/rng/SeededRandom.js';
 import type { IGameStateDto, ITraceSlotDto } from '../dto/GameStateDto.js';
 
@@ -98,6 +91,26 @@ interface IMissionTrackerInternalState {
 
 function cloneValue<TValue>(value: TValue): TValue {
   return JSON.parse(JSON.stringify(value)) as TValue;
+}
+
+function requireGameCounter<TValue>(
+  value: TValue | undefined,
+  name: string,
+): TValue {
+  if (value === undefined) {
+    throw new Error(`Missing required game counter: ${name}`);
+  }
+  return value;
+}
+
+function requirePlayerSnapshotField<TValue>(
+  value: TValue | undefined,
+  name: string,
+): TValue {
+  if (value === undefined) {
+    throw new Error(`Missing required player snapshot field: ${name}`);
+  }
+  return value;
 }
 
 function replayPendingResolution(dto: IGameStateDto): Game | undefined {
@@ -215,36 +228,29 @@ function deserializePlanetaryBoard(dto: IGameStateDto): PlanetaryBoard | null {
   const board = new PlanetaryBoard();
   board.planets.clear();
   for (const entry of dto.planetaryBoard.planets) {
-    const config =
-      PLANETARY_BOARD_CONFIG[entry.planet as TPlanetaryBoardConfigId];
     const state = cloneValue(entry.state) as Omit<
       IPlanetState,
       'moonOccupants'
     > & {
-      moonOccupant?: { playerId: string } | null;
-      moonOccupants?: Array<{
+      moonOccupants: Array<{
         playerId: string;
         moonId?: string;
-        moonIndex?: number;
       }>;
     };
-    const storedMoonOccupants = Array.isArray(state.moonOccupants)
-      ? state.moonOccupants
-      : state.moonOccupant
-        ? [{ ...state.moonOccupant, moonId: config?.moonIds[0] }]
-        : [];
-    const moonOccupants = storedMoonOccupants.map((slot, index) => ({
-      playerId: slot.playerId,
-      moonId:
-        typeof slot.moonId === 'string' && slot.moonId.length > 0
-          ? slot.moonId
-          : (config?.moonIds[
-              Number.isInteger(slot.moonIndex)
-                ? (slot.moonIndex as number)
-                : index
-            ] ?? `legacy-moon-${index}`),
-    }));
-    delete state.moonOccupant;
+    if (!Array.isArray(state.moonOccupants)) {
+      throw new Error(`Missing moonOccupants for saved planet ${entry.planet}`);
+    }
+    const moonOccupants = state.moonOccupants.map((slot) => {
+      if (typeof slot.moonId !== 'string' || slot.moonId.length === 0) {
+        throw new Error(
+          `Missing moonId for saved moon occupant on ${entry.planet}`,
+        );
+      }
+      return {
+        playerId: slot.playerId,
+        moonId: slot.moonId,
+      };
+    });
     board.planets.set(entry.planet, { ...state, moonOccupants });
   }
 
@@ -287,13 +293,16 @@ function deserializeTechBoard(dto: IGameStateDto): TechBoard | null {
       category: stackDto.category,
       level: stackDto.level,
       firstTakeBonusAvailable: stackDto.firstTakeBonusAvailable,
-      tiles: stackDto.tiles.map((tileDto, index) => ({
-        tech: sourceStack.tiles[index % sourceStack.tiles.length].tech,
-        bonus: tileDto.bonus,
-        bonuses:
-          tileDto.bonuses ??
-          buildTechTileBonuses(stackDto.techId, tileDto.bonus),
-      })),
+      tiles: stackDto.tiles.map((tileDto, index) => {
+        if (!Array.isArray(tileDto.bonuses)) {
+          throw new Error('Missing bonuses for saved tech tile');
+        }
+        return {
+          tech: sourceStack.tiles[index % sourceStack.tiles.length].tech,
+          bonus: tileDto.bonuses[0],
+          bonuses: [...tileDto.bonuses],
+        };
+      }),
     };
 
     techBoard.stacks.set(stackDto.techId, stack);
@@ -349,15 +358,37 @@ function deserializePlayers(game: Game, dto: IGameStateDto): void {
     player.setupChoiceContext = playerDto.setupChoiceContext
       ? cloneValue(playerDto.setupChoiceContext)
       : undefined;
-    player.quickStartCardIds = [...(playerDto.quickStartCardIds ?? [])];
-    player.organizationIds = [...(playerDto.organizationIds ?? [])];
-    player.organizationState = cloneValue(playerDto.organizationState ?? {});
-    player.oncePerRoundUsed = cloneValue(playerDto.oncePerRoundUsed ?? {});
-    player.actionCosts = {
-      ...DEFAULT_PLAYER_ACTION_COSTS,
-      ...(playerDto.actionCosts ?? {}),
-    };
-    player.exofossils = Math.max(0, playerDto.exofossils ?? 0);
+    player.quickStartCardIds = [
+      ...requirePlayerSnapshotField(
+        playerDto.quickStartCardIds,
+        'quickStartCardIds',
+      ),
+    ];
+    player.organizationIds = [
+      ...requirePlayerSnapshotField(
+        playerDto.organizationIds,
+        'organizationIds',
+      ),
+    ];
+    player.organizationState = cloneValue(
+      requirePlayerSnapshotField(
+        playerDto.organizationState,
+        'organizationState',
+      ),
+    );
+    player.oncePerRoundUsed = cloneValue(
+      requirePlayerSnapshotField(
+        playerDto.oncePerRoundUsed,
+        'oncePerRoundUsed',
+      ),
+    );
+    player.actionCosts = cloneValue(
+      requirePlayerSnapshotField(playerDto.actionCosts, 'actionCosts'),
+    );
+    player.exofossils = Math.max(
+      0,
+      requirePlayerSnapshotField(playerDto.exofossils, 'exofossils'),
+    );
 
     const concretePlayer = player as Player;
     const dataInternal = concretePlayer.data as unknown as IDataInternalState;
@@ -391,10 +422,10 @@ function deserializePlayers(game: Game, dto: IGameStateDto): void {
         credits: playerDto.resources.credits,
         energy: playerDto.resources.energy,
         publicity: playerDto.resources.publicity,
-        signalTokens:
-          playerDto.resources.signalTokens ??
-          playerDto.resourceByType?.[EResource.SIGNAL_TOKEN] ??
-          0,
+        signalTokens: requirePlayerSnapshotField(
+          playerDto.resources.signalTokens,
+          'resources.signalTokens',
+        ),
         data: 0,
       },
       { dataController: concretePlayer.data },
@@ -414,13 +445,17 @@ function deserializePlayers(game: Game, dto: IGameStateDto): void {
 
     concretePlayer.hand = cloneValue(playerDto.hand);
     concretePlayer.playedMissions = cloneValue(playerDto.playedMissions);
-    concretePlayer.playedCards = cloneValue(playerDto.playedCards ?? []);
+    concretePlayer.playedCards = cloneValue(
+      requirePlayerSnapshotField(playerDto.playedCards, 'playedCards'),
+    );
     concretePlayer.completedMissions = cloneValue(playerDto.completedMissions);
     concretePlayer.endGameCards = cloneValue(playerDto.endGameCards);
     concretePlayer.tuckedIncomeCards = cloneValue(playerDto.tuckedIncomeCards);
     concretePlayer.techs = [...playerDto.techs];
     concretePlayer.traces = cloneValue(playerDto.traces);
-    concretePlayer.tracesByAlien = cloneValue(playerDto.tracesByAlien ?? {});
+    concretePlayer.tracesByAlien = cloneValue(
+      requirePlayerSnapshotField(playerDto.tracesByAlien, 'tracesByAlien'),
+    );
     concretePlayer.waitingFor = undefined;
 
     const playerInternal = concretePlayer as unknown as IPlayerInternalState;
@@ -531,13 +566,13 @@ export function deserializeGame(dto: IGameStateDto): Game {
   game.random.setState(dto.rngState);
 
   game.round = dto.round;
-  game.roundIndex = dto.roundIndex ?? dto.round;
-  game.maxRounds = dto.maxRounds ?? 5;
+  game.roundIndex = requireGameCounter(dto.roundIndex, 'roundIndex');
+  game.maxRounds = requireGameCounter(dto.maxRounds, 'maxRounds');
   game.phase = dto.phase;
   game.roundRotationReminderIndex = dto.roundRotationReminderIndex;
   game.hasRoundFirstPassOccurred = dto.hasRoundFirstPassOccurred;
-  game.turnIndex = dto.turnIndex ?? 0;
-  game.turnLocked = dto.turnLocked ?? false;
+  game.turnIndex = requireGameCounter(dto.turnIndex, 'turnIndex');
+  game.turnLocked = requireGameCounter(dto.turnLocked, 'turnLocked');
 
   const startPlayer = game.players.find(
     (player) => player.id === dto.startPlayerId,
@@ -614,6 +649,11 @@ export function deserializeGame(dto: IGameStateDto): Game {
       glyphidsGlyphRows: cloneValue(a.glyphidsGlyphRows ?? {}),
       glyphidsBoardTokens: a.glyphidsBoardTokens?.map((token) => ({
         ...token,
+      })),
+      glyphidsPlacedTokens: a.glyphidsPlacedTokens?.map((token) => ({
+        tokenId: token.tokenId,
+        glyph: token.glyph,
+        location: { ...token.location },
       })),
       glyphidsTranslationRows: a.glyphidsTranslationRows?.map((row) => ({
         ...row,

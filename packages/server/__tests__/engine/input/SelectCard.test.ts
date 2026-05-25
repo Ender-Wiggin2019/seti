@@ -3,6 +3,29 @@ import { vi } from 'vitest';
 import { SelectCard } from '@/engine/input/SelectCard.js';
 
 describe('SelectCard', () => {
+  it('projects string and id-only card options to full card models', () => {
+    const input = new SelectCard({ id: 'p1' } as never, {
+      cards: ['128', { id: 'synthetic-128', cardId: '128' }],
+      onSelect: () => undefined,
+    });
+
+    const model = input.toModel();
+
+    expect(model.cards[0]).toMatchObject({
+      id: '128',
+      name: expect.any(String),
+      price: expect.any(Number),
+      effects: expect.any(Array),
+    });
+    expect(model.cards[1]).toMatchObject({
+      id: 'synthetic-128',
+      cardId: '128',
+      name: expect.any(String),
+      price: expect.any(Number),
+      effects: expect.any(Array),
+    });
+  });
+
   it('returns selected card ids via callback', () => {
     const onSelect = vi.fn(() => undefined);
     const input = new SelectCard({ id: 'p1' } as never, {

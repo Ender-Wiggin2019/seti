@@ -1,9 +1,5 @@
-import { sectorIndexOf } from '../constant/solarCoordinate';
 import type { EPlanet } from '../types/protocol/enums';
-import type {
-  IPublicSolarSystemSpaceState,
-  IPublicSolarSystemState,
-} from '../types/protocol/gameState';
+import type { IPublicSolarSystemState } from '../types/protocol/gameState';
 
 /**
  * Client-side query helpers over the public solar-system state. Mirror of
@@ -11,10 +7,9 @@ import type {
  * serialized DTO so the same code can run in views, effect-preview logic,
  * and unit tests without pulling the server class in.
  *
- * All helpers are O(1) when the server emits the indexed fields
- * (`planetSpaceIds`, `sectorSpaceIds`, `probeSpaceById`); they fall back
- * to a linear scan for older snapshots that lack those fields, so old
- * fixtures/tests keep working.
+ * These helpers intentionally use the indexed fields emitted by the server
+ * (`planetSpaceIds`, `sectorSpaceIds`, `probeSpaceById`) instead of
+ * reconstructing old snapshot shapes from `spaceStates`.
  */
 
 /** Current spaceId carrying `planet`. */
@@ -22,24 +17,7 @@ export function findPlanetSpaceId(
   state: IPublicSolarSystemState,
   planet: EPlanet,
 ): string | null {
-  const indexed = state.planetSpaceIds?.[planet];
-  if (indexed) return indexed;
-
-  const states = state.spaceStates;
-  if (!states) return null;
-  for (const spaceId of state.spaces) {
-    const s = states[spaceId];
-    if (!s?.elements) continue;
-    if (
-      s.elements.some(
-        (el) =>
-          (el.type === 'PLANET' || el.type === 'EARTH') && el.planet === planet,
-      )
-    ) {
-      return spaceId;
-    }
-  }
-  return null;
+  return state.planetSpaceIds?.[planet] ?? null;
 }
 
 /** Current sector (0..7) that the given `planet` occupies. */
@@ -51,8 +29,7 @@ export function findSectorIndexByPlanet(
   if (!spaceId) return null;
   const coord = state.spaceStates?.[spaceId];
   if (!coord) return null;
-  if (coord.sectorIndex !== undefined) return coord.sectorIndex;
-  return sectorIndexOf(coord.ringIndex, coord.indexInRing);
+  return coord.sectorIndex;
 }
 
 /** Ordered ring-1 → ring-4 spaceIds belonging to `sectorIndex`. */
@@ -60,25 +37,7 @@ export function getSpaceIdsInSector(
   state: IPublicSolarSystemState,
   sectorIndex: number,
 ): string[] {
-  const indexed = state.sectorSpaceIds?.[sectorIndex];
-  if (indexed) return indexed;
-
-  const states = state.spaceStates;
-  if (!states) return [];
-  const matched: IPublicSolarSystemSpaceState[] = [];
-  for (const spaceId of state.spaces) {
-    const s = states[spaceId];
-    if (!s || s.ringIndex < 1 || s.ringIndex > 4) continue;
-    const derived = s.sectorIndex ?? sectorIndexOf(s.ringIndex, s.indexInRing);
-    if (derived === sectorIndex) {
-      matched.push(s);
-    }
-  }
-  matched.sort((a, b) => {
-    if (a.ringIndex !== b.ringIndex) return a.ringIndex - b.ringIndex;
-    return a.indexInRing - b.indexInRing;
-  });
-  return matched.map((s) => s.spaceId);
+  return state.sectorSpaceIds?.[sectorIndex] ?? [];
 }
 
 /**
@@ -108,16 +67,11 @@ export function findSectorIndexByProbeId(
   state: IPublicSolarSystemState,
   probeId: string,
 ): number | null {
-  const indexedSpaceId = state.probeSpaceById?.[probeId];
-  const spaceId =
-    indexedSpaceId ??
-    state.probes.find((p) => p.probeId === probeId)?.spaceId ??
-    null;
+  const spaceId = state.probeSpaceById?.[probeId] ?? null;
   if (!spaceId) return null;
   const s = state.spaceStates?.[spaceId];
   if (!s) return null;
-  if (s.sectorIndex !== undefined) return s.sectorIndex;
-  return sectorIndexOf(s.ringIndex, s.indexInRing);
+  return s.sectorIndex;
 }
 
 /** Probes currently in the given sector, optionally filtered by playerId. */

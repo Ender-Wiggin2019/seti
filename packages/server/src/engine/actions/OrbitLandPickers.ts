@@ -10,11 +10,12 @@ import {
 } from '@seti/common/constant/boardLayout';
 import { EResource, ESector } from '@seti/common/types/element';
 import { EPlanet } from '@seti/common/types/protocol/enums';
+import { LandProbeEffect } from '../effects/probe/LandProbeEffect.js';
 import type { IGame } from '../IGame.js';
 import type { PlayerInput } from '../input/PlayerInput.js';
 import { SelectOption } from '../input/SelectOption.js';
+import { EMissionEventType } from '../missions/IMission.js';
 import type { IPlayer } from '../player/IPlayer.js';
-import { LandProbeEffect } from '../effects/probe/LandProbeEffect.js';
 import { OrbitAction } from './Orbit.js';
 
 const ALL_ORBIT_LAND_PLANETS: readonly EPlanet[] = [
@@ -213,6 +214,10 @@ export function buildOrbitActionSlotPicker(
         const result = OrbitAction.execute(player, game, planet, {
           claimFirstSlot: true,
         });
+        game.missionTracker.recordEvent({
+          type: EMissionEventType.PROBE_ORBITED,
+          planet,
+        });
         return result.pendingInput;
       },
     });
@@ -226,6 +231,10 @@ export function buildOrbitActionSlotPicker(
     onSelect: () => {
       const result = OrbitAction.execute(player, game, planet, {
         claimFirstSlot: false,
+      });
+      game.missionTracker.recordEvent({
+        type: EMissionEventType.PROBE_ORBITED,
+        planet,
       });
       return result.pendingInput;
     },

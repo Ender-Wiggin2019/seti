@@ -3,8 +3,8 @@ import type {
   TSectorWinnerBonusItem,
 } from '@seti/common/constant/sectorSetup';
 import { ETrace } from '@seti/common/types/element';
-import { formatSectorOptionLabel } from '../../board/SectorLabel.js';
 import type { ISectorCompletionResult, Sector } from '../../board/Sector.js';
+import { formatSectorOptionLabel } from '../../board/SectorLabel.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
@@ -158,6 +158,7 @@ export class SectorFulfillmentEffect {
     if (result.winnerPlayerId) {
       const winner = game.players.find((p) => p.id === result.winnerPlayerId);
       if (winner) {
+        game.alienState?.onSectorWon(game, winner, sector.id);
         const bonus = result.isFirstWin
           ? sector.firstWinBonus
           : sector.repeatWinBonus;

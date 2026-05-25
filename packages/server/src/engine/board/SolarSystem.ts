@@ -467,10 +467,7 @@ export class SolarSystem {
       };
       if (options?.grantVisitPublicity) {
         topLayer.hasPublicityIcon = true;
-        if (
-          !topLayer.publicityIconAmount ||
-          topLayer.publicityIconAmount < 1
-        ) {
+        if (!topLayer.publicityIconAmount || topLayer.publicityIconAmount < 1) {
           topLayer.publicityIconAmount = 1;
         }
       }
@@ -784,9 +781,7 @@ export class SolarSystem {
     // equals the ring index, which is the printed visible disc here).
     const isOutermostRingOfDisc = discIndex === ringIndex;
     const layerSnapshots = ringSpaces.map((space) => {
-      const layer = (space.layers ?? []).find(
-        (l) => l.discIndex === discIndex,
-      );
+      const layer = (space.layers ?? []).find((l) => l.discIndex === discIndex);
       if (!layer) return null;
       return {
         element: { ...layer.element },
@@ -839,9 +834,7 @@ export class SolarSystem {
       // visible element directly on `space.elements` — leave it alone.
       return;
     }
-    const sortedTopDown = [...layers].sort(
-      (a, b) => a.discIndex - b.discIndex,
-    );
+    const sortedTopDown = [...layers].sort((a, b) => a.discIndex - b.discIndex);
     const visible = sortedTopDown.find(
       (layer) => layer.element.type !== ESolarSystemElementType.NULL,
     );
@@ -857,14 +850,6 @@ export class SolarSystem {
       space.hasPublicityIcon = sortedTopDown[0].hasPublicityIcon;
       space.publicityIconAmount = sortedTopDown[0].publicityIconAmount;
     }
-  }
-
-  /** @deprecated Kept for back-compat; routes to the per-disc rotation. */
-  private rotateRingByOneStep(ringIndex: number): void {
-    // Pre-layer model assumed each (ring R) cell carried a single
-    // element that rotated en bloc. Map that to "rotate disc R's layer
-    // at ring R" — which is what the legacy semantics meant.
-    this.rotateDiscLayerForRingByOneStep(ringIndex, ringIndex);
   }
 
   private captureCoverStates(

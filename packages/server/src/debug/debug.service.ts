@@ -16,6 +16,7 @@ import type {
   IDebugSnapshotSessionResponse,
 } from '@seti/common/types/protocol/debug';
 import {
+  EAlienType,
   EFreeAction,
   EMainAction,
   EPhase,
@@ -28,9 +29,10 @@ import {
 } from '@seti/common/types/protocol/playerInput';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { IJwtPayload } from '@/auth/jwt-auth.guard.js';
+import { AlienState } from '@/engine/alien/AlienState.js';
 import { Game } from '@/engine/Game.js';
 import { createGameOptions, EExpansion } from '@/engine/GameOptions.js';
-import type { IGamePlayerIdentity } from '@/engine/IGame.js';
+import type { IGame, IGamePlayerIdentity } from '@/engine/IGame.js';
 import { GameManager } from '@/gateway/GameManager.js';
 import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
 import type { IGameStateDto } from '@/persistence/dto/GameStateDto.js';
@@ -87,6 +89,12 @@ const DEBUG_BOT_MAIN_ACTIONS: ReadonlyArray<EMainAction> = [
   EMainAction.PASS,
 ];
 const MAX_DEBUG_BOT_STEPS = 20;
+const DEBUG_REVEAL_ALIEN_TYPES = new Set<EAlienType>([
+  EAlienType.OUMUAMUA,
+  EAlienType.ANOMALIES,
+  EAlienType.MASCAMITES,
+  EAlienType.GLYPHIDS,
+]);
 
 @Injectable()
 export class DebugService {
@@ -136,6 +144,7 @@ export class DebugService {
     const humanPlayer = players[0];
     const botPlayerIds = players.slice(1).map((player) => player.id);
     this.debugSessionRegistry.register(gameId, humanPlayer.id, botPlayerIds);
+    this.resolveDebugBotPendingInputsInMemory(game, botPlayerIds);
     this.gameManager.registerGame(game);
     try {
       await this.gameRepository.create(game);
@@ -427,6 +436,7 @@ export class DebugService {
     action: IMainActionRequest,
     viewerId: string,
   ): Promise<IPublicGameState> {
+    await this.resolveDebugBotPendingInputs(gameId);
     await this.gameManager.processAction(gameId, playerId, action);
     await this.runDebugBots(gameId);
     return this.getProjectedState(gameId, viewerId);
@@ -438,6 +448,7 @@ export class DebugService {
     action: IFreeActionRequest,
     viewerId: string,
   ): Promise<IPublicGameState> {
+    await this.resolveDebugBotPendingInputs(gameId);
     await this.gameManager.processFreeAction(gameId, playerId, action);
     await this.runDebugBots(gameId);
     return this.getProjectedState(gameId, viewerId);
@@ -460,6 +471,7 @@ export class DebugService {
     viewerId: string,
   ): Promise<IPublicGameState> {
     await this.gameManager.processInput(gameId, playerId, inputResponse);
+    await this.resolveDebugBotPendingInputs(gameId);
     await this.runDebugBots(gameId);
     return this.getProjectedState(gameId, viewerId);
   }
@@ -585,6 +597,157 @@ export class DebugService {
     return this.getProjectedState(gameId, viewerId);
   }
 
+  async revealAlien(
+    gameId: string,
+    rawAlienType: EAlienType | string | number,
+    viewerId: string,
+  ): Promise<IPublicGameState> {
+    const alienType = this.normalizeDebugRevealAlienType(rawAlienType);
+    const game = await this.gameManager.getGame(gameId);
+    const board = this.getOrCreateDebugRevealAlienBoard(game, alienType);
+
+    if (!board.discovered) {
+      this.resolveSetupTucksInMemory(game);
+
+      for (const slot of board.getDiscoverySlots()) {
+        if (slot.occupants.length > 0) {
+          continue;
+        }
+        board.placeTrace(slot, 'neutral', slot.traceColor);
+      }
+
+      const input = game.alienState.discoverAlien(board, game);
+      if (input !== undefined) {
+        const viewer =
+          game.players.find((player) => player.id === viewerId) ??
+          game.activePlayer;
+        viewer.waitingFor = input;
+      }
+    }
+
+    return this.getProjectedState(gameId, viewerId);
+  }
+
+  private normalizeDebugRevealAlienType(
+    rawAlienType: EAlienType | string | number,
+  ): EAlienType {
+    const alienType = Number(rawAlienType) as EAlienType;
+    if (!DEBUG_REVEAL_ALIEN_TYPES.has(alienType)) {
+      throw new GameError(
+        EErrorCode.VALIDATION_ERROR,
+        `Unsupported debug reveal alien type: ${rawAlienType}`,
+      );
+    }
+    return alienType;
+  }
+
+  private getOrCreateDebugRevealAlienBoard(
+    game: IGame,
+    alienType: EAlienType,
+  ): NonNullable<ReturnType<AlienState['getBoardByType']>> {
+    const existingBoard = game.alienState.getBoardByType(alienType);
+    if (existingBoard) {
+      return existingBoard;
+    }
+
+    game.hiddenAliens = [alienType];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.getBoardByType(alienType);
+    if (!board) {
+      throw new GameError(
+        EErrorCode.VALIDATION_ERROR,
+        `Alien board not found for debug reveal: ${alienType}`,
+      );
+    }
+    return board;
+  }
+
+  private resolveSetupTucksInMemory(game: IGame): void {
+    for (const player of game.players) {
+      while (player.waitingFor) {
+        const model = player.waitingFor.toModel();
+        if (model.type !== EPlayerInputType.CARD || model.cards.length === 0) {
+          player.waitingFor = undefined;
+          player.pendingSetupTucks = 0;
+          break;
+        }
+
+        game.processInput(player.id, {
+          type: EPlayerInputType.CARD,
+          cardIds: [model.cards[0].id],
+        });
+      }
+    }
+  }
+
+  private async resolveDebugBotPendingInputs(gameId: string): Promise<void> {
+    if (!this.debugSessionRegistry.isDebugGame(gameId)) {
+      return;
+    }
+
+    for (let step = 0; step < MAX_DEBUG_BOT_STEPS; step += 1) {
+      const game = await this.gameManager.getGame(gameId);
+      let resolvedAny = false;
+
+      for (const player of game.players) {
+        if (!this.debugSessionRegistry.isBotPlayer(gameId, player.id)) {
+          continue;
+        }
+
+        const inputModel = player.waitingFor?.toModel();
+        if (!inputModel) {
+          continue;
+        }
+
+        const response = this.pickRandomInputResponse(inputModel);
+        if (!response) {
+          continue;
+        }
+
+        await this.gameManager.processInput(gameId, player.id, response);
+        resolvedAny = true;
+      }
+
+      if (!resolvedAny) {
+        return;
+      }
+    }
+  }
+
+  private resolveDebugBotPendingInputsInMemory(
+    game: Game,
+    botPlayerIds: readonly string[],
+  ): void {
+    const botIdSet = new Set(botPlayerIds);
+
+    for (let step = 0; step < MAX_DEBUG_BOT_STEPS; step += 1) {
+      let resolvedAny = false;
+
+      for (const player of game.players) {
+        if (!botIdSet.has(player.id)) {
+          continue;
+        }
+
+        const inputModel = player.waitingFor?.toModel();
+        if (!inputModel) {
+          continue;
+        }
+
+        const response = this.pickRandomInputResponse(inputModel);
+        if (!response) {
+          continue;
+        }
+
+        game.processInput(player.id, response);
+        resolvedAny = true;
+      }
+
+      if (!resolvedAny) {
+        return;
+      }
+    }
+  }
+
   private async runDebugBots(gameId: string): Promise<void> {
     if (!this.debugSessionRegistry.isDebugGame(gameId)) {
       return;
@@ -636,12 +799,13 @@ export class DebugService {
       return false;
     }
 
-    const botProbeSpaces = state.solarSystem.probes
-      .filter((probe) => probe.playerId === botPlayerId)
-      .map((probe) => probe.spaceId);
-    const shuffledSpaces = this.shuffle(botProbeSpaces);
+    const botProbes = state.solarSystem.probes.filter(
+      (probe) => probe.playerId === botPlayerId && probe.probeId,
+    );
+    const shuffledProbes = this.shuffle(botProbes);
 
-    for (const fromSpaceId of shuffledSpaces) {
+    for (const probe of shuffledProbes) {
+      const fromSpaceId = probe.spaceId;
       const neighbors = this.shuffle(
         state.solarSystem.adjacency[fromSpaceId] ?? [],
       );
@@ -650,6 +814,7 @@ export class DebugService {
           await this.gameManager.processFreeAction(gameId, botPlayerId, {
             type: EFreeAction.MOVEMENT,
             path: [fromSpaceId, toSpaceId],
+            target: { type: 'probe', id: probe.probeId as string },
           });
           return true;
         } catch {

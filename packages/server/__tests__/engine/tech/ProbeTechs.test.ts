@@ -20,6 +20,8 @@ import {
 } from '@/engine/tech/techs/ProbeTechs.js';
 import { GameError } from '@/shared/errors/GameError.js';
 import {
+  chooseLandMainActionPlanet,
+  chooseOrbitMainActionPlanet,
   resolveSetupTucks,
   setSolarSystemInitialDiscAngles,
   skipSetupTucks,
@@ -253,6 +255,10 @@ describe('Phase 8.1 — orange Probe tech (integration)', () => {
 
     const ss = game.solarSystem!;
     const earthId = ss.getSpacesOnPlanet(EPlanet.EARTH)[0].id;
+    const probe = ss.getProbesAt(earthId).find((p) => p.playerId === p1.id);
+    if (!probe) {
+      throw new Error('Expected launched probe on Earth');
+    }
     const fromEarth = ss.getAdjacentSpaces(earthId);
     const asteroidSpace = fromEarth.find((s) =>
       s.elements.some(
@@ -270,6 +276,7 @@ describe('Phase 8.1 — orange Probe tech (integration)', () => {
     game.processFreeAction(p1.id, {
       type: EFreeAction.MOVEMENT,
       path: [earthId, asteroidSpace.id],
+      target: { type: 'probe', id: probe.id },
     });
 
     expect(p1.resources.publicity).toBe(publicityBeforeAsteroid + 1);
@@ -280,6 +287,7 @@ describe('Phase 8.1 — orange Probe tech (integration)', () => {
     game.processFreeAction(p1.id, {
       type: EFreeAction.MOVEMENT,
       path: [asteroidSpace.id, venusSpace.id],
+      target: { type: 'probe', id: probe.id },
     });
 
     expect(moveBeforeLeave - p1.getMoveStash()).toBe(1);
@@ -298,10 +306,7 @@ describe('Phase 8.1 — orange Probe tech (integration)', () => {
     placeProbeOnPlanet(game, player.id, EPlanet.MERCURY, 1);
     player.probesInSpace = 1;
 
-    game.processMainAction(player.id, {
-      type: EMainAction.LAND,
-      payload: { planet: EPlanet.MERCURY },
-    });
+    chooseLandMainActionPlanet(game, player, EPlanet.MERCURY);
     resolveAllInputs(game, player.id);
 
     expect(player.resources.energy).toBe(1);
@@ -323,17 +328,11 @@ describe('Phase 8.1 — orange Probe tech (integration)', () => {
     p1.probesInSpace = 1;
     p2.probesInSpace = 1;
 
-    game.processMainAction(p1.id, {
-      type: EMainAction.ORBIT,
-      payload: { planet: EPlanet.SATURN },
-    });
+    chooseOrbitMainActionPlanet(game, p1, EPlanet.SATURN);
     resolveAllInputs(game, p1.id);
     game.processEndTurn(p1.id);
 
-    game.processMainAction(p2.id, {
-      type: EMainAction.LAND,
-      payload: { planet: EPlanet.SATURN },
-    });
+    chooseLandMainActionPlanet(game, p2, EPlanet.SATURN);
     resolveAllInputs(game, p2.id);
 
     expect(p2.resources.energy).toBe(2);
@@ -351,9 +350,8 @@ describe('Phase 8.1 — orange Probe tech (integration)', () => {
     placeProbeOnPlanet(game, player.id, EPlanet.MARS, 1);
     player.probesInSpace = 1;
 
-    game.processMainAction(player.id, {
-      type: EMainAction.LAND,
-      payload: { planet: EPlanet.MARS, isMoon: true },
+    chooseLandMainActionPlanet(game, player, EPlanet.MARS, {
+      moonId: 'mars-phobos-deimos',
     });
     resolveAllInputs(game, player.id);
 
@@ -377,13 +375,12 @@ describe('Phase 8.1 — orange Probe tech (integration)', () => {
     p2.probesInSpace = 1;
 
     expect(() =>
-      game.processMainAction(p1.id, {
-        type: EMainAction.LAND,
-        payload: { planet: EPlanet.MARS, isMoon: true },
+      chooseLandMainActionPlanet(game, p1, EPlanet.MARS, {
+        moonId: 'mars-phobos-deimos',
       }),
     ).toThrowError(
       expect.objectContaining({
-        code: EErrorCode.INVALID_ACTION,
+        code: EErrorCode.INVALID_INPUT_RESPONSE,
       }),
     );
   });

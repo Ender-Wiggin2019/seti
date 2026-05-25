@@ -22,6 +22,27 @@ describe('CreateRoomOptionsDto', () => {
 
     expect(errors).toHaveLength(0);
   });
+
+  it.each(['scenarioPreset', 'turnTimerSeconds'])(
+    'rejects legacy %s room option',
+    async (field) => {
+      const dto = plainToInstance(CreateRoomOptionsDto, {
+        playerCount: 2,
+        [field]: field === 'turnTimerSeconds' ? 120 : 'behavior-flow',
+      });
+
+      const errors = await validate(dto, {
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      });
+
+      expect(errors).toEqual([
+        expect.objectContaining({
+          property: field,
+        }),
+      ]);
+    },
+  );
 });
 
 describe('UpdateRoomOptionsDto', () => {

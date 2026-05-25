@@ -589,48 +589,11 @@ export class Game implements IGame {
                 break;
               }
               case EMainAction.ORBIT: {
-                const planet = this.getOptionalPlanetPayload(action);
-                if (planet === undefined) {
-                  // Picker-driven flow: surface the planet selector
-                  // SelectOption. Its onSelect chains the slot picker,
-                  // which in turn calls OrbitAction.execute — so the
-                  // PROBE_ORBITED mission event still fires inside the
-                  // execute path (via `OrbitProbeEffect`). No planet
-                  // logged in actionDetails because we don't know yet.
-                  pendingInput = buildOrbitActionPlanetPicker(player, game);
-                  break;
-                }
-                actionDetails = { planet };
-                pendingInput = OrbitAction.execute(
-                  player,
-                  game,
-                  planet,
-                ).pendingInput;
-                game.missionTracker.recordEvent({
-                  type: EMissionEventType.PROBE_ORBITED,
-                  planet,
-                });
+                pendingInput = buildOrbitActionPlanetPicker(player, game);
                 break;
               }
               case EMainAction.LAND: {
-                const planet = this.getOptionalPlanetPayload(action);
-                const isMoon = this.getMoonPayload(action);
-                const moonId = this.getMoonIdPayload(action);
-                if (planet === undefined) {
-                  // Picker-driven flow — see ORBIT comment above.
-                  pendingInput = buildLandActionPlanetPicker(player, game);
-                  break;
-                }
-                actionDetails = { planet, isMoon, moonId };
-                pendingInput = player.land(planet, {
-                  isMoon,
-                  moonId,
-                }).pendingInput;
-                game.missionTracker.recordEvent({
-                  type: EMissionEventType.PROBE_LANDED,
-                  planet,
-                  isMoon,
-                });
+                pendingInput = buildLandActionPlanetPicker(player, game);
                 break;
               }
               case EMainAction.SCAN: {
@@ -1071,76 +1034,29 @@ export class Game implements IGame {
         return;
       }
       case EMainAction.ORBIT: {
-        const planet = this.getOptionalPlanetPayload(action);
-        // No planet payload → picker flow. Gate on "any planet eligible
-        // to orbit at all"; the picker itself enumerates the legal
-        // options. With a planet specified (legacy / debug / replay
-        // path), fall through to the existing single-planet check.
-        if (planet === undefined) {
-          const hasAny = [
-            ...PLANETARY_PLANETS,
-            EPlanet.OUMUAMUA,
-          ].some((candidate) => OrbitAction.canExecute(player, this, candidate));
-          if (!hasAny) {
-            throw new GameError(
-              EErrorCode.INVALID_ACTION,
-              'No planet is currently legal to orbit',
-              { playerId: player.id },
-            );
-          }
-          return;
-        }
-        if (!OrbitAction.canExecute(player, this, planet)) {
+        this.assertNoOrbitLandPayload(action);
+        const hasAny = [...PLANETARY_PLANETS, EPlanet.OUMUAMUA].some(
+          (candidate) => OrbitAction.canExecute(player, this, candidate),
+        );
+        if (!hasAny) {
           throw new GameError(
             EErrorCode.INVALID_ACTION,
-            'Orbit requirements are not met',
-            {
-              playerId: player.id,
-              planet,
-            },
+            'No planet is currently legal to orbit',
+            { playerId: player.id },
           );
         }
         return;
       }
       case EMainAction.LAND: {
-        const planet = this.getOptionalPlanetPayload(action);
-        const isMoon = this.getMoonPayload(action);
-        const moonId = this.getMoonIdPayload(action);
-        if (!isMoon && moonId !== undefined) {
+        this.assertNoOrbitLandPayload(action);
+        const hasAny = [...PLANETARY_PLANETS, EPlanet.OUMUAMUA].some(
+          (candidate) => player.canLand(candidate),
+        );
+        if (!hasAny) {
           throw new GameError(
             EErrorCode.INVALID_ACTION,
-            'Action payload.moonId requires isMoon true',
-            {
-              actionType: action.type,
-              payload: action.payload,
-            },
-          );
-        }
-        if (planet === undefined) {
-          // Picker flow — gate on "any planet legal to land on".
-          const hasAny = [
-            ...PLANETARY_PLANETS,
-            EPlanet.OUMUAMUA,
-          ].some((candidate) => player.canLand(candidate));
-          if (!hasAny) {
-            throw new GameError(
-              EErrorCode.INVALID_ACTION,
-              'No planet is currently legal to land on',
-              { playerId: player.id },
-            );
-          }
-          return;
-        }
-        if (!player.canLand(planet, { isMoon, moonId })) {
-          throw new GameError(
-            EErrorCode.INVALID_ACTION,
-            'Land requirements are not met',
-            {
-              playerId: player.id,
-              planet,
-              isMoon,
-              moonId,
-            },
+            'No planet is currently legal to land on',
+            { playerId: player.id },
           );
         }
         return;
@@ -1254,78 +1170,19 @@ export class Game implements IGame {
     }
   }
 
-  private getPlanetPayload(action: IMainActionRequest): EPlanet {
-    const candidate = action.payload?.planet;
-    if (!Object.values(EPlanet).includes(candidate as EPlanet)) {
-      throw new GameError(
-        EErrorCode.INVALID_ACTION,
-        'Action payload.planet must be a valid EPlanet',
-        {
-          actionType: action.type,
-          payload: action.payload,
-        },
-      );
-    }
-    if (candidate === EPlanet.EARTH) {
-      throw new GameError(
-        EErrorCode.INVALID_ACTION,
-        'Earth cannot be selected for orbit/land',
-        {
-          actionType: action.type,
-        },
-      );
-    }
-    return candidate as EPlanet;
-  }
-
-  /**
-   * Variant of {@link getPlanetPayload} that returns `undefined` when
-   * the payload is missing entirely. Used by the new picker-driven
-   * ORBIT/LAND flow where the user picks a planet via a SelectOption
-   * after clicking the action button (the action arrives with no
-   * planet specified). Still throws on malformed-but-present payloads
-   * so explicit "give me Earth" calls still fail loudly.
-   */
-  private getOptionalPlanetPayload(
-    action: IMainActionRequest,
-  ): EPlanet | undefined {
-    if (action.payload?.planet === undefined) {
-      return undefined;
-    }
-    return this.getPlanetPayload(action);
-  }
-
-  private getMoonPayload(action: IMainActionRequest): boolean {
-    return action.payload?.isMoon === true;
-  }
-
-  private getMoonIdPayload(action: IMainActionRequest): string | undefined {
-    if (action.payload?.moonIndex !== undefined) {
-      throw new GameError(
-        EErrorCode.INVALID_ACTION,
-        'Action payload.moonIndex is not supported; use moonId',
-        {
-          actionType: action.type,
-          payload: action.payload,
-        },
-      );
+  private assertNoOrbitLandPayload(action: IMainActionRequest): void {
+    if (action.payload === undefined) {
+      return;
     }
 
-    const moonId = action.payload?.moonId;
-    if (moonId === undefined) {
-      return undefined;
-    }
-    if (typeof moonId !== 'string' || moonId.trim().length === 0) {
-      throw new GameError(
-        EErrorCode.INVALID_ACTION,
-        'Action payload.moonId must be a non-empty string',
-        {
-          actionType: action.type,
-          payload: action.payload,
-        },
-      );
-    }
-    return moonId;
+    const message =
+      action.payload.planet !== undefined
+        ? `Action payload.planet is not supported for ${action.type}; use slot picker input`
+        : `Action payload is not supported for ${action.type}; use slot picker input`;
+    throw new GameError(EErrorCode.INVALID_ACTION, message, {
+      actionType: action.type,
+      payload: action.payload,
+    });
   }
 
   private getCardIndexPayload(action: IMainActionRequest): number {

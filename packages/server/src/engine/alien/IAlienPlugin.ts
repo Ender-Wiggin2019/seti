@@ -1,4 +1,9 @@
-import type { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
+import type {
+  EAlienType,
+  EPlanet,
+  ETrace,
+} from '@seti/common/types/protocol/enums';
+import type { ETechId } from '@seti/common/types/tech';
 import type { IGame } from '../IGame.js';
 import type { PlayerInput } from '../input/PlayerInput.js';
 import type { IPlayer } from '../player/IPlayer.js';
@@ -46,6 +51,12 @@ export interface IAlienPlugin {
   onRoundEnd?(game: IGame): void;
 
   onSolarSystemRotated?(game: IGame): void;
+
+  onPlanetVisited?(game: IGame, player: IPlayer, planet: EPlanet): void;
+
+  onSectorWon?(game: IGame, player: IPlayer, sectorId: string): void;
+
+  onTechAcquired?(game: IGame, player: IPlayer, techId: ETechId): void;
 
   onGameEndScoring?(game: IGame, player: IPlayer): number;
 

@@ -3,7 +3,7 @@ import {
   SECTOR_STAR_CONFIGS,
   SECTOR_TILE_DEFINITIONS,
 } from '@seti/common/constant/sectorSetup';
-import { ESector } from '@seti/common/types/element';
+import { EAlienIcon, ESector } from '@seti/common/types/element';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { ComponentProps, ComponentType } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -57,15 +57,44 @@ function createMockSpaceStates(
   );
 }
 
+function createSectorSpaceIds(
+  spaceStates: Record<string, IPublicSolarSystemSpaceState>,
+): Record<number, string[]> {
+  return Object.values(spaceStates).reduce<Record<number, string[]>>(
+    (acc, state) => {
+      acc[state.sectorIndex] = [
+        ...(acc[state.sectorIndex] ?? []),
+        state.spaceId,
+      ];
+      return acc;
+    },
+    {},
+  );
+}
+
+function createProbeSpaceById(
+  probes: IPublicSolarSystem['probes'],
+): Record<string, string> {
+  return Object.fromEntries(
+    probes
+      .filter((probe) => probe.probeId !== undefined)
+      .map((probe) => [probe.probeId as string, probe.spaceId]),
+  );
+}
+
 function createSolarSystemMock(): IPublicSolarSystem {
   const spaces = Array.from({ length: 32 }, (_, i) => `space-${i}`);
+  const probes: IPublicSolarSystem['probes'] = [
+    { playerId: 'player-1', spaceId: 'space-0' },
+  ];
+  const spaceStates = createMockSpaceStates(spaces);
 
   return {
     spaces,
     adjacency: {
       'space-0': ['space-1'],
     },
-    probes: [{ playerId: 'player-1', spaceId: 'space-0' }],
+    probes,
     discs: [
       { discIndex: 0, angle: 1 },
       { discIndex: 1, angle: 2 },
@@ -74,23 +103,40 @@ function createSolarSystemMock(): IPublicSolarSystem {
     ],
     alienTokens: [],
     nextRotateRing: 2,
-    spaceStates: createMockSpaceStates(spaces),
+    spaceStates,
+    planetSpaceIds: {},
+    sectorSpaceIds: createSectorSpaceIds(spaceStates),
+    probeSpaceById: createProbeSpaceById(probes),
   };
 }
 
 function createRotatedRingOneMock(): IPublicSolarSystem {
+  const probes: IPublicSolarSystem['probes'] = [
+    {
+      playerId: 'player-1',
+      spaceId: 'ring-1-cell-3',
+      probeId: 'probe-earth',
+    },
+  ];
+  const spaceStates: Record<string, IPublicSolarSystemSpaceState> = {
+    'ring-1-cell-3': {
+      spaceId: 'ring-1-cell-3',
+      ringIndex: 1,
+      indexInRing: 3,
+      sectorIndex: 3,
+      cellInSector: 0,
+      hasPublicityIcon: false,
+      elementTypes: ['EARTH'],
+      elements: [{ type: 'EARTH' }],
+    },
+  };
+
   return {
     spaces: ['ring-1-cell-3'],
     adjacency: {
       'ring-1-cell-3': [],
     },
-    probes: [
-      {
-        playerId: 'player-1',
-        spaceId: 'ring-1-cell-3',
-        probeId: 'probe-earth',
-      },
-    ],
+    probes,
     discs: [
       { discIndex: 0, angle: 5 },
       { discIndex: 1, angle: 0 },
@@ -98,24 +144,79 @@ function createRotatedRingOneMock(): IPublicSolarSystem {
     ],
     alienTokens: [],
     nextRotateRing: 1,
-    spaceStates: {
-      'ring-1-cell-3': {
-        spaceId: 'ring-1-cell-3',
-        ringIndex: 1,
-        indexInRing: 3,
-        sectorIndex: 3,
-        cellInSector: 0,
-        hasPublicityIcon: false,
-        elementTypes: ['EARTH'],
-        elements: [{ type: 'EARTH' }],
-      },
-    },
+    spaceStates,
+    planetSpaceIds: { [EPlanet.EARTH]: 'ring-1-cell-3' },
+    sectorSpaceIds: createSectorSpaceIds(spaceStates),
+    probeSpaceById: createProbeSpaceById(probes),
   };
 }
 
 function createExpandedOuterRingMock(
   overrides?: Partial<IPublicSolarSystem>,
 ): IPublicSolarSystem {
+  const spaceStates: Record<string, IPublicSolarSystemSpaceState> = {
+    'ring-4-cell-8': {
+      spaceId: 'ring-4-cell-8',
+      ringIndex: 4,
+      indexInRing: 8,
+      sectorIndex: 2,
+      cellInSector: 0,
+      hasPublicityIcon: true,
+      elementTypes: ['PLANET'],
+      elements: [{ type: 'PLANET', planet: EPlanet.NEPTUNE }],
+    },
+    'ring-4-cell-9': {
+      spaceId: 'ring-4-cell-9',
+      ringIndex: 4,
+      indexInRing: 9,
+      sectorIndex: 2,
+      cellInSector: 1,
+      hasPublicityIcon: false,
+      elementTypes: ['EMPTY'],
+      elements: [{ type: 'EMPTY' }],
+    },
+    'ring-4-cell-10': {
+      spaceId: 'ring-4-cell-10',
+      ringIndex: 4,
+      indexInRing: 10,
+      sectorIndex: 2,
+      cellInSector: 2,
+      hasPublicityIcon: false,
+      elementTypes: ['ASTEROID'],
+      elements: [{ type: 'ASTEROID' }],
+    },
+    'ring-4-cell-12': {
+      spaceId: 'ring-4-cell-12',
+      ringIndex: 4,
+      indexInRing: 12,
+      sectorIndex: 3,
+      cellInSector: 0,
+      hasPublicityIcon: false,
+      elementTypes: ['ASTEROID'],
+      elements: [{ type: 'ASTEROID' }],
+    },
+    'ring-4-cell-15': {
+      spaceId: 'ring-4-cell-15',
+      ringIndex: 4,
+      indexInRing: 15,
+      sectorIndex: 3,
+      cellInSector: 3,
+      hasPublicityIcon: false,
+      elementTypes: ['EMPTY'],
+      elements: [{ type: 'EMPTY' }],
+    },
+    'ring-4-cell-16': {
+      spaceId: 'ring-4-cell-16',
+      ringIndex: 4,
+      indexInRing: 16,
+      sectorIndex: 4,
+      cellInSector: 0,
+      hasPublicityIcon: false,
+      elementTypes: ['EMPTY'],
+      elements: [{ type: 'EMPTY' }],
+    },
+  };
+
   return {
     spaces: [
       'ring-4-cell-8',
@@ -141,68 +242,10 @@ function createExpandedOuterRingMock(
     ],
     alienTokens: [],
     nextRotateRing: 1,
-    spaceStates: {
-      'ring-4-cell-8': {
-        spaceId: 'ring-4-cell-8',
-        ringIndex: 4,
-        indexInRing: 8,
-        sectorIndex: 2,
-        cellInSector: 0,
-        hasPublicityIcon: true,
-        elementTypes: ['PLANET'],
-        elements: [{ type: 'PLANET', planet: EPlanet.NEPTUNE }],
-      },
-      'ring-4-cell-9': {
-        spaceId: 'ring-4-cell-9',
-        ringIndex: 4,
-        indexInRing: 9,
-        sectorIndex: 2,
-        cellInSector: 1,
-        hasPublicityIcon: false,
-        elementTypes: ['EMPTY'],
-        elements: [{ type: 'EMPTY' }],
-      },
-      'ring-4-cell-10': {
-        spaceId: 'ring-4-cell-10',
-        ringIndex: 4,
-        indexInRing: 10,
-        sectorIndex: 2,
-        cellInSector: 2,
-        hasPublicityIcon: false,
-        elementTypes: ['ASTEROID'],
-        elements: [{ type: 'ASTEROID' }],
-      },
-      'ring-4-cell-12': {
-        spaceId: 'ring-4-cell-12',
-        ringIndex: 4,
-        indexInRing: 12,
-        sectorIndex: 3,
-        cellInSector: 0,
-        hasPublicityIcon: false,
-        elementTypes: ['ASTEROID'],
-        elements: [{ type: 'ASTEROID' }],
-      },
-      'ring-4-cell-15': {
-        spaceId: 'ring-4-cell-15',
-        ringIndex: 4,
-        indexInRing: 15,
-        sectorIndex: 3,
-        cellInSector: 3,
-        hasPublicityIcon: false,
-        elementTypes: ['EMPTY'],
-        elements: [{ type: 'EMPTY' }],
-      },
-      'ring-4-cell-16': {
-        spaceId: 'ring-4-cell-16',
-        ringIndex: 4,
-        indexInRing: 16,
-        sectorIndex: 4,
-        cellInSector: 0,
-        hasPublicityIcon: false,
-        elementTypes: ['EMPTY'],
-        elements: [{ type: 'EMPTY' }],
-      },
-    },
+    spaceStates,
+    planetSpaceIds: { [EPlanet.NEPTUNE]: 'ring-4-cell-8' },
+    sectorSpaceIds: createSectorSpaceIds(spaceStates),
+    probeSpaceById: {},
     ...overrides,
   };
 }
@@ -286,6 +329,24 @@ function getStyleRadius(element: HTMLElement): number {
   const x = parseFloat(element.style.left) - 50;
   const y = 50 - parseFloat(element.style.top);
   return Math.hypot(x, y);
+}
+
+function getTranslateXOffsetPx(transform: string): number {
+  if (transform.startsWith('translate(-50%')) {
+    return 0;
+  }
+
+  const plusMatch = /translate\(calc\(-50% \+ (-?[\d.]+)px\)/.exec(transform);
+  if (plusMatch) {
+    return Number(plusMatch[1]);
+  }
+
+  const minusMatch = /translate\(calc\(-50% - ([\d.]+)px\)/.exec(transform);
+  if (minusMatch) {
+    return -Number(minusMatch[1]);
+  }
+
+  throw new Error(`Could not parse translate X offset: ${transform}`);
 }
 
 describe('SolarSystemView', () => {
@@ -471,6 +532,29 @@ describe('SolarSystemView', () => {
     ).toHaveStyle({ backgroundColor: '#d63384' });
   });
 
+  it('renders Glyphids sector tokens separately from Anomalies tokens', () => {
+    renderSolarSystemView({
+      solarSystem: {
+        ...createSolarSystemMock(),
+        glyphidsSectorTokens: [
+          {
+            tokenId: 'glyphids-token|sector|sector-2',
+            alienType: EAlienType.GLYPHIDS,
+            glyph: EAlienIcon.GLYPH_GREEN,
+            sectorId: 'sector-2',
+            sectorIndex: 2,
+          },
+        ],
+      },
+    });
+
+    expect(
+      screen.getByTestId(
+        'solar-glyphids-sector-token-glyphids-token|sector|sector-2',
+      ),
+    ).toBeInTheDocument();
+  });
+
   it('anchors the Oumuamua sector data list at its solar-system cell', () => {
     const solarSystem = createExpandedOuterRingMock();
     const tile: IPublicOumuamuaTile = {
@@ -514,6 +598,63 @@ describe('SolarSystemView', () => {
     expect(screen.getByTestId('solar-oumuamua-data-slot-2')).toHaveAttribute(
       'data-signal-type',
       'data',
+    );
+  });
+
+  it('aligns the text-mode Oumuamua cell with its sector data list', () => {
+    useDebugStore.setState({ textMode: true });
+    const tile: IPublicOumuamuaTile = {
+      spaceId: 'ring-3-cell-15',
+      sectorId: 'sector-5',
+      dataRemaining: 2,
+      markerPlayerIds: ['player-1'],
+    };
+    const spaceStates: Record<string, IPublicSolarSystemSpaceState> = {
+      'ring-3-cell-15': {
+        spaceId: 'ring-3-cell-15',
+        ringIndex: 3,
+        indexInRing: 15,
+        sectorIndex: 5,
+        cellInSector: 0,
+        hasPublicityIcon: true,
+        elementTypes: ['PLANET'],
+        elements: [{ type: 'PLANET', planet: EPlanet.OUMUAMUA }],
+      },
+    };
+
+    renderSolarSystemView({
+      solarSystem: {
+        spaces: ['ring-3-cell-15'],
+        adjacency: { 'ring-3-cell-15': [] },
+        probes: [],
+        discs: [
+          { discIndex: 0, angle: 0 },
+          { discIndex: 1, angle: 0 },
+          { discIndex: 2, angle: 0 },
+        ],
+        alienTokens: [],
+        nextRotateRing: 1,
+        spaceStates,
+        planetSpaceIds: { [EPlanet.OUMUAMUA]: 'ring-3-cell-15' },
+        sectorSpaceIds: createSectorSpaceIds(spaceStates),
+        probeSpaceById: {},
+      },
+      playerColors: { 'player-1': '#f00' },
+      oumuamuaTile: tile,
+    });
+
+    const cell = screen.getByTestId('solar-text-cell-state:ring-3-cell-15');
+    const hotspot = screen.getByTestId('solar-space-ring-3-cell-15');
+    const dataList = screen.getByTestId('solar-oumuamua-data-list');
+    const dataListX = getTranslateXOffsetPx(dataList.style.transform);
+
+    expect(getTranslateXOffsetPx(cell.style.transform)).toBeCloseTo(
+      dataListX,
+      3,
+    );
+    expect(getTranslateXOffsetPx(hotspot.style.transform)).toBeCloseTo(
+      dataListX,
+      3,
     );
   });
 
@@ -982,6 +1123,38 @@ describe('SolarSystemView', () => {
 
   it('hides intra-sector cells in text mode (only cell-0 of each sector is a hotspot)', () => {
     useDebugStore.setState({ textMode: true });
+    const spaceStates: Record<string, IPublicSolarSystemSpaceState> = {
+      'ring-3-cell-15': {
+        spaceId: 'ring-3-cell-15',
+        ringIndex: 3,
+        indexInRing: 15,
+        sectorIndex: 5,
+        cellInSector: 0,
+        hasPublicityIcon: false,
+        elementTypes: ['EMPTY'],
+        elements: [{ type: 'EMPTY' }],
+      },
+      'ring-3-cell-16': {
+        spaceId: 'ring-3-cell-16',
+        ringIndex: 3,
+        indexInRing: 16,
+        sectorIndex: 5,
+        cellInSector: 1,
+        hasPublicityIcon: false,
+        elementTypes: ['ASTEROID'],
+        elements: [{ type: 'ASTEROID' }],
+      },
+      'ring-3-cell-17': {
+        spaceId: 'ring-3-cell-17',
+        ringIndex: 3,
+        indexInRing: 17,
+        sectorIndex: 5,
+        cellInSector: 2,
+        hasPublicityIcon: false,
+        elementTypes: ['EMPTY'],
+        elements: [{ type: 'EMPTY' }],
+      },
+    };
 
     render(
       <SolarSystemView
@@ -1000,38 +1173,10 @@ describe('SolarSystemView', () => {
           ],
           alienTokens: [],
           nextRotateRing: 1,
-          spaceStates: {
-            'ring-3-cell-15': {
-              spaceId: 'ring-3-cell-15',
-              ringIndex: 3,
-              indexInRing: 15,
-              sectorIndex: 5,
-              cellInSector: 0,
-              hasPublicityIcon: false,
-              elementTypes: ['EMPTY'],
-              elements: [{ type: 'EMPTY' }],
-            },
-            'ring-3-cell-16': {
-              spaceId: 'ring-3-cell-16',
-              ringIndex: 3,
-              indexInRing: 16,
-              sectorIndex: 5,
-              cellInSector: 1,
-              hasPublicityIcon: false,
-              elementTypes: ['ASTEROID'],
-              elements: [{ type: 'ASTEROID' }],
-            },
-            'ring-3-cell-17': {
-              spaceId: 'ring-3-cell-17',
-              ringIndex: 3,
-              indexInRing: 17,
-              sectorIndex: 5,
-              cellInSector: 2,
-              hasPublicityIcon: false,
-              elementTypes: ['EMPTY'],
-              elements: [{ type: 'EMPTY' }],
-            },
-          },
+          spaceStates,
+          planetSpaceIds: {},
+          sectorSpaceIds: createSectorSpaceIds(spaceStates),
+          probeSpaceById: {},
         }}
         sectors={createSectorsMock()}
         setupConfig={defaultSetup}

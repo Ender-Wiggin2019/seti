@@ -14,7 +14,9 @@ import type {
   IArkhosExplorationRewardRecord,
   IArkhosSecurityCardState,
   IGlyphidsBoardToken,
+  IGlyphidsPlacedToken,
   IGlyphidsTranslationRow,
+  TGlyphidsGlyph,
   TGlyphidsRowsByPlayer,
 } from '@seti/common/constant/spaceAgencyAliens';
 import { IBaseCard } from '@seti/common/types/BaseCard';
@@ -143,10 +145,18 @@ export type TPublicAnomalyTraceColor =
 
 export interface IPublicSolarSystemAlienToken {
   tokenId: string;
-  alienType: EAlienType;
+  alienType: EAlienType.ANOMALIES;
   sectorIndex: number;
   traceColor: TPublicAnomalyTraceColor;
   rewards: TPublicSlotReward[];
+}
+
+export interface IPublicSolarSystemGlyphidsSectorToken {
+  tokenId: string;
+  alienType: EAlienType.GLYPHIDS;
+  sectorId?: string;
+  sectorIndex: number;
+  glyph: TGlyphidsGlyph;
 }
 
 export interface IPublicSolarSystemDiscState {
@@ -196,17 +206,19 @@ export interface IPublicSolarSystemState {
    * rotation state; server rebuilds on every rotation so clients can
    * highlight planet targets in O(1) without scanning `spaceStates`.
    */
-  planetSpaceIds?: Partial<Record<EPlanet, string>>;
+  planetSpaceIds: Partial<Record<EPlanet, string>>;
   /**
    * Static sector → ordered spaceIds (ring-1 first) index. Stable for
    * the whole game. Lets clients render "sector zoom" or sector-scoped
    * probe badges without deriving the topology.
    */
-  sectorSpaceIds?: Record<number, string[]>;
+  sectorSpaceIds: Record<number, string[]>;
   /** probeId → spaceId. Enables probe-centric views (e.g. "which sector?"). */
-  probeSpaceById?: Record<string, string>;
-  /** Alien components physically located on the solar-system board. */
+  probeSpaceById: Record<string, string>;
+  /** Anomalies components physically located on solar-system sectors. */
   alienTokens: IPublicSolarSystemAlienToken[];
+  /** Glyphids sector tokens; planet and tech tokens are projected to their own boards. */
+  glyphidsSectorTokens?: IPublicSolarSystemGlyphidsSectorToken[];
 }
 
 export type IPublicSolarSystem = IPublicSolarSystemState;
@@ -248,11 +260,18 @@ export interface IPublicPlanetState {
   firstOrbitClaimed: boolean;
   firstLandDataBonusTaken: boolean[];
   moonOccupants: IPublicMoonOccupantState[];
+  alienTokens?: IPublicPlanetAlienToken[];
 }
 
 export interface IPublicPlanetaryBoard {
   configs?: Partial<Record<EPlanet, IPlanetaryBoardConfig>>;
   planets: Partial<Record<EPlanet, IPublicPlanetState>>;
+}
+
+export interface IPublicPlanetAlienToken {
+  tokenId: string;
+  alienType: EAlienType.GLYPHIDS;
+  glyph: TGlyphidsGlyph;
 }
 
 export interface IPublicTechStack {
@@ -261,6 +280,7 @@ export interface IPublicTechStack {
   remainingTiles: number;
   firstTakeBonusAvailable: boolean;
   topTileBonuses?: ITechBonusToken[];
+  alienTokens?: IPublicPlanetAlienToken[];
 }
 
 export interface IPublicTechBoard {
@@ -407,6 +427,7 @@ export interface IPublicGlyphidsBoard {
   glyphTokenBankSize: number;
   glyphRows: TGlyphidsRowsByPlayer;
   boardTokens: IGlyphidsBoardToken[];
+  placedTokens: IGlyphidsPlacedToken[];
   translationRows: IGlyphidsTranslationRow[];
   traceSlots: IPublicTraceSlot[];
 }
@@ -503,8 +524,8 @@ export interface IPublicGameState {
   gameId: string;
   isSoloMode?: boolean;
   round: number;
-  roundIndex?: number;
-  maxRounds?: number;
+  roundIndex: number;
+  maxRounds: number;
   phase: EPhase;
   currentPlayerId: string;
   startPlayerId: string;

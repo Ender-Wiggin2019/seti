@@ -175,6 +175,12 @@ function createMercurySolarSystem(
     planetSpaceIds: {
       [EPlanet.MERCURY]: 'planet-space-1',
     },
+    sectorSpaceIds: { 0: ['planet-space-1'] },
+    probeSpaceById: Object.fromEntries(
+      probes
+        .filter((probe) => probe.probeId !== undefined)
+        .map((probe) => [probe.probeId as string, probe.spaceId]),
+    ),
   };
 }
 
@@ -209,6 +215,8 @@ function createGameState(
     milestones: { goldMilestones: [], neutralMilestones: [] },
     goldScoringTiles: [],
     ...overrides,
+    roundIndex: overrides?.roundIndex ?? 1,
+    maxRounds: overrides?.maxRounds ?? 5,
     undoAllowed: overrides?.undoAllowed ?? false,
     canUndo: overrides?.canUndo ?? false,
     turnIndex: overrides?.turnIndex ?? 0,

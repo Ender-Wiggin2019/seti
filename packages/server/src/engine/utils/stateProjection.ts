@@ -5,6 +5,7 @@ import {
 import type { EPlanet } from '@seti/common/types/protocol/enums';
 import type {
   IPublicSolarSystemAlienToken,
+  IPublicSolarSystemGlyphidsSectorToken,
   IPublicSolarSystemMovablePiece,
   IPublicSolarSystemProbe,
   IPublicSolarSystemSpaceState,
@@ -19,6 +20,7 @@ export function toPublicSolarSystemState(
   ss: SolarSystem,
   alienTokens: IPublicSolarSystemAlienToken[] = [],
   extraMovablePieces: IPublicSolarSystemMovablePiece[] = [],
+  glyphidsSectorTokens: IPublicSolarSystemGlyphidsSectorToken[] = [],
 ): IPublicSolarSystemState {
   const adjacencyRecord: Record<string, string[]> = {};
   for (const [spaceId, neighbors] of ss.adjacency.entries()) {
@@ -117,5 +119,6 @@ export function toPublicSolarSystemState(
     sectorSpaceIds,
     probeSpaceById,
     alienTokens,
+    glyphidsSectorTokens,
   };
 }

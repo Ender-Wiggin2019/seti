@@ -20,14 +20,12 @@ import {
 } from '../turnEffects/TurnEffects.js';
 import { toPublicSolarSystemState } from '../utils/stateProjection.js';
 import {
-  findLegacyProbeMovementPieceAtSpace,
   findPlayerMovablePieces,
   resolveMovementTarget,
 } from './movementTargets.js';
 
 export interface IMovementResult {
   probeId: string;
-  capsuleId?: string;
   path: string[];
   totalCost: number;
   publicityGained: number;
@@ -36,8 +34,6 @@ export interface IMovementResult {
 
 export interface IMovementOptions {
   target?: TMovementTarget;
-  /** @deprecated Use target: { type: 'mascamites-capsule', id } instead. */
-  capsuleId?: string;
 }
 
 interface IPublicityRecord {
@@ -133,10 +129,14 @@ export class MovementFreeAction {
 
     const startSpaceId = path[0];
     const target = this.normalizeMovementTarget(options);
-    const movementPiece =
-      target !== undefined
-        ? resolveMovementTarget(game, player.id, target)
-        : findLegacyProbeMovementPieceAtSpace(game, player.id, startSpaceId);
+    if (target === undefined) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        'Movement target is required',
+        { playerId: player.id, path },
+      );
+    }
+    const movementPiece = resolveMovementTarget(game, player.id, target);
     if (!movementPiece) {
       throw new GameError(
         EErrorCode.INVALID_ACTION,
@@ -256,7 +256,6 @@ export class MovementFreeAction {
 
     return {
       probeId: movementPiece.pieceId,
-      capsuleId: movementPiece.legacyResult?.capsuleId,
       path,
       totalCost: effectiveCost,
       publicityGained,
@@ -315,13 +314,7 @@ export class MovementFreeAction {
   private static normalizeMovementTarget(
     options: IMovementOptions,
   ): TMovementTarget | undefined {
-    if (options.target) {
-      return options.target;
-    }
-    if (options.capsuleId !== undefined) {
-      return { type: 'mascamites-capsule', id: options.capsuleId };
-    }
-    return undefined;
+    return options.target;
   }
 
   private static findSpace(game: IGame, spaceId: string) {

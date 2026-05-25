@@ -9,18 +9,19 @@ import {
   type ISetupChoiceInputMetadata,
 } from '@seti/common/types/protocol/playerInput';
 import { GameError } from '@/shared/errors/GameError.js';
-import type { IPlayer } from '../player/IPlayer.js';
+import { projectCardItems } from '../cards/projectCardItem.js';
+import type { IPlayer, TCardItem } from '../player/IPlayer.js';
 import { BasePlayerInput, type PlayerInput } from './PlayerInput.js';
 
 export interface ISelectCardConfig {
-  cards: Array<{ id: string; [key: string]: unknown }>;
+  cards: TCardItem[];
   minSelections?: number;
   maxSelections?: number;
   onSelect: (selectedCardIds: string[]) => PlayerInput | undefined;
 }
 
 export class SelectCard extends BasePlayerInput {
-  private readonly cards: Array<{ id: string; [key: string]: unknown }>;
+  private readonly cards: TCardItem[];
 
   private readonly minSelections: number;
 
@@ -49,7 +50,7 @@ export class SelectCard extends BasePlayerInput {
       type: EPlayerInputType.CARD,
       title: this.title,
       setupChoice: this.setupChoice,
-      cards: this.cards as unknown as ISelectCardInputModel['cards'],
+      cards: projectCardItems(this.cards),
       minSelections: this.minSelections,
       maxSelections: this.maxSelections,
     };
@@ -71,7 +72,17 @@ export class SelectCard extends BasePlayerInput {
       );
     }
 
-    const validIds = new Set(this.cards.map((c) => c.id));
+    const validIds = new Set(
+      this.cards
+        .map((card) => {
+          if (typeof card === 'string') return card;
+          const candidate = card as { id?: unknown; cardId?: unknown };
+          if (typeof candidate.id === 'string') return candidate.id;
+          if (typeof candidate.cardId === 'string') return candidate.cardId;
+          return undefined;
+        })
+        .filter((cardId): cardId is string => cardId !== undefined),
+    );
     for (const id of cardIds) {
       if (!validIds.has(id)) {
         throw new GameError(

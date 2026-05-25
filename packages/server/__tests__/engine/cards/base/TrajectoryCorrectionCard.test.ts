@@ -48,15 +48,19 @@ describe('TrajectoryCorrectionCard', () => {
     const target = requireSpace(solarSystem, 'ring-1-cell-2');
     setEmpty(start);
     setEmpty(target);
-    solarSystem.placeProbe(player.id, start.id);
+    const probe = solarSystem.placeProbe(player.id, start.id);
     player.gainMove(2);
     const scoreBefore = player.score;
     const publicityBefore = player.resources.publicity;
 
     card.play({ player, game });
     game.deferredActions.drain(game);
-    MovementFreeAction.execute(player, game, [start.id, target.id]);
-    MovementFreeAction.execute(player, game, [target.id, start.id]);
+    MovementFreeAction.execute(player, game, [start.id, target.id], {
+      target: { type: 'probe', id: probe.id },
+    });
+    MovementFreeAction.execute(player, game, [target.id, start.id], {
+      target: { type: 'probe', id: probe.id },
+    });
 
     expect(card.id).toBe('125');
     expect(card.behavior.custom).toBeUndefined();

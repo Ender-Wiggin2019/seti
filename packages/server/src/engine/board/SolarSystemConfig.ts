@@ -84,14 +84,16 @@ function buildRealConfig(): IBuildResult {
     const visible = layers.find(
       (layer) => layer.element.type !== ESolarSystemElementType.NULL,
     );
-    const visibleElement = visible?.element ?? toElement(expandedCell.cell);
+    const topCell = expandedCell.layers[0]?.cell;
+    const visibleElement =
+      visible?.element ??
+      (topCell
+        ? toElement(topCell)
+        : { type: ESolarSystemElementType.NULL, amount: 1 });
     const elements = [visibleElement];
     const hasPublicityIcon = visible?.hasPublicityIcon ?? false;
 
-    // Cutout / publicity / planet indexes still index by the legacy
-    // top-cell shape — these are static lookups, not per-layer.
-    const mapCell = expandedCell.cell;
-    if (mapCell.type === 'NULL') {
+    if (topCell?.type === 'NULL') {
       cutoutSpaceIds.push(expandedCell.id);
     }
 

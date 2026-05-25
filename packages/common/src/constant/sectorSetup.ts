@@ -69,12 +69,6 @@ export interface ISolarSystemExpandedMapCell {
   sourceBandIndex: number;
   sourceSlotIndex: number;
   /**
-   * Topmost disc's printed contribution. Equivalent to `layers[0].cell`
-   * pre-rotation — kept for back-compat with callers that pre-date the
-   * layered model.
-   */
-  cell: ISolarSystemWheelMapCell;
-  /**
    * Top-down stack of every disc that prints terrain at this (ring, sector,
    * cellInSector) — disc R..disc 4 for ring R cell-0; intra-sector cells
    * (cellInSector > 0) only carry the topmost disc's scaffolding so they
@@ -425,11 +419,7 @@ export function createDefaultSolarSystemExpandedMapCells(
         // by movement, so deeper layers don't matter.
         const layers: ISolarSystemExpandedMapLayer[] = [];
         if (isCellZero) {
-          for (
-            let discIndex = ringIndex;
-            discIndex <= 4;
-            discIndex += 1
-          ) {
+          for (let discIndex = ringIndex; discIndex <= 4; discIndex += 1) {
             const discTyped = discIndex as TSolarSystemWheelIndex;
             const layerSourceCell =
               wheels[discTyped][sourceBandIndex][sectorIndex].cell;
@@ -453,7 +443,6 @@ export function createDefaultSolarSystemExpandedMapCells(
           cellInSector,
           sourceBandIndex,
           sourceSlotIndex: sectorIndex,
-          cell,
           layers,
         });
       }

@@ -45,19 +45,9 @@ export interface IRivalObjectiveDefinition {
 
 export const SOLO_DIFFICULTIES: readonly TSoloDifficulty[] = [1, 2, 3, 4, 5];
 
-const LEGACY_RIVAL_BOARD_CONFIG_IDS: Record<string, TRivalBoardConfigId> = {
-  automaBoard1: 'rival-board-1',
-  automaBoard2: 'rival-board-2',
-  automaBoard3: 'rival-board-3',
-  automaBoard4: 'rival-board-4',
-};
-
 export function normalizeRivalBoardConfigId(
   boardConfigId: string,
 ): TRivalBoardConfigId {
-  if (boardConfigId in LEGACY_RIVAL_BOARD_CONFIG_IDS) {
-    return LEGACY_RIVAL_BOARD_CONFIG_IDS[boardConfigId];
-  }
   if (
     boardConfigId === 'rival-board-1' ||
     boardConfigId === 'rival-board-2' ||
@@ -66,7 +56,7 @@ export function normalizeRivalBoardConfigId(
   ) {
     return boardConfigId;
   }
-  return 'rival-board-1';
+  throw new Error(`Unknown rival board config id: ${boardConfigId}`);
 }
 
 export const RIVAL_COMPUTER_SLOT_REWARDS: readonly (TPublicSlotReward | null)[] =

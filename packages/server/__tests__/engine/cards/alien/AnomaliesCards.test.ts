@@ -211,14 +211,20 @@ describe('Anomalies alien cards ET.11-ET.20', () => {
     expect(game.phase).toBe(EPhase.AWAIT_END_TURN);
     const iconSpaceId = adjacent?.id;
     if (!iconSpaceId) throw new Error('missing adjacent publicity space');
+    const probe = game.solarSystem
+      .getProbesAt(startSpaceId)
+      .find((candidate) => candidate.playerId === player.id);
+    if (!probe) throw new Error('expected player probe');
 
     game.processFreeAction(player.id, {
       type: EFreeAction.MOVEMENT,
       path: [startSpaceId, iconSpaceId],
+      target: { type: 'probe', id: probe.id },
     });
     game.processFreeAction(player.id, {
       type: EFreeAction.MOVEMENT,
       path: [iconSpaceId, startSpaceId, iconSpaceId],
+      target: { type: 'probe', id: probe.id },
     });
 
     expect(player.resources.publicity).toBe(publicityBefore);

@@ -1,5 +1,5 @@
-import type React from 'react';
 import { ESectorTileId } from '@seti/common/constant/sectorSetup';
+import type React from 'react';
 import { cn } from '@/lib/cn';
 import type { IPublicSector } from '@/types/re-exports';
 import {
@@ -75,19 +75,55 @@ const PER_TILE_SIGNAL_LAYOUT: Record<
 > = {
   [ESectorTileId.TILE_1]: {
     0: { sigX: 2, sigY: 3, sigRot: -23, arcRadiusPx: 300, dotDiameterPx: 22.8 },
-    1: { sigX: -15.6, sigY: -3, sigRot: 21, arcRadiusPx: 300, dotDiameterPx: 22.8 },
+    1: {
+      sigX: -15.6,
+      sigY: -3,
+      sigRot: 21,
+      arcRadiusPx: 300,
+      dotDiameterPx: 22.8,
+    },
   },
   [ESectorTileId.TILE_2]: {
-    0: { sigX: 1, sigY: 0.5, sigRot: -23, arcRadiusPx: 300, dotDiameterPx: 22.8 },
-    1: { sigX: -17, sigY: -6.5, sigRot: 20, arcRadiusPx: 300, dotDiameterPx: 22.8 },
+    0: {
+      sigX: 1,
+      sigY: 0.5,
+      sigRot: -23,
+      arcRadiusPx: 300,
+      dotDiameterPx: 22.8,
+    },
+    1: {
+      sigX: -17,
+      sigY: -6.5,
+      sigRot: 20,
+      arcRadiusPx: 300,
+      dotDiameterPx: 22.8,
+    },
   },
   [ESectorTileId.TILE_3]: {
     0: { sigX: 1, sigY: 2, sigRot: -23, arcRadiusPx: 300, dotDiameterPx: 22.8 },
-    1: { sigX: -18, sigY: -6, sigRot: 20, arcRadiusPx: 300, dotDiameterPx: 22.8 },
+    1: {
+      sigX: -18,
+      sigY: -6,
+      sigRot: 20,
+      arcRadiusPx: 300,
+      dotDiameterPx: 22.8,
+    },
   },
   [ESectorTileId.TILE_4]: {
-    0: { sigX: -1, sigY: 1.7, sigRot: -23, arcRadiusPx: 300, dotDiameterPx: 22.8 },
-    1: { sigX: -19, sigY: -5, sigRot: 20, arcRadiusPx: 300, dotDiameterPx: 22.8 },
+    0: {
+      sigX: -1,
+      sigY: 1.7,
+      sigRot: -23,
+      arcRadiusPx: 300,
+      dotDiameterPx: 22.8,
+    },
+    1: {
+      sigX: -19,
+      sigY: -5,
+      sigRot: 20,
+      arcRadiusPx: 300,
+      dotDiameterPx: 22.8,
+    },
   },
 };
 
@@ -243,8 +279,7 @@ export function SectorNodeView({
   const remainingData = sector.signals.filter(
     (sig) => sig.type === 'data',
   ).length;
-  // Keep debug/legacy snapshots renderable if they predate `dataCapability`.
-  const dataCapability = sector.dataCapability ?? sector.dataSlotCapacity;
+  const dataCapability = sector.dataCapability;
   const bonusesAreSame = sameBonus(
     sector.firstWinnerBonus ?? [],
     sector.otherWinnerBonus ?? [],

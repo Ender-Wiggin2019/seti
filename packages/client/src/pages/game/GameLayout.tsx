@@ -328,9 +328,6 @@ export function GameLayout({
   const [armedCardRowBuy, setArmedCardRowBuy] = useState(false);
   const [playCardSelectionMode, setPlayCardSelectionMode] = useState(false);
   const [movementModeActive, setMovementModeActive] = useState(false);
-  const [planetActionMode, setPlanetActionMode] = useState<
-    EMainAction.ORBIT | EMainAction.LAND | null
-  >(null);
   const {
     gameState,
     isMyTurn,
@@ -340,13 +337,7 @@ export function GameLayout({
     sendAction,
     sendInput,
   } = useGameContext();
-  // Effective ORBIT/LAND mode for the planetary board hotspots: prefer
-  // the legacy `planetActionMode` (kept for back-compat with debug
-  // presets / replays) and fall back to the active slot-picker
-  // pendingInput. With the new server-driven flow, the picker drives
-  // anchor visibility on its own without any client-side arming.
-  const effectivePlanetActionMode =
-    planetActionMode ?? getSlotPickerMode(pendingInput);
+  const effectivePlanetActionMode = getSlotPickerMode(pendingInput);
   const unhandledEffectToastKeysRef = useRef<Set<string>>(new Set());
   const lastGameIdRef = useRef<string | undefined>(undefined);
   const myPlayer = gameState?.players.find((p) => p.playerId === myPlayerId);
@@ -412,17 +403,6 @@ export function GameLayout({
     movementModeActive,
     pendingInput,
   ]);
-
-  useEffect(() => {
-    if (!planetActionMode) return;
-    if (
-      !isMyTurn ||
-      pendingInput !== null ||
-      gameState?.phase !== EPhase.AWAIT_MAIN_ACTION
-    ) {
-      setPlanetActionMode(null);
-    }
-  }, [gameState?.phase, isMyTurn, pendingInput, planetActionMode]);
 
   // Auto-jump to the Aliens tab when the player is asked to place a trace
   // (or otherwise act on an alien-board slot). Track the input by id so we
@@ -509,21 +489,6 @@ export function GameLayout({
       });
       return;
     }
-
-    // Legacy path (kept for back-compat with debug presets / replays
-    // that arm planetActionMode directly). New player-driven flows
-    // never reach here because `planetActionMode` is only set when a
-    // pendingInput is active.
-    if (!planetActionMode) return;
-    sendAction({
-      type: planetActionMode,
-      payload: {
-        planet,
-        ...(options?.isMoon ? { isMoon: true } : {}),
-        ...(options?.moonId !== undefined ? { moonId: options.moonId } : {}),
-      },
-    });
-    setPlanetActionMode(null);
   };
 
   const actionController = useActionController({
@@ -561,10 +526,6 @@ export function GameLayout({
         onRequestPlayCardSelection={() => {
           setPlayCardSelectionMode(true);
           setHandExpanded(true);
-        }}
-        onRequestPlanetActionSelection={(action) => {
-          setPlanetActionMode(action);
-          setActiveTab('planets');
         }}
       />
 
@@ -942,7 +903,6 @@ function TopActionBar({
   movementModeActive,
   onEndMovementMode,
   onRequestPlayCardSelection,
-  onRequestPlanetActionSelection,
 }: {
   onFreeActionClick: (
     action: EFreeAction,
@@ -952,9 +912,6 @@ function TopActionBar({
   movementModeActive: boolean;
   onEndMovementMode: () => void;
   onRequestPlayCardSelection: () => void;
-  onRequestPlanetActionSelection: (
-    action: EMainAction.ORBIT | EMainAction.LAND,
-  ) => void;
 }): React.JSX.Element {
   const { t } = useTranslation('common');
   const {
@@ -1468,11 +1425,8 @@ function BoardTabs({
                 movementPoints={myPlayer?.movementPoints ?? 0}
                 moveModeActive={movementModeActive}
                 onMoveProbe={(path, target) => {
-                  sendFreeAction(
-                    target
-                      ? { type: EFreeAction.MOVEMENT, path, target }
-                      : { type: EFreeAction.MOVEMENT, path },
-                  );
+                  if (!target) return;
+                  sendFreeAction({ type: EFreeAction.MOVEMENT, path, target });
                 }}
                 onRespondInput={sendInput}
                 showSpaceConfigDebug={showSolarSystemSpaceConfig}

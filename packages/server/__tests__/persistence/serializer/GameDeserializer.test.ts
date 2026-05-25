@@ -1,4 +1,4 @@
-import { EAlienIcon } from '@seti/common/types/element';
+import { EAlienIcon, EResource } from '@seti/common/types/element';
 import { EOrganizationId } from '@seti/common/types/organization';
 import {
   EAlienType,
@@ -206,23 +206,54 @@ describe('GameDeserializer', () => {
     expect(restoredSpace?.publicityIconAmount).toBe(2);
   });
 
-  it('restores missing legacy round counters from round defaults', () => {
-    const dto = serializeGame(createTestGame(), 1) as ReturnType<
-      typeof serializeGame
-    > & {
-      roundIndex?: number;
-      maxRounds?: number;
-    };
+  it('rejects snapshots missing required round counters', () => {
+    const dto = serializeGame(createTestGame(), 1) as Partial<
+      ReturnType<typeof serializeGame>
+    >;
     delete dto.roundIndex;
     delete dto.maxRounds;
+    delete dto.turnIndex;
+    delete dto.turnLocked;
 
-    const restored = deserializeGame(dto);
-
-    expect(restored.roundIndex).toBe(restored.round);
-    expect(restored.maxRounds).toBe(5);
+    expect(() =>
+      deserializeGame(dto as ReturnType<typeof serializeGame>),
+    ).toThrow('Missing required game counter: roundIndex');
   });
 
-  it('restores setup-choice player fields with legacy defaults', () => {
+  it.each([
+    'quickStartCardIds',
+    'organizationIds',
+    'organizationState',
+    'oncePerRoundUsed',
+    'actionCosts',
+    'exofossils',
+    'playedCards',
+    'tracesByAlien',
+  ])('rejects player snapshots missing required %s', (field) => {
+    const dto = serializeGame(createTestGame(), 1);
+
+    delete (dto.players[0] as unknown as Record<string, unknown>)[field];
+
+    expect(() => deserializeGame(dto)).toThrow(
+      `Missing required player snapshot field: ${field}`,
+    );
+  });
+
+  it('rejects player snapshots missing canonical signal token resources', () => {
+    const dto = serializeGame(createTestGame(), 1);
+    (
+      dto.players[0] as unknown as {
+        resourceByType?: Record<string, number>;
+      }
+    ).resourceByType = { [EResource.SIGNAL_TOKEN]: 7 };
+    delete (dto.players[0].resources as { signalTokens?: number }).signalTokens;
+
+    expect(() => deserializeGame(dto)).toThrow(
+      'Missing required player snapshot field: resources.signalTokens',
+    );
+  });
+
+  it('preserves setup-choice player fields in current snapshots', () => {
     const dto = serializeGame(createTestGame(), 1);
     const setupChoiceContext = {
       currentStepIndex: 0,
@@ -241,18 +272,16 @@ describe('GameDeserializer', () => {
     };
     dto.players[0].quickStartCardIds = ['QS.1'];
     dto.players[0].setupChoiceContext = setupChoiceContext;
-    delete dto.players[1].quickStartCardIds;
     delete dto.players[1].setupChoiceContext;
 
     const restored = deserializeGame(dto);
 
     expect(restored.players[0].quickStartCardIds).toEqual(['QS.1']);
     expect(restored.players[0].setupChoiceContext).toEqual(setupChoiceContext);
-    expect(restored.players[1].quickStartCardIds).toEqual([]);
     expect(restored.players[1].setupChoiceContext).toBeUndefined();
   });
 
-  it('restores organization player fields with legacy defaults', () => {
+  it('preserves organization player fields in current snapshots', () => {
     const dto = serializeGame(createTestGame(), 1);
     dto.players[0].organizationIds = [EOrganizationId.ORBITAL_DYNAMICS];
     dto.players[0].organizationState = {
@@ -261,9 +290,6 @@ describe('GameDeserializer', () => {
     dto.players[0].oncePerRoundUsed = {
       [EOrganizationId.ORBITAL_DYNAMICS]: false,
     };
-    delete dto.players[1].organizationIds;
-    delete dto.players[1].organizationState;
-    delete dto.players[1].oncePerRoundUsed;
 
     const restored = deserializeGame(dto);
 
@@ -276,9 +302,6 @@ describe('GameDeserializer', () => {
     expect(restored.players[0].oncePerRoundUsed).toEqual({
       [EOrganizationId.ORBITAL_DYNAMICS]: false,
     });
-    expect(restored.players[1].organizationIds).toEqual([]);
-    expect(restored.players[1].organizationState).toEqual({});
-    expect(restored.players[1].oncePerRoundUsed).toEqual({});
   });
 
   it.each(ORGANIZATION_STATE_CASES)(
@@ -370,41 +393,42 @@ describe('GameDeserializer', () => {
     expect(getPlayer(restored, 'p1').organizationIds).toEqual([organizationId]);
   });
 
-  it('normalizes legacy moon occupant snapshots to stable moon ids', () => {
+  it('rejects moon occupant snapshots without stable moon ids', () => {
     const game = createTestGame();
     const dto = serializeGame(game, 1);
-    const marsState = dto.planetaryBoard?.planets.find(
-      (entry) => entry.planet === EPlanet.MARS,
-    )?.state as
-      | (NonNullable<typeof dto.planetaryBoard>['planets'][number]['state'] & {
-          moonOccupant?: { playerId: string } | null;
-          moonOccupants?: unknown;
-        })
-      | undefined;
     const jupiterState = dto.planetaryBoard?.planets.find(
       (entry) => entry.planet === EPlanet.JUPITER,
     )?.state;
 
-    if (!marsState || !jupiterState) {
+    if (!jupiterState) {
       throw new Error('expected planetary board state');
     }
 
-    const legacyMarsState = marsState as {
-      moonOccupants?: unknown;
-      moonOccupant?: { playerId: string } | null;
-    };
-    delete legacyMarsState.moonOccupants;
-    legacyMarsState.moonOccupant = { playerId: 'p1' };
-    jupiterState.moonOccupants = [{ playerId: 'p2', moonIndex: 3 }];
+    jupiterState.moonOccupants = [{ playerId: 'p2' } as never];
 
-    const restored = deserializeGame(dto);
+    expect(() => deserializeGame(dto)).toThrow(
+      'Missing moonId for saved moon occupant on jupiter',
+    );
+  });
 
-    expect(
-      restored.planetaryBoard?.planets.get(EPlanet.MARS)?.moonOccupants,
-    ).toEqual([{ playerId: 'p1', moonId: 'mars-phobos-deimos' }]);
-    expect(
-      restored.planetaryBoard?.planets.get(EPlanet.JUPITER)?.moonOccupants,
-    ).toEqual([{ playerId: 'p2', moonId: 'jupiter-io' }]);
+  it('rejects tech board snapshots without canonical tile bonuses', () => {
+    const dto = serializeGame(createTestGame(), 1);
+    const tile = dto.techBoard?.stacks[0]?.tiles[0] as
+      | {
+          bonus?: unknown;
+          bonuses?: unknown;
+        }
+      | undefined;
+    if (!tile) {
+      throw new Error('expected tech tile');
+    }
+
+    tile.bonus = tile.bonuses;
+    delete tile.bonuses;
+
+    expect(() => deserializeGame(dto)).toThrow(
+      'Missing bonuses for saved tech tile',
+    );
   });
 
   it('round-trips solo rival state', () => {
@@ -435,16 +459,16 @@ describe('GameDeserializer', () => {
     expect(restored.rivalState?.actionDeck.getDrawPile()).toHaveLength(5);
   });
 
-  it('normalizes legacy solo rival board ids from older snapshots', () => {
+  it('rejects unknown solo rival board ids instead of defaulting', () => {
     const game = createSoloTestGame();
     const dto = serializeGame(game, 1);
     if (!dto.rivalState) throw new Error('expected rival state');
     (dto.rivalState as { boardConfigId: string }).boardConfigId =
-      'automaBoard4';
+      'unknown-rival-board';
 
-    const restored = deserializeGame(dto);
-
-    expect(restored.rivalState?.boardConfigId).toBe('rival-board-4');
+    expect(() => deserializeGame(dto)).toThrow(
+      'Unknown rival board config id: unknown-rival-board',
+    );
   });
 
   it('loads legacy multiplayer snapshots without rival state', () => {
@@ -611,6 +635,23 @@ describe('GameDeserializer', () => {
       { position: 0, glyph: EAlienIcon.GLYPH_RED },
       { position: 3, glyph: EAlienIcon.GLYPH_BLUE },
     ];
+    board.placedTokens = [
+      {
+        tokenId: 'glyphids-token|planet|mars',
+        glyph: EAlienIcon.GLYPH_GREEN,
+        location: { type: 'planet', planet: EPlanet.MARS },
+      },
+      {
+        tokenId: 'glyphids-token|sector|sector-2',
+        glyph: EAlienIcon.GLYPH_YELLOW,
+        location: { type: 'sector', sectorId: 'sector-2', sectorIndex: 2 },
+      },
+      {
+        tokenId: 'glyphids-token|tech|scan-0',
+        glyph: EAlienIcon.GLYPH_PURPLE,
+        location: { type: 'tech', techId: ETechId.SCAN_EARTH_LOOK },
+      },
+    ];
     board.translationRows = [
       {
         rowId: 'glyphids-translation-level-1',
@@ -639,6 +680,7 @@ describe('GameDeserializer', () => {
       { position: 0, glyph: EAlienIcon.GLYPH_RED },
       { position: 3, glyph: EAlienIcon.GLYPH_BLUE },
     ]);
+    expect(restoredBoard.placedTokens).toEqual(board.placedTokens);
     expect(restoredBoard.translationRows).toEqual([
       {
         rowId: 'glyphids-translation-level-1',

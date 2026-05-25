@@ -9,6 +9,7 @@ import { cn } from '@/lib/cn';
 import { useTextMode } from '@/stores/debugStore';
 import type {
   IPublicMoonOccupantState,
+  IPublicPlanetAlienToken,
   IPublicPlanetState,
 } from '@/types/re-exports';
 import { ProbeToken } from './ProbeToken';
@@ -239,6 +240,23 @@ function FirstDataIcons({
   );
 }
 
+function GlyphTokenBadge({
+  token,
+}: {
+  token: IPublicPlanetAlienToken;
+}): React.JSX.Element {
+  return (
+    <span
+      data-testid={`planet-card-alien-token-${token.tokenId}`}
+      className='inline-flex h-6 w-6 items-center justify-center rounded-full border border-lime-300/80 bg-surface-950/70'
+      aria-label={`${token.glyph} glyph token`}
+      title={`${token.glyph} glyph token`}
+    >
+      <DescRender desc={`{${token.glyph}[sm]}`} size='desc-mini' smartSize />
+    </span>
+  );
+}
+
 export function PlanetCard({
   planet,
   config,
@@ -285,6 +303,9 @@ export function PlanetCard({
           {planetConfig.label}
         </h3>
         <div className='flex items-center gap-1'>
+          {(state.alienTokens ?? []).map((token) => (
+            <GlyphTokenBadge key={token.tokenId} token={token} />
+          ))}
           <span
             className={cn(
               'rounded border px-1.5 py-0.5 font-mono text-[10px]',

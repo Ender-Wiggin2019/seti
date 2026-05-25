@@ -28,10 +28,7 @@ export interface IMovementFreeActionRequest {
   type: EFreeAction.MOVEMENT;
   /** Ordered space IDs: [probeCurrentSpace, step1, step2, ...]. At least 2 elements. */
   path: string[];
-  /** Explicit board piece to move. Omitted keeps the legacy "probe at path[0]" behavior. */
-  target?: TMovementTarget;
-  /** @deprecated Use target: { type: 'mascamites-capsule', id } instead. */
-  capsuleId?: string;
+  target: TMovementTarget;
 }
 
 export interface IConvertEnergyToMovementFreeActionRequest {

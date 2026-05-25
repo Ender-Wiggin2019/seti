@@ -112,6 +112,14 @@ export function createMockSolarSystem(): IPublicSolarSystem {
     ],
     alienTokens: [],
     spaceStates: createMockSolarSystemSpaceStates(spaces),
+    planetSpaceIds: {},
+    sectorSpaceIds: Object.fromEntries(
+      Array.from({ length: 8 }, (_, sectorIndex) => [
+        sectorIndex,
+        spaces.filter((_, index) => index % 8 === sectorIndex),
+      ]),
+    ),
+    probeSpaceById: {},
   };
 }
 
@@ -190,6 +198,8 @@ export function createMockGameState(
     milestones: { goldMilestones: [], neutralMilestones: [] },
     goldScoringTiles: [],
     ...overrides,
+    roundIndex: overrides?.roundIndex ?? 1,
+    maxRounds: overrides?.maxRounds ?? 5,
     undoAllowed: overrides?.undoAllowed ?? false,
     canUndo: overrides?.canUndo ?? false,
     turnIndex: overrides?.turnIndex ?? 0,
