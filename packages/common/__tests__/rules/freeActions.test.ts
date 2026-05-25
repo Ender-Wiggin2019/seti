@@ -114,6 +114,7 @@ function createGameState(
       probes: [],
       discs: [],
       alienTokens: [],
+      spaceStates: {},
     },
     sectors: [],
     planetaryBoard: { planets: {} },
@@ -150,6 +151,9 @@ function createSolarSystem(): IPublicSolarSystemState {
         indexInRing: 0,
         hasPublicityIcon: false,
         elementTypes: ['EMPTY'],
+        elements: [{ type: 'EMPTY' }],
+        sectorIndex: 0,
+        cellInSector: 0,
       },
       s1: {
         spaceId: 's1',
@@ -157,6 +161,9 @@ function createSolarSystem(): IPublicSolarSystemState {
         indexInRing: 1,
         hasPublicityIcon: true,
         elementTypes: ['EMPTY'],
+        elements: [{ type: 'EMPTY' }],
+        sectorIndex: 1,
+        cellInSector: 0,
       },
       s2: {
         spaceId: 's2',
@@ -164,6 +171,9 @@ function createSolarSystem(): IPublicSolarSystemState {
         indexInRing: 2,
         hasPublicityIcon: false,
         elementTypes: ['ASTEROID'],
+        elements: [{ type: 'ASTEROID' }],
+        sectorIndex: 2,
+        cellInSector: 0,
       },
       s3: {
         spaceId: 's3',
@@ -171,6 +181,9 @@ function createSolarSystem(): IPublicSolarSystemState {
         indexInRing: 3,
         hasPublicityIcon: false,
         elementTypes: ['EMPTY'],
+        elements: [{ type: 'EMPTY' }],
+        sectorIndex: 3,
+        cellInSector: 0,
       },
     },
   };

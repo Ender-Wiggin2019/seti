@@ -7,12 +7,12 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ETrace } from '@seti/common/types/element';
 import type {
   IFreeActionRequest,
   IInputResponse,
   IMainActionRequest,
 } from '@seti/common/types/protocol/actions';
-import { ETrace } from '@seti/common/types/element';
 import type {
   IDebugReplayPresetDefinition,
   IDebugReplaySessionRequest,
@@ -178,6 +178,15 @@ export class DebugController {
       body.discIndex,
       body.viewerId ?? '',
     );
+  }
+
+  @Public()
+  @Post('server/game/:gameId/solar-rotate-next')
+  async solarRotateNext(
+    @Param('gameId') gameId: string,
+    @Body() body: { viewerId?: string },
+  ): Promise<IPublicGameState> {
+    return this.debugService.solarRotateNext(gameId, body.viewerId ?? '');
   }
 
   @Public()

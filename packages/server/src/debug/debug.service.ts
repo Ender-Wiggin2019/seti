@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ETrace } from '@seti/common/types/element';
 import type {
   IFreeActionRequest,
   IInputResponse,
@@ -14,7 +15,6 @@ import type {
   IDebugSnapshotSessionRequest,
   IDebugSnapshotSessionResponse,
 } from '@seti/common/types/protocol/debug';
-import { ETrace } from '@seti/common/types/element';
 import {
   EFreeAction,
   EMainAction,
@@ -495,6 +495,22 @@ export class DebugService {
       );
     }
     solarSystem.rotate(discIndex);
+    return this.getProjectedState(gameId, viewerId);
+  }
+
+  async solarRotateNext(
+    gameId: string,
+    viewerId: string,
+  ): Promise<IPublicGameState> {
+    const game = await this.gameManager.getGame(gameId);
+    const solarSystem = game.solarSystem;
+    if (!solarSystem) {
+      throw new GameError(
+        EErrorCode.INVALID_ACTION,
+        'Solar system not initialized',
+      );
+    }
+    solarSystem.rotateNextDisc();
     return this.getProjectedState(gameId, viewerId);
   }
 

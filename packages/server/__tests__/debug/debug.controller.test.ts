@@ -36,6 +36,7 @@ const mockDebugService = {
   createReplaySession: vi.fn().mockResolvedValue(MOCK_REPLAY_SESSION),
   processEndTurn: vi.fn().mockResolvedValue(MOCK_STATE),
   solarRotate: vi.fn().mockResolvedValue(MOCK_STATE),
+  solarRotateNext: vi.fn().mockResolvedValue(MOCK_STATE),
   placeProbeDirect: vi.fn().mockResolvedValue(MOCK_STATE),
 };
 
@@ -92,6 +93,13 @@ describe('DebugController', () => {
     const result = await controller.solarRotate('game-1', { discIndex: 2 });
 
     expect(mockDebugService.solarRotate).toHaveBeenCalledWith('game-1', 2, '');
+    expect(result).toBe(MOCK_STATE);
+  });
+
+  it('POST /debug/server/game/:gameId/solar-rotate-next forwards viewer fallback', async () => {
+    const result = await controller.solarRotateNext('game-1', {});
+
+    expect(mockDebugService.solarRotateNext).toHaveBeenCalledWith('game-1', '');
     expect(result).toBe(MOCK_STATE);
   });
 

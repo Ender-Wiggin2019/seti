@@ -17,6 +17,7 @@ interface ISectorGridProps {
    * proportions correct as the user zooms in/out.
    */
   boardScale?: number;
+  textModeOverride?: boolean;
   onSelectSector: (sectorColor: IPublicSector['color']) => void;
   onSelectSectorId?: (sectorId: string) => void;
 }
@@ -27,6 +28,7 @@ export function SectorGrid({
   playerColors,
   pendingInput,
   boardScale = 1,
+  textModeOverride,
   onSelectSector,
   onSelectSectorId,
 }: ISectorGridProps): React.JSX.Element {
@@ -82,6 +84,7 @@ export function SectorGrid({
             clickable={clickable}
             highlighted={clickable}
             boardScale={boardScale}
+            textModeOverride={textModeOverride}
             onSelectSector={onSelectSector}
             onSelectSectorId={onSelectSectorId}
           />

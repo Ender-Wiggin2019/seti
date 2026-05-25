@@ -4,12 +4,6 @@ export const GAME_DEBUG_DEFAULTS = {
     2: 150,
     3: 180,
   } as const,
-  probeInsetPxByRing: {
-    1: 89,
-    2: 95,
-    3: 91,
-    4: 229,
-  } as const,
   sectorSignal: {
     // These mirror `PER_TILE_SIGNAL_LAYOUT[TILE_1]` in
     // `SectorNodeView.tsx` so /debug/game opens with the same sector
@@ -41,11 +35,6 @@ export const GAME_DEBUG_RANGES = {
     min: 0,
     max: 700,
     step: 10,
-  },
-  probeInsetPx: {
-    min: 0,
-    max: 260,
-    step: 1,
   },
   rotation: {
     min: -180,

@@ -1,5 +1,6 @@
 import { EMainAction, EPhase } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
+import type { IPublicGameState } from '@seti/common/types/protocol/gameState';
 import { vi } from 'vitest';
 import type { DebugSessionRegistry } from '@/debug/DebugSessionRegistry.js';
 import { DebugService } from '@/debug/debug.service.js';
@@ -13,9 +14,16 @@ type TMockRepository = Pick<
   'loadLatestSnapshot' | 'loadSnapshot' | 'create'
 >;
 
+interface IGameManagerMock
+  extends Pick<GameManager, 'registerGame' | 'getGame' | 'getProjectedState'> {
+  registerGame: ReturnType<typeof vi.fn>;
+  getGame: ReturnType<typeof vi.fn>;
+  getProjectedState: ReturnType<typeof vi.fn>;
+}
+
 function createService(repo: TMockRepository): {
   service: DebugService;
-  gameManager: Pick<GameManager, 'registerGame'>;
+  gameManager: IGameManagerMock;
   registry: Pick<DebugSessionRegistry, 'register'>;
 } {
   const jwtService = {
@@ -23,7 +31,9 @@ function createService(repo: TMockRepository): {
   };
   const gameManager = {
     registerGame: vi.fn(),
-  };
+    getGame: vi.fn(),
+    getProjectedState: vi.fn(),
+  } as IGameManagerMock;
   const registry = {
     register: vi.fn(),
   };
@@ -123,5 +133,27 @@ describe('DebugService snapshot replay', () => {
       code: EErrorCode.FORBIDDEN,
     });
     expect(repo.loadLatestSnapshot).not.toHaveBeenCalled();
+  });
+
+  it('rotates the solar system through the runtime next-disc order', async () => {
+    const repo: TMockRepository = {
+      loadLatestSnapshot: vi.fn(),
+      loadSnapshot: vi.fn(),
+      create: vi.fn(),
+    } as TMockRepository;
+    const { service, gameManager } = createService(repo);
+    const state = { gameId: 'game-1' } as IPublicGameState;
+    const solarSystem = { rotateNextDisc: vi.fn().mockReturnValue(1) };
+    gameManager.getGame.mockResolvedValue({ solarSystem });
+    gameManager.getProjectedState.mockReturnValue(state);
+
+    const result = await service.solarRotateNext('game-1', 'viewer-1');
+
+    expect(solarSystem.rotateNextDisc).toHaveBeenCalledTimes(1);
+    expect(gameManager.getProjectedState).toHaveBeenCalledWith(
+      'game-1',
+      'viewer-1',
+    );
+    expect(result).toBe(state);
   });
 });

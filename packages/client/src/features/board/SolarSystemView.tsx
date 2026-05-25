@@ -36,30 +36,16 @@ import { EPlayerInputType, ETrace } from '@/types/re-exports';
 import { ProbeToken } from './ProbeToken';
 import { SectorGrid } from './SectorGrid';
 import { SectorSignalList } from './SectorSignalList';
-import { WheelLayer } from './WheelLayer';
+import {
+  getWheelSlotLabelBoardPositionPercent,
+  WheelLayer,
+} from './WheelLayer';
 
-const WHEEL_RENDER_SIZE_PERCENT = [34, 48, 62, 100] as const;
-const WHEEL_IMAGE_SIZE_PX = [397, 548, 702, 1125] as const;
 const SOLAR_BOARD_BASE_SIZE_PX = 760;
 const SOLAR_BOARD_PANEL_HORIZONTAL_PADDING_PX = 24;
 const SOLAR_BOARD_ZOOM_STEP = 0.06;
 const SOLAR_BOARD_MIN_ZOOM = 0.72;
 const SOLAR_BOARD_MAX_ZOOM = 1.08;
-const DEFAULT_PROBE_INSET_PX_BY_RING: Readonly<Record<1 | 2 | 3 | 4, number>> =
-  {
-    1: 89,
-    2: 95,
-    3: 91,
-    4: 229,
-  };
-const IMAGE_ALIGNMENT_OFFSET_CW_BY_RING: Readonly<
-  Record<1 | 2 | 3 | 4, number>
-> = {
-  1: 0,
-  2: 0,
-  3: 0,
-  4: 0,
-};
 const PROBE_TRANSITION_MS = 900;
 const SOLAR_ALIEN_TOKEN_COLOR: Record<
   ETrace.PINK | ETrace.YELLOW | ETrace.BLUE,
@@ -78,7 +64,6 @@ const TEXT_MODE_LABEL_Z_INDEX_BY_WHEEL: Readonly<
   4: 72,
 };
 const ORBITAL_DYNAMICS_MOVE_INPUT_TITLE = 'Choose an Orbital Dynamics move';
-export type TProbeInsetPxByRing = Readonly<Record<1 | 2 | 3 | 4, number>>;
 
 export function isOrbitalDynamicsMoveInputModel(
   model: IPlayerInputModel | null,
@@ -101,9 +86,9 @@ interface ISolarSystemViewProps {
   onMoveProbe: (path: string[], target?: TMovementTarget) => void;
   onRespondInput: (response: IInputResponse) => void;
   showSpaceConfigDebug?: boolean;
-  probeInsetPxByRing?: TProbeInsetPxByRing;
   allowMoveAnyProbe?: boolean;
   oumuamuaTile?: IPublicOumuamuaTile | null;
+  textModeOverride?: boolean;
 }
 
 interface ISpacePoint {
@@ -229,34 +214,36 @@ function formatZoomPercent(zoom: number): string {
   return `${Math.round(zoom * 100)}%`;
 }
 
-function spacePosition(
+function getWheelSlotRadiusPercent(ringIndex: 1 | 2 | 3 | 4): number {
+  const point = getWheelSlotLabelBoardPositionPercent(ringIndex, 0);
+  return Math.hypot(point.xPercent - 50, 50 - point.yPercent);
+}
+
+function boardPointAtAngle(
   ringIndex: 1 | 2 | 3 | 4,
-  sectorIndex: number,
-  // Each ring-N sector resolves to a single playable point at the
-  // sector's geometric centre — multi-cell expansion is purely visual
-  // scaffolding for the wheel art. Cells with `cellInSector > 0`
-  // aren't rendered as independent hotspots (filtered upstream).
-  _cellInSector: number,
-  _cellsPerSector: number,
-  spaceRadiiPercent: readonly number[],
-  discAngle: number,
+  rotationDeg: number,
 ): { xPercent: number; yPercent: number; rotationDeg: number } {
-  const normalizedSectorIndex =
-    ((sectorIndex % SECTOR_COUNT) + SECTOR_COUNT) % SECTOR_COUNT;
-  const sectorCenterAngleDeg = (normalizedSectorIndex + 0.5) * 45;
-  const imageOffset = IMAGE_ALIGNMENT_OFFSET_CW_BY_RING[ringIndex] ?? 0;
-  // WheelLayer renders disc angle N as rotate(-N * 45deg), so hotspots
-  // must apply the same visual rotation direction as the wheel image.
-  const rotationDeg = normalizeAngleDeg(
-    sectorCenterAngleDeg + imageOffset * 45 - discAngle * 45,
-  );
-  const radius = spaceRadiiPercent[ringIndex - 1] ?? spaceRadiiPercent[0] ?? 0;
+  const radius = getWheelSlotRadiusPercent(ringIndex);
   const angle = (rotationDeg * Math.PI) / 180;
   return {
     xPercent: 50 + Math.sin(angle) * radius,
     yPercent: 50 - Math.cos(angle) * radius,
     rotationDeg,
   };
+}
+
+function spacePosition(
+  ringIndex: 1 | 2 | 3 | 4,
+  sectorIndex: number,
+  // Each ring-N sector resolves to the same slot origin used by the
+  // debug wheel labels. Cells with `cellInSector > 0` are visual
+  // scaffolding and are filtered before hotspot rendering.
+  _cellInSector: number,
+  _cellsPerSector: number,
+): { xPercent: number; yPercent: number; rotationDeg: number } {
+  const normalizedSectorIndex =
+    ((sectorIndex % SECTOR_COUNT) + SECTOR_COUNT) % SECTOR_COUNT;
+  return boardPointAtAngle(ringIndex, (normalizedSectorIndex + 0.5) * 45);
 }
 
 /**
@@ -269,8 +256,6 @@ function cellAnchoredSpacePosition(
   sectorIndex: number,
   cellInSector: number,
   cellsPerSector: number,
-  spaceRadiiPercent: readonly number[],
-  discAngle: number,
 ): { xPercent: number; yPercent: number; rotationDeg: number } {
   const safeCellsPerSector = Math.max(1, cellsPerSector);
   const normalizedSectorIndex =
@@ -279,22 +264,13 @@ function cellAnchoredSpacePosition(
     ((cellInSector % safeCellsPerSector) + safeCellsPerSector) %
     safeCellsPerSector;
   const cellAngleDeg = 45 / safeCellsPerSector;
-  const imageOffset = IMAGE_ALIGNMENT_OFFSET_CW_BY_RING[ringIndex] ?? 0;
   const rotationDeg = normalizeAngleDeg(
     (normalizedSectorIndex * safeCellsPerSector +
       normalizedCellInSector +
       0.5) *
-      cellAngleDeg +
-      imageOffset * 45 -
-      discAngle * 45,
+      cellAngleDeg,
   );
-  const radius = spaceRadiiPercent[ringIndex - 1] ?? spaceRadiiPercent[0] ?? 0;
-  const angle = (rotationDeg * Math.PI) / 180;
-  return {
-    xPercent: 50 + Math.sin(angle) * radius,
-    yPercent: 50 - Math.cos(angle) * radius,
-    rotationDeg,
-  };
+  return boardPointAtAngle(ringIndex, rotationDeg);
 }
 
 function getDiscAngle(
@@ -411,15 +387,16 @@ export function SolarSystemView({
   onMoveProbe,
   onRespondInput,
   showSpaceConfigDebug = false,
-  probeInsetPxByRing,
   allowMoveAnyProbe = false,
   oumuamuaTile = null,
+  textModeOverride,
 }: ISolarSystemViewProps): React.JSX.Element {
   const [selectedMoveTarget, setSelectedMoveTarget] = useState<{
     spaceId: string;
     target?: TMovementTarget;
   } | null>(null);
-  const textMode = useTextMode();
+  const globalTextMode = useTextMode();
+  const textMode = textModeOverride ?? globalTextMode;
   const solarBoardZoom = useGameViewStore((state) => state.zoom);
   const setSolarBoardZoom = useGameViewStore((state) => state.setZoom);
   const normalizedSolarBoardZoom = clampSolarBoardZoom(solarBoardZoom);
@@ -445,19 +422,6 @@ export function SolarSystemView({
           backgroundPosition: 'center',
         }),
   };
-
-  const spaceRadiiPercent = useMemo(() => {
-    const insets = probeInsetPxByRing ?? DEFAULT_PROBE_INSET_PX_BY_RING;
-    return WHEEL_RENDER_SIZE_PERCENT.map((wheelSizePercent, ringOffset) => {
-      const ring = (ringOffset + 1) as 1 | 2 | 3 | 4;
-      const imageSizePx =
-        WHEEL_IMAGE_SIZE_PX[ringOffset] ?? WHEEL_IMAGE_SIZE_PX[0];
-      const insetPx = insets[ring] ?? DEFAULT_PROBE_INSET_PX_BY_RING[ring];
-      const outerRadiusPercent = wheelSizePercent / 2;
-      const insetPercent = wheelSizePercent * (insetPx / imageSizePx);
-      return Math.max(0, outerRadiusPercent - insetPercent);
-    }) as [number, number, number, number];
-  }, [probeInsetPxByRing]);
 
   const spacePoints = useMemo<ISpacePoint[]>(() => {
     const states = solarSystem.spaceStates;
@@ -487,7 +451,7 @@ export function SolarSystemView({
       // Oumuamua's tile keeps the cell-anchored angle so its
       // printed planet image (and the 3-data dot pill) stay at their
       // calibrated positions relative to the wheel art. The rest of
-      // the board uses the new sector-centre anchor.
+      // the board uses the shared debug-wheel slot origin.
       const isOumuamuaTile =
         oumuamuaTile?.spaceId !== undefined && spaceId === oumuamuaTile.spaceId;
       const pos = isOumuamuaTile
@@ -496,17 +460,8 @@ export function SolarSystemView({
             sectorIndex,
             cellInSector,
             cellsPerSector,
-            spaceRadiiPercent,
-            0,
           )
-        : spacePosition(
-            ringIndex,
-            sectorIndex,
-            cellInSector,
-            cellsPerSector,
-            spaceRadiiPercent,
-            0,
-          );
+        : spacePosition(ringIndex, sectorIndex, cellInSector, cellsPerSector);
       return [
         {
           spaceId,
@@ -519,12 +474,7 @@ export function SolarSystemView({
         },
       ];
     });
-  }, [
-    oumuamuaTile?.spaceId,
-    solarSystem.spaces,
-    solarSystem.spaceStates,
-    spaceRadiiPercent,
-  ]);
+  }, [oumuamuaTile?.spaceId, solarSystem.spaces, solarSystem.spaceStates]);
 
   const debugLabelsBySpaceId = useMemo(() => {
     if (!showSpaceConfigDebug) {
@@ -769,14 +719,7 @@ export function SolarSystemView({
 
     const items: ISolarAlienTokenRenderItem[] = [];
     for (const [sectorIndex, tokens] of groupedBySector.entries()) {
-      const position = spacePosition(
-        4,
-        sectorIndex,
-        0,
-        1,
-        spaceRadiiPercent,
-        0,
-      );
+      const position = spacePosition(4, sectorIndex, 0, 1);
       for (let index = 0; index < tokens.length; index += 1) {
         const token = tokens[index];
         const offset = tokenStackOffset(index, tokens.length);
@@ -792,7 +735,7 @@ export function SolarSystemView({
     }
 
     return items;
-  }, [solarSystem.alienTokens, spaceRadiiPercent]);
+  }, [solarSystem.alienTokens]);
 
   const oumuamuaSectorData = useMemo(() => {
     if (!oumuamuaTile) {
@@ -1096,6 +1039,7 @@ export function SolarSystemView({
           playerColors={playerColors}
           pendingInput={pendingInput}
           boardScale={normalizedSolarBoardZoom}
+          textModeOverride={textMode}
           onSelectSector={(sectorColor) => {
             if (pendingInput?.type !== EPlayerInputType.SECTOR) {
               return;

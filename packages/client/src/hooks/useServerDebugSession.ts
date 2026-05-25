@@ -24,6 +24,7 @@ export interface IServerDebugSession {
   createSession: () => Promise<IDebugServerSessionResponse | null>;
   refresh: () => Promise<void>;
   solarRotate: (discIndex: number) => Promise<void>;
+  solarRotateNext: () => Promise<void>;
   placeProbeOn: (spaceId: string) => Promise<void>;
   moveProbeTo: (probeId: string, toSpaceId: string) => Promise<void>;
   placeTraceOf: (traceColor: ETrace) => Promise<void>;
@@ -139,6 +140,19 @@ export function useServerDebugSession(
     },
     [session, applyState],
   );
+
+  const solarRotateNext = useCallback(async () => {
+    if (!session) return;
+    try {
+      const next = await debugApi.solarRotateNext(
+        session.gameId,
+        session.user.id,
+      );
+      applyState(next);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Rotate failed');
+    }
+  }, [session, applyState]);
 
   const placeProbeOn = useCallback(
     async (spaceId: string) => {
@@ -288,6 +302,7 @@ export function useServerDebugSession(
     createSession,
     refresh,
     solarRotate,
+    solarRotateNext,
     placeProbeOn,
     moveProbeTo,
     placeTraceOf,

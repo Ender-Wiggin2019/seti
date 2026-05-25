@@ -14,6 +14,7 @@ import { GameDebugPage } from '@/pages/game/GameDebugPage';
 import { GamePage, SpectatePage } from '@/pages/game/GamePage';
 import { ServerDebugPage } from '@/pages/game/ServerDebugPage';
 import { SolarDebugPage } from '@/pages/game/SolarDebugPage';
+import { SolarSystemCompareDebugPage } from '@/pages/game/SolarSystemCompareDebugPage';
 import { HomePage } from '@/pages/home/HomePage';
 import { LobbyPage } from '@/pages/lobby/LobbyPage';
 import { RoomPage } from '@/pages/lobby/RoomPage';
@@ -134,6 +135,17 @@ const solarDebugRoute = createRoute({
     ),
 });
 
+const solarSystemCompareDebugRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/debug/solar-system',
+  component: () =>
+    CLIENT_ENV.VITE_ENABLE_DEBUG_ROUTES ? (
+      <SolarSystemCompareDebugPage />
+    ) : (
+      <Navigate to='/' replace />
+    ),
+});
+
 const serverDebugRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/debug/server',
@@ -159,6 +171,7 @@ const routeTree = rootRoute.addChildren([
   debugAlienRoute,
   debugReplayRoute,
   solarDebugRoute,
+  solarSystemCompareDebugRoute,
   serverDebugRoute,
 ]);
 

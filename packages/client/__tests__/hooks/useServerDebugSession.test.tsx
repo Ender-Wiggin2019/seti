@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useServerDebugSession } from '@/hooks/useServerDebugSession';
 import { EPlayerInputType } from '@/types/re-exports';
@@ -7,6 +7,7 @@ const debugApiMock = vi.hoisted(() => ({
   createServerSession: vi.fn(),
   getState: vi.fn(),
   getPendingInput: vi.fn(),
+  solarRotateNext: vi.fn(),
 }));
 
 vi.mock('@/api/debugApi', () => ({
@@ -43,6 +44,12 @@ describe('useServerDebugSession', () => {
       min: 1,
       max: 1,
     });
+    debugApiMock.solarRotateNext.mockResolvedValue({
+      gameId: 'game-1',
+      cardRow: [],
+      endOfRoundStacks: [],
+      players: [],
+    });
   });
 
   it('normalizes id-only cards from the debug REST state and pending input', async () => {
@@ -67,5 +74,17 @@ describe('useServerDebugSession', () => {
         },
       ],
     });
+  });
+
+  it('rotates the server-selected next solar disc', async () => {
+    const { result } = renderHook(() => useServerDebugSession(true));
+
+    await waitFor(() => expect(result.current?.gameState).not.toBeNull());
+
+    await act(async () => {
+      await result.current?.solarRotateNext();
+    });
+
+    expect(debugApiMock.solarRotateNext).toHaveBeenCalledWith('game-1', 'p1');
   });
 });

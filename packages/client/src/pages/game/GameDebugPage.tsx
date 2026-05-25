@@ -28,7 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { TProbeInsetPxByRing } from '@/features/board/SolarSystemView';
 import { useServerDebugSession } from '@/hooks/useServerDebugSession';
 import {
   GameContextValueProvider,
@@ -937,14 +936,6 @@ export function GameDebugPage(): React.JSX.Element {
   const [probeTransitionDelayById, setProbeTransitionDelayById] = useState<
     Record<string, number>
   >({});
-  const [probeInsetPxByRing, setProbeInsetPxByRing] =
-    useState<TProbeInsetPxByRing>({
-      1: GAME_DEBUG_DEFAULTS.probeInsetPxByRing[1],
-      2: GAME_DEBUG_DEFAULTS.probeInsetPxByRing[2],
-      3: GAME_DEBUG_DEFAULTS.probeInsetPxByRing[3],
-      4: GAME_DEBUG_DEFAULTS.probeInsetPxByRing[4],
-    });
-
   const [sigRot0, setSigRot0] = useState<number>(
     GAME_DEBUG_DEFAULTS.sectorSignal.sigRot0,
   );
@@ -1763,34 +1754,6 @@ export function GameDebugPage(): React.JSX.Element {
               </span>
             </label>
           ))}
-
-          {([1, 2, 3, 4] as const).map((ring) => (
-            <label
-              key={`probe-inset-ring-${ring}`}
-              className='flex items-center gap-1 font-mono text-[10px] text-text-300'
-              title={`Probe inset for wheel ${ring}`}
-            >
-              R{ring}
-              <input
-                type='range'
-                min={GAME_DEBUG_RANGES.probeInsetPx.min}
-                max={GAME_DEBUG_RANGES.probeInsetPx.max}
-                step={GAME_DEBUG_RANGES.probeInsetPx.step}
-                value={probeInsetPxByRing[ring]}
-                onChange={(event) => {
-                  const nextValue = Number(event.target.value);
-                  setProbeInsetPxByRing((prev) => ({
-                    ...prev,
-                    [ring]: nextValue,
-                  }));
-                }}
-                className='w-16 accent-accent-500'
-              />
-              <span className='w-6 text-right text-text-500'>
-                {probeInsetPxByRing[ring]}
-              </span>
-            </label>
-          ))}
         </div>
 
         <div className='flex w-full flex-wrap items-center gap-2 border-t border-surface-700 pt-2'>
@@ -1984,7 +1947,7 @@ export function GameDebugPage(): React.JSX.Element {
         </div>
       </div>
       <div style={sectorDebugVars}>
-        <GameLayout probeInsetPxByRing={probeInsetPxByRing} allowMoveAnyProbe />
+        <GameLayout allowMoveAnyProbe />
       </div>
     </GameContextValueProvider>
   );

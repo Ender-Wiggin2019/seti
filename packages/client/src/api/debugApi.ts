@@ -6,13 +6,13 @@ import type {
   IDebugSnapshotSessionResponse,
 } from '@/api/types';
 import type {
+  ETrace,
   IFreeActionRequest,
   IInputResponse,
   IMainActionRequest,
   IPlayerInputModel,
   IPublicGameState,
 } from '@/types/re-exports';
-import type { ETrace } from '@/types/re-exports';
 
 export const debugApi = {
   getReplayPresets: async (): Promise<IDebugReplayPresetDefinition[]> => {
@@ -134,6 +134,17 @@ export const debugApi = {
     const response = await httpClient.post<IPublicGameState>(
       `/debug/server/game/${gameId}/solar-rotate`,
       { discIndex, viewerId },
+    );
+    return response.data;
+  },
+
+  solarRotateNext: async (
+    gameId: string,
+    viewerId: string,
+  ): Promise<IPublicGameState> => {
+    const response = await httpClient.post<IPublicGameState>(
+      `/debug/server/game/${gameId}/solar-rotate-next`,
+      { viewerId },
     );
     return response.data;
   },

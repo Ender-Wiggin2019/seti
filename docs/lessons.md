@@ -41,6 +41,7 @@
 - 接入 prelude card 时不要重写正常图片版组件；image mode 继续用维护中的 `@seti/cards/PreludeCard`，只在 client `CardRender` 的 text mode 分支补对应文本渲染。
 - Text mode card 的价格应是左上角紧凑 readout，例如 `3 C` / `3 E`；数字更大更粗，资源字母更小，不要再用右上角 `#id + full priceType` 堆叠。
 - Text mode desc 不能直接输出翻译字符串；应先用通用 desc parser 安全拆分 `<br>` 和 `{token}`，换行渲染成真实 DOM，token 渲染成可读文本。
+- 给复合 board 增加局部 image/text mode override 时，不能只改最外层组件；所有读取全局 `useTextMode()` 的子渲染器都要接收同一个 override。回归测试要把全局 mode 设成相反值，验证局部入参不会被全局状态污染。
 
 ## Solo / Alien 规则覆盖
 

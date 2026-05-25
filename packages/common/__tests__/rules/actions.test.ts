@@ -17,6 +17,7 @@ import { EMainAction, EPhase, EPlanet } from '@/types/protocol/enums';
 import type {
   IPublicGameState,
   IPublicPlayerState,
+  IPublicSolarSystemState,
   IPublicTechBoard,
 } from '@/types/protocol/gameState';
 
@@ -148,6 +149,35 @@ function createFullComputer(): IPublicPlayerState['computer'] {
   };
 }
 
+function createMercurySolarSystem(
+  probes: IPublicSolarSystemState['probes'] = [
+    { playerId: 'p1', spaceId: 'planet-space-1' },
+  ],
+): IPublicSolarSystemState {
+  return {
+    spaces: ['planet-space-1'],
+    adjacency: {},
+    probes,
+    discs: [],
+    alienTokens: [],
+    spaceStates: {
+      'planet-space-1': {
+        spaceId: 'planet-space-1',
+        ringIndex: 1,
+        indexInRing: 0,
+        hasPublicityIcon: false,
+        elementTypes: ['PLANET'],
+        elements: [{ type: 'PLANET', planet: EPlanet.MERCURY }],
+        sectorIndex: 0,
+        cellInSector: 0,
+      },
+    },
+    planetSpaceIds: {
+      [EPlanet.MERCURY]: 'planet-space-1',
+    },
+  };
+}
+
 function createGameState(
   overrides?: Partial<IPublicGameState>,
 ): IPublicGameState {
@@ -158,16 +188,7 @@ function createGameState(
     currentPlayerId: 'p1',
     startPlayerId: 'p1',
     players: [],
-    solarSystem: {
-      spaces: ['planet-space-1'],
-      adjacency: {},
-      probes: [{ playerId: 'p1', spaceId: 'planet-space-1' }],
-      discs: [],
-      alienTokens: [],
-      planetSpaceIds: {
-        [EPlanet.MERCURY]: 'planet-space-1',
-      },
-    },
+    solarSystem: createMercurySolarSystem(),
     sectors: [],
     planetaryBoard: {
       planets: {
@@ -225,18 +246,9 @@ describe('action rules', () => {
     it('returns true when current planet position is available via solarSystem indexes only', () => {
       const player = createPlayer();
       const gameState = createGameState({
-        solarSystem: {
-          spaces: ['planet-space-1'],
-          adjacency: {},
-          probes: [
-            { playerId: 'p1', spaceId: 'planet-space-1', probeId: 'pr-1' },
-          ],
-          discs: [],
-          alienTokens: [],
-          planetSpaceIds: {
-            [EPlanet.MERCURY]: 'planet-space-1',
-          },
-        },
+        solarSystem: createMercurySolarSystem([
+          { playerId: 'p1', spaceId: 'planet-space-1', probeId: 'pr-1' },
+        ]),
         planetaryBoard: {
           planets: {
             [EPlanet.MERCURY]: {
@@ -286,18 +298,9 @@ describe('action rules', () => {
     it('returns true when landing target is derived from solarSystem indexes only', () => {
       const player = createPlayer();
       const gameState = createGameState({
-        solarSystem: {
-          spaces: ['planet-space-1'],
-          adjacency: {},
-          probes: [
-            { playerId: 'p1', spaceId: 'planet-space-1', probeId: 'pr-1' },
-          ],
-          discs: [],
-          alienTokens: [],
-          planetSpaceIds: {
-            [EPlanet.MERCURY]: 'planet-space-1',
-          },
-        },
+        solarSystem: createMercurySolarSystem([
+          { playerId: 'p1', spaceId: 'planet-space-1', probeId: 'pr-1' },
+        ]),
         planetaryBoard: {
           planets: {
             [EPlanet.MERCURY]: {

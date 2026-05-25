@@ -178,3 +178,45 @@
 - Client regression: a rotated Earth state now proves the Earth label, launched probe token, Earth-space hotspot, and current Earth sector panel share the same polar angle.
 - Server regressions prove launch resolves to current Earth space after rotation, and SCAN MARK_EARTH marks the sector indexed by current Earth.
 - Verification passed: `pnpm --filter @seti/client test -- SolarSystemView.test.tsx GameLayout.test.tsx`; `pnpm --filter @seti/server test -- LaunchProbe.test.ts Scan.test.ts OrganizationTechProbePowers.test.ts`; `pnpm --filter @seti/client typecheck`; `pnpm --filter @seti/server typecheck`; touched-file `biome check` exited 0 with two pre-existing `LaunchProbe.test.ts` non-null assertion warnings; `git diff --check`.
+
+## Solar system image/text geometry consistency
+
+- [x] Root cause and scope -> Verify: compare server `spaceStates`, `/debug/solar` wheel label geometry, and image-mode hotspot/probe positions to identify every drift source.
+- [x] Regression tests -> Verify: image-mode solar hotspots/probes use the same board-space origin as debug wheel labels for representative inner/outer rings, and text mode stays state-backed.
+- [x] Implementation -> Verify: remove the separate probe-inset geometry path and route solar board positions through one visual slot geometry while keeping wheel rotation animation.
+- [x] Verification -> Verify: targeted client tests, relevant typecheck/Biome checks, and `git diff --check` pass.
+
+### Assumptions
+
+- Server `spaceStates` remain the semantic source of truth for which element occupies a space.
+- `/debug/solar` is the trusted image-to-enum calibration surface; normal image mode must share that same visual geometry.
+- The old per-ring probe inset sliders are debug calibration scaffolding, not a required public contract.
+
+### Review
+
+- Root cause: image/text semantics were state-backed, but image-mode hotspots, probes, alien tokens, and text labels used a separate probe-inset radius instead of the same slot origin used by `/debug/solar` wheel labels. That made correct server values appear visually shifted over the wrong printed feature.
+- `SolarSystemView` now derives normal solar positions from `WheelLayer`'s shared slot geometry, while wheel PNG rotation animation still uses server disc angles. The Oumuamua tile keeps its dedicated cell-anchored calibration path.
+- Removed the debug-only per-ring probe inset prop/sliders/defaults so there is one normal solar board geometry path.
+- Added client regressions that failed on the old geometry, plus a server projection invariant proving real `SolarSystem.init()` planet indexes and `spaceStates` stay aligned across rotation angles.
+- Verification passed: `pnpm --filter @seti/client test -- SolarSystemView.test.tsx`; `pnpm --filter @seti/server test -- stateProjection.test.ts`; `pnpm --filter @ender-seti/common test -- actions.test.ts freeActions.test.ts planet.test.ts`; `pnpm --filter @seti/client typecheck`; `pnpm --filter @ender-seti/common typecheck`; `pnpm --filter @seti/server typecheck`; touched-file `biome check`; browser smoke on `/debug/game` in local source mode; `git diff --check`.
+
+## Debug solar-system compare page
+
+- [x] Scope and assumptions -> Verify: confirm the page uses one server-projected solar-system state for both views, with no duplicated client init/rotate algorithm.
+- [x] Regression tests -> Verify: `/debug/solar-system` renders image mode and text mode side by side from the same state, init creates a server session, and rotate calls the server next-disc rotation path.
+- [x] Implementation -> Verify: add a local mode override to `SolarSystemView`, route the new debug page, and expose a server debug rotate-next API backed by `SolarSystem.rotateNextDisc()`.
+- [x] Verification -> Verify: targeted client/server tests, relevant typecheck/Biome checks, and browser smoke on `/debug/solar-system` pass.
+
+### Assumptions
+
+- This page is debug-only and may require `VITE_ENABLE_DEBUG_ROUTES=true` plus the debug server API, matching existing `/debug/game` server mode.
+- "Same as server init" means using the existing server debug session creation path, which runs `GameSetup.initialize()` and `SolarSystem.init(game.random)`.
+- "Same as server rotate" means using `SolarSystem.rotateNextDisc()` so `nextRotateRing` advances from server state instead of being tracked only in the client.
+
+### Review
+
+- Added `/debug/solar-system`, rendering the same server-projected `solarSystem`, `sectors`, and `solarSystemSetup` through two `SolarSystemView` instances: left forced to image mode, right forced to text mode.
+- Added `SolarSystemView.textModeOverride` so debug comparison can be local to each view without mutating the global debug-store text mode.
+- Follow-up correction: `SectorView` also read the global text-mode store, so image-side sector tiles could still render as text panels when global text mode was on. `SolarSystemView` now passes the local mode override through `SectorGrid` to `SectorView`, with a regression that sets global text mode to the opposite value.
+- Added `solar-rotate-next` debug API/controller/service path backed by `SolarSystem.rotateNextDisc()`, so the compare page does not duplicate or client-track server rotation order.
+- Verification passed: `pnpm --filter @seti/client test -- SolarSystemCompareDebugPage.test.tsx useServerDebugSession.test.tsx SolarSystemView.test.tsx`; `pnpm --filter @seti/server test -- debug.controller.test.ts debug.service.test.ts`; `pnpm --filter @seti/client typecheck`; `pnpm --filter @seti/server typecheck`; touched-file `biome check`; Playwright smoke on `/debug/solar-system`; `git diff --check`.

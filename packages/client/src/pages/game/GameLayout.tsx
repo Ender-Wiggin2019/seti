@@ -28,7 +28,6 @@ import { PlanetaryBoardView } from '@/features/board/PlanetaryBoardView';
 import {
   isOrbitalDynamicsMoveInputModel,
   SolarSystemView,
-  type TProbeInsetPxByRing,
 } from '@/features/board/SolarSystemView';
 import { TechBoardView } from '@/features/board/TechBoardView';
 import { CardDetail } from '@/features/cards/CardDetail';
@@ -315,11 +314,9 @@ function isCapsuleAtPlanet(
  */
 export function GameLayout({
   showSolarSystemSpaceConfig = false,
-  probeInsetPxByRing,
   allowMoveAnyProbe = false,
 }: {
   showSolarSystemSpaceConfig?: boolean;
-  probeInsetPxByRing?: TProbeInsetPxByRing;
   allowMoveAnyProbe?: boolean;
 }): React.JSX.Element {
   const { t } = useTranslation('common');
@@ -578,7 +575,6 @@ export function GameLayout({
             onTabChange={setActiveTab}
             onInspectCard={handleInspectCard}
             showSolarSystemSpaceConfig={showSolarSystemSpaceConfig}
-            probeInsetPxByRing={probeInsetPxByRing}
             allowMoveAnyProbe={allowMoveAnyProbe}
             movementModeActive={movementModeActive}
             armedCardRowBuy={armedCardRowBuy}
@@ -1367,7 +1363,6 @@ function BoardTabs({
   onTabChange,
   onInspectCard,
   showSolarSystemSpaceConfig,
-  probeInsetPxByRing,
   allowMoveAnyProbe,
   movementModeActive,
   armedCardRowBuy,
@@ -1379,7 +1374,6 @@ function BoardTabs({
   onTabChange: (tab: TBoardTab) => void;
   onInspectCard: (card: IBaseCard) => void;
   showSolarSystemSpaceConfig: boolean;
-  probeInsetPxByRing?: TProbeInsetPxByRing;
   allowMoveAnyProbe: boolean;
   movementModeActive: boolean;
   armedCardRowBuy: boolean;
@@ -1482,7 +1476,6 @@ function BoardTabs({
                 }}
                 onRespondInput={sendInput}
                 showSpaceConfigDebug={showSolarSystemSpaceConfig}
-                probeInsetPxByRing={probeInsetPxByRing}
                 allowMoveAnyProbe={allowMoveAnyProbe}
                 oumuamuaTile={oumuamuaTile}
               />

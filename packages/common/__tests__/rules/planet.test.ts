@@ -93,6 +93,18 @@ function createGameState(playerId: string, spaceId: string): IPublicGameState {
       probes: [{ playerId, spaceId }],
       discs: [],
       alienTokens: [],
+      spaceStates: {
+        [spaceId]: {
+          spaceId,
+          ringIndex: 1,
+          indexInRing: 0,
+          hasPublicityIcon: false,
+          elementTypes: ['EMPTY'],
+          elements: [{ type: 'EMPTY' }],
+          sectorIndex: 0,
+          cellInSector: 0,
+        },
+      },
     },
     sectors: [],
     planetaryBoard: { planets: {} },

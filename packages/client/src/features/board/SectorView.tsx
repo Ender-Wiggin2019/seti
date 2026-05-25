@@ -13,6 +13,7 @@ interface ISectorViewProps {
   clickable: boolean;
   highlighted: boolean;
   boardScale?: number;
+  textModeOverride?: boolean;
   onSelectSector: (sectorColor: IPublicSector['color']) => void;
   onSelectSectorId?: (sectorId: string) => void;
 }
@@ -51,10 +52,12 @@ export function SectorView({
   clickable,
   highlighted,
   boardScale = 1,
+  textModeOverride,
   onSelectSector,
   onSelectSectorId,
 }: ISectorViewProps): React.JSX.Element {
-  const textMode = useTextMode();
+  const globalTextMode = useTextMode();
+  const textMode = textModeOverride ?? globalTextMode;
   const positionStyle = getPositionStyle(pair.placement.position);
 
   const starNames = pair.placement.sectors.map((s) => s.starName).join(' / ');

@@ -8,6 +8,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { ComponentProps, ComponentType } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SolarSystemView } from '@/features/board/SolarSystemView';
+import { getWheelSlotLabelBoardPositionPercent } from '@/features/board/WheelLayer';
 import { useDebugStore } from '@/stores/debugStore';
 import { useGameViewStore } from '@/stores/gameViewStore';
 import type {
@@ -231,9 +232,9 @@ function renderSolarSystemView(
       onMoveProbe={props.onMoveProbe ?? vi.fn()}
       onRespondInput={props.onRespondInput ?? vi.fn()}
       showSpaceConfigDebug={props.showSpaceConfigDebug}
-      probeInsetPxByRing={props.probeInsetPxByRing}
       allowMoveAnyProbe={props.allowMoveAnyProbe}
       oumuamuaTile={props.oumuamuaTile}
+      textModeOverride={props.textModeOverride}
     />,
   );
 }
@@ -315,6 +316,31 @@ describe('SolarSystemView', () => {
 
     const allSpaces = screen.getAllByRole('button', { name: /Space space-/ });
     expect(allSpaces).toHaveLength(32);
+  });
+
+  it('allows a local text-mode override without changing the global debug store', () => {
+    renderSolarSystemView({
+      solarSystem: createRotatedRingOneMock(),
+      textModeOverride: true,
+    });
+
+    expect(
+      screen.getByTestId('solar-text-cell-state:ring-1-cell-3'),
+    ).toHaveTextContent('earth');
+    expect(useDebugStore.getState().textMode).toBe(false);
+  });
+
+  it('keeps sector tiles in image mode when the solar view overrides global text mode off', () => {
+    useDebugStore.setState({ textMode: true });
+
+    const { container } = renderSolarSystemView({
+      textModeOverride: false,
+    });
+
+    expect(
+      container.querySelector('img[src="/assets/seti/sectors/sector1.png"]'),
+    ).not.toBeNull();
+    expect(screen.queryByText('procyon')).not.toBeInTheDocument();
   });
 
   it('defaults the solar board smaller and exposes zoom controls', () => {
@@ -872,9 +898,16 @@ describe('SolarSystemView', () => {
       'rotate(-225deg)',
     );
 
+    const expected = getWheelSlotLabelBoardPositionPercent(1, 3);
     const earthHotspot = screen.getByTestId('solar-space-ring-1-cell-3');
-    expect(parseFloat(earthHotspot.style.left)).toBeCloseTo(53.589, 3);
-    expect(parseFloat(earthHotspot.style.top)).toBeCloseTo(58.664, 3);
+    expect(parseFloat(earthHotspot.style.left)).toBeCloseTo(
+      expected.xPercent,
+      3,
+    );
+    expect(parseFloat(earthHotspot.style.top)).toBeCloseTo(
+      expected.yPercent,
+      3,
+    );
   });
 
   it('aligns text-mode Earth label, launched probe, and Earth sector from state-backed positions', () => {
@@ -918,7 +951,7 @@ describe('SolarSystemView', () => {
     );
   });
 
-  it('projects expanded server ring cells at the sector centre on outer rings', () => {
+  it('projects expanded server ring cells at the debug wheel slot origin on outer rings', () => {
     render(
       <SolarSystemView
         solarSystem={createExpandedOuterRingMock()}
@@ -933,12 +966,18 @@ describe('SolarSystemView', () => {
       />,
     );
 
-    // Each ring-N sector resolves to a single playable point at the
-    // sector centre. ring-4-cell-8 = sector 2 cell 0, so the centre
-    // angle is (2 + 0.5) × 45 = 112.5°.
+    // Each ring-N sector resolves to the same visual slot origin as
+    // `/debug/solar` wheel labels. ring-4-cell-8 = sector 2 cell 0.
+    const expected = getWheelSlotLabelBoardPositionPercent(4, 2);
     const neptuneHotspot = screen.getByTestId('solar-space-ring-4-cell-8');
-    expect(parseFloat(neptuneHotspot.style.left)).toBeCloseTo(77.388, 3);
-    expect(parseFloat(neptuneHotspot.style.top)).toBeCloseTo(61.344, 3);
+    expect(parseFloat(neptuneHotspot.style.left)).toBeCloseTo(
+      expected.xPercent,
+      3,
+    );
+    expect(parseFloat(neptuneHotspot.style.top)).toBeCloseTo(
+      expected.yPercent,
+      3,
+    );
   });
 
   it('hides intra-sector cells in text mode (only cell-0 of each sector is a hotspot)', () => {
@@ -1061,9 +1100,15 @@ describe('SolarSystemView', () => {
     );
 
     const neptuneHotspot = screen.getByTestId('solar-space-ring-4-cell-12');
-    // ring-4-cell-12 = sector 3 cell 0 → centred at (3+0.5) × 45 = 157.5°.
-    expect(parseFloat(neptuneHotspot.style.left)).toBeCloseTo(61.344, 3);
-    expect(parseFloat(neptuneHotspot.style.top)).toBeCloseTo(77.388, 3);
+    const expected = getWheelSlotLabelBoardPositionPercent(4, 3);
+    expect(parseFloat(neptuneHotspot.style.left)).toBeCloseTo(
+      expected.xPercent,
+      3,
+    );
+    expect(parseFloat(neptuneHotspot.style.top)).toBeCloseTo(
+      expected.yPercent,
+      3,
+    );
   });
 
   it('renders text mode cells from public space states and skips null cells', () => {
@@ -1242,8 +1287,15 @@ describe('SolarSystemView', () => {
     const neptuneLabel = screen.getByText('neptune');
     const neptuneAnchor = neptuneLabel.parentElement;
     expect(neptuneAnchor).not.toBeNull();
-    expect(parseFloat(neptuneAnchor?.style.left ?? '')).toBeCloseTo(61.344, 2);
-    expect(parseFloat(neptuneAnchor?.style.top ?? '')).toBeCloseTo(77.388, 2);
+    const expected = getWheelSlotLabelBoardPositionPercent(4, 3);
+    expect(parseFloat(neptuneAnchor?.style.left ?? '')).toBeCloseTo(
+      expected.xPercent,
+      2,
+    );
+    expect(parseFloat(neptuneAnchor?.style.top ?? '')).toBeCloseTo(
+      expected.yPercent,
+      2,
+    );
     expect(neptuneAnchor?.style.transform).toBe('translate(-50%, -50%)');
     expect(neptuneLabel.style.transform).toContain('rotate(157.5deg)');
     expect(neptuneLabel.className).toContain('bg-surface-900');
