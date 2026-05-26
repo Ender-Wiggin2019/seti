@@ -11,7 +11,14 @@ import type { IPublicRivalState } from '@/types/re-exports';
 
 describe('RivalPanel', () => {
   afterEach(() => {
-    setTextMode(false);
+    act(() => {
+      useDebugStore.setState({
+        textMode: false,
+        hotspotDebug: false,
+        hotspotOverrides: {},
+        hotspotDraftOverrides: {},
+      });
+    });
   });
 
   it('renders image-mode rival board with the reference board art and data-driven overlays', () => {
@@ -245,6 +252,86 @@ describe('RivalPanel', () => {
     expect(screen.getByTestId('rival-rules-dialog')).toHaveTextContent(
       'objectives',
     );
+  });
+
+  it('exposes rival controls through the shared hotspot debug layer', () => {
+    act(() => {
+      useDebugStore.getState().setHotspotDebug(true);
+    });
+
+    render(<RivalPanel rival={createRival()} />);
+
+    const rulesButton = screen.getByTestId('rival-rules-button');
+    expect(rulesButton).toHaveAttribute('data-hotspot-scene', 'rival-board');
+    expect(rulesButton).toHaveAttribute('data-hotspot-id', 'rules');
+    expect(screen.getByText('rival rules')).toBeInTheDocument();
+  });
+
+  it('exposes rival image overlays through the shared anchor debug layer', () => {
+    act(() => {
+      useDebugStore.getState().setHotspotDebug(true);
+    });
+
+    const { container } = render(
+      <RivalPanel
+        rival={createRival()}
+        rivalTechs={[
+          ETechId.PROBE_DOUBLE_PROBE,
+          ETechId.SCAN_EARTH_LOOK,
+          ETechId.COMPUTER_VP_CARD,
+        ]}
+      />,
+    );
+
+    const marker = screen.getByTestId('rival-board-progress-marker');
+    expect(marker).toHaveAttribute('data-hotspot-scene', 'rival-board');
+    expect(marker).toHaveAttribute('data-hotspot-id', 'progress-slot-3');
+    expect(marker).toHaveAttribute('data-hotspot-role', 'anchor');
+
+    for (let index = 0; index < 12; index += 1) {
+      expect(
+        container.querySelector(
+          `[data-hotspot-scene="rival-board"][data-hotspot-id="progress-slot-${index}"]`,
+        ),
+      ).toBeInTheDocument();
+    }
+
+    const computerSlot = screen.getByTestId(
+      'hotspot-anchor-rival-board-computer-slot-0',
+    );
+    expect(computerSlot).toHaveAttribute('data-hotspot-role', 'anchor');
+
+    expect(screen.getAllByTestId('rival-board-data-token')[0]).toHaveAttribute(
+      'data-hotspot-id',
+      'data-token-0',
+    );
+    expect(screen.getByTestId('rival-board-data-pool-count')).toHaveAttribute(
+      'data-hotspot-id',
+      'data-pool-count',
+    );
+    expect(screen.getByTestId('rival-board-tech-probe')).toHaveAttribute(
+      'data-hotspot-id',
+      'tech-probe',
+    );
+    expect(screen.getByTestId('rival-current-card')).toHaveAttribute(
+      'data-hotspot-id',
+      'current-action-card',
+    );
+    expect(screen.getByTestId('rival-board-action-deck')).toHaveAttribute(
+      'data-hotspot-id',
+      'action-deck-readouts',
+    );
+    expect(
+      screen.getByTestId('rival-objective-marker-SOLO.1-0'),
+    ).toHaveAttribute('data-hotspot-id', 'objective-SOLO.1-task-0');
+
+    expect(screen.getByText('rival progress 4')).toBeInTheDocument();
+    expect(screen.getByText('rival computer 1')).toBeInTheDocument();
+    expect(screen.getByText('rival data token 1')).toBeInTheDocument();
+    expect(screen.getByText('rival tech Probe')).toBeInTheDocument();
+    expect(
+      screen.getByText('rival objective SOLO.1 task 1'),
+    ).toBeInTheDocument();
   });
 
   it('renders current rival action cards as images when art is configured', () => {

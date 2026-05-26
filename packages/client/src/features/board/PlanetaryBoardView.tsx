@@ -11,6 +11,8 @@ import {
   canOrbitPlanet,
 } from '@seti/common/rules';
 import { useTranslation } from 'react-i18next';
+import { HotspotAnchor } from '@/features/hotspots/HotspotAnchor';
+import { HotspotButton } from '@/features/hotspots/HotspotButton';
 import { cn } from '@/lib/cn';
 import { useTextMode } from '@/stores/debugStore';
 import type {
@@ -71,12 +73,14 @@ function TokenAtPoint({
   playerId,
   playerColors,
   title,
+  hotspotId,
 }: {
   x: number;
   y: number;
   playerId: string;
   playerColors: Record<string, string>;
   title: string;
+  hotspotId: string;
 }): React.JSX.Element {
   // Image-mode planetary board uses the printed probe asset for
   // orbit / landing markers — visual continuity with the solar
@@ -86,17 +90,23 @@ function TokenAtPoint({
   // still locate the marker.
   const playerColor = playerColors[playerId] ?? 'white';
   return (
-    <span
-      className='absolute inline-flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center'
-      style={{
-        left: `${x}%`,
-        top: `${y}%`,
-      }}
+    <HotspotAnchor
+      sceneId='planet-board'
+      hotspotId={hotspotId}
+      baseWidth={PLANETARY_BOARD_DIMENSIONS.width}
+      baseHeight={PLANETARY_BOARD_DIMENSIONS.height}
+      x={(PLANETARY_BOARD_DIMENSIONS.width * x) / 100}
+      y={(PLANETARY_BOARD_DIMENSIONS.height * y) / 100}
+      width={28}
+      height={28}
+      color={playerColor}
+      debugLabel={title}
+      className='inline-flex items-center justify-center'
       title={title}
-      aria-label={`planet-board-token-${playerId}`}
+      ariaLabel={`planet-board-token-${playerId}`}
     >
       <ProbeToken playerColor={playerColor} className='h-7 w-7' />
-    </span>
+    </HotspotAnchor>
   );
 }
 
@@ -104,24 +114,34 @@ function GlyphTokenAtPoint({
   x,
   y,
   token,
+  hotspotId,
 }: {
   x: number;
   y: number;
   token: IPublicPlanetAlienToken;
+  hotspotId: string;
 }): React.JSX.Element {
   return (
-    <span
-      data-testid={`planet-board-alien-token-${token.tokenId}`}
-      className='absolute inline-flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-lime-300/80 bg-surface-950/80 shadow-[0_0_12px_rgba(190,242,100,0.35)]'
-      style={{
-        left: `${x}%`,
-        top: `${y}%`,
-      }}
+    <HotspotAnchor
+      sceneId='planet-board'
+      hotspotId={hotspotId}
+      baseWidth={PLANETARY_BOARD_DIMENSIONS.width}
+      baseHeight={PLANETARY_BOARD_DIMENSIONS.height}
+      x={(PLANETARY_BOARD_DIMENSIONS.width * x) / 100}
+      y={(PLANETARY_BOARD_DIMENSIONS.height * y) / 100}
+      width={28}
+      height={28}
+      color='#bef264'
+      debugLabel={`${token.glyph} glyph token`}
+      className='inline-flex items-center justify-center rounded-full'
+      testId={`planet-board-alien-token-${token.tokenId}`}
       aria-label={`${token.glyph} glyph token`}
       title={`${token.glyph} glyph token`}
     >
-      <DescRender desc={`{${token.glyph}[sm]}`} size='desc-mini' smartSize />
-    </span>
+      <span className='inline-flex h-full w-full items-center justify-center rounded-full border border-lime-300/80 bg-surface-950/80 shadow-[0_0_12px_rgba(190,242,100,0.35)]'>
+        <DescRender desc={`{${token.glyph}[sm]}`} size='desc-mini' smartSize />
+      </span>
+    </HotspotAnchor>
   );
 }
 
@@ -367,25 +387,36 @@ export function PlanetaryBoardView({
                       const targetLabel = isMoonTarget
                         ? `${config.label} ${moonLabel}`
                         : `${config.label} ${hotspot.kind}`;
+                      const hotspotId = isMoonTarget
+                        ? `${planet}-moon-${hotspot.moonId}`
+                        : `${planet}-${hotspot.kind}-${hotspot.index}`;
+                      const testId = isMoonTarget
+                        ? `planet-target-${planet}-moon-${hotspot.moonId}`
+                        : index === 0
+                          ? `planet-target-${planet}`
+                          : `planet-target-${planet}-${hotspot.kind}-${hotspot.index}`;
                       return (
-                        <button
+                        <HotspotButton
                           key={`${planet}-target-${hotspot.kind}-${hotspot.index}`}
-                          type='button'
-                          data-testid={
-                            isMoonTarget
-                              ? `planet-target-${planet}-moon-${hotspot.moonId}`
-                              : index === 0
-                                ? `planet-target-${planet}`
-                                : `planet-target-${planet}-${hotspot.kind}-${hotspot.index}`
+                          sceneId='planet-board'
+                          hotspotId={hotspotId}
+                          baseWidth={PLANETARY_BOARD_DIMENSIONS.width}
+                          baseHeight={PLANETARY_BOARD_DIMENSIONS.height}
+                          x={
+                            (PLANETARY_BOARD_DIMENSIONS.width * hotspot.x) / 100
                           }
+                          y={
+                            (PLANETARY_BOARD_DIMENSIONS.height * hotspot.y) /
+                            100
+                          }
+                          width={36}
+                          height={36}
+                          testId={testId}
+                          debugLabel={targetLabel}
                           className={cn(
-                            'absolute h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent-400/80 bg-accent-500/10 ring-1 ring-accent-400/70',
+                            'border-accent-400/80 ring-1 ring-accent-400/70',
                             'hover:bg-accent-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300',
                           )}
-                          style={{
-                            left: `${hotspot.x}%`,
-                            top: `${hotspot.y}%`,
-                          }}
                           onClick={() =>
                             handlePlanetSelect(
                               planet,
@@ -397,7 +428,7 @@ export function PlanetaryBoardView({
                                 : undefined,
                             )
                           }
-                          aria-label={`${targetLabel} target`}
+                          ariaLabel={`${targetLabel} target`}
                           title={targetLabel}
                         />
                       );
@@ -414,6 +445,7 @@ export function PlanetaryBoardView({
                           playerId={occupied.playerId}
                           playerColors={playerColors}
                           title={`${config.label} orbit (${occupied.playerId})`}
+                          hotspotId={`${planet}-orbit-token-${index}`}
                         />
                       );
                     })}
@@ -446,6 +478,7 @@ export function PlanetaryBoardView({
                           playerId={token.playerId}
                           playerColors={playerColors}
                           title={`${config.label} ${slotKind} (${token.playerId})`}
+                          hotspotId={`${planet}-landing-token-${index}`}
                         />
                       );
                     })}
@@ -456,6 +489,7 @@ export function PlanetaryBoardView({
                         x={Math.min(config.anchor.x + index * 4, 98)}
                         y={config.anchor.y}
                         token={token}
+                        hotspotId={`${planet}-alien-token-${token.tokenId}`}
                       />
                     ))}
                   </div>

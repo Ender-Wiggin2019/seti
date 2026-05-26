@@ -11,7 +11,7 @@ import type {
   IPublicPlanetaryBoard,
   IPublicTraceSlot,
 } from '@/types/re-exports';
-import { EAlienType, EPlanet, ETrace } from '@/types/re-exports';
+import { EAlienType, EMainAction, EPlanet, ETrace } from '@/types/re-exports';
 
 function slot(
   slotId: string,
@@ -56,7 +56,12 @@ function buildAnomalyColumnSlots(
 describe('AlienBoardView', () => {
   beforeEach(async () => {
     await i18n.changeLanguage('en');
-    useDebugStore.setState({ textMode: false });
+    useDebugStore.setState({
+      textMode: false,
+      hotspotDebug: false,
+      hotspotOverrides: {},
+      hotspotDraftOverrides: {},
+    });
   });
 
   it('lays out the two alien boards side by side on desktop', () => {
@@ -349,6 +354,145 @@ describe('AlienBoardView', () => {
     expect(screen.getByTestId('text-card-ET.11')).toBeInTheDocument();
   });
 
+  it('exposes Anomalies image trace markers through the shared anchor debug layer', () => {
+    useDebugStore.getState().setHotspotDebug(true);
+    const alien: IPublicAlienState = {
+      alienIndex: 0,
+      alienType: EAlienType.ANOMALIES,
+      discovered: true,
+      discovery: { zones: [], overflowZones: [] },
+      cardZone: null,
+      board: {
+        type: 'anomalies',
+        traceBoard: {
+          columns: {
+            [ETrace.PINK]: buildAnomalyColumnSlots(ETrace.PINK, {
+              tier1Occupants: [
+                { source: { playerId: 'p1' }, traceColor: ETrace.PINK },
+              ],
+            }),
+            [ETrace.YELLOW]: buildAnomalyColumnSlots(ETrace.YELLOW),
+            [ETrace.BLUE]: buildAnomalyColumnSlots(ETrace.BLUE),
+          },
+        },
+      },
+    };
+
+    render(<AlienBoardView aliens={[alien]} playerColors={{ p1: '#f00' }} />);
+
+    const marker = screen.getByTestId('alien-0-anomalies-marker-red-trace-0');
+    expect(marker).toHaveAttribute('data-hotspot-scene', 'alien-board');
+    expect(marker).toHaveAttribute('data-hotspot-role', 'anchor');
+    expect(marker).toHaveAttribute(
+      'data-hotspot-id',
+      'anomalies-0-red-trace-0',
+    );
+    expect(screen.getByText('anomalies red-trace trace 1')).toBeInTheDocument();
+  });
+
+  it.each([
+    {
+      alienType: EAlienType.CENTAURIANS,
+      board: {
+        type: 'centaurians' as const,
+        messageMilestones: [],
+        pendingMessagesByPlayer: {},
+        rewardSlots: [],
+        traceSlots: [
+          slot('alien-0-centaurians-red-0', ETrace.PINK, {
+            occupants: [
+              { source: { playerId: 'p1' }, traceColor: ETrace.PINK },
+            ],
+          }),
+        ],
+      },
+      testId: 'alien-0-centaurians-marker-red-trace-0-0',
+      hotspotId: 'centaurians-0-red-trace-0-0',
+      label: 'centaurians red-trace trace 1',
+    },
+    {
+      alienType: EAlienType.EXERTIANS,
+      board: {
+        type: 'exertians' as const,
+        faceDownCards: [],
+        milestones: [],
+        traceSlots: [
+          slot('alien-0-exertians-red-0', ETrace.PINK, {
+            occupants: [
+              { source: { playerId: 'p1' }, traceColor: ETrace.PINK },
+            ],
+          }),
+        ],
+      },
+      testId: 'alien-0-exertians-marker-red-trace-0-0',
+      hotspotId: 'exertians-0-red-trace-0-0',
+      label: 'exertians red-trace trace 1',
+    },
+    {
+      alienType: EAlienType.MASCAMITES,
+      board: {
+        type: 'mascamites' as const,
+        samplePools: { [EPlanet.JUPITER]: 0, [EPlanet.SATURN]: 0 },
+        publicSamples: [],
+        capsules: [],
+        deliveredSamples: [],
+        traceSlots: [
+          slot('alien-0-mascamites-red-0', ETrace.PINK, {
+            occupants: [
+              { source: { playerId: 'p1' }, traceColor: ETrace.PINK },
+            ],
+          }),
+        ],
+      },
+      testId: 'alien-0-mascamites-marker-red-trace-0-0',
+      hotspotId: 'mascamites-0-red-trace-0-0',
+      label: 'mascamites red-trace trace 1',
+    },
+    {
+      alienType: EAlienType.OUMUAMUA,
+      board: {
+        type: 'oumuamua' as const,
+        tile: {
+          spaceId: 'ring-3-cell-5',
+          sectorId: 'sector-2',
+          dataRemaining: 2,
+          markerPlayerIds: [],
+        },
+        traceSlots: [
+          slot('alien-0-oumuamua-red-0', ETrace.PINK, {
+            occupants: [
+              { source: { playerId: 'p1' }, traceColor: ETrace.PINK },
+            ],
+          }),
+        ],
+      },
+      testId: 'alien-0-oumuamua-marker-red-trace-0-0',
+      hotspotId: 'oumuamua-0-red-trace-0-0',
+      label: 'oumuamua red-trace trace 1',
+    },
+  ])(
+    'exposes $board.type image trace markers through the shared anchor debug layer',
+    ({ alienType, board, testId, hotspotId, label }) => {
+      useDebugStore.getState().setHotspotDebug(true);
+      const alien: IPublicAlienState = {
+        alienIndex: 0,
+        alienType,
+        discovered: true,
+        discovery: { zones: [], overflowZones: [] },
+        cardZone: null,
+        board,
+      };
+
+      render(<AlienBoardView aliens={[alien]} playerColors={{ p1: '#f00' }} />);
+
+      const marker = screen.getByTestId(testId);
+      expect(marker).toHaveAttribute('data-hotspot-scene', 'alien-board');
+      expect(marker).toHaveAttribute('data-hotspot-role', 'anchor');
+      expect(marker).toHaveAttribute('data-hotspot-id', hotspotId);
+      expect(screen.getByText(label)).toBeInTheDocument();
+    },
+  );
+
   it('opens the shared card preview when clicking the alien deck face-up card', () => {
     const onCardInspect = vi.fn();
     const alien: IPublicAlienState = {
@@ -370,10 +514,17 @@ describe('AlienBoardView', () => {
     };
 
     const props = { aliens: [alien], playerColors: {}, onCardInspect };
+    useDebugStore.getState().setHotspotDebug(true);
     render(<AlienBoardView {...props} />);
 
     const faceUpCard = screen.getByTestId('alien-0-deck-face-up-card');
     expect(faceUpCard).toHaveClass('overflow-hidden');
+    expect(faceUpCard).toHaveAttribute('data-hotspot-scene', 'alien-board');
+    expect(faceUpCard).toHaveAttribute(
+      'data-hotspot-id',
+      'deck-0-face-up-card',
+    );
+    expect(screen.getByText('Alien card ET.11')).toBeInTheDocument();
 
     fireEvent.click(faceUpCard);
 
@@ -924,6 +1075,40 @@ describe('AlienBoardView', () => {
     expect(
       screen.queryByTestId('oumuamua-tile-marker-p1-0'),
     ).not.toBeInTheDocument();
+  });
+
+  it('exposes Oumuamua planet targets through the shared hotspot debug layer', () => {
+    useDebugStore.getState().setHotspotDebug(true);
+    const alien: IPublicAlienState = {
+      alienIndex: 0,
+      alienType: EAlienType.OUMUAMUA,
+      discovered: true,
+      discovery: { zones: [], overflowZones: [] },
+      cardZone: null,
+      board: {
+        type: 'oumuamua',
+        tile: {
+          spaceId: 'ring-3-cell-5',
+          sectorId: 'sector-2',
+          dataRemaining: 2,
+          markerPlayerIds: [],
+        },
+        traceSlots: [],
+      },
+    };
+
+    render(
+      <AlienBoardView
+        aliens={[alien]}
+        playerColors={{}}
+        planetActionMode={EMainAction.ORBIT}
+      />,
+    );
+
+    const target = screen.getByTestId('planet-target-oumuamua');
+    expect(target).toHaveAttribute('data-hotspot-scene', 'alien-board');
+    expect(target).toHaveAttribute('data-hotspot-id', 'oumuamua-0-orbit');
+    expect(screen.getByText('Oumuamua orbit')).toBeInTheDocument();
   });
 
   it('keeps text-mode Oumuamua focused on its landing cell details', () => {

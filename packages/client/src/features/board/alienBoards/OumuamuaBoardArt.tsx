@@ -1,5 +1,6 @@
+import { HotspotButton } from '@/features/hotspots/HotspotButton';
 import type { IPublicOumuamuaBoard } from '@/types/re-exports';
-import { ETrace } from '@/types/re-exports';
+import { EMainAction, EPlanet, ETrace } from '@/types/re-exports';
 import { AlienBoardArtFrame } from './AlienBoardArtFrame';
 import {
   TraceMarkerOverlay,
@@ -38,12 +39,20 @@ interface IOumuamuaBoardArtProps {
   alienIndex: number;
   board: IPublicOumuamuaBoard;
   playerColors: Record<string, string>;
+  planetActionMode?: EMainAction.ORBIT | EMainAction.LAND | null;
+  orbitSelectable?: boolean;
+  landSelectable?: boolean;
+  onSelectMainActionPlanet?: (planet: EPlanet) => void;
 }
 
 export function OumuamuaBoardArt({
   alienIndex,
   board,
   playerColors,
+  planetActionMode,
+  orbitSelectable = false,
+  landSelectable = false,
+  onSelectMainActionPlanet,
 }: IOumuamuaBoardArtProps): React.JSX.Element {
   return (
     <section
@@ -62,6 +71,46 @@ export function OumuamuaBoardArt({
           playerColors={playerColors}
           layouts={OUMUAMUA_LAYOUTS}
         />
+        {planetActionMode === EMainAction.ORBIT ? (
+          <HotspotButton
+            sceneId='alien-board'
+            hotspotId={`oumuamua-${alienIndex}-orbit`}
+            baseWidth={777}
+            baseHeight={1415}
+            x={388.5}
+            y={1080}
+            width={280}
+            height={96}
+            shape='rect'
+            testId='planet-target-oumuamua'
+            debugLabel='Oumuamua orbit'
+            ariaLabel='Orbit Oumuamua'
+            disabled={!orbitSelectable}
+            onClick={() => onSelectMainActionPlanet?.(EPlanet.OUMUAMUA)}
+            className='border-accent-400/70'
+            opacity={0.36}
+          />
+        ) : null}
+        {planetActionMode === EMainAction.LAND ? (
+          <HotspotButton
+            sceneId='alien-board'
+            hotspotId={`oumuamua-${alienIndex}-land`}
+            baseWidth={777}
+            baseHeight={1415}
+            x={388.5}
+            y={1190}
+            width={280}
+            height={96}
+            shape='rect'
+            testId='planet-target-oumuamua'
+            debugLabel='Oumuamua land'
+            ariaLabel='Land Oumuamua'
+            disabled={!landSelectable}
+            onClick={() => onSelectMainActionPlanet?.(EPlanet.OUMUAMUA)}
+            className='border-accent-400/70'
+            opacity={0.36}
+          />
+        ) : null}
       </AlienBoardArtFrame>
     </section>
   );

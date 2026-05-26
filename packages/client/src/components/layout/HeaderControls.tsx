@@ -43,6 +43,8 @@ export function HeaderControls({
   );
   const textMode = useDebugStore((state) => state.textMode);
   const setTextMode = useDebugStore((state) => state.setTextMode);
+  const hotspotDebug = useDebugStore((state) => state.hotspotDebug);
+  const setHotspotDebug = useDebugStore((state) => state.setHotspotDebug);
 
   function handleLanguageChange(nextValue: string): void {
     void i18n.changeLanguage(resolveLanguage(nextValue));
@@ -89,6 +91,22 @@ export function HeaderControls({
           onCheckedChange={setTextMode}
           aria-label={t('home.text_mode', { defaultValue: 'Text view' })}
           data-testid='header-text-mode-switch'
+        />
+      </label>
+
+      <label
+        className={cn(
+          'flex items-center gap-1.5 font-mono uppercase tracking-microlabel text-text-500',
+          'whitespace-nowrap',
+          isCompact ? 'text-[10px]' : 'text-[11px]',
+        )}
+      >
+        <span>{t('home.hotspot_debug', { defaultValue: 'Hotspots' })}</span>
+        <Switch
+          checked={hotspotDebug}
+          onCheckedChange={setHotspotDebug}
+          aria-label={t('home.hotspot_debug', { defaultValue: 'Hotspots' })}
+          data-testid='header-hotspot-debug-switch'
         />
       </label>
     </div>

@@ -2,6 +2,7 @@ import {
   TRACE_COLUMN_COLORS,
   type TTraceColumnColor,
 } from '@seti/common/utils/alienTracePresentation';
+import { HotspotAnchor } from '@/features/hotspots/HotspotAnchor';
 import {
   useCalibrationMode,
   usePreviewOverflowCount,
@@ -38,6 +39,9 @@ const PREVIEW_PLAYER_FALLBACK_COLORS: Record<string, string> = {
   'preview-C': '#22c55e',
   'preview-D': '#eab308',
 };
+const ALIEN_BOARD_BASE_WIDTH = 777;
+const ALIEN_BOARD_BASE_HEIGHT = 1415;
+const TRACE_MARKER_SIZE = (ALIEN_BOARD_BASE_WIDTH * 8) / 100;
 
 interface IAnomaliesColumnLayout {
   xPct: number;
@@ -220,6 +224,8 @@ function ColumnMarkers({
         return (
           <SlotMarker
             key={`${color}-${index}`}
+            hotspotId={`anomalies-${alienIndex}-${color}-${index}`}
+            debugLabel={`anomalies ${color} trace ${index + 1}`}
             xPct={xPct}
             yPct={yPct}
             occupant={occ}
@@ -235,12 +241,16 @@ function ColumnMarkers({
 function SlotMarker({
   xPct,
   yPct,
+  hotspotId,
+  debugLabel,
   occupant,
   playerColors,
   testId,
 }: {
   xPct: number;
   yPct: number;
+  hotspotId: string;
+  debugLabel: string;
   occupant: TTraceOccupant;
   playerColors: Record<string, string>;
   ringColor?: string;
@@ -258,16 +268,26 @@ function SlotMarker({
         PREVIEW_PLAYER_FALLBACK_COLORS[playerId] ??
         '#cbd5e1');
   return (
-    <span
-      className='absolute aspect-square w-[8%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-black/50 shadow-[0_0_4px_rgba(0,0,0,0.6)]'
-      style={{
-        left: `${xPct}%`,
-        top: `${yPct}%`,
-        backgroundColor: fill,
-      }}
+    <HotspotAnchor
+      sceneId='alien-board'
+      hotspotId={hotspotId}
+      baseWidth={ALIEN_BOARD_BASE_WIDTH}
+      baseHeight={ALIEN_BOARD_BASE_HEIGHT}
+      x={(ALIEN_BOARD_BASE_WIDTH * xPct) / 100}
+      y={(ALIEN_BOARD_BASE_HEIGHT * yPct) / 100}
+      width={TRACE_MARKER_SIZE}
+      height={TRACE_MARKER_SIZE}
+      color={fill}
+      debugLabel={debugLabel}
+      className='rounded-full'
       title={playerId ?? 'neutral'}
-      data-testid={testId}
-    />
+      testId={testId}
+    >
+      <span
+        className='block h-full w-full rounded-full border border-black/50 shadow-[0_0_4px_rgba(0,0,0,0.6)]'
+        style={{ backgroundColor: fill }}
+      />
+    </HotspotAnchor>
   );
 }
 

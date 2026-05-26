@@ -1,8 +1,9 @@
 import { EAlienIcon } from '@seti/common/types/element';
 import { ETechBonusType, ETechId } from '@seti/common/types/tech';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TechBoardView } from '@/features/board/TechBoardView';
+import { useDebugStore } from '@/stores/debugStore';
 import type { IPublicPlayerState, IPublicTechBoard } from '@/types/re-exports';
 import { EAlienType, EPlayerInputType, ETech } from '@/types/re-exports';
 import { createMockPlayerState } from '../../../test/mocks/gameState';
@@ -28,6 +29,15 @@ function createTechBoardMock(): IPublicTechBoard {
 }
 
 describe('TechBoardView', () => {
+  beforeEach(() => {
+    useDebugStore.setState({
+      textMode: false,
+      hotspotDebug: false,
+      hotspotOverrides: {},
+      hotspotDraftOverrides: {},
+    });
+  });
+
   it('renders all 12 stacks', () => {
     render(
       <TechBoardView
@@ -218,6 +228,29 @@ describe('TechBoardView', () => {
       type: EPlayerInputType.OPTION,
       optionId: ETechId.SCAN_EARTH_LOOK,
     });
+  });
+
+  it('uses a shared hotspot overlay for selectable tech stacks in debug mode', () => {
+    useDebugStore.getState().setHotspotDebug(true);
+
+    render(
+      <TechBoardView
+        techBoard={createTechBoardMock()}
+        players={[]}
+        pendingInput={{
+          inputId: 'input-1',
+          type: EPlayerInputType.TECH,
+          options: [ETech.PROBE],
+        }}
+        playerColors={{}}
+        myPlayerId='player-1'
+      />,
+    );
+
+    const hotspot = screen.getByTestId('tech-hotspot-probe-tech-0');
+    expect(hotspot).toHaveAttribute('data-hotspot-scene', 'tech-board');
+    expect(hotspot).toHaveAttribute('data-hotspot-id', 'probe-tech-0');
+    expect(screen.getAllByText('Probe L1').length).toBeGreaterThan(0);
   });
 
   it('maps visible probe and scan stack positions to canonical tech ids', () => {

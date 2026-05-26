@@ -1,5 +1,6 @@
 import { DescRender } from '@seti/cards';
 import { useTranslation } from 'react-i18next';
+import { HotspotButton } from '@/features/hotspots/HotspotButton';
 import { cn } from '@/lib/cn';
 import type { IPublicTechStack } from '@/types/re-exports';
 import { ETech } from '@/types/re-exports';
@@ -50,7 +51,7 @@ export function TechStack({
           : undefined
       }
       className={cn(
-        'rounded-md border border-surface-700/50 bg-surface-900/60 p-2 transition-colors',
+        'relative rounded-md border border-surface-700/50 bg-surface-900/60 p-2 transition-colors',
         isSelectable && 'border-accent-500 ring-1 ring-accent-500/70',
         isInteractive &&
           'cursor-pointer hover:bg-surface-800/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400',
@@ -150,6 +151,26 @@ export function TechStack({
           ))
         )}
       </div>
+
+      {isSelectable ? (
+        <HotspotButton
+          sceneId='tech-board'
+          hotspotId={`${stack.tech}-${stack.level}`}
+          baseWidth={100}
+          baseHeight={100}
+          x={50}
+          y={50}
+          width={100}
+          height={100}
+          shape='rect'
+          opacity={0.18}
+          debugLabel={`${techName} L${stack.level + 1}`}
+          ariaLabel={`${techName} level ${stack.level + 1}`}
+          testId={`tech-hotspot-${stack.tech}-${stack.level}`}
+          onClick={onSelect}
+          disabled={!isInteractive}
+        />
+      ) : null}
     </article>
   );
 }

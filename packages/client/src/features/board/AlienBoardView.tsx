@@ -11,6 +11,7 @@ import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { TRACE_COLUMN_COLORS } from '@seti/common/utils/alienTracePresentation';
 import { useTranslation } from 'react-i18next';
 import { CardRender } from '@/features/cards/CardRender';
+import { HotspotButton } from '@/features/hotspots/HotspotButton';
 import { usePreviewOverflowCount } from '@/hooks/useCalibrationMode';
 import { cn } from '@/lib/cn';
 import { useTextMode } from '@/stores/debugStore';
@@ -509,6 +510,20 @@ function OumuamuaBoardRenderer({
       alienIndex={alienIndex}
       board={board}
       playerColors={playerColors}
+      planetActionMode={planetActionMode}
+      orbitSelectable={isOumuamuaPlanetActionSelectable({
+        gameState,
+        myPlayerId,
+        planetaryBoard,
+        mode: EMainAction.ORBIT,
+      })}
+      landSelectable={isOumuamuaPlanetActionSelectable({
+        gameState,
+        myPlayerId,
+        planetaryBoard,
+        mode: EMainAction.LAND,
+      })}
+      onSelectMainActionPlanet={onSelectMainActionPlanet}
     />
   );
 }
@@ -1575,6 +1590,34 @@ function createEmptyPlanetState(
   };
 }
 
+function isOumuamuaPlanetActionSelectable({
+  gameState,
+  myPlayerId,
+  planetaryBoard,
+  mode,
+}: {
+  gameState?: IPublicGameState | null;
+  myPlayerId?: string;
+  planetaryBoard?: IPublicPlanetaryBoard;
+  mode: EMainAction.ORBIT | EMainAction.LAND;
+}): boolean {
+  if (!gameState || !myPlayerId) {
+    return false;
+  }
+  const player = gameState.players.find((candidate) => {
+    return candidate.playerId === myPlayerId;
+  });
+  if (!player) {
+    return false;
+  }
+  const config = PLANETARY_BOARD_CONFIG[EPlanet.OUMUAMUA];
+  const state =
+    planetaryBoard?.planets[EPlanet.OUMUAMUA] ?? createEmptyPlanetState(config);
+  return mode === EMainAction.ORBIT
+    ? canOrbitPlanet(EPlanet.OUMUAMUA, state, player, gameState)
+    : canLandOnPlanet(EPlanet.OUMUAMUA, state, player, gameState);
+}
+
 function OumuamuaTokenDot({
   alienIndex,
   kind,
@@ -1722,15 +1765,27 @@ function OumuamuaLandingArea({
               )}
             </div>
             {!textMode && planetActionMode === EMainAction.ORBIT ? (
-              <button
-                type='button'
-                data-testid='planet-target-oumuamua'
-                disabled={!orbitSelectable}
-                onClick={() => onSelectMainActionPlanet?.(EPlanet.OUMUAMUA)}
-                className='mt-2 w-full rounded border border-accent-500/70 bg-accent-500/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-accent-200 disabled:border-surface-700 disabled:bg-surface-900/60 disabled:text-text-500'
-              >
-                Orbit Oumuamua
-              </button>
+              <div className='relative mt-2 h-7 w-full'>
+                <HotspotButton
+                  sceneId='alien-board'
+                  hotspotId={`oumuamua-${alienIndex}-orbit`}
+                  baseWidth={100}
+                  baseHeight={28}
+                  x={50}
+                  y={14}
+                  width={100}
+                  height={28}
+                  shape='rect'
+                  testId='planet-target-oumuamua'
+                  debugLabel='Oumuamua orbit'
+                  ariaLabel='Orbit Oumuamua'
+                  disabled={!orbitSelectable}
+                  onClick={() => onSelectMainActionPlanet?.(EPlanet.OUMUAMUA)}
+                  className='border-accent-500/70 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-accent-200 disabled:border-surface-700 disabled:bg-surface-900/60 disabled:text-text-500'
+                >
+                  Orbit Oumuamua
+                </HotspotButton>
+              </div>
             ) : null}
           </section>
 
@@ -1758,15 +1813,27 @@ function OumuamuaLandingArea({
               )}
             </div>
             {!textMode && planetActionMode === EMainAction.LAND ? (
-              <button
-                type='button'
-                data-testid='planet-target-oumuamua'
-                disabled={!landSelectable}
-                onClick={() => onSelectMainActionPlanet?.(EPlanet.OUMUAMUA)}
-                className='mt-2 w-full rounded border border-accent-500/70 bg-accent-500/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-accent-200 disabled:border-surface-700 disabled:bg-surface-900/60 disabled:text-text-500'
-              >
-                Land Oumuamua
-              </button>
+              <div className='relative mt-2 h-7 w-full'>
+                <HotspotButton
+                  sceneId='alien-board'
+                  hotspotId={`oumuamua-${alienIndex}-land`}
+                  baseWidth={100}
+                  baseHeight={28}
+                  x={50}
+                  y={14}
+                  width={100}
+                  height={28}
+                  shape='rect'
+                  testId='planet-target-oumuamua'
+                  debugLabel='Oumuamua land'
+                  ariaLabel='Land Oumuamua'
+                  disabled={!landSelectable}
+                  onClick={() => onSelectMainActionPlanet?.(EPlanet.OUMUAMUA)}
+                  className='border-accent-500/70 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-accent-200 disabled:border-surface-700 disabled:bg-surface-900/60 disabled:text-text-500'
+                >
+                  Land Oumuamua
+                </HotspotButton>
+              </div>
             ) : null}
           </section>
         </div>
@@ -2055,24 +2122,36 @@ function AlienDeckPanel({
         {headerNodes}
       </div>
       {faceUpCard ? (
-        <button
-          type='button'
-          className={cn(
-            'relative h-[184px] w-[132px] overflow-hidden rounded-[3px] border border-surface-700/60 transition-[border-color,box-shadow,transform] duration-150 focus-visible:outline-none focus-visible:shadow-focus-ring',
-            onCardInspect
-              ? 'cursor-pointer hover:-translate-y-0.5 hover:border-accent-500/70'
-              : 'cursor-default',
-          )}
-          data-testid={`alien-${alienIndex}-deck-face-up-card`}
-          aria-label={t('client.alien_board.card_zone.preview_aria', {
-            card: faceUpCard.name,
-          })}
-          onClick={() => onCardInspect?.(faceUpCard)}
-        >
-          <div className='pointer-events-none absolute left-0 top-0 origin-top-left scale-[0.88]'>
-            <CardRender card={faceUpCard} />
-          </div>
-        </button>
+        <div className='relative h-[184px] w-[132px]'>
+          <HotspotButton
+            sceneId='alien-board'
+            hotspotId={`deck-${alienIndex}-face-up-card`}
+            baseWidth={132}
+            baseHeight={184}
+            x={66}
+            y={92}
+            width={132}
+            height={184}
+            shape='rect'
+            testId={`alien-${alienIndex}-deck-face-up-card`}
+            debugLabel={`Alien card ${faceUpCard.id}`}
+            ariaLabel={t('client.alien_board.card_zone.preview_aria', {
+              card: faceUpCard.name,
+            })}
+            disabled={!onCardInspect}
+            onClick={() => onCardInspect?.(faceUpCard)}
+            className={cn(
+              'overflow-hidden rounded-[3px] border-surface-700/60 transition-[border-color,box-shadow,transform] duration-150 focus-visible:shadow-focus-ring',
+              onCardInspect
+                ? 'hover:-translate-y-0.5 hover:border-accent-500/70'
+                : 'cursor-default',
+            )}
+          >
+            <div className='pointer-events-none absolute left-0 top-0 origin-top-left scale-[0.88]'>
+              <CardRender card={faceUpCard} />
+            </div>
+          </HotspotButton>
+        </div>
       ) : cardZone.faceUpCardId ? (
         <div className='rounded border border-surface-700/60 px-2 py-3 text-center font-mono text-[10px] text-text-400'>
           {cardZone.faceUpCardId}

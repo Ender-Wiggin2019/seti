@@ -1,5 +1,11 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import type { IHotspotGeometryOverride } from '@/features/hotspots/hotspotConfig';
+
+type THotspotOverrides = Record<
+  string,
+  Record<string, IHotspotGeometryOverride>
+>;
 
 /**
  * Debug settings store.
@@ -14,8 +20,24 @@ import { createJSONStorage, persist } from 'zustand/middleware';
  */
 interface IDebugStoreState {
   textMode: boolean;
+  hotspotDebug: boolean;
+  showInteractiveHotspots: boolean;
+  showAnchorHotspots: boolean;
+  hotspotOverrides: THotspotOverrides;
+  hotspotDraftOverrides: THotspotOverrides;
   setTextMode: (enabled: boolean) => void;
   toggleTextMode: () => void;
+  setHotspotDebug: (enabled: boolean) => void;
+  toggleHotspotDebug: () => void;
+  setShowInteractiveHotspots: (enabled: boolean) => void;
+  setShowAnchorHotspots: (enabled: boolean) => void;
+  setHotspotDraftOverride: (
+    sceneId: string,
+    hotspotId: string,
+    override: IHotspotGeometryOverride,
+  ) => void;
+  saveHotspotOverrides: (sceneId?: string) => void;
+  resetHotspotOverrides: (sceneId?: string) => void;
 }
 
 const memoryStorage = new Map<string, string>();
@@ -61,13 +83,94 @@ export const useDebugStore = create<IDebugStoreState>()(
   persist(
     (set, get) => ({
       textMode: false,
+      hotspotDebug: false,
+      showInteractiveHotspots: true,
+      showAnchorHotspots: true,
+      hotspotOverrides: {},
+      hotspotDraftOverrides: {},
       setTextMode: (enabled) => set({ textMode: enabled }),
       toggleTextMode: () => set({ textMode: !get().textMode }),
+      setHotspotDebug: (enabled) => set({ hotspotDebug: enabled }),
+      toggleHotspotDebug: () => set({ hotspotDebug: !get().hotspotDebug }),
+      setShowInteractiveHotspots: (enabled) =>
+        set({ showInteractiveHotspots: enabled }),
+      setShowAnchorHotspots: (enabled) => set({ showAnchorHotspots: enabled }),
+      setHotspotDraftOverride: (sceneId, hotspotId, override) =>
+        set((state) => ({
+          hotspotDraftOverrides: {
+            ...state.hotspotDraftOverrides,
+            [sceneId]: {
+              ...(state.hotspotDraftOverrides[sceneId] ?? {}),
+              [hotspotId]: {
+                ...(state.hotspotOverrides[sceneId]?.[hotspotId] ?? {}),
+                ...(state.hotspotDraftOverrides[sceneId]?.[hotspotId] ?? {}),
+                ...override,
+              },
+            },
+          },
+        })),
+      saveHotspotOverrides: (sceneId) =>
+        set((state) => {
+          if (sceneId) {
+            const sceneDraft = state.hotspotDraftOverrides[sceneId];
+            if (!sceneDraft) {
+              return {};
+            }
+            const { [sceneId]: _removed, ...nextDraftOverrides } =
+              state.hotspotDraftOverrides;
+            return {
+              hotspotOverrides: {
+                ...state.hotspotOverrides,
+                [sceneId]: {
+                  ...(state.hotspotOverrides[sceneId] ?? {}),
+                  ...sceneDraft,
+                },
+              },
+              hotspotDraftOverrides: nextDraftOverrides,
+            };
+          }
+
+          return {
+            hotspotOverrides: Object.entries(
+              state.hotspotDraftOverrides,
+            ).reduce<THotspotOverrides>(
+              (nextOverrides, [draftSceneId, sceneDraft]) => ({
+                ...nextOverrides,
+                [draftSceneId]: {
+                  ...(nextOverrides[draftSceneId] ?? {}),
+                  ...sceneDraft,
+                },
+              }),
+              { ...state.hotspotOverrides },
+            ),
+            hotspotDraftOverrides: {},
+          };
+        }),
+      resetHotspotOverrides: (sceneId) =>
+        set((state) => {
+          if (!sceneId) {
+            return { hotspotOverrides: {}, hotspotDraftOverrides: {} };
+          }
+          const { [sceneId]: _removedOverride, ...nextOverrides } =
+            state.hotspotOverrides;
+          const { [sceneId]: _removedDraft, ...nextDraftOverrides } =
+            state.hotspotDraftOverrides;
+          return {
+            hotspotOverrides: nextOverrides,
+            hotspotDraftOverrides: nextDraftOverrides,
+          };
+        }),
     }),
     {
       name: 'seti-debug',
       storage: createJSONStorage(getSafeStorage),
-      partialize: (state) => ({ textMode: state.textMode }),
+      partialize: (state) => ({
+        textMode: state.textMode,
+        hotspotDebug: state.hotspotDebug,
+        showInteractiveHotspots: state.showInteractiveHotspots,
+        showAnchorHotspots: state.showAnchorHotspots,
+        hotspotOverrides: state.hotspotOverrides,
+      }),
     },
   ),
 );

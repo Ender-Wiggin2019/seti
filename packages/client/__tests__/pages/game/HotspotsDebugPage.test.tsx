@@ -1,0 +1,261 @@
+import {
+  PLANETARY_BOARD_CONFIG,
+  PLANETARY_PLANETS,
+} from '@seti/common/constant/boardLayout';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { HotspotsDebugPage } from '@/pages/game/HotspotsDebugPage';
+import { useDebugStore } from '@/stores/debugStore';
+
+describe('HotspotsDebugPage', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    useDebugStore.setState({
+      textMode: false,
+      hotspotDebug: false,
+      showInteractiveHotspots: true,
+      showAnchorHotspots: true,
+      hotspotOverrides: {},
+      hotspotDraftOverrides: {},
+    });
+  });
+
+  it('is a standalone hotspot calibration surface and turns hotspot debug on', async () => {
+    render(<HotspotsDebugPage />);
+
+    expect(screen.getByTestId('hotspots-debug-page')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Hotspot Debug' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Solar System' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+
+    for (const tab of [
+      'Solar System',
+      'Sectors',
+      'Planet Board',
+      'Tech Board',
+      'Personal Board',
+      'Rival Board',
+      'Aliens',
+      'Corporations',
+    ]) {
+      expect(screen.getByRole('tab', { name: tab })).toBeInTheDocument();
+    }
+
+    await waitFor(() => {
+      expect(useDebugStore.getState().hotspotDebug).toBe(true);
+    });
+    expect(await screen.findByText('space-0')).toBeInTheDocument();
+  });
+
+  it('saves draft hotspot edits only when Save Hotspots is clicked', async () => {
+    render(<HotspotsDebugPage />);
+
+    await waitFor(() => {
+      expect(useDebugStore.getState().hotspotDebug).toBe(true);
+    });
+    const saveButton = screen.getByRole('button', { name: 'Save Hotspots' });
+    expect(saveButton).toBeDisabled();
+
+    act(() => {
+      useDebugStore
+        .getState()
+        .setHotspotDraftOverride('solar-system', 'space-0', {
+          x: 120,
+          y: 88,
+          width: 32,
+          height: 32,
+        });
+    });
+
+    expect(saveButton).not.toBeDisabled();
+    expect(useDebugStore.getState().hotspotOverrides).toEqual({});
+
+    fireEvent.click(saveButton);
+
+    expect(useDebugStore.getState().hotspotOverrides).toEqual({
+      'solar-system': {
+        'space-0': {
+          x: 120,
+          y: 88,
+          width: 32,
+          height: 32,
+        },
+      },
+    });
+    expect(useDebugStore.getState().hotspotDraftOverrides).toEqual({});
+    expect(saveButton).toBeDisabled();
+  });
+
+  it('uses explicit image and text mode controls', async () => {
+    render(<HotspotsDebugPage />);
+
+    await waitFor(() => {
+      expect(useDebugStore.getState().hotspotDebug).toBe(true);
+    });
+
+    const imageModeButton = screen.getByRole('button', { name: 'Image Mode' });
+    const textModeButton = screen.getByRole('button', { name: 'Text Mode' });
+    expect(imageModeButton).toHaveAttribute('aria-pressed', 'true');
+    expect(textModeButton).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.queryByRole('button', { name: 'Text Mode Off' })).toBeNull();
+
+    fireEvent.click(textModeButton);
+
+    expect(useDebugStore.getState().textMode).toBe(true);
+    expect(imageModeButton).toHaveAttribute('aria-pressed', 'false');
+    expect(textModeButton).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('filters interactive hotspots and pure anchors independently', async () => {
+    render(<HotspotsDebugPage />);
+
+    await waitFor(() => {
+      expect(useDebugStore.getState().hotspotDebug).toBe(true);
+    });
+
+    expect(screen.getByText('space-0')).toBeInTheDocument();
+    expect(screen.getByText('solar sun')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Anchors On' }));
+
+    expect(screen.queryByText('solar sun')).not.toBeInTheDocument();
+    expect(screen.getByText('space-0')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Interactive On' }));
+
+    expect(screen.queryByText('space-0')).not.toBeInTheDocument();
+    expect(useDebugStore.getState().showAnchorHotspots).toBe(false);
+    expect(useDebugStore.getState().showInteractiveHotspots).toBe(false);
+  });
+
+  it('switches tabs to each component family with visible hotspot scenes', async () => {
+    const { container } = render(<HotspotsDebugPage />);
+
+    await waitFor(() => {
+      expect(useDebugStore.getState().hotspotDebug).toBe(true);
+    });
+    expect(
+      container.querySelector('[data-hotspot-scene="solar-system"]'),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Sectors' }));
+    expect(
+      screen.getByTestId('hotspots-debug-panel-sectors'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-hotspot-scene="sector-board"]'),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Planet Board' }));
+    expect(
+      screen.getByTestId('hotspots-debug-panel-planet'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-hotspot-scene="planet-board"]'),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Tech Board' }));
+    expect(screen.getByTestId('hotspots-debug-panel-tech')).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-hotspot-scene="tech-board"]'),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Personal Board' }));
+    expect(
+      screen.getByTestId('hotspots-debug-panel-player'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-hotspot-scene="player-board"]'),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Rival Board' }));
+    expect(
+      screen.getByTestId('hotspots-debug-panel-rival'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-hotspot-scene="rival-board"]'),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Aliens' }));
+    expect(
+      screen.getByTestId('hotspots-debug-panel-aliens'),
+    ).toBeInTheDocument();
+    for (const alien of [
+      'Anomalies',
+      'Centaurians',
+      'Exertians',
+      'Mascamites',
+      'Oumuamua',
+      'Glyphids',
+      'Amoeba',
+      'Arkhos',
+    ]) {
+      expect(screen.getAllByText(alien).length).toBeGreaterThan(0);
+    }
+    expect(
+      container.querySelector('[data-hotspot-scene="alien-board"]'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('anomalies red-trace trace 1')).toBeInTheDocument();
+    expect(
+      screen.getByText('centaurians red-trace trace 1'),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Corporations' }));
+    expect(
+      screen.getByTestId('hotspots-debug-panel-corporations'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-hotspot-scene="corporation-board"]'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-hotspot-id$="-used-badge"]'),
+    ).toBeInTheDocument();
+  });
+
+  it('shows every configured planet board orbit, land, and moon hotspot', async () => {
+    const { container } = render(<HotspotsDebugPage />);
+
+    await waitFor(() => {
+      expect(useDebugStore.getState().hotspotDebug).toBe(true);
+    });
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Planet Board' }));
+
+    const expectedHotspotIds = PLANETARY_PLANETS.flatMap((planet) => {
+      const config = PLANETARY_BOARD_CONFIG[planet];
+      let moonOrdinal = 0;
+      return [
+        ...config.orbitSlots.map((_, index) => `${planet}-orbit-${index}`),
+        ...config.landingSlots.map((_, index) => {
+          if (config.landingSlotKinds[index] !== 'moon') {
+            return `${planet}-planet-land-${index}`;
+          }
+          const moonId = config.moonIds[moonOrdinal];
+          moonOrdinal += 1;
+          return `${planet}-moon-${moonId}`;
+        }),
+      ];
+    });
+
+    for (const hotspotId of expectedHotspotIds) {
+      expect(
+        container.querySelector(
+          `[data-hotspot-scene="planet-board"][data-hotspot-id="${hotspotId}"]`,
+        ),
+      ).toBeInTheDocument();
+    }
+    expect(
+      container.querySelectorAll('[data-hotspot-scene="planet-board"]'),
+    ).toHaveLength(expectedHotspotIds.length);
+  });
+});

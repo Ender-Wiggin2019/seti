@@ -24,6 +24,16 @@
 
 ## UI 语义渲染
 
+- Flow debug 和 UI 校准 debug 要分 route：`/debug/game` 用来验证真实/调试游戏流程，hotspot 位置校准应放在独立 `/debug/hotspots`，用 fixtures + tabs 覆盖组件，不要把流程验证页当 UI 编辑器复用。
+- Hotspot 校准编辑不能拖动即持久化；位置/尺寸调整应先进非持久化草稿，只有显式 Save 才写入持久配置，这样刷新页面可以丢弃误改。
+- Hotspot 拖动坐标系不能简单取 `parentElement`；图片 overlay 常有分组 wrapper，拖动应优先使用实际定位坐标系 `offsetParent`，否则 planet board 这类空 wrapper 会得到 0 宽高。
+- Hotspot debug 页面需要可控密度；interactive hit areas 和 pure anchors 应能独立显示/隐藏，避免一次展示过多 label 导致无法校准。
+- Hotspot 校准范围不能只按“可点击按钮”定义；凡是叠在 game 图片资源上的绝对定位 token、marker、trace、badge、card overlay，也要进入可保存 anchor 或在 review 中明确排除。
+- Hotspot debug fixtures 不能只模拟一个合法动作模式；校准页应按 common/server 语义覆盖完整坐标集合，例如 planet board 要同时展示全部 planet、orbit、land、moon slot，否则 LAND-only fixture 会漏掉 orbit 和不在选项里的 planet。
+- Text mode 和 image mode 的 board hotspot 不应共享同一位置 override；如果两种模式使用不同坐标系，保持同一交互组件，但用 mode variant 拆分本地配置命名空间。
+- Hotspot debug 页的模式切换必须显式显示可选模式名和选中态，例如 `Image Mode` / `Text Mode`；不要用 `Text Mode Off` 这类状态文案，否则用户容易在错误 namespace 下编辑。
+- Rival board progress 不能只暴露当前 marker；12 个 printed progress spot 都是需要校准的 anchor，当前 marker 只是其中一个 slot 的视觉内容。
+- Hotspot debug 页的组件清单要包含 Personal Player Board；即使它不是传统点击大板，叠在 `playerBoard.png` 上的资源、tech、computer、income、mission 区域也应进入 `player-board` scene，并按 image/text variant 保存。
 - 做 SETI 客户端整体文案时，不能把“太空科幻”泛化成终端、观测台、档案室或任务控制台；若用户点名 Space Agency/太空机构，应先读取 `docs/arch/spaceAgency/rulebook.md`，围绕“强大组织、各自愿景/方法/动机、首次接触竞争、组织能力/快速起步”来命名。
 - 规则、奖励、desc 图标统一走 `DescRender` / `EffectFactory`；不要用颜色块、字母或临时图片替代。
 - 修 board 状态时不要用“新数组 + deprecated 单值”长期并存来兼容；除非明确有外部协议约束，否则当前 public/runtime state 只能保留一个规范字段，旧快照兼容放在 deserializer 边界。

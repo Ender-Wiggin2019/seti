@@ -8,7 +8,14 @@ import { createMockPlayerState } from '../../../test/mocks/gameState';
 
 describe('PlayerDashboard', () => {
   beforeEach(() => {
-    useDebugStore.setState({ textMode: false });
+    useDebugStore.setState({
+      textMode: false,
+      hotspotDebug: false,
+      showInteractiveHotspots: true,
+      showAnchorHotspots: true,
+      hotspotOverrides: {},
+      hotspotDraftOverrides: {},
+    });
   });
 
   it('renders all core sections', () => {
@@ -51,6 +58,11 @@ describe('PlayerDashboard', () => {
       'src',
       '/assets/seti/corporations/Helion Assembly.jpg',
     );
+    expect(
+      screen.getByTestId(
+        `organization-power-card-${EOrganizationId.HELION_ASSEMBLY}`,
+      ),
+    ).toHaveAttribute('data-hotspot-scene', 'corporation-board');
     fireEvent.click(
       screen.getByTestId(
         `organization-power-card-${EOrganizationId.HELION_ASSEMBLY}`,
@@ -102,6 +114,69 @@ describe('PlayerDashboard', () => {
         `organization-mark-${EOrganizationId.HELION_ASSEMBLY}-${ETech.PROBE}`,
       ),
     ).toHaveTextContent('marked');
+  });
+
+  it('exposes image-mode organization used badges through the shared anchor debug layer', () => {
+    useDebugStore.getState().setHotspotDebug(true);
+
+    render(
+      <PlayerDashboard
+        player={createMockPlayerState({
+          organizationIds: [EOrganizationId.HELION_ASSEMBLY],
+          oncePerRoundUsed: {
+            [EOrganizationId.HELION_ASSEMBLY]: true,
+          },
+        })}
+        pendingInput={null}
+        onFreeAction={() => undefined}
+      />,
+    );
+
+    const badge = screen.getByTestId(
+      `organization-used-badge-${EOrganizationId.HELION_ASSEMBLY}`,
+    );
+    expect(badge).toHaveAttribute('data-hotspot-scene', 'corporation-board');
+    expect(badge).toHaveAttribute(
+      'data-hotspot-id',
+      `${EOrganizationId.HELION_ASSEMBLY}-used-badge`,
+    );
+    expect(badge).toHaveAttribute('data-hotspot-role', 'anchor');
+    expect(screen.getByText('Helion Assembly used badge')).toBeInTheDocument();
+  });
+
+  it('exposes personal board regions through the shared anchor debug layer', () => {
+    useDebugStore.getState().setHotspotDebug(true);
+
+    const { container } = render(
+      <PlayerDashboard
+        player={createMockPlayerState()}
+        pendingInput={null}
+        onFreeAction={() => undefined}
+        income={{ credit: 2, energy: 1, card: 1 }}
+      />,
+    );
+
+    for (const hotspotId of [
+      'resource-credit',
+      'resource-energy',
+      'resource-publicity',
+      'resource-score',
+      'tech-launch',
+      'tech-scan',
+      'data-pool',
+      'computer-top-0',
+      'computer-bottom-5',
+      'analyze',
+      'income',
+      'mission-summary',
+    ]) {
+      expect(
+        container.querySelector(
+          `[data-hotspot-scene="player-board"][data-hotspot-id="${hotspotId}"]`,
+        ),
+      ).toBeInTheDocument();
+    }
+    expect(screen.getByText('player board data pool')).toBeInTheDocument();
   });
 
   it('hides Quick Start cards until the played cards dialog opens', () => {

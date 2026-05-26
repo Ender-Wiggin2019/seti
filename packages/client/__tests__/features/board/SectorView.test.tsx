@@ -61,7 +61,12 @@ function createPair(): ISectorPairConfig {
 
 describe('SectorView', () => {
   beforeEach(() => {
-    useDebugStore.setState({ textMode: false });
+    useDebugStore.setState({
+      textMode: false,
+      hotspotDebug: false,
+      hotspotOverrides: {},
+      hotspotDraftOverrides: {},
+    });
   });
 
   it('renders sector pair', () => {
@@ -115,6 +120,27 @@ describe('SectorView', () => {
     expect(onSelectSector).toHaveBeenCalledWith(ESector.BLACK);
   });
 
+  it('exposes sector nodes through the shared hotspot debug layer', () => {
+    useDebugStore.getState().setHotspotDebug(true);
+
+    render(
+      <SectorView
+        pair={createPair()}
+        playerColors={{ 'player-1': 'red' }}
+        selectableColors={new Set()}
+        clickable={false}
+        highlighted={false}
+        onSelectSector={vi.fn()}
+      />,
+    );
+
+    const node = screen.getByTestId('sector-node-north-0');
+    expect(node).toHaveAttribute('data-hotspot-scene', 'sector-board');
+    expect(node).toHaveAttribute('data-hotspot-id', 'north-sector-0');
+    expect(node).toHaveAttribute('data-hotspot-variant', 'image');
+    expect(screen.getByText('procyon blue-signal')).toBeInTheDocument();
+  });
+
   it('hides image-mode counters while showing player markers that replaced data', () => {
     const pair = createPair();
     pair.sectors[0] = {
@@ -160,6 +186,43 @@ describe('SectorView', () => {
     );
   });
 
+  it('exposes image-mode sector signal dots through the shared anchor debug layer', () => {
+    useDebugStore.getState().setHotspotDebug(true);
+    const pair = createPair();
+    pair.sectors[0] = {
+      ...pair.sectors[0],
+      signals: [
+        { type: 'player', playerId: 'player-1' },
+        { type: 'data' },
+        { type: 'data' },
+      ],
+      dataCapability: 3,
+      dataSlotCapacity: 3,
+    };
+
+    render(
+      <SectorView
+        pair={pair}
+        playerColors={{ 'player-1': 'red' }}
+        selectableColors={new Set()}
+        clickable={false}
+        highlighted={false}
+        onSelectSector={vi.fn()}
+      />,
+    );
+
+    const slot = screen.getByTestId('sector-node-north-0-slot-0');
+    expect(slot).toHaveAttribute('data-hotspot-scene', 'sector-board');
+    expect(slot).toHaveAttribute('data-hotspot-role', 'anchor');
+    expect(slot).toHaveAttribute('data-hotspot-id', 'north-sector-0-slot-0');
+    expect(slot).toHaveAttribute('data-hotspot-variant', 'image');
+    expect(slot).toHaveAttribute('data-signal-type', 'player');
+    expect(slot.style.getPropertyValue('--sector-data-size')).toBe('22.8px');
+    expect(
+      screen.getByText('procyon blue-signal signal 1'),
+    ).toBeInTheDocument();
+  });
+
   it('renders text-mode sector component with data and winner areas', () => {
     useDebugStore.setState({ textMode: true });
 
@@ -179,6 +242,10 @@ describe('SectorView', () => {
     const firstSectorPanel = screen.getByTestId(
       'sector-node-north-0',
     ).parentElement;
+    expect(screen.getByTestId('sector-node-north-0')).toHaveAttribute(
+      'data-hotspot-variant',
+      'text',
+    );
     const firstSectorWrapper = firstSectorPanel?.parentElement;
     expect(firstSectorPanel?.firstElementChild).toHaveTextContent('procyon');
     expect(firstSectorPanel?.firstElementChild).toHaveTextContent('blue');

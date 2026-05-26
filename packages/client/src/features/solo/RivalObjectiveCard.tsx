@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { HotspotAnchor } from '@/features/hotspots/HotspotAnchor';
 import { cn } from '@/lib/cn';
 import { useTextMode } from '@/stores/debugStore';
 import type { TRivalObjectiveId } from '@/types/re-exports';
@@ -45,14 +46,29 @@ export function RivalObjectiveCard({
             data-testid={`rival-objective-image-${objectiveId}`}
             loading='lazy'
           />
-          <div className='absolute inset-x-1 bottom-1 flex items-center justify-between gap-1 rounded-[3px] bg-background-950/85 px-1 py-0.5'>
-            <span className='truncate readout text-[9px] text-text-100'>
-              {objectiveId}
-            </span>
-            <span className='readout text-[9px] text-accent-200'>
-              {markedCount}/{taskCount}
-            </span>
-          </div>
+          <HotspotAnchor
+            sceneId='rival-board'
+            hotspotId={`objective-${objectiveId}-summary`}
+            baseWidth={1000}
+            baseHeight={1000}
+            x={500}
+            y={910}
+            width={900}
+            height={90}
+            shape='rect'
+            color='#38bdf8'
+            debugLabel={`rival objective ${objectiveId} summary`}
+            className='rounded-[3px]'
+          >
+            <div className='flex h-full w-full items-center justify-between gap-1 rounded-[3px] bg-background-950/85 px-1 py-0.5'>
+              <span className='truncate readout text-[9px] text-text-100'>
+                {objectiveId}
+              </span>
+              <span className='readout text-[9px] text-accent-200'>
+                {markedCount}/{taskCount}
+              </span>
+            </div>
+          </HotspotAnchor>
           <RivalObjectiveImageMarkers
             objectiveId={objectiveId}
             taskCount={taskCount}
@@ -81,19 +97,34 @@ function RivalObjectiveImageMarkers({
   taskCount: number;
 }): React.JSX.Element {
   return (
-    <div className='absolute inset-x-1 top-1 flex gap-1' aria-hidden>
+    <div className='absolute inset-0' aria-hidden>
       {Array.from({ length: taskCount }, (_, index) => {
         const marked = markedTaskIndexes.includes(index);
         return (
-          <span
+          <HotspotAnchor
             key={`${objectiveId}-image-marker-${index}`}
-            className={cn(
-              'h-1.5 flex-1 rounded-full border border-background-950/70',
-              marked ? 'bg-accent-300' : 'bg-background-950/70',
-            )}
-            data-marked={marked ? 'true' : 'false'}
-            data-testid={`rival-objective-marker-${objectiveId}-${index}`}
-          />
+            sceneId='rival-board'
+            hotspotId={`objective-${objectiveId}-task-${index}`}
+            baseWidth={1000}
+            baseHeight={1000}
+            x={((index + 0.5) * 1000) / taskCount}
+            y={42}
+            width={820 / taskCount}
+            height={24}
+            shape='rect'
+            color={marked ? '#facc15' : '#94a3b8'}
+            debugLabel={`rival objective ${objectiveId} task ${index + 1}`}
+            className='flex items-center rounded-full'
+            dataAttributes={{ 'data-marked': marked ? 'true' : 'false' }}
+            testId={`rival-objective-marker-${objectiveId}-${index}`}
+          >
+            <span
+              className={cn(
+                'h-1.5 w-full rounded-full border border-background-950/70',
+                marked ? 'bg-accent-300' : 'bg-background-950/70',
+              )}
+            />
+          </HotspotAnchor>
         );
       })}
     </div>

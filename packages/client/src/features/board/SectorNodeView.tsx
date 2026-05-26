@@ -1,5 +1,6 @@
 import { ESectorTileId } from '@seti/common/constant/sectorSetup';
 import type React from 'react';
+import { HotspotButton } from '@/features/hotspots/HotspotButton';
 import { cn } from '@/lib/cn';
 import type { IPublicSector } from '@/types/re-exports';
 import {
@@ -38,7 +39,7 @@ interface ISectorSignalLayout {
 // each tile's printed art, so its position is fixed relative to the tile
 // — independent of which cardinal the tile gets randomized to. Tile half
 // 0 is the inner sector of the tile, half 1 is the outer.
-const SHARED_TILE_LAYOUT: Readonly<{
+const _SHARED_TILE_LAYOUT: Readonly<{
   0: ISectorSignalLayout;
   1: ISectorSignalLayout;
 }> = {
@@ -285,8 +286,7 @@ export function SectorNodeView({
     sector.otherWinnerBonus ?? [],
   );
   const xPos = index === 0 ? '30%' : '70%';
-  function handleClick(event: React.MouseEvent<HTMLButtonElement>): void {
-    event.stopPropagation();
+  function handleClick(): void {
     if (!isSelectable) {
       return;
     }
@@ -369,18 +369,26 @@ export function SectorNodeView({
             />
           </div>
 
-          <button
-            type='button'
-            data-testid={`sector-node-${position}-${index}`}
+          <HotspotButton
+            sceneId='sector-board'
+            hotspotId={`${position}-${sector.sectorId}`}
+            variant='text'
+            baseWidth={122}
+            baseHeight={96}
+            x={61}
+            y={48}
+            width={122}
+            height={96}
+            shape='rect'
+            testId={`sector-node-${position}-${index}`}
+            debugLabel={`${formatSectorName(sectorName)} ${sector.color}`}
             className={cn(
-              'pointer-events-auto absolute inset-0 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400/80',
-              isSelectable
-                ? 'cursor-pointer bg-accent-500/0 hover:bg-accent-500/10'
-                : 'cursor-default',
+              'pointer-events-auto transition-colors focus-visible:ring-accent-400/80',
+              isSelectable ? 'hover:bg-accent-500/10' : 'cursor-default',
             )}
             onClick={handleClick}
             disabled={!isSelectable}
-            aria-label={`Mark ${sector.color} (${sector.sectorId}) sector`}
+            ariaLabel={`Mark ${sector.color} (${sector.sectorId}) sector`}
           />
         </div>
       </div>
@@ -390,7 +398,7 @@ export function SectorNodeView({
   return (
     <div
       key={`${position}-${sector.sectorId}`}
-      className='absolute h-[44px]'
+      className='absolute h-[44px] w-[120px]'
       style={{
         left: xPos,
         top: '50%',
@@ -416,6 +424,9 @@ export function SectorNodeView({
           playerColors={playerColors}
           textMode={false}
           slotTestIdPrefix={`sector-node-${position}-${index}-slot`}
+          hotspotSceneId='sector-board'
+          hotspotIdPrefix={`${position}-${sector.sectorId}-slot`}
+          hotspotDebugLabelPrefix={`${formatSectorName(sectorName)} ${sector.color} signal`}
           arc={{
             radiusPx: layout.arcRadiusPx,
             dotDiameterPx: layout.dotDiameterPx,
@@ -423,30 +434,29 @@ export function SectorNodeView({
         />
       </div>
 
-      <button
-        type='button'
-        data-testid={`sector-node-${position}-${index}`}
+      <HotspotButton
+        sceneId='sector-board'
+        hotspotId={`${position}-${sector.sectorId}`}
+        variant='image'
+        baseWidth={120}
+        baseHeight={44}
+        x={60 + style.circleX}
+        y={22 + style.circleY}
+        width={DEFAULT_SECTOR_SIGNAL_STYLE.circleSize}
+        height={DEFAULT_SECTOR_SIGNAL_STYLE.circleSize}
+        testId={`sector-node-${position}-${index}`}
+        debugLabel={`${formatSectorName(sectorName)} ${sector.color}`}
         className={cn(
-          'pointer-events-auto absolute rounded-full border-2 transition-colors',
+          'pointer-events-auto border-2 transition-colors',
           isSelectable
-            ? 'cursor-pointer border-accent-400 bg-accent-500/25 hover:bg-accent-500/45'
+            ? 'border-accent-400 hover:bg-accent-500/45'
             : 'cursor-default border-surface-500/40 bg-surface-800/30',
           isEmphasized &&
             'border-amber-300/90 bg-amber-500/20 shadow-[0_0_0_2px_rgba(251,191,36,0.55)]',
         )}
-        style={{
-          width: `var(--sector-circle-size, ${DEFAULT_SECTOR_SIGNAL_STYLE.circleSize}px)`,
-          height: `var(--sector-circle-size, ${DEFAULT_SECTOR_SIGNAL_STYLE.circleSize}px)`,
-          left: '50%',
-          top: '50%',
-          transform: [
-            'translate(-50%, -50%)',
-            `translate(var(--sector-circle-x-${index}, ${style.circleX}px), var(--sector-circle-y-${index}, ${style.circleY}px))`,
-          ].join(' '),
-        }}
         onClick={handleClick}
         disabled={!isSelectable}
-        aria-label={`Mark ${sector.color} (${sector.sectorId}) sector`}
+        ariaLabel={`Mark ${sector.color} (${sector.sectorId}) sector`}
       />
 
       {(isSelectable || isEmphasized) && (

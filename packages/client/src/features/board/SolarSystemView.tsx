@@ -11,6 +11,8 @@ import {
   toTraceRewardPresentations,
 } from '@seti/common/utils/alienTracePresentation';
 import { type CSSProperties, useMemo, useState } from 'react';
+import { HotspotAnchor } from '@/features/hotspots/HotspotAnchor';
+import { HotspotButton } from '@/features/hotspots/HotspotButton';
 import {
   type IOumuamuaDataPillCalibration,
   useOumuamuaCalibration,
@@ -1110,14 +1112,30 @@ export function SolarSystemView({
         />
 
         {!textMode && (
-          <img
-            src='/assets/seti/sun.png'
-            alt=''
-            aria-hidden
-            className='pointer-events-none absolute left-1/2 top-1/2 z-50 w-[10%] -translate-x-1/2 -translate-y-1/2 select-none'
-            style={{ animation: 'spin 1800s linear infinite' }}
-            draggable={false}
-          />
+          <HotspotAnchor
+            sceneId='solar-system'
+            hotspotId='sun'
+            variant='image'
+            baseWidth={SOLAR_BOARD_BASE_SIZE_PX}
+            baseHeight={SOLAR_BOARD_BASE_SIZE_PX}
+            x={SOLAR_BOARD_BASE_SIZE_PX / 2}
+            y={SOLAR_BOARD_BASE_SIZE_PX / 2}
+            width={SOLAR_BOARD_BASE_SIZE_PX * 0.1}
+            height={SOLAR_BOARD_BASE_SIZE_PX * 0.1}
+            color='#facc15'
+            debugLabel='solar sun'
+            className='z-50 select-none'
+            testId='solar-sun'
+          >
+            <img
+              src='/assets/seti/sun.png'
+              alt=''
+              aria-hidden
+              className='pointer-events-none h-full w-full select-none'
+              style={{ animation: 'spin 1800s linear infinite' }}
+              draggable={false}
+            />
+          </HotspotAnchor>
         )}
 
         <SectorGrid
@@ -1196,22 +1214,34 @@ export function SolarSystemView({
               : { x: 0, y: 0 };
 
             return (
-              <button
+              <HotspotButton
                 key={space.spaceId}
-                type='button'
-                data-testid={`solar-space-${space.spaceId}`}
-                data-planet={planet}
-                data-element-types={spaceState?.elementTypes.join(' ')}
-                className='absolute z-70 h-7 w-7 rounded-full border border-transparent bg-transparent transition-all hover:border-accent-400/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/60'
+                sceneId='solar-system'
+                hotspotId={space.spaceId}
+                variant={textMode ? 'text' : 'image'}
+                baseWidth={SOLAR_BOARD_BASE_SIZE_PX}
+                baseHeight={SOLAR_BOARD_BASE_SIZE_PX}
+                x={(space.xPercent * SOLAR_BOARD_BASE_SIZE_PX) / 100}
+                y={(space.yPercent * SOLAR_BOARD_BASE_SIZE_PX) / 100}
+                xPercent={space.xPercent}
+                yPercent={space.yPercent}
+                width={28}
+                height={28}
+                offsetX={hotspotNudge.x}
+                offsetY={hotspotNudge.y}
+                testId={`solar-space-${space.spaceId}`}
+                dataAttributes={{
+                  'data-planet': planet,
+                  'data-element-types': spaceState?.elementTypes.join(' '),
+                }}
+                className='transition-all hover:border-accent-400/60 focus-visible:ring-accent-500/60'
                 style={{
-                  left: `${space.xPercent}%`,
-                  top: `${space.yPercent}%`,
-                  transform: `translate(calc(-50% + ${hotspotNudge.x}px), calc(-50% + ${hotspotNudge.y}px))`,
                   zIndex: isMoveOverlayVisible ? 90 : undefined,
                 }}
                 onClick={() => handleSpaceClick(space.spaceId)}
                 title={`${space.spaceId} - pieces: ${probeCount}`}
-                aria-label={`Space ${space.spaceId}`}
+                ariaLabel={`Space ${space.spaceId}`}
+                debugLabel={space.spaceId}
               >
                 {(isSelected ||
                   isReachable ||
@@ -1229,7 +1259,7 @@ export function SolarSystemView({
                     ].join(' ')}
                   />
                 )}
-              </button>
+              </HotspotButton>
             );
           })}
 
@@ -1310,6 +1340,7 @@ export function SolarSystemView({
             yPercent={item.yPercent}
             offsetX={item.offsetX}
             offsetY={item.offsetY}
+            textMode={textMode}
           />
         ))}
 
@@ -1321,24 +1352,37 @@ export function SolarSystemView({
             yPercent={item.yPercent}
             offsetX={item.offsetX}
             offsetY={item.offsetY}
+            textMode={textMode}
           />
         ))}
 
         {boardPieceView.renderItems.map((piece) => (
-          <div
+          <HotspotAnchor
             key={piece.key}
-            className='pointer-events-none absolute z-80 h-6 w-6'
-            data-testid={
+            sceneId='solar-system'
+            hotspotId={`${piece.kind}-${piece.key}`}
+            variant={textMode ? 'text' : 'image'}
+            baseWidth={SOLAR_BOARD_BASE_SIZE_PX}
+            baseHeight={SOLAR_BOARD_BASE_SIZE_PX}
+            x={(piece.xPercent * SOLAR_BOARD_BASE_SIZE_PX) / 100}
+            y={(piece.yPercent * SOLAR_BOARD_BASE_SIZE_PX) / 100}
+            width={24}
+            height={24}
+            offsetX={piece.offsetX}
+            offsetY={piece.offsetY}
+            color={playerColors[piece.playerId] ?? '#e5e7eb'}
+            debugLabel={`${piece.kind} ${piece.key}`}
+            className='z-80'
+            testId={
               piece.kind === 'mascamites-capsule'
                 ? `solar-capsule-${piece.key}`
                 : `solar-probe-${piece.key}`
             }
-            data-player-id={piece.playerId}
-            data-space-id={piece.spaceId}
+            dataAttributes={{
+              'data-player-id': piece.playerId,
+              'data-space-id': piece.spaceId,
+            }}
             style={{
-              left: `${piece.xPercent}%`,
-              top: `${piece.yPercent}%`,
-              transform: `translate(calc(-50% + ${piece.offsetX}px), calc(-50% + ${piece.offsetY}px))`,
               transition: `left ${PROBE_TRANSITION_MS}ms ease-out, top ${PROBE_TRANSITION_MS}ms ease-out, transform ${PROBE_TRANSITION_MS}ms ease-out`,
               transitionDelay:
                 piece.transitionDelayMs > 0
@@ -1355,7 +1399,7 @@ export function SolarSystemView({
                 playerColor={playerColors[piece.playerId] ?? 'white'}
               />
             )}
-          </div>
+          </HotspotAnchor>
         ))}
 
         {showSpaceConfigDebug && (
@@ -1447,6 +1491,7 @@ function OumuamuaPlanetArt({
     boardWidthPx * OUMUAMUA_PLANET_BASE_WIDTH_FRACTION * calibration.scale,
   );
   const heightPx = Math.round(widthPx / OUMUAMUA_PLANET_ASPECT_RATIO);
+  const boardScale = boardWidthPx / SOLAR_BOARD_BASE_SIZE_PX;
 
   // Convert tangential / radial pixel offsets (calibration knobs) to x/y
   // pixel offsets in the un-rotated image-local frame. The image is
@@ -1466,25 +1511,23 @@ function OumuamuaPlanetArt({
   const offsetY = tangentY + radialY;
 
   return (
-    <div
-      className='pointer-events-none absolute'
-      data-testid={`solar-oumuamua-planet-${point.spaceId}`}
-      style={{
-        left: `${point.xPercent}%`,
-        top: `${point.yPercent}%`,
-        width: `${widthPx}px`,
-        height: `${heightPx}px`,
-        transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px)) rotate(${
-          point.rotationDeg +
-          OUMUAMUA_PLANET_BASE_ROTATION_DEG +
-          calibration.rotationOffset
-        }deg)`,
-        transformOrigin: 'center',
-        // Sit just below the probe layer (z-80) so probes parked on
-        // Oumuamua remain visible. The 3-data dot pill stays above
-        // probes (zIndex: 86) so the markers are still readable.
-        zIndex: 78,
-      }}
+    <HotspotAnchor
+      sceneId='solar-system'
+      hotspotId={`oumuamua-planet-${point.spaceId}`}
+      variant='image'
+      baseWidth={SOLAR_BOARD_BASE_SIZE_PX}
+      baseHeight={SOLAR_BOARD_BASE_SIZE_PX}
+      x={(point.xPercent * SOLAR_BOARD_BASE_SIZE_PX) / 100}
+      y={(point.yPercent * SOLAR_BOARD_BASE_SIZE_PX) / 100}
+      width={widthPx / boardScale}
+      height={heightPx / boardScale}
+      offsetX={offsetX}
+      offsetY={offsetY}
+      shape='rect'
+      color='#a78bfa'
+      debugLabel={`Oumuamua planet ${point.spaceId}`}
+      testId={`solar-oumuamua-planet-${point.spaceId}`}
+      style={{ zIndex: 78 }}
     >
       <img
         src='/assets/seti/aliens/oumuamua/planet.webp'
@@ -1494,9 +1537,15 @@ function OumuamuaPlanetArt({
         style={{
           imageRendering: 'auto',
           filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.55))',
+          transform: `rotate(${
+            point.rotationDeg +
+            OUMUAMUA_PLANET_BASE_ROTATION_DEG +
+            calibration.rotationOffset
+          }deg)`,
+          transformOrigin: 'center',
         }}
       />
-    </div>
+    </HotspotAnchor>
   );
 }
 
@@ -1612,25 +1661,34 @@ function OumuamuaSectorDataList({
   };
 
   return (
-    <div
-      className='pointer-events-none absolute h-0 w-0'
-      data-testid={`solar-oumuamua-sector-${point.spaceId}`}
-      style={{
-        left: `${point.xPercent}%`,
-        top: `${point.yPercent}%`,
-        zIndex: 86,
-      }}
+    <HotspotAnchor
+      sceneId='solar-system'
+      hotspotId={`oumuamua-sector-data-${point.spaceId}`}
+      variant={textMode ? 'text' : 'image'}
+      baseWidth={SOLAR_BOARD_BASE_SIZE_PX}
+      baseHeight={SOLAR_BOARD_BASE_SIZE_PX}
+      x={(point.xPercent * SOLAR_BOARD_BASE_SIZE_PX) / 100}
+      y={(point.yPercent * SOLAR_BOARD_BASE_SIZE_PX) / 100}
+      width={96}
+      height={44}
+      offsetX={offsetX}
+      offsetY={offsetY}
+      shape='rect'
+      color='#67e8f9'
+      debugLabel={`Oumuamua sector data ${tile.sectorId}`}
+      testId={`solar-oumuamua-sector-${point.spaceId}`}
+      style={{ zIndex: 86 }}
       title={`Oumuamua sector ${tile.sectorId}`}
     >
       <div
         className={cn(
-          'absolute left-0 top-0',
+          'absolute left-1/2 top-1/2',
           textMode
             ? 'flex items-center gap-[2px] rounded-full border border-white/75 bg-surface-950/90 px-1 py-0.5 shadow-[0_2px_8px_rgba(0,0,0,0.55)]'
             : 'pointer-events-none',
         )}
         style={{
-          transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px)) rotate(${pillRotation}deg)`,
+          transform: `translate(-50%, -50%) rotate(${pillRotation}deg)`,
           transformOrigin: 'center',
           // Arc-mode children position absolutely; give them a frame so the
           // outer translate above stays the anchor point.
@@ -1648,7 +1706,7 @@ function OumuamuaSectorDataList({
           arc={textMode ? undefined : scaledArc}
         />
       </div>
-    </div>
+    </HotspotAnchor>
   );
 }
 
@@ -1706,12 +1764,14 @@ function SolarAlienTokenMarker({
   yPercent,
   offsetX,
   offsetY,
+  textMode,
 }: {
   token: IPublicSolarSystemAlienToken;
   xPercent: number;
   yPercent: number;
   offsetX: number;
   offsetY: number;
+  textMode: boolean;
 }): React.JSX.Element {
   const color = SOLAR_ALIEN_TOKEN_COLOR[token.traceColor];
   const artSrc = resolveAnomalyTokenArtSrc(token);
@@ -1730,15 +1790,22 @@ function SolarAlienTokenMarker({
 
   if (artSrc) {
     return (
-      <div
-        className='pointer-events-none absolute'
-        data-testid={`solar-alien-token-${token.alienType}-${token.sectorIndex}-${token.traceColor}`}
-        style={{
-          left: `${xPercent}%`,
-          top: `${yPercent}%`,
-          transform: `translate(calc(-50% + ${offsetX + tangentX}px), calc(-50% + ${offsetY + tangentY}px))`,
-          zIndex: 78,
-        }}
+      <HotspotAnchor
+        sceneId='solar-system'
+        hotspotId={`alien-token-${token.tokenId}`}
+        variant={textMode ? 'text' : 'image'}
+        baseWidth={SOLAR_BOARD_BASE_SIZE_PX}
+        baseHeight={SOLAR_BOARD_BASE_SIZE_PX}
+        x={(xPercent * SOLAR_BOARD_BASE_SIZE_PX) / 100}
+        y={(yPercent * SOLAR_BOARD_BASE_SIZE_PX) / 100}
+        width={54}
+        height={36}
+        offsetX={offsetX + tangentX}
+        offsetY={offsetY + tangentY}
+        color={color}
+        debugLabel={`solar alien token ${token.tokenId}`}
+        style={{ zIndex: 78 }}
+        testId={`solar-alien-token-${token.alienType}-${token.sectorIndex}-${token.traceColor}`}
         title={token.tokenId}
       >
         <img
@@ -1748,37 +1815,49 @@ function SolarAlienTokenMarker({
           className='block h-9 w-auto select-none drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]'
           draggable={false}
         />
-      </div>
+      </HotspotAnchor>
     );
   }
 
   return (
-    <div
-      className='pointer-events-none absolute inline-flex h-7 min-w-14 items-center overflow-hidden rounded-full border border-surface-100/60 bg-surface-950/95 shadow-[0_2px_6px_rgba(0,0,0,0.55)]'
-      data-testid={`solar-alien-token-${token.alienType}-${token.sectorIndex}-${token.traceColor}`}
+    <HotspotAnchor
+      sceneId='solar-system'
+      hotspotId={`alien-token-${token.tokenId}`}
+      variant={textMode ? 'text' : 'image'}
+      baseWidth={SOLAR_BOARD_BASE_SIZE_PX}
+      baseHeight={SOLAR_BOARD_BASE_SIZE_PX}
+      x={(xPercent * SOLAR_BOARD_BASE_SIZE_PX) / 100}
+      y={(yPercent * SOLAR_BOARD_BASE_SIZE_PX) / 100}
+      width={56}
+      height={28}
+      offsetX={offsetX + tangentX}
+      offsetY={offsetY + tangentY}
+      color={color}
+      debugLabel={`solar alien token ${token.tokenId}`}
+      className='inline-flex min-w-14 items-center overflow-hidden rounded-full'
       style={{
-        left: `${xPercent}%`,
-        top: `${yPercent}%`,
-        transform: `translate(calc(-50% + ${offsetX + tangentX}px), calc(-50% + ${offsetY + tangentY}px))`,
         zIndex: 78,
         boxShadow: `0 0 0 1px ${color}, 0 2px 6px rgba(0,0,0,0.55)`,
       }}
+      testId={`solar-alien-token-${token.alienType}-${token.sectorIndex}-${token.traceColor}`}
       title={token.tokenId}
     >
-      <span
-        className='h-full w-2.5 shrink-0'
-        data-testid='solar-alien-token-trace-color-left'
-        style={{ backgroundColor: color }}
-      />
-      <span className='flex min-w-8 items-center justify-center px-1.5'>
-        <SolarAlienTokenRewardIcons rewards={token.rewards} />
+      <span className='flex h-full w-full overflow-hidden rounded-full border border-surface-100/60 bg-surface-950/95 shadow-[0_2px_6px_rgba(0,0,0,0.55)]'>
+        <span
+          className='h-full w-2.5 shrink-0'
+          data-testid='solar-alien-token-trace-color-left'
+          style={{ backgroundColor: color }}
+        />
+        <span className='flex min-w-8 items-center justify-center px-1.5'>
+          <SolarAlienTokenRewardIcons rewards={token.rewards} />
+        </span>
+        <span
+          className='h-full w-2.5 shrink-0'
+          data-testid='solar-alien-token-trace-color-right'
+          style={{ backgroundColor: color }}
+        />
       </span>
-      <span
-        className='h-full w-2.5 shrink-0'
-        data-testid='solar-alien-token-trace-color-right'
-        style={{ backgroundColor: color }}
-      />
-    </div>
+    </HotspotAnchor>
   );
 }
 
@@ -1788,27 +1867,39 @@ function SolarGlyphidsSectorTokenMarker({
   yPercent,
   offsetX,
   offsetY,
+  textMode,
 }: {
   token: IPublicSolarSystemGlyphidsSectorToken;
   xPercent: number;
   yPercent: number;
   offsetX: number;
   offsetY: number;
+  textMode: boolean;
 }): React.JSX.Element {
   return (
-    <div
-      className='pointer-events-none absolute inline-flex h-7 w-7 items-center justify-center rounded-full border border-lime-200/70 bg-surface-950/95 shadow-[0_2px_6px_rgba(0,0,0,0.55)]'
-      data-testid={`solar-glyphids-sector-token-${token.tokenId}`}
-      style={{
-        left: `${xPercent}%`,
-        top: `${yPercent}%`,
-        transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`,
-        zIndex: 79,
-      }}
+    <HotspotAnchor
+      sceneId='solar-system'
+      hotspotId={`glyphids-sector-token-${token.tokenId}`}
+      variant={textMode ? 'text' : 'image'}
+      baseWidth={SOLAR_BOARD_BASE_SIZE_PX}
+      baseHeight={SOLAR_BOARD_BASE_SIZE_PX}
+      x={(xPercent * SOLAR_BOARD_BASE_SIZE_PX) / 100}
+      y={(yPercent * SOLAR_BOARD_BASE_SIZE_PX) / 100}
+      width={28}
+      height={28}
+      offsetX={offsetX}
+      offsetY={offsetY}
+      color='#bef264'
+      debugLabel={`solar glyphids sector token ${token.tokenId}`}
+      className='inline-flex items-center justify-center rounded-full'
+      style={{ zIndex: 79 }}
+      testId={`solar-glyphids-sector-token-${token.tokenId}`}
       title={token.tokenId}
     >
-      <DescRender desc={`{${token.glyph}[sm]}`} size='desc-mini' smartSize />
-    </div>
+      <span className='inline-flex h-full w-full items-center justify-center rounded-full border border-lime-200/70 bg-surface-950/95 shadow-[0_2px_6px_rgba(0,0,0,0.55)]'>
+        <DescRender desc={`{${token.glyph}[sm]}`} size='desc-mini' smartSize />
+      </span>
+    </HotspotAnchor>
   );
 }
 

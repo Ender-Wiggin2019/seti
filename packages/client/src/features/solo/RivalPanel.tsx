@@ -12,13 +12,14 @@ import {
 } from '@seti/common/utils/alienTracePresentation';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { HotspotAnchor } from '@/features/hotspots/HotspotAnchor';
+import { HotspotButton } from '@/features/hotspots/HotspotButton';
 import { cn } from '@/lib/cn';
 import { useTextMode } from '@/stores/debugStore';
 import type { IPublicRivalState, TPublicSlotReward } from '@/types/re-exports';
@@ -28,10 +29,10 @@ import {
   getRivalBoardImageSrc,
   getRivalBoardTechCategoryOrder,
   getRivalBoardTechPoint,
-  getRivalProgressMarkerPoint,
   getRivalTechTileImage,
   RIVAL_BOARD_COMPUTER_POINTS,
   RIVAL_BOARD_DATA_POOL_POINTS,
+  RIVAL_BOARD_PROGRESS_MARKER_POINTS,
 } from './rivalBoardPresentation';
 
 interface IRivalPanelProps {
@@ -40,6 +41,8 @@ interface IRivalPanelProps {
 }
 
 const PROGRESS_SLOT_COUNT = 12;
+const RIVAL_BOARD_BASE_WIDTH = 1421;
+const RIVAL_BOARD_BASE_HEIGHT = 461;
 const PROGRESS_SLOT_COLORS = [
   'oklch(0.74 0.14 35)',
   'oklch(0.78 0.13 72)',
@@ -104,18 +107,27 @@ export function RivalPanel({
           {t('client.rival_panel.title', { defaultValue: 'Rival Institution' })}
         </p>
         <div aria-hidden className='section-head__rule' />
-        <Button
-          variant='ghost'
-          size='icon'
-          className='h-7 w-7 rounded-full text-xs'
-          aria-label={t('client.rival_panel.rules', {
-            defaultValue: 'Rival rules',
-          })}
-          data-testid='rival-rules-button'
-          onClick={() => setRulesOpen(true)}
-        >
-          <span aria-hidden>?</span>
-        </Button>
+        <span className='relative inline-block h-7 w-7'>
+          <HotspotButton
+            sceneId='rival-board'
+            hotspotId='rules'
+            baseWidth={28}
+            baseHeight={28}
+            x={14}
+            y={14}
+            width={28}
+            height={28}
+            testId='rival-rules-button'
+            debugLabel='rival rules'
+            ariaLabel={t('client.rival_panel.rules', {
+              defaultValue: 'Rival rules',
+            })}
+            className='grid place-items-center rounded-full text-xs text-text-300 transition-colors hover:bg-surface-800/70'
+            onClick={() => setRulesOpen(true)}
+          >
+            <span aria-hidden>?</span>
+          </HotspotButton>
+        </span>
         <span className='readout text-[10px] text-text-300'>
           D{rival.difficulty}
         </span>
@@ -173,7 +185,6 @@ function RivalImageModeBoard({
 }: IRivalPanelProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const activeSlot = normalizeProgressSlot(rival.progressSlot);
-  const markerPoint = getRivalProgressMarkerPoint(activeSlot);
   const boardImageSrc = getRivalBoardImageSrc(rival.boardConfigId);
   const computerSlots = getRivalComputerSlots(rival);
   const techIds = rivalTechs ?? rival.techIds ?? [];
@@ -197,40 +208,35 @@ function RivalImageModeBoard({
           draggable={false}
         />
 
-        <div
-          className='absolute left-2 top-2 rounded-[4px] border border-background-950/65 bg-background-950/80 px-2 py-1 shadow-hairline-inset'
-          data-testid='rival-progress'
+        <HotspotAnchor
+          sceneId='rival-board'
+          hotspotId='progress-readout'
+          baseWidth={RIVAL_BOARD_BASE_WIDTH}
+          baseHeight={RIVAL_BOARD_BASE_HEIGHT}
+          x={(RIVAL_BOARD_BASE_WIDTH * 5.2) / 100}
+          y={(RIVAL_BOARD_BASE_HEIGHT * 11) / 100}
+          width={68}
+          height={44}
+          shape='rect'
+          color='#38bdf8'
+          debugLabel='rival progress readout'
+          className='z-10 rounded-[4px]'
+          testId='rival-progress'
         >
-          <p className='micro-label text-[8px] text-text-500'>
-            {t('client.rival_panel.progress', { defaultValue: 'Progress' })}
-          </p>
-          <span
-            className='readout text-xs text-text-100'
-            data-testid='rival-progress-total'
-          >
-            {rival.progress}
-          </span>
-        </div>
+          <div className='h-full w-full rounded-[4px] border border-background-950/65 bg-background-950/80 px-2 py-1 shadow-hairline-inset'>
+            <p className='micro-label text-[8px] text-text-500'>
+              {t('client.rival_panel.progress', { defaultValue: 'Progress' })}
+            </p>
+            <span
+              className='readout text-xs text-text-100'
+              data-testid='rival-progress-total'
+            >
+              {rival.progress}
+            </span>
+          </div>
+        </HotspotAnchor>
 
-        <div
-          className='absolute z-20 flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center'
-          style={positionStyle(markerPoint)}
-          data-slot={String(activeSlot)}
-          data-reference-x={markerPoint.x.toFixed(2)}
-          data-reference-y={markerPoint.y.toFixed(2)}
-          data-testid='rival-board-progress-marker'
-          title={`Progress ${activeSlot + 1}`}
-        >
-          <img
-            src='/assets/seti/tokens/sky/redSky.png'
-            alt=''
-            aria-hidden
-            className='h-full w-full rounded-full drop-shadow-[0_0_5px_rgba(255,60,45,0.9)]'
-            data-current='true'
-            data-fill-mode='background'
-            data-testid={`rival-progress-slot-${activeSlot}`}
-          />
-        </div>
+        <RivalBoardProgressSpots activeSlot={activeSlot} />
 
         <div
           className='absolute inset-0 z-10'
@@ -242,10 +248,18 @@ function RivalImageModeBoard({
           {computerSlots.map(({ filled, reward }, index) => {
             const point = RIVAL_BOARD_COMPUTER_POINTS[index];
             return (
-              <div
+              <HotspotAnchor
                 key={`rival-board-computer-${index}`}
-                className='absolute -translate-x-1/2 -translate-y-1/2'
-                style={point ? positionStyle(point) : undefined}
+                sceneId='rival-board'
+                hotspotId={`computer-slot-${index}`}
+                baseWidth={RIVAL_BOARD_BASE_WIDTH}
+                baseHeight={RIVAL_BOARD_BASE_HEIGHT}
+                x={point ? (RIVAL_BOARD_BASE_WIDTH * point.x) / 100 : 0}
+                y={point ? (RIVAL_BOARD_BASE_HEIGHT * point.y) / 100 : 0}
+                width={28}
+                height={28}
+                color='#22c55e'
+                debugLabel={`rival computer ${index + 1}`}
               >
                 <RivalComputerSlot
                   filled={filled}
@@ -253,7 +267,7 @@ function RivalImageModeBoard({
                   reward={reward}
                   className='h-7 w-7 rounded-full'
                 />
-              </div>
+              </HotspotAnchor>
             );
           })}
         </div>
@@ -264,9 +278,20 @@ function RivalImageModeBoard({
           techIds={techIds}
         />
 
-        <div
-          className='absolute left-[47%] top-[37%] z-10 w-[13%] min-w-14 -translate-x-1/2 -translate-y-1/2'
-          data-testid='rival-current-card'
+        <HotspotAnchor
+          sceneId='rival-board'
+          hotspotId='current-action-card'
+          baseWidth={RIVAL_BOARD_BASE_WIDTH}
+          baseHeight={RIVAL_BOARD_BASE_HEIGHT}
+          x={(RIVAL_BOARD_BASE_WIDTH * 47) / 100}
+          y={(RIVAL_BOARD_BASE_HEIGHT * 37) / 100}
+          width={(RIVAL_BOARD_BASE_WIDTH * 13) / 100}
+          height={((RIVAL_BOARD_BASE_WIDTH * 13) / 100 / 197) * 276}
+          shape='rect'
+          color='#a78bfa'
+          debugLabel='rival current action'
+          className='z-10 min-w-14 rounded-[4px]'
+          testId='rival-current-card'
         >
           <span className='sr-only'>
             {rival.actionDeck.currentCardId ?? '-'}
@@ -275,11 +300,22 @@ function RivalImageModeBoard({
             cardId={rival.actionDeck.currentCardId}
             compact
           />
-        </div>
+        </HotspotAnchor>
 
-        <div
-          className='absolute right-2 top-2 z-10 flex flex-col gap-1'
-          data-testid='rival-board-action-deck'
+        <HotspotAnchor
+          sceneId='rival-board'
+          hotspotId='action-deck-readouts'
+          baseWidth={RIVAL_BOARD_BASE_WIDTH}
+          baseHeight={RIVAL_BOARD_BASE_HEIGHT}
+          x={(RIVAL_BOARD_BASE_WIDTH * 94) / 100}
+          y={(RIVAL_BOARD_BASE_HEIGHT * 14) / 100}
+          width={64}
+          height={72}
+          shape='rect'
+          color='#38bdf8'
+          debugLabel='rival action deck readouts'
+          className='z-10 flex flex-col gap-1 rounded-[4px]'
+          testId='rival-board-action-deck'
         >
           <RivalBoardDeckReadout
             label={t('client.rival_panel.draw', { defaultValue: 'Draw' })}
@@ -295,13 +331,66 @@ function RivalImageModeBoard({
           >
             {rival.actionDeck.discardPileSize}
           </RivalBoardDeckReadout>
-        </div>
+        </HotspotAnchor>
       </div>
 
       <div className='grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,0.85fr),minmax(0,1.15fr)]'>
         <RivalTechPile techIds={techIds} />
         <RivalObjectives rival={rival} />
       </div>
+    </>
+  );
+}
+
+function RivalBoardProgressSpots({
+  activeSlot,
+}: {
+  activeSlot: number;
+}): React.JSX.Element {
+  return (
+    <>
+      {RIVAL_BOARD_PROGRESS_MARKER_POINTS.map((point, index) => {
+        const current = index === activeSlot;
+        return (
+          <HotspotAnchor
+            key={`rival-progress-slot-${index}`}
+            sceneId='rival-board'
+            hotspotId={`progress-slot-${index}`}
+            baseWidth={RIVAL_BOARD_BASE_WIDTH}
+            baseHeight={RIVAL_BOARD_BASE_HEIGHT}
+            x={(RIVAL_BOARD_BASE_WIDTH * point.x) / 100}
+            y={(RIVAL_BOARD_BASE_HEIGHT * point.y) / 100}
+            width={24}
+            height={24}
+            color='#ef4444'
+            debugLabel={`rival progress ${index + 1}`}
+            className='z-20 flex items-center justify-center'
+            dataAttributes={{
+              'data-slot': String(index),
+              'data-reference-x': point.x.toFixed(2),
+              'data-reference-y': point.y.toFixed(2),
+            }}
+            testId={
+              current
+                ? 'rival-board-progress-marker'
+                : `rival-board-progress-slot-${index}`
+            }
+            title={`Progress ${index + 1}`}
+          >
+            {current ? (
+              <img
+                src='/assets/seti/tokens/sky/redSky.png'
+                alt=''
+                aria-hidden
+                className='h-full w-full rounded-full drop-shadow-[0_0_5px_rgba(255,60,45,0.9)]'
+                data-current='true'
+                data-fill-mode='background'
+                data-testid={`rival-progress-slot-${activeSlot}`}
+              />
+            ) : null}
+          </HotspotAnchor>
+        );
+      })}
     </>
   );
 }
@@ -527,24 +616,48 @@ function RivalBoardDataPool({ count }: { count: number }): React.JSX.Element {
         const point = RIVAL_BOARD_DATA_POOL_POINTS[index];
 
         return (
-          <img
+          <HotspotAnchor
             key={`rival-board-data-${index}`}
-            src='/assets/seti/tokens/data.png'
-            alt=''
-            aria-hidden
-            className='absolute h-5 w-5 -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]'
-            style={positionStyle(point)}
-            data-testid='rival-board-data-token'
-            draggable={false}
-          />
+            sceneId='rival-board'
+            hotspotId={`data-token-${index}`}
+            baseWidth={RIVAL_BOARD_BASE_WIDTH}
+            baseHeight={RIVAL_BOARD_BASE_HEIGHT}
+            x={(RIVAL_BOARD_BASE_WIDTH * point.x) / 100}
+            y={(RIVAL_BOARD_BASE_HEIGHT * point.y) / 100}
+            width={20}
+            height={20}
+            color='#60a5fa'
+            debugLabel={`rival data token ${index + 1}`}
+            testId='rival-board-data-token'
+          >
+            <img
+              src='/assets/seti/tokens/data.png'
+              alt=''
+              aria-hidden
+              className='h-full w-full drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]'
+              draggable={false}
+            />
+          </HotspotAnchor>
         );
       })}
-      <span
-        className='absolute bottom-[10%] right-[15%] rounded-full border border-background-950/70 bg-background-950/85 px-1.5 py-0.5 readout text-[10px] text-text-100 shadow-hairline-inset'
-        data-testid='rival-board-data-pool-count'
+      <HotspotAnchor
+        sceneId='rival-board'
+        hotspotId='data-pool-count'
+        baseWidth={RIVAL_BOARD_BASE_WIDTH}
+        baseHeight={RIVAL_BOARD_BASE_HEIGHT}
+        x={(RIVAL_BOARD_BASE_WIDTH * 85) / 100}
+        y={(RIVAL_BOARD_BASE_HEIGHT * 90) / 100}
+        width={32}
+        height={24}
+        color='#60a5fa'
+        debugLabel='rival data pool count'
+        className='rounded-full'
+        testId='rival-board-data-pool-count'
       >
-        {count}
-      </span>
+        <span className='flex h-full min-w-full items-center justify-center rounded-full border border-background-950/70 bg-background-950/85 px-1.5 py-0.5 readout text-[10px] text-text-100 shadow-hairline-inset'>
+          {count}
+        </span>
+      </HotspotAnchor>
     </div>
   );
 }
@@ -572,11 +685,21 @@ function RivalBoardTechTiles({
         }
 
         return (
-          <div
+          <HotspotAnchor
             key={`rival-board-tech-${meta.testKey}`}
-            className='absolute w-[8.5%] min-w-10 -translate-x-1/2 -translate-y-1/2'
-            style={positionStyle(point)}
-            data-testid={`rival-board-tech-${meta.testKey}`}
+            sceneId='rival-board'
+            hotspotId={`tech-${meta.testKey}`}
+            baseWidth={RIVAL_BOARD_BASE_WIDTH}
+            baseHeight={RIVAL_BOARD_BASE_HEIGHT}
+            x={(RIVAL_BOARD_BASE_WIDTH * point.x) / 100}
+            y={(RIVAL_BOARD_BASE_HEIGHT * point.y) / 100}
+            width={(RIVAL_BOARD_BASE_WIDTH * 8.5) / 100}
+            height={((RIVAL_BOARD_BASE_WIDTH * 8.5) / 100 / 197) * 276}
+            shape='rect'
+            color='#f97316'
+            debugLabel={`rival tech ${meta.defaultLabel}`}
+            className='min-w-10 rounded-[4px]'
+            testId={`rival-board-tech-${meta.testKey}`}
           >
             <img
               src={getRivalTechTileImage(firstTech)}
@@ -588,7 +711,7 @@ function RivalBoardTechTiles({
             <span className='absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border border-background-950 bg-background-950/90 px-1 readout text-[10px] text-text-100'>
               {techs.length}
             </span>
-          </div>
+          </HotspotAnchor>
         );
       })}
     </div>
@@ -749,13 +872,6 @@ function getRivalComputerSlots(
     filled: rival.computer.filledSlots[index] ?? false,
     reward: slotRewards[index] ?? null,
   }));
-}
-
-function positionStyle(point: { x: number; y: number }): React.CSSProperties {
-  return {
-    left: `${point.x}%`,
-    top: `${point.y}%`,
-  };
 }
 
 function RivalReadout({

@@ -5,7 +5,8 @@ import {
   type IOrganizationAbilityText,
 } from '@seti/common/types/organization';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
+import { HotspotAnchor } from '@/features/hotspots/HotspotAnchor';
+import { HotspotButton } from '@/features/hotspots/HotspotButton';
 import { cn } from '@/lib/cn';
 import { getOrganizationDisplayName } from '@/lib/organizationText';
 import { useTextMode } from '@/stores/debugStore';
@@ -180,17 +181,29 @@ export function OrganizationCard({
           ) : null}
         </div>
         <div className='border-t border-surface-700/70 p-2'>
-          <Button
-            size='sm'
-            disabled={!canUse}
-            onClick={() => onUse(organizationId)}
-            className='h-7 w-full font-mono text-[10px] uppercase tracking-[0.12em]'
-            data-testid={`organization-power-card-${organizationId}`}
-          >
-            {used
-              ? t('client.organizations.power_used')
-              : t('client.free_action_bar.actions.USE_ORGANIZATION_POWER')}
-          </Button>
+          <div className='relative h-7 w-full'>
+            <HotspotButton
+              sceneId='corporation-board'
+              hotspotId={`${organizationId}-power-text`}
+              baseWidth={204}
+              baseHeight={28}
+              x={102}
+              y={14}
+              width={204}
+              height={28}
+              shape='rect'
+              debugLabel={`${name} power`}
+              ariaLabel={`${name} ${t('client.free_action_bar.actions.USE_ORGANIZATION_POWER')}`}
+              disabled={!canUse}
+              onClick={() => onUse(organizationId)}
+              className='flex items-center justify-center font-mono text-[10px] uppercase tracking-[0.12em]'
+              testId={`organization-power-card-${organizationId}`}
+            >
+              {used
+                ? t('client.organizations.power_used')
+                : t('client.free_action_bar.actions.USE_ORGANIZATION_POWER')}
+            </HotspotButton>
+          </div>
         </div>
       </article>
     );
@@ -226,26 +239,49 @@ export function OrganizationCard({
             </section>
           ))}
         </div>
-        <button
-          type='button'
+        <HotspotButton
+          sceneId='corporation-board'
+          hotspotId={`${organizationId}-power`}
+          baseWidth={168}
+          baseHeight={234}
+          x={42}
+          y={210}
+          width={80}
+          height={44}
           disabled={!canUse}
           onClick={() => onUse(organizationId)}
-          aria-label={`${name} ${t('client.free_action_bar.actions.USE_ORGANIZATION_POWER')}`}
+          ariaLabel={`${name} ${t('client.free_action_bar.actions.USE_ORGANIZATION_POWER')}`}
+          debugLabel={`${name} power`}
           className={cn(
-            'absolute bottom-2 left-2 flex h-11 w-20 items-center justify-center rounded-full border font-mono text-[8px] uppercase tracking-[0.1em] transition',
+            'flex items-center justify-center rounded-full border font-mono text-[8px] uppercase tracking-[0.1em] transition',
             canUse
               ? 'border-accent-300 bg-accent-500/85 text-background-950 hover:bg-accent-300'
               : 'cursor-not-allowed border-surface-500 bg-surface-900/75 text-text-500',
           )}
-          data-testid={`organization-power-card-${organizationId}`}
+          testId={`organization-power-card-${organizationId}`}
         >
           {t('client.free_action_bar.actions.USE_ORGANIZATION_POWER')}
-        </button>
+        </HotspotButton>
       </div>
       {used ? (
-        <div className='absolute bottom-3 left-5 flex h-14 w-14 items-center justify-center rounded-full border border-accent-200 bg-background-950/90 font-mono text-[9px] uppercase tracking-[0.12em] text-accent-200 shadow-[0_0_18px_oklch(0.68_0.11_240/0.45)]'>
-          {t('client.organizations.power_used')}
-        </div>
+        <HotspotAnchor
+          sceneId='corporation-board'
+          hotspotId={`${organizationId}-used-badge`}
+          baseWidth={168}
+          baseHeight={234}
+          x={48}
+          y={194}
+          width={56}
+          height={56}
+          color='#facc15'
+          debugLabel={`${name} used badge`}
+          className='rounded-full'
+          testId={`organization-used-badge-${organizationId}`}
+        >
+          <div className='flex h-full w-full items-center justify-center rounded-full border border-accent-200 bg-background-950/90 font-mono text-[9px] uppercase tracking-[0.12em] text-accent-200 shadow-[0_0_18px_oklch(0.68_0.11_240/0.45)]'>
+            {t('client.organizations.power_used')}
+          </div>
+        </HotspotAnchor>
       ) : null}
     </article>
   );

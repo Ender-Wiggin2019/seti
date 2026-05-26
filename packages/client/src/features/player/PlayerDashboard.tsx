@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { CardRender } from '@/features/cards/CardRender';
+import { HotspotAnchor } from '@/features/hotspots/HotspotAnchor';
 import { QuickStartCardPreview } from '@/features/setup/QuickStartCardPreview';
 import { useTextMode } from '@/stores/debugStore';
 import type {
@@ -31,6 +32,16 @@ interface IPlayerIncomeInfo {
   card: number;
 }
 
+interface IPersonalBoardHotspot {
+  id: string;
+  label: string;
+  xPct: number;
+  yPct: number;
+  widthPct: number;
+  heightPct: number;
+  color?: string;
+}
+
 interface IPlayerDashboardProps {
   player: IPublicPlayerState;
   pendingInput: IPlayerInputModel | null;
@@ -45,6 +56,67 @@ interface IPlayerDashboardProps {
    */
   showExofossils?: boolean;
 }
+
+const PLAYER_BOARD_RESOURCE_BASE_WIDTH = 600;
+const PLAYER_BOARD_RESOURCE_BASE_HEIGHT = 48;
+const PLAYER_BOARD_MAIN_BASE_WIDTH = 1000;
+const PLAYER_BOARD_MAIN_BASE_HEIGHT = 420;
+const PLAYER_BOARD_MAIN_HOTSPOTS: IPersonalBoardHotspot[] = [
+  {
+    id: 'tech-launch',
+    label: 'player board launch tech',
+    xPct: 26,
+    yPct: 19,
+    widthPct: 42,
+    heightPct: 27,
+    color: '#f97316',
+  },
+  {
+    id: 'tech-scan',
+    label: 'player board scan tech',
+    xPct: 73,
+    yPct: 19,
+    widthPct: 42,
+    heightPct: 27,
+    color: '#f97316',
+  },
+  {
+    id: 'data-pool',
+    label: 'player board data pool',
+    xPct: 9,
+    yPct: 56,
+    widthPct: 15,
+    heightPct: 23,
+    color: '#60a5fa',
+  },
+  {
+    id: 'analyze',
+    label: 'player board analyze',
+    xPct: 93,
+    yPct: 56,
+    widthPct: 10,
+    heightPct: 25,
+    color: '#22c55e',
+  },
+  {
+    id: 'income',
+    label: 'player board income',
+    xPct: 25,
+    yPct: 86,
+    widthPct: 45,
+    heightPct: 20,
+    color: '#a78bfa',
+  },
+  {
+    id: 'mission-summary',
+    label: 'player board mission summary',
+    xPct: 74,
+    yPct: 86,
+    widthPct: 38,
+    heightPct: 20,
+    color: '#a78bfa',
+  },
+];
 
 /**
  * PlayerDashboard — the player's personal board.
@@ -78,9 +150,17 @@ export function PlayerDashboard({
   const playedCards = player.playedCards ?? playedMissions ?? [];
   const playedCardCount = quickStartCardIds.length + playedCards.length;
 
+  const hotspotVariant = textMode ? 'text' : 'image';
+
   return (
     <section className='space-y-1.5' data-testid='player-dashboard'>
-      <ResourceBar player={player} showExofossils={showExofossils} />
+      <div className='relative'>
+        <ResourceBar player={player} showExofossils={showExofossils} />
+        <PlayerBoardResourceHotspots
+          showExofossils={showExofossils}
+          variant={hotspotVariant}
+        />
+      </div>
       {organizationIds.length > 0 ? (
         <div
           className='flex items-start gap-2 overflow-x-auto'
@@ -205,8 +285,116 @@ export function PlayerDashboard({
             </section>
           </div>
         </div>
+        <PlayerBoardMainHotspots variant={hotspotVariant} />
       </div>
     </section>
+  );
+}
+
+function PlayerBoardResourceHotspots({
+  showExofossils,
+  variant,
+}: {
+  showExofossils: boolean;
+  variant: 'image' | 'text';
+}): React.JSX.Element {
+  const ids = showExofossils
+    ? ['credit', 'energy', 'publicity', 'signal-token', 'score', 'exofossils']
+    : ['credit', 'energy', 'publicity', 'signal-token', 'score'];
+  const widthPct = 100 / ids.length;
+
+  return (
+    <>
+      {ids.map((id, index) => (
+        <HotspotAnchor
+          key={`player-board-resource-${id}`}
+          sceneId='player-board'
+          hotspotId={`resource-${id}`}
+          variant={variant}
+          baseWidth={PLAYER_BOARD_RESOURCE_BASE_WIDTH}
+          baseHeight={PLAYER_BOARD_RESOURCE_BASE_HEIGHT}
+          x={(PLAYER_BOARD_RESOURCE_BASE_WIDTH * (index + 0.5)) / ids.length}
+          y={PLAYER_BOARD_RESOURCE_BASE_HEIGHT / 2}
+          width={(PLAYER_BOARD_RESOURCE_BASE_WIDTH * widthPct) / 100}
+          height={PLAYER_BOARD_RESOURCE_BASE_HEIGHT}
+          shape='rect'
+          color='#38bdf8'
+          opacity={0.2}
+          debugLabel={`player board ${id}`}
+        />
+      ))}
+    </>
+  );
+}
+
+function PlayerBoardMainHotspots({
+  variant,
+}: {
+  variant: 'image' | 'text';
+}): React.JSX.Element {
+  return (
+    <>
+      {PLAYER_BOARD_MAIN_HOTSPOTS.map((hotspot) => (
+        <HotspotAnchor
+          key={`player-board-${hotspot.id}`}
+          sceneId='player-board'
+          hotspotId={hotspot.id}
+          variant={variant}
+          baseWidth={PLAYER_BOARD_MAIN_BASE_WIDTH}
+          baseHeight={PLAYER_BOARD_MAIN_BASE_HEIGHT}
+          x={(PLAYER_BOARD_MAIN_BASE_WIDTH * hotspot.xPct) / 100}
+          y={(PLAYER_BOARD_MAIN_BASE_HEIGHT * hotspot.yPct) / 100}
+          width={(PLAYER_BOARD_MAIN_BASE_WIDTH * hotspot.widthPct) / 100}
+          height={(PLAYER_BOARD_MAIN_BASE_HEIGHT * hotspot.heightPct) / 100}
+          shape='rect'
+          color={hotspot.color}
+          opacity={0.2}
+          debugLabel={hotspot.label}
+        />
+      ))}
+      {Array.from({ length: 6 }, (_, index) => {
+        const xPct = 24 + index * 10.5;
+        return (
+          <HotspotAnchor
+            key={`player-board-computer-top-${index}`}
+            sceneId='player-board'
+            hotspotId={`computer-top-${index}`}
+            variant={variant}
+            baseWidth={PLAYER_BOARD_MAIN_BASE_WIDTH}
+            baseHeight={PLAYER_BOARD_MAIN_BASE_HEIGHT}
+            x={(PLAYER_BOARD_MAIN_BASE_WIDTH * xPct) / 100}
+            y={(PLAYER_BOARD_MAIN_BASE_HEIGHT * 48) / 100}
+            width={(PLAYER_BOARD_MAIN_BASE_WIDTH * 8.5) / 100}
+            height={(PLAYER_BOARD_MAIN_BASE_HEIGHT * 11) / 100}
+            shape='rect'
+            color='#22c55e'
+            opacity={0.2}
+            debugLabel={`player board computer top ${index + 1}`}
+          />
+        );
+      })}
+      {Array.from({ length: 6 }, (_, index) => {
+        const xPct = 24 + index * 10.5;
+        return (
+          <HotspotAnchor
+            key={`player-board-computer-bottom-${index}`}
+            sceneId='player-board'
+            hotspotId={`computer-bottom-${index}`}
+            variant={variant}
+            baseWidth={PLAYER_BOARD_MAIN_BASE_WIDTH}
+            baseHeight={PLAYER_BOARD_MAIN_BASE_HEIGHT}
+            x={(PLAYER_BOARD_MAIN_BASE_WIDTH * xPct) / 100}
+            y={(PLAYER_BOARD_MAIN_BASE_HEIGHT * 65) / 100}
+            width={(PLAYER_BOARD_MAIN_BASE_WIDTH * 8.5) / 100}
+            height={(PLAYER_BOARD_MAIN_BASE_HEIGHT * 11) / 100}
+            shape='rect'
+            color='#22c55e'
+            opacity={0.2}
+            debugLabel={`player board computer bottom ${index + 1}`}
+          />
+        );
+      })}
+    </>
   );
 }
 

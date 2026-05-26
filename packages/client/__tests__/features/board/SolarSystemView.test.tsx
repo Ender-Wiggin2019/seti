@@ -352,7 +352,12 @@ function getTranslateXOffsetPx(transform: string): number {
 describe('SolarSystemView', () => {
   beforeEach(() => {
     window.localStorage.clear();
-    useDebugStore.setState({ textMode: false });
+    useDebugStore.setState({
+      textMode: false,
+      hotspotDebug: false,
+      hotspotOverrides: {},
+      hotspotDraftOverrides: {},
+    });
     useGameViewStore.setState({
       activeTab: 'board',
       zoom: 0.9,
@@ -377,6 +382,50 @@ describe('SolarSystemView', () => {
 
     const allSpaces = screen.getAllByRole('button', { name: /Space space-/ });
     expect(allSpaces).toHaveLength(32);
+  });
+
+  it('exposes solar spaces through the shared hotspot debug layer', () => {
+    useDebugStore.getState().setHotspotDebug(true);
+
+    render(
+      <SolarSystemView
+        solarSystem={createSolarSystemMock()}
+        sectors={createSectorsMock()}
+        setupConfig={defaultSetup}
+        pendingInput={null}
+        playerColors={{ 'player-1': 'red' }}
+        myPlayerId='player-1'
+        movementPoints={1}
+        onMoveProbe={vi.fn()}
+        onRespondInput={vi.fn()}
+      />,
+    );
+
+    const space = screen.getByTestId('solar-space-space-0');
+    expect(space).toHaveAttribute('data-hotspot-scene', 'solar-system');
+    expect(space).toHaveAttribute('data-hotspot-id', 'space-0');
+    expect(space).toHaveAttribute('data-hotspot-variant', 'image');
+    expect(screen.getByText('space-0')).toBeInTheDocument();
+  });
+
+  it('uses a separate hotspot variant for text-mode solar spaces', () => {
+    useDebugStore.getState().setHotspotDebug(true);
+    useDebugStore.setState({
+      textMode: true,
+      hotspotOverrides: {
+        'solar-system:image': {
+          'space-0': { x: 0, y: 0, width: 80, height: 80 },
+        },
+      },
+    });
+
+    renderSolarSystemView();
+
+    const space = screen.getByTestId('solar-space-space-0');
+    expect(space).toHaveAttribute('data-hotspot-scene', 'solar-system');
+    expect(space).toHaveAttribute('data-hotspot-id', 'space-0');
+    expect(space).toHaveAttribute('data-hotspot-variant', 'text');
+    expect(space).not.toHaveStyle({ left: '0%', top: '0%' });
   });
 
   it('allows a local text-mode override without changing the global debug store', () => {
@@ -555,6 +604,70 @@ describe('SolarSystemView', () => {
     ).toBeInTheDocument();
   });
 
+  it('exposes image-mode board tokens through the shared anchor debug layer', () => {
+    useDebugStore.getState().setHotspotDebug(true);
+    renderSolarSystemView({
+      solarSystem: {
+        ...createSolarSystemMock(),
+        alienTokens: [
+          {
+            tokenId: 'alien-0-anomaly-token|3|red-trace',
+            alienType: EAlienType.ANOMALIES,
+            sectorIndex: 3,
+            traceColor: ETrace.PINK,
+            rewards: [{ type: 'PUBLICITY', amount: 1 }],
+          },
+        ],
+        glyphidsSectorTokens: [
+          {
+            tokenId: 'glyphids-token|sector|sector-2',
+            alienType: EAlienType.GLYPHIDS,
+            glyph: EAlienIcon.GLYPH_GREEN,
+            sectorId: 'sector-2',
+            sectorIndex: 2,
+          },
+        ],
+      },
+    });
+
+    const probe = screen.getByTestId('solar-probe-player-1-0');
+    expect(probe).toHaveAttribute('data-hotspot-scene', 'solar-system');
+    expect(probe).toHaveAttribute('data-hotspot-id', 'probe-player-1-0');
+    expect(probe).toHaveAttribute('data-hotspot-role', 'anchor');
+
+    const sun = screen.getByTestId('solar-sun');
+    expect(sun).toHaveAttribute('data-hotspot-scene', 'solar-system');
+    expect(sun).toHaveAttribute('data-hotspot-id', 'sun');
+    expect(screen.getByText('solar sun')).toBeInTheDocument();
+
+    const alienToken = screen.getByTestId(
+      `solar-alien-token-${EAlienType.ANOMALIES}-3-${ETrace.PINK}`,
+    );
+    expect(alienToken).toHaveAttribute('data-hotspot-scene', 'solar-system');
+    expect(alienToken).toHaveAttribute(
+      'data-hotspot-id',
+      'alien-token-alien-0-anomaly-token|3|red-trace',
+    );
+
+    const glyphidsToken = screen.getByTestId(
+      'solar-glyphids-sector-token-glyphids-token|sector|sector-2',
+    );
+    expect(glyphidsToken).toHaveAttribute(
+      'data-hotspot-id',
+      'glyphids-sector-token-glyphids-token|sector|sector-2',
+    );
+
+    expect(screen.getByText('probe player-1-0')).toBeInTheDocument();
+    expect(
+      screen.getByText('solar alien token alien-0-anomaly-token|3|red-trace'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'solar glyphids sector token glyphids-token|sector|sector-2',
+      ),
+    ).toBeInTheDocument();
+  });
+
   it('anchors the Oumuamua sector data list at its solar-system cell', () => {
     const solarSystem = createExpandedOuterRingMock();
     const tile: IPublicOumuamuaTile = {
@@ -572,11 +685,28 @@ describe('SolarSystemView', () => {
 
     const anchor = screen.getByTestId('solar-oumuamua-sector-ring-4-cell-8');
     const targetCell = screen.getByTestId('solar-space-ring-4-cell-8');
+    const planetArt = screen.getByTestId('solar-oumuamua-planet-ring-4-cell-8');
     const dataList = screen.getByTestId('solar-oumuamua-data-list');
     const slots = screen.getAllByTestId(/^solar-oumuamua-data-slot-/);
 
-    expect(anchor.style.left).toBe(targetCell.style.left);
-    expect(anchor.style.top).toBe(targetCell.style.top);
+    expect(parseFloat(anchor.style.left)).toBeCloseTo(
+      parseFloat(targetCell.style.left),
+      5,
+    );
+    expect(parseFloat(anchor.style.top)).toBeCloseTo(
+      parseFloat(targetCell.style.top),
+      5,
+    );
+    expect(anchor).toHaveAttribute('data-hotspot-scene', 'solar-system');
+    expect(anchor).toHaveAttribute(
+      'data-hotspot-id',
+      'oumuamua-sector-data-ring-4-cell-8',
+    );
+    expect(planetArt).toHaveAttribute('data-hotspot-scene', 'solar-system');
+    expect(planetArt).toHaveAttribute(
+      'data-hotspot-id',
+      'oumuamua-planet-ring-4-cell-8',
+    );
     // The arc layout positions each dot via absolute children of the
     // data-list wrapper, so the wrapper itself sits at the tile and a
     // `translate(...) rotate(...)` carries it to the calibrated offset.
@@ -645,8 +775,10 @@ describe('SolarSystemView', () => {
 
     const cell = screen.getByTestId('solar-text-cell-state:ring-3-cell-15');
     const hotspot = screen.getByTestId('solar-space-ring-3-cell-15');
-    const dataList = screen.getByTestId('solar-oumuamua-data-list');
-    const dataListX = getTranslateXOffsetPx(dataList.style.transform);
+    const dataAnchor = screen.getByTestId(
+      'solar-oumuamua-sector-ring-3-cell-15',
+    );
+    const dataListX = getTranslateXOffsetPx(dataAnchor.style.transform);
 
     expect(getTranslateXOffsetPx(cell.style.transform)).toBeCloseTo(
       dataListX,

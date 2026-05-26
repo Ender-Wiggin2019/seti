@@ -95,7 +95,12 @@ function createMoonLandingState(): {
 describe('PlanetaryBoardView', () => {
   beforeEach(() => {
     window.localStorage.clear();
-    useDebugStore.setState({ textMode: false });
+    useDebugStore.setState({
+      textMode: false,
+      hotspotDebug: false,
+      hotspotOverrides: {},
+      hotspotDraftOverrides: {},
+    });
   });
 
   it('keeps image mode focused on the board image and board tokens', () => {
@@ -118,6 +123,51 @@ describe('PlanetaryBoardView', () => {
     expect(
       screen.getByLabelText('planet-board-token-player-2'),
     ).toBeInTheDocument();
+  });
+
+  it('exposes image-mode board tokens through the shared anchor debug layer', () => {
+    useDebugStore.getState().setHotspotDebug(true);
+    const planetaryBoard = createPlanetaryBoardMock();
+    const marsState = planetaryBoard.planets[EPlanet.MARS];
+    if (!marsState) throw new Error('Mars state missing');
+    planetaryBoard.planets[EPlanet.MARS] = {
+      ...marsState,
+      alienTokens: [
+        {
+          tokenId: 'glyphids-token|planet|mars',
+          alienType: EAlienType.GLYPHIDS,
+          glyph: EAlienIcon.GLYPH_GREEN,
+        },
+      ],
+    };
+
+    render(
+      <PlanetaryBoardView
+        planetaryBoard={planetaryBoard}
+        pendingInput={null}
+        playerColors={{ 'player-1': 'red', 'player-2': 'blue' }}
+      />,
+    );
+
+    const orbitToken = screen.getByLabelText('planet-board-token-player-1');
+    expect(orbitToken).toHaveAttribute('data-hotspot-scene', 'planet-board');
+    expect(orbitToken).toHaveAttribute(
+      'data-hotspot-id',
+      `${EPlanet.MARS}-orbit-token-0`,
+    );
+    expect(orbitToken).toHaveAttribute('data-hotspot-role', 'anchor');
+
+    const alienToken = screen.getByTestId(
+      'planet-board-alien-token-glyphids-token|planet|mars',
+    );
+    expect(alienToken).toHaveAttribute('data-hotspot-scene', 'planet-board');
+    expect(alienToken).toHaveAttribute(
+      'data-hotspot-id',
+      `${EPlanet.MARS}-alien-token-glyphids-token|planet|mars`,
+    );
+
+    expect(screen.getByText('Mars orbit (player-1)')).toBeInTheDocument();
+    expect(screen.getByText('glyph-green glyph token')).toBeInTheDocument();
   });
 
   it('renders text-mode planet cards from projected board state', () => {
@@ -201,6 +251,11 @@ describe('PlanetaryBoardView', () => {
 
     const marsTarget = screen.getByTestId(`planet-target-${EPlanet.MARS}`);
     expect(marsTarget.className).toContain('ring-1');
+    expect(marsTarget).toHaveAttribute('data-hotspot-scene', 'planet-board');
+    expect(marsTarget).toHaveAttribute(
+      'data-hotspot-id',
+      `${EPlanet.MARS}-orbit-0`,
+    );
 
     fireEvent.click(marsTarget);
 
@@ -209,6 +264,24 @@ describe('PlanetaryBoardView', () => {
       type: EPlayerInputType.PLANET,
       planet: EPlanet.MARS,
     });
+  });
+
+  it('shows planet image-mode hotspot labels when hotspot debug is enabled', () => {
+    useDebugStore.getState().setHotspotDebug(true);
+
+    render(
+      <PlanetaryBoardView
+        planetaryBoard={createPlanetaryBoardMock()}
+        pendingInput={{
+          inputId: 'input-1',
+          type: EPlayerInputType.PLANET,
+          options: [EPlanet.MARS],
+        }}
+        playerColors={{}}
+      />,
+    );
+
+    expect(screen.getAllByText('Mars planet-land').length).toBeGreaterThan(0);
   });
 
   it('uses neutral moon availability copy instead of open state', () => {

@@ -1,4 +1,5 @@
 import type React from 'react';
+import { HotspotAnchor } from '@/features/hotspots/HotspotAnchor';
 import type { IPublicSectorSignal } from '@/types/re-exports';
 
 // The printed sector data slot is a small oval inscribed in the tile arc.
@@ -85,6 +86,9 @@ interface ISectorSignalListProps {
   textMode: boolean;
   slotTestIdPrefix?: string;
   showPlayerSignals?: boolean;
+  hotspotSceneId?: string;
+  hotspotIdPrefix?: string;
+  hotspotDebugLabelPrefix?: string;
   /**
    * When provided (real mode only), dots are positioned along a curved
    * arc instead of a horizontal row, matching the printed sector tile's
@@ -102,6 +106,9 @@ export function SectorSignalList({
   slotTestIdPrefix,
   showPlayerSignals = true,
   arc,
+  hotspotSceneId,
+  hotspotIdPrefix,
+  hotspotDebugLabelPrefix,
 }: ISectorSignalListProps): React.JSX.Element {
   const slotCount = showPlayerSignals
     ? Math.max(signals.length, capacity)
@@ -147,7 +154,9 @@ export function SectorSignalList({
         {arcIndexes.map((slotIndex) => {
           const signal = signals[slotIndex];
           const visibleSignal =
-            !showPlayerSignals && signal?.type === 'player' ? undefined : signal;
+            !showPlayerSignals && signal?.type === 'player'
+              ? undefined
+              : signal;
           const angleDeg = startDeg + stepDeg * slotIndex;
           // The arc's centre of curvature points toward the sun (board
           // centre). In tile-local coordinates the arc bows upward: dot
@@ -156,6 +165,45 @@ export function SectorSignalList({
           const rad = (angleDeg * Math.PI) / 180;
           const x = Math.sin(rad) * arc.radiusPx;
           const y = arc.radiusPx - Math.cos(rad) * arc.radiusPx;
+          const testId = slotTestIdPrefix
+            ? `${slotTestIdPrefix}-${slotIndex}`
+            : undefined;
+          if (hotspotSceneId && hotspotIdPrefix) {
+            const playerId =
+              visibleSignal?.type === 'player'
+                ? visibleSignal.playerId
+                : undefined;
+            return (
+              <HotspotAnchor
+                key={slotIndex}
+                sceneId={hotspotSceneId}
+                hotspotId={`${hotspotIdPrefix}-${slotIndex}`}
+                variant='image'
+                baseWidth={120}
+                baseHeight={44}
+                x={60 + x}
+                y={22 + y}
+                width={dotDiameterPx}
+                height={dotDiameterPx}
+                color='#67e8f9'
+                debugLabel={`${hotspotDebugLabelPrefix ?? hotspotIdPrefix} ${slotIndex + 1}`}
+                style={{
+                  ['--sector-data-size' as string]: `${dotDiameterPx}px`,
+                }}
+                dataAttributes={{
+                  'data-signal-type': visibleSignal?.type ?? 'empty',
+                  'data-player-id': playerId,
+                }}
+                testId={testId}
+              >
+                <SectorSignalDot
+                  signal={visibleSignal}
+                  playerColors={playerColors}
+                  textMode={textMode}
+                />
+              </HotspotAnchor>
+            );
+          }
           return (
             <span
               key={slotIndex}
@@ -171,11 +219,7 @@ export function SectorSignalList({
                 signal={visibleSignal}
                 playerColors={playerColors}
                 textMode={textMode}
-                testId={
-                  slotTestIdPrefix
-                    ? `${slotTestIdPrefix}-${slotIndex}`
-                    : undefined
-                }
+                testId={testId}
               />
             </span>
           );
@@ -186,15 +230,48 @@ export function SectorSignalList({
           // (no curvature) since this is just a holding area.
           const offsetX = overflowAnchorX + dotDiameterPx * (i + 1);
           const offsetY = overflowAnchorY;
+          const testId = slotTestIdPrefix
+            ? `${slotTestIdPrefix}-overflow-${i}`
+            : undefined;
+          if (hotspotSceneId && hotspotIdPrefix) {
+            const playerId =
+              signal.type === 'player' ? signal.playerId : undefined;
+            return (
+              <HotspotAnchor
+                key={`overflow-${i}`}
+                sceneId={hotspotSceneId}
+                hotspotId={`${hotspotIdPrefix}-overflow-${i}`}
+                variant='image'
+                baseWidth={120}
+                baseHeight={44}
+                x={60 + offsetX}
+                y={22 + offsetY}
+                width={dotDiameterPx}
+                height={dotDiameterPx}
+                color='#67e8f9'
+                debugLabel={`${hotspotDebugLabelPrefix ?? hotspotIdPrefix} overflow ${i + 1}`}
+                style={{
+                  ['--sector-data-size' as string]: `${dotDiameterPx}px`,
+                }}
+                dataAttributes={{
+                  'data-signal-type': signal.type,
+                  'data-player-id': playerId,
+                }}
+                testId={testId}
+              >
+                <SectorSignalDot
+                  signal={signal}
+                  playerColors={playerColors}
+                  textMode={textMode}
+                />
+              </HotspotAnchor>
+            );
+          }
           return (
             <span
               key={`overflow-${i}`}
               className='pointer-events-none absolute'
-              data-testid={
-                slotTestIdPrefix
-                  ? `${slotTestIdPrefix}-overflow-${i}`
-                  : undefined
-              }
+              data-testid={testId}
               style={{
                 left: '50%',
                 top: '50%',

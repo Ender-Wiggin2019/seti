@@ -29,4 +29,13 @@ describe('GameDebugPage', () => {
       screen.getByRole('button', { name: 'Text Mode On' }),
     ).toBeInTheDocument();
   });
+
+  it('does not expose hotspot calibration controls on the game-flow debug page', () => {
+    render(<GameDebugPage />);
+
+    expect(
+      screen.queryByTestId('debug-hotspot-toggle'),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId('debug-hotspot-reset')).not.toBeInTheDocument();
+  });
 });

@@ -12,6 +12,7 @@ import { AuthPage } from '@/pages/auth/AuthPage';
 import { DebugReplayPage } from '@/pages/game/DebugReplayPage';
 import { GameDebugPage } from '@/pages/game/GameDebugPage';
 import { GamePage, SpectatePage } from '@/pages/game/GamePage';
+import { HotspotsDebugPage } from '@/pages/game/HotspotsDebugPage';
 import { ServerDebugPage } from '@/pages/game/ServerDebugPage';
 import { SolarDebugPage } from '@/pages/game/SolarDebugPage';
 import { SolarSystemCompareDebugPage } from '@/pages/game/SolarSystemCompareDebugPage';
@@ -107,6 +108,17 @@ const gameDebugRoute = createRoute({
     ),
 });
 
+const hotspotsDebugRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/debug/hotspots',
+  component: () =>
+    CLIENT_ENV.VITE_ENABLE_DEBUG_ROUTES ? (
+      <HotspotsDebugPage />
+    ) : (
+      <Navigate to='/' replace />
+    ),
+});
+
 const debugReplayRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/debug/replay',
@@ -162,6 +174,7 @@ const routeTree = rootRoute.addChildren([
   gameRoute,
   spectateRoute,
   gameDebugRoute,
+  hotspotsDebugRoute,
   debugReplayRoute,
   solarDebugRoute,
   solarSystemCompareDebugRoute,
