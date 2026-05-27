@@ -6,7 +6,11 @@ export { HandView } from './HandView';
 export { IncomeTracker } from './IncomeTracker';
 export { OpponentSummary } from './OpponentSummary';
 export { OrganizationBadge } from './OrganizationBadge';
-export { PlayedMissions } from './PlayedMissions';
+export {
+  PlayedMissions,
+  type IPlayedMissionAnnotation,
+  type IPlayedMissionRow,
+} from './PlayedMissions';
 export { PlayerDashboard } from './PlayerDashboard';
 export { QuickStartCardsThumbnail } from './QuickStartCardsThumbnail';
 export { ResourceBar } from './ResourceBar';

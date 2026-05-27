@@ -608,19 +608,28 @@ describe('AlienBoardView', () => {
       },
     };
 
+    const gameState = {
+      players: [
+        { playerId: 'p1', playerName: 'Alice', score: 12 },
+        { playerId: 'p2', playerName: 'Bob', score: 20 },
+      ],
+    } as unknown as Parameters<typeof AlienBoardView>[0]['gameState'];
+
     render(
       <AlienBoardView
         aliens={[alien]}
         playerColors={{ p1: '#f00', p2: '#00f' }}
+        gameState={gameState}
+        myPlayerId='p1'
       />,
     );
 
     expect(screen.getByTestId('alien-0-centaurians-board')).toBeInTheDocument();
     expect(
-      screen.getByTestId('alien-0-centaurians-message-p1'),
+      screen.getByTestId('alien-0-centaurians-messages-rail-p1'),
     ).toHaveTextContent('27 VP');
     expect(
-      screen.getByTestId('alien-0-centaurians-message-p2'),
+      screen.getByTestId('alien-0-centaurians-messages-rail-p2'),
     ).toHaveTextContent('34 VP');
     expect(
       screen.getByTestId('alien-0-centaurians-reward-score-8'),

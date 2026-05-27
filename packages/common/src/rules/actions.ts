@@ -103,7 +103,13 @@ export function canAnalyzeData(player: IPublicPlayerState): boolean {
   return player.computer.columns.every((col) => col.topFilled);
 }
 
-function getCardPriceType(card: IBaseCard): EResource {
+/**
+ * Resolve a card's effective price-resource. Centaurian alien cards
+ * are paid in energy per rulebook; everything else defaults to credit
+ * unless the card data explicitly sets `priceType`. Single source of
+ * truth shared by client renderers (text + image) and server runtime.
+ */
+export function getCardPriceType(card: IBaseCard): EResource {
   return (
     card.priceType ??
     (card.alien === EAlienType.CENTAURIANS

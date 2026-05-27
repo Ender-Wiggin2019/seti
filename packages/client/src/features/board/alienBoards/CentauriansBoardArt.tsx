@@ -1,6 +1,10 @@
-import type { IPublicCentauriansBoard } from '@/types/re-exports';
+import type {
+  IPublicCentauriansBoard,
+  IPublicPlayerState,
+} from '@/types/re-exports';
 import { ETrace } from '@/types/re-exports';
 import { AlienBoardArtFrame } from './AlienBoardArtFrame';
+import { CentauriansMessagesPanel } from './CentauriansMessagesPanel';
 import {
   TraceMarkerOverlay,
   type TTraceColumnLayouts,
@@ -38,16 +42,20 @@ interface ICentauriansBoardArtProps {
   alienIndex: number;
   board: IPublicCentauriansBoard;
   playerColors: Record<string, string>;
+  players: IPublicPlayerState[];
+  myPlayerId?: string;
 }
 
 export function CentauriansBoardArt({
   alienIndex,
   board,
   playerColors,
+  players,
+  myPlayerId,
 }: ICentauriansBoardArtProps): React.JSX.Element {
   return (
     <section
-      className='min-w-0'
+      className='min-w-0 space-y-2'
       data-testid={`alien-${alienIndex}-centaurians-board`}
     >
       <AlienBoardArtFrame
@@ -63,6 +71,13 @@ export function CentauriansBoardArt({
           layouts={CENTAURIANS_LAYOUTS}
         />
       </AlienBoardArtFrame>
+      <CentauriansMessagesPanel
+        alienIndex={alienIndex}
+        board={board}
+        players={players}
+        myPlayerId={myPlayerId}
+        playerColors={playerColors}
+      />
     </section>
   );
 }

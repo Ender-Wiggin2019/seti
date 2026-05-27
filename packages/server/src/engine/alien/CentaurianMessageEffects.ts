@@ -1,70 +1,29 @@
-import { ETech, ETrace } from '@seti/common/types/element';
+import { ETech } from '@seti/common/types/element';
 import type { IBehavior } from '../cards/Behavior.js';
 
-export type TCentaurianDelayedMessageEffect =
-  | { type: 'income' }
-  | { type: 'trace'; trace: ETrace }
-  | { type: 'credit-and-trace'; trace: ETrace.ANY };
+// Re-export the delayed-effect lookup for server callers. Keeps the
+// existing import path stable while the data lives in common (where
+// the client's messages panel can also reach it).
+export {
+  getCentaurianMessageDelayedEffect,
+  type TCentaurianDelayedMessageEffect,
+} from '@seti/common/utils/centaurianMessageDelayedEffects';
 
-interface ICentaurianMessageEffectConfig {
-  immediate: IBehavior;
-  delayed: TCentaurianDelayedMessageEffect;
-}
-
-const CENTAURIAN_MESSAGE_EFFECTS: Record<
-  string,
-  ICentaurianMessageEffectConfig
-> = {
-  'ET.31': {
-    immediate: { launchProbe: true },
-    delayed: { type: 'income' },
-  },
-  'ET.32': {
-    immediate: { gainResources: { data: 2 } },
-    delayed: { type: 'income' },
-  },
-  'ET.33': {
-    immediate: { gainResources: { publicity: 1, credits: 1 } },
-    delayed: { type: 'income' },
-  },
-  'ET.34': {
-    immediate: { drawCards: 1 },
-    delayed: { type: 'trace', trace: ETrace.PINK },
-  },
-  'ET.35': {
-    immediate: { gainResources: { data: 1 } },
-    delayed: { type: 'trace', trace: ETrace.YELLOW },
-  },
-  'ET.36': {
-    immediate: { gainResources: { publicity: 2 } },
-    delayed: { type: 'trace', trace: ETrace.BLUE },
-  },
-  'ET.37': {
-    immediate: { drawCards: 1 },
-    delayed: { type: 'credit-and-trace', trace: ETrace.ANY },
-  },
-  'ET.38': {
-    immediate: { rotateSolarSystem: true, researchTech: ETech.COMPUTER },
-    delayed: { type: 'income' },
-  },
-  'ET.39': {
-    immediate: { rotateSolarSystem: true, researchTech: ETech.SCAN },
-    delayed: { type: 'income' },
-  },
-  'ET.40': {
-    immediate: { markAnySignal: 2 },
-    delayed: { type: 'income' },
-  },
+const CENTAURIAN_IMMEDIATE_BEHAVIORS: Record<string, IBehavior> = {
+  'ET.31': { launchProbe: true },
+  'ET.32': { gainResources: { data: 2 } },
+  'ET.33': { gainResources: { publicity: 1, credits: 1 } },
+  'ET.34': { drawCards: 1 },
+  'ET.35': { gainResources: { data: 1 } },
+  'ET.36': { gainResources: { publicity: 2 } },
+  'ET.37': { drawCards: 1 },
+  'ET.38': { rotateSolarSystem: true, researchTech: ETech.COMPUTER },
+  'ET.39': { rotateSolarSystem: true, researchTech: ETech.SCAN },
+  'ET.40': { markAnySignal: 2 },
 };
 
 export function getCentaurianMessageImmediateBehavior(
   cardId: string,
 ): IBehavior {
-  return CENTAURIAN_MESSAGE_EFFECTS[cardId]?.immediate ?? {};
-}
-
-export function getCentaurianMessageDelayedEffect(
-  cardId: string,
-): TCentaurianDelayedMessageEffect | undefined {
-  return CENTAURIAN_MESSAGE_EFFECTS[cardId]?.delayed;
+  return CENTAURIAN_IMMEDIATE_BEHAVIORS[cardId] ?? {};
 }
