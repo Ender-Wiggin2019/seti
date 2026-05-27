@@ -1,4 +1,5 @@
 import { EPlanet } from '@seti/common/types/protocol/enums';
+import { formatSectorOptionLabel } from '../../board/SectorLabel.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
 import { SelectOption } from '../../input/SelectOption.js';
@@ -8,7 +9,6 @@ import type { IScanTechEffect } from '../../tech/ITech.js';
 import { TechModifierQuery } from '../../tech/TechModifierQuery.js';
 import type { ICardRowCardInfo } from '../cardRow/SelectCardFromCardRowEffect.js';
 import { SelectCardFromCardRowEffect } from '../cardRow/SelectCardFromCardRowEffect.js';
-import { formatSectorOptionLabel } from '../../board/SectorLabel.js';
 import { MarkSectorSignalEffect } from './MarkSectorSignalEffect.js';
 import {
   extractSectorColorFromCardItem,

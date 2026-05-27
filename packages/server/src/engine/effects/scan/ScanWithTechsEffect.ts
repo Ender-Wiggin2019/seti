@@ -9,9 +9,9 @@ import type { IScanTechEffect } from '../../tech/ITech.js';
 import { TechModifierQuery } from '../../tech/TechModifierQuery.js';
 import type { IMarkSectorSignalResult } from './MarkSectorSignalEffect.js';
 import { MarkSectorSignalEffect } from './MarkSectorSignalEffect.js';
-import { getSectorAt } from './ScanEffectUtils.js';
 import type { IScanEffectResult } from './ScanEffect.js';
 import { ScanEffect } from './ScanEffect.js';
+import { getSectorAt } from './ScanEffectUtils.js';
 import {
   ScanEarthNeighborEffect,
   ScanEnergyLaunchEffect,

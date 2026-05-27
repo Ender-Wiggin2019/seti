@@ -122,10 +122,7 @@ export function ReadoutRow({
 }: IReadoutRowProps): React.JSX.Element {
   return (
     <div
-      className={cn(
-        'flex items-center justify-between gap-3 py-2',
-        className,
-      )}
+      className={cn('flex items-center justify-between gap-3 py-2', className)}
     >
       <span className='micro-label'>{label}</span>
       <span className='flex items-center gap-2'>
@@ -190,9 +187,7 @@ export function Bulletin({
             {title}
           </p>
           {body && (
-            <p className='mt-1 text-xs leading-relaxed text-text-500'>
-              {body}
-            </p>
+            <p className='mt-1 text-xs leading-relaxed text-text-500'>{body}</p>
           )}
         </div>
       </div>

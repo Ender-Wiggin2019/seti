@@ -3,9 +3,9 @@ import {
   EPlayerInputType,
   type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
-import type { IAlienPlugin } from '@/engine/alien/IAlienPlugin.js';
 import { AlienRegistry } from '@/engine/alien/AlienRegistry.js';
 import { AlienState } from '@/engine/alien/AlienState.js';
+import type { IAlienPlugin } from '@/engine/alien/IAlienPlugin.js';
 import { AnomaliesAlienPlugin } from '@/engine/alien/plugins/AnomaliesAlienPlugin.js';
 import { DummyAlienPlugin } from '@/engine/alien/plugins/DummyAlienPlugin.js';
 import { ResolveDiscovery } from '@/engine/deferred/ResolveDiscovery.js';
@@ -35,7 +35,13 @@ class InputReturningAlienPlugin implements IAlienPlugin {
     if (!player) return undefined;
     return new SelectOption(
       player,
-      [{ id: 'finish-input-alien', label: 'Finish', onSelect: () => undefined }],
+      [
+        {
+          id: 'finish-input-alien',
+          label: 'Finish',
+          onSelect: () => undefined,
+        },
+      ],
       'Resolve input alien',
     );
   }

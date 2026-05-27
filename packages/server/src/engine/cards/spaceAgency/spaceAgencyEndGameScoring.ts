@@ -1,8 +1,6 @@
 import { EAlienIcon, ETrace } from '@seti/common/types/element';
 import { EAlienType } from '@seti/common/types/protocol/enums';
-import {
-  isGlyphidsAlienBoard,
-} from '@/engine/alien/AlienBoard.js';
+import { isGlyphidsAlienBoard } from '@/engine/alien/AlienBoard.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayer } from '../../player/IPlayer.js';
 

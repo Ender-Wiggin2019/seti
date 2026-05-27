@@ -519,7 +519,7 @@ describe('PlayCardAction — integration', () => {
       const other = game.players.find((p) => p.id !== player.id) as Player;
       player.hand = ['116', '45'];
       player.resources.gain({ credits: 10 });
-      game.mainDeck = new Deck(['refill-1', 'refill-2', 'refill-3'], []);
+      game.mainDeck = new Deck(['50', '51', '52'], []);
       game.cardRow = ['55', '129'];
 
       game.processMainAction(player.id, {

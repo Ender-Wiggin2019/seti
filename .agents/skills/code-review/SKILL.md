@@ -59,7 +59,7 @@ Only load what's relevant — avoid unnecessary context consumption.
 
 ### Step 3 — Execute review
 
-Run the five review dimensions. See [references/checklist.md](references/checklist.md) for detailed checks per dimension. Keep working notes while reviewing; do not write a final report before deciding whether fixes are needed.
+Run the five review dimensions. See [references/checklist.md](references/checklist.md) for detailed checks per dimension and [references/regression-lessons.md](references/regression-lessons.md) for known regression patterns. Keep working notes while reviewing; do not write a final report before deciding whether fixes are needed.
 
 **Dimension 1: Logic Correctness**
 - Cross-reference implementation against game rules (`rule-simple.md`, then `rule-raw.md`/FAQ if needed)

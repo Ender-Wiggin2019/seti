@@ -25,7 +25,7 @@ export class AmoebaAlienPlugin implements IAlienPlugin {
 
   public onDiscover(
     game: IGame,
-    discoverers: IPlayer[],
+    _discoverers: IPlayer[],
   ): PlayerInput | undefined {
     const board = game.alienState.getBoardByType(EAlienType.AMOEBA);
     if (isAmoebaAlienBoard(board) && board.speciesTraceSlots.length === 0) {
@@ -39,11 +39,6 @@ export class AmoebaAlienPlugin implements IAlienPlugin {
           rewards: [{ type: 'VP', amount: 3 }],
           isDiscovery: false,
         });
-      }
-    }
-    for (const player of discoverers) {
-      if (board) {
-        game.alienState.drawAlienCard(player, board, 'deck');
       }
     }
     return undefined;

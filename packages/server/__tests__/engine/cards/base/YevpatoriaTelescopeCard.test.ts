@@ -53,7 +53,10 @@ function createGame(options: { availableTechs?: ETechId[] } = {}): TTestGame {
         tile: { tech: { type: 'scan-tech' }, bonus: undefined },
       }),
     },
-    alienState: { onSolarSystemRotated: () => undefined },
+    alienState: {
+      onSolarSystemRotated: () => undefined,
+      onTechAcquired: () => undefined,
+    },
     rotationCounter: 0,
     solarSystem: { rotateNextDisc: () => 0 },
     blueSector,

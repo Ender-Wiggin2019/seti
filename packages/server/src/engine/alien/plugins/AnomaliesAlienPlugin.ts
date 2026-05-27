@@ -50,7 +50,11 @@ export class AnomaliesAlienPlugin implements IAlienPlugin {
       //   tier 3                 single-cap, ladder[2] = 2 VP + 1 publicity
       //   tier 4                 single-cap, ladder[3] = 3 VP
       //   tier 5 (top overflow)  unlimited,  ladder[4] = 2 VP per occupant
-      for (let tier = 1; tier <= ANOMALY_COLUMN_REWARD_LADDER.length; tier += 1) {
+      for (
+        let tier = 1;
+        tier <= ANOMALY_COLUMN_REWARD_LADDER.length;
+        tier += 1
+      ) {
         const ladderRewards = ANOMALY_COLUMN_REWARD_LADDER[tier - 1] ?? [];
         const isOverflowTier = tier === ANOMALY_COLUMN_REWARD_LADDER.length;
         board.addAnomalyColumn({

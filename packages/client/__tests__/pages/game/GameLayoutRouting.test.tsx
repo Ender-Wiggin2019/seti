@@ -55,22 +55,16 @@ describe('GameLayout routing helpers', () => {
         ),
       ).toBe(false);
       expect(
-        isAlienBoardInput(
-          optionInput(['main-action-land-slot-saturn-planet']),
-        ),
+        isAlienBoardInput(optionInput(['main-action-land-slot-saturn-planet'])),
       ).toBe(false);
     });
 
     it('matches alien-board trace slot pickers', () => {
       expect(
-        isAlienBoardInput(
-          optionInput(['alien-0-discovery-pink-trace']),
-        ),
+        isAlienBoardInput(optionInput(['alien-0-discovery-pink-trace'])),
       ).toBe(true);
       expect(
-        isAlienBoardInput(
-          optionInput(['alien-1-anomaly-column|red-trace|1']),
-        ),
+        isAlienBoardInput(optionInput(['alien-1-anomaly-column|red-trace|1'])),
       ).toBe(true);
     });
   });

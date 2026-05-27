@@ -52,7 +52,7 @@ describe('Organization main actions', () => {
     player.organizationState[EOrganizationId.FUTURESPAN_INSTITUTE] = {};
     player.oncePerRoundUsed[EOrganizationId.FUTURESPAN_INSTITUTE] = false;
     game.cardRow = [];
-    game.mainDeck = new Deck(['drawn-card']);
+    game.mainDeck = new Deck(['128']);
 
     const prepareInput = game.processFreeAction(player.id, {
       type: EFreeAction.USE_ORGANIZATION_POWER,
@@ -91,7 +91,7 @@ describe('Organization main actions', () => {
       preparedCardId: '130',
       unlockScore: 28,
     });
-    expect(player.hand).toEqual(['drawn-card']);
+    expect(player.hand).toEqual(['128']);
     expect(player.oncePerRoundUsed[EOrganizationId.FUTURESPAN_INSTITUTE]).toBe(
       true,
     );
@@ -103,7 +103,7 @@ describe('Organization main actions', () => {
     });
 
     expect(player.resources.credits).toBe(0);
-    expect(player.hand).toEqual(['drawn-card']);
+    expect(player.hand).toEqual(['128']);
     expect(game.mainDeck.getDiscardPile()).toContain('130');
     expect(
       player.organizationState[EOrganizationId.FUTURESPAN_INSTITUTE],

@@ -16,7 +16,7 @@ describe('CreateRoomDialog', () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText('Mission Name'), {
+    fireEvent.change(screen.getByLabelText('Mission Callsign'), {
       target: { value: 'Solo Trial' },
     });
     fireEvent.click(screen.getByLabelText('Solo Rival'));
@@ -46,7 +46,7 @@ describe('CreateRoomDialog', () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText('Mission Name'), {
+    fireEvent.change(screen.getByLabelText('Mission Callsign'), {
       target: { value: 'Agency Trial' },
     });
     fireEvent.click(screen.getByRole('switch', { name: 'Space Agency' }));

@@ -564,12 +564,7 @@ function ReplayBanner({
       >
         <span aria-hidden>‹</span>
       </Button>
-      <Button
-        size='sm'
-        variant='ghost'
-        onClick={onDismiss}
-        className='h-7'
-      >
+      <Button size='sm' variant='ghost' onClick={onDismiss} className='h-7'>
         New Replay
       </Button>
     </div>

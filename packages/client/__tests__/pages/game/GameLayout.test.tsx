@@ -121,7 +121,7 @@ describe('GameLayout', () => {
     expect(screen.getByTestId('bottom-dashboard')).toBeInTheDocument();
     expect(screen.getByTestId('bottom-hand')).toBeInTheDocument();
     expect(screen.getByTestId('bottom-actions')).toBeInTheDocument();
-  }, 10_000);
+  });
 
   it('renders TopBar with round and phase info', async () => {
     await renderLayout();

@@ -75,7 +75,11 @@ export function SelectOptionInput({
  * same icon files the player dashboard uses, matching the rest of
  * the UI's resource readouts.
  */
-const INLINE_ICON_MAP: ReadonlyArray<{ token: string; src: string; alt: string }> = [
+const INLINE_ICON_MAP: ReadonlyArray<{
+  token: string;
+  src: string;
+  alt: string;
+}> = [
   { token: '⚡', src: '/assets/seti/icons/energy.png', alt: 'energy' },
   { token: '💰', src: '/assets/seti/icons/money.png', alt: 'credits' },
 ];

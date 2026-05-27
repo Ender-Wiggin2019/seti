@@ -5,9 +5,9 @@ import {
 } from '@seti/common/types/effect';
 import { EScanAction, ESector } from '@seti/common/types/element';
 import type { EPlanet } from '@seti/common/types/protocol/enums';
+import { formatSectorOptionLabel } from '@/engine/board/SectorLabel.js';
 import { EPriority } from '@/engine/deferred/Priority.js';
 import { SimpleDeferredAction } from '@/engine/deferred/SimpleDeferredAction.js';
-import { formatSectorOptionLabel } from '@/engine/board/SectorLabel.js';
 import { MarkSectorSignalEffect } from '@/engine/effects/scan/MarkSectorSignalEffect.js';
 import {
   findSectorById,
@@ -193,7 +193,9 @@ export class AnySignalQuickMissionCard extends MissionCard {
         const sector = findSectorById(game, sectorId);
         return {
           id: `probe-sector-${sectorId}`,
-          label: sector ? formatSectorOptionLabel(sector) : `Sector ${sectorId}`,
+          label: sector
+            ? formatSectorOptionLabel(sector)
+            : `Sector ${sectorId}`,
           onSelect: () =>
             this.markBySectorIdRepeatedly(
               player,

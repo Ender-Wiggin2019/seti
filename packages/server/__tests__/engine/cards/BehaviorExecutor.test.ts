@@ -411,6 +411,7 @@ describe('BehaviorExecutor — integration', () => {
     it('markDisplayCardSignal surfaces a real SelectCard over the current card row', () => {
       const { game, player } = createIntegrationGame('beh-2-9-5-display');
       game.cardRow = ['55', '71', '110'];
+      game.mainDeck = new Deck(['50', '51', '52'], []);
 
       const pending = drainReturningInput(game, () => {
         getBehaviorExecutor().execute(

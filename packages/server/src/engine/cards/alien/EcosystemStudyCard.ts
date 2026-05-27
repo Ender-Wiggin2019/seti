@@ -1,8 +1,8 @@
 import { ETrace } from '@seti/common/types/element';
 import { EAlienType } from '@seti/common/types/protocol/enums';
-import type { IGame } from '@/engine/IGame.js';
 import { EPriority } from '@/engine/deferred/Priority.js';
 import { SimpleDeferredAction } from '@/engine/deferred/SimpleDeferredAction.js';
+import type { IGame } from '@/engine/IGame.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
 import { EndGameScoringCard } from '../Card.js';
 import type { ICardRuntimeContext } from '../ICard.js';

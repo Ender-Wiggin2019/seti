@@ -338,10 +338,7 @@ function getArkhosSecurityBreachedEventDescription(
   });
 }
 
-function formatArkhosRewardSize(
-  size: string,
-  t: TTranslate,
-): string {
+function formatArkhosRewardSize(size: string, t: TTranslate): string {
   return t(`client.alien_board.arkhos.reward_size.${size}`, {
     defaultValue: prettifyToken(size),
   });

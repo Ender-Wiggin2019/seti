@@ -55,7 +55,6 @@ function hasTranslationSupport(
   const lowerRow = translationRows.find((row) => row.level === 1);
   if (!lowerRow || position + 1 >= lowerRow.glyphs.length) return false;
   return (
-    lowerRow.glyphs[position] !== null &&
-    lowerRow.glyphs[position + 1] !== null
+    lowerRow.glyphs[position] !== null && lowerRow.glyphs[position + 1] !== null
   );
 }

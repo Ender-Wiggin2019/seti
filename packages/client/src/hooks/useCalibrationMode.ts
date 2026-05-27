@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 
-function readQueryParam<T>(name: string, parse: (value: string | null) => T): T {
+function readQueryParam<T>(
+  name: string,
+  parse: (value: string | null) => T,
+): T {
   if (typeof window === 'undefined') return parse(null);
   const params = new URLSearchParams(window.location.search);
   return parse(params.get(name));
@@ -79,9 +82,7 @@ export function useOumuamuaCalibration(): IOumuamuaCalibration {
   const rotationOffset = useQueryParam('oumRot', (raw) =>
     parseFloatOrDefault(raw, 0),
   );
-  const scale = useQueryParam('oumScale', (raw) =>
-    parseFloatOrDefault(raw, 1),
-  );
+  const scale = useQueryParam('oumScale', (raw) => parseFloatOrDefault(raw, 1));
   const offsetT = useQueryParam('oumT', (raw) => parseFloatOrDefault(raw, 0));
   const offsetR = useQueryParam('oumR', (raw) => parseFloatOrDefault(raw, 0));
   return { rotationOffset, scale, offsetT, offsetR };

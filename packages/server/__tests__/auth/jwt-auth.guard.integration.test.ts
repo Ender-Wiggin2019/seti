@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  type INestApplication,
-  Module,
-} from '@nestjs/common';
+import { Controller, Get, type INestApplication, Module } from '@nestjs/common';
 import { APP_GUARD, Reflector } from '@nestjs/core';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';

@@ -7,8 +7,8 @@ import {
   clickMainAction,
   createRoomByUi,
   createUser,
-  enterGameByUi,
   ECoreAlienType,
+  enterGameByUi,
   joinRoomByUi,
   launchGameByUi,
   registerByUi,
@@ -195,9 +195,7 @@ async function expectTraceOccupant(page: Page, slotId: string): Promise<void> {
 async function expectCentauriansDiscovered(page: Page): Promise<void> {
   await openTab(page, 'Aliens');
   await expect(
-    page.getByTestId(
-      `alien-${CENTAURIANS_ALIEN_INDEX}-centaurians-board`,
-    ),
+    page.getByTestId(`alien-${CENTAURIANS_ALIEN_INDEX}-centaurians-board`),
   ).toBeVisible({ timeout: 15_000 });
   await expect(
     page.getByTestId(`alien-${CENTAURIANS_ALIEN_INDEX}-hidden-board`),
@@ -223,9 +221,9 @@ async function expectCentauriansDiscovered(page: Page): Promise<void> {
 async function playFirstCentaurianMessage(page: Page): Promise<void> {
   const energyBefore = await resourceValue(page, 'energy');
   await playHandCard(page, 'ET.31');
-  await expect.poll(() => resourceValue(page, 'energy')).toBeLessThan(
-    energyBefore,
-  );
+  await expect
+    .poll(() => resourceValue(page, 'energy'))
+    .toBeLessThan(energyBefore);
 }
 
 async function researchProbeTech(page: Page): Promise<void> {
@@ -236,9 +234,9 @@ async function researchProbeTech(page: Page): Promise<void> {
     timeout: 10_000,
   });
   await probeStack.click();
-  await expect(page.locator('[data-testid="action-menu-end-turn"]')).toBeVisible(
-    { timeout: 10_000 },
-  );
+  await expect(
+    page.locator('[data-testid="action-menu-end-turn"]'),
+  ).toBeVisible({ timeout: 10_000 });
 }
 
 async function playCard61(page: Page): Promise<void> {
@@ -266,9 +264,9 @@ async function scanThroughCardRow(
     await clickInputOptionById(page, traceSlotId);
   }
   await resolveScanSubActions(page, 5);
-  await expect(page.locator('[data-testid="action-menu-end-turn"]')).toBeVisible(
-    { timeout: 10_000 },
-  );
+  await expect(
+    page.locator('[data-testid="action-menu-end-turn"]'),
+  ).toBeVisible({ timeout: 10_000 });
 }
 
 async function buyRowCard(page: Page, cardId: string): Promise<void> {
@@ -294,9 +292,7 @@ async function endTurnAndClaimCentauriansScoreReward(
   await clickInputOptionById(page, 'claim-centaurians:score-8');
 }
 
-async function expectCentauriansScoreRewardClaimed(
-  page: Page,
-): Promise<void> {
+async function expectCentauriansScoreRewardClaimed(page: Page): Promise<void> {
   await openTab(page, 'Aliens');
   await expect(
     page.getByTestId(

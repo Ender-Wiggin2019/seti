@@ -86,6 +86,15 @@ function createGame(options?: {
               }
               return [{ ringIndex: 3, indexInRing: earthSector * 3 }];
             },
+            getSectorIndexOfPlanet: (planet: EPlanet) => {
+              if (
+                planet !== EPlanet.EARTH ||
+                options?.includeEarthSpace === false
+              ) {
+                return null;
+              }
+              return earthSector;
+            },
           },
   } as unknown as IGame;
 
@@ -113,10 +122,10 @@ function getColumnSlotByTier(
 ) {
   return board.slots.find(
     (slot) =>
-      slot.slotId === `alien-${board.alienIndex}-anomaly-column|${color}|${tier}`,
+      slot.slotId ===
+      `alien-${board.alienIndex}-anomaly-column|${color}|${tier}`,
   );
 }
-
 
 function getTokenBySector(
   game: ReturnType<typeof createGame>['game'],

@@ -1,6 +1,6 @@
-import { EndGameScoringCard } from '../Card.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayer } from '../../player/IPlayer.js';
+import { EndGameScoringCard } from '../Card.js';
 import { loadCardData } from '../loadCardData.js';
 import { scoreGlyphidsLargestSet } from './spaceAgencyEndGameScoring.js';
 

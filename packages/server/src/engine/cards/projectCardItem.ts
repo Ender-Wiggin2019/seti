@@ -11,11 +11,16 @@ export function projectCardItem(card: TCardItem): IBaseCard {
   const optionId = typeof candidate.id === 'string' ? candidate.id : undefined;
   const cardId =
     typeof candidate.cardId === 'string' ? candidate.cardId : undefined;
+  const baseOptionId = optionId?.split('@')[0];
   const lookupId =
-    optionId && hasCardData(optionId) ? optionId : (cardId ?? optionId);
+    optionId && hasCardData(optionId)
+      ? optionId
+      : baseOptionId && hasCardData(baseOptionId)
+        ? baseOptionId
+        : (cardId ?? optionId);
   const projectedId = optionId ?? cardId;
 
-  if (!lookupId || !projectedId) {
+  if (!lookupId || !projectedId || !hasCardData(lookupId)) {
     return { ...(candidate as unknown as IBaseCard) };
   }
 

@@ -59,6 +59,11 @@ function createMockSolarSystem(
   >,
 ) {
   return {
+    getSectorIndexOfPlanet: (planet: EPlanet) => {
+      const pos = planetPositions[planet];
+      if (!pos) return null;
+      return Math.floor(pos.indexInRing / pos.ringIndex);
+    },
     getSpacesOnPlanet: (planet: EPlanet) => {
       const pos = planetPositions[planet];
       if (!pos) return [];

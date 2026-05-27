@@ -247,8 +247,9 @@ export class OumuamuaAlienPlugin implements IAlienPlugin {
         new SimpleDeferredAction(
           player,
           (currentGame) => {
-            const liveBoard =
-              currentGame.alienState?.getBoardByType(EAlienType.OUMUAMUA);
+            const liveBoard = currentGame.alienState?.getBoardByType(
+              EAlienType.OUMUAMUA,
+            );
             if (!isOumuamuaAlienBoard(liveBoard)) return undefined;
             const liveTile = liveBoard.oumuamuaTile;
             // Guard: another player or path may have already drained
