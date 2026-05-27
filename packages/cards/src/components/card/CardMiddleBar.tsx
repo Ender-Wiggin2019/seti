@@ -6,8 +6,8 @@
  * @Description:
  */
 
+import { getCardPriceType } from '@seti/common/rules/actions';
 import { IBaseCard } from '@seti/common/types/BaseCard';
-import { EResource } from '@seti/common/types/element';
 import { getCardMiddleColor } from '@seti/common/utils/color';
 import { useTranslation } from 'react-i18next';
 import { CardPrice } from '@/components/card/CardPrice';
@@ -18,7 +18,7 @@ type Props = {
 };
 export const CardMiddleBar = ({ card }: Props) => {
   const { t } = useTranslation('seti');
-  const priceType = card?.priceType || EResource.CREDIT;
+  const priceType = getCardPriceType(card);
 
   const color = getCardMiddleColor(card);
   return (

@@ -1,3 +1,8 @@
+import {
+  CENTAURIANS_TRACE_COLORS,
+  CENTAURIANS_TRACE_SLOT_DEFS,
+  CENTAURIANS_TRACE_SLOT_PREFIX,
+} from '@seti/common/constant/centaurians';
 import { alienCards } from '@seti/common/data/alienCards';
 import { EResource, ETrace } from '@seti/common/types/element';
 import { EAlienType } from '@seti/common/types/protocol/enums';
@@ -12,7 +17,9 @@ import { RivalResourceResolver } from '../../solo/RivalResourceResolver.js';
 import { RivalSetup } from '../../solo/RivalSetup.js';
 import {
   type AlienBoard,
+  type CentauriansAlienBoard,
   type ICentauriansRewardSlotComponent,
+  type ITraceSlot,
   isCentauriansAlienBoard,
 } from '../AlienBoard.js';
 import { executeSimpleSlotRewards } from '../AlienRewards.js';
@@ -43,7 +50,72 @@ export class CentauriansAlienPlugin implements IAlienPlugin {
       board.pendingMessagesByPlayer[player.id] ??= [];
     }
 
+    if (board.speciesTraceSlots.length === 0) {
+      for (const color of CENTAURIANS_TRACE_COLORS) {
+        this.addTraceColumn(board, color);
+      }
+    }
+
     return undefined;
+  }
+
+  private addTraceColumn(
+    board: CentauriansAlienBoard,
+    color: ETrace,
+  ): void {
+    for (const def of CENTAURIANS_TRACE_SLOT_DEFS) {
+      board.addTraceSlot({
+        slotId: this.buildTraceSlotId(
+          board.alienIndex,
+          color,
+          def.tierFromBottom,
+          def.dataCost,
+        ),
+        alienIndex: board.alienIndex,
+        traceColor: color,
+        maxOccupants: def.maxOccupants,
+        rewards: def.rewards.map((reward) => ({ ...reward })),
+        isDiscovery: false,
+      });
+    }
+  }
+
+  private buildTraceSlotId(
+    alienIndex: number,
+    color: ETrace,
+    tierFromBottom: number,
+    dataCost: number,
+  ): string {
+    return `alien-${alienIndex}-${CENTAURIANS_TRACE_SLOT_PREFIX}|${color}|${tierFromBottom}|${dataCost}`;
+  }
+
+  private parseTraceSlotDataCost(slotId: string): number {
+    if (!slotId.includes(CENTAURIANS_TRACE_SLOT_PREFIX)) return 0;
+    const parts = slotId.split('|');
+    if (parts.length !== 4) return 0;
+    const cost = Number(parts[3]);
+    if (!Number.isInteger(cost) || cost <= 0) return 0;
+    return cost;
+  }
+
+  public canPlaceTraceOnSlot(
+    _game: IGame,
+    player: IPlayer,
+    slot: ITraceSlot,
+  ): boolean {
+    const cost = this.parseTraceSlotDataCost(slot.slotId);
+    if (cost <= 0) return true;
+    return player.resources.canAfford({ data: cost });
+  }
+
+  public onPlaceTraceOnSlot(
+    _game: IGame,
+    player: IPlayer,
+    slot: ITraceSlot,
+  ): void {
+    const cost = this.parseTraceSlotDataCost(slot.slotId);
+    if (cost <= 0) return;
+    player.resources.spend({ data: cost });
   }
 
   public getAlienDeckCardIds(_game: IGame, _board: AlienBoard): string[] {

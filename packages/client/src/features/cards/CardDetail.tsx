@@ -32,7 +32,7 @@ export function CardDetail({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='max-w-5xl bg-surface-900/95'>
+      <DialogContent className='w-fit max-w-fit bg-surface-900/95'>
         <DialogHeader>
           <DialogTitle>{card.name}</DialogTitle>
         </DialogHeader>
@@ -41,11 +41,13 @@ export function CardDetail({
           {textMode ? (
             <CardRender card={card} />
           ) : (
-            <div className='mx-auto w-fit'>
-              <div className='relative h-[335px] w-[240px] sm:h-[376px] sm:w-[270px]'>
-                <div className='absolute left-0 top-0 origin-top-left scale-[1.6] sm:scale-[1.8]'>
-                  <CardRender card={card} />
-                </div>
+            // CardRender's intrinsic size is 150 × 209 (the hand
+            // thumbnail). Reserve the *scaled* footprint here so the
+            // dialog hugs the visible card instead of leaving empty
+            // space on either side.
+            <div className='relative h-[376px] w-[270px] sm:h-[418px] sm:w-[300px]'>
+              <div className='absolute left-0 top-0 origin-top-left scale-[1.8] sm:scale-[2]'>
+                <CardRender card={card} />
               </div>
             </div>
           )}

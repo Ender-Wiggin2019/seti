@@ -1,3 +1,4 @@
+import { getCardPriceType } from '@seti/common/rules/actions';
 import type { IBaseCard, IFreeAction } from '@seti/common/types/BaseCard';
 import {
   EEffectType,
@@ -136,7 +137,7 @@ export function TextCard({ card }: ITextCardProps): React.JSX.Element {
   const freeActionText = formatFreeActions(freeActions);
   const sectorText = card.sector ?? '-';
   const priceValueText = card.price == null ? '-' : String(card.price);
-  const priceTypeText = formatPriceType(card.priceType ?? 'credit');
+  const priceTypeText = formatPriceType(getCardPriceType(card));
 
   return (
     <div

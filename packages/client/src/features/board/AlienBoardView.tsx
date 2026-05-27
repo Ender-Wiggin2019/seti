@@ -30,6 +30,7 @@ import type {
   IPublicOumuamuaBoard,
   IPublicPlanetaryBoard,
   IPublicPlanetState,
+  IPublicPlayerState,
   IPublicTraceSlot,
   TPublicAlienBoard,
 } from '@/types/re-exports';
@@ -45,6 +46,7 @@ import { AmoebaBoard } from './alienBoards/AmoebaBoard';
 import { AnomaliesBoardArt } from './alienBoards/AnomaliesBoardArt';
 import { ArkhosBoard } from './alienBoards/ArkhosBoard';
 import { CentauriansBoardArt } from './alienBoards/CentauriansBoardArt';
+import { CentauriansMessagesPanel } from './alienBoards/CentauriansMessagesPanel';
 import { ExertiansBoardArt } from './alienBoards/ExertiansBoardArt';
 import { GlyphidsBoard } from './alienBoards/GlyphidsBoard';
 import { MascamitesBoardArt } from './alienBoards/MascamitesBoardArt';
@@ -567,6 +569,8 @@ function CentauriansBoardRenderer({
   alienIndex,
   board,
   playerColors,
+  gameState,
+  myPlayerId,
 }: IAlienBoardRendererProps): React.JSX.Element {
   const textMode = useTextMode();
   if (board.type !== 'centaurians') {
@@ -579,12 +583,16 @@ function CentauriansBoardRenderer({
     );
   }
 
+  const players = gameState?.players ?? [];
+
   if (textMode) {
     return (
       <CentauriansBoard
         alienIndex={alienIndex}
         board={board}
         playerColors={playerColors}
+        players={players}
+        myPlayerId={myPlayerId}
       />
     );
   }
@@ -594,6 +602,8 @@ function CentauriansBoardRenderer({
       alienIndex={alienIndex}
       board={board}
       playerColors={playerColors}
+      players={players}
+      myPlayerId={myPlayerId}
     />
   );
 }
@@ -709,56 +719,28 @@ function CentauriansBoard({
   alienIndex,
   board,
   playerColors,
+  players,
+  myPlayerId,
 }: {
   alienIndex: number;
   board: IPublicCentauriansBoard;
   playerColors: Record<string, string>;
+  players: IPublicPlayerState[];
+  myPlayerId?: string;
 }): React.JSX.Element {
   return (
     <section
-      className='min-w-0 rounded border border-surface-700/50 bg-surface-950/30 p-1.5'
+      className='min-w-0 space-y-2 rounded border border-surface-700/50 bg-surface-950/30 p-1.5'
       data-testid={`alien-${alienIndex}-centaurians-board`}
     >
-      <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
-        Messages
-      </div>
-      <div className='grid gap-2 sm:grid-cols-2'>
-        {board.messageMilestones.length === 0 ? (
-          <div className='rounded border border-surface-700/50 bg-surface-900/40 px-2 py-3 font-mono text-[10px] text-text-500'>
-            No messages
-          </div>
-        ) : (
-          board.messageMilestones.map((milestone) => {
-            const pendingCount =
-              board.pendingMessagesByPlayer[milestone.playerId]?.length ?? 0;
-            return (
-              <div
-                key={`${milestone.playerId}-${milestone.threshold}`}
-                className='flex items-center justify-between gap-2 rounded border border-surface-700/60 bg-surface-900/50 px-2 py-1.5'
-                data-testid={`alien-${alienIndex}-centaurians-message-${milestone.playerId}`}
-              >
-                <span className='flex min-w-0 items-center gap-1.5'>
-                  <span
-                    className='h-2.5 w-2.5 shrink-0 rounded-full border border-surface-200/30'
-                    style={{
-                      backgroundColor:
-                        playerColors[milestone.playerId] ?? '#cbd5e1',
-                    }}
-                  />
-                  <span className='truncate font-mono text-[10px] text-text-300'>
-                    {milestone.playerId}
-                  </span>
-                </span>
-                <span className='shrink-0 font-mono text-[11px] font-semibold text-text-100'>
-                  {milestone.threshold} VP
-                  {pendingCount > 0 ? ` / ${pendingCount}` : ''}
-                </span>
-              </div>
-            );
-          })
-        )}
-      </div>
-      <div className='mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3'>
+      <CentauriansMessagesPanel
+        alienIndex={alienIndex}
+        board={board}
+        players={players}
+        myPlayerId={myPlayerId}
+        playerColors={playerColors}
+      />
+      <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-3'>
         {board.rewardSlots.map((slot) => (
           <div
             key={slot.slotId}
@@ -781,7 +763,7 @@ function CentauriansBoard({
         ))}
       </div>
       {board.traceSlots.length > 0 ? (
-        <div className='mt-3'>
+        <div>
           <TraceColumnGrid
             alienIndex={alienIndex}
             area='centaurians-trace'

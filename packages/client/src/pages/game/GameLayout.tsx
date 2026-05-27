@@ -3,6 +3,7 @@ import {
   canPlaySpecificCard,
   getAvailableMainActions,
 } from '@seti/common/rules';
+import { ALL_CARDS } from '@seti/common/data/index';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EPlanet, EResource } from '@seti/common/types/element';
 import { EOrganizationId } from '@seti/common/types/organization';
@@ -35,7 +36,12 @@ import { CardRowView } from '@/features/cards/CardRowView';
 import { EndOfRoundStacks } from '@/features/cards/EndOfRoundStacks';
 import { InputRenderer } from '@/features/input/InputRenderer';
 import { EventLog } from '@/features/log';
-import { HandDock, PlayedMissions, PlayerDashboard } from '@/features/player';
+import {
+  HandDock,
+  type IPlayedMissionRow,
+  PlayedMissions,
+  PlayerDashboard,
+} from '@/features/player';
 import type { IMilestoneItem } from '@/features/scoring';
 import { MilestoneTrack } from '@/features/scoring';
 import { SetupChoiceModal } from '@/features/setup/SetupChoiceModal';
@@ -220,6 +226,62 @@ function findMascamitesCapsules(
     ) ?? []
   );
 }
+
+/**
+ * Build mission-slot rows for the player's pending Centaurian message
+ * cards. Each pending card resolves at a `+15 VP` milestone tracked on
+ * the Centaurian board; we surface the threshold + remaining-VP hint
+ * so the player can see how close they are to triggering each card's
+ * green (delayed) effect. Cards already resolved are NOT shown here —
+ * they've been tucked / discarded and removed from `pendingMessagesByPlayer`.
+ *
+ * Per FAQ Centaurian cards are not missions; they only share the
+ * physical missions slot until they resolve.
+ */
+function buildPendingCentaurianRows(
+  aliens: IPublicAlienState[] | undefined,
+  playerId: string | null,
+  currentScore: number,
+): IPlayedMissionRow[] {
+  if (!playerId) return [];
+  const centaurians = aliens?.find(
+    (alien) => alien.board?.type === 'centaurians',
+  );
+  const board =
+    centaurians?.board?.type === 'centaurians' ? centaurians.board : null;
+  if (!board) return [];
+
+  const pendingCardIds = board.pendingMessagesByPlayer[playerId] ?? [];
+  if (pendingCardIds.length === 0) return [];
+
+  return pendingCardIds.map((cardId, queueIndex) => {
+    const card = CARD_BY_ID.get(cardId);
+    const milestone = board.messageMilestones.find(
+      (entry) =>
+        entry.playerId === playerId &&
+        entry.sourceCardId === cardId &&
+        !entry.resolved,
+    );
+    const threshold = milestone?.threshold;
+    const toGo =
+      threshold !== undefined ? Math.max(0, threshold - currentScore) : null;
+    return {
+      card: card ?? ({ id: cardId, name: cardId } as IBaseCard),
+      // queueIndex disambiguates if the same card id appears twice in the queue.
+      key: `centaurian-pending-${cardId}-${queueIndex}`,
+      annotation: {
+        label:
+          threshold !== undefined ? `→ ${threshold} VP` : 'pending milestone',
+        hint: toGo !== null ? `${toGo} VP to go` : undefined,
+        tone: 'pending',
+      },
+    };
+  });
+}
+
+const CARD_BY_ID = new Map<string, IBaseCard>(
+  ALL_CARDS.map((card) => [card.id, card]),
+);
 
 interface ISampleDeliveryOption {
   capsuleId: string;
@@ -545,7 +607,10 @@ export function GameLayout({
           />
         </main>
 
-        <PersonalColumn className='hidden w-[440px] shrink-0 xl:w-[520px] lg:flex' />
+        <PersonalColumn
+          className='hidden w-[440px] shrink-0 xl:w-[520px] lg:flex'
+          onInspectCard={handleInspectCard}
+        />
         <EventSidebarDrawer />
       </div>
 
@@ -1129,6 +1194,8 @@ interface IPersonalColumnProps {
   dashboardTestId?: string;
   missionAreaTestId?: string;
   rivalAreaTestId?: string;
+  /** Reuses the same enlarged-card preview the hand dock uses. */
+  onInspectCard?: (card: IBaseCard) => void;
 }
 
 /**
@@ -1136,7 +1203,7 @@ interface IPersonalColumnProps {
  *
  * Order (top to bottom):
  *  1. PlayerDashboard — resources, computer, inventory, tech, data pool
- *  2. PlayedMissions — cards currently in play
+ *  2. PlayedMissions — cards currently in play (mission + end-game cards)
  *
  * The column owns its own scroll so dashboard and missions remain stable
  * regardless of hand/board height changes.
@@ -1146,6 +1213,7 @@ function PersonalColumn({
   dashboardTestId = 'bottom-dashboard',
   missionAreaTestId = 'mission-area',
   rivalAreaTestId = 'rival-area',
+  onInspectCard,
 }: IPersonalColumnProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const { gameState, myPlayerId, pendingInput, sendFreeAction } =
@@ -1158,9 +1226,27 @@ function PersonalColumn({
         energyIncome?: number;
         cardIncome?: number;
         playedMissions?: IBaseCard[];
+        endGameCards?: IBaseCard[];
       })
     | undefined;
-  const missionCards = extendedPlayer?.playedMissions ?? [];
+  // Personal-board "missions" slot keeps:
+  //  - ongoing mission cards (with branch progress)
+  //  - end-game (golden) scoring cards
+  //  - pending Centaurian message cards (waiting on a +15 milestone
+  //    to trigger their green effect; per FAQ they're NOT missions,
+  //    but they sit in the same physical slot until resolved)
+  const missionCards = [
+    ...(extendedPlayer?.playedMissions ?? []),
+    ...(extendedPlayer?.endGameCards ?? []),
+  ];
+  const missionRows: IPlayedMissionRow[] = [
+    ...missionCards.map((card) => ({ card })),
+    ...buildPendingCentaurianRows(
+      gameState?.aliens,
+      myPlayerId,
+      myPlayer?.score ?? 0,
+    ),
+  ];
   // Tile only exists post-discovery; gates the per-player exofossil
   // readout in the dashboard (kept hidden for non-Oumuamua games).
   const personalOumuamuaTile = findOumuamuaTile(gameState?.aliens);
@@ -1228,7 +1314,10 @@ function PersonalColumn({
             </p>
             <div aria-hidden className='section-head__rule' />
           </div>
-          <PlayedMissions missions={missionCards} />
+          <PlayedMissions
+            missions={missionRows}
+            onCardInspect={onInspectCard}
+          />
         </section>
       ) : null}
     </aside>
@@ -1439,6 +1528,7 @@ function BoardTabs({
               dashboardTestId='mobile-bottom-dashboard'
               missionAreaTestId='mobile-mission-area'
               rivalAreaTestId='mobile-rival-area'
+              onInspectCard={onInspectCard}
             />
           </div>
         </TabsContent>
