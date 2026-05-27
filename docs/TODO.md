@@ -213,3 +213,45 @@
 - Browser 游戏页实操完成：开局收入卡牌选择、卡牌 tab 可见 3 张卡、科技 tab 可见 12 个 tech stack、主行动 `跳过` 生效、事件日志出现第 1 回合结束，随后进入第 2 回合主行动待命。
 - Browser console warning/error 检查为空。截图证据位于 `docs/review/browser-smoke-2026-05-25/`。
 - 剩余风险：本次没有跑完整 E2E 全套，只跑了脚本路由冒烟、重点双用户 smoke 和 Browser 单局主流程；更深的规则分支仍需依赖已有针对性 E2E/单测。
+
+## 2026-05-27 Lobby redesign from 2223.PNG
+
+### Assumptions
+
+- 参考图只按左侧 Lobby / 任务中心实现；右侧 design system 展示页不做单独页面。
+- 允许覆盖当前已暂存的 Home/Lobby 相关草稿、主题草稿、导入素材和 `docs/home-redesign-style.md`。
+- `/` 当前承载公开任务中心入口，`/lobby` 是登录后的真实任务大厅；本次优先让两者共享同一套 SETI Mission Hub 视觉语言，避免登录前后体验割裂。
+- 本次只改 client 前端、主题 token、复用组件和静态素材，不改 common/server 游戏规则或房间 API 契约。
+- 素材优先使用 `packages/client/public/assets/seti/sprites/`，必要时使用已导入的 `refine/2223.PNG` 作为设计参考，不把整张参考图当页面背景。
+
+### Plan
+
+- [x] 盘点当前 UI 与参考图差距。验证：列出需要补齐的组件/主题能力，确认不需要改后端或规则。
+- [x] 收敛主题能力：补齐深空背景、金属边框、任务状态语义色、场景图层和低多边形资产 utility。验证：`theme.ts` 与 `globals.css` token 命名一致，旧组件仍有兼容 alias。
+- [x] 重做 Mission Hub 页面结构：顶部导航下的 hero 月面场景、三张任务状态卡、筛选 tabs、房间列表，桌面首屏能同时看到标题、CTA、状态卡和列表入口。验证：DOM 内容和响应式结构可检查。
+- [x] 重做/补齐共享组件：`RoomCard`、状态卡、空状态、必要的 lobby scene 装饰组件，保持信息完整且不新增无关功能。验证：`RoomCard` 既有测试通过，新增/调整测试覆盖状态标签、玩家数和模块信息。
+- [x] 同步 `/lobby` 与 `/` 的视觉入口，或抽出小范围共享组件以减少重复。验证：两条路由不出现视觉和信息结构明显不一致。
+- [x] 继续补齐与参考图的剩余差距：`MissionHub` hero / 列表区背景层、`RoomCard` 的 card background、`RoomPage` 的 room background 与共享 mission surface。验证：相关组件 DOM 能看到新增的 scene / panel 标记，信息结构不丢失。
+- [x] 运行验证：只跑相关 client tests、typecheck、targeted biome；本轮按用户要求不跑 e2e。验证：在本节 Review 记录命令和结果。
+- [x] 在本文件末尾补 Review：记录本轮补齐的视觉能力、验证结果和剩余风险。
+
+### Success Criteria
+
+- 首屏符合参考图左侧 Lobby：深空/月面场景、飞船/地形/人物或等价 sprites、任务中心标题、创建任务按钮、三张状态卡、筛选 tabs 和房间列表入口。
+- 青色只用于主操作、选中和可加入；橙色用于进行中/暖色星体；紫色和绿色只作为状态补充。
+- 房间卡片可快速扫描：房间名、主持人、状态、玩家数、solo 难度/外星模块/计时信息不丢失。
+- 移动端不破坏主要操作：标题、CTA、状态卡、列表均可访问；装饰资产可降级隐藏。
+- 没有新增后端契约、游戏规则或不必要抽象。
+
+### Review
+
+- 继续补齐了共享 Mission Hub 视觉能力：新增 `mission-panel` 深色任务面板 utility，并给 `Badge` 补了 `info` / `neutral` 语义标签，避免房间卡和房间页继续靠局部颜色硬写“可加入 / 中性”状态。
+- `MissionHubView` 现在把 hero 场景、房间列表容器、底部 assets strip 都拉到同一月面任务中心语言：hero 叠加飞船、宇航员、基地 sprites；房间列表外层改成带场景底图和暖色光晕的 panel；底部素材带改成更接近参考图的陈列区。
+- `RoomCard` 现在使用 terrain + object 双层 card background，顶部补 mission id readout，状态标签改成等待玩家青色 / 进行中橙色 / 中性灰；保留主持人、玩家数、solo 难度、外星模块和计时信息。
+- `RoomPage` 不再是通用表单页：新增 mission-scene 头图区、三块 mission readout、带 sprites 背景的 crew / settings / actions panels，使 room background 与 Lobby 主视觉一致。
+- 组件断言已补：`MissionHub.test.tsx` 断言房间列表 panel 标记，`RoomCard.test.tsx` 断言 card scene 标记，避免这次“只改外观”的工作完全不可验证。
+- 验证通过：`pnpm --filter @seti/client test -- RoomCard.test.tsx MissionHub.test.tsx GameSettingsPanel.test.tsx GameSettingsPanel.editable.test.tsx`，4 files / 9 tests passed。
+- 验证通过：`pnpm --filter @seti/client typecheck`。
+- 验证通过：`pnpm --dir packages/client exec biome check src/components/MissionHub.tsx src/components/RoomCard.tsx src/components/ui/badge.tsx src/pages/lobby/RoomPage.tsx src/styles/globals.css __tests__/components/MissionHub.test.tsx __tests__/components/RoomCard.test.tsx`。
+- 本轮按用户要求没有跑 e2e，也没有启动真实浏览器做视觉回归；当前“更接近参考图”的结论来自源码结构、素材使用和 focused tests，而不是 Browser 截图证据。
+- 剩余风险：Room 页面没有新增独立页面级测试，视觉层次仍未经过真实桌面/移动浏览器验收；如果下一轮要继续追图片细节，优先看 hero / 列表卡片在真实 viewport 下的间距和资产遮挡关系。

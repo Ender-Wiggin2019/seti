@@ -12,9 +12,44 @@ describe('RoomCard', () => {
   it('counts only the required human player in solo rooms', () => {
     render(<RoomCard room={createRoom()} />);
 
+    expect(screen.getByTestId('room-card')).toHaveAttribute(
+      'data-panel-scene',
+      'card',
+    );
     expect(screen.getByTestId('room-card-crew-count')).toHaveTextContent('1/1');
     expect(screen.getByText('Solo')).toBeInTheDocument();
     expect(screen.getByText('D3')).toBeInTheDocument();
+  });
+
+  it('keeps mission status and module details scanable', () => {
+    render(
+      <RoomCard
+        room={{
+          ...createRoom(),
+          id: 'room-2',
+          name: 'Configured Room 1779040598246',
+          status: ERoomStatus.PLAYING,
+          options: {
+            ...createRoom().options,
+            isSoloMode: false,
+            playerCount: 2,
+            timerPerTurn: 90,
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getByTestId('room-card-status')).toHaveTextContent(
+      'In Progress',
+    );
+    expect(screen.getByTestId('room-card-host')).toHaveTextContent('Commander');
+    expect(screen.getByTestId('room-card-crew-count')).toHaveTextContent('1/2');
+    expect(screen.getByTestId('room-card-module-readout')).toHaveTextContent(
+      'Aliens',
+    );
+    expect(screen.getByTestId('room-card-module-readout')).toHaveTextContent(
+      '90s timer',
+    );
   });
 });
 

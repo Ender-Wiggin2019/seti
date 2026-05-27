@@ -3,7 +3,7 @@
    Design system: Space Agencies mission interface (see .impeccable.md)
    ============================================================ */
 
-@import url("https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;500;600;700&family=Hanken+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
 @import "tailwindcss";
 
 /* ------------------------------------------------------------
@@ -49,6 +49,15 @@
   --signal-red-hi: oklch(0.74 0.18 25);
   --signal-red-lo: oklch(0.5 0.16 25);
   --signal-white: oklch(0.96 0.008 260);
+
+  /* Lobby scene palette from 2223.PNG reference */
+  --lobby-deep-space: #0a0e14;
+  --lobby-rock-gray: #1a1f27;
+  --lobby-metal-gray: #2a303c;
+  --lobby-ground-gray: #3a404d;
+  --lobby-stardust: #e6e6e8;
+  --lobby-planet-orange: #c7734a;
+  --lobby-engine-cyan: #2ec1c9;
 
   /* Anodized blue — chrome accent (alias of signal-blue) */
   --accent-400: oklch(0.74 0.1 240);
@@ -204,9 +213,9 @@ body {
 
 body {
   margin: 0;
-  font-family: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  font-family:
+    "Noto Sans SC", "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
   font-weight: 400;
-  font-feature-settings: "ss01", "ss02", "cv11";
   /*
    * Body itself carries the cosmic atmosphere, so even routes that don't
    * mount AppShell (game pages, debug pages) sit on layered space —
@@ -227,7 +236,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: "Hanken Grotesk", ui-sans-serif, sans-serif;
+  font-family: "Noto Sans SC", "Orbitron", ui-sans-serif, sans-serif;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
@@ -385,13 +394,13 @@ pre {
   color: var(--text-100);
 }
 
-/* Mission-log label — Hanken Grotesk, uppercase, 0.12em tracking. */
+/* Mission-log label — Noto Sans SC for CJK, Orbitron for Latin micro labels. */
 .micro-label {
-  font-family: "Hanken Grotesk", ui-sans-serif, sans-serif;
+  font-family: "Orbitron", "Noto Sans SC", ui-sans-serif, sans-serif;
   font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   color: oklch(0.62 0.02 260);
 }
 
@@ -448,11 +457,11 @@ pre {
 }
 
 .telemetry-tile__label {
-  font-family: "Hanken Grotesk", ui-sans-serif, sans-serif;
+  font-family: "Orbitron", "Noto Sans SC", ui-sans-serif, sans-serif;
   font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   color: oklch(0.62 0.02 260);
   display: flex;
   align-items: center;
@@ -460,13 +469,13 @@ pre {
 }
 
 .telemetry-tile__value {
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-family: "Orbitron", "JetBrains Mono", ui-monospace, monospace;
   font-variant-numeric: tabular-nums slashed-zero;
   font-feature-settings: "tnum", "zero";
-  font-size: 1.875rem;
-  font-weight: 500;
+  font-size: 2.25rem;
+  font-weight: 700;
   color: var(--signal-white);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
   line-height: 1;
 }
 
@@ -492,6 +501,172 @@ pre {
 }
 .telemetry-tile[data-signal="red"] .telemetry-tile__value {
   color: var(--signal-red-hi);
+}
+
+/* ============================================================
+   Mission Hub scene primitives
+   ============================================================ */
+.mission-scene {
+  background:
+    radial-gradient(
+      1px 1px at 12% 12%,
+      oklch(0.9 0.08 230 / 0.64),
+      transparent 100%
+    ),
+    radial-gradient(
+      1.4px 1.4px at 26% 20%,
+      oklch(0.86 0.08 230 / 0.5),
+      transparent 100%
+    ),
+    radial-gradient(
+      1px 1px at 54% 16%,
+      oklch(0.94 0.02 260 / 0.5),
+      transparent 100%
+    ),
+    linear-gradient(
+      135deg,
+      oklch(0.08 0.02 255) 0%,
+      oklch(0.12 0.035 245) 45%,
+      oklch(0.08 0.018 255) 100%
+    );
+}
+
+.mission-scene::before {
+  content: "";
+  position: absolute;
+  inset: auto -4% -18% -4%;
+  height: 46%;
+  background:
+    linear-gradient(
+      172deg,
+      transparent 0%,
+      oklch(0.34 0.015 255 / 0.24) 46%,
+      oklch(0.14 0.018 255 / 0.9) 100%
+    ), url("/assets/seti/sprites/terrain_01_01.webp");
+  background-position: center bottom;
+  background-repeat: repeat-x;
+  background-size: 360px auto;
+  opacity: 0.72;
+}
+
+.mission-scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      90deg,
+      oklch(0.06 0.018 260 / 0.84),
+      transparent 44%,
+      oklch(0.06 0.018 260 / 0.36)
+    ),
+    radial-gradient(
+      560px 260px at 76% 18%,
+      oklch(0.62 0.13 48 / 0.16),
+      transparent 70%
+    );
+  pointer-events: none;
+}
+
+.mission-panel {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid var(--metal-edge-soft);
+  background: linear-gradient(
+    180deg,
+    oklch(0.13 0.025 258 / 0.96) 0%,
+    oklch(0.11 0.02 258 / 0.92) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 oklch(0.78 0.04 240 / 0.08),
+    0 14px 40px oklch(0.04 0.015 255 / 0.34);
+  backdrop-filter: blur(8px);
+}
+
+.mission-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      520px 220px at 16% 0%,
+      oklch(0.3 0.08 235 / 0.14),
+      transparent 70%
+    ),
+    linear-gradient(
+      180deg,
+      oklch(0.28 0.03 260 / 0.06) 0%,
+      transparent 44%,
+      oklch(0.04 0.01 260 / 0.28) 100%
+    );
+  pointer-events: none;
+}
+
+.mission-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    oklch(0.06 0.018 260 / 0.7),
+    transparent 36%,
+    transparent 72%,
+    oklch(0.06 0.018 260 / 0.42)
+  );
+  pointer-events: none;
+}
+
+.mission-panel[data-panel-scene="room"]::before {
+  background:
+    radial-gradient(
+      540px 260px at 85% 10%,
+      oklch(0.58 0.11 45 / 0.14),
+      transparent 72%
+    ),
+    radial-gradient(
+      400px 220px at 8% 0%,
+      oklch(0.3 0.08 235 / 0.12),
+      transparent 70%
+    ),
+    linear-gradient(
+      180deg,
+      oklch(0.28 0.03 260 / 0.06) 0%,
+      transparent 44%,
+      oklch(0.04 0.01 260 / 0.28) 100%
+    );
+}
+
+.mission-panel[data-panel-scene="card"]::before {
+  background:
+    radial-gradient(
+      280px 160px at 100% 10%,
+      oklch(0.58 0.11 45 / 0.12),
+      transparent 72%
+    ),
+    radial-gradient(
+      260px 150px at 0% 0%,
+      oklch(0.3 0.08 235 / 0.1),
+      transparent 72%
+    ),
+    linear-gradient(
+      180deg,
+      oklch(0.28 0.03 260 / 0.05) 0%,
+      transparent 40%,
+      oklch(0.04 0.01 260 / 0.24) 100%
+    );
+}
+
+.mission-stat-card[data-signal="blue"] {
+  --stat-color: var(--signal-blue-hi);
+}
+
+.mission-stat-card[data-signal="violet"] {
+  --stat-color: var(--signal-violet-hi);
+}
+
+.mission-stat-card[data-signal="green"] {
+  --stat-color: var(--signal-green-hi);
 }
 
 /* ============================================================

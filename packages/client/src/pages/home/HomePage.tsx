@@ -1,104 +1,140 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
-import { SignalIndicator } from '@/components/ui/telemetry';
-import { cn } from '@/lib/cn';
+import { lobbyApi } from '@/api/lobbyApi';
+import type { IAlienTypeOption, IGameOptions } from '@/api/types';
+import { ERoomStatus } from '@/api/types';
+import { CreateRoomDialog } from '@/components/CreateRoomDialog';
+import {
+  MissionHubView,
+  type TMissionFilterValue,
+} from '@/components/MissionHub';
+import { toast } from '@/components/ui/toast';
 import { useAuthStore } from '@/stores/authStore';
 
 /**
- * HomePage — the Space Agencies entry point.
+ * HomePage — the Mission Hub.
  *
- * One panel, one signal indicator, two controls. No fabricated
- * telemetry (no Bandwidth, no Stardate, no player-count fiction) — only
- * what is actually true about the user's session right now.
+ * Per home-redesign-style.md: Hero scene with low-poly assets, 3 mission-state
+ * tiles, room filter tabs, and room grid. This is the task center where players
+ * create or join missions.
  */
 export function HomePage(): React.JSX.Element {
-  const navigate = useNavigate();
   const { t } = useTranslation('common');
+  const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const userName = useAuthStore(
-    (state) => state.user?.name ?? t('client.home.default_name'),
-  );
+  const [filter, setFilter] = useState<TMissionFilterValue>('all');
+  const [createOpen, setCreateOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  const { data: rooms, isLoading } = useQuery({
+    queryKey: ['rooms', filter],
+    queryFn: () =>
+      lobbyApi.listRooms(
+        filter === 'all' ? undefined : { status: filter as ERoomStatus },
+      ),
+    refetchInterval: 5000,
+  });
+
+  const { data: allRooms } = useQuery({
+    queryKey: ['rooms', 'all'],
+    queryFn: () => lobbyApi.listRooms(),
+    refetchInterval: 5000,
+  });
+
+  const { data: alienTypeMap } = useQuery<Record<string, IAlienTypeOption>>({
+    queryKey: ['lobby-alien-types'],
+    queryFn: () => lobbyApi.getAlienTypeMap(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const stats = useMemo(() => {
+    const list = allRooms ?? [];
+    const waiting = list.filter((r) => r.status === ERoomStatus.WAITING).length;
+    const playing = list.filter((r) => r.status === ERoomStatus.PLAYING).length;
+    const players = list.reduce((acc, r) => acc + r.players.length, 0);
+    return { waiting, playing, players };
+  }, [allRooms]);
+
+  const createMutation = useMutation({
+    mutationFn: (vars: { name: string; options: IGameOptions }) =>
+      lobbyApi.createRoom({ name: vars.name, options: vars.options }),
+    onSuccess: (room) => {
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      setCreateOpen(false);
+      toast({ title: t('client.lobby.toast.created'), variant: 'success' });
+      navigate({ to: '/room/$roomId', params: { roomId: room.id } });
+    },
+    onError: (err) =>
+      toast({
+        title: t('client.lobby.toast.create_failed'),
+        description: err.message,
+        variant: 'error',
+      }),
+  });
 
   return (
-    <div className='space-y-8'>
-      {/* Hero panel — the mission identifier strip. */}
-      <section
-        className={cn(
-          'metal-hairline-rounded relative overflow-hidden p-7 sm:p-9',
-          'bg-[var(--surface-deep)]/72 backdrop-blur-[2px]',
-          'shadow-instrument',
-        )}
-      >
-        {/* Single instrument-light pool, upper-right. */}
-        <span
-          aria-hidden
-          className='pointer-events-none absolute right-[-120px] top-[-140px] h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle,oklch(0.42_0.13_240/0.18),transparent_70%)]'
-        />
-        <div className='relative flex flex-col gap-5'>
-          <div className='flex flex-wrap items-center gap-x-4 gap-y-2'>
-            <span className='micro-label inline-flex items-center gap-2 text-[oklch(0.78_0.10_240)]'>
-              <span className='h-px w-6 bg-[var(--signal-blue)]' />
-              {t('client.home.hero_kicker', { defaultValue: 'Space Agencies' })}
-            </span>
-            {isAuthenticated ? (
-              <SignalIndicator
-                signal='green'
-                active
-                label={t('client.home.station_nominal', {
-                  defaultValue: 'Signed in',
-                })}
-              />
-            ) : (
-              <SignalIndicator
-                signal='amber'
-                label={t('client.home.station_offline', {
-                  defaultValue: 'Sign in to play',
-                })}
-              />
-            )}
-          </div>
-          <h1 className='font-display text-3xl font-semibold tracking-[0.08em] text-text-100 sm:text-[2.5rem] leading-[1.1]'>
-            {t('home.title')}
-          </h1>
-          <p className='max-w-xl text-sm leading-relaxed text-text-300'>
-            {isAuthenticated
-              ? t('home.subtitle_authenticated', { name: userName })
-              : t('home.subtitle_guest')}
-          </p>
-        </div>
-      </section>
+    <>
+      <MissionHubView
+        title={t('client.home.title', { defaultValue: '任务中心' })}
+        subtitle={t('client.home.subtitle', {
+          defaultValue: '探索未知，连接未来。',
+        })}
+        kicker={t('client.home.hero_kicker', {
+          defaultValue: '可加入任务',
+        })}
+        createLabel={t('client.home.create_mission', {
+          defaultValue: '创建任务',
+        })}
+        onCreateMission={() =>
+          isAuthenticated ? setCreateOpen(true) : navigate({ to: '/auth' })
+        }
+        filter={filter}
+        onFilterChange={setFilter}
+        filterLabels={{
+          all: t('client.lobby.filters.all', { defaultValue: '全部' }),
+          waiting: t('client.lobby.filters.waiting', {
+            defaultValue: '等待玩家',
+          }),
+          playing: t('client.lobby.filters.in_progress', {
+            defaultValue: '进行中',
+          }),
+        }}
+        stats={stats}
+        statLabels={{
+          waiting: t('client.home.stat.waiting', {
+            defaultValue: '等待玩家',
+          }),
+          waitingSub: t('client.home.stat.waiting_sub', {
+            defaultValue: '可加入任务',
+          }),
+          playing: t('client.home.stat.playing', { defaultValue: '进行中' }),
+          playingSub: t('client.home.stat.playing_sub', {
+            defaultValue: '已开始任务',
+          }),
+          players: t('client.home.stat.players', { defaultValue: '参与玩家' }),
+          playersSub: t('client.home.stat.players_sub', {
+            defaultValue: '当前任务中',
+          }),
+        }}
+        rooms={rooms}
+        isLoading={isLoading}
+        loadingLabel={t('client.lobby.loading', {
+          defaultValue: 'Loading missions...',
+        })}
+        emptyLabel={t('client.lobby.empty', {
+          defaultValue: 'No missions available',
+        })}
+      />
 
-      {/* Control strip. No tiles — just the two paths. */}
-      <section className='flex flex-wrap items-center gap-3'>
-        {isAuthenticated ? (
-          <>
-            <Button size='lg' onClick={() => navigate({ to: '/lobby' })}>
-              {t('home.open_lobby')}
-            </Button>
-            <Button
-              variant='ghost'
-              size='lg'
-              onClick={() => navigate({ to: '/profile' })}
-            >
-              {t('home.profile')}
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button size='lg' onClick={() => navigate({ to: '/auth' })}>
-              {t('home.sign_in')}
-            </Button>
-            <Button
-              variant='ghost'
-              size='lg'
-              onClick={() => navigate({ to: '/auth' })}
-            >
-              {t('home.create_account')}
-            </Button>
-          </>
-        )}
-      </section>
-    </div>
+      <CreateRoomDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onSubmit={(name, options) => createMutation.mutate({ name, options })}
+        isPending={createMutation.isPending}
+        alienTypeMap={alienTypeMap}
+      />
+    </>
   );
 }

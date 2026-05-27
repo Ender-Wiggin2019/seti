@@ -78,6 +78,16 @@ export interface IThemeTokens {
     };
     /** Instrumentation / data readouts — plain near-white phosphor. */
     data: { primary: string; dim: string };
+    /** Lobby reference palette from 2223.PNG. */
+    lobby: {
+      deepSpace: string;
+      rockGray: string;
+      metalGray: string;
+      groundGray: string;
+      stardust: string;
+      planetOrange: string;
+      engineCyan: string;
+    };
   };
   typography: {
     /** Wide geometric display — screen titles, phase names, end-of-game reveals. */
@@ -164,10 +174,19 @@ export const THEME_TOKENS: IThemeTokens = {
       primary: 'oklch(0.96 0.008 260)',
       dim: 'oklch(0.72 0.015 260)',
     },
+    lobby: {
+      deepSpace: '#0A0E14',
+      rockGray: '#1A1F27',
+      metalGray: '#2A303C',
+      groundGray: '#3A404D',
+      stardust: '#E6E6E8',
+      planetOrange: '#C7734A',
+      engineCyan: '#2EC1C9',
+    },
   },
   typography: {
-    display: 'Unbounded',
-    body: 'Hanken Grotesk',
+    display: 'Orbitron',
+    body: 'Noto Sans SC',
     mono: 'JetBrains Mono',
   },
   effects: {

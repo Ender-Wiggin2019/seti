@@ -43,6 +43,11 @@ const badgeVariants = cva(
           'border border-[oklch(0.48_0.09_240/0.55)]',
           'text-[oklch(0.88_0.10_240)]',
         ],
+        info: [
+          'bg-[oklch(0.30_0.08_230/0.34)]',
+          'border border-[oklch(0.50_0.10_230/0.55)]',
+          'text-[oklch(0.88_0.10_230)]',
+        ],
         success: [
           'bg-[oklch(0.35_0.09_160/0.30)]',
           'border border-[oklch(0.52_0.12_160/0.55)]',
@@ -57,6 +62,11 @@ const badgeVariants = cva(
           'bg-[oklch(0.35_0.13_28/0.32)]',
           'border border-[oklch(0.55_0.16_28/0.55)]',
           'text-[oklch(0.85_0.16_28)]',
+        ],
+        neutral: [
+          'bg-[oklch(0.18_0.02_260/0.82)]',
+          'border border-[color:var(--metal-edge-soft)]',
+          'text-text-300',
         ],
       },
     },
