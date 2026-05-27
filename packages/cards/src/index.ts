@@ -1,4 +1,9 @@
 export { CardRender } from './CardRender';
+export {
+  CardRenderContextProvider,
+  type ICardRenderContext,
+  useCardRenderContext,
+} from './components/CardContext';
 export { BaseCard } from './components/cards/base_cards/BaseCard';
 export { FlavorText } from './components/cards/base_cards/FlavorText';
 export { PreludeCard } from './components/cards/prelude/PreludeCard';

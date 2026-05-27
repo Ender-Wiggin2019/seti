@@ -969,9 +969,21 @@ function toPublicPlayerState(
             branchIndex: mission.branchIndex,
           }))
       : undefined,
-    completedMissions: isViewer
-      ? (cloneValue(player.completedMissions) as string[])
-      : undefined,
+    // Public per rule: mission progress is visible to opponents
+    // because the cards are face-up on the player's personal board.
+    // Lets every viewer render claim tokens / "N / M claimed" annotations.
+    missionClaims: game.missionTracker
+      .getAllMissions(player.id)
+      .map((mission) => ({
+        cardId: mission.def.cardId,
+        branchClaims: mission.branchStates.map((state) => state.completed),
+      })),
+    // Public per rule: a completed mission is flipped face-up in
+    // front of the player, so opponents can see which missions
+    // each player has completed. Projected as IBaseCard[] (same
+    // shape as playedMissions / endGameCards) so the client can
+    // reuse the missions-slot rendering pipeline.
+    completedMissions: projectCardItems(player.completedMissions),
     completedMissionCount: player.completedMissions.length,
     endGameCards: isViewer ? projectCardItems(player.endGameCards) : undefined,
     endGameCardCount: player.endGameCards.length,

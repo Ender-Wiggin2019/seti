@@ -13,6 +13,15 @@ import { DescTextRender } from '@/features/cards/DescTextRender';
 
 interface ITextCardProps {
   card: IBaseCard;
+  /**
+   * Per-branch claim flags for the mission(s) on this card. Same
+   * shape the server projects in IPublicPlayerState.missionClaims.
+   * When provided, claimed branches render with a leading ✓ and
+   * dimmed text, matching the image-mode token overlay.
+   */
+  branchClaims?: boolean[];
+  /** Owner color for the ✓ marker accent. Falls back to neutral. */
+  ownerColor?: string;
 }
 
 type TranslateFn = (value: string) => string;
@@ -59,7 +68,9 @@ function formatEffect(effect: Effect, translate: TranslateFn): string {
       return formatCustomizedEffect(effect, translate);
     case EEffectType.MISSION_QUICK:
     case EEffectType.MISSION_FULL:
-      return formatMissionRows(effect, translate).join(' | ');
+      return formatMissionRows(effect, translate)
+        .map((row) => row.text)
+        .join(' | ');
     case EEffectType.END_GAME: {
       return `END: ${formatEndGameEffect(effect, translate)}`;
     }
@@ -83,21 +94,33 @@ function formatEndGameEffect(
   return `${translate(effect.desc ?? '')}${score}`;
 }
 
+interface IMissionRow {
+  text: string;
+  /** When set, the row corresponds to mission.branches[branchIndex]. */
+  branchIndex?: number;
+}
+
 function formatMissionRows(
   effect: IMissionEffect,
   translate: TranslateFn,
-): string[] {
-  const rows = effect.missions.map((mission) => {
+): IMissionRow[] {
+  const branchRows: IMissionRow[] = effect.missions.map((mission, index) => {
     const req = mission.req
       .map((item) => formatMissionPart(item, translate))
       .join(' + ');
     const reward = mission.reward
       .map((item) => formatMissionPart(item, translate))
       .join(' + ');
-    return `${req || '-'} -> ${reward || '-'}`;
+    return {
+      text: `${req || '-'} -> ${reward || '-'}`,
+      branchIndex: index,
+    };
   });
 
-  return [effect.desc ? translate(effect.desc) : '', ...rows].filter(Boolean);
+  const descRow: IMissionRow | null = effect.desc
+    ? { text: translate(effect.desc) }
+    : null;
+  return descRow ? [descRow, ...branchRows] : branchRows;
 }
 
 function formatFreeActions(freeActions: IFreeAction[]): string {
@@ -113,7 +136,11 @@ function formatFreeActions(freeActions: IFreeAction[]): string {
  * envelope of the production CardRender (150px by 209px) so layout
  * around it is unchanged.
  */
-export function TextCard({ card }: ITextCardProps): React.JSX.Element {
+export function TextCard({
+  card,
+  branchClaims,
+  ownerColor,
+}: ITextCardProps): React.JSX.Element {
   const { t } = useTranslation('seti');
   const freeActions = card.freeAction ?? [];
   const effects = card.effects ?? [];
@@ -225,14 +252,31 @@ export function TextCard({ card }: ITextCardProps): React.JSX.Element {
             </div>
             <div className='space-y-0.5 text-[9px] text-text-100'>
               {missionEffects.flatMap((effect, effectIndex) =>
-                formatMissionRows(effect, translate).map((row, rowIndex) => (
-                  <div
-                    key={`mission-${effectIndex}-${rowIndex}`}
-                    className='break-words'
-                  >
-                    <DescTextRender desc={row} />
-                  </div>
-                )),
+                formatMissionRows(effect, translate).map((row, rowIndex) => {
+                  const isClaimed =
+                    row.branchIndex !== undefined &&
+                    branchClaims?.[row.branchIndex] === true;
+                  return (
+                    <div
+                      key={`mission-${effectIndex}-${rowIndex}`}
+                      className={`flex items-baseline gap-1 break-words ${
+                        isClaimed ? 'opacity-60 line-through' : ''
+                      }`}
+                      data-claimed={isClaimed ? 'true' : undefined}
+                    >
+                      {isClaimed ? (
+                        <span
+                          aria-hidden
+                          className='shrink-0 font-mono text-[9px] no-underline'
+                          style={{ color: ownerColor ?? '#5fb35e' }}
+                        >
+                          ✓
+                        </span>
+                      ) : null}
+                      <DescTextRender desc={row.text} />
+                    </div>
+                  );
+                }),
               )}
             </div>
           </section>

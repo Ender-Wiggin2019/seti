@@ -18,6 +18,8 @@ import {
 } from '@/engine/alien/AlienBoard.js';
 import { AlienState } from '@/engine/alien/index.js';
 import { OumuamuaAlienPlugin } from '@/engine/alien/plugins/OumuamuaAlienPlugin.js';
+import { MissionCard } from '@/engine/cards/Card.js';
+import { getCardRegistry } from '@/engine/cards/CardRegistry.js';
 import type { TSolarSystemAnomalyTraceColor } from '@/engine/board/SolarSystem.js';
 import { EventLog } from '@/engine/event/EventLog.js';
 import type { Game } from '@/engine/Game.js';
@@ -45,6 +47,8 @@ const FREE_ACTION_SPEND_SIGNAL_TOKEN_CHECKPOINT_ID = 'spend-signal-token';
 const FREE_ACTION_DELIVER_SAMPLE_CHECKPOINT_ID = 'deliver-sample';
 const TRACE_PLACEMENT_PRESET_ID = 'trace-placement-debug';
 const TRACE_PLACEMENT_AFTER_DISCOVERY_CHECKPOINT_ID = 'after-discovery';
+const MISSIONS_PRESET_ID = 'missions-debug';
+const MISSIONS_WITH_COMPLETED_CHECKPOINT_ID = 'with-completed';
 
 interface IDebugReplayPreset {
   definition: IDebugReplayPresetDefinition;
@@ -253,6 +257,24 @@ const DEBUG_REPLAY_PRESETS: Readonly<Record<string, IDebugReplayPreset>> = {
       ],
     },
     apply: applyFreeActionReplay,
+  },
+  [MISSIONS_PRESET_ID]: {
+    definition: {
+      id: MISSIONS_PRESET_ID,
+      label: 'Missions Slot Replay',
+      description:
+        'Seed the active player with a mix of in-progress missions, completed (face-down) missions, and an end-game card so the personal-board missions slot can be inspected end-to-end.',
+      fields: [],
+      checkpoints: [
+        {
+          id: MISSIONS_WITH_COMPLETED_CHECKPOINT_ID,
+          label: 'With Completed Missions',
+          description:
+            'Active player has 2 in-progress + 2 completed + 1 end-game card. Phase is AWAIT_MAIN_ACTION.',
+        },
+      ],
+    },
+    apply: applyMissionsReplay,
   },
 };
 
@@ -753,6 +775,91 @@ function applyDeliverSampleReplay(game: Game): {
       'Replay ready: Mascamites has one deliverable sample capsule for the active player.',
     alienIndex: board.alienIndex,
     selectedAlienType: EAlienType.MASCAMITES,
+    currentPlayerId: activePlayer.id,
+  };
+}
+
+/**
+ * Seed the active player with a representative slice of mission-slot
+ * cards: two in-progress (face-up) missions, two completed (face-down,
+ * click-to-reveal) missions, and one end-game scoring card. Lets the
+ * UI surface the new completed-missions card-back tiles + counter chip
+ * without having to grind through a real game to flip a mission.
+ *
+ * Uses real card ids so the renderer can resolve names + flavor + the
+ * full enlarged preview when the user clicks any tile. The set covers
+ * both QUICK_MISSION and FULL_MISSION layouts plus an END_GAME card.
+ */
+function applyMissionsReplay(
+  game: Game,
+  request: IDebugReplaySessionRequest,
+): {
+  phase: EPhase;
+  summary: string;
+  alienIndex: number;
+  selectedAlienType: EAlienType;
+  currentPlayerId: string;
+} {
+  if (request.checkpointId !== MISSIONS_WITH_COMPLETED_CHECKPOINT_ID) {
+    throw new Error(`Unsupported replay checkpoint: ${request.checkpointId}`);
+  }
+
+  resolveSetupTucks(game);
+
+  const activePlayer = game.getActivePlayer();
+  // Card 128 is a 3-branch FULL_MISSION (Advanced Navigation System);
+  // card 39 is a single-branch QUICK_MISSION. Mixing the two lets the
+  // missions slot demo per-branch claim tokens (FULL) alongside the
+  // simpler one-shot path (QUICK).
+  activePlayer.playedMissions = ['128', '39'];
+  // FULL_MISSION + QUICK_MISSION cards already completed (server-side
+  // these would be moved here by MissionTracker on completion). Client
+  // renders these as the stacked card-back pile with click-to-reveal.
+  activePlayer.completedMissions = ['97', '70'];
+  // End-game (golden) scoring card kept on the personal board.
+  activePlayer.endGameCards = ['68'];
+
+  // Register the in-progress missions through the same path Game.ts
+  // uses on PLAY_CARD: prefer the MissionCard class's getMissionDef
+  // (which wires bespoke event matchers, e.g. card 128's "visit any
+  // non-Earth planet" trigger), and fall back to the data-driven
+  // registry. Without this card 128 would never trigger because its
+  // branch.req array is empty in the static card data.
+  const registry = getCardRegistry();
+  const registerMissionByCardId = (cardId: string): void => {
+    if (!registry.has(cardId)) {
+      game.missionTracker.registerMissionFromCard(cardId, activePlayer.id);
+      return;
+    }
+    const card = registry.create(cardId);
+    if (card instanceof MissionCard) {
+      const def = card.getMissionDef();
+      if (def) {
+        game.missionTracker.registerMission(def, activePlayer.id);
+        return;
+      }
+    }
+    game.missionTracker.registerMissionFromCard(cardId, activePlayer.id);
+  };
+  registerMissionByCardId('128');
+  registerMissionByCardId('39');
+  const fullMission = game.missionTracker.getMissionState(activePlayer.id, '128');
+  if (fullMission && fullMission.branchStates[0]) {
+    fullMission.branchStates[0].completed = true;
+    fullMission.branchStates[0].completedAtRound = game.round;
+  }
+
+  game.phase = EPhase.AWAIT_MAIN_ACTION;
+  activePlayer.waitingFor = undefined;
+  game.eventLog = new EventLog();
+
+  const board = game.alienState.getBoard(0);
+  return {
+    phase: game.phase,
+    summary:
+      'Replay ready: active player has 1 partially-claimed FULL_MISSION + 1 in-progress QUICK_MISSION + 2 completed missions + 1 end-game card.',
+    alienIndex: board?.alienIndex ?? 0,
+    selectedAlienType: board?.alienType ?? EAlienType.ANOMALIES,
     currentPlayerId: activePlayer.id,
   };
 }

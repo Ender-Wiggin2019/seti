@@ -89,6 +89,12 @@ vi.mock('@seti/cards', () => ({
     }),
   TagIcon: ({ type }: { type: string }) =>
     createElement('div', { 'data-testid': `seti-tag-${type}` }),
+  // CardContext stubs — production wires per-card claim flags through
+  // these but tests don't exercise the rendering path; pass-through
+  // provider + null context keep <CardRender> consumers happy.
+  CardRenderContextProvider: ({ children }: { children: unknown }) =>
+    createElement('div', null, children as never),
+  useCardRenderContext: () => null,
 }));
 
 beforeAll(() => {

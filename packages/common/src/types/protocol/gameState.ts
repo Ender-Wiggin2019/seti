@@ -99,7 +99,17 @@ export interface IPublicPlayerState {
     cardId: string;
     branchIndex: number;
   }>;
-  completedMissions?: string[];
+  /**
+   * Per-branch claim status for every mission card the player has
+   * played (still in-progress or already-resolved). Array index in
+   * `branchClaims` matches the mission's `branches[i]` ordering.
+   * Public per rule: mission progress is visible to opponents.
+   */
+  missionClaims?: Array<{
+    cardId: string;
+    branchClaims: boolean[];
+  }>;
+  completedMissions?: IBaseCard[];
   endGameCards?: IBaseCard[];
   completedMissionCount: number;
   endGameCardCount: number;

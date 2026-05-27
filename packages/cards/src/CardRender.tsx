@@ -12,6 +12,10 @@ import { ESector } from '@seti/common/types/element';
 import { freeAction2Effect } from '@seti/common/utils/effect';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  CardRenderContextProvider,
+  useCardRenderContext,
+} from './components/CardContext';
 import { CardIncome } from '@/components/card/CardIncome';
 import { CardMiddleBar } from '@/components/card/CardMiddleBar';
 import { FlavorText } from '@/components/cards/base_cards/FlavorText';
@@ -97,40 +101,51 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
       <div style={style}></div>
     );
 
-  return (
-    <CardRenderWrapper id={card.id}>
-      {renderFreeAction()}
-      {renderSector()}
-      {renderImage()}
-      <div className='card-cell card-render'>
-        {card.income && <CardIncome income={card.income} />}
-      </div>
-      <div
-        className='card-render-container'
-        style={{ top: titleHeight + 'px' }}
-      >
-        <CardMiddleBar card={card} />
+  // Inject the cardId into render context so sub-renderers (Mission,
+  // EffectContainer) can look up runtime state — branch claims, etc. —
+  // keyed by cardId without needing the consumer to pass it manually.
+  const parentContext = useCardRenderContext();
+  const childContext = useMemo(
+    () => ({ ...(parentContext ?? {}), cardId: card.id }),
+    [parentContext, card.id],
+  );
 
-        {card?.special?.enableEffectRender && card.effects && (
-          <EffectContainer
-            effects={effects}
-            className=''
-            height={effectContainerHeight}
+  return (
+    <CardRenderContextProvider value={childContext}>
+      <CardRenderWrapper id={card.id}>
+        {renderFreeAction()}
+        {renderSector()}
+        {renderImage()}
+        <div className='card-cell card-render'>
+          {card.income && <CardIncome income={card.income} />}
+        </div>
+        <div
+          className='card-render-container'
+          style={{ top: titleHeight + 'px' }}
+        >
+          <CardMiddleBar card={card} />
+
+          {card?.special?.enableEffectRender && card.effects && (
+            <EffectContainer
+              effects={effects}
+              className=''
+              height={effectContainerHeight}
+            />
+          )}
+        </div>
+        <div className='card-no-bg'></div>
+        <div className='card-no'>{card.id}</div>
+        {card?.special?.enableEffectRender && card.flavorText && (
+          <FlavorText
+            id={card.id}
+            flavorText={card.flavorText}
+            className='bg-transparent'
           />
         )}
-      </div>
-      <div className='card-no-bg'></div>
-      <div className='card-no'>{card.id}</div>
-      {card?.special?.enableEffectRender && card.flavorText && (
-        <FlavorText
-          id={card.id}
-          flavorText={card.flavorText}
-          className='bg-transparent'
-        />
-      )}
-      {card?.special?.watermark && (
-        <div className='card-copyright'>{t('watermark')}</div>
-      )}
-    </CardRenderWrapper>
+        {card?.special?.watermark && (
+          <div className='card-copyright'>{t('watermark')}</div>
+        )}
+      </CardRenderWrapper>
+    </CardRenderContextProvider>
   );
 };

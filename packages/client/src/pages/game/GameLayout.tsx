@@ -404,6 +404,15 @@ export function GameLayout({
   const lastGameIdRef = useRef<string | undefined>(undefined);
   const myPlayer = gameState?.players.find((p) => p.playerId === myPlayerId);
   const currentPlayerMovementPoints = myPlayer?.movementPoints ?? 0;
+  // Surface mission branch-claim flags up here so both the missions
+  // slot (PersonalColumn) and the enlarged-preview dialog (CardDetail)
+  // can render claim tokens against the same data.
+  const myMissionClaimsByCardId: Record<string, boolean[]> = Object.fromEntries(
+    ((
+      myPlayer as { missionClaims?: Array<{ cardId: string; branchClaims: boolean[] }> }
+        | undefined
+    )?.missionClaims ?? []).map((entry) => [entry.cardId, entry.branchClaims]),
+  );
 
   useEffect(() => {
     const gid = gameState?.gameId;
@@ -632,6 +641,8 @@ export function GameLayout({
         onOpenChange={setDetailOpen}
         canPlayCard={canPlayDetailCard}
         onPlayCard={handlePlayDetailCard}
+        branchClaimsByCardId={myMissionClaimsByCardId}
+        ownerPlayerColor={myPlayer?.color}
       />
 
       <GameOverDialog />
@@ -1227,6 +1238,8 @@ function PersonalColumn({
         cardIncome?: number;
         playedMissions?: IBaseCard[];
         endGameCards?: IBaseCard[];
+        completedMissions?: IBaseCard[];
+        missionClaims?: Array<{ cardId: string; branchClaims: boolean[] }>;
       })
     | undefined;
   // Personal-board "missions" slot keeps:
@@ -1235,12 +1248,39 @@ function PersonalColumn({
   //  - pending Centaurian message cards (waiting on a +15 milestone
   //    to trigger their green effect; per FAQ they're NOT missions,
   //    but they sit in the same physical slot until resolved)
+  // Completed missions are rendered as a single stacked-pile tile by
+  // <PlayedMissions>; click the pile to inspect every completed card.
   const missionCards = [
     ...(extendedPlayer?.playedMissions ?? []),
     ...(extendedPlayer?.endGameCards ?? []),
   ];
+  const completedMissions = extendedPlayer?.completedMissions ?? [];
+  // Build a cardId → branchClaims lookup so child <CardRender>
+  // instances can overlay the right per-branch claim tokens via
+  // the cards-package render context.
+  const branchClaimsByCardId: Record<string, boolean[]> = Object.fromEntries(
+    (extendedPlayer?.missionClaims ?? []).map((entry) => [
+      entry.cardId,
+      entry.branchClaims,
+    ]),
+  );
   const missionRows: IPlayedMissionRow[] = [
-    ...missionCards.map((card) => ({ card })),
+    ...missionCards.map((card) => {
+      const claims = branchClaimsByCardId[card.id];
+      // "N / M claimed" annotation is only useful for FULL_MISSION-
+      // style cards with multiple branches that aren't all claimed
+      // yet. Single-branch (QUICK) cards already disappear into the
+      // completed-pile when they fire, so the annotation just
+      // duplicates info; skip for them.
+      const annotation =
+        claims && claims.length > 1 && claims.some((c) => c)
+          ? {
+              label: `${claims.filter((c) => c).length} / ${claims.length} claimed`,
+              tone: 'pending' as const,
+            }
+          : undefined;
+      return annotation ? { card, annotation } : { card };
+    }),
     ...buildPendingCentaurianRows(
       gameState?.aliens,
       myPlayerId,
@@ -1317,6 +1357,9 @@ function PersonalColumn({
           <PlayedMissions
             missions={missionRows}
             onCardInspect={onInspectCard}
+            completedCards={completedMissions}
+            branchClaimsByCardId={branchClaimsByCardId}
+            ownerPlayerColor={myPlayer?.color}
           />
         </section>
       ) : null}
