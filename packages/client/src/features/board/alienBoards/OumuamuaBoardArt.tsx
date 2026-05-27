@@ -75,6 +75,7 @@ export function OumuamuaBoardArt({
           <HotspotButton
             sceneId='alien-board'
             hotspotId={`oumuamua-${alienIndex}-orbit`}
+            variant='image'
             baseWidth={777}
             baseHeight={1415}
             x={388.5}
@@ -95,6 +96,7 @@ export function OumuamuaBoardArt({
           <HotspotButton
             sceneId='alien-board'
             hotspotId={`oumuamua-${alienIndex}-land`}
+            variant='image'
             baseWidth={777}
             baseHeight={1415}
             x={388.5}

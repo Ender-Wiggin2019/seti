@@ -116,6 +116,50 @@ describe('PlayerDashboard', () => {
     ).toHaveTextContent('marked');
   });
 
+  it('uses the same organization power hotspot id with mode-specific variants', () => {
+    const organizationId = EOrganizationId.HELION_ASSEMBLY;
+    const player = createMockPlayerState({
+      organizationIds: [organizationId],
+      usableOrganizationPowerIds: [organizationId],
+    });
+
+    const { unmount } = render(
+      <PlayerDashboard
+        player={player}
+        pendingInput={null}
+        onFreeAction={() => undefined}
+      />,
+    );
+
+    const imagePower = screen.getByTestId(
+      `organization-power-card-${organizationId}`,
+    );
+    expect(imagePower).toHaveAttribute(
+      'data-hotspot-id',
+      `${organizationId}-power`,
+    );
+    expect(imagePower).toHaveAttribute('data-hotspot-variant', 'image');
+
+    unmount();
+    useDebugStore.setState({ textMode: true });
+    render(
+      <PlayerDashboard
+        player={player}
+        pendingInput={null}
+        onFreeAction={() => undefined}
+      />,
+    );
+
+    const textPower = screen.getByTestId(
+      `organization-power-card-${organizationId}`,
+    );
+    expect(textPower).toHaveAttribute(
+      'data-hotspot-id',
+      `${organizationId}-power`,
+    );
+    expect(textPower).toHaveAttribute('data-hotspot-variant', 'text');
+  });
+
   it('exposes image-mode organization used badges through the shared anchor debug layer', () => {
     useDebugStore.getState().setHotspotDebug(true);
 

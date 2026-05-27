@@ -1769,6 +1769,7 @@ function OumuamuaLandingArea({
                 <HotspotButton
                   sceneId='alien-board'
                   hotspotId={`oumuamua-${alienIndex}-orbit`}
+                  variant='image'
                   baseWidth={100}
                   baseHeight={28}
                   x={50}
@@ -1817,6 +1818,7 @@ function OumuamuaLandingArea({
                 <HotspotButton
                   sceneId='alien-board'
                   hotspotId={`oumuamua-${alienIndex}-land`}
+                  variant='image'
                   baseWidth={100}
                   baseHeight={28}
                   x={50}

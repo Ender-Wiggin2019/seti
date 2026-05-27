@@ -93,6 +93,7 @@ function TokenAtPoint({
     <HotspotAnchor
       sceneId='planet-board'
       hotspotId={hotspotId}
+      variant='image'
       baseWidth={PLANETARY_BOARD_DIMENSIONS.width}
       baseHeight={PLANETARY_BOARD_DIMENSIONS.height}
       x={(PLANETARY_BOARD_DIMENSIONS.width * x) / 100}
@@ -125,6 +126,7 @@ function GlyphTokenAtPoint({
     <HotspotAnchor
       sceneId='planet-board'
       hotspotId={hotspotId}
+      variant='image'
       baseWidth={PLANETARY_BOARD_DIMENSIONS.width}
       baseHeight={PLANETARY_BOARD_DIMENSIONS.height}
       x={(PLANETARY_BOARD_DIMENSIONS.width * x) / 100}
@@ -154,6 +156,12 @@ interface IPlanetHotspot {
   moonName?: string;
   x: number;
   y: number;
+}
+
+interface IPlanetTarget extends IPlanetHotspot {
+  hotspotId: string;
+  label: string;
+  selectOptions?: { isMoon?: boolean; moonId?: string };
 }
 
 function getMoonOccupants(
@@ -210,6 +218,41 @@ function getPlanetHotspots(
   return [
     { kind: 'planet-land', index: 0, x: config.anchor.x, y: config.anchor.y },
   ];
+}
+
+function getPlanetTargets(
+  planet: EPlanet,
+  config: IPlanetaryBoardConfig,
+  mode: EMainAction.ORBIT | EMainAction.LAND | null,
+): IPlanetTarget[] {
+  return getPlanetHotspots(config, mode).map((hotspot) => {
+    const isMoonTarget = hotspot.kind === 'moon-land';
+    return {
+      ...hotspot,
+      hotspotId: isMoonTarget
+        ? `${planet}-moon-${hotspot.moonId}`
+        : `${planet}-${hotspot.kind}-${hotspot.index}`,
+      label: isMoonTarget
+        ? `${config.label} ${hotspot.moonName ?? hotspot.moonId ?? 'moon'}`
+        : `${config.label} ${hotspot.kind}`,
+      selectOptions: isMoonTarget
+        ? { isMoon: true, moonId: hotspot.moonId }
+        : undefined,
+    };
+  });
+}
+
+function getPlanetTargetTestId(
+  planet: EPlanet,
+  target: IPlanetTarget,
+  index: number,
+): string {
+  if (target.kind === 'moon-land') {
+    return `planet-target-${planet}-moon-${target.moonId}`;
+  }
+  return index === 0
+    ? `planet-target-${planet}`
+    : `planet-target-${planet}-${target.kind}-${target.index}`;
 }
 
 function canSelectMainActionTarget(
@@ -309,15 +352,32 @@ export function PlanetaryBoardView({
             const config = getPlanetConfig(planetaryBoard, planet);
             const planetState =
               planetaryBoard.planets[planet] ?? createEmptyPlanetState(config);
-            // Text-mode disables the parallel-click affordance for the
-            // ORBIT/LAND slot picker — players resolve via the input
-            // panel only. Card-driven PLANET-typed inputs (e.g. "pick
-            // a planet for this card effect") still light up the
-            // selectable cards.
             const planetTargetSelectable = selectablePlanets.has(planet);
-            // Same rationale as above: text-mode skips the slot-picker
-            // moon parallel-click. Players use the input panel.
-            const selectableMoonIds = new Set<string>();
+            const targets = getPlanetTargets(
+              planet,
+              config,
+              mainActionPlanetMode,
+            ).filter((target) => {
+              if (planetTargetSelectable) {
+                return true;
+              }
+              return canSelectMainActionTarget(
+                mainActionPlanetMode,
+                planet,
+                planetState,
+                mainActionPlayer,
+                gameState,
+                target.selectOptions ?? {},
+              );
+            });
+            const selectableMoonIds = new Set(
+              targets
+                .map((target) => target.selectOptions?.moonId)
+                .filter((moonId): moonId is string => moonId !== undefined),
+            );
+            const planetMainActionSelectable = targets.some(
+              (target) => target.selectOptions?.isMoon !== true,
+            );
             return (
               <PlanetCard
                 key={planet}
@@ -326,10 +386,12 @@ export function PlanetaryBoardView({
                 state={planetState}
                 playerColors={playerColors}
                 isSelectable={
-                  planetTargetSelectable || selectableMoonIds.size > 0
+                  planetTargetSelectable ||
+                  planetMainActionSelectable ||
+                  selectableMoonIds.size > 0
                 }
                 onSelect={
-                  planetTargetSelectable
+                  planetTargetSelectable || planetMainActionSelectable
                     ? () => handlePlanetSelect(planet)
                     : undefined
                 }
@@ -337,6 +399,14 @@ export function PlanetaryBoardView({
                 onSelectMoon={(moonId) =>
                   handlePlanetSelect(planet, { isMoon: true, moonId })
                 }
+                hotspotTargets={targets.map((target, index) => ({
+                  hotspotId: target.hotspotId,
+                  testId: getPlanetTargetTestId(planet, target, index),
+                  label: target.label,
+                  ariaLabel: `${target.label} target`,
+                  onSelect: () =>
+                    handlePlanetSelect(planet, target.selectOptions),
+                }))}
               />
             );
           })}
@@ -359,10 +429,11 @@ export function PlanetaryBoardView({
                   planetaryBoard.planets[planet] ??
                   createEmptyPlanetState(config);
                 const moonOccupants = getMoonOccupants(planetState);
-                const hotspots = getPlanetHotspots(
+                const targets = getPlanetTargets(
+                  planet,
                   config,
                   mainActionPlanetMode,
-                ).filter((hotspot) => {
+                ).filter((target) => {
                   if (selectablePlanets.has(planet)) {
                     return true;
                   }
@@ -372,64 +443,40 @@ export function PlanetaryBoardView({
                     planetState,
                     mainActionPlayer,
                     gameState,
-                    hotspot.kind === 'moon-land'
-                      ? { isMoon: true, moonId: hotspot.moonId }
-                      : {},
+                    target.selectOptions ?? {},
                   );
                 });
 
                 return (
                   <div key={`planet-overlay-${planet}`}>
-                    {hotspots.map((hotspot, index) => {
-                      const isMoonTarget = hotspot.kind === 'moon-land';
-                      const moonLabel =
-                        hotspot.moonName ?? hotspot.moonId ?? 'moon';
-                      const targetLabel = isMoonTarget
-                        ? `${config.label} ${moonLabel}`
-                        : `${config.label} ${hotspot.kind}`;
-                      const hotspotId = isMoonTarget
-                        ? `${planet}-moon-${hotspot.moonId}`
-                        : `${planet}-${hotspot.kind}-${hotspot.index}`;
-                      const testId = isMoonTarget
-                        ? `planet-target-${planet}-moon-${hotspot.moonId}`
-                        : index === 0
-                          ? `planet-target-${planet}`
-                          : `planet-target-${planet}-${hotspot.kind}-${hotspot.index}`;
+                    {targets.map((target, index) => {
                       return (
                         <HotspotButton
-                          key={`${planet}-target-${hotspot.kind}-${hotspot.index}`}
+                          key={`${planet}-target-${target.kind}-${target.index}`}
                           sceneId='planet-board'
-                          hotspotId={hotspotId}
+                          hotspotId={target.hotspotId}
+                          variant='image'
                           baseWidth={PLANETARY_BOARD_DIMENSIONS.width}
                           baseHeight={PLANETARY_BOARD_DIMENSIONS.height}
                           x={
-                            (PLANETARY_BOARD_DIMENSIONS.width * hotspot.x) / 100
+                            (PLANETARY_BOARD_DIMENSIONS.width * target.x) / 100
                           }
                           y={
-                            (PLANETARY_BOARD_DIMENSIONS.height * hotspot.y) /
-                            100
+                            (PLANETARY_BOARD_DIMENSIONS.height * target.y) / 100
                           }
                           width={36}
                           height={36}
-                          testId={testId}
-                          debugLabel={targetLabel}
+                          testId={getPlanetTargetTestId(planet, target, index)}
+                          debugLabel={target.label}
                           className={cn(
                             'border-accent-400/80 ring-1 ring-accent-400/70',
                             'hover:bg-accent-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300',
                           )}
                           onClick={() =>
-                            handlePlanetSelect(
-                              planet,
-                              isMoonTarget
-                                ? {
-                                    isMoon: true,
-                                    moonId: hotspot.moonId,
-                                  }
-                                : undefined,
-                            )
+                            handlePlanetSelect(planet, target.selectOptions)
                           }
-                          ariaLabel={`${targetLabel} target`}
-                          title={targetLabel}
+                          ariaLabel={`${target.label} target`}
+                          title={target.label}
                         />
                       );
                     })}

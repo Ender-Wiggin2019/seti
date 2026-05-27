@@ -381,32 +381,84 @@ describe('PlanetaryBoardView', () => {
     ).toBeInTheDocument();
   });
 
-  it('clicks image-mode moon hotspots with the selected moon id payload', () => {
-    const { gameState, planetaryBoard } = createMoonLandingState();
-    const onSelectMainActionPlanet = vi.fn();
+  it.each([
+    { mode: 'image', textMode: false },
+    { mode: 'text', textMode: true },
+  ])(
+    'clicks $mode-mode moon hotspots with the selected moon id payload',
+    ({ textMode }) => {
+      useDebugStore.setState({ textMode });
+      const { gameState, planetaryBoard } = createMoonLandingState();
+      const onSelectMainActionPlanet = vi.fn();
 
-    render(
+      render(
+        <PlanetaryBoardView
+          planetaryBoard={planetaryBoard}
+          gameState={gameState}
+          myPlayerId='player-1'
+          pendingInput={null}
+          playerColors={{}}
+          mainActionPlanetMode={EMainAction.LAND}
+          onSelectMainActionPlanet={onSelectMainActionPlanet}
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByTestId(
+          `planet-target-${EPlanet.JUPITER}-moon-jupiter-callisto`,
+        ),
+      );
+
+      expect(onSelectMainActionPlanet).toHaveBeenCalledWith(EPlanet.JUPITER, {
+        isMoon: true,
+        moonId: 'jupiter-callisto',
+      });
+    },
+  );
+
+  it('uses separate hotspot variants for image and text planet targets', () => {
+    useDebugStore.setState({
+      hotspotDebug: true,
+      hotspotOverrides: {
+        'planet-board:image': {
+          [`${EPlanet.MARS}-orbit-0`]: { x: 0, y: 0, width: 80, height: 80 },
+        },
+      },
+    });
+
+    const { unmount } = render(
       <PlanetaryBoardView
-        planetaryBoard={planetaryBoard}
-        gameState={gameState}
-        myPlayerId='player-1'
-        pendingInput={null}
+        planetaryBoard={createPlanetaryBoardMock()}
+        pendingInput={{
+          inputId: 'input-1',
+          type: EPlayerInputType.PLANET,
+          options: [EPlanet.MARS],
+        }}
         playerColors={{}}
-        mainActionPlanetMode={EMainAction.LAND}
-        onSelectMainActionPlanet={onSelectMainActionPlanet}
       />,
     );
 
-    fireEvent.click(
-      screen.getByTestId(
-        `planet-target-${EPlanet.JUPITER}-moon-jupiter-callisto`,
-      ),
+    const imageTarget = screen.getByTestId(`planet-target-${EPlanet.MARS}`);
+    expect(imageTarget).toHaveAttribute('data-hotspot-variant', 'image');
+    expect(imageTarget).toHaveStyle({ left: '0%', top: '0%' });
+
+    unmount();
+    useDebugStore.setState({ textMode: true });
+    render(
+      <PlanetaryBoardView
+        planetaryBoard={createPlanetaryBoardMock()}
+        pendingInput={{
+          inputId: 'input-1',
+          type: EPlayerInputType.PLANET,
+          options: [EPlanet.MARS],
+        }}
+        playerColors={{}}
+      />,
     );
 
-    expect(onSelectMainActionPlanet).toHaveBeenCalledWith(EPlanet.JUPITER, {
-      isMoon: true,
-      moonId: 'jupiter-callisto',
-    });
+    const textTarget = screen.getByTestId(`planet-target-${EPlanet.MARS}`);
+    expect(textTarget).toHaveAttribute('data-hotspot-variant', 'text');
+    expect(textTarget).not.toHaveStyle({ left: '0%', top: '0%' });
   });
 
   it('clicks a planet land target when the player already has a lander there', () => {
@@ -508,11 +560,7 @@ describe('PlanetaryBoardView', () => {
     );
   });
 
-  it('does not light up text-mode moon blocks for the main-action LAND picker', () => {
-    // Text-mode disables planet-card / moon-block parallel-click for
-    // ORBIT/LAND — players resolve via the input panel only. Card-
-    // driven PLANET-typed inputs (with `pendingInput.options`) still
-    // light up the cards; that path is exercised separately.
+  it('keeps text-mode moon blocks interactive for the main-action LAND picker', () => {
     useDebugStore.setState({ textMode: true });
     const { gameState, planetaryBoard } = createMoonLandingState();
     const onSelectMainActionPlanet = vi.fn();
@@ -529,14 +577,15 @@ describe('PlanetaryBoardView', () => {
       />,
     );
 
-    // The block still renders (it's a read-only summary in text-mode)
-    // but is a div, not a button, so clicks don't fire the handler.
     const moonBlock = screen.getByTestId(
       `moon-block-${EPlanet.JUPITER}-jupiter-io`,
     );
-    expect(moonBlock.tagName).toBe('DIV');
+    expect(moonBlock.tagName).toBe('BUTTON');
     fireEvent.click(moonBlock);
-    expect(onSelectMainActionPlanet).not.toHaveBeenCalled();
+    expect(onSelectMainActionPlanet).toHaveBeenCalledWith(EPlanet.JUPITER, {
+      isMoon: true,
+      moonId: 'jupiter-io',
+    });
   });
 
   it('highlights selectable text-mode planet cards', () => {

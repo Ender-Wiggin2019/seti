@@ -184,7 +184,8 @@ export function OrganizationCard({
           <div className='relative h-7 w-full'>
             <HotspotButton
               sceneId='corporation-board'
-              hotspotId={`${organizationId}-power-text`}
+              hotspotId={`${organizationId}-power`}
+              variant='text'
               baseWidth={204}
               baseHeight={28}
               x={102}
@@ -242,6 +243,7 @@ export function OrganizationCard({
         <HotspotButton
           sceneId='corporation-board'
           hotspotId={`${organizationId}-power`}
+          variant='image'
           baseWidth={168}
           baseHeight={234}
           x={42}
@@ -267,6 +269,7 @@ export function OrganizationCard({
         <HotspotAnchor
           sceneId='corporation-board'
           hotspotId={`${organizationId}-used-badge`}
+          variant='image'
           baseWidth={168}
           baseHeight={234}
           x={48}

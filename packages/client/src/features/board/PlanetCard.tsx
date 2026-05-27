@@ -5,6 +5,7 @@ import type {
 } from '@seti/common/constant/boardLayout';
 import { EResource, ESector, ETrace } from '@seti/common/types/element';
 import { useTranslation } from 'react-i18next';
+import { HotspotButton } from '@/features/hotspots/HotspotButton';
 import { cn } from '@/lib/cn';
 import { useTextMode } from '@/stores/debugStore';
 import type {
@@ -23,6 +24,15 @@ interface IPlanetCardProps {
   onSelect?: () => void;
   selectableMoonIds?: ReadonlySet<string>;
   onSelectMoon?: (moonId: string) => void;
+  hotspotTargets?: IPlanetCardHotspotTarget[];
+}
+
+interface IPlanetCardHotspotTarget {
+  hotspotId: string;
+  testId: string;
+  label: string;
+  ariaLabel: string;
+  onSelect: () => void;
 }
 
 function TokenDot({
@@ -266,6 +276,7 @@ export function PlanetCard({
   onSelect,
   selectableMoonIds = new Set<string>(),
   onSelectMoon,
+  hotspotTargets = [],
 }: IPlanetCardProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const planetConfig = config;
@@ -318,6 +329,34 @@ export function PlanetCard({
           </span>
         </div>
       </header>
+
+      {hotspotTargets.length > 0 ? (
+        <div className='mb-2 grid gap-1.5'>
+          {hotspotTargets.map((target) => (
+            <div key={target.hotspotId} className='relative h-8'>
+              <HotspotButton
+                sceneId='planet-board'
+                hotspotId={target.hotspotId}
+                variant='text'
+                baseWidth={100}
+                baseHeight={32}
+                x={50}
+                y={16}
+                width={100}
+                height={32}
+                shape='rect'
+                testId={target.testId}
+                debugLabel={target.label}
+                ariaLabel={target.ariaLabel}
+                onClick={target.onSelect}
+                className='flex items-center justify-center border-accent-500/70 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-accent-200 hover:bg-accent-500/15'
+              >
+                {target.label}
+              </HotspotButton>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       <div className='mb-2 grid gap-2 rounded border border-surface-700/50 bg-surface-950/40 p-2 font-mono text-[10px] leading-snug text-text-300'>
         <section>
