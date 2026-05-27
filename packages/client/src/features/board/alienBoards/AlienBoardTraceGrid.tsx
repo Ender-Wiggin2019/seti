@@ -1,5 +1,6 @@
 import { DescRender } from '@seti/cards';
 import { OUMUAMUA_TRACE_SLOT_PREFIX } from '@seti/common/constant/alienBoardConfig';
+import { CENTAURIANS_TRACE_SLOT_PREFIX } from '@seti/common/constant/centaurians';
 import {
   groupTraceSlotsByColor,
   TRACE_COLUMN_COLORS,
@@ -211,6 +212,19 @@ function parseOumuamuaExofossilCost(slotId: string): number {
   return Number.isInteger(cost) && cost > 0 ? cost : 0;
 }
 
+/**
+ * Centaurian trace slot ids follow the same `…|tier|cost` shape, but
+ * the cost is paid in data instead of exofossils. Example:
+ *   `alien-0-centaurians-trace|yellow-trace|4|3`
+ */
+function parseCentauriansDataCost(slotId: string): number {
+  if (!slotId.includes(CENTAURIANS_TRACE_SLOT_PREFIX)) return 0;
+  const parts = slotId.split('|');
+  if (parts.length !== 4) return 0;
+  const cost = Number(parts[3]);
+  return Number.isInteger(cost) && cost > 0 ? cost : 0;
+}
+
 function TraceSlot({
   slot,
   playerColors,
@@ -221,6 +235,14 @@ function TraceSlot({
   const isOverflow = slot.maxOccupants === -1;
   const rewards = toTraceRewardPresentations(slot.rewards);
   const exofossilCost = parseOumuamuaExofossilCost(slot.slotId);
+  const dataCost = parseCentauriansDataCost(slot.slotId);
+
+  const costLabel =
+    exofossilCost > 0
+      ? ` — costs ${exofossilCost} exofossil`
+      : dataCost > 0
+        ? ` — costs ${dataCost} data`
+        : '';
 
   return (
     <div className='relative flex w-[78%] max-w-16 shrink-0 flex-col items-center'>
@@ -228,7 +250,7 @@ function TraceSlot({
         traceColor={slot.traceColor}
         variant={isOverflow ? 'pill' : 'circle'}
         testId={`trace-slot-${slot.slotId}-circle`}
-        title={`${TRACE_LABEL[slot.traceColor]} slot${isOverflow ? ' (overflow)' : ''}${slot.isDiscovery ? ' - Discovery' : ''}${exofossilCost > 0 ? ` — costs ${exofossilCost} exofossil` : ''}`}
+        title={`${TRACE_LABEL[slot.traceColor]} slot${isOverflow ? ' (overflow)' : ''}${slot.isDiscovery ? ' - Discovery' : ''}${costLabel}`}
         highlighted={slot.isDiscovery}
       >
         {rewards.length > 0 ? (
@@ -248,6 +270,7 @@ function TraceSlot({
         )}
       </TraceRewardFrame>
       {exofossilCost > 0 ? <ExofossilCostBadge cost={exofossilCost} /> : null}
+      {dataCost > 0 ? <DataCostBadge cost={dataCost} /> : null}
       <SlotOccupantOverlay slot={slot} playerColors={playerColors} />
     </div>
   );
@@ -278,6 +301,33 @@ function ExofossilCostBadge({ cost }: { cost: number }): React.JSX.Element {
         alt=''
         className='h-4 w-4 select-none'
         style={{ transform: 'rotate(45deg) scale(0.9)' }}
+        draggable={false}
+      />
+    </span>
+  );
+}
+
+/**
+ * "Costs N data" badge — same layout as the exofossil badge, with a
+ * data-token icon. Used by Centaurian trace ladder tiers that gate
+ * placement on a data spend (tier 4 = 3 data, tier 5 = 1 data).
+ */
+function DataCostBadge({ cost }: { cost: number }): React.JSX.Element {
+  return (
+    <span
+      className='pointer-events-none absolute -bottom-1.5 -right-1.5 inline-flex items-center gap-0.5 rounded-full border border-cyan-300/70 bg-surface-950/95 px-1.5 py-1 font-mono text-[11px] font-semibold leading-none text-cyan-100 shadow-[0_2px_4px_rgba(0,0,0,0.55)]'
+      data-testid='trace-slot-data-cost'
+      title={`Costs ${cost} data`}
+    >
+      <span aria-hidden className='relative inline-block h-3 w-3 shrink-0'>
+        <span className='absolute left-1/2 top-1/2 h-[2px] w-[110%] -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-full bg-red-500 shadow-[0_0_2px_rgba(0,0,0,0.6)]' />
+        <span className='absolute left-1/2 top-1/2 h-[2px] w-[110%] -translate-x-1/2 -translate-y-1/2 -rotate-45 rounded-full bg-red-500 shadow-[0_0_2px_rgba(0,0,0,0.6)]' />
+      </span>
+      <span>{cost}</span>
+      <img
+        src='/assets/seti/icons/data.png'
+        alt=''
+        className='h-4 w-4 select-none'
         draggable={false}
       />
     </span>

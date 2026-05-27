@@ -19,16 +19,28 @@
 
 _(none — most recent slice just landed)_
 
-> **Audit notes (2026-05-21):**
-> - Test baseline now: server 2160/2163 (3 pre-existing failures, none
->   Tong-owned: `OrganizationCardPowers > Cosmos Strategy Group …`,
->   `OrganizationTechProbePowers > Helion Assembly …`,
->   `SpaceAgencyAlienPlugins > deals Amoeba discovery cards …`); client
->   316/316; `pnpm -r typecheck` clean.
-> - 2026-05-21 update: solar-system multi-cell movement-cost fix
->   landed (option C — adjacency-only, see Done). Surfaced several
->   movement / planet / terrain gaps along the way; documented as new
->   P1/P2 items below.
+> **Audit notes (2026-05-27):**
+> - Pulled origin/feature/server up to `7b2b144`. Notable upstream
+>   commits since the last audit: `9af4a22` (historical-compat
+>   cleanup — see `docs/review/historical-compatibility-cleanup-audit-2026-05-25.md`),
+>   `9ecb5ea` (Space Agency copy alignment), `3ae7f75` (hotspot
+>   calibration debug editor), `faff245` (lint + unit-test
+>   fixtures updated for the cleanup), `7b2b144` (planet-board
+>   hotspot rework).
+> - Test baseline: server 2222/2222, client 393/393, `pnpm -r
+>   typecheck` clean.
+> - "Land main action on Oumuamua" P1 was resolved by `8a8151a`'s
+>   `OrbitLandPickers.ts`; `eligibleLandPlanets` includes Oumuamua
+>   and `AlienBoardView` ships a `planet-target-oumuamua` LAND
+>   button. Moved to Done.
+> - WS reconnect P0, `AndOptionsInput` Back-clear P1, and client
+>   asteroid-leave-cost P2 are unchanged in upstream — still
+>   applicable.
+> - `3ae7f75` introduces a hotspot calibration debug editor
+>   (`HotspotsDebugPage`), which directly addresses the P1 "Anchor
+>   planet hotspots to the printed image-mode board" tooling gap.
+>   The Open entry is still valid for the actual coordinate-tuning
+>   work, but the calibration tool is now in place.
 
 ## Open
 
@@ -94,32 +106,6 @@ _(none — most recent slice just landed)_
   approach as the alien boards (`AnomaliesBoardArt` precedent);
   also tune the moon hotspots which currently sit roughly on the
   printed moon glyphs but not exactly.
-
-### P1 — Land main action on Oumuamua not supported
-
-- `LAND` main action targets a printed planet's landing slot and grants
-  the planet's land rewards. Oumuamua has a `PLANETARY_BOARD_CONFIG`
-  entry (see `packages/common/src/constant/boardLayout.ts:379`) with
-  `landingSlots`, but the LAND flow doesn't accept Oumuamua as a
-  target — `canLandOnPlanet` likely rejects, or no UI option is
-  exposed in `AlienBoardView`'s Oumuamua landing surface.
-- Rulebook: "Players may place lander/orbiter on it as with other
-  planets" (`docs/arch/aliens/oumuamua/rule.md`). Orbit already works
-  (`OrbitProbeEffect` handles Oumuamua specially via the dual-routing
-  signal input), so LAND should mirror that.
-- Fix shape:
-  1. Audit `LandProbeEffect` for any planet-allowlist check; ensure
-     `EPlanet.OUMUAMUA` is in scope (the `ORBITABLE_PLANETS` list
-     already includes it; check the LAND equivalent).
-  2. Wire the "Land Oumuamua" UI button in `AlienBoardView`'s
-     `OumuamuaBoardRenderer` (already has the orbit/land surface
-     scaffolding).
-  3. Verify the per-Oumuamua land rewards land via the standard
-     reward pipeline; signals from "Land bonus" should also route
-     through `createSectorOrTileSignalInput` for the Oumuamua
-     sector-vs-tile choice.
-- _Audit (2026-05-21): observed in the live replay — Oumuamua's
-  landing surface renders but clicking the LAND button is a no-op._
 
 ### P2 — Client `getReachableSpaces` ignores Probe Tech 1 asteroid-leave discount
 
@@ -251,6 +237,32 @@ _(none — most recent slice just landed)_
   flipped to `false` in most packages.
 
 ## Done
+
+### Land main action on Oumuamua wired through picker - 2026-05-21
+
+The picker-driven ORBIT/LAND slice (commit `8a8151a`) added Oumuamua
+to `ALL_ORBIT_LAND_PLANETS` in
+`packages/server/src/engine/actions/OrbitLandPickers.ts:21-24`.
+`eligibleLandPlanets` filters Oumuamua out only when
+`solarSystem.getPlanetLocation(EPlanet.OUMUAMUA)` returns null
+(Oumuamua not yet placed); when placed, Oumuamua appears as a normal
+LAND planet picker option. The client-side `AlienBoardView` ships
+the matching `planet-target-oumuamua` button wired to
+`onSelectMainActionPlanet?.(EPlanet.OUMUAMUA)`.
+
+`LandProbeEffect` already handles Oumuamua's signal rewards through
+the same `MarkSectorSignalEffect.markByPlanetWithAlternatives`
+fallback that orbit uses, so per-planet land rewards land via the
+standard reward pipeline.
+
+Verification:
+- `eligibleLandPlanets` includes `EPlanet.OUMUAMUA` once placed; cost
+  label uses `LandProbeEffect.getLandingCost`.
+- `data-testid='planet-target-oumuamua'` LAND button renders in
+  `AlienBoardView`'s Oumuamua surface.
+- Confirmed via the playtest after the cleanup commit; remaining
+  "land/moon reward cross-check against printed board" tracked
+  separately under Open → P1.
 
 ### Picker-driven ORBIT/LAND main action + opt-in first-orbit + per-planet orbit rewards - 2026-05-21
 
