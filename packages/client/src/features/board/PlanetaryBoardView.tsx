@@ -419,7 +419,7 @@ export function PlanetaryBoardView({
               className='relative w-full bg-cover bg-center'
               style={{
                 aspectRatio: `${PLANETARY_BOARD_DIMENSIONS.width} / ${PLANETARY_BOARD_DIMENSIONS.height}`,
-                backgroundImage: 'url(/assets/seti/boards/planetBoard.jpg)',
+                backgroundImage: 'url(/assets/seti/boards/planetBoard.webp)',
                 backgroundSize: '100% 100%',
               }}
             >

@@ -1,3 +1,4 @@
+import { HotspotAnchor } from '@/features/hotspots/HotspotAnchor';
 import { HotspotButton } from '@/features/hotspots/HotspotButton';
 import type { IPublicOumuamuaBoard } from '@/types/re-exports';
 import { EMainAction, EPlanet, ETrace } from '@/types/re-exports';
@@ -34,6 +35,51 @@ const OUMUAMUA_LAYOUTS: TTraceColumnLayouts = {
     overflowStridePct: 1.5,
   },
 };
+const ALIEN_BOARD_BASE_WIDTH = 777;
+const ALIEN_BOARD_BASE_HEIGHT = 1415;
+
+const OUMUAMUA_PLANET_ANCHORS = [
+  {
+    id: 'orbit-area',
+    label: 'Oumuamua orbit area',
+    x: 104,
+    y: 336,
+    width: 150,
+    height: 150,
+  },
+  {
+    id: 'land-area',
+    label: 'Oumuamua land area',
+    x: 344,
+    y: 390,
+    width: 315,
+    height: 300,
+  },
+  {
+    id: 'first-land-data-1',
+    label: 'Oumuamua first land data 1',
+    x: 306,
+    y: 308,
+    width: 96,
+    height: 96,
+  },
+  {
+    id: 'first-land-data-2',
+    label: 'Oumuamua first land data 2',
+    x: 262,
+    y: 402,
+    width: 96,
+    height: 96,
+  },
+  {
+    id: 'first-land-data-3',
+    label: 'Oumuamua first land data 3',
+    x: 306,
+    y: 496,
+    width: 96,
+    height: 96,
+  },
+] as const;
 
 interface IOumuamuaBoardArtProps {
   alienIndex: number;
@@ -42,6 +88,8 @@ interface IOumuamuaBoardArtProps {
   planetActionMode?: EMainAction.ORBIT | EMainAction.LAND | null;
   orbitSelectable?: boolean;
   landSelectable?: boolean;
+  selectableSlotIds?: ReadonlySet<string>;
+  onSelectTraceSlot?: (slotId: string) => void;
   onSelectMainActionPlanet?: (planet: EPlanet) => void;
 }
 
@@ -52,6 +100,8 @@ export function OumuamuaBoardArt({
   planetActionMode,
   orbitSelectable = false,
   landSelectable = false,
+  selectableSlotIds,
+  onSelectTraceSlot,
   onSelectMainActionPlanet,
 }: IOumuamuaBoardArtProps): React.JSX.Element {
   return (
@@ -70,18 +120,39 @@ export function OumuamuaBoardArt({
           traceSlots={board.traceSlots}
           playerColors={playerColors}
           layouts={OUMUAMUA_LAYOUTS}
+          selectableSlotIds={selectableSlotIds}
+          onSelectTraceSlot={onSelectTraceSlot}
         />
+        {OUMUAMUA_PLANET_ANCHORS.map((anchor) => (
+          <HotspotAnchor
+            key={anchor.id}
+            sceneId='alien-board'
+            hotspotId={`oumuamua-${alienIndex}-${anchor.id}`}
+            variant='image'
+            baseWidth={ALIEN_BOARD_BASE_WIDTH}
+            baseHeight={ALIEN_BOARD_BASE_HEIGHT}
+            x={anchor.x}
+            y={anchor.y}
+            width={anchor.width}
+            height={anchor.height}
+            shape='rect'
+            color='#a78bfa'
+            opacity={0.22}
+            debugLabel={anchor.label}
+            testId={`alien-${alienIndex}-oumuamua-anchor-${anchor.id}`}
+          />
+        ))}
         {planetActionMode === EMainAction.ORBIT ? (
           <HotspotButton
             sceneId='alien-board'
             hotspotId={`oumuamua-${alienIndex}-orbit`}
             variant='image'
-            baseWidth={777}
-            baseHeight={1415}
-            x={388.5}
-            y={1080}
-            width={280}
-            height={96}
+            baseWidth={ALIEN_BOARD_BASE_WIDTH}
+            baseHeight={ALIEN_BOARD_BASE_HEIGHT}
+            x={104}
+            y={336}
+            width={150}
+            height={150}
             shape='rect'
             testId='planet-target-oumuamua'
             debugLabel='Oumuamua orbit'
@@ -97,12 +168,12 @@ export function OumuamuaBoardArt({
             sceneId='alien-board'
             hotspotId={`oumuamua-${alienIndex}-land`}
             variant='image'
-            baseWidth={777}
-            baseHeight={1415}
-            x={388.5}
-            y={1190}
-            width={280}
-            height={96}
+            baseWidth={ALIEN_BOARD_BASE_WIDTH}
+            baseHeight={ALIEN_BOARD_BASE_HEIGHT}
+            x={344}
+            y={390}
+            width={315}
+            height={300}
             shape='rect'
             testId='planet-target-oumuamua'
             debugLabel='Oumuamua land'

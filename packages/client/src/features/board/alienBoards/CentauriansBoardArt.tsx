@@ -1,3 +1,4 @@
+import { HotspotAnchor } from '@/features/hotspots/HotspotAnchor';
 import type {
   IPublicCentauriansBoard,
   IPublicPlayerState,
@@ -37,6 +38,35 @@ const CENTAURIANS_LAYOUTS: TTraceColumnLayouts = {
     overflowStridePct: 1.5,
   },
 };
+const ALIEN_BOARD_BASE_WIDTH = 777;
+const ALIEN_BOARD_BASE_HEIGHT = 1415;
+
+const CENTAURIANS_MESSAGE_ANCHORS = [
+  {
+    id: 'any-trace',
+    label: 'Centaurians message any trace',
+    x: 230,
+    y: 132,
+  },
+  {
+    id: 'energy-and-alien-card',
+    label: 'Centaurians message energy and alien card',
+    x: 343,
+    y: 132,
+  },
+  {
+    id: 'publicity-3',
+    label: 'Centaurians message publicity 3',
+    x: 457,
+    y: 132,
+  },
+  {
+    id: 'score-8',
+    label: 'Centaurians message score 8',
+    x: 570,
+    y: 132,
+  },
+] as const;
 
 interface ICentauriansBoardArtProps {
   alienIndex: number;
@@ -44,6 +74,8 @@ interface ICentauriansBoardArtProps {
   playerColors: Record<string, string>;
   players: IPublicPlayerState[];
   myPlayerId?: string;
+  selectableSlotIds?: ReadonlySet<string>;
+  onSelectTraceSlot?: (slotId: string) => void;
 }
 
 export function CentauriansBoardArt({
@@ -52,6 +84,8 @@ export function CentauriansBoardArt({
   playerColors,
   players,
   myPlayerId,
+  selectableSlotIds,
+  onSelectTraceSlot,
 }: ICentauriansBoardArtProps): React.JSX.Element {
   return (
     <section
@@ -69,7 +103,28 @@ export function CentauriansBoardArt({
           traceSlots={board.traceSlots}
           playerColors={playerColors}
           layouts={CENTAURIANS_LAYOUTS}
+          selectableSlotIds={selectableSlotIds}
+          onSelectTraceSlot={onSelectTraceSlot}
         />
+        {CENTAURIANS_MESSAGE_ANCHORS.map((anchor) => (
+          <HotspotAnchor
+            key={anchor.id}
+            sceneId='alien-board'
+            hotspotId={`centaurians-${alienIndex}-message-${anchor.id}`}
+            variant='image'
+            baseWidth={ALIEN_BOARD_BASE_WIDTH}
+            baseHeight={ALIEN_BOARD_BASE_HEIGHT}
+            x={anchor.x}
+            y={anchor.y}
+            width={98}
+            height={142}
+            shape='rect'
+            color='#6ee7b7'
+            opacity={0.2}
+            debugLabel={anchor.label}
+            testId={`alien-${alienIndex}-centaurians-message-anchor-${anchor.id}`}
+          />
+        ))}
       </AlienBoardArtFrame>
       <CentauriansMessagesPanel
         alienIndex={alienIndex}

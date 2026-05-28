@@ -111,6 +111,7 @@ pnpm --filter @seti/client dev
 - `client` 会读取：
   - `VITE_API_URL=http://localhost:3000`
   - `VITE_WS_URL=http://localhost:3000`
+  - `VITE_ENABLE_DEBUG_ROUTES=false`
 
 ### Debug 页面
 

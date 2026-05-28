@@ -537,12 +537,16 @@ describe('SolarSystemView', () => {
       `solar-alien-token-${EAlienType.ANOMALIES}-3-${ETrace.PINK}`,
     );
     expect(token).toBeInTheDocument();
-    // Pink + CREDIT should render the printed pink-credit art with no
-    // pill/border decoration around it (the artwork already carries the
-    // colored end-cap and reward icon).
-    const img = token.querySelector('img');
-    expect(img).not.toBeNull();
-    expect(img?.getAttribute('src')).toContain('anomalies/tokens/pink-credit');
+    // Pink + CREDIT should render from the shared sprite, not request the
+    // individual pink-credit PNG.
+    expect(token.querySelector('img')).toBeNull();
+    const sprite = screen.getByTestId('solar-anomaly-token-sprite-pink-credit');
+    expect(sprite).toHaveStyle({
+      backgroundImage:
+        'url(/assets/seti/aliens/anomalies/tokens/tokens-sprite.png)',
+      backgroundPosition: '-528px 0px',
+      backgroundSize: '1584px 159px',
+    });
   });
 
   it('falls back to the pill UI when an anomaly token has no matching printed art', () => {

@@ -47,8 +47,10 @@ export function AlienBoardSection(_: ISectionRenderProps): React.JSX.Element {
       planetaryBoard={gameState.planetaryBoard}
       gameState={gameState}
       myPlayerId={myPlayerId}
+      pendingInput={pendingInput}
       planetActionMode={planetActionMode}
       onSelectMainActionPlanet={handleSelect}
+      onRespondInput={sendInput}
       onCardInspect={inspectCard}
     />
   );

@@ -1565,7 +1565,7 @@ All assets are in `frontend-reference/storage.googleapis.com/cgo-projects/seti/a
 packages/client/public/assets/seti/
 ├── boards/
 │   ├── _board.png                   # ← from assets/_board.png
-│   ├── planetBoard.jpg              # ← from assets/planetBoard-SE0.4.0.jpg
+│   ├── planetBoard.webp
 │   ├── playerBoard.png              # ← from assets/playerboardSE0.0.B.png
 │   └── scoringReminder.jpg
 ├── wheels/

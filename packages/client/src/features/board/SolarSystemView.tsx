@@ -37,6 +37,12 @@ import type {
   TPublicSlotReward,
 } from '@/types/re-exports';
 import { EPlayerInputType, ETrace } from '@/types/re-exports';
+import {
+  ANOMALY_TOKEN_SPRITE_IMAGE,
+  ANOMALY_TOKEN_SPRITE_SRC,
+  ANOMALY_TOKEN_SPRITES,
+  type TAnomalyTokenSpriteKey,
+} from './anomalyTokenSprite.generated';
 import { ProbeToken } from './ProbeToken';
 import { SectorGrid } from './SectorGrid';
 import { SectorSignalList } from './SectorSignalList';
@@ -1717,9 +1723,9 @@ function OumuamuaSectorDataList({
  * don't fit any of those combos (in which case we fall back to the
  * earlier pill UI rendering).
  */
-function resolveAnomalyTokenArtSrc(
+function resolveAnomalyTokenSpriteKey(
   token: IPublicSolarSystemAlienToken,
-): string | null {
+): TAnomalyTokenSpriteKey | null {
   // Pull the headline reward — for Anomalies tokens this is the first
   // entry in the rewards array (the others, if any, are the bonus track).
   const headline = token.rewards.find(
@@ -1734,23 +1740,51 @@ function resolveAnomalyTokenArtSrc(
   );
   if (!headline) return null;
 
-  const base = '/assets/seti/aliens/anomalies/tokens';
   if (token.traceColor === ETrace.PINK) {
-    if (headline.type === 'CREDIT') return `${base}/pink-credit.png`;
-    if (headline.type === 'VP') return `${base}/pink-vp.png`;
+    if (headline.type === 'CREDIT') return 'pink-credit';
+    if (headline.type === 'VP') return 'pink-vp';
   } else if (token.traceColor === ETrace.YELLOW) {
     // YELLOW's printed "card" face is row-or-deck choice (CARD_ANY).
     // Treat the legacy CARD value the same way so older saves and
     // tests still resolve to the correct art.
     if (headline.type === 'CARD' || headline.type === 'CARD_ANY') {
-      return `${base}/yellow-card.png`;
+      return 'yellow-card';
     }
-    if (headline.type === 'PUBLICITY') return `${base}/yellow-publicity.png`;
+    if (headline.type === 'PUBLICITY') return 'yellow-publicity';
   } else if (token.traceColor === ETrace.BLUE) {
-    if (headline.type === 'DATA') return `${base}/blue-data.png`;
-    if (headline.type === 'ENERGY') return `${base}/blue-energy.png`;
+    if (headline.type === 'DATA') return 'blue-data';
+    if (headline.type === 'ENERGY') return 'blue-energy';
   }
   return null;
+}
+
+function SolarAnomalyTokenSprite({
+  spriteKey,
+}: {
+  spriteKey: TAnomalyTokenSpriteKey;
+}): React.JSX.Element {
+  const frame = ANOMALY_TOKEN_SPRITES[spriteKey];
+  const scale = 36 / frame.height;
+
+  return (
+    <span className='block h-9 w-[60px] overflow-hidden drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]'>
+      <span
+        aria-hidden
+        className='block select-none'
+        data-testid={`solar-anomaly-token-sprite-${spriteKey}`}
+        style={{
+          width: `${frame.width}px`,
+          height: `${frame.height}px`,
+          backgroundImage: `url(${ANOMALY_TOKEN_SPRITE_SRC})`,
+          backgroundPosition: `-${frame.x}px -${frame.y}px`,
+          backgroundSize: `${ANOMALY_TOKEN_SPRITE_IMAGE.width}px ${ANOMALY_TOKEN_SPRITE_IMAGE.height}px`,
+          backgroundRepeat: 'no-repeat',
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+        }}
+      />
+    </span>
+  );
 }
 
 // Slide the token tangentially along its orbital arc (same radius from the
@@ -1774,7 +1808,7 @@ function SolarAlienTokenMarker({
   textMode: boolean;
 }): React.JSX.Element {
   const color = SOLAR_ALIEN_TOKEN_COLOR[token.traceColor];
-  const artSrc = resolveAnomalyTokenArtSrc(token);
+  const spriteKey = resolveAnomalyTokenSpriteKey(token);
 
   // Slide each token along the orbit (perpendicular to the radius from
   // the sun at 50%/50%) so the planet/comet painted in the middle of
@@ -1788,7 +1822,7 @@ function SolarAlienTokenMarker({
   const tangentX = (-dy / len) * ALIEN_TOKEN_TANGENTIAL_OFFSET_PX;
   const tangentY = (dx / len) * ALIEN_TOKEN_TANGENTIAL_OFFSET_PX;
 
-  if (artSrc) {
+  if (spriteKey) {
     return (
       <HotspotAnchor
         sceneId='solar-system'
@@ -1808,13 +1842,7 @@ function SolarAlienTokenMarker({
         testId={`solar-alien-token-${token.alienType}-${token.sectorIndex}-${token.traceColor}`}
         title={token.tokenId}
       >
-        <img
-          src={artSrc}
-          alt=''
-          aria-hidden
-          className='block h-9 w-auto select-none drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]'
-          draggable={false}
-        />
+        <SolarAnomalyTokenSprite spriteKey={spriteKey} />
       </HotspotAnchor>
     );
   }

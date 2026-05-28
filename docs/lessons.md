@@ -29,6 +29,7 @@
 - Hotspot 拖动坐标系不能简单取 `parentElement`；图片 overlay 常有分组 wrapper，拖动应优先使用实际定位坐标系 `offsetParent`，否则 planet board 这类空 wrapper 会得到 0 宽高。
 - Hotspot debug 页面需要可控密度；interactive hit areas 和 pure anchors 应能独立显示/隐藏，避免一次展示过多 label 导致无法校准。
 - Hotspot 校准范围不能只按“可点击按钮”定义；凡是叠在 game 图片资源上的绝对定位 token、marker、trace、badge、card overlay，也要进入可保存 anchor 或在 review 中明确排除。
+- Alien board 的 trace hotspot 不能只覆盖最底部/第一个 slot；通常所有 server 暴露为合法 option 的 trace slot 都应可标记，尤其 Mascamites blue sample path 这类非直列 trace。
 - Hotspot debug fixtures 不能只模拟一个合法动作模式；校准页应按 common/server 语义覆盖完整坐标集合，例如 planet board 要同时展示全部 planet、orbit、land、moon slot，否则 LAND-only fixture 会漏掉 orbit 和不在选项里的 planet。
 - Text mode 和 image mode 的 board hotspot 不应共享同一位置 override；如果两种模式使用不同坐标系，保持同一交互组件，但用 mode variant 拆分本地配置命名空间。
 - Hotspot debug 页的模式切换必须显式显示可选模式名和选中态，例如 `Image Mode` / `Text Mode`；不要用 `Text Mode Off` 这类状态文案，否则用户容易在错误 namespace 下编辑。

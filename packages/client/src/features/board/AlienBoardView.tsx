@@ -16,6 +16,8 @@ import { usePreviewOverflowCount } from '@/hooks/useCalibrationMode';
 import { cn } from '@/lib/cn';
 import { useTextMode } from '@/stores/debugStore';
 import type {
+  IInputResponse,
+  IPlayerInputModel,
   IPublicAlienCardZone,
   IPublicAlienState,
   IPublicAmoebaBoard,
@@ -34,7 +36,13 @@ import type {
   IPublicTraceSlot,
   TPublicAlienBoard,
 } from '@/types/re-exports';
-import { EAlienType, EMainAction, EPlanet, ETrace } from '@/types/re-exports';
+import {
+  EAlienType,
+  EMainAction,
+  EPlanet,
+  EPlayerInputType,
+  ETrace,
+} from '@/types/re-exports';
 import {
   decorateSlotWithPreviewOccupants,
   SlotOccupantOverlay,
@@ -108,11 +116,13 @@ interface IAlienBoardViewProps {
   planetaryBoard?: IPublicPlanetaryBoard;
   gameState?: IPublicGameState | null;
   myPlayerId?: string;
+  pendingInput?: IPlayerInputModel | null;
   planetActionMode?: EMainAction.ORBIT | EMainAction.LAND | null;
   onSelectMainActionPlanet?: (
     planet: EPlanet,
     options?: { isMoon?: boolean; moonId?: string },
   ) => void;
+  onRespondInput?: (response: IInputResponse) => void;
   onCardInspect?: (card: IBaseCard) => void;
 }
 
@@ -123,6 +133,8 @@ interface IAlienBoardRendererProps {
   planetaryBoard?: IPublicPlanetaryBoard;
   gameState?: IPublicGameState | null;
   myPlayerId?: string;
+  selectableSlotIds?: ReadonlySet<string>;
+  onSelectTraceSlot?: (slotId: string) => void;
   planetActionMode?: EMainAction.ORBIT | EMainAction.LAND | null;
   onSelectMainActionPlanet?: (
     planet: EPlanet,
@@ -152,13 +164,37 @@ export function AlienBoardView({
   planetaryBoard,
   gameState,
   myPlayerId,
+  pendingInput = null,
   planetActionMode,
   onSelectMainActionPlanet,
+  onRespondInput,
   onCardInspect,
 }: IAlienBoardViewProps): React.JSX.Element {
   const { t } = useTranslation('common');
+  const selectableSlotIds =
+    pendingInput?.type === EPlayerInputType.OPTION
+      ? new Set(pendingInput.options.map((option) => option.id))
+      : new Set<string>();
+
+  function handleSelectTraceSlot(slotId: string): void {
+    if (
+      pendingInput?.type !== EPlayerInputType.OPTION ||
+      !selectableSlotIds.has(slotId)
+    ) {
+      return;
+    }
+    onRespondInput?.({
+      inputId: pendingInput.inputId,
+      type: EPlayerInputType.OPTION,
+      optionId: slotId,
+    });
+  }
+
   return (
-    <section className='w-full min-w-0 rounded-lg border border-surface-700/40 bg-surface-900/40 p-3'>
+    <section
+      className='w-full min-w-0 rounded-lg border border-surface-700/40 bg-surface-900/40 p-3 md:w-[60%] md:max-w-[60%] md:self-start'
+      data-testid='alien-board-section'
+    >
       <header className='mb-2'>
         <h2 className='font-display text-base font-bold uppercase tracking-wider text-text-100'>
           {t('client.alien_board.title')}
@@ -183,6 +219,8 @@ export function AlienBoardView({
             planetaryBoard={planetaryBoard}
             gameState={gameState}
             myPlayerId={myPlayerId}
+            selectableSlotIds={selectableSlotIds}
+            onSelectTraceSlot={handleSelectTraceSlot}
             planetActionMode={planetActionMode}
             onSelectMainActionPlanet={onSelectMainActionPlanet}
           />
@@ -198,6 +236,8 @@ export function AlienBoardView({
             planetaryBoard={planetaryBoard}
             gameState={gameState}
             myPlayerId={myPlayerId}
+            selectableSlotIds={selectableSlotIds}
+            onSelectTraceSlot={handleSelectTraceSlot}
             planetActionMode={planetActionMode}
             onSelectMainActionPlanet={onSelectMainActionPlanet}
           />
@@ -213,6 +253,8 @@ function AlienCard({
   planetaryBoard,
   gameState,
   myPlayerId,
+  selectableSlotIds,
+  onSelectTraceSlot,
   planetActionMode,
   onSelectMainActionPlanet,
 }: {
@@ -221,6 +263,8 @@ function AlienCard({
   planetaryBoard?: IPublicPlanetaryBoard;
   gameState?: IPublicGameState | null;
   myPlayerId?: string;
+  selectableSlotIds?: ReadonlySet<string>;
+  onSelectTraceSlot?: (slotId: string) => void;
   planetActionMode?: EMainAction.ORBIT | EMainAction.LAND | null;
   onSelectMainActionPlanet?: (
     planet: EPlanet,
@@ -269,6 +313,8 @@ function AlienCard({
             planetaryBoard={planetaryBoard}
             gameState={gameState}
             myPlayerId={myPlayerId}
+            selectableSlotIds={selectableSlotIds}
+            onSelectTraceSlot={onSelectTraceSlot}
             planetActionMode={planetActionMode}
             onSelectMainActionPlanet={onSelectMainActionPlanet}
           />
@@ -385,6 +431,8 @@ function DiscoveredAlienBoard({
   planetaryBoard,
   gameState,
   myPlayerId,
+  selectableSlotIds,
+  onSelectTraceSlot,
   planetActionMode,
   onSelectMainActionPlanet,
 }: {
@@ -394,6 +442,8 @@ function DiscoveredAlienBoard({
   planetaryBoard?: IPublicPlanetaryBoard;
   gameState?: IPublicGameState | null;
   myPlayerId?: string;
+  selectableSlotIds?: ReadonlySet<string>;
+  onSelectTraceSlot?: (slotId: string) => void;
   planetActionMode?: EMainAction.ORBIT | EMainAction.LAND | null;
   onSelectMainActionPlanet?: (
     planet: EPlanet,
@@ -411,6 +461,8 @@ function DiscoveredAlienBoard({
         planetaryBoard={planetaryBoard}
         gameState={gameState}
         myPlayerId={myPlayerId}
+        selectableSlotIds={selectableSlotIds}
+        onSelectTraceSlot={onSelectTraceSlot}
         planetActionMode={planetActionMode}
         onSelectMainActionPlanet={onSelectMainActionPlanet}
       />
@@ -440,6 +492,8 @@ function AnomaliesBoardRenderer({
   alienIndex,
   board,
   playerColors,
+  selectableSlotIds,
+  onSelectTraceSlot,
 }: IAlienBoardRendererProps): React.JSX.Element {
   const textMode = useTextMode();
   if (board.type !== 'anomalies') {
@@ -467,6 +521,8 @@ function AnomaliesBoardRenderer({
       alienIndex={alienIndex}
       board={board}
       playerColors={playerColors}
+      selectableSlotIds={selectableSlotIds}
+      onSelectTraceSlot={onSelectTraceSlot}
     />
   );
 }
@@ -478,6 +534,8 @@ function OumuamuaBoardRenderer({
   planetaryBoard,
   gameState,
   myPlayerId,
+  selectableSlotIds,
+  onSelectTraceSlot,
   planetActionMode,
   onSelectMainActionPlanet,
 }: IAlienBoardRendererProps): React.JSX.Element {
@@ -512,6 +570,8 @@ function OumuamuaBoardRenderer({
       alienIndex={alienIndex}
       board={board}
       playerColors={playerColors}
+      selectableSlotIds={selectableSlotIds}
+      onSelectTraceSlot={onSelectTraceSlot}
       planetActionMode={planetActionMode}
       orbitSelectable={isOumuamuaPlanetActionSelectable({
         gameState,
@@ -534,6 +594,8 @@ function ExertiansBoardRenderer({
   alienIndex,
   board,
   playerColors,
+  selectableSlotIds,
+  onSelectTraceSlot,
 }: IAlienBoardRendererProps): React.JSX.Element {
   const textMode = useTextMode();
   if (board.type !== 'exertians') {
@@ -561,6 +623,8 @@ function ExertiansBoardRenderer({
       alienIndex={alienIndex}
       board={board}
       playerColors={playerColors}
+      selectableSlotIds={selectableSlotIds}
+      onSelectTraceSlot={onSelectTraceSlot}
     />
   );
 }
@@ -571,6 +635,8 @@ function CentauriansBoardRenderer({
   playerColors,
   gameState,
   myPlayerId,
+  selectableSlotIds,
+  onSelectTraceSlot,
 }: IAlienBoardRendererProps): React.JSX.Element {
   const textMode = useTextMode();
   if (board.type !== 'centaurians') {
@@ -604,6 +670,8 @@ function CentauriansBoardRenderer({
       playerColors={playerColors}
       players={players}
       myPlayerId={myPlayerId}
+      selectableSlotIds={selectableSlotIds}
+      onSelectTraceSlot={onSelectTraceSlot}
     />
   );
 }
@@ -612,6 +680,8 @@ function MascamitesBoardRenderer({
   alienIndex,
   board,
   playerColors,
+  selectableSlotIds,
+  onSelectTraceSlot,
 }: IAlienBoardRendererProps): React.JSX.Element {
   const textMode = useTextMode();
   if (board.type !== 'mascamites') {
@@ -639,6 +709,8 @@ function MascamitesBoardRenderer({
       alienIndex={alienIndex}
       board={board}
       playerColors={playerColors}
+      selectableSlotIds={selectableSlotIds}
+      onSelectTraceSlot={onSelectTraceSlot}
     />
   );
 }

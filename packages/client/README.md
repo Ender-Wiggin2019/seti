@@ -31,6 +31,7 @@ pnpm dev
 ```dotenv
 VITE_API_URL=http://localhost:3000
 VITE_WS_URL=http://localhost:3000
+VITE_ENABLE_DEBUG_ROUTES=false
 ```
 
 确保后端 `@seti/server` 已运行在对应地址。

@@ -1749,8 +1749,10 @@ function BoardTabs({
               planetaryBoard={gameState.planetaryBoard}
               gameState={gameState}
               myPlayerId={myPlayerId}
+              pendingInput={pendingInput}
               planetActionMode={planetActionMode}
               onSelectMainActionPlanet={onSelectMainActionPlanet}
+              onRespondInput={sendInput}
               onCardInspect={onInspectCard}
             />
           )}

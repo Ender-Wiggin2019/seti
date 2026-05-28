@@ -1,0 +1,45 @@
+{
+  "src": "/assets/seti/aliens/anomalies/tokens/tokens-sprite.png",
+  "image": {
+    "width": 1584,
+    "height": 159
+  },
+  "entries": {
+    "blue-data": {
+      "x": 0,
+      "y": 0,
+      "width": 264,
+      "height": 159
+    },
+    "blue-energy": {
+      "x": 264,
+      "y": 0,
+      "width": 264,
+      "height": 159
+    },
+    "pink-credit": {
+      "x": 528,
+      "y": 0,
+      "width": 264,
+      "height": 159
+    },
+    "pink-vp": {
+      "x": 792,
+      "y": 0,
+      "width": 264,
+      "height": 159
+    },
+    "yellow-card": {
+      "x": 1056,
+      "y": 0,
+      "width": 264,
+      "height": 159
+    },
+    "yellow-publicity": {
+      "x": 1320,
+      "y": 0,
+      "width": 264,
+      "height": 159
+    }
+  }
+}
