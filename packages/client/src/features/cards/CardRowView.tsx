@@ -29,7 +29,7 @@ export function CardRowView({
         </h2>
       </header>
 
-      <div className='grid gap-2 sm:grid-cols-3'>
+      <div className='flex flex-wrap gap-2'>
         {cards.map((card) => {
           const isSelected = selectedCardId === card.id;
           return (
@@ -40,7 +40,12 @@ export function CardRowView({
               onClick={() => onCardClick?.(card)}
               onDoubleClick={() => onCardInspect?.(card)}
               className={cn(
-                'group relative overflow-hidden rounded-md border border-surface-700/50 bg-surface-900/70 p-2 text-left transition-all',
+                // w-fit hugs the 150px CardRender so each tile only
+                // takes the card's natural width — prevents the
+                // earlier behavior where each grid cell stretched to
+                // a third of the panel and left empty space beside
+                // the card.
+                'group relative w-fit shrink-0 overflow-hidden rounded-md border border-surface-700/50 bg-surface-900/70 p-2 text-left transition-all',
                 mode === 'buy' &&
                   'cursor-pointer hover:border-accent-500 hover:shadow-hud-glow',
                 mode === 'discard' &&
@@ -52,8 +57,27 @@ export function CardRowView({
               )}
               aria-label={`card-row-${card.name}`}
             >
-              <div className='pointer-events-none'>
-                <CardRender card={card} />
+              {/*
+                Scale CardRender (intrinsic 150×209) to 1.4× — gives
+                a more readable card row + end-of-round preview at
+                the cost of a larger reserved footprint. The wrapper
+                height/width matches the scaled size so flex layout
+                doesn't overlap neighbours.
+              */}
+              <div
+                className='pointer-events-none'
+                style={{
+                  width: '210px',
+                  height: '293px',
+                  position: 'relative',
+                }}
+              >
+                <div
+                  className='absolute left-0 top-0 origin-top-left'
+                  style={{ transform: 'scale(1.4)' }}
+                >
+                  <CardRender card={card} />
+                </div>
               </div>
             </button>
           );

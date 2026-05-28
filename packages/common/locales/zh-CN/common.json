@@ -764,7 +764,9 @@
       "title": "回合结束牌堆",
       "round": "第 {{index}} 回合",
       "cards": "{{count}} 张卡",
-      "select_one": "从当前牌堆选择一张"
+      "select_one": "从当前牌堆选择一张",
+      "final_round": "最终回合",
+      "final_round_hint": "无回合结束抽牌"
     },
     "game_page": {
       "connecting": "正在建立安全连接...",
@@ -793,6 +795,7 @@
       "buy_from_row": "从牌行购买",
       "cancel_row_buy": "取消牌行购买",
       "main_deck": "主牌库",
+      "discard_pile": "弃牌堆",
       "scores": "分数",
       "no_gold_tiles": "暂无金色计分板块。",
       "gold_scoring_tiles": "金色计分板块",

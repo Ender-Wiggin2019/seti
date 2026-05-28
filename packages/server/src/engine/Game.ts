@@ -891,6 +891,29 @@ export class Game implements IGame {
 
     this.startPlayer = this.getNextPlayer(this.startPlayer.id);
     this.activePlayer = this.startPlayer;
+    // Per rulebook §7.8: "the round ends as soon as the last player
+    // chooses one of the 2 remaining cards and discards the leftover
+    // card." Sweep any leftover end-of-round cards from the just-
+    // completed stack into the main deck's discard pile so they're
+    // (a) gone from `endOfRoundStacks` (no stale cards on the prior
+    // round's tile) and (b) eligible to be reshuffled when the deck
+    // empties.
+    const justCompletedStackIndex = this.roundRotationReminderIndex;
+    if (
+      justCompletedStackIndex >= 0 &&
+      justCompletedStackIndex < this.endOfRoundStacks.length
+    ) {
+      const leftover = this.endOfRoundStacks[justCompletedStackIndex];
+      if (leftover.length > 0) {
+        const ids = leftover
+          .map((card) => (typeof card === 'string' ? card : card.id))
+          .filter((id): id is string => typeof id === 'string');
+        if (ids.length > 0) {
+          this.mainDeck.discard(...ids);
+        }
+        this.endOfRoundStacks[justCompletedStackIndex] = [];
+      }
+    }
     this.roundRotationReminderIndex = Math.min(
       this.roundRotationReminderIndex + 1,
       4,

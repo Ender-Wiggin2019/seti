@@ -58,4 +58,35 @@ describe('EndOfRoundStacks', () => {
     fireEvent.click(screen.getByTestId('round-stack-card-1'));
     expect(onSelectCard).toHaveBeenCalledTimes(1);
   });
+
+  it('shows the final-round banner and suppresses the current-stack highlight when round >= maxRounds', () => {
+    render(
+      <EndOfRoundStacks
+        stacks={[[], [], [], []]}
+        currentRoundIndex={3}
+        round={5}
+        maxRounds={5}
+      />,
+    );
+
+    expect(screen.getByTestId('end-of-round-final-banner')).toBeInTheDocument();
+    expect(screen.getByTestId('round-stack-3').className).not.toContain(
+      'ring-1',
+    );
+  });
+
+  it('does not show the final-round banner before the final round', () => {
+    render(
+      <EndOfRoundStacks
+        stacks={[[], [], [], []]}
+        currentRoundIndex={2}
+        round={3}
+        maxRounds={5}
+      />,
+    );
+
+    expect(
+      screen.queryByTestId('end-of-round-final-banner'),
+    ).not.toBeInTheDocument();
+  });
 });

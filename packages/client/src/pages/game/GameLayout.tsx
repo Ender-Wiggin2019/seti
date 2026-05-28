@@ -32,6 +32,7 @@ import {
 } from '@/features/board/SolarSystemView';
 import { TechBoardView } from '@/features/board/TechBoardView';
 import { CardDetail } from '@/features/cards/CardDetail';
+import { CardRender } from '@/features/cards/CardRender';
 import { CardRowView } from '@/features/cards/CardRowView';
 import { EndOfRoundStacks } from '@/features/cards/EndOfRoundStacks';
 import { InputRenderer } from '@/features/input/InputRenderer';
@@ -1482,6 +1483,14 @@ function BoardTabs({
     sendFreeAction,
     sendInput,
   } = useGameContext();
+  // Confirm dialog for buy actions — both cost 3 publicity.
+  //   - 'deck': fires immediately on confirm (no card pick).
+  //   - card object: user has armed row-buy and clicked a specific
+  //     card; confirm dialog shows the card + cost and on confirm
+  //     fires BUY_CARD with that cardId.
+  const [buyConfirm, setBuyConfirm] = useState<
+    { kind: 'deck' } | { kind: 'row'; card: IBaseCard } | null
+  >(null);
   const playerColors =
     gameState?.players.reduce<Record<string, string>>((acc, p) => {
       acc[p.playerId] = p.color;
@@ -1509,8 +1518,10 @@ function BoardTabs({
     }
 
     if (armedCardRowBuy) {
-      sendFreeAction({ type: EFreeAction.BUY_CARD, cardId: card.id });
-      setArmedCardRowBuy(false);
+      // Cost confirm fires after the user picks a card, so the
+      // dialog can show *which* card is being bought + the 3-publicity
+      // cost. Confirm dispatches BUY_CARD with that cardId.
+      setBuyConfirm({ kind: 'row', card });
       return;
     }
 
@@ -1518,6 +1529,7 @@ function BoardTabs({
   }
 
   return (
+    <>
     <Tabs
       defaultValue='board'
       value={activeTab}
@@ -1606,46 +1618,76 @@ function BoardTabs({
 
         <TabsContent value='cards' className='mt-0 h-full'>
           {gameState && (
-            <div className='space-y-3'>
-              <div className='instrument-panel flex flex-wrap items-center gap-2 p-2'>
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  className='h-8 gap-1.5 px-2.5 font-mono text-[10px] uppercase tracking-[0.14em] hover:border-accent-500/70 hover:text-text-100'
-                  onClick={() =>
-                    sendFreeAction({
-                      type: EFreeAction.BUY_CARD,
-                      fromDeck: true,
-                    })
-                  }
-                >
-                  <span
-                    aria-hidden
-                    className='h-1.5 w-1.5 rounded-full bg-accent-500 shadow-[0_0_4px_oklch(0.68_0.11_240/0.7)]'
-                  />
-                  {t('client.game_layout.buy_from_deck')}
-                </Button>
-                <Button
-                  variant={armedCardRowBuy ? 'primary' : 'ghost'}
-                  size='sm'
-                  className='h-8 px-2.5 font-mono text-[10px] uppercase tracking-[0.14em]'
-                  onClick={() => setArmedCardRowBuy((v) => !v)}
-                >
-                  {armedCardRowBuy
-                    ? t('client.game_layout.cancel_row_buy')
-                    : t('client.game_layout.buy_from_row')}
-                </Button>
-                <div className='ml-auto flex items-center gap-2'>
+            // inline-flex w-fit shrinks the column to its widest
+            // child — keeps the card row + end-of-round stacks
+            // panels snug around their actual cards instead of
+            // stretching to the full tab width.
+            <div className='inline-flex w-fit flex-col gap-3'>
+              {/*
+                Cards tab is inspection-only: card row + end-of-round
+                stacks + a passive main-deck readout. Buying cards
+                lives exclusively in the free-action bar's "Buy Card
+                (3 PR)" entry, which already presents Deck / Row
+                choices and routes row picks through the same confirm
+                dialog. Keeps the buy UX in one place.
+              */}
+              <div className='instrument-panel flex w-full items-center gap-3 p-2'>
+                <div className='flex items-center gap-2'>
                   <div className='relative h-[72px] w-[52px] overflow-hidden rounded-[3px] border border-[color:var(--metal-edge-soft)] bg-[url(/assets/seti/cards/back_base.jpg)] bg-cover bg-center shadow-[inset_0_1px_0_oklch(0.78_0.07_240/0.2),0_4px_12px_oklch(0.08_0.018_260/0.8)]'>
                     <span
                       aria-hidden
                       className='pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[oklch(0.08_0.018_260/0.4)]'
                     />
                   </div>
-                  <span className='micro-label leading-none'>
-                    {t('client.game_layout.main_deck')}
-                  </span>
+                  <div className='flex flex-col items-start gap-0.5'>
+                    <span className='micro-label leading-none'>
+                      {t('client.game_layout.main_deck')}
+                    </span>
+                    <span
+                      className='font-mono text-[11px] font-bold tabular-nums text-text-200'
+                      data-testid='main-deck-remaining'
+                    >
+                      {gameState.mainDeck.drawPileSize}
+                    </span>
+                  </div>
                 </div>
+                {/*
+                  Discard pile preview — same dimensions as the main
+                  deck, but dimmer/desaturated to read as "out of
+                  play". Discarded card-row leftovers from each
+                  round + tucked-and-discarded play piles end up here.
+                */}
+                <div className='flex items-center gap-2'>
+                  <div className='relative h-[72px] w-[52px] overflow-hidden rounded-[3px] border border-[color:var(--metal-edge-soft)] bg-[url(/assets/seti/cards/back_base.jpg)] bg-cover bg-center opacity-50 grayscale shadow-[inset_0_1px_0_oklch(0.78_0.07_240/0.15),0_4px_12px_oklch(0.08_0.018_260/0.6)]'>
+                    <span
+                      aria-hidden
+                      className='pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[oklch(0.08_0.018_260/0.5)]'
+                    />
+                  </div>
+                  <div className='flex flex-col items-start gap-0.5'>
+                    <span className='micro-label leading-none text-text-500'>
+                      {t('client.game_layout.discard_pile', {
+                        defaultValue: 'Discard',
+                      })}
+                    </span>
+                    <span
+                      className='font-mono text-[11px] font-bold tabular-nums text-text-300'
+                      data-testid='main-deck-discard'
+                    >
+                      {gameState.mainDeck.discardPileSize}
+                    </span>
+                  </div>
+                </div>
+                {armedCardRowBuy ? (
+                  <span
+                    className='ml-auto rounded border border-accent-500/60 bg-accent-500/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-accent-300'
+                    data-testid='card-row-buy-armed-hint'
+                  >
+                    {t('client.game_layout.buy_from_row_pick_hint', {
+                      defaultValue: 'Pick a card from the row',
+                    })}
+                  </span>
+                ) : null}
               </div>
 
               <CardRowView
@@ -1672,6 +1714,11 @@ function BoardTabs({
                 }
                 stackCounts={gameState.endOfRoundStackCounts}
                 currentRoundIndex={gameState.currentEndOfRoundStackIndex ?? 0}
+                hasRoundFirstPassOccurred={
+                  gameState.hasRoundFirstPassOccurred ?? false
+                }
+                round={gameState.round}
+                maxRounds={gameState.maxRounds}
                 mode={
                   pendingInput?.type === EPlayerInputType.END_OF_ROUND
                     ? 'select'
@@ -1747,6 +1794,65 @@ function BoardTabs({
         players={gameState?.players ?? []}
       />
     </Tabs>
+    <Dialog
+      open={buyConfirm !== null}
+      onOpenChange={(open) => {
+        if (!open) setBuyConfirm(null);
+      }}
+    >
+      <DialogContent className='w-fit max-w-fit'>
+        <DialogHeader>
+          <DialogTitle>
+            {buyConfirm?.kind === 'deck'
+              ? t('client.game_layout.buy_from_deck')
+              : t('client.game_layout.buy_from_row')}
+          </DialogTitle>
+        </DialogHeader>
+        {buyConfirm?.kind === 'row' ? (
+          <div className='flex justify-center rounded border border-surface-700/50 bg-surface-950/70 p-3'>
+            <div className='pointer-events-none'>
+              <CardRender card={buyConfirm.card} />
+            </div>
+          </div>
+        ) : null}
+        <div className='instrument-panel p-3'>
+          <div className='section-head mb-2'>
+            <span aria-hidden className='section-head__tick' />
+            <p className='micro-label'>{t('client.action_confirm.cost')}</p>
+            <div aria-hidden className='section-head__rule' />
+          </div>
+          <p className='readout font-mono text-[13px] text-text-100'>
+            3 {t('client.resources.publicity', { defaultValue: 'publicity' })}
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant='ghost' onClick={() => setBuyConfirm(null)}>
+            {t('client.common.cancel', { defaultValue: 'Cancel' })}
+          </Button>
+          <Button
+            variant='primary'
+            onClick={() => {
+              if (buyConfirm?.kind === 'deck') {
+                sendFreeAction({
+                  type: EFreeAction.BUY_CARD,
+                  fromDeck: true,
+                });
+              } else if (buyConfirm?.kind === 'row') {
+                sendFreeAction({
+                  type: EFreeAction.BUY_CARD,
+                  cardId: buyConfirm.card.id,
+                });
+                setArmedCardRowBuy(false);
+              }
+              setBuyConfirm(null);
+            }}
+          >
+            {t('client.common.confirm', { defaultValue: 'Confirm' })}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
 
