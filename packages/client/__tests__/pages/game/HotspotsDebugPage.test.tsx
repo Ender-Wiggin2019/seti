@@ -9,13 +9,28 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { HotspotsDebugPage } from '@/pages/game/HotspotsDebugPage';
 import { useDebugStore } from '@/stores/debugStore';
+
+vi.mock('@/features/hotspots/hotspotOverridesApi', () => ({
+  loadHotspotOverridesFile: vi.fn(async () => ({})),
+  saveHotspotOverridesFile: vi.fn(async () => undefined),
+}));
+
+import {
+  loadHotspotOverridesFile,
+  saveHotspotOverridesFile,
+} from '@/features/hotspots/hotspotOverridesApi';
+
+const loadHotspotOverridesFileMock = vi.mocked(loadHotspotOverridesFile);
+const saveHotspotOverridesFileMock = vi.mocked(saveHotspotOverridesFile);
 
 describe('HotspotsDebugPage', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    loadHotspotOverridesFileMock.mockResolvedValue({});
+    saveHotspotOverridesFileMock.mockResolvedValue(undefined);
     useDebugStore.setState({
       textMode: false,
       hotspotDebug: false,
@@ -82,18 +97,50 @@ describe('HotspotsDebugPage', () => {
 
     fireEvent.click(saveButton);
 
-    expect(useDebugStore.getState().hotspotOverrides).toEqual({
-      'solar-system': {
-        'space-0': {
-          x: 120,
-          y: 88,
-          width: 32,
-          height: 32,
+    await waitFor(() => {
+      expect(useDebugStore.getState().hotspotOverrides).toEqual({
+        'solar-system': {
+          'space-0': {
+            x: 120,
+            y: 88,
+            width: 32,
+            height: 32,
+          },
         },
-      },
+      });
     });
     expect(useDebugStore.getState().hotspotDraftOverrides).toEqual({});
     expect(saveButton).toBeDisabled();
+    await waitFor(() => {
+      expect(saveHotspotOverridesFileMock).toHaveBeenCalledWith({
+        'solar-system': {
+          'space-0': {
+            x: 120,
+            y: 88,
+            width: 32,
+            height: 32,
+          },
+        },
+      });
+    });
+  });
+
+  it('loads saved hotspot overrides from the JSON source', async () => {
+    loadHotspotOverridesFileMock.mockResolvedValue({
+      'solar-system': {
+        'space-0': { x: 120, y: 88, width: 32, height: 32 },
+      },
+    });
+
+    render(<HotspotsDebugPage />);
+
+    await waitFor(() => {
+      expect(useDebugStore.getState().hotspotOverrides).toEqual({
+        'solar-system': {
+          'space-0': { x: 120, y: 88, width: 32, height: 32 },
+        },
+      });
+    });
   });
 
   it('uses explicit image and text mode controls', async () => {

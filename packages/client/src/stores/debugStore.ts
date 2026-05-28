@@ -1,11 +1,9 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import type { IHotspotGeometryOverride } from '@/features/hotspots/hotspotConfig';
-
-type THotspotOverrides = Record<
-  string,
-  Record<string, IHotspotGeometryOverride>
->;
+import type {
+  IHotspotGeometryOverride,
+  THotspotOverrides,
+} from '@/features/hotspots/hotspotConfig';
 
 /**
  * Debug settings store.
@@ -36,11 +34,42 @@ interface IDebugStoreState {
     hotspotId: string,
     override: IHotspotGeometryOverride,
   ) => void;
+  setHotspotOverrides: (overrides: THotspotOverrides) => void;
+  previewHotspotOverrides: (sceneId?: string) => THotspotOverrides;
   saveHotspotOverrides: (sceneId?: string) => void;
   resetHotspotOverrides: (sceneId?: string) => void;
 }
 
 const memoryStorage = new Map<string, string>();
+
+function mergeHotspotOverrides(
+  hotspotOverrides: THotspotOverrides,
+  hotspotDraftOverrides: THotspotOverrides,
+  sceneId?: string,
+): THotspotOverrides {
+  if (sceneId) {
+    const sceneDraft = hotspotDraftOverrides[sceneId];
+    if (!sceneDraft) return hotspotOverrides;
+    return {
+      ...hotspotOverrides,
+      [sceneId]: {
+        ...(hotspotOverrides[sceneId] ?? {}),
+        ...sceneDraft,
+      },
+    };
+  }
+
+  return Object.entries(hotspotDraftOverrides).reduce<THotspotOverrides>(
+    (nextOverrides, [draftSceneId, sceneDraft]) => ({
+      ...nextOverrides,
+      [draftSceneId]: {
+        ...(nextOverrides[draftSceneId] ?? {}),
+        ...sceneDraft,
+      },
+    }),
+    { ...hotspotOverrides },
+  );
+}
 
 function getSafeStorage(): Storage {
   try {
@@ -109,39 +138,38 @@ export const useDebugStore = create<IDebugStoreState>()(
             },
           },
         })),
+      setHotspotOverrides: (overrides) =>
+        set({ hotspotOverrides: overrides, hotspotDraftOverrides: {} }),
+      previewHotspotOverrides: (sceneId) => {
+        const state = get();
+        return mergeHotspotOverrides(
+          state.hotspotOverrides,
+          state.hotspotDraftOverrides,
+          sceneId,
+        );
+      },
       saveHotspotOverrides: (sceneId) =>
         set((state) => {
           if (sceneId) {
-            const sceneDraft = state.hotspotDraftOverrides[sceneId];
-            if (!sceneDraft) {
+            if (!state.hotspotDraftOverrides[sceneId]) {
               return {};
             }
             const { [sceneId]: _removed, ...nextDraftOverrides } =
               state.hotspotDraftOverrides;
             return {
-              hotspotOverrides: {
-                ...state.hotspotOverrides,
-                [sceneId]: {
-                  ...(state.hotspotOverrides[sceneId] ?? {}),
-                  ...sceneDraft,
-                },
-              },
+              hotspotOverrides: mergeHotspotOverrides(
+                state.hotspotOverrides,
+                state.hotspotDraftOverrides,
+                sceneId,
+              ),
               hotspotDraftOverrides: nextDraftOverrides,
             };
           }
 
           return {
-            hotspotOverrides: Object.entries(
+            hotspotOverrides: mergeHotspotOverrides(
+              state.hotspotOverrides,
               state.hotspotDraftOverrides,
-            ).reduce<THotspotOverrides>(
-              (nextOverrides, [draftSceneId, sceneDraft]) => ({
-                ...nextOverrides,
-                [draftSceneId]: {
-                  ...(nextOverrides[draftSceneId] ?? {}),
-                  ...sceneDraft,
-                },
-              }),
-              { ...state.hotspotOverrides },
             ),
             hotspotDraftOverrides: {},
           };
@@ -169,8 +197,23 @@ export const useDebugStore = create<IDebugStoreState>()(
         hotspotDebug: state.hotspotDebug,
         showInteractiveHotspots: state.showInteractiveHotspots,
         showAnchorHotspots: state.showAnchorHotspots,
-        hotspotOverrides: state.hotspotOverrides,
       }),
+      merge: (persistedState, currentState) => {
+        const persisted =
+          persistedState && typeof persistedState === 'object'
+            ? (persistedState as Partial<IDebugStoreState>)
+            : {};
+        return {
+          ...currentState,
+          textMode: persisted.textMode ?? currentState.textMode,
+          hotspotDebug: persisted.hotspotDebug ?? currentState.hotspotDebug,
+          showInteractiveHotspots:
+            persisted.showInteractiveHotspots ??
+            currentState.showInteractiveHotspots,
+          showAnchorHotspots:
+            persisted.showAnchorHotspots ?? currentState.showAnchorHotspots,
+        };
+      },
     },
   ),
 );

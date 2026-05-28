@@ -14,6 +14,11 @@ export interface IHotspotGeometryOverride {
   height?: number;
 }
 
+export type THotspotOverrides = Record<
+  string,
+  Record<string, IHotspotGeometryOverride>
+>;
+
 export type THotspotVariant = 'shared' | 'image' | 'text';
 
 export interface ICreateHotspotGeometryFromPercentParams {

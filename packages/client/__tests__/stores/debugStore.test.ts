@@ -85,7 +85,7 @@ describe('useDebugStore hotspot settings', () => {
     expect(useDebugStore.getState().hotspotDraftOverrides).toEqual({});
   });
 
-  it('persists only saved hotspot overrides to localStorage', () => {
+  it('does not persist hotspot overrides to localStorage', () => {
     useDebugStore.getState().setHotspotDraftOverride('solar', 'earth-launch', {
       x: 120,
       y: 88,
@@ -97,7 +97,7 @@ describe('useDebugStore hotspot settings', () => {
       window.localStorage.getItem('seti-debug') ?? '{}',
     ) as { state?: Record<string, unknown> };
     expect(draftSnapshot.state?.hotspotDraftOverrides).toBeUndefined();
-    expect(draftSnapshot.state?.hotspotOverrides).toEqual({});
+    expect(draftSnapshot.state?.hotspotOverrides).toBeUndefined();
 
     useDebugStore.getState().saveHotspotOverrides();
 
@@ -105,15 +105,6 @@ describe('useDebugStore hotspot settings', () => {
       window.localStorage.getItem('seti-debug') ?? '{}',
     ) as { state?: Record<string, unknown> };
     expect(savedSnapshot.state?.hotspotDraftOverrides).toBeUndefined();
-    expect(savedSnapshot.state?.hotspotOverrides).toEqual({
-      solar: {
-        'earth-launch': {
-          x: 120,
-          y: 88,
-          width: 32,
-          height: 32,
-        },
-      },
-    });
+    expect(savedSnapshot.state?.hotspotOverrides).toBeUndefined();
   });
 });

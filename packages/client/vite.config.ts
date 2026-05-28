@@ -1,12 +1,70 @@
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
+const hotspotOverridesPath = path.resolve(
+  currentDir,
+  'public/hotspot-overrides.json',
+);
+
+function hotspotOverridesEditorPlugin() {
+  return {
+    name: 'hotspot-overrides-editor',
+    configureServer(server: import('vite').ViteDevServer) {
+      server.middlewares.use('/__debug/hotspot-overrides', (req, res, next) => {
+        if (req.method !== 'PUT') {
+          next();
+          return;
+        }
+
+        let body = '';
+        req.setEncoding('utf8');
+        req.on('data', (chunk) => {
+          body += chunk;
+        });
+        req.on('end', () => {
+          try {
+            const parsed = JSON.parse(body) as unknown;
+            if (
+              parsed === null ||
+              typeof parsed !== 'object' ||
+              Array.isArray(parsed)
+            ) {
+              res.statusCode = 400;
+              res.end('Expected hotspot overrides object');
+              return;
+            }
+            void fs
+              .writeFile(
+                hotspotOverridesPath,
+                `${JSON.stringify(parsed, null, 2)}\n`,
+                'utf8',
+              )
+              .then(() => {
+                res.statusCode = 204;
+                res.end();
+              })
+              .catch((error: unknown) => {
+                res.statusCode = 500;
+                res.end(
+                  error instanceof Error ? error.message : 'Write failed',
+                );
+              });
+          } catch {
+            res.statusCode = 400;
+            res.end('Invalid JSON');
+          }
+        });
+      });
+    },
+  };
+}
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), hotspotOverridesEditorPlugin()],
   resolve: {
     alias: [
       {

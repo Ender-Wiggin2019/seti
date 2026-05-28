@@ -21,6 +21,10 @@ import { PlanetaryBoardView } from '@/features/board/PlanetaryBoardView';
 import { SectorGrid } from '@/features/board/SectorGrid';
 import { SolarSystemView } from '@/features/board/SolarSystemView';
 import { TechBoardView } from '@/features/board/TechBoardView';
+import {
+  loadHotspotOverridesFile,
+  saveHotspotOverridesFile,
+} from '@/features/hotspots/hotspotOverridesApi';
 import { PlayerDashboard } from '@/features/player';
 import { OrganizationCard } from '@/features/player/OrganizationCard';
 import { RivalPanel } from '@/features/solo/RivalPanel';
@@ -745,6 +749,7 @@ function renderPanel(tab: THotspotsDebugTab, gameState: IPublicGameState) {
 
 export function HotspotsDebugPage(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<THotspotsDebugTab>('solar');
+  const [hotspotPersistenceError, setHotspotPersistenceError] = useState('');
   const gameState = useMemo(createGameState, []);
   const textMode = useDebugStore((state) => state.textMode);
   const setTextMode = useDebugStore((state) => state.setTextMode);
@@ -766,6 +771,12 @@ export function HotspotsDebugPage(): React.JSX.Element {
   const saveHotspotOverrides = useDebugStore(
     (state) => state.saveHotspotOverrides,
   );
+  const previewHotspotOverrides = useDebugStore(
+    (state) => state.previewHotspotOverrides,
+  );
+  const setHotspotOverrides = useDebugStore(
+    (state) => state.setHotspotOverrides,
+  );
   const resetHotspotOverrides = useDebugStore(
     (state) => state.resetHotspotOverrides,
   );
@@ -773,6 +784,37 @@ export function HotspotsDebugPage(): React.JSX.Element {
   useEffect(() => {
     setHotspotDebug(true);
   }, [setHotspotDebug]);
+
+  useEffect(() => {
+    let active = true;
+    loadHotspotOverridesFile()
+      .then((overrides) => {
+        if (active) setHotspotOverrides(overrides);
+      })
+      .catch((error) => {
+        if (active) {
+          setHotspotPersistenceError(
+            error instanceof Error ? error.message : 'Failed to load hotspots',
+          );
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [setHotspotOverrides]);
+
+  async function handleSaveHotspots(): Promise<void> {
+    const nextOverrides = previewHotspotOverrides();
+    try {
+      await saveHotspotOverridesFile(nextOverrides);
+      saveHotspotOverrides();
+      setHotspotPersistenceError('');
+    } catch (error) {
+      setHotspotPersistenceError(
+        error instanceof Error ? error.message : 'Failed to save hotspots',
+      );
+    }
+  }
 
   return (
     <main
@@ -861,7 +903,9 @@ export function HotspotsDebugPage(): React.JSX.Element {
           <button
             type='button'
             disabled={!hasUnsavedHotspots}
-            onClick={() => saveHotspotOverrides()}
+            onClick={() => {
+              void handleSaveHotspots();
+            }}
             className={cn(
               'rounded border px-2 py-1 font-mono text-[10px] uppercase transition-colors disabled:cursor-not-allowed disabled:opacity-45',
               hasUnsavedHotspots
@@ -880,6 +924,12 @@ export function HotspotsDebugPage(): React.JSX.Element {
           </button>
         </div>
       </header>
+
+      {hotspotPersistenceError ? (
+        <p className='mb-3 rounded border border-red-400/60 bg-red-500/15 px-3 py-2 text-sm text-red-100'>
+          {hotspotPersistenceError}
+        </p>
+      ) : null}
 
       <nav
         aria-label='Hotspot debug components'
