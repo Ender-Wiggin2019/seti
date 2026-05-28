@@ -1214,6 +1214,7 @@ export function projectGameState(
     cardRow: projectCardItems(game.cardRow as TCardItem[]),
     endOfRoundStackCounts: game.endOfRoundStacks.map((stack) => stack.length),
     currentEndOfRoundStackIndex: game.roundRotationReminderIndex,
+    hasRoundFirstPassOccurred: game.hasRoundFirstPassOccurred,
     aliens: game.alienState.boards.map((board) => toPublicAlienState(board)),
     recentEvents: game.eventLog.recent(20) as never,
     milestones: toPublicMilestones(game),

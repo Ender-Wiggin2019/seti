@@ -550,6 +550,13 @@ export interface IPublicGameState {
   endOfRoundStacks?: IBaseCard[][];
   endOfRoundStackCounts?: number[];
   currentEndOfRoundStackIndex?: number;
+  /**
+   * True once the first player has passed this round (and the solar
+   * system disc has rotated). The client uses this to surface the
+   * rotation reminder token on the current end-of-round stack while
+   * it's still pending.
+   */
+  hasRoundFirstPassOccurred?: boolean;
   aliens: IPublicAlienState[];
   recentEvents: TGameEvent[];
   milestones: IPublicMilestoneState;

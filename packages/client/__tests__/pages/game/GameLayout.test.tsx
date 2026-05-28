@@ -1225,6 +1225,13 @@ describe('GameLayout', () => {
       );
 
       fireEvent.click(screen.getByTestId('card-row-row-1'));
+      // After picking a row card, a confirm dialog now shows the
+      // 3-publicity cost; the buy action fires on Confirm, not on
+      // the row-card click.
+      const confirmDialog = await screen.findByRole('dialog');
+      fireEvent.click(
+        within(confirmDialog).getByRole('button', { name: 'Confirm' }),
+      );
       expect(sendFreeAction).toHaveBeenCalledWith({
         type: EFreeAction.BUY_CARD,
         cardId: 'row-1',

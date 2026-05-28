@@ -758,7 +758,9 @@
       "title": "Pilhas de Fim de Rodada",
       "round": "Rodada {{index}}",
       "cards": "{{count}} cartas",
-      "select_one": "Selecione uma da pilha atual"
+      "select_one": "Selecione uma da pilha atual",
+      "final_round": "Rodada Final",
+      "final_round_hint": "Sem compra de fim de rodada"
     },
     "game_page": {
       "connecting": "Estabelecendo conexão segura...",
@@ -787,6 +789,7 @@
       "buy_from_row": "Comprar da Linha",
       "cancel_row_buy": "Cancelar Compra da Linha",
       "main_deck": "Baralho Principal",
+      "discard_pile": "Descarte",
       "scores": "Pontuações",
       "no_gold_tiles": "Sem peças douradas de pontuação.",
       "gold_scoring_tiles": "Peças Douradas de Pontuação",

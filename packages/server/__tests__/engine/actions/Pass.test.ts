@@ -522,7 +522,7 @@ describe('PassAction — integration closure (2.8.x)', () => {
     expect(game.phase).toBe('AWAIT_MAIN_ACTION');
   });
 
-  it('2.8.5 the last passing player takes one card and leaves exactly one unclaimed in the stack', () => {
+  it('2.8.5 the last passing player takes one card and the leftover is swept to the discard pile', () => {
     const { game, player, other } = createIntegrationGame(
       'pass-2-8-5-last-player-stack-tail',
     );
@@ -530,6 +530,7 @@ describe('PassAction — integration closure (2.8.x)', () => {
     other.hand = [];
     const stackIndex = game.roundRotationReminderIndex;
     const startingStackLength = game.endOfRoundStacks[stackIndex].length;
+    const discardSizeBefore = game.mainDeck.discardSize;
 
     const playerPick = () => {
       game.processMainAction(player.id, { type: EMainAction.PASS });
@@ -547,8 +548,12 @@ describe('PassAction — integration closure (2.8.x)', () => {
     expect(secondPick).toBeDefined();
     expect(player.hand).toContain(firstPick);
     expect(other.hand).toContain(secondPick);
-    expect(game.endOfRoundStacks[stackIndex]).toHaveLength(
-      startingStackLength - 2,
+    // Per rulebook §7.8 the round-end sweep moves the leftover card
+    // from the just-completed stack to the main deck's discard pile,
+    // so the prior round's tile renders empty for the rest of the game.
+    expect(game.endOfRoundStacks[stackIndex]).toHaveLength(0);
+    expect(game.mainDeck.discardSize).toBe(
+      discardSizeBefore + (startingStackLength - 2),
     );
     expect(game.round).toBe(2);
   });

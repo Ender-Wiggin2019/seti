@@ -758,7 +758,9 @@
       "title": "End of Round Stacks",
       "round": "Round {{index}}",
       "cards": "{{count}} cards",
-      "select_one": "Select one from current stack"
+      "select_one": "Select one from current stack",
+      "final_round": "Final Round",
+      "final_round_hint": "No end-of-round draw"
     },
     "game_page": {
       "connecting": "Establishing secure connection...",
@@ -787,6 +789,7 @@
       "buy_from_row": "Buy From Row",
       "cancel_row_buy": "Cancel Row Buy",
       "main_deck": "Main Deck",
+      "discard_pile": "Discard",
       "scores": "Scores",
       "no_gold_tiles": "No gold scoring tiles.",
       "gold_scoring_tiles": "Gold Scoring Tiles",

@@ -711,6 +711,7 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
 
     const stackIndex = game.roundRotationReminderIndex;
     const stackLengthBefore = game.endOfRoundStacks[stackIndex].length;
+    const discardSizeBefore = game.mainDeck.discardSize;
 
     game.processMainAction('p1', { type: EMainAction.PASS });
 
@@ -728,8 +729,14 @@ describe('Game Flow: Play Card → Launch → Move → Venus → Pass → Scan',
     });
 
     expect(p1.hand.length).toBe(handBefore + 1);
-    expect(game.endOfRoundStacks[stackIndex].length).toBe(
-      stackLengthBefore - 1,
+    // p1 was the *last* player to pass this round (p2 passed back at
+    // step 8), so resolveEndOfRound sweeps the leftover cards from the
+    // just-completed stack into the main deck's discard pile per
+    // rulebook §7.8. The stack tile renders as empty for the rest of
+    // the game.
+    expect(game.endOfRoundStacks[stackIndex]).toHaveLength(0);
+    expect(game.mainDeck.discardSize).toBe(
+      discardSizeBefore + (stackLengthBefore - 1),
     );
   });
 
