@@ -1366,7 +1366,7 @@ export function SolarSystemView({
           <HotspotAnchor
             key={piece.key}
             sceneId='solar-system'
-            hotspotId={`${piece.kind}-${piece.key}`}
+            hotspotId={piece.spaceId}
             variant={textMode ? 'text' : 'image'}
             baseWidth={SOLAR_BOARD_BASE_SIZE_PX}
             baseHeight={SOLAR_BOARD_BASE_SIZE_PX}

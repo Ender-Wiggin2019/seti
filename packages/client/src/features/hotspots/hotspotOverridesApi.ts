@@ -10,11 +10,60 @@ function isObject(value: unknown): value is Record<string, unknown> {
 function parseHotspotOverrides(value: unknown): THotspotOverrides {
   if (!isObject(value)) return {};
 
-  return Object.fromEntries(
-    Object.entries(value).filter(([, sceneOverrides]) =>
+  return migrateLegacySolarSpaceOverrides(
+    Object.fromEntries(
+      Object.entries(value).filter(([, sceneOverrides]) =>
+        isObject(sceneOverrides),
+      ),
+    ) as THotspotOverrides,
+  );
+}
+
+function solarSpaceIdFromLegacyIndex(index: number): string | null {
+  if (!Number.isInteger(index) || index < 0 || index >= 32) return null;
+  const ringIndex = Math.floor(index / 8) + 1;
+  const sectorIndex = index % 8;
+  return `ring-${ringIndex}-cell-${sectorIndex * ringIndex}`;
+}
+
+function migrateLegacySolarSpaceOverrides(
+  overrides: THotspotOverrides,
+): THotspotOverrides {
+  const nextOverrides: THotspotOverrides = { ...overrides };
+
+  for (const [sceneId, sceneOverrides] of Object.entries(overrides).filter(
+    ([sceneId, sceneOverrides]) =>
+      (sceneId === 'solar-system' || sceneId.startsWith('solar-system:')) &&
       isObject(sceneOverrides),
-    ),
-  ) as THotspotOverrides;
+  )) {
+    const targetSceneIds =
+      sceneId === 'solar-system'
+        ? ['solar-system', 'solar-system:image']
+        : [sceneId];
+
+    for (const targetSceneId of targetSceneIds) {
+      nextOverrides[targetSceneId] = {
+        ...(nextOverrides[targetSceneId] ?? {}),
+      };
+      for (const [hotspotId, override] of Object.entries(sceneOverrides)) {
+        const match = /^space-(\d+)$/.exec(hotspotId);
+        if (!match) continue;
+        const realSpaceId = solarSpaceIdFromLegacyIndex(Number(match[1]));
+        if (!realSpaceId || nextOverrides[targetSceneId][realSpaceId]) continue;
+        nextOverrides[targetSceneId][realSpaceId] = override;
+      }
+    }
+  }
+
+  return nextOverrides;
+}
+
+export function createSolarHotspotSpaceId(index: number): string {
+  const spaceId = solarSpaceIdFromLegacyIndex(index);
+  if (!spaceId) {
+    throw new Error(`Invalid solar hotspot space index: ${index}`);
+  }
+  return spaceId;
 }
 
 export async function loadHotspotOverridesFile(): Promise<THotspotOverrides> {

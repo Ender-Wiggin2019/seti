@@ -1,5 +1,99 @@
 # TODO
 
+## 2026-05-29 solar hotspot real-game id follow-up
+
+### Assumptions
+
+- Real game solar spaces use server ids like `ring-1-cell-0`; `/debug/hotspots` should calibrate those same ids.
+- Existing saved `space-*` solar calibration should be migrated at load time so prior debug edits are not lost.
+- Probe/capsule anchors continue to reuse their occupied space id.
+
+### Plan
+
+- [x] Make the solar hotspot debug fixture use real game solar space ids.
+- [x] Add load-time compatibility from legacy `space-*` solar overrides to `ring-*` ids.
+- [x] Update focused tests for the shared real-game ids and legacy migration.
+- [x] Run focused client tests, typecheck, targeted biome, and real game smoke.
+
+### Review
+
+- Root cause: `/debug/hotspots` generated fake solar ids such as `space-0`, while real game uses server ids such as `ring-1-cell-0`; saved debug calibration therefore missed the game route.
+- The debug fixture now uses the same `ring-N-cell-M` ids as real game solar spaces.
+- Loading `/hotspot-overrides.json` now maps legacy `space-*` solar overrides to the matching real ids, so previously saved calibration still applies.
+- Verification passed: focused client tests, client typecheck, targeted `biome check`, and real game smoke on `http://127.0.0.1:5174/game/{id}`. The smoke confirmed `solar-space-ring-1-cell-0` uses the migrated position and `/debug/hotspots` probe anchor shares the same id/position.
+
+## 2026-05-29 solar hotspot apply/probe follow-up
+
+### Assumptions
+
+- Solar probes/capsules should visually reuse the hotspot calibration of the solar space they occupy, not maintain independent `probe-*` calibration keys.
+- Saved hotspot JSON should be loaded for the normal game app, not only for `/debug/hotspots`.
+- Debug page save/reset behavior stays unchanged.
+
+### Plan
+
+- [x] Add focused regression coverage for probes reading the calibrated solar space hotspot.
+- [x] Add app-provider coverage that shared hotspot overrides load on normal routes.
+- [x] Change solar movable-piece anchors to use their `spaceId` hotspot key.
+- [x] Load `hotspot-overrides.json` from `AppProviders` so game routes receive saved calibration.
+- [x] Run focused client tests, typecheck, targeted biome, and browser smoke.
+
+### Review
+
+- Solar probes/capsules now reuse their occupied solar space hotspot id, so `space-*` calibration moves the probe anchor with the space.
+- Normal app routes now load `/hotspot-overrides.json` in `AppProviders`, so saved calibration is available outside `/debug/hotspots`.
+- Verification passed: `pnpm --filter @seti/client test -- SolarSystemView.test.tsx AppProviders.test.tsx HotspotsDebugPage.test.tsx`, `pnpm --filter @seti/client typecheck`, and targeted `biome check`.
+- Browser smoke passed on `http://127.0.0.1:5174`: `/game/smoke-hotspot` requested `hotspot-overrides.json` before redirecting to auth, and `/debug/hotspots` showed the solar `space-0` hotspot and probe anchor sharing the same hotspot id and position.
+
+## 2026-05-29 solar hotspot ring sliders
+
+### Assumptions
+
+- `/debug/hotspots` 的 Solar System tab 只批量调整已渲染的 solar space interactive hotspots，不调整 sun、probe、alien token 等 anchor。
+- Ring slider 表达相对当前坐标的径向像素偏移：负数向太阳中心收缩，正数向外扩张。
+- Image Mode 和 Text Mode 继续写入 `solar-system:image` / `solar-system:text`，保存和重置沿用现有 draft/save 流程；单点拖拽仍然可继续微调。
+
+### Plan
+
+- [x] Add Solar System ring slider controls to `/debug/hotspots`.
+- [x] Apply slider deltas as draft overrides for every hotspot in the selected ring and current mode namespace.
+- [x] Preserve existing Save/Reset behavior and reset slider readouts after save/reset or mode switch.
+- [x] Run focused client tests, typecheck, and targeted biome.
+
+### Review
+
+- Solar tab now shows Ring 1-4 radial sliders. Moving a slider writes draft overrides for all matching `solar-system` space hotspots in the active mode.
+- Existing single hotspot drag/resize still writes through `setHotspotDraftOverride`; the ring slider only batches the same draft path.
+- Verification passed: `pnpm --filter @seti/client test -- HotspotsDebugPage.test.tsx HotspotButton.test.tsx`, `pnpm --filter @seti/client typecheck`, and targeted `biome check`.
+- Browser smoke passed on `http://127.0.0.1:5174/debug/hotspots`: Ring 1 slider rendered, moving it changed `space-0` position, enabled Save Hotspots, and produced no console warnings/errors.
+
+## 2026-05-29 alien board trace hotspot follow-up
+
+### Assumptions
+
+- Oumuamua 的真实服务端 discovery 已经创建 trace slot；用户看到的缺失主要来自 `/debug/hotspots` fixture 没有按服务端 slot 定义补齐。
+- Alien board 上可交互 hotspot 的校准坐标应完全复用同一位置的 anchor key；点击回传仍使用服务端 option/slot id。
+- Exertians 版图上的 9 VP + 1 credit 底部行应使用已有的 `slot-1` 校准 key，避免被新生成的 `slot-0` 默认坐标错位。
+
+### Plan
+
+- [x] Add failing regression tests for Oumuamua debug trace bonus, Exertians bottom-row anchor key, and alien-board interactive hotspot anchor-follow behavior.
+- [x] Reuse anchor hotspot ids for alien-board interactive trace buttons and Oumuamua planet action buttons while preserving server response ids.
+- [x] Populate Oumuamua debug fixture from shared Oumuamua trace slot definitions.
+- [x] Apply Exertians trace anchor index offset so the 9 VP + 1 credit row maps to the calibrated bottom anchor.
+- [x] Run focused client tests, typecheck, and targeted biome.
+
+### Review
+
+- Oumuamua 的真实 server plugin 已经在 discovery 时创建 trace slots；本次修的是 `/debug/hotspots` fixture，现在直接使用 shared `OUMUAMUA_TRACE_SLOT_DEFS` 生成 3 色 x 5 个 slot，hover 能看到例如 `Trace bonus: 25 VP`。
+- Exertians image anchor 仍按 5 个印刷 slot 渲染，但 persisted hotspot id 从 `slot-1` 开始映射，恢复已有校准里的 9 VP + 1 credit 底部行。
+- Alien board trace 交互 hotspot 现在使用对应 anchor 的 hotspot id 做定位，同时通过 `data-server-trace-slot-id` 保留真实 server slot id，并且点击仍回传真实 option id。
+- Oumuamua orbit/land 交互 hotspot 也改为复用 `orbit-area` / `land-area` anchor 定位 key。
+- RED 验证：`pnpm --filter @seti/client test -- AlienBoardView.test.tsx HotspotsDebugPage.test.tsx` 在旧实现下 4 个新增断言失败。
+- GREEN 验证通过：`pnpm --filter @seti/client test -- AlienBoardView.test.tsx HotspotsDebugPage.test.tsx`，2 files / 35 tests passed。
+- 验证通过：`pnpm --filter @seti/client typecheck`。
+- 验证通过：`pnpm --dir packages/client exec biome check src/features/board/alienBoards/TraceMarkerOverlay.tsx src/features/board/alienBoards/ExertiansBoardArt.tsx src/features/board/alienBoards/OumuamuaBoardArt.tsx src/pages/game/HotspotsDebugPage.tsx __tests__/features/board/AlienBoardView.test.tsx __tests__/pages/game/HotspotsDebugPage.test.tsx`。
+
 ## 2026-05-28 hotspot debug hover info
 
 ### Assumptions

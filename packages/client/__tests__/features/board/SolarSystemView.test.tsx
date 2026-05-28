@@ -405,6 +405,7 @@ describe('SolarSystemView', () => {
     expect(space).toHaveAttribute('data-hotspot-scene', 'solar-system');
     expect(space).toHaveAttribute('data-hotspot-id', 'space-0');
     expect(space).toHaveAttribute('data-hotspot-variant', 'image');
+    fireEvent.mouseEnter(space);
     expect(screen.getByText('space-0')).toBeInTheDocument();
   });
 
@@ -426,6 +427,40 @@ describe('SolarSystemView', () => {
     expect(space).toHaveAttribute('data-hotspot-id', 'space-0');
     expect(space).toHaveAttribute('data-hotspot-variant', 'text');
     expect(space).not.toHaveStyle({ left: '0%', top: '0%' });
+  });
+
+  it('uses the calibrated solar space position for probes on that space', () => {
+    const spaceId = 'ring-1-cell-0';
+    const solarSystem = createSolarSystemMock();
+    const spaceState = createMockSpaceState(spaceId, 0);
+    useDebugStore.setState({
+      hotspotOverrides: {
+        'solar-system:image': {
+          [spaceId]: { x: 120, y: 88, width: 32, height: 32 },
+        },
+      },
+    });
+
+    renderSolarSystemView({
+      solarSystem: {
+        ...solarSystem,
+        spaces: [spaceId],
+        probes: [{ playerId: 'player-1', spaceId }],
+        adjacency: {},
+        spaceStates: { [spaceId]: spaceState },
+        sectorSpaceIds: createSectorSpaceIds({ [spaceId]: spaceState }),
+        probeSpaceById: {},
+      },
+    });
+
+    const space = screen.getByTestId(`solar-space-${spaceId}`);
+    const probe = screen.getByTestId('solar-probe-player-1-0');
+    expect(space).toHaveAttribute('data-hotspot-id', spaceId);
+    expect(probe).toHaveAttribute('data-hotspot-id', spaceId);
+    expect(probe).toHaveStyle({
+      left: '15.789474%',
+      top: '11.578947%',
+    });
   });
 
   it('allows a local text-mode override without changing the global debug store', () => {
@@ -636,12 +671,13 @@ describe('SolarSystemView', () => {
 
     const probe = screen.getByTestId('solar-probe-player-1-0');
     expect(probe).toHaveAttribute('data-hotspot-scene', 'solar-system');
-    expect(probe).toHaveAttribute('data-hotspot-id', 'probe-player-1-0');
+    expect(probe).toHaveAttribute('data-hotspot-id', 'space-0');
     expect(probe).toHaveAttribute('data-hotspot-role', 'anchor');
 
     const sun = screen.getByTestId('solar-sun');
     expect(sun).toHaveAttribute('data-hotspot-scene', 'solar-system');
     expect(sun).toHaveAttribute('data-hotspot-id', 'sun');
+    fireEvent.mouseEnter(sun);
     expect(screen.getByText('solar sun')).toBeInTheDocument();
 
     const alienToken = screen.getByTestId(
@@ -661,10 +697,13 @@ describe('SolarSystemView', () => {
       'glyphids-sector-token-glyphids-token|sector|sector-2',
     );
 
+    fireEvent.mouseEnter(probe);
     expect(screen.getByText('probe player-1-0')).toBeInTheDocument();
+    fireEvent.mouseEnter(alienToken);
     expect(
       screen.getByText('solar alien token alien-0-anomaly-token|3|red-trace'),
     ).toBeInTheDocument();
+    fireEvent.mouseEnter(glyphidsToken);
     expect(
       screen.getByText(
         'solar glyphids sector token glyphids-token|sector|sector-2',

@@ -31,6 +31,7 @@
 - Hotspot 校准范围不能只按“可点击按钮”定义；凡是叠在 game 图片资源上的绝对定位 token、marker、trace、badge、card overlay，也要进入可保存 anchor 或在 review 中明确排除。
 - Alien board 的 trace hotspot 不能只覆盖最底部/第一个 slot；通常所有 server 暴露为合法 option 的 trace slot 都应可标记，尤其 Mascamites blue sample path 这类非直列 trace。
 - Hotspot debug fixtures 不能只模拟一个合法动作模式；校准页应按 common/server 语义覆盖完整坐标集合，例如 planet board 要同时展示全部 planet、orbit、land、moon slot，否则 LAND-only fixture 会漏掉 orbit 和不在选项里的 planet。
+- Hotspot debug fixture 的 id 必须和真实 game public state 完全一致；不能用 `space-0` 这类本地假 id 代替 server 的 `ring-1-cell-0`，否则 debug 页保存成功但 game 路由不会命中同一个 override key。
 - Text mode 和 image mode 的 board hotspot 不应共享同一位置 override；如果两种模式使用不同坐标系，保持同一交互组件，但用 mode variant 拆分本地配置命名空间。
 - Hotspot debug 页的模式切换必须显式显示可选模式名和选中态，例如 `Image Mode` / `Text Mode`；不要用 `Text Mode Off` 这类状态文案，否则用户容易在错误 namespace 下编辑。
 - Rival board progress 不能只暴露当前 marker；12 个 printed progress spot 都是需要校准的 anchor，当前 marker 只是其中一个 slot 的视觉内容。

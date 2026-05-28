@@ -1,3 +1,7 @@
+import {
+  OUMUAMUA_TRACE_SLOT_DEFS,
+  OUMUAMUA_TRACE_SLOT_PREFIX,
+} from '@seti/common/constant/alienBoardConfig';
 import { PLANETARY_PLANETS } from '@seti/common/constant/boardLayout';
 import {
   createDefaultSetupConfig,
@@ -22,6 +26,7 @@ import { SectorGrid } from '@/features/board/SectorGrid';
 import { SolarSystemView } from '@/features/board/SolarSystemView';
 import { TechBoardView } from '@/features/board/TechBoardView';
 import {
+  createSolarHotspotSpaceId,
   loadHotspotOverridesFile,
   saveHotspotOverridesFile,
 } from '@/features/hotspots/hotspotOverridesApi';
@@ -102,7 +107,6 @@ const TABS: Array<{ id: THotspotsDebugTab; label: string }> = [
   { id: 'aliens', label: 'Aliens' },
   { id: 'corporations', label: 'Corporations' },
 ];
-
 function hasHotspotDrafts(
   draftOverrides: Record<string, Record<string, unknown>>,
 ): boolean {
@@ -256,12 +260,18 @@ function createAnomalyTokens(): IPublicSolarSystemAlienToken[] {
 }
 
 function createSolarSystem(): IPublicSolarSystem {
-  const spaces = Array.from({ length: 32 }, (_, i) => `space-${i}`);
+  const spaces = Array.from({ length: 32 }, (_, i) =>
+    createSolarHotspotSpaceId(i),
+  );
   const spaceStates = Object.fromEntries(
     spaces.map((spaceId, index) => [spaceId, createSpaceState(spaceId, index)]),
   );
   const probes: IPublicSolarSystem['probes'] = [
-    { playerId: PLAYER_ID, spaceId: 'space-0', probeId: 'probe-hotspot' },
+    {
+      playerId: PLAYER_ID,
+      spaceId: createSolarHotspotSpaceId(0),
+      probeId: 'probe-hotspot',
+    },
   ];
   const movementTarget: TMovementTarget = {
     type: 'probe',
@@ -271,9 +281,18 @@ function createSolarSystem(): IPublicSolarSystem {
   return {
     spaces,
     adjacency: {
-      'space-0': ['space-1', 'space-8'],
-      'space-1': ['space-0', 'space-2'],
-      'space-8': ['space-0', 'space-16'],
+      [createSolarHotspotSpaceId(0)]: [
+        createSolarHotspotSpaceId(1),
+        createSolarHotspotSpaceId(8),
+      ],
+      [createSolarHotspotSpaceId(1)]: [
+        createSolarHotspotSpaceId(0),
+        createSolarHotspotSpaceId(2),
+      ],
+      [createSolarHotspotSpaceId(8)]: [
+        createSolarHotspotSpaceId(0),
+        createSolarHotspotSpaceId(16),
+      ],
     },
     probes,
     movablePieces: [
@@ -281,7 +300,7 @@ function createSolarSystem(): IPublicSolarSystem {
         pieceId: 'probe-hotspot',
         pieceType: 'probe',
         playerId: PLAYER_ID,
-        spaceId: 'space-0',
+        spaceId: createSolarHotspotSpaceId(0),
         movementTarget,
       },
     ],
@@ -293,7 +312,10 @@ function createSolarSystem(): IPublicSolarSystem {
     ],
     nextRotateRing: 1,
     spaceStates,
-    planetSpaceIds: { [EPlanet.EARTH]: 'space-0', [EPlanet.MARS]: 'space-8' },
+    planetSpaceIds: {
+      [EPlanet.EARTH]: createSolarHotspotSpaceId(0),
+      [EPlanet.MARS]: createSolarHotspotSpaceId(8),
+    },
     sectorSpaceIds: createSectorSpaceIds(spaceStates),
     probeSpaceById: createProbeSpaceById(probes),
     alienTokens: createAnomalyTokens(),
@@ -405,6 +427,25 @@ function createTraceSlots(
       occupants:
         index === 0 ? [{ source: { playerId: PLAYER_ID }, traceColor }] : [],
     }),
+  );
+}
+
+function createOumuamuaTraceSlots(alienIndex: number): IPublicTraceSlot[] {
+  return [ETrace.PINK, ETrace.YELLOW, ETrace.BLUE].flatMap((traceColor) =>
+    OUMUAMUA_TRACE_SLOT_DEFS.map((def, index) =>
+      createTraceSlot(
+        `alien-${alienIndex}-${OUMUAMUA_TRACE_SLOT_PREFIX}|${traceColor}|${def.tierFromBottom}|${def.exofossilCost}`,
+        traceColor,
+        {
+          maxOccupants: def.maxOccupants,
+          rewards: def.rewards.map((reward) => ({ ...reward })),
+          occupants:
+            index === 0
+              ? [{ source: { playerId: PLAYER_ID }, traceColor }]
+              : [],
+        },
+      ),
+    ),
   );
 }
 
@@ -611,19 +652,12 @@ function createAlienBoard(
       return {
         type: 'oumuamua',
         tile: {
-          spaceId: 'space-8',
+          spaceId: createSolarHotspotSpaceId(8),
           sectorId: 'sector-1',
           dataRemaining: 3,
           markerPlayerIds: [PLAYER_ID],
         },
-        traceSlots: [
-          createOccupiedTraceSlot(`oumuamua-${alienIndex}-pink`, ETrace.PINK),
-          createOccupiedTraceSlot(
-            `oumuamua-${alienIndex}-yellow`,
-            ETrace.YELLOW,
-          ),
-          createOccupiedTraceSlot(`oumuamua-${alienIndex}-blue`, ETrace.BLUE),
-        ],
+        traceSlots: createOumuamuaTraceSlots(alienIndex),
       };
     case EAlienType.GLYPHIDS:
       return {
@@ -923,6 +957,10 @@ function renderPanel(tab: THotspotsDebugTab, gameState: IPublicGameState) {
 export function HotspotsDebugPage(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<THotspotsDebugTab>('solar');
   const [hotspotPersistenceError, setHotspotPersistenceError] = useState('');
+  const solarRingIndices = [1, 2, 3, 4] as const;
+  const [solarRingOffsets, setSolarRingOffsets] = useState<
+    Record<(typeof solarRingIndices)[number], number>
+  >({ 1: 0, 2: 0, 3: 0, 4: 0 });
   const gameState = useMemo(createGameState, []);
   const textMode = useDebugStore((state) => state.textMode);
   const setTextMode = useDebugStore((state) => state.setTextMode);
@@ -953,10 +991,16 @@ export function HotspotsDebugPage(): React.JSX.Element {
   const resetHotspotOverrides = useDebugStore(
     (state) => state.resetHotspotOverrides,
   );
-
+  const setHotspotDraftOverride = useDebugStore(
+    (state) => state.setHotspotDraftOverride,
+  );
   useEffect(() => {
     setHotspotDebug(true);
   }, [setHotspotDebug]);
+
+  useEffect(() => {
+    setSolarRingOffsets({ 1: 0, 2: 0, 3: 0, 4: 0 });
+  }, [textMode]);
 
   useEffect(() => {
     let active = true;
@@ -981,11 +1025,69 @@ export function HotspotsDebugPage(): React.JSX.Element {
     try {
       await saveHotspotOverridesFile(nextOverrides);
       saveHotspotOverrides();
+      setSolarRingOffsets({ 1: 0, 2: 0, 3: 0, 4: 0 });
       setHotspotPersistenceError('');
     } catch (error) {
       setHotspotPersistenceError(
         error instanceof Error ? error.message : 'Failed to save hotspots',
       );
+    }
+  }
+
+  function applySolarRingSlider(
+    ringIndex: 1 | 2 | 3 | 4,
+    nextOffset: number,
+  ): void {
+    if (!Number.isFinite(nextOffset)) return;
+    const currentOffset = solarRingOffsets[ringIndex] ?? 0;
+    const deltaPx = nextOffset - currentOffset;
+    setSolarRingOffsets((current) => ({ ...current, [ringIndex]: nextOffset }));
+    if (deltaPx === 0) return;
+
+    const variant = textMode ? 'text' : 'image';
+    const storageSceneId = `solar-system:${variant}`;
+    const elements = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        `[data-hotspot-scene="solar-system"][data-hotspot-role="interactive"][data-hotspot-variant="${variant}"]`,
+      ),
+    );
+    const centerPx = 380;
+    const baseSizePx = 760;
+    const hotspotIds = gameState.solarSystem.spaces.filter((spaceId) => {
+      const state = gameState.solarSystem.spaceStates[spaceId];
+      return state?.ringIndex === ringIndex && state.cellInSector === 0;
+    });
+
+    for (const hotspotId of hotspotIds) {
+      const element = elements.find(
+        (candidate) => candidate.dataset.hotspotId === hotspotId,
+      );
+      if (!element) continue;
+      const leftPct = Number.parseFloat(element.style.left);
+      const topPct = Number.parseFloat(element.style.top);
+      const widthPct = Number.parseFloat(element.style.width);
+      const heightPct = Number.parseFloat(element.style.height);
+      if (
+        !Number.isFinite(leftPct) ||
+        !Number.isFinite(topPct) ||
+        !Number.isFinite(widthPct) ||
+        !Number.isFinite(heightPct)
+      ) {
+        continue;
+      }
+      const x = (leftPct / 100) * baseSizePx;
+      const y = (topPct / 100) * baseSizePx;
+      const dx = x - centerPx;
+      const dy = y - centerPx;
+      const radius = Math.hypot(dx, dy);
+      if (radius <= 0) continue;
+      const scale = Math.max(0, radius + deltaPx) / radius;
+      setHotspotDraftOverride(storageSceneId, hotspotId, {
+        x: centerPx + dx * scale,
+        y: centerPx + dy * scale,
+        width: (widthPct / 100) * baseSizePx,
+        height: (heightPct / 100) * baseSizePx,
+      });
     }
   }
 
@@ -1090,7 +1192,10 @@ export function HotspotsDebugPage(): React.JSX.Element {
           </button>
           <button
             type='button'
-            onClick={() => resetHotspotOverrides()}
+            onClick={() => {
+              resetHotspotOverrides();
+              setSolarRingOffsets({ 1: 0, 2: 0, 3: 0, 4: 0 });
+            }}
             className='rounded border border-surface-700/60 bg-surface-800/60 px-2 py-1 font-mono text-[10px] uppercase text-text-300 transition-colors hover:bg-surface-700/70'
           >
             Reset Hotspots
@@ -1128,6 +1233,42 @@ export function HotspotsDebugPage(): React.JSX.Element {
           </button>
         ))}
       </nav>
+
+      {activeTab === 'solar' ? (
+        <section
+          aria-label='Solar ring radial controls'
+          className='mb-4 grid gap-2 rounded-md border border-surface-800/70 bg-surface-900/60 px-3 py-3 sm:grid-cols-2 xl:grid-cols-4'
+        >
+          {solarRingIndices.map((ringIndex) => (
+            <label
+              key={`solar-ring-slider-${ringIndex}`}
+              className='grid gap-1 rounded border border-surface-800/70 bg-surface-950/35 px-2 py-2'
+            >
+              <span className='flex items-center justify-between gap-3 font-mono text-[10px] uppercase tracking-[0.12em] text-text-300'>
+                <span>Ring {ringIndex}</span>
+                <span className='text-text-100'>
+                  {solarRingOffsets[ringIndex]}px
+                </span>
+              </span>
+              <input
+                type='range'
+                aria-label={`Ring ${ringIndex} radial offset`}
+                min={-80}
+                max={80}
+                step={1}
+                value={solarRingOffsets[ringIndex]}
+                onChange={(event) =>
+                  applySolarRingSlider(
+                    ringIndex,
+                    Number.parseFloat(event.currentTarget.value),
+                  )
+                }
+                className='h-6 w-full accent-cyan-400'
+              />
+            </label>
+          ))}
+        </section>
+      ) : null}
 
       <div className='min-w-0 overflow-x-auto pb-8'>
         {renderPanel(activeTab, gameState)}

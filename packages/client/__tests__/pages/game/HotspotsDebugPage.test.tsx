@@ -15,6 +15,11 @@ import { HotspotsDebugPage } from '@/pages/game/HotspotsDebugPage';
 import { useDebugStore } from '@/stores/debugStore';
 
 vi.mock('@/features/hotspots/hotspotOverridesApi', () => ({
+  createSolarHotspotSpaceId: (index: number) => {
+    const ringIndex = Math.floor(index / 8) + 1;
+    const sectorIndex = index % 8;
+    return `ring-${ringIndex}-cell-${sectorIndex * ringIndex}`;
+  },
   loadHotspotOverridesFile: vi.fn(async () => ({})),
   saveHotspotOverridesFile: vi.fn(async () => undefined),
 }));
@@ -70,12 +75,12 @@ describe('HotspotsDebugPage', () => {
     await waitFor(() => {
       expect(useDebugStore.getState().hotspotDebug).toBe(true);
     });
-    const spaceHotspot = await screen.findByTestId('solar-space-space-0');
-    expect(screen.queryByText('space-0')).not.toBeInTheDocument();
+    const spaceHotspot = await screen.findByTestId('solar-space-ring-1-cell-0');
+    expect(screen.queryByText('ring-1-cell-0')).not.toBeInTheDocument();
 
     fireEvent.mouseEnter(spaceHotspot);
 
-    expect(screen.getByText('space-0')).toBeInTheDocument();
+    expect(screen.getByText('ring-1-cell-0')).toBeInTheDocument();
   });
 
   it('saves draft hotspot edits only when Save Hotspots is clicked', async () => {
@@ -90,7 +95,7 @@ describe('HotspotsDebugPage', () => {
     act(() => {
       useDebugStore
         .getState()
-        .setHotspotDraftOverride('solar-system', 'space-0', {
+        .setHotspotDraftOverride('solar-system', 'ring-1-cell-0', {
           x: 120,
           y: 88,
           width: 32,
@@ -106,7 +111,7 @@ describe('HotspotsDebugPage', () => {
     await waitFor(() => {
       expect(useDebugStore.getState().hotspotOverrides).toEqual({
         'solar-system': {
-          'space-0': {
+          'ring-1-cell-0': {
             x: 120,
             y: 88,
             width: 32,
@@ -120,7 +125,7 @@ describe('HotspotsDebugPage', () => {
     await waitFor(() => {
       expect(saveHotspotOverridesFileMock).toHaveBeenCalledWith({
         'solar-system': {
-          'space-0': {
+          'ring-1-cell-0': {
             x: 120,
             y: 88,
             width: 32,
@@ -134,7 +139,7 @@ describe('HotspotsDebugPage', () => {
   it('loads saved hotspot overrides from the JSON source', async () => {
     loadHotspotOverridesFileMock.mockResolvedValue({
       'solar-system': {
-        'space-0': { x: 120, y: 88, width: 32, height: 32 },
+        'ring-1-cell-0': { x: 120, y: 88, width: 32, height: 32 },
       },
     });
 
@@ -143,7 +148,7 @@ describe('HotspotsDebugPage', () => {
     await waitFor(() => {
       expect(useDebugStore.getState().hotspotOverrides).toEqual({
         'solar-system': {
-          'space-0': { x: 120, y: 88, width: 32, height: 32 },
+          'ring-1-cell-0': { x: 120, y: 88, width: 32, height: 32 },
         },
       });
     });
@@ -176,10 +181,10 @@ describe('HotspotsDebugPage', () => {
       expect(useDebugStore.getState().hotspotDebug).toBe(true);
     });
 
-    const spaceHotspot = screen.getByTestId('solar-space-space-0');
+    const spaceHotspot = screen.getByTestId('solar-space-ring-1-cell-0');
     const sunAnchor = screen.getByTestId('solar-sun');
     fireEvent.mouseEnter(spaceHotspot);
-    expect(screen.getByText('space-0')).toBeInTheDocument();
+    expect(screen.getByText('ring-1-cell-0')).toBeInTheDocument();
     fireEvent.mouseLeave(spaceHotspot);
     fireEvent.mouseEnter(sunAnchor);
     expect(screen.getByText('solar sun')).toBeInTheDocument();
@@ -190,13 +195,13 @@ describe('HotspotsDebugPage', () => {
     fireEvent.mouseEnter(sunAnchor);
     expect(screen.queryByText('solar sun')).not.toBeInTheDocument();
     fireEvent.mouseEnter(spaceHotspot);
-    expect(screen.getByText('space-0')).toBeInTheDocument();
+    expect(screen.getByText('ring-1-cell-0')).toBeInTheDocument();
     fireEvent.mouseLeave(spaceHotspot);
 
     fireEvent.click(screen.getByRole('button', { name: 'Interactive On' }));
 
     fireEvent.mouseEnter(spaceHotspot);
-    expect(screen.queryByText('space-0')).not.toBeInTheDocument();
+    expect(screen.queryByText('ring-1-cell-0')).not.toBeInTheDocument();
     expect(useDebugStore.getState().showAnchorHotspots).toBe(false);
     expect(useDebugStore.getState().showInteractiveHotspots).toBe(false);
   });
@@ -286,6 +291,11 @@ describe('HotspotsDebugPage', () => {
     expect(
       screen.getByText('centaurians red-trace trace 1'),
     ).toBeInTheDocument();
+    const oumuamuaBottomSlot = screen.getByTestId(
+      'alien-4-oumuamua-slot-red-trace-0',
+    );
+    fireEvent.mouseEnter(oumuamuaBottomSlot);
+    expect(screen.getByText('Trace bonus: 25 VP')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', { name: 'Corporations' }));
     expect(

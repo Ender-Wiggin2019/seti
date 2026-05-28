@@ -145,7 +145,7 @@ export function OumuamuaBoardArt({
         {planetActionMode === EMainAction.ORBIT ? (
           <HotspotButton
             sceneId='alien-board'
-            hotspotId={`oumuamua-${alienIndex}-orbit`}
+            hotspotId={`oumuamua-${alienIndex}-orbit-area`}
             variant='image'
             baseWidth={ALIEN_BOARD_BASE_WIDTH}
             baseHeight={ALIEN_BOARD_BASE_HEIGHT}
@@ -166,7 +166,7 @@ export function OumuamuaBoardArt({
         {planetActionMode === EMainAction.LAND ? (
           <HotspotButton
             sceneId='alien-board'
-            hotspotId={`oumuamua-${alienIndex}-land`}
+            hotspotId={`oumuamua-${alienIndex}-land-area`}
             variant='image'
             baseWidth={ALIEN_BOARD_BASE_WIDTH}
             baseHeight={ALIEN_BOARD_BASE_HEIGHT}

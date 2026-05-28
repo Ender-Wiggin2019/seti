@@ -60,6 +60,11 @@ export interface ITraceColumnLayout {
    */
   yPctBottomToTop: number[];
   /**
+   * Offset used only for persisted hotspot ids. Some calibrated legacy anchors
+   * start at 1 even though slot arrays remain zero-indexed.
+   */
+  hotspotIdIndexOffset?: number;
+  /**
    * Vertical stride (in % of board height) used to stack multiple occupants
    * inside an overflow slot (`maxOccupants === -1`). Each subsequent occupant
    * shifts upward by this amount. Defaults to 1.5% — matches the
@@ -198,13 +203,16 @@ function TraceSlotAnchors({
           100;
         const y = (ALIEN_BOARD_BASE_HEIGHT * yPct) / 100;
         const slot = slots[index];
+        const anchorHotspotId = `${alienKey}-${alienIndex}-${color}-slot-${
+          index + (layout.hotspotIdIndexOffset ?? 0)
+        }`;
         const selectable =
           slot !== undefined && selectableSlotIds?.has(slot.slotId) === true;
         return (
           <span key={`${color}-${index}`}>
             <HotspotAnchor
               sceneId='alien-board'
-              hotspotId={`${alienKey}-${alienIndex}-${color}-slot-${index}`}
+              hotspotId={anchorHotspotId}
               variant='image'
               baseWidth={ALIEN_BOARD_BASE_WIDTH}
               baseHeight={ALIEN_BOARD_BASE_HEIGHT}
@@ -221,7 +229,7 @@ function TraceSlotAnchors({
             {selectable ? (
               <HotspotButton
                 sceneId='alien-board'
-                hotspotId={slot.slotId}
+                hotspotId={anchorHotspotId}
                 variant='image'
                 baseWidth={ALIEN_BOARD_BASE_WIDTH}
                 baseHeight={ALIEN_BOARD_BASE_HEIGHT}
@@ -235,6 +243,7 @@ function TraceSlotAnchors({
                 ariaLabel={`Select ${alienKey} ${color} trace slot ${index + 1}`}
                 className='rounded-full border-accent-400/70'
                 testId={`alien-${alienIndex}-${alienKey}-hotspot-${color}-${index}`}
+                dataAttributes={{ 'data-server-trace-slot-id': slot.slotId }}
                 onClick={() => onSelectTraceSlot?.(slot.slotId)}
               />
             ) : null}

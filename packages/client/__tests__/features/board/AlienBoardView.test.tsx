@@ -614,6 +614,10 @@ describe('AlienBoardView', () => {
     );
     expect(topSlot).toHaveAttribute(
       'data-hotspot-id',
+      'mascamites-0-blue-trace-slot-4',
+    );
+    expect(topSlot).toHaveAttribute(
+      'data-server-trace-slot-id',
       'alien-0-mascamites-blue-4',
     );
     expect(topSlot).toHaveAttribute('data-hotspot-role', 'interactive');
@@ -625,6 +629,46 @@ describe('AlienBoardView', () => {
       type: EPlayerInputType.OPTION,
       optionId: 'alien-0-mascamites-blue-4',
     });
+  });
+
+  it('keeps Exertians bottom printed trace row mapped to the calibrated slot anchor', () => {
+    useDebugStore.setState({ hotspotDebug: true, showAnchorHotspots: true });
+    const alien: IPublicAlienState = {
+      alienIndex: 0,
+      alienType: EAlienType.EXERTIANS,
+      discovered: true,
+      discovery: { zones: [], overflowZones: [] },
+      cardZone: null,
+      board: {
+        type: 'exertians',
+        faceDownCards: [],
+        milestones: [],
+        traceSlots: [
+          slot('exertians-danger-3-red-trace-0', ETrace.PINK, {
+            rewards: [
+              { type: 'VP', amount: 9 },
+              { type: 'CREDIT', amount: 1 },
+            ],
+          }),
+        ],
+      },
+    };
+
+    render(<AlienBoardView aliens={[alien]} playerColors={{}} />);
+
+    const bottomRedSlot = screen.getByTestId(
+      'alien-0-exertians-slot-red-trace-0',
+    );
+    expect(bottomRedSlot).toHaveAttribute(
+      'data-hotspot-id',
+      'exertians-0-red-trace-slot-1',
+    );
+
+    fireEvent.mouseEnter(bottomRedSlot);
+
+    expect(
+      screen.getByText('Trace bonus: 9 VP + 1 credit'),
+    ).toBeInTheDocument();
   });
 
   it.each([
@@ -1380,7 +1424,7 @@ describe('AlienBoardView', () => {
 
     const target = screen.getByTestId('planet-target-oumuamua');
     expect(target).toHaveAttribute('data-hotspot-scene', 'alien-board');
-    expect(target).toHaveAttribute('data-hotspot-id', 'oumuamua-0-orbit');
+    expect(target).toHaveAttribute('data-hotspot-id', 'oumuamua-0-orbit-area');
     expect(screen.queryByText('Oumuamua orbit')).not.toBeInTheDocument();
 
     fireEvent.mouseEnter(target);

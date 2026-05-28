@@ -7,9 +7,21 @@ import {
 } from './TraceMarkerOverlay';
 
 const EXERTIANS_LAYOUTS: TTraceColumnLayouts = {
-  [ETrace.PINK]: { xPct: 18, yPctBottomToTop: [78, 66, 53, 40, 27] },
-  [ETrace.YELLOW]: { xPct: 50, yPctBottomToTop: [78, 66, 53, 40, 27] },
-  [ETrace.BLUE]: { xPct: 82, yPctBottomToTop: [78, 66, 53, 40, 27] },
+  [ETrace.PINK]: {
+    xPct: 18,
+    yPctBottomToTop: [78, 66, 53, 40, 27],
+    hotspotIdIndexOffset: 1,
+  },
+  [ETrace.YELLOW]: {
+    xPct: 50,
+    yPctBottomToTop: [78, 66, 53, 40, 27],
+    hotspotIdIndexOffset: 1,
+  },
+  [ETrace.BLUE]: {
+    xPct: 82,
+    yPctBottomToTop: [78, 66, 53, 40, 27],
+    hotspotIdIndexOffset: 1,
+  },
 };
 
 interface IExertiansBoardArtProps {
