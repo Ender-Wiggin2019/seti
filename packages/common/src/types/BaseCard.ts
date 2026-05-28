@@ -35,6 +35,14 @@ export interface IBaseCard {
     descHelper?: string; // temporary translation for some texts
     faq?: string[];
     enableEffectRender?: boolean; // temp
+    /**
+     * Render an opaque white panel + React-translated flavor text
+     * over the bottom 32px of the card. Used for cards whose printed
+     * sprite bakes English flavor + padding into the bottom strip
+     * (Centaurians) so we can swap in a localized translation
+     * without touching the sprite asset.
+     */
+    enableFlavorText?: boolean;
     fanMade?: boolean;
     titleColor?: string;
     titleHeight?: number;

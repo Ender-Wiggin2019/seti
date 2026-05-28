@@ -895,6 +895,11 @@ export const alienCards: IBaseCard[] = _alienCards.map((card) => {
       ...card.special,
       titleHeight: 86,
       enableEffectRender: id >= 0 && id <= 30,
+      // Centaurians (ET.31–ET.40): sprite bakes English flavor +
+      // padding into the bottom ~32px. Opt into the React flavor
+      // panel that masks that strip and renders the translated
+      // version, while leaving the rest of the printed sprite alone.
+      enableFlavorText: id >= 31 && id <= 40,
       faq: FAQ[card.id],
     },
   };

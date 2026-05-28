@@ -116,9 +116,28 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
         {renderFreeAction()}
         {renderSector()}
         {renderImage()}
-        <div className='card-cell card-render'>
-          {card.income && <CardIncome income={card.income} />}
-        </div>
+        {/*
+          The .card-render overlay paints the generic card-template
+          (transparent at the top, opaque white over the bottom ~16%
+          where React renders effects + flavor). Cards that don't
+          enable the React effect/flavor pipeline (e.g. Centaurians)
+          have those zones baked into the sprite itself, so the
+          opaque white band would clip the printed art. Skip the
+          overlay in that case; the income chip floats freely on
+          top of the sprite at the existing z-index.
+        */}
+        {card?.special?.enableEffectRender ? (
+          <div className='card-cell card-render'>
+            {card.income && <CardIncome income={card.income} />}
+          </div>
+        ) : card.income ? (
+          <div
+            className='card-cell'
+            style={{ position: 'absolute', top: 0, left: 0 }}
+          >
+            <CardIncome income={card.income} />
+          </div>
+        ) : null}
         <div
           className='card-render-container'
           style={{ top: titleHeight + 'px' }}
@@ -142,6 +161,20 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
             className='bg-transparent'
           />
         )}
+        {/*
+          enableFlavorText (without enableEffectRender) — Centaurian-
+          style cards whose sprite bakes English flavor + padding into
+          the bottom 32px. Paint an opaque white panel over that
+          strip and render the React-translated flavor inside, so
+          locale switches affect the flavor text without touching
+          the sprite asset. 32px was measured against all 10
+          Centaurian sprites — none have effect content in that band.
+        */}
+        {card?.special?.enableFlavorText &&
+          !card?.special?.enableEffectRender &&
+          card.flavorText && (
+            <BakedFlavorMask flavorTextKey={card.flavorText} />
+          )}
         {card?.special?.watermark && (
           <div className='card-copyright'>{t('watermark')}</div>
         )}
@@ -149,3 +182,59 @@ export const CardRender: React.FC<CardRenderProps> = ({ card }) => {
     </CardRenderContextProvider>
   );
 };
+
+/**
+ * Bottom-strip mask used by Centaurian-style cards whose printed
+ * sprite bakes English flavor + padding into the bottom ~32px. The
+ * mask paints an opaque white rectangle over that strip and renders
+ * the React-translated flavor inside — keeps the rest of the printed
+ * sprite (effect icons, art, title) untouched while making the flavor
+ * locale-aware.
+ *
+ * 32px was measured against all 10 Centaurian sprites:
+ *   - 8 cards: baked flavor strip = bottom 32px
+ *   - 2 cards (ET.34, ET.37): baked flavor strip = bottom 21px,
+ *     remaining 11px is empty green padding (no effect content),
+ *     so 32px is safe to use everywhere.
+ */
+function BakedFlavorMask({
+  flavorTextKey,
+}: {
+  flavorTextKey: string;
+}): React.JSX.Element {
+  const { t } = useTranslation(['flavorText']);
+  // z-index 4 sits above the sprite (z-index: -1) but below the
+  // .card-no label (z-index: 5) so the printed ET.NN identifier
+  // stays visible in the bottom-left corner.
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        height: '32px',
+        backgroundColor: 'white',
+        borderBottomLeftRadius: '12px',
+        borderBottomRightRadius: '12px',
+        padding: '4px 8px',
+        boxSizing: 'border-box',
+        display: 'flex',
+        alignItems: 'center',
+        zIndex: 4,
+      }}
+    >
+      <span
+        style={{
+          color: 'black',
+          fontSize: '4px',
+          lineHeight: '5px',
+          fontStyle: 'italic',
+          width: '120px',
+        }}
+      >
+        {t(flavorTextKey)}
+      </span>
+    </div>
+  );
+}
