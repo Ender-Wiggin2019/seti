@@ -81,7 +81,7 @@ describe('HotspotAnchor', () => {
     expect(screen.queryByText('rival progress marker')).not.toBeInTheDocument();
   });
 
-  it('shows the debug label and writes drag edits to the unsaved draft', () => {
+  it('shows debug info only on hover and writes drag edits to the unsaved draft', () => {
     useDebugStore.getState().setHotspotDebug(true);
 
     render(
@@ -96,6 +96,7 @@ describe('HotspotAnchor', () => {
           width={40}
           height={40}
           debugLabel='centaurians red trace 0'
+          debugInfo='bonus: draw alien card'
         />
       </div>,
     );
@@ -104,7 +105,17 @@ describe('HotspotAnchor', () => {
     const anchor = screen.getByTestId(
       'hotspot-anchor-alien-board-centaurians-red-0',
     );
-    expect(screen.getByText('centaurians red trace 0')).toBeInTheDocument();
+    expect(
+      screen.queryByText('centaurians red trace 0'),
+    ).not.toBeInTheDocument();
+
+    fireEvent.mouseEnter(anchor);
+
+    const info = screen.getByTestId(
+      'hotspot-anchor-info-alien-board-centaurians-red-0',
+    );
+    expect(info).toHaveTextContent('centaurians red trace 0');
+    expect(info).toHaveTextContent('bonus: draw alien card');
 
     firePointerEvent(anchor, 'pointerdown', 100, 50);
     firePointerEvent(window, 'pointermove', 140, 70);

@@ -1,5 +1,108 @@
 # TODO
 
+## 2026-05-28 hotspot debug hover info
+
+### Assumptions
+
+- Debug anchors/buttons should remain visible and draggable in hotspot debug mode, but their text info should not be permanently rendered on the board.
+- Hover/focus info can be local to `HotspotAnchor` / `HotspotButton`; no new global debug panel is needed.
+- Alien trace image anchors should surface trace reward/bonus details when a server trace slot exists, and explicitly identify coordinates that have no backing server slot.
+
+### Plan
+
+- [x] Add failing tests for hidden-by-default hotspot info, hover/focus tooltip display, and trace reward details.
+- [x] Update shared hotspot primitives to accept optional debug details and show info only on hover/focus.
+- [x] Pass trace slot reward details from alien trace overlays into hotspot debug details.
+- [x] Add failing server tests for printed Exertians/Mascamites board trace slots missing from public state.
+- [x] Configure printed Exertians/Mascamites species-board trace slots in server/common and align image layouts.
+- [x] Verify focused tests, typecheck, targeted lint, and debug page HTTP smoke.
+
+### Review
+
+- 根因确认：`TraceMarkerOverlay` 按服务端 public `traceSlots` 的同色顺序映射到图片坐标；出现多条 `No server trace slot` 说明图片上有校准点但服务端没有对应 trace slot。
+- 对照 `docs/arch/aliens/exertians/rule.md`、`docs/arch/aliens/mascamites/rule.md` 和对应 species-board 图，补齐 Exertians 每色 5 个印刷 trace 位，以及 Mascamites 红/黄各 4 个固定 trace 位、蓝色固定位加样本路径。
+- Hotspot debug 信息改为 hover/focus 才显示；trace slot hover 现在展示 `Trace bonus: ...`，缺服务端 slot 时才显示 `No server trace slot`。
+- `/debug/hotspots` 的 Exertians/Mascamites fixture 已同步补齐 trace slot 奖励，便于调试时直接看到 trace bonus。
+- 验证通过：`pnpm --filter @seti/server test -- ExertiansAlienPlugin.test.ts MascamitesAlienPlugin.test.ts`，2 files / 26 tests passed。
+- 验证通过：`pnpm --filter @seti/client test -- HotspotAnchor.test.tsx HotspotButton.test.tsx AlienBoardView.test.tsx HotspotsDebugPage.test.tsx`，4 files / 43 tests passed。
+- 验证通过：`pnpm --filter @seti/client typecheck`；`pnpm --filter @seti/server typecheck`。
+- 验证通过：client/server targeted `biome check`。
+- Debug smoke：用 `pnpm --dir packages/client dev --host 127.0.0.1 --port 5174 --strictPort` 启动后，`curl -I http://127.0.0.1:5174/debug/hotspots` 返回 200。浏览器插件本轮没有可调用工具，因此未做真实浏览器截图 smoke。
+
+## 2026-05-28 alien trace slot interaction coverage
+
+### Assumptions
+
+- Trace slot selection arrives from the server as `EPlayerInputType.OPTION`; each legal trace slot has an option id equal to the slot id.
+- Image-mode alien boards should expose a clickable hotspot for every legal option, not just the first/bottom trace slot.
+- Pure debug anchors and action hotspots should remain separate: anchors are for calibration, buttons are for gameplay input.
+
+### Plan
+
+- [x] Add a failing component test proving upper trace slots become clickable hotspots when pending input includes them.
+- [x] Pass pending input and response callback through `AlienBoardView` renderers.
+- [x] Render trace slot `HotspotButton`s for every matching pending trace-slot option on image-mode alien art.
+- [x] Update both legacy `GameLayout` and section-based `AlienBoardSection` wiring.
+- [x] Verify with focused tests, typecheck, targeted lint, and browser smoke.
+
+### Review
+
+- Added regression coverage for Mascamites blue trace options: an upper image trace slot now renders as an interactive hotspot and sends the matching `EPlayerInputType.OPTION` response.
+- `AlienBoardView` now derives selectable trace slot ids from pending option input and passes the selection callback through image alien renderers.
+- Shared trace art now renders gameplay `HotspotButton`s for selectable slots while keeping calibration anchors separate; Anomalies uses the same behavior in its custom overlay.
+- Wired `pendingInput` and `sendInput` through both `AlienBoardSection` and legacy `GameLayout`.
+- Verification passed: `pnpm --filter @seti/client test -- AlienBoardView.test.tsx HotspotsDebugPage.test.tsx`, 2 files / 33 tests passed.
+- Verification passed: `pnpm --filter @seti/client typecheck`.
+- Verification passed: `pnpm --dir packages/client exec biome check src/features/board/AlienBoardView.tsx src/features/board/alienBoards/TraceMarkerOverlay.tsx src/features/board/alienBoards/AnomaliesBoardArt.tsx src/features/board/alienBoards/MascamitesBoardArt.tsx src/features/board/alienBoards/CentauriansBoardArt.tsx src/features/board/alienBoards/ExertiansBoardArt.tsx src/features/board/alienBoards/OumuamuaBoardArt.tsx src/features/layout/sections/AlienBoardSection.tsx __tests__/features/board/AlienBoardView.test.tsx`.
+- Verification passed: `pnpm --dir packages/client exec biome lint src/pages/game/GameLayout.tsx`.
+- Browser smoke passed against `http://localhost:5173/debug/hotspots`: Aliens panel rendered 26 alien cards, 5 webp board/back images, and console warning/error count was 0.
+
+## 2026-05-28 alien board visual scale
+
+### Assumptions
+
+- Scale the whole `AlienBoardView` area to about 60% on tablet/desktop, not only board images.
+- Keep mobile at full width so the board remains usable on small screens.
+- This is a client layout-only change; no server/common rule state changes.
+
+### Plan
+
+- [x] Add a focused layout regression test for the 60% alien board scale.
+- [x] Apply the minimal container-width change in `AlienBoardView` so image art and discovery/overflow zones shrink together.
+- [x] Confirm undiscovered aliens use the webp back asset and all alien board assets remain webp.
+- [x] Run focused tests, typecheck, and targeted formatting/static checks.
+
+### Review
+
+- `AlienBoardView` now keeps full width on mobile and constrains the whole section to `md:w-[60%] md:max-w-[60%]` on larger viewports, so the board image, discovery zone, overflow zone, and deck rail shrink together.
+- Added `alien-board-section` test coverage for the desktop 60% layout classes.
+- Confirmed undiscovered alien rendering uses `/assets/seti/aliens/back.webp` and added a regression assertion for that exact image path.
+- Added asset coverage that `back.webp` plus all alien `board.webp` assets exist under `packages/client/public/assets/seti/aliens`.
+- Verification passed: `pnpm --filter @seti/client test -- AlienBoardView.test.tsx HotspotsDebugPage.test.tsx`, 2 files / 31 tests passed.
+- Verification passed: `pnpm --filter @seti/client typecheck`.
+- Verification passed: `pnpm --dir packages/client exec biome check src/features/board/AlienBoardView.tsx __tests__/features/board/AlienBoardView.test.tsx`.
+- Browser plugin returned in-app browser unavailable; Playwright fallback smoke passed against `http://localhost:5173/debug/hotspots`: Aliens tab section width was 835px inside a 1392px panel, ratio `0.6`, console warning/error count 0.
+
+## 2026-05-28 anomalies token sprite
+
+### Plan
+
+- [x] 给 sprite 生成脚本和客户端适配补失败测试。验证：脚本测试能检查 6 个 token 的 sprite 布局，SolarSystemView 测试要求渲染 sprite background，HotspotsDebugPage 测试要求 debug 页覆盖 anomaly token。
+- [x] 实现零依赖生成脚本，把 `packages/client/public/assets/seti/aliens/anomalies/tokens/*.png` 合成为一张 sprite 并写出 metadata。验证：运行脚本后生成 `tokens-sprite.png` 和 `tokens-sprite.json`。
+- [x] 更新客户端 runtime 使用 sprite metadata 渲染 anomaly token，并在 `/debug/hotspots` 的 Solar System fixture 中加入 6 种 anomaly token。验证：相关测试通过且旧 fallback pill 仍保留。
+- [x] 运行 focused tests、typecheck、targeted lint、Browser smoke。验证：在本节 Review 记录命令和结果。
+
+### Review
+
+- 新增 `scripts/build-anomalies-token-sprite.mjs`：零依赖读取 6 张 8-bit RGBA PNG，横向拼成 `tokens-sprite.png`，同时写出 `tokens-sprite.json` 和客户端 generated TS manifest。
+- 客户端 `SolarSystemView` 不再为已知 Anomalies token 请求 6 张单图，改用 `tokens-sprite.png` 的 CSS background frame；未匹配组合仍走原 pill fallback。
+- `/debug/hotspots` 的 Solar System fixture 现在放入 blue-data、blue-energy、pink-credit、pink-vp、yellow-card、yellow-publicity 六种 anomaly token，方便校准对应热点。
+- RED 验证：`pnpm --filter @seti/client test -- buildAnomaliesTokenSprite.test.ts SolarSystemView.test.tsx HotspotsDebugPage.test.tsx` 在旧实现下失败，分别缺少脚本、仍渲染单图 `<img>`、debug solar 页没有 anomaly token。
+- GREEN 验证通过：`pnpm --filter @seti/client test -- buildAnomaliesTokenSprite.test.ts SolarSystemView.test.tsx HotspotsDebugPage.test.tsx`，3 files / 41 tests passed。
+- 验证通过：`pnpm --filter @seti/client typecheck`。
+- 验证通过：`pnpm --dir packages/client exec biome check src/features/board/SolarSystemView.tsx src/features/board/anomalyTokenSprite.generated.ts src/pages/game/HotspotsDebugPage.tsx __tests__/scripts/buildAnomaliesTokenSprite.test.ts __tests__/features/board/SolarSystemView.test.tsx __tests__/pages/game/HotspotsDebugPage.test.tsx ../../scripts/build-anomalies-token-sprite.mjs`。
+- Browser 插件的 in-app browser 当前返回 `iab` 不可用；用 Playwright fallback 做 smoke：`http://localhost:5174/debug/hotspots` 有 6 个 anomaly token 和 6 个 sprite frame，均指向 `tokens-sprite.png`，首个 frame 可见尺寸约 60x36，console warning/error 为 0。
+
 ## 2026-05-26 rival and personal board hotspot follow-up
 
 ### Plan
@@ -255,3 +358,58 @@
 - 验证通过：`pnpm --dir packages/client exec biome check src/components/MissionHub.tsx src/components/RoomCard.tsx src/components/ui/badge.tsx src/pages/lobby/RoomPage.tsx src/styles/globals.css __tests__/components/MissionHub.test.tsx __tests__/components/RoomCard.test.tsx`。
 - 本轮按用户要求没有跑 e2e，也没有启动真实浏览器做视觉回归；当前“更接近参考图”的结论来自源码结构、素材使用和 focused tests，而不是 Browser 截图证据。
 - 剩余风险：Room 页面没有新增独立页面级测试，视觉层次仍未经过真实桌面/移动浏览器验收；如果下一轮要继续追图片细节，优先看 hero / 列表卡片在真实 viewport 下的间距和资产遮挡关系。
+
+## 2026-05-28 alien board asset replacement
+
+### Assumptions
+
+- `packages/client/public/assets/seti/refine/aliens` is the source of truth for this pass.
+- Only source files with clear existing targets are replaced: `back.png -> back.webp`, and `anomalies|centaurians|exertians|mascamites|oumuamua.png -> */board.webp`.
+- Existing `amoeba`, `glyphids`, and `arkhos` board images are left unchanged because the refine folder has no matching source image for them.
+- Target dimensions stay aligned with the current client art frame: `777x1415`.
+
+### Plan
+
+- [x] Confirm refine alien image sizes and target dimensions. Verification: Pillow reports all refine source dimensions and target output dimensions.
+- [x] Add a reproducible Python script for alien image normalization/conversion. Verification: script supports dry-run style reporting and deterministic target mappings.
+- [x] Run the script to regenerate alien board and back assets as WebP while preserving target filenames. Verification: target files are WebP and all mapped outputs are `777x1415`.
+- [x] Record final review and remaining risks in this section.
+
+### Review
+
+- Refine source audit: `back.png`, `anomalies.png`, `centaurians.png`, `exertians.png`, `mascamites.png`, and `oumuamua.png` are all `929x1693 RGB PNG`; there is no source-size mismatch inside `refine/aliens`.
+- Added `scripts/process-alien-images.py` to normalize the refined PNGs into the existing client WebP filenames using centered fit/crop at `777x1415`.
+- Regenerated `packages/client/public/assets/seti/aliens/back.webp` and the five matching alien board images: `anomalies`, `centaurians`, `exertians`, `mascamites`, `oumuamua`.
+- Left `amoeba`, `glyphids`, and `arkhos` unchanged because the refine source folder does not contain matching images for those boards.
+- Verification passed: `python3 -m py_compile scripts/process-alien-images.py`.
+- Verification passed: `python3 scripts/process-alien-images.py --dry-run` reported consistent `929x1693` sources and the expected six source-to-target mappings.
+- Verification passed: Pillow reopened all six generated WebP files as `777x1415 RGB WEBP`.
+
+## 2026-05-28 alien board hotspot anchor audit
+
+### Assumptions
+
+- This pass only covers image-mode alien board hotspot/anchor coverage, not rule/state changes.
+- Printed trace slots should be calibratable even when no player marker currently occupies them.
+- Mascamites blue sample/delivered-sample trace positions, Oumuamua printed orbit/land positions, and Centaurians four top message/reward slots are in scope.
+
+### Plan
+
+- [x] Split alien trace slot anchors from live player markers. Verification: focused tests assert empty printed slots expose `alien-board` anchors.
+- [x] Add Mascamites expanded blue trace/sample anchor layout. Verification: focused test covers more blue anchors than the basic five-row trace ladder.
+- [x] Add Oumuamua printed orbit/land and first-land data anchors on the alien board art. Verification: focused test asserts all target IDs are present in image mode.
+- [x] Add Centaurians four top message/reward anchors. Verification: focused test asserts the four anchor IDs are present.
+- [x] Run focused client tests and record review.
+
+### Review
+
+- Root cause: image-mode alien boards only exposed player marker anchors when a trace slot already had an occupant; empty printed slots were not persisted/calibratable anchors.
+- Fixed shared alien trace art (`TraceMarkerOverlay`) so Centaurians, Exertians, Mascamites, and Oumuamua render pure image anchors for every configured printed trace slot, while player markers remain separate anchors.
+- Added Anomalies printed slot anchors to match the generic trace overlay behavior.
+- Expanded Mascamites blue layout to include the printed sample/delivered-sample blue path, not just the lower five-row ladder.
+- Added Oumuamua board-art anchors for printed orbit area, land area, and the three first-land data positions; moved the image-mode orbit/land action hotspots onto those printed areas.
+- Added Centaurians four top message/reward slot anchors: `any-trace`, `energy-and-alien-card`, `publicity-3`, and `score-8`.
+- Verification passed: `pnpm --filter @seti/client test -- AlienBoardView.test.tsx HotspotsDebugPage.test.tsx`, 2 files / 29 tests passed.
+- Verification passed: `pnpm --filter @seti/client typecheck`.
+- Verification passed: `pnpm --dir packages/client exec biome check src/features/board/alienBoards/TraceMarkerOverlay.tsx src/features/board/alienBoards/AnomaliesBoardArt.tsx src/features/board/alienBoards/MascamitesBoardArt.tsx src/features/board/alienBoards/OumuamuaBoardArt.tsx src/features/board/alienBoards/CentauriansBoardArt.tsx __tests__/features/board/AlienBoardView.test.tsx`.
+- Browser plugin returned in-app browser unavailable; Playwright fallback smoke passed against existing dev server `http://localhost:5173/debug/hotspots`: Aliens tab had 9 Mascamites blue trace anchors, 4 Centaurians message anchors, required Oumuamua orbit/land/data anchors, and no console warning/error.

@@ -98,6 +98,32 @@ describe('MascamitesAlienPlugin', () => {
     );
   });
 
+  it('MAS-A3 exposes printed Mascamites board trace spaces after discovery', () => {
+    const { board } = createMascamitesGame('mas-a3-board-spaces');
+
+    expect(
+      board.speciesTraceSlots.filter((slot) => slot.traceColor === ETrace.PINK),
+    ).toHaveLength(4);
+    expect(
+      board.speciesTraceSlots.filter(
+        (slot) => slot.traceColor === ETrace.YELLOW,
+      ),
+    ).toHaveLength(4);
+    expect(
+      board.speciesTraceSlots.filter((slot) =>
+        slot.slotId.startsWith('mascamites-fixed-blue'),
+      ),
+    ).toHaveLength(2);
+    expect(
+      board.speciesTraceSlots.find((slot) =>
+        slot.slotId.includes('red-trace-0'),
+      )?.rewards,
+    ).toEqual([
+      { type: 'VP', amount: 5 },
+      { type: 'PUBLICITY', amount: 1 },
+    ]);
+  });
+
   it('MAS-A4 collects by visible choice rather than blind random and creates a capsule at the source planet', () => {
     const { game, board, plugin } = createMascamitesGame('mas-a4');
     const p1 = getPlayer(game, 'p1');
@@ -232,7 +258,10 @@ describe('MascamitesAlienPlugin', () => {
       token.rewards.some(
         (reward) => reward.type === 'VP' && reward.amount === 7,
       ),
-    )!.id;
+    )?.id;
+    if (!tokenId) {
+      throw new Error('expected 7 VP Mascamites sample token');
+    }
     board.samplePools.jupiter = [
       tokenId,
       ...board.samplePools.jupiter.filter((sampleId) => sampleId !== tokenId),
@@ -340,14 +369,17 @@ describe('MascamitesAlienPlugin', () => {
   });
 
   it('MAS-D4/D5/D6 turns delivered samples into one-use blue trace slots whose token reward can be claimed by any player', () => {
-    const { game, board, plugin } = createMascamitesGame('mas-d4');
+    const { game, plugin } = createMascamitesGame('mas-d4');
     const p1 = getPlayer(game, 'p1');
     const p2 = getPlayer(game, 'p2');
     const tokenId = MASCAMITES_SAMPLE_TOKENS.find((token) =>
       token.rewards.some(
         (reward) => reward.type === 'DATA' && reward.amount === 2,
       ),
-    )!.id;
+    )?.id;
+    if (!tokenId) {
+      throw new Error('expected 2 data Mascamites sample token');
+    }
 
     const slot = plugin.addDeliveredSampleBlueSlot(game, {
       sampleTokenId: tokenId,

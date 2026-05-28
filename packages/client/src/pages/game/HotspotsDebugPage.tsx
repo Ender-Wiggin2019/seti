@@ -40,6 +40,7 @@ import type {
   IPublicRivalState,
   IPublicSector,
   IPublicSolarSystem,
+  IPublicSolarSystemAlienToken,
   IPublicSolarSystemSpaceState,
   IPublicTechBoard,
   IPublicTraceSlot,
@@ -207,6 +208,53 @@ function createProbeSpaceById(
   );
 }
 
+function createAnomalyTokens(): IPublicSolarSystemAlienToken[] {
+  return [
+    {
+      tokenId: 'debug-anomaly-blue-data',
+      alienType: EAlienType.ANOMALIES,
+      sectorIndex: 0,
+      traceColor: ETrace.BLUE,
+      rewards: [{ type: 'DATA', amount: 1 }],
+    },
+    {
+      tokenId: 'debug-anomaly-blue-energy',
+      alienType: EAlienType.ANOMALIES,
+      sectorIndex: 1,
+      traceColor: ETrace.BLUE,
+      rewards: [{ type: 'ENERGY', amount: 1 }],
+    },
+    {
+      tokenId: 'debug-anomaly-pink-credit',
+      alienType: EAlienType.ANOMALIES,
+      sectorIndex: 2,
+      traceColor: ETrace.PINK,
+      rewards: [{ type: 'CREDIT', amount: 1 }],
+    },
+    {
+      tokenId: 'debug-anomaly-pink-vp',
+      alienType: EAlienType.ANOMALIES,
+      sectorIndex: 3,
+      traceColor: ETrace.PINK,
+      rewards: [{ type: 'VP', amount: 1 }],
+    },
+    {
+      tokenId: 'debug-anomaly-yellow-card',
+      alienType: EAlienType.ANOMALIES,
+      sectorIndex: 4,
+      traceColor: ETrace.YELLOW,
+      rewards: [{ type: 'CARD_ANY', amount: 1 }],
+    },
+    {
+      tokenId: 'debug-anomaly-yellow-publicity',
+      alienType: EAlienType.ANOMALIES,
+      sectorIndex: 5,
+      traceColor: ETrace.YELLOW,
+      rewards: [{ type: 'PUBLICITY', amount: 1 }],
+    },
+  ];
+}
+
 function createSolarSystem(): IPublicSolarSystem {
   const spaces = Array.from({ length: 32 }, (_, i) => `space-${i}`);
   const spaceStates = Object.fromEntries(
@@ -248,7 +296,7 @@ function createSolarSystem(): IPublicSolarSystem {
     planetSpaceIds: { [EPlanet.EARTH]: 'space-0', [EPlanet.MARS]: 'space-8' },
     sectorSpaceIds: createSectorSpaceIds(spaceStates),
     probeSpaceById: createProbeSpaceById(probes),
-    alienTokens: [],
+    alienTokens: createAnomalyTokens(),
   };
 }
 
@@ -308,7 +356,11 @@ function createTechBoard(): IPublicTechBoard {
   };
 }
 
-function createTraceSlot(slotId: string, traceColor: ETrace): IPublicTraceSlot {
+function createTraceSlot(
+  slotId: string,
+  traceColor: ETrace,
+  overrides?: Partial<IPublicTraceSlot>,
+): IPublicTraceSlot {
   return {
     slotId,
     traceColor,
@@ -316,6 +368,7 @@ function createTraceSlot(slotId: string, traceColor: ETrace): IPublicTraceSlot {
     maxOccupants: 1,
     rewards: [{ type: 'VP', amount: 1 }],
     isDiscovery: false,
+    ...overrides,
   };
 }
 
@@ -337,6 +390,20 @@ function createAnomalyColumnSlots(traceColor: ETrace): IPublicTraceSlot[] {
       occupants:
         tier === 0 ? [{ source: { playerId: PLAYER_ID }, traceColor }] : [],
       maxOccupants: tier === 4 ? -1 : 1,
+    }),
+  );
+}
+
+function createTraceSlots(
+  prefix: string,
+  traceColor: ETrace,
+  rewardsBySlot: ReadonlyArray<IPublicTraceSlot['rewards']>,
+): IPublicTraceSlot[] {
+  return rewardsBySlot.map((rewards, index) =>
+    createTraceSlot(`${prefix}-${traceColor}-${index}`, traceColor, {
+      rewards,
+      occupants:
+        index === 0 ? [{ source: { playerId: PLAYER_ID }, traceColor }] : [],
     }),
   );
 }
@@ -410,12 +477,80 @@ function createAlienBoard(
         faceDownCards: [],
         milestones: [],
         traceSlots: [
-          createOccupiedTraceSlot(`exertians-${alienIndex}-pink`, ETrace.PINK),
-          createOccupiedTraceSlot(
-            `exertians-${alienIndex}-yellow`,
-            ETrace.YELLOW,
-          ),
-          createOccupiedTraceSlot(`exertians-${alienIndex}-blue`, ETrace.BLUE),
+          ...createTraceSlots(`exertians-${alienIndex}`, ETrace.PINK, [
+            [
+              { type: 'VP', amount: 9 },
+              { type: 'CREDIT', amount: 1 },
+            ],
+            [
+              { type: 'VP', amount: 7 },
+              { type: 'CREDIT', amount: 1 },
+            ],
+            [
+              { type: 'VP', amount: 5 },
+              { type: 'CREDIT', amount: 1 },
+            ],
+            [
+              { type: 'VP', amount: 4 },
+              { type: 'CREDIT', amount: 1 },
+            ],
+            [
+              { type: 'VP', amount: 3 },
+              { type: 'PUBLICITY', amount: 1 },
+            ],
+          ]),
+          ...createTraceSlots(`exertians-${alienIndex}`, ETrace.YELLOW, [
+            [
+              { type: 'VP', amount: 6 },
+              { type: 'ENERGY', amount: 1 },
+              { type: 'CARD', amount: 1 },
+            ],
+            [
+              { type: 'VP', amount: 4 },
+              { type: 'ENERGY', amount: 1 },
+              { type: 'CARD', amount: 1 },
+            ],
+            [
+              { type: 'VP', amount: 2 },
+              { type: 'ENERGY', amount: 1 },
+              { type: 'CARD', amount: 1 },
+            ],
+            [
+              { type: 'VP', amount: 1 },
+              { type: 'ENERGY', amount: 1 },
+              { type: 'CARD', amount: 1 },
+            ],
+            [
+              { type: 'VP', amount: 3 },
+              { type: 'PUBLICITY', amount: 1 },
+            ],
+          ]),
+          ...createTraceSlots(`exertians-${alienIndex}`, ETrace.BLUE, [
+            [
+              { type: 'VP', amount: 6 },
+              { type: 'DATA', amount: 1 },
+              { type: 'PUBLICITY', amount: 1 },
+            ],
+            [
+              { type: 'VP', amount: 4 },
+              { type: 'DATA', amount: 1 },
+              { type: 'PUBLICITY', amount: 1 },
+            ],
+            [
+              { type: 'VP', amount: 2 },
+              { type: 'DATA', amount: 1 },
+              { type: 'PUBLICITY', amount: 1 },
+            ],
+            [
+              { type: 'VP', amount: 1 },
+              { type: 'DATA', amount: 1 },
+              { type: 'PUBLICITY', amount: 1 },
+            ],
+            [
+              { type: 'VP', amount: 3 },
+              { type: 'PUBLICITY', amount: 1 },
+            ],
+          ]),
         ],
       };
     case EAlienType.MASCAMITES:
@@ -426,12 +561,50 @@ function createAlienBoard(
         capsules: [],
         deliveredSamples: [],
         traceSlots: [
-          createOccupiedTraceSlot(`mascamites-${alienIndex}-pink`, ETrace.PINK),
-          createOccupiedTraceSlot(
-            `mascamites-${alienIndex}-yellow`,
-            ETrace.YELLOW,
-          ),
-          createOccupiedTraceSlot(`mascamites-${alienIndex}-blue`, ETrace.BLUE),
+          ...createTraceSlots(`mascamites-${alienIndex}`, ETrace.PINK, [
+            [
+              { type: 'VP', amount: 5 },
+              { type: 'PUBLICITY', amount: 1 },
+            ],
+            [
+              { type: 'VP', amount: 3 },
+              { type: 'PUBLICITY', amount: 1 },
+            ],
+            [{ type: 'VP', amount: 5 }],
+            [{ type: 'VP', amount: 4 }],
+          ]),
+          ...createTraceSlots(`mascamites-${alienIndex}`, ETrace.YELLOW, [
+            [
+              { type: 'VP', amount: 5 },
+              { type: 'PUBLICITY', amount: 1 },
+            ],
+            [
+              { type: 'VP', amount: 3 },
+              { type: 'PUBLICITY', amount: 1 },
+            ],
+            [{ type: 'VP', amount: 5 }],
+            [{ type: 'VP', amount: 4 }],
+          ]),
+          ...createTraceSlots(`mascamites-${alienIndex}`, ETrace.BLUE, [
+            [
+              { type: 'VP', amount: 5 },
+              { type: 'PUBLICITY', amount: 1 },
+            ],
+            [
+              { type: 'VP', amount: 3 },
+              { type: 'PUBLICITY', amount: 1 },
+            ],
+            [{ type: 'VP', amount: 7 }],
+            [
+              { type: 'VP', amount: 3 },
+              { type: 'CARD_ANY', amount: 1 },
+            ],
+            [{ type: 'DATA', amount: 2 }],
+            [{ type: 'PUBLICITY', amount: 3 }],
+            [{ type: 'CARD', amount: 2 }],
+            [{ type: 'ENERGY', amount: 2 }],
+            [{ type: 'CREDIT', amount: 2 }],
+          ]),
         ],
       };
     case EAlienType.OUMUAMUA:

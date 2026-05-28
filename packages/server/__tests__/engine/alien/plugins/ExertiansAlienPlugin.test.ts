@@ -1,5 +1,5 @@
 import { alienCards } from '@seti/common/data/alienCards';
-import { EAlienType } from '@seti/common/types/protocol/enums';
+import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
 import { DEFAULT_ALIEN_MODULES_ENABLED } from '@seti/common/types/protocol/options';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import {
@@ -258,23 +258,38 @@ describe('ExertiansAlienPlugin', () => {
 
     const exertiansBoard = getExertiansBoard(game);
     const speciesSlots = exertiansBoard.speciesTraceSlots;
-    expect(speciesSlots).toHaveLength(9);
+    expect(speciesSlots).toHaveLength(15);
     expect(
       speciesSlots.filter((slot) =>
         slot.slotId.startsWith('exertians-danger-3'),
       ),
-    ).toHaveLength(3);
+    ).toHaveLength(6);
     expect(
       speciesSlots.filter((slot) =>
         slot.slotId.startsWith('exertians-danger-2'),
       ),
-    ).toHaveLength(3);
+    ).toHaveLength(6);
     expect(
       speciesSlots.filter((slot) =>
         slot.slotId.startsWith('exertians-danger-1'),
       ),
     ).toHaveLength(3);
-    expect(speciesSlots.every((slot) => slot.rewards.length === 0)).toBe(true);
+    expect(
+      speciesSlots.filter((slot) => slot.traceColor === ETrace.PINK),
+    ).toHaveLength(5);
+    expect(
+      speciesSlots.filter((slot) => slot.traceColor === ETrace.YELLOW),
+    ).toHaveLength(5);
+    expect(
+      speciesSlots.filter((slot) => slot.traceColor === ETrace.BLUE),
+    ).toHaveLength(5);
+    expect(speciesSlots.every((slot) => slot.rewards.length > 0)).toBe(true);
+    expect(
+      speciesSlots.find((slot) => slot.slotId.includes('red-trace-0'))?.rewards,
+    ).toEqual([
+      { type: 'VP', amount: 9 },
+      { type: 'CREDIT', amount: 1 },
+    ]);
   });
 
   it('EXE-C2 crossing the +20 Exertian milestone offers one extra face-down play', () => {

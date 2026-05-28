@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   geometryToPercentStyle,
   getHotspotStorageSceneId,
@@ -29,6 +29,7 @@ interface IHotspotButtonProps extends React.PropsWithChildren {
   shape?: THotspotShape;
   variant?: THotspotVariant;
   debugLabel: string;
+  debugInfo?: React.ReactNode;
   ariaLabel?: string;
   title?: string;
   disabled?: boolean;
@@ -123,6 +124,7 @@ export function HotspotButton({
   shape = 'circle',
   variant = 'shared',
   debugLabel,
+  debugInfo,
   ariaLabel,
   title,
   disabled = false,
@@ -149,6 +151,7 @@ export function HotspotButton({
   const setHotspotDraftOverride = useDebugStore(
     (state) => state.setHotspotDraftOverride,
   );
+  const [showDebugInfo, setShowDebugInfo] = useState(false);
   const editRef = useRef<IPointerEditState | null>(null);
   const suppressClickRef = useRef(false);
   const baseGeometry = useMemo<IHotspotGeometry>(
@@ -301,14 +304,28 @@ export function HotspotButton({
         transform,
       }}
       onClick={handleClick}
+      onMouseEnter={() => setShowDebugInfo(true)}
+      onMouseLeave={() => setShowDebugInfo(false)}
+      onFocus={() => setShowDebugInfo(true)}
+      onBlur={() => setShowDebugInfo(false)}
       onPointerDown={(event) => startPointerEdit(event, 'move')}
     >
       {children}
       {debugVisible ? (
         <>
-          <span className='pointer-events-none absolute left-full top-1/2 ml-1 -translate-y-1/2 whitespace-nowrap rounded-sm border border-surface-950/80 bg-surface-950/90 px-1 py-0.5 font-mono text-[9px] uppercase leading-none text-text-100'>
-            {debugLabel}
-          </span>
+          {showDebugInfo ? (
+            <span
+              className='pointer-events-none absolute left-full top-1/2 z-20 ml-1 grid max-w-[220px] -translate-y-1/2 gap-0.5 rounded-sm border border-surface-950/80 bg-surface-950/95 px-1.5 py-1 font-mono text-[9px] leading-tight text-text-100 shadow-[0_4px_12px_rgba(0,0,0,0.5)]'
+              data-testid={`hotspot-info-${sceneId}-${hotspotId}`}
+            >
+              <span className='uppercase'>{debugLabel}</span>
+              {debugInfo ? (
+                <span className='whitespace-normal text-text-300'>
+                  {debugInfo}
+                </span>
+              ) : null}
+            </span>
+          ) : null}
           <span
             aria-hidden
             data-testid={`hotspot-resize-${sceneId}-${hotspotId}`}

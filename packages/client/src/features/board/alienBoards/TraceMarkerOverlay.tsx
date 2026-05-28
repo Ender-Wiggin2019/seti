@@ -4,6 +4,7 @@ import {
   type TTraceColumnColor,
 } from '@seti/common/utils/alienTracePresentation';
 import { HotspotAnchor } from '@/features/hotspots/HotspotAnchor';
+import { HotspotButton } from '@/features/hotspots/HotspotButton';
 import {
   useCalibrationMode,
   usePreviewOverflowCount,
@@ -28,6 +29,7 @@ const TRACE_LETTER: Record<TTraceColumnColor, string> = {
 const ALIEN_BOARD_BASE_WIDTH = 777;
 const ALIEN_BOARD_BASE_HEIGHT = 1415;
 const TRACE_MARKER_SIZE = (ALIEN_BOARD_BASE_WIDTH * 8) / 100;
+const TRACE_SLOT_ANCHOR_SIZE = 108.00424713134765;
 
 /**
  * Distinct fallback colours for `?previewOverflow=N` synth occupants
@@ -44,6 +46,12 @@ const PREVIEW_PLAYER_FALLBACK_COLORS: Record<string, string> = {
 export interface ITraceColumnLayout {
   /** Horizontal centre, in % of board width. */
   xPct: number;
+  /**
+   * Optional per-slot horizontal centres, ordered with `yPctBottomToTop`.
+   * Used by boards like Mascamites where the blue sample trace path is not a
+   * straight vertical column.
+   */
+  xPctBottomToTop?: number[];
   /**
    * Y centre of each printed slot, ordered from bottom-most to top-most.
    * Index N maps to the Nth slot of this colour as received from the server
@@ -70,6 +78,8 @@ interface ITraceMarkerOverlayProps {
   traceSlots: IPublicTraceSlot[];
   playerColors: Record<string, string>;
   layouts: TTraceColumnLayouts;
+  selectableSlotIds?: ReadonlySet<string>;
+  onSelectTraceSlot?: (slotId: string) => void;
 }
 
 /**
@@ -85,6 +95,8 @@ export function TraceMarkerOverlay({
   traceSlots,
   playerColors,
   layouts,
+  selectableSlotIds,
+  onSelectTraceSlot,
 }: ITraceMarkerOverlayProps): React.JSX.Element {
   const calibrate = useCalibrationMode();
   if (calibrate) {
@@ -104,7 +116,7 @@ export function TraceMarkerOverlay({
       {TRACE_COLUMN_COLORS.map((color) => {
         const layout = layouts[color];
         const liveSlots = slotsByColor[color] ?? [];
-        if (!layout || liveSlots.length === 0) return null;
+        if (!layout) return null;
         const slots =
           previewOverflow > 0
             ? liveSlots.map((slot) =>
@@ -118,11 +130,21 @@ export function TraceMarkerOverlay({
             data-testid={`alien-${alienIndex}-${alienKey}-column-${color}`}
             data-trace-color={color}
           >
+            <TraceSlotAnchors
+              alienIndex={alienIndex}
+              alienKey={alienKey}
+              color={color}
+              slots={liveSlots}
+              layout={layout}
+              selectableSlotIds={selectableSlotIds}
+              onSelectTraceSlot={onSelectTraceSlot}
+            />
             {slots.map((slot, slotIndex) => {
               const yPct =
                 layout.yPctBottomToTop[slotIndex] ??
                 layout.yPctBottomToTop[layout.yPctBottomToTop.length - 1];
               if (yPct === undefined) return null;
+              const xPct = layout.xPctBottomToTop?.[slotIndex] ?? layout.xPct;
               const isOverflow = slot.maxOccupants === -1;
               return slot.occupants.map((occ, occIndex) => {
                 // Single-cap slot: stay centered. Overflow: stack upward.
@@ -134,7 +156,7 @@ export function TraceMarkerOverlay({
                     debugLabel={`${alienKey} ${color} trace ${slotIndex + 1}${
                       occIndex > 0 ? `.${occIndex + 1}` : ''
                     }`}
-                    xPct={layout.xPct}
+                    xPct={xPct}
                     yPct={occYPct}
                     occupant={occ}
                     playerColors={playerColors}
@@ -144,6 +166,79 @@ export function TraceMarkerOverlay({
               });
             })}
           </div>
+        );
+      })}
+    </>
+  );
+}
+
+function TraceSlotAnchors({
+  alienIndex,
+  alienKey,
+  color,
+  slots,
+  layout,
+  selectableSlotIds,
+  onSelectTraceSlot,
+}: {
+  alienIndex: number;
+  alienKey: string;
+  color: TTraceColumnColor;
+  slots: IPublicTraceSlot[];
+  layout: ITraceColumnLayout;
+  selectableSlotIds?: ReadonlySet<string>;
+  onSelectTraceSlot?: (slotId: string) => void;
+}): React.JSX.Element {
+  return (
+    <>
+      {layout.yPctBottomToTop.map((yPct, index) => {
+        const x =
+          (ALIEN_BOARD_BASE_WIDTH *
+            (layout.xPctBottomToTop?.[index] ?? layout.xPct)) /
+          100;
+        const y = (ALIEN_BOARD_BASE_HEIGHT * yPct) / 100;
+        const slot = slots[index];
+        const selectable =
+          slot !== undefined && selectableSlotIds?.has(slot.slotId) === true;
+        return (
+          <span key={`${color}-${index}`}>
+            <HotspotAnchor
+              sceneId='alien-board'
+              hotspotId={`${alienKey}-${alienIndex}-${color}-slot-${index}`}
+              variant='image'
+              baseWidth={ALIEN_BOARD_BASE_WIDTH}
+              baseHeight={ALIEN_BOARD_BASE_HEIGHT}
+              x={x}
+              y={y}
+              width={TRACE_SLOT_ANCHOR_SIZE}
+              height={TRACE_SLOT_ANCHOR_SIZE}
+              color={TRACE_COLOR[color]}
+              debugLabel={`${alienKey} ${color} slot ${index + 1}`}
+              debugInfo={formatTraceSlotDebugInfo(slot)}
+              className='rounded-full'
+              testId={`alien-${alienIndex}-${alienKey}-slot-${color}-${index}`}
+            />
+            {selectable ? (
+              <HotspotButton
+                sceneId='alien-board'
+                hotspotId={slot.slotId}
+                variant='image'
+                baseWidth={ALIEN_BOARD_BASE_WIDTH}
+                baseHeight={ALIEN_BOARD_BASE_HEIGHT}
+                x={x}
+                y={y}
+                width={TRACE_SLOT_ANCHOR_SIZE}
+                height={TRACE_SLOT_ANCHOR_SIZE}
+                color={TRACE_COLOR[color]}
+                debugLabel={`${alienKey} ${color} trace option ${index + 1}`}
+                debugInfo={formatTraceSlotDebugInfo(slot)}
+                ariaLabel={`Select ${alienKey} ${color} trace slot ${index + 1}`}
+                className='rounded-full border-accent-400/70'
+                testId={`alien-${alienIndex}-${alienKey}-hotspot-${color}-${index}`}
+                onClick={() => onSelectTraceSlot?.(slot.slotId)}
+              />
+            ) : null}
+          </span>
         );
       })}
     </>
@@ -175,12 +270,13 @@ function CalibrationOverlay({
             {layout.yPctBottomToTop.map((yPct, index) => {
               const slot = slots[index];
               const isOverflow = slot?.maxOccupants === -1;
+              const xPct = layout.xPctBottomToTop?.[index] ?? layout.xPct;
               return (
                 <span
                   key={`${color}-${index}`}
                   className='absolute flex aspect-square w-[10%] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-[3px] font-mono text-[9px] font-bold'
                   style={{
-                    left: `${layout.xPct}%`,
+                    left: `${xPct}%`,
                     top: `${yPct}%`,
                     borderColor: ringColor,
                     backgroundColor: 'rgba(0, 0, 0, 0.55)',
@@ -189,7 +285,7 @@ function CalibrationOverlay({
                   data-testid={`calibrate-${alienKey}-${color}-${index}`}
                   title={`${alienKey} ${letter}${index}${
                     isOverflow ? ' (overflow)' : ''
-                  } (x=${layout.xPct}%, y=${yPct}%)`}
+                  } (x=${xPct}%, y=${yPct}%)`}
                 >
                   {letter}
                   {index}
@@ -251,6 +347,7 @@ function SlotMarker({
       height={TRACE_MARKER_SIZE}
       color={fill}
       debugLabel={debugLabel}
+      debugInfo={playerId ?? 'neutral'}
       className='rounded-full'
       title={playerId ?? 'neutral'}
       testId={testId}
@@ -261,4 +358,39 @@ function SlotMarker({
       />
     </HotspotAnchor>
   );
+}
+
+export function formatTraceSlotDebugInfo(
+  slot: IPublicTraceSlot | undefined,
+): string {
+  if (!slot) {
+    return 'No server trace slot';
+  }
+  if (slot.rewards.length === 0) {
+    return `Trace bonus: none (${slot.slotId})`;
+  }
+  return `Trace bonus: ${slot.rewards.map(formatTraceReward).join(' + ')}`;
+}
+
+function formatTraceReward(
+  reward: IPublicTraceSlot['rewards'][number],
+): string {
+  switch (reward.type) {
+    case 'VP':
+      return `${reward.amount} VP`;
+    case 'CARD_ANY':
+      return `${reward.amount} any card`;
+    case 'CARD':
+      return `${reward.amount} card`;
+    case 'CREDIT':
+      return `${reward.amount} credit`;
+    case 'ENERGY':
+      return `${reward.amount} energy`;
+    case 'DATA':
+      return `${reward.amount} data`;
+    case 'PUBLICITY':
+      return `${reward.amount} publicity`;
+    case 'CUSTOM':
+      return reward.effectId;
+  }
 }

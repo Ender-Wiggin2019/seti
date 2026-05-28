@@ -7,21 +7,25 @@ import {
 } from './TraceMarkerOverlay';
 
 const EXERTIANS_LAYOUTS: TTraceColumnLayouts = {
-  [ETrace.PINK]: { xPct: 18, yPctBottomToTop: [90, 78, 66, 53, 40, 27] },
-  [ETrace.YELLOW]: { xPct: 50, yPctBottomToTop: [90, 78, 66, 53, 40, 27] },
-  [ETrace.BLUE]: { xPct: 82, yPctBottomToTop: [90, 78, 66, 53, 40, 27] },
+  [ETrace.PINK]: { xPct: 18, yPctBottomToTop: [78, 66, 53, 40, 27] },
+  [ETrace.YELLOW]: { xPct: 50, yPctBottomToTop: [78, 66, 53, 40, 27] },
+  [ETrace.BLUE]: { xPct: 82, yPctBottomToTop: [78, 66, 53, 40, 27] },
 };
 
 interface IExertiansBoardArtProps {
   alienIndex: number;
   board: IPublicExertiansBoard;
   playerColors: Record<string, string>;
+  selectableSlotIds?: ReadonlySet<string>;
+  onSelectTraceSlot?: (slotId: string) => void;
 }
 
 export function ExertiansBoardArt({
   alienIndex,
   board,
   playerColors,
+  selectableSlotIds,
+  onSelectTraceSlot,
 }: IExertiansBoardArtProps): React.JSX.Element {
   return (
     <section
@@ -39,6 +43,8 @@ export function ExertiansBoardArt({
           traceSlots={board.traceSlots}
           playerColors={playerColors}
           layouts={EXERTIANS_LAYOUTS}
+          selectableSlotIds={selectableSlotIds}
+          onSelectTraceSlot={onSelectTraceSlot}
         />
       </AlienBoardArtFrame>
     </section>

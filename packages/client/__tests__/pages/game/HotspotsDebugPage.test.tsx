@@ -2,6 +2,7 @@ import {
   PLANETARY_BOARD_CONFIG,
   PLANETARY_PLANETS,
 } from '@seti/common/constant/boardLayout';
+import { EAlienType } from '@seti/common/types/BaseCard';
 import {
   act,
   fireEvent,
@@ -69,7 +70,12 @@ describe('HotspotsDebugPage', () => {
     await waitFor(() => {
       expect(useDebugStore.getState().hotspotDebug).toBe(true);
     });
-    expect(await screen.findByText('space-0')).toBeInTheDocument();
+    const spaceHotspot = await screen.findByTestId('solar-space-space-0');
+    expect(screen.queryByText('space-0')).not.toBeInTheDocument();
+
+    fireEvent.mouseEnter(spaceHotspot);
+
+    expect(screen.getByText('space-0')).toBeInTheDocument();
   });
 
   it('saves draft hotspot edits only when Save Hotspots is clicked', async () => {
@@ -170,16 +176,26 @@ describe('HotspotsDebugPage', () => {
       expect(useDebugStore.getState().hotspotDebug).toBe(true);
     });
 
+    const spaceHotspot = screen.getByTestId('solar-space-space-0');
+    const sunAnchor = screen.getByTestId('solar-sun');
+    fireEvent.mouseEnter(spaceHotspot);
     expect(screen.getByText('space-0')).toBeInTheDocument();
+    fireEvent.mouseLeave(spaceHotspot);
+    fireEvent.mouseEnter(sunAnchor);
     expect(screen.getByText('solar sun')).toBeInTheDocument();
+    fireEvent.mouseLeave(sunAnchor);
 
     fireEvent.click(screen.getByRole('button', { name: 'Anchors On' }));
 
+    fireEvent.mouseEnter(sunAnchor);
     expect(screen.queryByText('solar sun')).not.toBeInTheDocument();
+    fireEvent.mouseEnter(spaceHotspot);
     expect(screen.getByText('space-0')).toBeInTheDocument();
+    fireEvent.mouseLeave(spaceHotspot);
 
     fireEvent.click(screen.getByRole('button', { name: 'Interactive On' }));
 
+    fireEvent.mouseEnter(spaceHotspot);
     expect(screen.queryByText('space-0')).not.toBeInTheDocument();
     expect(useDebugStore.getState().showAnchorHotspots).toBe(false);
     expect(useDebugStore.getState().showInteractiveHotspots).toBe(false);
@@ -194,6 +210,11 @@ describe('HotspotsDebugPage', () => {
     expect(
       container.querySelector('[data-hotspot-scene="solar-system"]'),
     ).toBeInTheDocument();
+    expect(
+      container.querySelectorAll(
+        `[data-testid^="solar-alien-token-${EAlienType.ANOMALIES}-"]`,
+      ),
+    ).toHaveLength(6);
 
     fireEvent.click(screen.getByRole('tab', { name: 'Sectors' }));
     expect(
@@ -252,7 +273,16 @@ describe('HotspotsDebugPage', () => {
     expect(
       container.querySelector('[data-hotspot-scene="alien-board"]'),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByText('anomalies red-trace trace 1'),
+    ).not.toBeInTheDocument();
+    fireEvent.mouseEnter(
+      screen.getByTestId('alien-0-anomalies-marker-red-trace-0'),
+    );
     expect(screen.getByText('anomalies red-trace trace 1')).toBeInTheDocument();
+    fireEvent.mouseEnter(
+      screen.getByTestId('alien-1-centaurians-marker-red-trace-0-0'),
+    );
     expect(
       screen.getByText('centaurians red-trace trace 1'),
     ).toBeInTheDocument();

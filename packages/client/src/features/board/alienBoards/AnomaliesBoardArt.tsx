@@ -3,6 +3,7 @@ import {
   type TTraceColumnColor,
 } from '@seti/common/utils/alienTracePresentation';
 import { HotspotAnchor } from '@/features/hotspots/HotspotAnchor';
+import { HotspotButton } from '@/features/hotspots/HotspotButton';
 import {
   useCalibrationMode,
   usePreviewOverflowCount,
@@ -13,6 +14,7 @@ import type {
 } from '@/types/re-exports';
 import { ETrace } from '@/types/re-exports';
 import { AlienBoardArtFrame } from './AlienBoardArtFrame';
+import { formatTraceSlotDebugInfo } from './TraceMarkerOverlay';
 
 type TTraceOccupant = IPublicTraceSlot['occupants'][number];
 
@@ -42,6 +44,7 @@ const PREVIEW_PLAYER_FALLBACK_COLORS: Record<string, string> = {
 const ALIEN_BOARD_BASE_WIDTH = 777;
 const ALIEN_BOARD_BASE_HEIGHT = 1415;
 const TRACE_MARKER_SIZE = (ALIEN_BOARD_BASE_WIDTH * 8) / 100;
+const TRACE_SLOT_ANCHOR_SIZE = 108.00424713134765;
 
 interface IAnomaliesColumnLayout {
   xPct: number;
@@ -89,12 +92,16 @@ interface IAnomaliesBoardArtProps {
   alienIndex: number;
   board: IPublicAnomaliesBoard;
   playerColors: Record<string, string>;
+  selectableSlotIds?: ReadonlySet<string>;
+  onSelectTraceSlot?: (slotId: string) => void;
 }
 
 export function AnomaliesBoardArt({
   alienIndex,
   board,
   playerColors,
+  selectableSlotIds,
+  onSelectTraceSlot,
 }: IAnomaliesBoardArtProps): React.JSX.Element {
   const calibrate = useCalibrationMode();
   const previewOverflow = usePreviewOverflowCount();
@@ -123,20 +130,97 @@ export function AnomaliesBoardArt({
               previewOverflow > 0
                 ? buildPreviewOccupants(liveOccupants, previewOverflow)
                 : liveOccupants;
-            if (occupants.length === 0) return null;
             return (
-              <ColumnMarkers
-                key={color}
-                alienIndex={alienIndex}
-                color={color}
-                occupants={occupants}
-                playerColors={playerColors}
-              />
+              <div key={color}>
+                <ColumnSlotAnchors
+                  alienIndex={alienIndex}
+                  color={color}
+                  slots={tierSlots}
+                  selectableSlotIds={selectableSlotIds}
+                  onSelectTraceSlot={onSelectTraceSlot}
+                />
+                {occupants.length > 0 ? (
+                  <ColumnMarkers
+                    alienIndex={alienIndex}
+                    color={color}
+                    occupants={occupants}
+                    playerColors={playerColors}
+                  />
+                ) : null}
+              </div>
             );
           })
         )}
       </AlienBoardArtFrame>
     </section>
+  );
+}
+
+function ColumnSlotAnchors({
+  alienIndex,
+  color,
+  slots,
+  selectableSlotIds,
+  onSelectTraceSlot,
+}: {
+  alienIndex: number;
+  color: TTraceColumnColor;
+  slots: IPublicTraceSlot[];
+  selectableSlotIds?: ReadonlySet<string>;
+  onSelectTraceSlot?: (slotId: string) => void;
+}): React.JSX.Element {
+  const layout = ANOMALIES_LAYOUTS[color];
+  const yPositions = [...layout.singleCapYPctBottomToTop, layout.overflowYPct];
+  return (
+    <>
+      {yPositions.map((yPct, index) => {
+        const x = (ALIEN_BOARD_BASE_WIDTH * layout.xPct) / 100;
+        const y = (ALIEN_BOARD_BASE_HEIGHT * yPct) / 100;
+        const slot = slots[index];
+        const selectable =
+          slot !== undefined && selectableSlotIds?.has(slot.slotId) === true;
+        return (
+          <span key={`${color}-${index}`}>
+            <HotspotAnchor
+              sceneId='alien-board'
+              hotspotId={`anomalies-${alienIndex}-${color}-slot-${index}`}
+              variant='image'
+              baseWidth={ALIEN_BOARD_BASE_WIDTH}
+              baseHeight={ALIEN_BOARD_BASE_HEIGHT}
+              x={x}
+              y={y}
+              width={TRACE_SLOT_ANCHOR_SIZE}
+              height={TRACE_SLOT_ANCHOR_SIZE}
+              color={TRACE_RING_COLOR[color]}
+              debugLabel={`anomalies ${color} slot ${index + 1}`}
+              debugInfo={formatTraceSlotDebugInfo(slot)}
+              className='rounded-full'
+              testId={`alien-${alienIndex}-anomalies-slot-${color}-${index}`}
+            />
+            {selectable ? (
+              <HotspotButton
+                sceneId='alien-board'
+                hotspotId={slot.slotId}
+                variant='image'
+                baseWidth={ALIEN_BOARD_BASE_WIDTH}
+                baseHeight={ALIEN_BOARD_BASE_HEIGHT}
+                x={x}
+                y={y}
+                width={TRACE_SLOT_ANCHOR_SIZE}
+                height={TRACE_SLOT_ANCHOR_SIZE}
+                color={TRACE_RING_COLOR[color]}
+                debugLabel={`anomalies ${color} trace option ${index + 1}`}
+                debugInfo={formatTraceSlotDebugInfo(slot)}
+                ariaLabel={`Select anomalies ${color} trace slot ${index + 1}`}
+                className='rounded-full border-accent-400/70'
+                testId={`alien-${alienIndex}-anomalies-hotspot-${color}-${index}`}
+                onClick={() => onSelectTraceSlot?.(slot.slotId)}
+              />
+            ) : null}
+          </span>
+        );
+      })}
+    </>
   );
 }
 
@@ -279,6 +363,7 @@ function SlotMarker({
       height={TRACE_MARKER_SIZE}
       color={fill}
       debugLabel={debugLabel}
+      debugInfo={playerId ?? 'neutral'}
       className='rounded-full'
       title={playerId ?? 'neutral'}
       testId={testId}

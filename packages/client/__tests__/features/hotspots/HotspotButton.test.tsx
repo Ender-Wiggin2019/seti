@@ -76,7 +76,7 @@ describe('HotspotButton', () => {
     expect(screen.queryByText('Earth launch')).not.toBeInTheDocument();
   });
 
-  it('shows the debug label and writes drag edits to the unsaved draft', () => {
+  it('shows debug info only on hover and writes drag edits to the unsaved draft', () => {
     useDebugStore.getState().setHotspotDebug(true);
     const onClick = vi.fn();
 
@@ -92,6 +92,7 @@ describe('HotspotButton', () => {
           width={40}
           height={40}
           debugLabel='Earth launch'
+          debugInfo='interactive launch hotspot'
           onClick={onClick}
         />
       </div>,
@@ -99,7 +100,13 @@ describe('HotspotButton', () => {
     mockSceneRect(screen.getByTestId('scene'));
 
     const hotspot = screen.getByTestId('hotspot-solar-earth');
-    expect(screen.getByText('Earth launch')).toBeInTheDocument();
+    expect(screen.queryByText('Earth launch')).not.toBeInTheDocument();
+
+    fireEvent.mouseEnter(hotspot);
+
+    const info = screen.getByTestId('hotspot-info-solar-earth');
+    expect(info).toHaveTextContent('Earth launch');
+    expect(info).toHaveTextContent('interactive launch hotspot');
 
     firePointerEvent(hotspot, 'pointerdown', 100, 50);
     firePointerEvent(window, 'pointermove', 140, 70);

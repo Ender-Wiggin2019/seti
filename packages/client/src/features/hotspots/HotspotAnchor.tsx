@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   geometryToPercentStyle,
   getHotspotStorageSceneId,
@@ -30,6 +30,7 @@ interface IHotspotAnchorProps extends React.PropsWithChildren {
   shape?: THotspotShape;
   variant?: THotspotVariant;
   debugLabel: string;
+  debugInfo?: React.ReactNode;
   ariaLabel?: string;
   className?: string;
   style?: React.CSSProperties;
@@ -119,6 +120,7 @@ export function HotspotAnchor({
   shape = 'circle',
   variant = 'shared',
   debugLabel,
+  debugInfo,
   ariaLabel,
   className,
   style,
@@ -141,6 +143,7 @@ export function HotspotAnchor({
   const setHotspotDraftOverride = useDebugStore(
     (state) => state.setHotspotDraftOverride,
   );
+  const [showDebugInfo, setShowDebugInfo] = useState(false);
   const editRef = useRef<IPointerEditState | null>(null);
   const baseGeometry = useMemo<IHotspotGeometry>(
     () => ({ x, y, width, height }),
@@ -248,6 +251,7 @@ export function HotspotAnchor({
       data-testid={testId ?? formatAnchorTestId(sceneId, hotspotId)}
       aria-label={ariaLabel}
       title={title ?? debugLabel}
+      tabIndex={debugVisible ? 0 : undefined}
       {...dataAttributes}
       className={cn(
         'absolute z-70 border transition-[background-color,border-color,opacity,box-shadow]',
@@ -266,14 +270,28 @@ export function HotspotAnchor({
         color,
         transform,
       }}
+      onMouseEnter={() => setShowDebugInfo(true)}
+      onMouseLeave={() => setShowDebugInfo(false)}
+      onFocus={() => setShowDebugInfo(true)}
+      onBlur={() => setShowDebugInfo(false)}
       onPointerDown={(event) => startPointerEdit(event, 'move')}
     >
       {children}
       {debugVisible ? (
         <>
-          <span className='pointer-events-none absolute left-full top-1/2 ml-1 -translate-y-1/2 whitespace-nowrap rounded-sm border border-surface-950/80 bg-surface-950/90 px-1 py-0.5 font-mono text-[9px] uppercase leading-none text-text-100'>
-            {debugLabel}
-          </span>
+          {showDebugInfo ? (
+            <span
+              className='pointer-events-none absolute left-full top-1/2 z-20 ml-1 grid max-w-[220px] -translate-y-1/2 gap-0.5 rounded-sm border border-surface-950/80 bg-surface-950/95 px-1.5 py-1 font-mono text-[9px] leading-tight text-text-100 shadow-[0_4px_12px_rgba(0,0,0,0.5)]'
+              data-testid={`hotspot-anchor-info-${sceneId}-${hotspotId}`}
+            >
+              <span className='uppercase'>{debugLabel}</span>
+              {debugInfo ? (
+                <span className='whitespace-normal text-text-300'>
+                  {debugInfo}
+                </span>
+              ) : null}
+            </span>
+          ) : null}
           <span
             aria-hidden
             data-testid={`hotspot-anchor-resize-${sceneId}-${hotspotId}`}

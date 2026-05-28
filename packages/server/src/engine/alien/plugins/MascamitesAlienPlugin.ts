@@ -23,6 +23,61 @@ import {
 import { executeSimpleSlotRewards } from '../AlienRewards.js';
 import type { IAlienPlugin } from '../IAlienPlugin.js';
 
+const MASCAMITES_FIXED_TRACE_SLOTS: ReadonlyArray<{
+  traceColor: ETrace;
+  rewards: ReadonlyArray<
+    | { type: 'VP' | 'PUBLICITY'; amount: number }
+    | { type: 'CUSTOM'; effectId: string }
+  >;
+}> = [
+  {
+    traceColor: ETrace.PINK,
+    rewards: [
+      { type: 'VP', amount: 5 },
+      { type: 'PUBLICITY', amount: 1 },
+    ],
+  },
+  {
+    traceColor: ETrace.PINK,
+    rewards: [
+      { type: 'VP', amount: 3 },
+      { type: 'PUBLICITY', amount: 1 },
+    ],
+  },
+  { traceColor: ETrace.PINK, rewards: [{ type: 'VP', amount: 5 }] },
+  { traceColor: ETrace.PINK, rewards: [{ type: 'VP', amount: 4 }] },
+  {
+    traceColor: ETrace.YELLOW,
+    rewards: [
+      { type: 'VP', amount: 5 },
+      { type: 'PUBLICITY', amount: 1 },
+    ],
+  },
+  {
+    traceColor: ETrace.YELLOW,
+    rewards: [
+      { type: 'VP', amount: 3 },
+      { type: 'PUBLICITY', amount: 1 },
+    ],
+  },
+  { traceColor: ETrace.YELLOW, rewards: [{ type: 'VP', amount: 5 }] },
+  { traceColor: ETrace.YELLOW, rewards: [{ type: 'VP', amount: 4 }] },
+  {
+    traceColor: ETrace.BLUE,
+    rewards: [
+      { type: 'VP', amount: 5 },
+      { type: 'PUBLICITY', amount: 1 },
+    ],
+  },
+  {
+    traceColor: ETrace.BLUE,
+    rewards: [
+      { type: 'VP', amount: 3 },
+      { type: 'PUBLICITY', amount: 1 },
+    ],
+  },
+];
+
 export class MascamitesAlienPlugin implements IAlienPlugin {
   public readonly alienType = EAlienType.MASCAMITES;
 
@@ -31,7 +86,9 @@ export class MascamitesAlienPlugin implements IAlienPlugin {
     _discoverers: IPlayer[],
   ): PlayerInput | undefined {
     const board = this.getBoard(game);
-    if (!board || this.hasInitializedSamples(board)) return undefined;
+    if (!board) return undefined;
+    this.createFixedTraceSlots(board);
+    if (this.hasInitializedSamples(board)) return undefined;
 
     const shuffled = game.random.shuffle(
       MASCAMITES_SAMPLE_TOKENS.map((token) => token.id),
@@ -40,6 +97,23 @@ export class MascamitesAlienPlugin implements IAlienPlugin {
     board.samplePools.saturn = shuffled.slice(3, 6);
     board.publicSamples = shuffled.slice(6, 7);
     return undefined;
+  }
+
+  private createFixedTraceSlots(board: MascamitesAlienBoard): void {
+    for (const [index, def] of MASCAMITES_FIXED_TRACE_SLOTS.entries()) {
+      const slotId = `mascamites-fixed-${def.traceColor}-${index}`;
+      if (board.getSlot(slotId)) {
+        continue;
+      }
+      board.addTraceSlot({
+        slotId,
+        alienIndex: board.alienIndex,
+        traceColor: def.traceColor,
+        maxOccupants: 1,
+        rewards: def.rewards.map((reward) => ({ ...reward })),
+        isDiscovery: false,
+      });
+    }
   }
 
   public createCollectSampleInput(

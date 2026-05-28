@@ -7,11 +7,19 @@ import { AlienBoardView } from '@/features/board/AlienBoardView';
 import i18n from '@/i18n';
 import { useDebugStore } from '@/stores/debugStore';
 import type {
+  IInputResponse,
+  IPlayerInputModel,
   IPublicAlienState,
   IPublicPlanetaryBoard,
   IPublicTraceSlot,
 } from '@/types/re-exports';
-import { EAlienType, EMainAction, EPlanet, ETrace } from '@/types/re-exports';
+import {
+  EAlienType,
+  EMainAction,
+  EPlanet,
+  EPlayerInputType,
+  ETrace,
+} from '@/types/re-exports';
 
 function slot(
   slotId: string,
@@ -54,6 +62,11 @@ function buildAnomalyColumnSlots(
 }
 
 describe('AlienBoardView', () => {
+  const ALIEN_TRACE_SLOT_SIZE_STYLE = {
+    width: '13.900161%',
+    height: '7.632809%',
+  };
+
   beforeEach(async () => {
     await i18n.changeLanguage('en');
     useDebugStore.setState({
@@ -84,6 +97,30 @@ describe('AlienBoardView', () => {
     );
     expect(screen.getByTestId('alien-0-card')).toHaveClass('min-w-0');
     expect(screen.getByTestId('alien-1-card')).toHaveClass('min-w-0');
+  });
+
+  it('scales the whole alien board area down on larger viewports', () => {
+    const aliens: IPublicAlienState[] = [
+      {
+        alienIndex: 0,
+        alienType: null,
+        discovered: false,
+        discovery: {
+          zones: [],
+          overflowZones: [],
+        },
+        cardZone: null,
+        board: null,
+      },
+    ];
+
+    render(<AlienBoardView aliens={aliens} playerColors={{}} />);
+
+    const section = screen.getByTestId('alien-board-section');
+    expect(section).toHaveClass('w-full');
+    expect(section).toHaveClass('md:w-[60%]');
+    expect(section).toHaveClass('md:max-w-[60%]');
+    expect(section).toHaveClass('md:self-start');
   });
 
   it('renders all public alien reward labels', () => {
@@ -240,6 +277,9 @@ describe('AlienBoardView', () => {
     expect(
       within(hiddenBoard).getByAltText('Face-down alien board'),
     ).toBeInTheDocument();
+    expect(
+      within(hiddenBoard).getByAltText('Face-down alien board'),
+    ).toHaveAttribute('src', '/assets/seti/aliens/back.webp');
     expect(hiddenBoard.compareDocumentPosition(discoveryZone)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
@@ -387,7 +427,204 @@ describe('AlienBoardView', () => {
       'data-hotspot-id',
       'anomalies-0-red-trace-0',
     );
+    expect(
+      screen.queryByText('anomalies red-trace trace 1'),
+    ).not.toBeInTheDocument();
+
+    fireEvent.mouseEnter(marker);
+
     expect(screen.getByText('anomalies red-trace trace 1')).toBeInTheDocument();
+  });
+
+  it('exposes printed alien trace slots as image anchors even when empty', () => {
+    useDebugStore.setState({ hotspotDebug: true, showAnchorHotspots: true });
+    const alien: IPublicAlienState = {
+      alienIndex: 0,
+      alienType: EAlienType.MASCAMITES,
+      discovered: true,
+      discovery: { zones: [], overflowZones: [] },
+      cardZone: null,
+      board: {
+        type: 'mascamites',
+        samplePools: { [EPlanet.JUPITER]: 0, [EPlanet.SATURN]: 0 },
+        publicSamples: [],
+        capsules: [],
+        deliveredSamples: [],
+        traceSlots: [],
+      },
+    };
+
+    render(<AlienBoardView aliens={[alien]} playerColors={{}} />);
+
+    const pinkSlot = screen.getByTestId('alien-0-mascamites-slot-red-trace-3');
+    const extraBlueSlot = screen.getByTestId(
+      'alien-0-mascamites-slot-blue-trace-8',
+    );
+
+    expect(pinkSlot).toHaveAttribute('data-hotspot-scene', 'alien-board');
+    expect(pinkSlot).toHaveAttribute('data-hotspot-role', 'anchor');
+    expect(pinkSlot).toHaveAttribute('data-hotspot-variant', 'image');
+    expect(pinkSlot).toHaveAttribute(
+      'data-hotspot-id',
+      'mascamites-0-red-trace-slot-3',
+    );
+    expect(
+      screen.queryByTestId('alien-0-mascamites-slot-red-trace-4'),
+    ).not.toBeInTheDocument();
+    expect(extraBlueSlot).toHaveAttribute(
+      'data-hotspot-id',
+      'mascamites-0-blue-trace-slot-8',
+    );
+    expect(
+      screen.queryByText('mascamites blue-trace slot 9'),
+    ).not.toBeInTheDocument();
+
+    fireEvent.mouseEnter(extraBlueSlot);
+
+    expect(
+      screen.getByText('mascamites blue-trace slot 9'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('No server trace slot')).toBeInTheDocument();
+  });
+
+  it('shows trace slot bonus details in the hover debug info', () => {
+    useDebugStore.setState({ hotspotDebug: true, showAnchorHotspots: true });
+    const alien: IPublicAlienState = {
+      alienIndex: 0,
+      alienType: EAlienType.MASCAMITES,
+      discovered: true,
+      discovery: { zones: [], overflowZones: [] },
+      cardZone: null,
+      board: {
+        type: 'mascamites',
+        samplePools: { [EPlanet.JUPITER]: 0, [EPlanet.SATURN]: 0 },
+        publicSamples: [],
+        capsules: [],
+        deliveredSamples: [],
+        traceSlots: [
+          slot('alien-0-mascamites-sample-blue-0', ETrace.BLUE, {
+            rewards: [
+              { type: 'VP', amount: 3 },
+              { type: 'CARD_ANY', amount: 1 },
+            ],
+          }),
+        ],
+      },
+    };
+
+    render(<AlienBoardView aliens={[alien]} playerColors={{}} />);
+
+    const blueSlot = screen.getByTestId('alien-0-mascamites-slot-blue-trace-0');
+    expect(screen.queryByText('Trace bonus: 3 VP + 1 any card')).toBeNull();
+
+    fireEvent.mouseEnter(blueSlot);
+
+    expect(
+      screen.getByText('Trace bonus: 3 VP + 1 any card'),
+    ).toBeInTheDocument();
+  });
+
+  it('uses the calibrated size for every printed alien trace slot anchor', () => {
+    const anomalies: IPublicAlienState = {
+      alienIndex: 0,
+      alienType: EAlienType.ANOMALIES,
+      discovered: true,
+      discovery: { zones: [], overflowZones: [] },
+      cardZone: null,
+      board: {
+        type: 'anomalies',
+        traceBoard: {
+          columns: {
+            [ETrace.PINK]: buildAnomalyColumnSlots(ETrace.PINK),
+            [ETrace.YELLOW]: buildAnomalyColumnSlots(ETrace.YELLOW),
+            [ETrace.BLUE]: buildAnomalyColumnSlots(ETrace.BLUE),
+          },
+        },
+      },
+    };
+    const mascamites: IPublicAlienState = {
+      alienIndex: 1,
+      alienType: EAlienType.MASCAMITES,
+      discovered: true,
+      discovery: { zones: [], overflowZones: [] },
+      cardZone: null,
+      board: {
+        type: 'mascamites',
+        samplePools: { [EPlanet.JUPITER]: 0, [EPlanet.SATURN]: 0 },
+        publicSamples: [],
+        capsules: [],
+        deliveredSamples: [],
+        traceSlots: [],
+      },
+    };
+
+    render(
+      <AlienBoardView aliens={[anomalies, mascamites]} playerColors={{}} />,
+    );
+
+    expect(
+      screen.getByTestId('alien-0-anomalies-slot-red-trace-0'),
+    ).toHaveStyle(ALIEN_TRACE_SLOT_SIZE_STYLE);
+    expect(
+      screen.getByTestId('alien-1-mascamites-slot-blue-trace-8'),
+    ).toHaveStyle(ALIEN_TRACE_SLOT_SIZE_STYLE);
+  });
+
+  it('makes every selectable image trace slot clickable, not only the bottom slot', () => {
+    const onRespondInput = vi.fn<(response: IInputResponse) => void>();
+    const traceSlots = [0, 1, 2, 3, 4].map((index) =>
+      slot(`alien-0-mascamites-blue-${index}`, ETrace.BLUE),
+    );
+    const pendingInput: IPlayerInputModel = {
+      inputId: 'place-blue-trace',
+      type: EPlayerInputType.OPTION,
+      title: 'Place blue trace',
+      options: traceSlots.map((traceSlot, index) => ({
+        id: traceSlot.slotId,
+        label: `Blue slot ${index + 1}`,
+      })),
+    };
+    const alien: IPublicAlienState = {
+      alienIndex: 0,
+      alienType: EAlienType.MASCAMITES,
+      discovered: true,
+      discovery: { zones: [], overflowZones: [] },
+      cardZone: null,
+      board: {
+        type: 'mascamites',
+        samplePools: { [EPlanet.JUPITER]: 0, [EPlanet.SATURN]: 0 },
+        publicSamples: [],
+        capsules: [],
+        deliveredSamples: [],
+        traceSlots,
+      },
+    };
+
+    render(
+      <AlienBoardView
+        aliens={[alien]}
+        playerColors={{}}
+        pendingInput={pendingInput}
+        onRespondInput={onRespondInput}
+      />,
+    );
+
+    const topSlot = screen.getByTestId(
+      'alien-0-mascamites-hotspot-blue-trace-4',
+    );
+    expect(topSlot).toHaveAttribute(
+      'data-hotspot-id',
+      'alien-0-mascamites-blue-4',
+    );
+    expect(topSlot).toHaveAttribute('data-hotspot-role', 'interactive');
+
+    fireEvent.click(topSlot);
+
+    expect(onRespondInput).toHaveBeenCalledWith({
+      inputId: 'place-blue-trace',
+      type: EPlayerInputType.OPTION,
+      optionId: 'alien-0-mascamites-blue-4',
+    });
   });
 
   it.each([
@@ -489,6 +726,10 @@ describe('AlienBoardView', () => {
       expect(marker).toHaveAttribute('data-hotspot-scene', 'alien-board');
       expect(marker).toHaveAttribute('data-hotspot-role', 'anchor');
       expect(marker).toHaveAttribute('data-hotspot-id', hotspotId);
+      expect(screen.queryByText(label)).not.toBeInTheDocument();
+
+      fireEvent.mouseEnter(marker);
+
       expect(screen.getByText(label)).toBeInTheDocument();
     },
   );
@@ -524,6 +765,10 @@ describe('AlienBoardView', () => {
       'data-hotspot-id',
       'deck-0-face-up-card',
     );
+    expect(screen.queryByText('Alien card ET.11')).not.toBeInTheDocument();
+
+    fireEvent.mouseEnter(faceUpCard);
+
     expect(screen.getByText('Alien card ET.11')).toBeInTheDocument();
 
     fireEvent.click(faceUpCard);
@@ -1008,6 +1253,25 @@ describe('AlienBoardView', () => {
     }
   });
 
+  it('keeps alien back and board art assets in webp format', () => {
+    const assets = [
+      '/assets/seti/aliens/back.webp',
+      '/assets/seti/aliens/amoeba/board.webp',
+      '/assets/seti/aliens/anomalies/board.webp',
+      '/assets/seti/aliens/arkhos/board.webp',
+      '/assets/seti/aliens/centaurians/board.webp',
+      '/assets/seti/aliens/exertians/board.webp',
+      '/assets/seti/aliens/glyphids/board.webp',
+      '/assets/seti/aliens/mascamites/board.webp',
+      '/assets/seti/aliens/oumuamua/board.webp',
+    ];
+
+    for (const src of assets) {
+      expect(src.endsWith('.webp'), src).toBe(true);
+      expect(existsSync(resolvePublicAsset(src)), src).toBe(true);
+    }
+  });
+
   it('renders discovered Oumuamua as a landing area with planet orbit and land details', () => {
     useDebugStore.setState({ textMode: true });
     const alien: IPublicAlienState = {
@@ -1087,7 +1351,7 @@ describe('AlienBoardView', () => {
   });
 
   it('exposes Oumuamua planet targets through the shared hotspot debug layer', () => {
-    useDebugStore.getState().setHotspotDebug(true);
+    useDebugStore.setState({ hotspotDebug: true, showAnchorHotspots: true });
     const alien: IPublicAlienState = {
       alienIndex: 0,
       alienType: EAlienType.OUMUAMUA,
@@ -1117,7 +1381,51 @@ describe('AlienBoardView', () => {
     const target = screen.getByTestId('planet-target-oumuamua');
     expect(target).toHaveAttribute('data-hotspot-scene', 'alien-board');
     expect(target).toHaveAttribute('data-hotspot-id', 'oumuamua-0-orbit');
+    expect(screen.queryByText('Oumuamua orbit')).not.toBeInTheDocument();
+
+    fireEvent.mouseEnter(target);
+
     expect(screen.getByText('Oumuamua orbit')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('alien-0-oumuamua-anchor-orbit-area'),
+    ).toHaveAttribute('data-hotspot-id', 'oumuamua-0-orbit-area');
+    expect(
+      screen.getByTestId('alien-0-oumuamua-anchor-land-area'),
+    ).toHaveAttribute('data-hotspot-id', 'oumuamua-0-land-area');
+    expect(
+      screen.getByTestId('alien-0-oumuamua-anchor-first-land-data-3'),
+    ).toHaveAttribute('data-hotspot-id', 'oumuamua-0-first-land-data-3');
+  });
+
+  it('exposes Centaurians top message slots as image anchors', () => {
+    useDebugStore.setState({ hotspotDebug: true, showAnchorHotspots: true });
+    const alien: IPublicAlienState = {
+      alienIndex: 0,
+      alienType: EAlienType.CENTAURIANS,
+      discovered: true,
+      discovery: { zones: [], overflowZones: [] },
+      cardZone: null,
+      board: {
+        type: 'centaurians',
+        messageMilestones: [],
+        pendingMessagesByPlayer: {},
+        rewardSlots: [],
+        traceSlots: [],
+      },
+    };
+
+    render(<AlienBoardView aliens={[alien]} playerColors={{}} />);
+
+    for (const slotId of [
+      'any-trace',
+      'energy-and-alien-card',
+      'publicity-3',
+      'score-8',
+    ]) {
+      expect(
+        screen.getByTestId(`alien-0-centaurians-message-anchor-${slotId}`),
+      ).toHaveAttribute('data-hotspot-id', `centaurians-0-message-${slotId}`);
+    }
   });
 
   it('keeps text-mode Oumuamua focused on its landing cell details', () => {
