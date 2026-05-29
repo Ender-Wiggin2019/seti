@@ -70,7 +70,7 @@ export function OpponentSummary({
                   {player.score}
                 </span>
                 <span className='font-mono text-[9px] uppercase tracking-[0.14em] text-text-500'>
-                  VP
+                  {t('client.opponent_summary.vp', { defaultValue: 'VP' })}
                 </span>
                 <span
                   aria-hidden

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 import { useTextMode } from '@/stores/debugStore';
 import type { IPublicSector } from '@/types/re-exports';
@@ -56,6 +57,7 @@ export function SectorView({
   onSelectSector,
   onSelectSectorId,
 }: ISectorViewProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const globalTextMode = useTextMode();
   const textMode = textModeOverride ?? globalTextMode;
   const positionStyle = getPositionStyle(pair.placement.position);
@@ -65,7 +67,11 @@ export function SectorView({
   return (
     <div
       data-testid={`sector-pair-${pair.placement.position}`}
-      aria-label={`Sector tile ${pair.placement.tileId} (${starNames})`}
+      aria-label={t('client.sector_node.tile_aria_label', {
+        tileId: pair.placement.tileId,
+        starNames,
+        defaultValue: `Sector tile ${pair.placement.tileId} (${starNames})`,
+      })}
       aria-disabled={!clickable}
       className={cn(
         'absolute transition-all duration-300',

@@ -148,10 +148,10 @@ export function ActionBarSection(_: ISectionRenderProps): React.JSX.Element {
               <div aria-hidden className='section-head__rule' />
             </div>
             <p className='font-mono text-[11px] uppercase tracking-[0.14em] text-text-300'>
-              Orbital Dynamics
+              {t('client.game_layout.orbital_dynamics')}
             </p>
             <p className='mt-1 text-sm text-text-100'>
-              Select a highlighted space on the board.
+              {t('client.game_layout.select_highlighted_space')}
             </p>
             {orbitalDynamicsDoneOption ? (
               <Button

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { IPublicMascamitesBoard } from '@/types/re-exports';
 import { ETrace } from '@/types/re-exports';
 import { AlienBoardArtFrame } from './AlienBoardArtFrame';
@@ -36,6 +37,7 @@ export function MascamitesBoardArt({
   selectableSlotIds,
   onSelectTraceSlot,
 }: IMascamitesBoardArtProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <section
       className='min-w-0'
@@ -43,7 +45,12 @@ export function MascamitesBoardArt({
     >
       <AlienBoardArtFrame
         artKey='mascamites'
-        alt='Mascamites alien board'
+        alt={t('client.alien_board_extra.image_alt_named', {
+          name: t('client.alien_board.types.mascamites', {
+            defaultValue: 'Mascamites',
+          }),
+          defaultValue: 'Mascamites alien board',
+        })}
         testId={`alien-${alienIndex}-mascamites-art`}
       >
         <TraceMarkerOverlay

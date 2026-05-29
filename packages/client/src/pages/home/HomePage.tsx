@@ -77,15 +77,15 @@ export function HomePage(): React.JSX.Element {
   return (
     <>
       <MissionHubView
-        title={t('client.home.title', { defaultValue: '任务中心' })}
+        title={t('client.home.title', { defaultValue: 'Mission Hub' })}
         subtitle={t('client.home.subtitle', {
-          defaultValue: '探索未知，连接未来。',
+          defaultValue: 'Explore the unknown, connect the future.',
         })}
         kicker={t('client.home.hero_kicker', {
-          defaultValue: '可加入任务',
+          defaultValue: 'Space Agencies',
         })}
         createLabel={t('client.home.create_mission', {
-          defaultValue: '创建任务',
+          defaultValue: 'Create Mission',
         })}
         onCreateMission={() =>
           isAuthenticated ? setCreateOpen(true) : navigate({ to: '/auth' })
@@ -93,29 +93,31 @@ export function HomePage(): React.JSX.Element {
         filter={filter}
         onFilterChange={setFilter}
         filterLabels={{
-          all: t('client.lobby.filters.all', { defaultValue: '全部' }),
+          all: t('client.lobby.filters.all', { defaultValue: 'All' }),
           waiting: t('client.lobby.filters.waiting', {
-            defaultValue: '等待玩家',
+            defaultValue: 'Waiting',
           }),
           playing: t('client.lobby.filters.in_progress', {
-            defaultValue: '进行中',
+            defaultValue: 'In Progress',
           }),
         }}
         stats={stats}
         statLabels={{
           waiting: t('client.home.stat.waiting', {
-            defaultValue: '等待玩家',
+            defaultValue: 'Waiting',
           }),
           waitingSub: t('client.home.stat.waiting_sub', {
-            defaultValue: '可加入任务',
+            defaultValue: 'Available missions',
           }),
-          playing: t('client.home.stat.playing', { defaultValue: '进行中' }),
+          playing: t('client.home.stat.playing', {
+            defaultValue: 'In Progress',
+          }),
           playingSub: t('client.home.stat.playing_sub', {
-            defaultValue: '已开始任务',
+            defaultValue: 'Active missions',
           }),
-          players: t('client.home.stat.players', { defaultValue: '参与玩家' }),
+          players: t('client.home.stat.players', { defaultValue: 'Players' }),
           playersSub: t('client.home.stat.players_sub', {
-            defaultValue: '当前任务中',
+            defaultValue: 'In missions',
           }),
         }}
         rooms={rooms}

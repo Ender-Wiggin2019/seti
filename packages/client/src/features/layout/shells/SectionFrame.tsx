@@ -47,7 +47,7 @@ function scaleToStyle(size: SizeConfig | undefined): CSSProperties {
 }
 
 class SectionErrorBoundary extends Component<
-  { children: ReactNode },
+  { children: ReactNode; fallbackText: string },
   { hasError: boolean }
 > {
   state = { hasError: false };
@@ -64,7 +64,7 @@ class SectionErrorBoundary extends Component<
     if (this.state.hasError) {
       return (
         <div className='instrument-panel p-3 text-sm text-danger-300'>
-          Section failed to render.
+          {this.props.fallbackText}
         </div>
       );
     }
@@ -123,7 +123,13 @@ export function SectionFrame({
       )}
       {!isCollapsed && (
         <div className='min-h-0 flex-1' style={bodyStyle}>
-          <SectionErrorBoundary>{children}</SectionErrorBoundary>
+          <SectionErrorBoundary
+            fallbackText={t('client.layout_v2.section_failed_to_render', {
+              defaultValue: 'Section failed to render.',
+            })}
+          >
+            {children}
+          </SectionErrorBoundary>
         </div>
       )}
     </section>

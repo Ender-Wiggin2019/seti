@@ -156,6 +156,7 @@ function Column({
   canPlace,
   onPlaceData,
 }: IColumnProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const col = computer.columns[columnIndex];
   const topAvailable = canPlaceTopSlot(computer, columnIndex);
   const topInteractive = canPlace && topAvailable;
@@ -174,7 +175,10 @@ function Column({
         isTuckBuiltin={topIsTuck}
         onClick={() => topInteractive && onPlaceData?.('top', columnIndex)}
         testId={`computer-slot-top-${columnIndex}`}
-        ariaLabel={`Computer top slot ${columnIndex + 1}`}
+        ariaLabel={t('client.computer_view.top_slot', {
+          index: columnIndex + 1,
+          defaultValue: `Computer top slot ${columnIndex + 1}`,
+        })}
       />
       {col.hasBottomSlot ? (
         <Slot
@@ -186,7 +190,10 @@ function Column({
             bottomInteractive && onPlaceData?.('bottom', columnIndex)
           }
           testId={`computer-slot-bottom-${columnIndex}`}
-          ariaLabel={`Computer bottom slot ${columnIndex + 1}`}
+          ariaLabel={t('client.computer_view.bottom_slot', {
+            index: columnIndex + 1,
+            defaultValue: `Computer bottom slot ${columnIndex + 1}`,
+          })}
         />
       ) : (
         <div

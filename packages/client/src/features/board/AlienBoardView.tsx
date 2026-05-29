@@ -402,12 +402,15 @@ function HiddenBoard({
   alienIndex: number;
 }): React.JSX.Element {
   const textMode = useTextMode();
+  const { t } = useTranslation('common');
   if (textMode) {
     return (
       <section
         className='min-h-[360px] min-w-0 rounded border border-surface-800/70 bg-black/60'
         data-testid={`alien-${alienIndex}-hidden-board`}
-        aria-label='Alien Board'
+        aria-label={t('client.alien_board_extra.title', {
+          defaultValue: 'Alien Board',
+        })}
       />
     );
   }
@@ -415,12 +418,16 @@ function HiddenBoard({
     <section
       className='min-w-0'
       data-testid={`alien-${alienIndex}-hidden-board`}
-      aria-label='Alien Board (face-down)'
+      aria-label={t('client.alien_board_extra.title_face_down', {
+        defaultValue: 'Alien Board (face-down)',
+      })}
     >
       <div className='relative mx-auto aspect-[777/1415] w-full overflow-hidden rounded-[14%/8%]'>
         <img
           src='/assets/seti/aliens/back.webp'
-          alt='Face-down alien board'
+          alt={t('client.alien_board_extra.image_alt_face_down', {
+            defaultValue: 'Face-down alien board',
+          })}
           className='absolute inset-0 h-full w-full object-cover'
           loading='lazy'
         />
@@ -926,8 +933,18 @@ function MascamitesBoard({
                     />
                   </div>
                   <div className='mt-1 grid gap-0.5 font-mono text-[10px] text-text-300'>
-                    <div>From {capsule.sourcePlanet}</div>
-                    <div>At {capsule.spaceId}</div>
+                    <div>
+                      {t('client.alien_board_extra.from_planet', {
+                        planet: capsule.sourcePlanet,
+                        defaultValue: `From ${capsule.sourcePlanet}`,
+                      })}
+                    </div>
+                    <div>
+                      {t('client.alien_board_extra.at_space', {
+                        space: capsule.spaceId,
+                        defaultValue: `At ${capsule.spaceId}`,
+                      })}
+                    </div>
                     {capsule.missionCardId ? (
                       <div>{capsule.missionCardId}</div>
                     ) : null}
@@ -972,7 +989,12 @@ function MascamitesBoard({
                     />
                   </div>
                   <div className='mt-1 grid gap-0.5 font-mono text-[10px] text-text-300'>
-                    <div>Round {sample.deliveredAtRound}</div>
+                    <div>
+                      {t('client.alien_board_extra.round_label', {
+                        round: sample.deliveredAtRound,
+                        defaultValue: `Round ${sample.deliveredAtRound}`,
+                      })}
+                    </div>
                     <div>{sample.slotId}</div>
                   </div>
                 </div>
@@ -1860,7 +1882,9 @@ function OumuamuaLandingArea({
                   shape='rect'
                   testId='planet-target-oumuamua'
                   debugLabel='Oumuamua orbit'
-                  ariaLabel='Orbit Oumuamua'
+                  ariaLabel={t('client.alien_board.orbit_oumuamua', {
+                    defaultValue: 'Orbit Oumuamua',
+                  })}
                   disabled={!orbitSelectable}
                   onClick={() => onSelectMainActionPlanet?.(EPlanet.OUMUAMUA)}
                   className='border-accent-500/70 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-accent-200 disabled:border-surface-700 disabled:bg-surface-900/60 disabled:text-text-500'
@@ -1913,7 +1937,9 @@ function OumuamuaLandingArea({
                   shape='rect'
                   testId='planet-target-oumuamua'
                   debugLabel='Oumuamua land'
-                  ariaLabel='Land Oumuamua'
+                  ariaLabel={t('client.alien_board.land_oumuamua', {
+                    defaultValue: 'Land Oumuamua',
+                  })}
                   disabled={!landSelectable}
                   onClick={() => onSelectMainActionPlanet?.(EPlanet.OUMUAMUA)}
                   className='border-accent-500/70 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-accent-200 disabled:border-surface-700 disabled:bg-surface-900/60 disabled:text-text-500'
@@ -2057,14 +2083,25 @@ function AnomalyTierBubble({
   color: ETrace.PINK | ETrace.YELLOW | ETrace.BLUE;
   playerColors: Record<string, string>;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   const isOverflow = slot.maxOccupants === -1;
+  const traceLabelKey =
+    color === ETrace.PINK
+      ? 'client.alien_board_extra.trace_pink'
+      : color === ETrace.YELLOW
+        ? 'client.alien_board_extra.trace_yellow'
+        : 'client.alien_board_extra.trace_blue';
+  const traceLabel = t(traceLabelKey, { defaultValue: TRACE_LABEL[color] });
   return (
     <div className='relative flex w-[78%] max-w-16 flex-col items-center'>
       <TraceRewardFrame
         traceColor={color}
         variant={isOverflow ? 'pill' : 'circle'}
         testId={`trace-slot-${slot.slotId}-circle`}
-        title={`${TRACE_LABEL[color]} anomaly tier`}
+        title={t('client.alien_board_extra.anomaly_tier_title', {
+          trace: traceLabel,
+          defaultValue: `${traceLabel} anomaly tier`,
+        })}
       >
         <TraceRewardIcons rewards={slot.rewards} size='xs' />
       </TraceRewardFrame>

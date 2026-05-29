@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -20,51 +21,87 @@ interface IUserLayoutSettingsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const MOBILE_SECTIONS: Array<{ id: SectionId; label: string }> = [
-  { id: 'playerBoard', label: 'Player Board' },
-  { id: 'solarSystem', label: 'Solar System' },
-  { id: 'planetBoard', label: 'Planet Board' },
-  { id: 'techBoard', label: 'Tech Board' },
-  { id: 'alienBoard', label: 'Alien Board' },
-  { id: 'cardRows', label: 'Card Rows' },
-  { id: 'log', label: 'Log' },
-  { id: 'endGame', label: 'End Game' },
+const MOBILE_SECTION_DEFINITIONS: Array<{
+  id: SectionId;
+  defaultLabel: string;
+  i18nKey: string;
+}> = [
+  {
+    id: 'playerBoard',
+    defaultLabel: 'Player Board',
+    i18nKey: 'client.layout_v2.dialogs.section_player_board',
+  },
+  {
+    id: 'solarSystem',
+    defaultLabel: 'Solar System',
+    i18nKey: 'client.layout_v2.dialogs.section_solar_system',
+  },
+  {
+    id: 'planetBoard',
+    defaultLabel: 'Planet Board',
+    i18nKey: 'client.layout_v2.dialogs.section_planet_board',
+  },
+  {
+    id: 'techBoard',
+    defaultLabel: 'Tech Board',
+    i18nKey: 'client.layout_v2.dialogs.section_tech_board',
+  },
+  {
+    id: 'alienBoard',
+    defaultLabel: 'Alien Board',
+    i18nKey: 'client.layout_v2.dialogs.section_alien_board',
+  },
+  {
+    id: 'cardRows',
+    defaultLabel: 'Card Rows',
+    i18nKey: 'client.layout_v2.dialogs.section_card_rows',
+  },
+  {
+    id: 'log',
+    defaultLabel: 'Log',
+    i18nKey: 'client.layout_v2.dialogs.section_log',
+  },
+  {
+    id: 'endGame',
+    defaultLabel: 'End Game',
+    i18nKey: 'client.layout_v2.dialogs.section_end_game',
+  },
 ];
 
-const WATERFALL_PREVIEW: Array<{
+const WATERFALL_PREVIEW_DEFINITION: Array<{
   slot: 'left' | 'middle' | 'right';
-  label: string;
-  sections: Array<{ id: SectionId; label: string }>;
+  i18nKey: string;
+  defaultLabel: string;
+  sectionIds: SectionId[];
 }> = [
   {
     slot: 'left',
-    label: 'Left',
-    sections: [
-      { id: 'solarSystem', label: 'Solar System' },
-      { id: 'planetBoard', label: 'Planet Board' },
-      { id: 'endGame', label: 'End Game' },
-    ],
+    i18nKey: 'client.layout_v2.dialogs.preview_left',
+    defaultLabel: 'Left',
+    sectionIds: ['solarSystem', 'planetBoard', 'endGame'],
   },
   {
     slot: 'middle',
-    label: 'Middle',
-    sections: [
-      { id: 'techBoard', label: 'Tech Board' },
-      { id: 'alienBoard', label: 'Alien Board' },
-      { id: 'cardRows', label: 'Card Rows' },
-    ],
+    i18nKey: 'client.layout_v2.dialogs.preview_middle',
+    defaultLabel: 'Middle',
+    sectionIds: ['techBoard', 'alienBoard', 'cardRows'],
   },
   {
     slot: 'right',
-    label: 'Right',
-    sections: [
-      { id: 'playerBoard', label: 'Player Board' },
-      { id: 'log', label: 'Log' },
-    ],
+    i18nKey: 'client.layout_v2.dialogs.preview_right',
+    defaultLabel: 'Right',
+    sectionIds: ['playerBoard', 'log'],
   },
 ];
 
-const TAB_PREVIEW = ['Board', 'Planets', 'Tech', 'Cards', 'Aliens', 'Scoring'];
+const TAB_PREVIEW_DEFINITION: Array<{ id: string; defaultLabel: string }> = [
+  { id: 'board', defaultLabel: 'Board' },
+  { id: 'planets', defaultLabel: 'Planets' },
+  { id: 'tech', defaultLabel: 'Tech' },
+  { id: 'cards', defaultLabel: 'Cards' },
+  { id: 'aliens', defaultLabel: 'Aliens' },
+  { id: 'scoring', defaultLabel: 'Scoring' },
+];
 const DEFAULT_WATERFALL_COLUMNS: Record<'left' | 'middle' | 'right', number> = {
   left: 43,
   middle: 37,
@@ -99,9 +136,11 @@ function columnLabel(
 
 function mobilePreviewSections(
   overrides: LayoutSnapshot['overrides'],
+  sectionLabels: Record<SectionId, string>,
 ): Array<{ id: SectionId; label: string; order: number }> {
-  return MOBILE_SECTIONS.map((section, index) => ({
-    ...section,
+  return MOBILE_SECTION_DEFINITIONS.map((section, index) => ({
+    id: section.id,
+    label: sectionLabels[section.id],
     order: overrides[section.id]?.mobileOrder ?? index + 1,
   })).sort((a, b) => a.order - b.order);
 }
@@ -110,6 +149,7 @@ export function UserLayoutSettingsDialog({
   open,
   onOpenChange,
 }: IUserLayoutSettingsDialogProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const enabled = useLayoutStore((s) => s.enabled);
   const mode = useLayoutStore((s) => s.mode);
@@ -125,6 +165,14 @@ export function UserLayoutSettingsDialog({
   const importSnapshot = useLayoutStore((s) => s.importSnapshot);
   const exportSnapshot = useLayoutStore((s) => s.exportSnapshot);
   const resetAll = useLayoutStore((s) => s.resetAll);
+
+  const sectionLabels = useMemo<Record<SectionId, string>>(() => {
+    const acc = {} as Record<SectionId, string>;
+    for (const def of MOBILE_SECTION_DEFINITIONS) {
+      acc[def.id] = t(def.i18nKey, { defaultValue: def.defaultLabel });
+    }
+    return acc;
+  }, [t]);
 
   const snapshot = useMemo<LayoutSnapshot>(
     () => ({
@@ -179,10 +227,17 @@ export function UserLayoutSettingsDialog({
       const parsed = JSON.parse(source) as unknown;
       importSnapshot(coerceSettings(parsed));
       setJsonDraft(JSON.stringify(coerceSettings(parsed), null, 2));
-      toast({ title: 'Layout settings imported', variant: 'success' });
+      toast({
+        title: t('client.layout_v2.dialogs.toast_imported', {
+          defaultValue: 'Layout settings imported',
+        }),
+        variant: 'success',
+      });
     } catch (error) {
       toast({
-        title: 'Invalid settings.json',
+        title: t('client.layout_v2.dialogs.toast_invalid_json', {
+          defaultValue: 'Invalid settings.json',
+        }),
         description: error instanceof Error ? error.message : undefined,
         variant: 'error',
       });
@@ -246,48 +301,75 @@ export function UserLayoutSettingsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='max-h-[88vh] max-w-4xl overflow-y-auto'>
         <DialogHeader>
-          <DialogTitle>Layout Settings</DialogTitle>
+          <DialogTitle>
+            {t('client.layout_v2.dialogs.settings_title', {
+              defaultValue: 'Layout Settings',
+            })}
+          </DialogTitle>
           <DialogDescription>
-            Configure the in-game layout. Changes are stored locally in this
-            browser automatically and can be exported as settings.json.
+            {t('client.layout_v2.dialogs.settings_description', {
+              defaultValue:
+                'Configure the in-game layout. Changes are stored locally in this browser automatically and can be exported as settings.json.',
+            })}
           </DialogDescription>
         </DialogHeader>
 
         <div className='grid gap-4 lg:grid-cols-[1fr_1fr]'>
           <section className='space-y-4'>
-            <SettingsBlock title='Mode'>
-              <Field label='Game Layout System'>
+            <SettingsBlock
+              title={t('client.layout_v2.dialogs.mode_block', {
+                defaultValue: 'Mode',
+              })}
+            >
+              <Field
+                label={t('client.layout_v2.dialogs.game_layout_system', {
+                  defaultValue: 'Game Layout System',
+                })}
+              >
                 <div className='grid grid-cols-2 gap-2'>
                   <Button
                     variant={enabled ? 'primary' : 'ghost'}
                     onClick={() => setEnabled(true)}
                   >
-                    Configurable
+                    {t('client.layout_v2.dialogs.system_configurable', {
+                      defaultValue: 'Configurable',
+                    })}
                   </Button>
                   <Button
                     variant={!enabled ? 'primary' : 'ghost'}
                     onClick={() => setEnabled(false)}
                   >
-                    Legacy
+                    {t('client.layout_v2.dialogs.system_legacy', {
+                      defaultValue: 'Legacy',
+                    })}
                   </Button>
                 </div>
                 <p className='text-xs leading-relaxed text-text-500'>
-                  Layout settings only affect games when Configurable is active.
+                  {t('client.layout_v2.dialogs.system_hint', {
+                    defaultValue:
+                      'Layout settings only affect games when Configurable is active.',
+                  })}
                 </p>
               </Field>
-              <Field label='Default Layout Mode'>
+              <Field
+                label={t('client.layout_v2.dialogs.default_layout_mode', {
+                  defaultValue: 'Default Layout Mode',
+                })}
+              >
                 <div className='grid grid-cols-2 gap-2'>
                   <Button
                     variant={mode === 'tab' ? 'primary' : 'ghost'}
                     onClick={() => setMode('tab')}
                   >
-                    Tab
+                    {t('client.layout_v2.shell.tab', { defaultValue: 'Tab' })}
                   </Button>
                   <Button
                     variant={mode === 'waterfall' ? 'primary' : 'ghost'}
                     onClick={() => setMode('waterfall')}
                   >
-                    Waterfall
+                    {t('client.layout_v2.shell.waterfall', {
+                      defaultValue: 'Waterfall',
+                    })}
                   </Button>
                 </div>
               </Field>
@@ -298,11 +380,20 @@ export function UserLayoutSettingsDialog({
               rootColumns={rootColumns}
               panelLayouts={panelLayouts}
               overrides={overrides}
+              sectionLabels={sectionLabels}
             />
 
-            <SettingsBlock title='Waterfall Columns'>
+            <SettingsBlock
+              title={t('client.layout_v2.dialogs.waterfall_columns_block', {
+                defaultValue: 'Waterfall Columns',
+              })}
+            >
               <div className='grid gap-3 sm:grid-cols-3'>
-                <Field label='Left %'>
+                <Field
+                  label={t('client.layout_v2.dialogs.field_left_pct', {
+                    defaultValue: 'Left %',
+                  })}
+                >
                   <Input
                     value={toNumberValue(waterfallColumns.left)}
                     placeholder='44'
@@ -312,7 +403,11 @@ export function UserLayoutSettingsDialog({
                     mono
                   />
                 </Field>
-                <Field label='Middle %'>
+                <Field
+                  label={t('client.layout_v2.dialogs.field_middle_pct', {
+                    defaultValue: 'Middle %',
+                  })}
+                >
                   <Input
                     value={toNumberValue(waterfallColumns.middle)}
                     placeholder='33'
@@ -322,7 +417,11 @@ export function UserLayoutSettingsDialog({
                     mono
                   />
                 </Field>
-                <Field label='Right %'>
+                <Field
+                  label={t('client.layout_v2.dialogs.field_right_pct', {
+                    defaultValue: 'Right %',
+                  })}
+                >
                   <Input
                     value={toNumberValue(waterfallColumns.right)}
                     placeholder='23'
@@ -334,14 +433,24 @@ export function UserLayoutSettingsDialog({
                 </Field>
               </div>
               <p className='text-xs leading-relaxed text-text-500'>
-                These percentages are also updated when you drag the column
-                handles in game.
+                {t('client.layout_v2.dialogs.column_widths_hint', {
+                  defaultValue:
+                    'These percentages are also updated when you drag the column handles in game.',
+                })}
               </p>
             </SettingsBlock>
 
-            <SettingsBlock title='Pinned Areas'>
+            <SettingsBlock
+              title={t('client.layout_v2.dialogs.pinned_areas_block', {
+                defaultValue: 'Pinned Areas',
+              })}
+            >
               <div className='grid gap-3 sm:grid-cols-2'>
-                <Field label='Hand Height'>
+                <Field
+                  label={t('client.layout_v2.dialogs.field_hand_height', {
+                    defaultValue: 'Hand Height',
+                  })}
+                >
                   <Input
                     value={overrides.hand?.size?.height ?? ''}
                     placeholder='112px'
@@ -351,7 +460,11 @@ export function UserLayoutSettingsDialog({
                     mono
                   />
                 </Field>
-                <Field label='Log Height'>
+                <Field
+                  label={t('client.layout_v2.dialogs.field_log_height', {
+                    defaultValue: 'Log Height',
+                  })}
+                >
                   <Input
                     value={overrides.log?.size?.height ?? ''}
                     placeholder='240px'
@@ -361,7 +474,11 @@ export function UserLayoutSettingsDialog({
                     mono
                   />
                 </Field>
-                <Field label='Log Min Height'>
+                <Field
+                  label={t('client.layout_v2.dialogs.field_log_min_height', {
+                    defaultValue: 'Log Min Height',
+                  })}
+                >
                   <Input
                     value={overrides.log?.size?.minH ?? ''}
                     placeholder='180px'
@@ -371,7 +488,11 @@ export function UserLayoutSettingsDialog({
                     mono
                   />
                 </Field>
-                <Field label='Log Grow'>
+                <Field
+                  label={t('client.layout_v2.dialogs.field_log_grow', {
+                    defaultValue: 'Log Grow',
+                  })}
+                >
                   <Input
                     value={toNumberValue(overrides.log?.size?.grow)}
                     placeholder='0'
@@ -384,9 +505,17 @@ export function UserLayoutSettingsDialog({
               </div>
             </SettingsBlock>
 
-            <SettingsBlock title='Board Scale'>
+            <SettingsBlock
+              title={t('client.layout_v2.dialogs.board_scale_block', {
+                defaultValue: 'Board Scale',
+              })}
+            >
               <div className='grid gap-3 sm:grid-cols-2'>
-                <Field label='Tech Board Scale'>
+                <Field
+                  label={t('client.layout_v2.dialogs.field_tech_board_scale', {
+                    defaultValue: 'Tech Board Scale',
+                  })}
+                >
                   <Input
                     value={toNumberValue(overrides.techBoard?.size?.scale)}
                     placeholder='0.86'
@@ -396,7 +525,11 @@ export function UserLayoutSettingsDialog({
                     mono
                   />
                 </Field>
-                <Field label='Card Rows Scale'>
+                <Field
+                  label={t('client.layout_v2.dialogs.field_card_rows_scale', {
+                    defaultValue: 'Card Rows Scale',
+                  })}
+                >
                   <Input
                     value={toNumberValue(overrides.cardRows?.size?.scale)}
                     placeholder='0.86'
@@ -409,10 +542,14 @@ export function UserLayoutSettingsDialog({
               </div>
             </SettingsBlock>
 
-            <SettingsBlock title='Mobile Order'>
+            <SettingsBlock
+              title={t('client.layout_v2.dialogs.mobile_order_block', {
+                defaultValue: 'Mobile Order',
+              })}
+            >
               <div className='grid gap-2 sm:grid-cols-2'>
-                {MOBILE_SECTIONS.map((section) => (
-                  <Field key={section.id} label={section.label}>
+                {MOBILE_SECTION_DEFINITIONS.map((section) => (
+                  <Field key={section.id} label={sectionLabels[section.id]}>
                     <Input
                       value={toNumberValue(overrides[section.id]?.mobileOrder)}
                       placeholder='auto'
@@ -432,10 +569,16 @@ export function UserLayoutSettingsDialog({
           </section>
 
           <section className='space-y-4'>
-            <SettingsBlock title='JSON'>
+            <SettingsBlock
+              title={t('client.layout_v2.dialogs.json_block', {
+                defaultValue: 'JSON',
+              })}
+            >
               <p className='text-xs leading-relaxed text-text-500'>
-                Use JSON for full control. Import accepts either exported
-                settings.json or the raw persisted Zustand shape.
+                {t('client.layout_v2.dialogs.json_hint', {
+                  defaultValue:
+                    'Use JSON for full control. Import accepts either exported settings.json or the raw persisted Zustand shape.',
+                })}
               </p>
               <textarea
                 value={jsonDraft}
@@ -449,20 +592,28 @@ export function UserLayoutSettingsDialog({
               />
               <div className='flex flex-wrap gap-2'>
                 <Button size='sm' onClick={() => applyJson(jsonDraft)}>
-                  Apply JSON
+                  {t('client.layout_v2.dialogs.apply_json', {
+                    defaultValue: 'Apply JSON',
+                  })}
                 </Button>
                 <Button size='sm' variant='ghost' onClick={refreshJson}>
-                  Refresh JSON
+                  {t('client.layout_v2.dialogs.refresh_json', {
+                    defaultValue: 'Refresh JSON',
+                  })}
                 </Button>
                 <Button size='sm' variant='ghost' onClick={handleExport}>
-                  Export settings.json
+                  {t('client.layout_v2.dialogs.export_json', {
+                    defaultValue: 'Export settings.json',
+                  })}
                 </Button>
                 <Button
                   size='sm'
                   variant='ghost'
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  Import settings.json
+                  {t('client.layout_v2.dialogs.import_json', {
+                    defaultValue: 'Import settings.json',
+                  })}
                 </Button>
                 <input
                   ref={fileInputRef}
@@ -478,12 +629,18 @@ export function UserLayoutSettingsDialog({
 
         <DialogFooter>
           <p className='mr-auto self-center text-xs text-text-500'>
-            Saved automatically to this browser.
+            {t('client.layout_v2.dialogs.saved_hint', {
+              defaultValue: 'Saved automatically to this browser.',
+            })}
           </p>
           <Button variant='ghost' onClick={resetAll}>
-            Reset Layout
+            {t('client.layout_v2.dialogs.reset_layout', {
+              defaultValue: 'Reset Layout',
+            })}
           </Button>
-          <Button onClick={() => onOpenChange(false)}>Done</Button>
+          <Button onClick={() => onOpenChange(false)}>
+            {t('client.layout_v2.dialogs.done', { defaultValue: 'Done' })}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -495,32 +652,47 @@ function LayoutPreview({
   rootColumns,
   panelLayouts,
   overrides,
+  sectionLabels,
 }: {
   mode: LayoutMode;
   rootColumns: LayoutSnapshot['rootColumns'];
   panelLayouts: LayoutSnapshot['panelLayouts'];
   overrides: LayoutSnapshot['overrides'];
+  sectionLabels: Record<SectionId, string>;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   const handHeight = overrides.hand?.size?.height || '120px';
   const logHeight = overrides.log?.size?.height || 'auto';
   const logGrow = overrides.log?.size?.grow ?? 1;
   const techScale = overrides.techBoard?.size?.scale ?? 0.86;
   const cardRowsScale = overrides.cardRows?.size?.scale ?? 0.86;
   const columnLayout = panelLayouts?.['waterfall-columns'];
-  const mobileSections = mobilePreviewSections(overrides);
+  const mobileSections = mobilePreviewSections(overrides, sectionLabels);
 
   return (
-    <SettingsBlock title='Preview'>
+    <SettingsBlock
+      title={t('client.layout_v2.dialogs.preview_block', {
+        defaultValue: 'Preview',
+      })}
+    >
       <div className='overflow-hidden rounded-[6px] border border-[color:var(--metal-edge)] bg-[oklch(0.08_0.018_260)] p-2'>
-        <PreviewChrome label='TopBar' />
-        <PreviewChrome label='ActionBar' />
+        <PreviewChrome
+          label={t('client.layout_v2.dialogs.preview_topbar', {
+            defaultValue: 'TopBar',
+          })}
+        />
+        <PreviewChrome
+          label={t('client.layout_v2.dialogs.preview_actionbar', {
+            defaultValue: 'ActionBar',
+          })}
+        />
 
         {mode === 'tab' ? (
           <div className='space-y-2 rounded-[4px] border border-[color:var(--metal-edge-soft)] bg-surface-950/60 p-2'>
             <div className='flex gap-1 overflow-hidden'>
-              {TAB_PREVIEW.map((tab, index) => (
+              {TAB_PREVIEW_DEFINITION.map((tab, index) => (
                 <span
-                  key={tab}
+                  key={tab.id}
                   className={cn(
                     'rounded-[3px] px-2 py-1 font-mono text-[9px] uppercase tracking-[0.12em]',
                     index === 0
@@ -528,16 +700,18 @@ function LayoutPreview({
                       : 'bg-surface-800 text-text-500',
                   )}
                 >
-                  {tab}
+                  {t(`client.game_layout.tabs.${tab.id}`, {
+                    defaultValue: tab.defaultLabel,
+                  })}
                 </span>
               ))}
             </div>
             <div className='grid min-h-[150px] grid-cols-[1fr_86px] gap-2'>
-              <PreviewBlock label='Solar System' />
+              <PreviewBlock label={sectionLabels.solarSystem} />
               <div className='space-y-2'>
-                <PreviewBlock label='Player Board' compact />
+                <PreviewBlock label={sectionLabels.playerBoard} compact />
                 <PreviewBlock
-                  label={`Log · ${logHeight} · grow ${logGrow}`}
+                  label={`${sectionLabels.log} · ${logHeight} · grow ${logGrow}`}
                   compact
                 />
               </div>
@@ -545,10 +719,10 @@ function LayoutPreview({
           </div>
         ) : (
           <div className='grid min-h-[180px] grid-cols-[0.95fr_1.35fr_1fr] gap-2 rounded-[4px] border border-[color:var(--metal-edge-soft)] bg-surface-950/60 p-2'>
-            {WATERFALL_PREVIEW.map((column) => (
+            {WATERFALL_PREVIEW_DEFINITION.map((column) => (
               <div key={column.slot} className='space-y-2'>
                 <div className='truncate font-mono text-[9px] uppercase tracking-[0.12em] text-text-500'>
-                  {column.label} ·{' '}
+                  {t(column.i18nKey, { defaultValue: column.defaultLabel })} ·{' '}
                   {columnLabel(
                     rootColumns,
                     column.slot,
@@ -561,32 +735,41 @@ function LayoutPreview({
                           : '420px',
                   )}
                 </div>
-                {column.sections.map((section) => (
-                  <PreviewBlock
-                    key={section.id}
-                    label={
-                      section.id === 'log'
-                        ? `${section.label} · ${logHeight} · grow ${logGrow}`
-                        : section.id === 'techBoard'
-                          ? `${section.label} · scale ${techScale}`
-                          : section.id === 'cardRows'
-                            ? `${section.label} · scale ${cardRowsScale}`
-                            : section.label
-                    }
-                    compact={section.id === 'endGame' || section.id === 'log'}
-                  />
-                ))}
+                {column.sectionIds.map((sectionId) => {
+                  const baseLabel = sectionLabels[sectionId];
+                  const label =
+                    sectionId === 'log'
+                      ? `${baseLabel} · ${logHeight} · grow ${logGrow}`
+                      : sectionId === 'techBoard'
+                        ? `${baseLabel} · scale ${techScale}`
+                        : sectionId === 'cardRows'
+                          ? `${baseLabel} · scale ${cardRowsScale}`
+                          : baseLabel;
+                  return (
+                    <PreviewBlock
+                      key={sectionId}
+                      label={label}
+                      compact={sectionId === 'endGame' || sectionId === 'log'}
+                    />
+                  );
+                })}
               </div>
             ))}
           </div>
         )}
 
-        <PreviewChrome label={`Hand · ${handHeight}`} />
+        <PreviewChrome
+          label={`${t('client.layout_v2.dialogs.preview_hand', {
+            defaultValue: 'Hand',
+          })} · ${handHeight}`}
+        />
       </div>
 
       <div className='rounded-[4px] border border-[color:var(--metal-edge-soft)] bg-surface-950/60 p-2'>
         <div className='mb-2 font-mono text-[9px] uppercase tracking-[0.12em] text-text-500'>
-          Mobile order
+          {t('client.layout_v2.dialogs.preview_mobile_order_label', {
+            defaultValue: 'Mobile order',
+          })}
         </div>
         <div className='grid grid-cols-2 gap-1 sm:grid-cols-4'>
           {mobileSections.map((section) => (

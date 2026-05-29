@@ -193,12 +193,17 @@ function RotationReminderToken({
 }: {
   testId: string;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <img
       data-testid={testId}
       src='/assets/seti/cards/rotation-token.png'
-      alt='Rotation reminder token'
-      title='First player to pass rotates the solar system'
+      alt={t('client.alien_board_extra.rotation_token_alt', {
+        defaultValue: 'Rotation reminder token',
+      })}
+      title={t('client.alien_board_extra.rotation_token_title', {
+        defaultValue: 'First player to pass rotates the solar system',
+      })}
       draggable={false}
       className='pointer-events-none absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 select-none rounded-full shadow-[0_2px_6px_rgba(0,0,0,0.6)]'
     />

@@ -42,12 +42,17 @@ function TokenDot({
   playerId: string;
   playerColors: Record<string, string>;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
+  const tokenAriaLabel = t('client.planetary_board.token_aria_label', {
+    playerId,
+    defaultValue: `token-${playerId}`,
+  });
   return (
     <span
       className='inline-flex h-3.5 w-3.5 rounded-full border border-surface-200/30'
       style={{ backgroundColor: playerColors[playerId] ?? '#cbd5e1' }}
       title={playerId}
-      aria-label={`token-${playerId}`}
+      aria-label={tokenAriaLabel}
     />
   );
 }
@@ -71,16 +76,21 @@ function PlayerProbeMarker({
   playerId: string;
   playerColors: Record<string, string>;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   const textMode = useTextMode();
   if (textMode) {
     return <TokenDot playerId={playerId} playerColors={playerColors} />;
   }
   const playerColor = playerColors[playerId] ?? 'white';
+  const tokenAriaLabel = t('client.planetary_board.token_aria_label', {
+    playerId,
+    defaultValue: `token-${playerId}`,
+  });
   return (
     <span
       className='inline-flex h-4 w-4 items-center justify-center'
       title={playerId}
-      aria-label={`token-${playerId}`}
+      aria-label={tokenAriaLabel}
     >
       <ProbeToken playerColor={playerColor} className='h-4 w-4' />
     </span>
@@ -255,12 +265,19 @@ function GlyphTokenBadge({
 }: {
   token: IPublicPlanetAlienToken;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <span
       data-testid={`planet-card-alien-token-${token.tokenId}`}
       className='inline-flex h-6 w-6 items-center justify-center rounded-full border border-lime-300/80 bg-surface-950/70'
-      aria-label={`${token.glyph} glyph token`}
-      title={`${token.glyph} glyph token`}
+      aria-label={t('client.planetary_board.glyph_token', {
+        glyph: token.glyph,
+        defaultValue: `${token.glyph} glyph token`,
+      })}
+      title={t('client.planetary_board.glyph_token', {
+        glyph: token.glyph,
+        defaultValue: `${token.glyph} glyph token`,
+      })}
     >
       <DescRender desc={`{${token.glyph}[sm]}`} size='desc-mini' smartSize />
     </span>

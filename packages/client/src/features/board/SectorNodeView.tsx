@@ -1,5 +1,6 @@
 import { ESectorTileId } from '@seti/common/constant/sectorSetup';
 import type React from 'react';
+import { useTranslation } from 'react-i18next';
 import { HotspotButton } from '@/features/hotspots/HotspotButton';
 import { cn } from '@/lib/cn';
 import type { IPublicSector } from '@/types/re-exports';
@@ -265,6 +266,7 @@ export function SectorNodeView({
   onSelectSector,
   onSelectSectorId,
 }: ISectorNodeViewProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const style = DEFAULT_SECTOR_SIGNAL_STYLE[index];
   const baseLayout = getSectorSignalLayout(tileId, index);
   // Multiply every px-based knob by the current board zoom so the data
@@ -345,17 +347,22 @@ export function SectorNodeView({
           <div className='grid w-full grid-cols-2 gap-1'>
             {bonusesAreSame ? (
               <WinnerBonus
-                label='WIN'
+                label={t('client.sector_node.win', { defaultValue: 'WIN' })}
                 bonus={sector.firstWinnerBonus ?? []}
                 merged
               />
             ) : (
               <>
                 <WinnerBonus
-                  label='1st'
+                  label={t('client.sector_node.first', {
+                    defaultValue: '1st',
+                  })}
                   bonus={sector.firstWinnerBonus ?? []}
                 />
-                <WinnerBonus label='2+' bonus={sector.otherWinnerBonus ?? []} />
+                <WinnerBonus
+                  label={t('client.sector_node.other', { defaultValue: '2+' })}
+                  bonus={sector.otherWinnerBonus ?? []}
+                />
               </>
             )}
           </div>
@@ -388,7 +395,11 @@ export function SectorNodeView({
             )}
             onClick={handleClick}
             disabled={!isSelectable}
-            ariaLabel={`Mark ${sector.color} (${sector.sectorId}) sector`}
+            ariaLabel={t('client.sector_node.mark_aria_label', {
+              color: sector.color,
+              sectorId: sector.sectorId,
+              defaultValue: `Mark ${sector.color} (${sector.sectorId}) sector`,
+            })}
           />
         </div>
       </div>
@@ -456,7 +467,11 @@ export function SectorNodeView({
         )}
         onClick={handleClick}
         disabled={!isSelectable}
-        ariaLabel={`Mark ${sector.color} (${sector.sectorId}) sector`}
+        ariaLabel={t('client.sector_node.mark_aria_label', {
+          color: sector.color,
+          sectorId: sector.sectorId,
+          defaultValue: `Mark ${sector.color} (${sector.sectorId}) sector`,
+        })}
       />
 
       {(isSelectable || isEmphasized) && (

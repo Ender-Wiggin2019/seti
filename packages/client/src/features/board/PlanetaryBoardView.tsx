@@ -122,6 +122,11 @@ function GlyphTokenAtPoint({
   token: IPublicPlanetAlienToken;
   hotspotId: string;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
+  const glyphLabel = t('client.planetary_board.glyph_token', {
+    glyph: token.glyph,
+    defaultValue: `${token.glyph} glyph token`,
+  });
   return (
     <HotspotAnchor
       sceneId='planet-board'
@@ -134,11 +139,11 @@ function GlyphTokenAtPoint({
       width={28}
       height={28}
       color='#bef264'
-      debugLabel={`${token.glyph} glyph token`}
+      debugLabel={glyphLabel}
       className='inline-flex items-center justify-center rounded-full'
       testId={`planet-board-alien-token-${token.tokenId}`}
-      aria-label={`${token.glyph} glyph token`}
-      title={`${token.glyph} glyph token`}
+      aria-label={glyphLabel}
+      title={glyphLabel}
     >
       <span className='inline-flex h-full w-full items-center justify-center rounded-full border border-lime-300/80 bg-surface-950/80 shadow-[0_0_12px_rgba(190,242,100,0.35)]'>
         <DescRender desc={`{${token.glyph}[sm]}`} size='desc-mini' smartSize />
@@ -403,7 +408,10 @@ export function PlanetaryBoardView({
                   hotspotId: target.hotspotId,
                   testId: getPlanetTargetTestId(planet, target, index),
                   label: target.label,
-                  ariaLabel: `${target.label} target`,
+                  ariaLabel: t('client.planetary_board.target_aria_label', {
+                    label: target.label,
+                    defaultValue: `${target.label} target`,
+                  }),
                   onSelect: () =>
                     handlePlanetSelect(planet, target.selectOptions),
                 }))}
@@ -475,7 +483,13 @@ export function PlanetaryBoardView({
                           onClick={() =>
                             handlePlanetSelect(planet, target.selectOptions)
                           }
-                          ariaLabel={`${target.label} target`}
+                          ariaLabel={t(
+                            'client.planetary_board.target_aria_label',
+                            {
+                              label: target.label,
+                              defaultValue: `${target.label} target`,
+                            },
+                          )}
                           title={target.label}
                         />
                       );
@@ -491,7 +505,11 @@ export function PlanetaryBoardView({
                           y={slot.y}
                           playerId={occupied.playerId}
                           playerColors={playerColors}
-                          title={`${config.label} orbit (${occupied.playerId})`}
+                          title={t('client.planetary_board.orbit_token_title', {
+                            label: config.label,
+                            player: occupied.playerId,
+                            defaultValue: `${config.label} orbit (${occupied.playerId})`,
+                          })}
                           hotspotId={`${planet}-orbit-token-${index}`}
                         />
                       );
@@ -524,7 +542,15 @@ export function PlanetaryBoardView({
                           y={slot.y}
                           playerId={token.playerId}
                           playerColors={playerColors}
-                          title={`${config.label} ${slotKind} (${token.playerId})`}
+                          title={t(
+                            'client.planetary_board.landing_token_title',
+                            {
+                              label: config.label,
+                              slotKind,
+                              player: token.playerId,
+                              defaultValue: `${config.label} ${slotKind} (${token.playerId})`,
+                            },
+                          )}
                           hotspotId={`${planet}-landing-token-${index}`}
                         />
                       );

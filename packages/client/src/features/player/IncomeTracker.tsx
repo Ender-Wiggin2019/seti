@@ -28,6 +28,7 @@ function Stream({
   tuckedValue,
   icon,
 }: IStreamProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const isZero = value === 0;
   const showTucked = tuckedValue !== undefined && tuckedValue > 0;
   return (
@@ -47,7 +48,10 @@ function Stream({
           {showTucked ? (
             <span
               className='ml-1 font-mono text-[10px] text-text-400'
-              title='Income from tucked cards (excludes starting income card)'
+              title={t('client.income_tracker.tucked_tooltip', {
+                defaultValue:
+                  'Income from tucked cards (excludes starting income card)',
+              })}
               data-testid='income-tucked-suffix'
             >
               ({`+${tuckedValue}`})

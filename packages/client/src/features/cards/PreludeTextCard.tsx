@@ -77,6 +77,7 @@ export function PreludeTextCard({
   card,
 }: IPreludeTextCardProps): React.JSX.Element {
   const { t } = useTranslation('seti');
+  const { t: tCommon } = useTranslation('common');
   const translate = (value: string): string =>
     t(value, { defaultValue: value });
   const upperText = [
@@ -100,14 +101,16 @@ export function PreludeTextCard({
           {card.id}
         </span>
         <span className='text-[8px] uppercase tracking-wide text-text-400'>
-          Prelude
+          {tCommon('client.prelude_card.label', { defaultValue: 'Prelude' })}
         </span>
       </div>
 
       <div className='min-h-0 flex-1 space-y-2 overflow-y-auto px-2 py-1.5'>
         <PreludeTextEffectList
           cardId={card.id}
-          label='Upper'
+          label={tCommon('client.prelude_card.upper', {
+            defaultValue: 'Upper',
+          })}
           effects={card.upperEffects}
           testId={`text-prelude-card-upper-${card.id}`}
           translate={translate}
@@ -115,7 +118,7 @@ export function PreludeTextCard({
         {upperText ? (
           <section data-testid={`text-prelude-card-middle-${card.id}`}>
             <div className='mb-0.5 text-[8px] font-semibold uppercase tracking-wide text-text-400'>
-              Setup
+              {tCommon('client.prelude_card.setup', { defaultValue: 'Setup' })}
             </div>
             <p className='break-words text-[9px] text-text-100'>
               <DescTextRender desc={upperText} />
@@ -124,7 +127,9 @@ export function PreludeTextCard({
         ) : null}
         <PreludeTextEffectList
           cardId={card.id}
-          label='Lower'
+          label={tCommon('client.prelude_card.lower', {
+            defaultValue: 'Lower',
+          })}
           effects={card.lowerEffects}
           testId={`text-prelude-card-lower-${card.id}`}
           translate={translate}
@@ -132,7 +137,7 @@ export function PreludeTextCard({
         {card.lowerText ? (
           <section data-testid={`text-prelude-card-note-${card.id}`}>
             <div className='mb-0.5 text-[8px] font-semibold uppercase tracking-wide text-text-400'>
-              Note
+              {tCommon('client.prelude_card.note', { defaultValue: 'Note' })}
             </div>
             <p className='break-words text-[9px] text-text-300'>
               <DescTextRender desc={translate(card.lowerText)} />
@@ -146,7 +151,11 @@ export function PreludeTextCard({
           data-testid={`text-prelude-card-income-${card.id}`}
           className='shrink-0 border-t border-surface-700/70 px-2 py-1 text-[8px] text-text-300'
         >
-          <span className='text-text-400'>Income: </span>
+          <span className='text-text-400'>
+            {tCommon('client.prelude_card.income', {
+              defaultValue: 'Income:',
+            })}{' '}
+          </span>
           <span className='text-text-100'>{card.income}</span>
         </div>
       ) : null}

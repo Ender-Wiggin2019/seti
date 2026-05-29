@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { ERoomStatus, type IRoom } from '@/api/types';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { RoomCard } from '@/components/RoomCard';
@@ -396,12 +397,19 @@ function MissionEmptyState({ label }: { label: string }): React.JSX.Element {
 }
 
 function MissionAssetStrip(): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <section className='mission-panel border-transparent px-4 py-5 max-md:hidden'>
       <div className='mb-2'>
-        <p className='micro-label text-text-500'>Background Elements</p>
+        <p className='micro-label text-text-500'>
+          {t('client.mission_hub.background_elements', {
+            defaultValue: 'Background Elements',
+          })}
+        </p>
         <p className='text-xs uppercase tracking-[0.16em] text-text-700'>
-          Low-poly mission assets
+          {t('client.mission_hub.low_poly_assets', {
+            defaultValue: 'Low-poly mission assets',
+          })}
         </p>
       </div>
       <div className='relative h-44 overflow-hidden rounded-[6px] bg-[linear-gradient(180deg,transparent,oklch(0.09_0.02_260/0.78))]'>

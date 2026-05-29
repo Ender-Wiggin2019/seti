@@ -85,7 +85,9 @@ export function ExchangeResourcesDialog({
         {handCards.length > 0 ? (
           <div className='rounded-md border border-surface-700/50 p-2'>
             <p className='mb-2 text-xs font-semibold uppercase tracking-wider text-text-300'>
-              Select 2 cards to spend
+              {t('client.layout_v2.dialogs.select_two_cards_to_spend', {
+                defaultValue: 'Select 2 cards to spend',
+              })}
             </p>
             <div className='grid grid-cols-1 gap-1.5'>
               {handCards.map((card) => {

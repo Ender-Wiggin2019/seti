@@ -20,7 +20,9 @@ import { findPlanetSpaceId } from '@seti/common/rules/solarSystem';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { ESector, ETech } from '@seti/common/types/element';
 import { ETechId } from '@seti/common/types/tech';
+import type { TFunction } from 'i18next';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Select,
   SelectContent,
@@ -150,26 +152,56 @@ function buildScanPoolInput(
   remaining: Set<string>,
   cardRowLength: number,
   handLength: number,
+  t: TFunction,
 ): IPlayerInputModel {
   const options: Array<{ id: string; label: string }> = [];
   if (remaining.has('mark-earth'))
-    options.push({ id: 'mark-earth', label: 'Mark Earth' });
+    options.push({
+      id: 'mark-earth',
+      label: t('client.debug.game.scan.option.mark_earth', {
+        defaultValue: 'Mark Earth',
+      }),
+    });
   if (remaining.has('mark-card-row') && cardRowLength > 0)
-    options.push({ id: 'mark-card-row', label: 'Mark Card Row' });
+    options.push({
+      id: 'mark-card-row',
+      label: t('client.debug.game.scan.option.mark_card_row', {
+        defaultValue: 'Mark Card Row',
+      }),
+    });
   if (remaining.has('mark-mercury'))
-    options.push({ id: 'mark-mercury', label: 'Mark Mercury (1 publicity)' });
+    options.push({
+      id: 'mark-mercury',
+      label: t('client.debug.game.scan.option.mark_mercury', {
+        defaultValue: 'Mark Mercury (1 publicity)',
+      }),
+    });
   if (remaining.has('mark-hand') && handLength > 0)
-    options.push({ id: 'mark-hand', label: 'Mark Hand Signal' });
+    options.push({
+      id: 'mark-hand',
+      label: t('client.debug.game.scan.option.mark_hand', {
+        defaultValue: 'Mark Hand Signal',
+      }),
+    });
   if (remaining.has('energy-launch-or-move'))
     options.push({
       id: 'energy-launch-or-move',
-      label: 'Energy Launch or Move',
+      label: t('client.debug.game.scan.option.energy_launch_or_move', {
+        defaultValue: 'Energy Launch or Move',
+      }),
     });
-  options.push({ id: 'done', label: 'Done (end scan)' });
+  options.push({
+    id: 'done',
+    label: t('client.debug.game.scan.option.done', {
+      defaultValue: 'Done (end scan)',
+    }),
+  });
   return {
     inputId: 'scan-pool',
     type: EPlayerInputType.OPTION,
-    title: 'Scan: choose sub-action',
+    title: t('client.debug.game.scan.pool_title', {
+      defaultValue: 'Scan: choose sub-action',
+    }),
     options,
   };
 }
@@ -177,14 +209,19 @@ function buildScanPoolInput(
 function buildCardSelectInput(
   source: 'row' | 'hand',
   cards: IBaseCard[],
+  t: TFunction,
 ): IPlayerInputModel {
   return {
     inputId: `scan-${source}`,
     type: EPlayerInputType.CARD,
     title:
       source === 'row'
-        ? 'Select a card from the card row'
-        : 'Select a hand card to discard for signal',
+        ? t('client.debug.game.scan.card_row_title', {
+            defaultValue: 'Select a card from the card row',
+          })
+        : t('client.debug.game.scan.hand_title', {
+            defaultValue: 'Select a hand card to discard for signal',
+          }),
     cards,
     minSelections: 1,
     maxSelections: 1,
@@ -194,23 +231,45 @@ function buildCardSelectInput(
 function buildColorPickInput(
   color: ESector,
   sectorIds: string[],
+  t: TFunction,
 ): IPlayerInputModel {
   return {
     inputId: 'scan-color-pick',
     type: EPlayerInputType.OPTION,
-    title: `Choose ${color} sector to mark signal`,
-    options: sectorIds.map((id) => ({ id, label: `Sector ${id}` })),
+    title: t('client.debug.game.scan.color_pick_title', {
+      defaultValue: 'Choose {{color}} sector to mark signal',
+      color,
+    }),
+    options: sectorIds.map((id) => ({
+      id,
+      label: t('client.debug.game.scan.sector_option', {
+        defaultValue: 'Sector {{id}}',
+        id,
+      }),
+    })),
   };
 }
 
-function buildEnergyInput(): IPlayerInputModel {
+function buildEnergyInput(t: TFunction): IPlayerInputModel {
   return {
     inputId: 'scan-energy',
     type: EPlayerInputType.OPTION,
-    title: 'Select Scan Energy Launch effect',
+    title: t('client.debug.game.scan.energy_title', {
+      defaultValue: 'Select Scan Energy Launch effect',
+    }),
     options: [
-      { id: 'launch', label: 'Pay 1 energy to launch a probe' },
-      { id: 'move', label: 'Gain 1 movement' },
+      {
+        id: 'launch',
+        label: t('client.debug.game.scan.option.launch', {
+          defaultValue: 'Pay 1 energy to launch a probe',
+        }),
+      },
+      {
+        id: 'move',
+        label: t('client.debug.game.scan.option.move', {
+          defaultValue: 'Gain 1 movement',
+        }),
+      },
     ],
   };
 }
@@ -960,6 +1019,7 @@ function createDebugGameState(
 }
 
 export function GameDebugPage(): React.JSX.Element {
+  const { t } = useTranslation('common');
   const textMode = useDebugStore((state) => state.textMode);
   const setTextMode = useDebugStore((state) => state.setTextMode);
   const [scenario, setScenario] = useState<TDebugScenario>('my-turn');
@@ -1282,6 +1342,7 @@ export function GameDebugPage(): React.JSX.Element {
         scanPhase.remaining,
         gameState.cardRow.length,
         handLen,
+        t,
       );
       return {
         ...model,
@@ -1289,7 +1350,7 @@ export function GameDebugPage(): React.JSX.Element {
       };
     }
     if (scanPhase.step === 'card-row') {
-      const model = buildCardSelectInput('row', gameState.cardRow);
+      const model = buildCardSelectInput('row', gameState.cardRow, t);
       return {
         ...model,
         debugSectorHighlights: scanPlanetHintSectorIds,
@@ -1299,6 +1360,7 @@ export function GameDebugPage(): React.JSX.Element {
       const model = buildCardSelectInput(
         'hand',
         gameState.players[0]?.hand ?? [],
+        t,
       );
       return {
         ...model,
@@ -1306,14 +1368,18 @@ export function GameDebugPage(): React.JSX.Element {
       };
     }
     if (scanPhase.step === 'color-pick') {
-      const model = buildColorPickInput(scanPhase.color, scanPhase.sectorIds);
+      const model = buildColorPickInput(
+        scanPhase.color,
+        scanPhase.sectorIds,
+        t,
+      );
       return {
         ...model,
         debugSectorHighlights: scanPlanetHintSectorIds,
       };
     }
     if (scanPhase.step === 'energy') {
-      const model = buildEnergyInput();
+      const model = buildEnergyInput(t);
       return {
         ...model,
         debugSectorHighlights: scanPlanetHintSectorIds,
@@ -1325,7 +1391,9 @@ export function GameDebugPage(): React.JSX.Element {
       return {
         inputId: 'debug-hand-select',
         type: EPlayerInputType.CARD,
-        title: 'Debug Hand Select',
+        title: t('client.debug.game.debug_hand_select_title', {
+          defaultValue: 'Debug Hand Select',
+        }),
         cards: handCards,
         minSelections: 1,
         maxSelections: Math.min(2, handCards.length || 1),
@@ -1336,7 +1404,9 @@ export function GameDebugPage(): React.JSX.Element {
       return {
         inputId: 'debug-row-select',
         type: EPlayerInputType.CARD,
-        title: 'Debug Card Row Select',
+        title: t('client.debug.game.debug_row_select_title', {
+          defaultValue: 'Debug Card Row Select',
+        }),
         cards: gameState.cardRow,
         minSelections: 1,
         maxSelections: 1,
@@ -1349,13 +1419,15 @@ export function GameDebugPage(): React.JSX.Element {
       return {
         inputId: 'debug-end-of-round',
         type: EPlayerInputType.END_OF_ROUND,
-        title: 'Debug End Of Round',
+        title: t('client.debug.game.debug_end_of_round_title', {
+          defaultValue: 'Debug End Of Round',
+        }),
         cards,
       };
     }
 
     return null;
-  }, [scanPhase, cardInputMode, gameState, scanPlanetHintSectorIds]);
+  }, [scanPhase, cardInputMode, gameState, scanPlanetHintSectorIds, t]);
 
   const handleDebugInput = useCallback(
     (response: IInputResponse): void => {
@@ -1597,7 +1669,9 @@ export function GameDebugPage(): React.JSX.Element {
   return (
     <GameContextValueProvider value={contextValue}>
       <div className='fixed right-3 top-3 z-50 flex max-w-[calc(100vw-1.5rem)] flex-wrap items-center justify-end gap-2 rounded-[5px] border border-[color:var(--metal-edge)] bg-[var(--surface-raised)]/95 p-2 text-xs backdrop-blur shadow-instrument'>
-        <span className='micro-label'>Calibration</span>
+        <span className='micro-label'>
+          {t('client.debug.game.calibration', { defaultValue: 'Calibration' })}
+        </span>
         <button
           type='button'
           aria-pressed={textMode}
@@ -1609,7 +1683,10 @@ export function GameDebugPage(): React.JSX.Element {
               : 'border-surface-700/60 bg-surface-800/60 text-text-300 hover:bg-surface-700/70',
           ].join(' ')}
         >
-          Text Mode {textMode ? 'On' : 'Off'}
+          {t('client.debug.game.text_mode', { defaultValue: 'Text Mode' })}{' '}
+          {textMode
+            ? t('client.common.on', { defaultValue: 'On' })
+            : t('client.common.off', { defaultValue: 'Off' })}
         </button>
         <Select
           value={sourceMode}
@@ -1617,22 +1694,39 @@ export function GameDebugPage(): React.JSX.Element {
         >
           <SelectTrigger
             className='h-8 w-[140px] text-xs'
-            title='Where game state comes from'
+            title={t('client.debug.game.source.title', {
+              defaultValue: 'Where game state comes from',
+            })}
           >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value='local'>Source: Local</SelectItem>
-            <SelectItem value='server'>Source: Server</SelectItem>
+            <SelectItem value='local'>
+              {t('client.debug.game.source.local', {
+                defaultValue: 'Source: Local',
+              })}
+            </SelectItem>
+            <SelectItem value='server'>
+              {t('client.debug.game.source.server', {
+                defaultValue: 'Source: Server',
+              })}
+            </SelectItem>
           </SelectContent>
         </Select>
         {sourceMode === 'server' && (
           <span className='font-mono text-[10px] text-text-400'>
             {serverSession?.isCreating
-              ? 'Creating…'
+              ? t('client.debug.game.server_status.creating', {
+                  defaultValue: 'Creating…',
+                })
               : serverSession?.gameId
-                ? `Game ${serverSession.gameId.slice(0, 8)}`
-                : 'idle'}
+                ? t('client.debug.game.server_status.game', {
+                    defaultValue: 'Game {{id}}',
+                    id: serverSession.gameId.slice(0, 8),
+                  })
+                : t('client.debug.game.server_status.idle', {
+                    defaultValue: 'idle',
+                  })}
             {serverSession?.errorMessage ? (
               <span className='ml-1 text-rose-300'>
                 · {serverSession.errorMessage}
@@ -1647,7 +1741,9 @@ export function GameDebugPage(): React.JSX.Element {
             disabled={!serverSession || serverSession.isCreating}
             className='rounded border border-surface-700/60 bg-surface-800/60 px-2 py-1 text-text-200 transition-colors hover:bg-surface-700/70 disabled:opacity-50'
           >
-            New Server Game
+            {t('client.debug.game.new_server_game', {
+              defaultValue: 'New Server Game',
+            })}
           </button>
         )}
         {!isServerMode && (
@@ -1659,10 +1755,26 @@ export function GameDebugPage(): React.JSX.Element {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value='my-turn'>My Turn</SelectItem>
-              <SelectItem value='opponent-turn'>Opponent Turn</SelectItem>
-              <SelectItem value='spectator'>Spectator</SelectItem>
-              <SelectItem value='game-over'>Game Over</SelectItem>
+              <SelectItem value='my-turn'>
+                {t('client.debug.game.scenarios.my_turn', {
+                  defaultValue: 'My Turn',
+                })}
+              </SelectItem>
+              <SelectItem value='opponent-turn'>
+                {t('client.debug.game.scenarios.opponent_turn', {
+                  defaultValue: 'Opponent Turn',
+                })}
+              </SelectItem>
+              <SelectItem value='spectator'>
+                {t('client.debug.game.scenarios.spectator', {
+                  defaultValue: 'Spectator',
+                })}
+              </SelectItem>
+              <SelectItem value='game-over'>
+                {t('client.debug.game.scenarios.game_over', {
+                  defaultValue: 'Game Over',
+                })}
+              </SelectItem>
             </SelectContent>
           </Select>
         )}
@@ -1678,10 +1790,26 @@ export function GameDebugPage(): React.JSX.Element {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value='none'>No Input</SelectItem>
-              <SelectItem value='hand-select'>Input: Hand Cards</SelectItem>
-              <SelectItem value='row-select'>Input: Card Row</SelectItem>
-              <SelectItem value='end-of-round'>Input: End Of Round</SelectItem>
+              <SelectItem value='none'>
+                {t('client.debug.game.card_input.none', {
+                  defaultValue: 'No Input',
+                })}
+              </SelectItem>
+              <SelectItem value='hand-select'>
+                {t('client.debug.game.card_input.hand_select', {
+                  defaultValue: 'Input: Hand Cards',
+                })}
+              </SelectItem>
+              <SelectItem value='row-select'>
+                {t('client.debug.game.card_input.row_select', {
+                  defaultValue: 'Input: Card Row',
+                })}
+              </SelectItem>
+              <SelectItem value='end-of-round'>
+                {t('client.debug.game.card_input.end_of_round', {
+                  defaultValue: 'Input: End Of Round',
+                })}
+              </SelectItem>
             </SelectContent>
           </Select>
         )}
@@ -1695,7 +1823,7 @@ export function GameDebugPage(): React.JSX.Element {
               }
               className='rounded border border-surface-700/60 bg-surface-800/60 px-2 py-1 text-text-200 transition-colors hover:bg-surface-700/70'
             >
-              Next Row
+              {t('client.debug.game.next_row', { defaultValue: 'Next Row' })}
             </button>
             <button
               type='button'
@@ -1704,7 +1832,7 @@ export function GameDebugPage(): React.JSX.Element {
               }
               className='rounded border border-surface-700/60 bg-surface-800/60 px-2 py-1 text-text-200 transition-colors hover:bg-surface-700/70'
             >
-              Next Hand
+              {t('client.debug.game.next_hand', { defaultValue: 'Next Hand' })}
             </button>
             {scanPhase.step === 'idle' ? (
               <button
@@ -1712,7 +1840,9 @@ export function GameDebugPage(): React.JSX.Element {
                 onClick={startScan}
                 className='rounded border border-teal-500/60 bg-teal-500/15 px-2 py-1 text-teal-200 transition-colors hover:bg-teal-500/25'
               >
-                Start Scan
+                {t('client.debug.game.start_scan', {
+                  defaultValue: 'Start Scan',
+                })}
               </button>
             ) : (
               <button
@@ -1720,7 +1850,10 @@ export function GameDebugPage(): React.JSX.Element {
                 onClick={() => setScanPhase(SCAN_IDLE)}
                 className='rounded border border-rose-500/60 bg-rose-500/15 px-2 py-1 text-rose-200 transition-colors hover:bg-rose-500/25'
               >
-                Cancel Scan ({scanPhase.step})
+                {t('client.debug.game.cancel_scan', {
+                  defaultValue: 'Cancel Scan ({{step}})',
+                  step: scanPhase.step,
+                })}
               </button>
             )}
           </div>
@@ -1731,9 +1864,15 @@ export function GameDebugPage(): React.JSX.Element {
             type='button'
             onClick={rotateByRuleOrder}
             className='rounded border border-accent-500/60 bg-accent-500/15 px-2 py-1 text-accent-200 transition-colors hover:bg-accent-500/25'
-            title='Rotate based on game rule order: ring 1 -> ring 2 -> ring 3'
+            title={t('client.debug.game.rotate_next_title', {
+              defaultValue:
+                'Rotate based on game rule order: ring 1 -> ring 2 -> ring 3',
+            })}
           >
-            Rotate (R{nextRotateRing})
+            {t('client.debug.game.rotate_next', {
+              defaultValue: 'Rotate (R{{ring}})',
+              ring: nextRotateRing,
+            })}
           </button>
           <button
             type='button'
@@ -1743,9 +1882,11 @@ export function GameDebugPage(): React.JSX.Element {
                 : rotateRing(1)
             }
             className='rounded border border-amber-700/60 bg-amber-900/40 px-2 py-1 text-amber-200 transition-colors hover:bg-amber-800/50'
-            title='Ring 1 only rotates'
+            title={t('client.debug.game.rotate_r1_title', {
+              defaultValue: 'Ring 1 only rotates',
+            })}
           >
-            Rotate R1
+            {t('client.debug.game.rotate_r1', { defaultValue: 'Rotate R1' })}
           </button>
           <button
             type='button'
@@ -1755,9 +1896,11 @@ export function GameDebugPage(): React.JSX.Element {
                 : rotateRing(2)
             }
             className='rounded border border-sky-700/60 bg-sky-900/40 px-2 py-1 text-sky-200 transition-colors hover:bg-sky-800/50'
-            title='Ring 2 carries Ring 1'
+            title={t('client.debug.game.rotate_r2_title', {
+              defaultValue: 'Ring 2 carries Ring 1',
+            })}
           >
-            Rotate R2
+            {t('client.debug.game.rotate_r2', { defaultValue: 'Rotate R2' })}
           </button>
           <button
             type='button'
@@ -1767,9 +1910,11 @@ export function GameDebugPage(): React.JSX.Element {
                 : rotateRing(3)
             }
             className='rounded border border-emerald-700/60 bg-emerald-900/40 px-2 py-1 text-emerald-200 transition-colors hover:bg-emerald-800/50'
-            title='Ring 3 carries Ring 2 and Ring 1'
+            title={t('client.debug.game.rotate_r3_title', {
+              defaultValue: 'Ring 3 carries Ring 2 and Ring 1',
+            })}
           >
-            Rotate R3
+            {t('client.debug.game.rotate_r3', { defaultValue: 'Rotate R3' })}
           </button>
         </div>
 
@@ -1778,7 +1923,11 @@ export function GameDebugPage(): React.JSX.Element {
             <label
               key={`push-delay-ring-${ring}`}
               className='flex items-center gap-1 font-mono text-[10px] text-text-300'
-              title={`Delay for pushed probes when rotating ring ${ring}`}
+              title={t('client.debug.game.push_delay_title', {
+                defaultValue:
+                  'Delay for pushed probes when rotating ring {{ring}}',
+                ring,
+              })}
             >
               D{ring}
               <input

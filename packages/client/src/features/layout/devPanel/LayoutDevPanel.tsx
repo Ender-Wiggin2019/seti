@@ -1,8 +1,10 @@
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
 import { useLayoutStore } from '../layoutStore';
 
 export function LayoutDevPanel(): React.JSX.Element | null {
+  const { t } = useTranslation('common');
   const open = useLayoutStore((s) => s.devPanelOpen);
   const mode = useLayoutStore((s) => s.mode);
   const setMode = useLayoutStore((s) => s.setMode);
@@ -35,7 +37,9 @@ export function LayoutDevPanel(): React.JSX.Element | null {
     >
       <div className='mb-3 flex items-center justify-between'>
         <h3 className='font-mono text-sm font-semibold uppercase tracking-wider text-text-100'>
-          Layout Dev
+          {t('client.layout_v2.dev_panel.title', {
+            defaultValue: 'Layout Dev',
+          })}
         </h3>
         <button
           onClick={() => setDevPanelOpen(false)}
@@ -48,7 +52,7 @@ export function LayoutDevPanel(): React.JSX.Element | null {
       <div className='space-y-3'>
         <div>
           <p className='mb-1 font-mono text-xs uppercase tracking-wider text-text-500'>
-            Mode
+            {t('client.layout_v2.dev_panel.mode', { defaultValue: 'Mode' })}
           </p>
           <div className='flex gap-2'>
             <Button
@@ -57,7 +61,7 @@ export function LayoutDevPanel(): React.JSX.Element | null {
               onClick={() => setMode('tab')}
               className='flex-1'
             >
-              Tab
+              {t('client.layout_v2.shell.tab', { defaultValue: 'Tab' })}
             </Button>
             <Button
               variant={mode === 'waterfall' ? 'primary' : 'ghost'}
@@ -65,7 +69,9 @@ export function LayoutDevPanel(): React.JSX.Element | null {
               onClick={() => setMode('waterfall')}
               className='flex-1'
             >
-              Waterfall
+              {t('client.layout_v2.shell.waterfall', {
+                defaultValue: 'Waterfall',
+              })}
             </Button>
           </div>
         </div>
@@ -77,7 +83,9 @@ export function LayoutDevPanel(): React.JSX.Element | null {
             onClick={handleExport}
             className='flex-1'
           >
-            Export
+            {t('client.layout_v2.dev_panel.export', {
+              defaultValue: 'Export',
+            })}
           </Button>
           <Button
             variant='ghost'
@@ -85,16 +93,20 @@ export function LayoutDevPanel(): React.JSX.Element | null {
             onClick={resetAll}
             className='flex-1'
           >
-            Reset
+            {t('client.layout_v2.dev_panel.reset', { defaultValue: 'Reset' })}
           </Button>
         </div>
 
         <p className='text-xs text-text-500'>
-          Press{' '}
+          {t('client.layout_v2.dev_panel.toggle_hint_prefix', {
+            defaultValue: 'Press',
+          })}{' '}
           <kbd className='rounded bg-background-800 px-1 py-0.5'>
             Ctrl+Shift+L
           </kbd>{' '}
-          to toggle
+          {t('client.layout_v2.dev_panel.toggle_hint_suffix', {
+            defaultValue: 'to toggle',
+          })}
         </p>
       </div>
     </div>

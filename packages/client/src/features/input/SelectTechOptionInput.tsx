@@ -105,18 +105,24 @@ export function SelectTechOptionInput({
                     </span>
                     {(stack.topTileBonuses ?? []).map((bonus, index) => {
                       const meta = getTechBonusPresentation(bonus);
+                      const localizedLabel = meta.labelKey
+                        ? t(meta.labelKey, {
+                            type: bonus.type,
+                            defaultValue: meta.label,
+                          })
+                        : meta.label;
                       return (
                         <span
                           key={`${option.id}-bonus-${bonus.type}-${index}`}
                           data-testid={`input-tech-back-bonus-${option.id}-${index}`}
                           className='inline-flex h-5 min-w-5 items-center justify-center rounded border border-surface-700/70 bg-background-950/60 px-1 font-mono text-[8px] text-text-200'
-                          title={meta.label}
-                          aria-label={meta.label}
+                          title={localizedLabel}
+                          aria-label={localizedLabel}
                         >
                           {meta.src ? (
                             <img
                               src={meta.src}
-                              alt={meta.label}
+                              alt={localizedLabel}
                               className='h-4 w-4 object-contain'
                             />
                           ) : (

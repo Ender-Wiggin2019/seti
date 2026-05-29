@@ -347,6 +347,7 @@ function RivalBoardProgressSpots({
 }: {
   activeSlot: number;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <>
       {RIVAL_BOARD_PROGRESS_MARKER_POINTS.map((point, index) => {
@@ -375,7 +376,10 @@ function RivalBoardProgressSpots({
                 ? 'rival-board-progress-marker'
                 : `rival-board-progress-slot-${index}`
             }
-            title={`Progress ${index + 1}`}
+            title={t('client.rival_panel_extra.progress_title', {
+              index: index + 1,
+              defaultValue: `Progress ${index + 1}`,
+            })}
           >
             {current ? (
               // Mask-tint the white sky disc with the rival's piece
@@ -391,8 +395,7 @@ function RivalBoardProgressSpots({
                 data-testid={`rival-progress-slot-${activeSlot}`}
                 style={{
                   backgroundColor: '#d46d1e',
-                  WebkitMaskImage:
-                    'url(/assets/seti/tokens/sky/whiteSky.png)',
+                  WebkitMaskImage: 'url(/assets/seti/tokens/sky/whiteSky.png)',
                   maskImage: 'url(/assets/seti/tokens/sky/whiteSky.png)',
                   WebkitMaskRepeat: 'no-repeat',
                   maskRepeat: 'no-repeat',
@@ -477,6 +480,7 @@ function RivalProgressCycle({
 }: {
   progressSlot: number;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   const textMode = useTextMode();
   const activeSlot = normalizeProgressSlot(progressSlot);
 
@@ -515,7 +519,10 @@ function RivalProgressCycle({
             data-current={current ? 'true' : 'false'}
             data-fill-mode={textMode ? 'border' : 'background'}
             data-testid={`rival-progress-slot-${index}`}
-            title={`Progress ${index + 1}`}
+            title={t('client.rival_panel_extra.progress_title', {
+              index: index + 1,
+              defaultValue: `Progress ${index + 1}`,
+            })}
           >
             {index + 1}
           </span>
@@ -615,6 +622,7 @@ function RivalComputerPanel({
 }
 
 function RivalBoardDataPool({ count }: { count: number }): React.JSX.Element {
+  const { t } = useTranslation('common');
   const visibleCount = Math.max(
     0,
     Math.min(count, RIVAL_BOARD_DATA_POOL_POINTS.length),
@@ -625,7 +633,10 @@ function RivalBoardDataPool({ count }: { count: number }): React.JSX.Element {
       className='absolute inset-0 z-10'
       data-count={String(count)}
       data-testid='rival-board-data-pool'
-      aria-label={`Rival data pool: ${count}`}
+      aria-label={t('client.rival_panel_extra.data_pool_aria', {
+        count,
+        defaultValue: `Rival data pool: ${count}`,
+      })}
     >
       {Array.from({ length: visibleCount }, (_, index) => {
         const point = RIVAL_BOARD_DATA_POOL_POINTS[index];
@@ -684,11 +695,17 @@ function RivalBoardTechTiles({
   boardConfigId: IPublicRivalState['boardConfigId'];
   techIds: readonly ETechId[];
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   const byCategory = groupTechsByCategory(techIds);
   const categoryOrder = getRivalBoardTechCategoryOrder(boardConfigId);
 
   return (
-    <div className='absolute inset-0 z-10' aria-label='Rival tech tiles'>
+    <div
+      className='absolute inset-0 z-10'
+      aria-label={t('client.rival_panel_extra.tech_tiles_aria', {
+        defaultValue: 'Rival tech tiles',
+      })}
+    >
       {categoryOrder.map((category) => {
         const techs = byCategory[category];
         const firstTech = techs[0];

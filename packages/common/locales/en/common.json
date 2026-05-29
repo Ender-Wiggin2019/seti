@@ -167,7 +167,18 @@
       "hero_kicker": "Space Agencies",
       "station_nominal": "Signed in",
       "station_offline": "Sign in to play",
-      "commander": "Player"
+      "commander": "Player",
+      "title": "Mission Hub",
+      "subtitle": "Explore the unknown, connect the future.",
+      "create_mission": "Create Mission",
+      "stat": {
+        "waiting": "Waiting",
+        "waiting_sub": "Available missions",
+        "playing": "In Progress",
+        "playing_sub": "Active missions",
+        "players": "Players",
+        "players_sub": "In missions"
+      }
     },
     "common": {
       "loading": "Loading…",
@@ -191,7 +202,11 @@
       "close": "Stow",
       "close_dialog": "Close",
       "mission": "Mission",
-      "crew": "Crew"
+      "crew": "Crew",
+      "ready": "Ready",
+      "pending": "Pending",
+      "live": "Shared mission",
+      "actions": "Actions"
     },
     "auth": {
       "hero": {
@@ -254,9 +269,15 @@
         "operators_sub": "in missions"
       }
     },
+    "mission_hub": {
+      "background_elements": "Background Elements",
+      "low_poly_assets": "Low-poly mission assets"
+    },
     "room": {
       "back": "Mission Hub",
       "crew": "Players",
+      "mode_solo_short": "Solo",
+      "mode_multi_short": "Multi",
       "status": {
         "waiting": "Waiting",
         "playing": "In Progress",
@@ -286,6 +307,9 @@
       "disconnect": "Sign Out",
       "danger_zone": "Account Session",
       "disconnect_hint": "Sign out of this account. Sign in again to resume active missions.",
+      "settings": "Settings",
+      "id": "ID",
+      "email": "Email",
       "toast": {
         "invalid_name": "Name must be at least 2 characters",
         "updated": "Profile updated",
@@ -311,6 +335,7 @@
         "4": "4 Players"
       },
       "alien_modules": "Alien Modules",
+      "alien_pool": "Alien random pool",
       "undo": "Allow Undo",
       "turn_timer": "Turn Timer (seconds, 0 = off)",
       "alien_pool_disabled": " (disabled)",
@@ -382,10 +407,17 @@
     "action_menu": {
       "loading_actions": "Loading actions…",
       "waiting_for": "Waiting for {{player}}...",
+      "waiting_for_setup": "Waiting for {{player}} to finish setup tuck before turn actions",
       "another_player": "another player",
       "player_unavailable": "Player data unavailable.",
       "title": "Main Actions",
       "end_turn": "End Turn",
+      "status": {
+        "loading": "Standby",
+        "turn": "Active",
+        "waiting": "Standby",
+        "offline": "Offline"
+      },
       "actions": {
         "LAUNCH_PROBE": "Launch Probe",
         "ORBIT": "Orbit",
@@ -437,6 +469,8 @@
       "setup_summary": "Setup: {{credit}} credits, {{energy}} energy, {{card}} cards, {{publicity}} publicity, {{data}} data, {{tuckIncome}} tuck income cards",
       "effect_label": "Effect",
       "passive_label": "Passive",
+      "setup_ability_label": "Setup",
+      "main_action_label": "Main Action",
       "power_used": "Used",
       "names": {
         "cosmos-strategy-group": "Cosmos Strategy Group",
@@ -663,13 +697,63 @@
     "milestone": {
       "empty": "No milestone data.",
       "title": "Milestone Track",
-      "open": "open"
+      "open": "open",
+      "type_gold": "GOLD",
+      "type_neutral": "NEUTRAL"
+    },
+    "gold_tile_selector": {
+      "title": "Gold Tiles",
+      "slots": "SLOTS"
     },
     "income_tracker": {
       "title": "Income",
       "credit": "Credits",
       "energy": "Energy",
-      "card": "Cards"
+      "card": "Cards",
+      "tucked_tooltip": "Income from tucked cards (excludes starting income card)"
+    },
+    "resource_bar": {
+      "credit": "Credits",
+      "energy": "Energy",
+      "publicity": "Publicity",
+      "signal_tokens": "Signal Tokens",
+      "score": "Score",
+      "exofossils": "Exofossils"
+    },
+    "computer_view": {
+      "title": "Computer",
+      "top_slot": "Computer top slot {{index}}",
+      "bottom_slot": "Computer bottom slot {{index}}"
+    },
+    "data_pool": {
+      "title": "Data Pool",
+      "full": "Full"
+    },
+    "opponent_summary": {
+      "title": "Opponents",
+      "passed": "PASS",
+      "vp": "VP",
+      "hand": "Hand",
+      "tech": "Tech",
+      "credit": "Credit",
+      "energy": "Energy",
+      "data": "Data",
+      "publicity": "Publicity",
+      "pool": "Pool",
+      "signals": "Signals"
+    },
+    "organizations_card": {
+      "reward_marks": "Reward marks",
+      "marked": "marked",
+      "open": "open",
+      "marks": {
+        "credit": "Credit",
+        "publicity": "Publicity",
+        "data": "Data",
+        "probe": "Probe",
+        "scan": "Scan",
+        "computer": "Computer"
+      }
     },
     "hand_view": {
       "title": "Hand",
@@ -824,11 +908,101 @@
       },
       "scan": {
         "earth": "Earth (or adj.)",
+        "earth_base": "Earth",
         "card_row": "Card Row",
         "mercury": "Mercury (−★)",
         "discard_card": "Discard Card",
         "energy_launch": "Move / Launch (⚡)"
       }
+    },
+    "sector_node": {
+      "win": "WIN",
+      "first": "1st",
+      "other": "2+",
+      "mark_aria_label": "Mark {{color}} ({{sectorId}}) sector",
+      "tile_aria_label": "Sector tile {{tileId}} ({{starNames}})"
+    },
+    "sector_grid": {
+      "ring_aria_label": "Sector ring"
+    },
+    "probe_token": {
+      "aria_label": "{{playerColor}} probe"
+    },
+    "tech_stack_view": {
+      "glyph_token": "{{glyph}} glyph token"
+    },
+    "tech_bonus": {
+      "energy": "Energy bonus",
+      "data": "Data bonus",
+      "publicity": "Publicity bonus",
+      "card": "Card bonus",
+      "vp_3": "3 VP bonus",
+      "vp_2": "2 VP bonus",
+      "data_2": "2 data bonus",
+      "credit": "Credit bonus",
+      "launch": "Launch action bonus",
+      "generic": "{{type}} bonus"
+    },
+    "alien_board_extra": {
+      "title": "Alien Board",
+      "title_face_down": "Alien Board (face-down)",
+      "image_alt_face_down": "Face-down alien board",
+      "image_alt_named": "{{name}} alien board",
+      "costs_exofossil": "Costs {{count}} exofossil",
+      "costs_data": "Costs {{count}} data",
+      "neutral": "Neutral",
+      "trace_slot_title": "{{trace}} slot{{overflow}}{{discovery}}{{cost}}",
+      "trace_slot_overflow_suffix": " (overflow)",
+      "trace_slot_discovery_suffix": " - Discovery",
+      "from_planet": "From {{planet}}",
+      "at_space": "At {{space}}",
+      "round_label": "Round {{round}}",
+      "anomaly_tier_title": "{{trace}} anomaly tier",
+      "trace_pink": "Pink",
+      "trace_yellow": "Yellow",
+      "trace_blue": "Blue",
+      "trace_any": "Any",
+      "rotation_token_alt": "Rotation reminder token",
+      "rotation_token_title": "First player to pass rotates the solar system"
+    },
+    "solar_system_view": {
+      "zoom_controls": "Solar board zoom controls",
+      "zoom_out": "Zoom solar board out",
+      "zoom_in": "Zoom solar board in",
+      "space_aria_label": "Space {{spaceId}}",
+      "space_title": "{{spaceId}} - pieces: {{count}}",
+      "oumuamua_sector_title": "Oumuamua sector {{sectorId}}",
+      "sample_capsule_title": "{{playerColor}} sample capsule"
+    },
+    "rival_panel_extra": {
+      "board_alt": "Rival board difficulty {{difficulty}}",
+      "progress_title": "Progress {{index}}",
+      "tech_tiles_aria": "Rival tech tiles",
+      "data_pool_aria": "Rival data pool: {{count}}"
+    },
+    "planetary_board": {
+      "glyph_token": "{{glyph}} glyph token",
+      "target_aria_label": "{{label}} target",
+      "token_aria_label": "token-{{playerId}}",
+      "orbit_token_title": "{{label}} orbit ({{player}})",
+      "landing_token_title": "{{label}} {{slotKind}} ({{player}})"
+    },
+    "text_card": {
+      "effect": "Effect:",
+      "mission": "Mission:",
+      "end_game": "End Game:",
+      "note": "Note:",
+      "free_action": "Free Action:",
+      "sector": "Sector:",
+      "income": "Income:"
+    },
+    "prelude_card": {
+      "label": "Prelude",
+      "upper": "Upper",
+      "setup": "Setup",
+      "lower": "Lower",
+      "note": "Note",
+      "income": "Income:"
     },
     "computer_row": {
       "tuck": "Tuck",
@@ -857,6 +1031,8 @@
       "next_rotate_alt": "Next rotate ring"
     },
     "gold_tile": {
+      "title": "Gold Tiles",
+      "slots": "SLOTS",
       "label": {
         "tech": "Tech",
         "mission": "Mission",
@@ -976,6 +1152,12 @@
       "connecting": "Establishing secure connection...",
       "awaiting": "Awaiting mission data..."
     },
+    "error_boundary": {
+      "fallback": "Something went wrong while rendering this section."
+    },
+    "toast": {
+      "dismiss": "Dismiss"
+    },
     "game": {
       "toast": {
         "blocking": "Blocking Error",
@@ -1072,6 +1254,248 @@
       "winner": "Winner",
       "breakdown_hint": "Detailed scoring breakdown by source is shown above.",
       "scoring_reminder_alt": "Scoring reminder"
+    },
+    "action_bar": {
+      "label": "Action Bar",
+      "move_probe": "Move Probe",
+      "step": "step",
+      "steps": "steps",
+      "end_move": "End Move",
+      "cancel": "Cancel"
+    },
+    "layout_v2": {
+      "section_failed_to_render": "Section failed to render.",
+      "shell": {
+        "tab": "Tab",
+        "waterfall": "Waterfall",
+        "mobile": "Mobile"
+      },
+      "dev_panel": {
+        "title": "Layout Dev",
+        "mode": "Mode",
+        "export": "Export",
+        "reset": "Reset",
+        "toggle_hint_prefix": "Press",
+        "toggle_hint_suffix": "to toggle"
+      },
+      "dialogs": {
+        "settings_title": "Layout Settings",
+        "settings_description": "Configure the in-game layout. Changes are stored locally in this browser automatically and can be exported as settings.json.",
+        "mode_block": "Mode",
+        "game_layout_system": "Game Layout System",
+        "system_configurable": "Configurable",
+        "system_legacy": "Legacy",
+        "system_hint": "Layout settings only affect games when Configurable is active.",
+        "default_layout_mode": "Default Layout Mode",
+        "preview_block": "Preview",
+        "preview_topbar": "TopBar",
+        "preview_actionbar": "ActionBar",
+        "preview_hand": "Hand",
+        "preview_left": "Left",
+        "preview_middle": "Middle",
+        "preview_right": "Right",
+        "preview_mobile_order_label": "Mobile order",
+        "waterfall_columns_block": "Waterfall Columns",
+        "field_left_pct": "Left %",
+        "field_middle_pct": "Middle %",
+        "field_right_pct": "Right %",
+        "column_widths_hint": "These percentages are also updated when you drag the column handles in game.",
+        "pinned_areas_block": "Pinned Areas",
+        "field_hand_height": "Hand Height",
+        "field_log_height": "Log Height",
+        "field_log_min_height": "Log Min Height",
+        "field_log_grow": "Log Grow",
+        "board_scale_block": "Board Scale",
+        "field_tech_board_scale": "Tech Board Scale",
+        "field_card_rows_scale": "Card Rows Scale",
+        "mobile_order_block": "Mobile Order",
+        "json_block": "JSON",
+        "json_hint": "Use JSON for full control. Import accepts either exported settings.json or the raw persisted Zustand shape.",
+        "apply_json": "Apply JSON",
+        "refresh_json": "Refresh JSON",
+        "export_json": "Export settings.json",
+        "import_json": "Import settings.json",
+        "saved_hint": "Saved automatically to this browser.",
+        "reset_layout": "Reset Layout",
+        "done": "Done",
+        "toast_imported": "Layout settings imported",
+        "toast_invalid_json": "Invalid settings.json",
+        "select_two_cards_to_spend": "Select 2 cards to spend",
+        "section_player_board": "Player Board",
+        "section_solar_system": "Solar System",
+        "section_planet_board": "Planet Board",
+        "section_tech_board": "Tech Board",
+        "section_alien_board": "Alien Board",
+        "section_card_rows": "Card Rows",
+        "section_log": "Log",
+        "section_end_game": "End Game"
+      }
+    },
+    "debug": {
+      "game": {
+        "calibration": "Calibration",
+        "text_mode": "Text Mode",
+        "source": {
+          "title": "Where game state comes from",
+          "local": "Source: Local",
+          "server": "Source: Server"
+        },
+        "server_status": {
+          "creating": "Creating…",
+          "game": "Game {{id}}",
+          "idle": "idle"
+        },
+        "new_server_game": "New Server Game",
+        "scenarios": {
+          "my_turn": "My Turn",
+          "opponent_turn": "Opponent Turn",
+          "spectator": "Spectator",
+          "game_over": "Game Over"
+        },
+        "card_input": {
+          "none": "No Input",
+          "hand_select": "Input: Hand Cards",
+          "row_select": "Input: Card Row",
+          "end_of_round": "Input: End Of Round"
+        },
+        "next_row": "Next Row",
+        "next_hand": "Next Hand",
+        "start_scan": "Start Scan",
+        "cancel_scan": "Cancel Scan ({{step}})",
+        "rotate_next": "Rotate (R{{ring}})",
+        "rotate_next_title": "Rotate based on game rule order: ring 1 -> ring 2 -> ring 3",
+        "rotate_r1": "Rotate R1",
+        "rotate_r1_title": "Ring 1 only rotates",
+        "rotate_r2": "Rotate R2",
+        "rotate_r2_title": "Ring 2 carries Ring 1",
+        "rotate_r3": "Rotate R3",
+        "rotate_r3_title": "Ring 3 carries Ring 2 and Ring 1",
+        "push_delay_title": "Delay for pushed probes when rotating ring {{ring}}",
+        "debug_hand_select_title": "Debug Hand Select",
+        "debug_row_select_title": "Debug Card Row Select",
+        "debug_end_of_round_title": "Debug End Of Round",
+        "scan": {
+          "pool_title": "Scan: choose sub-action",
+          "card_row_title": "Select a card from the card row",
+          "hand_title": "Select a hand card to discard for signal",
+          "color_pick_title": "Choose {{color}} sector to mark signal",
+          "sector_option": "Sector {{id}}",
+          "energy_title": "Select Scan Energy Launch effect",
+          "option": {
+            "mark_earth": "Mark Earth",
+            "mark_card_row": "Mark Card Row",
+            "mark_mercury": "Mark Mercury (1 publicity)",
+            "mark_hand": "Mark Hand Signal",
+            "energy_launch_or_move": "Energy Launch or Move",
+            "done": "Done (end scan)",
+            "launch": "Pay 1 energy to launch a probe",
+            "move": "Gain 1 movement"
+          }
+        }
+      },
+      "server": {
+        "establishing_uplink": "Establishing uplink to debug gateway…",
+        "acquiring_telemetry": "Acquiring server telemetry…",
+        "establishing_session": "Establishing server debug session…",
+        "anomaly_detected": "Anomaly detected",
+        "init_failed": "Could not initialize server debug session.",
+        "reacquire_session": "Re-acquire session",
+        "label": "Server Debug",
+        "game_id": "Game {{id}}",
+        "creating": "Creating...",
+        "new_game": "New Game",
+        "create_failed": "Failed to create debug session"
+      },
+      "replay": {
+        "connecting": "Connecting to replay session...",
+        "kicker": "Calibration · Replay",
+        "title": "Replay presets with checkpoint resume",
+        "subtitle": "Stage a real debug session from a reusable preset, then re-engage through the live mission console.",
+        "loading_presets": "Loading replay presets...",
+        "preset_label": "Preset",
+        "preset_placeholder": "Select replay preset",
+        "checkpoint_label": "Checkpoint",
+        "checkpoint_placeholder": "Select checkpoint",
+        "checkpoint_default_hint": "Choose where the replay should stop.",
+        "field_select_placeholder": "Select {{label}}",
+        "anomaly_label": "Anomaly",
+        "refresh_presets": "Refresh presets",
+        "starting": "Starting...",
+        "start_replay": "Start Replay",
+        "no_presets": "No replay presets available.",
+        "snapshot_kicker": "Snapshot · Resume",
+        "snapshot_subtitle": "Re-engage from a stored snapshot by entering its game ID.",
+        "game_id_label": "Game ID",
+        "game_id_placeholder": "Enter game UUID",
+        "version_label": "Version (optional, latest if empty)",
+        "version_placeholder": "e.g. 5",
+        "loading_snapshot": "Loading...",
+        "load_snapshot": "Load Snapshot",
+        "load_presets_failed": "Failed to load replay presets",
+        "create_session_failed": "Failed to create replay session",
+        "load_snapshot_failed": "Failed to load snapshot session",
+        "banner": {
+          "kind_replay": "Replay",
+          "kind_snapshot": "Snapshot",
+          "source_label": "src: {{id}}",
+          "expand_aria": "Expand {{kind}} banner",
+          "collapse_aria": "Collapse banner",
+          "new_replay": "New Replay"
+        }
+      },
+      "hotspots": {
+        "kicker": "UI Calibration",
+        "title": "Hotspot Debug",
+        "board_render_mode": "Board render mode",
+        "image_mode": "Image Mode",
+        "text_mode": "Text Mode",
+        "hotspots_label": "Hotspots",
+        "interactive_label": "Interactive",
+        "anchors_label": "Anchors",
+        "save_hotspots": "Save Hotspots",
+        "reset_hotspots": "Reset Hotspots",
+        "load_failed": "Failed to load hotspots",
+        "save_failed": "Failed to save hotspots",
+        "nav_aria": "Hotspot debug components",
+        "solar_ring_controls_aria": "Solar ring radial controls",
+        "ring_label": "Ring {{index}}",
+        "ring_offset_aria": "Ring {{index}} radial offset",
+        "tabs": {
+          "solar": "Solar System",
+          "sectors": "Sectors",
+          "planet": "Planet Board",
+          "tech": "Tech Board",
+          "player": "Personal Board",
+          "rival": "Rival Board",
+          "aliens": "Aliens",
+          "corporations": "Corporations"
+        },
+        "input": {
+          "choose_sector": "Choose a sector",
+          "choose_planet": "Choose a planet",
+          "choose_tech": "Choose tech"
+        }
+      },
+      "solar_compare": {
+        "title": "Solar System Compare",
+        "server_game": "Server game {{id}}",
+        "server_game_pending": "Server game pending",
+        "init": "Init",
+        "rotate": "Rotate",
+        "launch": "Launch",
+        "scan": "Scan",
+        "move_mode": "Move Mode",
+        "reveal": "Reveal",
+        "reveal_alien": "Reveal Alien",
+        "reveal_alien_aria": "Reveal alien type",
+        "pending_input_aria": "Pending debug input",
+        "mascamites_samples": "Mascamites samples: Jupiter {{jupiter}} / Saturn {{saturn}}",
+        "initializing": "Initializing server solar system...",
+        "image_mode_aria": "Image mode solar system",
+        "text_mode_aria": "Text mode solar system",
+        "image_mode_label": "Image Mode",
+        "text_mode_label": "Text Mode"
+      }
     }
   }
 }

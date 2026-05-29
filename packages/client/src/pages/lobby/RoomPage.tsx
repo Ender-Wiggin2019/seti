@@ -204,7 +204,11 @@ export function RoomPage(): React.JSX.Element {
             />
             <RoomHeroMetric
               label={t('client.game_settings.mode', { defaultValue: 'Mode' })}
-              value={room.options.isSoloMode ? 'Solo' : 'Multi'}
+              value={
+                room.options.isSoloMode
+                  ? t('client.room.mode_solo_short', { defaultValue: 'Solo' })
+                  : t('client.room.mode_multi_short', { defaultValue: 'Multi' })
+              }
               sub={
                 room.options.isSoloMode
                   ? `D${room.options.soloDifficulty ?? 1}`
@@ -215,7 +219,9 @@ export function RoomPage(): React.JSX.Element {
               label={t('client.game_settings.turn_timer')}
               value={
                 room.options.timerPerTurn > 0
-                  ? `${room.options.timerPerTurn}s`
+                  ? t('client.common.seconds_short', {
+                      count: room.options.timerPerTurn,
+                    })
                   : t('client.common.off')
               }
               sub={

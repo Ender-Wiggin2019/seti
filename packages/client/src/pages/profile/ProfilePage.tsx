@@ -80,7 +80,7 @@ export function ProfilePage(): React.JSX.Element {
           </h1>
           <div className='flex flex-wrap items-center gap-2'>
             <Button variant='ghost' onClick={() => setSettingsOpen(true)}>
-              Settings
+              {t('client.profile.settings', { defaultValue: 'Settings' })}
             </Button>
             <SignalIndicator
               signal='green'
@@ -106,7 +106,7 @@ export function ProfilePage(): React.JSX.Element {
         </CardHeader>
         <CardContent className='p-0'>
           <dl className='divide-y divide-[color:var(--metal-edge-soft)]'>
-            <IdentityRow label='ID'>
+            <IdentityRow label={t('client.profile.id', { defaultValue: 'ID' })}>
               <span className='readout text-sm text-text-300'>
                 {displayUser?.id ?? t('client.common.empty_value')}
               </span>
@@ -158,7 +158,9 @@ export function ProfilePage(): React.JSX.Element {
               )}
             </IdentityRow>
 
-            <IdentityRow label='Email'>
+            <IdentityRow
+              label={t('client.profile.email', { defaultValue: 'Email' })}
+            >
               <span className='readout text-sm text-text-300'>
                 {displayUser?.email ?? t('client.common.empty_value')}
               </span>

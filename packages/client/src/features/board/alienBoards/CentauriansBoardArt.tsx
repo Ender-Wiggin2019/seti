@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { HotspotAnchor } from '@/features/hotspots/HotspotAnchor';
 import type {
   IPublicCentauriansBoard,
@@ -87,6 +88,7 @@ export function CentauriansBoardArt({
   selectableSlotIds,
   onSelectTraceSlot,
 }: ICentauriansBoardArtProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <section
       className='min-w-0 space-y-2'
@@ -94,7 +96,12 @@ export function CentauriansBoardArt({
     >
       <AlienBoardArtFrame
         artKey='centaurians'
-        alt='Centaurians alien board'
+        alt={t('client.alien_board_extra.image_alt_named', {
+          name: t('client.alien_board.types.centaurians', {
+            defaultValue: 'Centaurians',
+          }),
+          defaultValue: 'Centaurians alien board',
+        })}
         testId={`alien-${alienIndex}-centaurians-art`}
       >
         <TraceMarkerOverlay

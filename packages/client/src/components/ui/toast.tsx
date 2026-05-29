@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import { create } from 'zustand';
 import { cn } from '@/lib/cn';
 
@@ -59,6 +60,7 @@ function ToastItem({
   toast: IToast;
   onDismiss: () => void;
 }): React.JSX.Element {
+  const { t: translate } = useTranslation('common');
   useEffect(() => {
     if (t.duration === null) {
       return;
@@ -110,7 +112,9 @@ function ToastItem({
         type='button'
         onClick={onDismiss}
         className='-mr-1 -mt-1 flex h-6 w-6 items-center justify-center rounded-sm text-text-500 transition-colors hover:bg-surface-800 hover:text-text-100'
-        aria-label='Dismiss'
+        aria-label={translate('client.toast.dismiss', {
+          defaultValue: 'Dismiss',
+        })}
       >
         <svg
           xmlns='http://www.w3.org/2000/svg'

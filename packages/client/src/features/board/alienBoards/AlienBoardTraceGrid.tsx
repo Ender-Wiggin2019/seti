@@ -8,6 +8,7 @@ import {
   type TTraceRewardPresentation,
   toTraceRewardPresentations,
 } from '@seti/common/utils/alienTracePresentation';
+import { useTranslation } from 'react-i18next';
 import { usePreviewOverflowCount } from '@/hooks/useCalibrationMode';
 import { cn } from '@/lib/cn';
 import type {
@@ -284,11 +285,15 @@ function TraceSlot({
  * the fossil.
  */
 function ExofossilCostBadge({ cost }: { cost: number }): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <span
       className='pointer-events-none absolute -bottom-1.5 -right-1.5 inline-flex items-center gap-0.5 rounded-full border border-purple-300/70 bg-surface-950/95 px-1.5 py-1 font-mono text-[11px] font-semibold leading-none text-purple-100 shadow-[0_2px_4px_rgba(0,0,0,0.55)]'
       data-testid='trace-slot-exofossil-cost'
-      title={`Costs ${cost} exofossil`}
+      title={t('client.alien_board_extra.costs_exofossil', {
+        count: cost,
+        defaultValue: `Costs ${cost} exofossil`,
+      })}
     >
       {/* Red ✕ — pure CSS so the icon scales cleanly with the badge. */}
       <span aria-hidden className='relative inline-block h-3 w-3 shrink-0'>
@@ -313,11 +318,15 @@ function ExofossilCostBadge({ cost }: { cost: number }): React.JSX.Element {
  * placement on a data spend (tier 4 = 3 data, tier 5 = 1 data).
  */
 function DataCostBadge({ cost }: { cost: number }): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <span
       className='pointer-events-none absolute -bottom-1.5 -right-1.5 inline-flex items-center gap-0.5 rounded-full border border-cyan-300/70 bg-surface-950/95 px-1.5 py-1 font-mono text-[11px] font-semibold leading-none text-cyan-100 shadow-[0_2px_4px_rgba(0,0,0,0.55)]'
       data-testid='trace-slot-data-cost'
-      title={`Costs ${cost} data`}
+      title={t('client.alien_board_extra.costs_data', {
+        count: cost,
+        defaultValue: `Costs ${cost} data`,
+      })}
     >
       <span aria-hidden className='relative inline-block h-3 w-3 shrink-0'>
         <span className='absolute left-1/2 top-1/2 h-[2px] w-[110%] -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-full bg-red-500 shadow-[0_0_2px_rgba(0,0,0,0.6)]' />
@@ -349,6 +358,7 @@ export function SlotOccupantOverlay({
   ringColor?: string;
   playerColors: Record<string, string>;
 }): React.JSX.Element | null {
+  const { t } = useTranslation('common');
   if (slot.occupants.length === 0) return null;
   const isOverflow = slot.maxOccupants === -1;
   // Same token size in both circle and overflow pill so they read as
@@ -386,7 +396,13 @@ export function SlotOccupantOverlay({
               aspectRatio: '1 / 1',
               backgroundColor: fill,
             }}
-            title={occ.source === 'neutral' ? 'Neutral' : occ.source.playerId}
+            title={
+              occ.source === 'neutral'
+                ? t('client.alien_board_extra.neutral', {
+                    defaultValue: 'Neutral',
+                  })
+                : occ.source.playerId
+            }
           />
         );
       })}

@@ -164,7 +164,10 @@ export function ComputerView({
                 label={getRewardLabel(col.topReward)}
                 onClick={() => interactive && onPlaceData?.('top', i)}
                 testId={`computer-slot-top-${i}`}
-                ariaLabel={`Computer top slot ${i + 1}`}
+                ariaLabel={t('client.computer_view.top_slot', {
+                  index: i + 1,
+                  defaultValue: `Computer top slot ${i + 1}`,
+                })}
               />
             );
           })}
@@ -192,7 +195,10 @@ export function ComputerView({
                   label={getRewardLabel(col.bottomReward)}
                   onClick={() => interactive && onPlaceData?.('bottom', i)}
                   testId={`computer-slot-bottom-${i}`}
-                  ariaLabel={`Computer bottom slot ${i + 1}`}
+                  ariaLabel={t('client.computer_view.bottom_slot', {
+                    index: i + 1,
+                    defaultValue: `Computer bottom slot ${i + 1}`,
+                  })}
                 />
               );
             })}

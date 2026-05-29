@@ -19,7 +19,9 @@ import {
   TECH_CATEGORIES,
   TECH_LEVELS,
 } from '@seti/common/types/tech';
+import type { TFunction } from 'i18next';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlienBoardView } from '@/features/board/AlienBoardView';
 import { PlanetaryBoardView } from '@/features/board/PlanetaryBoardView';
 import { SectorGrid } from '@/features/board/SectorGrid';
@@ -86,27 +88,92 @@ const ALIEN_TYPES = [
   EAlienType.AMOEBA,
   EAlienType.ARKHOS,
 ] as const;
-const ALIEN_LABELS: Record<EAlienType, string> = {
-  [EAlienType.ANOMALIES]: 'Anomalies',
-  [EAlienType.CENTAURIANS]: 'Centaurians',
-  [EAlienType.EXERTIANS]: 'Exertians',
-  [EAlienType.MASCAMITES]: 'Mascamites',
-  [EAlienType.OUMUAMUA]: 'Oumuamua',
-  [EAlienType.AMOEBA]: 'Amoeba',
-  [EAlienType.GLYPHIDS]: 'Glyphids',
-  [EAlienType.ARKHOS]: 'Arkhos',
-  [EAlienType.DUMMY]: 'Dummy',
-};
-const TABS: Array<{ id: THotspotsDebugTab; label: string }> = [
-  { id: 'solar', label: 'Solar System' },
-  { id: 'sectors', label: 'Sectors' },
-  { id: 'planet', label: 'Planet Board' },
-  { id: 'tech', label: 'Tech Board' },
-  { id: 'player', label: 'Personal Board' },
-  { id: 'rival', label: 'Rival Board' },
-  { id: 'aliens', label: 'Aliens' },
-  { id: 'corporations', label: 'Corporations' },
-];
+function buildAlienLabels(t: TFunction): Record<EAlienType, string> {
+  return {
+    [EAlienType.ANOMALIES]: t('client.alien_board.types.anomalies', {
+      defaultValue: 'Anomalies',
+    }),
+    [EAlienType.CENTAURIANS]: t('client.alien_board.types.centaurians', {
+      defaultValue: 'Centaurians',
+    }),
+    [EAlienType.EXERTIANS]: t('client.alien_board.types.exertians', {
+      defaultValue: 'Exertians',
+    }),
+    [EAlienType.MASCAMITES]: t('client.alien_board.types.mascamites', {
+      defaultValue: 'Mascamites',
+    }),
+    [EAlienType.OUMUAMUA]: t('client.alien_board.types.oumuamua', {
+      defaultValue: 'Oumuamua',
+    }),
+    [EAlienType.AMOEBA]: t('client.alien_board.types.amoeba', {
+      defaultValue: 'Amoeba',
+    }),
+    [EAlienType.GLYPHIDS]: t('client.alien_board.types.glyphids', {
+      defaultValue: 'Glyphids',
+    }),
+    [EAlienType.ARKHOS]: t('client.alien_board.types.arkhos', {
+      defaultValue: 'Arkhos',
+    }),
+    [EAlienType.DUMMY]: t('client.alien_board.types.dummy', {
+      defaultValue: 'Dummy',
+    }),
+  };
+}
+
+function buildTabs(
+  t: TFunction,
+): Array<{ id: THotspotsDebugTab; label: string }> {
+  return [
+    {
+      id: 'solar',
+      label: t('client.debug.hotspots.tabs.solar', {
+        defaultValue: 'Solar System',
+      }),
+    },
+    {
+      id: 'sectors',
+      label: t('client.debug.hotspots.tabs.sectors', {
+        defaultValue: 'Sectors',
+      }),
+    },
+    {
+      id: 'planet',
+      label: t('client.debug.hotspots.tabs.planet', {
+        defaultValue: 'Planet Board',
+      }),
+    },
+    {
+      id: 'tech',
+      label: t('client.debug.hotspots.tabs.tech', {
+        defaultValue: 'Tech Board',
+      }),
+    },
+    {
+      id: 'player',
+      label: t('client.debug.hotspots.tabs.player', {
+        defaultValue: 'Personal Board',
+      }),
+    },
+    {
+      id: 'rival',
+      label: t('client.debug.hotspots.tabs.rival', {
+        defaultValue: 'Rival Board',
+      }),
+    },
+    {
+      id: 'aliens',
+      label: t('client.debug.hotspots.tabs.aliens', {
+        defaultValue: 'Aliens',
+      }),
+    },
+    {
+      id: 'corporations',
+      label: t('client.debug.hotspots.tabs.corporations', {
+        defaultValue: 'Corporations',
+      }),
+    },
+  ];
+}
 function hasHotspotDrafts(
   draftOverrides: Record<string, Record<string, unknown>>,
 ): boolean {
@@ -786,29 +853,35 @@ function createGameState(): IPublicGameState {
   };
 }
 
-function createSectorInput(): IPlayerInputModel {
+function createSectorInput(t: TFunction): IPlayerInputModel {
   return {
     inputId: 'hotspot-sector',
     type: EPlayerInputType.SECTOR,
-    title: 'Choose a sector',
+    title: t('client.debug.hotspots.input.choose_sector', {
+      defaultValue: 'Choose a sector',
+    }),
     options: [ESector.RED, ESector.YELLOW, ESector.BLUE, ESector.BLACK],
   };
 }
 
-function createPlanetInput(): IPlayerInputModel {
+function createPlanetInput(t: TFunction): IPlayerInputModel {
   return {
     inputId: 'hotspot-planet',
     type: EPlayerInputType.PLANET,
-    title: 'Choose a planet',
+    title: t('client.debug.hotspots.input.choose_planet', {
+      defaultValue: 'Choose a planet',
+    }),
     options: [...PLANETARY_PLANETS],
   };
 }
 
-function createTechInput(): IPlayerInputModel {
+function createTechInput(t: TFunction): IPlayerInputModel {
   return {
     inputId: 'hotspot-tech',
     type: EPlayerInputType.TECH,
-    title: 'Choose tech',
+    title: t('client.debug.hotspots.input.choose_tech', {
+      defaultValue: 'Choose tech',
+    }),
     options: [ETech.PROBE, ETech.SCAN, ETech.COMPUTER],
   };
 }
@@ -817,7 +890,12 @@ function noopInputResponse(_response: IInputResponse): void {
   // Intentionally empty: the page calibrates UI hit areas, not game flow.
 }
 
-function renderPanel(tab: THotspotsDebugTab, gameState: IPublicGameState) {
+function renderPanel(
+  tab: THotspotsDebugTab,
+  gameState: IPublicGameState,
+  t: TFunction,
+  alienLabels: Record<EAlienType, string>,
+) {
   const player = gameState.players[0];
 
   switch (tab) {
@@ -849,7 +927,7 @@ function renderPanel(tab: THotspotsDebugTab, gameState: IPublicGameState) {
             sectors={gameState.sectors}
             setupConfig={SETUP_CONFIG}
             playerColors={PLAYER_COLORS}
-            pendingInput={createSectorInput()}
+            pendingInput={createSectorInput(t)}
             boardScale={0.82}
             onSelectSector={() => undefined}
             onSelectSectorId={() => undefined}
@@ -863,7 +941,7 @@ function renderPanel(tab: THotspotsDebugTab, gameState: IPublicGameState) {
             planetaryBoard={gameState.planetaryBoard}
             gameState={gameState}
             myPlayerId={PLAYER_ID}
-            pendingInput={createPlanetInput()}
+            pendingInput={createPlanetInput(t)}
             playerColors={PLAYER_COLORS}
             onSelectMainActionPlanet={() => undefined}
             onRespondInput={noopInputResponse}
@@ -876,7 +954,7 @@ function renderPanel(tab: THotspotsDebugTab, gameState: IPublicGameState) {
           <TechBoardView
             techBoard={gameState.techBoard}
             players={gameState.players}
-            pendingInput={createTechInput()}
+            pendingInput={createTechInput(t)}
             playerColors={PLAYER_COLORS}
             myPlayerId={PLAYER_ID}
             onSubmit={noopInputResponse}
@@ -909,7 +987,7 @@ function renderPanel(tab: THotspotsDebugTab, gameState: IPublicGameState) {
         >
           {ALIEN_TYPES.map((alienType) => (
             <h3 key={alienType} className='sr-only'>
-              {ALIEN_LABELS[alienType]}
+              {alienLabels[alienType]}
             </h3>
           ))}
           {gameState.aliens
@@ -955,6 +1033,9 @@ function renderPanel(tab: THotspotsDebugTab, gameState: IPublicGameState) {
 }
 
 export function HotspotsDebugPage(): React.JSX.Element {
+  const { t } = useTranslation('common');
+  const tabs = useMemo(() => buildTabs(t), [t]);
+  const alienLabels = useMemo(() => buildAlienLabels(t), [t]);
   const [activeTab, setActiveTab] = useState<THotspotsDebugTab>('solar');
   const [hotspotPersistenceError, setHotspotPersistenceError] = useState('');
   const solarRingIndices = [1, 2, 3, 4] as const;
@@ -1011,14 +1092,18 @@ export function HotspotsDebugPage(): React.JSX.Element {
       .catch((error) => {
         if (active) {
           setHotspotPersistenceError(
-            error instanceof Error ? error.message : 'Failed to load hotspots',
+            error instanceof Error
+              ? error.message
+              : t('client.debug.hotspots.load_failed', {
+                  defaultValue: 'Failed to load hotspots',
+                }),
           );
         }
       });
     return () => {
       active = false;
     };
-  }, [setHotspotOverrides]);
+  }, [setHotspotOverrides, t]);
 
   async function handleSaveHotspots(): Promise<void> {
     const nextOverrides = previewHotspotOverrides();
@@ -1029,7 +1114,11 @@ export function HotspotsDebugPage(): React.JSX.Element {
       setHotspotPersistenceError('');
     } catch (error) {
       setHotspotPersistenceError(
-        error instanceof Error ? error.message : 'Failed to save hotspots',
+        error instanceof Error
+          ? error.message
+          : t('client.debug.hotspots.save_failed', {
+              defaultValue: 'Failed to save hotspots',
+            }),
       );
     }
   }
@@ -1098,14 +1187,22 @@ export function HotspotsDebugPage(): React.JSX.Element {
     >
       <header className='mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-surface-700/50 pb-3'>
         <div>
-          <p className='micro-label'>UI Calibration</p>
+          <p className='micro-label'>
+            {t('client.debug.hotspots.kicker', {
+              defaultValue: 'UI Calibration',
+            })}
+          </p>
           <h1 className='font-display text-2xl font-bold uppercase tracking-wide'>
-            Hotspot Debug
+            {t('client.debug.hotspots.title', {
+              defaultValue: 'Hotspot Debug',
+            })}
           </h1>
         </div>
         <div className='flex flex-wrap items-center gap-2'>
           <div
-            aria-label='Board render mode'
+            aria-label={t('client.debug.hotspots.board_render_mode', {
+              defaultValue: 'Board render mode',
+            })}
             className='flex overflow-hidden rounded border border-surface-700/60'
             role='group'
           >
@@ -1120,7 +1217,9 @@ export function HotspotsDebugPage(): React.JSX.Element {
                   : 'bg-surface-800/60 text-text-300 hover:bg-surface-700/70',
               )}
             >
-              Image Mode
+              {t('client.debug.hotspots.image_mode', {
+                defaultValue: 'Image Mode',
+              })}
             </button>
             <button
               type='button'
@@ -1133,7 +1232,9 @@ export function HotspotsDebugPage(): React.JSX.Element {
                   : 'bg-surface-800/60 text-text-300 hover:bg-surface-700/70',
               )}
             >
-              Text Mode
+              {t('client.debug.hotspots.text_mode', {
+                defaultValue: 'Text Mode',
+              })}
             </button>
           </div>
           <button
@@ -1147,7 +1248,12 @@ export function HotspotsDebugPage(): React.JSX.Element {
                 : 'border-surface-700/60 bg-surface-800/60 text-text-300 hover:bg-surface-700/70',
             )}
           >
-            Hotspots {hotspotDebug ? 'On' : 'Off'}
+            {t('client.debug.hotspots.hotspots_label', {
+              defaultValue: 'Hotspots',
+            })}{' '}
+            {hotspotDebug
+              ? t('client.common.on', { defaultValue: 'On' })
+              : t('client.common.off', { defaultValue: 'Off' })}
           </button>
           <button
             type='button'
@@ -1160,7 +1266,12 @@ export function HotspotsDebugPage(): React.JSX.Element {
                 : 'border-surface-700/60 bg-surface-800/60 text-text-300 hover:bg-surface-700/70',
             )}
           >
-            Interactive {showInteractiveHotspots ? 'On' : 'Off'}
+            {t('client.debug.hotspots.interactive_label', {
+              defaultValue: 'Interactive',
+            })}{' '}
+            {showInteractiveHotspots
+              ? t('client.common.on', { defaultValue: 'On' })
+              : t('client.common.off', { defaultValue: 'Off' })}
           </button>
           <button
             type='button'
@@ -1173,7 +1284,12 @@ export function HotspotsDebugPage(): React.JSX.Element {
                 : 'border-surface-700/60 bg-surface-800/60 text-text-300 hover:bg-surface-700/70',
             )}
           >
-            Anchors {showAnchorHotspots ? 'On' : 'Off'}
+            {t('client.debug.hotspots.anchors_label', {
+              defaultValue: 'Anchors',
+            })}{' '}
+            {showAnchorHotspots
+              ? t('client.common.on', { defaultValue: 'On' })
+              : t('client.common.off', { defaultValue: 'Off' })}
           </button>
           <button
             type='button'
@@ -1188,7 +1304,9 @@ export function HotspotsDebugPage(): React.JSX.Element {
                 : 'border-surface-700/60 bg-surface-800/60 text-text-500',
             )}
           >
-            Save Hotspots
+            {t('client.debug.hotspots.save_hotspots', {
+              defaultValue: 'Save Hotspots',
+            })}
           </button>
           <button
             type='button'
@@ -1198,7 +1316,9 @@ export function HotspotsDebugPage(): React.JSX.Element {
             }}
             className='rounded border border-surface-700/60 bg-surface-800/60 px-2 py-1 font-mono text-[10px] uppercase text-text-300 transition-colors hover:bg-surface-700/70'
           >
-            Reset Hotspots
+            {t('client.debug.hotspots.reset_hotspots', {
+              defaultValue: 'Reset Hotspots',
+            })}
           </button>
         </div>
       </header>
@@ -1210,11 +1330,13 @@ export function HotspotsDebugPage(): React.JSX.Element {
       ) : null}
 
       <nav
-        aria-label='Hotspot debug components'
+        aria-label={t('client.debug.hotspots.nav_aria', {
+          defaultValue: 'Hotspot debug components',
+        })}
         className='mb-4 flex gap-2 overflow-x-auto border-b border-surface-800/80 pb-2'
         role='tablist'
       >
-        {TABS.map((tab) => (
+        {tabs.map((tab) => (
           <button
             key={tab.id}
             type='button'
@@ -1236,7 +1358,9 @@ export function HotspotsDebugPage(): React.JSX.Element {
 
       {activeTab === 'solar' ? (
         <section
-          aria-label='Solar ring radial controls'
+          aria-label={t('client.debug.hotspots.solar_ring_controls_aria', {
+            defaultValue: 'Solar ring radial controls',
+          })}
           className='mb-4 grid gap-2 rounded-md border border-surface-800/70 bg-surface-900/60 px-3 py-3 sm:grid-cols-2 xl:grid-cols-4'
         >
           {solarRingIndices.map((ringIndex) => (
@@ -1245,14 +1369,22 @@ export function HotspotsDebugPage(): React.JSX.Element {
               className='grid gap-1 rounded border border-surface-800/70 bg-surface-950/35 px-2 py-2'
             >
               <span className='flex items-center justify-between gap-3 font-mono text-[10px] uppercase tracking-[0.12em] text-text-300'>
-                <span>Ring {ringIndex}</span>
+                <span>
+                  {t('client.debug.hotspots.ring_label', {
+                    defaultValue: 'Ring {{index}}',
+                    index: ringIndex,
+                  })}
+                </span>
                 <span className='text-text-100'>
                   {solarRingOffsets[ringIndex]}px
                 </span>
               </span>
               <input
                 type='range'
-                aria-label={`Ring ${ringIndex} radial offset`}
+                aria-label={t('client.debug.hotspots.ring_offset_aria', {
+                  defaultValue: 'Ring {{index}} radial offset',
+                  index: ringIndex,
+                })}
                 min={-80}
                 max={80}
                 step={1}
@@ -1271,7 +1403,7 @@ export function HotspotsDebugPage(): React.JSX.Element {
       ) : null}
 
       <div className='min-w-0 overflow-x-auto pb-8'>
-        {renderPanel(activeTab, gameState)}
+        {renderPanel(activeTab, gameState, t, alienLabels)}
       </div>
     </main>
   );

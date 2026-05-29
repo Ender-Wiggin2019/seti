@@ -97,8 +97,14 @@ export function TechStack({
                   key={token.tokenId}
                   data-testid={`tech-stack-alien-token-${token.tokenId}`}
                   className='inline-flex h-6 w-6 items-center justify-center rounded-full border border-lime-300/80 bg-surface-950/70'
-                  aria-label={`${token.glyph} glyph token`}
-                  title={`${token.glyph} glyph token`}
+                  aria-label={t('client.tech_stack_view.glyph_token', {
+                    glyph: token.glyph,
+                    defaultValue: `${token.glyph} glyph token`,
+                  })}
+                  title={t('client.tech_stack_view.glyph_token', {
+                    glyph: token.glyph,
+                    defaultValue: `${token.glyph} glyph token`,
+                  })}
                 >
                   <DescRender
                     desc={`{${token.glyph}[sm]}`}
@@ -112,17 +118,23 @@ export function TechStack({
           <div className='flex min-h-7 flex-wrap items-center gap-1'>
             {(stack.topTileBonuses ?? []).map((bonus, index) => {
               const meta = getTechBonusPresentation(bonus);
+              const localizedLabel = meta.labelKey
+                ? t(meta.labelKey, {
+                    type: bonus.type,
+                    defaultValue: meta.label,
+                  })
+                : meta.label;
               return (
                 <span
                   key={`${stack.tech}-${stack.level}-bonus-${bonus.type}-${index}`}
                   className='inline-flex h-6 min-w-6 items-center justify-center rounded border border-surface-700/70 bg-background-950/60 px-1 font-mono text-[9px] text-text-200'
-                  title={meta.label}
-                  aria-label={meta.label}
+                  title={localizedLabel}
+                  aria-label={localizedLabel}
                 >
                   {meta.src ? (
                     <img
                       src={meta.src}
-                      alt={meta.label}
+                      alt={localizedLabel}
                       className='h-5 w-5 object-contain'
                     />
                   ) : (

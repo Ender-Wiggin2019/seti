@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { debugApi } from '@/api/debugApi';
 import type { IDebugServerSessionResponse } from '@/api/types';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
@@ -16,6 +17,7 @@ interface IAuthSnapshot {
 }
 
 function ServerDebugGameContent(): React.JSX.Element {
+  const { t } = useTranslation('common');
   const { isConnected, gameState } = useGameContext();
   const setActiveTab = useGameViewStore((state) => state.setActiveTab);
 
@@ -28,7 +30,9 @@ function ServerDebugGameContent(): React.JSX.Element {
       <div className='flex h-screen flex-col items-center justify-center gap-4 bg-[var(--surface-void)]'>
         <LoadingSpinner
           variant='scanline'
-          label='Establishing uplink to debug gateway…'
+          label={t('client.debug.server.establishing_uplink', {
+            defaultValue: 'Establishing uplink to debug gateway…',
+          })}
           className='max-w-md'
         />
       </div>
@@ -40,7 +44,9 @@ function ServerDebugGameContent(): React.JSX.Element {
       <div className='flex h-screen flex-col items-center justify-center gap-4 bg-[var(--surface-void)]'>
         <LoadingSpinner
           variant='scanline'
-          label='Acquiring server telemetry…'
+          label={t('client.debug.server.acquiring_telemetry', {
+            defaultValue: 'Acquiring server telemetry…',
+          })}
           className='max-w-md'
         />
       </div>
@@ -51,6 +57,7 @@ function ServerDebugGameContent(): React.JSX.Element {
 }
 
 export function ServerDebugPage(): React.JSX.Element {
+  const { t } = useTranslation('common');
   const [session, setSession] = useState<IDebugServerSessionResponse | null>(
     null,
   );
@@ -81,12 +88,14 @@ export function ServerDebugPage(): React.JSX.Element {
       const message =
         error instanceof Error
           ? error.message
-          : 'Failed to create debug session';
+          : t('client.debug.server.create_failed', {
+              defaultValue: 'Failed to create debug session',
+            });
       setErrorMessage(message);
     } finally {
       setIsCreating(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void createSession();
@@ -114,7 +123,9 @@ export function ServerDebugPage(): React.JSX.Element {
       <div className='flex h-screen flex-col items-center justify-center gap-4 bg-[var(--surface-void)]'>
         <LoadingSpinner
           variant='scanline'
-          label='Establishing server debug session…'
+          label={t('client.debug.server.establishing_session', {
+            defaultValue: 'Establishing server debug session…',
+          })}
           className='max-w-md'
         />
       </div>
@@ -125,13 +136,20 @@ export function ServerDebugPage(): React.JSX.Element {
     return (
       <div className='flex h-screen flex-col items-center justify-center gap-4 bg-[var(--surface-void)] px-6 text-center'>
         <span className='micro-label text-[var(--signal-red-hi)]'>
-          Anomaly detected
+          {t('client.debug.server.anomaly_detected', {
+            defaultValue: 'Anomaly detected',
+          })}
         </span>
         <p className='text-base text-[var(--signal-red-hi)]'>
-          {errorMessage ?? 'Could not initialize server debug session.'}
+          {errorMessage ??
+            t('client.debug.server.init_failed', {
+              defaultValue: 'Could not initialize server debug session.',
+            })}
         </p>
         <Button onClick={() => void createSession()} disabled={isCreating}>
-          Re-acquire session
+          {t('client.debug.server.reacquire_session', {
+            defaultValue: 'Re-acquire session',
+          })}
         </Button>
       </div>
     );
@@ -140,8 +158,15 @@ export function ServerDebugPage(): React.JSX.Element {
   return (
     <>
       <div className='fixed right-3 top-3 z-50 flex items-center gap-2 rounded-[5px] border border-[color:var(--metal-edge)] bg-[var(--surface-raised)]/95 p-2 text-xs backdrop-blur'>
-        <span className='micro-label'>Server Debug</span>
-        <span className='font-mono text-text-300'>Game {session.gameId}</span>
+        <span className='micro-label'>
+          {t('client.debug.server.label', { defaultValue: 'Server Debug' })}
+        </span>
+        <span className='font-mono text-text-300'>
+          {t('client.debug.server.game_id', {
+            defaultValue: 'Game {{id}}',
+            id: session.gameId,
+          })}
+        </span>
         <Button
           size='sm'
           variant='ghost'
@@ -149,7 +174,9 @@ export function ServerDebugPage(): React.JSX.Element {
           disabled={isCreating}
           className='h-7'
         >
-          {isCreating ? 'Creating...' : 'New Game'}
+          {isCreating
+            ? t('client.debug.server.creating', { defaultValue: 'Creating...' })
+            : t('client.debug.server.new_game', { defaultValue: 'New Game' })}
         </Button>
       </div>
       <GameContextProvider key={session.gameId} gameId={session.gameId}>

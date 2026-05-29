@@ -57,13 +57,34 @@ const HELION_MARK_CATEGORIES = [
   ETech.COMPUTER,
 ] as const;
 
-const ORGANIZATION_MARK_LABELS: Record<string, string> = {
-  [EResource.CREDIT]: 'Credit',
-  [EResource.PUBLICITY]: 'Publicity',
-  [EResource.DATA]: 'Data',
-  [ETech.PROBE]: 'Probe',
-  [ETech.SCAN]: 'Scan',
-  [ETech.COMPUTER]: 'Computer',
+const ORGANIZATION_MARK_LABEL_KEYS: Record<
+  string,
+  { key: string; defaultValue: string }
+> = {
+  [EResource.CREDIT]: {
+    key: 'client.organizations_card.marks.credit',
+    defaultValue: 'Credit',
+  },
+  [EResource.PUBLICITY]: {
+    key: 'client.organizations_card.marks.publicity',
+    defaultValue: 'Publicity',
+  },
+  [EResource.DATA]: {
+    key: 'client.organizations_card.marks.data',
+    defaultValue: 'Data',
+  },
+  [ETech.PROBE]: {
+    key: 'client.organizations_card.marks.probe',
+    defaultValue: 'Probe',
+  },
+  [ETech.SCAN]: {
+    key: 'client.organizations_card.marks.scan',
+    defaultValue: 'Scan',
+  },
+  [ETech.COMPUTER]: {
+    key: 'client.organizations_card.marks.computer',
+    defaultValue: 'Computer',
+  },
 };
 
 function getAbilityEntries(
@@ -80,24 +101,32 @@ function getAbilityEntries(
 function getOrganizationMarkEntries(
   organizationId: EOrganizationId,
   state: Record<string, unknown> | undefined,
+  t: (key: string, opts?: Record<string, unknown>) => string,
 ): TOrganizationMarkEntry[] {
   if (organizationId === EOrganizationId.COSMOS_STRATEGY_GROUP) {
     const markedRewards = getRecord(state?.markedRewards);
-    return COSMOS_MARK_REWARDS.map((reward) => ({
-      id: reward,
-      label: ORGANIZATION_MARK_LABELS[reward],
-      marked: markedRewards?.[reward] === true,
-    }));
+    return COSMOS_MARK_REWARDS.map((reward) => {
+      const meta = ORGANIZATION_MARK_LABEL_KEYS[reward];
+      return {
+        id: reward,
+        label: t(meta.key, { defaultValue: meta.defaultValue }),
+        marked: markedRewards?.[reward] === true,
+      };
+    });
   }
 
   if (organizationId === EOrganizationId.HELION_ASSEMBLY) {
     const markedCategories = state?.markedCategories;
-    return HELION_MARK_CATEGORIES.map((category) => ({
-      id: category,
-      label: ORGANIZATION_MARK_LABELS[category],
-      marked:
-        Array.isArray(markedCategories) && markedCategories.includes(category),
-    }));
+    return HELION_MARK_CATEGORIES.map((category) => {
+      const meta = ORGANIZATION_MARK_LABEL_KEYS[category];
+      return {
+        id: category,
+        label: t(meta.key, { defaultValue: meta.defaultValue }),
+        marked:
+          Array.isArray(markedCategories) &&
+          markedCategories.includes(category),
+      };
+    });
   }
 
   return [];
@@ -128,7 +157,7 @@ export function OrganizationCard({
   const name = getOrganizationDisplayName(t, organizationId);
   const reference = organization.frontendReference;
   const abilityEntries = getAbilityEntries(organization.abilityText);
-  const markEntries = getOrganizationMarkEntries(organizationId, state);
+  const markEntries = getOrganizationMarkEntries(organizationId, state, t);
   const canUse = available && !used;
 
   if (textMode) {
@@ -158,7 +187,9 @@ export function OrganizationCard({
           {markEntries.length > 0 ? (
             <section data-testid={`organization-status-${organizationId}`}>
               <p className='mb-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-accent-300'>
-                Reward marks
+                {t('client.organizations_card.reward_marks', {
+                  defaultValue: 'Reward marks',
+                })}
               </p>
               <div className='grid grid-cols-1 gap-1'>
                 {markEntries.map((entry) => (
@@ -173,7 +204,15 @@ export function OrganizationCard({
                     data-testid={`organization-mark-${organizationId}-${entry.id}`}
                   >
                     <span>{entry.label}</span>
-                    <span>{entry.marked ? 'marked' : 'open'}</span>
+                    <span>
+                      {entry.marked
+                        ? t('client.organizations_card.marked', {
+                            defaultValue: 'marked',
+                          })
+                        : t('client.organizations_card.open', {
+                            defaultValue: 'open',
+                          })}
+                    </span>
                   </span>
                 ))}
               </div>

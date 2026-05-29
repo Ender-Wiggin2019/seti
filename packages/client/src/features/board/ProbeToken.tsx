@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 import { resolvePlayerColor } from '@/lib/playerColor';
 
@@ -24,12 +25,16 @@ export function ProbeToken({
   playerColor,
   className,
 }: IProbeTokenProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const fill = resolvePlayerColor(playerColor) ?? '#e6eded';
 
   return (
     <span
       role='img'
-      aria-label={`${playerColor} probe`}
+      aria-label={t('client.probe_token.aria_label', {
+        playerColor,
+        defaultValue: `${playerColor} probe`,
+      })}
       className={cn(
         'pointer-events-none inline-block h-5 w-5 select-none drop-shadow-md',
         className,

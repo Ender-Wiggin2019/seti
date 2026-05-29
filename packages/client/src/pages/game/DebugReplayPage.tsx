@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { debugApi } from '@/api/debugApi';
 import type {
   IDebugReplayPresetDefinition,
@@ -62,6 +63,7 @@ function getInitialReplayFieldValue(
 }
 
 function DebugReplayGameContent(): React.JSX.Element {
+  const { t } = useTranslation('common');
   const { isConnected, gameState } = useGameContext();
   const setActiveTab = useGameViewStore((state) => state.setActiveTab);
 
@@ -73,7 +75,11 @@ function DebugReplayGameContent(): React.JSX.Element {
     return (
       <div className='flex h-screen flex-col items-center justify-center gap-4 bg-[var(--surface-void)]'>
         <LoadingSpinner />
-        <p className='text-sm text-text-500'>Connecting to replay session...</p>
+        <p className='text-sm text-text-500'>
+          {t('client.debug.replay.connecting', {
+            defaultValue: 'Connecting to replay session...',
+          })}
+        </p>
       </div>
     );
   }
@@ -82,6 +88,7 @@ function DebugReplayGameContent(): React.JSX.Element {
 }
 
 export function DebugReplayPage(): React.JSX.Element {
+  const { t } = useTranslation('common');
   const [presets, setPresets] = useState<IDebugReplayPresetDefinition[]>([]);
   const [selectedPresetId, setSelectedPresetId] = useState('');
   const [selectedCheckpointId, setSelectedCheckpointId] = useState('');
@@ -140,12 +147,14 @@ export function DebugReplayPage(): React.JSX.Element {
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : 'Failed to load replay presets',
+          : t('client.debug.replay.load_presets_failed', {
+              defaultValue: 'Failed to load replay presets',
+            }),
       );
     } finally {
       setIsLoadingPresets(false);
     }
-  }, [initializeSelections]);
+  }, [initializeSelections, t]);
 
   useEffect(() => {
     void loadPresets();
@@ -222,12 +231,14 @@ export function DebugReplayPage(): React.JSX.Element {
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : 'Failed to create replay session',
+          : t('client.debug.replay.create_session_failed', {
+              defaultValue: 'Failed to create replay session',
+            }),
       );
     } finally {
       setIsCreating(false);
     }
-  }, [fieldValues, selectedCheckpointId, selectedPreset]);
+  }, [fieldValues, selectedCheckpointId, selectedPreset, t]);
 
   const loadSnapshot = useCallback(async () => {
     if (!snapshotGameId.trim()) {
@@ -264,12 +275,14 @@ export function DebugReplayPage(): React.JSX.Element {
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : 'Failed to load snapshot session',
+          : t('client.debug.replay.load_snapshot_failed', {
+              defaultValue: 'Failed to load snapshot session',
+            }),
       );
     } finally {
       setIsLoadingSnapshot(false);
     }
-  }, [snapshotGameId, snapshotVersion]);
+  }, [snapshotGameId, snapshotVersion, t]);
 
   if (snapshotSession) {
     return (
@@ -277,7 +290,10 @@ export function DebugReplayPage(): React.JSX.Element {
         <ReplayBanner
           kind='Snapshot'
           primaryLabel={`R${snapshotSession.round} · ${snapshotSession.phase}`}
-          secondaryLabel={`src: ${snapshotSession.sourceGameId.slice(0, 8)}`}
+          secondaryLabel={t('client.debug.replay.banner.source_label', {
+            defaultValue: 'src: {{id}}',
+            id: snapshotSession.sourceGameId.slice(0, 8),
+          })}
           onDismiss={() => setSnapshotSession(null)}
         />
         <GameContextProvider
@@ -316,29 +332,47 @@ export function DebugReplayPage(): React.JSX.Element {
         <div className='mb-6 space-y-2'>
           <span className='micro-label inline-flex items-center gap-2 text-[oklch(0.78_0.10_240)]'>
             <span className='h-px w-6 bg-[var(--signal-blue)]' />
-            Calibration · Replay
+            {t('client.debug.replay.kicker', {
+              defaultValue: 'Calibration · Replay',
+            })}
           </span>
           <h1 className='font-display text-2xl font-semibold tracking-[0.06em] text-text-100'>
-            Replay presets with checkpoint resume
+            {t('client.debug.replay.title', {
+              defaultValue: 'Replay presets with checkpoint resume',
+            })}
           </h1>
           <p className='text-sm text-text-500'>
-            Stage a real debug session from a reusable preset, then re-engage
-            through the live mission console.
+            {t('client.debug.replay.subtitle', {
+              defaultValue:
+                'Stage a real debug session from a reusable preset, then re-engage through the live mission console.',
+            })}
           </p>
         </div>
 
         {isLoadingPresets ? (
           <div className='flex items-center gap-3 rounded-[5px] border border-[color:var(--metal-edge-soft)] bg-[var(--surface-instrument)]/70 px-4 py-5'>
             <LoadingSpinner />
-            <p className='text-sm text-text-400'>Loading replay presets...</p>
+            <p className='text-sm text-text-400'>
+              {t('client.debug.replay.loading_presets', {
+                defaultValue: 'Loading replay presets...',
+              })}
+            </p>
           </div>
         ) : selectedPreset ? (
           <div className='space-y-4'>
             <div className='space-y-2'>
-              <label className='text-sm text-text-300'>Preset</label>
+              <label className='text-sm text-text-300'>
+                {t('client.debug.replay.preset_label', {
+                  defaultValue: 'Preset',
+                })}
+              </label>
               <Select value={selectedPresetId} onValueChange={updatePreset}>
                 <SelectTrigger data-testid='debug-replay-preset'>
-                  <SelectValue placeholder='Select replay preset' />
+                  <SelectValue
+                    placeholder={t('client.debug.replay.preset_placeholder', {
+                      defaultValue: 'Select replay preset',
+                    })}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {presets.map((preset) => (
@@ -354,13 +388,24 @@ export function DebugReplayPage(): React.JSX.Element {
             </div>
 
             <div className='space-y-2'>
-              <label className='text-sm text-text-300'>Checkpoint</label>
+              <label className='text-sm text-text-300'>
+                {t('client.debug.replay.checkpoint_label', {
+                  defaultValue: 'Checkpoint',
+                })}
+              </label>
               <Select
                 value={selectedCheckpointId}
                 onValueChange={setSelectedCheckpointId}
               >
                 <SelectTrigger data-testid='debug-replay-checkpoint'>
-                  <SelectValue placeholder='Select checkpoint' />
+                  <SelectValue
+                    placeholder={t(
+                      'client.debug.replay.checkpoint_placeholder',
+                      {
+                        defaultValue: 'Select checkpoint',
+                      },
+                    )}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {selectedPreset.checkpoints.map((checkpoint) => (
@@ -373,7 +418,10 @@ export function DebugReplayPage(): React.JSX.Element {
               <p className='text-xs text-text-500'>
                 {selectedPreset.checkpoints.find(
                   (checkpoint) => checkpoint.id === selectedCheckpointId,
-                )?.description ?? 'Choose where the replay should stop.'}
+                )?.description ??
+                  t('client.debug.replay.checkpoint_default_hint', {
+                    defaultValue: 'Choose where the replay should stop.',
+                  })}
               </p>
             </div>
 
@@ -393,7 +441,15 @@ export function DebugReplayPage(): React.JSX.Element {
                     <SelectTrigger
                       data-testid={`debug-replay-field-${field.id}`}
                     >
-                      <SelectValue placeholder={`Select ${field.label}`} />
+                      <SelectValue
+                        placeholder={t(
+                          'client.debug.replay.field_select_placeholder',
+                          {
+                            defaultValue: 'Select {{label}}',
+                            label: field.label,
+                          },
+                        )}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {field.options.map((option) => (
@@ -431,7 +487,9 @@ export function DebugReplayPage(): React.JSX.Element {
                   className='pointer-events-none absolute inset-x-0 bottom-0 h-px bg-[var(--signal-red)] opacity-60'
                 />
                 <span className='micro-label mr-2 text-[var(--signal-red-hi)]'>
-                  Anomaly
+                  {t('client.debug.replay.anomaly_label', {
+                    defaultValue: 'Anomaly',
+                  })}
                 </span>
                 {errorMessage}
               </div>
@@ -439,20 +497,30 @@ export function DebugReplayPage(): React.JSX.Element {
 
             <div className='flex items-center justify-between gap-3 pt-2'>
               <Button variant='ghost' onClick={() => void loadPresets()}>
-                Refresh presets
+                {t('client.debug.replay.refresh_presets', {
+                  defaultValue: 'Refresh presets',
+                })}
               </Button>
               <Button
                 onClick={() => void startReplay()}
                 disabled={isCreating}
                 data-testid='debug-replay-start'
               >
-                {isCreating ? 'Starting...' : 'Start Replay'}
+                {isCreating
+                  ? t('client.debug.replay.starting', {
+                      defaultValue: 'Starting...',
+                    })
+                  : t('client.debug.replay.start_replay', {
+                      defaultValue: 'Start Replay',
+                    })}
               </Button>
             </div>
           </div>
         ) : (
           <div className='rounded-[5px] border border-[color:var(--metal-edge-soft)] bg-[var(--surface-instrument)]/70 px-4 py-5 text-sm text-text-500'>
-            No replay presets available.
+            {t('client.debug.replay.no_presets', {
+              defaultValue: 'No replay presets available.',
+            })}
           </div>
         )}
 
@@ -460,32 +528,47 @@ export function DebugReplayPage(): React.JSX.Element {
           <div className='mb-4 space-y-2'>
             <span className='micro-label inline-flex items-center gap-2 text-[oklch(0.78_0.10_240)]'>
               <span className='h-px w-5 bg-[var(--signal-blue)]' />
-              Snapshot · Resume
+              {t('client.debug.replay.snapshot_kicker', {
+                defaultValue: 'Snapshot · Resume',
+              })}
             </span>
             <p className='text-sm text-text-500'>
-              Re-engage from a stored snapshot by entering its game ID.
+              {t('client.debug.replay.snapshot_subtitle', {
+                defaultValue:
+                  'Re-engage from a stored snapshot by entering its game ID.',
+              })}
             </p>
           </div>
 
           <div className='space-y-4'>
             <div className='space-y-2'>
-              <label className='text-sm text-text-300'>Game ID</label>
+              <label className='text-sm text-text-300'>
+                {t('client.debug.replay.game_id_label', {
+                  defaultValue: 'Game ID',
+                })}
+              </label>
               <Input
                 value={snapshotGameId}
                 onChange={(e) => setSnapshotGameId(e.target.value)}
-                placeholder='Enter game UUID'
+                placeholder={t('client.debug.replay.game_id_placeholder', {
+                  defaultValue: 'Enter game UUID',
+                })}
                 data-testid='debug-snapshot-game-id'
               />
             </div>
 
             <div className='space-y-2'>
               <label className='text-sm text-text-300'>
-                Version (optional, latest if empty)
+                {t('client.debug.replay.version_label', {
+                  defaultValue: 'Version (optional, latest if empty)',
+                })}
               </label>
               <Input
                 value={snapshotVersion}
                 onChange={(e) => setSnapshotVersion(e.target.value)}
-                placeholder='e.g. 5'
+                placeholder={t('client.debug.replay.version_placeholder', {
+                  defaultValue: 'e.g. 5',
+                })}
                 type='text'
                 inputMode='numeric'
                 data-testid='debug-snapshot-version'
@@ -498,7 +581,13 @@ export function DebugReplayPage(): React.JSX.Element {
                 disabled={isLoadingSnapshot || !snapshotGameId.trim()}
                 data-testid='debug-snapshot-start'
               >
-                {isLoadingSnapshot ? 'Loading...' : 'Load Snapshot'}
+                {isLoadingSnapshot
+                  ? t('client.debug.replay.loading_snapshot', {
+                      defaultValue: 'Loading...',
+                    })
+                  : t('client.debug.replay.load_snapshot', {
+                      defaultValue: 'Load Snapshot',
+                    })}
               </Button>
             </div>
           </div>
@@ -526,7 +615,14 @@ function ReplayBanner({
   secondaryLabel,
   onDismiss,
 }: IReplayBannerProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const [collapsed, setCollapsed] = useState(false);
+  const kindLabel =
+    kind === 'Snapshot'
+      ? t('client.debug.replay.banner.kind_snapshot', {
+          defaultValue: 'Snapshot',
+        })
+      : t('client.debug.replay.banner.kind_replay', { defaultValue: 'Replay' });
 
   if (collapsed) {
     return (
@@ -534,10 +630,13 @@ function ReplayBanner({
         type='button'
         onClick={() => setCollapsed(false)}
         className='fixed right-3 top-14 z-40 inline-flex items-center gap-1 rounded-[4px] border border-[color:var(--metal-edge)] bg-[var(--surface-raised)]/95 px-2 py-1 font-mono text-[10px] uppercase tracking-microlabel text-text-300 backdrop-blur transition-colors hover:text-text-100'
-        aria-label={`Expand ${kind.toLowerCase()} banner`}
+        aria-label={t('client.debug.replay.banner.expand_aria', {
+          defaultValue: 'Expand {{kind}} banner',
+          kind: kind.toLowerCase(),
+        })}
         data-testid='replay-banner-collapsed'
       >
-        {kind}
+        {kindLabel}
         <span aria-hidden className='text-text-500'>
           ›
         </span>
@@ -550,7 +649,7 @@ function ReplayBanner({
       className='fixed right-3 top-14 z-40 flex items-center gap-2 rounded-[5px] border border-[color:var(--metal-edge)] bg-[var(--surface-raised)]/95 p-2 text-xs backdrop-blur'
       data-testid='replay-banner'
     >
-      <span className='font-mono text-text-500'>{kind}</span>
+      <span className='font-mono text-text-500'>{kindLabel}</span>
       <span className='font-mono text-text-300'>{primaryLabel}</span>
       <span className='font-mono text-[10px] text-text-500'>
         {secondaryLabel}
@@ -560,12 +659,16 @@ function ReplayBanner({
         variant='ghost'
         onClick={() => setCollapsed(true)}
         className='h-7 px-1.5'
-        aria-label='Collapse banner'
+        aria-label={t('client.debug.replay.banner.collapse_aria', {
+          defaultValue: 'Collapse banner',
+        })}
       >
         <span aria-hidden>‹</span>
       </Button>
       <Button size='sm' variant='ghost' onClick={onDismiss} className='h-7'>
-        New Replay
+        {t('client.debug.replay.banner.new_replay', {
+          defaultValue: 'New Replay',
+        })}
       </Button>
     </div>
   );

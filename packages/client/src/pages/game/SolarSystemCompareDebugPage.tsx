@@ -1,5 +1,6 @@
 import { findPlanetSpaceId } from '@seti/common/rules/solarSystem';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { SolarSystemView } from '@/features/board/SolarSystemView';
 import { InputRenderer } from '@/features/input/InputRenderer';
 import { useServerDebugSession } from '@/hooks/useServerDebugSession';
@@ -45,6 +46,7 @@ function findMascamitesSamplePools(
 }
 
 export function SolarSystemCompareDebugPage(): React.JSX.Element {
+  const { t } = useTranslation('common');
   const session = useServerDebugSession(true);
   const [moveModeActive, setMoveModeActive] = useState(false);
   const [selectedAlienType, setSelectedAlienType] = useState<EAlienType>(
@@ -125,12 +127,19 @@ export function SolarSystemCompareDebugPage(): React.JSX.Element {
       <header className='mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-surface-800 bg-surface-900/80 px-3 py-2'>
         <div>
           <h1 className='font-display text-lg font-bold uppercase tracking-wider'>
-            Solar System Compare
+            {t('client.debug.solar_compare.title', {
+              defaultValue: 'Solar System Compare',
+            })}
           </h1>
           <p className='font-mono text-[11px] uppercase tracking-[0.14em] text-text-400'>
             {session?.gameId
-              ? `Server game ${session.gameId.slice(0, 8)}`
-              : 'Server game pending'}
+              ? t('client.debug.solar_compare.server_game', {
+                  defaultValue: 'Server game {{id}}',
+                  id: session.gameId.slice(0, 8),
+                })
+              : t('client.debug.solar_compare.server_game_pending', {
+                  defaultValue: 'Server game pending',
+                })}
           </p>
         </div>
         <div className='flex flex-wrap items-center gap-2'>
@@ -140,7 +149,7 @@ export function SolarSystemCompareDebugPage(): React.JSX.Element {
             disabled={!session || session.isCreating}
             className='rounded border border-accent-500/60 bg-accent-500/15 px-3 py-1.5 text-sm font-semibold text-accent-100 transition-colors hover:bg-accent-500/25 disabled:cursor-not-allowed disabled:opacity-50'
           >
-            Init
+            {t('client.debug.solar_compare.init', { defaultValue: 'Init' })}
           </button>
           <button
             type='button'
@@ -148,7 +157,7 @@ export function SolarSystemCompareDebugPage(): React.JSX.Element {
             disabled={!canRotate}
             className='rounded border border-surface-700 bg-surface-800 px-3 py-1.5 text-sm font-semibold text-text-100 transition-colors hover:bg-surface-700 disabled:cursor-not-allowed disabled:opacity-50'
           >
-            Rotate
+            {t('client.debug.solar_compare.rotate', { defaultValue: 'Rotate' })}
           </button>
           <button
             type='button'
@@ -156,7 +165,7 @@ export function SolarSystemCompareDebugPage(): React.JSX.Element {
             disabled={!canUseBoardAction}
             className='rounded border border-emerald-500/60 bg-emerald-500/15 px-3 py-1.5 text-sm font-semibold text-emerald-100 transition-colors hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50'
           >
-            Launch
+            {t('client.debug.solar_compare.launch', { defaultValue: 'Launch' })}
           </button>
           <button
             type='button'
@@ -164,7 +173,7 @@ export function SolarSystemCompareDebugPage(): React.JSX.Element {
             disabled={!canUseBoardAction || session?.pendingInput !== null}
             className='rounded border border-sky-500/60 bg-sky-500/15 px-3 py-1.5 text-sm font-semibold text-sky-100 transition-colors hover:bg-sky-500/25 disabled:cursor-not-allowed disabled:opacity-50'
           >
-            Scan
+            {t('client.debug.solar_compare.scan', { defaultValue: 'Scan' })}
           </button>
           <button
             type='button'
@@ -173,12 +182,19 @@ export function SolarSystemCompareDebugPage(): React.JSX.Element {
             disabled={!canUseBoardAction}
             className='rounded border border-surface-700 bg-surface-800 px-3 py-1.5 text-sm font-semibold text-text-100 transition-colors hover:bg-surface-700 disabled:cursor-not-allowed disabled:opacity-50'
           >
-            Move Mode {moveModeActive ? 'On' : 'Off'}
+            {t('client.debug.solar_compare.move_mode', {
+              defaultValue: 'Move Mode',
+            })}{' '}
+            {moveModeActive
+              ? t('client.common.on', { defaultValue: 'On' })
+              : t('client.common.off', { defaultValue: 'Off' })}
           </button>
           <label className='flex items-center gap-1 rounded border border-surface-700 bg-surface-800 px-2 py-1.5 text-sm font-semibold text-text-100'>
-            Reveal
+            {t('client.debug.solar_compare.reveal', { defaultValue: 'Reveal' })}
             <select
-              aria-label='Reveal alien type'
+              aria-label={t('client.debug.solar_compare.reveal_alien_aria', {
+                defaultValue: 'Reveal alien type',
+              })}
               value={selectedAlienType}
               onChange={(event) =>
                 setSelectedAlienType(
@@ -188,10 +204,26 @@ export function SolarSystemCompareDebugPage(): React.JSX.Element {
               disabled={!canUseBoardAction}
               className='rounded border border-surface-700 bg-surface-950 px-2 py-1 text-sm text-text-100 disabled:cursor-not-allowed disabled:opacity-50'
             >
-              <option value={EAlienType.OUMUAMUA}>Oumuamua</option>
-              <option value={EAlienType.ANOMALIES}>Anomalies</option>
-              <option value={EAlienType.MASCAMITES}>Mascamites</option>
-              <option value={EAlienType.GLYPHIDS}>Glyphids</option>
+              <option value={EAlienType.OUMUAMUA}>
+                {t('client.alien_board.types.oumuamua', {
+                  defaultValue: 'Oumuamua',
+                })}
+              </option>
+              <option value={EAlienType.ANOMALIES}>
+                {t('client.alien_board.types.anomalies', {
+                  defaultValue: 'Anomalies',
+                })}
+              </option>
+              <option value={EAlienType.MASCAMITES}>
+                {t('client.alien_board.types.mascamites', {
+                  defaultValue: 'Mascamites',
+                })}
+              </option>
+              <option value={EAlienType.GLYPHIDS}>
+                {t('client.alien_board.types.glyphids', {
+                  defaultValue: 'Glyphids',
+                })}
+              </option>
             </select>
           </label>
           <button
@@ -200,7 +232,9 @@ export function SolarSystemCompareDebugPage(): React.JSX.Element {
             disabled={!canUseBoardAction}
             className='rounded border border-violet-500/60 bg-violet-500/15 px-3 py-1.5 text-sm font-semibold text-violet-100 transition-colors hover:bg-violet-500/25 disabled:cursor-not-allowed disabled:opacity-50'
           >
-            Reveal Alien
+            {t('client.debug.solar_compare.reveal_alien', {
+              defaultValue: 'Reveal Alien',
+            })}
           </button>
         </div>
       </header>
@@ -213,7 +247,9 @@ export function SolarSystemCompareDebugPage(): React.JSX.Element {
 
       {session?.pendingInput ? (
         <section
-          aria-label='Pending debug input'
+          aria-label={t('client.debug.solar_compare.pending_input_aria', {
+            defaultValue: 'Pending debug input',
+          })}
           className='mb-4 rounded-md border border-surface-800 bg-surface-900/70 px-3 py-3'
         >
           <InputRenderer
@@ -229,20 +265,32 @@ export function SolarSystemCompareDebugPage(): React.JSX.Element {
           data-testid='debug-mascamites-sample-pools'
           className='mb-4 rounded-md border border-surface-800 bg-surface-900/70 px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-text-300'
         >
-          Mascamites samples: Jupiter {mascamitesSamplePools.jupiter} / Saturn{' '}
-          {mascamitesSamplePools.saturn}
+          {t('client.debug.solar_compare.mascamites_samples', {
+            defaultValue:
+              'Mascamites samples: Jupiter {{jupiter}} / Saturn {{saturn}}',
+            jupiter: mascamitesSamplePools.jupiter,
+            saturn: mascamitesSamplePools.saturn,
+          })}
         </section>
       ) : null}
 
       {!gameState || !setupConfig ? (
         <div className='rounded-md border border-surface-800 bg-surface-900/70 px-3 py-6 text-center text-sm text-text-300'>
-          Initializing server solar system...
+          {t('client.debug.solar_compare.initializing', {
+            defaultValue: 'Initializing server solar system...',
+          })}
         </div>
       ) : (
         <div className='grid gap-4 2xl:grid-cols-2'>
-          <section aria-label='Image mode solar system'>
+          <section
+            aria-label={t('client.debug.solar_compare.image_mode_aria', {
+              defaultValue: 'Image mode solar system',
+            })}
+          >
             <h2 className='mb-2 font-display text-sm font-bold uppercase tracking-wider text-text-200'>
-              Image Mode
+              {t('client.debug.solar_compare.image_mode_label', {
+                defaultValue: 'Image Mode',
+              })}
             </h2>
             <SolarSystemView
               solarSystem={gameState.solarSystem}
@@ -261,9 +309,15 @@ export function SolarSystemCompareDebugPage(): React.JSX.Element {
             />
           </section>
 
-          <section aria-label='Text mode solar system'>
+          <section
+            aria-label={t('client.debug.solar_compare.text_mode_aria', {
+              defaultValue: 'Text mode solar system',
+            })}
+          >
             <h2 className='mb-2 font-display text-sm font-bold uppercase tracking-wider text-text-200'>
-              Text Mode
+              {t('client.debug.solar_compare.text_mode_label', {
+                defaultValue: 'Text Mode',
+              })}
             </h2>
             <SolarSystemView
               solarSystem={gameState.solarSystem}

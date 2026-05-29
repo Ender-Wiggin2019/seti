@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { HotspotAnchor } from '@/features/hotspots/HotspotAnchor';
 import { HotspotButton } from '@/features/hotspots/HotspotButton';
 import type { IPublicOumuamuaBoard } from '@/types/re-exports';
@@ -104,6 +105,7 @@ export function OumuamuaBoardArt({
   onSelectTraceSlot,
   onSelectMainActionPlanet,
 }: IOumuamuaBoardArtProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <section
       className='min-w-0'
@@ -111,7 +113,12 @@ export function OumuamuaBoardArt({
     >
       <AlienBoardArtFrame
         artKey='oumuamua'
-        alt='Oumuamua alien board'
+        alt={t('client.alien_board_extra.image_alt_named', {
+          name: t('client.alien_board.types.oumuamua', {
+            defaultValue: 'Oumuamua',
+          }),
+          defaultValue: 'Oumuamua alien board',
+        })}
         testId={`alien-${alienIndex}-oumuamua-art`}
       >
         <TraceMarkerOverlay

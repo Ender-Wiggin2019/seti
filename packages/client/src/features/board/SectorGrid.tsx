@@ -1,5 +1,6 @@
 import type { ISolarSystemSetupConfig } from '@seti/common/constant/sectorSetup';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { IPlayerInputModel, IPublicSector } from '@/types/re-exports';
 import { EPlayerInputType } from '@/types/re-exports';
 import { SectorView } from './SectorView';
@@ -32,6 +33,7 @@ export function SectorGrid({
   onSelectSector,
   onSelectSectorId,
 }: ISectorGridProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const isSectorInput = pendingInput?.type === EPlayerInputType.SECTOR;
   const colorOptions =
     isSectorInput && 'options' in pendingInput
@@ -57,7 +59,9 @@ export function SectorGrid({
   return (
     <div
       className='absolute inset-0 z-60 pointer-events-none'
-      aria-label='Sector ring'
+      aria-label={t('client.sector_grid.ring_aria_label', {
+        defaultValue: 'Sector ring',
+      })}
     >
       {sectorPairs.map((pair) => {
         const colors = pair.sectors.map((s) => s.color);

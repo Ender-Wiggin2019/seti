@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React from 'react';
 
 interface IErrorBoundaryProps {
@@ -32,7 +33,10 @@ export class ErrorBoundary extends React.Component<
           className='rounded-xl border border-danger-500/40 bg-surface-900/80 p-4 text-sm text-text-300'
           role='alert'
         >
-          Something went wrong while rendering this section.
+          {i18n.t('client.error_boundary.fallback', {
+            ns: 'common',
+            defaultValue: 'Something went wrong while rendering this section.',
+          })}
         </div>
       );
     }

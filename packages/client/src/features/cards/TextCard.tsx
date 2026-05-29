@@ -142,6 +142,7 @@ export function TextCard({
   ownerColor,
 }: ITextCardProps): React.JSX.Element {
   const { t } = useTranslation('seti');
+  const { t: tCommon } = useTranslation('common');
   const freeActions = card.freeAction ?? [];
   const effects = card.effects ?? [];
   const translate = (value: string): string =>
@@ -206,17 +207,25 @@ export function TextCard({
       <div
         data-testid={`text-card-meta-${card.id}`}
         className='shrink-0 space-y-0.5 border-b border-surface-700/60 px-2 py-1 text-[8px] leading-snug text-text-300'
-        title={`Free Action: ${freeActionText}\nSector: ${sectorText}`}
+        title={`${tCommon('client.text_card.free_action', { defaultValue: 'Free Action:' })} ${freeActionText}\n${tCommon('client.text_card.sector', { defaultValue: 'Sector:' })} ${sectorText}`}
       >
         <div
           data-testid={`text-card-free-action-${card.id}`}
           className='truncate'
         >
-          <span className='text-text-400'>Free Action: </span>
+          <span className='text-text-400'>
+            {tCommon('client.text_card.free_action', {
+              defaultValue: 'Free Action:',
+            })}{' '}
+          </span>
           <span className='text-text-100'>{freeActionText}</span>
         </div>
         <div data-testid={`text-card-sector-${card.id}`} className='truncate'>
-          <span className='text-text-400'>Sector: </span>
+          <span className='text-text-400'>
+            {tCommon('client.text_card.sector', {
+              defaultValue: 'Sector:',
+            })}{' '}
+          </span>
           <span className='text-text-100'>{sectorText}</span>
         </div>
       </div>
@@ -227,7 +236,7 @@ export function TextCard({
       >
         <section data-testid={`text-card-effects-${card.id}`}>
           <div className='mb-0.5 text-[8px] font-semibold uppercase tracking-wide text-text-400'>
-            Effect:
+            {tCommon('client.text_card.effect', { defaultValue: 'Effect:' })}
           </div>
           <div className='space-y-0.5 text-[9px] text-text-100'>
             {nonMissionEffects.length > 0 ? (
@@ -248,7 +257,9 @@ export function TextCard({
             className='mt-2 rounded-sm border border-surface-600/70 bg-surface-900/45 px-1.5 py-1'
           >
             <div className='mb-0.5 text-[8px] font-semibold uppercase tracking-wide text-text-200'>
-              Mission:
+              {tCommon('client.text_card.mission', {
+                defaultValue: 'Mission:',
+              })}
             </div>
             <div className='space-y-0.5 text-[9px] text-text-100'>
               {missionEffects.flatMap((effect, effectIndex) =>
@@ -288,7 +299,9 @@ export function TextCard({
             className='mt-2 rounded-sm border border-surface-600/70 bg-surface-900/45 px-1.5 py-1'
           >
             <div className='mb-0.5 text-[8px] font-semibold uppercase tracking-wide text-text-200'>
-              End Game:
+              {tCommon('client.text_card.end_game', {
+                defaultValue: 'End Game:',
+              })}
             </div>
             <div className='space-y-0.5 text-[9px] text-text-100'>
               {endGameEffects.map((effect, index) => (
@@ -305,7 +318,7 @@ export function TextCard({
         {card.description && (
           <section className='mt-2 border-t border-surface-700/50 pt-1'>
             <div className='mb-0.5 text-[8px] font-semibold uppercase tracking-wide text-text-400'>
-              Note:
+              {tCommon('client.text_card.note', { defaultValue: 'Note:' })}
             </div>
             <p className='break-words text-[9px] italic leading-snug text-text-300'>
               <DescTextRender desc={translate(card.description)} />
@@ -318,7 +331,9 @@ export function TextCard({
         data-testid={`text-card-income-${card.id}`}
         className='shrink-0 border-t border-surface-700/70 px-2 py-1 text-[8px] text-text-300'
       >
-        <span className='text-text-400'>Income: </span>
+        <span className='text-text-400'>
+          {tCommon('client.text_card.income', { defaultValue: 'Income:' })}{' '}
+        </span>
         <span className='text-text-100'>{card.income}</span>
       </div>
     </div>

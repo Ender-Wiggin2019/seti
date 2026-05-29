@@ -1046,14 +1046,18 @@ export function SolarSystemView({
         <div className='flex items-center gap-2'>
           <div
             className='inline-flex h-7 items-center gap-1 rounded-sm border border-surface-700/70 bg-surface-950/60 px-1 font-mono text-[10px] text-text-300'
-            aria-label='Solar board zoom controls'
+            aria-label={t('client.solar_system_view.zoom_controls', {
+              defaultValue: 'Solar board zoom controls',
+            })}
           >
             <span className='px-1 text-[11px] leading-none text-text-400'>
               ⌕
             </span>
             <button
               type='button'
-              aria-label='Zoom solar board out'
+              aria-label={t('client.solar_system_view.zoom_out', {
+                defaultValue: 'Zoom solar board out',
+              })}
               className='grid h-5 w-5 place-items-center rounded-sm border border-surface-700 bg-surface-900 text-text-100 transition-colors hover:bg-surface-800 disabled:cursor-not-allowed disabled:opacity-40'
               disabled={
                 normalizedSolarBoardZoom <= SOLAR_BOARD_MIN_ZOOM + 0.001
@@ -1070,7 +1074,9 @@ export function SolarSystemView({
             </span>
             <button
               type='button'
-              aria-label='Zoom solar board in'
+              aria-label={t('client.solar_system_view.zoom_in', {
+                defaultValue: 'Zoom solar board in',
+              })}
               className='grid h-5 w-5 place-items-center rounded-sm border border-surface-700 bg-surface-900 text-text-100 transition-colors hover:bg-surface-800 disabled:cursor-not-allowed disabled:opacity-40'
               disabled={
                 normalizedSolarBoardZoom >= SOLAR_BOARD_MAX_ZOOM - 0.001
@@ -1253,8 +1259,15 @@ export function SolarSystemView({
                   zIndex: isMoveOverlayVisible ? 90 : undefined,
                 }}
                 onClick={() => handleSpaceClick(space.spaceId)}
-                title={`${space.spaceId} - pieces: ${probeCount}`}
-                ariaLabel={`Space ${space.spaceId}`}
+                title={t('client.solar_system_view.space_title', {
+                  spaceId: space.spaceId,
+                  count: probeCount,
+                  defaultValue: `${space.spaceId} - pieces: ${probeCount}`,
+                })}
+                ariaLabel={t('client.solar_system_view.space_aria_label', {
+                  spaceId: space.spaceId,
+                  defaultValue: `Space ${space.spaceId}`,
+                })}
                 debugLabel={space.spaceId}
               >
                 {(isSelected ||
@@ -1655,6 +1668,7 @@ function OumuamuaSectorDataList({
   boardScale?: number;
   calibration: IOumuamuaDataPillCalibration;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   const {
     offsetX,
     offsetY,
@@ -1692,7 +1706,10 @@ function OumuamuaSectorDataList({
       debugLabel={`Oumuamua sector data ${tile.sectorId}`}
       testId={`solar-oumuamua-sector-${point.spaceId}`}
       style={{ zIndex: 86 }}
-      title={`Oumuamua sector ${tile.sectorId}`}
+      title={t('client.solar_system_view.oumuamua_sector_title', {
+        sectorId: tile.sectorId,
+        defaultValue: `Oumuamua sector ${tile.sectorId}`,
+      })}
     >
       <div
         className={cn(
@@ -1993,13 +2010,17 @@ function CapsuleToken({
 }: {
   playerColor: string;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <span
       className='flex h-5 w-5 items-center justify-center rounded-full border-2 border-text-100/80 bg-surface-950/85 font-mono text-[9px] font-bold leading-none text-text-100 shadow-[0_0_0_1px_rgba(0,0,0,0.7),0_2px_6px_rgba(0,0,0,0.55)]'
       style={{
         boxShadow: `0 0 0 2px ${playerColor}, 0 2px 6px rgba(0,0,0,0.55)`,
       }}
-      title={`${playerColor} sample capsule`}
+      title={t('client.solar_system_view.sample_capsule_title', {
+        playerColor,
+        defaultValue: `${playerColor} sample capsule`,
+      })}
     >
       S
     </span>

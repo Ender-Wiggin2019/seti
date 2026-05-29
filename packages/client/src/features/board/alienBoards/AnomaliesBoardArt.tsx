@@ -2,6 +2,7 @@ import {
   TRACE_COLUMN_COLORS,
   type TTraceColumnColor,
 } from '@seti/common/utils/alienTracePresentation';
+import { useTranslation } from 'react-i18next';
 import { HotspotAnchor } from '@/features/hotspots/HotspotAnchor';
 import { HotspotButton } from '@/features/hotspots/HotspotButton';
 import {
@@ -103,6 +104,7 @@ export function AnomaliesBoardArt({
   selectableSlotIds,
   onSelectTraceSlot,
 }: IAnomaliesBoardArtProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const calibrate = useCalibrationMode();
   const previewOverflow = usePreviewOverflowCount();
   return (
@@ -112,7 +114,12 @@ export function AnomaliesBoardArt({
     >
       <AlienBoardArtFrame
         artKey='anomalies'
-        alt='Anomalies alien board'
+        alt={t('client.alien_board_extra.image_alt_named', {
+          name: t('client.alien_board.types.anomalies', {
+            defaultValue: 'Anomalies',
+          }),
+          defaultValue: 'Anomalies alien board',
+        })}
         testId={`alien-${alienIndex}-anomalies-art`}
       >
         {calibrate ? (

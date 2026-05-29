@@ -167,7 +167,18 @@
       "hero_kicker": "Agências Espaciais",
       "station_nominal": "Conectado",
       "station_offline": "Entre para jogar",
-      "commander": "Jogador"
+      "commander": "Jogador",
+      "title": "Central de Missões",
+      "subtitle": "Explore o desconhecido, conecte o futuro.",
+      "create_mission": "Criar Missão",
+      "stat": {
+        "waiting": "Aguardando",
+        "waiting_sub": "Missões disponíveis",
+        "playing": "Em andamento",
+        "playing_sub": "Missões ativas",
+        "players": "Jogadores",
+        "players_sub": "Em missões"
+      }
     },
     "common": {
       "loading": "Carregando…",
@@ -191,7 +202,11 @@
       "close": "Recolher",
       "close_dialog": "Fechar",
       "mission": "Missão",
-      "crew": "Equipe"
+      "crew": "Equipe",
+      "ready": "Pronto",
+      "pending": "Pendente",
+      "live": "Missão Compartilhada",
+      "actions": "Ações"
     },
     "auth": {
       "hero": {
@@ -254,9 +269,15 @@
         "operators_sub": "em missões"
       }
     },
+    "mission_hub": {
+      "background_elements": "Elementos de Fundo",
+      "low_poly_assets": "Recursos de missão low-poly"
+    },
     "room": {
       "back": "Central de Missões",
       "crew": "Jogadores",
+      "mode_solo_short": "Solo",
+      "mode_multi_short": "Multi",
       "status": {
         "waiting": "Aguardando",
         "playing": "Em andamento",
@@ -286,6 +307,9 @@
       "disconnect": "Sair",
       "danger_zone": "Sessão da Conta",
       "disconnect_hint": "Saia desta conta. Entre novamente para retomar missões ativas.",
+      "settings": "Configurações",
+      "id": "ID",
+      "email": "E-mail",
       "toast": {
         "invalid_name": "O nome deve ter pelo menos 2 caracteres",
         "updated": "Perfil atualizado",
@@ -311,6 +335,7 @@
         "4": "4 Jogadores"
       },
       "alien_modules": "Módulos Alienígenas",
+      "alien_pool": "Pool aleatório de alienígenas",
       "undo": "Permitir Desfazer",
       "turn_timer": "Timer do turno (segundos, 0 = desligado)",
       "alien_pool_disabled": " (desativado)",
@@ -382,10 +407,17 @@
     "action_menu": {
       "loading_actions": "Carregando ações…",
       "waiting_for": "Aguardando {{player}}...",
+      "waiting_for_setup": "Aguardando {{player}} concluir o tuck inicial antes das ações do turno",
       "another_player": "outro jogador",
       "player_unavailable": "Dados do jogador indisponíveis.",
       "title": "Ações Principais",
       "end_turn": "Encerrar Turno",
+      "status": {
+        "loading": "Em espera",
+        "turn": "Ativo",
+        "waiting": "Em espera",
+        "offline": "Offline"
+      },
       "actions": {
         "LAUNCH_PROBE": "Lançar Sonda",
         "ORBIT": "Orbitar",
@@ -437,6 +469,8 @@
       "setup_summary": "Preparação: {{credit}} crédito, {{energy}} energia, {{card}} carta, {{publicity}} publicidade, {{data}} dado, {{tuckIncome}} carta de renda",
       "effect_label": "Efeito",
       "passive_label": "Passivo",
+      "setup_ability_label": "Preparação",
+      "main_action_label": "Ação Principal",
       "power_used": "Usado",
       "names": {
         "cosmos-strategy-group": "Grupo de Estratégia Cosmos",
@@ -663,13 +697,63 @@
     "milestone": {
       "empty": "Sem dados de marcos.",
       "title": "Trilha de Marcos",
-      "open": "aberto"
+      "open": "aberto",
+      "type_gold": "OURO",
+      "type_neutral": "NEUTRO"
+    },
+    "gold_tile_selector": {
+      "title": "Peças Douradas",
+      "slots": "ESPAÇOS"
     },
     "income_tracker": {
       "title": "Renda",
       "credit": "Créditos",
       "energy": "Energia",
-      "card": "Cartas"
+      "card": "Cartas",
+      "tucked_tooltip": "Renda das cartas guardadas (não inclui a carta inicial)"
+    },
+    "resource_bar": {
+      "credit": "Créditos",
+      "energy": "Energia",
+      "publicity": "Publicidade",
+      "signal_tokens": "Marcadores de Sinal",
+      "score": "Pontos",
+      "exofossils": "Exofósseis"
+    },
+    "computer_view": {
+      "title": "Computador",
+      "top_slot": "Espaço superior do computador {{index}}",
+      "bottom_slot": "Espaço inferior do computador {{index}}"
+    },
+    "data_pool": {
+      "title": "Reserva de Dados",
+      "full": "Cheia"
+    },
+    "opponent_summary": {
+      "title": "Oponentes",
+      "passed": "PASSOU",
+      "vp": "VP",
+      "hand": "Mão",
+      "tech": "Tech",
+      "credit": "Crédito",
+      "energy": "Energia",
+      "data": "Dados",
+      "publicity": "Publicidade",
+      "pool": "Reserva",
+      "signals": "Sinais"
+    },
+    "organizations_card": {
+      "reward_marks": "Marcas de recompensa",
+      "marked": "marcado",
+      "open": "aberto",
+      "marks": {
+        "credit": "Crédito",
+        "publicity": "Publicidade",
+        "data": "Dados",
+        "probe": "Sonda",
+        "scan": "Escaneamento",
+        "computer": "Computador"
+      }
     },
     "hand_view": {
       "title": "Mão",
@@ -824,11 +908,101 @@
       },
       "scan": {
         "earth": "Terra (ou adj.)",
+        "earth_base": "Terra",
         "card_row": "Linha de Cartas",
         "mercury": "Mercúrio (−★)",
         "discard_card": "Descartar Carta",
         "energy_launch": "Mover / Lançar (⚡)"
       }
+    },
+    "sector_node": {
+      "win": "VITÓRIA",
+      "first": "1º",
+      "other": "2+",
+      "mark_aria_label": "Marcar setor {{color}} ({{sectorId}})",
+      "tile_aria_label": "Peça de setor {{tileId}} ({{starNames}})"
+    },
+    "sector_grid": {
+      "ring_aria_label": "Anel de setores"
+    },
+    "probe_token": {
+      "aria_label": "Sonda {{playerColor}}"
+    },
+    "tech_stack_view": {
+      "glyph_token": "Marcador de glifo {{glyph}}"
+    },
+    "tech_bonus": {
+      "energy": "Bônus de energia",
+      "data": "Bônus de dados",
+      "publicity": "Bônus de publicidade",
+      "card": "Bônus de carta",
+      "vp_3": "Bônus de 3 VP",
+      "vp_2": "Bônus de 2 VP",
+      "data_2": "Bônus de 2 dados",
+      "credit": "Bônus de crédito",
+      "launch": "Bônus de ação de lançamento",
+      "generic": "Bônus de {{type}}"
+    },
+    "alien_board_extra": {
+      "title": "Tabuleiro Alienígena",
+      "title_face_down": "Tabuleiro Alienígena (virado para baixo)",
+      "image_alt_face_down": "Tabuleiro alienígena virado para baixo",
+      "image_alt_named": "Tabuleiro alienígena {{name}}",
+      "costs_exofossil": "Custa {{count}} exofóssil",
+      "costs_data": "Custa {{count}} dados",
+      "neutral": "Neutro",
+      "trace_slot_title": "Espaço {{trace}}{{overflow}}{{discovery}}{{cost}}",
+      "trace_slot_overflow_suffix": " (overflow)",
+      "trace_slot_discovery_suffix": " - Descoberta",
+      "from_planet": "De {{planet}}",
+      "at_space": "Em {{space}}",
+      "round_label": "Rodada {{round}}",
+      "anomaly_tier_title": "Nível de anomalia {{trace}}",
+      "trace_pink": "Rosa",
+      "trace_yellow": "Amarelo",
+      "trace_blue": "Azul",
+      "trace_any": "Qualquer",
+      "rotation_token_alt": "Marcador de rotação",
+      "rotation_token_title": "O primeiro a passar gira o sistema solar"
+    },
+    "solar_system_view": {
+      "zoom_controls": "Controles de zoom do tabuleiro solar",
+      "zoom_out": "Reduzir zoom do tabuleiro solar",
+      "zoom_in": "Aumentar zoom do tabuleiro solar",
+      "space_aria_label": "Espaço {{spaceId}}",
+      "space_title": "{{spaceId}} - peças: {{count}}",
+      "oumuamua_sector_title": "Setor de Oumuamua {{sectorId}}",
+      "sample_capsule_title": "Cápsula de amostra de {{playerColor}}"
+    },
+    "rival_panel_extra": {
+      "board_alt": "Tabuleiro do Rival, dificuldade {{difficulty}}",
+      "progress_title": "Progresso {{index}}",
+      "tech_tiles_aria": "Peças de tecnologia do Rival",
+      "data_pool_aria": "Reserva de dados do Rival: {{count}}"
+    },
+    "planetary_board": {
+      "glyph_token": "Marcador de glifo {{glyph}}",
+      "target_aria_label": "Alvo {{label}}",
+      "token_aria_label": "marcador-{{playerId}}",
+      "orbit_token_title": "{{label}} órbita ({{player}})",
+      "landing_token_title": "{{label}} {{slotKind}} ({{player}})"
+    },
+    "text_card": {
+      "effect": "Efeito:",
+      "mission": "Missão:",
+      "end_game": "Fim de Jogo:",
+      "note": "Nota:",
+      "free_action": "Ação Livre:",
+      "sector": "Setor:",
+      "income": "Renda:"
+    },
+    "prelude_card": {
+      "label": "Prelúdio",
+      "upper": "Superior",
+      "setup": "Preparação",
+      "lower": "Inferior",
+      "note": "Nota",
+      "income": "Renda:"
     },
     "computer_row": {
       "tuck": "Guardar",
@@ -857,6 +1031,8 @@
       "next_rotate_alt": "Anel da próxima rotação"
     },
     "gold_tile": {
+      "title": "Peças Douradas",
+      "slots": "ESPAÇOS",
       "label": {
         "tech": "Tech",
         "mission": "Missão",
@@ -976,6 +1152,12 @@
       "connecting": "Estabelecendo conexão segura...",
       "awaiting": "Aguardando dados da missão..."
     },
+    "error_boundary": {
+      "fallback": "Algo deu errado ao renderizar esta seção."
+    },
+    "toast": {
+      "dismiss": "Dispensar"
+    },
     "game": {
       "toast": {
         "blocking": "Erro Bloqueante",
@@ -1072,6 +1254,248 @@
       "winner": "Vencedor",
       "breakdown_hint": "A análise detalhada da pontuação por origem é exibida acima.",
       "scoring_reminder_alt": "Lembrete de pontuação"
+    },
+    "action_bar": {
+      "label": "Barra de Ações",
+      "move_probe": "Mover Sonda",
+      "step": "passo",
+      "steps": "passos",
+      "end_move": "Encerrar Movimento",
+      "cancel": "Cancelar"
+    },
+    "layout_v2": {
+      "section_failed_to_render": "Falha ao renderizar a seção.",
+      "shell": {
+        "tab": "Aba",
+        "waterfall": "Cascata",
+        "mobile": "Móvel"
+      },
+      "dev_panel": {
+        "title": "Layout Dev",
+        "mode": "Modo",
+        "export": "Exportar",
+        "reset": "Redefinir",
+        "toggle_hint_prefix": "Pressione",
+        "toggle_hint_suffix": "para alternar"
+      },
+      "dialogs": {
+        "settings_title": "Configurações de Layout",
+        "settings_description": "Configure o layout em jogo. As alterações ficam salvas localmente neste navegador automaticamente e podem ser exportadas como settings.json.",
+        "mode_block": "Modo",
+        "game_layout_system": "Sistema de Layout do Jogo",
+        "system_configurable": "Configurável",
+        "system_legacy": "Legado",
+        "system_hint": "As configurações de layout só afetam partidas quando o modo Configurável está ativo.",
+        "default_layout_mode": "Modo de Layout Padrão",
+        "preview_block": "Pré-visualização",
+        "preview_topbar": "Barra Superior",
+        "preview_actionbar": "Barra de Ações",
+        "preview_hand": "Mão",
+        "preview_left": "Esquerda",
+        "preview_middle": "Centro",
+        "preview_right": "Direita",
+        "preview_mobile_order_label": "Ordem em modo móvel",
+        "waterfall_columns_block": "Colunas em Cascata",
+        "field_left_pct": "Esquerda %",
+        "field_middle_pct": "Centro %",
+        "field_right_pct": "Direita %",
+        "column_widths_hint": "Estas porcentagens também são atualizadas quando você arrasta as alças das colunas durante a partida.",
+        "pinned_areas_block": "Áreas Fixas",
+        "field_hand_height": "Altura da Mão",
+        "field_log_height": "Altura do Log",
+        "field_log_min_height": "Altura Mínima do Log",
+        "field_log_grow": "Crescimento do Log",
+        "board_scale_block": "Escala dos Painéis",
+        "field_tech_board_scale": "Escala do Painel de Tecnologia",
+        "field_card_rows_scale": "Escala das Linhas de Cartas",
+        "mobile_order_block": "Ordem em Modo Móvel",
+        "json_block": "JSON",
+        "json_hint": "Use JSON para controle completo. A importação aceita o settings.json exportado ou o formato bruto persistido pelo Zustand.",
+        "apply_json": "Aplicar JSON",
+        "refresh_json": "Atualizar JSON",
+        "export_json": "Exportar settings.json",
+        "import_json": "Importar settings.json",
+        "saved_hint": "Salvo automaticamente neste navegador.",
+        "reset_layout": "Redefinir Layout",
+        "done": "Concluir",
+        "toast_imported": "Configurações de layout importadas",
+        "toast_invalid_json": "settings.json inválido",
+        "select_two_cards_to_spend": "Selecione 2 cartas para gastar",
+        "section_player_board": "Painel do Jogador",
+        "section_solar_system": "Sistema Solar",
+        "section_planet_board": "Painel Planetário",
+        "section_tech_board": "Painel de Tecnologia",
+        "section_alien_board": "Painel Alienígena",
+        "section_card_rows": "Linhas de Cartas",
+        "section_log": "Log",
+        "section_end_game": "Fim de Jogo"
+      }
+    },
+    "debug": {
+      "game": {
+        "calibration": "Calibração",
+        "text_mode": "Modo Texto",
+        "source": {
+          "title": "De onde vem o estado do jogo",
+          "local": "Origem: Local",
+          "server": "Origem: Servidor"
+        },
+        "server_status": {
+          "creating": "Criando…",
+          "game": "Jogo {{id}}",
+          "idle": "ocioso"
+        },
+        "new_server_game": "Novo Jogo no Servidor",
+        "scenarios": {
+          "my_turn": "Meu Turno",
+          "opponent_turn": "Turno do Oponente",
+          "spectator": "Espectador",
+          "game_over": "Fim de Jogo"
+        },
+        "card_input": {
+          "none": "Sem Entrada",
+          "hand_select": "Entrada: Cartas da Mão",
+          "row_select": "Entrada: Linha de Cartas",
+          "end_of_round": "Entrada: Fim de Rodada"
+        },
+        "next_row": "Próxima Linha",
+        "next_hand": "Próxima Mão",
+        "start_scan": "Iniciar Scan",
+        "cancel_scan": "Cancelar Scan ({{step}})",
+        "rotate_next": "Girar (R{{ring}})",
+        "rotate_next_title": "Girar pela ordem das regras: anel 1 -> anel 2 -> anel 3",
+        "rotate_r1": "Girar R1",
+        "rotate_r1_title": "Apenas o anel 1 gira",
+        "rotate_r2": "Girar R2",
+        "rotate_r2_title": "O anel 2 leva o anel 1 junto",
+        "rotate_r3": "Girar R3",
+        "rotate_r3_title": "O anel 3 leva os anéis 2 e 1 juntos",
+        "push_delay_title": "Atraso para sondas empurradas ao girar o anel {{ring}}",
+        "debug_hand_select_title": "Debug Seleção da Mão",
+        "debug_row_select_title": "Debug Seleção da Linha de Cartas",
+        "debug_end_of_round_title": "Debug Fim de Rodada",
+        "scan": {
+          "pool_title": "Scan: escolha uma sub-ação",
+          "card_row_title": "Selecione uma carta da linha de cartas",
+          "hand_title": "Selecione uma carta da mão para descartar e marcar sinal",
+          "color_pick_title": "Escolha um setor {{color}} para marcar o sinal",
+          "sector_option": "Setor {{id}}",
+          "energy_title": "Selecione o efeito de Lançamento de Energia do Scan",
+          "option": {
+            "mark_earth": "Marcar Terra",
+            "mark_card_row": "Marcar Linha de Cartas",
+            "mark_mercury": "Marcar Mercúrio (1 publicidade)",
+            "mark_hand": "Marcar Sinal da Mão",
+            "energy_launch_or_move": "Lançamento de Energia ou Mover",
+            "done": "Concluído (encerrar scan)",
+            "launch": "Pague 1 energia para lançar uma sonda",
+            "move": "Ganhe 1 movimento"
+          }
+        }
+      },
+      "server": {
+        "establishing_uplink": "Estabelecendo uplink com o gateway de debug…",
+        "acquiring_telemetry": "Obtendo telemetria do servidor…",
+        "establishing_session": "Estabelecendo sessão de debug do servidor…",
+        "anomaly_detected": "Anomalia detectada",
+        "init_failed": "Não foi possível inicializar a sessão de debug do servidor.",
+        "reacquire_session": "Reabrir sessão",
+        "label": "Debug do Servidor",
+        "game_id": "Jogo {{id}}",
+        "creating": "Criando...",
+        "new_game": "Novo Jogo",
+        "create_failed": "Falha ao criar sessão de debug"
+      },
+      "replay": {
+        "connecting": "Conectando à sessão de replay...",
+        "kicker": "Calibração · Replay",
+        "title": "Replay com presets e retomada por checkpoint",
+        "subtitle": "Inicie uma sessão de debug real a partir de um preset reutilizável e retome pelo console de missão ao vivo.",
+        "loading_presets": "Carregando presets de replay...",
+        "preset_label": "Preset",
+        "preset_placeholder": "Selecione o preset de replay",
+        "checkpoint_label": "Checkpoint",
+        "checkpoint_placeholder": "Selecione o checkpoint",
+        "checkpoint_default_hint": "Escolha onde o replay deve parar.",
+        "field_select_placeholder": "Selecione {{label}}",
+        "anomaly_label": "Anomalia",
+        "refresh_presets": "Atualizar presets",
+        "starting": "Iniciando...",
+        "start_replay": "Iniciar Replay",
+        "no_presets": "Nenhum preset de replay disponível.",
+        "snapshot_kicker": "Snapshot · Retomada",
+        "snapshot_subtitle": "Retome a partir de um snapshot armazenado informando o ID do jogo.",
+        "game_id_label": "ID do Jogo",
+        "game_id_placeholder": "Informe o UUID do jogo",
+        "version_label": "Versão (opcional, mais recente se vazio)",
+        "version_placeholder": "ex.: 5",
+        "loading_snapshot": "Carregando...",
+        "load_snapshot": "Carregar Snapshot",
+        "load_presets_failed": "Falha ao carregar presets de replay",
+        "create_session_failed": "Falha ao criar sessão de replay",
+        "load_snapshot_failed": "Falha ao carregar sessão de snapshot",
+        "banner": {
+          "kind_replay": "Replay",
+          "kind_snapshot": "Snapshot",
+          "source_label": "src: {{id}}",
+          "expand_aria": "Expandir banner de {{kind}}",
+          "collapse_aria": "Recolher banner",
+          "new_replay": "Novo Replay"
+        }
+      },
+      "hotspots": {
+        "kicker": "Calibração de UI",
+        "title": "Debug de Hotspots",
+        "board_render_mode": "Modo de renderização do painel",
+        "image_mode": "Modo Imagem",
+        "text_mode": "Modo Texto",
+        "hotspots_label": "Hotspots",
+        "interactive_label": "Interativo",
+        "anchors_label": "Âncoras",
+        "save_hotspots": "Salvar Hotspots",
+        "reset_hotspots": "Redefinir Hotspots",
+        "load_failed": "Falha ao carregar hotspots",
+        "save_failed": "Falha ao salvar hotspots",
+        "nav_aria": "Componentes do debug de hotspots",
+        "solar_ring_controls_aria": "Controles radiais dos anéis solares",
+        "ring_label": "Anel {{index}}",
+        "ring_offset_aria": "Deslocamento radial do anel {{index}}",
+        "tabs": {
+          "solar": "Sistema Solar",
+          "sectors": "Setores",
+          "planet": "Painel Planetário",
+          "tech": "Painel de Tecnologia",
+          "player": "Painel Pessoal",
+          "rival": "Painel do Rival",
+          "aliens": "Alienígenas",
+          "corporations": "Corporações"
+        },
+        "input": {
+          "choose_sector": "Escolha um setor",
+          "choose_planet": "Escolha um planeta",
+          "choose_tech": "Escolha a tecnologia"
+        }
+      },
+      "solar_compare": {
+        "title": "Comparar Sistema Solar",
+        "server_game": "Jogo no servidor {{id}}",
+        "server_game_pending": "Jogo no servidor pendente",
+        "init": "Iniciar",
+        "rotate": "Girar",
+        "launch": "Lançar",
+        "scan": "Scan",
+        "move_mode": "Modo Mover",
+        "reveal": "Revelar",
+        "reveal_alien": "Revelar Alienígena",
+        "reveal_alien_aria": "Revelar tipo de alienígena",
+        "pending_input_aria": "Entrada de debug pendente",
+        "mascamites_samples": "Amostras Mascamites: Júpiter {{jupiter}} / Saturno {{saturn}}",
+        "initializing": "Inicializando o sistema solar do servidor...",
+        "image_mode_aria": "Sistema solar em modo imagem",
+        "text_mode_aria": "Sistema solar em modo texto",
+        "image_mode_label": "Modo Imagem",
+        "text_mode_label": "Modo Texto"
+      }
     }
   }
 }
