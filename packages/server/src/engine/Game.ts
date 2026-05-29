@@ -589,11 +589,18 @@ export class Game implements IGame {
                 break;
               }
               case EMainAction.ORBIT: {
+                // The orbit picker emits the action event from its
+                // onSelect handler so the line can carry the chosen
+                // planet (e.g. "Alice orbited Mars"); skip the
+                // default emission below.
                 pendingInput = buildOrbitActionPlanetPicker(player, game);
+                actionEventLogged = true;
                 break;
               }
               case EMainAction.LAND: {
+                // Same as ORBIT — picker's onSelect emits with planet.
                 pendingInput = buildLandActionPlanetPicker(player, game);
+                actionEventLogged = true;
                 break;
               }
               case EMainAction.SCAN: {

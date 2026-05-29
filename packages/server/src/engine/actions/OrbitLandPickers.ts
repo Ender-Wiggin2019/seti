@@ -9,8 +9,9 @@ import {
   type TPlanetReward,
 } from '@seti/common/constant/boardLayout';
 import { EResource, ESector } from '@seti/common/types/element';
-import { EPlanet } from '@seti/common/types/protocol/enums';
+import { EMainAction, EPlanet } from '@seti/common/types/protocol/enums';
 import { LandProbeEffect } from '../effects/probe/LandProbeEffect.js';
+import { createActionEvent } from '../event/GameEvent.js';
 import type { IGame } from '../IGame.js';
 import type { PlayerInput } from '../input/PlayerInput.js';
 import { SelectOption } from '../input/SelectOption.js';
@@ -113,6 +114,7 @@ export function buildLandActionSlotPicker(
         ? `${planetSurfaceLabel} (${surfaceRewardSummary})`
         : planetSurfaceLabel,
       onSelect: () => {
+        emitLandOrbitActionEvent(game, player, EMainAction.LAND, planet);
         const result = player.land(planet, { isMoon: false });
         return result.pendingInput;
       },
@@ -136,6 +138,13 @@ export function buildLandActionSlotPicker(
         ? `${baseLabel} — ${moonRewardSummary}`
         : baseLabel,
       onSelect: () => {
+        emitLandOrbitActionEvent(
+          game,
+          player,
+          EMainAction.LAND,
+          planet,
+          moonName,
+        );
         const result = player.land(planet, { isMoon: true, moonId });
         return result.pendingInput;
       },
@@ -211,6 +220,7 @@ export function buildOrbitActionSlotPicker(
         ? `Take first-orbit slot (${firstSlotRewardSummary})`
         : 'Take first-orbit slot',
       onSelect: () => {
+        emitLandOrbitActionEvent(game, player, EMainAction.ORBIT, planet);
         const result = OrbitAction.execute(player, game, planet, {
           claimFirstSlot: true,
         });
@@ -229,6 +239,7 @@ export function buildOrbitActionSlotPicker(
       ? `Take regular orbit slot (${regularRewardSummary})`
       : 'Take regular orbit slot',
     onSelect: () => {
+      emitLandOrbitActionEvent(game, player, EMainAction.ORBIT, planet);
       const result = OrbitAction.execute(player, game, planet, {
         claimFirstSlot: false,
       });
@@ -312,6 +323,31 @@ function humanizeSector(sector: ESector): string {
     default:
       return String(sector);
   }
+}
+
+/**
+ * Emit the ACTION event for ORBIT/LAND from the slot picker so the
+ * line carries the chosen planet (and optionally moon) — keeps the
+ * log readable as "Alice orbited Mars" / "Alice landed on Titan".
+ *
+ * `Game.processMainAction` skips the default ACTION emission for
+ * ORBIT/LAND (sets `actionEventLogged = true`) so this helper is the
+ * sole emitter for those two actions.
+ */
+function emitLandOrbitActionEvent(
+  game: IGame,
+  player: IPlayer,
+  action: EMainAction,
+  planet: EPlanet,
+  moon?: string,
+): void {
+  game.eventLog.append(
+    createActionEvent(player.id, action, {
+      planet,
+      planetLabel: getPlanetLabel(planet),
+      ...(moon ? { moon } : {}),
+    }),
+  );
 }
 
 function formatResource(resource: EResource): string {

@@ -261,6 +261,123 @@ const EVENT_TINT: Record<EGameEventType, string> = {
   [EGameEventType.GAME_END]: 'text-[oklch(0.82_0.10_240)]',
 };
 
+/**
+ * Classify an event into one of three reading buckets so the log
+ * can give each row a clear left-rail kind indicator:
+ *   - 'main'   — top-level main action (LAUNCH/ORBIT/LAND/SCAN/
+ *                ANALYZE/PLAY_CARD/RESEARCH/PASS, plus structured
+ *                rival actions). Visually anchored as the trunk of
+ *                the action narrative.
+ *   - 'free'   — free-action lines (BUY_CARD, MOVEMENT,
+ *                EXCHANGE_RESOURCES, etc.). Slotted between mains.
+ *   - 'effect' — side effects of an action: resource/score deltas,
+ *                trace marks, milestone resolutions, sector wins,
+ *                alien discoveries, internal ACTION_COST /
+ *                ACTION_REWARD bookkeeping. Rendered indented under
+ *                the parent action.
+ *   - 'meta'   — round/game/rotation/undo events: structural
+ *                punctuation that's neither action nor effect.
+ */
+type TEntryKind = 'main' | 'free' | 'effect' | 'meta';
+
+const INTERNAL_ACTION_NAMES = new Set([
+  'ACTION_COST',
+  'ACTION_REWARD',
+  'CARD_CUSTOM_EFFECT_UNHANDLED',
+  'CARD_MARK_TRACE',
+  'SECTOR_MARKED',
+  'SECTOR_COMPLETION_RESOLVED',
+  'MILESTONE_CHECK',
+  'MILESTONE_GOLD_RESOLVED',
+  'MILESTONE_NEUTRAL_RESOLVED',
+  'ARKHOS_EXPLORATION_REWARD_REVEALED',
+  'ARKHOS_SECURITY_CARD_USED',
+  'ARKHOS_SECURITY_BREACHED',
+  'ANOMALY_TRIGGERED',
+  'CENTAURIANS_REWARD_CLAIMED',
+  'DRAW_ALIEN_CARD',
+]);
+
+const META_ACTION_NAMES = new Set(['END_TURN']);
+
+function classifyEvent(event: TGameEvent): TEntryKind {
+  switch (event.type) {
+    case EGameEventType.ACTION: {
+      const actionName =
+        typeof event.action === 'string' ? event.action : event.action?.type;
+      if (actionName === 'RIVAL_ACTION') return 'main';
+      if (actionName && META_ACTION_NAMES.has(actionName)) {
+        return 'meta';
+      }
+      if (actionName && INTERNAL_ACTION_NAMES.has(actionName)) {
+        return 'effect';
+      }
+      return 'main';
+    }
+    case EGameEventType.FREE_ACTION:
+      return 'free';
+    case EGameEventType.INPUT:
+    case EGameEventType.RESOURCE_CHANGE:
+    case EGameEventType.SCORE_CHANGE:
+    case EGameEventType.TRACE_MARKED:
+    case EGameEventType.SECTOR_COMPLETED:
+      return 'effect';
+    case EGameEventType.ALIEN_DISCOVERED:
+    case EGameEventType.ROTATION:
+    case EGameEventType.ROUND_END:
+    case EGameEventType.GAME_END:
+    case EGameEventType.UNDO:
+      return 'meta';
+    default:
+      return 'effect';
+  }
+}
+
+const ENTRY_KIND_STYLES: Record<
+  TEntryKind,
+  {
+    rail: string;
+    indent: string;
+    badge: string;
+    badgeKey: string;
+    badgeFallback: string;
+  }
+> = {
+  main: {
+    rail: 'border-accent-500/80 bg-accent-500/[0.06]',
+    indent: 'pl-2',
+    badge: 'border-accent-500/60 bg-accent-500/15 text-accent-200',
+    badgeKey: 'client.event_entry.kind.main',
+    badgeFallback: 'MAIN',
+  },
+  free: {
+    rail: 'border-[oklch(0.74_0.13_155/0.7)] bg-[oklch(0.74_0.13_155/0.06)]',
+    indent: 'pl-2',
+    badge:
+      'border-[oklch(0.74_0.13_155/0.6)] bg-[oklch(0.74_0.13_155/0.15)] text-[oklch(0.86_0.13_155)]',
+    badgeKey: 'client.event_entry.kind.free',
+    badgeFallback: 'FREE',
+  },
+  effect: {
+    rail: 'border-[color:var(--metal-edge-soft)] bg-transparent',
+    // Effects render indented under the preceding main/free action so
+    // the eye reads them as belonging to the trunk above.
+    indent: 'pl-6',
+    badge:
+      'border-[color:var(--metal-edge-soft)] bg-background-950/40 text-text-500',
+    badgeKey: 'client.event_entry.kind.effect',
+    badgeFallback: '↳',
+  },
+  meta: {
+    rail: 'border-[color:var(--metal-edge-soft)] bg-background-950/40',
+    indent: 'pl-2',
+    badge:
+      'border-[color:var(--metal-edge-soft)] bg-background-950/60 text-text-400',
+    badgeKey: 'client.event_entry.kind.meta',
+    badgeFallback: '⋯',
+  },
+};
+
 function getPlayerName(
   playerId: string,
   playerNames: Record<string, string>,
@@ -289,6 +406,12 @@ function getEventDescription(
       }
       const actionName =
         typeof event.action === 'string' ? event.action : event.action.type;
+      const player = getPlayerName(event.playerId, playerNames);
+      // Each well-known internal action gets its own narrative
+      // template so the line reads like a real sentence ("Alice
+      // marked a trace via card effect") instead of the generic
+      // "Alice used X" mold that made internal events look like
+      // main actions.
       switch (actionName) {
         case 'ARKHOS_EXPLORATION_REWARD_REVEALED':
           return getArkhosExplorationRewardEventDescription(
@@ -308,16 +431,173 @@ function getEventDescription(
             playerNames,
             t,
           );
+        case 'PLAY_CARD': {
+          const cardDetails = getCardDetails(event);
+          if (cardDetails) {
+            return (
+              <>
+                {t('client.event_entry.played_card_prefix', {
+                  player,
+                  defaultValue: '{{player}} played ',
+                })}
+                <CardReference
+                  cardId={cardDetails.cardId}
+                  cardName={cardDetails.cardName}
+                />
+              </>
+            );
+          }
+          return t('client.event_entry.played_unknown_card', {
+            player,
+            defaultValue: '{{player}} played a card',
+          });
+        }
+        case 'CARD_MARK_TRACE':
+          return t('client.event_entry.card_mark_trace_line', {
+            player,
+            defaultValue: '{{player}} marked a trace via card effect',
+          });
+        case 'SECTOR_MARKED':
+          return t('client.event_entry.sector_marked_line', {
+            player,
+            defaultValue: '{{player}} placed a sector marker',
+          });
+        case 'SECTOR_COMPLETION_RESOLVED':
+          return t('client.event_entry.sector_completion_resolved_line', {
+            player,
+            defaultValue: '{{player}} resolved sector completion',
+          });
+        case 'ANOMALY_TRIGGERED':
+          return t('client.event_entry.anomaly_triggered_line', {
+            player,
+            defaultValue: '{{player}} triggered an Anomaly token',
+          });
+        case 'CENTAURIANS_REWARD_CLAIMED':
+          return t('client.event_entry.centaurians_reward_claimed_line', {
+            player,
+            defaultValue: '{{player}} claimed a Centaurians message reward',
+          });
+        case 'DRAW_ALIEN_CARD':
+          return t('client.event_entry.draw_alien_card_line', {
+            player,
+            defaultValue: '{{player}} drew an alien card',
+          });
+        case 'MILESTONE_GOLD_RESOLVED': {
+          const threshold =
+            typeof event.details?.threshold === 'number'
+              ? event.details.threshold
+              : '?';
+          return t('client.event_entry.milestone_gold_resolved_line', {
+            player,
+            threshold,
+            defaultValue:
+              '{{player}} reached the {{threshold}} VP gold milestone',
+          });
+        }
+        case 'MILESTONE_NEUTRAL_RESOLVED': {
+          const threshold =
+            typeof event.details?.threshold === 'number'
+              ? event.details.threshold
+              : '?';
+          return t('client.event_entry.milestone_neutral_resolved_line', {
+            player,
+            threshold,
+            defaultValue:
+              '{{player}} crossed the {{threshold}} VP neutral milestone',
+          });
+        }
+        case 'MILESTONE_CHECK':
+        case 'ACTION_COST':
+        case 'ACTION_REWARD':
+        case 'CARD_CUSTOM_EFFECT_UNHANDLED':
+          // These are debug-level bookkeeping events that the log
+          // toggle hides by default. When shown, give them a quiet
+          // technical label rather than the "X used Y" frame.
+          return t(`client.event_entry.internal_${actionName.toLowerCase()}`, {
+            player,
+            defaultValue: `${player} — ${prettifyToken(actionName)}`,
+          });
+        case 'END_TURN':
+          return t('client.event_entry.end_turn_line', {
+            player,
+            defaultValue: '{{player}} ended their turn',
+          });
+        case 'LAUNCH_PROBE':
+          return t('client.event_entry.main.LAUNCH_PROBE', {
+            player,
+            defaultValue: '{{player}} launched a probe',
+          });
+        case 'ORBIT': {
+          const planetName = formatPlanetName(event, t);
+          if (!planetName) {
+            return t('client.event_entry.main.ORBIT_NO_PLANET', {
+              player,
+              defaultValue: '{{player}} orbited',
+            });
+          }
+          return t('client.event_entry.main.ORBIT', {
+            player,
+            planet: planetName,
+            defaultValue: '{{player}} orbited {{planet}}',
+          });
+        }
+        case 'LAND': {
+          const planetName = formatPlanetName(event, t);
+          const moonName = formatMoonName(event);
+          if (!planetName) {
+            return t('client.event_entry.main.LAND_NO_PLANET', {
+              player,
+              defaultValue: '{{player}} landed',
+            });
+          }
+          if (moonName) {
+            return t('client.event_entry.main.LAND_WITH_MOON', {
+              player,
+              planet: planetName,
+              moon: moonName,
+              defaultValue: '{{player}} landed on {{moon}} ({{planet}} moon)',
+            });
+          }
+          return t('client.event_entry.main.LAND', {
+            player,
+            planet: planetName,
+            defaultValue: '{{player}} landed on {{planet}}',
+          });
+        }
+        case 'SCAN':
+          return t('client.event_entry.main.SCAN', {
+            player,
+            defaultValue: '{{player}} scanned',
+          });
+        case 'ANALYZE_DATA':
+          return t('client.event_entry.main.ANALYZE_DATA', {
+            player,
+            defaultValue: '{{player}} analyzed data',
+          });
+        case 'RESEARCH_TECH':
+          return t('client.event_entry.main.RESEARCH_TECH', {
+            player,
+            defaultValue: '{{player}} researched a tech',
+          });
+        case 'PASS':
+          return t('client.event_entry.main.PASS', {
+            player,
+            defaultValue: '{{player}} passed',
+          });
         default:
           break;
       }
+      // USE_ORGANIZATION_ACTION and any unknown actions still use the
+      // generic "X used Y" mold — organization powers are too varied
+      // to template per-id and the generic mold reads naturally for
+      // them ("Alice used Cosmos Strategy Group").
       const actionLabel = formatMainActionName(actionName, t);
       const cardDetails = getCardDetails(event);
       if (cardDetails) {
         return (
           <>
             {t('client.event_entry.action', {
-              player: getPlayerName(event.playerId, playerNames),
+              player,
               action: actionLabel,
             })}{' '}
             <CardReference
@@ -328,15 +608,29 @@ function getEventDescription(
         );
       }
       return t('client.event_entry.action', {
-        player: getPlayerName(event.playerId, playerNames),
+        player,
         action: actionLabel,
       });
     }
-    case EGameEventType.FREE_ACTION:
-      return t('client.event_entry.free_action', {
-        player: getPlayerName(event.playerId, playerNames),
-        action: formatFreeActionName(event.action.type, t),
+    case EGameEventType.FREE_ACTION: {
+      const player = getPlayerName(event.playerId, playerNames);
+      const actionName = event.action.type;
+      // Each free action has a per-name full-sentence template under
+      // `client.event_entry.free.<NAME>`. Falling back to the
+      // generic "X used free Y" mold only when a name isn't keyed.
+      const specificKey = `client.event_entry.free.${actionName}`;
+      const specific = t(specificKey, {
+        player,
+        defaultValue: '',
       });
+      if (specific && specific !== specificKey && specific.length > 0) {
+        return specific;
+      }
+      return t('client.event_entry.free_action', {
+        player,
+        action: formatFreeActionName(actionName, t),
+      });
+    }
     case EGameEventType.INPUT:
       return t('client.event_entry.input', {
         player: getPlayerName(event.playerId, playerNames),
@@ -363,10 +657,7 @@ function getEventDescription(
         amount: Math.abs(event.delta),
         resource: prettifyToken(event.resource),
       });
-      if (
-        typeof event.before === 'number' &&
-        typeof event.after === 'number'
-      ) {
+      if (typeof event.before === 'number' && typeof event.after === 'number') {
         return `${baseLine} (${event.before} → ${event.after})`;
       }
       return baseLine;
@@ -548,12 +839,22 @@ function formatMainActionName(
   });
 }
 
+/**
+ * Free-action labels rendered in the log. The bar's button labels
+ * sometimes include a cost hint ("Buy Card (3 PR)") for
+ * affordability — fine for a button, noisy for a log line — so each
+ * action gets a dedicated `client.event_entry.free.<NAME>` key with
+ * a clean log-friendly label, falling through to the bar's label
+ * if a key is missing.
+ */
 function formatFreeActionName(
   action: string,
   t: (key: string, options?: Record<string, unknown>) => string,
 ): string {
-  return t(`client.free_action_bar.actions.${action}`, {
-    defaultValue: prettifyToken(action),
+  return t(`client.event_entry.free.${action}`, {
+    defaultValue: t(`client.free_action_bar.actions.${action}`, {
+      defaultValue: prettifyToken(action),
+    }),
   });
 }
 
@@ -569,6 +870,31 @@ function prettifyToken(token: string): string {
 
 function formatAlienTypeName(alienType: EAlienType): string {
   return prettifyToken(EAlienType[alienType] ?? String(alienType));
+}
+
+/**
+ * Pull the planet name out of an ACTION event's `details.planetLabel`
+ * (server emits the canonical English label like "Mars") and run it
+ * through the seti-namespace i18n so the locale-specific spelling
+ * shows up ("火星(Mars)" / "Marte"). Returns `undefined` when the
+ * event predates the planet-detail addition.
+ */
+function formatPlanetName(
+  event: TActionEvent,
+  t: TTranslate,
+): string | undefined {
+  const label =
+    typeof event.details?.planetLabel === 'string'
+      ? event.details.planetLabel
+      : undefined;
+  if (!label) return undefined;
+  return t(label, { ns: 'seti', defaultValue: label });
+}
+
+function formatMoonName(event: TActionEvent): string | undefined {
+  const moon =
+    typeof event.details?.moon === 'string' ? event.details.moon : undefined;
+  return moon && moon.length > 0 ? moon : undefined;
 }
 
 function getCardDetails(
@@ -710,14 +1036,24 @@ export function EventEntry({
     playerColors,
   );
 
+  const kind = classifyEvent(event);
+  const kindStyle = ENTRY_KIND_STYLES[kind];
+
   return (
     <article
       className={cn(
         'group relative grid grid-cols-[16px_1fr_auto] items-start gap-2',
-        'rounded-[2px] px-1.5 py-1',
+        'rounded-[2px] py-1 pr-1.5',
+        // Left rail color codes the kind (main / free / effect / meta).
+        // Effect rows are indented further so they read as branches
+        // off the trunk action above them.
+        'border-l-2',
+        kindStyle.rail,
+        kindStyle.indent,
         'hover:bg-[oklch(0.16_0.025_260/0.6)] transition-colors',
       )}
       data-testid={`event-entry-${index}`}
+      data-kind={kind}
       tabIndex={rivalAction ? 0 : undefined}
     >
       <span
@@ -732,11 +1068,22 @@ export function EventEntry({
         <p className='text-xs leading-snug text-text-200'>
           {renderedDescription}
         </p>
-        <p className='micro-label mt-0.5 opacity-60'>
-          {event.level === 'debug'
-            ? t('client.event_entry.debug', { defaultValue: 'Debug' })
-            : t('client.event_entry.info', { defaultValue: 'Info' })}
-        </p>
+        <div className='mt-0.5 flex items-center gap-1.5'>
+          <span
+            className={cn(
+              'inline-flex h-3.5 items-center rounded-[3px] border px-1 font-mono text-[8px] uppercase tracking-[0.16em]',
+              kindStyle.badge,
+            )}
+            data-testid={`event-kind-badge-${index}`}
+          >
+            {t(kindStyle.badgeKey, { defaultValue: kindStyle.badgeFallback })}
+          </span>
+          <span className='micro-label opacity-60'>
+            {event.level === 'debug'
+              ? t('client.event_entry.debug', { defaultValue: 'Debug' })
+              : t('client.event_entry.info', { defaultValue: 'Info' })}
+          </span>
+        </div>
       </div>
       <span className='mt-0.5 font-mono text-[10px] tabular-nums text-text-500'>
         {String(index + 1).padStart(3, '0')}

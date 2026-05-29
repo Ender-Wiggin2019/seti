@@ -42,9 +42,9 @@ const SLOT_VALUES_BY_TILE: Record<
   TGoldScoringTileId,
   Record<TGoldScoringTileSide, readonly number[]>
 > = {
-  tech: { A: [11, 8, 5, 5], B: [7, 5, 3, 3] },
-  mission: { A: [4, 3, 2, 2], B: [8, 6, 4, 4] },
-  income: { A: [11, 8, 5, 5], B: [5, 4, 3, 3] },
+  tech: { A: [7, 5, 3, 3], B: [11, 8, 5, 5] },
+  mission: { A: [8, 6, 4, 4], B: [4, 3, 2, 2] },
+  income: { A: [5, 4, 3, 3], B: [11, 8, 5, 5] },
   other: { A: [8, 6, 4, 4], B: [8, 6, 4, 4] },
 };
 

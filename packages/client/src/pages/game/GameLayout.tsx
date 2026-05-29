@@ -1,9 +1,9 @@
 import { createDefaultSetupConfig } from '@seti/common/constant/sectorSetup';
+import { ALL_CARDS } from '@seti/common/data/index';
 import {
   canPlaySpecificCard,
   getAvailableMainActions,
 } from '@seti/common/rules';
-import { ALL_CARDS } from '@seti/common/data/index';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EPlanet, EResource } from '@seti/common/types/element';
 import { EOrganizationId } from '@seti/common/types/organization';
@@ -35,8 +35,8 @@ import { CardDetail } from '@/features/cards/CardDetail';
 import { CardRender } from '@/features/cards/CardRender';
 import { CardRowView } from '@/features/cards/CardRowView';
 import { EndOfRoundStacks } from '@/features/cards/EndOfRoundStacks';
-import { translateInputText } from '@/features/input/inputI18n';
 import { InputRenderer } from '@/features/input/InputRenderer';
+import { translateInputText } from '@/features/input/inputI18n';
 import { EventLog } from '@/features/log';
 import {
   HandDock,
@@ -412,10 +412,18 @@ export function GameLayout({
   // slot (PersonalColumn) and the enlarged-preview dialog (CardDetail)
   // can render claim tokens against the same data.
   const myMissionClaimsByCardId: Record<string, boolean[]> = Object.fromEntries(
-    ((
-      myPlayer as { missionClaims?: Array<{ cardId: string; branchClaims: boolean[] }> }
-        | undefined
-    )?.missionClaims ?? []).map((entry) => [entry.cardId, entry.branchClaims]),
+    (
+      (
+        myPlayer as
+          | {
+              missionClaims?: Array<{
+                cardId: string;
+                branchClaims: boolean[];
+              }>;
+            }
+          | undefined
+      )?.missionClaims ?? []
+    ).map((entry) => [entry.cardId, entry.branchClaims]),
   );
 
   useEffect(() => {
@@ -1520,100 +1528,104 @@ function BoardTabs({
 
   return (
     <>
-    <Tabs
-      defaultValue='board'
-      value={activeTab}
-      onValueChange={(v) => onTabChange(v as TBoardTab)}
-      className='flex min-h-0 flex-1 flex-col'
-    >
-      <div className='relative shrink-0 overflow-x-auto bg-[var(--surface-deep)]/60 px-3 py-2'>
-        <TabsList className='w-max'>
-          {BOARD_TABS.map((tab) => (
-            <TabsTrigger key={tab} value={tab}>
-              {t(`client.game_layout.tabs.${tab}`)}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        <div
-          aria-hidden
-          className='pointer-events-none absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[color:var(--surface-700)] to-transparent opacity-70'
-        />
-      </div>
-
-      <div className='min-h-0 flex-1 overflow-auto p-4'>
-        <TabsContent value='board' className='mt-0 h-full'>
+      <Tabs
+        defaultValue='board'
+        value={activeTab}
+        onValueChange={(v) => onTabChange(v as TBoardTab)}
+        className='flex min-h-0 flex-1 flex-col'
+      >
+        <div className='relative shrink-0 overflow-x-auto bg-[var(--surface-deep)]/60 px-3 py-2'>
+          <TabsList className='w-max'>
+            {BOARD_TABS.map((tab) => (
+              <TabsTrigger key={tab} value={tab}>
+                {t(`client.game_layout.tabs.${tab}`)}
+              </TabsTrigger>
+            ))}
+          </TabsList>
           <div
-            data-testid='board-tab-solar-column'
-            className='w-fit max-w-full space-y-3'
-          >
+            aria-hidden
+            className='pointer-events-none absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[color:var(--surface-700)] to-transparent opacity-70'
+          />
+        </div>
+
+        <div className='min-h-0 flex-1 overflow-auto p-4'>
+          <TabsContent value='board' className='mt-0 h-full'>
+            <div
+              data-testid='board-tab-solar-column'
+              className='w-fit max-w-full space-y-3'
+            >
+              {gameState && (
+                <SolarSystemView
+                  solarSystem={gameState.solarSystem}
+                  sectors={gameState.sectors}
+                  setupConfig={
+                    gameState.solarSystemSetup ?? createDefaultSetupConfig()
+                  }
+                  pendingInput={pendingInput}
+                  playerColors={playerColors}
+                  myPlayerId={myPlayerId}
+                  movementPoints={myPlayer?.movementPoints ?? 0}
+                  moveModeActive={movementModeActive}
+                  onMoveProbe={(path, target) => {
+                    if (!target) return;
+                    sendFreeAction({
+                      type: EFreeAction.MOVEMENT,
+                      path,
+                      target,
+                    });
+                  }}
+                  onRespondInput={sendInput}
+                  showSpaceConfigDebug={showSolarSystemSpaceConfig}
+                  allowMoveAnyProbe={allowMoveAnyProbe}
+                  oumuamuaTile={oumuamuaTile}
+                />
+              )}
+              <PersonalColumn
+                className='mt-3 flex max-w-full border-l-0 border-t lg:hidden'
+                dashboardTestId='mobile-bottom-dashboard'
+                missionAreaTestId='mobile-mission-area'
+                rivalAreaTestId='mobile-rival-area'
+                onInspectCard={onInspectCard}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value='planets' className='mt-0 h-full'>
             {gameState && (
-              <SolarSystemView
-                solarSystem={gameState.solarSystem}
-                sectors={gameState.sectors}
-                setupConfig={
-                  gameState.solarSystemSetup ?? createDefaultSetupConfig()
-                }
+              <PlanetaryBoardView
+                gameState={gameState}
+                myPlayerId={myPlayerId}
+                planetaryBoard={gameState.planetaryBoard}
+                pendingInput={pendingInput}
+                playerColors={playerColors}
+                mainActionPlanetMode={planetActionMode}
+                onSelectMainActionPlanet={onSelectMainActionPlanet}
+                onRespondInput={sendInput}
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value='tech' className='mt-0 h-full'>
+            {gameState && (
+              <TechBoardView
+                techBoard={gameState.techBoard}
+                players={gameState.players}
                 pendingInput={pendingInput}
                 playerColors={playerColors}
                 myPlayerId={myPlayerId}
-                movementPoints={myPlayer?.movementPoints ?? 0}
-                moveModeActive={movementModeActive}
-                onMoveProbe={(path, target) => {
-                  if (!target) return;
-                  sendFreeAction({ type: EFreeAction.MOVEMENT, path, target });
-                }}
-                onRespondInput={sendInput}
-                showSpaceConfigDebug={showSolarSystemSpaceConfig}
-                allowMoveAnyProbe={allowMoveAnyProbe}
-                oumuamuaTile={oumuamuaTile}
+                onSubmit={sendInput}
               />
             )}
-            <PersonalColumn
-              className='mt-3 flex max-w-full border-l-0 border-t lg:hidden'
-              dashboardTestId='mobile-bottom-dashboard'
-              missionAreaTestId='mobile-mission-area'
-              rivalAreaTestId='mobile-rival-area'
-              onInspectCard={onInspectCard}
-            />
-          </div>
-        </TabsContent>
+          </TabsContent>
 
-        <TabsContent value='planets' className='mt-0 h-full'>
-          {gameState && (
-            <PlanetaryBoardView
-              gameState={gameState}
-              myPlayerId={myPlayerId}
-              planetaryBoard={gameState.planetaryBoard}
-              pendingInput={pendingInput}
-              playerColors={playerColors}
-              mainActionPlanetMode={planetActionMode}
-              onSelectMainActionPlanet={onSelectMainActionPlanet}
-              onRespondInput={sendInput}
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value='tech' className='mt-0 h-full'>
-          {gameState && (
-            <TechBoardView
-              techBoard={gameState.techBoard}
-              players={gameState.players}
-              pendingInput={pendingInput}
-              playerColors={playerColors}
-              myPlayerId={myPlayerId}
-              onSubmit={sendInput}
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value='cards' className='mt-0 h-full'>
-          {gameState && (
-            // inline-flex w-fit shrinks the column to its widest
-            // child — keeps the card row + end-of-round stacks
-            // panels snug around their actual cards instead of
-            // stretching to the full tab width.
-            <div className='inline-flex w-fit flex-col gap-3'>
-              {/*
+          <TabsContent value='cards' className='mt-0 h-full'>
+            {gameState && (
+              // inline-flex w-fit shrinks the column to its widest
+              // child — keeps the card row + end-of-round stacks
+              // panels snug around their actual cards instead of
+              // stretching to the full tab width.
+              <div className='inline-flex w-fit flex-col gap-3'>
+                {/*
                 Cards tab is inspection-only: card row + end-of-round
                 stacks + a passive main-deck readout. Buying cards
                 lives exclusively in the free-action bar's "Buy Card
@@ -1621,66 +1633,66 @@ function BoardTabs({
                 choices and routes row picks through the same confirm
                 dialog. Keeps the buy UX in one place.
               */}
-              <div className='instrument-panel flex w-full items-center gap-3 p-2'>
-                <div className='flex items-center gap-2'>
-                  <div className='relative h-[72px] w-[52px] overflow-hidden rounded-[3px] border border-[color:var(--metal-edge-soft)] bg-[url(/assets/seti/cards/back_base.jpg)] bg-cover bg-center shadow-[inset_0_1px_0_oklch(0.78_0.07_240/0.2),0_4px_12px_oklch(0.08_0.018_260/0.8)]'>
-                    <span
-                      aria-hidden
-                      className='pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[oklch(0.08_0.018_260/0.4)]'
-                    />
+                <div className='instrument-panel flex w-full items-center gap-3 p-2'>
+                  <div className='flex items-center gap-2'>
+                    <div className='relative h-[72px] w-[52px] overflow-hidden rounded-[3px] border border-[color:var(--metal-edge-soft)] bg-[url(/assets/seti/cards/back_base.jpg)] bg-cover bg-center shadow-[inset_0_1px_0_oklch(0.78_0.07_240/0.2),0_4px_12px_oklch(0.08_0.018_260/0.8)]'>
+                      <span
+                        aria-hidden
+                        className='pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[oklch(0.08_0.018_260/0.4)]'
+                      />
+                    </div>
+                    <div className='flex flex-col items-start gap-0.5'>
+                      <span className='micro-label leading-none'>
+                        {t('client.game_layout.main_deck')}
+                      </span>
+                      <span
+                        className='font-mono text-[11px] font-bold tabular-nums text-text-200'
+                        data-testid='main-deck-remaining'
+                      >
+                        {gameState.mainDeck.drawPileSize}
+                      </span>
+                    </div>
                   </div>
-                  <div className='flex flex-col items-start gap-0.5'>
-                    <span className='micro-label leading-none'>
-                      {t('client.game_layout.main_deck')}
-                    </span>
-                    <span
-                      className='font-mono text-[11px] font-bold tabular-nums text-text-200'
-                      data-testid='main-deck-remaining'
-                    >
-                      {gameState.mainDeck.drawPileSize}
-                    </span>
-                  </div>
-                </div>
-                {/*
+                  {/*
                   Discard pile preview — same dimensions as the main
                   deck, but dimmer/desaturated to read as "out of
                   play". Discarded card-row leftovers from each
                   round + tucked-and-discarded play piles end up here.
                 */}
-                <div className='flex items-center gap-2'>
-                  <div className='relative h-[72px] w-[52px] overflow-hidden rounded-[3px] border border-[color:var(--metal-edge-soft)] bg-[url(/assets/seti/cards/back_base.jpg)] bg-cover bg-center opacity-50 grayscale shadow-[inset_0_1px_0_oklch(0.78_0.07_240/0.15),0_4px_12px_oklch(0.08_0.018_260/0.6)]'>
-                    <span
-                      aria-hidden
-                      className='pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[oklch(0.08_0.018_260/0.5)]'
-                    />
+                  <div className='flex items-center gap-2'>
+                    <div className='relative h-[72px] w-[52px] overflow-hidden rounded-[3px] border border-[color:var(--metal-edge-soft)] bg-[url(/assets/seti/cards/back_base.jpg)] bg-cover bg-center opacity-50 grayscale shadow-[inset_0_1px_0_oklch(0.78_0.07_240/0.15),0_4px_12px_oklch(0.08_0.018_260/0.6)]'>
+                      <span
+                        aria-hidden
+                        className='pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[oklch(0.08_0.018_260/0.5)]'
+                      />
+                    </div>
+                    <div className='flex flex-col items-start gap-0.5'>
+                      <span className='micro-label leading-none text-text-500'>
+                        {t('client.game_layout.discard_pile', {
+                          defaultValue: 'Discard',
+                        })}
+                      </span>
+                      <span
+                        className='font-mono text-[11px] font-bold tabular-nums text-text-300'
+                        data-testid='main-deck-discard'
+                      >
+                        {gameState.mainDeck.discardPileSize}
+                      </span>
+                    </div>
                   </div>
-                  <div className='flex flex-col items-start gap-0.5'>
-                    <span className='micro-label leading-none text-text-500'>
-                      {t('client.game_layout.discard_pile', {
-                        defaultValue: 'Discard',
+                  {armedCardRowBuy ? (
+                    <span
+                      className='ml-auto rounded border border-accent-500/60 bg-accent-500/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-accent-300'
+                      data-testid='card-row-buy-armed-hint'
+                    >
+                      {t('client.game_layout.buy_from_row_pick_hint', {
+                        defaultValue: 'Pick a card from the row',
                       })}
                     </span>
-                    <span
-                      className='font-mono text-[11px] font-bold tabular-nums text-text-300'
-                      data-testid='main-deck-discard'
-                    >
-                      {gameState.mainDeck.discardPileSize}
-                    </span>
-                  </div>
+                  ) : null}
                 </div>
-                {armedCardRowBuy ? (
-                  <span
-                    className='ml-auto rounded border border-accent-500/60 bg-accent-500/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-accent-300'
-                    data-testid='card-row-buy-armed-hint'
-                  >
-                    {t('client.game_layout.buy_from_row_pick_hint', {
-                      defaultValue: 'Pick a card from the row',
-                    })}
-                  </span>
-                ) : null}
-              </div>
 
-              {/*
+                {/*
                 Permanent buy chooser strip. The Cards tab is the
                 single buy entry point — Buy From Deck opens a confirm
                 dialog with a card-back preview; Buy From Row arms the
@@ -1688,225 +1700,225 @@ function BoardTabs({
                 confirm dialog with the picked card. The "Buy Card
                 (3 PR)" free action just jumps to this tab.
               */}
-              <div
-                className='instrument-panel flex w-full flex-wrap items-center gap-2 border-accent-500/40 bg-accent-500/[0.05] p-2'
-                data-testid='cards-tab-buy-chooser'
-              >
-                <span className='font-mono text-[10px] uppercase tracking-[0.14em] text-accent-300'>
-                  {t('client.game_layout.buy_card_title', {
-                    defaultValue: 'Buy Card',
-                  })}
-                </span>
-                <span className='font-mono text-[10px] uppercase tracking-[0.14em] text-text-400'>
-                  {t('client.game_layout.buy_card_cost', {
-                    defaultValue: '3 publicity',
-                  })}
-                </span>
-                <Button
-                  variant='primary'
-                  size='sm'
-                  className='ml-auto h-8 px-3 font-mono text-[10px] uppercase tracking-[0.14em]'
-                  data-testid='cards-tab-buy-from-deck'
-                  onClick={() => {
-                    setArmedCardRowBuy(false);
-                    setBuyConfirm({ kind: 'deck' });
-                  }}
+                <div
+                  className='instrument-panel flex w-full flex-wrap items-center gap-2 border-accent-500/40 bg-accent-500/[0.05] p-2'
+                  data-testid='cards-tab-buy-chooser'
                 >
-                  {t('client.game_layout.buy_from_deck')}
-                </Button>
-                <Button
-                  variant={armedCardRowBuy ? 'primary' : 'ghost'}
-                  size='sm'
-                  className='h-8 px-3 font-mono text-[10px] uppercase tracking-[0.14em]'
-                  data-testid='cards-tab-buy-from-row'
-                  onClick={() => setArmedCardRowBuy((v) => !v)}
-                >
-                  {armedCardRowBuy
-                    ? t('client.game_layout.cancel_row_buy', {
-                        defaultValue: 'Cancel Row Pick',
-                      })
-                    : t('client.game_layout.buy_from_row')}
-                </Button>
-              </div>
+                  <span className='font-mono text-[10px] uppercase tracking-[0.14em] text-accent-300'>
+                    {t('client.game_layout.buy_card_title', {
+                      defaultValue: 'Buy Card',
+                    })}
+                  </span>
+                  <span className='font-mono text-[10px] uppercase tracking-[0.14em] text-text-400'>
+                    {t('client.game_layout.buy_card_cost', {
+                      defaultValue: '3 publicity',
+                    })}
+                  </span>
+                  <Button
+                    variant='primary'
+                    size='sm'
+                    className='ml-auto h-8 px-3 font-mono text-[10px] uppercase tracking-[0.14em]'
+                    data-testid='cards-tab-buy-from-deck'
+                    onClick={() => {
+                      setArmedCardRowBuy(false);
+                      setBuyConfirm({ kind: 'deck' });
+                    }}
+                  >
+                    {t('client.game_layout.buy_from_deck')}
+                  </Button>
+                  <Button
+                    variant={armedCardRowBuy ? 'primary' : 'ghost'}
+                    size='sm'
+                    className='h-8 px-3 font-mono text-[10px] uppercase tracking-[0.14em]'
+                    data-testid='cards-tab-buy-from-row'
+                    onClick={() => setArmedCardRowBuy((v) => !v)}
+                  >
+                    {armedCardRowBuy
+                      ? t('client.game_layout.cancel_row_buy', {
+                          defaultValue: 'Cancel Row Pick',
+                        })
+                      : t('client.game_layout.buy_from_row')}
+                  </Button>
+                </div>
 
-              <CardRowView
-                cards={gameState.cardRow}
-                mode={
-                  isSelectingFromCardRow
-                    ? 'discard'
-                    : armedCardRowBuy
-                      ? 'buy'
+                <CardRowView
+                  cards={gameState.cardRow}
+                  mode={
+                    isSelectingFromCardRow
+                      ? 'discard'
+                      : armedCardRowBuy
+                        ? 'buy'
+                        : 'idle'
+                  }
+                  onCardClick={handleCardRowClick}
+                  onCardInspect={onInspectCard}
+                />
+                <EndOfRoundStacks
+                  stacks={
+                    gameState.endOfRoundStacks ??
+                    gameState.endOfRoundStackCounts?.map(() => []) ?? [
+                      [],
+                      [],
+                      [],
+                      [],
+                    ]
+                  }
+                  stackCounts={gameState.endOfRoundStackCounts}
+                  currentRoundIndex={gameState.currentEndOfRoundStackIndex ?? 0}
+                  hasRoundFirstPassOccurred={
+                    gameState.hasRoundFirstPassOccurred ?? false
+                  }
+                  round={gameState.round}
+                  maxRounds={gameState.maxRounds}
+                  mode={
+                    pendingInput?.type === EPlayerInputType.END_OF_ROUND
+                      ? 'select'
                       : 'idle'
-                }
-                onCardClick={handleCardRowClick}
+                  }
+                  onSelectCard={(card) => {
+                    if (pendingInput?.type !== EPlayerInputType.END_OF_ROUND) {
+                      onInspectCard(card);
+                      return;
+                    }
+
+                    sendInput({
+                      inputId: pendingInput.inputId,
+                      type: EPlayerInputType.END_OF_ROUND,
+                      cardId: card.id,
+                    });
+                  }}
+                />
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value='aliens' className='mt-0 h-full'>
+            {gameState && (
+              <AlienBoardView
+                aliens={gameState.aliens}
+                playerColors={playerColors}
+                planetaryBoard={gameState.planetaryBoard}
+                gameState={gameState}
+                myPlayerId={myPlayerId}
+                pendingInput={pendingInput}
+                planetActionMode={planetActionMode}
+                onSelectMainActionPlanet={onSelectMainActionPlanet}
+                onRespondInput={sendInput}
                 onCardInspect={onInspectCard}
               />
-              <EndOfRoundStacks
-                stacks={
-                  gameState.endOfRoundStacks ??
-                  gameState.endOfRoundStackCounts?.map(() => []) ?? [
-                    [],
-                    [],
-                    [],
-                    [],
-                  ]
-                }
-                stackCounts={gameState.endOfRoundStackCounts}
-                currentRoundIndex={gameState.currentEndOfRoundStackIndex ?? 0}
-                hasRoundFirstPassOccurred={
-                  gameState.hasRoundFirstPassOccurred ?? false
-                }
-                round={gameState.round}
-                maxRounds={gameState.maxRounds}
-                mode={
-                  pendingInput?.type === EPlayerInputType.END_OF_ROUND
-                    ? 'select'
-                    : 'idle'
-                }
-                onSelectCard={(card) => {
-                  if (pendingInput?.type !== EPlayerInputType.END_OF_ROUND) {
-                    onInspectCard(card);
-                    return;
-                  }
+            )}
+          </TabsContent>
 
-                  sendInput({
-                    inputId: pendingInput.inputId,
-                    type: EPlayerInputType.END_OF_ROUND,
-                    cardId: card.id,
-                  });
-                }}
-              />
-            </div>
-          )}
-        </TabsContent>
+          <TabsContent value='scoring' className='mt-0 h-full'>
+            {gameState && (
+              <div className='space-y-4'>
+                {/* Score Rankings — instrumentation ladder */}
+                <section className='instrument-panel p-3'>
+                  <div className='section-head mb-2'>
+                    <span aria-hidden className='section-head__tick' />
+                    <p className='micro-label'>
+                      {t('client.game_layout.scores')}
+                    </p>
+                    <div aria-hidden className='section-head__rule' />
+                  </div>
+                  <ScoreLadder players={gameState.players} />
+                </section>
 
-        <TabsContent value='aliens' className='mt-0 h-full'>
-          {gameState && (
-            <AlienBoardView
-              aliens={gameState.aliens}
-              playerColors={playerColors}
-              planetaryBoard={gameState.planetaryBoard}
-              gameState={gameState}
-              myPlayerId={myPlayerId}
-              pendingInput={pendingInput}
-              planetActionMode={planetActionMode}
-              onSelectMainActionPlanet={onSelectMainActionPlanet}
-              onRespondInput={sendInput}
-              onCardInspect={onInspectCard}
-            />
-          )}
-        </TabsContent>
+                <MilestoneTrack
+                  milestones={buildMilestoneItems(
+                    gameState.milestones,
+                    playerColors,
+                  )}
+                />
 
-        <TabsContent value='scoring' className='mt-0 h-full'>
-          {gameState && (
-            <div className='space-y-4'>
-              {/* Score Rankings — instrumentation ladder */}
-              <section className='instrument-panel p-3'>
-                <div className='section-head mb-2'>
-                  <span aria-hidden className='section-head__tick' />
-                  <p className='micro-label'>
-                    {t('client.game_layout.scores')}
-                  </p>
-                  <div aria-hidden className='section-head__rule' />
-                </div>
-                <ScoreLadder players={gameState.players} />
-              </section>
+                <GoldScoringTilesView
+                  tiles={gameState.goldScoringTiles}
+                  playerColors={playerColors}
+                />
+              </div>
+            )}
+          </TabsContent>
+        </div>
 
-              <MilestoneTrack
-                milestones={buildMilestoneItems(
-                  gameState.milestones,
-                  playerColors,
-                )}
-              />
-
-              <GoldScoringTilesView
-                tiles={gameState.goldScoringTiles}
-                playerColors={playerColors}
-              />
-            </div>
-          )}
-        </TabsContent>
-      </div>
-
-      <EventLog
-        compact
-        className='lg:hidden'
-        events={events}
-        players={gameState?.players ?? []}
-      />
-    </Tabs>
-    <Dialog
-      open={buyConfirm !== null}
-      onOpenChange={(open) => {
-        if (!open) setBuyConfirm(null);
-      }}
-    >
-      <DialogContent className='w-fit max-w-fit bg-surface-900/95'>
-        <DialogHeader>
-          <DialogTitle>
-            {buyConfirm?.kind === 'deck'
-              ? t('client.game_layout.buy_from_deck')
-              : t('client.game_layout.buy_from_row')}
-          </DialogTitle>
-        </DialogHeader>
-        {/*
+        <EventLog
+          compact
+          className='lg:hidden'
+          events={events}
+          players={gameState?.players ?? []}
+        />
+      </Tabs>
+      <Dialog
+        open={buyConfirm !== null}
+        onOpenChange={(open) => {
+          if (!open) setBuyConfirm(null);
+        }}
+      >
+        <DialogContent className='w-fit max-w-fit bg-surface-900/95'>
+          <DialogHeader>
+            <DialogTitle>
+              {buyConfirm?.kind === 'deck'
+                ? t('client.game_layout.buy_from_deck')
+                : t('client.game_layout.buy_from_row')}
+            </DialogTitle>
+          </DialogHeader>
+          {/*
           Card preview matches CardDetail's enlarged size (1.8×/2×
           scale of CardRender's intrinsic 150×209 footprint), so the
           card the player is about to commit to looks the same here as
           when they tap a row card to inspect it. Deck buys show a
           card-back tile at the same dimensions instead.
         */}
-        <div className='max-h-[78vh] overflow-auto rounded border border-surface-700/50 bg-surface-950/70 p-3'>
-          <div className='relative h-[376px] w-[270px] sm:h-[418px] sm:w-[300px]'>
-            {buyConfirm?.kind === 'row' ? (
-              <div className='absolute left-0 top-0 origin-top-left scale-[1.8] sm:scale-[2]'>
-                <CardRender card={buyConfirm.card} />
-              </div>
-            ) : (
-              <div
-                className='absolute inset-0 rounded border border-surface-700/50 bg-[url(/assets/seti/cards/back_base.jpg)] bg-cover bg-center'
-                aria-hidden
-              />
-            )}
+          <div className='max-h-[78vh] overflow-auto rounded border border-surface-700/50 bg-surface-950/70 p-3'>
+            <div className='relative h-[376px] w-[270px] sm:h-[418px] sm:w-[300px]'>
+              {buyConfirm?.kind === 'row' ? (
+                <div className='absolute left-0 top-0 origin-top-left scale-[1.8] sm:scale-[2]'>
+                  <CardRender card={buyConfirm.card} />
+                </div>
+              ) : (
+                <div
+                  className='absolute inset-0 rounded border border-surface-700/50 bg-[url(/assets/seti/cards/back_base.jpg)] bg-cover bg-center'
+                  aria-hidden
+                />
+              )}
+            </div>
           </div>
-        </div>
-        <div className='instrument-panel p-3'>
-          <div className='section-head mb-2'>
-            <span aria-hidden className='section-head__tick' />
-            <p className='micro-label'>{t('client.action_confirm.cost')}</p>
-            <div aria-hidden className='section-head__rule' />
+          <div className='instrument-panel p-3'>
+            <div className='section-head mb-2'>
+              <span aria-hidden className='section-head__tick' />
+              <p className='micro-label'>{t('client.action_confirm.cost')}</p>
+              <div aria-hidden className='section-head__rule' />
+            </div>
+            <p className='readout font-mono text-[13px] text-text-100'>
+              3 {t('client.resources.publicity', { defaultValue: 'publicity' })}
+            </p>
           </div>
-          <p className='readout font-mono text-[13px] text-text-100'>
-            3 {t('client.resources.publicity', { defaultValue: 'publicity' })}
-          </p>
-        </div>
-        <DialogFooter>
-          <Button variant='ghost' onClick={() => setBuyConfirm(null)}>
-            {t('client.common.cancel', { defaultValue: 'Cancel' })}
-          </Button>
-          <Button
-            variant='primary'
-            onClick={() => {
-              if (buyConfirm?.kind === 'deck') {
-                sendFreeAction({
-                  type: EFreeAction.BUY_CARD,
-                  fromDeck: true,
-                });
-              } else if (buyConfirm?.kind === 'row') {
-                sendFreeAction({
-                  type: EFreeAction.BUY_CARD,
-                  cardId: buyConfirm.card.id,
-                });
-                setArmedCardRowBuy(false);
-              }
-              setBuyConfirm(null);
-            }}
-          >
-            {t('client.common.confirm', { defaultValue: 'Confirm' })}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter>
+            <Button variant='ghost' onClick={() => setBuyConfirm(null)}>
+              {t('client.common.cancel', { defaultValue: 'Cancel' })}
+            </Button>
+            <Button
+              variant='primary'
+              onClick={() => {
+                if (buyConfirm?.kind === 'deck') {
+                  sendFreeAction({
+                    type: EFreeAction.BUY_CARD,
+                    fromDeck: true,
+                  });
+                } else if (buyConfirm?.kind === 'row') {
+                  sendFreeAction({
+                    type: EFreeAction.BUY_CARD,
+                    cardId: buyConfirm.card.id,
+                  });
+                  setArmedCardRowBuy(false);
+                }
+                setBuyConfirm(null);
+              }}
+            >
+              {t('client.common.confirm', { defaultValue: 'Confirm' })}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
@@ -2067,21 +2079,6 @@ const GOLD_TILE_DESCRIPTIONS: Record<string, { i18nKey: string; en: string }> =
   };
 
 /**
- * Normalized 0..1 coordinates of the three rank slots on each gold
- * tile PNG, measured against the upper-left of the tile image. The
- * three slots sit horizontally in the lower band of every tile
- * (rulebook layout is consistent across all 8 sides). Slot 3
- * physically holds 2 markers — both the data model (with a
- * duplicated `slotValues[N-1]`) and this UI lay them out side-by-side
- * inside the same anchor.
- */
-const GOLD_TILE_SLOT_ANCHORS = [
-  { x: 0.30, y: 0.66 },
-  { x: 0.50, y: 0.66 },
-  { x: 0.70, y: 0.66 },
-] as const;
-
-/**
  * Inline display for gold scoring tiles — shows per-side rulebook
  * description, the 3 rank multipliers (with the bottom rank holding
  * 2 markers), and any markers already placed by players.
@@ -2117,46 +2114,39 @@ function GoldScoringTilesView({
       </div>
       <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
         {tiles.map((tile) => {
-          // Group consecutive equal slot values together — physically
-          // the bottom rank is one position that holds up to 2 markers,
-          // so [8, 6, 4, 4] → 3 ranked positions where the last has a
-          // 2-marker capacity. We fold same-value slots into one rank
-          // and surface "×2" capacity hint.
-          const ranks: Array<{ value: number; capacity: number }> = [];
-          for (const value of tile.slotValues) {
-            const last = ranks[ranks.length - 1];
-            if (last && last.value === value) {
-              last.capacity += 1;
-            } else {
-              ranks.push({ value, capacity: 1 });
-            }
-          }
-          // Distribute claims to ranks in claim order. claims[0] takes
-          // the highest-value rank's first slot, claims[1] takes the
-          // next slot down, etc.
-          const claimsByRank: Array<string[]> = ranks.map(() => []);
-          let cursor = 0;
+          // Render one chip per slotValue position — the bottom rank
+          // physically holds 2 markers but reads cleaner as two
+          // adjacent equal-value chips ("4× 4×") than a single chip
+          // with a "·2" capacity hint.
+          const slots = tile.slotValues.map((value) => ({ value }));
+
+          // Distribute claims to slots in claim order: each claim
+          // takes the first matching-value slot that's still open.
+          const occupantsBySlot: Array<string | undefined> = slots.map(
+            () => undefined,
+          );
           for (const claim of tile.claims) {
-            // Find the rank whose value matches this claim, with a
-            // free spot remaining.
-            const matchIdx = ranks.findIndex(
-              (rank, i) =>
-                rank.value === claim.value &&
-                claimsByRank[i].length < rank.capacity,
+            const matchIdx = slots.findIndex(
+              (slot, i) =>
+                slot.value === claim.value && occupantsBySlot[i] === undefined,
             );
             if (matchIdx >= 0) {
-              claimsByRank[matchIdx].push(claim.playerId);
+              occupantsBySlot[matchIdx] = claim.playerId;
             } else {
-              // Fall through if the value doesn't match — shouldn't
-              // happen with the new SLOT_VALUES_BY_TILE table but
-              // guards older serialized games.
-              claimsByRank[cursor]?.push(claim.playerId);
-              cursor = Math.min(cursor + 1, ranks.length - 1);
+              // Fall through to the first open slot if the value
+              // doesn't match any open slot — shouldn't happen with
+              // the SLOT_VALUES_BY_TILE table but guards older
+              // serialized games.
+              const fallbackIdx = occupantsBySlot.findIndex(
+                (occ) => occ === undefined,
+              );
+              if (fallbackIdx >= 0) {
+                occupantsBySlot[fallbackIdx] = claim.playerId;
+              }
             }
           }
 
-          const description =
-            GOLD_TILE_DESCRIPTIONS[`${tile.id}_${tile.side}`];
+          const description = GOLD_TILE_DESCRIPTIONS[`${tile.id}_${tile.side}`];
 
           return (
             <div
@@ -2192,70 +2182,53 @@ function GoldScoringTilesView({
                 </p>
               ) : null}
 
-              {textMode ? (
-                <div className='flex flex-wrap gap-1'>
-                  {ranks.map((rank, idx) => {
-                    const occupants = claimsByRank[idx];
-                    return (
-                      <div
-                        key={`${tile.id}-rank-${idx}`}
-                        className={cn(
-                          'flex min-w-[44px] items-center justify-center gap-1 rounded-[3px] border px-1.5 py-0.5 font-mono text-[11px] tabular-nums',
-                          occupants.length > 0
-                            ? 'border-accent-500/60 bg-accent-500/[0.08] text-text-100 shadow-[inset_0_0_0_1px_oklch(0.68_0.11_240/0.2)]'
-                            : 'border-[color:var(--metal-edge-soft)] bg-background-950/50 text-text-500',
-                        )}
-                        title={
-                          occupants.length > 0
-                            ? occupants
-                                .map((pid) =>
-                                  t('client.game_layout.claimed_by', {
-                                    player: pid,
-                                  }),
-                                )
-                                .join(', ')
-                            : t('client.common.open', {
-                                defaultValue: 'Open',
-                              })
-                        }
-                      >
-                        <span className='flex items-center gap-0.5'>
-                          {occupants.map((pid) => (
-                            <span
-                              key={pid}
-                              aria-hidden
-                              className='inline-block h-2 w-2 rounded-full border border-[oklch(0.96_0.008_260/0.4)]'
-                              style={{
-                                backgroundColor:
-                                  playerColors[pid] ?? '#cbd5e1',
-                              }}
-                            />
-                          ))}
-                        </span>
-                        {rank.value}×
-                        {rank.capacity > 1 ? (
-                          <span
-                            className='font-mono text-[8px] uppercase tracking-[0.16em] text-text-500'
-                            title={t('client.gold_tile.capacity_hint', {
-                              count: rank.capacity,
-                              defaultValue: '{{count}} markers fit',
-                            })}
-                          >
-                            ·{rank.capacity}
-                          </span>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <GoldTileArt
-                  tile={tile}
-                  ranks={ranks}
-                  claimsByRank={claimsByRank}
-                  playerColors={playerColors}
-                />
-              )}
+              {/*
+                Image mode adds a small cropped strip showing only
+                the upper "scoring condition" art of the printed PNG
+                (≈top 58% of the 550×488 source — the rank/marker
+                row in the lower band is omitted because the chips
+                below already render that data). Text mode skips the
+                image entirely and goes straight to the chips.
+              */}
+              {!textMode ? <GoldTileScoringArt tile={tile} /> : null}
+
+              <div className='flex flex-wrap gap-1.5'>
+                {slots.map((slot, idx) => {
+                  const occupant = occupantsBySlot[idx];
+                  return (
+                    <div
+                      key={`${tile.id}-slot-${idx}`}
+                      className={cn(
+                        'flex min-w-[60px] items-center justify-center gap-1.5 rounded-[4px] border px-2 py-1 font-mono text-[14px] tabular-nums',
+                        occupant
+                          ? 'border-accent-500/60 bg-accent-500/[0.08] text-text-100 shadow-[inset_0_0_0_1px_oklch(0.68_0.11_240/0.2)]'
+                          : 'border-[color:var(--metal-edge-soft)] bg-background-950/50 text-text-500',
+                      )}
+                      title={
+                        occupant
+                          ? t('client.game_layout.claimed_by', {
+                              player: occupant,
+                            })
+                          : t('client.common.open', {
+                              defaultValue: 'Open',
+                            })
+                      }
+                    >
+                      {occupant ? (
+                        <span
+                          aria-hidden
+                          className='inline-block h-2.5 w-2.5 rounded-full border border-[oklch(0.96_0.008_260/0.4)]'
+                          style={{
+                            backgroundColor:
+                              playerColors[occupant] ?? '#cbd5e1',
+                          }}
+                        />
+                      ) : null}
+                      <span className='font-semibold'>{slot.value}×</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           );
         })}
@@ -2265,87 +2238,53 @@ function GoldScoringTilesView({
 }
 
 /**
- * Image-mode rendering of a gold scoring tile — the actual rulebook
- * art (`/assets/seti/scoring/<id>_<side>.jpg`) with player claim
- * tokens absolute-positioned on top of the three rank slots.
+ * Image-mode helper: shows only the *scoring condition* art at the
+ * top of the printed gold tile PNG (≈58% of the source image), which
+ * is the visually informative part. The rank/marker row at the
+ * bottom is intentionally cropped out — the chip strip rendered
+ * underneath this component already conveys claims and slot values.
  *
- * The third slot physically holds 2 markers, so when both are
- * occupied we lay them out side-by-side around the anchor point.
- * Marker color comes from `playerColors`; the disc uses the same
- * mask-tinted look as `<ProbeToken>` for consistency.
+ * Source assets are 550×488 (`/assets/seti/scoring/<id>_<side>.jpg`).
+ * We constrain the panel to a fixed compact height (≈80px) and
+ * contain the full-width PNG anchored to its top edge so the upper
+ * art shows in full while the lower band is clipped by the
+ * container's max-height + overflow.
  */
-function GoldTileArt({
+function GoldTileScoringArt({
   tile,
-  ranks,
-  claimsByRank,
-  playerColors,
 }: {
   tile: IPublicGoldScoringTile;
-  ranks: Array<{ value: number; capacity: number }>;
-  claimsByRank: Array<string[]>;
-  playerColors: Record<string, string>;
 }): React.JSX.Element {
   const { t } = useTranslation('common');
   const sideKey = tile.side.toLowerCase();
   const src = `/assets/seti/scoring/${tile.id}_${sideKey}.jpg`;
+  // Crop tightly to the *icon-band* at the very top of the printed
+  // tile (the row of condition shields — see the rulebook art). The
+  // shields sit in roughly the top 33% of the 550×488 source; that
+  // ratio keeps the icons plus a small breathing margin below them
+  // and trims the descriptive band and marker row that follow.
+  const CROP_RATIO = 0.33;
   return (
     <div
-      className='relative w-full overflow-hidden rounded border border-surface-700/60 bg-surface-950/60'
-      style={{ aspectRatio: '550 / 488' }}
-      data-testid={`gold-tile-art-${tile.id}-${tile.side}`}
+      // Scaled to 70% of the panel width so the icon strip reads as
+      // an inline detail rather than dominating the panel.
+      className='mb-2 w-[70%] overflow-hidden rounded border border-surface-700/60 bg-surface-950/60'
+      style={{ aspectRatio: `550 / ${488 * CROP_RATIO}` }}
+      data-testid={`gold-tile-scoring-art-${tile.id}-${tile.side}`}
     >
       <img
         src={src}
         alt={t(`client.gold_tile.label.${tile.id}`, {
           defaultValue: tile.id,
         })}
-        className='pointer-events-none absolute inset-0 h-full w-full object-contain'
+        className='pointer-events-none block w-full select-none'
+        // translateY shifts the image upward by 6% of its own
+        // rendered height — trims the very top of the source (the
+        // small bezel above the icons) and reveals 6% more of the
+        // band immediately below the icon row.
+        style={{ aspectRatio: '550 / 488', transform: 'translateY(-6%)' }}
         draggable={false}
       />
-      {ranks.map((rank, idx) => {
-        const anchor =
-          GOLD_TILE_SLOT_ANCHORS[idx] ??
-          GOLD_TILE_SLOT_ANCHORS[GOLD_TILE_SLOT_ANCHORS.length - 1];
-        const occupants = claimsByRank[idx];
-        return (
-          <div
-            key={`${tile.id}-art-rank-${idx}`}
-            className='absolute -translate-x-1/2 -translate-y-1/2'
-            style={{
-              left: `${anchor.x * 100}%`,
-              top: `${anchor.y * 100}%`,
-            }}
-          >
-            <div className='flex items-center gap-1'>
-              {Array.from({ length: rank.capacity }, (_, slotIdx) => {
-                const playerId = occupants[slotIdx];
-                const color = playerId ? playerColors[playerId] : undefined;
-                return (
-                  <span
-                    key={`${tile.id}-art-rank-${idx}-${slotIdx}`}
-                    aria-hidden
-                    title={
-                      playerId
-                        ? t('client.game_layout.claimed_by', {
-                            player: playerId,
-                          })
-                        : t('client.common.open', { defaultValue: 'Open' })
-                    }
-                    className={cn(
-                      'inline-block h-4 w-4 rounded-full border-2 shadow-md transition-opacity',
-                      playerId ? 'opacity-100' : 'opacity-0',
-                    )}
-                    style={{
-                      backgroundColor: color ?? 'transparent',
-                      borderColor: 'rgba(255,255,255,0.85)',
-                    }}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
     </div>
   );
 }

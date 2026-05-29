@@ -22,7 +22,7 @@ describe('EventEntry', () => {
       />,
     );
 
-    expect(screen.getByText(/Ada used Scan/)).toBeInTheDocument();
+    expect(screen.getByText(/Ada scanned/)).toBeInTheDocument();
     expect(screen.getByText('Info')).toBeInTheDocument();
     expect(screen.queryByText('ACTION')).not.toBeInTheDocument();
   });

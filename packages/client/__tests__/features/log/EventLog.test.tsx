@@ -49,11 +49,11 @@ describe('EventLog', () => {
 
     // Player names are now wrapped in tinted spans, so the rendered
     // line is split across nodes — match on the row's combined
-    // textContent instead of a single text node.
+    // textContent instead of a single text node. Each main action
+    // has a dedicated narrative (e.g. SCAN → "Ada scanned") instead
+    // of the older generic "Ada used Scan" mold.
     expect(
-      screen
-        .getByTestId('event-log')
-        .textContent?.includes('Ada used Scan'),
+      screen.getByTestId('event-log').textContent?.includes('Ada scanned'),
     ).toBe(true);
     expect(screen.queryByText('ACTION')).not.toBeInTheDocument();
     expect(screen.queryByText('SCAN')).not.toBeInTheDocument();
@@ -159,16 +159,23 @@ describe('EventLog', () => {
     );
 
     const compactLog = screen.getByTestId('event-log-compact');
-    expect(compactLog).toHaveTextContent('Ada used Pass');
-    expect(compactLog).not.toHaveTextContent('Milestone Check');
-    expect(compactLog).not.toHaveTextContent('Action Reward');
+    // Compact log surfaces user-facing main actions; internal
+    // milestone-check / action-reward bookkeeping events are
+    // filtered out (compact mode skips internal action names + any
+    // debug-level event).
+    expect(compactLog).toHaveTextContent('Ada passed');
+    expect(compactLog).not.toHaveTextContent('milestone check');
+    expect(compactLog).not.toHaveTextContent('action reward');
 
     fireEvent.click(compactLog);
 
     const dialog = screen.getByRole('dialog');
-    expect(dialog).toHaveTextContent('Ada used Pass');
-    expect(dialog).toHaveTextContent('Milestone Check');
-    expect(dialog).toHaveTextContent('Action Reward');
+    expect(dialog).toHaveTextContent('Ada passed');
+    // Internal events use their narrative templates now (e.g.
+    // "Ada — milestone check", "Ada received action reward")
+    // instead of the old "Ada used Milestone Check" mold.
+    expect(dialog.textContent ?? '').toMatch(/milestone check/i);
+    expect(dialog.textContent ?? '').toMatch(/action reward/i);
   });
 
   it('keeps newest-first logs scrolled to the top', () => {

@@ -1398,13 +1398,13 @@ describe('GameLayout', () => {
       await renderLayout();
 
       expect(screen.getByTestId('event-log-compact')).toHaveTextContent(
-        'Commander used Scan',
+        'Commander scanned',
       );
 
       fireEvent.click(screen.getByRole('tab', { name: 'Tech' }));
 
       expect(screen.getByTestId('event-log-compact')).toHaveTextContent(
-        'Commander used Scan',
+        'Commander scanned',
       );
     });
 
@@ -1431,7 +1431,7 @@ describe('GameLayout', () => {
       // Player names are wrapped in tinted spans, so use textContent
       // for the cross-element match.
       expect(
-        screen.getByRole('dialog').textContent?.includes('Commander used Scan'),
+        screen.getByRole('dialog').textContent?.includes('Commander scanned'),
       ).toBe(true);
     });
   });

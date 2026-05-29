@@ -87,8 +87,19 @@ function DebugReplayGameContent(): React.JSX.Element {
   return <GameLayout />;
 }
 
+type TReplayLanguage = 'en' | 'zh-CN' | 'pt-BR';
+
+function resolveReplayLanguage(
+  rawLanguage: string | undefined,
+): TReplayLanguage {
+  const normalized = (rawLanguage ?? 'en').toLowerCase();
+  if (normalized.startsWith('zh')) return 'zh-CN';
+  if (normalized.startsWith('pt')) return 'pt-BR';
+  return 'en';
+}
+
 export function DebugReplayPage(): React.JSX.Element {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const [presets, setPresets] = useState<IDebugReplayPresetDefinition[]>([]);
   const [selectedPresetId, setSelectedPresetId] = useState('');
   const [selectedCheckpointId, setSelectedCheckpointId] = useState('');
@@ -328,6 +339,31 @@ export function DebugReplayPage(): React.JSX.Element {
         className='pointer-events-none fixed inset-0 -z-10 bg-[image:var(--bg-atmosphere)]'
         aria-hidden
       />
+      {/*
+        Replay picker only needs the language switch — text-mode and
+        hotspots aren't relevant here (no live game art is visible).
+      */}
+      <div className='fixed right-3 top-3 z-40 rounded-[5px] border border-[color:var(--metal-edge)] bg-[var(--surface-raised)]/95 p-1.5 shadow-instrument backdrop-blur'>
+        <Select
+          value={resolveReplayLanguage(i18n.resolvedLanguage ?? i18n.language)}
+          onValueChange={(value) => {
+            void i18n.changeLanguage(resolveReplayLanguage(value));
+          }}
+        >
+          <SelectTrigger
+            className='h-8 w-[120px] text-xs'
+            aria-label={t('home.language')}
+            data-testid='debug-replay-language-select'
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value='en'>English</SelectItem>
+            <SelectItem value='zh-CN'>简体中文</SelectItem>
+            <SelectItem value='pt-BR'>Português</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       <div className='w-full max-w-xl rounded-[6px] border border-[color:var(--metal-edge)] bg-[var(--surface-panel)]/95 p-6 shadow-instrument'>
         <div className='mb-6 space-y-2'>
           <span className='micro-label inline-flex items-center gap-2 text-[oklch(0.78_0.10_240)]'>
