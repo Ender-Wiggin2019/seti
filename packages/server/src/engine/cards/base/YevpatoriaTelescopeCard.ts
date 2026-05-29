@@ -13,7 +13,7 @@ import { SelectOption } from '@/engine/input/SelectOption.js';
 import type { TCardItem } from '@/engine/player/IPlayer.js';
 import { ImmediateCard } from '../Card.js';
 import type { ICardRuntimeContext } from '../ICard.js';
-import { loadCardData } from '../loadCardData.js';
+import { describeCard, loadCardData } from '../loadCardData.js';
 
 const SCAN_TECH_FILTER = {
   mode: 'category' as const,
@@ -97,7 +97,7 @@ export class YevpatoriaTelescopeCard extends ImmediateCard {
         },
         ...handCards.map((card) => ({
           id: card.optionId,
-          label: `Discard ${card.discardCardId}`,
+          label: `Discard ${describeCard(card.discardCardId)}`,
           onSelect: () => {
             const discarded = context.player.removeCardAt(card.handIndex);
             context.game.mainDeck.discard(card.discardCardId);

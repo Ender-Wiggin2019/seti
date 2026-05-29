@@ -197,7 +197,16 @@ describe('MilestoneState (Phase 7)', () => {
       next!.process({ type: EPlayerInputType.GOLD_TILE, tileId: 'tech' });
 
       const techTile = game.goldScoringTiles.find((t) => t.id === 'tech')!;
-      expect(techTile.claims.map((c) => c.value)).toEqual([5, 4]);
+      // Tech tile multipliers depend on the randomized side:
+      //   A → 11/8/5/5 (third rank holds 2 markers)
+      //   B → 7/5/3/3
+      // The first two claims always take the top two ranks.
+      const [first, second] = techTile.claims.map((c) => c.value);
+      expect([first, second]).toEqual([
+        techTile.slotValues[0],
+        techTile.slotValues[1],
+      ]);
+      expect(first).toBeGreaterThan(second);
     });
 
     it('7.1.6 [集成] crossing 100+ VP does not re-trigger gold milestones', () => {

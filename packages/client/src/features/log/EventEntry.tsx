@@ -19,7 +19,72 @@ import {
 interface IEventEntryProps {
   event: TGameEvent;
   playerNames?: Record<string, string>;
+  /**
+   * Optional mapping of `playerId → player color` (already resolved
+   * to the final hex via `mapPlayerColors`). When provided, log lines
+   * tint each occurrence of a player's display name with their color
+   * so the event log reads at a glance — same dictionary the score
+   * ladder uses.
+   */
+  playerColors?: Record<string, string>;
   index: number;
+}
+
+/**
+ * Post-process the i18n-rendered description text by wrapping every
+ * known player-name occurrence in a <span> tinted with that player's
+ * color. The i18n templates emit raw player names (`{{player}}`,
+ * `{{winner}}`), so a longest-match-first scan over the names map
+ * gives us colored chips without changing every translation key.
+ *
+ * Names are matched by literal substring; we order longest-first so
+ * "Bot Vega" wins over an accidentally substring-overlapping "Bot".
+ */
+function colorizePlayerNames(
+  description: string,
+  playerNames: Record<string, string>,
+  playerColors: Record<string, string> | undefined,
+): React.ReactNode {
+  if (!playerColors || Object.keys(playerColors).length === 0) {
+    return description;
+  }
+  const entries = Object.entries(playerNames)
+    .map(([id, name]) => ({ id, name, color: playerColors[id] }))
+    .filter((entry) => entry.color && entry.name)
+    .sort((a, b) => b.name.length - a.name.length);
+  if (entries.length === 0) return description;
+
+  const segments: React.ReactNode[] = [];
+  let cursor = 0;
+  let chunkIndex = 0;
+  while (cursor < description.length) {
+    let nextMatch: { index: number; entry: (typeof entries)[number] } | null =
+      null;
+    for (const entry of entries) {
+      const idx = description.indexOf(entry.name, cursor);
+      if (idx >= 0 && (nextMatch === null || idx < nextMatch.index)) {
+        nextMatch = { index: idx, entry };
+      }
+    }
+    if (!nextMatch) {
+      segments.push(description.slice(cursor));
+      break;
+    }
+    if (nextMatch.index > cursor) {
+      segments.push(description.slice(cursor, nextMatch.index));
+    }
+    segments.push(
+      <span
+        key={`pname-${chunkIndex++}`}
+        style={{ color: nextMatch.entry.color }}
+        className='font-medium'
+      >
+        {nextMatch.entry.name}
+      </span>,
+    );
+    cursor = nextMatch.index + nextMatch.entry.name.length;
+  }
+  return segments;
 }
 
 type TTranslate = (key: string, options?: Record<string, unknown>) => string;
@@ -486,10 +551,20 @@ function getRivalActionEventDetails(
 export function EventEntry({
   event,
   playerNames = {},
+  playerColors,
   index,
 }: IEventEntryProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const rivalAction = getRivalActionEventDetails(event);
+  const description = getEventDescription(event, playerNames, t);
+  // When `description` is a plain string (the common case for action,
+  // resource, score lines), splice player-name spans tinted to each
+  // player's color. React-node descriptions (currently none) pass
+  // through unchanged.
+  const renderedDescription =
+    typeof description === 'string'
+      ? colorizePlayerNames(description, playerNames, playerColors)
+      : description;
 
   return (
     <article
@@ -511,7 +586,7 @@ export function EventEntry({
       </span>
       <div className='min-w-0 flex-1'>
         <p className='text-xs leading-snug text-text-200'>
-          {getEventDescription(event, playerNames, t)}
+          {renderedDescription}
         </p>
         <p className='micro-label mt-0.5 opacity-60'>
           {event.level === 'debug'

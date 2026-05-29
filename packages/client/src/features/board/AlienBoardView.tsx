@@ -862,13 +862,14 @@ function MascamitesBoard({
   board: IPublicMascamitesBoard;
   playerColors: Record<string, string>;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <section
       className='min-w-0 rounded border border-surface-700/50 bg-surface-950/30 p-2'
       data-testid={`alien-${alienIndex}-mascamites-board`}
     >
       <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
-        Samples
+        {t('client.alien_board.samples', { defaultValue: 'Samples' })}
       </div>
 
       <div className='grid gap-2 sm:grid-cols-3'>
@@ -895,12 +896,14 @@ function MascamitesBoard({
       <div className='mt-3 grid gap-2 lg:grid-cols-2'>
         <section className='rounded border border-surface-700/50 bg-surface-900/35 p-2'>
           <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
-            Capsules
+            {t('client.alien_board.capsules', { defaultValue: 'Capsules' })}
           </div>
           <div className='space-y-2'>
             {board.capsules.length === 0 ? (
               <div className='rounded border border-dashed border-surface-700/50 px-2 py-3 font-mono text-[10px] text-text-500'>
-                No active capsules
+                {t('client.alien_board.no_active_capsules', {
+                  defaultValue: 'No active capsules',
+                })}
               </div>
             ) : (
               board.capsules.map((capsule) => (
@@ -937,12 +940,16 @@ function MascamitesBoard({
 
         <section className='rounded border border-surface-700/50 bg-surface-900/35 p-2'>
           <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
-            Delivered Samples
+            {t('client.alien_board.delivered_samples', {
+              defaultValue: 'Delivered Samples',
+            })}
           </div>
           <div className='space-y-2'>
             {board.deliveredSamples.length === 0 ? (
               <div className='rounded border border-dashed border-surface-700/50 px-2 py-3 font-mono text-[10px] text-text-500'>
-                No delivered samples
+                {t('client.alien_board.no_delivered_samples', {
+                  defaultValue: 'No delivered samples',
+                })}
               </div>
             ) : (
               board.deliveredSamples.map((sample, index) => (
@@ -999,8 +1006,12 @@ function MascamitesSamplePoolCard({
   sampleCount?: number;
   sampleIds?: readonly string[];
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   const count = sampleCount ?? sampleIds?.length ?? 0;
-  const countLabel = `${count} sample${count === 1 ? '' : 's'}`;
+  const countLabel = t('client.alien_board.sample_count', {
+    count,
+    defaultValue: '{{count}} samples',
+  });
 
   return (
     <section
@@ -1018,7 +1029,7 @@ function MascamitesSamplePoolCard({
       <div className='mt-2 flex flex-wrap gap-1'>
         {count === 0 ? (
           <span className='rounded border border-dashed border-surface-700/50 px-1.5 py-0.5 font-mono text-[10px] text-text-500'>
-            Empty
+            {t('client.alien_board.empty', { defaultValue: 'Empty' })}
           </span>
         ) : sampleIds !== undefined ? (
           sampleIds.map((sampleId) => (
@@ -1031,7 +1042,7 @@ function MascamitesSamplePoolCard({
           ))
         ) : (
           <span className='rounded border border-surface-700/60 bg-surface-950/45 px-1.5 py-0.5 font-mono text-[10px] text-text-200'>
-            Hidden
+            {t('client.alien_board.hidden', { defaultValue: 'Hidden' })}
           </span>
         )}
       </div>
@@ -1048,6 +1059,7 @@ function ExertiansBoard({
   board: IPublicExertiansBoard;
   playerColors: Record<string, string>;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   const countsByPlayer = board.faceDownCards.reduce<Record<string, number>>(
     (counts, card) => {
       counts[card.ownerId] = (counts[card.ownerId] ?? 0) + 1;
@@ -1062,12 +1074,16 @@ function ExertiansBoard({
       data-testid={`alien-${alienIndex}-exertians-board`}
     >
       <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
-        Face-down Exertians
+        {t('client.alien_board.face_down_exertians', {
+          defaultValue: 'Face-down Exertians',
+        })}
       </div>
       <div className='grid gap-2 sm:grid-cols-2'>
         {Object.entries(countsByPlayer).length === 0 ? (
           <div className='rounded border border-surface-700/50 bg-surface-900/40 px-2 py-3 font-mono text-[10px] text-text-500'>
-            No hidden cards
+            {t('client.alien_board.no_hidden_cards', {
+              defaultValue: 'No hidden cards',
+            })}
           </div>
         ) : (
           Object.entries(countsByPlayer).map(([playerId, count]) => (
@@ -1603,6 +1619,7 @@ function OumuamuaBoard({
     options?: { isMoon?: boolean; moonId?: string },
   ) => void;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <section
       className='min-w-0 rounded border border-surface-700/50 bg-surface-950/30 p-2'
@@ -1610,7 +1627,9 @@ function OumuamuaBoard({
     >
       <div data-testid={`alien-${alienIndex}-oumuamua-landing-area`}>
         <div className='mb-2 font-mono text-[10px] uppercase tracking-widest text-text-500'>
-          Oumuamua Landing Area
+          {t('client.alien_board.oumuamua_landing_area', {
+            defaultValue: 'Oumuamua Landing Area',
+          })}
         </div>
         <OumuamuaLandingArea
           alienIndex={alienIndex}
@@ -1739,6 +1758,7 @@ function OumuamuaLandingArea({
     options?: { isMoon?: boolean; moonId?: string },
   ) => void;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   const textMode = useTextMode();
   const config = PLANETARY_BOARD_CONFIG[EPlanet.OUMUAMUA];
   const state = planetState ?? createEmptyPlanetState(config);
@@ -1805,11 +1825,13 @@ function OumuamuaLandingArea({
             data-testid={`alien-${alienIndex}-oumuamua-orbit-area`}
           >
             <p className='mb-1 font-mono text-[10px] uppercase tracking-wider text-text-500'>
-              Orbit
+              {t('client.alien_board.orbit', { defaultValue: 'Orbit' })}
             </p>
             <div className='flex min-h-5 flex-wrap gap-1'>
               {state.orbitSlots.length === 0 ? (
-                <span className='text-[11px] text-text-500'>Empty</span>
+                <span className='text-[11px] text-text-500'>
+                  {t('client.alien_board.empty', { defaultValue: 'Empty' })}
+                </span>
               ) : (
                 state.orbitSlots.map((slot, index) => (
                   <OumuamuaTokenDot
@@ -1843,7 +1865,9 @@ function OumuamuaLandingArea({
                   onClick={() => onSelectMainActionPlanet?.(EPlanet.OUMUAMUA)}
                   className='border-accent-500/70 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-accent-200 disabled:border-surface-700 disabled:bg-surface-900/60 disabled:text-text-500'
                 >
-                  Orbit Oumuamua
+                  {t('client.alien_board.orbit_oumuamua', {
+                    defaultValue: 'Orbit Oumuamua',
+                  })}
                 </HotspotButton>
               </div>
             ) : null}
@@ -1854,11 +1878,13 @@ function OumuamuaLandingArea({
             data-testid={`alien-${alienIndex}-oumuamua-landing-cells`}
           >
             <p className='mb-1 font-mono text-[10px] uppercase tracking-wider text-text-500'>
-              Landing
+              {t('client.alien_board.landing', { defaultValue: 'Landing' })}
             </p>
             <div className='flex min-h-5 flex-wrap gap-1'>
               {state.landingSlots.length === 0 ? (
-                <span className='text-[11px] text-text-500'>Empty</span>
+                <span className='text-[11px] text-text-500'>
+                  {t('client.alien_board.empty', { defaultValue: 'Empty' })}
+                </span>
               ) : (
                 state.landingSlots.map((slot, index) => (
                   <OumuamuaTokenDot
@@ -1892,7 +1918,9 @@ function OumuamuaLandingArea({
                   onClick={() => onSelectMainActionPlanet?.(EPlanet.OUMUAMUA)}
                   className='border-accent-500/70 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-accent-200 disabled:border-surface-700 disabled:bg-surface-900/60 disabled:text-text-500'
                 >
-                  Land Oumuamua
+                  {t('client.alien_board.land_oumuamua', {
+                    defaultValue: 'Land Oumuamua',
+                  })}
                 </HotspotButton>
               </div>
             ) : null}

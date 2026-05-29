@@ -8,6 +8,8 @@ import type {
 } from '@/types/re-exports';
 import { EPlayerInputType } from '@/types/re-exports';
 import { InputRenderer } from './InputRenderer';
+import { translateInputText } from './inputI18n';
+import type { TFunction } from 'i18next';
 
 export interface IOrOptionsInputProps {
   model: IOrOptionsInputModel;
@@ -16,11 +18,14 @@ export interface IOrOptionsInputProps {
 }
 
 function optionLabel(
+  t: TFunction,
   option: IPlayerInputModel,
   index: number,
   fallbackLabel: string,
 ): string {
-  return option.title?.trim() || fallbackLabel;
+  const trimmed = option.title?.trim();
+  if (trimmed) return translateInputText(t, trimmed);
+  return fallbackLabel;
 }
 
 export function OrOptionsInput({
@@ -49,6 +54,7 @@ export function OrOptionsInput({
             data-testid={`input-or-tab-${index}`}
           >
             {optionLabel(
+              t,
               option,
               index,
               t('client.input.option', { index: index + 1 }),

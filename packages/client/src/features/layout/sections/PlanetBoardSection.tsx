@@ -1,5 +1,6 @@
 import type { EPlanet } from '@seti/common/types/element';
 import { PlanetaryBoardView } from '@/features/board/PlanetaryBoardView';
+import { mapPlayerColors } from '@/lib/playerColor';
 import { useGameContext } from '@/pages/game/GameContext';
 import { EPlayerInputType } from '@/types/re-exports';
 import { getSlotPickerMode, resolveSlotPickerOptionId } from '../sectionInputs';
@@ -10,13 +11,7 @@ export function PlanetBoardSection(_: ISectionRenderProps): React.JSX.Element {
   const { gameState, myPlayerId, pendingInput, sendInput } = useGameContext();
   if (!gameState) return <></>;
 
-  const playerColors = gameState.players.reduce<Record<string, string>>(
-    (acc, p) => {
-      acc[p.playerId] = p.color;
-      return acc;
-    },
-    {},
-  );
+  const playerColors = mapPlayerColors(gameState.players);
 
   const planetActionMode = getSlotPickerMode(pendingInput);
 

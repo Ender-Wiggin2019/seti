@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { SolarSystemView } from '@/features/board/SolarSystemView';
 import { InputRenderer } from '@/features/input/InputRenderer';
 import { useServerDebugSession } from '@/hooks/useServerDebugSession';
+import { mapPlayerColors } from '@/lib/playerColor';
 import {
   EAlienType,
   EFreeAction,
@@ -18,9 +19,7 @@ import {
 function buildPlayerColors(
   players: IPublicGameState['players'],
 ): Record<string, string> {
-  return Object.fromEntries(
-    players.map((player) => [player.playerId, player.color]),
-  );
+  return mapPlayerColors(players);
 }
 
 function findOumuamuaTile(

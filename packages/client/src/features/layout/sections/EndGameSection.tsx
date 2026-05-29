@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { MilestoneTrack } from '@/features/scoring';
+import { mapPlayerColors, resolvePlayerColor } from '@/lib/playerColor';
 import { useGameContext } from '@/pages/game/GameContext';
 import type {
   IPublicGoldScoringTile,
@@ -14,13 +15,7 @@ export function EndGameSection(_: ISectionRenderProps): React.JSX.Element {
   const { t } = useTranslation('common');
   if (!gameState) return <></>;
 
-  const playerColors = gameState.players.reduce<Record<string, string>>(
-    (acc, p) => {
-      acc[p.playerId] = p.color;
-      return acc;
-    },
-    {},
-  );
+  const playerColors = mapPlayerColors(gameState.players);
 
   return (
     <div className='space-y-4'>
@@ -69,9 +64,12 @@ function ScoreLadder({
             <span
               aria-hidden
               className='h-2 w-2 shrink-0 rounded-full border border-[oklch(0.96_0.008_260/0.4)]'
-              style={{ backgroundColor: p.color }}
+              style={{ backgroundColor: resolvePlayerColor(p.color) }}
             />
-            <span className='flex-1 truncate text-[13px] font-medium text-text-100'>
+            <span
+              className='flex-1 truncate text-[13px] font-medium'
+              style={{ color: resolvePlayerColor(p.color) }}
+            >
               {p.playerName}
             </span>
             <div className='hidden min-w-[80px] flex-[0.5] items-center sm:flex'>

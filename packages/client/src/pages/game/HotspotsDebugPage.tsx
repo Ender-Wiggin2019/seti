@@ -122,7 +122,7 @@ function createPlayer(
     playerId: PLAYER_ID,
     playerName: 'Hotspot Pilot',
     seatIndex: 0,
-    color: 'blue',
+    color: 'green',
     score: 12,
     handSize: 5,
     pendingSetupTucks: 0,

@@ -30,6 +30,14 @@ interface IPlayerIncomeInfo {
   credit: number;
   energy: number;
   card: number;
+  /**
+   * Per-resource income from cards tucked during play (excludes the
+   * starting income card). Optional — when undefined the income
+   * tracker just shows totals.
+   */
+  tuckedCredit?: number;
+  tuckedEnergy?: number;
+  tuckedCard?: number;
 }
 
 interface IPersonalBoardHotspot {
@@ -229,6 +237,9 @@ export function PlayerDashboard({
               creditIncome={income?.credit ?? 0}
               energyIncome={income?.energy ?? 0}
               cardIncome={income?.card ?? 0}
+              tuckedCreditIncome={income?.tuckedCredit}
+              tuckedEnergyIncome={income?.tuckedEnergy}
+              tuckedCardIncome={income?.tuckedCard}
             />
 
             <section className='instrument-panel p-2'>

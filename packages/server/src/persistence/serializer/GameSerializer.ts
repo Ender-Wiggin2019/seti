@@ -990,6 +990,12 @@ function toPublicPlayerState(
     creditIncome: player.income.computeRoundPayout()[EResource.CREDIT],
     energyIncome: player.income.computeRoundPayout()[EResource.ENERGY],
     cardIncome: player.income.computeRoundPayout()[EResource.CARD],
+    // Tucked-only income lets the dashboard show "(+N tucked)" so
+    // players can see how much of their income comes from cards
+    // they tucked during play vs the printed starting income card.
+    tuckedCreditIncome: player.income.tuckedCardIncome[EResource.CREDIT],
+    tuckedEnergyIncome: player.income.tuckedCardIncome[EResource.ENERGY],
+    tuckedCardIncome: player.income.tuckedCardIncome[EResource.CARD],
     pendingSetupTucks: player.pendingSetupTucks,
     setupChoiceContext:
       isViewer && player.setupChoiceContext

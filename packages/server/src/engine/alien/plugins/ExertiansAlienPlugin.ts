@@ -7,6 +7,7 @@ import type { ESector } from '@seti/common/types/element';
 import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
 import { getTechDescriptor } from '@seti/common/types/tech';
 import { getMoonOccupants } from '../../board/PlanetaryBoard.js';
+import { describeCard } from '../../cards/loadCardData.js';
 import { isSoloMode } from '../../GameOptions.js';
 import type { IGame } from '../../IGame.js';
 import type { PlayerInput } from '../../input/PlayerInput.js';
@@ -418,7 +419,7 @@ export class ExertiansAlienPlugin implements IAlienPlugin {
       [
         ...playableCardIds.map((cardId) => ({
           id: `play-facedown:${cardId}`,
-          label: `Play ${cardId} face down`,
+          label: `Play ${describeCard(cardId)} face down`,
           onSelect: () => {
             this.playFaceDownCard(player, game, cardId, 'discovery');
             return this.createDiscoveryPlayInput(
@@ -511,7 +512,7 @@ export class ExertiansAlienPlugin implements IAlienPlugin {
       [
         ...playableCardIds.map((cardId) => ({
           id: `play-facedown:${cardId}`,
-          label: `Play ${cardId} face down`,
+          label: `Play ${describeCard(cardId)} face down`,
           onSelect: () => {
             if (creditCost > 0) {
               player.resources.spend({ credits: creditCost });

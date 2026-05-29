@@ -104,8 +104,16 @@ describe('GoldScoringTile', () => {
       expect(tile.scorePlayer(p1, game)).toBe(12);
     });
 
-    it('9.2.4 [集成] 任务 B：收入组只计 tucked，不计 base', () => {
-      const game = createTestGame('g92-mission-b');
+    // Side A/B assignments per the printed rulebook (p.21):
+    //   INCOME-A = min(credit, energy, card) tucked   (was previously
+    //              wired as MISSION-B in the older formulas)
+    //   INCOME-B = max(credit, energy) tucked         (was old INCOME-A)
+    //   OTHER-A  = min(pink, yellow, blue) traces     (was old INCOME-B)
+    //   OTHER-B  = min(wins, orbit+land)              (was old OTHER-A)
+    //   MISSION-B = floor((missions + end-game cards) / 2)
+    //              (was old OTHER-B's fallback)
+    it('9.2.4 [rulebook] Income A: min(credit, energy, card) tucked, base ignored', () => {
+      const game = createTestGame('g92-income-a');
       const p1 = game.players[0];
       p1.income.addBaseIncome(EResource.CREDIT, 99);
       p1.income.addBaseIncome(EResource.ENERGY, 99);
@@ -114,13 +122,13 @@ describe('GoldScoringTile', () => {
         { income: 'energy' },
         { income: 'draw-card' },
       ];
-      // min(1 credit, 1 energy, 1 card) = 1；base 不参与
-      const tile = tileClaimed('mission', 'B', 'p1', 8);
+      // min(1 credit, 1 energy, 1 card) = 1; base income excluded.
+      const tile = tileClaimed('income', 'A', 'p1', 8);
       expect(tile.scorePlayer(p1, game)).toBe(8);
     });
 
-    it('9.2.5 [集成] 收入 A：max(信用 tucked, 能量 tucked)', () => {
-      const game = createTestGame('g92-income-a');
+    it('9.2.5 [rulebook] Income B: max(credit tucked, energy tucked)', () => {
+      const game = createTestGame('g92-income-b');
       const p1 = game.players[0];
       p1.tuckedIncomeCards = [
         { income: 'credit' },
@@ -130,14 +138,14 @@ describe('GoldScoringTile', () => {
         { income: 'energy' },
       ];
       // max(2, 3) = 3
-      const tile = tileClaimed('income', 'A', 'p1', 4);
+      const tile = tileClaimed('income', 'B', 'p1', 4);
       expect(tile.scorePlayer(p1, game)).toBe(12);
     });
 
-    it('9.2.6 [集成] 收入 B：三色生命痕迹 min，overflow 计入 player.traces', () => {
-      const game = createTestGame('g92-income-b-overflow');
+    it('9.2.6 [rulebook] Other A: min(pink, yellow, blue) traces, overflow counts via player.traces', () => {
+      const game = createTestGame('g92-other-a-overflow');
       const p1 = game.players[0];
-      // Red: discovery + overflow → 2；Y/B：各 1（discovery）
+      // Red: discovery + overflow → 2; Y/B: 1 each (discovery slot).
       placeTraceForTestSetup(game.alienState, p1, game, ETrace.PINK, 0);
       placeTraceForTestSetup(game.alienState, p1, game, ETrace.PINK, 0);
       placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
@@ -146,12 +154,12 @@ describe('GoldScoringTile', () => {
       expect(p1.traces[ETrace.YELLOW]).toBe(1);
       expect(p1.traces[ETrace.BLUE]).toBe(1);
 
-      const tile = tileClaimed('income', 'B', 'p1', 6);
+      const tile = tileClaimed('other', 'A', 'p1', 6);
       expect(tile.scorePlayer(p1, game)).toBe(6);
     });
 
-    it('9.2.6b [集成] 收入 B 从 alien board 统计 trace，而不是依赖 player 缓存', () => {
-      const game = createTestGame('g92-income-b-board-count');
+    it('9.2.6b [rulebook] Other A counts traces from alien board, not player cache', () => {
+      const game = createTestGame('g92-other-a-board-count');
       const p1 = game.players[0];
       const board = game.alienState.boards[0];
 
@@ -167,24 +175,23 @@ describe('GoldScoringTile', () => {
         [ETrace.ANY]: 0,
       };
 
-      const tile = tileClaimed('income', 'B', 'p1', 6);
+      const tile = tileClaimed('other', 'A', 'p1', 6);
       expect(tile.scorePlayer(p1, game)).toBe(6);
     });
 
-    it('9.2.7 [集成] 其他 A：扇区胜利次数与 orbiter/lander 取 min（lander 含月球等）', () => {
-      const game = createTestGame('g92-other-a');
+    it('9.2.7 [rulebook] Other B: min(sector wins, orbit+land count)', () => {
+      const game = createTestGame('g92-other-b');
       const p1 = game.players[0];
       game.sectors[0].sectorWinners.push('p1', 'p1', 'p2');
-      // p1 在该 sector 上 2 次胜场；全 game 累加
       p1.pieces.deploy(EPieceType.ORBITER);
       p1.pieces.deploy(EPieceType.LANDER);
-      // min(2 wins, 1 orb + 1 land) = 2
-      const tile = tileClaimed('other', 'A', 'p1', 5);
+      // min(2 wins, 1 orbiter + 1 lander) = 2
+      const tile = tileClaimed('other', 'B', 'p1', 5);
       expect(tile.scorePlayer(p1, game)).toBe(10);
     });
 
-    it('9.2.7 FAQ: other A counts actual planetary-board orbiters, landers, and moons', () => {
-      const game = createTestGame('g92-other-a-real-board');
+    it('9.2.7 FAQ: Other B counts actual planetary-board orbiters, landers, and moons', () => {
+      const game = createTestGame('g92-other-b-real-board');
       const p1 = game.players[0];
       game.sectors[0].sectorWinners.push('p1', 'p1', 'p1');
       const mars = game.planetaryBoard?.planets.get(EPlanet.MARS);
@@ -196,7 +203,7 @@ describe('GoldScoringTile', () => {
         moonId: 'mars-phobos-deimos',
       });
 
-      const tile = tileClaimed('other', 'A', 'p1', 5);
+      const tile = tileClaimed('other', 'B', 'p1', 5);
 
       expect(tile.scorePlayer(p1, game)).toBe(15);
     });
@@ -232,13 +239,13 @@ describe('GoldScoringTile', () => {
       expect(scoreEndGameCard('44', p1, game)).toBe(9);
     });
 
-    it('9.2.8 [集成] 其他 B：floor((已完成任务 + 终局计分牌) / 2)', () => {
-      const game = createTestGame('g92-other-b');
+    it('9.2.8 [rulebook] Mission B: floor((completed missions + end-game cards) / 2)', () => {
+      const game = createTestGame('g92-mission-b');
       const p1 = game.players[0];
       p1.completedMissions = ['a', 'b', 'c'];
       p1.endGameCards = ['eg1', 'eg2'];
       // floor((3+2)/2) = 2
-      const tile = tileClaimed('other', 'B', 'p1', 5);
+      const tile = tileClaimed('mission', 'B', 'p1', 5);
       expect(tile.scorePlayer(p1, game)).toBe(10);
     });
 
@@ -378,9 +385,12 @@ describe('GoldScoringTile', () => {
         { length: 10 },
         (_, index) => `m${index}`,
       );
+      // Tucked one of each type so the income-B "max(credit, energy)
+      // tucked" formula yields max(2, 1) = 2 — the rightmost slot of
+      // the income-B tile (3) × 2 = 6, vs tech-A which yields 0.
       p1.tuckedIncomeCards = [
-        { income: EResource.ENERGY },
-        { income: EResource.ENERGY },
+        { income: EResource.CREDIT },
+        { income: EResource.CREDIT },
         { income: EResource.ENERGY },
       ];
 
@@ -400,12 +410,15 @@ describe('GoldScoringTile', () => {
         }),
         new GoldScoringTile({
           id: 'income',
-          side: 'A',
+          side: 'B',
           slotValues: [8, 6, 4, 3],
         }),
       ];
 
-      expect(scoreEndGameCard('113', p1, game)).toBe(9);
+      // Income-B rightmost slot = 3, multiplied by max(2 credit, 1
+      // energy) tucked = 2 → 6. Tech-A is 0 (no techs). Best of
+      // unmarked tiles is 6.
+      expect(scoreEndGameCard('113', p1, game)).toBe(6);
     });
 
     it('scores Base 113 even when the unmarked tile has no claimable spaces, and scores 0 when all tiles were marked by the player', () => {

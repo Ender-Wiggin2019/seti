@@ -1,5 +1,6 @@
 import type { EPlanet } from '@seti/common/types/element';
 import { AlienBoardView } from '@/features/board/AlienBoardView';
+import { mapPlayerColors } from '@/lib/playerColor';
 import { useGameContext } from '@/pages/game/GameContext';
 import { EPlayerInputType } from '@/types/re-exports';
 import { useGameSession } from '../GameSessionContext';
@@ -12,13 +13,7 @@ export function AlienBoardSection(_: ISectionRenderProps): React.JSX.Element {
   const { inspectCard } = useGameSession();
   if (!gameState) return <></>;
 
-  const playerColors = gameState.players.reduce<Record<string, string>>(
-    (acc, p) => {
-      acc[p.playerId] = p.color;
-      return acc;
-    },
-    {},
-  );
+  const playerColors = mapPlayerColors(gameState.players);
 
   const planetActionMode = getSlotPickerMode(pendingInput);
 

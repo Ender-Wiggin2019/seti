@@ -64,20 +64,23 @@ export interface IDebugBehaviorFlowSessionResponse {
   }>;
 }
 
+// Debug seed players use the rulebook palette (green/orange/purple/
+// white) so the renderer paints probes, markers, and tokens in the
+// retail piece colors rather than placeholder red/blue.
 const DEBUG_PLAYER_BLUEPRINTS: ReadonlyArray<{
   name: string;
   color: string;
 }> = [
-  { name: 'Commander Ada', color: 'red' },
-  { name: 'Bot Vega', color: 'blue' },
+  { name: 'Commander Ada', color: 'green' },
+  { name: 'Bot Vega', color: 'orange' },
 ];
 
 const BEHAVIOR_FLOW_PLAYER_BLUEPRINTS: ReadonlyArray<{
   name: string;
   color: string;
 }> = [
-  { name: 'Alice', color: 'red' },
-  { name: 'Bob', color: 'blue' },
+  { name: 'Alice', color: 'green' },
+  { name: 'Bob', color: 'orange' },
 ];
 
 const DEBUG_BOT_MAIN_ACTIONS: ReadonlyArray<EMainAction> = [

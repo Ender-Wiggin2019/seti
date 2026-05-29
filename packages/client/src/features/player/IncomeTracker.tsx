@@ -4,16 +4,32 @@ interface IIncomeTrackerProps {
   creditIncome: number;
   energyIncome: number;
   cardIncome: number;
+  /**
+   * Per-resource income contributed by *tucked* cards (i.e.
+   * excluding the printed starting income card). When provided we
+   * surface this as a small "+N" suffix so players can see how much
+   * of each stream they've grown during play.
+   */
+  tuckedCreditIncome?: number;
+  tuckedEnergyIncome?: number;
+  tuckedCardIncome?: number;
 }
 
 interface IStreamProps {
   label: string;
   value: number;
+  tuckedValue?: number;
   icon: string;
 }
 
-function Stream({ label, value, icon }: IStreamProps): React.JSX.Element {
+function Stream({
+  label,
+  value,
+  tuckedValue,
+  icon,
+}: IStreamProps): React.JSX.Element {
   const isZero = value === 0;
+  const showTucked = tuckedValue !== undefined && tuckedValue > 0;
   return (
     <div className='flex items-center gap-1.5'>
       <img src={icon} alt='' aria-hidden className='h-3.5 w-3.5 shrink-0' />
@@ -28,6 +44,15 @@ function Stream({ label, value, icon }: IStreamProps): React.JSX.Element {
         >
           <span className='text-accent-400'>{isZero ? '·' : '+'}</span>
           {value}
+          {showTucked ? (
+            <span
+              className='ml-1 font-mono text-[10px] text-text-400'
+              title='Income from tucked cards (excludes starting income card)'
+              data-testid='income-tucked-suffix'
+            >
+              ({`+${tuckedValue}`})
+            </span>
+          ) : null}
         </p>
       </div>
     </div>
@@ -43,6 +68,9 @@ export function IncomeTracker({
   creditIncome,
   energyIncome,
   cardIncome,
+  tuckedCreditIncome,
+  tuckedEnergyIncome,
+  tuckedCardIncome,
 }: IIncomeTrackerProps): React.JSX.Element {
   const { t } = useTranslation('common');
   return (
@@ -61,16 +89,19 @@ export function IncomeTracker({
         <Stream
           label={t('client.income_tracker.credit', { defaultValue: 'Credit' })}
           value={creditIncome}
+          tuckedValue={tuckedCreditIncome}
           icon='/assets/seti/icons/money.png'
         />
         <Stream
           label={t('client.income_tracker.energy', { defaultValue: 'Energy' })}
           value={energyIncome}
+          tuckedValue={tuckedEnergyIncome}
           icon='/assets/seti/icons/energy.png'
         />
         <Stream
           label={t('client.income_tracker.card', { defaultValue: 'Cards' })}
           value={cardIncome}
+          tuckedValue={tuckedCardIncome}
           icon='/assets/seti/icons/draw.png'
         />
       </div>

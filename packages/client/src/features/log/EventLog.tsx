@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/cn';
+import { mapPlayerColors } from '@/lib/playerColor';
 import {
   EGameEventType,
   type IPublicPlayerState,
@@ -79,6 +80,8 @@ export function EventLog({
     }, {});
   }, [players]);
 
+  const playerColors = useMemo(() => mapPlayerColors(players), [players]);
+
   useEffect(() => {
     if (!scrollRef.current) {
       return;
@@ -130,6 +133,7 @@ export function EventLog({
                     }
                     event={event}
                     playerNames={playerNames}
+                    playerColors={playerColors}
                     index={index}
                   />
                 ))}
@@ -185,6 +189,7 @@ export function EventLog({
                 key={event.id ?? `${event.type}-${event.at ?? index}-${index}`}
                 event={event}
                 playerNames={playerNames}
+                playerColors={playerColors}
                 index={index}
               />
             ))}

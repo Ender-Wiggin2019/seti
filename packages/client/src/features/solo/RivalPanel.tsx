@@ -378,14 +378,29 @@ function RivalBoardProgressSpots({
             title={`Progress ${index + 1}`}
           >
             {current ? (
-              <img
-                src='/assets/seti/tokens/sky/redSky.png'
-                alt=''
+              // Mask-tint the white sky disc with the rival's piece
+              // color (orange — see lobby PLAYER_COLORS[1]) so the
+              // progress marker matches the rival's probes/markers
+              // elsewhere on the board, without shipping per-color art.
+              <span
                 aria-hidden
-                className='h-full w-full rounded-full drop-shadow-[0_0_5px_rgba(255,60,45,0.9)]'
+                role='img'
+                className='h-full w-full rounded-full drop-shadow-[0_0_5px_rgba(212,109,30,0.85)]'
                 data-current='true'
                 data-fill-mode='background'
                 data-testid={`rival-progress-slot-${activeSlot}`}
+                style={{
+                  backgroundColor: '#d46d1e',
+                  WebkitMaskImage:
+                    'url(/assets/seti/tokens/sky/whiteSky.png)',
+                  maskImage: 'url(/assets/seti/tokens/sky/whiteSky.png)',
+                  WebkitMaskRepeat: 'no-repeat',
+                  maskRepeat: 'no-repeat',
+                  WebkitMaskSize: 'contain',
+                  maskSize: 'contain',
+                  WebkitMaskPosition: 'center',
+                  maskPosition: 'center',
+                }}
               />
             ) : null}
           </HotspotAnchor>

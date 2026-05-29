@@ -1,3 +1,4 @@
+import { describeCard } from '../../cards/loadCardData.js';
 import { drawCard } from '../../deck/drawCard.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
@@ -34,7 +35,7 @@ export class AnyCardChoiceEffect {
       const cardId = resolveCardId(card, `row-${index}`);
       options.push({
         id: `row:${index}:${cardId}`,
-        label: `Take ${cardId} from card row`,
+        label: `Take ${describeCard(cardId)} from card row`,
         onSelect: () => {
           const currentIndex = game.cardRow.indexOf(card);
           const removeIndex = currentIndex >= 0 ? currentIndex : index;

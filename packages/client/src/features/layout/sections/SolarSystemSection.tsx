@@ -1,5 +1,6 @@
 import { createDefaultSetupConfig } from '@seti/common/constant/sectorSetup';
 import { SolarSystemView } from '@/features/board/SolarSystemView';
+import { mapPlayerColors } from '@/lib/playerColor';
 import { useGameContext } from '@/pages/game/GameContext';
 import { EFreeAction } from '@/types/re-exports';
 import { useGameSession } from '../GameSessionContext';
@@ -11,13 +12,7 @@ export function SolarSystemSection(): React.JSX.Element | null {
 
   if (!gameState) return null;
 
-  const playerColors = gameState.players.reduce<Record<string, string>>(
-    (acc, p) => {
-      acc[p.playerId] = p.color;
-      return acc;
-    },
-    {},
-  );
+  const playerColors = mapPlayerColors(gameState.players);
   const myPlayer = gameState.players.find((p) => p.playerId === myPlayerId);
 
   const oumuamuaTile =

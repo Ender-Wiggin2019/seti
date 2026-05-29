@@ -9,6 +9,7 @@ import type {
 } from '@/types/re-exports';
 import { EPlayerInputType } from '@/types/re-exports';
 import { InputRenderer } from './InputRenderer';
+import { translateInputText } from './inputI18n';
 
 export interface IAndOptionsInputProps {
   model: IAndOptionsInputModel;
@@ -76,7 +77,7 @@ export function AndOptionsInput({
         <div aria-hidden className='section-head__rule' />
         {currentStep.title ? (
           <span className='font-mono text-[10px] uppercase tracking-[0.12em] text-text-500'>
-            {currentStep.title}
+            {translateInputText(t, currentStep.title)}
           </span>
         ) : null}
       </div>

@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { resolvePlayerColor } from '@/lib/playerColor';
 import type { IPublicPlayerState } from '@/types/re-exports';
 import { OrganizationBadge } from './OrganizationBadge';
 
@@ -51,7 +52,7 @@ export function OpponentSummary({
                 <span
                   aria-hidden
                   className='h-2.5 w-2.5 shrink-0 rounded-full border border-[oklch(0.96_0.008_260/0.5)] shadow-[inset_0_1px_0_oklch(1_0_0/0.3)]'
-                  style={{ backgroundColor: player.color }}
+                  style={{ backgroundColor: resolvePlayerColor(player.color) }}
                 />
                 <span className='truncate text-[12px] font-medium text-text-100'>
                   {player.playerName}

@@ -1,4 +1,5 @@
 import { TechBoardView } from '@/features/board/TechBoardView';
+import { mapPlayerColors } from '@/lib/playerColor';
 import { useGameContext } from '@/pages/game/GameContext';
 import type { ISectionRenderProps } from '../sectionRegistry';
 
@@ -7,13 +8,7 @@ export function TechBoardSection(_: ISectionRenderProps): React.JSX.Element {
   const { gameState, myPlayerId, pendingInput, sendInput } = useGameContext();
   if (!gameState) return <></>;
 
-  const playerColors = gameState.players.reduce<Record<string, string>>(
-    (acc, p) => {
-      acc[p.playerId] = p.color;
-      return acc;
-    },
-    {},
-  );
+  const playerColors = mapPlayerColors(gameState.players);
 
   return (
     <TechBoardView

@@ -1638,9 +1638,13 @@ describe('RivalTurnController', () => {
     expect(rival.waitingFor).toBeUndefined();
     expect(game.activePlayer.id).toBe('p1');
     expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
+    // The rival always claims the highest unclaimed slot, whose value
+    // depends on the randomized side of the first gold tile. Read it
+    // from the tile instead of hardcoding the old [5,4,3,2] default.
+    const expectedTopValue = game.goldScoringTiles[0]?.slotValues[0];
     expect(game.goldScoringTiles[0]?.claims).toContainEqual({
       playerId: rival.id,
-      value: 5,
+      value: expectedTopValue,
     });
     expect(
       game.eventLog

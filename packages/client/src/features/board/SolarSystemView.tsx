@@ -11,6 +11,7 @@ import {
   toTraceRewardPresentations,
 } from '@seti/common/utils/alienTracePresentation';
 import { type CSSProperties, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { HotspotAnchor } from '@/features/hotspots/HotspotAnchor';
 import { HotspotButton } from '@/features/hotspots/HotspotButton';
 import {
@@ -412,6 +413,7 @@ export function SolarSystemView({
   oumuamuaTile = null,
   textModeOverride,
 }: ISolarSystemViewProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   const [selectedMoveTarget, setSelectedMoveTarget] = useState<{
     spaceId: string;
     target?: TMovementTarget;
@@ -1039,7 +1041,7 @@ export function SolarSystemView({
     >
       <header className='mb-2 flex flex-wrap items-center justify-between gap-2'>
         <h2 className='font-display text-base font-bold uppercase tracking-wider text-text-100'>
-          Solar System
+          {t('client.solar_system.title', { defaultValue: 'Solar System' })}
         </h2>
         <div className='flex items-center gap-2'>
           <div
@@ -1081,10 +1083,16 @@ export function SolarSystemView({
 
           {solarSystem.nextRotateRing ? (
             <div className='flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-text-400'>
-              <span>Next Rotate:</span>
+              <span>
+                {t('client.solar_system.next_rotate', {
+                  defaultValue: 'Next Rotate:',
+                })}
+              </span>
               <img
                 src={`/assets/seti/tech/bonuses/techRotation${solarSystem.nextRotateRing}.png`}
-                alt='Next rotate ring'
+                alt={t('client.solar_system.next_rotate_alt', {
+                  defaultValue: 'Next rotate ring',
+                })}
                 className='h-6 w-6'
               />
             </div>

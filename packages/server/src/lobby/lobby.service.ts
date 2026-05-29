@@ -26,7 +26,12 @@ import { gamePlayers } from '@/persistence/schema/players.js';
 import { users } from '@/persistence/schema/users.js';
 import type { IRoomPlayer, IRoomResponse } from './dto/RoomResponseDto.js';
 
-const PLAYER_COLORS = ['red', 'blue', 'green', 'yellow'];
+// Rulebook palette: each retail SETI box ships pieces in green,
+// orange, purple, and white (see SE_rulebook §Components, p.2). The
+// solo rival uses one of the unused colors — index 1 keeps it visually
+// distinct from the human (green) and matches the rival reminder card
+// imagery (orange rival pieces).
+const PLAYER_COLORS = ['green', 'orange', 'purple', 'white'];
 const RIVAL_DISPLAY_NAME = 'Rival Institution';
 
 @Injectable()

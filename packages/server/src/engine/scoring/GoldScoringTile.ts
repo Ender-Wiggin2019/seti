@@ -32,7 +32,21 @@ export interface IGoldScoringTileInit {
   slotValues?: number[];
 }
 
-const DEFAULT_SLOT_VALUES = [5, 4, 3, 2];
+// Per-tile multipliers from the rulebook (p.21). Each tile has 3
+// rank positions; positions #1 and #2 hold a single player marker,
+// position #3 holds up to two markers (so the bottom-rank value
+// appears twice). Earlier code used a uniform [5,4,3,2] default that
+// didn't match any printed tile.
+const DEFAULT_SLOT_VALUES = [5, 4, 3, 3] as const;
+const SLOT_VALUES_BY_TILE: Record<
+  TGoldScoringTileId,
+  Record<TGoldScoringTileSide, readonly number[]>
+> = {
+  tech: { A: [11, 8, 5, 5], B: [7, 5, 3, 3] },
+  mission: { A: [4, 3, 2, 2], B: [8, 6, 4, 4] },
+  income: { A: [11, 8, 5, 5], B: [5, 4, 3, 3] },
+  other: { A: [8, 6, 4, 4], B: [8, 6, 4, 4] },
+};
 
 type TFormula = (player: IPlayer, game: IGame) => number;
 
@@ -208,6 +222,21 @@ function getFormula(
   id: TGoldScoringTileId,
   side: TGoldScoringTileSide,
 ): TFormula {
+  // Rulebook p.21 — each tile/side text:
+  //   TECH-A: "for each set of three techs, one of each type"
+  //   TECH-B: "for each pair of techs"
+  //   MISSION-A: "for each mission you have completed"
+  //   MISSION-B: "for each pair of completed missions / end-game cards
+  //              (a pair = 2 missions, 2 end-game cards, or 1 of each)"
+  //   INCOME-A: "for each set of three cards tucked for income, one of
+  //              each type" (starting income card is excluded; only
+  //              cards tucked during play count)
+  //   INCOME-B: "for the type of income card you tucked the most:
+  //              credits or energy" (max of the two, starting card
+  //              excluded)
+  //   OTHER-A: "for each set of three life traces, one of each color"
+  //   OTHER-B: "for each sector win paired with an orbiter or lander
+  //              (smaller of total wins vs total orbit+land)"
   if (id === 'tech' && side === 'A') {
     return (player) => {
       const probeCount = getTechCategoryCount(player.techs, ETech.PROBE);
@@ -226,6 +255,13 @@ function getFormula(
   }
 
   if (id === 'mission' && side === 'B') {
+    return (player) =>
+      Math.floor(
+        (player.completedMissions.length + player.endGameCards.length) / 2,
+      );
+  }
+
+  if (id === 'income' && side === 'A') {
     return (player) => {
       const incomeCounts = getTuckedIncomeCounts(player);
       return Math.min(
@@ -236,7 +272,7 @@ function getFormula(
     };
   }
 
-  if (id === 'income' && side === 'A') {
+  if (id === 'income' && side === 'B') {
     return (player) => {
       const incomeCounts = getTuckedIncomeCounts(player);
       return Math.max(
@@ -246,7 +282,7 @@ function getFormula(
     };
   }
 
-  if (id === 'income' && side === 'B') {
+  if (id === 'other' && side === 'A') {
     return (player, game) =>
       Math.min(
         getTraceCount(player, game, ETrace.PINK),
@@ -255,18 +291,12 @@ function getFormula(
       );
   }
 
-  if (id === 'other' && side === 'A') {
-    return (player, game) => {
-      const wins = getSectorWinCount(player, game);
-      const orbitersAndLanders = getOrbitOrLandCount(player, game);
-      return Math.min(wins, orbitersAndLanders);
-    };
-  }
-
-  return (player) =>
-    Math.floor(
-      (player.completedMissions.length + player.endGameCards.length) / 2,
-    );
+  // OTHER-B fallback.
+  return (player, game) => {
+    const wins = getSectorWinCount(player, game);
+    const orbitersAndLanders = getOrbitOrLandCount(player, game);
+    return Math.min(wins, orbitersAndLanders);
+  };
 }
 
 function getSectorFulfillCountForEndGamePer(
@@ -305,7 +335,12 @@ export class GoldScoringTile {
   public constructor(init: IGoldScoringTileInit) {
     this.id = init.id;
     this.side = init.side;
-    this.slotValues = [...(init.slotValues ?? DEFAULT_SLOT_VALUES)];
+    // Tile multipliers come from the rulebook table; the third
+    // position is duplicated because it physically holds 2 markers.
+    // `init.slotValues` lets tests override.
+    const tileDefaults =
+      SLOT_VALUES_BY_TILE[init.id]?.[init.side] ?? DEFAULT_SLOT_VALUES;
+    this.slotValues = [...(init.slotValues ?? tileDefaults)];
     this.claims = [];
     this.formula = getFormula(this.id, this.side);
   }

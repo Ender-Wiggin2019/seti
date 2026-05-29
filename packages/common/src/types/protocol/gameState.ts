@@ -117,6 +117,16 @@ export interface IPublicPlayerState {
   energyIncome: number;
   cardIncome: number;
   /**
+   * Income contributions from cards this player has tucked during
+   * play (i.e. excluding the starting income card). The dashboard
+   * uses these to show "(+N tucked)" alongside total income so the
+   * player can see at a glance how much of their income is "earned"
+   * vs the base printed on their starting card.
+   */
+  tuckedCreditIncome?: number;
+  tuckedEnergyIncome?: number;
+  tuckedCardIncome?: number;
+  /**
    * Number of setup-tuck inputs this player still owes. `0` means setup
    * is complete for this player. Broadcast publicly so peers can reflect
    * "waiting for all players to finish setup" in the UI.

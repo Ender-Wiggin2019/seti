@@ -1,11 +1,14 @@
 import { DescRender } from '@seti/cards';
+import { ALL_CARDS } from '@seti/common/data/index';
 import { ORGANIZATIONS_BY_ID } from '@seti/common/data/organizations';
 import { PRELUDE_CARDS_BY_ID } from '@seti/common/data/preludeCards';
+import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EMiscIcon, EResource } from '@seti/common/types/element';
 import type {
   EOrganizationId,
   IOrganizationData,
 } from '@seti/common/types/organization';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { QuickStartCardPreview } from '@/features/setup/QuickStartCardPreview';
@@ -15,6 +18,30 @@ import type {
   ISelectOptionInputModel,
 } from '@/types/re-exports';
 import { EPlayerInputType, ESetupChoiceStepKind } from '@/types/re-exports';
+import { translateInputText } from './inputI18n';
+
+const CARD_BY_ID = new Map<string, IBaseCard>(
+  ALL_CARDS.map((card) => [card.id, card]),
+);
+
+/**
+ * Server-side option labels embed a bare `[[card:NN]]` sentinel for
+ * card references (see `describeCard()` in server/loadCardData.ts).
+ * On the client we replace the sentinel with the locale-specific
+ * `<card.name> (#NN)` so e.g. "Discard [[card:67]]" becomes "Discard
+ * Yevpatoria Telescope (#67)" or "弃 叶夫帕托里亚望远镜 (#67)".
+ */
+function localizeCardNameSuffix(label: string, t: TFunction): string {
+  return label.replace(/\[\[card:(\d+)\]\]/g, (_match, cardId: string) => {
+    const card = CARD_BY_ID.get(cardId);
+    if (!card?.name) return `(#${cardId})`;
+    const translatedName = t(card.name, {
+      ns: 'seti',
+      defaultValue: card.name,
+    });
+    return `${translatedName} (#${cardId})`;
+  });
+}
 
 export interface ISelectOptionInputProps {
   model: ISelectOptionInputModel;
@@ -25,6 +52,7 @@ export function SelectOptionInput({
   model,
   onSubmit,
 }: ISelectOptionInputProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   if (model.setupChoice?.kind === ESetupChoiceStepKind.ORGANIZATION) {
     return <OrganizationOptionInput model={model} onSubmit={onSubmit} />;
   }
@@ -34,7 +62,9 @@ export function SelectOptionInput({
 
   return (
     <div className='space-y-2'>
-      {model.title ? <p className='micro-label'>{model.title}</p> : null}
+      {model.title ? (
+        <p className='micro-label'>{translateInputText(t, model.title)}</p>
+      ) : null}
       <div className='grid gap-1.5 sm:grid-cols-2'>
         {model.options.map((option, index) => (
           <Button
@@ -58,7 +88,17 @@ export function SelectOptionInput({
               {String(index + 1).padStart(2, '0')}
             </span>
             <span className='flex-1 truncate font-body text-text-100'>
-              {renderOptionLabel(option.label)}
+              {/*
+                Order matters: resolve `[[card:NN]]` sentinels first
+                (so the dynamic patterns in translateInputText see
+                e.g. "Discard <localized name> (#N)" rather than
+                "Discard <english> [[card:N]]"), then run the static
+                + dynamic dictionary translation, then splice resource
+                emojis into <img> elements.
+              */}
+              {renderOptionLabel(
+                translateInputText(t, localizeCardNameSuffix(option.label, t)),
+              )}
             </span>
           </Button>
         ))}
@@ -125,9 +165,12 @@ function QuickStartOptionInput({
   model,
   onSubmit,
 }: ISelectOptionInputProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <div className='space-y-2'>
-      {model.title ? <p className='micro-label'>{model.title}</p> : null}
+      {model.title ? (
+        <p className='micro-label'>{translateInputText(t, model.title)}</p>
+      ) : null}
       <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-3'>
         {model.options.map((option) => {
           const card = PRELUDE_CARDS_BY_ID[option.id];
@@ -215,7 +258,9 @@ function OrganizationOptionInput({
   const { t } = useTranslation('common');
   return (
     <div className='space-y-2'>
-      {model.title ? <p className='micro-label'>{model.title}</p> : null}
+      {model.title ? (
+        <p className='micro-label'>{translateInputText(t, model.title)}</p>
+      ) : null}
       <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-3'>
         {model.options.map((option) => {
           const organization =

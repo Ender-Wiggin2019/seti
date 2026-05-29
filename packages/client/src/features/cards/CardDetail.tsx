@@ -59,7 +59,9 @@ export function CardDetail({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='w-fit max-w-fit bg-surface-900/95'>
         <DialogHeader>
-          <DialogTitle>{card.name}</DialogTitle>
+          <DialogTitle>
+            {t(card.name, { ns: 'seti', defaultValue: card.name })}
+          </DialogTitle>
         </DialogHeader>
 
         {branchClaimsByCardId || ownerPlayerColor ? (
@@ -87,7 +89,7 @@ export function CardDetail({
             </Button>
           ) : null}
           <Button variant='ghost' size='sm' onClick={() => onOpenChange(false)}>
-            Close
+            {t('client.common.close_dialog', { defaultValue: 'Close' })}
           </Button>
         </DialogFooter>
       </DialogContent>

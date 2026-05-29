@@ -5,6 +5,7 @@ import type {
   ISelectTraceInputModel,
 } from '@/types/re-exports';
 import { EPlayerInputType } from '@/types/re-exports';
+import { translateInputText } from './inputI18n';
 
 export interface ISelectTraceInputProps {
   model: ISelectTraceInputModel;
@@ -19,8 +20,9 @@ export function SelectTraceInput({
   return (
     <div className='space-y-2'>
       <p className='micro-label'>
-        {model.title ??
-          t('client.input.select_trace', { defaultValue: 'Select trace' })}
+        {model.title
+          ? translateInputText(t, model.title)
+          : t('client.input.select_trace', { defaultValue: 'Select trace' })}
       </p>
       <div className='grid gap-1.5 sm:grid-cols-2'>
         {model.options.map((trace) => (

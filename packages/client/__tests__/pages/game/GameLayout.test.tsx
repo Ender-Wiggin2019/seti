@@ -1190,7 +1190,7 @@ describe('GameLayout', () => {
       expect(screen.queryByTestId('free-action-bar')).not.toBeInTheDocument();
     });
 
-    it('opens buy-card chooser and lets player buy from row', async () => {
+    it('clicks Buy Card free action → jumps to Cards tab → row pick → confirm dialog', async () => {
       const sendFreeAction = vi.fn();
       mockContextValue = createMockContext({
         sendFreeAction,
@@ -1213,21 +1213,22 @@ describe('GameLayout', () => {
       await renderLayout();
 
       fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+      // Buy Card free action just jumps to the Cards tab; the buy
+      // chooser strip is permanently mounted there.
       fireEvent.click(screen.getByRole('button', { name: 'Buy Card (3 PR)' }));
-      const dialog = screen.getByRole('dialog');
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: 'Buy From Row' }),
-      );
 
       expect(screen.getByRole('tab', { name: 'Cards' })).toHaveAttribute(
         'aria-selected',
         'true',
       );
 
+      const chooser = screen.getByTestId('cards-tab-buy-chooser');
+      fireEvent.click(within(chooser).getByTestId('cards-tab-buy-from-row'));
+
       fireEvent.click(screen.getByTestId('card-row-row-1'));
-      // After picking a row card, a confirm dialog now shows the
-      // 3-publicity cost; the buy action fires on Confirm, not on
-      // the row-card click.
+      // After picking a row card, a confirm dialog shows the card
+      // (rendered at CardDetail-equivalent size) and the 3-publicity
+      // cost; the buy action fires on Confirm.
       const confirmDialog = await screen.findByRole('dialog');
       fireEvent.click(
         within(confirmDialog).getByRole('button', { name: 'Confirm' }),
@@ -1238,18 +1239,21 @@ describe('GameLayout', () => {
       });
     });
 
-    it('opens buy-card chooser and lets player draw from deck directly', async () => {
+    it('Cards tab Buy From Deck → confirm dialog → BUY_CARD fromDeck', async () => {
       const sendFreeAction = vi.fn();
       mockContextValue = createMockContext({ sendFreeAction });
       await renderLayout();
 
-      fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
-      fireEvent.click(screen.getByRole('button', { name: 'Buy Card (3 PR)' }));
-      const dialog = screen.getByRole('dialog');
-      fireEvent.click(
-        within(dialog).getByRole('button', { name: 'Buy From Deck' }),
-      );
+      // Cards tab is reachable directly via the tab; the Buy chooser
+      // strip is always visible there.
+      fireEvent.click(screen.getByRole('tab', { name: 'Cards' }));
+      const chooser = screen.getByTestId('cards-tab-buy-chooser');
+      fireEvent.click(within(chooser).getByTestId('cards-tab-buy-from-deck'));
 
+      const confirmDialog = await screen.findByRole('dialog');
+      fireEvent.click(
+        within(confirmDialog).getByRole('button', { name: 'Confirm' }),
+      );
       expect(sendFreeAction).toHaveBeenCalledWith({
         type: EFreeAction.BUY_CARD,
         fromDeck: true,
@@ -1424,9 +1428,11 @@ describe('GameLayout', () => {
       expect(
         within(screen.getByRole('dialog')).getByText('Event Log'),
       ).toBeInTheDocument();
+      // Player names are wrapped in tinted spans, so use textContent
+      // for the cross-element match.
       expect(
-        within(screen.getByRole('dialog')).getByText('Commander used Scan'),
-      ).toBeInTheDocument();
+        screen.getByRole('dialog').textContent?.includes('Commander used Scan'),
+      ).toBe(true);
     });
   });
 

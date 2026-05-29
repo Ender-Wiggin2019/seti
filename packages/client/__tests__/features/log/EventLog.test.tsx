@@ -47,7 +47,14 @@ describe('EventLog', () => {
       />,
     );
 
-    expect(screen.getByText('Ada used Scan')).toBeInTheDocument();
+    // Player names are now wrapped in tinted spans, so the rendered
+    // line is split across nodes — match on the row's combined
+    // textContent instead of a single text node.
+    expect(
+      screen
+        .getByTestId('event-log')
+        .textContent?.includes('Ada used Scan'),
+    ).toBe(true);
     expect(screen.queryByText('ACTION')).not.toBeInTheDocument();
     expect(screen.queryByText('SCAN')).not.toBeInTheDocument();
   });
@@ -209,7 +216,11 @@ describe('EventLog', () => {
       />,
     );
 
-    expect(screen.getByText('Ada +2 VP (Mission Reward)')).toBeInTheDocument();
+    expect(
+      screen
+        .getByTestId('event-log')
+        .textContent?.includes('Ada +2 VP (Mission Reward)'),
+    ).toBe(true);
     expect(screen.queryByText('MISSION_REWARD')).not.toBeInTheDocument();
   });
 });

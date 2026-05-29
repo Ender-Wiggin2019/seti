@@ -297,16 +297,20 @@ describe('FinalScoring', () => {
       expect(result.breakdown.p1.endGameCards).toBe(0);
     });
 
-    it('9.1.2 [集成] 0 VP end-game card still counts toward pairing formula on gold tile (other / B)', () => {
+    it('9.1.2 [集成] 0 VP end-game card still counts toward pairing formula on mission/B tile', () => {
       const game = createTwoPlayerGame('phase-9-1-2');
       const p1 = getPlayer(game, 'p1');
 
-      const otherB = replaceGoldTile(game, 'other', {
-        id: 'other',
+      // Per rulebook p.21 the "pair of completed missions / end-game
+      // cards" formula lives on MISSION-B (multipliers 8/6/4 on the
+      // printed tile; the test installs explicit values to isolate
+      // the formula under test).
+      const missionB = replaceGoldTile(game, 'mission', {
+        id: 'mission',
         side: 'B',
         slotValues: [5, 4, 3, 2],
       });
-      otherB.claim('p1');
+      missionB.claim('p1');
 
       p1.completedMissions = ['m1'];
       p1.endGameCards = [getCardRegistry().create('127')];
@@ -329,19 +333,21 @@ describe('FinalScoring', () => {
       expect(result.breakdown.p2.alienBonus).toBe(0);
     });
 
-    it('9.1.4 [集成] sector win counts feed gold tile other / A formula', () => {
+    it('9.1.4 [集成] sector win counts feed gold tile other/B formula', () => {
       const game = createTwoPlayerGame('phase-9-1-4');
       const p1 = getPlayer(game, 'p1');
 
       const sector = game.sectors[0]!;
       sector.sectorWinners.push('p1', 'p1');
 
-      const otherA = replaceGoldTile(game, 'other', {
+      // Per rulebook p.21 the "min(sector wins, orbit + land + moon)"
+      // formula lives on OTHER-B.
+      const otherB = replaceGoldTile(game, 'other', {
         id: 'other',
-        side: 'A',
+        side: 'B',
         slotValues: [5, 4, 3, 2],
       });
-      otherA.claim('p1');
+      otherB.claim('p1');
 
       p1.pieces.deploy(EPieceType.ORBITER);
       p1.pieces.deploy(EPieceType.ORBITER);

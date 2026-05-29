@@ -6,7 +6,7 @@ import {
 import { EPlanet, EScanAction } from '@seti/common/types/element';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
-import { hasCardData, loadCardData } from '../cards/loadCardData.js';
+import { describeCard, hasCardData, loadCardData } from '../cards/loadCardData.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
 import { SelectOption } from '../input/SelectOption.js';
@@ -553,7 +553,10 @@ export class MissionTracker {
     const options = [
       ...triggered.map((t) => ({
         id: `complete-${t.cardId}-${t.branchIndex}`,
-        label: `${t.cardName}: ${rewardDesc(t)}`,
+        // Use describeCard so the client can swap the English name
+        // for the locale-specific card name; rewardDesc is left raw
+        // (effect-type tokens that the DescRender handles client-side).
+        label: `${describeCard(t.cardId)}: ${rewardDesc(t)}`,
         onSelect: (): IPlayerInput | undefined => {
           return this.completeMissionBranch(
             player,

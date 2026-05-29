@@ -15,6 +15,7 @@ import type {
   ISelectOptionInputModel,
 } from '@/types/re-exports';
 import { EPlayerInputType } from '@/types/re-exports';
+import { translateInputText } from './inputI18n';
 
 const ALL_TECH_ID_SET = new Set<string>(ALL_TECH_IDS);
 
@@ -40,7 +41,9 @@ export function SelectTechOptionInput({
 
   return (
     <div className='space-y-2'>
-      {model.title ? <p className='micro-label'>{model.title}</p> : null}
+      {model.title ? (
+        <p className='micro-label'>{translateInputText(t, model.title)}</p>
+      ) : null}
       <div className='grid max-h-[220px] gap-1.5 overflow-auto sm:grid-cols-2 lg:grid-cols-3'>
         {model.options.map((option) => {
           const techId = option.id as ETechId;
