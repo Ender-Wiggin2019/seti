@@ -18,7 +18,9 @@ export function isAlienBoardInput(model: IPlayerInputModel | null): boolean {
     (option) =>
       /^alien-\d+-(?:discovery|overflow|anomaly-column|oumuamua-trace|mascamites|centaurians|exertians|glyphids|amoeba|arkhos)/.test(
         option.id,
-      ) || /^main-action-(?:land|orbit)-slot-oumuamua-/i.test(option.id),
+      ) ||
+      /^(?:mascamites-fixed|exertians-danger)-/.test(option.id) ||
+      /^main-action-(?:land|orbit)-slot-oumuamua-/i.test(option.id),
   );
 }
 

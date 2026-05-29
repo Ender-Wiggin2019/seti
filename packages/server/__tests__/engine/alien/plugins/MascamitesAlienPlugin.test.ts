@@ -98,6 +98,36 @@ describe('MascamitesAlienPlugin', () => {
     );
   });
 
+  it('MAS-A2 exposes the initial public sample as a one-use blue trace slot', () => {
+    const { game, board } = createMascamitesGame('mas-a2-public-blue');
+    const p2 = getPlayer(game, 'p2');
+    const publicSample = board.publicSamples[0];
+    const publicSampleToken = MASCAMITES_SAMPLE_TOKENS.find(
+      (token) => token.id === publicSample,
+    );
+
+    expect(publicSample).toBeDefined();
+    expect(publicSampleToken).toBeDefined();
+    const slot = board.getSlot('alien-0-mascamites-public-sample-0');
+    expect(slot).toEqual(
+      expect.objectContaining({
+        traceColor: ETrace.BLUE,
+        maxOccupants: 1,
+        rewards: [...(publicSampleToken?.rewards ?? [])],
+      }),
+    );
+
+    expect(
+      game.alienState.applyTraceToSlot(
+        p2,
+        game,
+        'alien-0-mascamites-public-sample-0',
+        ETrace.BLUE,
+      ),
+    ).not.toBe(false);
+    expect(slot?.occupants).toHaveLength(1);
+  });
+
   it('MAS-A3 exposes printed Mascamites board trace spaces after discovery', () => {
     const { board } = createMascamitesGame('mas-a3-board-spaces');
 
@@ -319,6 +349,59 @@ describe('MascamitesAlienPlugin', () => {
         cardId: 'ET.1',
       }),
     ).toThrow();
+  });
+
+  it('MAS-D2 resolves CARD_ANY sample delivery through a row-or-deck choice before completing the mission', () => {
+    const { game, board, plugin } = createMascamitesGame('mas-d-card-any');
+    const p1 = getPlayer(game, 'p1');
+    game.mainDeck = new Deck(['deck-card'], []);
+    game.cardRow = ['row-card'];
+    const tokenId: TMascamitesSampleTokenId = 'mascamites-vp-3-card-any-1';
+    board.samplePools.jupiter = [
+      tokenId,
+      ...board.samplePools.jupiter.filter((sampleId) => sampleId !== tokenId),
+    ];
+    const capsule = plugin.collectSample(
+      p1,
+      game,
+      EPlanet.JUPITER,
+      tokenId,
+      'ET.1',
+    );
+    const ss = game.solarSystem;
+    if (!ss) throw new Error('expected solar system');
+    capsule.spaceId = ss.getSpacesOnPlanet(EPlanet.EARTH)[0].id;
+    p1.playedMissions.push({ id: 'ET.1' });
+    game.missionTracker.registerMission(
+      {
+        cardId: 'ET.1',
+        cardName: 'First Contact',
+        type: EMissionType.QUICK,
+        branches: [{ req: [], rewards: [] }],
+      },
+      p1.id,
+    );
+    const scoreBefore = p1.score;
+
+    const input = plugin.deliverSample(p1, game, capsule.capsuleId, 'ET.1');
+
+    expect(p1.score).toBe(scoreBefore + 3);
+    expect(input?.toModel().type).toBe(EPlayerInputType.OPTION);
+    expect(
+      p1.completedMissions.map((card) =>
+        typeof card === 'string' ? card : card.id,
+      ),
+    ).toEqual([]);
+    input?.process({
+      type: EPlayerInputType.OPTION,
+      optionId: 'row:0:row-card',
+    });
+    expect(p1.hand).toContain('row-card');
+    expect(
+      p1.completedMissions.map((card) =>
+        typeof card === 'string' ? card : card.id,
+      ),
+    ).toEqual(['ET.1']);
   });
 
   it('does not mutate sample state when delivery is requested for an unregistered mission', () => {

@@ -66,6 +66,12 @@ describe('GameLayout routing helpers', () => {
       expect(
         isAlienBoardInput(optionInput(['alien-1-anomaly-column|red-trace|1'])),
       ).toBe(true);
+      expect(
+        isAlienBoardInput(optionInput(['mascamites-fixed-blue-trace-8'])),
+      ).toBe(true);
+      expect(
+        isAlienBoardInput(optionInput(['exertians-danger-1-blue-trace-0'])),
+      ).toBe(true);
     });
   });
 

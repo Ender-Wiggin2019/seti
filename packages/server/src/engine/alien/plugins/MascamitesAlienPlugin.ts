@@ -21,7 +21,6 @@ import {
   isMascamitesAlienBoard,
   type MascamitesAlienBoard,
 } from '../AlienBoard.js';
-import { executeSimpleSlotRewards } from '../AlienRewards.js';
 import type { IAlienPlugin } from '../IAlienPlugin.js';
 
 export class MascamitesAlienPlugin implements IAlienPlugin {
@@ -34,7 +33,10 @@ export class MascamitesAlienPlugin implements IAlienPlugin {
     const board = this.getBoard(game);
     if (!board) return undefined;
     this.createFixedTraceSlots(board);
-    if (this.hasInitializedSamples(board)) return undefined;
+    if (this.hasInitializedSamples(board)) {
+      this.createPublicSampleTraceSlots(board);
+      return undefined;
+    }
 
     const shuffled = game.random.shuffle(
       MASCAMITES_SAMPLE_TOKENS.map((token) => token.id),
@@ -42,6 +44,7 @@ export class MascamitesAlienPlugin implements IAlienPlugin {
     board.samplePools.jupiter = shuffled.slice(0, 3);
     board.samplePools.saturn = shuffled.slice(3, 6);
     board.publicSamples = shuffled.slice(6, 7);
+    this.createPublicSampleTraceSlots(board);
     return undefined;
   }
 
@@ -57,6 +60,29 @@ export class MascamitesAlienPlugin implements IAlienPlugin {
         traceColor: def.traceColor,
         maxOccupants: 1,
         rewards: def.rewards.map((reward) => ({ ...reward })),
+        isDiscovery: false,
+      });
+    }
+  }
+
+  private createPublicSampleTraceSlots(board: MascamitesAlienBoard): void {
+    for (const [index, sampleTokenId] of board.publicSamples.entries()) {
+      const slotId = this.buildPublicSampleSlotId(board.alienIndex, index);
+      if (board.getSlot(slotId)) {
+        continue;
+      }
+
+      const token = getMascamitesSampleToken(sampleTokenId);
+      if (!token) {
+        throw new Error(`Unknown Mascamites sample ${sampleTokenId}`);
+      }
+
+      board.addTraceSlot({
+        slotId,
+        alienIndex: board.alienIndex,
+        traceColor: ETrace.BLUE,
+        maxOccupants: 1,
+        rewards: token.rewards.map((reward) => ({ ...reward })),
         isDiscovery: false,
       });
     }
@@ -151,19 +177,30 @@ export class MascamitesAlienPlugin implements IAlienPlugin {
     if (!token) {
       throw new Error(`Unknown Mascamites sample ${removed.sampleTokenId}`);
     }
-    executeSimpleSlotRewards(player, game, token.rewards);
+    const completeMission = () =>
+      game.missionTracker.completeMissionBranch(
+        player,
+        game,
+        cardId,
+        branchIndex,
+      );
+    const rewardInput = game.alienState.executeRewards(
+      player,
+      game,
+      board,
+      token.rewards.map((reward) => ({ ...reward })),
+      completeMission,
+    );
     this.addDeliveredSampleBlueSlot(game, {
       sampleTokenId: removed.sampleTokenId,
       deliveredBy: player.id,
       deliveredAtRound: game.round,
     });
 
-    return game.missionTracker.completeMissionBranch(
-      player,
-      game,
-      cardId,
-      branchIndex,
-    );
+    if (rewardInput !== undefined) return rewardInput;
+    const mission = game.missionTracker.getMissionState(player.id, cardId);
+    if (mission?.branchStates[branchIndex]?.completed) return undefined;
+    return completeMission();
   }
 
   public addDeliveredSampleBlueSlot(
@@ -199,6 +236,10 @@ export class MascamitesAlienPlugin implements IAlienPlugin {
       slotId,
     });
     return slot;
+  }
+
+  private buildPublicSampleSlotId(alienIndex: number, index: number): string {
+    return `alien-${alienIndex}-mascamites-public-sample-${index}`;
   }
 
   public getBoard(game: IGame): MascamitesAlienBoard | undefined {

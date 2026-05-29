@@ -114,6 +114,7 @@ export function isAlienBoardInput(model: IPlayerInputModel | null): boolean {
       /^alien-\d+-(?:discovery|overflow|anomaly-column|oumuamua-trace|mascamites|centaurians|exertians|glyphids|amoeba|arkhos)/.test(
         option.id,
       ) ||
+      /^(?:mascamites-fixed|exertians-danger)-/.test(option.id) ||
       // EPlanet.OUMUAMUA serializes as the lowercase 'oumuamua'
       // string — match case-insensitively so this regex tracks the
       // enum's wire value rather than the TypeScript identifier.
@@ -1707,7 +1708,6 @@ function BoardTabs({
                     </span>
                   ) : null}
                 </div>
-
                 {/*
                 Permanent buy chooser strip. The Cards tab is the
                 single buy entry point — Buy From Deck opens a confirm
