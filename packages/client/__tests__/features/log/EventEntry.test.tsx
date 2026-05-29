@@ -88,10 +88,15 @@ describe('EventEntry', () => {
       />,
     );
 
-    expect(
-      screen.getByText(/Ada revealed major Arkhos exploration/i),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/ARKHOS\.EXPLORATION\.2/)).toBeInTheDocument();
+    // Card refs are now rendered via <CardReference> (a button with
+    // hover popover + click dialog), so the text is split across
+    // multiple elements. Match on combined textContent.
+    {
+      const article = screen.getByTestId('event-entry-3');
+      const text = article.textContent ?? '';
+      expect(text).toContain('Ada revealed major Arkhos exploration');
+      expect(text).toContain('ARKHOS.EXPLORATION.2');
+    }
 
     rerender(
       <EventEntry
@@ -109,9 +114,16 @@ describe('EventEntry', () => {
       />,
     );
 
-    expect(
-      screen.getByText(/Ada used AIcard01 for a minor Arkhos reward/i),
-    ).toBeInTheDocument();
+    {
+      const article = screen.getByTestId('event-entry-4');
+      // CardReference renders `<name> (#NN)` so the textContent has
+      // `AIcard01 (#AIcard01)` between "used" and "for". Match
+      // tolerantly across element boundaries.
+      const text = article.textContent ?? '';
+      expect(text).toContain('Ada used');
+      expect(text).toContain('AIcard01');
+      expect(text).toContain('for a minor Arkhos reward');
+    }
 
     rerender(
       <EventEntry
@@ -130,11 +142,13 @@ describe('EventEntry', () => {
       />,
     );
 
-    expect(
-      screen.getByText(
-        /Ada breached yellow Arkhos security AIcard05 \(access 2\)/i,
-      ),
-    ).toBeInTheDocument();
+    {
+      const article = screen.getByTestId('event-entry-5');
+      const text = article.textContent ?? '';
+      expect(text).toContain('Ada breached yellow Arkhos security');
+      expect(text).toContain('AIcard05');
+      expect(text).toContain('(access 2)');
+    }
   });
 
   it('renders Arkhos structured action events from common locale keys', async () => {
@@ -156,8 +170,11 @@ describe('EventEntry', () => {
       />,
     );
 
-    expect(
-      screen.getByText('Ada 揭示 大 Arkhos 探索 ARKHOS.EXPLORATION.2'),
-    ).toBeInTheDocument();
+    {
+      const article = screen.getByTestId('event-entry-6');
+      const text = article.textContent ?? '';
+      expect(text).toContain('Ada 揭示 大 Arkhos 探索');
+      expect(text).toContain('ARKHOS.EXPLORATION.2');
+    }
   });
 });

@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { CardRender } from '@seti/cards';
+import { ALL_CARDS } from '@seti/common/data/index';
+import type { IBaseCard } from '@seti/common/types/BaseCard';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog,
@@ -15,6 +18,10 @@ import {
   type TGameEvent,
   type TRivalActionCardId,
 } from '@/types/re-exports';
+
+const CARD_BY_ID = new Map<string, IBaseCard>(
+  ALL_CARDS.map((card) => [card.id, card]),
+);
 
 interface IEventEntryProps {
   event: TGameEvent;
@@ -85,6 +92,43 @@ function colorizePlayerNames(
     cursor = nextMatch.index + nextMatch.entry.name.length;
   }
   return segments;
+}
+
+/**
+ * Walk a React node tree and apply `colorizePlayerNames` to every
+ * string child while preserving non-string elements (CardReference,
+ * other tinted spans we add elsewhere). Used so descriptions that
+ * already include `<CardReference>` can still get player-name color
+ * without losing the card preview link.
+ */
+function colorizeReactNode(
+  node: React.ReactNode,
+  playerNames: Record<string, string>,
+  playerColors: Record<string, string> | undefined,
+  keyPrefix = 'cz',
+): React.ReactNode {
+  if (typeof node === 'string') {
+    return colorizePlayerNames(node, playerNames, playerColors);
+  }
+  if (Array.isArray(node)) {
+    return node.map((child, index) => (
+      <React.Fragment key={`${keyPrefix}-${index}`}>
+        {colorizeReactNode(
+          child,
+          playerNames,
+          playerColors,
+          `${keyPrefix}-${index}`,
+        )}
+      </React.Fragment>
+    ));
+  }
+  if (node && typeof node === 'object' && 'props' in node) {
+    // React element — leave it alone; player names appearing inside
+    // a custom element are unlikely (we only emit them as plain
+    // text via i18n).
+    return node;
+  }
+  return node;
 }
 
 type TTranslate = (key: string, options?: Record<string, unknown>) => string;
@@ -304,8 +348,13 @@ function getEventDescription(
         player: getPlayerName(event.playerId, playerNames),
         turn: event.turnIndex,
       });
-    case EGameEventType.RESOURCE_CHANGE:
-      return t('client.event_entry.resource_change', {
+    case EGameEventType.RESOURCE_CHANGE: {
+      // When the server emits before/after balances we extend the
+      // line with a "(before → after)" trail so it reads
+      // "Alice gained 2 credit (4 → 6)" instead of just the delta.
+      // Older event sources without before/after fall back to the
+      // bare line.
+      const baseLine = t('client.event_entry.resource_change', {
         player: getPlayerName(event.playerId, playerNames),
         direction:
           event.delta >= 0
@@ -314,6 +363,14 @@ function getEventDescription(
         amount: Math.abs(event.delta),
         resource: prettifyToken(event.resource),
       });
+      if (
+        typeof event.before === 'number' &&
+        typeof event.after === 'number'
+      ) {
+        return `${baseLine} (${event.before} → ${event.after})`;
+      }
+      return baseLine;
+    }
     case EGameEventType.SCORE_CHANGE:
       return t('client.event_entry.score_change', {
         player: getPlayerName(event.playerId, playerNames),
@@ -346,44 +403,77 @@ function getEventDescription(
   }
 }
 
+/**
+ * Splits a translated string at its `{{card}}` placeholder so we can
+ * substitute a `<CardReference>` element while keeping all other
+ * placeholders inline as text. Falls back to the raw string when the
+ * translation doesn't include `{{card}}` (locale missing the slot).
+ */
+function renderWithCardSlot(
+  rendered: string,
+  cardId: string,
+  cardName: string,
+): React.ReactNode {
+  // Match what i18next emitted when `card` was passed but the
+  // template didn't have a placeholder — fall through.
+  const idx = rendered.indexOf(cardId);
+  if (idx < 0) return rendered;
+  // We don't know what label the locale used for the card; assume
+  // the cardId itself was the substitution. The CardReference will
+  // re-render using the localized seti name.
+  return (
+    <>
+      {rendered.slice(0, idx)}
+      <CardReference cardId={cardId} cardName={cardName} />
+      {rendered.slice(idx + cardId.length)}
+    </>
+  );
+}
+
 function getArkhosExplorationRewardEventDescription(
   event: TActionEvent,
   playerNames: Record<string, string>,
   t: TTranslate,
-): string {
+): React.ReactNode {
   const details = event.details ?? {};
   const cardId = typeof details.cardId === 'string' ? details.cardId : '?';
   const player = getPlayerName(event.playerId, playerNames);
   const size = typeof details.size === 'string' ? details.size : 'minor';
-  return t('client.event_entry.arkhos_exploration_reward', {
+  const rendered = t('client.event_entry.arkhos_exploration_reward', {
     player,
     card: cardId,
     size: formatArkhosRewardSize(size, t),
   });
+  return cardId !== '?'
+    ? renderWithCardSlot(rendered, cardId, cardId)
+    : rendered;
 }
 
 function getArkhosSecurityCardUsedEventDescription(
   event: TActionEvent,
   playerNames: Record<string, string>,
   t: TTranslate,
-): string {
+): React.ReactNode {
   const details = event.details ?? {};
   const cardId = typeof details.cardId === 'string' ? details.cardId : '?';
   const player = getPlayerName(event.playerId, playerNames);
   const size =
     typeof details.rewardSize === 'string' ? details.rewardSize : 'minor';
-  return t('client.event_entry.arkhos_security_card_used', {
+  const rendered = t('client.event_entry.arkhos_security_card_used', {
     player,
     card: cardId,
     size: formatArkhosRewardSize(size, t),
   });
+  return cardId !== '?'
+    ? renderWithCardSlot(rendered, cardId, cardId)
+    : rendered;
 }
 
 function getArkhosSecurityBreachedEventDescription(
   event: TActionEvent,
   playerNames: Record<string, string>,
   t: TTranslate,
-): string {
+): React.ReactNode {
   const details = event.details ?? {};
   const cardId = typeof details.cardId === 'string' ? details.cardId : '?';
   const player = getPlayerName(event.playerId, playerNames);
@@ -395,12 +485,15 @@ function getArkhosSecurityBreachedEventDescription(
       : '?';
   const access =
     typeof details.accessLevel === 'number' ? details.accessLevel : '?';
-  return t('client.event_entry.arkhos_security_breached', {
+  const rendered = t('client.event_entry.arkhos_security_breached', {
     player,
     card: cardId,
     trace,
     access,
   });
+  return cardId !== '?'
+    ? renderWithCardSlot(rendered, cardId, cardId)
+    : rendered;
 }
 
 function formatArkhosRewardSize(size: string, t: TTranslate): string {
@@ -499,6 +592,17 @@ function getCardDetails(
   return { cardId, cardName };
 }
 
+/**
+ * Inline card reference rendered inside a log line. Shows
+ * `<localized name> (#NN)` so players can scan ids and names at a
+ * glance, with a hover popover that paints the actual card art and
+ * a click-to-open dialog that enlarges it (CardDetail-equivalent
+ * 1.8×–2× scale of the intrinsic 150×209 footprint).
+ *
+ * Falls back gracefully when the cardId isn't in the static registry
+ * — keeps the bare id as the link label without a popover (since we
+ * don't have art to show).
+ */
 function CardReference({
   cardId,
   cardName,
@@ -506,29 +610,68 @@ function CardReference({
   cardId: string;
   cardName: string;
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
   const [open, setOpen] = useState(false);
+  const [hover, setHover] = useState(false);
+  const card = CARD_BY_ID.get(cardId) ?? null;
+  const localizedName = card?.name
+    ? t(card.name, { ns: 'seti', defaultValue: card.name })
+    : cardName;
+  const labelText = `${localizedName} (#${cardId})`;
 
   return (
-    <>
+    <span
+      className='relative inline-block'
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
       <button
         type='button'
         className='rounded-[3px] px-1 font-semibold text-accent-300 underline-offset-2 hover:text-accent-200 hover:underline'
+        data-testid={`event-card-ref-${cardId}`}
         onClick={(event) => {
           event.stopPropagation();
-          setOpen(true);
+          if (card) setOpen(true);
         }}
       >
-        {cardName}
+        {labelText}
       </button>
+
+      {/*
+        Hover popover — small thumbnail (intrinsic CardRender size,
+        150×209) anchored above the link. Skipped when the card isn't
+        in the registry (rival action cards, transient ids).
+      */}
+      {hover && card ? (
+        <span
+          className='pointer-events-none absolute bottom-full left-1/2 z-30 mb-1 -translate-x-1/2 rounded border border-surface-700/60 bg-surface-950/95 p-1 shadow-lg'
+          role='presentation'
+        >
+          <span className='block'>
+            <CardRender card={card} />
+          </span>
+        </span>
+      ) : null}
+
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className='max-w-sm'>
+        <DialogContent className='w-fit max-w-fit bg-surface-900/95'>
           <DialogHeader>
-            <DialogTitle>{cardName}</DialogTitle>
+            <DialogTitle>{labelText}</DialogTitle>
           </DialogHeader>
-          <p className='micro-label'>{cardId}</p>
+          {card ? (
+            <div className='max-h-[78vh] overflow-auto rounded border border-surface-700/50 bg-surface-950/70 p-3'>
+              <div className='relative h-[376px] w-[270px] sm:h-[418px] sm:w-[300px]'>
+                <div className='absolute left-0 top-0 origin-top-left scale-[1.8] sm:scale-[2]'>
+                  <CardRender card={card} />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className='micro-label'>{cardId}</p>
+          )}
         </DialogContent>
       </Dialog>
-    </>
+    </span>
   );
 }
 
@@ -557,14 +700,15 @@ export function EventEntry({
   const { t } = useTranslation('common');
   const rivalAction = getRivalActionEventDetails(event);
   const description = getEventDescription(event, playerNames, t);
-  // When `description` is a plain string (the common case for action,
-  // resource, score lines), splice player-name spans tinted to each
-  // player's color. React-node descriptions (currently none) pass
-  // through unchanged.
-  const renderedDescription =
-    typeof description === 'string'
-      ? colorizePlayerNames(description, playerNames, playerColors)
-      : description;
+  // Walk the rendered description and tint every string child's
+  // player-name occurrences. React elements (e.g. <CardReference>
+  // for in-log card previews) are kept as-is so the popover/click
+  // behavior survives the colorization pass.
+  const renderedDescription = colorizeReactNode(
+    description,
+    playerNames,
+    playerColors,
+  );
 
   return (
     <article

@@ -10,8 +10,8 @@
 > - Original-author scope (Space Agency, expansion alien backend, source-data
 >   recovery for Glyphids/Amoeba/Arkhos) belongs in `docs/TODO.md` and should
 >   not be picked up here unless explicitly handed over.
-> - When a slice lands, move it to "Done" with the same Plan/Review/Verification
->   format used in `docs/TODO.md`.
+> - When a slice lands, move it to "Done" with a short one-line summary +
+>   commit ref so the file stays scannable.
 
 ---
 
@@ -19,28 +19,43 @@
 
 _(none — most recent slice just landed)_
 
-> **Audit notes (2026-05-27):**
-> - Pulled origin/feature/server up to `7b2b144`. Notable upstream
->   commits since the last audit: `9af4a22` (historical-compat
->   cleanup — see `docs/review/historical-compatibility-cleanup-audit-2026-05-25.md`),
->   `9ecb5ea` (Space Agency copy alignment), `3ae7f75` (hotspot
->   calibration debug editor), `faff245` (lint + unit-test
->   fixtures updated for the cleanup), `7b2b144` (planet-board
->   hotspot rework).
-> - Test baseline: server 2222/2222, client 393/393, `pnpm -r
->   typecheck` clean.
-> - "Land main action on Oumuamua" P1 was resolved by `8a8151a`'s
->   `OrbitLandPickers.ts`; `eligibleLandPlanets` includes Oumuamua
->   and `AlienBoardView` ships a `planet-target-oumuamua` LAND
->   button. Moved to Done.
-> - WS reconnect P0, `AndOptionsInput` Back-clear P1, and client
->   asteroid-leave-cost P2 are unchanged in upstream — still
->   applicable.
-> - `3ae7f75` introduces a hotspot calibration debug editor
->   (`HotspotsDebugPage`), which directly addresses the P1 "Anchor
->   planet hotspots to the printed image-mode board" tooling gap.
->   The Open entry is still valid for the actual coordinate-tuning
->   work, but the calibration tool is now in place.
+> **Audit notes (2026-05-29):**
+> - Pulled `origin/feature/server` up to `f1dbc6c` (rulebook palette +
+>   i18n sweep + gold tile scoring + log/score colorization). Notable
+>   upstream commits since the 2026-05-27 audit: `52b6d51` (configurable
+>   layout V2 — gated behind `useNewLayout` debug flag, default off),
+>   `a1f238a` (trace hotspot debug overlays), `cb8c579` (board asset
+>   refresh), `77136ec` (hotspot calibration), `c2ef2e7` (resizable
+>   game layout).
+> - Test baseline: server **2222/2223** (1 pre-existing peer failure
+>   in `debugReplayPresets` — Exertians replay length 9 vs 15;
+>   verified failing on upstream tip without our changes), client
+>   **411/419** (8 pre-existing peer failures in PlanetaryBoardView,
+>   SectorView, PlayerDashboard, RivalPanel hotspot-debug overlay
+>   tests; all introduced by `52b6d51`/`77136ec` and verified failing
+>   on upstream without our changes). `pnpm -r typecheck` clean.
+> - Player palette migrated to the rulebook (green/orange/purple/white)
+>   with hex `#219449 / #d46d1e / #801da1 / #e6eded`. Probe + sky
+>   tokens now CSS-mask-tinted from a single white asset; score ladder
+>   + event log player names colored. Solo rival uses orange.
+> - Gold scoring tile formulas were realigned to the rulebook (p.21):
+>   per-tile slot multipliers + corrected A/B side assignments. The
+>   scoring tab shows tile descriptions + ranked slot chips.
+> - Comprehensive input-text i18n pipeline (titles + option labels)
+>   landed; server emits `[[card:NN]]` sentinel for card refs and the
+>   client localizes via the `seti` namespace. Sector star names,
+>   color words, "from card row", "Choose any card", "Mission
+>   triggered! Claim reward?", reward tokens (publicity ×2 → 声望 ×2)
+>   all translatable.
+> - WS reconnect P0, `AndOptionsInput` Back-clear P1, asteroid-leave
+>   P2, `sync-card-assets.sh` P2, `useGameEvents` P2,
+>   `ScoreBreakdown` 👑 P2, `isHandLimitExemptCard` P2, root
+>   `pnpm dev` P3, and `tsconfig.base.json` P3 are all unchanged in
+>   upstream — still applicable.
+> - V2 layout (`52b6d51`) introduces a parallel `CardRowsSection.tsx`
+>   under `features/layout/sections/` that doesn't pick up the buy-
+>   confirm dialog or final-round banner from V1. Toggle is gated
+>   off by default; flagged as a follow-up if it gets enabled.
 
 ## Open
 
@@ -50,1253 +65,290 @@ _(none — most recent slice just landed)_
 ### P0 — WS auto-reconnect listener attached to wrong emitter
 
 - `packages/client/src/hooks/useReconnection.ts:19` registers
-  `socket.on('reconnect', handleReconnect)`. In socket.io v4 the `reconnect`
-  event fires on the **manager** (`socket.io`), not the socket. After an
-  auto-reconnect, the client never re-sends `room:join`, so the player sees a
-  perpetual loading spinner.
-- Fix: switch to `socket.io.on('reconnect', …)` and `socket.io.off('reconnect', …)`,
-  matching the pattern `wsClient.ts` already uses for `reconnect_failed`.
-- Add a regression covering "reconnect → state push" through the existing WS
-  mocks rather than a real network test.
-- _Audit (2026-05-19): still broken — `socket.on('reconnect', …)` is
-  unchanged at line 19._
+  `socket.on('reconnect', handleReconnect)`. In socket.io v4 the
+  `reconnect` event fires on the **manager** (`socket.io`), not the
+  socket. After an auto-reconnect, the client never re-sends
+  `room:join`, so the player sees a perpetual loading spinner.
+- Fix: switch to `socket.io.on('reconnect', …)` /
+  `socket.io.off('reconnect', …)`, matching the pattern `wsClient.ts`
+  already uses for `reconnect_failed`.
+- Add a regression covering "reconnect → state push" through the
+  existing WS mocks rather than a real network test.
 
 ### P0 — Cross-check the rest of the alien reward ladders for similar bugs
 
-- `ANOMALY_TOKEN_REWARD_OPTIONS`, `LEFT_ALIEN_REWARDS`, `RIGHT_ALIEN_REWARDS`,
-  and `OUMUAMUA_TRACE_SLOT_DEFS` should all be cross-checked against the rule
-  book the same way `ANOMALY_COLUMN_REWARD_LADDER` was.
-- If any alien-card reward is encoded as `CARD` (regular deck) but the rule
-  says it should be alien-deck, they need the same treatment as the Anomalies
-  fix: switch to `CUSTOM:DRAW_ALIEN_CARD` and ensure the path delivers through
-  `executeRewards` (not `executeSimpleSlotRewards`).
-- Pair with the executeRewards short-circuit fix above so the cross-check
-  doesn't trip the latent footgun on landing.
+- `ANOMALY_TOKEN_REWARD_OPTIONS`, `LEFT_ALIEN_REWARDS`,
+  `RIGHT_ALIEN_REWARDS`, and `OUMUAMUA_TRACE_SLOT_DEFS` should be
+  cross-checked against the rulebook the same way
+  `ANOMALY_COLUMN_REWARD_LADDER` was.
+- If any alien-card reward is encoded as `CARD` (regular deck) but
+  the rule says alien-deck, switch to `CUSTOM:DRAW_ALIEN_CARD` and
+  ensure `executeRewards` (not `executeSimpleSlotRewards`) delivers
+  it. Pair with the executeRewards short-circuit fix.
+
+### P1 — Show gold scoring tile art (PNG) + place player markers in the scoring tab
+
+- Today the scoring tab renders gold tiles as plain text rows
+  (description + multiplier chips). The rulebook ships 4 double-sided
+  printed tiles (TECH / MISSION / INCOME / OTHER, sides A/B) with
+  distinct iconography for the formula and three rank slots.
+- Plan:
+  - Author 8 PNG/WEBP assets (`tile_<id>_<side>.webp`) at the same
+    resolution as the alien board art; store under
+    `packages/client/public/assets/seti/scoring/`.
+  - Build a `<GoldTileArt>` component that paints the asset behind
+    three absolute-positioned slot anchors (1st / 2nd / 3rd; the 3rd
+    rank holds 2 markers). Calibrate the anchors with the existing
+    `?calibrate=1` overlay flow.
+  - In image mode the scoring tab renders the art version; in text
+    mode keep the existing description rows. The 3 anchors paint
+    player tokens (`<ProbeToken>`-style mask-tinted disc) for each
+    claim. Bottom rank shows two side-by-side markers.
+
+### P1 — Richer event log: cost+action coupling and card hover/click previews
+
+- Today log lines like `Alice spent 2 credit` and `Alice played 14`
+  emit as separate events, and most card refs are bare ids.
+- Plan:
+  - Server: extend `RESOURCE_CHANGE` events with `before`/`after`
+    balance fields so the log can render `2 credit (6 → 4)`.
+    Alternatively (simpler): the log component runs a per-player
+    resource accumulator over the event stream and infers
+    before/after from the deltas.
+  - Server: when an action's cost is paid, emit a single composite
+    event (or tag the cost event with the parent action id) so the
+    log can collapse `paid 3 publicity (5 → 2) → bought card #67
+    Yevpatoria Telescope` into one line instead of two.
+  - Client `EventEntry`: every card reference (played, discarded,
+    bought, scanned, taken from row, refilled) goes through
+    `<CardReference>`. The popover currently only shows id; upgrade
+    it to render `<CardRender card={card} />` on hover and a full-
+    size dialog on click. Skip the link only when the card is a
+    blind draw from the deck (private to the drawer).
+
+### P1 — Debug-log show/hide toggle in debug mode
+
+- `EventLog` already filters `level === 'debug'` events out of the
+  compact 2-line preview, but the full log dialog and the desktop
+  sidebar log show every event including `ACTION_COST` /
+  `ACTION_REWARD` / `MILESTONE_CHECK` / debug-only diagnostic events.
+  Power users want a toggle.
+- Plan: add a checkbox-style chip in the EventLog header
+  ("Hide debug" → defaults on for non-debug players; toggleable from
+  `gameViewStore` so it persists across navigations). When on, drop
+  events with `level === 'debug'` AND collapse `ACTION_COST` /
+  `ACTION_REWARD` parents under their main action.
 
 ### P1 — Cross-check land + moon rewards against the printed board
 
 - The orbit-bonus pass (2026-05-21) updated every native planet's
-  printed orbit rewards in `boardLayout.ts:PLANETARY_BOARD_CONFIG` to
-  match the rulebook (Mercury 1 deck card + 2 sector signals + 1
-  income; Jupiter 1 data + sector signal + income; Saturn 2 publicity
-  + sector signal + income; Uranus 3 deck cards + black-sector signal
-  + 8 VP; Neptune 4 data + black-sector signal + 7 VP; Oumuamua 10 VP
-  + 1 exofossil + sector signal). The corresponding **land rewards
-  and moon rewards have not been re-verified** against the printed
-  board.
-- Today's land payload per planet: ${planet}_VP + 1 yellow trace,
+  printed orbit rewards in `boardLayout.ts:PLANETARY_BOARD_CONFIG`
+  to match the rulebook. The corresponding land rewards and moon
+  rewards have not been re-verified.
+- Today's land payload per planet: `${planet}_VP + 1 yellow trace`
   with `firstData: [N]` for first-land bonuses. Some printed boards
-  add additional rewards (publicity, signals, traces) — needs a
-  pass with the rulebook PDF in hand.
-- Moon rewards were last touched when adding Probe Tech 3 support
-  and likely hold but should be re-verified the same way.
-- Pair with the slot-keyed reward model TODO so each landing anchor
-  can carry its own reward set instead of a flat list.
+  add publicity / signals / traces — needs a rulebook pass.
+- Pair with the slot-keyed reward model TODO (each landing anchor
+  carries its own reward set instead of a flat list).
 
 ### P1 — Anchor planet hotspots to the printed image-mode board
 
 - `PlanetaryBoardView`'s image mode renders one anchor button per
   printed planet, but the (`x`, `y`) coordinates in
-  `PLANETARY_BOARD_CONFIG[planet]` (anchor / orbitSlots / landingSlots)
-  are still the rough first-pass values from the initial layout. The
-  ORBIT/LAND picker now relies on those positions for the parallel-
-  click affordance — visual misalignment of the hotspot vs. the
-  printed slot makes it look like the hotspot is "off".
-- Calibrate per planet using the same `?calibrate=1` overlay
-  approach as the alien boards (`AnomaliesBoardArt` precedent);
-  also tune the moon hotspots which currently sit roughly on the
-  printed moon glyphs but not exactly.
-
-### P2 — Client `getReachableSpaces` ignores Probe Tech 1 asteroid-leave discount
-
-- The common `getMoveCost` (`packages/common/src/rules/movement.ts:44`)
-  always adds `ASTEROID_EXTRA_COST = 1` when `fromSpace` has ASTEROID
-  element. The server's `Movement.getEffectiveMovementCost` applies
-  `TechModifierQuery.getAsteroidLeaveCost(1)` which reduces to 0 with
-  Probe Tech 1 — but the client never applies this discount.
-- Result: a player with Probe Tech 1 sees fewer highlighted
-  destinations than the server would accept. Not a gameplay bug (server
-  still allows the move), but a misleading UX.
-- Fix shape: thread the player's effective asteroid-leave-cost (0 or 1)
-  into the client's `getReachableSpaces` call as an optional parameter.
-  The `IPublicPlayerState` already carries `techs: ETechId[]` — derive
-  the discount client-side.
+  `PLANETARY_BOARD_CONFIG[planet]` (anchor / orbitSlots /
+  landingSlots) are still rough first-pass values. The picker now
+  relies on those positions for the parallel-click affordance —
+  visual misalignment makes it look like the hotspot is "off".
+- The hotspot calibration debug editor (`HotspotsDebugPage`,
+  `3ae7f75`) is in place for tuning. Calibrate per planet using the
+  same `?calibrate=1` overlay approach as the alien boards.
 
 ### P1 — `AndOptionsInput` Back button preserves stale response
 
-- `packages/client/src/features/input/AndOptionsInput.tsx:111` —
-  `setCurrentStepIndex(prev - 1)` decrements without clearing
-  `responses[currentStepIndex]`. If the player goes Back and Next without
-  re-answering, the old response is silently re-submitted as part of the AND
-  payload.
-- Fix: clear `responses[currentStepIndex]` (set to `undefined`) before
-  decrementing.
+- `packages/client/src/features/input/AndOptionsInput.tsx:122`
+  decrements `currentStepIndex` without clearing
+  `responses[currentStepIndex]`. If the player goes Back then Next
+  without re-answering, the old response is silently re-submitted as
+  part of the AND payload.
+- Fix: clear `responses[currentStepIndex]` (set to `undefined`)
+  before decrementing.
 
 ### P1 — Calibrate Centaurians / Exertians / Mascamites / Oumuamua art
 
 - Anomalies coordinates were re-tuned (`AnomaliesBoardArt`'s
   `ANOMALIES_LAYOUTS`) and the four other aliens still use rough
-  placeholder coordinates from the original art-mode landing.
-- Use `?calibrate=1` + `?previewOverflow=N` overlay (already wired) plus
-  `/tmp/try-layout.mjs` (the iteration script used for Anomalies) to
-  read deltas and update each renderer's layout constants until rings
-  sit on printed circles.
-- Once all five are calibrated, evaluate whether to extract a shared
+  placeholder coordinates.
+- Use `?calibrate=1` + `?previewOverflow=N` overlay (already wired)
+  plus `/tmp/try-layout.mjs` (the iteration script used for
+  Anomalies) to tune each renderer's layout constants.
+- Once all five are calibrated, evaluate extracting a shared
   `<TraceOnlyAlienBoardArt>` for the four non-Anomalies renderers.
-- Bumped from P2 → P1 because the user-visible misalignment is the next
-  obvious blocker after Anomalies looked right.
 
 ### P2 — Apply tile-half overflow stacking to non-Anomalies aliens
 
-- The shared `SlotOccupantOverlay` now centre-stacks tokens inside
-  overflow pills (per the pink-trace UX slice). When the other four
-  aliens get their art-mode coordinates calibrated above, double-check
-  the overflow rendering on Oumuamua tier 6 (`maxOccupants: -1`) and
-  any other `maxOccupants: -1` slot — the existing `TraceMarkerOverlay`
-  already supports this, but it hasn't been visually verified for the
-  hi-res art.
+- The shared `SlotOccupantOverlay` centre-stacks tokens inside
+  overflow pills. Once the other four aliens get art-mode
+  coordinates calibrated above, double-check the overflow rendering
+  on Oumuamua tier 6 (`maxOccupants: -1`) and any other
+  `maxOccupants: -1` slot.
 
 ### P2 — Tune per-tile sector data-slot layouts
 
 - `SectorNodeView.tsx` `PER_TILE_SIGNAL_LAYOUT` currently holds the
-  same default layout for all four tiles (TILE_1..TILE_4). The plumbing
-  is there for per-tile overrides — each tile's printed data-slot oval
-  has slightly different positioning, so this is where remaining
-  pixel-level tuning lives.
-- Tune visually using a fresh game (each tile gets randomly placed at a
-  cardinal each game). Five knobs per half: `sigX`, `sigY`, `sigRot`,
-  `arcRadiusPx`, `dotDiameterPx`. `dotDiameterPx`/`arcRadiusPx` already
-  scale automatically with `boardScale`; `sigRot` is angular — leave
-  alone.
+  same default layout for all four tiles. The plumbing is there for
+  per-tile overrides — each printed tile's data-slot oval has
+  slightly different positioning.
+- Five knobs per half: `sigX`, `sigY`, `sigRot`, `arcRadiusPx`,
+  `dotDiameterPx`. `dotDiameterPx`/`arcRadiusPx` already scale with
+  `boardScale`; `sigRot` is angular — leave alone.
+
+### P2 — Client `getReachableSpaces` ignores Probe Tech 1 asteroid-leave discount
+
+- `getMoveCost` in `packages/common/src/rules/movement.ts:44` always
+  adds `ASTEROID_EXTRA_COST = 1` for asteroid leaves. The server
+  applies `TechModifierQuery.getAsteroidLeaveCost(1)` (reduces to 0
+  with Probe Tech 1) — but the client never applies this discount.
+- Result: a Probe-Tech-1 player sees fewer highlighted destinations
+  than the server would accept (server still allows the move).
+- Fix: thread the player's effective asteroid-leave-cost into
+  `getReachableSpaces` as an optional parameter.
+  `IPublicPlayerState.techs: ETechId[]` carries the data.
 
 ### P2 — `sync-card-assets.sh` runs twice on build and is destructive
 
-- `scripts/sync-card-assets.sh` does an unconditional
-  `rm -rf` of `packages/{web,client}/public/seti-assets`, then re-copies.
-  `packages/client/package.json` runs it as `prebuild` AND inlines it inside
-  the `build` script body, so it runs **twice** per turbo build. It also
-  exits non-zero if `packages/cards/assets/images` is missing (CI without a
-  prior cards build).
-- Fix: drop the inline call from the `build` script body; add a "missing
-  source" guard that warns and exits 0 instead of failing.
+- `scripts/sync-card-assets.sh` does an unconditional `rm -rf` of
+  `packages/{web,client}/public/seti-assets`, then re-copies.
+  `packages/client/package.json` runs it as `prebuild` AND inlines
+  it inside the `build` script body, so it runs **twice** per turbo
+  build. Also exits non-zero if `packages/cards/assets/images` is
+  missing (CI without a prior cards build).
+- Fix: drop the inline call from the `build` script body; add a
+  "missing source" guard that warns and exits 0.
 
 ### P2 — `useGameEvents` re-runs seed-merge effect on every state push
 
-- `packages/client/src/hooks/useGameEvents.ts:21-32` keys the seed-merge
-  `useEffect` on `seedEvents`, which is `gameState?.recentEvents ?? []` from
-  `GameContext.tsx:76`. `recentEvents` is a fresh array reference on every
-  `game:state` push, so the effect re-runs continually. The internal
-  `next === prev` guard prevents redundant `setEvents`, but the merge work
-  still runs and dedupes by an event-key that includes `JSON.stringify(details)`
-  — events without an `id` and without `details` collapse to a degenerate
-  key and can collide.
-- Fix: stabilise `recentEvents` with `useMemo` in the caller, or compute a
-  stable identity (e.g. last-event id) and key the effect on that.
+- `packages/client/src/hooks/useGameEvents.ts:32` keys the seed-merge
+  `useEffect` on `seedEvents`, which is a fresh array reference on
+  every `game:state` push. The internal `next === prev` guard
+  prevents redundant `setEvents`, but the merge work still runs.
+  The dedupe key uses `JSON.stringify(details)` — events without an
+  `id` and without `details` collapse to a degenerate key and can
+  collide.
+- Fix: stabilise `recentEvents` with `useMemo` in the caller, or
+  compute a stable identity (e.g. last-event id) and key on that.
 
 ### P2 — `ScoreBreakdown` injects 👑 emoji into a tabular-nums readout
 
-- `packages/client/src/features/scoring/ScoreBreakdown.tsx:120` renders
-  `${row.total} 👑` in a monospace cell. Across players the emoji glyph
-  width disrupts the score column alignment and conflicts with
-  `.impeccable.md` "instrumentation, not decoration" / "data readouts are
-  white phosphor on dark, never dressed up as marketing stat tiles."
-- Fix: replace the emoji with a small inline SVG indicator or a row-level
-  highlight (border/background tint) so the data column stays uniform.
+- `packages/client/src/features/scoring/ScoreBreakdown.tsx:120`
+  renders `${row.total} 👑` in a monospace cell. Across players the
+  emoji glyph width disrupts the score column alignment and conflicts
+  with the "instrumentation, not decoration" guideline.
+- Fix: replace the emoji with a small inline SVG indicator or a
+  row-level highlight (border/background tint).
 
 ### P2 — `isHandLimitExemptCard` redundantly checks the same condition
 
-- `packages/common/src/rules/handLimit.ts:18-23` ORs `isExertianCard(card)`
-  and `EXERTIAN_CARD_IDS.has(cardId)`. Any card with `alien === EXERTIANS`
-  is already in `EXERTIAN_CARD_IDS` (the set is built from the same data).
-  Harmless today; diverges silently if a future card sets one and not the
-  other.
-- Fix: prefer the id-based check, fall back to the alien-field check only
-  when no id is available (partial objects).
+- `packages/common/src/rules/handLimit.ts:18-23` ORs
+  `isExertianCard(card)` and `EXERTIAN_CARD_IDS.has(cardId)`. Any
+  card with `alien === EXERTIANS` is already in `EXERTIAN_CARD_IDS`
+  (the set is built from the same data). Diverges silently if a
+  future card sets one and not the other.
+- Fix: prefer the id-based check, fall back to the alien-field check
+  only when no id is available (partial objects).
 
 ### P3 — Root `pnpm dev` starts the Next.js card-browser, not the game
 
-- `package.json` `"dev": "pnpm --filter @seti/web dev"` is documented in
-  `README.md` as the "重点入口" (primary entry). New contributors running
-  `pnpm dev` at the root get the card-browser app, not the game; the actual
-  game lives in `pnpm dev:client-server`.
-- This is documented as intentional, but `@seti/web` and `@seti/client`
-  have drifted onto different React/Tailwind/Radix major versions, which
-  is a maintenance hazard regardless of which is the "default" entry.
-- Fix options (pick one once the team confirms the intent):
-  (a) keep `web` as default, but document the split in README and align
-      shared dependency majors so the two apps don't drift further apart;
-  (b) flip root `dev` to `dev:client-server`, marking `web` as a
-      separate utility entry.
+- `package.json` `"dev": "pnpm --filter @seti/web dev"` is documented
+  in `README.md` as the "重点入口". New contributors running
+  `pnpm dev` at the root get the card-browser app, not the game; the
+  actual game lives in `pnpm dev:client-server`.
+- `@seti/web` and `@seti/client` have drifted onto different
+  React/Tailwind/Radix major versions, which is a maintenance hazard.
+- Fix options: (a) keep `web` as default, document the split, align
+  shared dependency majors; (b) flip root `dev` to
+  `dev:client-server`, mark `web` as a separate utility entry.
 
 ### P3 — `tsconfig.base.json` `moduleResolution` is dead config
 
-- `tsconfig.base.json:12` sets `"moduleResolution": "node"` (legacy), but
-  every package overrides this (server → `NodeNext`, client → `Bundler`,
-  e2e → `bundler`). The base value is misleading and never wins.
-- Fix: drop the field from the base. Same for `incremental: true` which is
-  flipped to `false` in most packages.
+- `tsconfig.base.json:12` sets `"moduleResolution": "node"` (legacy),
+  but every package overrides this (server → `NodeNext`, client →
+  `Bundler`, e2e → `bundler`). The base value is misleading.
+- Fix: drop the field from the base. Same for `incremental: true`
+  which is flipped to `false` in most packages.
 
 ## Done
 
-### Land main action on Oumuamua wired through picker - 2026-05-21
-
-The picker-driven ORBIT/LAND slice (commit `8a8151a`) added Oumuamua
-to `ALL_ORBIT_LAND_PLANETS` in
-`packages/server/src/engine/actions/OrbitLandPickers.ts:21-24`.
-`eligibleLandPlanets` filters Oumuamua out only when
-`solarSystem.getPlanetLocation(EPlanet.OUMUAMUA)` returns null
-(Oumuamua not yet placed); when placed, Oumuamua appears as a normal
-LAND planet picker option. The client-side `AlienBoardView` ships
-the matching `planet-target-oumuamua` button wired to
-`onSelectMainActionPlanet?.(EPlanet.OUMUAMUA)`.
-
-`LandProbeEffect` already handles Oumuamua's signal rewards through
-the same `MarkSectorSignalEffect.markByPlanetWithAlternatives`
-fallback that orbit uses, so per-planet land rewards land via the
-standard reward pipeline.
-
-Verification:
-- `eligibleLandPlanets` includes `EPlanet.OUMUAMUA` once placed; cost
-  label uses `LandProbeEffect.getLandingCost`.
-- `data-testid='planet-target-oumuamua'` LAND button renders in
-  `AlienBoardView`'s Oumuamua surface.
-- Confirmed via the playtest after the cleanup commit; remaining
-  "land/moon reward cross-check against printed board" tracked
-  separately under Open → P1.
-
-### Picker-driven ORBIT/LAND main action + opt-in first-orbit + per-planet orbit rewards - 2026-05-21
-
-Replaces the click-to-arm `planetActionMode` flow with a server-driven
-SelectOption pipeline: ORBIT/LAND with no `planet` payload returns a
-planet picker; selecting a planet returns a slot picker (first-orbit
-vs regular for ORBIT; planet-surface vs moon for LAND). Existing
-auto-tab-jump logic routes Oumuamua picks to the Aliens tab, other
-planets to the Planets tab.
-
-Plan:
-- [x] **`PlanetaryBoard.orbit` opt-in `claimFirstSlot`.** Default
-  `false`; bonus rewards now resolve **before** regular orbit
-  rewards (the picker label and the on-board chain both lead with
-  the bonus). Audited prod call sites: `OrbitProbeEffect.execute`
-  passes through the explicit choice, `RivalActionResolver` always
-  passes `true` (rival has no UI prompt). Test sites updated.
-- [x] **Server `OrbitLandPickers.ts`** new helper builds the planet +
-  slot pickers with cost-aware labels (ORBIT shows `1 ⚡ + 1 💰`;
-  LAND shows the per-planet `LandProbeEffect.getLandingCost`).
-  Reward summaries use rulebook wording: `1 deck card`, `1 snap
-  card`, `1 income` (tuck), `1 signal on Mars sector`, etc.
-- [x] **Game.ts:** ORBIT/LAND with no payload → return picker; with
-  payload → legacy direct path (back-compat for replays/debug).
-- [x] **Per-planet orbit rewards updated** to match the printed
-  planetary board. Confirmed by user; locked into
-  `planetBoardRewards.test.ts`.
-- [x] **Client SelectOptionInput renders inline icons.** Server emits
-  emoji shorthand (`⚡`, `💰`); the renderer replaces them with the
-  same `/assets/seti/icons/` PNGs the personal board uses
-  (energy.png / money.png). Astral-plane emoji require the regex
-  `u` flag.
-- [x] **`isAlienBoardInput` / `isPlanetaryBoardInput` regexes use
-  case-insensitive matching** so Oumuamua's lowercase wire id
-  (`'oumuamua'`) routes to the Aliens tab. 7-test regression suite
-  in `GameLayoutRouting.test.tsx`.
-- [x] **Probe-shaped player marker** on orbit / landing slots in
-  non-text mode (via `ProbeToken`). Text mode keeps the flat dot.
-  Sized at h-7/w-7 on the planetary image-mode board.
-- [x] **1-hop move picker.** `getReachableSpaces` consumer in
-  `SolarSystemView` capped to direct neighbors so the player sees
-  per-hop visit/leave effects instead of bundling a multi-hop path
-  in one click.
-
-Verification:
-- `pnpm -r typecheck` clean across all 6 packages.
-- `pnpm --filter @seti/server test` — 2183/2184 (only the
-  pre-existing Amoeba flake; unrelated).
-- `pnpm --filter @ender-seti/common test` — 251/251.
-- `pnpm --filter @seti/client test` — 324/324 (added 7 new
-  GameLayoutRouting tests).
-
-Residual:
-- Land + moon rewards not yet cross-checked against the printed
-  board; tracked under Open → P1.
-- Image-mode planet hotspot anchors still on first-pass
-  coordinates; tracked under Open → P1.
-- Slot-keyed reward model deferred (each landing anchor today
-  shares the planet's `land.rewards`; printed board has different
-  payouts per anchor). Tracked separately for a future slice.
-
-### Flush per-turn move stash + restore YELLOW anomaly token art - 2026-05-21
-
-Two related fixes from a single user-reported playtest:
-
-1. **Movement leak across turns.** `Player.flushTurnStashAtTurnEnd()`
-   existed and was unit-tested in isolation, but `Game.handoffTurnFrom`
-   never called it — so unspent movement (and unstashed data) leaked
-   into the next turn. Wired the helper into the turn handoff so the
-   ending player's stash zeros out at turn end (rulebook: movement is
-   spent-or-lost). `GameFlowBehavior` test 9b now correctly asserts
-   `getMoveStash() === 0` after handoff; test 10 re-grants 1 movement
-   inline (modelling a card that grants movement at start of turn) so
-   the rest of the scenario plays unchanged.
-
-2. **YELLOW anomaly token rendered with publicity art on its
-   card-side.** When `461aca4` flipped the YELLOW token's headline
-   reward from `CARD` to `CARD_ANY`, the client's
-   `resolveAnomalyTokenArtSrc` mapping in `SolarSystemView.tsx` wasn't
-   updated — `CARD_ANY` wasn't in the headline filter, so `find()`
-   skipped past it to the secondary `PUBLICITY` reward and resolved
-   to `yellow-publicity.png` for both faces of YELLOW. Added
-   `CARD_ANY` to the filter and mapped both `CARD` and `CARD_ANY`
-   to `yellow-card.png` (back-compat with saved games).
-
-Verification:
-- `pnpm --filter @seti/server test` — 1987/1988 (only the long-standing
-  Amoeba flake; unrelated).
-- `pnpm --filter @seti/client test` — 317/317.
-- `pnpm -r typecheck` clean.
-
-### Cap solar move picker to 1-hop neighbors - 2026-05-21
-
-The move picker used to highlight every cell reachable within the
-player's full movement budget and then submit the entire multi-hop
-path in one click. That bundled per-hop visit/leave effects into a
-single server transaction, so the player never saw intermediate
-hop costs (asteroid leave +1, comet publicity, Oumuamua tile
-pickup prompt) until the chain had already committed.
-
-Plan:
-- [x] **Single-hop reachability.** Replaced `getReachableSpaces` calls
-  in `SolarSystemView`'s `reachablePathBySpaceId` and
-  `activeMovePathBySpaceId` memos with `getAdjacentSpaceIds` +
-  `getMoveCost` — only direct neighbors that fit in the current
-  movement budget are highlighted. Path is always
-  `[fromSpaceId, toSpaceId]`.
-- [x] **State refresh between hops.** After each free-action
-  movement, the server pushes updated `gameState` (probe location,
-  reduced `movementPoints`). The existing prop chain
-  (`myPlayer.movementPoints` → `SolarSystemView`) plus the memo's
-  `[selectedMoveTarget, movementPoints, solarSystem]` deps make the
-  picker re-render automatically with the post-hop options.
-- [x] **Regression test.** Added `highlights only 1-hop neighbors
-  even when movement budget exceeds the hop count` to
-  `SolarSystemView.test.tsx`: 3-space chain `space-0 → space-1 →
-  space-2` with `movementPoints=3` confirms only `space-1` lights
-  up, not `space-2`.
-
-Verification:
-- `pnpm --filter @seti/client typecheck` clean.
-- `pnpm --filter @seti/client test` — 317/317 (one new test).
-- Server-side cost validation untouched: existing `Movement.execute`
-  path validates each hop and charges the actual cost via
-  `getEffectiveMovementCost`, which already accounts for asteroid
-  leave-cost + Probe Tech 1 discount.
-
-Residual:
-- The "client `getReachableSpaces` ignores Probe Tech 1 discount"
-  P2 entry now applies to the new helper too — a tech-1 player
-  on an asteroid sees no reachable spaces (cost is 2 with no
-  tech awareness on the client side, but server would let them
-  leave for 1). Tracked separately under Open → P2.
-
-### Layered disc model — base-board terrain visible after rotation - 2026-05-21
-
-User-observed bug: outermost ring (ring 4) comets/asteroids fired
-visit events correctly, but inner-ring spaces exposed by upper-disc
-NULL cutouts after rotation didn't grant publicity or charge
-asteroid leave-cost. The probe visited what looked like a comet
-on screen, but server logged no event.
-
-Root cause: the data model only loaded `wheels[R][R-1]` for each
-ring R — the disc's own outer band. The base disc 4's contributions
-at rings 1/2/3 (`wheels[4][0..2]`, full of comets and asteroids
-printed on the base board) were defined in the wheel data but
-**never read into runtime**. So when disc 1's NULL cutout exposed
-disc 4's ring-1 asteroid, the data model still saw NULL (or
-whatever the topmost loaded disc had); visit-events read the wrong
-elements.
-
-Plan:
-- [x] **Layered space model.** `ISolarSystemSpace` now carries a
-  `layers: ISolarSystemSpaceLayer[]` stack — disc R..disc 4 for
-  ring R cell-0, sorted top-down. The visible element is the
-  topmost non-NULL layer. Disc 4 has no NULL slots, so the walk
-  always resolves.
-- [x] **Construct full layer stack at setup.**
-  `createDefaultSolarSystemExpandedMapCells` now reads
-  `wheels[D][R-1]` for every (D, R) where D ≥ R, populating the
-  per-cell stack. The base disc's printed terrain is now visible
-  to runtime code.
-- [x] **Per-disc rotation.** New `rotateDiscLayerByOneStep(D)`
-  shifts only disc D's contributions across every ring it covers
-  (1..D). Lower-disc layers stay put. `rotate(discIndex)` now
-  iterates `DISC_TO_MOVING_RINGS[discIndex]` interpreting each
-  entry as a disc number rather than a ring number — preserves
-  the rulebook semantics ("disc 2 rotation moves disc 1+2
-  together"). Initial-rotation loop in the constructor switched
-  to the same per-disc helper.
-- [x] **Derived `elements`/`hasPublicityIcon`/`publicityIconAmount`.**
-  `refreshDerivedFields(space)` recomputes these from the topmost
-  non-NULL layer. Called by every layer mutation — rotation,
-  `setDynamicPlanetAtSpace`, etc. Existing call sites that read
-  `space.elements` or `space.hasPublicityIcon` work unchanged;
-  they now see the correctly resolved visible element.
-- [x] **Oumuamua placement uses the disc-3 layer.**
-  `setDynamicPlanetAtSpace` writes the topmost disc layer of the
-  target space (instead of mutating `elements` directly) so the
-  placement follows rotation naturally. Pre-discovery
-  `isUnplacedOumuamuaSpace` checks the disc-3 layer's NULL
-  contribution explicitly — the resolved visible element may be
-  the base disc's terrain underneath after my refactor, which
-  would otherwise pass the old `isNullOnlySpace` predicate.
-- [x] **Tests.** Added `layered disc model — base-board terrain
-  visibility` block in `SolarSystem.test.ts`: visible-element
-  resolution, leave-cost on exposed asteroids, publicity grant on
-  exposed comets. Updated `rotates publicity icon amounts` to
-  mutate the disc-2 layer (matching runtime). Updated two
-  scenario-patch helpers (`GameFlowBehavior`, `ProbeTechs`) to
-  also mirror onto the topmost layer so subsequent
-  `setDynamicPlanetAtSpace` calls don't refresh-clobber the patch.
-
-Verification:
-- `pnpm -r typecheck` — all 6 packages clean.
-- `pnpm --filter @seti/server test` — 1987/1988 (only the
-  long-standing pre-existing Amoeba flake; unrelated).
-- `pnpm --filter @ender-seti/common test` — 251/251.
-- `pnpm --filter @seti/client test` — 316/316.
-- Live verification by Tong: probes now correctly receive
-  publicity / asteroid leave-cost when entering inner-ring
-  base-disc terrain exposed by upper-disc rotation.
-
-Residual:
-- Earlier "Close comet/asteroid visit effects" entry from this
-  session was based on incomplete analysis; the actual root cause
-  was the missing base-disc layers. Superseded by this entry.
-- P2 follow-up still open: client's `getReachableSpaces` doesn't
-  apply Probe Tech 1's asteroid-leave-cost discount, so a tech-1
-  player sees fewer reachable spaces than the server allows.
-  Tracked under Open → P2.
-
-### Defer Oumuamua tile completion to SECTOR_COMPLETION priority - 2026-05-21
-
-User-observed bug: Oumuamua's tile resolved inline as soon as the
-third data marker was placed — the trace prompt and tile refill
-fired before the active player's main-action chain settled. Normal
-sectors correctly defer through `ResolveSectorCompletion` at
-`EPriority.SECTOR_COMPLETION`, but `OumuamuaAlienPlugin.markTileSignal`
-called `resolveTileCompletion` synchronously when `dataRemaining
-<= 0`.
-
-Plan:
-- [x] **Trace both paths.** Normal sector: `markSignal` flips
-  `completed`, `MarkSectorSignalEffect.markOnSector` emits
-  `SECTOR_COMPLETED` turn event but doesn't resolve;
-  `Game.processMainAction` enqueues `ResolveSectorCompletion` at
-  `EPriority.SECTOR_COMPLETION` so completion runs after CORE_EFFECT
-  / IMMEDIATE_REWARD / CARD_TRIGGER. Oumuamua's path bypassed the
-  queue.
-- [x] **Defer Oumuamua's tile completion** via a
-  `SimpleDeferredAction` at `EPriority.SECTOR_COMPLETION`. Per-mark
-  rewards (data, VP at marker 1/3) stay inline — same as normal
-  sectors' per-signal rewards.
-- [x] **Test updates** — three existing Oumuamua tests called
-  `markTileSignal` directly and asserted on completion side
-  effects without driving the deferred queue. Added
-  `game.deferredActions.drain(game)` calls before the relevant
-  assertions. Added a new regression test that asserts the tile
-  stays in the mid-completion state until the queue drains.
-- [x] **Pre-discovery placeProbe contract** — upstream `7bc4436`
-  made the unplaced Oumuamua space untraversable; updated the
-  affected test to assert `placeProbe` throws `not traversable`
-  instead of seeding a probe defensively.
-
-Verification:
-- `pnpm --filter @seti/server typecheck` clean.
-- `pnpm --filter @seti/server test -- --run` — 2171/2172 (only the
-  pre-existing Amoeba flake; the two upstream-fixed organisation
-  tests are now green thanks to `7bc4436`).
-- New regression test (`defers tile completion side effects until
-  the deferred queue runs`) locks in the new behaviour.
-
-### Solar-system multi-cell movement-cost fix + sector-centre rendering - 2026-05-21
-
-Fixed the long-standing issue where ring-N sectors were treated as N
-separate cells for movement, making ring-4 traversal cost 4× ring-1.
-Picked option (C) from the investigation — adjacency-only — so the
-data model stays the same but probes can only hop sector-to-sector.
-
-Plan:
-- [x] **Investigation** — confirmed the multi-cell expansion is purely
-  visual scaffolding (planets/asteroids/comets only ever live at
-  `cellInSector === 0`; cells 1+ are always EMPTY). Wheel rotation
-  moves cells in lockstep so they're a single logical sector. Probes
-  always launch / land at cell-0 (Earth's spaceId via
-  `LaunchProbeEffect`). No tests asserted on intra-sector cell hops.
-- [x] **Server adjacency** — `SolarSystem.buildAdjacency` now only
-  links cells with `cellInSector === 0`. Tangential walk skips
-  intra-sector edges; radial walk uses the natural sector-to-sector
-  1:1 mapping (replacing the fractional-overlap ranges). Dropped the
-  unused `rangesOverlap` helper. Probes physically can't enter
-  intra-sector cells now because there are no edges into them.
-- [x] **Client `spacePosition`** — switched to centring on each
-  sector's geometric centre (`(sectorIndex + 0.5) × 45°`) regardless
-  of `cellInSector`. Probe + hotspot positions follow.
-- [x] **Hotspot loop** — `solar-space-*` buttons filter to
-  `cellInSector === 0` so users see one click target per (ring,
-  sector). The decorative wheel art (multi-segment terrain visuals
-  on ring 4) still renders via the wheel-image PNG; only the
-  hotspot count drops from 80 → 25 (~8 per ring × 4 rings, plus the
-  Earth + sun).
-- [x] **Oumuamua tile exception** — added
-  `legacyCellSpacePosition` and routed `oumuamuaTile.spaceId`
-  through it so the planet image, 3-data dot pill, and probes
-  parked on the tile stay at their printed wheel position relative
-  to Jupiter (invariant by construction; no offset re-tuning).
-- [x] **Oumuamua probe-landing nudge** — added
-  `OUMUAMUA_PROBE_LANDING_OFFSET` (tangentialPx + radialPx) so probes
-  parked on Oumuamua and the hotspot click target both shift in
-  sync to land on the printed planet glyph instead of the cell
-  anchor. Tweakable; defaults to (0, 0) until you tune.
-- [x] **Z-index** — Oumuamua planet image lowered to z-78 (under the
-  z-80 probe layer) so probes parked on the tile remain visible.
-  Data pill stays at z-86 for readability.
-- [x] **Test updates** — three SolarSystemView client tests asserted
-  on the old leading-edge anchor positions; updated to the
-  sector-centre coordinates. Two SolarSystem server tests used
-  `ring-2-cell-1` (intra-sector) for a hop; updated to
-  `ring-2-cell-2` (sector 1 cell 0). Movement.test 3.1E.4 used
-  `ring2[2]` as a "diagonal" target — that's now the legal
-  sector-1 hop, switched to `ring2[4]` (sector 2, two sectors
-  away, genuinely non-adjacent).
-
-Verification:
-- `pnpm -r typecheck` clean.
-- `pnpm --filter @seti/server test -- --run` — 2160/2163 (3
-  pre-existing failures unrelated).
-- `pnpm --filter @seti/client test -- --run` — 316/316.
-- Live verification in `/debug/replay`: probes hop sector-to-sector
-  at 1 move per hop; only 8 hotspots per ring; Oumuamua tile sits
-  at its original printed-art position.
-
-Residual:
-- Several gameplay-mechanic gaps surfaced during testing — see new
-  P1 entries above (LAND on Oumuamua, comet/asteroid visit effects,
-  asteroid leave-cost verify, 1-hop move picker, sector
-  end-of-turn resolution).
-- `OUMUAMUA_PROBE_LANDING_OFFSET` defaults to (0, 0); needs visual
-  tuning so probes land on the printed planet glyph rather than
-  the cell anchor.
-
-### Oumuamua trace ladder + cost badges + UI polish slice - 2026-05-20
-
-Mixed slice covering Oumuamua trace-ladder data, supporting UI polish,
-and a couple of unrelated debug fixes that surfaced along the way.
-
-Plan:
-- [x] **Rewrite Oumuamua trace ladder to match the printed alien
-  board** — 5 tiers per column instead of 6:
-    1. 25 VP (cost 4 fossils)
-    2. 3 VP + alien card + 1 fossil (free)
-    3. 3 VP + alien card (free)
-    4. 2 VP + 1 fossil (free)
-    5. 6 VP (top, unlimited, cost 1 fossil per mark)
-  Updated `OUMUAMUA_TRACE_SLOT_DEFS` in `alienBoardConfig.ts` and the
-  matching tests in `OumuamuaAlienPlugin.test.ts` +
-  `debugReplayPresets.test.ts` (slot count 18 → 15, tier-6 → tier-5).
-- [x] **Replace exofossil cell icon** with the printed token glyph
-  from the Oumuamua reference art (`exofossil.webp` 7 KB), rotated
-  +45° clockwise and scaled to 80% so it reads upright in the
-  resource cell.
-- [x] **Add `× N 🦴` cost badge** to Oumuamua trace slots that have
-  a positive `exofossilCost`. Parses the cost client-side from the
-  slotId (server already encodes it), renders a small red ✕ + count +
-  fossil glyph pinned to the bottom-right of the bonus circle. High-
-  value VP icons (e.g. `score-25`) get a `translateX(8px)` nudge to
-  recover their visual centre — the underlying icon CSS positions
-  the value text at `left: -27px` for 50px-wide icons, which sits
-  off-centre in our 24px wrapper.
-- [x] **Wrap trace-slot bonuses onto two rows** when a slot has 3+
-  rewards (only tier 2 today: 3 VP + alien card + fossil). Headline
-  on row 1, secondary rewards on row 2 — fits inside the bonus
-  circle instead of overflowing horizontally.
-- [x] **Make `?previewOverflow=N` work for every alien**. Added
-  `decorateSlotWithPreviewOccupants` in `AlienBoardTraceGrid.tsx` and
-  wired it into `TraceColorColumn` (text-mode all aliens),
-  `TraceMarkerOverlay` (image-mode Oumuamua/Centaurians/Exertians/
-  Mascamites), and `AnomalyColumn` (text-mode Anomalies). Added a
-  4-color preview-player palette (red/blue/green/yellow) so synth
-  occupants get distinct colors when they aren't in the live
-  `playerColors` map.
-- [x] **Tighten the overflow stack stride** so all aliens match the
-  Anomalies image-mode density. Lowered text-mode stride from 14% to
-  9% in `SlotOccupantOverlay`; lowered `TraceMarkerOverlay`'s
-  default `overflowStridePct` from 4.5% to 1.5%; updated
-  `OumuamuaBoardArt`'s explicit per-column 4 → 1.5.
-- [x] **Vary anomaly trigger replay token art**. The trigger preset
-  used to write the same `templateRewards` to all 8 sectors with
-  forced PINK trace-color, collapsing visual variety to one PNG.
-  Now alternates between PINK+CREDIT and PINK+VP so both
-  `pink-credit.png` and `pink-vp.png` show up. Kept all PINK so the
-  pre-marked PINK column leader still triggers regardless of which
-  sector Earth lands on.
-- [x] **Sync `/debug/game` sector-data sliders to production
-  baseline.** `GAME_DEBUG_DEFAULTS.sectorSignal` had drifted to
-  stale calibration values; updated to mirror
-  `PER_TILE_SIGNAL_LAYOUT[TILE_1]` so `/debug/game` opens with the
-  same sector data-dot positions as a normal game. Slider tunings
-  still override; reset returns to the synced baseline.
-- [x] **Fix `processInput` resolution-base error**. Setup-time
-  inputs (corp tuck-income chain) hit
-  `Cannot persist pending input without a resume base` because
-  `recordResolutionStep` always passed `undefined` baseState
-  expecting an in-flight journal that doesn't exist for
-  setup-triggered prompts. Capture a fresh base when no journal
-  exists, mirroring `processAction` / `processFreeAction`.
-- [x] **Lift ring-4 probes onto the new Oumuamua tile at discovery**.
-  Pre-discovery the ring-3 slot is NULL (transparent cutout), so
-  probes "already there" sit on the ring-4 cell beneath. Added
-  `SolarSystem.getLowerSpacesCoveredBy` + `relocateProbesBetweenSpaces`
-  helpers; `OumuamuaAlienPlugin.onDiscover` now lifts those probes
-  onto the new tile and grants +1 publicity per the rulebook.
-
-Verification:
-- `pnpm -r typecheck` clean.
-- `pnpm --filter @seti/server test -- --run` — 2160/2163 (3
-  pre-existing failures unrelated).
-- `pnpm --filter @seti/client test -- --run` — 316/316.
-
-Residual:
-- Movement-cost issue surfaced during testing but not addressed here
-  — see new "P0 — Solar-system multi-cell ring expansion breaks
-  movement cost" in Open. Needs a dedicated slice.
-- Oumuamua text-mode column comment block (`OumuamuaBoardArt.tsx:9-18`)
-  is stale (still references 6 tiers). Cosmetic; left for a doc pass.
-
-### Oumuamua rule-coverage audit + planet-visit hardening + exofossil cell visibility - 2026-05-20
-
-Single audit pass through `docs/arch/aliens/oumuamua/rule.md` against
-the live code. Most of the rulebook was already implemented; one
-real bug fixed and two defence-in-depth tweaks landed.
-
-Plan:
-- [x] **Audit:** Walk through every rule-line — setup, exofossils,
-  signal routing, tile completion, planet semantics, solo/rival,
-  FAQ — and locate the corresponding implementation.
-- [x] **Fix the rotation-hook publicity-icon regression.** My earlier
-  `OumuamuaAlienPlugin.onSolarSystemRotated` slice called
-  `setDynamicPlanetAtSpace(... grantVisitPublicity: false)`, which
-  would have stripped the visit-publicity icon from Oumuamua's space
-  after the first wheel rotation. Replaced with a metadata-only
-  update — `SolarSystem.rotateRing` already moves the planet element
-  + publicity icon together via the wheel snapshot, so the hook just
-  refreshes the cached `tile.spaceId` / `tile.sectorId` for
-  dual-routing, projection, and rival logic.
-- [x] **Investigated underlying-terrain coverage and reverted the
-  initial fix.** First pass had `setDynamicPlanetAtSpace` strip
-  ASTEROID/COMET so probes visiting Oumuamua wouldn't fire those
-  events. Reverted on review: deeper investigation showed the data
-  model has no "base-board layer beneath disc 3". Ring 4 is the
-  static outermost ring and is where all asteroid/comet markers
-  live (`wheels[4][3]`); disc 3's visible band (`wheels[3][2]`)
-  has Jupiter/Saturn/NULL/EMPTY only — no asteroid/comet anywhere
-  on disc 3. Disc 3 partially overlaps ring 4 (handled by the
-  existing `pushCoveredProbes` cover-state mechanic for probe
-  displacement), but Oumuamua's space is on ring 3, never on top
-  of a ring-4 terrain cell. Result: a probe visiting Oumuamua sees
-  only the Oumuamua planet element — there's no underlying
-  asteroid/comet to fire. The strip was solving a non-existent
-  problem.
-- [x] **Per-player exofossil cell hidden when Oumuamua absent.**
-  `ResourceBar` now takes a `showExofossils` prop (default `false`).
-  `PlayerDashboard` forwards it; `GameLayout`'s `PersonalColumn`
-  computes `findOumuamuaTile(gameState?.aliens) !== null` and feeds
-  the result. The tile is set in the plugin's `onDiscover`, so the
-  cell appears post-discovery and stays hidden in non-Oumuamua
-  games. Grid switches between 5 and 6 columns to keep cell widths
-  uniform.
-
-Review:
-- The audit covered all 24 rule-lines across the raw + detailed
-  rule.md layers. Coverage was already broad — VP at marker 1/0/2,
-  tile completion exofossil-per-contributor + refill + no winner +
-  no publicity, dual-routing wired through `MarkSectorSignalEffect`
-  + `OrbitProbeEffect`, rival's "always marks tile" short-circuit,
-  rival's "treat as occupied" via `canPlaceTraceOnSlot`, exofossil
-  exclusion from `TExchangeableResource`, no end-game VP scoring on
-  exofossils, Oumuamua present in `ORBITABLE_PLANETS`, and the
-  alien-board's Orbit/Land surface in `AlienBoardView`.
-- Top-tier (`maxOccupants: -1`) "marked any number of times, each
-  spends 1 exofossil" already works because `parseTraceSlotCost`
-  reads cost from the slotId on every placement and
-  `onPlaceTraceOnSlot` always spends it once per mark.
-
-Verification:
-- `pnpm -r typecheck` clean.
-- `pnpm --filter @seti/server test -- --run` — 2159/2162 (3
-  pre-existing failures unrelated: two upstream organization-power
-  tests from the `225745f` merge, plus the long-standing
-  `SpaceAgencyAlienPlugins > deals Amoeba discovery cards…` flake).
-- `pnpm --filter @seti/client test -- --run` — 316/316. Updated
-  `ResourceBar.test.tsx` to assert both the visible (with
-  `showExofossils`) and hidden (default-off) cell paths.
-
-Residual:
-- The audit also confirmed the dual-routing and rival paths are
-  correct against the rulebook. No follow-ups needed.
-
-### Oumuamua planet art on the solar wheel - 2026-05-19
-
-Plan:
-- [x] **Pin Oumuamua 2 sectors clockwise of Jupiter on ring 3.**
-  `OUMUAMUA_SOLAR_SYSTEM_WHEEL_POSITION.sourceSlotIndex: 1 → 5`.
-  Same band as Jupiter so the tile rotates in lockstep — no
-  computation needed beyond the existing `getOumuamuaSolarSystemSpaceId`.
-- [x] **Add `onSolarSystemRotated` hook** to `OumuamuaAlienPlugin`
-  so the plugin's cached `tile.spaceId` / `tile.sectorId` follow
-  the wheel after each rotation. (Later refined — see audit slice
-  above — to *only* update metadata, since the wheel snapshot
-  already moves the planet element + publicity icon together.)
-- [x] **Render the printed Oumuamua planet PNG on the solar
-  board.** Drop `planet.webp` into
-  `packages/client/public/assets/seti/aliens/oumuamua/`. Add an
-  `OumuamuaPlanetArt` component in `SolarSystemView.tsx` that
-  positions the image at the tile's space-centre with calibrated
-  rotation/scale/offset constants. URL params
-  `?oumRot=…&oumScale=…&oumT=…&oumR=…` allow live tuning before
-  baking values in.
-- [x] **Switch the 3-data marker pill to arc layout.** Reuses
-  `SectorSignalList`'s `arc` mode (same as the per-tile sector
-  data slots in `PER_TILE_SIGNAL_LAYOUT`). Arc geometry and the
-  group offset both scale with the solar-board zoom factor
-  (`normalizedSolarBoardZoom`) so dots stay visually consistent
-  with the rest of the board at any zoom. The dark pill chrome
-  is dropped in image mode so dots overlay the planet art
-  directly; text mode keeps the pill for debug readability.
-
-Verification:
-- `pnpm -r typecheck` clean.
-- `pnpm --filter @seti/server test -- --run OumuamuaAlienPlugin`
-  passes after updating the `places oumuamua on the fixed ring-3
-  wheel slot` assertion to expect `ring-3-cell-15` (slot 5 of
-  band-2 expanded by `cellsPerSector: 3`).
-- `pnpm --filter @seti/client test -- --run` — 303/303.
-- Live tuning in `/debug/replay` with the Oumuamua preset.
-
-### Backend P0/P1 backlog: alien reward delivery + auth guard + lobby + persistence - 2026-05-19
-
-Single sweep through four backend-only items the user picked from the open
-backlog. Two commits on `feature/server`: `c0c66cf` (P0 footguns) and
-`2b52b85` (P1 backlog).
-
-Plan:
-- [x] **P0 — `executeRewards` short-circuit + `onSolarSystemRotated` CUSTOM-skip.**
-  Make `AlienState.executeRewards` apply all simple rewards inline first,
-  then build at most one `CUSTOM:DRAW_ALIEN_CARD` PlayerInput at the end
-  (boolean `hasPendingDrawAlienCard` flag — a typed accumulator was
-  rejected because it couldn't be narrowed without an unsafe cast).
-  Make it `public`. In `AnomaliesAlienPlugin.onSolarSystemRotated`, swap
-  `executeSimpleSlotRewards` for `executeRewards` and push any returned
-  PlayerInput onto `game.deferredActions` with
-  `EPriority.IMMEDIATE_REWARD`, mirroring the existing trace-slot path.
-  Two regressions added — "applies simple rewards listed AFTER a
-  CUSTOM:DRAW_ALIEN_CARD" and "routes CUSTOM token rewards through the
-  deferred queue (no silent drop)".
-- [x] **P0 — `JwtAuthGuard` per-request DB roundtrip.** Drop the
-  `authService.getProfile(payload.sub)` call from the guard; trust the
-  signed JWT for read paths, keep the existence check on user-write
-  paths (`PUT /auth/me` etc.) where the FK matters. Removed the
-  `AuthService` injection from the guard's constructor and the
-  `auth.module.ts` `APP_GUARD` factory. Replaced the
-  "rejects … no-longer-exists" integration test with a positive
-  assertion that the guard does NOT round-trip authService for a
-  missing user.
-- [x] **P1 — Lobby `startGame` transaction with row lock.** Wrapped
-  the whole method in `this.db.transaction(async tx => …)` and used
-  `.limit(1).for('update')` on the games row so two concurrent
-  `POST /lobby/rooms/:id/start` requests serialize. The second call
-  sees `status='playing'` after the first commits and rejects with
-  `BadRequestException`. `getPlayersForGame` now takes an optional
-  `db` parameter (defaults to `this.db`) so the inner transactional
-  call reuses the locked tx. Mock-db chain in the lobby test extended
-  with a `transaction(callback)` impl that runs inline against the
-  same db, plus `.for()` as the awaitable terminator after `.limit()`;
-  added a "rejects a second concurrent start once the first one
-  settles" regression that drives the lock via two `.for()` results.
-- [x] **P1 — `AlienBoardInit` overflow plurals.** Dropped the singular
-  `overflowSlot?` from `IAlienBoardInit` and the matching path in
-  `hydrateTraceSlots` so the init shape can no longer specify both
-  fields and accidentally duplicate the slot. The read-only
-  `get overflowSlot()` accessor stays — it's a safe convenience.
-- [x] **P1 — `gameSnapshots` prune on unload.** Added
-  `GameRepository.pruneSnapshots(gameId, keep = 50)` that selects the
-  most recent `keep` versions descending and deletes anything older
-  than `oldestKept`, while preserving version 0 unconditionally
-  (GAME_CREATED seed; sole loader entry-point for cold cache).
-  `GameManager.unloadGame` now calls it inside try/catch; failures
-  log a warning but don't fail the unload itself. Two regressions
-  added — "prunes old snapshots when unloading" and "unloads cleanly
-  even when prune throws".
-
-Review:
-- The `executeRewards` rewrite was the highest-risk change. The first
-  attempt used a typed accumulator
-  (`{ reward: TSlotReward & { type: 'CUSTOM'; effectId: 'DRAW_ALIEN_CARD' } }`)
-  that TypeScript couldn't narrow from a generic CUSTOM reward
-  assignment; replaced with a boolean flag, which is also semantically
-  correct (we only ever build a single DRAW_ALIEN_CARD prompt per
-  call). All existing call-sites pass without change.
-- The two new Anomalies plugin tests both initially failed with
-  `expected true to be false` / `expected boolean to be object`; the
-  root cause was that the auto-draw fallback returns
-  `onComplete?.()` (undefined) when there's only one drawable card.
-  Seeding both `board.faceUpAlienCardId = 'ET.3'` AND
-  `board.alienDeckDrawPile = ['ET.1', 'ET.2']` forces the
-  SelectOption branch, which is what the regression actually wants
-  to exercise.
-- The lobby transaction test ran into two mock-chain quirks:
-  (1) the row-lock select chains `.limit(1).for('update')`, so
-  `.limit` can't be a terminal `.mockResolvedValue` — it needs to
-  return a chainable object that exposes `.for`. Fixed by promoting
-  the chain to `vi.fn().mockReturnThis()` and terminating on
-  `.for()`. (2) The transaction-wrapped service builds a fresh
-  `new GameRepository(tx)` inside the tx, which bypasses the
-  field-replaced `service.gameRepo.startFromLobby` stub. Fixed by
-  spying on `GameRepository.prototype.startFromLobby` instead.
-- `JwtAuthGuard` change: the `lessons.md` constraint ("engine should
-  still 401 if sub no longer resolves to a real user") is now honoured
-  exclusively at user-write paths via `authService.updateProfile`,
-  not on every guarded request. The integration test was rewritten
-  to lock that intent in: a token whose `sub` doesn't exist in `users`
-  still gets 200 from a generic GET endpoint.
-- Snapshot prune is `keep = 50` (configurable) and runs only at
-  unload. The keep-window naturally covers the undo subsystem's
-  N-version peek, and version 0 stays regardless so cold-cache load
-  always succeeds. Errors don't block unload — losing a few stale
-  rows is preferable to leaving the game in memory.
-
-Verification:
-- `pnpm --filter @seti/server typecheck` — clean.
-- `pnpm --filter @seti/server test -- --run` — 2127/2128 (the only
-  failure is the pre-existing
-  `SpaceAgencyAlienPlugins > deals Amoeba discovery cards…` flake,
-  audit-tracked since 2026-05-17).
-- All 4 new regressions pass: 2 in
-  `AnomaliesAlienPlugin.test.ts`, 1 in `lobby.service.test.ts`
-  (concurrent-start), 2 in `GameManager.test.ts` (prune happy +
-  prune-throws). The rewritten JwtAuthGuard integration test passes.
-
-Residual:
-- "P0 — Cross-check the rest of the alien reward ladders" still
-  open. The `executeRewards` short-circuit was the prerequisite; the
-  cross-check itself wasn't part of this slice.
-- All remaining "client/UI verification needed" P0/P1 items
-  (WS reconnect, `AndOptionsInput` Back-clear, alien art
-  calibration) are still open — not picked up because the user
-  flagged UI testing as inconvenient.
-
-### Sector data dot arc + zoom-aware sizing + overflow bin - 2026-05-19
-
-Assumptions:
-- Printed sector data slots are curved ovals along each tile's arc, not
-  straight horizontal rows. Dots should match the curvature.
-- Adjacent dots in the same slot should touch (no gaps) regardless of
-  capacity (4/5/6) — a 6-data slot spans wider than a 4-data slot but
-  the dot density is identical.
-- Zooming the solar board must scale the data slot proportionally; the
-  data row was previously frozen in CSS px and broke at non-default zoom.
-- Per the rulebook, "any excess signals you mark in the sector count
-  towards winning" — sector resolution only happens at the end of the
-  active player's main action, so a player can pile up overflow markers
-  within one turn.
-
-Plan:
-- [x] `SectorSignalList`: add an `arc` mode that places dots tangent to
-  each other along an arc (`step = 2·asin(d / 2r)`). Concave side faces
-  the sun (board centre).
-- [x] `SectorNodeView`: per-(tileId, half-index) layout table
-  (`PER_TILE_SIGNAL_LAYOUT`) with `sigX/sigY/sigRot/arcRadiusPx/dotDiameterPx`.
-  Each tile has its own copy so they tune independently.
-- [x] `SolarSystemView` → `SectorGrid` → `SectorView` → `SectorNodeView`:
-  thread `boardScale` (= current zoom factor) and multiply px-based
-  layout values by it so the slot stays aligned at any zoom.
-- [x] When `signals.length > capacity`, render the extras as a
-  horizontal stack flush to the right end of the arc — the temporary
-  holding area for overflow markers.
-- [x] Add a `Sector` regression test asserting overflow markers count
-  toward majority (4-vs-1 with 3 overflow markers, p1 wins).
-
-Review:
-- The arc formula picks `step = 2·asin(d/(2r))` (chord-angle) so adjacent
-  dots are exactly tangent; the slot's total angular span scales with
-  count, which is what the user expected.
-- `boardScale` is `normalizedSolarBoardZoom` (clamped 0.72…1.08), exposed
-  via prop chain — no React context, no CSS-var-readback hacks.
-- Server-side overflow logic was already correct (`Sector.markSignal`
-  appends past capacity, `computeRanking` iterates all signals); the
-  test locks that semantic in place.
-
-Verification:
-- `pnpm -r typecheck` clean.
-- `pnpm --filter @seti/client test -- --run` — 303/303.
-- `pnpm --filter @seti/server test -- --run` — 2122/2123 (only the
-  pre-existing Amoeba flake; new `Sector` overflow-majority test passes).
-
-Residual:
-- Per-tile fine-tuning of `PER_TILE_SIGNAL_LAYOUT` is open under
-  "P2 — Tune per-tile sector data-slot layouts". Today all four tile
-  entries point at the same default layout.
-
-### Anomalies token art + recalibrated anchors - 2026-05-19
-
-Plan:
-- [x] Drop 6 hi-res anomaly token PNGs (pink+credit/VP, yellow+card/publicity,
-  blue+data/energy) into `packages/client/public/assets/seti/aliens/anomalies/tokens/`.
-  Verified alpha channel (corners `a=0`, no white-bg leak).
-- [x] `SolarAlienTokenMarker`: render `<img>` with the matching art when
-  `(traceColor, headlineReward)` maps to a printed combo; fall back to
-  the pre-existing pill UI for any unmapped combo.
-- [x] Slide each token tangentially along its orbit
-  (`ALIEN_TOKEN_TANGENTIAL_OFFSET_PX = 35`) so it sits next to the
-  sector's planet/comet rather than on top of it.
-- [x] Recalibrate Anomalies trace-slot anchors against the hi-res
-  board art (`ANOMALIES_LAYOUTS`).
-
-Verification:
-- `pnpm --filter @seti/client typecheck` clean.
-- `pnpm --filter @seti/client test -- --run SolarSystemView` — 302/302.
-- Live board screenshot: 8 anomaly tokens render with their printed art
-  on a fresh `anomaly-trigger-resolution` replay.
-
-### Earth-scan-marks-wrong-sector - 2026-05-18
-
-The actual bug:
-- `getSectorAt(game, wedgeIndex)` did `game.sectors[wedgeIndex]`, but the
-  `game.sectors` array was ordered by tile-placement (NORTH first, then
-  EAST/SOUTH/WEST), NOT by wedge index. So the server's "Earth's wedge
-  index = 5" lookup grabbed `sectors[5]` which was sector-4 — the next
-  sector in placement order — and the marker landed on the wrong tile.
-- Investigation went down a wrong path first (cardinal-position-vs-
-  wheel-angle theory). The cardinal-walk and sector-pair changes are
-  still correct rendering-side fixes, but they didn't address the actual
-  bug — the wedge-index → array-index mismatch did.
-
-Fix:
-- [x] Sort `game.sectors` by the numeric suffix of `sector-${N}` in
-  `buildSectorsFromPlacements` so `game.sectors[N]` is always sector-N.
-  Restores the invariant `getSectorAt`/`getSectorIndexByPlanet` were
-  written against.
-- [x] `ALL_SECTOR_POSITIONS = [NORTH, EAST, SOUTH, WEST]` — walks tiles
-  clockwise so sector-N's cardinal tile sits on the same arc as cell-N.
-- [x] Sector pairing: NORTH→(7,0), EAST→(1,2), SOUTH→(3,4), WEST→(5,6),
-  so the two sectors of each tile straddle the cardinal anchor.
-- [x] Client `getFallbackSectorIndex` mirrors the server pairing.
-
-Verification:
-- Live: 8/8 fresh replays mark the same sector that contains Earth
-  (wedge index match, cardinal-tile match).
-- `pnpm -r typecheck` clean.
-- `pnpm --filter @seti/server test -- --run` — 2089/2090 (pre-existing
-  Amoeba flake unrelated).
-- `pnpm --filter @seti/client test -- --run` — 301/301.
-
-Lessons:
-- When a server already exposes the correct value (`getSectorIndexOfPlanet`
-  returned 5 correctly for cell-5), trust it and trace ONE level — check
-  what the consumer does with that value. Going up to "the layout must be
-  fundamentally wrong" was premature.
-
-### Trace UX + sector labels + pink rename - 2026-05-18
-
-Assumptions:
-- The trace-of-life icon printed on components is magenta/pink (heart-shaped
-  symbol on sector tiles), not red. The internal enum was named `ETrace.RED`
-  for historical reasons; renaming the TypeScript identifier to `PINK` while
-  keeping the persisted string value `'red-trace'` preserves DB / save-game
-  compatibility.
-- Sector RED (the **sector colour** on tiles like Procyon / Barnard's Star)
-  is genuinely red on the printed components — that stays unchanged.
-- Discovery + Overflow trace circles should read as the same kind of slot,
-  with player tokens overlaid at the same size in both variants.
-- Free-action sector resolution should read like the rulebook
-  ("Red Barnard's Star"), not raw sector ids.
-
-Success criteria:
-- All trace-of-life UI uses magenta hex (#d63384) and the label "Pink".
-- `ETrace.RED` is gone from TypeScript code; the enum value stays
-  `'red-trace'` so saved games keep loading.
-- Discovery vs Overflow tokens are the same size (55% of slot width); no
-  trace-color ring on player markers — only player colour with a thin dark
-  border.
-- Trace Placement Replay starts the active player with 6 data on the
-  computer, 6 data in the pool, a probe on Mars, and every sector
-  pre-marked down to one signal — so any sector mark fulfils, the active
-  player wins, and the pink trace-of-life prompt fires.
-- Sector resolution and "Mark Earth" / "Mark sector by colour" / probe
-  pickers all show "Red Barnard's Star (sector-3)" labels instead of raw
-  sector ids.
-- Test suite ≥ pre-slice baseline (no new pre-existing failures).
-
-Plan:
-- [x] Discovery / Overflow / AnomalyTier shared `SlotOccupantOverlay`
-  re-tuned: tokens centre-stack inside overflow pills (matching the
-  Anomalies overflow ladder, but symmetric instead of bottom-up).
-- [x] Drop the trace-color ring from `SlotOccupantOverlay`,
-  `AnomaliesBoardArt.SlotMarker`, `TraceMarkerOverlay.SlotMarker` —
-  player tokens are pure player colour with `border-black/50`.
-- [x] Resize Discovery / Overflow circles + AnomalyTier bubble to
-  `w-[78%] max-w-16` so they read as the same size as the printed
-  alien-board markers (and shrink/grow with column width).
-- [x] Mass rename `ETrace.RED` → `ETrace.PINK` across all 96 source
-  files (server, client, common, web, tests). String value stays
-  `'red-trace'`.
-- [x] Recolor `[ETrace.PINK]: '#e93e27'` → `'#d63384'` (magenta) in 6
-  client renderers; sector RED hex stays red.
-- [x] Update display labels: TRACE_LABEL `'Red'` → `'Pink'`,
-  `formatTraceColor` `'Red'` → `'Pink'`, Centaurians plugin test
-  assertion `'Place Red trace'` → `'Place Pink trace'`.
-- [x] Replay preset bug fix: pre-mark sectors with the active player's
-  id (was a fake "neutral debug" id, which would win the sector and
-  rob the player of the trace prompt). Two-step data gain (gain 6 →
-  place 6 → gain 6) works around the `DATA_POOL_MAX = 6` cap.
-- [x] Add `SectorLabel.ts` (single source of truth for sector option
-  labels) and reuse `formatSectorOptionLabel` across 9 callsites:
-  `SectorFulfillmentEffect`, `MarkSectorSignalEffect.markByColor`,
-  `markByColorWithoutData`, `ScanActionPool` Earth-Look picker,
-  `ScanWithTechsEffect` candidate + earth picker, probe-sector card
-  utils, `AnySignalQuickMissionCard`, `OrbitingLagrangePointCard`,
-  `TessSatelliteCard`.
-- [x] Add E2E test: `ResolveSectorCompletion.test.ts` "marking the
-  last data signal in a pre-marked sector prompts the active player
-  to place a pink trace" — exercises the full
-  MarkSectorSignalEffect → deferred queue → trace input flow.
-- [x] Defensive fix in client `getSectorIdByPlanet`: replaced
-  `indexInRing % 8` with `floor(indexInRing / ringIndex)` so the
-  helper agrees with server math on rings > 1.
-
-Review:
-- The bulk rename ran in two passes — BSD `sed -E '... \b'` doesn't
-  treat `\b` as a word boundary, so the first sweep was a no-op.
-  Second pass with `(ETrace\.RED)([^A-Za-z0-9_])` + `(ETrace\.RED)$`
-  caught all 96 files cleanly.
-- The replay-preset bug was a subtle ranking issue: 4 fake "neutral
-  debug" markers + 1 real marker meant the fake player won the
-  sector and the trace bonus never fired for the real player. Fixed
-  by pre-marking with the active player's id.
-- Earth-scan-marks-wrong-sector turned out to be a *different* bug
-  (cardinal-position vs. wheel-angle disagreement). Documented as
-  the next P0 with three candidate fix shapes.
-- Verification:
-  - `pnpm -r typecheck` — all 6 packages clean.
-  - `pnpm --filter @seti/client test -- --run` — 301/301.
-  - `pnpm --filter @seti/server test -- --run` — 2089/2090
-    (pre-existing Amoeba flake unrelated to this slice).
-- Residual:
-  - Earth-scan-marks-wrong-sector layout fix tracked as P0
-    "Sector-tile cardinal placement vs. wheel-cell angles disagree".
-
-### Anomalies trace placement: per-tier slots, friendlier labels, auto-tab - 2026-05-18
-
-Assumptions:
-- Anomalies columns must let the player choose **any available tier**, not
-  auto-fill bottom-up — only the top "overflow" space stacks tokens.
-  Re-reading `docs/arch/aliens/anomalies/rule.md` confirmed: "later markers
-  stack above earlier markers on top space" applies to the overflow only.
-- Universally (across aliens), placement should target whichever printed
-  circles still have capacity; this slice ships the Anomalies version, the
-  same principle applies as we calibrate the other aliens.
-- Discovery and overflow zone bonus circles, plus text-mode column bubbles,
-  should share one visual size to read as the same kind of slot.
-
-Success criteria:
-- The Anomalies column exposes 5 distinct trace slots per color (4 single-cap
-  tiers + 1 top overflow, matching the printed art).
-- The trace input prompt lists each tier as its own option with a friendly
-  label including the alien name (when discovered) and the slot's reward
-  summary, so the player can read the option list and pick a tier.
-- Discovery / overflow zones and the text-mode column bubble all use the
-  same 64px circle / 128px pill, with player tokens overlaid on the bubble
-  (like the AnomaliesBoardArt pattern) instead of in a row beneath.
-- When a trace input arrives, the active tab auto-jumps to "Aliens" so the
-  player sees the alien board where the choice has to be made.
-- Test suite ≥ pre-slice baseline (no new pre-existing failures).
-
-Plan:
-- [x] Replace the single-slot-per-color Anomalies model with 5 per-tier
-  slots (`AnomaliesAlienPlugin.onDiscover`); each slot carries the matching
-  ladder rewards as static data.
-- [x] Drop the dynamic `getAnomalyColumnRewardsForPlacement` projection
-  from the plugin's `onPlaceTraceOnSlot` (no longer needed; framework
-  delivers rewards).
-- [x] Update `getColumnLeaderPlayerId` to walk tiers top→bottom and pick
-  the highest non-neutral occupant (overflow latest-placed wins).
-- [x] Widen `IPublicAnomaliesTraceBoard.columns` from
-  `Record<color, IPublicTraceSlot>` to `Record<color, IPublicTraceSlot[]>`
-  (bottom→top); update serializer.
-- [x] Refit `AnomaliesBoardArt` (real-mode) and `AnomalyColumn` (text-mode)
-  to consume the per-tier shape; render each tier as its own bubble with
-  occupants overlaid.
-- [x] Bump trace-grid bonus circles to `h-16 w-16` (pill `min-h-32 w-16`)
-  and reward icons to `sm` so discovery zone, overflow zone, and text-mode
-  columns share one visual.
-- [x] Remove the pre-existing `compact` mode from the local
-  `TraceRewardFrame`; collapse to one variant.
-- [x] Update slot-label generator: alien name when discovered, plus
-  inline reward summary (`4 VP + alien card`, `2 VP + 1 publicity`, etc).
-- [x] Add `isAlienBoardInput` helper + `useEffect` in `GameLayout` to
-  auto-jump to the Aliens tab on the first render of an alien-targeting
-  pending input.
-- [x] Add `Trace Placement Replay` debug preset and `place-trace` REST
-  endpoint for fast UX testing without a full Scan/Analyze setup.
-
-Review:
-- The slot-label change made the previously broken option text
-  ("Alien 1 — alien-0-anomaly-column|blue-trace") become
-  "Anomalies — Blue tier 1 — 4 VP + alien card", which is exactly what
-  the option list needs to be useful.
-- The auto-tab effect is gated on a per-input id ref so the player can
-  flip back to Board / Cards / Tech mid-prompt without us re-stomping
-  their choice; only the first render of a *new* alien input triggers
-  the switch.
-- The `compact` removal touched layout only, no game-state
-  consequences; existing `<TraceRewardFrame />` callsites work without
-  the prop.
-- Preserved API compatibility for the `applyTraceToSlot` callers from
-  the prior slice — the wider `PlayerInput | boolean` return shape was
-  already in place.
-- Verification:
-  - `pnpm --filter @seti/server typecheck`
-  - `pnpm --filter @seti/client typecheck`
-  - `pnpm --filter @ender-seti/common typecheck`
-  - `pnpm --filter @seti/server test` — `2088 passed, 1 failed`. The
-    single failure is the audit-tracked SA Amoeba test, unrelated to
-    this slice.
-  - `pnpm --filter @seti/client test -- AlienBoardView GameLayout` —
-    `301 passed`.
-  - Live REST probe of the trace input: option labels render as
-    "Anomalies — Red tier 1 — 4 VP + alien card", "Anomalies — Red
-    tier 3 — 2 VP + 1 publicity", "Anomalies — Red Overflow — 2 VP",
-    "Alien 2 — Discovery (Red) — 3 VP + 1 publicity".
-
-Residual:
-- Other aliens (Centaurians/Exertians/Mascamites/Oumuamua) still use
-  the old per-color shape and have not been calibrated against their
-  hi-res art — tracked under "Open → P2 Calibrate base alien art
-  coordinates".
-- The `executeRewards` short-circuit and the Anomalies token-trigger
-  CUSTOM-drop footguns (P0) are still in place: this slice only changed
-  the slot model + labels, not the reward delivery path. The cross-check
-  P0 still applies.
-
-### Hi-res alien art + face-down back - 2026-05-18
-
-Assumptions:
-- The 5 base aliens (Anomalies, Centaurians, Exertians, Mascamites,
-  Oumuamua) have stable art that won't be re-skinned by the original author.
-- `HiddenBoard` should match the printed board's aspect/frame so the
-  discovery transition is purely a face flip, not a size jump.
-- The new images are the same artwork at higher resolution, so the calibrated
-  Anomalies coordinates (xPct/yPctBottomToTop) remain valid.
-
-Success criteria:
-- Each base alien shows its hi-res board in real mode while text-mode is
-  byte-for-byte unchanged.
-- The not-yet-discovered alien slot shows a face-down "back" image, not
-  an empty black placeholder.
-- Anomalies marker calibration still passes (rings sit on printed circles).
-
-Plan:
-- [x] Convert the 5 hi-res steam PNGs (777x1415) to webp, drop into
-  `packages/client/public/assets/seti/aliens/<alien>/board.webp`.
-- [x] Add `packages/client/public/assets/seti/aliens/back.webp` for the
-  face-down state.
-- [x] Update `AlienBoardArtFrame` aspect ratio to `777/1415` so the source
-  PNG fits without distortion.
-- [x] Branch `HiddenBoard` on `useTextMode()`: real mode renders the back
-  image at the same frame; text mode keeps the original empty placeholder.
-- [x] Verify calibration overlay rings still align on the new image.
-
-Review:
-- The aspect-ratio bump is small (0.5565 → 0.5491, ~1% delta). Anomalies
-  marker positions remained correct without re-tuning.
-- Image file sizes ~285-432 KB each at q=92 webp (~2.5 MB total for the
-  5 boards + back).
-- `HiddenBoard` previously rendered as a black box with `min-h-[360px]`;
-  the new face-down rendering uses the same fixed-aspect frame as a
-  discovered board, so both alien slots size identically before/after
-  discovery (no layout shift on reveal).
-- Verification:
-  - `pnpm --filter @seti/client typecheck`
-  - Headless screenshots of all 5 base aliens in real mode + text mode
-    confirmed art renders and text-mode unchanged.
-  - DOM probe confirmed `?calibrate=1` produces 15 rings + 1 badge on the
-    new image, same as before.
-
-### Anomalies art renderer + ladder reward fix - 2026-05-18
-
-Assumptions:
-- Original author owns Space Agency / expansion backend; UI/asset polish on
-  base aliens is in scope for Tong.
-- The five base aliens (Anomalies, Centaurians, Exertians, Mascamites,
-  Oumuamua) are stable enough on the backend that visual reskinning won't
-  conflict with active backend work.
-- `useTextMode()` is the canonical way to toggle text vs image-mode in the
-  rest of the codebase (PlanetaryBoardView, SolarSystemView).
-
-Success criteria:
-- Real-mode renders the printed alien-board art with player markers landing
-  on the printed token-circles, while text-mode is byte-for-byte unchanged.
-- Anomalies column rewards match the rule book: 4 VP + alien card on the 1st
-  token, 2 VP + alien card on the 2nd, 2 VP + 1 publicity on the 3rd, 3 VP
-  on the 4th, 2 VP on each overflow token.
-- Custom (alien-card) rewards are delivered through a real `PlayerInput` so
-  the player picks face-up vs deck.
-- All affected unit tests fail before the fix and pass after.
-
-Plan:
-- [x] Add `AlienBoardArtFrame` and `TraceMarkerOverlay` shared components.
-- [x] Add `AnomaliesBoardArt`, `CentauriansBoardArt`, `ExertiansBoardArt`,
-  `MascamitesBoardArt`, `OumuamuaBoardArt` (placeholder coordinates for the
-  last four).
-- [x] Calibrate Anomalies coordinates (4 single-cap circles + 1 overflow
-  circle, R/B vs Y column offset).
-- [x] Add `?calibrate=1` and `?previewOverflow=N` debug flags via a new
-  `useCalibrationMode` / `usePreviewOverflowCount` hook.
-- [x] Fix `ANOMALY_COLUMN_REWARD_LADDER` data: 1st/2nd token now `4 VP +
-  CUSTOM:DRAW_ALIEN_CARD` and `2 VP + CUSTOM:DRAW_ALIEN_CARD`.
-- [x] Route Anomalies plugin rewards through `AlienState.executeRewards`
-  (assign to `slot.rewards` instead of calling `executeSimpleSlotRewards`).
-- [x] Widen `applyTraceToSlot` return type to `PlayerInput | boolean` so the
-  alien-card draw input round-trips.
-- [x] Map solo rival's `DRAW_ALIEN_CARD` custom reward to `+1 progress`
-  (mirrors the existing `CARD` → progress conversion).
-- [x] Update tests: `AnomaliesAlienPlugin`, `ResolveDiscovery`,
-  `RivalTurnController`.
-
-Review:
-- Anomalies art is the only renderer with a fully calibrated layout; the
-  other four base aliens still ship with rough placeholder coordinates and
-  must be calibrated before they're production-ready.
-- The redundant `overflowStrideYPct` field in `AnomaliesBoardArt` was renamed
-  to `overflowStridePct` to match `TraceMarkerOverlay`'s field name.
-- `useCalibrationMode.ts` was refactored to share a `useQueryParam` helper
-  between the two URL flags, dropping ~20 lines of duplicate state-and-effect
-  scaffolding.
-- The Anomalies trace marker uses `#9ca3af` / `#cbd5e1` (Tailwind grays) for
-  neutral / fallback fills; this matches existing usage elsewhere in the
-  client but does not strictly conform to `.impeccable.md`'s OKLCH-only
-  token policy. Treated as pre-existing convention; not changed in this slice.
-- Verification:
-  - `pnpm --filter @seti/client typecheck`
-  - `pnpm --filter @seti/server typecheck`
-  - `pnpm --filter @ender-seti/common typecheck`
-  - `pnpm --filter @seti/server test --
-    __tests__/engine/alien/plugins/AnomaliesAlienPlugin.test.ts
-    __tests__/engine/deferred/ResolveDiscovery.test.ts
-    __tests__/engine/solo/RivalTurnController.test.ts` — `2088 passed, 1 failed`.
-    The single failure (`SpaceAgencyAlienPlugins > deals Amoeba discovery
-    cards once per marked discovery space`) is the pre-existing failure
-    documented in `docs/TODO.md` (audit 2026-05-17), unrelated to this slice.
-  - Headless-browser screenshots under `?calibrate=1` and `?previewOverflow=3`
-    verified Anomalies marker placement and overflow stack visuals.
-- Residual risk:
-  - Centaurians / Exertians / Mascamites / Oumuamua art coordinates are not
-    calibrated; in real mode their player markers may sit visibly off the
-    printed circles. Tracked under "Open → Calibrate base alien art coordinates".
+> One-line summaries with commit refs. See git history (`git log
+> --oneline -- docs/TODO-Tong.md` or the listed commit) for the full
+> Plan/Review/Verification details that originally lived here.
+
+### 2026-05-29
+
+- **`f1dbc6c`** — rulebook palette (green/orange/purple/white) +
+  comprehensive input-text i18n + gold scoring tile rulebook fix
+  (per-tile multipliers + correct A/B formulas) + scoring tab tile
+  descriptions + IncomeTracker tucked annotation + score ladder /
+  event log player-name colorization + probe/sky CSS-mask tinting.
+
+### 2026-05-28
+
+- **`24a5170`** — Cards tab tidy-up (single buy entry via free-action
+  bar, confirm dialog, discard pile preview, Final Round banner,
+  rotation reminder token); per-rulebook end-of-round leftover sweep
+  on round transition.
+- **`af6c34d`** — Completed-mission stacked pile + branch claim tokens
+  (generalized via per-card branch DOM anchors), enlarged-card cursor
+  hint, replay preset for completed missions.
+- **`21f9b8d`** — Fix Centaurian sprite truncation (skip card-render
+  overlay when `enableEffectRender=false`) + render translated flavor
+  strip without breaking layout.
+
+### 2026-05-26
+
+- **`ac5a8de`** — Centaurians messages panel + missions slot
+  integration with VP-threshold annotations + cost-display fix
+  (energy not credit).
+- **`8bb40cc`** — Centaurians per-tier trace ladder bonuses + data
+  cost gating.
+
+### 2026-05-21
+
+- **`8a8151a`** — Picker-driven ORBIT/LAND main action via server
+  SelectOption (planet picker → slot picker), opt-in first-orbit
+  bonus, per-planet orbit rewards refactor, 1-hop move picker, probe-
+  shaped player markers on planetary slots, case-insensitive
+  Oumuamua routing to Aliens tab.
+- **Land main action on Oumuamua** — `eligibleLandPlanets` now
+  includes Oumuamua when placed; `AlienBoardView` ships
+  `planet-target-oumuamua` LAND button (folded into the
+  picker-driven slice).
+- **Flush per-turn move stash + restore YELLOW anomaly token art.**
+- **Cap solar move picker to 1-hop neighbors.**
+- **Layered disc model — base-board terrain visible after rotation.**
+- **Defer Oumuamua tile completion to SECTOR_COMPLETION priority.**
+- **Solar-system multi-cell movement-cost fix + sector-centre
+  rendering.**
+
+### 2026-05-20
+
+- **Oumuamua trace ladder + cost badges + UI polish slice.**
+- **Oumuamua rule-coverage audit + planet-visit hardening +
+  exofossil cell visibility.**
+
+### 2026-05-19
+
+- **Oumuamua planet art on the solar wheel.**
+- **Backend P0/P1 backlog**: alien reward delivery + auth guard +
+  lobby + persistence.
+- **Sector data dot arc + zoom-aware sizing + overflow bin.**
+- **Anomalies token art + recalibrated anchors.**
+
+### 2026-05-18
+
+- **Earth-scan-marks-wrong-sector** fix.
+- **Trace UX + sector labels + pink rename** (yellow→pink for the
+  third trace color across UI + alien board art).
+- **Anomalies trace placement**: per-tier slots, friendlier labels,
+  auto-tab.
+- **Hi-res alien art + face-down back.**
+- **Anomalies art renderer + ladder reward fix.**

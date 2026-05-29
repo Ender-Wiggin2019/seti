@@ -78,12 +78,12 @@ describe('EventLog', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'SETI Institute' }));
+    // Card refs now show "<localized name> (#NN)". Find the button
+    // by its testid so we don't depend on the exact label format.
+    fireEvent.click(screen.getByTestId('event-card-ref-42'));
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(
-      within(screen.getByRole('dialog')).getByText('SETI Institute'),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('dialog').textContent).toContain('#42');
   });
 
   it('does not expand compact log when clicking a card reference', () => {
@@ -106,10 +106,10 @@ describe('EventLog', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'SETI Institute' }));
+    fireEvent.click(screen.getByTestId('event-card-ref-42'));
 
     expect(screen.getAllByRole('dialog')).toHaveLength(1);
-    expect(screen.getByRole('dialog')).toHaveTextContent('42');
+    expect(screen.getByRole('dialog').textContent).toContain('#42');
     expect(screen.queryByText('Event Log')).not.toBeInTheDocument();
   });
 

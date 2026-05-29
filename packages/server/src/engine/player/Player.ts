@@ -266,9 +266,11 @@ export class Player implements IPlayer {
 
   public set resources(resources: Resources) {
     this.resourcesValue = resources;
-    this.resourcesValue.setChangeObserver((resource, delta) => {
-      this.recordResourceChange(resource, delta);
-    });
+    this.resourcesValue.setChangeObserver(
+      (resource, delta, before, after) => {
+        this.recordResourceChange(resource, delta, before, after);
+      },
+    );
   }
 
   public get dataPool(): DataPool {
@@ -282,9 +284,17 @@ export class Player implements IPlayer {
   private recordResourceChange(
     resource: keyof IResourceBundle,
     delta: number,
+    before: number,
+    after: number,
   ): void {
     this.game?.eventLog.append(
-      createResourceChangeEvent(this.id, this.toEventResource(resource), delta),
+      createResourceChangeEvent(
+        this.id,
+        this.toEventResource(resource),
+        delta,
+        before,
+        after,
+      ),
     );
   }
 

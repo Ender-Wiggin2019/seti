@@ -14,6 +14,8 @@ export type TPartialResourceBundle = Partial<IResourceBundle>;
 export type TResourceChangeObserver = (
   resource: keyof IResourceBundle,
   delta: number,
+  before: number,
+  after: number,
 ) => void;
 
 export interface IDataResourceController {
@@ -307,7 +309,7 @@ export class Resources {
   ): void {
     const delta = after - before;
     if (delta !== 0) {
-      this.onChange?.(resource, delta);
+      this.onChange?.(resource, delta, before, after);
     }
   }
 }

@@ -96,10 +96,19 @@ export function createTraceMarkedEvent(
   };
 }
 
+/**
+ * Resource change events optionally carry the before/after balance
+ * for the affected resource. This lets the client log render
+ * "spent 2 credit (6 → 4)" rather than just the delta. Older call
+ * sites that only know the delta may still pass `before` and
+ * `after` as `undefined`.
+ */
 export function createResourceChangeEvent(
   playerId: string,
   resource: string,
   delta: number,
+  before?: number,
+  after?: number,
 ): TGameEvent {
   return {
     ...eventMeta('debug'),
@@ -107,6 +116,8 @@ export function createResourceChangeEvent(
     playerId,
     resource,
     delta,
+    ...(before !== undefined ? { before } : {}),
+    ...(after !== undefined ? { after } : {}),
   };
 }
 

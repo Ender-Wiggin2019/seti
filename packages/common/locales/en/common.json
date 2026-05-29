@@ -469,7 +469,11 @@
     },
     "event_log": {
       "title": "Event Log",
-      "empty": "No events yet."
+      "empty": "No events yet.",
+      "latest": "Latest Log",
+      "debug_toggle_hint": "Toggle debug log entries",
+      "debug_shown": "Debug On",
+      "debug_hidden": "Debug Off"
     },
     "event_entry": {
       "action": "{{player}} used {{action}}",

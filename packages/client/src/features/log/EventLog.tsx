@@ -9,6 +9,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/cn';
 import { mapPlayerColors } from '@/lib/playerColor';
+import { useGameViewStore } from '@/stores/gameViewStore';
 import {
   EGameEventType,
   type IPublicPlayerState,
@@ -69,9 +70,22 @@ export function EventLog({
   scrollAreaClassName,
 }: IEventLogProps): React.JSX.Element {
   const { t } = useTranslation('common');
+  const hideDebugLog = useGameViewStore((s) => s.hideDebugLog);
+  const setHideDebugLog = useGameViewStore((s) => s.setHideDebugLog);
   const deferredEvents = useDeferredValue(events);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // When the toggle is on we drop debug-level events from BOTH the
+  // sidebar log and the full dialog. Compact mode already hides them
+  // unconditionally, so this only affects the long-form views.
+  const visibleEvents = useMemo(
+    () =>
+      hideDebugLog
+        ? deferredEvents.filter((e) => e.level !== 'debug')
+        : deferredEvents,
+    [deferredEvents, hideDebugLog],
+  );
 
   const playerNames = useMemo(() => {
     return players.reduce<Record<string, string>>((accumulator, player) => {
@@ -166,9 +180,15 @@ export function EventLog({
       {showHeader ? (
         <header className='mb-2 flex items-baseline justify-between gap-2'>
           <h3 className='micro-label'>{t('client.event_log.title')}</h3>
-          <span className='readout text-[10px] text-text-500'>
-            {String(deferredEvents.length).padStart(3, '0')}
-          </span>
+          <div className='flex items-center gap-2'>
+            <DebugLogToggle
+              hideDebugLog={hideDebugLog}
+              setHideDebugLog={setHideDebugLog}
+            />
+            <span className='readout text-[10px] text-text-500'>
+              {String(visibleEvents.length).padStart(3, '0')}
+            </span>
+          </div>
         </header>
       ) : null}
       <ScrollArea
@@ -178,13 +198,13 @@ export function EventLog({
           scrollAreaClassName,
         )}
       >
-        {deferredEvents.length === 0 ? (
+        {visibleEvents.length === 0 ? (
           <p className='text-xs italic text-text-500'>
             {t('client.event_log.empty')}
           </p>
         ) : (
           <div className='flex flex-col gap-1'>
-            {deferredEvents.map((event, index) => (
+            {visibleEvents.map((event, index) => (
               <EventEntry
                 key={event.id ?? `${event.type}-${event.at ?? index}-${index}`}
                 event={event}
@@ -197,5 +217,50 @@ export function EventLog({
         )}
       </ScrollArea>
     </section>
+  );
+}
+
+/**
+ * Tiny chip-style checkbox toggle that controls whether `level ===
+ * 'debug'` events show in the long-form log views. Power players
+ * (running through replay snapshots, debug presets, or with mock
+ * deck seeds) want to see internal `ACTION_COST` / `ACTION_REWARD`
+ * traces; everyone else just wants the action narrative.
+ */
+function DebugLogToggle({
+  hideDebugLog,
+  setHideDebugLog,
+}: {
+  hideDebugLog: boolean;
+  setHideDebugLog: (hide: boolean) => void;
+}): React.JSX.Element {
+  const { t } = useTranslation('common');
+  return (
+    <button
+      type='button'
+      data-testid='event-log-debug-toggle'
+      data-pressed={hideDebugLog}
+      onClick={() => setHideDebugLog(!hideDebugLog)}
+      className={cn(
+        'inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono text-[9px] uppercase tracking-[0.14em] transition-colors',
+        hideDebugLog
+          ? 'border-accent-500/70 bg-accent-500/10 text-accent-300'
+          : 'border-[color:var(--metal-edge-soft)] bg-background-950/40 text-text-500 hover:text-text-300',
+      )}
+      title={t('client.event_log.debug_toggle_hint', {
+        defaultValue: 'Toggle debug log entries',
+      })}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          'inline-block h-1.5 w-1.5 rounded-full',
+          hideDebugLog ? 'bg-accent-300' : 'bg-text-500',
+        )}
+      />
+      {hideDebugLog
+        ? t('client.event_log.debug_hidden', { defaultValue: 'Debug Off' })
+        : t('client.event_log.debug_shown', { defaultValue: 'Debug On' })}
+    </button>
   );
 }

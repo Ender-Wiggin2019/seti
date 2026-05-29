@@ -475,7 +475,11 @@
     },
     "event_log": {
       "title": "事件日志",
-      "empty": "暂无事件。"
+      "empty": "暂无事件。",
+      "latest": "最近日志",
+      "debug_toggle_hint": "切换调试日志条目",
+      "debug_shown": "调试可见",
+      "debug_hidden": "已隐藏调试"
     },
     "event_entry": {
       "action": "{{player}} 使用了 {{action}}",

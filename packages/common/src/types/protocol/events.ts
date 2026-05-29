@@ -69,6 +69,15 @@ export type TGameEvent =
       playerId: string;
       resource: string;
       delta: number;
+      /**
+       * Player's balance for `resource` immediately *before* this
+       * change applied. Optional — older event emitters and replay
+       * snapshots may omit it; the log falls back to a delta-only
+       * line when missing.
+       */
+      before?: number;
+      /** Balance immediately after the change applied. */
+      after?: number;
       level?: TGameEventLevel;
       at?: number;
     }

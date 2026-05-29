@@ -52,6 +52,7 @@ import { cn } from '@/lib/cn';
 import { mapPlayerColors, resolvePlayerColor } from '@/lib/playerColor';
 import { useGameContext } from '@/pages/game/GameContext';
 import { GameOverDialog } from '@/pages/game/GameOverDialog';
+import { useTextMode } from '@/stores/debugStore';
 import { type TBoardTab, useGameViewStore } from '@/stores/gameViewStore';
 import type {
   IMainActionRequest,
@@ -2066,6 +2067,21 @@ const GOLD_TILE_DESCRIPTIONS: Record<string, { i18nKey: string; en: string }> =
   };
 
 /**
+ * Normalized 0..1 coordinates of the three rank slots on each gold
+ * tile PNG, measured against the upper-left of the tile image. The
+ * three slots sit horizontally in the lower band of every tile
+ * (rulebook layout is consistent across all 8 sides). Slot 3
+ * physically holds 2 markers — both the data model (with a
+ * duplicated `slotValues[N-1]`) and this UI lay them out side-by-side
+ * inside the same anchor.
+ */
+const GOLD_TILE_SLOT_ANCHORS = [
+  { x: 0.30, y: 0.66 },
+  { x: 0.50, y: 0.66 },
+  { x: 0.70, y: 0.66 },
+] as const;
+
+/**
  * Inline display for gold scoring tiles — shows per-side rulebook
  * description, the 3 rank multipliers (with the bottom rank holding
  * 2 markers), and any markers already placed by players.
@@ -2078,6 +2094,7 @@ function GoldScoringTilesView({
   playerColors: Record<string, string>;
 }): React.JSX.Element {
   const { t } = useTranslation('common');
+  const textMode = useTextMode();
   if (tiles.length === 0) {
     return (
       <p className='font-mono text-[10px] tracking-[0.08em] text-text-500'>
@@ -2175,66 +2192,161 @@ function GoldScoringTilesView({
                 </p>
               ) : null}
 
-              <div className='flex flex-wrap gap-1'>
-                {ranks.map((rank, idx) => {
-                  const occupants = claimsByRank[idx];
-                  return (
-                    <div
-                      key={`${tile.id}-rank-${idx}`}
-                      className={cn(
-                        'flex min-w-[44px] items-center justify-center gap-1 rounded-[3px] border px-1.5 py-0.5 font-mono text-[11px] tabular-nums',
-                        occupants.length > 0
-                          ? 'border-accent-500/60 bg-accent-500/[0.08] text-text-100 shadow-[inset_0_0_0_1px_oklch(0.68_0.11_240/0.2)]'
-                          : 'border-[color:var(--metal-edge-soft)] bg-background-950/50 text-text-500',
-                      )}
-                      title={
-                        occupants.length > 0
-                          ? occupants
-                              .map((pid) =>
-                                t('client.game_layout.claimed_by', {
-                                  player: pid,
-                                }),
-                              )
-                              .join(', ')
-                          : t('client.common.open', {
-                              defaultValue: 'Open',
-                            })
-                      }
-                    >
-                      <span className='flex items-center gap-0.5'>
-                        {occupants.map((pid) => (
-                          <span
-                            key={pid}
-                            aria-hidden
-                            className='inline-block h-2 w-2 rounded-full border border-[oklch(0.96_0.008_260/0.4)]'
-                            style={{
-                              backgroundColor:
-                                playerColors[pid] ?? '#cbd5e1',
-                            }}
-                          />
-                        ))}
-                      </span>
-                      {rank.value}×
-                      {rank.capacity > 1 ? (
-                        <span
-                          className='font-mono text-[8px] uppercase tracking-[0.16em] text-text-500'
-                          title={t('client.gold_tile.capacity_hint', {
-                            count: rank.capacity,
-                            defaultValue: '{{count}} markers fit',
-                          })}
-                        >
-                          ·{rank.capacity}
+              {textMode ? (
+                <div className='flex flex-wrap gap-1'>
+                  {ranks.map((rank, idx) => {
+                    const occupants = claimsByRank[idx];
+                    return (
+                      <div
+                        key={`${tile.id}-rank-${idx}`}
+                        className={cn(
+                          'flex min-w-[44px] items-center justify-center gap-1 rounded-[3px] border px-1.5 py-0.5 font-mono text-[11px] tabular-nums',
+                          occupants.length > 0
+                            ? 'border-accent-500/60 bg-accent-500/[0.08] text-text-100 shadow-[inset_0_0_0_1px_oklch(0.68_0.11_240/0.2)]'
+                            : 'border-[color:var(--metal-edge-soft)] bg-background-950/50 text-text-500',
+                        )}
+                        title={
+                          occupants.length > 0
+                            ? occupants
+                                .map((pid) =>
+                                  t('client.game_layout.claimed_by', {
+                                    player: pid,
+                                  }),
+                                )
+                                .join(', ')
+                            : t('client.common.open', {
+                                defaultValue: 'Open',
+                              })
+                        }
+                      >
+                        <span className='flex items-center gap-0.5'>
+                          {occupants.map((pid) => (
+                            <span
+                              key={pid}
+                              aria-hidden
+                              className='inline-block h-2 w-2 rounded-full border border-[oklch(0.96_0.008_260/0.4)]'
+                              style={{
+                                backgroundColor:
+                                  playerColors[pid] ?? '#cbd5e1',
+                              }}
+                            />
+                          ))}
                         </span>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
+                        {rank.value}×
+                        {rank.capacity > 1 ? (
+                          <span
+                            className='font-mono text-[8px] uppercase tracking-[0.16em] text-text-500'
+                            title={t('client.gold_tile.capacity_hint', {
+                              count: rank.capacity,
+                              defaultValue: '{{count}} markers fit',
+                            })}
+                          >
+                            ·{rank.capacity}
+                          </span>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <GoldTileArt
+                  tile={tile}
+                  ranks={ranks}
+                  claimsByRank={claimsByRank}
+                  playerColors={playerColors}
+                />
+              )}
             </div>
           );
         })}
       </div>
     </section>
+  );
+}
+
+/**
+ * Image-mode rendering of a gold scoring tile — the actual rulebook
+ * art (`/assets/seti/scoring/<id>_<side>.jpg`) with player claim
+ * tokens absolute-positioned on top of the three rank slots.
+ *
+ * The third slot physically holds 2 markers, so when both are
+ * occupied we lay them out side-by-side around the anchor point.
+ * Marker color comes from `playerColors`; the disc uses the same
+ * mask-tinted look as `<ProbeToken>` for consistency.
+ */
+function GoldTileArt({
+  tile,
+  ranks,
+  claimsByRank,
+  playerColors,
+}: {
+  tile: IPublicGoldScoringTile;
+  ranks: Array<{ value: number; capacity: number }>;
+  claimsByRank: Array<string[]>;
+  playerColors: Record<string, string>;
+}): React.JSX.Element {
+  const { t } = useTranslation('common');
+  const sideKey = tile.side.toLowerCase();
+  const src = `/assets/seti/scoring/${tile.id}_${sideKey}.jpg`;
+  return (
+    <div
+      className='relative w-full overflow-hidden rounded border border-surface-700/60 bg-surface-950/60'
+      style={{ aspectRatio: '550 / 488' }}
+      data-testid={`gold-tile-art-${tile.id}-${tile.side}`}
+    >
+      <img
+        src={src}
+        alt={t(`client.gold_tile.label.${tile.id}`, {
+          defaultValue: tile.id,
+        })}
+        className='pointer-events-none absolute inset-0 h-full w-full object-contain'
+        draggable={false}
+      />
+      {ranks.map((rank, idx) => {
+        const anchor =
+          GOLD_TILE_SLOT_ANCHORS[idx] ??
+          GOLD_TILE_SLOT_ANCHORS[GOLD_TILE_SLOT_ANCHORS.length - 1];
+        const occupants = claimsByRank[idx];
+        return (
+          <div
+            key={`${tile.id}-art-rank-${idx}`}
+            className='absolute -translate-x-1/2 -translate-y-1/2'
+            style={{
+              left: `${anchor.x * 100}%`,
+              top: `${anchor.y * 100}%`,
+            }}
+          >
+            <div className='flex items-center gap-1'>
+              {Array.from({ length: rank.capacity }, (_, slotIdx) => {
+                const playerId = occupants[slotIdx];
+                const color = playerId ? playerColors[playerId] : undefined;
+                return (
+                  <span
+                    key={`${tile.id}-art-rank-${idx}-${slotIdx}`}
+                    aria-hidden
+                    title={
+                      playerId
+                        ? t('client.game_layout.claimed_by', {
+                            player: playerId,
+                          })
+                        : t('client.common.open', { defaultValue: 'Open' })
+                    }
+                    className={cn(
+                      'inline-block h-4 w-4 rounded-full border-2 shadow-md transition-opacity',
+                      playerId ? 'opacity-100' : 'opacity-0',
+                    )}
+                    style={{
+                      backgroundColor: color ?? 'transparent',
+                      borderColor: 'rgba(255,255,255,0.85)',
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

@@ -469,7 +469,11 @@
     },
     "event_log": {
       "title": "Registro de Eventos",
-      "empty": "Ainda sem eventos."
+      "empty": "Ainda sem eventos.",
+      "latest": "Último Registro",
+      "debug_toggle_hint": "Alternar entradas de log de depuração",
+      "debug_shown": "Depuração Ligada",
+      "debug_hidden": "Depuração Oculta"
     },
     "event_entry": {
       "action": "{{player}} usou {{action}}",
