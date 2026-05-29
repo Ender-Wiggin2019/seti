@@ -7,9 +7,9 @@ export { IncomeTracker } from './IncomeTracker';
 export { OpponentSummary } from './OpponentSummary';
 export { OrganizationBadge } from './OrganizationBadge';
 export {
-  PlayedMissions,
   type IPlayedMissionAnnotation,
   type IPlayedMissionRow,
+  PlayedMissions,
 } from './PlayedMissions';
 export { PlayerDashboard } from './PlayerDashboard';
 export { QuickStartCardsThumbnail } from './QuickStartCardsThumbnail';

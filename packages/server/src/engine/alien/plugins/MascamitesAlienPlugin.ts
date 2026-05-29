@@ -1,3 +1,4 @@
+import { MASCAMITES_FIXED_TRACE_SLOT_DEFS } from '@seti/common/constant/alienBoardConfig';
 import {
   getMascamitesSampleToken,
   MASCAMITES_SAMPLE_TOKENS,
@@ -23,61 +24,6 @@ import {
 import { executeSimpleSlotRewards } from '../AlienRewards.js';
 import type { IAlienPlugin } from '../IAlienPlugin.js';
 
-const MASCAMITES_FIXED_TRACE_SLOTS: ReadonlyArray<{
-  traceColor: ETrace;
-  rewards: ReadonlyArray<
-    | { type: 'VP' | 'PUBLICITY'; amount: number }
-    | { type: 'CUSTOM'; effectId: string }
-  >;
-}> = [
-  {
-    traceColor: ETrace.PINK,
-    rewards: [
-      { type: 'VP', amount: 5 },
-      { type: 'PUBLICITY', amount: 1 },
-    ],
-  },
-  {
-    traceColor: ETrace.PINK,
-    rewards: [
-      { type: 'VP', amount: 3 },
-      { type: 'PUBLICITY', amount: 1 },
-    ],
-  },
-  { traceColor: ETrace.PINK, rewards: [{ type: 'VP', amount: 5 }] },
-  { traceColor: ETrace.PINK, rewards: [{ type: 'VP', amount: 4 }] },
-  {
-    traceColor: ETrace.YELLOW,
-    rewards: [
-      { type: 'VP', amount: 5 },
-      { type: 'PUBLICITY', amount: 1 },
-    ],
-  },
-  {
-    traceColor: ETrace.YELLOW,
-    rewards: [
-      { type: 'VP', amount: 3 },
-      { type: 'PUBLICITY', amount: 1 },
-    ],
-  },
-  { traceColor: ETrace.YELLOW, rewards: [{ type: 'VP', amount: 5 }] },
-  { traceColor: ETrace.YELLOW, rewards: [{ type: 'VP', amount: 4 }] },
-  {
-    traceColor: ETrace.BLUE,
-    rewards: [
-      { type: 'VP', amount: 5 },
-      { type: 'PUBLICITY', amount: 1 },
-    ],
-  },
-  {
-    traceColor: ETrace.BLUE,
-    rewards: [
-      { type: 'VP', amount: 3 },
-      { type: 'PUBLICITY', amount: 1 },
-    ],
-  },
-];
-
 export class MascamitesAlienPlugin implements IAlienPlugin {
   public readonly alienType = EAlienType.MASCAMITES;
 
@@ -100,7 +46,7 @@ export class MascamitesAlienPlugin implements IAlienPlugin {
   }
 
   private createFixedTraceSlots(board: MascamitesAlienBoard): void {
-    for (const [index, def] of MASCAMITES_FIXED_TRACE_SLOTS.entries()) {
+    for (const [index, def] of MASCAMITES_FIXED_TRACE_SLOT_DEFS.entries()) {
       const slotId = `mascamites-fixed-${def.traceColor}-${index}`;
       if (board.getSlot(slotId)) {
         continue;

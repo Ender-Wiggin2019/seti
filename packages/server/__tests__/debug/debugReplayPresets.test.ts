@@ -414,7 +414,16 @@ describe('debugReplayPresets', () => {
     const dangerSlots = board.slots.filter((slot) =>
       slot.slotId.startsWith('exertians-danger-'),
     );
-    expect(dangerSlots).toHaveLength(9);
+    expect(dangerSlots).toHaveLength(15);
+    expect(
+      dangerSlots.filter((slot) => slot.traceColor === ETrace.PINK),
+    ).toHaveLength(5);
+    expect(
+      dangerSlots.filter((slot) => slot.traceColor === ETrace.YELLOW),
+    ).toHaveLength(5);
+    expect(
+      dangerSlots.filter((slot) => slot.traceColor === ETrace.BLUE),
+    ).toHaveLength(5);
   });
 
   it('replays mascamites debug state after discovery with initialized sample pools', () => {

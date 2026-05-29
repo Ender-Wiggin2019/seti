@@ -120,7 +120,15 @@ describe('MascamitesAlienPlugin', () => {
       )?.rewards,
     ).toEqual([
       { type: 'VP', amount: 5 },
-      { type: 'PUBLICITY', amount: 1 },
+      { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
+    ]);
+    expect(
+      board.speciesTraceSlots.find((slot) =>
+        slot.slotId.includes('blue-trace-8'),
+      )?.rewards,
+    ).toEqual([
+      { type: 'VP', amount: 5 },
+      { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
     ]);
   });
 

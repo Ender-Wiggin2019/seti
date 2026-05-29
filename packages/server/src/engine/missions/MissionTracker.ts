@@ -6,7 +6,11 @@ import {
 import { EPlanet, EScanAction } from '@seti/common/types/element';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
-import { describeCard, hasCardData, loadCardData } from '../cards/loadCardData.js';
+import {
+  describeCard,
+  hasCardData,
+  loadCardData,
+} from '../cards/loadCardData.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
 import { SelectOption } from '../input/SelectOption.js';

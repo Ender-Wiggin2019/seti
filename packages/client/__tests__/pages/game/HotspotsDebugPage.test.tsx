@@ -291,6 +291,28 @@ describe('HotspotsDebugPage', () => {
     expect(
       screen.getByText('centaurians red-trace trace 1'),
     ).toBeInTheDocument();
+    const centauriansTopRedSlot = screen.getByTestId(
+      'alien-1-centaurians-slot-red-trace-4',
+    );
+    fireEvent.mouseEnter(centauriansTopRedSlot);
+    expect(screen.getByText('Trace bonus: 6 VP')).toBeInTheDocument();
+    const mascamitesBottomRedSlot = screen.getByTestId(
+      'alien-3-mascamites-slot-red-trace-0',
+    );
+    fireEvent.mouseEnter(mascamitesBottomRedSlot);
+    expect(
+      screen.getByText('Trace bonus: 5 VP + DRAW_ALIEN_CARD'),
+    ).toBeInTheDocument();
+    const mascamitesFirstSampleSlot = screen.getByTestId(
+      'alien-3-mascamites-slot-blue-trace-2',
+    );
+    fireEvent.mouseEnter(mascamitesFirstSampleSlot);
+    expect(screen.getByText('Trace bonus: 2 credit')).toBeInTheDocument();
+    const mascamitesLastSampleSlot = screen.getByTestId(
+      'alien-3-mascamites-slot-blue-trace-8',
+    );
+    fireEvent.mouseEnter(mascamitesLastSampleSlot);
+    expect(screen.getByText('Trace bonus: 7 VP')).toBeInTheDocument();
     const oumuamuaBottomSlot = screen.getByTestId(
       'alien-4-oumuamua-slot-red-trace-0',
     );

@@ -83,55 +83,55 @@ export function PlayedMissions({
           : null
       }
     >
-    <section
-      className='instrument-panel h-full p-2'
-      data-testid='played-missions'
-    >
-      <div className='section-head mb-1.5'>
-        <span aria-hidden className='section-head__tick' />
-        <p className='micro-label'>
-          {t('client.played_missions.title', { defaultValue: 'Missions' })}
-        </p>
-        <div aria-hidden className='section-head__rule' />
-        {completedCount > 0 ? (
-          <span
-            className='font-mono text-[10px] tabular-nums text-accent-300'
-            data-testid='played-missions-completed-count'
-            title={t('client.played_missions.completed_tooltip', {
-              defaultValue: 'Completed missions',
-            })}
-          >
-            ✓ {completedCount}
-          </span>
-        ) : null}
-        <span className='font-mono text-[10px] tabular-nums text-text-500'>
-          {missions.length}
-        </span>
-      </div>
-
-      {showEmpty ? (
-        <div className='flex items-center justify-center rounded-[4px] border border-dashed border-[color:var(--metal-edge-soft)] bg-background-950/50 px-2 py-5'>
-          <p className='font-mono text-[10px] uppercase tracking-[0.14em] text-text-500'>
-            {t('client.played_missions.empty', {
-              defaultValue: 'No active missions',
-            })}
+      <section
+        className='instrument-panel h-full p-2'
+        data-testid='played-missions'
+      >
+        <div className='section-head mb-1.5'>
+          <span aria-hidden className='section-head__tick' />
+          <p className='micro-label'>
+            {t('client.played_missions.title', { defaultValue: 'Missions' })}
           </p>
-        </div>
-      ) : (
-        <div className='grid max-h-[180px] grid-cols-[repeat(auto-fill,minmax(88px,1fr))] gap-1 overflow-auto'>
-          {missions.map((row, index) => (
-            <MissionThumbnail
-              key={row.key ?? `${row.card.id}-${index}`}
-              row={row}
-              onCardInspect={onCardInspect}
-            />
-          ))}
+          <div aria-hidden className='section-head__rule' />
           {completedCount > 0 ? (
-            <CompletedMissionsPile cards={completedCards} />
+            <span
+              className='font-mono text-[10px] tabular-nums text-accent-300'
+              data-testid='played-missions-completed-count'
+              title={t('client.played_missions.completed_tooltip', {
+                defaultValue: 'Completed missions',
+              })}
+            >
+              ✓ {completedCount}
+            </span>
           ) : null}
+          <span className='font-mono text-[10px] tabular-nums text-text-500'>
+            {missions.length}
+          </span>
         </div>
-      )}
-    </section>
+
+        {showEmpty ? (
+          <div className='flex items-center justify-center rounded-[4px] border border-dashed border-[color:var(--metal-edge-soft)] bg-background-950/50 px-2 py-5'>
+            <p className='font-mono text-[10px] uppercase tracking-[0.14em] text-text-500'>
+              {t('client.played_missions.empty', {
+                defaultValue: 'No active missions',
+              })}
+            </p>
+          </div>
+        ) : (
+          <div className='grid max-h-[180px] grid-cols-[repeat(auto-fill,minmax(88px,1fr))] gap-1 overflow-auto'>
+            {missions.map((row, index) => (
+              <MissionThumbnail
+                key={row.key ?? `${row.card.id}-${index}`}
+                row={row}
+                onCardInspect={onCardInspect}
+              />
+            ))}
+            {completedCount > 0 ? (
+              <CompletedMissionsPile cards={completedCards} />
+            ) : null}
+          </div>
+        )}
+      </section>
     </CardRenderContextProvider>
   );
 }

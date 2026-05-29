@@ -18,9 +18,9 @@ import {
 } from '@/engine/alien/AlienBoard.js';
 import { AlienState } from '@/engine/alien/index.js';
 import { OumuamuaAlienPlugin } from '@/engine/alien/plugins/OumuamuaAlienPlugin.js';
+import type { TSolarSystemAnomalyTraceColor } from '@/engine/board/SolarSystem.js';
 import { MissionCard } from '@/engine/cards/Card.js';
 import { getCardRegistry } from '@/engine/cards/CardRegistry.js';
-import type { TSolarSystemAnomalyTraceColor } from '@/engine/board/SolarSystem.js';
 import { EventLog } from '@/engine/event/EventLog.js';
 import type { Game } from '@/engine/Game.js';
 import { EComputerRow } from '@/engine/player/Computer.js';
@@ -843,7 +843,10 @@ function applyMissionsReplay(
   };
   registerMissionByCardId('128');
   registerMissionByCardId('39');
-  const fullMission = game.missionTracker.getMissionState(activePlayer.id, '128');
+  const fullMission = game.missionTracker.getMissionState(
+    activePlayer.id,
+    '128',
+  );
   if (fullMission && fullMission.branchStates[0]) {
     fullMission.branchStates[0].completed = true;
     fullMission.branchStates[0].completedAtRound = game.round;

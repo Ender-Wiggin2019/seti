@@ -138,6 +138,7 @@ describe('SectorView', () => {
     expect(node).toHaveAttribute('data-hotspot-scene', 'sector-board');
     expect(node).toHaveAttribute('data-hotspot-id', 'north-sector-0');
     expect(node).toHaveAttribute('data-hotspot-variant', 'image');
+    fireEvent.mouseEnter(node);
     expect(screen.getByText('procyon blue-signal')).toBeInTheDocument();
   });
 
@@ -218,6 +219,7 @@ describe('SectorView', () => {
     expect(slot).toHaveAttribute('data-hotspot-variant', 'image');
     expect(slot).toHaveAttribute('data-signal-type', 'player');
     expect(slot.style.getPropertyValue('--sector-data-size')).toBe('22.8px');
+    fireEvent.mouseEnter(slot);
     expect(
       screen.getByText('procyon blue-signal signal 1'),
     ).toBeInTheDocument();

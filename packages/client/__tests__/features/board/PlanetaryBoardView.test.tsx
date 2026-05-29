@@ -166,7 +166,9 @@ describe('PlanetaryBoardView', () => {
       `${EPlanet.MARS}-alien-token-glyphids-token|planet|mars`,
     );
 
+    fireEvent.mouseEnter(orbitToken);
     expect(screen.getByText('Mars orbit (player-1)')).toBeInTheDocument();
+    fireEvent.mouseEnter(alienToken);
     expect(screen.getByText('glyph-green glyph token')).toBeInTheDocument();
   });
 
@@ -281,6 +283,9 @@ describe('PlanetaryBoardView', () => {
       />,
     );
 
+    fireEvent.mouseEnter(
+      screen.getByTestId('planet-target-mars-planet-land-0'),
+    );
     expect(screen.getAllByText('Mars planet-land').length).toBeGreaterThan(0);
   });
 

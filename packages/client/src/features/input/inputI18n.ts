@@ -21,12 +21,10 @@ const STATIC_DICT: Record<string, string> = {
   'Choose a Helion Assembly tech to disable':
     'client.input.choose_helion_tech_to_disable',
   'Choose a technology type': 'client.input.choose_tech_type',
-  'Choose a temporary Turing Systems tech':
-    'client.input.choose_turing_tech',
+  'Choose a temporary Turing Systems tech': 'client.input.choose_turing_tech',
   'Choose alien board to draw from': 'client.input.choose_alien_board',
   'Choose card destination': 'client.input.choose_card_destination',
-  'Choose Cosmos Strategy Group reward':
-    'client.input.choose_cosmos_reward',
+  'Choose Cosmos Strategy Group reward': 'client.input.choose_cosmos_reward',
   'Choose Fenwick Research Center card source':
     'client.input.choose_fenwick_source',
   'Choose lander to return': 'client.input.choose_lander_to_return',
@@ -35,8 +33,7 @@ const STATIC_DICT: Record<string, string> = {
   'Choose one: pay 1 energy to launch a probe, or gain 1 free movement.':
     'client.input.choose_one_pay_or_gain',
   'Choose orbiter to return': 'client.input.choose_orbiter_to_return',
-  'Choose probe for asteroid survey':
-    'client.input.choose_probe_asteroid',
+  'Choose probe for asteroid survey': 'client.input.choose_probe_asteroid',
   'Choose sector for TESS Satellite': 'client.input.choose_sector_tess',
   'Choose sector to mark signal': 'client.input.choose_sector_to_mark',
   'Choose sector with your probe': 'client.input.choose_sector_with_probe',
@@ -49,26 +46,21 @@ const STATIC_DICT: Record<string, string> = {
     'client.input.discard_for_corner_reward',
   'Discard 1 card to gain the resource matching its income':
     'client.input.discard_for_income_resource',
-  'Discard a card from hand for a signal':
-    'client.input.discard_for_signal',
+  'Discard a card from hand for a signal': 'client.input.discard_for_signal',
   'Discard a non-alien card': 'client.input.discard_non_alien',
-  'Discard cards for income corners':
-    'client.input.discard_for_income_corners',
+  'Discard cards for income corners': 'client.input.discard_for_income_corners',
   'Discard down to hand limit': 'client.input.discard_to_hand_limit',
   'Discard one hand card, then place one signal in the discarded card sector.':
     'client.input.discard_then_signal',
-  'Earth Look: choose sector for earth signal':
-    'client.input.earth_look',
+  'Earth Look: choose sector for earth signal': 'client.input.earth_look',
   'Mark Helion Assembly reward?': 'client.input.mark_helion_reward',
   'Mission triggered! Claim reward?': 'client.input.mission_triggered',
   'Pay 1 publicity to place one extra signal in mercury sector.':
     'client.input.pay_publicity_mercury',
   'Play Exertian card face down': 'client.input.play_exertian_facedown',
-  'Return an unfinished mission':
-    'client.input.return_unfinished_mission',
+  'Return an unfinished mission': 'client.input.return_unfinished_mission',
   'Scan: choose sub-action': 'client.input.scan_sub_action',
-  'Select a card from the card row':
-    'client.input.select_card_from_row',
+  'Select a card from the card row': 'client.input.select_card_from_row',
   'Select a card to tuck for income': 'client.input.select_card_to_tuck',
   'Select a computer column for the tech':
     'client.input.select_computer_column',
@@ -79,17 +71,13 @@ const STATIC_DICT: Record<string, string> = {
   'Select a technology to research': 'client.input.select_tech_to_research',
   'Select an orbiter to reassign': 'client.input.select_orbiter_reassign',
   'Select end-of-round card': 'client.input.select_end_of_round_card',
-  'Select Scan Energy Launch effect':
-    'client.input.select_scan_energy_launch',
-  'Use exofossil for extra signal?':
-    'client.input.use_exofossil_signal',
+  'Select Scan Energy Launch effect': 'client.input.select_scan_energy_launch',
+  'Use exofossil for extra signal?': 'client.input.use_exofossil_signal',
   'Use exofossil to gain data?': 'client.input.use_exofossil_data',
-  'Use exofossil to gain movement?':
-    'client.input.use_exofossil_movement',
+  'Use exofossil to gain movement?': 'client.input.use_exofossil_movement',
   'Choose any card': 'client.input.choose_any_card',
   'Choose sector for signal': 'client.input.choose_sector_for_signal',
-  'Choose a probe sector to mark':
-    'client.input.choose_probe_sector_to_mark',
+  'Choose a probe sector to mark': 'client.input.choose_probe_sector_to_mark',
 
   // SelectOption option labels
   'Add to hand': 'client.input.opt.add_to_hand',
@@ -120,18 +108,15 @@ const STATIC_DICT: Record<string, string> = {
   'Mark reward': 'client.input.opt.mark_reward',
   'Mark sector': 'client.input.opt.mark_sector',
   'Other Planet': 'client.input.opt.other_planet',
-  'Pay 1 energy to launch a probe':
-    'client.input.opt.pay_energy_launch_probe',
+  'Pay 1 energy to launch a probe': 'client.input.opt.pay_energy_launch_probe',
   'Red signal': 'client.input.opt.signal_red',
   'Research probe tech': 'client.input.opt.research_probe_tech',
   'Research scan tech': 'client.input.opt.research_scan_tech',
   'Skip discard': 'client.input.opt.skip_discard',
   'Skip Exertian face-down play': 'client.input.opt.skip_exertian_facedown',
   Skip: 'client.input.opt.skip',
-  'Spend 1 exofossil to gain 1 data':
-    'client.input.opt.exofossil_for_data',
-  'Spend 1 exofossil to gain 2 move':
-    'client.input.opt.exofossil_for_move',
+  'Spend 1 exofossil to gain 1 data': 'client.input.opt.exofossil_for_data',
+  'Spend 1 exofossil to gain 2 move': 'client.input.opt.exofossil_for_move',
   'Spend 1 exofossil to mark any signal':
     'client.input.opt.exofossil_for_signal',
   'Yellow signal': 'client.input.opt.signal_yellow',

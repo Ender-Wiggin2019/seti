@@ -185,6 +185,7 @@ describe('PlayerDashboard', () => {
       `${EOrganizationId.HELION_ASSEMBLY}-used-badge`,
     );
     expect(badge).toHaveAttribute('data-hotspot-role', 'anchor');
+    fireEvent.mouseEnter(badge);
     expect(screen.getByText('Helion Assembly used badge')).toBeInTheDocument();
   });
 
@@ -220,6 +221,13 @@ describe('PlayerDashboard', () => {
         ),
       ).toBeInTheDocument();
     }
+    const dataPool = container.querySelector(
+      '[data-hotspot-scene="player-board"][data-hotspot-id="data-pool"]',
+    );
+    if (!(dataPool instanceof HTMLElement)) {
+      throw new Error('Expected player board data pool hotspot');
+    }
+    fireEvent.mouseEnter(dataPool);
     expect(screen.getByText('player board data pool')).toBeInTheDocument();
   });
 

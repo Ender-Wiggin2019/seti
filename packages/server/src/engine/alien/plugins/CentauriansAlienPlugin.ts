@@ -59,10 +59,7 @@ export class CentauriansAlienPlugin implements IAlienPlugin {
     return undefined;
   }
 
-  private addTraceColumn(
-    board: CentauriansAlienBoard,
-    color: ETrace,
-  ): void {
+  private addTraceColumn(board: CentauriansAlienBoard, color: ETrace): void {
     for (const def of CENTAURIANS_TRACE_SLOT_DEFS) {
       board.addTraceSlot({
         slotId: this.buildTraceSlotId(

@@ -507,3 +507,32 @@
 - Verification passed: `pnpm --filter @seti/client typecheck`.
 - Verification passed: `pnpm --dir packages/client exec biome check src/features/board/alienBoards/TraceMarkerOverlay.tsx src/features/board/alienBoards/AnomaliesBoardArt.tsx src/features/board/alienBoards/MascamitesBoardArt.tsx src/features/board/alienBoards/OumuamuaBoardArt.tsx src/features/board/alienBoards/CentauriansBoardArt.tsx __tests__/features/board/AlienBoardView.test.tsx`.
 - Browser plugin returned in-app browser unavailable; Playwright fallback smoke passed against existing dev server `http://localhost:5173/debug/hotspots`: Aliens tab had 9 Mascamites blue trace anchors, 4 Centaurians message anchors, required Oumuamua orbit/land/data anchors, and no console warning/error.
+
+## 2026-05-30 alien trace config common source
+
+### Assumptions
+
+- Scope is the base five alien boards: Anomalies, Centaurians, Exertians, Mascamites, and Oumuamua.
+- Existing user edit in `packages/client/public/hotspot-overrides.json` is unrelated and must not be touched.
+- Mascamites fixed printed trace rewards should use alien-card draw rewards, not publicity rewards.
+- Mascamites delivered-sample trace slots remain dynamic and keep using the sample token reward table.
+
+### Plan
+
+- [x] Add failing tests for common trace config coverage and Mascamites fixed trace rewards. Verification: focused common/server/client tests fail before implementation.
+- [x] Move Exertians and Mascamites fixed trace definitions into common constants. Verification: server plugin imports common definitions and no longer owns duplicated reward tables.
+- [x] Update HotspotsDebugPage fixtures to generate Exertians/Mascamites from common constants. Verification: alien hotspot debug fixture hovers show trace bonuses instead of drifted/manual data.
+- [x] Run focused verification and record final review.
+
+### Review
+
+- Root cause: Exertians and Mascamites fixed printed trace rewards were duplicated in server plugins and the client hotspot debug fixture. The fixture had drifted slot ids/reward data, so printed hotspot anchors could show `no server data` even when the real board had trace slots.
+- Added shared common definitions for Exertians trace slots and Mascamites fixed printed trace slots in `alienBoardConfig.ts`. Server plugins now create those slots from common data, and `/debug/hotspots` builds its Exertians/Mascamites fixtures from the same definitions.
+- Mascamites fixed printed trace rewards now use `CUSTOM:DRAW_ALIEN_CARD` for the first two printed slots of each configured color. Dynamic delivered-sample trace slots remain driven by `MASCAMITES_SAMPLE_TOKENS`; the debug fixture simulates the 7 sample-token slots in token order so the blue sample path has server data during calibration.
+- RED verification was observed before implementation: common constants were missing, server Mascamites still returned publicity, and client debug fixture lacked matching trace data.
+- Verification passed: `pnpm --filter @ender-seti/common exec vitest run __tests__/constant/alienBoardConfig.test.ts __tests__/utils/alienTracePresentation.test.ts`.
+- Verification passed: `pnpm --filter @seti/server exec vitest run __tests__/persistence/serializer/GameSerializer.test.ts __tests__/engine/alien/plugins/ExertiansAlienPlugin.test.ts __tests__/engine/alien/plugins/MascamitesAlienPlugin.test.ts`.
+- Verification passed: `pnpm --filter @seti/client exec vitest run __tests__/features/board/AlienBoardView.test.tsx __tests__/pages/game/HotspotsDebugPage.test.tsx`.
+- Verification passed: common, server, and client typecheck.
+- Verification passed: targeted `pnpm exec biome check` for touched common/server/client files.
+- Existing dirty file `packages/client/public/hotspot-overrides.json` was not part of this fix.

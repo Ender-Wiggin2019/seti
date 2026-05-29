@@ -1,8 +1,17 @@
 import {
+  EXERTIANS_TRACE_COLORS,
+  EXERTIANS_TRACE_SLOT_DEFS,
+  MASCAMITES_FIXED_TRACE_SLOT_DEFS,
   OUMUAMUA_TRACE_SLOT_DEFS,
   OUMUAMUA_TRACE_SLOT_PREFIX,
 } from '@seti/common/constant/alienBoardConfig';
 import { PLANETARY_PLANETS } from '@seti/common/constant/boardLayout';
+import {
+  CENTAURIANS_TRACE_COLORS,
+  CENTAURIANS_TRACE_SLOT_DEFS,
+  CENTAURIANS_TRACE_SLOT_PREFIX,
+} from '@seti/common/constant/centaurians';
+import { MASCAMITES_SAMPLE_TOKENS } from '@seti/common/constant/mascamites';
 import {
   createDefaultSetupConfig,
   type ISolarSystemSetupConfig,
@@ -483,20 +492,6 @@ function createAnomalyColumnSlots(traceColor: ETrace): IPublicTraceSlot[] {
   );
 }
 
-function createTraceSlots(
-  prefix: string,
-  traceColor: ETrace,
-  rewardsBySlot: ReadonlyArray<IPublicTraceSlot['rewards']>,
-): IPublicTraceSlot[] {
-  return rewardsBySlot.map((rewards, index) =>
-    createTraceSlot(`${prefix}-${traceColor}-${index}`, traceColor, {
-      rewards,
-      occupants:
-        index === 0 ? [{ source: { playerId: PLAYER_ID }, traceColor }] : [],
-    }),
-  );
-}
-
 function createOumuamuaTraceSlots(alienIndex: number): IPublicTraceSlot[] {
   return [ETrace.PINK, ETrace.YELLOW, ETrace.BLUE].flatMap((traceColor) =>
     OUMUAMUA_TRACE_SLOT_DEFS.map((def, index) =>
@@ -514,6 +509,78 @@ function createOumuamuaTraceSlots(alienIndex: number): IPublicTraceSlot[] {
       ),
     ),
   );
+}
+
+function createCentauriansTraceSlots(alienIndex: number): IPublicTraceSlot[] {
+  return CENTAURIANS_TRACE_COLORS.flatMap((traceColor) =>
+    CENTAURIANS_TRACE_SLOT_DEFS.map((def, index) =>
+      createTraceSlot(
+        `alien-${alienIndex}-${CENTAURIANS_TRACE_SLOT_PREFIX}|${traceColor}|${def.tierFromBottom}|${def.dataCost}`,
+        traceColor,
+        {
+          maxOccupants: def.maxOccupants,
+          rewards: def.rewards.map((reward) => ({ ...reward })),
+          occupants:
+            index === 0
+              ? [{ source: { playerId: PLAYER_ID }, traceColor }]
+              : [],
+        },
+      ),
+    ),
+  );
+}
+
+function createExertiansTraceSlots(alienIndex: number): IPublicTraceSlot[] {
+  return EXERTIANS_TRACE_COLORS.flatMap((traceColor) =>
+    EXERTIANS_TRACE_SLOT_DEFS[traceColor].map((def, index) =>
+      createTraceSlot(
+        `exertians-danger-${def.danger}-${traceColor}-${index}`,
+        traceColor,
+        {
+          rewards: def.rewards.map((reward) => ({ ...reward })),
+          occupants:
+            index === 0
+              ? [{ source: { playerId: PLAYER_ID }, traceColor }]
+              : [],
+        },
+      ),
+    ),
+  );
+}
+
+function createMascamitesSampleSlotId(
+  alienIndex: number,
+  sampleIndex: number,
+): string {
+  return `alien-${alienIndex}-mascamites-sample-blue-${sampleIndex}`;
+}
+
+function createMascamitesTraceSlots(alienIndex: number): IPublicTraceSlot[] {
+  const firstSlotByColor = new Set<ETrace>();
+  const fixedSlots = MASCAMITES_FIXED_TRACE_SLOT_DEFS.map((def, index) => {
+    const occupants = firstSlotByColor.has(def.traceColor)
+      ? []
+      : [{ source: { playerId: PLAYER_ID }, traceColor: def.traceColor }];
+    firstSlotByColor.add(def.traceColor);
+    return createTraceSlot(
+      `mascamites-fixed-${def.traceColor}-${index}`,
+      def.traceColor,
+      {
+        rewards: def.rewards.map((reward) => ({ ...reward })),
+        occupants,
+      },
+    );
+  });
+  const sampleSlots = MASCAMITES_SAMPLE_TOKENS.map((token, index) =>
+    createTraceSlot(
+      createMascamitesSampleSlotId(alienIndex, index),
+      ETrace.BLUE,
+      {
+        rewards: token.rewards.map((reward) => ({ ...reward })),
+      },
+    ),
+  );
+  return [...fixedSlots, ...sampleSlots];
 }
 
 function findAlienCard(alienType: EAlienType): IBaseCard {
@@ -564,102 +631,14 @@ function createAlienBoard(
         messageMilestones: [],
         pendingMessagesByPlayer: {},
         rewardSlots: [],
-        traceSlots: [
-          createOccupiedTraceSlot(
-            `centaurians-${alienIndex}-pink`,
-            ETrace.PINK,
-          ),
-          createOccupiedTraceSlot(
-            `centaurians-${alienIndex}-yellow`,
-            ETrace.YELLOW,
-          ),
-          createOccupiedTraceSlot(
-            `centaurians-${alienIndex}-blue`,
-            ETrace.BLUE,
-          ),
-        ],
+        traceSlots: createCentauriansTraceSlots(alienIndex),
       };
     case EAlienType.EXERTIANS:
       return {
         type: 'exertians',
         faceDownCards: [],
         milestones: [],
-        traceSlots: [
-          ...createTraceSlots(`exertians-${alienIndex}`, ETrace.PINK, [
-            [
-              { type: 'VP', amount: 9 },
-              { type: 'CREDIT', amount: 1 },
-            ],
-            [
-              { type: 'VP', amount: 7 },
-              { type: 'CREDIT', amount: 1 },
-            ],
-            [
-              { type: 'VP', amount: 5 },
-              { type: 'CREDIT', amount: 1 },
-            ],
-            [
-              { type: 'VP', amount: 4 },
-              { type: 'CREDIT', amount: 1 },
-            ],
-            [
-              { type: 'VP', amount: 3 },
-              { type: 'PUBLICITY', amount: 1 },
-            ],
-          ]),
-          ...createTraceSlots(`exertians-${alienIndex}`, ETrace.YELLOW, [
-            [
-              { type: 'VP', amount: 6 },
-              { type: 'ENERGY', amount: 1 },
-              { type: 'CARD', amount: 1 },
-            ],
-            [
-              { type: 'VP', amount: 4 },
-              { type: 'ENERGY', amount: 1 },
-              { type: 'CARD', amount: 1 },
-            ],
-            [
-              { type: 'VP', amount: 2 },
-              { type: 'ENERGY', amount: 1 },
-              { type: 'CARD', amount: 1 },
-            ],
-            [
-              { type: 'VP', amount: 1 },
-              { type: 'ENERGY', amount: 1 },
-              { type: 'CARD', amount: 1 },
-            ],
-            [
-              { type: 'VP', amount: 3 },
-              { type: 'PUBLICITY', amount: 1 },
-            ],
-          ]),
-          ...createTraceSlots(`exertians-${alienIndex}`, ETrace.BLUE, [
-            [
-              { type: 'VP', amount: 6 },
-              { type: 'DATA', amount: 1 },
-              { type: 'PUBLICITY', amount: 1 },
-            ],
-            [
-              { type: 'VP', amount: 4 },
-              { type: 'DATA', amount: 1 },
-              { type: 'PUBLICITY', amount: 1 },
-            ],
-            [
-              { type: 'VP', amount: 2 },
-              { type: 'DATA', amount: 1 },
-              { type: 'PUBLICITY', amount: 1 },
-            ],
-            [
-              { type: 'VP', amount: 1 },
-              { type: 'DATA', amount: 1 },
-              { type: 'PUBLICITY', amount: 1 },
-            ],
-            [
-              { type: 'VP', amount: 3 },
-              { type: 'PUBLICITY', amount: 1 },
-            ],
-          ]),
-        ],
+        traceSlots: createExertiansTraceSlots(alienIndex),
       };
     case EAlienType.MASCAMITES:
       return {
@@ -667,53 +646,13 @@ function createAlienBoard(
         samplePools: { [EPlanet.JUPITER]: 1, [EPlanet.SATURN]: 1 },
         publicSamples: [],
         capsules: [],
-        deliveredSamples: [],
-        traceSlots: [
-          ...createTraceSlots(`mascamites-${alienIndex}`, ETrace.PINK, [
-            [
-              { type: 'VP', amount: 5 },
-              { type: 'PUBLICITY', amount: 1 },
-            ],
-            [
-              { type: 'VP', amount: 3 },
-              { type: 'PUBLICITY', amount: 1 },
-            ],
-            [{ type: 'VP', amount: 5 }],
-            [{ type: 'VP', amount: 4 }],
-          ]),
-          ...createTraceSlots(`mascamites-${alienIndex}`, ETrace.YELLOW, [
-            [
-              { type: 'VP', amount: 5 },
-              { type: 'PUBLICITY', amount: 1 },
-            ],
-            [
-              { type: 'VP', amount: 3 },
-              { type: 'PUBLICITY', amount: 1 },
-            ],
-            [{ type: 'VP', amount: 5 }],
-            [{ type: 'VP', amount: 4 }],
-          ]),
-          ...createTraceSlots(`mascamites-${alienIndex}`, ETrace.BLUE, [
-            [
-              { type: 'VP', amount: 5 },
-              { type: 'PUBLICITY', amount: 1 },
-            ],
-            [
-              { type: 'VP', amount: 3 },
-              { type: 'PUBLICITY', amount: 1 },
-            ],
-            [{ type: 'VP', amount: 7 }],
-            [
-              { type: 'VP', amount: 3 },
-              { type: 'CARD_ANY', amount: 1 },
-            ],
-            [{ type: 'DATA', amount: 2 }],
-            [{ type: 'PUBLICITY', amount: 3 }],
-            [{ type: 'CARD', amount: 2 }],
-            [{ type: 'ENERGY', amount: 2 }],
-            [{ type: 'CREDIT', amount: 2 }],
-          ]),
-        ],
+        deliveredSamples: MASCAMITES_SAMPLE_TOKENS.map((token, index) => ({
+          sampleTokenId: token.id,
+          deliveredBy: PLAYER_ID,
+          deliveredAtRound: 1,
+          slotId: createMascamitesSampleSlotId(alienIndex, index),
+        })),
+        traceSlots: createMascamitesTraceSlots(alienIndex),
       };
     case EAlienType.OUMUAMUA:
       return {

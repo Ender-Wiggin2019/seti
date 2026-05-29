@@ -264,6 +264,7 @@ describe('RivalPanel', () => {
     const rulesButton = screen.getByTestId('rival-rules-button');
     expect(rulesButton).toHaveAttribute('data-hotspot-scene', 'rival-board');
     expect(rulesButton).toHaveAttribute('data-hotspot-id', 'rules');
+    fireEvent.mouseEnter(rulesButton);
     expect(screen.getByText('rival rules')).toBeInTheDocument();
   });
 
@@ -301,18 +302,14 @@ describe('RivalPanel', () => {
     );
     expect(computerSlot).toHaveAttribute('data-hotspot-role', 'anchor');
 
-    expect(screen.getAllByTestId('rival-board-data-token')[0]).toHaveAttribute(
-      'data-hotspot-id',
-      'data-token-0',
-    );
+    const dataToken = screen.getAllByTestId('rival-board-data-token')[0];
+    expect(dataToken).toHaveAttribute('data-hotspot-id', 'data-token-0');
     expect(screen.getByTestId('rival-board-data-pool-count')).toHaveAttribute(
       'data-hotspot-id',
       'data-pool-count',
     );
-    expect(screen.getByTestId('rival-board-tech-probe')).toHaveAttribute(
-      'data-hotspot-id',
-      'tech-probe',
-    );
+    const techProbe = screen.getByTestId('rival-board-tech-probe');
+    expect(techProbe).toHaveAttribute('data-hotspot-id', 'tech-probe');
     expect(screen.getByTestId('rival-current-card')).toHaveAttribute(
       'data-hotspot-id',
       'current-action-card',
@@ -321,14 +318,23 @@ describe('RivalPanel', () => {
       'data-hotspot-id',
       'action-deck-readouts',
     );
-    expect(
-      screen.getByTestId('rival-objective-marker-SOLO.1-0'),
-    ).toHaveAttribute('data-hotspot-id', 'objective-SOLO.1-task-0');
+    const objectiveMarker = screen.getByTestId(
+      'rival-objective-marker-SOLO.1-0',
+    );
+    expect(objectiveMarker).toHaveAttribute(
+      'data-hotspot-id',
+      'objective-SOLO.1-task-0',
+    );
 
+    fireEvent.mouseEnter(marker);
     expect(screen.getByText('rival progress 4')).toBeInTheDocument();
+    fireEvent.mouseEnter(computerSlot);
     expect(screen.getByText('rival computer 1')).toBeInTheDocument();
+    fireEvent.mouseEnter(dataToken);
     expect(screen.getByText('rival data token 1')).toBeInTheDocument();
+    fireEvent.mouseEnter(techProbe);
     expect(screen.getByText('rival tech Probe')).toBeInTheDocument();
+    fireEvent.mouseEnter(objectiveMarker);
     expect(
       screen.getByText('rival objective SOLO.1 task 1'),
     ).toBeInTheDocument();

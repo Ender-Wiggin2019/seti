@@ -104,6 +104,199 @@ export function getAnomalyColumnRewardsForPlacement(
   return ANOMALY_COLUMN_REWARD_LADDER[index].map((reward) => ({ ...reward }));
 }
 
+export const EXERTIANS_TRACE_COLORS: readonly [
+  ETrace.PINK,
+  ETrace.YELLOW,
+  ETrace.BLUE,
+] = [ETrace.PINK, ETrace.YELLOW, ETrace.BLUE];
+
+export interface IExertiansTraceSlotDef {
+  danger: 1 | 2 | 3;
+  rewards: readonly TAlienSlotReward[];
+}
+
+export const EXERTIANS_TRACE_SLOT_DEFS: Readonly<
+  Record<
+    (typeof EXERTIANS_TRACE_COLORS)[number],
+    readonly IExertiansTraceSlotDef[]
+  >
+> = {
+  [ETrace.PINK]: [
+    {
+      danger: 3,
+      rewards: [
+        { type: 'VP', amount: 9 },
+        { type: 'CREDIT', amount: 1 },
+      ],
+    },
+    {
+      danger: 3,
+      rewards: [
+        { type: 'VP', amount: 7 },
+        { type: 'CREDIT', amount: 1 },
+      ],
+    },
+    {
+      danger: 2,
+      rewards: [
+        { type: 'VP', amount: 5 },
+        { type: 'CREDIT', amount: 1 },
+      ],
+    },
+    {
+      danger: 2,
+      rewards: [
+        { type: 'VP', amount: 4 },
+        { type: 'CREDIT', amount: 1 },
+      ],
+    },
+    {
+      danger: 1,
+      rewards: [
+        { type: 'VP', amount: 3 },
+        { type: 'PUBLICITY', amount: 1 },
+      ],
+    },
+  ],
+  [ETrace.YELLOW]: [
+    {
+      danger: 3,
+      rewards: [
+        { type: 'VP', amount: 6 },
+        { type: 'ENERGY', amount: 1 },
+        { type: 'CARD', amount: 1 },
+      ],
+    },
+    {
+      danger: 3,
+      rewards: [
+        { type: 'VP', amount: 4 },
+        { type: 'ENERGY', amount: 1 },
+        { type: 'CARD', amount: 1 },
+      ],
+    },
+    {
+      danger: 2,
+      rewards: [
+        { type: 'VP', amount: 2 },
+        { type: 'ENERGY', amount: 1 },
+        { type: 'CARD', amount: 1 },
+      ],
+    },
+    {
+      danger: 2,
+      rewards: [
+        { type: 'VP', amount: 1 },
+        { type: 'ENERGY', amount: 1 },
+        { type: 'CARD', amount: 1 },
+      ],
+    },
+    {
+      danger: 1,
+      rewards: [
+        { type: 'VP', amount: 3 },
+        { type: 'PUBLICITY', amount: 1 },
+      ],
+    },
+  ],
+  [ETrace.BLUE]: [
+    {
+      danger: 3,
+      rewards: [
+        { type: 'VP', amount: 6 },
+        { type: 'DATA', amount: 1 },
+        { type: 'PUBLICITY', amount: 1 },
+      ],
+    },
+    {
+      danger: 3,
+      rewards: [
+        { type: 'VP', amount: 4 },
+        { type: 'DATA', amount: 1 },
+        { type: 'PUBLICITY', amount: 1 },
+      ],
+    },
+    {
+      danger: 2,
+      rewards: [
+        { type: 'VP', amount: 2 },
+        { type: 'DATA', amount: 1 },
+        { type: 'PUBLICITY', amount: 1 },
+      ],
+    },
+    {
+      danger: 2,
+      rewards: [
+        { type: 'VP', amount: 1 },
+        { type: 'DATA', amount: 1 },
+        { type: 'PUBLICITY', amount: 1 },
+      ],
+    },
+    {
+      danger: 1,
+      rewards: [
+        { type: 'VP', amount: 3 },
+        { type: 'PUBLICITY', amount: 1 },
+      ],
+    },
+  ],
+};
+
+export interface IMascamitesFixedTraceSlotDef {
+  traceColor: ETrace.PINK | ETrace.YELLOW | ETrace.BLUE;
+  rewards: readonly TAlienSlotReward[];
+}
+
+export const MASCAMITES_FIXED_TRACE_SLOT_DEFS: readonly IMascamitesFixedTraceSlotDef[] =
+  [
+    {
+      traceColor: ETrace.PINK,
+      rewards: [
+        { type: 'VP', amount: 5 },
+        { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
+      ],
+    },
+    {
+      traceColor: ETrace.PINK,
+      rewards: [
+        { type: 'VP', amount: 3 },
+        { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
+      ],
+    },
+    { traceColor: ETrace.PINK, rewards: [{ type: 'VP', amount: 5 }] },
+    { traceColor: ETrace.PINK, rewards: [{ type: 'VP', amount: 4 }] },
+    {
+      traceColor: ETrace.YELLOW,
+      rewards: [
+        { type: 'VP', amount: 5 },
+        { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
+      ],
+    },
+    {
+      traceColor: ETrace.YELLOW,
+      rewards: [
+        { type: 'VP', amount: 3 },
+        { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
+      ],
+    },
+    { traceColor: ETrace.YELLOW, rewards: [{ type: 'VP', amount: 5 }] },
+    { traceColor: ETrace.YELLOW, rewards: [{ type: 'VP', amount: 4 }] },
+    {
+      traceColor: ETrace.BLUE,
+      rewards: [
+        { type: 'VP', amount: 5 },
+        { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
+      ],
+    },
+    {
+      traceColor: ETrace.BLUE,
+      rewards: [
+        { type: 'VP', amount: 3 },
+        { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
+      ],
+    },
+  ];
+
 export const OUMUAMUA_TRACE_SLOT_PREFIX = 'oumuamua-trace';
 export const OUMUAMUA_TILE_DATA_CAPACITY = 3;
 export const OUMUAMUA_TRACE_COLORS: readonly ETrace[] = [

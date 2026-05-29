@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type {
@@ -9,7 +10,6 @@ import type {
 import { EPlayerInputType } from '@/types/re-exports';
 import { InputRenderer } from './InputRenderer';
 import { translateInputText } from './inputI18n';
-import type { TFunction } from 'i18next';
 
 export interface IOrOptionsInputProps {
   model: IOrOptionsInputModel;

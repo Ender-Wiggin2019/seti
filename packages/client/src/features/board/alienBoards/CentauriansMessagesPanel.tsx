@@ -86,10 +86,7 @@ export function CentauriansMessagesPanel({
         <ul className='space-y-1.5'>
           {summaries.map((summary) => (
             <li key={summary.playerId}>
-              <PlayerRail
-                alienIndex={alienIndex}
-                summary={summary}
-              />
+              <PlayerRail alienIndex={alienIndex} summary={summary} />
             </li>
           ))}
         </ul>
@@ -153,10 +150,7 @@ function PlayerRail({
           milestone={discoveryMilestone}
           score={summary.score}
         />
-        <TokenList
-          tokens={pendingTokens}
-          isSelf={isSelf}
-        />
+        <TokenList tokens={pendingTokens} isSelf={isSelf} />
       </div>
     </details>
   );
@@ -263,11 +257,7 @@ function buildPlayerSummaries(
   const milestonesByPlayer = groupMilestonesByPlayer(board.messageMilestones);
   return [...players]
     .sort((a, b) =>
-      a.playerId === myPlayerId
-        ? -1
-        : b.playerId === myPlayerId
-          ? 1
-          : 0,
+      a.playerId === myPlayerId ? -1 : b.playerId === myPlayerId ? 1 : 0,
     )
     .map((player) => {
       const playerMilestones = milestonesByPlayer.get(player.playerId) ?? [];
@@ -316,8 +306,7 @@ function buildTokenRow(
     (m) => m.sourceCardId === cardId && !m.resolved,
   );
   const threshold = milestone?.threshold ?? null;
-  const toGo =
-    threshold !== null ? Math.max(0, threshold - playerScore) : null;
+  const toGo = threshold !== null ? Math.max(0, threshold - playerScore) : null;
   const delayed = getCentaurianMessageDelayedEffect(cardId);
   return {
     cardId,
