@@ -119,9 +119,9 @@ export const waterfallPreset: LayoutConfig = {
   mode: 'waterfall',
   rootGrid: {
     columns: {
-      left: { width: '380px' },
-      middle: { width: '1fr' },
-      right: { width: '420px' },
+      left: { width: '43fr' },
+      middle: { width: '37fr' },
+      right: { width: '20fr' },
     },
     gap: '12px',
   },
@@ -147,7 +147,7 @@ export const waterfallPreset: LayoutConfig = {
       id: 'solarSystem',
       waterfall: { slot: 'left', order: 1 },
       mobileOrder: 1,
-      size: { minH: '320px' },
+      size: { minH: '420px' },
     },
     {
       id: 'planetBoard',
@@ -166,6 +166,7 @@ export const waterfallPreset: LayoutConfig = {
       id: 'techBoard',
       waterfall: { slot: 'middle', order: 1 },
       mobileOrder: 3,
+      size: { scale: 0.86 },
     },
     {
       id: 'alienBoard',
@@ -176,6 +177,7 @@ export const waterfallPreset: LayoutConfig = {
       id: 'cardRows',
       waterfall: { slot: 'middle', order: 3 },
       mobileOrder: 5,
+      size: { scale: 0.86 },
     },
     // right column
     {

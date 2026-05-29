@@ -44,6 +44,8 @@ export interface SizeConfig {
   maxW?: string;
   /** Flex grow inside its column. Default 0; log defaults to 1. */
   grow?: number;
+  /** Visual scale for dense boards inside constrained panels. */
+  scale?: number;
 }
 
 export interface ColumnSpec {

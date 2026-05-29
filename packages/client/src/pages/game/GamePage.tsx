@@ -2,14 +2,14 @@ import { useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { GameLayoutV2 } from '@/features/layout/GameLayoutV2';
+import { useLayoutStore } from '@/features/layout/layoutStore';
 import { GameContextProvider, useGameContext } from '@/pages/game/GameContext';
 import { GameLayout } from '@/pages/game/GameLayout';
-import { useGameViewStore } from '@/stores/gameViewStore';
 
 function GameContent(): React.JSX.Element {
   const { t } = useTranslation('common');
   const { isConnected, gameState } = useGameContext();
-  const useNewLayout = useGameViewStore((s) => s.useNewLayout);
+  const layoutEnabled = useLayoutStore((s) => s.enabled);
 
   if (!isConnected) {
     return (
@@ -47,7 +47,7 @@ function GameContent(): React.JSX.Element {
     );
   }
 
-  return useNewLayout ? <GameLayoutV2 /> : <GameLayout />;
+  return layoutEnabled ? <GameLayoutV2 /> : <GameLayout />;
 }
 
 export function GamePage(): React.JSX.Element {

@@ -13,6 +13,8 @@ export type SectionOverrides = Partial<
 >;
 
 export interface LayoutSnapshot {
+  /** Enables the configurable V2 game layout instead of the legacy layout. */
+  enabled: boolean;
   mode: LayoutMode;
   /** Per-section overrides keyed by section id; merged onto the active preset. */
   overrides: Partial<Record<SectionId, SectionOverrides>>;
@@ -25,11 +27,14 @@ export interface LayoutSnapshot {
     string,
     { left?: string; middle?: string; right?: string }
   >;
+  /** Resizable panel group layouts keyed by group id. Values are percentages. */
+  panelLayouts?: Record<string, Record<string, number>>;
 }
 
 export interface LayoutStoreState extends LayoutSnapshot {
   devPanelOpen: boolean;
   activeTab: string | null;
+  setEnabled: (enabled: boolean) => void;
   setMode: (mode: LayoutMode) => void;
   setActiveTab: (tab: string) => void;
   patchSection: (id: SectionId, overrides: SectionOverrides) => void;
@@ -41,6 +46,7 @@ export interface LayoutStoreState extends LayoutSnapshot {
     key: 'left' | 'middle' | 'right',
     width: string,
   ) => void;
+  setPanelLayout: (groupId: string, layout: Record<string, number>) => void;
   toggleDevPanel: () => void;
   setDevPanelOpen: (open: boolean) => void;
   resetAll: () => void;
@@ -49,11 +55,13 @@ export interface LayoutStoreState extends LayoutSnapshot {
 }
 
 const INITIAL_SNAPSHOT: LayoutSnapshot = {
+  enabled: false,
   mode: 'tab',
   overrides: {},
   collapsed: {},
   rootColumns: undefined,
   tabColumns: undefined,
+  panelLayouts: undefined,
 };
 
 export const useLayoutStore = create<LayoutStoreState>()(
@@ -62,6 +70,7 @@ export const useLayoutStore = create<LayoutStoreState>()(
       ...INITIAL_SNAPSHOT,
       devPanelOpen: false,
       activeTab: null,
+      setEnabled: (enabled) => set({ enabled }),
       setMode: (mode) => set({ mode }),
       setActiveTab: (tab) => set({ activeTab: tab }),
       patchSection: (id, overrides) =>
@@ -92,33 +101,43 @@ export const useLayoutStore = create<LayoutStoreState>()(
             [tab]: { ...(s.tabColumns?.[tab] ?? {}), [key]: width },
           },
         })),
+      setPanelLayout: (groupId, layout) =>
+        set((s) => ({
+          panelLayouts: { ...(s.panelLayouts ?? {}), [groupId]: layout },
+        })),
       toggleDevPanel: () => set((s) => ({ devPanelOpen: !s.devPanelOpen })),
       setDevPanelOpen: (devPanelOpen) => set({ devPanelOpen }),
       resetAll: () => set({ ...INITIAL_SNAPSHOT }),
       importSnapshot: (snapshot) =>
         set({
+          enabled: snapshot.enabled ?? get().enabled,
           mode: snapshot.mode ?? get().mode,
           overrides: snapshot.overrides ?? {},
           collapsed: snapshot.collapsed ?? {},
           rootColumns: snapshot.rootColumns,
           tabColumns: snapshot.tabColumns,
+          panelLayouts: snapshot.panelLayouts,
         }),
       exportSnapshot: () => ({
+        enabled: get().enabled,
         mode: get().mode,
         overrides: get().overrides,
         collapsed: get().collapsed,
         rootColumns: get().rootColumns,
         tabColumns: get().tabColumns,
+        panelLayouts: get().panelLayouts,
       }),
     }),
     {
       name: 'seti-layout-v1',
       partialize: (s): LayoutSnapshot => ({
+        enabled: s.enabled,
         mode: s.mode,
         overrides: s.overrides,
         collapsed: s.collapsed,
         rootColumns: s.rootColumns,
         tabColumns: s.tabColumns,
+        panelLayouts: s.panelLayouts,
       }),
     },
   ),

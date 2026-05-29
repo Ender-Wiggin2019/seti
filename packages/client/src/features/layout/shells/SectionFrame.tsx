@@ -37,6 +37,15 @@ function sizeToStyle(size: SizeConfig | undefined): CSSProperties {
   };
 }
 
+function scaleToStyle(size: SizeConfig | undefined): CSSProperties {
+  if (!size?.scale || size.scale === 1) return {};
+  return {
+    transform: `scale(${size.scale})`,
+    transformOrigin: 'top left',
+    width: `${100 / size.scale}%`,
+  };
+}
+
 class SectionErrorBoundary extends Component<
   { children: ReactNode },
   { hasError: boolean }
@@ -77,6 +86,7 @@ export function SectionFrame({
     collapsedMap[section.id] ?? section.defaultCollapsed ?? false;
 
   const style = useMemo(() => sizeToStyle(section.size), [section.size]);
+  const bodyStyle = useMemo(() => scaleToStyle(section.size), [section.size]);
 
   return (
     <section
@@ -112,7 +122,7 @@ export function SectionFrame({
         </div>
       )}
       {!isCollapsed && (
-        <div className='min-h-0 flex-1'>
+        <div className='min-h-0 flex-1' style={bodyStyle}>
           <SectionErrorBoundary>{children}</SectionErrorBoundary>
         </div>
       )}

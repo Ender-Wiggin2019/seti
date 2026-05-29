@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SignalIndicator } from '@/components/ui/telemetry';
 import { toast } from '@/components/ui/toast';
+import { UserLayoutSettingsDialog } from '@/features/layout/UserLayoutSettingsDialog';
 import { useCurrentUser, useLogout, useUpdateProfile } from '@/hooks/useAuth';
 import { cn } from '@/lib/cn';
 import { useAuthStore } from '@/stores/authStore';
@@ -26,6 +27,7 @@ export function ProfilePage(): React.JSX.Element {
   const storedUser = useAuthStore((s) => s.user);
   const [editName, setEditName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const displayUser = user ?? storedUser;
 
@@ -76,15 +78,25 @@ export function ProfilePage(): React.JSX.Element {
           <h1 className='font-display text-3xl font-semibold tracking-[0.08em] text-text-100'>
             {t('client.profile.title')}
           </h1>
-          <SignalIndicator
-            signal='green'
-            active
-            label={t('client.profile.on_station', {
-              defaultValue: 'Signed in',
-            })}
-          />
+          <div className='flex flex-wrap items-center gap-2'>
+            <Button variant='ghost' onClick={() => setSettingsOpen(true)}>
+              Settings
+            </Button>
+            <SignalIndicator
+              signal='green'
+              active
+              label={t('client.profile.on_station', {
+                defaultValue: 'Signed in',
+              })}
+            />
+          </div>
         </div>
       </header>
+
+      <UserLayoutSettingsDialog
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+      />
 
       <Card variant='instrument'>
         <CardHeader>

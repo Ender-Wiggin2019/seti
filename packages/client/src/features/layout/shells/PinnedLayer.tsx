@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import { cn } from '@/lib/cn';
 import { useLayout } from '../LayoutContext';
+import { useLayoutStore } from '../layoutStore';
 import { getSection } from '../sectionRegistry';
 import type { PinMode, ResolvedSection } from '../types';
 import { SectionFrame } from './SectionFrame';
@@ -69,6 +70,7 @@ export function PinnedLayer({
   variant: 'sticky-top' | 'sticky-bottom' | 'fixed';
 }): React.JSX.Element | null {
   const { layout } = useLayout();
+  const patchSection = useLayoutStore((s) => s.patchSection);
 
   const sections = layout.sections.filter((s) => {
     if (!s.visible) return false;
@@ -96,6 +98,16 @@ export function PinnedLayer({
             style={pinStyle(section)}
             className={cn('pointer-events-auto')}
           >
+            {section.id === 'hand' && section.pin === 'fixed-bottom' ? (
+              <FixedBottomResizeHandle
+                currentHeight={section.size?.height}
+                onResize={(height) =>
+                  patchSection('hand', {
+                    size: { ...(section.size ?? {}), height: `${height}px` },
+                  })
+                }
+              />
+            ) : null}
             <SectionFrame section={section} titleKey={def.titleKey}>
               <Body section={section} />
             </SectionFrame>
@@ -104,4 +116,58 @@ export function PinnedLayer({
       })}
     </>
   );
+}
+
+function FixedBottomResizeHandle({
+  currentHeight,
+  onResize,
+}: {
+  currentHeight?: string;
+  onResize: (height: number) => void;
+}): React.JSX.Element {
+  const handlePointerDown = (
+    event: React.PointerEvent<HTMLDivElement>,
+  ): void => {
+    event.preventDefault();
+    const startY = event.clientY;
+    const startHeight = parsePx(currentHeight) ?? 120;
+
+    const handlePointerMove = (moveEvent: PointerEvent): void => {
+      const nextHeight = clamp(
+        startHeight + startY - moveEvent.clientY,
+        72,
+        260,
+      );
+      onResize(nextHeight);
+    };
+    const handlePointerUp = (): void => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+  };
+
+  return (
+    <div
+      role='separator'
+      aria-orientation='horizontal'
+      tabIndex={0}
+      className='absolute inset-x-0 top-0 z-10 flex h-3 cursor-ns-resize items-center justify-center'
+      onPointerDown={handlePointerDown}
+    >
+      <span className='h-1 w-16 rounded-full border border-[color:var(--metal-edge)] bg-surface-800 shadow-hairline-inset' />
+    </div>
+  );
+}
+
+function parsePx(value: string | undefined): number | null {
+  if (!value?.endsWith('px')) return null;
+  const parsed = Number(value.slice(0, -2));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, Math.round(value)));
 }

@@ -42,6 +42,7 @@ export function AlienBoardSection(_: ISectionRenderProps): React.JSX.Element {
 
   return (
     <AlienBoardView
+      className='md:w-full md:max-w-none'
       aliens={gameState.aliens}
       playerColors={playerColors}
       planetaryBoard={gameState.planetaryBoard}

@@ -113,6 +113,7 @@ const ARKHOS_EXPLORATION_IMAGE_SRC_BY_ID = new Map<string, string>(
 interface IAlienBoardViewProps {
   aliens: IPublicAlienState[];
   playerColors: Record<string, string>;
+  className?: string;
   planetaryBoard?: IPublicPlanetaryBoard;
   gameState?: IPublicGameState | null;
   myPlayerId?: string;
@@ -161,6 +162,7 @@ const ALIEN_BOARD_RENDERERS: Partial<Record<EAlienType, TAlienBoardRenderer>> =
 export function AlienBoardView({
   aliens,
   playerColors,
+  className,
   planetaryBoard,
   gameState,
   myPlayerId,
@@ -192,7 +194,10 @@ export function AlienBoardView({
 
   return (
     <section
-      className='w-full min-w-0 rounded-lg border border-surface-700/40 bg-surface-900/40 p-3 md:w-[60%] md:max-w-[60%] md:self-start'
+      className={cn(
+        'w-full min-w-0 rounded-lg border border-surface-700/40 bg-surface-900/40 p-3 md:w-[60%] md:max-w-[60%] md:self-start',
+        className,
+      )}
       data-testid='alien-board-section'
     >
       <header className='mb-2'>

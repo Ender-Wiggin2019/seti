@@ -21,10 +21,12 @@ export function LayoutProvider({
   children: ReactNode;
 }): React.JSX.Element {
   const mode = useLayoutStore((s) => s.mode);
+  const enabled = useLayoutStore((s) => s.enabled);
   const overrides = useLayoutStore((s) => s.overrides);
   const collapsed = useLayoutStore((s) => s.collapsed);
   const rootColumns = useLayoutStore((s) => s.rootColumns);
   const tabColumns = useLayoutStore((s) => s.tabColumns);
+  const panelLayouts = useLayoutStore((s) => s.panelLayouts);
 
   // Compute breakpoint from preset (constant per mode) so the responsive hook
   // doesn't itself depend on the resolved layout.
@@ -35,12 +37,29 @@ export function LayoutProvider({
     const preset = getPreset(mode);
     const layout = resolveLayout({
       preset,
-      snapshot: { mode, overrides, collapsed, rootColumns, tabColumns },
+      snapshot: {
+        enabled,
+        mode,
+        overrides,
+        collapsed,
+        rootColumns,
+        tabColumns,
+        panelLayouts,
+      },
       isMobile,
     });
     const bySection = new Map(layout.sections.map((s) => [s.id, s]));
     return { layout, isMobile, mode, bySection };
-  }, [mode, overrides, collapsed, rootColumns, tabColumns, isMobile]);
+  }, [
+    enabled,
+    mode,
+    overrides,
+    collapsed,
+    rootColumns,
+    tabColumns,
+    panelLayouts,
+    isMobile,
+  ]);
 
   return <LayoutCtx.Provider value={value}>{children}</LayoutCtx.Provider>;
 }
