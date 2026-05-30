@@ -201,6 +201,49 @@ describe('HotspotButton', () => {
     ).toBeUndefined();
   });
 
+  it('keeps percent-based hotspots at their rendered position when dragged', () => {
+    useDebugStore.getState().setHotspotDebug(true);
+
+    render(
+      <div data-testid='scene' className='relative'>
+        <HotspotButton
+          sceneId='corporation-board'
+          hotspotId='helion-assembly-power'
+          variant='image'
+          baseWidth={400}
+          baseHeight={200}
+          x={0}
+          y={0}
+          xPercent={75}
+          yPercent={40}
+          width={40}
+          height={40}
+          debugLabel='organization use marker'
+          testId='organization-use-marker'
+        />
+      </div>,
+    );
+    mockSceneRect(screen.getByTestId('scene'));
+
+    const hotspot = screen.getByTestId('organization-use-marker');
+    expect(hotspot).toHaveStyle({ left: '75%', top: '40%' });
+
+    firePointerEvent(hotspot, 'pointerdown', 300, 80);
+    firePointerEvent(window, 'pointermove', 340, 100);
+    firePointerEvent(window, 'pointerup', 340, 100);
+
+    expect(
+      useDebugStore.getState().hotspotDraftOverrides[
+        'corporation-board:image'
+      ]?.['helion-assembly-power'],
+    ).toMatchObject({
+      x: 340,
+      y: 100,
+      width: 40,
+      height: 40,
+    });
+  });
+
   it('uses the offset parent as the coordinate scene when nested in a zero-size wrapper', () => {
     useDebugStore.getState().setHotspotDebug(true);
 

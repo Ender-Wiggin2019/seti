@@ -487,8 +487,7 @@ function createOccupiedTraceSlot(
 function createAnomalyColumnSlots(traceColor: ETrace): IPublicTraceSlot[] {
   return [0, 1, 2, 3, 4].map((tier) =>
     createOccupiedTraceSlot(`anomaly-${traceColor}-${tier}`, traceColor, {
-      occupants:
-        tier === 0 ? [{ source: { playerId: PLAYER_ID }, traceColor }] : [],
+      occupants: [{ source: { playerId: PLAYER_ID }, traceColor }],
       maxOccupants: tier === 4 ? -1 : 1,
     }),
   );
@@ -496,17 +495,14 @@ function createAnomalyColumnSlots(traceColor: ETrace): IPublicTraceSlot[] {
 
 function createOumuamuaTraceSlots(alienIndex: number): IPublicTraceSlot[] {
   return [ETrace.PINK, ETrace.YELLOW, ETrace.BLUE].flatMap((traceColor) =>
-    OUMUAMUA_TRACE_SLOT_DEFS.map((def, index) =>
+    OUMUAMUA_TRACE_SLOT_DEFS.map((def) =>
       createTraceSlot(
         `alien-${alienIndex}-${OUMUAMUA_TRACE_SLOT_PREFIX}|${traceColor}|${def.tierFromBottom}|${def.exofossilCost}`,
         traceColor,
         {
           maxOccupants: def.maxOccupants,
           rewards: def.rewards.map((reward) => ({ ...reward })),
-          occupants:
-            index === 0
-              ? [{ source: { playerId: PLAYER_ID }, traceColor }]
-              : [],
+          occupants: [{ source: { playerId: PLAYER_ID }, traceColor }],
         },
       ),
     ),
@@ -515,17 +511,14 @@ function createOumuamuaTraceSlots(alienIndex: number): IPublicTraceSlot[] {
 
 function createCentauriansTraceSlots(alienIndex: number): IPublicTraceSlot[] {
   return CENTAURIANS_TRACE_COLORS.flatMap((traceColor) =>
-    CENTAURIANS_TRACE_SLOT_DEFS.map((def, index) =>
+    CENTAURIANS_TRACE_SLOT_DEFS.map((def) =>
       createTraceSlot(
         `alien-${alienIndex}-${CENTAURIANS_TRACE_SLOT_PREFIX}|${traceColor}|${def.tierFromBottom}|${def.dataCost}`,
         traceColor,
         {
           maxOccupants: def.maxOccupants,
           rewards: def.rewards.map((reward) => ({ ...reward })),
-          occupants:
-            index === 0
-              ? [{ source: { playerId: PLAYER_ID }, traceColor }]
-              : [],
+          occupants: [{ source: { playerId: PLAYER_ID }, traceColor }],
         },
       ),
     ),
@@ -540,10 +533,7 @@ function createExertiansTraceSlots(alienIndex: number): IPublicTraceSlot[] {
         traceColor,
         {
           rewards: def.rewards.map((reward) => ({ ...reward })),
-          occupants:
-            index === 0
-              ? [{ source: { playerId: PLAYER_ID }, traceColor }]
-              : [],
+          occupants: [{ source: { playerId: PLAYER_ID }, traceColor }],
         },
       ),
     ),
@@ -558,18 +548,15 @@ function createMascamitesSampleSlotId(
 }
 
 function createMascamitesTraceSlots(alienIndex: number): IPublicTraceSlot[] {
-  const firstSlotByColor = new Set<ETrace>();
   const fixedSlots = MASCAMITES_FIXED_TRACE_SLOT_DEFS.map((def, index) => {
-    const occupants = firstSlotByColor.has(def.traceColor)
-      ? []
-      : [{ source: { playerId: PLAYER_ID }, traceColor: def.traceColor }];
-    firstSlotByColor.add(def.traceColor);
     return createTraceSlot(
       `mascamites-fixed-${def.traceColor}-${index}`,
       def.traceColor,
       {
         rewards: def.rewards.map((reward) => ({ ...reward })),
-        occupants,
+        occupants: [
+          { source: { playerId: PLAYER_ID }, traceColor: def.traceColor },
+        ],
       },
     );
   });
@@ -579,6 +566,9 @@ function createMascamitesTraceSlots(alienIndex: number): IPublicTraceSlot[] {
       ETrace.BLUE,
       {
         rewards: token.rewards.map((reward) => ({ ...reward })),
+        occupants: [
+          { source: { playerId: PLAYER_ID }, traceColor: ETrace.BLUE },
+        ],
       },
     ),
   );
@@ -719,7 +709,7 @@ function createAlienBoard(
         slots: [
           createOccupiedTraceSlot(`generic-${alienIndex}-pink`, ETrace.PINK),
           createTraceSlot(`generic-${alienIndex}-yellow`, ETrace.YELLOW),
-          createTraceSlot(`generic-${alienIndex}-blue`, ETrace.BLUE),
+          createOccupiedTraceSlot(`generic-${alienIndex}-blue`, ETrace.BLUE),
         ],
       };
   }

@@ -37,6 +37,8 @@
 - Text mode 和 image mode 的 board hotspot 不应共享同一位置 override；如果两种模式使用不同坐标系，保持同一交互组件，但用 mode variant 拆分本地配置命名空间。
 - Hotspot debug 页的模式切换必须显式显示可选模式名和选中态，例如 `Image Mode` / `Text Mode`；不要用 `Text Mode Off` 这类状态文案，否则用户容易在错误 namespace 下编辑。
 - 可点击的 surface 也要有独立 anchor 层；只有按钮没有锚点时，debug/hotspots 会少一层可拖动目标，尤其是组织卡和 board readout 这类同时需要交互与校准的位置。
+- Hotspot 的 `xPercent` / `yPercent` 不能只影响 CSS `left/top`；拖拽和缩放使用的 base geometry 也必须从百分比换算到同一 scene 坐标，否则一拖动就会从 `0,0` 重新计算并跳到左上角。
+- 叠在图片板上的全板透明 overlay wrapper 应设为 `pointer-events-none`，只让内部具体 `HotspotAnchor` / `HotspotButton` 接 pointer；否则后渲染的空 overlay 会挡住 data-pool 这类大区域 anchor。
 - Sector debug fixture 不能只塞部分 signals；如果 server 语义保证 sector 最终总是填满容量，就要把 debug 示例也填满，空位会把状态示例误读成渲染 bug。
 - Rival board progress 不能只暴露当前 marker；12 个 printed progress spot 都是需要校准的 anchor，当前 marker 只是其中一个 slot 的视觉内容。
 - Hotspot debug 页的组件清单要包含 Personal Player Board；即使它不是传统点击大板，叠在 `playerBoard.png` 上的资源、tech、computer、income、mission 区域也应进入 `player-board` scene，并按 image/text variant 保存。

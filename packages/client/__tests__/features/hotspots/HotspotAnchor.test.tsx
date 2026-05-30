@@ -216,6 +216,94 @@ describe('HotspotAnchor', () => {
     ).toBeUndefined();
   });
 
+  it('drags percent-positioned anchors from their visual position', () => {
+    useDebugStore.getState().setHotspotDebug(true);
+
+    render(
+      <div data-testid='scene' className='relative'>
+        <HotspotAnchor
+          sceneId='corporation-board'
+          hotspotId='agency-power'
+          variant='image'
+          baseWidth={400}
+          baseHeight={200}
+          x={0}
+          y={0}
+          xPercent={50}
+          yPercent={40}
+          width={40}
+          height={40}
+          debugLabel='agency power'
+        />
+      </div>,
+    );
+    mockSceneRect(screen.getByTestId('scene'));
+
+    const anchor = screen.getByTestId(
+      'hotspot-anchor-corporation-board-agency-power',
+    );
+    firePointerEvent(anchor, 'pointerdown', 200, 80);
+    firePointerEvent(window, 'pointermove', 240, 100);
+    firePointerEvent(window, 'pointerup', 240, 100);
+
+    expect(
+      useDebugStore.getState().hotspotDraftOverrides[
+        'corporation-board:image'
+      ]?.['agency-power'],
+    ).toMatchObject({
+      x: 240,
+      y: 100,
+      width: 40,
+      height: 40,
+    });
+  });
+
+  it('keeps percent-based anchors at their rendered position when resized', () => {
+    useDebugStore.getState().setHotspotDebug(true);
+
+    render(
+      <div data-testid='scene' className='relative'>
+        <HotspotAnchor
+          sceneId='corporation-board'
+          hotspotId='helion-assembly-power'
+          variant='image'
+          baseWidth={400}
+          baseHeight={200}
+          x={0}
+          y={0}
+          xPercent={75}
+          yPercent={40}
+          width={40}
+          height={40}
+          debugLabel='organization use marker'
+          testId='organization-use-marker-anchor'
+        />
+      </div>,
+    );
+    mockSceneRect(screen.getByTestId('scene'));
+
+    const anchor = screen.getByTestId('organization-use-marker-anchor');
+    expect(anchor).toHaveStyle({ left: '75%', top: '40%' });
+
+    const handle = screen.getByTestId(
+      'hotspot-anchor-resize-corporation-board-helion-assembly-power',
+    );
+    firePointerEvent(handle, 'pointerdown', 320, 100);
+    firePointerEvent(window, 'pointermove', 340, 120);
+    firePointerEvent(window, 'pointerup', 340, 120);
+
+    expect(
+      useDebugStore.getState().hotspotDraftOverrides[
+        'corporation-board:image'
+      ]?.['helion-assembly-power'],
+    ).toMatchObject({
+      x: 300,
+      y: 80,
+      width: 60,
+      height: 60,
+    });
+  });
+
   it('resizes from the debug handle and keeps the edit unsaved', () => {
     useDebugStore.getState().setHotspotDebug(true);
 

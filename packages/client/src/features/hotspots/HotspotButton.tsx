@@ -155,8 +155,13 @@ export function HotspotButton({
   const editRef = useRef<IPointerEditState | null>(null);
   const suppressClickRef = useRef(false);
   const baseGeometry = useMemo<IHotspotGeometry>(
-    () => ({ x, y, width, height }),
-    [height, width, x, y],
+    () => ({
+      x: xPercent === undefined ? x : (baseWidth * xPercent) / 100,
+      y: yPercent === undefined ? y : (baseHeight * yPercent) / 100,
+      width,
+      height,
+    }),
+    [baseHeight, baseWidth, height, width, x, xPercent, y, yPercent],
   );
   const override =
     draftOverride === undefined
@@ -164,12 +169,6 @@ export function HotspotButton({
       : { ...(committedOverride ?? {}), ...draftOverride };
   const geometry = resolveHotspotGeometry(baseGeometry, override);
   const percentStyle = geometryToPercentStyle(geometry, baseWidth, baseHeight);
-  if (override === undefined && xPercent !== undefined) {
-    percentStyle.left = `${xPercent}%`;
-  }
-  if (override === undefined && yPercent !== undefined) {
-    percentStyle.top = `${yPercent}%`;
-  }
   const transform =
     offsetX === 0 && offsetY === 0
       ? 'translate(-50%, -50%)'

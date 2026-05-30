@@ -239,7 +239,7 @@ function RivalImageModeBoard({
         <RivalBoardProgressSpots activeSlot={activeSlot} />
 
         <div
-          className='absolute inset-0 z-10'
+          className='pointer-events-none absolute inset-0 z-10'
           data-testid='rival-computer'
           aria-label={t('client.rival_panel.computer', {
             defaultValue: 'Computer',
@@ -630,7 +630,7 @@ function RivalBoardDataPool({ count }: { count: number }): React.JSX.Element {
 
   return (
     <div
-      className='absolute inset-0 z-10'
+      className='pointer-events-none absolute inset-0 z-10'
       data-count={String(count)}
       data-testid='rival-board-data-pool'
       aria-label={t('client.rival_panel_extra.data_pool_aria', {
@@ -716,7 +716,8 @@ function RivalBoardTechTiles({
 
   return (
     <div
-      className='absolute inset-0 z-10'
+      className='pointer-events-none absolute inset-0 z-10'
+      data-testid='rival-tech-tiles-overlay'
       aria-label={t('client.rival_panel_extra.tech_tiles_aria', {
         defaultValue: 'Rival tech tiles',
       })}

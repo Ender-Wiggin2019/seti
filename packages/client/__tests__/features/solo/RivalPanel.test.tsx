@@ -205,6 +205,29 @@ describe('RivalPanel', () => {
     expect(screen.getByText('rival data pool area')).toBeInTheDocument();
   });
 
+  it('keeps transparent image overlay wrappers out of pointer hit testing', () => {
+    render(
+      <RivalPanel
+        rival={createRival()}
+        rivalTechs={[
+          ETechId.PROBE_DOUBLE_PROBE,
+          ETechId.SCAN_EARTH_LOOK,
+          ETechId.COMPUTER_VP_CARD,
+        ]}
+      />,
+    );
+
+    expect(screen.getByTestId('rival-computer')).toHaveClass(
+      'pointer-events-none',
+    );
+    expect(screen.getByTestId('rival-board-data-pool')).toHaveClass(
+      'pointer-events-none',
+    );
+    expect(screen.getByTestId('rival-tech-tiles-overlay')).toHaveClass(
+      'pointer-events-none',
+    );
+  });
+
   it('renders text-mode progress with colored borders instead of filled circles', () => {
     setTextMode(true);
 
