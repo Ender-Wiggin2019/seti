@@ -327,12 +327,16 @@ export function useArmedFlagAutoReset(): void {
 
   useEffect(() => {
     if (!movementModeActive) return;
+    const hasConvertibleEnergy =
+      (myPlayer?.resources?.[EResource.ENERGY] ?? 0) > 0;
+    const phase = gameState?.phase;
     if (
       !isMyTurn ||
-      pendingInput !== null ||
-      (gameState?.phase !== EPhase.AWAIT_MAIN_ACTION &&
-        gameState?.phase !== EPhase.AWAIT_END_TURN) ||
-      movementPoints <= 0
+      (phase !== undefined &&
+        phase !== EPhase.AWAIT_MAIN_ACTION &&
+        phase !== EPhase.AWAIT_END_TURN &&
+        phase !== EPhase.IN_RESOLUTION) ||
+      (movementPoints <= 0 && !hasConvertibleEnergy)
     ) {
       setMovementModeActive(false);
     }
@@ -341,7 +345,7 @@ export function useArmedFlagAutoReset(): void {
     isMyTurn,
     movementModeActive,
     movementPoints,
-    pendingInput,
+    myPlayer?.resources?.[EResource.ENERGY],
     setMovementModeActive,
   ]);
 }

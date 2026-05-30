@@ -1,13 +1,17 @@
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EResource } from '@seti/common/types/element';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { useEffect } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { GameSessionProvider } from '@/features/layout/GameSessionContext';
+import {
+  GameSessionProvider,
+  useGameSession,
+} from '@/features/layout/GameSessionContext';
 import { useLayoutStore } from '@/features/layout/layoutStore';
 import { ActionBarSection } from '@/features/layout/sections/ActionBarSection';
 import { SectionFrame } from '@/features/layout/shells/SectionFrame';
 import type { IGameContext } from '@/pages/game/GameContext';
-import { EMainAction, EPlayerInputType } from '@/types/re-exports';
+import { EMainAction, EPhase, EPlayerInputType } from '@/types/re-exports';
 import {
   createMockGameState,
   createMockPlayerState,
@@ -54,6 +58,26 @@ function renderActionBar(): void {
       <ActionBarSection
         section={{ id: 'actionBar', pin: 'sticky-top', visible: true }}
       />
+    </GameSessionProvider>,
+  );
+}
+
+function MovementModeHarness(): React.JSX.Element {
+  const { setMovementModeActive } = useGameSession();
+  useEffect(() => {
+    setMovementModeActive(true);
+  }, [setMovementModeActive]);
+  return (
+    <ActionBarSection
+      section={{ id: 'actionBar', pin: 'sticky-top', visible: true }}
+    />
+  );
+}
+
+function renderMovementModeHarness(): void {
+  render(
+    <GameSessionProvider>
+      <MovementModeHarness />
     </GameSessionProvider>,
   );
 }
@@ -105,6 +129,37 @@ describe('layout V2 regressions', () => {
     expect(
       screen.queryByTestId(`action-menu-${EMainAction.PASS}`),
     ).not.toBeInTheDocument();
+  });
+
+  it('keeps movement mode armed during transient pending inputs', async () => {
+    mockContextValue = createMockContext({
+      gameState: createMockGameState({
+        phase: EPhase.IN_RESOLUTION,
+        players: [
+          createMockPlayerState({
+            playerId: 'player-1',
+            movementPoints: 0,
+            resources: {
+              [EResource.CREDIT]: 8,
+              [EResource.ENERGY]: 1,
+              [EResource.DATA]: 2,
+              [EResource.PUBLICITY]: 4,
+              [EResource.SIGNAL_TOKEN]: 0,
+            },
+          }),
+        ],
+      }),
+      pendingInput: {
+        inputId: 'resource-input',
+        type: EPlayerInputType.RESOURCE,
+        title: 'Choose resource',
+        options: [EResource.CREDIT],
+      },
+    });
+
+    renderMovementModeHarness();
+
+    expect(await screen.findByTestId('movement-mode-hint')).toBeInTheDocument();
   });
 
   it('keeps one section crash inside its frame', () => {
