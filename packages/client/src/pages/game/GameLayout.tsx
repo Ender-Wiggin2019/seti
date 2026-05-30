@@ -1220,8 +1220,14 @@ function PersonalColumn({
   onInspectCard,
 }: IPersonalColumnProps): React.JSX.Element {
   const { t } = useTranslation('common');
-  const { gameState, myPlayerId, pendingInput, sendFreeAction } =
-    useGameContext();
+  const {
+    gameState,
+    myPlayerId,
+    isMyTurn,
+    pendingInput,
+    sendAction,
+    sendFreeAction,
+  } = useGameContext();
 
   const myPlayer = gameState?.players.find((p) => p.playerId === myPlayerId);
   const extendedPlayer = myPlayer as
@@ -1290,6 +1296,14 @@ function PersonalColumn({
   // Tile only exists post-discovery; gates the per-player exofossil
   // readout in the dashboard (kept hidden for non-Oumuamua games).
   const personalOumuamuaTile = findOumuamuaTile(gameState?.aliens);
+  const playerBoardAvailableMainActions =
+    gameState &&
+    myPlayer &&
+    isMyTurn &&
+    pendingInput === null &&
+    gameState.phase === EPhase.AWAIT_MAIN_ACTION
+      ? getAvailableMainActions(myPlayer, gameState)
+      : [];
   const isSyntheticRivalView =
     gameState?.rival?.rivalPlayerId !== undefined &&
     myPlayerId === gameState.rival.rivalPlayerId;
@@ -1317,6 +1331,8 @@ function PersonalColumn({
             player={myPlayer}
             pendingInput={pendingInput}
             onFreeAction={sendFreeAction}
+            onMainAction={sendAction}
+            availableMainActions={playerBoardAvailableMainActions}
             income={{
               credit: extendedPlayer?.creditIncome ?? 0,
               energy: extendedPlayer?.energyIncome ?? 0,

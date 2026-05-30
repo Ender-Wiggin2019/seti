@@ -1,5 +1,100 @@
 # TODO
 
+## 2026-05-30 player board image mode operability follow-up
+
+### Assumptions
+
+- Image-mode player board should be interactive at the same semantic grain as the printed board areas, not just decorative anchors.
+- Launch, scan, and analyze data are main actions and should call the same main-action request path as ActionMenu.
+- Place data remains a free action and should continue to send `PLACE_DATA` with the selected computer slot index.
+- All 12 printed tech slots should be independently addressable hotspots: 4 probe, 4 scan, and 4 computer.
+
+### Plan
+
+- [x] Add failing tests for launch/scan/analyze image hotspots, place-data slot payload, and all 12 tech slot hotspots.
+- [x] Extend `PlayerDashboard` props for main-action dispatch and available main-action gating.
+- [x] Render paired anchors/buttons for player-board main actions and 12 tech-slot anchors in image mode.
+- [x] Wire main-action props from `GameLayout`, layout `PlayerBoardSection`, and `/debug/hotspots`.
+- [x] Update `player-board:image` initial hotspot config and rerun focused/full verification plus browser smoke.
+
+### Review
+
+- Player board image mode now exposes clickable main-action hotspots for launch probe, scan, and analyze data; they send the same `IMainActionRequest` path as the top action menu and are gated by turn/phase availability.
+- Image-mode computer slots still send the `PLACE_DATA` free action with the selected slot index, so place-data is operable directly from the board surface.
+- All 12 printed tech positions are exposed as independent `tech-slot-*` image hotspots, have initial entries in `public/hotspot-overrides.json`, and `/debug/hotspots` Personal Board renders all 12 tech tiles for calibration.
+- Verification passed: focused `PlayerDashboard` / `HotspotsDebugPage` tests, full client test suite, client typecheck, client lint, targeted Biome check, JSON parse check, and browser smoke on `http://127.0.0.1:5174/debug/hotspots` with 3 main-action hotspots, 12 tech-slot hotspots, visible place-data hotspot, and no console warnings/errors.
+
+## 2026-05-30 player board image mode
+
+### Assumptions
+
+- Player board image mode should use the supplied board artwork as the coordinate surface instead of a DOM panel with a dim background.
+- Text mode should keep the existing readable ResourceBar / TechRow / ComputerRow / IncomeTracker layout.
+- Computer slots are the only player-board areas that currently have direct gameplay interaction; other printed areas are calibration anchors/readouts.
+- `/debug/hotspots` should render the same image-mode player-board scene and save coordinates under `player-board:image`, separate from `player-board:text`.
+
+### Plan
+
+- [x] Add failing coverage for player-board image mode, computer-slot hotspot interaction, and `/debug/hotspots` player tab.
+- [x] Implement the image-mode board surface with state overlays and image/text hotspot variants.
+- [x] Add initial `player-board:image` hotspot override configuration for the supplied artwork.
+- [x] Run focused tests, typecheck/biome as needed, and browser-smoke `/debug/hotspots`.
+
+### Review
+
+- Player board image mode now renders the supplied `8e4f86f5-9689-4000-88fd-344aa94604eb.png` artwork as the main personal board surface while text mode keeps the previous DOM panel.
+- Image mode overlays data pool tokens, acquired probe/scan tech tiles, income/mission readouts, and computer-slot hotspots. Computer slots remain the gameplay interaction surface and send the existing `PLACE_DATA` payload.
+- `/debug/hotspots` Personal Board renders the same `player-board:image` scene; initial image-surface coordinates were added to `public/hotspot-overrides.json`.
+- Verification passed: focused player/hotspot tests, full client test suite, client typecheck, targeted Biome check, and browser smoke on `http://127.0.0.1:5174/debug/hotspots` with no console warnings/errors.
+
+## 2026-05-30 hotspot percent drag origin fix
+
+### Assumptions
+
+- Hotspots declared with `xPercent` / `yPercent` should drag from the visual percentage position, not from fallback `x` / `y`.
+- The fix should apply to both `HotspotAnchor` and `HotspotButton` because debug/hotspots exposes both draggable pure anchors and clickable interaction hotspots.
+- Existing saved overrides should continue to take precedence over percentage defaults.
+
+### Plan
+
+- [x] Add failing tests for percent-positioned anchors/buttons dragging from the visual location.
+- [x] Make shared hotspot geometry initialization respect percentage defaults before drag/resize calculations.
+- [x] Run focused hotspot tests and browser smoke.
+- [x] Run client lint/unit tests, then commit the verified changes.
+
+### Review
+
+- Root cause 1: percent-positioned hotspots rendered from `xPercent` / `yPercent`, but drag/resize state still used fallback `x=0` / `y=0`, so organization image markers jumped toward the top-left when edited.
+- Root cause 2: Rival image-mode full-board overlay wrappers could intercept pointer events above lower anchors, so `data-pool` could be visible but not draggable.
+- `HotspotAnchor` and `HotspotButton` now convert percentage defaults into base geometry before resolving overrides, so drag and resize start from the rendered position.
+- Rival computer/data/tech overlay wrappers now use `pointer-events-none`, while their child hotspots keep their own pointer handling.
+- RED verification: focused hotspot tests failed with draft coordinates `x: 40, y: 20` instead of the rendered percent position; the RivalPanel wrapper test failed before `pointer-events-none`.
+- GREEN verification passed: `pnpm --filter @seti/client test -- HotspotAnchor.test.tsx HotspotButton.test.tsx`; `pnpm --filter @seti/client test -- RivalPanel.test.tsx -t "transparent image overlay wrappers"`.
+- Final verification passed: `pnpm --filter @seti/client lint`, `pnpm --filter @seti/client test`, and `pnpm --filter @seti/client typecheck`.
+- Browser smoke passed on `http://127.0.0.1:5174/debug/hotspots`: dragging `organization-power-card-helion-assembly` and `rival-board-data-pool-area` each moved exactly `30px/20px`, with no console warnings/errors.
+
+## 2026-05-30 organization card image mode cleanup
+
+### Assumptions
+
+- Image mode should show the original corporation artwork size/aspect, not the text-mode card shell.
+- The only visible hotspot on the image should be the use marker; the used badge is redundant in image mode.
+- Ability details can stay out of the image surface and remain available through hover/title behavior.
+
+### Plan
+
+- [x] Add regression coverage for image-mode artwork aspect and absence of direct ability text.
+- [x] Replace the image-mode organization card shell with the original artwork aspect and a single use marker hotspot.
+- [x] Remove the separate image-mode used badge and update the debug-page expectations.
+- [x] Run focused client tests, typecheck, biome, and a browser smoke on the debug page.
+
+### Review
+
+- Image-mode organization cards now render at the source artwork aspect ratio (`671x507`) and no longer print ability text directly on the image.
+- The image mode now exposes one hotspot per card for the use marker; the separate used badge was removed.
+- Verification passed: `pnpm --filter @seti/client test -- PlayerDashboard.test.tsx HotspotsDebugPage.test.tsx`, `pnpm --filter @seti/client test -- HotspotButton.test.tsx HotspotAnchor.test.tsx`, `pnpm --filter @seti/client typecheck`, and targeted `biome check`.
+- Browser smoke passed against `http://[::1]:5174/debug/hotspots`: Helion Assembly card box measured `220x166.21875`, card text was only `1X`, marker text was only `1X`, and `organization-used-badge-helion-assembly` was absent.
+
 ## 2026-05-29 solar hotspot real-game id follow-up
 
 ### Assumptions

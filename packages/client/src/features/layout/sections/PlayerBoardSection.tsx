@@ -1,3 +1,4 @@
+import { getAvailableMainActions } from '@seti/common/rules';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { useTranslation } from 'react-i18next';
 import {
@@ -7,6 +8,7 @@ import {
 } from '@/features/player';
 import { RivalPanel } from '@/features/solo';
 import { useGameContext } from '@/pages/game/GameContext';
+import { EPhase } from '@/types/re-exports';
 import { useGameSession } from '../GameSessionContext';
 import type { ISectionRenderProps } from '../sectionRegistry';
 import {
@@ -22,8 +24,14 @@ import {
 export function PlayerBoardSection(_: ISectionRenderProps): React.JSX.Element {
   void _;
   const { t } = useTranslation('common');
-  const { gameState, myPlayerId, pendingInput, sendFreeAction } =
-    useGameContext();
+  const {
+    gameState,
+    myPlayerId,
+    isMyTurn,
+    pendingInput,
+    sendAction,
+    sendFreeAction,
+  } = useGameContext();
   const { inspectCard } = useGameSession();
 
   const myPlayer = gameState?.players.find((p) => p.playerId === myPlayerId);
@@ -70,6 +78,14 @@ export function PlayerBoardSection(_: ISectionRenderProps): React.JSX.Element {
   ];
 
   const personalOumuamuaTile = findOumuamuaTile(gameState?.aliens);
+  const playerBoardAvailableMainActions =
+    gameState &&
+    myPlayer &&
+    isMyTurn &&
+    pendingInput === null &&
+    gameState.phase === EPhase.AWAIT_MAIN_ACTION
+      ? getAvailableMainActions(myPlayer, gameState)
+      : [];
   const isSyntheticRivalView =
     gameState?.rival?.rivalPlayerId !== undefined &&
     myPlayerId === gameState.rival.rivalPlayerId;
@@ -91,6 +107,8 @@ export function PlayerBoardSection(_: ISectionRenderProps): React.JSX.Element {
             player={myPlayer}
             pendingInput={pendingInput}
             onFreeAction={sendFreeAction}
+            onMainAction={sendAction}
+            availableMainActions={playerBoardAvailableMainActions}
             income={{
               credit: extendedPlayer?.creditIncome ?? 0,
               energy: extendedPlayer?.energyIncome ?? 0,

@@ -4,6 +4,7 @@ import {
 } from '@seti/common/constant/boardLayout';
 import { EAlienType } from '@seti/common/types/BaseCard';
 import { EOrganizationId } from '@seti/common/types/organization';
+import { ETechId } from '@seti/common/types/tech';
 import {
   act,
   fireEvent,
@@ -12,6 +13,7 @@ import {
   waitFor,
 } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { getTechTileImageById } from '@/features/tech/techTileImages';
 import { HotspotsDebugPage } from '@/pages/game/HotspotsDebugPage';
 import { useDebugStore } from '@/stores/debugStore';
 
@@ -248,9 +250,27 @@ describe('HotspotsDebugPage', () => {
     expect(
       screen.getByTestId('hotspots-debug-panel-player'),
     ).toBeInTheDocument();
+    expect(screen.getByTestId('player-board-image-mode')).toBeInTheDocument();
     expect(
       container.querySelector('[data-hotspot-scene="player-board"]'),
     ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('player-board-computer-slot-top-0'),
+    ).toHaveAttribute('data-hotspot-variant', 'image');
+    expect(
+      screen.getByTestId('player-board-main-action-launch-probe'),
+    ).toHaveAttribute('data-hotspot-id', 'main-action-launch-probe');
+    expect(
+      container.querySelectorAll(
+        '[data-hotspot-scene="player-board"][data-hotspot-id^="tech-slot-"][data-hotspot-variant="image"]',
+      ),
+    ).toHaveLength(12);
+    for (const techId of Object.values(ETechId)) {
+      expect(screen.getByTestId(`player-board-tech-${techId}`)).toHaveAttribute(
+        'src',
+        getTechTileImageById(techId),
+      );
+    }
 
     fireEvent.click(screen.getByRole('tab', { name: 'Rival Board' }));
     expect(
@@ -286,6 +306,10 @@ describe('HotspotsDebugPage', () => {
       screen.getByTestId('alien-0-anomalies-marker-red-trace-0'),
     );
     expect(screen.getByText('anomalies red-trace trace 1')).toBeInTheDocument();
+    fireEvent.mouseEnter(
+      screen.getByTestId('alien-0-anomalies-marker-red-trace-4'),
+    );
+    expect(screen.getByText('anomalies red-trace trace 5')).toBeInTheDocument();
     fireEvent.mouseEnter(
       screen.getByTestId('alien-1-centaurians-marker-red-trace-0-0'),
     );

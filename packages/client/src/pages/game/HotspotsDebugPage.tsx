@@ -24,6 +24,7 @@ import { EAlienType, type IBaseCard } from '@seti/common/types/BaseCard';
 import { EAlienIcon, EResource, ESector } from '@seti/common/types/element';
 import type { EOrganizationId } from '@seti/common/types/organization';
 import {
+  ALL_TECH_IDS,
   getTechId,
   TECH_CATEGORIES,
   TECH_LEVELS,
@@ -899,8 +900,14 @@ function renderPanel(
             player={player}
             pendingInput={null}
             onFreeAction={() => undefined}
+            onMainAction={() => undefined}
+            availableMainActions={[
+              EMainAction.LAUNCH_PROBE,
+              EMainAction.SCAN,
+              EMainAction.ANALYZE_DATA,
+            ]}
             income={{ credit: 2, energy: 1, card: 1 }}
-            techs={player.techs}
+            techs={[...ALL_TECH_IDS]}
           />
         </section>
       );

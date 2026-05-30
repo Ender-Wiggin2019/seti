@@ -42,6 +42,9 @@
 - Sector debug fixture 不能只塞部分 signals；如果 server 语义保证 sector 最终总是填满容量，就要把 debug 示例也填满，空位会把状态示例误读成渲染 bug。
 - Rival board progress 不能只暴露当前 marker；12 个 printed progress spot 都是需要校准的 anchor，当前 marker 只是其中一个 slot 的视觉内容。
 - Hotspot debug 页的组件清单要包含 Personal Player Board；即使它不是传统点击大板，叠在 `playerBoard.png` 上的资源、tech、computer、income、mission 区域也应进入 `player-board` scene，并按 image/text variant 保存。
+- Player board image mode 不能只做视觉锚点；应保持和真实 board 操作等价的粒度：launch/scan/analyze 等主行动区域要能触发 main action，place data 要能触发 free action，12 个 tech slot 都要作为独立 hotspot 暴露。
+- Hotspot 回归不能只数 slot；有状态视觉内容时要填满完整集合并断言每个 slot 的真实内容，例如 player board 12 个 tech slot 都要摆上 tech tile 并检查图片来源。
+- `/debug/hotspots` fixture 本身也要摆满需要校准的内容；仅在组件单测里构造满状态不够，校准页必须直接显示完整 tech/token/slot 内容供拖动尺寸和位置。
 - 做 SETI 客户端整体文案时，不能把“太空科幻”泛化成终端、观测台、档案室或任务控制台；若用户点名 Space Agency/太空机构，应先读取 `docs/arch/spaceAgency/rulebook.md`，围绕“强大组织、各自愿景/方法/动机、首次接触竞争、组织能力/快速起步”来命名。
 - 规则、奖励、desc 图标统一走 `DescRender` / `EffectFactory`；不要用颜色块、字母或临时图片替代。
 - 修 board 状态时不要用“新数组 + deprecated 单值”长期并存来兼容；除非明确有外部协议约束，否则当前 public/runtime state 只能保留一个规范字段，旧快照兼容放在 deserializer 边界。

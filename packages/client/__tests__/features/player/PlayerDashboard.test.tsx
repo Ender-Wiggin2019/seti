@@ -1,8 +1,11 @@
 import { EResource, ETech } from '@seti/common/types/element';
 import { EOrganizationId } from '@seti/common/types/organization';
+import { EFreeAction, EMainAction } from '@seti/common/types/protocol/enums';
+import { ETechId } from '@seti/common/types/tech';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PlayerDashboard } from '@/features/player';
+import { getTechTileImageById } from '@/features/tech/techTileImages';
 import { useDebugStore } from '@/stores/debugStore';
 import { createMockPlayerState } from '../../../test/mocks/gameState';
 
@@ -19,6 +22,8 @@ describe('PlayerDashboard', () => {
   });
 
   it('renders all core sections', () => {
+    useDebugStore.setState({ textMode: true });
+
     render(
       <PlayerDashboard
         player={createMockPlayerState()}
@@ -31,6 +36,125 @@ describe('PlayerDashboard', () => {
     expect(screen.getByTestId('income-tracker')).toBeInTheDocument();
     expect(screen.getByTestId('data-pool-view')).toBeInTheDocument();
     expect(screen.getByText('Tech Slots')).toBeInTheDocument();
+  });
+
+  it('renders the supplied player board artwork in image mode', () => {
+    render(
+      <PlayerDashboard
+        player={createMockPlayerState({
+          dataPoolCount: 2,
+          techs: [ETechId.PROBE_ASTEROID, ETechId.SCAN_EARTH_LOOK],
+        })}
+        pendingInput={null}
+        onFreeAction={() => undefined}
+        income={{ credit: 2, energy: 1, card: 1 }}
+      />,
+    );
+
+    const imageModeBoard = screen.getByTestId('player-board-image-mode');
+    expect(imageModeBoard).toBeInTheDocument();
+    expect(imageModeBoard).toHaveClass('aspect-[2160/728]');
+    expect(screen.getByTestId('player-board-image')).toHaveAttribute(
+      'src',
+      '/assets/seti/refine/8e4f86f5-9689-4000-88fd-344aa94604eb.png',
+    );
+    expect(screen.queryByTestId('tech-row')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('computer-row')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId(/^player-board-data-token-/)).toHaveLength(2);
+  });
+
+  it('uses image-mode computer hotspots for place-data interaction', () => {
+    const onFreeAction = vi.fn();
+    const computer = {
+      columns: Array.from({ length: 6 }, (_, index) => ({
+        topFilled: index === 0,
+        topReward: null,
+        techId: null,
+        hasBottomSlot: false,
+        bottomFilled: false,
+        bottomReward: null,
+        techSlotAvailable: true,
+      })),
+    };
+
+    render(
+      <PlayerDashboard
+        player={createMockPlayerState({
+          computer,
+          dataPoolCount: 1,
+        })}
+        pendingInput={null}
+        onFreeAction={onFreeAction}
+      />,
+    );
+
+    const topSlot = screen.getByTestId('player-board-computer-slot-top-1');
+    expect(topSlot).toHaveAttribute('data-hotspot-scene', 'player-board');
+    expect(topSlot).toHaveAttribute('data-hotspot-id', 'computer-top-1');
+    expect(topSlot).toHaveAttribute('data-hotspot-variant', 'image');
+    expect(topSlot).toHaveAttribute('data-hotspot-role', 'interactive');
+
+    fireEvent.click(topSlot);
+
+    expect(onFreeAction).toHaveBeenCalledWith({
+      type: EFreeAction.PLACE_DATA,
+      slotIndex: 1,
+    });
+  });
+
+  it('uses image-mode main action hotspots for launch scan and analyze', () => {
+    const onMainAction = vi.fn();
+
+    render(
+      <PlayerDashboard
+        player={createMockPlayerState()}
+        pendingInput={null}
+        onFreeAction={() => undefined}
+        onMainAction={onMainAction}
+        availableMainActions={[
+          EMainAction.LAUNCH_PROBE,
+          EMainAction.SCAN,
+          EMainAction.ANALYZE_DATA,
+        ]}
+      />,
+    );
+
+    for (const [testId, action] of [
+      ['player-board-main-action-launch-probe', EMainAction.LAUNCH_PROBE],
+      ['player-board-main-action-scan', EMainAction.SCAN],
+      ['player-board-main-action-analyze-data', EMainAction.ANALYZE_DATA],
+    ] as const) {
+      const hotspot = screen.getByTestId(testId);
+      expect(hotspot).toHaveAttribute('data-hotspot-scene', 'player-board');
+      expect(hotspot).toHaveAttribute('data-hotspot-variant', 'image');
+      fireEvent.click(hotspot);
+      expect(onMainAction).toHaveBeenLastCalledWith({ type: action });
+    }
+  });
+
+  it('exposes and renders all 12 player board tech slots in image mode', () => {
+    const allTechIds = Object.values(ETechId);
+
+    render(
+      <PlayerDashboard
+        player={createMockPlayerState({
+          techs: allTechIds,
+        })}
+        pendingInput={null}
+        onFreeAction={() => undefined}
+      />,
+    );
+
+    for (const techId of allTechIds) {
+      const slot = screen.getByTestId(`player-board-tech-slot-${techId}`);
+      expect(slot).toHaveAttribute('data-hotspot-scene', 'player-board');
+      expect(slot).toHaveAttribute('data-hotspot-id', `tech-slot-${techId}`);
+      expect(slot).toHaveAttribute('data-hotspot-variant', 'image');
+      expect(screen.getByTestId(`player-board-tech-${techId}`)).toHaveAttribute(
+        'src',
+        getTechTileImageById(techId),
+      );
+    }
   });
 
   it('renders selected Space Agency organization cards', () => {

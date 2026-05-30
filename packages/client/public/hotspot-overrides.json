@@ -1130,5 +1130,205 @@
       "width": 58.91607666015625,
       "height": 58.91607666015625
     }
+  },
+  "player-board:image": {
+    "tech-launch": {
+      "x": 561.6,
+      "y": 173.8555185034567,
+      "width": 928.8,
+      "height": 218.4
+    },
+    "tech-scan": {
+      "x": 1598.4,
+      "y": 174.72,
+      "width": 907.2,
+      "height": 218.4
+    },
+    "data-pool": {
+      "x": 469.60659436677633,
+      "y": 519.8699735664904,
+      "width": 280.8,
+      "height": 160.16
+    },
+    "analyze": {
+      "x": 1857.6,
+      "y": 509.6,
+      "width": 216,
+      "height": 131.04
+    },
+    "income": {
+      "x": 86.4,
+      "y": 495.04,
+      "width": 151.2,
+      "height": 371.28
+    },
+    "mission-summary": {
+      "x": 1965.6,
+      "y": 509.6,
+      "width": 324,
+      "height": 131.04
+    },
+    "main-action-launch-probe": {
+      "x": 77.76,
+      "y": 171.08,
+      "width": 129.6,
+      "height": 116.48
+    },
+    "main-action-scan": {
+      "x": 77.76,
+      "y": 425.88,
+      "width": 129.6,
+      "height": 116.48
+    },
+    "main-action-analyze-data": {
+      "x": 1868.4,
+      "y": 509.6,
+      "width": 259.2,
+      "height": 131.04
+    },
+    "tech-slot-probe-0": {
+      "x": 241.9179646381579,
+      "y": 197.10011590077266,
+      "width": 108,
+      "height": 108
+    },
+    "tech-slot-probe-1": {
+      "x": 415.358400493421,
+      "y": 201.19335807238718,
+      "width": 108,
+      "height": 108
+    },
+    "tech-slot-probe-2": {
+      "x": 762.6566694078947,
+      "y": 192.84233174054495,
+      "width": 108,
+      "height": 108
+    },
+    "tech-slot-probe-3": {
+      "x": 937.44,
+      "y": 196.56,
+      "width": 108,
+      "height": 108
+    },
+    "tech-slot-scan-0": {
+      "x": 1468.8,
+      "y": 196.56,
+      "width": 108,
+      "height": 108
+    },
+    "tech-slot-scan-1": {
+      "x": 1678.32,
+      "y": 196.56,
+      "width": 108,
+      "height": 108
+    },
+    "tech-slot-scan-2": {
+      "x": 1887.84,
+      "y": 196.56,
+      "width": 108,
+      "height": 108
+    },
+    "tech-slot-scan-3": {
+      "x": 2077.92,
+      "y": 196.56,
+      "width": 108,
+      "height": 108
+    },
+    "tech-slot-comp-0": {
+      "x": 743.640431743421,
+      "y": 497.2747549816998,
+      "width": 108,
+      "height": 108
+    },
+    "tech-slot-comp-1": {
+      "x": 1127.52,
+      "y": 509.6,
+      "width": 108,
+      "height": 108
+    },
+    "tech-slot-comp-2": {
+      "x": 1332.72,
+      "y": 509.6,
+      "width": 108,
+      "height": 108
+    },
+    "tech-slot-comp-3": {
+      "x": 1548.72,
+      "y": 509.6,
+      "width": 108,
+      "height": 108
+    },
+    "computer-top-0": {
+      "x": 742.7428371710527,
+      "y": 477.21371431476206,
+      "width": 92,
+      "height": 54
+    },
+    "computer-bottom-0": {
+      "x": 743.8272224506578,
+      "y": 542.712649654331,
+      "width": 92,
+      "height": 54
+    },
+    "computer-top-1": {
+      "x": 961.2,
+      "y": 486.304,
+      "width": 92,
+      "height": 54
+    },
+    "computer-bottom-1": {
+      "x": 961.2,
+      "y": 549.312,
+      "width": 92,
+      "height": 54
+    },
+    "computer-top-2": {
+      "x": 1127.52,
+      "y": 486.304,
+      "width": 92,
+      "height": 54
+    },
+    "computer-bottom-2": {
+      "x": 1127.52,
+      "y": 549.312,
+      "width": 92,
+      "height": 54
+    },
+    "computer-top-3": {
+      "x": 1332.72,
+      "y": 486.304,
+      "width": 92,
+      "height": 54
+    },
+    "computer-bottom-3": {
+      "x": 1332.72,
+      "y": 549.312,
+      "width": 92,
+      "height": 54
+    },
+    "computer-top-4": {
+      "x": 1548.72,
+      "y": 486.304,
+      "width": 92,
+      "height": 54
+    },
+    "computer-bottom-4": {
+      "x": 1548.72,
+      "y": 549.312,
+      "width": 92,
+      "height": 54
+    },
+    "computer-top-5": {
+      "x": 1699.92,
+      "y": 486.304,
+      "width": 92,
+      "height": 54
+    },
+    "computer-bottom-5": {
+      "x": 1699.92,
+      "y": 549.312,
+      "width": 92,
+      "height": 54
+    }
   }
 }
