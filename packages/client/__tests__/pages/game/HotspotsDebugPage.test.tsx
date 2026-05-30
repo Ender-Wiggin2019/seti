@@ -258,6 +258,12 @@ describe('HotspotsDebugPage', () => {
       screen.getByTestId('player-board-computer-slot-top-0'),
     ).toHaveAttribute('data-hotspot-variant', 'image');
     expect(
+      container.querySelector('[data-hotspot-id="computer-bottom-1"]'),
+    ).not.toBeInTheDocument();
+    expect(
+      container.querySelector('[data-hotspot-id="computer-bottom-3"]'),
+    ).not.toBeInTheDocument();
+    expect(
       screen.getByTestId('player-board-main-action-launch-probe'),
     ).toHaveAttribute('data-hotspot-id', 'main-action-launch-probe');
     expect(
@@ -266,6 +272,15 @@ describe('HotspotsDebugPage', () => {
       ),
     ).toHaveLength(12);
     for (const techId of Object.values(ETechId)) {
+      const slot = screen.getByTestId(`player-board-tech-slot-${techId}`);
+      expect(Number.parseFloat(slot.style.width)).toBeCloseTo(
+        (197 / 2160) * 100,
+        5,
+      );
+      expect(Number.parseFloat(slot.style.height)).toBeCloseTo(
+        (276 / 728) * 100,
+        5,
+      );
       expect(screen.getByTestId(`player-board-tech-${techId}`)).toHaveAttribute(
         'src',
         getTechTileImageById(techId),

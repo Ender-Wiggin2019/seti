@@ -345,4 +345,44 @@ describe('HotspotAnchor', () => {
       undefined,
     );
   });
+
+  it('preserves rectangular hotspot dimensions while resizing', () => {
+    useDebugStore.getState().setHotspotDebug(true);
+
+    render(
+      <div data-testid='scene' className='relative'>
+        <HotspotAnchor
+          sceneId='player-board'
+          hotspotId='tech-slot-probe-0'
+          variant='image'
+          baseWidth={2160}
+          baseHeight={728}
+          x={242}
+          y={197}
+          width={197}
+          height={276}
+          debugLabel='player board tech slot probe-0'
+        />
+      </div>,
+    );
+    mockSceneRect(screen.getByTestId('scene'));
+
+    const handle = screen.getByTestId(
+      'hotspot-anchor-resize-player-board-tech-slot-probe-0',
+    );
+    firePointerEvent(handle, 'pointerdown', 340, 335);
+    firePointerEvent(window, 'pointermove', 350, 355);
+    firePointerEvent(window, 'pointerup', 350, 355);
+
+    expect(
+      useDebugStore.getState().hotspotDraftOverrides['player-board:image']?.[
+        'tech-slot-probe-0'
+      ],
+    ).toMatchObject({
+      x: 242,
+      y: 197,
+      width: 207,
+      height: 296,
+    });
+  });
 });

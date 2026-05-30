@@ -21,6 +21,7 @@ import {
 import { ALL_CARDS } from '@seti/common/data';
 import { ORGANIZATIONS } from '@seti/common/data/organizations';
 import { EAlienType, type IBaseCard } from '@seti/common/types/BaseCard';
+import { DEFAULT_COLUMN_CONFIGS } from '@seti/common/types/computer';
 import { EAlienIcon, EResource, ESector } from '@seti/common/types/element';
 import type { EOrganizationId } from '@seti/common/types/organization';
 import {
@@ -217,14 +218,14 @@ function createPlayer(
     },
     tracesByAlien: {},
     computer: {
-      columns: Array.from({ length: 6 }, () => ({
+      columns: DEFAULT_COLUMN_CONFIGS.map((config) => ({
         topFilled: false,
-        topReward: null,
+        topReward: config.topReward,
         techId: null,
         hasBottomSlot: false,
         bottomFilled: false,
         bottomReward: null,
-        techSlotAvailable: true,
+        techSlotAvailable: config.techSlotAvailable,
       })),
     },
     dataPoolCount: 2,

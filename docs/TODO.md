@@ -22,6 +22,9 @@
 - Player board image mode now exposes clickable main-action hotspots for launch probe, scan, and analyze data; they send the same `IMainActionRequest` path as the top action menu and are gated by turn/phase availability.
 - Image-mode computer slots still send the `PLACE_DATA` free action with the selected slot index, so place-data is operable directly from the board surface.
 - All 12 printed tech positions are exposed as independent `tech-slot-*` image hotspots, have initial entries in `public/hotspot-overrides.json`, and `/debug/hotspots` Personal Board renders all 12 tech tiles for calibration.
+- Tech slot hotspot dimensions now match the original tech tile asset size (`197x276`) instead of the previous square placeholder.
+- Hotspot resize now preserves rectangular dimensions by editing width and height independently, so tech tile hotspots do not snap back to a square when resized.
+- Computer bottom anchors now skip built-in reward columns b/d (1-based 2 and 4), which cannot host computer tech or bottom data slots.
 - Verification passed: focused `PlayerDashboard` / `HotspotsDebugPage` tests, full client test suite, client typecheck, client lint, targeted Biome check, JSON parse check, and browser smoke on `http://127.0.0.1:5174/debug/hotspots` with 3 main-action hotspots, 12 tech-slot hotspots, visible place-data hotspot, and no console warnings/errors.
 
 ## 2026-05-30 player board image mode

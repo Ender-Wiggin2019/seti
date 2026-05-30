@@ -322,4 +322,44 @@ describe('HotspotButton', () => {
       height: 70,
     });
   });
+
+  it('preserves rectangular hotspot dimensions while resizing', () => {
+    useDebugStore.getState().setHotspotDebug(true);
+
+    render(
+      <div data-testid='scene' className='relative'>
+        <HotspotButton
+          sceneId='player-board'
+          hotspotId='main-action-analyze-data'
+          variant='image'
+          baseWidth={2160}
+          baseHeight={728}
+          x={1868}
+          y={510}
+          width={197}
+          height={276}
+          debugLabel='player board analyze data'
+        />
+      </div>,
+    );
+    mockSceneRect(screen.getByTestId('scene'));
+
+    const handle = screen.getByTestId(
+      'hotspot-resize-player-board-main-action-analyze-data',
+    );
+    firePointerEvent(handle, 'pointerdown', 1966, 648);
+    firePointerEvent(window, 'pointermove', 1976, 668);
+    firePointerEvent(window, 'pointerup', 1976, 668);
+
+    expect(
+      useDebugStore.getState().hotspotDraftOverrides['player-board:image']?.[
+        'main-action-analyze-data'
+      ],
+    ).toMatchObject({
+      x: 1868,
+      y: 510,
+      width: 207,
+      height: 296,
+    });
+  });
 });

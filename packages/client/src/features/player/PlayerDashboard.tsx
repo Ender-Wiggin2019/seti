@@ -80,6 +80,8 @@ const PLAYER_BOARD_IMAGE_SRC =
   '/assets/seti/refine/8e4f86f5-9689-4000-88fd-344aa94604eb.png';
 const PLAYER_BOARD_IMAGE_BASE_WIDTH = 2160;
 const PLAYER_BOARD_IMAGE_BASE_HEIGHT = 728;
+const PLAYER_BOARD_TECH_TILE_WIDTH = 197;
+const PLAYER_BOARD_TECH_TILE_HEIGHT = 276;
 const PLAYER_BOARD_MAIN_HOTSPOTS: IPersonalBoardHotspot[] = [
   {
     id: 'tech-launch',
@@ -739,8 +741,8 @@ function PlayerBoardTechOverlay({
             baseHeight={PLAYER_BOARD_IMAGE_BASE_HEIGHT}
             x={(PLAYER_BOARD_IMAGE_BASE_WIDTH * point.xPct) / 100}
             y={(PLAYER_BOARD_IMAGE_BASE_HEIGHT * point.yPct) / 100}
-            width={108}
-            height={108}
+            width={PLAYER_BOARD_TECH_TILE_WIDTH}
+            height={PLAYER_BOARD_TECH_TILE_HEIGHT}
             shape='rect'
             color={color}
             opacity={0.16}
@@ -811,14 +813,14 @@ function PlayerBoardComputerOverlay({
                 interactive={bottomInteractive}
                 onClick={() => onPlaceData(index)}
               />
-            ) : (
+            ) : column.techSlotAvailable ? (
               <PlayerBoardComputerSlotAnchor
                 row='bottom'
                 columnIndex={index}
                 xPct={point.xPct}
                 yPct={point.bottomYPct}
               />
-            )}
+            ) : null}
           </div>
         );
       })}

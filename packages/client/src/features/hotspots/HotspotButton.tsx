@@ -4,6 +4,7 @@ import {
   geometryToPercentStyle,
   getHotspotStorageSceneId,
   type IHotspotGeometry,
+  MIN_HOTSPOT_SIZE,
   resolveHotspotGeometry,
   type THotspotVariant,
 } from '@/features/hotspots/hotspotConfig';
@@ -199,14 +200,10 @@ export function HotspotButton({
     }
 
     if (edit.mode === 'resize') {
-      const nextSize = Math.max(
-        edit.startGeometry.width + dx,
-        edit.startGeometry.height + dy,
-      );
       commitOverride({
         ...edit.startGeometry,
-        width: nextSize,
-        height: nextSize,
+        width: Math.max(MIN_HOTSPOT_SIZE, edit.startGeometry.width + dx),
+        height: Math.max(MIN_HOTSPOT_SIZE, edit.startGeometry.height + dy),
       });
       return;
     }

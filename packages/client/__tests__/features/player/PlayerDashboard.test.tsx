@@ -1,3 +1,4 @@
+import { DEFAULT_COLUMN_CONFIGS } from '@seti/common/types/computer';
 import { EResource, ETech } from '@seti/common/types/element';
 import { EOrganizationId } from '@seti/common/types/organization';
 import { EFreeAction, EMainAction } from '@seti/common/types/protocol/enums';
@@ -102,6 +103,47 @@ describe('PlayerDashboard', () => {
     });
   });
 
+  it('does not expose impossible bottom computer slots for built-in reward columns', () => {
+    const computer = {
+      columns: DEFAULT_COLUMN_CONFIGS.map((config) => ({
+        topFilled: false,
+        topReward: config.topReward,
+        techId: null,
+        hasBottomSlot: false,
+        bottomFilled: false,
+        bottomReward: null,
+        techSlotAvailable: config.techSlotAvailable,
+      })),
+    };
+
+    const { container } = render(
+      <PlayerDashboard
+        player={createMockPlayerState({ computer })}
+        pendingInput={null}
+        onFreeAction={() => undefined}
+      />,
+    );
+
+    expect(
+      container.querySelector('[data-hotspot-id="computer-bottom-0"]'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-hotspot-id="computer-bottom-1"]'),
+    ).not.toBeInTheDocument();
+    expect(
+      container.querySelector('[data-hotspot-id="computer-bottom-2"]'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-hotspot-id="computer-bottom-3"]'),
+    ).not.toBeInTheDocument();
+    expect(
+      container.querySelector('[data-hotspot-id="computer-bottom-4"]'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-hotspot-id="computer-bottom-5"]'),
+    ).toBeInTheDocument();
+  });
+
   it('uses image-mode main action hotspots for launch scan and analyze', () => {
     const onMainAction = vi.fn();
 
@@ -150,6 +192,14 @@ describe('PlayerDashboard', () => {
       expect(slot).toHaveAttribute('data-hotspot-scene', 'player-board');
       expect(slot).toHaveAttribute('data-hotspot-id', `tech-slot-${techId}`);
       expect(slot).toHaveAttribute('data-hotspot-variant', 'image');
+      expect(Number.parseFloat(slot.style.width)).toBeCloseTo(
+        (197 / 2160) * 100,
+        5,
+      );
+      expect(Number.parseFloat(slot.style.height)).toBeCloseTo(
+        (276 / 728) * 100,
+        5,
+      );
       expect(screen.getByTestId(`player-board-tech-${techId}`)).toHaveAttribute(
         'src',
         getTechTileImageById(techId),

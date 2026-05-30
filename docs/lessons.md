@@ -45,6 +45,9 @@
 - Player board image mode 不能只做视觉锚点；应保持和真实 board 操作等价的粒度：launch/scan/analyze 等主行动区域要能触发 main action，place data 要能触发 free action，12 个 tech slot 都要作为独立 hotspot 暴露。
 - Hotspot 回归不能只数 slot；有状态视觉内容时要填满完整集合并断言每个 slot 的真实内容，例如 player board 12 个 tech slot 都要摆上 tech tile 并检查图片来源。
 - `/debug/hotspots` fixture 本身也要摆满需要校准的内容；仅在组件单测里构造满状态不够，校准页必须直接显示完整 tech/token/slot 内容供拖动尺寸和位置。
+- Player board tech tile hotspot 尺寸要跟原始 tech tile 素材一致；当前原始素材是 `197x276`，不能用方形占位尺寸，否则 debug 校准会误导。
+- Hotspot resize 不能默认强制正方形；对 tech tile 这类矩形内容，resize draft 要分别写入 width/height，否则一拖缩放手柄就会破坏原始比例。
+- Player board computer b/d 两列是内置 publicity/tuck 奖励，`techSlotAvailable: false`；image hotspot/debug fixture 不能给它们渲染 bottom tech/data slot anchor。
 - 做 SETI 客户端整体文案时，不能把“太空科幻”泛化成终端、观测台、档案室或任务控制台；若用户点名 Space Agency/太空机构，应先读取 `docs/arch/spaceAgency/rulebook.md`，围绕“强大组织、各自愿景/方法/动机、首次接触竞争、组织能力/快速起步”来命名。
 - 规则、奖励、desc 图标统一走 `DescRender` / `EffectFactory`；不要用颜色块、字母或临时图片替代。
 - 修 board 状态时不要用“新数组 + deprecated 单值”长期并存来兼容；除非明确有外部协议约束，否则当前 public/runtime state 只能保留一个规范字段，旧快照兼容放在 deserializer 边界。
