@@ -29,12 +29,14 @@
 - Hotspot 拖动坐标系不能简单取 `parentElement`；图片 overlay 常有分组 wrapper，拖动应优先使用实际定位坐标系 `offsetParent`，否则 planet board 这类空 wrapper 会得到 0 宽高。
 - Hotspot debug 页面需要可控密度；interactive hit areas 和 pure anchors 应能独立显示/隐藏，避免一次展示过多 label 导致无法校准。
 - Hotspot 校准范围不能只按“可点击按钮”定义；凡是叠在 game 图片资源上的绝对定位 token、marker、trace、badge、card overlay，也要进入可保存 anchor 或在 review 中明确排除。
+- 当一个可点击区域也是需要校准的视觉元素时，不能只保留按钮层；应给它补一层同位 anchor，保证 `/debug/hotspots` 里能独立拖动/缩放。
 - Alien board 的 trace hotspot 不能只覆盖最底部/第一个 slot；通常所有 server 暴露为合法 option 的 trace slot 都应可标记，尤其 Mascamites blue sample path 这类非直列 trace。
 - Alien board trace 奖励、slot id 和 fixture 数据不能在 server/client 各手写一份；如果 debug hotspot、server public state 和真实规则都要读同一组奖励，先放到 common，再由 server plugin 和 client fixture 共同消费。
 - Hotspot debug fixtures 不能只模拟一个合法动作模式；校准页应按 common/server 语义覆盖完整坐标集合，例如 planet board 要同时展示全部 planet、orbit、land、moon slot，否则 LAND-only fixture 会漏掉 orbit 和不在选项里的 planet。
 - Hotspot debug fixture 的 id 必须和真实 game public state 完全一致；不能用 `space-0` 这类本地假 id 代替 server 的 `ring-1-cell-0`，否则 debug 页保存成功但 game 路由不会命中同一个 override key。
 - Text mode 和 image mode 的 board hotspot 不应共享同一位置 override；如果两种模式使用不同坐标系，保持同一交互组件，但用 mode variant 拆分本地配置命名空间。
 - Hotspot debug 页的模式切换必须显式显示可选模式名和选中态，例如 `Image Mode` / `Text Mode`；不要用 `Text Mode Off` 这类状态文案，否则用户容易在错误 namespace 下编辑。
+- 可点击的 surface 也要有独立 anchor 层；只有按钮没有锚点时，debug/hotspots 会少一层可拖动目标，尤其是组织卡和 board readout 这类同时需要交互与校准的位置。
 - Sector debug fixture 不能只塞部分 signals；如果 server 语义保证 sector 最终总是填满容量，就要把 debug 示例也填满，空位会把状态示例误读成渲染 bug。
 - Rival board progress 不能只暴露当前 marker；12 个 printed progress spot 都是需要校准的 anchor，当前 marker 只是其中一个 slot 的视觉内容。
 - Hotspot debug 页的组件清单要包含 Personal Player Board；即使它不是传统点击大板，叠在 `playerBoard.png` 上的资源、tech、computer、income、mission 区域也应进入 `player-board` scene，并按 image/text variant 保存。

@@ -3,6 +3,7 @@ import {
   PLANETARY_PLANETS,
 } from '@seti/common/constant/boardLayout';
 import { EAlienType } from '@seti/common/types/BaseCard';
+import { EOrganizationId } from '@seti/common/types/organization';
 import {
   act,
   fireEvent,
@@ -327,8 +328,21 @@ describe('HotspotsDebugPage', () => {
       container.querySelector('[data-hotspot-scene="corporation-board"]'),
     ).toBeInTheDocument();
     expect(
-      container.querySelector('[data-hotspot-id$="-used-badge"]'),
-    ).toBeInTheDocument();
+      container.querySelectorAll('[data-hotspot-scene="corporation-board"]'),
+    ).toHaveLength(22);
+    const helionUseMarker = screen.getByTestId(
+      `organization-power-card-${EOrganizationId.HELION_ASSEMBLY}`,
+    );
+    const helionUseAnchor = screen.getByTestId(
+      `organization-power-anchor-${EOrganizationId.HELION_ASSEMBLY}`,
+    );
+    expect(helionUseAnchor).toHaveAttribute('data-hotspot-role', 'anchor');
+    expect(helionUseAnchor).toHaveAttribute(
+      'data-hotspot-id',
+      `${EOrganizationId.HELION_ASSEMBLY}-power`,
+    );
+    fireEvent.mouseEnter(helionUseMarker);
+    expect(screen.getByText('Helion Assembly use marker')).toBeInTheDocument();
   });
 
   it('shows every configured planet board orbit, land, and moon hotspot', async () => {

@@ -50,10 +50,7 @@ describe('PlayerDashboard', () => {
     const organizationCard = screen.getByTestId(
       `organization-card-${EOrganizationId.HELION_ASSEMBLY}`,
     );
-    expect(organizationCard).toHaveTextContent('Helion Assembly');
-    expect(organizationCard).toHaveTextContent(
-      /destroy one of your probe\/orange or scan\/purple techs/i,
-    );
+    expect(organizationCard).toHaveTextContent('1x');
     expect(screen.getByAltText('Virelon Technologies')).toHaveAttribute(
       'src',
       '/assets/seti/corporations/Helion Assembly.jpg',
@@ -72,6 +69,26 @@ describe('PlayerDashboard', () => {
       type: 'USE_ORGANIZATION_POWER',
       organizationId: EOrganizationId.HELION_ASSEMBLY,
     });
+  });
+
+  it('renders image-mode organization cards at the original image aspect without direct ability text', () => {
+    render(
+      <PlayerDashboard
+        player={createMockPlayerState({
+          organizationIds: [EOrganizationId.HELION_ASSEMBLY],
+        })}
+        pendingInput={null}
+        onFreeAction={() => undefined}
+      />,
+    );
+
+    const organizationCard = screen.getByTestId(
+      `organization-card-${EOrganizationId.HELION_ASSEMBLY}`,
+    );
+    expect(organizationCard).toHaveClass('aspect-[671/507]');
+    expect(organizationCard).not.toHaveTextContent(
+      /free action|destroy one of your probe\/orange or scan\/purple techs/i,
+    );
   });
 
   it('renders organization reward marks in text mode', () => {
@@ -160,7 +177,7 @@ describe('PlayerDashboard', () => {
     expect(textPower).toHaveAttribute('data-hotspot-variant', 'text');
   });
 
-  it('exposes image-mode organization used badges through the shared anchor debug layer', () => {
+  it('exposes image-mode organization use markers through the shared anchor debug layer', () => {
     useDebugStore.getState().setHotspotDebug(true);
 
     render(
@@ -176,17 +193,57 @@ describe('PlayerDashboard', () => {
       />,
     );
 
-    const badge = screen.getByTestId(
-      `organization-used-badge-${EOrganizationId.HELION_ASSEMBLY}`,
+    const marker = screen.getByTestId(
+      `organization-power-card-${EOrganizationId.HELION_ASSEMBLY}`,
     );
-    expect(badge).toHaveAttribute('data-hotspot-scene', 'corporation-board');
-    expect(badge).toHaveAttribute(
+    const anchor = screen.getByTestId(
+      `organization-power-anchor-${EOrganizationId.HELION_ASSEMBLY}`,
+    );
+    expect(anchor).toHaveAttribute('data-hotspot-scene', 'corporation-board');
+    expect(anchor).toHaveAttribute(
       'data-hotspot-id',
-      `${EOrganizationId.HELION_ASSEMBLY}-used-badge`,
+      `${EOrganizationId.HELION_ASSEMBLY}-power`,
     );
-    expect(badge).toHaveAttribute('data-hotspot-role', 'anchor');
-    fireEvent.mouseEnter(badge);
-    expect(screen.getByText('Helion Assembly used badge')).toBeInTheDocument();
+    expect(anchor).toHaveAttribute('data-hotspot-role', 'anchor');
+    expect(marker).toHaveAttribute('data-hotspot-scene', 'corporation-board');
+    expect(marker).toHaveAttribute(
+      'data-hotspot-id',
+      `${EOrganizationId.HELION_ASSEMBLY}-power`,
+    );
+    expect(marker).toHaveAttribute('data-hotspot-role', 'interactive');
+    fireEvent.mouseEnter(marker);
+    expect(screen.getByText('Helion Assembly use marker')).toBeInTheDocument();
+  });
+
+  it('renders paired image-mode organization hotspots for the use marker', () => {
+    render(
+      <PlayerDashboard
+        player={createMockPlayerState({
+          organizationIds: [EOrganizationId.HELION_ASSEMBLY],
+          oncePerRoundUsed: {
+            [EOrganizationId.HELION_ASSEMBLY]: true,
+          },
+        })}
+        pendingInput={null}
+        onFreeAction={() => undefined}
+      />,
+    );
+
+    const hotspots = screen
+      .getByTestId(`organization-card-${EOrganizationId.HELION_ASSEMBLY}`)
+      .querySelectorAll('[data-hotspot-scene="corporation-board"]');
+
+    expect(hotspots).toHaveLength(2);
+    expect(
+      screen.getByTestId(
+        `organization-power-anchor-${EOrganizationId.HELION_ASSEMBLY}`,
+      ),
+    ).toHaveAttribute('data-hotspot-role', 'anchor');
+    expect(
+      screen.getByTestId(
+        `organization-power-card-${EOrganizationId.HELION_ASSEMBLY}`,
+      ),
+    ).toHaveAttribute('data-hotspot-role', 'interactive');
   });
 
   it('exposes personal board regions through the shared anchor debug layer', () => {

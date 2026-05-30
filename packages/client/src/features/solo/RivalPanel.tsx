@@ -638,6 +638,21 @@ function RivalBoardDataPool({ count }: { count: number }): React.JSX.Element {
         defaultValue: `Rival data pool: ${count}`,
       })}
     >
+      <HotspotAnchor
+        sceneId='rival-board'
+        hotspotId='data-pool'
+        baseWidth={RIVAL_BOARD_BASE_WIDTH}
+        baseHeight={RIVAL_BOARD_BASE_HEIGHT}
+        x={(RIVAL_BOARD_BASE_WIDTH * 3) / 100}
+        y={(RIVAL_BOARD_BASE_HEIGHT * 75) / 100}
+        width={(RIVAL_BOARD_BASE_WIDTH * 18) / 100}
+        height={(RIVAL_BOARD_BASE_HEIGHT * 16) / 100}
+        shape='rect'
+        color='#60a5fa'
+        debugLabel='rival data pool area'
+        className='rounded-[4px]'
+        testId='rival-board-data-pool-area'
+      />
       {Array.from({ length: visibleCount }, (_, index) => {
         const point = RIVAL_BOARD_DATA_POOL_POINTS[index];
 

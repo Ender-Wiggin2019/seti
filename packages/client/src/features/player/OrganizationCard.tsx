@@ -57,6 +57,25 @@ const HELION_MARK_CATEGORIES = [
   ETech.COMPUTER,
 ] as const;
 
+const ORGANIZATION_IMAGE_BASE_WIDTH = 671;
+const ORGANIZATION_IMAGE_BASE_HEIGHT = 507;
+const ORGANIZATION_IMAGE_POWER_CONFIG: Record<
+  string,
+  { xPercent: number; yPercent: number }
+> = {
+  cards: { xPercent: 10, yPercent: 90 },
+  look: { xPercent: 10, yPercent: 90 },
+  publ: { xPercent: 10, yPercent: 87 },
+  probes: { xPercent: 10, yPercent: 90 },
+  offerEffects: { xPercent: 10, yPercent: 87 },
+  probeSignal: { xPercent: 10, yPercent: 90 },
+  sponsoring: { xPercent: 10, yPercent: 92 },
+  techSeller: { xPercent: 5, yPercent: 85 },
+  testTech: { xPercent: 10, yPercent: 80 },
+  missions: { xPercent: 10, yPercent: 85 },
+  traces: { xPercent: 10, yPercent: 90 },
+};
+
 const ORGANIZATION_MARK_LABEL_KEYS: Record<
   string,
   { key: string; defaultValue: string }
@@ -159,6 +178,12 @@ export function OrganizationCard({
   const abilityEntries = getAbilityEntries(organization.abilityText);
   const markEntries = getOrganizationMarkEntries(organizationId, state, t);
   const canUse = available && !used;
+  const imagePowerConfig =
+    ORGANIZATION_IMAGE_POWER_CONFIG[reference.type] ??
+    ORGANIZATION_IMAGE_POWER_CONFIG.probes;
+  const imageAbilitySummary = abilityEntries
+    .map((entry) => entry.text)
+    .join(' ');
 
   if (textMode) {
     return (
@@ -221,6 +246,20 @@ export function OrganizationCard({
         </div>
         <div className='border-t border-surface-700/70 p-2'>
           <div className='relative h-7 w-full'>
+            <HotspotAnchor
+              sceneId='corporation-board'
+              hotspotId={`${organizationId}-power`}
+              variant='text'
+              baseWidth={204}
+              baseHeight={28}
+              x={102}
+              y={14}
+              width={204}
+              height={28}
+              shape='rect'
+              debugLabel={`${name} power`}
+              testId={`organization-power-anchor-${organizationId}`}
+            />
             <HotspotButton
               sceneId='corporation-board'
               hotspotId={`${organizationId}-power`}
@@ -251,8 +290,9 @@ export function OrganizationCard({
 
   return (
     <article
-      className='relative h-[234px] w-[168px] shrink-0 overflow-hidden rounded-sm border border-accent-700/55 bg-surface-950 shadow-sm'
+      className='relative aspect-[671/507] w-[220px] shrink-0 overflow-hidden rounded-sm border border-accent-700/55 bg-surface-950 shadow-sm'
       data-testid={`organization-card-${organizationId}`}
+      title={imageAbilitySummary || name}
     >
       <img
         alt={reference.displayName}
@@ -261,70 +301,49 @@ export function OrganizationCard({
       />
       <div className='absolute inset-0 bg-gradient-to-b from-background-950/75 via-background-950/45 to-background-950/85' />
       <div className='relative flex h-full flex-col p-2.5 text-text-50'>
-        <h3 className='text-[15px] font-bold uppercase leading-tight tracking-wide drop-shadow'>
-          {name}
-        </h3>
-        <div className='my-2 h-px bg-text-100/45' />
-        <div className='min-h-0 flex-1 space-y-1.5 overflow-y-auto pb-12 pr-1'>
-          {abilityEntries.map((entry) => (
-            <section key={entry.key}>
-              <p className='text-[8px] font-semibold uppercase tracking-[0.16em] text-accent-200'>
-                {t(ABILITY_LABEL_KEYS[entry.key].key, {
-                  defaultValue: ABILITY_LABEL_KEYS[entry.key].defaultValue,
-                })}
-              </p>
-              <p className='mt-1 rounded-sm bg-background-950/55 p-1.5 text-[9px] leading-snug text-text-100'>
-                {entry.text}
-              </p>
-            </section>
-          ))}
-        </div>
+        <div className='flex-1' />
+        <HotspotAnchor
+          sceneId='corporation-board'
+          hotspotId={`${organizationId}-power`}
+          variant='image'
+          baseWidth={ORGANIZATION_IMAGE_BASE_WIDTH}
+          baseHeight={ORGANIZATION_IMAGE_BASE_HEIGHT}
+          x={0}
+          y={0}
+          xPercent={imagePowerConfig.xPercent}
+          yPercent={imagePowerConfig.yPercent}
+          width={76}
+          height={76}
+          debugLabel={`${name} use marker`}
+          testId={`organization-power-anchor-${organizationId}`}
+        />
         <HotspotButton
           sceneId='corporation-board'
           hotspotId={`${organizationId}-power`}
           variant='image'
-          baseWidth={168}
-          baseHeight={234}
-          x={42}
-          y={210}
-          width={80}
-          height={44}
+          baseWidth={ORGANIZATION_IMAGE_BASE_WIDTH}
+          baseHeight={ORGANIZATION_IMAGE_BASE_HEIGHT}
+          x={0}
+          y={0}
+          xPercent={imagePowerConfig.xPercent}
+          yPercent={imagePowerConfig.yPercent}
+          width={76}
+          height={76}
           disabled={!canUse}
           onClick={() => onUse(organizationId)}
           ariaLabel={`${name} ${t('client.free_action_bar.actions.USE_ORGANIZATION_POWER')}`}
-          debugLabel={`${name} power`}
+          debugLabel={`${name} use marker`}
           className={cn(
-            'flex items-center justify-center rounded-full border font-mono text-[8px] uppercase tracking-[0.1em] transition',
+            'flex items-center justify-center rounded-full border font-mono text-[10px] font-semibold uppercase tracking-[0.12em] transition',
             canUse
-              ? 'border-accent-300 bg-accent-500/85 text-background-950 hover:bg-accent-300'
-              : 'cursor-not-allowed border-surface-500 bg-surface-900/75 text-text-500',
+              ? 'border-accent-200/80 bg-surface-950/70 text-text-100 shadow-[0_0_18px_rgba(249,115,22,0.22)]'
+              : 'cursor-not-allowed border-surface-500/90 bg-surface-950/75 text-text-400',
           )}
           testId={`organization-power-card-${organizationId}`}
         >
-          {t('client.free_action_bar.actions.USE_ORGANIZATION_POWER')}
+          <span className='leading-none'>1x</span>
         </HotspotButton>
       </div>
-      {used ? (
-        <HotspotAnchor
-          sceneId='corporation-board'
-          hotspotId={`${organizationId}-used-badge`}
-          variant='image'
-          baseWidth={168}
-          baseHeight={234}
-          x={48}
-          y={194}
-          width={56}
-          height={56}
-          color='#facc15'
-          debugLabel={`${name} used badge`}
-          className='rounded-full'
-          testId={`organization-used-badge-${organizationId}`}
-        >
-          <div className='flex h-full w-full items-center justify-center rounded-full border border-accent-200 bg-background-950/90 font-mono text-[9px] uppercase tracking-[0.12em] text-accent-200 shadow-[0_0_18px_oklch(0.68_0.11_240/0.45)]'>
-            {t('client.organizations.power_used')}
-          </div>
-        </HotspotAnchor>
-      ) : null}
     </article>
   );
 }

@@ -190,6 +190,21 @@ describe('RivalPanel', () => {
     );
   });
 
+  it('exposes the rival data pool area through the shared anchor debug layer', () => {
+    act(() => {
+      useDebugStore.getState().setHotspotDebug(true);
+    });
+
+    render(<RivalPanel rival={createRival()} />);
+
+    const dataPoolArea = screen.getByTestId('rival-board-data-pool-area');
+    expect(dataPoolArea).toHaveAttribute('data-hotspot-scene', 'rival-board');
+    expect(dataPoolArea).toHaveAttribute('data-hotspot-id', 'data-pool');
+    expect(dataPoolArea).toHaveAttribute('data-hotspot-role', 'anchor');
+    fireEvent.mouseEnter(dataPoolArea);
+    expect(screen.getByText('rival data pool area')).toBeInTheDocument();
+  });
+
   it('renders text-mode progress with colored borders instead of filled circles', () => {
     setTextMode(true);
 
