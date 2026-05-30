@@ -367,4 +367,20 @@ describe('HotspotsDebugPage', () => {
       container.querySelectorAll('[data-hotspot-scene="planet-board"]'),
     ).toHaveLength(expectedHotspotIds.length);
   });
+
+  it('renders sector slots fully populated with no empty debug placeholders', async () => {
+    const { container } = render(<HotspotsDebugPage />);
+
+    await waitFor(() => {
+      expect(useDebugStore.getState().hotspotDebug).toBe(true);
+    });
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Sectors' }));
+
+    expect(
+      container.querySelectorAll(
+        '[data-hotspot-scene="sector-board"][data-signal-type="empty"]',
+      ),
+    ).toHaveLength(0);
+  });
 });

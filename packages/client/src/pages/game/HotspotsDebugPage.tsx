@@ -407,11 +407,13 @@ function createSectors(setupConfig: ISolarSystemSetupConfig): IPublicSector[] {
         sectorId,
         name: sector.starName,
         color: sector.color,
-        signals: [
-          { type: 'data' as const },
-          { type: 'player' as const, playerId: PLAYER_ID },
-          { type: 'data' as const },
-        ],
+        signals: Array.from(
+          { length: starConfig.dataSlotCapacity },
+          (_, signalIndex) =>
+            signalIndex === 1
+              ? { type: 'player' as const, playerId: PLAYER_ID }
+              : { type: 'data' as const },
+        ),
         dataCapability: starConfig.dataSlotCapacity,
         dataSlotCapacity: starConfig.dataSlotCapacity,
         firstWinnerBonus: starConfig.firstWinBonus,

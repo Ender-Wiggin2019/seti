@@ -213,6 +213,11 @@ describe('Sector', () => {
       // p1 has 4 markers (incl. overflow), p2 has 1. p1 must win.
       expect(result.winnerPlayerId).toBe('p1');
       expect(result.secondPlacePlayerId).toBe('p2');
+      expect(sector.signals).toHaveLength(sector.dataSlotCapacity);
+      expect(sector.signals[0]).toEqual({ type: 'player', playerId: 'p2' });
+      expect(sector.signals.slice(1).every((s) => s.type === 'data')).toBe(
+        true,
+      );
     });
 
     it('breaks ties by rightmost position (later-placed wins)', () => {

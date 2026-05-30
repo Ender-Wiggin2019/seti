@@ -35,6 +35,7 @@
 - Hotspot debug fixture 的 id 必须和真实 game public state 完全一致；不能用 `space-0` 这类本地假 id 代替 server 的 `ring-1-cell-0`，否则 debug 页保存成功但 game 路由不会命中同一个 override key。
 - Text mode 和 image mode 的 board hotspot 不应共享同一位置 override；如果两种模式使用不同坐标系，保持同一交互组件，但用 mode variant 拆分本地配置命名空间。
 - Hotspot debug 页的模式切换必须显式显示可选模式名和选中态，例如 `Image Mode` / `Text Mode`；不要用 `Text Mode Off` 这类状态文案，否则用户容易在错误 namespace 下编辑。
+- Sector debug fixture 不能只塞部分 signals；如果 server 语义保证 sector 最终总是填满容量，就要把 debug 示例也填满，空位会把状态示例误读成渲染 bug。
 - Rival board progress 不能只暴露当前 marker；12 个 printed progress spot 都是需要校准的 anchor，当前 marker 只是其中一个 slot 的视觉内容。
 - Hotspot debug 页的组件清单要包含 Personal Player Board；即使它不是传统点击大板，叠在 `playerBoard.png` 上的资源、tech、computer、income、mission 区域也应进入 `player-board` scene，并按 image/text variant 保存。
 - 做 SETI 客户端整体文案时，不能把“太空科幻”泛化成终端、观测台、档案室或任务控制台；若用户点名 Space Agency/太空机构，应先读取 `docs/arch/spaceAgency/rulebook.md`，围绕“强大组织、各自愿景/方法/动机、首次接触竞争、组织能力/快速起步”来命名。
