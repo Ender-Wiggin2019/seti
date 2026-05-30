@@ -28,11 +28,14 @@ const STATIC_DICT: Record<string, string> = {
   'Choose Fenwick Research Center card source':
     'client.input.choose_fenwick_source',
   'Choose lander to return': 'client.input.choose_lander_to_return',
+  'Choose landing position': 'client.input.choose_landing_position',
   'Choose Mission Relay card source':
     'client.input.choose_mission_relay_source',
   'Choose one: pay 1 energy to launch a probe, or gain 1 free movement.':
     'client.input.choose_one_pay_or_gain',
   'Choose orbiter to return': 'client.input.choose_orbiter_to_return',
+  'Choose planet to land on': 'client.input.choose_planet_to_land_on',
+  'Choose planet to orbit': 'client.input.choose_planet_to_orbit',
   'Choose probe for asteroid survey': 'client.input.choose_probe_asteroid',
   'Choose sector for TESS Satellite': 'client.input.choose_sector_tess',
   'Choose sector to mark signal': 'client.input.choose_sector_to_mark',
@@ -295,10 +298,10 @@ function translateChooseColorSectorTitle(
 }
 
 /**
- * Resource tokens server-side `MissionTracker.rewardDesc` and similar
- * formatters embed in option labels (e.g. "publicity ×2", "credit",
- * "vp ×3"). Map them through `client.resources.*` so the mission
- * triggered prompt's reward summary matches the locale.
+ * Resource tokens are emitted by the server as explicit sentinels
+ * (`[[res:credit]]`, `[[res:energy]]`, etc.) so they can be localized
+ * without touching ordinary words inside card names or other copied
+ * text. Only those sentinels are replaced here.
  */
 const RESOURCE_TOKEN_KEYS: Record<string, string> = {
   credit: 'client.resources.credit',
@@ -313,7 +316,7 @@ const RESOURCE_TOKEN_KEYS: Record<string, string> = {
 
 function translateResourceTokens(t: TFunction, text: string): string {
   return text.replace(
-    /\b(credit|energy|publicity|data|card|vp|move|exofossil)(?:\s*×(\d+))?/gi,
+    /\[\[res:(credit|energy|publicity|data|card|vp|move|exofossil)\]\](?:\s*×(\d+))?/gi,
     (_match, type: string, multiplier?: string) => {
       const key = RESOURCE_TOKEN_KEYS[type.toLowerCase()];
       const translated = key ? t(key, { defaultValue: type }) : type;
@@ -345,14 +348,12 @@ export function translateInputText(
     if (match) {
       const params = (match.groups ?? {}) as Record<string, string>;
       const translated = t(entry.key, { ...params, defaultValue: text });
-      // After dynamic pattern resolution, sweep any embedded resource
-      // tokens so labels like "Mission Card (#67): publicity ×2" pick
-      // up locale-specific resource names too.
+      // After dynamic pattern resolution, resolve any explicit
+      // resource sentinels so reward summaries localize without
+      // touching arbitrary card names.
       return translateResourceTokens(t, translated);
     }
   }
-  // Even when nothing else matched, sweep resource tokens — handles
-  // the bare "publicity ×2" rewardDesc fragment after a card-name
-  // sentinel has already been resolved.
+  // Even when nothing else matched, sweep explicit resource sentinels.
   return translateResourceTokens(t, text);
 }

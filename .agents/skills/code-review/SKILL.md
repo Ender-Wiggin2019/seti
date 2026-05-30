@@ -1,11 +1,13 @@
 ---
 name: code-review
-description: Systematic review-and-fix workflow for the SETI board game project. Use when the user asks to "review code", "check implementation", "review task X-Y", "code review", or wants feedback/fixes for code quality, logic correctness, task completion, or architecture compliance. Reviews findings, applies required fixes, and verifies the result unless the user explicitly requests read-only review.
+description: Systematic review-and-fix workflow for the SETI board game project. Use when the user asks to "review code", "check implementation", "review task X-Y", "code review", or wants feedback/fixes for code quality, logic correctness, task completion, or architecture compliance. Reviews findings, applies required fixes, and verifies the result unless the user explicitly requests read-only review. Favor long-term maintainability and best-practice design over quick patches or compatibility workarounds.
 ---
 
 # Code Review
 
 **Key rule**: Do not stop at diagnosis. For every strategy and fix, ask: "Are you 100% confident in this strategy?" If not, find the loopholes, choose proper fixes, implement them, and rerun review plus verification until the confidence is evidence-backed. If factual 100% confidence is impossible because of an external blocker, state the blocker and the exact residual risk.
+
+**Project assumption**: this is a new, unreleased codebase. Do not spend review budget on backward compatibility, migration shims, or `normalize` passes whose only purpose is to preserve legacy behavior. Prefer the cleanest correct design, even if it is not the fastest patch to write.
 
 Systematic review of SETI project code from a game-architecture perspective. Produce working code changes, not just style nits or review documents. A report in `docs/review/` is supporting evidence; it is never the only deliverable unless the user explicitly asks for a read-only review.
 
@@ -100,7 +102,8 @@ For review-and-fix mode:
 
 - Fix critical findings first, then warnings. Suggestions are fixed only when low-risk and directly tied to the requested scope.
 - Prefer tests first for bugs and rule behavior: create a failing reproduction, implement the fix, then make it pass.
-- Keep the patch minimal. Do not refactor adjacent code or add flexibility unrelated to the finding.
+- Choose the maintainable, idiomatic fix over the smallest possible patch when the two differ. Do not trade away architectural clarity for speed.
+- Keep the patch scoped to the finding, but do not preserve compatibility quirks or add `normalize` layers just to avoid touching callers.
 - Preserve package boundaries: shared pure rules/types go in `common`, engine behavior in `server`, UI behavior in `client`.
 - If a change touches both client and server behavior, update both sides in the same pass.
 - When UI renders rules, rewards, or desc icons, use existing `DescRender` / `EffectFactory` instead of hand-written placeholders.

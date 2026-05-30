@@ -3,7 +3,7 @@ import {
   type IBaseEffect,
   type IMissionEffect,
 } from '@seti/common/types/effect';
-import { EPlanet, EScanAction } from '@seti/common/types/element';
+import { EPlanet, EResource, EScanAction } from '@seti/common/types/element';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import {
@@ -41,6 +41,18 @@ const CARD_IDS_WITH_MARS_FLAVOR_TEXT = new Set([
   'SE EN 02',
   'ET.4',
 ]);
+
+const REWARD_TOKEN_SENTINELS: Record<string, string> = {
+  [EResource.CREDIT]: 'credit',
+  [EResource.ENERGY]: 'energy',
+  [EResource.DATA]: 'data',
+  [EResource.PUBLICITY]: 'publicity',
+  [EResource.CARD]: 'card',
+  [EResource.CARD_ANY]: 'card',
+  [EResource.MOVE]: 'move',
+  [EResource.SCORE]: 'vp',
+  exofossil: 'exofossil',
+};
 
 function getBespokeFullMissionMatcher(
   cardId: string,
@@ -547,7 +559,7 @@ export class MissionTracker {
         .map((r) => {
           if (r.effectType !== EEffectType.BASE) return '';
           const base = r as { type: string; value?: number };
-          return `${base.type}${base.value && base.value > 1 ? ` ×${base.value}` : ''}`;
+          return `${this.describeRewardToken(base.type)}${base.value && base.value > 1 ? ` ×${base.value}` : ''}`;
         })
         .filter(Boolean)
         .join(', ');
@@ -583,6 +595,11 @@ export class MissionTracker {
       options,
       'Mission triggered! Claim reward?',
     );
+  }
+
+  private describeRewardToken(token: string): string {
+    const sentinel = REWARD_TOKEN_SENTINELS[token];
+    return sentinel ? `[[res:${sentinel}]]` : token;
   }
 
   private markMissionFullyComplete(player: IPlayer, cardId: string): void {
