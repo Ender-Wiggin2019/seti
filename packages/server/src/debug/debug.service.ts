@@ -510,6 +510,7 @@ export class DebugService {
       );
     }
     solarSystem.rotate(discIndex);
+    game.alienState?.onSolarSystemRotated(game);
     return this.getProjectedState(gameId, viewerId);
   }
 
@@ -526,6 +527,7 @@ export class DebugService {
       );
     }
     solarSystem.rotateNextDisc();
+    game.alienState?.onSolarSystemRotated(game);
     return this.getProjectedState(gameId, viewerId);
   }
 

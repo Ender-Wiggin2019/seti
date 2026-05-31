@@ -274,6 +274,19 @@ export function SolarSystemCompareDebugPage(): React.JSX.Element {
         </section>
       ) : null}
 
+      {oumuamuaTile ? (
+        <section
+          data-testid='debug-oumuamua-location'
+          className='mb-4 rounded-md border border-violet-500/35 bg-violet-950/30 px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-violet-100'
+        >
+          {t('client.debug.solar_compare.oumuamua_location', {
+            defaultValue: 'Oumuamua: {{spaceId}} / {{sectorId}}',
+            spaceId: oumuamuaTile.spaceId,
+            sectorId: oumuamuaTile.sectorId,
+          })}
+        </section>
+      ) : null}
+
       {!gameState || !setupConfig ? (
         <div className='rounded-md border border-surface-800 bg-surface-900/70 px-3 py-6 text-center text-sm text-text-300'>
           {t('client.debug.solar_compare.initializing', {

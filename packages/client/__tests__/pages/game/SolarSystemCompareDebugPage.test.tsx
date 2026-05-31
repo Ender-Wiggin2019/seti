@@ -193,6 +193,43 @@ describe('SolarSystemCompareDebugPage', () => {
     );
   });
 
+  it('shows the current Oumuamua solar-system location after reveal', () => {
+    const gameState = createGameState();
+    sessionMock.current.gameState = {
+      ...gameState,
+      aliens: [
+        {
+          alienType: EAlienType.OUMUAMUA,
+          discovered: true,
+          board: {
+            type: 'oumuamua',
+            tile: {
+              spaceId: 'space-1',
+              sectorId: 'sector-2',
+              dataRemaining: 3,
+              markerPlayerIds: [],
+            },
+            traceSlots: [],
+          },
+        },
+      ],
+    } as unknown as IPublicGameState;
+
+    render(<SolarSystemCompareDebugPage />);
+
+    expect(screen.getByTestId('debug-oumuamua-location')).toHaveTextContent(
+      'Oumuamua: space-1 / sector-2',
+    );
+    const [imageProps, textProps] = solarViewCalls.slice(-2);
+    expect(imageProps.oumuamuaTile).toEqual({
+      spaceId: 'space-1',
+      sectorId: 'sector-2',
+      dataRemaining: 3,
+      markerPlayerIds: [],
+    });
+    expect(textProps.oumuamuaTile).toBe(imageProps.oumuamuaTile);
+  });
+
   it('uses server init and next-rotate actions', () => {
     render(<SolarSystemCompareDebugPage />);
 

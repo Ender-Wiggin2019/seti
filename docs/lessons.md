@@ -61,6 +61,7 @@
 ## Planet、Solar、Rival 与 Alien Board
 
 - Planet board 的 text/image 两种模式都要覆盖交互语义；如果 image mode 能点 moon，text mode 的 moon block 也要能通过相同 main-action payload 发 `isMoon`。
+- Oumuamua image-mode 调位置时不能改变既有旋转坐标系；如果用户只反馈定位偏移，保留原来的旋转角/局部朝向，只把可调量接到相同坐标系里。
 - Sector debug fixture 不能只塞部分 signals；如果 server 语义保证 sector 最终总是填满容量，debug 示例也要填满。
 - Rival board progress 不能只暴露当前 marker；12 个 printed progress spot 都是需要校准的 anchor，当前 marker 只是其中一个 slot 的视觉内容。
 - Alien board trace hotspot 不能只覆盖最底部/第一个 slot；所有 server 暴露为合法 option 的 trace slot 都应可标记，尤其 Mascamites blue sample path 这类非直列 trace。

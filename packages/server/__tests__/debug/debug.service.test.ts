@@ -2,6 +2,7 @@ import {
   EAlienType,
   EMainAction,
   EPhase,
+  EPlanet,
 } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import type { IPublicGameState } from '@seti/common/types/protocol/gameState';
@@ -174,12 +175,15 @@ describe('DebugService snapshot replay', () => {
     const { service, gameManager } = createService(repo);
     const state = { gameId: 'game-1' } as IPublicGameState;
     const solarSystem = { rotateNextDisc: vi.fn().mockReturnValue(1) };
-    gameManager.getGame.mockResolvedValue({ solarSystem });
+    const alienState = { onSolarSystemRotated: vi.fn() };
+    const game = { solarSystem, alienState };
+    gameManager.getGame.mockResolvedValue(game);
     gameManager.getProjectedState.mockReturnValue(state);
 
     const result = await service.solarRotateNext('game-1', 'viewer-1');
 
     expect(solarSystem.rotateNextDisc).toHaveBeenCalledTimes(1);
+    expect(alienState.onSolarSystemRotated).toHaveBeenCalledWith(game);
     expect(gameManager.getProjectedState).toHaveBeenCalledWith(
       'game-1',
       'viewer-1',
@@ -219,6 +223,55 @@ describe('DebugService snapshot replay', () => {
         (stack) => (stack.alienTokens ?? []).length > 0,
       ),
     ).toHaveLength(12);
+  });
+
+  it('keeps the Oumuamua tile metadata synced when debug solar rotation moves the planet', async () => {
+    const repo: TMockRepository = {
+      loadLatestSnapshot: vi.fn(),
+      loadSnapshot: vi.fn(),
+      create: vi.fn(),
+    } as TMockRepository;
+    const { service, gameManager } = createService(repo);
+    const game = buildTestGame();
+    game.hiddenAliens = [];
+    gameManager.getGame.mockResolvedValue(game);
+    gameManager.getProjectedState.mockImplementation((_gameId, viewerId) =>
+      projectGameState(game, viewerId),
+    );
+
+    const revealed = await service.revealAlien(
+      game.id,
+      EAlienType.OUMUAMUA,
+      'p1',
+    );
+    const revealedBoard = revealed.aliens.find(
+      (alien) => alien.board?.type === 'oumuamua',
+    )?.board;
+    if (revealedBoard?.type !== 'oumuamua' || !revealedBoard.tile) {
+      throw new Error('Expected Oumuamua tile after debug reveal');
+    }
+    const initialSpaceId = revealedBoard.tile.spaceId;
+
+    const rotated = await service.solarRotate(game.id, 2, 'p1');
+    const rotatedBoard = rotated.aliens.find(
+      (alien) => alien.board?.type === 'oumuamua',
+    )?.board;
+    if (rotatedBoard?.type !== 'oumuamua' || !rotatedBoard.tile) {
+      throw new Error('Expected Oumuamua tile after debug rotation');
+    }
+
+    expect(rotated.solarSystem.planetSpaceIds[EPlanet.OUMUAMUA]).toBeDefined();
+    expect(rotated.solarSystem.planetSpaceIds[EPlanet.OUMUAMUA]).not.toBe(
+      initialSpaceId,
+    );
+    expect(rotatedBoard.tile.spaceId).toBe(
+      rotated.solarSystem.planetSpaceIds[EPlanet.OUMUAMUA],
+    );
+    expect(rotatedBoard.tile.sectorId).toBe(
+      rotated.sectors[
+        rotated.solarSystem.spaceStates[rotatedBoard.tile.spaceId].sectorIndex
+      ]?.sectorId,
+    );
   });
 });
 
