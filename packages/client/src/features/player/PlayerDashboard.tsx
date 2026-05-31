@@ -76,6 +76,8 @@ const PLAYER_BOARD_RESOURCE_BASE_WIDTH = 600;
 const PLAYER_BOARD_RESOURCE_BASE_HEIGHT = 48;
 const PLAYER_BOARD_MAIN_BASE_WIDTH = 1000;
 const PLAYER_BOARD_MAIN_BASE_HEIGHT = 420;
+const PLAYER_BOARD_AUX_BASE_WIDTH = 1000;
+const PLAYER_BOARD_AUX_BASE_HEIGHT = 120;
 const PLAYER_BOARD_IMAGE_SRC =
   '/assets/seti/refine/8e4f86f5-9689-4000-88fd-344aa94604eb.png';
 const PLAYER_BOARD_IMAGE_BASE_WIDTH = 2160;
@@ -119,24 +121,6 @@ const PLAYER_BOARD_MAIN_HOTSPOTS: IPersonalBoardHotspot[] = [
     heightPct: 25,
     color: '#22c55e',
   },
-  {
-    id: 'income',
-    label: 'player board income',
-    xPct: 25,
-    yPct: 86,
-    widthPct: 45,
-    heightPct: 20,
-    color: '#a78bfa',
-  },
-  {
-    id: 'mission-summary',
-    label: 'player board mission summary',
-    xPct: 74,
-    yPct: 86,
-    widthPct: 38,
-    heightPct: 20,
-    color: '#a78bfa',
-  },
 ];
 
 const PLAYER_BOARD_IMAGE_ANCHORS: IPersonalBoardHotspot[] = [
@@ -176,22 +160,25 @@ const PLAYER_BOARD_IMAGE_ANCHORS: IPersonalBoardHotspot[] = [
     heightPct: 18,
     color: '#22c55e',
   },
+];
+
+const PLAYER_BOARD_AUX_HOTSPOTS: IPersonalBoardHotspot[] = [
   {
     id: 'income',
     label: 'player board income',
-    xPct: 4,
-    yPct: 68,
-    widthPct: 7,
-    heightPct: 51,
+    xPct: 25,
+    yPct: 50,
+    widthPct: 50,
+    heightPct: 100,
     color: '#a78bfa',
   },
   {
     id: 'mission-summary',
     label: 'player board mission summary',
-    xPct: 91,
-    yPct: 70,
-    widthPct: 15,
-    heightPct: 18,
+    xPct: 75,
+    yPct: 50,
+    widthPct: 50,
+    heightPct: 100,
     color: '#a78bfa',
   },
 ];
@@ -288,9 +275,8 @@ const PLAYER_BOARD_TECH_POINTS: Partial<
  *   2. TechRow      — Launch (4) and Scan (5) tech slots
  *   3. ComputerRow  — Data Pool, six computer columns, and Analyze cap
  *
- * A compact aux strip below carries the income forecast, piece inventory,
- * and mission/tech counts so they remain glanceable without dominating
- * the player board itself.
+ * A compact aux strip below carries the income forecast and mission/tech
+ * counts so they remain present regardless of the board render mode.
  */
 export function PlayerDashboard({
   player,
@@ -362,25 +348,24 @@ export function PlayerDashboard({
         <PlayerBoardTextModePanel
           player={player}
           playerTechs={playerTechs}
-          income={income}
-          missionCount={missionCount}
-          techCount={techCount}
-          cardInputActive={cardInputActive}
           onFreeAction={onFreeAction}
         />
       ) : (
         <PlayerBoardImageModePanel
           player={player}
           playerTechs={playerTechs}
-          income={income}
-          missionCount={missionCount}
-          techCount={techCount}
-          cardInputActive={cardInputActive}
           onFreeAction={onFreeAction}
           onMainAction={onMainAction}
           availableMainActions={availableMainActions}
         />
       )}
+      <PlayerBoardAuxiliaryStrip
+        income={income}
+        missionCount={missionCount}
+        techCount={techCount}
+        cardInputActive={cardInputActive}
+        variant={hotspotVariant}
+      />
     </section>
   );
 }
@@ -388,22 +373,12 @@ export function PlayerDashboard({
 function PlayerBoardTextModePanel({
   player,
   playerTechs,
-  income,
-  missionCount,
-  techCount,
-  cardInputActive,
   onFreeAction,
 }: {
   player: IPublicPlayerState;
   playerTechs: ETechId[];
-  income?: IPlayerIncomeInfo;
-  missionCount: number;
-  techCount: number;
-  cardInputActive: boolean;
   onFreeAction: (action: IFreeActionRequest) => void;
 }): React.JSX.Element {
-  const { t } = useTranslation('common');
-
   return (
     <div className='instrument-panel relative overflow-hidden p-1.5'>
       <div className='relative flex flex-col gap-1.5'>
@@ -420,70 +395,6 @@ function PlayerBoardTextModePanel({
             })
           }
         />
-
-        <div className='grid grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] gap-1.5'>
-          <IncomeTracker
-            creditIncome={income?.credit ?? 0}
-            energyIncome={income?.energy ?? 0}
-            cardIncome={income?.card ?? 0}
-            tuckedCreditIncome={income?.tuckedCredit}
-            tuckedEnergyIncome={income?.tuckedEnergy}
-            tuckedCardIncome={income?.tuckedCard}
-          />
-
-          <section className='instrument-panel p-2'>
-            <div className='section-head mb-1.5'>
-              <span aria-hidden className='section-head__tick' />
-              <p className='micro-label'>
-                {t('client.player_dashboard.missions')}
-              </p>
-              <div aria-hidden className='section-head__rule' />
-            </div>
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center gap-1.5'>
-                <img
-                  src='/assets/seti/icons/missionSatellite.png'
-                  alt=''
-                  aria-hidden
-                  className='h-4 w-4 opacity-90'
-                />
-                <span className='font-mono text-[10px] uppercase tracking-[0.1em] text-text-500'>
-                  {t('client.player_dashboard.played')}
-                </span>
-              </div>
-              <span className='readout text-sm font-semibold leading-none text-text-100'>
-                {missionCount}
-              </span>
-            </div>
-            <div className='mt-1.5 flex items-center justify-between'>
-              <div className='flex items-center gap-1.5'>
-                <img
-                  src='/assets/seti/icons/progress.png'
-                  alt=''
-                  aria-hidden
-                  className='h-4 w-4 opacity-90'
-                />
-                <span className='font-mono text-[10px] uppercase tracking-[0.1em] text-text-500'>
-                  {t('client.player_dashboard.tech')}
-                </span>
-              </div>
-              <span className='readout text-sm font-semibold leading-none text-text-100'>
-                {techCount}
-              </span>
-            </div>
-            {cardInputActive ? (
-              <div className='mt-2 flex items-center gap-1.5 border-t border-[color:var(--metal-edge-soft)] pt-1.5'>
-                <span
-                  aria-hidden
-                  className='h-1.5 w-1.5 shrink-0 rounded-full bg-accent-500 shadow-[0_0_6px_oklch(0.68_0.11_240/0.8)] motion-safe:animate-pulse'
-                />
-                <p className='font-mono text-[10px] uppercase tracking-[0.12em] text-accent-400'>
-                  {t('client.player_dashboard.card_selection_active')}
-                </p>
-              </div>
-            ) : null}
-          </section>
-        </div>
       </div>
       <PlayerBoardMainHotspots variant='text' />
     </div>
@@ -493,20 +404,12 @@ function PlayerBoardTextModePanel({
 function PlayerBoardImageModePanel({
   player,
   playerTechs,
-  income,
-  missionCount,
-  techCount,
-  cardInputActive,
   onFreeAction,
   onMainAction,
   availableMainActions,
 }: {
   player: IPublicPlayerState;
   playerTechs: ETechId[];
-  income?: IPlayerIncomeInfo;
-  missionCount: number;
-  techCount: number;
-  cardInputActive: boolean;
   onFreeAction: (action: IFreeActionRequest) => void;
   onMainAction?: (action: IMainActionRequest) => void;
   availableMainActions?: readonly EMainAction[];
@@ -529,12 +432,7 @@ function PlayerBoardImageModePanel({
         draggable={false}
       />
 
-      <PlayerBoardImageAnchors
-        income={income}
-        missionCount={missionCount}
-        techCount={techCount}
-        cardInputActive={cardInputActive}
-      />
+      <PlayerBoardImageAnchors />
       <PlayerBoardMainActionHotspots
         onMainAction={onMainAction}
         availableMainActions={availableMainActions}
@@ -555,17 +453,109 @@ function PlayerBoardImageModePanel({
   );
 }
 
-function PlayerBoardImageAnchors({
+function PlayerBoardAuxiliaryStrip({
   income,
   missionCount,
   techCount,
   cardInputActive,
+  variant,
 }: {
   income?: IPlayerIncomeInfo;
   missionCount: number;
   techCount: number;
   cardInputActive: boolean;
+  variant: 'image' | 'text';
 }): React.JSX.Element {
+  const { t } = useTranslation('common');
+
+  return (
+    <div className='relative grid grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] gap-1.5'>
+      <IncomeTracker
+        creditIncome={income?.credit ?? 0}
+        energyIncome={income?.energy ?? 0}
+        cardIncome={income?.card ?? 0}
+        tuckedCreditIncome={income?.tuckedCredit}
+        tuckedEnergyIncome={income?.tuckedEnergy}
+        tuckedCardIncome={income?.tuckedCard}
+      />
+
+      <section
+        className='instrument-panel p-2'
+        data-testid='player-board-mission-summary'
+      >
+        <div className='section-head mb-1.5'>
+          <span aria-hidden className='section-head__tick' />
+          <p className='micro-label'>{t('client.player_dashboard.missions')}</p>
+          <div aria-hidden className='section-head__rule' />
+        </div>
+        <div className='flex items-center justify-between'>
+          <div className='flex items-center gap-1.5'>
+            <img
+              src='/assets/seti/icons/missionSatellite.png'
+              alt=''
+              aria-hidden
+              className='h-4 w-4 opacity-90'
+            />
+            <span className='font-mono text-[10px] uppercase tracking-[0.1em] text-text-500'>
+              {t('client.player_dashboard.played')}
+            </span>
+          </div>
+          <span className='readout text-sm font-semibold leading-none text-text-100'>
+            {missionCount}
+          </span>
+        </div>
+        <div className='mt-1.5 flex items-center justify-between'>
+          <div className='flex items-center gap-1.5'>
+            <img
+              src='/assets/seti/icons/progress.png'
+              alt=''
+              aria-hidden
+              className='h-4 w-4 opacity-90'
+            />
+            <span className='font-mono text-[10px] uppercase tracking-[0.1em] text-text-500'>
+              {t('client.player_dashboard.tech')}
+            </span>
+          </div>
+          <span className='readout text-sm font-semibold leading-none text-text-100'>
+            {techCount}
+          </span>
+        </div>
+        {cardInputActive ? (
+          <div className='mt-2 flex items-center gap-1.5 border-t border-[color:var(--metal-edge-soft)] pt-1.5'>
+            <span
+              aria-hidden
+              className='h-1.5 w-1.5 shrink-0 rounded-full bg-accent-500 shadow-[0_0_6px_oklch(0.68_0.11_240/0.8)] motion-safe:animate-pulse'
+            />
+            <p className='font-mono text-[10px] uppercase tracking-[0.12em] text-accent-400'>
+              {t('client.player_dashboard.card_selection_active')}
+            </p>
+          </div>
+        ) : null}
+      </section>
+
+      {PLAYER_BOARD_AUX_HOTSPOTS.map((hotspot) => (
+        <HotspotAnchor
+          key={`player-board-aux-${hotspot.id}`}
+          sceneId='player-board'
+          hotspotId={hotspot.id}
+          variant={variant}
+          baseWidth={PLAYER_BOARD_AUX_BASE_WIDTH}
+          baseHeight={PLAYER_BOARD_AUX_BASE_HEIGHT}
+          x={(PLAYER_BOARD_AUX_BASE_WIDTH * hotspot.xPct) / 100}
+          y={(PLAYER_BOARD_AUX_BASE_HEIGHT * hotspot.yPct) / 100}
+          width={(PLAYER_BOARD_AUX_BASE_WIDTH * hotspot.widthPct) / 100}
+          height={(PLAYER_BOARD_AUX_BASE_HEIGHT * hotspot.heightPct) / 100}
+          shape='rect'
+          color={hotspot.color}
+          opacity={0.2}
+          debugLabel={hotspot.label}
+        />
+      ))}
+    </div>
+  );
+}
+
+function PlayerBoardImageAnchors(): React.JSX.Element {
   return (
     <>
       {PLAYER_BOARD_IMAGE_ANCHORS.map((hotspot) => (
@@ -584,40 +574,9 @@ function PlayerBoardImageAnchors({
           color={hotspot.color}
           opacity={0.2}
           debugLabel={hotspot.label}
-        >
-          {hotspot.id === 'income' ? (
-            <ImageReadout>
-              +{income?.credit ?? 0}C +{income?.energy ?? 0}E +
-              {income?.card ?? 0}
-            </ImageReadout>
-          ) : null}
-          {hotspot.id === 'mission-summary' ? (
-            <span className='flex flex-col items-center gap-0.5'>
-              <ImageReadout>{missionCount}M</ImageReadout>
-              <ImageReadout>{techCount}T</ImageReadout>
-              {cardInputActive ? (
-                <span
-                  aria-hidden
-                  className='h-1.5 w-1.5 rounded-full bg-accent-300 shadow-[0_0_8px_oklch(0.82_0.11_240/0.8)] motion-safe:animate-pulse'
-                />
-              ) : null}
-            </span>
-          ) : null}
-        </HotspotAnchor>
+        />
       ))}
     </>
-  );
-}
-
-function ImageReadout({
-  children,
-}: {
-  children: React.ReactNode;
-}): React.JSX.Element {
-  return (
-    <span className='pointer-events-none flex min-h-6 min-w-6 items-center justify-center rounded-[3px] border border-background-950/70 bg-background-950/85 px-1.5 readout text-[10px] font-semibold text-text-100 shadow-hairline-inset'>
-      {children}
-    </span>
   );
 }
 

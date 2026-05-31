@@ -1,3 +1,4 @@
+import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { DEFAULT_COLUMN_CONFIGS } from '@seti/common/types/computer';
 import { EResource, ETech } from '@seti/common/types/element';
 import { EOrganizationId } from '@seti/common/types/organization';
@@ -9,6 +10,16 @@ import { PlayerDashboard } from '@/features/player';
 import { getTechTileImageById } from '@/features/tech/techTileImages';
 import { useDebugStore } from '@/stores/debugStore';
 import { createMockPlayerState } from '../../../test/mocks/gameState';
+
+function createCard(id: string, name = `Card ${id}`): IBaseCard {
+  return {
+    id,
+    name,
+    price: 1,
+    income: EResource.CREDIT,
+    effects: [],
+  };
+}
 
 describe('PlayerDashboard', () => {
   beforeEach(() => {
@@ -62,6 +73,29 @@ describe('PlayerDashboard', () => {
     expect(screen.queryByTestId('tech-row')).not.toBeInTheDocument();
     expect(screen.queryByTestId('computer-row')).not.toBeInTheDocument();
     expect(screen.getAllByTestId(/^player-board-data-token-/)).toHaveLength(2);
+  });
+
+  it('keeps income and mission summary areas visible in image mode', () => {
+    render(
+      <PlayerDashboard
+        player={createMockPlayerState({
+          techs: [ETechId.PROBE_ASTEROID],
+        })}
+        pendingInput={null}
+        onFreeAction={() => undefined}
+        income={{ credit: 2, energy: 1, card: 1 }}
+        playedMissions={[createCard('mission-1'), createCard('mission-2')]}
+      />,
+    );
+
+    expect(screen.getByTestId('player-board-image-mode')).toBeInTheDocument();
+    expect(screen.getByTestId('income-tracker')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('player-board-mission-summary'),
+    ).toHaveTextContent('2');
+    expect(
+      screen.getByTestId('player-board-mission-summary'),
+    ).toHaveTextContent('1');
   });
 
   it('uses image-mode computer hotspots for place-data interaction', () => {
