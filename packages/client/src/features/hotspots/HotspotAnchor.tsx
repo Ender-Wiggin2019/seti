@@ -4,7 +4,8 @@ import {
   geometryToPercentStyle,
   getHotspotStorageSceneId,
   type IHotspotGeometry,
-  MIN_HOTSPOT_SIZE,
+  moveHotspotGeometry,
+  resizeHotspotGeometry,
   resolveHotspotGeometry,
   type THotspotVariant,
 } from '@/features/hotspots/hotspotConfig';
@@ -70,10 +71,6 @@ function readClientPoint(
     clientX: Number.isFinite(rawClientX) ? rawClientX : 0,
     clientY: Number.isFinite(rawClientY) ? rawClientY : 0,
   };
-}
-
-function clampPercent(value: number): number {
-  return Math.min(100, Math.max(0, value));
 }
 
 function applyColorOpacity(color: string, opacity: number): string {
@@ -186,31 +183,22 @@ export function HotspotAnchor({
     const dy = point.clientY - edit.startClientY;
 
     if (edit.mode === 'resize') {
-      commitOverride({
-        ...edit.startGeometry,
-        width: Math.max(MIN_HOTSPOT_SIZE, edit.startGeometry.width + dx),
-        height: Math.max(MIN_HOTSPOT_SIZE, edit.startGeometry.height + dy),
-      });
+      commitOverride(resizeHotspotGeometry(edit.startGeometry, dx, dy));
       return;
     }
 
     const rect = edit.sceneElement.getBoundingClientRect();
-    if (rect.width <= 0 || rect.height <= 0) return;
-    commitOverride({
-      ...edit.startGeometry,
-      x:
-        (clampPercent(
-          (edit.startGeometry.x / baseWidth) * 100 + (dx / rect.width) * 100,
-        ) /
-          100) *
-        baseWidth,
-      y:
-        (clampPercent(
-          (edit.startGeometry.y / baseHeight) * 100 + (dy / rect.height) * 100,
-        ) /
-          100) *
-        baseHeight,
+    const nextGeometry = moveHotspotGeometry({
+      geometry: edit.startGeometry,
+      baseWidth,
+      baseHeight,
+      sceneWidth: rect.width,
+      sceneHeight: rect.height,
+      deltaX: dx,
+      deltaY: dy,
     });
+    if (!nextGeometry) return;
+    commitOverride(nextGeometry);
   }
 
   function handleWindowPointerUp(): void {

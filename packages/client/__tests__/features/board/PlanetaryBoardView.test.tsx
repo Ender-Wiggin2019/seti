@@ -153,9 +153,15 @@ describe('PlanetaryBoardView', () => {
     expect(orbitToken).toHaveAttribute('data-hotspot-scene', 'planet-board');
     expect(orbitToken).toHaveAttribute(
       'data-hotspot-id',
-      `${EPlanet.MARS}-orbit-token-0`,
+      `${EPlanet.MARS}-orbit-0`,
     );
     expect(orbitToken).toHaveAttribute('data-hotspot-role', 'anchor');
+
+    const landingToken = screen.getByLabelText('planet-board-token-player-2');
+    expect(landingToken).toHaveAttribute(
+      'data-hotspot-id',
+      `${EPlanet.MARS}-planet-land-0`,
+    );
 
     const alienToken = screen.getByTestId(
       'planet-board-alien-token-glyphids-token|planet|mars',
@@ -170,6 +176,32 @@ describe('PlanetaryBoardView', () => {
     expect(screen.getByText('Mars orbit (player-1)')).toBeInTheDocument();
     fireEvent.mouseEnter(alienToken);
     expect(screen.getByText('glyph-green glyph token')).toBeInTheDocument();
+  });
+
+  it('reuses moon landing hotspot ids for occupied image-mode moon tokens', () => {
+    const planetaryBoard = createPlanetaryBoardMock();
+    planetaryBoard.planets[EPlanet.JUPITER] = {
+      orbitSlots: [],
+      landingSlots: [],
+      firstOrbitClaimed: false,
+      firstLandDataBonusTaken: [false],
+      moonOccupants: [{ playerId: 'player-3', moonId: 'jupiter-europa' }],
+    };
+
+    render(
+      <PlanetaryBoardView
+        planetaryBoard={planetaryBoard}
+        pendingInput={null}
+        playerColors={{ 'player-3': 'green' }}
+      />,
+    );
+
+    expect(
+      screen.getByLabelText('planet-board-token-player-3'),
+    ).toHaveAttribute(
+      'data-hotspot-id',
+      `${EPlanet.JUPITER}-moon-jupiter-europa`,
+    );
   });
 
   it('renders text-mode planet cards from projected board state', () => {

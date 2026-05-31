@@ -70,6 +70,59 @@ export function resolveHotspotGeometry(
   };
 }
 
+export function resizeHotspotGeometry(
+  geometry: IHotspotGeometry,
+  deltaX: number,
+  deltaY: number,
+): IHotspotGeometry {
+  return {
+    ...geometry,
+    width: clampSize(geometry.width + deltaX),
+    height: clampSize(geometry.height + deltaY),
+  };
+}
+
+export interface IMoveHotspotGeometryParams {
+  geometry: IHotspotGeometry;
+  baseWidth: number;
+  baseHeight: number;
+  sceneWidth: number;
+  sceneHeight: number;
+  deltaX: number;
+  deltaY: number;
+}
+
+function clampPercent(value: number): number {
+  return Math.min(100, Math.max(0, value));
+}
+
+export function moveHotspotGeometry({
+  geometry,
+  baseWidth,
+  baseHeight,
+  sceneWidth,
+  sceneHeight,
+  deltaX,
+  deltaY,
+}: IMoveHotspotGeometryParams): IHotspotGeometry | undefined {
+  if (sceneWidth <= 0 || sceneHeight <= 0) return undefined;
+  return {
+    ...geometry,
+    x:
+      (clampPercent(
+        (geometry.x / baseWidth) * 100 + (deltaX / sceneWidth) * 100,
+      ) /
+        100) *
+      baseWidth,
+    y:
+      (clampPercent(
+        (geometry.y / baseHeight) * 100 + (deltaY / sceneHeight) * 100,
+      ) /
+        100) *
+      baseHeight,
+  };
+}
+
 export function getHotspotStorageSceneId(
   sceneId: string,
   variant: THotspotVariant = 'shared',

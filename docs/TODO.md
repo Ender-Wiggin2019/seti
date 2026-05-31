@@ -1,5 +1,30 @@
 # TODO
 
+## 2026-05-31 hotspot maintainability and anchor sync audit
+
+### Assumptions
+
+- This continuation reviews the current branch state, with no E2E execution.
+- Hotspot geometry math should have one shared implementation for anchors and buttons.
+- Occupied planet-board probe markers should reuse the same slot hotspot id as the clickable orbit/land/moon target so saved calibration moves both layers together.
+
+### Plan
+
+- [x] Re-review the latest branch diff for duplicated hotspot math and client/server/common boundary drift.
+- [x] Extract shared hotspot move/resize geometry helpers and cover them with unit tests.
+- [x] Align planet-board occupied orbit/land/moon token anchors with their canonical target hotspot ids and cover the sync behavior.
+- [x] Run focused client tests, full client/server/common unit suites, typechecks, and lint where relevant.
+
+### Review
+
+- Fixed duplicated hotspot edit math by moving resize and move calculations into `hotspotConfig.ts`; `HotspotAnchor` and `HotspotButton` now share rectangular resize, minimum-size, and scene-pixel move behavior.
+- Fixed a planet-board anchor-sync hole: occupied image-mode orbit, planet-land, and moon-land probe markers now reuse the corresponding canonical target hotspot ids (`planet-orbit-N`, `planet-planet-land-N`, `planet-moon-ID`) instead of independent `*-token-*` ids.
+- Verification passed: `pnpm --filter @seti/client test -- hotspotConfig.test.ts HotspotAnchor.test.tsx HotspotButton.test.tsx PlanetaryBoardView.test.tsx`.
+- Verification passed: `pnpm --filter @seti/client test -- PlayerDashboard.test.tsx HotspotsDebugPage.test.tsx SolarSystemView.test.tsx GameLayout.test.tsx GameLayoutRouting.test.tsx`.
+- Verification passed: `pnpm --filter @seti/client test` (83 files / 441 tests), `pnpm --filter @seti/server test` (332 files / 2223 tests), and `pnpm --filter @ender-seti/common test` (23 files / 257 tests).
+- Verification passed: client/common/server typecheck, client/common lint, and targeted Biome check for touched client files.
+- `pnpm --filter @seti/server lint` still reports one pre-existing formatting issue in `packages/server/src/engine/player/Player.ts`; this pass did not edit unrelated server formatting.
+
 ## 2026-05-30 player board image mode operability follow-up
 
 ### Assumptions

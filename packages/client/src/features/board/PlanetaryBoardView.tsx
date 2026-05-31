@@ -169,6 +169,22 @@ interface IPlanetTarget extends IPlanetHotspot {
   selectOptions?: { isMoon?: boolean; moonId?: string };
 }
 
+function getPlanetOrbitHotspotId(planet: EPlanet, index: number): string {
+  return `${planet}-orbit-${index}`;
+}
+
+function getPlanetLandingHotspotId(
+  planet: EPlanet,
+  slotKind: 'planet' | 'moon',
+  slotIndex: number,
+  moonId?: string,
+): string {
+  if (slotKind === 'moon') {
+    return `${planet}-moon-${moonId}`;
+  }
+  return `${planet}-planet-land-${slotIndex}`;
+}
+
 function getMoonOccupants(
   state: IPublicPlanetState,
 ): IPublicMoonOccupantState[] {
@@ -235,8 +251,15 @@ function getPlanetTargets(
     return {
       ...hotspot,
       hotspotId: isMoonTarget
-        ? `${planet}-moon-${hotspot.moonId}`
-        : `${planet}-${hotspot.kind}-${hotspot.index}`,
+        ? getPlanetLandingHotspotId(
+            planet,
+            'moon',
+            hotspot.index,
+            hotspot.moonId,
+          )
+        : hotspot.kind === 'orbit'
+          ? getPlanetOrbitHotspotId(planet, hotspot.index)
+          : getPlanetLandingHotspotId(planet, 'planet', hotspot.index),
       label: isMoonTarget
         ? `${config.label} ${hotspot.moonName ?? hotspot.moonId ?? 'moon'}`
         : `${config.label} ${hotspot.kind}`,
@@ -510,7 +533,7 @@ export function PlanetaryBoardView({
                             player: occupied.playerId,
                             defaultValue: `${config.label} orbit (${occupied.playerId})`,
                           })}
-                          hotspotId={`${planet}-orbit-token-${index}`}
+                          hotspotId={getPlanetOrbitHotspotId(planet, index)}
                         />
                       );
                     })}
@@ -551,7 +574,12 @@ export function PlanetaryBoardView({
                               defaultValue: `${config.label} ${slotKind} (${token.playerId})`,
                             },
                           )}
-                          hotspotId={`${planet}-landing-token-${index}`}
+                          hotspotId={getPlanetLandingHotspotId(
+                            planet,
+                            slotKind,
+                            index,
+                            moonId,
+                          )}
                         />
                       );
                     })}
