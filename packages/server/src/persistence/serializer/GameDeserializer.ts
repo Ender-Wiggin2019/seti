@@ -189,6 +189,15 @@ function deserializeSolarSystem(dto: IGameStateDto): SolarSystem | null {
       ...element,
       type: element.type as never,
     })),
+    layers: space.layers.map((layer) => ({
+      discIndex: layer.discIndex,
+      element: {
+        ...layer.element,
+        type: layer.element.type as never,
+      },
+      hasPublicityIcon: layer.hasPublicityIcon,
+      publicityIconAmount: layer.publicityIconAmount,
+    })),
     occupants: space.occupants.map((probe) => ({ ...probe })),
   }));
 

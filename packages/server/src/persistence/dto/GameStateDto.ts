@@ -71,6 +71,16 @@ export interface ISolarSystemDto {
       amount: number;
       planet?: EPlanet;
     }>;
+    layers: Array<{
+      discIndex: number;
+      element: {
+        type: string;
+        amount: number;
+        planet?: EPlanet;
+      };
+      hasPublicityIcon: boolean;
+      publicityIconAmount?: number;
+    }>;
     occupants: Array<{
       id: string;
       playerId: string;

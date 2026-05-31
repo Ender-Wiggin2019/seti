@@ -26,6 +26,7 @@ import {
 } from '@/engine/alien/AlienBoard.js';
 import { AlienState } from '@/engine/alien/AlienState.js';
 import { Game } from '@/engine/Game.js';
+import { toPublicSolarSystemState } from '@/engine/utils/stateProjection.js';
 import { deserializeGame } from '@/persistence/serializer/GameDeserializer.js';
 import { serializeGame } from '@/persistence/serializer/GameSerializer.js';
 import { resolveSetupTucks } from '../../helpers/TestGameBuilder.js';
@@ -69,6 +70,13 @@ function getPlayer(game: Game, playerId: string) {
     throw new Error(`expected player ${playerId}`);
   }
   return player;
+}
+
+function requireSolarSystem(game: Game): NonNullable<Game['solarSystem']> {
+  if (!game.solarSystem) {
+    throw new Error('expected solar system');
+  }
+  return game.solarSystem;
 }
 
 function getSetupOrganizationOptions(
@@ -204,6 +212,23 @@ describe('GameDeserializer', () => {
       dto.solarSystem?.spaces.find((candidate) => candidate.id === space.id),
     ).toMatchObject({ hasPublicityIcon: true, publicityIconAmount: 2 });
     expect(restoredSpace?.publicityIconAmount).toBe(2);
+  });
+
+  it('preserves solar-system wheel layers so rotation after reload matches live games', () => {
+    const game = createTestGame();
+    resolveSetupTucks(game);
+    const restored = deserializeGame(serializeGame(game, 1));
+    const liveSolarSystem = requireSolarSystem(game);
+    const restoredSolarSystem = requireSolarSystem(restored);
+
+    for (let rotation = 0; rotation < 12; rotation += 1) {
+      liveSolarSystem.rotateNextDisc();
+      restoredSolarSystem.rotateNextDisc();
+
+      expect(toPublicSolarSystemState(restoredSolarSystem)).toEqual(
+        toPublicSolarSystemState(liveSolarSystem),
+      );
+    }
   });
 
   it('rejects snapshots missing required round counters', () => {

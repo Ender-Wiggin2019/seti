@@ -558,25 +558,45 @@ function serializeSolarSystem(game: IGame): ISolarSystemDto | null {
   }
 
   return {
-    spaces: game.solarSystem.spaces.map((space) => ({
-      id: space.id,
-      ringIndex: space.ringIndex,
-      indexInRing: space.indexInRing,
-      discIndex: space.discIndex,
-      hasPublicityIcon: space.hasPublicityIcon,
-      ...(space.publicityIconAmount !== undefined
-        ? { publicityIconAmount: space.publicityIconAmount }
-        : {}),
-      elements: space.elements.map((element) => ({
-        type: element.type,
-        amount: element.amount,
-        planet: element.planet,
-      })),
-      occupants: space.occupants.map((probe) => ({
-        id: probe.id,
-        playerId: probe.playerId,
-      })),
-    })),
+    spaces: game.solarSystem.spaces.map((space) => {
+      if (!space.layers) {
+        throw new Error(
+          `Cannot serialize solar-system space without layers: ${space.id}`,
+        );
+      }
+
+      return {
+        id: space.id,
+        ringIndex: space.ringIndex,
+        indexInRing: space.indexInRing,
+        discIndex: space.discIndex,
+        hasPublicityIcon: space.hasPublicityIcon,
+        ...(space.publicityIconAmount !== undefined
+          ? { publicityIconAmount: space.publicityIconAmount }
+          : {}),
+        elements: space.elements.map((element) => ({
+          type: element.type,
+          amount: element.amount,
+          planet: element.planet,
+        })),
+        layers: space.layers.map((layer) => ({
+          discIndex: layer.discIndex,
+          element: {
+            type: layer.element.type,
+            amount: layer.element.amount,
+            planet: layer.element.planet,
+          },
+          hasPublicityIcon: layer.hasPublicityIcon,
+          ...(layer.publicityIconAmount !== undefined
+            ? { publicityIconAmount: layer.publicityIconAmount }
+            : {}),
+        })),
+        occupants: space.occupants.map((probe) => ({
+          id: probe.id,
+          playerId: probe.playerId,
+        })),
+      };
+    }),
     sectorNearStars: [...game.solarSystem.sectorNearStars],
     discs: game.solarSystem.discs.map((disc) => ({
       index: disc.index,
