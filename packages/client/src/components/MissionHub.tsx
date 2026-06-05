@@ -55,28 +55,13 @@ const STAT_SIGNAL = {
   players: 'green',
 } as const;
 
-const HERO_SCENE_ASSETS = [
-  {
-    src: '/assets/seti/sprites/terrain_00_02.webp',
-    className:
-      'right-[9%] top-[4%] w-[40%] min-w-[250px] max-w-[470px] rotate-[-5deg] opacity-92 max-sm:right-[-16%] max-sm:top-[14%] max-sm:w-[290px]',
-  },
-  {
-    src: '/assets/seti/sprites/terrain_00_00.webp',
-    className:
-      'bottom-[-4%] left-[4%] w-[32%] min-w-[190px] max-w-[340px] opacity-80 max-sm:left-[-10%] max-sm:w-[220px]',
-  },
-  {
-    src: '/assets/seti/sprites/terrain_01_01.webp',
-    className:
-      'bottom-[2%] right-[22%] w-[24%] min-w-[150px] max-w-[270px] opacity-68 max-sm:right-[16%] max-sm:bottom-[12%] max-sm:w-[160px]',
-  },
-  {
-    src: '/assets/seti/sprites/objects_02_00.webp',
-    className:
-      'right-[1%] top-[14%] w-[18%] min-w-[110px] max-w-[180px] opacity-48 max-md:hidden',
-  },
-];
+const MISSION_HERO_SCENE = '/assets/seti/sprites/terrain_00_02.webp';
+
+const STAT_SCENES = {
+  waiting: '/assets/seti/sprites/terrain_01_00.webp',
+  playing: '/assets/seti/sprites/terrain_00_02.webp',
+  players: '/assets/seti/sprites/terrain_01_01.webp',
+} as const;
 
 const ASSET_STRIP_ITEMS = [
   {
@@ -135,7 +120,7 @@ export function MissionHubView({
           value={stats.waiting}
           sub={statLabels.waitingSub}
           signal={STAT_SIGNAL.waiting}
-          bgTile='terrain_01_00.webp'
+          scene={STAT_SCENES.waiting}
         />
         <MissionStatTile
           id='playing'
@@ -143,7 +128,7 @@ export function MissionHubView({
           value={stats.playing}
           sub={statLabels.playingSub}
           signal={STAT_SIGNAL.playing}
-          bgTile='terrain_00_02.webp'
+          scene={STAT_SCENES.playing}
         />
         <MissionStatTile
           id='players'
@@ -151,7 +136,7 @@ export function MissionHubView({
           value={stats.players}
           sub={statLabels.playersSub}
           signal={STAT_SIGNAL.players}
-          bgTile='terrain_01_01.webp'
+          scene={STAT_SCENES.players}
         />
       </section>
 
@@ -160,15 +145,11 @@ export function MissionHubView({
         data-testid='mission-room-list'
         data-panel-scene='list'
       >
-        <span
+        <img
           aria-hidden
-          className='pointer-events-none absolute inset-x-0 bottom-0 h-[58%] opacity-[0.18]'
-          style={{
-            backgroundImage: "url('/assets/seti/sprites/terrain_02_02.webp')",
-            backgroundPosition: 'center bottom',
-            backgroundRepeat: 'repeat-x',
-            backgroundSize: '280px auto',
-          }}
+          src='/assets/seti/sprites/terrain_02_02.webp'
+          alt=''
+          className='pointer-events-none absolute inset-x-0 bottom-0 h-[62%] w-full object-cover object-bottom opacity-[0.16]'
         />
         <span
           aria-hidden
@@ -244,29 +225,35 @@ function MissionHero({
       )}
       data-testid='mission-hero-scene'
       data-scene='lunar-lobby'
+      data-scene-treatment='single-image'
     >
-      {HERO_SCENE_ASSETS.map((asset) => (
-        <SceneImage
-          key={asset.src}
-          src={asset.src}
-          alt=''
-          className={asset.className}
-        />
-      ))}
-      <span
+      <img
+        src={MISSION_HERO_SCENE}
+        alt=''
         aria-hidden
-        className='absolute right-[12%] top-[-18%] h-[360px] w-[240px] rotate-[24deg] bg-[linear-gradient(180deg,oklch(0.66_0.13_48/0.34),transparent_78%)] blur-[1px]'
+        data-testid='mission-hero-image'
+        className='pointer-events-none absolute inset-y-[-4%] right-[8%] h-[108%] w-auto max-w-none select-none object-contain opacity-[0.9] max-sm:right-[-18%]'
+        style={{
+          WebkitMaskImage:
+            'linear-gradient(90deg, transparent 0%, black 28%, black 100%)',
+          maskImage:
+            'linear-gradient(90deg, transparent 0%, black 28%, black 100%)',
+        }}
       />
       <span
         aria-hidden
-        className='absolute left-[34%] top-[36%] h-28 w-56 bg-[radial-gradient(circle,oklch(0.68_0.11_235/0.16),transparent_72%)] blur-md'
+        className='absolute inset-0 bg-[linear-gradient(90deg,oklch(0.05_0.018_260/0.92)_0%,oklch(0.07_0.02_260/0.72)_42%,oklch(0.07_0.02_260/0.28)_68%,oklch(0.05_0.018_260/0.50)_100%)]'
       />
       <span
         aria-hidden
-        className='absolute bottom-[-18%] left-[-4%] h-[44%] w-[110%] bg-[radial-gradient(ellipse_at_center,oklch(0.42_0.025_250/0.22),transparent_67%)]'
+        className='absolute right-[18%] top-[-16%] h-[380px] w-[260px] rotate-[22deg] bg-[linear-gradient(180deg,oklch(0.66_0.13_48/0.24),transparent_78%)] blur-[1px]'
+      />
+      <span
+        aria-hidden
+        className='absolute bottom-[-18%] left-[-4%] h-[42%] w-[110%] bg-[radial-gradient(ellipse_at_center,oklch(0.42_0.025_250/0.22),transparent_67%)]'
       />
 
-      <div className='relative z-10 flex min-h-[360px] flex-col justify-between gap-10 p-6 sm:min-h-[410px] sm:p-8 lg:p-10'>
+      <div className='relative z-10 flex min-h-[320px] flex-col justify-between gap-10 p-6 sm:min-h-[360px] sm:p-8 lg:p-10'>
         <div className='max-w-[520px] space-y-5'>
           <span className='micro-label inline-flex items-center gap-3 text-[oklch(0.82_0.09_235)]'>
             <span className='h-px w-8 bg-[var(--signal-blue)]' />
@@ -276,7 +263,7 @@ function MissionHero({
             </span>
           </span>
           <div className='space-y-3'>
-            <h1 className='font-display text-[clamp(2.8rem,8vw,5.8rem)] font-black leading-[0.95] tracking-[0.04em] text-text-100'>
+            <h1 className='font-display text-[clamp(2.7rem,7vw,4.9rem)] font-black leading-[0.95] tracking-[0.04em] text-text-100'>
               {title}
             </h1>
             <p className='max-w-md text-base leading-relaxed text-text-300 sm:text-lg'>
@@ -300,30 +287,6 @@ function MissionHero({
   );
 }
 
-interface ISceneImageProps {
-  src: string;
-  alt: string;
-  className: string;
-}
-
-function SceneImage({
-  src,
-  alt,
-  className,
-}: ISceneImageProps): React.JSX.Element {
-  return (
-    <img
-      src={src}
-      alt={alt}
-      aria-hidden={alt === '' ? true : undefined}
-      className={cn(
-        'pointer-events-none absolute select-none mix-blend-screen',
-        className,
-      )}
-    />
-  );
-}
-
 type TStatSignal = 'blue' | 'violet' | 'green';
 
 interface IMissionStatTileProps {
@@ -332,7 +295,7 @@ interface IMissionStatTileProps {
   value: number;
   sub: string;
   signal: TStatSignal;
-  bgTile: string;
+  scene: string;
 }
 
 function MissionStatTile({
@@ -341,7 +304,7 @@ function MissionStatTile({
   value,
   sub,
   signal,
-  bgTile,
+  scene,
 }: IMissionStatTileProps): React.JSX.Element {
   return (
     <article
@@ -349,15 +312,11 @@ function MissionStatTile({
       data-testid={`mission-stat-${id}`}
       data-signal={signal}
     >
-      <span
+      <img
         aria-hidden
-        className='absolute inset-0 opacity-[0.36]'
-        style={{
-          backgroundImage: `url('/assets/seti/sprites/${bgTile}')`,
-          backgroundPosition: 'right center',
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: 'auto 118%',
-        }}
+        src={scene}
+        alt=''
+        className='pointer-events-none absolute inset-0 h-full w-full object-cover object-[70%_center] opacity-[0.38]'
       />
       <span
         aria-hidden

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SignalIndicator } from '@/components/ui/telemetry';
@@ -11,6 +10,8 @@ import { UserLayoutSettingsDialog } from '@/features/layout/UserLayoutSettingsDi
 import { useCurrentUser, useLogout, useUpdateProfile } from '@/hooks/useAuth';
 import { cn } from '@/lib/cn';
 import { useAuthStore } from '@/stores/authStore';
+
+const PROFILE_SCENE_IMAGE = '/assets/seti/sprites/terrain_00_02.webp';
 
 /**
  * ProfilePage — the signed-in player's account surface.
@@ -68,138 +69,322 @@ export function ProfilePage(): React.JSX.Element {
   };
 
   return (
-    <div className='space-y-8'>
-      <header className='space-y-2'>
-        <span className='micro-label inline-flex items-center gap-2 text-[oklch(0.78_0.10_240)]'>
-          <span className='h-px w-6 bg-[var(--signal-blue)]' />
-          {t('client.profile.kicker', { defaultValue: 'Member Info' })}
-        </span>
-        <div className='flex flex-wrap items-end justify-between gap-3'>
-          <h1 className='font-display text-3xl font-semibold tracking-[0.08em] text-text-100'>
-            {t('client.profile.title')}
-          </h1>
-          <div className='flex flex-wrap items-center gap-2'>
-            <Button variant='ghost' onClick={() => setSettingsOpen(true)}>
-              {t('client.profile.settings', { defaultValue: 'Settings' })}
-            </Button>
-            <SignalIndicator
-              signal='green'
-              active
-              label={t('client.profile.on_station', {
-                defaultValue: 'Signed in',
-              })}
-            />
-          </div>
-        </div>
-      </header>
+    <div
+      className='mission-scene relative min-h-[calc(100vh-9rem)] overflow-hidden rounded-[8px] border border-[color:var(--metal-edge-soft)] shadow-instrument'
+      data-scene='profile'
+      data-scene-treatment='single-image'
+      data-testid='profile-scene'
+    >
+      <img
+        src={PROFILE_SCENE_IMAGE}
+        alt=''
+        aria-hidden
+        data-testid='profile-scene-image'
+        className='pointer-events-none absolute inset-0 h-full w-full object-cover object-[74%_center] opacity-[0.45]'
+      />
+      <span
+        aria-hidden
+        className='pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,oklch(0.05_0.018_260/0.86)_0%,oklch(0.07_0.02_260/0.70)_42%,oklch(0.06_0.02_260/0.42)_72%,oklch(0.05_0.018_260/0.66)_100%)]'
+      />
+      <span
+        aria-hidden
+        className='pointer-events-none absolute inset-x-0 bottom-0 h-[38%] bg-[linear-gradient(180deg,transparent,oklch(0.04_0.012_260/0.88))]'
+      />
 
       <UserLayoutSettingsDialog
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
       />
 
-      <Card variant='instrument'>
-        <CardHeader>
-          <CardTitle className='font-display tracking-tight'>
-            {t('client.profile.identity')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className='p-0'>
-          <dl className='divide-y divide-[color:var(--metal-edge-soft)]'>
-            <IdentityRow label={t('client.profile.id', { defaultValue: 'ID' })}>
-              <span className='readout text-sm text-text-300'>
-                {displayUser?.id ?? t('client.common.empty_value')}
-              </span>
-            </IdentityRow>
-
-            <IdentityRow label={t('client.profile.callsign')}>
-              {isEditing ? (
-                <div className='flex flex-wrap items-center gap-2'>
-                  <Label htmlFor='profile-name' className='sr-only'>
-                    {t('client.profile.callsign')}
-                  </Label>
-                  <Input
-                    id='profile-name'
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className='max-w-xs'
-                  />
-                  <Button
-                    size='sm'
-                    onClick={handleSave}
-                    disabled={updateMutation.isPending}
-                  >
-                    {t('client.common.save')}
-                  </Button>
-                  <Button
-                    size='sm'
-                    variant='ghost'
-                    onClick={() => setIsEditing(false)}
-                  >
-                    {t('client.common.cancel')}
-                  </Button>
-                </div>
-              ) : (
-                <div className='flex items-center gap-2'>
-                  <span className='text-sm text-text-100'>
-                    {displayUser?.name ?? t('client.common.empty_value')}
-                  </span>
-                  <Button
-                    size='sm'
-                    variant='ghost'
-                    onClick={() => {
-                      setEditName(displayUser?.name ?? '');
-                      setIsEditing(true);
-                    }}
-                  >
-                    {t('client.common.edit')}
-                  </Button>
-                </div>
-              )}
-            </IdentityRow>
-
-            <IdentityRow
-              label={t('client.profile.email', { defaultValue: 'Email' })}
+      <div className='relative z-10 grid min-h-[calc(100vh-9rem)] lg:grid-cols-[210px_minmax(0,1fr)]'>
+        <aside className='hidden border-r border-[color:var(--metal-edge-soft)] bg-[var(--surface-deep)]/62 p-4 backdrop-blur-md lg:block'>
+          <div className='mb-8 flex items-center gap-3'>
+            <span
+              aria-hidden
+              className='relative inline-flex h-7 w-7 items-center justify-center'
             >
-              <span className='readout text-sm text-text-300'>
-                {displayUser?.email ?? t('client.common.empty_value')}
-              </span>
-            </IdentityRow>
-          </dl>
-        </CardContent>
-      </Card>
+              <span className='absolute inset-0.5 rotate-45 border border-[color:var(--metal-edge)] bg-[var(--surface-instrument)]' />
+              <span className='absolute inset-[7px] rotate-45 border border-[oklch(0.48_0.10_240)] bg-[oklch(0.32_0.08_240)]' />
+            </span>
+            <span className='font-display text-sm font-medium tracking-wordmark text-text-100'>
+              SETI
+            </span>
+          </div>
 
-      <div
-        className={cn(
-          'relative flex items-center justify-between gap-4 overflow-hidden rounded-[6px]',
-          'border border-[color:var(--metal-edge-soft)]',
-          'bg-[var(--surface-instrument)]/70 px-5 py-4',
-        )}
-      >
-        {/* Bottom hairline plasma-red — instrument underline, not a left stripe. */}
-        <span
-          aria-hidden
-          className='pointer-events-none absolute inset-x-0 bottom-0 h-px bg-[var(--signal-red)] opacity-60'
-        />
-        <div className='space-y-1'>
-          <p className='micro-label text-[var(--signal-red-hi)]'>
-            {t('client.profile.danger_zone', {
-              defaultValue: 'Account Session',
-            })}
-          </p>
-          <p className='text-xs text-text-500'>
-            {t('client.profile.disconnect_hint', {
-              defaultValue:
-                'Sign out of this account. Sign in again to resume active missions.',
-            })}
-          </p>
-        </div>
-        <Button variant='danger' onClick={logout}>
-          {t('client.profile.disconnect')}
-        </Button>
+          <nav className='space-y-2' aria-label={t('client.profile.title')}>
+            <ProfileRailItem active label={t('client.profile.title')} />
+            <ProfileRailItem label={t('client.game_layout.mission_area')} />
+            <ProfileRailItem label={t('client.game_layout.intel')} />
+            <button
+              type='button'
+              onClick={() => setSettingsOpen(true)}
+              className='w-full'
+            >
+              <ProfileRailItem label={t('client.profile.settings')} />
+            </button>
+          </nav>
+        </aside>
+
+        <main className='space-y-5 p-5 sm:p-6 lg:p-8'>
+          <header className='flex flex-wrap items-start justify-between gap-4'>
+            <div className='space-y-2'>
+              <span className='micro-label inline-flex items-center gap-2 text-[oklch(0.78_0.10_240)]'>
+                <span className='h-px w-6 bg-[var(--signal-blue)]' />
+                {t('client.profile.kicker', { defaultValue: 'Member Info' })}
+              </span>
+              <h1 className='font-display text-3xl font-semibold tracking-[0.08em] text-text-100'>
+                {t('client.profile.title')}
+              </h1>
+            </div>
+            <div className='flex flex-wrap items-center gap-2'>
+              <Button
+                className='lg:hidden'
+                variant='ghost'
+                onClick={() => setSettingsOpen(true)}
+              >
+                {t('client.profile.settings', { defaultValue: 'Settings' })}
+              </Button>
+              <SignalIndicator
+                signal='green'
+                active
+                label={t('client.profile.on_station', {
+                  defaultValue: 'Signed in',
+                })}
+              />
+            </div>
+          </header>
+
+          <section className='mission-panel px-5 py-5 sm:px-6'>
+            <div className='relative z-10 flex flex-col gap-5 md:flex-row md:items-center'>
+              <ProfileAvatar name={displayUser?.name} />
+              <div className='min-w-0 flex-1 space-y-3'>
+                <div>
+                  <p className='text-lg font-semibold text-text-100'>
+                    {displayUser?.email ?? t('client.common.empty_value')}
+                  </p>
+                  <p className='mt-1 text-sm text-text-500'>
+                    {t('client.profile.callsign')}:&nbsp;
+                    <span className='text-text-300'>
+                      {displayUser?.name ?? t('client.common.empty_value')}
+                    </span>
+                  </p>
+                </div>
+                <div className='instrument-tick max-w-sm' />
+              </div>
+            </div>
+          </section>
+
+          <section className='grid gap-3 md:grid-cols-4'>
+            <ProfileMetric
+              label={t('client.profile.id', { defaultValue: 'ID' })}
+              value={shortId(displayUser?.id)}
+              tone='blue'
+            />
+            <ProfileMetric
+              label={t('client.profile.callsign')}
+              value={displayUser?.name ?? t('client.common.empty_value')}
+              tone='green'
+            />
+            <ProfileMetric
+              label={t('client.profile.email', { defaultValue: 'Email' })}
+              value={displayUser?.email ?? t('client.common.empty_value')}
+              tone='white'
+            />
+            <ProfileMetric
+              label={t('client.profile.on_station', {
+                defaultValue: 'Signed in',
+              })}
+              value={t('client.common.ready')}
+              tone='violet'
+            />
+          </section>
+
+          <section className='mission-panel px-5 py-5 sm:px-6'>
+            <div className='relative z-10 space-y-4'>
+              <div className='section-head mb-2'>
+                <span aria-hidden className='section-head__tick' />
+                <p className='micro-label'>{t('client.profile.identity')}</p>
+                <div aria-hidden className='section-head__rule' />
+              </div>
+
+              <dl className='divide-y divide-[color:var(--metal-edge-soft)] rounded-[6px] border border-[color:var(--metal-edge-soft)] bg-[var(--surface-instrument)]/72'>
+                <IdentityRow
+                  label={t('client.profile.id', { defaultValue: 'ID' })}
+                >
+                  <span className='readout text-sm text-text-300'>
+                    {displayUser?.id ?? t('client.common.empty_value')}
+                  </span>
+                </IdentityRow>
+
+                <IdentityRow label={t('client.profile.callsign')}>
+                  {isEditing ? (
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <Label htmlFor='profile-name' className='sr-only'>
+                        {t('client.profile.callsign')}
+                      </Label>
+                      <Input
+                        id='profile-name'
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className='max-w-xs'
+                      />
+                      <Button
+                        size='sm'
+                        onClick={handleSave}
+                        disabled={updateMutation.isPending}
+                      >
+                        {t('client.common.save')}
+                      </Button>
+                      <Button
+                        size='sm'
+                        variant='ghost'
+                        onClick={() => setIsEditing(false)}
+                      >
+                        {t('client.common.cancel')}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <span className='text-sm text-text-100'>
+                        {displayUser?.name ?? t('client.common.empty_value')}
+                      </span>
+                      <Button
+                        size='sm'
+                        variant='ghost'
+                        onClick={() => {
+                          setEditName(displayUser?.name ?? '');
+                          setIsEditing(true);
+                        }}
+                      >
+                        {t('client.common.edit')}
+                      </Button>
+                    </div>
+                  )}
+                </IdentityRow>
+
+                <IdentityRow
+                  label={t('client.profile.email', { defaultValue: 'Email' })}
+                >
+                  <span className='readout text-sm text-text-300'>
+                    {displayUser?.email ?? t('client.common.empty_value')}
+                  </span>
+                </IdentityRow>
+              </dl>
+            </div>
+          </section>
+
+          <div
+            className={cn(
+              'relative flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-[6px]',
+              'border border-[color:var(--metal-edge-soft)]',
+              'bg-[var(--surface-instrument)]/78 px-5 py-4',
+            )}
+          >
+            <span
+              aria-hidden
+              className='pointer-events-none absolute inset-x-0 bottom-0 h-px bg-[var(--signal-red)] opacity-60'
+            />
+            <div className='space-y-1'>
+              <p className='micro-label text-[var(--signal-red-hi)]'>
+                {t('client.profile.danger_zone', {
+                  defaultValue: 'Account Session',
+                })}
+              </p>
+              <p className='text-xs text-text-500'>
+                {t('client.profile.disconnect_hint', {
+                  defaultValue:
+                    'Sign out of this account. Sign in again to resume active missions.',
+                })}
+              </p>
+            </div>
+            <Button variant='danger' onClick={logout}>
+              {t('client.profile.disconnect')}
+            </Button>
+          </div>
+        </main>
       </div>
     </div>
   );
+}
+
+function ProfileRailItem({
+  label,
+  active = false,
+}: {
+  label: string;
+  active?: boolean;
+}): React.JSX.Element {
+  return (
+    <span
+      className={cn(
+        'relative flex h-10 items-center rounded-[4px] border px-3 text-left text-sm transition-colors',
+        active
+          ? 'border-[oklch(0.48_0.10_240/0.62)] bg-[oklch(0.24_0.06_240/0.38)] text-[oklch(0.86_0.10_240)]'
+          : 'border-transparent text-text-500 hover:border-[color:var(--metal-edge-soft)] hover:bg-[var(--surface-panel)]/50 hover:text-text-300',
+      )}
+    >
+      {active ? (
+        <span
+          aria-hidden
+          className='absolute inset-y-1.5 right-0 w-px bg-[var(--signal-blue)]'
+        />
+      ) : null}
+      {label}
+    </span>
+  );
+}
+
+function ProfileAvatar({ name }: { name?: string }): React.JSX.Element {
+  return (
+    <div className='relative h-24 w-24 shrink-0 overflow-hidden rounded-full border border-[color:var(--metal-edge)] bg-[var(--surface-instrument)] shadow-hairline-inset'>
+      <img
+        src='/assets/seti/sprites/objects_02_01.webp'
+        alt=''
+        aria-hidden
+        className='absolute inset-0 h-full w-full object-cover opacity-70'
+      />
+      <span
+        aria-hidden
+        className='absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,transparent,oklch(0.04_0.012_260/0.62))]'
+      />
+      <span className='relative z-10 flex h-full items-center justify-center font-display text-2xl font-semibold text-text-100'>
+        {name?.charAt(0).toUpperCase() ?? '?'}
+      </span>
+    </div>
+  );
+}
+
+function ProfileMetric({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: 'blue' | 'green' | 'violet' | 'white';
+}): React.JSX.Element {
+  const color =
+    tone === 'blue'
+      ? 'text-[var(--signal-blue-hi)]'
+      : tone === 'green'
+        ? 'text-[var(--signal-green-hi)]'
+        : tone === 'violet'
+          ? 'text-[var(--signal-violet-hi)]'
+          : 'text-text-100';
+
+  return (
+    <article className='relative overflow-hidden rounded-[6px] border border-[color:var(--metal-edge-soft)] bg-[var(--surface-instrument)]/76 px-4 py-4 shadow-hairline-inset'>
+      <p className='micro-label text-[0.625rem] text-text-500'>{label}</p>
+      <p className={cn('readout mt-3 truncate text-lg font-semibold', color)}>
+        {value}
+      </p>
+    </article>
+  );
+}
+
+function shortId(id: string | undefined): string {
+  if (!id) return '-';
+  return id.length > 12 ? id.slice(0, 12) : id;
 }
 
 function IdentityRow({

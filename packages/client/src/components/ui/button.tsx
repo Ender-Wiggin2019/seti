@@ -4,9 +4,9 @@ import { cn } from '@/lib/cn';
 /**
  * Button — the interactive workhorse.
  * Three visual languages for three levels of intent:
- *  - `primary`  → metal-face (anodized blue). Player agency, CTAs.
- *  - `ghost`    → hairline metal (no fill). Secondary actions, filters, chips.
- *  - `danger`   → anodized-red metal face. Destructive / game-ending only.
+ *  - `primary`  → cyan filled control. Player agency, CTAs.
+ *  - `ghost`    → transparent outline. Secondary actions, filters, chips.
+ *  - `danger`   → red filled control. Destructive / game-ending only.
  *  - `link`     → text-only, for inline or subtle nav.
  */
 const buttonVariants = cva(
@@ -26,21 +26,19 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary: [
-          // The metal-face technique: gradient + bevel highlights + contact shadow.
-          'text-[oklch(0.98_0.01_240)]',
-          'bg-metal-face',
-          'border border-[oklch(0.30_0.06_240)]',
-          'shadow-metal-face',
-          // Hover: brighten the gradient 4-6% in lightness, no color shift.
-          'hover:bg-metal-face-hover',
-          'hover:shadow-metal-face-hover',
-          // Active: invert the gradient (light at bottom) and drop contact shadow.
-          'active:bg-metal-face-pressed',
-          'active:shadow-metal-face-active',
+          // Reference control: flat cyan face with a restrained catch-light.
+          'text-[var(--lobby-deep-space)]',
+          'bg-[var(--lobby-engine-cyan)]',
+          'border border-[#1d8790]',
+          'shadow-[inset_0_1px_0_oklch(0.96_0.02_230/0.42),inset_0_-1px_0_oklch(0.25_0.08_230/0.34),0_1px_0_oklch(0.06_0.02_260/0.85)]',
+          'hover:bg-[#42d4dc]',
+          'hover:shadow-[inset_0_1px_0_oklch(0.98_0.02_230/0.52),inset_0_-1px_0_oklch(0.25_0.08_230/0.28),0_1px_0_oklch(0.06_0.02_260/0.85)]',
+          'active:bg-[#259da6]',
+          'active:shadow-[inset_0_1px_2px_oklch(0.10_0.03_235/0.42)]',
           'active:translate-y-px',
         ],
         ghost: [
-          // Hairline metal frame, no fill. Hover reveals a soft tint.
+          // Hairline frame, no fill. Hover reveals a quiet dark face.
           'text-text-100',
           'bg-transparent',
           'border border-[color:var(--metal-edge)]',
@@ -52,9 +50,9 @@ const buttonVariants = cva(
         ],
         danger: [
           'text-[oklch(0.98_0.02_28)]',
-          'bg-metal-face-danger',
-          'border border-[oklch(0.32_0.10_28)]',
-          'shadow-[inset_0_1px_0_oklch(0.78_0.10_28/0.45),inset_0_-1px_0_oklch(0.24_0.08_28/0.6),0_1px_0_oklch(0.08_0.018_260/0.8)]',
+          'bg-[var(--signal-red)]',
+          'border border-[oklch(0.38_0.13_28)]',
+          'shadow-[inset_0_1px_0_oklch(0.82_0.10_28/0.28),inset_0_-1px_0_oklch(0.20_0.08_28/0.38),0_1px_0_oklch(0.08_0.018_260/0.8)]',
           'hover:brightness-110',
           'active:translate-y-px',
         ],

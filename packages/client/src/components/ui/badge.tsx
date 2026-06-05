@@ -4,9 +4,8 @@ import { cn } from '@/lib/cn';
 /**
  * Badge — small status / label chip.
  *
- * Instrumentation style: mono, uppercase, wide letter-spacing.
- * Colors are OKLCH with matching hue for border, fill tint, and text —
- * unified temperature rather than arbitrary color pairs.
+ * Instrumentation style: compact rectangular status tags from the Mission Hub
+ * reference. Colors are semantic tints, not decorative badges.
  *
  * Variant colors reserved for:
  *   default → neutral label
@@ -19,9 +18,9 @@ import { cn } from '@/lib/cn';
 const badgeVariants = cva(
   [
     'inline-flex items-center',
-    'rounded-full',
-    'px-2.5 py-0.5',
-    'font-mono text-[0.6875rem] font-medium uppercase tracking-microlabel',
+    'rounded-[4px]',
+    'px-2.5 py-1',
+    'font-body text-xs font-medium',
     'whitespace-nowrap',
     'transition-colors duration-150',
   ],

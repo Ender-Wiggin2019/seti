@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { formatAlienLabel, getAlienTypeKey } from '@/lib/alien';
+import { cn } from '@/lib/cn';
 
 interface ISpaceAgencyOptionsSectionProps {
   options: IGameOptions;
@@ -22,6 +23,36 @@ const SPACE_AGENCY_ALIENS = [
   EAlienType.AMOEBA,
   EAlienType.ARKHOS,
 ] as const;
+
+const ENABLED_SPACE_AGENCY_OPTIONS: ISpaceAgencyOptions = {
+  enabled: true,
+  agencies: true,
+  startResourceCards: true,
+  newDeck: true,
+  newAlienSpecies: true,
+};
+
+const ENABLED_SPACE_AGENCY_ALIENS: Pick<
+  IGameOptionsPatch,
+  'alienModulesEnabled'
+> = {
+  alienModulesEnabled: {
+    [EAlienType.GLYPHIDS]: true,
+    [EAlienType.AMOEBA]: true,
+    [EAlienType.ARKHOS]: true,
+  },
+};
+
+const DISABLED_SPACE_AGENCY_ALIENS: Pick<
+  IGameOptionsPatch,
+  'alienModulesEnabled'
+> = {
+  alienModulesEnabled: {
+    [EAlienType.GLYPHIDS]: false,
+    [EAlienType.AMOEBA]: false,
+    [EAlienType.ARKHOS]: false,
+  },
+};
 
 export function SpaceAgencyOptionsSection({
   options,
@@ -51,19 +82,13 @@ export function SpaceAgencyOptionsSection({
 
     emitSpaceAgencyPatch(
       enabled
-        ? { ...DEFAULT_SPACE_AGENCY_OPTIONS, enabled: true }
+        ? ENABLED_SPACE_AGENCY_OPTIONS
         : { ...DEFAULT_SPACE_AGENCY_OPTIONS },
       {
         expansions,
         ...(enabled
-          ? {}
-          : {
-              alienModulesEnabled: {
-                [EAlienType.GLYPHIDS]: false,
-                [EAlienType.AMOEBA]: false,
-                [EAlienType.ARKHOS]: false,
-              },
-            }),
+          ? ENABLED_SPACE_AGENCY_ALIENS
+          : DISABLED_SPACE_AGENCY_ALIENS),
       },
     );
   };
@@ -82,9 +107,9 @@ export function SpaceAgencyOptionsSection({
     }
 
     const extraPatch: IGameOptionsPatch = {};
-    if (key === 'newAlienSpecies' && !checked) {
+    if (key === 'newAlienSpecies') {
       extraPatch.alienModulesEnabled = Object.fromEntries(
-        SPACE_AGENCY_ALIENS.map((alienType) => [alienType, false]),
+        SPACE_AGENCY_ALIENS.map((alienType) => [alienType, checked]),
       ) as IGameOptionsPatch['alienModulesEnabled'];
     }
 
@@ -112,7 +137,12 @@ export function SpaceAgencyOptionsSection({
         disabled={disabled}
         onChange={handleEnabledChange}
       />
-      <div className='space-y-2 border-l border-[color:var(--metal-edge-soft)] pl-3'>
+      <div
+        className={cn(
+          'space-y-2 rounded-[5px] border border-[color:var(--metal-edge-soft)] bg-[oklch(0.10_0.02_260/0.42)] p-2 shadow-hairline-inset',
+          !spaceAgencyOptions.enabled && 'opacity-70',
+        )}
+      >
         <ToggleRow
           id='space-agency-agencies'
           label={t('client.space_agency_options.organizations')}
@@ -148,7 +178,7 @@ export function SpaceAgencyOptionsSection({
           onChange={(checked) => handleOptionChange('newAlienSpecies', checked)}
         />
         {spaceAgencyOptions.enabled && spaceAgencyOptions.newAlienSpecies ? (
-          <div className='space-y-2 border-l border-[color:var(--metal-edge-soft)] pl-3'>
+          <div className='space-y-2 rounded-[4px] border border-[color:var(--metal-edge-soft)] bg-[oklch(0.08_0.018_260/0.38)] p-2'>
             {SPACE_AGENCY_ALIENS.map((alienType) => {
               const label = t(
                 `client.alien_board.types.${getAlienTypeKey(alienType)}`,

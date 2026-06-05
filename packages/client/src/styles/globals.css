@@ -568,6 +568,10 @@ pre {
   pointer-events: none;
 }
 
+.mission-scene[data-scene-treatment="single-image"]::before {
+  display: none;
+}
+
 .mission-panel {
   position: relative;
   overflow: hidden;
@@ -575,13 +579,13 @@ pre {
   border: 1px solid var(--metal-edge-soft);
   background: linear-gradient(
     180deg,
-    oklch(0.13 0.025 258 / 0.96) 0%,
-    oklch(0.11 0.02 258 / 0.92) 100%
+    oklch(0.13 0.025 258 / 0.98) 0%,
+    oklch(0.1 0.018 258 / 0.96) 100%
   );
   box-shadow:
     inset 0 1px 0 oklch(0.78 0.04 240 / 0.08),
-    0 14px 40px oklch(0.04 0.015 255 / 0.34);
-  backdrop-filter: blur(8px);
+    0 10px 28px oklch(0.04 0.015 255 / 0.26);
+  backdrop-filter: blur(4px);
 }
 
 .mission-panel::before {

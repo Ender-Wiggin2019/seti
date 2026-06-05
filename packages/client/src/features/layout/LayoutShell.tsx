@@ -8,6 +8,8 @@ import { PinnedLayer } from './shells/PinnedLayer';
 import { TabShell } from './shells/TabShell';
 import { WaterfallShell } from './shells/WaterfallShell';
 
+const GAME_SHELL_SCENE_IMAGE = '/assets/seti/sprites/terrain_02_02.webp';
+
 /**
  * LayoutShell — the root render. Picks tab vs waterfall vs mobile and
  * layers in pinned chrome (TopBar / ActionBar / Hand).
@@ -40,6 +42,12 @@ export function LayoutShell(): React.JSX.Element {
       <div
         className='pointer-events-none fixed inset-0 -z-10 bg-[image:var(--bg-atmosphere)]'
         aria-hidden
+      />
+      <img
+        src={GAME_SHELL_SCENE_IMAGE}
+        alt=''
+        aria-hidden
+        className='pointer-events-none fixed inset-x-0 bottom-0 -z-10 h-[38vh] w-full object-cover object-bottom opacity-[0.22]'
       />
 
       <PinnedLayer variant='sticky-top' />

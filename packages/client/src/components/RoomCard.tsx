@@ -20,29 +20,7 @@ const STATUS_VARIANT = {
   [ERoomStatus.FINISHED]: 'neutral',
 } as const;
 
-const TERRAIN_ASSETS = [
-  'terrain_00_00.webp',
-  'terrain_00_01.webp',
-  'terrain_00_02.webp',
-  'terrain_01_00.webp',
-  'terrain_01_01.webp',
-  'terrain_01_02.webp',
-  'terrain_02_00.webp',
-  'terrain_02_01.webp',
-  'terrain_02_02.webp',
-] as const;
-
-const OBJECT_ASSETS = [
-  'objects_00_00.webp',
-  'objects_00_01.webp',
-  'objects_00_02.webp',
-  'objects_01_00.webp',
-  'objects_01_01.webp',
-  'objects_01_02.webp',
-  'objects_02_00.webp',
-  'objects_02_01.webp',
-  'objects_02_02.webp',
-] as const;
+const ROOM_CARD_SCENE = '/assets/seti/sprites/terrain_01_01.webp';
 
 /**
  * RoomCard — a mission in the lobby.
@@ -66,10 +44,6 @@ export function RoomCard({ room }: IRoomCardProps): React.JSX.Element {
   const requiredHumanPlayers = getRequiredHumanPlayerCount(room.options);
   const soloMode = isSoloRoom(room.options);
 
-  const sceneIdx = pickTileIndex(room.id);
-  const bgTile = `/assets/seti/sprites/${TERRAIN_ASSETS[sceneIdx % TERRAIN_ASSETS.length]}`;
-  const accentTile = `/assets/seti/sprites/${OBJECT_ASSETS[sceneIdx % OBJECT_ASSETS.length]}`;
-
   return (
     <button
       type='button'
@@ -77,37 +51,25 @@ export function RoomCard({ room }: IRoomCardProps): React.JSX.Element {
         navigate({ to: '/room/$roomId', params: { roomId: room.id } })
       }
       className={cn(
-        'mission-panel group w-full rounded-[6px] px-4 py-4 text-left',
+        'mission-panel group min-h-[132px] w-full rounded-[6px] px-4 py-4 text-left',
         'transition-all duration-200',
         'hover:border-[oklch(0.50_0.10_240/0.7)] hover:-translate-y-[1px]',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.68_0.11_240)]',
       )}
       data-testid='room-card'
       data-panel-scene='card'
+      data-scene-treatment='single-image'
     >
-      <span
+      <img
         aria-hidden
-        className='pointer-events-none absolute inset-0 opacity-[0.42] transition-opacity duration-200 group-hover:opacity-[0.52]'
-        style={{
-          backgroundImage: `url('${bgTile}')`,
-          backgroundSize: 'auto 126%',
-          backgroundPosition: 'right center',
-          backgroundRepeat: 'no-repeat',
-        }}
+        src={ROOM_CARD_SCENE}
+        alt=''
+        data-testid='room-card-scene-image'
+        className='pointer-events-none absolute inset-0 h-full w-full object-cover object-[68%_center] opacity-[0.46] transition-opacity duration-200 group-hover:opacity-[0.56]'
       />
       <span
         aria-hidden
-        className='pointer-events-none absolute -bottom-[22%] right-[-8%] h-40 w-40 opacity-[0.34] mix-blend-screen transition-opacity duration-200 group-hover:opacity-[0.46]'
-        style={{
-          backgroundImage: `url('${accentTile}')`,
-          backgroundSize: 'contain',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
-      />
-      <span
-        aria-hidden
-        className='pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,oklch(0.07_0.015_260/0.94)_0%,oklch(0.08_0.018_260/0.88)_42%,oklch(0.10_0.022_260/0.62)_60%,oklch(0.10_0.022_260/0.36)_78%,oklch(0.07_0.015_260/0.50)_100%)]'
+        className='pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,oklch(0.07_0.015_260/0.95)_0%,oklch(0.08_0.018_260/0.88)_42%,oklch(0.10_0.022_260/0.60)_68%,oklch(0.07_0.015_260/0.58)_100%)]'
       />
       <span
         aria-hidden
@@ -214,16 +176,4 @@ function TimerGlyph(): React.JSX.Element {
       <path d='M6 3v3l2 1' strokeLinecap='round' />
     </svg>
   );
-}
-
-/**
- * Pick a consistent scene index for a given room id.
- * Simple hash: sum char codes mod asset count.
- */
-function pickTileIndex(roomId: string): number {
-  let hash = 0;
-  for (let i = 0; i < roomId.length; i++) {
-    hash += roomId.charCodeAt(i);
-  }
-  return hash % TERRAIN_ASSETS.length;
 }

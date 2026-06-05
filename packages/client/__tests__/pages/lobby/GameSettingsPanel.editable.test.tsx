@@ -66,12 +66,17 @@ describe('GameSettingsPanel editable', () => {
 
     expect(onChange).toHaveBeenCalledWith({
       expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+      alienModulesEnabled: {
+        [EAlienType.GLYPHIDS]: true,
+        [EAlienType.AMOEBA]: true,
+        [EAlienType.ARKHOS]: true,
+      },
       spaceAgencyOptions: {
         enabled: true,
-        agencies: false,
-        startResourceCards: false,
-        newDeck: false,
-        newAlienSpecies: false,
+        agencies: true,
+        startResourceCards: true,
+        newDeck: true,
+        newAlienSpecies: true,
       },
     });
   });

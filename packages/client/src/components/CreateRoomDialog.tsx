@@ -31,8 +31,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { toast } from '@/components/ui/toast';
+import { cn } from '@/lib/cn';
 import { applyGameOptionsPatch } from '@/lib/gameOptions';
 import { GameOptionsEditor } from '@/pages/lobby/GameOptionsEditor';
 
@@ -45,7 +45,7 @@ interface ICreateRoomDialogProps {
 }
 
 const createRoomSchema = z.object({
-  name: z.string().trim().min(1).max(50),
+  name: z.string().trim().max(50),
   playerCount: z.number().min(2).max(4),
 });
 
@@ -167,18 +167,16 @@ export function CreateRoomDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const effectivePlayerCount = options.isSoloMode ? 2 : options.playerCount;
+    const effectiveName =
+      name.trim() ||
+      t('client.create_room.default_name', { defaultValue: 'New Mission' });
     const result = createRoomSchema.safeParse({
-      name,
+      name: effectiveName,
       playerCount: effectivePlayerCount,
     });
     if (!result.success) {
-      const nameIssue = result.error.issues.find(
-        (issue) => issue.path[0] === 'name',
-      );
       toast({
-        title: nameIssue
-          ? t('client.create_room.validation.name_required')
-          : t('client.create_room.validation.invalid_options'),
+        title: t('client.create_room.validation.invalid_options'),
         variant: 'error',
       });
       return;
@@ -198,7 +196,7 @@ export function CreateRoomDialog({
       return;
     }
 
-    onSubmit(name, finalOptions);
+    onSubmit(result.data.name, finalOptions);
   };
 
   return (
@@ -229,6 +227,10 @@ export function CreateRoomDialog({
                 defaultValue: 'Identification',
               })}
             >
+              <ModeSelector
+                isSoloMode={options.isSoloMode}
+                onChange={handleSoloModeChange}
+              />
               <div className='space-y-1.5'>
                 <Label htmlFor='room-name' variant='micro'>
                   {t('client.create_room.name')}
@@ -240,41 +242,6 @@ export function CreateRoomDialog({
                   onChange={(e) => setName(e.target.value)}
                 />
               </div>
-              <div className='space-y-1.5'>
-                <Label htmlFor='player-count' variant='micro'>
-                  {t('client.create_room.players')}
-                </Label>
-                <Select
-                  value={String(options.playerCount)}
-                  onValueChange={(value) =>
-                    handleOptionsChange({ playerCount: Number(value) })
-                  }
-                  disabled={options.isSoloMode}
-                >
-                  <SelectTrigger id='player-count'>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='2'>
-                      {t('client.create_room.player_count.2')}
-                    </SelectItem>
-                    <SelectItem value='3'>
-                      {t('client.create_room.player_count.3')}
-                    </SelectItem>
-                    <SelectItem value='4'>
-                      {t('client.create_room.player_count.4')}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <ToggleRow
-                id='solo-mode-toggle'
-                label={t('client.create_room.solo_mode', {
-                  defaultValue: 'Solo Rival',
-                })}
-                checked={options.isSoloMode}
-                onChange={handleSoloModeChange}
-              />
               {options.isSoloMode ? (
                 <div className='space-y-2'>
                   <Label htmlFor='solo-difficulty' variant='micro'>
@@ -311,7 +278,34 @@ export function CreateRoomDialog({
                     ))}
                   </div>
                 </div>
-              ) : null}
+              ) : (
+                <div className='space-y-1.5'>
+                  <Label htmlFor='player-count' variant='micro'>
+                    {t('client.create_room.players')}
+                  </Label>
+                  <Select
+                    value={String(options.playerCount)}
+                    onValueChange={(value) =>
+                      handleOptionsChange({ playerCount: Number(value) })
+                    }
+                  >
+                    <SelectTrigger id='player-count'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='2'>
+                        {t('client.create_room.player_count.2')}
+                      </SelectItem>
+                      <SelectItem value='3'>
+                        {t('client.create_room.player_count.3')}
+                      </SelectItem>
+                      <SelectItem value='4'>
+                        {t('client.create_room.player_count.4')}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </SectionBlock>
 
             <SectionBlock
@@ -355,6 +349,91 @@ export function CreateRoomDialog({
   );
 }
 
+function ModeSelector({
+  isSoloMode,
+  onChange,
+}: {
+  isSoloMode: boolean;
+  onChange: (next: boolean) => void;
+}): React.JSX.Element {
+  const { t } = useTranslation('common');
+  const multiplayerLabel = t('client.create_room.mode_multiplayer', {
+    defaultValue: 'Multiplayer Mission',
+  });
+  const soloLabel = t('client.create_room.mode_solo', {
+    defaultValue: 'Solo Mission',
+  });
+
+  return (
+    <div className='space-y-1.5'>
+      <Label variant='micro'>
+        {t('client.game_settings.mode', { defaultValue: 'Mode' })}
+      </Label>
+      <div
+        className='grid grid-cols-2 gap-1 rounded-[5px] border border-[color:var(--metal-edge)] bg-[oklch(0.10_0.02_260/0.72)] p-1 shadow-hairline-inset'
+        role='group'
+        aria-label={t('client.game_settings.mode', { defaultValue: 'Mode' })}
+      >
+        <ModeButton
+          label={multiplayerLabel}
+          meta={t('client.create_room.mode_multiplayer_meta', {
+            defaultValue: '2-4 Players',
+          })}
+          pressed={!isSoloMode}
+          onClick={() => onChange(false)}
+        />
+        <ModeButton
+          label={soloLabel}
+          meta={t('client.create_room.mode_solo_meta', {
+            defaultValue: '1 Player + Rival',
+          })}
+          pressed={isSoloMode}
+          onClick={() => onChange(true)}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ModeButton({
+  label,
+  meta,
+  pressed,
+  onClick,
+}: {
+  label: string;
+  meta: string;
+  pressed: boolean;
+  onClick: () => void;
+}): React.JSX.Element {
+  return (
+    <button
+      type='button'
+      aria-label={label}
+      aria-pressed={pressed}
+      onClick={onClick}
+      className={cn(
+        'flex min-h-14 flex-col items-start justify-center rounded-[4px] px-3 py-2 text-left',
+        'transition-[background,border-color,color,box-shadow] duration-150',
+        'focus-visible:outline-none focus-visible:shadow-[0_0_0_2px_var(--bg-950),0_0_0_4px_oklch(0.68_0.11_240/0.72)]',
+        pressed
+          ? 'border border-[#1d8790] bg-[var(--lobby-engine-cyan)] text-[var(--lobby-deep-space)] shadow-[inset_0_1px_0_oklch(0.96_0.02_230/0.42)]'
+          : 'border border-transparent text-text-300 hover:border-[color:var(--metal-edge-soft)] hover:bg-surface-800/55 hover:text-text-100',
+      )}
+    >
+      <span className='text-sm font-semibold leading-none'>{label}</span>
+      <span
+        className={cn(
+          'mt-1 font-mono text-[0.6875rem] tracking-[0.06em]',
+          pressed ? 'opacity-70' : 'text-text-500',
+        )}
+      >
+        {meta}
+      </span>
+    </button>
+  );
+}
+
 function SectionBlock({
   title,
   children,
@@ -367,33 +446,5 @@ function SectionBlock({
       <h4 className='micro-label text-text-500'>{title}</h4>
       {children}
     </section>
-  );
-}
-
-interface IToggleRowProps {
-  id: string;
-  label: string;
-  checked: boolean;
-  onChange: (next: boolean) => void;
-}
-
-function ToggleRow({
-  id,
-  label,
-  checked,
-  onChange,
-}: IToggleRowProps): React.JSX.Element {
-  return (
-    <div className='flex items-center justify-between'>
-      <Label htmlFor={id} className='cursor-pointer'>
-        {label}
-      </Label>
-      <Switch
-        id={id}
-        checked={checked}
-        onCheckedChange={onChange}
-        aria-label={label}
-      />
-    </div>
   );
 }

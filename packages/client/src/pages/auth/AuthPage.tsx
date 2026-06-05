@@ -11,28 +11,7 @@ import { toast } from '@/components/ui/toast';
 import { useLogin, useRegister } from '@/hooks/useAuth';
 import { cn } from '@/lib/cn';
 
-const AUTH_SCENE_ASSETS = [
-  {
-    src: '/assets/seti/sprites/terrain_00_02.webp',
-    className:
-      'right-[-8%] top-[4%] w-[56%] min-w-[260px] max-w-[520px] rotate-[-4deg] opacity-86',
-  },
-  {
-    src: '/assets/seti/sprites/terrain_01_01.webp',
-    className:
-      'bottom-[-5%] left-[-8%] w-[50%] min-w-[250px] max-w-[460px] opacity-72',
-  },
-  {
-    src: '/assets/seti/sprites/objects_00_00.webp',
-    className:
-      'right-[18%] bottom-[9%] w-[28%] min-w-[150px] max-w-[250px] opacity-60',
-  },
-  {
-    src: '/assets/seti/sprites/objects_02_01.webp',
-    className:
-      'left-[9%] top-[14%] w-[22%] min-w-[120px] max-w-[200px] opacity-52',
-  },
-] as const;
+const AUTH_SCENE_IMAGE = '/assets/seti/sprites/objects_00_00.webp';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -147,7 +126,7 @@ function LoginForm(): React.JSX.Element {
       >
         {loginMutation.isPending
           ? t('client.auth.actions.authenticating')
-          : t('client.auth.actions.access_terminal')}
+          : t('client.auth.actions.sign_in')}
       </Button>
     </form>
   );
@@ -279,29 +258,40 @@ export function AuthPage(): React.JSX.Element {
         aria-hidden
       />
 
-      <div className='mx-auto grid min-h-[calc(100vh-7rem)] w-full max-w-6xl items-center gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(390px,0.8fr)]'>
-        <section className='mission-scene relative hidden min-h-[560px] overflow-hidden rounded-[8px] border border-[color:var(--metal-edge)] shadow-instrument lg:block'>
-          {AUTH_SCENE_ASSETS.map((asset) => (
-            <img
-              key={asset.src}
-              src={asset.src}
-              alt=''
+      <section
+        className={cn(
+          'mission-scene relative mx-auto min-h-[calc(100vh-7rem)] w-full max-w-6xl overflow-hidden rounded-[8px]',
+          'border border-[color:var(--metal-edge)] shadow-instrument',
+        )}
+        data-scene='auth'
+        data-scene-treatment='single-image'
+      >
+        <img
+          src={AUTH_SCENE_IMAGE}
+          alt=''
+          aria-hidden
+          data-testid='auth-scene-image'
+          className='pointer-events-none absolute inset-0 h-full w-full select-none object-cover object-[42%_center] opacity-[0.72]'
+        />
+        <span
+          aria-hidden
+          className='pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,oklch(0.04_0.018_260/0.72)_0%,oklch(0.06_0.02_260/0.56)_42%,oklch(0.05_0.018_260/0.78)_100%)]'
+        />
+        <span
+          aria-hidden
+          className='pointer-events-none absolute inset-x-0 bottom-0 h-[34%] bg-[linear-gradient(180deg,transparent,oklch(0.04_0.012_260/0.92))]'
+        />
+
+        <div className='relative z-10 grid min-h-[calc(100vh-7rem)] items-center gap-6 p-5 sm:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(390px,440px)] lg:p-10'>
+          <div className='hidden min-h-[520px] flex-col justify-between lg:flex'>
+            <span
               aria-hidden
-              className={cn(
-                'pointer-events-none absolute select-none mix-blend-screen',
-                asset.className,
-              )}
+              className='pointer-events-none absolute right-[14%] top-[-14%] h-[420px] w-[230px] rotate-[22deg] bg-[linear-gradient(180deg,oklch(0.66_0.13_48/0.24),transparent_78%)] blur-[1px]'
             />
-          ))}
-          <span
-            aria-hidden
-            className='pointer-events-none absolute right-[14%] top-[-14%] h-[420px] w-[230px] rotate-[22deg] bg-[linear-gradient(180deg,oklch(0.66_0.13_48/0.24),transparent_78%)] blur-[1px]'
-          />
-          <span
-            aria-hidden
-            className='pointer-events-none absolute left-[34%] top-[46%] h-24 w-72 bg-[radial-gradient(circle,oklch(0.68_0.11_235/0.15),transparent_72%)] blur-md'
-          />
-          <div className='relative z-10 flex min-h-[560px] flex-col justify-between p-8'>
+            <span
+              aria-hidden
+              className='pointer-events-none absolute left-[34%] top-[46%] h-24 w-72 bg-[radial-gradient(circle,oklch(0.68_0.11_235/0.15),transparent_72%)] blur-md'
+            />
             <div className='max-w-[520px] space-y-5'>
               <span className='micro-label inline-flex items-center gap-3 text-[oklch(0.82_0.09_235)]'>
                 <span className='h-px w-8 bg-[var(--signal-blue)]' />
@@ -323,53 +313,53 @@ export function AuthPage(): React.JSX.Element {
               <AuthReadout label='CONTACT' value='SETI' tone='violet' />
             </div>
           </div>
-        </section>
 
-        <section className='mission-panel mx-auto w-full max-w-md px-5 py-5 sm:px-6 sm:py-6'>
-          <div className='relative z-10'>
-            <header className='border-b border-[color:var(--metal-edge-soft)] pb-5 text-center'>
-              <span className='micro-label mx-auto inline-flex items-center justify-center gap-2 text-[oklch(0.78_0.10_240)]'>
-                <span className='h-px w-4 bg-[var(--signal-blue)]' />
-                {t('client.auth.hero.badge')}
-                <span className='h-px w-4 bg-[var(--signal-blue)]' />
-              </span>
-              <h2 className='mt-3 font-display text-2xl font-semibold tracking-[0.08em] text-text-100'>
-                {t('client.auth.hero.title')}
-              </h2>
-              <p className='mx-auto mt-2 max-w-sm text-sm leading-relaxed text-text-500'>
-                {t('client.auth.hero.subtitle')}
-              </p>
-            </header>
+          <section className='mission-panel mx-auto w-full max-w-md self-center px-5 py-5 sm:px-6 sm:py-6'>
+            <div className='relative z-10'>
+              <header className='border-b border-[color:var(--metal-edge-soft)] pb-5 text-center'>
+                <span className='micro-label mx-auto inline-flex items-center justify-center gap-2 text-[oklch(0.78_0.10_240)]'>
+                  <span className='h-px w-4 bg-[var(--signal-blue)]' />
+                  {t('client.auth.hero.badge')}
+                  <span className='h-px w-4 bg-[var(--signal-blue)]' />
+                </span>
+                <h2 className='mt-3 font-display text-2xl font-semibold tracking-[0.08em] text-text-100'>
+                  {t('client.auth.hero.title')}
+                </h2>
+                <p className='mx-auto mt-2 max-w-sm text-sm leading-relaxed text-text-500'>
+                  {t('client.auth.hero.subtitle')}
+                </p>
+              </header>
 
-            <div className='pt-5'>
-              <Tabs defaultValue='login'>
-                <TabsList className='w-full'>
-                  <TabsTrigger
-                    value='login'
-                    className='flex-1'
-                    data-testid='auth-tab-login'
-                  >
-                    {t('client.auth.tabs.login')}
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value='register'
-                    className='flex-1'
-                    data-testid='auth-tab-register'
-                  >
-                    {t('client.auth.tabs.register')}
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value='login' className='mt-6'>
-                  <LoginForm />
-                </TabsContent>
-                <TabsContent value='register' className='mt-6'>
-                  <RegisterForm />
-                </TabsContent>
-              </Tabs>
+              <div className='pt-5'>
+                <Tabs defaultValue='login'>
+                  <TabsList className='w-full'>
+                    <TabsTrigger
+                      value='login'
+                      className='flex-1'
+                      data-testid='auth-tab-login'
+                    >
+                      {t('client.auth.tabs.login')}
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value='register'
+                      className='flex-1'
+                      data-testid='auth-tab-register'
+                    >
+                      {t('client.auth.tabs.register')}
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value='login' className='mt-6'>
+                    <LoginForm />
+                  </TabsContent>
+                  <TabsContent value='register' className='mt-6'>
+                    <RegisterForm />
+                  </TabsContent>
+                </Tabs>
+              </div>
             </div>
-          </div>
-        </section>
-      </div>
+          </section>
+        </div>
+      </section>
     </div>
   );
 }

@@ -74,21 +74,26 @@ export function TabsList({
   );
 }
 
-interface ITabsTriggerProps {
+interface ITabsTriggerProps
+  extends Omit<
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
+    'children' | 'value'
+  > {
   value: string;
   children: React.ReactNode;
-  className?: string;
 }
 
 export function TabsTrigger({
   value,
   children,
   className,
+  ...props
 }: ITabsTriggerProps): React.JSX.Element {
   const ctx = useTabsContext();
   const isActive = ctx.value === value;
   return (
     <button
+      {...props}
       type='button'
       role='tab'
       aria-selected={isActive}

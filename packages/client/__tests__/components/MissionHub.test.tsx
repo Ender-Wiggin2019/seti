@@ -50,6 +50,14 @@ describe('MissionHubView', () => {
       'data-scene',
       'lunar-lobby',
     );
+    expect(screen.getByTestId('mission-hero-scene')).toHaveAttribute(
+      'data-scene-treatment',
+      'single-image',
+    );
+    expect(screen.getByTestId('mission-hero-image')).toHaveAttribute(
+      'src',
+      '/assets/seti/sprites/terrain_00_02.webp',
+    );
     expect(screen.getByText('任务中心')).toBeInTheDocument();
     expect(screen.getByText('探索未知，连接未来。')).toBeInTheDocument();
     expect(

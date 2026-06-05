@@ -237,7 +237,7 @@
       },
       "actions": {
         "authenticating": "正在核验身份…",
-        "access_terminal": "登录",
+        "sign_in": "登录",
         "initializing": "正在创建账号…",
         "register": "创建账号"
       },
@@ -332,7 +332,12 @@
         "rules": "任务规则"
       },
       "name": "任务代号",
-      "name_placeholder": "Mars Alpha-7",
+      "name_placeholder": "新任务",
+      "default_name": "新任务",
+      "mode_multiplayer": "多人任务",
+      "mode_solo": "单人任务",
+      "mode_multiplayer_meta": "2-4 名玩家",
+      "mode_solo_meta": "1 名玩家 + 对手",
       "players": "玩家",
       "solo_mode": "单人对抗",
       "solo_difficulty": "Rival 难度",

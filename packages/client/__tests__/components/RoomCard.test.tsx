@@ -16,6 +16,14 @@ describe('RoomCard', () => {
       'data-panel-scene',
       'card',
     );
+    expect(screen.getByTestId('room-card')).toHaveAttribute(
+      'data-scene-treatment',
+      'single-image',
+    );
+    expect(screen.getByTestId('room-card-scene-image')).toHaveAttribute(
+      'src',
+      '/assets/seti/sprites/terrain_01_01.webp',
+    );
     expect(screen.getByTestId('room-card-crew-count')).toHaveTextContent('1/1');
     expect(screen.getByText('Solo')).toBeInTheDocument();
     expect(screen.getByText('D3')).toBeInTheDocument();

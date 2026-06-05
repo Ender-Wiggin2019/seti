@@ -75,6 +75,7 @@ import {
 } from '@/types/re-exports';
 
 const CARD_CUSTOM_EFFECT_UNHANDLED = 'CARD_CUSTOM_EFFECT_UNHANDLED';
+const GAME_SHELL_SCENE_IMAGE = '/assets/seti/sprites/terrain_02_02.webp';
 
 function actionEventName(event: TGameEvent): string | null {
   if (event.type !== EGameEventType.ACTION) return null;
@@ -614,10 +615,17 @@ export function GameLayout({
   });
 
   return (
-    <div className='flex h-screen flex-col overflow-hidden bg-[var(--surface-void)] text-text-100'>
+    <div className='relative flex h-screen flex-col overflow-hidden bg-[var(--surface-void)] text-text-100'>
       <div
         className='pointer-events-none fixed inset-0 -z-10 bg-[image:var(--bg-atmosphere)]'
         aria-hidden
+      />
+      <img
+        src={GAME_SHELL_SCENE_IMAGE}
+        alt=''
+        aria-hidden
+        data-testid='game-shell-scene-image'
+        className='pointer-events-none fixed inset-x-0 bottom-0 -z-10 h-[38vh] w-full object-cover object-bottom opacity-[0.22]'
       />
 
       <TopBar />
@@ -1051,7 +1059,7 @@ function TopActionBar({
 
   return (
     <section
-      className='relative shrink-0 border-b border-[color:var(--metal-edge-soft)] bg-[var(--surface-deep)]/85 backdrop-blur-sm'
+      className='relative shrink-0 border-b border-[color:var(--metal-edge-soft)] bg-[var(--surface-deep)]/76 backdrop-blur-md shadow-[inset_0_1px_0_oklch(0.78_0.04_240/0.08)]'
       data-testid='bottom-actions'
     >
       <div
@@ -1312,14 +1320,24 @@ function PersonalColumn({
   return (
     <aside
       className={cn(
-        'flex-col gap-3 overflow-y-auto p-3',
+        'relative flex-col gap-3 overflow-y-auto p-3',
         'border-l border-[color:var(--metal-edge-soft)]',
-        'bg-[var(--surface-deep)]/70 backdrop-blur-sm',
+        'bg-[var(--surface-deep)]/76 backdrop-blur-md',
         className,
       )}
       aria-label={t('client.game_layout.personal_board')}
     >
-      <section data-testid={dashboardTestId}>
+      <img
+        src='/assets/seti/sprites/terrain_01_01.webp'
+        alt=''
+        aria-hidden
+        className='pointer-events-none absolute inset-0 h-full w-full object-cover object-bottom opacity-[0.12]'
+      />
+      <span
+        aria-hidden
+        className='pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,oklch(0.05_0.018_260/0.52),oklch(0.05_0.018_260/0.82))]'
+      />
+      <section className='relative z-10' data-testid={dashboardTestId}>
         <div className='section-head mb-2'>
           <span aria-hidden className='section-head__tick' />
           <p className='micro-label'>
@@ -1351,7 +1369,7 @@ function PersonalColumn({
       </section>
 
       {gameState?.isSoloMode && gameState.rival ? (
-        <section data-testid={rivalAreaTestId}>
+        <section className='relative z-10' data-testid={rivalAreaTestId}>
           <div className='section-head mb-2'>
             <span aria-hidden className='section-head__tick' />
             <p className='micro-label'>
@@ -1366,7 +1384,7 @@ function PersonalColumn({
       ) : null}
 
       {!isSyntheticRivalView ? (
-        <section data-testid={missionAreaTestId}>
+        <section className='relative z-10' data-testid={missionAreaTestId}>
           <div className='section-head mb-2'>
             <span aria-hidden className='section-head__tick' />
             <p className='micro-label'>
@@ -1551,7 +1569,7 @@ function BoardTabs({
         onValueChange={(v) => onTabChange(v as TBoardTab)}
         className='flex min-h-0 flex-1 flex-col'
       >
-        <div className='relative shrink-0 overflow-x-auto bg-[var(--surface-deep)]/60 px-3 py-2'>
+        <div className='relative shrink-0 overflow-x-auto border-b border-[color:var(--metal-edge-soft)] bg-[var(--surface-deep)]/52 px-3 py-2 backdrop-blur-sm'>
           <TabsList className='w-max'>
             {BOARD_TABS.map((tab) => (
               <TabsTrigger key={tab} value={tab}>
@@ -1565,7 +1583,7 @@ function BoardTabs({
           />
         </div>
 
-        <div className='min-h-0 flex-1 overflow-auto p-4'>
+        <div className='min-h-0 flex-1 overflow-auto bg-[oklch(0.06_0.016_260/0.22)] p-4'>
           <TabsContent value='board' className='mt-0 h-full'>
             <div
               data-testid='board-tab-solar-column'

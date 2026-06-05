@@ -21,7 +21,7 @@ function GameContent(): React.JSX.Element {
         <LoadingSpinner
           variant='scanline'
           label={t('client.game_page.connecting', {
-            defaultValue: 'Establishing uplink…',
+            defaultValue: 'Connecting to mission…',
           })}
           className='max-w-md'
         />
@@ -39,7 +39,7 @@ function GameContent(): React.JSX.Element {
         <LoadingSpinner
           variant='scanline'
           label={t('client.game_page.awaiting', {
-            defaultValue: 'Acquiring telemetry…',
+            defaultValue: 'Loading mission data…',
           })}
           className='max-w-md'
         />

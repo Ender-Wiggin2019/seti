@@ -231,7 +231,7 @@
       },
       "actions": {
         "authenticating": "Verificando identidade…",
-        "access_terminal": "Entrar",
+        "sign_in": "Entrar",
         "initializing": "Criando conta…",
         "register": "Criar Conta"
       },
@@ -326,7 +326,12 @@
         "rules": "Regras"
       },
       "name": "Codinome da Missão",
-      "name_placeholder": "Mars Alpha-7",
+      "name_placeholder": "Nova Missão",
+      "default_name": "Nova Missão",
+      "mode_multiplayer": "Missão Multijogador",
+      "mode_solo": "Missão Solo",
+      "mode_multiplayer_meta": "2-4 Jogadores",
+      "mode_solo_meta": "1 Jogador + Rival",
       "players": "Jogadores",
       "solo_mode": "Rival Solo",
       "solo_difficulty": "Dificuldade do Rival",

@@ -27,18 +27,23 @@ export function TopBar(): React.JSX.Element {
   return (
     <header
       className={cn(
-        'flex h-12 shrink-0 items-center justify-between px-4',
+        'relative flex h-12 shrink-0 items-center justify-between px-4',
         'border-b border-[color:var(--metal-edge-soft)]',
-        'bg-[var(--surface-deep)]/85 backdrop-blur-md',
+        'bg-[var(--surface-deep)]/74 backdrop-blur-md',
+        'shadow-[inset_0_1px_0_oklch(0.78_0.04_240/0.08)]',
       )}
     >
+      <span
+        aria-hidden
+        className='pointer-events-none absolute inset-x-0 bottom-0 h-px bg-[linear-gradient(90deg,transparent,oklch(0.68_0.11_240/0.38),transparent)]'
+      />
       <div className='flex items-center gap-4'>
         <Link
           to='/lobby'
           className={cn(
-            'flex items-center gap-1.5',
+            'flex items-center gap-1.5 rounded-[4px] border border-[color:var(--metal-edge-soft)] px-2.5 py-1.5',
             'font-mono text-[0.6875rem] uppercase tracking-microlabel',
-            'text-text-500 transition-colors hover:text-text-100',
+            'bg-[var(--surface-instrument)]/68 text-text-500 transition-colors hover:text-text-100',
           )}
         >
           <svg

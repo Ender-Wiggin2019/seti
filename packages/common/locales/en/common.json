@@ -231,7 +231,7 @@
       },
       "actions": {
         "authenticating": "Verifying identity…",
-        "access_terminal": "Sign In",
+        "sign_in": "Sign In",
         "initializing": "Creating account…",
         "register": "Create Account"
       },
@@ -326,7 +326,12 @@
         "rules": "Rules"
       },
       "name": "Mission Callsign",
-      "name_placeholder": "Mars Alpha-7",
+      "name_placeholder": "New Mission",
+      "default_name": "New Mission",
+      "mode_multiplayer": "Multiplayer Mission",
+      "mode_solo": "Solo Mission",
+      "mode_multiplayer_meta": "2-4 Players",
+      "mode_solo_meta": "1 Player + Rival",
       "players": "Players",
       "solo_mode": "Solo Rival",
       "solo_difficulty": "Rival Difficulty",
