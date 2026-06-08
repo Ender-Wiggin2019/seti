@@ -1,4 +1,5 @@
 import { EResource } from '@seti/common/types/element';
+import { EOrganizationId } from '@seti/common/types/organization';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { loadCardData } from '@/engine/cards/loadCardData.js';
 import { TuckCardForIncomeEffect } from '@/engine/effects/income/TuckCardForIncomeEffect.js';
@@ -120,5 +121,28 @@ describe('TuckCardForIncomeEffect', () => {
 
     expect(input).toBeUndefined();
     expect(player.pendingSetupTucks).toBe(0);
+  });
+
+  it('includes setup tuck progress across chained prompts', () => {
+    const player = createPlayer(['16', '46', '64']);
+    player.organizationIds = [EOrganizationId.FENWICK_RESEARCH_CENTER];
+    player.pendingSetupTucks = 3;
+    const game = createGame([]);
+
+    const first = TuckCardForIncomeEffect.executeSetupChain(player, game);
+    expect(first?.toModel()).toMatchObject({
+      type: EPlayerInputType.CARD,
+      setupTuckProgress: { current: 1, total: 3 },
+    });
+
+    const second = first?.process({
+      type: EPlayerInputType.CARD,
+      cardIds: ['16'],
+    });
+
+    expect(second?.toModel()).toMatchObject({
+      type: EPlayerInputType.CARD,
+      setupTuckProgress: { current: 2, total: 3 },
+    });
   });
 });

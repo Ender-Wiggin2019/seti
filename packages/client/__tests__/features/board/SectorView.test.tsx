@@ -120,6 +120,27 @@ describe('SectorView', () => {
     expect(onSelectSector).toHaveBeenCalledWith(ESector.BLACK);
   });
 
+  it('marks selectable sector nodes with the shared pending hotspot affordance', () => {
+    render(
+      <SectorView
+        pair={createPair()}
+        playerColors={{ 'player-1': 'red' }}
+        selectableColors={new Set([ESector.BLACK])}
+        clickable
+        highlighted
+        onSelectSector={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('sector-node-north-0')).not.toHaveAttribute(
+      'data-hotspot-attention',
+    );
+    expect(screen.getByTestId('sector-node-north-1')).toHaveAttribute(
+      'data-hotspot-attention',
+      'true',
+    );
+  });
+
   it('exposes sector nodes through the shared hotspot debug layer', () => {
     useDebugStore.getState().setHotspotDebug(true);
 

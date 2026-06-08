@@ -105,6 +105,38 @@ describe('FreeActionBar', () => {
     ).toBeDisabled();
   });
 
+  it('requires stored movement before enabling Move Probe', () => {
+    const gameState = createMockGameState({
+      players: [
+        createMockPlayerState({
+          playerId: 'player-1',
+          probesInSpace: 1,
+          movementPoints: 0,
+          resources: { credit: 1, energy: 2, data: 0, publicity: 1 },
+        }),
+      ],
+    });
+
+    render(
+      <FreeActionBar
+        gameState={gameState}
+        myPlayerId='player-1'
+        isMyTurn
+        onActionClick={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Move Probe (0)' }),
+    ).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+
+    expect(
+      screen.getByTestId('free-action-CONVERT_ENERGY_TO_MOVEMENT'),
+    ).toBeEnabled();
+  });
+
   it('triggers callback with clicked action', () => {
     const onActionClick = vi.fn();
 

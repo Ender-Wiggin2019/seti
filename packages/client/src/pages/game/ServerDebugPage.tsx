@@ -9,6 +9,7 @@ import { GameLayout } from '@/pages/game/GameLayout';
 import type { IAuthUser } from '@/stores/authStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useGameViewStore } from '@/stores/gameViewStore';
+import { GAME_Z_INDEX } from '@/styles/zIndex';
 
 interface IAuthSnapshot {
   token: string | null;
@@ -157,7 +158,10 @@ export function ServerDebugPage(): React.JSX.Element {
 
   return (
     <>
-      <div className='fixed right-3 top-3 z-50 flex items-center gap-2 rounded-[5px] border border-[color:var(--metal-edge)] bg-[var(--surface-raised)]/95 p-2 text-xs backdrop-blur'>
+      <div
+        className='fixed right-3 top-3 flex items-center gap-2 rounded-[5px] border border-[color:var(--metal-edge)] bg-[var(--surface-raised)]/95 p-2 text-xs backdrop-blur'
+        style={{ zIndex: GAME_Z_INDEX.popover }}
+      >
         <span className='micro-label'>
           {t('client.debug.server.label', { defaultValue: 'Server Debug' })}
         </span>

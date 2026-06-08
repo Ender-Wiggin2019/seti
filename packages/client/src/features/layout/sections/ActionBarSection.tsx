@@ -4,14 +4,16 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/toast';
 import { ActionMenu } from '@/features/actions/ActionMenu';
 import { FreeActionBar } from '@/features/actions/FreeActionBar';
-import { isOrbitalDynamicsMoveInputModel } from '@/features/board/SolarSystemView';
-import { InputRenderer } from '@/features/input/InputRenderer';
-import { SetupChoiceModal } from '@/features/setup/SetupChoiceModal';
+import {
+  getPlayerInputPresentationMode,
+  isOrbitalDynamicsMoveInputModel,
+  shouldRenderPendingInputPrompt,
+} from '@/features/input/inputPresentation';
+import { PendingInputPrompt } from '@/features/input/PendingInputPrompt';
 import { useGameContext } from '@/pages/game/GameContext';
 import { useGameViewStore } from '@/stores/gameViewStore';
 import {
   EMainAction,
-  EPhase,
   EPlayerInputType,
   type IMainActionRequest,
 } from '@/types/re-exports';
@@ -65,12 +67,13 @@ export function ActionBarSection(_: ISectionRenderProps): React.JSX.Element {
     orbitalDynamicsInput?.options.find((option) => option.id === 'done') ??
     null;
   const showBoardInputHint = orbitalDynamicsInput !== null;
-  const showInputRenderer =
-    pendingInput !== null &&
-    pendingInput.type !== EPlayerInputType.OR &&
-    !showBoardInputHint;
-  const showSetupChoiceInput =
-    gameState?.phase === EPhase.SETUP_CHOICE && pendingInput !== null;
+  const presentationMode = getPlayerInputPresentationMode(pendingInput, {
+    cardRowCardIds: gameState
+      ? new Set(gameState.cardRow.map((card) => card.id))
+      : undefined,
+  });
+  const showPendingInputPrompt = shouldRenderPendingInputPrompt(pendingInput);
+  const promptInput = showPendingInputPrompt ? pendingInput : null;
 
   const handleSendAction = (request: IMainActionRequest): void => {
     setMovementModeActive(false);
@@ -108,69 +111,31 @@ export function ActionBarSection(_: ISectionRenderProps): React.JSX.Element {
 
   return (
     <div className='flex flex-col'>
-      {showInputRenderer ? (
-        <div className='px-4 py-2'>
-          <div className='instrument-panel p-3'>
-            <div className='section-head mb-2'>
-              <span aria-hidden className='section-head__tick' />
-              <p className='font-mono text-[11px] uppercase tracking-[0.14em] text-accent-400'>
-                {t('client.game_layout.awaiting_input', {
-                  defaultValue: 'Input Required',
-                })}
-              </p>
-              <div aria-hidden className='section-head__rule' />
-              <span
-                aria-hidden
-                className='h-1.5 w-1.5 rounded-full bg-accent-500 shadow-[0_0_6px_oklch(0.68_0.11_240/0.8)] motion-safe:animate-pulse'
-              />
-            </div>
-            {showSetupChoiceInput ? (
-              <SetupChoiceModal model={pendingInput} onSubmit={sendInput} />
-            ) : (
-              <InputRenderer
-                model={pendingInput}
-                onSubmit={sendInput}
-                techBoard={gameState?.techBoard}
-              />
-            )}
-          </div>
-        </div>
-      ) : showBoardInputHint ? (
-        <div className='px-4 py-2'>
-          <div className='instrument-panel p-3'>
-            <div className='section-head mb-2'>
-              <span aria-hidden className='section-head__tick' />
-              <p className='font-mono text-[11px] uppercase tracking-[0.14em] text-accent-400'>
-                {t('client.game_layout.awaiting_input', {
-                  defaultValue: 'Input Required',
-                })}
-              </p>
-              <div aria-hidden className='section-head__rule' />
-            </div>
-            <p className='font-mono text-[11px] uppercase tracking-[0.14em] text-text-300'>
-              {t('client.game_layout.orbital_dynamics')}
-            </p>
-            <p className='mt-1 text-sm text-text-100'>
-              {t('client.game_layout.select_highlighted_space')}
-            </p>
-            {orbitalDynamicsDoneOption ? (
-              <Button
-                variant='ghost'
-                size='sm'
-                className='mt-3 h-7 px-2.5 font-mono text-[10px] uppercase tracking-[0.14em]'
-                onClick={() =>
-                  sendInput({
-                    inputId: orbitalDynamicsInput.inputId,
-                    type: EPlayerInputType.OPTION,
-                    optionId: orbitalDynamicsDoneOption.id,
-                  })
+      {promptInput ? (
+        <PendingInputPrompt
+          model={promptInput}
+          onSubmit={sendInput}
+          phase={gameState?.phase}
+          techBoard={gameState?.techBoard}
+          presentationMode={presentationMode ?? undefined}
+          boardHint={
+            showBoardInputHint
+              ? {
+                  title: t('client.game_layout.orbital_dynamics'),
+                  description: t('client.game_layout.select_highlighted_space'),
+                  doneLabel: orbitalDynamicsDoneOption?.label,
+                  onDone: orbitalDynamicsDoneOption
+                    ? () =>
+                        sendInput({
+                          inputId: orbitalDynamicsInput.inputId,
+                          type: EPlayerInputType.OPTION,
+                          optionId: orbitalDynamicsDoneOption.id,
+                        })
+                    : undefined,
                 }
-              >
-                {orbitalDynamicsDoneOption.label}
-              </Button>
-            ) : null}
-          </div>
-        </div>
+              : undefined
+          }
+        />
       ) : (
         <div className='flex min-w-0 items-center gap-3 px-4 py-2'>
           <ActionMenu

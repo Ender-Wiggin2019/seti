@@ -54,7 +54,7 @@ export function Switch({
         aria-hidden
         className={cn(
           'pointer-events-none block h-[18px] w-[18px] rounded-full',
-          'bg-gradient-to-b from-[oklch(0.98_0.008_260)] to-[oklch(0.85_0.01_260)]',
+          'bg-[oklch(0.92_0.008_260)]',
           'shadow-[inset_0_-1px_0_oklch(0.60_0.02_260/0.4),0_1px_2px_oklch(0.08_0.018_260/0.6)]',
           'transition-transform duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)]',
           checked ? 'translate-x-[18px]' : 'translate-x-0',

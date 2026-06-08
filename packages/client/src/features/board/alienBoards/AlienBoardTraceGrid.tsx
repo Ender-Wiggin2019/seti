@@ -37,11 +37,15 @@ export function TraceColumnGrid({
   area,
   slots,
   playerColors,
+  selectableSlotIds,
+  onSelectTraceSlot,
 }: {
   alienIndex: number;
   area: string;
   slots: IPublicTraceSlot[];
   playerColors: Record<string, string>;
+  selectableSlotIds?: ReadonlySet<string>;
+  onSelectTraceSlot?: (slotId: string) => void;
 }): React.JSX.Element {
   const groupedSlots = groupTraceSlotsByColor(slots);
 
@@ -55,6 +59,8 @@ export function TraceColumnGrid({
           color={color}
           slots={groupedSlots[color]}
           playerColors={playerColors}
+          selectableSlotIds={selectableSlotIds}
+          onSelectTraceSlot={onSelectTraceSlot}
         />
       ))}
     </div>
@@ -67,12 +73,16 @@ function TraceColorColumn({
   color,
   slots,
   playerColors,
+  selectableSlotIds,
+  onSelectTraceSlot,
 }: {
   alienIndex: number;
   area: string;
   color: TTraceColumnColor;
   slots: IPublicTraceSlot[];
   playerColors: Record<string, string>;
+  selectableSlotIds?: ReadonlySet<string>;
+  onSelectTraceSlot?: (slotId: string) => void;
 }): React.JSX.Element {
   const previewOverflow = usePreviewOverflowCount();
   const decoratedSlots =
@@ -96,6 +106,8 @@ function TraceColorColumn({
             key={slot.slotId}
             slot={slot}
             playerColors={playerColors}
+            selectable={selectableSlotIds?.has(slot.slotId) === true}
+            onSelectTraceSlot={onSelectTraceSlot}
           />
         ))}
         {decoratedSlots.length === 0 ? (
@@ -229,9 +241,13 @@ function parseCentauriansDataCost(slotId: string): number {
 function TraceSlot({
   slot,
   playerColors,
+  selectable = false,
+  onSelectTraceSlot,
 }: {
   slot: IPublicTraceSlot;
   playerColors: Record<string, string>;
+  selectable?: boolean;
+  onSelectTraceSlot?: (slotId: string) => void;
 }): React.JSX.Element {
   const isOverflow = slot.maxOccupants === -1;
   const rewards = toTraceRewardPresentations(slot.rewards);
@@ -245,8 +261,8 @@ function TraceSlot({
         ? ` — costs ${dataCost} data`
         : '';
 
-  return (
-    <div className='relative flex w-[78%] max-w-16 shrink-0 flex-col items-center'>
+  const content = (
+    <>
       <TraceRewardFrame
         traceColor={slot.traceColor}
         variant={isOverflow ? 'pill' : 'circle'}
@@ -273,6 +289,29 @@ function TraceSlot({
       {exofossilCost > 0 ? <ExofossilCostBadge cost={exofossilCost} /> : null}
       {dataCost > 0 ? <DataCostBadge cost={dataCost} /> : null}
       <SlotOccupantOverlay slot={slot} playerColors={playerColors} />
+    </>
+  );
+
+  if (selectable) {
+    return (
+      <button
+        type='button'
+        aria-label={`Select ${TRACE_LABEL[slot.traceColor]} trace slot`}
+        className='hotspot-button--attention relative flex w-[78%] max-w-16 shrink-0 cursor-pointer flex-col items-center rounded-full border border-transparent bg-transparent p-0 text-inherit focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400'
+        data-hotspot-attention='true'
+        data-hotspot-role='interactive'
+        data-server-trace-slot-id={slot.slotId}
+        data-testid={`trace-slot-${slot.slotId}-button`}
+        onClick={() => onSelectTraceSlot?.(slot.slotId)}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className='relative flex w-[78%] max-w-16 shrink-0 flex-col items-center'>
+      {content}
     </div>
   );
 }

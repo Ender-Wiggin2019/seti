@@ -70,8 +70,11 @@ describe('drawCard', () => {
     const result = drawCard(player, game, { source: 'alien' });
 
     expect(result.drawnCardIds).toEqual([]);
-    expect(result.pendingInput).toBeDefined();
-    const model = result.pendingInput!.toModel();
+    const pendingInput = result.pendingInput;
+    if (!pendingInput) {
+      throw new Error('Expected pending input');
+    }
+    const model = pendingInput.toModel();
     expect(model.type).toBe(EPlayerInputType.OPTION);
     if (model.type !== EPlayerInputType.OPTION) {
       throw new Error('Expected option input model');
@@ -109,7 +112,23 @@ describe('drawCard', () => {
     });
 
     expect(result.pendingInput).toBeDefined();
-    const done = result.pendingInput!.process({
+    const pendingInput = result.pendingInput;
+    if (!pendingInput) {
+      throw new Error('Expected pending input');
+    }
+    const model = pendingInput.toModel();
+    expect(model.type).toBe(EPlayerInputType.OPTION);
+    if (model.type !== EPlayerInputType.OPTION) {
+      throw new Error('Expected option input model');
+    }
+    expect(model.options).toContainEqual(
+      expect.objectContaining({
+        id: 'draw-face-up',
+        cardId: 'ET.11',
+      }),
+    );
+
+    const done = pendingInput.process({
       type: EPlayerInputType.OPTION,
       optionId: 'draw-random',
     });

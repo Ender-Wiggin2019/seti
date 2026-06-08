@@ -82,119 +82,10 @@
   --ease-expo-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   /*
-   * Cosmic atmosphere — perceptibly layered, not a flat black wall.
-   * Painted back to front:
-   *   1. Void gradient — indigo glow centred upper-left, drifting to cold edges.
-   *   2. Distant nebula — wide violet wash at lower-right, ~10% lightness lift.
-   *   3. Dust lane — warm diagonal smear suggesting a galactic plane.
-   *   4. Starfield — sparse luminous pinpoints.
-   * The combined lift at the focal point is intentionally visible: dark, but
-   * never flat.
+   * Cosmic atmosphere — project-drawn SVG background, not existing board art.
+   * Low-poly space facets and sparse signal stars keep the app dark but alive.
    */
-  /* Starfield — sparse pinpoints */
-  --bg-atmosphere:
-    radial-gradient(
-      1px 1px at 23% 17%,
-      oklch(0.96 0.008 260 / 0.65),
-      transparent 100%
-    ),
-    radial-gradient(
-      1px 1px at 61% 42%,
-      oklch(0.96 0.008 260 / 0.45),
-      transparent 100%
-    ),
-    radial-gradient(
-      1px 1px at 79% 83%,
-      oklch(0.96 0.008 260 / 0.5),
-      transparent 100%
-    ),
-    radial-gradient(
-      1px 1px at 14% 76%,
-      oklch(0.96 0.008 260 / 0.36),
-      transparent 100%
-    ),
-    radial-gradient(
-      1px 1px at 88% 22%,
-      oklch(0.96 0.008 260 / 0.42),
-      transparent 100%
-    ),
-    radial-gradient(
-      1px 1px at 41% 89%,
-      oklch(0.96 0.008 260 / 0.32),
-      transparent 100%
-    ),
-    radial-gradient(
-      1px 1px at 6% 33%,
-      oklch(0.96 0.008 260 / 0.38),
-      transparent 100%
-    ),
-    radial-gradient(
-      1.3px 1.3px at 52% 8%,
-      oklch(0.94 0.05 240 / 0.65),
-      transparent 100%
-    ),
-    radial-gradient(
-      0.9px 0.9px at 33% 58%,
-      oklch(0.96 0.008 260 / 0.36),
-      transparent 100%
-    ),
-    radial-gradient(
-      1px 1px at 71% 25%,
-      oklch(0.96 0.008 260 / 0.32),
-      transparent 100%
-    ),
-    radial-gradient(
-      0.9px 0.9px at 95% 60%,
-      oklch(0.96 0.008 260 / 0.36),
-      transparent 100%
-    ),
-    radial-gradient(
-      1.6px 1.6px at 18% 50%,
-      oklch(0.92 0.06 305 / 0.55),
-      transparent 100%
-    ),
-    radial-gradient(
-      1px 1px at 47% 67%,
-      oklch(0.96 0.008 260 / 0.3),
-      transparent 100%
-    ),
-    radial-gradient(
-      1.2px 1.2px at 82% 11%,
-      oklch(0.94 0.04 240 / 0.45),
-      transparent 100%
-    ),
-    /* Dust lane — warm diagonal smear, wider and ~2× the previous opacity */
-    linear-gradient(
-      112deg,
-      transparent 0%,
-      transparent 30%,
-      oklch(0.34 0.06 30 / 0.07) 42%,
-      oklch(0.34 0.06 30 / 0.1) 50%,
-      oklch(0.34 0.06 30 / 0.07) 58%,
-      transparent 70%,
-      transparent 100%
-    ),
-    /* Distant nebula — violet wash, lower-right */
-    radial-gradient(
-      900px 600px at 85% 90%,
-      oklch(0.28 0.1 305 / 0.4) 0%,
-      oklch(0.22 0.07 290 / 0.18) 45%,
-      transparent 75%
-    ),
-    /* Instrument-light pool — anodized blue, upper-left focal point */
-    radial-gradient(
-      1100px 700px at 22% 18%,
-      oklch(0.32 0.1 240 / 0.45) 0%,
-      oklch(0.24 0.07 250 / 0.22) 40%,
-      transparent 75%
-    ),
-    /* Void gradient (the canvas) — base lightness lifted from 0.08 → 0.10 */
-    radial-gradient(
-      ellipse 130% 90% at 35% 25%,
-      oklch(0.2 0.045 275) 0%,
-      oklch(0.15 0.03 265) 45%,
-      oklch(0.1 0.02 255) 100%
-    );
+  --bg-atmosphere: url("/assets/seti/sky/impeccable-atmosphere.svg");
 }
 
 /* ------------------------------------------------------------
@@ -220,10 +111,8 @@ body {
    * Body itself carries the cosmic atmosphere, so even routes that don't
    * mount AppShell (game pages, debug pages) sit on layered space —
    * never flat #000. Components paint their own surfaces on top.
-   */
+  */
   background-color: var(--surface-void);
-  background-image: var(--bg-atmosphere);
-  background-attachment: fixed;
   color: var(--text-100);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -507,28 +396,10 @@ pre {
    Mission Hub scene primitives
    ============================================================ */
 .mission-scene {
-  background:
-    radial-gradient(
-      1px 1px at 12% 12%,
-      oklch(0.9 0.08 230 / 0.64),
-      transparent 100%
-    ),
-    radial-gradient(
-      1.4px 1.4px at 26% 20%,
-      oklch(0.86 0.08 230 / 0.5),
-      transparent 100%
-    ),
-    radial-gradient(
-      1px 1px at 54% 16%,
-      oklch(0.94 0.02 260 / 0.5),
-      transparent 100%
-    ),
-    linear-gradient(
-      135deg,
-      oklch(0.08 0.02 255) 0%,
-      oklch(0.12 0.035 245) 45%,
-      oklch(0.08 0.018 255) 100%
-    );
+  background-color: var(--surface-deep);
+  background-image: url("/assets/seti/sky/impeccable-atmosphere.svg");
+  background-position: center;
+  background-size: cover;
 }
 
 .mission-scene::before {
@@ -536,13 +407,7 @@ pre {
   position: absolute;
   inset: auto -4% -18% -4%;
   height: 46%;
-  background:
-    linear-gradient(
-      172deg,
-      transparent 0%,
-      oklch(0.34 0.015 255 / 0.24) 46%,
-      oklch(0.14 0.018 255 / 0.9) 100%
-    ), url("/assets/seti/sprites/terrain_01_01.webp");
+  background-image: url("/assets/seti/sprites/terrain_01_01.webp");
   background-position: center bottom;
   background-repeat: repeat-x;
   background-size: 360px auto;
@@ -553,18 +418,7 @@ pre {
   content: "";
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(
-      90deg,
-      oklch(0.06 0.018 260 / 0.84),
-      transparent 44%,
-      oklch(0.06 0.018 260 / 0.36)
-    ),
-    radial-gradient(
-      560px 260px at 76% 18%,
-      oklch(0.62 0.13 48 / 0.16),
-      transparent 70%
-    );
+  background-color: oklch(0.06 0.018 260 / 0.54);
   pointer-events: none;
 }
 
@@ -577,11 +431,7 @@ pre {
   overflow: hidden;
   border-radius: 8px;
   border: 1px solid var(--metal-edge-soft);
-  background: linear-gradient(
-    180deg,
-    oklch(0.13 0.025 258 / 0.98) 0%,
-    oklch(0.1 0.018 258 / 0.96) 100%
-  );
+  background-color: oklch(0.13 0.025 258 / 0.98);
   box-shadow:
     inset 0 1px 0 oklch(0.78 0.04 240 / 0.08),
     0 10px 28px oklch(0.04 0.015 255 / 0.26);
@@ -592,18 +442,10 @@ pre {
   content: "";
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(
-      520px 220px at 16% 0%,
-      oklch(0.3 0.08 235 / 0.14),
-      transparent 70%
-    ),
-    linear-gradient(
-      180deg,
-      oklch(0.28 0.03 260 / 0.06) 0%,
-      transparent 44%,
-      oklch(0.04 0.01 260 / 0.28) 100%
-    );
+  background-image: url("/assets/seti/sky/impeccable-atmosphere.svg");
+  background-position: center;
+  background-size: cover;
+  opacity: 0.1;
   pointer-events: none;
 }
 
@@ -611,54 +453,18 @@ pre {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    90deg,
-    oklch(0.06 0.018 260 / 0.7),
-    transparent 36%,
-    transparent 72%,
-    oklch(0.06 0.018 260 / 0.42)
-  );
+  background-color: oklch(0.06 0.018 260 / 0.26);
   pointer-events: none;
 }
 
 .mission-panel[data-panel-scene="room"]::before {
-  background:
-    radial-gradient(
-      540px 260px at 85% 10%,
-      oklch(0.58 0.11 45 / 0.14),
-      transparent 72%
-    ),
-    radial-gradient(
-      400px 220px at 8% 0%,
-      oklch(0.3 0.08 235 / 0.12),
-      transparent 70%
-    ),
-    linear-gradient(
-      180deg,
-      oklch(0.28 0.03 260 / 0.06) 0%,
-      transparent 44%,
-      oklch(0.04 0.01 260 / 0.28) 100%
-    );
+  background-image: url("/assets/seti/sprites/terrain_00_02.webp");
+  opacity: 0.12;
 }
 
 .mission-panel[data-panel-scene="card"]::before {
-  background:
-    radial-gradient(
-      280px 160px at 100% 10%,
-      oklch(0.58 0.11 45 / 0.12),
-      transparent 72%
-    ),
-    radial-gradient(
-      260px 150px at 0% 0%,
-      oklch(0.3 0.08 235 / 0.1),
-      transparent 72%
-    ),
-    linear-gradient(
-      180deg,
-      oklch(0.28 0.03 260 / 0.05) 0%,
-      transparent 40%,
-      oklch(0.04 0.01 260 / 0.24) 100%
-    );
+  background-image: url("/assets/seti/sprites/terrain_01_01.webp");
+  opacity: 0.12;
 }
 
 .mission-stat-card[data-signal="blue"] {
@@ -736,6 +542,279 @@ pre {
 
 .signal-pulse {
   animation: signal-pulse 2.4s ease-in-out infinite;
+}
+
+.hotspot-button--attention {
+  overflow: visible;
+  border-color: oklch(0.78 0.13 75 / 0.86);
+  background: oklch(0.78 0.13 75 / 0.16) !important;
+  box-shadow:
+    0 0 0 1px oklch(0.92 0.08 82 / 0.36),
+    0 0 16px oklch(0.78 0.13 75 / 0.44);
+  animation: hotspot-attention-breathe 2.4s ease-in-out infinite;
+}
+
+.hotspot-button--attention::before {
+  content: "";
+  position: absolute;
+  inset: -0.35rem;
+  border-radius: inherit;
+  border: 1px solid oklch(0.78 0.13 75 / 0.42);
+  opacity: 0.65;
+  animation: hotspot-attention-ring 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes hotspot-attention-breathe {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px oklch(0.92 0.08 82 / 0.28),
+      0 0 12px oklch(0.78 0.13 75 / 0.36);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px oklch(0.92 0.08 82 / 0.44),
+      0 0 22px oklch(0.78 0.13 75 / 0.58);
+  }
+}
+
+@keyframes hotspot-attention-ring {
+  0%,
+  100% {
+    opacity: 0.28;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 0.72;
+    transform: scale(1.15);
+  }
+}
+
+.pending-input-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(4.5rem, 8vh, 5.75rem) 2rem 1.5rem;
+  background: oklch(0.06 0.016 260 / 0.72);
+  animation: pending-input-overlay-in 240ms var(--ease-enter) both;
+}
+
+.pending-input-overlay--collapsing {
+  animation: pending-input-overlay-out 240ms var(--ease-exit) both;
+}
+
+.pending-input-panel {
+  position: relative;
+  width: min(64rem, calc(100vw - 4rem));
+  max-height: min(46rem, calc(100vh - 7rem));
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid var(--metal-edge);
+  background: var(--surface-raised);
+  box-shadow:
+    inset 0 1px 0 oklch(0.78 0.04 240 / 0.25),
+    inset 0 -1px 0 oklch(0.06 0.018 260 / 0.78);
+  padding: 1.5rem;
+  animation: pending-input-panel-in 480ms var(--ease-enter) both;
+}
+
+.pending-input-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    oklch(0.55 0.04 240 / 0.72),
+    transparent
+  );
+  pointer-events: none;
+}
+
+.pending-input-panel--collapsing {
+  animation: pending-input-panel-collapse 240ms var(--ease-exit) both;
+  transform-origin: left bottom;
+}
+
+.pending-input-panel__body {
+  max-height: min(34rem, calc(100vh - 17rem));
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.pending-input-board-hint {
+  border-radius: 5px;
+  border: 1px solid oklch(0.58 0.1 75 / 0.36);
+  background: oklch(0.16 0.035 75 / 0.18);
+  padding: 0.75rem 1rem;
+}
+
+.pending-input-ingame {
+  position: fixed;
+  left: max(1rem, env(safe-area-inset-left));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  width: min(22rem, calc(100vw - 2rem));
+  border-radius: 8px;
+  border: 1px solid oklch(0.58 0.1 75 / 0.5);
+  background: oklch(0.12 0.024 258 / 0.94);
+  color: var(--text-100);
+  padding: 0.85rem;
+  box-shadow:
+    inset 0 1px 0 oklch(0.78 0.04 240 / 0.16),
+    0 0 18px oklch(0.78 0.13 75 / 0.22),
+    0 14px 36px oklch(0.04 0.012 260 / 0.52);
+  backdrop-filter: blur(10px);
+  animation: pending-input-float-in 240ms var(--ease-enter) both;
+}
+
+.pending-input-float {
+  position: fixed;
+  left: max(1rem, env(safe-area-inset-left));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  display: inline-flex;
+  height: 3.25rem;
+  width: 3.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid oklch(0.58 0.1 75 / 0.72);
+  background: oklch(0.14 0.03 258 / 0.96);
+  color: var(--signal-amber);
+  box-shadow:
+    inset 0 1px 0 oklch(0.78 0.04 240 / 0.18),
+    0 0 16px oklch(0.78 0.13 75 / 0.34),
+    0 12px 32px oklch(0.04 0.012 260 / 0.58);
+  animation:
+    pending-input-float-in 240ms var(--ease-enter) both,
+    pending-input-float-breathe 2.6s ease-in-out 180ms infinite;
+}
+
+.pending-input-float__ring {
+  position: absolute;
+  inset: -0.35rem;
+  border-radius: inherit;
+  border: 1px solid oklch(0.78 0.13 75 / 0.34);
+  animation: pending-input-float-ring 2.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.pending-input-float:hover {
+  color: var(--signal-amber-hi);
+  border-color: oklch(0.72 0.12 75 / 0.88);
+  background: oklch(0.18 0.036 258 / 0.96);
+}
+
+@keyframes pending-input-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pending-input-overlay-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes pending-input-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pending-input-panel-collapse {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0.18;
+    transform: translate(-42vw, 38vh) scale(0.16);
+  }
+}
+
+@keyframes pending-input-float-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pending-input-float-breathe {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 1px 0 oklch(0.78 0.04 240 / 0.18),
+      0 0 14px oklch(0.78 0.13 75 / 0.3),
+      0 12px 32px oklch(0.04 0.012 260 / 0.58);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 oklch(0.78 0.04 240 / 0.24),
+      0 0 24px oklch(0.78 0.13 75 / 0.52),
+      0 14px 36px oklch(0.04 0.012 260 / 0.62);
+  }
+}
+
+@keyframes pending-input-float-ring {
+  0%,
+  100% {
+    opacity: 0.38;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 0.78;
+    transform: scale(1.08);
+  }
+}
+
+@media (max-width: 640px) {
+  .pending-input-overlay {
+    align-items: flex-end;
+    padding: 4rem 0.75rem 5rem;
+  }
+
+  .pending-input-panel {
+    width: 100%;
+    max-height: min(38rem, calc(100vh - 7rem));
+  }
+
+  .pending-input-panel__body {
+    max-height: min(27rem, calc(100vh - 17rem));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pending-input-overlay,
+  .pending-input-overlay--collapsing,
+  .pending-input-panel,
+  .pending-input-panel--collapsing,
+  .pending-input-float,
+  .pending-input-float__ring,
+  .pending-input-ingame,
+  .hotspot-button--attention,
+  .hotspot-button--attention::before {
+    animation: none;
+  }
 }
 
 /* ============================================================

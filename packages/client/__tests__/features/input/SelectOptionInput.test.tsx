@@ -35,7 +35,75 @@ describe('SelectOptionInput', () => {
     });
   });
 
-  it('renders organization setup choices with organization metadata and same OPTION response', () => {
+  it('renders card-reference options with full card visuals and the same OPTION response', () => {
+    const onSubmit = vi.fn();
+    render(
+      <SelectOptionInput
+        model={{
+          inputId: 'input-option',
+          type: EPlayerInputType.OPTION,
+          title: 'Choose any card',
+          options: [
+            { id: 'take-93', label: 'Take [[card:93]] from card row' },
+            { id: 'draw-deck', label: 'Draw from deck' },
+          ],
+        }}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    const cardOption = screen.getByTestId('input-option-take-93');
+    expect(screen.getByTestId('card-render-93')).toBeInTheDocument();
+    expect(screen.getByTestId('input-option-draw-deck')).toHaveTextContent(
+      'Draw from deck',
+    );
+
+    fireEvent.click(cardOption);
+
+    expect(onSubmit).toHaveBeenCalledWith({
+      inputId: 'input-option',
+      type: EPlayerInputType.OPTION,
+      optionId: 'take-93',
+    });
+  });
+
+  it('renders card-id option metadata with full card visuals and the same OPTION response', () => {
+    const onSubmit = vi.fn();
+    render(
+      <SelectOptionInput
+        model={{
+          inputId: 'draw-alien-source',
+          type: EPlayerInputType.OPTION,
+          title: 'Choose how to draw from Oumuamua',
+          options: [
+            {
+              id: 'draw-face-up',
+              label: 'Draw face-up alien card',
+              cardId: 'ET.21',
+            },
+            { id: 'draw-random', label: 'Draw random alien card' },
+          ],
+        }}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    const cardOption = screen.getByTestId('input-option-draw-face-up');
+    expect(screen.getByTestId('card-render-ET.21')).toBeInTheDocument();
+    expect(screen.getByTestId('input-option-draw-random')).toHaveTextContent(
+      'Draw random alien card',
+    );
+
+    fireEvent.click(cardOption);
+
+    expect(onSubmit).toHaveBeenCalledWith({
+      inputId: 'draw-alien-source',
+      type: EPlayerInputType.OPTION,
+      optionId: 'draw-face-up',
+    });
+  });
+
+  it('renders organization setup choices with the real organization card visual and same OPTION response', () => {
     const onSubmit = vi.fn();
     render(
       <SelectOptionInput
@@ -64,8 +132,14 @@ describe('SelectOptionInput', () => {
     const option = screen.getByTestId(
       `input-option-${EOrganizationId.ORBITAL_DYNAMICS}`,
     );
-    expect(option).toHaveTextContent('Orbital Dynamics');
-    expect(option).toHaveTextContent('Start');
+    expect(
+      screen.getByTestId(
+        `organization-card-${EOrganizationId.ORBITAL_DYNAMICS}`,
+      ),
+    ).toBeInTheDocument();
+    expect(option).toHaveAccessibleName(
+      /Orbital Dynamics\. Setup: 2 credits, 2 energy, 0 cards, 3 publicity, 0 data, 2 tuck income cards/,
+    );
     expect(option).toHaveAccessibleName(
       /Setup: 2 credits, 2 energy, 0 cards, 3 publicity, 0 data, 2 tuck income cards/,
     );
@@ -105,10 +179,13 @@ describe('SelectOptionInput', () => {
       />,
     );
 
-    expect(screen.getByText('轨道动力')).toBeInTheDocument();
-    expect(screen.getByText('初始')).toBeInTheDocument();
     expect(
-      screen.getByText(
+      screen.getByTestId(
+        `organization-card-${EOrganizationId.ORBITAL_DYNAMICS}`,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(
         /设置：2 金钱，2 能量，0 卡牌，3 声望，0 数据，2 张收入塞牌/,
       ),
     ).toBeInTheDocument();

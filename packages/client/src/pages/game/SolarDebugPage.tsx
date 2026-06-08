@@ -34,7 +34,7 @@ export function SolarDebugPage(): React.JSX.Element {
   return (
     <main className='relative min-h-screen bg-[var(--surface-void)] p-6 text-text-100'>
       <div
-        className='pointer-events-none fixed inset-0 -z-10 bg-[image:var(--bg-atmosphere)]'
+        className='pointer-events-none fixed inset-0 -z-10 bg-[image:var(--bg-atmosphere)] bg-cover bg-center'
         aria-hidden
       />
       <header className='mb-6 space-y-1.5'>
@@ -97,7 +97,8 @@ export function SolarDebugPage(): React.JSX.Element {
               <div
                 className='relative mx-auto aspect-square w-full max-w-[380px] overflow-hidden rounded-md border border-surface-700/50'
                 style={{
-                  backgroundImage: 'url(/assets/seti/boards/background.jpg)',
+                  backgroundImage:
+                    'url(/assets/seti/sky/impeccable-atmosphere.svg)',
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                 }}

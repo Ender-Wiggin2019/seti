@@ -220,7 +220,7 @@ function CompletedMissionsPile({
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className='w-fit max-w-[min(96vw,_1200px)] bg-surface-900/95'>
+        <DialogContent className='w-fit max-w-[min(96vw,_1200px)]'>
           <DialogHeader>
             <DialogTitle>
               {t('client.played_missions.completed_dialog_title', {

@@ -21,6 +21,7 @@ import { GameLayout } from '@/pages/game/GameLayout';
 import type { IAuthUser } from '@/stores/authStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useGameViewStore } from '@/stores/gameViewStore';
+import { GAME_Z_INDEX } from '@/styles/zIndex';
 
 interface IAuthSnapshot {
   token: string | null;
@@ -336,14 +337,17 @@ export function DebugReplayPage(): React.JSX.Element {
   return (
     <div className='relative flex min-h-screen items-center justify-center bg-[var(--surface-void)] px-6 py-10'>
       <div
-        className='pointer-events-none fixed inset-0 -z-10 bg-[image:var(--bg-atmosphere)]'
+        className='pointer-events-none fixed inset-0 -z-10 bg-[image:var(--bg-atmosphere)] bg-cover bg-center'
         aria-hidden
       />
       {/*
         Replay picker only needs the language switch — text-mode and
         hotspots aren't relevant here (no live game art is visible).
       */}
-      <div className='fixed right-3 top-3 z-40 rounded-[5px] border border-[color:var(--metal-edge)] bg-[var(--surface-raised)]/95 p-1.5 shadow-instrument backdrop-blur'>
+      <div
+        className='fixed right-3 top-3 rounded-[5px] border border-[color:var(--metal-edge)] bg-[var(--surface-raised)]/95 p-1.5 shadow-instrument backdrop-blur'
+        style={{ zIndex: GAME_Z_INDEX.popover }}
+      >
         <Select
           value={resolveReplayLanguage(i18n.resolvedLanguage ?? i18n.language)}
           onValueChange={(value) => {
@@ -665,7 +669,8 @@ function ReplayBanner({
       <button
         type='button'
         onClick={() => setCollapsed(false)}
-        className='fixed right-3 top-14 z-40 inline-flex items-center gap-1 rounded-[4px] border border-[color:var(--metal-edge)] bg-[var(--surface-raised)]/95 px-2 py-1 font-mono text-[10px] uppercase tracking-microlabel text-text-300 backdrop-blur transition-colors hover:text-text-100'
+        className='fixed right-3 top-14 inline-flex items-center gap-1 rounded-[4px] border border-[color:var(--metal-edge)] bg-[var(--surface-raised)]/95 px-2 py-1 font-mono text-[10px] uppercase tracking-microlabel text-text-300 backdrop-blur transition-colors hover:text-text-100'
+        style={{ zIndex: GAME_Z_INDEX.popover }}
         aria-label={t('client.debug.replay.banner.expand_aria', {
           defaultValue: 'Expand {{kind}} banner',
           kind: kind.toLowerCase(),
@@ -682,8 +687,9 @@ function ReplayBanner({
 
   return (
     <div
-      className='fixed right-3 top-14 z-40 flex items-center gap-2 rounded-[5px] border border-[color:var(--metal-edge)] bg-[var(--surface-raised)]/95 p-2 text-xs backdrop-blur'
+      className='fixed right-3 top-14 flex items-center gap-2 rounded-[5px] border border-[color:var(--metal-edge)] bg-[var(--surface-raised)]/95 p-2 text-xs backdrop-blur'
       data-testid='replay-banner'
+      style={{ zIndex: GAME_Z_INDEX.popover }}
     >
       <span className='font-mono text-text-500'>{kindLabel}</span>
       <span className='font-mono text-text-300'>{primaryLabel}</span>

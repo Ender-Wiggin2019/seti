@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/cn';
+import { GAME_Z_INDEX } from '@/styles/zIndex';
 
 /**
  * Dialog — modal surface.
  *
- * The overlay darkens the whole void with a soft radial vignette
- * (instrument spotlight) and the content surface is a hairline-metal
- * panel. Display font on the title sells the mission-control feel.
+ * The overlay settles the current view behind a raised mission surface.
+ * Content owns its own max width so large player tools can breathe while
+ * small confirms stay compact.
  */
 interface IDialogProps {
   open: boolean;
@@ -50,18 +51,20 @@ export function Dialog({
     <div
       ref={overlayRef}
       onClick={handleOverlayClick}
+      data-testid='dialog-overlay'
+      style={{ zIndex: GAME_Z_INDEX.dialog }}
       className={cn(
-        'fixed inset-0 z-[1000] flex items-center justify-center p-4',
-        // Deep vignette: black pool at center, fades to edges.
-        'bg-[radial-gradient(ellipse_at_center,oklch(0.03_0.01_260/0.92)_0%,oklch(0.05_0.015_260/0.88)_60%,oklch(0.05_0.015_260/0.80)_100%)]',
-        'backdrop-blur-sm',
+        'fixed inset-0 flex items-center justify-center p-4',
+        'bg-[oklch(0.05_0.015_260/0.86)]',
+        'backdrop-blur-[2px]',
         'animate-overlay-fade-in',
       )}
     >
       <div
-        className='w-full max-w-lg animate-panel-rise'
+        className='w-full animate-panel-rise'
         role='dialog'
         aria-modal='true'
+        data-dialog-surface='raised'
       >
         {children}
       </div>
@@ -80,19 +83,20 @@ export function DialogContent({
   return (
     <div
       className={cn(
-        'relative overflow-hidden p-6',
+        'relative mx-auto w-full max-w-lg overflow-hidden p-6',
         'rounded-[8px]',
-        'bg-surface-900',
+        'bg-[var(--surface-raised)]/94',
+        'backdrop-blur-md',
         'border border-[color:var(--metal-edge)]',
         'shadow-instrument',
         className,
       )}
+      data-surface='raised'
       {...props}
     >
-      {/* Top highlight — the light catch */}
       <span
         aria-hidden
-        className='pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.78_0.07_240/0.35)] to-transparent'
+        className='pointer-events-none absolute inset-x-0 top-0 h-px bg-[color:var(--metal-edge-soft)]'
       />
       {children}
     </div>

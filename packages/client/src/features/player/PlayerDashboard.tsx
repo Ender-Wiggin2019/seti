@@ -162,26 +162,24 @@ const PLAYER_BOARD_IMAGE_ANCHORS: IPersonalBoardHotspot[] = [
   },
 ];
 
-const PLAYER_BOARD_AUX_HOTSPOTS: IPersonalBoardHotspot[] = [
-  {
-    id: 'income',
-    label: 'player board income',
-    xPct: 25,
-    yPct: 50,
-    widthPct: 50,
-    heightPct: 100,
-    color: '#a78bfa',
-  },
-  {
-    id: 'mission-summary',
-    label: 'player board mission summary',
-    xPct: 75,
-    yPct: 50,
-    widthPct: 50,
-    heightPct: 100,
-    color: '#a78bfa',
-  },
-];
+const PLAYER_BOARD_INCOME_HOTSPOT: IPersonalBoardHotspot = {
+  id: 'income',
+  label: 'player board income',
+  xPct: 50,
+  yPct: 50,
+  widthPct: 100,
+  heightPct: 100,
+  color: '#a78bfa',
+};
+const PLAYER_BOARD_MISSION_SUMMARY_HOTSPOT: IPersonalBoardHotspot = {
+  id: 'mission-summary',
+  label: 'player board mission summary',
+  xPct: 50,
+  yPct: 50,
+  widthPct: 100,
+  heightPct: 100,
+  color: '#a78bfa',
+};
 
 const PLAYER_BOARD_DATA_POOL_POINTS = [
   { xPct: 17.7, yPct: 66.8 },
@@ -275,8 +273,8 @@ const PLAYER_BOARD_TECH_POINTS: Partial<
  *   2. TechRow      — Launch (4) and Scan (5) tech slots
  *   3. ComputerRow  — Data Pool, six computer columns, and Analyze cap
  *
- * A compact aux strip below carries the income forecast and mission/tech
- * counts so they remain present regardless of the board render mode.
+ * Income sits above the physical board, while the compact strip below keeps
+ * mission/tech counts present regardless of board render mode.
  */
 export function PlayerDashboard({
   player,
@@ -300,6 +298,9 @@ export function PlayerDashboard({
   const playedCardCount = quickStartCardIds.length + playedCards.length;
 
   const hotspotVariant = textMode ? 'text' : 'image';
+  const incomePanel = (
+    <PlayerBoardIncomePanel income={income} variant={hotspotVariant} />
+  );
 
   return (
     <section className='space-y-1.5' data-testid='player-dashboard'>
@@ -312,10 +313,10 @@ export function PlayerDashboard({
       </div>
       {organizationIds.length > 0 ? (
         <div
-          className='flex items-start gap-2 overflow-x-auto'
+          className='grid gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(240px,360px)] lg:items-start'
           data-testid='player-organizations'
         >
-          <div className='flex min-w-0 flex-1 items-start gap-2 overflow-x-auto'>
+          <div className='flex min-w-0 items-start gap-2 overflow-x-auto'>
             {organizationIds.map((organizationId) => (
               <OrganizationCard
                 key={organizationId}
@@ -335,14 +336,17 @@ export function PlayerDashboard({
                 }
               />
             ))}
+            <PlayedCardsDialog
+              quickStartCardIds={quickStartCardIds}
+              playedCards={playedCards}
+              count={playedCardCount}
+            />
           </div>
-          <PlayedCardsDialog
-            quickStartCardIds={quickStartCardIds}
-            playedCards={playedCards}
-            count={playedCardCount}
-          />
+          {incomePanel}
         </div>
-      ) : null}
+      ) : (
+        incomePanel
+      )}
 
       {textMode ? (
         <PlayerBoardTextModePanel
@@ -360,7 +364,6 @@ export function PlayerDashboard({
         />
       )}
       <PlayerBoardAuxiliaryStrip
-        income={income}
         missionCount={missionCount}
         techCount={techCount}
         cardInputActive={cardInputActive}
@@ -453,23 +456,15 @@ function PlayerBoardImageModePanel({
   );
 }
 
-function PlayerBoardAuxiliaryStrip({
+function PlayerBoardIncomePanel({
   income,
-  missionCount,
-  techCount,
-  cardInputActive,
   variant,
 }: {
   income?: IPlayerIncomeInfo;
-  missionCount: number;
-  techCount: number;
-  cardInputActive: boolean;
   variant: 'image' | 'text';
 }): React.JSX.Element {
-  const { t } = useTranslation('common');
-
   return (
-    <div className='relative grid grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] gap-1.5'>
+    <div className='relative'>
       <IncomeTracker
         creditIncome={income?.credit ?? 0}
         energyIncome={income?.energy ?? 0}
@@ -478,7 +473,29 @@ function PlayerBoardAuxiliaryStrip({
         tuckedEnergyIncome={income?.tuckedEnergy}
         tuckedCardIncome={income?.tuckedCard}
       />
+      <PlayerBoardAuxHotspot
+        hotspot={PLAYER_BOARD_INCOME_HOTSPOT}
+        variant={variant}
+      />
+    </div>
+  );
+}
 
+function PlayerBoardAuxiliaryStrip({
+  missionCount,
+  techCount,
+  cardInputActive,
+  variant,
+}: {
+  missionCount: number;
+  techCount: number;
+  cardInputActive: boolean;
+  variant: 'image' | 'text';
+}): React.JSX.Element {
+  const { t } = useTranslation('common');
+
+  return (
+    <div className='relative'>
       <section
         className='instrument-panel p-2'
         data-testid='player-board-mission-summary'
@@ -532,26 +549,38 @@ function PlayerBoardAuxiliaryStrip({
           </div>
         ) : null}
       </section>
-
-      {PLAYER_BOARD_AUX_HOTSPOTS.map((hotspot) => (
-        <HotspotAnchor
-          key={`player-board-aux-${hotspot.id}`}
-          sceneId='player-board'
-          hotspotId={hotspot.id}
-          variant={variant}
-          baseWidth={PLAYER_BOARD_AUX_BASE_WIDTH}
-          baseHeight={PLAYER_BOARD_AUX_BASE_HEIGHT}
-          x={(PLAYER_BOARD_AUX_BASE_WIDTH * hotspot.xPct) / 100}
-          y={(PLAYER_BOARD_AUX_BASE_HEIGHT * hotspot.yPct) / 100}
-          width={(PLAYER_BOARD_AUX_BASE_WIDTH * hotspot.widthPct) / 100}
-          height={(PLAYER_BOARD_AUX_BASE_HEIGHT * hotspot.heightPct) / 100}
-          shape='rect'
-          color={hotspot.color}
-          opacity={0.2}
-          debugLabel={hotspot.label}
-        />
-      ))}
+      <PlayerBoardAuxHotspot
+        hotspot={PLAYER_BOARD_MISSION_SUMMARY_HOTSPOT}
+        variant={variant}
+      />
     </div>
+  );
+}
+
+function PlayerBoardAuxHotspot({
+  hotspot,
+  variant,
+}: {
+  hotspot: IPersonalBoardHotspot;
+  variant: 'image' | 'text';
+}): React.JSX.Element {
+  return (
+    <HotspotAnchor
+      key={`player-board-aux-${hotspot.id}`}
+      sceneId='player-board'
+      hotspotId={hotspot.id}
+      variant={variant}
+      baseWidth={PLAYER_BOARD_AUX_BASE_WIDTH}
+      baseHeight={PLAYER_BOARD_AUX_BASE_HEIGHT}
+      x={(PLAYER_BOARD_AUX_BASE_WIDTH * hotspot.xPct) / 100}
+      y={(PLAYER_BOARD_AUX_BASE_HEIGHT * hotspot.yPct) / 100}
+      width={(PLAYER_BOARD_AUX_BASE_WIDTH * hotspot.widthPct) / 100}
+      height={(PLAYER_BOARD_AUX_BASE_HEIGHT * hotspot.heightPct) / 100}
+      shape='rect'
+      color={hotspot.color}
+      opacity={0.2}
+      debugLabel={hotspot.label}
+    />
   );
 }
 

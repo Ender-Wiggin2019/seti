@@ -1,4 +1,7 @@
+import { ORGANIZATIONS_BY_ID } from '@seti/common/data/organizations';
 import { EResource } from '@seti/common/types/element';
+import type { ISetupTuckProgressMetadata } from '@seti/common/types/protocol/playerInput';
+import { BaseCorporation } from '../../corporation/BaseCorporation.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
 import { SelectCard } from '../../input/SelectCard.js';
@@ -15,7 +18,33 @@ const RESOURCE_GAIN_MAP = {
 
 interface ITuckCardForIncomeOptions {
   allowSkip?: boolean;
+  setupTuckProgress?: ISetupTuckProgressMetadata;
   onComplete?: () => IPlayerInput | undefined;
+}
+
+function getSetupTuckTotal(player: IPlayer, chainTotal?: number): number {
+  if (chainTotal !== undefined) return chainTotal;
+  const organizationId = player.organizationIds[0];
+  const organizationTotal =
+    organizationId !== undefined
+      ? ORGANIZATIONS_BY_ID[organizationId]?.setup.tuckIncome
+      : undefined;
+  return Math.max(
+    player.pendingSetupTucks,
+    organizationTotal ?? BaseCorporation.startActions.tuckIncome,
+  );
+}
+
+function getSetupTuckProgress(
+  player: IPlayer,
+  chainTotal?: number,
+): ISetupTuckProgressMetadata | undefined {
+  const total = getSetupTuckTotal(player, chainTotal);
+  if (total <= 1) return undefined;
+  return {
+    current: Math.min(total, Math.max(1, total - player.pendingSetupTucks + 1)),
+    total,
+  };
 }
 
 /**
@@ -45,13 +74,20 @@ export class TuckCardForIncomeEffect {
   public static executeSetupChain(
     player: IPlayer,
     game: IGame,
+    chainTotal?: number,
   ): IPlayerInput | undefined {
     if (player.pendingSetupTucks <= 0) return undefined;
+    const setupTuckProgress = getSetupTuckProgress(player, chainTotal);
     const input = TuckCardForIncomeEffect.execute(player, game, {
       allowSkip: false,
+      setupTuckProgress,
       onComplete: () => {
         player.pendingSetupTucks = Math.max(0, player.pendingSetupTucks - 1);
-        return TuckCardForIncomeEffect.executeSetupChain(player, game);
+        return TuckCardForIncomeEffect.executeSetupChain(
+          player,
+          game,
+          setupTuckProgress?.total ?? chainTotal,
+        );
       },
     });
 
@@ -95,6 +131,7 @@ export class TuckCardForIncomeEffect {
         cards: handCards,
         minSelections: allowSkip ? 0 : 1,
         maxSelections: 1,
+        setupTuckProgress: options.setupTuckProgress,
         onSelect: (selectedCardIds) => {
           const selectedId = selectedCardIds[0];
           if (selectedId === undefined) return options.onComplete?.();

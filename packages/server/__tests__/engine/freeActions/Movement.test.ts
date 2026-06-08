@@ -242,13 +242,13 @@ describe('MovementFreeAction', () => {
       );
     });
 
-    it('returns true when probe in space and has energy (convertible)', () => {
+    it('returns false when probe in space but movement is only convertible energy', () => {
       const ss = createLinearSolarSystem();
       const player = createTestPlayer();
       ss.placeProbe(player.id, 's0');
       expect(player.resources.energy).toBeGreaterThan(0);
       expect(MovementFreeAction.canExecute(player, createMockGame(ss))).toBe(
-        true,
+        false,
       );
     });
 

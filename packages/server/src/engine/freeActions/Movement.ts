@@ -104,7 +104,7 @@ export class MovementFreeAction {
       return false;
     }
 
-    return player.getMoveStash() > 0 || player.resources.energy > 0;
+    return player.getMoveStash() > 0;
   }
 
   static execute(

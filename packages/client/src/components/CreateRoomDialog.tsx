@@ -51,9 +51,9 @@ const createRoomSchema = z.object({
 
 function createDefaultCreateRoomOptions(): IGameOptions {
   const alienModulesEnabled = CORE_RANDOM_ALIEN_TYPES.reduce(
-    (enabled, alienType, index) => ({
+    (enabled, alienType) => ({
       ...enabled,
-      [alienType]: index < 2,
+      [alienType]: true,
     }),
     { ...DEFAULT_ALIEN_MODULES_ENABLED },
   );
@@ -89,7 +89,7 @@ export function CreateRoomDialog({
       return values
         .map((option) => ({
           ...option,
-          alienType: option.alienType as EAlienType,
+          alienType: Number(option.alienType) as EAlienType,
         }))
         .sort((a, b) => a.alienType - b.alienType);
     }

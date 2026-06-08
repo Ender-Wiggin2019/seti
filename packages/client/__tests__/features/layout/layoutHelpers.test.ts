@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isLayoutDevPanelShortcut } from '@/features/layout/LayoutShell';
 import { getInputFocusSection } from '@/features/layout/sectionInputs';
-import { EPlayerInputType, ETrace } from '@/types/re-exports';
+import { EPlanet, EPlayerInputType, ETrace } from '@/types/re-exports';
 
 describe('layout helpers', () => {
   it('accepts both Ctrl+Shift+L and Cmd+Shift+L for the dev panel', () => {
@@ -41,6 +41,15 @@ describe('layout helpers', () => {
         type: EPlayerInputType.OPTION,
         title: 'Choose Mars slot',
         options: [{ id: 'main-action-orbit-slot-mars-first', label: 'Mars' }],
+      }),
+    ).toBe('planetBoard');
+
+    expect(
+      getInputFocusSection({
+        inputId: 'native-planet-input',
+        type: EPlayerInputType.PLANET,
+        title: 'Choose Mars',
+        options: [EPlanet.MARS],
       }),
     ).toBe('planetBoard');
   });

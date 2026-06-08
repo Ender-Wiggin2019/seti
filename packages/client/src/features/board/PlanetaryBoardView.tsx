@@ -364,9 +364,9 @@ export function PlanetaryBoardView({
   }
 
   return (
-    <section className='w-full rounded-lg border border-surface-700/40 bg-surface-900/40 p-3'>
-      <header className='mb-2'>
-        <h2 className='font-display text-base font-bold uppercase tracking-wider text-text-100'>
+    <section className='w-full rounded-lg border border-surface-700/40 bg-surface-900/40 p-2.5'>
+      <header className='mb-1.5'>
+        <h2 className='font-display text-sm font-bold uppercase tracking-wider text-text-100'>
           {t('client.board.planetary_board')}
         </h2>
       </header>
@@ -374,7 +374,7 @@ export function PlanetaryBoardView({
       {textMode ? (
         <div
           data-testid='planetary-board-text-cards'
-          className='grid gap-2 sm:grid-cols-2 xl:grid-cols-3'
+          className='grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4'
         >
           {PLANETARY_PLANETS.map((planet) => {
             const config = getPlanetConfig(planetaryBoard, planet);

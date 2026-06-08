@@ -84,11 +84,11 @@ export function ProfilePage(): React.JSX.Element {
       />
       <span
         aria-hidden
-        className='pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,oklch(0.05_0.018_260/0.86)_0%,oklch(0.07_0.02_260/0.70)_42%,oklch(0.06_0.02_260/0.42)_72%,oklch(0.05_0.018_260/0.66)_100%)]'
+        className='pointer-events-none absolute inset-0 bg-[oklch(0.05_0.018_260/0.62)]'
       />
       <span
         aria-hidden
-        className='pointer-events-none absolute inset-x-0 bottom-0 h-[38%] bg-[linear-gradient(180deg,transparent,oklch(0.04_0.012_260/0.88))]'
+        className='pointer-events-none absolute inset-x-0 bottom-0 h-[38%] bg-[oklch(0.04_0.012_260/0.55)]'
       />
 
       <UserLayoutSettingsDialog
@@ -345,7 +345,7 @@ function ProfileAvatar({ name }: { name?: string }): React.JSX.Element {
       />
       <span
         aria-hidden
-        className='absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,transparent,oklch(0.04_0.012_260/0.62))]'
+        className='absolute inset-0 bg-[oklch(0.04_0.012_260/0.18)]'
       />
       <span className='relative z-10 flex h-full items-center justify-center font-display text-2xl font-semibold text-text-100'>
         {name?.charAt(0).toUpperCase() ?? '?'}

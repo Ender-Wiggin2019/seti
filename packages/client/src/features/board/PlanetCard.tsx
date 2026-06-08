@@ -228,11 +228,11 @@ function RewardIcons({
     <div
       data-testid={testId}
       aria-label={formatPlanetRewardList(rewards)}
-      className='flex min-h-8 items-center justify-center'
+      className='flex min-h-7 items-center justify-center'
     >
       <DescRender
         desc={planetRewardListToDesc(rewards)}
-        size='desc-mini'
+        size='desc'
         smartSize
       />
     </div>
@@ -253,9 +253,9 @@ function FirstDataIcons({
     <div
       data-testid={testId}
       aria-label={formatFirstLandData(firstData)}
-      className='flex min-h-8 items-center justify-center'
+      className='flex min-h-7 items-center justify-center'
     >
-      <DescRender desc={desc} size='desc-mini' smartSize />
+      <DescRender desc={desc} size='desc' smartSize />
     </div>
   );
 }
@@ -269,7 +269,7 @@ function GlyphTokenBadge({
   return (
     <span
       data-testid={`planet-card-alien-token-${token.tokenId}`}
-      className='inline-flex h-6 w-6 items-center justify-center rounded-full border border-lime-300/80 bg-surface-950/70'
+      className='inline-flex h-7 w-7 items-center justify-center rounded-full border border-lime-300/80 bg-surface-950/70'
       aria-label={t('client.planetary_board.glyph_token', {
         glyph: token.glyph,
         defaultValue: `${token.glyph} glyph token`,
@@ -279,7 +279,7 @@ function GlyphTokenBadge({
         defaultValue: `${token.glyph} glyph token`,
       })}
     >
-      <DescRender desc={`{${token.glyph}[sm]}`} size='desc-mini' smartSize />
+      <DescRender desc={`{${token.glyph}[sm]}`} size='desc' smartSize />
     </span>
   );
 }
@@ -320,14 +320,14 @@ export function PlanetCard({
           : undefined
       }
       className={cn(
-        'rounded-md border border-surface-700/50 bg-surface-900/60 p-3 transition-colors',
+        'rounded-md border border-surface-700/50 bg-surface-900/60 p-2 transition-colors',
         isSelectable && 'border-accent-500 ring-1 ring-accent-500/70',
         interactive &&
           'cursor-pointer hover:bg-surface-800/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400',
       )}
     >
-      <header className='mb-2 flex items-center justify-between'>
-        <h3 className='font-display text-sm font-semibold uppercase tracking-wide text-text-100'>
+      <header className='mb-1.5 flex items-center justify-between gap-2'>
+        <h3 className='font-display text-xs font-semibold uppercase tracking-wide text-text-100'>
           {planetConfig.label}
         </h3>
         <div className='flex items-center gap-1'>

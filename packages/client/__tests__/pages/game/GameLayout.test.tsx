@@ -1,12 +1,15 @@
 import type { IBaseCard } from '@seti/common/types/BaseCard';
-import { EResource } from '@seti/common/types/element';
+import { EResource, ESector, ETrace } from '@seti/common/types/element';
 import { EOrganizationId } from '@seti/common/types/organization';
 import { ETechBonusType, ETechId } from '@seti/common/types/tech';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IGameContext } from '@/pages/game/GameContext';
+import { useDebugStore } from '@/stores/debugStore';
 import { useGameViewStore } from '@/stores/gameViewStore';
+import { GAME_Z_INDEX } from '@/styles/zIndex';
 import {
+  EAlienType,
   EFreeAction,
   EGameEventType,
   EMainAction,
@@ -107,6 +110,7 @@ describe('GameLayout', () => {
       hoveredPieceId: null,
       zoom: 0.9,
     });
+    useDebugStore.setState({ textMode: false });
     mockContextValue = createMockContext();
   });
 
@@ -123,14 +127,29 @@ describe('GameLayout', () => {
     expect(screen.getByTestId('bottom-actions')).toBeInTheDocument();
   });
 
+  it('keeps the hand dock rail below the collapsible hand content', async () => {
+    await renderLayout();
+
+    const content = document.getElementById('hand-dock-content');
+    const rail = screen.getByTestId('hand-dock-rail');
+
+    if (!content) {
+      throw new Error('Expected hand dock content');
+    }
+    expect(
+      content.compareDocumentPosition(rail) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   it('renders TopBar with round and phase info', async () => {
     await renderLayout();
 
     const roundLabel = screen.getByText('Round');
     const topBar = roundLabel.closest('header');
     expect(topBar).not.toBeNull();
+    if (!topBar) throw new Error('TopBar header not found');
     expect(roundLabel.nextElementSibling).toHaveTextContent('1');
-    expect(within(topBar!).getByText('Awaiting Action')).toBeInTheDocument();
+    expect(within(topBar).getByText('Awaiting Action')).toBeInTheDocument();
   });
 
   it('renders end-turn phase label instead of the raw translation key', async () => {
@@ -501,19 +520,303 @@ describe('GameLayout', () => {
       expect(screen.getByText('Waiting for Pilot...')).toBeInTheDocument();
     });
 
-    it('shows pending input indicator', async () => {
+    it('shows sector input as non-blocking in-game interaction', async () => {
       mockContextValue = createMockContext({
         pendingInput: {
           inputId: 'input-sector',
           type: EPlayerInputType.SECTOR,
-          options: ['red-signal'],
+          options: [ESector.RED],
         } as unknown as IGameContext['pendingInput'],
       });
       await renderLayout();
 
+      expect(screen.getByTestId('topbar-input-status')).toBeInTheDocument();
+      expect(screen.getByTestId('pending-input-ingame')).toBeInTheDocument();
       expect(
-        screen.getByRole('button', { name: 'red-signal' }),
+        screen.queryByTestId('pending-input-modal'),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: ESector.RED }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('resolves sector-id option input through sector hotspots', async () => {
+      const sendInput = vi.fn();
+      mockContextValue = createMockContext({
+        sendInput,
+        pendingInput: {
+          inputId: 'input-sector-option',
+          type: EPlayerInputType.OPTION,
+          title: 'Earth Look: choose sector for earth signal',
+          options: [
+            { id: 'sector-0', label: 'Earth - Red sector' },
+            { id: 'sector-7', label: 'Adjacent - Blue sector' },
+          ],
+        } as unknown as IGameContext['pendingInput'],
+      });
+      await renderLayout();
+
+      expect(screen.getByTestId('pending-input-ingame')).toBeInTheDocument();
+      expect(
+        screen.queryByTestId('pending-input-modal'),
+      ).not.toBeInTheDocument();
+      expect(screen.getByTestId('sector-node-north-1')).toHaveAttribute(
+        'data-hotspot-attention',
+        'true',
+      );
+
+      fireEvent.click(screen.getByTestId('sector-node-north-1'));
+
+      expect(sendInput).toHaveBeenCalledWith({
+        inputId: 'input-sector-option',
+        type: EPlayerInputType.OPTION,
+        optionId: 'sector-0',
+      });
+    });
+
+    it('routes native planet input to the planet board as in-game interaction', async () => {
+      const sendInput = vi.fn();
+      mockContextValue = createMockContext({
+        sendInput,
+        pendingInput: {
+          inputId: 'input-planet',
+          type: EPlayerInputType.PLANET,
+          title: 'Choose Mars',
+          options: [EPlanet.MARS],
+        } as unknown as IGameContext['pendingInput'],
+      });
+      await renderLayout();
+
+      expect(useGameViewStore.getState().activeTab).toBe('planets');
+      expect(screen.getByTestId('pending-input-ingame')).toBeInTheDocument();
+      expect(
+        screen.queryByTestId('pending-input-modal'),
+      ).not.toBeInTheDocument();
+
+      fireEvent.click(
+        await screen.findByTestId(`planet-target-${EPlanet.MARS}`),
+      );
+
+      expect(sendInput).toHaveBeenCalledWith({
+        inputId: 'input-planet',
+        type: EPlayerInputType.PLANET,
+        planet: EPlanet.MARS,
+      });
+    });
+
+    it('routes alien trace slot option input through an attention hotspot', async () => {
+      const sendInput = vi.fn();
+      const slotId = `alien-0-oumuamua-trace|${ETrace.PINK}|1|0`;
+      mockContextValue = createMockContext({
+        sendInput,
+        gameState: createMockGameState({
+          aliens: [
+            {
+              alienIndex: 0,
+              alienType: EAlienType.OUMUAMUA,
+              discovered: true,
+              cardZone: null,
+              discovery: { zones: [], overflowZones: [] },
+              board: {
+                type: 'oumuamua',
+                tile: null,
+                traceSlots: [
+                  {
+                    slotId,
+                    traceColor: ETrace.PINK,
+                    occupants: [],
+                    maxOccupants: 1,
+                    rewards: [],
+                    isDiscovery: false,
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+        pendingInput: {
+          inputId: 'alien-trace-slot',
+          type: EPlayerInputType.OPTION,
+          title: 'Choose trace slot',
+          options: [{ id: slotId, label: 'Oumuamua pink trace slot' }],
+        } as unknown as IGameContext['pendingInput'],
+      });
+      await renderLayout();
+
+      expect(useGameViewStore.getState().activeTab).toBe('aliens');
+      expect(screen.getByTestId('pending-input-ingame')).toBeInTheDocument();
+      expect(
+        screen.queryByTestId('pending-input-modal'),
+      ).not.toBeInTheDocument();
+
+      const hotspot = screen.getByTestId(
+        'alien-0-oumuamua-hotspot-red-trace-0',
+      );
+      expect(hotspot).toHaveAttribute('data-hotspot-attention', 'true');
+      expect(hotspot).toHaveAttribute('data-server-trace-slot-id', slotId);
+
+      fireEvent.click(hotspot);
+
+      expect(sendInput).toHaveBeenCalledWith({
+        inputId: 'alien-trace-slot',
+        type: EPlayerInputType.OPTION,
+        optionId: slotId,
+      });
+    });
+
+    it('routes alien discovery trace option input through an attention slot', async () => {
+      const sendInput = vi.fn();
+      const slotId = 'alien-0-discovery-yellow-trace';
+      mockContextValue = createMockContext({
+        sendInput,
+        gameState: createMockGameState({
+          aliens: [
+            {
+              alienIndex: 0,
+              alienType: null,
+              discovered: false,
+              cardZone: null,
+              board: null,
+              discovery: {
+                zones: [
+                  {
+                    slotId,
+                    traceColor: ETrace.YELLOW,
+                    occupants: [],
+                    maxOccupants: 1,
+                    rewards: [],
+                    isDiscovery: true,
+                  },
+                ],
+                overflowZones: [],
+              },
+            },
+          ],
+        }),
+        pendingInput: {
+          inputId: 'place-yellow-trace',
+          type: EPlayerInputType.OPTION,
+          title: 'Place Yellow trace',
+          options: [{ id: slotId, label: 'Alien 1 discovery yellow trace' }],
+        } as unknown as IGameContext['pendingInput'],
+      });
+      await renderLayout();
+
+      expect(useGameViewStore.getState().activeTab).toBe('aliens');
+      expect(screen.getByTestId('pending-input-ingame')).toBeInTheDocument();
+      expect(
+        screen.queryByTestId('pending-input-modal'),
+      ).not.toBeInTheDocument();
+
+      const slotButton = screen.getByTestId(`trace-slot-${slotId}-button`);
+      expect(slotButton).toHaveAttribute('data-hotspot-attention', 'true');
+      expect(slotButton).toHaveAttribute('data-server-trace-slot-id', slotId);
+
+      fireEvent.click(slotButton);
+
+      expect(sendInput).toHaveBeenCalledWith({
+        inputId: 'place-yellow-trace',
+        type: EPlayerInputType.OPTION,
+        optionId: slotId,
+      });
+    });
+
+    it('shows dialog-mode pending input modal and can minimize it to a floating button', async () => {
+      vi.useFakeTimers();
+      mockContextValue = createMockContext({
+        pendingInput: {
+          inputId: 'input-resource',
+          type: EPlayerInputType.RESOURCE,
+          options: [EResource.CREDIT],
+        } as unknown as IGameContext['pendingInput'],
+      });
+      await renderLayout();
+
+      expect(screen.getByTestId('pending-input-modal')).toBeInTheDocument();
+      expect(
+        screen.queryByTestId('pending-input-ingame'),
+      ).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('pending-input-minimize'));
+      act(() => {
+        vi.advanceTimersByTime(220);
+      });
+
+      expect(
+        screen.queryByTestId('pending-input-modal'),
+      ).not.toBeInTheDocument();
+      const floatButton = screen.getByTestId('pending-input-float');
+      expect(Number(floatButton.style.zIndex)).toBe(GAME_Z_INDEX.pendingInput);
+      expect(Number(floatButton.style.zIndex)).toBeGreaterThan(
+        GAME_Z_INDEX.hand,
+      );
+      fireEvent.click(floatButton);
+      expect(screen.getByTestId('pending-input-modal')).toBeInTheDocument();
+      vi.useRealTimers();
+    });
+
+    it('opens a non-blocking alien found dialog from discovery events', async () => {
+      const sendInput = vi.fn();
+      mockContextValue = createMockContext({
+        sendInput,
+        events: [
+          {
+            id: 'alien-found-1',
+            type: EGameEventType.ALIEN_DISCOVERED,
+            alienType: EAlienType.ANOMALIES,
+            alienIndex: 0,
+            level: 'info',
+          },
+        ],
+      });
+      await renderLayout();
+
+      expect(screen.getByTestId('alien-found-dialog')).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { name: 'Alien Anomalies is Found!' }),
       ).toBeInTheDocument();
+      expect(sendInput).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+
+      expect(
+        screen.queryByTestId('alien-found-dialog'),
+      ).not.toBeInTheDocument();
+      expect(sendInput).not.toHaveBeenCalled();
+    });
+
+    it('resolves card-row card input through the real card row instead of a blocking modal', async () => {
+      const sendInput = vi.fn();
+      const rowCard = createCard('row-1', 'Row Choice');
+      mockContextValue = createMockContext({
+        sendInput,
+        gameState: createMockGameState({
+          cardRow: [rowCard],
+        }),
+        pendingInput: {
+          inputId: 'card-row-input',
+          type: EPlayerInputType.CARD,
+          cards: [rowCard],
+          minSelections: 1,
+          maxSelections: 1,
+        } as unknown as IGameContext['pendingInput'],
+      });
+
+      await renderLayout();
+
+      expect(screen.getByTestId('pending-input-ingame')).toBeInTheDocument();
+      expect(
+        screen.queryByTestId('pending-input-modal'),
+      ).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('tab', { name: 'Cards' }));
+      fireEvent.click(screen.getByTestId('card-row-row-1'));
+
+      expect(sendInput).toHaveBeenCalledWith({
+        inputId: 'card-row-input',
+        type: EPlayerInputType.CARD,
+        cardIds: ['row-1'],
+      });
     });
 
     it('does not render Orbital Dynamics move options in the action dock', async () => {
@@ -538,8 +841,12 @@ describe('GameLayout', () => {
           name: /probe-1 to ring-1-cell-1/i,
         }),
       ).not.toBeInTheDocument();
+      expect(screen.getByTestId('pending-input-ingame')).toBeInTheDocument();
       expect(
-        within(actions).getByText('Select a highlighted space on the board.'),
+        screen.queryByTestId('pending-input-modal'),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getAllByText('Select a highlighted space on the board.')[0],
       ).toBeInTheDocument();
     });
 
@@ -559,8 +866,7 @@ describe('GameLayout', () => {
       });
       await renderLayout();
 
-      const actions = screen.getByTestId('bottom-actions');
-      fireEvent.click(within(actions).getByRole('button', { name: 'Done' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Done' }));
 
       expect(sendInput).toHaveBeenCalledWith({
         inputId: 'orbital-dynamics-move',
@@ -650,7 +956,7 @@ describe('GameLayout', () => {
       });
     });
 
-    it('renders compact tech-id option input in the action dock and submits the selected tech id', async () => {
+    it('renders compact tech-id option input in the modal prompt and submits the selected tech id', async () => {
       const sendInput = vi.fn();
       mockContextValue = createMockContext({
         sendInput,
@@ -682,23 +988,20 @@ describe('GameLayout', () => {
       await renderLayout();
 
       const actions = screen.getByTestId('bottom-actions');
+      const modal = screen.getByTestId('pending-input-modal');
       expect(within(actions).queryByText('Tech Board')).not.toBeInTheDocument();
       expect(
-        within(actions).getByTestId(
-          `input-tech-tile-${ETechId.SCAN_EARTH_LOOK}`,
-        ),
+        within(modal).getByTestId(`input-tech-tile-${ETechId.SCAN_EARTH_LOOK}`),
       ).toBeInTheDocument();
       expect(
-        within(actions).getByTestId(
+        within(modal).getByTestId(
           `input-tech-first-bonus-${ETechId.SCAN_EARTH_LOOK}`,
         ),
       ).toHaveTextContent('2VP available');
-      expect(
-        within(actions).getByLabelText('2 data bonus'),
-      ).toBeInTheDocument();
+      expect(within(modal).getByLabelText('2 data bonus')).toBeInTheDocument();
 
       fireEvent.click(
-        within(actions).getByTestId(`input-option-${ETechId.SCAN_EARTH_LOOK}`),
+        within(modal).getByTestId(`input-option-${ETechId.SCAN_EARTH_LOOK}`),
       );
 
       expect(sendInput).toHaveBeenCalledWith({
@@ -708,7 +1011,7 @@ describe('GameLayout', () => {
       });
     });
 
-    it('renders compact tech-category input in the action dock', async () => {
+    it('renders compact tech-category input in the modal prompt', async () => {
       const sendInput = vi.fn();
       mockContextValue = createMockContext({
         sendInput,
@@ -722,10 +1025,11 @@ describe('GameLayout', () => {
       await renderLayout();
 
       const actions = screen.getByTestId('bottom-actions');
+      const modal = screen.getByTestId('pending-input-modal');
       expect(within(actions).queryByText('Tech Board')).not.toBeInTheDocument();
 
       fireEvent.click(
-        within(actions).getByRole('button', { name: /Earth \(or adj\.\)/i }),
+        within(modal).getByRole('button', { name: /Earth \(or adj\.\)/i }),
       );
 
       expect(sendInput).toHaveBeenCalledWith({

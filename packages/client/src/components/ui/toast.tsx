@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { create } from 'zustand';
 import { cn } from '@/lib/cn';
+import { GAME_Z_INDEX } from '@/styles/zIndex';
 
 /**
  * Toast — ephemeral status messages, styled as mission-log entries.
@@ -90,7 +91,7 @@ function ToastItem({
         aria-hidden
         className='pointer-events-none absolute inset-x-0 bottom-0 h-px'
         style={{
-          background: `linear-gradient(to right, transparent 0%, ${ACCENT_LINE[variant]} 15%, ${ACCENT_LINE[variant]} 85%, transparent 100%)`,
+          background: ACCENT_LINE[variant],
         }}
       />
       <div className='flex-1 min-w-0'>
@@ -146,7 +147,10 @@ export function Toaster(): React.JSX.Element | null {
   if (!mounted || toasts.length === 0) return null;
 
   return createPortal(
-    <div className='fixed bottom-4 right-4 z-[1100] flex flex-col-reverse gap-2 pointer-events-none'>
+    <div
+      className='fixed bottom-4 right-4 flex flex-col-reverse gap-2 pointer-events-none'
+      style={{ zIndex: GAME_Z_INDEX.toast }}
+    >
       {toasts.map((t) => (
         <ToastItem key={t.id} toast={t} onDismiss={() => removeToast(t.id)} />
       ))}

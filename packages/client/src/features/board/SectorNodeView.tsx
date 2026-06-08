@@ -393,6 +393,7 @@ export function SectorNodeView({
               'pointer-events-auto transition-colors focus-visible:ring-accent-400/80',
               isSelectable ? 'hover:bg-accent-500/10' : 'cursor-default',
             )}
+            attention={isSelectable}
             onClick={handleClick}
             disabled={!isSelectable}
             ariaLabel={t('client.sector_node.mark_aria_label', {
@@ -465,6 +466,7 @@ export function SectorNodeView({
           isEmphasized &&
             'border-amber-300/90 bg-amber-500/20 shadow-[0_0_0_2px_rgba(251,191,36,0.55)]',
         )}
+        attention={isSelectable}
         onClick={handleClick}
         disabled={!isSelectable}
         ariaLabel={t('client.sector_node.mark_aria_label', {
@@ -474,7 +476,7 @@ export function SectorNodeView({
         })}
       />
 
-      {(isSelectable || isEmphasized) && (
+      {isEmphasized && (
         <span
           aria-hidden
           className={cn(

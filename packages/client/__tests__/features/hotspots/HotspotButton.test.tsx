@@ -76,6 +76,28 @@ describe('HotspotButton', () => {
     expect(screen.queryByText('Earth launch')).not.toBeInTheDocument();
   });
 
+  it('exposes a reusable pending-attention affordance for clickable input targets', () => {
+    render(
+      <HotspotButton
+        sceneId='solar'
+        hotspotId='earth'
+        baseWidth={400}
+        baseHeight={200}
+        x={100}
+        y={50}
+        width={40}
+        height={40}
+        debugLabel='Earth launch'
+        ariaLabel='Launch from Earth'
+        attention
+      />,
+    );
+
+    const hotspot = screen.getByRole('button', { name: 'Launch from Earth' });
+    expect(hotspot).toHaveAttribute('data-hotspot-attention', 'true');
+    expect(hotspot).toHaveClass('hotspot-button--attention');
+  });
+
   it('shows debug info only on hover and writes drag edits to the unsaved draft', () => {
     useDebugStore.getState().setHotspotDebug(true);
     const onClick = vi.fn();
@@ -125,6 +147,39 @@ describe('HotspotButton', () => {
       width: 40,
       height: 40,
     });
+  });
+
+  it('keeps plain clicks active while debug calibration is visible', () => {
+    useDebugStore.getState().setHotspotDebug(true);
+    const onClick = vi.fn();
+
+    render(
+      <div data-testid='scene' className='relative'>
+        <HotspotButton
+          sceneId='solar'
+          hotspotId='earth'
+          baseWidth={400}
+          baseHeight={200}
+          x={100}
+          y={50}
+          width={40}
+          height={40}
+          debugLabel='Earth launch'
+          onClick={onClick}
+        />
+      </div>,
+    );
+    mockSceneRect(screen.getByTestId('scene'));
+
+    const hotspot = screen.getByTestId('hotspot-solar-earth');
+    firePointerEvent(hotspot, 'pointerdown', 100, 50);
+    firePointerEvent(window, 'pointerup', 100, 50);
+    fireEvent.click(hotspot);
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(useDebugStore.getState().hotspotDraftOverrides.solar?.earth).toBe(
+      undefined,
+    );
   });
 
   it('keeps text and image hotspot overrides in separate namespaces', () => {

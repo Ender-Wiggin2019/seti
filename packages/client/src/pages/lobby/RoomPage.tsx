@@ -140,11 +140,7 @@ export function RoomPage(): React.JSX.Element {
         />
         <span
           aria-hidden
-          className='absolute right-[12%] top-[-18%] h-[320px] w-[220px] rotate-[22deg] bg-[linear-gradient(180deg,oklch(0.66_0.13_48/0.28),transparent_80%)] blur-[1px]'
-        />
-        <span
-          aria-hidden
-          className='absolute bottom-[-18%] left-[-4%] h-[42%] w-[110%] bg-[radial-gradient(ellipse_at_center,oklch(0.42_0.025_250/0.2),transparent_67%)]'
+          className='absolute bottom-[-18%] left-[-4%] h-[42%] w-[110%] bg-[oklch(0.42_0.025_250/0.10)]'
         />
 
         <div className='relative z-10 flex min-h-[300px] flex-col justify-between gap-8 p-5 sm:min-h-[340px] sm:p-8'>
@@ -400,7 +396,7 @@ function PanelBackdrop({
       />
       <span
         aria-hidden
-        className='pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,oklch(0.07_0.015_260/0.88)_0%,oklch(0.11_0.022_260/0.6)_52%,oklch(0.07_0.015_260/0.74)_100%)]'
+        className='pointer-events-none absolute inset-0 bg-[oklch(0.07_0.015_260/0.68)]'
       />
     </>
   );

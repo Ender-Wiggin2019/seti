@@ -100,8 +100,39 @@ export function HandDock({
         className='pointer-events-none absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-[color:var(--surface-700)] to-transparent opacity-70'
       />
 
-      {/* Header rail — always visible, even when the dock is collapsed */}
-      <div className='flex items-center gap-3 px-4 py-1.5'>
+      {/* Collapsible body — content sits above the bottom rail so collapse
+          visually moves the hand down into the bottom edge. */}
+      <div
+        id='hand-dock-content'
+        className={cn(
+          'grid transition-[grid-template-rows] duration-300 ease-out',
+          effectiveExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+        )}
+        aria-hidden={!effectiveExpanded}
+      >
+        <div className='min-h-0 overflow-hidden'>
+          <div className='px-4 pb-2 pt-0.5'>
+            <HandView
+              cards={cards}
+              handSize={handSize}
+              pendingInput={pendingInput}
+              cornerSelectionMode={cornerSelectionMode}
+              playCardSelectionMode={playCardSelectionMode}
+              onSubmitSelection={onSubmitSelection}
+              onCardCornerSelect={onCardCornerSelect}
+              onCardPlaySelect={onCardPlaySelect}
+              onCardInspect={onCardInspect}
+              variant='dock'
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Header rail — always visible at the bottom of the dock */}
+      <div
+        className='flex items-center gap-3 px-4 py-1.5'
+        data-testid='hand-dock-rail'
+      >
         <span aria-hidden className='section-head__tick' />
         <p className='micro-label whitespace-nowrap'>
           {t('client.game_layout.hand')}
@@ -161,34 +192,6 @@ export function HandDock({
             )}
           />
         </button>
-      </div>
-
-      {/* Collapsible body — animated via grid-template-rows to avoid layout
-          jank from animating height directly */}
-      <div
-        id='hand-dock-content'
-        className={cn(
-          'grid transition-[grid-template-rows] duration-300 ease-out',
-          effectiveExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
-        )}
-        aria-hidden={!effectiveExpanded}
-      >
-        <div className='min-h-0 overflow-hidden'>
-          <div className='px-4 pb-2 pt-0.5'>
-            <HandView
-              cards={cards}
-              handSize={handSize}
-              pendingInput={pendingInput}
-              cornerSelectionMode={cornerSelectionMode}
-              playCardSelectionMode={playCardSelectionMode}
-              onSubmitSelection={onSubmitSelection}
-              onCardCornerSelect={onCardCornerSelect}
-              onCardPlaySelect={onCardPlaySelect}
-              onCardInspect={onCardInspect}
-              variant='dock'
-            />
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -16,6 +16,12 @@ export enum EPlayerInputType {
   AND = 'and',
 }
 
+export enum EPlayerInputPresentationMode {
+  DIALOG_ONLY = 'dialogOnly',
+  IN_GAME_INTERACTIVE = 'inGameInteractive',
+  DIALOG_AND_IN_GAME = 'dialogAndInGame',
+}
+
 export enum ESetupChoiceStepKind {
   ORGANIZATION = 'organization',
   QUICK_START_CARDS = 'quickStartCards',
@@ -53,17 +59,24 @@ export interface ISetupChoiceInputMetadata {
   maxSelections: number;
 }
 
+export interface ISetupTuckProgressMetadata {
+  current: number;
+  total: number;
+}
+
 export interface IPlayerInputModelBase {
   inputId: string;
   type: EPlayerInputType;
   title?: string;
   description?: string;
+  presentationMode?: EPlayerInputPresentationMode;
   setupChoice?: ISetupChoiceInputMetadata;
+  setupTuckProgress?: ISetupTuckProgressMetadata;
 }
 
 export interface ISelectOptionInputModel extends IPlayerInputModelBase {
   type: EPlayerInputType.OPTION;
-  options: Array<{ id: string; label: string }>;
+  options: Array<{ id: string; label: string; cardId?: string }>;
 }
 
 export interface ISelectCardInputModel extends IPlayerInputModelBase {

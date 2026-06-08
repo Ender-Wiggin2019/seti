@@ -58,6 +58,7 @@ export function GameOptionsEditor({
         options={options}
         disabled={disabled}
         onChange={onChange}
+        alienTypeOptions={alienTypeOptions}
       />
 
       <ToggleRow

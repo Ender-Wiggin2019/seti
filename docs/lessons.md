@@ -65,6 +65,7 @@
 - Sector debug fixture 不能只塞部分 signals；如果 server 语义保证 sector 最终总是填满容量，debug 示例也要填满。
 - Rival board progress 不能只暴露当前 marker；12 个 printed progress spot 都是需要校准的 anchor，当前 marker 只是其中一个 slot 的视觉内容。
 - Alien board trace hotspot 不能只覆盖最底部/第一个 slot；所有 server 暴露为合法 option 的 trace slot 都应可标记，尤其 Mascamites blue sample path 这类非直列 trace。
+- Alien trace pending input 的可点击目标不能只接 revealed/species board image hotspots；server 暴露的 discovery/overflow/generic trace column slot 也必须消费同一组 selectable slot ids，否则会出现“等待输入/Select highlighted target”但页面没有可点目标。
 - Alien board trace 奖励、slot id 和 fixture 数据不能在 server/client 各手写一份；如果 debug hotspot、server public state 和真实规则都要读同一组奖励，先放到 common，再由 server plugin 和 client fixture 共同消费。
 - Alien/Solo 改动要覆盖 mark trace、三色 discovery、reveal、专属规则结果；未发现 board 只显示未知占位，真实 trace 只在 Discovery/Overflow 或 reveal 后 board 中出现。
 - `SPEND_SIGNAL_TOKEN` 是条件 free action；`DELIVER_SAMPLE` 是 Mascamites sample mission 交付分支，测试和实现都不能用普通 move/sample 代替。
@@ -73,6 +74,7 @@
 ## 文案、卡牌与 Desc 渲染
 
 - 做 SETI 客户端整体文案时，不能把“太空科幻”泛化成终端、观测台、档案室或任务控制台；若用户点名 Space Agency/太空机构，应先读取 `docs/arch/spaceAgency/rulebook.md`。
+- 创建任务的外星模块默认值要区分基础池和 Space Agency 池：非 Space Agency 外星人默认全选；Space Agency 外星人必须尊重 lobby availability，disabled 时即使开启 Space Agency 扩展也不能自动勾选。
 - 接入 prelude card 时不要重写正常图片版组件；image mode 继续用维护中的 `@seti/cards/PreludeCard`，只在 client `CardRender` 的 text mode 分支补对应文本渲染。
 - Text mode card 的价格应是左上角紧凑 readout，例如 `3 C` / `3 E`；数字更大更粗，资源字母更小，不要再用右上角 `#id + full priceType` 堆叠。
 - Text mode desc 不能直接输出翻译字符串；应先用通用 desc parser 安全拆分 `<br>` 和 `{token}`，换行渲染成真实 DOM，token 渲染成可读文本。

@@ -79,7 +79,8 @@ export function HomePage(): React.JSX.Element {
       <MissionHubView
         title={t('client.home.title', { defaultValue: 'Mission Hub' })}
         subtitle={t('client.home.subtitle', {
-          defaultValue: 'Explore the unknown, connect the future.',
+          defaultValue:
+            'Choose an organization, join a mission, and compete for first contact.',
         })}
         kicker={t('client.home.hero_kicker', {
           defaultValue: 'Space Agencies',

@@ -98,6 +98,48 @@ describe('PlayerDashboard', () => {
     ).toHaveTextContent('1');
   });
 
+  it('places income above the player board when no organization is present', () => {
+    render(
+      <PlayerDashboard
+        player={createMockPlayerState()}
+        pendingInput={null}
+        onFreeAction={() => undefined}
+        income={{ credit: 2, energy: 1, card: 1 }}
+      />,
+    );
+
+    const incomeTracker = screen.getByTestId('income-tracker');
+    const playerBoard = screen.getByTestId('player-board-image-mode');
+
+    expect(
+      incomeTracker.compareDocumentPosition(playerBoard) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('places income in the organization row when organizations are present', () => {
+    render(
+      <PlayerDashboard
+        player={createMockPlayerState({
+          organizationIds: [EOrganizationId.HELION_ASSEMBLY],
+        })}
+        pendingInput={null}
+        onFreeAction={() => undefined}
+        income={{ credit: 2, energy: 1, card: 1 }}
+      />,
+    );
+
+    const organizationRow = screen.getByTestId('player-organizations');
+    const incomeTracker = screen.getByTestId('income-tracker');
+    const playerBoard = screen.getByTestId('player-board-image-mode');
+
+    expect(organizationRow).toContainElement(incomeTracker);
+    expect(
+      incomeTracker.compareDocumentPosition(playerBoard) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   it('uses image-mode computer hotspots for place-data interaction', () => {
     const onFreeAction = vi.fn();
     const computer = {

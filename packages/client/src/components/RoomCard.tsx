@@ -69,11 +69,11 @@ export function RoomCard({ room }: IRoomCardProps): React.JSX.Element {
       />
       <span
         aria-hidden
-        className='pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,oklch(0.07_0.015_260/0.95)_0%,oklch(0.08_0.018_260/0.88)_42%,oklch(0.10_0.022_260/0.60)_68%,oklch(0.07_0.015_260/0.58)_100%)]'
+        className='pointer-events-none absolute inset-0 bg-[oklch(0.07_0.015_260/0.72)]'
       />
       <span
         aria-hidden
-        className='pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.70_0.10_240/0.6)] to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100'
+        className='pointer-events-none absolute inset-x-0 top-0 h-px bg-[oklch(0.70_0.10_240/0.46)] opacity-0 transition-opacity duration-200 group-hover:opacity-100'
       />
 
       <div className='relative z-10 space-y-3'>

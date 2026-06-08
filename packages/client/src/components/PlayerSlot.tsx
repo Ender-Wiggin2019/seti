@@ -100,7 +100,7 @@ export function PlayerSlot({
         className={cn(
           'flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
           'border border-[color:var(--metal-edge)]',
-          'bg-gradient-to-b from-[oklch(0.24_0.03_260)] to-[oklch(0.17_0.025_260)]',
+          'bg-[var(--surface-raised)]',
           'font-display text-sm font-semibold text-text-100',
           'shadow-[inset_0_1px_0_oklch(0.40_0.04_260/0.5)]',
         )}

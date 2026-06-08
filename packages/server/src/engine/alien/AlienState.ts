@@ -718,21 +718,22 @@ export class AlienState {
     board: AlienBoard,
     onComplete?: () => PlayerInput | undefined,
   ): PlayerInput | undefined {
-    const hasFaceUp = board.faceUpAlienCardId !== null;
+    const faceUpCardId = board.faceUpAlienCardId;
     const hasDeck =
       board.alienDeckDrawPile.length > 0 ||
       board.alienDeckDiscardPile.length > 0;
-    if (!hasFaceUp && !hasDeck) {
-      return undefined;
-    }
 
-    if (hasFaceUp && !hasDeck) {
-      this.drawAlienCard(player, board, 'face-up', game);
+    if (faceUpCardId === null) {
+      if (!hasDeck) {
+        return undefined;
+      }
+
+      this.drawAlienCard(player, board, 'deck', game);
       return onComplete?.();
     }
 
-    if (!hasFaceUp && hasDeck) {
-      this.drawAlienCard(player, board, 'deck', game);
+    if (!hasDeck) {
+      this.drawAlienCard(player, board, 'face-up', game);
       return onComplete?.();
     }
 
@@ -742,6 +743,7 @@ export class AlienState {
         {
           id: 'draw-face-up',
           label: 'Draw face-up alien card',
+          cardId: faceUpCardId,
           onSelect: () => {
             this.drawAlienCard(player, board, 'face-up', game);
             return onComplete?.();

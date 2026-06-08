@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { HeaderControls } from '@/components/layout/HeaderControls';
+import { getPendingInputTitle } from '@/features/input/PendingInputPrompt';
 import { cn } from '@/lib/cn';
 import { useGameContext } from '@/pages/game/GameContext';
 import { EPhase } from '@/types/re-exports';
@@ -16,13 +17,16 @@ import { EPhase } from '@/types/re-exports';
  */
 export function TopBar(): React.JSX.Element {
   const { t } = useTranslation('common');
-  const { gameState, isMyTurn, isSpectator } = useGameContext();
+  const { gameState, isMyTurn, isSpectator, pendingInput } = useGameContext();
 
   const currentPlayerName = gameState?.players.find(
     (p) => p.playerId === gameState.currentPlayerId,
   )?.playerName;
 
   const isGameOver = gameState?.phase === EPhase.GAME_OVER;
+  const inputTitle = pendingInput
+    ? getPendingInputTitle(t, pendingInput)
+    : null;
 
   return (
     <header
@@ -35,9 +39,9 @@ export function TopBar(): React.JSX.Element {
     >
       <span
         aria-hidden
-        className='pointer-events-none absolute inset-x-0 bottom-0 h-px bg-[linear-gradient(90deg,transparent,oklch(0.68_0.11_240/0.38),transparent)]'
+        className='pointer-events-none absolute inset-x-0 bottom-0 h-px bg-[color:var(--metal-edge-soft)]'
       />
-      <div className='flex items-center gap-4'>
+      <div className='flex min-w-0 items-center gap-4'>
         <Link
           to='/lobby'
           className={cn(
@@ -75,11 +79,17 @@ export function TopBar(): React.JSX.Element {
               label={t(`client.top_bar.phases.${gameState.phase}`)}
               active={isGameOver}
             />
+            {inputTitle ? (
+              <>
+                <Divider />
+                <InputStatusChip title={inputTitle} />
+              </>
+            ) : null}
           </>
         )}
       </div>
 
-      <div className='flex items-center gap-4'>
+      <div className='flex min-w-0 items-center gap-4'>
         {gameState && currentPlayerName && (
           <div className='flex items-center gap-2.5'>
             <span className='font-mono text-[0.6875rem] uppercase tracking-microlabel text-text-500'>
@@ -166,6 +176,36 @@ function PhaseChip({ label, active }: IPhaseChipProps): React.JSX.Element {
     >
       {label}
     </span>
+  );
+}
+
+function InputStatusChip({ title }: { title: string }): React.JSX.Element {
+  const { t } = useTranslation('common');
+
+  return (
+    <div
+      className={cn(
+        'flex min-w-0 max-w-[18rem] items-center gap-2 rounded-[3px] border border-[color:oklch(0.58_0.1_75/0.42)] px-2 py-0.5',
+        'bg-[oklch(0.78_0.13_75/0.07)] text-[color:var(--signal-amber)]',
+      )}
+      data-testid='topbar-input-status'
+      title={title}
+    >
+      <span
+        aria-hidden
+        className='signal-dot'
+        data-active='true'
+        data-signal='amber'
+      />
+      <span className='shrink-0 font-mono text-[0.625rem] uppercase tracking-microlabel'>
+        {t('client.game_layout.awaiting_input', {
+          defaultValue: 'Input Required',
+        })}
+      </span>
+      <span className='hidden min-w-0 truncate font-mono text-[0.625rem] uppercase tracking-microlabel text-text-300 lg:block'>
+        {title}
+      </span>
+    </div>
   );
 }
 

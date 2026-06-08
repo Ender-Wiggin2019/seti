@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { cn } from '@/lib/cn';
+import { GAME_Z_INDEX } from '@/styles/zIndex';
 import { LayoutDevPanel } from './devPanel/LayoutDevPanel';
 import { useLayout } from './LayoutContext';
 import { useLayoutStore } from './layoutStore';
@@ -40,14 +41,16 @@ export function LayoutShell(): React.JSX.Element {
       )}
     >
       <div
-        className='pointer-events-none fixed inset-0 -z-10 bg-[image:var(--bg-atmosphere)]'
+        className='pointer-events-none fixed inset-0 bg-[image:var(--bg-atmosphere)] bg-cover bg-center'
+        style={{ zIndex: GAME_Z_INDEX.background }}
         aria-hidden
       />
       <img
         src={GAME_SHELL_SCENE_IMAGE}
         alt=''
         aria-hidden
-        className='pointer-events-none fixed inset-x-0 bottom-0 -z-10 h-[38vh] w-full object-cover object-bottom opacity-[0.22]'
+        className='pointer-events-none fixed inset-x-0 bottom-0 h-[38vh] w-full object-cover object-bottom opacity-[0.22]'
+        style={{ zIndex: GAME_Z_INDEX.background }}
       />
 
       <PinnedLayer variant='sticky-top' />

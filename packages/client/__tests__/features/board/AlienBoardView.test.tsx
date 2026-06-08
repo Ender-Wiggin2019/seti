@@ -118,8 +118,8 @@ describe('AlienBoardView', () => {
 
     const section = screen.getByTestId('alien-board-section');
     expect(section).toHaveClass('w-full');
-    expect(section).toHaveClass('md:w-[60%]');
-    expect(section).toHaveClass('md:max-w-[60%]');
+    expect(section).toHaveClass('md:w-[52%]');
+    expect(section).toHaveClass('md:max-w-[52%]');
     expect(section).toHaveClass('md:self-start');
   });
 

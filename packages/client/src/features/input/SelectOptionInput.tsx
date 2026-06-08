@@ -1,9 +1,7 @@
-import { DescRender } from '@seti/cards';
 import { ALL_CARDS } from '@seti/common/data/index';
 import { ORGANIZATIONS_BY_ID } from '@seti/common/data/organizations';
 import { PRELUDE_CARDS_BY_ID } from '@seti/common/data/preludeCards';
 import type { IBaseCard } from '@seti/common/types/BaseCard';
-import { EMiscIcon, EResource } from '@seti/common/types/element';
 import type {
   EOrganizationId,
   IOrganizationData,
@@ -11,7 +9,10 @@ import type {
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { CardRender } from '@/features/cards/CardRender';
+import { OrganizationCard } from '@/features/player/OrganizationCard';
 import { QuickStartCardPreview } from '@/features/setup/QuickStartCardPreview';
+import { cn } from '@/lib/cn';
 import { getOrganizationDisplayName } from '@/lib/organizationText';
 import type {
   IInputResponse,
@@ -43,6 +44,20 @@ function localizeCardNameSuffix(label: string, t: TFunction): string {
   });
 }
 
+function getReferencedCard(option: {
+  label: string;
+  cardId?: string;
+}): IBaseCard | null {
+  if (option.cardId) {
+    return CARD_BY_ID.get(option.cardId) ?? null;
+  }
+
+  const { label } = option;
+  const match = label.match(/\[\[card:(\d+)\]\]/);
+  if (!match) return null;
+  return CARD_BY_ID.get(match[1]) ?? null;
+}
+
 export interface ISelectOptionInputProps {
   model: ISelectOptionInputModel;
   onSubmit: (response: IInputResponse) => void;
@@ -65,43 +80,56 @@ export function SelectOptionInput({
       {model.title ? (
         <p className='micro-label'>{translateInputText(t, model.title)}</p>
       ) : null}
-      <div className='grid gap-1.5 sm:grid-cols-2'>
-        {model.options.map((option, index) => (
-          <Button
-            key={option.id}
-            variant='ghost'
-            size='sm'
-            data-testid={`input-option-${option.id}`}
-            className='h-9 justify-start gap-2 px-2.5 text-left text-xs'
-            onClick={() =>
-              onSubmit({
-                inputId: model.inputId,
-                type: EPlayerInputType.OPTION,
-                optionId: option.id,
-              })
-            }
-          >
-            <span
-              aria-hidden
-              className='font-mono text-[10px] tracking-[0.14em] text-accent-400'
-            >
-              {String(index + 1).padStart(2, '0')}
-            </span>
-            <span className='flex-1 truncate font-body text-text-100'>
-              {/*
-                Order matters: resolve `[[card:NN]]` sentinels first
-                (so the dynamic patterns in translateInputText see
-                e.g. "Discard <localized name> (#N)" rather than
-                "Discard <english> [[card:N]]"), then run the static
-                + dynamic dictionary translation, then splice resource
-                emojis into <img> elements.
-              */}
-              {renderOptionLabel(
-                translateInputText(t, localizeCardNameSuffix(option.label, t)),
+      <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-3'>
+        {model.options.map((option, index) => {
+          const label = translateInputText(
+            t,
+            localizeCardNameSuffix(option.label, t),
+          );
+          const card = getReferencedCard(option);
+
+          return (
+            <Button
+              key={option.id}
+              variant='ghost'
+              size='sm'
+              data-testid={`input-option-${option.id}`}
+              aria-label={label}
+              className={cn(
+                'justify-start gap-2 px-2.5 text-left text-xs',
+                card ? 'h-auto items-stretch py-2' : 'h-9',
               )}
-            </span>
-          </Button>
-        ))}
+              onClick={() =>
+                onSubmit({
+                  inputId: model.inputId,
+                  type: EPlayerInputType.OPTION,
+                  optionId: option.id,
+                })
+              }
+            >
+              <span
+                aria-hidden
+                className='font-mono text-[10px] tracking-[0.14em] text-accent-400'
+              >
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              {card ? (
+                <span className='flex min-w-0 flex-1 flex-col items-center gap-1.5'>
+                  <span className='pointer-events-none'>
+                    <CardRender card={card} />
+                  </span>
+                  <span className='line-clamp-2 w-full font-body text-[11px] leading-snug text-text-200'>
+                    {renderOptionLabel(label)}
+                  </span>
+                </span>
+              ) : (
+                <span className='flex-1 truncate font-body text-text-100'>
+                  {renderOptionLabel(label)}
+                </span>
+              )}
+            </Button>
+          );
+        })}
       </div>
     </div>
   );
@@ -219,23 +247,6 @@ function QuickStartOptionInput({
   );
 }
 
-function setupToken(type: string, amount: number): string | null {
-  return amount > 0 ? `{${type}-${amount}}` : null;
-}
-
-function organizationSetupDesc(organization: IOrganizationData): string {
-  return [
-    setupToken(EResource.CREDIT, organization.resources.credit),
-    setupToken(EResource.ENERGY, organization.resources.energy),
-    setupToken(EResource.CARD, organization.resources.card),
-    setupToken(EResource.PUBLICITY, organization.resources.publicity),
-    setupToken(EResource.DATA, organization.resources.data),
-    setupToken(EMiscIcon.INCOME, organization.tuckIncome),
-  ]
-    .filter((token): token is string => token !== null)
-    .join(' ');
-}
-
 function plural(amount: number, singular: string, pluralName = `${singular}s`) {
   return `${amount} ${amount === 1 ? singular : pluralName}`;
 }
@@ -268,63 +279,65 @@ function OrganizationOptionInput({
           const organizationName = organization
             ? getOrganizationDisplayName(t, organization.id)
             : option.label;
+          const setupSummary = organization
+            ? t('client.organizations.setup_summary', {
+                credit: organization.resources.credit,
+                energy: organization.resources.energy,
+                card: organization.resources.card,
+                publicity: organization.resources.publicity,
+                data: organization.resources.data,
+                tuckIncome: organization.tuckIncome,
+                defaultValue: `Setup: ${organizationSetupSummary(
+                  organization,
+                )}`,
+              })
+            : option.label;
+          if (!organization) {
+            return (
+              <Button
+                key={option.id}
+                variant='ghost'
+                size='sm'
+                data-testid={`input-option-${option.id}`}
+                className='h-9 justify-start gap-2 px-2.5 text-left text-xs'
+                onClick={() =>
+                  onSubmit({
+                    inputId: model.inputId,
+                    type: EPlayerInputType.OPTION,
+                    optionId: option.id,
+                  })
+                }
+              >
+                {option.label}
+              </Button>
+            );
+          }
+
           return (
-            <Button
+            <div
               key={option.id}
-              variant='ghost'
-              size='sm'
-              data-testid={`input-option-${option.id}`}
-              className='h-auto min-h-20 items-stretch justify-start px-3 py-2 text-left'
-              onClick={() =>
-                onSubmit({
-                  inputId: model.inputId,
-                  type: EPlayerInputType.OPTION,
-                  optionId: option.id,
-                })
-              }
+              className='relative w-fit rounded-sm transition-transform hover:-translate-y-0.5'
             >
-              <span className='flex w-full flex-col gap-1.5'>
-                <span className='flex items-center justify-between gap-2'>
-                  <span className='truncate font-body text-sm font-semibold text-text-100'>
-                    {organizationName}
-                  </span>
-                  <span
-                    aria-hidden
-                    className='chip shrink-0 font-mono text-[9px] tracking-[0.14em]'
-                  >
-                    {t('client.organizations.setup_badge')}
-                  </span>
-                </span>
-                {organization ? (
-                  <>
-                    <div
-                      aria-hidden
-                      className='flex min-h-8 items-center justify-start rounded border border-surface-200/40 bg-surface-900/35 px-1.5 py-1'
-                    >
-                      <DescRender
-                        desc={organizationSetupDesc(organization)}
-                        size='desc-mini'
-                        smartSize
-                        width='half'
-                      />
-                    </div>
-                    <span className='sr-only'>
-                      {t('client.organizations.setup_summary', {
-                        credit: organization.resources.credit,
-                        energy: organization.resources.energy,
-                        card: organization.resources.card,
-                        publicity: organization.resources.publicity,
-                        data: organization.resources.data,
-                        tuckIncome: organization.tuckIncome,
-                        defaultValue: `Setup: ${organizationSetupSummary(
-                          organization,
-                        )}`,
-                      })}
-                    </span>
-                  </>
-                ) : null}
-              </span>
-            </Button>
+              <OrganizationCard
+                organizationId={organization.id}
+                available={false}
+                used={false}
+                onUse={() => undefined}
+              />
+              <button
+                type='button'
+                aria-label={`${organizationName}. ${setupSummary}`}
+                data-testid={`input-option-${option.id}`}
+                className='absolute inset-0 rounded-sm border border-transparent bg-transparent transition-[background,border-color,box-shadow] hover:border-accent-400/70 hover:bg-accent-500/10 focus-visible:outline-none focus-visible:shadow-focus-ring'
+                onClick={() =>
+                  onSubmit({
+                    inputId: model.inputId,
+                    type: EPlayerInputType.OPTION,
+                    optionId: option.id,
+                  })
+                }
+              />
+            </div>
           );
         })}
       </div>

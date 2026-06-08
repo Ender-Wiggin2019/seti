@@ -195,13 +195,13 @@ export function AlienBoardView({
   return (
     <section
       className={cn(
-        'w-full min-w-0 rounded-lg border border-surface-700/40 bg-surface-900/40 p-3 md:w-[60%] md:max-w-[60%] md:self-start',
+        'w-full min-w-0 rounded-lg border border-surface-700/40 bg-surface-900/40 p-2.5 md:w-[52%] md:max-w-[52%] md:self-start',
         className,
       )}
       data-testid='alien-board-section'
     >
-      <header className='mb-2'>
-        <h2 className='font-display text-base font-bold uppercase tracking-wider text-text-100'>
+      <header className='mb-1.5'>
+        <h2 className='font-display text-sm font-bold uppercase tracking-wider text-text-100'>
           {t('client.alien_board.title')}
         </h2>
       </header>
@@ -288,7 +288,7 @@ function AlienCard({
 
   return (
     <article
-      className='min-w-0 rounded-md border border-surface-700/50 bg-surface-900/60 p-2 sm:p-3'
+      className='min-w-0 rounded-md border border-surface-700/50 bg-surface-900/60 p-2'
       data-testid={`alien-${alien.alienIndex}-card`}
     >
       <div className='flex items-center justify-between gap-3'>
@@ -309,7 +309,7 @@ function AlienCard({
         </span>
       </div>
 
-      <div className='mt-2 min-w-0 space-y-2 lg:mt-3 lg:space-y-3'>
+      <div className='mt-2 min-w-0 space-y-2'>
         {alien.discovered && alien.board ? (
           <DiscoveredAlienBoard
             alien={alien}
@@ -331,11 +331,15 @@ function AlienCard({
           alienIndex={alien.alienIndex}
           slots={alien.discovery.zones}
           playerColors={playerColors}
+          selectableSlotIds={selectableSlotIds}
+          onSelectTraceSlot={onSelectTraceSlot}
         />
         <OverflowZone
           alienIndex={alien.alienIndex}
           slots={alien.discovery.overflowZones}
           playerColors={playerColors}
+          selectableSlotIds={selectableSlotIds}
+          onSelectTraceSlot={onSelectTraceSlot}
         />
       </div>
     </article>
@@ -346,10 +350,14 @@ function DiscoveryZone({
   alienIndex,
   slots,
   playerColors,
+  selectableSlotIds,
+  onSelectTraceSlot,
 }: {
   alienIndex: number;
   slots: IPublicTraceSlot[];
   playerColors: Record<string, string>;
+  selectableSlotIds?: ReadonlySet<string>;
+  onSelectTraceSlot?: (slotId: string) => void;
 }): React.JSX.Element {
   return (
     <section
@@ -364,6 +372,8 @@ function DiscoveryZone({
         area='discovery'
         slots={slots}
         playerColors={playerColors}
+        selectableSlotIds={selectableSlotIds}
+        onSelectTraceSlot={onSelectTraceSlot}
       />
     </section>
   );
@@ -373,10 +383,14 @@ function OverflowZone({
   alienIndex,
   slots,
   playerColors,
+  selectableSlotIds,
+  onSelectTraceSlot,
 }: {
   alienIndex: number;
   slots: IPublicTraceSlot[];
   playerColors: Record<string, string>;
+  selectableSlotIds?: ReadonlySet<string>;
+  onSelectTraceSlot?: (slotId: string) => void;
 }): React.JSX.Element {
   return (
     <section
@@ -391,6 +405,8 @@ function OverflowZone({
         area='overflow'
         slots={slots}
         playerColors={playerColors}
+        selectableSlotIds={selectableSlotIds}
+        onSelectTraceSlot={onSelectTraceSlot}
       />
     </section>
   );
@@ -406,7 +422,7 @@ function HiddenBoard({
   if (textMode) {
     return (
       <section
-        className='min-h-[360px] min-w-0 rounded border border-surface-800/70 bg-black/60'
+        className='min-h-[300px] min-w-0 rounded border border-surface-800/70 bg-black/60'
         data-testid={`alien-${alienIndex}-hidden-board`}
         aria-label={t('client.alien_board_extra.title', {
           defaultValue: 'Alien Board',
@@ -487,6 +503,8 @@ function DiscoveredAlienBoard({
         alienIndex={alien.alienIndex}
         board={board}
         playerColors={playerColors}
+        selectableSlotIds={selectableSlotIds}
+        onSelectTraceSlot={onSelectTraceSlot}
       />
     );
   }
@@ -496,6 +514,8 @@ function DiscoveredAlienBoard({
       alienIndex={alien.alienIndex}
       board={{ type: 'generic', slots: [] }}
       playerColors={playerColors}
+      selectableSlotIds={selectableSlotIds}
+      onSelectTraceSlot={onSelectTraceSlot}
     />
   );
 }
@@ -1167,10 +1187,14 @@ function GenericAlienBoard({
   alienIndex,
   board,
   playerColors,
+  selectableSlotIds,
+  onSelectTraceSlot,
 }: {
   alienIndex: number;
   board: IPublicGenericAlienBoard;
   playerColors: Record<string, string>;
+  selectableSlotIds?: ReadonlySet<string>;
+  onSelectTraceSlot?: (slotId: string) => void;
 }): React.JSX.Element {
   return (
     <section
@@ -1185,6 +1209,8 @@ function GenericAlienBoard({
         area='generic-board'
         slots={board.slots}
         playerColors={playerColors}
+        selectableSlotIds={selectableSlotIds}
+        onSelectTraceSlot={onSelectTraceSlot}
       />
     </section>
   );

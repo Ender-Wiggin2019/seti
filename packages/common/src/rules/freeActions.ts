@@ -69,9 +69,7 @@ export function canMoveProbe(
     return false;
   }
 
-  const hasMovement = player.movementPoints > 0;
-  const hasEnergy = player.resources[EResource.ENERGY] > 0;
-  return hasMovement || hasEnergy;
+  return player.movementPoints > 0;
 }
 
 function hasPlayerMovablePiece(

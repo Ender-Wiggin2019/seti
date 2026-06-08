@@ -463,6 +463,35 @@ describe('SolarSystemView', () => {
     });
   });
 
+  it('groups same-player probes on one solar space with a count', () => {
+    const solarSystem = createSolarSystemMock();
+    const probes: IPublicSolarSystem['probes'] = [
+      { playerId: 'player-1', spaceId: 'space-0', probeId: 'probe-1' },
+      { playerId: 'player-1', spaceId: 'space-0', probeId: 'probe-2' },
+      { playerId: 'player-1', spaceId: 'space-0', probeId: 'probe-3' },
+      { playerId: 'player-2', spaceId: 'space-0', probeId: 'probe-4' },
+      { playerId: 'player-2', spaceId: 'space-0', probeId: 'probe-5' },
+    ];
+
+    renderSolarSystemView({
+      solarSystem: {
+        ...solarSystem,
+        probes,
+        probeSpaceById: createProbeSpaceById(probes),
+      },
+      playerColors: { 'player-1': 'red', 'player-2': 'purple' },
+    });
+
+    const playerOneStack = screen.getByTestId('solar-probe-probe-1');
+    expect(within(playerOneStack).getByText('3')).toBeInTheDocument();
+    expect(screen.queryByTestId('solar-probe-probe-2')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('solar-probe-probe-3')).not.toBeInTheDocument();
+
+    const playerTwoStack = screen.getByTestId('solar-probe-probe-4');
+    expect(within(playerTwoStack).getByText('2')).toBeInTheDocument();
+    expect(screen.queryByTestId('solar-probe-probe-5')).not.toBeInTheDocument();
+  });
+
   it('allows a local text-mode override without changing the global debug store', () => {
     renderSolarSystemView({
       solarSystem: createRotatedRingOneMock(),
@@ -931,6 +960,43 @@ describe('SolarSystemView', () => {
     expect(onMoveProbe.mock.calls[0]?.[1]).toEqual({
       type: 'probe',
       id: 'player-1-0',
+    });
+  });
+
+  it('does not draw move-source affordance when movement mode has no movement points', () => {
+    renderSolarSystemView({
+      movementPoints: 0,
+      moveModeActive: true,
+    });
+
+    expect(
+      screen.getByTestId('solar-space-space-0').querySelector('span'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('moves one probe from a same-player stack by default', () => {
+    const onMoveProbe = vi.fn();
+    const probes: IPublicSolarSystem['probes'] = [
+      { playerId: 'player-1', spaceId: 'space-0', probeId: 'probe-1' },
+      { playerId: 'player-1', spaceId: 'space-0', probeId: 'probe-2' },
+    ];
+
+    renderSolarSystemView({
+      solarSystem: {
+        ...createSolarSystemMock(),
+        probes,
+        probeSpaceById: createProbeSpaceById(probes),
+      },
+      movementPoints: 1,
+      moveModeActive: true,
+      onMoveProbe,
+    });
+
+    fireEvent.click(screen.getByTestId('solar-space-space-1'));
+
+    expect(onMoveProbe).toHaveBeenCalledWith(['space-0', 'space-1'], {
+      type: 'probe',
+      id: 'probe-1',
     });
   });
 

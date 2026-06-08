@@ -14,6 +14,7 @@ import { type CSSProperties, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HotspotAnchor } from '@/features/hotspots/HotspotAnchor';
 import { HotspotButton } from '@/features/hotspots/HotspotButton';
+import { isOrbitalDynamicsMoveInputModel } from '@/features/input/inputPresentation';
 import {
   type IOumuamuaDataPillCalibration,
   useOumuamuaCalibration,
@@ -22,6 +23,7 @@ import {
 import { cn } from '@/lib/cn';
 import { useTextMode } from '@/stores/debugStore';
 import { useGameViewStore } from '@/stores/gameViewStore';
+import { SOLAR_SYSTEM_Z_INDEX } from '@/styles/zIndex';
 import type {
   IInputResponse,
   IPlayerInputModel,
@@ -69,22 +71,11 @@ const SOLAR_ALIEN_TOKEN_COLOR: Record<
 const TEXT_MODE_LABEL_Z_INDEX_BY_WHEEL: Readonly<
   Record<TSolarSystemWheelIndex, number>
 > = {
-  1: 75,
-  2: 74,
-  3: 73,
-  4: 72,
+  1: SOLAR_SYSTEM_Z_INDEX.textLabelBase + 3,
+  2: SOLAR_SYSTEM_Z_INDEX.textLabelBase + 2,
+  3: SOLAR_SYSTEM_Z_INDEX.textLabelBase + 1,
+  4: SOLAR_SYSTEM_Z_INDEX.textLabelBase,
 };
-const ORBITAL_DYNAMICS_MOVE_INPUT_TITLE = 'Choose an Orbital Dynamics move';
-
-export function isOrbitalDynamicsMoveInputModel(
-  model: IPlayerInputModel | null,
-): model is ISelectOptionInputModel {
-  return (
-    model?.type === EPlayerInputType.OPTION &&
-    model.title === ORBITAL_DYNAMICS_MOVE_INPUT_TITLE
-  );
-}
-
 interface ISolarSystemViewProps {
   solarSystem: IPublicSolarSystem;
   sectors: IPublicSector[];
@@ -120,6 +111,7 @@ interface IBoardPieceRenderItem {
   playerId: string;
   spaceId: string;
   movementTarget: TMovementTarget;
+  count: number;
   xPercent: number;
   yPercent: number;
   offsetX: number;
@@ -441,7 +433,7 @@ export function SolarSystemView({
     ...(textMode
       ? { backgroundColor: 'rgba(8, 13, 25, 0.6)' }
       : {
-          backgroundImage: 'url(/assets/seti/boards/background.jpg)',
+          backgroundImage: 'url(/assets/seti/sky/impeccable-atmosphere.svg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }),
@@ -619,6 +611,23 @@ export function SolarSystemView({
       if (!point) {
         continue;
       }
+      const displayPieces: Array<(typeof pieces)[number] & { count: number }> =
+        [];
+      const probeGroupIndexByPlayer = new Map<string, number>();
+      for (const piece of pieces) {
+        if (piece.kind === 'probe') {
+          const groupIndex = probeGroupIndexByPlayer.get(piece.playerId);
+          if (groupIndex !== undefined) {
+            const groupedPiece = displayPieces[groupIndex];
+            if (groupedPiece) {
+              groupedPiece.count += 1;
+            }
+            continue;
+          }
+          probeGroupIndexByPlayer.set(piece.playerId, displayPieces.length);
+        }
+        displayPieces.push({ ...piece, count: 1 });
+      }
 
       // Image mode parks probes on the printed Oumuamua glyph. Text mode
       // keeps them on the shifted debug cell instead.
@@ -641,14 +650,15 @@ export function SolarSystemView({
               })()
           : { x: 0, y: 0 };
 
-      for (let index = 0; index < pieces.length; index += 1) {
-        const piece = pieces[index];
-        const offset = tokenStackOffset(index, pieces.length);
+      for (let index = 0; index < displayPieces.length; index += 1) {
+        const piece = displayPieces[index];
+        const offset = tokenStackOffset(index, displayPieces.length);
         renderItems.push({
           key: piece.key,
           kind: piece.kind,
           playerId: piece.playerId,
           movementTarget: piece.movementTarget,
+          count: piece.count,
           spaceId,
           xPercent: point.xPercent,
           yPercent: point.yPercent,
@@ -1011,6 +1021,7 @@ export function SolarSystemView({
       selectableTarget &&
       (canSelectOrbitalDynamicsProbe ||
         (!isOrbitalDynamicsMoveInput &&
+          movementPoints > 0 &&
           (hasMyProbe || (allowMoveAnyProbe && hasAnyProbe))))
     ) {
       setSelectedMoveTarget((prev) =>
@@ -1108,27 +1119,32 @@ export function SolarSystemView({
 
       <div
         data-testid='solar-board-frame'
-        className='relative mx-auto aspect-square overflow-hidden rounded-md transition-[width]'
+        className='relative isolate mx-auto aspect-square overflow-hidden rounded-md transition-[width]'
         style={boardStyle}
       >
-        <WheelLayer ring={4} angle={0} className='z-10' showImage={!textMode} />
+        <WheelLayer
+          ring={4}
+          angle={0}
+          showImage={!textMode}
+          style={{ zIndex: SOLAR_SYSTEM_Z_INDEX.outerWheel }}
+        />
         <WheelLayer
           ring={3}
           angle={getDiscAngle(solarSystem, 3)}
-          className='z-20'
           showImage={!textMode}
+          style={{ zIndex: SOLAR_SYSTEM_Z_INDEX.thirdWheel }}
         />
         <WheelLayer
           ring={2}
           angle={getDiscAngle(solarSystem, 2)}
-          className='z-30'
           showImage={!textMode}
+          style={{ zIndex: SOLAR_SYSTEM_Z_INDEX.secondWheel }}
         />
         <WheelLayer
           ring={1}
           angle={getDiscAngle(solarSystem, 1)}
-          className='z-40'
           showImage={!textMode}
+          style={{ zIndex: SOLAR_SYSTEM_Z_INDEX.innerWheel }}
         />
 
         {!textMode && (
@@ -1144,7 +1160,8 @@ export function SolarSystemView({
             height={SOLAR_BOARD_BASE_SIZE_PX * 0.1}
             color='#facc15'
             debugLabel='solar sun'
-            className='z-50 select-none'
+            className='select-none'
+            style={{ zIndex: SOLAR_SYSTEM_Z_INDEX.sun }}
             testId='solar-sun'
           >
             <img
@@ -1199,16 +1216,38 @@ export function SolarSystemView({
             const hasMyProbe = (
               boardPieceView.bySpacePlayers[space.spaceId] ?? []
             ).includes(myPlayerId);
+            const hasAnyProbe =
+              (boardPieceView.bySpacePlayers[space.spaceId] ?? []).length > 0;
             const isSelected = selectedMoveTarget?.spaceId === space.spaceId;
             const isReachable = reachable.has(space.spaceId);
             const isOrbitalDynamicsMoveSource = orbitalDynamicsMovePaths.some(
               (move) => move.fromSpaceId === space.spaceId,
             );
+            const sourceMoveTargets =
+              boardPieceView.targetsBySpace[space.spaceId] ?? [];
+            const ownMoveTarget = sourceMoveTargets.find(
+              (target) => target.playerId === myPlayerId,
+            );
+            const anyMoveTarget = sourceMoveTargets[0];
+            const selectableMoveTarget =
+              ownMoveTarget ?? (allowMoveAnyProbe ? anyMoveTarget : undefined);
+            const canSelectOrbitalDynamicsSource =
+              selectableMoveTarget?.movementTarget.type === 'probe' &&
+              orbitalDynamicsMovableProbeIds.has(
+                selectableMoveTarget.movementTarget.id,
+              );
+            const canSelectNormalMoveSource =
+              !isOrbitalDynamicsMoveInput &&
+              movementPoints > 0 &&
+              (hasMyProbe || (allowMoveAnyProbe && hasAnyProbe));
+            const isMoveSourceSelectable =
+              selectableMoveTarget !== undefined &&
+              (canSelectOrbitalDynamicsSource || canSelectNormalMoveSource);
             const isMoveOverlayVisible =
               isSelected ||
               isReachable ||
               isOrbitalDynamicsMoveSource ||
-              (moveModeActive && hasMyProbe);
+              isMoveSourceSelectable;
 
             // Match the hotspot to whichever Oumuamua cell is visible in
             // the current mode.
@@ -1256,7 +1295,9 @@ export function SolarSystemView({
                 }}
                 className='transition-all hover:border-accent-400/60 focus-visible:ring-accent-500/60'
                 style={{
-                  zIndex: isMoveOverlayVisible ? 90 : undefined,
+                  zIndex: isMoveOverlayVisible
+                    ? SOLAR_SYSTEM_Z_INDEX.interaction
+                    : undefined,
                 }}
                 onClick={() => handleSpaceClick(space.spaceId)}
                 title={t('client.solar_system_view.space_title', {
@@ -1273,7 +1314,7 @@ export function SolarSystemView({
                 {(isSelected ||
                   isReachable ||
                   isOrbitalDynamicsMoveSource ||
-                  hasMyProbe) && (
+                  isMoveSourceSelectable) && (
                   <span
                     data-reachable-indicator={isReachable ? 'true' : undefined}
                     className={[
@@ -1399,7 +1440,6 @@ export function SolarSystemView({
             offsetY={piece.offsetY}
             color={playerColors[piece.playerId] ?? '#e5e7eb'}
             debugLabel={`${piece.kind} ${piece.key}`}
-            className='z-80'
             testId={
               piece.kind === 'mascamites-capsule'
                 ? `solar-capsule-${piece.key}`
@@ -1408,8 +1448,13 @@ export function SolarSystemView({
             dataAttributes={{
               'data-player-id': piece.playerId,
               'data-space-id': piece.spaceId,
+              'data-probe-count':
+                piece.kind === 'probe' && piece.count > 1
+                  ? String(piece.count)
+                  : undefined,
             }}
             style={{
+              zIndex: SOLAR_SYSTEM_Z_INDEX.probe,
               transition: `left ${PROBE_TRANSITION_MS}ms ease-out, top ${PROBE_TRANSITION_MS}ms ease-out, transform ${PROBE_TRANSITION_MS}ms ease-out`,
               transitionDelay:
                 piece.transitionDelayMs > 0
@@ -1424,6 +1469,7 @@ export function SolarSystemView({
             ) : (
               <ProbeToken
                 playerColor={playerColors[piece.playerId] ?? 'white'}
+                count={piece.count}
               />
             )}
           </HotspotAnchor>
@@ -1432,7 +1478,7 @@ export function SolarSystemView({
         {showSpaceConfigDebug && (
           <div
             className='pointer-events-none absolute inset-0'
-            style={{ zIndex: 90 }}
+            style={{ zIndex: SOLAR_SYSTEM_Z_INDEX.debug }}
           >
             {spacePoints.map((space) => (
               <span
@@ -1554,7 +1600,7 @@ function OumuamuaPlanetArt({
       color='#a78bfa'
       debugLabel={`Oumuamua planet ${point.spaceId}`}
       testId={`solar-oumuamua-planet-${point.spaceId}`}
-      style={{ zIndex: 78 }}
+      style={{ zIndex: SOLAR_SYSTEM_Z_INDEX.boardAccessory }}
     >
       <img
         src='/assets/seti/aliens/oumuamua/planet.webp'
@@ -1705,7 +1751,7 @@ function OumuamuaSectorDataList({
       color='#67e8f9'
       debugLabel={`Oumuamua sector data ${tile.sectorId}`}
       testId={`solar-oumuamua-sector-${point.spaceId}`}
-      style={{ zIndex: 86 }}
+      style={{ zIndex: SOLAR_SYSTEM_Z_INDEX.dataPill }}
       title={t('client.solar_system_view.oumuamua_sector_title', {
         sectorId: tile.sectorId,
         defaultValue: `Oumuamua sector ${tile.sectorId}`,
@@ -1863,7 +1909,7 @@ function SolarAlienTokenMarker({
         offsetY={offsetY + tangentY}
         color={color}
         debugLabel={`solar alien token ${token.tokenId}`}
-        style={{ zIndex: 78 }}
+        style={{ zIndex: SOLAR_SYSTEM_Z_INDEX.boardAccessory }}
         testId={`solar-alien-token-${token.alienType}-${token.sectorIndex}-${token.traceColor}`}
         title={token.tokenId}
       >
@@ -1889,7 +1935,7 @@ function SolarAlienTokenMarker({
       debugLabel={`solar alien token ${token.tokenId}`}
       className='inline-flex min-w-14 items-center overflow-hidden rounded-full'
       style={{
-        zIndex: 78,
+        zIndex: SOLAR_SYSTEM_Z_INDEX.boardAccessory,
         boxShadow: `0 0 0 1px ${color}, 0 2px 6px rgba(0,0,0,0.55)`,
       }}
       testId={`solar-alien-token-${token.alienType}-${token.sectorIndex}-${token.traceColor}`}
@@ -1945,7 +1991,7 @@ function SolarGlyphidsSectorTokenMarker({
       color='#bef264'
       debugLabel={`solar glyphids sector token ${token.tokenId}`}
       className='inline-flex items-center justify-center rounded-full'
-      style={{ zIndex: 79 }}
+      style={{ zIndex: SOLAR_SYSTEM_Z_INDEX.sectorToken }}
       testId={`solar-glyphids-sector-token-${token.tokenId}`}
       title={token.tokenId}
     >

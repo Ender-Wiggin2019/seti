@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
+import { GAME_Z_INDEX } from '@/styles/zIndex';
 import { useLayoutStore } from '../layoutStore';
 
 export function LayoutDevPanel(): React.JSX.Element | null {
@@ -29,8 +30,9 @@ export function LayoutDevPanel(): React.JSX.Element | null {
 
   return (
     <div
+      style={{ zIndex: GAME_Z_INDEX.popover }}
       className={cn(
-        'fixed right-4 top-16 z-50 w-80',
+        'fixed right-4 top-16 w-80',
         'rounded-md border border-[color:var(--metal-edge-soft)]',
         'bg-background-950/95 p-3 shadow-2xl backdrop-blur-md',
       )}

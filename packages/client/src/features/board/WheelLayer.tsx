@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/cn';
 
@@ -5,6 +6,7 @@ interface IWheelLayerProps {
   ring: 1 | 2 | 3 | 4;
   angle: number;
   className?: string;
+  style?: CSSProperties;
   slotLabels?: string[];
   textModeLabels?: Array<string | null>;
   showImage?: boolean;
@@ -79,6 +81,7 @@ export function WheelLayer({
   ring,
   angle,
   className,
+  style,
   slotLabels,
   textModeLabels,
   showImage = true,
@@ -110,6 +113,7 @@ export function WheelLayer({
         className,
       )}
       style={{
+        ...style,
         width: size,
         height: size,
         transform: `translate(-50%, -50%) rotate(${angleDeg}deg)`,

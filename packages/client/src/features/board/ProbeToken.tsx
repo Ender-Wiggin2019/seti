@@ -4,52 +4,81 @@ import { resolvePlayerColor } from '@/lib/playerColor';
 
 interface IProbeTokenProps {
   playerColor: string;
+  count?: number;
   className?: string;
 }
 
-/**
- * Probe silhouette uses the white-probe PNG as an alpha mask and
- * paints it with the player's hex color via `mask-image` + a solid
- * `backgroundColor`. This way every player slug — including the
- * rulebook's green/orange that don't ship as standalone art — renders
- * with the correct retail-piece tint from a single source asset.
- *
- * The drop-shadow keeps the metallic dimensionality of the original
- * sculpt; the `mask-image` shape doesn't carry shading by itself, so
- * the shadow gives the chip enough silhouette weight to read on the
- * solar board background.
- */
-const PROBE_MASK = '/assets/seti/tokens/probes/whiteProbe.png';
+const PROBE_ASSET_BY_COLOR: Record<string, string> = {
+  '#f00': '/assets/seti/tokens/probes/redProbe.png',
+  '#ff0000': '/assets/seti/tokens/probes/redProbe.png',
+  '#801da1': '/assets/seti/tokens/probes/purpleProbe.png',
+  '#e6eded': '/assets/seti/tokens/probes/whiteProbe.png',
+  purple: '/assets/seti/tokens/probes/purpleProbe.png',
+  red: '/assets/seti/tokens/probes/redProbe.png',
+  white: '/assets/seti/tokens/probes/whiteProbe.png',
+};
+const FALLBACK_PROBE_MASK = '/assets/seti/tokens/probes/whiteProbe.png';
+
+function resolveProbeAsset(playerColor: string, fill: string): string | null {
+  const rawKey = playerColor.trim().toLowerCase();
+  const fillKey = fill.trim().toLowerCase();
+  return PROBE_ASSET_BY_COLOR[rawKey] ?? PROBE_ASSET_BY_COLOR[fillKey] ?? null;
+}
 
 export function ProbeToken({
   playerColor,
+  count = 1,
   className,
 }: IProbeTokenProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const fill = resolvePlayerColor(playerColor) ?? '#e6eded';
+  const probeAsset = resolveProbeAsset(playerColor, fill);
+  const label = t('client.probe_token.aria_label', {
+    playerColor,
+    defaultValue: `${playerColor} probe`,
+  });
+  const hasCount = count > 1;
 
   return (
     <span
-      role='img'
-      aria-label={t('client.probe_token.aria_label', {
-        playerColor,
-        defaultValue: `${playerColor} probe`,
-      })}
       className={cn(
-        'pointer-events-none inline-block h-5 w-5 select-none drop-shadow-md',
+        'pointer-events-none relative inline-flex h-5 w-5 select-none items-center justify-center',
         className,
       )}
-      style={{
-        backgroundColor: fill,
-        WebkitMaskImage: `url(${PROBE_MASK})`,
-        maskImage: `url(${PROBE_MASK})`,
-        WebkitMaskRepeat: 'no-repeat',
-        maskRepeat: 'no-repeat',
-        WebkitMaskSize: 'contain',
-        maskSize: 'contain',
-        WebkitMaskPosition: 'center',
-        maskPosition: 'center',
-      }}
-    />
+      data-testid={probeAsset ? 'probe-token' : 'probe-token-fallback'}
+    >
+      <img
+        src={probeAsset ?? FALLBACK_PROBE_MASK}
+        alt={label}
+        className='h-full w-full select-none object-contain drop-shadow-md'
+        draggable={false}
+      />
+      {!probeAsset ? (
+        <span
+          aria-hidden='true'
+          className='absolute inset-0 opacity-70 mix-blend-multiply'
+          data-testid='probe-token-tint'
+          style={{
+            backgroundColor: fill,
+            WebkitMaskImage: `url(${FALLBACK_PROBE_MASK})`,
+            maskImage: `url(${FALLBACK_PROBE_MASK})`,
+            WebkitMaskRepeat: 'no-repeat',
+            maskRepeat: 'no-repeat',
+            WebkitMaskSize: 'contain',
+            maskSize: 'contain',
+            WebkitMaskPosition: 'center',
+            maskPosition: 'center',
+          }}
+        />
+      ) : null}
+      {hasCount ? (
+        <span
+          aria-hidden='true'
+          className='absolute inset-0 flex items-center justify-center font-mono text-[11px] font-black leading-none text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.95),0_0_4px_rgba(0,0,0,0.9)]'
+        >
+          {count}
+        </span>
+      ) : null}
+    </span>
   );
 }

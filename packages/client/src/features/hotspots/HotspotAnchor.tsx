@@ -11,6 +11,7 @@ import {
 } from '@/features/hotspots/hotspotConfig';
 import { cn } from '@/lib/cn';
 import { useDebugStore } from '@/stores/debugStore';
+import { BOARD_LOCAL_Z_INDEX } from '@/styles/zIndex';
 
 type THotspotShape = 'circle' | 'rect';
 type TEditMode = 'move' | 'resize';
@@ -238,7 +239,7 @@ export function HotspotAnchor({
       tabIndex={debugVisible ? 0 : undefined}
       {...dataAttributes}
       className={cn(
-        'absolute z-70 border transition-[background-color,border-color,opacity,box-shadow]',
+        'absolute border transition-[background-color,border-color,opacity,box-shadow]',
         debugVisible
           ? 'pointer-events-auto cursor-move border-current shadow-[0_0_0_1px_rgba(0,0,0,0.45)]'
           : 'pointer-events-none border-transparent',
@@ -246,6 +247,7 @@ export function HotspotAnchor({
       )}
       style={{
         ...percentStyle,
+        zIndex: BOARD_LOCAL_Z_INDEX.hotspot,
         ...style,
         minWidth: '24px',
         minHeight: '24px',

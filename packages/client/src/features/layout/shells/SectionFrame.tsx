@@ -95,7 +95,7 @@ export function SectionFrame({
       data-collapsed={isCollapsed ? 'true' : 'false'}
       style={style}
       className={cn(
-        'min-w-0 flex flex-col',
+        'isolate min-w-0 flex flex-col',
         section.size?.grow ? '' : 'shrink-0',
         className,
       )}

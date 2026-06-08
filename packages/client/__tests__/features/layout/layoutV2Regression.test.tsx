@@ -1,6 +1,6 @@
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EResource } from '@seti/common/types/element';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useEffect } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -113,7 +113,7 @@ describe('layout V2 regressions', () => {
     });
   });
 
-  it('renders generic pending input controls in V2 action bar', () => {
+  it('renders generic pending input controls in the V2 modal prompt', () => {
     mockContextValue = createMockContext({
       pendingInput: {
         inputId: 'resource-input',
@@ -125,13 +125,14 @@ describe('layout V2 regressions', () => {
 
     renderActionBar();
 
+    expect(screen.getByTestId('pending-input-modal')).toBeInTheDocument();
     expect(screen.getByText('Select resource')).toBeInTheDocument();
     expect(
       screen.queryByTestId(`action-menu-${EMainAction.PASS}`),
     ).not.toBeInTheDocument();
   });
 
-  it('keeps movement mode armed during transient pending inputs', async () => {
+  it('clears movement mode when transient pending input leaves no movement points', async () => {
     mockContextValue = createMockContext({
       gameState: createMockGameState({
         phase: EPhase.IN_RESOLUTION,
@@ -159,7 +160,12 @@ describe('layout V2 regressions', () => {
 
     renderMovementModeHarness();
 
-    expect(await screen.findByTestId('movement-mode-hint')).toBeInTheDocument();
+    expect(screen.getByTestId('pending-input-modal')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId('movement-mode-hint'),
+      ).not.toBeInTheDocument();
+    });
   });
 
   it('keeps one section crash inside its frame', () => {

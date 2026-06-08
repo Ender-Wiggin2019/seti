@@ -254,7 +254,7 @@ export function AuthPage(): React.JSX.Element {
       )}
     >
       <div
-        className='pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(900px_540px_at_24%_12%,oklch(0.24_0.06_240/0.26),transparent_64%),radial-gradient(760px_520px_at_90%_84%,oklch(0.25_0.08_48/0.13),transparent_68%),var(--bg-atmosphere)]'
+        className='pointer-events-none absolute inset-0 -z-10 bg-[image:var(--bg-atmosphere)] bg-cover bg-center'
         aria-hidden
       />
 
@@ -275,23 +275,15 @@ export function AuthPage(): React.JSX.Element {
         />
         <span
           aria-hidden
-          className='pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,oklch(0.04_0.018_260/0.72)_0%,oklch(0.06_0.02_260/0.56)_42%,oklch(0.05_0.018_260/0.78)_100%)]'
+          className='pointer-events-none absolute inset-0 bg-[oklch(0.04_0.018_260/0.62)]'
         />
         <span
           aria-hidden
-          className='pointer-events-none absolute inset-x-0 bottom-0 h-[34%] bg-[linear-gradient(180deg,transparent,oklch(0.04_0.012_260/0.92))]'
+          className='pointer-events-none absolute inset-x-0 bottom-0 h-[34%] bg-[oklch(0.04_0.012_260/0.58)]'
         />
 
         <div className='relative z-10 grid min-h-[calc(100vh-7rem)] items-center gap-6 p-5 sm:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(390px,440px)] lg:p-10'>
           <div className='hidden min-h-[520px] flex-col justify-between lg:flex'>
-            <span
-              aria-hidden
-              className='pointer-events-none absolute right-[14%] top-[-14%] h-[420px] w-[230px] rotate-[22deg] bg-[linear-gradient(180deg,oklch(0.66_0.13_48/0.24),transparent_78%)] blur-[1px]'
-            />
-            <span
-              aria-hidden
-              className='pointer-events-none absolute left-[34%] top-[46%] h-24 w-72 bg-[radial-gradient(circle,oklch(0.68_0.11_235/0.15),transparent_72%)] blur-md'
-            />
             <div className='max-w-[520px] space-y-5'>
               <span className='micro-label inline-flex items-center gap-3 text-[oklch(0.82_0.09_235)]'>
                 <span className='h-px w-8 bg-[var(--signal-blue)]' />

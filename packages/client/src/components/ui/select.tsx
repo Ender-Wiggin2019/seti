@@ -1,6 +1,7 @@
 import * as SelectPrimitive from '@radix-ui/react-select';
 import * as React from 'react';
 import { cn } from '@/lib/cn';
+import { GAME_Z_INDEX } from '@/styles/zIndex';
 
 const Select = SelectPrimitive.Root;
 const SelectGroup = SelectPrimitive.Group;
@@ -61,12 +62,12 @@ SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
 const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
->(({ className, children, position = 'popper', ...props }, ref) => (
+>(({ className, children, position = 'popper', style, ...props }, ref) => (
   <SelectPrimitive.Portal>
     <SelectPrimitive.Content
       ref={ref}
       className={cn(
-        'relative z-50 max-h-96 min-w-[8rem] overflow-hidden',
+        'relative max-h-96 min-w-[8rem] overflow-hidden',
         'rounded-[6px]',
         'bg-surface-900/95 backdrop-blur-md',
         'border border-[color:var(--metal-edge)]',
@@ -77,6 +78,7 @@ const SelectContent = React.forwardRef<
           'data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1',
         className,
       )}
+      style={{ ...style, zIndex: GAME_Z_INDEX.popover }}
       position={position}
       {...props}
     >

@@ -17,6 +17,12 @@ const RESOURCE_I18N_KEY: Partial<Record<EResource, string>> = {
   [EResource.CARD]: 'card',
 };
 
+const RESOURCE_ICON_SRC: Partial<Record<EResource, string>> = {
+  [EResource.CREDIT]: '/assets/seti/icons/money.png',
+  [EResource.ENERGY]: '/assets/seti/icons/energy.png',
+  [EResource.CARD]: '/assets/seti/icons/draw.png',
+};
+
 type TExchangeOption =
   | { from: EResource; to: EResource; cardSource?: undefined }
   | { from: EResource; to: EResource.CARD; cardSource: 'row' | 'deck' };
@@ -83,7 +89,7 @@ export function ExchangeResourcesDialog({
           </p>
         </DialogHeader>
         {handCards.length > 0 ? (
-          <div className='rounded-md border border-surface-700/50 p-2'>
+          <div className='rounded-[6px] border border-[color:var(--metal-edge-soft)] bg-[var(--surface-instrument)]/70 p-3 shadow-hairline-inset'>
             <p className='mb-2 text-xs font-semibold uppercase tracking-wider text-text-300'>
               {t('client.layout_v2.dialogs.select_two_cards_to_spend', {
                 defaultValue: 'Select 2 cards to spend',
@@ -145,12 +151,9 @@ export function ExchangeResourcesDialog({
                     Object.keys(cardPick).length > 0 ? cardPick : undefined,
                   );
                 }}
-                className='h-10 justify-start gap-2 px-3 text-left text-sm'
+                className='h-11 justify-start gap-3 px-3 text-left text-sm'
               >
-                <span
-                  aria-hidden
-                  className='inline-block h-px w-3 bg-accent-500/80'
-                />
+                <ResourcePairIcon from={opt.from} to={opt.to} />
                 <span className='flex-1 font-body text-[13px] text-text-100'>
                   {label}
                 </span>
@@ -190,7 +193,7 @@ export function PlaceDataDialog({
               key={`${opt.row}-${opt.slotIndex}`}
               variant='ghost'
               onClick={() => onConfirm(opt.slotIndex)}
-              className='h-10 justify-start gap-2 px-3 text-left text-sm'
+              className='h-11 justify-start gap-3 px-3 text-left text-sm'
             >
               <img
                 src='/assets/seti/tokens/data.png'
@@ -248,14 +251,14 @@ export function SampleDeliveryDialog({
               key={`${option.capsuleId}-${option.cardId}`}
               variant='ghost'
               onClick={() => onConfirm(option)}
-              className='h-10 justify-start gap-2 px-3 text-left text-sm'
+              className='h-11 justify-start gap-3 px-3 text-left text-sm'
             >
-              <span
+              <img
+                src='/assets/seti/icons/missionSatellite.png'
+                alt=''
                 aria-hidden
-                className='inline-flex h-5 w-5 items-center justify-center rounded-full border border-text-100/60 bg-surface-950 font-mono text-[9px] font-bold text-text-100'
-              >
-                S
-              </span>
+                className='h-5 w-5'
+              />
               <span className='flex-1 font-body text-[13px] text-text-100'>
                 {option.label}
               </span>
@@ -264,6 +267,28 @@ export function SampleDeliveryDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ResourcePairIcon({
+  from,
+  to,
+}: {
+  from: EResource;
+  to: EResource;
+}): React.JSX.Element {
+  const fromIcon = RESOURCE_ICON_SRC[from];
+  const toIcon = RESOURCE_ICON_SRC[to];
+
+  return (
+    <span
+      aria-hidden
+      className='inline-flex shrink-0 items-center gap-1 rounded-[4px] border border-[color:var(--metal-edge-soft)] bg-[var(--surface-instrument)] px-1.5 py-1 shadow-hairline-inset'
+    >
+      {fromIcon ? <img src={fromIcon} alt='' className='h-4 w-4' /> : null}
+      <span className='h-px w-2 bg-[color:var(--metal-edge-soft)]' />
+      {toIcon ? <img src={toIcon} alt='' className='h-4 w-4' /> : null}
+    </span>
   );
 }
 

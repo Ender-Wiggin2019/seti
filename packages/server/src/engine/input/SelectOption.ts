@@ -15,12 +15,14 @@ import { BasePlayerInput, type PlayerInput } from './PlayerInput.js';
 export interface ISelectOptionEntry {
   id?: string;
   label: string;
+  cardId?: string;
   onSelect: () => PlayerInput | undefined;
 }
 
 interface IResolvedSelectOptionEntry {
   id: string;
   label: string;
+  cardId?: string;
   onSelect: () => PlayerInput | undefined;
 }
 
@@ -44,6 +46,7 @@ export class SelectOption extends BasePlayerInput {
     this.options = options.map((option, index) => ({
       id: option.id ?? `option-${index}`,
       label: option.label,
+      ...(option.cardId !== undefined ? { cardId: option.cardId } : {}),
       onSelect: option.onSelect,
     }));
   }
@@ -57,6 +60,7 @@ export class SelectOption extends BasePlayerInput {
       options: this.options.map((option) => ({
         id: option.id,
         label: option.label,
+        ...(option.cardId !== undefined ? { cardId: option.cardId } : {}),
       })),
     };
   }

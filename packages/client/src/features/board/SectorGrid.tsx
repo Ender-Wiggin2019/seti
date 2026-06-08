@@ -1,6 +1,7 @@
 import type { ISolarSystemSetupConfig } from '@seti/common/constant/sectorSetup';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { SOLAR_SYSTEM_Z_INDEX } from '@/styles/zIndex';
 import type { IPlayerInputModel, IPublicSector } from '@/types/re-exports';
 import { EPlayerInputType } from '@/types/re-exports';
 import { SectorView } from './SectorView';
@@ -58,7 +59,8 @@ export function SectorGrid({
 
   return (
     <div
-      className='absolute inset-0 z-60 pointer-events-none'
+      className='absolute inset-0 pointer-events-none'
+      style={{ zIndex: SOLAR_SYSTEM_Z_INDEX.sectorContent }}
       aria-label={t('client.sector_grid.ring_aria_label', {
         defaultValue: 'Sector ring',
       })}

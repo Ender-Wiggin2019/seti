@@ -1,4 +1,5 @@
 import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
+import { EGameEventType } from '@seti/common/types/protocol/events';
 import {
   EPlayerInputType,
   type ISelectOptionInputModel,
@@ -104,6 +105,37 @@ describe('ResolveDiscovery', () => {
       expect(p2.hand.length).toBe(p2HandBefore + 1);
       expect(board.faceUpAlienCardId).toBeTruthy();
       expect(board.alienDeckDrawPile.length).toBeGreaterThanOrEqual(0);
+    });
+
+    it('emits a structured non-input alien discovered event', () => {
+      const game = Game.create(
+        BASE_PLAYERS,
+        { playerCount: 2 },
+        'discovery-structured-event',
+      );
+      const p1 = game.players[0];
+      const board = game.alienState.boards[0];
+
+      forceAlienType(board, EAlienType.ANOMALIES);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.PINK, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.YELLOW, 0);
+      placeTraceForTestSetup(game.alienState, p1, game, ETrace.BLUE, 0);
+
+      const waitingBeforeDiscovery = p1.waitingFor;
+      const action = new ResolveDiscovery(p1);
+      const input = action.execute(game);
+
+      expect(input).toBeUndefined();
+      expect(p1.waitingFor).toBe(waitingBeforeDiscovery);
+      expect(game.eventLog.toArray()).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: EGameEventType.ALIEN_DISCOVERED,
+            alienType: EAlienType.ANOMALIES,
+            alienIndex: 0,
+          }),
+        ]),
+      );
     });
   });
 

@@ -57,7 +57,7 @@ export function CardDetail({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='w-fit max-w-fit bg-surface-900/95'>
+      <DialogContent className='w-fit max-w-fit'>
         <DialogHeader>
           <DialogTitle>
             {t(card.name, { ns: 'seti', defaultValue: card.name })}

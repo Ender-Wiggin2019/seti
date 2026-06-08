@@ -3,8 +3,11 @@ import {
   isAlienBoardInput,
   isPlanetaryBoardInput,
 } from '@/pages/game/GameLayout';
-import type { ISelectOptionInputModel } from '@/types/re-exports';
-import { EPlayerInputType } from '@/types/re-exports';
+import type {
+  IPlayerInputModel,
+  ISelectOptionInputModel,
+} from '@/types/re-exports';
+import { EPlanet, EPlayerInputType } from '@/types/re-exports';
 
 function optionInput(
   optionIds: string[],
@@ -85,6 +88,17 @@ describe('GameLayout routing helpers', () => {
           ]),
         ),
       ).toBe(true);
+    });
+
+    it('matches native non-earth planet inputs', () => {
+      const planetInput: IPlayerInputModel = {
+        inputId: 'planet-input',
+        type: EPlayerInputType.PLANET,
+        title: 'Choose Mars',
+        options: [EPlanet.MARS],
+      };
+
+      expect(isPlanetaryBoardInput(planetInput)).toBe(true);
     });
 
     it('matches non-Oumuamua slot pickers', () => {

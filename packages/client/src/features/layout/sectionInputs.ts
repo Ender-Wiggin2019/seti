@@ -28,6 +28,7 @@ export function isPlanetaryBoardInput(
   model: IPlayerInputModel | null,
 ): boolean {
   if (!model) return false;
+  if (model.type === EPlayerInputType.PLANET) return true;
   if (model.type !== EPlayerInputType.OPTION) return false;
   return model.options.some((option) =>
     /^main-action-(?:land|orbit)-(?:planet-(?!oumuamua\b)|slot-(?!oumuamua-))/i.test(

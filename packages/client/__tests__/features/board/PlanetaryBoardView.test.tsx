@@ -218,9 +218,16 @@ describe('PlanetaryBoardView', () => {
     expect(
       screen.queryByTestId('planetary-board-text-mode'),
     ).not.toBeInTheDocument();
+    expect(screen.getByTestId('planetary-board-text-cards')).toHaveClass(
+      '2xl:grid-cols-4',
+    );
     expect(screen.getAllByTestId(/^planet-card-/)).toHaveLength(7);
     const marsCard = screen.getByTestId(`planet-card-${EPlanet.MARS}`);
+    expect(marsCard).toHaveClass('p-2');
     expect(marsCard).toHaveTextContent('Mars');
+    expect(
+      screen.getByTestId(`planet-reward-icons-${EPlanet.MARS}-orbit`),
+    ).toHaveClass('min-h-7');
     expect(screen.getByLabelText('token-player-1')).toBeInTheDocument();
     expect(screen.getByLabelText('token-player-2')).toBeInTheDocument();
   });

@@ -241,6 +241,7 @@ function TraceSlotAnchors({
                 debugLabel={`${alienKey} ${color} trace option ${index + 1}`}
                 debugInfo={formatTraceSlotDebugInfo(slot)}
                 ariaLabel={`Select ${alienKey} ${color} trace slot ${index + 1}`}
+                attention
                 className='rounded-full border-accent-400/70'
                 testId={`alien-${alienIndex}-${alienKey}-hotspot-${color}-${index}`}
                 dataAttributes={{ 'data-server-trace-slot-id': slot.slotId }}

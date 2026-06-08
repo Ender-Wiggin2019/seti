@@ -5,6 +5,7 @@ import { GameLayoutV2 } from '@/features/layout/GameLayoutV2';
 import { useLayoutStore } from '@/features/layout/layoutStore';
 import { GameContextProvider, useGameContext } from '@/pages/game/GameContext';
 import { GameLayout } from '@/pages/game/GameLayout';
+import { GAME_Z_INDEX } from '@/styles/zIndex';
 
 function GameContent(): React.JSX.Element {
   const { t } = useTranslation('common');
@@ -15,7 +16,8 @@ function GameContent(): React.JSX.Element {
     return (
       <div className='relative flex h-screen flex-col items-center justify-center gap-4 bg-[var(--surface-void)]'>
         <div
-          className='pointer-events-none fixed inset-0 -z-10 bg-[image:var(--bg-atmosphere)]'
+          className='pointer-events-none fixed inset-0 bg-[image:var(--bg-atmosphere)] bg-cover bg-center'
+          style={{ zIndex: GAME_Z_INDEX.background }}
           aria-hidden
         />
         <LoadingSpinner
@@ -33,7 +35,8 @@ function GameContent(): React.JSX.Element {
     return (
       <div className='relative flex h-screen flex-col items-center justify-center gap-4 bg-[var(--surface-void)]'>
         <div
-          className='pointer-events-none fixed inset-0 -z-10 bg-[image:var(--bg-atmosphere)]'
+          className='pointer-events-none fixed inset-0 bg-[image:var(--bg-atmosphere)] bg-cover bg-center'
+          style={{ zIndex: GAME_Z_INDEX.background }}
           aria-hidden
         />
         <LoadingSpinner

@@ -59,6 +59,27 @@ describe('HandView', () => {
     expect(onSubmitSelection).toHaveBeenCalledWith(['card-a']);
   });
 
+  it('shows setup tuck progress when card input is part of setup income tucks', () => {
+    const cards = [createCard('card-a', 'Alpha'), createCard('card-b', 'Beta')];
+
+    render(
+      <HandView
+        cards={cards}
+        handSize={2}
+        pendingInput={{
+          inputId: 'setup-tuck-1',
+          type: EPlayerInputType.CARD,
+          cards,
+          minSelections: 1,
+          maxSelections: 1,
+          setupTuckProgress: { current: 1, total: 3 },
+        }}
+      />,
+    );
+
+    expect(screen.getByText('Current card 1 of 3')).toBeVisible();
+  });
+
   it('fires play-card callback when play selection mode is active', () => {
     const onCardPlaySelect = vi.fn();
 

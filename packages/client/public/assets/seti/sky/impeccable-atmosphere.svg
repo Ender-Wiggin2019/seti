@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <rect width="1920" height="1080" fill="#0A0E14"/>
+
+  <path d="M0 0h1920v1080H0z" fill="#0D1320" opacity=".72"/>
+  <path d="M0 720 430 650 760 720 1110 660 1920 760v320H0z" fill="#101722" opacity=".74"/>
+  <path d="M0 820 280 775 520 830 760 760 1040 825 1330 775 1920 870v210H0z" fill="#151B26" opacity=".78"/>
+  <path d="M0 960 220 910 460 960 710 900 940 965 1220 918 1510 970 1920 935v145H0z" fill="#1A1F27" opacity=".86"/>
+
+  <g opacity=".34">
+    <polygon points="0,960 220,910 180,1080 0,1080" fill="#222936"/>
+    <polygon points="220,910 460,960 360,1080 180,1080" fill="#2A303C"/>
+    <polygon points="460,960 710,900 640,1080 360,1080" fill="#1F2632"/>
+    <polygon points="710,900 940,965 860,1080 640,1080" fill="#303744"/>
+    <polygon points="940,965 1220,918 1160,1080 860,1080" fill="#242B37"/>
+    <polygon points="1220,918 1510,970 1440,1080 1160,1080" fill="#343B47"/>
+    <polygon points="1510,970 1920,935 1920,1080 1440,1080" fill="#202734"/>
+  </g>
+
+  <g opacity=".16">
+    <polygon points="1280,0 1920,0 1920,330 1540,250" fill="#C7734A"/>
+    <polygon points="1420,0 1920,0 1920,190 1660,145" fill="#8E573F"/>
+    <polygon points="1640,0 1920,0 1920,90 1780,76" fill="#E6E6E8"/>
+  </g>
+
+  <g opacity=".2">
+    <polygon points="210,115 610,60 820,150 620,225" fill="#2EC1C9"/>
+    <polygon points="610,60 1120,98 1320,178 820,150" fill="#46525F"/>
+    <polygon points="620,225 820,150 1320,178 1050,270" fill="#1A1F27"/>
+  </g>
+
+  <g opacity=".12">
+    <path d="M110 420c310-70 640-56 980 44 210 62 405 78 585 48" fill="none" stroke="#E6E6E8" stroke-width="1"/>
+    <path d="M150 456c285-48 590-32 920 48 230 56 432 67 606 35" fill="none" stroke="#2EC1C9" stroke-width="1"/>
+  </g>
+
+  <g opacity=".56" fill="#E6E6E8">
+    <circle cx="96" cy="90" r="1.1"/>
+    <circle cx="154" cy="338" r=".9"/>
+    <circle cx="248" cy="202" r="1.4"/>
+    <circle cx="330" cy="524" r=".8"/>
+    <circle cx="420" cy="132" r=".9"/>
+    <circle cx="534" cy="380" r="1.2"/>
+    <circle cx="694" cy="252" r=".8"/>
+    <circle cx="790" cy="94" r="1.1"/>
+    <circle cx="902" cy="486" r=".9"/>
+    <circle cx="1050" cy="306" r="1.2"/>
+    <circle cx="1190" cy="122" r=".8"/>
+    <circle cx="1286" cy="538" r="1.1"/>
+    <circle cx="1438" cy="370" r=".8"/>
+    <circle cx="1592" cy="602" r=".9"/>
+    <circle cx="1710" cy="280" r="1.2"/>
+    <circle cx="1846" cy="438" r=".8"/>
+  </g>
+
+  <g opacity=".42" fill="#2EC1C9">
+    <circle cx="370" cy="282" r="1.2"/>
+    <circle cx="742" cy="444" r="1"/>
+    <circle cx="1118" cy="214" r="1.3"/>
+    <circle cx="1560" cy="164" r="1"/>
+    <circle cx="1768" cy="656" r="1.4"/>
+  </g>
+
+  <g opacity=".2" fill="#C7734A">
+    <circle cx="126" cy="640" r="1.5"/>
+    <circle cx="1008" cy="624" r="1.1"/>
+    <circle cx="1390" cy="92" r="1.4"/>
+  </g>
+
+  <g opacity=".08" stroke="#E6E6E8" stroke-width="1" fill="none">
+    <path d="M1500 880h210"/>
+    <path d="M1538 840v120"/>
+    <path d="M1658 830v136"/>
+    <path d="M1460 918h290"/>
+  </g>
+</svg>

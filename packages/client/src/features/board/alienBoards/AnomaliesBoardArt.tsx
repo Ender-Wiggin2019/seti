@@ -219,6 +219,7 @@ function ColumnSlotAnchors({
                 debugLabel={`anomalies ${color} trace option ${index + 1}`}
                 debugInfo={formatTraceSlotDebugInfo(slot)}
                 ariaLabel={`Select anomalies ${color} trace slot ${index + 1}`}
+                attention
                 className='rounded-full border-accent-400/70'
                 testId={`alien-${alienIndex}-anomalies-hotspot-${color}-${index}`}
                 onClick={() => onSelectTraceSlot?.(slot.slotId)}

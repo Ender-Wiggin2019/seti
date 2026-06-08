@@ -26,7 +26,7 @@ export function AppShell(props: IAppShellProps): React.JSX.Element {
     <div className='relative min-h-screen text-text-100'>
       {/* Cosmic atmosphere — fixed behind all content, three-layer composition. */}
       <div
-        className='pointer-events-none fixed inset-0 -z-10 bg-[image:var(--bg-atmosphere)]'
+        className='pointer-events-none fixed inset-0 -z-10 bg-[image:var(--bg-atmosphere)] bg-cover bg-center'
         aria-hidden
       />
 

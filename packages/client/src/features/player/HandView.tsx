@@ -181,11 +181,17 @@ export function HandView({
   const selectionFooter = selectCardInput ? (
     <div className='mt-2 flex items-center justify-between gap-2'>
       <p className='font-mono text-[10px] tracking-[0.08em] text-text-500'>
-        {t('client.hand_view.pick_range', {
-          min: selectCardInput.minSelections,
-          max: selectCardInput.maxSelections,
-          defaultValue: `Pick ${selectCardInput.minSelections}–${selectCardInput.maxSelections}`,
-        })}
+        {selectCardInput.setupTuckProgress
+          ? t('client.hand_view.setup_tuck_progress', {
+              current: selectCardInput.setupTuckProgress.current,
+              total: selectCardInput.setupTuckProgress.total,
+              defaultValue: `Current card ${selectCardInput.setupTuckProgress.current} of ${selectCardInput.setupTuckProgress.total}`,
+            })
+          : t('client.hand_view.pick_range', {
+              min: selectCardInput.minSelections,
+              max: selectCardInput.maxSelections,
+              defaultValue: `Pick ${selectCardInput.minSelections}–${selectCardInput.maxSelections}`,
+            })}
         <span className='ml-2 text-text-300'>
           {selectedCardIds.length}/{selectCardInput.maxSelections}
         </span>

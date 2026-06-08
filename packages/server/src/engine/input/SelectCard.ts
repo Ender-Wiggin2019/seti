@@ -7,6 +7,7 @@ import {
   EPlayerInputType,
   type ISelectCardInputModel,
   type ISetupChoiceInputMetadata,
+  type ISetupTuckProgressMetadata,
 } from '@seti/common/types/protocol/playerInput';
 import { GameError } from '@/shared/errors/GameError.js';
 import { projectCardItems } from '../cards/projectCardItem.js';
@@ -17,6 +18,7 @@ export interface ISelectCardConfig {
   cards: TCardItem[];
   minSelections?: number;
   maxSelections?: number;
+  setupTuckProgress?: ISetupTuckProgressMetadata;
   onSelect: (selectedCardIds: string[]) => PlayerInput | undefined;
 }
 
@@ -26,6 +28,8 @@ export class SelectCard extends BasePlayerInput {
   private readonly minSelections: number;
 
   private readonly maxSelections: number;
+
+  private readonly setupTuckProgress?: ISetupTuckProgressMetadata;
 
   private readonly onSelect: (
     selectedCardIds: string[],
@@ -41,6 +45,7 @@ export class SelectCard extends BasePlayerInput {
     this.cards = config.cards;
     this.minSelections = config.minSelections ?? 1;
     this.maxSelections = config.maxSelections ?? 1;
+    this.setupTuckProgress = config.setupTuckProgress;
     this.onSelect = config.onSelect;
   }
 
@@ -50,6 +55,7 @@ export class SelectCard extends BasePlayerInput {
       type: EPlayerInputType.CARD,
       title: this.title,
       setupChoice: this.setupChoice,
+      setupTuckProgress: this.setupTuckProgress,
       cards: projectCardItems(this.cards),
       minSelections: this.minSelections,
       maxSelections: this.maxSelections,

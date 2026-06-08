@@ -79,4 +79,38 @@ describe('SelectOption', () => {
       options: [{ id: 'confirm', label: 'Confirm' }],
     });
   });
+
+  it('serializes optional card metadata when an option references a card', () => {
+    const input = new SelectOption(
+      { id: 'p1' } as IPlayer,
+      [
+        {
+          id: 'draw-face-up',
+          label: 'Draw face-up alien card',
+          cardId: 'ET.11',
+          onSelect: () => undefined,
+        },
+        {
+          id: 'draw-random',
+          label: 'Draw random alien card',
+          onSelect: () => undefined,
+        },
+      ],
+      'Choose source',
+    );
+
+    expect(input.toModel()).toEqual({
+      inputId: expect.any(String),
+      type: EPlayerInputType.OPTION,
+      title: 'Choose source',
+      options: [
+        {
+          id: 'draw-face-up',
+          label: 'Draw face-up alien card',
+          cardId: 'ET.11',
+        },
+        { id: 'draw-random', label: 'Draw random alien card' },
+      ],
+    });
+  });
 });

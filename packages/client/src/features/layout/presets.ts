@@ -1,3 +1,4 @@
+import { GAME_Z_INDEX } from '@/styles/zIndex';
 import type { GridConfig, LayoutConfig } from './types';
 
 export const DEFAULT_TAB_GRID: GridConfig = {
@@ -56,18 +57,23 @@ export const tabPreset: LayoutConfig = {
   defaultTab: 'board',
   sections: [
     // chrome
-    { id: 'topBar', pin: 'sticky-top', size: { height: '48px' }, zIndex: 40 },
+    {
+      id: 'topBar',
+      pin: 'sticky-top',
+      size: { height: '48px' },
+      zIndex: GAME_Z_INDEX.chrome,
+    },
     {
       id: 'actionBar',
       pin: 'sticky-top',
       pinOffset: { top: '48px' },
-      zIndex: 39,
+      zIndex: GAME_Z_INDEX.chrome,
     },
     {
       id: 'hand',
       pin: 'fixed-bottom',
       size: { height: '120px' },
-      zIndex: 38,
+      zIndex: GAME_Z_INDEX.hand,
     },
     // section bodies — all live in their dedicated tab's middle column
     {
@@ -129,18 +135,23 @@ export const waterfallPreset: LayoutConfig = {
   defaultTab: 'board',
   sections: [
     // chrome
-    { id: 'topBar', pin: 'sticky-top', size: { height: '48px' }, zIndex: 40 },
+    {
+      id: 'topBar',
+      pin: 'sticky-top',
+      size: { height: '48px' },
+      zIndex: GAME_Z_INDEX.chrome,
+    },
     {
       id: 'actionBar',
       pin: 'sticky-top',
       pinOffset: { top: '48px' },
-      zIndex: 39,
+      zIndex: GAME_Z_INDEX.chrome,
     },
     {
       id: 'hand',
       pin: 'fixed-bottom',
       size: { height: '120px' },
-      zIndex: 38,
+      zIndex: GAME_Z_INDEX.hand,
     },
     // left column
     {

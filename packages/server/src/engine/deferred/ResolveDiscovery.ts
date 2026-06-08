@@ -1,7 +1,10 @@
 import type { IInputResponse } from '@seti/common/types/protocol/actions';
 import type { IPlayerInputModel } from '@seti/common/types/protocol/playerInput';
 import type { AlienBoard } from '@/engine/alien/AlienBoard.js';
-import { createActionEvent } from '@/engine/event/GameEvent.js';
+import {
+  createActionEvent,
+  createAlienDiscoveredEvent,
+} from '@/engine/event/GameEvent.js';
 import type { IGame } from '@/engine/IGame.js';
 import type { IPlayer } from '@/engine/player/IPlayer.js';
 import { DeferredAction, type PlayerInput } from './DeferredAction.js';
@@ -39,6 +42,9 @@ export class ResolveDiscovery extends DeferredAction {
         alienType: board.alienType,
         alienIndex: board.alienIndex,
       }),
+    );
+    game.eventLog.append(
+      createAlienDiscoveredEvent(board.alienType, board.alienIndex),
     );
 
     const pluginInput = game.alienState.discoverAlien(board, game);

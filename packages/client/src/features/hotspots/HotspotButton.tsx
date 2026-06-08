@@ -11,6 +11,7 @@ import {
 } from '@/features/hotspots/hotspotConfig';
 import { cn } from '@/lib/cn';
 import { useDebugStore } from '@/stores/debugStore';
+import { BOARD_LOCAL_Z_INDEX } from '@/styles/zIndex';
 
 type THotspotShape = 'circle' | 'rect';
 type THotspotDataAttributes = Record<`data-${string}`, string | undefined>;
@@ -35,6 +36,7 @@ interface IHotspotButtonProps extends React.PropsWithChildren {
   ariaLabel?: string;
   title?: string;
   disabled?: boolean;
+  attention?: boolean;
   className?: string;
   style?: React.CSSProperties;
   offsetX?: number;
@@ -126,6 +128,7 @@ export function HotspotButton({
   ariaLabel,
   title,
   disabled = false,
+  attention = false,
   className,
   style,
   offsetX = 0,
@@ -227,9 +230,11 @@ export function HotspotButton({
     const sceneElement = findSceneElement(event.currentTarget);
     if (!sceneElement) return;
     const point = readClientPoint(event);
-    event.preventDefault();
     event.stopPropagation();
-    suppressClickRef.current = true;
+    if (mode === 'resize') {
+      event.preventDefault();
+      suppressClickRef.current = true;
+    }
     editRef.current = {
       mode,
       sceneElement,
@@ -266,19 +271,22 @@ export function HotspotButton({
       data-hotspot-id={hotspotId}
       data-hotspot-variant={variant}
       data-hotspot-role='interactive'
+      data-hotspot-attention={attention ? 'true' : undefined}
       title={title}
       data-testid={testId ?? formatHotspotTestId(sceneId, hotspotId)}
       {...dataAttributes}
       className={cn(
-        'absolute z-70 border transition-[background-color,border-color,opacity,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400',
+        'absolute border transition-[background-color,border-color,opacity,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400',
         debugVisible
           ? 'border-current shadow-[0_0_0_1px_rgba(0,0,0,0.45)]'
           : 'border-transparent',
         disabled ? 'cursor-default' : 'cursor-pointer',
+        attention && !disabled && 'hotspot-button--attention',
         className,
       )}
       style={{
         ...percentStyle,
+        zIndex: BOARD_LOCAL_Z_INDEX.hotspot,
         ...style,
         minWidth: '24px',
         minHeight: '24px',

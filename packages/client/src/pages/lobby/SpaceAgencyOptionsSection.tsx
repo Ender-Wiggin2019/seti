@@ -1,3 +1,4 @@
+import type { IAlienLobbyOption } from '@seti/common/constant/alienLobby';
 import { EAlienType } from '@seti/common/types/BaseCard';
 import {
   DEFAULT_SPACE_AGENCY_OPTIONS,
@@ -16,6 +17,7 @@ interface ISpaceAgencyOptionsSectionProps {
   options: IGameOptions;
   disabled: boolean;
   onChange?: (patch: IGameOptionsPatch) => void;
+  alienTypeOptions?: readonly IAlienLobbyOption[];
 }
 
 const SPACE_AGENCY_ALIENS = [
@@ -32,36 +34,37 @@ const ENABLED_SPACE_AGENCY_OPTIONS: ISpaceAgencyOptions = {
   newAlienSpecies: true,
 };
 
-const ENABLED_SPACE_AGENCY_ALIENS: Pick<
-  IGameOptionsPatch,
-  'alienModulesEnabled'
-> = {
-  alienModulesEnabled: {
-    [EAlienType.GLYPHIDS]: true,
-    [EAlienType.AMOEBA]: true,
-    [EAlienType.ARKHOS]: true,
-  },
-};
-
-const DISABLED_SPACE_AGENCY_ALIENS: Pick<
-  IGameOptionsPatch,
-  'alienModulesEnabled'
-> = {
-  alienModulesEnabled: {
-    [EAlienType.GLYPHIDS]: false,
-    [EAlienType.AMOEBA]: false,
-    [EAlienType.ARKHOS]: false,
-  },
-};
-
 export function SpaceAgencyOptionsSection({
   options,
   disabled,
   onChange,
+  alienTypeOptions,
 }: ISpaceAgencyOptionsSectionProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const spaceAgencyOptions =
     options.spaceAgencyOptions ?? DEFAULT_SPACE_AGENCY_OPTIONS;
+  const alienOptionByType = new Map(
+    alienTypeOptions?.map((option) => [option.alienType, option]),
+  );
+
+  const isSpaceAgencyAlienAvailable = (
+    alienType: (typeof SPACE_AGENCY_ALIENS)[number],
+  ): boolean => alienOptionByType.get(alienType)?.disabled !== true;
+
+  const hasAvailableSpaceAgencyAliens = SPACE_AGENCY_ALIENS.some((alienType) =>
+    isSpaceAgencyAlienAvailable(alienType),
+  );
+
+  const createSpaceAgencyAlienPatch = (
+    checked: boolean,
+  ): Pick<IGameOptionsPatch, 'alienModulesEnabled'> => ({
+    alienModulesEnabled: Object.fromEntries(
+      SPACE_AGENCY_ALIENS.map((alienType) => [
+        alienType,
+        checked && isSpaceAgencyAlienAvailable(alienType),
+      ]),
+    ) as IGameOptionsPatch['alienModulesEnabled'],
+  });
 
   const emitSpaceAgencyPatch = (
     nextOptions: ISpaceAgencyOptions,
@@ -82,13 +85,14 @@ export function SpaceAgencyOptionsSection({
 
     emitSpaceAgencyPatch(
       enabled
-        ? ENABLED_SPACE_AGENCY_OPTIONS
+        ? {
+            ...ENABLED_SPACE_AGENCY_OPTIONS,
+            newAlienSpecies: hasAvailableSpaceAgencyAliens,
+          }
         : { ...DEFAULT_SPACE_AGENCY_OPTIONS },
       {
         expansions,
-        ...(enabled
-          ? ENABLED_SPACE_AGENCY_ALIENS
-          : DISABLED_SPACE_AGENCY_ALIENS),
+        ...createSpaceAgencyAlienPatch(enabled),
       },
     );
   };
@@ -97,9 +101,13 @@ export function SpaceAgencyOptionsSection({
     key: keyof Omit<ISpaceAgencyOptions, 'enabled'>,
     checked: boolean,
   ): void => {
+    const nextChecked =
+      key === 'newAlienSpecies'
+        ? checked && hasAvailableSpaceAgencyAliens
+        : checked;
     const nextOptions = {
       ...spaceAgencyOptions,
-      [key]: checked,
+      [key]: nextChecked,
     };
 
     if (key === 'agencies' && !checked) {
@@ -108,9 +116,8 @@ export function SpaceAgencyOptionsSection({
 
     const extraPatch: IGameOptionsPatch = {};
     if (key === 'newAlienSpecies') {
-      extraPatch.alienModulesEnabled = Object.fromEntries(
-        SPACE_AGENCY_ALIENS.map((alienType) => [alienType, checked]),
-      ) as IGameOptionsPatch['alienModulesEnabled'];
+      extraPatch.alienModulesEnabled =
+        createSpaceAgencyAlienPatch(nextChecked).alienModulesEnabled;
     }
 
     emitSpaceAgencyPatch(nextOptions, extraPatch);
@@ -174,7 +181,11 @@ export function SpaceAgencyOptionsSection({
           id='space-agency-new-aliens'
           label={t('client.space_agency_options.new_alien_species')}
           checked={spaceAgencyOptions.newAlienSpecies}
-          disabled={disabled || !spaceAgencyOptions.enabled}
+          disabled={
+            disabled ||
+            !spaceAgencyOptions.enabled ||
+            !hasAvailableSpaceAgencyAliens
+          }
           onChange={(checked) => handleOptionChange('newAlienSpecies', checked)}
         />
         {spaceAgencyOptions.enabled && spaceAgencyOptions.newAlienSpecies ? (
@@ -186,13 +197,22 @@ export function SpaceAgencyOptionsSection({
                   defaultValue: formatAlienLabel(alienType),
                 },
               );
+              const isAvailable = isSpaceAgencyAlienAvailable(alienType);
+              const displayLabel = isAvailable
+                ? label
+                : `${label}${t('client.create_room.alien_pool_disabled', {
+                    defaultValue: ' (disabled)',
+                  })}`;
               return (
                 <ToggleRow
                   key={alienType}
                   id={`space-agency-alien-${alienType}`}
-                  label={label}
-                  checked={options.alienModulesEnabled[alienType] === true}
-                  disabled={disabled}
+                  label={displayLabel}
+                  checked={
+                    isAvailable &&
+                    options.alienModulesEnabled[alienType] === true
+                  }
+                  disabled={disabled || !isAvailable}
                   onChange={(checked) => handleAlienChange(alienType, checked)}
                 />
               );

@@ -151,11 +151,6 @@ export function MissionHubView({
           alt=''
           className='pointer-events-none absolute inset-x-0 bottom-0 h-[62%] w-full object-cover object-bottom opacity-[0.16]'
         />
-        <span
-          aria-hidden
-          className='pointer-events-none absolute right-[-2%] top-[-10%] h-44 w-44 rounded-full bg-[radial-gradient(circle,oklch(0.58_0.12_45/0.18),transparent_70%)] blur-[2px]'
-        />
-
         <div className='relative z-10 space-y-4'>
           <div className='flex flex-wrap items-end justify-between gap-3'>
             <Tabs
@@ -233,24 +228,14 @@ function MissionHero({
         aria-hidden
         data-testid='mission-hero-image'
         className='pointer-events-none absolute inset-y-[-4%] right-[8%] h-[108%] w-auto max-w-none select-none object-contain opacity-[0.9] max-sm:right-[-18%]'
-        style={{
-          WebkitMaskImage:
-            'linear-gradient(90deg, transparent 0%, black 28%, black 100%)',
-          maskImage:
-            'linear-gradient(90deg, transparent 0%, black 28%, black 100%)',
-        }}
       />
       <span
         aria-hidden
-        className='absolute inset-0 bg-[linear-gradient(90deg,oklch(0.05_0.018_260/0.92)_0%,oklch(0.07_0.02_260/0.72)_42%,oklch(0.07_0.02_260/0.28)_68%,oklch(0.05_0.018_260/0.50)_100%)]'
+        className='absolute inset-0 bg-[oklch(0.05_0.018_260/0.58)]'
       />
       <span
         aria-hidden
-        className='absolute right-[18%] top-[-16%] h-[380px] w-[260px] rotate-[22deg] bg-[linear-gradient(180deg,oklch(0.66_0.13_48/0.24),transparent_78%)] blur-[1px]'
-      />
-      <span
-        aria-hidden
-        className='absolute bottom-[-18%] left-[-4%] h-[42%] w-[110%] bg-[radial-gradient(ellipse_at_center,oklch(0.42_0.025_250/0.22),transparent_67%)]'
+        className='absolute bottom-[-18%] left-[-4%] h-[42%] w-[110%] bg-[oklch(0.42_0.025_250/0.10)]'
       />
 
       <div className='relative z-10 flex min-h-[320px] flex-col justify-between gap-10 p-6 sm:min-h-[360px] sm:p-8 lg:p-10'>
@@ -320,7 +305,7 @@ function MissionStatTile({
       />
       <span
         aria-hidden
-        className='absolute inset-0 bg-[linear-gradient(90deg,oklch(0.08_0.02_260/0.88)_0%,oklch(0.08_0.02_260/0.82)_42%,oklch(0.10_0.02_260/0.58)_62%,oklch(0.10_0.02_260/0.34)_78%,oklch(0.08_0.02_260/0.46)_100%)]'
+        className='absolute inset-0 bg-[oklch(0.08_0.02_260/0.66)]'
       />
       <div className='relative z-10 flex h-full flex-col justify-between gap-3'>
         <div className='flex items-center justify-between gap-3'>
@@ -346,7 +331,7 @@ function MissionEmptyState({ label }: { label: string }): React.JSX.Element {
     <div className='metal-hairline-rounded relative overflow-hidden bg-[var(--surface-instrument)]/70 p-12 text-center'>
       <span
         aria-hidden
-        className='pointer-events-none absolute inset-0 bg-[radial-gradient(420px_200px_at_50%_30%,oklch(0.28_0.08_240/0.14),transparent_70%)]'
+        className='pointer-events-none absolute inset-0 bg-[oklch(0.28_0.08_240/0.07)]'
       />
       <p className='relative font-mono text-[0.75rem] uppercase tracking-microlabel text-text-500'>
         {label}
@@ -371,14 +356,14 @@ function MissionAssetStrip(): React.JSX.Element {
           })}
         </p>
       </div>
-      <div className='relative h-44 overflow-hidden rounded-[6px] bg-[linear-gradient(180deg,transparent,oklch(0.09_0.02_260/0.78))]'>
+      <div className='relative h-44 overflow-hidden rounded-[6px] bg-[var(--surface-instrument)]/70'>
         <span
           aria-hidden
-          className='absolute inset-x-0 bottom-0 h-[58%] bg-[linear-gradient(180deg,transparent,oklch(0.09_0.02_260/0.56)_45%,oklch(0.09_0.02_260/0.92))]'
+          className='absolute inset-x-0 bottom-0 h-[58%] bg-[oklch(0.09_0.02_260/0.56)]'
         />
         <span
           aria-hidden
-          className='absolute inset-x-0 bottom-0 h-px bg-[linear-gradient(90deg,transparent,var(--surface-700),transparent)]'
+          className='absolute inset-x-0 bottom-0 h-px bg-[color:var(--surface-700)]'
         />
         {ASSET_STRIP_ITEMS.map(({ asset, className }) => (
           <img

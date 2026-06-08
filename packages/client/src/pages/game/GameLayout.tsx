@@ -4,7 +4,7 @@ import {
   canPlaySpecificCard,
   getAvailableMainActions,
 } from '@seti/common/rules';
-import type { IBaseCard } from '@seti/common/types/BaseCard';
+import { EAlienMap, type IBaseCard } from '@seti/common/types/BaseCard';
 import { EPlanet, EResource } from '@seti/common/types/element';
 import { EOrganizationId } from '@seti/common/types/organization';
 import { getMascamitesSampleDeliveryDestination } from '@seti/common/utils/mascamitesSampleDelivery';
@@ -26,17 +26,18 @@ import { ActionMenu } from '@/features/actions/ActionMenu';
 import { FreeActionBar } from '@/features/actions/FreeActionBar';
 import { AlienBoardView } from '@/features/board/AlienBoardView';
 import { PlanetaryBoardView } from '@/features/board/PlanetaryBoardView';
-import {
-  isOrbitalDynamicsMoveInputModel,
-  SolarSystemView,
-} from '@/features/board/SolarSystemView';
+import { SolarSystemView } from '@/features/board/SolarSystemView';
 import { TechBoardView } from '@/features/board/TechBoardView';
 import { CardDetail } from '@/features/cards/CardDetail';
 import { CardRender } from '@/features/cards/CardRender';
 import { CardRowView } from '@/features/cards/CardRowView';
 import { EndOfRoundStacks } from '@/features/cards/EndOfRoundStacks';
-import { InputRenderer } from '@/features/input/InputRenderer';
-import { translateInputText } from '@/features/input/inputI18n';
+import {
+  getPlayerInputPresentationMode,
+  isOrbitalDynamicsMoveInputModel,
+  shouldRenderPendingInputPrompt,
+} from '@/features/input/inputPresentation';
+import { PendingInputPrompt } from '@/features/input/PendingInputPrompt';
 import { EventLog } from '@/features/log';
 import {
   HandDock,
@@ -46,7 +47,6 @@ import {
 } from '@/features/player';
 import type { IMilestoneItem } from '@/features/scoring';
 import { MilestoneTrack } from '@/features/scoring';
-import { SetupChoiceModal } from '@/features/setup/SetupChoiceModal';
 import { RivalPanel } from '@/features/solo';
 import { cn } from '@/lib/cn';
 import { mapPlayerColors, resolvePlayerColor } from '@/lib/playerColor';
@@ -54,6 +54,7 @@ import { useGameContext } from '@/pages/game/GameContext';
 import { GameOverDialog } from '@/pages/game/GameOverDialog';
 import { useTextMode } from '@/stores/debugStore';
 import { type TBoardTab, useGameViewStore } from '@/stores/gameViewStore';
+import { GAME_Z_INDEX } from '@/styles/zIndex';
 import type {
   IMainActionRequest,
   IPlayerInputModel,
@@ -77,6 +78,17 @@ import {
 const CARD_CUSTOM_EFFECT_UNHANDLED = 'CARD_CUSTOM_EFFECT_UNHANDLED';
 const GAME_SHELL_SCENE_IMAGE = '/assets/seti/sprites/terrain_02_02.webp';
 
+type TAlienDiscoveredEvent = Extract<
+  TGameEvent,
+  { type: EGameEventType.ALIEN_DISCOVERED }
+>;
+
+interface IAlienDiscoveryNotice {
+  key: string;
+  alienType: TAlienDiscoveredEvent['alienType'];
+  alienIndex?: number;
+}
+
 function actionEventName(event: TGameEvent): string | null {
   if (event.type !== EGameEventType.ACTION) return null;
   const a = event.action;
@@ -85,6 +97,19 @@ function actionEventName(event: TGameEvent): string | null {
     return String((a as { type: string }).type);
   }
   return null;
+}
+
+function alienDiscoveredEventKey(event: TAlienDiscoveredEvent): string {
+  return (
+    event.id ??
+    `${event.type}|${event.at ?? ''}|${event.alienType}|${event.alienIndex ?? ''}`
+  );
+}
+
+function alienTypeTranslationKey(
+  alienType: TAlienDiscoveredEvent['alienType'],
+): string {
+  return EAlienMap[alienType] ?? String(alienType).toLowerCase();
 }
 
 const BOARD_TABS: TBoardTab[] = [
@@ -132,6 +157,7 @@ export function isPlanetaryBoardInput(
   model: IPlayerInputModel | null,
 ): boolean {
   if (!model) return false;
+  if (model.type === EPlayerInputType.PLANET) return true;
   if (model.type !== EPlayerInputType.OPTION) return false;
   return model.options.some((option) =>
     // Match planet/slot pickers for any planet *except* the
@@ -407,7 +433,11 @@ export function GameLayout({
   } = useGameContext();
   const effectivePlanetActionMode = getSlotPickerMode(pendingInput);
   const unhandledEffectToastKeysRef = useRef<Set<string>>(new Set());
+  const alienNoticeKeysRef = useRef<Set<string>>(new Set());
   const lastGameIdRef = useRef<string | undefined>(undefined);
+  const [alienNoticeQueue, setAlienNoticeQueue] = useState<
+    IAlienDiscoveryNotice[]
+  >([]);
   const myPlayer = gameState?.players.find((p) => p.playerId === myPlayerId);
   const currentPlayerMovementPoints = myPlayer?.movementPoints ?? 0;
   // Surface mission branch-claim flags up here so both the missions
@@ -432,9 +462,29 @@ export function GameLayout({
     const gid = gameState?.gameId;
     if (gid !== lastGameIdRef.current) {
       unhandledEffectToastKeysRef.current.clear();
+      alienNoticeKeysRef.current.clear();
+      setAlienNoticeQueue([]);
       lastGameIdRef.current = gid;
     }
   }, [gameState?.gameId]);
+
+  useEffect(() => {
+    const nextNotices: IAlienDiscoveryNotice[] = [];
+    for (const event of [...events].reverse()) {
+      if (event.type !== EGameEventType.ALIEN_DISCOVERED) continue;
+      const key = alienDiscoveredEventKey(event);
+      if (alienNoticeKeysRef.current.has(key)) continue;
+      alienNoticeKeysRef.current.add(key);
+      nextNotices.push({
+        key,
+        alienType: event.alienType,
+        alienIndex: event.alienIndex,
+      });
+    }
+
+    if (nextNotices.length === 0) return;
+    setAlienNoticeQueue((current) => [...current, ...nextNotices]);
+  }, [events]);
 
   useEffect(() => {
     for (const event of events) {
@@ -476,8 +526,8 @@ export function GameLayout({
     // player can keep clicking neighbors without re-arming the free
     // action between hops. Only auto-clear on:
     //  - turn change (someone else acts now)
-    //  - run-out (movement points hit zero AND no convertible energy
-    //    is available — re-arming wouldn't do anything)
+    //  - run-out (movement points hit zero; energy must be converted
+    //    through its own free action before movement can resume)
     //  - phase leaves the action window (BETWEEN_TURNS, FINAL_SCORING)
     //
     // pendingInput is intentionally NOT a clear trigger here: a
@@ -487,15 +537,13 @@ export function GameLayout({
     // off mid-flight forced the player to re-click "Move Probe"
     // every step, which is what the user reported.
     const phase = gameState?.phase;
-    const hasConvertibleEnergy =
-      (myPlayer?.resources?.[EResource.ENERGY] ?? 0) > 0;
     if (
       !isMyTurn ||
       (phase !== undefined &&
         phase !== EPhase.AWAIT_MAIN_ACTION &&
         phase !== EPhase.AWAIT_END_TURN &&
         phase !== EPhase.IN_RESOLUTION) ||
-      (currentPlayerMovementPoints <= 0 && !hasConvertibleEnergy)
+      currentPlayerMovementPoints <= 0
     ) {
       setMovementModeActive(false);
     }
@@ -504,7 +552,6 @@ export function GameLayout({
     gameState?.phase,
     isMyTurn,
     movementModeActive,
-    myPlayer?.resources?.[EResource.ENERGY],
   ]);
 
   // Auto-jump to the Aliens tab when the player is asked to place a trace
@@ -613,11 +660,24 @@ export function GameLayout({
     },
     openBoardTab: () => setActiveTab('board'),
   });
+  const alienNotice = alienNoticeQueue[0] ?? null;
+  const alienNoticeName = alienNotice
+    ? t(
+        `client.alien_board.types.${alienTypeTranslationKey(alienNotice.alienType)}`,
+        {
+          defaultValue: alienTypeTranslationKey(alienNotice.alienType),
+        },
+      )
+    : '';
+  const dismissAlienNotice = (): void => {
+    setAlienNoticeQueue((current) => current.slice(1));
+  };
 
   return (
     <div className='relative flex h-screen flex-col overflow-hidden bg-[var(--surface-void)] text-text-100'>
       <div
-        className='pointer-events-none fixed inset-0 -z-10 bg-[image:var(--bg-atmosphere)]'
+        className='pointer-events-none fixed inset-0 bg-[image:var(--bg-atmosphere)] bg-cover bg-center'
+        style={{ zIndex: GAME_Z_INDEX.background }}
         aria-hidden
       />
       <img
@@ -625,10 +685,16 @@ export function GameLayout({
         alt=''
         aria-hidden
         data-testid='game-shell-scene-image'
-        className='pointer-events-none fixed inset-x-0 bottom-0 -z-10 h-[38vh] w-full object-cover object-bottom opacity-[0.22]'
+        className='pointer-events-none fixed inset-x-0 bottom-0 h-[38vh] w-full object-cover object-bottom opacity-[0.22]'
+        style={{ zIndex: GAME_Z_INDEX.background }}
       />
 
-      <TopBar />
+      <div
+        className='relative shrink-0'
+        style={{ zIndex: GAME_Z_INDEX.chrome }}
+      >
+        <TopBar />
+      </div>
 
       <TopActionBar
         onFreeActionClick={actionController.handleFreeActionClick}
@@ -641,7 +707,10 @@ export function GameLayout({
         }}
       />
 
-      <div className='flex min-h-0 flex-1'>
+      <div
+        className='relative isolate flex min-h-0 flex-1'
+        style={{ zIndex: GAME_Z_INDEX.board }}
+      >
         <main className='relative flex min-h-0 flex-1 flex-col overflow-hidden'>
           <BoardTabs
             activeTab={activeTab}
@@ -687,6 +756,36 @@ export function GameLayout({
       />
 
       <GameOverDialog />
+
+      <Dialog
+        open={alienNotice !== null}
+        onOpenChange={(open) => {
+          if (!open) dismissAlienNotice();
+        }}
+      >
+        <DialogContent data-testid='alien-found-dialog'>
+          <DialogHeader>
+            <DialogTitle>
+              {t('client.game_layout.alien_found_title', {
+                alien: alienNoticeName,
+                defaultValue: `Alien ${alienNoticeName} is Found!`,
+              })}
+            </DialogTitle>
+          </DialogHeader>
+          <p className='text-sm leading-6 text-text-300'>
+            {t('client.game_layout.alien_found_desc', {
+              alien: alienNoticeName,
+              defaultValue:
+                'The species board has been revealed and its discovery effects are now resolved.',
+            })}
+          </p>
+          <DialogFooter>
+            <Button onClick={dismissAlienNotice} variant='primary'>
+              {t('client.common.ok', { defaultValue: 'OK' })}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {actionController.dialogs}
     </div>
@@ -964,8 +1063,8 @@ function useActionController({
  *
  * Hosts the main action menu rendered horizontally, the FreeActionBar,
  * and (when the server requests a specific input that isn't an OR fork)
- * replaces the action menu with the InputRenderer so the player cannot
- * miss the prompt. A thin corner-selection hint rides below when the
+ * opens the shared pending-input prompt so the player cannot miss the
+ * decision. A thin corner-selection hint rides below when the
  * USE_CARD_CORNER free action has been armed.
  */
 function TopActionBar({
@@ -1004,12 +1103,13 @@ function TopActionBar({
     orbitalDynamicsInput?.options.find((option) => option.id === 'done') ??
     null;
   const showBoardInputHint = orbitalDynamicsInput !== null;
-  const showInputRenderer =
-    pendingInput !== null &&
-    pendingInput.type !== EPlayerInputType.OR &&
-    !showBoardInputHint;
-  const showSetupChoiceInput =
-    gameState?.phase === EPhase.SETUP_CHOICE && pendingInput !== null;
+  const presentationMode = getPlayerInputPresentationMode(pendingInput, {
+    cardRowCardIds: gameState
+      ? new Set(gameState.cardRow.map((card) => card.id))
+      : undefined,
+  });
+  const showPendingInputPrompt = shouldRenderPendingInputPrompt(pendingInput);
+  const promptInput = showPendingInputPrompt ? pendingInput : null;
   const myPlayer = gameState?.players.find(
     (player) => player.playerId === myPlayerId,
   );
@@ -1061,79 +1161,45 @@ function TopActionBar({
     <section
       className='relative shrink-0 border-b border-[color:var(--metal-edge-soft)] bg-[var(--surface-deep)]/76 backdrop-blur-md shadow-[inset_0_1px_0_oklch(0.78_0.04_240/0.08)]'
       data-testid='bottom-actions'
+      style={{ zIndex: GAME_Z_INDEX.chrome }}
     >
       <div
         aria-hidden
-        className='pointer-events-none absolute left-0 right-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[color:var(--surface-700)] to-transparent opacity-60'
+        className='pointer-events-none absolute left-0 right-0 bottom-0 h-px bg-[color:var(--surface-700)] opacity-60'
       />
 
-      {showInputRenderer ? (
-        <div className='px-4 py-2'>
-          <div className='instrument-panel p-3'>
-            <div className='section-head mb-2'>
-              <span aria-hidden className='section-head__tick' />
-              <p className='font-mono text-[11px] uppercase tracking-[0.14em] text-accent-400'>
-                {t('client.game_layout.awaiting_input', {
-                  defaultValue: 'Input Required',
-                })}
-              </p>
-              <div aria-hidden className='section-head__rule' />
-              <span
-                aria-hidden
-                className='h-1.5 w-1.5 rounded-full bg-accent-500 shadow-[0_0_6px_oklch(0.68_0.11_240/0.8)] motion-safe:animate-pulse'
-              />
-            </div>
-            {showSetupChoiceInput ? (
-              <SetupChoiceModal model={pendingInput} onSubmit={sendInput} />
-            ) : (
-              <InputRenderer
-                model={pendingInput}
-                onSubmit={sendInput}
-                techBoard={gameState?.techBoard}
-              />
-            )}
-          </div>
-        </div>
-      ) : showBoardInputHint ? (
-        <div className='px-4 py-2'>
-          <div className='instrument-panel p-3'>
-            <div className='section-head mb-2'>
-              <span aria-hidden className='section-head__tick' />
-              <p className='font-mono text-[11px] uppercase tracking-[0.14em] text-accent-400'>
-                {t('client.game_layout.awaiting_input', {
-                  defaultValue: 'Input Required',
-                })}
-              </p>
-              <div aria-hidden className='section-head__rule' />
-            </div>
-            <p className='font-mono text-[11px] uppercase tracking-[0.14em] text-text-300'>
-              {t('client.game_layout.orbital_dynamics', {
-                defaultValue: 'Orbital Dynamics',
-              })}
-            </p>
-            <p className='mt-1 text-sm text-text-100'>
-              {t('client.game_layout.select_highlighted_space', {
-                defaultValue: 'Select a highlighted space on the board.',
-              })}
-            </p>
-            {orbitalDynamicsDoneOption ? (
-              <Button
-                variant='ghost'
-                size='sm'
-                className='mt-3 h-7 px-2.5 font-mono text-[10px] uppercase tracking-[0.14em]'
-                onClick={() =>
-                  sendInput({
-                    inputId: orbitalDynamicsInput.inputId,
-                    type: EPlayerInputType.OPTION,
-                    optionId: orbitalDynamicsDoneOption.id,
-                  })
+      {promptInput ? (
+        <PendingInputPrompt
+          model={promptInput}
+          onSubmit={sendInput}
+          phase={gameState?.phase}
+          techBoard={gameState?.techBoard}
+          presentationMode={presentationMode ?? undefined}
+          boardHint={
+            showBoardInputHint
+              ? {
+                  title: t('client.game_layout.orbital_dynamics', {
+                    defaultValue: 'Orbital Dynamics',
+                  }),
+                  description: t(
+                    'client.game_layout.select_highlighted_space',
+                    {
+                      defaultValue: 'Select a highlighted space on the board.',
+                    },
+                  ),
+                  doneLabel: orbitalDynamicsDoneOption?.label,
+                  onDone: orbitalDynamicsDoneOption
+                    ? () =>
+                        sendInput({
+                          inputId: orbitalDynamicsInput.inputId,
+                          type: EPlayerInputType.OPTION,
+                          optionId: orbitalDynamicsDoneOption.id,
+                        })
+                    : undefined,
                 }
-              >
-                {translateInputText(t, orbitalDynamicsDoneOption.label)}
-              </Button>
-            ) : null}
-          </div>
-        </div>
+              : undefined
+          }
+        />
       ) : (
         <div className='flex min-w-0 items-center gap-3 px-4 py-2'>
           <ActionMenu
@@ -1335,7 +1401,7 @@ function PersonalColumn({
       />
       <span
         aria-hidden
-        className='pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,oklch(0.05_0.018_260/0.52),oklch(0.05_0.018_260/0.82))]'
+        className='pointer-events-none absolute inset-0 bg-[oklch(0.05_0.018_260/0.68)]'
       />
       <section className='relative z-10' data-testid={dashboardTestId}>
         <div className='section-head mb-2'>
@@ -1440,7 +1506,11 @@ function HandDockBlock({
   const myPlayer = gameState?.players.find((p) => p.playerId === myPlayerId);
 
   return (
-    <div data-testid='bottom-hand'>
+    <div
+      className='relative'
+      data-testid='bottom-hand'
+      style={{ zIndex: GAME_Z_INDEX.hand }}
+    >
       <HandDock
         cards={myPlayer?.hand}
         handSize={myPlayer?.handSize ?? 0}
@@ -1579,11 +1649,11 @@ function BoardTabs({
           </TabsList>
           <div
             aria-hidden
-            className='pointer-events-none absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[color:var(--surface-700)] to-transparent opacity-70'
+            className='pointer-events-none absolute bottom-0 left-0 right-0 h-px bg-[color:var(--surface-700)] opacity-70'
           />
         </div>
 
-        <div className='min-h-0 flex-1 overflow-auto bg-[oklch(0.06_0.016_260/0.22)] p-4'>
+        <div className='relative isolate min-h-0 flex-1 overflow-auto bg-[oklch(0.06_0.016_260/0.22)] p-4'>
           <TabsContent value='board' className='mt-0 h-full'>
             <div
               data-testid='board-tab-solar-column'
@@ -1673,7 +1743,7 @@ function BoardTabs({
                     <div className='relative h-[72px] w-[52px] overflow-hidden rounded-[3px] border border-[color:var(--metal-edge-soft)] bg-[url(/assets/seti/cards/back_base.jpg)] bg-cover bg-center shadow-[inset_0_1px_0_oklch(0.78_0.07_240/0.2),0_4px_12px_oklch(0.08_0.018_260/0.8)]'>
                       <span
                         aria-hidden
-                        className='pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[oklch(0.08_0.018_260/0.4)]'
+                        className='pointer-events-none absolute inset-0 bg-[oklch(0.08_0.018_260/0.18)]'
                       />
                     </div>
                     <div className='flex flex-col items-start gap-0.5'>
@@ -1698,7 +1768,7 @@ function BoardTabs({
                     <div className='relative h-[72px] w-[52px] overflow-hidden rounded-[3px] border border-[color:var(--metal-edge-soft)] bg-[url(/assets/seti/cards/back_base.jpg)] bg-cover bg-center opacity-50 grayscale shadow-[inset_0_1px_0_oklch(0.78_0.07_240/0.15),0_4px_12px_oklch(0.08_0.018_260/0.6)]'>
                       <span
                         aria-hidden
-                        className='pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[oklch(0.08_0.018_260/0.5)]'
+                        className='pointer-events-none absolute inset-0 bg-[oklch(0.08_0.018_260/0.24)]'
                       />
                     </div>
                     <div className='flex flex-col items-start gap-0.5'>
@@ -1887,7 +1957,7 @@ function BoardTabs({
           if (!open) setBuyConfirm(null);
         }}
       >
-        <DialogContent className='w-fit max-w-fit bg-surface-900/95'>
+        <DialogContent className='w-fit max-w-fit'>
           <DialogHeader>
             <DialogTitle>
               {buyConfirm?.kind === 'deck'
@@ -2362,6 +2432,12 @@ const RESOURCE_I18N_KEY: Partial<Record<EResource, string>> = {
   [EResource.CARD]: 'card',
 };
 
+const RESOURCE_ICON_SRC: Partial<Record<EResource, string>> = {
+  [EResource.CREDIT]: '/assets/seti/icons/money.png',
+  [EResource.ENERGY]: '/assets/seti/icons/energy.png',
+  [EResource.CARD]: '/assets/seti/icons/draw.png',
+};
+
 function ExchangeResourcesDialog({
   open,
   player,
@@ -2418,9 +2494,11 @@ function ExchangeResourcesDialog({
           </p>
         </DialogHeader>
         {handCards.length > 0 ? (
-          <div className='rounded-md border border-surface-700/50 p-2'>
+          <div className='rounded-[6px] border border-[color:var(--metal-edge-soft)] bg-[var(--surface-instrument)]/70 p-3 shadow-hairline-inset'>
             <p className='mb-2 text-xs font-semibold uppercase tracking-wider text-text-300'>
-              Select 2 cards to spend
+              {t('client.layout_v2.dialogs.select_two_cards_to_spend', {
+                defaultValue: 'Select 2 cards to spend',
+              })}
             </p>
             <div className='grid grid-cols-1 gap-1.5'>
               {handCards.map((card) => {
@@ -2479,12 +2557,9 @@ function ExchangeResourcesDialog({
                     Object.keys(cardPick).length > 0 ? cardPick : undefined,
                   );
                 }}
-                className='h-10 justify-start gap-2 px-3 text-left text-sm'
+                className='h-11 justify-start gap-3 px-3 text-left text-sm'
               >
-                <span
-                  aria-hidden
-                  className='inline-block h-px w-3 bg-accent-500/80'
-                />
+                <ResourcePairIcon from={opt.from} to={opt.to} />
                 <span className='flex-1 font-body text-[13px] text-text-100'>
                   {label}
                 </span>
@@ -2560,7 +2635,7 @@ function PlaceDataDialog({
               key={`${opt.row}-${opt.slotIndex}`}
               variant='ghost'
               onClick={() => onConfirm(opt.slotIndex)}
-              className='h-10 justify-start gap-2 px-3 text-left text-sm'
+              className='h-11 justify-start gap-3 px-3 text-left text-sm'
             >
               <img
                 src='/assets/seti/tokens/data.png'
@@ -2618,14 +2693,14 @@ function SampleDeliveryDialog({
               key={`${option.capsuleId}-${option.cardId}`}
               variant='ghost'
               onClick={() => onConfirm(option)}
-              className='h-10 justify-start gap-2 px-3 text-left text-sm'
+              className='h-11 justify-start gap-3 px-3 text-left text-sm'
             >
-              <span
+              <img
+                src='/assets/seti/icons/missionSatellite.png'
+                alt=''
                 aria-hidden
-                className='inline-flex h-5 w-5 items-center justify-center rounded-full border border-text-100/60 bg-surface-950 font-mono text-[9px] font-bold text-text-100'
-              >
-                S
-              </span>
+                className='h-5 w-5'
+              />
               <span className='flex-1 font-body text-[13px] text-text-100'>
                 {option.label}
               </span>
@@ -2634,6 +2709,28 @@ function SampleDeliveryDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ResourcePairIcon({
+  from,
+  to,
+}: {
+  from: EResource;
+  to: EResource;
+}): React.JSX.Element {
+  const fromIcon = RESOURCE_ICON_SRC[from];
+  const toIcon = RESOURCE_ICON_SRC[to];
+
+  return (
+    <span
+      aria-hidden
+      className='inline-flex shrink-0 items-center gap-1 rounded-[4px] border border-[color:var(--metal-edge-soft)] bg-[var(--surface-instrument)] px-1.5 py-1 shadow-hairline-inset'
+    >
+      {fromIcon ? <img src={fromIcon} alt='' className='h-4 w-4' /> : null}
+      <span className='h-px w-2 bg-[color:var(--metal-edge-soft)]' />
+      {toIcon ? <img src={toIcon} alt='' className='h-4 w-4' /> : null}
+    </span>
   );
 }
 

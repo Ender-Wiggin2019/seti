@@ -217,7 +217,7 @@ export function UserLayoutSettingsDialog({
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'settings.json';
+    link.download = 'mission-display.json';
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -236,7 +236,7 @@ export function UserLayoutSettingsDialog({
     } catch (error) {
       toast({
         title: t('client.layout_v2.dialogs.toast_invalid_json', {
-          defaultValue: 'Invalid settings.json',
+          defaultValue: 'Invalid display file',
         }),
         description: error instanceof Error ? error.message : undefined,
         variant: 'error',
@@ -299,17 +299,17 @@ export function UserLayoutSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='max-h-[88vh] max-w-4xl overflow-y-auto'>
+      <DialogContent className='mx-auto max-h-[88vh] w-full max-w-5xl overflow-y-auto'>
         <DialogHeader>
           <DialogTitle>
             {t('client.layout_v2.dialogs.settings_title', {
-              defaultValue: 'Layout Settings',
+              defaultValue: 'Mission Display',
             })}
           </DialogTitle>
           <DialogDescription>
             {t('client.layout_v2.dialogs.settings_description', {
               defaultValue:
-                'Configure the in-game layout. Changes are stored locally in this browser automatically and can be exported as settings.json.',
+                'Choose how the game table is arranged. Changes are saved on this device.',
             })}
           </DialogDescription>
         </DialogHeader>
@@ -318,12 +318,12 @@ export function UserLayoutSettingsDialog({
           <section className='space-y-4'>
             <SettingsBlock
               title={t('client.layout_v2.dialogs.mode_block', {
-                defaultValue: 'Mode',
+                defaultValue: 'Current Display',
               })}
             >
               <Field
                 label={t('client.layout_v2.dialogs.game_layout_system', {
-                  defaultValue: 'Game Layout System',
+                  defaultValue: 'Display System',
                 })}
               >
                 <div className='grid grid-cols-2 gap-2'>
@@ -332,7 +332,7 @@ export function UserLayoutSettingsDialog({
                     onClick={() => setEnabled(true)}
                   >
                     {t('client.layout_v2.dialogs.system_configurable', {
-                      defaultValue: 'Configurable',
+                      defaultValue: 'Custom Display',
                     })}
                   </Button>
                   <Button
@@ -340,20 +340,20 @@ export function UserLayoutSettingsDialog({
                     onClick={() => setEnabled(false)}
                   >
                     {t('client.layout_v2.dialogs.system_legacy', {
-                      defaultValue: 'Legacy',
+                      defaultValue: 'Standard Display',
                     })}
                   </Button>
                 </div>
                 <p className='text-xs leading-relaxed text-text-500'>
                   {t('client.layout_v2.dialogs.system_hint', {
                     defaultValue:
-                      'Layout settings only affect games when Configurable is active.',
+                      'Custom display applies only when it is active.',
                   })}
                 </p>
               </Field>
               <Field
                 label={t('client.layout_v2.dialogs.default_layout_mode', {
-                  defaultValue: 'Default Layout Mode',
+                  defaultValue: 'Table Layout',
                 })}
               >
                 <div className='grid grid-cols-2 gap-2'>
@@ -385,7 +385,7 @@ export function UserLayoutSettingsDialog({
 
             <SettingsBlock
               title={t('client.layout_v2.dialogs.waterfall_columns_block', {
-                defaultValue: 'Waterfall Columns',
+                defaultValue: 'Column Widths',
               })}
             >
               <div className='grid gap-3 sm:grid-cols-3'>
@@ -435,7 +435,7 @@ export function UserLayoutSettingsDialog({
               <p className='text-xs leading-relaxed text-text-500'>
                 {t('client.layout_v2.dialogs.column_widths_hint', {
                   defaultValue:
-                    'These percentages are also updated when you drag the column handles in game.',
+                    'These values also update when you drag column handles in game.',
                 })}
               </p>
             </SettingsBlock>
@@ -569,73 +569,78 @@ export function UserLayoutSettingsDialog({
           </section>
 
           <section className='space-y-4'>
-            <SettingsBlock
-              title={t('client.layout_v2.dialogs.json_block', {
-                defaultValue: 'JSON',
-              })}
-            >
-              <p className='text-xs leading-relaxed text-text-500'>
-                {t('client.layout_v2.dialogs.json_hint', {
-                  defaultValue:
-                    'Use JSON for full control. Import accepts either exported settings.json or the raw persisted Zustand shape.',
-                })}
-              </p>
-              <textarea
-                value={jsonDraft}
-                onChange={(e) => setJsonDraft(e.target.value)}
-                className={cn(
-                  'min-h-[420px] w-full rounded-[5px] px-3 py-2 font-mono text-xs',
-                  'border border-[color:var(--metal-edge)] bg-[oklch(0.10_0.02_260)]',
-                  'text-text-100 shadow-hairline-inset focus:border-accent-500 focus:outline-none',
-                )}
-                spellCheck={false}
-              />
-              <div className='flex flex-wrap gap-2'>
-                <Button size='sm' onClick={() => applyJson(jsonDraft)}>
-                  {t('client.layout_v2.dialogs.apply_json', {
-                    defaultValue: 'Apply JSON',
+            <details className='group rounded-[6px] border border-[color:var(--metal-edge-soft)] bg-[var(--surface-instrument)]/60 p-4 shadow-hairline-inset'>
+              <summary className='cursor-pointer list-none'>
+                <span className='micro-label text-text-300'>
+                  {t('client.layout_v2.dialogs.json_block', {
+                    defaultValue: 'Advanced Layout File',
                   })}
-                </Button>
-                <Button size='sm' variant='ghost' onClick={refreshJson}>
-                  {t('client.layout_v2.dialogs.refresh_json', {
-                    defaultValue: 'Refresh JSON',
+                </span>
+                <p className='mt-2 text-xs leading-relaxed text-text-500'>
+                  {t('client.layout_v2.dialogs.json_hint', {
+                    defaultValue:
+                      'Import or export the saved display file for another device.',
                   })}
-                </Button>
-                <Button size='sm' variant='ghost' onClick={handleExport}>
-                  {t('client.layout_v2.dialogs.export_json', {
-                    defaultValue: 'Export settings.json',
-                  })}
-                </Button>
-                <Button
-                  size='sm'
-                  variant='ghost'
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  {t('client.layout_v2.dialogs.import_json', {
-                    defaultValue: 'Import settings.json',
-                  })}
-                </Button>
-                <input
-                  ref={fileInputRef}
-                  type='file'
-                  accept='application/json,.json'
-                  className='hidden'
-                  onChange={(e) => handleImportFile(e.target.files?.[0])}
+                </p>
+              </summary>
+              <div className='mt-4 space-y-3'>
+                <textarea
+                  value={jsonDraft}
+                  onChange={(e) => setJsonDraft(e.target.value)}
+                  className={cn(
+                    'min-h-[420px] w-full rounded-[5px] px-3 py-2 font-mono text-xs',
+                    'border border-[color:var(--metal-edge)] bg-[var(--surface-instrument)]',
+                    'text-text-100 shadow-hairline-inset focus:border-accent-500 focus:outline-none',
+                  )}
+                  spellCheck={false}
                 />
+                <div className='flex flex-wrap gap-2'>
+                  <Button size='sm' onClick={() => applyJson(jsonDraft)}>
+                    {t('client.layout_v2.dialogs.apply_json', {
+                      defaultValue: 'Apply Display File',
+                    })}
+                  </Button>
+                  <Button size='sm' variant='ghost' onClick={refreshJson}>
+                    {t('client.layout_v2.dialogs.refresh_json', {
+                      defaultValue: 'Refresh File',
+                    })}
+                  </Button>
+                  <Button size='sm' variant='ghost' onClick={handleExport}>
+                    {t('client.layout_v2.dialogs.export_json', {
+                      defaultValue: 'Export Display File',
+                    })}
+                  </Button>
+                  <Button
+                    size='sm'
+                    variant='ghost'
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {t('client.layout_v2.dialogs.import_json', {
+                      defaultValue: 'Import Display File',
+                    })}
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type='file'
+                    accept='application/json,.json'
+                    className='hidden'
+                    onChange={(e) => handleImportFile(e.target.files?.[0])}
+                  />
+                </div>
               </div>
-            </SettingsBlock>
+            </details>
           </section>
         </div>
 
         <DialogFooter>
           <p className='mr-auto self-center text-xs text-text-500'>
             {t('client.layout_v2.dialogs.saved_hint', {
-              defaultValue: 'Saved automatically to this browser.',
+              defaultValue: 'Saved automatically on this device.',
             })}
           </p>
           <Button variant='ghost' onClick={resetAll}>
             {t('client.layout_v2.dialogs.reset_layout', {
-              defaultValue: 'Reset Layout',
+              defaultValue: 'Reset Display',
             })}
           </Button>
           <Button onClick={() => onOpenChange(false)}>
@@ -822,7 +827,7 @@ function SettingsBlock({
   children: React.ReactNode;
 }): React.JSX.Element {
   return (
-    <div className='rounded-[6px] border border-[color:var(--metal-edge-soft)] bg-surface-900/70 p-4'>
+    <div className='rounded-[6px] border border-[color:var(--metal-edge-soft)] bg-[var(--surface-panel)]/72 p-4 shadow-hairline-inset'>
       <h3 className='micro-label mb-3 text-text-300'>{title}</h3>
       <div className='space-y-3'>{children}</div>
     </div>
