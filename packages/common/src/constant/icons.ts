@@ -106,11 +106,14 @@ export const getIconItem = (effect: IBaseEffect): IIconItem => {
       shape = 'normal';
       showValue = true;
       break;
+    case EResource.SIGNAL_TOKEN:
+      size = 'sm';
+      shape = 'normal';
+      break;
     case EResource.CREDIT:
     case EResource.ENERGY:
     case EResource.DATA:
     case EResource.PUBLICITY:
-    case EResource.SIGNAL_TOKEN:
     case EAlienIcon.EXOFOSSIL:
     case EAlienIcon.USE_EXOFOSSIL:
       shape = 'diamond';
