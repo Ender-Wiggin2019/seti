@@ -6,6 +6,10 @@ SPEC_PATHS=("$@")
 SERVER_URL="${SERVER_URL:-http://127.0.0.1:3000}"
 CLIENT_URL="${CLIENT_URL:-http://127.0.0.1:5173}"
 WS_URL="${WS_URL:-http://127.0.0.1:3000}"
+SERVER_PORT="${SERVER_URL##*:}"
+SERVER_PORT="${SERVER_PORT%%/*}"
+CLIENT_PORT="${CLIENT_URL##*:}"
+CLIENT_PORT="${CLIENT_PORT%%/*}"
 PLAYWRIGHT_PROJECT="${PLAYWRIGHT_PROJECT:-chromium}"
 PLAYWRIGHT_RETRIES="${PLAYWRIGHT_RETRIES:-0}"
 KEEP_SERVERS="${KEEP_SERVERS:-0}"
@@ -60,14 +64,14 @@ fi
 echo "[e2e:run] starting server on ${SERVER_URL}"
 (
   cd "${ROOT_DIR}/packages/server"
-  exec env PATH="${NODE_DIR}:$PATH" SETI_ENABLE_DEBUG_API=true SETI_THROTTLE_LIMIT=10000 "${NODE_BIN}" --import "${TSX_LOADER}" src/main.ts
+  exec env PATH="${NODE_DIR}:$PATH" PORT="${SERVER_PORT}" SETI_ENABLE_DEBUG_API=true SETI_THROTTLE_LIMIT=10000 "${NODE_BIN}" --import "${TSX_LOADER}" src/main.ts
 ) &
 SERVER_PID=$!
 
 echo "[e2e:run] starting client on ${CLIENT_URL}"
 (
   cd "${ROOT_DIR}/packages/client"
-  exec env PATH="${NODE_DIR}:$PATH" VITE_ENABLE_DEBUG_ROUTES=true ./node_modules/.bin/vite --host 127.0.0.1 --port 5173
+  exec env PATH="${NODE_DIR}:$PATH" VITE_API_URL="${SERVER_URL}" VITE_WS_URL="${WS_URL}" VITE_ENABLE_DEBUG_ROUTES=true ./node_modules/.bin/vite --host 127.0.0.1 --port "${CLIENT_PORT}"
 ) &
 CLIENT_PID=$!
 

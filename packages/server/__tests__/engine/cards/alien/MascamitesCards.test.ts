@@ -264,6 +264,7 @@ describe('Mascamites alien cards ET.1-ET.10', () => {
         capsuleId: capsule.capsuleId,
         cardId,
       });
+      resolveNonMissionOptions(game);
 
       expect(board.capsules).toEqual([]);
       expect(board.deliveredSamples).toEqual([

@@ -16,7 +16,8 @@
       "dependsOn": ["^typecheck"]
     },
     "test": {
-      "dependsOn": ["^test"]
+      "dependsOn": ["^test"],
+      "env": ["SERVER_URL", "CLIENT_URL", "WS_URL"]
     }
   }
 }

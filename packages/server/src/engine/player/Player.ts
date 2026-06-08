@@ -266,11 +266,9 @@ export class Player implements IPlayer {
 
   public set resources(resources: Resources) {
     this.resourcesValue = resources;
-    this.resourcesValue.setChangeObserver(
-      (resource, delta, before, after) => {
-        this.recordResourceChange(resource, delta, before, after);
-      },
-    );
+    this.resourcesValue.setChangeObserver((resource, delta, before, after) => {
+      this.recordResourceChange(resource, delta, before, after);
+    });
   }
 
   public get dataPool(): DataPool {

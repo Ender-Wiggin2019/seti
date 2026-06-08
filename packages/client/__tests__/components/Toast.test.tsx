@@ -36,8 +36,8 @@ describe('Toaster', () => {
 
     expect(toastViewport).not.toBeNull();
     expect(dialogOverlay).not.toBeNull();
-    expect(readArbitraryZIndex(toastViewport)).toBeGreaterThan(
-      readArbitraryZIndex(dialogOverlay),
+    expect(readZIndex(toastViewport)).toBeGreaterThan(
+      readZIndex(dialogOverlay),
     );
 
     await waitFor(() => {
@@ -68,9 +68,9 @@ describe('Toaster', () => {
   });
 });
 
-function readArbitraryZIndex(element: Element | null): number {
-  if (!element) return Number.NEGATIVE_INFINITY;
+function readZIndex(element: Element | null): number {
+  if (!(element instanceof HTMLElement)) return Number.NEGATIVE_INFINITY;
 
-  const match = element.className.match(/z-\[(\d+)\]/);
-  return match ? Number(match[1]) : Number.NEGATIVE_INFINITY;
+  const zIndex = Number(element.style.zIndex);
+  return Number.isFinite(zIndex) ? zIndex : Number.NEGATIVE_INFINITY;
 }

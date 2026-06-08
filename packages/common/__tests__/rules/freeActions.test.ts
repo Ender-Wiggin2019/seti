@@ -256,7 +256,7 @@ describe('free action rules', () => {
       expect(canMoveProbe(player, createGameState())).toBe(true);
     });
 
-    it('returns true when probe in space and energy available', () => {
+    it('returns false when probe in space and only energy available', () => {
       const player = createPlayer({
         probesInSpace: 1,
         movementPoints: 0,
@@ -265,9 +265,10 @@ describe('free action rules', () => {
           [EResource.ENERGY]: 1,
           [EResource.DATA]: 0,
           [EResource.PUBLICITY]: 4,
+          [EResource.SIGNAL_TOKEN]: 0,
         },
       });
-      expect(canMoveProbe(player, createGameState())).toBe(true);
+      expect(canMoveProbe(player, createGameState())).toBe(false);
     });
 
     it('returns false when no probes in space', () => {
@@ -737,10 +738,11 @@ describe('free action rules', () => {
   });
 
   describe('getAvailableFreeActions', () => {
-    it('includes movement when probe in space and has energy', () => {
+    it('includes energy conversion but not movement when probe in space and only has energy', () => {
       const player = createPlayer({ probesInSpace: 1 });
       const actions = getAvailableFreeActions(player, createGameState());
-      expect(actions).toContain(EFreeAction.MOVEMENT);
+      expect(actions).toContain(EFreeAction.CONVERT_ENERGY_TO_MOVEMENT);
+      expect(actions).not.toContain(EFreeAction.MOVEMENT);
     });
 
     it('includes place data when pool has data', () => {
