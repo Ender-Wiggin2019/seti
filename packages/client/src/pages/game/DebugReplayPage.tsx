@@ -16,11 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { GameLayoutV2 } from '@/features/layout/GameLayoutV2';
+import { useLayoutStore } from '@/features/layout/layoutStore';
 import { GameContextProvider, useGameContext } from '@/pages/game/GameContext';
-import { GameLayout } from '@/pages/game/GameLayout';
 import type { IAuthUser } from '@/stores/authStore';
 import { useAuthStore } from '@/stores/authStore';
-import { useGameViewStore } from '@/stores/gameViewStore';
 import { GAME_Z_INDEX } from '@/styles/zIndex';
 
 interface IAuthSnapshot {
@@ -66,7 +66,7 @@ function getInitialReplayFieldValue(
 function DebugReplayGameContent(): React.JSX.Element {
   const { t } = useTranslation('common');
   const { isConnected, gameState } = useGameContext();
-  const setActiveTab = useGameViewStore((state) => state.setActiveTab);
+  const setActiveTab = useLayoutStore((state) => state.setActiveTab);
 
   useEffect(() => {
     setActiveTab('board');
@@ -85,7 +85,7 @@ function DebugReplayGameContent(): React.JSX.Element {
     );
   }
 
-  return <GameLayout />;
+  return <GameLayoutV2 />;
 }
 
 type TReplayLanguage = 'en' | 'zh-CN' | 'pt-BR';

@@ -4,11 +4,14 @@ import { mapPlayerColors } from '@/lib/playerColor';
 import { useGameContext } from '@/pages/game/GameContext';
 import { EFreeAction } from '@/types/re-exports';
 import { useGameSession } from '../GameSessionContext';
+import { useGameLayoutRuntimeOptions } from '../runtimeOptions';
 
 export function SolarSystemSection(): React.JSX.Element | null {
   const { gameState, myPlayerId, pendingInput, sendFreeAction, sendInput } =
     useGameContext();
   const { movementModeActive } = useGameSession();
+  const { showSolarSystemSpaceConfig, allowMoveAnyProbe } =
+    useGameLayoutRuntimeOptions();
 
   if (!gameState) return null;
 
@@ -41,6 +44,8 @@ export function SolarSystemSection(): React.JSX.Element | null {
         sendFreeAction({ type: EFreeAction.MOVEMENT, path, target });
       }}
       onRespondInput={sendInput}
+      showSpaceConfigDebug={showSolarSystemSpaceConfig}
+      allowMoveAnyProbe={allowMoveAnyProbe}
       oumuamuaTile={oumuamuaTile}
     />
   );

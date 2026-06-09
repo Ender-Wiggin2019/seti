@@ -30,12 +30,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { GameLayoutV2 } from '@/features/layout/GameLayoutV2';
 import { useServerDebugSession } from '@/hooks/useServerDebugSession';
 import {
   GameContextValueProvider,
   type IGameContext,
 } from '@/pages/game/GameContext';
-import { GameLayout } from '@/pages/game/GameLayout';
 import { useDebugStore } from '@/stores/debugStore';
 import { GAME_Z_INDEX } from '@/styles/zIndex';
 import {
@@ -2149,7 +2149,7 @@ export function GameDebugPage(): React.JSX.Element {
         </div>
       </div>
       <div style={sectorDebugVars}>
-        <GameLayout allowMoveAnyProbe />
+        <GameLayoutV2 allowMoveAnyProbe />
       </div>
     </GameContextValueProvider>
   );

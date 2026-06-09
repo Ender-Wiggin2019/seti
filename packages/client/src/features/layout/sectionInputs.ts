@@ -4,10 +4,10 @@ import { EMainAction, EPlayerInputType } from '@/types/re-exports';
 import type { SectionId } from './types';
 
 /**
- * Pure pendingInput predicates lifted out of the legacy GameLayout. Used by
- * the SolarSystem / Planet / Alien adapters and the focus-jump effect in
- * GameLayoutV2 — keeping them here makes both consumers depend on a single
- * source of truth for "what tab does this input belong to".
+ * Pure pendingInput predicates shared by the SolarSystem / Planet / Alien
+ * adapters and the focus-jump effect in GameLayoutV2. Keeping them here makes
+ * every consumer depend on a single source of truth for "what tab does this
+ * input belong to".
  */
 
 export function isAlienBoardInput(model: IPlayerInputModel | null): boolean {

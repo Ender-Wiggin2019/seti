@@ -18,8 +18,8 @@ import {
 
 /**
  * PlayerBoardSection — owns the player dashboard, mission slot, and rival
- * panel. Mirrors the legacy PersonalColumn but with no scroll container of
- * its own (the SectionFrame / ColumnGrid handle that).
+ * panel. It avoids its own scroll container so SectionFrame / shell panels
+ * control layout consistently.
  */
 export function PlayerBoardSection(_: ISectionRenderProps): React.JSX.Element {
   void _;
@@ -40,6 +40,9 @@ export function PlayerBoardSection(_: ISectionRenderProps): React.JSX.Element {
         creditIncome?: number;
         energyIncome?: number;
         cardIncome?: number;
+        tuckedCreditIncome?: number;
+        tuckedEnergyIncome?: number;
+        tuckedCardIncome?: number;
         playedMissions?: IBaseCard[];
         endGameCards?: IBaseCard[];
         completedMissions?: IBaseCard[];
@@ -113,6 +116,9 @@ export function PlayerBoardSection(_: ISectionRenderProps): React.JSX.Element {
               credit: extendedPlayer?.creditIncome ?? 0,
               energy: extendedPlayer?.energyIncome ?? 0,
               card: extendedPlayer?.cardIncome ?? 0,
+              tuckedCredit: extendedPlayer?.tuckedCreditIncome,
+              tuckedEnergy: extendedPlayer?.tuckedEnergyIncome,
+              tuckedCard: extendedPlayer?.tuckedCardIncome,
             }}
             playedMissions={missionCards}
             showExofossils={personalOumuamuaTile !== null}

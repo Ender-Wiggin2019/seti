@@ -11,7 +11,6 @@ import {
 } from '@/features/input/inputPresentation';
 import { PendingInputPrompt } from '@/features/input/PendingInputPrompt';
 import { useGameContext } from '@/pages/game/GameContext';
-import { useGameViewStore } from '@/stores/gameViewStore';
 import {
   EMainAction,
   EPlayerInputType,
@@ -22,9 +21,10 @@ import {
   useArmedFlagAutoReset,
 } from '../actionController';
 import { useGameSession } from '../GameSessionContext';
+import { useLayoutStore } from '../layoutStore';
 import type { ISectionRenderProps } from '../sectionRegistry';
 
-// `gameState.canUndo` is the server-authoritative flag — mirror legacy GameLayout.
+// `gameState.canUndo` is the server-authoritative flag for recovery controls.
 
 /**
  * ActionBarSection — ActionMenu + FreeActionBar + the cross-section hints
@@ -44,7 +44,7 @@ export function ActionBarSection(_: ISectionRenderProps): React.JSX.Element {
     sendEndTurn,
     requestUndo,
   } = useGameContext();
-  const setActiveTab = useGameViewStore((s) => s.setActiveTab);
+  const setActiveTab = useLayoutStore((s) => s.setActiveTab);
   const {
     cornerSelectionMode,
     setCornerSelectionMode,
@@ -110,7 +110,7 @@ export function ActionBarSection(_: ISectionRenderProps): React.JSX.Element {
   };
 
   return (
-    <div className='flex flex-col'>
+    <div className='flex flex-col' data-testid='bottom-actions'>
       {promptInput ? (
         <PendingInputPrompt
           model={promptInput}

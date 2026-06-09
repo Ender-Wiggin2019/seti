@@ -1,5 +1,48 @@
 # TODO
 
+## Game Layout V2 Legacy Removal Plan
+
+### Assumptions
+
+- Long-term target is one maintained game layout: `GameLayoutV2` in tab/waterfall/mobile modes.
+- `tab` mode is the default single-layout game table experience.
+- Scope starts in `packages/client`; server/common rule behavior should not change.
+- Existing dirty files are user/previous-agent work. This pass will only touch files required for the approved layout migration.
+
+### Success Criteria
+
+- `/game/:gameId`, `/spectate/:gameId`, debug game, server debug, and replay debug all render through `GameLayoutV2`.
+- V2 tab mode preserves the gameplay affordances users rely on: persistent player board access, event log access, buy-card confirmation, alien discovery notice, unhandled custom-effect toast, tucked income display, and setup/pending-input recovery.
+- `GameLayout` is no longer imported by runtime code; remaining pure helpers live under `features/layout`.
+- The player-facing settings no longer expose a legacy/custom system split; it only configures the single layout system.
+
+### Plan
+
+- [x] Add failing V2 regression tests for legacy-only behavior gaps.
+  - 验证: tests fail for at least alien discovery notice, unhandled custom-effect toast, tucked income display, event log access outside board tab, and buy-card confirm parity.
+- [x] Fill V2 tab-mode behavior gaps with the smallest section/session changes.
+  - 验证: V2 focused tests pass while shared gameplay components keep existing payloads.
+- [x] Move runtime routes and debug routes to `GameLayoutV2`.
+  - 验证: `GamePage`, `SpectatePage`, `GameDebugPage`, `ServerDebugPage`, and `DebugReplayPage` no longer import legacy `GameLayout`.
+- [x] Remove the legacy/custom display switch from layout settings and make tab mode the default single-layout experience.
+  - 验证: layout settings tests assert no Standard Display / Custom Display split; persisted layout snapshots still import/export safely.
+- [x] Move or delete remaining helper/test imports from legacy `GameLayout`, then delete the legacy component.
+  - 验证: `rg "pages/game/GameLayout"` finds no runtime imports; helper tests import from `features/layout`.
+- [x] Run focused client tests, typecheck, biome, and browser smoke for game/debug routes.
+  - 验证: record exact commands and residual risks in this TODO review.
+
+### Review
+
+- 完成：`/game/:gameId`、`/spectate/:gameId`、local debug、server debug、replay debug 都直接渲染 `GameLayoutV2`；旧的 `packages/client/src/pages/game/GameLayout.tsx` 已删除。
+- 完成：layout settings 移除了 Standard/Custom/Legacy system split，`layoutStore` 也移除了 persisted `enabled` 开关，默认只保留 `tab` / `waterfall` 模式选择。
+- 完成：V2 补齐原先只在旧实现里有的能力：alien discovered notice、unhandled custom-effect toast、全局 event drawer、Cards tab 内买卡确认、tucked income 传递、debug runtime options、pending-input focus/recovery。
+- 完成：helper/test import 已迁到 `features/layout/sectionInputs` 和 `features/layout/sessionHelpers`；`rg "@/pages/game/GameLayout|pages/game/GameLayout|../GameLayout|GameLayout.tsx"` 无结果。
+- 验证通过：`pnpm --filter @seti/client test -- layoutV2Regression.test.tsx UserLayoutSettingsDialog.test.tsx GamePage.test.tsx GameDebugPage.test.tsx GameLayoutRouting.test.tsx milestoneItems.test.ts GameLayout.test.tsx`，6 files / 87 tests passed。
+- 验证通过：`pnpm --filter @seti/client typecheck`。
+- 验证通过：touched-file `pnpm --dir packages/client exec biome check ...`，31 files passed。
+- 浏览器 smoke：Vite `http://127.0.0.1:5173/` + Playwright opened `/debug/game` and confirmed V2 shell, tabs, action bar, hand, player board, solar system, and event drawer mounted; screenshot saved at `/tmp/seti-game-layout-v2-smoke.png`。
+- 剩余风险：没有跑完整 e2e/auth/backend real-room 流程；本轮用 debug route smoke 覆盖实际浏览器渲染，用 focused unit/integration tests 覆盖游戏交互 parity。
+
 ## Alien Trace Hotspot Anchor Alignment Plan
 
 ### Assumptions
@@ -425,3 +468,30 @@
 - 调整：V1 text mode 的 planet board 外壳、网格间距和 `PlanetCard` padding 缩小；奖励/first data/glyph 图标使用更大的 `DescRender` 尺寸。Alien board 桌面占宽从 60% 收到 52%，外壳与 hidden text board 也同步压缩。
 - 验证通过：`pnpm --filter @seti/client test -- SelectOptionInput.test.tsx PlayerDashboard.test.tsx PlanetaryBoardView.test.tsx AlienBoardView.test.tsx`、`pnpm --filter @seti/client typecheck`、touched-file `biome check`。
 - 浏览器检查：使用 bundled Node 启动 Vite 于 `http://127.0.0.1:5173/`，Playwright 打开 `/debug/hotspots` 并切到 Personal Board / Planet Board / Aliens；确认关键 DOM 存在、新 class 生效、console error 为空。默认 Node 18.17 无法启动 Vite，需使用 bundled Node 或 Node 20.19+/22.12+。
+
+## Pending Input Freeze Latest Commit Review Plan
+
+### Assumptions
+
+- Scope is the latest commit `9d914b5e` on `feature/server`.
+- Review mode is review-and-fix because the request did not ask for read-only review.
+- The main risk is not the idea of server-projected pending input; it is incomplete coverage across the legacy/V2 layout split and recovery protocol tests.
+
+### Plan
+
+- [x] Review the latest commit diff across common/server/client pending-input paths.
+  - 验证: identify whether projected `pendingInput` is per-viewer, cleared authoritatively, and not leaked across sockets.
+- [x] Add failing regression coverage for any loophole found before changing production code.
+  - 验证: focused tests fail for the exact current bug.
+- [x] Fix scoped production code only where the regression points.
+  - 验证: focused tests pass without broad layout refactors.
+- [x] Run focused tests/typecheck/biome, then re-review the final diff.
+  - 验证: checks pass or exact blockers and residual risks are recorded here.
+
+### Review
+
+- 发现并修复：最新提交声称 sector pending input 会自动聚焦 solar-system tab，但实际只覆盖了 V2 layout；默认 legacy `GameLayout` 仍会停在 `cards` 等非 board tab，导致 `Input Required` 可见但 sector hotspot 不可见。
+- 修复：legacy `GameLayout` 复用 `isSolarSystemInput`，对 native `SECTOR` 和 `sector-N` option 输入按 inputId 自动切回 `board` tab；不改 input payload、board 渲染或 server 行为。
+- 测试：先让 `GameLayout.test.tsx` 在 activeTab=`cards` 的 sector / sector-option 场景红灯，再实现并通过；补充 V2 helper、TopBar recovery、wsClient resync、gateway resync、serializer per-viewer pendingInput 覆盖。
+- 验证通过：`pnpm --filter @seti/client test -- usePlayerInput.test.tsx inputPresentation.test.ts GameLayout.test.tsx layoutHelpers.test.ts wsClient.test.ts`、`pnpm --filter @seti/server test -- game.gateway.test.ts GameSerializer.test.ts`、`pnpm --filter @seti/client test`、`pnpm --filter @seti/server test`、`pnpm --filter @ender-seti/common test`、`pnpm --filter @seti/client typecheck`、`pnpm --filter @seti/server typecheck`、`pnpm --filter @ender-seti/common typecheck`、touched-file `pnpm exec biome check ...`。
+- 剩余风险：没有发现当前 pending-input 策略中的未闭环逻辑漏洞；没有跑浏览器 E2E。

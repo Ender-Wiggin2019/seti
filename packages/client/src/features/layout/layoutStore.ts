@@ -3,9 +3,8 @@ import { persist } from 'zustand/middleware';
 import type { LayoutMode, SectionId, SectionPlacement } from './types';
 
 /**
- * Layout store — orthogonal to gameViewStore (which keeps gameplay UI state
- * like activeTab/zoom). Persists user customisations across sessions so
- * the dev panel's edits stick.
+ * Layout store — persists user customisations and layout-local UI state
+ * across sessions so the dev panel's edits stick.
  */
 
 export type SectionOverrides = Partial<
@@ -13,8 +12,6 @@ export type SectionOverrides = Partial<
 >;
 
 export interface LayoutSnapshot {
-  /** Enables the configurable V2 game layout instead of the legacy layout. */
-  enabled: boolean;
   mode: LayoutMode;
   /** Per-section overrides keyed by section id; merged onto the active preset. */
   overrides: Partial<Record<SectionId, SectionOverrides>>;
@@ -34,7 +31,6 @@ export interface LayoutSnapshot {
 export interface LayoutStoreState extends LayoutSnapshot {
   devPanelOpen: boolean;
   activeTab: string | null;
-  setEnabled: (enabled: boolean) => void;
   setMode: (mode: LayoutMode) => void;
   setActiveTab: (tab: string) => void;
   patchSection: (id: SectionId, overrides: SectionOverrides) => void;
@@ -55,7 +51,6 @@ export interface LayoutStoreState extends LayoutSnapshot {
 }
 
 const INITIAL_SNAPSHOT: LayoutSnapshot = {
-  enabled: false,
   mode: 'tab',
   overrides: {},
   collapsed: {},
@@ -70,7 +65,6 @@ export const useLayoutStore = create<LayoutStoreState>()(
       ...INITIAL_SNAPSHOT,
       devPanelOpen: false,
       activeTab: null,
-      setEnabled: (enabled) => set({ enabled }),
       setMode: (mode) => set({ mode }),
       setActiveTab: (tab) => set({ activeTab: tab }),
       patchSection: (id, overrides) =>
@@ -107,10 +101,10 @@ export const useLayoutStore = create<LayoutStoreState>()(
         })),
       toggleDevPanel: () => set((s) => ({ devPanelOpen: !s.devPanelOpen })),
       setDevPanelOpen: (devPanelOpen) => set({ devPanelOpen }),
-      resetAll: () => set({ ...INITIAL_SNAPSHOT }),
+      resetAll: () =>
+        set({ ...INITIAL_SNAPSHOT, activeTab: null, devPanelOpen: false }),
       importSnapshot: (snapshot) =>
         set({
-          enabled: snapshot.enabled ?? get().enabled,
           mode: snapshot.mode ?? get().mode,
           overrides: snapshot.overrides ?? {},
           collapsed: snapshot.collapsed ?? {},
@@ -119,7 +113,6 @@ export const useLayoutStore = create<LayoutStoreState>()(
           panelLayouts: snapshot.panelLayouts,
         }),
       exportSnapshot: () => ({
-        enabled: get().enabled,
         mode: get().mode,
         overrides: get().overrides,
         collapsed: get().collapsed,
@@ -131,7 +124,6 @@ export const useLayoutStore = create<LayoutStoreState>()(
     {
       name: 'seti-layout-v1',
       partialize: (s): LayoutSnapshot => ({
-        enabled: s.enabled,
         mode: s.mode,
         overrides: s.overrides,
         collapsed: s.collapsed,

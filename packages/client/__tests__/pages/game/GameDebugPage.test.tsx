@@ -7,8 +7,8 @@ vi.mock('@/hooks/useServerDebugSession', () => ({
   useServerDebugSession: () => null,
 }));
 
-vi.mock('@/pages/game/GameLayout', () => ({
-  GameLayout: () => <div data-testid='debug-game-layout' />,
+vi.mock('@/features/layout/GameLayoutV2', () => ({
+  GameLayoutV2: () => <div data-testid='debug-game-layout' />,
 }));
 
 describe('GameDebugPage', () => {

@@ -14,9 +14,8 @@ import type { ResolvedSection, Slot } from '../types';
 import { SectionFrame } from './SectionFrame';
 
 /**
- * TabShell — legacy in-game UX wrapped around the layout DSL. Each tab
- * renders its own `<ColumnGrid>` so users get the inner 3-column layout
- * inside any tab they like.
+ * TabShell — the default in-game table. Each tab renders its own column grid
+ * so users get focused board areas without losing pinned chrome.
  *
  * Auto-jump (alien input → aliens tab, planet input → planets tab) routes
  * through `focusSection`, registered here so the existing input pipeline
@@ -43,7 +42,7 @@ export function TabShell(): React.JSX.Element {
       if (tab) setActiveTab(tab);
       // Defer scroll until after the tab content swap.
       requestAnimationFrame(() => {
-        document.getElementById(`section-${id}`)?.scrollIntoView({
+        document.getElementById(`section-${id}`)?.scrollIntoView?.({
           behavior: 'smooth',
           block: 'start',
         });

@@ -2,11 +2,19 @@ import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EResource, ESector, ETrace } from '@seti/common/types/element';
 import { EOrganizationId } from '@seti/common/types/organization';
 import { ETechBonusType, ETechId } from '@seti/common/types/tech';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { GameLayoutV2 } from '@/features/layout/GameLayoutV2';
+import { useLayoutStore } from '@/features/layout/layoutStore';
 import type { IGameContext } from '@/pages/game/GameContext';
 import { useDebugStore } from '@/stores/debugStore';
-import { useGameViewStore } from '@/stores/gameViewStore';
 import { GAME_Z_INDEX } from '@/styles/zIndex';
 import {
   EAlienType,
@@ -28,6 +36,16 @@ vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, ...rest }: { children: React.ReactNode; to: string }) => (
     <a href={rest.to}>{children}</a>
   ),
+}));
+
+vi.mock('@/components/ui/resizable', () => ({
+  ResizablePanelGroup: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  ResizablePanel: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  ResizableHandle: (): React.JSX.Element => <div />,
 }));
 
 let mockContextValue: IGameContext;
@@ -103,21 +121,16 @@ function createMockRivalState(): IPublicRivalState {
   };
 }
 
-describe('GameLayout', () => {
+describe('GameLayoutV2', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useGameViewStore.setState({
-      activeTab: 'board',
-      hoveredPieceId: null,
-      zoom: 0.9,
-    });
+    useLayoutStore.getState().resetAll();
     useDebugStore.setState({ textMode: false });
     mockContextValue = createMockContext();
   });
 
   async function renderLayout() {
-    const { GameLayout } = await import('@/pages/game/GameLayout');
-    return render(<GameLayout />);
+    return render(<GameLayoutV2 />);
   }
 
   it('renders the three main layout areas', async () => {
@@ -221,26 +234,19 @@ describe('GameLayout', () => {
       expect(screen.getByTestId('solar-space-space-0')).toBeInTheDocument();
     });
 
-    it('keeps the solar board column compact so zoom frees right-side space', async () => {
+    it('keeps the solar system framed as its board tab section', async () => {
       await renderLayout();
 
-      const solarColumn = screen.getByTestId('board-tab-solar-column');
-      expect(solarColumn).toHaveClass('w-fit');
-      expect(solarColumn).toHaveClass('max-w-full');
-      expect(solarColumn).not.toHaveClass('mx-auto');
+      expect(document.getElementById('section-solarSystem')).not.toBeNull();
       expect(screen.getByTestId('solar-board-panel')).toHaveStyle({
         width: '708px',
       });
     });
 
-    it('places the mobile player board below the solar board instead of behind an info overlay', async () => {
+    it('renders the player board as a normal board tab section', async () => {
       await renderLayout();
 
-      const solarColumn = screen.getByTestId('board-tab-solar-column');
-      const mobileDashboard = screen.getByTestId('mobile-bottom-dashboard');
-
-      expect(solarColumn).toContainElement(mobileDashboard);
-      expect(mobileDashboard.closest('aside')).toHaveClass('lg:hidden');
+      expect(document.getElementById('section-playerBoard')).not.toBeNull();
       expect(
         screen.queryByRole('button', { name: /toggle sidebar/i }),
       ).not.toBeInTheDocument();
@@ -522,6 +528,7 @@ describe('GameLayout', () => {
     });
 
     it('shows sector input as non-blocking in-game interaction', async () => {
+      useLayoutStore.setState({ activeTab: 'cards' });
       mockContextValue = createMockContext({
         pendingInput: {
           inputId: 'input-sector',
@@ -531,6 +538,9 @@ describe('GameLayout', () => {
       });
       await renderLayout();
 
+      await waitFor(() => {
+        expect(useLayoutStore.getState().activeTab).toBe('board');
+      });
       expect(screen.getByTestId('topbar-input-status')).toBeInTheDocument();
       expect(screen.getByTestId('pending-input-ingame')).toBeInTheDocument();
       expect(
@@ -541,8 +551,32 @@ describe('GameLayout', () => {
       ).not.toBeInTheDocument();
     });
 
+    it('keeps resync and undo recovery controls reachable while input is pending', async () => {
+      const resync = vi.fn();
+      const requestUndo = vi.fn();
+      mockContextValue = createMockContext({
+        resync,
+        requestUndo,
+        gameState: createMockGameState({ canUndo: true }),
+        pendingInput: {
+          inputId: 'input-resource',
+          type: EPlayerInputType.RESOURCE,
+          options: [EResource.CREDIT],
+        } as unknown as IGameContext['pendingInput'],
+      });
+
+      await renderLayout();
+
+      fireEvent.click(screen.getByTestId('input-recovery-resync'));
+      fireEvent.click(screen.getByTestId('input-recovery-undo'));
+
+      expect(resync).toHaveBeenCalledTimes(1);
+      expect(requestUndo).toHaveBeenCalledTimes(1);
+    });
+
     it('resolves sector-id option input through sector hotspots', async () => {
       const sendInput = vi.fn();
+      useLayoutStore.setState({ activeTab: 'cards' });
       mockContextValue = createMockContext({
         sendInput,
         pendingInput: {
@@ -557,6 +591,9 @@ describe('GameLayout', () => {
       });
       await renderLayout();
 
+      await waitFor(() => {
+        expect(useLayoutStore.getState().activeTab).toBe('board');
+      });
       expect(screen.getByTestId('pending-input-ingame')).toBeInTheDocument();
       expect(
         screen.queryByTestId('pending-input-modal'),
@@ -588,7 +625,9 @@ describe('GameLayout', () => {
       });
       await renderLayout();
 
-      expect(useGameViewStore.getState().activeTab).toBe('planets');
+      await waitFor(() => {
+        expect(useLayoutStore.getState().activeTab).toBe('planets');
+      });
       expect(screen.getByTestId('pending-input-ingame')).toBeInTheDocument();
       expect(
         screen.queryByTestId('pending-input-modal'),
@@ -644,7 +683,9 @@ describe('GameLayout', () => {
       });
       await renderLayout();
 
-      expect(useGameViewStore.getState().activeTab).toBe('aliens');
+      await waitFor(() => {
+        expect(useLayoutStore.getState().activeTab).toBe('aliens');
+      });
       expect(screen.getByTestId('pending-input-ingame')).toBeInTheDocument();
       expect(
         screen.queryByTestId('pending-input-modal'),
@@ -703,7 +744,9 @@ describe('GameLayout', () => {
       });
       await renderLayout();
 
-      expect(useGameViewStore.getState().activeTab).toBe('aliens');
+      await waitFor(() => {
+        expect(useLayoutStore.getState().activeTab).toBe('aliens');
+      });
       expect(screen.getByTestId('pending-input-ingame')).toBeInTheDocument();
       expect(
         screen.queryByTestId('pending-input-modal'),
@@ -1305,7 +1348,7 @@ describe('GameLayout', () => {
 
     it('opens the board tab when using Orbital Dynamics power', async () => {
       const sendFreeAction = vi.fn();
-      useGameViewStore.setState({ activeTab: 'cards' });
+      useLayoutStore.setState({ activeTab: 'cards' });
       mockContextValue = createMockContext({
         sendFreeAction,
         gameState: createMockGameState({
@@ -1328,7 +1371,7 @@ describe('GameLayout', () => {
         ),
       );
 
-      expect(useGameViewStore.getState().activeTab).toBe('board');
+      expect(useLayoutStore.getState().activeTab).toBe('board');
       expect(sendFreeAction).toHaveBeenCalledWith({
         type: EFreeAction.USE_ORGANIZATION_POWER,
         organizationId: EOrganizationId.ORBITAL_DYNAMICS,
@@ -1428,7 +1471,7 @@ describe('GameLayout', () => {
     });
 
     it('resolves orbit slot picker clicks through input instead of direct planet actions', async () => {
-      useGameViewStore.setState({ activeTab: 'planets' });
+      useLayoutStore.setState({ activeTab: 'planets' });
       const sendAction = vi.fn();
       const sendInput = vi.fn();
       mockContextValue = createMockContext({
@@ -1683,12 +1726,15 @@ describe('GameLayout', () => {
 
     it('shows event log section after opening drawer', async () => {
       await renderLayout();
-      fireEvent.click(screen.getByRole('button', { name: 'Event Log' }));
+      const drawer = screen.getByTestId('event-sidebar-drawer');
+      fireEvent.click(
+        within(drawer).getByRole('button', { name: 'Event Log' }),
+      );
 
-      expect(screen.getByText('Event Log')).toBeInTheDocument();
+      expect(within(drawer).getByTestId('event-log')).toBeInTheDocument();
     });
 
-    it('keeps a compact event log in the board area across tab changes', async () => {
+    it('keeps event log access available across tab changes', async () => {
       mockContextValue = createMockContext({
         events: [
           {
@@ -1701,19 +1747,15 @@ describe('GameLayout', () => {
       });
 
       await renderLayout();
-
-      expect(screen.getByTestId('event-log-compact')).toHaveTextContent(
-        'Commander scanned',
-      );
 
       fireEvent.click(screen.getByRole('tab', { name: 'Tech' }));
 
-      expect(screen.getByTestId('event-log-compact')).toHaveTextContent(
-        'Commander scanned',
-      );
+      expect(
+        screen.getByRole('button', { name: /event log/i }),
+      ).toBeInTheDocument();
     });
 
-    it('opens a scrollable full log dialog from the compact board log', async () => {
+    it('renders event details in the drawer log', async () => {
       mockContextValue = createMockContext({
         events: [
           {
@@ -1727,16 +1769,15 @@ describe('GameLayout', () => {
 
       await renderLayout();
 
-      fireEvent.click(screen.getByTestId('event-log-compact'));
+      const drawer = screen.getByTestId('event-sidebar-drawer');
+      fireEvent.click(
+        within(drawer).getByRole('button', { name: 'Event Log' }),
+      );
 
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
       expect(
-        within(screen.getByRole('dialog')).getByText('Event Log'),
-      ).toBeInTheDocument();
-      // Player names are wrapped in tinted spans, so use textContent
-      // for the cross-element match.
-      expect(
-        screen.getByRole('dialog').textContent?.includes('Commander scanned'),
+        within(drawer)
+          .getByTestId('event-log')
+          .textContent?.includes('Commander scanned'),
       ).toBe(true);
     });
   });

@@ -101,8 +101,8 @@ export const tabPreset: LayoutConfig = {
       tab: { container: 'scoring', slot: 'middle', order: 1 },
       collapsible: true,
     },
-    // PlayerBoard floats in board tab's right column to mirror the legacy
-    // PersonalColumn placement; users can move it via the dev panel.
+    // PlayerBoard floats in board tab's right column so the table keeps the
+    // player's dashboard visible next to the board.
     {
       id: 'playerBoard',
       tab: { container: 'board', slot: 'right', order: 1 },

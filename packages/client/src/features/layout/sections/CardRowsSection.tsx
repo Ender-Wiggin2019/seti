@@ -1,6 +1,15 @@
 import type { IBaseCard } from '@seti/common/types/BaseCard';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { CardRender } from '@/features/cards/CardRender';
 import { CardRowView } from '@/features/cards/CardRowView';
 import { EndOfRoundStacks } from '@/features/cards/EndOfRoundStacks';
 import { useGameContext } from '@/pages/game/GameContext';
@@ -14,6 +23,9 @@ export function CardRowsSection(_: ISectionRenderProps): React.JSX.Element {
   const { gameState, pendingInput, sendFreeAction, sendInput } =
     useGameContext();
   const { armedCardRowBuy, setArmedCardRowBuy, inspectCard } = useGameSession();
+  const [buyConfirm, setBuyConfirm] = useState<
+    { kind: 'deck' } | { kind: 'row'; card: IBaseCard } | null
+  >(null);
   if (!gameState) return <></>;
 
   const cardSelectionInput =
@@ -35,8 +47,7 @@ export function CardRowsSection(_: ISectionRenderProps): React.JSX.Element {
       return;
     }
     if (armedCardRowBuy) {
-      sendFreeAction({ type: EFreeAction.BUY_CARD, cardId: card.id });
-      setArmedCardRowBuy(false);
+      setBuyConfirm({ kind: 'row', card });
       return;
     }
     inspectCard(card);
@@ -44,28 +55,37 @@ export function CardRowsSection(_: ISectionRenderProps): React.JSX.Element {
 
   return (
     <div className='space-y-3'>
-      <div className='instrument-panel flex flex-wrap items-center gap-2 p-2'>
+      <div
+        className='instrument-panel flex flex-wrap items-center gap-2 p-2'
+        data-testid='cards-tab-buy-chooser'
+      >
+        <span className='font-mono text-[10px] uppercase tracking-[0.14em] text-accent-300'>
+          {t('client.game_layout.buy_card_title', {
+            defaultValue: 'Buy Card',
+          })}
+        </span>
+        <span className='font-mono text-[10px] uppercase tracking-[0.14em] text-text-400'>
+          {t('client.game_layout.buy_card_cost', {
+            defaultValue: '3 publicity',
+          })}
+        </span>
         <Button
-          variant='ghost'
+          variant='primary'
           size='sm'
-          className='h-8 gap-1.5 px-2.5 font-mono text-[10px] uppercase tracking-[0.14em] hover:border-accent-500/70 hover:text-text-100'
-          onClick={() =>
-            sendFreeAction({
-              type: EFreeAction.BUY_CARD,
-              fromDeck: true,
-            })
-          }
+          className='ml-auto h-8 px-3 font-mono text-[10px] uppercase tracking-[0.14em]'
+          data-testid='cards-tab-buy-from-deck'
+          onClick={() => {
+            setArmedCardRowBuy(false);
+            setBuyConfirm({ kind: 'deck' });
+          }}
         >
-          <span
-            aria-hidden
-            className='h-1.5 w-1.5 rounded-full bg-accent-500 shadow-[0_0_4px_oklch(0.68_0.11_240/0.7)]'
-          />
           {t('client.game_layout.buy_from_deck')}
         </Button>
         <Button
           variant={armedCardRowBuy ? 'primary' : 'ghost'}
           size='sm'
-          className='h-8 px-2.5 font-mono text-[10px] uppercase tracking-[0.14em]'
+          className='h-8 px-3 font-mono text-[10px] uppercase tracking-[0.14em]'
+          data-testid='cards-tab-buy-from-row'
           onClick={() => setArmedCardRowBuy((v) => !v)}
         >
           {armedCardRowBuy
@@ -106,6 +126,73 @@ export function CardRowsSection(_: ISectionRenderProps): React.JSX.Element {
           });
         }}
       />
+      <Dialog
+        open={buyConfirm !== null}
+        onOpenChange={(open) => {
+          if (!open) setBuyConfirm(null);
+        }}
+      >
+        <DialogContent className='w-fit max-w-fit'>
+          <DialogHeader>
+            <DialogTitle>
+              {buyConfirm?.kind === 'deck'
+                ? t('client.game_layout.buy_from_deck')
+                : t('client.game_layout.buy_from_row')}
+            </DialogTitle>
+          </DialogHeader>
+          <div className='max-h-[78vh] overflow-auto rounded border border-surface-700/50 bg-surface-950/70 p-3'>
+            <div className='relative h-[376px] w-[270px] sm:h-[418px] sm:w-[300px]'>
+              {buyConfirm?.kind === 'row' ? (
+                <div className='absolute left-0 top-0 origin-top-left scale-[1.8] sm:scale-[2]'>
+                  <CardRender card={buyConfirm.card} />
+                </div>
+              ) : (
+                <div
+                  className='absolute inset-0 rounded border border-surface-700/50 bg-[url(/assets/seti/cards/back_base.jpg)] bg-cover bg-center'
+                  aria-hidden
+                />
+              )}
+            </div>
+          </div>
+          <div className='instrument-panel p-3'>
+            <div className='section-head mb-2'>
+              <span aria-hidden className='section-head__tick' />
+              <p className='micro-label'>{t('client.action_confirm.cost')}</p>
+              <div aria-hidden className='section-head__rule' />
+            </div>
+            <p className='readout font-mono text-[13px] text-text-100'>
+              {t('client.game_layout.buy_card_cost', {
+                defaultValue: '3 publicity',
+              })}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant='ghost' onClick={() => setBuyConfirm(null)}>
+              {t('client.common.cancel', { defaultValue: 'Cancel' })}
+            </Button>
+            <Button
+              variant='primary'
+              onClick={() => {
+                if (buyConfirm?.kind === 'deck') {
+                  sendFreeAction({
+                    type: EFreeAction.BUY_CARD,
+                    fromDeck: true,
+                  });
+                } else if (buyConfirm?.kind === 'row') {
+                  sendFreeAction({
+                    type: EFreeAction.BUY_CARD,
+                    cardId: buyConfirm.card.id,
+                  });
+                  setArmedCardRowBuy(false);
+                }
+                setBuyConfirm(null);
+              }}
+            >
+              {t('client.common.confirm', { defaultValue: 'Confirm' })}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

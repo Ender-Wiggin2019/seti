@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { buildMilestoneItems } from '@/features/layout/sessionHelpers';
 import type { IPublicMilestoneState } from '@/types/re-exports';
-import { buildMilestoneItems } from '../GameLayout';
 
 describe('buildMilestoneItems', () => {
   const baseState: IPublicMilestoneState = {

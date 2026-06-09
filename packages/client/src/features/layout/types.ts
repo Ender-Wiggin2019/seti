@@ -3,7 +3,7 @@
  *
  * Two render modes share one config:
  *   • `tab`        — sections are grouped by `tab.container`, each tab renders
- *                    its own 3-column grid. The legacy in-game experience.
+ *                    its own 3-column grid. This is the default game table.
  *   • `waterfall`  — the whole game scrolls as one screen; sections fall into
  *                    `waterfall.slot` columns. Tab triggers are hidden.
  *

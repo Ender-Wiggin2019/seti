@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { EventSidebarDrawer } from '@/components/layout/EventSidebarDrawer';
 import { cn } from '@/lib/cn';
 import { GAME_Z_INDEX } from '@/styles/zIndex';
 import { LayoutDevPanel } from './devPanel/LayoutDevPanel';
@@ -55,14 +56,17 @@ export function LayoutShell(): React.JSX.Element {
 
       <PinnedLayer variant='sticky-top' />
 
-      <div className='flex min-h-0 flex-1 flex-col'>
-        {isMobile ? (
-          <MobileShell />
-        ) : layout.mode === 'tab' ? (
-          <TabShell />
-        ) : (
-          <WaterfallShell />
-        )}
+      <div className='relative flex min-h-0 flex-1'>
+        <div className='flex min-w-0 flex-1 flex-col'>
+          {isMobile ? (
+            <MobileShell />
+          ) : layout.mode === 'tab' ? (
+            <TabShell />
+          ) : (
+            <WaterfallShell />
+          )}
+        </div>
+        <EventSidebarDrawer />
       </div>
 
       <PinnedLayer variant='sticky-bottom' />

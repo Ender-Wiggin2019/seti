@@ -1,8 +1,16 @@
 import type { IBaseCard } from '@seti/common/types/BaseCard';
 import { EResource } from '@seti/common/types/element';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import { useEffect } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useToastStore } from '@/components/ui/toast';
+import { GameLayoutV2 } from '@/features/layout/GameLayoutV2';
 import {
   GameSessionProvider,
   useGameSession,
@@ -11,11 +19,34 @@ import { useLayoutStore } from '@/features/layout/layoutStore';
 import { ActionBarSection } from '@/features/layout/sections/ActionBarSection';
 import { SectionFrame } from '@/features/layout/shells/SectionFrame';
 import type { IGameContext } from '@/pages/game/GameContext';
-import { EMainAction, EPhase, EPlayerInputType } from '@/types/re-exports';
+import {
+  EAlienType,
+  EFreeAction,
+  EGameEventType,
+  EMainAction,
+  EPhase,
+  EPlayerInputType,
+} from '@/types/re-exports';
 import {
   createMockGameState,
   createMockPlayerState,
 } from '../../../test/mocks/gameState';
+
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({ children, ...rest }: { children: React.ReactNode; to: string }) => (
+    <a href={rest.to}>{children}</a>
+  ),
+}));
+
+vi.mock('@/components/ui/resizable', () => ({
+  ResizablePanelGroup: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  ResizablePanel: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  ResizableHandle: (): React.JSX.Element => <div />,
+}));
 
 let mockContextValue: IGameContext;
 
@@ -87,6 +118,7 @@ describe('layout V2 regressions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useLayoutStore.getState().resetAll();
+    useToastStore.setState({ toasts: [] });
     mockContextValue = createMockContext();
   });
 
@@ -185,5 +217,134 @@ describe('layout V2 regressions', () => {
 
     expect(screen.getByText('Section failed to render.')).toBeInTheDocument();
     consoleError.mockRestore();
+  });
+
+  it('shows the alien discovery notice in V2', async () => {
+    mockContextValue = createMockContext({
+      events: [
+        {
+          id: 'alien-found-1',
+          type: EGameEventType.ALIEN_DISCOVERED,
+          alienType: EAlienType.ANOMALIES,
+          alienIndex: 0,
+          level: 'info',
+        },
+      ],
+    });
+
+    render(<GameLayoutV2 />);
+
+    expect(await screen.findByTestId('alien-found-dialog')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Alien Anomalies is Found!' }),
+    ).toBeInTheDocument();
+  });
+
+  it('toasts unhandled custom card effects in V2', async () => {
+    mockContextValue = createMockContext({
+      events: [
+        {
+          id: 'unhandled-custom-1',
+          type: EGameEventType.ACTION,
+          action: 'CARD_CUSTOM_EFFECT_UNHANDLED',
+          playerId: 'player-1',
+          at: 1,
+          level: 'info',
+          details: { cardId: 'C.001', customId: 'CUSTOM_TEST' },
+        },
+      ],
+    });
+
+    render(<GameLayoutV2 />);
+
+    await waitFor(() => {
+      expect(useToastStore.getState().toasts).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            title: 'Card effect not available',
+            description:
+              'Custom effect "CUSTOM_TEST" on card C.001 was skipped. The game continued.',
+          }),
+        ]),
+      );
+    });
+  });
+
+  it('keeps event log access available after switching away from the board tab', () => {
+    render(<GameLayoutV2 />);
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Tech' }));
+
+    expect(
+      screen.getByRole('button', { name: /event log/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('jumps to the card tab for buy-card and confirms row purchases there', async () => {
+    const sendFreeAction = vi.fn();
+    mockContextValue = createMockContext({
+      sendFreeAction,
+      gameState: createMockGameState({
+        cardRow: [createCard('row-1')],
+        players: [
+          createMockPlayerState({
+            playerId: 'player-1',
+            resources: {
+              [EResource.CREDIT]: 8,
+              [EResource.ENERGY]: 2,
+              [EResource.DATA]: 0,
+              [EResource.PUBLICITY]: 3,
+            },
+          }),
+        ],
+      }),
+    });
+
+    render(<GameLayoutV2 />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Buy Card (3 PR)' }));
+
+    expect(screen.getByRole('tab', { name: 'Cards' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    const chooser = screen.getByTestId('cards-tab-buy-chooser');
+    fireEvent.click(within(chooser).getByTestId('cards-tab-buy-from-row'));
+    fireEvent.click(screen.getByTestId('card-row-row-1'));
+
+    const confirmDialog = await screen.findByRole('dialog');
+    fireEvent.click(
+      within(confirmDialog).getByRole('button', { name: 'Confirm' }),
+    );
+
+    expect(sendFreeAction).toHaveBeenCalledWith({
+      type: EFreeAction.BUY_CARD,
+      cardId: 'row-1',
+    });
+  });
+
+  it('passes tucked income through the V2 player board section', () => {
+    mockContextValue = createMockContext({
+      gameState: createMockGameState({
+        players: [
+          createMockPlayerState({
+            playerId: 'player-1',
+            creditIncome: 3,
+            energyIncome: 2,
+            cardIncome: 1,
+            tuckedCreditIncome: 2,
+            tuckedEnergyIncome: 1,
+            tuckedCardIncome: 1,
+          }),
+        ],
+      }),
+    });
+
+    render(<GameLayoutV2 />);
+
+    expect(screen.getAllByTestId('income-tucked-suffix')).toHaveLength(3);
   });
 });

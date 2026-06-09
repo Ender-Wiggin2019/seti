@@ -151,14 +151,12 @@ export function UserLayoutSettingsDialog({
 }: IUserLayoutSettingsDialogProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const enabled = useLayoutStore((s) => s.enabled);
   const mode = useLayoutStore((s) => s.mode);
   const overrides = useLayoutStore((s) => s.overrides);
   const collapsed = useLayoutStore((s) => s.collapsed);
   const rootColumns = useLayoutStore((s) => s.rootColumns);
   const tabColumns = useLayoutStore((s) => s.tabColumns);
   const panelLayouts = useLayoutStore((s) => s.panelLayouts);
-  const setEnabled = useLayoutStore((s) => s.setEnabled);
   const setMode = useLayoutStore((s) => s.setMode);
   const setPanelLayout = useLayoutStore((s) => s.setPanelLayout);
   const patchSection = useLayoutStore((s) => s.patchSection);
@@ -176,7 +174,6 @@ export function UserLayoutSettingsDialog({
 
   const snapshot = useMemo<LayoutSnapshot>(
     () => ({
-      enabled,
       mode,
       overrides,
       collapsed,
@@ -184,15 +181,7 @@ export function UserLayoutSettingsDialog({
       tabColumns,
       panelLayouts,
     }),
-    [
-      enabled,
-      mode,
-      overrides,
-      collapsed,
-      rootColumns,
-      tabColumns,
-      panelLayouts,
-    ],
+    [mode, overrides, collapsed, rootColumns, tabColumns, panelLayouts],
   );
   const [jsonDraft, setJsonDraft] = useState(() =>
     JSON.stringify(snapshot, null, 2),
@@ -321,36 +310,6 @@ export function UserLayoutSettingsDialog({
                 defaultValue: 'Current Display',
               })}
             >
-              <Field
-                label={t('client.layout_v2.dialogs.game_layout_system', {
-                  defaultValue: 'Display System',
-                })}
-              >
-                <div className='grid grid-cols-2 gap-2'>
-                  <Button
-                    variant={enabled ? 'primary' : 'ghost'}
-                    onClick={() => setEnabled(true)}
-                  >
-                    {t('client.layout_v2.dialogs.system_configurable', {
-                      defaultValue: 'Custom Display',
-                    })}
-                  </Button>
-                  <Button
-                    variant={!enabled ? 'primary' : 'ghost'}
-                    onClick={() => setEnabled(false)}
-                  >
-                    {t('client.layout_v2.dialogs.system_legacy', {
-                      defaultValue: 'Standard Display',
-                    })}
-                  </Button>
-                </div>
-                <p className='text-xs leading-relaxed text-text-500'>
-                  {t('client.layout_v2.dialogs.system_hint', {
-                    defaultValue:
-                      'Custom display applies only when it is active.',
-                  })}
-                </p>
-              </Field>
               <Field
                 label={t('client.layout_v2.dialogs.default_layout_mode', {
                   defaultValue: 'Table Layout',

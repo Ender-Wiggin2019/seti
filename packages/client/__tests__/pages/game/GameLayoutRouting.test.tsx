@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   isAlienBoardInput,
   isPlanetaryBoardInput,
-} from '@/pages/game/GameLayout';
+} from '@/features/layout/sectionInputs';
 import type {
   IPlayerInputModel,
   ISelectOptionInputModel,
@@ -21,7 +21,7 @@ function optionInput(
   };
 }
 
-describe('GameLayout routing helpers', () => {
+describe('layout routing helpers', () => {
   describe('isAlienBoardInput', () => {
     it('matches the Oumuamua main-action ORBIT slot picker (lowercase wire id)', () => {
       // Regression: EPlanet.OUMUAMUA serializes as the lowercase

@@ -27,8 +27,8 @@ vi.mock('@/pages/game/GameContext', () => ({
   useGameContext: () => mockContextValue,
 }));
 
-vi.mock('@/pages/game/GameLayout', () => ({
-  GameLayout: () => <div data-testid='game-layout'>Game Layout</div>,
+vi.mock('@/features/layout/GameLayoutV2', () => ({
+  GameLayoutV2: () => <div data-testid='game-layout-v2'>Game Layout V2</div>,
 }));
 
 function createMockContext(overrides?: Partial<IGameContext>): IGameContext {
@@ -86,7 +86,7 @@ describe('GamePage', () => {
     expect(screen.getByText('Awaiting mission data...')).toBeInTheDocument();
   });
 
-  it('renders GameLayout when connected with game state', async () => {
+  it('renders GameLayoutV2 when connected with game state', async () => {
     mockContextValue = createMockContext({
       isConnected: true,
       gameState: createMockGameState(),
@@ -94,7 +94,7 @@ describe('GamePage', () => {
     const { GamePage } = await import('@/pages/game/GamePage');
     render(<GamePage />);
 
-    expect(screen.getByTestId('game-layout')).toBeInTheDocument();
+    expect(screen.getByTestId('game-layout-v2')).toBeInTheDocument();
   });
 });
 

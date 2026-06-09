@@ -26,7 +26,7 @@ export function WaterfallShell(): React.JSX.Element {
   useEffect(() => {
     return registerFocusHandler((id) => {
       requestAnimationFrame(() => {
-        document.getElementById(`section-${id}`)?.scrollIntoView({
+        document.getElementById(`section-${id}`)?.scrollIntoView?.({
           behavior: 'smooth',
           block: 'start',
         });

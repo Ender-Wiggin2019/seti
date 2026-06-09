@@ -103,6 +103,7 @@ export function ExchangeResourcesDialog({
                     key={card.id}
                     type='button'
                     variant={isSelected ? 'primary' : 'ghost'}
+                    data-testid={`exchange-spend-card-${card.id}`}
                     aria-pressed={isSelected}
                     onClick={() => toggleSpentCard(card.id)}
                     className='h-9 justify-start px-3 text-left text-xs'
@@ -338,50 +339,6 @@ export function ConvertEnergyDialog({
               </span>
             </Button>
           ))}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-export function BuyCardDialog({
-  open,
-  onCancel,
-  onBuyFromRow,
-  onBuyFromDeck,
-}: {
-  open: boolean;
-  onCancel: () => void;
-  onBuyFromRow: () => void;
-  onBuyFromDeck: () => void;
-}): React.JSX.Element {
-  const { t } = useTranslation('common');
-  return (
-    <Dialog open={open} onOpenChange={(next) => !next && onCancel()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('client.game_layout.buy_card_title')}</DialogTitle>
-          <p className='text-sm text-text-300'>
-            {t('client.game_layout.buy_card_desc')}
-          </p>
-        </DialogHeader>
-        <div className='instrument-panel p-3'>
-          <div className='section-head mb-2'>
-            <span aria-hidden className='section-head__tick' />
-            <p className='micro-label'>{t('client.action_confirm.cost')}</p>
-            <div aria-hidden className='section-head__rule' />
-          </div>
-          <p className='readout font-mono text-[13px] text-text-100'>
-            {t('client.game_layout.buy_card_cost')}
-          </p>
-        </div>
-        <div className='flex justify-end gap-2 mt-2'>
-          <Button variant='ghost' onClick={onBuyFromRow}>
-            {t('client.game_layout.buy_from_row')}
-          </Button>
-          <Button onClick={onBuyFromDeck}>
-            {t('client.game_layout.buy_from_deck')}
-          </Button>
         </div>
       </DialogContent>
     </Dialog>

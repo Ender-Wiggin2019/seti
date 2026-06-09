@@ -2,15 +2,12 @@ import { useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { GameLayoutV2 } from '@/features/layout/GameLayoutV2';
-import { useLayoutStore } from '@/features/layout/layoutStore';
 import { GameContextProvider, useGameContext } from '@/pages/game/GameContext';
-import { GameLayout } from '@/pages/game/GameLayout';
 import { GAME_Z_INDEX } from '@/styles/zIndex';
 
 function GameContent(): React.JSX.Element {
   const { t } = useTranslation('common');
   const { isConnected, gameState } = useGameContext();
-  const layoutEnabled = useLayoutStore((s) => s.enabled);
 
   if (!isConnected) {
     return (
@@ -50,7 +47,7 @@ function GameContent(): React.JSX.Element {
     );
   }
 
-  return layoutEnabled ? <GameLayoutV2 /> : <GameLayout />;
+  return <GameLayoutV2 />;
 }
 
 export function GamePage(): React.JSX.Element {

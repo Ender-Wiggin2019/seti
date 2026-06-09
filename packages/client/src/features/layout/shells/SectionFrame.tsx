@@ -12,9 +12,8 @@ import type { ResolvedSection, SizeConfig } from '../types';
  *   • flex-grow / min-height / max-height plumbing from `SizeConfig`
  *   • a thin error fence so a single broken section doesn't take the screen
  *
- * Header is intentionally minimal — we lean on the legacy `section-head` /
- * `instrument-panel` classes already used throughout the app so the new
- * layout matches the existing visual language.
+ * Header is intentionally minimal — we lean on the existing `section-head` /
+ * `instrument-panel` classes so sections match the app's visual language.
  */
 export interface ISectionFrameProps {
   section: ResolvedSection;

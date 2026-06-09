@@ -21,7 +21,6 @@ export function LayoutProvider({
   children: ReactNode;
 }): React.JSX.Element {
   const mode = useLayoutStore((s) => s.mode);
-  const enabled = useLayoutStore((s) => s.enabled);
   const overrides = useLayoutStore((s) => s.overrides);
   const collapsed = useLayoutStore((s) => s.collapsed);
   const rootColumns = useLayoutStore((s) => s.rootColumns);
@@ -38,7 +37,6 @@ export function LayoutProvider({
     const layout = resolveLayout({
       preset,
       snapshot: {
-        enabled,
         mode,
         overrides,
         collapsed,
@@ -51,7 +49,6 @@ export function LayoutProvider({
     const bySection = new Map(layout.sections.map((s) => [s.id, s]));
     return { layout, isMobile, mode, bySection };
   }, [
-    enabled,
     mode,
     overrides,
     collapsed,

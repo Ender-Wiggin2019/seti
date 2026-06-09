@@ -5,16 +5,15 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from '@/components/ui/toast';
 import { useGameContext } from '@/pages/game/GameContext';
-import { useGameViewStore } from '@/stores/gameViewStore';
 import { EFreeAction, EPhase } from '@/types/re-exports';
 import {
-  BuyCardDialog,
   ConvertEnergyDialog,
   ExchangeResourcesDialog,
   PlaceDataDialog,
   SampleDeliveryDialog,
 } from './dialogs';
 import { useGameSession } from './GameSessionContext';
+import { useLayoutStore } from './layoutStore';
 import {
   buildPlaceDataOptions,
   buildSampleDeliveryOptions,
@@ -38,7 +37,7 @@ export interface IActionControllerHandle {
 export function useActionController(): IActionControllerHandle {
   const { t } = useTranslation('common');
   const { gameState, myPlayerId, sendFreeAction } = useGameContext();
-  const setActiveTab = useGameViewStore((s) => s.setActiveTab);
+  const setActiveTab = useLayoutStore((s) => s.setActiveTab);
   const {
     setCornerSelectionMode,
     setArmedCardRowBuy,
@@ -46,7 +45,6 @@ export function useActionController(): IActionControllerHandle {
     focusSection,
   } = useGameSession();
 
-  const [buyCardOpen, setBuyCardOpen] = useState(false);
   const [exchangeOpen, setExchangeOpen] = useState(false);
   const [placeDataOpen, setPlaceDataOpen] = useState(false);
   const [convertEnergyOpen, setConvertEnergyOpen] = useState(false);
@@ -64,12 +62,6 @@ export function useActionController(): IActionControllerHandle {
   const placeDataOptions = buildPlaceDataOptions(myPlayer);
   const maxConvertibleEnergy = myPlayer?.resources?.[EResource.ENERGY] ?? 0;
 
-  const armCardRowBuy = (): void => {
-    setArmedCardRowBuy(true);
-    setActiveTab('cards');
-    focusSection('cardRows');
-  };
-
   const armMoveMode = (): void => {
     setMovementModeActive(true);
     setActiveTab('board');
@@ -85,7 +77,7 @@ export function useActionController(): IActionControllerHandle {
         setCornerSelectionMode(false);
         setMovementModeActive(false);
         setArmedCardRowBuy(false);
-        setBuyCardOpen(true);
+        focusSection('cardRows');
         return;
       case EFreeAction.PLACE_DATA:
         setCornerSelectionMode(false);
@@ -220,18 +212,6 @@ export function useActionController(): IActionControllerHandle {
 
   const dialogs = (
     <>
-      <BuyCardDialog
-        open={buyCardOpen}
-        onCancel={() => setBuyCardOpen(false)}
-        onBuyFromRow={() => {
-          setBuyCardOpen(false);
-          armCardRowBuy();
-        }}
-        onBuyFromDeck={() => {
-          sendFreeAction({ type: EFreeAction.BUY_CARD, fromDeck: true });
-          setBuyCardOpen(false);
-        }}
-      />
       <ExchangeResourcesDialog
         open={exchangeOpen}
         player={myPlayer}
@@ -293,8 +273,7 @@ export function useActionController(): IActionControllerHandle {
 
 /**
  * Auto-resets armed flags when the player's turn / phase / pending input
- * changes. Mirrors the legacy GameLayout effects but reads from the shared
- * session context.
+ * changes. Keeps transient section-wide UI flags in sync with game state.
  */
 export function useArmedFlagAutoReset(): void {
   const { gameState, isMyTurn, pendingInput, myPlayerId } = useGameContext();

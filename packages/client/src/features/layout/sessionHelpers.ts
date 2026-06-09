@@ -14,9 +14,8 @@ import type {
 } from '@/types/re-exports';
 
 /**
- * Helpers extracted from the legacy GameLayout so the new section adapters
- * can compose without depending on the 2300-line file. Any time the legacy
- * GameLayout is removed these stay — they live with the new layout system.
+ * Shared helpers used by layout sections to compose player, alien, and
+ * scoring data without tying that logic to one render shell.
  */
 
 const CARD_BY_ID = new Map<string, IBaseCard>(
