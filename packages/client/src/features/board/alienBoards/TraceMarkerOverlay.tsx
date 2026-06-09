@@ -3,12 +3,21 @@ import {
   TRACE_COLUMN_COLORS,
   type TTraceColumnColor,
 } from '@seti/common/utils/alienTracePresentation';
+import { useState } from 'react';
 import { HotspotAnchor } from '@/features/hotspots/HotspotAnchor';
 import { HotspotButton } from '@/features/hotspots/HotspotButton';
+import {
+  geometryToPercentStyle,
+  getHotspotStorageSceneId,
+  type IHotspotGeometry,
+  resolveHotspotGeometry,
+} from '@/features/hotspots/hotspotConfig';
 import {
   useCalibrationMode,
   usePreviewOverflowCount,
 } from '@/hooks/useCalibrationMode';
+import { useDebugStore } from '@/stores/debugStore';
+import { BOARD_LOCAL_Z_INDEX } from '@/styles/zIndex';
 import type { IPublicTraceSlot } from '@/types/re-exports';
 import { ETrace } from '@/types/re-exports';
 import { decorateSlotWithPreviewOccupants } from './AlienBoardTraceGrid';
@@ -76,6 +85,24 @@ export interface ITraceColumnLayout {
 }
 
 export type TTraceColumnLayouts = Record<TTraceColumnColor, ITraceColumnLayout>;
+
+export function formatTraceSlotAnchorHotspotId({
+  alienKey,
+  alienIndex,
+  color,
+  slotIndex,
+  layout,
+}: {
+  alienKey: string;
+  alienIndex: number;
+  color: TTraceColumnColor;
+  slotIndex: number;
+  layout: Pick<ITraceColumnLayout, 'hotspotIdIndexOffset'>;
+}): string {
+  return `${alienKey}-${alienIndex}-${color}-slot-${
+    slotIndex + (layout.hotspotIdIndexOffset ?? 0)
+  }`;
+}
 
 interface ITraceMarkerOverlayProps {
   alienIndex: number;
@@ -150,19 +177,32 @@ export function TraceMarkerOverlay({
                 layout.yPctBottomToTop[layout.yPctBottomToTop.length - 1];
               if (yPct === undefined) return null;
               const xPct = layout.xPctBottomToTop?.[slotIndex] ?? layout.xPct;
+              const slotAnchorX = (ALIEN_BOARD_BASE_WIDTH * xPct) / 100;
+              const slotAnchorY = (ALIEN_BOARD_BASE_HEIGHT * yPct) / 100;
+              const slotAnchorHotspotId = formatTraceSlotAnchorHotspotId({
+                alienKey,
+                alienIndex,
+                color,
+                slotIndex,
+                layout,
+              });
               const isOverflow = slot.maxOccupants === -1;
               return slot.occupants.map((occ, occIndex) => {
                 // Single-cap slot: stay centered. Overflow: stack upward.
-                const occYPct = isOverflow ? yPct - stride * occIndex : yPct;
+                const markerOffsetY = isOverflow
+                  ? -((ALIEN_BOARD_BASE_HEIGHT * stride * occIndex) / 100)
+                  : 0;
                 return (
                   <SlotMarker
                     key={`${slot.slotId}-${occIndex}`}
                     hotspotId={`${alienKey}-${alienIndex}-${color}-${slotIndex}-${occIndex}`}
+                    slotAnchorHotspotId={slotAnchorHotspotId}
                     debugLabel={`${alienKey} ${color} trace ${slotIndex + 1}${
                       occIndex > 0 ? `.${occIndex + 1}` : ''
                     }`}
-                    xPct={xPct}
-                    yPct={occYPct}
+                    slotAnchorX={slotAnchorX}
+                    slotAnchorY={slotAnchorY}
+                    markerOffsetY={markerOffsetY}
                     occupant={occ}
                     playerColors={playerColors}
                     testId={`alien-${alienIndex}-${alienKey}-marker-${color}-${slotIndex}-${occIndex}`}
@@ -203,9 +243,13 @@ function TraceSlotAnchors({
           100;
         const y = (ALIEN_BOARD_BASE_HEIGHT * yPct) / 100;
         const slot = slots[index];
-        const anchorHotspotId = `${alienKey}-${alienIndex}-${color}-slot-${
-          index + (layout.hotspotIdIndexOffset ?? 0)
-        }`;
+        const anchorHotspotId = formatTraceSlotAnchorHotspotId({
+          alienKey,
+          alienIndex,
+          color,
+          slotIndex: index,
+          layout,
+        });
         const selectable =
           slot !== undefined && selectableSlotIds?.has(slot.slotId) === true;
         return (
@@ -317,18 +361,22 @@ function CalibrationOverlay({
 }
 
 function SlotMarker({
-  xPct,
-  yPct,
   hotspotId,
+  slotAnchorHotspotId,
   debugLabel,
+  slotAnchorX,
+  slotAnchorY,
+  markerOffsetY = 0,
   occupant,
   playerColors,
   testId,
 }: {
-  xPct: number;
-  yPct: number;
   hotspotId: string;
+  slotAnchorHotspotId: string;
   debugLabel: string;
+  slotAnchorX: number;
+  slotAnchorY: number;
+  markerOffsetY?: number;
   occupant: TTraceOccupant;
   playerColors: Record<string, string>;
   ringColor?: string;
@@ -346,19 +394,15 @@ function SlotMarker({
         PREVIEW_PLAYER_FALLBACK_COLORS[playerId] ??
         '#cbd5e1');
   return (
-    <HotspotAnchor
-      sceneId='alien-board'
+    <TraceSlotMarkerAnchor
       hotspotId={hotspotId}
-      baseWidth={ALIEN_BOARD_BASE_WIDTH}
-      baseHeight={ALIEN_BOARD_BASE_HEIGHT}
-      x={(ALIEN_BOARD_BASE_WIDTH * xPct) / 100}
-      y={(ALIEN_BOARD_BASE_HEIGHT * yPct) / 100}
-      width={TRACE_MARKER_SIZE}
-      height={TRACE_MARKER_SIZE}
+      slotAnchorHotspotId={slotAnchorHotspotId}
+      slotAnchorX={slotAnchorX}
+      slotAnchorY={slotAnchorY}
+      markerOffsetY={markerOffsetY}
       color={fill}
       debugLabel={debugLabel}
       debugInfo={playerId ?? 'neutral'}
-      className='rounded-full'
       title={playerId ?? 'neutral'}
       testId={testId}
     >
@@ -366,7 +410,111 @@ function SlotMarker({
         className='block h-full w-full rounded-full border border-black/50 shadow-[0_0_4px_rgba(0,0,0,0.6)]'
         style={{ backgroundColor: fill }}
       />
-    </HotspotAnchor>
+    </TraceSlotMarkerAnchor>
+  );
+}
+
+export function TraceSlotMarkerAnchor({
+  hotspotId,
+  slotAnchorHotspotId,
+  slotAnchorX,
+  slotAnchorY,
+  markerOffsetX = 0,
+  markerOffsetY = 0,
+  color,
+  debugLabel,
+  debugInfo,
+  title,
+  testId,
+  children,
+}: React.PropsWithChildren<{
+  hotspotId: string;
+  slotAnchorHotspotId: string;
+  slotAnchorX: number;
+  slotAnchorY: number;
+  markerOffsetX?: number;
+  markerOffsetY?: number;
+  color: string;
+  debugLabel: string;
+  debugInfo?: React.ReactNode;
+  title?: string;
+  testId: string;
+}>): React.JSX.Element {
+  const debug = useDebugStore((state) => state.hotspotDebug);
+  const showAnchorHotspots = useDebugStore((state) => state.showAnchorHotspots);
+  const storageSceneId = getHotspotStorageSceneId('alien-board', 'image');
+  const committedOverride = useDebugStore(
+    (state) => state.hotspotOverrides[storageSceneId]?.[slotAnchorHotspotId],
+  );
+  const draftOverride = useDebugStore(
+    (state) =>
+      state.hotspotDraftOverrides[storageSceneId]?.[slotAnchorHotspotId],
+  );
+  const [showDebugInfo, setShowDebugInfo] = useState(false);
+  const slotGeometry = resolveHotspotGeometry(
+    {
+      x: slotAnchorX,
+      y: slotAnchorY,
+      width: TRACE_SLOT_ANCHOR_SIZE,
+      height: TRACE_SLOT_ANCHOR_SIZE,
+    },
+    draftOverride === undefined
+      ? committedOverride
+      : { ...(committedOverride ?? {}), ...draftOverride },
+  );
+  const markerGeometry: IHotspotGeometry = {
+    x: slotGeometry.x + markerOffsetX,
+    y: slotGeometry.y + markerOffsetY,
+    width: TRACE_MARKER_SIZE,
+    height: TRACE_MARKER_SIZE,
+  };
+  const debugVisible = debug && showAnchorHotspots;
+
+  return (
+    <div
+      data-hotspot-scene='alien-board'
+      data-hotspot-id={hotspotId}
+      data-hotspot-variant='image'
+      data-hotspot-role='anchor'
+      data-trace-anchor-hotspot-id={slotAnchorHotspotId}
+      data-testid={testId}
+      title={title ?? debugLabel}
+      tabIndex={debugVisible ? 0 : undefined}
+      className={`absolute rounded-full border transition-[background-color,border-color,opacity,box-shadow] ${
+        debugVisible
+          ? 'pointer-events-auto cursor-default border-current shadow-[0_0_0_1px_rgba(0,0,0,0.45)]'
+          : 'pointer-events-none border-transparent'
+      }`}
+      style={{
+        ...geometryToPercentStyle(
+          markerGeometry,
+          ALIEN_BOARD_BASE_WIDTH,
+          ALIEN_BOARD_BASE_HEIGHT,
+        ),
+        zIndex: BOARD_LOCAL_Z_INDEX.hotspot,
+        minWidth: '24px',
+        minHeight: '24px',
+        color,
+        transform: 'translate(-50%, -50%)',
+      }}
+      onMouseEnter={() => setShowDebugInfo(true)}
+      onMouseLeave={() => setShowDebugInfo(false)}
+      onFocus={() => setShowDebugInfo(true)}
+      onBlur={() => setShowDebugInfo(false)}
+    >
+      {children}
+      {debugVisible && showDebugInfo ? (
+        <span
+          className='pointer-events-none absolute left-full top-1/2 z-20 ml-1 grid max-w-[220px] -translate-y-1/2 gap-0.5 rounded-sm border border-surface-950/80 bg-surface-950/95 px-1.5 py-1 font-mono text-[9px] leading-tight text-text-100 shadow-[0_4px_12px_rgba(0,0,0,0.5)]'
+          data-testid={`hotspot-anchor-info-alien-board-${hotspotId}`}
+        >
+          <span className='uppercase'>{debugLabel}</span>
+          {debugInfo ? (
+            <span className='whitespace-normal text-text-300'>{debugInfo}</span>
+          ) : null}
+        </span>
+      ) : null}
+    </div>
   );
 }
 

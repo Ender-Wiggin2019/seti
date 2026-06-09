@@ -1,5 +1,38 @@
 # TODO
 
+## Alien Trace Hotspot Anchor Alignment Plan
+
+### Assumptions
+
+- Scope stays in `packages/client`; server trace slot ids remain the submit payload source, while visual geometry should use calibrated hotspot anchor ids.
+- Alien board image-mode trace anchors are the source of truth for both player markers and selectable attention hotspots.
+- Discovery/overflow text-mode trace columns are unaffected by image-board calibration.
+
+### Plan
+
+- [x] Identify every alien-board trace renderer that can split anchor, marker, and selectable hotspot ids.
+  - 验证: Anomalies and shared `TraceMarkerOverlay` image paths are both accounted for.
+- [x] Add failing regression tests for marker/attention hotspot alignment with saved anchor overrides.
+  - 验证: old implementation fails because marker/selectable hotspot does not use the trace anchor geometry.
+- [x] Implement the smallest client-side fix so visual markers/buttons resolve geometry from the printed trace slot anchor id.
+  - 验证: marker remains centered on the anchor; selectable hotspot still submits the server slot id.
+- [x] Run focused tests, typecheck, and biome.
+  - 验证: evidence covers marker alignment and real pending-input attention hotspot alignment at component/layout level.
+- [ ] Browser/E2E verification for `/debug/hotspots` plus a real game route.
+  - 验证: deferred because user asked not to run E2E in this pass.
+- [x] Review remaining loopholes and record confidence.
+  - 验证: this section includes commands run, browser evidence, and any residual risk.
+
+### Review
+
+- 根因 1：shared alien-board image markers had their own hotspot ids and hard-coded geometry, so saved trace slot anchors moved without their player markers.
+- 根因 2：Anomalies selectable attention hotspots used server `slotId` as `data-hotspot-id`, bypassing the calibrated printed trace anchor id.
+- 修复：shared `TraceMarkerOverlay` now gives markers a `data-trace-anchor-hotspot-id` and resolves their center from the printed trace slot anchor geometry; marker size and overflow stacking stay marker-specific.
+- 修复：Anomalies printed trace anchors, selectable attention hotspots, and markers now share the same visual anchor id while still submitting the original server trace slot id through `data-server-trace-slot-id` / `optionId`.
+- 验证通过：red test first failed for marker center and Anomalies hotspot id; then `pnpm --filter @seti/client test -- AlienBoardView.test.tsx -t "calibrated printed trace"` passed.
+- 验证通过：`pnpm --filter @seti/client test -- AlienBoardView.test.tsx`、`pnpm --filter @seti/client test -- GameLayout.test.tsx -t "alien"`、`pnpm --filter @seti/client test -- HotspotsDebugPage.test.tsx`、`pnpm --filter @seti/client test -- AlienBoardView.test.tsx GameLayout.test.tsx HotspotsDebugPage.test.tsx`、`pnpm --filter @seti/client typecheck`、`pnpm exec biome check packages/client/src/features/board/alienBoards/TraceMarkerOverlay.tsx packages/client/src/features/board/alienBoards/AnomaliesBoardArt.tsx packages/client/__tests__/features/board/AlienBoardView.test.tsx`。
+- 剩余风险：未跑浏览器/E2E；按用户要求本轮先停在单测、layout 回归、typecheck 和 biome 证据。
+
 ## Alien Card Draw Input And Trace Interaction Plan
 
 ### Assumptions

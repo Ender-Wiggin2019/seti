@@ -15,7 +15,11 @@ import type {
 } from '@/types/re-exports';
 import { ETrace } from '@/types/re-exports';
 import { AlienBoardArtFrame } from './AlienBoardArtFrame';
-import { formatTraceSlotDebugInfo } from './TraceMarkerOverlay';
+import {
+  formatTraceSlotAnchorHotspotId,
+  formatTraceSlotDebugInfo,
+  TraceSlotMarkerAnchor,
+} from './TraceMarkerOverlay';
 
 type TTraceOccupant = IPublicTraceSlot['occupants'][number];
 
@@ -44,7 +48,6 @@ const PREVIEW_PLAYER_FALLBACK_COLORS: Record<string, string> = {
 };
 const ALIEN_BOARD_BASE_WIDTH = 777;
 const ALIEN_BOARD_BASE_HEIGHT = 1415;
-const TRACE_MARKER_SIZE = (ALIEN_BOARD_BASE_WIDTH * 8) / 100;
 const TRACE_SLOT_ANCHOR_SIZE = 108.00424713134765;
 
 interface IAnomaliesColumnLayout {
@@ -184,13 +187,20 @@ function ColumnSlotAnchors({
         const x = (ALIEN_BOARD_BASE_WIDTH * layout.xPct) / 100;
         const y = (ALIEN_BOARD_BASE_HEIGHT * yPct) / 100;
         const slot = slots[index];
+        const anchorHotspotId = formatTraceSlotAnchorHotspotId({
+          alienKey: 'anomalies',
+          alienIndex,
+          color,
+          slotIndex: index,
+          layout: {},
+        });
         const selectable =
           slot !== undefined && selectableSlotIds?.has(slot.slotId) === true;
         return (
           <span key={`${color}-${index}`}>
             <HotspotAnchor
               sceneId='alien-board'
-              hotspotId={`anomalies-${alienIndex}-${color}-slot-${index}`}
+              hotspotId={anchorHotspotId}
               variant='image'
               baseWidth={ALIEN_BOARD_BASE_WIDTH}
               baseHeight={ALIEN_BOARD_BASE_HEIGHT}
@@ -207,7 +217,7 @@ function ColumnSlotAnchors({
             {selectable ? (
               <HotspotButton
                 sceneId='alien-board'
-                hotspotId={slot.slotId}
+                hotspotId={anchorHotspotId}
                 variant='image'
                 baseWidth={ALIEN_BOARD_BASE_WIDTH}
                 baseHeight={ALIEN_BOARD_BASE_HEIGHT}
@@ -222,6 +232,7 @@ function ColumnSlotAnchors({
                 attention
                 className='rounded-full border-accent-400/70'
                 testId={`alien-${alienIndex}-anomalies-hotspot-${color}-${index}`}
+                dataAttributes={{ 'data-server-trace-slot-id': slot.slotId }}
                 onClick={() => onSelectTraceSlot?.(slot.slotId)}
               />
             ) : null}
@@ -300,11 +311,12 @@ function ColumnMarkers({
     >
       {occupants.map(({ occ, tierIndex }, index) => {
         const inOverflow = tierIndex >= 4;
-        const xPct = layout.xPct;
         let yPct: number;
+        let markerOffsetYPct = 0;
         if (inOverflow) {
           // First overflow token at centre, subsequent ones fan upward.
-          yPct = layout.overflowYPct - overflowOrder * layout.overflowStridePct;
+          yPct = layout.overflowYPct;
+          markerOffsetYPct = -(overflowOrder * layout.overflowStridePct);
           overflowOrder += 1;
         } else {
           yPct =
@@ -313,13 +325,27 @@ function ColumnMarkers({
               layout.singleCapYPctBottomToTop.length - 1
             ];
         }
+        const slotIndex = inOverflow ? 4 : tierIndex;
+        const slotAnchorHotspotId = formatTraceSlotAnchorHotspotId({
+          alienKey: 'anomalies',
+          alienIndex,
+          color,
+          slotIndex,
+          layout: {},
+        });
+        const slotAnchorX = (ALIEN_BOARD_BASE_WIDTH * layout.xPct) / 100;
+        const slotAnchorY = (ALIEN_BOARD_BASE_HEIGHT * yPct) / 100;
+        const markerOffsetY =
+          (ALIEN_BOARD_BASE_HEIGHT * markerOffsetYPct) / 100;
         return (
           <SlotMarker
             key={`${color}-${index}`}
             hotspotId={`anomalies-${alienIndex}-${color}-${index}`}
+            slotAnchorHotspotId={slotAnchorHotspotId}
             debugLabel={`anomalies ${color} trace ${index + 1}`}
-            xPct={xPct}
-            yPct={yPct}
+            slotAnchorX={slotAnchorX}
+            slotAnchorY={slotAnchorY}
+            markerOffsetY={markerOffsetY}
             occupant={occ}
             playerColors={playerColors}
             testId={`alien-${alienIndex}-anomalies-marker-${color}-${index}`}
@@ -331,18 +357,22 @@ function ColumnMarkers({
 }
 
 function SlotMarker({
-  xPct,
-  yPct,
   hotspotId,
+  slotAnchorHotspotId,
   debugLabel,
+  slotAnchorX,
+  slotAnchorY,
+  markerOffsetY = 0,
   occupant,
   playerColors,
   testId,
 }: {
-  xPct: number;
-  yPct: number;
   hotspotId: string;
+  slotAnchorHotspotId: string;
   debugLabel: string;
+  slotAnchorX: number;
+  slotAnchorY: number;
+  markerOffsetY?: number;
   occupant: TTraceOccupant;
   playerColors: Record<string, string>;
   ringColor?: string;
@@ -360,19 +390,15 @@ function SlotMarker({
         PREVIEW_PLAYER_FALLBACK_COLORS[playerId] ??
         '#cbd5e1');
   return (
-    <HotspotAnchor
-      sceneId='alien-board'
+    <TraceSlotMarkerAnchor
       hotspotId={hotspotId}
-      baseWidth={ALIEN_BOARD_BASE_WIDTH}
-      baseHeight={ALIEN_BOARD_BASE_HEIGHT}
-      x={(ALIEN_BOARD_BASE_WIDTH * xPct) / 100}
-      y={(ALIEN_BOARD_BASE_HEIGHT * yPct) / 100}
-      width={TRACE_MARKER_SIZE}
-      height={TRACE_MARKER_SIZE}
+      slotAnchorHotspotId={slotAnchorHotspotId}
+      slotAnchorX={slotAnchorX}
+      slotAnchorY={slotAnchorY}
+      markerOffsetY={markerOffsetY}
       color={fill}
       debugLabel={debugLabel}
       debugInfo={playerId ?? 'neutral'}
-      className='rounded-full'
       title={playerId ?? 'neutral'}
       testId={testId}
     >
@@ -380,7 +406,7 @@ function SlotMarker({
         className='block h-full w-full rounded-full border border-black/50 shadow-[0_0_4px_rgba(0,0,0,0.6)]'
         style={{ backgroundColor: fill }}
       />
-    </HotspotAnchor>
+    </TraceSlotMarkerAnchor>
   );
 }
 

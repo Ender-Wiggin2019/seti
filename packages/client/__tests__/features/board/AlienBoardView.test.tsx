@@ -570,6 +570,122 @@ describe('AlienBoardView', () => {
     ).toHaveStyle(ALIEN_TRACE_SLOT_SIZE_STYLE);
   });
 
+  it('centers image trace markers on the calibrated printed trace slot anchor', () => {
+    useDebugStore.setState({
+      hotspotOverrides: {
+        'alien-board:image': {
+          'centaurians-0-red-trace-slot-0': {
+            x: 200,
+            y: 300,
+            width: 108,
+            height: 108,
+          },
+        },
+      },
+    });
+    const alien: IPublicAlienState = {
+      alienIndex: 0,
+      alienType: EAlienType.CENTAURIANS,
+      discovered: true,
+      discovery: { zones: [], overflowZones: [] },
+      cardZone: null,
+      board: {
+        type: 'centaurians',
+        messageMilestones: [],
+        pendingMessagesByPlayer: {},
+        rewardSlots: [],
+        traceSlots: [
+          slot('alien-0-centaurians-red-0', ETrace.PINK, {
+            occupants: [
+              { source: { playerId: 'p1' }, traceColor: ETrace.PINK },
+            ],
+          }),
+        ],
+      },
+    };
+
+    render(<AlienBoardView aliens={[alien]} playerColors={{ p1: '#f00' }} />);
+
+    const anchor = screen.getByTestId('alien-0-centaurians-slot-red-trace-0');
+    const marker = screen.getByTestId(
+      'alien-0-centaurians-marker-red-trace-0-0',
+    );
+
+    expect(anchor).toHaveStyle({
+      left: '25.740026%',
+      top: '21.201413%',
+    });
+    expect(marker).toHaveStyle({
+      left: '25.740026%',
+      top: '21.201413%',
+    });
+    expect(marker).toHaveAttribute(
+      'data-trace-anchor-hotspot-id',
+      'centaurians-0-red-trace-slot-0',
+    );
+  });
+
+  it('uses the calibrated printed trace anchor for Anomalies selectable hotspots', () => {
+    useDebugStore.setState({
+      hotspotOverrides: {
+        'alien-board:image': {
+          'anomalies-0-red-trace-slot-0': {
+            x: 222,
+            y: 333,
+            width: 108,
+            height: 108,
+          },
+        },
+      },
+    });
+    const redSlots = buildAnomalyColumnSlots(ETrace.PINK);
+    const pendingInput: IPlayerInputModel = {
+      inputId: 'place-red-trace',
+      type: EPlayerInputType.OPTION,
+      title: 'Place red trace',
+      options: [{ id: redSlots[0].slotId, label: 'Red slot 1' }],
+    };
+    const alien: IPublicAlienState = {
+      alienIndex: 0,
+      alienType: EAlienType.ANOMALIES,
+      discovered: true,
+      discovery: { zones: [], overflowZones: [] },
+      cardZone: null,
+      board: {
+        type: 'anomalies',
+        traceBoard: {
+          columns: {
+            [ETrace.PINK]: redSlots,
+            [ETrace.YELLOW]: buildAnomalyColumnSlots(ETrace.YELLOW),
+            [ETrace.BLUE]: buildAnomalyColumnSlots(ETrace.BLUE),
+          },
+        },
+      },
+    };
+
+    render(
+      <AlienBoardView
+        aliens={[alien]}
+        playerColors={{}}
+        pendingInput={pendingInput}
+      />,
+    );
+
+    const hotspot = screen.getByTestId('alien-0-anomalies-hotspot-red-trace-0');
+    expect(hotspot).toHaveAttribute(
+      'data-hotspot-id',
+      'anomalies-0-red-trace-slot-0',
+    );
+    expect(hotspot).toHaveAttribute(
+      'data-server-trace-slot-id',
+      redSlots[0].slotId,
+    );
+    expect(hotspot).toHaveStyle({
+      left: '28.571429%',
+      top: '23.533569%',
+    });
+  });
+
   it('makes every selectable image trace slot clickable, not only the bottom slot', () => {
     const onRespondInput = vi.fn<(response: IInputResponse) => void>();
     const traceSlots = [0, 1, 2, 3, 4].map((index) =>
