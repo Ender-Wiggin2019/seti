@@ -104,6 +104,17 @@ describe('wsClient', () => {
     expect(handleState).toHaveBeenCalledWith(secondState);
   });
 
+  it('emits a game:resync request for the current game', async () => {
+    const { wsClient } = await import('@/api/wsClient');
+
+    wsClient.connect('token-a');
+    wsClient.resync('game-1');
+
+    expect(createdSockets[0].emit).toHaveBeenCalledWith('game:resync', {
+      gameId: 'game-1',
+    });
+  });
+
   it('forwards socket connection failures through the game error channel', async () => {
     const { wsClient } = await import('@/api/wsClient');
     const handleError = vi.fn<(error: IErrorPayload) => void>();

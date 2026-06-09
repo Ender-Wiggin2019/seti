@@ -52,5 +52,23 @@ describe('layout helpers', () => {
         options: [EPlanet.MARS],
       }),
     ).toBe('planetBoard');
+
+    expect(
+      getInputFocusSection({
+        inputId: 'native-sector-input',
+        type: EPlayerInputType.SECTOR,
+        title: 'Choose sector',
+        options: [],
+      }),
+    ).toBe('solarSystem');
+
+    expect(
+      getInputFocusSection({
+        inputId: 'sector-option-input',
+        type: EPlayerInputType.OPTION,
+        title: 'Choose sector option',
+        options: [{ id: 'sector-0', label: 'Earth sector' }],
+      }),
+    ).toBe('solarSystem');
   });
 });

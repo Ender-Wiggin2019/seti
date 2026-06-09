@@ -1318,5 +1318,75 @@
       "width": 92,
       "height": 54
     }
+  },
+  "tech-board": {
+    "probe-tech-1": {
+      "x": 50.07960938329264,
+      "y": 50,
+      "width": 100,
+      "height": 100
+    }
+  },
+  "corporation-board:image": {
+    "cosmos-strategy-group-power": {
+      "x": 62.08145966448103,
+      "y": 398.4254345364944,
+      "width": 76,
+      "height": 76
+    },
+    "sentinel-probe-network-power": {
+      "x": 59.006600760323664,
+      "y": 374.9334853933582,
+      "width": 76,
+      "height": 76
+    },
+    "stratus-core-power": {
+      "x": 63.68574455915179,
+      "y": 363.8449425057716,
+      "width": 76,
+      "height": 76
+    },
+    "deep-sky-survey-power": {
+      "x": 62.98647419084821,
+      "y": 390.91416711063755,
+      "width": 76,
+      "height": 76
+    },
+    "fenwick-research-center-power": {
+      "x": 62.81170340401787,
+      "y": 396.3213942905346,
+      "width": 76,
+      "height": 76
+    },
+    "turing-systems-power": {
+      "x": 65.85572935267857,
+      "y": 414.3579087861836,
+      "width": 76,
+      "height": 76
+    },
+    "futurespan-institute-power": {
+      "x": 66.46251255580358,
+      "y": 411.73887397886693,
+      "width": 76,
+      "height": 76
+    },
+    "helion-assembly-power": {
+      "x": 69.27625669642858,
+      "y": 299.45700419552475,
+      "width": 76,
+      "height": 76
+    },
+    "mission-relay-power": {
+      "x": 65.43410770089285,
+      "y": 405.6962273574854,
+      "width": 76,
+      "height": 76
+    },
+    "orbital-dynamics-power": {
+      "x": 66.5551869419643,
+      "y": 411.31502341946367,
+      "width": 76,
+      "height": 76
+    }
   }
 }

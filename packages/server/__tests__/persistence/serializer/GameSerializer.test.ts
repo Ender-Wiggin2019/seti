@@ -43,6 +43,7 @@ import {
   ScanActionPool,
 } from '@/engine/effects/scan/ScanActionPool.js';
 import { Game } from '@/engine/Game.js';
+import { SelectOption } from '@/engine/input/SelectOption.js';
 import {
   projectGameState,
   serializeGame,
@@ -179,6 +180,27 @@ describe('GameSerializer', () => {
     expect(
       getAvailableFreeActions(publicState.players[0], publicState),
     ).not.toContain(EFreeAction.SPEND_SIGNAL_TOKEN);
+  });
+
+  it('projects pending input only to the waiting viewer', () => {
+    const game = createTestGame();
+    const prompt = new SelectOption(
+      game.players[0],
+      [{ id: 'confirm', label: 'Confirm', onSelect: () => undefined }],
+      'Confirm action',
+    );
+    game.players[0].waitingFor = prompt;
+
+    const ownView = projectGameState(game, 'p1');
+    const otherView = projectGameState(game, 'p2');
+
+    expect(ownView.pendingInput).toMatchObject({
+      inputId: prompt.inputId,
+      type: EPlayerInputType.OPTION,
+      title: 'Confirm action',
+      options: [{ id: 'confirm', label: 'Confirm' }],
+    });
+    expect(otherView.pendingInput).toBeNull();
   });
 
   it('serializes and projects setup-choice player fields only to the owning viewer', () => {

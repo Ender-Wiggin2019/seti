@@ -195,6 +195,44 @@ describe('GameGateway', () => {
     });
   });
 
+  describe('handleGameResync', () => {
+    it('re-emits projected state and pending input only to the requester', async () => {
+      const mockInput = {
+        toModel: vi.fn().mockReturnValue({ type: 'option', options: [] }),
+      };
+      const mockGame = {
+        players: [
+          { id: 'user-1', name: 'Alice', waitingFor: mockInput },
+          { id: 'user-2', name: 'Bob', waitingFor: null },
+        ],
+      };
+      const state = { gameId: 'game-1', pendingInput: { inputId: 'i1' } };
+      mockGameManager.getGame.mockResolvedValue(mockGame);
+      mockGameManager.getProjectedState.mockReturnValue(state);
+      const socket = createMockSocket();
+      socket.data.userId = 'user-1';
+
+      await gateway.handleGameResync(socket as never, { gameId: 'game-1' });
+
+      expect(mockGameManager.getGame).toHaveBeenCalledWith('game-1');
+      expect(mockGameManager.getProjectedState).toHaveBeenCalledWith(
+        'game-1',
+        'user-1',
+      );
+      expect(socket.emit).toHaveBeenCalledWith('game:state', {
+        gameState: state,
+      });
+      expect(socket.emit).toHaveBeenCalledWith('game:waiting', {
+        playerId: 'user-1',
+        input: { type: 'option', options: [] },
+      });
+      expect(
+        (gateway as unknown as { server: { to: ReturnType<typeof vi.fn> } })
+          .server.to,
+      ).not.toHaveBeenCalled();
+    });
+  });
+
   describe('handleGameAction', () => {
     it('broadcasts state to all players after action', async () => {
       const states = new Map([
