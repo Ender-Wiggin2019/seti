@@ -122,6 +122,7 @@ function createGameState(playerId: string, spaceId: string): IPublicGameState {
     goldScoringTiles: [],
     undoAllowed: false,
     canUndo: false,
+    pendingInput: null,
     turnIndex: 0,
   };
 }

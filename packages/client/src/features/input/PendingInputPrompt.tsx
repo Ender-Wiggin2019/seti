@@ -248,6 +248,9 @@ export function PendingInputPrompt({
                         'Select a highlighted target on the game board.',
                     }))
               }
+              model={model}
+              onSubmit={onSubmit}
+              techBoard={techBoard}
               doneLabel={boardHint?.doneLabel}
               onDone={boardHint?.onDone}
             />,
@@ -261,15 +264,22 @@ export function PendingInputPrompt({
 function InGameInputHint({
   title,
   description,
+  model,
+  onSubmit,
+  techBoard,
   doneLabel,
   onDone,
 }: {
   title: string;
   description: string;
+  model: IPlayerInputModel;
+  onSubmit: (response: IInputResponse) => void;
+  techBoard?: IPublicTechBoard;
   doneLabel?: string;
   onDone?: () => void;
 }): React.JSX.Element {
   const { t } = useTranslation('common');
+  const [showList, setShowList] = useState(false);
 
   return (
     <aside
@@ -299,6 +309,40 @@ function InGameInputHint({
           <p className='mt-1 text-xs leading-5 text-text-300'>{description}</p>
         </div>
       </div>
+
+      {/*
+        Always-available fallback: if the highlighted board target can't be
+        found or reached, the player can still resolve the input from a
+        concrete list of options. This guarantees there is never a "waiting"
+        state with no way to act.
+      */}
+      <button
+        type='button'
+        className='mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-text-400 underline-offset-2 hover:text-text-100 hover:underline'
+        data-testid='pending-input-ingame-fallback-toggle'
+        onClick={() => setShowList((open) => !open)}
+      >
+        {showList
+          ? t('client.game_layout.hide_options_list', {
+              defaultValue: 'Hide list',
+            })
+          : t('client.game_layout.show_options_list', {
+              defaultValue: "Can't find it? Choose from list",
+            })}
+      </button>
+      {showList ? (
+        <div
+          className='mt-2 max-h-[40vh] overflow-y-auto'
+          data-testid='pending-input-ingame-fallback'
+        >
+          <InputRenderer
+            model={model}
+            onSubmit={onSubmit}
+            techBoard={techBoard}
+          />
+        </div>
+      ) : null}
+
       {doneLabel && onDone ? (
         <Button
           className='mt-3 h-8 px-3 font-mono text-[10px] uppercase tracking-[0.14em]'

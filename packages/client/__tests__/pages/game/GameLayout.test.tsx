@@ -49,6 +49,7 @@ function createMockContext(overrides?: Partial<IGameContext>): IGameContext {
     sendFreeAction: vi.fn(),
     sendInput: vi.fn(),
     requestUndo: vi.fn(),
+    resync: vi.fn(),
     sendEndTurn: vi.fn(),
     ...overrides,
   };

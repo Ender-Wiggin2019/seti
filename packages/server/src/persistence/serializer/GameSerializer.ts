@@ -1201,6 +1201,12 @@ export function projectGameState(
     game.activePlayer.id === viewerId &&
     Boolean(options.hasTurnCheckpoint);
 
+  // Authoritative pending input for this viewer. The client derives its
+  // input prompt from this rather than guessing from phase, so a dropped
+  // or out-of-order `game:waiting` event can never leave the UI stuck.
+  const viewer = game.players.find((player) => player.id === viewerId);
+  const pendingInput = viewer?.waitingFor?.toModel() ?? null;
+
   return {
     gameId: game.id,
     isSoloMode: game.options.isSoloMode,
@@ -1212,6 +1218,7 @@ export function projectGameState(
     startPlayerId: game.startPlayer.id,
     undoAllowed,
     canUndo,
+    pendingInput,
     ...(game.options.spaceAgencyOptions !== undefined
       ? { spaceAgencyOptions: { ...game.options.spaceAgencyOptions } }
       : {}),

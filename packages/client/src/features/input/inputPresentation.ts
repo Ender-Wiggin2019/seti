@@ -91,7 +91,10 @@ export function isAlienTraceSlotOptionInput(
 export function shouldRenderPendingInputPrompt(
   model: IPlayerInputModel | null,
 ): boolean {
-  return model !== null && model.type !== EPlayerInputType.OR;
+  // Render a prompt for any pending input. (OR inputs were previously
+  // excluded, which left them with no interactive widget at all — a
+  // guaranteed deadlock. They present as a dialog via OrOptionsInput.)
+  return model !== null;
 }
 
 export function usesDialogPresentation(

@@ -171,6 +171,35 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
+  @SubscribeMessage('game:resync')
+  async handleGameResync(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { gameId: string },
+  ): Promise<void> {
+    const { gameId } = data;
+    const userId = getUserId(client);
+
+    try {
+      // Re-emit authoritative state (and any pending input) to the
+      // requesting socket only. No room-level side effects — this is a
+      // pure recovery path for a client that believes it is stuck.
+      const game = await this.gameManager.getGame(gameId);
+
+      const state = this.gameManager.getProjectedState(gameId, userId);
+      if (state) {
+        client.emit('game:state', { gameState: state });
+      }
+
+      const player = game.players.find((p) => p.id === userId);
+      if (player?.waitingFor) {
+        const input = player.waitingFor.toModel();
+        client.emit('game:waiting', { playerId: userId, input });
+      }
+    } catch (err) {
+      this.emitError(client, err);
+    }
+  }
+
   @SubscribeMessage('game:action')
   async handleGameAction(
     @ConnectedSocket() client: Socket,

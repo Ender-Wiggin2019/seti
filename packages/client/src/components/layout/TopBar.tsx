@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { HeaderControls } from '@/components/layout/HeaderControls';
+import { Button } from '@/components/ui/button';
 import { getPendingInputTitle } from '@/features/input/PendingInputPrompt';
 import { cn } from '@/lib/cn';
 import { useGameContext } from '@/pages/game/GameContext';
@@ -17,7 +18,14 @@ import { EPhase } from '@/types/re-exports';
  */
 export function TopBar(): React.JSX.Element {
   const { t } = useTranslation('common');
-  const { gameState, isMyTurn, isSpectator, pendingInput } = useGameContext();
+  const {
+    gameState,
+    isMyTurn,
+    isSpectator,
+    pendingInput,
+    requestUndo,
+    resync,
+  } = useGameContext();
 
   const currentPlayerName = gameState?.players.find(
     (p) => p.playerId === gameState.currentPlayerId,
@@ -27,6 +35,7 @@ export function TopBar(): React.JSX.Element {
   const inputTitle = pendingInput
     ? getPendingInputTitle(t, pendingInput)
     : null;
+  const canUndo = gameState?.canUndo ?? false;
 
   return (
     <header
@@ -83,6 +92,11 @@ export function TopBar(): React.JSX.Element {
               <>
                 <Divider />
                 <InputStatusChip title={inputTitle} />
+                <InputRecoveryControls
+                  canUndo={canUndo}
+                  onResync={resync}
+                  onUndo={requestUndo}
+                />
               </>
             ) : null}
           </>
@@ -176,6 +190,64 @@ function PhaseChip({ label, active }: IPhaseChipProps): React.JSX.Element {
     >
       {label}
     </span>
+  );
+}
+
+interface IInputRecoveryControlsProps {
+  canUndo: boolean;
+  onResync: () => void;
+  onUndo: () => void;
+}
+
+/**
+ * InputRecoveryControls — an always-reachable escape hatch shown next to
+ * the "Input Required" chip whenever the local player has a pending input.
+ * The TopBar is never covered by the input prompt, so these stay clickable
+ * even if the prompt itself fails to surface an interactive target.
+ *
+ *   • Resync  — re-pull authoritative state from the server (no game
+ *               mutation); recovers a client that dropped/desynced its
+ *               input prompt.
+ *   • Undo    — roll the turn back to its start (before the action that
+ *               spawned the input). Only available to the active player
+ *               while the turn is unlocked, so it's hidden otherwise.
+ */
+function InputRecoveryControls({
+  canUndo,
+  onResync,
+  onUndo,
+}: IInputRecoveryControlsProps): React.JSX.Element {
+  const { t } = useTranslation('common');
+
+  return (
+    <div className='flex items-center gap-1' data-testid='input-recovery'>
+      <Button
+        variant='ghost'
+        size='sm'
+        className='h-6 px-2 font-mono text-[10px] uppercase tracking-microlabel'
+        data-testid='input-recovery-resync'
+        onClick={onResync}
+        title={t('client.game_layout.resync_hint', {
+          defaultValue: 'Re-sync game state if the prompt is stuck',
+        })}
+      >
+        {t('client.game_layout.resync', { defaultValue: 'Resync' })}
+      </Button>
+      {canUndo ? (
+        <Button
+          variant='ghost'
+          size='sm'
+          className='h-6 px-2 font-mono text-[10px] uppercase tracking-microlabel'
+          data-testid='input-recovery-undo'
+          onClick={onUndo}
+          title={t('client.game_layout.undo_to_turn_start', {
+            defaultValue: 'Undo back to the start of your turn',
+          })}
+        >
+          {t('client.game_layout.undo', { defaultValue: 'Undo' })}
+        </Button>
+      ) : null}
+    </div>
   );
 }
 

@@ -38,7 +38,10 @@ import {
 } from '@seti/common/types/protocol/enums';
 import type { TGameEvent } from '@seti/common/types/protocol/events';
 import type { ISpaceAgencyOptions } from '@seti/common/types/protocol/options';
-import type { ISetupChoiceContext } from '@seti/common/types/protocol/playerInput';
+import type {
+  IPlayerInputModel,
+  ISetupChoiceContext,
+} from '@seti/common/types/protocol/playerInput';
 import type { IPublicRivalState } from '@seti/common/types/protocol/solo';
 import type { ETechId, ITechBonusToken } from '@seti/common/types/tech';
 
@@ -583,6 +586,14 @@ export interface IPublicGameState {
    * when no turn-start checkpoint is available.
    */
   canUndo: boolean;
+  /**
+   * The pending input the current viewer must resolve, if any. This is
+   * the authoritative source of truth for "am I being asked to act?" —
+   * the client derives its input prompt from this field rather than
+   * reconciling the transient `game:waiting` socket event against the
+   * game phase. Always null for viewers with no pending input.
+   */
+  pendingInput: IPlayerInputModel | null;
   /** Space Agency module options selected for this game. */
   spaceAgencyOptions?: ISpaceAgencyOptions;
   /** True while the active player is at the scan sub-action pool. */

@@ -782,6 +782,7 @@ function createGameState(): IPublicGameState {
     rival: createRival(),
     undoAllowed: false,
     canUndo: false,
+    pendingInput: null,
     turnIndex: 0,
   };
 }

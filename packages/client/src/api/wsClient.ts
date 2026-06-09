@@ -133,6 +133,10 @@ class WsClient {
     this.socket?.emit('game:undo', { gameId });
   }
 
+  resync(gameId: string): void {
+    this.socket?.emit('game:resync', { gameId });
+  }
+
   onState(cb: (state: IPublicGameState) => void): () => void {
     return this.subscribe('game:state', this.stateHandlers, (data) =>
       cb(data.gameState),

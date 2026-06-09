@@ -1015,6 +1015,7 @@ function createDebugGameState(
     goldScoringTiles: [],
     undoAllowed: false,
     canUndo: false,
+    pendingInput: null,
     turnIndex: 0,
   };
 }
@@ -1637,6 +1638,7 @@ export function GameDebugPage(): React.JSX.Element {
       sendEndTurn: handleEndTurn,
       sendInput: handleInput,
       requestUndo: () => undefined,
+      resync: () => undefined,
     }),
     [
       effectiveGameState,

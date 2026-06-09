@@ -10,6 +10,7 @@ interface IUseGameActionsReturn {
   sendFreeAction: (gameId: string, action: IFreeActionRequest) => void;
   sendEndTurn: (gameId: string) => void;
   requestUndo: (gameId: string) => void;
+  resync: (gameId: string) => void;
 }
 
 export function useGameActions(): IUseGameActionsReturn {
@@ -35,5 +36,9 @@ export function useGameActions(): IUseGameActionsReturn {
     wsClient.instance?.emit('game:undo', { gameId });
   }, []);
 
-  return { sendAction, sendFreeAction, sendEndTurn, requestUndo };
+  const resync = useCallback((gameId: string) => {
+    wsClient.resync(gameId);
+  }, []);
+
+  return { sendAction, sendFreeAction, sendEndTurn, requestUndo, resync };
 }

@@ -37,11 +37,22 @@ export function isPlanetaryBoardInput(
   );
 }
 
+export function isSolarSystemInput(model: IPlayerInputModel | null): boolean {
+  if (!model) return false;
+  if (model.type === EPlayerInputType.SECTOR) return true;
+  if (model.type !== EPlayerInputType.OPTION) return false;
+  return (
+    model.options.length > 0 &&
+    model.options.every((option) => /^sector-\d+$/.test(option.id))
+  );
+}
+
 export function getInputFocusSection(
   model: IPlayerInputModel | null,
 ): SectionId | null {
   if (isAlienBoardInput(model)) return 'alienBoard';
   if (isPlanetaryBoardInput(model)) return 'planetBoard';
+  if (isSolarSystemInput(model)) return 'solarSystem';
   return null;
 }
 

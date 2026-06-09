@@ -133,6 +133,7 @@ function createGameState(
     maxRounds: overrides?.maxRounds ?? 5,
     undoAllowed: overrides?.undoAllowed ?? false,
     canUndo: overrides?.canUndo ?? false,
+    pendingInput: overrides?.pendingInput ?? null,
     turnIndex: overrides?.turnIndex ?? 0,
   };
 }

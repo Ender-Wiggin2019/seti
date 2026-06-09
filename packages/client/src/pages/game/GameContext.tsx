@@ -37,6 +37,7 @@ export interface IGameContext {
   sendEndTurn: () => void;
   sendInput: (response: IInputResponse) => void;
   requestUndo: () => void;
+  resync: () => void;
 }
 
 const GameCtx = createContext<IGameContext | null>(null);
@@ -66,18 +67,21 @@ export function GameContextProvider({
 }: IGameContextProviderProps): React.JSX.Element {
   const { isConnected } = useSocket();
   const gameState = useGameState();
-  const { pendingInput, waitingPlayerId, respond } = usePlayerInput();
+  const myPlayerId = useAuthStore((s) => s.user?.id ?? '');
+  const { pendingInput, waitingPlayerId, respond } = usePlayerInput(
+    gameState,
+    myPlayerId,
+  );
   const {
     sendAction: rawSendAction,
     sendFreeAction: rawSendFreeAction,
     sendEndTurn: rawSendEndTurn,
     requestUndo: rawRequestUndo,
+    resync: rawResync,
   } = useGameActions();
   const events = useGameEvents(gameState?.recentEvents ?? []);
   useGameError();
   useReconnection(gameId);
-
-  const myPlayerId = useAuthStore((s) => s.user?.id ?? '');
 
   useEffect(() => {
     if (isConnected) {
@@ -115,6 +119,8 @@ export function GameContextProvider({
     [gameId, rawRequestUndo],
   );
 
+  const resync = useCallback(() => rawResync(gameId), [gameId, rawResync]);
+
   const value = useMemo<IGameContext>(
     () => ({
       gameState,
@@ -129,6 +135,7 @@ export function GameContextProvider({
       sendEndTurn,
       sendInput,
       requestUndo,
+      resync,
     }),
     [
       gameState,
@@ -144,6 +151,7 @@ export function GameContextProvider({
       sendEndTurn,
       sendInput,
       requestUndo,
+      resync,
     ],
   );
 
