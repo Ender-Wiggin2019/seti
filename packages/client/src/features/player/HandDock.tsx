@@ -91,7 +91,7 @@ export function HandDock({
 
   return (
     <div
-      className='relative shrink-0 border-t border-[color:var(--metal-edge-soft)] bg-background-950/85 backdrop-blur-sm'
+      className='relative flex h-full min-h-0 shrink-0 flex-col overflow-hidden border-t border-[color:var(--metal-edge-soft)] bg-background-950/85 backdrop-blur-sm'
       data-testid='hand-dock'
       data-expanded={effectiveExpanded}
     >
@@ -105,13 +105,13 @@ export function HandDock({
       <div
         id='hand-dock-content'
         className={cn(
-          'grid transition-[grid-template-rows] duration-300 ease-out',
+          'grid min-h-0 flex-1 transition-[grid-template-rows] duration-300 ease-out',
           effectiveExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
         )}
         aria-hidden={!effectiveExpanded}
       >
         <div className='min-h-0 overflow-hidden'>
-          <div className='px-4 pb-2 pt-0.5'>
+          <div className='flex h-full min-h-0 flex-col px-4 pb-2 pt-0.5'>
             <HandView
               cards={cards}
               handSize={handSize}

@@ -124,7 +124,7 @@ export function HandView({
         className={cn(
           'overflow-auto',
           isDock
-            ? 'flex gap-2 pb-1'
+            ? 'flex min-h-0 flex-1 gap-2 pb-1'
             : 'grid max-h-[150px] grid-cols-2 gap-1.5 lg:grid-cols-3',
         )}
       >
@@ -219,7 +219,10 @@ export function HandView({
     // grid and the optional selection footer so the dock can own its own
     // chrome (toggle, count, mode tags).
     return (
-      <div className='flex flex-col gap-2' data-testid='hand-view'>
+      <div
+        className='flex h-full min-h-0 flex-col gap-2'
+        data-testid='hand-view'
+      >
         {cardGrid}
         {selectionFooter}
       </div>

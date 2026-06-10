@@ -57,21 +57,30 @@ export function MobileShell(): React.JSX.Element {
     );
 
   return (
-    <div className='min-h-0 flex-1 overflow-y-auto p-3'>
-      <div className='flex flex-col gap-3'>
+    <div
+      className='min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-3'
+      data-testid='mobile-layout-scroll'
+    >
+      <div className='flex min-w-0 flex-col gap-3'>
         {ordered.map((section) => {
           const def = getSection(section.id);
           if (!def) return null;
           const Body = def.Component;
           return (
-            <SectionFrame
+            <div
               key={section.id}
-              section={section}
-              titleKey={def.titleKey}
-              showHeader={def.showHeader ?? false}
+              className='min-w-0 overflow-auto'
+              data-testid={`mobile-section-scroll-${section.id}`}
             >
-              <Body section={section} />
-            </SectionFrame>
+              <SectionFrame
+                section={section}
+                titleKey={def.titleKey}
+                showHeader={def.showHeader ?? false}
+                className='min-w-full'
+              >
+                <Body section={section} />
+              </SectionFrame>
+            </div>
           );
         })}
       </div>

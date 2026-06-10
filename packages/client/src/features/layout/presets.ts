@@ -72,7 +72,7 @@ export const tabPreset: LayoutConfig = {
     {
       id: 'hand',
       pin: 'fixed-bottom',
-      size: { height: '120px' },
+      size: { height: '320px' },
       zIndex: GAME_Z_INDEX.hand,
     },
     // section bodies — all live in their dedicated tab's middle column
@@ -150,7 +150,7 @@ export const waterfallPreset: LayoutConfig = {
     {
       id: 'hand',
       pin: 'fixed-bottom',
-      size: { height: '120px' },
+      size: { height: '320px' },
       zIndex: GAME_Z_INDEX.hand,
     },
     // left column

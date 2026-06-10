@@ -39,7 +39,7 @@ export function EventSidebarDrawer({
       >
         {open
           ? t('client.common.close', { defaultValue: 'Close' })
-          : t('client.event_log.title', { defaultValue: 'Event Log' })}
+          : t('client.game_layout.intel', { defaultValue: 'Intel' })}
       </button>
 
       {open ? (

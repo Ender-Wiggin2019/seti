@@ -275,9 +275,7 @@ describe('layout V2 regressions', () => {
 
     fireEvent.click(screen.getByRole('tab', { name: 'Tech' }));
 
-    expect(
-      screen.getByRole('button', { name: /event log/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /intel/i })).toBeInTheDocument();
   });
 
   it('jumps to the card tab for buy-card and confirms row purchases there', async () => {

@@ -64,7 +64,9 @@ export function HeaderControls({
       <Select value={language} onValueChange={handleLanguageChange}>
         <SelectTrigger
           className={cn(
-            isCompact ? 'h-7 w-[110px] text-xs' : 'h-8 w-[118px] sm:w-[130px]',
+            isCompact
+              ? 'h-7 w-[92px] text-xs sm:w-[110px]'
+              : 'h-8 w-[118px] sm:w-[130px]',
           )}
           aria-label={t('home.language')}
           data-testid='header-language-select'
@@ -85,7 +87,9 @@ export function HeaderControls({
           isCompact ? 'text-[10px]' : 'text-[11px]',
         )}
       >
-        <span>{t('home.text_mode', { defaultValue: 'Text view' })}</span>
+        <span className={cn(isCompact ? 'hidden lg:inline' : undefined)}>
+          {t('home.text_mode', { defaultValue: 'Text view' })}
+        </span>
         <Switch
           checked={textMode}
           onCheckedChange={setTextMode}
@@ -101,7 +105,9 @@ export function HeaderControls({
           isCompact ? 'text-[10px]' : 'text-[11px]',
         )}
       >
-        <span>{t('home.hotspot_debug', { defaultValue: 'Hotspots' })}</span>
+        <span className={cn(isCompact ? 'hidden lg:inline' : undefined)}>
+          {t('home.hotspot_debug', { defaultValue: 'Hotspots' })}
+        </span>
         <Switch
           checked={hotspotDebug}
           onCheckedChange={setHotspotDebug}

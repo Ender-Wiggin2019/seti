@@ -130,13 +130,13 @@ function FixedBottomResizeHandle({
   ): void => {
     event.preventDefault();
     const startY = event.clientY;
-    const startHeight = parsePx(currentHeight) ?? 120;
+    const startHeight = parsePx(currentHeight) ?? 320;
 
     const handlePointerMove = (moveEvent: PointerEvent): void => {
       const nextHeight = clamp(
         startHeight + startY - moveEvent.clientY,
-        72,
-        260,
+        120,
+        360,
       );
       onResize(nextHeight);
     };

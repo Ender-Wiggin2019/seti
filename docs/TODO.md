@@ -1,5 +1,39 @@
 # TODO
 
+## Client Layout V2 Interaction Fix Plan
+
+### Assumptions
+
+- Scope stays in `packages/client`; game rules, server state, and common protocol do not change.
+- `GameLayoutV2` remains the only runtime layout path; this pass fixes layout behavior, not the legacy removal itself.
+- The hand dock should remain persistent, but must not make underlying panels or its own controls unreachable.
+
+### Plan
+
+- [x] Add focused failing tests for the current layout interaction regressions.
+  - 验证: tests fail for fixed-bottom hand reservation, waterfall section clipping, and drawer label/content semantics.
+- [x] Fix bottom hand reservation and hand dock viewport fit with minimal layout changes.
+  - 验证: desktop and mobile `getBoundingClientRect()` show main content is not hidden behind the fixed hand dock.
+- [x] Fix Waterfall panel containment and mobile overflow behavior.
+  - 验证: waterfall sections do not overlap and mobile content can scroll to lower sections.
+- [x] Fix right sidebar trigger copy so it matches the actual side panel content.
+  - 验证: button text and accessible sidebar content no longer conflict.
+- [x] Run focused tests, typecheck, and real browser layout smoke.
+  - 验证: record exact commands and residual risks in this TODO review.
+
+### Review
+
+- 修复：fixed-bottom hand 默认高度从 `120px` 调整为 `320px`，`LayoutShell` 根据可见 fixed-bottom section 给主内容区域预留底部空间；`HandDock`/`HandView` 改为在固定层内 flex 填充和内部滚动，避免卡牌与收起按钮跑出视口。
+- 修复：Tab/Waterfall section panel body 统一变成 `h-full min-h-0 overflow-auto`，ResizablePanel 本身裁剪内容；Waterfall 同列 section 不再被超高内容互相覆盖。
+- 修复：MobileShell 新增明确的 `mobile-layout-scroll` 纵向滚动容器，每个 section 有自己的横向滚动壳，太阳系固定宽画布不再撑开整页；TopBar 在窄屏隐藏低优先级文字，header controls 保持在视口内。
+- 修复：右侧 drawer 关闭态按钮从 `Event Log` 改为 `Intel` / `情报`，匹配实际包含 event log + opponent/sidebar intel 的内容。
+- 验证通过：先跑红测 `pnpm --filter @seti/client test -- GameLayout.test.tsx -t "reserves space|bounds section|Sidebar"` 失败于缺 reserve/body/Intel；实现后该聚焦集合通过。
+- 验证通过：`pnpm --filter @seti/client test -- GameLayout.test.tsx layoutV2Regression.test.tsx layoutHelpers.test.ts UserLayoutSettingsDialog.test.tsx`，4 files / 76 tests passed。
+- 验证通过：`pnpm --filter @seti/client typecheck`。
+- 验证通过：touched-file `pnpm exec biome check ...`，13 files passed。
+- 浏览器验证：真实 auth/lobby/start 流程创建并进入 `/game/cbe78c56-912c-433a-b97a-d6ed7c6145c4`；desktop Tab 下 solar scroll body bottom `564`，hand starts `576`，hand toggle bottom `852` within `896` viewport；Waterfall panel body overlap count `0`；mobile 390px 下 topbar/header controls right edge `382 <= 390`，`mobile-layout-scroll` scrollHeight `13842` and can scroll to bottom，solar section scrollWidth `708` contained inside 366px section scroller。
+- 剩余风险：移动端 hand 仍是横向卡牌条，第三张以后会在 hand 内部横向滚动；这是当前 hand dock 交互模型，不再扩大 document 宽度或遮挡主内容滚动。
+
 ## Game Layout V2 Legacy Removal Plan
 
 ### Assumptions

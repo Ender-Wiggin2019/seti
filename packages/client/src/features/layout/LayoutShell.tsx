@@ -22,6 +22,7 @@ const GAME_SHELL_SCENE_IMAGE = '/assets/seti/sprites/terrain_02_02.webp';
 export function LayoutShell(): React.JSX.Element {
   const { layout, isMobile } = useLayout();
   const toggleDevPanel = useLayoutStore((s) => s.toggleDevPanel);
+  const fixedBottomReserve = getFixedBottomReserve(layout.sections);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
@@ -56,7 +57,13 @@ export function LayoutShell(): React.JSX.Element {
 
       <PinnedLayer variant='sticky-top' />
 
-      <div className='relative flex min-h-0 flex-1'>
+      <div
+        className='relative flex min-h-0 flex-1'
+        data-testid='layout-content-region'
+        style={
+          fixedBottomReserve ? { paddingBottom: fixedBottomReserve } : undefined
+        }
+      >
         <div className='flex min-w-0 flex-1 flex-col'>
           {isMobile ? (
             <MobileShell />
@@ -79,4 +86,26 @@ export function LayoutShell(): React.JSX.Element {
 
 export function isLayoutDevPanelShortcut(e: KeyboardEvent): boolean {
   return (e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'l';
+}
+
+export function getFixedBottomReserve(
+  sections: Array<{
+    pin?: string;
+    visible?: boolean;
+    size?: { height?: string };
+  }>,
+): string | undefined {
+  const total = sections.reduce((sum, section) => {
+    if (!section.visible || section.pin !== 'fixed-bottom') return sum;
+    const height = parsePx(section.size?.height);
+    return height === null ? sum : sum + height;
+  }, 0);
+
+  return total > 0 ? `${total}px` : undefined;
+}
+
+function parsePx(value: string | undefined): number | null {
+  if (!value?.endsWith('px')) return null;
+  const parsed = Number(value.slice(0, -2));
+  return Number.isFinite(parsed) ? parsed : null;
 }

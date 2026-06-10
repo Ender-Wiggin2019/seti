@@ -158,9 +158,14 @@ function WaterfallSectionPanel({
         id={section.id}
         defaultSize={DEFAULT_SECTION_SIZE[section.id] ?? 30}
         minSize={section.id === 'solarSystem' ? 30 : 12}
-        className='min-h-0 overflow-y-auto'
+        className='min-h-0 overflow-hidden'
       >
-        <div className='min-h-full pr-1'>{renderSectionBody(section)}</div>
+        <div
+          className='h-full min-h-0 overflow-auto pr-1'
+          data-testid={`layout-panel-body-${section.id}`}
+        >
+          {renderSectionBody(section)}
+        </div>
       </ResizablePanel>
       {showHandle ? (
         <ResizableHandle handleOrientation='horizontal' withHandle />

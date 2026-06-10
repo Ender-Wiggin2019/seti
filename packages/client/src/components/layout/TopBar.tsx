@@ -40,7 +40,7 @@ export function TopBar(): React.JSX.Element {
   return (
     <header
       className={cn(
-        'relative flex h-12 shrink-0 items-center justify-between px-4',
+        'relative flex h-12 shrink-0 items-center justify-between gap-2 overflow-hidden px-2 sm:px-4',
         'border-b border-[color:var(--metal-edge-soft)]',
         'bg-[var(--surface-deep)]/74 backdrop-blur-md',
         'shadow-[inset_0_1px_0_oklch(0.78_0.04_240/0.08)]',
@@ -50,11 +50,11 @@ export function TopBar(): React.JSX.Element {
         aria-hidden
         className='pointer-events-none absolute inset-x-0 bottom-0 h-px bg-[color:var(--metal-edge-soft)]'
       />
-      <div className='flex min-w-0 items-center gap-4'>
+      <div className='flex min-w-0 flex-1 items-center gap-2 sm:gap-4'>
         <Link
           to='/lobby'
           className={cn(
-            'flex items-center gap-1.5 rounded-[4px] border border-[color:var(--metal-edge-soft)] px-2.5 py-1.5',
+            'flex shrink-0 items-center gap-1.5 rounded-[4px] border border-[color:var(--metal-edge-soft)] px-2.5 py-1.5',
             'font-mono text-[0.6875rem] uppercase tracking-microlabel',
             'bg-[var(--surface-instrument)]/68 text-text-500 transition-colors hover:text-text-100',
           )}
@@ -72,7 +72,7 @@ export function TopBar(): React.JSX.Element {
           >
             <path d='M15 18l-6-6 6-6' />
           </svg>
-          {t('client.top_bar.exit')}
+          <span className='hidden sm:inline'>{t('client.top_bar.exit')}</span>
         </Link>
 
         <Divider />
@@ -103,9 +103,9 @@ export function TopBar(): React.JSX.Element {
         )}
       </div>
 
-      <div className='flex min-w-0 items-center gap-4'>
+      <div className='ml-auto flex min-w-0 shrink-0 items-center gap-2 sm:gap-4'>
         {gameState && currentPlayerName && (
-          <div className='flex items-center gap-2.5'>
+          <div className='hidden items-center gap-2.5 lg:flex'>
             <span className='font-mono text-[0.6875rem] uppercase tracking-microlabel text-text-500'>
               {t('client.top_bar.current')}
             </span>
@@ -135,7 +135,7 @@ export function TopBar(): React.JSX.Element {
         )}
 
         {gameState && (
-          <span className='font-mono text-[10px] text-text-500 tracking-readout'>
+          <span className='hidden font-mono text-[10px] text-text-500 tracking-readout md:inline'>
             {gameState.gameId.slice(0, 8)}
           </span>
         )}
@@ -150,7 +150,10 @@ export function TopBar(): React.JSX.Element {
 
 function Divider(): React.JSX.Element {
   return (
-    <span aria-hidden className='h-4 w-px bg-[color:var(--metal-edge-soft)]' />
+    <span
+      aria-hidden
+      className='hidden h-4 w-px bg-[color:var(--metal-edge-soft)] sm:block'
+    />
   );
 }
 
@@ -161,8 +164,8 @@ interface IReadoutProps {
 
 function Readout({ label, value }: IReadoutProps): React.JSX.Element {
   return (
-    <div className='flex items-center gap-2'>
-      <span className='font-mono text-[0.6875rem] uppercase tracking-microlabel text-text-500'>
+    <div className='flex shrink-0 items-center gap-1.5 sm:gap-2'>
+      <span className='hidden font-mono text-[0.6875rem] uppercase tracking-microlabel text-text-500 sm:inline'>
         {label}
       </span>
       <span className='font-mono text-sm font-semibold text-text-100 tabular-nums tracking-readout'>
@@ -181,7 +184,7 @@ function PhaseChip({ label, active }: IPhaseChipProps): React.JSX.Element {
   return (
     <span
       className={cn(
-        'rounded-[3px] px-2 py-0.5',
+        'min-w-0 truncate rounded-[3px] px-2 py-0.5',
         'font-mono text-[0.6875rem] font-medium uppercase tracking-microlabel',
         active
           ? 'bg-[oklch(0.30_0.08_240/0.5)] text-[oklch(0.88_0.10_240)] border border-[oklch(0.50_0.10_240/0.6)]'

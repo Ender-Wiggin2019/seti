@@ -155,6 +155,35 @@ describe('GameLayoutV2', () => {
     ).toBeTruthy();
   });
 
+  it('reserves space above the fixed bottom hand dock', async () => {
+    await renderLayout();
+
+    expect(screen.getByTestId('layout-content-region')).toHaveStyle({
+      paddingBottom: '320px',
+    });
+    expect(screen.getByTestId('hand-dock')).toHaveClass(
+      'flex',
+      'h-full',
+      'min-h-0',
+      'overflow-hidden',
+    );
+  });
+
+  it('bounds section panel bodies inside their scroll panels', async () => {
+    await renderLayout();
+
+    expect(screen.getByTestId('layout-panel-body-solarSystem')).toHaveClass(
+      'h-full',
+      'min-h-0',
+      'overflow-auto',
+    );
+    expect(screen.getByTestId('layout-panel-body-playerBoard')).toHaveClass(
+      'h-full',
+      'min-h-0',
+      'overflow-auto',
+    );
+  });
+
   it('renders TopBar with round and phase info', async () => {
     await renderLayout();
 
@@ -1719,7 +1748,7 @@ describe('GameLayoutV2', () => {
   describe('Sidebar', () => {
     it('opens right drawer and displays opponents in sidebar', async () => {
       await renderLayout();
-      fireEvent.click(screen.getByRole('button', { name: 'Event Log' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Intel' }));
 
       expect(screen.getByText('Pilot')).toBeInTheDocument();
     });
@@ -1727,9 +1756,7 @@ describe('GameLayoutV2', () => {
     it('shows event log section after opening drawer', async () => {
       await renderLayout();
       const drawer = screen.getByTestId('event-sidebar-drawer');
-      fireEvent.click(
-        within(drawer).getByRole('button', { name: 'Event Log' }),
-      );
+      fireEvent.click(within(drawer).getByRole('button', { name: 'Intel' }));
 
       expect(within(drawer).getByTestId('event-log')).toBeInTheDocument();
     });
@@ -1751,7 +1778,7 @@ describe('GameLayoutV2', () => {
       fireEvent.click(screen.getByRole('tab', { name: 'Tech' }));
 
       expect(
-        screen.getByRole('button', { name: /event log/i }),
+        screen.getByRole('button', { name: /intel/i }),
       ).toBeInTheDocument();
     });
 
@@ -1770,9 +1797,7 @@ describe('GameLayoutV2', () => {
       await renderLayout();
 
       const drawer = screen.getByTestId('event-sidebar-drawer');
-      fireEvent.click(
-        within(drawer).getByRole('button', { name: 'Event Log' }),
-      );
+      fireEvent.click(within(drawer).getByRole('button', { name: 'Intel' }));
 
       expect(
         within(drawer)
