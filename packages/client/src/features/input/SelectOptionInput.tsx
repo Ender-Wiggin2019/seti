@@ -1,3 +1,7 @@
+import {
+  getMascamitesSampleToken,
+  type TMascamitesSampleTokenId,
+} from '@seti/common/constant/mascamites';
 import { ALL_CARDS } from '@seti/common/data/index';
 import { ORGANIZATIONS_BY_ID } from '@seti/common/data/organizations';
 import { PRELUDE_CARDS_BY_ID } from '@seti/common/data/preludeCards';
@@ -9,6 +13,7 @@ import type {
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { MascamitesSampleToken } from '@/features/board/MascamitesSampleToken';
 import { CardRender } from '@/features/cards/CardRender';
 import { OrganizationCard } from '@/features/player/OrganizationCard';
 import { QuickStartCardPreview } from '@/features/setup/QuickStartCardPreview';
@@ -58,6 +63,20 @@ function getReferencedCard(option: {
   return CARD_BY_ID.get(match[1]) ?? null;
 }
 
+function getReferencedSample(option: {
+  id: string;
+  sampleTokenId?: TMascamitesSampleTokenId;
+}): TMascamitesSampleTokenId | null {
+  if (option.sampleTokenId && getMascamitesSampleToken(option.sampleTokenId)) {
+    return option.sampleTokenId;
+  }
+
+  const match = option.id.match(/^sample:(.+)$/);
+  if (!match) return null;
+  const sampleTokenId = match[1] as TMascamitesSampleTokenId;
+  return getMascamitesSampleToken(sampleTokenId) ? sampleTokenId : null;
+}
+
 export interface ISelectOptionInputProps {
   model: ISelectOptionInputModel;
   onSubmit: (response: IInputResponse) => void;
@@ -87,6 +106,7 @@ export function SelectOptionInput({
             localizeCardNameSuffix(option.label, t),
           );
           const card = getReferencedCard(option);
+          const sampleTokenId = getReferencedSample(option);
 
           return (
             <Button
@@ -97,7 +117,7 @@ export function SelectOptionInput({
               aria-label={label}
               className={cn(
                 'justify-start gap-2 px-2.5 text-left text-xs',
-                card ? 'h-auto items-stretch py-2' : 'h-9',
+                card || sampleTokenId ? 'h-auto items-stretch py-2' : 'h-9',
               )}
               onClick={() =>
                 onSubmit({
@@ -118,6 +138,17 @@ export function SelectOptionInput({
                   <span className='pointer-events-none'>
                     <CardRender card={card} />
                   </span>
+                  <span className='line-clamp-2 w-full font-body text-[11px] leading-snug text-text-200'>
+                    {renderOptionLabel(label)}
+                  </span>
+                </span>
+              ) : sampleTokenId ? (
+                <span className='flex min-w-0 flex-1 flex-col items-center gap-1.5'>
+                  <MascamitesSampleToken
+                    sampleTokenId={sampleTokenId}
+                    face={option.sampleFaceDown ? 'back' : 'front'}
+                    className='h-9 w-9'
+                  />
                   <span className='line-clamp-2 w-full font-body text-[11px] leading-snug text-text-200'>
                     {renderOptionLabel(label)}
                   </span>

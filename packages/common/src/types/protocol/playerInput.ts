@@ -1,3 +1,4 @@
+import type { TMascamitesSampleTokenId } from '@seti/common/constant/mascamites';
 import { IBaseCard } from '@seti/common/types/BaseCard';
 import { EResource, ESector } from '@seti/common/types/element';
 import { EPlanet, ETech, ETrace } from '@seti/common/types/protocol/enums';
@@ -76,7 +77,13 @@ export interface IPlayerInputModelBase {
 
 export interface ISelectOptionInputModel extends IPlayerInputModelBase {
   type: EPlayerInputType.OPTION;
-  options: Array<{ id: string; label: string; cardId?: string }>;
+  options: Array<{
+    id: string;
+    label: string;
+    cardId?: string;
+    sampleTokenId?: TMascamitesSampleTokenId;
+    sampleFaceDown?: boolean;
+  }>;
 }
 
 export interface ISelectCardInputModel extends IPlayerInputModelBase {

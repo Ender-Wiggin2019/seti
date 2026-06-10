@@ -365,6 +365,53 @@ describe('SolarSystemView', () => {
     });
   });
 
+  it('renders Mascamites sample stacks separately from capsules and probes', () => {
+    const solarSystem = {
+      ...createSolarSystemMock(),
+      probes: [
+        { playerId: 'player-1', spaceId: 'space-0', probeId: 'probe-1' },
+      ],
+      movablePieces: [
+        {
+          pieceId: 'probe-1',
+          pieceType: 'probe',
+          playerId: 'player-1',
+          spaceId: 'space-0',
+          movementTarget: { type: 'probe', id: 'probe-1' },
+        },
+        {
+          pieceId: 'capsule-1',
+          pieceType: 'mascamites-capsule',
+          playerId: 'player-1',
+          spaceId: 'space-0',
+          movementTarget: { type: 'mascamites-capsule', id: 'capsule-1' },
+          sampleTokenId: 'mascamites-credit-2',
+        },
+      ],
+      sampleStacks: [
+        {
+          stackId: 'mascamites-sample-stack-jupiter',
+          sourcePlanet: EPlanet.JUPITER,
+          spaceId: 'space-0',
+          count: 3,
+        },
+      ],
+      probeSpaceById: { probe: 'space-0' },
+    } as IPublicSolarSystem;
+
+    renderSolarSystemView({ solarSystem });
+
+    const sampleStack = screen.getByTestId(
+      'solar-sample-stack-mascamites-sample-stack-jupiter',
+    );
+    expect(sampleStack).toHaveTextContent('3');
+    expect(
+      within(sampleStack).getByTestId('seti-desc-sample'),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('solar-capsule-capsule-1')).toBeInTheDocument();
+    expect(screen.getByTestId('solar-probe-probe-1')).toBeInTheDocument();
+  });
+
   it('renders all 32 space hotspots', () => {
     render(
       <SolarSystemView

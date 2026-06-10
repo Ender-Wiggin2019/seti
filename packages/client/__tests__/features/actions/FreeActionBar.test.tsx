@@ -175,8 +175,7 @@ describe('FreeActionBar', () => {
     expect(screen.queryByTestId('free-action-bar')).not.toBeInTheDocument();
   });
 
-  it('shows spend signal token while a scan pool is active', () => {
-    const onActionClick = vi.fn();
+  it('does not show spend signal token in the free-action bar while a scan pool is active', () => {
     const gameState = createMockGameState({
       phase: EPhase.IN_RESOLUTION,
       scanActionInProgress: true,
@@ -201,13 +200,13 @@ describe('FreeActionBar', () => {
         gameState={gameState}
         myPlayerId='player-1'
         isMyTurn
-        onActionClick={onActionClick}
+        onActionClick={vi.fn()}
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Spend Signal Token' }));
-
-    expect(onActionClick).toHaveBeenCalledWith(EFreeAction.SPEND_SIGNAL_TOKEN);
+    expect(
+      screen.queryByRole('button', { name: 'Spend Signal Token' }),
+    ).not.toBeInTheDocument();
   });
 
   it('does not show spend signal token when newDeck is disabled', () => {
@@ -241,11 +240,11 @@ describe('FreeActionBar', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
     expect(
-      screen.getByRole('button', { name: 'Spend Signal Token' }),
-    ).toBeDisabled();
+      screen.queryByRole('button', { name: 'Spend Signal Token' }),
+    ).not.toBeInTheDocument();
   });
 
-  it('disables spend signal token after two spends in the current scan', () => {
+  it('does not show spend signal token after two spends in the current scan', () => {
     const gameState = createMockGameState({
       phase: EPhase.IN_RESOLUTION,
       scanActionInProgress: true,
@@ -277,12 +276,11 @@ describe('FreeActionBar', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
     expect(
-      screen.getByRole('button', { name: 'Spend Signal Token' }),
-    ).toBeDisabled();
+      screen.queryByRole('button', { name: 'Spend Signal Token' }),
+    ).not.toBeInTheDocument();
   });
 
-  it('keeps spend signal token available during the scan pool input', () => {
-    const onActionClick = vi.fn();
+  it('hides the free-action bar during the scan pool input', () => {
     const gameState = createMockGameState({
       phase: EPhase.IN_RESOLUTION,
       scanActionInProgress: true,
@@ -313,16 +311,11 @@ describe('FreeActionBar', () => {
           title: 'Scan: choose sub-action',
           options: [{ id: 'mark-earth', label: 'Mark Earth' }],
         }}
-        onActionClick={onActionClick}
+        onActionClick={vi.fn()}
       />,
     );
 
-    expect(
-      screen.queryByRole('button', { name: 'Expand' }),
-    ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Spend Signal Token' }));
-
-    expect(onActionClick).toHaveBeenCalledWith(EFreeAction.SPEND_SIGNAL_TOKEN);
+    expect(screen.queryByTestId('free-action-bar')).not.toBeInTheDocument();
   });
 
   it('does not render organization buttons while resolving pending input', () => {

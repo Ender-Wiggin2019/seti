@@ -17,8 +17,8 @@ const MASCAMITES_LAYOUTS: TTraceColumnLayouts = {
   [ETrace.YELLOW]: { xPct: 50, yPctBottomToTop: [83, 74, 65, 55] },
   [ETrace.BLUE]: {
     xPct: 79.4,
-    xPctBottomToTop: [79.4, 64.5, 50.6, 66.2, 79.8, 79.8, 79.2, 79.1, 79.4],
-    yPctBottomToTop: [32.4, 37.3, 41, 46.6, 52.6, 59.8, 68, 79.5, 92],
+    xPctBottomToTop: [79.4, 79.1, 79.2, 79.8, 79.8, 66.2, 50.6, 64.5, 79.4],
+    yPctBottomToTop: [92, 79.5, 68, 59.8, 52.6, 46.6, 41, 37.3, 32.4],
   },
 };
 

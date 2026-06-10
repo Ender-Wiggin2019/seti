@@ -195,7 +195,7 @@ export function AlienBoardView({
   return (
     <section
       className={cn(
-        'w-full min-w-0 rounded-lg border border-surface-700/40 bg-surface-900/40 p-2.5 md:w-[52%] md:max-w-[52%] md:self-start',
+        'w-full min-w-0 rounded-lg border border-surface-700/40 bg-surface-900/40 p-2.5 md:w-[46%] md:max-w-[46%] md:self-start',
         className,
       )}
       data-testid='alien-board-section'

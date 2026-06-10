@@ -129,6 +129,18 @@ describe('input presentation policy', () => {
           id: `alien-0-oumuamua-trace|${ETrace.PINK}|1|0`,
           label: 'Oumuamua pink trace slot',
         },
+        {
+          id: 'mascamites-fixed-blue-trace-8',
+          label: 'Mascamites fixed blue trace slot',
+        },
+        {
+          id: 'alien-0-mascamites-public-sample-0',
+          label: 'Mascamites public sample trace slot',
+        },
+        {
+          id: 'alien-0-mascamites-sample-blue-0',
+          label: 'Mascamites delivered sample trace slot',
+        },
       ],
     };
 

@@ -1,32 +1,28 @@
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import { GameError } from '@/shared/errors/GameError.js';
 import {
-  type ICardRowCardInfo,
-  SelectCardFromCardRowEffect,
-} from '../effects/cardRow/SelectCardFromCardRowEffect.js';
-import { MarkSectorSignalEffect } from '../effects/scan/MarkSectorSignalEffect.js';
-import {
   getScanSignalTokenSpendCount,
   isScanActionPoolInput,
   recordScanSignalTokenSpend,
   refreshScanActionPoolInput,
 } from '../effects/scan/ScanActionPool.js';
-import { extractSectorColorFromCardItem } from '../effects/scan/ScanEffectUtils.js';
+import {
+  executeSignalTokenScanOption,
+  getSpendableSignalTokenScanCount,
+} from '../effects/scan/SignalTokenScanOption.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
 import type { IPlayer } from '../player/IPlayer.js';
 
 export class SpendSignalTokenFreeAction {
-  private static readonly MAX_SPENDS_PER_SCAN = 2;
-
   public static canExecute(player: IPlayer, game: IGame): boolean {
     return (
-      game.options.spaceAgencyOptions?.newDeck === true &&
       isScanActionPoolInput(player.waitingFor) &&
-      getScanSignalTokenSpendCount(player.waitingFor) <
-        SpendSignalTokenFreeAction.MAX_SPENDS_PER_SCAN &&
-      player.resources.signalTokens > 0 &&
-      game.cardRow.length > 0
+      getSpendableSignalTokenScanCount(
+        player,
+        game,
+        getScanSignalTokenSpendCount(player.waitingFor),
+      ) > 0
     );
   }
 
@@ -48,23 +44,9 @@ export class SpendSignalTokenFreeAction {
       );
     }
 
-    player.resources.spend({ signalTokens: 1 });
     recordScanSignalTokenSpend(returnToScanPool);
-
-    return SelectCardFromCardRowEffect.execute(player, game, {
-      destination: 'discard',
-      onComplete: (cardInfo: ICardRowCardInfo) => {
-        const sectorColor = extractSectorColorFromCardItem(cardInfo.rawItem);
-        if (!sectorColor) {
-          return refreshScanActionPoolInput(returnToScanPool);
-        }
-        return MarkSectorSignalEffect.markByColor(
-          player,
-          game,
-          sectorColor,
-          () => refreshScanActionPoolInput(returnToScanPool),
-        );
-      },
-    });
+    return executeSignalTokenScanOption(player, game, () =>
+      refreshScanActionPoolInput(returnToScanPool),
+    );
   }
 }

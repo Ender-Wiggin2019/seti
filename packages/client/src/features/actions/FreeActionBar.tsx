@@ -20,7 +20,6 @@ const COLLAPSIBLE_ACTIONS: EFreeAction[] = [
   EFreeAction.USE_CARD_CORNER,
   EFreeAction.BUY_CARD,
   EFreeAction.EXCHANGE_RESOURCES,
-  EFreeAction.SPEND_SIGNAL_TOKEN,
 ];
 
 type TFreeActionKey =
@@ -60,11 +59,10 @@ export function FreeActionBar({
   const available = new Set(
     myPlayer && gameState ? getAvailableFreeActions(myPlayer, gameState) : [],
   );
-  const visibleActions =
-    pendingInput === null ? VISIBLE_ACTIONS : [EFreeAction.SPEND_SIGNAL_TOKEN];
-  const collapsibleActions = pendingInput === null ? COLLAPSIBLE_ACTIONS : [];
+  const visibleActions = VISIBLE_ACTIONS;
+  const collapsibleActions = COLLAPSIBLE_ACTIONS;
   const organizationIds = myPlayer ? (myPlayer.organizationIds ?? []) : [];
-  const renderedOrganizationIds = pendingInput === null ? organizationIds : [];
+  const renderedOrganizationIds = organizationIds;
   const availableActionSignature = getAvailableActionKeys(
     available,
     organizationIds,
@@ -80,7 +78,7 @@ export function FreeActionBar({
     return null;
   }
 
-  if (pendingInput !== null && !available.has(EFreeAction.SPEND_SIGNAL_TOKEN)) {
+  if (pendingInput !== null) {
     return null;
   }
 

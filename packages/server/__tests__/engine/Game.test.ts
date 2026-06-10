@@ -278,4 +278,33 @@ describe('Game', () => {
     expect(game.deferredActions.isEmpty()).toBe(true);
     expect(game.phase).toBe(EPhase.AWAIT_MAIN_ACTION);
   });
+
+  it('reassigns follow-up input to the next input owner instead of the responding player', () => {
+    const game = createGame();
+    resolveSetupTucks(game);
+    const p1 = game.players[0];
+    const p2 = game.players[1];
+
+    p1.waitingFor = createOptionInput(p1, () =>
+      createOptionInput(p2, () => createOptionInput(p1, () => undefined)),
+    );
+
+    game.processInput(p1.id, {
+      type: EPlayerInputType.OPTION,
+      optionId: 'ok',
+    });
+
+    expect(p1.waitingFor).toBeUndefined();
+    expect(p2.waitingFor).toBeDefined();
+    expect(p2.waitingFor?.player.id).toBe(p2.id);
+
+    game.processInput(p2.id, {
+      type: EPlayerInputType.OPTION,
+      optionId: 'ok',
+    });
+
+    expect(p2.waitingFor).toBeUndefined();
+    expect(p1.waitingFor).toBeDefined();
+    expect(p1.waitingFor?.player.id).toBe(p1.id);
+  });
 });

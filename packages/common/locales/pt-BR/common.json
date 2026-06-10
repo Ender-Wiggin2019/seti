@@ -688,6 +688,8 @@
         "skip_discard": "Pular descarte",
         "skip_exertian_facedown": "Pular jogada Exertian virada para baixo",
         "skip": "Pular",
+        "use_signal_token": "Usar Token de Sinal",
+        "use_signal_token_numbered": "Usar Token de Sinal ({{index}})",
         "exofossil_for_data": "Gaste 1 exofóssil para ganhar 1 dado",
         "exofossil_for_move": "Gaste 1 exofóssil para ganhar 2 movimento",
         "exofossil_for_signal": "Gaste 1 exofóssil para marcar qualquer sinal",

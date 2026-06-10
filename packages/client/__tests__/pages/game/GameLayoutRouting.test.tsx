@@ -73,6 +73,12 @@ describe('layout routing helpers', () => {
         isAlienBoardInput(optionInput(['mascamites-fixed-blue-trace-8'])),
       ).toBe(true);
       expect(
+        isAlienBoardInput(optionInput(['alien-0-mascamites-public-sample-0'])),
+      ).toBe(true);
+      expect(
+        isAlienBoardInput(optionInput(['alien-0-mascamites-sample-blue-0'])),
+      ).toBe(true);
+      expect(
         isAlienBoardInput(optionInput(['exertians-danger-1-blue-trace-0'])),
       ).toBe(true);
     });

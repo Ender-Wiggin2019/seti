@@ -3,6 +3,7 @@ import {
   EPlayerInputType,
   type ISelectOptionInputModel,
 } from '@seti/common/types/protocol/playerInput';
+import { vi } from 'vitest';
 import { Sector } from '@/engine/board/Sector.js';
 import { ResolveSectorCompletion } from '@/engine/deferred/ResolveSectorCompletion.js';
 import { EMissionEventType } from '@/engine/missions/IMission.js';
@@ -170,5 +171,73 @@ describe('ResolveSectorCompletion', () => {
 
     expect(pinkAfter > pinkBefore || placedOnAlienBoard).toBe(true);
     expect(sector.sectorWinners).toEqual([p1.id]);
+  });
+
+  it('switches waiting input from turn owner to sector winner and back during multi-sector resolution', async () => {
+    const { ETrace } = await import('@seti/common/types/element');
+
+    const game = buildTestGame({ seed: 'sector-winner-input-handoff' });
+    const p1 = getPlayer(game, 'p1');
+    const p2 = getPlayer(game, 'p2');
+
+    const winnerGetsTrace = new Sector({
+      id: 's1',
+      color: ESector.RED,
+      dataSlotCapacity: 1,
+      firstWinBonus: [{ type: 'trace', trace: ETrace.PINK }],
+    });
+    winnerGetsTrace.markSignal(p2.id);
+
+    const remainingSector = new Sector({
+      id: 's2',
+      color: ESector.BLUE,
+      dataSlotCapacity: 1,
+      firstWinBonus: [{ type: 'vp', amount: 2 }],
+    });
+    remainingSector.markSignal(p1.id);
+
+    const thirdSector = new Sector({
+      id: 's3',
+      color: ESector.YELLOW,
+      dataSlotCapacity: 1,
+      firstWinBonus: [{ type: 'vp', amount: 1 }],
+    });
+    thirdSector.markSignal(p1.id);
+
+    game.sectors = [winnerGetsTrace, remainingSector, thirdSector];
+    game.deferredActions.push(new ResolveSectorCompletion(p1));
+
+    const firstPrompt = game.deferredActions.drain(game);
+    expect(firstPrompt).toBeDefined();
+    if (!firstPrompt) {
+      throw new Error('Expected sector resolution order prompt');
+    }
+    p1.waitingFor = firstPrompt;
+
+    game.processInput(p1.id, {
+      type: EPlayerInputType.OPTION,
+      optionId: 'resolve-sector-s1',
+    });
+
+    expect(p1.waitingFor).toBeUndefined();
+    expect(p2.waitingFor).toBeDefined();
+    expect(p2.waitingFor?.player.id).toBe(p2.id);
+
+    const tracePrompt = p2.waitingFor?.toModel() as
+      | ISelectOptionInputModel
+      | undefined;
+    if (!tracePrompt?.options[0]) {
+      throw new Error('Expected trace placement prompt for sector winner');
+    }
+
+    game.processInput(p2.id, {
+      type: EPlayerInputType.OPTION,
+      optionId: tracePrompt.options[0].id,
+    });
+
+    expect(p2.waitingFor).toBeUndefined();
+    expect(p1.waitingFor).toBeDefined();
+    expect(p1.waitingFor?.player.id).toBe(p1.id);
+    expect(p1.waitingFor?.toModel().type).toBe(EPlayerInputType.OPTION);
   });
 });

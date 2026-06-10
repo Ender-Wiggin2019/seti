@@ -457,7 +457,10 @@ export class Game implements IGame {
       const nextInput = currentInput.process(response);
       this.eventLog.append(createInputEvent(playerId, response));
       if (nextInput !== undefined) {
-        player.waitingFor = nextInput;
+        if (player.waitingFor === currentInput && nextInput.player !== player) {
+          player.waitingFor = undefined;
+        }
+        nextInput.player.waitingFor = nextInput;
         return;
       }
 

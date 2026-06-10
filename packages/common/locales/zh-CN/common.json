@@ -694,6 +694,8 @@
         "skip_discard": "跳过弃牌",
         "skip_exertian_facedown": "跳过 Exertian 面朝下打出",
         "skip": "跳过",
+        "use_signal_token": "使用信号令牌",
+        "use_signal_token_numbered": "使用信号令牌（{{index}}）",
         "exofossil_for_data": "消耗 1 化石获得 1 数据",
         "exofossil_for_move": "消耗 1 化石获得 2 移动",
         "exofossil_for_signal": "消耗 1 化石标记任意信号",

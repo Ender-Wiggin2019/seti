@@ -2,7 +2,10 @@ import { EPlanet } from '@seti/common/types/protocol/enums';
 import { formatSectorOptionLabel } from '../../board/SectorLabel.js';
 import type { IGame } from '../../IGame.js';
 import type { IPlayerInput } from '../../input/PlayerInput.js';
-import { SelectOption } from '../../input/SelectOption.js';
+import {
+  type ISelectOptionEntry,
+  SelectOption,
+} from '../../input/SelectOption.js';
 import { OrganizationRegistry } from '../../organization/OrganizationRegistry.js';
 import type { IPlayer } from '../../player/IPlayer.js';
 import type { IScanTechEffect } from '../../tech/ITech.js';
@@ -21,6 +24,10 @@ import {
   ScanHandSignalEffect,
   ScanMercurySignalEffect,
 } from './ScanTechEffects.js';
+import {
+  executeSignalTokenScanOption,
+  getSpendableSignalTokenScanCount,
+} from './SignalTokenScanOption.js';
 
 // ── Sub-action identifiers ────────────────────────────────────────────────
 
@@ -30,6 +37,7 @@ export enum EScanSubAction {
   MARK_MERCURY = 'mark-mercury',
   MARK_HAND = 'mark-hand',
   ENERGY_LAUNCH_OR_MOVE = 'energy-launch-or-move',
+  SPEND_SIGNAL_TOKEN = 'spend-signal-token',
   /** UI-only: end scan without executing remaining sub-actions. */
   DONE = 'done',
 }
@@ -162,15 +170,20 @@ export class ScanActionPool {
     options: IScanActionPoolOptions,
   ): IPlayerInput | undefined {
     const affordable = remaining.filter((d) => d.canExecute());
+    const spendableSignalTokenCount = getSpendableSignalTokenScanCount(
+      player,
+      game,
+      result.signalTokensSpent,
+    );
 
-    if (affordable.length === 0) {
+    if (affordable.length === 0 && spendableSignalTokenCount === 0) {
       for (const d of remaining) {
         result.subActions.push({ id: d.id, executed: false });
       }
       return options.onComplete?.(result);
     }
 
-    const menuOptions = affordable.map((descriptor) => ({
+    const menuOptions: ISelectOptionEntry[] = affordable.map((descriptor) => ({
       id: descriptor.id,
       label: descriptor.label,
       onSelect: () => {
@@ -181,6 +194,27 @@ export class ScanActionPool {
         });
       },
     }));
+
+    for (let index = 0; index < spendableSignalTokenCount; index += 1) {
+      const spendOrdinal = result.signalTokensSpent + index + 1;
+      menuOptions.push({
+        id: `${EScanSubAction.SPEND_SIGNAL_TOKEN}-${spendOrdinal}`,
+        label:
+          spendableSignalTokenCount > 1
+            ? `Use Signal Token (${spendOrdinal})`
+            : 'Use Signal Token',
+        onSelect: () => {
+          result.signalTokensSpent += 1;
+          result.subActions.push({
+            id: EScanSubAction.SPEND_SIGNAL_TOKEN,
+            executed: true,
+          });
+          return executeSignalTokenScanOption(player, game, () =>
+            this.presentPool(player, game, remaining, result, options),
+          );
+        },
+      });
+    }
 
     // Base Scan marks are mandatory while they can be resolved.
     const mandatoryBaseMarkPending = remaining.some(

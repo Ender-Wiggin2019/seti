@@ -1,5 +1,10 @@
 import { ESector } from '@seti/common/types/element';
 import { EPlanet } from '@seti/common/types/protocol/enums';
+import {
+  createGameOptions,
+  EExpansion,
+  type IGameOptions,
+} from '@seti/common/types/protocol/options';
 import { EPlayerInputType } from '@seti/common/types/protocol/playerInput';
 import { ETechId } from '@seti/common/types/tech';
 import { Sector } from '@/engine/board/Sector.js';
@@ -15,7 +20,19 @@ import { Player } from '@/engine/player/Player.js';
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
+const SPACE_AGENCY_NEW_DECK_OPTIONS = createGameOptions({
+  expansions: [EExpansion.BASE, EExpansion.SPACE_AGENCY],
+  spaceAgencyOptions: {
+    enabled: true,
+    agencies: false,
+    startResourceCards: false,
+    newDeck: true,
+    newAlienSpecies: false,
+  },
+});
+
 function createMockGame(options?: {
+  gameOptions?: Readonly<IGameOptions>;
   solarSystem?: unknown;
   cardRow?: unknown[];
 }): IGame {
@@ -32,6 +49,7 @@ function createMockGame(options?: {
   const mainDeck = new Deck<string>(['refill-1', 'refill-2', 'refill-3']);
 
   return {
+    options: options?.gameOptions ?? createGameOptions(),
     sectors,
     mainDeck,
     cardRow: options?.cardRow ?? [
@@ -77,7 +95,12 @@ function createPlayer(
   overrides: {
     techs?: ETechId[];
     hand?: TCardItem[];
-    resources?: { credits?: number; energy?: number; publicity?: number };
+    resources?: {
+      credits?: number;
+      energy?: number;
+      publicity?: number;
+      signalTokens?: number;
+    };
   } = {},
 ): Player {
   return new Player({
@@ -266,6 +289,60 @@ describe('ScanActionPool', () => {
       expect(completedResult).not.toBeNull();
       expect(completedResult!.subActions).toHaveLength(2);
       expect(completedResult!.subActions.every((a) => a.executed)).toBe(true);
+    });
+
+    it('adds one spend-signal-token scan option per available token', () => {
+      const game = createMockGame({
+        gameOptions: SPACE_AGENCY_NEW_DECK_OPTIONS,
+      });
+      const player = createPlayer({
+        resources: { signalTokens: 2 },
+      });
+
+      const input = ScanActionPool.execute(player, game);
+      const optionIds = (
+        input!.toModel() as { options: Array<{ id: string }> }
+      ).options
+        .map((option) => option.id)
+        .filter((optionId) =>
+          optionId.startsWith(`${EScanSubAction.SPEND_SIGNAL_TOKEN}-`),
+        );
+
+      expect(optionIds).toEqual([
+        `${EScanSubAction.SPEND_SIGNAL_TOKEN}-1`,
+        `${EScanSubAction.SPEND_SIGNAL_TOKEN}-2`,
+      ]);
+    });
+
+    it('refreshes to include spend-signal-token when a token is gained during scan', () => {
+      const game = createMockGame({
+        gameOptions: SPACE_AGENCY_NEW_DECK_OPTIONS,
+      });
+      const player = createPlayer({
+        resources: { signalTokens: 0 },
+      });
+
+      const poolMenu = ScanActionPool.execute(player, game);
+      const beforeGainOptionIds = (
+        poolMenu!.toModel() as { options: Array<{ id: string }> }
+      ).options.map((option) => option.id);
+      expect(beforeGainOptionIds).not.toContain(
+        `${EScanSubAction.SPEND_SIGNAL_TOKEN}-1`,
+      );
+
+      player.resources.gain({ signalTokens: 1 });
+
+      const afterEarth = poolMenu!.process({
+        type: EPlayerInputType.OPTION,
+        optionId: EScanSubAction.MARK_EARTH,
+      });
+      const afterGainOptionIds = (
+        afterEarth!.toModel() as { options: Array<{ id: string }> }
+      ).options.map((option) => option.id);
+
+      expect(afterGainOptionIds).toContain(
+        `${EScanSubAction.SPEND_SIGNAL_TOKEN}-1`,
+      );
     });
   });
 

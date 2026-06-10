@@ -1,7 +1,8 @@
 import { PLANETARY_BOARD_CONFIG } from '@seti/common/constant/boardLayout';
+import { MASCAMITES_SAMPLE_SOURCE_PLANETS } from '@seti/common/constant/mascamites';
 import { RIVAL_COMPUTER_SLOT_REWARDS } from '@seti/common/constant/solo';
 import { EResource } from '@seti/common/types/element';
-import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
+import { EAlienType, EPlanet, ETrace } from '@seti/common/types/protocol/enums';
 import type {
   IPublicAlienCardZone,
   IPublicAlienState,
@@ -22,6 +23,7 @@ import type {
   IPublicSolarSystemAlienToken,
   IPublicSolarSystemGlyphidsSectorToken,
   IPublicSolarSystemMovablePiece,
+  IPublicSolarSystemSampleStack,
   IPublicTechBoard,
   IPublicTraceSlot,
   TPublicAlienBoard,
@@ -463,6 +465,48 @@ function toPublicSolarMovablePieces(
       id: capsule.capsuleId,
     },
   }));
+}
+
+function toPublicMascamitesSolarSampleStacks(
+  game: IGame,
+): IPublicSolarSystemSampleStack[] {
+  const board = game.alienState.getBoardByType(EAlienType.MASCAMITES);
+  if (!isMascamitesAlienBoard(board) || !board.discovered) {
+    return [];
+  }
+
+  return MASCAMITES_SAMPLE_SOURCE_PLANETS.flatMap((planet) => {
+    const count = board.samplePools[planet].length;
+    const spaceId = getSolarPlanetSpaceId(game, planet);
+    if (count <= 0 || !spaceId) {
+      return [];
+    }
+    return [
+      {
+        stackId: `mascamites-sample-stack-${planet}`,
+        sourcePlanet: planet,
+        spaceId,
+        count,
+      },
+    ];
+  });
+}
+
+function getSolarPlanetSpaceId(game: IGame, planet: EPlanet): string | null {
+  if (!game.solarSystem) {
+    return null;
+  }
+
+  for (const space of game.solarSystem.spaces) {
+    if (
+      space.elements.some(
+        (element) => element.planet === planet && element.amount > 0,
+      )
+    ) {
+      return space.id;
+    }
+  }
+  return null;
 }
 
 function serializePlayer(player: IPlayer): IPlayerStateDto {
@@ -1235,6 +1279,7 @@ export function projectGameState(
       toPublicSolarAlienTokens(game),
       toPublicSolarMovablePieces(game),
       toPublicSolarGlyphidsSectorTokens(game),
+      toPublicMascamitesSolarSampleStacks(game),
     ),
     sectors: toPublicSectors(game),
     solarSystemSetup: game.solarSystemSetup ?? undefined,

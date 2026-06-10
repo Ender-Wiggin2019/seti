@@ -118,6 +118,7 @@ const STATIC_DICT: Record<string, string> = {
   'Skip discard': 'client.input.opt.skip_discard',
   'Skip Exertian face-down play': 'client.input.opt.skip_exertian_facedown',
   Skip: 'client.input.opt.skip',
+  'Use Signal Token': 'client.input.opt.use_signal_token',
   'Spend 1 exofossil to gain 1 data': 'client.input.opt.exofossil_for_data',
   'Spend 1 exofossil to gain 2 move': 'client.input.opt.exofossil_for_move',
   'Spend 1 exofossil to mark any signal':
@@ -182,6 +183,10 @@ const DYNAMIC_PATTERNS: Array<{
   {
     pattern: /^Discard (?<card>.+)$/,
     key: 'client.input.opt.discard_card',
+  },
+  {
+    pattern: /^Use Signal Token \((?<index>\d+)\)$/,
+    key: 'client.input.opt.use_signal_token_numbered',
   },
   {
     pattern: /^Take (?<card>.+) from card row$/,

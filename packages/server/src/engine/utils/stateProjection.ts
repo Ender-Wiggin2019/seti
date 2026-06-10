@@ -8,6 +8,7 @@ import type {
   IPublicSolarSystemGlyphidsSectorToken,
   IPublicSolarSystemMovablePiece,
   IPublicSolarSystemProbe,
+  IPublicSolarSystemSampleStack,
   IPublicSolarSystemSpaceState,
   IPublicSolarSystemState,
 } from '@seti/common/types/protocol/gameState';
@@ -21,6 +22,7 @@ export function toPublicSolarSystemState(
   alienTokens: IPublicSolarSystemAlienToken[] = [],
   extraMovablePieces: IPublicSolarSystemMovablePiece[] = [],
   glyphidsSectorTokens: IPublicSolarSystemGlyphidsSectorToken[] = [],
+  sampleStacks: IPublicSolarSystemSampleStack[] = [],
 ): IPublicSolarSystemState {
   const adjacencyRecord: Record<string, string[]> = {};
   for (const [spaceId, neighbors] of ss.adjacency.entries()) {
@@ -120,5 +122,6 @@ export function toPublicSolarSystemState(
     probeSpaceById,
     alienTokens,
     glyphidsSectorTokens,
+    sampleStacks,
   };
 }

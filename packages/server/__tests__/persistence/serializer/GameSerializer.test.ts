@@ -1031,6 +1031,52 @@ describe('GameSerializer', () => {
     });
   });
 
+  it('projects Mascamites planet sample stacks onto the solar system without leaking sample identities', () => {
+    const game = createTestGame();
+    game.hiddenAliens = [EAlienType.MASCAMITES];
+    game.alienState = AlienState.createFromHiddenAliens(game.hiddenAliens);
+    const board = game.alienState.boards[0];
+    if (!isMascamitesAlienBoard(board)) {
+      throw new Error('expected Mascamites board');
+    }
+    board.discovered = true;
+    board.samplePools.jupiter = ['mascamites-credit-2', 'mascamites-energy-2'];
+    board.samplePools.saturn = ['mascamites-card-2'];
+
+    const publicState = projectGameState(game, 'p1');
+    const sampleStacks = (
+      publicState.solarSystem as {
+        sampleStacks?: Array<{
+          stackId: string;
+          sourcePlanet: EPlanet;
+          spaceId: string;
+          count: number;
+        }>;
+      }
+    ).sampleStacks;
+
+    expect(sampleStacks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          stackId: 'mascamites-sample-stack-jupiter',
+          sourcePlanet: EPlanet.JUPITER,
+          count: 2,
+        }),
+        expect.objectContaining({
+          stackId: 'mascamites-sample-stack-saturn',
+          sourcePlanet: EPlanet.SATURN,
+          count: 1,
+        }),
+      ]),
+    );
+    expect(sampleStacks?.map((stack) => stack.spaceId)).not.toContain(
+      undefined,
+    );
+    expect(JSON.stringify(sampleStacks)).not.toContain('mascamites-credit-2');
+    expect(JSON.stringify(sampleStacks)).not.toContain('mascamites-energy-2');
+    expect(JSON.stringify(sampleStacks)).not.toContain('mascamites-card-2');
+  });
+
   it('projects Mascamites board without leaking hidden sample identities', () => {
     const game = createTestGame();
     game.hiddenAliens = [EAlienType.MASCAMITES];

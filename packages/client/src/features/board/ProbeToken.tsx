@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 import { resolvePlayerColor } from '@/lib/playerColor';
+import { TokenCountBadge } from './TokenCountBadge';
 
 interface IProbeTokenProps {
   playerColor: string;
@@ -37,8 +38,6 @@ export function ProbeToken({
     playerColor,
     defaultValue: `${playerColor} probe`,
   });
-  const hasCount = count > 1;
-
   return (
     <span
       className={cn(
@@ -71,14 +70,7 @@ export function ProbeToken({
           }}
         />
       ) : null}
-      {hasCount ? (
-        <span
-          aria-hidden='true'
-          className='absolute inset-0 flex items-center justify-center font-mono text-[11px] font-black leading-none text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.95),0_0_4px_rgba(0,0,0,0.9)]'
-        >
-          {count}
-        </span>
-      ) : null}
+      <TokenCountBadge count={count} />
     </span>
   );
 }

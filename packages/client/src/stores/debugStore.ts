@@ -119,8 +119,17 @@ export const useDebugStore = create<IDebugStoreState>()(
       hotspotDraftOverrides: {},
       setTextMode: (enabled) => set({ textMode: enabled }),
       toggleTextMode: () => set({ textMode: !get().textMode }),
-      setHotspotDebug: (enabled) => set({ hotspotDebug: enabled }),
-      toggleHotspotDebug: () => set({ hotspotDebug: !get().hotspotDebug }),
+      setHotspotDebug: (enabled) =>
+        set(
+          enabled
+            ? {
+                hotspotDebug: true,
+                showInteractiveHotspots: true,
+                showAnchorHotspots: true,
+              }
+            : { hotspotDebug: false },
+        ),
+      toggleHotspotDebug: () => get().setHotspotDebug(!get().hotspotDebug),
       setShowInteractiveHotspots: (enabled) =>
         set({ showInteractiveHotspots: enabled }),
       setShowAnchorHotspots: (enabled) => set({ showAnchorHotspots: enabled }),

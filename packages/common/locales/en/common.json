@@ -688,6 +688,8 @@
         "skip_discard": "Skip discard",
         "skip_exertian_facedown": "Skip Exertian face-down play",
         "skip": "Skip",
+        "use_signal_token": "Use Signal Token",
+        "use_signal_token_numbered": "Use Signal Token ({{index}})",
         "exofossil_for_data": "Spend 1 exofossil to gain 1 data",
         "exofossil_for_move": "Spend 1 exofossil to gain 2 move",
         "exofossil_for_signal": "Spend 1 exofossil to mark any signal",

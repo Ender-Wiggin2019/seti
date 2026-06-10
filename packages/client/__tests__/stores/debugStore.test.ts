@@ -35,6 +35,17 @@ describe('useDebugStore hotspot settings', () => {
     expect(useDebugStore.getState().showAnchorHotspots).toBe(false);
   });
 
+  it('restores both hotspot layers when enabling hotspot debug', () => {
+    useDebugStore.getState().setShowInteractiveHotspots(false);
+    useDebugStore.getState().setShowAnchorHotspots(false);
+
+    useDebugStore.getState().setHotspotDebug(true);
+
+    expect(useDebugStore.getState().hotspotDebug).toBe(true);
+    expect(useDebugStore.getState().showInteractiveHotspots).toBe(true);
+    expect(useDebugStore.getState().showAnchorHotspots).toBe(true);
+  });
+
   it('keeps hotspot edits in draft until they are saved', () => {
     useDebugStore.getState().setHotspotDraftOverride('solar', 'earth-launch', {
       x: 120,

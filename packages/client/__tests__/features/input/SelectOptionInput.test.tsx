@@ -103,6 +103,49 @@ describe('SelectOptionInput', () => {
     });
   });
 
+  it('renders Mascamites sample options with sample visuals and the same OPTION response', () => {
+    const onSubmit = vi.fn();
+    render(
+      <SelectOptionInput
+        model={{
+          inputId: 'collect-mascamites-sample',
+          type: EPlayerInputType.OPTION,
+          title: 'Collect Mascamites sample from jupiter',
+          options: [
+            {
+              id: 'sample:mascamites-credit-2',
+              label: 'mascamites-credit-2',
+            },
+            {
+              id: 'sample:mascamites-energy-2',
+              label: 'Hidden sample',
+              sampleTokenId: 'mascamites-energy-2',
+              sampleFaceDown: true,
+            },
+          ] as never,
+        }}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    expect(
+      screen.getByTestId('mascamites-sample-token-mascamites-credit-2-front'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('mascamites-sample-token-mascamites-energy-2-back'),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByTestId('input-option-sample:mascamites-credit-2'),
+    );
+
+    expect(onSubmit).toHaveBeenCalledWith({
+      inputId: 'collect-mascamites-sample',
+      type: EPlayerInputType.OPTION,
+      optionId: 'sample:mascamites-credit-2',
+    });
+  });
+
   it('renders organization setup choices with the real organization card visual and same OPTION response', () => {
     const onSubmit = vi.fn();
     render(

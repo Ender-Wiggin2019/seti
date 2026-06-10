@@ -161,6 +161,13 @@ export interface IPublicSolarSystemMovablePiece {
   movementTarget: TMovementTarget;
 }
 
+export interface IPublicSolarSystemSampleStack {
+  stackId: string;
+  sourcePlanet: TMascamitesSampleSourcePlanet;
+  spaceId: string;
+  count: number;
+}
+
 export type TPublicAnomalyTraceColor =
   | ETrace.PINK
   | ETrace.YELLOW
@@ -217,6 +224,7 @@ export interface IPublicSolarSystemState {
   adjacency: Record<string, string[]>;
   probes: IPublicSolarSystemProbe[];
   movablePieces?: IPublicSolarSystemMovablePiece[];
+  sampleStacks?: IPublicSolarSystemSampleStack[];
   discs: IPublicSolarSystemDiscState[];
   /**
    * Next ring that will rotate when a rotation resolves (rule order 1 -> 2 -> 3).

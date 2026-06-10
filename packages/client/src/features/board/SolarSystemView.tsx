@@ -46,6 +46,7 @@ import {
   ANOMALY_TOKEN_SPRITES,
   type TAnomalyTokenSpriteKey,
 } from './anomalyTokenSprite.generated';
+import { MascamitesSampleToken } from './MascamitesSampleToken';
 import { ProbeToken } from './ProbeToken';
 import { SectorGrid } from './SectorGrid';
 import { SectorSignalList } from './SectorSignalList';
@@ -76,6 +77,13 @@ const TEXT_MODE_LABEL_Z_INDEX_BY_WHEEL: Readonly<
   3: SOLAR_SYSTEM_Z_INDEX.textLabelBase + 1,
   4: SOLAR_SYSTEM_Z_INDEX.textLabelBase,
 };
+
+enum ESolarBoardPieceDisplayKind {
+  SAMPLE = 'sample',
+  SAMPLE_PROBE = 'sample_probe',
+  PROBE = 'probe',
+}
+
 interface ISolarSystemViewProps {
   solarSystem: IPublicSolarSystem;
   sectors: IPublicSector[];
@@ -107,15 +115,24 @@ interface ISpacePoint {
 
 interface IBoardPieceRenderItem {
   key: string;
-  kind: TMovementTarget['type'];
-  playerId: string;
+  displayKind: ESolarBoardPieceDisplayKind;
+  playerId?: string;
   spaceId: string;
-  movementTarget: TMovementTarget;
+  movementTarget?: TMovementTarget;
   count: number;
   xPercent: number;
   yPercent: number;
   offsetX: number;
   offsetY: number;
+  transitionDelayMs: number;
+}
+
+interface IGroupedBoardPiece {
+  key: string;
+  displayKind: ESolarBoardPieceDisplayKind;
+  playerId?: string;
+  movementTarget?: TMovementTarget;
+  count: number;
   transitionDelayMs: number;
 }
 
@@ -202,6 +219,17 @@ function tokenStackOffset(
     x: (col - (columns - 1) / 2) * spacingPx,
     y: (row - (rows - 1) / 2) * spacingPx,
   };
+}
+
+function getBoardPieceDisplayOrder(kind: ESolarBoardPieceDisplayKind): number {
+  switch (kind) {
+    case ESolarBoardPieceDisplayKind.SAMPLE:
+      return 0;
+    case ESolarBoardPieceDisplayKind.SAMPLE_PROBE:
+      return 1;
+    case ESolarBoardPieceDisplayKind.PROBE:
+      return 2;
+  }
 }
 
 function normalizeRingIndex(ringIndex: number): 1 | 2 | 3 | 4 | null {
@@ -571,16 +599,26 @@ export function SolarSystemView({
     const spacePointById = new Map(
       spacePoints.map((point) => [point.spaceId, point]),
     );
-    const grouped: Record<
-      string,
-      Array<{
-        key: string;
-        kind: TMovementTarget['type'];
-        playerId: string;
-        movementTarget: TMovementTarget;
-        transitionDelayMs: number;
-      }>
-    > = {};
+    const grouped: Record<string, IGroupedBoardPiece[]> = {};
+
+    function addGroupedPiece(spaceId: string, piece: IGroupedBoardPiece): void {
+      if (!grouped[spaceId]) {
+        grouped[spaceId] = [];
+      }
+      grouped[spaceId].push(piece);
+    }
+
+    for (const stack of solarSystem.sampleStacks ?? []) {
+      if (stack.count <= 0) {
+        continue;
+      }
+      addGroupedPiece(stack.spaceId, {
+        key: stack.stackId,
+        displayKind: ESolarBoardPieceDisplayKind.SAMPLE,
+        count: stack.count,
+        transitionDelayMs: 0,
+      });
+    }
 
     const movablePieces = buildMovablePieces(solarSystem);
     for (const piece of movablePieces) {
@@ -589,14 +627,15 @@ export function SolarSystemView({
       }
       bySpacePlayers[piece.spaceId].push(piece.playerId);
 
-      if (!grouped[piece.spaceId]) {
-        grouped[piece.spaceId] = [];
-      }
-      grouped[piece.spaceId].push({
+      addGroupedPiece(piece.spaceId, {
         key: piece.pieceId,
-        kind: piece.pieceType,
+        displayKind:
+          piece.pieceType === 'mascamites-capsule'
+            ? ESolarBoardPieceDisplayKind.SAMPLE_PROBE
+            : ESolarBoardPieceDisplayKind.PROBE,
         playerId: piece.playerId,
         movementTarget: piece.movementTarget,
+        count: 1,
         transitionDelayMs: getPieceTransitionDelay(piece, solarSystem),
       });
     }
@@ -611,12 +650,15 @@ export function SolarSystemView({
       if (!point) {
         continue;
       }
-      const displayPieces: Array<(typeof pieces)[number] & { count: number }> =
-        [];
-      const probeGroupIndexByPlayer = new Map<string, number>();
+      const displayPieces: IGroupedBoardPiece[] = [];
+      const groupIndexByKindAndPlayer = new Map<string, number>();
       for (const piece of pieces) {
-        if (piece.kind === 'probe') {
-          const groupIndex = probeGroupIndexByPlayer.get(piece.playerId);
+        if (
+          piece.displayKind !== ESolarBoardPieceDisplayKind.SAMPLE &&
+          piece.playerId
+        ) {
+          const groupKey = `${piece.displayKind}:${piece.playerId}`;
+          const groupIndex = groupIndexByKindAndPlayer.get(groupKey);
           if (groupIndex !== undefined) {
             const groupedPiece = displayPieces[groupIndex];
             if (groupedPiece) {
@@ -624,10 +666,15 @@ export function SolarSystemView({
             }
             continue;
           }
-          probeGroupIndexByPlayer.set(piece.playerId, displayPieces.length);
+          groupIndexByKindAndPlayer.set(groupKey, displayPieces.length);
         }
-        displayPieces.push({ ...piece, count: 1 });
+        displayPieces.push({ ...piece });
       }
+      displayPieces.sort(
+        (a, b) =>
+          getBoardPieceDisplayOrder(a.displayKind) -
+          getBoardPieceDisplayOrder(b.displayKind),
+      );
 
       // Image mode parks probes on the printed Oumuamua glyph. Text mode
       // keeps them on the shifted debug cell instead.
@@ -655,7 +702,7 @@ export function SolarSystemView({
         const offset = tokenStackOffset(index, displayPieces.length);
         renderItems.push({
           key: piece.key,
-          kind: piece.kind,
+          displayKind: piece.displayKind,
           playerId: piece.playerId,
           movementTarget: piece.movementTarget,
           count: piece.count,
@@ -666,12 +713,14 @@ export function SolarSystemView({
           offsetY: offset.y + oumuamuaProbeNudge.y,
           transitionDelayMs: piece.transitionDelayMs,
         });
-        const targets = targetsBySpace[spaceId] ?? [];
-        targets.push({
-          playerId: piece.playerId,
-          movementTarget: piece.movementTarget,
-        });
-        targetsBySpace[spaceId] = targets;
+        if (piece.playerId && piece.movementTarget) {
+          const targets = targetsBySpace[spaceId] ?? [];
+          targets.push({
+            playerId: piece.playerId,
+            movementTarget: piece.movementTarget,
+          });
+          targetsBySpace[spaceId] = targets;
+        }
       }
     }
 
@@ -695,8 +744,14 @@ export function SolarSystemView({
 
     const pieceByProbeId = new Map(
       boardPieceView.renderItems
-        .filter((piece) => piece.kind === 'probe')
-        .map((piece) => [piece.movementTarget.id, piece]),
+        .filter(
+          (piece) =>
+            piece.displayKind === ESolarBoardPieceDisplayKind.PROBE &&
+            piece.movementTarget,
+        )
+        .flatMap((piece) =>
+          piece.movementTarget ? [[piece.movementTarget.id, piece]] : [],
+        ),
     );
 
     return (pendingInput as ISelectOptionInputModel).options.flatMap(
@@ -708,6 +763,9 @@ export function SolarSystemView({
 
         const piece = pieceByProbeId.get(probeId);
         if (!piece || piece.playerId !== myPlayerId) {
+          return [];
+        }
+        if (!piece.movementTarget) {
           return [];
         }
 
@@ -901,6 +959,9 @@ export function SolarSystemView({
       { movementCost: number; path: string[]; target: TMovementTarget }
     >();
     for (const piece of boardPieceView.renderItems) {
+      if (!piece.playerId || !piece.movementTarget) {
+        continue;
+      }
       if (!allowMoveAnyProbe && piece.playerId !== myPlayerId) {
         continue;
       }
@@ -1434,22 +1495,38 @@ export function SolarSystemView({
             baseHeight={SOLAR_BOARD_BASE_SIZE_PX}
             x={(piece.xPercent * SOLAR_BOARD_BASE_SIZE_PX) / 100}
             y={(piece.yPercent * SOLAR_BOARD_BASE_SIZE_PX) / 100}
-            width={24}
-            height={24}
+            width={
+              piece.displayKind === ESolarBoardPieceDisplayKind.PROBE ? 24 : 32
+            }
+            height={
+              piece.displayKind === ESolarBoardPieceDisplayKind.PROBE ? 24 : 32
+            }
             offsetX={piece.offsetX}
             offsetY={piece.offsetY}
-            color={playerColors[piece.playerId] ?? '#e5e7eb'}
-            debugLabel={`${piece.kind} ${piece.key}`}
+            color={
+              piece.playerId
+                ? (playerColors[piece.playerId] ?? '#e5e7eb')
+                : '#e5e7eb'
+            }
+            debugLabel={`${piece.displayKind} ${piece.key}`}
             testId={
-              piece.kind === 'mascamites-capsule'
-                ? `solar-capsule-${piece.key}`
-                : `solar-probe-${piece.key}`
+              piece.displayKind === ESolarBoardPieceDisplayKind.SAMPLE
+                ? `solar-sample-stack-${piece.key}`
+                : piece.displayKind === ESolarBoardPieceDisplayKind.SAMPLE_PROBE
+                  ? `solar-capsule-${piece.key}`
+                  : `solar-probe-${piece.key}`
             }
             dataAttributes={{
               'data-player-id': piece.playerId,
               'data-space-id': piece.spaceId,
               'data-probe-count':
-                piece.kind === 'probe' && piece.count > 1
+                piece.displayKind === ESolarBoardPieceDisplayKind.PROBE &&
+                piece.count > 1
+                  ? String(piece.count)
+                  : undefined,
+              'data-sample-count':
+                piece.displayKind !== ESolarBoardPieceDisplayKind.PROBE &&
+                piece.count > 1
                   ? String(piece.count)
                   : undefined,
             }}
@@ -1462,13 +1539,25 @@ export function SolarSystemView({
                   : undefined,
             }}
           >
-            {piece.kind === 'mascamites-capsule' ? (
-              <CapsuleToken
-                playerColor={playerColors[piece.playerId] ?? 'white'}
+            {piece.displayKind === ESolarBoardPieceDisplayKind.SAMPLE ? (
+              <MascamitesSampleToken count={piece.count} />
+            ) : piece.displayKind ===
+              ESolarBoardPieceDisplayKind.SAMPLE_PROBE ? (
+              <MascamitesSampleToken
+                count={piece.count}
+                playerColor={
+                  piece.playerId
+                    ? (playerColors[piece.playerId] ?? 'white')
+                    : 'white'
+                }
               />
             ) : (
               <ProbeToken
-                playerColor={playerColors[piece.playerId] ?? 'white'}
+                playerColor={
+                  piece.playerId
+                    ? (playerColors[piece.playerId] ?? 'white')
+                    : 'white'
+                }
                 count={piece.count}
               />
             )}
@@ -2047,28 +2136,6 @@ function SolarAlienTokenRewardIcon({
       title={presentation.label}
     >
       <DescRender desc={presentation.token} size='desc-mini' smartSize />
-    </span>
-  );
-}
-
-function CapsuleToken({
-  playerColor,
-}: {
-  playerColor: string;
-}): React.JSX.Element {
-  const { t } = useTranslation('common');
-  return (
-    <span
-      className='flex h-5 w-5 items-center justify-center rounded-full border-2 border-text-100/80 bg-surface-950/85 font-mono text-[9px] font-bold leading-none text-text-100 shadow-[0_0_0_1px_rgba(0,0,0,0.7),0_2px_6px_rgba(0,0,0,0.55)]'
-      style={{
-        boxShadow: `0 0 0 2px ${playerColor}, 0 2px 6px rgba(0,0,0,0.55)`,
-      }}
-      title={t('client.solar_system_view.sample_capsule_title', {
-        playerColor,
-        defaultValue: `${playerColor} sample capsule`,
-      })}
-    >
-      S
     </span>
   );
 }

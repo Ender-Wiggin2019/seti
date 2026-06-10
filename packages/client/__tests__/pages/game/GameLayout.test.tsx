@@ -1119,10 +1119,10 @@ describe('GameLayoutV2', () => {
       expect(screen.getByTestId('free-action-bar')).toBeInTheDocument();
     });
 
-    it('sends spend signal token from the scan free-action rail', async () => {
-      const sendFreeAction = vi.fn();
+    it('sends spend signal token from the scan player-input options', async () => {
+      const sendInput = vi.fn();
       mockContextValue = createMockContext({
-        sendFreeAction,
+        sendInput,
         gameState: createMockGameState({
           phase: EPhase.IN_RESOLUTION,
           scanActionInProgress: true,
@@ -1151,16 +1151,24 @@ describe('GameLayoutV2', () => {
           inputId: 'input-scan-pool',
           type: EPlayerInputType.OPTION,
           title: 'Scan: choose sub-action',
-          options: [{ id: 'mark-earth', label: 'Mark Earth' }],
+          options: [
+            { id: 'mark-earth', label: 'Mark Earth' },
+            {
+              id: 'spend-signal-token-1',
+              label: 'Use Signal Token',
+            },
+          ],
         } as unknown as IGameContext['pendingInput'],
       });
 
       await renderLayout();
 
-      fireEvent.click(screen.getByTestId('free-action-SPEND_SIGNAL_TOKEN'));
+      fireEvent.click(screen.getByTestId('input-option-spend-signal-token-1'));
 
-      expect(sendFreeAction).toHaveBeenCalledWith({
-        type: EFreeAction.SPEND_SIGNAL_TOKEN,
+      expect(sendInput).toHaveBeenCalledWith({
+        inputId: 'input-scan-pool',
+        type: EPlayerInputType.OPTION,
+        optionId: 'spend-signal-token-1',
       });
     });
 

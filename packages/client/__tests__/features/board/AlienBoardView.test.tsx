@@ -118,8 +118,8 @@ describe('AlienBoardView', () => {
 
     const section = screen.getByTestId('alien-board-section');
     expect(section).toHaveClass('w-full');
-    expect(section).toHaveClass('md:w-[52%]');
-    expect(section).toHaveClass('md:max-w-[52%]');
+    expect(section).toHaveClass('md:w-[46%]');
+    expect(section).toHaveClass('md:max-w-[46%]');
     expect(section).toHaveClass('md:self-start');
   });
 
@@ -744,6 +744,86 @@ describe('AlienBoardView', () => {
       inputId: 'place-blue-trace',
       type: EPlayerInputType.OPTION,
       optionId: 'alien-0-mascamites-blue-4',
+    });
+  });
+
+  it('maps the initial Mascamites blue trace slots from the bottom up', () => {
+    const onRespondInput = vi.fn<(response: IInputResponse) => void>();
+    const traceSlots = [
+      slot('mascamites-fixed-blue-trace-8', ETrace.BLUE, {
+        rewards: [
+          { type: 'VP', amount: 5 },
+          { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
+        ],
+      }),
+      slot('mascamites-fixed-blue-trace-9', ETrace.BLUE, {
+        rewards: [
+          { type: 'VP', amount: 3 },
+          { type: 'CUSTOM', effectId: 'DRAW_ALIEN_CARD' },
+        ],
+      }),
+      slot('alien-0-mascamites-public-sample-0', ETrace.BLUE, {
+        rewards: [{ type: 'DATA', amount: 1 }],
+      }),
+    ];
+    const pendingInput: IPlayerInputModel = {
+      inputId: 'place-mascamites-blue-trace',
+      type: EPlayerInputType.OPTION,
+      title: 'Place blue trace',
+      options: traceSlots.map((traceSlot) => ({
+        id: traceSlot.slotId,
+        label: traceSlot.slotId,
+      })),
+    };
+    const alien: IPublicAlienState = {
+      alienIndex: 0,
+      alienType: EAlienType.MASCAMITES,
+      discovered: true,
+      discovery: { zones: [], overflowZones: [] },
+      cardZone: null,
+      board: {
+        type: 'mascamites',
+        samplePools: { [EPlanet.JUPITER]: 3, [EPlanet.SATURN]: 3 },
+        publicSamples: ['mascamites-data-2'],
+        capsules: [],
+        deliveredSamples: [],
+        traceSlots,
+      },
+    };
+
+    render(
+      <AlienBoardView
+        aliens={[alien]}
+        playerColors={{}}
+        pendingInput={pendingInput}
+        onRespondInput={onRespondInput}
+      />,
+    );
+
+    const fixedFiveVp = screen.getByTestId(
+      'alien-0-mascamites-hotspot-blue-trace-0',
+    );
+    const fixedThreeVp = screen.getByTestId(
+      'alien-0-mascamites-hotspot-blue-trace-1',
+    );
+    const publicSample = screen.getByTestId(
+      'alien-0-mascamites-hotspot-blue-trace-2',
+    );
+
+    expect(fixedFiveVp).toHaveStyle({ top: '92%' });
+    expect(fixedThreeVp).toHaveStyle({ top: '79.5%' });
+    expect(publicSample).toHaveStyle({ top: '68%' });
+    expect(publicSample).toHaveAttribute(
+      'data-server-trace-slot-id',
+      'alien-0-mascamites-public-sample-0',
+    );
+
+    fireEvent.click(publicSample);
+
+    expect(onRespondInput).toHaveBeenCalledWith({
+      inputId: 'place-mascamites-blue-trace',
+      type: EPlayerInputType.OPTION,
+      optionId: 'alien-0-mascamites-public-sample-0',
     });
   });
 
