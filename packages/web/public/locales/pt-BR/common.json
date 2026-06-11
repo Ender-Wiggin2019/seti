@@ -45,7 +45,13 @@
     "maps": "Mapas",
     "endgames": "Pontuação Final",
     "random_quiz": "Quiz Aleatório",
-    "daily_quiz": "Quiz Diário"
+    "daily_quiz": "Quiz Diário",
+    "organizations": "Organizações"
+  },
+  "organizations_page": {
+    "kicker": "Organizações SETI",
+    "title": "Organizações",
+    "subtitle": "11 novas organizações, cada uma com habilidade e recursos iniciais únicos. Clique para ver em tamanho grande; passe o mouse para ampliar."
   },
   "comment": {
     "login_to_comment": "faça login para comentar",

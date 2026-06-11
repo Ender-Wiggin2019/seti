@@ -8,6 +8,7 @@
 export const navigationItems = [
   { href: '/', text: 'nav.home' },
   { href: '/prelude', text: 'nav.prelude' },
+  { href: '/organizations', text: 'nav.organizations' },
   // { href: '/maps', text: 'nav.maps' },
   // { href: '/cards', text: 'nav.cards' },
   { href: '/diy', text: 'nav.diy' },

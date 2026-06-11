@@ -52,7 +52,13 @@
     "endgames": "终局计分",
     "random_quiz": "随机测验",
     "daily_quiz": "每日测验",
-    "prelude": "起始卡"
+    "prelude": "起始卡",
+    "organizations": "组织"
+  },
+  "organizations_page": {
+    "kicker": "SETI 组织",
+    "title": "组织",
+    "subtitle": "11 个全新组织，每个都拥有独特的能力与初始资源。点击查看大图，悬停可放大预览。"
   },
   "comment": {
     "login_to_comment": "login to comment",

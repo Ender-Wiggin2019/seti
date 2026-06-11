@@ -46,7 +46,13 @@
     "endgames": "Final Scoring",
     "random_quiz": "Random Quiz",
     "daily_quiz": "Daily Quiz",
-    "prelude": "Prelude"
+    "prelude": "Prelude",
+    "organizations": "Organizations"
+  },
+  "organizations_page": {
+    "kicker": "SETI Organizations",
+    "title": "Organizations",
+    "subtitle": "11 new organizations, each with a unique ability and starting resources. Click for a larger view; hover to preview."
   },
   "comment": {
     "login_to_comment": "login to comment",

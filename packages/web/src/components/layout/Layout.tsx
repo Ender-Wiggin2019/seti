@@ -16,17 +16,36 @@ import { Toaster } from '@/components/ui/toaster';
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <div className='pointer-events-none fixed inset-0 select-none bg-black'>
-        <div className='h-full w-full'>
-          <img
-            src='/images/background.webp'
-            className='h-full w-full object-cover object-top lg:object-bottom'
-            alt='background'
-            // fill
-            // priority
-            // quality={100}
-          />
-        </div>
+      {/*
+       * 3-tier lobby scene backdrop, ported from packages/client SceneBackground.
+       *   - solid mid color (--scene-bg) sits beneath everything (set on <body>).
+       *   - hero image fades from top, masked downward into the mid color.
+       *   - footer image fades from bottom, masked upward into the mid color.
+       */}
+      <div
+        aria-hidden
+        className='pointer-events-none fixed inset-0 -z-10 select-none overflow-hidden bg-[var(--scene-bg)]'
+      >
+        <div
+          className='absolute inset-x-0 top-0 h-[58vh] bg-cover bg-center bg-no-repeat'
+          style={{
+            backgroundImage: 'var(--scene-hero-image)',
+            WebkitMaskImage:
+              'linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 55%, rgba(0,0,0,0) 100%)',
+            maskImage:
+              'linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 55%, rgba(0,0,0,0) 100%)',
+          }}
+        />
+        <div
+          className='absolute inset-x-0 bottom-0 h-[42vh] bg-cover bg-bottom bg-no-repeat'
+          style={{
+            backgroundImage: 'var(--scene-footer-image)',
+            WebkitMaskImage:
+              'linear-gradient(to top, rgba(0,0,0,1) 60%, rgba(0,0,0,0.85) 80%, rgba(0,0,0,0) 100%)',
+            maskImage:
+              'linear-gradient(to top, rgba(0,0,0,1) 60%, rgba(0,0,0,0.85) 80%, rgba(0,0,0,0) 100%)',
+          }}
+        />
       </div>
       <span className='pointer-events-none fixed top-0 block h-[800px] w-full select-none bg-[radial-gradient(103.72%_46.58%_at_50%_0%,rgba(5,5,5,0.045)_0%,rgba(0,0,0,0)_100%)] dark:bg-[radial-gradient(103.72%_46.58%_at_50%_0%,rgba(255,255,255,0.09)_0%,rgba(255,255,255,0)_100%)]' />
 

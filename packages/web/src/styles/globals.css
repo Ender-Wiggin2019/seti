@@ -17,6 +17,18 @@ html.dark {
   --bg-color: theme("colors.zinc.900");
 }
 
+/*
+ * Scene background — 3-tier client backdrop ported from the seti client lobby:
+ *   1. --scene-bg            solid mid color sampled from the footer's top edge
+ *   2. --scene-hero-image    optional per-route top image (e.g. lobby.webp)
+ *   3. --scene-footer-image  global bottom banner
+ */
+:root {
+  --scene-bg: #011d36;
+  --scene-hero-image: url("/images/scenes/lobby.webp");
+  --scene-footer-image: url("/images/scenes/footer.webp");
+}
+
 [data-radix-popper-content-wrapper] {
   z-index: 99999 !important;
 }
