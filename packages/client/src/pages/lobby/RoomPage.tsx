@@ -1,14 +1,22 @@
 import type { IGameOptionsPatch } from '@seti/common/types/protocol/options';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { lobbyApi } from '@/api/lobbyApi';
-import { ERoomStatus } from '@/api/types';
+import { ERoomStatus, type IPlayerPublicProfile } from '@/api/types';
+import { useSceneHero } from '@/components/layout/SceneBackground';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { PlayerSlot } from '@/components/PlayerSlot';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { toast } from '@/components/ui/toast';
 import { getRequiredHumanPlayerCount } from '@/lib/roomOptions';
 import { GameSettingsPanel } from '@/pages/lobby/GameSettingsPanel';
@@ -20,12 +28,17 @@ const ROOM_STATUS_VARIANT = {
   [ERoomStatus.FINISHED]: 'neutral',
 } as const;
 
+const ROOM_SCENE_HERO = '/assets/seti/scenes/room.webp';
+
 export function RoomPage(): React.JSX.Element {
   const { t } = useTranslation('common');
   const { roomId } = useParams({ strict: false }) as { roomId: string };
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
+  const [profilePlayerId, setProfilePlayerId] = useState<string | null>(null);
+
+  useSceneHero(ROOM_SCENE_HERO);
 
   const { data: room, isLoading } = useQuery({
     queryKey: ['room', roomId],
@@ -88,6 +101,35 @@ export function RoomPage(): React.JSX.Element {
       }),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: () => lobbyApi.deleteRoom(roomId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      queryClient.invalidateQueries({ queryKey: ['my-games'] });
+      toast({
+        title: t('client.room.toast.deleted', {
+          defaultValue: 'Mission deleted',
+        }),
+        variant: 'success',
+      });
+      navigate({ to: '/lobby' });
+    },
+    onError: (err) =>
+      toast({
+        title: t('client.room.toast.delete_failed', {
+          defaultValue: 'Could not delete mission',
+        }),
+        description: err.message,
+        variant: 'error',
+      }),
+  });
+
+  const profileQuery = useQuery({
+    queryKey: ['player-public-profile', profilePlayerId],
+    queryFn: () => lobbyApi.getPlayerPublicProfile(profilePlayerId ?? ''),
+    enabled: profilePlayerId !== null,
+  });
+
   if (isLoading || !room) {
     return (
       <div className='flex min-h-[50vh] items-center justify-center'>
@@ -103,6 +145,7 @@ export function RoomPage(): React.JSX.Element {
   const canStart = isHost && isFull && room.status === ERoomStatus.WAITING;
   const canEnterGame = isInRoom && room.status === ERoomStatus.PLAYING;
   const canLeave = isInRoom && !isHost && room.status === ERoomStatus.WAITING;
+  const canDelete = isHost && room.status === ERoomStatus.WAITING;
 
   const statusLabel =
     room.status === ERoomStatus.WAITING
@@ -122,28 +165,11 @@ export function RoomPage(): React.JSX.Element {
   return (
     <div className='space-y-6' data-testid='room-page'>
       <section
-        className='mission-scene relative overflow-hidden rounded-[8px] border border-[color:var(--metal-edge)] bg-[var(--surface-deep)] shadow-instrument'
+        className='relative'
         data-testid='room-scene'
         data-scene='mission-room'
       >
-        <SceneImage
-          src='/assets/seti/sprites/terrain_00_02.webp'
-          className='right-[7%] top-[5%] w-[33%] min-w-[220px] max-w-[420px] rotate-[-4deg] opacity-88 max-md:right-[-14%] max-md:top-[14%] max-md:w-[260px]'
-        />
-        <SceneImage
-          src='/assets/seti/sprites/terrain_01_00.webp'
-          className='bottom-[-2%] right-[16%] w-[24%] min-w-[150px] max-w-[260px] opacity-70 max-md:hidden'
-        />
-        <SceneImage
-          src='/assets/seti/sprites/terrain_00_00.webp'
-          className='bottom-[-4%] left-[2%] w-[28%] min-w-[180px] max-w-[300px] opacity-78 max-md:left-[-12%] max-md:w-[220px]'
-        />
-        <span
-          aria-hidden
-          className='absolute bottom-[-18%] left-[-4%] h-[42%] w-[110%] bg-[oklch(0.42_0.025_250/0.10)]'
-        />
-
-        <div className='relative z-10 flex min-h-[300px] flex-col justify-between gap-8 p-5 sm:min-h-[340px] sm:p-8'>
+        <div className='relative z-10 flex min-h-[300px] flex-col justify-between gap-8 py-5 sm:min-h-[340px] sm:py-8'>
           <div className='flex flex-wrap items-start justify-between gap-3'>
             <Button
               variant='ghost'
@@ -178,10 +204,16 @@ export function RoomPage(): React.JSX.Element {
               </span>
             </span>
             <div className='space-y-2'>
-              <h1 className='font-display text-[clamp(2.2rem,5vw,4.2rem)] font-semibold tracking-[0.06em] text-text-100'>
+              <h1
+                className='font-display text-[clamp(2.2rem,5vw,4.2rem)] font-semibold tracking-[0.06em] text-text-100'
+                style={{ textShadow: '0 2px 18px rgba(1, 15, 30, 0.7)' }}
+              >
                 {room.name}
               </h1>
-              <p className='max-w-2xl text-sm leading-relaxed text-text-300 sm:text-base'>
+              <p
+                className='max-w-2xl text-sm leading-relaxed text-text-100/90 sm:text-base'
+                style={{ textShadow: '0 1px 10px rgba(1, 15, 30, 0.7)' }}
+              >
                 {hostName} · {room.players.length}/{requiredHumanPlayers}{' '}
                 {t('client.room.crew').toLowerCase()}
               </p>
@@ -251,6 +283,7 @@ export function RoomPage(): React.JSX.Element {
                 player={player}
                 seatIndex={player.seatIndex}
                 isCurrentUser={player.id === userId}
+                onInspectPlayer={setProfilePlayerId}
               />
             ))}
             {emptySlots.map((idx) => (
@@ -342,28 +375,161 @@ export function RoomPage(): React.JSX.Element {
                     : t('client.room.actions.launch')}
                 </Button>
               )}
+              {canDelete && (
+                <Button
+                  variant='danger'
+                  onClick={() => deleteMutation.mutate()}
+                  disabled={deleteMutation.isPending}
+                  data-testid='room-delete'
+                >
+                  {deleteMutation.isPending
+                    ? t('client.room.actions.deleting', {
+                        defaultValue: 'Deleting mission...',
+                      })
+                    : t('client.room.actions.delete', {
+                        defaultValue: 'Delete Mission',
+                      })}
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>
       </div>
+
+      <PlayerPublicProfileDialog
+        open={profilePlayerId !== null}
+        profile={profileQuery.data}
+        isLoading={profileQuery.isLoading}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setProfilePlayerId(null);
+          }
+        }}
+      />
     </div>
   );
 }
 
-function SceneImage({
-  src,
-  className,
+function PlayerPublicProfileDialog({
+  open,
+  profile,
+  isLoading,
+  onOpenChange,
 }: {
-  src: string;
-  className: string;
+  open: boolean;
+  profile?: IPlayerPublicProfile;
+  isLoading: boolean;
+  onOpenChange: (open: boolean) => void;
+}): React.JSX.Element {
+  const { t } = useTranslation('common');
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        scene='/assets/seti/scenes/profile.webp'
+        sceneHeight={170}
+        data-testid='player-public-profile'
+      >
+        <DialogHeader>
+          <span className='micro-label text-[oklch(0.74_0.10_240)]'>
+            {t('client.player_profile.kicker', {
+              defaultValue: 'Player Profile',
+            })}
+          </span>
+          <DialogTitle>
+            {profile?.name ??
+              t('client.player_profile.loading', {
+                defaultValue: 'Loading player...',
+              })}
+          </DialogTitle>
+        </DialogHeader>
+
+        {isLoading || !profile ? (
+          <LoadingSpinner variant='scanline' />
+        ) : (
+          <div className='space-y-4'>
+            <div className='grid grid-cols-2 gap-3'>
+              <ProfileReadout
+                label={t('client.player_profile.games_played', {
+                  defaultValue: 'Recent Games',
+                })}
+                value={String(profile.stats.gamesPlayed)}
+              />
+              <ProfileReadout
+                label={t('client.player_profile.hosted', {
+                  defaultValue: 'Hosted',
+                })}
+                value={String(profile.stats.hostedGames)}
+              />
+            </div>
+
+            <div className='space-y-2'>
+              <p className='micro-label text-text-500'>
+                {t('client.player_profile.recent', {
+                  defaultValue: 'Recent Activity',
+                })}
+              </p>
+              {!profile.recentGames.length ? (
+                <p className='text-sm text-text-500'>
+                  {t('client.player_profile.no_recent_games', {
+                    defaultValue: 'No recent games yet.',
+                  })}
+                </p>
+              ) : (
+                <div className='space-y-2'>
+                  {profile.recentGames.map((game) => (
+                    <div
+                      key={game.id}
+                      className='rounded-[5px] border border-[color:var(--metal-edge-soft)] bg-[var(--surface-instrument)]/72 px-3 py-2'
+                    >
+                      <div className='flex items-center justify-between gap-3'>
+                        <p className='truncate text-sm font-medium text-text-100'>
+                          {game.name}
+                        </p>
+                        <span className='readout text-[0.6875rem] uppercase tracking-microlabel text-text-500'>
+                          {game.status}
+                        </span>
+                      </div>
+                      <p className='mt-1 text-xs text-text-500'>
+                        {game.isSoloMode
+                          ? t('client.room_card.solo', {
+                              defaultValue: 'Solo',
+                            })
+                          : t('client.room.mode_multi_short', {
+                              defaultValue: 'Multi',
+                            })}
+                        {!game.visibleInLobby
+                          ? ` · ${t('client.my_games.hidden', {
+                              defaultValue: 'Hidden',
+                            })}`
+                          : ''}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ProfileReadout({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
 }): React.JSX.Element {
   return (
-    <img
-      src={src}
-      alt=''
-      aria-hidden
-      className={`pointer-events-none absolute select-none mix-blend-screen ${className}`}
-    />
+    <div className='rounded-[5px] border border-[color:var(--metal-edge-soft)] bg-[var(--surface-instrument)]/72 px-3 py-2'>
+      <p className='micro-label text-text-500'>{label}</p>
+      <p className='mt-1 font-display text-2xl font-semibold tracking-[0.06em] text-text-100'>
+        {value}
+      </p>
+    </div>
   );
 }
 

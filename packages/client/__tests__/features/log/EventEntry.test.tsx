@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { EventEntry } from '@/features/log';
 import i18n from '@/i18n';
 import { EGameEventType } from '@/types/re-exports';
+import { playerEventBase } from '../../helpers/gameEvents';
 
 describe('EventEntry', () => {
   beforeEach(async () => {
@@ -13,8 +14,8 @@ describe('EventEntry', () => {
     render(
       <EventEntry
         event={{
+          ...playerEventBase('p1'),
           type: EGameEventType.ACTION,
-          playerId: 'p1',
           action: { type: 'SCAN' as never },
         }}
         playerNames={{ p1: 'Ada' }}
@@ -31,9 +32,10 @@ describe('EventEntry', () => {
     render(
       <EventEntry
         event={{
-          type: EGameEventType.SCORE_CHANGE,
-          playerId: 'p2',
-          delta: 3,
+          ...playerEventBase('p2'),
+          type: EGameEventType.SCORE_CHANGED,
+          before: 4,
+          after: 7,
           source: 'mission',
         }}
         playerNames={{ p2: 'Lin' }}
@@ -48,8 +50,8 @@ describe('EventEntry', () => {
     render(
       <EventEntry
         event={{
+          ...playerEventBase('rival:solo'),
           type: EGameEventType.ACTION,
-          playerId: 'rival:solo',
           action: 'RIVAL_ACTION',
           details: {
             cardId: 'S.4',
@@ -75,8 +77,8 @@ describe('EventEntry', () => {
     const { rerender } = render(
       <EventEntry
         event={{
+          ...playerEventBase('p1'),
           type: EGameEventType.ACTION,
-          playerId: 'p1',
           action: 'ARKHOS_EXPLORATION_REWARD_REVEALED',
           details: {
             cardId: 'ARKHOS.EXPLORATION.2',
@@ -101,8 +103,8 @@ describe('EventEntry', () => {
     rerender(
       <EventEntry
         event={{
+          ...playerEventBase('p1'),
           type: EGameEventType.ACTION,
-          playerId: 'p1',
           action: 'ARKHOS_SECURITY_CARD_USED',
           details: {
             cardId: 'AIcard01',
@@ -128,8 +130,8 @@ describe('EventEntry', () => {
     rerender(
       <EventEntry
         event={{
+          ...playerEventBase('p1'),
           type: EGameEventType.ACTION,
-          playerId: 'p1',
           action: 'ARKHOS_SECURITY_BREACHED',
           details: {
             cardId: 'AIcard05',
@@ -157,8 +159,8 @@ describe('EventEntry', () => {
     render(
       <EventEntry
         event={{
+          ...playerEventBase('p1'),
           type: EGameEventType.ACTION,
-          playerId: 'p1',
           action: 'ARKHOS_EXPLORATION_REWARD_REVEALED',
           details: {
             cardId: 'ARKHOS.EXPLORATION.2',

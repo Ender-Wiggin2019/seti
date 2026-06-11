@@ -20,4 +20,11 @@ describe('WheelLayer', () => {
 
     expect(ring.style.transform).toContain('rotate(-360deg)');
   });
+
+  it('uses a render angle override for controlled animation steps', () => {
+    render(<WheelLayer ring={2} angle={2} renderAngleOverride={5} />);
+
+    const ring = screen.getByTestId('wheel-layer-ring-2');
+    expect(ring.style.transform).toContain('rotate(-225deg)');
+  });
 });

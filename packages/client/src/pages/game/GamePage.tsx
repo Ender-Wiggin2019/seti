@@ -2,8 +2,8 @@ import { useParams } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { GameLayoutV2 } from '@/features/layout/GameLayoutV2';
+import { GameSceneBackground } from '@/features/layout/GameSceneBackground';
 import { GameContextProvider, useGameContext } from '@/pages/game/GameContext';
-import { GAME_Z_INDEX } from '@/styles/zIndex';
 
 function GameContent(): React.JSX.Element {
   const { t } = useTranslation('common');
@@ -11,12 +11,8 @@ function GameContent(): React.JSX.Element {
 
   if (!isConnected) {
     return (
-      <div className='relative flex h-screen flex-col items-center justify-center gap-4 bg-[var(--surface-void)]'>
-        <div
-          className='pointer-events-none fixed inset-0 bg-[image:var(--bg-atmosphere)] bg-cover bg-center'
-          style={{ zIndex: GAME_Z_INDEX.background }}
-          aria-hidden
-        />
+      <div className='relative flex h-screen flex-col items-center justify-center gap-4'>
+        <GameSceneBackground />
         <LoadingSpinner
           variant='scanline'
           label={t('client.game_page.connecting', {
@@ -30,12 +26,8 @@ function GameContent(): React.JSX.Element {
 
   if (!gameState) {
     return (
-      <div className='relative flex h-screen flex-col items-center justify-center gap-4 bg-[var(--surface-void)]'>
-        <div
-          className='pointer-events-none fixed inset-0 bg-[image:var(--bg-atmosphere)] bg-cover bg-center'
-          style={{ zIndex: GAME_Z_INDEX.background }}
-          aria-hidden
-        />
+      <div className='relative flex h-screen flex-col items-center justify-center gap-4'>
+        <GameSceneBackground />
         <LoadingSpinner
           variant='scanline'
           label={t('client.game_page.awaiting', {

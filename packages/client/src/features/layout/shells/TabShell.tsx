@@ -6,6 +6,8 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { EventLog } from '@/features/log';
+import { useGameContext } from '@/pages/game/GameContext';
 import { useGameSession } from '../GameSessionContext';
 import { useLayout } from '../LayoutContext';
 import { useLayoutStore } from '../layoutStore';
@@ -53,45 +55,87 @@ export function TabShell(): React.JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [registerFocusHandler, layout]);
 
-  return (
-    <Tabs
-      defaultValue={layout.defaultTab}
-      value={activeTab}
-      onValueChange={(v) => setActiveTab(v)}
-      className='flex min-h-0 flex-1 flex-col'
-    >
-      <div className='relative shrink-0 overflow-x-auto bg-[var(--surface-deep)]/60 px-3 py-2'>
-        <TabsList className='w-max'>
-          {layout.tabs.map((tab) => (
-            <TabsTrigger key={tab.id} value={tab.id}>
-              {t(tab.labelKey)}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </div>
+  // The event log is hoisted out of the per-tab grid into a persistent right
+  // rail (PC) so it stays visible across every tab. It still lives in the
+  // layout config (so visibility toggles work); we just render it here.
+  const logSection = layout.sections.find(
+    (s) => s.id === 'log' && s.visible !== false,
+  );
 
-      <div className='min-h-0 flex-1 overflow-hidden p-3'>
-        {layout.tabs.map((tab) => {
-          const tabSections = layout.sections.filter(
-            (s) => s.tab?.container === tab.id,
-          );
-          return (
-            <TabsContent
-              key={tab.id}
-              value={tab.id}
-              className='mt-0 h-full data-[state=inactive]:hidden'
-            >
-              <ResizableTabGrid
-                tabId={tab.id}
-                sections={tabSections}
-                panelLayouts={panelLayouts ?? {}}
-                setPanelLayout={setPanelLayout}
-              />
-            </TabsContent>
-          );
-        })}
-      </div>
-    </Tabs>
+  return (
+    <div className='flex min-h-0 flex-1'>
+      <Tabs
+        defaultValue={layout.defaultTab}
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v)}
+        className='flex min-h-0 min-w-0 flex-1 flex-col'
+      >
+        <div className='relative shrink-0 overflow-x-auto border-b border-[color:var(--metal-edge-soft)] bg-[var(--surface-deep)]/70 px-3 py-2 backdrop-blur-md'>
+          <TabsList className='w-max'>
+            {layout.tabs.map((tab) => (
+              <TabsTrigger key={tab.id} value={tab.id}>
+                {t(tab.labelKey)}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+
+        <div className='min-h-0 flex-1 overflow-hidden p-3'>
+          {layout.tabs.map((tab) => {
+            const tabSections = layout.sections.filter(
+              (s) => s.tab?.container === tab.id && s.id !== 'log',
+            );
+            return (
+              <TabsContent
+                key={tab.id}
+                value={tab.id}
+                className='mt-0 h-full data-[state=inactive]:hidden'
+              >
+                <ResizableTabGrid
+                  tabId={tab.id}
+                  sections={tabSections}
+                  panelLayouts={panelLayouts ?? {}}
+                  setPanelLayout={setPanelLayout}
+                />
+              </TabsContent>
+            );
+          })}
+        </div>
+      </Tabs>
+
+      {logSection ? <LogRail titleKey={getSection('log')?.titleKey} /> : null}
+    </div>
+  );
+}
+
+/**
+ * LogRail — the always-on event-log strip docked at the far right on PC.
+ * Hidden below the tab-mode breakpoint, where the log lives in-column.
+ */
+function LogRail({ titleKey }: { titleKey?: string }): React.JSX.Element {
+  const { t } = useTranslation('common');
+  const { events, gameState } = useGameContext();
+
+  return (
+    <aside
+      data-testid='log-rail'
+      className='hidden min-h-0 w-[300px] shrink-0 flex-col border-l border-[color:var(--metal-edge-soft)] bg-[var(--surface-deep)]/35 px-3 py-3 lg:flex'
+    >
+      {titleKey ? (
+        <div className='section-head mb-2 flex items-center'>
+          <span aria-hidden className='section-head__tick' />
+          <p className='micro-label'>{t(titleKey)}</p>
+          <div aria-hidden className='section-head__rule' />
+        </div>
+      ) : null}
+      <EventLog
+        events={events}
+        players={gameState?.players ?? []}
+        showHeader={false}
+        className='flex min-h-0 flex-1 flex-col'
+        scrollAreaClassName='!max-h-none min-h-0 flex-1'
+      />
+    </aside>
   );
 }
 

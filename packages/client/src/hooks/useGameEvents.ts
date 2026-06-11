@@ -77,7 +77,7 @@ function mergeEvents(
 }
 
 function getEventTimestamp(event: TGameEvent): number {
-  return 'at' in event && typeof event.at === 'number' ? event.at : 0;
+  return event.seq;
 }
 
 function getEventKey(event: TGameEvent): string {
@@ -85,9 +85,8 @@ function getEventKey(event: TGameEvent): string {
     return `id:${event.id}`;
   }
 
-  const at = 'at' in event && event.at !== undefined ? event.at : '';
-  const playerId =
-    'playerId' in event && event.playerId !== undefined ? event.playerId : '';
+  const seq = event.seq;
+  const actorId = event.actorId ?? '';
   const action =
     event.type === 'ACTION'
       ? typeof event.action === 'string'
@@ -101,5 +100,5 @@ function getEventKey(event: TGameEvent): string {
       ? JSON.stringify(event.details)
       : '';
 
-  return `${event.type}|${at}|${playerId}|${action}|${details}`;
+  return `${event.type}|${seq}|${actorId}|${action}|${details}`;
 }

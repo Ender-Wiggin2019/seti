@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  EAnimationStepKind,
   EErrorCategory,
   EErrorCode,
   EErrorDisplay,
   EErrorSeverity,
+  type IAnimationBatch,
   type IErrorPayload,
   type IPublicGameState,
 } from '@/types/re-exports';
@@ -104,15 +106,44 @@ describe('wsClient', () => {
     expect(handleState).toHaveBeenCalledWith(secondState);
   });
 
+  it('binds game:animation listeners before and after socket replacement', async () => {
+    const { wsClient } = await import('@/api/wsClient');
+    const handleAnimation = vi.fn<(batch: IAnimationBatch) => void>();
+    const batch: IAnimationBatch = {
+      batchId: 'batch-1',
+      actorId: 'opponent',
+      turnIndex: 4,
+      finalStateVersion: 7,
+      steps: [
+        {
+          kind: EAnimationStepKind.GENERIC,
+          sourceEventId: 'event-1',
+          durationMs: 10,
+        },
+      ],
+    };
+
+    wsClient.onAnimation(handleAnimation);
+    wsClient.connect('token-a');
+    wsClient.connect('token-b');
+
+    emitSocketEvent(createdSockets[1], 'game:animation', { batch });
+
+    expect(handleAnimation).toHaveBeenCalledWith(batch);
+  });
+
   it('emits a game:resync request for the current game', async () => {
     const { wsClient } = await import('@/api/wsClient');
+    const handleResyncRequested = vi.fn();
 
     wsClient.connect('token-a');
+    wsClient.onResyncRequested(handleResyncRequested);
     wsClient.resync('game-1');
 
     expect(createdSockets[0].emit).toHaveBeenCalledWith('game:resync', {
       gameId: 'game-1',
     });
+    expect(handleResyncRequested).toHaveBeenCalledWith({ gameId: 'game-1' });
   });
 
   it('forwards socket connection failures through the game error channel', async () => {

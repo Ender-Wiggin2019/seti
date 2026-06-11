@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { toast } from '@/components/ui/toast';
 import { cn } from '@/lib/cn';
 import { applyGameOptionsPatch } from '@/lib/gameOptions';
@@ -39,7 +40,11 @@ import { GameOptionsEditor } from '@/pages/lobby/GameOptionsEditor';
 interface ICreateRoomDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (name: string, options: IGameOptions) => void;
+  onSubmit: (
+    name: string,
+    options: IGameOptions,
+    visibleInLobby: boolean,
+  ) => void;
   isPending: boolean;
   alienTypeMap?: Record<string, IAlienTypeOption>;
 }
@@ -82,6 +87,7 @@ export function CreateRoomDialog({
   const [options, setOptions] = useState<IGameOptions>(
     createDefaultCreateRoomOptions,
   );
+  const [visibleInLobby, setVisibleInLobby] = useState(true);
 
   const alienTypeOptions = useMemo<IAlienLobbyOption[]>(() => {
     const values = Object.values(alienTypeMap ?? {});
@@ -162,6 +168,9 @@ export function CreateRoomDialog({
         playerCount: nextChecked ? 2 : previous.playerCount,
       }),
     );
+    if (!nextChecked) {
+      setVisibleInLobby(true);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -196,13 +205,19 @@ export function CreateRoomDialog({
       return;
     }
 
-    onSubmit(result.data.name, finalOptions);
+    onSubmit(
+      result.data.name,
+      finalOptions,
+      finalOptions.isSoloMode ? visibleInLobby : true,
+    );
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         data-testid='create-room-dialog'
+        scene='/assets/seti/scenes/dialog-create.webp'
+        sceneHeight={200}
         className='max-h-[calc(100vh-2rem)] max-w-lg overflow-y-auto p-0'
       >
         <DialogHeader className='px-6 pt-6'>
@@ -243,41 +258,66 @@ export function CreateRoomDialog({
                 />
               </div>
               {options.isSoloMode ? (
-                <div className='space-y-2'>
-                  <Label htmlFor='solo-difficulty' variant='micro'>
-                    {t('client.create_room.solo_difficulty', {
-                      defaultValue: 'Rival Difficulty',
-                    })}
-                  </Label>
-                  <div
-                    id='solo-difficulty'
-                    className='grid grid-cols-5 gap-1.5'
-                    role='group'
-                    aria-label={t('client.create_room.solo_difficulty', {
-                      defaultValue: 'Rival Difficulty',
-                    })}
-                  >
-                    {SOLO_DIFFICULTIES.map((difficulty) => (
-                      <Button
-                        key={difficulty}
-                        type='button'
-                        variant={
-                          options.soloDifficulty === difficulty
-                            ? 'primary'
-                            : 'ghost'
-                        }
-                        size='sm'
-                        className='h-8 px-0 font-mono text-xs'
-                        onClick={() =>
-                          handleOptionsChange({ soloDifficulty: difficulty })
-                        }
-                        aria-pressed={options.soloDifficulty === difficulty}
-                      >
-                        {difficulty}
-                      </Button>
-                    ))}
+                <>
+                  <div className='space-y-2'>
+                    <Label htmlFor='solo-difficulty' variant='micro'>
+                      {t('client.create_room.solo_difficulty', {
+                        defaultValue: 'Rival Difficulty',
+                      })}
+                    </Label>
+                    <div
+                      id='solo-difficulty'
+                      className='grid grid-cols-5 gap-1.5'
+                      role='group'
+                      aria-label={t('client.create_room.solo_difficulty', {
+                        defaultValue: 'Rival Difficulty',
+                      })}
+                    >
+                      {SOLO_DIFFICULTIES.map((difficulty) => (
+                        <Button
+                          key={difficulty}
+                          type='button'
+                          variant={
+                            options.soloDifficulty === difficulty
+                              ? 'primary'
+                              : 'ghost'
+                          }
+                          size='sm'
+                          className='h-8 px-0 font-mono text-xs'
+                          onClick={() =>
+                            handleOptionsChange({ soloDifficulty: difficulty })
+                          }
+                          aria-pressed={options.soloDifficulty === difficulty}
+                        >
+                          {difficulty}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                  <div className='flex items-center justify-between gap-4 rounded-[5px] border border-[color:var(--metal-edge-soft)] bg-[var(--surface-instrument)]/62 px-3 py-2.5'>
+                    <div className='min-w-0'>
+                      <Label variant='micro'>
+                        {t('client.create_room.visible_in_lobby', {
+                          defaultValue: 'Show in Lobby',
+                        })}
+                      </Label>
+                      <p className='mt-1 text-xs text-text-500'>
+                        {t('client.create_room.visible_in_lobby_hint', {
+                          defaultValue:
+                            'Turn off to keep this solo mission in My Games only.',
+                        })}
+                      </p>
+                    </div>
+                    <Switch
+                      id='visible-in-lobby-toggle'
+                      checked={visibleInLobby}
+                      onCheckedChange={setVisibleInLobby}
+                      aria-label={t('client.create_room.visible_in_lobby', {
+                        defaultValue: 'Show in Lobby',
+                      })}
+                    />
+                  </div>
+                </>
               ) : (
                 <div className='space-y-1.5'>
                   <Label htmlFor='player-count' variant='micro'>
@@ -375,6 +415,7 @@ function ModeSelector({
         aria-label={t('client.game_settings.mode', { defaultValue: 'Mode' })}
       >
         <ModeButton
+          id='multiplayer-mode-toggle'
           label={multiplayerLabel}
           meta={t('client.create_room.mode_multiplayer_meta', {
             defaultValue: '2-4 Players',
@@ -383,6 +424,7 @@ function ModeSelector({
           onClick={() => onChange(false)}
         />
         <ModeButton
+          id='solo-mode-toggle'
           label={soloLabel}
           meta={t('client.create_room.mode_solo_meta', {
             defaultValue: '1 Player + Rival',
@@ -396,11 +438,13 @@ function ModeSelector({
 }
 
 function ModeButton({
+  id,
   label,
   meta,
   pressed,
   onClick,
 }: {
+  id: string;
   label: string;
   meta: string;
   pressed: boolean;
@@ -409,6 +453,7 @@ function ModeButton({
   return (
     <button
       type='button'
+      id={id}
       aria-label={label}
       aria-pressed={pressed}
       onClick={onClick}
@@ -417,7 +462,12 @@ function ModeButton({
         'transition-[background,border-color,color,box-shadow] duration-150',
         'focus-visible:outline-none focus-visible:shadow-[0_0_0_2px_var(--bg-950),0_0_0_4px_oklch(0.68_0.11_240/0.72)]',
         pressed
-          ? 'border border-[#1d8790] bg-[var(--lobby-engine-cyan)] text-[var(--lobby-deep-space)] shadow-[inset_0_1px_0_oklch(0.96_0.02_230/0.42)]'
+          ? cn(
+              'border border-[color:var(--signal-blue-lo)]',
+              'bg-[color-mix(in_oklab,var(--signal-blue)_22%,var(--surface-instrument))]',
+              'text-text-100',
+              'shadow-[inset_0_1px_0_oklch(0.78_0.10_240/0.30),0_0_0_1px_oklch(0.68_0.11_240/0.25)]',
+            )
           : 'border border-transparent text-text-300 hover:border-[color:var(--metal-edge-soft)] hover:bg-surface-800/55 hover:text-text-100',
       )}
     >
@@ -425,7 +475,7 @@ function ModeButton({
       <span
         className={cn(
           'mt-1 font-mono text-[0.6875rem] tracking-[0.06em]',
-          pressed ? 'opacity-70' : 'text-text-500',
+          pressed ? 'text-text-300' : 'text-text-500',
         )}
       >
         {meta}

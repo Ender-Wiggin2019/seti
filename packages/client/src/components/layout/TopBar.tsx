@@ -42,7 +42,7 @@ export function TopBar(): React.JSX.Element {
       className={cn(
         'relative flex h-12 shrink-0 items-center justify-between gap-2 overflow-hidden px-2 sm:px-4',
         'border-b border-[color:var(--metal-edge-soft)]',
-        'bg-[var(--surface-deep)]/74 backdrop-blur-md',
+        'bg-[oklch(0.09_0.02_262)]/92 backdrop-blur-md',
         'shadow-[inset_0_1px_0_oklch(0.78_0.04_240/0.08)]',
       )}
     >
@@ -51,6 +51,8 @@ export function TopBar(): React.JSX.Element {
         className='pointer-events-none absolute inset-x-0 bottom-0 h-px bg-[color:var(--metal-edge-soft)]'
       />
       <div className='flex min-w-0 flex-1 items-center gap-2 sm:gap-4'>
+        <WordmarkMark />
+
         <Link
           to='/lobby'
           className={cn(
@@ -117,7 +119,14 @@ export function TopBar(): React.JSX.Element {
             >
               {isMyTurn ? t('client.top_bar.your_turn') : currentPlayerName}
             </span>
-            {isMyTurn && <TurnPulse />}
+            {isMyTurn && (
+              <span
+                aria-hidden
+                className='signal-dot'
+                data-active='true'
+                data-signal='blue'
+              />
+            )}
           </div>
         )}
 
@@ -284,14 +293,20 @@ function InputStatusChip({ title }: { title: string }): React.JSX.Element {
   );
 }
 
-function TurnPulse(): React.JSX.Element {
+/**
+ * WordmarkMark — the shared instrument-diamond brand mark (mirrors the lobby
+ * AppShell). Three concentric rhombi, hairline-drawn anodized blue; anchors
+ * the in-game chrome to the same identity as the mission center.
+ */
+function WordmarkMark(): React.JSX.Element {
   return (
     <span
       aria-hidden
-      className='relative inline-flex h-2 w-2 items-center justify-center'
+      className='relative hidden h-6 w-6 shrink-0 items-center justify-center sm:inline-flex'
     >
-      <span className='absolute inset-0 animate-ping rounded-full bg-[oklch(0.68_0.11_240/0.6)]' />
-      <span className='relative h-2 w-2 rounded-full bg-[oklch(0.82_0.10_240)] shadow-[0_0_6px_oklch(0.68_0.11_240/0.8)]' />
+      <span className='absolute inset-0.5 rotate-45 border border-[color:var(--metal-edge)] bg-[var(--surface-instrument)]' />
+      <span className='absolute inset-[6px] rotate-45 border border-[oklch(0.48_0.10_240)] bg-[oklch(0.32_0.08_240)]' />
+      <span className='absolute inset-[9px] rotate-45 bg-[var(--signal-blue-hi)]' />
     </span>
   );
 }

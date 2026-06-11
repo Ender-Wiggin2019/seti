@@ -12,6 +12,7 @@ import {
 } from '@seti/common/utils/alienTracePresentation';
 import { type CSSProperties, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { IAnimationRenderState } from '@/features/board/animation/animationController';
 import { HotspotAnchor } from '@/features/hotspots/HotspotAnchor';
 import { HotspotButton } from '@/features/hotspots/HotspotButton';
 import { isOrbitalDynamicsMoveInputModel } from '@/features/input/inputPresentation';
@@ -99,6 +100,7 @@ interface ISolarSystemViewProps {
   allowMoveAnyProbe?: boolean;
   oumuamuaTile?: IPublicOumuamuaTile | null;
   textModeOverride?: boolean;
+  animationRenderState?: IAnimationRenderState;
 }
 
 interface ISpacePoint {
@@ -383,9 +385,15 @@ function buildOumuamuaTileSignals(
 
 function buildMovablePieces(
   solarSystem: IPublicSolarSystem,
+  animationRenderState?: IAnimationRenderState,
 ): IPublicSolarSystemMovablePiece[] {
   if (solarSystem.movablePieces) {
-    return solarSystem.movablePieces;
+    return solarSystem.movablePieces.map((piece) => ({
+      ...piece,
+      spaceId:
+        animationRenderState?.renderProbeSpaceById[piece.pieceId] ??
+        piece.spaceId,
+    }));
   }
 
   const playerOccurrence: Record<string, number> = {};
@@ -397,7 +405,8 @@ function buildMovablePieces(
       pieceId,
       pieceType: 'probe',
       playerId: probe.playerId,
-      spaceId: probe.spaceId,
+      spaceId:
+        animationRenderState?.renderProbeSpaceById[pieceId] ?? probe.spaceId,
       movementTarget: { type: 'probe', id: pieceId },
     };
   });
@@ -432,6 +441,7 @@ export function SolarSystemView({
   allowMoveAnyProbe = false,
   oumuamuaTile = null,
   textModeOverride,
+  animationRenderState,
 }: ISolarSystemViewProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const [selectedMoveTarget, setSelectedMoveTarget] = useState<{
@@ -461,7 +471,8 @@ export function SolarSystemView({
     ...(textMode
       ? { backgroundColor: 'rgba(8, 13, 25, 0.6)' }
       : {
-          backgroundImage: 'url(/assets/seti/sky/impeccable-atmosphere.svg)',
+          backgroundColor: 'oklch(0.09 0.02 260)',
+          backgroundImage: 'url(/assets/seti/sky/skyProximaCentauri.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }),
@@ -620,7 +631,7 @@ export function SolarSystemView({
       });
     }
 
-    const movablePieces = buildMovablePieces(solarSystem);
+    const movablePieces = buildMovablePieces(solarSystem, animationRenderState);
     for (const piece of movablePieces) {
       if (!bySpacePlayers[piece.spaceId]) {
         bySpacePlayers[piece.spaceId] = [];
@@ -732,6 +743,7 @@ export function SolarSystemView({
     textMode,
     normalizedSolarBoardZoom,
     oumuamuaDataPillCalibration,
+    animationRenderState,
   ]);
 
   const isOrbitalDynamicsMoveInput =
@@ -1108,21 +1120,24 @@ export function SolarSystemView({
   return (
     <section
       data-testid='solar-board-panel'
-      className='shrink-0 rounded-lg border border-surface-700/40 bg-surface-900/30 p-3 transition-[width]'
+      className='shrink-0 rounded-[8px] border border-[color:var(--metal-edge-soft)] bg-[var(--surface-instrument)]/90 p-3 shadow-instrument backdrop-blur-sm transition-[width]'
       style={panelStyle}
     >
       <header className='mb-2 flex flex-wrap items-center justify-between gap-2'>
-        <h2 className='font-display text-base font-bold uppercase tracking-wider text-text-100'>
-          {t('client.solar_system.title', { defaultValue: 'Solar System' })}
-        </h2>
+        <div className='flex items-center gap-2'>
+          <span aria-hidden className='section-head__tick' />
+          <h2 className='font-display text-base font-bold uppercase tracking-wider text-text-100'>
+            {t('client.solar_system.title', { defaultValue: 'Solar System' })}
+          </h2>
+        </div>
         <div className='flex items-center gap-2'>
           <div
-            className='inline-flex h-7 items-center gap-1 rounded-sm border border-surface-700/70 bg-surface-950/60 px-1 font-mono text-[10px] text-text-300'
+            className='inline-flex h-7 items-center gap-1 rounded-[4px] border border-[color:var(--metal-edge-soft)] bg-[var(--surface-instrument)] px-1 font-mono text-[10px] text-text-300 shadow-hairline-inset'
             aria-label={t('client.solar_system_view.zoom_controls', {
               defaultValue: 'Solar board zoom controls',
             })}
           >
-            <span className='px-1 text-[11px] leading-none text-text-400'>
+            <span className='px-1 text-[11px] leading-none text-text-500'>
               ⌕
             </span>
             <button
@@ -1130,7 +1145,7 @@ export function SolarSystemView({
               aria-label={t('client.solar_system_view.zoom_out', {
                 defaultValue: 'Zoom solar board out',
               })}
-              className='grid h-5 w-5 place-items-center rounded-sm border border-surface-700 bg-surface-900 text-text-100 transition-colors hover:bg-surface-800 disabled:cursor-not-allowed disabled:opacity-40'
+              className='grid h-5 w-5 place-items-center rounded-[3px] border border-[color:var(--metal-edge-soft)] bg-[var(--surface-raised)] text-text-100 transition-colors hover:bg-[oklch(0.28_0.04_262)] hover:border-[oklch(0.40_0.04_240)] disabled:cursor-not-allowed disabled:opacity-40'
               disabled={
                 normalizedSolarBoardZoom <= SOLAR_BOARD_MIN_ZOOM + 0.001
               }
@@ -1140,7 +1155,7 @@ export function SolarSystemView({
             </button>
             <span
               data-testid='solar-board-zoom-value'
-              className='w-8 text-center tabular-nums text-text-200'
+              className='readout w-8 text-center text-[10px] tabular-nums text-text-100'
             >
               {formatZoomPercent(normalizedSolarBoardZoom)}
             </span>
@@ -1149,7 +1164,7 @@ export function SolarSystemView({
               aria-label={t('client.solar_system_view.zoom_in', {
                 defaultValue: 'Zoom solar board in',
               })}
-              className='grid h-5 w-5 place-items-center rounded-sm border border-surface-700 bg-surface-900 text-text-100 transition-colors hover:bg-surface-800 disabled:cursor-not-allowed disabled:opacity-40'
+              className='grid h-5 w-5 place-items-center rounded-[3px] border border-[color:var(--metal-edge-soft)] bg-[var(--surface-raised)] text-text-100 transition-colors hover:bg-[oklch(0.28_0.04_262)] hover:border-[oklch(0.40_0.04_240)] disabled:cursor-not-allowed disabled:opacity-40'
               disabled={
                 normalizedSolarBoardZoom >= SOLAR_BOARD_MAX_ZOOM - 0.001
               }
@@ -1160,7 +1175,7 @@ export function SolarSystemView({
           </div>
 
           {solarSystem.nextRotateRing ? (
-            <div className='flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-text-400'>
+            <div className='flex items-center gap-2 font-mono text-[11px] uppercase tracking-microlabel text-text-500'>
               <span>
                 {t('client.solar_system.next_rotate', {
                   defaultValue: 'Next Rotate:',
@@ -1180,9 +1195,20 @@ export function SolarSystemView({
 
       <div
         data-testid='solar-board-frame'
-        className='relative isolate mx-auto aspect-square overflow-hidden rounded-md transition-[width]'
+        className='relative isolate mx-auto aspect-square overflow-hidden rounded-md ring-1 ring-inset ring-[color:var(--metal-edge-soft)] transition-[width]'
         style={boardStyle}
       >
+        {!textMode ? (
+          <span
+            aria-hidden
+            className='pointer-events-none absolute inset-0'
+            style={{
+              zIndex: 1,
+              background:
+                'radial-gradient(ellipse 75% 75% at 50% 50%, oklch(0.10 0.02 260 / 0.15) 0%, oklch(0.08 0.018 260 / 0.45) 62%, oklch(0.05 0.015 260 / 0.78) 100%)',
+            }}
+          />
+        ) : null}
         <WheelLayer
           ring={4}
           angle={0}
@@ -1192,18 +1218,21 @@ export function SolarSystemView({
         <WheelLayer
           ring={3}
           angle={getDiscAngle(solarSystem, 3)}
+          renderAngleOverride={animationRenderState?.renderDiscAngles[3]}
           showImage={!textMode}
           style={{ zIndex: SOLAR_SYSTEM_Z_INDEX.thirdWheel }}
         />
         <WheelLayer
           ring={2}
           angle={getDiscAngle(solarSystem, 2)}
+          renderAngleOverride={animationRenderState?.renderDiscAngles[2]}
           showImage={!textMode}
           style={{ zIndex: SOLAR_SYSTEM_Z_INDEX.secondWheel }}
         />
         <WheelLayer
           ring={1}
           angle={getDiscAngle(solarSystem, 1)}
+          renderAngleOverride={animationRenderState?.renderDiscAngles[1]}
           showImage={!textMode}
           style={{ zIndex: SOLAR_SYSTEM_Z_INDEX.innerWheel }}
         />

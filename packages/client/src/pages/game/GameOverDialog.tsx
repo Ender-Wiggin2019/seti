@@ -57,7 +57,11 @@ export function GameOverDialog(): React.JSX.Element | null {
 
   return (
     <Dialog open onOpenChange={() => undefined}>
-      <DialogContent className='max-w-4xl p-0'>
+      <DialogContent
+        scene='/assets/seti/scenes/dialog-results.webp'
+        sceneHeight={220}
+        className='max-w-4xl p-0'
+      >
         <DialogHeader className='px-6 pt-6'>
           <span className='micro-label inline-flex items-center gap-2 text-[oklch(0.78_0.10_240)]'>
             <span className='h-px w-6 bg-[var(--signal-blue)]' />

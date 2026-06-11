@@ -6,6 +6,7 @@ interface IPlayerSlotProps {
   player: IRoomPlayer | null;
   seatIndex: number;
   isCurrentUser: boolean;
+  onInspectPlayer?: (playerId: string) => void;
 }
 
 /**
@@ -50,6 +51,7 @@ export function PlayerSlot({
   player,
   seatIndex,
   isCurrentUser,
+  onInspectPlayer,
 }: IPlayerSlotProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const signal = SEAT_SIGNALS[seatIndex % SEAT_SIGNALS.length];
@@ -78,16 +80,8 @@ export function PlayerSlot({
     );
   }
 
-  return (
-    <div
-      className={cn(
-        'relative flex h-14 items-center gap-3 overflow-hidden rounded-[4px] px-4',
-        'border border-[color:var(--metal-edge-soft)]',
-        'bg-[oklch(0.15_0.025_260/0.8)]',
-        'shadow-hairline-inset',
-        isCurrentUser && 'ring-1 ring-[oklch(0.68_0.11_240/0.5)] ring-offset-0',
-      )}
-    >
+  const content = (
+    <>
       {/* Seat signal bar: a clean 2px vertical ident. */}
       <span
         aria-hidden
@@ -146,6 +140,34 @@ export function PlayerSlot({
       >
         {signal.label}
       </span>
+    </>
+  );
+
+  const className = cn(
+    'relative flex h-14 items-center gap-3 overflow-hidden rounded-[4px] px-4',
+    'border border-[color:var(--metal-edge-soft)]',
+    'bg-[oklch(0.15_0.025_260/0.8)]',
+    'shadow-hairline-inset',
+    isCurrentUser && 'ring-1 ring-[oklch(0.68_0.11_240/0.5)] ring-offset-0',
+    onInspectPlayer &&
+      'w-full text-left transition-colors hover:border-[oklch(0.50_0.10_240/0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.68_0.11_240)]',
+  );
+
+  if (onInspectPlayer) {
+    return (
+      <button
+        type='button'
+        className={className}
+        onClick={() => onInspectPlayer(player.id)}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className={className}>
+      {content}
     </div>
   );
 }

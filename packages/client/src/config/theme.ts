@@ -51,7 +51,7 @@ export interface IThemeTokens {
      * A color earns its place by meaning, not aesthetics.
      */
     signal: {
-      /** 🔷 Anodized Blue — player agency, primary actions, focus, current selection. */
+      /** 🔷 Star Track Blue — player agency, focus, current selection, secondary controls. */
       blue: { base: string; hi: string; lo: string };
       /** 🟣 Nebula Violet — discovery events, new signals, alien encounters. The 'awe' accent. */
       violet: { base: string; hi: string; lo: string };
@@ -78,9 +78,14 @@ export interface IThemeTokens {
     };
     /** Instrumentation / data readouts — plain near-white phosphor. */
     data: { primary: string; dim: string };
-    /** Lobby reference palette from 2223.PNG. */
+    /** Refine v2 lobby/design-system palette. */
     lobby: {
       deepSpace: string;
+      starTrackBlue: string;
+      energyOrange: string;
+      orbitWhite: string;
+      starGray: string;
+      /** Legacy aliases kept for existing consumers. */
       rockGray: string;
       metalGray: string;
       groundGray: string;
@@ -175,13 +180,18 @@ export const THEME_TOKENS: IThemeTokens = {
       dim: 'oklch(0.72 0.015 260)',
     },
     lobby: {
-      deepSpace: '#0A0E14',
-      rockGray: '#1A1F27',
-      metalGray: '#2A303C',
-      groundGray: '#3A404D',
-      stardust: '#E6E6E8',
-      planetOrange: '#C7734A',
-      engineCyan: '#2EC1C9',
+      deepSpace: '#0A0F1C',
+      starTrackBlue: '#1E5ABA',
+      energyOrange: '#F26A21',
+      orbitWhite: '#F2E6D0',
+      starGray: '#3A4756',
+      // Legacy aliases
+      rockGray: '#0A0F1C',
+      metalGray: '#3A4756',
+      groundGray: '#3A4756',
+      stardust: '#F2E6D0',
+      planetOrange: '#F26A21',
+      engineCyan: '#1E5ABA',
     },
   },
   typography: {

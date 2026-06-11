@@ -1,10 +1,14 @@
 import type { CSSProperties } from 'react';
 import { cn } from '@/lib/cn';
+import { useGameSession } from '../GameSessionContext';
 import { useLayout } from '../LayoutContext';
 import { useLayoutStore } from '../layoutStore';
 import { getSection } from '../sectionRegistry';
 import type { PinMode, ResolvedSection } from '../types';
 import { SectionFrame } from './SectionFrame';
+
+/** Height of the hand dock when collapsed — only its top rail stays visible. */
+export const HAND_COLLAPSED_HEIGHT = '44px';
 
 /**
  * PinnedLayer — renders any section whose `pin` !== 'none' outside the flow.
@@ -71,6 +75,7 @@ export function PinnedLayer({
 }): React.JSX.Element | null {
   const { layout } = useLayout();
   const patchSection = useLayoutStore((s) => s.patchSection);
+  const handExpanded = useGameSession().handExpanded;
 
   const sections = layout.sections.filter((s) => {
     if (!s.visible) return false;
@@ -90,15 +95,25 @@ export function PinnedLayer({
         const def = getSection(section.id);
         if (!def) return null;
         const Body = def.Component;
+        const isHand = section.id === 'hand' && section.pin === 'fixed-bottom';
+        const handCollapsed = isHand && !handExpanded;
+        const style = pinStyle(section);
+        if (handCollapsed) {
+          // Shrink the fixed wrapper to the rail so the dock retracts flush to
+          // the bottom edge instead of leaving a tall empty panel.
+          style.height = HAND_COLLAPSED_HEIGHT;
+          style.minHeight = HAND_COLLAPSED_HEIGHT;
+          style.maxHeight = HAND_COLLAPSED_HEIGHT;
+        }
         return (
           <div
             key={section.id}
             data-pin={section.pin}
             data-section-id={section.id}
-            style={pinStyle(section)}
+            style={style}
             className={cn('pointer-events-auto')}
           >
-            {section.id === 'hand' && section.pin === 'fixed-bottom' ? (
+            {isHand && !handCollapsed ? (
               <FixedBottomResizeHandle
                 currentHeight={section.size?.height}
                 onResize={(height) =>
@@ -130,13 +145,13 @@ function FixedBottomResizeHandle({
   ): void => {
     event.preventDefault();
     const startY = event.clientY;
-    const startHeight = parsePx(currentHeight) ?? 320;
+    const startHeight = parsePx(currentHeight) ?? 280;
 
     const handlePointerMove = (moveEvent: PointerEvent): void => {
       const nextHeight = clamp(
         startHeight + startY - moveEvent.clientY,
         120,
-        360,
+        340,
       );
       onResize(nextHeight);
     };

@@ -54,15 +54,15 @@ describe('MissionHubView', () => {
       'data-scene-treatment',
       'single-image',
     );
-    expect(screen.getByTestId('mission-hero-image')).toHaveAttribute(
-      'src',
-      '/assets/seti/sprites/terrain_00_02.webp',
-    );
+    expect(screen.queryByTestId('mission-hero-image')).toBeNull();
     expect(screen.getByText('任务中心')).toBeInTheDocument();
     expect(screen.getByText('探索未知，连接未来。')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: '创建任务' }),
     ).toBeInTheDocument();
+    expect(screen.getByTestId('lobby-new-mission')).toHaveTextContent(
+      '创建任务',
+    );
     expect(screen.getByTestId('mission-stat-waiting')).toHaveTextContent('01');
     expect(screen.getByTestId('mission-stat-playing')).toHaveTextContent('01');
     expect(screen.getByTestId('mission-stat-players')).toHaveTextContent('03');
@@ -81,6 +81,58 @@ describe('MissionHubView', () => {
 
     fireEvent.click(screen.getByRole('tab', { name: '等待玩家' }));
     expect(onFilterChange).toHaveBeenCalledWith(ERoomStatus.WAITING);
+  });
+
+  it('renders pagination controls for long room lists', () => {
+    const onPageChange = vi.fn();
+
+    render(
+      <MissionHubView
+        title='Mission Hub'
+        subtitle='Explore'
+        kicker='Available'
+        createLabel='Create'
+        onCreateMission={vi.fn()}
+        filter='all'
+        onFilterChange={vi.fn()}
+        filterLabels={{
+          all: 'All',
+          waiting: 'Waiting',
+          playing: 'In Progress',
+        }}
+        stats={{
+          waiting: 7,
+          playing: 2,
+          players: 9,
+        }}
+        statLabels={{
+          waiting: 'Waiting',
+          waitingSub: 'Open',
+          playing: 'Playing',
+          playingSub: 'Active',
+          players: 'Players',
+          playersSub: 'Total',
+        }}
+        rooms={[createRoom('room-1', 'Mercury Relay', ERoomStatus.WAITING)]}
+        emptyLabel='No missions'
+        page={2}
+        pageSize={12}
+        total={30}
+        totalPages={3}
+        hasMore
+        onPageChange={onPageChange}
+      />,
+    );
+
+    expect(screen.getByTestId('mission-pagination')).toHaveTextContent(
+      '02 / 03',
+    );
+
+    fireEvent.click(screen.getByTestId('mission-page-prev'));
+    expect(onPageChange).toHaveBeenCalledWith(1);
+
+    fireEvent.click(screen.getByTestId('mission-page-next'));
+    expect(onPageChange).toHaveBeenCalledWith(3);
   });
 });
 

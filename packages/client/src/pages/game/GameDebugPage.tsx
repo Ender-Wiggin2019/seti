@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { EMPTY_ANIMATION_RENDER_STATE } from '@/features/board/animation/animationController';
 import { GameLayoutV2 } from '@/features/layout/GameLayoutV2';
 import { useServerDebugSession } from '@/hooks/useServerDebugSession';
 import {
@@ -860,6 +861,7 @@ function createDebugGameState(
 
   return {
     gameId: `debug-${scenario}`,
+    version: 1,
     round: 3,
     roundIndex: 3,
     maxRounds: 5,
@@ -1632,7 +1634,18 @@ export function GameDebugPage(): React.JSX.Element {
       isMyTurn: effectiveGameState.currentPlayerId === effectiveMyPlayerId,
       isSpectator,
       myPlayerId: effectiveMyPlayerId,
-      events: [{ type: EGameEventType.ROUND_END, round: 2 }],
+      events: [
+        {
+          id: 'debug-round-end',
+          seq: 1,
+          turnIndex: effectiveGameState.turnIndex,
+          round: 2,
+          actorId: null,
+          level: 'info',
+          type: EGameEventType.ROUND_END,
+        },
+      ],
+      animationRenderState: EMPTY_ANIMATION_RENDER_STATE,
       sendAction: handleAction,
       sendFreeAction: handleFreeAction,
       sendEndTurn: handleEndTurn,

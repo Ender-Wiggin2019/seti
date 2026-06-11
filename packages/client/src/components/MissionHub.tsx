@@ -4,7 +4,6 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { RoomCard } from '@/components/RoomCard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { cn } from '@/lib/cn';
 
 export type TMissionFilterValue =
   | 'all'
@@ -47,6 +46,12 @@ interface IMissionHubViewProps {
   isLoading?: boolean;
   loadingLabel?: string;
   emptyLabel: string;
+  page?: number;
+  pageSize?: number;
+  total?: number;
+  totalPages?: number;
+  hasMore?: boolean;
+  onPageChange?: (page: number) => void;
 }
 
 const STAT_SIGNAL = {
@@ -55,36 +60,11 @@ const STAT_SIGNAL = {
   players: 'green',
 } as const;
 
-const MISSION_HERO_SCENE = '/assets/seti/sprites/terrain_00_02.webp';
-
 const STAT_SCENES = {
   waiting: '/assets/seti/sprites/terrain_01_00.webp',
   playing: '/assets/seti/sprites/terrain_00_02.webp',
   players: '/assets/seti/sprites/terrain_01_01.webp',
 } as const;
-
-const ASSET_STRIP_ITEMS = [
-  {
-    asset: 'objects_01_01.webp',
-    className: 'left-[-1%] bottom-[-18%] w-36 opacity-68 sm:w-40 lg:w-44',
-  },
-  {
-    asset: 'terrain_00_00.webp',
-    className: 'left-[13%] bottom-[-6%] w-40 opacity-70 sm:w-48 lg:w-52',
-  },
-  {
-    asset: 'objects_02_02.webp',
-    className: 'left-[34%] bottom-[-10%] w-32 opacity-56 sm:w-36 lg:w-40',
-  },
-  {
-    asset: 'terrain_00_02.webp',
-    className: 'left-[50%] bottom-[-12%] w-40 opacity-70 sm:w-48 lg:w-52',
-  },
-  {
-    asset: 'terrain_02_00.webp',
-    className: 'right-[7%] bottom-[-5%] w-40 opacity-64 sm:w-44 lg:w-48',
-  },
-];
 
 export function MissionHubView({
   title,
@@ -101,7 +81,14 @@ export function MissionHubView({
   isLoading = false,
   loadingLabel = 'Loading missions...',
   emptyLabel,
+  page = 1,
+  total = rooms?.length ?? 0,
+  totalPages = total > 0 ? 1 : 0,
+  hasMore = false,
+  onPageChange,
 }: IMissionHubViewProps): React.JSX.Element {
+  const { t } = useTranslation('common');
+
   return (
     <div className='space-y-5' data-testid='mission-hub'>
       <MissionHero
@@ -171,7 +158,7 @@ export function MissionHubView({
               </TabsList>
             </Tabs>
             <span className='readout text-[0.6875rem] uppercase tracking-microlabel text-text-500'>
-              {String(rooms?.length ?? 0).padStart(2, '0')}
+              {String(total).padStart(2, '0')}
             </span>
           </div>
 
@@ -181,15 +168,44 @@ export function MissionHubView({
             <MissionEmptyState label={emptyLabel} />
           ) : (
             <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
-              {rooms.map((room) => (
-                <RoomCard key={room.id} room={room} />
+              {rooms.map((room, index) => (
+                <RoomCard key={room.id} room={room} index={index} />
               ))}
             </div>
           )}
+          {totalPages > 1 && onPageChange ? (
+            <div
+              className='flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--metal-edge-soft)] pt-4'
+              data-testid='mission-pagination'
+            >
+              <Button
+                type='button'
+                variant='ghost'
+                size='sm'
+                onClick={() => onPageChange(Math.max(1, page - 1))}
+                disabled={page <= 1}
+                data-testid='mission-page-prev'
+              >
+                {t('client.common.previous', { defaultValue: 'Previous' })}
+              </Button>
+              <span className='readout text-[0.6875rem] uppercase tracking-microlabel text-text-500'>
+                {String(page).padStart(2, '0')} /{' '}
+                {String(totalPages).padStart(2, '0')}
+              </span>
+              <Button
+                type='button'
+                variant='ghost'
+                size='sm'
+                onClick={() => onPageChange(page + 1)}
+                disabled={!hasMore}
+                data-testid='mission-page-next'
+              >
+                {t('client.common.next', { defaultValue: 'Next' })}
+              </Button>
+            </div>
+          ) : null}
         </div>
       </section>
-
-      <MissionAssetStrip />
     </div>
   );
 }
@@ -213,32 +229,12 @@ function MissionHero({
 }: IMissionHeroProps): React.JSX.Element {
   return (
     <section
-      className={cn(
-        'mission-scene relative overflow-hidden rounded-[8px]',
-        'border border-[color:var(--metal-edge)] bg-[var(--surface-deep)]',
-        'shadow-instrument',
-      )}
+      className='relative'
       data-testid='mission-hero-scene'
       data-scene='lunar-lobby'
       data-scene-treatment='single-image'
     >
-      <img
-        src={MISSION_HERO_SCENE}
-        alt=''
-        aria-hidden
-        data-testid='mission-hero-image'
-        className='pointer-events-none absolute inset-y-[-4%] right-[8%] h-[108%] w-auto max-w-none select-none object-contain opacity-[0.9] max-sm:right-[-18%]'
-      />
-      <span
-        aria-hidden
-        className='absolute inset-0 bg-[oklch(0.05_0.018_260/0.58)]'
-      />
-      <span
-        aria-hidden
-        className='absolute bottom-[-18%] left-[-4%] h-[42%] w-[110%] bg-[oklch(0.42_0.025_250/0.10)]'
-      />
-
-      <div className='relative z-10 flex min-h-[320px] flex-col justify-between gap-10 p-6 sm:min-h-[360px] sm:p-8 lg:p-10'>
+      <div className='relative z-10 flex min-h-[320px] flex-col justify-between gap-10 py-6 sm:min-h-[360px] sm:py-8 lg:py-10'>
         <div className='max-w-[520px] space-y-5'>
           <span className='micro-label inline-flex items-center gap-3 text-[oklch(0.82_0.09_235)]'>
             <span className='h-px w-8 bg-[var(--signal-blue)]' />
@@ -248,21 +244,27 @@ function MissionHero({
             </span>
           </span>
           <div className='space-y-3'>
-            <h1 className='font-display text-[clamp(2.7rem,7vw,4.9rem)] font-black leading-[0.95] tracking-[0.04em] text-text-100'>
+            <h1
+              className='font-display text-[clamp(2.7rem,7vw,4.9rem)] font-black leading-[0.95] tracking-[0.04em] text-text-100'
+              style={{ textShadow: '0 2px 18px rgba(1, 15, 30, 0.7)' }}
+            >
               {title}
             </h1>
-            <p className='max-w-md text-base leading-relaxed text-text-300 sm:text-lg'>
+            <p
+              className='max-w-md text-base leading-relaxed text-text-100/90 sm:text-lg'
+              style={{ textShadow: '0 1px 10px rgba(1, 15, 30, 0.7)' }}
+            >
               {subtitle}
             </p>
           </div>
         </div>
 
-        <div className='flex justify-start sm:justify-end'>
+        <div className='flex justify-start'>
           <Button
             size='lg'
             onClick={onCreateMission}
             className='min-w-[150px]'
-            data-testid='mission-create-button'
+            data-testid='lobby-new-mission'
           >
             {createLabel}
           </Button>
@@ -337,47 +339,5 @@ function MissionEmptyState({ label }: { label: string }): React.JSX.Element {
         {label}
       </p>
     </div>
-  );
-}
-
-function MissionAssetStrip(): React.JSX.Element {
-  const { t } = useTranslation('common');
-  return (
-    <section className='mission-panel border-transparent px-4 py-5 max-md:hidden'>
-      <div className='mb-2'>
-        <p className='micro-label text-text-500'>
-          {t('client.mission_hub.background_elements', {
-            defaultValue: 'Background Elements',
-          })}
-        </p>
-        <p className='text-xs uppercase tracking-[0.16em] text-text-700'>
-          {t('client.mission_hub.low_poly_assets', {
-            defaultValue: 'Low-poly mission assets',
-          })}
-        </p>
-      </div>
-      <div className='relative h-44 overflow-hidden rounded-[6px] bg-[var(--surface-instrument)]/70'>
-        <span
-          aria-hidden
-          className='absolute inset-x-0 bottom-0 h-[58%] bg-[oklch(0.09_0.02_260/0.56)]'
-        />
-        <span
-          aria-hidden
-          className='absolute inset-x-0 bottom-0 h-px bg-[color:var(--surface-700)]'
-        />
-        {ASSET_STRIP_ITEMS.map(({ asset, className }) => (
-          <img
-            key={asset}
-            src={`/assets/seti/sprites/${asset}`}
-            alt=''
-            aria-hidden
-            className={cn(
-              'pointer-events-none absolute select-none mix-blend-screen',
-              className,
-            )}
-          />
-        ))}
-      </div>
-    </section>
   );
 }

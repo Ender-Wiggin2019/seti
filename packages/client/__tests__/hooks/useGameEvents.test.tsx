@@ -2,6 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useGameEvents } from '@/hooks/useGameEvents';
 import { EGameEventType, type TGameEvent } from '@/types/re-exports';
+import { playerEventBase } from '../helpers/gameEvents';
 
 const wsMock = vi.hoisted(() => ({
   eventHandlers: new Set<(event: TGameEvent) => void>(),
@@ -22,15 +23,12 @@ function emitEvent(event: TGameEvent): void {
   }
 }
 
-function actionEvent(id: string, at = 100): TGameEvent {
+function actionEvent(id: string, seq = 100): TGameEvent {
   return {
-    id,
+    ...playerEventBase('p1', { id, seq }),
     type: EGameEventType.ACTION,
-    level: 'info',
-    at,
-    playerId: 'p1',
     action: 'SCAN',
-  } as TGameEvent;
+  };
 }
 
 describe('useGameEvents', () => {

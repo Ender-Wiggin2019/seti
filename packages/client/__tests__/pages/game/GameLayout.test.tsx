@@ -11,6 +11,7 @@ import {
   within,
 } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { EMPTY_ANIMATION_RENDER_STATE } from '@/features/board/animation/animationController';
 import { GameLayoutV2 } from '@/features/layout/GameLayoutV2';
 import { useLayoutStore } from '@/features/layout/layoutStore';
 import type { IGameContext } from '@/pages/game/GameContext';
@@ -31,6 +32,7 @@ import {
   createMockGameState,
   createMockPlayerState,
 } from '../../../test/mocks/gameState';
+import { playerEventBase, systemEventBase } from '../../helpers/gameEvents';
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, ...rest }: { children: React.ReactNode; to: string }) => (
@@ -63,6 +65,7 @@ function createMockContext(overrides?: Partial<IGameContext>): IGameContext {
     isSpectator: false,
     myPlayerId: 'player-1',
     events: [],
+    animationRenderState: EMPTY_ANIMATION_RENDER_STATE,
     sendAction: vi.fn(),
     sendFreeAction: vi.fn(),
     sendInput: vi.fn(),
@@ -141,7 +144,7 @@ describe('GameLayoutV2', () => {
     expect(screen.getByTestId('bottom-actions')).toBeInTheDocument();
   });
 
-  it('keeps the hand dock rail below the collapsible hand content', async () => {
+  it('keeps the hand dock rail above the collapsible hand content', async () => {
     await renderLayout();
 
     const content = document.getElementById('hand-dock-content');
@@ -150,8 +153,9 @@ describe('GameLayoutV2', () => {
     if (!content) {
       throw new Error('Expected hand dock content');
     }
+    // Rail sits before the content in the DOM so the hand collapses downward.
     expect(
-      content.compareDocumentPosition(rail) & Node.DOCUMENT_POSITION_FOLLOWING,
+      rail.compareDocumentPosition(content) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
 
@@ -159,7 +163,7 @@ describe('GameLayoutV2', () => {
     await renderLayout();
 
     expect(screen.getByTestId('layout-content-region')).toHaveStyle({
-      paddingBottom: '320px',
+      paddingBottom: '280px',
     });
     expect(screen.getByTestId('hand-dock')).toHaveClass(
       'flex',
@@ -834,11 +838,10 @@ describe('GameLayoutV2', () => {
         sendInput,
         events: [
           {
-            id: 'alien-found-1',
+            ...systemEventBase({ id: 'alien-found-1' }),
             type: EGameEventType.ALIEN_DISCOVERED,
             alienType: EAlienType.ANOMALIES,
             alienIndex: 0,
-            level: 'info',
           },
         ],
       });
@@ -1773,11 +1776,11 @@ describe('GameLayoutV2', () => {
       mockContextValue = createMockContext({
         events: [
           {
+            ...playerEventBase('player-1'),
             type: EGameEventType.ACTION,
             level: 'info',
-            playerId: 'player-1',
             action: EMainAction.SCAN,
-          } as never,
+          },
         ],
       });
 
@@ -1794,11 +1797,11 @@ describe('GameLayoutV2', () => {
       mockContextValue = createMockContext({
         events: [
           {
+            ...playerEventBase('player-1'),
             type: EGameEventType.ACTION,
             level: 'info',
-            playerId: 'player-1',
             action: EMainAction.SCAN,
-          } as never,
+          },
         ],
       });
 

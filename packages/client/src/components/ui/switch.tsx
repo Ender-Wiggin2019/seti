@@ -37,14 +37,19 @@ export function Switch({
         'rounded-full p-px',
         'border border-[color:var(--metal-edge)]',
         'shadow-hairline-inset',
-        'transition-[background-color,box-shadow] duration-200',
-        // Off vs on
+        'transition-[background-color,box-shadow,border-color] duration-200',
+        // Off vs on — use design-system signal tokens so the switch lives in
+        // the same palette as buttons, badges, and indicators.
         checked
-          ? 'bg-[oklch(0.58_0.10_240)] border-[oklch(0.42_0.10_240)] shadow-[inset_0_1px_0_oklch(0.82_0.10_240/0.55),0_0_0_1px_oklch(0.68_0.11_240/0.35)]'
-          : 'bg-[oklch(0.15_0.02_260)]',
+          ? cn(
+              'bg-[color-mix(in_oklab,var(--signal-blue-lo)_88%,var(--surface-instrument))]',
+              'border-[color:var(--signal-blue-lo)]',
+              'shadow-[inset_0_1px_0_oklch(0.82_0.08_240/0.42),0_0_0_1px_oklch(0.68_0.11_240/0.22)]',
+            )
+          : 'bg-[var(--surface-void)]',
         'focus-visible:outline-none',
         'focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background-950',
-        'focus-visible:ring-[oklch(0.68_0.11_240)]',
+        'focus-visible:ring-[var(--signal-blue)]',
         'disabled:cursor-not-allowed disabled:opacity-50',
         className,
       )}

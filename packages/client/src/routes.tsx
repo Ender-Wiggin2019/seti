@@ -18,6 +18,7 @@ import { SolarDebugPage } from '@/pages/game/SolarDebugPage';
 import { SolarSystemCompareDebugPage } from '@/pages/game/SolarSystemCompareDebugPage';
 import { HomePage } from '@/pages/home/HomePage';
 import { LobbyPage } from '@/pages/lobby/LobbyPage';
+import { MyGamesPage } from '@/pages/lobby/MyGamesPage';
 import { RoomPage } from '@/pages/lobby/RoomPage';
 import { ProfilePage } from '@/pages/profile/ProfilePage';
 
@@ -63,6 +64,16 @@ const roomRoute = createRoute({
   component: () => (
     <ProtectedRoute>
       <RoomPage />
+    </ProtectedRoute>
+  ),
+});
+
+const myGamesRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: '/my-games',
+  component: () => (
+    <ProtectedRoute>
+      <MyGamesPage />
     </ProtectedRoute>
   ),
 });
@@ -168,6 +179,7 @@ const routeTree = rootRoute.addChildren([
     indexRoute,
     authRoute,
     lobbyRoute,
+    myGamesRoute,
     roomRoute,
     profileRoute,
   ]),

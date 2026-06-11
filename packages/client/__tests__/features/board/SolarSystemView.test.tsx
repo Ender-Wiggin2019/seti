@@ -278,6 +278,7 @@ function renderSolarSystemView(
       allowMoveAnyProbe={props.allowMoveAnyProbe}
       oumuamuaTile={props.oumuamuaTile}
       textModeOverride={props.textModeOverride}
+      animationRenderState={props.animationRenderState}
     />,
   );
 }
@@ -410,6 +411,31 @@ describe('SolarSystemView', () => {
     ).toBeInTheDocument();
     expect(screen.getByTestId('solar-capsule-capsule-1')).toBeInTheDocument();
     expect(screen.getByTestId('solar-probe-probe-1')).toBeInTheDocument();
+  });
+
+  it('renders probe and disc animation overrides without mutating authoritative state', () => {
+    const solarSystem = createSolarSystemMock();
+    solarSystem.probes = [
+      { playerId: 'player-1', spaceId: 'space-0', probeId: 'probe-1' },
+    ];
+    solarSystem.probeSpaceById = { 'probe-1': 'space-0' };
+
+    renderSolarSystemView({
+      solarSystem,
+      animationRenderState: {
+        renderProbeSpaceById: { 'probe-1': 'space-1' },
+        renderDiscAngles: { 2: 6 },
+      },
+    });
+
+    expect(screen.getByTestId('solar-probe-probe-1')).toHaveAttribute(
+      'data-space-id',
+      'space-1',
+    );
+    expect(screen.getByTestId('wheel-layer-ring-2').style.transform).toContain(
+      'rotate(-270deg)',
+    );
+    expect(solarSystem.probes[0]?.spaceId).toBe('space-0');
   });
 
   it('renders all 32 space hotspots', () => {

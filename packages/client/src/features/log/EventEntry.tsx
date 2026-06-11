@@ -177,14 +177,14 @@ function EventGlyph({ type }: { type: EGameEventType }): React.JSX.Element {
           <path d='M4 1.8L2.8 3 4 4.2' />
         </svg>
       );
-    case EGameEventType.RESOURCE_CHANGE:
+    case EGameEventType.RESOURCE_CHANGED:
       return (
         <svg {...commonProps} className='h-2.5 w-2.5'>
           <path d='M2 7l3-3 3 3' />
           <path d='M2 3h6' />
         </svg>
       );
-    case EGameEventType.SCORE_CHANGE:
+    case EGameEventType.SCORE_CHANGED:
       return (
         <svg {...commonProps} className='h-2.5 w-2.5'>
           <path d='M5 1.5l1.1 2.3 2.5.4-1.8 1.7.4 2.5L5 7.2 2.8 8.4l.4-2.5L1.4 4.2l2.5-.4z' />
@@ -213,7 +213,14 @@ function EventGlyph({ type }: { type: EGameEventType }): React.JSX.Element {
           <circle cx='6' cy='4.5' r='0.4' fill='currentColor' stroke='none' />
         </svg>
       );
-    case EGameEventType.ROTATION:
+    case EGameEventType.PROBE_MOVED:
+      return (
+        <svg {...commonProps} className='h-2.5 w-2.5'>
+          <path d='M2 7.5L5 2l3 5.5' />
+          <path d='M3.2 5.5h3.6' />
+        </svg>
+      );
+    case EGameEventType.DISC_ROTATED:
       return (
         <svg {...commonProps} className='h-2.5 w-2.5'>
           <path d='M7.5 4.5a3 3 0 10-.5 2.8' />
@@ -251,12 +258,13 @@ const EVENT_TINT: Record<EGameEventType, string> = {
   [EGameEventType.FREE_ACTION]: 'text-text-300',
   [EGameEventType.INPUT]: 'text-[oklch(0.82_0.10_150)]',
   [EGameEventType.UNDO]: 'text-[oklch(0.82_0.12_75)]',
-  [EGameEventType.RESOURCE_CHANGE]: 'text-text-300',
-  [EGameEventType.SCORE_CHANGE]: 'text-[oklch(0.82_0.12_75)]',
+  [EGameEventType.RESOURCE_CHANGED]: 'text-text-300',
+  [EGameEventType.SCORE_CHANGED]: 'text-[oklch(0.82_0.12_75)]',
   [EGameEventType.SECTOR_COMPLETED]: 'text-[oklch(0.82_0.10_240)]',
   [EGameEventType.TRACE_MARKED]: 'text-[oklch(0.72_0.13_300)]',
   [EGameEventType.ALIEN_DISCOVERED]: 'text-[oklch(0.72_0.13_300)]',
-  [EGameEventType.ROTATION]: 'text-text-500',
+  [EGameEventType.PROBE_MOVED]: 'text-[oklch(0.82_0.10_240)]',
+  [EGameEventType.DISC_ROTATED]: 'text-text-500',
   [EGameEventType.ROUND_END]: 'text-text-400',
   [EGameEventType.GAME_END]: 'text-[oklch(0.82_0.10_240)]',
 };
@@ -317,13 +325,14 @@ function classifyEvent(event: TGameEvent): TEntryKind {
     case EGameEventType.FREE_ACTION:
       return 'free';
     case EGameEventType.INPUT:
-    case EGameEventType.RESOURCE_CHANGE:
-    case EGameEventType.SCORE_CHANGE:
+    case EGameEventType.RESOURCE_CHANGED:
+    case EGameEventType.SCORE_CHANGED:
+    case EGameEventType.PROBE_MOVED:
     case EGameEventType.TRACE_MARKED:
     case EGameEventType.SECTOR_COMPLETED:
       return 'effect';
     case EGameEventType.ALIEN_DISCOVERED:
-    case EGameEventType.ROTATION:
+    case EGameEventType.DISC_ROTATED:
     case EGameEventType.ROUND_END:
     case EGameEventType.GAME_END:
     case EGameEventType.UNDO:
@@ -385,6 +394,13 @@ function getPlayerName(
   return playerNames[playerId] ?? playerId;
 }
 
+function getActorName(
+  actorId: string | null,
+  playerNames: Record<string, string>,
+): string {
+  return actorId ? getPlayerName(actorId, playerNames) : 'System';
+}
+
 function getEventDescription(
   event: TGameEvent,
   playerNames: Record<string, string>,
@@ -395,7 +411,7 @@ function getEventDescription(
       const rivalAction = getRivalActionEventDetails(event);
       if (rivalAction) {
         return t('client.event_entry.rival_action', {
-          player: getPlayerName(event.playerId, playerNames),
+          player: getActorName(event.actorId, playerNames),
           card: rivalAction.cardId,
           action: rivalAction.actionKind
             ? formatRivalActionKind(rivalAction.actionKind, t)
@@ -406,7 +422,7 @@ function getEventDescription(
       }
       const actionName =
         typeof event.action === 'string' ? event.action : event.action.type;
-      const player = getPlayerName(event.playerId, playerNames);
+      const player = getActorName(event.actorId, playerNames);
       // Each well-known internal action gets its own narrative
       // template so the line reads like a real sentence ("Alice
       // marked a trace via card effect") instead of the generic
@@ -613,7 +629,7 @@ function getEventDescription(
       });
     }
     case EGameEventType.FREE_ACTION: {
-      const player = getPlayerName(event.playerId, playerNames);
+      const player = getActorName(event.actorId, playerNames);
       const actionName = event.action.type;
       // Each free action has a per-name full-sentence template under
       // `client.event_entry.free.<NAME>`. Falling back to the
@@ -633,41 +649,36 @@ function getEventDescription(
     }
     case EGameEventType.INPUT:
       return t('client.event_entry.input', {
-        player: getPlayerName(event.playerId, playerNames),
+        player: getActorName(event.actorId, playerNames),
         response: prettifyToken(event.response.type),
       });
     case EGameEventType.UNDO:
       return t('client.event_entry.undo', {
         defaultValue: '{{player}} undid turn {{turn}}',
-        player: getPlayerName(event.playerId, playerNames),
+        player: getActorName(event.actorId, playerNames),
         turn: event.turnIndex,
       });
-    case EGameEventType.RESOURCE_CHANGE: {
-      // When the server emits before/after balances we extend the
-      // line with a "(before → after)" trail so it reads
-      // "Alice gained 2 credit (4 → 6)" instead of just the delta.
-      // Older event sources without before/after fall back to the
-      // bare line.
+    case EGameEventType.RESOURCE_CHANGED: {
+      const delta = event.after - event.before;
       const baseLine = t('client.event_entry.resource_change', {
-        player: getPlayerName(event.playerId, playerNames),
+        player: getActorName(event.actorId, playerNames),
         direction:
-          event.delta >= 0
+          delta >= 0
             ? t('client.event_entry.gained')
             : t('client.event_entry.lost'),
-        amount: Math.abs(event.delta),
+        amount: Math.abs(delta),
         resource: prettifyToken(event.resource),
       });
-      if (typeof event.before === 'number' && typeof event.after === 'number') {
-        return `${baseLine} (${event.before} → ${event.after})`;
-      }
-      return baseLine;
+      return `${baseLine} (${event.before} -> ${event.after})`;
     }
-    case EGameEventType.SCORE_CHANGE:
+    case EGameEventType.SCORE_CHANGED: {
+      const delta = event.after - event.before;
       return t('client.event_entry.score_change', {
-        player: getPlayerName(event.playerId, playerNames),
-        delta: `${event.delta >= 0 ? '+' : ''}${event.delta}`,
+        player: getActorName(event.actorId, playerNames),
+        delta: `${delta >= 0 ? '+' : ''}${delta}`,
         source: prettifyToken(event.source),
       });
+    }
     case EGameEventType.SECTOR_COMPLETED:
       return t('client.event_entry.sector_completed', {
         sector: event.sectorId,
@@ -676,15 +687,20 @@ function getEventDescription(
     case EGameEventType.TRACE_MARKED:
       return t('client.event_entry.trace_marked', {
         defaultValue: '{{player}} marked {{trace}} trace',
-        player: getPlayerName(event.playerId, playerNames),
+        player: getActorName(event.actorId, playerNames),
         trace: prettifyToken(event.traceColor),
       });
     case EGameEventType.ALIEN_DISCOVERED:
       return t('client.event_entry.alien_discovered', {
         alien: formatAlienTypeName(event.alienType),
       });
-    case EGameEventType.ROTATION:
-      return t('client.event_entry.rotation', { disc: event.discIndex + 1 });
+    case EGameEventType.PROBE_MOVED:
+      return t('client.event_entry.probe_moved', {
+        defaultValue: '{{player}} moved a probe',
+        player: getActorName(event.actorId, playerNames),
+      });
+    case EGameEventType.DISC_ROTATED:
+      return t('client.event_entry.rotation', { disc: event.ring });
     case EGameEventType.ROUND_END:
       return t('client.event_entry.round_end', { round: event.round });
     case EGameEventType.GAME_END:
@@ -728,7 +744,7 @@ function getArkhosExplorationRewardEventDescription(
 ): React.ReactNode {
   const details = event.details ?? {};
   const cardId = typeof details.cardId === 'string' ? details.cardId : '?';
-  const player = getPlayerName(event.playerId, playerNames);
+  const player = getActorName(event.actorId, playerNames);
   const size = typeof details.size === 'string' ? details.size : 'minor';
   const rendered = t('client.event_entry.arkhos_exploration_reward', {
     player,
@@ -747,7 +763,7 @@ function getArkhosSecurityCardUsedEventDescription(
 ): React.ReactNode {
   const details = event.details ?? {};
   const cardId = typeof details.cardId === 'string' ? details.cardId : '?';
-  const player = getPlayerName(event.playerId, playerNames);
+  const player = getActorName(event.actorId, playerNames);
   const size =
     typeof details.rewardSize === 'string' ? details.rewardSize : 'minor';
   const rendered = t('client.event_entry.arkhos_security_card_used', {
@@ -767,7 +783,7 @@ function getArkhosSecurityBreachedEventDescription(
 ): React.ReactNode {
   const details = event.details ?? {};
   const cardId = typeof details.cardId === 'string' ? details.cardId : '?';
-  const player = getPlayerName(event.playerId, playerNames);
+  const player = getActorName(event.actorId, playerNames);
   const trace =
     typeof details.traceColor === 'string'
       ? t(`client.alien_board.arkhos.trace.${details.traceColor}`, {

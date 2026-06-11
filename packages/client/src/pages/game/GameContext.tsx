@@ -7,6 +7,8 @@ import {
   useMemo,
 } from 'react';
 import { wsClient } from '@/api/wsClient';
+import type { IAnimationRenderState } from '@/features/board/animation/animationController';
+import { useAnimationQueue } from '@/features/board/animation/useAnimationQueue';
 import { useGameActions } from '@/hooks/useGameActions';
 import { useGameError } from '@/hooks/useGameError';
 import { useGameEvents } from '@/hooks/useGameEvents';
@@ -32,6 +34,7 @@ export interface IGameContext {
   isSpectator: boolean;
   myPlayerId: string;
   events: TGameEvent[];
+  animationRenderState: IAnimationRenderState;
   sendAction: (action: IMainActionRequest) => void;
   sendFreeAction: (action: IFreeActionRequest) => void;
   sendEndTurn: () => void;
@@ -68,6 +71,10 @@ export function GameContextProvider({
   const { isConnected } = useSocket();
   const gameState = useGameState();
   const myPlayerId = useAuthStore((s) => s.user?.id ?? '');
+  const animationRenderState = useAnimationQueue({
+    authoritativeState: gameState,
+    myPlayerId,
+  });
   const { pendingInput, waitingPlayerId, respond } = usePlayerInput(
     gameState,
     myPlayerId,
@@ -130,6 +137,7 @@ export function GameContextProvider({
       isSpectator: spectate,
       myPlayerId,
       events,
+      animationRenderState,
       sendAction,
       sendFreeAction,
       sendEndTurn,
@@ -146,6 +154,7 @@ export function GameContextProvider({
       spectate,
       myPlayerId,
       events,
+      animationRenderState,
       sendAction,
       sendFreeAction,
       sendEndTurn,

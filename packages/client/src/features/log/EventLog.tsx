@@ -143,7 +143,8 @@ export function EventLog({
                 {compactEvents.map((event, index) => (
                   <EventEntry
                     key={
-                      event.id ?? `${event.type}-${event.at ?? index}-${index}`
+                      event.id ??
+                      `${event.type}-${event.seq ?? index}-${index}`
                     }
                     event={event}
                     playerNames={playerNames}
@@ -206,7 +207,9 @@ export function EventLog({
           <div className='flex flex-col gap-1'>
             {visibleEvents.map((event, index) => (
               <EventEntry
-                key={event.id ?? `${event.type}-${event.at ?? index}-${index}`}
+                key={
+                  event.id ?? `${event.type}-${event.seq ?? index}-${index}`
+                }
                 event={event}
                 playerNames={playerNames}
                 playerColors={playerColors}

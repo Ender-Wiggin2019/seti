@@ -7,8 +7,14 @@ import { useGameSession } from '../GameSessionContext';
 import { useGameLayoutRuntimeOptions } from '../runtimeOptions';
 
 export function SolarSystemSection(): React.JSX.Element | null {
-  const { gameState, myPlayerId, pendingInput, sendFreeAction, sendInput } =
-    useGameContext();
+  const {
+    gameState,
+    myPlayerId,
+    pendingInput,
+    animationRenderState,
+    sendFreeAction,
+    sendInput,
+  } = useGameContext();
   const { movementModeActive } = useGameSession();
   const { showSolarSystemSpaceConfig, allowMoveAnyProbe } =
     useGameLayoutRuntimeOptions();
@@ -47,6 +53,7 @@ export function SolarSystemSection(): React.JSX.Element | null {
       showSpaceConfigDebug={showSolarSystemSpaceConfig}
       allowMoveAnyProbe={allowMoveAnyProbe}
       oumuamuaTile={oumuamuaTile}
+      animationRenderState={animationRenderState}
     />
   );
 }

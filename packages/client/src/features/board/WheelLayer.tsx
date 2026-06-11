@@ -5,6 +5,7 @@ import { cn } from '@/lib/cn';
 interface IWheelLayerProps {
   ring: 1 | 2 | 3 | 4;
   angle: number;
+  renderAngleOverride?: number;
   className?: string;
   style?: CSSProperties;
   slotLabels?: string[];
@@ -80,6 +81,7 @@ function normalizeStepDelta(delta: number): number {
 export function WheelLayer({
   ring,
   angle,
+  renderAngleOverride,
   className,
   style,
   slotLabels,
@@ -102,7 +104,8 @@ export function WheelLayer({
   const size = `${RING_SIZE_PERCENT[ring]}%`;
   // One rotation step is rendered counterclockwise to match rule behavior.
   // State angle still increments by +1 per step; CSS uses negative degrees.
-  const angleDeg = -renderAngle * 45;
+  const effectiveRenderAngle = renderAngleOverride ?? renderAngle;
+  const angleDeg = -effectiveRenderAngle * 45;
   const duration = TRANSITION_DURATION_MS[ring];
 
   return (

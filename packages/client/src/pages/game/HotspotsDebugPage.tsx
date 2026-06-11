@@ -759,6 +759,7 @@ function createGameState(): IPublicGameState {
 
   return {
     gameId: 'hotspots-debug',
+    version: 1,
     round: 1,
     roundIndex: 1,
     maxRounds: 5,

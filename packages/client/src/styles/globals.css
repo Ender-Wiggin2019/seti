@@ -50,14 +50,19 @@
   --signal-red-lo: oklch(0.5 0.16 25);
   --signal-white: oklch(0.96 0.008 260);
 
-  /* Lobby scene palette from 2223.PNG reference */
-  --lobby-deep-space: #0a0e14;
-  --lobby-rock-gray: #1a1f27;
-  --lobby-metal-gray: #2a303c;
-  --lobby-ground-gray: #3a404d;
-  --lobby-stardust: #e6e6e8;
-  --lobby-planet-orange: #c7734a;
-  --lobby-engine-cyan: #2ec1c9;
+  /* Refine v2 lobby scene palette */
+  --lobby-deep-space: #0a0f1c;
+  --lobby-star-track: #1e5aba;
+  --lobby-energy-orange: #f26a21;
+  --lobby-orbit-white: #f2e6d0;
+  --lobby-star-gray: #3a4756;
+  /* Legacy aliases kept for existing consumers. */
+  --lobby-rock-gray: #0a0f1c;
+  --lobby-metal-gray: #3a4756;
+  --lobby-ground-gray: #3a4756;
+  --lobby-stardust: #f2e6d0;
+  --lobby-planet-orange: #f26a21;
+  --lobby-engine-cyan: #1e5aba;
 
   /* Anodized blue — chrome accent (alias of signal-blue) */
   --accent-400: oklch(0.74 0.1 240);
@@ -86,6 +91,17 @@
    * Low-poly space facets and sparse signal stars keep the app dark but alive.
    */
   --bg-atmosphere: url("/assets/seti/sky/impeccable-atmosphere.svg");
+
+  /*
+   * Scene background — the 3-tier client backdrop:
+   *   1. --scene-bg            solid mid color (sampled from footer's top edge)
+   *   2. --scene-hero-image    optional per-route top image (set via useSceneHero)
+   *   3. --scene-footer-image  global bottom banner (refine v2 c05187fa)
+   * The mid color matches the footer's top edge so the two seams disappear.
+   */
+  --scene-bg: #011d36;
+  --scene-hero-image: none;
+  --scene-footer-image: url("/assets/seti/scenes/footer.webp");
 }
 
 /* ------------------------------------------------------------
@@ -108,11 +124,11 @@ body {
     "Noto Sans SC", "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
   font-weight: 400;
   /*
-   * Body itself carries the cosmic atmosphere, so even routes that don't
-   * mount AppShell (game pages, debug pages) sit on layered space —
-   * never flat #000. Components paint their own surfaces on top.
-  */
-  background-color: var(--surface-void);
+   * Body paints the shared scene mid-color so every route — including ones
+   * that never mount AppShell (game, debug) — meets the footer banner
+   * without a visible seam.
+   */
+  background-color: var(--scene-bg);
   color: var(--text-100);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;

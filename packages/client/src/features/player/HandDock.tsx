@@ -91,7 +91,7 @@ export function HandDock({
 
   return (
     <div
-      className='relative flex h-full min-h-0 shrink-0 flex-col overflow-hidden border-t border-[color:var(--metal-edge-soft)] bg-background-950/85 backdrop-blur-sm'
+      className='relative flex h-full min-h-0 shrink-0 flex-col overflow-hidden border-t border-[color:var(--metal-edge-soft)] bg-[oklch(0.07_0.016_260)]'
       data-testid='hand-dock'
       data-expanded={effectiveExpanded}
     >
@@ -100,35 +100,8 @@ export function HandDock({
         className='pointer-events-none absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-[color:var(--surface-700)] to-transparent opacity-70'
       />
 
-      {/* Collapsible body — content sits above the bottom rail so collapse
-          visually moves the hand down into the bottom edge. */}
-      <div
-        id='hand-dock-content'
-        className={cn(
-          'grid min-h-0 flex-1 transition-[grid-template-rows] duration-300 ease-out',
-          effectiveExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
-        )}
-        aria-hidden={!effectiveExpanded}
-      >
-        <div className='min-h-0 overflow-hidden'>
-          <div className='flex h-full min-h-0 flex-col px-4 pb-2 pt-0.5'>
-            <HandView
-              cards={cards}
-              handSize={handSize}
-              pendingInput={pendingInput}
-              cornerSelectionMode={cornerSelectionMode}
-              playCardSelectionMode={playCardSelectionMode}
-              onSubmitSelection={onSubmitSelection}
-              onCardCornerSelect={onCardCornerSelect}
-              onCardPlaySelect={onCardPlaySelect}
-              onCardInspect={onCardInspect}
-              variant='dock'
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Header rail — always visible at the bottom of the dock */}
+      {/* Header rail — always visible at the TOP of the dock, so collapsing
+          retracts the cards downward toward the bottom edge of the screen. */}
       <div
         className='flex items-center gap-3 px-4 py-1.5'
         data-testid='hand-dock-rail'
@@ -187,11 +160,38 @@ export function HandDock({
             className={cn(
               'inline-block h-0 w-0 border-x-[4px] border-x-transparent transition-transform duration-200',
               effectiveExpanded
-                ? 'border-b-[5px] border-b-current'
-                : 'border-t-[5px] border-t-current',
+                ? 'border-t-[5px] border-t-current'
+                : 'border-b-[5px] border-b-current',
             )}
           />
         </button>
+      </div>
+
+      {/* Collapsible body — sits below the rail; collapses toward the bottom. */}
+      <div
+        id='hand-dock-content'
+        className={cn(
+          'grid min-h-0 flex-1 transition-[grid-template-rows] duration-300 ease-out',
+          effectiveExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+        )}
+        aria-hidden={!effectiveExpanded}
+      >
+        <div className='min-h-0 overflow-hidden'>
+          <div className='flex h-full min-h-0 flex-col px-4 pb-2 pt-0.5'>
+            <HandView
+              cards={cards}
+              handSize={handSize}
+              pendingInput={pendingInput}
+              cornerSelectionMode={cornerSelectionMode}
+              playCardSelectionMode={playCardSelectionMode}
+              onSubmitSelection={onSubmitSelection}
+              onCardCornerSelect={onCardCornerSelect}
+              onCardPlaySelect={onCardPlaySelect}
+              onCardInspect={onCardInspect}
+              variant='dock'
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

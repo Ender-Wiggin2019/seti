@@ -6,12 +6,17 @@ import { lobbyApi } from '@/api/lobbyApi';
 import type { IAlienTypeOption, IGameOptions } from '@/api/types';
 import { ERoomStatus } from '@/api/types';
 import { CreateRoomDialog } from '@/components/CreateRoomDialog';
+import { useSceneHero } from '@/components/layout/SceneBackground';
 import {
   MissionHubView,
   type TMissionFilterValue,
 } from '@/components/MissionHub';
 import { toast } from '@/components/ui/toast';
 import { useAuthStore } from '@/stores/authStore';
+
+const ROOM_PAGE_SIZE = 12;
+
+const HOME_SCENE_HERO = '/assets/seti/scenes/lobby.webp';
 
 /**
  * HomePage — the Mission Hub.
@@ -25,21 +30,52 @@ export function HomePage(): React.JSX.Element {
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [filter, setFilter] = useState<TMissionFilterValue>('all');
+  const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: rooms, isLoading } = useQuery({
-    queryKey: ['rooms', filter],
+  useSceneHero(HOME_SCENE_HERO);
+
+  const { data: roomsPage, isLoading } = useQuery({
+    queryKey: ['rooms', filter, page],
     queryFn: () =>
       lobbyApi.listRooms(
-        filter === 'all' ? undefined : { status: filter as ERoomStatus },
+        filter === 'all'
+          ? { page, pageSize: ROOM_PAGE_SIZE }
+          : {
+              status: filter as ERoomStatus,
+              page,
+              pageSize: ROOM_PAGE_SIZE,
+            },
       ),
     refetchInterval: 5000,
   });
 
-  const { data: allRooms } = useQuery({
-    queryKey: ['rooms', 'all'],
-    queryFn: () => lobbyApi.listRooms(),
+  const { data: allRoomsPage } = useQuery({
+    queryKey: ['rooms', 'all', 'summary'],
+    queryFn: () => lobbyApi.listRooms({ page: 1, pageSize: ROOM_PAGE_SIZE }),
+    refetchInterval: 5000,
+  });
+
+  const { data: waitingRoomsPage } = useQuery({
+    queryKey: ['rooms', 'waiting', 'summary'],
+    queryFn: () =>
+      lobbyApi.listRooms({
+        status: ERoomStatus.WAITING,
+        page: 1,
+        pageSize: 1,
+      }),
+    refetchInterval: 5000,
+  });
+
+  const { data: playingRoomsPage } = useQuery({
+    queryKey: ['rooms', 'playing', 'summary'],
+    queryFn: () =>
+      lobbyApi.listRooms({
+        status: ERoomStatus.PLAYING,
+        page: 1,
+        pageSize: 1,
+      }),
     refetchInterval: 5000,
   });
 
@@ -50,18 +86,26 @@ export function HomePage(): React.JSX.Element {
   });
 
   const stats = useMemo(() => {
-    const list = allRooms ?? [];
-    const waiting = list.filter((r) => r.status === ERoomStatus.WAITING).length;
-    const playing = list.filter((r) => r.status === ERoomStatus.PLAYING).length;
-    const players = list.reduce((acc, r) => acc + r.players.length, 0);
+    const waiting = waitingRoomsPage?.total ?? 0;
+    const playing = playingRoomsPage?.total ?? 0;
+    const players = allRoomsPage?.totalPlayers ?? 0;
     return { waiting, playing, players };
-  }, [allRooms]);
+  }, [allRoomsPage, playingRoomsPage, waitingRoomsPage]);
 
   const createMutation = useMutation({
-    mutationFn: (vars: { name: string; options: IGameOptions }) =>
-      lobbyApi.createRoom({ name: vars.name, options: vars.options }),
+    mutationFn: (vars: {
+      name: string;
+      options: IGameOptions;
+      visibleInLobby: boolean;
+    }) =>
+      lobbyApi.createRoom({
+        name: vars.name,
+        options: vars.options,
+        visibleInLobby: vars.visibleInLobby,
+      }),
     onSuccess: (room) => {
       queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      queryClient.invalidateQueries({ queryKey: ['my-games'] });
       setCreateOpen(false);
       toast({ title: t('client.lobby.toast.created'), variant: 'success' });
       navigate({ to: '/room/$roomId', params: { roomId: room.id } });
@@ -92,7 +136,10 @@ export function HomePage(): React.JSX.Element {
           isAuthenticated ? setCreateOpen(true) : navigate({ to: '/auth' })
         }
         filter={filter}
-        onFilterChange={setFilter}
+        onFilterChange={(nextFilter) => {
+          setFilter(nextFilter);
+          setPage(1);
+        }}
         filterLabels={{
           all: t('client.lobby.filters.all', { defaultValue: 'All' }),
           waiting: t('client.lobby.filters.waiting', {
@@ -121,7 +168,7 @@ export function HomePage(): React.JSX.Element {
             defaultValue: 'In missions',
           }),
         }}
-        rooms={rooms}
+        rooms={roomsPage?.items}
         isLoading={isLoading}
         loadingLabel={t('client.lobby.loading', {
           defaultValue: 'Loading missions...',
@@ -129,12 +176,20 @@ export function HomePage(): React.JSX.Element {
         emptyLabel={t('client.lobby.empty', {
           defaultValue: 'No missions available',
         })}
+        page={roomsPage?.page ?? page}
+        pageSize={roomsPage?.pageSize ?? ROOM_PAGE_SIZE}
+        total={roomsPage?.total ?? 0}
+        totalPages={roomsPage?.totalPages ?? 0}
+        hasMore={roomsPage?.hasMore ?? false}
+        onPageChange={setPage}
       />
 
       <CreateRoomDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
-        onSubmit={(name, options) => createMutation.mutate({ name, options })}
+        onSubmit={(name, options, visibleInLobby) =>
+          createMutation.mutate({ name, options, visibleInLobby })
+        }
         isPending={createMutation.isPending}
         alienTypeMap={alienTypeMap}
       />

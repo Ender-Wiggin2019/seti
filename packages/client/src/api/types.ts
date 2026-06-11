@@ -70,6 +70,7 @@ export interface IRoom {
   status: ERoomStatus;
   players: IRoomPlayer[];
   options: IGameOptions;
+  visibleInLobby?: boolean;
   gameId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -78,10 +79,45 @@ export interface IRoom {
 export interface ICreateRoomRequest {
   name: string;
   options: IGameOptions;
+  visibleInLobby?: boolean;
 }
 
 export interface IRoomListFilter {
   status?: ERoomStatus;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface IRoomListResponse {
+  items: IRoom[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPlayers: number;
+  totalPages: number;
+  hasMore: boolean;
+}
+
+export interface IPlayerRecentGame {
+  id: string;
+  name: string;
+  status: ERoomStatus;
+  isHost: boolean;
+  isSoloMode: boolean;
+  visibleInLobby: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IPlayerPublicProfile {
+  id: string;
+  name: string;
+  joinedAt: string;
+  stats: {
+    gamesPlayed: number;
+    hostedGames: number;
+  };
+  recentGames: IPlayerRecentGame[];
 }
 
 export interface IUpdateProfileRequest {

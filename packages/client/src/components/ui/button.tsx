@@ -4,7 +4,7 @@ import { cn } from '@/lib/cn';
 /**
  * Button — the interactive workhorse.
  * Three visual languages for three levels of intent:
- *  - `primary`  → cyan filled control. Player agency, CTAs.
+ *  - `primary`  → energy-orange filled control. Main CTAs.
  *  - `ghost`    → transparent outline. Secondary actions, filters, chips.
  *  - `danger`   → red filled control. Destructive / game-ending only.
  *  - `link`     → text-only, for inline or subtle nav.
@@ -26,15 +26,15 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary: [
-          // Reference control: flat cyan face with a restrained catch-light.
-          'text-[var(--lobby-deep-space)]',
-          'bg-[var(--lobby-engine-cyan)]',
-          'border border-[#1d8790]',
-          'shadow-[inset_0_1px_0_oklch(0.96_0.02_230/0.42),inset_0_-1px_0_oklch(0.25_0.08_230/0.34),0_1px_0_oklch(0.06_0.02_260/0.85)]',
-          'hover:bg-[#42d4dc]',
-          'hover:shadow-[inset_0_1px_0_oklch(0.98_0.02_230/0.52),inset_0_-1px_0_oklch(0.25_0.08_230/0.28),0_1px_0_oklch(0.06_0.02_260/0.85)]',
-          'active:bg-[#259da6]',
-          'active:shadow-[inset_0_1px_2px_oklch(0.10_0.03_235/0.42)]',
+          // Refine v2 primary: compact energy-orange face, no glow.
+          'text-[var(--lobby-orbit-white)]',
+          'bg-[var(--lobby-energy-orange)]',
+          'border border-[#c84e17]',
+          'shadow-[inset_0_1px_0_oklch(0.95_0.04_70/0.38),inset_0_-1px_0_oklch(0.24_0.10_35/0.34),0_1px_0_oklch(0.06_0.02_260/0.85)]',
+          'hover:bg-[#ff7a2b]',
+          'hover:shadow-[inset_0_1px_0_oklch(0.98_0.04_70/0.46),inset_0_-1px_0_oklch(0.24_0.10_35/0.28),0_1px_0_oklch(0.06_0.02_260/0.85)]',
+          'active:bg-[#d95519]',
+          'active:shadow-[inset_0_1px_2px_oklch(0.14_0.08_35/0.42)]',
           'active:translate-y-px',
         ],
         ghost: [

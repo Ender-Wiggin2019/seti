@@ -10,6 +10,7 @@ import {
 import { useEffect } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useToastStore } from '@/components/ui/toast';
+import { EMPTY_ANIMATION_RENDER_STATE } from '@/features/board/animation/animationController';
 import { GameLayoutV2 } from '@/features/layout/GameLayoutV2';
 import {
   GameSessionProvider,
@@ -31,6 +32,7 @@ import {
   createMockGameState,
   createMockPlayerState,
 } from '../../../test/mocks/gameState';
+import { playerEventBase, systemEventBase } from '../../helpers/gameEvents';
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, ...rest }: { children: React.ReactNode; to: string }) => (
@@ -74,6 +76,7 @@ function createMockContext(overrides?: Partial<IGameContext>): IGameContext {
     isSpectator: false,
     myPlayerId: 'player-1',
     events: [],
+    animationRenderState: EMPTY_ANIMATION_RENDER_STATE,
     sendAction: vi.fn(),
     sendFreeAction: vi.fn(),
     sendInput: vi.fn(),
@@ -223,11 +226,10 @@ describe('layout V2 regressions', () => {
     mockContextValue = createMockContext({
       events: [
         {
-          id: 'alien-found-1',
+          ...systemEventBase({ id: 'alien-found-1' }),
           type: EGameEventType.ALIEN_DISCOVERED,
           alienType: EAlienType.ANOMALIES,
           alienIndex: 0,
-          level: 'info',
         },
       ],
     });
@@ -244,12 +246,12 @@ describe('layout V2 regressions', () => {
     mockContextValue = createMockContext({
       events: [
         {
-          id: 'unhandled-custom-1',
+          ...playerEventBase('player-1', {
+            id: 'unhandled-custom-1',
+            seq: 1,
+          }),
           type: EGameEventType.ACTION,
           action: 'CARD_CUSTOM_EFFECT_UNHANDLED',
-          playerId: 'player-1',
-          at: 1,
-          level: 'info',
           details: { cardId: 'C.001', customId: 'CUSTOM_TEST' },
         },
       ],

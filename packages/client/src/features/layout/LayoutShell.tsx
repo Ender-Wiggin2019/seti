@@ -1,16 +1,15 @@
 import { useEffect } from 'react';
 import { EventSidebarDrawer } from '@/components/layout/EventSidebarDrawer';
 import { cn } from '@/lib/cn';
-import { GAME_Z_INDEX } from '@/styles/zIndex';
 import { LayoutDevPanel } from './devPanel/LayoutDevPanel';
+import { GameSceneBackground } from './GameSceneBackground';
+import { useGameSession } from './GameSessionContext';
 import { useLayout } from './LayoutContext';
 import { useLayoutStore } from './layoutStore';
 import { MobileShell } from './shells/MobileShell';
-import { PinnedLayer } from './shells/PinnedLayer';
+import { HAND_COLLAPSED_HEIGHT, PinnedLayer } from './shells/PinnedLayer';
 import { TabShell } from './shells/TabShell';
 import { WaterfallShell } from './shells/WaterfallShell';
-
-const GAME_SHELL_SCENE_IMAGE = '/assets/seti/sprites/terrain_02_02.webp';
 
 /**
  * LayoutShell — the root render. Picks tab vs waterfall vs mobile and
@@ -22,7 +21,11 @@ const GAME_SHELL_SCENE_IMAGE = '/assets/seti/sprites/terrain_02_02.webp';
 export function LayoutShell(): React.JSX.Element {
   const { layout, isMobile } = useLayout();
   const toggleDevPanel = useLayoutStore((s) => s.toggleDevPanel);
-  const fixedBottomReserve = getFixedBottomReserve(layout.sections);
+  const handExpanded = useGameSession().handExpanded;
+  const fixedBottomReserve = getFixedBottomReserve(
+    layout.sections,
+    handExpanded,
+  );
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
@@ -39,21 +42,13 @@ export function LayoutShell(): React.JSX.Element {
     <div
       className={cn(
         'flex h-screen flex-col overflow-hidden',
-        'bg-[var(--surface-void)] text-text-100',
+        // No opaque background here: GameSceneBackground (fixed, z = -10)
+        // provides the void base. An opaque bg on this in-flow root would
+        // paint *over* the negative-z scene layer and hide it entirely.
+        'text-text-100',
       )}
     >
-      <div
-        className='pointer-events-none fixed inset-0 bg-[image:var(--bg-atmosphere)] bg-cover bg-center'
-        style={{ zIndex: GAME_Z_INDEX.background }}
-        aria-hidden
-      />
-      <img
-        src={GAME_SHELL_SCENE_IMAGE}
-        alt=''
-        aria-hidden
-        className='pointer-events-none fixed inset-x-0 bottom-0 h-[38vh] w-full object-cover object-bottom opacity-[0.22]'
-        style={{ zIndex: GAME_Z_INDEX.background }}
-      />
+      <GameSceneBackground />
 
       <PinnedLayer variant='sticky-top' />
 
@@ -90,13 +85,19 @@ export function isLayoutDevPanelShortcut(e: KeyboardEvent): boolean {
 
 export function getFixedBottomReserve(
   sections: Array<{
+    id?: string;
     pin?: string;
     visible?: boolean;
     size?: { height?: string };
   }>,
+  handExpanded = true,
 ): string | undefined {
   const total = sections.reduce((sum, section) => {
     if (!section.visible || section.pin !== 'fixed-bottom') return sum;
+    // A collapsed hand only reserves its rail height.
+    if (section.id === 'hand' && !handExpanded) {
+      return sum + (parsePx(HAND_COLLAPSED_HEIGHT) ?? 0);
+    }
     const height = parsePx(section.size?.height);
     return height === null ? sum : sum + height;
   }, 0);

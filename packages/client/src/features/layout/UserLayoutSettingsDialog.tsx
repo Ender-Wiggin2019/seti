@@ -288,7 +288,11 @@ export function UserLayoutSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='mx-auto max-h-[88vh] w-full max-w-5xl overflow-y-auto'>
+      <DialogContent
+        scene='/assets/seti/scenes/dialog-settings.webp'
+        sceneHeight={180}
+        className='mx-auto max-h-[88vh] w-full max-w-5xl overflow-y-auto'
+      >
         <DialogHeader>
           <DialogTitle>
             {t('client.layout_v2.dialogs.settings_title', {

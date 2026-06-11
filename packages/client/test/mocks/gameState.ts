@@ -198,6 +198,7 @@ export function createMockGameState(
     milestones: { goldMilestones: [], neutralMilestones: [] },
     goldScoringTiles: [],
     ...overrides,
+    version: overrides?.version ?? 1,
     roundIndex: overrides?.roundIndex ?? 1,
     maxRounds: overrides?.maxRounds ?? 5,
     undoAllowed: overrides?.undoAllowed ?? false,

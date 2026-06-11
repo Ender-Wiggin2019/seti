@@ -6,6 +6,7 @@ import {
   type IFreeActionRequest,
   type IInputResponse,
   type IMainActionRequest,
+  type IAnimationBatch,
   type IPlayerInputModel,
   type IPublicGameState,
   normalizeErrorPayload,
@@ -18,7 +19,9 @@ type TWaitingSocketHandler = (data: {
   input: IPlayerInputModel;
 }) => void;
 type TEventSocketHandler = (data: { event: TGameEvent }) => void;
+type TAnimationSocketHandler = (data: { batch: IAnimationBatch }) => void;
 type TErrorSocketHandler = (error: IErrorPayload) => void;
+type TResyncRequestedHandler = (data: { gameId: string }) => void;
 export interface IUndoAppliedPayload {
   undoneByPlayerId: string;
   turnIndex: number;
@@ -30,6 +33,7 @@ interface IGameSocketHandlerMap {
   'game:state': TStateSocketHandler;
   'game:waiting': TWaitingSocketHandler;
   'game:event': TEventSocketHandler;
+  'game:animation': TAnimationSocketHandler;
   'game:error': TErrorSocketHandler;
   'game:undoApplied': TUndoAppliedHandler;
 }
@@ -48,8 +52,11 @@ class WsClient {
   private readonly stateHandlers = new Set<TStateSocketHandler>();
   private readonly waitingHandlers = new Set<TWaitingSocketHandler>();
   private readonly eventHandlers = new Set<TEventSocketHandler>();
+  private readonly animationHandlers = new Set<TAnimationSocketHandler>();
   private readonly errorHandlers = new Set<TErrorSocketHandler>();
   private readonly undoAppliedHandlers = new Set<TUndoAppliedHandler>();
+  private readonly resyncRequestedHandlers =
+    new Set<TResyncRequestedHandler>();
   private readonly handleConnectionError = (error?: unknown): void => {
     this.emitLocalError(
       error instanceof Error && error.message
@@ -135,6 +142,9 @@ class WsClient {
 
   resync(gameId: string): void {
     this.socket?.emit('game:resync', { gameId });
+    for (const handler of this.resyncRequestedHandlers) {
+      handler({ gameId });
+    }
   }
 
   onState(cb: (state: IPublicGameState) => void): () => void {
@@ -155,12 +165,25 @@ class WsClient {
     );
   }
 
+  onAnimation(cb: (batch: IAnimationBatch) => void): () => void {
+    return this.subscribe('game:animation', this.animationHandlers, (data) =>
+      cb(data.batch),
+    );
+  }
+
   onError(cb: (error: IErrorPayload) => void): () => void {
     return this.subscribe('game:error', this.errorHandlers, cb);
   }
 
   onUndoApplied(cb: TUndoAppliedHandler): () => void {
     return this.subscribe('game:undoApplied', this.undoAppliedHandlers, cb);
+  }
+
+  onResyncRequested(cb: TResyncRequestedHandler): () => void {
+    this.resyncRequestedHandlers.add(cb);
+    return () => {
+      this.resyncRequestedHandlers.delete(cb);
+    };
   }
 
   disconnect(): void {
@@ -197,6 +220,7 @@ class WsClient {
     this.bindHandlers(socket, 'game:state', this.stateHandlers);
     this.bindHandlers(socket, 'game:waiting', this.waitingHandlers);
     this.bindHandlers(socket, 'game:event', this.eventHandlers);
+    this.bindHandlers(socket, 'game:animation', this.animationHandlers);
     this.bindHandlers(socket, 'game:error', this.errorHandlers);
     this.bindHandlers(socket, 'game:undoApplied', this.undoAppliedHandlers);
   }
@@ -237,6 +261,7 @@ class WsClient {
     this.unbindHandlers(socket, 'game:state', this.stateHandlers);
     this.unbindHandlers(socket, 'game:waiting', this.waitingHandlers);
     this.unbindHandlers(socket, 'game:event', this.eventHandlers);
+    this.unbindHandlers(socket, 'game:animation', this.animationHandlers);
     this.unbindHandlers(socket, 'game:error', this.errorHandlers);
     this.unbindHandlers(socket, 'game:undoApplied', this.undoAppliedHandlers);
   }

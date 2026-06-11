@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSceneHero } from '@/components/layout/SceneBackground';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,7 @@ import { cn } from '@/lib/cn';
 import { useAuthStore } from '@/stores/authStore';
 
 const PROFILE_SCENE_IMAGE = '/assets/seti/sprites/terrain_00_02.webp';
+const PROFILE_SCENE_HERO = '/assets/seti/scenes/profile.webp';
 
 /**
  * ProfilePage — the signed-in player's account surface.
@@ -29,6 +31,8 @@ export function ProfilePage(): React.JSX.Element {
   const [editName, setEditName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  useSceneHero(PROFILE_SCENE_HERO);
 
   const displayUser = user ?? storedUser;
 

@@ -16,19 +16,27 @@ function ResizableHandle({
   return (
     <Separator
       className={cn(
-        'relative flex items-center justify-center bg-[color:var(--metal-edge-soft)] transition-colors',
-        handleOrientation === 'horizontal' ? 'h-2 w-full' : 'h-full w-2',
-        'hover:bg-accent-500/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500',
+        'group relative flex shrink-0 items-center justify-center bg-transparent transition-colors',
+        handleOrientation === 'horizontal' ? 'h-1.5 w-full' : 'h-full w-1.5',
+        'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-500/50',
         className,
       )}
       {...props}
     >
+      {/* Always-on hairline; brightens on hover/drag. */}
+      <span
+        aria-hidden
+        className={cn(
+          'rounded-full bg-[color:var(--metal-edge-soft)] transition-colors group-hover:bg-accent-500/60 group-data-[resize-handle-active]:bg-accent-500/70',
+          handleOrientation === 'horizontal' ? 'h-px w-full' : 'h-full w-px',
+        )}
+      />
       {withHandle ? (
         <span
           aria-hidden
           className={cn(
-            'z-10 rounded-full border border-[color:var(--metal-edge)] bg-surface-800 shadow-hairline-inset',
-            handleOrientation === 'horizontal' ? 'h-2 w-8' : 'h-8 w-2',
+            'absolute rounded-full bg-[color:var(--metal-edge)] transition-colors group-hover:bg-accent-500/70',
+            handleOrientation === 'horizontal' ? 'h-[3px] w-5' : 'h-5 w-[3px]',
           )}
         />
       ) : null}

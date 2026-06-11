@@ -51,6 +51,7 @@ describe('CreateRoomDialog', () => {
       expect.objectContaining({
         isSoloMode: false,
       }),
+      true,
     );
   });
 
@@ -83,6 +84,7 @@ describe('CreateRoomDialog', () => {
           [EAlienType.ARKHOS]: false,
         }),
       }),
+      true,
     );
   });
 
@@ -145,6 +147,36 @@ describe('CreateRoomDialog', () => {
         isSoloMode: true,
         soloDifficulty: 3,
       }),
+      true,
+    );
+  });
+
+  it('lets solo rooms opt out of the public lobby listing', async () => {
+    const onSubmit = vi.fn();
+
+    render(
+      <CreateRoomDialog
+        open
+        onOpenChange={() => undefined}
+        onSubmit={onSubmit}
+        isPending={false}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText('Mission Callsign'), {
+      target: { value: 'Private Solo' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Solo Mission' }));
+    fireEvent.click(screen.getByRole('switch', { name: 'Show in Lobby' }));
+    fireEvent.click(screen.getByTestId('create-room-submit'));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit).toHaveBeenCalledWith(
+      'Private Solo',
+      expect.objectContaining({
+        isSoloMode: true,
+      }),
+      false,
     );
   });
 
@@ -184,6 +216,7 @@ describe('CreateRoomDialog', () => {
           [EAlienType.ARKHOS]: true,
         }),
       }),
+      true,
     );
   });
 
@@ -224,6 +257,7 @@ describe('CreateRoomDialog', () => {
           [EAlienType.ARKHOS]: false,
         }),
       }),
+      true,
     );
   });
 });

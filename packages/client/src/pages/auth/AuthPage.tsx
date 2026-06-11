@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
+import { useSceneHero } from '@/components/layout/SceneBackground';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,7 @@ import { useLogin, useRegister } from '@/hooks/useAuth';
 import { cn } from '@/lib/cn';
 
 const AUTH_SCENE_IMAGE = '/assets/seti/sprites/objects_00_00.webp';
+const AUTH_SCENE_HERO = '/assets/seti/scenes/auth.webp';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -247,17 +249,13 @@ function RegisterForm(): React.JSX.Element {
 
 export function AuthPage(): React.JSX.Element {
   const { t } = useTranslation('common');
+  useSceneHero(AUTH_SCENE_HERO);
   return (
     <div
       className={cn(
         'relative min-h-[calc(100vh-4rem)] overflow-hidden px-4 py-6 sm:px-6 lg:px-8',
       )}
     >
-      <div
-        className='pointer-events-none absolute inset-0 -z-10 bg-[image:var(--bg-atmosphere)] bg-cover bg-center'
-        aria-hidden
-      />
-
       <section
         className={cn(
           'mission-scene relative mx-auto min-h-[calc(100vh-7rem)] w-full max-w-6xl overflow-hidden rounded-[8px]',

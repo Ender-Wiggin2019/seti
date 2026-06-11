@@ -209,10 +209,10 @@ function GlobalEventEffects(): React.JSX.Element {
       const details = event.details as
         | { cardId?: string; customId?: string }
         | undefined;
-      const at = event.at ?? 0;
+      const seq = event.seq ?? 0;
       const cardId = details?.cardId ?? '';
       const customId = details?.customId ?? '';
-      const dedupeKey = `${at}|${event.playerId}|${cardId}|${customId}`;
+      const dedupeKey = `${seq}|${event.actorId ?? ''}|${cardId}|${customId}`;
       if (unhandledEffectToastKeysRef.current.has(dedupeKey)) continue;
       unhandledEffectToastKeysRef.current.add(dedupeKey);
       toast({
@@ -284,7 +284,7 @@ function actionEventName(event: TGameEvent): string | null {
 function alienDiscoveredEventKey(event: TAlienDiscoveredEvent): string {
   return (
     event.id ??
-    `${event.type}|${event.at ?? ''}|${event.alienType}|${event.alienIndex ?? ''}`
+    `${event.type}|${event.seq ?? ''}|${event.alienType}|${event.alienIndex ?? ''}`
   );
 }
 

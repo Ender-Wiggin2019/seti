@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { EMPTY_ANIMATION_RENDER_STATE } from '@/features/board/animation/animationController';
 import type { IGameContext } from '@/pages/game/GameContext';
 import { createMockGameState } from '../../../test/mocks/gameState';
 
@@ -40,6 +41,7 @@ function createMockContext(overrides?: Partial<IGameContext>): IGameContext {
     isSpectator: false,
     myPlayerId: 'player-1',
     events: [],
+    animationRenderState: EMPTY_ANIMATION_RENDER_STATE,
     sendAction: vi.fn(),
     sendFreeAction: vi.fn(),
     sendInput: vi.fn(),

@@ -12,6 +12,11 @@ import { getRequiredHumanPlayerCount, isSoloRoom } from '@/lib/roomOptions';
 
 interface IRoomCardProps {
   room: IRoom;
+  /**
+   * Position in the room list. Drives sprite selection so adjacent cards
+   * get visually distinct backdrops. Defaults to 0 when used standalone.
+   */
+  index?: number;
 }
 
 const STATUS_VARIANT = {
@@ -20,7 +25,21 @@ const STATUS_VARIANT = {
   [ERoomStatus.FINISHED]: 'neutral',
 } as const;
 
-const ROOM_CARD_SCENE = '/assets/seti/sprites/terrain_01_01.webp';
+/**
+ * Nine object sprites painted at full brightness behind each room card.
+ * Cycled by index so any number of cards still gets the 0..8 sequence.
+ */
+const ROOM_CARD_SPRITES = [
+  '/assets/seti/sprites/objects_00_00.webp',
+  '/assets/seti/sprites/objects_00_01.webp',
+  '/assets/seti/sprites/objects_00_02.webp',
+  '/assets/seti/sprites/objects_01_00.webp',
+  '/assets/seti/sprites/objects_01_01.webp',
+  '/assets/seti/sprites/objects_01_02.webp',
+  '/assets/seti/sprites/objects_02_00.webp',
+  '/assets/seti/sprites/objects_02_01.webp',
+  '/assets/seti/sprites/objects_02_02.webp',
+] as const;
 
 /**
  * RoomCard — a mission in the lobby.
@@ -29,9 +48,15 @@ const ROOM_CARD_SCENE = '/assets/seti/sprites/terrain_01_01.webp';
  * warms to anodized blue and a subtle top-catch highlight lifts.
  * A bottom instrument-tick marks the status dimension.
  */
-export function RoomCard({ room }: IRoomCardProps): React.JSX.Element {
+export function RoomCard({
+  room,
+  index = 0,
+}: IRoomCardProps): React.JSX.Element {
   const { t } = useTranslation('common');
   const navigate = useNavigate();
+  const spriteSrc =
+    ROOM_CARD_SPRITES[index % ROOM_CARD_SPRITES.length] ??
+    ROOM_CARD_SPRITES[0];
   const statusLabel =
     room.status === ERoomStatus.WAITING
       ? t('client.room_card.status.waiting')
@@ -51,7 +76,8 @@ export function RoomCard({ room }: IRoomCardProps): React.JSX.Element {
         navigate({ to: '/room/$roomId', params: { roomId: room.id } })
       }
       className={cn(
-        'mission-panel group min-h-[132px] w-full rounded-[6px] px-4 py-4 text-left',
+        'group relative min-h-[132px] w-full overflow-hidden rounded-[6px] text-left',
+        'border border-[color:var(--metal-edge-soft)] bg-[var(--surface-instrument)] shadow-instrument',
         'transition-all duration-200',
         'hover:border-[oklch(0.50_0.10_240/0.7)] hover:-translate-y-[1px]',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.68_0.11_240)]',
@@ -59,24 +85,35 @@ export function RoomCard({ room }: IRoomCardProps): React.JSX.Element {
       data-testid='room-card'
       data-panel-scene='card'
       data-scene-treatment='single-image'
+      data-sprite-index={index % ROOM_CARD_SPRITES.length}
     >
+      {/* Sprite — extend past the card edge so source-sheet borders stay clipped. */}
       <img
         aria-hidden
-        src={ROOM_CARD_SCENE}
+        src={spriteSrc}
         alt=''
         data-testid='room-card-scene-image'
-        className='pointer-events-none absolute inset-0 h-full w-full object-cover object-[68%_center] opacity-[0.46] transition-opacity duration-200 group-hover:opacity-[0.56]'
+        className={cn(
+          'pointer-events-none absolute inset-y-0 -right-3 h-full w-[calc(58%+0.75rem)] select-none',
+          'object-cover scale-[1.12] origin-right',
+          'transition-transform duration-200 group-hover:scale-[1.16]',
+        )}
       />
+      {/* Gradient — solid card body on the left, fading to transparent over the sprite. */}
       <span
         aria-hidden
-        className='pointer-events-none absolute inset-0 bg-[oklch(0.07_0.015_260/0.72)]'
+        className='pointer-events-none absolute inset-0'
+        style={{
+          backgroundImage:
+            'linear-gradient(to right, var(--surface-instrument) 0%, var(--surface-instrument) 38%, color-mix(in oklab, var(--surface-instrument) 60%, transparent) 62%, transparent 92%)',
+        }}
       />
       <span
         aria-hidden
         className='pointer-events-none absolute inset-x-0 top-0 h-px bg-[oklch(0.70_0.10_240/0.46)] opacity-0 transition-opacity duration-200 group-hover:opacity-100'
       />
 
-      <div className='relative z-10 space-y-3'>
+      <div className='relative z-10 space-y-3 px-4 py-4'>
         <div className='flex items-start justify-between gap-3'>
           <div className='min-w-0 flex-1'>
             <p className='micro-label flex items-center gap-2 text-[oklch(0.76_0.08_235)]'>
@@ -88,6 +125,11 @@ export function RoomCard({ room }: IRoomCardProps): React.JSX.Element {
             </h3>
           </div>
           <div className='flex shrink-0 items-center gap-1.5'>
+            {room.visibleInLobby === false ? (
+              <Badge variant='neutral'>
+                {t('client.my_games.hidden', { defaultValue: 'Hidden' })}
+              </Badge>
+            ) : null}
             {soloMode ? (
               <Badge variant='neutral'>
                 {t('client.room_card.solo', { defaultValue: 'Solo' })}

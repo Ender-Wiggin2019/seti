@@ -22,11 +22,25 @@ describe('RoomCard', () => {
     );
     expect(screen.getByTestId('room-card-scene-image')).toHaveAttribute(
       'src',
-      '/assets/seti/sprites/terrain_01_01.webp',
+      '/assets/seti/sprites/objects_00_00.webp',
     );
     expect(screen.getByTestId('room-card-crew-count')).toHaveTextContent('1/1');
     expect(screen.getByText('Solo')).toBeInTheDocument();
     expect(screen.getByText('D3')).toBeInTheDocument();
+  });
+
+  it('rotates through the 9 object sprites by index and wraps around', () => {
+    const { rerender } = render(<RoomCard room={createRoom()} index={4} />);
+    expect(screen.getByTestId('room-card-scene-image')).toHaveAttribute(
+      'src',
+      '/assets/seti/sprites/objects_01_01.webp',
+    );
+
+    rerender(<RoomCard room={createRoom()} index={11} />);
+    expect(screen.getByTestId('room-card-scene-image')).toHaveAttribute(
+      'src',
+      '/assets/seti/sprites/objects_00_02.webp',
+    );
   });
 
   it('keeps mission status and module details scanable', () => {

@@ -1,6 +1,10 @@
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { HeaderControls } from '@/components/layout/HeaderControls';
+import {
+  SceneBackground,
+  SceneProvider,
+} from '@/components/layout/SceneBackground';
 import { APP_NAME } from '@/config/constants';
 import { cn } from '@/lib/cn';
 import { useAuthStore } from '@/stores/authStore';
@@ -13,7 +17,7 @@ interface IAppShellProps {
  * AppShell — the global chrome outside of a live game.
  *
  * The page sits in three depth planes:
- *   1. Cosmic atmosphere fixed behind everything (--bg-atmosphere).
+ *   1. SceneBackground — top hero (per route) + mid solid + bottom footer.
  *   2. Surface-deep top bar (the first lift off the void).
  *   3. Surface-panel content cards within the main column.
  */
@@ -23,61 +27,66 @@ export function AppShell(props: IAppShellProps): React.JSX.Element {
   const userName = useAuthStore((s) => s.user?.name);
 
   return (
-    <div className='relative min-h-screen text-text-100'>
-      {/* Cosmic atmosphere — fixed behind all content, three-layer composition. */}
-      <div
-        className='pointer-events-none fixed inset-0 -z-10 bg-[image:var(--bg-atmosphere)] bg-cover bg-center'
-        aria-hidden
-      />
+    <SceneProvider>
+      <div className='relative min-h-screen text-text-100'>
+        <SceneBackground />
 
-      <header
-        className={cn(
-          'sticky top-0 z-20',
-          'border-b border-[color:var(--metal-edge-soft)]',
-          'bg-[var(--surface-deep)]/82 backdrop-blur-md',
-        )}
-      >
-        <div className='mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-3'>
-          <Link
-            to='/'
-            className={cn(
-              'group flex shrink-0 items-center gap-3 text-text-100 max-sm:w-full',
-              'transition-colors',
-            )}
-          >
-            <WordmarkMark />
-            <span className='font-display text-sm font-medium tracking-wordmark uppercase'>
-              {APP_NAME}
-            </span>
-          </Link>
-
-          <div className='flex min-w-0 flex-1 items-center justify-end gap-4 max-sm:w-full max-sm:flex-none max-sm:justify-between max-sm:gap-2'>
-            <HeaderControls variant='shell' />
-            <nav className='flex shrink-0 items-center gap-1'>
-              {isAuthenticated ? (
-                <>
-                  <NavLink to='/lobby'>{t('client.app_shell.lobby')}</NavLink>
-                  <NavLink
-                    to='/profile'
-                    leading={
-                      <span className='flex h-5 w-5 items-center justify-center rounded-full bg-[var(--surface-instrument)] border border-[color:var(--metal-edge-soft)] font-mono text-[10px] font-semibold text-text-100'>
-                        {userName?.charAt(0).toUpperCase() ?? '?'}
-                      </span>
-                    }
-                  >
-                    {userName ?? t('client.app_shell.profile')}
-                  </NavLink>
-                </>
-              ) : (
-                <NavLink to='/auth'>{t('client.app_shell.login')}</NavLink>
+        <header
+          className={cn(
+            'sticky top-0 z-20',
+            'border-b border-[color:var(--metal-edge-soft)]',
+            'bg-[var(--surface-deep)]/82 backdrop-blur-md',
+          )}
+        >
+          <div className='mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-3'>
+            <Link
+              to='/'
+              className={cn(
+                'group flex shrink-0 items-center gap-3 text-text-100 max-sm:w-full',
+                'transition-colors',
               )}
-            </nav>
-          </div>
-        </div>
-      </header>
+            >
+              <WordmarkMark />
+              <span className='font-display text-sm font-medium tracking-wordmark uppercase'>
+                {APP_NAME}
+              </span>
+            </Link>
 
-      <main className='mx-auto max-w-6xl px-5 py-8'>{props.children}</main>
-    </div>
+            <div className='flex min-w-0 flex-1 items-center justify-end gap-4 max-sm:w-full max-sm:flex-none max-sm:justify-between max-sm:gap-2'>
+              <HeaderControls variant='shell' />
+              <nav className='flex shrink-0 items-center gap-1'>
+                {isAuthenticated ? (
+                  <>
+                    <NavLink to='/lobby'>
+                      {t('client.app_shell.lobby')}
+                    </NavLink>
+                    <NavLink to='/my-games'>
+                      {t('client.app_shell.my_games', {
+                        defaultValue: 'My Games',
+                      })}
+                    </NavLink>
+                    <NavLink
+                      to='/profile'
+                      leading={
+                        <span className='flex h-5 w-5 items-center justify-center rounded-full bg-[var(--surface-instrument)] border border-[color:var(--metal-edge-soft)] font-mono text-[10px] font-semibold text-text-100'>
+                          {userName?.charAt(0).toUpperCase() ?? '?'}
+                        </span>
+                      }
+                    >
+                      {userName ?? t('client.app_shell.profile')}
+                    </NavLink>
+                  </>
+                ) : (
+                  <NavLink to='/auth'>{t('client.app_shell.login')}</NavLink>
+                )}
+              </nav>
+            </div>
+          </div>
+        </header>
+
+        <main className='mx-auto max-w-6xl px-5 py-8'>{props.children}</main>
+      </div>
+    </SceneProvider>
   );
 }
 

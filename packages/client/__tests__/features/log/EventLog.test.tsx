@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { EventLog } from '@/features/log';
 import { EGameEventType } from '@/types/re-exports';
+import { playerEventBase, systemEventBase } from '../../helpers/gameEvents';
 import { createMockPlayerState } from '../../../test/mocks/gameState';
 
 describe('EventLog', () => {
@@ -10,12 +11,15 @@ describe('EventLog', () => {
       <EventLog
         events={[
           {
+            ...systemEventBase(),
             type: EGameEventType.ROUND_END,
             round: 2,
           },
           {
-            type: EGameEventType.ROTATION,
-            discIndex: 1,
+            ...systemEventBase(),
+            type: EGameEventType.DISC_ROTATED,
+            ring: 2,
+            steps: 1,
           },
         ]}
         players={[createMockPlayerState({ playerId: 'p1', playerName: 'Ada' })]}
@@ -37,11 +41,11 @@ describe('EventLog', () => {
       <EventLog
         events={[
           {
+            ...playerEventBase('p1'),
             type: EGameEventType.ACTION,
             level: 'info',
-            playerId: 'p1',
             action: 'SCAN',
-          } as never,
+          },
         ]}
         players={[createMockPlayerState({ playerId: 'p1', playerName: 'Ada' })]}
       />,
@@ -64,15 +68,15 @@ describe('EventLog', () => {
       <EventLog
         events={[
           {
+            ...playerEventBase('p1'),
             type: EGameEventType.ACTION,
             level: 'info',
-            playerId: 'p1',
             action: 'PLAY_CARD',
             details: {
               cardId: '42',
               cardName: 'SETI Institute',
             },
-          } as never,
+          },
         ]}
         players={[createMockPlayerState({ playerId: 'p1', playerName: 'Ada' })]}
       />,
@@ -92,15 +96,15 @@ describe('EventLog', () => {
         compact
         events={[
           {
+            ...playerEventBase('p1'),
             type: EGameEventType.ACTION,
             level: 'info',
-            playerId: 'p1',
             action: 'PLAY_CARD',
             details: {
               cardId: '42',
               cardName: 'SETI Institute',
             },
-          } as never,
+          },
         ]}
         players={[createMockPlayerState({ playerId: 'p1', playerName: 'Ada' })]}
       />,
@@ -117,7 +121,9 @@ describe('EventLog', () => {
     render(
       <EventLog
         compact
-        events={[{ type: EGameEventType.ROUND_END, round: 2 }]}
+        events={[
+          { ...systemEventBase(), type: EGameEventType.ROUND_END, round: 2 },
+        ]}
         players={[]}
       />,
     );
@@ -136,23 +142,23 @@ describe('EventLog', () => {
         compact
         events={[
           {
+            ...playerEventBase('p1'),
             type: EGameEventType.ACTION,
             level: 'info',
-            playerId: 'p1',
             action: 'MILESTONE_CHECK',
-          } as never,
+          },
           {
+            ...playerEventBase('p1', { level: 'debug' }),
             type: EGameEventType.ACTION,
             level: 'debug',
-            playerId: 'p1',
             action: 'ACTION_REWARD',
-          } as never,
+          },
           {
+            ...playerEventBase('p1'),
             type: EGameEventType.ACTION,
             level: 'info',
-            playerId: 'p1',
             action: 'PASS',
-          } as never,
+          },
         ]}
         players={[createMockPlayerState({ playerId: 'p1', playerName: 'Ada' })]}
       />,
@@ -182,8 +188,8 @@ describe('EventLog', () => {
     const { rerender } = render(
       <EventLog
         events={[
-          { type: EGameEventType.ROUND_END, round: 3 },
-          { type: EGameEventType.ROUND_END, round: 2 },
+          { ...systemEventBase(), type: EGameEventType.ROUND_END, round: 3 },
+          { ...systemEventBase(), type: EGameEventType.ROUND_END, round: 2 },
         ]}
         players={[]}
       />,
@@ -197,9 +203,9 @@ describe('EventLog', () => {
     rerender(
       <EventLog
         events={[
-          { type: EGameEventType.ROUND_END, round: 4 },
-          { type: EGameEventType.ROUND_END, round: 3 },
-          { type: EGameEventType.ROUND_END, round: 2 },
+          { ...systemEventBase(), type: EGameEventType.ROUND_END, round: 4 },
+          { ...systemEventBase(), type: EGameEventType.ROUND_END, round: 3 },
+          { ...systemEventBase(), type: EGameEventType.ROUND_END, round: 2 },
         ]}
         players={[]}
       />,
@@ -213,9 +219,10 @@ describe('EventLog', () => {
       <EventLog
         events={[
           {
-            type: EGameEventType.SCORE_CHANGE,
-            playerId: 'p1',
-            delta: 2,
+            ...playerEventBase('p1'),
+            type: EGameEventType.SCORE_CHANGED,
+            before: 8,
+            after: 10,
             source: 'MISSION_REWARD',
           },
         ]}
