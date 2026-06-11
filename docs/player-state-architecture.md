@@ -83,9 +83,10 @@ client: useGameState stores latest state (direct replace) · useGameEvents merge
   (situation, exists)  (G1) registry EventToAnimation
 
   Persistence (G3):
-    · game_events        append-only event store (source of truth + analytics source)
+    · game_events        append-only event store (source of truth + analytics source);
+                         written **only at completed turn boundaries** as one batch per turn
     · turn_snapshots     turn-boundary materialized board (load/undo optimization; rebuildable from events)
-    · per-action full snapshots removed
+    · per-action full snapshots removed; same-turn events stay in memory until the turn commits
 ```
 
 **Why this satisfies "extensibility / reusability"**:
@@ -280,15 +281,16 @@ export const turnSnapshots = pgTable('turn_snapshots', {
 
 **(c) `GameSerializer.serializeGame`**: change `eventLog` to keep only a `recent(50)` tail (so the log feed renders self-sufficiently); analytics / replay use `game_events` as the source of truth.
 
-**(d) `GameManager` persistence timing refactor**:
+**(d) `GameManager` persistence timing refactor** — persistence is **turn-complete**: a player turn is tentative (in-memory only) until all end-turn / between-turn / reveal / pending-input work settles and the engine enters the next turn. Only then is the whole turn's accumulated event batch + the new turn snapshot committed in **one transaction**. In-memory state stays authoritative while the process is alive, so same-turn actions work without any DB write; a mid-turn crash recovers from the previous committed turn snapshot (the lost tentative actions can be redone).
+
 | Timing | Now | Change to |
 |---|---|---|
-| Per action/input | full `game_snapshots` write | **only** `gameEventRepo.appendMany(appended)` |
-| Turn boundary | in-memory checkpoint + DB write every 4 turns | in-memory checkpoint (immediate undo) + **every turn** write to `turn_snapshots` |
+| Per action/input | full `game_snapshots` write | **no DB write** — events accumulate in memory above the last-committed seq |
+| Turn boundary (settled) | in-memory checkpoint + DB write every 4 turns | in-memory checkpoint (immediate undo) + **one transaction**: append the whole turn's events since the last commit **and** the `turn_snapshots` row |
 | Cold load | `loadLatestSnapshot` | latest `turn_snapshots` + `loadSince(snapshot.seq)` replay to current |
-| Rollback (undo) | restore turn checkpoint | unchanged (restore previous turn); keep `game_events` (UNDO itself enters the event stream) |
+| Rollback (undo) | restore turn checkpoint | restore previous turn-start **in memory only**; **no DB write** — committed turns cannot be undone and the `UNDO` log event is ephemeral (returned for the live feed, never persisted) |
 
-> Remove the per-action `game_snapshots` write path and table; `captureCurrentTurnCheckpoint`'s DB branch becomes an every-turn `turn_snapshots` write (the in-memory checkpoint is still kept every turn for immediate undo).
+> Remove the per-action `game_snapshots` write path and table. `GameManager` tracks the last committed event seq per game; same-turn commands append nothing, and the next completed turn boundary commits everything since that watermark.
 
 ---
 
@@ -393,9 +395,9 @@ Same pipeline as 5.1; `broadcastResult`'s room broadcast delivers the same batch
 - AC5: persisted event content matches the runtime UI log feed (no omissions / no duplicates).
 
 **Persistence (G3)**
-- AC6: within a turn no full state is written (events appended only); one `turn_snapshots` row at the turn boundary; `game_snapshots` no longer produced.
-- AC7: after killing the server process and restarting, the game recovers from `turn_snapshots + loadSince` replay, consistent with the pre-crash state (deep equal).
-- AC8: `undo` rolls back to the previous turn start, semantics identical to current behavior.
+- AC6: within a turn **no DB row is written** (events stay in memory above the last-committed seq); at the completed turn boundary one transaction commits the whole turn's event batch + one `turn_snapshots` row; `game_snapshots` no longer produced.
+- AC7: after killing the server process and restarting, the game recovers from `turn_snapshots + loadSince` replay, consistent with the **last committed turn** (tentative same-turn actions are discarded and can be redone).
+- AC8: `undo` rolls back to the previous turn start **in memory only** (no DB write); the `UNDO` event is ephemeral and committed turns cannot be undone.
 
 **Extensibility (core goal)**
 - AC9: **adding a new animated action is closed over "emit one event + one server registry entry + one client renderer entry"**; `useAnimationQueue` / broadcast / persistence / reconcile require no changes. Validate with a new action (e.g. "place orbiter") as a demonstration.

@@ -4,6 +4,7 @@
 
 - JWT 通过签名验证后，仍要确认 `sub` 对应用户存在；所有写 `users.id` 外键的入口都应在写库前返回明确 401，数据库外键只做最后防线。
 - E2E reset 只清游戏持久化状态，保留 `users`，避免浏览器保存的 token 指向被删除账号。
+- Player-state 持久化边界要先确认业务语义：若需求是“turn 完整结束才落库”，同一 turn 内 action/input/free-action 的 `game_events` 也不能先写 DB；end turn 后的 between-turn/reveal/pending input 流程完成并进入下一 turn，才应把该 turn 的事件和 snapshot 作为一个 commit 写入。
 
 ## 验证策略
 
@@ -82,6 +83,7 @@
 ## 规则文档与参考数据
 
 - PDF 资产提取优先保存原始嵌入图片或 native-pixel crop；不要把页面高倍率渲染裁切冒充原始素材，交付前用原图尺寸和清晰度审计说明来源限制。
+- 处理 sprite 资产前先确认 sheet 类型和专用脚本；不要把 anomaly token 合成脚本误用到通用场景 sprite 切分。
 - 源资料缺图或数据时，优先从 `frontend-reference`、`docs/arch/aliens/*`、FAQ 补足；用户确认点迁入 Confirmed Decisions，并记录来源与冲突优先级。
 - `frontend-reference` 只作为行为/数据参考；实现规格必须写清 common/server/client 分工，并把 source alias 映射到项目规范命名。
 - 用户确认某机制只需现有选项控制时，不要新增语义相近的 helper 或 public boolean；server/common/client 应读取同一个 options 字段，避免出现第二套开关语义。
