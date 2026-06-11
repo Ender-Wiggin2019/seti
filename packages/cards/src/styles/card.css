@@ -409,7 +409,8 @@
 }
 
 .diamond {
-  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  /* Slightly rounded diamond: square rotated 45° with ~4px corner radius (50x50 box). */
+  clip-path: path('M 22 3 Q 25 0 28 3 L 47 22 Q 50 25 47 28 L 28 47 Q 25 50 22 47 L 3 28 Q 0 25 3 22 Z');
   /* border: 1px solid black; */
 }
 
@@ -1154,6 +1155,12 @@
 .icon-value-danger,
 .icon-value-exofossil,
 .icon-value-use-exofossil {
+  /* Default horizontal offset for the numeric label. The base `.icon-value`
+   * rule is intentionally declared AFTER the size variants below (see comment
+   * there), so we can't put `left` there without it stomping the per-type
+   * overrides further down. Variants that want a different left set their own
+   * value, which wins via source order. */
+  left: -5px;
   text-shadow:
     var(--icon-value-shadow-color) 3px 0px 0px,
     var(--icon-value-shadow-color) 2.83487px 0.981584px 0px,
@@ -1237,7 +1244,11 @@
    * Size-dependent geometry (height / bottom) is owned by
    * `.icon-value-size-*`; do NOT set `height` here — doing so would
    * override every size variant because this rule is declared after
-   * them and has the same specificity.
+   * them and has the same specificity. The same trap applies to `left`:
+   * the per-type `.icon-value-<type>` rules set their own `left`, so this
+   * rule must not declare one (it would clobber them all). The shared
+   * default `left: -5px` lives on the combined `.icon-value-*` selector
+   * above so per-type overrides win via source order.
    *
    * `font-size` stays fixed at 40px on purpose: the parent
    * `.icon-container-*` applies a CSS `scale` that visually resizes
@@ -1251,7 +1262,6 @@
   font-variant-numeric: normal;
   line-height: 1;
   font-size: 40px;
-  left: -5px;
   display: flex;
   justify-content: center;
   align-items: center;
