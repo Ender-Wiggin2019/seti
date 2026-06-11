@@ -54,10 +54,11 @@ test.describe('Lobby & Room Management', () => {
       });
       expect(res.status()).toBe(200);
 
-      const rooms = await res.json();
-      expect(Array.isArray(rooms)).toBe(true);
+      const roomsPage = await res.json();
+      expect(Array.isArray(roomsPage.items)).toBe(true);
+      expect(roomsPage.total).toBeGreaterThanOrEqual(1);
 
-      const found = rooms.find((r: { id: string }) => r.id === roomId);
+      const found = roomsPage.items.find((r: { id: string }) => r.id === roomId);
       expect(found).toBeDefined();
       expect(found.status).toBe('playing');
     });
@@ -116,6 +117,69 @@ test.describe('Lobby & Room Management', () => {
         await hostContext.close();
         await guestContext.close();
       }
+    });
+
+    test('hidden solo room stays out of Lobby, appears in My Games, and exposes player profile', async ({
+      page,
+      request,
+    }) => {
+      await waitForServerReady(request);
+
+      const host = createUser('hidden-solo-host');
+      const roomName = `Hidden Solo ${Date.now()}`;
+
+      await registerByUi(page, host);
+      const roomId = await createRoomByUi(page, roomName, 2, {
+        isSoloMode: true,
+        soloDifficulty: 3,
+        visibleInLobby: false,
+      });
+
+      await page.goto('/lobby');
+      await expect(page.getByTestId('mission-room-list')).toBeVisible({
+        timeout: 10_000,
+      });
+      await expect(page.getByText(roomName)).toHaveCount(0);
+
+      await page.getByRole('link', { name: /my games/i }).click();
+      await expect(page.getByTestId('my-games-page')).toBeVisible({
+        timeout: 10_000,
+      });
+      const myGameCard = page.getByTestId('room-card').filter({
+        hasText: roomName,
+      });
+      await expect(myGameCard).toBeVisible({ timeout: 10_000 });
+      await expect(myGameCard.getByText('Hidden', { exact: true })).toBeVisible();
+      await expect(myGameCard.getByText('Solo', { exact: true })).toBeVisible();
+
+      await myGameCard.click();
+      await page.waitForURL(new RegExp(`/room/${roomId}$`), {
+        timeout: 10_000,
+      });
+      await expect(page.getByTestId('room-page')).toBeVisible({
+        timeout: 10_000,
+      });
+
+      const profileResponse = page.waitForResponse(
+        (res) =>
+          res.url().includes(`/lobby/players/`) &&
+          res.url().includes('/profile') &&
+          res.request().method() === 'GET',
+        { timeout: 10_000 },
+      );
+      await page.getByRole('button', { name: new RegExp(host.name) }).click();
+      const response = await profileResponse;
+      expect(response.ok()).toBe(true);
+
+      await expect(page.getByTestId('player-public-profile')).toBeVisible({
+        timeout: 10_000,
+      });
+      await expect(page.getByTestId('player-public-profile')).toContainText(
+        host.name,
+      );
+      await expect(page.getByTestId('player-public-profile')).toContainText(
+        roomName,
+      );
     });
   });
 });

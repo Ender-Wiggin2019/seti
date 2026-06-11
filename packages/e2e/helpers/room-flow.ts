@@ -17,6 +17,7 @@ export interface ICreateRoomByUiOptions {
   alienTypes?: readonly ECoreAlienType[];
   isSoloMode?: boolean;
   soloDifficulty?: 1 | 2 | 3 | 4 | 5;
+  visibleInLobby?: boolean;
   seed?: string;
 }
 
@@ -88,12 +89,12 @@ export async function createRoomByUiWithDetails(
     const soloToggle = page.locator('#solo-mode-toggle');
     await expect(soloToggle).toBeVisible({ timeout: 10_000 });
     const checked =
-      (await soloToggle.getAttribute('aria-checked', {
+      (await soloToggle.getAttribute('aria-pressed', {
         timeout: 10_000,
       })) === 'true';
     if (!checked) {
       await soloToggle.click();
-      await expect(soloToggle).toHaveAttribute('aria-checked', 'true');
+      await expect(soloToggle).toHaveAttribute('aria-pressed', 'true');
     }
 
     const difficulty = options.soloDifficulty ?? 1;
@@ -103,6 +104,22 @@ export async function createRoomByUiWithDetails(
     await expect(difficultyButton).toBeVisible({ timeout: 10_000 });
     await difficultyButton.click();
     await expect(difficultyButton).toHaveAttribute('aria-pressed', 'true');
+
+    if (options.visibleInLobby === false) {
+      const visibleInLobbyToggle = page.locator('#visible-in-lobby-toggle');
+      await expect(visibleInLobbyToggle).toBeVisible({ timeout: 10_000 });
+      const visible =
+        (await visibleInLobbyToggle.getAttribute('aria-checked', {
+          timeout: 10_000,
+        })) === 'true';
+      if (visible) {
+        await visibleInLobbyToggle.click();
+        await expect(visibleInLobbyToggle).toHaveAttribute(
+          'aria-checked',
+          'false',
+        );
+      }
+    }
   }
 
   if (options.alienTypes) {

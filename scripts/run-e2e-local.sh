@@ -3,9 +3,9 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SPEC_PATHS=("$@")
-SERVER_URL="${SERVER_URL:-http://127.0.0.1:3000}"
-CLIENT_URL="${CLIENT_URL:-http://127.0.0.1:5173}"
-WS_URL="${WS_URL:-http://127.0.0.1:3000}"
+SERVER_URL="${SERVER_URL:-http://127.0.0.1:3100}"
+CLIENT_URL="${CLIENT_URL:-http://127.0.0.1:5177}"
+WS_URL="${WS_URL:-http://127.0.0.1:3100}"
 SERVER_PORT="${SERVER_URL##*:}"
 SERVER_PORT="${SERVER_PORT%%/*}"
 CLIENT_PORT="${CLIENT_URL##*:}"
@@ -13,8 +13,19 @@ CLIENT_PORT="${CLIENT_PORT%%/*}"
 PLAYWRIGHT_PROJECT="${PLAYWRIGHT_PROJECT:-chromium}"
 PLAYWRIGHT_RETRIES="${PLAYWRIGHT_RETRIES:-0}"
 KEEP_SERVERS="${KEEP_SERVERS:-0}"
+E2E_PGDATABASE="${PGDATABASE:-seti_e2e}"
+E2E_DATABASE_URL="${E2E_DATABASE_URL:-}"
 
-eval "$("${ROOT_DIR}/scripts/init-e2e-local.sh" | awk '
+assert_e2e_database_env() {
+  if [[ -n "${DATABASE_URL:-}" && -z "${E2E_DATABASE_URL:-}" ]]; then
+    echo "[e2e:run] DATABASE_URL is set. Unset it or use E2E_DATABASE_URL for the isolated local E2E database." >&2
+    exit 1
+  fi
+}
+
+assert_e2e_database_env
+
+eval "$(PGDATABASE="${E2E_PGDATABASE}" E2E_DATABASE_URL="${E2E_DATABASE_URL}" "${ROOT_DIR}/scripts/init-e2e-local.sh" | awk '
   /^\[e2e:init\] Node:/ { print "NODE_BIN=\"" $3 "\"" }
   /^\[e2e:init\] pnpm CLI:/ {
     sub(/^\[e2e:init\] pnpm CLI: /, "", $0)
@@ -43,6 +54,11 @@ server_ready() {
   [[ "${status}" == "200" ]]
 }
 
+process_alive() {
+  local pid="$1"
+  [[ -n "${pid}" ]] && kill -0 "${pid}" >/dev/null 2>&1
+}
+
 cleanup() {
   if [[ "${KEEP_SERVERS}" == "1" ]]; then
     return
@@ -64,18 +80,32 @@ fi
 echo "[e2e:run] starting server on ${SERVER_URL}"
 (
   cd "${ROOT_DIR}/packages/server"
-  exec env PATH="${NODE_DIR}:$PATH" PORT="${SERVER_PORT}" SETI_ENABLE_DEBUG_API=true SETI_THROTTLE_LIMIT=10000 "${NODE_BIN}" --import "${TSX_LOADER}" src/main.ts
+  unset DATABASE_URL
+  if [[ -n "${E2E_DATABASE_URL}" ]]; then
+    export DATABASE_URL="${E2E_DATABASE_URL}"
+  fi
+  exec env PATH="${NODE_DIR}:$PATH" PGDATABASE="${E2E_PGDATABASE}" PORT="${SERVER_PORT}" SETI_ENABLE_DEBUG_API=true SETI_THROTTLE_LIMIT=10000 "${NODE_BIN}" --import "${TSX_LOADER}" src/main.ts
 ) &
 SERVER_PID=$!
 
 echo "[e2e:run] starting client on ${CLIENT_URL}"
 (
   cd "${ROOT_DIR}/packages/client"
-  exec env PATH="${NODE_DIR}:$PATH" VITE_API_URL="${SERVER_URL}" VITE_WS_URL="${WS_URL}" VITE_ENABLE_DEBUG_ROUTES=true ./node_modules/.bin/vite --host 127.0.0.1 --port "${CLIENT_PORT}"
+  exec env PATH="${NODE_DIR}:$PATH" VITE_API_URL="${SERVER_URL}" VITE_WS_URL="${WS_URL}" VITE_ENABLE_DEBUG_ROUTES=true ./node_modules/.bin/vite --host 127.0.0.1 --port "${CLIENT_PORT}" --strictPort
 ) &
 CLIENT_PID=$!
 
 for _ in $(seq 1 60); do
+  if ! process_alive "${SERVER_PID}"; then
+    echo "[e2e:run] server process exited before becoming ready at ${SERVER_URL}" >&2
+    exit 1
+  fi
+
+  if ! process_alive "${CLIENT_PID}"; then
+    echo "[e2e:run] client process exited before becoming ready at ${CLIENT_URL}" >&2
+    exit 1
+  fi
+
   if server_ready && curl -fs "${CLIENT_URL}" >/dev/null 2>&1; then
     break
   fi
@@ -112,11 +142,17 @@ PLAYWRIGHT_CMD+=(
   --retries="${PLAYWRIGHT_RETRIES}"
 )
 
-env \
-  PATH="${NODE_DIR}:$PATH" \
-  CI=1 \
-  SERVER_URL="${SERVER_URL}" \
-  CLIENT_URL="${CLIENT_URL}" \
-  WS_URL="${WS_URL}" \
-  SKIP_E2E_DB_PREPARE=1 \
-  "${PLAYWRIGHT_CMD[@]}"
+(
+  unset DATABASE_URL
+  if [[ -n "${E2E_DATABASE_URL}" ]]; then
+    export DATABASE_URL="${E2E_DATABASE_URL}"
+  fi
+  env \
+    PATH="${NODE_DIR}:$PATH" \
+    CI=1 \
+    SERVER_URL="${SERVER_URL}" \
+    CLIENT_URL="${CLIENT_URL}" \
+    WS_URL="${WS_URL}" \
+    SKIP_E2E_DB_PREPARE=1 \
+    "${PLAYWRIGHT_CMD[@]}"
+)

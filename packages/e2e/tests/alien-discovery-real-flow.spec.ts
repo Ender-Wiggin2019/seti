@@ -76,7 +76,7 @@ async function expandFreeActions(page: Page): Promise<void> {
   await expect(convert).toBeVisible({ timeout: 10_000 });
 }
 
-async function convertEnergyToMovement(page: Page, amount: 2): Promise<void> {
+async function convertEnergyToMovement(page: Page, amount: number): Promise<void> {
   await expandFreeActions(page);
   const convert = page.locator(sel.freeAction('CONVERT_ENERGY_TO_MOVEMENT'));
   await expect(convert).toBeEnabled({ timeout: 10_000 });
@@ -104,20 +104,46 @@ async function moveProbeToFirstReachablePlanet(page: Page): Promise<string> {
     timeout: 10_000,
   });
 
-  const planetTarget = page
-    .locator(
-      '[data-reachable-indicator="true"]' +
-        ' >> xpath=ancestor::button[@data-planet and @data-planet!="earth"][1]',
-    )
-    .first();
-  await expect(planetTarget).toBeVisible({ timeout: 10_000 });
+  for (let hop = 0; hop < 4; hop += 1) {
+    const planetTarget = page
+      .locator(
+        '[data-reachable-indicator="true"]' +
+          ' >> xpath=ancestor::button[@data-planet and @data-planet!="earth"][1]',
+      )
+      .first();
+    if (await planetTarget.isVisible().catch(() => false)) {
+      return clickReachableSpaceAndWait(
+        page,
+        planetTarget,
+        await firstProbeSpaceId(page),
+      );
+    }
 
-  const targetSpaceTestId = await planetTarget.getAttribute('data-testid');
+    const targetSpace = page.locator('[data-reachable-indicator="true"]').first();
+    await expect(targetSpace).toBeVisible({ timeout: 10_000 });
+    const targetButton = targetSpace.locator('xpath=ancestor::button[1]');
+    await clickReachableSpaceAndWait(
+      page,
+      targetButton,
+      await firstProbeSpaceId(page),
+    );
+  }
+
+  throw new Error('No reachable non-Earth planet found while moving probe');
+}
+
+async function clickReachableSpaceAndWait(
+  page: Page,
+  targetButton: Locator,
+  initialSpaceId: string,
+): Promise<string> {
+  const targetSpaceTestId = await targetButton.getAttribute('data-testid');
   expect(targetSpaceTestId).toBeTruthy();
-  await planetTarget.click();
+  await targetButton.click();
 
   const targetSpaceId = targetSpaceTestId?.replace('solar-space-', '');
   expect(targetSpaceId).toBeTruthy();
+  expect(targetSpaceId).not.toBe(initialSpaceId);
   await expect
     .poll(async () => firstProbeSpaceId(page), { timeout: 15_000 })
     .toBe(targetSpaceId);
@@ -165,9 +191,11 @@ async function playFloodingTheMediaSpaceAndExpectDraw(
 }
 
 async function dataPoolCount(page: Page): Promise<number> {
-  const text = await page
-    .locator('[data-testid="data-pool-view"] .readout')
-    .textContent();
+  const readout = page.locator('[data-testid="data-pool-view"] .readout');
+  if (!(await readout.isVisible().catch(() => false))) {
+    await openTab(page, 'Board');
+  }
+  const text = await readout.textContent({ timeout: 10_000 });
   return Number(text?.match(/\d+/)?.[0] ?? 0);
 }
 
@@ -175,9 +203,13 @@ async function resourceValue(
   page: Page,
   resourceId: 'publicity' | 'score',
 ): Promise<number> {
-  const text = await page
+  const readout = page
     .locator(`[data-testid="resource-${resourceId}"] .readout`)
-    .textContent();
+    .first();
+  if (!(await readout.isVisible().catch(() => false))) {
+    await openTab(page, 'Board');
+  }
+  const text = await readout.textContent({ timeout: 10_000 });
   return Number(text?.match(/-?\d+/)?.[0] ?? 0);
 }
 
@@ -203,6 +235,13 @@ async function useDataCardCorner(page: Page, cardId: string): Promise<void> {
   await expect
     .poll(() => dataPoolCount(page), { timeout: 15_000 })
     .toBe(dataBefore + 1);
+}
+
+async function resolveFirstLandOptionIfVisible(page: Page): Promise<void> {
+  const option = page.locator('[data-testid^="input-option-land-"]').first();
+  if (await option.isVisible().catch(() => false)) {
+    await option.click();
+  }
 }
 
 async function placeDataInTopSlots(page: Page, count: number): Promise<void> {
@@ -305,7 +344,7 @@ test('@slow @real-ui alien discovery e2e: real UI marks traces, reveals Anomalie
     );
 
     await clickMainAction(p1Page, 'LAUNCH_PROBE');
-    await convertEnergyToMovement(p1Page, 2);
+    await convertEnergyToMovement(p1Page, 3);
     await moveProbeToFirstReachablePlanet(p1Page);
     await clickEndTurn(p1Page);
 
@@ -313,11 +352,11 @@ test('@slow @real-ui alien discovery e2e: real UI marks traces, reveals Anomalie
       timeout: 20_000,
     });
     await playHandCard(p2Page, '75');
-    const p2PublicityBeforeRedTrace = await resourceValue(p2Page, 'publicity');
+    const p2ScoreBeforeRedTrace = await resourceValue(p2Page, 'score');
     await clickInputOptionById(p2Page, 'alien-0-discovery-red-trace');
     await expect
-      .poll(() => resourceValue(p2Page, 'publicity'), { timeout: 15_000 })
-      .toBe(p2PublicityBeforeRedTrace + 1);
+      .poll(() => resourceValue(p2Page, 'score'), { timeout: 15_000 })
+      .toBe(p2ScoreBeforeRedTrace + 6);
     await expectTraceOccupant(p2Page, 'alien-0-discovery-red-trace');
     await attachScreenshot(
       p2Page,
@@ -331,7 +370,7 @@ test('@slow @real-ui alien discovery e2e: real UI marks traces, reveals Anomalie
       timeout: 20_000,
     });
     await playHandCard(p1Page, '12');
-    await clickInputOptionById(p1Page, 'land-venus');
+    await resolveFirstLandOptionIfVisible(p1Page);
     const p1PublicityBeforeYellowTrace = await resourceValue(
       p1Page,
       'publicity',

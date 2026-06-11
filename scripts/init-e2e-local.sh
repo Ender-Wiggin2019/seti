@@ -119,6 +119,13 @@ find_tsx_loader() {
   echo "${loader}"
 }
 
+assert_e2e_database_env() {
+  if [[ -n "${DATABASE_URL:-}" && -z "${E2E_DATABASE_URL:-}" ]]; then
+    echo "[e2e:init] DATABASE_URL is set. Unset it or use E2E_DATABASE_URL for the isolated local E2E database." >&2
+    exit 1
+  fi
+}
+
 run_pnpm() {
   env PATH="${NODE_DIR}:$PATH" "${NODE_BIN}" "${PNPM_CLI}" --dir "${ROOT_DIR}" "$@"
 }
@@ -138,12 +145,26 @@ NODE_BIN="$(find_compatible_node)"
 NODE_DIR="$(dirname "${NODE_BIN}")"
 PNPM_CLI="$(find_pnpm_cli)"
 TSX_LOADER="$(find_tsx_loader)"
+E2E_PGDATABASE="${PGDATABASE:-seti_e2e}"
+E2E_DATABASE_URL="${E2E_DATABASE_URL:-}"
+assert_e2e_database_env
 
 ensure_client_env
-env PATH="${NODE_DIR}:$PATH" "${NODE_BIN}" --import "${TSX_LOADER}" \
-  "${ROOT_DIR}/packages/server/scripts/prepare-e2e-db.ts"
+(
+  unset DATABASE_URL
+  if [[ -n "${E2E_DATABASE_URL}" ]]; then
+    export DATABASE_URL="${E2E_DATABASE_URL}"
+  fi
+  env PATH="${NODE_DIR}:$PATH" PGDATABASE="${E2E_PGDATABASE}" "${NODE_BIN}" --import "${TSX_LOADER}" \
+    "${ROOT_DIR}/packages/server/scripts/prepare-e2e-db.ts"
+)
 
 echo "[e2e:init] Node: ${NODE_BIN}"
 echo "[e2e:init] pnpm CLI: ${PNPM_CLI}"
 echo "[e2e:init] tsx loader: ${TSX_LOADER}"
+if [[ -n "${E2E_DATABASE_URL}" ]]; then
+  echo "[e2e:init] Database URL: E2E_DATABASE_URL"
+else
+  echo "[e2e:init] Database: ${E2E_PGDATABASE}"
+fi
 echo "[e2e:init] Ready"

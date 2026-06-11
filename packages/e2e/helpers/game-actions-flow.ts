@@ -1,5 +1,8 @@
-import { expect, type Page } from '@playwright/test';
-import { resolveCardPromptIfVisible } from './prompt-resolvers';
+import { expect, type Locator, type Page } from '@playwright/test';
+import {
+  resolveCardPromptIfVisible,
+  resolveVisibleCardPrompt,
+} from './prompt-resolvers';
 import { sel } from './selectors';
 
 export async function waitForActionOwner(
@@ -8,33 +11,54 @@ export async function waitForActionOwner(
   actionType: string,
   timeout = 15_000,
 ): Promise<{ actor: Page; other: Page }> {
-  await expect
-    .poll(
-      async () => {
-        const [firstState, secondState] = await Promise.all([
-          getActionAvailability(firstPage, actionType),
-          getActionAvailability(secondPage, actionType),
-        ]);
+  const intervalMs = 150;
+  const deadline = performance.now() + timeout;
+  let lastState = 'not checked';
 
-        if (firstState === 'enabled' && secondState === 'enabled') {
-          return 'both';
-        }
-        if (firstState === 'enabled') return 'first';
-        if (secondState === 'enabled') return 'second';
-        return 'none';
-      },
-      {
-        timeout,
-        message: `Timed out waiting for action-menu-${actionType} to become enabled on either page`,
-      },
-    )
-    .not.toBe('none');
+  while (performance.now() < deadline) {
+    let [firstState, secondState] = await Promise.all([
+      getActionAvailability(firstPage, actionType),
+      getActionAvailability(secondPage, actionType),
+    ]);
+    lastState = `first=${firstState}, second=${secondState}`;
 
-  const firstState = await getActionAvailability(firstPage, actionType);
-  if (firstState === 'enabled') {
-    return { actor: firstPage, other: secondPage };
+    if (firstState === 'enabled') {
+      return { actor: firstPage, other: secondPage };
+    }
+    if (secondState === 'enabled') {
+      return { actor: secondPage, other: firstPage };
+    }
+
+    if (performance.now() >= deadline) {
+      break;
+    }
+    await Promise.all([
+      resolveVisibleCardPrompt(firstPage),
+      resolveVisibleCardPrompt(secondPage),
+    ]);
+    [firstState, secondState] = await Promise.all([
+      getActionAvailability(firstPage, actionType),
+      getActionAvailability(secondPage, actionType),
+    ]);
+    lastState = `first=${firstState}, second=${secondState}`;
+
+    if (firstState === 'enabled') {
+      return { actor: firstPage, other: secondPage };
+    }
+    if (secondState === 'enabled') {
+      return { actor: secondPage, other: firstPage };
+    }
+
+    const remainingMs = deadline - performance.now();
+    if (remainingMs <= 0) {
+      break;
+    }
+    await sleep(Math.min(intervalMs, remainingMs));
   }
-  return { actor: secondPage, other: firstPage };
+
+  throw new Error(
+    `Timed out waiting for action-menu-${actionType} to become enabled on either page (${lastState})`,
+  );
 }
 
 export async function waitForActionHandoff(
@@ -76,15 +100,58 @@ async function getActionAvailability(
   page: Page,
   actionType: string,
 ): Promise<TActionAvailability> {
-  const action = page.locator(sel.actionMenu(actionType));
-  const visible = await action.isVisible().catch(() => false);
+  return page
+    .evaluate((testId) => {
+      const elements = Array.from(
+        document.querySelectorAll<HTMLElement>(
+          `[data-testid="${testId}"]`,
+        ),
+      );
+      const visible = elements.filter((element) => {
+        const rect = element.getBoundingClientRect();
+        const style = window.getComputedStyle(element);
+        return (
+          rect.width > 0 &&
+          rect.height > 0 &&
+          style.display !== 'none' &&
+          style.visibility !== 'hidden'
+        );
+      });
 
-  if (!visible) {
-    return 'hidden';
+      if (visible.length === 0) {
+        return 'hidden';
+      }
+
+      return visible.some(
+        (element) =>
+          !element.hasAttribute('disabled') &&
+          element.getAttribute('aria-disabled') !== 'true',
+      )
+        ? 'enabled'
+        : 'disabled';
+    }, `action-menu-${actionType}`)
+    .catch(() => 'hidden') as Promise<TActionAvailability>;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function firstVisibleAction(
+  page: Page,
+  actionType: string,
+): Promise<Locator | null> {
+  const actions = page.locator(sel.actionMenu(actionType));
+  const count = await actions.count().catch(() => 0);
+
+  for (let index = 0; index < count; index += 1) {
+    const action = actions.nth(index);
+    if (await action.isVisible().catch(() => false)) {
+      return action;
+    }
   }
 
-  const enabled = await action.isEnabled().catch(() => false);
-  return enabled ? 'enabled' : 'disabled';
+  return null;
 }
 
 export async function clickPassAndWaitForLogSync(
@@ -161,7 +228,9 @@ export async function clickMainAction(
   page: Page,
   actionType: string,
 ): Promise<void> {
-  const actionBtn = page.locator(sel.actionMenu(actionType));
+  const actionBtn =
+    (await firstVisibleAction(page, actionType)) ??
+    page.locator(sel.actionMenu(actionType)).first();
   await expect(actionBtn).toBeVisible({ timeout: 10_000 });
   await expect(actionBtn).toBeEnabled({ timeout: 5_000 });
   await actionBtn.click();

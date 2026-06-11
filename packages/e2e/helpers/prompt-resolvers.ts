@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import { sel } from './selectors';
 
 export async function resolveCardPromptIfVisible(
@@ -8,34 +8,7 @@ export async function resolveCardPromptIfVisible(
   const deadline = Date.now() + timeoutMs;
 
   while (Date.now() < deadline) {
-    const eorCardPrompt = page
-      .locator(
-        '[data-testid="bottom-actions"] [data-testid^="input-eor-card-"]',
-      )
-      .first();
-    const eorVisible = await eorCardPrompt.isVisible().catch(() => false);
-
-    if (eorVisible) {
-      await eorCardPrompt.click();
-      return true;
-    }
-
-    const cardPrompt = page
-      .locator(
-        '[data-testid="bottom-actions"] [data-testid^="hand-card-"],' +
-          '[data-testid="bottom-actions"] [data-testid^="select-card-"]',
-      )
-      .first();
-    const visible = await cardPrompt.isVisible().catch(() => false);
-
-    if (visible) {
-      await cardPrompt.click();
-      const confirmBtn = page
-        .locator('[data-testid="bottom-actions"]')
-        .getByRole('button', { name: /^confirm$/i });
-      await confirmBtn.scrollIntoViewIfNeeded().catch(() => undefined);
-      await expect(confirmBtn).toBeEnabled({ timeout: 5_000 });
-      await confirmBtn.click();
+    if (await resolveVisibleCardPrompt(page)) {
       return true;
     }
 
@@ -51,6 +24,76 @@ export async function resolveCardPromptIfVisible(
   return false;
 }
 
+export async function resolveVisibleCardPrompt(page: Page): Promise<boolean> {
+  const promptRoot = await visiblePromptRoot(page);
+  if (await clickPromptConfirmIfEnabled(promptRoot)) {
+    return true;
+  }
+
+  const eorCardPrompt = promptRoot
+    .locator('[data-testid^="input-eor-card-"]')
+    .first();
+  const eorVisible = await eorCardPrompt.isVisible().catch(() => false);
+
+  if (eorVisible) {
+    return eorCardPrompt.click({ timeout: 2_000 }).then(
+      () => true,
+      () => false,
+    );
+  }
+
+  const cardPrompt = promptRoot
+    .locator('[data-testid^="hand-card-"], [data-testid^="select-card-"]')
+    .first();
+  const visible = await cardPrompt.isVisible().catch(() => false);
+
+  if (visible) {
+    const clicked = await cardPrompt
+      .click({ timeout: 2_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!clicked) {
+      return false;
+    }
+
+    const nextPromptRoot = await visiblePromptRoot(page);
+    if (await clickPromptConfirmIfEnabled(nextPromptRoot)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+async function clickPromptConfirmIfEnabled(promptRoot: Locator): Promise<boolean> {
+  const confirmBtn = promptRoot.getByRole('button', { name: /^confirm$/i });
+  const confirmVisible = await confirmBtn.isVisible().catch(() => false);
+  if (!confirmVisible) {
+    return false;
+  }
+
+  await confirmBtn
+    .scrollIntoViewIfNeeded({ timeout: 1_000 })
+    .catch(() => undefined);
+  const confirmEnabled = await confirmBtn.isEnabled().catch(() => false);
+  if (!confirmEnabled) {
+    return false;
+  }
+
+  return confirmBtn.click({ timeout: 2_000 }).then(
+    () => true,
+    () => false,
+  );
+}
+
+async function visiblePromptRoot(page: Page): Promise<Locator> {
+  const modal = page.locator('[data-testid="pending-input-modal"]').first();
+  if (await modal.isVisible().catch(() => false)) {
+    return modal;
+  }
+  return page.locator('[data-testid="bottom-actions"]');
+}
+
 export async function waitForAndResolveCardPrompt(
   page: Page,
   timeoutMs = 10_000,
@@ -58,10 +101,9 @@ export async function waitForAndResolveCardPrompt(
   const deadline = Date.now() + timeoutMs;
 
   while (Date.now() < deadline) {
-    const eorCardPrompt = page
-      .locator(
-        '[data-testid="bottom-actions"] [data-testid^="input-eor-card-"]',
-      )
+    const promptRoot = await visiblePromptRoot(page);
+    const eorCardPrompt = promptRoot
+      .locator('[data-testid^="input-eor-card-"]')
       .first();
     const eorVisible = await eorCardPrompt.isVisible().catch(() => false);
 
@@ -70,19 +112,14 @@ export async function waitForAndResolveCardPrompt(
       return true;
     }
 
-    const cardPrompt = page
-      .locator(
-        '[data-testid="bottom-actions"] [data-testid^="hand-card-"],' +
-          '[data-testid="bottom-actions"] [data-testid^="select-card-"]',
-      )
+    const cardPrompt = promptRoot
+      .locator('[data-testid^="hand-card-"], [data-testid^="select-card-"]')
       .first();
     const visible = await cardPrompt.isVisible().catch(() => false);
 
     if (visible) {
       await cardPrompt.click();
-      const confirmBtn = page
-        .locator('[data-testid="bottom-actions"]')
-        .getByRole('button', { name: /^confirm$/i });
+      const confirmBtn = promptRoot.getByRole('button', { name: /^confirm$/i });
       const confirmVisible = await confirmBtn.isVisible().catch(() => false);
       if (confirmVisible) {
         await confirmBtn.scrollIntoViewIfNeeded().catch(() => undefined);
@@ -134,7 +171,28 @@ export async function clickInputOptionById(
   page: Page,
   optionId: string,
 ): Promise<void> {
+  const traceSlot = page
+    .locator(
+      `[data-testid="trace-slot-${optionId}-button"], [data-server-trace-slot-id="${optionId}"]`,
+    )
+    .first();
+  if (await traceSlot.isVisible().catch(() => false)) {
+    await traceSlot.click();
+    return;
+  }
+
   const option = page.locator(sel.inputOption(optionId));
+  if (!(await option.isVisible().catch(() => false))) {
+    const fallbackToggle = page.locator(
+      '[data-testid="pending-input-ingame-fallback-toggle"]',
+    );
+    if (await fallbackToggle.isVisible().catch(() => false)) {
+      await fallbackToggle.click();
+      await expect(
+        page.locator('[data-testid="pending-input-ingame-fallback"]'),
+      ).toBeVisible({ timeout: 5_000 });
+    }
+  }
   await expect(option).toBeVisible({ timeout: 10_000 });
   await option.click();
 }
