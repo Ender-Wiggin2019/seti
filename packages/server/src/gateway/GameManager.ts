@@ -6,11 +6,15 @@ import type {
 } from '@seti/common/types/protocol/actions';
 import { EPhase } from '@seti/common/types/protocol/enums';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
-import type { TGameEvent } from '@seti/common/types/protocol/events';
+import {
+  EGameEventType,
+  type TGameEvent,
+} from '@seti/common/types/protocol/events';
 import type { IPublicGameState } from '@seti/common/types/protocol/gameState';
 import type { IPlayerInputModel } from '@seti/common/types/protocol/playerInput';
+import type { IAnimationBatch } from '@seti/common/types/protocol/animation';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { createUndoEvent } from '@/engine/event/GameEvent.js';
+import { createEventId, createUndoEvent } from '@/engine/event/GameEvent.js';
 import type { Game } from '@/engine/Game.js';
 import { isSoloMode } from '@/engine/GameOptions.js';
 import type { IGame } from '@/engine/IGame.js';
@@ -22,22 +26,18 @@ import type {
 import { RivalTurnController } from '@/engine/solo/RivalTurnController.js';
 import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
 import type { IGameStateDto } from '@/persistence/dto/GameStateDto.js';
-import { GameRepository } from '@/persistence/repository/GameRepository.js';
-import { TurnCheckpointRepository } from '@/persistence/repository/TurnCheckpointRepository.js';
+import { GameEventRepository } from '@/persistence/repository/GameEventRepository.js';
+import { TurnSnapshotRepository } from '@/persistence/repository/TurnSnapshotRepository.js';
+import { replayGameEvents } from '@/persistence/replay/GameEventReplay.js';
 import { deserializeGame } from '@/persistence/serializer/GameDeserializer.js';
 import {
   projectGameState,
   serializeGame,
 } from '@/persistence/serializer/GameSerializer.js';
 import { GameError } from '@/shared/errors/GameError.js';
+import { buildAnimationBatch } from './AnimationProjector.js';
 
 const UNLOAD_TIMEOUT_MS = 5 * 60 * 1000;
-/**
- * Persist a turn-start checkpoint to the DB only every Nth turn to
- * amortize serialization + write cost. Day-to-day undo is served
- * from the in-memory checkpoint, which is refreshed every turn.
- */
-const DB_PERSIST_EVERY_TURNS = 4;
 
 export interface IPendingInput {
   playerId: string;
@@ -48,6 +48,7 @@ export interface IActionResult {
   states: Map<string, IPublicGameState>;
   pendingInputs: IPendingInput[];
   events: TGameEvent[];
+  animationBatches: IAnimationBatch[];
 }
 
 export interface IUndoResult {
@@ -71,6 +72,14 @@ interface ITurnCheckpointInMemory {
   interactedPlayerIds: Set<string>;
 }
 
+interface IMutationRollbackSnapshot {
+  stateDto: IGameStateDto;
+  version: number | undefined;
+  checkpoint: ITurnCheckpointInMemory | undefined;
+  lastCommittedSeq: number | undefined;
+  lastCommittedTurnIndex: number | undefined;
+}
+
 @Injectable()
 export class GameManager {
   private readonly logger = new Logger(GameManager.name);
@@ -78,12 +87,23 @@ export class GameManager {
   private readonly versions = new Map<string, number>();
   private readonly timers = new Map<string, ReturnType<typeof setTimeout>>();
   private readonly turnCheckpoints = new Map<string, ITurnCheckpointInMemory>();
-  private readonly gameRepo: GameRepository;
-  private readonly turnCheckpointRepo: TurnCheckpointRepository;
+  /**
+   * Seq of the last event durably committed to `game_events`. Same-turn
+   * actions accumulate in memory above this watermark; a completed turn
+   * commits everything since this seq in one transaction.
+   */
+  private readonly lastCommittedSeqs = new Map<string, number>();
+  /**
+   * Turn index at which the last commit happened. A turn is only
+   * committed once the engine advances past it and the game settles.
+   */
+  private readonly lastCommittedTurnIndexes = new Map<string, number>();
+  private readonly gameEventRepo: GameEventRepository;
+  private readonly turnSnapshotRepo: TurnSnapshotRepository;
 
   constructor(@Inject(DRIZZLE_DB) private readonly db: NodePgDatabase) {
-    this.gameRepo = new GameRepository(db);
-    this.turnCheckpointRepo = new TurnCheckpointRepository(db);
+    this.gameEventRepo = new GameEventRepository(db);
+    this.turnSnapshotRepo = new TurnSnapshotRepository(db);
   }
 
   async getGame(gameId: string): Promise<IGame> {
@@ -93,19 +113,33 @@ export class GameManager {
       return cached;
     }
 
-    const game = await this.gameRepo.loadGame(gameId);
-    if (!game) {
+    const snapshot = await this.turnSnapshotRepo.loadLatest(gameId);
+    if (!snapshot) {
       throw new GameError(
         EErrorCode.GAME_NOT_FOUND,
         `Game ${gameId} not found`,
         { gameId },
       );
     }
+    const persistedEvents = await this.gameEventRepo.loadSince(
+      gameId,
+      snapshot.seq,
+    );
+    const game = replayGameEvents(
+      deserializeGame(snapshot.state),
+      persistedEvents,
+    );
+    const recoveredVersion = this.versionAfterReplayingEvents(
+      snapshot.state.version ?? 0,
+      persistedEvents,
+    );
 
     this.cache.set(gameId, game);
-
-    const snapshot = await this.gameRepo.loadLatestSnapshot(gameId);
-    this.versions.set(gameId, snapshot?.version ?? 0);
+    this.versions.set(gameId, recoveredVersion);
+    // The loaded in-memory state matches what is durably committed, so
+    // the commit watermark starts at the current head.
+    this.lastCommittedSeqs.set(gameId, this.latestEventSeq(game));
+    this.lastCommittedTurnIndexes.set(gameId, game.turnIndex);
 
     await this.rehydrateTurnCheckpoint(gameId, game);
 
@@ -119,26 +153,32 @@ export class GameManager {
     action: IMainActionRequest,
   ): Promise<IActionResult> {
     const game = await this.getGame(gameId);
-    const turnIndexBefore = game.turnIndex;
-    const version = this.nextVersion(gameId);
-    const resolutionBase = this.captureResolutionBase(game);
+    this.prepareTurnTracking(gameId, game);
+    return this.withMutationRollback(gameId, game, async () => {
+      const seqBefore = this.latestEventSeq(game);
+      const turnIndexBefore = game.turnIndex;
+      const version = this.nextVersion(gameId);
+      const resolutionBase = this.captureResolutionBase(game);
 
-    game.processMainAction(playerId, action);
-    this.recordResolutionStep(game, resolutionBase, {
-      type: 'MAIN_ACTION',
-      playerId,
-      action,
+      game.processMainAction(playerId, action);
+      this.recordResolutionStep(game, resolutionBase, {
+        type: 'MAIN_ACTION',
+        playerId,
+        action,
+      });
+
+      const appended = game.eventLog.since(seqBefore);
+      const animationBatches = this.buildAnimationBatchesForAppended(
+        appended,
+        playerId,
+        turnIndexBefore,
+        version,
+      );
+      await this.resolveAutomatedRivalTurns(gameId, game, animationBatches);
+      await this.commitIfTurnComplete(gameId, game);
+
+      return this.buildResult(game, gameId, seqBefore, animationBatches);
     });
-
-    await this.persistSnapshot(gameId, version, game, {
-      type: 'MAIN_ACTION',
-      lastActorId: playerId,
-      action,
-    });
-    await this.afterTurnMaybeChanged(gameId, game, turnIndexBefore);
-    await this.resolveAutomatedRivalTurns(gameId, game);
-
-    return this.buildResult(game, gameId);
   }
 
   async processEndTurn(
@@ -146,19 +186,26 @@ export class GameManager {
     playerId: string,
   ): Promise<IActionResult> {
     const game = await this.getGame(gameId);
-    const turnIndexBefore = game.turnIndex;
-    const version = this.nextVersion(gameId);
+    this.prepareTurnTracking(gameId, game);
+    return this.withMutationRollback(gameId, game, async () => {
+      const seqBefore = this.latestEventSeq(game);
+      const turnIndexBefore = game.turnIndex;
+      const version = this.nextVersion(gameId);
 
-    game.processEndTurn(playerId);
+      game.processEndTurn(playerId);
 
-    await this.persistSnapshot(gameId, version, game, {
-      type: 'END_TURN',
-      lastActorId: playerId,
+      const appended = game.eventLog.since(seqBefore);
+      const animationBatches = this.buildAnimationBatchesForAppended(
+        appended,
+        playerId,
+        turnIndexBefore,
+        version,
+      );
+      await this.resolveAutomatedRivalTurns(gameId, game, animationBatches);
+      await this.commitIfTurnComplete(gameId, game);
+
+      return this.buildResult(game, gameId, seqBefore, animationBatches);
     });
-    await this.afterTurnMaybeChanged(gameId, game, turnIndexBefore);
-    await this.resolveAutomatedRivalTurns(gameId, game);
-
-    return this.buildResult(game, gameId);
   }
 
   async processFreeAction(
@@ -167,37 +214,34 @@ export class GameManager {
     action: IFreeActionRequest,
   ): Promise<IActionResult> {
     const game = await this.getGame(gameId);
-    const turnIndexBefore = game.turnIndex;
-    const resolutionBase = this.captureResolutionBase(game);
+    this.prepareTurnTracking(gameId, game);
+    return this.withMutationRollback(gameId, game, async () => {
+      const seqBefore = this.latestEventSeq(game);
+      const turnIndexBefore = game.turnIndex;
+      const resolutionBase = this.captureResolutionBase(game);
 
-    game.processFreeAction(playerId, action);
-    this.recordResolutionStep(game, resolutionBase, {
-      type: 'FREE_ACTION',
-      playerId,
-      action,
-    });
-
-    // Free actions intentionally don't get their own gameSnapshots
-    // row — the undo subsystem rolls back to the turn-start
-    // checkpoint, which covers free actions automatically. We still
-    // persist if a free action leaves a prompt pending; otherwise a
-    // cold load would restore the previous snapshot with no way to
-    // replay or answer that prompt.
-    if (this.hasPendingInput(game)) {
-      const version = this.nextVersion(gameId);
-      await this.persistSnapshot(gameId, version, game, {
+      game.processFreeAction(playerId, action);
+      this.recordResolutionStep(game, resolutionBase, {
         type: 'FREE_ACTION',
-        lastActorId: playerId,
+        playerId,
         action,
       });
-    }
 
-    // Watch for a turn-index change (e.g. via a card effect that
-    // forces a handoff) to refresh the checkpoint.
-    await this.afterTurnMaybeChanged(gameId, game, turnIndexBefore);
-    await this.resolveAutomatedRivalTurns(gameId, game);
+      // Watch for a turn-index change (e.g. via a card effect that
+      // forces a handoff) to refresh the checkpoint.
+      const version = this.nextVersion(gameId);
+      const appended = game.eventLog.since(seqBefore);
+      const animationBatches = this.buildAnimationBatchesForAppended(
+        appended,
+        playerId,
+        turnIndexBefore,
+        version,
+      );
+      await this.resolveAutomatedRivalTurns(gameId, game, animationBatches);
+      await this.commitIfTurnComplete(gameId, game);
 
-    return this.buildResult(game, gameId);
+      return this.buildResult(game, gameId, seqBefore, animationBatches);
+    });
   }
 
   async processInput(
@@ -206,45 +250,51 @@ export class GameManager {
     response: IInputResponse,
   ): Promise<IActionResult> {
     const game = await this.getGame(gameId);
-    const turnIndexBefore = game.turnIndex;
-
     this.validateInputResponseEnvelope(game, playerId, response);
+    this.prepareTurnTracking(gameId, game);
+    return this.withMutationRollback(gameId, game, async () => {
+      const seqBefore = this.latestEventSeq(game);
+      const turnIndexBefore = game.turnIndex;
 
-    const version = this.nextVersion(gameId);
-    // Inputs that arrive without an in-flight resolution journal need
-    // a fresh base — e.g. setup-time tuck-income chains, where the
-    // first prompt is fired by `GameSetup` rather than by a player
-    // action, so `pendingResolutionJournal` is undefined when the
-    // first response arrives. Capture the pre-mutation state as the
-    // base so `recordResolutionStep` doesn't throw "Cannot persist
-    // pending input without a resume base".
-    const resolutionBase =
-      game.pendingResolutionJournal === undefined
-        ? this.captureResolutionBase(game)
-        : undefined;
-    game.processInput(playerId, response);
-    this.recordResolutionStep(game, resolutionBase, {
-      type: 'INPUT_RESPONSE',
-      playerId,
-      response,
+      const version = this.nextVersion(gameId);
+      // Inputs that arrive without an in-flight resolution journal need
+      // a fresh base — e.g. setup-time tuck-income chains, where the
+      // first prompt is fired by `GameSetup` rather than by a player
+      // action, so `pendingResolutionJournal` is undefined when the
+      // first response arrives. Capture the pre-mutation state as the
+      // base so `recordResolutionStep` doesn't throw "Cannot persist
+      // pending input without a resume base".
+      const resolutionBase =
+        game.pendingResolutionJournal === undefined
+          ? this.captureResolutionBase(game)
+          : undefined;
+      game.processInput(playerId, response);
+      this.recordResolutionStep(game, resolutionBase, {
+        type: 'INPUT_RESPONSE',
+        playerId,
+        response,
+      });
+
+      const appended = game.eventLog.since(seqBefore);
+
+      // If a non-active player answered an input prompt, mark them as
+      // "interacted" for the current turn so we can notify them if the
+      // active player later undoes.
+      if (playerId !== game.activePlayer.id) {
+        this.recordInteraction(gameId, playerId);
+      }
+
+      const animationBatches = this.buildAnimationBatchesForAppended(
+        appended,
+        playerId,
+        turnIndexBefore,
+        version,
+      );
+      await this.resolveAutomatedRivalTurns(gameId, game, animationBatches);
+      await this.commitIfTurnComplete(gameId, game);
+
+      return this.buildResult(game, gameId, seqBefore, animationBatches);
     });
-
-    await this.persistSnapshot(gameId, version, game, {
-      type: 'INPUT_RESPONSE',
-      lastActorId: playerId,
-    });
-
-    // If a non-active player answered an input prompt, mark them as
-    // "interacted" for the current turn so we can notify them if the
-    // active player later undoes.
-    if (playerId !== game.activePlayer.id) {
-      this.recordInteraction(gameId, playerId);
-    }
-
-    await this.afterTurnMaybeChanged(gameId, game, turnIndexBefore);
-    await this.resolveAutomatedRivalTurns(gameId, game);
-
-    return this.buildResult(game, gameId);
   }
 
   private validateInputResponseEnvelope(
@@ -292,7 +342,16 @@ export class GameManager {
     playerId: string,
   ): Promise<IUndoResult> {
     const game = await this.getGame(gameId);
+    return this.withMutationRollback(gameId, game, async () => {
+      return this.undoToTurnStartWithoutRollback(gameId, playerId, game);
+    });
+  }
 
+  private async undoToTurnStartWithoutRollback(
+    gameId: string,
+    playerId: string,
+    game: IGame,
+  ): Promise<IUndoResult> {
     if (!game.options.undoAllowed) {
       throw new GameError(
         EErrorCode.INVALID_ACTION,
@@ -321,28 +380,45 @@ export class GameManager {
       );
     }
 
+    const undoSeq = this.latestEventSeq(game) + 1;
     const restored = deserializeGame(checkpoint.stateDto);
     this.cache.set(gameId, restored);
 
     const interactedPlayerIds = [...checkpoint.interactedPlayerIds].filter(
       (id) => id !== playerId,
     );
-    const undoEvent = createUndoEvent(
-      playerId,
-      restored.turnIndex,
-      interactedPlayerIds,
-    );
-    restored.eventLog.append(undoEvent);
+    // Undo before commit is an in-memory rollback only: committed turns
+    // cannot be undone, and same-turn work was never persisted. The UNDO
+    // log event is ephemeral — returned for the live feed but not appended
+    // to the durable event stream or written to the DB.
+    const undoEvent = {
+      ...createUndoEvent(playerId, interactedPlayerIds),
+      id: createEventId(undoSeq),
+      seq: undoSeq,
+      turnIndex: restored.turnIndex,
+      round: restored.round,
+    } as TGameEvent;
 
     // After restore the turn-start checkpoint is still valid — reset
     // interactions (the rollback invalidated any mid-turn work).
     checkpoint.interactedPlayerIds = new Set();
+    checkpoint.stateDto = serializeGame(
+      restored,
+      this.versions.get(gameId) ?? 0,
+    );
+    // The in-memory state now matches the last committed turn snapshot, so
+    // realign the commit watermark to the restored turn start.
+    this.lastCommittedSeqs.set(gameId, this.latestEventSeq(restored));
+    this.lastCommittedTurnIndexes.set(gameId, restored.turnIndex);
 
     const states = new Map<string, IPublicGameState>();
     for (const player of restored.players) {
       states.set(
         player.id,
-        projectGameState(restored, player.id, { hasTurnCheckpoint: true }),
+        projectGameState(restored, player.id, {
+          hasTurnCheckpoint: true,
+          version: this.versions.get(gameId) ?? 0,
+        }),
       );
     }
 
@@ -362,6 +438,7 @@ export class GameManager {
     }
     return projectGameState(game, viewerId, {
       hasTurnCheckpoint: this.hasValidCheckpoint(gameId, game),
+      version: this.versions.get(gameId) ?? 0,
     });
   }
 
@@ -375,6 +452,11 @@ export class GameManager {
     this.refreshTimer(game.id);
     this.resolveAutomatedRivalTurnsInMemory(game);
 
+    // The freshly registered game starts fully committed at its current
+    // turn; subsequent same-turn work accumulates above this watermark.
+    this.lastCommittedSeqs.set(game.id, this.latestEventSeq(game));
+    this.lastCommittedTurnIndexes.set(game.id, game.turnIndex);
+
     // Take an initial checkpoint for the very first turn so the
     // active player can undo right at game start.
     void this.captureCurrentTurnCheckpoint(game.id, game);
@@ -386,41 +468,21 @@ export class GameManager {
       return;
     }
 
-    // Unload also persists a snapshot (e.g. to capture free-action-only
-    // changes), so it must advance version to avoid unique-key collisions.
-    const version = this.nextVersion(gameId);
-    await this.persistSnapshot(gameId, version, game, {
-      type: 'UNLOAD',
-    });
-
-    // Trim the snapshot history before letting go of the game. Version
-    // 0 (GAME_CREATED) and the most recent N entries are kept; older
-    // intermediate snapshots are dropped so an idle long-running room
-    // doesn't grow the snapshots table without bound. Errors are
-    // logged but not fatal — the unload itself must still succeed.
-    try {
-      const removed = await this.gameRepo.pruneSnapshots(gameId);
-      if (removed > 0) {
-        this.logger.log(
-          `Pruned ${removed} old snapshot(s) for game ${gameId} on unload`,
-        );
-      }
-    } catch (error) {
-      this.logger.warn(
-        `Failed to prune snapshots for ${gameId} during unload: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      );
-    }
-
     this.cache.delete(gameId);
     this.versions.delete(gameId);
     this.turnCheckpoints.delete(gameId);
+    this.lastCommittedSeqs.delete(gameId);
+    this.lastCommittedTurnIndexes.delete(gameId);
     this.clearTimer(gameId);
     this.logger.log(`Game ${gameId} unloaded from memory`);
   }
 
-  private buildResult(game: IGame, gameId: string): IActionResult {
+  private buildResult(
+    game: IGame,
+    gameId: string,
+    seqBefore: number,
+    animationBatches: IAnimationBatch[],
+  ): IActionResult {
     const states = new Map<string, IPublicGameState>();
     const pendingInputs: IPendingInput[] = [];
     const hasCheckpoint = this.hasValidCheckpoint(gameId, game);
@@ -430,6 +492,7 @@ export class GameManager {
         player.id,
         projectGameState(game, player.id, {
           hasTurnCheckpoint: hasCheckpoint,
+          version: this.versions.get(gameId) ?? 0,
         }),
       );
 
@@ -441,9 +504,9 @@ export class GameManager {
       }
     }
 
-    const events = game.eventLog.recent(10);
+    const events = game.eventLog.since(seqBefore);
 
-    return { states, pendingInputs, events };
+    return { states, pendingInputs, events, animationBatches };
   }
 
   private toInputModel(player: IPlayer): IPlayerInputModel | null {
@@ -453,18 +516,93 @@ export class GameManager {
     return player.waitingFor.toModel();
   }
 
-  private async persistSnapshot(
-    gameId: string,
-    version: number,
-    game: IGame,
-    event: unknown,
-  ): Promise<void> {
-    try {
-      const dto = serializeGame(game, version);
-      await this.gameRepo.saveSnapshot(gameId, version, dto, event);
-    } catch (err) {
-      this.logger.error(`Failed to persist snapshot for game ${gameId}`, err);
+  /**
+   * Initialize the commit watermark and refresh the in-memory undo
+   * checkpoint at the genuine start of a turn (before the engine mutates).
+   * The watermark defaults to the current head so the next turn boundary
+   * commits everything appended from here on. The checkpoint is only
+   * re-captured while no same-turn work has accumulated yet, so undo
+   * always rolls back to the true turn-start state.
+   */
+  private prepareTurnTracking(gameId: string, game: IGame): void {
+    if (!this.lastCommittedSeqs.has(gameId)) {
+      this.lastCommittedSeqs.set(gameId, this.latestEventSeq(game));
     }
+    if (!this.lastCommittedTurnIndexes.has(gameId)) {
+      this.lastCommittedTurnIndexes.set(gameId, game.turnIndex);
+    }
+
+    if (!game.options.undoAllowed || game.turnIndex <= 0) {
+      return;
+    }
+    // Only refresh at a fresh turn start — no events appended since the
+    // last commit yet.
+    if (this.latestEventSeq(game) !== this.lastCommittedSeqs.get(gameId)) {
+      return;
+    }
+    const existing = this.turnCheckpoints.get(gameId);
+    const sameTurn = existing?.turnIndex === game.turnIndex;
+    this.turnCheckpoints.set(gameId, {
+      turnIndex: game.turnIndex,
+      playerId: game.activePlayer.id,
+      round: game.round,
+      stateDto: serializeGame(game, this.versions.get(gameId) ?? 0),
+      interactedPlayerIds: sameTurn
+        ? existing.interactedPlayerIds
+        : new Set(),
+    });
+  }
+
+  /**
+   * Commit the whole turn's accumulated events plus the new turn-start
+   * snapshot once the engine has settled past a turn boundary. Same-turn
+   * work and turns still waiting on pending input stay in memory only.
+   */
+  private async commitIfTurnComplete(
+    gameId: string,
+    game: IGame,
+  ): Promise<void> {
+    // A turn is tentative while any player still owes an input response.
+    if (this.hasPendingInput(game)) {
+      return;
+    }
+
+    const committedTurnIndex =
+      this.lastCommittedTurnIndexes.get(gameId) ?? game.turnIndex;
+    if (game.turnIndex <= committedTurnIndex) {
+      return;
+    }
+
+    const snapshot = this.buildCurrentTurnSnapshot(gameId, game);
+    if (!snapshot) {
+      return;
+    }
+
+    const lastCommittedSeq = this.lastCommittedSeqs.get(gameId) ?? 0;
+    const events = game.eventLog.since(lastCommittedSeq);
+
+    await this.persistEventsAndTurnSnapshotInTransaction(
+      gameId,
+      events,
+      snapshot,
+    );
+
+    this.lastCommittedSeqs.set(gameId, snapshot.seq);
+    this.lastCommittedTurnIndexes.set(gameId, game.turnIndex);
+  }
+
+  private async persistEventsAndTurnSnapshotInTransaction(
+    gameId: string,
+    events: TGameEvent[],
+    snapshot: Parameters<TurnSnapshotRepository['save']>[0],
+  ): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      await new GameEventRepository(tx as NodePgDatabase).appendMany(
+        gameId,
+        events,
+      );
+      await new TurnSnapshotRepository(tx as NodePgDatabase).save(snapshot);
+    });
   }
 
   private nextVersion(gameId: string): number {
@@ -472,6 +610,52 @@ export class GameManager {
     const next = current + 1;
     this.versions.set(gameId, next);
     return next;
+  }
+
+  private versionAfterReplayingEvents(
+    baseVersion: number,
+    events: TGameEvent[],
+  ): number {
+    return (
+      baseVersion +
+      events.filter((event) => this.isReplayCommandEvent(event)).length
+    );
+  }
+
+  private isReplayCommandEvent(event: TGameEvent): boolean {
+    switch (event.type) {
+      case EGameEventType.FREE_ACTION:
+      case EGameEventType.INPUT:
+        return true;
+      case EGameEventType.ACTION:
+        return (
+          typeof event.action !== 'string' ||
+          event.action === 'END_TURN' ||
+          event.action === 'RIVAL_ACTION' ||
+          event.action === 'RIVAL_PASS'
+        );
+      default:
+        return false;
+    }
+  }
+
+  private latestEventSeq(game: IGame): number {
+    return game.eventLog.toArray().at(-1)?.seq ?? 0;
+  }
+
+  private buildAnimationBatchesForAppended(
+    appended: TGameEvent[],
+    actorId: string,
+    turnIndex: number,
+    finalStateVersion: number,
+  ): IAnimationBatch[] {
+    const batch = buildAnimationBatch(
+      appended,
+      actorId,
+      turnIndex,
+      finalStateVersion,
+    );
+    return batch ? [batch] : [];
   }
 
   private captureResolutionBase(game: IGame): IGameStateDto {
@@ -507,6 +691,85 @@ export class GameManager {
     };
   }
 
+  private async withMutationRollback<TResult>(
+    gameId: string,
+    game: IGame,
+    work: () => Promise<TResult>,
+  ): Promise<TResult> {
+    const rollbackSnapshot = this.captureMutationRollback(gameId, game);
+
+    try {
+      return await work();
+    } catch (error) {
+      this.restoreMutationRollback(gameId, rollbackSnapshot);
+      throw error;
+    }
+  }
+
+  private captureMutationRollback(
+    gameId: string,
+    game: IGame,
+  ): IMutationRollbackSnapshot {
+    const version = this.versions.get(gameId);
+    return {
+      stateDto: serializeGame(game, version ?? 0),
+      version,
+      checkpoint: this.cloneTurnCheckpoint(this.turnCheckpoints.get(gameId)),
+      lastCommittedSeq: this.lastCommittedSeqs.get(gameId),
+      lastCommittedTurnIndex: this.lastCommittedTurnIndexes.get(gameId),
+    };
+  }
+
+  private restoreMutationRollback(
+    gameId: string,
+    snapshot: IMutationRollbackSnapshot,
+  ): void {
+    this.cache.set(gameId, deserializeGame(snapshot.stateDto));
+    if (snapshot.version === undefined) {
+      this.versions.delete(gameId);
+    } else {
+      this.versions.set(gameId, snapshot.version);
+    }
+
+    if (snapshot.lastCommittedSeq === undefined) {
+      this.lastCommittedSeqs.delete(gameId);
+    } else {
+      this.lastCommittedSeqs.set(gameId, snapshot.lastCommittedSeq);
+    }
+    if (snapshot.lastCommittedTurnIndex === undefined) {
+      this.lastCommittedTurnIndexes.delete(gameId);
+    } else {
+      this.lastCommittedTurnIndexes.set(
+        gameId,
+        snapshot.lastCommittedTurnIndex,
+      );
+    }
+
+    if (snapshot.checkpoint) {
+      const checkpoint = this.cloneTurnCheckpoint(snapshot.checkpoint);
+      if (checkpoint) {
+        this.turnCheckpoints.set(gameId, checkpoint);
+      }
+    } else {
+      this.turnCheckpoints.delete(gameId);
+    }
+  }
+
+  private cloneTurnCheckpoint(
+    checkpoint: ITurnCheckpointInMemory | undefined,
+  ): ITurnCheckpointInMemory | undefined {
+    if (!checkpoint) {
+      return undefined;
+    }
+    return {
+      turnIndex: checkpoint.turnIndex,
+      playerId: checkpoint.playerId,
+      round: checkpoint.round,
+      stateDto: structuredClone(checkpoint.stateDto),
+      interactedPlayerIds: new Set(checkpoint.interactedPlayerIds),
+    };
+  }
+
   private hasPendingInput(game: IGame): boolean {
     return game.players.some((player) => player.waitingFor !== undefined);
   }
@@ -527,26 +790,10 @@ export class GameManager {
     }
   }
 
-  /**
-   * After every engine operation, check whether the turn boundary
-   * was crossed. If so, take a fresh in-memory checkpoint and
-   * conditionally persist it to the DB (every `DB_PERSIST_EVERY_TURNS`
-   * turns).
-   */
-  private async afterTurnMaybeChanged(
-    gameId: string,
-    game: IGame,
-    turnIndexBefore: number,
-  ): Promise<void> {
-    if (game.turnIndex === turnIndexBefore) {
-      return;
-    }
-    await this.captureCurrentTurnCheckpoint(gameId, game);
-  }
-
   private async resolveAutomatedRivalTurns(
     gameId: string,
     game: IGame,
+    animationBatches: IAnimationBatch[],
   ): Promise<void> {
     let guard = 0;
     while (this.shouldResolveAutomatedRivalTurn(game)) {
@@ -556,13 +803,22 @@ export class GameManager {
       }
 
       const turnIndexBefore = game.turnIndex;
-      const result = RivalTurnController.resolveCurrentTurn(game as Game);
+      const seqBefore = this.latestEventSeq(game);
+      RivalTurnController.resolveCurrentTurn(game as Game);
       const version = this.nextVersion(gameId);
-      await this.persistSnapshot(gameId, version, game, {
-        type: 'RIVAL_ACTION',
-        result,
-      });
-      await this.afterTurnMaybeChanged(gameId, game, turnIndexBefore);
+      const appended = game.eventLog.since(seqBefore);
+      const rivalActorId = game.rivalState?.rivalPlayerId;
+      if (rivalActorId) {
+        const batch = buildAnimationBatch(
+          appended,
+          rivalActorId,
+          turnIndexBefore,
+          version,
+        );
+        if (batch) {
+          animationBatches.push(batch);
+        }
+      }
     }
   }
 
@@ -599,44 +855,43 @@ export class GameManager {
     gameId: string,
     game: IGame,
   ): Promise<void> {
-    if (!game.options.undoAllowed) {
-      this.turnCheckpoints.delete(gameId);
-      return;
-    }
+    const snapshot = this.buildCurrentTurnSnapshot(gameId, game);
+    if (!snapshot) return;
+
+    await this.turnSnapshotRepo.save(snapshot);
+  }
+
+  private buildCurrentTurnSnapshot(
+    gameId: string,
+    game: IGame,
+  ): Parameters<TurnSnapshotRepository['save']>[0] | null {
     if (game.turnIndex <= 0) {
       // Engine is still in SETUP; no turn-start to capture.
-      return;
+      return null;
     }
 
-    const stateDto = serializeGame(game, 0);
-    this.turnCheckpoints.set(gameId, {
+    const stateDto = serializeGame(game, this.versions.get(gameId) ?? 0);
+    if (game.options.undoAllowed) {
+      this.turnCheckpoints.set(gameId, {
+        turnIndex: game.turnIndex,
+        playerId: game.activePlayer.id,
+        round: game.round,
+        stateDto,
+        interactedPlayerIds: new Set(),
+      });
+    } else {
+      this.turnCheckpoints.delete(gameId);
+    }
+
+    return {
+      gameId,
       turnIndex: game.turnIndex,
+      seq: this.latestEventSeq(game),
       playerId: game.activePlayer.id,
       round: game.round,
-      stateDto,
-      interactedPlayerIds: new Set(),
-    });
-
-    if (game.turnIndex % DB_PERSIST_EVERY_TURNS === 0) {
-      try {
-        await this.turnCheckpointRepo.save({
-          gameId,
-          turnIndex: game.turnIndex,
-          playerId: game.activePlayer.id,
-          round: game.round,
-          state: stateDto,
-          interactedPlayerIds: [],
-        });
-        // Keep only the latest DB checkpoint to avoid unbounded
-        // growth — we never read the older ones anyway.
-        await this.turnCheckpointRepo.pruneBefore(gameId, game.turnIndex);
-      } catch (err) {
-        this.logger.error(
-          `Failed to persist turn checkpoint for game ${gameId} @ turn ${game.turnIndex}`,
-          err,
-        );
-      }
-    }
+      state: stateDto,
+      interactedPlayerIds: [],
+    };
   }
 
   private recordInteraction(gameId: string, playerId: string): void {
@@ -670,7 +925,7 @@ export class GameManager {
       return;
     }
     try {
-      const row = await this.turnCheckpointRepo.loadLatest(gameId);
+      const row = await this.turnSnapshotRepo.loadLatest(gameId);
       if (!row || row.turnIndex !== game.turnIndex) {
         return;
       }

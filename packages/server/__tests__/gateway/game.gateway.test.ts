@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
+import { EAnimationStepKind } from '@seti/common/types/protocol/animation';
 import { EMainAction } from '@seti/common/types/protocol/enums';
 import {
   EErrorCategory,
@@ -257,6 +258,60 @@ describe('GameGateway', () => {
         'g1',
         'user-1',
         { type: EMainAction.PASS },
+      );
+    });
+
+    it('broadcasts animation batches before authoritative state', async () => {
+      const socket = createMockSocket();
+      socket.data.userId = 'user-1';
+      const roomKey = 'game:g1';
+      const roomEmit = vi.fn();
+      const serverTo = vi.fn().mockReturnValue({ emit: roomEmit });
+      const socketMap = new Map([[socket.id, socket]]);
+      (
+        gateway as unknown as {
+          server: {
+            to: typeof serverTo;
+            adapter: { rooms: Map<string, Set<string>> };
+            sockets: Map<string, typeof socket>;
+          };
+        }
+      ).server = {
+        to: serverTo,
+        adapter: { rooms: new Map([[roomKey, new Set([socket.id])]]) },
+        sockets: socketMap,
+      };
+      const batch = {
+        batchId: 'batch-1',
+        actorId: 'user-1',
+        turnIndex: 1,
+        finalStateVersion: 2,
+        steps: [
+          {
+            kind: EAnimationStepKind.GENERIC,
+            sourceEventId: 'event-1',
+            durationMs: 100,
+          },
+        ],
+      };
+      mockGameManager.processAction.mockResolvedValue({
+        states: new Map([['user-1', { gameId: 'g1', version: 2 }]]),
+        pendingInputs: [],
+        events: [],
+        animationBatches: [batch],
+      });
+
+      await gateway.handleGameAction(socket as never, {
+        gameId: 'g1',
+        action: { type: EMainAction.PASS },
+      });
+
+      expect(roomEmit).toHaveBeenCalledWith('game:animation', { batch });
+      expect(socket.emit).toHaveBeenCalledWith('game:state', {
+        gameState: { gameId: 'g1', version: 2 },
+      });
+      expect(roomEmit.mock.invocationCallOrder[0]).toBeLessThan(
+        socket.emit.mock.invocationCallOrder[0],
       );
     });
 

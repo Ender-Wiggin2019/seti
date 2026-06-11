@@ -1,4 +1,5 @@
 import {
+  boolean,
   integer,
   jsonb,
   pgTable,
@@ -17,6 +18,7 @@ export const games = pgTable('games', {
   currentRound: integer('current_round').notNull(),
   seed: text('seed').notNull(),
   options: jsonb('options').notNull(),
+  visibleInLobby: boolean('visible_in_lobby').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .defaultNow(),

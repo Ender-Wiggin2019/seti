@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Pool } from 'pg';
+import { assertPlayerStateSchemaReady } from '../../src/persistence/schemaReadiness.js';
 import { getTargetConnectionConfig, getTargetDatabaseName } from './dbAdmin.js';
 
 function resolveMigrationsFolder(): string {
@@ -19,6 +20,7 @@ export async function runMigrations(): Promise<string> {
   try {
     await pool.query('CREATE EXTENSION IF NOT EXISTS pgcrypto');
     await migrate(db, { migrationsFolder });
+    await assertPlayerStateSchemaReady(pool);
     return targetDatabase;
   } finally {
     await pool.end();

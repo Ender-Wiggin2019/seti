@@ -1,3 +1,4 @@
+import type { EResource } from '@seti/common/types/element';
 import type {
   IFreeActionRequest,
   IInputResponse,
@@ -12,14 +13,29 @@ import {
 
 export type { TGameEvent } from '@seti/common/types/protocol/events';
 
+export type TGameEventDraft = TGameEvent extends infer TEvent
+  ? TEvent extends TGameEvent
+    ? Omit<TEvent, 'id' | 'seq' | 'turnIndex' | 'round'>
+    : never
+  : never;
+
+export interface IEventLogContext {
+  turnIndex: number;
+  round: number;
+}
+
 export function createEventId(sequence: number): string {
   return `event-${sequence.toString(36)}`;
 }
 
-function eventMeta(level: TGameEventLevel): {
+function eventMeta<TActorId extends string | null>(
+  actorId: TActorId,
+  level: TGameEventLevel,
+): {
+  actorId: TActorId;
   level: TGameEventLevel;
 } {
-  return { level };
+  return { actorId, level };
 }
 
 export function createActionEvent(
@@ -27,11 +43,10 @@ export function createActionEvent(
   action: IMainActionRequest | string,
   details?: Record<string, unknown>,
   level: TGameEventLevel = 'info',
-): TGameEvent {
+): TGameEventDraft {
   return {
-    ...eventMeta(level),
+    ...eventMeta(playerId, level),
     type: EGameEventType.ACTION,
-    playerId,
     action,
     details,
   };
@@ -42,11 +57,10 @@ export function createFreeActionEvent(
   action: IFreeActionRequest,
   details?: Record<string, unknown>,
   level: TGameEventLevel = 'info',
-): TGameEvent {
+): TGameEventDraft {
   return {
-    ...eventMeta(level),
+    ...eventMeta(playerId, level),
     type: EGameEventType.FREE_ACTION,
-    playerId,
     action,
     details,
   };
@@ -56,11 +70,10 @@ export function createInputEvent(
   playerId: string,
   response: IInputResponse,
   details?: Record<string, unknown>,
-): TGameEvent {
+): TGameEventDraft {
   return {
-    ...eventMeta('debug'),
+    ...eventMeta(playerId, 'debug'),
     type: EGameEventType.INPUT,
-    playerId,
     response,
     details,
   };
@@ -68,14 +81,11 @@ export function createInputEvent(
 
 export function createUndoEvent(
   playerId: string,
-  turnIndex: number,
   affectedPlayerIds: string[] = [],
-): TGameEvent {
+): TGameEventDraft {
   return {
-    ...eventMeta('info'),
+    ...eventMeta(playerId, 'info'),
     type: EGameEventType.UNDO,
-    playerId,
-    turnIndex,
     affectedPlayerIds,
   };
 }
@@ -85,81 +95,97 @@ export function createTraceMarkedEvent(
   traceColor: ETrace,
   alienIndex: number,
   isOverflow: boolean,
-): TGameEvent {
+): TGameEventDraft {
   return {
-    ...eventMeta('debug'),
+    ...eventMeta(playerId, 'debug'),
     type: EGameEventType.TRACE_MARKED,
-    playerId,
     traceColor,
     alienIndex,
     isOverflow,
   };
 }
 
-/**
- * Resource change events optionally carry the before/after balance
- * for the affected resource. This lets the client log render
- * "spent 2 credit (6 → 4)" rather than just the delta. Older call
- * sites that only know the delta may still pass `before` and
- * `after` as `undefined`.
- */
 export function createResourceChangeEvent(
   playerId: string,
-  resource: string,
-  delta: number,
-  before?: number,
-  after?: number,
-): TGameEvent {
+  resource: EResource,
+  before: number,
+  after: number,
+): TGameEventDraft {
   return {
-    ...eventMeta('debug'),
-    type: EGameEventType.RESOURCE_CHANGE,
-    playerId,
+    ...eventMeta(playerId, 'debug'),
+    type: EGameEventType.RESOURCE_CHANGED,
     resource,
-    delta,
-    ...(before !== undefined ? { before } : {}),
-    ...(after !== undefined ? { after } : {}),
+    before,
+    after,
   };
 }
 
 export function createScoreChangeEvent(
   playerId: string,
-  delta: number,
+  before: number,
+  after: number,
   source = 'score',
-): TGameEvent {
+): TGameEventDraft {
   return {
-    ...eventMeta('debug'),
-    type: EGameEventType.SCORE_CHANGE,
-    playerId,
-    delta,
+    ...eventMeta(playerId, 'debug'),
+    type: EGameEventType.SCORE_CHANGED,
+    before,
+    after,
     source,
+  };
+}
+
+export function createProbeMovedEvent(
+  playerId: string,
+  probeId: string,
+  path: string[],
+  publicityGained?: number,
+): TGameEventDraft {
+  return {
+    ...eventMeta(playerId, 'info'),
+    type: EGameEventType.PROBE_MOVED,
+    probeId,
+    path,
+    ...(publicityGained !== undefined ? { publicityGained } : {}),
+  };
+}
+
+export function createDiscRotatedEvent(
+  ring: 1 | 2 | 3,
+  steps: number,
+): TGameEventDraft {
+  return {
+    ...eventMeta(null, 'info'),
+    type: EGameEventType.DISC_ROTATED,
+    ring,
+    steps,
   };
 }
 
 export function createAlienDiscoveredEvent(
   alienType: EAlienType,
   alienIndex: number,
-): TGameEvent {
+): TGameEventDraft {
   return {
-    ...eventMeta('info'),
+    ...eventMeta(null, 'info'),
     type: EGameEventType.ALIEN_DISCOVERED,
     alienType,
     alienIndex,
   };
 }
 
-export function createRoundEndEvent(round: number): TGameEvent {
+export function createRoundEndEvent(): TGameEventDraft {
   return {
-    ...eventMeta('info'),
+    ...eventMeta(null, 'info'),
     type: EGameEventType.ROUND_END,
-    round,
   };
 }
 
 export function createGameEndEvent(
   finalScores: Record<string, number>,
-): TGameEvent {
+): TGameEventDraft {
   return {
-    ...eventMeta('info'),
+    ...eventMeta(null, 'info'),
     type: EGameEventType.GAME_END,
     finalScores,
   };

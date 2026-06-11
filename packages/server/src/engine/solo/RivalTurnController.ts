@@ -85,6 +85,15 @@ export class RivalTurnController {
               : {}),
           }),
         );
+      } else {
+        game.eventLog.append(
+          createActionEvent(rival.id, 'RIVAL_PASS', {
+            cardId: resolved.resolvedCardId,
+            ...(resolved.removedCardId
+              ? { removedCardId: resolved.removedCardId }
+              : {}),
+          }),
+        );
       }
       this.finishTurn(game);
       if (resolved.actionKind) {
@@ -99,6 +108,7 @@ export class RivalTurnController {
 
     rivalState.actionDeck.discard(cardId);
     rivalState.usedActionCardIdsThisRound.push(cardId);
+    game.eventLog.append(createActionEvent(rival.id, 'RIVAL_PASS', { cardId }));
     this.finishTurn(game);
     return { kind: 'pass' };
   }
@@ -178,6 +188,7 @@ export class RivalTurnController {
   private static resolvePass(game: Game): TRivalTurnResult {
     const rival = RivalSetup.getRivalPlayer(game);
     RivalActionResolver.enterResolution(game);
+    game.eventLog.append(createActionEvent(rival.id, 'RIVAL_PASS'));
 
     const stack = game.endOfRoundStacks[game.roundRotationReminderIndex];
     if (stack?.length > 0) {

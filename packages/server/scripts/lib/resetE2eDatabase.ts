@@ -10,8 +10,8 @@ type TClosableDatabaseClient = IDatabaseClient & {
 };
 
 export const E2E_RESET_TABLES = [
-  'turn_checkpoints',
-  'game_snapshots',
+  'game_events',
+  'turn_snapshots',
   'game_players',
   'games',
 ] as const;

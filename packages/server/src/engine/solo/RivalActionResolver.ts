@@ -54,7 +54,10 @@ import {
 } from '@/engine/effects/index.js';
 import { LaunchProbeEffect } from '@/engine/effects/probe/LaunchProbeEffect.js';
 import { RotateDiscEffect } from '@/engine/effects/solar/RotateDiscEffect.js';
-import { createTraceMarkedEvent } from '@/engine/event/GameEvent.js';
+import {
+  createProbeMovedEvent,
+  createTraceMarkedEvent,
+} from '@/engine/event/GameEvent.js';
 import type { Game } from '@/engine/Game.js';
 import { EMissionEventType } from '@/engine/missions/IMission.js';
 import type { TCardItem } from '@/engine/player/IPlayer.js';
@@ -598,6 +601,14 @@ export class RivalActionResolver {
         publicity: publicityGained,
       });
     }
+    game.eventLog.append(
+      createProbeMovedEvent(
+        RivalSetup.getRivalPlayer(game).id,
+        probeId,
+        [...path],
+        publicityGained,
+      ),
+    );
   }
 
   private static applyPlanetRewards(

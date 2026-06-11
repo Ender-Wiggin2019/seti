@@ -5,6 +5,7 @@ import {
   IsBoolean,
   IsEnum,
   IsInt,
+  IsIn,
   IsNotEmpty,
   IsObject,
   IsOptional,
@@ -97,6 +98,10 @@ export class CreateRoomDto {
   @ValidateNested()
   @Type(() => CreateRoomOptionsDto)
   options?: CreateRoomOptionsDto;
+
+  @IsOptional()
+  @IsBoolean()
+  visibleInLobby?: boolean;
 }
 
 export class UpdateRoomOptionsDto {
@@ -139,4 +144,23 @@ export class UpdateRoomOptionsDto {
   @ValidateNested()
   @Type(() => SpaceAgencyOptionsDto)
   spaceAgencyOptions?: SpaceAgencyOptionsDto;
+}
+
+export class ListRoomsQueryDto {
+  @IsOptional()
+  @IsIn(['waiting', 'playing', 'finished'])
+  status?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  pageSize?: number;
 }

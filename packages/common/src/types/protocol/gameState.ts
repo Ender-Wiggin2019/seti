@@ -553,6 +553,7 @@ export interface IPublicFinalScoringResult {
 
 export interface IPublicGameState {
   gameId: string;
+  version: number;
   isSoloMode?: boolean;
   round: number;
   roundIndex: number;

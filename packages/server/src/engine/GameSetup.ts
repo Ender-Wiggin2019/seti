@@ -15,7 +15,6 @@ import { BaseCorporation } from './corporation/BaseCorporation.js';
 import { Deck } from './deck/Deck.js';
 import { DeferredActionsQueue } from './deferred/DeferredActionsQueue.js';
 import { TuckCardForIncomeEffect } from './effects/income/TuckCardForIncomeEffect.js';
-import { EventLog } from './event/EventLog.js';
 import type { Game } from './Game.js';
 import { isAlienEnabled, isSoloMode } from './GameOptions.js';
 import { OrganizationRegistry } from './organization/OrganizationRegistry.js';
@@ -145,7 +144,7 @@ export class GameSetup {
     });
 
     game.deferredActions = new DeferredActionsQueue();
-    game.eventLog = new EventLog();
+    game.eventLog = game.createEventLog();
 
     if (agenciesEnabled) {
       game.transitionTo(EPhase.SETUP_CHOICE);

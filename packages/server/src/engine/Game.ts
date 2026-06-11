@@ -244,7 +244,7 @@ export class Game implements IGame {
     this.roundRotationReminderIndex = 0;
     this.deferredActions = new DeferredActionsQueue();
     this.missionTracker = new MissionTracker();
-    this.eventLog = new EventLog();
+    this.eventLog = this.createEventLog();
     this.eventBus = new GameEventBus();
     this.pendingResolutionJournal = undefined;
 
@@ -331,6 +331,13 @@ export class Game implements IGame {
     return this.currentMainActionType;
   }
 
+  public createEventLog(): EventLog {
+    return new EventLog(undefined, () => ({
+      turnIndex: this.turnIndex,
+      round: this.round,
+    }));
+  }
+
   public get rotationCounter(): number {
     return this.solarSystem?.rotationCounter ?? this.rotationCounterValue;
   }
@@ -371,6 +378,9 @@ export class Game implements IGame {
 
     const player = this.getPlayer(playerId);
     this.assertMainActionIsLegal(player, action);
+    this.eventLog.append(
+      createActionEvent(playerId, action, { replayCommand: true }, 'debug'),
+    );
     this.currentMainActionType = action.type;
     this.transitionTo(EPhase.IN_RESOLUTION);
 
@@ -874,7 +884,7 @@ export class Game implements IGame {
   }
 
   private resolveEndOfRound(): void {
-    this.eventLog.append(createRoundEndEvent(this.round));
+    this.eventLog.append(createRoundEndEvent());
     this.eventBus.emit({
       type: EGameRuntimeEvent.ROUND_END,
       game: this,

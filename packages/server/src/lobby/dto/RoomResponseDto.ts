@@ -15,5 +15,39 @@ export interface IRoomResponse {
   playerCount: number;
   currentPlayers: IRoomPlayer[];
   options: IGameOptions;
+  visibleInLobby: boolean;
   createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IRoomListResponse {
+  items: IRoomResponse[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPlayers: number;
+  totalPages: number;
+  hasMore: boolean;
+}
+
+export interface IPlayerRecentGameResponse {
+  id: string;
+  name: string;
+  status: string;
+  isHost: boolean;
+  isSoloMode: boolean;
+  visibleInLobby: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IPlayerPublicProfileResponse {
+  id: string;
+  name: string;
+  joinedAt: Date;
+  stats: {
+    gamesPlayed: number;
+    hostedGames: number;
+  };
+  recentGames: IPlayerRecentGameResponse[];
 }

@@ -1,6 +1,7 @@
 import { alienCards } from '@seti/common/data/alienCards';
 import { ESector, ETrace } from '@seti/common/types/element';
 import { EAlienType, EPhase, EPlanet } from '@seti/common/types/protocol/enums';
+import { EGameEventType } from '@seti/common/types/protocol/events';
 import { ERivalActionKind } from '@seti/common/types/protocol/solo';
 import { ETechBonusType, ETechId } from '@seti/common/types/tech';
 import {
@@ -256,7 +257,7 @@ describe('RivalTurnController', () => {
       .find(
         (candidate) =>
           candidate.type === 'ACTION' &&
-          candidate.playerId === rival.id &&
+          candidate.actorId === rival.id &&
           candidate.action === 'RIVAL_ACTION',
       );
     if (!event || event.type !== 'ACTION') {
@@ -579,6 +580,15 @@ describe('RivalTurnController', () => {
     // bonus) = 3.
     expect(solarSystem.getPlayerPublicity(rival.id)).toBe(2);
     expect(rival.resources.publicity).toBe(3);
+    expect(
+      game.eventLog.toArray().some(
+        (event) =>
+          event.type === EGameEventType.PROBE_MOVED &&
+          event.actorId === rival.id &&
+          event.path.includes(scenicSpace.id) &&
+          event.publicityGained === 2,
+      ),
+    ).toBe(true);
   });
 
   it('keeps movement publicity when the first priority duplicate planet landing is legal', () => {
@@ -1652,7 +1662,7 @@ describe('RivalTurnController', () => {
         .some(
           (event) =>
             event.type === 'ACTION' &&
-            event.playerId === rival.id &&
+            event.actorId === rival.id &&
             event.action === 'MILESTONE_GOLD_RESOLVED' &&
             event.details?.tileId === firstGoldTileId,
         ),

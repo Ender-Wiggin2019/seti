@@ -253,10 +253,11 @@ export class Player implements IPlayer {
 
   public set score(value: number) {
     assertValidInteger('score', value);
+    const before = this.scoreAmount;
     const delta = value - this.scoreAmount;
     this.scoreAmount = value;
     if (delta !== 0) {
-      this.recordScoreChange(delta);
+      this.recordScoreChange(before, value);
     }
   }
 
@@ -289,15 +290,14 @@ export class Player implements IPlayer {
       createResourceChangeEvent(
         this.id,
         this.toEventResource(resource),
-        delta,
         before,
         after,
       ),
     );
   }
 
-  private recordScoreChange(delta: number): void {
-    this.game?.eventLog.append(createScoreChangeEvent(this.id, delta));
+  private recordScoreChange(before: number, after: number): void {
+    this.game?.eventLog.append(createScoreChangeEvent(this.id, before, after));
   }
 
   private toEventResource(resource: keyof IResourceBundle): EResource {

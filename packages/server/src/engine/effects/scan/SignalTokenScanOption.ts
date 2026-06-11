@@ -15,7 +15,7 @@ export function getSpendableSignalTokenScanCount(
   game: IGame,
   signalTokensSpent: number,
 ): number {
-  if (game.options.spaceAgencyOptions?.newDeck !== true) {
+  if (game.options?.spaceAgencyOptions?.newDeck !== true) {
     return 0;
   }
   if (game.cardRow.length === 0) {

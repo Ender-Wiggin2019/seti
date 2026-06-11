@@ -120,7 +120,7 @@ describe('MilestoneState (Phase 7)', () => {
       );
       expect(goldResolved).toHaveLength(1);
       expect(goldResolved[0].details?.threshold).toBe(25);
-      expect(goldResolved[0].playerId).toBe('p1');
+      expect(goldResolved[0].actorId).toBe('p1');
     });
 
     it('7.1.2 [集成] reaching 50 VP still triggers after 25 was resolved', () => {

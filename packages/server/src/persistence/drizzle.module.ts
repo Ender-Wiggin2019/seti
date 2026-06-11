@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
+import { createReadyPool } from './schemaReadiness.js';
 
 export const DRIZZLE_DB = Symbol('DRIZZLE_DB');
 const DRIZZLE_POOL = Symbol('DRIZZLE_POOL');
@@ -10,10 +11,7 @@ const DRIZZLE_POOL = Symbol('DRIZZLE_POOL');
   providers: [
     {
       provide: DRIZZLE_POOL,
-      useFactory: () =>
-        new Pool({
-          connectionString: process.env.DATABASE_URL,
-        }),
+      useFactory: createReadyPool,
     },
     {
       provide: DRIZZLE_DB,

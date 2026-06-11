@@ -1,5 +1,12 @@
 import { Test } from '@nestjs/testing';
-import { EMainAction, EPhase } from '@seti/common/types/protocol/enums';
+import { EResource } from '@seti/common/types/element';
+import type { IFreeActionRequest } from '@seti/common/types/protocol/actions';
+import { EAnimationStepKind } from '@seti/common/types/protocol/animation';
+import {
+  EFreeAction,
+  EMainAction,
+  EPhase,
+} from '@seti/common/types/protocol/enums';
 import {
   EErrorCode,
   EErrorDisplay,
@@ -11,6 +18,11 @@ import {
 } from '@seti/common/types/protocol/playerInput';
 import { vi } from 'vitest';
 import { Deck } from '@/engine/deck/Deck.js';
+import {
+  createActionEvent,
+  createFreeActionEvent,
+  createProbeMovedEvent,
+} from '@/engine/event/GameEvent.js';
 import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
 import { SelectOption } from '@/engine/input/SelectOption.js';
@@ -57,18 +69,37 @@ function createSoloTestGame(): Game {
   return game;
 }
 
+function normalizedState(game: IGame, version: number) {
+  return serializeGame(deserializeGame(serializeGame(game, version)), version);
+}
+
 const mockDb = {
   select: vi.fn(),
   insert: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
+  transaction: vi.fn(),
 };
 
-function setupMockDbForSnapshot() {
-  const insertChain = {
-    values: vi.fn().mockResolvedValue(undefined),
+function createInsertChain() {
+  const insertResult = {
+    onConflictDoNothing: vi.fn().mockResolvedValue(undefined),
+    onConflictDoUpdate: vi.fn().mockResolvedValue(undefined),
   };
+  const insertChain = {
+    values: vi.fn().mockReturnValue(insertResult),
+  };
+
+  return insertChain;
+}
+
+function setupMockDbForSnapshot() {
+  const insertChain = createInsertChain();
   mockDb.insert.mockReturnValue(insertChain);
+  mockDb.transaction.mockImplementation(
+    async (callback: (tx: typeof mockDb) => Promise<unknown>) =>
+      callback(mockDb),
+  );
 
   const selectChain = {
     from: vi.fn().mockReturnThis(),
@@ -77,6 +108,24 @@ function setupMockDbForSnapshot() {
     limit: vi.fn().mockResolvedValue([]),
   };
   mockDb.select.mockReturnValue(selectChain);
+}
+
+function cacheGame(
+  manager: GameManager,
+  game: IGame,
+  version = 0,
+): void {
+  (manager as unknown as { cache: Map<string, IGame> }).cache.set(
+    game.id,
+    game,
+  );
+  (manager as unknown as { versions: Map<string, number> }).versions.set(
+    game.id,
+    version,
+  );
+  (
+    manager as unknown as { lastCommittedSeqs?: Map<string, number> }
+  ).lastCommittedSeqs?.set(game.id, game.eventLog.toArray().at(-1)?.seq ?? 0);
 }
 
 describe('GameManager', () => {
@@ -148,8 +197,14 @@ describe('GameManager', () => {
       expect(p1State).toBeDefined();
     });
 
-    it('saves a snapshot after action', async () => {
+    it('returns only appended events and animation batches for the command', async () => {
       const game = createTestGame();
+      game.eventLog.append(createActionEvent('p1', 'PRE_EXISTING'));
+      vi.spyOn(game, 'processMainAction').mockImplementation(() => {
+        game.eventLog.append(
+          createProbeMovedEvent('p1', 'probe-1', ['s0', 's1']),
+        );
+      });
       (manager as unknown as { cache: Map<string, IGame> }).cache.set(
         'game-mgr-test',
         game,
@@ -159,11 +214,284 @@ describe('GameManager', () => {
         0,
       );
 
-      await manager.processAction('game-mgr-test', 'p1', {
+      const result = await manager.processAction('game-mgr-test', 'p1', {
         type: EMainAction.PASS,
       });
 
-      expect(mockDb.insert).toHaveBeenCalled();
+      expect(result.events).toHaveLength(1);
+      expect(result.events[0]).toMatchObject({
+        type: 'PROBE_MOVED',
+      });
+      expect(result.animationBatches).toHaveLength(1);
+      expect(result.animationBatches[0]).toMatchObject({
+        actorId: 'p1',
+        finalStateVersion: 1,
+        steps: [
+          expect.objectContaining({
+            kind: EAnimationStepKind.PROBE_MOVE,
+            sourceEventId: result.events[0].id,
+          }),
+        ],
+      });
+    });
+
+    it('does not persist same-turn events before the turn is complete', async () => {
+      const game = createTestGame();
+      cacheGame(manager, game);
+
+      const result = await manager.processFreeAction('game-mgr-test', 'p1', {
+        type: EFreeAction.EXCHANGE_RESOURCES,
+        from: EResource.CREDIT,
+        to: EResource.ENERGY,
+      });
+
+      expect(result.events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ type: 'FREE_ACTION' }),
+        ]),
+      );
+      expect(mockDb.transaction).not.toHaveBeenCalled();
+      expect(mockDb.insert).not.toHaveBeenCalled();
+    });
+
+    it('does not persist when end-turn flow is still waiting for follow-up input', async () => {
+      const game = createTestGame();
+      game.phase = EPhase.AWAIT_END_TURN;
+      vi.spyOn(game, 'processEndTurn').mockImplementation(() => {
+        game.eventLog.append(createActionEvent('p1', 'END_TURN'));
+        game.players[0].waitingFor = new SelectOption(game.players[0], [
+          { id: 'continue', label: 'Continue', onSelect: () => undefined },
+        ]);
+      });
+      cacheGame(manager, game);
+
+      await manager.processEndTurn('game-mgr-test', 'p1');
+
+      expect(game.turnIndex).toBe(1);
+      expect(mockDb.transaction).not.toHaveBeenCalled();
+      expect(mockDb.insert).not.toHaveBeenCalled();
+    });
+
+    it('commits all accumulated turn events and the turn snapshot in one database transaction', async () => {
+      const game = createTestGame();
+      cacheGame(manager, game);
+
+      await manager.processFreeAction('game-mgr-test', 'p1', {
+        type: EFreeAction.EXCHANGE_RESOURCES,
+        from: EResource.CREDIT,
+        to: EResource.ENERGY,
+      });
+      vi.clearAllMocks();
+
+      game.phase = EPhase.AWAIT_END_TURN;
+      const txInsertChain = createInsertChain();
+      const txDb = {
+        ...mockDb,
+        insert: vi.fn().mockReturnValue(txInsertChain),
+      };
+      mockDb.transaction.mockImplementationOnce(
+        async (callback: (tx: typeof mockDb) => Promise<unknown>) =>
+          callback(txDb),
+      );
+
+      await manager.processEndTurn('game-mgr-test', 'p1');
+
+      expect(mockDb.transaction).toHaveBeenCalledTimes(1);
+      expect(txDb.insert).toHaveBeenCalledTimes(2);
+      expect(mockDb.insert).not.toHaveBeenCalled();
+      expect(txInsertChain.values).toHaveBeenNthCalledWith(
+        1,
+        expect.arrayContaining([
+          expect.objectContaining({
+            gameId: 'game-mgr-test',
+            payload: expect.objectContaining({ type: 'FREE_ACTION' }),
+          }),
+          expect.objectContaining({
+            gameId: 'game-mgr-test',
+            payload: expect.objectContaining({
+              type: 'ACTION',
+              action: 'END_TURN',
+            }),
+          }),
+        ]),
+      );
+    });
+
+    it('commits accumulated turn events even when they exceed the display event window', async () => {
+      const game = createTestGame();
+      cacheGame(manager, game);
+      const committedSeq =
+        game.eventLog.toArray().at(-1)?.seq ?? 0;
+
+      for (let index = 0; index < 501; index += 1) {
+        game.eventLog.append(createActionEvent('p1', `LONG_TURN_${index}`));
+      }
+      const firstLongTurnSeq = committedSeq + 1;
+      const txInsertChain = createInsertChain();
+      const txDb = {
+        ...mockDb,
+        insert: vi.fn().mockReturnValue(txInsertChain),
+      };
+      mockDb.transaction.mockImplementationOnce(
+        async (callback: (tx: typeof mockDb) => Promise<unknown>) =>
+          callback(txDb),
+      );
+      game.phase = EPhase.AWAIT_END_TURN;
+
+      await manager.processEndTurn('game-mgr-test', 'p1');
+
+      const persistedEvents = txInsertChain.values.mock.calls[0]?.[0] as Array<{
+        payload: { seq: number; action?: unknown };
+      }>;
+      expect(persistedEvents).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            payload: expect.objectContaining({
+              seq: firstLongTurnSeq,
+              action: 'LONG_TURN_0',
+            }),
+          }),
+        ]),
+      );
+      expect(persistedEvents.length).toBeGreaterThan(501);
+    });
+
+    it('rejects the turn completion when committed event persistence fails', async () => {
+      const game = createTestGame();
+      game.phase = EPhase.AWAIT_END_TURN;
+      const stateBefore = normalizedState(game, 0);
+      cacheGame(manager, game);
+
+      const eventInsertChain = {
+        values: vi.fn().mockReturnValue({
+          onConflictDoNothing: vi
+            .fn()
+            .mockRejectedValue(new Error('event store unavailable')),
+        }),
+      };
+      const txDb = {
+        ...mockDb,
+        insert: vi.fn().mockReturnValueOnce(eventInsertChain),
+      };
+      mockDb.transaction.mockImplementationOnce(
+        async (callback: (tx: typeof mockDb) => Promise<unknown>) =>
+          callback(txDb),
+      );
+
+      await expect(
+        manager.processEndTurn('game-mgr-test', 'p1'),
+      ).rejects.toThrow('event store unavailable');
+
+      const restored = await manager.getGame('game-mgr-test');
+      expect(serializeGame(restored, 0)).toEqual(stateBefore);
+      expect(
+        (manager as unknown as { versions: Map<string, number> }).versions.get(
+          'game-mgr-test',
+        ),
+      ).toBe(0);
+    });
+
+    it('persists one turn snapshot when a command crosses a turn boundary', async () => {
+      const game = createTestGame();
+      cacheGame(manager, game);
+      const txInsertChain = createInsertChain();
+      const txDb = {
+        ...mockDb,
+        insert: vi.fn().mockReturnValue(txInsertChain),
+      };
+      mockDb.transaction.mockImplementationOnce(
+        async (callback: (tx: typeof mockDb) => Promise<unknown>) =>
+          callback(txDb),
+      );
+
+      game.phase = EPhase.AWAIT_END_TURN;
+
+      await manager.processEndTurn('game-mgr-test', 'p1');
+
+      expect(txInsertChain.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gameId: 'game-mgr-test',
+          turnIndex: game.turnIndex,
+          seq: game.eventLog.toArray().at(-1)?.seq,
+          state: expect.objectContaining({ turnIndex: game.turnIndex }),
+        }),
+      );
+    });
+
+    it('rejects the command when turn snapshot persistence fails', async () => {
+      const game = createTestGame();
+      game.phase = EPhase.AWAIT_END_TURN;
+      const stateBefore = normalizedState(game, 0);
+      cacheGame(manager, game);
+      const eventInsertChain = createInsertChain();
+      const snapshotInsertChain = {
+        values: vi.fn().mockReturnValue({
+          onConflictDoNothing: vi.fn().mockResolvedValue(undefined),
+          onConflictDoUpdate: vi
+            .fn()
+            .mockRejectedValue(new Error('turn snapshot unavailable')),
+        }),
+      };
+      const txDb = {
+        ...mockDb,
+        insert: vi
+          .fn()
+          .mockReturnValueOnce(eventInsertChain)
+          .mockReturnValueOnce(snapshotInsertChain),
+      };
+      mockDb.transaction.mockImplementationOnce(
+        async (callback: (tx: typeof mockDb) => Promise<unknown>) =>
+          callback(txDb),
+      );
+
+      await expect(
+        manager.processEndTurn('game-mgr-test', 'p1'),
+      ).rejects.toThrow('turn snapshot unavailable');
+
+      const restored = await manager.getGame('game-mgr-test');
+      expect(serializeGame(restored, 0)).toEqual(stateBefore);
+      expect(
+        (manager as unknown as { versions: Map<string, number> }).versions.get(
+          'game-mgr-test',
+        ),
+      ).toBe(0);
+    });
+
+    it('advances the projected version after replaying post-snapshot events on cold load', async () => {
+      const base = createTestGame();
+      const snapshotSeq = base.eventLog.toArray().at(-1)?.seq ?? 0;
+      const snapshot = serializeGame(base, 1);
+      const live = deserializeGame(snapshot);
+      live.processFreeAction('p1', {
+        type: EFreeAction.EXCHANGE_RESOURCES,
+        from: EResource.CREDIT,
+        to: EResource.ENERGY,
+      });
+      const persistedEvents = live.eventLog.since(snapshotSeq);
+      const loadLatestMock = vi.fn().mockResolvedValue({
+        gameId: 'game-mgr-test',
+        turnIndex: snapshot.turnIndex,
+        seq: snapshotSeq,
+        playerId: snapshot.currentPlayerId,
+        round: snapshot.round,
+        state: snapshot,
+        interactedPlayerIds: [],
+      });
+      const loadSinceMock = vi.fn().mockResolvedValue(persistedEvents);
+      (
+        manager as unknown as {
+          turnSnapshotRepo: { loadLatest: typeof loadLatestMock };
+        }
+      ).turnSnapshotRepo = { loadLatest: loadLatestMock };
+      (
+        manager as unknown as {
+          gameEventRepo: { loadSince: typeof loadSinceMock };
+        }
+      ).gameEventRepo = { loadSince: loadSinceMock };
+
+      await manager.getGame('game-mgr-test');
+
+      expect(manager.getProjectedState('game-mgr-test', 'p1')?.version).toBe(2);
     });
 
     it('records a durable journal when an action pauses for player input', async () => {
@@ -297,14 +625,20 @@ describe('GameManager', () => {
       expect(result.states.size).toBe(2);
     });
 
-    it('persists a free-action snapshot when the free action leaves pending input', async () => {
+    it('keeps free-action events in memory when the free action leaves pending input', async () => {
       const game = createTestGame();
       const player = game.players[0];
       const prompt = new SelectOption(player, [
         { id: 'confirm', label: 'Confirm', onSelect: () => undefined },
       ]);
+      const action = {
+        type: EFreeAction.EXCHANGE_RESOURCES,
+        from: EResource.CREDIT,
+        to: EResource.ENERGY,
+      } satisfies IFreeActionRequest;
       vi.spyOn(game, 'processFreeAction').mockImplementation(() => {
         player.waitingFor = prompt;
+        game.eventLog.append(createFreeActionEvent('p1', action));
       });
       (manager as unknown as { cache: Map<string, IGame> }).cache.set(
         'game-mgr-test',
@@ -315,11 +649,7 @@ describe('GameManager', () => {
         0,
       );
 
-      await manager.processFreeAction('game-mgr-test', 'p1', {
-        type: 'EXCHANGE_RESOURCES' as never,
-        from: 'credit' as never,
-        to: 'energy' as never,
-      });
+      await manager.processFreeAction('game-mgr-test', 'p1', action);
 
       expect(game.pendingResolutionJournal).toMatchObject({
         version: 1,
@@ -330,15 +660,49 @@ describe('GameManager', () => {
           },
         ],
       });
-      expect(mockDb.insert).toHaveBeenCalled();
+      expect(game.eventLog.toArray()).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ type: 'FREE_ACTION' }),
+        ]),
+      );
+      expect(mockDb.transaction).not.toHaveBeenCalled();
+      expect(mockDb.insert).not.toHaveBeenCalled();
     });
   });
 
   describe('undoToTurnStart', () => {
-    it('returns and persists an undo log event after rollback', async () => {
+    it('rolls back same-turn work in memory without persisting undo', async () => {
       const game = createTestGame();
       manager.registerGame(game);
       game.turnLocked = false;
+      const stateBefore = normalizedState(game, 0);
+      await manager.processFreeAction('game-mgr-test', 'p1', {
+        type: EFreeAction.EXCHANGE_RESOURCES,
+        from: EResource.CREDIT,
+        to: EResource.ENERGY,
+      });
+      vi.clearAllMocks();
+
+      const result = await manager.undoToTurnStart('game-mgr-test', 'p1');
+
+      const restored = await manager.getGame('game-mgr-test');
+      expect(serializeGame(restored, 0)).toEqual(stateBefore);
+      expect(result.events).toEqual([
+        expect.objectContaining({
+          type: 'UNDO',
+          level: 'info',
+          actorId: 'p1',
+        }),
+      ]);
+      expect(mockDb.transaction).not.toHaveBeenCalled();
+      expect(mockDb.insert).not.toHaveBeenCalled();
+    });
+
+    it('returns an ephemeral undo log event after rollback', async () => {
+      const game = createTestGame();
+      manager.registerGame(game);
+      game.turnLocked = false;
+      vi.clearAllMocks();
 
       const result = await manager.undoToTurnStart('game-mgr-test', 'p1');
       const events = (result as { events?: unknown[] }).events;
@@ -347,21 +711,17 @@ describe('GameManager', () => {
         expect.objectContaining({
           type: 'UNDO',
           level: 'info',
-          playerId: 'p1',
+          actorId: 'p1',
           turnIndex: expect.any(Number),
         }),
       ]);
 
       const restored = await manager.getGame('game-mgr-test');
-      expect(restored.eventLog.toArray()).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            type: 'UNDO',
-            level: 'info',
-            playerId: 'p1',
-          }),
-        ]),
+      expect(restored.eventLog.toArray()).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'UNDO' })]),
       );
+      expect(mockDb.transaction).not.toHaveBeenCalled();
+      expect(mockDb.insert).not.toHaveBeenCalled();
     });
   });
 
@@ -439,7 +799,7 @@ describe('GameManager', () => {
       expect(mockDb.insert).not.toHaveBeenCalled();
     });
 
-    it('accepts a response that matches the current inputId', async () => {
+    it('accepts a response that matches the current inputId without persisting before turn completion', async () => {
       const game = createTestGame();
       const player = game.players[0];
       const prompt = new SelectOption(player, [
@@ -462,7 +822,11 @@ describe('GameManager', () => {
       });
 
       expect(player.waitingFor).toBeUndefined();
-      expect(mockDb.insert).toHaveBeenCalled();
+      expect(game.eventLog.toArray()).toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'INPUT' })]),
+      );
+      expect(mockDb.transaction).not.toHaveBeenCalled();
+      expect(mockDb.insert).not.toHaveBeenCalled();
     });
 
     it('records a base state when a non-resolution input leaves another prompt pending', async () => {
@@ -507,7 +871,8 @@ describe('GameManager', () => {
           },
         ],
       });
-      expect(mockDb.insert).toHaveBeenCalled();
+      expect(mockDb.transaction).not.toHaveBeenCalled();
+      expect(mockDb.insert).not.toHaveBeenCalled();
     });
   });
 
@@ -574,72 +939,7 @@ describe('GameManager', () => {
       await manager.unloadGame('game-mgr-test');
 
       expect(cache.has('game-mgr-test')).toBe(false);
-    });
-
-    it('persists unload snapshot using next version', async () => {
-      const game = createTestGame();
-      const cache = (manager as unknown as { cache: Map<string, IGame> }).cache;
-      const versions = (manager as unknown as { versions: Map<string, number> })
-        .versions;
-      cache.set('game-mgr-test', game);
-      versions.set('game-mgr-test', 3);
-
-      const saveSnapshotMock = vi.fn().mockResolvedValue(undefined);
-      (
-        manager as unknown as {
-          gameRepo: { saveSnapshot: typeof saveSnapshotMock };
-        }
-      ).gameRepo.saveSnapshot = saveSnapshotMock;
-
-      await manager.unloadGame('game-mgr-test');
-
-      expect(saveSnapshotMock).toHaveBeenCalledWith(
-        'game-mgr-test',
-        4,
-        expect.any(Object),
-        { type: 'UNLOAD' },
-      );
-    });
-
-    // Regression: long-running games used to accumulate hundreds of
-    // gameSnapshots rows because unload only ever inserted, never
-    // pruned. The repo now exposes `pruneSnapshots` and the manager
-    // calls it during unload.
-    it('prunes old snapshots when unloading', async () => {
-      const game = createTestGame();
-      const cache = (manager as unknown as { cache: Map<string, IGame> }).cache;
-      cache.set('game-mgr-test', game);
-
-      const pruneSnapshotsMock = vi.fn().mockResolvedValue(0);
-      (
-        manager as unknown as {
-          gameRepo: { pruneSnapshots: typeof pruneSnapshotsMock };
-        }
-      ).gameRepo.pruneSnapshots = pruneSnapshotsMock;
-
-      await manager.unloadGame('game-mgr-test');
-
-      expect(pruneSnapshotsMock).toHaveBeenCalledWith('game-mgr-test');
-    });
-
-    // The unload itself must succeed even if pruning fails — losing a
-    // few stale rows is preferable to leaving the game in memory.
-    it('unloads cleanly even when prune throws', async () => {
-      const game = createTestGame();
-      const cache = (manager as unknown as { cache: Map<string, IGame> }).cache;
-      cache.set('game-mgr-test', game);
-
-      const pruneSnapshotsMock = vi.fn().mockRejectedValue(new Error('boom'));
-      (
-        manager as unknown as {
-          gameRepo: { pruneSnapshots: typeof pruneSnapshotsMock };
-        }
-      ).gameRepo.pruneSnapshots = pruneSnapshotsMock;
-
-      await expect(
-        manager.unloadGame('game-mgr-test'),
-      ).resolves.toBeUndefined();
-      expect(cache.has('game-mgr-test')).toBe(false);
+      expect(mockDb.insert).not.toHaveBeenCalled();
     });
   });
 });

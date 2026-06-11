@@ -1,5 +1,7 @@
 import { vi } from 'vitest';
+import { EGameEventType } from '@seti/common/types/protocol/events';
 import { BoardBuilder } from '@/engine/board/BoardBuilder.js';
+import { EventLog } from '@/engine/event/EventLog.js';
 import { ESolarSystemElementType } from '@/engine/board/SolarSystem.js';
 import { RotateDiscEffect } from '@/engine/effects/solar/RotateDiscEffect.js';
 import { Player } from '@/engine/player/Player.js';
@@ -10,7 +12,7 @@ describe('RotateDiscEffect', () => {
     const solarSystem = BoardBuilder.buildSolarSystemFromRandom(
       new SeededRandom('rotate-top-test'),
     );
-    const game = { solarSystem };
+    const game = { solarSystem, eventLog: new EventLog() };
 
     const disc0BeforeRotation = solarSystem.discs[0].currentRotation;
 
@@ -23,6 +25,11 @@ describe('RotateDiscEffect', () => {
     expect(solarSystem.discs[0].currentRotation).toBe(
       (disc0BeforeRotation + 1) % 8,
     );
+    expect(game.eventLog.recent(1)[0]).toMatchObject({
+      type: EGameEventType.DISC_ROTATED,
+      ring: 1,
+      steps: 1,
+    });
   });
 
   it('[4.1.2] rotates middle disc and changes space positions', () => {

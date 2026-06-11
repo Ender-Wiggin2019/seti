@@ -42,6 +42,7 @@ import {
   recordScanSignalTokenSpend,
   ScanActionPool,
 } from '@/engine/effects/scan/ScanActionPool.js';
+import { createActionEvent } from '@/engine/event/GameEvent.js';
 import { Game } from '@/engine/Game.js';
 import { SelectOption } from '@/engine/input/SelectOption.js';
 import {
@@ -122,6 +123,23 @@ describe('GameSerializer', () => {
       game.players[0].resources.signalTokens,
     );
     expect('resourceByType' in playerDto).toBe(false);
+  });
+
+  it('keeps only the recent event tail for display state', () => {
+    const game = createTestGame();
+    const startSeq = game.eventLog.toArray().at(-1)?.seq ?? 0;
+    for (let index = 1; index <= 60; index += 1) {
+      game.eventLog.append(createActionEvent('p1', `ACTION_${index}`));
+    }
+
+    const dto = serializeGame(game, 7);
+
+    expect(dto.eventLog).toHaveLength(50);
+    expect(dto.eventLog[0]).toMatchObject({ seq: startSeq + 11 });
+    expect(dto.eventLog.at(-1)).toMatchObject({
+      seq: startSeq + 60,
+      action: 'ACTION_60',
+    });
   });
 
   it('projects round counters for clients', () => {

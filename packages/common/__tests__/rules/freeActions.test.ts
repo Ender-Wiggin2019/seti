@@ -103,6 +103,7 @@ function createGameState(
 ): IPublicGameState {
   return {
     gameId: 'g1',
+    version: 0,
     round: 1,
     phase: EPhase.AWAIT_MAIN_ACTION,
     currentPlayerId: 'p1',

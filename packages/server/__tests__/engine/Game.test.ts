@@ -183,6 +183,10 @@ describe('Game', () => {
     expect(
       game.eventLog.recent(5).some((event) => event.type === 'ACTION'),
     ).toBe(true);
+    expect(game.eventLog.recent(1)[0]).toMatchObject({
+      round: game.round,
+      turnIndex: 1,
+    });
   });
 
   it('advances round after all players pass', () => {

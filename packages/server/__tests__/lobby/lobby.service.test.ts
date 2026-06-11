@@ -28,6 +28,7 @@ const MOCK_GAME = {
     isSoloMode: false,
     soloDifficulty: 1,
   },
+  visibleInLobby: true,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -203,22 +204,11 @@ describe('LobbyService', () => {
       expect(db.insert).toHaveBeenCalled();
       expect(result).toBeDefined();
     });
-  });
 
-  describe('listRooms', () => {
-    it('returns rooms ordered by creation date', async () => {
-      db.select.mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            orderBy: vi.fn().mockResolvedValue([MOCK_GAME]),
-          }),
-        }),
-      });
-
+    it('persists hidden lobby visibility for solo rooms', async () => {
       db.select.mockImplementation(() => ({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            orderBy: vi.fn().mockResolvedValue([MOCK_GAME]),
             limit: vi.fn().mockResolvedValue([MOCK_GAME]),
           }),
           innerJoin: vi.fn().mockReturnValue({
@@ -227,10 +217,261 @@ describe('LobbyService', () => {
         }),
       }));
 
-      const rooms = await service.listRooms('waiting');
+      await service.createRoom(
+        'host-user',
+        'Hidden Solo',
+        2,
+        undefined,
+        {
+          isSoloMode: true,
+        },
+        false,
+      );
 
-      expect(rooms).toHaveLength(1);
-      expect(rooms[0].name).toBe('Test Room');
+      expect(db._insertChain.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          visibleInLobby: false,
+        }),
+      );
+    });
+  });
+
+  describe('listRooms', () => {
+    it('returns paged public rooms ordered by creation date', async () => {
+      db.select
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([{ total: 3 }]),
+          }),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            innerJoin: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue([{ totalPlayers: 1 }]),
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              orderBy: vi.fn().mockReturnValue({
+                limit: vi.fn().mockReturnValue({
+                  offset: vi.fn().mockResolvedValue([MOCK_GAME]),
+                }),
+              }),
+            }),
+          }),
+        });
+
+      vi.spyOn(
+        service as unknown as TTestLobbyService,
+        'getPlayersForGame',
+      ).mockResolvedValue([MOCK_PLAYER]);
+
+      const rooms = await service.listRooms({
+        status: 'waiting',
+        page: 2,
+        pageSize: 1,
+      });
+
+      expect(rooms.items).toHaveLength(1);
+      expect(rooms.items[0].name).toBe('Test Room');
+      expect(rooms.page).toBe(2);
+      expect(rooms.pageSize).toBe(1);
+      expect(rooms.total).toBe(3);
+    });
+
+    it('reports total players across all matching public rooms, not just the current page', async () => {
+      db.select
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([{ total: 3 }]),
+          }),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            innerJoin: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue([{ totalPlayers: 7 }]),
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              orderBy: vi.fn().mockReturnValue({
+                limit: vi.fn().mockReturnValue({
+                  offset: vi.fn().mockResolvedValue([MOCK_GAME]),
+                }),
+              }),
+            }),
+          }),
+        });
+
+      vi.spyOn(
+        service as unknown as TTestLobbyService,
+        'getPlayersForGame',
+      ).mockResolvedValue([MOCK_PLAYER]);
+
+      const rooms = await service.listRooms({
+        page: 1,
+        pageSize: 1,
+      });
+
+      expect(rooms.items).toHaveLength(1);
+      expect(rooms.total).toBe(3);
+      expect(rooms.totalPlayers).toBe(7);
+    });
+  });
+
+  describe('listMyGames', () => {
+    it('returns rooms and games the user participates in, including hidden solo rooms', async () => {
+      db.select
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            innerJoin: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue([{ total: 1 }]),
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            innerJoin: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue([{ gameId: 'game-1' }]),
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([{ totalPlayers: 1 }]),
+          }),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            innerJoin: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({
+                orderBy: vi.fn().mockReturnValue({
+                  limit: vi.fn().mockReturnValue({
+                    offset: vi.fn().mockResolvedValue([
+                      { game: { ...MOCK_SOLO_GAME, visibleInLobby: false } },
+                    ]),
+                  }),
+                }),
+              }),
+            }),
+          }),
+        });
+      vi.spyOn(
+        service as unknown as TTestLobbyService,
+        'getPlayersForGame',
+      ).mockResolvedValue([MOCK_PLAYER]);
+
+      const page = await service.listMyGames('host-user', {
+        page: 1,
+        pageSize: 5,
+      });
+
+      expect(page.items).toHaveLength(1);
+      expect(page.items[0].visibleInLobby).toBe(false);
+      expect(page.items[0].options.isSoloMode).toBe(true);
+    });
+  });
+
+  describe('deleteRoom', () => {
+    it('deletes a waiting room for the host', async () => {
+      db.select.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([MOCK_GAME]),
+          }),
+        }),
+      });
+
+      await expect(
+        service.deleteRoom('game-1', 'host-user'),
+      ).resolves.toBeUndefined();
+
+      expect(db.delete).toHaveBeenCalled();
+    });
+
+    it('rejects non-host room deletion', async () => {
+      db.select.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([MOCK_GAME]),
+          }),
+        }),
+      });
+
+      await expect(service.deleteRoom('game-1', 'guest')).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(db.delete).not.toHaveBeenCalled();
+    });
+
+    it('rejects deleting a started game', async () => {
+      db.select.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi
+              .fn()
+              .mockResolvedValue([{ ...MOCK_GAME, status: 'playing' }]),
+          }),
+        }),
+      });
+
+      await expect(service.deleteRoom('game-1', 'host-user')).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(db.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getPlayerPublicProfile', () => {
+    it('returns public profile and recent games without email', async () => {
+      db.select
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([
+                {
+                  id: 'host-user',
+                  name: 'Alice',
+                  email: 'alice@example.test',
+                  createdAt: new Date('2026-01-01T00:00:00.000Z'),
+                },
+              ]),
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            innerJoin: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({
+                orderBy: vi.fn().mockReturnValue({
+                  limit: vi.fn().mockResolvedValue([
+                    { game: MOCK_GAME, seatIndex: 0 },
+                  ]),
+                }),
+              }),
+            }),
+          }),
+        });
+
+      const profile = await service.getPlayerPublicProfile('host-user');
+
+      expect(profile).toEqual(
+        expect.objectContaining({
+          id: 'host-user',
+          name: 'Alice',
+          recentGames: [
+            expect.objectContaining({
+              id: 'game-1',
+              name: 'Test Room',
+            }),
+          ],
+        }),
+      );
+      expect(profile).not.toHaveProperty('email');
     });
   });
 

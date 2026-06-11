@@ -4,6 +4,7 @@ import {
   EMainAction,
   EPlanet,
 } from '@seti/common/types/protocol/enums';
+import { EGameEventType } from '@seti/common/types/protocol/events';
 import { EErrorCode } from '@seti/common/types/protocol/errors';
 import {
   EPlayerInputType,
@@ -18,6 +19,7 @@ import {
   SolarSystem,
 } from '@/engine/board/SolarSystem.js';
 import { MovementFreeAction } from '@/engine/freeActions/Movement.js';
+import { EventLog } from '@/engine/event/EventLog.js';
 import { Game } from '@/engine/Game.js';
 import type { IGame } from '@/engine/IGame.js';
 import { EMissionEventType } from '@/engine/missions/IMission.js';
@@ -85,6 +87,7 @@ function createMockGame(
     missionTracker: {
       recordEvent: vi.fn(),
     },
+    eventLog: new EventLog(),
     ...overrides,
   } as unknown as IGame;
 }
@@ -774,6 +777,18 @@ describe('MovementFreeAction', () => {
         movementRequest(ss, p1.id, [prev.id, iconSpace.id, next.id]),
       );
       expect(p1.resources.publicity).toBeGreaterThan(pubBefore);
+      expect(
+        game.eventLog
+          .toArray()
+          .some(
+            (event) =>
+              event.type === EGameEventType.PROBE_MOVED &&
+              event.actorId === p1.id &&
+              event.path.join('>') ===
+                [prev.id, iconSpace.id, next.id].join('>') &&
+              (event.publicityGained ?? 0) > 0,
+          ),
+      ).toBe(true);
     });
 
     it('3.1.5 [集成] cannot enter a SUN space', () => {

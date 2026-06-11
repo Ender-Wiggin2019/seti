@@ -14,7 +14,6 @@ import {
 import { Deck } from '@/engine/deck/Deck.js';
 import { DeferredActionsQueue } from '@/engine/deferred/DeferredActionsQueue.js';
 import { TuckCardForIncomeEffect } from '@/engine/effects/income/TuckCardForIncomeEffect.js';
-import { EventLog } from '@/engine/event/EventLog.js';
 import { Game } from '@/engine/Game.js';
 import { GameSetup } from '@/engine/GameSetup.js';
 import type {
@@ -697,7 +696,7 @@ export function deserializeGame(dto: IGameStateDto): Game {
   deserializePlayers(game, dto);
   OrganizationRegistry.restorePlayerOrganizations(game);
 
-  game.eventLog = new EventLog();
+  game.eventLog = game.createEventLog();
   for (const event of dto.eventLog) {
     game.eventLog.append(cloneValue(event));
   }

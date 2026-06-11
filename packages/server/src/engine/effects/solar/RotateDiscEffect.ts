@@ -1,5 +1,6 @@
 import type { IGame } from '../../IGame.js';
 import type { IPlayer } from '../../player/IPlayer.js';
+import { createDiscRotatedEvent } from '../../event/GameEvent.js';
 
 export interface IRotateDiscResult {
   rotatedDisc: number;
@@ -38,6 +39,9 @@ export class RotateDiscEffect {
       }
     }
     game.alienState?.onSolarSystemRotated(game);
+    game.eventLog?.append(
+      createDiscRotatedEvent((rotatedDisc + 1) as 1 | 2 | 3, 1),
+    );
     return { rotatedDisc };
   }
 }

@@ -8,7 +8,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ALIEN_LOBBY_OPTION_MAP } from '@seti/common/constant/alienLobby';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, type SQL } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Game } from '@/engine/Game.js';
 import {
@@ -21,10 +21,15 @@ import {
 } from '@/engine/GameOptions.js';
 import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
 import { GameRepository } from '@/persistence/repository/GameRepository.js';
-import { games } from '@/persistence/schema/games.js';
 import { gamePlayers } from '@/persistence/schema/players.js';
+import { type TGameRow, games } from '@/persistence/schema/games.js';
 import { users } from '@/persistence/schema/users.js';
-import type { IRoomPlayer, IRoomResponse } from './dto/RoomResponseDto.js';
+import type {
+  IPlayerPublicProfileResponse,
+  IRoomListResponse,
+  IRoomPlayer,
+  IRoomResponse,
+} from './dto/RoomResponseDto.js';
 
 // Rulebook palette: each retail SETI box ships pieces in green,
 // orange, purple, and white (see SE_rulebook §Components, p.2). The
@@ -33,6 +38,21 @@ import type { IRoomPlayer, IRoomResponse } from './dto/RoomResponseDto.js';
 // imagery (orange rival pieces).
 const PLAYER_COLORS = ['green', 'orange', 'purple', 'white'];
 const RIVAL_DISPLAY_NAME = 'Rival Institution';
+const DEFAULT_PAGE = 1;
+const DEFAULT_PAGE_SIZE = 12;
+const MAX_PAGE_SIZE = 50;
+
+export interface IListRoomsQuery {
+  status?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+interface IPagination {
+  page: number;
+  pageSize: number;
+  offset: number;
+}
 
 @Injectable()
 export class LobbyService {
@@ -48,6 +68,7 @@ export class LobbyService {
     playerCount: number,
     seed?: string,
     roomOptionsInput?: IGameOptionsPatch,
+    visibleInLobbyInput = true,
   ): Promise<IRoomResponse> {
     const gameId = randomUUID();
     let options: Readonly<IGameOptions>;
@@ -61,6 +82,7 @@ export class LobbyService {
     }
 
     await this.ensureUserExists(userId);
+    const visibleInLobby = isSoloMode(options) ? visibleInLobbyInput : true;
 
     await this.db.insert(games).values({
       id: gameId,
@@ -71,6 +93,7 @@ export class LobbyService {
       currentRound: 0,
       seed: seed ?? randomUUID(),
       options,
+      visibleInLobby,
     });
 
     await this.db.insert(gamePlayers).values({
@@ -83,31 +106,82 @@ export class LobbyService {
     return this.getRoomById(gameId);
   }
 
-  async listRooms(status?: string): Promise<IRoomResponse[]> {
-    const condition = status ? eq(games.status, status) : undefined;
+  async listRooms(query: IListRoomsQuery = {}): Promise<IRoomListResponse> {
+    const pagination = this.normalizePagination(query);
+    const condition = this.combineConditions([
+      eq(games.visibleInLobby, true),
+      query.status ? eq(games.status, query.status) : undefined,
+    ]);
+
+    const [{ total } = { total: 0 }] = await this.db
+      .select({ total: count() })
+      .from(games)
+      .where(condition);
+
+    const [{ totalPlayers } = { totalPlayers: 0 }] = await this.db
+      .select({ totalPlayers: count() })
+      .from(gamePlayers)
+      .innerJoin(games, eq(gamePlayers.gameId, games.id))
+      .where(condition);
 
     const rows = await this.db
       .select()
       .from(games)
       .where(condition)
-      .orderBy(desc(games.createdAt));
+      .orderBy(desc(games.createdAt))
+      .limit(pagination.pageSize)
+      .offset(pagination.offset);
 
-    const rooms: IRoomResponse[] = [];
-    for (const row of rows) {
-      const players = await this.getPlayersForGame(row.id);
-      rooms.push({
-        id: row.id,
-        name: row.name,
-        status: row.status,
-        hostUserId: row.hostUserId,
-        playerCount: row.playerCount,
-        currentPlayers: players,
-        options: row.options as IGameOptions,
-        createdAt: row.createdAt,
-      });
-    }
+    return this.buildRoomListResponse(
+      rows,
+      pagination,
+      Number(total),
+      Number(totalPlayers),
+    );
+  }
 
-    return rooms;
+  async listMyGames(
+    userId: string,
+    query: IListRoomsQuery = {},
+  ): Promise<IRoomListResponse> {
+    const pagination = this.normalizePagination(query);
+    const condition = this.combineConditions([
+      eq(gamePlayers.userId, userId),
+      query.status ? eq(games.status, query.status) : undefined,
+    ]);
+
+    const [{ total } = { total: 0 }] = await this.db
+      .select({ total: count() })
+      .from(gamePlayers)
+      .innerJoin(games, eq(gamePlayers.gameId, games.id))
+      .where(condition);
+
+    const matchingGameRows = await this.db
+      .select({ gameId: gamePlayers.gameId })
+      .from(gamePlayers)
+      .innerJoin(games, eq(gamePlayers.gameId, games.id))
+      .where(condition);
+    const totalPlayers = await this.countPlayersForGames(
+      matchingGameRows.map((row) => row.gameId),
+    );
+
+    const rows = await this.db
+      .select({
+        game: games,
+      })
+      .from(gamePlayers)
+      .innerJoin(games, eq(gamePlayers.gameId, games.id))
+      .where(condition)
+      .orderBy(desc(games.updatedAt))
+      .limit(pagination.pageSize)
+      .offset(pagination.offset);
+
+    return this.buildRoomListResponse(
+      rows.map((row) => row.game as TGameRow),
+      pagination,
+      Number(total),
+      totalPlayers,
+    );
   }
 
   getAlienTypeMap() {
@@ -127,16 +201,7 @@ export class LobbyService {
 
     const players = await this.getPlayersForGame(gameId);
 
-    return {
-      id: row.id,
-      name: row.name,
-      status: row.status,
-      hostUserId: row.hostUserId,
-      playerCount: row.playerCount,
-      currentPlayers: players,
-      options: row.options as IGameOptions,
-      createdAt: row.createdAt,
-    };
+    return this.toRoomResponse(row, players);
   }
 
   async updateRoomOptions(
@@ -281,6 +346,79 @@ export class LobbyService {
     return this.getRoomById(gameId);
   }
 
+  async deleteRoom(gameId: string, userId: string): Promise<void> {
+    const [room] = await this.db
+      .select()
+      .from(games)
+      .where(eq(games.id, gameId))
+      .limit(1);
+
+    if (!room) {
+      throw new NotFoundException('Room not found');
+    }
+
+    if (room.hostUserId !== userId) {
+      throw new ForbiddenException('Only the host can delete the room');
+    }
+
+    if (room.status !== 'waiting') {
+      throw new BadRequestException('Cannot delete a room that has started');
+    }
+
+    await this.db.delete(games).where(eq(games.id, gameId));
+  }
+
+  async getPlayerPublicProfile(
+    userId: string,
+  ): Promise<IPlayerPublicProfileResponse> {
+    const [user] = await this.db
+      .select({
+        id: users.id,
+        name: users.name,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user) {
+      throw new NotFoundException('Player not found');
+    }
+
+    const recentRows = await this.db
+      .select({
+        game: games,
+        seatIndex: gamePlayers.seatIndex,
+      })
+      .from(gamePlayers)
+      .innerJoin(games, eq(gamePlayers.gameId, games.id))
+      .where(eq(gamePlayers.userId, userId))
+      .orderBy(desc(games.updatedAt))
+      .limit(5);
+
+    const recentGames = recentRows.map((row) => ({
+      id: row.game.id,
+      name: row.game.name,
+      status: row.game.status,
+      isHost: row.game.hostUserId === userId,
+      isSoloMode: isSoloMode(row.game.options as Partial<IGameOptions>),
+      visibleInLobby: row.game.visibleInLobby,
+      createdAt: row.game.createdAt,
+      updatedAt: row.game.updatedAt,
+    }));
+
+    return {
+      id: user.id,
+      name: user.name,
+      joinedAt: user.createdAt,
+      stats: {
+        gamesPlayed: recentGames.length,
+        hostedGames: recentGames.filter((game) => game.isHost).length,
+      },
+      recentGames,
+    };
+  }
+
   async startGame(gameId: string, userId: string): Promise<IRoomResponse> {
     // Validate + acquire a row-level write lock on the games row, then
     // build the Game and write the snapshot — all inside a single
@@ -363,6 +501,91 @@ export class LobbyService {
     });
 
     return this.getRoomById(gameId);
+  }
+
+  private normalizePagination(query: IListRoomsQuery): IPagination {
+    const page = Math.max(1, Math.floor(query.page ?? DEFAULT_PAGE));
+    const pageSize = Math.min(
+      MAX_PAGE_SIZE,
+      Math.max(1, Math.floor(query.pageSize ?? DEFAULT_PAGE_SIZE)),
+    );
+
+    return {
+      page,
+      pageSize,
+      offset: (page - 1) * pageSize,
+    };
+  }
+
+  private combineConditions(
+    conditions: Array<SQL | undefined>,
+  ): SQL | undefined {
+    const active = conditions.filter(
+      (condition): condition is SQL => condition !== undefined,
+    );
+    if (active.length === 0) {
+      return undefined;
+    }
+    if (active.length === 1) {
+      return active[0];
+    }
+    return and(...active);
+  }
+
+  private async buildRoomListResponse(
+    rows: TGameRow[],
+    pagination: IPagination,
+    total: number,
+    totalPlayers: number,
+  ): Promise<IRoomListResponse> {
+    const items: IRoomResponse[] = [];
+    for (const row of rows) {
+      items.push(
+        this.toRoomResponse(row, await this.getPlayersForGame(row.id)),
+      );
+    }
+
+    const totalPages = Math.ceil(total / pagination.pageSize);
+    return {
+      items,
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+      total,
+      totalPlayers,
+      totalPages,
+      hasMore: pagination.page < totalPages,
+    };
+  }
+
+  private async countPlayersForGames(gameIds: string[]): Promise<number> {
+    if (gameIds.length === 0) {
+      return 0;
+    }
+
+    const [{ totalPlayers } = { totalPlayers: 0 }] = await this.db
+      .select({ totalPlayers: count() })
+      .from(gamePlayers)
+      .where(inArray(gamePlayers.gameId, gameIds));
+
+    return Number(totalPlayers);
+  }
+
+  private toRoomResponse(
+    row: TGameRow,
+    players: IRoomPlayer[],
+  ): IRoomResponse {
+    return {
+      id: row.id,
+      name: row.name,
+      status: row.status,
+      hostUserId: row.hostUserId,
+      playerCount: row.playerCount,
+      currentPlayers: players,
+      options: row.options as IGameOptions,
+      visibleInLobby: row.visibleInLobby ?? true,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt ?? row.createdAt,
+    };
   }
 
   private async ensureUserExists(userId: string): Promise<void> {

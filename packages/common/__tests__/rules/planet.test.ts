@@ -82,6 +82,7 @@ function createPlanetState(
 function createGameState(playerId: string, spaceId: string): IPublicGameState {
   return {
     gameId: 'game-1',
+    version: 0,
     round: 1,
     roundIndex: 1,
     maxRounds: 5,

@@ -116,12 +116,31 @@ function passPlayer(game: Game, playerId: string): void {
   resolveAllInputs(game, getPlayer(game, playerId));
 }
 
+function resolveAllPendingInputs(game: Game): void {
+  let guard = 0;
+  while (game.players.some((player) => player.waitingFor)) {
+    guard += 1;
+    if (guard > 20) {
+      throw new Error('Pending input resolution exceeded guard');
+    }
+    for (const player of game.players) {
+      resolveAllInputs(game, player);
+    }
+  }
+}
+
 function passOneRound(game: Game): void {
   const targetRound = game.round;
-  while (
-    game.phase === EPhase.AWAIT_MAIN_ACTION &&
-    game.round === targetRound
-  ) {
+  let guard = 0;
+  while (game.phase !== EPhase.GAME_OVER && game.round === targetRound) {
+    guard += 1;
+    if (guard > 20) {
+      throw new Error('Round advancement exceeded guard');
+    }
+    resolveAllPendingInputs(game);
+    if (game.phase !== EPhase.AWAIT_MAIN_ACTION) {
+      break;
+    }
     passPlayer(game, game.activePlayer.id);
   }
 }
@@ -129,6 +148,7 @@ function passOneRound(game: Game): void {
 function advanceRounds(game: Game, rounds: number): void {
   for (let i = 0; i < rounds; i++) {
     passOneRound(game);
+    resolveAllPendingInputs(game);
     if (game.phase === EPhase.GAME_OVER) break;
   }
 }
@@ -658,7 +678,8 @@ describe('Game Integration: Milestone & Discovery Timing', () => {
     const milestoneCheck = events.find(
       (e) =>
         e.type === 'ACTION' &&
-        (e as { action: string }).action.includes('MILESTONE'),
+        typeof e.action === 'string' &&
+        e.action.includes('MILESTONE'),
     );
     expect(milestoneCheck).toBeDefined();
   });
@@ -891,13 +912,13 @@ describe('Game Integration: Turn Lifecycle', () => {
         expect.objectContaining({
           type: 'ACTION',
           level: 'info',
-          playerId: 'p1',
+          actorId: 'p1',
           action: EMainAction.LAUNCH_PROBE,
         }),
         expect.objectContaining({
           type: 'FREE_ACTION',
           level: 'info',
-          playerId: 'p1',
+          actorId: 'p1',
           action: expect.objectContaining({
             type: EFreeAction.CONVERT_ENERGY_TO_MOVEMENT,
           }),
@@ -922,7 +943,7 @@ describe('Game Integration: Turn Lifecycle', () => {
         expect.objectContaining({
           type: 'ACTION',
           level: 'info',
-          playerId: 'p1',
+          actorId: 'p1',
           action: EMainAction.PLAY_CARD,
           details: expect.objectContaining({
             cardId: 'test-card-1',
@@ -945,7 +966,7 @@ describe('Game Integration: Turn Lifecycle', () => {
         expect.objectContaining({
           type: 'ACTION',
           level: 'debug',
-          playerId: 'p1',
+          actorId: 'p1',
           action: 'SECTOR_MARKED',
           details: expect.objectContaining({
             sectorId: expect.any(String),
@@ -989,7 +1010,7 @@ describe('Game Integration: Turn Lifecycle', () => {
         expect.objectContaining({
           type: 'INPUT',
           level: 'debug',
-          playerId: 'p1',
+          actorId: 'p1',
           response: expect.objectContaining({
             type: expect.any(String),
           }),
@@ -1009,20 +1030,41 @@ describe('Game Integration: Turn Lifecycle', () => {
     expect(game.eventLog.toArray()).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          type: 'RESOURCE_CHANGE',
+          type: 'RESOURCE_CHANGED',
           level: 'debug',
-          playerId: 'p1',
+          actorId: 'p1',
           resource: 'publicity',
-          delta: -RESEARCH_PUBLICITY_COST,
+          before: expect.any(Number),
+          after: expect.any(Number),
         }),
         expect.objectContaining({
-          type: 'SCORE_CHANGE',
+          type: 'SCORE_CHANGED',
           level: 'debug',
-          playerId: 'p1',
-          delta: 2,
+          actorId: 'p1',
+          before: expect.any(Number),
+          after: expect.any(Number),
           source: 'score',
         }),
       ]),
     );
+    const publicityCostEvent = game.eventLog
+      .toArray()
+      .find(
+        (event) =>
+          event.type === 'RESOURCE_CHANGED' &&
+          event.actorId === 'p1' &&
+          event.resource === 'publicity' &&
+          event.before - event.after === RESEARCH_PUBLICITY_COST,
+      );
+    const scoreEvent = game.eventLog
+      .toArray()
+      .find(
+        (event) =>
+          event.type === 'SCORE_CHANGED' &&
+          event.actorId === 'p1' &&
+          event.after - event.before === 2,
+      );
+    expect(publicityCostEvent).toBeDefined();
+    expect(scoreEvent).toBeDefined();
   });
 });

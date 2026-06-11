@@ -400,7 +400,9 @@ export class MissionTracker {
     player: IPlayer,
     game: IGame,
   ): ICompletableMission[] {
-    const missions = this.getOrCreatePlayerMissions(player.id);
+    // Pure read — do not materialize an empty map entry (this runs on the
+    // state-projection path, which must not mutate the tracker).
+    const missions = this.missionsByPlayer.get(player.id) ?? [];
     const completable: ICompletableMission[] = [];
 
     for (const mission of missions) {
@@ -495,13 +497,16 @@ export class MissionTracker {
     playerId: string,
     cardId: string,
   ): IMissionRuntimeState | undefined {
-    return this.getOrCreatePlayerMissions(playerId).find(
+    return (this.missionsByPlayer.get(playerId) ?? []).find(
       (m) => m.def.cardId === cardId,
     );
   }
 
   public getAllMissions(playerId: string): ReadonlyArray<IMissionRuntimeState> {
-    return this.getOrCreatePlayerMissions(playerId);
+    // Pure read: never materialize an empty entry. Lazily creating a map
+    // entry here mutates state on a read path (e.g. state projection),
+    // which makes serialization non-deterministic across read vs. write.
+    return this.missionsByPlayer.get(playerId) ?? [];
   }
 
   public clearEventBuffer(): void {

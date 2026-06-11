@@ -8,6 +8,7 @@ import type { IPlayerInputModel } from '@seti/common/types/protocol/playerInput'
 import { GameError } from '@/shared/errors/GameError.js';
 import { isMovementPublicityDisabledForCurrentTurn } from '../alien/plugins/AnomaliesTurnEffects.js';
 import { ESolarSystemElementType } from '../board/SolarSystem.js';
+import { createProbeMovedEvent } from '../event/GameEvent.js';
 import type { IGame } from '../IGame.js';
 import type { IPlayerInput } from '../input/PlayerInput.js';
 import { EMissionEventType } from '../missions/IMission.js';
@@ -251,6 +252,15 @@ export class MovementFreeAction {
     if (pendingInputs.length === 0) {
       gainMovementPublicity();
     }
+
+    game.eventLog.append(
+      createProbeMovedEvent(
+        player.id,
+        movementPiece.pieceId,
+        path,
+        publicityGained,
+      ),
+    );
 
     const [firstPendingInput, ...remainingPendingInputs] = pendingInputs;
 

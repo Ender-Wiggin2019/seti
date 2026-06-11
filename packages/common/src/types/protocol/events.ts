@@ -3,7 +3,9 @@ import type {
   IInputResponse,
   IMainActionRequest,
 } from '@seti/common/types/protocol/actions';
-import { EAlienType } from '@seti/common/types/protocol/enums';
+import type { EResource } from '@seti/common/types/element';
+import type { IAnimationBatch } from '@seti/common/types/protocol/animation';
+import { EAlienType, ETrace } from '@seti/common/types/protocol/enums';
 import type { IErrorPayload } from '@seti/common/types/protocol/errors';
 import type { IPublicGameState } from '@seti/common/types/protocol/gameState';
 import type { IPlayerInputModel } from '@seti/common/types/protocol/playerInput';
@@ -13,137 +15,107 @@ export enum EGameEventType {
   FREE_ACTION = 'FREE_ACTION',
   INPUT = 'INPUT',
   UNDO = 'UNDO',
-  RESOURCE_CHANGE = 'RESOURCE_CHANGE',
-  SCORE_CHANGE = 'SCORE_CHANGE',
+  RESOURCE_CHANGED = 'RESOURCE_CHANGED',
+  SCORE_CHANGED = 'SCORE_CHANGED',
   SECTOR_COMPLETED = 'SECTOR_COMPLETED',
   TRACE_MARKED = 'TRACE_MARKED',
   ALIEN_DISCOVERED = 'ALIEN_DISCOVERED',
-  ROTATION = 'ROTATION',
   ROUND_END = 'ROUND_END',
   GAME_END = 'GAME_END',
+  PROBE_MOVED = 'PROBE_MOVED',
+  DISC_ROTATED = 'DISC_ROTATED',
 }
 
 export type TGameEventLevel = 'debug' | 'info';
 
+export interface IGameEventBase {
+  id: string;
+  seq: number;
+  turnIndex: number;
+  round: number;
+  actorId: string | null;
+  level: TGameEventLevel;
+}
+
 export type TGameEvent =
-  | {
-      id?: string;
+  | (IGameEventBase & {
       type: EGameEventType.ACTION;
-      playerId: string;
       /** Main-action requests use `IMainActionRequest`; the engine may log string keys (e.g. `CARD_CUSTOM_EFFECT_UNHANDLED`). */
       action: IMainActionRequest | string;
       details?: Record<string, unknown>;
-      level?: TGameEventLevel;
-      at?: number;
-    }
-  | {
-      id?: string;
+    })
+  | (IGameEventBase & {
       type: EGameEventType.FREE_ACTION;
-      playerId: string;
       action: IFreeActionRequest;
       details?: Record<string, unknown>;
-      level?: TGameEventLevel;
-      at?: number;
-    }
-  | {
-      id?: string;
+    })
+  | (IGameEventBase & {
       type: EGameEventType.INPUT;
-      playerId: string;
       response: IInputResponse;
       details?: Record<string, unknown>;
-      level?: TGameEventLevel;
-      at?: number;
-    }
-  | {
-      id?: string;
+    })
+  | (IGameEventBase & {
       type: EGameEventType.UNDO;
-      playerId: string;
-      turnIndex: number;
       affectedPlayerIds: string[];
-      level?: TGameEventLevel;
-      at?: number;
-    }
-  | {
-      id?: string;
-      type: EGameEventType.RESOURCE_CHANGE;
-      playerId: string;
-      resource: string;
-      delta: number;
-      /**
-       * Player's balance for `resource` immediately *before* this
-       * change applied. Optional — older event emitters and replay
-       * snapshots may omit it; the log falls back to a delta-only
-       * line when missing.
-       */
-      before?: number;
-      /** Balance immediately after the change applied. */
-      after?: number;
-      level?: TGameEventLevel;
-      at?: number;
-    }
-  | {
-      id?: string;
-      type: EGameEventType.SCORE_CHANGE;
-      playerId: string;
-      delta: number;
+    })
+  | (IGameEventBase & {
+      type: EGameEventType.RESOURCE_CHANGED;
+      actorId: string;
+      resource: EResource;
+      before: number;
+      after: number;
+    })
+  | (IGameEventBase & {
+      type: EGameEventType.SCORE_CHANGED;
+      actorId: string;
+      before: number;
+      after: number;
       source: string;
-      level?: TGameEventLevel;
-      at?: number;
-    }
-  | {
-      id?: string;
+    })
+  | (IGameEventBase & {
       type: EGameEventType.SECTOR_COMPLETED;
       sectorId: string;
       winnerId: string;
       details?: Record<string, unknown>;
-      level?: TGameEventLevel;
-      at?: number;
-    }
-  | {
-      id?: string;
+    })
+  | (IGameEventBase & {
       type: EGameEventType.TRACE_MARKED;
-      playerId: string;
-      traceColor: string;
+      actorId: string;
+      traceColor: ETrace;
       alienIndex: number;
       isOverflow: boolean;
       details?: Record<string, unknown>;
-      level?: TGameEventLevel;
-      at?: number;
-    }
-  | {
-      id?: string;
+    })
+  | (IGameEventBase & {
       type: EGameEventType.ALIEN_DISCOVERED;
       alienType: EAlienType;
       alienIndex?: number;
       details?: Record<string, unknown>;
-      level?: TGameEventLevel;
-      at?: number;
-    }
-  | {
-      id?: string;
-      type: EGameEventType.ROTATION;
-      discIndex: number;
-      level?: TGameEventLevel;
-      at?: number;
-    }
-  | {
-      id?: string;
+    })
+  | (IGameEventBase & {
       type: EGameEventType.ROUND_END;
-      round: number;
-      level?: TGameEventLevel;
-      at?: number;
-    }
-  | {
-      id?: string;
+    })
+  | (IGameEventBase & {
       type: EGameEventType.GAME_END;
       finalScores: Record<string, number>;
-      level?: TGameEventLevel;
-      at?: number;
-    };
+    })
+  | (IGameEventBase & {
+      type: EGameEventType.PROBE_MOVED;
+      actorId: string;
+      probeId: string;
+      path: string[];
+      publicityGained?: number;
+    })
+  | (IGameEventBase & {
+      type: EGameEventType.DISC_ROTATED;
+      ring: 1 | 2 | 3;
+      steps: number;
+    });
 
 export interface IGameWsEventPayloadMap {
   'game:state': { gameState: IPublicGameState };
   'game:waiting': { playerId: string; input: IPlayerInputModel };
+  'game:animation': { batch: IAnimationBatch };
   'game:event': { event: TGameEvent };
   'game:error': IErrorPayload;
   /**

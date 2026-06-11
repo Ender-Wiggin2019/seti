@@ -13,15 +13,17 @@ import { DebugService } from '@/debug/debug.service.js';
 import type { IGame } from '@/engine/IGame.js';
 import type { GameManager } from '@/gateway/GameManager.js';
 import type { GameRepository } from '@/persistence/repository/GameRepository.js';
+import type { TurnSnapshotRepository } from '@/persistence/repository/TurnSnapshotRepository.js';
 import {
   projectGameState,
   serializeGame,
 } from '@/persistence/serializer/GameSerializer.js';
 import { buildTestGame } from '../helpers/TestGameBuilder.js';
 
-type TMockRepository = Pick<
-  GameRepository,
-  'loadLatestSnapshot' | 'loadSnapshot' | 'create'
+type TMockRepository = Pick<GameRepository, 'create'>;
+type TMockTurnSnapshotRepository = Pick<
+  TurnSnapshotRepository,
+  'loadLatest' | 'loadByTurn'
 >;
 
 interface IGameManagerMock
@@ -35,7 +37,25 @@ interface IGameManagerMock
   processInput: ReturnType<typeof vi.fn>;
 }
 
-function createService(repo: TMockRepository): {
+function turnSnapshotRecord(state: ReturnType<typeof serializeGame>) {
+  return {
+    gameId: state.gameId,
+    turnIndex: state.turnIndex,
+    seq: state.eventLog.at(-1)?.seq ?? 0,
+    playerId: state.currentPlayerId,
+    round: state.round,
+    state,
+    interactedPlayerIds: [],
+  };
+}
+
+function createService(
+  repo: TMockRepository,
+  turnSnapshotRepo: TMockTurnSnapshotRepository = {
+    loadLatest: vi.fn(),
+    loadByTurn: vi.fn(),
+  },
+): {
   service: DebugService;
   gameManager: IGameManagerMock;
   registry: Pick<
@@ -77,6 +97,11 @@ function createService(repo: TMockRepository): {
   );
   (service as unknown as { gameRepository: TMockRepository }).gameRepository =
     repo;
+  (
+    service as unknown as {
+      turnSnapshotRepository: TMockTurnSnapshotRepository;
+    }
+  ).turnSnapshotRepository = turnSnapshotRepo;
 
   return { service, gameManager, registry };
 }
@@ -93,11 +118,16 @@ describe('DebugService snapshot replay', () => {
     sourceGame.setActivePlayer('p2');
     const snapshot = serializeGame(sourceGame, 3);
     const repo: TMockRepository = {
-      loadLatestSnapshot: vi.fn().mockResolvedValue(snapshot),
-      loadSnapshot: vi.fn(),
       create: vi.fn().mockResolvedValue(undefined),
     } as TMockRepository;
-    const { service, gameManager, registry } = createService(repo);
+    const turnSnapshotRepo: TMockTurnSnapshotRepository = {
+      loadLatest: vi.fn().mockResolvedValue(turnSnapshotRecord(snapshot)),
+      loadByTurn: vi.fn(),
+    };
+    const { service, gameManager, registry } = createService(
+      repo,
+      turnSnapshotRepo,
+    );
 
     const response = await service.createSnapshotSession({
       gameId: sourceGame.id,
@@ -128,13 +158,18 @@ describe('DebugService snapshot replay', () => {
     expect(sourceGame.activePlayer.waitingFor).toBeDefined();
 
     const repo: TMockRepository = {
-      loadLatestSnapshot: vi
-        .fn()
-        .mockResolvedValue(serializeGame(sourceGame, 4)),
-      loadSnapshot: vi.fn(),
       create: vi.fn(),
     } as TMockRepository;
-    const { service, gameManager, registry } = createService(repo);
+    const turnSnapshotRepo: TMockTurnSnapshotRepository = {
+      loadLatest: vi
+        .fn()
+        .mockResolvedValue(turnSnapshotRecord(serializeGame(sourceGame, 4))),
+      loadByTurn: vi.fn(),
+    };
+    const { service, gameManager, registry } = createService(
+      repo,
+      turnSnapshotRepo,
+    );
 
     await expect(
       service.createSnapshotSession({ gameId: sourceGame.id }),
@@ -150,26 +185,26 @@ describe('DebugService snapshot replay', () => {
     process.env.NODE_ENV = 'production';
     const sourceGame = buildTestGame();
     const repo: TMockRepository = {
-      loadLatestSnapshot: vi
-        .fn()
-        .mockResolvedValue(serializeGame(sourceGame, 1)),
-      loadSnapshot: vi.fn(),
       create: vi.fn(),
     } as TMockRepository;
-    const { service } = createService(repo);
+    const turnSnapshotRepo: TMockTurnSnapshotRepository = {
+      loadLatest: vi
+        .fn()
+        .mockResolvedValue(turnSnapshotRecord(serializeGame(sourceGame, 1))),
+      loadByTurn: vi.fn(),
+    };
+    const { service } = createService(repo, turnSnapshotRepo);
 
     await expect(
       service.createSnapshotSession({ gameId: sourceGame.id }),
     ).rejects.toMatchObject({
       code: EErrorCode.FORBIDDEN,
     });
-    expect(repo.loadLatestSnapshot).not.toHaveBeenCalled();
+    expect(turnSnapshotRepo.loadLatest).not.toHaveBeenCalled();
   });
 
   it('rotates the solar system through the runtime next-disc order', async () => {
     const repo: TMockRepository = {
-      loadLatestSnapshot: vi.fn(),
-      loadSnapshot: vi.fn(),
       create: vi.fn(),
     } as TMockRepository;
     const { service, gameManager } = createService(repo);
@@ -193,8 +228,6 @@ describe('DebugService snapshot replay', () => {
 
   it('reveals a selected alien through the real discovery path', async () => {
     const repo: TMockRepository = {
-      loadLatestSnapshot: vi.fn(),
-      loadSnapshot: vi.fn(),
       create: vi.fn(),
     } as TMockRepository;
     const { service, gameManager } = createService(repo);
@@ -227,8 +260,6 @@ describe('DebugService snapshot replay', () => {
 
   it('keeps the Oumuamua tile metadata synced when debug solar rotation moves the planet', async () => {
     const repo: TMockRepository = {
-      loadLatestSnapshot: vi.fn(),
-      loadSnapshot: vi.fn(),
       create: vi.fn(),
     } as TMockRepository;
     const { service, gameManager } = createService(repo);
@@ -278,8 +309,6 @@ describe('DebugService snapshot replay', () => {
 describe('DebugService server session setup', () => {
   it('resolves bot setup tuck inputs so only the debug viewer has to answer setup', async () => {
     const repo: TMockRepository = {
-      loadLatestSnapshot: vi.fn(),
-      loadSnapshot: vi.fn(),
       create: vi.fn().mockResolvedValue(undefined),
     } as TMockRepository;
     const { service, gameManager, registry } = createService(repo);

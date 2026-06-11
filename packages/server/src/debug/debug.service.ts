@@ -37,6 +37,7 @@ import { GameManager } from '@/gateway/GameManager.js';
 import { DRIZZLE_DB } from '@/persistence/drizzle.module.js';
 import type { IGameStateDto } from '@/persistence/dto/GameStateDto.js';
 import { GameRepository } from '@/persistence/repository/GameRepository.js';
+import { TurnSnapshotRepository } from '@/persistence/repository/TurnSnapshotRepository.js';
 import { deserializeGame } from '@/persistence/serializer/GameDeserializer.js';
 import { GameError } from '@/shared/errors/GameError.js';
 import {
@@ -103,6 +104,7 @@ const DEBUG_REVEAL_ALIEN_TYPES = new Set<EAlienType>([
 export class DebugService {
   private readonly logger = new Logger(DebugService.name);
   private readonly gameRepository: GameRepository;
+  private readonly turnSnapshotRepository: TurnSnapshotRepository;
 
   constructor(
     @Inject(DRIZZLE_DB) db: NodePgDatabase,
@@ -112,6 +114,7 @@ export class DebugService {
     private readonly debugSessionRegistry: DebugSessionRegistry,
   ) {
     this.gameRepository = new GameRepository(db);
+    this.turnSnapshotRepository = new TurnSnapshotRepository(db);
   }
 
   private createAuthSession(user: IDebugAuthUser): {
@@ -277,13 +280,14 @@ export class DebugService {
   ): Promise<IDebugSnapshotSessionResponse> {
     this.assertSnapshotReplayAllowed();
 
-    const snapshot =
+    const snapshotRecord =
       request.version !== undefined
-        ? await this.gameRepository.loadSnapshot(
+        ? await this.turnSnapshotRepository.loadByTurn(
             request.gameId,
             request.version,
           )
-        : await this.gameRepository.loadLatestSnapshot(request.gameId);
+        : await this.turnSnapshotRepository.loadLatest(request.gameId);
+    const snapshot = snapshotRecord?.state;
 
     if (!snapshot) {
       throw new GameError(

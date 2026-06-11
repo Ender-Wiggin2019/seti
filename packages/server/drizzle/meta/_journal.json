@@ -8,6 +8,20 @@
       "when": 1776791897288,
       "tag": "0000_sad_redwing",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1781160282477,
+      "tag": "0001_player_state_event_sourcing",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781163200000,
+      "tag": "0002_lobby_room_visibility",
+      "breakpoints": true
     }
   ]
 }

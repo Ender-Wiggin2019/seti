@@ -290,6 +290,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private broadcastResult(gameId: string, result: IActionResult): void {
     const roomKey = this.roomKey(gameId);
 
+    for (const batch of result.animationBatches) {
+      this.server.to(roomKey).emit('game:animation', { batch });
+    }
+
     for (const [playerId, state] of result.states) {
       const sockets = this.getPlayerSockets(gameId, playerId);
       for (const socket of sockets) {

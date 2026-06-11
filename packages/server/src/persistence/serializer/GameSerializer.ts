@@ -953,7 +953,7 @@ export function serializeGame(game: IGame, version = 0): IGameStateDto {
     endOfRoundStacks: cloneValue(game.endOfRoundStacks),
 
     players: game.players.map((player) => serializePlayer(player)),
-    eventLog: cloneValue(game.eventLog.toArray() as TGameEvent[]),
+    eventLog: cloneValue(game.eventLog.recent(50) as TGameEvent[]),
 
     milestones: serializeMilestoneState(game),
     goldScoringTiles: serializeGoldTiles(game),
@@ -1227,6 +1227,7 @@ export interface IProjectGameStateOptions {
    * not locked.
    */
   hasTurnCheckpoint?: boolean;
+  version?: number;
 }
 
 export function projectGameState(
@@ -1253,6 +1254,7 @@ export function projectGameState(
 
   return {
     gameId: game.id,
+    version: options.version ?? 0,
     isSoloMode: game.options.isSoloMode,
     round: game.round,
     roundIndex: game.roundIndex,

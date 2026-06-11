@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Inject,
   Param,
@@ -11,7 +12,11 @@ import {
   Req,
 } from '@nestjs/common';
 import type { IJwtPayload } from '@/auth/jwt-auth.guard.js';
-import { CreateRoomDto, UpdateRoomOptionsDto } from './dto/CreateRoomDto.js';
+import {
+  CreateRoomDto,
+  ListRoomsQueryDto,
+  UpdateRoomOptionsDto,
+} from './dto/CreateRoomDto.js';
 import { LobbyService } from './lobby.service.js';
 
 @Controller('lobby')
@@ -21,8 +26,16 @@ export class LobbyController {
   ) {}
 
   @Get('rooms')
-  async listRooms(@Query('status') status?: string) {
-    return this.lobbyService.listRooms(status);
+  async listRooms(@Query() query: ListRoomsQueryDto) {
+    return this.lobbyService.listRooms(query);
+  }
+
+  @Get('my-games')
+  async listMyGames(
+    @Req() req: { user: IJwtPayload },
+    @Query() query: ListRoomsQueryDto,
+  ) {
+    return this.lobbyService.listMyGames(req.user.sub, query);
   }
 
   @Get('alien-types')
@@ -46,6 +59,7 @@ export class LobbyController {
       playerCount,
       dto.seed,
       dto.options,
+      dto.visibleInLobby ?? true,
     );
   }
 
@@ -71,6 +85,16 @@ export class LobbyController {
   @Post('rooms/:id/leave')
   async leaveRoom(@Req() req: { user: IJwtPayload }, @Param('id') id: string) {
     return this.lobbyService.leaveRoom(id, req.user.sub);
+  }
+
+  @Delete('rooms/:id')
+  async deleteRoom(@Req() req: { user: IJwtPayload }, @Param('id') id: string) {
+    await this.lobbyService.deleteRoom(id, req.user.sub);
+  }
+
+  @Get('players/:id/profile')
+  async getPlayerPublicProfile(@Param('id') id: string) {
+    return this.lobbyService.getPlayerPublicProfile(id);
   }
 
   @Post('rooms/:id/start')
