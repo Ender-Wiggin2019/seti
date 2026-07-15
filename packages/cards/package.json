@@ -1,0 +1,42 @@
+{
+  "name": "@ender-seti/cards",
+  "version": "0.1.1",
+  "private": false,
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./styles/card.css": "./dist/styles/card.css",
+    "./assets/*": "./dist/assets/*"
+  },
+  "scripts": {
+    "build": "tsup --config tsup.config.ts && mkdir -p dist/styles dist/assets && cp src/styles/card.css dist/styles/card.css && cp -R assets/images dist/assets/images",
+    "clean": "rm -rf dist",
+    "lint": "biome check src",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "i18next": "^23.16.8",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-i18next": "^13.5.0"
+  },
+  "dependencies": {
+    "@seti/common": "workspace:@ender-seti/common@*",
+    "clsx": "^1.2.1",
+    "tailwind-merge": "^1.13.2"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.28",
+    "@types/react-dom": "18.3.7",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
+  }
+}

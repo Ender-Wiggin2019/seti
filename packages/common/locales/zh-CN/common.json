@@ -1,0 +1,1570 @@
+{
+  "sector": "扇区",
+  "income": "收入",
+  "Card Type": "卡牌类型",
+  "free_action": "自由行动",
+  "credit": "金钱",
+  "energy": "电力",
+  "data": "数据",
+  "publicity": "声望",
+  "score": "分数",
+  "card": "卡牌",
+  "move": "移动",
+  "red": "红",
+  "yellow": "黄",
+  "blue": "蓝",
+  "black": "黑",
+  "base_cards": "基础卡牌",
+  "aliens": "外星人卡牌",
+  "sort": {
+    "ID_ASC": "编号升序",
+    "ID_DESC": "编号降序",
+    "DIFF_ASC": "价值升序",
+    "DIFF_DESC": "价值降序",
+    "RATING_DESC": "评分"
+  },
+  "posts": {
+    "model": "SETI 基础: 卡牌模型",
+    "tech": "SETI 进阶: 科技路线",
+    "advanced_strategy_1": "SETI进阶攻略",
+    "diy": "DIY工具使用指南",
+    "trace": "SETI 进阶: 点灯学",
+    "fan_made_corps": "玩家自制公司",
+    "corp_tier": "SETI 公司梯度排名",
+    "about": "关于本网站",
+    "expand": "展开",
+    "hot": "热门"
+  },
+  "corps": {
+    "desc": "目前仅包含部分公司，后续会持续更新。"
+  },
+  "Strategy": "策略",
+  "Tutorial": "教程",
+  "General": "常规",
+  "nav": {
+    "go": "前往",
+    "home": "首页",
+    "cards": "卡牌",
+    "about": "关于",
+    "diy": "卡牌制作",
+    "posts": "文章",
+    "maps": "地图",
+    "endgames": "终局计分",
+    "random_quiz": "随机测验",
+    "daily_quiz": "每日测验",
+    "prelude": "起始卡",
+    "organizations": "组织"
+  },
+  "organizations_page": {
+    "kicker": "SETI 组织",
+    "title": "组织",
+    "subtitle": "11 个全新组织，每个都拥有独特的能力与初始资源。点击查看大图，悬停可放大预览。"
+  },
+  "comment": {
+    "login_to_comment": "login to comment",
+    "login_to_pick": "login for better statistics"
+  },
+  "about": {
+    "title": "关于本网站",
+    "intro": "This is an open-source unofficial website of the board game Seti. It is not affiliated with Capstone Games in any way.\nThis project gets inspiration from ssimeonoff's website and for players to easily search for cards and their effects. The initial data for this site is sourced from <1>Cillie's List of animal cards</1>, while the icons and styles were borrowed from <3>BGA</3>. If there are any copyright concerns, I will address them.",
+    "features": {
+      "title": "Features",
+      "intro": "Currently, this site has the following features:",
+      "li_1": "All animal and sponsor cards in base game and Marine World expansion",
+      "li_2": "Multi-language support",
+      "li_3": "Filters for tags, requirements, keywords and so on",
+      "li_4": "Animal value calculation",
+      "li_5": "Rating and comments for each card",
+      "plan_title": "Future Plans",
+      "plan_intro": "In the future, I plan to add the following features:",
+      "plan_li_1": "Animal Card Maker",
+      "plan_li_2": "Maps",
+      "plan_li_3": "All other cards"
+    },
+    "thanks": {
+      "title": "Thanks",
+      "translation": "Thanks for the following players for helping with translation: 小z, 晓慜, Yannick, Propaganda Panda."
+    },
+    "faq": {
+      "title": "FAQ",
+      "q_1": "How can I assist with the translation?",
+      "a_1": "Nice! You can follow the instructions <1>here</1>.",
+      "q_2": "Is this website created for commercial purposes?",
+      "a_2": "No, it's a open-source website dedicated to this fantastic game. Original images and texts belong to Capstone Games. f there are any copyright concerns, I will address them.",
+      "q_3": "What if I have another question, suggestion, or bug report related to this website?",
+      "a_3": "Feel free to comment in the <1>BGG thread</1> or submit an issue at <3>GitHub</3>."
+    }
+  },
+  "helper": {
+    "howto": "如何在文本中使用图标？",
+    "desc": "可渲染图标列表",
+    "name": "语法",
+    "example": "样例",
+    "display": "展示"
+  },
+  "diy": {
+    "card_maker": "Card Maker",
+    "create_your_own_animal_card": "Create your own animal card.",
+    "Download": "Download Image",
+    "animal_name": "Animal Name",
+    "add_new_enclosure": "Add New Enclosure",
+    "add_new_ability": "Customized Ability",
+    "export_json": "导出 SETI 文件",
+    "import_json": "导入 .SETI 文件",
+    "add_exist_ability": "Existing Ability",
+    "bug": "This function has a unsolved bug. Please do not delete original abilities before your customized abilities."
+  },
+  "dialog": {
+    "warning": "警告",
+    "warning-desc": "这部分可能会剧透并影响你的游戏体验。你确定要继续吗？",
+    "confirm": "确认",
+    "export": "说明",
+    "export-desc": "点击“确认”按钮后，将下载一个 .seti 文件。这个文件记录了这张卡牌的编辑状态，导出后可以通过“导入”按钮恢复当前编辑状态。如果你希望未来依然可以编辑这张卡牌，建议导出该文件。"
+  },
+  "article": {
+    "enlarge": "点击卡牌查看大图"
+  },
+  "Aliens?": "外...外星人?",
+  "Placeholder": "Placeholder",
+  "Free Action": "免费行动",
+  "Sector": "右上角扇区",
+  "Image": "图片",
+  "Use URL": "使用链接",
+  "Credit": "费用",
+  "Title": "卡牌名称",
+  "Flavor Text": "背景文字",
+  "Card ID": "卡牌编号",
+  "Effect": "效果",
+  "Description": "文本描述",
+  "Go to Full Page": "查看完整列表并了解更多使用技巧",
+  "Icons": "图标",
+  "Conditional Mission": "条件式任务",
+  "Triggerable Missions": "触发式任务",
+  "Endgame": "终局计分",
+  "Income": "收入",
+  "Tier List": "梯度排名",
+  "Advanced": "高级选项",
+  "Filter text": "输入文本",
+  "Reset": "重置",
+  "Download": "保存",
+  "Export": "导出",
+  "Your card price": "你的卡牌费用",
+  "Your card title": "你的卡牌名称",
+  "Tell more about your card": "你的卡牌背景",
+  "Enter card title": "输入卡牌名称",
+  "Undo": "撤销",
+  "Base": "基础",
+  "Space Agency": "太空机构",
+  "Promo": "推广",
+  "Card Source": "卡牌来源",
+  "home": {
+    "title": "SETI：太空机构",
+    "subtitle_authenticated": "{{name}}，代表你的组织继续搜寻。谁会率先建立首次接触？",
+    "subtitle_guest": "加入一家组织，创建或加入任务，展开对外星生命的搜寻。",
+    "language": "语言",
+    "text_mode": "文本视图",
+    "hotspot_debug": "热区",
+    "open_lobby": "进入任务中心",
+    "profile": "个人资料",
+    "sign_in": "登录",
+    "create_account": "创建账号"
+  },
+  "client": {
+    "app_shell": {
+      "lobby": "任务中心",
+      "login": "登录",
+      "profile": "资料"
+    },
+    "home": {
+      "default_name": "玩家",
+      "hero_kicker": "太空机构",
+      "station_nominal": "已登录",
+      "station_offline": "登录后开始",
+      "commander": "玩家",
+      "title": "任务中心",
+      "subtitle": "选择组织，加入任务，竞争首次接触。",
+      "create_mission": "创建任务",
+      "stat": {
+        "waiting": "等待玩家",
+        "waiting_sub": "可加入任务",
+        "playing": "进行中",
+        "playing_sub": "已开始任务",
+        "players": "参与玩家",
+        "players_sub": "当前任务中"
+      }
+    },
+    "common": {
+      "loading": "加载中…",
+      "empty_value": "—",
+      "empty": "空",
+      "unknown": "未知",
+      "save": "保存",
+      "cancel": "取消",
+      "edit": "编辑",
+      "back": "返回",
+      "next": "下一步",
+      "confirm": "确认",
+      "undo": "撤销",
+      "on": "开",
+      "off": "关",
+      "open": "开放",
+      "locked": "锁定",
+      "na": "不适用",
+      "seconds_short": "{{count}}秒",
+      "seconds_unit": "秒",
+      "close": "收起",
+      "close_dialog": "关闭",
+      "mission": "任务",
+      "crew": "玩家",
+      "ready": "已就绪",
+      "pending": "待定",
+      "live": "共享任务",
+      "actions": "操作"
+    },
+    "auth": {
+      "hero": {
+        "badge": "身份核验",
+        "title": "登录太空机构",
+        "subtitle": "登录后即可创建任务、选择组织，并参与首次接触的竞争。"
+      },
+      "tabs": {
+        "login": "登录",
+        "register": "创建账号"
+      },
+      "fields": {
+        "email": "通讯邮箱",
+        "password": "访问码",
+        "callsign": "代号",
+        "access_code": "访问码"
+      },
+      "placeholders": {
+        "email": "commander@mars.gov",
+        "callsign": "Commander Shepard"
+      },
+      "actions": {
+        "authenticating": "正在核验身份…",
+        "sign_in": "登录",
+        "initializing": "正在创建账号…",
+        "register": "创建账号"
+      },
+      "toast": {
+        "login_failed": "登录失败",
+        "registration_failed": "创建账号失败"
+      },
+      "validation": {
+        "invalid_email": "通讯邮箱格式不正确",
+        "password_min": "访问码至少 8 位",
+        "name_min": "代号至少 2 位",
+        "invalid_field": "输入不合法"
+      }
+    },
+    "lobby": {
+      "title": "任务中心",
+      "new_mission": "创建任务",
+      "kicker": "可加入任务",
+      "loading": "正在加载任务列表…",
+      "filters": {
+        "all": "全部",
+        "waiting": "等待玩家",
+        "in_progress": "进行中"
+      },
+      "empty": "暂无可加入任务。创建一个任务，选择组织并开始搜寻。",
+      "toast": {
+        "created": "任务已创建",
+        "create_failed": "创建任务失败"
+      },
+      "telemetry": {
+        "open": "等待玩家",
+        "open_sub": "可加入任务",
+        "in_orbit": "进行中",
+        "in_orbit_sub": "已开始任务",
+        "operators": "参与玩家",
+        "operators_sub": "当前任务中"
+      }
+    },
+    "mission_hub": {
+      "background_elements": "背景元素",
+      "low_poly_assets": "低多边形任务素材"
+    },
+    "room": {
+      "back": "返回任务中心",
+      "crew": "玩家列表",
+      "mode_solo_short": "单人",
+      "mode_multi_short": "多人",
+      "status": {
+        "waiting": "等待玩家",
+        "playing": "进行中",
+        "finished": "已结束"
+      },
+      "actions": {
+        "joining": "正在加入任务…",
+        "join": "加入任务",
+        "leave": "离开任务",
+        "enter_game": "进入任务",
+        "launching": "正在启动任务…",
+        "launch": "开始任务"
+      },
+      "toast": {
+        "join_failed": "加入失败",
+        "leave_failed": "离开失败",
+        "start_failed": "任务启动失败",
+        "update_failed": "任务设置更新失败"
+      }
+    },
+    "profile": {
+      "title": "个人资料",
+      "kicker": "成员信息",
+      "identity": "账号信息",
+      "callsign": "代号",
+      "on_station": "已登录",
+      "disconnect": "退出登录",
+      "danger_zone": "账号会话",
+      "disconnect_hint": "退出当前账号。再次登录后才能继续未完成的任务。",
+      "settings": "任务显示",
+      "id": "编号",
+      "email": "邮箱",
+      "toast": {
+        "invalid_name": "名称至少 2 位",
+        "updated": "资料已更新",
+        "update_failed": "更新失败"
+      }
+    },
+    "create_room": {
+      "kicker": "新任务",
+      "title": "创建任务",
+      "subtitle": "设置席位、模块与回合计时。组织与快速起步会在任务开始前决定。",
+      "section": {
+        "identification": "任务识别",
+        "rules": "任务规则"
+      },
+      "name": "任务代号",
+      "name_placeholder": "新任务",
+      "default_name": "新任务",
+      "mode_multiplayer": "多人任务",
+      "mode_solo": "单人任务",
+      "mode_multiplayer_meta": "2-4 名玩家",
+      "mode_solo_meta": "1 名玩家 + 对手",
+      "players": "玩家",
+      "solo_mode": "单人对抗",
+      "solo_difficulty": "Rival 难度",
+      "player_count": {
+        "2": "2 名玩家",
+        "3": "3 名玩家",
+        "4": "4 名玩家"
+      },
+      "alien_modules": "外星模块",
+      "alien_pool": "外星随机池",
+      "undo": "允许撤销",
+      "turn_timer": "回合计时（秒，0 为关闭）",
+      "alien_pool_disabled": "（不可用）",
+      "actions": {
+        "launching": "正在创建任务…",
+        "launch": "创建任务"
+      },
+      "validation": {
+        "name_required": "请输入任务代号",
+        "invalid_options": "任务参数无效"
+      }
+    },
+    "room_card": {
+      "status": {
+        "waiting": "等待玩家",
+        "playing": "进行中",
+        "finished": "已结束"
+      },
+      "host": "主持",
+      "solo": "单人",
+      "players": "{{current}}/{{total}} 名玩家",
+      "aliens": "外星模块",
+      "timer": "{{seconds}}秒计时"
+    },
+    "player_slot": {
+      "empty": "席位 {{index}} - 空",
+      "you": "你",
+      "host": "主持",
+      "ready": "已准备",
+      "not_ready": "未准备"
+    },
+    "game_settings": {
+      "title": "任务设置",
+      "mode": "模式",
+      "mode_solo": "单人",
+      "mode_multiplayer": "多人",
+      "players": "玩家",
+      "solo_difficulty": "难度",
+      "alien_modules": "外星模块",
+      "space_agency": "太空机构",
+      "undo": "撤销",
+      "undo_allowed": "允许",
+      "undo_disabled": "禁用",
+      "turn_timer": "回合计时"
+    },
+    "top_bar": {
+      "exit": "离开任务",
+      "round": "回合",
+      "current": "当前：",
+      "your_turn": "轮到你行动",
+      "spectating": "旁观中",
+      "phases": {
+        "SETUP": "准备阶段",
+        "AWAIT_MAIN_ACTION": "主行动待命",
+        "AWAIT_END_TURN": "待结束行动",
+        "IN_RESOLUTION": "结算中",
+        "BETWEEN_TURNS": "回合间",
+        "END_OF_ROUND": "回合结束",
+        "FINAL_SCORING": "最终评估",
+        "GAME_OVER": "任务结束"
+      }
+    },
+    "sidebar": {
+      "opponents": "其他玩家",
+      "no_opponents": "暂无其他玩家。",
+      "alien_boards": "外星板块",
+      "alien_boards_hint": "发现外星人后会显示在这里。"
+    },
+    "action_menu": {
+      "loading_actions": "正在加载可用行动…",
+      "waiting_for": "等待 {{player}} 行动…",
+      "waiting_for_setup": "等待 {{player}} 完成设置阶段塞牌后再进行回合行动",
+      "another_player": "其他玩家",
+      "player_unavailable": "玩家数据不可用。",
+      "title": "主行动",
+      "end_turn": "结束回合",
+      "status": {
+        "loading": "待命",
+        "turn": "进行中",
+        "waiting": "待命",
+        "offline": "离线"
+      },
+      "actions": {
+        "LAUNCH_PROBE": "发射探测器",
+        "ORBIT": "进入轨道",
+        "LAND": "着陆",
+        "SCAN": "扫描",
+        "ANALYZE_DATA": "分析数据",
+        "PLAY_CARD": "打出卡牌",
+        "RESEARCH_TECH": "研究科技",
+        "USE_ORGANIZATION_ACTION": "组织主行动",
+        "PASS": "跳过"
+      },
+      "organization_actions": {
+        "futurespan": "未来跨度卡牌",
+        "xenolab": {
+          "launch": "异星实验室发射",
+          "scan": "异星实验室扫描",
+          "research": "异星实验室研究"
+        }
+      }
+    },
+    "free_action_bar": {
+      "title": "免费行动",
+      "expand": "展开",
+      "collapse": "收起",
+      "actions": {
+        "MOVEMENT": "移动探测器",
+        "CONVERT_ENERGY_TO_MOVEMENT": "能量->移动",
+        "PLACE_DATA": "放置数据",
+        "COMPLETE_MISSION": "完成任务",
+        "DELIVER_SAMPLE": "交付样本",
+        "USE_CARD_CORNER": "使用卡角",
+        "BUY_CARD": "买卡（3声望）",
+        "EXCHANGE_RESOURCES": "资源交换",
+        "SPEND_SIGNAL_TOKEN": "使用信号标记",
+        "USE_ORGANIZATION_POWER": "组织能力"
+      }
+    },
+    "space_agency_options": {
+      "organizations": "组织",
+      "quick_start_cards": "快速起步卡",
+      "new_deck": "新牌库",
+      "new_alien_species": "新外星物种"
+    },
+    "setup_choice": {
+      "title": "设置选择"
+    },
+    "organizations": {
+      "setup_badge": "初始",
+      "setup_summary": "设置：{{credit}} 金钱，{{energy}} 能量，{{card}} 卡牌，{{publicity}} 声望，{{data}} 数据，{{tuckIncome}} 张收入塞牌",
+      "effect_label": "效果",
+      "passive_label": "被动",
+      "setup_ability_label": "初始设置",
+      "main_action_label": "主行动",
+      "power_used": "已使用",
+      "names": {
+        "cosmos-strategy-group": "宇宙战略小组",
+        "deep-sky-survey": "深空巡测",
+        "fenwick-research-center": "芬威克研究中心",
+        "futurespan-institute": "未来跨度研究所",
+        "helion-assembly": "赫利昂议会",
+        "mission-relay": "任务中继",
+        "orbital-dynamics": "轨道动力",
+        "sentinel-probe-network": "哨兵探测网络",
+        "stratus-core": "层云核心",
+        "turing-systems": "图灵系统",
+        "xenolab": "异星实验室"
+      }
+    },
+    "played_cards": {
+      "show_all": "显示所有已打出卡牌",
+      "count": "{{count}} 张卡",
+      "title": "所有已打出卡牌",
+      "empty": "暂无已打出卡牌",
+      "cards": "卡牌"
+    },
+    "quick_start_card": {
+      "short_label": "快速起步",
+      "screen_reader_label": "快速起步卡 {{id}}：{{summary}}",
+      "no_setup_mark": "无设置标记"
+    },
+    "action_confirm": {
+      "cost": "花费"
+    },
+    "event_log": {
+      "title": "事件日志",
+      "empty": "暂无事件。",
+      "latest": "最近日志",
+      "debug_toggle_hint": "切换调试日志条目",
+      "debug_shown": "调试可见",
+      "debug_hidden": "已隐藏调试"
+    },
+    "event_entry": {
+      "action": "{{player}} 使用了 {{action}}",
+      "rival_action": "{{player}} 翻开 {{card}} 并结算 {{action}}",
+      "arkhos_exploration_reward": "{{player}} 揭示 {{size}} Arkhos 探索 {{card}}",
+      "arkhos_security_card_used": "{{player}} 使用 {{card}} 结算 {{size}} Arkhos 奖励",
+      "arkhos_security_breached": "{{player}} 破解 {{trace}} Arkhos 安保 {{card}}（访问 {{access}}）",
+      "free_action": "{{player}} 使用了免费行动 {{action}}",
+      "input": "{{player}} 响应 {{response}}",
+      "resource_change": "{{player}} {{direction}} {{amount}} {{resource}}",
+      "score_change": "{{player}} {{delta}} VP（{{source}}）",
+      "sector_completed": "扇区 {{sector}} 已完成，赢家：{{winner}}",
+      "alien_discovered": "发现外星人：{{alien}}",
+      "rotation": "太阳盘 {{disc}} 已旋转",
+      "round_end": "第 {{round}} 回合结束",
+      "game_end": "对局结束",
+      "unknown": "未知事件",
+      "gained": "获得",
+      "lost": "失去",
+      "action_cost": "行动消耗",
+      "action_reward": "行动奖励",
+      "card_unhandled": "未处理的卡牌效果",
+      "card_mark_trace": "卡牌轨迹",
+      "sector_marked_action": "扇区标记",
+      "milestone_check": "里程碑检查",
+      "gold_resolved": "金色里程碑",
+      "neutral_resolved": "中立里程碑",
+      "rival_action_name": "对手行动",
+      "end_turn": "结束回合",
+      "debug": "调试",
+      "info": "信息",
+      "undo": "{{player}} 撤销了第 {{turn}} 回合",
+      "trace_marked": "{{player}} 标记了 {{trace}} 轨迹",
+      "played_card_prefix": "{{player}} 打出了 ",
+      "played_unknown_card": "{{player}} 打出了一张卡",
+      "card_mark_trace_line": "{{player}} 通过卡牌效果标记了一条轨迹",
+      "sector_marked_line": "{{player}} 在扇区放置了标记",
+      "sector_completion_resolved_line": "{{player}} 结算了扇区完成",
+      "anomaly_triggered_line": "{{player}} 触发了一个异象者代币",
+      "centaurians_reward_claimed_line": "{{player}} 领取了一项半人马族信息奖励",
+      "draw_alien_card_line": "{{player}} 抽取了一张外星人卡牌",
+      "milestone_gold_resolved_line": "{{player}} 达成了 {{threshold}} VP 金色里程碑",
+      "milestone_neutral_resolved_line": "{{player}} 跨过了 {{threshold}} VP 中立里程碑",
+      "internal_action_cost": "{{player}} 支付了行动消耗",
+      "internal_action_reward": "{{player}} 获得了行动奖励",
+      "internal_milestone_check": "{{player}} — 里程碑检查",
+      "internal_card_custom_effect_unhandled": "{{player}} — 卡牌效果未处理",
+      "end_turn_line": "{{player}} 结束了回合",
+      "main": {
+        "LAUNCH_PROBE": "{{player}} 发射了探测器",
+        "ORBIT": "{{player}} 让探测器进入了 {{planet}} 轨道",
+        "ORBIT_NO_PLANET": "{{player}} 进行了环绕",
+        "LAND": "{{player}} 着陆在 {{planet}}",
+        "LAND_WITH_MOON": "{{player}} 着陆在 {{moon}}（{{planet}} 的卫星）",
+        "LAND_NO_PLANET": "{{player}} 进行了着陆",
+        "SCAN": "{{player}} 扫描",
+        "ANALYZE_DATA": "{{player}} 分析数据",
+        "RESEARCH_TECH": "{{player}} 研究科技",
+        "PASS": "{{player}} 跳过"
+      },
+      "free": {
+        "BUY_CARD": "{{player}} 购买了一张卡",
+        "MOVEMENT": "{{player}} 移动了探测器",
+        "EXCHANGE_RESOURCES": "{{player}} 进行了资源交换",
+        "PLACE_DATA": "{{player}} 放置了一枚数据",
+        "COMPLETE_MISSION": "{{player}} 完成了一项任务",
+        "DELIVER_SAMPLE": "{{player}} 投送了一份样本",
+        "USE_CARD_CORNER": "{{player}} 使用了卡牌的角落效果",
+        "CONVERT_ENERGY_TO_MOVEMENT": "{{player}} 将能量转换为移动",
+        "SPEND_SIGNAL_TOKEN": "{{player}} 使用了信号令牌",
+        "USE_ORGANIZATION_POWER": "{{player}} 使用了组织能力"
+      },
+      "kind": {
+        "main": "主行动",
+        "free": "免费行动",
+        "effect": "↳",
+        "meta": "⋯"
+      }
+    },
+    "input": {
+      "no_step_required": "无需执行步骤。",
+      "no_available_options": "没有可选项。",
+      "option": "选项 {{index}}",
+      "step": "步骤 {{current}} / {{total}}",
+      "choose_end_of_round": "请选择一张回合结束卡：",
+      "select_tech": "选择科技",
+      "select_trace": "选择轨迹",
+      "choose_card_from_row": "从牌行中选择一张卡",
+      "choose_card_to_prepare": "选择一张要准备的卡",
+      "choose_hand_card_to_swap": "选择一张要交换的手牌",
+      "choose_helion_tech_to_disable": "选择要禁用的 Helion Assembly 科技",
+      "choose_tech_type": "选择科技类型",
+      "choose_turing_tech": "选择临时的 Turing Systems 科技",
+      "choose_alien_board": "选择要从中抽牌的外星人板块",
+      "choose_card_destination": "选择卡牌去向",
+      "choose_cosmos_reward": "选择 Cosmos Strategy Group 奖励",
+      "choose_fenwick_source": "选择 Fenwick Research Center 卡牌来源",
+      "choose_lander_to_return": "选择要回收的着陆器",
+      "choose_mission_relay_source": "选择 Mission Relay 卡牌来源",
+      "choose_one_pay_or_gain": "二选一：消耗 1 能量发射探测器，或获得 1 自由移动。",
+      "choose_orbiter_to_return": "选择要回收的轨道器",
+      "choose_probe_asteroid": "选择用于小行星调查的探测器",
+      "choose_sector_tess": "为 TESS 卫星选择扇区",
+      "choose_sector_to_mark": "选择要标记信号的扇区",
+      "choose_sector_with_probe": "选择有你探测器的扇区",
+      "choose_signal_color_to_mark": "选择要标记的信号颜色",
+      "choose_signal_color": "选择信号颜色",
+      "choose_color_sector_to_mark": "选择{{color}}扇区以标记信号",
+      "choose_where_to_mark": "选择信号标记位置",
+      "choose_fulfilled_sector": "选择下一个要结算的已完成扇区",
+      "discard_for_corner_reward": "弃 1 张卡获得其自由动作角落奖励",
+      "discard_for_income_resource": "弃 1 张卡以获得与其收入相对应的资源",
+      "discard_for_signal": "弃 1 张手牌以放置一个信号",
+      "discard_non_alien": "弃一张非外星人卡",
+      "discard_for_income_corners": "为收入角落弃牌",
+      "discard_to_hand_limit": "弃牌至手牌上限",
+      "discard_then_signal": "弃 1 张手牌,然后在弃牌所在的扇区放置一个信号。",
+      "earth_look": "Earth Look:为地球信号选择扇区",
+      "mark_helion_reward": "标记 Helion Assembly 奖励?",
+      "mission_triggered": "任务触发!领取奖励?",
+      "pay_publicity_mercury": "支付 1 声望在水星扇区放置 1 个额外信号。",
+      "play_exertian_facedown": "面朝下打出 Exertian 卡",
+      "return_unfinished_mission": "回收一项未完成任务",
+      "scan_sub_action": "扫描:选择子动作",
+      "select_card_from_row": "从牌行中选择一张卡",
+      "select_card_to_tuck": "选择一张卡塞入获得收入",
+      "select_computer_column": "为该科技选择一个计算机列",
+      "select_hand_card_for_signal": "选择一张手牌弃掉以获得信号",
+      "select_other_player_tech": "选择其他玩家研究的科技",
+      "select_tech_to_research": "选择要研究的科技",
+      "select_orbiter_reassign": "选择要重新分配的轨道器",
+      "select_end_of_round_card": "选择回合结束卡",
+      "select_scan_energy_launch": "选择 Scan 能量发射效果",
+      "use_exofossil_signal": "用化石额外标记一个信号?",
+      "use_exofossil_data": "用化石获得数据?",
+      "use_exofossil_movement": "用化石获得移动?",
+      "choose_any_card": "选择任意一张卡",
+      "choose_sector_for_signal": "选择放置信号的扇区",
+      "choose_probe_sector_to_mark": "选择有探测器的扇区进行标记",
+      "opt": {
+        "add_to_hand": "加入手牌",
+        "signal_black": "黑色信号",
+        "signal_blue": "蓝色信号",
+        "signal_red": "红色信号",
+        "signal_yellow": "黄色信号",
+        "card_row": "牌行",
+        "discard": "弃牌",
+        "done_end_scan": "完成(结束扫描)",
+        "done_skip_remaining_techs": "完成(跳过其余扫描科技)",
+        "done": "完成",
+        "draw_faceup_alien": "抽明面外星人卡",
+        "draw_from_deck": "从牌库抽牌",
+        "draw_random_alien": "随机抽外星人卡",
+        "energy_launch_or_move": "能量发射或移动",
+        "finish": "完成",
+        "gain_movement_instead_publicity": "获得 1 移动,代替 1 声望",
+        "gain_movement": "获得 1 移动",
+        "keep_publicity": "保留 1 声望",
+        "main_deck": "主牌库",
+        "mark_card_row": "标记牌行",
+        "mark_earth_or_adjacent": "标记地球或相邻",
+        "mark_earth": "标记地球",
+        "mark_hand_signal": "标记手牌信号",
+        "mark_mercury": "标记水星(1 声望)",
+        "mark_oumuamua": "标记奥陌陌图块",
+        "mark_reward": "标记奖励",
+        "mark_sector": "标记扇区",
+        "other_planet": "其他行星",
+        "pay_energy_launch_probe": "消耗 1 能量发射探测器",
+        "research_probe_tech": "研究探测器科技",
+        "research_scan_tech": "研究扫描科技",
+        "skip_discard": "跳过弃牌",
+        "skip_exertian_facedown": "跳过 Exertian 面朝下打出",
+        "skip": "跳过",
+        "use_signal_token": "使用信号令牌",
+        "use_signal_token_numbered": "使用信号令牌（{{index}}）",
+        "exofossil_for_data": "消耗 1 化石获得 1 数据",
+        "exofossil_for_move": "消耗 1 化石获得 2 移动",
+        "exofossil_for_signal": "消耗 1 化石标记任意信号",
+        "choose_planet": "选择 {{planet}}",
+        "choose_landing_position": "选择降落位置",
+        "choose_planet_to_land_on": "选择要降落的行星",
+        "choose_planet_to_orbit": "选择要环绕的行星",
+        "orbit_planet_with_cost": "环绕 {{planet}} ({{costs}})",
+        "orbit_planet": "环绕 {{planet}}",
+        "land_on_planet": "登陆 {{planet}}",
+        "column_n": "第 {{index}} 列",
+        "sector_n": "扇区 {{id}}",
+        "probe_n": "探测器 {{id}}",
+        "spend_n_credit": "消耗 {{amount}} 金币",
+        "gain_resource": "获得 {{resource}}",
+        "gain_reward": "获得 {{reward}}",
+        "return_orbiter_from": "回收来自 {{planet}} 的轨道器",
+        "discard_card": "弃 {{card}}",
+        "take_from_row": "从牌行获得 {{card}}",
+        "play_facedown": "面朝下打出 {{card}}",
+        "resource_token": {
+          "vp": "胜利点",
+          "move": "移动",
+          "exofossil": "化石"
+        },
+        "sector_color": {
+          "red": "红色",
+          "yellow": "黄色",
+          "blue": "蓝色",
+          "black": "黑色"
+        },
+        "sector_banner": {
+          "earth": "地球",
+          "adjacent": "相邻"
+        },
+        "sector_star": {
+          "procyon": "南河三",
+          "vega": "织女星",
+          "sirius_a": "天狼星 A",
+          "barnards_star": "巴纳德星",
+          "kepler_22": "开普勒-22",
+          "proxima_centauri": "比邻星",
+          "sixty_one_virginis": "天门增四",
+          "beta_pictoris": "绘架座 β"
+        },
+        "sector_full": "{{color}} {{star}} (sector-{{index}})",
+        "sector_banner_full": "{{banner}} — {{color}} {{star}} (sector-{{index}})"
+      }
+    },
+    "score": {
+      "empty": "暂无计分数据。",
+      "player": "玩家",
+      "base": "基础",
+      "cards": "卡牌",
+      "tech": "科技",
+      "milestone": "里程碑",
+      "gold": "金色",
+      "alien": "外星",
+      "total": "总分"
+    },
+    "milestone": {
+      "empty": "暂无里程碑数据。",
+      "title": "里程碑轨道",
+      "open": "开放",
+      "type_gold": "金色",
+      "type_neutral": "普通"
+    },
+    "gold_tile_selector": {
+      "title": "金色板块",
+      "slots": "槽位"
+    },
+    "income_tracker": {
+      "title": "收入",
+      "credit": "金钱",
+      "energy": "能量",
+      "card": "卡牌",
+      "tucked_tooltip": "塞入卡牌的收入（不含起始收入卡）"
+    },
+    "resource_bar": {
+      "credit": "金钱",
+      "energy": "能量",
+      "publicity": "声望",
+      "signal_tokens": "信号标记",
+      "score": "分数",
+      "exofossils": "外星化石"
+    },
+    "computer_view": {
+      "title": "计算机",
+      "top_slot": "计算机上层槽位 {{index}}",
+      "bottom_slot": "计算机下层槽位 {{index}}"
+    },
+    "data_pool": {
+      "title": "数据池",
+      "full": "已满"
+    },
+    "opponent_summary": {
+      "title": "其他玩家",
+      "passed": "过牌",
+      "vp": "胜利点",
+      "hand": "手牌",
+      "tech": "科技",
+      "credit": "金钱",
+      "energy": "能量",
+      "data": "数据",
+      "publicity": "声望",
+      "pool": "数据池",
+      "signals": "信号"
+    },
+    "organizations_card": {
+      "reward_marks": "奖励标记",
+      "marked": "已标记",
+      "open": "未标记",
+      "marks": {
+        "credit": "金钱",
+        "publicity": "声望",
+        "data": "数据",
+        "probe": "探测",
+        "scan": "扫描",
+        "computer": "计算机"
+      }
+    },
+    "hand_view": {
+      "title": "手牌",
+      "count": "{{count}} 张",
+      "empty": "暂无明牌",
+      "mode_select": "选择",
+      "mode_corner": "角落",
+      "mode_play": "打出",
+      "pick_range": "选择 {{min}}–{{max}}",
+      "setup_tuck_progress": "当前第 {{current}} 张，共 {{total}} 张"
+    },
+    "played_missions": {
+      "title": "任务",
+      "completed_tooltip": "已完成任务",
+      "empty": "暂无任务或结束计分卡",
+      "completed_pile_title": "点击查看已完成任务",
+      "completed_pile_label": "已完成 {{count}}",
+      "completed_dialog_title": "已完成任务"
+    },
+    "player_dashboard": {
+      "missions": "任务",
+      "mission_alt": "任务",
+      "played": "已打出",
+      "tech_alt": "科技数量",
+      "tech": "科技",
+      "card_selection_active": "卡牌选择中"
+    },
+    "rival_panel": {
+      "title": "Rival 机构",
+      "progress": "进度",
+      "progress_total": "总计 {{count}}",
+      "draw": "牌库",
+      "discard": "弃牌",
+      "current_card": "行动",
+      "no_current_card": "无卡牌",
+      "tech_pile": "科技堆",
+      "tech_probe": "探测",
+      "tech_scan": "扫描",
+      "tech_computer": "计算机",
+      "rules": "Rival 规则",
+      "rules_title": "Rival 规则",
+      "rules_progress": "Rival progress 会沿 12 格循环前进；越过牌库格时加入高级行动牌。",
+      "rules_tech": "科技堆统计 Rival 拥有的探测、扫描、计算机三类科技。",
+      "rules_objectives": "Rival objectives 是公开目标；任务全部标记后移入完成堆。",
+      "objectives": "目标",
+      "objectives_completed": "完成 {{count}}",
+      "no_objectives": "无",
+      "no_completed_objectives": "暂无完成目标",
+      "computer": "计算机",
+      "data_pool": "池 {{count}}"
+    },
+    "rival_action_card": {
+      "unknown": "未知卡牌",
+      "unknown_action": "行动",
+      "image_alt": "Rival 行动牌 {{card}}",
+      "tiers": {
+        "basic": "基础",
+        "advanced": "高级",
+        "species-special": "物种"
+      },
+      "decisions": {
+        "left": "左",
+        "right": "右"
+      },
+      "actions": {
+        "analyze-data": "分析数据",
+        "launch-probe": "发射探测器",
+        "research-tech": "研究科技",
+        "probe-placement": "探测器放置",
+        "scan": "扫描",
+        "species-replacement-check": "物种检查",
+        "mark-trace": "标记痕迹",
+        "mark-any-trace": "标记任意痕迹",
+        "play-danger-card": "打出危险牌",
+        "start-countdown": "开始倒计时",
+        "unlock-arkhos-security": "解锁 Arkhos 安保"
+      },
+      "candidate": {
+        "paid": "付费",
+        "free": "免费",
+        "movement": "{{count}} 移动",
+        "planets": "目标：{{planets}}",
+        "probe_target": "目标：{{target}}",
+        "alien_index": "外星人 {{index}}"
+      },
+      "probe_placements": {
+        "orbiter": "轨道",
+        "lander": "着陆"
+      },
+      "probe_targets": {
+        "oumuamua": "奥陌陌"
+      }
+    },
+    "rival_objective": {
+      "unknown": "未知目标",
+      "image_alt": "Rival 目标 {{objective}}",
+      "tasks": {
+        "min_score": "达到 {{amount}} VP",
+        "min_data_pool": "储存 {{amount}} 数据",
+        "min_publicity": "达到 {{amount}} 声望",
+        "unknown": "目标触发",
+        "either": "{{items}}",
+        "either_separator": " 或 "
+      },
+      "triggers": {
+        "probe-launched": "发射探测器",
+        "scan-performed": "扫描",
+        "tech-probe": "探测科技",
+        "tech-scan": "扫描科技",
+        "tech-computer": "计算机科技",
+        "tech-any": "任意科技",
+        "trace-blue": "蓝色痕迹",
+        "probe-visited-asteroids": "访问小行星",
+        "probe-visited-comet": "访问彗星",
+        "card-cost-3": "打出 3 费卡牌",
+        "mission-completed": "完成任务",
+        "probe-landed": "探测器着陆",
+        "probe-orbited": "探测器入轨",
+        "planet-venus": "金星任务",
+        "planet-mercury": "水星任务",
+        "planet-jupiter": "木星任务",
+        "planet-saturn": "土星任务",
+        "planet-mars": "火星任务",
+        "planet-neptune": "海王星任务",
+        "planet-uranus": "天王星任务",
+        "sector-dominance": "赢得任意扇区",
+        "sector-dominance-yellow": "赢得黄色扇区",
+        "sector-dominance-red": "赢得红色扇区",
+        "sector-dominance-blue": "赢得蓝色扇区",
+        "sector-dominance-black": "赢得黑色扇区"
+      }
+    },
+    "tech_display": {
+      "title": "科技槽",
+      "empty": "暂无科技板块",
+      "types": {
+        "probe": "探测",
+        "scan": "扫描",
+        "computer": "计算机",
+        "any": "任意"
+      }
+    },
+    "tech_row": {
+      "types": {
+        "launch": "发射",
+        "scan": "扫描"
+      },
+      "launch": {
+        "double_probe": "发射 +1",
+        "asteroid": "小行星 +★",
+        "land_discount": "着陆 −1⚡",
+        "moon": "登月"
+      },
+      "scan": {
+        "earth": "地球（或邻接）",
+        "earth_base": "地球",
+        "card_row": "卡牌行",
+        "mercury": "声望水星",
+        "discard_card": "弃手牌",
+        "energy_launch": "移动 / 发射（⚡）"
+      }
+    },
+    "sector_node": {
+      "win": "胜",
+      "first": "首位",
+      "other": "2+",
+      "mark_aria_label": "标记 {{color}} 扇区（{{sectorId}}）",
+      "tile_aria_label": "扇区板块 {{tileId}}（{{starNames}}）"
+    },
+    "sector_grid": {
+      "ring_aria_label": "扇区圆环"
+    },
+    "probe_token": {
+      "aria_label": "{{playerColor}} 探测器"
+    },
+    "tech_stack_view": {
+      "glyph_token": "{{glyph}} 字形标记"
+    },
+    "tech_bonus": {
+      "energy": "能量奖励",
+      "data": "数据奖励",
+      "publicity": "声望奖励",
+      "card": "卡牌奖励",
+      "vp_3": "3 VP 奖励",
+      "vp_2": "2 VP 奖励",
+      "data_2": "2 数据奖励",
+      "credit": "金钱奖励",
+      "launch": "发射行动奖励",
+      "generic": "{{type}} 奖励"
+    },
+    "alien_board_extra": {
+      "title": "外星板块",
+      "title_face_down": "外星板块（背面）",
+      "image_alt_face_down": "背面外星板块",
+      "image_alt_named": "{{name}} 外星板块",
+      "costs_exofossil": "消耗 {{count}} 外星化石",
+      "costs_data": "消耗 {{count}} 数据",
+      "neutral": "中立",
+      "trace_slot_title": "{{trace}} 槽位{{overflow}}{{discovery}}{{cost}}",
+      "trace_slot_overflow_suffix": "（溢出）",
+      "trace_slot_discovery_suffix": " - 发现",
+      "from_planet": "来自 {{planet}}",
+      "at_space": "位于 {{space}}",
+      "round_label": "第 {{round}} 回合",
+      "anomaly_tier_title": "{{trace}} 异象层级",
+      "trace_pink": "粉色",
+      "trace_yellow": "黄色",
+      "trace_blue": "蓝色",
+      "trace_any": "任意",
+      "rotation_token_alt": "旋转提示标记",
+      "rotation_token_title": "本回合首位过牌的玩家旋转太阳系"
+    },
+    "solar_system_view": {
+      "zoom_controls": "太阳系板块缩放控件",
+      "zoom_out": "缩小太阳系板块",
+      "zoom_in": "放大太阳系板块",
+      "space_aria_label": "空间 {{spaceId}}",
+      "space_title": "{{spaceId}} - 棋子数：{{count}}",
+      "oumuamua_sector_title": "奥陌陌扇区 {{sectorId}}",
+      "sample_capsule_title": "{{playerColor}} 样本舱"
+    },
+    "rival_panel_extra": {
+      "board_alt": "Rival 难度 {{difficulty}} 板块",
+      "progress_title": "进度 {{index}}",
+      "tech_tiles_aria": "Rival 科技板块",
+      "data_pool_aria": "Rival 数据池：{{count}}"
+    },
+    "planetary_board": {
+      "glyph_token": "{{glyph}} 字形标记",
+      "target_aria_label": "{{label}} 目标",
+      "token_aria_label": "玩家 {{playerId}} 的标记",
+      "orbit_token_title": "{{label}} 轨道（{{player}}）",
+      "landing_token_title": "{{label}} {{slotKind}}（{{player}}）"
+    },
+    "text_card": {
+      "effect": "效果：",
+      "mission": "任务：",
+      "end_game": "终局：",
+      "note": "注：",
+      "free_action": "自由行动：",
+      "sector": "扇区：",
+      "income": "收入："
+    },
+    "prelude_card": {
+      "label": "前奏",
+      "upper": "上半",
+      "setup": "设置",
+      "lower": "下半",
+      "note": "注释",
+      "income": "收入："
+    },
+    "computer_row": {
+      "tuck": "藏入",
+      "analyze": "分析"
+    },
+    "tech_stack": {
+      "types": {
+        "probe": "探测",
+        "scan": "扫描",
+        "computer": "计算机",
+        "any": "任意"
+      },
+      "tile_alt": "{{tech}} 等级 {{level}}",
+      "first_take_bonus": "2VP {{status}}",
+      "available": "可用",
+      "taken": "已领取",
+      "no_owner": "无人拥有"
+    },
+    "board": {
+      "planetary_board": "行星板块",
+      "tech_board": "科技板块"
+    },
+    "solar_system": {
+      "title": "太阳系",
+      "next_rotate": "下次旋转：",
+      "next_rotate_alt": "下次旋转的圆环"
+    },
+    "gold_tile": {
+      "title": "金色板块",
+      "slots": "槽位",
+      "label": {
+        "tech": "科技",
+        "mission": "任务",
+        "income": "收入",
+        "other": "其他"
+      },
+      "tech_a": "每三种科技各一个为一组(探测 / 扫描 / 计算机)",
+      "tech_b": "每两个科技为一对",
+      "mission_a": "每完成一个任务(条件 + 触发都算)",
+      "mission_b": "每一对已完成任务 / 终局计分卡",
+      "income_a": "每三张不同类型的塞入收入卡(各 1 张:金钱 / 能量 / 抽卡)",
+      "income_b": "塞入最多的那种收入(金钱或能量)",
+      "other_a": "每三种生命痕迹各一个为一组(粉 / 黄 / 蓝)",
+      "other_b": "每一次扇区获胜搭配一个轨道器或着陆器",
+      "capacity_hint_one": "可容纳 {{count}} 个标记",
+      "capacity_hint_other": "可容纳 {{count}} 个标记"
+    },
+    "alien_board": {
+      "title": "外星发现",
+      "alien_index": "外星人 {{index}}",
+      "discovered": "已发现",
+      "capsules": "胶囊",
+      "no_active_capsules": "暂无活跃胶囊",
+      "delivered_samples": "已交付样本",
+      "no_delivered_samples": "暂无已交付样本",
+      "samples": "样本",
+      "sample_count_one": "{{count}} 个样本",
+      "sample_count_other": "{{count}} 个样本",
+      "empty": "空",
+      "hidden": "隐藏",
+      "face_down_exertians": "面朝下的动能族",
+      "no_hidden_cards": "暂无隐藏卡牌",
+      "oumuamua_landing_area": "奥陌陌着陆区",
+      "orbit": "环绕",
+      "landing": "着陆",
+      "orbit_oumuamua": "环绕奥陌陌",
+      "land_oumuamua": "登陆奥陌陌",
+      "types": {
+        "anomalies": "异象者",
+        "centaurians": "半人马族",
+        "exertians": "动能族",
+        "mascamites": "虫族",
+        "oumuamua": "奥陌陌",
+        "amoeba": "变形虫",
+        "glyphids": "字形族",
+        "arkhos": "阿尔霍斯",
+        "dummy": "占位体"
+      },
+      "card_zone": {
+        "title": "外星牌库",
+        "deck_count": "牌库 {{count}}",
+        "discard_count": "弃牌 {{count}}",
+        "preview_aria": "预览 {{card}}",
+        "empty": "空"
+      },
+      "glyphids": {
+        "bank_count": "库存 {{count}}",
+        "player_rows": "玩家行",
+        "no_glyph_rows": "无字形行",
+        "board_tokens": "板块标记",
+        "translation": "翻译",
+        "side": "面 {{side}}"
+      },
+      "amoeba": {
+        "organelles": "变形虫细胞器"
+      },
+      "arkhos": {
+        "exploration_counts": "牌库 {{deck}} / 储备 {{reserve}} / 弃牌 {{discard}}",
+        "security": "安保",
+        "access": "访问",
+        "no_security_cards": "无安保卡",
+        "no_access_records": "无访问记录",
+        "access_record": "等级 {{level}} / {{breached}}",
+        "resolved_rewards": "已揭示奖励",
+        "reward_image_alt": "{{player}} 的 Arkhos 探索 {{card}} {{size}}奖励",
+        "reward_size": {
+          "minor": "小",
+          "major": "大"
+        },
+        "zone": {
+          "front": "正面",
+          "hand": "手牌",
+          "used": "已用"
+        },
+        "trace": {
+          "red-trace": "红色",
+          "yellow-trace": "黄色",
+          "blue-trace": "蓝色"
+        }
+      }
+    },
+    "planet_card": {
+      "orbit_bonus": "轨道 +3VP",
+      "orbit_reward": "轨道奖励",
+      "first_orbit": "首次轨道",
+      "land_reward": "着陆奖励",
+      "first_land_data": "首次着陆数据",
+      "orbit": "轨道",
+      "landing": "着陆",
+      "data_slot": "数据 {{index}}",
+      "moons": "卫星 {{count}}",
+      "occupied": "已占用（{{player}}）",
+      "unoccupied": "未占用"
+    },
+    "card_row": {
+      "title": "卡牌行"
+    },
+    "end_of_round": {
+      "title": "回合结束牌堆",
+      "round": "第 {{index}} 回合",
+      "cards": "{{count}} 张卡",
+      "select_one": "从当前牌堆选择一张",
+      "final_round": "最终回合",
+      "final_round_hint": "无回合结束抽牌"
+    },
+    "game_page": {
+      "connecting": "正在建立安全连接...",
+      "awaiting": "等待任务数据..."
+    },
+    "error_boundary": {
+      "fallback": "渲染该区域时出现错误。"
+    },
+    "toast": {
+      "dismiss": "关闭"
+    },
+    "game": {
+      "toast": {
+        "blocking": "阻塞错误",
+        "error": "游戏错误",
+        "warning": "游戏提示"
+      }
+    },
+    "game_layout": {
+      "toggle_sidebar": "切换侧栏",
+      "board": "棋盘",
+      "info": "信息",
+      "tabs": {
+        "board": "棋盘",
+        "planets": "行星",
+        "tech": "科技",
+        "cards": "卡牌",
+        "aliens": "外星",
+        "scoring": "计分"
+      },
+      "buy_from_deck": "从牌库购买",
+      "buy_from_row": "从牌行购买",
+      "buy_from_row_pick_hint": "请从牌行中选择一张卡",
+      "cancel_row_buy": "取消牌行购买",
+      "awaiting_input": "等待输入",
+      "orbital_dynamics": "Orbital Dynamics",
+      "select_highlighted_space": "请选择棋盘上高亮的空间。",
+      "move_probe": "移动探测器",
+      "movement_points_steps_one": "{{count}} 步",
+      "movement_points_steps_other": "{{count}} 步",
+      "end_move": "结束移动",
+      "main_deck": "主牌库",
+      "discard_pile": "弃牌堆",
+      "scores": "分数",
+      "no_gold_tiles": "暂无金色计分板块。",
+      "gold_scoring_tiles": "金色计分板块",
+      "gold_tile_alt": "金色计分板块",
+      "side": "面 {{side}}",
+      "claimed_by": "已被 {{player}} 占用",
+      "dashboard": "面板",
+      "hand_and_missions": "手牌与任务",
+      "personal_board": "个人面板",
+      "rival_board": "Rival 面板",
+      "mission_area": "任务区",
+      "intel": "情报",
+      "hand": "手牌",
+      "hide_hand": "收起手牌",
+      "show_hand": "展开手牌",
+      "hand_collapsed_hint": "手牌 {{count}} 张 — 展开以查看或使用",
+      "corner_selection_hint": "点击手牌以使用其卡角行动",
+      "actions": "行动",
+      "buy_card_title": "买卡",
+      "buy_card_desc": "花费 3 声望：可从牌行购买一张，或直接从牌库抽 1 张。",
+      "buy_card_cost": "3 声望",
+      "buy": "购买",
+      "exchange_title": "交换资源",
+      "exchange_desc": "用 2 个资源换 1 个其他资源。",
+      "exchange_into_card": "2 {{from}} → 1 张牌 — {{source}}",
+      "exchange_option": "2 {{from}} -> 1 {{to}}",
+      "place_data_title": "放置数据",
+      "place_data_desc": "选择要填充的计算机槽位。",
+      "place_data_top": "上层槽位 C{{index}}（从左到右）",
+      "place_data_bottom": "下层槽位 C{{index}}",
+      "deliver_sample_title": "交付样本",
+      "deliver_sample_desc": "选择要完成的 capsule 与任务卡。",
+      "convert_energy_title": "转换能量",
+      "convert_energy_desc": "消耗能量，获得等量移动点。",
+      "convert_energy_option": "{{amount}} 能量 -> {{amount}} 移动",
+      "toast": {
+        "no_computer_slot": "没有可用的计算机槽位",
+        "no_computer_slot_desc": "请先填充数据池并解锁槽位。",
+        "mission_required": "需要选择任务",
+        "mission_required_desc": "请在任务区域选择要完成的任务。",
+        "card_required": "需要选择卡牌",
+        "card_required_desc": "请选择具体卡牌来使用其卡角行动。",
+        "select_probe": "请在棋盘上选择探测器移动",
+        "select_probe_desc": "点击探测器并在棋盘上选择目的地。",
+        "sample_delivery_required": "没有可交付的样本",
+        "sample_delivery_required_desc": "请先把 capsule 移动到对应任务目的地。",
+        "not_enough_energy": "能量不足",
+        "not_enough_energy_desc": "至少需要 1 点能量才能转换。",
+        "card_custom_effect_unhandled": "卡牌效果暂不可用",
+        "card_custom_effect_unhandled_desc": "卡牌 {{cardId}} 的自定义效果 \"{{customId}}\" 已跳过，游戏继续进行。"
+      }
+    },
+    "resources": {
+      "credit": "金钱",
+      "energy": "能量",
+      "card": "卡牌",
+      "publicity": "声望",
+      "data": "数据"
+    },
+    "game_over": {
+      "title": "任务结束",
+      "winner": "胜者",
+      "breakdown_hint": "上方展示按来源拆分的详细计分。",
+      "scoring_reminder_alt": "计分提醒"
+    },
+    "action_bar": {
+      "label": "行动栏",
+      "move_probe": "移动探测器",
+      "step": "步",
+      "steps": "步",
+      "end_move": "结束移动",
+      "cancel": "取消"
+    },
+    "layout_v2": {
+      "section_failed_to_render": "区块渲染失败。",
+      "shell": {
+        "tab": "标签页",
+        "waterfall": "瀑布流",
+        "mobile": "移动端"
+      },
+      "dev_panel": {
+        "title": "布局调试",
+        "mode": "模式",
+        "export": "导出",
+        "reset": "重置",
+        "toggle_hint_prefix": "按",
+        "toggle_hint_suffix": "切换"
+      },
+      "dialogs": {
+        "settings_title": "任务显示",
+        "settings_description": "选择游戏桌面的排列方式。更改会保存在当前设备。",
+        "mode_block": "当前显示",
+        "game_layout_system": "显示系统",
+        "system_configurable": "自定义显示",
+        "system_legacy": "标准显示",
+        "system_hint": "只有启用自定义显示时，这些设置才会生效。",
+        "default_layout_mode": "桌面布局",
+        "preview_block": "预览",
+        "preview_topbar": "顶栏",
+        "preview_actionbar": "行动栏",
+        "preview_hand": "手牌",
+        "preview_left": "左侧",
+        "preview_middle": "中间",
+        "preview_right": "右侧",
+        "preview_mobile_order_label": "移动端顺序",
+        "waterfall_columns_block": "列宽",
+        "field_left_pct": "左侧 %",
+        "field_middle_pct": "中间 %",
+        "field_right_pct": "右侧 %",
+        "column_widths_hint": "在游戏中拖动列分隔条时，这些数值也会同步更新。",
+        "pinned_areas_block": "固定区域",
+        "field_hand_height": "手牌高度",
+        "field_log_height": "日志高度",
+        "field_log_min_height": "日志最小高度",
+        "field_log_grow": "日志伸展系数",
+        "board_scale_block": "面板缩放",
+        "field_tech_board_scale": "科技板缩放",
+        "field_card_rows_scale": "卡牌行缩放",
+        "mobile_order_block": "移动端顺序",
+        "json_block": "高级显示文件",
+        "json_hint": "导入或导出已保存的显示文件，方便在另一台设备上使用。",
+        "apply_json": "应用显示文件",
+        "refresh_json": "刷新文件",
+        "export_json": "导出显示文件",
+        "import_json": "导入显示文件",
+        "saved_hint": "已自动保存至当前设备。",
+        "reset_layout": "重置显示",
+        "done": "完成",
+        "toast_imported": "布局设置已导入",
+        "toast_invalid_json": "显示文件格式无效",
+        "select_two_cards_to_spend": "选择 2 张卡牌作为消耗",
+        "section_player_board": "玩家面板",
+        "section_solar_system": "太阳系",
+        "section_planet_board": "行星板",
+        "section_tech_board": "科技板",
+        "section_alien_board": "外星人板",
+        "section_card_rows": "卡牌行",
+        "section_log": "日志",
+        "section_end_game": "终局得分"
+      }
+    },
+    "debug": {
+      "game": {
+        "calibration": "校准",
+        "text_mode": "文本模式",
+        "source": {
+          "title": "对局状态来源",
+          "local": "来源：本地",
+          "server": "来源：服务器"
+        },
+        "server_status": {
+          "creating": "创建中…",
+          "game": "对局 {{id}}",
+          "idle": "空闲"
+        },
+        "new_server_game": "新建服务器对局",
+        "scenarios": {
+          "my_turn": "我的回合",
+          "opponent_turn": "对手回合",
+          "spectator": "观战",
+          "game_over": "游戏结束"
+        },
+        "card_input": {
+          "none": "无输入",
+          "hand_select": "输入：手牌",
+          "row_select": "输入：卡牌行",
+          "end_of_round": "输入：回合结束"
+        },
+        "next_row": "下一行",
+        "next_hand": "下一手牌",
+        "start_scan": "开始扫描",
+        "cancel_scan": "取消扫描（{{step}}）",
+        "rotate_next": "旋转 (R{{ring}})",
+        "rotate_next_title": "按规则顺序旋转：环 1 -> 环 2 -> 环 3",
+        "rotate_r1": "旋转 R1",
+        "rotate_r1_title": "仅旋转环 1",
+        "rotate_r2": "旋转 R2",
+        "rotate_r2_title": "环 2 带动环 1",
+        "rotate_r3": "旋转 R3",
+        "rotate_r3_title": "环 3 带动环 2 和环 1",
+        "push_delay_title": "旋转环 {{ring}} 时被推动探测器的延迟",
+        "debug_hand_select_title": "调试手牌选择",
+        "debug_row_select_title": "调试卡牌行选择",
+        "debug_end_of_round_title": "调试回合结束",
+        "scan": {
+          "pool_title": "扫描：选择子动作",
+          "card_row_title": "从卡牌行选择一张卡",
+          "hand_title": "选择一张手牌弃牌以放置信号",
+          "color_pick_title": "选择 {{color}} 区域以放置信号",
+          "sector_option": "区域 {{id}}",
+          "energy_title": "选择扫描能量发射效果",
+          "option": {
+            "mark_earth": "标记地球",
+            "mark_card_row": "标记卡牌行",
+            "mark_mercury": "标记水星（1 声望）",
+            "mark_hand": "标记手牌信号",
+            "energy_launch_or_move": "能量发射或移动",
+            "done": "完成（结束扫描）",
+            "launch": "支付 1 能量发射探测器",
+            "move": "获得 1 移动"
+          }
+        }
+      },
+      "server": {
+        "establishing_uplink": "正在建立调试网关连接…",
+        "acquiring_telemetry": "正在获取服务器遥测…",
+        "establishing_session": "正在建立服务器调试会话…",
+        "anomaly_detected": "检测到异常",
+        "init_failed": "无法初始化服务器调试会话。",
+        "reacquire_session": "重新获取会话",
+        "label": "服务器调试",
+        "game_id": "对局 {{id}}",
+        "creating": "创建中...",
+        "new_game": "新建对局",
+        "create_failed": "创建调试会话失败"
+      },
+      "replay": {
+        "connecting": "正在连接回放会话...",
+        "kicker": "校准 · 回放",
+        "title": "带检查点恢复的回放预设",
+        "subtitle": "从可复用预设中启动一次真实调试会话，再通过实时任务控制台重新接入。",
+        "loading_presets": "加载回放预设中...",
+        "preset_label": "预设",
+        "preset_placeholder": "选择回放预设",
+        "checkpoint_label": "检查点",
+        "checkpoint_placeholder": "选择检查点",
+        "checkpoint_default_hint": "选择回放停止的位置。",
+        "field_select_placeholder": "选择 {{label}}",
+        "anomaly_label": "异常",
+        "refresh_presets": "刷新预设",
+        "starting": "启动中...",
+        "start_replay": "开始回放",
+        "no_presets": "暂无可用回放预设。",
+        "snapshot_kicker": "快照 · 恢复",
+        "snapshot_subtitle": "输入对局 ID 从已存快照重新接入。",
+        "game_id_label": "对局 ID",
+        "game_id_placeholder": "输入对局 UUID",
+        "version_label": "版本（可选，留空使用最新）",
+        "version_placeholder": "例如 5",
+        "loading_snapshot": "加载中...",
+        "load_snapshot": "加载快照",
+        "load_presets_failed": "加载回放预设失败",
+        "create_session_failed": "创建回放会话失败",
+        "load_snapshot_failed": "加载快照会话失败",
+        "banner": {
+          "kind_replay": "回放",
+          "kind_snapshot": "快照",
+          "source_label": "源：{{id}}",
+          "expand_aria": "展开 {{kind}} 横幅",
+          "collapse_aria": "收起横幅",
+          "new_replay": "新建回放"
+        }
+      },
+      "hotspots": {
+        "kicker": "UI 校准",
+        "title": "热区调试",
+        "board_render_mode": "面板渲染模式",
+        "image_mode": "图片模式",
+        "text_mode": "文本模式",
+        "hotspots_label": "热区",
+        "interactive_label": "交互",
+        "anchors_label": "锚点",
+        "save_hotspots": "保存热区",
+        "reset_hotspots": "重置热区",
+        "load_failed": "加载热区失败",
+        "save_failed": "保存热区失败",
+        "nav_aria": "热区调试组件",
+        "solar_ring_controls_aria": "太阳系环径向控制",
+        "ring_label": "环 {{index}}",
+        "ring_offset_aria": "环 {{index}} 径向偏移",
+        "tabs": {
+          "solar": "太阳系",
+          "sectors": "扇区",
+          "planet": "行星板",
+          "tech": "科技板",
+          "player": "个人板",
+          "rival": "对手板",
+          "aliens": "外星人",
+          "corporations": "公司"
+        },
+        "input": {
+          "choose_sector": "选择一个扇区",
+          "choose_planet": "选择一颗行星",
+          "choose_tech": "选择科技"
+        }
+      },
+      "solar_compare": {
+        "title": "太阳系对比",
+        "server_game": "服务器对局 {{id}}",
+        "server_game_pending": "服务器对局待启动",
+        "init": "初始化",
+        "rotate": "旋转",
+        "launch": "发射",
+        "scan": "扫描",
+        "move_mode": "移动模式",
+        "reveal": "揭示",
+        "reveal_alien": "揭示外星人",
+        "reveal_alien_aria": "揭示外星人类型",
+        "pending_input_aria": "待处理调试输入",
+        "mascamites_samples": "虫族样本：木星 {{jupiter}} / 土星 {{saturn}}",
+        "initializing": "正在初始化服务器太阳系...",
+        "image_mode_aria": "图片模式太阳系",
+        "text_mode_aria": "文本模式太阳系",
+        "image_mode_label": "图片模式",
+        "text_mode_label": "文本模式"
+      }
+    }
+  }
+}

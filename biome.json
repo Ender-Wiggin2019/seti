@@ -11,6 +11,8 @@
       "!./coverage",
       "!**/.next",
       "!./.next/",
+      "!**/.turbo",
+      "!**/.turbo/**",
       "!./out/",
       "!./build",
       "!**/.DS_Store",
@@ -24,11 +26,21 @@
       "!**/.env.production.local",
       "!**/.vercel",
       "!**/CHANGELOG.md",
-      "!src/styles/odometer.css"
+      "!**/src/styles/odometer.css"
     ]
   },
   "formatter": {
     "enabled": true,
+    "includes": [
+      "*.{js,mjs,cjs,ts,tsx,json,jsonc,css,scss,webmanifest}",
+      "docs/**/*.{js,mjs,cjs,ts,tsx,json,jsonc,css,scss,webmanifest}",
+      "packages/**/*.{js,jsx,mjs,cjs,ts,tsx,json,jsonc,css,scss,webmanifest}",
+      "scripts/**/*.{js,mjs,cjs,ts,tsx,json,jsonc,css,scss,webmanifest}",
+      "!packages/**/build/**",
+      "!packages/**/coverage/**",
+      "!packages/**/dist/**",
+      "!packages/**/node_modules/**"
+    ],
     "formatWithErrors": false,
     "indentStyle": "space",
     "indentWidth": 2,
@@ -122,6 +134,7 @@
     }
   },
   "javascript": {
+    "parser": { "unsafeParameterDecoratorsEnabled": true },
     "formatter": {
       "jsxQuoteStyle": "single",
       "quoteProperties": "asNeeded",

@@ -1,0 +1,431 @@
+import { EAlienType } from '@seti/common/types/BaseCard';
+import {
+  EPlanet,
+  EResource,
+  ESector,
+  ETech,
+  ETrace,
+} from '@seti/common/types/element';
+
+export interface IBoardPosition {
+  x: number;
+  y: number;
+}
+
+export type TPlanetReward =
+  | {
+      type: 'resource';
+      resource: EResource;
+      amount: number;
+    }
+  | {
+      type: 'trace';
+      trace: ETrace;
+      amount: number;
+    }
+  | {
+      type: 'signal';
+      target: 'planet-sector';
+      amount: number;
+    }
+  | {
+      type: 'signal';
+      sector: ESector;
+      amount: number;
+    }
+  | {
+      type: 'card';
+      source: 'random' | 'any';
+      amount: number;
+    }
+  | {
+      type: 'alien-card';
+      alienType: EAlienType;
+      amount: number;
+    }
+  | {
+      type: 'exofossil';
+      amount: number;
+    }
+  | {
+      type: 'tuck';
+      amount: number;
+    };
+
+export interface IPlanetOrbitRewardConfig {
+  rewards: readonly TPlanetReward[];
+  firstRewards: readonly TPlanetReward[];
+}
+
+export interface IPlanetLandRewardConfig {
+  rewards: readonly TPlanetReward[];
+  firstData: readonly number[];
+  moonRewards: readonly (readonly TPlanetReward[])[];
+}
+
+export interface IPlanetaryBoardConfig {
+  label: string;
+  anchor: IBoardPosition;
+  orbitSlots: readonly IBoardPosition[];
+  landingSlots: readonly IBoardPosition[];
+  landingSlotKinds: readonly ('planet' | 'moon')[];
+  orbit: IPlanetOrbitRewardConfig;
+  land: IPlanetLandRewardConfig;
+  firstLandDataBonusSlots: number;
+  moonSlots: number;
+  moonIds: readonly string[];
+  moonNames: readonly string[];
+}
+
+export interface ITechStackLayout {
+  tech: ETech.PROBE | ETech.SCAN | ETech.COMPUTER;
+  level: 0 | 1 | 2 | 3;
+  x: number;
+  y: number;
+}
+
+export const PLANETARY_BOARD_DIMENSIONS = {
+  width: 500,
+  height: 700,
+} as const;
+
+export const TECH_BOARD_DIMENSIONS = {
+  width: 380,
+  height: 310,
+} as const;
+
+export const PLANETARY_PLANETS = [
+  EPlanet.MERCURY,
+  EPlanet.VENUS,
+  EPlanet.MARS,
+  EPlanet.JUPITER,
+  EPlanet.SATURN,
+  EPlanet.URANUS,
+  EPlanet.NEPTUNE,
+] as const;
+
+export const SOLAR_SYSTEM_PLANETS = [
+  EPlanet.EARTH,
+  ...PLANETARY_PLANETS,
+] as const;
+
+export type TPlanetaryBoardConfigId =
+  | (typeof PLANETARY_PLANETS)[number]
+  | EPlanet.OUMUAMUA;
+
+export const PLANETARY_BOARD_CONFIG: Readonly<
+  Record<TPlanetaryBoardConfigId, IPlanetaryBoardConfig>
+> = {
+  [EPlanet.MERCURY]: {
+    label: 'Mercury',
+    anchor: { x: 89, y: 23 },
+    orbitSlots: [{ x: 77, y: 10 }],
+    landingSlots: [{ x: 81, y: 19 }],
+    landingSlotKinds: ['planet'],
+    orbit: {
+      rewards: [
+        { type: 'card', source: 'random', amount: 1 },
+        { type: 'signal', target: 'planet-sector', amount: 2 },
+        { type: 'tuck', amount: 1 },
+      ],
+      firstRewards: [
+        { type: 'resource', resource: EResource.SCORE, amount: 3 },
+      ],
+    },
+    land: {
+      rewards: [
+        { type: 'resource', resource: EResource.SCORE, amount: 12 },
+        { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
+      ],
+      firstData: [3],
+      moonRewards: [],
+    },
+    firstLandDataBonusSlots: 1,
+    moonSlots: 0,
+    moonIds: [],
+    moonNames: [],
+  },
+  [EPlanet.VENUS]: {
+    label: 'Venus',
+    anchor: { x: 56, y: 25 },
+    orbitSlots: [{ x: 42, y: 9 }],
+    landingSlots: [{ x: 48, y: 21 }],
+    landingSlotKinds: ['planet'],
+    orbit: {
+      rewards: [
+        { type: 'resource', resource: EResource.SCORE, amount: 6 },
+        { type: 'tuck', amount: 1 },
+      ],
+      firstRewards: [
+        { type: 'resource', resource: EResource.SCORE, amount: 3 },
+      ],
+    },
+    land: {
+      rewards: [
+        { type: 'resource', resource: EResource.SCORE, amount: 5 },
+        { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
+      ],
+      firstData: [2],
+      moonRewards: [],
+    },
+    firstLandDataBonusSlots: 1,
+    moonSlots: 0,
+    moonIds: [],
+    moonNames: [],
+  },
+  [EPlanet.MARS]: {
+    label: 'Mars',
+    anchor: { x: 24, y: 25 },
+    orbitSlots: [{ x: 8, y: 8 }],
+    landingSlots: [
+      { x: 16, y: 21 },
+      { x: 11, y: 16 },
+      { x: 9, y: 28 },
+    ],
+    landingSlotKinds: ['planet', 'planet', 'moon'],
+    orbit: {
+      rewards: [
+        { type: 'card', source: 'any', amount: 1 },
+        { type: 'signal', target: 'planet-sector', amount: 1 },
+        { type: 'tuck', amount: 1 },
+      ],
+      firstRewards: [
+        { type: 'resource', resource: EResource.SCORE, amount: 3 },
+      ],
+    },
+    land: {
+      rewards: [
+        { type: 'resource', resource: EResource.SCORE, amount: 6 },
+        { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
+      ],
+      firstData: [2, 1],
+      moonRewards: [
+        [
+          { type: 'resource', resource: EResource.SCORE, amount: 8 },
+          { type: 'tuck', amount: 2 },
+        ],
+      ],
+    },
+    firstLandDataBonusSlots: 2,
+    moonSlots: 1,
+    moonIds: ['mars-phobos-deimos'],
+    moonNames: ['Phobos & Deimos'],
+  },
+  [EPlanet.JUPITER]: {
+    label: 'Jupiter',
+    anchor: { x: 20, y: 57 },
+    orbitSlots: [{ x: 3, y: 41 }],
+    landingSlots: [
+      { x: 12, y: 53 },
+      { x: 25, y: 63 },
+      { x: 32, y: 58 },
+      { x: 15, y: 65 },
+      { x: 35, y: 50 },
+    ],
+    landingSlotKinds: ['planet', 'moon', 'moon', 'moon', 'moon'],
+    orbit: {
+      rewards: [
+        { type: 'resource', resource: EResource.DATA, amount: 1 },
+        { type: 'signal', target: 'planet-sector', amount: 1 },
+        { type: 'tuck', amount: 1 },
+      ],
+      firstRewards: [
+        { type: 'resource', resource: EResource.SCORE, amount: 3 },
+      ],
+    },
+    land: {
+      rewards: [
+        { type: 'resource', resource: EResource.SCORE, amount: 7 },
+        { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
+      ],
+      firstData: [2],
+      moonRewards: [
+        [
+          { type: 'resource', resource: EResource.SCORE, amount: 12 },
+          { type: 'resource', resource: EResource.PUBLICITY, amount: 5 },
+        ],
+        [
+          { type: 'resource', resource: EResource.SCORE, amount: 7 },
+          { type: 'trace', trace: ETrace.YELLOW, amount: 2 },
+        ],
+        [
+          { type: 'resource', resource: EResource.SCORE, amount: 10 },
+          { type: 'resource', resource: EResource.ENERGY, amount: 4 },
+        ],
+        [
+          { type: 'resource', resource: EResource.SCORE, amount: 13 },
+          { type: 'resource', resource: EResource.DATA, amount: 4 },
+        ],
+      ],
+    },
+    firstLandDataBonusSlots: 1,
+    moonSlots: 4,
+    moonIds: [
+      'jupiter-ganymede',
+      'jupiter-europa',
+      'jupiter-callisto',
+      'jupiter-io',
+    ],
+    moonNames: ['Ganymede', 'Europa', 'Callisto', 'Io'],
+  },
+  [EPlanet.SATURN]: {
+    label: 'Saturn',
+    anchor: { x: 69, y: 56 },
+    orbitSlots: [{ x: 55, y: 38 }],
+    landingSlots: [
+      { x: 61, y: 52 },
+      { x: 83, y: 48 },
+      { x: 77, y: 58 },
+    ],
+    landingSlotKinds: ['planet', 'moon', 'moon'],
+    orbit: {
+      rewards: [
+        { type: 'resource', resource: EResource.PUBLICITY, amount: 2 },
+        { type: 'signal', target: 'planet-sector', amount: 1 },
+        { type: 'tuck', amount: 1 },
+      ],
+      firstRewards: [
+        { type: 'resource', resource: EResource.SCORE, amount: 3 },
+      ],
+    },
+    land: {
+      rewards: [
+        { type: 'resource', resource: EResource.SCORE, amount: 8 },
+        { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
+      ],
+      firstData: [2],
+      moonRewards: [
+        [
+          { type: 'resource', resource: EResource.SCORE, amount: 12 },
+          { type: 'signal', sector: ESector.RED, amount: 1 },
+          { type: 'signal', sector: ESector.YELLOW, amount: 1 },
+          { type: 'signal', sector: ESector.BLUE, amount: 1 },
+        ],
+        [
+          { type: 'resource', resource: EResource.SCORE, amount: 7 },
+          { type: 'trace', trace: ETrace.ANY, amount: 2 },
+        ],
+      ],
+    },
+    firstLandDataBonusSlots: 1,
+    moonSlots: 2,
+    moonIds: ['saturn-enceladus', 'saturn-titan'],
+    moonNames: ['Enceladus', 'Titan'],
+  },
+  [EPlanet.URANUS]: {
+    label: 'Uranus',
+    anchor: { x: 51, y: 90 },
+    orbitSlots: [{ x: 40, y: 75 }],
+    landingSlots: [
+      { x: 43, y: 86 },
+      { x: 61, y: 86 },
+    ],
+    landingSlotKinds: ['planet', 'moon'],
+    orbit: {
+      rewards: [
+        { type: 'card', source: 'random', amount: 3 },
+        { type: 'signal', sector: ESector.BLACK, amount: 1 },
+        { type: 'resource', resource: EResource.SCORE, amount: 8 },
+      ],
+      firstRewards: [
+        { type: 'resource', resource: EResource.SCORE, amount: 3 },
+      ],
+    },
+    land: {
+      rewards: [
+        { type: 'resource', resource: EResource.SCORE, amount: 9 },
+        { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
+      ],
+      firstData: [3],
+      moonRewards: [
+        [{ type: 'resource', resource: EResource.SCORE, amount: 25 }],
+      ],
+    },
+    firstLandDataBonusSlots: 1,
+    moonSlots: 1,
+    moonIds: ['uranus-titania'],
+    moonNames: ['Titania'],
+  },
+  [EPlanet.NEPTUNE]: {
+    label: 'Neptune',
+    anchor: { x: 27, y: 85 },
+    orbitSlots: [{ x: 7, y: 76 }],
+    landingSlots: [
+      { x: 11, y: 87 },
+      { x: 22, y: 93 },
+    ],
+    landingSlotKinds: ['planet', 'moon'],
+    orbit: {
+      rewards: [
+        { type: 'resource', resource: EResource.DATA, amount: 4 },
+        { type: 'signal', sector: ESector.BLACK, amount: 1 },
+        { type: 'resource', resource: EResource.SCORE, amount: 7 },
+      ],
+      firstRewards: [
+        { type: 'resource', resource: EResource.SCORE, amount: 3 },
+      ],
+    },
+    land: {
+      rewards: [
+        { type: 'resource', resource: EResource.SCORE, amount: 10 },
+        { type: 'trace', trace: ETrace.YELLOW, amount: 1 },
+      ],
+      firstData: [3],
+      moonRewards: [
+        [{ type: 'resource', resource: EResource.SCORE, amount: 26 }],
+      ],
+    },
+    firstLandDataBonusSlots: 1,
+    moonSlots: 1,
+    moonIds: ['neptune-triton'],
+    moonNames: ['Triton'],
+  },
+  [EPlanet.OUMUAMUA]: {
+    label: 'Oumuamua',
+    anchor: { x: 50, y: 50 },
+    orbitSlots: [{ x: 50, y: 38 }],
+    landingSlots: [
+      { x: 40, y: 52 },
+      { x: 50, y: 56 },
+      { x: 60, y: 52 },
+    ],
+    landingSlotKinds: ['planet', 'planet', 'planet'],
+    orbit: {
+      rewards: [
+        { type: 'resource', resource: EResource.SCORE, amount: 10 },
+        { type: 'exofossil', amount: 1 },
+        { type: 'signal', target: 'planet-sector', amount: 1 },
+      ],
+      firstRewards: [
+        { type: 'alien-card', alienType: EAlienType.OUMUAMUA, amount: 1 },
+      ],
+    },
+    land: {
+      rewards: [
+        { type: 'resource', resource: EResource.SCORE, amount: 9 },
+        { type: 'exofossil', amount: 2 },
+      ],
+      firstData: [3, 2, 1],
+      moonRewards: [],
+    },
+    firstLandDataBonusSlots: 3,
+    moonSlots: 0,
+    moonIds: [],
+    moonNames: [],
+  },
+};
+
+export const TECH_STACK_LAYOUT: readonly ITechStackLayout[] = [
+  { tech: ETech.PROBE, level: 0, x: 10, y: 10 },
+  { tech: ETech.PROBE, level: 1, x: 30, y: 10 },
+  { tech: ETech.PROBE, level: 2, x: 50, y: 10 },
+  { tech: ETech.PROBE, level: 3, x: 70, y: 10 },
+  { tech: ETech.SCAN, level: 0, x: 10, y: 30 },
+  { tech: ETech.SCAN, level: 1, x: 30, y: 30 },
+  { tech: ETech.SCAN, level: 2, x: 50, y: 30 },
+  { tech: ETech.SCAN, level: 3, x: 70, y: 30 },
+  { tech: ETech.COMPUTER, level: 0, x: 10, y: 50 },
+  { tech: ETech.COMPUTER, level: 1, x: 30, y: 50 },
+  { tech: ETech.COMPUTER, level: 2, x: 50, y: 50 },
+  { tech: ETech.COMPUTER, level: 3, x: 70, y: 50 },
+] as const;

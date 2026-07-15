@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+**/node_modules/
 /.pnp
 .pnp.js
 
@@ -11,6 +12,7 @@
 # next.js
 /.next/
 /out/
+**/.next/
 
 # production
 /build
@@ -19,6 +21,15 @@
 .idea
 .DS_Store
 *.pem
+.turbo/
+**/.turbo/
+.smoke-web.log
+.smoke-screenshots/
+.opencode/skills/skill-creator/scripts/
+
+# python artifacts
+**/__pycache__/
+*.py[cod]
 
 # debug
 npm-debug.log*
@@ -42,7 +53,32 @@ robots.txt
 sitemap.xml
 sitemap-*.xml
 /public/locales/en/common.missing.json
+*.missing.json
+**/*.missing.json
 /public/img/icons.psd
 
 # sqrpi locale
-scripts
+# scripts (keep tracked scripts, ignore temporary script outputs only)
+scripts/*.tmp
+
+# monorepo build outputs
+packages/*/dist/
+**/dist/
+**/build/
+**/coverage/
+**/.cache/
+**/.eslintcache
+**/.rpt2_cache/
+**/.parcel-cache/
+
+/frontend-reference
+/backend-reference
+/solar-system-reference
+
+.omx/
+
+# local agent/runtime folders
+.codex/
+.playwright-mcp/
+**/.oxc*/
+**/.omc*/
